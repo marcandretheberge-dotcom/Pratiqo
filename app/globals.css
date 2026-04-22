@@ -1,0 +1,96 @@
+@import "tailwindcss";
+
+:root {
+  /* Design System */
+  --p-primary: #1d9e75;
+  --p-dark-teal: #0f6e56;
+  --p-light-teal-bg: #e1f5ee;
+  --p-mint-accent: #9fe1cb;
+
+  --p-text: #2c2c2a;
+  --p-text-muted: #888780;
+  --p-text-subtle: #b4b2a9;
+
+  --p-border-light: #d3d1c7;
+  --p-page-bg: rgba(241, 239, 232, 0.4);
+
+  --background: #ffffff;
+  --foreground: var(--p-text);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-inter);
+  --color-brand-primary: var(--p-primary);
+  --color-brand-secondary: var(--p-dark-teal);
+  --color-brand-accent: var(--p-mint-accent);
+}
+
+body {
+  color: var(--p-text);
+  font-family: var(--font-inter);
+  font-weight: 400;
+  line-height: 1.6;
+  background: linear-gradient(var(--p-page-bg), var(--p-page-bg)), #fff;
+}
+
+h1,
+h2,
+h3 {
+  font-weight: 500;
+  letter-spacing: -0.8px;
+}
+
+.ds-label {
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.ds-card {
+  background: #fff;
+  border: 1.5px solid var(--p-light-teal-bg);
+  border-radius: 14px;
+}
+
+.ds-btn-primary {
+  background: var(--p-primary);
+  color: #fff;
+  border-radius: 22px;
+  padding: 10px 24px;
+  font-weight: 500;
+}
+
+.ds-btn-secondary {
+  background: var(--p-light-teal-bg);
+  color: #085041;
+  border-radius: 22px;
+  padding: 10px 24px;
+  font-weight: 500;
+}
+
+.ds-pill {
+  background: var(--p-light-teal-bg);
+  color: var(--p-dark-teal);
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 6px 10px;
+}
+
+.ds-search {
+  background: #fff;
+  border: 1px solid var(--p-border-light);
+  border-radius: 22px;
+  height: 44px;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

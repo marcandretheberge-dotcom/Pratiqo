@@ -1,0 +1,84 @@
+export type Discipline = 'Musique' | 'Arts Martiaux' | 'Langues' | 'Danse' | 'Sports' | 'Scolaire';
+export type TeachingMode = 'online' | 'person' | 'both';
+
+export type AppTab = 'explore' | 'map' | 'dashboard' | 'messages';
+
+export interface Teacher {
+  id: string;
+  name: string;
+  discipline: string;
+  category: Discipline;
+  rating: number;
+  reviews: number;
+  distance: number;
+  pricePerLesson: number;
+  monthlySubscription?: number;
+  bio: string;
+  imageUrl: string;
+  availability: string[];
+  location: {
+    lat: number;
+    lng: number;
+  };
+  isVerified: boolean;
+  teachingMode: TeachingMode;
+  languages: string[];
+  levels: string[];
+}
+
+export interface Lesson {
+  id: string;
+  teacherId: string;
+  studentId: string;
+  date: string;
+  time: string;
+  status: 'booked' | 'completed' | 'cancelled';
+  price: number;
+  homework?: string;
+  notes?: string;
+}
+
+export interface ProgressData {
+  date: string;
+  score: number;
+  milestone?: string;
+}
+
+export interface StudentProfile {
+  id: string;
+  name: string;
+  email: string;
+  activeSubscriptions: {
+    teacherId: string;
+    startDate: string;
+    remainingLessons: number;
+    price: number;
+  }[];
+  progress: Record<string, ProgressData[]>; // category -> history
+  badges: { id: string; icon: string; name: string; date: string }[];
+  streak: number;
+  milestones: { id: string; title: string; completed: boolean }[];
+}
+
+export interface Assignment {
+  id: string;
+  teacherId: string;
+  studentId: string;
+  title: string;
+  description?: string;
+  dueDate?: string;
+  status: 'pending' | 'submitted' | 'reviewed';
+  createdAt: string;
+  feedback?: string;
+}
+
+export interface PratiqoNotification {
+  id: string;
+  userId: string;
+  title: string;
+  message: string;
+  type: 'booking' | 'message' | 'assignment' | 'system';
+  read: boolean;
+  createdAt: string;
+  link?: string;
+}
