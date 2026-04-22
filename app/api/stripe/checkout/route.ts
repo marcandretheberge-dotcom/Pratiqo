@@ -1,9 +1,21 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { stripe } from "../../../../lib/stripe";
-import { getSupabaseAdmin } from "../../../../lib/supabaseAdmin";
+import Stripe from "stripe";
+import { stripe } from "@/lib/stripe";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
-const PLATFORM_FEE_RATE = 0.12;
+function trimTrailingSlash(url: string) {
+  return url.replace(/\/+$/, "");
+}
+
+/** Stripe success/cancel URLs — must be set for checkout (no Connect / no dynamic origin fallback). */
+function checkoutPublicBase(): string {
+  const raw = process.env.STRIPE_CHECKOUT_BASE_URL?.trim();
+  if (!raw) {
+    throw new Error("STRIPE_CHECKOUT_BASE_URL is required (e.g. https://pratiqo.vercel.app).");
+  }
+  return trimTrailingSlash(raw);
+}
 
 type CheckoutBody = {
   teacher_id?: string;
@@ -12,8 +24,38 @@ type CheckoutBody = {
   booking_id?: string;
 };
 
+type TeacherRow = {
+  id: string;
+  name: string;
+  price_per_lesson: number | string | null;
+};
+
+/** Hourly amount in CAD cents from `teachers.price_per_lesson` (stored as main-currency dollars). */
+function hourlyRateCentsFromTeacher(teacher: TeacherRow): number {
+  const dollars = Number(teacher.price_per_lesson);
+  if (!Number.isFinite(dollars) || dollars <= 0) return 0;
+  return Math.round(dollars * 100);
+}
+
 export async function POST(req: Request) {
   try {
+    const hasStripeKey = Boolean(process.env.STRIPE_SECRET_KEY?.trim());
+    console.log("[stripe/checkout] STRIPE_SECRET_KEY configured:", hasStripeKey);
+    if (!hasStripeKey) {
+      const msg = "STRIPE_SECRET_KEY is missing or empty.";
+      console.error("[stripe/checkout]", msg);
+      return NextResponse.json({ error: msg }, { status: 500 });
+    }
+
+    let origin: string;
+    try {
+      origin = checkoutPublicBase();
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Missing STRIPE_CHECKOUT_BASE_URL.";
+      console.error("[stripe/checkout]", msg);
+      return NextResponse.json({ error: msg }, { status: 500 });
+    }
+
     const authHeader = req.headers.get("authorization");
     const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
     if (!token) {
@@ -71,7 +113,7 @@ export async function POST(req: Request) {
 
     const { data: teacher, error: tErr } = await admin
       .from("teachers")
-      .select("id, name, stripe_account_id")
+      .select("id, name, price_per_lesson")
       .eq("id", booking.teacher_id)
       .maybeSingle();
 
@@ -79,45 +121,18 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Teacher not found." }, { status: 404 });
     }
 
-    const connectedAccountId = teacher.stripe_account_id as string | null;
-    if (!connectedAccountId) {
+    const typed = teacher as TeacherRow;
+    const unitAmountCents = hourlyRateCentsFromTeacher(typed);
+    if (unitAmountCents < 50) {
       return NextResponse.json(
-        {
-          error:
-            "This teacher is not connected to Stripe yet. Add `stripe_account_id` on the teacher row (Connect account id, e.g. acct_...).",
-        },
+        { error: "Invalid hourly rate: amount in cents must be at least 50 (Stripe minimum for CAD)." },
         { status: 400 },
-      );
-    }
-
-    const priceUsd = Number(booking.price);
-    if (!Number.isFinite(priceUsd) || priceUsd <= 0) {
-      return NextResponse.json({ error: "Invalid booking price." }, { status: 400 });
-    }
-
-    const unitAmountCents = Math.round(priceUsd * 100);
-    const applicationFeeAmount = Math.round(unitAmountCents * PLATFORM_FEE_RATE);
-    if (applicationFeeAmount >= unitAmountCents) {
-      return NextResponse.json({ error: "Platform fee must be less than total amount." }, { status: 400 });
-    }
-
-    const headerOrigin = req.headers.get("origin");
-    const envSite = process.env.NEXT_PUBLIC_SITE_URL;
-    const vercel = process.env.VERCEL_URL;
-    const origin =
-      headerOrigin ||
-      envSite ||
-      (vercel ? (vercel.startsWith("http") ? vercel : `https://${vercel}`) : "");
-
-    if (!origin) {
-      return NextResponse.json(
-        { error: "Missing origin header or NEXT_PUBLIC_SITE_URL / VERCEL_URL for redirect URLs." },
-        { status: 500 },
       );
     }
 
     const successUrl = `${origin}/booking/success?session_id={CHECKOUT_SESSION_ID}`;
     const cancelUrl = `${origin}/booking`;
+    console.log("[stripe/checkout] redirect base (STRIPE_CHECKOUT_BASE_URL):", origin);
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
@@ -133,20 +148,16 @@ export async function POST(req: Request) {
         {
           quantity: 1,
           price_data: {
-            currency: "eur",
+            currency: "cad",
             unit_amount: unitAmountCents,
             product_data: {
-              name: `Cours — ${teacher.name}`,
+              name: `Cours avec ${typed.name}`,
               description: [booking.date, booking.time].filter(Boolean).join(" · ") || undefined,
             },
           },
         },
       ],
       payment_intent_data: {
-        application_fee_amount: applicationFeeAmount,
-        transfer_data: {
-          destination: connectedAccountId,
-        },
         metadata: {
           booking_id: bookingId,
           teacher_id: booking.teacher_id,
@@ -161,8 +172,37 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ url: session.url });
   } catch (e: unknown) {
+    if (e instanceof Stripe.errors.StripeError) {
+      const declineCode =
+        "decline_code" in e && typeof (e as { decline_code?: string }).decline_code === "string"
+          ? (e as { decline_code: string }).decline_code
+          : undefined;
+      console.error("[stripe/checkout] Stripe API error:", {
+        type: e.type,
+        code: e.code,
+        message: e.message,
+        decline_code: declineCode,
+        raw: e.raw,
+      });
+      const status =
+        e instanceof Stripe.errors.StripeAuthenticationError
+          ? 500
+          : e instanceof Stripe.errors.StripeInvalidRequestError
+            ? 400
+            : 502;
+      return NextResponse.json(
+        { error: e.message, stripeType: e.type, stripeCode: e.code ?? null },
+        { status },
+      );
+    }
+
+    if (e instanceof Error && e.message.includes("SUPABASE_SERVICE_ROLE_KEY")) {
+      console.error("[stripe/checkout] Supabase admin:", e.message);
+      return NextResponse.json({ error: "Server misconfiguration: " + e.message }, { status: 500 });
+    }
+
     const message = e instanceof Error ? e.message : "Stripe checkout error";
-    console.error("[stripe/checkout]", e);
+    console.error("[stripe/checkout] Unexpected error:", e);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

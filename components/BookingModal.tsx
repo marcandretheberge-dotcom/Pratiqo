@@ -23,6 +23,7 @@ export function BookingModal({ teacher, onClose }: BookingModalProps) {
     teacher.teachingMode === "both" ? "person" : (teacher.teachingMode as "online" | "person"),
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
   const days = ["Lun 20", "Mar 21", "Mer 22", "Jeu 23", "Ven 24", "Sam 25"];
   const times = ["09:00", "10:30", "14:00", "15:30", "17:00", "18:30"];
@@ -34,6 +35,8 @@ export function BookingModal({ teacher, onClose }: BookingModalProps) {
     }
 
     setIsSubmitting(true);
+    setCheckoutError(null);
+    let redirecting = false;
     try {
       const supabase = getSupabaseClient();
       const bookingData = {
@@ -73,21 +76,33 @@ export function BookingModal({ teacher, onClose }: BookingModalProps) {
         }),
       });
 
-      const payload = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        throw new Error((payload as { error?: string }).error || "Échec du paiement Stripe.");
+      const raw = await res.text();
+      let payload: { url?: string; error?: string; stripeCode?: string | null; stripeType?: string };
+      try {
+        payload = raw ? (JSON.parse(raw) as typeof payload) : {};
+      } catch {
+        payload = { error: raw || `Erreur HTTP ${res.status}` };
       }
 
-      const url = (payload as { url?: string }).url;
-      if (!url) throw new Error("URL de paiement manquante.");
+      if (!res.ok) {
+        const parts = [
+          payload.error || "Échec du paiement Stripe.",
+          payload.stripeCode ? `(${payload.stripeCode})` : null,
+        ].filter(Boolean);
+        throw new Error(parts.join(" "));
+      }
 
-      window.location.href = url;
+      const url = payload.url;
+      if (!url) throw new Error("URL de paiement manquante (réponse Stripe invalide).");
+
+      redirecting = true;
+      window.location.assign(url);
     } catch (error) {
       console.error("Booking / checkout error", error);
       const msg = error instanceof Error ? error.message : "Une erreur est survenue.";
-      alert(msg);
+      setCheckoutError(msg);
     } finally {
-      setIsSubmitting(false);
+      if (!redirecting) setIsSubmitting(false);
     }
   };
 
@@ -220,6 +235,14 @@ export function BookingModal({ teacher, onClose }: BookingModalProps) {
               <p className="text-xs text-slate-500">
                 Vous serez redirigé vers Stripe pour payer. Commission plateforme : 12&nbsp;%.
               </p>
+              {checkoutError ? (
+                <div
+                  role="alert"
+                  className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800"
+                >
+                  {checkoutError}
+                </div>
+              ) : null}
               <div className="grid grid-cols-2 gap-2">
                 {times.map((t) => (
                   <button

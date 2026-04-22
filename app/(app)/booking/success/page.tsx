@@ -56,7 +56,8 @@ export default async function BookingSuccessPage({
     if (desc) {
       descriptionLine = desc;
     }
-  } catch {
+  } catch (err) {
+    console.error("[booking/success] Stripe session retrieve failed:", sessionId, err);
     return (
       <div className="max-w-lg mx-auto space-y-6">
         <div className="ds-card p-8 text-center border border-[var(--p-border-light)]">
