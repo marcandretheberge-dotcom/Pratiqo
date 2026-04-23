@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import {
   CheckCircle2,
@@ -21,16 +21,19 @@ import { cn } from "../lib/utils";
 import { useAuth } from "./AuthProvider";
 import { getSupabaseClient } from "../lib/supabase";
 import { useRouter } from "next/navigation";
+import { haversineDistance } from "../lib/geo";
 
 interface TeacherProfileProps {
   teacher: Teacher;
   onClose: () => void;
   onBook: () => void;
+  distanceKm?: number | null;
 }
 
-export function TeacherProfile({ teacher, onClose, onBook }: TeacherProfileProps) {
+export function TeacherProfile({ teacher, onClose, onBook, distanceKm }: TeacherProfileProps) {
   const { user } = useAuth();
   const router = useRouter();
+  const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(null);
 
   const handleStartChat = async () => {
     if (!user) {
@@ -55,6 +58,34 @@ export function TeacherProfile({ teacher, onClose, onBook }: TeacherProfileProps
       console.error("Chat error", error);
     }
   };
+
+  useEffect(() => {
+    if (!("geolocation" in navigator)) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => setGeo({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => {
+        // Permission denied or unavailable: keep badge hidden (geo stays null).
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 },
+    );
+  }, []);
+
+  const computedDistanceKm = useMemo(() => {
+    if (!geo) return null;
+    const lat = teacher.location?.lat;
+    const lng = teacher.location?.lng;
+    if (
+      typeof lat !== "number" ||
+      typeof lng !== "number" ||
+      !Number.isFinite(lat) ||
+      !Number.isFinite(lng)
+    ) {
+      return null;
+    }
+    return haversineDistance(geo.lat, geo.lng, lat, lng);
+  }, [geo, teacher.location?.lat, teacher.location?.lng]);
+
+  const displayDistanceKm = distanceKm !== undefined ? distanceKm : computedDistanceKm;
 
   return (
     <div className="fixed inset-0 z-[210] flex items-center justify-center p-4">
@@ -114,7 +145,7 @@ export function TeacherProfile({ teacher, onClose, onBook }: TeacherProfileProps
               <h2 className="text-3xl font-bold text-slate-900 leading-tight">{teacher.name}</h2>
               <p className="text-slate-500 font-medium flex items-center gap-2">
                 <MapPin size={16} className="text-brand-primary" />
-                {teacher.distance}km de vous •{" "}
+                {displayDistanceKm !== null ? `${displayDistanceKm.toFixed(1)} km de vous • ` : null}
                 {teacher.teachingMode === "both"
                   ? "Hybride"
                   : teacher.teachingMode === "online"

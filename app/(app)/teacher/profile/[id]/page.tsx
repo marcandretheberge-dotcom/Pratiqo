@@ -7,11 +7,14 @@ import { teacherRowToTeacher, type TeacherRow } from "../../../../../lib/teacher
 import { TeacherProfile } from "../../../../../components/TeacherProfile";
 import { BookingModal } from "../../../../../components/BookingModal";
 import { useRouter } from "next/navigation";
+import { haversineDistance } from "../../../../../lib/geo";
 
 export default function TeacherProfilePage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const [teacher, setTeacher] = useState<Teacher | null>(null);
   const [booking, setBooking] = useState(false);
+  const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(null);
+  const [geoDeniedOrUnavailable, setGeoDeniedOrUnavailable] = useState(false);
 
   useEffect(() => {
     const supabase = getSupabaseClient();
@@ -48,6 +51,29 @@ export default function TeacherProfilePage({ params }: { params: { id: string } 
     };
   }, [params.id]);
 
+  useEffect(() => {
+    if (!("geolocation" in navigator)) {
+      setGeoDeniedOrUnavailable(true);
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setGeo({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setGeoDeniedOrUnavailable(false);
+      },
+      () => {
+        setGeo(null);
+        setGeoDeniedOrUnavailable(true);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 },
+    );
+  }, []);
+
+  const distanceKm =
+    !teacher || !geo || geoDeniedOrUnavailable
+      ? null
+      : haversineDistance(geo.lat, geo.lng, teacher.location.lat, teacher.location.lng);
+
   if (!teacher) {
     return (
       <div className="bg-white border border-slate-200 rounded-3xl p-8">
@@ -62,6 +88,7 @@ export default function TeacherProfilePage({ params }: { params: { id: string } 
         teacher={teacher}
         onClose={() => router.push("/teacher/profile")}
         onBook={() => setBooking(true)}
+        distanceKm={geoDeniedOrUnavailable ? null : distanceKm}
       />
       {booking && <BookingModal teacher={teacher} onClose={() => setBooking(false)} />}
     </>
