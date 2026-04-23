@@ -1,18 +1,26 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import { Check, Star } from "lucide-react";
 import { useAuth } from "../../../components/AuthProvider";
 import { getSupabaseClient } from "../../../lib/supabase";
 
 export default function UpgradePage() {
-  const { session } = useAuth();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
-  const token = useMemo(() => session?.access_token ?? null, [session?.access_token]);
 
   const startUpgrade = async () => {
-    if (!token) {
+    if (!user) {
       alert("Veuillez vous connecter.");
+      return;
+    }
+    const supabase = getSupabaseClient();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    const token = session?.access_token ?? null;
+    if (!token) {
+      alert("Session expirée. Reconnecte-toi.");
       return;
     }
     setLoading(true);

@@ -85,9 +85,11 @@ async function setUserPlanFromSubscription(subscription: Stripe.Subscription) {
 
   const admin = getSupabaseAdmin();
   const plan = isPro ? "pro" : "free";
+  // Stripe API 2026+: period bounds live on subscription items, not the subscription root.
+  const currentPeriodEnd = subscription.items?.data?.[0]?.current_period_end ?? null;
   const expiresAt =
-    subscription.cancel_at_period_end && subscription.current_period_end
-      ? new Date(subscription.current_period_end * 1000).toISOString()
+    subscription.cancel_at_period_end && typeof currentPeriodEnd === "number"
+      ? new Date(currentPeriodEnd * 1000).toISOString()
       : null;
 
   const { error } = await admin
