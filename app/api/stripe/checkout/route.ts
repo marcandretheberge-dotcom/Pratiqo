@@ -10,10 +10,8 @@ function trimTrailingSlash(url: string) {
 
 /** Stripe success/cancel URLs — must be set for checkout (no Connect / no dynamic origin fallback). */
 function checkoutPublicBase(): string {
-  const raw = process.env.STRIPE_CHECKOUT_BASE_URL?.trim();
-  if (!raw) {
-    throw new Error("STRIPE_CHECKOUT_BASE_URL is required (e.g. https://pratiqo.vercel.app).");
-  }
+  const raw =
+    process.env.STRIPE_CHECKOUT_BASE_URL?.trim() || "https://pratiqo.vercel.app";
   return trimTrailingSlash(raw);
 }
 
@@ -47,14 +45,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: msg }, { status: 500 });
     }
 
-    let origin: string;
-    try {
-      origin = checkoutPublicBase();
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : "Missing STRIPE_CHECKOUT_BASE_URL.";
-      console.error("[stripe/checkout]", msg);
-      return NextResponse.json({ error: msg }, { status: 500 });
-    }
+    const origin = checkoutPublicBase();
 
     const authHeader = req.headers.get("authorization");
     const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
@@ -130,9 +121,17 @@ export async function POST(req: Request) {
       );
     }
 
-    const successUrl = `${origin}/booking/success?session_id={CHECKOUT_SESSION_ID}`;
-    const cancelUrl = `${origin}/booking`;
-    console.log("[stripe/checkout] redirect base (STRIPE_CHECKOUT_BASE_URL):", origin);
+    const baseUrl = origin;
+    const successUrlRaw = `${baseUrl}/booking/success?session_id={CHECKOUT_SESSION_ID}`;
+    const cancelUrlRaw = `${baseUrl}/booking`;
+    const successUrl = encodeURI(successUrlRaw);
+    const cancelUrl = encodeURI(cancelUrlRaw);
+
+    console.log("[stripe/checkout] redirect base (STRIPE_CHECKOUT_BASE_URL):", baseUrl);
+    console.log("[stripe/checkout] success_url (raw):", successUrlRaw);
+    console.log("[stripe/checkout] cancel_url (raw):", cancelUrlRaw);
+    console.log("[stripe/checkout] success_url (encoded):", successUrl);
+    console.log("[stripe/checkout] cancel_url (encoded):", cancelUrl);
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
