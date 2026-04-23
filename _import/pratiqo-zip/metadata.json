@@ -1,8 +1,0 @@
-{
-  "name": "Pratiqo",
-  "description": "Pratiqo est la première marketplace mondiale de mentorat géolocalisé et en ligne. Une plateforme complète pour les professeurs et un hub de progression gamifié pour les élèves.",
-  "requestFramePermissions": [
-    "geolocation"
-  ],
-  "majorCapabilities": []
-}

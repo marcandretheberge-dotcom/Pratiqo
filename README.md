@@ -1,21 +1,16 @@
-Version 1.0
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Pratiqo
 
-# Run and deploy your AI Studio app
+Marketplace for independent teachers — music, dance, martial arts, languages and more.
 
-This contains everything you need to run your app locally.
+## Tech Stack
 
-View your app in AI Studio: https://ai.studio/apps/b3d9f1ba-9221-4d49-8d68-3f39dfa58be3
+- Next.js 16
+- Supabase (PostgreSQL)
+- Stripe Connect
+- Google Auth
 
 ## Run Locally
 
-**Prerequisites:**  Node.js
-
-
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+1. `npm install`
+2. Copy `.env.example` to `.env.local` and fill in values
+3. `npm run dev`
