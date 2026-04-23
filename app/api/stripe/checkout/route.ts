@@ -28,11 +28,25 @@ type TeacherRow = {
   price_per_lesson: number | string | null;
   user_id?: string | null;
   stripe_account_id?: string | null;
+  home_lesson_enabled?: boolean | null;
+  home_lesson_price?: number | string | null;
+};
+
+type BookingRow = {
+  price: number | string | null;
+  teaching_mode?: string | null;
+  student_address?: string | null;
 };
 
 /** Hourly amount in CAD cents from `teachers.price_per_lesson` (stored as main-currency dollars). */
 function hourlyRateCentsFromTeacher(teacher: TeacherRow): number {
   const dollars = Number(teacher.price_per_lesson);
+  if (!Number.isFinite(dollars) || dollars <= 0) return 0;
+  return Math.round(dollars * 100);
+}
+
+function homeRateCentsFromTeacher(teacher: TeacherRow): number {
+  const dollars = Number(teacher.home_lesson_price);
   if (!Number.isFinite(dollars) || dollars <= 0) return 0;
   return Math.round(dollars * 100);
 }
@@ -84,7 +98,9 @@ export async function POST(req: Request) {
     const admin = getSupabaseAdmin();
     const { data: booking, error: bookErr } = await admin
       .from("bookings")
-      .select("id, teacher_id, student_id, status, price, date, time, student_level, teaching_mode")
+      .select(
+        "id, teacher_id, student_id, status, price, date, time, student_level, teaching_mode, student_address",
+      )
       .eq("id", bookingId)
       .maybeSingle();
 
@@ -106,7 +122,9 @@ export async function POST(req: Request) {
 
     const { data: teacher, error: tErr } = await admin
       .from("teachers")
-      .select("id, user_id, stripe_account_id, name, price_per_lesson")
+      .select(
+        "id, user_id, stripe_account_id, name, price_per_lesson, home_lesson_enabled, home_lesson_price",
+      )
       .eq("id", booking.teacher_id)
       .maybeSingle();
 
@@ -115,10 +133,38 @@ export async function POST(req: Request) {
     }
 
     const typed = teacher as TeacherRow;
-    const unitAmountCents = hourlyRateCentsFromTeacher(typed);
+    const b = booking as BookingRow;
+    const teachingMode = (b.teaching_mode || "person").toLowerCase();
+    const studentAddress = (b.student_address || "").trim();
+
+    let unitAmountCents = 0;
+    const bookingPriceDollars = Number(b.price);
+    if (Number.isFinite(bookingPriceDollars) && bookingPriceDollars > 0) {
+      unitAmountCents = Math.round(bookingPriceDollars * 100);
+    } else if (teachingMode === "domicile") {
+      if (!typed.home_lesson_enabled) {
+        return NextResponse.json({ error: "Cours à domicile non disponible pour ce professeur." }, { status: 400 });
+      }
+      unitAmountCents = homeRateCentsFromTeacher(typed);
+    } else {
+      unitAmountCents = hourlyRateCentsFromTeacher(typed);
+    }
+
+    if (teachingMode === "domicile") {
+      if (!typed.home_lesson_enabled) {
+        return NextResponse.json({ error: "Cours à domicile non activé." }, { status: 400 });
+      }
+      if (!studentAddress) {
+        return NextResponse.json({ error: "Adresse requise pour un cours à domicile." }, { status: 400 });
+      }
+    }
+
+    const modeLabel =
+      teachingMode === "domicile" ? "À domicile" : teachingMode === "online" ? "En ligne" : "En studio";
+
     if (unitAmountCents < 50) {
       return NextResponse.json(
-        { error: "Invalid hourly rate: amount in cents must be at least 50 (Stripe minimum for CAD)." },
+        { error: "Invalid amount: must be at least 50 cents (Stripe minimum for CAD)." },
         { status: 400 },
       );
     }
@@ -166,6 +212,8 @@ export async function POST(req: Request) {
         booking_id: bookingId,
         teacher_id: booking.teacher_id,
         student_id: booking.student_id,
+        teaching_mode: teachingMode,
+        student_address: studentAddress,
       },
       line_items: [
         {
@@ -174,7 +222,7 @@ export async function POST(req: Request) {
             currency: "cad",
             unit_amount: unitAmountCents,
             product_data: {
-              name: `Cours avec ${typed.name}`,
+              name: `Cours avec ${typed.name} (${modeLabel})`,
               description: [booking.date, booking.time].filter(Boolean).join(" · ") || undefined,
             },
           },
@@ -185,6 +233,8 @@ export async function POST(req: Request) {
           booking_id: bookingId,
           teacher_id: booking.teacher_id,
           student_id: booking.student_id,
+          teaching_mode: teachingMode,
+          student_address: studentAddress,
         },
         ...(destination
           ? {

@@ -29,6 +29,14 @@ export interface Teacher {
   teachingMode: TeachingMode;
   languages: string[];
   levels: string[];
+  /** Cours à domicile (paramètres profil) */
+  homeLessonEnabled?: boolean;
+  homeLessonPrice?: number | null;
+  homeLessonRadiusKm?: number;
+  homeLessonMinDuration?: number;
+  homeLessonRequiresConfirmation?: boolean;
+  /** Si distance élève → prof &gt; 20 km, durée min 2 h */
+  homeLessonForce2hOver20km?: boolean;
 }
 
 export interface ProgressData {

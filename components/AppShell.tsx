@@ -3,7 +3,16 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarCheck2, Database, LayoutDashboard, LogIn, LogOut, Search, UserCircle2 } from "lucide-react";
+import {
+  CalendarCheck2,
+  Database,
+  LayoutDashboard,
+  LogIn,
+  LogOut,
+  Search,
+  Settings,
+  UserCircle2,
+} from "lucide-react";
 import { cn } from "../lib/utils";
 import { useAuth } from "./AuthProvider";
 import { loginWithGoogle, logout } from "../lib/auth";
@@ -11,14 +20,26 @@ import { authAvatarUrl, authDisplayName } from "../lib/authDisplay";
 import Logo from "./ui/Logo";
 import { NotificationCenter } from "./NotificationCenter";
 
-const NAV = [
+type NavItem = { href: string; label: string; teacherOnly?: boolean };
+
+const NAV: NavItem[] = [
   { href: "/", label: "Accueil" },
-  { href: "/dashboard", label: "Tableau de bord", icon: <LayoutDashboard size={18} /> },
-  { href: "/student/search", label: "Recherche élève", icon: <Search size={18} /> },
-  { href: "/booking", label: "Réservation", icon: <CalendarCheck2 size={18} /> },
-  { href: "/teacher/profile", label: "Profil prof", icon: <UserCircle2 size={18} /> },
-  { href: "/supabase", label: "Supabase", icon: <Database size={18} /> },
-] as const;
+  { href: "/dashboard", label: "Tableau de bord" },
+  { href: "/student/search", label: "Recherche élève" },
+  { href: "/booking", label: "Réservation" },
+  { href: "/teacher/profile", label: "Profil prof" },
+  { href: "/teacher/settings", label: "Paramètres", teacherOnly: true },
+  { href: "/supabase", label: "Supabase" },
+];
+
+const NAV_ICONS: Partial<Record<string, React.ReactNode>> = {
+  "/dashboard": <LayoutDashboard size={18} />,
+  "/student/search": <Search size={18} />,
+  "/booking": <CalendarCheck2 size={18} />,
+  "/teacher/profile": <UserCircle2 size={18} />,
+  "/teacher/settings": <Settings size={18} />,
+  "/supabase": <Database size={18} />,
+};
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -34,21 +55,23 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </Link>
 
           <nav className="hidden md:flex items-center gap-2">
-            {NAV.map((item) => {
+            {NAV.filter((item) => !item.teacherOnly || profile?.role === "teacher").map((item) => {
               const active =
                 pathname === item.href ||
                 (item.href !== "/" && item.href !== "/dashboard" && pathname.startsWith(item.href));
+              const icon = NAV_ICONS[item.href];
               return (
                 <Link
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "px-4 py-2 rounded-[18px] text-sm font-medium transition-colors",
+                    "px-4 py-2 rounded-[18px] text-sm font-medium transition-colors inline-flex items-center gap-2",
                     active
                       ? "bg-[var(--p-light-teal-bg)] text-[var(--p-dark-teal)]"
                       : "text-[var(--p-text-muted)] hover:text-[var(--p-text)] hover:bg-[rgba(225,245,238,0.6)]",
                   )}
                 >
+                  {icon}
                   {item.label}
                 </Link>
               );

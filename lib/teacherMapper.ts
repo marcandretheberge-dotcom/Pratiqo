@@ -18,6 +18,12 @@ export type TeacherRow = {
   teaching_mode: string;
   languages: string[] | null;
   levels: string[] | null;
+  home_lesson_enabled?: boolean | null;
+  home_lesson_price?: number | string | null;
+  home_lesson_radius_km?: number | null;
+  home_lesson_min_duration?: number | null;
+  home_lesson_requires_confirmation?: boolean | null;
+  home_lesson_force_2h_over_20km?: boolean | null;
 };
 
 export function teacherRowToTeacher(row: TeacherRow): Teacher {
@@ -40,6 +46,15 @@ export function teacherRowToTeacher(row: TeacherRow): Teacher {
     teachingMode: row.teaching_mode as Teacher["teachingMode"],
     languages: row.languages ?? [],
     levels: row.levels ?? [],
+    homeLessonEnabled: Boolean(row.home_lesson_enabled),
+    homeLessonPrice:
+      row.home_lesson_price == null || row.home_lesson_price === ""
+        ? null
+        : Number(row.home_lesson_price),
+    homeLessonRadiusKm: row.home_lesson_radius_km ?? 25,
+    homeLessonMinDuration: row.home_lesson_min_duration ?? 60,
+    homeLessonRequiresConfirmation: row.home_lesson_requires_confirmation ?? true,
+    homeLessonForce2hOver20km: Boolean(row.home_lesson_force_2h_over_20km),
   };
 }
 
@@ -61,5 +76,11 @@ export function teacherToRow(t: Teacher): Record<string, unknown> {
     teaching_mode: t.teachingMode,
     languages: t.languages,
     levels: t.levels,
+    home_lesson_enabled: t.homeLessonEnabled ?? false,
+    home_lesson_price: t.homeLessonPrice ?? null,
+    home_lesson_radius_km: t.homeLessonRadiusKm ?? 25,
+    home_lesson_min_duration: t.homeLessonMinDuration ?? 60,
+    home_lesson_requires_confirmation: t.homeLessonRequiresConfirmation ?? true,
+    home_lesson_force_2h_over_20km: t.homeLessonForce2hOver20km ?? false,
   };
 }

@@ -1,29 +1,109 @@
 "use client";
 
-import React, { useState } from "react";
-import { Calendar, CheckCircle2, ChevronRight, Clock, Loader2 } from "lucide-react";
+import React, { useEffect, useMemo, useState } from "react";
+import {
+  Calendar,
+  CheckCircle2,
+  ChevronRight,
+  Clock,
+  Home,
+  Loader2,
+  MapPin,
+  Users,
+  Video,
+} from "lucide-react";
 import { motion } from "motion/react";
 import type { Teacher } from "../types";
 import { cn } from "../lib/utils";
 import { useAuth } from "./AuthProvider";
 import { getSupabaseClient } from "../lib/supabase";
+import { haversineDistance } from "../lib/geo";
+
+export type BookingInitialLessonKind = "standard" | "home";
+
+type StoredTeachingMode = "person" | "online" | "domicile";
+
+function defaultTeachingMode(teacher: Teacher, initial: BookingInitialLessonKind): StoredTeachingMode {
+  if (initial === "home") return "domicile";
+  if (teacher.teachingMode === "online") return "online";
+  if (teacher.teachingMode === "person") return "person";
+  return "person";
+}
 
 interface BookingModalProps {
   teacher: Teacher;
   onClose: () => void;
+  /** Depuis la fiche prof : cours classique ou à domicile. */
+  initialLessonKind?: BookingInitialLessonKind;
 }
 
-export function BookingModal({ teacher, onClose }: BookingModalProps) {
+export function BookingModal({ teacher, onClose, initialLessonKind = "standard" }: BookingModalProps) {
   const { user } = useAuth();
   const [step, setStep] = useState<"info" | "preferences" | "calendar" | "slots">("info");
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [selectedLevel, setSelectedLevel] = useState<string | null>(null);
-  const [preferredMode, setPreferredMode] = useState<"online" | "person">(
-    teacher.teachingMode === "both" ? "person" : (teacher.teachingMode as "online" | "person"),
+  const [teachingMode, setTeachingMode] = useState<StoredTeachingMode>(() =>
+    defaultTeachingMode(teacher, initialLessonKind),
   );
+  const [studentAddress, setStudentAddress] = useState("");
+  const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setTeachingMode(defaultTeachingMode(teacher, initialLessonKind));
+    setStudentAddress("");
+    setStep("info");
+    setSelectedDate(null);
+    setSelectedTime(null);
+    setSelectedLevel(null);
+    setCheckoutError(null);
+  }, [teacher.id, initialLessonKind]);
+
+  useEffect(() => {
+    if (!("geolocation" in navigator)) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => setGeo({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => setGeo(null),
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 },
+    );
+  }, []);
+
+  const distanceKm = useMemo(() => {
+    if (!geo) return null;
+    const lat = teacher.location?.lat;
+    const lng = teacher.location?.lng;
+    if (
+      typeof lat !== "number" ||
+      typeof lng !== "number" ||
+      !Number.isFinite(lat) ||
+      !Number.isFinite(lng)
+    ) {
+      return null;
+    }
+    return haversineDistance(geo.lat, geo.lng, lat, lng);
+  }, [geo, teacher.location?.lat, teacher.location?.lng]);
+
+  const lessonHours = useMemo(() => {
+    if (teachingMode !== "domicile") return 1;
+    let h = (teacher.homeLessonMinDuration ?? 60) / 60;
+    if (teacher.homeLessonForce2hOver20km && distanceKm !== null && distanceKm > 20) {
+      h = Math.max(h, 2);
+    }
+    return h;
+  }, [teachingMode, teacher.homeLessonMinDuration, teacher.homeLessonForce2hOver20km, distanceKm]);
+
+  const hourlyRate = teachingMode === "domicile" ? Number(teacher.homeLessonPrice ?? 0) : teacher.pricePerLesson;
+  const totalPrice = Math.round(lessonHours * hourlyRate * 100) / 100;
+
+  const homeAvailable =
+    Boolean(teacher.homeLessonEnabled) &&
+    teacher.homeLessonPrice != null &&
+    Number(teacher.homeLessonPrice) > 0;
+
+  const showStudio = teacher.teachingMode === "person" || teacher.teachingMode === "both";
+  const showOnline = teacher.teachingMode === "online" || teacher.teachingMode === "both";
 
   const days = ["Lun 20", "Mar 21", "Mer 22", "Jeu 23", "Ven 24", "Sam 25"];
   const times = ["09:00", "10:30", "14:00", "15:30", "17:00", "18:30"];
@@ -32,6 +112,21 @@ export function BookingModal({ teacher, onClose }: BookingModalProps) {
     if (!user) {
       alert("Veuillez vous connecter pour réserver.");
       return;
+    }
+
+    const modeForDb: "person" | "online" | "domicile" =
+      teachingMode === "domicile" ? "domicile" : teachingMode;
+    const addressTrim = studentAddress.trim();
+
+    if (modeForDb === "domicile") {
+      if (!homeAvailable) {
+        setCheckoutError("Cours à domicile non disponible pour ce professeur.");
+        return;
+      }
+      if (!addressTrim) {
+        setCheckoutError("Indiquez l’adresse du cours à domicile.");
+        return;
+      }
     }
 
     setIsSubmitting(true);
@@ -45,9 +140,10 @@ export function BookingModal({ teacher, onClose }: BookingModalProps) {
         date: selectedDate,
         time: selectedTime,
         student_level: selectedLevel,
-        teaching_mode: preferredMode,
+        teaching_mode: modeForDb,
         status: "pending_payment",
-        price: teacher.pricePerLesson,
+        price: totalPrice,
+        student_address: modeForDb === "domicile" ? addressTrim : null,
       };
 
       const { data: inserted, error: insErr } = await supabase.from("bookings").insert(bookingData).select("id").single();
@@ -71,8 +167,10 @@ export function BookingModal({ teacher, onClose }: BookingModalProps) {
         },
         body: JSON.stringify({
           teacher_id: teacher.id,
-          amount: teacher.pricePerLesson,
+          amount: totalPrice,
           booking_details: { booking_id: bookingId },
+          teaching_mode: modeForDb,
+          student_address: modeForDb === "domicile" ? addressTrim : "",
         }),
       });
 
@@ -121,7 +219,7 @@ export function BookingModal({ teacher, onClose }: BookingModalProps) {
             </p>
             <h3 className="text-xl font-bold text-slate-900">{teacher.name}</h3>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-sm font-bold">
+          <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-600 text-sm font-bold">
             Fermer
           </button>
         </div>
@@ -131,6 +229,7 @@ export function BookingModal({ teacher, onClose }: BookingModalProps) {
             <div className="space-y-4">
               <p className="text-sm text-slate-600">{teacher.bio}</p>
               <button
+                type="button"
                 onClick={() => setStep("preferences")}
                 className="w-full ds-btn-primary h-12 rounded-2xl text-sm font-semibold"
               >
@@ -146,6 +245,7 @@ export function BookingModal({ teacher, onClose }: BookingModalProps) {
                 {teacher.levels.map((lvl) => (
                   <button
                     key={lvl}
+                    type="button"
                     onClick={() => setSelectedLevel(lvl)}
                     className={cn(
                       "px-3 py-1.5 rounded-full text-xs border",
@@ -161,34 +261,88 @@ export function BookingModal({ teacher, onClose }: BookingModalProps) {
                   </button>
                 ))}
               </div>
-              {teacher.teachingMode === "both" && (
-                <div className="space-y-2">
-                  <p className="text-sm font-semibold text-slate-800">Mode</p>
-                  <div className="flex gap-2">
+
+              <div className="space-y-2">
+                <p className="text-sm font-semibold text-slate-800">Lieu du cours</p>
+                <div className="flex flex-wrap gap-2">
+                  {showStudio ? (
                     <button
                       type="button"
-                      onClick={() => setPreferredMode("person")}
+                      onClick={() => setTeachingMode("person")}
                       className={cn(
-                        "flex-1 py-2 rounded-xl border text-xs font-bold",
-                        preferredMode === "person" ? "border-[#1D9E75] bg-[#e1f5ee] text-[#0f6e56]" : "border-slate-200",
+                        "flex-1 min-w-[100px] py-2.5 px-2 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5",
+                        teachingMode === "person"
+                          ? "border-[#1D9E75] bg-[#e1f5ee] text-[#0f6e56]"
+                          : "border-slate-200",
                       )}
                     >
-                      Présentiel
+                      <Users size={14} /> En studio
                     </button>
+                  ) : null}
+                  {showOnline ? (
                     <button
                       type="button"
-                      onClick={() => setPreferredMode("online")}
+                      onClick={() => setTeachingMode("online")}
                       className={cn(
-                        "flex-1 py-2 rounded-xl border text-xs font-bold",
-                        preferredMode === "online" ? "border-[#1D9E75] bg-[#e1f5ee] text-[#0f6e56]" : "border-slate-200",
+                        "flex-1 min-w-[100px] py-2.5 px-2 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5",
+                        teachingMode === "online"
+                          ? "border-[#1D9E75] bg-[#e1f5ee] text-[#0f6e56]"
+                          : "border-slate-200",
                       )}
                     >
-                      En ligne
+                      <Video size={14} /> En ligne
                     </button>
-                  </div>
+                  ) : null}
+                  {homeAvailable ? (
+                    <button
+                      type="button"
+                      onClick={() => setTeachingMode("domicile")}
+                      className={cn(
+                        "flex-1 min-w-[100px] py-2.5 px-2 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5",
+                        teachingMode === "domicile"
+                          ? "border-[#1D9E75] bg-[#e1f5ee] text-[#0f6e56]"
+                          : "border-slate-200",
+                      )}
+                    >
+                      <Home size={14} /> À domicile
+                    </button>
+                  ) : null}
                 </div>
+              </div>
+
+              {teachingMode === "domicile" ? (
+                <div className="space-y-2 rounded-2xl border border-slate-100 bg-slate-50/80 p-4">
+                  <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                    <MapPin size={14} className="text-[#1D9E75]" />
+                    Adresse du cours
+                  </label>
+                  <textarea
+                    value={studentAddress}
+                    onChange={(e) => setStudentAddress(e.target.value)}
+                    rows={3}
+                    placeholder="Numéro, rue, ville…"
+                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm resize-none focus:ring-2 focus:ring-[#1D9E75]/30 focus:border-[#1D9E75] outline-none"
+                  />
+                  <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                    <span className="font-semibold text-slate-700">
+                      ${hourlyRate.toFixed(0)} / h × {lessonHours === 1 ? "1 h" : `${lessonHours} h`}
+                    </span>
+                    <span className="font-bold text-[#1D9E75]">Total : ${totalPrice.toFixed(2)}</span>
+                  </div>
+                  {teacher.homeLessonRequiresConfirmation ? (
+                    <p className="text-[11px] text-amber-800 bg-amber-50 border border-amber-100 rounded-lg px-2 py-1.5">
+                      Ce professeur confirmera manuellement votre demande à domicile après le paiement.
+                    </p>
+                  ) : null}
+                </div>
+              ) : (
+                <p className="text-xs text-slate-500">
+                  Tarif : <strong className="text-slate-800">${teacher.pricePerLesson}</strong> / heure
+                </p>
               )}
+
               <button
+                type="button"
                 disabled={!selectedLevel}
                 onClick={() => setStep("calendar")}
                 className="w-full ds-btn-primary h-12 rounded-2xl text-sm font-semibold disabled:opacity-50"
@@ -207,6 +361,7 @@ export function BookingModal({ teacher, onClose }: BookingModalProps) {
                 {days.map((d) => (
                   <button
                     key={d}
+                    type="button"
                     onClick={() => setSelectedDate(d)}
                     className={cn(
                       "py-2 rounded-xl border text-xs font-bold",
@@ -218,6 +373,7 @@ export function BookingModal({ teacher, onClose }: BookingModalProps) {
                 ))}
               </div>
               <button
+                type="button"
                 disabled={!selectedDate}
                 onClick={() => setStep("slots")}
                 className="w-full ds-btn-primary h-12 rounded-2xl text-sm font-semibold disabled:opacity-50"
@@ -235,6 +391,15 @@ export function BookingModal({ teacher, onClose }: BookingModalProps) {
               <p className="text-xs text-slate-500">
                 Vous serez redirigé vers Stripe pour payer. Commission plateforme : 12&nbsp;%.
               </p>
+              {teachingMode === "domicile" ? (
+                <div className="rounded-xl border border-[rgba(29,158,117,0.25)] bg-[rgba(29,158,117,0.06)] px-3 py-2 text-xs text-slate-700">
+                  <span className="font-semibold text-[#0f6e56]">À domicile</span>
+                  {lessonHours > 1 ? (
+                    <span className="block mt-1">Durée facturée : {lessonHours} h (politique distance du professeur).</span>
+                  ) : null}
+                  <span className="block mt-1 font-bold text-slate-900">Montant : ${totalPrice.toFixed(2)}</span>
+                </div>
+              ) : null}
               {checkoutError ? (
                 <div
                   role="alert"
@@ -247,6 +412,7 @@ export function BookingModal({ teacher, onClose }: BookingModalProps) {
                 {times.map((t) => (
                   <button
                     key={t}
+                    type="button"
                     onClick={() => setSelectedTime(t)}
                     className={cn(
                       "py-2 rounded-xl border text-xs font-bold",
@@ -258,8 +424,9 @@ export function BookingModal({ teacher, onClose }: BookingModalProps) {
                 ))}
               </div>
               <button
+                type="button"
                 disabled={!selectedTime || isSubmitting}
-                onClick={handleConfirmAndPay}
+                onClick={() => void handleConfirmAndPay()}
                 className="w-full h-12 rounded-2xl text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-2 text-white shadow-md transition hover:opacity-95"
                 style={{ backgroundColor: "#1D9E75" }}
               >
@@ -271,7 +438,7 @@ export function BookingModal({ teacher, onClose }: BookingModalProps) {
                 ) : (
                   <>
                     <CheckCircle2 size={18} />
-                    Payer et confirmer
+                    Payer ${totalPrice.toFixed(2)}
                   </>
                 )}
               </button>

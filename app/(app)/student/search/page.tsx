@@ -3,13 +3,14 @@
 import React, { useEffect, useState } from "react";
 import type { Teacher } from "../../../../types";
 import { Explore } from "../../../../components/Explore";
-import { BookingModal } from "../../../../components/BookingModal";
+import { BookingModal, type BookingInitialLessonKind } from "../../../../components/BookingModal";
 import { TeacherProfile } from "../../../../components/TeacherProfile";
 import { useSearchParams } from "next/navigation";
 
 export default function StudentSearchPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [bookingTeacher, setBookingTeacher] = useState<Teacher | null>(null);
+  const [bookingInitialKind, setBookingInitialKind] = useState<BookingInitialLessonKind>("standard");
   const [selectedTeacherProfile, setSelectedTeacherProfile] = useState<Teacher | null>(null);
   const searchParams = useSearchParams();
 
@@ -23,7 +24,10 @@ export default function StudentSearchPage() {
       <Explore
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
-        onBook={setBookingTeacher}
+        onBook={(t) => {
+          setBookingInitialKind("standard");
+          setBookingTeacher(t);
+        }}
         onViewProfile={setSelectedTeacherProfile}
       />
 
@@ -31,7 +35,8 @@ export default function StudentSearchPage() {
         <TeacherProfile
           teacher={selectedTeacherProfile}
           onClose={() => setSelectedTeacherProfile(null)}
-          onBook={() => {
+          onBook={(kind) => {
+            setBookingInitialKind(kind);
             setBookingTeacher(selectedTeacherProfile);
             setSelectedTeacherProfile(null);
           }}
@@ -39,7 +44,15 @@ export default function StudentSearchPage() {
       )}
 
       {bookingTeacher && (
-        <BookingModal teacher={bookingTeacher} onClose={() => setBookingTeacher(null)} />
+        <BookingModal
+          key={`${bookingTeacher.id}-${bookingInitialKind}`}
+          teacher={bookingTeacher}
+          initialLessonKind={bookingInitialKind}
+          onClose={() => {
+            setBookingTeacher(null);
+            setBookingInitialKind("standard");
+          }}
+        />
       )}
     </>
   );

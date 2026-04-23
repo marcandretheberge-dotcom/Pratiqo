@@ -479,8 +479,13 @@ function TeacherCard({
       <div className="flex-1 min-w-0 flex flex-col justify-between py-1">
         <div className="space-y-2">
           <div className="flex justify-between items-start gap-2">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <span className="ds-pill">{teacher.category}</span>
+              {teacher.homeLessonEnabled ? (
+                <span className="px-2 py-0.5 rounded-[8px] text-[10px] font-bold uppercase tracking-wide bg-[rgba(29,158,117,0.14)] text-[#1D9E75] border border-[rgba(29,158,117,0.25)]">
+                  À domicile disponible
+                </span>
+              ) : null}
               {teacher.teachingMode === "online" && <Video size={12} className="text-indigo-400" />}
               {teacher.teachingMode === "person" && <Users size={12} className="text-emerald-400" />}
               {teacher.teachingMode === "both" && (

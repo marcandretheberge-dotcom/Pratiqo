@@ -8,6 +8,7 @@ import {
   Clock,
   CreditCard,
   Globe,
+  Home,
   MapPin,
   MessageSquare,
   ShieldCheck,
@@ -24,10 +25,12 @@ import { useRouter } from "next/navigation";
 import { haversineDistance } from "../lib/geo";
 import { PlanBadge } from "./PlanBadge";
 
+export type TeacherBookKind = "standard" | "home";
+
 interface TeacherProfileProps {
   teacher: Teacher;
   onClose: () => void;
-  onBook: () => void;
+  onBook: (kind: TeacherBookKind) => void;
   distanceKm?: number | null;
 }
 
@@ -99,6 +102,23 @@ export function TeacherProfile({ teacher, onClose, onBook, distanceKm }: Teacher
   }, [geo, teacher.location?.lat, teacher.location?.lng]);
 
   const displayDistanceKm = distanceKm !== undefined ? distanceKm : computedDistanceKm;
+
+  const homeConfigured =
+    Boolean(teacher.homeLessonEnabled) &&
+    teacher.homeLessonPrice != null &&
+    Number(teacher.homeLessonPrice) > 0;
+  const radiusKm = teacher.homeLessonRadiusKm ?? 25;
+  const outOfHomeZone =
+    homeConfigured && displayDistanceKm !== null && displayDistanceKm > radiusKm;
+  const homeNeedsGeo = homeConfigured && displayDistanceKm === null;
+  const homeDisabled = !homeConfigured || outOfHomeZone || homeNeedsGeo;
+
+  const standardLabel =
+    teacher.teachingMode === "both"
+      ? "En studio / En ligne"
+      : teacher.teachingMode === "online"
+        ? "En ligne"
+        : "En studio";
 
   return (
     <div className="fixed inset-0 z-[210] flex items-center justify-center p-4">
@@ -258,20 +278,83 @@ export function TeacherProfile({ teacher, onClose, onBook, distanceKm }: Teacher
           </div>
         </div>
 
-        <div className="p-8 bg-white border-t border-slate-100 flex items-center gap-4 flex-shrink-0">
+        <div className="p-8 bg-white border-t border-slate-100 flex flex-col sm:flex-row items-stretch gap-4 flex-shrink-0">
           <button
+            type="button"
             onClick={handleStartChat}
-            className="p-4 bg-slate-100 text-slate-600 hover:bg-teal-50 hover:text-brand-primary rounded-2xl transition-all border border-transparent hover:border-teal-100"
+            className="p-4 bg-slate-100 text-slate-600 hover:bg-teal-50 hover:text-brand-primary rounded-2xl transition-all border border-transparent hover:border-teal-100 sm:self-center shrink-0"
           >
             <MessageSquare size={24} />
           </button>
-          <button
-            onClick={onBook}
-            className="flex-1 bg-slate-900 text-white py-4 rounded-2xl font-bold text-sm shadow-xl shadow-slate-200 hover:bg-slate-800 transition-all flex items-center justify-center gap-2 group"
+          <div
+            className={cn(
+              "flex-1 grid gap-3 min-w-0",
+              homeConfigured ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1",
+            )}
           >
-            Réserver un cours d&apos;essai
-            <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
-          </button>
+            <button
+              type="button"
+              onClick={() => onBook("standard")}
+              className="text-left rounded-2xl border border-slate-200 bg-slate-50/80 p-4 hover:border-[#1D9E75] hover:bg-[rgba(29,158,117,0.06)] transition-all group flex flex-col gap-2"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                  {standardLabel}
+                </span>
+                <Users size={18} className="text-slate-400 group-hover:text-[#1D9E75]" />
+              </div>
+              <p className="text-lg font-bold text-slate-900">${teacher.pricePerLesson}</p>
+              <p className="text-[11px] text-slate-500">par heure · tarif studio ou visio</p>
+              <span className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-[#1D9E75]">
+                Réserver <ChevronRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
+              </span>
+            </button>
+
+            {homeConfigured ? (
+              <button
+                type="button"
+                disabled={homeDisabled}
+                onClick={() => onBook("home")}
+                className={cn(
+                  "text-left rounded-2xl border p-4 transition-all flex flex-col gap-2",
+                  homeDisabled
+                    ? "border-slate-100 bg-slate-50 opacity-70 cursor-not-allowed"
+                    : "border-slate-200 bg-slate-50/80 hover:border-[#1D9E75] hover:bg-[rgba(29,158,117,0.06)] group",
+                )}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">À domicile</span>
+                  <Home size={18} className={homeDisabled ? "text-slate-300" : "text-slate-400 group-hover:text-[#1D9E75]"} />
+                </div>
+                <p className="text-lg font-bold text-slate-900">${Number(teacher.homeLessonPrice).toFixed(2)}</p>
+                <p className="text-[11px] text-slate-500">par heure</p>
+                <div className="flex flex-wrap gap-1.5 mt-1">
+                  <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase bg-[rgba(29,158,117,0.15)] text-[#0f6e56]">
+                    Déplacement inclus
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase bg-[rgba(29,158,117,0.15)] text-[#0f6e56]">
+                    Rayon {radiusKm} km
+                  </span>
+                  {teacher.homeLessonRequiresConfirmation ? (
+                    <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase bg-amber-50 text-amber-800 border border-amber-100">
+                      Confirmation requise
+                    </span>
+                  ) : null}
+                </div>
+                {outOfHomeZone ? (
+                  <p className="text-[11px] font-semibold text-rose-600 mt-1">Hors de la zone de déplacement</p>
+                ) : homeNeedsGeo ? (
+                  <p className="text-[11px] font-semibold text-amber-700 mt-1">
+                    Activez la localisation pour vérifier la zone
+                  </p>
+                ) : (
+                  <span className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-[#1D9E75]">
+                    Réserver <ChevronRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
+                  </span>
+                )}
+              </button>
+            ) : null}
+          </div>
         </div>
       </motion.div>
     </div>

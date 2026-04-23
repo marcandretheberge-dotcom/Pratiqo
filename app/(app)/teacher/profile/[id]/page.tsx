@@ -5,7 +5,7 @@ import type { Teacher } from "../../../../../types";
 import { getSupabaseClient } from "../../../../../lib/supabase";
 import { teacherRowToTeacher, type TeacherRow } from "../../../../../lib/teacherMapper";
 import { TeacherProfile } from "../../../../../components/TeacherProfile";
-import { BookingModal } from "../../../../../components/BookingModal";
+import { BookingModal, type BookingInitialLessonKind } from "../../../../../components/BookingModal";
 import { useRouter } from "next/navigation";
 import { haversineDistance } from "../../../../../lib/geo";
 
@@ -13,6 +13,7 @@ export default function TeacherProfilePage({ params }: { params: { id: string } 
   const router = useRouter();
   const [teacher, setTeacher] = useState<Teacher | null>(null);
   const [booking, setBooking] = useState(false);
+  const [bookingInitialKind, setBookingInitialKind] = useState<BookingInitialLessonKind>("standard");
   const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(null);
   const [geoDeniedOrUnavailable, setGeoDeniedOrUnavailable] = useState(false);
 
@@ -87,10 +88,23 @@ export default function TeacherProfilePage({ params }: { params: { id: string } 
       <TeacherProfile
         teacher={teacher}
         onClose={() => router.push("/teacher/profile")}
-        onBook={() => setBooking(true)}
+        onBook={(kind) => {
+          setBookingInitialKind(kind);
+          setBooking(true);
+        }}
         distanceKm={geoDeniedOrUnavailable ? null : distanceKm}
       />
-      {booking && <BookingModal teacher={teacher} onClose={() => setBooking(false)} />}
+      {booking && (
+        <BookingModal
+          key={`${teacher.id}-${bookingInitialKind}`}
+          teacher={teacher}
+          initialLessonKind={bookingInitialKind}
+          onClose={() => {
+            setBooking(false);
+            setBookingInitialKind("standard");
+          }}
+        />
+      )}
     </>
   );
 }
