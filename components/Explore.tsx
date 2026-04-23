@@ -40,7 +40,7 @@ export function Explore({
   const [teachingMode, setTeachingMode] = useState<TeachingMode | "all">("all");
   const [onlyVerified, setOnlyVerified] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
-  const [radiusFilter, setRadiusFilter] = useState<5 | 10 | 25 | 50 | "online">(25);
+  const [radiusFilter, setRadiusFilter] = useState<5 | 10 | 25 | 50 | 500 | "all" | "online">(500);
   const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(null);
   const [geoError, setGeoError] = useState<string | null>(null);
   const [geoLoading, setGeoLoading] = useState(false);
@@ -132,6 +132,22 @@ export function Explore({
       return onlineOnly;
     }
 
+    // "Tous" radius filter: ignore radius constraints.
+    if (radiusFilter === "all") {
+      const allTeachers = [...base];
+      if (geo) {
+        allTeachers.sort((a, b) => {
+          const da = a.distanceKm ?? Number.POSITIVE_INFINITY;
+          const db = b.distanceKm ?? Number.POSITIVE_INFINITY;
+          if (da !== db) return da - db;
+          return (b.teacher.rating ?? 0) - (a.teacher.rating ?? 0);
+        });
+      } else {
+        allTeachers.sort((a, b) => (b.teacher.rating ?? 0) - (a.teacher.rating ?? 0));
+      }
+      return allTeachers;
+    }
+
     const withinRadius = geo
       ? base.filter((x) => x.distanceKm !== null && x.distanceKm <= radiusFilter)
       : base;
@@ -202,7 +218,7 @@ export function Explore({
       )}
 
       <section className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-        {([5, 10, 25, 50] as const).map((km) => (
+        {([5, 10, 25, 50, 500] as const).map((km) => (
           <RadiusPill
             key={km}
             label={`${km} km`}
@@ -210,6 +226,7 @@ export function Explore({
             onClick={() => setRadiusFilter(km)}
           />
         ))}
+        <RadiusPill label="Tous" active={radiusFilter === "all"} onClick={() => setRadiusFilter("all")} />
         <RadiusPill
           label="En ligne"
           active={radiusFilter === "online"}
@@ -306,6 +323,19 @@ export function Explore({
         {loading ? (
           <div className="col-span-full flex items-center justify-center p-20">
             <Loader2 className="animate-spin text-brand-primary" size={32} />
+          </div>
+        ) : filteredTeachers.length === 0 && geo && radiusFilter !== "all" && radiusFilter !== "online" ? (
+          <div className="col-span-full text-center p-20 bg-white rounded-2xl border border-dashed border-slate-200">
+            <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Aucun prof trouvé</p>
+            <p className="mt-3 text-[13px] text-[var(--p-text-muted)] max-w-[520px] mx-auto">
+              Aucun prof trouvé dans ce rayon. Essaie un rayon plus grand ou cherche en ligne.
+            </p>
+            <button
+              onClick={() => setRadiusFilter("all")}
+              className="mt-5 h-10 px-5 rounded-[22px] text-sm font-medium bg-[#1D9E75] text-white hover:brightness-[0.98]"
+            >
+              Voir tous les profs
+            </button>
           </div>
         ) : filteredTeachers.length === 0 ? (
           <div className="col-span-full text-center p-20 bg-white rounded-2xl border border-dashed border-slate-200">
