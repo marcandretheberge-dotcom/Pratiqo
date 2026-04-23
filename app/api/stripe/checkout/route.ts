@@ -26,6 +26,8 @@ type TeacherRow = {
   id: string;
   name: string;
   price_per_lesson: number | string | null;
+  user_id?: string | null;
+  stripe_account_id?: string | null;
 };
 
 /** Hourly amount in CAD cents from `teachers.price_per_lesson` (stored as main-currency dollars). */
@@ -104,7 +106,7 @@ export async function POST(req: Request) {
 
     const { data: teacher, error: tErr } = await admin
       .from("teachers")
-      .select("id, name, price_per_lesson")
+      .select("id, user_id, stripe_account_id, name, price_per_lesson")
       .eq("id", booking.teacher_id)
       .maybeSingle();
 
@@ -132,6 +134,28 @@ export async function POST(req: Request) {
     console.log("[stripe/checkout] cancel_url (raw):", cancelUrlRaw);
     console.log("[stripe/checkout] success_url (encoded):", successUrl);
     console.log("[stripe/checkout] cancel_url (encoded):", cancelUrl);
+
+    // Commission based on teacher plan (default: free).
+    let commissionRate = 0.1;
+    if (typed.user_id) {
+      const { data: prof } = await admin
+        .from("profiles")
+        .select("plan")
+        .eq("id", typed.user_id)
+        .maybeSingle();
+      const plan = (prof as { plan?: string | null } | null)?.plan;
+      commissionRate = plan === "pro" ? 0.05 : 0.1;
+    }
+
+    const applicationFeeAmount = Math.max(0, Math.round(unitAmountCents * commissionRate));
+    console.log("[stripe/checkout] commissionRate:", commissionRate, "applicationFeeAmount:", applicationFeeAmount);
+
+    const destination = typed.stripe_account_id?.trim() || null;
+    if (!destination) {
+      console.warn(
+        "[stripe/checkout] Missing teacher.stripe_account_id; skipping application_fee_amount (Connect not configured).",
+      );
+    }
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
@@ -162,6 +186,12 @@ export async function POST(req: Request) {
           teacher_id: booking.teacher_id,
           student_id: booking.student_id,
         },
+        ...(destination
+          ? {
+              application_fee_amount: applicationFeeAmount,
+              transfer_data: { destination },
+            }
+          : {}),
       },
     });
 

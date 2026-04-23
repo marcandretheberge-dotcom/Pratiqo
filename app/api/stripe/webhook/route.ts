@@ -74,6 +74,29 @@ async function confirmBookingAndNotify(bookingId: string, paymentIntentId: strin
   }
 }
 
+async function setUserPlanFromSubscription(subscription: Stripe.Subscription) {
+  const userId = (subscription.metadata?.user_id as string | undefined) ?? undefined;
+  if (!userId) return;
+
+  const isPro =
+    subscription.status === "active" ||
+    subscription.status === "trialing" ||
+    subscription.status === "past_due";
+
+  const admin = getSupabaseAdmin();
+  const plan = isPro ? "pro" : "free";
+  const expiresAt =
+    subscription.cancel_at_period_end && subscription.current_period_end
+      ? new Date(subscription.current_period_end * 1000).toISOString()
+      : null;
+
+  const { error } = await admin
+    .from("profiles")
+    .update({ plan, plan_expires_at: expiresAt })
+    .eq("id", userId);
+  if (error) console.error("[stripe/webhook] plan update failed", error);
+}
+
 export async function POST(req: Request) {
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
   if (!webhookSecret) {
@@ -117,6 +140,20 @@ export async function POST(req: Request) {
       if (bookingId && piId) {
         await confirmBookingAndNotify(bookingId, piId);
       }
+
+      // Pro plan: subscription checkout completion
+      if (sess.mode === "subscription") {
+        const subId = typeof sess.subscription === "string" ? sess.subscription : null;
+        if (subId) {
+          const sub = await stripe.subscriptions.retrieve(subId);
+          await setUserPlanFromSubscription(sub);
+        }
+      }
+    }
+
+    if (event.type === "customer.subscription.updated" || event.type === "customer.subscription.deleted") {
+      const sub = event.data.object as Stripe.Subscription;
+      await setUserPlanFromSubscription(sub);
     }
   } catch (e) {
     console.error("[stripe/webhook] handler error", e);

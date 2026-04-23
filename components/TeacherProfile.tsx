@@ -22,6 +22,7 @@ import { useAuth } from "./AuthProvider";
 import { getSupabaseClient } from "../lib/supabase";
 import { useRouter } from "next/navigation";
 import { haversineDistance } from "../lib/geo";
+import { PlanBadge } from "./PlanBadge";
 
 interface TeacherProfileProps {
   teacher: Teacher;
@@ -34,6 +35,7 @@ export function TeacherProfile({ teacher, onClose, onBook, distanceKm }: Teacher
   const { user } = useAuth();
   const router = useRouter();
   const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(null);
+  const [plan, setPlan] = useState<"free" | "pro">("free");
 
   const handleStartChat = async () => {
     if (!user) {
@@ -69,6 +71,17 @@ export function TeacherProfile({ teacher, onClose, onBook, distanceKm }: Teacher
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 },
     );
   }, []);
+
+  useEffect(() => {
+    const load = async () => {
+      if (!teacher.id) return;
+      const res = await fetch(`/api/teachers/plan?teacherId=${encodeURIComponent(teacher.id)}`);
+      const json = (await res.json()) as { plan?: string };
+      setPlan(json.plan === "pro" ? "pro" : "free");
+    };
+
+    void load();
+  }, [teacher.id]);
 
   const computedDistanceKm = useMemo(() => {
     if (!geo) return null;
@@ -136,6 +149,7 @@ export function TeacherProfile({ teacher, onClose, onBook, distanceKm }: Teacher
                 <span className="px-3 py-1 bg-brand-primary text-white text-[10px] font-bold uppercase tracking-widest rounded-full">
                   {teacher.category}
                 </span>
+                <PlanBadge plan={plan} />
                 <div className="flex items-center gap-1 text-amber-500 font-bold">
                   <Star size={16} fill="currentColor" />
                   <span className="text-sm">{teacher.rating}</span>
