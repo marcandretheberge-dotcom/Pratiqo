@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { CalendarCheck2, Database, LayoutDashboard, LogIn, LogOut, Search, UserCircle2 } from "lucide-react";
@@ -23,9 +23,10 @@ const NAV = [
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user, profile } = useAuth();
+  const [legalAccepted, setLegalAccepted] = useState(false);
 
   return (
-    <div className="min-h-[100dvh] text-[var(--p-text)]">
+    <div className="min-h-[100dvh] text-[var(--p-text)] flex flex-col">
       <header className="bg-white border-b border-[var(--p-border-light)]">
         <div className="max-w-[1200px] mx-auto px-5 sm:px-10 h-16 flex items-center justify-between">
             <Link href="/" className="flex items-center">
@@ -86,19 +87,64 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 </button>
               </div>
             ) : (
-              <button onClick={() => loginWithGoogle()} className="ds-btn-primary text-sm">
-                <span className="inline-flex items-center gap-2">
-                  <LogIn size={16} /> Se connecter
-                </span>
-              </button>
+              <div className="flex flex-col items-end gap-2 max-w-[min(100vw-2.5rem,280px)]">
+                <label className="flex items-start gap-2 text-left text-[11px] text-[var(--p-text-muted)] leading-snug cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={legalAccepted}
+                    onChange={(e) => setLegalAccepted(e.target.checked)}
+                    className="mt-0.5 h-3.5 w-3.5 rounded border-slate-300 text-[#1D9E75] focus:ring-[#1D9E75]"
+                  />
+                  <span>
+                    J&apos;accepte les{" "}
+                    <Link href="/legal/cgu" className="text-[#1D9E75] underline font-medium">
+                      CGU
+                    </Link>{" "}
+                    et la{" "}
+                    <Link href="/legal/confidentialite" className="text-[#1D9E75] underline font-medium">
+                      politique de confidentialité
+                    </Link>
+                    .
+                  </span>
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!legalAccepted) return;
+                    void loginWithGoogle();
+                  }}
+                  disabled={!legalAccepted}
+                  className="ds-btn-primary text-sm disabled:opacity-50 disabled:pointer-events-none"
+                >
+                  <span className="inline-flex items-center gap-2">
+                    <LogIn size={16} /> Se connecter
+                  </span>
+                </button>
+              </div>
             )}
           </div>
         </div>
       </header>
 
-      <main>
+      <main className="flex-1">
         <div className="max-w-[1200px] mx-auto px-5 sm:px-10 py-12">{children}</div>
       </main>
+
+      <footer className="border-t border-[var(--p-border-light)] bg-white mt-auto">
+        <div className="max-w-[1200px] mx-auto px-5 sm:px-10 py-4 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-[var(--p-text-muted)]">
+          <Link href="/legal/cgu" className="hover:text-[#1D9E75] hover:underline">
+            CGU
+          </Link>
+          <span className="text-slate-300">·</span>
+          <Link href="/legal/confidentialite" className="hover:text-[#1D9E75] hover:underline">
+            Confidentialité
+          </Link>
+          <span className="text-slate-300">·</span>
+          <Link href="/legal/annulation" className="hover:text-[#1D9E75] hover:underline">
+            Annulation
+          </Link>
+        </div>
+      </footer>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { Check, Star } from "lucide-react";
 import { useAuth } from "../../../components/AuthProvider";
 import { getSupabaseClient } from "../../../lib/supabase";
@@ -8,8 +9,13 @@ import { getSupabaseClient } from "../../../lib/supabase";
 export default function UpgradePage() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [legalAccepted, setLegalAccepted] = useState(false);
 
   const startUpgrade = async () => {
+    if (!legalAccepted) {
+      alert("Tu dois accepter les CGU et la politique de confidentialité.");
+      return;
+    }
     if (!user) {
       alert("Veuillez vous connecter.");
       return;
@@ -76,10 +82,30 @@ export default function UpgradePage() {
           />
         </div>
 
-        <div className="mt-8 flex flex-col sm:flex-row gap-3">
+        <label className="mt-8 flex items-start gap-3 text-[13px] text-[var(--p-text-muted)] cursor-pointer max-w-xl">
+          <input
+            type="checkbox"
+            checked={legalAccepted}
+            onChange={(e) => setLegalAccepted(e.target.checked)}
+            className="mt-1 h-4 w-4 rounded border-slate-300 text-[#1D9E75] focus:ring-[#1D9E75]"
+          />
+          <span>
+            J&apos;accepte les{" "}
+            <Link href="/legal/cgu" className="text-[#1D9E75] underline font-medium">
+              CGU
+            </Link>{" "}
+            et la{" "}
+            <Link href="/legal/confidentialite" className="text-[#1D9E75] underline font-medium">
+              politique de confidentialité
+            </Link>
+            .
+          </span>
+        </label>
+
+        <div className="mt-4 flex flex-col sm:flex-row gap-3">
           <button
             onClick={startUpgrade}
-            disabled={loading}
+            disabled={loading || !legalAccepted}
             className="h-11 px-6 rounded-[22px] text-sm font-medium bg-[#1D9E75] text-white hover:brightness-[0.98] disabled:opacity-60"
           >
             {loading ? "Redirection…" : "Passer à Pro"}
