@@ -40,7 +40,7 @@ export function Explore({
   const [teachingMode, setTeachingMode] = useState<TeachingMode | "all">("all");
   const [onlyVerified, setOnlyVerified] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
-  const [radiusKm] = useState(25);
+  const [radiusFilter, setRadiusFilter] = useState<5 | 10 | 25 | 50 | "online">(25);
   const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(null);
   const [geoError, setGeoError] = useState<string | null>(null);
   const [geoLoading, setGeoLoading] = useState(false);
@@ -94,6 +94,7 @@ export function Explore({
         setGeoLoading(false);
         if (err.code === err.PERMISSION_DENIED) {
           setGeoError("Permission GPS refusée. Autorise la localisation puis réessaie.");
+          setGeo(null);
           return;
         }
         setGeoError("Impossible de récupérer votre position.");
@@ -116,19 +117,39 @@ export function Explore({
       })
       .map((t) => ({
         teacher: t,
-        distanceKm: geo ? haversineKm(geo.lat, geo.lng, t.location.lat, t.location.lng) : null,
+        distanceKm:
+          geo && teacherHasCoords(t)
+            ? haversineDistance(geo.lat, geo.lng, t.location.lat, t.location.lng)
+            : null,
       }));
 
-    const withinRadius = geo ? base.filter((x) => x.distanceKm !== null && x.distanceKm <= radiusKm) : base;
+    // "En ligne" radius filter: ignore geo + distances, just show online/both.
+    if (radiusFilter === "online") {
+      const onlineOnly = base.filter(
+        (x) => x.teacher.teachingMode === "online" || x.teacher.teachingMode === "both",
+      );
+      onlineOnly.sort((a, b) => (b.teacher.rating ?? 0) - (a.teacher.rating ?? 0));
+      return onlineOnly;
+    }
 
-    withinRadius.sort((a, b) => {
-      const da = a.distanceKm ?? Number.POSITIVE_INFINITY;
-      const db = b.distanceKm ?? Number.POSITIVE_INFINITY;
-      return da - db;
-    });
+    const withinRadius = geo
+      ? base.filter((x) => x.distanceKm !== null && x.distanceKm <= radiusFilter)
+      : base;
+
+    // If geo is active, sort by closest first; otherwise (or if user denied GPS) sort by rating.
+    if (geo) {
+      withinRadius.sort((a, b) => {
+        const da = a.distanceKm ?? Number.POSITIVE_INFINITY;
+        const db = b.distanceKm ?? Number.POSITIVE_INFINITY;
+        if (da !== db) return da - db;
+        return (b.teacher.rating ?? 0) - (a.teacher.rating ?? 0);
+      });
+    } else {
+      withinRadius.sort((a, b) => (b.teacher.rating ?? 0) - (a.teacher.rating ?? 0));
+    }
 
     return withinRadius;
-  }, [teachers, selectedCategory, searchQuery, teachingMode, onlyVerified, geo, radiusKm]);
+  }, [teachers, selectedCategory, searchQuery, teachingMode, onlyVerified, geo, radiusFilter]);
 
   return (
     <div className="space-y-6">
@@ -146,14 +167,16 @@ export function Explore({
           <button
             onClick={requestGeolocation}
             className={cn(
-              "ds-btn-secondary h-10 px-5 text-sm flex items-center gap-2 border border-[var(--p-border-light)]",
-              geo ? "bg-[var(--p-light-teal-bg)] text-[var(--p-dark-teal)]" : "bg-white text-[var(--p-text)]",
+              "h-10 px-5 rounded-[22px] text-sm font-medium transition-all flex items-center gap-2",
+              geo
+                ? "bg-[rgba(29,158,117,0.12)] text-[#1D9E75] border border-[rgba(29,158,117,0.22)]"
+                : "bg-[#1D9E75] text-white hover:brightness-[0.98]",
             )}
             disabled={geoLoading}
             title="Déclencher le GPS"
           >
             <MapPin size={14} />
-            {geoLoading ? "Localisation…" : geo ? `Dans ${radiusKm} km` : "Utiliser ma position"}
+            {geoLoading ? "Localisation…" : geo ? "Position active" : "Utiliser ma position"}
           </button>
           <button
             onClick={() => setShowFilters(!showFilters)}
@@ -177,6 +200,22 @@ export function Explore({
           {geoError}
         </div>
       )}
+
+      <section className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+        {([5, 10, 25, 50] as const).map((km) => (
+          <RadiusPill
+            key={km}
+            label={`${km} km`}
+            active={radiusFilter === km}
+            onClick={() => setRadiusFilter(km)}
+          />
+        ))}
+        <RadiusPill
+          label="En ligne"
+          active={radiusFilter === "online"}
+          onClick={() => setRadiusFilter("online")}
+        />
+      </section>
 
       <div className="ds-search w-full flex items-center px-4">
         <input
@@ -326,6 +365,30 @@ function CategoryPill({
   );
 }
 
+function RadiusPill({
+  label,
+  active,
+  onClick,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "whitespace-nowrap text-[11px] font-medium rounded-[10px] px-4 py-2 border transition-all",
+        active
+          ? "bg-[rgba(29,158,117,0.12)] border-[rgba(29,158,117,0.22)] text-[#1D9E75]"
+          : "bg-white border-[var(--p-border-light)] text-[var(--p-text-muted)] hover:text-[var(--p-text)] hover:bg-[rgba(225,245,238,0.6)]",
+      )}
+    >
+      {label}
+    </button>
+  );
+}
+
 function TeacherCard({
   teacher,
   index,
@@ -396,9 +459,16 @@ function TeacherCard({
                 </div>
               )}
             </div>
-            <span className={cn("px-3 py-1 rounded-[10px] text-[11px] font-medium", ratingPillFor(teacher.category))}>
-              ★ {teacher.rating}
-            </span>
+            <div className="flex items-center gap-2">
+              {distanceKm !== null && (
+                <span className="px-3 py-1 rounded-[10px] text-[11px] font-medium bg-[rgba(29,158,117,0.12)] text-[#1D9E75]">
+                  {distanceKm.toFixed(1)} km de vous
+                </span>
+              )}
+              <span className={cn("px-3 py-1 rounded-[10px] text-[11px] font-medium", ratingPillFor(teacher.category))}>
+                ★ {teacher.rating}
+              </span>
+            </div>
           </div>
           <h3 className="text-[18px] leading-tight text-[var(--p-text)] truncate group-hover:text-[var(--p-dark-teal)] transition-colors">
             {teacher.name}
@@ -412,9 +482,6 @@ function TeacherCard({
           <div className="space-y-1">
             <p className="ds-label text-[var(--p-text-subtle)]">Prochain cours disponible</p>
             <div className="flex items-center gap-2">
-              <span className="ds-pill inline-flex">
-                {distanceKm !== null ? `${distanceKm.toFixed(1)} km` : `${teacher.distance} km`}
-              </span>
               {teacher.isVerified && (
                 <span className="ds-pill inline-flex items-center gap-1">
                   <ShieldCheck size={14} /> Vérifié
@@ -454,15 +521,27 @@ function avatarBgFor(category: Discipline) {
   return "bg-[rgba(225,245,238,0.6)] text-[var(--p-dark-teal)]";
 }
 
-function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number) {
-  const toRad = (deg: number) => (deg * Math.PI) / 180;
-  const R = 6371;
-  const dLat = toRad(lat2 - lat1);
-  const dLon = toRad(lon2 - lon1);
+function teacherHasCoords(t: Teacher) {
+  const { lat, lng } = t.location || ({} as Teacher["location"]);
+  return (
+    typeof lat === "number" &&
+    typeof lng === "number" &&
+    Number.isFinite(lat) &&
+    Number.isFinite(lng) &&
+    !(lat === 0 && lng === 0)
+  );
+}
+
+function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: number) {
+  const R = 6371; // Earth radius in km
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLng / 2) *
+      Math.sin(dLng / 2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
