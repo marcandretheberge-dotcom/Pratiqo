@@ -10,6 +10,8 @@ export type TeachingMode = "online" | "person" | "both";
 
 export interface Teacher {
   id: string;
+  /** Compte Supabase (auth) lié à la fiche professeur — messagerie, etc. */
+  userId?: string | null;
   name: string;
   discipline: string;
   category: Discipline;

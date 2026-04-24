@@ -5,9 +5,10 @@ import type { Teacher } from "../../../../types";
 import { Explore } from "../../../../components/Explore";
 import { BookingModal, type BookingInitialLessonKind } from "../../../../components/BookingModal";
 import { TeacherProfile } from "../../../../components/TeacherProfile";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function StudentSearchPage() {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [bookingTeacher, setBookingTeacher] = useState<Teacher | null>(null);
   const [bookingInitialKind, setBookingInitialKind] = useState<BookingInitialLessonKind>("standard");
@@ -40,6 +41,15 @@ export default function StudentSearchPage() {
             setBookingTeacher(selectedTeacherProfile);
             setSelectedTeacherProfile(null);
           }}
+          onSendMessage={
+            selectedTeacherProfile.userId
+              ? () => {
+                  const uid = selectedTeacherProfile.userId!;
+                  setSelectedTeacherProfile(null);
+                  router.push(`/messages?peer=${encodeURIComponent(uid)}`);
+                }
+              : undefined
+          }
         />
       )}
 

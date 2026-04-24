@@ -92,6 +92,11 @@ export default function TeacherProfilePage({ params }: { params: { id: string } 
           setBookingInitialKind(kind);
           setBooking(true);
         }}
+        onSendMessage={
+          teacher.userId
+            ? () => router.push(`/messages?peer=${encodeURIComponent(teacher.userId!)}`)
+            : undefined
+        }
         distanceKm={geoDeniedOrUnavailable ? null : distanceKm}
       />
       {booking && (

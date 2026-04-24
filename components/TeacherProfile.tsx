@@ -31,10 +31,12 @@ interface TeacherProfileProps {
   teacher: Teacher;
   onClose: () => void;
   onBook: (kind: TeacherBookKind) => void;
+  /** Ouvre la messagerie avec ce professeur (nécessite `teacher.userId`). */
+  onSendMessage?: () => void;
   distanceKm?: number | null;
 }
 
-export function TeacherProfile({ teacher, onClose, onBook, distanceKm }: TeacherProfileProps) {
+export function TeacherProfile({ teacher, onClose, onBook, onSendMessage, distanceKm }: TeacherProfileProps) {
   const { user } = useAuth();
   const router = useRouter();
   const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(null);
@@ -43,6 +45,12 @@ export function TeacherProfile({ teacher, onClose, onBook, distanceKm }: Teacher
   const handleStartChat = async () => {
     if (!user) {
       alert("Veuillez vous connecter pour envoyer un message.");
+      return;
+    }
+
+    if (teacher.userId) {
+      router.push(`/messages?peer=${encodeURIComponent(teacher.userId)}`);
+      onClose();
       return;
     }
 
@@ -355,6 +363,15 @@ export function TeacherProfile({ teacher, onClose, onBook, distanceKm }: Teacher
               </button>
             ) : null}
           </div>
+          {user && teacher.userId && onSendMessage ? (
+            <button
+              type="button"
+              onClick={() => onSendMessage()}
+              className="w-full py-3.5 rounded-2xl text-sm font-bold border-2 border-[#1D9E75] text-[#0f6e56] bg-[#E1F5EE] hover:bg-[rgba(29,158,117,0.18)] transition-colors"
+            >
+              Envoyer un message
+            </button>
+          ) : null}
         </div>
       </motion.div>
     </div>

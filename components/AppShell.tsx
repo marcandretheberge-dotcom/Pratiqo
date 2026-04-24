@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   LogIn,
   LogOut,
+  MessageCircle,
   Search,
   Settings,
   UserCircle2,
@@ -17,6 +18,8 @@ import { cn } from "../lib/utils";
 import { useAuth } from "./AuthProvider";
 import { loginWithGoogle, logout } from "../lib/auth";
 import { authAvatarUrl, authDisplayName } from "../lib/authDisplay";
+import { getSupabaseClient } from "../lib/supabase";
+import { fetchUnreadMessageCount } from "../lib/messaging";
 import Logo from "./ui/Logo";
 import { NotificationCenter } from "./NotificationCenter";
 
@@ -26,6 +29,7 @@ const NAV: NavItem[] = [
   { href: "/", label: "Accueil" },
   { href: "/dashboard", label: "Tableau de bord" },
   { href: "/student/search", label: "Recherche élève" },
+  { href: "/messages", label: "Messages" },
   { href: "/booking", label: "Réservation" },
   { href: "/teacher/profile", label: "Profil prof" },
   { href: "/teacher/settings", label: "Paramètres", teacherOnly: true },
@@ -35,6 +39,7 @@ const NAV: NavItem[] = [
 const NAV_ICONS: Partial<Record<string, React.ReactNode>> = {
   "/dashboard": <LayoutDashboard size={18} />,
   "/student/search": <Search size={18} />,
+  "/messages": <MessageCircle size={18} />,
   "/booking": <CalendarCheck2 size={18} />,
   "/teacher/profile": <UserCircle2 size={18} />,
   "/teacher/settings": <Settings size={18} />,
@@ -45,6 +50,39 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user, profile } = useAuth();
   const [legalAccepted, setLegalAccepted] = useState(false);
+  const [unreadMessages, setUnreadMessages] = useState(0);
+
+  useEffect(() => {
+    if (!user?.id) {
+      setUnreadMessages(0);
+      return;
+    }
+
+    const supabase = getSupabaseClient();
+    const refresh = () => {
+      void fetchUnreadMessageCount(supabase, user.id).then(setUnreadMessages);
+    };
+    void refresh();
+
+    const channel = supabase
+      .channel("app-shell-unread-messages")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "messages", filter: `receiver_id=eq.${user.id}` },
+        refresh,
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "messages", filter: `receiver_id=eq.${user.id}` },
+        refresh,
+      );
+
+    void channel.subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [user?.id]);
 
   return (
     <div className="min-h-[100dvh] text-[var(--p-text)] flex flex-col">
@@ -60,6 +98,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 pathname === item.href ||
                 (item.href !== "/" && item.href !== "/dashboard" && pathname.startsWith(item.href));
               const icon = NAV_ICONS[item.href];
+              const showUnread = item.href === "/messages" && unreadMessages > 0;
               return (
                 <Link
                   key={item.href}
@@ -72,7 +111,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   )}
                 >
                   {icon}
-                  {item.label}
+                  <span className="inline-flex items-center gap-2">
+                    {item.label}
+                    {showUnread ? (
+                      <span className="min-w-[1.125rem] h-[1.125rem] px-1 rounded-full bg-[#1D9E75] text-white text-[10px] font-bold leading-none inline-flex items-center justify-center">
+                        {unreadMessages > 99 ? "99+" : unreadMessages}
+                      </span>
+                    ) : null}
+                  </span>
                 </Link>
               );
             })}

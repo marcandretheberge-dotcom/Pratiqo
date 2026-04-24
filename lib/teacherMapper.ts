@@ -30,6 +30,7 @@ export function teacherRowToTeacher(row: TeacherRow): Teacher {
   const loc = (row.location || {}) as { lat?: number; lng?: number };
   return {
     id: row.id,
+    userId: row.user_id ?? undefined,
     name: row.name,
     discipline: row.discipline,
     category: row.category as Teacher["category"],
@@ -62,6 +63,7 @@ export function teacherRowToTeacher(row: TeacherRow): Teacher {
 export function teacherToRow(t: Teacher): Record<string, unknown> {
   return {
     id: t.id,
+    user_id: t.userId ?? null,
     name: t.name,
     discipline: t.discipline,
     category: t.category,

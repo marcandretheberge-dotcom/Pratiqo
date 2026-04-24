@@ -12,6 +12,7 @@ const TOC = [
   { id: "inscription", label: "3. Inscription et compte utilisateur" },
   { id: "services", label: "4. Services offerts" },
   { id: "frais", label: "5. Frais et commissions" },
+  { id: "ristourne-5bis-6", label: "5bis.6 Ristourne annuelle — Protections financières" },
   { id: "paiements", label: "6. Paiements et remboursements" },
   { id: "domicile", label: "7. Cours à domicile" },
   { id: "conduite", label: "8. Contenu et conduite des utilisateurs" },
@@ -169,6 +170,56 @@ export default function CguPage() {
           Pratiqo se réserve le droit de modifier ses tarifs et commissions avec un préavis de <strong>30 jours</strong>{" "}
           par courriel aux utilisateurs concernés.
         </p>
+
+        <h3
+          id="ristourne-5bis-6"
+          className="text-base font-semibold text-[var(--p-text)] mt-10 mb-3 scroll-mt-24"
+        >
+          5bis.6 Ristourne annuelle — Protections financières
+        </h3>
+
+        <h4 className="text-sm font-semibold text-[var(--p-text)] mt-4 mb-2">Pool de ristourne</h4>
+        <p>
+          Le pool annuel de ristourne est calculé comme suit : MIN(profits nets × 5 %, 150 000 $ CAD). Le montant
+          effectivement redistribué ne peut jamais dépasser 150 000 $ CAD par année, peu importe les profits.
+        </p>
+
+        <h4 className="text-sm font-semibold text-[var(--p-text)] mt-6 mb-2">Plafond individuel</h4>
+        <p>
+          Chaque professeur éligible peut recevoir un maximum de 10 000 $ CAD et un minimum de 25 $ CAD. Si le calcul
+          donne moins de 25 $, le montant est reporté à l&apos;année suivante.
+        </p>
+
+        <h4 className="text-sm font-semibold text-[var(--p-text)] mt-6 mb-2">Condition d&apos;activation</h4>
+        <p>
+          La ristourne n&apos;est activée que si au moins 10 professeurs remplissent toutes les conditions
+          d&apos;éligibilité. Si moins de 10 professeurs sont éligibles, le pool de ristourne est conservé par Pratiqo
+          et reporté à l&apos;année civile suivante.
+        </p>
+
+        <h4 className="text-sm font-semibold text-[var(--p-text)] mt-6 mb-2">Report du pool</h4>
+        <p>
+          En cas de non-activation, le pool reporté s&apos;ajoute au pool de l&apos;année suivante, dans la limite de
+          200 000 $ CAD cumulatif maximum.
+        </p>
+
+        <h4 className="text-sm font-semibold text-[var(--p-text)] mt-6 mb-2">Exemple illustratif</h4>
+        <ul className="list-disc pl-5 space-y-2">
+          <li>Profits nets Pratiqo : 1 000 000 $</li>
+          <li>Pool théorique (5 %) : 50 000 $</li>
+          <li>Pool effectif (plafonné) : 50 000 $ (sous 150 k)</li>
+          <li>Profs éligibles : 8 (sous le minimum de 10)</li>
+          <li>Résultat : pool reporté à 2027</li>
+        </ul>
+
+        <h4 className="text-sm font-semibold text-[var(--p-text)] mt-6 mb-2">Autre exemple</h4>
+        <ul className="list-disc pl-5 space-y-2">
+          <li>Profits nets Pratiqo : 1 000 000 $</li>
+          <li>Pool effectif : 50 000 $</li>
+          <li>Profs éligibles : 25</li>
+          <li>Prof avec 10 % du volume : 5 000 $ (sous plafond 10 k)</li>
+          <li>Prof avec 40 % du volume : 10 000 $ (plafonné à 10 k)</li>
+        </ul>
       </LegalSection>
 
       <hr className="my-8 border-slate-200" />
