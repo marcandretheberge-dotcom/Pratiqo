@@ -14,7 +14,7 @@ function LoginForm() {
   const router = useRouter();
   const { user, loading } = useAuth();
   const role = searchParams.get("role");
-  const nextRaw = searchParams.get("next") || "/dashboard";
+  const nextRaw = searchParams.get("next") || (role === "teacher" ? "/onboarding?role=teacher" : "/dashboard");
   const next = nextRaw.startsWith("/") ? nextRaw : `/${nextRaw}`;
   const isTeacherInvite = role === "teacher";
 

@@ -133,44 +133,41 @@ export default function MessagesPage() {
   useEffect(() => {
     if (!user?.id) return;
 
-    const handleInsert = (payload: { new: Record<string, unknown> }) => {
-      const row = payload.new as MessageRow;
-      void refreshConversations();
-      if (activeConversationId && row.conversation_id === activeConversationId) {
-        setMessages((prev) => (prev.some((m) => m.id === row.id) ? prev : [...prev, row]));
-        void markAsRead(supabase, activeConversationId, user.id);
-      }
-    };
-
-    const handleUpdate = () => {
-      void refreshConversations();
-      if (activeConversationId) void loadThread(activeConversationId);
-    };
-
     const channel = supabase
-      .channel(`messages-ui-${user.id}`)
+      .channel(`messages-${user.id}`)
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "messages", filter: `receiver_id=eq.${user.id}` },
-        handleInsert,
-      )
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "messages", filter: `sender_id=eq.${user.id}` },
-        handleInsert,
-      )
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "messages", filter: `receiver_id=eq.${user.id}` },
-        handleUpdate,
-      );
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+          filter: `receiver_id=eq.${user.id}`,
+        },
+        (payload) => {
+          console.log("[realtime] new INSERT payload", payload);
+          const newMsg = payload.new as MessageRow;
 
-    void channel.subscribe();
+          // Always refresh conversation list
+          void refreshConversations();
+
+          // If conversation is open, append message
+          if (newMsg.conversation_id === activeConversationId) {
+            console.log("[realtime] append message", newMsg.id, newMsg.conversation_id);
+            setMessages((prev) => (prev.some((m) => m.id === newMsg.id) ? prev : [...prev, newMsg]));
+            void markAsRead(supabase, newMsg.conversation_id, user.id);
+          } else {
+            console.log("[realtime] message for other conversation", newMsg.conversation_id);
+          }
+        },
+      )
+      .subscribe((status) => {
+        console.log("[realtime] status:", status);
+      });
 
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [user?.id, supabase, activeConversationId, refreshConversations, loadThread]);
+  }, [user?.id, supabase, activeConversationId, refreshConversations]);
 
   const displayConversations = useMemo(() => {
     if (!pendingPeer || !user?.id) return conversations;
@@ -196,15 +193,33 @@ export default function MessagesPage() {
 
   const handleSend = async () => {
     if (!user?.id || !activePeerId || !input.trim()) return;
+    console.log("[send] handleSend", { activePeerId, activeConversationId });
     setSending(true);
     setError(null);
+    const optimisticId = `temp-${Date.now()}`;
+    const optimistic: MessageRow = {
+      id: optimisticId,
+      conversation_id: getConversationId(user.id, activePeerId),
+      sender_id: user.id,
+      receiver_id: activePeerId,
+      content: input.trim(),
+      read: false,
+      created_at: new Date().toISOString(),
+    };
+    const contentToSend = input.trim();
+    setInput("");
+    setMessages((prev) => [...prev, optimistic]);
     try {
-      const row = await sendMessage(supabase, user.id, activePeerId, input);
-      setInput("");
-      setMessages((prev) => (prev.some((m) => m.id === row.id) ? prev : [...prev, row]));
+      console.log("[send] inserting to Supabase…");
+      const row = await sendMessage(supabase, user.id, activePeerId, contentToSend);
+      console.log("[send] insert ok", row.id);
+      setMessages((prev) => prev.map((m) => (m.id === optimisticId ? row : m)));
       setPendingPeer(null);
       await refreshConversations();
     } catch (e) {
+      console.log("[send] insert failed", e);
+      setMessages((prev) => prev.filter((m) => m.id !== optimisticId));
+      setInput(contentToSend);
       setError(e instanceof Error ? e.message : "Envoi impossible.");
     } finally {
       setSending(false);

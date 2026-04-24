@@ -303,6 +303,14 @@ export default function LandingPage() {
         <span className="mx-3 text-[#D3D1C7]">·</span>
         Ristourne
       </div>
+
+      <footer className="bg-white border-b border-[var(--p-border-light)]">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 py-5 flex items-center justify-center">
+          <Link href="/become-teacher" className="text-sm font-semibold text-[#888780] hover:text-[#2C2C2A] hover:underline">
+            Tu es professeur ? <span className="text-[#1D9E75]">Devenir professeur</span>
+          </Link>
+        </div>
+      </footer>
     </div>
   );
 }
