@@ -11,7 +11,7 @@ function trimTrailingSlash(url: string) {
 /** Stripe success/cancel URLs — must be set for checkout (no Connect / no dynamic origin fallback). */
 function checkoutPublicBase(): string {
   const raw =
-    process.env.STRIPE_CHECKOUT_BASE_URL?.trim() || "https://pratiqo.vercel.app";
+    process.env.STRIPE_CHECKOUT_BASE_URL?.trim() || "https://pratiqo.ca";
   return trimTrailingSlash(raw);
 }
 

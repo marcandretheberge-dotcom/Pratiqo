@@ -11,7 +11,7 @@ function fromEmail(): string {
 }
 
 function appBaseUrl(): string {
-  return process.env.APP_BASE_URL?.trim() || process.env.STRIPE_CHECKOUT_BASE_URL?.trim() || "https://pratiqo.vercel.app";
+  return process.env.APP_BASE_URL?.trim() || process.env.STRIPE_CHECKOUT_BASE_URL?.trim() || "https://pratiqo.ca";
 }
 
 export async function sendWelcomeTeacher(email: string, name: string) {

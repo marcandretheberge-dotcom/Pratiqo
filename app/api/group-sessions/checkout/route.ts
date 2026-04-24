@@ -10,7 +10,7 @@ function trimTrailingSlash(url: string) {
 }
 
 function checkoutPublicBase(): string {
-  const raw = process.env.STRIPE_CHECKOUT_BASE_URL?.trim() || "https://pratiqo.vercel.app";
+  const raw = process.env.STRIPE_CHECKOUT_BASE_URL?.trim() || "https://pratiqo.ca";
   return trimTrailingSlash(raw);
 }
 
