@@ -8,6 +8,8 @@ import { getSupabaseClient } from "../../../../lib/supabase";
 import { CATEGORIES } from "../../../../constants";
 import type { Discipline } from "../../../../types";
 import { cn } from "../../../../lib/utils";
+import { isEnabled } from "../../../../lib/features";
+import { ComingSoonBanner } from "../../../../components/ComingSoonBanner";
 import {
   GROUP_SESSION_STATUS_LABELS,
   planAllowsGroupSessions,
@@ -65,6 +67,20 @@ export default function TeacherGroupSessionsPage() {
   }, [load]);
 
   const proOk = planAllowsGroupSessions(plan ?? profile?.plan);
+
+  if (!isEnabled("group_sessions")) {
+    return (
+      <div className="max-w-4xl mx-auto space-y-6">
+        <ComingSoonBanner
+          phase={2}
+          feature="group_sessions"
+          featureName="Cours de groupe — Phase 2"
+          description="Les cours de groupe seront disponibles lors de notre Phase 2. Inscris-toi pour être notifié en premier!"
+          showEmailCapture
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">

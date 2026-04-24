@@ -17,7 +17,9 @@ import {
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import type { Discipline, Teacher, TeachingMode } from "../types";
-import { CATEGORIES, TEACHERS } from "../constants";
+import { TEACHERS } from "../constants";
+import { displayTeacherMarketplaceCategory, getEnabledDisciplines } from "../lib/disciplines";
+import { isEnabled } from "../lib/features";
 import { cn } from "../lib/utils";
 import { getSupabaseClient } from "../lib/supabase";
 import { teacherRowToTeacher, type TeacherRow } from "../lib/teacherMapper";
@@ -76,7 +78,7 @@ export function Explore({
 }) {
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState<Discipline | "All">("All");
+  const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [teachingMode, setTeachingMode] = useState<TeachingMode | "all">("all");
   const [onlyVerified, setOnlyVerified] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
@@ -90,6 +92,17 @@ export function Explore({
   const [sortMode, setSortMode] = useState<"default" | "reliable">("default");
 
   useEffect(() => {
+    if (!isEnabled("group_sessions") && exploreTab === "groupe") {
+      setExploreTab("cours");
+    }
+  }, [exploreTab]);
+
+  useEffect(() => {
+    if (!isEnabled("group_sessions")) {
+      setGroupSessions([]);
+      setLoadingGroups(false);
+      return;
+    }
     const supabase = getSupabaseClient();
     const loadGroups = async () => {
       const { data, error } = await supabase
@@ -193,7 +206,8 @@ export function Explore({
     const sortOpts = (geo: boolean) => ({ geo, sortMode } as const);
     const base = teachers
       .filter((t) => {
-        const matchesCategory = selectedCategory === "All" || t.category === selectedCategory;
+        const displayCat = displayTeacherMarketplaceCategory(t.category);
+        const matchesCategory = selectedCategory === "All" || displayCat === selectedCategory;
         const matchesSearch =
           t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
           t.discipline.toLowerCase().includes(searchQuery.toLowerCase());
@@ -242,7 +256,9 @@ export function Explore({
 
   const filteredGroupSessions = useMemo(() => {
     return groupSessions.filter((s) => {
-      const catOk = selectedCategory === "All" || s.discipline === selectedCategory;
+      const sessionCat = displayTeacherMarketplaceCategory(s.discipline);
+      const catOk =
+        selectedCategory === "All" || sessionCat === selectedCategory || s.discipline === selectedCategory;
       const q = searchQuery.toLowerCase();
       const name = s.teachers?.name?.toLowerCase() ?? "";
       const searchOk = !q || s.title.toLowerCase().includes(q) || name.includes(q);
@@ -274,18 +290,20 @@ export function Explore({
             >
               Cours individuels
             </button>
-            <button
-              type="button"
-              onClick={() => setExploreTab("groupe")}
-              className={cn(
-                "h-10 px-4 rounded-full text-sm font-semibold transition-all border inline-flex items-center gap-2",
-                exploreTab === "groupe"
-                  ? "bg-[#1D9E75] text-white border-[#1D9E75]"
-                  : "bg-[var(--p-surface)] text-[var(--p-text-muted)] border-[var(--p-border-light)] hover:border-[#1D9E75]/40",
-              )}
-            >
-              <UsersRound size={16} /> Cours de groupe
-            </button>
+            {isEnabled("group_sessions") ? (
+              <button
+                type="button"
+                onClick={() => setExploreTab("groupe")}
+                className={cn(
+                  "h-10 px-4 rounded-full text-sm font-semibold transition-all border inline-flex items-center gap-2",
+                  exploreTab === "groupe"
+                    ? "bg-[#1D9E75] text-white border-[#1D9E75]"
+                    : "bg-[var(--p-surface)] text-[var(--p-text-muted)] border-[var(--p-border-light)] hover:border-[#1D9E75]/40",
+                )}
+              >
+                <UsersRound size={16} /> Cours de groupe
+              </button>
+            ) : null}
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-3">
@@ -439,8 +457,13 @@ export function Explore({
 
       <section className="flex gap-2 overflow-x-auto pb-4 no-scrollbar">
         <CategoryPill label="Tous" active={selectedCategory === "All"} onClick={() => setSelectedCategory("All")} />
-        {CATEGORIES.map((cat) => (
-          <CategoryPill key={cat} label={cat} active={selectedCategory === cat} onClick={() => setSelectedCategory(cat)} />
+        {getEnabledDisciplines().map((d) => (
+          <CategoryPill
+            key={d.id}
+            label={d.label}
+            active={selectedCategory === d.label}
+            onClick={() => setSelectedCategory(d.label)}
+          />
         ))}
       </section>
 
@@ -654,6 +677,7 @@ function TeacherCard({
   const { user } = useAuth();
   const router = useRouter();
   const [isStartingChat, setIsStartingChat] = useState(false);
+  const marketplaceCategory = displayTeacherMarketplaceCategory(teacher.category);
 
   const handleStartChat = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -698,7 +722,7 @@ function TeacherCard({
         <div className="space-y-2">
           <div className="flex justify-between items-start gap-2">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="ds-pill">{teacher.category}</span>
+              <span className="ds-pill">{marketplaceCategory}</span>
               {teacher.homeLessonEnabled && teacher.homeLessonPrice ? (
                 <span className="badge-teal">À domicile disponible</span>
               ) : null}

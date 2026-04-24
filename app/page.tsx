@@ -5,9 +5,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
 import { Loader2, MapPin, Search, Star, Users, Video } from "lucide-react";
-import type { Discipline, Teacher } from "../types";
+import type { Teacher } from "../types";
 import { TEACHERS } from "../constants";
 import { cn } from "../lib/utils";
+import { getAllDisciplines, getEnabledDisciplines, displayTeacherMarketplaceCategory } from "../lib/disciplines";
+import { isEnabled } from "../lib/features";
 import Logo from "../components/ui/Logo";
 import { getSupabaseClient } from "../lib/supabase";
 import { teacherRowToTeacher, type TeacherRow } from "../lib/teacherMapper";
@@ -19,22 +21,19 @@ type HeroMode = "student" | "teacher";
 const TEACHERS_SELECT =
   "id, user_id, name, discipline, category, rating, reviews, price_per_lesson, monthly_subscription, bio, image_url, availability, location, is_verified, teaching_mode, languages, levels, home_lesson_enabled, home_lesson_price, home_lesson_radius_km, home_lesson_min_duration, home_lesson_requires_confirmation, home_lesson_force_2h_over_20km, verification_level, identity_verified, diploma_verified, phone_verified";
 
-const QUICK: { label: string; cat?: Discipline; href?: string }[] = [
-  { label: "Musique", cat: "Musique" },
-  { label: "Danse", cat: "Danse" },
-  { label: "Arts martiaux", cat: "Arts Martiaux" },
-  { label: "Langues", cat: "Langues" },
-  { label: "Cours groupe", href: "/group-sessions" },
-];
-
 export default function LandingPage() {
   const router = useRouter();
   const [mode, setMode] = useState<HeroMode>("student");
   const [query, setQuery] = useState("");
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [loadingTeachers, setLoadingTeachers] = useState(true);
-  const [activeCat, setActiveCat] = useState<Discipline | "All">("All");
+  const [activeCat, setActiveCat] = useState<string>("All");
   const [geoLoading, setGeoLoading] = useState(false);
+  const [disciplinesModalOpen, setDisciplinesModalOpen] = useState(false);
+
+  const comingSoonDisciplines = useMemo(() => getAllDisciplines().filter((d) => !d.enabled), []);
+  const comingSoonCount = comingSoonDisciplines.length;
+  const enabledHeroLabels = useMemo(() => getEnabledDisciplines().map((d) => d.label).join(" · "), []);
 
   useEffect(() => {
     const supabase = getSupabaseClient();
@@ -73,7 +72,7 @@ export default function LandingPage() {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return teachers.filter((t) => {
-      const catOk = activeCat === "All" || t.category === activeCat;
+      const catOk = activeCat === "All" || displayTeacherMarketplaceCategory(t.category) === activeCat;
       const qOk =
         !q ||
         t.name.toLowerCase().includes(q) ||
@@ -142,9 +141,7 @@ export default function LandingPage() {
                 </div>
 
                 <h1 className="text-center text-3xl font-bold tracking-tight sm:text-4xl">Trouve ton prof idéal</h1>
-                <p className="mt-3 text-center text-sm text-white/85 sm:text-base">
-                  Musique · Danse · Arts martiaux · Langues
-                </p>
+                <p className="mt-3 text-center text-sm text-white/85 sm:text-base">{enabledHeroLabels}</p>
 
                 <div className="mx-auto mt-8 flex max-w-xl flex-col gap-3 sm:flex-row sm:items-center">
                   <div className="flex flex-1 items-center gap-2 rounded-2xl bg-white px-4 py-3 text-[#2C2C2A] shadow-sm">
@@ -179,31 +176,38 @@ export default function LandingPage() {
                 </div>
 
                 <div className="mx-auto mt-6 flex max-w-3xl flex-wrap justify-center gap-2">
-                  {QUICK.map((x) =>
-                    x.href ? (
-                      <Link
-                        key={x.label}
-                        href={x.href}
-                        className="rounded-full border border-white/30 bg-white/15 px-4 py-2 text-xs font-semibold text-white hover:bg-white/20"
-                      >
-                        {x.label}
-                      </Link>
-                    ) : (
-                      <button
-                        key={x.label}
-                        type="button"
-                        onClick={() => setActiveCat(x.cat!)}
-                        className={cn(
-                          "rounded-full border px-4 py-2 text-xs font-semibold transition-colors",
-                          activeCat === x.cat
-                            ? "border-white bg-white text-[#0F6E56]"
-                            : "border-white/30 bg-white/15 text-white hover:bg-white/20",
-                        )}
-                      >
-                        {x.label}
-                      </button>
-                    ),
-                  )}
+                  {getEnabledDisciplines().map((d) => (
+                    <button
+                      key={d.id}
+                      type="button"
+                      onClick={() => setActiveCat(d.label)}
+                      className={cn(
+                        "rounded-full border px-4 py-2 text-xs font-semibold transition-colors",
+                        activeCat === d.label
+                          ? "border-white bg-white text-[#0F6E56]"
+                          : "border-white/30 bg-white/15 text-white hover:bg-white/20",
+                      )}
+                    >
+                      {d.emoji} {d.label}
+                    </button>
+                  ))}
+                  {comingSoonCount > 0 ? (
+                    <button
+                      type="button"
+                      onClick={() => setDisciplinesModalOpen(true)}
+                      className="rounded-full border border-white/40 bg-white/10 px-4 py-2 text-xs font-semibold text-white hover:bg-white/20"
+                    >
+                      + {comingSoonCount} disciplines bientôt
+                    </button>
+                  ) : null}
+                  {isEnabled("group_sessions") ? (
+                    <Link
+                      href="/group-sessions"
+                      className="rounded-full border border-white/30 bg-white/15 px-4 py-2 text-xs font-semibold text-white hover:bg-white/20"
+                    >
+                      Cours groupe
+                    </Link>
+                  ) : null}
                   <button
                     type="button"
                     onClick={() => setActiveCat("All")}
@@ -317,6 +321,54 @@ export default function LandingPage() {
           </Link>
         </div>
       </footer>
+
+      {disciplinesModalOpen ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="disciplines-soon-title"
+          onClick={() => setDisciplinesModalOpen(false)}
+          onKeyDown={(e) => e.key === "Escape" && setDisciplinesModalOpen(false)}
+        >
+          <div
+            className="max-h-[min(80vh,520px)] w-full max-w-md overflow-y-auto rounded-2xl bg-white p-6 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <h3 id="disciplines-soon-title" className="text-lg font-bold text-[#2C2C2A]">
+                Disciplines à venir
+              </h3>
+              <button
+                type="button"
+                onClick={() => setDisciplinesModalOpen(false)}
+                className="shrink-0 rounded-lg px-2 py-1 text-sm font-semibold text-slate-500 hover:bg-slate-100"
+              >
+                Fermer
+              </button>
+            </div>
+            <p className="mb-4 text-sm text-slate-600">
+              Voici les disciplines prévues pour les phases 2 et 3 (aperçu — non disponibles pour l’instant).
+            </p>
+            <ul className="space-y-2">
+              {comingSoonDisciplines.map((d) => (
+                <li
+                  key={d.id}
+                  className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5 text-sm text-slate-500 opacity-[0.72]"
+                >
+                  <span className="text-lg" aria-hidden>
+                    {d.emoji}
+                  </span>
+                  <span className="min-w-0 flex-1 font-medium">{d.label}</span>
+                  <span className="shrink-0 rounded-md bg-slate-200/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-600">
+                    Phase {d.phase}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

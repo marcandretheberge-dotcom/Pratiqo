@@ -7,20 +7,10 @@ import { CheckCircle2, ChevronLeft, ChevronRight, Loader2, ShieldCheck, Upload }
 import { cn } from "../../lib/utils";
 import { useAuth } from "../../components/AuthProvider";
 import { getSupabaseClient } from "../../lib/supabase";
+import { getAllDisciplines } from "../../lib/disciplines";
 
 type Step = 1 | 2 | 3 | "done";
 type Mode = "person" | "online" | "both";
-
-const CATEGORY_OPTIONS = [
-  "Musique",
-  "Danse",
-  "Arts martiaux",
-  "Langues",
-  "Yoga/Fitness",
-  "Dessin/Arts",
-  "Cuisine",
-  "Autre",
-] as const;
 
 const LEVELS = ["Débutants", "Enfants", "Intermédiaires", "Avancés", "Tous"] as const;
 
@@ -50,7 +40,7 @@ function OnboardingInner() {
   const [bio, setBio] = useState("");
   const [teachingSince, setTeachingSince] = useState<number | null>(null);
 
-  // Step 2
+  // Disciplines (étape 1 + payload étape 2)
   const [categories, setCategories] = useState<string[]>([]);
   const [discipline, setDiscipline] = useState("");
   const [teachingMode, setTeachingMode] = useState<Mode>("both");
@@ -69,7 +59,7 @@ function OnboardingInner() {
 
   async function generateDescription() {
     if (!disciplineForAi) {
-      alert("Choisis au moins une discipline à l’étape 2 (tu peux y aller puis revenir à l’étape 1).");
+      alert("Choisis au moins une discipline à l’étape 1.");
       return;
     }
     setAiLoading(true);
@@ -373,6 +363,47 @@ function OnboardingInner() {
                 />
               </Field>
 
+              <Field label="Disciplines">
+                <div className="flex flex-wrap gap-2">
+                  {getAllDisciplines().map((d) => {
+                    const active = categories.includes(d.label);
+                    const locked = !d.enabled;
+                    return (
+                      <button
+                        key={d.id}
+                        type="button"
+                        disabled={locked}
+                        title={locked ? `Disponible en Phase ${d.phase}` : undefined}
+                        onClick={() => {
+                          if (locked) return;
+                          setCategories((prev) =>
+                            active ? prev.filter((x) => x !== d.label) : [...prev, d.label],
+                          );
+                        }}
+                        className={cn(
+                          "inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-semibold transition-colors",
+                          locked && "cursor-not-allowed opacity-50",
+                          !locked && active && "border-[#1D9E75] bg-[rgba(29,158,117,0.12)] text-[#0f6d52]",
+                          !locked && !active && "border-slate-200 bg-white text-slate-600 hover:border-slate-300",
+                          locked && "border-slate-200 bg-slate-50 text-slate-500",
+                        )}
+                      >
+                        <span aria-hidden>{d.emoji}</span>
+                        <span>{d.label}</span>
+                        {locked ? (
+                          <span className="rounded-md bg-slate-200/80 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-slate-600">
+                            Phase {d.phase}
+                          </span>
+                        ) : null}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="mt-2 text-[11px] text-[var(--p-text-muted)]">
+                  Les disciplines grisées arriveront dans les prochaines phases.
+                </p>
+              </Field>
+
               <Field label="Photo de profil (optionnel)">
                 <div
                   role="button"
@@ -478,7 +509,7 @@ function OnboardingInner() {
                       {aiLoading ? "⏳ Génération..." : "✨ Générer avec l'IA"}
                     </button>
                     <p style={{ fontSize: "11px", color: "#888780", marginTop: "4px" }}>
-                      Disponible une fois pendant la création de ton profil — indique d’abord tes disciplines (étape 2), puis reviens ici si besoin.
+                      Disponible une fois pendant la création de ton profil — choisis tes disciplines ci-dessus, puis reviens ici si besoin.
                     </p>
                   </div>
                 ) : null}
@@ -503,31 +534,6 @@ function OnboardingInner() {
 
           {step === 2 ? (
             <div className="mt-8 space-y-6">
-              <Field label="Disciplines (multi-sélection)">
-                <div className="flex flex-wrap gap-2">
-                  {CATEGORY_OPTIONS.map((c) => {
-                    const active = categories.includes(c);
-                    return (
-                      <button
-                        key={c}
-                        type="button"
-                        onClick={() =>
-                          setCategories((prev) => (active ? prev.filter((x) => x !== c) : [...prev, c]))
-                        }
-                        className={cn(
-                          "px-4 py-2 rounded-full border text-xs font-semibold transition-colors",
-                          active
-                            ? "border-[#1D9E75] bg-[rgba(29,158,117,0.12)] text-[#0f6d52]"
-                            : "border-slate-200 bg-white text-slate-600 hover:border-slate-300",
-                        )}
-                      >
-                        {c}
-                      </button>
-                    );
-                  })}
-                </div>
-              </Field>
-
               <Field label="Sous-discipline (ex: Piano classique)">
                 <input
                   value={discipline}
@@ -760,7 +766,13 @@ function OnboardingInner() {
               ) : (
                 <button
                   type="button"
-                  onClick={() => setStep((prev) => (prev === 1 ? 2 : 3))}
+                  onClick={() => {
+                    if (step === 1 && categories.length === 0) {
+                      alert("Choisis au moins une discipline (disponible dès la Phase 1).");
+                      return;
+                    }
+                    setStep((prev) => (prev === 1 ? 2 : 3));
+                  }}
                   className="inline-flex h-11 items-center gap-2 rounded-2xl bg-[#1D9E75] px-5 text-sm font-bold text-white hover:brightness-[0.98]"
                 >
                   Suivant <ChevronRight size={18} />

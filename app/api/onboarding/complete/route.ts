@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { disciplineLabelToTeacherCategory } from "@/lib/disciplines";
 import { sendWelcomeTeacher, sendWelcomeStudent } from "@/lib/email";
 
 export const runtime = "nodejs";
@@ -93,7 +94,8 @@ export async function POST(req: Request) {
     }
 
     if (role === "teacher") {
-      const category = (body.categories?.[0] || "Musique").trim();
+      const rawCat = (body.categories?.[0] || "Musique").trim();
+      const category = disciplineLabelToTeacherCategory(rawCat);
       const discipline = (body.discipline || "—").trim();
       const teachingMode = body.teaching_mode || "both";
       const hourlyRate = clamp(Number(body.hourly_rate || 50), 10, 500);

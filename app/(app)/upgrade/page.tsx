@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Check, Star } from "lucide-react";
 import { useAuth } from "../../../components/AuthProvider";
 import { getSupabaseClient } from "../../../lib/supabase";
+import { isEnabled } from "../../../lib/features";
 
 export default function UpgradePage() {
   const { user } = useAuth();
@@ -67,7 +68,7 @@ export default function UpgradePage() {
           </span>
         </div>
 
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <PlanCard
             title="Gratuit"
             price="0$"
@@ -80,6 +81,7 @@ export default function UpgradePage() {
             items={["Élèves illimités", "5% de commission", "Support prioritaire (bientôt)"]}
             accent="bg-[rgba(29,158,117,0.12)] text-[#1D9E75]"
           />
+          {!isEnabled("enterprise_plan") ? <LockedEnterprisePlanCard /> : null}
         </div>
 
         <label className="mt-8 flex items-start gap-3 text-[13px] text-[var(--p-text-muted)] cursor-pointer max-w-xl">
@@ -118,6 +120,83 @@ export default function UpgradePage() {
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+function LockedEnterprisePlanCard() {
+  const [email, setEmail] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+
+  const submit = async () => {
+    if (!email.trim()) return;
+    setBusy(true);
+    setMsg(null);
+    try {
+      const res = await fetch("/api/waitlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim(), feature: "enterprise_plan" }),
+      });
+      const j = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string };
+      if (!res.ok || !j.ok) throw new Error(j.error || "Envoi impossible");
+      setMsg("Merci ! On te préviendra au lancement.");
+      setEmail("");
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : "Erreur");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="rounded-3xl border-2 border-slate-300 bg-slate-50/60 p-6 opacity-95">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <span className="rounded-[12px] bg-slate-200/90 px-3 py-1 text-[12px] font-medium text-slate-700">Entreprise</span>
+        <span className="rounded-lg bg-slate-200 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-slate-600">
+          Phase 2
+        </span>
+      </div>
+      <p className="mt-4 text-[13px] text-slate-600 leading-relaxed">
+        Carte studio, visibilité renforcée et outils dédiés aux structures — réservé au plan Entreprise.
+      </p>
+      <ul className="mt-4 space-y-2">
+        {["Page profil avancée", "Cours de groupe prioritaires", "Support dédié"].map((x) => (
+          <div key={x} className="flex items-center gap-2 text-[13px] text-slate-500">
+            <Check size={16} className="text-slate-400" />
+            <span>{x}</span>
+          </div>
+        ))}
+      </ul>
+      <button
+        type="button"
+        disabled
+        className="mt-6 h-11 w-full rounded-[22px] border border-slate-300 bg-white text-sm font-semibold text-slate-500 cursor-not-allowed"
+      >
+        Bientôt disponible
+      </button>
+      <p className="mt-6 text-[11px] font-bold uppercase tracking-widest text-slate-500">Être notifié du lancement</p>
+      <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center">
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="ton@courriel.com"
+          className="h-11 flex-1 rounded-xl border border-slate-300 bg-white px-4 text-sm outline-none focus:border-slate-500"
+        />
+        <button
+          type="button"
+          disabled={busy || !email.trim()}
+          onClick={() => void submit()}
+          className="h-11 shrink-0 rounded-xl border border-slate-400 bg-slate-700 px-5 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
+        >
+          {busy ? "…" : "Me notifier"}
+        </button>
+      </div>
+      {msg ? (
+        <p className={`mt-3 text-sm ${msg.startsWith("Merci") ? "text-[#085041]" : "text-rose-700"}`}>{msg}</p>
+      ) : null}
     </div>
   );
 }
