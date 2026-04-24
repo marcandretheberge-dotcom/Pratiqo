@@ -105,7 +105,7 @@ export function TeacherProfile({ teacher, onClose, onBook, distanceKm }: Teacher
 
   const homeConfigured =
     Boolean(teacher.homeLessonEnabled) &&
-    teacher.homeLessonPrice != null &&
+    typeof teacher.homeLessonPrice === "number" &&
     Number(teacher.homeLessonPrice) > 0;
   const radiusKm = teacher.homeLessonRadiusKm ?? 25;
   const outOfHomeZone =

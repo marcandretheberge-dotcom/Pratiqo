@@ -99,7 +99,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
 
   const homeAvailable =
     Boolean(teacher.homeLessonEnabled) &&
-    teacher.homeLessonPrice != null &&
+    typeof teacher.homeLessonPrice === "number" &&
     Number(teacher.homeLessonPrice) > 0;
 
   const showStudio = teacher.teachingMode === "person" || teacher.teachingMode === "both";

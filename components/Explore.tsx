@@ -24,6 +24,10 @@ import { haversineDistance } from "../lib/geo";
 import { useAuth } from "./AuthProvider";
 import { useRouter } from "next/navigation";
 
+/** Colonnes nécessaires au mapper + cours à domicile (évite les réponses PostgREST incomplètes). */
+const TEACHERS_SELECT =
+  "id, user_id, name, discipline, category, rating, reviews, price_per_lesson, monthly_subscription, bio, image_url, availability, location, is_verified, teaching_mode, languages, levels, home_lesson_enabled, home_lesson_price, home_lesson_radius_km, home_lesson_min_duration, home_lesson_requires_confirmation, home_lesson_force_2h_over_20km";
+
 export function Explore({
   onBook,
   onViewProfile,
@@ -50,7 +54,7 @@ export function Explore({
     const supabase = getSupabaseClient();
 
     const load = async () => {
-      const { data, error } = await supabase.from("teachers").select("*").order("id");
+      const { data, error } = await supabase.from("teachers").select(TEACHERS_SELECT).order("id");
       if (error || !data?.length) {
         console.warn("Supabase teachers load failed, using local TEACHERS.", error);
         setTeachers(TEACHERS);
@@ -481,10 +485,8 @@ function TeacherCard({
           <div className="flex justify-between items-start gap-2">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="ds-pill">{teacher.category}</span>
-              {teacher.homeLessonEnabled ? (
-                <span className="px-2 py-0.5 rounded-[8px] text-[10px] font-bold uppercase tracking-wide bg-[rgba(29,158,117,0.14)] text-[#1D9E75] border border-[rgba(29,158,117,0.25)]">
-                  À domicile disponible
-                </span>
+              {teacher.homeLessonEnabled && teacher.homeLessonPrice ? (
+                <span className="badge-teal">À domicile disponible</span>
               ) : null}
               {teacher.teachingMode === "online" && <Video size={12} className="text-indigo-400" />}
               {teacher.teachingMode === "person" && <Users size={12} className="text-emerald-400" />}

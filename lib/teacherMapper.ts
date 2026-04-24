@@ -47,10 +47,11 @@ export function teacherRowToTeacher(row: TeacherRow): Teacher {
     languages: row.languages ?? [],
     levels: row.levels ?? [],
     homeLessonEnabled: Boolean(row.home_lesson_enabled),
-    homeLessonPrice:
-      row.home_lesson_price == null || row.home_lesson_price === ""
-        ? null
-        : Number(row.home_lesson_price),
+    homeLessonPrice: (() => {
+      if (row.home_lesson_price == null || row.home_lesson_price === "") return undefined;
+      const n = Number(row.home_lesson_price);
+      return Number.isFinite(n) && n > 0 ? n : undefined;
+    })(),
     homeLessonRadiusKm: row.home_lesson_radius_km ?? 25,
     homeLessonMinDuration: row.home_lesson_min_duration ?? 60,
     homeLessonRequiresConfirmation: row.home_lesson_requires_confirmation ?? true,

@@ -31,7 +31,7 @@ export interface Teacher {
   levels: string[];
   /** Cours à domicile (paramètres profil) */
   homeLessonEnabled?: boolean;
-  homeLessonPrice?: number | null;
+  homeLessonPrice?: number;
   homeLessonRadiusKm?: number;
   homeLessonMinDuration?: number;
   homeLessonRequiresConfirmation?: boolean;

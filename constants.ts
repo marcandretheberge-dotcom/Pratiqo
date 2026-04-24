@@ -45,7 +45,6 @@ export const TEACHERS: Teacher[] = [
     languages: ["Français", "Japonais"],
     levels: ["Tous niveaux"],
     homeLessonEnabled: false,
-    homeLessonPrice: null,
     homeLessonRadiusKm: 25,
     homeLessonMinDuration: 60,
     homeLessonRequiresConfirmation: true,
