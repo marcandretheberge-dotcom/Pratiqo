@@ -39,6 +39,7 @@ function OnboardingInner() {
   const [saving, setSaving] = useState(false);
   const [stripeBusy, setStripeBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
 
   // Step 1
   const [name, setName] = useState("");
@@ -59,6 +60,48 @@ function OnboardingInner() {
   const [homeEnabled, setHomeEnabled] = useState(false);
   const [homeRadius, setHomeRadius] = useState(25);
   const [homePrice, setHomePrice] = useState<number | null>(null);
+
+  const disciplineForAi = categories.length > 0 ? categories.join(", ") : discipline.trim();
+  const canGenerateAiBio = Boolean(disciplineForAi);
+
+  async function generateDescription() {
+    if (!disciplineForAi) {
+      alert("Choisis au moins une discipline à l’étape 2 (tu peux y aller puis revenir à l’étape 1).");
+      return;
+    }
+    setAiLoading(true);
+    setMessage(null);
+    try {
+      const { data: sess } = await getSupabaseClient().auth.getSession();
+      const token = sess.session?.access_token;
+      if (!token) {
+        alert("Session expirée. Reconnecte-toi.");
+        return;
+      }
+      const res = await fetch("/api/ai/description", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          discipline: disciplineForAi,
+          specialite: discipline.trim() || undefined,
+        }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { description?: string; error?: string };
+      if (!res.ok) {
+        setMessage(data.error || "Génération impossible.");
+        return;
+      }
+      if (data.description) setBio(data.description.slice(0, 300));
+    } catch (e) {
+      console.error(e);
+      setMessage("Erreur réseau.");
+    } finally {
+      setAiLoading(false);
+    }
+  }
 
   const yearOptions = useMemo(() => {
     const y = new Date().getFullYear();
@@ -315,6 +358,30 @@ function OnboardingInner() {
                   placeholder="Ton approche, ton expérience…"
                 />
                 <p className="mt-1 text-[11px] text-[var(--p-text-muted)]">{bio.length}/300</p>
+                {profile?.role === "teacher" ? (
+                  <div className="mt-2">
+                    <button
+                      type="button"
+                      onClick={() => void generateDescription()}
+                      disabled={aiLoading || !canGenerateAiBio}
+                      style={{
+                        background: aiLoading ? "#9FE1CB" : "#E1F5EE",
+                        color: "#085041",
+                        border: "none",
+                        borderRadius: "20px",
+                        padding: "6px 14px",
+                        fontSize: "12px",
+                        cursor: canGenerateAiBio ? "pointer" : "not-allowed",
+                        opacity: canGenerateAiBio ? 1 : 0.5,
+                      }}
+                    >
+                      {aiLoading ? "⏳ Génération..." : "✨ Générer avec l'IA"}
+                    </button>
+                    <p style={{ fontSize: "11px", color: "#888780", marginTop: "4px" }}>
+                      Disponible une fois pendant la création de ton profil — indique d’abord tes disciplines (étape 2), puis reviens ici si besoin.
+                    </p>
+                  </div>
+                ) : null}
               </Field>
 
               <Field label="Depuis quelle année enseignes-tu ?">
