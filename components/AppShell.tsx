@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  BookOpen,
   CalendarDays,
   Gift,
   LayoutDashboard,
@@ -37,8 +38,9 @@ function normalizeTier(raw: string | null | undefined): string {
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user, profile } = useAuth();
-  const role = (profile?.role as Role) || "student";
+  const role = profile?.role as Role | undefined;
   const isTeacher = role === "teacher";
+  const isStudent = role === "student";
 
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [loyaltyTier, setLoyaltyTier] = useState<string | null>(null);
@@ -134,7 +136,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </Link>
 
         <div className="flex items-center gap-1 sm:gap-2">
-          {!isTeacher ? (
+          {isStudent ? (
             <Link
               href="/messages"
               className={cn(
@@ -153,6 +155,25 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               ) : null}
             </Link>
           ) : null}
+          {isTeacher ? (
+            <Link
+              href="/messages"
+              className={cn(
+                "relative inline-flex h-10 w-10 items-center justify-center rounded-full transition-colors",
+                pathname?.startsWith("/messages")
+                  ? "bg-white/15 text-white"
+                  : "text-white/85 hover:bg-white/10",
+              )}
+              aria-label="Messages"
+            >
+              <MessageCircle size={22} />
+              {unreadMessages > 0 ? (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[1.125rem] h-[1.125rem] px-1 rounded-full bg-[#1D9E75] text-white text-[10px] font-bold leading-none inline-flex items-center justify-center border-2 border-[#2C2C2A]">
+                  {unreadMessages > 99 ? "99+" : unreadMessages}
+                </span>
+              ) : null}
+            </Link>
+          ) : null}
           <div
             className={
               isTeacher
@@ -165,35 +186,62 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      {!isTeacher ? (
+      {isStudent ? (
         <div className="hidden lg:block border-b border-[var(--p-border-light)] bg-white">
-          <nav className="mx-auto max-w-[960px] px-5 flex items-center gap-8 h-11 text-sm font-semibold">
+          <nav className="mx-auto max-w-[960px] px-4 sm:px-5 flex flex-wrap items-center gap-x-5 gap-y-1 min-h-11 text-sm font-semibold">
             <Link
               href="/student/search"
               className={cn(
-                "border-b-2 -mb-px pb-2.5 transition-colors",
+                "border-b-2 -mb-px py-2.5 transition-colors",
                 pathname?.startsWith("/student/search") ? "border-[#1D9E75] text-[#1D9E75]" : "border-transparent text-[var(--p-text-muted)] hover:text-[#1D9E75]",
               )}
             >
-              Trouver
+              Trouver un prof
+            </Link>
+            <Link
+              href="/group-sessions"
+              className={cn(
+                "border-b-2 -mb-px py-2.5 transition-colors",
+                pathname?.startsWith("/group-sessions") ? "border-[#1D9E75] text-[#1D9E75]" : "border-transparent text-[var(--p-text-muted)] hover:text-[#1D9E75]",
+              )}
+            >
+              Cours de groupe
             </Link>
             <Link
               href="/dashboard"
               className={cn(
-                "border-b-2 -mb-px pb-2.5 transition-colors",
+                "border-b-2 -mb-px py-2.5 transition-colors",
                 pathname === "/dashboard" ? "border-[#1D9E75] text-[#1D9E75]" : "border-transparent text-[var(--p-text-muted)] hover:text-[#1D9E75]",
               )}
             >
               Mes cours
             </Link>
             <Link
+              href="/student/progress"
+              className={cn(
+                "border-b-2 -mb-px py-2.5 transition-colors",
+                pathname?.startsWith("/student/progress") ? "border-[#1D9E75] text-[#1D9E75]" : "border-transparent text-[var(--p-text-muted)] hover:text-[#1D9E75]",
+              )}
+            >
+              Ma progression
+            </Link>
+            <Link
               href="/profile"
               className={cn(
-                "border-b-2 -mb-px pb-2.5 transition-colors",
+                "border-b-2 -mb-px py-2.5 transition-colors",
                 pathname === "/profile" ? "border-[#1D9E75] text-[#1D9E75]" : "border-transparent text-[var(--p-text-muted)] hover:text-[#1D9E75]",
               )}
             >
-              Profil
+              Mon profil
+            </Link>
+            <Link
+              href="/messages"
+              className={cn(
+                "border-b-2 -mb-px py-2.5 transition-colors",
+                pathname?.startsWith("/messages") ? "border-[#1D9E75] text-[#1D9E75]" : "border-transparent text-[var(--p-text-muted)] hover:text-[#1D9E75]",
+              )}
+            >
+              Messages
             </Link>
           </nav>
         </div>
@@ -249,7 +297,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <main
           className={cn(
             "flex-1 min-w-0 overflow-y-auto",
-            isTeacher ? "pb-24 lg:pb-8 px-4 sm:px-6 py-6" : "pb-24 lg:pb-8 px-4 sm:px-5 py-6",
+            isTeacher ? "pb-24 lg:pb-8 px-4 sm:px-6 py-6" : isStudent ? "pb-24 lg:pb-8 px-4 sm:px-5 py-6" : "pb-8 px-4 sm:px-5 py-6",
           )}
         >
           <div className={cn("mx-auto w-full", isTeacher ? "max-w-[1100px]" : "max-w-[960px]")}>{children}</div>
@@ -257,12 +305,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* Student bottom tabs */}
-      {!isTeacher ? (
+      {isStudent ? (
         <nav className="lg:hidden fixed bottom-0 inset-x-0 z-50 border-t border-[var(--p-border-light)] bg-white safe-area-pb">
-          <div className="grid grid-cols-3 h-16 max-w-lg mx-auto">
-            <StudentTab href="/student/search" icon={<Search size={22} />} label="Trouver" active={pathname?.startsWith("/student/search")} />
-            <StudentTab href="/dashboard" icon={<CalendarDays size={22} />} label="Mes cours" active={pathname === "/dashboard"} />
-            <StudentTab href="/profile" icon={<UserRound size={22} />} label="Profil" active={pathname === "/profile"} />
+          <div className="grid grid-cols-5 h-16 max-w-lg mx-auto">
+            <StudentTab href="/student/search" icon={<Search size={20} />} label="Trouver" active={pathname?.startsWith("/student/search")} />
+            <StudentTab href="/group-sessions" icon={<UsersRound size={20} />} label="Groupes" active={pathname?.startsWith("/group-sessions")} />
+            <StudentTab href="/dashboard" icon={<CalendarDays size={20} />} label="Cours" active={pathname === "/dashboard"} />
+            <StudentTab href="/student/progress" icon={<BookOpen size={20} />} label="Progrès" active={pathname?.startsWith("/student/progress")} />
+            <StudentTab href="/profile" icon={<UserRound size={20} />} label="Profil" active={pathname === "/profile"} />
           </div>
         </nav>
       ) : null}

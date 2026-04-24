@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from "react";
 import { Calendar, Flame, Loader2, ShieldCheck } from "lucide-react";
-import { cn } from "../lib/utils";
 import { useAuth } from "./AuthProvider";
 import { getSupabaseClient } from "../lib/supabase";
 import { authDisplayName } from "../lib/authDisplay";
@@ -23,17 +22,24 @@ interface BookingWithTeacher {
 }
 
 export function Dashboard() {
-  const { user } = useAuth();
+  const { user, profile: authProfile, loading: authLoading } = useAuth();
   const router = useRouter();
+  const role = authProfile?.role as string | undefined;
+  const isTeacherRole = role === "teacher";
+  const isStudentRole = role === "student";
+
   const [profile, setProfile] = useState<StudentProfile | null>(null);
   const [bookings, setBookings] = useState<BookingWithTeacher[]>([]);
   const [teacherBookings, setTeacherBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState<"student" | "teacher">("student");
-  const [isTeacher, setIsTeacher] = useState(false);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || authLoading) return;
+    if (!isTeacherRole && !isStudentRole) {
+      setLoading(false);
+      return;
+    }
+
     const supabase = getSupabaseClient();
     let cancelled = false;
 
@@ -89,11 +95,6 @@ export function Dashboard() {
       }
     };
 
-    const loadIsTeacher = async () => {
-      const { data } = await supabase.from("teachers").select("id").eq("user_id", user.id).maybeSingle();
-      if (!cancelled) setIsTeacher(!!data);
-    };
-
     const loadStudentBookings = async () => {
       const { data: rows, error } = await supabase
         .from("bookings")
@@ -147,10 +148,12 @@ export function Dashboard() {
 
     const refreshAll = async () => {
       try {
-        await loadProfile();
-        await loadIsTeacher();
-        await loadStudentBookings();
-        await loadTeacherBookings();
+        if (isStudentRole) {
+          await loadProfile();
+          await loadStudentBookings();
+        } else if (isTeacherRole) {
+          await loadTeacherBookings();
+        }
       } catch (e) {
         console.error("Dashboard refresh", e);
       } finally {
@@ -166,162 +169,59 @@ export function Dashboard() {
         "postgres_changes",
         { event: "*", schema: "public", table: "profiles", filter: `id=eq.${user.id}` },
         () => {
-          void loadProfile();
+          if (isStudentRole) void loadProfile();
         },
       )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "bookings" },
-        () => {
-          void loadStudentBookings();
-          void loadTeacherBookings();
-        },
-      )
+      .on("postgres_changes", { event: "*", schema: "public", table: "bookings" }, () => {
+        if (isStudentRole) void loadStudentBookings();
+        if (isTeacherRole) void loadTeacherBookings();
+      })
       .subscribe();
 
     return () => {
       cancelled = true;
       void supabase.removeChannel(ch);
     };
-  }, [user]);
+  }, [user, authLoading, isTeacherRole, isStudentRole]);
 
-  if (!user || loading) {
+  if (!user || authLoading) {
     return (
       <div className="h-[calc(100vh-200px)] flex flex-col items-center justify-center p-12 text-center">
         <Loader2 size={48} className="text-brand-primary animate-spin mb-4" />
-        <h2 className="text-xl font-bold text-slate-800">Initialisation...</h2>
+        <h2 className="text-xl font-bold text-slate-800">Chargement du compte…</h2>
       </div>
     );
   }
 
-  return (
-    <div className="space-y-6 pb-12">
-      <section className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-        <div>
-          <p className="ds-label text-[var(--p-text-subtle)]">Espace</p>
-          <h2 className="text-[32px] sm:text-[40px] leading-[1.1] text-[var(--p-text)]">Tableau de bord</h2>
-          <div className="flex items-center gap-2 mt-1">
-            <span className="text-[14px] text-[var(--p-text-muted)] capitalize">
-              {viewMode === "student" ? "Espace Élève" : "Espace Prof"}
-            </span>
+  if (!isTeacherRole && !isStudentRole) {
+    return (
+      <div className="flex flex-col items-center justify-center p-12 text-center space-y-4">
+        <p className="text-slate-600 font-medium">Configuration du profil en cours…</p>
+        <p className="text-sm text-slate-500">Tu seras redirigé pour finaliser ton inscription.</p>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="h-[calc(100vh-200px)] flex flex-col items-center justify-center p-12 text-center">
+        <Loader2 size={48} className="text-brand-primary animate-spin mb-4" />
+        <h2 className="text-xl font-bold text-slate-800">Initialisation…</h2>
+      </div>
+    );
+  }
+
+  if (isTeacherRole) {
+    return (
+      <div className="space-y-6 pb-12">
+        <section className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div>
+            <p className="ds-label text-[var(--p-text-subtle)]">Espace professeur</p>
+            <h2 className="text-[32px] sm:text-[40px] leading-[1.1] text-[var(--p-text)]">Tableau de bord</h2>
+            <p className="text-[14px] text-[var(--p-text-muted)] mt-1">Agenda, élèves et revenus</p>
           </div>
-        </div>
+        </section>
 
-        <div className="flex items-center bg-white p-1 rounded-[22px] border border-[var(--p-border-light)]">
-          <button
-            onClick={() => setViewMode("student")}
-            className={cn(
-              "px-6 py-2 rounded-[18px] text-[11px] font-medium transition-all",
-              viewMode === "student"
-                ? "bg-[var(--p-light-teal-bg)] text-[var(--p-dark-teal)]"
-                : "text-[var(--p-text-muted)] hover:text-[var(--p-text)]",
-            )}
-          >
-            Élève
-          </button>
-          {isTeacher && (
-            <button
-              onClick={() => setViewMode("teacher")}
-              className={cn(
-                "px-6 py-2 rounded-[18px] text-[11px] font-medium transition-all",
-                viewMode === "teacher"
-                  ? "bg-[var(--p-light-teal-bg)] text-[var(--p-dark-teal)]"
-                  : "text-[var(--p-text-muted)] hover:text-[var(--p-text)]",
-              )}
-            >
-              Prof
-            </button>
-          )}
-        </div>
-      </section>
-
-      {viewMode === "student" ? (
-        <div className="grid grid-cols-12 gap-6">
-          <div className="col-span-12 lg:col-span-8 space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div className="bg-gradient-to-br from-orange-500 to-rose-500 p-6 rounded-3xl text-white shadow-xl shadow-orange-100 relative overflow-hidden group">
-                <div className="relative z-10 space-y-4">
-                  <div className="flex items-center gap-2">
-                    <Flame size={24} className="animate-pulse" />
-                    <span className="text-3xl font-bold">{profile?.streak || 1}</span>
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-lg leading-tight">Série de jours</h4>
-                    <p className="text-xs opacity-80 font-medium">Continuez comme ça !</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between overflow-hidden relative">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h4 className="font-bold text-slate-900 mb-1">Réservations</h4>
-                    <p className="text-3xl font-bold text-brand-primary">{bookings.length}</p>
-                  </div>
-                  <div className="w-12 h-12 bg-teal-50 rounded-2xl flex items-center justify-center text-brand-primary">
-                    <Calendar size={24} />
-                  </div>
-                </div>
-                <div className="mt-4 pt-4 border-t border-slate-50 flex items-center justify-between">
-                  <button
-                    onClick={() => router.push("/student/search")}
-                    className="text-[10px] font-bold text-brand-primary uppercase tracking-widest hover:underline"
-                  >
-                    Trouver un prof
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <AssignmentHub mode="student" />
-          </div>
-
-          <div className="col-span-12 lg:col-span-4 space-y-6">
-            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-50 pb-4">
-                <h3 className="font-bold text-slate-900 text-[10px] uppercase tracking-widest">Ma Semaine</h3>
-                <Calendar size={14} className="text-slate-400" />
-              </div>
-              <div className="space-y-3">
-                {bookings.length > 0 ? (
-                  bookings.slice(0, 3).map((b) => (
-                    <div
-                      key={b.id}
-                      className="flex flex-col p-3 rounded-2xl bg-slate-50 border border-slate-100 hover:border-brand-primary transition-all"
-                    >
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-[10px] font-bold text-slate-900">{b.teacherName}</span>
-                        <span className="text-[9px] font-bold text-brand-primary uppercase tracking-tighter">{b.time}</span>
-                      </div>
-                      <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">{b.date}</p>
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-center py-8">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">
-                      Aucune leçon prévue
-                    </p>
-                    <button
-                      onClick={() => router.push("/student/search")}
-                      className="text-[10px] font-bold text-brand-primary uppercase tracking-widest hover:underline"
-                    >
-                      Trouver un mentor
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="bg-teal-900 rounded-3xl p-6 text-white space-y-4">
-              <ShieldCheck size={32} className="text-teal-400" />
-              <h4 className="font-bold text-lg leading-tight">Votre sécurité est notre priorité</h4>
-              <p className="text-xs opacity-80 leading-relaxed">
-                Profils vérifiés, notifications, et paiements sécurisés.
-              </p>
-            </div>
-          </div>
-        </div>
-      ) : (
         <div className="grid grid-cols-12 gap-6">
           <div className="col-span-12 lg:col-span-8 space-y-6">
             <div className="rounded-[14px] bg-[var(--p-dark-teal)] p-6">
@@ -337,15 +237,111 @@ export function Dashboard() {
           </div>
           <div className="col-span-12 lg:col-span-4 space-y-6">
             <div className="rounded-[14px] bg-[var(--p-dark-teal)] p-8 text-white">
-              <p className="ds-label text-[var(--p-mint-accent)]">Teacher side</p>
-              <h3 className="text-2xl leading-tight mt-2">Gérez votre activité</h3>
+              <p className="ds-label text-[var(--p-mint-accent)]">Vue prof</p>
+              <h3 className="text-2xl leading-tight mt-2">Gère ton activité</h3>
               <p className="text-[13px] text-[var(--p-mint-accent)]/90 mt-3 leading-relaxed">
                 Agenda, réservations, devoirs et suivi élève depuis une seule plateforme.
               </p>
             </div>
           </div>
         </div>
-      )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6 pb-12">
+      <section className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+        <div>
+          <p className="ds-label text-[var(--p-text-subtle)]">Espace élève</p>
+          <h2 className="text-[32px] sm:text-[40px] leading-[1.1] text-[var(--p-text)]">Tableau de bord</h2>
+          <p className="text-[14px] text-[var(--p-text-muted)] mt-1">Prochains cours, profs et pratique</p>
+        </div>
+      </section>
+
+      <div className="grid grid-cols-12 gap-6">
+        <div className="col-span-12 lg:col-span-8 space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div className="bg-gradient-to-br from-orange-500 to-rose-500 p-6 rounded-3xl text-white shadow-xl shadow-orange-100 relative overflow-hidden group">
+              <div className="relative z-10 space-y-4">
+                <div className="flex items-center gap-2">
+                  <Flame size={24} className="animate-pulse" />
+                  <span className="text-3xl font-bold">{profile?.streak || 1}</span>
+                </div>
+                <div>
+                  <h4 className="font-bold text-lg leading-tight">Série de jours</h4>
+                  <p className="text-xs opacity-80 font-medium">Continue comme ça !</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between overflow-hidden relative">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h4 className="font-bold text-slate-900 mb-1">Réservations</h4>
+                  <p className="text-3xl font-bold text-brand-primary">{bookings.length}</p>
+                </div>
+                <div className="w-12 h-12 bg-teal-50 rounded-2xl flex items-center justify-center text-brand-primary">
+                  <Calendar size={24} />
+                </div>
+              </div>
+              <div className="mt-4 pt-4 border-t border-slate-50 flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => router.push("/student/search")}
+                  className="text-[10px] font-bold text-brand-primary uppercase tracking-widest hover:underline"
+                >
+                  Trouver un prof
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <AssignmentHub mode="student" />
+        </div>
+
+        <div className="col-span-12 lg:col-span-4 space-y-6">
+          <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-50 pb-4">
+              <h3 className="font-bold text-slate-900 text-[10px] uppercase tracking-widest">Ma semaine</h3>
+              <Calendar size={14} className="text-slate-400" />
+            </div>
+            <div className="space-y-3">
+              {bookings.length > 0 ? (
+                bookings.slice(0, 3).map((b) => (
+                  <div
+                    key={b.id}
+                    className="flex flex-col p-3 rounded-2xl bg-slate-50 border border-slate-100 hover:border-brand-primary transition-all"
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[10px] font-bold text-slate-900">{b.teacherName}</span>
+                      <span className="text-[9px] font-bold text-brand-primary uppercase tracking-tighter">{b.time}</span>
+                    </div>
+                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">{b.date}</p>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Aucune leçon prévue</p>
+                  <button
+                    type="button"
+                    onClick={() => router.push("/student/search")}
+                    className="text-[10px] font-bold text-brand-primary uppercase tracking-widest hover:underline"
+                  >
+                    Trouver un mentor
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="bg-teal-900 rounded-3xl p-6 text-white space-y-4">
+            <ShieldCheck size={32} className="text-teal-400" />
+            <h4 className="font-bold text-lg leading-tight">Ta sécurité, notre priorité</h4>
+            <p className="text-xs opacity-80 leading-relaxed">Profils vérifiés, notifications et paiements sécurisés.</p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
