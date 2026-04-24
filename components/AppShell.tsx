@@ -164,26 +164,44 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 </button>
               </div>
             ) : (
-              <div className="flex flex-col items-end gap-2 max-w-[min(100vw-2.5rem,280px)]">
-                <label className="flex items-start gap-2 text-left text-[11px] text-[var(--p-text-muted)] leading-snug cursor-pointer">
+              <div className="flex w-full min-w-0 flex-col gap-2.5 sm:w-auto sm:max-w-[min(100vw-2.5rem,340px)] sm:items-end">
+                <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-left shadow-sm transition-colors hover:border-[#1D9E75]/40 hover:bg-[rgba(29,158,117,0.06)] sm:py-3">
                   <input
                     type="checkbox"
                     checked={legalAccepted}
                     onChange={(e) => setLegalAccepted(e.target.checked)}
-                    className="mt-0.5 h-3.5 w-3.5 rounded border-slate-300 text-[#1D9E75] focus:ring-[#1D9E75]"
+                    className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-[#1D9E75] focus:ring-2 focus:ring-[#1D9E75] focus:ring-offset-1"
+                    aria-describedby="legal-login-hint"
                   />
-                  <span>
-                    J&apos;accepte les{" "}
-                    <Link href="/legal/cgu" className="text-[#1D9E75] underline font-medium">
-                      CGU
-                    </Link>{" "}
-                    et la{" "}
-                    <Link href="/legal/confidentialite" className="text-[#1D9E75] underline font-medium">
-                      politique de confidentialité
-                    </Link>
-                    .
+                  <span className="min-w-0 text-sm leading-snug text-[var(--p-text)]">
+                    <span className="font-semibold text-[var(--p-text)]">
+                      J&apos;accepte les CGU et la politique de confidentialité
+                    </span>
+                    <span className="mt-1 block text-xs font-normal text-[var(--p-text-muted)]">
+                      Documents :{" "}
+                      <Link
+                        href="/legal/cgu"
+                        className="font-medium text-[#1D9E75] underline underline-offset-2 hover:no-underline"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        CGU
+                      </Link>
+                      {" · "}
+                      <Link
+                        href="/legal/confidentialite"
+                        className="font-medium text-[#1D9E75] underline underline-offset-2 hover:no-underline"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        Politique de confidentialité
+                      </Link>
+                    </span>
                   </span>
                 </label>
+                <p id="legal-login-hint" className={cn("text-xs sm:text-right", legalAccepted ? "text-[var(--p-text-muted)]" : "font-medium text-amber-800")}>
+                  {legalAccepted
+                    ? "Tu peux te connecter avec Google."
+                    : "Coche la case ci-dessus pour activer le bouton de connexion."}
+                </p>
                 <button
                   type="button"
                   onClick={() => {
@@ -191,10 +209,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     void loginWithGoogle();
                   }}
                   disabled={!legalAccepted}
-                  className="ds-btn-primary text-sm disabled:opacity-50 disabled:pointer-events-none"
+                  className="ds-btn-primary w-full text-sm sm:w-auto disabled:cursor-not-allowed disabled:opacity-45"
                 >
-                  <span className="inline-flex items-center gap-2">
-                    <LogIn size={16} /> Se connecter
+                  <span className="inline-flex items-center justify-center gap-2">
+                    <LogIn size={16} /> Se connecter avec Google
                   </span>
                 </button>
               </div>
