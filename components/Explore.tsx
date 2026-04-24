@@ -672,10 +672,11 @@ function TeacherCard({
               ) : null}
               {String(teacher.profilePlan || "").toLowerCase() === "enterprise" ? (
                 <span
-                  className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full bg-slate-900 text-white border border-slate-700"
+                  className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full bg-[rgba(29,158,117,0.14)] text-[#0f6d52] border border-[rgba(29,158,117,0.35)]"
                   title="Carte Google Maps sur le profil — plan Entreprise"
                 >
-                  Studio vérifié <MapPin size={12} className="shrink-0" />
+                  <MapPin size={12} className="shrink-0 text-[#1D9E75]" />
+                  Studio vérifié
                 </span>
               ) : null}
               {teacher.teachingMode === "online" && <Video size={12} className="text-indigo-400" />}

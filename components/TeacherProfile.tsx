@@ -51,6 +51,8 @@ interface TeacherProfileProps {
    * Carte Google « Studio » uniquement sur la fiche `/teacher/profile/[id]`, pas dans la modale Recherche.
    */
   showGoogleStudioMap?: boolean;
+  /** Réservation individuelle confirmée (paiement) — révèle l’adresse exacte sur la carte */
+  studioMapHasConfirmedBooking?: boolean;
 }
 
 export function TeacherProfile({
@@ -61,6 +63,7 @@ export function TeacherProfile({
   distanceKm,
   embeddedPlan,
   showGoogleStudioMap,
+  studioMapHasConfirmedBooking,
 }: TeacherProfileProps) {
   const { user } = useAuth();
   const router = useRouter();
@@ -296,22 +299,6 @@ export function TeacherProfile({
             </div>
           </div>
 
-          {showEnterpriseStudioMap ? (
-            <div className="space-y-3">
-              <h3 className="text-lg font-bold text-slate-900 border-l-4 border-brand-primary pl-4 uppercase tracking-wider text-sm">
-                Studio sur la carte
-              </h3>
-              <TeacherMap
-                context="teacher_profile"
-                teacherPlan={displayPlan}
-                lat={teacher.location.lat}
-                lng={teacher.location.lng}
-                title="Localisation"
-                className="space-y-2"
-              />
-            </div>
-          ) : null}
-
           <div className="bg-slate-50 rounded-3xl p-6 border border-slate-100 flex flex-col sm:flex-row items-center gap-6">
             <div className="flex-1 space-y-1">
               <h4 className="font-bold text-slate-900">Options de cours</h4>
@@ -342,6 +329,14 @@ export function TeacherProfile({
               </div>
             </div>
           </div>
+
+          {showEnterpriseStudioMap ? (
+            <TeacherMap
+              teacher={teacher}
+              isBooked={Boolean(studioMapHasConfirmedBooking)}
+              isEnterprise={displayPlan === "enterprise"}
+            />
+          ) : null}
         </div>
 
         <div className="p-8 bg-white border-t border-slate-100 flex flex-col sm:flex-row items-stretch gap-4 flex-shrink-0">

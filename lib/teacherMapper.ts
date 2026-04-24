@@ -27,7 +27,7 @@ export type TeacherRow = {
 };
 
 export function teacherRowToTeacher(row: TeacherRow): Teacher {
-  const loc = (row.location || {}) as { lat?: number; lng?: number };
+  const loc = (row.location || {}) as { lat?: number; lng?: number; neighborhood?: string; address?: string };
   return {
     id: row.id,
     userId: row.user_id ?? undefined,
@@ -42,7 +42,12 @@ export function teacherRowToTeacher(row: TeacherRow): Teacher {
     bio: row.bio,
     imageUrl: row.image_url,
     availability: Array.isArray(row.availability) ? (row.availability as string[]) : [],
-    location: { lat: Number(loc.lat ?? 0), lng: Number(loc.lng ?? 0) },
+    location: {
+      lat: Number(loc.lat ?? 0),
+      lng: Number(loc.lng ?? 0),
+      neighborhood: loc.neighborhood,
+      address: loc.address,
+    },
     isVerified: row.is_verified,
     teachingMode: row.teaching_mode as Teacher["teachingMode"],
     languages: row.languages ?? [],

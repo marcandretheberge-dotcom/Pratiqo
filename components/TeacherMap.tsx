@@ -1,58 +1,42 @@
 "use client";
 
-import React, { useMemo } from "react";
-import { googleMapsEmbedSrc } from "../lib/googleMapsEmbed";
-
-export type TeacherMapContext = "teacher_profile" | "group_session";
-
-function mapAllowed(context: TeacherMapContext, teacherPlan: string | null | undefined): boolean {
-  if (context === "group_session") return true;
-  return String(teacherPlan || "").toLowerCase() === "enterprise";
-}
+import React from "react";
+import type { Teacher } from "../types";
+import { GoogleProgressiveMap } from "./GoogleProgressiveMap";
 
 /**
- * Google Maps (Embed API) — visible only for Enterprise teachers in profile context,
- * or always when {@link TeacherMapContext} is `group_session`.
+ * Carte Google (progressive) — réservée au plan **Entreprise**.
+ * Avant réservation confirmée : centre flouté + cercle 500 m + message.
  */
 export function TeacherMap({
-  context,
-  teacherPlan,
-  lat,
-  lng,
-  placeQuery,
-  title = "Carte",
-  className,
+  teacher,
+  isBooked,
+  isEnterprise,
 }: {
-  context: TeacherMapContext;
-  teacherPlan?: string | null;
-  lat?: number;
-  lng?: number;
-  placeQuery?: string | null;
-  title?: string;
-  className?: string;
+  teacher: Teacher;
+  isBooked: boolean;
+  isEnterprise: boolean;
 }) {
-  if (!mapAllowed(context, teacherPlan)) {
+  if (!isEnterprise) return null;
+  const { lat, lng } = teacher.location;
+  if (!Number.isFinite(lat) || !Number.isFinite(lng) || (lat === 0 && lng === 0)) {
     return null;
   }
 
-  const src = useMemo(() => googleMapsEmbedSrc({ lat, lng, placeQuery }), [lat, lng, placeQuery]);
-  if (!src) {
-    return (
-      <div className={className}>
-        <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-2">{title}</p>
-        <p className="text-sm text-slate-500 rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-4">
-          Ajoute la variable d&apos;environnement NEXT_PUBLIC_GOOGLE_MAPS_API_KEY (Embed API) pour afficher la carte.
-        </p>
-      </div>
-    );
-  }
-
   return (
-    <div className={className}>
-      <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-2">{title}</p>
-      <div className="relative w-full overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 aspect-[16/10]">
-        <iframe title={title} className="absolute inset-0 h-full w-full border-0" loading="lazy" referrerPolicy="no-referrer-when-downgrade" src={src} allowFullScreen />
-      </div>
+    <div className="space-y-2 pt-2">
+      <h3 className="text-lg font-bold text-slate-900 border-l-4 border-brand-primary pl-4 text-sm uppercase tracking-wider">
+        Studio sur la carte
+      </h3>
+      <GoogleProgressiveMap
+        mapKey={`teacher-${teacher.id}`}
+        exactLat={lat}
+        exactLng={lng}
+        locked={!isBooked}
+        neighborhood={teacher.location.neighborhood ?? null}
+        fullAddress={teacher.location.address ?? null}
+        lockedMessage="Adresse exacte révélée après réservation"
+      />
     </div>
   );
 }

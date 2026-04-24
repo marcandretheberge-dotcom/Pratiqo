@@ -8,9 +8,12 @@ import { TeacherProfile } from "../../../../../components/TeacherProfile";
 import { BookingModal, type BookingInitialLessonKind } from "../../../../../components/BookingModal";
 import { useRouter } from "next/navigation";
 import { haversineDistance } from "../../../../../lib/geo";
+import { hasConfirmedBooking } from "../../../../../lib/maps";
+import { useAuth } from "../../../../../components/AuthProvider";
 
 export default function TeacherProfilePage({ params }: { params: { id: string } }) {
   const router = useRouter();
+  const { user } = useAuth();
   const [teacher, setTeacher] = useState<Teacher | null>(null);
   const [embeddedPlan, setEmbeddedPlan] = useState<{ plan: string | null; loading: boolean }>({
     plan: null,
@@ -20,6 +23,39 @@ export default function TeacherProfilePage({ params }: { params: { id: string } 
   const [bookingInitialKind, setBookingInitialKind] = useState<BookingInitialLessonKind>("standard");
   const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(null);
   const [geoDeniedOrUnavailable, setGeoDeniedOrUnavailable] = useState(false);
+  const [studioMapHasConfirmedBooking, setStudioMapHasConfirmedBooking] = useState(false);
+
+  useEffect(() => {
+    if (!teacher?.id || !user?.id) {
+      setStudioMapHasConfirmedBooking(false);
+      return;
+    }
+    let cancelled = false;
+    void hasConfirmedBooking(user.id, teacher.id).then((ok) => {
+      if (!cancelled) setStudioMapHasConfirmedBooking(ok);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [teacher?.id, user?.id]);
+
+  useEffect(() => {
+    if (!teacher?.id) return;
+    let cancelled = false;
+    setEmbeddedPlan({ plan: null, loading: true });
+    void fetch(`/api/teachers/plan?teacherId=${encodeURIComponent(teacher.id)}`)
+      .then((r) => r.json())
+      .then((j: { plan?: string }) => {
+        if (cancelled) return;
+        setEmbeddedPlan({ plan: j.plan ?? "free", loading: false });
+      })
+      .catch(() => {
+        if (!cancelled) setEmbeddedPlan({ plan: "free", loading: false });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [teacher?.id]);
 
   useEffect(() => {
     const supabase = getSupabaseClient();
@@ -93,6 +129,7 @@ export default function TeacherProfilePage({ params }: { params: { id: string } 
         teacher={teacher}
         embeddedPlan={embeddedPlan}
         showGoogleStudioMap
+        studioMapHasConfirmedBooking={studioMapHasConfirmedBooking}
         onClose={() => router.push("/teacher/profile")}
         onBook={(kind) => {
           setBookingInitialKind(kind);

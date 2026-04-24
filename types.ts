@@ -26,6 +26,10 @@ export interface Teacher {
   location: {
     lat: number;
     lng: number;
+    /** Quartier affiché avant réservation (plan Entreprise / carte progressive) */
+    neighborhood?: string;
+    /** Adresse complète après réservation confirmée */
+    address?: string;
   };
   isVerified: boolean;
   teachingMode: TeachingMode;

@@ -27,6 +27,8 @@ export default function TeacherSettingsPage() {
   const [force2h, setForce2h] = useState(false);
   const [requiresConfirmation, setRequiresConfirmation] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
+  const [neighborhood, setNeighborhood] = useState("");
+  const [locationJson, setLocationJson] = useState<Record<string, unknown>>({});
 
   useEffect(() => {
     if (!user) {
@@ -43,6 +45,9 @@ export default function TeacherSettingsPage() {
       }
       const row = data as TeacherRow;
       setTeacherId(row.id);
+      const loc = (row.location || {}) as Record<string, unknown>;
+      setLocationJson(loc);
+      setNeighborhood(typeof loc.neighborhood === "string" ? loc.neighborhood : "");
       setEnabled(Boolean(row.home_lesson_enabled));
       setPrice(row.home_lesson_price != null ? String(row.home_lesson_price) : "");
       setRadius(snapRadiusKm(row.home_lesson_radius_km ?? 25));
@@ -65,6 +70,9 @@ export default function TeacherSettingsPage() {
       setSaving(false);
       return;
     }
+    const nextLocation: Record<string, unknown> = { ...locationJson };
+    if (neighborhood.trim()) nextLocation.neighborhood = neighborhood.trim();
+    else delete nextLocation.neighborhood;
     const { error } = await supabase
       .from("teachers")
       .update({
@@ -74,6 +82,7 @@ export default function TeacherSettingsPage() {
         home_lesson_min_duration: minDuration,
         home_lesson_force_2h_over_20km: force2h,
         home_lesson_requires_confirmation: requiresConfirmation,
+        location: nextLocation,
       })
       .eq("id", teacherId);
     setSaving(false);
@@ -81,6 +90,7 @@ export default function TeacherSettingsPage() {
       setMessage(error.message);
       return;
     }
+    setLocationJson(nextLocation);
     setMessage("Enregistré.");
   };
 
@@ -127,6 +137,24 @@ export default function TeacherSettingsPage() {
       </div>
 
       <div className="bg-white border border-[var(--p-border-light)] rounded-3xl p-6 space-y-6 shadow-sm">
+        <div>
+          <label className="block text-xs font-bold uppercase tracking-widest text-[var(--p-text-subtle)] mb-2">
+            Quartier affiché publiquement
+          </label>
+          <input
+            type="text"
+            value={neighborhood}
+            onChange={(e) => setNeighborhood(e.target.value)}
+            className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm"
+            placeholder="ex: Plateau-Mont-Royal"
+            autoComplete="address-level3"
+          />
+          <p className="mt-1.5 text-[11px] text-[var(--p-text-muted)] leading-snug">
+            Ce quartier apparaît sur la carte (plan Entreprise) avant réservation. L&apos;adresse complète reste masquée
+            jusqu&apos;à confirmation.
+          </p>
+        </div>
+
         <label className="flex items-center justify-between gap-4 cursor-pointer">
           <span className="text-sm font-medium text-[var(--p-text)]">Activer les cours à domicile</span>
           <input

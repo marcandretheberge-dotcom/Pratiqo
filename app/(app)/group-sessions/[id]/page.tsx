@@ -9,6 +9,7 @@ import { cn } from "../../../../lib/utils";
 import { isSessionBookable, spotsRemaining, type GroupSessionRow } from "../../../../lib/groupSessions";
 import { useAuth } from "../../../../components/AuthProvider";
 import { GroupSessionMap } from "../../../../components/GroupSessionMap";
+import { hasConfirmedGroupRegistration } from "../../../../lib/maps";
 
 type Row = GroupSessionRow & { teachers?: { name: string; image_url: string; bio: string } | null };
 
@@ -21,6 +22,21 @@ export default function GroupSessionDetailPage() {
   const [loadingSession, setLoadingSession] = useState(true);
   const [related, setRelated] = useState<GroupSessionRow[]>([]);
   const [paying, setPaying] = useState(false);
+  const [groupRegistered, setGroupRegistered] = useState(false);
+
+  useEffect(() => {
+    if (!user?.id) {
+      setGroupRegistered(false);
+      return;
+    }
+    let cancelled = false;
+    void hasConfirmedGroupRegistration(user.id, id).then((ok) => {
+      if (!cancelled) setGroupRegistered(ok);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id, id]);
 
   useEffect(() => {
     const supabase = getSupabaseClient();
@@ -170,18 +186,24 @@ export default function GroupSessionDetailPage() {
         <h2 className="text-sm font-bold uppercase tracking-widest text-[var(--p-text-subtle)] mb-3">Lieu</h2>
         {session.teaching_mode === "online" ? (
           <p className="text-sm text-[var(--p-text)] break-all">{session.online_link || "Lien communiqué après inscription."}</p>
-        ) : (
+        ) : groupRegistered ? (
           <p className="text-sm text-[var(--p-text)] flex items-start gap-2">
             <MapPin className="text-[#1D9E75] shrink-0 mt-0.5" size={18} />
             {session.location || "Adresse communiquée après inscription."}
+          </p>
+        ) : (
+          <p className="text-sm text-[var(--p-text-muted)]">
+            Le lieu exact est communiqué après inscription confirmée. La carte ci-dessous indique une zone approximative.
           </p>
         )}
       </section>
 
       <GroupSessionMap
         className="rounded-2xl border border-[var(--p-border-light)] bg-[var(--p-surface)] p-6"
+        sessionId={id}
         teachingMode={session.teaching_mode}
         location={session.location}
+        isRegistered={groupRegistered}
       />
 
       <section className="rounded-2xl border border-[var(--p-border-light)] bg-[var(--p-surface)] p-6">
