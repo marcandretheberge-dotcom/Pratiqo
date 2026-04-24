@@ -32,7 +32,13 @@ export default function CguPage() {
       toc={[...TOC]}
       currentPath="/legal/cgu"
     >
-      <p className="text-sm text-[var(--p-text-muted)] -mt-4 mb-8">
+      <p className="text-sm text-[var(--p-text-muted)] text-center -mt-2 mb-6 max-w-xl mx-auto leading-relaxed">
+        © 2026 Pratiqo inc. Tous droits réservés.
+        <br />
+        Contenu protégé par le droit d&apos;auteur canadien.
+      </p>
+
+      <p className="text-sm text-[var(--p-text-muted)] -mt-2 mb-8">
         <strong className="text-[var(--p-text)]">Version : 1.0</strong>
       </p>
 

@@ -199,7 +199,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="max-w-[1200px] mx-auto px-5 sm:px-10 py-12">{children}</div>
       </main>
 
-      <footer className="border-t border-[var(--p-border-light)] bg-white mt-auto">
+      <footer className="border-t border-[var(--p-border-light)] bg-[var(--p-surface)] mt-auto">
         <div className="max-w-[1200px] mx-auto px-5 sm:px-10 py-4 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-[var(--p-text-muted)]">
           <Link href="/legal/cgu" className="hover:text-[#1D9E75] hover:underline">
             CGU
@@ -212,6 +212,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <Link href="/legal/annulation" className="hover:text-[#1D9E75] hover:underline">
             Annulation
           </Link>
+        </div>
+        <div className="border-t border-[var(--p-border-light)] py-4 px-5 sm:px-10">
+          <p className="text-center text-[11px] text-[var(--p-text-muted)] leading-relaxed">
+            © 2026 Pratiqo inc. Tous droits réservés.
+            <span className="mx-2 text-[var(--p-text-subtle)]">·</span>
+            <Link href="/legal/confidentialite" className="hover:text-[#1D9E75] hover:underline">
+              Politique de confidentialité
+            </Link>
+            <span className="mx-2 text-[var(--p-text-subtle)]">·</span>
+            <Link href="/legal/cgu" className="hover:text-[#1D9E75] hover:underline">
+              CGU
+            </Link>
+          </p>
         </div>
       </footer>
     </div>

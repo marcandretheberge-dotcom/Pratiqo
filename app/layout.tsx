@@ -11,8 +11,12 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Pratiqo",
-  description: "Marketplace premium de cours",
+  title: "Pratiqo — Trouve ton prof idéal",
+  description:
+    "Marketplace de cours particuliers — musique, danse, arts martiaux, langues et plus.",
+  other: {
+    copyright: "© 2026 Pratiqo inc.",
+  },
 };
 
 export default function RootLayout({
