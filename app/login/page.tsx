@@ -8,38 +8,20 @@ import { cn } from "../../lib/utils";
 import Logo from "../../components/ui/Logo";
 import { loginWithGoogle } from "../../lib/auth";
 import { useAuth } from "../../components/AuthProvider";
-import { getSupabaseClient } from "../../lib/supabase";
 
 function LoginForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { user, loading } = useAuth();
   const role = searchParams.get("role");
-  const nextRaw = searchParams.get("next") || (role === "teacher" ? "/onboarding?role=teacher" : "/dashboard");
+  const nextRaw = searchParams.get("next") || "/dashboard";
   const next = nextRaw.startsWith("/") ? nextRaw : `/${nextRaw}`;
   const isTeacherInvite = role === "teacher";
 
   useEffect(() => {
-    if (loading || !user) return;
-
-    const run = async () => {
-      // Teacher flow: decide onboarding vs dashboard
-      if (role === "teacher") {
-        const supabase = getSupabaseClient();
-        const { data } = await supabase
-          .from("profiles")
-          .select("teacher_onboarding_complete, role")
-          .eq("id", user.id)
-          .maybeSingle();
-        const done = Boolean((data as { teacher_onboarding_complete?: boolean } | null)?.teacher_onboarding_complete);
-        router.replace(done ? "/dashboard" : "/onboarding");
-        return;
-      }
-
+    if (!loading && user) {
       router.replace(next);
-    };
-
-    void run();
+    }
   }, [loading, user, router, next, role]);
 
   const [legalAccepted, setLegalAccepted] = useState(false);
@@ -49,9 +31,11 @@ function LoginForm() {
     if (!legalAccepted || busy) return;
     setBusy(true);
     try {
-      // Teachers always come back to /login?role=teacher after OAuth, so we can branch correctly.
-      const redirectPath = role === "teacher" ? "/login?role=teacher" : next;
-      await loginWithGoogle(redirectPath.startsWith("/") ? redirectPath : `/${redirectPath}`);
+      if (role === "teacher") {
+        await loginWithGoogle("/dashboard", "teacher");
+      } else {
+        await loginWithGoogle("/dashboard");
+      }
     } catch (e) {
       console.error(e);
       alert("Connexion impossible. Réessaie dans un instant.");
