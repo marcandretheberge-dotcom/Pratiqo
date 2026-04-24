@@ -11,6 +11,7 @@ import {
   ShieldCheck,
   Star,
   Users,
+  UsersRound,
   Video,
   X,
 } from "lucide-react";
@@ -21,12 +22,17 @@ import { cn } from "../lib/utils";
 import { getSupabaseClient } from "../lib/supabase";
 import { teacherRowToTeacher, type TeacherRow } from "../lib/teacherMapper";
 import { haversineDistance } from "../lib/geo";
+import { spotsRemaining, type GroupSessionRow } from "../lib/groupSessions";
 import { useAuth } from "./AuthProvider";
 import { useRouter } from "next/navigation";
 
 /** Colonnes nécessaires au mapper + cours à domicile (évite les réponses PostgREST incomplètes). */
 const TEACHERS_SELECT =
   "id, user_id, name, discipline, category, rating, reviews, price_per_lesson, monthly_subscription, bio, image_url, availability, location, is_verified, teaching_mode, languages, levels, home_lesson_enabled, home_lesson_price, home_lesson_radius_km, home_lesson_min_duration, home_lesson_requires_confirmation, home_lesson_force_2h_over_20km";
+
+type ExploreGroupSession = GroupSessionRow & {
+  teachers?: { name: string; image_url: string | null } | null;
+};
 
 export function Explore({
   onBook,
@@ -49,6 +55,30 @@ export function Explore({
   const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(null);
   const [geoError, setGeoError] = useState<string | null>(null);
   const [geoLoading, setGeoLoading] = useState(false);
+  const [exploreTab, setExploreTab] = useState<"cours" | "groupe">("cours");
+  const [groupSessions, setGroupSessions] = useState<ExploreGroupSession[]>([]);
+  const [loadingGroups, setLoadingGroups] = useState(true);
+
+  useEffect(() => {
+    const supabase = getSupabaseClient();
+    const loadGroups = async () => {
+      const { data, error } = await supabase
+        .from("group_sessions")
+        .select("*, teachers(name, image_url)")
+        .in("status", ["open", "full"])
+        .order("date", { ascending: true });
+      if (!error && data) setGroupSessions(data as ExploreGroupSession[]);
+      setLoadingGroups(false);
+    };
+    void loadGroups();
+    const ch = supabase
+      .channel("explore-group-sessions")
+      .on("postgres_changes", { event: "*", schema: "public", table: "group_sessions" }, () => void loadGroups())
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(ch);
+    };
+  }, []);
 
   useEffect(() => {
     const supabase = getSupabaseClient();
@@ -172,6 +202,16 @@ export function Explore({
     return withinRadius;
   }, [teachers, selectedCategory, searchQuery, teachingMode, onlyVerified, geo, radiusFilter]);
 
+  const filteredGroupSessions = useMemo(() => {
+    return groupSessions.filter((s) => {
+      const catOk = selectedCategory === "All" || s.discipline === selectedCategory;
+      const q = searchQuery.toLowerCase();
+      const name = s.teachers?.name?.toLowerCase() ?? "";
+      const searchOk = !q || s.title.toLowerCase().includes(q) || name.includes(q);
+      return catOk && searchOk;
+    });
+  }, [groupSessions, selectedCategory, searchQuery]);
+
   return (
     <div className="space-y-6">
       <section className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -183,6 +223,32 @@ export function Explore({
           <p className="text-[14px] text-[var(--p-text-muted)] max-w-[560px]">
             Active votre position pour voir en priorité les professeurs près de toi.
           </p>
+          <div className="flex flex-wrap gap-2 mt-4">
+            <button
+              type="button"
+              onClick={() => setExploreTab("cours")}
+              className={cn(
+                "h-10 px-4 rounded-full text-sm font-semibold transition-all border",
+                exploreTab === "cours"
+                  ? "bg-[#1D9E75] text-white border-[#1D9E75]"
+                  : "bg-[var(--p-surface)] text-[var(--p-text-muted)] border-[var(--p-border-light)] hover:border-[#1D9E75]/40",
+              )}
+            >
+              Cours individuels
+            </button>
+            <button
+              type="button"
+              onClick={() => setExploreTab("groupe")}
+              className={cn(
+                "h-10 px-4 rounded-full text-sm font-semibold transition-all border inline-flex items-center gap-2",
+                exploreTab === "groupe"
+                  ? "bg-[#1D9E75] text-white border-[#1D9E75]"
+                  : "bg-[var(--p-surface)] text-[var(--p-text-muted)] border-[var(--p-border-light)] hover:border-[#1D9E75]/40",
+              )}
+            >
+              <UsersRound size={16} /> Cours de groupe
+            </button>
+          </div>
         </div>
         <div className="flex items-center gap-3">
           <button
@@ -211,7 +277,8 @@ export function Explore({
             <Filter size={14} /> Filtres
           </button>
           <div className="hidden sm:flex items-center gap-2 ds-pill">
-            <CheckCircle2 size={12} /> {filteredTeachers.length} disponibles
+            <CheckCircle2 size={12} />{" "}
+            {exploreTab === "cours" ? filteredTeachers.length : filteredGroupSessions.length} disponibles
           </div>
         </div>
       </section>
@@ -243,7 +310,11 @@ export function Explore({
         <input
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
-          placeholder="Rechercher un prof (nom, discipline)..."
+          placeholder={
+            exploreTab === "groupe"
+              ? "Rechercher un cours ou un professeur…"
+              : "Rechercher un prof (nom, discipline)..."
+          }
           className="w-full bg-transparent outline-none text-[14px] text-[var(--p-text)] placeholder:text-[var(--p-text-subtle)]"
         />
       </div>
@@ -325,7 +396,20 @@ export function Explore({
       </section>
 
       <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 min-h-[400px]">
-        {loading ? (
+        {exploreTab === "groupe" ? (
+          loadingGroups ? (
+            <div className="col-span-full flex items-center justify-center p-20">
+              <Loader2 className="animate-spin text-brand-primary" size={32} />
+            </div>
+          ) : filteredGroupSessions.length === 0 ? (
+            <div className="col-span-full text-center p-20 bg-white rounded-2xl border border-dashed border-slate-200">
+              <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Aucun cours de groupe</p>
+              <p className="mt-3 text-[13px] text-[var(--p-text-muted)]">Essaie une autre discipline ou reviens plus tard.</p>
+            </div>
+          ) : (
+            filteredGroupSessions.map((s, index) => <ExploreGroupCard key={s.id} session={s} index={index} />)
+          )
+        ) : loading ? (
           <div className="col-span-full flex items-center justify-center p-20">
             <Loader2 className="animate-spin text-brand-primary" size={32} />
           </div>
@@ -373,6 +457,87 @@ export function Explore({
         )}
       </section>
     </div>
+  );
+}
+
+function ExploreGroupCard({ session, index }: { session: ExploreGroupSession; index: number }) {
+  const router = useRouter();
+  const max = Number(session.max_participants);
+  const cur = Number(session.current_participants);
+  const remaining = spotsRemaining(session);
+  const ratio = max > 0 ? remaining / max : 0;
+  const barColor =
+    remaining === 0 ? "bg-amber-500" : ratio > 0.5 ? "bg-[#1D9E75]" : ratio < 0.25 ? "bg-amber-500" : "bg-[#1D9E75]/70";
+  const teacherName = session.teachers?.name ?? "Professeur";
+  const img = session.teachers?.image_url;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.05 }}
+      onClick={() => router.push(`/group-sessions/${session.id}`)}
+      className="ds-card p-5 hover:shadow-[0_22px_70px_rgba(15,110,86,0.12)] transition-all cursor-pointer flex gap-5 group relative border-l-4 border-l-[#1D9E75]"
+    >
+      <div className="relative shrink-0">
+        {img ? (
+          <img src={img} alt="" className="w-14 h-14 rounded-full object-cover border border-[var(--p-border-light)]" />
+        ) : (
+          <div className="w-14 h-14 rounded-full bg-[var(--p-light-teal-bg)] flex items-center justify-center text-[15px] font-semibold text-[var(--p-dark-teal)]">
+            {initialsFor(teacherName)}
+          </div>
+        )}
+        <span
+          className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-violet-600 text-white flex items-center justify-center border-2 border-white shadow-sm"
+          title="Cours de groupe"
+        >
+          <UsersRound size={14} />
+        </span>
+      </div>
+
+      <div className="flex-1 min-w-0 flex flex-col gap-3">
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <div className="space-y-1 min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="ds-pill">{session.discipline}</span>
+              {session.is_recurring ? (
+                <span className="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-violet-100 text-violet-800 border border-violet-200">
+                  Récurrent
+                </span>
+              ) : null}
+            </div>
+            <h3 className="text-[17px] font-semibold leading-snug text-[var(--p-text)] group-hover:text-[var(--p-dark-teal)] transition-colors line-clamp-2">
+              {session.title}
+            </h3>
+            <p className="text-[13px] text-[var(--p-text-muted)] truncate">{teacherName}</p>
+          </div>
+          <div className="text-right shrink-0">
+            <p className="text-[18px] font-semibold text-[#1D9E75]">${Number(session.price_per_person)}</p>
+            <p className="text-[11px] text-[var(--p-text-muted)]">/ personne</p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-x-4 gap-y-1 text-[12px] text-[var(--p-text-muted)]">
+          <span>
+            {session.date} · {session.time}
+          </span>
+          <span>{session.duration_minutes} min</span>
+          <span className="inline-flex items-center gap-1 text-[var(--p-text)]">
+            <Users size={12} className="text-[#1D9E75]" />
+            {cur}/{max} inscrits
+          </span>
+        </div>
+
+        <div className="space-y-1.5">
+          <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
+            <div className={cn("h-full rounded-full transition-all", barColor)} style={{ width: `${max ? (remaining / max) * 100 : 0}%` }} />
+          </div>
+          <p className="text-[11px] text-[var(--p-text-muted)]">
+            {remaining > 0 ? `${remaining} place${remaining > 1 ? "s" : ""} restante${remaining > 1 ? "s" : ""}` : "Complet"}
+          </p>
+        </div>
+      </div>
+    </motion.div>
   );
 }
 

@@ -13,6 +13,7 @@ import {
   Search,
   Settings,
   UserCircle2,
+  UsersRound,
 } from "lucide-react";
 import { cn } from "../lib/utils";
 import { useAuth } from "./AuthProvider";
@@ -23,12 +24,13 @@ import { fetchUnreadMessageCount } from "../lib/messaging";
 import Logo from "./ui/Logo";
 import { NotificationCenter } from "./NotificationCenter";
 
-type NavItem = { href: string; label: string; teacherOnly?: boolean };
+type NavItem = { href: string; label: string; teacherOnly?: boolean; groupSessionsNav?: boolean };
 
 const NAV: NavItem[] = [
   { href: "/", label: "Accueil" },
   { href: "/dashboard", label: "Tableau de bord" },
   { href: "/student/search", label: "Recherche élève" },
+  { href: "/group-sessions", label: "Cours de groupe", groupSessionsNav: true },
   { href: "/messages", label: "Messages" },
   { href: "/booking", label: "Réservation" },
   { href: "/teacher/profile", label: "Profil prof" },
@@ -39,6 +41,7 @@ const NAV: NavItem[] = [
 const NAV_ICONS: Partial<Record<string, React.ReactNode>> = {
   "/dashboard": <LayoutDashboard size={18} />,
   "/student/search": <Search size={18} />,
+  "/group-sessions": <UsersRound size={18} />,
   "/messages": <MessageCircle size={18} />,
   "/booking": <CalendarCheck2 size={18} />,
   "/teacher/profile": <UserCircle2 size={18} />,
@@ -94,15 +97,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
           <nav className="hidden md:flex items-center gap-2">
             {NAV.filter((item) => !item.teacherOnly || profile?.role === "teacher").map((item) => {
-              const active =
-                pathname === item.href ||
-                (item.href !== "/" && item.href !== "/dashboard" && pathname.startsWith(item.href));
+              const resolvedHref =
+                item.groupSessionsNav && profile?.role === "teacher"
+                  ? "/teacher/group-sessions"
+                  : item.href;
+              const active = item.groupSessionsNav
+                ? pathname.startsWith("/teacher/group-sessions") || pathname.startsWith("/group-sessions")
+                : pathname === item.href ||
+                  (item.href !== "/" && item.href !== "/dashboard" && pathname.startsWith(item.href));
               const icon = NAV_ICONS[item.href];
               const showUnread = item.href === "/messages" && unreadMessages > 0;
               return (
                 <Link
                   key={item.href}
-                  href={item.href}
+                  href={resolvedHref}
                   className={cn(
                     "px-4 py-2 rounded-[18px] text-sm font-medium transition-colors inline-flex items-center gap-2",
                     active
