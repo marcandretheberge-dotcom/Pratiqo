@@ -1,7 +1,7 @@
 import React from "react";
-import { AppShell } from "../../components/AppShell";
+import { AuthenticatedShell } from "../../components/AuthenticatedShell";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-  return <AppShell>{children}</AppShell>;
+  return <AuthenticatedShell>{children}</AuthenticatedShell>;
 }
 

@@ -1,156 +1,378 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { MapPin, Search } from "lucide-react";
-import { cn } from "../lib/utils";
+import { useRouter } from "next/navigation";
+import { AnimatePresence, motion } from "motion/react";
+import { Loader2, MapPin, Search, Star, Users, Video } from "lucide-react";
+import type { Discipline, Teacher } from "../types";
 import { TEACHERS } from "../constants";
-import type { Teacher } from "../types";
+import { cn } from "../lib/utils";
 import Logo from "../components/ui/Logo";
+import { getSupabaseClient } from "../lib/supabase";
+import { teacherRowToTeacher, type TeacherRow } from "../lib/teacherMapper";
 
-const POPULAR_TAGS = ["Piano", "Anglais", "Karaté", "Salsa", "Violon", "Business"];
+type HeroMode = "student" | "teacher";
 
-export default function Home() {
+const TEACHERS_SELECT =
+  "id, user_id, name, discipline, category, rating, reviews, price_per_lesson, monthly_subscription, bio, image_url, availability, location, is_verified, teaching_mode, languages, levels, home_lesson_enabled, home_lesson_price, home_lesson_radius_km, home_lesson_min_duration, home_lesson_requires_confirmation, home_lesson_force_2h_over_20km";
+
+const QUICK: { label: string; cat?: Discipline; href?: string }[] = [
+  { label: "Musique", cat: "Musique" },
+  { label: "Danse", cat: "Danse" },
+  { label: "Arts martiaux", cat: "Arts Martiaux" },
+  { label: "Langues", cat: "Langues" },
+  { label: "Cours groupe", href: "/group-sessions" },
+];
+
+export default function LandingPage() {
+  const router = useRouter();
+  const [mode, setMode] = useState<HeroMode>("student");
   const [query, setQuery] = useState("");
-  const cards = useMemo(() => TEACHERS.slice(0, 3), []);
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [loadingTeachers, setLoadingTeachers] = useState(true);
+  const [activeCat, setActiveCat] = useState<Discipline | "All">("All");
+  const [geoLoading, setGeoLoading] = useState(false);
+
+  useEffect(() => {
+    const supabase = getSupabaseClient();
+    const load = async () => {
+      const mergePlans = async (list: Teacher[]) => {
+        const ids = list.map((t) => t.id).join(",");
+        if (!ids) {
+          setTeachers(list);
+          return;
+        }
+        try {
+          const pr = await fetch(`/api/teachers/plans?ids=${encodeURIComponent(ids)}`);
+          const body = (await pr.json()) as { plans?: Record<string, string> };
+          const plans = body.plans ?? {};
+          setTeachers(list.map((t) => ({ ...t, profilePlan: plans[t.id] ?? "free" })));
+        } catch {
+          setTeachers(list.map((t) => ({ ...t, profilePlan: "free" })));
+        }
+      };
+      const { data, error } = await supabase.from("teachers").select(TEACHERS_SELECT).order("id");
+      if (error || !data?.length) {
+        await mergePlans(TEACHERS);
+        setLoadingTeachers(false);
+        return;
+      }
+      await mergePlans(data.map((r) => teacherRowToTeacher(r as TeacherRow)));
+      setLoadingTeachers(false);
+    };
+    void load();
+  }, []);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return teachers.filter((t) => {
+      const catOk = activeCat === "All" || t.category === activeCat;
+      const qOk =
+        !q ||
+        t.name.toLowerCase().includes(q) ||
+        t.discipline.toLowerCase().includes(q) ||
+        "montréal".includes(q);
+      return catOk && qOk;
+    });
+  }, [teachers, query, activeCat]);
+
+  const runSearch = () => {
+    const q = query.trim();
+    router.push(q ? `/student/search?q=${encodeURIComponent(q)}` : "/student/search");
+  };
+
+  const nearMe = () => {
+    if (!("geolocation" in navigator)) {
+      alert("La géolocalisation n'est pas disponible.");
+      return;
+    }
+    setGeoLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      () => {
+        setGeoLoading(false);
+        router.push("/student/search?near=1");
+      },
+      () => {
+        setGeoLoading(false);
+        alert("Active la localisation pour « Près de moi ».");
+      },
+      { enableHighAccuracy: true, timeout: 10000 },
+    );
+  };
 
   return (
-    <div>
-      <header className="bg-white border-b border-[var(--p-border-light)]">
-        <div className="max-w-[1200px] mx-auto px-5 sm:px-10 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center">
-            <Logo size="sm" />
+    <div className="min-h-[100dvh] flex flex-col bg-[#FAFCFB]">
+      <header className="border-b border-[var(--p-border-light)] bg-white">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
+          <Link href="/" className="flex items-center gap-2">
+            <Logo size="sm" variant="dark" />
           </Link>
-          <div className="hidden sm:flex items-center gap-3">
-            <Link href="/dashboard" className="ds-btn-secondary text-sm">
-              Tableau de bord
-            </Link>
-            <Link href="/student/search" className="ds-btn-primary text-sm">
-              Trouver un professeur
-            </Link>
-          </div>
+          <Link href="/login" className="text-sm font-semibold text-[#1D9E75] hover:underline">
+            Se connecter
+          </Link>
         </div>
       </header>
 
-      <main className="max-w-[1200px] mx-auto px-5 sm:px-10">
-        <section className="py-20 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-          <div className="space-y-8">
-            <div className="inline-flex items-center ds-pill">
-              <span className="ds-label text-[var(--p-dark-teal)]">#1 plateforme</span>
-            </div>
+      <section className="relative overflow-hidden">
+        <AnimatePresence mode="wait">
+          {mode === "student" ? (
+            <motion.div
+              key="student"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
+              className="bg-[#0F6E56] text-white"
+            >
+              <div className="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-14">
+                <div className="mb-6 flex flex-wrap justify-center gap-2 rounded-2xl bg-black/10 p-1 sm:inline-flex">
+                  <TogglePill active onClick={() => setMode("student")}>
+                    Je cherche un prof
+                  </TogglePill>
+                  <TogglePill active={false} onClick={() => setMode("teacher")}>
+                    Je suis professeur
+                  </TogglePill>
+                </div>
 
-            <div className="space-y-4">
-              <h1 className="text-[40px] sm:text-[52px] leading-[1.05]">
-                <span className="text-[var(--p-text)]">Apprenez plus vite,</span>
-                <br />
-                <span className="text-[var(--p-primary)]">avec le bon professeur.</span>
-              </h1>
-              <p className="text-[16px] text-[var(--p-text-muted)] max-w-[560px]">
-                Musique, langues, sports, arts martiaux — trouvez un mentor vérifié près de vous et
-                réservez en quelques secondes.
-              </p>
-            </div>
+                <h1 className="text-center text-3xl font-bold tracking-tight sm:text-4xl">Trouve ton prof idéal</h1>
+                <p className="mt-3 text-center text-sm text-white/85 sm:text-base">
+                  Musique · Danse · Arts martiaux · Langues
+                </p>
 
-            <div className={cn("ds-search w-full flex items-center px-4 gap-3")}>
-              <MapPin size={18} className="text-[var(--p-text-subtle)]" />
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Discipline, professeur, ville…"
-                className="flex-1 bg-transparent outline-none text-[14px] text-[var(--p-text)] placeholder:text-[var(--p-text-subtle)]"
-              />
-              <Link
-                href={query ? `/student/search?q=${encodeURIComponent(query)}` : "/student/search"}
-                className="ds-btn-primary text-sm h-9 px-5 flex items-center gap-2"
-              >
-                <Search size={16} />
-                Rechercher
-              </Link>
-            </div>
+                <div className="mx-auto mt-8 flex max-w-xl flex-col gap-3 sm:flex-row sm:items-center">
+                  <div className="flex flex-1 items-center gap-2 rounded-2xl bg-white/95 px-4 py-3 text-[#2C2C2A] shadow-sm">
+                    <Search size={18} className="shrink-0 text-[#0F6E56]" />
+                    <input
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && runSearch()}
+                      placeholder="Discipline, ville…"
+                      className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-slate-400"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => runSearch()}
+                    className="h-12 shrink-0 rounded-2xl bg-[#1D9E75] px-6 text-sm font-bold text-white hover:brightness-105"
+                  >
+                    Rechercher
+                  </button>
+                </div>
 
-            <div className="flex flex-wrap gap-2">
-              {POPULAR_TAGS.map((t) => (
-                <Link key={t} href={`/student/search?q=${encodeURIComponent(t)}`} className="ds-pill">
-                  {t}
-                </Link>
-              ))}
-            </div>
+                <div className="mx-auto mt-4 flex max-w-xl flex-wrap gap-2">
+                  <button
+                    type="button"
+                    disabled={geoLoading}
+                    onClick={() => void nearMe()}
+                    className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-4 py-2 text-xs font-semibold text-white hover:bg-white/15 disabled:opacity-60"
+                  >
+                    <MapPin size={14} />
+                    {geoLoading ? "…" : "Près de moi"}
+                  </button>
+                </div>
 
-            <p className="text-[14px] text-[var(--p-text-muted)]">
-              <span className="text-[var(--p-text)] font-medium">+ 2 400</span> professeurs vérifiés
-            </p>
-          </div>
+                <div className="mx-auto mt-6 flex max-w-3xl flex-wrap justify-center gap-2">
+                  {QUICK.map((x) =>
+                    x.href ? (
+                      <Link
+                        key={x.label}
+                        href={x.href}
+                        className="rounded-full border border-white/25 bg-white/10 px-4 py-2 text-xs font-semibold text-white hover:bg-white/20"
+                      >
+                        {x.label}
+                      </Link>
+                    ) : (
+                      <button
+                        key={x.label}
+                        type="button"
+                        onClick={() => setActiveCat(x.cat!)}
+                        className={cn(
+                          "rounded-full border px-4 py-2 text-xs font-semibold transition-colors",
+                          activeCat === x.cat
+                            ? "border-white bg-white text-[#0F6E56]"
+                            : "border-white/25 bg-white/10 text-white hover:bg-white/15",
+                        )}
+                      >
+                        {x.label}
+                      </button>
+                    ),
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setActiveCat("All")}
+                    className={cn(
+                      "rounded-full border px-4 py-2 text-xs font-semibold",
+                      activeCat === "All"
+                        ? "border-white bg-white text-[#0F6E56]"
+                        : "border-white/25 bg-white/10 text-white hover:bg-white/15",
+                    )}
+                  >
+                    Tous
+                  </button>
+                </div>
 
-          <div className="relative min-h-[420px]">
-            <FloatingTeacherCard teacher={cards[0]} className="absolute left-0 top-6 rotate-[-2deg]" variant="music" />
-            <FloatingTeacherCard teacher={cards[1]} className="absolute right-0 top-28 rotate-[2deg]" variant="martial" />
-            <FloatingTeacherCard teacher={cards[2]} className="absolute left-10 top-60 rotate-[-1deg]" variant="languages" />
-          </div>
-        </section>
-      </main>
+                <div className="mt-10">
+                  <p className="mb-4 text-center text-xs font-bold uppercase tracking-widest text-white/70">
+                    Profils populaires
+                  </p>
+                  {loadingTeachers ? (
+                    <div className="flex justify-center py-12">
+                      <Loader2 className="h-8 w-8 animate-spin text-white/80" />
+                    </div>
+                  ) : (
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                      {filtered.slice(0, 6).map((t) => (
+                        <LandingTeacherCard key={t.id} teacher={t} />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="teacher"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
+              className="bg-[#2C2C2A] text-white"
+            >
+              <div className="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-14">
+                <div className="mb-6 flex flex-wrap justify-center gap-2 rounded-2xl bg-white/5 p-1 sm:inline-flex">
+                  <TogglePill active={false} onClick={() => setMode("student")} darkMode>
+                    Je cherche un prof
+                  </TogglePill>
+                  <TogglePill active onClick={() => setMode("teacher")} darkMode>
+                    Je suis professeur
+                  </TogglePill>
+                </div>
+
+                <h1 className="text-center text-2xl font-bold leading-tight sm:text-4xl">
+                  La seule plateforme qui partage ses profits
+                </h1>
+
+                <div className="mx-auto mt-10 grid max-w-4xl gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                  <StatCard label="Revenu moyen / mois" value="2 400 $" />
+                  <StatCard label="Cashback annuel" value="576 $" />
+                  <StatCard label="Ristourne estimée" value="~350 $" />
+                  <StatCard label="Total annuel" value="29 726 $" />
+                </div>
+
+                <ul className="mx-auto mt-10 max-w-xl space-y-3 text-sm text-white/90">
+                  <li className="flex items-center gap-2 rounded-xl bg-white/5 px-4 py-3">
+                    <span className="h-2 w-2 shrink-0 rounded-full bg-[#1D9E75]" />
+                    Programme Fidélité Bronze → Platine
+                  </li>
+                  <li className="flex items-center gap-2 rounded-xl bg-white/5 px-4 py-3">
+                    <span className="h-2 w-2 shrink-0 rounded-full bg-[#1D9E75]" />
+                    Agenda et paiements automatiques
+                  </li>
+                  <li className="flex items-center gap-2 rounded-xl bg-white/5 px-4 py-3">
+                    <span className="h-2 w-2 shrink-0 rounded-full bg-[#1D9E75]" />
+                    Cours individuels + cours de groupe
+                  </li>
+                </ul>
+
+                <div className="mt-10 flex flex-col items-center gap-3">
+                  <Link
+                    href="/login?role=teacher"
+                    className="inline-flex h-12 items-center justify-center rounded-2xl bg-[#1D9E75] px-8 text-sm font-bold text-white hover:brightness-105"
+                  >
+                    Rejoindre gratuitement →
+                  </Link>
+                  <Link href="/login" className="text-sm font-medium text-white/80 underline underline-offset-2 hover:text-white">
+                    Déjà inscrit ? Se connecter
+                  </Link>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </section>
+
+      <div className="border-y border-[var(--p-border-light)] bg-white py-4 text-center text-xs font-bold uppercase tracking-widest text-[var(--p-text-muted)] sm:text-sm">
+        2 400+ Profs · #1 Mondial · 5% Cashback · Ristourne
+      </div>
     </div>
   );
 }
 
-function FloatingTeacherCard({
-  teacher,
-  className,
-  variant,
+function TogglePill({
+  children,
+  active,
+  onClick,
+  darkMode,
 }: {
-  teacher: Teacher;
-  className?: string;
-  variant: "music" | "martial" | "languages";
+  children: React.ReactNode;
+  active: boolean;
+  onClick: () => void;
+  darkMode?: boolean;
 }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "min-w-[140px] rounded-xl px-4 py-2.5 text-xs font-bold transition-colors sm:text-sm",
+        active
+          ? darkMode
+            ? "bg-white text-[#2C2C2A] shadow-sm"
+            : "bg-white text-[#0F6E56] shadow-sm"
+          : "bg-transparent text-white/90 hover:bg-white/10",
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
+function StatCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-center">
+      <p className="text-[10px] font-bold uppercase tracking-widest text-white/60">{label}</p>
+      <p className="mt-2 text-xl font-bold text-[#7FE0C3]">{value}</p>
+    </div>
+  );
+}
+
+function LandingTeacherCard({ teacher }: { teacher: Teacher }) {
   const initials = teacher.name
     .split(" ")
     .slice(0, 2)
     .map((x) => x[0]?.toUpperCase())
     .join("");
 
-  const ratingColor =
-    variant === "music"
-      ? "bg-[var(--p-light-teal-bg)] text-[var(--p-dark-teal)]"
-      : variant === "martial"
-        ? "bg-[#FFE7E1] text-[#C2462E]"
-        : "bg-[#EFE8FF] text-[#5B3EC8]";
-
-  const avatarBg =
-    variant === "music"
-      ? "bg-[var(--p-light-teal-bg)] text-[var(--p-dark-teal)]"
-      : variant === "martial"
-        ? "bg-[#FFE7E1] text-[#C2462E]"
-        : "bg-[#EFE8FF] text-[#5B3EC8]";
-
   return (
-    <div className={cn("ds-card w-[360px] p-4 shadow-[0_18px_60px_rgba(15,110,86,0.18)]", className)}>
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className={cn("w-11 h-11 rounded-full flex items-center justify-center font-medium", avatarBg)}>
+    <Link
+      href={`/login?next=${encodeURIComponent("/student/search")}`}
+      className="block rounded-2xl border border-white/15 bg-white/10 p-4 text-left backdrop-blur-sm transition hover:bg-white/15"
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/20 text-sm font-bold text-white">
             {initials}
           </div>
           <div className="min-w-0">
-            <p className="text-[14px] font-medium text-[var(--p-text)] truncate">{teacher.name}</p>
-            <p className="text-[12px] text-[var(--p-text-muted)] truncate">
-              {teacher.discipline} · Montréal
-            </p>
+            <p className="truncate font-semibold text-white">{teacher.name}</p>
+            <p className="truncate text-xs text-white/75">{teacher.discipline}</p>
           </div>
         </div>
-        <span className={cn("px-3 py-1 rounded-[10px] text-[11px] font-medium", ratingColor)}>
-          ★ {teacher.rating}
+        <span className="shrink-0 rounded-lg bg-white/15 px-2 py-1 text-[11px] font-bold text-white">★ {teacher.rating}</span>
+      </div>
+      <div className="mt-3 flex items-center justify-between border-t border-white/10 pt-3 text-xs text-white/80">
+        <span className="inline-flex items-center gap-1">
+          {teacher.teachingMode === "online" ? <Video size={12} /> : <Users size={12} />}
+          {teacher.teachingMode === "online" ? "En ligne" : "Présentiel / mixte"}
         </span>
+        <span className="font-bold text-white">${teacher.pricePerLesson}/h</span>
       </div>
-
-      <div className="mt-4 flex items-end justify-between">
-        <div className="space-y-1">
-          <p className="ds-label text-[var(--p-text-subtle)]">Prochain cours disponible</p>
-          <span className="ds-pill inline-flex">Aujourd’hui 18:30</span>
-        </div>
-        <div className="text-right">
-          <p className="text-[18px] font-medium text-[var(--p-text)]">${teacher.pricePerLesson}</p>
-          <p className="text-[12px] text-[var(--p-text-muted)]">/ heure</p>
-        </div>
-      </div>
-    </div>
+      {String(teacher.profilePlan || "").toLowerCase() === "enterprise" ? (
+        <p className="mt-2 flex items-center gap-1 text-[10px] font-bold uppercase text-[#B8F5DC]">
+          <Star size={12} className="text-[#1D9E75]" /> Studio vérifié
+        </p>
+      ) : null}
+    </Link>
   );
 }
-

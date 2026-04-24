@@ -1,9 +1,10 @@
 import { getSupabaseClient } from "./supabase";
 
-export async function loginWithGoogle() {
+export async function loginWithGoogle(redirectPath = "/dashboard") {
   const supabase = getSupabaseClient();
+  const path = redirectPath.startsWith("/") ? redirectPath : `/${redirectPath}`;
   const redirectTo =
-    typeof window !== "undefined" ? `${window.location.origin}/` : undefined;
+    typeof window !== "undefined" ? `${window.location.origin}${path}` : undefined;
   const { error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: { redirectTo },
