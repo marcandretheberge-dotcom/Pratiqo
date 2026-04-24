@@ -39,6 +39,8 @@ export interface Teacher {
   homeLessonRequiresConfirmation?: boolean;
   /** Si distance élève → prof &gt; 20 km, durée min 2 h */
   homeLessonForce2hOver20km?: boolean;
+  /** Plan profil (profiles.plan), renseigné côté Explore via API — lecture seule marketplace */
+  profilePlan?: string | null;
 }
 
 export interface ProgressData {

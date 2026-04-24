@@ -84,14 +84,31 @@ export function Explore({
     const supabase = getSupabaseClient();
 
     const load = async () => {
+      const mergePlans = async (list: Teacher[]) => {
+        const ids = list.map((t) => t.id).join(",");
+        if (!ids) {
+          setTeachers(list);
+          return;
+        }
+        try {
+          const pr = await fetch(`/api/teachers/plans?ids=${encodeURIComponent(ids)}`);
+          const body = (await pr.json()) as { plans?: Record<string, string> };
+          const plans = body.plans ?? {};
+          setTeachers(list.map((t) => ({ ...t, profilePlan: plans[t.id] ?? "free" })));
+        } catch {
+          setTeachers(list.map((t) => ({ ...t, profilePlan: "free" })));
+        }
+      };
+
       const { data, error } = await supabase.from("teachers").select(TEACHERS_SELECT).order("id");
       if (error || !data?.length) {
         console.warn("Supabase teachers load failed, using local TEACHERS.", error);
-        setTeachers(TEACHERS);
+        await mergePlans(TEACHERS);
         setLoading(false);
         return;
       }
-      setTeachers(data.map((r) => teacherRowToTeacher(r as TeacherRow)));
+      const mapped = data.map((r) => teacherRowToTeacher(r as TeacherRow));
+      await mergePlans(mapped);
       setLoading(false);
     };
 
@@ -652,6 +669,14 @@ function TeacherCard({
               <span className="ds-pill">{teacher.category}</span>
               {teacher.homeLessonEnabled && teacher.homeLessonPrice ? (
                 <span className="badge-teal">À domicile disponible</span>
+              ) : null}
+              {String(teacher.profilePlan || "").toLowerCase() === "enterprise" ? (
+                <span
+                  className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full bg-slate-900 text-white border border-slate-700"
+                  title="Carte Google Maps sur le profil — plan Entreprise"
+                >
+                  Studio vérifié <MapPin size={12} className="shrink-0" />
+                </span>
               ) : null}
               {teacher.teachingMode === "online" && <Video size={12} className="text-indigo-400" />}
               {teacher.teachingMode === "person" && <Users size={12} className="text-emerald-400" />}

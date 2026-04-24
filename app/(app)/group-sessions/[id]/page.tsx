@@ -8,6 +8,7 @@ import { getSupabaseClient } from "../../../../lib/supabase";
 import { cn } from "../../../../lib/utils";
 import { isSessionBookable, spotsRemaining, type GroupSessionRow } from "../../../../lib/groupSessions";
 import { useAuth } from "../../../../components/AuthProvider";
+import { GroupSessionMap } from "../../../../components/GroupSessionMap";
 
 type Row = GroupSessionRow & { teachers?: { name: string; image_url: string; bio: string } | null };
 
@@ -176,6 +177,12 @@ export default function GroupSessionDetailPage() {
           </p>
         )}
       </section>
+
+      <GroupSessionMap
+        className="rounded-2xl border border-[var(--p-border-light)] bg-[var(--p-surface)] p-6"
+        teachingMode={session.teaching_mode}
+        location={session.location}
+      />
 
       <section className="rounded-2xl border border-[var(--p-border-light)] bg-[var(--p-surface)] p-6">
         <h2 className="text-sm font-bold uppercase tracking-widest text-[var(--p-text-subtle)] mb-3">Places</h2>

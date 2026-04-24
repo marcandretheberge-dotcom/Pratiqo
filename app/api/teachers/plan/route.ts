@@ -27,7 +27,8 @@ export async function GET(req: Request) {
   }
 
   const { data: prof } = await admin.from("profiles").select("plan").eq("id", userId).maybeSingle();
-  const plan = (prof as { plan?: string | null } | null)?.plan;
-  return NextResponse.json({ plan: plan === "pro" ? "pro" : "free" });
+  const raw = String((prof as { plan?: string | null } | null)?.plan || "free").toLowerCase();
+  const plan = raw === "enterprise" ? "enterprise" : raw === "pro" ? "pro" : "free";
+  return NextResponse.json({ plan });
 }
 

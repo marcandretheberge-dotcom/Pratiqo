@@ -12,6 +12,10 @@ import { haversineDistance } from "../../../../../lib/geo";
 export default function TeacherProfilePage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const [teacher, setTeacher] = useState<Teacher | null>(null);
+  const [embeddedPlan, setEmbeddedPlan] = useState<{ plan: string | null; loading: boolean }>({
+    plan: null,
+    loading: true,
+  });
   const [booking, setBooking] = useState(false);
   const [bookingInitialKind, setBookingInitialKind] = useState<BookingInitialLessonKind>("standard");
   const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(null);
@@ -87,6 +91,8 @@ export default function TeacherProfilePage({ params }: { params: { id: string } 
     <>
       <TeacherProfile
         teacher={teacher}
+        embeddedPlan={embeddedPlan}
+        showGoogleStudioMap
         onClose={() => router.push("/teacher/profile")}
         onBook={(kind) => {
           setBookingInitialKind(kind);

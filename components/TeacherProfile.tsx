@@ -24,8 +24,16 @@ import { getSupabaseClient } from "../lib/supabase";
 import { useRouter } from "next/navigation";
 import { haversineDistance } from "../lib/geo";
 import { PlanBadge } from "./PlanBadge";
+import { TeacherMap } from "./TeacherMap";
 
 export type TeacherBookKind = "standard" | "home";
+
+function normalizeMarketPlan(p: string | null | undefined): "free" | "pro" | "enterprise" {
+  const raw = String(p || "free").toLowerCase();
+  if (raw === "enterprise") return "enterprise";
+  if (raw === "pro") return "pro";
+  return "free";
+}
 
 interface TeacherProfileProps {
   teacher: Teacher;
@@ -34,13 +42,30 @@ interface TeacherProfileProps {
   /** Ouvre la messagerie avec ce professeur (nécessite `teacher.userId`). */
   onSendMessage?: () => void;
   distanceKm?: number | null;
+  /**
+   * Plan chargé par la page profil (`/teacher/profile/[id]`) — évite un double fetch
+   * et pilote la carte Google (réservée Entreprise).
+   */
+  embeddedPlan?: { plan: string | null; loading: boolean };
+  /**
+   * Carte Google « Studio » uniquement sur la fiche `/teacher/profile/[id]`, pas dans la modale Recherche.
+   */
+  showGoogleStudioMap?: boolean;
 }
 
-export function TeacherProfile({ teacher, onClose, onBook, onSendMessage, distanceKm }: TeacherProfileProps) {
+export function TeacherProfile({
+  teacher,
+  onClose,
+  onBook,
+  onSendMessage,
+  distanceKm,
+  embeddedPlan,
+  showGoogleStudioMap,
+}: TeacherProfileProps) {
   const { user } = useAuth();
   const router = useRouter();
   const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(null);
-  const [plan, setPlan] = useState<"free" | "pro">("free");
+  const [plan, setPlan] = useState<"free" | "pro" | "enterprise">("free");
 
   const handleStartChat = async () => {
     if (!user) {
@@ -84,15 +109,32 @@ export function TeacherProfile({ teacher, onClose, onBook, onSendMessage, distan
   }, []);
 
   useEffect(() => {
+    if (embeddedPlan !== undefined) return;
     const load = async () => {
       if (!teacher.id) return;
       const res = await fetch(`/api/teachers/plan?teacherId=${encodeURIComponent(teacher.id)}`);
       const json = (await res.json()) as { plan?: string };
-      setPlan(json.plan === "pro" ? "pro" : "free");
+      setPlan(normalizeMarketPlan(json.plan));
     };
 
     void load();
-  }, [teacher.id]);
+  }, [teacher.id, embeddedPlan]);
+
+  const displayPlan = useMemo(() => {
+    if (embeddedPlan !== undefined) {
+      return embeddedPlan.loading ? "free" : normalizeMarketPlan(embeddedPlan.plan);
+    }
+    return plan;
+  }, [embeddedPlan, plan]);
+
+  const studioMapCoordsOk = useMemo(() => {
+    const lat = teacher.location?.lat;
+    const lng = teacher.location?.lng;
+    return typeof lat === "number" && typeof lng === "number" && Number.isFinite(lat) && Number.isFinite(lng);
+  }, [teacher.location?.lat, teacher.location?.lng]);
+
+  const showEnterpriseStudioMap =
+    Boolean(showGoogleStudioMap) && displayPlan === "enterprise" && studioMapCoordsOk;
 
   const computedDistanceKm = useMemo(() => {
     if (!geo) return null;
@@ -177,7 +219,7 @@ export function TeacherProfile({ teacher, onClose, onBook, onSendMessage, distan
                 <span className="px-3 py-1 bg-brand-primary text-white text-[10px] font-bold uppercase tracking-widest rounded-full">
                   {teacher.category}
                 </span>
-                <PlanBadge plan={plan} />
+                <PlanBadge plan={displayPlan} />
                 <div className="flex items-center gap-1 text-amber-500 font-bold">
                   <Star size={16} fill="currentColor" />
                   <span className="text-sm">{teacher.rating}</span>
@@ -253,6 +295,22 @@ export function TeacherProfile({ teacher, onClose, onBook, onSendMessage, distan
               </ul>
             </div>
           </div>
+
+          {showEnterpriseStudioMap ? (
+            <div className="space-y-3">
+              <h3 className="text-lg font-bold text-slate-900 border-l-4 border-brand-primary pl-4 uppercase tracking-wider text-sm">
+                Studio sur la carte
+              </h3>
+              <TeacherMap
+                context="teacher_profile"
+                teacherPlan={displayPlan}
+                lat={teacher.location.lat}
+                lng={teacher.location.lng}
+                title="Localisation"
+                className="space-y-2"
+              />
+            </div>
+          ) : null}
 
           <div className="bg-slate-50 rounded-3xl p-6 border border-slate-100 flex flex-col sm:flex-row items-center gap-6">
             <div className="flex-1 space-y-1">
