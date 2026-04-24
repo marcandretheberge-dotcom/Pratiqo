@@ -33,6 +33,7 @@ function OnboardingInner() {
   const { user, loading, profile } = useAuth();
   const roleParam = searchParams.get("role");
   const stripeStatus = searchParams.get("stripe");
+  const force = searchParams.get("force") === "true";
 
   const [step, setStep] = useState<Step>(1);
   const [saving, setSaving] = useState(false);
@@ -89,11 +90,28 @@ function OnboardingInner() {
   // Determine if already onboarded (simple heuristic)
   useEffect(() => {
     if (!user?.id) return;
-    const dash = (profile && typeof profile === "object" ? (profile as Record<string, unknown>) : {}) as Record<string, unknown>;
-    const done = Boolean((dash as any).teacher_onboarding_complete);
+    if (force) return;
     if (profile?.role !== "teacher") return;
-    if (done) setStep("done");
-  }, [profile, user?.id]);
+
+    let cancelled = false;
+    const supabase = getSupabaseClient();
+    void (async () => {
+      const { data: profRow } = await supabase
+        .from("profiles")
+        .select("teacher_onboarding_complete")
+        .eq("id", user.id)
+        .single();
+
+      if (cancelled) return;
+      if ((profRow as { teacher_onboarding_complete?: boolean } | null)?.teacher_onboarding_complete) {
+        router.push("/dashboard");
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [profile?.role, user?.id, force, router]);
 
   useEffect(() => {
     if (stripeStatus === "success") setMessage("Stripe configuré. Tes virements sont prêts.");

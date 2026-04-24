@@ -71,6 +71,7 @@ export async function POST(req: Request) {
       unknown
     >;
     const nextDash: Record<string, unknown> = { ...dash };
+    // Legacy (kept for backwards compatibility with earlier builds)
     if (role === "teacher") nextDash.teacher_onboarding_complete = true;
 
     const { error: pErr } = await admin
@@ -82,6 +83,7 @@ export async function POST(req: Request) {
           email: user.email ?? (prof?.email as string) ?? "",
           role,
           photo_url: photoUrl,
+          teacher_onboarding_complete: role === "teacher",
           dashboard: nextDash,
         },
         { onConflict: "id" },

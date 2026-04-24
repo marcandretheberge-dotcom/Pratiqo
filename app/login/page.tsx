@@ -8,6 +8,7 @@ import { cn } from "../../lib/utils";
 import Logo from "../../components/ui/Logo";
 import { loginWithGoogle } from "../../lib/auth";
 import { useAuth } from "../../components/AuthProvider";
+import { getSupabaseClient } from "../../lib/supabase";
 
 function LoginForm() {
   const searchParams = useSearchParams();
@@ -19,10 +20,27 @@ function LoginForm() {
   const isTeacherInvite = role === "teacher";
 
   useEffect(() => {
-    if (!loading && user) {
+    if (loading || !user) return;
+
+    const run = async () => {
+      // Teacher flow: decide onboarding vs dashboard
+      if (role === "teacher") {
+        const supabase = getSupabaseClient();
+        const { data } = await supabase
+          .from("profiles")
+          .select("teacher_onboarding_complete, role")
+          .eq("id", user.id)
+          .maybeSingle();
+        const done = Boolean((data as { teacher_onboarding_complete?: boolean } | null)?.teacher_onboarding_complete);
+        router.replace(done ? "/dashboard" : "/onboarding");
+        return;
+      }
+
       router.replace(next);
-    }
-  }, [loading, user, router, next]);
+    };
+
+    void run();
+  }, [loading, user, router, next, role]);
 
   const [legalAccepted, setLegalAccepted] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -31,7 +49,9 @@ function LoginForm() {
     if (!legalAccepted || busy) return;
     setBusy(true);
     try {
-      await loginWithGoogle(next.startsWith("/") ? next : `/${next}`);
+      // Teachers always come back to /login?role=teacher after OAuth, so we can branch correctly.
+      const redirectPath = role === "teacher" ? "/login?role=teacher" : next;
+      await loginWithGoogle(redirectPath.startsWith("/") ? redirectPath : `/${redirectPath}`);
     } catch (e) {
       console.error(e);
       alert("Connexion impossible. Réessaie dans un instant.");
