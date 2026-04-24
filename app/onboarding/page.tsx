@@ -7,7 +7,7 @@ import { CheckCircle2, ChevronLeft, ChevronRight, Loader2, ShieldCheck, Upload }
 import { cn } from "../../lib/utils";
 import { useAuth } from "../../components/AuthProvider";
 import { getSupabaseClient } from "../../lib/supabase";
-import { getAllDisciplines } from "../../lib/disciplines";
+import { getEnabledDisciplines } from "../../lib/disciplines";
 
 type Step = 1 | 2 | 3 | "done";
 type Mode = "person" | "online" | "both";
@@ -365,42 +365,35 @@ function OnboardingInner() {
 
               <Field label="Disciplines">
                 <div className="flex flex-wrap gap-2">
-                  {getAllDisciplines().map((d) => {
+                  {getEnabledDisciplines().map((d) => {
                     const active = categories.includes(d.label);
-                    const locked = !d.enabled;
                     return (
                       <button
                         key={d.id}
                         type="button"
-                        disabled={locked}
-                        title={locked ? `Disponible en Phase ${d.phase}` : undefined}
-                        onClick={() => {
-                          if (locked) return;
+                        onClick={() =>
                           setCategories((prev) =>
                             active ? prev.filter((x) => x !== d.label) : [...prev, d.label],
-                          );
-                        }}
+                          )
+                        }
                         className={cn(
                           "inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-semibold transition-colors",
-                          locked && "cursor-not-allowed opacity-50",
-                          !locked && active && "border-[#1D9E75] bg-[rgba(29,158,117,0.12)] text-[#0f6d52]",
-                          !locked && !active && "border-slate-200 bg-white text-slate-600 hover:border-slate-300",
-                          locked && "border-slate-200 bg-slate-50 text-slate-500",
+                          active
+                            ? "border-[#1D9E75] bg-[rgba(29,158,117,0.12)] text-[#0f6d52]"
+                            : "border-slate-200 bg-white text-slate-600 hover:border-slate-300",
                         )}
                       >
                         <span aria-hidden>{d.emoji}</span>
                         <span>{d.label}</span>
-                        {locked ? (
-                          <span className="rounded-md bg-slate-200/80 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-slate-600">
-                            Phase {d.phase}
-                          </span>
-                        ) : null}
                       </button>
                     );
                   })}
                 </div>
-                <p className="mt-2 text-[11px] text-[var(--p-text-muted)]">
-                  Les disciplines grisées arriveront dans les prochaines phases.
+                <p
+                  className="mt-2 italic"
+                  style={{ fontSize: "12px", color: "#888780" }}
+                >
+                  D&apos;autres disciplines seront bientôt disponibles.
                 </p>
               </Field>
 

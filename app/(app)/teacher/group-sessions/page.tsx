@@ -9,7 +9,6 @@ import { CATEGORIES } from "../../../../constants";
 import type { Discipline } from "../../../../types";
 import { cn } from "../../../../lib/utils";
 import { isEnabled } from "../../../../lib/features";
-import { ComingSoonBanner } from "../../../../components/ComingSoonBanner";
 import {
   GROUP_SESSION_STATUS_LABELS,
   planAllowsGroupSessions,
@@ -70,14 +69,16 @@ export default function TeacherGroupSessionsPage() {
 
   if (!isEnabled("group_sessions")) {
     return (
-      <div className="max-w-4xl mx-auto space-y-6">
-        <ComingSoonBanner
-          phase={2}
-          feature="group_sessions"
-          featureName="Cours de groupe — Phase 2"
-          description="Les cours de groupe seront disponibles lors de notre Phase 2. Inscris-toi pour être notifié en premier!"
-          showEmailCapture
-        />
+      <div className="max-w-4xl mx-auto">
+        <div style={{ textAlign: "center", padding: "40px 20px" }}>
+          <p style={{ fontSize: "32px", margin: "0 0 12px" }}>🚀</p>
+          <p style={{ fontSize: "16px", margin: "0 0 8px", fontWeight: 600, color: "var(--p-text, #2C2C2A)" }}>
+            Cours de groupe — bientôt disponibles
+          </p>
+          <p style={{ fontSize: "14px", margin: 0, color: "#888780", lineHeight: 1.5, maxWidth: "420px", marginLeft: "auto", marginRight: "auto" }}>
+            Tu pourras bientôt créer des séances collectives depuis cet espace. Merci de ta patience !
+          </p>
+        </div>
       </div>
     );
   }

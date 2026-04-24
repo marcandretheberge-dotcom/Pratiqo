@@ -8,7 +8,7 @@ import { Loader2, MapPin, Search, Star, Users, Video } from "lucide-react";
 import type { Teacher } from "../types";
 import { TEACHERS } from "../constants";
 import { cn } from "../lib/utils";
-import { getAllDisciplines, getEnabledDisciplines, displayTeacherMarketplaceCategory } from "../lib/disciplines";
+import { getEnabledDisciplines, displayTeacherMarketplaceCategory } from "../lib/disciplines";
 import { isEnabled } from "../lib/features";
 import Logo from "../components/ui/Logo";
 import { getSupabaseClient } from "../lib/supabase";
@@ -29,10 +29,7 @@ export default function LandingPage() {
   const [loadingTeachers, setLoadingTeachers] = useState(true);
   const [activeCat, setActiveCat] = useState<string>("All");
   const [geoLoading, setGeoLoading] = useState(false);
-  const [disciplinesModalOpen, setDisciplinesModalOpen] = useState(false);
 
-  const comingSoonDisciplines = useMemo(() => getAllDisciplines().filter((d) => !d.enabled), []);
-  const comingSoonCount = comingSoonDisciplines.length;
   const enabledHeroLabels = useMemo(() => getEnabledDisciplines().map((d) => d.label).join(" · "), []);
 
   useEffect(() => {
@@ -175,51 +172,50 @@ export default function LandingPage() {
                   </button>
                 </div>
 
-                <div className="mx-auto mt-6 flex max-w-3xl flex-wrap justify-center gap-2">
-                  {getEnabledDisciplines().map((d) => (
+                <div className="mx-auto mt-6 max-w-3xl">
+                  <div className="flex flex-wrap justify-center gap-2">
+                    {getEnabledDisciplines().map((d) => (
+                      <button
+                        key={d.id}
+                        type="button"
+                        onClick={() => setActiveCat(d.label)}
+                        className={cn(
+                          "rounded-full border px-4 py-2 text-xs font-semibold transition-colors",
+                          activeCat === d.label
+                            ? "border-white bg-white text-[#0F6E56]"
+                            : "border-white/30 bg-white/15 text-white hover:bg-white/20",
+                        )}
+                      >
+                        {d.emoji} {d.label}
+                      </button>
+                    ))}
+                    {isEnabled("group_sessions") ? (
+                      <Link
+                        href="/group-sessions"
+                        className="rounded-full border border-white/30 bg-white/15 px-4 py-2 text-xs font-semibold text-white hover:bg-white/20"
+                      >
+                        Cours groupe
+                      </Link>
+                    ) : null}
                     <button
-                      key={d.id}
                       type="button"
-                      onClick={() => setActiveCat(d.label)}
+                      onClick={() => setActiveCat("All")}
                       className={cn(
-                        "rounded-full border px-4 py-2 text-xs font-semibold transition-colors",
-                        activeCat === d.label
+                        "rounded-full border px-4 py-2 text-xs font-semibold",
+                        activeCat === "All"
                           ? "border-white bg-white text-[#0F6E56]"
                           : "border-white/30 bg-white/15 text-white hover:bg-white/20",
                       )}
                     >
-                      {d.emoji} {d.label}
+                      Tous
                     </button>
-                  ))}
-                  {comingSoonCount > 0 ? (
-                    <button
-                      type="button"
-                      onClick={() => setDisciplinesModalOpen(true)}
-                      className="rounded-full border border-white/40 bg-white/10 px-4 py-2 text-xs font-semibold text-white hover:bg-white/20"
-                    >
-                      + {comingSoonCount} disciplines bientôt
-                    </button>
-                  ) : null}
-                  {isEnabled("group_sessions") ? (
-                    <Link
-                      href="/group-sessions"
-                      className="rounded-full border border-white/30 bg-white/15 px-4 py-2 text-xs font-semibold text-white hover:bg-white/20"
-                    >
-                      Cours groupe
-                    </Link>
-                  ) : null}
-                  <button
-                    type="button"
-                    onClick={() => setActiveCat("All")}
-                    className={cn(
-                      "rounded-full border px-4 py-2 text-xs font-semibold",
-                      activeCat === "All"
-                        ? "border-white bg-white text-[#0F6E56]"
-                        : "border-white/30 bg-white/15 text-white hover:bg-white/20",
-                    )}
+                  </div>
+                  <p
+                    className="mt-3 text-center"
+                    style={{ fontSize: "11px", color: "rgba(255,255,255,0.6)" }}
                   >
-                    Tous
-                  </button>
+                    D&apos;autres disciplines arrivent bientôt 🚀
+                  </p>
                 </div>
               </div>
 
@@ -322,53 +318,6 @@ export default function LandingPage() {
         </div>
       </footer>
 
-      {disciplinesModalOpen ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="disciplines-soon-title"
-          onClick={() => setDisciplinesModalOpen(false)}
-          onKeyDown={(e) => e.key === "Escape" && setDisciplinesModalOpen(false)}
-        >
-          <div
-            className="max-h-[min(80vh,520px)] w-full max-w-md overflow-y-auto rounded-2xl bg-white p-6 shadow-xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="mb-4 flex items-start justify-between gap-3">
-              <h3 id="disciplines-soon-title" className="text-lg font-bold text-[#2C2C2A]">
-                Disciplines à venir
-              </h3>
-              <button
-                type="button"
-                onClick={() => setDisciplinesModalOpen(false)}
-                className="shrink-0 rounded-lg px-2 py-1 text-sm font-semibold text-slate-500 hover:bg-slate-100"
-              >
-                Fermer
-              </button>
-            </div>
-            <p className="mb-4 text-sm text-slate-600">
-              Voici les disciplines prévues pour les phases 2 et 3 (aperçu — non disponibles pour l’instant).
-            </p>
-            <ul className="space-y-2">
-              {comingSoonDisciplines.map((d) => (
-                <li
-                  key={d.id}
-                  className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5 text-sm text-slate-500 opacity-[0.72]"
-                >
-                  <span className="text-lg" aria-hidden>
-                    {d.emoji}
-                  </span>
-                  <span className="min-w-0 flex-1 font-medium">{d.label}</span>
-                  <span className="shrink-0 rounded-md bg-slate-200/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-600">
-                    Phase {d.phase}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      ) : null}
     </div>
   );
 }
