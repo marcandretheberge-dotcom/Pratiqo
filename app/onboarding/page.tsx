@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Suspense, useEffect, useMemo, useState } from "react";
+import React, { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { CheckCircle2, ChevronLeft, ChevronRight, Loader2, ShieldCheck, Upload } from "lucide-react";
@@ -40,6 +40,9 @@ function OnboardingInner() {
   const [stripeBusy, setStripeBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Step 1
   const [name, setName] = useState("");
@@ -100,6 +103,52 @@ function OnboardingInner() {
       setMessage("Erreur réseau.");
     } finally {
       setAiLoading(false);
+    }
+  }
+
+  async function handlePhotoUpload(file: File) {
+    if (!user?.id) return;
+    const maxBytes = 5 * 1024 * 1024;
+    if (file.size > maxBytes) {
+      alert("L’image est trop volumineuse (max 5 Mo).");
+      return;
+    }
+    if (!file.type.startsWith("image/")) return;
+
+    let blobPreview: string | null = null;
+    try {
+      setPhotoUploading(true);
+      setMessage(null);
+      blobPreview = URL.createObjectURL(file);
+      setPhotoUrl(blobPreview);
+
+      const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 80) || "photo";
+      const path = `${user.id}/${Date.now()}-${safe}`;
+      const supabase = getSupabaseClient();
+      const { error: upErr } = await supabase.storage.from("avatars").upload(path, file, {
+        cacheControl: "3600",
+        upsert: true,
+        contentType: file.type || "image/jpeg",
+      });
+      if (upErr) throw upErr;
+
+      const { data: pub } = supabase.storage.from("avatars").getPublicUrl(path);
+      if (blobPreview) {
+        URL.revokeObjectURL(blobPreview);
+        blobPreview = null;
+      }
+      setPhotoUrl(pub.publicUrl);
+    } catch (e) {
+      console.error(e);
+      if (blobPreview) URL.revokeObjectURL(blobPreview);
+      const fallback =
+        (typeof profile?.photo_url === "string" && profile.photo_url) ||
+        (typeof user?.user_metadata?.avatar_url === "string" && (user.user_metadata.avatar_url as string)) ||
+        "";
+      setPhotoUrl(fallback);
+      setMessage("Envoi de la photo impossible. Vérifie le bucket Storage « avatars » (public) dans Supabase.");
+    } finally {
+      setPhotoUploading(false);
     }
   }
 
@@ -325,29 +374,80 @@ function OnboardingInner() {
               </Field>
 
               <Field label="Photo de profil (optionnel)">
-                <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(name || "Pratiqo")}`}
-                      alt=""
-                      className="h-14 w-14 rounded-2xl border border-slate-200 object-cover"
-                      referrerPolicy="no-referrer"
-                    />
-                    <div className="min-w-0">
-                      <p className="text-xs font-semibold text-[var(--p-text)]">Aperçu</p>
-                      <p className="text-[11px] text-[var(--p-text-muted)]">Tu peux coller une URL d’image</p>
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      fileInputRef.current?.click();
+                    }
+                  }}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setIsDragging(true);
+                  }}
+                  onDragLeave={() => setIsDragging(false)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setIsDragging(false);
+                    const file = e.dataTransfer.files[0];
+                    if (file && file.type.startsWith("image/")) void handlePhotoUpload(file);
+                  }}
+                  onClick={() => !photoUploading && fileInputRef.current?.click()}
+                  style={{
+                    border: `2px dashed ${isDragging ? "#1D9E75" : "#D3D1C7"}`,
+                    borderRadius: "12px",
+                    padding: "24px",
+                    textAlign: "center",
+                    cursor: photoUploading ? "wait" : "pointer",
+                    background: isDragging ? "#E1F5EE" : "#F4F4F3",
+                    transition: "all 0.2s",
+                    opacity: photoUploading ? 0.75 : 1,
+                    position: "relative",
+                  }}
+                >
+                  {photoUploading ? (
+                    <div className="flex flex-col items-center gap-2 py-1">
+                      <Loader2 className="animate-spin text-[#1D9E75]" size={28} />
+                      <p style={{ fontSize: "12px", color: "#085041", margin: 0 }}>Envoi en cours…</p>
                     </div>
-                  </div>
-                  <div className="flex-1" />
-                  <div className="flex-1 w-full">
-                    <input
-                      value={photoUrl}
-                      onChange={(e) => setPhotoUrl(e.target.value)}
-                      className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm"
-                      placeholder="https://…"
-                    />
-                  </div>
+                  ) : photoUrl ? (
+                    <div style={{ display: "flex", alignItems: "center", gap: "12px", justifyContent: "center" }}>
+                      <img
+                        src={photoUrl}
+                        alt=""
+                        style={{ width: 64, height: 64, borderRadius: "50%", objectFit: "cover" }}
+                        referrerPolicy="no-referrer"
+                      />
+                      <div style={{ textAlign: "left" }}>
+                        <p style={{ fontSize: "13px", fontWeight: 500, margin: "0 0 4px" }}>Photo ajoutée ✓</p>
+                        <p style={{ fontSize: "11px", color: "#888780", margin: 0 }}>Clique ou glisse pour changer</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div>
+                      <div style={{ fontSize: "32px", marginBottom: "8px" }}>📷</div>
+                      <p style={{ fontSize: "13px", fontWeight: 500, color: "#2C2C2A", margin: "0 0 4px" }}>
+                        Glisse ta photo ici
+                      </p>
+                      <p style={{ fontSize: "11px", color: "#888780", margin: 0 }}>
+                        ou clique pour choisir · JPG, PNG · Max 5MB
+                      </p>
+                    </div>
+                  )}
                 </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  style={{ display: "none" }}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) void handlePhotoUpload(file);
+                    e.target.value = "";
+                  }}
+                />
               </Field>
 
               <Field label="Bio (max 300 caractères)">
