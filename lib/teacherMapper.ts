@@ -24,6 +24,11 @@ export type TeacherRow = {
   home_lesson_min_duration?: number | null;
   home_lesson_requires_confirmation?: boolean | null;
   home_lesson_force_2h_over_20km?: boolean | null;
+  verification_level?: number | null;
+  identity_verified?: boolean | null;
+  diploma_verified?: boolean | null;
+  phone_verified?: boolean | null;
+  verification_notes?: string | null;
 };
 
 export function teacherRowToTeacher(row: TeacherRow): Teacher {
@@ -62,6 +67,10 @@ export function teacherRowToTeacher(row: TeacherRow): Teacher {
     homeLessonMinDuration: row.home_lesson_min_duration ?? 60,
     homeLessonRequiresConfirmation: row.home_lesson_requires_confirmation ?? true,
     homeLessonForce2hOver20km: Boolean(row.home_lesson_force_2h_over_20km),
+    verificationLevel: row.verification_level ?? undefined,
+    identityVerified: Boolean(row.identity_verified),
+    diplomaVerified: Boolean(row.diploma_verified),
+    phoneVerified: Boolean(row.phone_verified),
   };
 }
 
@@ -90,5 +99,9 @@ export function teacherToRow(t: Teacher): Record<string, unknown> {
     home_lesson_min_duration: t.homeLessonMinDuration ?? 60,
     home_lesson_requires_confirmation: t.homeLessonRequiresConfirmation ?? true,
     home_lesson_force_2h_over_20km: t.homeLessonForce2hOver20km ?? false,
+    verification_level: t.verificationLevel ?? null,
+    identity_verified: t.identityVerified ?? false,
+    diploma_verified: t.diplomaVerified ?? false,
+    phone_verified: t.phoneVerified ?? false,
   };
 }

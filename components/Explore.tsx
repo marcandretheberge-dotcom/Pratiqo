@@ -23,12 +23,41 @@ import { getSupabaseClient } from "../lib/supabase";
 import { teacherRowToTeacher, type TeacherRow } from "../lib/teacherMapper";
 import { haversineDistance } from "../lib/geo";
 import { spotsRemaining, type GroupSessionRow } from "../lib/groupSessions";
+import { getVerificationLevel } from "../lib/verification";
 import { useAuth } from "./AuthProvider";
 import { useRouter } from "next/navigation";
+import { VerificationBadge } from "./VerificationBadge";
 
 /** Colonnes nécessaires au mapper + cours à domicile (évite les réponses PostgREST incomplètes). */
 const TEACHERS_SELECT =
-  "id, user_id, name, discipline, category, rating, reviews, price_per_lesson, monthly_subscription, bio, image_url, availability, location, is_verified, teaching_mode, languages, levels, home_lesson_enabled, home_lesson_price, home_lesson_radius_km, home_lesson_min_duration, home_lesson_requires_confirmation, home_lesson_force_2h_over_20km";
+  "id, user_id, name, discipline, category, rating, reviews, price_per_lesson, monthly_subscription, bio, image_url, availability, location, is_verified, teaching_mode, languages, levels, home_lesson_enabled, home_lesson_price, home_lesson_radius_km, home_lesson_min_duration, home_lesson_requires_confirmation, home_lesson_force_2h_over_20km, verification_level, identity_verified, diploma_verified, phone_verified";
+
+function verificationSortKey(t: Teacher) {
+  return getVerificationLevel({
+    plan: t.profilePlan,
+    identity_verified: t.identityVerified,
+    diploma_verified: t.diplomaVerified,
+    is_verified: t.isVerified,
+    verification_level: t.verificationLevel ?? null,
+  });
+}
+
+function compareExploreTeachers(
+  a: { teacher: Teacher; distanceKm: number | null },
+  b: { teacher: Teacher; distanceKm: number | null },
+  opts: { geo: boolean; sortMode: "default" | "reliable" },
+) {
+  const la = verificationSortKey(a.teacher);
+  const lb = verificationSortKey(b.teacher);
+  if (opts.sortMode === "reliable" && lb !== la) return lb - la;
+  if (opts.geo && a.distanceKm != null && b.distanceKm != null) {
+    const da = a.distanceKm;
+    const db = b.distanceKm;
+    if (da !== db) return da - db;
+  }
+  if (opts.sortMode === "default" && lb !== la) return lb - la;
+  return (b.teacher.rating ?? 0) - (a.teacher.rating ?? 0);
+}
 
 type ExploreGroupSession = GroupSessionRow & {
   teachers?: { name: string; image_url: string | null } | null;
@@ -58,6 +87,7 @@ export function Explore({
   const [exploreTab, setExploreTab] = useState<"cours" | "groupe">("cours");
   const [groupSessions, setGroupSessions] = useState<ExploreGroupSession[]>([]);
   const [loadingGroups, setLoadingGroups] = useState(true);
+  const [sortMode, setSortMode] = useState<"default" | "reliable">("default");
 
   useEffect(() => {
     const supabase = getSupabaseClient();
@@ -100,7 +130,11 @@ export function Explore({
         }
       };
 
-      const { data, error } = await supabase.from("teachers").select(TEACHERS_SELECT).order("id");
+      const { data, error } = await supabase
+        .from("teachers")
+        .select(TEACHERS_SELECT)
+        .order("verification_level", { ascending: false })
+        .order("rating", { ascending: false });
       if (error || !data?.length) {
         console.warn("Supabase teachers load failed, using local TEACHERS.", error);
         await mergePlans(TEACHERS);
@@ -156,6 +190,7 @@ export function Explore({
   };
 
   const filteredTeachers = useMemo(() => {
+    const sortOpts = (geo: boolean) => ({ geo, sortMode } as const);
     const base = teachers
       .filter((t) => {
         const matchesCategory = selectedCategory === "All" || t.category === selectedCategory;
@@ -180,7 +215,7 @@ export function Explore({
       const onlineOnly = base.filter(
         (x) => x.teacher.teachingMode === "online" || x.teacher.teachingMode === "both",
       );
-      onlineOnly.sort((a, b) => (b.teacher.rating ?? 0) - (a.teacher.rating ?? 0));
+      onlineOnly.sort((a, b) => compareExploreTeachers(a, b, sortOpts(false)));
       return onlineOnly;
     }
 
@@ -188,14 +223,9 @@ export function Explore({
     if (radiusFilter === "all") {
       const allTeachers = [...base];
       if (geo) {
-        allTeachers.sort((a, b) => {
-          const da = a.distanceKm ?? Number.POSITIVE_INFINITY;
-          const db = b.distanceKm ?? Number.POSITIVE_INFINITY;
-          if (da !== db) return da - db;
-          return (b.teacher.rating ?? 0) - (a.teacher.rating ?? 0);
-        });
+        allTeachers.sort((a, b) => compareExploreTeachers(a, b, sortOpts(true)));
       } else {
-        allTeachers.sort((a, b) => (b.teacher.rating ?? 0) - (a.teacher.rating ?? 0));
+        allTeachers.sort((a, b) => compareExploreTeachers(a, b, sortOpts(false)));
       }
       return allTeachers;
     }
@@ -205,19 +235,10 @@ export function Explore({
       : base;
 
     // If geo is active, sort by closest first; otherwise (or if user denied GPS) sort by rating.
-    if (geo) {
-      withinRadius.sort((a, b) => {
-        const da = a.distanceKm ?? Number.POSITIVE_INFINITY;
-        const db = b.distanceKm ?? Number.POSITIVE_INFINITY;
-        if (da !== db) return da - db;
-        return (b.teacher.rating ?? 0) - (a.teacher.rating ?? 0);
-      });
-    } else {
-      withinRadius.sort((a, b) => (b.teacher.rating ?? 0) - (a.teacher.rating ?? 0));
-    }
+    withinRadius.sort((a, b) => compareExploreTeachers(a, b, sortOpts(Boolean(geo))));
 
     return withinRadius;
-  }, [teachers, selectedCategory, searchQuery, teachingMode, onlyVerified, geo, radiusFilter]);
+  }, [teachers, selectedCategory, searchQuery, teachingMode, onlyVerified, geo, radiusFilter, sortMode]);
 
   const filteredGroupSessions = useMemo(() => {
     return groupSessions.filter((s) => {
@@ -267,7 +288,18 @@ export function Explore({
             </button>
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <label className="flex items-center gap-2 text-xs font-semibold text-[var(--p-text-muted)]">
+            <span className="hidden sm:inline">Tri</span>
+            <select
+              value={sortMode}
+              onChange={(e) => setSortMode(e.target.value === "reliable" ? "reliable" : "default")}
+              className="h-10 rounded-[14px] border border-[var(--p-border-light)] bg-white px-3 text-sm font-medium text-[var(--p-text)] outline-none focus:border-[#1D9E75]"
+            >
+              <option value="default">Pertinence</option>
+              <option value="reliable">Les plus fiables</option>
+            </select>
+          </label>
           <button
             onClick={requestGeolocation}
             className={cn(
@@ -699,9 +731,17 @@ function TeacherCard({
               </span>
             </div>
           </div>
-          <h3 className="text-[18px] leading-tight text-[var(--p-text)] truncate group-hover:text-[var(--p-dark-teal)] transition-colors">
-            {teacher.name}
-          </h3>
+          <div className="flex items-center gap-2 min-w-0">
+            <h3 className="text-[18px] leading-tight text-[var(--p-text)] truncate group-hover:text-[var(--p-dark-teal)] transition-colors">
+              {teacher.name}
+            </h3>
+            <VerificationBadge
+              level={verificationSortKey(teacher)}
+              size="sm"
+              showLabel={false}
+              className="shrink-0"
+            />
+          </div>
           <p className="text-[13px] text-[var(--p-text-muted)] -mt-1">
             {teacher.discipline.split(",")[0]} · Montréal
           </p>

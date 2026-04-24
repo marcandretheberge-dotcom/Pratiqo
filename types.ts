@@ -45,6 +45,11 @@ export interface Teacher {
   homeLessonForce2hOver20km?: boolean;
   /** Plan profil (profiles.plan), renseigné côté Explore via API — lecture seule marketplace */
   profilePlan?: string | null;
+  /** Colonnes `teachers` — confiance progressive */
+  verificationLevel?: number | null;
+  identityVerified?: boolean;
+  diplomaVerified?: boolean;
+  phoneVerified?: boolean;
 }
 
 export interface ProgressData {

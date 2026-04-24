@@ -11,11 +11,13 @@ import { cn } from "../lib/utils";
 import Logo from "../components/ui/Logo";
 import { getSupabaseClient } from "../lib/supabase";
 import { teacherRowToTeacher, type TeacherRow } from "../lib/teacherMapper";
+import { getVerificationLevel } from "../lib/verification";
+import { VerificationBadge } from "../components/VerificationBadge";
 
 type HeroMode = "student" | "teacher";
 
 const TEACHERS_SELECT =
-  "id, user_id, name, discipline, category, rating, reviews, price_per_lesson, monthly_subscription, bio, image_url, availability, location, is_verified, teaching_mode, languages, levels, home_lesson_enabled, home_lesson_price, home_lesson_radius_km, home_lesson_min_duration, home_lesson_requires_confirmation, home_lesson_force_2h_over_20km";
+  "id, user_id, name, discipline, category, rating, reviews, price_per_lesson, monthly_subscription, bio, image_url, availability, location, is_verified, teaching_mode, languages, levels, home_lesson_enabled, home_lesson_price, home_lesson_radius_km, home_lesson_min_duration, home_lesson_requires_confirmation, home_lesson_force_2h_over_20km, verification_level, identity_verified, diploma_verified, phone_verified";
 
 const QUICK: { label: string; cat?: Discipline; href?: string }[] = [
   { label: "Musique", cat: "Musique" },
@@ -52,7 +54,11 @@ export default function LandingPage() {
           setTeachers(list.map((t) => ({ ...t, profilePlan: "free" })));
         }
       };
-      const { data, error } = await supabase.from("teachers").select(TEACHERS_SELECT).order("id");
+      const { data, error } = await supabase
+        .from("teachers")
+        .select(TEACHERS_SELECT)
+        .order("verification_level", { ascending: false })
+        .order("rating", { ascending: false });
       if (error || !data?.length) {
         await mergePlans(TEACHERS);
         setLoadingTeachers(false);
@@ -385,7 +391,21 @@ function LandingTeacherCard({ teacher }: { teacher: Teacher }) {
             {initials}
           </div>
           <div className="min-w-0">
-            <p className="truncate font-semibold text-[#2C2C2A]">{teacher.name}</p>
+            <div className="flex items-center gap-2 min-w-0">
+              <p className="truncate font-semibold text-[#2C2C2A]">{teacher.name}</p>
+              <VerificationBadge
+                level={getVerificationLevel({
+                  plan: teacher.profilePlan,
+                  identity_verified: teacher.identityVerified,
+                  diploma_verified: teacher.diplomaVerified,
+                  is_verified: teacher.isVerified,
+                  verification_level: teacher.verificationLevel ?? null,
+                })}
+                size="sm"
+                showLabel={false}
+                className="shrink-0 scale-90"
+              />
+            </div>
             <p className="truncate text-xs text-[#888780]">{teacher.discipline}</p>
           </div>
         </div>

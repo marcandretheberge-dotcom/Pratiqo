@@ -25,6 +25,8 @@ import { useRouter } from "next/navigation";
 import { haversineDistance } from "../lib/geo";
 import { PlanBadge } from "./PlanBadge";
 import { TeacherMap } from "./TeacherMap";
+import { VerificationBadge } from "./VerificationBadge";
+import { getVerificationLevel, nextLevelRequirements, nextVerificationLevel, VERIFICATION_LEVELS } from "../lib/verification";
 
 export type TeacherBookKind = "standard" | "home";
 
@@ -156,6 +158,33 @@ export function TeacherProfile({
 
   const displayDistanceKm = distanceKm !== undefined ? distanceKm : computedDistanceKm;
 
+  const verificationLevel = useMemo(
+    () =>
+      getVerificationLevel({
+        plan: displayPlan,
+        identity_verified: teacher.identityVerified,
+        diploma_verified: teacher.diplomaVerified,
+        is_verified: teacher.isVerified,
+        verification_level: teacher.verificationLevel ?? null,
+      }),
+    [
+      displayPlan,
+      teacher.identityVerified,
+      teacher.diplomaVerified,
+      teacher.isVerified,
+      teacher.verificationLevel,
+    ],
+  );
+
+  const nextLevel = nextVerificationLevel(verificationLevel);
+  const nextReq = nextLevel
+    ? nextLevelRequirements(verificationLevel, {
+        plan: displayPlan,
+        identity_verified: teacher.identityVerified,
+        diploma_verified: teacher.diplomaVerified,
+      })
+    : [];
+
   const homeConfigured =
     Boolean(teacher.homeLessonEnabled) &&
     typeof teacher.homeLessonPrice === "number" &&
@@ -230,6 +259,24 @@ export function TeacherProfile({
                 </div>
               </div>
               <h2 className="text-3xl font-bold text-slate-900 leading-tight">{teacher.name}</h2>
+              <div className="max-w-md">
+                <VerificationBadge level={verificationLevel} size="lg" showLabel />
+              </div>
+              {nextLevel ? (
+                <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 space-y-2">
+                  <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                    Comment obtenir le niveau suivant?
+                  </p>
+                  <p className="text-sm font-semibold text-slate-800">
+                    Prochain palier : {VERIFICATION_LEVELS[nextLevel].label}
+                  </p>
+                  <ul className="list-disc pl-4 text-sm text-slate-600 space-y-1">
+                    {nextReq.map((line) => (
+                      <li key={line}>{line}</li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
               <p className="text-slate-500 font-medium flex items-center gap-2">
                 <MapPin size={16} className="text-brand-primary" />
                 {displayDistanceKm !== null ? `${displayDistanceKm.toFixed(1)} km de vous • ` : null}

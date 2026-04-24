@@ -105,6 +105,52 @@ export async function sendWelcomeStudent(email: string, name: string) {
   }
 }
 
+export async function sendTeacherVerificationRequestToAdmin(opts: {
+  teacherName: string;
+  teacherEmail: string;
+  teacherId: string;
+  userId: string;
+  kind: "identity" | "diploma";
+  description?: string;
+}) {
+  const to = process.env.ADMIN_VERIFICATION_EMAIL?.trim() || process.env.RESEND_ADMIN_EMAIL?.trim();
+  if (!to) {
+    console.warn("[email] ADMIN_VERIFICATION_EMAIL / RESEND_ADMIN_EMAIL missing; skipping admin verification alert");
+    return { skipped: true as const };
+  }
+  const resend = resendClient();
+  if (!resend) {
+    console.warn("[email] RESEND_API_KEY missing; skipping admin verification alert");
+    return { skipped: true as const };
+  }
+  const base = appBaseUrl();
+  const kindFr = opts.kind === "identity" ? "Pièce d'identité" : "Diplôme / certificat";
+  const subject = `[Pratiqo] Demande de vérification — ${kindFr} — ${opts.teacherName}`;
+  const html = `
+  <div style="font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;line-height:1.5;color:#2C2C2A">
+    <h2 style="margin:0 0 12px 0;">Nouvelle demande de vérification</h2>
+    <p><strong>Type :</strong> ${escapeHtml(kindFr)}</p>
+    <p><strong>Professeur :</strong> ${escapeHtml(opts.teacherName)} (${escapeHtml(opts.teacherEmail)})</p>
+    <p><strong>teacher.id :</strong> ${escapeHtml(opts.teacherId)}</p>
+    <p><strong>user.id :</strong> ${escapeHtml(opts.userId)}</p>
+    ${opts.description ? `<p><strong>Message :</strong><br/>${escapeHtml(opts.description)}</p>` : ""}
+    <p style="margin-top:16px"><a href="${base}/teacher/verification" style="color:#1D9E75;font-weight:600;">Ouvrir l’admin (à traiter manuellement)</a></p>
+  </div>`;
+  try {
+    const result = await resend.emails.send({
+      from: fromEmail(),
+      to,
+      subject,
+      html,
+    });
+    console.log("[resend] Verification request alert:", result);
+    return result;
+  } catch (error) {
+    console.error("[resend] Verification request error:", error);
+    throw error;
+  }
+}
+
 function escapeHtml(s: string): string {
   return s.replace(/[&<>"']/g, (c) => {
     switch (c) {

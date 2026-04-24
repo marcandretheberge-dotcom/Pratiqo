@@ -10,6 +10,7 @@ import {
   MessageCircle,
   Search,
   Settings,
+  ShieldCheck,
   UserRound,
   UsersRound,
 } from "lucide-react";
@@ -20,6 +21,8 @@ import { getSupabaseClient } from "../lib/supabase";
 import { fetchUnreadMessageCount } from "../lib/messaging";
 import Logo from "./ui/Logo";
 import { NotificationCenter } from "./NotificationCenter";
+import { VerificationBadge } from "./VerificationBadge";
+import { getVerificationLevel, type VerificationLevel } from "../lib/verification";
 
 type Role = "student" | "teacher" | string;
 
@@ -39,6 +42,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [loyaltyTier, setLoyaltyTier] = useState<string | null>(null);
+  const [teacherVerifyLevel, setTeacherVerifyLevel] = useState<VerificationLevel | null>(null);
 
   useEffect(() => {
     if (!user?.id) {
@@ -71,12 +75,40 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!isTeacher || !user?.id) {
       setLoyaltyTier(null);
+      setTeacherVerifyLevel(null);
       return;
     }
     const supabase = getSupabaseClient();
     const load = async () => {
-      const { data } = await supabase.from("profiles").select("loyalty_tier").eq("id", user.id).maybeSingle();
+      const [{ data }, { data: trow }] = await Promise.all([
+        supabase.from("profiles").select("loyalty_tier, plan").eq("id", user.id).maybeSingle(),
+        supabase
+          .from("teachers")
+          .select("verification_level, identity_verified, diploma_verified, is_verified")
+          .eq("user_id", user.id)
+          .maybeSingle(),
+      ]);
       setLoyaltyTier(normalizeTier((data as { loyalty_tier?: string | null } | null)?.loyalty_tier));
+      const plan = String((data as { plan?: string | null } | null)?.plan || "free");
+      if (trow) {
+        const tr = trow as {
+          verification_level?: number | null;
+          identity_verified?: boolean | null;
+          diploma_verified?: boolean | null;
+          is_verified?: boolean | null;
+        };
+        setTeacherVerifyLevel(
+          getVerificationLevel({
+            plan,
+            identity_verified: Boolean(tr.identity_verified),
+            diploma_verified: Boolean(tr.diploma_verified),
+            is_verified: tr.is_verified !== false,
+            verification_level: tr.verification_level ?? null,
+          }),
+        );
+      } else {
+        setTeacherVerifyLevel(null);
+      }
     };
     void load();
   }, [isTeacher, user?.id]);
@@ -179,6 +211,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 label="Cours de groupe"
                 active={pathname?.startsWith("/teacher/group-sessions")}
               />
+              <TeacherNavLink
+                href="/teacher/verification"
+                label="Vérification"
+                active={pathname?.startsWith("/teacher/verification")}
+                icon={<ShieldCheck size={18} className="opacity-90 shrink-0" />}
+                extra={
+                  teacherVerifyLevel !== null ? (
+                    <VerificationBadge level={teacherVerifyLevel} size="sm" showLabel={false} />
+                  ) : null
+                }
+              />
               <TeacherNavLink href="/messages" label="Messages" active={pathname?.startsWith("/messages")} badge={unreadMessages} />
               <TeacherNavLink
                 href="/loyalty"
@@ -231,6 +274,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <TeacherTab href="/dashboard" icon={<LayoutDashboard size={20} />} label="Accueil" active={pathname === "/dashboard"} />
             <TeacherTab href="/teacher/progress" icon={<CalendarDays size={20} />} label="Agenda" active={pathname?.startsWith("/teacher/progress")} />
             <TeacherTab href="/teacher/group-sessions" icon={<UsersRound size={20} />} label="Groupes" active={pathname?.startsWith("/teacher/group-sessions")} />
+            <TeacherTab
+              href="/teacher/verification"
+              icon={<ShieldCheck size={20} />}
+              label="Vérif."
+              active={pathname?.startsWith("/teacher/verification")}
+              suffix={
+                teacherVerifyLevel !== null ? (
+                  <VerificationBadge level={teacherVerifyLevel} size="sm" showLabel={false} className="scale-90" />
+                ) : null
+              }
+            />
             <TeacherTab href="/messages" icon={<MessageCircle size={20} />} label="Messages" active={pathname?.startsWith("/messages")} badge={unreadMessages} />
             <TeacherTab href="/loyalty" icon={<Gift size={20} />} label="Fidélité" active={pathname?.startsWith("/loyalty")} pill={loyaltyTier} />
             <TeacherTab href="/teacher/settings" icon={<Settings size={20} />} label="Réglages" active={pathname?.startsWith("/teacher/settings")} />
@@ -274,6 +328,7 @@ function TeacherTab({
   active,
   badge,
   pill,
+  suffix,
 }: {
   href: string;
   icon: React.ReactNode;
@@ -281,6 +336,7 @@ function TeacherTab({
   active: boolean;
   badge?: number;
   pill?: string | null;
+  suffix?: React.ReactNode;
 }) {
   return (
     <Link
@@ -298,9 +354,12 @@ function TeacherTab({
           </span>
         ) : null}
       </span>
-      <span className="flex items-center gap-0.5">
-        {label}
-        {pill ? <span className="text-[8px] opacity-80">({pill})</span> : null}
+      <span className="flex flex-col items-center gap-0.5">
+        <span className="flex items-center gap-0.5">
+          {label}
+          {pill ? <span className="text-[8px] opacity-80">({pill})</span> : null}
+        </span>
+        {suffix}
       </span>
     </Link>
   );
@@ -312,12 +371,16 @@ function TeacherNavLink({
   active,
   badge,
   pill,
+  icon,
+  extra,
 }: {
   href: string;
   label: string;
   active: boolean;
   badge?: number;
   pill?: string | null;
+  icon?: React.ReactNode;
+  extra?: React.ReactNode;
 }) {
   return (
     <Link
@@ -327,7 +390,11 @@ function TeacherNavLink({
         active ? "bg-white/12 text-white" : "text-white/80 hover:bg-white/8 hover:text-white",
       )}
     >
-      <span>{label}</span>
+      <span className="flex items-center gap-2 min-w-0">
+        {icon}
+        <span className="truncate">{label}</span>
+        {extra}
+      </span>
       <span className="flex items-center gap-1 shrink-0">
         {pill ? (
           <span className="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-md bg-[#1D9E75]/30 text-[#B8F5DC]">
