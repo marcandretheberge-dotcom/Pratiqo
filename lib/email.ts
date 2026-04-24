@@ -7,7 +7,7 @@ function resendClient(): Resend | null {
 }
 
 function fromEmail(): string {
-  return process.env.RESEND_FROM?.trim() || "Pratiqo <onboarding@pratiqo.app>";
+  return "Pratiqo <onboarding@pratiqo.ca>";
 }
 
 function appBaseUrl(): string {
