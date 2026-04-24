@@ -20,6 +20,8 @@ import { useAuth } from "./AuthProvider";
 import { getSupabaseClient } from "../lib/supabase";
 import { haversineDistance } from "../lib/geo";
 import { formatLocalISODate, periodForSlot } from "../lib/slots";
+import { localeToBcp47 } from "../lib/i18n";
+import { useLocale } from "../lib/locale-context";
 
 export type BookingInitialLessonKind = "standard" | "home";
 
@@ -42,6 +44,8 @@ interface BookingModalProps {
 
 export function BookingModal({ teacher, onClose, initialLessonKind = "standard" }: BookingModalProps) {
   const { user } = useAuth();
+  const { locale, t } = useLocale();
+  const dateLocale = localeToBcp47(locale);
   const [step, setStep] = useState<Step>("info");
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
@@ -111,7 +115,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
         durationMinutes?: number;
         error?: string;
       };
-      if (!res.ok) throw new Error(body.error || "Impossible de charger les dates.");
+      if (!res.ok) throw new Error(body.error || t("bookingLoadDatesFail"));
       setAvailableDays(body.days ?? {});
       if (typeof body.durationMinutes === "number") setDurationMinutes(body.durationMinutes);
     } catch (e) {
@@ -120,7 +124,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
     } finally {
       setLoadingDays(false);
     }
-  }, [teacher.id, lessonMinutes]);
+  }, [teacher.id, lessonMinutes, t]);
 
   const loadSlotsForDate = useCallback(
     async (dateIso: string) => {
@@ -134,7 +138,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
           durationMinutes?: number;
           error?: string;
         };
-        if (!res.ok) throw new Error(body.error || "Impossible de charger les créneaux.");
+        if (!res.ok) throw new Error(body.error || t("bookingLoadSlotsFail"));
         setSlots(body.slots ?? []);
         if (typeof body.durationMinutes === "number") setDurationMinutes(body.durationMinutes);
       } catch (e) {
@@ -144,7 +148,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
         setLoadingSlots(false);
       }
     },
-    [teacher.id, lessonMinutes],
+    [teacher.id, lessonMinutes, t],
   );
 
   useEffect(() => {
@@ -188,11 +192,11 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
       const iso = formatLocalISODate(d);
       const count = availableDays[iso] ?? 0;
       const disabled = iso < todayIso || count === 0;
-      const label = d.toLocaleDateString("fr-CA", { weekday: "short", day: "numeric", month: "short" });
+      const label = d.toLocaleDateString(dateLocale, { weekday: "short", day: "numeric", month: "short" });
       cells.push({ iso, label, count, disabled });
     }
     return cells;
-  }, [availableDays, todayIso]);
+  }, [availableDays, todayIso, dateLocale]);
 
   const slotsByPeriod = useMemo(() => {
     const groups: { key: "matin" | "apresmidi" | "soir"; label: string; emoji: string; items: string[] }[] = [
@@ -206,22 +210,22 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
       if (g) g.items.push(s);
     }
     return groups.filter((g) => g.items.length > 0);
-  }, [slots]);
+  }, [slots, t]);
 
   const formattedSelectedDate = useMemo(() => {
     if (!selectedDate) return "";
     const [y, m, d] = selectedDate.split("-").map(Number);
     const dt = new Date(y, m - 1, d);
-    return dt.toLocaleDateString("fr-CA", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
-  }, [selectedDate]);
+    return dt.toLocaleDateString(dateLocale, { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  }, [selectedDate, dateLocale]);
 
   const handleConfirmAndPay = async () => {
     if (!user) {
-      alert("Veuillez vous connecter pour réserver.");
+      setCheckoutError(t("bookingLoginAlert"));
       return;
     }
     if (!selectedDate || !selectedSlot) {
-      setCheckoutError("Choisis une date et un créneau.");
+      setCheckoutError(t("bookingSelectDateTimeError"));
       return;
     }
 
@@ -262,7 +266,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
       const { data: inserted, error: insErr } = await supabase.from("bookings").insert(bookingData).select("id").single();
       if (insErr) {
         if ((insErr as { code?: string }).code === "23505") {
-          setCheckoutError("Ce créneau vient d'être réservé.");
+          setCheckoutError(t("slotBooked"));
           return;
         }
         throw insErr;
@@ -275,7 +279,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
       } = await supabase.auth.getSession();
       const accessToken = session?.access_token;
       if (!accessToken) {
-        throw new Error("Session expirée. Reconnectez-vous.");
+        throw new Error(t("bookingSessionExpired"));
       }
 
       const res = await fetch("/api/stripe/checkout", {
@@ -302,26 +306,26 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
       }
 
       if (res.status === 409) {
-        setCheckoutError(payload.error || "Ce créneau vient d'être réservé.");
+        setCheckoutError(payload.error || t("slotBooked"));
         return;
       }
 
       if (!res.ok) {
         const parts = [
-          payload.error || "Échec du paiement Stripe.",
+          payload.error || t("bookingStripeFail"),
           payload.stripeCode ? `(${payload.stripeCode})` : null,
         ].filter(Boolean);
         throw new Error(parts.join(" "));
       }
 
       const url = payload.url;
-      if (!url) throw new Error("URL de paiement manquante (réponse Stripe invalide).");
+      if (!url) throw new Error(t("bookingMissingCheckoutUrl"));
 
       redirecting = true;
       window.location.assign(url);
     } catch (error) {
       console.error("Booking / checkout error", error);
-      const msg = error instanceof Error ? error.message : "Une erreur est survenue.";
+      const msg = error instanceof Error ? error.message : t("bookingUnknownError");
       setCheckoutError(msg);
     } finally {
       if (!redirecting) setIsSubmitting(false);
@@ -339,12 +343,12 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
         <div className="p-6 border-b border-slate-100 flex items-center justify-between">
           <div>
             <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "#1D9E75" }}>
-              Réservation
+              {t("bookingTitle")}
             </p>
             <h3 className="text-xl font-bold text-slate-900">{teacher.name}</h3>
           </div>
           <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-600 text-sm font-bold">
-            Fermer
+            {t("bookingClose")}
           </button>
         </div>
 
@@ -357,14 +361,14 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                 onClick={() => setStep("preferences")}
                 className="w-full ds-btn-primary h-12 rounded-2xl text-sm font-semibold"
               >
-                Continuer <ChevronRight className="inline ml-1" size={16} />
+                {t("bookingContinue")} <ChevronRight className="inline ml-1" size={16} />
               </button>
             </div>
           )}
 
           {step === "preferences" && (
             <div className="space-y-4">
-              <p className="text-sm font-semibold text-slate-800">Votre niveau</p>
+              <p className="text-sm font-semibold text-slate-800">{t("bookingYourLevel")}</p>
               <div className="flex flex-wrap gap-2">
                 {teacher.levels.map((lvl) => (
                   <button
@@ -387,7 +391,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
               </div>
 
               <div className="space-y-2">
-                <p className="text-sm font-semibold text-slate-800">Lieu du cours</p>
+                <p className="text-sm font-semibold text-slate-800">{t("bookingLocationTitle")}</p>
                 <div className="flex flex-wrap gap-2">
                   {showStudio ? (
                     <button
@@ -400,7 +404,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                           : "border-slate-200",
                       )}
                     >
-                      <Users size={14} /> En studio
+                      <Users size={14} /> {t("bookingStudio")}
                     </button>
                   ) : null}
                   {showOnline ? (
@@ -414,7 +418,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                           : "border-slate-200",
                       )}
                     >
-                      <Video size={14} /> En ligne
+                      <Video size={14} /> {t("bookingOnline")}
                     </button>
                   ) : null}
                   {homeAvailable ? (
@@ -428,7 +432,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                           : "border-slate-200",
                       )}
                     >
-                      <Home size={14} /> À domicile
+                      <Home size={14} /> {t("bookingHome")}
                     </button>
                   ) : null}
                 </div>
@@ -438,30 +442,33 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                 <div className="space-y-2 rounded-2xl border border-slate-100 bg-slate-50/80 p-4">
                   <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
                     <MapPin size={14} className="text-[#1D9E75]" />
-                    Adresse du cours
+                    {t("bookingAddressLabel")}
                   </label>
                   <textarea
                     value={studentAddress}
                     onChange={(e) => setStudentAddress(e.target.value)}
                     rows={3}
-                    placeholder="Numéro, rue, ville…"
+                    placeholder={t("bookingAddressPlaceholder")}
                     className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm resize-none focus:ring-2 focus:ring-[#1D9E75]/30 focus:border-[#1D9E75] outline-none"
                   />
                   <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
                     <span className="font-semibold text-slate-700">
                       ${hourlyRate.toFixed(0)} / h × {lessonHours === 1 ? "1 h" : `${lessonHours} h`}
                     </span>
-                    <span className="font-bold text-[#1D9E75]">Total : ${totalPrice.toFixed(2)}</span>
+                    <span className="font-bold text-[#1D9E75]">
+                      {t("bookingTotalLine")} : ${totalPrice.toFixed(2)}
+                    </span>
                   </div>
                   {teacher.homeLessonRequiresConfirmation ? (
                     <p className="text-[11px] text-amber-800 bg-amber-50 border border-amber-100 rounded-lg px-2 py-1.5">
-                      Ce professeur confirmera manuellement votre demande à domicile après le paiement.
+                      {t("bookingManualConfirmHome")}
                     </p>
                   ) : null}
                 </div>
               ) : (
                 <p className="text-xs text-slate-500">
-                  Tarif : <strong className="text-slate-800">${teacher.pricePerLesson}</strong> / heure
+                  {t("bookingRateHint")} : <strong className="text-slate-800">${teacher.pricePerLesson}</strong> /{" "}
+                  {t("bookingPerHourWord")}
                 </p>
               )}
 
@@ -472,7 +479,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                   className="flex-1 h-11 rounded-2xl border border-slate-200 text-sm font-semibold text-slate-600"
                 >
                   <ChevronLeft className="inline mr-1" size={16} />
-                  Retour
+                  {t("back")}
                 </button>
                 <button
                   type="button"
@@ -484,7 +491,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                   }}
                   className="flex-[2] ds-btn-primary h-11 rounded-2xl text-sm font-semibold disabled:opacity-50"
                 >
-                  Choisir un créneau
+                  {t("chooseSlotCta")}
                 </button>
               </div>
             </div>
@@ -493,9 +500,9 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
           {step === "pickDate" && (
             <div className="space-y-4">
               <p className="text-sm font-semibold text-slate-800 flex items-center gap-2">
-                <Calendar size={16} /> Date
+                <Calendar size={16} /> {t("bookingPickDateTitle")}
               </p>
-              <p className="text-xs text-slate-500">Les 4 prochaines semaines — uniquement les jours avec places libres.</p>
+              <p className="text-xs text-slate-500">{t("fourWeeksHint")}</p>
               {daysError ? (
                 <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800">{daysError}</div>
               ) : null}
@@ -526,11 +533,13 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                     >
                       <span className="block capitalize">{cell.label}</span>
                       {!cell.disabled ? (
-                        <span className="text-[10px] font-bold text-[#1D9E75]">{cell.count} dispo</span>
+                        <span className="text-[10px] font-bold text-[#1D9E75]">
+                          {t("slotsAvailableBadge").replace("{n}", String(cell.count))}
+                        </span>
                       ) : cell.iso < todayIso ? (
-                        <span className="text-[10px] text-slate-400">Passé</span>
+                        <span className="text-[10px] text-slate-400">{t("pastLabel")}</span>
                       ) : (
-                        <span className="text-[10px] text-slate-400">Complet</span>
+                        <span className="text-[10px] text-slate-400">{t("fullLabel")}</span>
                       )}
                     </button>
                   ))}
@@ -542,7 +551,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                 className="w-full h-10 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600"
               >
                 <ChevronLeft className="inline mr-1" size={16} />
-                Retour
+                {t("back")}
               </button>
             </div>
           )}
@@ -550,7 +559,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
           {step === "pickSlot" && (
             <div className="space-y-4">
               <p className="text-sm font-semibold text-slate-800 flex items-center gap-2">
-                <Clock size={16} /> Heure
+                <Clock size={16} /> {t("bookingTimeLabel")}
               </p>
               {selectedDate ? (
                 <p className="text-xs text-slate-500 capitalize">{formattedSelectedDate}</p>
@@ -563,7 +572,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                   <Loader2 className="animate-spin text-[#1D9E75]" size={28} />
                 </div>
               ) : slots.length === 0 ? (
-                <p className="text-sm text-slate-500">Aucun créneau libre ce jour-là. Choisis une autre date.</p>
+                <p className="text-sm text-slate-500">{t("noSlotsPickOther")}</p>
               ) : (
                 <div className="space-y-4 max-h-[40vh] overflow-y-auto pr-1">
                   {slotsByPeriod.map((g) => (
@@ -602,7 +611,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                   className="flex-1 h-10 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600"
                 >
                   <ChevronLeft className="inline mr-1" size={16} />
-                  Date
+                  {t("backToDate")}
                 </button>
               </div>
             </div>
@@ -610,33 +619,35 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
 
           {step === "confirm" && (
             <div className="space-y-4">
-              <p className="text-sm font-bold text-slate-900">Récapitulatif</p>
+              <p className="text-sm font-bold text-slate-900">{t("bookingConfirmTitle")}</p>
               <div className="rounded-2xl border border-[rgba(29,158,117,0.35)] bg-[rgba(29,158,117,0.06)] p-4 space-y-2 text-sm">
                 <div className="flex justify-between gap-2">
-                  <span className="text-slate-600">Date</span>
+                  <span className="text-slate-600">{t("bookingDateLabel")}</span>
                   <span className="font-semibold text-slate-900 text-right capitalize">{formattedSelectedDate}</span>
                 </div>
                 <div className="flex justify-between gap-2">
-                  <span className="text-slate-600">Heure</span>
+                  <span className="text-slate-600">{t("bookingTimeLabel")}</span>
                   <span className="font-semibold text-slate-900">{selectedSlot}</span>
                 </div>
                 <div className="flex justify-between gap-2">
-                  <span className="text-slate-600">Durée</span>
-                  <span className="font-semibold text-slate-900">{durationMinutes} min</span>
+                  <span className="text-slate-600">{t("bookingDurationLabel")}</span>
+                  <span className="font-semibold text-slate-900">
+                    {durationMinutes} {t("freeSlotsMinSuffix")}
+                  </span>
                 </div>
                 <div className="flex justify-between gap-2">
-                  <span className="text-slate-600">Montant</span>
+                  <span className="text-slate-600">{t("bookingAmountLabel")}</span>
                   <span className="font-bold text-[#1D9E75]">${totalPrice.toFixed(2)}</span>
                 </div>
               </div>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                Ce créneau sera réservé exclusivement pour toi après paiement réussi.
-              </p>
+              <p className="text-xs text-slate-600 leading-relaxed">{t("bookingExclusiveText")}</p>
               {teachingMode === "domicile" ? (
                 <div className="rounded-xl border border-[rgba(29,158,117,0.25)] bg-[rgba(29,158,117,0.06)] px-3 py-2 text-xs text-slate-700">
-                  <span className="font-semibold text-[#0f6e56]">À domicile</span>
+                  <span className="font-semibold text-[#0f6e56]">{t("bookingAtHomeLabel")}</span>
                   {lessonHours > 1 ? (
-                    <span className="block mt-1">Durée facturée : {lessonHours} h (politique distance du professeur).</span>
+                    <span className="block mt-1">
+                      {t("bookingBilledDuration")} : {lessonHours} {t("bookingHours")} {t("bookingDistancePolicy")}
+                    </span>
                   ) : null}
                 </div>
               ) : null}
@@ -655,7 +666,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                   className="flex-1 h-11 rounded-2xl border border-slate-200 text-sm font-semibold text-slate-600"
                 >
                   <ChevronLeft className="inline mr-1" size={16} />
-                  Créneau
+                  {t("backToSlot")}
                 </button>
                 <button
                   type="button"
@@ -667,12 +678,12 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                   {isSubmitting ? (
                     <>
                       <Loader2 className="animate-spin" size={18} />
-                      Redirection…
+                      {t("bookingRedirecting")}
                     </>
                   ) : (
                     <>
                       <CheckCircle2 size={18} />
-                      Payer ${totalPrice.toFixed(2)}
+                      {t("bookingPay")} ${totalPrice.toFixed(2)}
                     </>
                   )}
                 </button>

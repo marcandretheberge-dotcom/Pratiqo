@@ -14,9 +14,28 @@ import {
   weeklyAvailabilityFromTeacherRows,
 } from "../../../../lib/slots";
 import { defaultLessonDurationMinutes } from "../../../../lib/teacherSlotQueries";
+import { useLocale } from "../../../../lib/locale-context";
+import { localeToBcp47 } from "../../../../lib/i18n";
+import type { TranslationKey } from "../../../../lib/translations";
 
 const DAYS = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"] as const;
 const SLOTS = ["Matin", "Après-midi", "Soir"] as const;
+
+const DAY_TKEY: Record<(typeof DAYS)[number], TranslationKey> = {
+  Lun: "mon",
+  Mar: "tue",
+  Mer: "wed",
+  Jeu: "thu",
+  Ven: "fri",
+  Sam: "sat",
+  Dim: "sun",
+};
+
+const SLOT_TKEY: Record<(typeof SLOTS)[number], TranslationKey> = {
+  Matin: "morning",
+  "Après-midi": "afternoon",
+  Soir: "evening",
+};
 
 function startOfWeekMonday(from: Date): Date {
   const x = new Date(from);
@@ -47,6 +66,8 @@ type BookingRow = {
 
 function TeacherScheduleInner() {
   const { user } = useAuth();
+  const { locale, t } = useLocale();
+  const dateLocale = localeToBcp47(locale);
   const searchParams = useSearchParams();
   const [tab, setTab] = useState<Tab>("cours");
   const [teacherId, setTeacherId] = useState<string | null>(null);
@@ -68,7 +89,7 @@ function TeacherScheduleInner() {
   const [blockDate, setBlockDate] = useState("");
   const [blockPeriod, setBlockPeriod] = useState<"matin" | "apresmidi" | "soir" | "all">("matin");
   const [blockReason, setBlockReason] = useState("");
-  const [message, setMessage] = useState<string | null>(null);
+  const [flash, setFlash] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
 
   const weekDays = useMemo(() => {
     return Array.from({ length: 7 }, (_, i) => addDays(weekAnchor, i));
@@ -112,12 +133,12 @@ function TeacherScheduleInner() {
     const withNames: BookingRow[] = [];
     for (const r of rows) {
       const { data: p } = await supabase.from("profiles").select("name").eq("id", r.student_id).maybeSingle();
-      withNames.push({ ...r, studentName: (p?.name as string) || "Élève" });
+      withNames.push({ ...r, studentName: (p?.name as string) || t("studentDefaultName") });
     }
     setBookings(withNames);
     setBlockedRows((bl || []) as { id: string; blocked_date: string; period: string | null }[]);
     setLoading(false);
-  }, [user?.id, weekAnchor]);
+  }, [user?.id, weekAnchor, t]);
 
   useEffect(() => {
     const t = searchParams.get("tab");
@@ -195,14 +216,14 @@ function TeacherScheduleInner() {
   const saveAvailability = async () => {
     if (!user?.id) return;
     setSaving(true);
-    setMessage(null);
+    setFlash(null);
     try {
       const supabase = getSupabaseClient();
       const { error } = await supabase.from("teachers").update({ availability }).eq("user_id", user.id);
       if (error) throw error;
-      setMessage("Disponibilités enregistrées.");
+      setFlash({ kind: "ok", text: t("availabilitySaved") });
     } catch (e) {
-      setMessage(e instanceof Error ? e.message : "Erreur");
+      setFlash({ kind: "err", text: e instanceof Error ? e.message : t("errorGeneric") });
     } finally {
       setSaving(false);
     }
@@ -211,7 +232,7 @@ function TeacherScheduleInner() {
   const addBlocked = async () => {
     if (!teacherId || !blockDate) return;
     setSaving(true);
-    setMessage(null);
+    setFlash(null);
     try {
       const supabase = getSupabaseClient();
       const { error } = await supabase.from("blocked_slots").insert({
@@ -224,7 +245,7 @@ function TeacherScheduleInner() {
       setBlockReason("");
       await load();
     } catch (e) {
-      setMessage(e instanceof Error ? e.message : "Erreur");
+      setFlash({ kind: "err", text: e instanceof Error ? e.message : t("errorGeneric") });
     } finally {
       setSaving(false);
     }
@@ -237,7 +258,7 @@ function TeacherScheduleInner() {
   };
 
   const cancelBooking = async (id: string) => {
-    if (!confirm("Annuler ce cours ?")) return;
+    if (!confirm(t("cancelCourseConfirm"))) return;
     const supabase = getSupabaseClient();
     await supabase.from("bookings").update({ status: "cancelled" }).eq("id", id);
     await load();
@@ -246,7 +267,7 @@ function TeacherScheduleInner() {
   if (!user) {
     return (
       <div className="max-w-3xl mx-auto py-16 text-center text-sm text-slate-500">
-        Connecte-toi pour gérer ton emploi du temps.
+        {t("loginToSchedule")}
       </div>
     );
   }
@@ -254,9 +275,9 @@ function TeacherScheduleInner() {
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       <div>
-        <p className="ds-label text-[var(--p-text-subtle)]">Professeur</p>
-        <h1 className="text-3xl font-bold text-[var(--p-text)]">Emploi du temps</h1>
-        <p className="text-sm text-[var(--p-text-muted)] mt-2">Cours réservés et disponibilités.</p>
+        <p className="ds-label text-[var(--p-text-subtle)]">{t("scheduleTeacherLabel")}</p>
+        <h1 className="text-3xl font-bold text-[var(--p-text)]">{t("schedulePageTitle")}</h1>
+        <p className="text-sm text-[var(--p-text-muted)] mt-2">{t("schedulePageSubtitle")}</p>
       </div>
 
       <div className="flex gap-2 p-1 rounded-2xl bg-slate-100 border border-slate-200 w-fit">
@@ -268,7 +289,7 @@ function TeacherScheduleInner() {
             tab === "cours" ? "bg-[#1D9E75] text-white shadow-sm" : "text-slate-600 hover:text-slate-900",
           )}
         >
-          Mes cours
+          {t("tabMyCourses")}
         </button>
         <button
           type="button"
@@ -278,14 +299,12 @@ function TeacherScheduleInner() {
             tab === "dispo" ? "bg-[#1D9E75] text-white shadow-sm" : "text-slate-600 hover:text-slate-900",
           )}
         >
-          Disponibilités
+          {t("tabAvailabilityNav")}
         </button>
       </div>
 
-      {message ? (
-        <p className={cn("text-sm", message.includes("Erreur") || message.includes("error") ? "text-rose-600" : "text-[#085041]")}>
-          {message}
-        </p>
+      {flash ? (
+        <p className={cn("text-sm", flash.kind === "err" ? "text-rose-600" : "text-[#085041]")}>{flash.text}</p>
       ) : null}
 
       {loading ? (
@@ -293,7 +312,7 @@ function TeacherScheduleInner() {
           <Loader2 className="animate-spin text-[#1D9E75]" size={36} />
         </div>
       ) : !teacherId ? (
-        <p className="text-sm text-slate-500">Aucune fiche professeur liée à ton compte.</p>
+        <p className="text-sm text-slate-500">{t("noTeacherProfile")}</p>
       ) : tab === "cours" ? (
         <div className="space-y-6">
           <div className="flex items-center justify-between gap-4 flex-wrap">
@@ -302,7 +321,7 @@ function TeacherScheduleInner() {
               onClick={() => setWeekAnchor((w) => addDays(w, -7))}
               className="inline-flex items-center gap-1 h-10 px-3 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50"
             >
-              <ChevronLeft size={18} /> Semaine
+              <ChevronLeft size={18} /> {t("weekNav")}
             </button>
             <p className="text-sm font-semibold text-slate-700">
               {formatLocalISODate(weekAnchor)} → {formatLocalISODate(addDays(weekAnchor, 6))}
@@ -312,14 +331,14 @@ function TeacherScheduleInner() {
               onClick={() => setWeekAnchor((w) => addDays(w, 7))}
               className="inline-flex items-center gap-1 h-10 px-3 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50"
             >
-              Semaine <ChevronRight size={18} />
+              {t("weekNav")} <ChevronRight size={18} />
             </button>
           </div>
 
           <div className="flex flex-wrap gap-2">
             {weekDays.map((dt, i) => {
               const iso = formatLocalISODate(dt);
-              const label = dt.toLocaleDateString("fr-CA", { weekday: "short", day: "numeric" });
+              const label = dt.toLocaleDateString(dateLocale, { weekday: "short", day: "numeric" });
               return (
                 <button
                   key={iso}
@@ -339,9 +358,9 @@ function TeacherScheduleInner() {
           <div className="rounded-2xl border border-slate-200 bg-white p-5 space-y-4">
             <h2 className="text-sm font-bold text-slate-800 capitalize">{selectedDateIso}</h2>
             <div className="space-y-2">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400">Réservations</p>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400">{t("reservationsTitle")}</p>
               {dayBookings.length === 0 ? (
-                <p className="text-sm text-slate-500">Aucun cours ce jour-là.</p>
+                <p className="text-sm text-slate-500">{t("noBookingsThatDay")}</p>
               ) : (
                 <ul className="space-y-2">
                   {dayBookings.map((b) => (
@@ -360,7 +379,7 @@ function TeacherScheduleInner() {
                         onClick={() => void cancelBooking(b.id)}
                         className="text-xs font-semibold text-rose-600 hover:underline"
                       >
-                        Annuler
+                        {t("cancel")}
                       </button>
                     </li>
                   ))}
@@ -368,9 +387,11 @@ function TeacherScheduleInner() {
               )}
             </div>
             <div className="space-y-2 border-t border-slate-100 pt-4">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400">Créneaux libres ({durationMin} min)</p>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400">
+                {t("freeSlotsTitle")} ({durationMin} {t("freeSlotsMinSuffix")})
+              </p>
               {freeSlotsForDay.length === 0 ? (
-                <p className="text-sm text-slate-500">Aucun créneau libre affiché (complet ou hors disponibilité).</p>
+                <p className="text-sm text-slate-500">{t("noFreeSlotsDetail")}</p>
               ) : (
                 <div className="flex flex-wrap gap-2">
                   {freeSlotsForDay.map((s) => (
@@ -383,16 +404,16 @@ function TeacherScheduleInner() {
                   ))}
                 </div>
               )}
-              <p className="text-[11px] text-slate-500">
-                Pour bloquer une plage, passe à l’onglet Disponibilités → « Bloquer une date exceptionnelle ».
-              </p>
+              <p className="text-[11px] text-slate-500">{t("blockHintToTab")}</p>
             </div>
           </div>
         </div>
       ) : (
         <div className="space-y-8">
           <div className="flex items-center justify-between gap-4 flex-wrap mb-2">
-            <p className="text-sm text-slate-600">Semaine du {formatLocalISODate(weekAnchor)}</p>
+            <p className="text-sm text-slate-600">
+              {t("weekOf")} {formatLocalISODate(weekAnchor)}
+            </p>
             <div className="flex gap-2">
               <button
                 type="button"
@@ -411,14 +432,14 @@ function TeacherScheduleInner() {
             </div>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white p-5">
-            <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">Grille hebdomadaire</p>
-            <p className="text-sm text-slate-600 mb-4">Teal = disponible · Gris = fermé · Orange = réservation (non modifiable)</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">{t("gridWeeklyTitle")}</p>
+            <p className="text-sm text-slate-600 mb-4">{t("gridCombinedLegend")}</p>
             <div className="overflow-x-auto">
               <div className="min-w-[560px] grid grid-cols-[120px_repeat(7,1fr)] gap-2">
                 <div />
                 {DAYS.map((d, di) => (
                   <div key={d} className="text-[11px] font-bold uppercase tracking-widest text-slate-500 text-center">
-                    {d}{" "}
+                    {t(DAY_TKEY[d])}{" "}
                     <span className="block font-normal text-slate-400 normal-case">
                       {weekDays[di] ? weekDays[di].getDate() : ""}/{weekDays[di] ? weekDays[di].getMonth() + 1 : ""}
                     </span>
@@ -426,7 +447,7 @@ function TeacherScheduleInner() {
                 ))}
                 {SLOTS.map((s) => (
                   <React.Fragment key={s}>
-                    <div className="text-sm font-semibold text-slate-700">{s}</div>
+                    <div className="text-sm font-semibold text-slate-700">{t(SLOT_TKEY[s])}</div>
                     {DAYS.map((d, di) => {
                       const key = `${d} ${s}`;
                       const on = availability.includes(key);
@@ -443,7 +464,7 @@ function TeacherScheduleInner() {
                             !locked && on ? "border-[#1D9E75] bg-[rgba(29,158,117,0.12)]" : "",
                             !locked && !on ? "border-slate-200 bg-white hover:border-slate-300" : "",
                           )}
-                          title={locked ? "Créneau avec réservation" : on ? "Disponible" : "Indisponible"}
+                          title={locked ? t("titleCellBooked") : on ? t("titleCellAvailable") : t("titleCellUnavailable")}
                         />
                       );
                     })}
@@ -458,12 +479,12 @@ function TeacherScheduleInner() {
               className="mt-5 inline-flex items-center justify-center gap-2 h-11 px-5 rounded-full bg-[#1D9E75] text-white text-sm font-semibold hover:brightness-[0.98] disabled:opacity-60"
             >
               <Save size={18} />
-              {saving ? "…" : "Enregistrer"}
+              {saving ? t("savingDots") : t("save")}
             </button>
           </div>
 
           <div className="rounded-2xl border border-slate-200 bg-white p-5 space-y-4">
-            <p className="text-sm font-bold text-slate-800">Bloquer une date exceptionnelle</p>
+            <p className="text-sm font-bold text-slate-800">{t("blockExceptionalTitle")}</p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <input
                 type="date"
@@ -476,15 +497,15 @@ function TeacherScheduleInner() {
                 onChange={(e) => setBlockPeriod(e.target.value as typeof blockPeriod)}
                 className="h-11 rounded-xl border border-slate-200 px-3 text-sm"
               >
-                <option value="matin">Matin</option>
-                <option value="apresmidi">Après-midi</option>
-                <option value="soir">Soir</option>
-                <option value="all">Toute la journée</option>
+                <option value="matin">{t("morning")}</option>
+                <option value="apresmidi">{t("afternoon")}</option>
+                <option value="soir">{t("evening")}</option>
+                <option value="all">{t("periodAllDay")}</option>
               </select>
               <input
                 value={blockReason}
                 onChange={(e) => setBlockReason(e.target.value)}
-                placeholder="Raison (optionnel)"
+                placeholder={t("reasonPlaceholder")}
                 className="h-11 rounded-xl border border-slate-200 px-3 text-sm"
               />
             </div>
@@ -494,7 +515,7 @@ function TeacherScheduleInner() {
               onClick={() => void addBlocked()}
               className="h-10 px-4 rounded-full border border-[#1D9E75] text-[#0f6e56] text-sm font-semibold hover:bg-[#e1f5ee] disabled:opacity-50"
             >
-              Bloquer
+              {t("blockAction")}
             </button>
 
             {blockedRows.length > 0 ? (
@@ -502,9 +523,18 @@ function TeacherScheduleInner() {
                 {blockedRows.map((r) => (
                   <li key={r.id} className="flex items-center justify-between gap-2 text-sm border border-slate-100 rounded-xl px-3 py-2">
                     <span>
-                      {r.blocked_date} — {r.period || "—"}
+                      {r.blocked_date} —{" "}
+                      {r.period === "all"
+                        ? t("periodAllDay")
+                        : r.period === "matin"
+                          ? t("morning")
+                          : r.period === "apresmidi"
+                            ? t("afternoon")
+                            : r.period === "soir"
+                              ? t("evening")
+                              : r.period || "—"}
                     </span>
-                    <button type="button" onClick={() => void removeBlocked(r.id)} className="text-rose-600 p-1" aria-label="Supprimer">
+                    <button type="button" onClick={() => void removeBlocked(r.id)} className="text-rose-600 p-1" aria-label={t("deleteAria")}>
                       <Trash2 size={16} />
                     </button>
                   </li>

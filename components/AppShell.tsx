@@ -24,6 +24,8 @@ import Logo from "./ui/Logo";
 import { NotificationCenter } from "./NotificationCenter";
 import { VerificationBadge } from "./VerificationBadge";
 import { getVerificationLevel, type VerificationLevel } from "../lib/verification";
+import { useLocale } from "../lib/locale-context";
+import { LocaleSwitcher } from "./LocaleSwitcher";
 
 type Role = "student" | "teacher" | string;
 
@@ -37,6 +39,7 @@ function normalizeTier(raw: string | null | undefined): string {
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { t } = useLocale();
   const { user, profile } = useAuth();
   const role = profile?.role as Role | undefined;
   const isTeacher = role === "teacher";
@@ -131,7 +134,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           isTeacher ? "border-[#2C2C2A]/10 bg-[#2C2C2A] text-white" : "border-[var(--p-border-light)] bg-white",
         )}
       >
-        <Link href={logoHref} className="flex items-center gap-2 min-w-0" aria-label="Accueil">
+        <Link href={logoHref} className="flex items-center gap-2 min-w-0" aria-label={t("ariaHome")}>
           <Logo size="sm" variant={isTeacher ? "light" : "dark"} />
         </Link>
 
@@ -145,7 +148,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   ? "bg-[rgba(29,158,117,0.18)] text-[#0f6d52]"
                   : "text-[#1D9E75] hover:bg-[rgba(29,158,117,0.12)]",
               )}
-              aria-label="Messages"
+              aria-label={t("ariaMessages")}
             >
               <MessageCircle size={22} />
               {unreadMessages > 0 ? (
@@ -164,7 +167,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   ? "bg-white/15 text-white"
                   : "text-white/85 hover:bg-white/10",
               )}
-              aria-label="Messages"
+              aria-label={t("ariaMessages")}
             >
               <MessageCircle size={22} />
               {unreadMessages > 0 ? (
@@ -196,7 +199,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 pathname?.startsWith("/student/search") ? "border-[#1D9E75] text-[#1D9E75]" : "border-transparent text-[var(--p-text-muted)] hover:text-[#1D9E75]",
               )}
             >
-              Trouver un prof
+              {t("findTeacher")}
             </Link>
             <Link
               href="/group-sessions"
@@ -205,7 +208,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 pathname?.startsWith("/group-sessions") ? "border-[#1D9E75] text-[#1D9E75]" : "border-transparent text-[var(--p-text-muted)] hover:text-[#1D9E75]",
               )}
             >
-              Cours de groupe
+              {t("groupClasses")}
             </Link>
             <Link
               href="/dashboard"
@@ -214,7 +217,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 pathname === "/dashboard" ? "border-[#1D9E75] text-[#1D9E75]" : "border-transparent text-[var(--p-text-muted)] hover:text-[#1D9E75]",
               )}
             >
-              Mes cours
+              {t("schedule")}
             </Link>
             <Link
               href="/student/progress"
@@ -223,7 +226,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 pathname?.startsWith("/student/progress") ? "border-[#1D9E75] text-[#1D9E75]" : "border-transparent text-[var(--p-text-muted)] hover:text-[#1D9E75]",
               )}
             >
-              Ma progression
+              {t("myProgress")}
             </Link>
             <Link
               href="/profile"
@@ -232,7 +235,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 pathname === "/profile" ? "border-[#1D9E75] text-[#1D9E75]" : "border-transparent text-[var(--p-text-muted)] hover:text-[#1D9E75]",
               )}
             >
-              Mon profil
+              {t("profile")}
             </Link>
             <Link
               href="/messages"
@@ -241,7 +244,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 pathname?.startsWith("/messages") ? "border-[#1D9E75] text-[#1D9E75]" : "border-transparent text-[var(--p-text-muted)] hover:text-[#1D9E75]",
               )}
             >
-              Messages
+              {t("messages")}
             </Link>
           </nav>
         </div>
@@ -252,14 +255,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {isTeacher ? (
           <aside className="hidden lg:flex w-56 shrink-0 flex-col border-r border-[#2C2C2A]/10 bg-[#2C2C2A] text-white py-4 px-2">
             <nav className="flex flex-col gap-1">
-              <TeacherNavLink href="/dashboard" label="Tableau de bord" active={pathname === "/dashboard"} />
+              <TeacherNavLink href="/dashboard" label={t("dashboard")} active={pathname === "/dashboard"} />
               <Suspense fallback={<span className="h-20 block" />}>
                 <TeacherScheduleSidebarLinks />
               </Suspense>
-              <TeacherNavLink href="/teacher/progress" label="Progression élèves" active={pathname?.startsWith("/teacher/progress")} />
+              <TeacherNavLink href="/teacher/progress" label={t("progressStudentsNav")} active={pathname?.startsWith("/teacher/progress")} />
               <TeacherNavLink
                 href="/teacher/verification"
-                label="Vérification"
+                label={t("verification")}
                 active={pathname?.startsWith("/teacher/verification")}
                 icon={<ShieldCheck size={18} className="opacity-90 shrink-0" />}
                 extra={
@@ -268,25 +271,26 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   ) : null
                 }
               />
-              <TeacherNavLink href="/messages" label="Messages" active={pathname?.startsWith("/messages")} badge={unreadMessages} />
+              <TeacherNavLink href="/messages" label={t("messages")} active={pathname?.startsWith("/messages")} badge={unreadMessages} />
               <TeacherNavLink
                 href="/loyalty"
-                label="Fidélité"
+                label={t("loyalty")}
                 active={pathname?.startsWith("/loyalty")}
                 pill={loyaltyTier}
               />
-              <TeacherNavLink href="/teacher/settings" label="Paramètres" active={pathname?.startsWith("/teacher/settings")} />
+              <TeacherNavLink href="/teacher/settings" label={t("settings")} active={pathname?.startsWith("/teacher/settings")} />
             </nav>
-            <div className="mt-auto pt-6 px-2 space-y-2 border-t border-white/10">
+            <div className="mt-auto pt-6 px-2 space-y-3 border-t border-white/10">
+              <LocaleSwitcher />
               <Link href="/legal/cgu" className="block text-[11px] text-white/60 hover:text-white/90">
-                CGU
+                {t("cgu")}
               </Link>
               <button
                 type="button"
                 onClick={() => void logout()}
                 className="w-full text-left text-xs font-semibold text-white/80 hover:text-white py-2"
               >
-                Déconnexion
+                {t("logout")}
               </button>
             </div>
           </aside>
@@ -306,11 +310,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {isStudent ? (
         <nav className="lg:hidden fixed bottom-0 inset-x-0 z-50 border-t border-[var(--p-border-light)] bg-white safe-area-pb">
           <div className="grid grid-cols-5 h-16 max-w-lg mx-auto">
-            <StudentTab href="/student/search" icon={<Search size={20} />} label="Trouver" active={pathname?.startsWith("/student/search")} />
-            <StudentTab href="/group-sessions" icon={<UsersRound size={20} />} label="Groupes" active={pathname?.startsWith("/group-sessions")} />
-            <StudentTab href="/dashboard" icon={<CalendarDays size={20} />} label="Cours" active={pathname === "/dashboard"} />
-            <StudentTab href="/student/progress" icon={<BookOpen size={20} />} label="Progrès" active={pathname?.startsWith("/student/progress")} />
-            <StudentTab href="/profile" icon={<UserRound size={20} />} label="Profil" active={pathname === "/profile"} />
+            <StudentTab href="/student/search" icon={<Search size={20} />} label={t("studentTabFindShort")} active={pathname?.startsWith("/student/search")} />
+            <StudentTab href="/group-sessions" icon={<UsersRound size={20} />} label={t("studentTabGroups")} active={pathname?.startsWith("/group-sessions")} />
+            <StudentTab href="/dashboard" icon={<CalendarDays size={20} />} label={t("studentTabCoursesShort")} active={pathname === "/dashboard"} />
+            <StudentTab href="/student/progress" icon={<BookOpen size={20} />} label={t("studentTabProgressShort")} active={pathname?.startsWith("/student/progress")} />
+            <StudentTab href="/profile" icon={<UserRound size={20} />} label={t("studentTabProfileShort")} active={pathname === "/profile"} />
           </div>
         </nav>
       ) : null}
@@ -319,13 +323,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {isTeacher ? (
         <nav className="lg:hidden fixed bottom-0 inset-x-0 z-50 border-t border-[#2C2C2A]/20 bg-[#2C2C2A] text-white safe-area-pb overflow-x-auto">
           <div className="flex min-w-max px-1 h-16 items-stretch">
-            <TeacherTab href="/dashboard" icon={<LayoutDashboard size={20} />} label="Accueil" active={pathname === "/dashboard"} />
-            <TeacherTab href="/teacher/schedule" icon={<CalendarDays size={20} />} label="Cours" active={pathname?.startsWith("/teacher/schedule")} />
-            <TeacherTab href="/teacher/progress" icon={<UsersRound size={20} />} label="Progrès" active={pathname?.startsWith("/teacher/progress")} />
+            <TeacherTab href="/dashboard" icon={<LayoutDashboard size={20} />} label={t("teacherHome")} active={pathname === "/dashboard"} />
+            <TeacherTab href="/teacher/schedule" icon={<CalendarDays size={20} />} label={t("teacherCoursesShort")} active={pathname?.startsWith("/teacher/schedule")} />
+            <TeacherTab href="/teacher/progress" icon={<UsersRound size={20} />} label={t("teacherProgressShort")} active={pathname?.startsWith("/teacher/progress")} />
             <TeacherTab
               href="/teacher/verification"
               icon={<ShieldCheck size={20} />}
-              label="Vérif."
+              label={t("teacherVerifyShort")}
               active={pathname?.startsWith("/teacher/verification")}
               suffix={
                 teacherVerifyLevel !== null ? (
@@ -333,9 +337,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 ) : null
               }
             />
-            <TeacherTab href="/messages" icon={<MessageCircle size={20} />} label="Messages" active={pathname?.startsWith("/messages")} badge={unreadMessages} />
-            <TeacherTab href="/loyalty" icon={<Gift size={20} />} label="Fidélité" active={pathname?.startsWith("/loyalty")} pill={loyaltyTier} />
-            <TeacherTab href="/teacher/settings" icon={<Settings size={20} />} label="Réglages" active={pathname?.startsWith("/teacher/settings")} />
+            <TeacherTab href="/messages" icon={<MessageCircle size={20} />} label={t("messages")} active={pathname?.startsWith("/messages")} badge={unreadMessages} />
+            <TeacherTab href="/loyalty" icon={<Gift size={20} />} label={t("loyalty")} active={pathname?.startsWith("/loyalty")} pill={loyaltyTier} />
+            <TeacherTab href="/teacher/settings" icon={<Settings size={20} />} label={t("teacherSettingsShort")} active={pathname?.startsWith("/teacher/settings")} />
           </div>
         </nav>
       ) : null}
@@ -347,13 +351,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 function TeacherScheduleSidebarLinks() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { t } = useLocale();
   const tab = searchParams.get("tab");
   const onSchedule = pathname?.startsWith("/teacher/schedule") ?? false;
   const dispo = tab === "dispo" || tab === "availability";
   return (
     <>
-      <TeacherNavLink href="/teacher/schedule" label="Mes cours" active={onSchedule && !dispo} />
-      <TeacherNavLink href="/teacher/schedule?tab=dispo" label="Disponibilités" active={onSchedule && dispo} />
+      <TeacherNavLink href="/teacher/schedule" label={t("tabMyCourses")} active={onSchedule && !dispo} />
+      <TeacherNavLink href="/teacher/schedule?tab=dispo" label={t("tabAvailabilityNav")} active={onSchedule && dispo} />
     </>
   );
 }
