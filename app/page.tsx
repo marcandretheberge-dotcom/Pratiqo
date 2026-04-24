@@ -125,8 +125,8 @@ export default function LandingPage() {
               transition={{ duration: 0.25 }}
               className="bg-[#0F6E56] text-white"
             >
-              <div className="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-14">
-                <div className="mb-6 flex flex-wrap justify-center gap-2 rounded-2xl bg-black/10 p-1 sm:inline-flex">
+              <div className="mx-auto max-w-6xl px-4 sm:px-6 pt-10 sm:pt-14 pb-8 sm:pb-10">
+                <div className="mb-8 flex flex-wrap justify-center gap-2 rounded-2xl bg-[rgba(0,0,0,0.2)] p-1 sm:inline-flex">
                   <TogglePill active onClick={() => setMode("student")}>
                     Je cherche un prof
                   </TogglePill>
@@ -141,8 +141,8 @@ export default function LandingPage() {
                 </p>
 
                 <div className="mx-auto mt-8 flex max-w-xl flex-col gap-3 sm:flex-row sm:items-center">
-                  <div className="flex flex-1 items-center gap-2 rounded-2xl bg-white/95 px-4 py-3 text-[#2C2C2A] shadow-sm">
-                    <Search size={18} className="shrink-0 text-[#0F6E56]" />
+                  <div className="flex flex-1 items-center gap-2 rounded-2xl bg-white px-4 py-3 text-[#2C2C2A] shadow-sm">
+                    <Search size={18} className="shrink-0 text-slate-500" />
                     <input
                       value={query}
                       onChange={(e) => setQuery(e.target.value)}
@@ -154,7 +154,7 @@ export default function LandingPage() {
                   <button
                     type="button"
                     onClick={() => runSearch()}
-                    className="h-12 shrink-0 rounded-2xl bg-[#1D9E75] px-6 text-sm font-bold text-white hover:brightness-105"
+                    className="h-12 shrink-0 rounded-2xl bg-white px-6 text-sm font-bold text-[#0F6E56] hover:bg-white/95"
                   >
                     Rechercher
                   </button>
@@ -165,7 +165,7 @@ export default function LandingPage() {
                     type="button"
                     disabled={geoLoading}
                     onClick={() => void nearMe()}
-                    className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-4 py-2 text-xs font-semibold text-white hover:bg-white/15 disabled:opacity-60"
+                    className="inline-flex items-center gap-2 rounded-full border border-white/35 bg-white/10 px-4 py-2 text-xs font-semibold text-white hover:bg-white/15 disabled:opacity-60"
                   >
                     <MapPin size={14} />
                     {geoLoading ? "…" : "Près de moi"}
@@ -178,7 +178,7 @@ export default function LandingPage() {
                       <Link
                         key={x.label}
                         href={x.href}
-                        className="rounded-full border border-white/25 bg-white/10 px-4 py-2 text-xs font-semibold text-white hover:bg-white/20"
+                        className="rounded-full border border-white/30 bg-white/15 px-4 py-2 text-xs font-semibold text-white hover:bg-white/20"
                       >
                         {x.label}
                       </Link>
@@ -191,7 +191,7 @@ export default function LandingPage() {
                           "rounded-full border px-4 py-2 text-xs font-semibold transition-colors",
                           activeCat === x.cat
                             ? "border-white bg-white text-[#0F6E56]"
-                            : "border-white/25 bg-white/10 text-white hover:bg-white/15",
+                            : "border-white/30 bg-white/15 text-white hover:bg-white/20",
                         )}
                       >
                         {x.label}
@@ -205,20 +205,22 @@ export default function LandingPage() {
                       "rounded-full border px-4 py-2 text-xs font-semibold",
                       activeCat === "All"
                         ? "border-white bg-white text-[#0F6E56]"
-                        : "border-white/25 bg-white/10 text-white hover:bg-white/15",
+                        : "border-white/30 bg-white/15 text-white hover:bg-white/20",
                     )}
                   >
                     Tous
                   </button>
                 </div>
+              </div>
 
-                <div className="mt-10">
-                  <p className="mb-4 text-center text-xs font-bold uppercase tracking-widest text-white/70">
+              <div className="bg-[#F1EFE8]">
+                <div className="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-12">
+                  <p className="mb-5 text-center text-[11px] font-bold uppercase tracking-widest text-[#888780]">
                     Profils populaires
                   </p>
                   {loadingTeachers ? (
                     <div className="flex justify-center py-12">
-                      <Loader2 className="h-8 w-8 animate-spin text-white/80" />
+                      <Loader2 className="h-8 w-8 animate-spin text-[#888780]" />
                     </div>
                   ) : (
                     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -240,7 +242,7 @@ export default function LandingPage() {
               className="bg-[#2C2C2A] text-white"
             >
               <div className="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-14">
-                <div className="mb-6 flex flex-wrap justify-center gap-2 rounded-2xl bg-white/5 p-1 sm:inline-flex">
+                <div className="mb-6 flex flex-wrap justify-center gap-2 rounded-2xl bg-[rgba(0,0,0,0.2)] p-1 sm:inline-flex">
                   <TogglePill active={false} onClick={() => setMode("student")} darkMode>
                     Je cherche un prof
                   </TogglePill>
@@ -292,8 +294,14 @@ export default function LandingPage() {
         </AnimatePresence>
       </section>
 
-      <div className="border-y border-[var(--p-border-light)] bg-white py-4 text-center text-xs font-bold uppercase tracking-widest text-[var(--p-text-muted)] sm:text-sm">
-        2 400+ Profs · #1 Mondial · 5% Cashback · Ristourne
+      <div className="border-y border-[#E8E6DF] bg-[#F1EFE8] py-4 text-center text-xs font-bold uppercase tracking-widest text-[#2C2C2A] sm:text-sm">
+        <span className="text-[#1D9E75]">2 400+</span> Profs
+        <span className="mx-3 text-[#D3D1C7]">·</span>
+        #1 Mondial
+        <span className="mx-3 text-[#D3D1C7]">·</span>
+        <span className="text-[#1D9E75]">5%</span> Cashback
+        <span className="mx-3 text-[#D3D1C7]">·</span>
+        Ristourne
       </div>
     </div>
   );
@@ -344,35 +352,60 @@ function LandingTeacherCard({ teacher }: { teacher: Teacher }) {
     .map((x) => x[0]?.toUpperCase())
     .join("");
 
+  const avatarBg =
+    teacher.category === "Musique"
+      ? "bg-[rgba(29,158,117,0.14)] text-[#085041]"
+      : teacher.category === "Arts Martiaux"
+        ? "bg-[rgba(255,153,102,0.18)] text-[#C2462E]"
+        : teacher.category === "Langues"
+          ? "bg-[rgba(146,106,255,0.16)] text-[#5B3EC8]"
+          : "bg-[rgba(29,158,117,0.14)] text-[#085041]";
+
+  const availability = teacher.availability?.[0] ? String(teacher.availability[0]) : null;
+
   return (
     <Link
       href={`/login?next=${encodeURIComponent("/student/search")}`}
-      className="block rounded-2xl border border-white/15 bg-white/10 p-4 text-left backdrop-blur-sm transition hover:bg-white/15"
+      className={cn(
+        "block rounded-2xl bg-white p-4 text-left transition",
+        "border border-[#E8E6DF] shadow-[0_12px_40px_rgba(44,44,42,0.06)] hover:shadow-[0_16px_55px_rgba(44,44,42,0.08)]",
+      )}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 items-center gap-3">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/20 text-sm font-bold text-white">
+          <div className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-bold", avatarBg)}>
             {initials}
           </div>
           <div className="min-w-0">
-            <p className="truncate font-semibold text-white">{teacher.name}</p>
-            <p className="truncate text-xs text-white/75">{teacher.discipline}</p>
+            <p className="truncate font-semibold text-[#2C2C2A]">{teacher.name}</p>
+            <p className="truncate text-xs text-[#888780]">{teacher.discipline}</p>
           </div>
         </div>
-        <span className="shrink-0 rounded-lg bg-white/15 px-2 py-1 text-[11px] font-bold text-white">★ {teacher.rating}</span>
+        <span className="shrink-0 rounded-lg bg-white px-2 py-1 text-[11px] font-bold text-[#2C2C2A] border border-[#E8E6DF]">
+          ★ {teacher.rating}
+        </span>
       </div>
-      <div className="mt-3 flex items-center justify-between border-t border-white/10 pt-3 text-xs text-white/80">
+
+      <div className="mt-3 flex items-center justify-between border-t border-[#E8E6DF] pt-3 text-xs text-[#888780]">
         <span className="inline-flex items-center gap-1">
           {teacher.teachingMode === "online" ? <Video size={12} /> : <Users size={12} />}
           {teacher.teachingMode === "online" ? "En ligne" : "Présentiel / mixte"}
         </span>
-        <span className="font-bold text-white">${teacher.pricePerLesson}/h</span>
+        <span className="font-bold text-[#1D9E75]">${teacher.pricePerLesson}/h</span>
       </div>
-      {String(teacher.profilePlan || "").toLowerCase() === "enterprise" ? (
-        <p className="mt-2 flex items-center gap-1 text-[10px] font-bold uppercase text-[#B8F5DC]">
-          <Star size={12} className="text-[#1D9E75]" /> Studio vérifié
-        </p>
-      ) : null}
+
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        {availability ? (
+          <span className="inline-flex items-center rounded-full bg-[#E1F5EE] px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-[#085041]">
+            {availability}
+          </span>
+        ) : null}
+        {String(teacher.profilePlan || "").toLowerCase() === "enterprise" ? (
+          <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase text-[#888780]">
+            <Star size={12} className="text-[#1D9E75]" /> Studio vérifié
+          </span>
+        ) : null}
+      </div>
     </Link>
   );
 }
