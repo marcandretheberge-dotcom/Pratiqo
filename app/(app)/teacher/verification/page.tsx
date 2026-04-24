@@ -110,7 +110,7 @@ export default function TeacherVerificationPage() {
   if (!teacherRow) {
     return (
       <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-sm text-[#633806]">
-        Aucune fiche professeur liée à ton compte. Complète l&apos;onboarding ou contacte le support.
+        Aucune fiche professeur liée à ton compte. Complète l'onboarding ou contacte le support.
       </div>
     );
   }
@@ -205,7 +205,7 @@ export default function TeacherVerificationPage() {
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-[#2C2C2A]">Niveau 3 — Diplôme / certificat</p>
               <p className="text-sm text-[#888780] mt-1">
-                Décris ton diplôme (établissement, année). Tu pourras envoyer les fichiers quand l&apos;équipe te répond.
+                Décris ton diplôme (établissement, année). Tu pourras envoyer les fichiers quand l'équipe te répond.
               </p>
               {teacherRow.diploma_verified ? (
                 <p className="mt-2 text-sm font-semibold text-[#1D9E75]">Diplôme validé.</p>
@@ -224,7 +224,7 @@ export default function TeacherVerificationPage() {
                     onClick={() => void postRequest("diploma", diplomaNote.trim())}
                     className="mt-2 h-11 rounded-xl bg-[#534AB7] px-5 text-sm font-semibold text-white hover:brightness-105 disabled:opacity-50"
                   >
-                    {busy === "diploma" ? "Envoi…" : "Notifier l&apos;équipe"}
+                    {busy === "diploma" ? "Envoi…" : "Notifier l'équipe"}
                   </button>
                 </>
               )}
