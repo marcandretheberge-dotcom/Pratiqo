@@ -99,7 +99,7 @@ export async function POST(req: Request) {
     const { data: booking, error: bookErr } = await admin
       .from("bookings")
       .select(
-        "id, teacher_id, student_id, status, price, date, time, student_level, teaching_mode, student_address",
+        "id, teacher_id, student_id, status, price, date, time, slot_date, time_slot, student_level, teaching_mode, student_address",
       )
       .eq("id", bookingId)
       .maybeSingle();
@@ -114,6 +114,25 @@ export async function POST(req: Request) {
 
     if (booking.status !== "pending_payment") {
       return NextResponse.json({ error: "Booking is not awaiting payment." }, { status: 400 });
+    }
+
+    const bSlotDate = (booking as { slot_date?: string | null }).slot_date;
+    const bTimeSlot = (booking as { time_slot?: string | null }).time_slot;
+    if (!bSlotDate || !bTimeSlot) {
+      return NextResponse.json({ error: "Créneau (date / heure) manquant sur la réservation." }, { status: 400 });
+    }
+
+    const { count: otherCount, error: occErr } = await admin
+      .from("bookings")
+      .select("id", { count: "exact", head: true })
+      .eq("teacher_id", booking.teacher_id)
+      .eq("slot_date", bSlotDate)
+      .eq("time_slot", bTimeSlot)
+      .neq("id", bookingId)
+      .in("status", ["pending_payment", "confirmed", "booked"]);
+
+    if (!occErr && otherCount && otherCount > 0) {
+      return NextResponse.json({ error: "Ce créneau vient d'être réservé." }, { status: 409 });
     }
 
     if (teacherIdFromBody && teacherIdFromBody !== booking.teacher_id) {
@@ -223,7 +242,10 @@ export async function POST(req: Request) {
             unit_amount: unitAmountCents,
             product_data: {
               name: `Cours avec ${typed.name} (${modeLabel})`,
-              description: [booking.date, booking.time].filter(Boolean).join(" · ") || undefined,
+              description:
+                [bSlotDate, bTimeSlot].filter(Boolean).join(" · ") ||
+                [booking.date, booking.time].filter(Boolean).join(" · ") ||
+                undefined,
             },
           },
         },

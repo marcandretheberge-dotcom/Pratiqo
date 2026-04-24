@@ -119,7 +119,7 @@ async function confirmBookingAndNotify(bookingId: string, paymentIntentId: strin
 
   const { data: booking, error: fetchErr } = await admin
     .from("bookings")
-    .select("id, teacher_id, student_id, status, date, time")
+    .select("id, teacher_id, student_id, status, date, time, slot_date, time_slot")
     .eq("id", bookingId)
     .maybeSingle();
 
@@ -132,13 +132,51 @@ async function confirmBookingAndNotify(bookingId: string, paymentIntentId: strin
     return;
   }
 
-  const { error: updErr } = await admin
+  const slotDate = (booking as { slot_date?: string | null }).slot_date;
+  const timeSlot = (booking as { time_slot?: string | null }).time_slot;
+
+  if (slotDate && timeSlot) {
+    const { data: otherConfirmed } = await admin
+      .from("bookings")
+      .select("id")
+      .eq("teacher_id", booking.teacher_id)
+      .eq("slot_date", slotDate)
+      .eq("time_slot", timeSlot)
+      .eq("status", "confirmed")
+      .neq("id", bookingId)
+      .maybeSingle();
+
+    if (otherConfirmed) {
+      console.warn("[stripe/webhook] slot conflict after payment, refunding", bookingId);
+      try {
+        await stripe.refunds.create({ payment_intent: paymentIntentId });
+      } catch (re) {
+        console.error("[stripe/webhook] refund failed", re);
+      }
+      await admin.from("bookings").update({ status: "cancelled_conflict" }).eq("id", bookingId);
+      return;
+    }
+  }
+
+  const { data: updatedRows, error: updErr } = await admin
     .from("bookings")
     .update({ status: "confirmed", stripe_payment_intent_id: paymentIntentId })
-    .eq("id", bookingId);
+    .eq("id", bookingId)
+    .eq("status", "pending_payment")
+    .select("id");
 
   if (updErr) {
     console.error("[stripe/webhook] booking update", updErr);
+    return;
+  }
+
+  if (!updatedRows?.length) {
+    console.warn("[stripe/webhook] booking not pending_payment at confirm; refunding", bookingId);
+    try {
+      await stripe.refunds.create({ payment_intent: paymentIntentId });
+    } catch (re) {
+      console.error("[stripe/webhook] refund failed", re);
+    }
     return;
   }
 

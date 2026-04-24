@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
   BookOpen,
   CalendarDays,
@@ -115,7 +115,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     void load();
   }, [isTeacher, user?.id]);
 
-  const logoHref = isTeacher ? "/dashboard" : "/dashboard";
+  const logoHref = !user ? "/" : isTeacher ? "/dashboard" : "/student/search";
 
   return (
     <div
@@ -131,7 +131,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           isTeacher ? "border-[#2C2C2A]/10 bg-[#2C2C2A] text-white" : "border-[var(--p-border-light)] bg-white",
         )}
       >
-        <Link href={logoHref} className="flex items-center gap-2 min-w-0">
+        <Link href={logoHref} className="flex items-center gap-2 min-w-0" aria-label="Accueil">
           <Logo size="sm" variant={isTeacher ? "light" : "dark"} />
         </Link>
 
@@ -252,13 +252,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {isTeacher ? (
           <aside className="hidden lg:flex w-56 shrink-0 flex-col border-r border-[#2C2C2A]/10 bg-[#2C2C2A] text-white py-4 px-2">
             <nav className="flex flex-col gap-1">
-              <TeacherNavLink href="/dashboard" label="Dashboard" active={pathname === "/dashboard"} />
-              <TeacherNavLink href="/teacher/progress" label="Agenda & Élèves" active={pathname?.startsWith("/teacher/progress")} />
-              <TeacherNavLink
-                href="/teacher/group-sessions"
-                label="Cours de groupe"
-                active={pathname?.startsWith("/teacher/group-sessions")}
-              />
+              <TeacherNavLink href="/dashboard" label="Tableau de bord" active={pathname === "/dashboard"} />
+              <Suspense fallback={<span className="h-20 block" />}>
+                <TeacherScheduleSidebarLinks />
+              </Suspense>
+              <TeacherNavLink href="/teacher/progress" label="Progression élèves" active={pathname?.startsWith("/teacher/progress")} />
               <TeacherNavLink
                 href="/teacher/verification"
                 label="Vérification"
@@ -322,8 +320,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <nav className="lg:hidden fixed bottom-0 inset-x-0 z-50 border-t border-[#2C2C2A]/20 bg-[#2C2C2A] text-white safe-area-pb overflow-x-auto">
           <div className="flex min-w-max px-1 h-16 items-stretch">
             <TeacherTab href="/dashboard" icon={<LayoutDashboard size={20} />} label="Accueil" active={pathname === "/dashboard"} />
-            <TeacherTab href="/teacher/progress" icon={<CalendarDays size={20} />} label="Agenda" active={pathname?.startsWith("/teacher/progress")} />
-            <TeacherTab href="/teacher/group-sessions" icon={<UsersRound size={20} />} label="Groupes" active={pathname?.startsWith("/teacher/group-sessions")} />
+            <TeacherTab href="/teacher/schedule" icon={<CalendarDays size={20} />} label="Cours" active={pathname?.startsWith("/teacher/schedule")} />
+            <TeacherTab href="/teacher/progress" icon={<UsersRound size={20} />} label="Progrès" active={pathname?.startsWith("/teacher/progress")} />
             <TeacherTab
               href="/teacher/verification"
               icon={<ShieldCheck size={20} />}
@@ -343,6 +341,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       ) : null}
 
     </div>
+  );
+}
+
+function TeacherScheduleSidebarLinks() {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const tab = searchParams.get("tab");
+  const onSchedule = pathname?.startsWith("/teacher/schedule") ?? false;
+  const dispo = tab === "dispo" || tab === "availability";
+  return (
+    <>
+      <TeacherNavLink href="/teacher/schedule" label="Mes cours" active={onSchedule && !dispo} />
+      <TeacherNavLink href="/teacher/schedule?tab=dispo" label="Disponibilités" active={onSchedule && dispo} />
+    </>
   );
 }
 
