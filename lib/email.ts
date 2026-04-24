@@ -15,6 +15,7 @@ function appBaseUrl(): string {
 }
 
 export async function sendWelcomeTeacher(email: string, name: string) {
+  console.log("[email] RESEND_API_KEY exists:", !!process.env.RESEND_API_KEY);
   const resend = resendClient();
   if (!resend) {
     console.warn("[email] RESEND_API_KEY missing; skipping teacher welcome email");
@@ -46,15 +47,23 @@ export async function sendWelcomeTeacher(email: string, name: string) {
     </p>
   </div>`;
 
-  await resend.emails.send({
-    from: fromEmail(),
-    to: email,
-    subject,
-    html,
-  });
+  try {
+    const result = await resend.emails.send({
+      from: fromEmail(),
+      to: email,
+      subject,
+      html,
+    });
+    console.log("[resend] Success:", result);
+    return result;
+  } catch (error) {
+    console.error("[resend] Error:", error);
+    throw error;
+  }
 }
 
 export async function sendWelcomeStudent(email: string, name: string) {
+  console.log("[email] RESEND_API_KEY exists:", !!process.env.RESEND_API_KEY);
   const resend = resendClient();
   if (!resend) {
     console.warn("[email] RESEND_API_KEY missing; skipping student welcome email");
@@ -81,12 +90,19 @@ export async function sendWelcomeStudent(email: string, name: string) {
     </p>
   </div>`;
 
-  await resend.emails.send({
-    from: fromEmail(),
-    to: email,
-    subject,
-    html,
-  });
+  try {
+    const result = await resend.emails.send({
+      from: fromEmail(),
+      to: email,
+      subject,
+      html,
+    });
+    console.log("[resend] Success:", result);
+    return result;
+  } catch (error) {
+    console.error("[resend] Error:", error);
+    throw error;
+  }
 }
 
 function escapeHtml(s: string): string {

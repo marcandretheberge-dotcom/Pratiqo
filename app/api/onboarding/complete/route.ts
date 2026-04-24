@@ -142,11 +142,15 @@ export async function POST(req: Request) {
       if (tErr) return NextResponse.json({ error: tErr.message }, { status: 500 });
 
       if (user.email) {
-        await sendWelcomeTeacher(user.email, name);
+        console.log("[email] Attempting to send welcome email to:", user.email);
+        const emailResult = await sendWelcomeTeacher(user.email, name);
+        console.log("[email] Result:", emailResult);
       }
     } else {
       if (user.email) {
-        await sendWelcomeStudent(user.email, name);
+        console.log("[email] Attempting to send welcome email to:", user.email);
+        const emailResult = await sendWelcomeStudent(user.email, name);
+        console.log("[email] Result:", emailResult);
       }
     }
 

@@ -160,12 +160,14 @@ function OnboardingInner() {
         home_lesson_price: homePrice,
       };
 
+      console.log("[onboarding] POST /api/onboarding/complete", payload);
       const res = await fetch("/api/onboarding/complete", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify(payload),
       });
-      const j = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string };
+      const j = (await res.json().catch(() => ({}))) as { ok?: boolean; role?: string; error?: string };
+      console.log("[onboarding] response", { status: res.status, ok: res.ok, body: j });
       if (!res.ok || !j.ok) throw new Error(j.error || "Enregistrement impossible.");
       setStep("done");
     } catch (e) {
