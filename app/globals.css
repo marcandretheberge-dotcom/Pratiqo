@@ -17,6 +17,36 @@
 
   --background: #ffffff;
   --foreground: var(--p-text);
+  --p-surface: #ffffff;
+  --p-surface-muted: #f6f6f3;
+  --p-watch-bg: #fffbeb;
+  --p-watch-border: #f59e0b;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --p-text: #e8eae6;
+    --p-text-muted: #9aa297;
+    --p-text-subtle: #6f756d;
+    --p-border-light: #2a3530;
+    --p-page-bg: rgba(8, 14, 11, 0.85);
+    --background: #0f1411;
+    --foreground: var(--p-text);
+    --color-background-secondary: #1a221e;
+    --p-surface: #151c18;
+    --p-surface-muted: #1c2520;
+    --p-watch-bg: rgba(120, 53, 15, 0.25);
+    --p-watch-border: #f59e0b;
+  }
+
+  body {
+    background: linear-gradient(var(--p-page-bg), var(--p-page-bg)), var(--background);
+  }
+
+  .ds-card {
+    background: var(--p-surface);
+    border-color: var(--p-border-light);
+  }
 }
 
 @theme inline {
