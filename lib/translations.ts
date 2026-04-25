@@ -527,6 +527,17 @@ const frCA = {
   verificationBadgeL4p1: "Programme Platine",
   verificationBadgeL4p2: "Ristourne annuelle",
 
+  searchPageTitle: "Trouve ton prof idéal",
+  searchResults: "profs trouvés",
+  sortLabel: "Tri",
+  sortRelevance: "Pertinence",
+  sortNearest: "Les plus proches",
+  sortTrusted: "Les plus fiables",
+  useMyLocation: "Utiliser ma position",
+  searchInputPlaceholder: "Rechercher un prof (nom, discipline)...",
+  radiusAll: "Tous",
+  radiusOnline: "En ligne",
+
   emailLabel: "Email",
 } as const;
 
@@ -1046,6 +1057,17 @@ const enCA: Record<TranslationKey, string> = {
   verificationBadgeL4p0: "#1 search placement",
   verificationBadgeL4p1: "Platinum program",
   verificationBadgeL4p2: "Annual rebate",
+
+  searchPageTitle: "Find your perfect teacher",
+  searchResults: "teachers found",
+  sortLabel: "Sort",
+  sortRelevance: "Relevance",
+  sortNearest: "Nearest",
+  sortTrusted: "Most trusted",
+  useMyLocation: "Use my location",
+  searchInputPlaceholder: "Search a teacher (name, discipline)...",
+  radiusAll: "All",
+  radiusOnline: "Online",
 
   emailLabel: "Email",
 };
@@ -1567,6 +1589,17 @@ const es: Record<TranslationKey, string> = {
   verificationBadgeL4p0: "Posición #1 en búsqueda",
   verificationBadgeL4p1: "Programa Platino",
   verificationBadgeL4p2: "Reembolso anual",
+
+  searchPageTitle: "Encuentra tu profesor ideal",
+  searchResults: "profesores encontrados",
+  sortLabel: "Ordenar",
+  sortRelevance: "Relevancia",
+  sortNearest: "Más cercanos",
+  sortTrusted: "Más confiables",
+  useMyLocation: "Usar mi ubicación",
+  searchInputPlaceholder: "Buscar profesor (nombre, disciplina)...",
+  radiusAll: "Todos",
+  radiusOnline: "En línea",
 
   emailLabel: "Correo",
 };
