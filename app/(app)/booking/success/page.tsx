@@ -41,7 +41,7 @@ export default async function BookingSuccessPage({
     const total = session.amount_total;
     const cur = (session.currency || "eur").toUpperCase();
     if (total != null) {
-      amountLabel = new Intl.NumberFormat("fr-FR", {
+      amountLabel = new Intl.NumberFormat("fr-CA", {
         style: "currency",
         currency: cur,
       }).format(total / 100);

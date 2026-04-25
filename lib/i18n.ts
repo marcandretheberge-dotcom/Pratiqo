@@ -1,11 +1,11 @@
-export type Locale = "fr-CA" | "fr-FR" | "en-CA" | "es";
+export type Locale = "fr-CA" | "en-CA" | "es";
 
 export const DEFAULT_LOCALE: Locale = "fr-CA";
 
-export const SUPPORTED_LOCALES: Locale[] = ["fr-CA", "fr-FR", "en-CA", "es"];
+export const SUPPORTED_LOCALES: Locale[] = ["fr-CA", "en-CA", "es"];
 
 export function isLocale(value: string | null | undefined): value is Locale {
-  return value === "fr-CA" || value === "fr-FR" || value === "en-CA" || value === "es";
+  return value === "fr-CA" || value === "en-CA" || value === "es";
 }
 
 /** BCP 47 tag for `toLocaleDateString` */
@@ -18,7 +18,7 @@ export function detectLocale(): Locale {
   if (typeof window === "undefined") return DEFAULT_LOCALE;
   const lang = navigator.language || "fr-CA";
   if (lang === "fr-CA" || lang.startsWith("fr-CA")) return "fr-CA";
-  if (lang.startsWith("fr")) return "fr-FR";
+  if (lang.startsWith("fr")) return "fr-CA";
   if (lang.startsWith("es")) return "es";
   if (lang.startsWith("en")) return "en-CA";
   return DEFAULT_LOCALE;

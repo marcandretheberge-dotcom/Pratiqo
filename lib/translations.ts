@@ -494,36 +494,6 @@ const frCA = {
 
 export type TranslationKey = keyof typeof frCA;
 
-const frFR: Record<TranslationKey, string> = {
-  ...frCA,
-  messages: "Messagerie",
-  findTeacher: "Trouver un professeur",
-  timeSlot: "créneau",
-  timeSlots: "créneaux",
-  availableSlots: "créneaux disponibles",
-  bookSlot: "Réserver ce créneau",
-  noSlots: "Aucun créneau disponible",
-  slotBooked: "Ce créneau vient d'être réservé",
-  chooseTime: "Choisir un créneau",
-  closed: "Indisponible",
-  hasBooking: "Réservé",
-  colorClosed: "Gris = indisponible",
-  colorBooked: "Orange = réservé (non modifiable)",
-  save: "Enregistrer",
-  dragPhotoHere: "Glissez votre photo ici",
-  clickToChoose: "ou cliquez pour choisir",
-  legendClosed: "Gris = indisponible",
-  legendBooked: "Orange = réservé (non modifiable)",
-  titleCellUnavailable: "Indisponible",
-  gridCombinedLegend: "Teal = disponible · Gris = indisponible · Orange = réservé (non modifiable)",
-  titleCellBooked: "Créneau réservé",
-  blockHintToTab:
-    "Pour bloquer un créneau, passe à l’onglet Disponibilités → « Bloquer une date exceptionnelle ».",
-  freeSlotsTitle: "Créneaux libres",
-  noFreeSlotsDetail: "Aucun créneau libre affiché (complet ou hors disponibilité).",
-  perHour: "€/h",
-};
-
 const enCA: Record<TranslationKey, string> = {
   ...frCA,
   dashboard: "Dashboard",
@@ -1489,7 +1459,6 @@ const es: Record<TranslationKey, string> = {
 
 export const translations: Record<Locale, Record<TranslationKey, string>> = {
   "fr-CA": frCA as unknown as Record<TranslationKey, string>,
-  "fr-FR": frFR,
   "en-CA": enCA,
   es,
 };
