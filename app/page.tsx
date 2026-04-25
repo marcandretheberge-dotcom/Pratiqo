@@ -23,6 +23,7 @@ import { teacherRowToTeacher, type TeacherRow } from "../lib/teacherMapper";
 import { getVerificationLevel } from "../lib/verification";
 import { VerificationBadge } from "../components/VerificationBadge";
 import { useLocale } from "../lib/locale-context";
+import { useAuth } from "../components/AuthProvider";
 
 type HeroMode = "student" | "teacher";
 
@@ -31,6 +32,7 @@ const TEACHERS_SELECT =
 
 export default function LandingPage() {
   const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
   const { t, formatPrice } = useLocale();
   const [mode, setMode] = useState<HeroMode>("student");
   const [query, setQuery] = useState("");
@@ -40,6 +42,48 @@ export default function LandingPage() {
   const [geoLoading, setGeoLoading] = useState(false);
 
   const enabledHeroLabels = useMemo(() => getEnabledDisciplines().map((d) => d.label).join(" · "), []);
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (!user) return;
+
+    const checkRole = async () => {
+      const supabase = getSupabaseClient();
+      const { data: profile, error } = await supabase
+        .from("profiles")
+        .select("role, teacher_onboarding_complete, companion_chosen")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (error || !profile) {
+        router.push("/dashboard");
+        return;
+      }
+
+      const row = profile as {
+        role?: string | null;
+        teacher_onboarding_complete?: boolean | null;
+        companion_chosen?: boolean | null;
+      };
+
+      if (row.role === "teacher") {
+        if (!row.teacher_onboarding_complete) {
+          router.push("/onboarding");
+        } else {
+          router.push("/dashboard");
+        }
+        return;
+      }
+
+      if (!row.companion_chosen) {
+        router.push("/student/choose-companion");
+      } else {
+        router.push("/dashboard");
+      }
+    };
+
+    void checkRole();
+  }, [user, authLoading, router]);
 
   useEffect(() => {
     const supabase = getSupabaseClient();
@@ -88,6 +132,10 @@ export default function LandingPage() {
       return catOk && qOk;
     });
   }, [teachers, query, activeCat]);
+
+  if (authLoading) return null;
+
+  if (user) return null;
 
   const runSearch = () => {
     const q = query.trim();
