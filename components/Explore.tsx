@@ -35,6 +35,7 @@ import { getVerificationLevel } from "../lib/verification";
 import { useAuth } from "./AuthProvider";
 import { useRouter } from "next/navigation";
 import { VerificationBadge } from "./VerificationBadge";
+import { useLocale } from "@/lib/locale-context";
 
 /** Colonnes nécessaires au mapper + cours à domicile (évite les réponses PostgREST incomplètes). */
 const TEACHERS_SELECT =
@@ -82,6 +83,7 @@ export function Explore({
   searchQuery: string;
   onSearchChange: (q: string) => void;
 }) {
+  const { formatPrice } = useLocale();
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
@@ -545,6 +547,7 @@ export function Explore({
 
 function ExploreGroupCard({ session, index }: { session: ExploreGroupSession; index: number }) {
   const router = useRouter();
+  const { formatPrice } = useLocale();
   const max = Number(session.max_participants);
   const cur = Number(session.current_participants);
   const remaining = spotsRemaining(session);
@@ -595,7 +598,7 @@ function ExploreGroupCard({ session, index }: { session: ExploreGroupSession; in
             <p className="text-[13px] text-[var(--p-text-muted)] truncate">{teacherName}</p>
           </div>
           <div className="text-right shrink-0">
-            <p className="text-[18px] font-semibold text-[#1D9E75]">${Number(session.price_per_person)}</p>
+            <p className="text-[18px] font-semibold text-[#1D9E75]">{formatPrice(Number(session.price_per_person))}</p>
             <p className="text-[11px] text-[var(--p-text-muted)]">/ personne</p>
           </div>
         </div>
@@ -685,6 +688,7 @@ function TeacherCard({
   onViewProfile: () => void;
   distanceKm: number | null;
 }) {
+  const { formatPrice } = useLocale();
   const { user } = useAuth();
   const router = useRouter();
   const [isStartingChat, setIsStartingChat] = useState(false);
@@ -801,7 +805,7 @@ function TeacherCard({
             </div>
           </div>
           <div className="text-right">
-            <p className="text-[18px] font-medium text-[var(--p-text)]">${teacher.pricePerLesson}</p>
+            <p className="text-[18px] font-medium text-[var(--p-text)]">{formatPrice(Number(teacher.pricePerLesson))}</p>
             <p className="text-[12px] text-[var(--p-text-muted)]">/ heure</p>
           </div>
         </div>

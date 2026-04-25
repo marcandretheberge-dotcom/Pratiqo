@@ -70,7 +70,7 @@ export function TeacherProfile({
   studioMapHasConfirmedBooking,
 }: TeacherProfileProps) {
   const { user } = useAuth();
-  const { t } = useLocale();
+  const { t, formatPrice } = useLocale();
   const router = useRouter();
   const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(null);
   const [plan, setPlan] = useState<"free" | "pro" | "enterprise">("free");
@@ -324,7 +324,11 @@ export function TeacherProfile({
               label="Niveaux"
               value={teacher.levels.length > 2 ? "Tous niveaux" : teacher.levels[0]}
             />
-            <QuickStat icon={<CreditCard className="text-teal-500" />} label="Tarif" value={`$${teacher.pricePerLesson}`} />
+            <QuickStat
+              icon={<CreditCard className="text-teal-500" />}
+              label="Tarif"
+              value={formatPrice(Number(teacher.pricePerLesson))}
+            />
           </div>
 
           <div className="space-y-4">
@@ -436,7 +440,7 @@ export function TeacherProfile({
                 </span>
                 <Users size={18} className="text-slate-400 group-hover:text-[#1D9E75]" />
               </div>
-              <p className="text-lg font-bold text-slate-900">${teacher.pricePerLesson}</p>
+              <p className="text-lg font-bold text-slate-900">{formatPrice(Number(teacher.pricePerLesson))}</p>
               <p className="text-[11px] text-slate-500">par heure · tarif studio ou visio</p>
               <span className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-[#1D9E75]">
                 Réserver <ChevronRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
@@ -459,7 +463,7 @@ export function TeacherProfile({
                   <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">À domicile</span>
                   <Home size={18} className={homeDisabled ? "text-slate-300" : "text-slate-400 group-hover:text-[#1D9E75]"} />
                 </div>
-                <p className="text-lg font-bold text-slate-900">${Number(teacher.homeLessonPrice).toFixed(2)}</p>
+                <p className="text-lg font-bold text-slate-900">{formatPrice(Number(teacher.homeLessonPrice))}</p>
                 <p className="text-[11px] text-slate-500">par heure</p>
                 <div className="flex flex-wrap gap-1.5 mt-1">
                   <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase bg-[rgba(29,158,117,0.15)] text-[#0f6e56]">

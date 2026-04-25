@@ -22,6 +22,7 @@ import {
 import { teacherRowToTeacher, type TeacherRow } from "../lib/teacherMapper";
 import { getVerificationLevel } from "../lib/verification";
 import { VerificationBadge } from "../components/VerificationBadge";
+import { useLocale } from "../lib/locale-context";
 
 type HeroMode = "student" | "teacher";
 
@@ -30,6 +31,7 @@ const TEACHERS_SELECT =
 
 export default function LandingPage() {
   const router = useRouter();
+  const { formatPrice } = useLocale();
   const [mode, setMode] = useState<HeroMode>("student");
   const [query, setQuery] = useState("");
   const [teachers, setTeachers] = useState<Teacher[]>([]);
@@ -394,6 +396,7 @@ function StatCard({ label, value }: { label: string; value: string }) {
 }
 
 function LandingTeacherCard({ teacher }: { teacher: Teacher }) {
+  const { formatPrice } = useLocale();
   const initials = teacher.name
     .split(" ")
     .slice(0, 2)
@@ -453,7 +456,7 @@ function LandingTeacherCard({ teacher }: { teacher: Teacher }) {
           {teacher.teachingMode === "online" ? <Video size={12} /> : <Users size={12} />}
           {teacher.teachingMode === "online" ? "En ligne" : "Présentiel / mixte"}
         </span>
-        <span className="font-bold text-[#1D9E75]">${teacher.pricePerLesson}/h</span>
+        <span className="font-bold text-[#1D9E75]">{formatPrice(Number(teacher.pricePerLesson))}/h</span>
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
