@@ -18,12 +18,15 @@ import {
   isRistourneActivated,
   teacherRistourneHitsPerProfCap,
 } from "../../../lib/loyalty";
+import { useLocale } from "../../../lib/locale-context";
+import type { TranslationKey } from "../../../lib/translations";
 
 type LoyaltyTab = "fidelite" | "ristourne" | "calculateur" | "rapport";
 
+type TierId = "bronze" | "argent" | "or" | "platine";
+
 type TierDef = {
-  id: "bronze" | "argent" | "or" | "platine";
-  label: string;
+  id: TierId;
   min: number;
   max: number;
   circle: string;
@@ -31,11 +34,18 @@ type TierDef = {
   commissionPct: number;
 };
 
+const TIER_I18N: Record<TierId, TranslationKey> = {
+  bronze: "tierBronze",
+  argent: "tierSilver",
+  or: "tierGold",
+  platine: "tierPlatinum",
+};
+
 const TIERS: TierDef[] = [
-  { id: "bronze", label: "Bronze", min: 0, max: 5000, circle: "#CD7F32", cashbackPct: 1, commissionPct: 10 },
-  { id: "argent", label: "Argent", min: 5000, max: 15000, circle: "#C0C0C0", cashbackPct: 2, commissionPct: 8 },
-  { id: "or", label: "Or", min: 15000, max: 30000, circle: "#FFD700", cashbackPct: 3, commissionPct: 6 },
-  { id: "platine", label: "Platine", min: 30000, max: Infinity, circle: "#1D9E75", cashbackPct: 5, commissionPct: 3 },
+  { id: "bronze", min: 0, max: 5000, circle: "#CD7F32", cashbackPct: 1, commissionPct: 10 },
+  { id: "argent", min: 5000, max: 15000, circle: "#C0C0C0", cashbackPct: 2, commissionPct: 8 },
+  { id: "or", min: 15000, max: 30000, circle: "#FFD700", cashbackPct: 3, commissionPct: 6 },
+  { id: "platine", min: 30000, max: Infinity, circle: "#1D9E75", cashbackPct: 5, commissionPct: 3 },
 ];
 
 function tierFromVolume(volume: number): TierDef {
@@ -58,13 +68,13 @@ function tierById(id: TierDef["id"]): TierDef {
   return TIERS.find((t) => t.id === id) ?? TIERS[0]!;
 }
 
-function nextTierProgress(volume: number): { nextLabel: string; remaining: number; pct: number } {
+function nextTierProgress(volume: number): { nextTierId: TierId | null; remaining: number; pct: number } {
   const v = Math.max(0, volume);
-  if (v < 5000) return { nextLabel: "Argent", remaining: Math.max(0, 5000 - v), pct: Math.min(100, (v / 5000) * 100) };
-  if (v < 15000) return { nextLabel: "Or", remaining: Math.max(0, 15000 - v), pct: Math.min(100, ((v - 5000) / 10000) * 100) };
+  if (v < 5000) return { nextTierId: "argent", remaining: Math.max(0, 5000 - v), pct: Math.min(100, (v / 5000) * 100) };
+  if (v < 15000) return { nextTierId: "or", remaining: Math.max(0, 15000 - v), pct: Math.min(100, ((v - 5000) / 10000) * 100) };
   if (v < 30000)
-    return { nextLabel: "Platine", remaining: Math.max(0, 30000 - v), pct: Math.min(100, ((v - 15000) / 15000) * 100) };
-  return { nextLabel: "Platine", remaining: 0, pct: 100 };
+    return { nextTierId: "platine", remaining: Math.max(0, 30000 - v), pct: Math.min(100, ((v - 15000) / 15000) * 100) };
+  return { nextTierId: null, remaining: 0, pct: 100 };
 }
 
 type ProfileLoyaltyRow = {
@@ -76,11 +86,11 @@ type ProfileLoyaltyRow = {
   active_student_count: number | string | null;
 };
 
-const TAB_LABELS: { id: LoyaltyTab; label: string }[] = [
-  { id: "fidelite", label: "Fidélité" },
-  { id: "ristourne", label: "Ristourne" },
-  { id: "calculateur", label: "Calculateur" },
-  { id: "rapport", label: "Rapport" },
+const TAB_KEYS: { id: LoyaltyTab; labelKey: TranslationKey }[] = [
+  { id: "fidelite", labelKey: "loyaltyFidelity" },
+  { id: "ristourne", labelKey: "loyaltyRistourneTab" },
+  { id: "calculateur", labelKey: "loyaltyCalculator" },
+  { id: "rapport", labelKey: "loyaltyReport" },
 ];
 
 /** Estimation réseau (illustrative) pour l’onglet Ristourne. */
@@ -90,6 +100,7 @@ const ESTIMATE_ELIGIBLE_TEACHERS = 45;
 
 export default function LoyaltyPage() {
   const { user } = useAuth();
+  const { t } = useLocale();
   const [tab, setTab] = useState<LoyaltyTab>("fidelite");
   const [loading, setLoading] = useState(true);
   const [row, setRow] = useState<ProfileLoyaltyRow | null>(null);
@@ -186,22 +197,25 @@ export default function LoyaltyPage() {
   );
   const belowMin = ristourneActivated && calcRistourne > 0 && calcRistourne < RISTOURNE_PER_PROF_MIN;
 
+  const nextTierName = (id: TierId | null) => (id ? t(TIER_I18N[id]) : t("tierPlatinum"));
+
   return (
     <div className="max-w-5xl mx-auto pb-12 text-[var(--p-text)]">
+      <h1 className="text-2xl sm:text-3xl font-bold text-[var(--p-text)] mb-6">{t("loyaltyTitle")}</h1>
       <div className="flex flex-wrap gap-2 mb-8 p-1 rounded-[999px] bg-[var(--p-surface-muted)] border border-[var(--p-border-light)] w-fit max-w-full">
-        {TAB_LABELS.map((t) => (
+        {TAB_KEYS.map((tabDef) => (
           <button
-            key={t.id}
+            key={tabDef.id}
             type="button"
-            onClick={() => setTab(t.id)}
+            onClick={() => setTab(tabDef.id)}
             className={cn(
               "px-4 py-2.5 rounded-full text-sm font-semibold transition-all",
-              tab === t.id
+              tab === tabDef.id
                 ? "bg-[#1D9E75] text-white shadow-sm"
                 : "text-[var(--p-text-muted)] hover:text-[var(--p-text)] bg-transparent",
             )}
           >
-            {t.label}
+            {t(tabDef.labelKey)}
           </button>
         ))}
       </div>
@@ -212,28 +226,34 @@ export default function LoyaltyPage() {
             className="rounded-3xl p-8 sm:p-10 text-white shadow-xl overflow-hidden relative"
             style={{ backgroundColor: "#0F6E56" }}
           >
-            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/75">Ton niveau actuel</p>
+            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/75">{t("loyaltyCurrentLevel")}</p>
             {loading ? (
-              <p className="mt-4 text-white/80 text-sm">Chargement…</p>
+              <p className="mt-4 text-white/80 text-sm">{t("loading")}</p>
             ) : !user ? (
-              <p className="mt-4 text-white/90 text-sm">Connecte-toi pour voir ton niveau fidélité.</p>
+              <p className="mt-4 text-white/90 text-sm">{t("loyaltyLoginPrompt")}</p>
             ) : (
               <>
-                <h2 className="mt-3 text-4xl sm:text-5xl font-bold tracking-tight">{displayTier.label}</h2>
+                <h2 className="mt-3 text-4xl sm:text-5xl font-bold tracking-tight">{t(TIER_I18N[displayTier.id])}</h2>
                 <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div>
-                    <p className="text-xs font-medium text-white/70">Volume annuel (cette année)</p>
+                    <p className="text-xs font-medium text-white/70">
+                      {t("loyaltyAnnualVolume")} {t("loyaltyAnnualVolumeYearNote")}
+                    </p>
                     <p className="text-2xl font-bold mt-1">{formatCadWhole(volume)}</p>
                   </div>
                   <div>
-                    <p className="text-xs font-medium text-white/70">Cashback accumulé</p>
+                    <p className="text-xs font-medium text-white/70">{t("loyaltyCashbackAccumulated")}</p>
                     <p className="text-2xl font-bold mt-1">{formatCadWhole(cashbackEarned)}</p>
                   </div>
                 </div>
                 <div className="mt-8">
                   <div className="flex justify-between text-xs font-medium text-white/80 mb-2">
-                    <span>Progression vers {progress.nextLabel}</span>
-                    <span>{formatCadWhole(progress.remaining)} restants</span>
+                    <span>
+                      {t("loyaltyProgressToward")} {nextTierName(progress.nextTierId)}
+                    </span>
+                    <span>
+                      {formatCadWhole(progress.remaining)} {t("loyaltyNextTier")} {nextTierName(progress.nextTierId)}
+                    </span>
                   </div>
                   <div className="h-3 rounded-full bg-black/20 overflow-hidden">
                     <div
@@ -247,11 +267,11 @@ export default function LoyaltyPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-            {TIERS.map((t) => {
-              const active = t.id === displayTier.id;
+            {TIERS.map((tier) => {
+              const active = tier.id === displayTier.id;
               return (
                 <div
-                  key={t.id}
+                  key={tier.id}
                   className={cn(
                     "rounded-2xl border-2 p-5 bg-[var(--p-surface)] transition-shadow",
                     active ? "border-[#1D9E75] shadow-[0_12px_40px_rgba(29,158,117,0.15)]" : "border-[var(--p-border-light)]",
@@ -260,23 +280,27 @@ export default function LoyaltyPage() {
                   <div className="flex items-center gap-3 mb-4">
                     <div
                       className="w-12 h-12 rounded-full shrink-0 border-2 border-white/40 shadow-inner"
-                      style={{ backgroundColor: t.circle }}
+                      style={{ backgroundColor: tier.circle }}
                     />
                     <div>
-                      <p className="text-lg font-bold">{t.label}</p>
+                      <p className="text-lg font-bold">{t(TIER_I18N[tier.id])}</p>
                       <p className="text-[11px] text-[var(--p-text-muted)] font-medium">
-                        {t.max === Infinity
-                          ? `${formatCadWhole(t.min)}+`
-                          : `${formatCadWhole(t.min)} – ${formatCadWhole(t.max)}`}
+                        {tier.max === Infinity
+                          ? `${formatCadWhole(tier.min)}+`
+                          : `${formatCadWhole(tier.min)} – ${formatCadWhole(tier.max)}`}
                       </p>
                     </div>
                   </div>
                   <ul className="text-sm text-[var(--p-text-muted)] space-y-1">
                     <li>
-                      <strong className="text-[var(--p-text)]">{t.cashbackPct}%</strong> cashback
+                      <strong className="text-[var(--p-text)]">
+                        {t("loyaltyTierCashbackLine").replace("{pct}", String(tier.cashbackPct))}
+                      </strong>
                     </li>
                     <li>
-                      <strong className="text-[var(--p-text)]">{t.commissionPct}%</strong> commission plateforme
+                      <strong className="text-[var(--p-text)]">
+                        {t("loyaltyTierCommissionLine").replace("{pct}", String(tier.commissionPct))}
+                      </strong>
                     </li>
                   </ul>
                 </div>
@@ -286,15 +310,15 @@ export default function LoyaltyPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {[
-              { label: "Cashback gagné", value: formatCadWhole(user ? cashbackEarned : 0) },
-              { label: "Volume annuel", value: formatCadWhole(user ? volume : 0) },
-              { label: "Transactions", value: "—" },
+              { labelKey: "loyaltyCashback" as const, value: formatCadWhole(user ? cashbackEarned : 0) },
+              { labelKey: "loyaltyAnnualVolume" as const, value: formatCadWhole(user ? volume : 0) },
+              { labelKey: "loyaltyTransactions" as const, value: "—" },
             ].map((s) => (
               <div
-                key={s.label}
+                key={s.labelKey}
                 className="rounded-2xl border border-[var(--p-border-light)] bg-[var(--color-background-secondary)] px-5 py-4"
               >
-                <p className="text-[11px] font-bold uppercase tracking-widest text-[var(--p-text-subtle)]">{s.label}</p>
+                <p className="text-[11px] font-bold uppercase tracking-widest text-[var(--p-text-subtle)]">{t(s.labelKey)}</p>
                 <p className="text-xl font-bold mt-2 text-[var(--p-text)]">{s.value}</p>
               </div>
             ))}
@@ -308,17 +332,16 @@ export default function LoyaltyPage() {
             className="rounded-2xl border border-[rgba(29,158,117,0.35)] px-5 py-4 text-sm leading-relaxed"
             style={{ backgroundColor: "var(--p-light-teal-bg)", color: "var(--p-dark-teal)" }}
           >
-            <strong className="text-[var(--p-dark-teal)]">Ristourne annuelle :</strong> jusqu&apos;à{" "}
-            <strong>{RISTOURNE_RATE * 100}%</strong> des profits nets de Pratiqo sont mis en pool et redistribués aux
-            professeurs éligibles, selon leur volume, avec des plafonds de protection (
+            <strong className="text-[var(--p-dark-teal)]">{t("loyaltyRistourne")}:</strong> {t("loyaltyRistourneUpTo")}{" "}
+            <strong>{RISTOURNE_RATE * 100}%</strong> {t("loyaltyRistourneCguMid")}
             <a href="/legal/cgu#ristourne-5bis-6" className="underline font-semibold">
-              CGU 5bis.6
+              {t("loyaltyCguLink")}
             </a>
-            ).
+            {t("loyaltyRistourneCguEnd")}
           </div>
 
           <div className="rounded-2xl border border-[var(--p-border-light)] bg-[var(--p-surface)] p-6 space-y-4">
-            <h3 className="text-base font-bold text-[var(--p-text)]">Conditions d&apos;éligibilité</h3>
+            <h3 className="text-base font-bold text-[var(--p-text)]">{t("loyaltyEligibilityTitle")}</h3>
             <ul className="space-y-3 text-sm">
               <li className="flex items-start gap-3">
                 {checklist.proOk ? (
@@ -327,9 +350,9 @@ export default function LoyaltyPage() {
                   <X className="text-rose-500 shrink-0 mt-0.5" size={18} />
                 )}
                 <span>
-                  Plan Pro actif ({plan === "pro" ? monthsCapped : 0}/12 mois)
+                  {t("loyaltyPlanProLine").replace("{months}", String(plan === "pro" ? monthsCapped : 0))}
                   {!checklist.proOk ? (
-                    <span className="block text-xs text-[var(--p-text-muted)] mt-0.5">Passe au plan Pro pour cumuler.</span>
+                    <span className="block text-xs text-[var(--p-text-muted)] mt-0.5">{t("loyaltyUpgradeProHint")}</span>
                   ) : null}
                 </span>
               </li>
@@ -339,7 +362,7 @@ export default function LoyaltyPage() {
                 ) : (
                   <X className="text-rose-500 shrink-0 mt-0.5" size={18} />
                 )}
-                <span>Au moins 1 élève actif / mois (indicateur : {activeStudents} élève(s) actif(s))</span>
+                <span>{t("loyaltyActiveStudentsLine").replace("{n}", String(activeStudents))}</span>
               </li>
               <li className="flex items-start gap-3">
                 {checklist.cguOk ? (
@@ -347,7 +370,7 @@ export default function LoyaltyPage() {
                 ) : (
                   <X className="text-rose-500 shrink-0 mt-0.5" size={18} />
                 )}
-                <span>Aucune violation des CGU</span>
+                <span>{t("loyaltyCguCleanLine")}</span>
               </li>
               <li className="flex items-start gap-3">
                 {checklist.volOk ? (
@@ -355,15 +378,15 @@ export default function LoyaltyPage() {
                 ) : (
                   <X className="text-rose-500 shrink-0 mt-0.5" size={18} />
                 )}
-                <span>Volume minimum {formatCadWhole(1000)}</span>
+                <span>{t("loyaltyMinVolumeLine").replace("{amount}", formatCadWhole(1000))}</span>
               </li>
             </ul>
 
             <div className="pt-2">
               <div className="flex justify-between text-xs font-semibold text-[var(--p-text-muted)] mb-2">
-                <span>Progression annuelle (mois)</span>
+                <span>{t("loyaltyProgressYearTitle")}</span>
                 <span>
-                  {monthsCapped}/12 complétés
+                  {monthsCapped}/12 {t("loyaltyProgressYearSuffix")}
                 </span>
               </div>
               <div className="h-2.5 rounded-full bg-[var(--color-background-secondary)] overflow-hidden border border-[var(--p-border-light)]">
@@ -384,30 +407,26 @@ export default function LoyaltyPage() {
                 color: "var(--p-text)",
               }}
             >
-              <p className="font-bold">Conditions non remplies</p>
-              <p className="text-[var(--p-text-muted)]">
-                Complète toutes les cases pour être éligible à la ristourne. Le pool peut être reporté si le quorum
-                global n&apos;est pas atteint (voir calculateur).
-              </p>
+              <p className="font-bold">{t("loyaltyConditionsUnmetTitle")}</p>
+              <p className="text-[var(--p-text-muted)]">{t("loyaltyConditionsUnmetBody")}</p>
             </div>
           ) : (
             <div
-              className="rounded-2xl border border-[rgba(29,158,117,0.45)] px-5 py-4 text-sm font-medium"
+              className="rounded-2xl border border-[rgba(29,158,117,0.45)] px-5 py-4 text-sm font-medium space-y-2"
               style={{ backgroundColor: "var(--p-light-teal-bg)", color: "var(--p-dark-teal)" }}
             >
-              Tu remplis les conditions personnelles d&apos;éligibilité. La distribution finale dépend aussi du pool
-              global et du nombre de profs éligibles (min. {RISTOURNE_MIN_ELIGIBLE_TEACHERS}).
+              <p className="font-bold">{t("loyaltyEligible")}</p>
+              <p>{t("loyaltyEligibleBody").replace("{min}", String(RISTOURNE_MIN_ELIGIBLE_TEACHERS))}</p>
             </div>
           )}
 
           <div className="rounded-2xl border border-[var(--p-border-light)] bg-[var(--p-surface-muted)] p-6">
-            <p className="text-[11px] font-bold uppercase tracking-widest text-[var(--p-text-subtle)]">
-              Ristourne estimée (illustratif)
-            </p>
+            <p className="text-[11px] font-bold uppercase tracking-widest text-[var(--p-text-subtle)]">{t("loyaltyEstimateTitle")}</p>
             <p className="text-3xl font-bold text-[#1D9E75] mt-2">{formatCadWhole(estimateRistourne)}</p>
             <p className="text-xs text-[var(--p-text-muted)] mt-2 max-w-xl">
-              Basé sur ton volume ({formatCadWhole(volume)}), un pool réseau indicatif et {ESTIMATE_ELIGIBLE_TEACHERS}{" "}
-              profs éligibles. Les montants réels seront communiqués après clôture annuelle.
+              {t("loyaltyEstimateFoot")
+                .replace("{volume}", formatCadWhole(volume))
+                .replace("{teachers}", String(ESTIMATE_ELIGIBLE_TEACHERS))}
             </p>
           </div>
         </div>
@@ -417,7 +436,7 @@ export default function LoyaltyPage() {
         <div className="space-y-8">
           <div className="grid grid-cols-1 gap-8">
             <SliderBlock
-              label="Ton volume annuel"
+              label={t("loyaltyCalcYourVolume")}
               min={0}
               max={50_000}
               step={500}
@@ -426,7 +445,7 @@ export default function LoyaltyPage() {
               format={(v) => formatCadWhole(v)}
             />
             <SliderBlock
-              label="Profits nets estimés Pratiqo"
+              label={t("loyaltyCalcNetProfit")}
               min={10_000}
               max={500_000}
               step={5000}
@@ -435,7 +454,7 @@ export default function LoyaltyPage() {
               format={(v) => formatCadWhole(v)}
             />
             <SliderBlock
-              label="Nombre de profs éligibles"
+              label={t("loyaltyCalcEligibleTeachers")}
               min={1}
               max={500}
               step={1}
@@ -449,23 +468,23 @@ export default function LoyaltyPage() {
             className="rounded-3xl border border-[rgba(29,158,117,0.4)] p-6 sm:p-8 space-y-4 text-[var(--p-dark-teal)]"
             style={{ backgroundColor: "var(--p-light-teal-bg)" }}
           >
-            <h3 className="text-lg font-bold">Résultats</h3>
+            <h3 className="text-lg font-bold">{t("loyaltyResultsTitle")}</h3>
             <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
               <div>
-                <dt className="text-[var(--p-text-muted)] font-medium">Cashback fidélité</dt>
+                <dt className="text-[var(--p-text-muted)] font-medium">{t("loyaltyResultCashbackFidelity")}</dt>
                 <dd className="text-xl font-bold mt-1">{formatCadWhole(calcCashback)}</dd>
               </div>
               <div>
-                <dt className="text-[var(--p-text-muted)] font-medium">Ristourne annuelle (part estimée)</dt>
+                <dt className="text-[var(--p-text-muted)] font-medium">{t("loyaltyResultRistourneAnnual")}</dt>
                 <dd className="text-xl font-bold mt-1">{formatCadWhole(calcRistourne)}</dd>
               </div>
               <div>
-                <dt className="text-[var(--p-text-muted)] font-medium">Total gains (estimé)</dt>
+                <dt className="text-[var(--p-text-muted)] font-medium">{t("loyaltyResultTotalGains")}</dt>
                 <dd className="text-xl font-bold mt-1">{formatCadWhole(calcCashback + calcRistourne)}</dd>
               </div>
               <div>
-                <dt className="text-[var(--p-text-muted)] font-medium">Niveau atteint</dt>
-                <dd className="text-xl font-bold mt-1">{calcTier.label}</dd>
+                <dt className="text-[var(--p-text-muted)] font-medium">{t("loyaltyResultTierReached")}</dt>
+                <dd className="text-xl font-bold mt-1">{t(TIER_I18N[calcTier.id])}</dd>
               </div>
             </dl>
           </div>
@@ -480,23 +499,26 @@ export default function LoyaltyPage() {
                   color: "var(--p-text)",
                 }}
               >
-                Ristourne non activée — minimum {RISTOURNE_MIN_ELIGIBLE_TEACHERS} profs requis. Pool reporté à
-                l&apos;année suivante.
+                {t("loyaltyRistourneNotActivated").replace("{min}", String(RISTOURNE_MIN_ELIGIBLE_TEACHERS))}
               </div>
             ) : null}
             <div className="rounded-xl border border-[var(--p-border-light)] bg-[var(--p-surface-muted)] px-4 py-3 text-sm text-[var(--p-text)]">
-              <strong>Pool effectif :</strong> MIN({formatCadWhole(poolTheoretical)}, {formatCadWhole(RISTOURNE_POOL_MAX)}) ={" "}
+              <strong>{t("loyaltyPoolEffectiveLine")}</strong>{" "}
+              {t("loyaltyPoolEffectiveFormula")
+                .replace("{a}", formatCadWhole(poolTheoretical))
+                .replace("{b}", formatCadWhole(RISTOURNE_POOL_MAX))}{" "}
               <strong className="text-[#1D9E75]">{formatCadWhole(poolEffective)}</strong>
             </div>
             {hitsCap ? (
               <div className="rounded-xl border-l-4 border-amber-500 bg-[var(--p-watch-bg)] px-4 py-3 text-sm text-[var(--p-text)]">
-                Plafond par professeur atteint ({formatCadWhole(RISTOURNE_PER_PROF_MAX)}). Brut calculé :{" "}
-                {formatCadWhole(calcUncapped)}.
+                {t("loyaltyCapHitLine")
+                  .replace("{cap}", formatCadWhole(RISTOURNE_PER_PROF_MAX))
+                  .replace("{raw}", formatCadWhole(calcUncapped))}
               </div>
             ) : null}
             {belowMin ? (
               <div className="rounded-xl border border-amber-200 bg-[var(--p-watch-bg)] px-4 py-3 text-xs text-[var(--p-text-muted)]">
-                Part inférieure à {formatCadWhole(RISTOURNE_PER_PROF_MIN)} : versement reporté (CGU).
+                {t("loyaltyBelowMinLine").replace("{min}", formatCadWhole(RISTOURNE_PER_PROF_MIN))}
               </div>
             ) : null}
           </div>
@@ -506,41 +528,33 @@ export default function LoyaltyPage() {
       {tab === "rapport" && (
         <div className="space-y-6">
           <div className="rounded-2xl border border-[var(--p-border-light)] bg-[var(--p-surface)] p-8 text-center">
-            <p className="text-[11px] font-bold uppercase tracking-widest text-[var(--p-text-subtle)]">Rapport annuel</p>
-            <h3 className="text-2xl font-bold mt-2 text-[var(--p-text)]">Rapport disponible en janvier 2027</h3>
-            <p className="text-sm text-[var(--p-text-muted)] mt-3 max-w-md mx-auto">
-              Les agrégats définitifs, le pool redistribué et la liste des professeurs éligibles seront publiés après la
-              clôture de l&apos;exercice.
-            </p>
+            <p className="text-[11px] font-bold uppercase tracking-widest text-[var(--p-text-subtle)]">{t("loyaltyReportAnnualTitle")}</p>
+            <h3 className="text-2xl font-bold mt-2 text-[var(--p-text)]">{t("loyaltyReportAvailableTitle")}</h3>
+            <p className="text-sm text-[var(--p-text-muted)] mt-3 max-w-md mx-auto">{t("loyaltyReportAvailableBody")}</p>
           </div>
 
           <div className="rounded-2xl border border-[var(--p-border-light)] bg-[var(--p-surface)] p-6">
-            <h4 className="text-sm font-bold text-[var(--p-text)] mb-4">Contenu prévu du rapport</h4>
+            <h4 className="text-sm font-bold text-[var(--p-text)] mb-4">{t("loyaltyReportPlannedTitle")}</h4>
             <ul className="list-disc pl-5 space-y-2 text-sm text-[var(--p-text-muted)]">
-              <li>Revenus totaux</li>
-              <li>Coûts d&apos;exploitation</li>
-              <li>Profits nets redistribuables</li>
-              <li>Ristourne totale distribuée</li>
-              <li>Nombre de profs éligibles</li>
+              <li>{t("loyaltyReportPlannedItem1")}</li>
+              <li>{t("loyaltyReportPlannedItem2")}</li>
+              <li>{t("loyaltyReportPlannedItem3")}</li>
+              <li>{t("loyaltyReportPlannedItem4")}</li>
+              <li>{t("loyaltyReportPlannedItem5")}</li>
             </ul>
           </div>
 
           <div className="rounded-2xl border border-[var(--p-border-light)] bg-[var(--color-background-secondary)] p-6">
-            <h4 className="text-sm font-bold text-[var(--p-text)] mb-3">Règles de protection financière</h4>
+            <h4 className="text-sm font-bold text-[var(--p-text)] mb-3">{t("loyaltyFinanceRulesTitle")}</h4>
             <ul className="space-y-2 text-sm text-[var(--p-text-muted)]">
               <li>
-                <strong className="text-[var(--p-text)]">Pool max :</strong> {formatCadWhole(RISTOURNE_POOL_MAX)}/an
+                <strong className="text-[var(--p-text)]">{t("loyaltyRulePoolMax")}</strong> {formatCadWhole(RISTOURNE_POOL_MAX)}/an
               </li>
               <li>
-                <strong className="text-[var(--p-text)]">Plafond / prof :</strong> {formatCadWhole(RISTOURNE_PER_PROF_MAX)}
+                <strong className="text-[var(--p-text)]">{t("loyaltyRuleCapProf")}</strong> {formatCadWhole(RISTOURNE_PER_PROF_MAX)}
               </li>
-              <li>
-                <strong className="text-[var(--p-text)]">Minimum</strong> {RISTOURNE_MIN_ELIGIBLE_TEACHERS} profs
-                éligibles pour activer la ristourne
-              </li>
-              <li>
-                <strong className="text-[var(--p-text)]">Report</strong> si les conditions ne sont pas remplies (voir CGU)
-              </li>
+              <li>{t("loyaltyRuleMinProfs").replace("{min}", String(RISTOURNE_MIN_ELIGIBLE_TEACHERS))}</li>
+              <li>{t("loyaltyRuleDefer")}</li>
             </ul>
           </div>
         </div>

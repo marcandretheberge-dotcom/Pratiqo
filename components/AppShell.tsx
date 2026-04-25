@@ -108,18 +108,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       )}
     >
       {/* Top bar */}
-      <header
-        className={cn(
-          "sticky top-0 z-40 h-14 shrink-0 border-b flex items-center justify-between px-4 sm:px-5",
-          isTeacher ? "border-[#2C2C2A]/10 bg-[#2C2C2A] text-white" : "border-[var(--p-border-light)] bg-white",
-        )}
-      >
+      <header className="sticky top-0 z-40 h-14 shrink-0 border-b border-[var(--p-border-light)] bg-white flex items-center justify-between px-4 sm:px-5">
         <Link href={logoHref} className="flex items-center gap-2 min-w-0" aria-label={t("ariaHome")}>
-          <Logo size="sm" variant={isTeacher ? "light" : "dark"} />
+          <Logo size="md" variant="dark" />
         </Link>
 
         <div className="flex items-center gap-1 sm:gap-2">
-          {isStudent ? (
+          {isStudent || isTeacher ? (
             <Link
               href="/messages"
               className={cn(
@@ -138,32 +133,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               ) : null}
             </Link>
           ) : null}
-          {isTeacher ? (
-            <Link
-              href="/messages"
-              className={cn(
-                "relative inline-flex h-10 w-10 items-center justify-center rounded-full transition-colors",
-                pathname?.startsWith("/messages")
-                  ? "bg-white/15 text-white"
-                  : "text-white/85 hover:bg-white/10",
-              )}
-              aria-label={t("ariaMessages")}
-            >
-              <MessageCircle size={22} />
-              {unreadMessages > 0 ? (
-                <span className="absolute -top-0.5 -right-0.5 min-w-[1.125rem] h-[1.125rem] px-1 rounded-full bg-[#1D9E75] text-white text-[10px] font-bold leading-none inline-flex items-center justify-center border-2 border-[#2C2C2A]">
-                  {unreadMessages > 99 ? "99+" : unreadMessages}
-                </span>
-              ) : null}
-            </Link>
-          ) : null}
-          <div
-            className={
-              isTeacher
-                ? "[&_button]:border-white/20 [&_button]:bg-white/10 [&_button]:hover:bg-white/15 [&_svg]:text-white/90"
-                : ""
-            }
-          >
+          <div>
             <NotificationCenter />
           </div>
         </div>

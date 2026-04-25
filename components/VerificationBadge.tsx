@@ -3,7 +3,8 @@
 import React from "react";
 import { cn } from "../lib/utils";
 import type { VerificationLevel } from "../lib/verification";
-import { VERIFICATION_LEVELS } from "../lib/verification";
+import { VERIFICATION_LEVELS, verificationBadgeDescriptionKey, verificationBadgePerkKeys, verificationLevelTitleKey } from "../lib/verification";
+import { useLocale } from "../lib/locale-context";
 
 export function VerificationBadge({
   level,
@@ -16,8 +17,12 @@ export function VerificationBadge({
   showLabel?: boolean;
   className?: string;
 }) {
+  const { t } = useLocale();
   const info = VERIFICATION_LEVELS[level];
-  const tooltip = `${info.label} — ${info.description}`;
+  const label = t(verificationLevelTitleKey(level));
+  const description = t(verificationBadgeDescriptionKey(level));
+  const perkKeys = verificationBadgePerkKeys(level);
+  const tooltip = `${label} — ${description}`;
 
   if (size === "lg") {
     const dark = level === 4;
@@ -44,20 +49,23 @@ export function VerificationBadge({
           </span>
           <div>
             <p className={cn("text-xs font-bold uppercase tracking-wide", dark ? "text-white/80" : "")} style={dark ? undefined : { color: info.color }}>
-              Vérification Pratiqo
+              {t("verificationPratiqoBrand")}
             </p>
-            <p className={cn("text-lg font-bold", dark ? "text-white" : "text-[#2C2C2A]")}>{info.label}</p>
-            <p className={cn("text-sm", dark ? "text-white/85" : "text-[#2C2C2A]/80")}>{info.description}</p>
+            <p className={cn("text-lg font-bold", dark ? "text-white" : "text-[#2C2C2A]")}>{label}</p>
+            <p className={cn("text-sm", dark ? "text-white/85" : "text-[#2C2C2A]/80")}>{description}</p>
           </div>
         </div>
-        <ul className="mt-4 space-y-2">
-          {info.perks.map((p) => (
+        <p className={cn("mt-3 text-xs font-bold uppercase tracking-wide", dark ? "text-white/75" : "text-[#2C2C2A]/60")}>
+          {t("verificationPerks")}
+        </p>
+        <ul className="mt-2 space-y-2">
+          {perkKeys.map((pk) => (
             <li
-              key={p}
+              key={pk}
               className={cn("flex items-start gap-2 text-sm font-medium", dark ? "text-white/95" : "text-[#2C2C2A]")}
             >
               <span className={cn("mt-0.5", dark ? "text-[#B8F5DC]" : "text-[#1D9E75]")}>✓</span>
-              {p}
+              {t(pk)}
             </li>
           ))}
         </ul>
@@ -81,12 +89,11 @@ export function VerificationBadge({
         }}
       >
         <span aria-hidden>{info.badge}</span>
-        {showLabel ? <span className="max-w-[140px] truncate">{info.label}</span> : null}
+        {showLabel ? <span className="max-w-[140px] truncate">{label}</span> : null}
       </span>
     );
   }
 
-  // md
   return (
     <span
       title={tooltip}
@@ -101,7 +108,7 @@ export function VerificationBadge({
       }}
     >
       <span aria-hidden>{info.badge}</span>
-      {showLabel ? info.label : null}
+      {showLabel ? label : null}
     </span>
   );
 }

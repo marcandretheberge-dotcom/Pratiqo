@@ -1,3 +1,5 @@
+import type { TranslationKey } from "./translations";
+
 export type VerificationLevel = 0 | 1 | 2 | 3 | 4;
 
 export interface VerificationInfo {
@@ -103,10 +105,11 @@ export function nextVerificationLevel(level: VerificationLevel): VerificationLev
   return (level + 1) as VerificationLevel;
 }
 
-export function nextLevelRequirements(
+/** i18n keys for `t()` — see `lib/translations.ts` verificationReq* */
+export function nextLevelRequirementKeys(
   current: VerificationLevel,
   ctx: { plan?: string | null; identity_verified?: boolean; diploma_verified?: boolean },
-): string[] {
+): TranslationKey[] {
   const next = nextVerificationLevel(current);
   if (!next) return [];
 
@@ -115,15 +118,50 @@ export function nextLevelRequirements(
   const idV = Boolean(ctx.identity_verified);
   const dipV = Boolean(ctx.diploma_verified);
 
-  if (next === 1) return ["Confirmer ton adresse courriel (connexion Google)."];
-  if (next === 2) return ["Soumettre une pièce d'identité et la faire valider par l'équipe Pratiqo."];
-  if (next === 3) return ["Téléverser un diplôme ou certificat et attendre la validation."];
+  if (next === 1) return ["verificationReqConfirmEmail"];
+  if (next === 2) return ["verificationReqSubmitId"];
+  if (next === 3) return ["verificationReqSubmitDiploma"];
   if (next === 4) {
-    const lines = ["Avoir les niveaux 1 à 3 complétés."];
-    if (!isPro) lines.unshift("Passer au forfait Pro ou Entreprise.");
-    if (!idV) lines.push("Vérification d'identité (niveau 2) requise.");
-    if (!dipV) lines.push("Vérification de diplôme (niveau 3) requise.");
+    const lines: TranslationKey[] = ["verificationReqComplete123"];
+    if (!isPro) lines.unshift("verificationReqUpgradePro");
+    if (!idV) lines.push("verificationReqIdentityPending");
+    if (!dipV) lines.push("verificationReqDiplomaPending");
     return lines;
   }
   return [];
+}
+
+export function verificationLevelTitleKey(level: VerificationLevel): TranslationKey {
+  const map: Record<VerificationLevel, TranslationKey> = {
+    0: "verificationUnverified",
+    1: "verificationEmail",
+    2: "verificationIdentity",
+    3: "verificationDiploma",
+    4: "verificationPro",
+  };
+  return map[level];
+}
+
+const BADGE_DESC_KEYS: Record<VerificationLevel, TranslationKey> = {
+  0: "verificationBadgeDesc0",
+  1: "verificationBadgeDesc1",
+  2: "verificationBadgeDesc2",
+  3: "verificationBadgeDesc3",
+  4: "verificationBadgeDesc4",
+};
+
+const BADGE_PERK_KEYS: Record<VerificationLevel, [TranslationKey, TranslationKey, TranslationKey]> = {
+  0: ["verificationBadgeL0p0", "verificationBadgeL0p1", "verificationBadgeL0p2"],
+  1: ["verificationBadgeL1p0", "verificationBadgeL1p1", "verificationBadgeL1p2"],
+  2: ["verificationBadgeL2p0", "verificationBadgeL2p1", "verificationBadgeL2p2"],
+  3: ["verificationBadgeL3p0", "verificationBadgeL3p1", "verificationBadgeL3p2"],
+  4: ["verificationBadgeL4p0", "verificationBadgeL4p1", "verificationBadgeL4p2"],
+};
+
+export function verificationBadgeDescriptionKey(level: VerificationLevel): TranslationKey {
+  return BADGE_DESC_KEYS[level];
+}
+
+export function verificationBadgePerkKeys(level: VerificationLevel): [TranslationKey, TranslationKey, TranslationKey] {
+  return BADGE_PERK_KEYS[level];
 }

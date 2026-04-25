@@ -8,11 +8,12 @@ import { getSupabaseClient } from "../../../../lib/supabase";
 import { VerificationBadge } from "../../../../components/VerificationBadge";
 import {
   getVerificationLevel,
-  nextLevelRequirements,
+  nextLevelRequirementKeys,
   nextVerificationLevel,
-  VERIFICATION_LEVELS,
+  verificationLevelTitleKey,
   type VerificationLevel,
 } from "../../../../lib/verification";
+import { useLocale } from "../../../../lib/locale-context";
 import { cn } from "../../../../lib/utils";
 
 type TeacherVerifyRow = {
@@ -26,6 +27,7 @@ type TeacherVerifyRow = {
 
 export default function TeacherVerificationPage() {
   const { user, profile, loading } = useAuth();
+  const { t } = useLocale();
   const [busy, setBusy] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [diplomaNote, setDiplomaNote] = useState("");
@@ -63,7 +65,13 @@ export default function TeacherVerificationPage() {
   }, [teacherRow, plan]);
 
   const next = nextVerificationLevel(level);
-  const nextReq = next ? nextLevelRequirements(level, { plan, identity_verified: Boolean(teacherRow?.identity_verified), diploma_verified: Boolean(teacherRow?.diploma_verified) }) : [];
+  const nextReqKeys = next
+    ? nextLevelRequirementKeys(level, {
+        plan,
+        identity_verified: Boolean(teacherRow?.identity_verified),
+        diploma_verified: Boolean(teacherRow?.diploma_verified),
+      })
+    : [];
 
   const postRequest = async (kind: "identity" | "diploma", description?: string) => {
     if (!user) return;
@@ -72,17 +80,17 @@ export default function TeacherVerificationPage() {
     try {
       const { data: sess } = await getSupabaseClient().auth.getSession();
       const token = sess.session?.access_token;
-      if (!token) throw new Error("Session expirée. Reconnecte-toi.");
+      if (!token) throw new Error(t("verificationSessionExpired"));
       const res = await fetch("/api/teacher/verification/request", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ kind, description }),
       });
       const j = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string };
-      if (!res.ok || !j.ok) throw new Error(j.error || "Envoi impossible.");
-      setMessage(kind === "identity" ? "Demande envoyée. Nous te contacterons sous peu." : "Demande de diplôme envoyée à l'équipe.");
+      if (!res.ok || !j.ok) throw new Error(j.error || t("verificationSendFailed"));
+      setMessage(kind === "identity" ? t("verificationSentIdentity") : t("verificationSentDiploma"));
     } catch (e) {
-      setMessage(e instanceof Error ? e.message : "Erreur");
+      setMessage(e instanceof Error ? e.message : t("verificationErrorGeneric"));
     } finally {
       setBusy(null);
     }
@@ -99,9 +107,9 @@ export default function TeacherVerificationPage() {
   if (profile?.role !== "teacher") {
     return (
       <div className="rounded-2xl border border-[#E8E6DF] bg-white p-8 text-center">
-        <p className="text-[#2C2C2A] font-semibold">Cette page est réservée aux professeurs.</p>
+        <p className="text-[#2C2C2A] font-semibold">{t("verificationTeachersOnly")}</p>
         <Link href="/dashboard" className="mt-4 inline-block text-sm font-semibold text-[#1D9E75] hover:underline">
-          Retour
+          {t("back")}
         </Link>
       </div>
     );
@@ -109,9 +117,7 @@ export default function TeacherVerificationPage() {
 
   if (!teacherRow) {
     return (
-      <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-sm text-[#633806]">
-        Aucune fiche professeur liée à ton compte. Complète l'onboarding ou contacte le support.
-      </div>
+      <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-sm text-[#633806]">{t("verificationNoTeacherRow")}</div>
     );
   }
 
@@ -122,14 +128,12 @@ export default function TeacherVerificationPage() {
     <div className="space-y-8">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-xs font-bold uppercase tracking-widest text-[#888780]">Confiance</p>
+          <p className="text-xs font-bold uppercase tracking-widest text-[#888780]">{t("verificationTrustLabel")}</p>
           <h1 className="mt-1 text-2xl font-bold text-[#2C2C2A] flex items-center gap-2">
             <ShieldCheck className="text-[#1D9E75]" size={28} />
-            Vérification
+            {t("verificationTitle")}
           </h1>
-          <p className="mt-2 text-sm text-[#888780] max-w-xl">
-            Montre aux élèves ton sérieux : chaque niveau débloque des avantages sur la plateforme.
-          </p>
+          <p className="mt-2 text-sm text-[#888780] max-w-xl">{t("verificationSubtitle")}</p>
         </div>
         <VerificationBadge level={level} size="md" />
       </div>
@@ -140,9 +144,9 @@ export default function TeacherVerificationPage() {
         <div
           className={cn(
             "rounded-xl px-4 py-3 text-sm font-medium",
-            message.includes("impossible") || message.includes("Erreur") || message.includes("Session")
-              ? "bg-red-50 text-red-800 border border-red-200"
-              : "bg-[#E1F5EE] text-[#085041] border border-[#1D9E75]/25",
+            message === t("verificationSentIdentity") || message === t("verificationSentDiploma")
+              ? "bg-[#E1F5EE] text-[#085041] border border-[#1D9E75]/25"
+              : "bg-red-50 text-red-800 border border-red-200",
           )}
         >
           {message}
@@ -151,40 +155,38 @@ export default function TeacherVerificationPage() {
 
       {next ? (
         <section className="rounded-2xl border border-[#E8E6DF] bg-white p-6 space-y-3">
-          <h2 className="text-sm font-bold uppercase tracking-wider text-[#2C2C2A]">Prochain niveau</h2>
-          <p className="text-lg font-semibold text-[#2C2C2A]">{VERIFICATION_LEVELS[next].label}</p>
+          <h2 className="text-sm font-bold uppercase tracking-wider text-[#2C2C2A]">{t("verificationNextLevel")}</h2>
+          <p className="text-lg font-semibold text-[#2C2C2A]">{t(verificationLevelTitleKey(next))}</p>
           <ul className="list-disc pl-5 text-sm text-[#888780] space-y-1">
-            {nextReq.map((r) => (
-              <li key={r}>{r}</li>
+            {nextReqKeys.map((key) => (
+              <li key={key}>{t(key)}</li>
             ))}
           </ul>
         </section>
       ) : null}
 
       <section className="space-y-4">
-        <h2 className="text-sm font-bold uppercase tracking-wider text-[#2C2C2A]">Checklist</h2>
+        <h2 className="text-sm font-bold uppercase tracking-wider text-[#2C2C2A]">{t("verificationChecklistTitle")}</h2>
 
         <div className="rounded-2xl border border-[#E8E6DF] bg-white p-5 flex flex-wrap items-start justify-between gap-4">
           <div className="flex gap-3">
             <CheckCircle2 className="text-[#1D9E75] shrink-0 mt-0.5" size={22} />
             <div>
-              <p className="font-semibold text-[#2C2C2A]">Niveau 1 — Email vérifié</p>
-              <p className="text-sm text-[#888780]">Automatique avec ta connexion Google.</p>
+              <p className="font-semibold text-[#2C2C2A]">{t("verificationLevel1Title")}</p>
+              <p className="text-sm text-[#888780]">{t("verificationLevel1Body")}</p>
             </div>
           </div>
-          {level >= 1 ? <span className="text-xs font-bold text-[#1D9E75]">OK</span> : null}
+          {level >= 1 ? <span className="text-xs font-bold text-[#1D9E75]">{t("verificationOk")}</span> : null}
         </div>
 
         <div className="rounded-2xl border border-[#E8E6DF] bg-white p-5 space-y-3">
           <div className="flex gap-3">
             <ShieldCheck className="text-[#BA7517] shrink-0 mt-0.5" size={22} />
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-[#2C2C2A]">Niveau 2 — Identité</p>
-              <p className="text-sm text-[#888780] mt-1">
-                Stripe Identity arrive bientôt. En attendant, envoie une demande de vérification manuelle à notre équipe.
-              </p>
+              <p className="font-semibold text-[#2C2C2A]">{t("verificationLevel2Title")}</p>
+              <p className="text-sm text-[#888780] mt-1">{t("verificationLevel2Body")}</p>
               {teacherRow.identity_verified ? (
-                <p className="mt-2 text-sm font-semibold text-[#1D9E75]">Identité validée.</p>
+                <p className="mt-2 text-sm font-semibold text-[#1D9E75]">{t("verificationIdentityValidated")}</p>
               ) : (
                 <button
                   type="button"
@@ -192,7 +194,7 @@ export default function TeacherVerificationPage() {
                   onClick={() => void postRequest("identity")}
                   className="mt-3 h-11 rounded-xl bg-[#2C2C2A] px-5 text-sm font-semibold text-white hover:bg-[#1a1a18] disabled:opacity-50"
                 >
-                  {busy === "identity" ? "Envoi…" : "Demande de vérification manuelle"}
+                  {busy === "identity" ? t("verificationSending") : t("verificationUploadId")}
                 </button>
               )}
             </div>
@@ -203,18 +205,16 @@ export default function TeacherVerificationPage() {
           <div className="flex gap-3">
             <ShieldCheck className="text-[#534AB7] shrink-0 mt-0.5" size={22} />
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-[#2C2C2A]">Niveau 3 — Diplôme / certificat</p>
-              <p className="text-sm text-[#888780] mt-1">
-                Décris ton diplôme (établissement, année). Tu pourras envoyer les fichiers quand l'équipe te répond.
-              </p>
+              <p className="font-semibold text-[#2C2C2A]">{t("verificationLevel3Title")}</p>
+              <p className="text-sm text-[#888780] mt-1">{t("verificationLevel3Body")}</p>
               {teacherRow.diploma_verified ? (
-                <p className="mt-2 text-sm font-semibold text-[#1D9E75]">Diplôme validé.</p>
+                <p className="mt-2 text-sm font-semibold text-[#1D9E75]">{t("verificationDiplomaValidated")}</p>
               ) : (
                 <>
                   <textarea
                     value={diplomaNote}
                     onChange={(e) => setDiplomaNote(e.target.value)}
-                    placeholder="Ex. : DEM en piano, Conservatoire de Montréal, 2018…"
+                    placeholder={t("verificationDiplomaPlaceholder")}
                     rows={3}
                     className="mt-3 w-full rounded-xl border border-[#E8E6DF] px-3 py-2 text-sm outline-none focus:border-[#1D9E75]"
                   />
@@ -224,7 +224,7 @@ export default function TeacherVerificationPage() {
                     onClick={() => void postRequest("diploma", diplomaNote.trim())}
                     className="mt-2 h-11 rounded-xl bg-[#534AB7] px-5 text-sm font-semibold text-white hover:brightness-105 disabled:opacity-50"
                   >
-                    {busy === "diploma" ? "Envoi…" : "Notifier l'équipe"}
+                    {busy === "diploma" ? t("verificationSending") : t("verificationRequest")}
                   </button>
                 </>
               )}
@@ -233,18 +233,16 @@ export default function TeacherVerificationPage() {
         </div>
 
         <div className="rounded-2xl border border-[#E8E6DF] bg-[#F1EFE8] p-5">
-          <p className="font-semibold text-[#2C2C2A]">Niveau 4 — Pro Vérifié Pratiqo</p>
+          <p className="font-semibold text-[#2C2C2A]">{t("verificationLevel4Title")}</p>
           <p className="mt-2 text-sm text-[#888780]">
-            {isPro
-              ? "Tu es en Pro ou Entreprise : complète les niveaux 1 à 3 (identité + diplôme) pour atteindre le niveau maximum."
-              : "Passe au forfait Pro ou Entreprise, puis complète identité et diplôme pour le badge ⭐."}
+            {isPro ? t("verificationLevel4BodyPro") : t("verificationLevel4BodyFree")}
           </p>
           {!isPro ? (
             <Link
               href="/upgrade"
               className="mt-4 inline-flex h-10 items-center rounded-xl bg-[#0F6E56] px-4 text-sm font-bold text-white hover:brightness-105"
             >
-              Voir les forfaits
+              {t("verificationViewPlans")}
             </Link>
           ) : null}
         </div>

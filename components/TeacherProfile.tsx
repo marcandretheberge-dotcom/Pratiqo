@@ -27,7 +27,8 @@ import { PlanBadge } from "./PlanBadge";
 import { TeacherMap } from "./TeacherMap";
 import { VerificationBadge } from "./VerificationBadge";
 import { getAllDisciplines, getDisciplineById } from "../lib/disciplines";
-import { getVerificationLevel, nextLevelRequirements, nextVerificationLevel, VERIFICATION_LEVELS } from "../lib/verification";
+import { useLocale } from "../lib/locale-context";
+import { getVerificationLevel, nextLevelRequirementKeys, nextVerificationLevel, verificationLevelTitleKey } from "../lib/verification";
 
 export type TeacherBookKind = "standard" | "home";
 
@@ -69,6 +70,7 @@ export function TeacherProfile({
   studioMapHasConfirmedBooking,
 }: TeacherProfileProps) {
   const { user } = useAuth();
+  const { t } = useLocale();
   const router = useRouter();
   const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(null);
   const [plan, setPlan] = useState<"free" | "pro" | "enterprise">("free");
@@ -178,8 +180,8 @@ export function TeacherProfile({
   );
 
   const nextLevel = nextVerificationLevel(verificationLevel);
-  const nextReq = nextLevel
-    ? nextLevelRequirements(verificationLevel, {
+  const nextReqKeys = nextLevel
+    ? nextLevelRequirementKeys(verificationLevel, {
         plan: displayPlan,
         identity_verified: teacher.identityVerified,
         diploma_verified: teacher.diplomaVerified,
@@ -289,15 +291,13 @@ export function TeacherProfile({
               </div>
               {nextLevel ? (
                 <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 space-y-2">
-                  <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                    Comment obtenir le niveau suivant?
-                  </p>
+                  <p className="text-xs font-bold uppercase tracking-wider text-slate-500">{t("verificationNextLevel")}</p>
                   <p className="text-sm font-semibold text-slate-800">
-                    Prochain palier : {VERIFICATION_LEVELS[nextLevel].label}
+                    {t("verificationNextTierLabel")} : {t(verificationLevelTitleKey(nextLevel))}
                   </p>
                   <ul className="list-disc pl-4 text-sm text-slate-600 space-y-1">
-                    {nextReq.map((line) => (
-                      <li key={line}>{line}</li>
+                    {nextReqKeys.map((key) => (
+                      <li key={key}>{t(key)}</li>
                     ))}
                   </ul>
                 </div>
