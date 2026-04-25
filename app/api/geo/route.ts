@@ -3,7 +3,11 @@ import { getGeoConfig } from "@/lib/geoLocale";
 
 export async function GET(request: Request) {
   try {
-    const country = request.headers.get("x-vercel-ip-country") || request.headers.get("cf-ipcountry");
+    const { searchParams } = new URL(request.url);
+    const testCountry = searchParams.get("country");
+
+    const country =
+      testCountry || request.headers.get("x-vercel-ip-country") || request.headers.get("cf-ipcountry") || null;
 
     // In development / locally there is usually no country header.
     // Return null so the client falls back to browser language.
