@@ -41,41 +41,32 @@ export async function GET(request: Request) {
         .eq("id", user.id)
         .maybeSingle();
 
-      const profileRole = (profile as { role?: string | null } | null)?.role ?? null;
-      const complete = Boolean((profile as { teacher_onboarding_complete?: boolean } | null)?.teacher_onboarding_complete);
-      const companionChosen = Boolean((profile as { companion_chosen?: boolean | null } | null)?.companion_chosen);
-
-      if (role === "teacher" || profileRole === "teacher") {
-        if (profileRole !== "teacher") {
-          await supabase.from("profiles").upsert({
-            id: user.id,
-            role: "teacher",
-            email: user.email,
-            name: (user.user_metadata?.full_name as string) || null,
-          });
-        }
-
-        if (!complete) {
-          return NextResponse.redirect(new URL("/onboarding", requestUrl.origin));
-        }
-        return NextResponse.redirect(new URL("/dashboard", requestUrl.origin));
-      }
-
-      // Ensure student profile exists so defaults apply (including companion_chosen = false).
+      // Ensure new users get role='student' by default.
       if (!profile) {
         await supabase.from("profiles").upsert({
           id: user.id,
           role: "student",
           email: user.email,
           name: (user.user_metadata?.full_name as string) || null,
+          companion_chosen: false,
         });
       }
 
-      if (!companionChosen) {
-        return NextResponse.redirect(new URL("/student/choose-companion", requestUrl.origin));
+      const resolvedRole =
+        role === "teacher" || (profile as { role?: string | null } | null)?.role === "teacher" ? "teacher" : "student";
+
+      if (resolvedRole === "teacher") {
+        if (!(profile as { teacher_onboarding_complete?: boolean | null } | null)?.teacher_onboarding_complete) {
+          return NextResponse.redirect(new URL("/onboarding", requestUrl.origin));
+        }
+        return NextResponse.redirect(new URL("/dashboard", requestUrl.origin));
       }
 
-      return NextResponse.redirect(new URL(next, requestUrl.origin));
+      // Default = student flow
+      if (!(profile as { companion_chosen?: boolean | null } | null)?.companion_chosen) {
+        return NextResponse.redirect(new URL("/student/choose-companion", requestUrl.origin));
+      }
+      return NextResponse.redirect(new URL("/dashboard", requestUrl.origin));
     }
   }
 
