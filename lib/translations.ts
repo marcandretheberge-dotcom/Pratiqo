@@ -335,6 +335,13 @@ const frCA = {
     "Les statistiques complètes (série, badges, devoirs) sont sur ton accueil. On centralise ici la vue « progression ».",
   studentProgressDashboardLink: "Voir mes cours et ma série",
 
+  companionTitle: "Choisis ton compagnon",
+  companionSubtitle: "Il grandira avec toi",
+  companionStart: "Commencer avec",
+  companionProgress: "cours de plus pour évoluer",
+  companionEvolved: "a évolué!",
+  companionMaxLevel: "Niveau maximum atteint!",
+
   loyaltyTitle: "Programme Fidélité",
   loyaltyCurrentLevel: "Ton niveau actuel",
   loyaltyCashback: "Cashback gagné",
@@ -840,6 +847,13 @@ const enCA: Record<TranslationKey, string> = {
     "Full stats (streak, badges, homework) are on your home page. This page focuses on the “progress” view.",
   studentProgressDashboardLink: "See my lessons and streak",
 
+  companionTitle: "Choose your companion",
+  companionSubtitle: "It will grow with you",
+  companionStart: "Start with",
+  companionProgress: "more lessons to evolve",
+  companionEvolved: "has evolved!",
+  companionMaxLevel: "Maximum level reached!",
+
   loyaltyTitle: "Loyalty Program",
   loyaltyCurrentLevel: "Your current level",
   loyaltyCashback: "Cashback earned",
@@ -1315,6 +1329,13 @@ const es: Record<TranslationKey, string> = {
   studentProgressCardBody:
     "Las estadísticas completas (racha, insignias, tareas) están en tu inicio. Aquí centralizamos la vista «progreso».",
   studentProgressDashboardLink: "Ver mis clases y mi racha",
+
+  companionTitle: "Elige tu compañero",
+  companionSubtitle: "Crecerá contigo",
+  companionStart: "Empezar con",
+  companionProgress: "clases más para evolucionar",
+  companionEvolved: "¡ha evolucionado!",
+  companionMaxLevel: "¡Nivel máximo alcanzado!",
 
   loyaltyTitle: "Programa de Fidelidad",
   loyaltyCurrentLevel: "Tu nivel actual",

@@ -105,6 +105,47 @@ export async function sendWelcomeStudent(email: string, name: string) {
   }
 }
 
+export async function sendCompanionEvolution(
+  email: string,
+  name: string,
+  companionName: string,
+  newStageEmoji: string,
+  newStageName: string,
+) {
+  console.log("[email] RESEND_API_KEY exists:", !!process.env.RESEND_API_KEY);
+  const resend = resendClient();
+  if (!resend) {
+    console.warn("[email] RESEND_API_KEY missing; skipping companion evolution email");
+    return;
+  }
+
+  const subject = `${newStageEmoji} Ton compagnon a évolué!`;
+  const html = `
+  <div style="font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;line-height:1.5;color:#2C2C2A">
+    <h2 style="margin:0 0 12px 0;">${escapeHtml(subject)}</h2>
+    <p style="margin:0 0 14px 0;">
+      Félicitations ${escapeHtml(name)}! Ton ${escapeHtml(companionName)} est maintenant ${escapeHtml(newStageName)} ${escapeHtml(newStageEmoji)}
+    </p>
+    <p style="margin:22px 0 0 0;color:#888780;font-size:12px;">
+      Continue comme ça — chaque cours compte.
+    </p>
+  </div>`;
+
+  try {
+    const result = await resend.emails.send({
+      from: fromEmail(),
+      to: email,
+      subject,
+      html,
+    });
+    console.log("[resend] Companion evolution:", result);
+    return result;
+  } catch (error) {
+    console.error("[resend] Companion evolution error:", error);
+    throw error;
+  }
+}
+
 export async function sendTeacherVerificationRequestToAdmin(opts: {
   teacherName: string;
   teacherEmail: string;

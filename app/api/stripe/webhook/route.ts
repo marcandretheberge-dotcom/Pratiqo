@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { stripe } from "@/lib/stripe";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { COMPANIONS, getCompanionStage } from "@/lib/companions";
+import { sendCompanionEvolution } from "@/lib/email";
 
 export const runtime = "nodejs";
 
@@ -188,11 +190,13 @@ async function confirmBookingAndNotify(bookingId: string, paymentIntentId: strin
 
   const { data: studentProfile } = await admin
     .from("profiles")
-    .select("name")
+    .select("name, email, companion_type")
     .eq("id", booking.student_id)
     .maybeSingle();
 
   const studentName = (studentProfile?.name as string) || "Élève";
+  const studentEmail = (studentProfile as { email?: string | null } | null)?.email ?? null;
+  const companionType = (studentProfile as { companion_type?: string | null } | null)?.companion_type ?? null;
   const teacherName = (teacher?.name as string) || "Professeur";
   const when = [booking.date, booking.time].filter(Boolean).join(" · ");
 
@@ -218,6 +222,28 @@ async function confirmBookingAndNotify(bookingId: string, paymentIntentId: strin
   const { error: notifErr } = await admin.from("notifications").insert(rows);
   if (notifErr) {
     console.error("[stripe/webhook] notifications insert", notifErr);
+  }
+
+  // Companion evolution email (only celebratory notification).
+  if (studentEmail && companionType && (companionType === "phoenix" || companionType === "forest" || companionType === "dragon" || companionType === "star")) {
+    const { count } = await admin
+      .from("bookings")
+      .select("id", { count: "exact", head: true })
+      .eq("student_id", booking.student_id)
+      .eq("status", "confirmed");
+
+    const total = typeof count === "number" ? count : 0;
+    const prev = Math.max(0, total - 1);
+    const prevStage = getCompanionStage(companionType, prev);
+    const newStage = getCompanionStage(companionType, total);
+    if (prevStage.name !== newStage.name || prevStage.emoji !== newStage.emoji) {
+      const companionName = COMPANIONS[companionType].name;
+      try {
+        await sendCompanionEvolution(studentEmail, studentName, companionName, newStage.emoji, newStage.name);
+      } catch (e) {
+        console.error("[stripe/webhook] evolution email failed", e);
+      }
+    }
   }
 }
 

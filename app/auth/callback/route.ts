@@ -37,12 +37,13 @@ export async function GET(request: Request) {
     if (user) {
       const { data: profile } = await supabase
         .from("profiles")
-        .select("role, teacher_onboarding_complete")
+        .select("role, teacher_onboarding_complete, companion_chosen")
         .eq("id", user.id)
         .maybeSingle();
 
       const profileRole = (profile as { role?: string | null } | null)?.role ?? null;
       const complete = Boolean((profile as { teacher_onboarding_complete?: boolean } | null)?.teacher_onboarding_complete);
+      const companionChosen = Boolean((profile as { companion_chosen?: boolean | null } | null)?.companion_chosen);
 
       if (role === "teacher" || profileRole === "teacher") {
         if (profileRole !== "teacher") {
@@ -58,6 +59,20 @@ export async function GET(request: Request) {
           return NextResponse.redirect(new URL("/onboarding", requestUrl.origin));
         }
         return NextResponse.redirect(new URL("/dashboard", requestUrl.origin));
+      }
+
+      // Ensure student profile exists so defaults apply (including companion_chosen = false).
+      if (!profile) {
+        await supabase.from("profiles").upsert({
+          id: user.id,
+          role: "student",
+          email: user.email,
+          name: (user.user_metadata?.full_name as string) || null,
+        });
+      }
+
+      if (!companionChosen) {
+        return NextResponse.redirect(new URL("/student/choose-companion", requestUrl.origin));
       }
 
       return NextResponse.redirect(new URL(next, requestUrl.origin));
