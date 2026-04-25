@@ -1,6 +1,8 @@
 export interface Discipline {
   id: string;
   label: string;
+  labelEn?: string;
+  labelEs?: string;
   emoji: string;
   enabled: boolean;
   phase: 1 | 2 | 3;
@@ -10,9 +12,42 @@ export interface Discipline {
 }
 
 export const DISCIPLINES: Discipline[] = [
-  { id: "musique", label: "Musique", emoji: "🎵", enabled: true, phase: 1, requiresIdentity: false, category: "arts", avgHourlyRate: 45 },
-  { id: "langues", label: "Langues", emoji: "🌍", enabled: true, phase: 1, requiresIdentity: false, category: "academic", avgHourlyRate: 40 },
-  { id: "tuteurs", label: "Tuteurs académiques", emoji: "📚", enabled: true, phase: 1, requiresIdentity: false, category: "academic", avgHourlyRate: 55 },
+  {
+    id: "musique",
+    label: "Musique",
+    labelEn: "Music",
+    labelEs: "Música",
+    emoji: "🎵",
+    enabled: true,
+    phase: 1,
+    requiresIdentity: false,
+    category: "arts",
+    avgHourlyRate: 45,
+  },
+  {
+    id: "langues",
+    label: "Langues",
+    labelEn: "Languages",
+    labelEs: "Idiomas",
+    emoji: "🌍",
+    enabled: true,
+    phase: 1,
+    requiresIdentity: false,
+    category: "academic",
+    avgHourlyRate: 40,
+  },
+  {
+    id: "tuteurs",
+    label: "Tuteurs académiques",
+    labelEn: "Academic Tutors",
+    labelEs: "Tutores académicos",
+    emoji: "📚",
+    enabled: true,
+    phase: 1,
+    requiresIdentity: false,
+    category: "academic",
+    avgHourlyRate: 55,
+  },
 
   { id: "danse", label: "Danse", emoji: "💃", enabled: false, phase: 2, requiresIdentity: false, category: "arts", avgHourlyRate: 35 },
   { id: "yoga", label: "Yoga / Fitness", emoji: "🧘", enabled: false, phase: 2, requiresIdentity: false, category: "wellness", avgHourlyRate: 40 },

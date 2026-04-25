@@ -8,7 +8,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { MapPin, Search, Star, Users, Video } from "lucide-react";
 import { useLocale } from "../../../../lib/locale-context";
 import { cn } from "../../../../lib/utils";
-import { getEnabledDisciplines } from "../../../../lib/disciplines";
+import { getEnabledDisciplines, type Discipline } from "../../../../lib/disciplines";
 import { getSupabaseClient } from "../../../../lib/supabase";
 import { haversineDistance } from "../../../../lib/geo";
 import {
@@ -24,7 +24,7 @@ import { VerificationBadge } from "../../../../components/VerificationBadge";
 
 export default function StudentSearchPage() {
   const router = useRouter();
-  const { t, formatPrice } = useLocale();
+  const { t, formatPrice, locale } = useLocale();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCat, setActiveCat] = useState<string>("All");
   const [teachers, setTeachers] = useState<Teacher[]>([]);
@@ -114,6 +114,12 @@ export default function StudentSearchPage() {
 
   const enabledDisciplines = useMemo(() => getEnabledDisciplines(), []);
 
+  const disciplineLabel = (d: Discipline) => {
+    if (locale === "en-CA") return d.labelEn ?? d.label;
+    if (locale === "es") return d.labelEs ?? d.label;
+    return d.label;
+  };
+
   const results = useMemo(() => {
     const base = teachers
       .filter((tt) => {
@@ -144,9 +150,10 @@ export default function StudentSearchPage() {
 
   return (
     <>
-      <div className="min-h-[100dvh] w-full bg-[#FAFCFB]">
-        <section className="bg-[#0F6E56] text-white">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6 pt-10 sm:pt-12 pb-6">
+      <div style={{ minHeight: "100vh", background: "#F1EFE8" }}>
+        {/* Hero - full width */}
+        <div style={{ background: "#0F6E56", width: "100%", padding: "32px 24px" }}>
+          <div style={{ maxWidth: 800, margin: "0 auto" }}>
             <h1 className="text-center text-3xl font-bold tracking-tight sm:text-4xl">{t("heroStudentTitle")}</h1>
             <p className="mt-3 text-center text-sm text-white/85 sm:text-base">{t("heroStudentSubtitle")}</p>
 
@@ -181,11 +188,14 @@ export default function StudentSearchPage() {
               <Chip active={activeCat === "All"} onClick={() => setActiveCat("All")}>
                 {t("radiusAll")}
               </Chip>
-              {enabledDisciplines.map((d) => (
-                <Chip key={d.label} active={activeCat === d.label} onClick={() => setActiveCat(d.label)}>
-                  {d.label}
-                </Chip>
-              ))}
+              {enabledDisciplines.map((d) => {
+                const label = disciplineLabel(d);
+                return (
+                  <Chip key={d.id} active={activeCat === label} onClick={() => setActiveCat(label)}>
+                    {label}
+                  </Chip>
+                );
+              })}
             </div>
 
             <div className="mx-auto mt-5 flex max-w-4xl flex-wrap justify-center gap-2">
@@ -209,10 +219,10 @@ export default function StudentSearchPage() {
               </RadiusPill>
             </div>
           </div>
-        </section>
+        </div>
 
-        <section className="bg-[#FAFCFB]">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6 py-6">
+        {/* Results - full width with padding */}
+        <div style={{ padding: "20px 24px", maxWidth: 900, margin: "0 auto", paddingBottom: 80 }}>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm font-semibold text-[#2C2C2A]">
                 {results.length} {t("searchResults")}
@@ -251,8 +261,7 @@ export default function StudentSearchPage() {
                     />
                   ))}
             </div>
-          </div>
-        </section>
+        </div>
       </div>
 
       {selectedTeacherProfile && (
