@@ -6,6 +6,8 @@ import { useAuth } from "../../../../components/AuthProvider";
 import { getSupabaseClient } from "../../../../lib/supabase";
 import { useLocale } from "../../../../lib/locale-context";
 import type { TranslationKey } from "../../../../lib/translations";
+import type { CompanionType } from "../../../../lib/companions";
+import { COMPANIONS, getCompanionStage, getLessonsToNextStage, getProgressPercent } from "../../../../lib/companions";
 
 type BookingRow = {
   id: string;
@@ -20,6 +22,9 @@ type StudentAgg = {
   name: string;
   discipline: string;
   levelLabel: string;
+  companionType: CompanionType | null;
+  companionChosen: boolean;
+  lessonCount: number;
 };
 
 function badgeFromLevel(lvl: string | null | undefined, t: (key: TranslationKey) => string): string {
@@ -61,12 +66,29 @@ export default function TeacherProgressPage() {
         .in("status", ["confirmed", "booked", "pending_payment"]);
 
       const list = (rows || []) as BookingRow[];
+      const lessonCounts = new Map<string, number>();
+      for (const r of list) {
+        if (!r.student_id) continue;
+        if (r.status === "confirmed" || r.status === "booked") {
+          lessonCounts.set(r.student_id, (lessonCounts.get(r.student_id) ?? 0) + 1);
+        }
+      }
       const map = new Map<string, { name: string; level: string | null }>();
+      const companionByStudent = new Map<string, { type: CompanionType | null; chosen: boolean }>();
       for (const row of list) {
         const sid = row.student_id;
         if (!sid || map.has(sid)) continue;
-        const { data: prow } = await supabase.from("profiles").select("name").eq("id", sid).maybeSingle();
+        const { data: prow } = await supabase
+          .from("profiles")
+          .select("name, companion_type, companion_chosen")
+          .eq("id", sid)
+          .maybeSingle();
         map.set(sid, { name: (prow?.name as string) || t("studentDefaultName"), level: row.student_level ?? null });
+        const ct = (prow as any)?.companion_type as string | null | undefined;
+        const chosen = Boolean((prow as any)?.companion_chosen);
+        const type =
+          ct === "phoenix" || ct === "forest" || ct === "dragon" || ct === "star" ? (ct as CompanionType) : null;
+        companionByStudent.set(sid, { type, chosen });
       }
 
       const agg: StudentAgg[] = Array.from(map.entries()).map(([studentId, v]) => ({
@@ -74,6 +96,9 @@ export default function TeacherProgressPage() {
         name: v.name,
         discipline: disc,
         levelLabel: v.level || "—",
+        companionType: companionByStudent.get(studentId)?.type ?? null,
+        companionChosen: companionByStudent.get(studentId)?.chosen ?? false,
+        lessonCount: lessonCounts.get(studentId) ?? 0,
       }));
 
       const notes: Record<string, string> = {};
@@ -156,8 +181,36 @@ export default function TeacherProgressPage() {
                     {s.name.slice(0, 2).toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-bold text-[#2C2C2A] truncate">{s.name}</p>
-                    <p className="text-xs text-slate-600 truncate">{s.discipline}</p>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <p className="font-bold text-[#2C2C2A] truncate">{s.name}</p>
+                      {s.companionChosen && s.companionType ? (
+                        <span
+                          title={`${(() => {
+                            const st = getCompanionStage(s.companionType, s.lessonCount);
+                            const next = getLessonsToNextStage(s.companionType, s.lessonCount);
+                            return `${st.name} · ${next} cours pour évoluer`;
+                          })()}`}
+                          className="shrink-0"
+                        >
+                          {getCompanionStage(s.companionType, s.lessonCount).emoji}
+                        </span>
+                      ) : null}
+                    </div>
+                    {s.companionChosen && s.companionType ? (
+                      <div className="mt-1 space-y-1">
+                        <p className="text-[11px] text-slate-500">
+                          {getCompanionStage(s.companionType, s.lessonCount).name} · {s.lessonCount} cours
+                        </p>
+                        <div className="h-1 rounded-full bg-slate-100 overflow-hidden">
+                          <div
+                            className="h-full rounded-full bg-[#1D9E75]"
+                            style={{ width: `${getProgressPercent(s.companionType, s.lessonCount)}%` }}
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-xs text-slate-600 truncate">{s.discipline}</p>
+                    )}
                     <div className="flex flex-wrap items-center gap-2 mt-1">
                       <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-[#e1f5ee] text-[#085041]">
                         {badgeFromLevel(s.levelLabel, t)}
