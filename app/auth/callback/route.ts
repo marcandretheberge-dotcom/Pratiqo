@@ -6,7 +6,6 @@ export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
   const role = requestUrl.searchParams.get("role");
-  const next = requestUrl.searchParams.get("next") ?? "/dashboard";
 
   if (code) {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -35,35 +34,46 @@ export async function GET(request: Request) {
     } = await supabase.auth.getUser();
 
     if (user) {
-      const { data: profile } = await supabase
+      // First upsert (no select) so profile exists immediately after OAuth.
+      const { error: upsertErr } = await supabase
+        .from("profiles")
+        .upsert(
+          {
+            id: user.id,
+            email: user.email,
+            name: (user.user_metadata?.full_name as string) || null,
+            updated_at: new Date().toISOString(),
+            // Ensure new users default to student flow.
+            role: role === "teacher" ? "teacher" : "student",
+            companion_chosen: false,
+          },
+          { onConflict: "id" },
+        );
+
+      if (upsertErr) {
+        console.error("[auth/callback] profile upsert failed", upsertErr);
+      }
+
+      // Then select separately (avoids Supabase typechain edge cases).
+      const { data: profile, error: readErr } = await supabase
         .from("profiles")
         .select("role, teacher_onboarding_complete, companion_chosen")
         .eq("id", user.id)
-        .maybeSingle();
+        .single();
 
-      // Ensure new users get role='student' by default.
-      if (!profile) {
-        await supabase.from("profiles").upsert({
-          id: user.id,
-          role: "student",
-          email: user.email,
-          name: (user.user_metadata?.full_name as string) || null,
-          companion_chosen: false,
-        });
+      if (readErr || !profile) {
+        console.error("[auth/callback] profile read failed", readErr);
+        return NextResponse.redirect(new URL("/dashboard", requestUrl.origin));
       }
 
-      const resolvedRole =
-        role === "teacher" || (profile as { role?: string | null } | null)?.role === "teacher" ? "teacher" : "student";
-
-      if (resolvedRole === "teacher") {
-        if (!(profile as { teacher_onboarding_complete?: boolean | null } | null)?.teacher_onboarding_complete) {
+      if (profile?.role === "teacher") {
+        if (!profile?.teacher_onboarding_complete) {
           return NextResponse.redirect(new URL("/onboarding", requestUrl.origin));
         }
         return NextResponse.redirect(new URL("/dashboard", requestUrl.origin));
       }
 
-      // Default = student flow
-      if (!(profile as { companion_chosen?: boolean | null } | null)?.companion_chosen) {
+      if (!profile?.companion_chosen) {
         return NextResponse.redirect(new URL("/student/choose-companion", requestUrl.origin));
       }
       return NextResponse.redirect(new URL("/dashboard", requestUrl.origin));
