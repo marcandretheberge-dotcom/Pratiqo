@@ -12,6 +12,15 @@ import { getEnabledDisciplines } from "../../lib/disciplines";
 type Step = 1 | 2 | 3 | "done";
 type Mode = "person" | "online" | "both";
 
+const MAX_DISCIPLINES = 3;
+
+type SelectedDiscipline = {
+  id: string;
+  label: string;
+  emoji: string;
+  specialite: string;
+};
+
 const LEVELS = ["Débutants", "Enfants", "Intermédiaires", "Avancés", "Tous"] as const;
 
 const DAYS = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"] as const;
@@ -40,9 +49,7 @@ function OnboardingInner() {
   const [bio, setBio] = useState("");
   const [teachingSince, setTeachingSince] = useState<number | null>(null);
 
-  // Disciplines (étape 1 + payload étape 2)
-  const [categories, setCategories] = useState<string[]>([]);
-  const [discipline, setDiscipline] = useState("");
+  const [selectedDisciplines, setSelectedDisciplines] = useState<SelectedDiscipline[]>([]);
   const [teachingMode, setTeachingMode] = useState<Mode>("both");
   const [hourlyRate, setHourlyRate] = useState<number>(50);
   const [levels, setLevels] = useState<string[]>([]);
@@ -54,7 +61,10 @@ function OnboardingInner() {
   const [homeRadius, setHomeRadius] = useState(25);
   const [homePrice, setHomePrice] = useState<number | null>(null);
 
-  const disciplineForAi = categories.length > 0 ? categories.join(", ") : discipline.trim();
+  const disciplineForAi =
+    selectedDisciplines.length > 0
+      ? selectedDisciplines.map((s) => `${s.label}: ${s.specialite.trim() || "…"}`).join(" · ")
+      : "";
   const canGenerateAiBio = Boolean(disciplineForAi);
 
   async function generateDescription() {
@@ -79,7 +89,7 @@ function OnboardingInner() {
         },
         body: JSON.stringify({
           discipline: disciplineForAi,
-          specialite: discipline.trim() || undefined,
+          specialite: selectedDisciplines[0]?.specialite.trim() || undefined,
         }),
       });
       const data = (await res.json().catch(() => ({}))) as { description?: string; error?: string };
@@ -248,8 +258,12 @@ function OnboardingInner() {
         photo_url: photoUrl || null,
         bio,
         teaching_since: teachingSince,
-        categories,
-        discipline,
+        categories: selectedDisciplines.map((s) => s.label),
+        discipline: selectedDisciplines[0]?.specialite.trim() || "",
+        disciplines: selectedDisciplines.map((s) => ({
+          discipline_id: s.id,
+          specialite: s.specialite.trim(),
+        })),
         teaching_mode: teachingMode,
         hourly_rate: hourlyRate,
         levels,
@@ -363,24 +377,33 @@ function OnboardingInner() {
                 />
               </Field>
 
-              <Field label="Disciplines">
+              <Field label="Disciplines (max 3)">
+                <p className="text-xs font-semibold text-[#0f6d52] mb-2">
+                  {selectedDisciplines.length}/{MAX_DISCIPLINES} disciplines sélectionnées
+                </p>
                 <div className="flex flex-wrap gap-2">
                   {getEnabledDisciplines().map((d) => {
-                    const active = categories.includes(d.label);
+                    const active = selectedDisciplines.some((x) => x.id === d.id);
+                    const atMax = selectedDisciplines.length >= MAX_DISCIPLINES;
                     return (
                       <button
                         key={d.id}
                         type="button"
+                        disabled={!active && atMax}
                         onClick={() =>
-                          setCategories((prev) =>
-                            active ? prev.filter((x) => x !== d.label) : [...prev, d.label],
-                          )
+                          setSelectedDisciplines((prev) => {
+                            const exists = prev.find((x) => x.id === d.id);
+                            if (exists) return prev.filter((x) => x.id !== d.id);
+                            if (prev.length >= MAX_DISCIPLINES) return prev;
+                            return [...prev, { id: d.id, label: d.label, emoji: d.emoji, specialite: "" }];
+                          })
                         }
                         className={cn(
                           "inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-semibold transition-colors",
                           active
                             ? "border-[#1D9E75] bg-[rgba(29,158,117,0.12)] text-[#0f6d52]"
                             : "border-slate-200 bg-white text-slate-600 hover:border-slate-300",
+                          !active && atMax ? "opacity-45 cursor-not-allowed" : "",
                         )}
                       >
                         <span aria-hidden>{d.emoji}</span>
@@ -389,12 +412,41 @@ function OnboardingInner() {
                     );
                   })}
                 </div>
-                <p
-                  className="mt-2 italic"
-                  style={{ fontSize: "12px", color: "#888780" }}
-                >
-                  D&apos;autres disciplines seront bientôt disponibles.
-                </p>
+                {selectedDisciplines.length > 0 ? (
+                  <div className="mt-4 space-y-3">
+                    {selectedDisciplines.map((s) => (
+                      <div key={s.id} className="rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2.5">
+                        <p className="text-xs font-bold text-slate-700 mb-1.5">
+                          {s.emoji} {s.label}
+                        </p>
+                        <input
+                          value={s.specialite}
+                          onChange={(e) =>
+                            setSelectedDisciplines((prev) =>
+                              prev.map((x) => (x.id === s.id ? { ...x, specialite: e.target.value } : x)),
+                            )
+                          }
+                          className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm bg-white"
+                          placeholder={s.label === "Langues" ? "Anglais, Espagnol…" : "Piano classique…"}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+                <p className="mt-2 text-xs italic text-[#888780]">Tu peux modifier tes disciplines dans Paramètres.</p>
+                <p className="mt-1 italic text-[12px] text-[#888780]">D&apos;autres disciplines seront bientôt disponibles.</p>
+              </Field>
+
+              <Field label="Tarif horaire ($)">
+                <input
+                  type="number"
+                  min={10}
+                  max={500}
+                  step={1}
+                  value={hourlyRate}
+                  onChange={(e) => setHourlyRate(Number(e.target.value))}
+                  className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm"
+                />
               </Field>
 
               <Field label="Photo de profil (optionnel)">
@@ -527,15 +579,6 @@ function OnboardingInner() {
 
           {step === 2 ? (
             <div className="mt-8 space-y-6">
-              <Field label="Sous-discipline (ex: Piano classique)">
-                <input
-                  value={discipline}
-                  onChange={(e) => setDiscipline(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm"
-                  placeholder="Ex: Piano classique"
-                />
-              </Field>
-
               <Field label="Modes d’enseignement">
                 <div className="flex flex-wrap gap-2">
                   {[
@@ -558,18 +601,6 @@ function OnboardingInner() {
                     </button>
                   ))}
                 </div>
-              </Field>
-
-              <Field label="Tarif horaire ($)">
-                <input
-                  type="number"
-                  min={10}
-                  max={500}
-                  step={1}
-                  value={hourlyRate}
-                  onChange={(e) => setHourlyRate(Number(e.target.value))}
-                  className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm"
-                />
               </Field>
 
               <Field label="Niveaux enseignés (multi-sélection)">
@@ -760,9 +791,16 @@ function OnboardingInner() {
                 <button
                   type="button"
                   onClick={() => {
-                    if (step === 1 && categories.length === 0) {
+                    if (step === 1 && selectedDisciplines.length === 0) {
                       alert("Choisis au moins une discipline (disponible dès la Phase 1).");
                       return;
+                    }
+                    if (step === 1) {
+                      const missingSpec = selectedDisciplines.some((s) => !s.specialite.trim());
+                      if (missingSpec) {
+                        alert("Indique une spécialité pour chaque discipline sélectionnée.");
+                        return;
+                      }
                     }
                     setStep((prev) => (prev === 1 ? 2 : 3));
                   }}

@@ -3,6 +3,10 @@
 import React, { useEffect, useState } from "react";
 import type { Teacher } from "../../../../../types";
 import { getSupabaseClient } from "../../../../../lib/supabase";
+import {
+  fetchTeacherDisciplinesMap,
+  mergeTeachersWithDisciplines,
+} from "../../../../../lib/teacherDisciplines";
 import { teacherRowToTeacher, type TeacherRow } from "../../../../../lib/teacherMapper";
 import { TeacherProfile } from "../../../../../components/TeacherProfile";
 import { BookingModal, type BookingInitialLessonKind } from "../../../../../components/BookingModal";
@@ -66,7 +70,9 @@ export default function TeacherProfilePage({ params }: { params: { id: string } 
         setTeacher(null);
         return;
       }
-      setTeacher(teacherRowToTeacher(data as TeacherRow));
+      const base = teacherRowToTeacher(data as TeacherRow);
+      const discMap = await fetchTeacherDisciplinesMap(supabase, [params.id]);
+      setTeacher(mergeTeachersWithDisciplines([base], discMap)[0] ?? base);
     };
 
     void load();

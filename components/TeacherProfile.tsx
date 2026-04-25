@@ -26,6 +26,7 @@ import { haversineDistance } from "../lib/geo";
 import { PlanBadge } from "./PlanBadge";
 import { TeacherMap } from "./TeacherMap";
 import { VerificationBadge } from "./VerificationBadge";
+import { getAllDisciplines, getDisciplineById } from "../lib/disciplines";
 import { getVerificationLevel, nextLevelRequirements, nextVerificationLevel, VERIFICATION_LEVELS } from "../lib/verification";
 
 export type TeacherBookKind = "standard" | "home";
@@ -202,6 +203,18 @@ export function TeacherProfile({
         ? "En ligne"
         : "En studio";
 
+  const disciplineChips = useMemo(() => {
+    const primaryEmoji = getAllDisciplines().find((d) => d.label === teacher.category)?.emoji ?? "✨";
+    const out: string[] = [`${primaryEmoji} ${teacher.discipline}`.trim()];
+    for (const ad of teacher.additionalDisciplines ?? []) {
+      const d = getDisciplineById(ad.disciplineId);
+      const em = d?.emoji ?? "✨";
+      const spec = ad.specialite?.trim() || d?.label || "";
+      if (spec) out.push(`${em} ${spec}`);
+    }
+    return out;
+  }, [teacher.category, teacher.discipline, teacher.additionalDisciplines]);
+
   return (
     <div className="fixed inset-0 z-[210] flex items-center justify-center p-4">
       <motion.div
@@ -259,6 +272,18 @@ export function TeacherProfile({
                 </div>
               </div>
               <h2 className="text-3xl font-bold text-slate-900 leading-tight">{teacher.name}</h2>
+              {disciplineChips.length > 0 ? (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {disciplineChips.map((text, i) => (
+                    <span
+                      key={`${text}-${i}`}
+                      className="inline-flex items-center rounded-full border border-[rgba(29,158,117,0.35)] bg-[rgba(29,158,117,0.1)] px-3 py-1 text-xs font-semibold text-[#0f6d52]"
+                    >
+                      {text}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
               <div className="max-w-md">
                 <VerificationBadge level={verificationLevel} size="lg" showLabel />
               </div>

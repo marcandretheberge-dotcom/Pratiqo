@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
-import { disciplineLabelToTeacherCategory } from "@/lib/disciplines";
+import { disciplineLabelToTeacherCategory, getAllDisciplines, getDisciplineById } from "@/lib/disciplines";
 import { sendWelcomeTeacher, sendWelcomeStudent } from "@/lib/email";
 
 export const runtime = "nodejs";
@@ -16,6 +16,8 @@ type Body = {
   // step 2
   categories?: string[];
   discipline?: string;
+  /** Multi-discipline (max 3); first = primary for `teachers.discipline` / `category`. */
+  disciplines?: { discipline_id: string; specialite: string }[];
   teaching_mode?: "person" | "online" | "both";
   hourly_rate?: number;
   levels?: string[];
@@ -94,9 +96,6 @@ export async function POST(req: Request) {
     }
 
     if (role === "teacher") {
-      const rawCat = (body.categories?.[0] || "Musique").trim();
-      const category = disciplineLabelToTeacherCategory(rawCat);
-      const discipline = (body.discipline || "—").trim();
       const teachingMode = body.teaching_mode || "both";
       const hourlyRate = clamp(Number(body.hourly_rate || 50), 10, 500);
       const teacherBio = (body.bio || "").slice(0, 300);
@@ -114,6 +113,31 @@ export async function POST(req: Request) {
         .maybeSingle();
 
       const teacherId = (existingTeacher as { id?: string } | null)?.id ?? user.id;
+
+      const rawDisciplines = Array.isArray(body.disciplines) ? body.disciplines : [];
+      const normalizedDisciplines = rawDisciplines
+        .filter((x) => x && typeof x.discipline_id === "string" && x.discipline_id.trim())
+        .slice(0, 3)
+        .map((x) => ({
+          discipline_id: String(x.discipline_id).trim(),
+          specialite: String(x.specialite ?? "")
+            .trim()
+            .slice(0, 200),
+        }));
+
+      let category: string;
+      let discipline: string;
+      if (normalizedDisciplines.length > 0) {
+        const first = normalizedDisciplines[0];
+        const meta = getDisciplineById(first.discipline_id);
+        const labelForCat = meta?.label ?? (body.categories?.[0] || "Musique").trim();
+        category = disciplineLabelToTeacherCategory(labelForCat);
+        discipline = first.specialite || "—";
+      } else {
+        const rawCat = (body.categories?.[0] || "Musique").trim();
+        category = disciplineLabelToTeacherCategory(rawCat);
+        discipline = (body.discipline || "—").trim();
+      }
 
       const { error: tErr } = await admin
         .from("teachers")
@@ -144,6 +168,29 @@ export async function POST(req: Request) {
         );
 
       if (tErr) return NextResponse.json({ error: tErr.message }, { status: 500 });
+
+      await admin.from("teacher_disciplines").delete().eq("teacher_id", teacherId);
+
+      if (normalizedDisciplines.length > 0) {
+        const rows = normalizedDisciplines.map((d, sort_order) => ({
+          teacher_id: teacherId,
+          discipline_id: d.discipline_id,
+          specialite: d.specialite || null,
+          sort_order,
+        }));
+        const { error: dErr } = await admin.from("teacher_disciplines").insert(rows);
+        if (dErr) return NextResponse.json({ error: dErr.message }, { status: 500 });
+      } else {
+        const rawCat = (body.categories?.[0] || "Musique").trim();
+        const fallbackId = getAllDisciplines().find((d) => d.label === rawCat)?.id ?? "musique";
+        const { error: dErr } = await admin.from("teacher_disciplines").insert({
+          teacher_id: teacherId,
+          discipline_id: fallbackId,
+          specialite: discipline || null,
+          sort_order: 0,
+        });
+        if (dErr) return NextResponse.json({ error: dErr.message }, { status: 500 });
+      }
 
       if (user.email) {
         console.log("[email] Attempting to send welcome email to:", user.email);

@@ -1,5 +1,12 @@
 import type { Teacher } from "../types";
 
+/** One row from `teacher_disciplines` (same teacher_id may appear in ordered list). */
+export type TeacherDisciplineRow = {
+  teacher_id: string;
+  discipline_id: string;
+  specialite: string | null;
+};
+
 export type TeacherRow = {
   id: string;
   user_id: string | null;
@@ -71,7 +78,20 @@ export function teacherRowToTeacher(row: TeacherRow): Teacher {
     identityVerified: Boolean(row.identity_verified),
     diplomaVerified: Boolean(row.diploma_verified),
     phoneVerified: Boolean(row.phone_verified),
+    additionalDisciplines: undefined,
   };
+}
+
+/** Rows must be ordered by `created_at` asc (primary = first row). Adds `additionalDisciplines` from remaining rows. */
+export function applyAdditionalDisciplines(teacher: Teacher, rowsOrdered: TeacherDisciplineRow[]): Teacher {
+  if (rowsOrdered.length <= 1) {
+    return { ...teacher, additionalDisciplines: undefined };
+  }
+  const additional = rowsOrdered.slice(1).map((r) => ({
+    disciplineId: r.discipline_id,
+    specialite: String(r.specialite ?? "").trim(),
+  }));
+  return { ...teacher, additionalDisciplines: additional };
 }
 
 export function teacherToRow(t: Teacher): Record<string, unknown> {

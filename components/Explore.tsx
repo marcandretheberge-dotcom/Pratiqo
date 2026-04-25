@@ -22,6 +22,12 @@ import { displayTeacherMarketplaceCategory, getEnabledDisciplines } from "../lib
 import { isEnabled } from "../lib/features";
 import { cn } from "../lib/utils";
 import { getSupabaseClient } from "../lib/supabase";
+import {
+  fetchTeacherDisciplinesMap,
+  mergeTeachersWithDisciplines,
+  teacherMatchesExploreCategory,
+  teacherMatchesExploreSearch,
+} from "../lib/teacherDisciplines";
 import { teacherRowToTeacher, type TeacherRow } from "../lib/teacherMapper";
 import { haversineDistance } from "../lib/geo";
 import { spotsRemaining, type GroupSessionRow } from "../lib/groupSessions";
@@ -155,7 +161,12 @@ export function Explore({
         return;
       }
       const mapped = data.map((r) => teacherRowToTeacher(r as TeacherRow));
-      await mergePlans(mapped);
+      const discMap = await fetchTeacherDisciplinesMap(
+        supabase,
+        mapped.map((t) => t.id),
+      );
+      const withDisc = mergeTeachersWithDisciplines(mapped, discMap);
+      await mergePlans(withDisc);
       setLoading(false);
     };
 
@@ -206,11 +217,8 @@ export function Explore({
     const sortOpts = (geo: boolean) => ({ geo, sortMode } as const);
     const base = teachers
       .filter((t) => {
-        const displayCat = displayTeacherMarketplaceCategory(t.category);
-        const matchesCategory = selectedCategory === "All" || displayCat === selectedCategory;
-        const matchesSearch =
-          t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          t.discipline.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesCategory = teacherMatchesExploreCategory(t, selectedCategory);
+        const matchesSearch = teacherMatchesExploreSearch(t, searchQuery);
         const matchesMode =
           teachingMode === "all" || t.teachingMode === teachingMode || t.teachingMode === "both";
         const matchesVerified = !onlyVerified || t.isVerified;
@@ -766,8 +774,15 @@ function TeacherCard({
               className="shrink-0"
             />
           </div>
-          <p className="text-[13px] text-[var(--p-text-muted)] -mt-1">
-            {teacher.discipline.split(",")[0]} · Montréal
+          <p className="text-[13px] text-[var(--p-text-muted)] -mt-1 flex flex-wrap items-center gap-2">
+            <span>{teacher.discipline} · Montréal</span>
+            {(teacher.additionalDisciplines?.length ?? 0) > 0 ? (
+              <span className="inline-flex items-center rounded-full border border-[rgba(29,158,117,0.35)] bg-[rgba(29,158,117,0.1)] px-2 py-0.5 text-[11px] font-bold text-[#0f6d52]">
+                {teacher.additionalDisciplines!.length === 1
+                  ? "+ 1 autre"
+                  : `+ ${teacher.additionalDisciplines!.length} autres`}
+              </span>
+            ) : null}
           </p>
         </div>
 

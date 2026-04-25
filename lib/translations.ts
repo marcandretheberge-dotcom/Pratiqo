@@ -155,6 +155,15 @@ const frCA = {
   bookingDistancePolicy: "(politique distance du professeur).",
   errorGeneric: "Erreur",
   localeSwitcherLabel: "Langue",
+
+  blockModePeriod: "Toute une période (matin / après-midi / soir)",
+  blockModeTimeRange: "Plage horaire précise",
+  blockFromLabel: "De",
+  blockToLabel: "À",
+  timeInputPlaceholder: "14:30",
+  blockPreview: "Bloqué de {start} à {end}",
+  blockTimeRangeInvalid: "L’heure de fin doit être après l’heure de début.",
+  scheduleBlockedRangesTitle: "Plages bloquées",
 } as const;
 
 export type TranslationKey = keyof typeof frCA;
@@ -338,6 +347,15 @@ const enCA: Record<TranslationKey, string> = {
   bookingBilledDuration: "Billed duration",
   bookingDistancePolicy: "(teacher distance policy).",
   errorGeneric: "Error",
+  localeSwitcherLabel: "Language",
+  blockModePeriod: "Whole period (morning / afternoon / evening)",
+  blockModeTimeRange: "Specific time range",
+  blockFromLabel: "From",
+  blockToLabel: "To",
+  timeInputPlaceholder: "14:30",
+  blockPreview: "Blocked from {start} to {end}",
+  blockTimeRangeInvalid: "End time must be after start time.",
+  scheduleBlockedRangesTitle: "Blocked windows",
 };
 
 const es: Record<TranslationKey, string> = {
@@ -492,6 +510,14 @@ const es: Record<TranslationKey, string> = {
   bookingDistancePolicy: "(política de distancia del profesor).",
   errorGeneric: "Error",
   localeSwitcherLabel: "Idioma",
+  blockModePeriod: "Todo el periodo (mañana / tarde / noche)",
+  blockModeTimeRange: "Franja horaria exacta",
+  blockFromLabel: "De",
+  blockToLabel: "A",
+  timeInputPlaceholder: "14:30",
+  blockPreview: "Bloqueado de {start} a {end}",
+  blockTimeRangeInvalid: "La hora de fin debe ser posterior a la de inicio.",
+  scheduleBlockedRangesTitle: "Franjas bloqueadas",
 };
 
 export const translations: Record<Locale, Record<TranslationKey, string>> = {

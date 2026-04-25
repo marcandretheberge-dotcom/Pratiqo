@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import {
   blockedPeriodsFromRows,
+  blockedTimeRangesFromRows,
   dayShortKeyForISODate,
   formatLocalISODate,
   generateSlots,
@@ -62,13 +63,19 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
 
     const { data: blockedRows } = await admin
       .from("blocked_slots")
-      .select("period")
+      .select("period, start_time, end_time")
       .eq("teacher_id", teacherId)
       .eq("blocked_date", date);
 
-    const blockedPeriods = blockedPeriodsFromRows((blockedRows || []) as { period: string | null }[]);
+    const blockedDayRows = (blockedRows || []) as {
+      period: string | null;
+      start_time?: string | null;
+      end_time?: string | null;
+    }[];
+    const blockedPeriods = blockedPeriodsFromRows(blockedDayRows);
+    const blockedRanges = blockedTimeRangesFromRows(blockedDayRows);
 
-    const slots = generateSlots(dayAvail, durationMinutes, date, bookedSlots, blockedPeriods);
+    const slots = generateSlots(dayAvail, durationMinutes, date, bookedSlots, blockedPeriods, blockedRanges);
 
     return NextResponse.json({ slots, durationMinutes, date });
   } catch (e) {

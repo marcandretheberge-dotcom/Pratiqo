@@ -1,5 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { formatLocalISODate, getAvailableDays, weeklyAvailabilityFromTeacherRows } from "@/lib/slots";
+import {
+  type BlockedSlotDayRow,
+  formatLocalISODate,
+  getAvailableDays,
+  weeklyAvailabilityFromTeacherRows,
+} from "@/lib/slots";
 
 type Admin = SupabaseClient;
 
@@ -42,22 +47,31 @@ export async function fetchBlockedByDate(
   teacherId: string,
   fromIso: string,
   toIso: string,
-): Promise<Record<string, string[]>> {
+): Promise<Record<string, BlockedSlotDayRow[]>> {
   const { data, error } = await admin
     .from("blocked_slots")
-    .select("blocked_date, period")
+    .select("blocked_date, period, start_time, end_time")
     .eq("teacher_id", teacherId)
     .gte("blocked_date", fromIso)
     .lte("blocked_date", toIso);
 
   if (error || !data) return {};
 
-  const map: Record<string, string[]> = {};
-  for (const row of data as { blocked_date?: string; period?: string | null }[]) {
+  const map: Record<string, BlockedSlotDayRow[]> = {};
+  for (const row of data as {
+    blocked_date?: string;
+    period?: string | null;
+    start_time?: string | null;
+    end_time?: string | null;
+  }[]) {
     const ds = row.blocked_date as string;
     if (!ds) continue;
     if (!map[ds]) map[ds] = [];
-    if (row.period) map[ds].push(String(row.period).trim().toLowerCase());
+    map[ds].push({
+      period: row.period ?? null,
+      start_time: row.start_time ?? null,
+      end_time: row.end_time ?? null,
+    });
   }
   return map;
 }
@@ -100,17 +114,26 @@ export async function computeAvailableDaysForTeacher(
   const bookedByDate = await fetchBookedSlotsByDate(admin, teacherId, fromIso, toIso);
   const blockedRows = await admin
     .from("blocked_slots")
-    .select("blocked_date, period")
+    .select("blocked_date, period, start_time, end_time")
     .eq("teacher_id", teacherId)
     .gte("blocked_date", fromIso)
     .lte("blocked_date", toIso);
-  const blockedRaw = (blockedRows.data || []) as { blocked_date?: string; period?: string | null }[];
-  const blockedByDate: Record<string, string[]> = {};
+  const blockedRaw = (blockedRows.data || []) as {
+    blocked_date?: string;
+    period?: string | null;
+    start_time?: string | null;
+    end_time?: string | null;
+  }[];
+  const blockedByDate: Record<string, BlockedSlotDayRow[]> = {};
   for (const row of blockedRaw) {
     const ds = row.blocked_date as string;
     if (!ds) continue;
     if (!blockedByDate[ds]) blockedByDate[ds] = [];
-    if (row.period) blockedByDate[ds].push(String(row.period).trim().toLowerCase());
+    blockedByDate[ds].push({
+      period: row.period ?? null,
+      start_time: row.start_time ?? null,
+      end_time: row.end_time ?? null,
+    });
   }
 
   const days = getAvailableDays(weekly, durationMinutes, bookedByDate, blockedByDate, weeks);

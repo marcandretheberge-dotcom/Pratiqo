@@ -8,14 +8,16 @@ import { getSupabaseClient } from "../../../../lib/supabase";
 import { cn } from "../../../../lib/utils";
 import {
   blockedPeriodsFromRows,
+  blockedTimeRangesFromRows,
   dayShortKeyForISODate,
   formatLocalISODate,
   generateSlots,
+  parseHHMMToMinutes,
   weeklyAvailabilityFromTeacherRows,
 } from "../../../../lib/slots";
 import { defaultLessonDurationMinutes } from "../../../../lib/teacherSlotQueries";
 import { useLocale } from "../../../../lib/locale-context";
-import { localeToBcp47 } from "../../../../lib/i18n";
+import { localeToBcp47, type Locale } from "../../../../lib/i18n";
 import type { TranslationKey } from "../../../../lib/translations";
 
 const DAYS = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"] as const;
@@ -35,6 +37,24 @@ const SLOT_TKEY: Record<(typeof SLOTS)[number], TranslationKey> = {
   Matin: "morning",
   "Après-midi": "afternoon",
   Soir: "evening",
+};
+
+function formatTimePreviewLabel(hhmm: string, locale: Locale): string {
+  const parts = hhmm.trim().split(":");
+  if (parts.length < 2) return hhmm;
+  const [hs, ms] = parts;
+  if (!hs || ms === undefined) return hhmm;
+  if (locale === "en-CA") return `${hs.padStart(2, "0")}:${ms.padStart(2, "0")}`;
+  return `${Number(hs)}h${ms.padStart(2, "0")}`;
+}
+
+type BlockedRow = {
+  id: string;
+  blocked_date: string;
+  period: string | null;
+  start_time?: string | null;
+  end_time?: string | null;
+  reason?: string | null;
 };
 
 function startOfWeekMonday(from: Date): Date {
@@ -83,11 +103,14 @@ function TeacherScheduleInner() {
     return 0;
   });
   const [bookings, setBookings] = useState<BookingRow[]>([]);
-  const [blockedRows, setBlockedRows] = useState<{ id: string; blocked_date: string; period: string | null }[]>([]);
+  const [blockedRows, setBlockedRows] = useState<BlockedRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [blockDate, setBlockDate] = useState("");
+  const [blockMode, setBlockMode] = useState<"period" | "range">("period");
   const [blockPeriod, setBlockPeriod] = useState<"matin" | "apresmidi" | "soir" | "all">("matin");
+  const [blockStartTime, setBlockStartTime] = useState("14:30");
+  const [blockEndTime, setBlockEndTime] = useState("15:30");
   const [blockReason, setBlockReason] = useState("");
   const [flash, setFlash] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
 
@@ -136,7 +159,7 @@ function TeacherScheduleInner() {
       withNames.push({ ...r, studentName: (p?.name as string) || t("studentDefaultName") });
     }
     setBookings(withNames);
-    setBlockedRows((bl || []) as { id: string; blocked_date: string; period: string | null }[]);
+    setBlockedRows((bl || []) as BlockedRow[]);
     setLoading(false);
   }, [user?.id, weekAnchor, t]);
 
@@ -165,16 +188,37 @@ function TeacherScheduleInner() {
     return Array.from(set);
   }, [bookings, selectedDateIso]);
 
-  const blockedForSelectedDay = useMemo(() => {
-    const rows = blockedRows.filter((r) => r.blocked_date === selectedDateIso);
-    return blockedPeriodsFromRows(rows.map((r) => ({ period: r.period })));
-  }, [blockedRows, selectedDateIso]);
+  const blockedRowsForSelectedDay = useMemo(
+    () => blockedRows.filter((r) => r.blocked_date === selectedDateIso),
+    [blockedRows, selectedDateIso],
+  );
+
+  const blockedPeriodsOnly = useMemo(
+    () => blockedPeriodsFromRows(blockedRowsForSelectedDay),
+    [blockedRowsForSelectedDay],
+  );
+
+  const blockedRangesOnly = useMemo(
+    () => blockedTimeRangesFromRows(blockedRowsForSelectedDay),
+    [blockedRowsForSelectedDay],
+  );
+
+  const timeRangeBlocksForDay = useMemo(() => {
+    return blockedRowsForSelectedDay.filter((r) => {
+      const st = r.start_time?.trim();
+      const en = r.end_time?.trim();
+      if (!st || !en) return false;
+      const a = parseHHMMToMinutes(st);
+      const b = parseHHMMToMinutes(en);
+      return a != null && b != null && b > a;
+    });
+  }, [blockedRowsForSelectedDay]);
 
   const freeSlotsForDay = useMemo(() => {
     const dayKey = dayShortKeyForISODate(selectedDateIso);
     const dayAvail = weeklyAvail[dayKey] || { matin: false, apresmidi: false, soir: false };
-    return generateSlots(dayAvail, durationMin, selectedDateIso, bookedSlotsForDay, blockedForSelectedDay);
-  }, [weeklyAvail, selectedDateIso, durationMin, bookedSlotsForDay, blockedForSelectedDay]);
+    return generateSlots(dayAvail, durationMin, selectedDateIso, bookedSlotsForDay, blockedPeriodsOnly, blockedRangesOnly);
+  }, [weeklyAvail, selectedDateIso, durationMin, bookedSlotsForDay, blockedPeriodsOnly, blockedRangesOnly]);
 
   const dayBookings = useMemo(() => {
     return bookings.filter((b) => {
@@ -231,16 +275,39 @@ function TeacherScheduleInner() {
 
   const addBlocked = async () => {
     if (!teacherId || !blockDate) return;
+    if (blockMode === "range") {
+      const st = blockStartTime.trim();
+      const en = blockEndTime.trim();
+      const a = parseHHMMToMinutes(st);
+      const b = parseHHMMToMinutes(en);
+      if (a == null || b == null || b <= a) {
+        setFlash({ kind: "err", text: t("blockTimeRangeInvalid") });
+        return;
+      }
+    }
     setSaving(true);
     setFlash(null);
     try {
       const supabase = getSupabaseClient();
-      const { error } = await supabase.from("blocked_slots").insert({
-        teacher_id: teacherId,
-        blocked_date: blockDate,
-        period: blockPeriod,
-        reason: blockReason.trim() || null,
-      });
+      const payload =
+        blockMode === "period"
+          ? {
+              teacher_id: teacherId,
+              blocked_date: blockDate,
+              period: blockPeriod,
+              start_time: null as string | null,
+              end_time: null as string | null,
+              reason: blockReason.trim() || null,
+            }
+          : {
+              teacher_id: teacherId,
+              blocked_date: blockDate,
+              period: null as string | null,
+              start_time: blockStartTime.trim(),
+              end_time: blockEndTime.trim(),
+              reason: blockReason.trim() || null,
+            };
+      const { error } = await supabase.from("blocked_slots").insert(payload);
       if (error) throw error;
       setBlockReason("");
       await load();
@@ -386,9 +453,37 @@ function TeacherScheduleInner() {
                 </ul>
               )}
             </div>
+            {timeRangeBlocksForDay.length > 0 ? (
+              <div className="space-y-2 border-t border-slate-100 pt-4">
+                <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400">
+                  {t("scheduleBlockedRangesTitle")}
+                </p>
+                <ul className="space-y-2">
+                  {timeRangeBlocksForDay.map((r) => (
+                    <li
+                      key={r.id}
+                      className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3"
+                    >
+                      <p className="text-sm font-semibold text-amber-950">
+                        🚫 {formatTimePreviewLabel(r.start_time || "", locale)} – {formatTimePreviewLabel(r.end_time || "", locale)}
+                        {r.reason ? <span className="font-normal text-amber-900/90"> · {r.reason}</span> : null}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => void removeBlocked(r.id)}
+                        className="text-rose-600 p-1 shrink-0 hover:bg-amber-100 rounded-lg"
+                        aria-label={t("deleteAria")}
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
             <div className="space-y-2 border-t border-slate-100 pt-4">
               <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400">
-                {t("freeSlotsTitle")} ({durationMin} {t("freeSlotsMinSuffix")})
+                {t("timeSlots")} ({durationMin} {t("freeSlotsMinSuffix")})
               </p>
               {freeSlotsForDay.length === 0 ? (
                 <p className="text-sm text-slate-500">{t("noFreeSlotsDetail")}</p>
@@ -485,30 +580,87 @@ function TeacherScheduleInner() {
 
           <div className="rounded-2xl border border-slate-200 bg-white p-5 space-y-4">
             <p className="text-sm font-bold text-slate-800">{t("blockExceptionalTitle")}</p>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+
+            <div className="flex flex-col gap-3">
+              <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-800">
+                <input
+                  type="radio"
+                  name="blockMode"
+                  checked={blockMode === "period"}
+                  onChange={() => setBlockMode("period")}
+                  className="h-4 w-4 accent-[#1D9E75] border-slate-300"
+                />
+                {t("blockModePeriod")}
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-800">
+                <input
+                  type="radio"
+                  name="blockMode"
+                  checked={blockMode === "range"}
+                  onChange={() => setBlockMode("range")}
+                  className="h-4 w-4 accent-[#1D9E75] border-slate-300"
+                />
+                {t("blockModeTimeRange")}
+              </label>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3">
               <input
                 type="date"
                 value={blockDate}
                 onChange={(e) => setBlockDate(e.target.value)}
-                className="h-11 rounded-xl border border-slate-200 px-3 text-sm"
+                className="h-11 rounded-xl border border-slate-200 px-3 text-sm max-w-xs"
               />
-              <select
-                value={blockPeriod}
-                onChange={(e) => setBlockPeriod(e.target.value as typeof blockPeriod)}
-                className="h-11 rounded-xl border border-slate-200 px-3 text-sm"
-              >
-                <option value="matin">{t("morning")}</option>
-                <option value="apresmidi">{t("afternoon")}</option>
-                <option value="soir">{t("evening")}</option>
-                <option value="all">{t("periodAllDay")}</option>
-              </select>
+
+              {blockMode === "period" ? (
+                <select
+                  value={blockPeriod}
+                  onChange={(e) => setBlockPeriod(e.target.value as typeof blockPeriod)}
+                  className="h-11 rounded-xl border border-slate-200 px-3 text-sm max-w-xs"
+                >
+                  <option value="matin">{t("morning")}</option>
+                  <option value="apresmidi">{t("afternoon")}</option>
+                  <option value="soir">{t("evening")}</option>
+                  <option value="all">{t("periodAllDay")}</option>
+                </select>
+              ) : (
+                <div className="flex flex-wrap items-end gap-4">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs font-semibold text-slate-600">{t("blockFromLabel")}</span>
+                    <input
+                      type="time"
+                      value={blockStartTime}
+                      onChange={(e) => setBlockStartTime(e.target.value)}
+                      step={60}
+                      className="h-11 w-[8.5rem] rounded-xl border border-slate-200 px-3 text-sm"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs font-semibold text-slate-600">{t("blockToLabel")}</span>
+                    <input
+                      type="time"
+                      value={blockEndTime}
+                      onChange={(e) => setBlockEndTime(e.target.value)}
+                      step={60}
+                      className="h-11 w-[8.5rem] rounded-xl border border-slate-200 px-3 text-sm"
+                    />
+                  </div>
+                  <p className="text-sm italic text-[#1D9E75] w-full basis-full">
+                    {t("blockPreview")
+                      .replace("{start}", formatTimePreviewLabel(blockStartTime, locale))
+                      .replace("{end}", formatTimePreviewLabel(blockEndTime, locale))}
+                  </p>
+                </div>
+              )}
+
               <input
                 value={blockReason}
                 onChange={(e) => setBlockReason(e.target.value)}
                 placeholder={t("reasonPlaceholder")}
-                className="h-11 rounded-xl border border-slate-200 px-3 text-sm"
+                className="h-11 rounded-xl border border-slate-200 px-3 text-sm max-w-xl"
               />
             </div>
+
             <button
               type="button"
               disabled={saving || !blockDate}
@@ -520,25 +672,48 @@ function TeacherScheduleInner() {
 
             {blockedRows.length > 0 ? (
               <ul className="space-y-2 pt-2">
-                {blockedRows.map((r) => (
-                  <li key={r.id} className="flex items-center justify-between gap-2 text-sm border border-slate-100 rounded-xl px-3 py-2">
-                    <span>
-                      {r.blocked_date} —{" "}
-                      {r.period === "all"
-                        ? t("periodAllDay")
-                        : r.period === "matin"
-                          ? t("morning")
-                          : r.period === "apresmidi"
-                            ? t("afternoon")
-                            : r.period === "soir"
-                              ? t("evening")
-                              : r.period || "—"}
-                    </span>
-                    <button type="button" onClick={() => void removeBlocked(r.id)} className="text-rose-600 p-1" aria-label={t("deleteAria")}>
-                      <Trash2 size={16} />
-                    </button>
-                  </li>
-                ))}
+                {blockedRows.map((r) => {
+                  const st = r.start_time?.trim();
+                  const en = r.end_time?.trim();
+                  const isRange =
+                    st &&
+                    en &&
+                    parseHHMMToMinutes(st) != null &&
+                    parseHHMMToMinutes(en) != null &&
+                    (parseHHMMToMinutes(en) as number) > (parseHHMMToMinutes(st) as number);
+                  return (
+                    <li
+                      key={r.id}
+                      className={cn(
+                        "flex items-center justify-between gap-2 text-sm rounded-xl px-3 py-2 border",
+                        isRange ? "border-amber-200 bg-amber-50/80" : "border-slate-100",
+                      )}
+                    >
+                      <span>
+                        {r.blocked_date} —{" "}
+                        {isRange ? (
+                          <>
+                            🚫 {formatTimePreviewLabel(st, locale)} – {formatTimePreviewLabel(en, locale)}
+                            {r.reason ? <span className="text-slate-600"> · {r.reason}</span> : null}
+                          </>
+                        ) : r.period === "all" ? (
+                          t("periodAllDay")
+                        ) : r.period === "matin" ? (
+                          t("morning")
+                        ) : r.period === "apresmidi" ? (
+                          t("afternoon")
+                        ) : r.period === "soir" ? (
+                          t("evening")
+                        ) : (
+                          r.period || "—"
+                        )}
+                      </span>
+                      <button type="button" onClick={() => void removeBlocked(r.id)} className="text-rose-600 p-1" aria-label={t("deleteAria")}>
+                        <Trash2 size={16} />
+                      </button>
+                    </li>
+                  );
+                })}
               </ul>
             ) : null}
           </div>

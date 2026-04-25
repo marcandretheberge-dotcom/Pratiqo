@@ -8,10 +8,16 @@ import { Loader2, MapPin, Search, Star, Users, Video } from "lucide-react";
 import type { Teacher } from "../types";
 import { TEACHERS } from "../constants";
 import { cn } from "../lib/utils";
-import { getEnabledDisciplines, displayTeacherMarketplaceCategory } from "../lib/disciplines";
+import { getEnabledDisciplines } from "../lib/disciplines";
 import { isEnabled } from "../lib/features";
 import Logo from "../components/ui/Logo";
 import { getSupabaseClient } from "../lib/supabase";
+import {
+  fetchTeacherDisciplinesMap,
+  mergeTeachersWithDisciplines,
+  teacherMatchesExploreCategory,
+  teacherMatchesExploreSearch,
+} from "../lib/teacherDisciplines";
 import { teacherRowToTeacher, type TeacherRow } from "../lib/teacherMapper";
 import { getVerificationLevel } from "../lib/verification";
 import { VerificationBadge } from "../components/VerificationBadge";
@@ -60,7 +66,12 @@ export default function LandingPage() {
         setLoadingTeachers(false);
         return;
       }
-      await mergePlans(data.map((r) => teacherRowToTeacher(r as TeacherRow)));
+      const mapped = data.map((r) => teacherRowToTeacher(r as TeacherRow));
+      const discMap = await fetchTeacherDisciplinesMap(
+        supabase,
+        mapped.map((t) => t.id),
+      );
+      await mergePlans(mergeTeachersWithDisciplines(mapped, discMap));
       setLoadingTeachers(false);
     };
     void load();
@@ -69,12 +80,8 @@ export default function LandingPage() {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return teachers.filter((t) => {
-      const catOk = activeCat === "All" || displayTeacherMarketplaceCategory(t.category) === activeCat;
-      const qOk =
-        !q ||
-        t.name.toLowerCase().includes(q) ||
-        t.discipline.toLowerCase().includes(q) ||
-        "montréal".includes(q);
+      const catOk = teacherMatchesExploreCategory(t, activeCat);
+      const qOk = !q || teacherMatchesExploreSearch(t, query) || "montréal".includes(q);
       return catOk && qOk;
     });
   }, [teachers, query, activeCat]);

@@ -2,12 +2,38 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { Loader2, Save } from "lucide-react";
+import { Loader2, Plus, Save, X } from "lucide-react";
 import { useAuth } from "../../../../components/AuthProvider";
 import { getSupabaseClient } from "../../../../lib/supabase";
+import { disciplineLabelToTeacherCategory, getDisciplineById, getEnabledDisciplines } from "../../../../lib/disciplines";
 import type { TeacherRow } from "../../../../lib/teacherMapper";
 
 const RADIUS_OPTIONS = [5, 10, 25, 50] as const;
+
+type TeacherDisciplineDbRow = {
+  id: string;
+  discipline_id: string;
+  specialite: string | null;
+  sort_order: number;
+};
+
+async function syncTeacherPrimaryFromDisciplines(
+  supabase: ReturnType<typeof getSupabaseClient>,
+  teacherId: string,
+): Promise<void> {
+  const { data: rows } = await supabase
+    .from("teacher_disciplines")
+    .select("discipline_id, specialite, sort_order")
+    .eq("teacher_id", teacherId)
+    .order("sort_order", { ascending: true });
+  if (!rows?.length) return;
+  const first = rows[0] as { discipline_id: string; specialite: string | null };
+  const meta = getDisciplineById(first.discipline_id);
+  const label = meta?.label ?? "Musique";
+  const category = disciplineLabelToTeacherCategory(label);
+  const discipline = String(first.specialite || "").trim() || "—";
+  await supabase.from("teachers").update({ discipline, category }).eq("id", teacherId);
+}
 
 function snapRadiusKm(value: number): number {
   return RADIUS_OPTIONS.reduce((best, cur) =>
@@ -29,9 +55,16 @@ export default function TeacherSettingsPage() {
   const [message, setMessage] = useState<string | null>(null);
   const [neighborhood, setNeighborhood] = useState("");
   const [locationJson, setLocationJson] = useState<Record<string, unknown>>({});
+  const [discRows, setDiscRows] = useState<TeacherDisciplineDbRow[]>([]);
+  const [discLoading, setDiscLoading] = useState(true);
+  const [showAddDisc, setShowAddDisc] = useState(false);
+  const [addDiscId, setAddDiscId] = useState("");
+  const [addSpec, setAddSpec] = useState("");
+  const [discSaving, setDiscSaving] = useState(false);
 
   useEffect(() => {
     if (!user) {
+      setDiscLoading(false);
       setLoading(false);
       return;
     }
@@ -40,6 +73,7 @@ export default function TeacherSettingsPage() {
       const { data, error } = await supabase.from("teachers").select("*").eq("user_id", user.id).maybeSingle();
       if (error || !data) {
         setTeacherId(null);
+        setDiscLoading(false);
         setLoading(false);
         return;
       }
@@ -54,10 +88,81 @@ export default function TeacherSettingsPage() {
       setMinDuration(row.home_lesson_min_duration ?? 60);
       setForce2h(Boolean(row.home_lesson_force_2h_over_20km));
       setRequiresConfirmation(row.home_lesson_requires_confirmation ?? true);
+      const enabledList = getEnabledDisciplines();
+      setAddDiscId(enabledList[0]?.id ?? "musique");
+      const { data: drows, error: dErr } = await supabase
+        .from("teacher_disciplines")
+        .select("id, discipline_id, specialite, sort_order")
+        .eq("teacher_id", row.id)
+        .order("sort_order", { ascending: true });
+      if (!dErr && drows) setDiscRows(drows as TeacherDisciplineDbRow[]);
+      else setDiscRows([]);
+      setDiscLoading(false);
       setLoading(false);
     };
     void load();
   }, [user]);
+
+  const reloadDisciplines = async (tid: string) => {
+    const supabase = getSupabaseClient();
+    const { data: drows } = await supabase
+      .from("teacher_disciplines")
+      .select("id, discipline_id, specialite, sort_order")
+      .eq("teacher_id", tid)
+      .order("sort_order", { ascending: true });
+    setDiscRows((drows as TeacherDisciplineDbRow[]) ?? []);
+  };
+
+  const removeDiscipline = async (rowId: string) => {
+    if (!teacherId || discRows.length <= 1) return;
+    setDiscSaving(true);
+    setMessage(null);
+    const supabase = getSupabaseClient();
+    const { error } = await supabase.from("teacher_disciplines").delete().eq("id", rowId);
+    if (error) {
+      setMessage(error.message);
+      setDiscSaving(false);
+      return;
+    }
+    await syncTeacherPrimaryFromDisciplines(supabase, teacherId);
+    await reloadDisciplines(teacherId);
+    setDiscSaving(false);
+    setMessage("Enregistré.");
+  };
+
+  const addDiscipline = async () => {
+    if (!teacherId || discRows.length >= 3) return;
+    const spec = addSpec.trim();
+    if (!spec) {
+      setMessage("Indique une spécialité.");
+      return;
+    }
+    if (discRows.some((r) => r.discipline_id === addDiscId)) {
+      setMessage("Cette discipline est déjà ajoutée.");
+      return;
+    }
+    setDiscSaving(true);
+    setMessage(null);
+    const supabase = getSupabaseClient();
+    const nextOrder = discRows.length ? Math.max(...discRows.map((r) => r.sort_order)) + 1 : 0;
+    const { error } = await supabase.from("teacher_disciplines").insert({
+      teacher_id: teacherId,
+      discipline_id: addDiscId,
+      specialite: spec,
+      sort_order: nextOrder,
+    });
+    if (error) {
+      setMessage(error.message);
+      setDiscSaving(false);
+      return;
+    }
+    await syncTeacherPrimaryFromDisciplines(supabase, teacherId);
+    await reloadDisciplines(teacherId);
+    setAddSpec("");
+    setShowAddDisc(false);
+    setDiscSaving(false);
+    setMessage("Enregistré.");
+  };
 
   const save = async () => {
     if (!user || !teacherId) return;
@@ -126,6 +231,8 @@ export default function TeacherSettingsPage() {
     );
   }
 
+  const addableDisciplines = getEnabledDisciplines().filter((d) => !discRows.some((r) => r.discipline_id === d.id));
+
   return (
     <div className="max-w-xl mx-auto space-y-8">
       <div>
@@ -134,6 +241,96 @@ export default function TeacherSettingsPage() {
         <p className="mt-2 text-sm text-[var(--p-text-muted)]">
           Tarif déplacement, zone et options de confirmation pour les réservations « À domicile ».
         </p>
+      </div>
+
+      <div className="bg-white border border-[var(--p-border-light)] rounded-3xl p-6 space-y-5 shadow-sm">
+        <div>
+          <h2 className="text-lg font-bold text-[var(--p-text)]">Mes disciplines</h2>
+          <p className="mt-1 text-sm text-[var(--p-text-muted)]">Jusqu&apos;à 3 disciplines. La première est ton affichage principal.</p>
+        </div>
+        {discLoading ? (
+          <Loader2 className="animate-spin text-[#1D9E75]" size={24} />
+        ) : (
+          <>
+            <div className="flex flex-wrap gap-2">
+              {discRows.map((r) => {
+                const meta = getDisciplineById(r.discipline_id);
+                const label = `${meta?.emoji ?? "✨"} ${meta?.label ?? r.discipline_id}${r.specialite ? ` — ${r.specialite}` : ""}`;
+                return (
+                  <span
+                    key={r.id}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-[rgba(29,158,117,0.35)] bg-[rgba(29,158,117,0.08)] px-3 py-1.5 text-xs font-semibold text-[#0f6d52]"
+                  >
+                    {label}
+                    <button
+                      type="button"
+                      disabled={discRows.length <= 1 || discSaving}
+                      onClick={() => void removeDiscipline(r.id)}
+                      className="rounded-full p-0.5 hover:bg-[rgba(29,158,117,0.2)] disabled:opacity-30 disabled:cursor-not-allowed"
+                      aria-label="Retirer"
+                    >
+                      <X size={14} />
+                    </button>
+                  </span>
+                );
+              })}
+            </div>
+            {discRows.length < 3 ? (
+              <div className="space-y-3">
+                {!showAddDisc ? (
+                  <button
+                    type="button"
+                    disabled={discSaving || addableDisciplines.length === 0}
+                    onClick={() => setShowAddDisc(true)}
+                    className="inline-flex items-center gap-2 h-10 px-4 rounded-full border border-[#1D9E75] text-[#0f6d56] text-sm font-semibold hover:bg-[#e1f5ee] disabled:opacity-50"
+                  >
+                    <Plus size={18} /> Ajouter une discipline
+                  </button>
+                ) : (
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-3">
+                    <select
+                      value={addDiscId}
+                      onChange={(e) => setAddDiscId(e.target.value)}
+                      className="w-full h-11 rounded-xl border border-slate-200 px-3 text-sm bg-white"
+                    >
+                      {addableDisciplines.map((d) => (
+                        <option key={d.id} value={d.id}>
+                          {d.emoji} {d.label}
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      value={addSpec}
+                      onChange={(e) => setAddSpec(e.target.value)}
+                      placeholder="Spécialité"
+                      className="w-full h-11 rounded-xl border border-slate-200 px-3 text-sm bg-white"
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        disabled={discSaving}
+                        onClick={() => void addDiscipline()}
+                        className="h-10 px-4 rounded-full bg-[#1D9E75] text-white text-sm font-semibold disabled:opacity-50"
+                      >
+                        Ajouter
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowAddDisc(false);
+                          setAddSpec("");
+                        }}
+                        className="h-10 px-4 rounded-full border border-slate-200 text-sm font-semibold text-slate-600"
+                      >
+                        Annuler
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : null}
+          </>
+        )}
       </div>
 
       <div className="bg-white border border-[var(--p-border-light)] rounded-3xl p-6 space-y-6 shadow-sm">

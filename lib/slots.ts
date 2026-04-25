@@ -52,6 +52,52 @@ export function slotStartMinutes(slot: string): number {
   return Number(m[1]) * 60 + Number(m[2]);
 }
 
+/** Parse "14:30" or "14:30:00" → minutes from midnight, or null if invalid. */
+export function parseHHMMToMinutes(s: string): number | null {
+  const t = s.trim();
+  const m = /^(\d{1,2}):(\d{2})(?::(\d{2}))?$/.exec(t);
+  if (!m) return null;
+  const h = Number(m[1]);
+  const min = Number(m[2]);
+  if (!Number.isFinite(h) || !Number.isFinite(min) || h < 0 || h > 23 || min < 0 || min > 59) return null;
+  return h * 60 + min;
+}
+
+export type BlockedSlotDayRow = {
+  period: string | null;
+  start_time?: string | null;
+  end_time?: string | null;
+};
+
+export type BlockedTimeRange = { start: number; end: number };
+
+/** Rows with both start_time and end_time contribute only as ranges (period ignored for slot exclusion). */
+export function blockedTimeRangesFromRows(rows: BlockedSlotDayRow[]): BlockedTimeRange[] {
+  const out: BlockedTimeRange[] = [];
+  for (const r of rows) {
+    const st = r.start_time?.trim();
+    const en = r.end_time?.trim();
+    if (!st || !en) continue;
+    const a = parseHHMMToMinutes(st);
+    const b = parseHHMMToMinutes(en);
+    if (a == null || b == null || b <= a) continue;
+    out.push({ start: a, end: b });
+  }
+  return out;
+}
+
+function slotOverlapsBlockedRange(
+  slot: string,
+  durationMinutes: number,
+  rangeStart: number,
+  rangeEnd: number,
+): boolean {
+  const slotStart = slotStartMinutes(slot);
+  if (slotStart < 0) return false;
+  const slotEnd = slotStart + durationMinutes;
+  return slotStart < rangeEnd && slotEnd > rangeStart;
+}
+
 export function periodForSlot(slot: string): PeriodKey | null {
   const t = slotStartMinutes(slot);
   if (t < 0) return null;
@@ -91,6 +137,7 @@ export function generateSlots(
   _date: string,
   bookedSlots: string[],
   blockedPeriods: string[],
+  blockedTimeRanges: BlockedTimeRange[] = [],
 ): string[] {
   const slots: string[] = [];
   if (blockedPeriods.includes("all")) return slots;
@@ -105,7 +152,15 @@ export function generateSlots(
       const hours = Math.floor(timeMinutes / 60);
       const mins = timeMinutes % 60;
       const slot = formatSlotLabel(hours, mins);
-      if (!bookedSlots.includes(slot)) slots.push(slot);
+      if (bookedSlots.includes(slot)) {
+        timeMinutes += durationMinutes;
+        continue;
+      }
+      if (blockedTimeRanges.some((br) => slotOverlapsBlockedRange(slot, durationMinutes, br.start, br.end))) {
+        timeMinutes += durationMinutes;
+        continue;
+      }
+      slots.push(slot);
       timeMinutes += durationMinutes;
     }
   });
@@ -118,7 +173,7 @@ export function getAvailableDays(
   weeklyAvailability: Record<string, DayAvailability>,
   durationMinutes: number,
   bookedByDate: Record<string, string[]>,
-  blockedByDate: Record<string, string[]>,
+  blockedByDate: Record<string, BlockedSlotDayRow[]>,
   weeks = 4,
 ): Record<string, number> {
   const result: Record<string, number> = {};
@@ -135,17 +190,31 @@ export function getAvailableDays(
     if (!avail) continue;
 
     const booked = bookedByDate[dateStr] || [];
-    const blocked = normalizeBlockedPeriodList(blockedByDate[dateStr] || []);
-    const slots = generateSlots(avail, durationMinutes, dateStr, booked, blocked);
+    const blockedRows = blockedByDate[dateStr] || [];
+    const blocked = blockedPeriodsFromRows(blockedRows);
+    const ranges = blockedTimeRangesFromRows(blockedRows);
+    const slots = generateSlots(avail, durationMinutes, dateStr, booked, blocked, ranges);
     if (slots.length > 0) result[dateStr] = slots.length;
   }
 
   return result;
 }
 
-export function blockedPeriodsFromRows(rows: { period: string | null }[]): string[] {
-  const p = rows.map((r) => (r.period || "").trim().toLowerCase()).filter(Boolean);
-  return normalizeBlockedPeriodList(p);
+/** Period-only contribution: rows with a valid start+end time range are excluded here (handled as ranges). */
+export function blockedPeriodsFromRows(rows: BlockedSlotDayRow[]): string[] {
+  const periods: string[] = [];
+  for (const r of rows) {
+    const st = r.start_time?.trim();
+    const en = r.end_time?.trim();
+    if (st && en && parseHHMMToMinutes(st) != null && parseHHMMToMinutes(en) != null) {
+      const a = parseHHMMToMinutes(st)!;
+      const b = parseHHMMToMinutes(en)!;
+      if (b > a) continue;
+    }
+    const p = (r.period || "").trim().toLowerCase();
+    if (p) periods.push(p);
+  }
+  return normalizeBlockedPeriodList(periods);
 }
 
 export function normalizeBlockedPeriodList(blocked: string[]): string[] {

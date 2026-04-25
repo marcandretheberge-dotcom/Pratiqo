@@ -14,6 +14,8 @@ export interface Teacher {
   userId?: string | null;
   name: string;
   discipline: string;
+  /** Disciplines secondaires (ordre = `created_at` sur `teacher_disciplines`, sans la première entrée). */
+  additionalDisciplines?: { disciplineId: string; specialite: string }[];
   category: Discipline;
   rating: number;
   reviews: number;
