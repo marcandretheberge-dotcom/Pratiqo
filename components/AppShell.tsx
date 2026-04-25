@@ -234,8 +234,47 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {/* Teacher desktop sidebar */}
         {isTeacher ? (
           <aside className="hidden lg:flex w-[220px] shrink-0 flex-col border-r border-white/5 bg-[#2C2C2A] text-white py-5 px-3">
-            <Link href="/dashboard" className="mb-6 flex items-center gap-2 px-1 min-w-0" aria-label={t("ariaHome")}>
-              <Logo size="sm" variant="light" className="[&_span]:!text-white" />
+            <Link
+              href="/dashboard"
+              className="mb-6 flex items-center gap-2 px-1 min-w-0 shrink-0 hover:opacity-95 transition-opacity"
+              aria-label={t("ariaHome")}
+            >
+              <div
+                style={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: 8,
+                  background: "#1D9E75",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                }}
+              >
+                <svg width="14" height="14" viewBox="0 0 36 36" fill="none" aria-hidden>
+                  <rect x="8" y="8" width="3.5" height="20" rx="1.75" fill="white" />
+                  <path
+                    d="M11.5 8 Q23 8 23 16 Q23 24 11.5 24"
+                    fill="none"
+                    stroke="white"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                  />
+                  <circle cx="28" cy="21" r="2.5" fill="white" opacity="0.5" />
+                  <circle cx="28" cy="16" r="2.5" fill="white" opacity="0.75" />
+                  <circle cx="28" cy="11" r="2.5" fill="white" />
+                </svg>
+              </div>
+              <span
+                style={{
+                  fontSize: 16,
+                  fontWeight: 500,
+                  color: "white",
+                  letterSpacing: "-0.3px",
+                }}
+              >
+                Pratiqo
+              </span>
             </Link>
             <TeacherShellNav unreadMessages={unreadMessages} loyaltyTier={loyaltyTier} studentCount={teacherStudentCount} />
             <div className="mt-auto pt-8 space-y-3 border-t border-white/10">
