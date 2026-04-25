@@ -287,7 +287,7 @@ export function Dashboard() {
     return (
       <div className="h-[calc(100vh-200px)] flex flex-col items-center justify-center p-12 text-center">
         <Loader2 size={48} className="text-brand-primary animate-spin mb-4" />
-        <h2 className="text-xl font-bold text-slate-800">Initialisation…</h2>
+        <h2 className="text-xl font-bold text-slate-800">{t("dashboardInitializing")}</h2>
       </div>
     );
   }
@@ -307,19 +307,19 @@ export function Dashboard() {
         <div className="rounded-2xl bg-[#2C2C2A] text-white p-6 shadow-md">
           <p className="text-xs text-white/50 capitalize">{todayLabel}</p>
           <h2 className="text-2xl sm:text-3xl font-bold mt-2">
-            Bonjour {displayName} <span className="inline-block">👋</span>
+            {t("greeting")} {displayName} <span className="inline-block">👋</span>
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
             <div className="rounded-xl bg-white/10 px-4 py-3 border border-white/10">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-[#5DCAA5]">{t("todayLessons")}</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[#5DCAA5]">{t("lessonsToday")}</p>
               <p className="text-2xl font-bold mt-1">{coursesTodayCount}</p>
             </div>
             <div className="rounded-xl bg-white/10 px-4 py-3 border border-white/10">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-[#5DCAA5]">{t("activeStudents")}</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[#5DCAA5]">{t("activeStudentsLabel")}</p>
               <p className="text-2xl font-bold mt-1">{distinctStudents}</p>
             </div>
             <div className="rounded-xl bg-white/10 px-4 py-3 border border-white/10">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-[#5DCAA5]">{t("thisMonth")}</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[#5DCAA5]">{t("thisMonthLabel")}</p>
               <p className="text-2xl font-bold mt-1">{fmtMoney(monthRevenue)}</p>
             </div>
           </div>
@@ -378,15 +378,13 @@ export function Dashboard() {
             </div>
           </div>
         ) : (
-          <div className="rounded-2xl border border-[#1D9E75]/30 bg-[rgba(29,158,117,0.06)] p-6 text-sm text-[#2C2C2A]/80">
-            Aucun cours prévu · Tes disponibilités sont visibles par les élèves
-          </div>
+          <div className="rounded-2xl border border-[#1D9E75]/30 bg-[rgba(29,158,117,0.06)] p-6 text-sm text-[#2C2C2A]/80">{t("noNextLesson")}</div>
         )}
 
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <p className="text-[11px] font-bold uppercase tracking-widest text-[#1D9E75] mb-4">Demandes en attente</p>
+          <p className="text-[11px] font-bold uppercase tracking-widest text-[#1D9E75] mb-4">{t("pendingTitle")}</p>
           {pendingList.length === 0 ? (
-            <p className="text-sm text-slate-500">Aucune demande en attente</p>
+            <p className="text-sm text-slate-500">{t("noPending")}</p>
           ) : (
             <ul className="space-y-3">
               {pendingList.map((b) => (
@@ -416,7 +414,7 @@ export function Dashboard() {
                         onClick={() => void acceptTeacherBooking(b.id)}
                         className="h-9 px-4 rounded-full bg-[#1D9E75] text-white text-xs font-bold"
                       >
-                        {t("pendingAccept")}
+                        {t("acceptButton")}
                       </button>
                     ) : null}
                     <button
@@ -424,7 +422,7 @@ export function Dashboard() {
                       onClick={() => void cancelTeacherBooking(b.id)}
                       className="h-9 px-4 rounded-full border border-slate-200 bg-white text-xs font-bold text-slate-700 inline-flex items-center gap-1"
                     >
-                      <X size={14} /> {t("pendingDecline")}
+                      <X size={14} /> {t("declineButton")}
                     </button>
                   </div>
                 </li>
@@ -442,9 +440,9 @@ export function Dashboard() {
     <div className="space-y-6 pb-12">
       <section className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div>
-          <p className="ds-label text-[var(--p-text-subtle)]">Espace élève</p>
-          <h2 className="text-[32px] sm:text-[40px] leading-[1.1] text-[var(--p-text)]">Tableau de bord</h2>
-          <p className="text-[14px] text-[var(--p-text-muted)] mt-1">Prochains cours, profs et pratique</p>
+          <p className="ds-label text-[var(--p-text-subtle)]">{t("dashboardStudentSpace")}</p>
+          <h2 className="text-[32px] sm:text-[40px] leading-[1.1] text-[var(--p-text)]">{t("dashboard")}</h2>
+          <p className="text-[14px] text-[var(--p-text-muted)] mt-1">{t("dashboardStudentSubtitle")}</p>
         </div>
       </section>
 
@@ -458,8 +456,8 @@ export function Dashboard() {
                   <span className="text-3xl font-bold">{profile?.streak || 1}</span>
                 </div>
                 <div>
-                  <h4 className="font-bold text-lg leading-tight">Série de jours</h4>
-                  <p className="text-xs opacity-80 font-medium">Continue comme ça !</p>
+                  <h4 className="font-bold text-lg leading-tight">{t("dashboardStreakTitle")}</h4>
+                  <p className="text-xs opacity-80 font-medium">{t("dashboardStreakEncourage")}</p>
                 </div>
               </div>
             </div>
@@ -480,7 +478,7 @@ export function Dashboard() {
                   onClick={() => router.push("/student/search")}
                   className="text-[10px] font-bold text-brand-primary uppercase tracking-widest hover:underline"
                 >
-                  Trouver un prof
+                  {t("findTeacher")}
                 </button>
               </div>
             </div>
@@ -511,13 +509,13 @@ export function Dashboard() {
                 ))
               ) : (
                 <div className="text-center py-8">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Aucune leçon prévue</p>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">{t("dashboardNoLessonsWeek")}</p>
                   <button
                     type="button"
                     onClick={() => router.push("/student/search")}
                     className="text-[10px] font-bold text-brand-primary uppercase tracking-widest hover:underline"
                   >
-                    Trouver un mentor
+                    {t("dashboardFindMentor")}
                   </button>
                 </div>
               )}
@@ -526,8 +524,8 @@ export function Dashboard() {
 
           <div className="bg-teal-900 rounded-3xl p-6 text-white space-y-4">
             <ShieldCheck size={32} className="text-teal-400" />
-            <h4 className="font-bold text-lg leading-tight">Ta sécurité, notre priorité</h4>
-            <p className="text-xs opacity-80 leading-relaxed">Profils vérifiés, notifications et paiements sécurisés.</p>
+            <h4 className="font-bold text-lg leading-tight">{t("dashboardSecurityTitle")}</h4>
+            <p className="text-xs opacity-80 leading-relaxed">{t("dashboardSecurityBlurb")}</p>
           </div>
         </div>
       </div>

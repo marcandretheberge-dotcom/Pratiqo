@@ -1,37 +1,57 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Calendar, CheckCircle2, ChevronLeft, ChevronRight, MapPin, User, Video } from "lucide-react";
 import { cn } from "../lib/utils";
 import { motion } from "motion/react";
+import { useLocale } from "../lib/locale-context";
+import { localeToBcp47 } from "../lib/i18n";
 
 interface TeacherAgendaProps {
   bookings: any[];
 }
 
 export function TeacherAgenda({ bookings }: TeacherAgendaProps) {
-  const [selectedDay, setSelectedDay] = useState(new Date().toDateString());
+  const { t, locale } = useLocale();
+  const dateLocale = localeToBcp47(locale);
+  const [selectedDay, setSelectedDay] = useState(() => new Date().toDateString());
 
-  const weekDays = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date();
-    d.setDate(d.getDate() + i);
-    return d;
-  });
+  const weekDays = useMemo(
+    () =>
+      Array.from({ length: 7 }, (_, i) => {
+        const d = new Date();
+        d.setDate(d.getDate() + i);
+        return d;
+      }),
+    [],
+  );
+
+  const selectedDate = useMemo(
+    () => weekDays.find((d) => d.toDateString() === selectedDay) ?? weekDays[0]!,
+    [weekDays, selectedDay],
+  );
+
+  const monthYearLabel = useMemo(
+    () =>
+      selectedDate.toLocaleDateString(dateLocale, {
+        month: "long",
+        year: "numeric",
+      }),
+    [selectedDate, dateLocale],
+  );
 
   const filteredBookings = bookings.filter(() => true);
 
   return (
     <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
       <div className="p-6 border-b border-slate-50 flex items-center justify-between bg-slate-50/30">
-        <h3 className="font-bold text-slate-900 text-[10px] uppercase tracking-widest">
-          Agenda Professionnel
-        </h3>
+        <h3 className="font-bold text-slate-900 text-[10px] uppercase tracking-widest">{t("agendaProfessionalTitle")}</h3>
         <div className="flex items-center gap-2">
-          <button className="p-1.5 hover:bg-white rounded-lg text-slate-400 transition-colors">
+          <button type="button" className="p-1.5 hover:bg-white rounded-lg text-slate-400 transition-colors" aria-label={t("back")}>
             <ChevronLeft size={16} />
           </button>
-          <span className="text-xs font-bold text-slate-600">Avril 2026</span>
-          <button className="p-1.5 hover:bg-white rounded-lg text-slate-400 transition-colors">
+          <span className="text-xs font-bold text-slate-600 capitalize">{monthYearLabel}</span>
+          <button type="button" className="p-1.5 hover:bg-white rounded-lg text-slate-400 transition-colors" aria-label={t("next")}>
             <ChevronRight size={16} />
           </button>
         </div>
@@ -41,6 +61,7 @@ export function TeacherAgenda({ bookings }: TeacherAgendaProps) {
         {weekDays.map((d, i) => (
           <button
             key={i}
+            type="button"
             onClick={() => setSelectedDay(d.toDateString())}
             className={cn(
               "flex-1 py-4 flex flex-col items-center gap-1 transition-all border-b-2",
@@ -49,9 +70,7 @@ export function TeacherAgenda({ bookings }: TeacherAgendaProps) {
                 : "border-transparent text-slate-400 hover:text-slate-600",
             )}
           >
-            <span className="text-[9px] font-bold uppercase">
-              {d.toLocaleDateString("fr-FR", { weekday: "short" })}
-            </span>
+            <span className="text-[9px] font-bold uppercase">{d.toLocaleDateString(dateLocale, { weekday: "short" })}</span>
             <span
               className={cn(
                 "text-sm font-bold",
@@ -90,11 +109,11 @@ export function TeacherAgenda({ bookings }: TeacherAgendaProps) {
                   <div className="flex items-center gap-3">
                     <div className="flex items-center gap-1 text-[9px] font-bold text-slate-400 uppercase tracking-widest">
                       {b.teachingMode === "online" ? <Video size={10} /> : <MapPin size={10} />}
-                      {b.teachingMode === "online" ? "Ligne" : "Présentiel"}
+                      {b.teachingMode === "online" ? t("agendaOnline") : t("agendaInPerson")}
                     </div>
                     <div className="w-1 h-1 bg-slate-200 rounded-full" />
                     <div className="text-[9px] font-bold text-indigo-400 uppercase tracking-widest">
-                      {b.studentLevel || "Standard"}
+                      {b.studentLevel || t("agendaLevelStandard")}
                     </div>
                   </div>
                 </div>
@@ -111,12 +130,12 @@ export function TeacherAgenda({ bookings }: TeacherAgendaProps) {
                     )}
                   >
                     {b.status === "confirmed"
-                      ? "Payé"
+                      ? t("agendaStatusPaid")
                       : b.status === "pending_payment"
-                        ? "Paiement…"
-                        : "À venir"}
+                        ? t("agendaStatusPendingPayment")
+                        : t("agendaStatusUpcoming")}
                   </span>
-                  <button className="text-slate-300 hover:text-brand-primary transition-colors">
+                  <button type="button" className="text-slate-300 hover:text-brand-primary transition-colors" aria-label={t("markComplete")}>
                     <CheckCircle2 size={18} />
                   </button>
                 </div>
@@ -126,11 +145,10 @@ export function TeacherAgenda({ bookings }: TeacherAgendaProps) {
         ) : (
           <div className="py-12 text-center">
             <Calendar size={32} className="mx-auto text-slate-100 mb-2" />
-            <p className="text-xs text-slate-400 font-medium">Aucun cours prévu pour ce jour.</p>
+            <p className="text-xs text-slate-400 font-medium">{t("agendaNoBookingsDay")}</p>
           </div>
         )}
       </div>
     </div>
   );
 }
-

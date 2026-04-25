@@ -3,15 +3,17 @@
 import React from "react";
 import Link from "next/link";
 import { BookOpen, CalendarDays, ChevronRight } from "lucide-react";
+import { useLocale } from "@/lib/locale-context";
+
 export default function StudentProgressPage() {
+  const { t } = useLocale();
+
   return (
     <div className="space-y-8">
       <div>
-        <p className="text-xs font-bold uppercase tracking-widest text-[#888780]">Élève</p>
-        <h1 className="mt-1 text-2xl font-bold text-[#2C2C2A]">Ma progression</h1>
-        <p className="mt-2 text-sm text-[#888780] max-w-xl">
-          Suis ta pratique entre les cours : série, badges et devoirs arrivent ici progressivement.
-        </p>
+        <p className="text-xs font-bold uppercase tracking-widest text-[#888780]">{t("studentProgressPageLabel")}</p>
+        <h1 className="mt-1 text-2xl font-bold text-[#2C2C2A]">{t("myProgress")}</h1>
+        <p className="mt-2 text-sm text-[#888780] max-w-xl">{t("studentProgressIntro")}</p>
       </div>
 
       <div className="rounded-2xl border border-[#E8E6DF] bg-white p-6 flex items-start gap-4">
@@ -19,16 +21,14 @@ export default function StudentProgressPage() {
           <BookOpen size={24} />
         </div>
         <div className="min-w-0 flex-1">
-          <h2 className="font-semibold text-[#2C2C2A]">Tableau de bord détaillé</h2>
-          <p className="mt-1 text-sm text-[#888780]">
-            Les statistiques complètes (série, badges, devoirs) sont sur ton accueil. On centralise ici la vue « progression ».
-          </p>
+          <h2 className="font-semibold text-[#2C2C2A]">{t("studentProgressCardTitle")}</h2>
+          <p className="mt-1 text-sm text-[#888780]">{t("studentProgressCardBody")}</p>
           <Link
             href="/dashboard"
             className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-[#1D9E75] hover:underline"
           >
             <CalendarDays size={18} />
-            Voir mes cours et ma série
+            {t("studentProgressDashboardLink")}
             <ChevronRight size={16} />
           </Link>
         </div>
