@@ -11,6 +11,7 @@ import { cn } from "../lib/utils";
 import { getEnabledDisciplines } from "../lib/disciplines";
 import { isEnabled } from "../lib/features";
 import Logo from "../components/ui/Logo";
+import { LocaleSwitcher } from "../components/LocaleSwitcher";
 import { getSupabaseClient } from "../lib/supabase";
 import {
   fetchTeacherDisciplinesMap,
@@ -112,12 +113,37 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-[100dvh] flex flex-col bg-[#FAFCFB]">
-      <header className="border-b border-[var(--p-border-light)] bg-white">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
-          <Link href="/" className="flex items-center gap-2">
-            <Logo size="sm" variant="dark" />
-          </Link>
-          <Link href="/login" className="text-sm font-semibold text-[#1D9E75] hover:underline">
+      <header
+        style={{
+          position: "sticky",
+          top: 0,
+          left: 0,
+          right: 0,
+          background: "white",
+          zIndex: 50,
+          padding: "0 20px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          height: 56,
+          borderBottom: "0.5px solid #D3D1C7",
+        }}
+      >
+        <Link href="/" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none" }}>
+          <Logo variant="dark" size="md" />
+        </Link>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <LocaleSwitcher />
+          <Link
+            href="/login"
+            style={{
+              fontSize: 13,
+              color: "#1D9E75",
+              fontWeight: 500,
+              textDecoration: "none",
+            }}
+          >
             Se connecter
           </Link>
         </div>

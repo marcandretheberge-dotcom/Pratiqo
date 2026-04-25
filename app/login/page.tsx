@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { LogIn } from "lucide-react";
 import { cn } from "../../lib/utils";
 import Logo from "../../components/ui/Logo";
+import { LocaleSwitcher } from "../../components/LocaleSwitcher";
 import { loginWithGoogle } from "../../lib/auth";
 import { useAuth } from "../../components/AuthProvider";
 
@@ -45,7 +46,32 @@ function LoginForm() {
   };
 
   return (
-    <div className="min-h-[100dvh] flex flex-col items-center justify-center px-5 py-12 bg-[#FAFCFB]">
+    <div className="min-h-[100dvh] bg-[#FAFCFB]">
+      <header
+        style={{
+          position: "sticky",
+          top: 0,
+          left: 0,
+          right: 0,
+          background: "white",
+          zIndex: 50,
+          padding: "0 20px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          height: 56,
+          borderBottom: "0.5px solid #D3D1C7",
+        }}
+      >
+        <Link href="/" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none" }}>
+          <Logo variant="dark" size="md" />
+        </Link>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <LocaleSwitcher />
+        </div>
+      </header>
+
+      <div className="flex flex-col items-center justify-center px-5 py-12">
       <div className="w-full max-w-md rounded-3xl border border-[var(--p-border-light)] bg-white p-8 sm:p-10 shadow-[0_24px_80px_rgba(15,110,86,0.08)]">
         <div className="flex justify-center mb-8">
           <Logo size="md" />
@@ -99,6 +125,7 @@ function LoginForm() {
             ← Retour à l&apos;accueil
           </Link>
         </p>
+      </div>
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import { useLocale } from "@/lib/locale-context";
@@ -8,6 +9,8 @@ import type { CompanionType } from "@/lib/companions";
 import { COMPANIONS, getCompanionStage } from "@/lib/companions";
 import { getSupabaseClient } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
+import Logo from "@/components/ui/Logo";
+import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 
 function localizedText(locale: string, fr: string, en: string, es: string) {
   if (locale === "en-CA") return en;
@@ -59,7 +62,32 @@ export default function ChooseCompanionPage() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
+    <div className="space-y-6">
+      <header
+        style={{
+          position: "sticky",
+          top: 0,
+          left: 0,
+          right: 0,
+          background: "white",
+          zIndex: 50,
+          padding: "0 20px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          height: 56,
+          borderBottom: "0.5px solid #D3D1C7",
+        }}
+      >
+        <Link href="/dashboard" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none" }}>
+          <Logo variant="dark" size="md" />
+        </Link>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <LocaleSwitcher />
+        </div>
+      </header>
+
+      <div className="max-w-3xl mx-auto space-y-6 px-4 sm:px-6">
       <div>
         <h1 className="text-2xl font-bold text-[#2C2C2A]">{t("companionTitle")}</h1>
         <p className="mt-2 text-sm text-[#888780]">{t("companionSubtitle")}</p>
@@ -108,6 +136,7 @@ export default function ChooseCompanionPage() {
           {t("companionStart")}{" "}
           {localizedText(locale, COMPANIONS[selected].name, COMPANIONS[selected].nameEn, COMPANIONS[selected].nameEs)}
         </button>
+      </div>
       </div>
     </div>
   );
