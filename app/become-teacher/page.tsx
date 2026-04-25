@@ -4,6 +4,7 @@ import React, { useMemo, useState } from "react";
 import Link from "next/link";
 import { cn } from "../../lib/utils";
 import Logo from "../../components/ui/Logo";
+import { useLocale } from "../../lib/locale-context";
 
 type TierId = "bronze" | "argent" | "or" | "platine";
 
@@ -36,6 +37,7 @@ function formatCad(amount: number): string {
 }
 
 export default function BecomeTeacherPage() {
+  const { t } = useLocale();
   const [students, setStudents] = useState(6);
   const [avgPrice, setAvgPrice] = useState(55);
   const [coursesPerWeek, setCoursesPerWeek] = useState(6);
@@ -70,7 +72,7 @@ export default function BecomeTeacherPage() {
             <Logo size="sm" variant="light" />
           </Link>
           <Link href="/login?role=teacher" className="text-sm font-semibold text-white/85 hover:text-white underline underline-offset-4">
-            Se connecter
+            {t("signIn")}
           </Link>
         </div>
       </header>
@@ -87,7 +89,7 @@ export default function BecomeTeacherPage() {
                 href="/login?role=teacher"
                 className="inline-flex h-12 items-center justify-center rounded-2xl bg-[#1D9E75] px-7 text-sm font-bold text-white hover:brightness-105"
               >
-                Commencer gratuitement
+                {t("startFree")}
               </Link>
               <Link
                 href="/"
@@ -174,7 +176,7 @@ export default function BecomeTeacherPage() {
                   href="/login?role=teacher"
                   className="inline-flex w-full h-12 items-center justify-center rounded-2xl bg-[#1D9E75] text-sm font-bold text-white hover:brightness-105"
                 >
-                  Commencer gratuitement →
+                  {t("joinFree")}
                 </Link>
                 <p className="mt-2 text-xs text-white/55 text-center">
                   Estimations à titre indicatif. La ristourne dépend des profits nets annuels de Pratiqo.
@@ -221,7 +223,7 @@ export default function BecomeTeacherPage() {
 
           <div className="rounded-3xl border border-white/10 bg-white/5 overflow-hidden">
             <div className="px-6 py-4 border-b border-white/10">
-              <p className="text-sm font-bold">Programme Fidélité — Bronze → Platine</p>
+              <p className="text-sm font-bold">{t("benefitLoyalty").replace("Bronze → Platine", "").trim()} — Bronze → Platine</p>
             </div>
             <div className="grid grid-cols-4 text-[11px] uppercase tracking-widest font-bold text-white/60 px-6 py-3">
               <span>Niveau</span>

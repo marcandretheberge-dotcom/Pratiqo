@@ -297,24 +297,24 @@ export default function LandingPage() {
                 </h1>
 
                 <div className="mx-auto mt-10 grid max-w-4xl gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                  <StatCard label="Revenu moyen / mois" value="2 400 $" />
-                  <StatCard label="Cashback annuel" value="576 $" />
-                  <StatCard label="Ristourne estimée" value="~350 $" />
-                  <StatCard label="Total annuel" value="29 726 $" />
+                  <StatCard label={t("avgMonthlyRevenue")} value="2 400 $" />
+                  <StatCard label={t("annualCashback")} value="576 $" />
+                  <StatCard label={t("estimatedRebate")} value="~350 $" />
+                  <StatCard label={t("annualTotal")} value="29 726 $" />
                 </div>
 
                 <ul className="mx-auto mt-10 max-w-xl space-y-3 text-sm text-white/90">
                   <li className="flex items-center gap-2 rounded-xl bg-white/5 px-4 py-3">
                     <span className="h-2 w-2 shrink-0 rounded-full bg-[#1D9E75]" />
-                    Programme Fidélité Bronze → Platine
+                    {t("benefitLoyalty")}
                   </li>
                   <li className="flex items-center gap-2 rounded-xl bg-white/5 px-4 py-3">
                     <span className="h-2 w-2 shrink-0 rounded-full bg-[#1D9E75]" />
-                    Agenda et paiements automatiques
+                    {t("benefitPayments")}
                   </li>
                   <li className="flex items-center gap-2 rounded-xl bg-white/5 px-4 py-3">
                     <span className="h-2 w-2 shrink-0 rounded-full bg-[#1D9E75]" />
-                    Cours individuels + cours de groupe
+                    {t("benefitLessons")}
                   </li>
                 </ul>
 
@@ -323,10 +323,10 @@ export default function LandingPage() {
                     href="/login?role=teacher"
                     className="inline-flex h-12 items-center justify-center rounded-2xl bg-[#1D9E75] px-8 text-sm font-bold text-white hover:brightness-105"
                   >
-                    {t("startFree")} →
+                    {t("joinFree")}
                   </Link>
                   <Link href="/login" className="text-sm font-medium text-white/80 underline underline-offset-2 hover:text-white">
-                    {t("alreadyRegistered")}
+                    {t("alreadyMember")} {t("signIn")}
                   </Link>
                 </div>
               </div>
