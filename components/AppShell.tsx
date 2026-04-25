@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, CalendarDays, MessageCircle, Search, UserRound, UsersRound } from "lucide-react";
+import { CalendarDays, MessageCircle, Search, Sprout, UserRound } from "lucide-react";
 import { cn } from "../lib/utils";
 import { useAuth } from "./AuthProvider";
 import { getSupabaseClient } from "../lib/supabase";
@@ -133,72 +133,22 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               ) : null}
             </Link>
           ) : null}
-          <div>
-            <NotificationCenter />
-          </div>
+          {isStudent ? (
+            <div className="opacity-95 scale-90 origin-right">
+              <LocaleSwitcher />
+            </div>
+          ) : (
+            <>
+              <div className="opacity-80 scale-90 origin-right">
+                <LocaleSwitcher />
+              </div>
+              <div>
+                <NotificationCenter />
+              </div>
+            </>
+          )}
         </div>
       </header>
-
-      {isStudent ? (
-        <div className="hidden lg:block border-b border-[var(--p-border-light)] bg-white">
-          <nav className="mx-auto max-w-[960px] px-4 sm:px-5 flex flex-wrap items-center gap-x-5 gap-y-1 min-h-11 text-sm font-semibold">
-            <Link
-              href="/student/search"
-              className={cn(
-                "border-b-2 -mb-px py-2.5 transition-colors",
-                pathname?.startsWith("/student/search") ? "border-[#1D9E75] text-[#1D9E75]" : "border-transparent text-[var(--p-text-muted)] hover:text-[#1D9E75]",
-              )}
-            >
-              {t("findTeacher")}
-            </Link>
-            <Link
-              href="/group-sessions"
-              className={cn(
-                "border-b-2 -mb-px py-2.5 transition-colors",
-                pathname?.startsWith("/group-sessions") ? "border-[#1D9E75] text-[#1D9E75]" : "border-transparent text-[var(--p-text-muted)] hover:text-[#1D9E75]",
-              )}
-            >
-              {t("groupClasses")}
-            </Link>
-            <Link
-              href="/dashboard"
-              className={cn(
-                "border-b-2 -mb-px py-2.5 transition-colors",
-                pathname === "/dashboard" ? "border-[#1D9E75] text-[#1D9E75]" : "border-transparent text-[var(--p-text-muted)] hover:text-[#1D9E75]",
-              )}
-            >
-              {t("schedule")}
-            </Link>
-            <Link
-              href="/student/progress"
-              className={cn(
-                "border-b-2 -mb-px py-2.5 transition-colors",
-                pathname?.startsWith("/student/progress") ? "border-[#1D9E75] text-[#1D9E75]" : "border-transparent text-[var(--p-text-muted)] hover:text-[#1D9E75]",
-              )}
-            >
-              {t("myProgress")}
-            </Link>
-            <Link
-              href="/profile"
-              className={cn(
-                "border-b-2 -mb-px py-2.5 transition-colors",
-                pathname === "/profile" ? "border-[#1D9E75] text-[#1D9E75]" : "border-transparent text-[var(--p-text-muted)] hover:text-[#1D9E75]",
-              )}
-            >
-              {t("profile")}
-            </Link>
-            <Link
-              href="/messages"
-              className={cn(
-                "border-b-2 -mb-px py-2.5 transition-colors",
-                pathname?.startsWith("/messages") ? "border-[#1D9E75] text-[#1D9E75]" : "border-transparent text-[var(--p-text-muted)] hover:text-[#1D9E75]",
-              )}
-            >
-              {t("messages")}
-            </Link>
-          </nav>
-        </div>
-      ) : null}
 
       <div className="flex flex-1 min-h-0">
         {/* Teacher desktop sidebar */}
@@ -281,19 +231,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             isTeacher ? "pb-24 lg:pb-8 px-4 sm:px-6 py-6" : isStudent ? "pb-24 lg:pb-8 px-4 sm:px-5 py-6" : "pb-8 px-4 sm:px-5 py-6",
           )}
         >
-          <div className={cn("mx-auto w-full", isTeacher ? "max-w-[1100px]" : "max-w-[960px]")}>{children}</div>
+          <div className={cn("mx-auto w-full", isTeacher ? "max-w-[1100px]" : isStudent ? "max-w-[480px]" : "max-w-[960px]")}>
+            {children}
+          </div>
         </main>
       </div>
 
       {/* Student bottom tabs */}
       {isStudent ? (
-        <nav className="lg:hidden fixed bottom-0 inset-x-0 z-50 border-t border-[var(--p-border-light)] bg-white safe-area-pb">
-          <div className="grid grid-cols-5 h-16 max-w-lg mx-auto">
-            <StudentTab href="/student/search" icon={<Search size={20} />} label={t("studentTabFindShort")} active={pathname?.startsWith("/student/search")} />
-            <StudentTab href="/group-sessions" icon={<UsersRound size={20} />} label={t("studentTabGroups")} active={pathname?.startsWith("/group-sessions")} />
-            <StudentTab href="/dashboard" icon={<CalendarDays size={20} />} label={t("studentTabCoursesShort")} active={pathname === "/dashboard"} />
-            <StudentTab href="/student/progress" icon={<BookOpen size={20} />} label={t("studentTabProgressShort")} active={pathname?.startsWith("/student/progress")} />
-            <StudentTab href="/profile" icon={<UserRound size={20} />} label={t("studentTabProfileShort")} active={pathname === "/profile"} />
+        <nav className="fixed bottom-0 inset-x-0 z-50 border-t border-[var(--p-border-light)] bg-white safe-area-pb">
+          <div className="grid grid-cols-4 h-16 max-w-[480px] mx-auto">
+            <StudentTab href="/student/search" icon={<Search size={20} />} label="Trouver" active={pathname?.startsWith("/student/search")} />
+            <StudentTab href="/dashboard" icon={<CalendarDays size={20} />} label="Mes cours" active={pathname === "/dashboard"} />
+            <StudentTab href="/student/progress" icon={<Sprout size={20} />} label="Progression" active={pathname?.startsWith("/student/progress")} />
+            <StudentTab href="/profile" icon={<UserRound size={20} />} label="Profil" active={pathname === "/profile"} />
           </div>
         </nav>
       ) : null}
