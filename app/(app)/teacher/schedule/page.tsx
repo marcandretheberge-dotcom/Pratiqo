@@ -1,23 +1,14 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useState, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
-import { ChevronLeft, ChevronRight, Loader2, Save, Trash2 } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { ChevronLeft, ChevronRight, Loader2, Save } from "lucide-react";
 import { useAuth } from "../../../../components/AuthProvider";
 import { getSupabaseClient } from "../../../../lib/supabase";
 import { cn } from "../../../../lib/utils";
-import {
-  blockedPeriodsFromRows,
-  blockedTimeRangesFromRows,
-  dayShortKeyForISODate,
-  formatLocalISODate,
-  generateSlots,
-  parseHHMMToMinutes,
-  weeklyAvailabilityFromTeacherRows,
-} from "../../../../lib/slots";
-import { defaultLessonDurationMinutes } from "../../../../lib/teacherSlotQueries";
+import { formatLocalISODate } from "../../../../lib/slots";
 import { useLocale } from "../../../../lib/locale-context";
-import { localeToBcp47, type Locale } from "../../../../lib/i18n";
+import { localeToBcp47 } from "../../../../lib/i18n";
 import type { TranslationKey } from "../../../../lib/translations";
 
 const DAYS = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"] as const;
@@ -39,23 +30,7 @@ const SLOT_TKEY: Record<(typeof SLOTS)[number], TranslationKey> = {
   Soir: "evening",
 };
 
-function formatTimePreviewLabel(hhmm: string, locale: Locale): string {
-  const parts = hhmm.trim().split(":");
-  if (parts.length < 2) return hhmm;
-  const [hs, ms] = parts;
-  if (!hs || ms === undefined) return hhmm;
-  if (locale === "en-CA") return `${hs.padStart(2, "0")}:${ms.padStart(2, "0")}`;
-  return `${Number(hs)}h${ms.padStart(2, "0")}`;
-}
-
-type BlockedRow = {
-  id: string;
-  blocked_date: string;
-  period: string | null;
-  start_time?: string | null;
-  end_time?: string | null;
-  reason?: string | null;
-};
+type ScheduleTab = "today" | "week" | "dispo";
 
 function startOfWeekMonday(from: Date): Date {
   const x = new Date(from);
@@ -71,8 +46,6 @@ function addDays(d: Date, n: number): Date {
   return x;
 }
 
-type Tab = "cours" | "dispo";
-
 type BookingRow = {
   id: string;
   slot_date: string | null;
@@ -81,18 +54,44 @@ type BookingRow = {
   time: string | null;
   status: string;
   student_id: string;
+  teaching_mode?: string | null;
+  price?: number | null;
   studentName?: string;
 };
+
+function slotStartApprox(ts: string | null | undefined): number {
+  if (!ts) return 9999;
+  const m = /^(\d{1,2})h(\d{2})/.exec(ts.trim());
+  if (m) return Number(m[1]) * 60 + Number(m[2]);
+  const m2 = /^(\d{1,2}):(\d{2})/.exec(ts.trim());
+  if (m2) return Number(m2[1]) * 60 + Number(m2[2]);
+  return 9999;
+}
 
 function TeacherScheduleInner() {
   const { user } = useAuth();
   const { locale, t } = useLocale();
   const dateLocale = localeToBcp47(locale);
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [tab, setTab] = useState<Tab>("cours");
+
+  const subtab = useMemo<ScheduleTab>(() => {
+    const raw = (searchParams.get("tab") || "today").toLowerCase();
+    if (raw === "week" || raw === "semaine") return "week";
+    if (raw === "dispo" || raw === "availability" || raw === "disponibilites") return "dispo";
+    return "today";
+  }, [searchParams]);
+
+  const setSubtab = (next: ScheduleTab) => {
+    const q = next === "today" ? "today" : next === "week" ? "week" : "dispo";
+    router.replace(`${pathname}?tab=${q}`, { scroll: false });
+  };
+
   const [teacherId, setTeacherId] = useState<string | null>(null);
+  const [teacherDiscipline, setTeacherDiscipline] = useState("—");
   const [availability, setAvailability] = useState<string[]>([]);
-  const [durationMin, setDurationMin] = useState(60);
+  const [teachingMode, setTeachingMode] = useState<string>("both");
   const [weekAnchor, setWeekAnchor] = useState(() => startOfWeekMonday(new Date()));
   const [selectedDayIndex, setSelectedDayIndex] = useState(() => {
     const w = startOfWeekMonday(new Date());
@@ -103,22 +102,19 @@ function TeacherScheduleInner() {
     return 0;
   });
   const [bookings, setBookings] = useState<BookingRow[]>([]);
-  const [blockedRows, setBlockedRows] = useState<BlockedRow[]>([]);
+  const [blockedRows, setBlockedRows] = useState<{ id: string; blocked_date: string; period: string | null }[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [blockDate, setBlockDate] = useState("");
-  const [blockMode, setBlockMode] = useState<"period" | "range">("period");
   const [blockPeriod, setBlockPeriod] = useState<"matin" | "apresmidi" | "soir" | "all">("matin");
-  const [blockStartTime, setBlockStartTime] = useState("14:30");
-  const [blockEndTime, setBlockEndTime] = useState("15:30");
-  const [blockReason, setBlockReason] = useState("");
   const [flash, setFlash] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
 
-  const weekDays = useMemo(() => {
-    return Array.from({ length: 7 }, (_, i) => addDays(weekAnchor, i));
-  }, [weekAnchor]);
-
-  const selectedDateIso = useMemo(() => formatLocalISODate(weekDays[selectedDayIndex] ?? weekAnchor), [weekDays, selectedDayIndex, weekAnchor]);
+  const todayIso = formatLocalISODate(new Date());
+  const weekDays = useMemo(() => Array.from({ length: 7 }, (_, i) => addDays(weekAnchor, i)), [weekAnchor]);
+  const selectedDateIso = useMemo(
+    () => formatLocalISODate(weekDays[selectedDayIndex] ?? weekAnchor),
+    [weekDays, selectedDayIndex, weekAnchor],
+  );
 
   const load = useCallback(async () => {
     if (!user?.id) {
@@ -126,9 +122,14 @@ function TeacherScheduleInner() {
       return;
     }
     const supabase = getSupabaseClient();
-    const { data: trow } = await supabase.from("teachers").select("id, availability, home_lesson_min_duration").eq("user_id", user.id).maybeSingle();
+    const { data: trow } = await supabase
+      .from("teachers")
+      .select("id, availability, home_lesson_min_duration, teaching_mode")
+      .eq("user_id", user.id)
+      .maybeSingle();
     const tid = (trow as { id?: string } | null)?.id ?? null;
     setTeacherId(tid);
+    setTeachingMode(String((trow as { teaching_mode?: string })?.teaching_mode || "both"));
     if (!tid) {
       setBookings([]);
       setLoading(false);
@@ -136,7 +137,6 @@ function TeacherScheduleInner() {
     }
     const avail = (trow as { availability?: unknown }).availability;
     setAvailability(Array.isArray(avail) ? (avail as string[]) : []);
-    setDurationMin(defaultLessonDurationMinutes((trow as { home_lesson_min_duration?: number | null }).home_lesson_min_duration));
 
     const from = formatLocalISODate(weekAnchor);
     const to = formatLocalISODate(addDays(weekAnchor, 13));
@@ -144,7 +144,7 @@ function TeacherScheduleInner() {
     const [{ data: bdata }, { data: bl }] = await Promise.all([
       supabase
         .from("bookings")
-        .select("id, slot_date, time_slot, date, time, status, student_id")
+        .select("id, slot_date, time_slot, date, time, status, student_id, teaching_mode, price")
         .eq("teacher_id", tid)
         .gte("slot_date", from)
         .lte("slot_date", to)
@@ -159,73 +159,34 @@ function TeacherScheduleInner() {
       withNames.push({ ...r, studentName: (p?.name as string) || t("studentDefaultName") });
     }
     setBookings(withNames);
-    setBlockedRows((bl || []) as BlockedRow[]);
+    setBlockedRows((bl || []) as { id: string; blocked_date: string; period: string | null }[]);
     setLoading(false);
   }, [user?.id, weekAnchor, t]);
-
-  useEffect(() => {
-    const t = searchParams.get("tab");
-    if (t === "dispo" || t === "availability") setTab("dispo");
-    if (t === "cours") setTab("cours");
-  }, [searchParams]);
 
   useEffect(() => {
     setLoading(true);
     void load();
   }, [load]);
 
-  const weeklyAvail = useMemo(() => weeklyAvailabilityFromTeacherRows(availability), [availability]);
+  const activeBooking = (b: BookingRow) => !["cancelled", "cancelled_conflict"].includes(b.status);
 
-  const bookedSlotsForDay = useMemo(() => {
-    const set = new Set<string>();
-    for (const b of bookings) {
-      const ds = (b.slot_date || b.date) as string | null;
-      if (ds !== selectedDateIso) continue;
-      if (b.status === "cancelled" || b.status === "cancelled_conflict") continue;
-      const ts = b.time_slot || b.time;
-      if (ts) set.add(ts);
-    }
-    return Array.from(set);
-  }, [bookings, selectedDateIso]);
-
-  const blockedRowsForSelectedDay = useMemo(
-    () => blockedRows.filter((r) => r.blocked_date === selectedDateIso),
-    [blockedRows, selectedDateIso],
+  const bookingsForDay = useCallback(
+    (iso: string) =>
+      bookings
+        .filter((b) => (b.slot_date || b.date) === iso && activeBooking(b))
+        .sort((a, b) => slotStartApprox(a.time_slot || a.time) - slotStartApprox(b.time_slot || b.time)),
+    [bookings],
   );
 
-  const blockedPeriodsOnly = useMemo(
-    () => blockedPeriodsFromRows(blockedRowsForSelectedDay),
-    [blockedRowsForSelectedDay],
+  const todayBookings = useMemo(() => bookingsForDay(todayIso), [bookingsForDay, todayIso]);
+  const selectedDayBookings = useMemo(() => bookingsForDay(selectedDateIso), [bookingsForDay, selectedDateIso]);
+
+  const todayRevenue = useMemo(
+    () => todayBookings.reduce((s, b) => s + (Number(b.price) || 0), 0),
+    [todayBookings],
   );
 
-  const blockedRangesOnly = useMemo(
-    () => blockedTimeRangesFromRows(blockedRowsForSelectedDay),
-    [blockedRowsForSelectedDay],
-  );
-
-  const timeRangeBlocksForDay = useMemo(() => {
-    return blockedRowsForSelectedDay.filter((r) => {
-      const st = r.start_time?.trim();
-      const en = r.end_time?.trim();
-      if (!st || !en) return false;
-      const a = parseHHMMToMinutes(st);
-      const b = parseHHMMToMinutes(en);
-      return a != null && b != null && b > a;
-    });
-  }, [blockedRowsForSelectedDay]);
-
-  const freeSlotsForDay = useMemo(() => {
-    const dayKey = dayShortKeyForISODate(selectedDateIso);
-    const dayAvail = weeklyAvail[dayKey] || { matin: false, apresmidi: false, soir: false };
-    return generateSlots(dayAvail, durationMin, selectedDateIso, bookedSlotsForDay, blockedPeriodsOnly, blockedRangesOnly);
-  }, [weeklyAvail, selectedDateIso, durationMin, bookedSlotsForDay, blockedPeriodsOnly, blockedRangesOnly]);
-
-  const dayBookings = useMemo(() => {
-    return bookings.filter((b) => {
-      const ds = (b.slot_date || b.date) as string | null;
-      return ds === selectedDateIso && !["cancelled", "cancelled_conflict"].includes(b.status);
-    });
-  }, [bookings, selectedDateIso]);
+  const countForDay = useCallback((iso: string) => bookingsForDay(iso).length, [bookingsForDay]);
 
   const toggleAvail = (d: string, s: string) => {
     const key = `${d} ${s}`;
@@ -240,7 +201,7 @@ function TeacherScheduleInner() {
     return bookings.some((b) => {
       const ds = (b.slot_date || b.date) as string | null;
       if (ds !== iso) return false;
-      if (["cancelled", "cancelled_conflict"].includes(b.status)) return false;
+      if (!activeBooking(b)) return false;
       const ts = b.time_slot || b.time;
       if (!ts) return false;
       const p =
@@ -257,13 +218,16 @@ function TeacherScheduleInner() {
     });
   };
 
-  const saveAvailability = async () => {
+  const saveAll = async () => {
     if (!user?.id) return;
     setSaving(true);
     setFlash(null);
     try {
       const supabase = getSupabaseClient();
-      const { error } = await supabase.from("teachers").update({ availability }).eq("user_id", user.id);
+      const { error } = await supabase
+        .from("teachers")
+        .update({ availability, teaching_mode: teachingMode })
+        .eq("user_id", user.id);
       if (error) throw error;
       setFlash({ kind: "ok", text: t("availabilitySaved") });
     } catch (e) {
@@ -275,41 +239,20 @@ function TeacherScheduleInner() {
 
   const addBlocked = async () => {
     if (!teacherId || !blockDate) return;
-    if (blockMode === "range") {
-      const st = blockStartTime.trim();
-      const en = blockEndTime.trim();
-      const a = parseHHMMToMinutes(st);
-      const b = parseHHMMToMinutes(en);
-      if (a == null || b == null || b <= a) {
-        setFlash({ kind: "err", text: t("blockTimeRangeInvalid") });
-        return;
-      }
-    }
     setSaving(true);
     setFlash(null);
     try {
       const supabase = getSupabaseClient();
-      const payload =
-        blockMode === "period"
-          ? {
-              teacher_id: teacherId,
-              blocked_date: blockDate,
-              period: blockPeriod,
-              start_time: null as string | null,
-              end_time: null as string | null,
-              reason: blockReason.trim() || null,
-            }
-          : {
-              teacher_id: teacherId,
-              blocked_date: blockDate,
-              period: null as string | null,
-              start_time: blockStartTime.trim(),
-              end_time: blockEndTime.trim(),
-              reason: blockReason.trim() || null,
-            };
-      const { error } = await supabase.from("blocked_slots").insert(payload);
+      const { error } = await supabase.from("blocked_slots").insert({
+        teacher_id: teacherId,
+        blocked_date: blockDate,
+        period: blockPeriod,
+        start_time: null,
+        end_time: null,
+        reason: null,
+      });
       if (error) throw error;
-      setBlockReason("");
+      setBlockDate("");
       await load();
     } catch (e) {
       setFlash({ kind: "err", text: e instanceof Error ? e.message : t("errorGeneric") });
@@ -318,17 +261,31 @@ function TeacherScheduleInner() {
     }
   };
 
-  const removeBlocked = async (id: string) => {
-    const supabase = getSupabaseClient();
-    await supabase.from("blocked_slots").delete().eq("id", id);
-    await load();
+  const formatLabel = (b: BookingRow) => {
+    const tm = b.teaching_mode === "domicile" ? "À domicile" : b.teaching_mode === "online" ? "En ligne" : "En personne";
+    return tm;
   };
 
-  const cancelBooking = async (id: string) => {
-    if (!confirm(t("cancelCourseConfirm"))) return;
-    const supabase = getSupabaseClient();
-    await supabase.from("bookings").update({ status: "cancelled" }).eq("id", id);
-    await load();
+  const chipsPerson = teachingMode === "person" || teachingMode === "both" || teachingMode === "all";
+  const chipsOnline = teachingMode === "online" || teachingMode === "both" || teachingMode === "all";
+  const chipsHome = teachingMode === "home" || teachingMode === "all";
+
+  const encodeFormats = (p: boolean, o: boolean, h: boolean) => {
+    const n = (p ? 1 : 0) + (o ? 1 : 0) + (h ? 1 : 0);
+    if (n === 0) return "both";
+    if (n === 3) return "all";
+    if (p && o && !h) return "both";
+    if (p && !o && !h) return "person";
+    if (!p && o && !h) return "online";
+    if (!p && !o && h) return "home";
+    return "all";
+  };
+
+  const toggleFormat = (key: "person" | "online" | "home") => {
+    const p = key === "person" ? !chipsPerson : chipsPerson;
+    const o = key === "online" ? !chipsOnline : chipsOnline;
+    const h = key === "home" ? !chipsHome : chipsHome;
+    setTeachingMode(encodeFormats(p, o, h));
   };
 
   if (!user) {
@@ -340,34 +297,32 @@ function TeacherScheduleInner() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
+    <div className="max-w-5xl mx-auto space-y-5">
       <div>
-        <p className="ds-label text-[var(--p-text-subtle)]">{t("scheduleTeacherLabel")}</p>
-        <h1 className="text-3xl font-bold text-[var(--p-text)]">{t("schedulePageTitle")}</h1>
-        <p className="text-sm text-[var(--p-text-muted)] mt-2">{t("schedulePageSubtitle")}</p>
+        <p className="text-[10px] font-bold uppercase tracking-widest text-[#1D9E75]">{t("scheduleTeacherLabel")}</p>
+        <h1 className="text-2xl sm:text-3xl font-bold text-[#2C2C2A]">{t("schedulePageTitle")}</h1>
       </div>
 
-      <div className="flex gap-2 p-1 rounded-2xl bg-slate-100 border border-slate-200 w-fit">
-        <button
-          type="button"
-          onClick={() => setTab("cours")}
-          className={cn(
-            "px-4 py-2 rounded-xl text-sm font-semibold transition-colors",
-            tab === "cours" ? "bg-[#1D9E75] text-white shadow-sm" : "text-slate-600 hover:text-slate-900",
-          )}
-        >
-          {t("tabMyCourses")}
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab("dispo")}
-          className={cn(
-            "px-4 py-2 rounded-xl text-sm font-semibold transition-colors",
-            tab === "dispo" ? "bg-[#1D9E75] text-white shadow-sm" : "text-slate-600 hover:text-slate-900",
-          )}
-        >
-          {t("tabAvailabilityNav")}
-        </button>
+      <div className="flex gap-1 p-1 rounded-2xl bg-slate-100 border border-slate-200 w-full max-w-md">
+        {(
+          [
+            ["today", "Aujourd'hui"],
+            ["week", "Semaine"],
+            ["dispo", "Disponibilités"],
+          ] as const
+        ).map(([key, label]) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => setSubtab(key)}
+            className={cn(
+              "flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors",
+              subtab === key ? "bg-[#1D9E75] text-white shadow-sm" : "text-slate-600 hover:text-slate-900",
+            )}
+          >
+            {label}
+          </button>
+        ))}
       </div>
 
       {flash ? (
@@ -380,8 +335,84 @@ function TeacherScheduleInner() {
         </div>
       ) : !teacherId ? (
         <p className="text-sm text-slate-500">{t("noTeacherProfile")}</p>
-      ) : tab === "cours" ? (
-        <div className="space-y-6">
+      ) : subtab === "today" ? (
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <p className="text-sm font-semibold text-[#2C2C2A] capitalize">
+              {new Date(todayIso + "T12:00:00").toLocaleDateString(dateLocale, { weekday: "long", day: "numeric", month: "long" })}
+            </p>
+            <p className="text-sm text-slate-600 mt-1">
+              {todayBookings.length} cours ·{" "}
+              {new Intl.NumberFormat("fr-CA", { style: "currency", currency: "CAD" }).format(todayRevenue)}
+            </p>
+          </div>
+          {todayBookings.length === 0 ? (
+            <p className="text-center text-slate-500 py-12">Aucun cours aujourd&apos;hui 🎉</p>
+          ) : (
+            <ul className="space-y-3">
+              {todayBookings.map((b, idx) => {
+                const now = new Date();
+                const mins = now.getHours() * 60 + now.getMinutes();
+                const sm = slotStartApprox(b.time_slot || b.time);
+                const isCurrentOrNext =
+                  ["confirmed", "booked"].includes(b.status) && sm >= mins - 30 && sm <= mins + 90;
+                const isFirst = idx === 0;
+                const boldTeal = isCurrentOrNext;
+                return (
+                  <li
+                    key={b.id}
+                    className={cn(
+                      "rounded-2xl border p-4 flex flex-wrap items-center justify-between gap-3",
+                      isFirst ? "border-[#1D9E75] bg-[rgba(29,158,117,0.12)]" : "border-slate-200 bg-slate-100",
+                    )}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div
+                        className={cn(
+                          "h-12 w-12 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0",
+                          isFirst ? "bg-[#1D9E75]" : "bg-slate-400",
+                        )}
+                      >
+                        {(b.studentName || "?").slice(0, 2).toUpperCase()}
+                      </div>
+                      <div className="min-w-0">
+                        <p className={cn("text-base font-bold", boldTeal ? "text-[#1D9E75]" : "text-[#2C2C2A]")}>
+                          {b.time_slot || b.time}
+                        </p>
+                        <p className="text-sm font-semibold text-[#2C2C2A] truncate">{b.studentName}</p>
+                        <p className="text-xs text-slate-600">
+                          {teacherDiscipline} · {formatLabel(b)}
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          {new Intl.NumberFormat("fr-CA", { style: "currency", currency: "CAD" }).format(Number(b.price) || 0)}
+                        </p>
+                      </div>
+                    </div>
+                    {idx === 0 ? (
+                      <button
+                        type="button"
+                        className="h-10 px-5 rounded-full bg-[#1D9E75] text-white text-sm font-semibold"
+                        onClick={() => router.push("/messages")}
+                      >
+                        Démarrer
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className="h-10 px-5 rounded-full border border-slate-300 bg-white text-sm font-semibold text-[#2C2C2A]"
+                        onClick={() => router.push("/messages")}
+                      >
+                        Message
+                      </button>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+      ) : subtab === "week" ? (
+        <div className="space-y-4">
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <button
               type="button"
@@ -401,10 +432,10 @@ function TeacherScheduleInner() {
               {t("weekNav")} <ChevronRight size={18} />
             </button>
           </div>
-
-          <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-7 gap-2">
             {weekDays.map((dt, i) => {
               const iso = formatLocalISODate(dt);
+              const c = countForDay(iso);
               const label = dt.toLocaleDateString(dateLocale, { weekday: "short", day: "numeric" });
               return (
                 <button
@@ -412,123 +443,49 @@ function TeacherScheduleInner() {
                   type="button"
                   onClick={() => setSelectedDayIndex(i)}
                   className={cn(
-                    "px-3 py-2 rounded-xl border text-xs font-bold transition-colors",
-                    selectedDayIndex === i ? "border-[#1D9E75] bg-[#e1f5ee] text-[#0f6e56]" : "border-slate-200 bg-white hover:border-slate-300",
+                    "flex flex-col items-center rounded-xl border py-2 px-1 text-center transition-colors",
+                    selectedDayIndex === i ? "border-[#1D9E75] bg-[#1D9E75] text-white" : "border-slate-200 bg-white hover:border-slate-300",
                   )}
                 >
-                  {label}
+                  <span className="text-[10px] font-bold uppercase leading-tight">{label}</span>
+                  <span className={cn("text-lg font-bold mt-0.5", selectedDayIndex === i ? "text-white" : "text-[#2C2C2A]")}>{c}</span>
+                  <span className={cn("text-[9px]", selectedDayIndex === i ? "text-white/80" : "text-slate-500")}>cours</span>
                 </button>
               );
             })}
           </div>
-
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 space-y-4">
-            <h2 className="text-sm font-bold text-slate-800 capitalize">{selectedDateIso}</h2>
-            <div className="space-y-2">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400">{t("reservationsTitle")}</p>
-              {dayBookings.length === 0 ? (
-                <p className="text-sm text-slate-500">{t("noBookingsThatDay")}</p>
-              ) : (
-                <ul className="space-y-2">
-                  {dayBookings.map((b) => (
-                    <li
-                      key={b.id}
-                      className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[rgba(29,158,117,0.25)] bg-[rgba(29,158,117,0.06)] px-4 py-3"
-                    >
-                      <div>
-                        <p className="text-sm font-bold text-slate-900">{b.studentName}</p>
-                        <p className="text-xs text-slate-600">
-                          {b.time_slot || b.time} · {b.status}
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => void cancelBooking(b.id)}
-                        className="text-xs font-semibold text-rose-600 hover:underline"
-                      >
-                        {t("cancel")}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-            {timeRangeBlocksForDay.length > 0 ? (
-              <div className="space-y-2 border-t border-slate-100 pt-4">
-                <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400">
-                  {t("scheduleBlockedRangesTitle")}
-                </p>
-                <ul className="space-y-2">
-                  {timeRangeBlocksForDay.map((r) => (
-                    <li
-                      key={r.id}
-                      className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3"
-                    >
-                      <p className="text-sm font-semibold text-amber-950">
-                        🚫 {formatTimePreviewLabel(r.start_time || "", locale)} – {formatTimePreviewLabel(r.end_time || "", locale)}
-                        {r.reason ? <span className="font-normal text-amber-900/90"> · {r.reason}</span> : null}
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => void removeBlocked(r.id)}
-                        className="text-rose-600 p-1 shrink-0 hover:bg-amber-100 rounded-lg"
-                        aria-label={t("deleteAria")}
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
-            <div className="space-y-2 border-t border-slate-100 pt-4">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400">
-                {t("timeSlots")} ({durationMin} {t("freeSlotsMinSuffix")})
-              </p>
-              {freeSlotsForDay.length === 0 ? (
-                <p className="text-sm text-slate-500">{t("noFreeSlotsDetail")}</p>
-              ) : (
-                <div className="flex flex-wrap gap-2">
-                  {freeSlotsForDay.map((s) => (
-                    <span
-                      key={s}
-                      className="px-3 py-1.5 rounded-full border border-slate-200 bg-slate-50 text-xs font-semibold text-slate-500"
-                    >
-                      {s}
-                    </span>
-                  ))}
-                </div>
-              )}
-              <p className="text-[11px] text-slate-500">{t("blockHintToTab")}</p>
-            </div>
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 space-y-3">
+            <p className="text-sm font-bold text-[#2C2C2A]">{selectedDateIso}</p>
+            {selectedDayBookings.length === 0 ? (
+              <p className="text-sm text-slate-500">Aucun cours ce jour-là.</p>
+            ) : (
+              <ul className="space-y-2">
+                {selectedDayBookings.map((b) => (
+                  <li key={b.id} className="flex items-center justify-between gap-2 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2">
+                    <span className="text-sm font-bold text-[#1D9E75]">{b.time_slot || b.time}</span>
+                    <span className="text-sm font-semibold truncate">{b.studentName}</span>
+                    <span className="text-xs text-slate-500 shrink-0">{formatLabel(b)}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </div>
       ) : (
-        <div className="space-y-8">
-          <div className="flex items-center justify-between gap-4 flex-wrap mb-2">
-            <p className="text-sm text-slate-600">
-              {t("weekOf")} {formatLocalISODate(weekAnchor)}
-            </p>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setWeekAnchor((w) => addDays(w, -7))}
-                className="h-9 px-3 rounded-xl border border-slate-200 text-sm font-semibold"
-              >
-                ←
-              </button>
-              <button
-                type="button"
-                onClick={() => setWeekAnchor((w) => addDays(w, 7))}
-                className="h-9 px-3 rounded-xl border border-slate-200 text-sm font-semibold"
-              >
-                →
-              </button>
+        <div className="space-y-6">
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
+            <p className="text-xs font-bold uppercase tracking-widest text-slate-400">{t("gridWeeklyTitle")}</p>
+            <div className="flex flex-wrap gap-4 text-xs text-[#2C2C2A]">
+              <span className="inline-flex items-center gap-2">
+                <span className="h-3 w-3 rounded-sm bg-[#1D9E75]" /> Vert = disponible
+              </span>
+              <span className="inline-flex items-center gap-2">
+                <span className="h-3 w-3 rounded-sm bg-slate-200 border border-slate-300" /> Gris = fermé
+              </span>
+              <span className="inline-flex items-center gap-2">
+                <span className="h-3 w-3 rounded-sm bg-[#FAEEDA] border border-[#F5C478]" /> Orange = réservation (non modifiable)
+              </span>
             </div>
-          </div>
-          <div className="rounded-2xl border border-slate-200 bg-white p-5">
-            <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">{t("gridWeeklyTitle")}</p>
-            <p className="text-sm text-slate-600 mb-4">{t("gridCombinedLegend")}</p>
             <div className="overflow-x-auto">
               <div className="min-w-[560px] grid grid-cols-[120px_repeat(7,1fr)] gap-2">
                 <div />
@@ -555,9 +512,9 @@ function TeacherScheduleInner() {
                           onClick={() => !locked && toggleAvail(d, s)}
                           className={cn(
                             "h-11 rounded-xl border transition-colors",
-                            locked ? "border-amber-300 bg-amber-50 cursor-not-allowed" : "",
+                            locked ? "border-[#F5C478] bg-[#FAEEDA] cursor-not-allowed" : "",
                             !locked && on ? "border-[#1D9E75] bg-[rgba(29,158,117,0.12)]" : "",
-                            !locked && !on ? "border-slate-200 bg-white hover:border-slate-300" : "",
+                            !locked && !on ? "border-slate-200 bg-slate-100 hover:border-slate-300" : "",
                           )}
                           title={locked ? t("titleCellBooked") : on ? t("titleCellAvailable") : t("titleCellUnavailable")}
                         />
@@ -567,155 +524,69 @@ function TeacherScheduleInner() {
                 ))}
               </div>
             </div>
-            <button
-              type="button"
-              disabled={saving}
-              onClick={() => void saveAvailability()}
-              className="mt-5 inline-flex items-center justify-center gap-2 h-11 px-5 rounded-full bg-[#1D9E75] text-white text-sm font-semibold hover:brightness-[0.98] disabled:opacity-60"
-            >
-              <Save size={18} />
-              {saving ? t("savingDots") : t("save")}
-            </button>
-          </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 space-y-4">
-            <p className="text-sm font-bold text-slate-800">{t("blockExceptionalTitle")}</p>
-
-            <div className="flex flex-col gap-3">
-              <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-800">
-                <input
-                  type="radio"
-                  name="blockMode"
-                  checked={blockMode === "period"}
-                  onChange={() => setBlockMode("period")}
-                  className="h-4 w-4 accent-[#1D9E75] border-slate-300"
-                />
-                {t("blockModePeriod")}
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-800">
-                <input
-                  type="radio"
-                  name="blockMode"
-                  checked={blockMode === "range"}
-                  onChange={() => setBlockMode("range")}
-                  className="h-4 w-4 accent-[#1D9E75] border-slate-300"
-                />
-                {t("blockModeTimeRange")}
-              </label>
+            <div className="border-t border-slate-100 pt-4 space-y-2">
+              <p className="text-sm font-bold text-[#2C2C2A]">Format des cours</p>
+              <div className="flex flex-wrap gap-2">
+                {(["En personne", "En ligne", "À domicile"] as const).map((label, i) => {
+                  const keys = ["person", "online", "home"] as const;
+                  const on = keys[i] === "person" ? chipsPerson : keys[i] === "online" ? chipsOnline : chipsHome;
+                  return (
+                    <button
+                      key={label}
+                      type="button"
+                      onClick={() => toggleFormat(keys[i])}
+                      className={cn(
+                        "h-10 px-4 rounded-full text-sm font-semibold border transition-colors",
+                        on ? "border-[#1D9E75] bg-[rgba(29,158,117,0.12)] text-[#0f6e56]" : "border-slate-200 bg-slate-100 text-slate-600",
+                      )}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-3">
-              <input
-                type="date"
-                value={blockDate}
-                onChange={(e) => setBlockDate(e.target.value)}
-                className="h-11 rounded-xl border border-slate-200 px-3 text-sm max-w-xs"
-              />
-
-              {blockMode === "period" ? (
+            <div className="border-t border-slate-100 pt-4 space-y-3">
+              <p className="text-sm font-bold text-[#2C2C2A]">Bloquer une exception</p>
+              <div className="flex flex-wrap items-end gap-3">
+                <input
+                  type="date"
+                  value={blockDate}
+                  onChange={(e) => setBlockDate(e.target.value)}
+                  className="h-11 rounded-xl border border-slate-200 px-3 text-sm"
+                />
                 <select
                   value={blockPeriod}
                   onChange={(e) => setBlockPeriod(e.target.value as typeof blockPeriod)}
-                  className="h-11 rounded-xl border border-slate-200 px-3 text-sm max-w-xs"
+                  className="h-11 rounded-xl border border-slate-200 px-3 text-sm min-w-[10rem]"
                 >
                   <option value="matin">{t("morning")}</option>
                   <option value="apresmidi">{t("afternoon")}</option>
                   <option value="soir">{t("evening")}</option>
                   <option value="all">{t("periodAllDay")}</option>
                 </select>
-              ) : (
-                <div className="flex flex-wrap items-end gap-4">
-                  <div className="flex flex-col gap-1">
-                    <span className="text-xs font-semibold text-slate-600">{t("blockFromLabel")}</span>
-                    <input
-                      type="time"
-                      value={blockStartTime}
-                      onChange={(e) => setBlockStartTime(e.target.value)}
-                      step={60}
-                      className="h-11 w-[8.5rem] rounded-xl border border-slate-200 px-3 text-sm"
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <span className="text-xs font-semibold text-slate-600">{t("blockToLabel")}</span>
-                    <input
-                      type="time"
-                      value={blockEndTime}
-                      onChange={(e) => setBlockEndTime(e.target.value)}
-                      step={60}
-                      className="h-11 w-[8.5rem] rounded-xl border border-slate-200 px-3 text-sm"
-                    />
-                  </div>
-                  <p className="text-sm italic text-[#1D9E75] w-full basis-full">
-                    {t("blockPreview")
-                      .replace("{start}", formatTimePreviewLabel(blockStartTime, locale))
-                      .replace("{end}", formatTimePreviewLabel(blockEndTime, locale))}
-                  </p>
-                </div>
-              )}
-
-              <input
-                value={blockReason}
-                onChange={(e) => setBlockReason(e.target.value)}
-                placeholder={t("reasonPlaceholder")}
-                className="h-11 rounded-xl border border-slate-200 px-3 text-sm max-w-xl"
-              />
+                <button
+                  type="button"
+                  disabled={saving || !blockDate}
+                  onClick={() => void addBlocked()}
+                  className="h-11 px-5 rounded-full bg-red-600 text-white text-sm font-semibold hover:bg-red-700 disabled:opacity-50"
+                >
+                  Bloquer
+                </button>
+              </div>
             </div>
 
             <button
               type="button"
-              disabled={saving || !blockDate}
-              onClick={() => void addBlocked()}
-              className="h-10 px-4 rounded-full border border-[#1D9E75] text-[#0f6e56] text-sm font-semibold hover:bg-[#e1f5ee] disabled:opacity-50"
+              disabled={saving}
+              onClick={() => void saveAll()}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 h-12 px-8 rounded-full bg-[#1D9E75] text-white text-sm font-semibold hover:brightness-[0.98] disabled:opacity-60"
             >
-              {t("blockAction")}
+              <Save size={18} />
+              {saving ? t("savingDots") : t("save")}
             </button>
-
-            {blockedRows.length > 0 ? (
-              <ul className="space-y-2 pt-2">
-                {blockedRows.map((r) => {
-                  const st = r.start_time?.trim();
-                  const en = r.end_time?.trim();
-                  const isRange =
-                    st &&
-                    en &&
-                    parseHHMMToMinutes(st) != null &&
-                    parseHHMMToMinutes(en) != null &&
-                    (parseHHMMToMinutes(en) as number) > (parseHHMMToMinutes(st) as number);
-                  return (
-                    <li
-                      key={r.id}
-                      className={cn(
-                        "flex items-center justify-between gap-2 text-sm rounded-xl px-3 py-2 border",
-                        isRange ? "border-amber-200 bg-amber-50/80" : "border-slate-100",
-                      )}
-                    >
-                      <span>
-                        {r.blocked_date} —{" "}
-                        {isRange ? (
-                          <>
-                            🚫 {formatTimePreviewLabel(st, locale)} – {formatTimePreviewLabel(en, locale)}
-                            {r.reason ? <span className="text-slate-600"> · {r.reason}</span> : null}
-                          </>
-                        ) : r.period === "all" ? (
-                          t("periodAllDay")
-                        ) : r.period === "matin" ? (
-                          t("morning")
-                        ) : r.period === "apresmidi" ? (
-                          t("afternoon")
-                        ) : r.period === "soir" ? (
-                          t("evening")
-                        ) : (
-                          r.period || "—"
-                        )}
-                      </span>
-                      <button type="button" onClick={() => void removeBlocked(r.id)} className="text-rose-600 p-1" aria-label={t("deleteAria")}>
-                        <Trash2 size={16} />
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            ) : null}
           </div>
         </div>
       )}
@@ -725,7 +596,13 @@ function TeacherScheduleInner() {
 
 export default function TeacherSchedulePage() {
   return (
-    <Suspense fallback={<div className="max-w-5xl mx-auto py-20 flex justify-center"><Loader2 className="animate-spin text-[#1D9E75]" size={32} /></div>}>
+    <Suspense
+      fallback={
+        <div className="max-w-5xl mx-auto py-20 flex justify-center">
+          <Loader2 className="animate-spin text-[#1D9E75]" size={32} />
+        </div>
+      }
+    >
       <TeacherScheduleInner />
     </Suspense>
   );

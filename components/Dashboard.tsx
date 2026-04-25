@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { Calendar, Flame, Loader2, MessageSquare, ShieldCheck, Video, X } from "lucide-react";
+import { Calendar, Flame, Loader2, MessageSquare, ShieldCheck, X } from "lucide-react";
 import { useAuth } from "./AuthProvider";
 import { getSupabaseClient } from "../lib/supabase";
 import { authDisplayName } from "../lib/authDisplay";
@@ -39,6 +39,7 @@ export function Dashboard() {
   const [profile, setProfile] = useState<StudentProfile | null>(null);
   const [bookings, setBookings] = useState<BookingWithTeacher[]>([]);
   const [teacherBookings, setTeacherBookings] = useState<any[]>([]);
+  const [teacherMeta, setTeacherMeta] = useState<{ discipline: string; hourlyRate: number } | null>(null);
   const [loading, setLoading] = useState(true);
 
   const teacherDash = useMemo(() => {
@@ -58,7 +59,23 @@ export function Dashboard() {
       .filter((b) => String(b.slot_date || b.date || "") === today)
       .sort((a, b) => bookingSortKey(a).localeCompare(bookingSortKey(b)));
     const pendingList = teacherBookings.filter((b) => b.status === "pending_payment" || b.status === "pending_teacher");
-    return { next, todayList, pendingList, today };
+    const monthStart = new Date();
+    monthStart.setDate(1);
+    monthStart.setHours(0, 0, 0, 0);
+    const monthRevenue = teacherBookings
+      .filter((b) => {
+        if (!["confirmed", "booked"].includes(b.status)) return false;
+        if (!b.created_at) return false;
+        const c = new Date(b.created_at as string);
+        if (Number.isNaN(c.getTime())) return false;
+        return c.getFullYear() === monthStart.getFullYear() && c.getMonth() === monthStart.getMonth();
+      })
+      .reduce((s, b) => s + (Number(b.price) || 0), 0);
+    const distinctStudents = new Set(
+      teacherBookings.filter((b) => activeStatuses.includes(b.status)).map((b) => String(b.student_id)),
+    ).size;
+    const coursesTodayCount = todayList.filter((b) => activeStatuses.includes(b.status)).length;
+    return { next, todayList, pendingList, today, monthRevenue, distinctStudents, coursesTodayCount };
   }, [isTeacherRole, teacherBookings]);
 
   const cancelTeacherBooking = async (id: string) => {
@@ -172,11 +189,20 @@ export function Dashboard() {
     };
 
     const loadTeacherBookings = async () => {
-      const { data: t } = await supabase.from("teachers").select("id").eq("user_id", user.id).maybeSingle();
+      const { data: t } = await supabase
+        .from("teachers")
+        .select("id, discipline, price_per_lesson")
+        .eq("user_id", user.id)
+        .maybeSingle();
       if (!t?.id) {
         setTeacherBookings([]);
+        setTeacherMeta(null);
         return;
       }
+      setTeacherMeta({
+        discipline: String((t as { discipline?: string }).discipline || "—"),
+        hourlyRate: Number((t as { price_per_lesson?: number }).price_per_lesson) || 0,
+      });
       const teacherSlug = t.id as string;
       const { data: rows, error } = await supabase
         .from("bookings")
@@ -264,40 +290,64 @@ export function Dashboard() {
   }
 
   if (isTeacherRole && teacherDash) {
-    const { next, todayList, pendingList, today } = teacherDash;
+    const { next, pendingList, today, monthRevenue, distinctStudents, coursesTodayCount } = teacherDash;
+    const displayName = authProfile?.name || authDisplayName(user);
+    const todayLabel = new Date().toLocaleDateString("fr-CA", { weekday: "long", day: "numeric", month: "long" });
+    const lessonPrice = (b: (typeof teacherBookings)[0]) =>
+      Number(b.price) > 0 ? Number(b.price) : teacherMeta?.hourlyRate ?? 0;
+    const fmtMoney = (n: number) =>
+      new Intl.NumberFormat("fr-CA", { style: "currency", currency: "CAD", maximumFractionDigits: 0 }).format(n);
+
     return (
-      <div className="space-y-6 pb-12">
-        <section className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          <div>
-            <p className="ds-label text-[var(--p-text-subtle)]">Espace professeur</p>
-            <h2 className="text-[32px] sm:text-[40px] leading-[1.1] text-[var(--p-text)]">Tableau de bord</h2>
-            <p className="text-[14px] text-[var(--p-text-muted)] mt-1">Prochains cours et demandes</p>
+      <div className="space-y-5 pb-12">
+        <div className="rounded-2xl bg-[#2C2C2A] text-white p-6 shadow-md">
+          <p className="text-xs text-white/50 capitalize">{todayLabel}</p>
+          <h2 className="text-2xl sm:text-3xl font-bold mt-2">
+            Bonjour {displayName} <span className="inline-block">👋</span>
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
+            <div className="rounded-xl bg-white/10 px-4 py-3 border border-white/10">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[#5DCAA5]">Cours aujourd&apos;hui</p>
+              <p className="text-2xl font-bold mt-1">{coursesTodayCount}</p>
+            </div>
+            <div className="rounded-xl bg-white/10 px-4 py-3 border border-white/10">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[#5DCAA5]">Élèves actifs</p>
+              <p className="text-2xl font-bold mt-1">{distinctStudents}</p>
+            </div>
+            <div className="rounded-xl bg-white/10 px-4 py-3 border border-white/10">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[#5DCAA5]">Ce mois</p>
+              <p className="text-2xl font-bold mt-1">{fmtMoney(monthRevenue)}</p>
+            </div>
           </div>
-        </section>
+        </div>
 
         {next ? (
-          <div
-            className="rounded-2xl border-2 border-[#1D9E75] bg-[rgba(29,158,117,0.06)] p-6 shadow-sm"
-            style={{ borderColor: "#1D9E75" }}
-          >
-            <p className="text-[11px] font-bold uppercase tracking-widest text-[#085041] mb-3">Prochain cours</p>
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="rounded-2xl border-2 border-[#1D9E75] bg-white p-6 shadow-sm">
+            <p className="text-[11px] font-bold uppercase tracking-widest text-[#1D9E75] mb-4">Prochain cours</p>
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
               <div className="flex items-center gap-4 min-w-0">
                 {next.studentPhotoUrl ? (
                   <img
                     src={next.studentPhotoUrl}
                     alt=""
-                    className="h-14 w-14 rounded-full object-cover border border-[rgba(29,158,117,0.35)] shrink-0"
+                    className="h-16 w-16 rounded-full object-cover border-2 border-[rgba(29,158,117,0.4)] shrink-0"
                   />
                 ) : (
-                  <div className="h-14 w-14 rounded-full bg-[#e1f5ee] flex items-center justify-center text-lg font-bold text-[#0f6e56] shrink-0">
-                    {(next.studentName || "?").slice(0, 1).toUpperCase()}
+                  <div
+                    className="h-16 w-16 rounded-full shrink-0 flex items-center justify-center text-xl font-bold text-white"
+                    style={{ background: "linear-gradient(135deg,#1D9E75,#0f6e56)" }}
+                  >
+                    {(next.studentName || "?").slice(0, 2).toUpperCase()}
                   </div>
                 )}
                 <div className="min-w-0">
-                  <p className="text-lg font-bold text-[var(--p-text)] truncate">{next.studentName}</p>
-                  <p className="text-sm text-[var(--p-text-muted)]">
-                    {next.slot_date || next.date} · {next.time_slot || next.time} · {next.teaching_mode === "domicile" ? "À domicile" : next.teaching_mode === "online" ? "En ligne" : "Présentiel"}
+                  <p className="text-lg font-bold text-[#2C2C2A] truncate">{next.studentName}</p>
+                  <p className="text-sm text-[#2C2C2A]/70">{teacherMeta?.discipline ?? "—"}</p>
+                  <p className="text-sm text-[#2C2C2A]/80 mt-1">
+                    {next.slot_date || next.date} · {next.time_slot || next.time} · 1 h · {fmtMoney(lessonPrice(next))}
+                  </p>
+                  <p className="text-xs text-[#2C2C2A]/60 mt-0.5">
+                    {next.teaching_mode === "domicile" ? "À domicile" : next.teaching_mode === "online" ? "En ligne" : "En personne"}
                   </p>
                 </div>
               </div>
@@ -305,14 +355,14 @@ export function Dashboard() {
                 <button
                   type="button"
                   onClick={() => router.push("/messages")}
-                  className="inline-flex items-center gap-2 h-10 px-4 rounded-full bg-[#1D9E75] text-white text-sm font-semibold hover:brightness-[0.98]"
+                  className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-full bg-[#1D9E75] text-white text-sm font-semibold hover:brightness-[0.98]"
                 >
-                  <Video size={16} /> Démarrer
+                  Démarrer
                 </button>
                 <button
                   type="button"
                   onClick={() => router.push("/messages")}
-                  className="inline-flex items-center gap-2 h-10 px-4 rounded-full border border-slate-200 bg-white text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                  className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-full border-2 border-[#2C2C2A]/15 bg-white text-sm font-semibold text-[#2C2C2A] hover:bg-slate-50"
                 >
                   <MessageSquare size={16} /> Message
                 </button>
@@ -320,96 +370,54 @@ export function Dashboard() {
             </div>
           </div>
         ) : (
-          <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 p-6 text-sm text-slate-500">
-            Aucun cours à venir confirmé. Les réservations payées apparaîtront ici.
+          <div className="rounded-2xl border border-[#1D9E75]/30 bg-[rgba(29,158,117,0.06)] p-6 text-sm text-[#2C2C2A]/80">
+            Aucun cours prévu · Tes disponibilités sont visibles par les élèves
           </div>
         )}
 
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-4">Aujourd&apos;hui — {today}</p>
-          {todayList.length === 0 ? (
-            <p className="text-sm text-slate-500">Rien de prévu aujourd&apos;hui.</p>
-          ) : (
-            <ul className="space-y-3">
-              {todayList.map((b) => (
-                <li
-                  key={b.id}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/80 px-4 py-3"
-                >
-                  <div>
-                    <p className="text-sm font-bold text-slate-900">{b.time_slot || b.time}</p>
-                    <p className="text-xs text-slate-600">{b.studentName}</p>
-                  </div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span
-                      className={cn(
-                        "text-[10px] font-bold uppercase px-2 py-0.5 rounded-full",
-                        b.status === "pending_payment" ? "bg-amber-100 text-amber-900" : "bg-[#e1f5ee] text-[#085041]",
-                      )}
-                    >
-                      {b.status === "pending_payment" ? "Paiement en attente" : b.status}
-                    </span>
-                    {b.status === "pending_payment" ? (
-                      <button
-                        type="button"
-                        onClick={() => void cancelTeacherBooking(b.id)}
-                        className="text-xs font-semibold text-rose-600 hover:underline"
-                      >
-                        Annuler
-                      </button>
-                    ) : null}
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-4">Demandes en attente</p>
+          <p className="text-[11px] font-bold uppercase tracking-widest text-[#1D9E75] mb-4">Demandes en attente</p>
           {pendingList.length === 0 ? (
-            <p className="text-sm text-slate-500">Aucune demande en attente de traitement.</p>
+            <p className="text-sm text-slate-500">Aucune demande en attente</p>
           ) : (
             <ul className="space-y-3">
               {pendingList.map((b) => (
                 <li
                   key={b.id}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-100 px-4 py-3"
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-100 px-4 py-4 bg-slate-50/50"
                 >
-                  <div>
-                    <p className="text-sm font-bold text-slate-900">{b.studentName}</p>
-                    <p className="text-xs text-slate-600">
-                      {b.slot_date || b.date} · {b.time_slot || b.time}
-                    </p>
-                    <p className="text-[10px] text-slate-400 mt-1">{b.status}</p>
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div
+                      className="h-11 w-11 rounded-full shrink-0 flex items-center justify-center text-sm font-bold text-white"
+                      style={{ background: "linear-gradient(135deg,#6366f1,#1D9E75)" }}
+                    >
+                      {(b.studentName || "?").slice(0, 2).toUpperCase()}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-slate-900 truncate">{b.studentName}</p>
+                      <p className="text-xs text-slate-600">{teacherMeta?.discipline ?? "—"}</p>
+                      <p className="text-xs text-slate-500">
+                        {b.slot_date || b.date} · {b.time_slot || b.time}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 shrink-0">
                     {b.status === "pending_teacher" ? (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => void acceptTeacherBooking(b.id)}
-                          className="h-9 px-3 rounded-full bg-[#1D9E75] text-white text-xs font-bold"
-                        >
-                          ✓ Accepter
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => void cancelTeacherBooking(b.id)}
-                          className="h-9 px-3 rounded-full border border-slate-200 text-xs font-bold text-slate-600 inline-flex items-center gap-1"
-                        >
-                          <X size={14} /> Refuser
-                        </button>
-                      </>
-                    ) : (
                       <button
                         type="button"
-                        onClick={() => void cancelTeacherBooking(b.id)}
-                        className="h-9 px-3 rounded-full border border-rose-200 text-xs font-bold text-rose-600"
+                        onClick={() => void acceptTeacherBooking(b.id)}
+                        className="h-9 px-4 rounded-full bg-[#1D9E75] text-white text-xs font-bold"
                       >
-                        Libérer le créneau
+                        ✓ Accept
                       </button>
-                    )}
+                    ) : null}
+                    <button
+                      type="button"
+                      onClick={() => void cancelTeacherBooking(b.id)}
+                      className="h-9 px-4 rounded-full border border-slate-200 bg-white text-xs font-bold text-slate-700 inline-flex items-center gap-1"
+                    >
+                      <X size={14} /> Decline
+                    </button>
                   </div>
                 </li>
               ))}
@@ -417,27 +425,7 @@ export function Dashboard() {
           )}
         </div>
 
-        <div className="grid grid-cols-12 gap-6">
-          <div className="col-span-12 lg:col-span-8 space-y-6">
-            <div className="rounded-[14px] bg-[var(--p-dark-teal)] p-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <TeacherStat label="Revenus" value="$1,240" sub="+12% vs mois dernier" />
-                <TeacherStat label="Élèves" value="—" sub="données démo" />
-                <TeacherStat label="Réservations" value={teacherBookings.length.toString()} sub="côté prof" />
-              </div>
-            </div>
-            <AssignmentHub mode="teacher" />
-          </div>
-          <div className="col-span-12 lg:col-span-4 space-y-6">
-            <div className="rounded-[14px] bg-[var(--p-dark-teal)] p-8 text-white">
-              <p className="ds-label text-[var(--p-mint-accent)]">Vue prof</p>
-              <h3 className="text-2xl leading-tight mt-2">Gère ton activité</h3>
-              <p className="text-[13px] text-[var(--p-mint-accent)]/90 mt-3 leading-relaxed">
-                Emploi du temps, réservations et devoirs depuis une seule plateforme.
-              </p>
-            </div>
-          </div>
-        </div>
+        <AssignmentHub mode="teacher" />
       </div>
     );
   }
@@ -539,12 +527,3 @@ export function Dashboard() {
   );
 }
 
-function TeacherStat({ label, value, sub }: { label: string; value: string; sub: string }) {
-  return (
-    <div className="rounded-[14px] bg-[#085041] p-5 border border-[rgba(159,225,203,0.15)]">
-      <p className="ds-label text-[var(--p-mint-accent)]">{label}</p>
-      <p className="text-[28px] leading-none text-white mt-3">{value}</p>
-      <p className="text-[12px] text-[#5DCAA5] mt-2">{sub}</p>
-    </div>
-  );
-}

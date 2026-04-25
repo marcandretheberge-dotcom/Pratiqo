@@ -220,7 +220,10 @@ export function Explore({
         const matchesCategory = teacherMatchesExploreCategory(t, selectedCategory);
         const matchesSearch = teacherMatchesExploreSearch(t, searchQuery);
         const matchesMode =
-          teachingMode === "all" || t.teachingMode === teachingMode || t.teachingMode === "both";
+          teachingMode === "all" ||
+          t.teachingMode === teachingMode ||
+          t.teachingMode === "both" ||
+          t.teachingMode === "all";
         const matchesVerified = !onlyVerified || t.isVerified;
         return matchesCategory && matchesSearch && matchesMode && matchesVerified;
       })

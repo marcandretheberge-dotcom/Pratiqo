@@ -1,31 +1,18 @@
 "use client";
 
-import React, { Suspense, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
-import {
-  BookOpen,
-  CalendarDays,
-  Gift,
-  LayoutDashboard,
-  MessageCircle,
-  Search,
-  Settings,
-  ShieldCheck,
-  UserRound,
-  UsersRound,
-} from "lucide-react";
+import { usePathname } from "next/navigation";
+import { BookOpen, CalendarDays, MessageCircle, Search, UserRound, UsersRound } from "lucide-react";
 import { cn } from "../lib/utils";
 import { useAuth } from "./AuthProvider";
-import { logout } from "../lib/auth";
 import { getSupabaseClient } from "../lib/supabase";
 import { fetchUnreadMessageCount } from "../lib/messaging";
 import Logo from "./ui/Logo";
 import { NotificationCenter } from "./NotificationCenter";
-import { VerificationBadge } from "./VerificationBadge";
-import { getVerificationLevel, type VerificationLevel } from "../lib/verification";
 import { useLocale } from "../lib/locale-context";
 import { LocaleSwitcher } from "./LocaleSwitcher";
+import { TeacherShellNav } from "./TeacherShellNav";
 
 type Role = "student" | "teacher" | string;
 
@@ -47,7 +34,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [loyaltyTier, setLoyaltyTier] = useState<string | null>(null);
-  const [teacherVerifyLevel, setTeacherVerifyLevel] = useState<VerificationLevel | null>(null);
+  const [teacherStudentCount, setTeacherStudentCount] = useState<number | null>(null);
+  const [teacherMoreOpen, setTeacherMoreOpen] = useState(false);
 
   useEffect(() => {
     if (!user?.id) {
@@ -80,39 +68,31 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!isTeacher || !user?.id) {
       setLoyaltyTier(null);
-      setTeacherVerifyLevel(null);
+      setTeacherStudentCount(0);
       return;
     }
     const supabase = getSupabaseClient();
     const load = async () => {
       const [{ data }, { data: trow }] = await Promise.all([
         supabase.from("profiles").select("loyalty_tier, plan").eq("id", user.id).maybeSingle(),
-        supabase
-          .from("teachers")
-          .select("verification_level, identity_verified, diploma_verified, is_verified")
-          .eq("user_id", user.id)
-          .maybeSingle(),
+        supabase.from("teachers").select("id").eq("user_id", user.id).maybeSingle(),
       ]);
       setLoyaltyTier(normalizeTier((data as { loyalty_tier?: string | null } | null)?.loyalty_tier));
-      const plan = String((data as { plan?: string | null } | null)?.plan || "free");
       if (trow) {
-        const tr = trow as {
-          verification_level?: number | null;
-          identity_verified?: boolean | null;
-          diploma_verified?: boolean | null;
-          is_verified?: boolean | null;
-        };
-        setTeacherVerifyLevel(
-          getVerificationLevel({
-            plan,
-            identity_verified: Boolean(tr.identity_verified),
-            diploma_verified: Boolean(tr.diploma_verified),
-            is_verified: tr.is_verified !== false,
-            verification_level: tr.verification_level ?? null,
-          }),
-        );
+        const tid = (trow as { id?: string }).id;
+        if (tid) {
+          const { data: studs } = await supabase.from("bookings").select("student_id").eq("teacher_id", tid);
+          const set = new Set<string>();
+          for (const r of studs || []) {
+            const sid = (r as { student_id?: string }).student_id;
+            if (sid) set.add(sid);
+          }
+          setTeacherStudentCount(set.size);
+        } else {
+          setTeacherStudentCount(0);
+        }
       } else {
-        setTeacherVerifyLevel(null);
+        setTeacherStudentCount(0);
       }
     };
     void load();
@@ -253,45 +233,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="flex flex-1 min-h-0">
         {/* Teacher desktop sidebar */}
         {isTeacher ? (
-          <aside className="hidden lg:flex w-56 shrink-0 flex-col border-r border-[#2C2C2A]/10 bg-[#2C2C2A] text-white py-4 px-2">
-            <nav className="flex flex-col gap-1">
-              <TeacherNavLink href="/dashboard" label={t("dashboard")} active={pathname === "/dashboard"} />
-              <Suspense fallback={<span className="h-20 block" />}>
-                <TeacherScheduleSidebarLinks />
-              </Suspense>
-              <TeacherNavLink href="/teacher/progress" label={t("progressStudentsNav")} active={pathname?.startsWith("/teacher/progress")} />
-              <TeacherNavLink
-                href="/teacher/verification"
-                label={t("verification")}
-                active={pathname?.startsWith("/teacher/verification")}
-                icon={<ShieldCheck size={18} className="opacity-90 shrink-0" />}
-                extra={
-                  teacherVerifyLevel !== null ? (
-                    <VerificationBadge level={teacherVerifyLevel} size="sm" showLabel={false} />
-                  ) : null
-                }
-              />
-              <TeacherNavLink href="/messages" label={t("messages")} active={pathname?.startsWith("/messages")} badge={unreadMessages} />
-              <TeacherNavLink
-                href="/loyalty"
-                label={t("loyalty")}
-                active={pathname?.startsWith("/loyalty")}
-                pill={loyaltyTier}
-              />
-              <TeacherNavLink href="/teacher/settings" label={t("settings")} active={pathname?.startsWith("/teacher/settings")} />
-            </nav>
-            <div className="mt-auto pt-6 px-2 space-y-3 border-t border-white/10">
-              <LocaleSwitcher />
-              <Link href="/legal/cgu" className="block text-[11px] text-white/60 hover:text-white/90">
-                {t("cgu")}
-              </Link>
-              <button
-                type="button"
-                onClick={() => void logout()}
-                className="w-full text-left text-xs font-semibold text-white/80 hover:text-white py-2"
-              >
-                {t("logout")}
-              </button>
+          <aside className="hidden lg:flex w-[220px] shrink-0 flex-col border-r border-white/5 bg-[#2C2C2A] text-white py-5 px-3">
+            <Link href="/dashboard" className="mb-6 flex items-center gap-2 px-1 min-w-0" aria-label={t("ariaHome")}>
+              <Logo size="sm" variant="light" className="[&_span]:!text-white" />
+            </Link>
+            <TeacherShellNav unreadMessages={unreadMessages} loyaltyTier={loyaltyTier} studentCount={teacherStudentCount} />
+            <div className="mt-auto pt-8 space-y-3 border-t border-white/10">
+              <div className="opacity-80 scale-90 origin-left">
+                <LocaleSwitcher />
+              </div>
+              <p className="text-[10px] text-white/40 leading-relaxed px-1">© 2026 Pratiqo inc.</p>
             </div>
           </aside>
         ) : null}
@@ -319,47 +270,67 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </nav>
       ) : null}
 
-      {/* Teacher mobile bottom tabs */}
+      {/* Teacher mobile: 5 tabs + More menu */}
       {isTeacher ? (
-        <nav className="lg:hidden fixed bottom-0 inset-x-0 z-50 border-t border-[#2C2C2A]/20 bg-[#2C2C2A] text-white safe-area-pb overflow-x-auto">
-          <div className="flex min-w-max px-1 h-16 items-stretch">
-            <TeacherTab href="/dashboard" icon={<LayoutDashboard size={20} />} label={t("teacherHome")} active={pathname === "/dashboard"} />
-            <TeacherTab href="/teacher/schedule" icon={<CalendarDays size={20} />} label={t("teacherCoursesShort")} active={pathname?.startsWith("/teacher/schedule")} />
-            <TeacherTab href="/teacher/progress" icon={<UsersRound size={20} />} label={t("teacherProgressShort")} active={pathname?.startsWith("/teacher/progress")} />
-            <TeacherTab
-              href="/teacher/verification"
-              icon={<ShieldCheck size={20} />}
-              label={t("teacherVerifyShort")}
-              active={pathname?.startsWith("/teacher/verification")}
-              suffix={
-                teacherVerifyLevel !== null ? (
-                  <VerificationBadge level={teacherVerifyLevel} size="sm" showLabel={false} className="scale-90" />
-                ) : null
-              }
-            />
-            <TeacherTab href="/messages" icon={<MessageCircle size={20} />} label={t("messages")} active={pathname?.startsWith("/messages")} badge={unreadMessages} />
-            <TeacherTab href="/loyalty" icon={<Gift size={20} />} label={t("loyalty")} active={pathname?.startsWith("/loyalty")} pill={loyaltyTier} />
-            <TeacherTab href="/teacher/settings" icon={<Settings size={20} />} label={t("teacherSettingsShort")} active={pathname?.startsWith("/teacher/settings")} />
-          </div>
-        </nav>
+        <>
+          <nav className="lg:hidden fixed bottom-0 inset-x-0 z-50 border-t border-white/10 bg-[#2C2C2A] text-white safe-area-pb">
+            <div className="grid grid-cols-5 h-16 max-w-lg mx-auto">
+              <TeacherEmojiTab href="/dashboard" emoji="📊" label="Accueil" active={pathname === "/dashboard"} />
+              <TeacherEmojiTab href="/teacher/schedule" emoji="📅" label="Cours" active={pathname?.startsWith("/teacher/schedule") ?? false} />
+              <TeacherEmojiTab href="/teacher/progress" emoji="👥" label="Élèves" active={pathname?.startsWith("/teacher/progress") ?? false} />
+              <TeacherEmojiTab href="/messages" emoji="💬" label="Messages" active={pathname?.startsWith("/messages") ?? false} badge={unreadMessages} />
+              <button
+                type="button"
+                onClick={() => setTeacherMoreOpen(true)}
+                className={cn(
+                  "flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors",
+                  teacherMoreOpen || ["/loyalty", "/teacher/verification", "/teacher/settings"].some((p) => pathname?.startsWith(p))
+                    ? "text-[#5DCAA5]"
+                    : "text-white/70",
+                )}
+              >
+                <span className="text-lg leading-none">⚙️</span>
+                Plus
+              </button>
+            </div>
+          </nav>
+          {teacherMoreOpen ? (
+            <div className="lg:hidden fixed inset-0 z-[60] flex flex-col justify-end bg-black/50" role="dialog" aria-modal>
+              <button type="button" className="flex-1 min-h-0 w-full cursor-default" aria-label="Fermer" onClick={() => setTeacherMoreOpen(false)} />
+              <div className="rounded-t-2xl bg-[#2C2C2A] text-white p-4 pb-safe space-y-1 border-t border-white/10">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 px-2 pb-2">Menu</p>
+                <Link
+                  href="/loyalty"
+                  onClick={() => setTeacherMoreOpen(false)}
+                  className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold hover:bg-white/10"
+                >
+                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 text-base">⭐</span>
+                  <span className="flex-1">{t("loyalty")}</span>
+                  {loyaltyTier ? <span className="text-xs text-[#5DCAA5]">{loyaltyTier}</span> : null}
+                </Link>
+                <Link
+                  href="/teacher/verification"
+                  onClick={() => setTeacherMoreOpen(false)}
+                  className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold hover:bg-white/10"
+                >
+                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 text-base">🛡️</span>
+                  <span>{t("verification")}</span>
+                </Link>
+                <Link
+                  href="/teacher/settings"
+                  onClick={() => setTeacherMoreOpen(false)}
+                  className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold hover:bg-white/10"
+                >
+                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 text-base">⚙️</span>
+                  <span>{t("settings")}</span>
+                </Link>
+              </div>
+            </div>
+          ) : null}
+        </>
       ) : null}
 
     </div>
-  );
-}
-
-function TeacherScheduleSidebarLinks() {
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const { t } = useLocale();
-  const tab = searchParams.get("tab");
-  const onSchedule = pathname?.startsWith("/teacher/schedule") ?? false;
-  const dispo = tab === "dispo" || tab === "availability";
-  return (
-    <>
-      <TeacherNavLink href="/teacher/schedule" label={t("tabMyCourses")} active={onSchedule && !dispo} />
-      <TeacherNavLink href="/teacher/schedule?tab=dispo" label={t("tabAvailabilityNav")} active={onSchedule && dispo} />
-    </>
   );
 }
 
@@ -388,92 +359,36 @@ function StudentTab({
   );
 }
 
-function TeacherTab({
+function TeacherEmojiTab({
   href,
-  icon,
+  emoji,
   label,
   active,
   badge,
-  pill,
-  suffix,
 }: {
   href: string;
-  icon: React.ReactNode;
+  emoji: string;
   label: string;
   active: boolean;
   badge?: number;
-  pill?: string | null;
-  suffix?: React.ReactNode;
 }) {
   return (
     <Link
       href={href}
       className={cn(
-        "flex flex-col items-center justify-center min-w-[4.25rem] px-1.5 gap-0.5 text-[9px] font-semibold transition-colors border-r border-white/10 last:border-0",
-        active ? "text-[#7FE0C3] bg-white/5" : "text-white/75 hover:text-white",
+        "flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors",
+        active ? "text-[#5DCAA5]" : "text-white/70 hover:text-white/90",
       )}
     >
-      <span className="relative">
-        {icon}
+      <span className="relative text-lg leading-none">
+        {emoji}
         {badge && badge > 0 ? (
-          <span className="absolute -top-1 -right-2 min-w-[1rem] h-4 px-0.5 rounded-full bg-[#1D9E75] text-white text-[9px] font-bold flex items-center justify-center">
+          <span className="absolute -top-1 -right-2 min-w-[1rem] h-4 px-0.5 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">
             {badge > 99 ? "99+" : badge}
           </span>
         ) : null}
       </span>
-      <span className="flex flex-col items-center gap-0.5">
-        <span className="flex items-center gap-0.5">
-          {label}
-          {pill ? <span className="text-[8px] opacity-80">({pill})</span> : null}
-        </span>
-        {suffix}
-      </span>
-    </Link>
-  );
-}
-
-function TeacherNavLink({
-  href,
-  label,
-  active,
-  badge,
-  pill,
-  icon,
-  extra,
-}: {
-  href: string;
-  label: string;
-  active: boolean;
-  badge?: number;
-  pill?: string | null;
-  icon?: React.ReactNode;
-  extra?: React.ReactNode;
-}) {
-  return (
-    <Link
-      href={href}
-      className={cn(
-        "flex items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
-        active ? "bg-white/12 text-white" : "text-white/80 hover:bg-white/8 hover:text-white",
-      )}
-    >
-      <span className="flex items-center gap-2 min-w-0">
-        {icon}
-        <span className="truncate">{label}</span>
-        {extra}
-      </span>
-      <span className="flex items-center gap-1 shrink-0">
-        {pill ? (
-          <span className="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-md bg-[#1D9E75]/30 text-[#B8F5DC]">
-            {pill}
-          </span>
-        ) : null}
-        {badge && badge > 0 ? (
-          <span className="min-w-[1.25rem] h-5 px-1 rounded-full bg-[#1D9E75] text-white text-[11px] font-bold flex items-center justify-center">
-            {badge > 99 ? "99+" : badge}
-          </span>
-        ) : null}
-      </span>
+      {label}
     </Link>
   );
 }

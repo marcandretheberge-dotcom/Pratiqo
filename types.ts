@@ -6,7 +6,7 @@ export type Discipline =
   | "Sports"
   | "Scolaire";
 
-export type TeachingMode = "online" | "person" | "both";
+export type TeachingMode = "online" | "person" | "both" | "home" | "all";
 
 export interface Teacher {
   id: string;
