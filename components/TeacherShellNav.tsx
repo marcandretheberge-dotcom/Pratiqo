@@ -3,16 +3,18 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "../lib/utils";
+import { useLocale } from "../lib/locale-context";
+import type { TranslationKey } from "../lib/translations";
 
-const NAV = [
-  { href: "/dashboard", emoji: "📊", label: "Tableau de bord" },
-  { href: "/teacher/schedule", emoji: "📅", label: "Mes cours" },
-  { href: "/teacher/progress", emoji: "👥", label: "Mes élèves" },
-  { href: "/messages", emoji: "💬", label: "Messages" },
-  { href: "/loyalty", emoji: "⭐", label: "Fidélité" },
-  { href: "/teacher/verification", emoji: "🛡️", label: "Vérification" },
-  { href: "/teacher/settings", emoji: "⚙️", label: "Paramètres" },
-] as const;
+const NAV: { href: string; emoji: string; labelKey: TranslationKey }[] = [
+  { href: "/dashboard", emoji: "📊", labelKey: "teacherDashboard" },
+  { href: "/teacher/schedule", emoji: "📅", labelKey: "teacherSchedule" },
+  { href: "/teacher/progress", emoji: "👥", labelKey: "teacherStudents" },
+  { href: "/messages", emoji: "💬", labelKey: "teacherMessages" },
+  { href: "/loyalty", emoji: "⭐", labelKey: "teacherLoyalty" },
+  { href: "/teacher/verification", emoji: "🛡️", labelKey: "teacherVerification" },
+  { href: "/teacher/settings", emoji: "⚙️", labelKey: "teacherSettings" },
+];
 
 function isActive(pathname: string | null, href: string): boolean {
   if (!pathname) return false;
@@ -31,6 +33,7 @@ export function TeacherShellNav({
   studentCount: number | null;
 }) {
   const pathname = usePathname();
+  const { t } = useLocale();
 
   return (
     <nav className="flex flex-col gap-1">
@@ -64,7 +67,9 @@ export function TeacherShellNav({
               >
                 {item.emoji}
               </span>
-              <span className={cn("truncate", active ? "text-[#5DCAA5]" : "text-[rgba(255,255,255,0.7)]")}>{item.label}</span>
+              <span className={cn("truncate", active ? "text-[#5DCAA5]" : "text-[rgba(255,255,255,0.7)]")}>
+                {t(item.labelKey)}
+              </span>
             </span>
             {badge?.kind === "count" ? (
               <span

@@ -4,6 +4,8 @@ import React, { useEffect, useMemo, useState } from "react";
 import { ChevronDown, ChevronUp, Loader2 } from "lucide-react";
 import { useAuth } from "../../../../components/AuthProvider";
 import { getSupabaseClient } from "../../../../lib/supabase";
+import { useLocale } from "../../../../lib/locale-context";
+import type { TranslationKey } from "../../../../lib/translations";
 
 type BookingRow = {
   id: string;
@@ -18,18 +20,18 @@ type StudentAgg = {
   name: string;
   discipline: string;
   levelLabel: string;
-  progressBadge: string;
 };
 
-const BADGE_FROM_LEVEL = (lvl: string | null | undefined): string => {
+function badgeFromLevel(lvl: string | null | undefined, t: (key: TranslationKey) => string): string {
   const s = (lvl || "").toLowerCase();
-  if (s.includes("avanc") || s.includes("advanced")) return "Avancé";
-  if (s.includes("inter") || s.includes("mid")) return "Intermédiaire";
-  return "Débutant";
-};
+  if (s.includes("avanc") || s.includes("advanced")) return t("levelAdvanced");
+  if (s.includes("inter") || s.includes("mid")) return t("levelIntermediate");
+  return t("levelBeginner");
+}
 
 export default function TeacherProgressPage() {
   const { user } = useAuth();
+  const { t } = useLocale();
   const [loading, setLoading] = useState(true);
   const [students, setStudents] = useState<StudentAgg[]>([]);
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -41,16 +43,16 @@ export default function TeacherProgressPage() {
     let cancelled = false;
 
     const load = async () => {
-      const { data: t } = await supabase.from("teachers").select("id, discipline").eq("user_id", user.id).maybeSingle();
-      if (!t?.id) {
+      const { data: teacherRow } = await supabase.from("teachers").select("id, discipline").eq("user_id", user.id).maybeSingle();
+      if (!teacherRow?.id) {
         if (!cancelled) {
           setStudents([]);
           setLoading(false);
         }
         return;
       }
-      const tid = t.id as string;
-      const disc = String((t as { discipline?: string }).discipline || "—");
+      const tid = teacherRow.id as string;
+      const disc = String((teacherRow as { discipline?: string }).discipline || "—");
 
       const { data: rows } = await supabase
         .from("bookings")
@@ -64,7 +66,7 @@ export default function TeacherProgressPage() {
         const sid = row.student_id;
         if (!sid || map.has(sid)) continue;
         const { data: prow } = await supabase.from("profiles").select("name").eq("id", sid).maybeSingle();
-        map.set(sid, { name: (prow?.name as string) || "Élève", level: row.student_level ?? null });
+        map.set(sid, { name: (prow?.name as string) || t("studentDefaultName"), level: row.student_level ?? null });
       }
 
       const agg: StudentAgg[] = Array.from(map.entries()).map(([studentId, v]) => ({
@@ -72,7 +74,6 @@ export default function TeacherProgressPage() {
         name: v.name,
         discipline: disc,
         levelLabel: v.level || "—",
-        progressBadge: BADGE_FROM_LEVEL(v.level),
       }));
 
       const notes: Record<string, string> = {};
@@ -120,7 +121,7 @@ export default function TeacherProgressPage() {
       cancelled = true;
       void supabase.removeChannel(ch);
     };
-  }, [user?.id]);
+  }, [user?.id, t]);
 
   const sorted = useMemo(() => [...students].sort((a, b) => a.name.localeCompare(b.name)), [students]);
 
@@ -129,9 +130,9 @@ export default function TeacherProgressPage() {
   return (
     <div className="space-y-6 pb-8">
       <div>
-        <p className="text-[10px] font-bold uppercase tracking-widest text-[#1D9E75]">Espace professeur</p>
-        <h1 className="mt-1 text-2xl font-bold text-[#2C2C2A] sm:text-3xl">Mes élèves</h1>
-        <p className="mt-2 text-sm text-slate-600">Suivi, notes et devoirs par élève.</p>
+        <p className="text-[10px] font-bold uppercase tracking-widest text-[#1D9E75]">{t("teacherSpaceLabel")}</p>
+        <h1 className="mt-1 text-2xl font-bold text-[#2C2C2A] sm:text-3xl">{t("myStudents")}</h1>
+        <p className="mt-2 text-sm text-slate-600">{t("studentsSubtitle")}</p>
       </div>
 
       {loading ? (
@@ -139,7 +140,7 @@ export default function TeacherProgressPage() {
           <Loader2 className="h-9 w-9 animate-spin text-[#1D9E75]" />
         </div>
       ) : sorted.length === 0 ? (
-        <p className="text-sm text-slate-500 rounded-2xl border border-slate-200 bg-white p-6">Aucun élève pour le moment.</p>
+        <p className="text-sm text-slate-500 rounded-2xl border border-slate-200 bg-white p-6">{t("noStudents")}</p>
       ) : (
         <ul className="space-y-3">
           {sorted.map((s) => {
@@ -159,7 +160,7 @@ export default function TeacherProgressPage() {
                     <p className="text-xs text-slate-600 truncate">{s.discipline}</p>
                     <div className="flex flex-wrap items-center gap-2 mt-1">
                       <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-[#e1f5ee] text-[#085041]">
-                        {s.progressBadge}
+                        {badgeFromLevel(s.levelLabel, t)}
                       </span>
                       <span className="text-xs text-slate-500">{s.levelLabel}</span>
                     </div>
@@ -173,9 +174,9 @@ export default function TeacherProgressPage() {
                       <p className="text-sm text-[#2C2C2A] whitespace-pre-wrap">{notesByStudent[s.studentId] || "—"}</p>
                     </div>
                     <div>
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Devoirs</p>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">{t("progressHomeworkTitle")}</p>
                       {(homeworkByStudent[s.studentId] || []).length === 0 ? (
-                        <p className="text-xs text-slate-500">Aucun devoir enregistré.</p>
+                        <p className="text-xs text-slate-500">{t("progressNoHomework")}</p>
                       ) : (
                         <ul className="space-y-1">
                           {homeworkByStudent[s.studentId].map((a) => (
@@ -187,9 +188,7 @@ export default function TeacherProgressPage() {
                         </ul>
                       )}
                     </div>
-                    <p className="text-[11px] text-slate-500">
-                      Mise à jour détaillée de la progression : prochainement depuis cette fiche.
-                    </p>
+                    <p className="text-[11px] text-slate-500">{t("progressUpdateSoon")}</p>
                   </div>
                 ) : null}
               </li>

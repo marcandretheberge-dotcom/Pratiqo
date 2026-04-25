@@ -7,6 +7,7 @@ import { useAuth } from "../../../../components/AuthProvider";
 import { logout } from "../../../../lib/auth";
 import { getSupabaseClient } from "../../../../lib/supabase";
 import { cn } from "../../../../lib/utils";
+import { useLocale } from "../../../../lib/locale-context";
 import { disciplineLabelToTeacherCategory, getDisciplineById, getEnabledDisciplines } from "../../../../lib/disciplines";
 import type { TeacherRow } from "../../../../lib/teacherMapper";
 
@@ -74,6 +75,7 @@ function encodeTeachingMode(p: boolean, o: boolean, h: boolean): string {
 
 export default function TeacherSettingsPage() {
   const { user, profile } = useAuth();
+  const { t } = useLocale();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -172,18 +174,18 @@ export default function TeacherSettingsPage() {
     await syncTeacherPrimaryFromDisciplines(supabase, teacherId);
     await reloadDisciplines(teacherId);
     setDiscSaving(false);
-    setMessage("Enregistré.");
+    setMessage(t("savedOk"));
   };
 
   const addDiscipline = async () => {
     if (!teacherId || discRows.length >= 3) return;
     const spec = addSpec.trim();
     if (!spec) {
-      setMessage("Indique une spécialité.");
+      setMessage(t("specialtyRequired"));
       return;
     }
     if (discRows.some((r) => r.discipline_id === addDiscId)) {
-      setMessage("Cette discipline est déjà ajoutée.");
+      setMessage(t("disciplineDuplicate"));
       return;
     }
     setDiscSaving(true);
@@ -206,7 +208,7 @@ export default function TeacherSettingsPage() {
     setAddSpec("");
     setShowAddDisc(false);
     setDiscSaving(false);
-    setMessage("Enregistré.");
+    setMessage(t("savedOk"));
   };
 
   const saveProfile = async () => {
@@ -236,7 +238,7 @@ export default function TeacherSettingsPage() {
       return;
     }
     setLocationJson(nextLocation);
-    setMessage("Enregistré.");
+    setMessage(t("savedOk"));
   };
 
   const saveTeachingModeOnly = async () => {
@@ -246,7 +248,7 @@ export default function TeacherSettingsPage() {
     const { error } = await supabase.from("teachers").update({ teaching_mode: teachingMode }).eq("id", teacherId);
     setSaving(false);
     if (error) setMessage(error.message);
-    else setMessage("Enregistré.");
+    else setMessage(t("savedOk"));
   };
 
   const saveNotifications = async () => {
@@ -258,7 +260,7 @@ export default function TeacherSettingsPage() {
     if (error) setMessage(error.message);
     else {
       setDashboardJson(nextDash as Record<string, unknown>);
-      setMessage("Enregistré.");
+      setMessage(t("savedOk"));
     }
   };
 
@@ -267,7 +269,7 @@ export default function TeacherSettingsPage() {
     const { data: s } = await supabase.auth.getSession();
     const token = s.session?.access_token;
     if (!token) {
-      setMessage("Session expirée.");
+      setMessage(t("sessionExpiredShort"));
       return;
     }
     const res = await fetch("/api/stripe/connect", {
@@ -276,7 +278,7 @@ export default function TeacherSettingsPage() {
     });
     const body = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
     if (!res.ok || !body.url) {
-      setMessage(body.error || "Impossible d’ouvrir Stripe.");
+      setMessage(body.error || t("stripeOpenError"));
       return;
     }
     window.location.href = body.url;
@@ -316,10 +318,8 @@ export default function TeacherSettingsPage() {
   if (!teacherId) {
     return (
       <div className="max-w-lg mx-auto bg-white border border-amber-200 rounded-3xl p-8">
-        <p className="text-sm font-semibold text-slate-800">Aucun profil professeur lié</p>
-        <p className="mt-2 text-sm text-slate-600">
-          Ce compte ({profile?.role ?? "élève"}) n&apos;est pas relié à une fiche professeur.
-        </p>
+        <p className="text-sm font-semibold text-slate-800">{t("noTeacherAccountTitle")}</p>
+        <p className="mt-2 text-sm text-slate-600">{t("noTeacherAccountBody")}</p>
       </div>
     );
   }
@@ -329,12 +329,12 @@ export default function TeacherSettingsPage() {
   return (
     <div className="max-w-xl mx-auto space-y-8 pb-16">
       <div>
-        <p className="text-[10px] font-bold uppercase tracking-widest text-[#1D9E75]">Professeur</p>
-        <h1 className="text-2xl font-bold text-[#2C2C2A]">Paramètres</h1>
+        <p className="text-[10px] font-bold uppercase tracking-widest text-[#1D9E75]">{t("settingsTeacherLabel")}</p>
+        <h1 className="text-2xl font-bold text-[#2C2C2A]">{t("settingsTitle")}</h1>
       </div>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
-        <h2 className="text-lg font-bold text-[#2C2C2A]">Mon profil</h2>
+        <h2 className="text-lg font-bold text-[#2C2C2A]">{t("sectionProfile")}</h2>
         <div className="flex items-center gap-4">
           <label className="relative cursor-pointer shrink-0">
             <input
@@ -356,12 +356,12 @@ export default function TeacherSettingsPage() {
                 {initials}
               </div>
             )}
-            <span className="block text-center text-[10px] text-slate-500 mt-1">Modifier</span>
+            <span className="block text-center text-[10px] text-slate-500 mt-1">{t("profilePhotoEdit")}</span>
           </label>
-          <p className="text-xs text-slate-500">Clic sur la photo pour changer (aperçu local — enregistre pour conserver si URL base64).</p>
+          <p className="text-xs text-slate-500">{t("profilePhotoHint")}</p>
         </div>
         <label className="block space-y-1">
-          <span className="text-xs font-bold text-slate-500 uppercase">Nom affiché</span>
+          <span className="text-xs font-bold text-slate-500 uppercase">{t("profileDisplayName")}</span>
           <input
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
@@ -369,7 +369,7 @@ export default function TeacherSettingsPage() {
           />
         </label>
         <label className="block space-y-1">
-          <span className="text-xs font-bold text-slate-500 uppercase">Tarif horaire ($)</span>
+          <span className="text-xs font-bold text-slate-500 uppercase">{t("profileHourlyRate")}</span>
           <input
             value={hourly}
             onChange={(e) => setHourly(e.target.value)}
@@ -403,12 +403,12 @@ export default function TeacherSettingsPage() {
           onClick={() => void saveProfile()}
           className="h-11 px-6 rounded-full bg-[#1D9E75] text-white text-sm font-semibold disabled:opacity-50"
         >
-          Enregistrer le profil
+          {t("settingsProfileSave")}
         </button>
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
-        <h2 className="text-lg font-bold text-[#2C2C2A]">Mes disciplines</h2>
+        <h2 className="text-lg font-bold text-[#2C2C2A]">{t("sectionDisciplines")}</h2>
         {discLoading ? (
           <Loader2 className="animate-spin text-[#1D9E75]" size={24} />
         ) : (
@@ -428,7 +428,7 @@ export default function TeacherSettingsPage() {
                       disabled={discRows.length <= 1 || discSaving}
                       onClick={() => void removeDiscipline(r.id)}
                       className="rounded-full p-0.5 hover:bg-[rgba(29,158,117,0.2)] disabled:opacity-30"
-                      aria-label="Retirer"
+                      aria-label={t("removeAria")}
                     >
                       <X size={14} />
                     </button>
@@ -445,7 +445,7 @@ export default function TeacherSettingsPage() {
                     onClick={() => setShowAddDisc(true)}
                     className="w-full py-3 rounded-xl border-2 border-dashed border-[#1D9E75]/40 text-[#0f6e56] text-sm font-semibold hover:bg-[#e1f5ee]/50"
                   >
-                    + Ajouter
+                    {t("addDiscipline")}
                   </button>
                 ) : (
                   <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-3">
@@ -463,7 +463,7 @@ export default function TeacherSettingsPage() {
                     <input
                       value={addSpec}
                       onChange={(e) => setAddSpec(e.target.value)}
-                      placeholder="Spécialité"
+                      placeholder={t("specialtyPlaceholder")}
                       className="w-full h-11 rounded-xl border border-slate-200 px-3 text-sm bg-white"
                     />
                     <div className="flex gap-2">
@@ -473,7 +473,7 @@ export default function TeacherSettingsPage() {
                         onClick={() => void addDiscipline()}
                         className="h-10 px-4 rounded-full bg-[#1D9E75] text-white text-sm font-semibold"
                       >
-                        Ajouter
+                        {t("disciplineAdd")}
                       </button>
                       <button
                         type="button"
@@ -483,27 +483,27 @@ export default function TeacherSettingsPage() {
                         }}
                         className="h-10 px-4 rounded-full border border-slate-200 text-sm text-slate-600"
                       >
-                        Annuler
+                        {t("cancelAction")}
                       </button>
                     </div>
                   </div>
                 )}
               </div>
             ) : null}
-            <p className="text-xs text-slate-500">Maximum 3 disciplines</p>
+            <p className="text-xs text-slate-500">{t("maxDisciplines")}</p>
           </>
         )}
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
-        <h2 className="text-lg font-bold text-[#2C2C2A]">Format des cours</h2>
+        <h2 className="text-lg font-bold text-[#2C2C2A]">{t("sectionFormat")}</h2>
         <div className="flex flex-wrap gap-2">
-          {(["En personne", "En ligne", "À domicile"] as const).map((label, i) => {
+          {(["inPerson", "online", "homeVisit"] as const).map((labelKey, i) => {
             const keys = ["person", "online", "home"] as const;
             const on = keys[i] === "person" ? chipsPerson : keys[i] === "online" ? chipsOnline : chipsHome;
             return (
               <button
-                key={label}
+                key={labelKey}
                 type="button"
                 onClick={() => toggleFormat(keys[i])}
                 className={cn(
@@ -511,7 +511,7 @@ export default function TeacherSettingsPage() {
                   on ? "border-[#1D9E75] bg-[rgba(29,158,117,0.12)] text-[#0f6e56]" : "border-slate-200 bg-slate-100 text-slate-600",
                 )}
               >
-                {label}
+                {t(labelKey)}
               </button>
             );
           })}
@@ -522,24 +522,24 @@ export default function TeacherSettingsPage() {
           onClick={() => void saveTeachingModeOnly()}
           className="h-10 px-5 rounded-full bg-[#1D9E75] text-white text-sm font-semibold disabled:opacity-50"
         >
-          Enregistrer le format
+          {t("settingsFormatSave")}
         </button>
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
-        <h2 className="text-lg font-bold text-[#2C2C2A]">Notifications</h2>
+        <h2 className="text-lg font-bold text-[#2C2C2A]">{t("sectionNotifications")}</h2>
         {(
           [
-            ["newBooking", "Nouvelle réservation"],
-            ["reminder1h", "Rappel 1h avant le cours"],
-            ["studentMessages", "Messages des élèves"],
-            ["promotions", "Promotions Pratiqo"],
+            ["newBooking", "notifNewBooking"],
+            ["reminder1h", "notifReminder1h"],
+            ["studentMessages", "notifStudentMessages"],
+            ["promotions", "notifPromotions"],
           ] as const
-        ).map(([key, label]) => {
+        ).map(([key, labelKey]) => {
           const on = notif[key];
           return (
             <label key={key} className="flex items-center justify-between gap-4 cursor-pointer py-1">
-              <span className="text-sm text-[#2C2C2A]">{label}</span>
+              <span className="text-sm text-[#2C2C2A]">{t(labelKey)}</span>
               <button
                 type="button"
                 role="switch"
@@ -566,48 +566,50 @@ export default function TeacherSettingsPage() {
           onClick={() => void saveNotifications()}
           className="h-10 px-5 rounded-full bg-[#1D9E75] text-white text-sm font-semibold disabled:opacity-50"
         >
-          Enregistrer les notifications
+          {t("settingsNotifSave")}
         </button>
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
-        <h2 className="text-lg font-bold text-[#2C2C2A]">Paiements</h2>
+        <h2 className="text-lg font-bold text-[#2C2C2A]">{t("sectionPayments")}</h2>
         <p className="text-sm text-slate-600">
-          Stripe :{" "}
-          <span className="font-semibold text-[#2C2C2A]">{stripeAccountId ? "Connecté" : "Non connecté"}</span>
+          {t("stripeConnectLabel")}{" "}
+          <span className="font-semibold text-[#2C2C2A]">
+            {stripeAccountId ? t("stripeConnected") : t("stripeDisconnected")}
+          </span>
         </p>
         <button
           type="button"
           onClick={() => void openStripeDashboard()}
           className="h-10 px-5 rounded-full border-2 border-[#2C2C2A]/15 bg-white text-sm font-semibold text-[#2C2C2A]"
         >
-          Gérer
+          {t("manageStripe")}
         </button>
         <p className="text-sm text-slate-600">
-          Plan actuel : <span className="font-bold text-[#1D9E75]">{plan === "pro" ? "Pro" : "Gratuit"}</span>
+          {t("currentPlanPrefix")} <span className="font-bold text-[#1D9E75]">{plan === "pro" ? t("planProLabel") : t("planFreeLabel")}</span>
         </p>
         <Link
           href="/upgrade"
           className="inline-flex h-10 px-5 rounded-full bg-[#1D9E75] text-white text-sm font-semibold items-center"
         >
-          Passer Pro
+          {t("upgradeToPro")}
         </Link>
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-3">
-        <h2 className="text-lg font-bold text-[#2C2C2A]">Compte</h2>
-        <p className="text-sm text-slate-500">Email</p>
+        <h2 className="text-lg font-bold text-[#2C2C2A]">{t("sectionAccount")}</h2>
+        <p className="text-sm text-slate-500">{t("emailLabel")}</p>
         <p className="text-sm font-medium text-[#2C2C2A]">{email}</p>
         <button
           type="button"
           onClick={() => void logout()}
           className="text-sm font-semibold text-red-600 hover:underline"
         >
-          Se déconnecter
+          {t("signOut")}
         </button>
       </section>
 
-      {message ? <p className={cn("text-sm text-center", message === "Enregistré." ? "text-[#1D9E75]" : "text-rose-600")}>{message}</p> : null}
+      {message ? <p className={cn("text-sm text-center", message === t("savedOk") ? "text-[#1D9E75]" : "text-rose-600")}>{message}</p> : null}
     </div>
   );
 }

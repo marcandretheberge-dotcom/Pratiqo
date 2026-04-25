@@ -262,8 +262,7 @@ function TeacherScheduleInner() {
   };
 
   const formatLabel = (b: BookingRow) => {
-    const tm = b.teaching_mode === "domicile" ? "À domicile" : b.teaching_mode === "online" ? "En ligne" : "En personne";
-    return tm;
+    return b.teaching_mode === "domicile" ? t("homeVisit") : b.teaching_mode === "online" ? t("online") : t("inPerson");
   };
 
   const chipsPerson = teachingMode === "person" || teachingMode === "both" || teachingMode === "all";
@@ -306,11 +305,11 @@ function TeacherScheduleInner() {
       <div className="flex gap-1 p-1 rounded-2xl bg-slate-100 border border-slate-200 w-full max-w-md">
         {(
           [
-            ["today", "Aujourd'hui"],
-            ["week", "Semaine"],
-            ["dispo", "Disponibilités"],
+            ["today", "tabToday"],
+            ["week", "tabWeek"],
+            ["dispo", "tabAvailability"],
           ] as const
-        ).map(([key, label]) => (
+        ).map(([key, labelKey]) => (
           <button
             key={key}
             type="button"
@@ -320,7 +319,7 @@ function TeacherScheduleInner() {
               subtab === key ? "bg-[#1D9E75] text-white shadow-sm" : "text-slate-600 hover:text-slate-900",
             )}
           >
-            {label}
+            {t(labelKey)}
           </button>
         ))}
       </div>
@@ -342,12 +341,12 @@ function TeacherScheduleInner() {
               {new Date(todayIso + "T12:00:00").toLocaleDateString(dateLocale, { weekday: "long", day: "numeric", month: "long" })}
             </p>
             <p className="text-sm text-slate-600 mt-1">
-              {todayBookings.length} cours ·{" "}
-              {new Intl.NumberFormat("fr-CA", { style: "currency", currency: "CAD" }).format(todayRevenue)}
+              {todayBookings.length} {t("lessons")} ·{" "}
+              {new Intl.NumberFormat(dateLocale, { style: "currency", currency: "CAD" }).format(todayRevenue)}
             </p>
           </div>
           {todayBookings.length === 0 ? (
-            <p className="text-center text-slate-500 py-12">Aucun cours aujourd&apos;hui 🎉</p>
+            <p className="text-center text-slate-500 py-12">{t("scheduleNoClassesToday")}</p>
           ) : (
             <ul className="space-y-3">
               {todayBookings.map((b, idx) => {
@@ -384,7 +383,7 @@ function TeacherScheduleInner() {
                           {teacherDiscipline} · {formatLabel(b)}
                         </p>
                         <p className="text-xs text-slate-500">
-                          {new Intl.NumberFormat("fr-CA", { style: "currency", currency: "CAD" }).format(Number(b.price) || 0)}
+                          {new Intl.NumberFormat(dateLocale, { style: "currency", currency: "CAD" }).format(Number(b.price) || 0)}
                         </p>
                       </div>
                     </div>
@@ -449,7 +448,9 @@ function TeacherScheduleInner() {
                 >
                   <span className="text-[10px] font-bold uppercase leading-tight">{label}</span>
                   <span className={cn("text-lg font-bold mt-0.5", selectedDayIndex === i ? "text-white" : "text-[#2C2C2A]")}>{c}</span>
-                  <span className={cn("text-[9px]", selectedDayIndex === i ? "text-white/80" : "text-slate-500")}>cours</span>
+                  <span className={cn("text-[9px]", selectedDayIndex === i ? "text-white/80" : "text-slate-500")}>
+                    {t("lessonCountSuffix")}
+                  </span>
                 </button>
               );
             })}
@@ -477,13 +478,13 @@ function TeacherScheduleInner() {
             <p className="text-xs font-bold uppercase tracking-widest text-slate-400">{t("gridWeeklyTitle")}</p>
             <div className="flex flex-wrap gap-4 text-xs text-[#2C2C2A]">
               <span className="inline-flex items-center gap-2">
-                <span className="h-3 w-3 rounded-sm bg-[#1D9E75]" /> Vert = disponible
+                <span className="h-3 w-3 rounded-sm bg-[#1D9E75]" /> {t("legendAvailable")}
               </span>
               <span className="inline-flex items-center gap-2">
-                <span className="h-3 w-3 rounded-sm bg-slate-200 border border-slate-300" /> Gris = fermé
+                <span className="h-3 w-3 rounded-sm bg-slate-200 border border-slate-300" /> {t("legendClosed")}
               </span>
               <span className="inline-flex items-center gap-2">
-                <span className="h-3 w-3 rounded-sm bg-[#FAEEDA] border border-[#F5C478]" /> Orange = réservation (non modifiable)
+                <span className="h-3 w-3 rounded-sm bg-[#FAEEDA] border border-[#F5C478]" /> {t("legendBooked")}
               </span>
             </div>
             <div className="overflow-x-auto">
@@ -526,14 +527,14 @@ function TeacherScheduleInner() {
             </div>
 
             <div className="border-t border-slate-100 pt-4 space-y-2">
-              <p className="text-sm font-bold text-[#2C2C2A]">Format des cours</p>
+              <p className="text-sm font-bold text-[#2C2C2A]">{t("teachingFormat")}</p>
               <div className="flex flex-wrap gap-2">
-                {(["En personne", "En ligne", "À domicile"] as const).map((label, i) => {
+                {(["inPerson", "online", "homeVisit"] as const).map((labelKey, i) => {
                   const keys = ["person", "online", "home"] as const;
                   const on = keys[i] === "person" ? chipsPerson : keys[i] === "online" ? chipsOnline : chipsHome;
                   return (
                     <button
-                      key={label}
+                      key={labelKey}
                       type="button"
                       onClick={() => toggleFormat(keys[i])}
                       className={cn(
@@ -541,7 +542,7 @@ function TeacherScheduleInner() {
                         on ? "border-[#1D9E75] bg-[rgba(29,158,117,0.12)] text-[#0f6e56]" : "border-slate-200 bg-slate-100 text-slate-600",
                       )}
                     >
-                      {label}
+                      {t(labelKey)}
                     </button>
                   );
                 })}
@@ -549,7 +550,7 @@ function TeacherScheduleInner() {
             </div>
 
             <div className="border-t border-slate-100 pt-4 space-y-3">
-              <p className="text-sm font-bold text-[#2C2C2A]">Bloquer une exception</p>
+              <p className="text-sm font-bold text-[#2C2C2A]">{t("blockException")}</p>
               <div className="flex flex-wrap items-end gap-3">
                 <input
                   type="date"
@@ -573,7 +574,7 @@ function TeacherScheduleInner() {
                   onClick={() => void addBlocked()}
                   className="h-11 px-5 rounded-full bg-red-600 text-white text-sm font-semibold hover:bg-red-700 disabled:opacity-50"
                 >
-                  Bloquer
+                  {t("blockButton")}
                 </button>
               </div>
             </div>
@@ -585,7 +586,7 @@ function TeacherScheduleInner() {
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 h-12 px-8 rounded-full bg-[#1D9E75] text-white text-sm font-semibold hover:brightness-[0.98] disabled:opacity-60"
             >
               <Save size={18} />
-              {saving ? t("savingDots") : t("save")}
+              {saving ? t("savingDots") : t("saveAvailability")}
             </button>
           </div>
         </div>

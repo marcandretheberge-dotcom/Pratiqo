@@ -10,6 +10,8 @@ import { AssignmentHub } from "./AssignmentHub";
 import { useRouter } from "next/navigation";
 import { formatLocalISODate, slotStartMinutes } from "../lib/slots";
 import { cn } from "../lib/utils";
+import { useLocale } from "../lib/locale-context";
+import { localeToBcp47 } from "../lib/i18n";
 
 interface BookingWithTeacher {
   id: string;
@@ -31,6 +33,7 @@ function bookingSortKey(b: { slot_date?: string | null; date?: string | null; ti
 
 export function Dashboard() {
   const { user, profile: authProfile, loading: authLoading } = useAuth();
+  const { t, locale } = useLocale();
   const router = useRouter();
   const role = authProfile?.role as string | undefined;
   const isTeacherRole = role === "teacher";
@@ -292,11 +295,12 @@ export function Dashboard() {
   if (isTeacherRole && teacherDash) {
     const { next, pendingList, today, monthRevenue, distinctStudents, coursesTodayCount } = teacherDash;
     const displayName = authProfile?.name || authDisplayName(user);
-    const todayLabel = new Date().toLocaleDateString("fr-CA", { weekday: "long", day: "numeric", month: "long" });
+    const dateLocale = localeToBcp47(locale);
+    const todayLabel = new Date().toLocaleDateString(dateLocale, { weekday: "long", day: "numeric", month: "long" });
     const lessonPrice = (b: (typeof teacherBookings)[0]) =>
       Number(b.price) > 0 ? Number(b.price) : teacherMeta?.hourlyRate ?? 0;
     const fmtMoney = (n: number) =>
-      new Intl.NumberFormat("fr-CA", { style: "currency", currency: "CAD", maximumFractionDigits: 0 }).format(n);
+      new Intl.NumberFormat(dateLocale, { style: "currency", currency: "CAD", maximumFractionDigits: 0 }).format(n);
 
     return (
       <div className="space-y-5 pb-12">
@@ -307,15 +311,15 @@ export function Dashboard() {
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
             <div className="rounded-xl bg-white/10 px-4 py-3 border border-white/10">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-[#5DCAA5]">Cours aujourd&apos;hui</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[#5DCAA5]">{t("todayLessons")}</p>
               <p className="text-2xl font-bold mt-1">{coursesTodayCount}</p>
             </div>
             <div className="rounded-xl bg-white/10 px-4 py-3 border border-white/10">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-[#5DCAA5]">Élèves actifs</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[#5DCAA5]">{t("activeStudents")}</p>
               <p className="text-2xl font-bold mt-1">{distinctStudents}</p>
             </div>
             <div className="rounded-xl bg-white/10 px-4 py-3 border border-white/10">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-[#5DCAA5]">Ce mois</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[#5DCAA5]">{t("thisMonth")}</p>
               <p className="text-2xl font-bold mt-1">{fmtMoney(monthRevenue)}</p>
             </div>
           </div>
@@ -347,7 +351,11 @@ export function Dashboard() {
                     {next.slot_date || next.date} · {next.time_slot || next.time} · 1 h · {fmtMoney(lessonPrice(next))}
                   </p>
                   <p className="text-xs text-[#2C2C2A]/60 mt-0.5">
-                    {next.teaching_mode === "domicile" ? "À domicile" : next.teaching_mode === "online" ? "En ligne" : "En personne"}
+                    {next.teaching_mode === "domicile"
+                      ? t("homeVisit")
+                      : next.teaching_mode === "online"
+                        ? t("online")
+                        : t("inPerson")}
                   </p>
                 </div>
               </div>
@@ -357,14 +365,14 @@ export function Dashboard() {
                   onClick={() => router.push("/messages")}
                   className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-full bg-[#1D9E75] text-white text-sm font-semibold hover:brightness-[0.98]"
                 >
-                  Démarrer
+                  {t("startLesson")}
                 </button>
                 <button
                   type="button"
                   onClick={() => router.push("/messages")}
                   className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-full border-2 border-[#2C2C2A]/15 bg-white text-sm font-semibold text-[#2C2C2A] hover:bg-slate-50"
                 >
-                  <MessageSquare size={16} /> Message
+                  <MessageSquare size={16} /> {t("messageButton")}
                 </button>
               </div>
             </div>
@@ -408,7 +416,7 @@ export function Dashboard() {
                         onClick={() => void acceptTeacherBooking(b.id)}
                         className="h-9 px-4 rounded-full bg-[#1D9E75] text-white text-xs font-bold"
                       >
-                        ✓ Accept
+                        {t("pendingAccept")}
                       </button>
                     ) : null}
                     <button
@@ -416,7 +424,7 @@ export function Dashboard() {
                       onClick={() => void cancelTeacherBooking(b.id)}
                       className="h-9 px-4 rounded-full border border-slate-200 bg-white text-xs font-bold text-slate-700 inline-flex items-center gap-1"
                     >
-                      <X size={14} /> Decline
+                      <X size={14} /> {t("pendingDecline")}
                     </button>
                   </div>
                 </li>

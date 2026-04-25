@@ -233,10 +233,29 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="flex flex-1 min-h-0">
         {/* Teacher desktop sidebar */}
         {isTeacher ? (
-          <aside className="hidden lg:flex w-[220px] shrink-0 flex-col border-r border-white/5 bg-[#2C2C2A] text-white py-5 px-3">
+          <aside
+            className="hidden lg:flex w-[220px] shrink-0 border-r border-white/5 text-white"
+            style={{
+              background: "#2C2C2A",
+              paddingTop: 0,
+              paddingLeft: 14,
+              paddingRight: 14,
+              paddingBottom: 16,
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
             <Link
               href="/dashboard"
-              className="mb-6 flex items-center gap-2 px-1 min-w-0 shrink-0 hover:opacity-95 transition-opacity"
+              className="min-w-0 shrink-0 text-white hover:opacity-95 transition-opacity"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                marginBottom: 20,
+                marginTop: 0,
+                textDecoration: "none",
+              }}
               aria-label={t("ariaHome")}
             >
               <div
