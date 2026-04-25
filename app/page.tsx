@@ -31,7 +31,7 @@ const TEACHERS_SELECT =
 
 export default function LandingPage() {
   const router = useRouter();
-  const { formatPrice } = useLocale();
+  const { t, formatPrice } = useLocale();
   const [mode, setMode] = useState<HeroMode>("student");
   const [query, setQuery] = useState("");
   const [teachers, setTeachers] = useState<Teacher[]>([]);
@@ -96,7 +96,7 @@ export default function LandingPage() {
 
   const nearMe = () => {
     if (!("geolocation" in navigator)) {
-      alert("La géolocalisation n'est pas disponible.");
+      alert(t("nearMe"));
       return;
     }
     setGeoLoading(true);
@@ -107,7 +107,7 @@ export default function LandingPage() {
       },
       () => {
         setGeoLoading(false);
-        alert("Active la localisation pour « Près de moi ».");
+        alert(t("nearMe"));
       },
       { enableHighAccuracy: true, timeout: 10000 },
     );
@@ -146,7 +146,7 @@ export default function LandingPage() {
               textDecoration: "none",
             }}
           >
-            Se connecter
+            {t("signIn")}
           </Link>
         </div>
       </header>
@@ -165,15 +165,15 @@ export default function LandingPage() {
               <div className="mx-auto max-w-6xl px-4 sm:px-6 pt-10 sm:pt-14 pb-8 sm:pb-10">
                 <div className="mb-8 flex flex-wrap justify-center gap-2 rounded-2xl bg-[rgba(0,0,0,0.2)] p-1 sm:inline-flex">
                   <TogglePill active onClick={() => setMode("student")}>
-                    Je cherche un prof
+                    {t("iAmStudent")}
                   </TogglePill>
                   <TogglePill active={false} onClick={() => setMode("teacher")}>
-                    Je suis professeur
+                    {t("iAmTeacher")}
                   </TogglePill>
                 </div>
 
-                <h1 className="text-center text-3xl font-bold tracking-tight sm:text-4xl">Trouve ton prof idéal</h1>
-                <p className="mt-3 text-center text-sm text-white/85 sm:text-base">{enabledHeroLabels}</p>
+                <h1 className="text-center text-3xl font-bold tracking-tight sm:text-4xl">{t("heroStudentTitle")}</h1>
+                <p className="mt-3 text-center text-sm text-white/85 sm:text-base">{t("heroStudentSubtitle")}</p>
 
                 <div className="mx-auto mt-8 flex max-w-xl flex-col gap-3 sm:flex-row sm:items-center">
                   <div className="flex flex-1 items-center gap-2 rounded-2xl bg-white px-4 py-3 text-[#2C2C2A] shadow-sm">
@@ -182,7 +182,7 @@ export default function LandingPage() {
                       value={query}
                       onChange={(e) => setQuery(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && runSearch()}
-                      placeholder="Discipline, ville…"
+                      placeholder={t("searchPlaceholder")}
                       className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-slate-400"
                     />
                   </div>
@@ -191,7 +191,7 @@ export default function LandingPage() {
                     onClick={() => runSearch()}
                     className="h-12 shrink-0 rounded-2xl bg-white px-6 text-sm font-bold text-[#0F6E56] hover:bg-white/95"
                   >
-                    Rechercher
+                    {t("search")}
                   </button>
                 </div>
 
@@ -203,7 +203,7 @@ export default function LandingPage() {
                     className="inline-flex items-center gap-2 rounded-full border border-white/35 bg-white/10 px-4 py-2 text-xs font-semibold text-white hover:bg-white/15 disabled:opacity-60"
                   >
                     <MapPin size={14} />
-                    {geoLoading ? "…" : "Près de moi"}
+                    {geoLoading ? "…" : t("nearMe")}
                   </button>
                 </div>
 
@@ -285,15 +285,15 @@ export default function LandingPage() {
               <div className="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-14">
                 <div className="mb-6 flex flex-wrap justify-center gap-2 rounded-2xl bg-[rgba(0,0,0,0.2)] p-1 sm:inline-flex">
                   <TogglePill active={false} onClick={() => setMode("student")} darkMode>
-                    Je cherche un prof
+                    {t("iAmStudent")}
                   </TogglePill>
                   <TogglePill active onClick={() => setMode("teacher")} darkMode>
-                    Je suis professeur
+                    {t("iAmTeacher")}
                   </TogglePill>
                 </div>
 
                 <h1 className="text-center text-2xl font-bold leading-tight sm:text-4xl">
-                  La seule plateforme qui partage ses profits
+                  {t("heroTeacherTitle")}
                 </h1>
 
                 <div className="mx-auto mt-10 grid max-w-4xl gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -323,10 +323,10 @@ export default function LandingPage() {
                     href="/login?role=teacher"
                     className="inline-flex h-12 items-center justify-center rounded-2xl bg-[#1D9E75] px-8 text-sm font-bold text-white hover:brightness-105"
                   >
-                    Rejoindre gratuitement →
+                    {t("startFree")} →
                   </Link>
                   <Link href="/login" className="text-sm font-medium text-white/80 underline underline-offset-2 hover:text-white">
-                    Déjà inscrit ? Se connecter
+                    {t("alreadyRegistered")}
                   </Link>
                 </div>
               </div>
@@ -336,19 +336,19 @@ export default function LandingPage() {
       </section>
 
       <div className="border-y border-[#E8E6DF] bg-[#F1EFE8] py-4 text-center text-xs font-bold uppercase tracking-widest text-[#2C2C2A] sm:text-sm">
-        <span className="text-[#1D9E75]">2 400+</span> Profs
+        <span className="text-[#1D9E75]">{t("statProfCount").split(" ")[0]}</span> {t("statProfCount").split(" ").slice(1).join(" ")}
         <span className="mx-3 text-[#D3D1C7]">·</span>
-        #1 Mondial
+        {t("statWorldwide")}
         <span className="mx-3 text-[#D3D1C7]">·</span>
-        <span className="text-[#1D9E75]">5%</span> Cashback
+        <span className="text-[#1D9E75]">{t("statCashback").split(" ")[0]}</span> {t("statCashback").split(" ").slice(1).join(" ")}
         <span className="mx-3 text-[#D3D1C7]">·</span>
-        Ristourne
+        {t("statRistourne")}
       </div>
 
       <footer className="bg-white border-b border-[var(--p-border-light)]">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 py-5 flex items-center justify-center">
           <Link href="/become-teacher" className="text-sm font-semibold text-[#888780] hover:text-[#2C2C2A] hover:underline">
-            Tu es professeur ? <span className="text-[#1D9E75]">Devenir professeur</span>
+            {t("areYouTeacher")} <span className="text-[#1D9E75]">{t("becomeTeacher")}</span>
           </Link>
         </div>
       </footer>

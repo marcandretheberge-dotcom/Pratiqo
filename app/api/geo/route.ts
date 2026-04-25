@@ -2,15 +2,24 @@ import { NextResponse } from "next/server";
 import { getGeoConfig } from "@/lib/geoLocale";
 
 export async function GET(request: Request) {
-  // Vercel provides country in headers; Cloudflare uses cf-ipcountry.
-  const country = request.headers.get("x-vercel-ip-country") || request.headers.get("cf-ipcountry") || "CA";
-  const config = getGeoConfig(country);
+  try {
+    const country = request.headers.get("x-vercel-ip-country") || request.headers.get("cf-ipcountry");
 
-  return NextResponse.json({
-    country,
-    locale: config.locale,
-    currency: config.currency,
-    currencySymbol: config.currencySymbol,
-  });
+    // In development / locally there is usually no country header.
+    // Return null so the client falls back to browser language.
+    if (!country) {
+      return NextResponse.json({ country: null, locale: null });
+    }
+
+    const config = getGeoConfig(country);
+    return NextResponse.json({
+      country,
+      locale: config.locale,
+      currency: config.currency,
+      currencySymbol: config.currencySymbol,
+    });
+  } catch {
+    return NextResponse.json({ country: null, locale: null });
+  }
 }
 
