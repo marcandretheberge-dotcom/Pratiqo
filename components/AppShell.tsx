@@ -226,25 +226,56 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         ) : null}
 
         <main
-          className={cn(
-            "flex-1 min-w-0 overflow-y-auto",
-            isTeacher ? "pb-24 lg:pb-8 px-4 sm:px-6 py-6" : isStudent ? "pb-24 lg:pb-8 px-4 sm:px-5 py-6" : "pb-8 px-4 sm:px-5 py-6",
-          )}
+          className={cn("flex-1 min-w-0", isTeacher ? "px-4 sm:px-6 py-6" : "px-4 sm:px-5 py-6")}
+          style={
+            isStudent
+              ? {
+                  flex: 1,
+                  width: "100%",
+                  paddingBottom: 80,
+                  overflowY: "auto",
+                }
+              : undefined
+          }
         >
-          <div className={cn("mx-auto w-full", isTeacher ? "max-w-[1100px]" : isStudent ? "max-w-[480px]" : "max-w-[960px]")}>
-            {children}
-          </div>
+          {isStudent ? (
+            <div className="w-full">{children}</div>
+          ) : (
+            <div className={cn("mx-auto w-full", isTeacher ? "max-w-[1100px]" : "max-w-[960px]")}>{children}</div>
+          )}
         </main>
       </div>
 
       {/* Student bottom tabs */}
       {isStudent ? (
-        <nav className="fixed bottom-0 inset-x-0 z-50 border-t border-[var(--p-border-light)] bg-white safe-area-pb">
-          <div className="grid grid-cols-4 h-16 max-w-[480px] mx-auto">
-            <StudentTab href="/student/search" icon={<Search size={20} />} label="Trouver" active={pathname?.startsWith("/student/search")} />
-            <StudentTab href="/dashboard" icon={<CalendarDays size={20} />} label="Mes cours" active={pathname === "/dashboard"} />
-            <StudentTab href="/student/progress" icon={<Sprout size={20} />} label="Progression" active={pathname?.startsWith("/student/progress")} />
-            <StudentTab href="/profile" icon={<UserRound size={20} />} label="Profil" active={pathname === "/profile"} />
+        <nav
+          style={{
+            position: "fixed",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            zIndex: 50,
+            background: "white",
+            borderTop: "0.5px solid #D3D1C7",
+            display: "flex",
+          }}
+          className="safe-area-pb"
+        >
+          <div className="grid grid-cols-4 h-16 w-full">
+            <StudentTab
+              href="/student/search"
+              icon={<Search size={20} />}
+              label={t("studentTabFindShort")}
+              active={pathname?.startsWith("/student/search")}
+            />
+            <StudentTab href="/dashboard" icon={<CalendarDays size={20} />} label={t("studentTabCoursesShort")} active={pathname === "/dashboard"} />
+            <StudentTab
+              href="/student/progress"
+              icon={<Sprout size={20} />}
+              label={t("studentTabProgressShort")}
+              active={pathname?.startsWith("/student/progress")}
+            />
+            <StudentTab href="/profile" icon={<UserRound size={20} />} label={t("studentTabProfileShort")} active={pathname === "/profile"} />
           </div>
         </nav>
       ) : null}
