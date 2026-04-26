@@ -541,6 +541,11 @@ const frCA = {
   searchInputPlaceholder: "Rechercher un prof (nom, discipline)...",
   radiusAll: "Tous",
   radiusOnline: "En ligne",
+  mapView: "Carte",
+  listView: "Liste",
+  youAreHere: "Vous êtes ici",
+  viewProfile: "Voir le profil",
+  noCoordinates: "Position non disponible",
 
   emailLabel: "Email",
 } as const;
@@ -1076,6 +1081,11 @@ const enCA: Record<TranslationKey, string> = {
   searchInputPlaceholder: "Search a teacher (name, discipline)...",
   radiusAll: "All",
   radiusOnline: "Online",
+  mapView: "Map",
+  listView: "List",
+  youAreHere: "You are here",
+  viewProfile: "View profile",
+  noCoordinates: "Location unavailable",
 
   emailLabel: "Email",
 };
@@ -1612,6 +1622,11 @@ const es: Record<TranslationKey, string> = {
   searchInputPlaceholder: "Buscar profesor (nombre, disciplina)...",
   radiusAll: "Todos",
   radiusOnline: "En línea",
+  mapView: "Mapa",
+  listView: "Lista",
+  youAreHere: "Estás aquí",
+  viewProfile: "Ver perfil",
+  noCoordinates: "Ubicación no disponible",
 
   emailLabel: "Correo",
 };

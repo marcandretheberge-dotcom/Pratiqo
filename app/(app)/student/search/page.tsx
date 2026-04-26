@@ -21,6 +21,7 @@ import { teacherRowToTeacher, type TeacherRow } from "../../../../lib/teacherMap
 import { TEACHERS } from "../../../../constants";
 import { getVerificationLevel } from "../../../../lib/verification";
 import { VerificationBadge } from "../../../../components/VerificationBadge";
+import { SearchMapView } from "../../../../components/SearchMapView";
 
 export default function StudentSearchPage() {
   const router = useRouter();
@@ -33,6 +34,9 @@ export default function StudentSearchPage() {
   const [geoLoading, setGeoLoading] = useState(false);
   const [radius, setRadius] = useState<5 | 10 | 25 | 50 | "all" | "online">("all");
   const [sortMode, setSortMode] = useState<"relevance" | "nearest" | "trusted">("relevance");
+  const [viewMode, setViewMode] = useState<"list" | "map">("list");
+  const [mapLoaded, setMapLoaded] = useState(false);
+  const [selectedMapTeacher, setSelectedMapTeacher] = useState<Teacher | null>(null);
   const [bookingTeacher, setBookingTeacher] = useState<Teacher | null>(null);
   const [bookingInitialKind, setBookingInitialKind] = useState<BookingInitialLessonKind>("standard");
   const [selectedTeacherProfile, setSelectedTeacherProfile] = useState<Teacher | null>(null);
@@ -228,39 +232,90 @@ export default function StudentSearchPage() {
                 {results.length} {t("searchResults")}
               </p>
 
-              <label className="inline-flex items-center gap-2 text-sm text-[#2C2C2A]">
-                <span className="text-[#888780]">{t("sortLabel")}</span>
-                <select
-                  value={sortMode}
-                  onChange={(e) => setSortMode(e.target.value as typeof sortMode)}
-                  className="h-10 rounded-xl border border-[#E8E6DF] bg-white px-3 text-sm font-semibold text-[#2C2C2A] outline-none"
+              <div className="flex items-center gap-2">
+                <label className="inline-flex items-center gap-2 text-sm text-[#2C2C2A]">
+                  <span className="text-[#888780]">{t("sortLabel")}</span>
+                  <select
+                    value={sortMode}
+                    onChange={(e) => setSortMode(e.target.value as typeof sortMode)}
+                    className="h-10 rounded-xl border border-[#E8E6DF] bg-white px-3 text-sm font-semibold text-[#2C2C2A] outline-none"
+                  >
+                    <option value="relevance">{t("sortRelevance")}</option>
+                    <option value="nearest">{t("sortNearest")}</option>
+                    <option value="trusted">{t("sortTrusted")}</option>
+                  </select>
+                </label>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setViewMode((v) => (v === "list" ? "map" : "list"));
+                    setMapLoaded(true);
+                  }}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    padding: "7px 14px",
+                    borderRadius: 20,
+                    fontSize: 12,
+                    fontWeight: 500,
+                    cursor: "pointer",
+                    border: "0.5px solid #D3D1C7",
+                    background: viewMode === "map" ? "#1D9E75" : "white",
+                    color: viewMode === "map" ? "white" : "#2C2C2A",
+                    transition: "all 0.2s",
+                  }}
                 >
-                  <option value="relevance">{t("sortRelevance")}</option>
-                  <option value="nearest">{t("sortNearest")}</option>
-                  <option value="trusted">{t("sortTrusted")}</option>
-                </select>
-              </label>
+                  {viewMode === "map" ? `☰ ${t("listView")}` : `🗺️ ${t("mapView")}`}
+                </button>
+              </div>
             </div>
 
-            <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {loadingTeachers
-                ? Array.from({ length: 6 }).map((_, i) => (
-                    <div
-                      key={i}
-                      className="h-[140px] rounded-2xl border border-[#E8E6DF] bg-white shadow-[0_12px_40px_rgba(44,44,42,0.06)]"
-                    />
-                  ))
-                : results.map(({ teacher, distanceKm }) => (
-                    <TeacherCard
-                      key={teacher.id}
-                      teacher={teacher}
-                      distanceKm={distanceKm}
-                      formatPrice={formatPrice}
-                      t={t}
-                      onOpen={() => setSelectedTeacherProfile(teacher)}
-                    />
-                  ))}
-            </div>
+            {viewMode === "list" ? (
+              <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {loadingTeachers
+                  ? Array.from({ length: 6 }).map((_, i) => (
+                      <div
+                        key={i}
+                        className="h-[140px] rounded-2xl border border-[#E8E6DF] bg-white shadow-[0_12px_40px_rgba(44,44,42,0.06)]"
+                      />
+                    ))
+                  : results.map(({ teacher, distanceKm }) => (
+                      <TeacherCard
+                        key={teacher.id}
+                        teacher={teacher}
+                        distanceKm={distanceKm}
+                        formatPrice={formatPrice}
+                        t={t}
+                        onOpen={() => setSelectedTeacherProfile(teacher)}
+                      />
+                    ))}
+              </div>
+            ) : (
+              <div className="mt-5">
+                {!mapLoaded ? null : (
+                  <>
+                    {loadingTeachers ? (
+                      <div className="flex items-center gap-2 text-sm font-semibold text-[#0F6E56]">
+                        <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-[#1D9E75] border-t-transparent" />
+                        {t("loading")}
+                      </div>
+                    ) : (
+                      <SearchMapView
+                        teachers={results.map((x) => x.teacher)}
+                        userLat={geo?.lat ?? null}
+                        userLng={geo?.lng ?? null}
+                        selectedTeacher={selectedMapTeacher}
+                        onTeacherSelect={(teacher) => setSelectedMapTeacher(teacher)}
+                        onCloseSelected={() => setSelectedMapTeacher(null)}
+                        onViewProfile={(teacher) => setSelectedTeacherProfile(teacher)}
+                      />
+                    )}
+                  </>
+                )}
+              </div>
+            )}
         </div>
       </div>
 
