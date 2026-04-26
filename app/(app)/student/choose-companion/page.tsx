@@ -9,8 +9,6 @@ import type { CompanionType } from "@/lib/companions";
 import { COMPANIONS, getCompanionStage } from "@/lib/companions";
 import { getSupabaseClient } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
-import Logo from "@/components/ui/Logo";
-import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 
 function localizedText(locale: string, fr: string, en: string, es: string) {
   if (locale === "en-CA") return en;
@@ -62,81 +60,65 @@ export default function ChooseCompanionPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <header
-        style={{
-          position: "sticky",
-          top: 0,
-          left: 0,
-          right: 0,
-          background: "white",
-          zIndex: 50,
-          padding: "0 20px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          height: 56,
-          borderBottom: "0.5px solid #D3D1C7",
-        }}
-      >
-        <Link href="/dashboard" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none" }}>
-          <Logo variant="dark" size="md" />
-        </Link>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <LocaleSwitcher />
-        </div>
-      </header>
-
-      <div className="max-w-3xl mx-auto space-y-6 px-4 sm:px-6">
-      <div>
+    <div
+      className="w-full"
+      style={{
+        paddingTop: 60, // space for sticky AppShell header
+        paddingBottom: 80, // mobile bottom tabs
+      }}
+    >
+      <div className="max-w-3xl mx-auto space-y-5 px-4 sm:px-6">
+        <div>
         <h1 className="text-2xl font-bold text-[#2C2C2A]">{t("companionTitle")}</h1>
         <p className="mt-2 text-sm text-[#888780]">{t("companionSubtitle")}</p>
-      </div>
+        </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {companions.map((c) => {
-          const firstStage = getCompanionStage(c.id, 0);
-          const name = localizedText(locale, c.name, c.nameEn, c.nameEs);
-          const tagline = localizedText(locale, c.tagline, c.taglineEn, c.taglineEs);
-          const stageEmoji = firstStage.emoji;
-          return (
-            <button
-              key={c.id}
-              type="button"
-              onClick={() => setSelected(c.id)}
-              className={cn(
-                "text-left rounded-2xl border bg-white p-5 transition-all",
-                selected === c.id ? "border-[#1D9E75] ring-2 ring-[#1D9E75]/15" : "border-[#E8E6DF] hover:border-[#D7D3C9]",
-              )}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <div className="text-[40px] leading-none">{stageEmoji}</div>
-                  <div className="mt-2 font-semibold text-[#2C2C2A]">{name}</div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {companions.map((c) => {
+            const firstStage = getCompanionStage(c.id, 0);
+            const name = localizedText(locale, c.name, c.nameEn, c.nameEs);
+            const tagline = localizedText(locale, c.tagline, c.taglineEn, c.taglineEs);
+            const stageEmoji = firstStage.emoji;
+            const active = selected === c.id;
+            return (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() => setSelected(c.id)}
+                className={cn(
+                  "text-left w-full rounded-2xl border bg-white p-5 transition-all",
+                  "hover:shadow-[0_14px_40px_rgba(44,44,42,0.08)]",
+                  active ? "border-[#1D9E75] ring-2 ring-[#1D9E75]/15" : "border-[#E8E6DF] hover:border-[#D7D3C9]",
+                )}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="text-[40px] leading-none">{stageEmoji}</div>
+                    <div className="mt-2 font-semibold text-[#2C2C2A]">{name}</div>
+                  </div>
+                  <span className="text-[10px] font-bold uppercase tracking-widest rounded-full px-2 py-1 bg-[#E1F5EE] text-[#1D9E75]">
+                    {c.tag}
+                  </span>
                 </div>
-                <span className="text-[10px] font-bold uppercase tracking-widest rounded-full px-2 py-1 bg-[#E1F5EE] text-[#1D9E75]">
-                  {c.tag}
-                </span>
-              </div>
-              <div className="mt-3 text-sm text-[#6B6A64]">{tagline}</div>
-            </button>
-          );
-        })}
-      </div>
+                <div className="mt-3 text-sm text-[#6B6A64]">{tagline}</div>
+              </button>
+            );
+          })}
+        </div>
 
-      <div className="flex justify-end">
-        <button
-          onClick={handleStart}
-          disabled={saving}
-          className={cn(
-            "rounded-xl px-5 py-3 text-sm font-bold text-white bg-[#1D9E75] hover:bg-[#178C67] transition-all",
-            saving && "opacity-70 cursor-not-allowed",
-          )}
-        >
-          {t("companionStart")}{" "}
-          {localizedText(locale, COMPANIONS[selected].name, COMPANIONS[selected].nameEn, COMPANIONS[selected].nameEs)}
-        </button>
-      </div>
+        <div className="flex justify-end pt-1">
+          <button
+            onClick={handleStart}
+            disabled={saving}
+            className={cn(
+              "rounded-xl px-5 py-3 text-sm font-bold text-white bg-[#1D9E75] hover:bg-[#178C67] transition-all",
+              saving && "opacity-70 cursor-not-allowed",
+            )}
+          >
+            {t("companionStart")}{" "}
+            {localizedText(locale, COMPANIONS[selected].name, COMPANIONS[selected].nameEn, COMPANIONS[selected].nameEs)}
+          </button>
+        </div>
       </div>
     </div>
   );
