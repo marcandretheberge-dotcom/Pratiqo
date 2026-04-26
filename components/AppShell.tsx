@@ -3,9 +3,10 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, MessageCircle, Search, Sprout, UserRound } from "lucide-react";
+import { MessageCircle } from "lucide-react";
 import { cn } from "../lib/utils";
 import { useAuth } from "./AuthProvider";
+import { authDisplayName } from "../lib/authDisplay";
 import { getSupabaseClient } from "../lib/supabase";
 import { fetchUnreadMessageCount } from "../lib/messaging";
 import Logo from "./ui/Logo";
@@ -22,6 +23,23 @@ function normalizeTier(raw: string | null | undefined): string {
   if (s === "or" || s === "gold") return "Or";
   if (s === "platine" || s === "platinum") return "Platine";
   return "Bronze";
+}
+
+function isStudentNavActive(pathname: string | null, href: string): boolean {
+  if (!pathname) return false;
+  if (href === "/dashboard") return pathname === "/dashboard";
+  if (href === "/profile") return pathname === "/profile" || pathname.startsWith("/profile/");
+  return pathname.startsWith(href);
+}
+
+function initialsFromDisplay(name: string | undefined, email: string | undefined): string {
+  const base = (name || email || "?").trim();
+  const parts = base.split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) {
+    return `${parts[0]![0] ?? ""}${parts[1]![0] ?? ""}`.toUpperCase() || "?";
+  }
+  const one = parts[0] || base;
+  return one.slice(0, 2).toUpperCase() || "?";
 }
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -99,6 +117,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }, [isTeacher, user?.id]);
 
   const logoHref = !user ? "/" : isTeacher ? "/dashboard" : "/student/search";
+  const studentDisplayName = (profile?.name as string | undefined) || (user ? authDisplayName(user) : "");
+  const studentInitials = initialsFromDisplay(studentDisplayName, user?.email || undefined);
+
+  const STUDENT_NAV: { href: string; labelKey: "studentTabFind" | "studentTabLessons" | "studentTabProgress" | "studentTabProfile" }[] = [
+    { href: "/student/search", labelKey: "studentTabFind" },
+    { href: "/dashboard", labelKey: "studentTabLessons" },
+    { href: "/student/progress", labelKey: "studentTabProgress" },
+    { href: "/profile", labelKey: "studentTabProfile" },
+  ];
 
   return (
     <div
@@ -107,48 +134,162 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         isTeacher ? "bg-[#F4F4F3] text-[#2C2C2A]" : "bg-[#FAFCFB] text-[var(--p-text)]",
       )}
     >
-      {/* Top bar */}
-      <header className="sticky top-0 z-40 h-14 shrink-0 border-b border-[var(--p-border-light)] bg-white flex items-center justify-between px-4 sm:px-5">
-        <Link href={logoHref} className="flex items-center gap-2 min-w-0" aria-label={t("ariaHome")}>
-          <Logo size="md" variant="dark" />
-        </Link>
+      {/* Default top bar (non-student) */}
+      {!isStudent ? (
+        <header className="sticky top-0 z-40 h-14 shrink-0 border-b border-[var(--p-border-light)] bg-white flex items-center justify-between px-4 sm:px-5">
+          <Link href={logoHref} className="flex items-center gap-2 min-w-0" aria-label={t("ariaHome")}>
+            <Logo size="md" variant="dark" />
+          </Link>
 
-        <div className="flex items-center gap-1 sm:gap-2">
-          {isStudent || isTeacher ? (
-            <Link
-              href="/messages"
-              className={cn(
-                "relative inline-flex h-10 w-10 items-center justify-center rounded-full transition-colors",
-                pathname?.startsWith("/messages")
-                  ? "bg-[rgba(29,158,117,0.18)] text-[#0f6d52]"
-                  : "text-[#1D9E75] hover:bg-[rgba(29,158,117,0.12)]",
-              )}
-              aria-label={t("ariaMessages")}
-            >
-              <MessageCircle size={22} />
-              {unreadMessages > 0 ? (
-                <span className="absolute -top-0.5 -right-0.5 min-w-[1.125rem] h-[1.125rem] px-1 rounded-full bg-[#1D9E75] text-white text-[10px] font-bold leading-none inline-flex items-center justify-center border-2 border-white">
-                  {unreadMessages > 99 ? "99+" : unreadMessages}
-                </span>
-              ) : null}
-            </Link>
-          ) : null}
-          {isStudent ? (
-            <div className="opacity-95 scale-90 origin-right">
+          <div className="flex items-center gap-1 sm:gap-2">
+            {isTeacher ? (
+              <Link
+                href="/messages"
+                className={cn(
+                  "relative inline-flex h-10 w-10 items-center justify-center rounded-full transition-colors",
+                  pathname?.startsWith("/messages")
+                    ? "bg-[rgba(29,158,117,0.18)] text-[#0f6d52]"
+                    : "text-[#1D9E75] hover:bg-[rgba(29,158,117,0.12)]",
+                )}
+                aria-label={t("ariaMessages")}
+              >
+                <MessageCircle size={22} />
+                {unreadMessages > 0 ? (
+                  <span className="absolute -top-0.5 -right-0.5 min-w-[1.125rem] h-[1.125rem] px-1 rounded-full bg-[#1D9E75] text-white text-[10px] font-bold leading-none inline-flex items-center justify-center border-2 border-white">
+                    {unreadMessages > 99 ? "99+" : unreadMessages}
+                  </span>
+                ) : null}
+              </Link>
+            ) : null}
+            <div className="opacity-80 scale-90 origin-right">
               <LocaleSwitcher />
             </div>
-          ) : (
-            <>
-              <div className="opacity-80 scale-90 origin-right">
-                <LocaleSwitcher />
-              </div>
+            {isTeacher ? (
               <div>
                 <NotificationCenter />
               </div>
-            </>
-          )}
-        </div>
-      </header>
+            ) : null}
+          </div>
+        </header>
+      ) : (
+        <>
+          {/* Student desktop: sticky header + horizontal tabs */}
+          <header
+            className="sticky top-0 z-50 hidden md:block shrink-0 bg-white"
+            style={{
+              borderBottom: "0.5px solid #D3D1C7",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "0 24px",
+                height: 52,
+              }}
+            >
+              <Link href="/student/search" className="shrink-0" aria-label={t("ariaHome")}>
+                <Logo variant="dark" size="md" />
+              </Link>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <Link
+                  href="/messages"
+                  className={cn(
+                    "relative inline-flex h-10 w-10 items-center justify-center rounded-full transition-colors",
+                    pathname?.startsWith("/messages")
+                      ? "bg-[rgba(29,158,117,0.18)] text-[#0f6d52]"
+                      : "text-[#1D9E75] hover:bg-[rgba(29,158,117,0.12)]",
+                  )}
+                  aria-label={t("ariaMessages")}
+                >
+                  <MessageCircle size={22} />
+                  {unreadMessages > 0 ? (
+                    <span className="absolute -top-0.5 -right-0.5 min-w-[1.125rem] h-[1.125rem] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold leading-none inline-flex items-center justify-center border-2 border-white">
+                      {unreadMessages > 99 ? "99+" : unreadMessages}
+                    </span>
+                  ) : null}
+                </Link>
+                <div className="w-[min(200px,42vw)] shrink-0">
+                  <LocaleSwitcher variant="light" />
+                </div>
+                <Link
+                  href="/profile"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#E1F5EE] text-xs font-bold text-[#085041]"
+                  aria-label={t("studentTabProfile")}
+                >
+                  {studentInitials}
+                </Link>
+              </div>
+            </div>
+            <div
+              className="hidden md:flex"
+              style={{
+                padding: "0 24px",
+                borderTop: "0.5px solid #F1EFE8",
+              }}
+            >
+              {STUDENT_NAV.map((tab) => {
+                const active = isStudentNavActive(pathname, tab.href);
+                return (
+                  <Link
+                    key={tab.href}
+                    href={tab.href}
+                    style={{
+                      padding: "10px 16px",
+                      fontSize: 13,
+                      fontWeight: active ? 500 : 400,
+                      color: active ? "#1D9E75" : "#888780",
+                      borderBottom: active ? "2px solid #1D9E75" : "2px solid transparent",
+                      textDecoration: "none",
+                      whiteSpace: "nowrap",
+                      transition: "all 0.15s",
+                    }}
+                  >
+                    {t(tab.labelKey)}
+                  </Link>
+                );
+              })}
+            </div>
+          </header>
+
+          {/* Student mobile: minimal header */}
+          <header
+            className="sticky top-0 z-50 md:hidden shrink-0 flex items-center justify-between bg-white"
+            style={{
+              borderBottom: "0.5px solid #D3D1C7",
+              padding: "0 16px",
+              height: 52,
+            }}
+          >
+            <Link href="/student/search" className="shrink-0" aria-label={t("ariaHome")}>
+              <Logo variant="dark" size="sm" />
+            </Link>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <Link
+                href="/messages"
+                className={cn(
+                  "relative inline-flex h-9 w-9 items-center justify-center rounded-full transition-colors",
+                  pathname?.startsWith("/messages")
+                    ? "bg-[rgba(29,158,117,0.18)] text-[#0f6d52]"
+                    : "text-[#1D9E75] hover:bg-[rgba(29,158,117,0.12)]",
+                )}
+                aria-label={t("ariaMessages")}
+              >
+                <MessageCircle size={20} />
+                {unreadMessages > 0 ? (
+                  <span className="absolute -top-0.5 -right-0.5 min-w-[1rem] h-4 px-0.5 rounded-full bg-red-500 text-white text-[9px] font-bold leading-none inline-flex items-center justify-center border-2 border-white">
+                    {unreadMessages > 99 ? "99+" : unreadMessages}
+                  </span>
+                ) : null}
+              </Link>
+              <div className="w-[140px] shrink-0 scale-90 origin-right">
+                <LocaleSwitcher variant="light" compact />
+              </div>
+            </div>
+          </header>
+        </>
+      )}
 
       <div className="flex flex-1 min-h-0">
         {/* Teacher desktop sidebar */}
@@ -226,14 +367,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         ) : null}
 
         <main
-          className={cn("flex-1 min-w-0", isTeacher ? "px-4 sm:px-6 py-6" : "px-4 sm:px-5 py-6")}
+          className={cn(
+            "flex-1 min-w-0",
+            isStudent && "w-full overflow-y-auto px-4 sm:px-5 py-6 md:pb-0 pb-20",
+            isTeacher && "overflow-y-auto px-4 sm:px-6 py-6 pb-24 lg:pb-8",
+            !isStudent && !isTeacher && "overflow-y-auto px-4 sm:px-5 py-6 pb-8",
+          )}
           style={
             isStudent
               ? {
                   flex: 1,
                   width: "100%",
-                  paddingBottom: 80,
-                  overflowY: "auto",
                 }
               : undefined
           }
@@ -246,9 +390,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </main>
       </div>
 
-      {/* Student bottom tabs */}
+      {/* Student bottom tabs (mobile only) */}
       {isStudent ? (
         <nav
+          className="safe-area-pb md:hidden"
           style={{
             position: "fixed",
             bottom: 0,
@@ -259,24 +404,39 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             borderTop: "0.5px solid #D3D1C7",
             display: "flex",
           }}
-          className="safe-area-pb"
         >
-          <div className="grid grid-cols-4 h-16 w-full">
-            <StudentTab
-              href="/student/search"
-              icon={<Search size={20} />}
-              label={t("studentTabFindShort")}
-              active={pathname?.startsWith("/student/search")}
-            />
-            <StudentTab href="/dashboard" icon={<CalendarDays size={20} />} label={t("studentTabCoursesShort")} active={pathname === "/dashboard"} />
-            <StudentTab
-              href="/student/progress"
-              icon={<Sprout size={20} />}
-              label={t("studentTabProgressShort")}
-              active={pathname?.startsWith("/student/progress")}
-            />
-            <StudentTab href="/profile" icon={<UserRound size={20} />} label={t("studentTabProfileShort")} active={pathname === "/profile"} />
-          </div>
+          {[
+            { href: "/student/search", icon: "🔍", labelKey: "studentTabFind" as const },
+            { href: "/dashboard", icon: "📅", labelKey: "studentTabLessons" as const },
+            { href: "/student/progress", icon: "🌱", labelKey: "studentTabProgress" as const },
+            { href: "/profile", icon: "👤", labelKey: "studentTabProfile" as const },
+          ].map((tab) => {
+            const active = isStudentNavActive(pathname, tab.href);
+            return (
+              <Link
+                key={tab.href}
+                href={tab.href}
+                style={{
+                  flex: 1,
+                  textAlign: "center",
+                  padding: "8px 4px",
+                  textDecoration: "none",
+                }}
+              >
+                <div style={{ fontSize: 20 }}>{tab.icon}</div>
+                <div
+                  style={{
+                    fontSize: 10,
+                    color: active ? "#1D9E75" : "#888780",
+                    fontWeight: active ? 500 : 400,
+                    marginTop: 2,
+                  }}
+                >
+                  {t(tab.labelKey)}
+                </div>
+              </Link>
+            );
+          })}
         </nav>
       ) : null}
 
@@ -341,31 +501,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       ) : null}
 
     </div>
-  );
-}
-
-function StudentTab({
-  href,
-  icon,
-  label,
-  active,
-}: {
-  href: string;
-  icon: React.ReactNode;
-  label: string;
-  active: boolean;
-}) {
-  return (
-    <Link
-      href={href}
-      className={cn(
-        "flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors",
-        active ? "text-[#1D9E75]" : "text-[var(--p-text-muted)] hover:text-[#1D9E75]",
-      )}
-    >
-      {icon}
-      {label}
-    </Link>
   );
 }
 
