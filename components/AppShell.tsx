@@ -393,7 +393,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {/* Student bottom tabs (mobile only) */}
       {isStudent ? (
         <nav
-          className="safe-area-pb md:hidden"
+          className="md:hidden"
           style={{
             position: "fixed",
             bottom: 0,

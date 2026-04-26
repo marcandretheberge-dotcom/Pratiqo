@@ -110,15 +110,15 @@ export default function StudentProfilePage() {
         </div>
         <p className="text-[16px] font-bold text-[var(--p-text)]">{authDisplayName(user)}</p>
         <p className="text-[12px] text-[var(--p-text-muted)]">
-          Élève · {t("studentMember")} {memberYear ?? "—"}
+          {t("student")} · {t("profileMemberSince")} {memberYear ?? "—"}
         </p>
       </section>
 
       {/* STATS */}
       <section className="grid grid-cols-3 gap-2">
-        <StatCard label="Cours" value={loading ? "…" : String(lessonCount)} />
-        <StatCard label={t("studentMyTeachers")} value={loading ? "…" : String(teacherCount)} />
-        <StatCard label={t("studentPoints")} value={String(points)} />
+        <StatCard label={t("profileLessons")} value={loading ? "…" : String(lessonCount)} />
+        <StatCard label={t("profileTeachers")} value={loading ? "…" : String(teacherCount)} />
+        <StatCard label={t("profilePoints")} value={String(points)} />
       </section>
 
       {/* COMPANION */}
@@ -151,13 +151,13 @@ export default function StudentProfilePage() {
 
       {/* SETTINGS */}
       <section className="rounded-3xl border border-[var(--p-border-light)] bg-white p-4 shadow-sm space-y-3">
-        <Row label="Langue">
+        <Row label={t("profileLanguage")}>
           <div className="scale-90 origin-right">
             <LocaleSwitcher />
           </div>
         </Row>
 
-        <Row label="Notifications">
+        <Row label={t("profileNotifications")}>
           <button
             type="button"
             onClick={async () => {
@@ -172,7 +172,7 @@ export default function StudentProfilePage() {
               "h-8 w-14 rounded-full border transition-colors relative",
               notificationsEnabled ? "bg-[#1D9E75] border-[#1D9E75]" : "bg-slate-100 border-[var(--p-border-light)]",
             )}
-            aria-label="Notifications"
+            aria-label={t("profileNotifications")}
           >
             <span
               className={cn(
@@ -191,7 +191,7 @@ export default function StudentProfilePage() {
             <span className="h-9 w-9 rounded-xl bg-[#E1F5EE] text-[#0F6E56] flex items-center justify-center">
               <CreditCard size={18} />
             </span>
-            <span className="text-sm font-semibold text-[var(--p-text)]">Mes paiements</span>
+            <span className="text-sm font-semibold text-[var(--p-text)]">{t("profilePayments")}</span>
           </div>
           <ChevronRight size={18} className="text-slate-400" />
         </Link>
@@ -205,7 +205,7 @@ export default function StudentProfilePage() {
           }}
           className="w-full rounded-2xl px-3 py-3 text-left text-sm font-bold text-rose-600 hover:bg-rose-50"
         >
-          {t("signOut")}
+          {t("profileSignOut")}
         </button>
       </section>
     </div>
