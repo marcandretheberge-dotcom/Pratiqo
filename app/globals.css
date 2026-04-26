@@ -138,3 +138,9 @@ h3 {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+@media (min-width: 768px) {
+  .student-bottom-nav {
+    display: none !important;
+  }
+}

@@ -392,8 +392,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* Student bottom tabs (mobile only) */}
       {isStudent ? (
+        <>
+          <style>{`
+            .student-bottom-nav {
+              display: flex;
+            }
+            @media (min-width: 768px) {
+              .student-bottom-nav {
+                display: none !important;
+              }
+            }
+          `}</style>
         <nav
-          className="md:hidden"
+          className="student-bottom-nav"
           style={{
             position: "fixed",
             bottom: 0,
@@ -402,7 +413,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             zIndex: 50,
             background: "white",
             borderTop: "0.5px solid #D3D1C7",
-            display: "flex",
           }}
         >
           {[
@@ -438,6 +448,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             );
           })}
         </nav>
+        </>
       ) : null}
 
       {/* Teacher mobile: 5 tabs + More menu */}
