@@ -30,21 +30,24 @@ function escapeHtml(s: string): string {
 }
 
 async function send(opts: { to: string; subject: string; html: string }) {
-  const resend = resendClient();
-  if (!resend) {
-    console.warn("[email] RESEND_API_KEY missing — skipping:", opts.subject);
+  const key = process.env.RESEND_API_KEY?.trim();
+  if (!key) {
+    console.warn("[email] RESEND_API_KEY missing — skipping email to:", opts.to, "subject:", opts.subject);
     return;
   }
+  const resend = new Resend(key);
+  console.log("[email] Sending to:", opts.to, "| subject:", opts.subject);
   try {
-    await resend.emails.send({
+    const result = await resend.emails.send({
       from: "Pratiqo <onboarding@pratiqo.ca>",
       replyTo: "support@pratiqo.ca",
       to: opts.to,
       subject: opts.subject,
       html: opts.html,
     });
+    console.log("[email] ✓ Sent successfully — id:", (result as { data?: { id?: string } }).data?.id ?? "unknown");
   } catch (e) {
-    console.error("[email] Send failed:", opts.subject, e);
+    console.error("[email] ✗ Send failed — to:", opts.to, "subject:", opts.subject, "error:", e);
     // never rethrow — email failures must not block payments or bookings
   }
 }
@@ -93,23 +96,22 @@ function buildEmail(opts: TemplateOpts): string {
 
         <!-- LOGO -->
         <tr>
-          <td style="padding-bottom:20px;text-align:center;">
-            <a href="${base}" style="text-decoration:none;display:inline-flex;align-items:center;gap:8px;">
-              <span style="display:inline-flex;align-items:center;justify-content:center;
-                           width:32px;height:32px;border-radius:9px;background:#1D9E75;">
-                <svg width="16" height="16" viewBox="0 0 36 36" fill="none">
-                  <rect x="8" y="8" width="3.5" height="20" rx="1.75" fill="white"/>
-                  <path d="M11.5 8 Q23 8 23 16 Q23 24 11.5 24" fill="none"
-                        stroke="white" stroke-width="3" stroke-linecap="round"/>
-                  <circle cx="28" cy="21" r="2.5" fill="white" opacity=".5"/>
-                  <circle cx="28" cy="16" r="2.5" fill="white" opacity=".75"/>
-                  <circle cx="28" cy="11" r="2.5" fill="white"/>
-                </svg>
-              </span>
-              <span style="font-size:18px;font-weight:600;color:#2C2C2A;letter-spacing:-0.4px;">
-                Pratiqo
-              </span>
-            </a>
+          <td style="padding-bottom:20px;">
+            <table cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;">
+              <tr>
+                <td align="center">
+                  <a href="${base}" style="text-decoration:none;display:block;">
+                    <img
+                      src="https://pratiqo.ca/logo-email.png"
+                      alt="Pratiqo"
+                      width="160"
+                      height="48"
+                      style="display:block;border:0;max-width:160px;height:auto;"
+                    />
+                  </a>
+                </td>
+              </tr>
+            </table>
           </td>
         </tr>
 

@@ -244,13 +244,14 @@ function OnboardingInner() {
     if (!user) return;
     setSaving(true);
     setMessage(null);
+    console.log("[onboarding] Submitting onboarding...");
     try {
       const supabase = getSupabaseClient();
       const {
         data: { session },
       } = await supabase.auth.getSession();
       const token = session?.access_token;
-      if (!token) throw new Error("Session expirée.");
+      if (!token) throw new Error("Session expirée. Reconnecte-toi.");
 
       const payload = {
         role: "teacher",
@@ -274,18 +275,29 @@ function OnboardingInner() {
         home_lesson_price: homePrice,
       };
 
-      console.log("[onboarding] POST /api/onboarding/complete", payload);
+      console.log("[onboarding] Payload ready, calling /api/onboarding/complete");
       const res = await fetch("/api/onboarding/complete", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify(payload),
       });
-      const j = (await res.json().catch(() => ({}))) as { ok?: boolean; role?: string; error?: string };
-      console.log("[onboarding] response", { status: res.status, ok: res.ok, body: j });
-      if (!res.ok || !j.ok) throw new Error(j.error || "Enregistrement impossible.");
+
+      const text = await res.text();
+      console.log("[onboarding] Raw response:", res.status, text);
+
+      let j: { ok?: boolean; role?: string; error?: string } = {};
+      try { j = JSON.parse(text) as typeof j; } catch { /* non-JSON body */ }
+
+      if (!res.ok || !j.ok) {
+        throw new Error(j.error || `Erreur ${res.status}`);
+      }
+
+      console.log("[onboarding] Onboarding complete, redirecting to /dashboard...");
       setStep("done");
+      router.push("/dashboard");
     } catch (e) {
-      setMessage(e instanceof Error ? e.message : "Erreur");
+      console.error("[onboarding] Error:", e);
+      setMessage(e instanceof Error ? e.message : "Erreur inattendue. Réessaie.");
     } finally {
       setSaving(false);
     }
