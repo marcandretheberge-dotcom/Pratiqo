@@ -16,6 +16,16 @@ ALTER TABLE public.credit_transactions
 
 -- Insert policy so the webhook/server can write transactions via service role
 -- (service role bypasses RLS anyway, but make explicit for anon client fallback)
-CREATE POLICY IF NOT EXISTS "Service role writes credit transactions"
-  ON public.credit_transactions FOR INSERT
-  WITH CHECK (true);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename  = 'credit_transactions'
+      AND policyname = 'Service role writes credit transactions'
+  ) THEN
+    CREATE POLICY "Service role writes credit transactions"
+      ON public.credit_transactions FOR INSERT
+      WITH CHECK (true);
+  END IF;
+END $$;

@@ -5,7 +5,7 @@ import type { Teacher } from "../../../../types";
 import { BookingModal, type BookingInitialLessonKind } from "../../../../components/BookingModal";
 import { TeacherProfile } from "../../../../components/TeacherProfile";
 import { useRouter, useSearchParams } from "next/navigation";
-import { MapPin, Search, Star, Users, Video } from "lucide-react";
+import { Star, Users, Video } from "lucide-react";
 import { useLocale } from "../../../../lib/locale-context";
 import { cn } from "../../../../lib/utils";
 import { getEnabledDisciplines, type Discipline } from "../../../../lib/disciplines";
@@ -22,6 +22,8 @@ import { TEACHERS } from "../../../../constants";
 import { getVerificationLevel } from "../../../../lib/verification";
 import { VerificationBadge } from "../../../../components/VerificationBadge";
 import { SearchMapView } from "../../../../components/SearchMapView";
+import { SmartSearchInput } from "../../../../components/SmartSearchInput";
+import type { City } from "../../../../lib/cities";
 
 export default function StudentSearchPage() {
   const router = useRouter();
@@ -162,16 +164,22 @@ export default function StudentSearchPage() {
             <p className="mt-3 text-center text-sm text-white/85 sm:text-base">{t("heroStudentSubtitle")}</p>
 
             <div className="mx-auto mt-8 flex max-w-xl flex-col gap-3 sm:flex-row sm:items-center">
-              <div className="flex flex-1 items-center gap-2 rounded-2xl bg-white px-4 py-3 text-[#2C2C2A] shadow-sm">
-                <Search size={18} className="shrink-0 text-slate-500" />
-                <input
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && setSortMode("relevance")}
-                  placeholder={t("searchInputPlaceholder")}
-                  className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-slate-400"
-                />
-              </div>
+              <SmartSearchInput
+                value={searchQuery}
+                onChange={setSearchQuery}
+                teachers={teachers}
+                geo={geo}
+                onSelectTeacher={(teacher) => setSelectedTeacherProfile(teacher)}
+                onSelectDiscipline={(label) => {
+                  setActiveCat(label);
+                  setSearchQuery("");
+                }}
+                onSelectCity={(city: City) => {
+                  setGeo({ lat: city.lat, lng: city.lng });
+                  setSortMode("nearest");
+                  setSearchQuery(city.name);
+                }}
+              />
 
               <button
                 type="button"
@@ -181,9 +189,8 @@ export default function StudentSearchPage() {
                   geoLoading && "opacity-80",
                 )}
               >
-                <span className="inline-flex items-center gap-2">
-                  <MapPin size={16} />
-                  {t("nearMe")}
+                <span className="inline-flex items-center gap-2 whitespace-nowrap">
+                  📍 {t("nearMe")}
                 </span>
               </button>
             </div>
