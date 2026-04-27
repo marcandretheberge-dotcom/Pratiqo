@@ -176,6 +176,7 @@ const frCA = {
   teacherLoyalty: "Fidélité",
   teacherVerification: "Vérification",
   teacherSettings: "Paramètres",
+  teacherTabPlus: "Plus",
 
   nextLesson: "Prochain cours",
   pendingRequests: "Demandes en attente",
@@ -784,6 +785,7 @@ const enCA: Record<TranslationKey, string> = {
   teacherLoyalty: "Rewards",
   teacherVerification: "Verification",
   teacherSettings: "Settings",
+  teacherTabPlus: "More",
   nextLesson: "Next Lesson",
   pendingRequests: "Pending Requests",
   noPendingRequests: "No pending requests",
@@ -1386,6 +1388,7 @@ const es: Record<TranslationKey, string> = {
   teacherLoyalty: "Fidelidad",
   teacherVerification: "Verificación",
   teacherSettings: "Configuración",
+  teacherTabPlus: "Más",
   nextLesson: "Próxima clase",
   pendingRequests: "Solicitudes pendientes",
   noPendingRequests: "Sin solicitudes pendientes",

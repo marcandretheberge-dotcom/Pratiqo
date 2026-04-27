@@ -143,4 +143,10 @@ h3 {
   .student-bottom-nav {
     display: none !important;
   }
+  .teacher-bottom-nav {
+    display: none !important;
+  }
+  .teacher-mobile-header {
+    display: none !important;
+  }
 }

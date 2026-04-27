@@ -134,44 +134,54 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         isTeacher ? "bg-[#F4F4F3] text-[#2C2C2A]" : "bg-[#FAFCFB] text-[var(--p-text)]",
       )}
     >
-      {/* Default top bar (non-student) */}
-      {!isStudent ? (
+      {/* Teacher mobile header — hidden at md+ via .teacher-mobile-header class */}
+      {isTeacher ? (
+        <header
+          className="teacher-mobile-header sticky top-0 z-50 shrink-0 bg-white items-center justify-between"
+          style={{ borderBottom: "0.5px solid #D3D1C7", padding: "0 16px", height: 52 }}
+        >
+          <Link href="/dashboard" className="shrink-0" aria-label={t("ariaHome")}>
+            <Logo variant="dark" size="sm" />
+          </Link>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <Link
+              href="/messages"
+              className={cn(
+                "relative inline-flex h-9 w-9 items-center justify-center rounded-full transition-colors",
+                pathname?.startsWith("/messages")
+                  ? "bg-[rgba(29,158,117,0.18)] text-[#0f6d52]"
+                  : "text-[#1D9E75] hover:bg-[rgba(29,158,117,0.12)]",
+              )}
+              aria-label={t("ariaMessages")}
+            >
+              <MessageCircle size={20} />
+              {unreadMessages > 0 ? (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[1rem] h-4 px-0.5 rounded-full bg-[#1D9E75] text-white text-[9px] font-bold leading-none inline-flex items-center justify-center border-2 border-white">
+                  {unreadMessages > 99 ? "99+" : unreadMessages}
+                </span>
+              ) : null}
+            </Link>
+            <NotificationCenter />
+            <div className="scale-90 origin-right">
+              <LocaleSwitcher />
+            </div>
+          </div>
+        </header>
+      ) : null}
+
+      {/* Default top bar (non-student, non-teacher: logged-out or unknown role) */}
+      {!isStudent && !isTeacher ? (
         <header className="sticky top-0 z-40 h-14 shrink-0 border-b border-[var(--p-border-light)] bg-white flex items-center justify-between px-4 sm:px-5">
           <Link href={logoHref} className="flex items-center gap-2 min-w-0" aria-label={t("ariaHome")}>
             <Logo size="md" variant="dark" />
           </Link>
-
-          <div className="flex items-center gap-1 sm:gap-2">
-            {isTeacher ? (
-              <Link
-                href="/messages"
-                className={cn(
-                  "relative inline-flex h-10 w-10 items-center justify-center rounded-full transition-colors",
-                  pathname?.startsWith("/messages")
-                    ? "bg-[rgba(29,158,117,0.18)] text-[#0f6d52]"
-                    : "text-[#1D9E75] hover:bg-[rgba(29,158,117,0.12)]",
-                )}
-                aria-label={t("ariaMessages")}
-              >
-                <MessageCircle size={22} />
-                {unreadMessages > 0 ? (
-                  <span className="absolute -top-0.5 -right-0.5 min-w-[1.125rem] h-[1.125rem] px-1 rounded-full bg-[#1D9E75] text-white text-[10px] font-bold leading-none inline-flex items-center justify-center border-2 border-white">
-                    {unreadMessages > 99 ? "99+" : unreadMessages}
-                  </span>
-                ) : null}
-              </Link>
-            ) : null}
-            <div className="opacity-80 scale-90 origin-right">
-              <LocaleSwitcher />
-            </div>
-            {isTeacher ? (
-              <div>
-                <NotificationCenter />
-              </div>
-            ) : null}
+          <div className="opacity-80 scale-90 origin-right">
+            <LocaleSwitcher />
           </div>
         </header>
-      ) : (
+      ) : null}
+
+      {isStudent ? (
         <>
           {/* Student desktop: sticky header + horizontal tabs */}
           <header
@@ -289,13 +299,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </div>
           </header>
         </>
-      )}
+      ) : null}
 
       <div className="flex flex-1 min-h-0">
         {/* Teacher desktop sidebar */}
         {isTeacher ? (
           <aside
-            className="hidden lg:flex w-[220px] shrink-0 border-r border-white/5 text-white"
+            className="hidden md:flex w-[220px] shrink-0 border-r border-white/5 text-white"
             style={{
               background: "#2C2C2A",
               paddingTop: 0,
@@ -370,7 +380,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           className={cn(
             "flex-1 min-w-0",
             isStudent && "w-full overflow-y-auto px-4 sm:px-5 py-6 md:pb-0 pb-20",
-            isTeacher && "overflow-y-auto px-4 sm:px-6 py-6 pb-24 lg:pb-8",
+            isTeacher && "overflow-y-auto px-4 sm:px-6 py-6 pb-20 md:pb-8",
             !isStudent && !isTeacher && "overflow-y-auto px-4 sm:px-5 py-6 pb-8",
           )}
           style={
@@ -451,60 +461,153 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </>
       ) : null}
 
-      {/* Teacher mobile: 5 tabs + More menu */}
+      {/* Teacher mobile: 5 bottom tabs + More overlay */}
       {isTeacher ? (
         <>
-          <nav className="lg:hidden fixed bottom-0 inset-x-0 z-50 border-t border-white/10 bg-[#2C2C2A] text-white safe-area-pb">
-            <div className="grid grid-cols-5 h-16 max-w-lg mx-auto">
-              <TeacherEmojiTab href="/dashboard" emoji="📊" label="Accueil" active={pathname === "/dashboard"} />
-              <TeacherEmojiTab href="/teacher/schedule" emoji="📅" label="Cours" active={pathname?.startsWith("/teacher/schedule") ?? false} />
-              <TeacherEmojiTab href="/teacher/progress" emoji="👥" label="Élèves" active={pathname?.startsWith("/teacher/progress") ?? false} />
-              <TeacherEmojiTab href="/messages" emoji="💬" label="Messages" active={pathname?.startsWith("/messages") ?? false} badge={unreadMessages} />
-              <button
-                type="button"
-                onClick={() => setTeacherMoreOpen(true)}
-                className={cn(
-                  "flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors",
-                  teacherMoreOpen || ["/loyalty", "/teacher/verification", "/teacher/settings"].some((p) => pathname?.startsWith(p))
-                    ? "text-[#5DCAA5]"
-                    : "text-white/70",
-                )}
+          <style>{`
+            .teacher-bottom-nav { display: flex; }
+            @media (min-width: 768px) { .teacher-bottom-nav { display: none !important; } }
+            .teacher-mobile-header { display: flex; }
+            @media (min-width: 768px) { .teacher-mobile-header { display: none !important; } }
+          `}</style>
+          <nav
+            className="teacher-bottom-nav"
+            style={{
+              position: "fixed",
+              bottom: 0,
+              left: 0,
+              right: 0,
+              zIndex: 50,
+              background: "white",
+              borderTop: "0.5px solid #D3D1C7",
+            }}
+          >
+            {[
+              { href: "/dashboard",         emoji: "📊", labelKey: "teacherHome"     as const, active: pathname === "/dashboard" },
+              { href: "/teacher/schedule",  emoji: "📅", labelKey: "teacherCoursesShort" as const, active: !!pathname?.startsWith("/teacher/schedule") },
+              { href: "/teacher/progress",  emoji: "👥", labelKey: "teacherProgressShort" as const, active: !!pathname?.startsWith("/teacher/progress") },
+              { href: "/messages",          emoji: "💬", labelKey: "teacherMessages" as const, active: !!pathname?.startsWith("/messages") },
+            ].map((tab) => (
+              <Link
+                key={tab.href}
+                href={tab.href}
+                style={{ flex: 1, textAlign: "center", padding: "8px 4px", textDecoration: "none" }}
               >
-                <span className="text-lg leading-none">⚙️</span>
-                Plus
-              </button>
-            </div>
+                <div style={{ fontSize: 20, position: "relative", display: "inline-block" }}>
+                  {tab.emoji}
+                  {tab.href === "/messages" && unreadMessages > 0 ? (
+                    <span
+                      style={{
+                        position: "absolute", top: -4, right: -8,
+                        minWidth: 16, height: 16, padding: "0 3px",
+                        borderRadius: 999, background: "#ef4444",
+                        color: "white", fontSize: 9, fontWeight: 700,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        border: "2px solid white",
+                      }}
+                    >
+                      {unreadMessages > 99 ? "99+" : unreadMessages}
+                    </span>
+                  ) : null}
+                </div>
+                <div style={{ fontSize: 10, color: tab.active ? "#1D9E75" : "#888780", fontWeight: tab.active ? 500 : 400, marginTop: 2 }}>
+                  {t(tab.labelKey)}
+                </div>
+              </Link>
+            ))}
+            {/* Plus / More */}
+            <button
+              type="button"
+              onClick={() => setTeacherMoreOpen(true)}
+              style={{ flex: 1, textAlign: "center", padding: "8px 4px", background: "none", border: "none", cursor: "pointer" }}
+            >
+              <div style={{ fontSize: 20 }}>⋯</div>
+              <div
+                style={{
+                  fontSize: 10,
+                  fontWeight: teacherMoreOpen || ["/loyalty", "/teacher/verification", "/teacher/settings"].some((p) => pathname?.startsWith(p)) ? 500 : 400,
+                  color: teacherMoreOpen || ["/loyalty", "/teacher/verification", "/teacher/settings"].some((p) => pathname?.startsWith(p)) ? "#1D9E75" : "#888780",
+                  marginTop: 2,
+                }}
+              >
+                {t("teacherTabPlus")}
+              </div>
+            </button>
           </nav>
+
+          {/* More overlay */}
           {teacherMoreOpen ? (
-            <div className="lg:hidden fixed inset-0 z-[60] flex flex-col justify-end bg-black/50" role="dialog" aria-modal>
+            <div
+              className="fixed inset-0 z-[60] flex flex-col justify-end"
+              style={{ background: "rgba(0,0,0,0.5)" }}
+              role="dialog"
+              aria-modal
+            >
               <button type="button" className="flex-1 min-h-0 w-full cursor-default" aria-label="Fermer" onClick={() => setTeacherMoreOpen(false)} />
-              <div className="rounded-t-2xl bg-[#2C2C2A] text-white p-4 pb-safe space-y-1 border-t border-white/10">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 px-2 pb-2">Menu</p>
-                <Link
-                  href="/loyalty"
-                  onClick={() => setTeacherMoreOpen(false)}
-                  className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold hover:bg-white/10"
+              <div
+                style={{
+                  borderRadius: "16px 16px 0 0",
+                  background: "white",
+                  padding: "16px 16px 32px",
+                  borderTop: "0.5px solid #D3D1C7",
+                }}
+              >
+                <p style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#888780", padding: "0 8px 12px" }}>
+                  Menu
+                </p>
+                {[
+                  { href: "/teacher/verification", emoji: "🛡️", label: t("verification") },
+                  { href: "/loyalty",              emoji: "⭐", label: t("loyalty"),     badge: loyaltyTier },
+                  { href: "/teacher/settings",     emoji: "⚙️", label: t("settings") },
+                ].map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setTeacherMoreOpen(false)}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 12,
+                      borderRadius: 12, padding: "12px 8px",
+                      textDecoration: "none", color: "#2C2C2A",
+                    }}
+                  >
+                    <span
+                      style={{
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        height: 36, width: 36, borderRadius: 10,
+                        background: "#F1EFE8", fontSize: 16,
+                      }}
+                    >
+                      {item.emoji}
+                    </span>
+                    <span style={{ flex: 1, fontSize: 14, fontWeight: 600 }}>{item.label}</span>
+                    {"badge" in item && item.badge ? (
+                      <span style={{ fontSize: 10, fontWeight: 700, color: "#1D9E75" }}>{item.badge}</span>
+                    ) : null}
+                  </Link>
+                ))}
+                <div style={{ marginTop: 8, padding: "0 8px" }}>
+                  <LocaleSwitcher />
+                </div>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setTeacherMoreOpen(false);
+                    const supabase = getSupabaseClient();
+                    await supabase.auth.signOut();
+                    window.location.href = "/";
+                  }}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 12,
+                    borderRadius: 12, padding: "12px 8px", marginTop: 4,
+                    width: "100%", border: "none", background: "none", cursor: "pointer",
+                    color: "#ef4444", fontSize: 14, fontWeight: 600,
+                  }}
                 >
-                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 text-base">⭐</span>
-                  <span className="flex-1">{t("loyalty")}</span>
-                  {loyaltyTier ? <span className="text-xs text-[#5DCAA5]">{loyaltyTier}</span> : null}
-                </Link>
-                <Link
-                  href="/teacher/verification"
-                  onClick={() => setTeacherMoreOpen(false)}
-                  className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold hover:bg-white/10"
-                >
-                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 text-base">🛡️</span>
-                  <span>{t("verification")}</span>
-                </Link>
-                <Link
-                  href="/teacher/settings"
-                  onClick={() => setTeacherMoreOpen(false)}
-                  className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold hover:bg-white/10"
-                >
-                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 text-base">⚙️</span>
-                  <span>{t("settings")}</span>
-                </Link>
+                  <span style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 36, width: 36, borderRadius: 10, background: "#fef2f2", fontSize: 16 }}>
+                    🚪
+                  </span>
+                  {t("signOut")}
+                </button>
               </div>
             </div>
           ) : null}
@@ -515,36 +618,3 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   );
 }
 
-function TeacherEmojiTab({
-  href,
-  emoji,
-  label,
-  active,
-  badge,
-}: {
-  href: string;
-  emoji: string;
-  label: string;
-  active: boolean;
-  badge?: number;
-}) {
-  return (
-    <Link
-      href={href}
-      className={cn(
-        "flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors",
-        active ? "text-[#5DCAA5]" : "text-white/70 hover:text-white/90",
-      )}
-    >
-      <span className="relative text-lg leading-none">
-        {emoji}
-        {badge && badge > 0 ? (
-          <span className="absolute -top-1 -right-2 min-w-[1rem] h-4 px-0.5 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">
-            {badge > 99 ? "99+" : badge}
-          </span>
-        ) : null}
-      </span>
-      {label}
-    </Link>
-  );
-}
