@@ -193,15 +193,13 @@ export async function POST(req: Request) {
       }
 
       if (user.email) {
-        console.log("[email] Attempting to send welcome email to:", user.email);
-        const emailResult = await sendWelcomeTeacher(user.email, name);
-        console.log("[email] Result:", emailResult);
+        void sendWelcomeTeacher(user.email, name);
       }
     } else {
+      // Student welcome already sent from auth/callback on first signup.
+      // Onboarding complete is not triggered for students, so no duplicate risk.
       if (user.email) {
-        console.log("[email] Attempting to send welcome email to:", user.email);
-        const emailResult = await sendWelcomeStudent(user.email, name);
-        console.log("[email] Result:", emailResult);
+        void sendWelcomeStudent(user.email, name);
       }
     }
 

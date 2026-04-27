@@ -305,14 +305,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {/* Teacher desktop sidebar */}
         {isTeacher ? (
           <aside
-            className="hidden md:flex w-[220px] shrink-0 border-r border-white/5 text-white"
+            className="teacher-sidebar w-[220px] shrink-0 border-r border-white/5 text-white"
             style={{
               background: "#2C2C2A",
               paddingTop: 0,
               paddingLeft: 14,
               paddingRight: 14,
               paddingBottom: 16,
-              display: "flex",
               flexDirection: "column",
             }}
           >
@@ -465,6 +464,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {isTeacher ? (
         <>
           <style>{`
+            .teacher-sidebar { display: none; }
+            @media (min-width: 768px) { .teacher-sidebar { display: flex !important; } }
             .teacher-bottom-nav { display: flex; }
             @media (min-width: 768px) { .teacher-bottom-nav { display: none !important; } }
             .teacher-mobile-header { display: flex; }

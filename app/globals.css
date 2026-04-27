@@ -139,6 +139,10 @@ h3 {
   scrollbar-width: none;
 }
 
+.teacher-sidebar {
+  display: none;
+}
+
 @media (min-width: 768px) {
   .student-bottom-nav {
     display: none !important;
@@ -148,5 +152,8 @@ h3 {
   }
   .teacher-mobile-header {
     display: none !important;
+  }
+  .teacher-sidebar {
+    display: flex !important;
   }
 }

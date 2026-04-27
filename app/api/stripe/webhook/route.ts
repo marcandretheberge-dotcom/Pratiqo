@@ -3,8 +3,13 @@ import Stripe from "stripe";
 import { stripe } from "@/lib/stripe";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { COMPANIONS, getCompanionStage } from "@/lib/companions";
-import { sendCompanionEvolution } from "@/lib/email";
 import { awardCredit, deductCredits, COMPANION_MILESTONE_AMOUNTS } from "@/lib/credits";
+import {
+  sendCompanionEvolution,
+  sendBookingConfirmedStudent,
+  sendBookingConfirmedTeacher,
+  sendProUpgrade,
+} from "@/lib/email";
 
 export const runtime = "nodejs";
 
@@ -126,7 +131,7 @@ async function confirmBookingAndNotify(
 
   const { data: booking, error: fetchErr } = await admin
     .from("bookings")
-    .select("id, teacher_id, student_id, status, date, time, slot_date, time_slot, credits_applied")
+    .select("id, teacher_id, student_id, status, date, time, slot_date, time_slot, credits_applied, price, duration_minutes, teaching_mode")
     .eq("id", bookingId)
     .maybeSingle();
 
@@ -189,7 +194,7 @@ async function confirmBookingAndNotify(
 
   const { data: teacher } = await admin
     .from("teachers")
-    .select("user_id, name")
+    .select("user_id, name, discipline")
     .eq("id", booking.teacher_id)
     .maybeSingle();
 
@@ -203,7 +208,22 @@ async function confirmBookingAndNotify(
   const studentEmail = (studentProfile as { email?: string | null } | null)?.email ?? null;
   const companionType = (studentProfile as { companion_type?: string | null } | null)?.companion_type ?? null;
   const teacherName = (teacher?.name as string) || "Professeur";
+  const teacherDiscipline = (teacher as { discipline?: string | null } | null)?.discipline ?? "Cours privé";
   const when = [booking.date, booking.time].filter(Boolean).join(" · ");
+
+  // Fetch teacher email and commission plan
+  let teacherEmail: string | null = null;
+  let commissionRate = 0.1;
+  if (teacher?.user_id) {
+    const { data: teacherProf } = await admin
+      .from("profiles")
+      .select("email, plan")
+      .eq("id", teacher.user_id as string)
+      .maybeSingle();
+    teacherEmail = (teacherProf as { email?: string | null } | null)?.email ?? null;
+    const plan = (teacherProf as { plan?: string | null } | null)?.plan ?? "free";
+    commissionRate = plan === "pro" ? 0.05 : 0.1;
+  }
 
   const rows = [
     teacher?.user_id
@@ -227,6 +247,59 @@ async function confirmBookingAndNotify(
   const { error: notifErr } = await admin.from("notifications").insert(rows);
   if (notifErr) {
     console.error("[stripe/webhook] notifications insert", notifErr);
+  }
+
+  // Booking confirmation emails
+  const bookingDate = (booking.date as string | null) ?? (booking as { slot_date?: string | null }).slot_date ?? "—";
+  const bookingTime = (booking.time as string | null) ?? (booking as { time_slot?: string | null }).time_slot ?? "—";
+  const bookingPrice = Number((booking as { price?: number | string | null }).price ?? 0);
+  const bookingDuration = Number((booking as { duration_minutes?: number | null }).duration_minutes ?? 60);
+  const bookingMode = (booking as { teaching_mode?: string | null }).teaching_mode ?? "person";
+  const locationLabel =
+    bookingMode === "online" ? "En ligne" :
+    bookingMode === "domicile" ? "À domicile" :
+    "En studio";
+  const creditsAppliedForEmail = Math.max(
+    Number((booking as { credits_applied?: number | string | null }).credits_applied ?? 0),
+    Number(piMetadata?.credits_applied ?? 0),
+  );
+
+  if (studentEmail) {
+    try {
+      await sendBookingConfirmedStudent({
+        email: studentEmail,
+        name: studentName,
+        teacherName,
+        discipline: teacherDiscipline,
+        date: bookingDate,
+        time: bookingTime,
+        durationMinutes: bookingDuration,
+        price: bookingPrice,
+        creditsApplied: creditsAppliedForEmail,
+        location: locationLabel,
+      });
+    } catch (e) {
+      console.error("[stripe/webhook] student booking email failed", e);
+    }
+  }
+
+  if (teacherEmail) {
+    try {
+      await sendBookingConfirmedTeacher({
+        email: teacherEmail,
+        name: teacherName,
+        studentName,
+        discipline: teacherDiscipline,
+        date: bookingDate,
+        time: bookingTime,
+        durationMinutes: bookingDuration,
+        price: bookingPrice,
+        commissionRate,
+        location: locationLabel,
+      });
+    } catch (e) {
+      console.error("[stripe/webhook] teacher booking email failed", e);
+    }
   }
 
   // Deduct credits — prefer booking column, fall back to PI metadata
@@ -255,16 +328,25 @@ async function confirmBookingAndNotify(
     const newStage = getCompanionStage(companionType, total);
     if (prevStage.name !== newStage.name || prevStage.emoji !== newStage.emoji) {
       const companionName = COMPANIONS[companionType].name;
-      try {
-        await sendCompanionEvolution(studentEmail, studentName, companionName, newStage.emoji, newStage.name);
-      } catch (e) {
-        console.error("[stripe/webhook] evolution email failed", e);
-      }
       // Milestone credit: $5/$10/$15/$25 depending on stage reached
       const newStageIndex = COMPANIONS[companionType].stages.findIndex(
         (s) => s.name === newStage.name && s.emoji === newStage.emoji,
       );
       const milestoneAmount = COMPANION_MILESTONE_AMOUNTS[newStageIndex] ?? 0;
+      try {
+        await sendCompanionEvolution(
+          studentEmail,
+          studentName,
+          companionName,
+          prevStage.emoji,
+          newStage.emoji,
+          prevStage.name,
+          newStage.name,
+          milestoneAmount,
+        );
+      } catch (e) {
+        console.error("[stripe/webhook] evolution email failed", e);
+      }
       if (milestoneAmount > 0) {
         try {
           await awardCredit(
@@ -305,6 +387,24 @@ async function setUserPlanFromSubscription(subscription: Stripe.Subscription) {
     .update({ plan, plan_expires_at: expiresAt })
     .eq("id", userId);
   if (error) console.error("[stripe/webhook] plan update failed", error);
+
+  // Pro upgrade welcome email (only on activation, not on cancellation)
+  if (isPro && plan === "pro") {
+    try {
+      const { data: prof } = await admin
+        .from("profiles")
+        .select("name, email")
+        .eq("id", userId)
+        .maybeSingle();
+      const profName = (prof as { name?: string | null } | null)?.name ?? "Professeur";
+      const profEmail = (prof as { email?: string | null } | null)?.email ?? null;
+      if (profEmail) {
+        await sendProUpgrade(profEmail, profName);
+      }
+    } catch (e) {
+      console.error("[stripe/webhook] pro upgrade email failed", e);
+    }
+  }
 }
 
 export async function POST(req: Request) {

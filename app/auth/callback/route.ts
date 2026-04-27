@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { awardCredit } from "@/lib/credits";
+import { sendWelcomeStudent } from "@/lib/email";
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
@@ -37,6 +38,15 @@ export async function GET(request: Request) {
     } = await supabase.auth.getUser();
 
     if (user) {
+      // Detect new users before the upsert so we can send a welcome email
+      const admin = getSupabaseAdmin();
+      const { data: existingProfile } = await admin
+        .from("profiles")
+        .select("id")
+        .eq("id", user.id)
+        .maybeSingle();
+      const isNewUser = !existingProfile;
+
       // First upsert (no select) so profile exists immediately after OAuth.
       const { error: upsertErr } = await supabase
         .from("profiles")
@@ -110,6 +120,12 @@ export async function GET(request: Request) {
         } catch (e) {
           console.error("[auth/callback] referral attribution failed", e);
         }
+      }
+
+      // Welcome email for new students (teachers get theirs on onboarding/complete)
+      if (isNewUser && profile?.role === "student" && user.email) {
+        const displayName = (user.user_metadata?.full_name as string) || user.email.split("@")[0] || "toi";
+        void sendWelcomeStudent(user.email, displayName);
       }
 
       if (profile?.role === "teacher") {
