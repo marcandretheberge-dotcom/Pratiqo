@@ -7,6 +7,7 @@ import { useAuth } from "@/components/AuthProvider";
 import { getSupabaseClient } from "@/lib/supabase";
 import { useLocale } from "@/lib/locale-context";
 import { cn } from "@/lib/utils";
+import { CreditsWidget } from "@/components/CreditsWidget";
 
 type BookingRow = {
   id: string;
@@ -218,6 +219,13 @@ export function StudentDashboard() {
           </ul>
         )}
       </section>
+
+      {/* CREDITS — shown only when student has at least one teacher */}
+      {!loading && teachers.length > 0 && (
+        <CreditsWidget
+          teachers={teachers.map((x) => ({ teacherId: x.teacherId, name: x.name }))}
+        />
+      )}
 
       {/* MY TEACHERS */}
       <section className="space-y-3">

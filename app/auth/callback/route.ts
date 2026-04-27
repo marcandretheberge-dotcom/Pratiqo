@@ -1,11 +1,14 @@
 import { createServerClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { awardCredit } from "@/lib/credits";
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
   const role = requestUrl.searchParams.get("role");
+  const refCode = requestUrl.searchParams.get("ref");
 
   if (code) {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -64,6 +67,49 @@ export async function GET(request: Request) {
       if (readErr || !profile) {
         console.error("[auth/callback] profile read failed", readErr);
         return NextResponse.redirect(new URL("/dashboard", requestUrl.origin));
+      }
+
+      // Handle referral attribution (only for new users — referred_by IS NULL)
+      if (refCode) {
+        try {
+          const admin = getSupabaseAdmin();
+          const { data: referrer } = await admin
+            .from("profiles")
+            .select("id")
+            .eq("referral_code", refCode)
+            .neq("id", user.id)
+            .maybeSingle();
+
+          if (referrer?.id) {
+            const { data: updated } = await admin
+              .from("profiles")
+              .update({ referred_by: referrer.id })
+              .eq("id", user.id)
+              .is("referred_by", null)
+              .select("id");
+
+            if (updated?.length) {
+              // +$1 to the referrer
+              await awardCredit(
+                referrer.id,
+                "referral",
+                `Parrainage réussi (${user.email ?? "nouvel utilisateur"})`,
+                `referral:${user.id}`,
+                1,
+              );
+              // +$1 to the new user (referee bonus)
+              await awardCredit(
+                user.id,
+                "referee_bonus",
+                "Bonus de bienvenue — parrainé par un ami",
+                `referee:${referrer.id}`,
+                1,
+              );
+            }
+          }
+        } catch (e) {
+          console.error("[auth/callback] referral attribution failed", e);
+        }
       }
 
       if (profile?.role === "teacher") {

@@ -11,6 +11,7 @@ import { useLocale } from "../../../lib/locale-context";
 import type { CompanionType } from "../../../lib/companions";
 import { COMPANIONS, getCompanionStage, getLessonsToNextStage, getProgressPercent } from "../../../lib/companions";
 import { LocaleSwitcher } from "../../../components/LocaleSwitcher";
+import { CreditsWidget } from "../../../components/CreditsWidget";
 import { cn } from "../../../lib/utils";
 
 export default function StudentProfilePage() {
@@ -22,6 +23,7 @@ export default function StudentProfilePage() {
   const [teacherCount, setTeacherCount] = useState(0);
   const [points] = useState(0);
   const [companionType, setCompanionType] = useState<CompanionType | null>(null);
+  const [myTeachers, setMyTeachers] = useState<{ teacherId: string; name: string }[]>([]);
   const [companionChosen, setCompanionChosen] = useState(false);
   const [memberYear, setMemberYear] = useState<number | null>(null);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
@@ -61,12 +63,22 @@ export default function StudentProfilePage() {
       setNotificationsEnabled(dash.notificationsEnabled !== false);
 
       const bookings = (bRows || []) as unknown as { teacher_id: string; status: string }[];
-      const distinctTeachers = new Set<string>();
+      const distinctTeacherIds = new Set<string>();
       for (const r of bookings) {
-        if (r.teacher_id) distinctTeachers.add(r.teacher_id);
+        if (r.teacher_id) distinctTeacherIds.add(r.teacher_id);
       }
-      setTeacherCount(distinctTeachers.size);
+      setTeacherCount(distinctTeacherIds.size);
       setLessonCount(typeof confirmedCount === "number" ? confirmedCount : 0);
+
+      // Fetch teacher names for review widget
+      const teacherList: { teacherId: string; name: string }[] = [];
+      await Promise.all(
+        Array.from(distinctTeacherIds).map(async (tid) => {
+          const { data: tr } = await supabase.from("teachers").select("id, name").eq("id", tid).maybeSingle();
+          if (tr) teacherList.push({ teacherId: (tr as { id: string; name: string | null }).id, name: (tr as { id: string; name: string | null }).name ?? tid });
+        }),
+      );
+      setMyTeachers(teacherList);
       setLoading(false);
     };
 
@@ -148,6 +160,15 @@ export default function StudentProfilePage() {
           </Link>
         )}
       </section>
+
+      {/* MES CRÉDITS */}
+      {!loading && (
+        <CreditsWidget
+          teachers={myTeachers}
+          lessonCount={lessonCount}
+          companionType={companionType}
+        />
+      )}
 
       {/* SETTINGS */}
       <section className="rounded-3xl border border-[var(--p-border-light)] bg-white p-4 shadow-sm space-y-3">

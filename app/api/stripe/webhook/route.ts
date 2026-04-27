@@ -4,6 +4,7 @@ import { stripe } from "@/lib/stripe";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { COMPANIONS, getCompanionStage } from "@/lib/companions";
 import { sendCompanionEvolution } from "@/lib/email";
+import { awardCredit, deductCredits, COMPANION_MILESTONE_AMOUNTS } from "@/lib/credits";
 
 export const runtime = "nodejs";
 
@@ -116,12 +117,16 @@ async function confirmGroupSessionCheckout(
   }
 }
 
-async function confirmBookingAndNotify(bookingId: string, paymentIntentId: string) {
+async function confirmBookingAndNotify(
+  bookingId: string,
+  paymentIntentId: string,
+  piMetadata?: Record<string, string> | null,
+) {
   const admin = getSupabaseAdmin();
 
   const { data: booking, error: fetchErr } = await admin
     .from("bookings")
-    .select("id, teacher_id, student_id, status, date, time, slot_date, time_slot")
+    .select("id, teacher_id, student_id, status, date, time, slot_date, time_slot, credits_applied")
     .eq("id", bookingId)
     .maybeSingle();
 
@@ -224,6 +229,18 @@ async function confirmBookingAndNotify(bookingId: string, paymentIntentId: strin
     console.error("[stripe/webhook] notifications insert", notifErr);
   }
 
+  // Deduct credits — prefer booking column, fall back to PI metadata
+  const creditsApplied = Math.max(
+    Number((booking as { credits_applied?: number | string | null }).credits_applied ?? 0),
+    Number(piMetadata?.credits_applied ?? 0),
+  );
+  if (creditsApplied > 0) {
+    const { ok } = await deductCredits(booking.student_id as string, creditsApplied, bookingId);
+    if (!ok) console.warn("[stripe/webhook] credit deduction failed for booking", bookingId);
+    // Mirror to booking row so subsequent webhook fires are idempotent
+    await admin.from("bookings").update({ credits_applied: creditsApplied }).eq("id", bookingId);
+  }
+
   // Companion evolution email (only celebratory notification).
   if (studentEmail && companionType && (companionType === "phoenix" || companionType === "forest" || companionType === "dragon" || companionType === "star")) {
     const { count } = await admin
@@ -242,6 +259,24 @@ async function confirmBookingAndNotify(bookingId: string, paymentIntentId: strin
         await sendCompanionEvolution(studentEmail, studentName, companionName, newStage.emoji, newStage.name);
       } catch (e) {
         console.error("[stripe/webhook] evolution email failed", e);
+      }
+      // Milestone credit: $5/$10/$15/$25 depending on stage reached
+      const newStageIndex = COMPANIONS[companionType].stages.findIndex(
+        (s) => s.name === newStage.name && s.emoji === newStage.emoji,
+      );
+      const milestoneAmount = COMPANION_MILESTONE_AMOUNTS[newStageIndex] ?? 0;
+      if (milestoneAmount > 0) {
+        try {
+          await awardCredit(
+            booking.student_id as string,
+            "companion_evolution",
+            `${companionName} : ${newStage.name} (+${milestoneAmount} $)`,
+            `evolution:${bookingId}`,
+            milestoneAmount,
+          );
+        } catch (e) {
+          console.error("[stripe/webhook] evolution credit failed", e);
+        }
       }
     }
   }
@@ -301,7 +336,7 @@ export async function POST(req: Request) {
       } else {
         const bookingId = pi.metadata?.booking_id;
         if (bookingId) {
-          await confirmBookingAndNotify(bookingId, pi.id);
+          await confirmBookingAndNotify(bookingId, pi.id, pi.metadata as Record<string, string>);
         }
       }
     }
@@ -322,7 +357,7 @@ export async function POST(req: Request) {
       } else {
         const bookingId = sess.metadata?.booking_id;
         if (bookingId && piId) {
-          await confirmBookingAndNotify(bookingId, piId);
+          await confirmBookingAndNotify(bookingId, piId, md);
         }
       }
 

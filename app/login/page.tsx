@@ -17,6 +17,7 @@ function LoginForm() {
   const role = searchParams.get("role");
   const nextRaw = searchParams.get("next") || "/dashboard";
   const next = nextRaw.startsWith("/") ? nextRaw : `/${nextRaw}`;
+  const refCode = searchParams.get("ref") ?? undefined;
   const isTeacherInvite = role === "teacher";
 
   useEffect(() => {
@@ -33,9 +34,9 @@ function LoginForm() {
     setBusy(true);
     try {
       if (role === "teacher") {
-        await loginWithGoogle("/dashboard", "teacher");
+        await loginWithGoogle("/dashboard", "teacher", refCode);
       } else {
-        await loginWithGoogle("/dashboard");
+        await loginWithGoogle("/dashboard", undefined, refCode);
       }
     } catch (e) {
       console.error(e);

@@ -7,6 +7,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
+  Gift,
   Home,
   Loader2,
   MapPin,
@@ -57,6 +58,9 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
   const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  const [creditBalance, setCreditBalance] = useState(0);
+  const [applyCredits, setApplyCredits] = useState(false);
+  const [loadingCredits, setLoadingCredits] = useState(false);
 
   const [availableDays, setAvailableDays] = useState<Record<string, number>>({});
   const [slots, setSlots] = useState<string[]>([]);
@@ -95,6 +99,11 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
   const lessonHours = lessonMinutes / 60;
   const hourlyRate = teachingMode === "domicile" ? Number(teacher.homeLessonPrice ?? 0) : teacher.pricePerLesson;
   const totalPrice = Math.round(lessonHours * hourlyRate * 100) / 100;
+
+  // Credits: can apply up to balance, but leave at least $0.50 for Stripe minimum
+  const maxCreditsApplicable = Math.max(0, Math.floor(Math.min(creditBalance, totalPrice - 0.5) * 100) / 100);
+  const creditsDiscount = applyCredits ? maxCreditsApplicable : 0;
+  const effectivePrice = Math.max(0.5, totalPrice - creditsDiscount);
 
   const homeAvailable =
     Boolean(teacher.homeLessonEnabled) &&
@@ -181,6 +190,24 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
   useEffect(() => {
     if (step === "pickSlot" && selectedDate) void loadSlotsForDate(selectedDate);
   }, [step, selectedDate, loadSlotsForDate]);
+
+  useEffect(() => {
+    if (step !== "confirm" || !user) return;
+    setLoadingCredits(true);
+    setApplyCredits(false);
+    const supabase = getSupabaseClient();
+    void supabase.auth.getSession().then(({ data: { session } }) => {
+      void fetch("/api/credits", {
+        headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {},
+      })
+        .then((r) => r.json())
+        .then((d: { balance?: number }) => {
+          setCreditBalance(Number(d?.balance ?? 0));
+          setLoadingCredits(false);
+        })
+        .catch(() => setLoadingCredits(false));
+    });
+  }, [step, user]);
 
   const calendarCells = useMemo(() => {
     const start = new Date();
@@ -294,6 +321,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
           booking_details: { booking_id: bookingId },
           teaching_mode: modeForDb,
           student_address: modeForDb === "domicile" ? addressTrim : "",
+          credits_to_apply: creditsDiscount > 0 ? creditsDiscount : undefined,
         }),
       });
 
@@ -641,6 +669,53 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                 </div>
               </div>
               <p className="text-xs text-slate-600 leading-relaxed">{t("bookingExclusiveText")}</p>
+
+              {/* Credits toggle */}
+              {!loadingCredits && creditBalance > 0 && maxCreditsApplicable > 0 ? (
+                <button
+                  type="button"
+                  onClick={() => setApplyCredits((v) => !v)}
+                  className={cn(
+                    "w-full flex items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-left transition-all",
+                    applyCredits
+                      ? "border-[#1D9E75] bg-[rgba(29,158,117,0.06)]"
+                      : "border-slate-200 bg-slate-50/60 hover:border-slate-300",
+                  )}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Gift size={16} className={applyCredits ? "text-[#1D9E75]" : "text-slate-400"} />
+                    <div>
+                      <p className={cn("text-sm font-semibold", applyCredits ? "text-[#0f6e56]" : "text-slate-700")}>
+                        {t("creditsApply")}
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        ${creditBalance.toFixed(2)} {t("creditsAvailable")}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {applyCredits && (
+                      <span className="text-sm font-bold text-[#1D9E75]">
+                        −${creditsDiscount.toFixed(2)}
+                      </span>
+                    )}
+                    <div
+                      className={cn(
+                        "relative h-6 w-11 rounded-full border transition-colors",
+                        applyCredits ? "bg-[#1D9E75] border-[#1D9E75]" : "bg-slate-200 border-slate-200",
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          "absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all",
+                          applyCredits ? "left-5" : "left-0.5",
+                        )}
+                      />
+                    </div>
+                  </div>
+                </button>
+              ) : null}
+
               {teachingMode === "domicile" ? (
                 <div className="rounded-xl border border-[rgba(29,158,117,0.25)] bg-[rgba(29,158,117,0.06)] px-3 py-2 text-xs text-slate-700">
                   <span className="font-semibold text-[#0f6e56]">{t("bookingAtHomeLabel")}</span>
@@ -683,7 +758,15 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                   ) : (
                     <>
                       <CheckCircle2 size={18} />
-                      {t("bookingPay")} ${totalPrice.toFixed(2)}
+                      {t("bookingPay")}{" "}
+                      {creditsDiscount > 0 ? (
+                        <>
+                          <span className="line-through opacity-60 mr-1">${totalPrice.toFixed(2)}</span>
+                          ${effectivePrice.toFixed(2)}
+                        </>
+                      ) : (
+                        `$${totalPrice.toFixed(2)}`
+                      )}
                     </>
                   )}
                 </button>

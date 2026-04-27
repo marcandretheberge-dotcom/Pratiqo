@@ -1,10 +1,11 @@
 import { getSupabaseClient } from "./supabase";
 
-export async function loginWithGoogle(redirectPath = "/dashboard", role?: string) {
+export async function loginWithGoogle(redirectPath = "/dashboard", role?: string, referralCode?: string) {
   const supabase = getSupabaseClient();
   const params = new URLSearchParams();
   if (role) params.set("role", role);
   params.set("next", redirectPath);
+  if (referralCode) params.set("ref", referralCode);
 
   const redirectTo =
     typeof window !== "undefined"

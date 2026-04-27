@@ -20,6 +20,7 @@ type CheckoutBody = {
   amount?: number;
   booking_details?: { booking_id?: string };
   booking_id?: string;
+  credits_to_apply?: number;
 };
 
 type TeacherRow = {
@@ -87,6 +88,7 @@ export async function POST(req: Request) {
     const body = (await req.json().catch(() => null)) as CheckoutBody | null;
     const bookingId = body?.booking_details?.booking_id ?? body?.booking_id;
     const teacherIdFromBody = body?.teacher_id;
+    const creditsToApply = Math.max(0, Number(body?.credits_to_apply ?? 0));
 
     if (!bookingId) {
       return NextResponse.json(
@@ -181,6 +183,24 @@ export async function POST(req: Request) {
     const modeLabel =
       teachingMode === "domicile" ? "À domicile" : teachingMode === "online" ? "En ligne" : "En studio";
 
+    // Apply credits: validate server-side against actual balance
+    let validatedCredits = 0;
+    if (creditsToApply > 0 && typed.user_id !== user.id) {
+      const { data: studentProf } = await admin
+        .from("profiles")
+        .select("credit_balance")
+        .eq("id", user.id)
+        .maybeSingle();
+      const balance = Number((studentProf as { credit_balance?: number | null } | null)?.credit_balance ?? 0);
+      // Cap at balance, and ensure at least $0.50 remains for Stripe minimum
+      const maxApplicable = Math.max(0, (unitAmountCents - 50) / 100);
+      validatedCredits = Math.min(creditsToApply, balance, maxApplicable);
+      validatedCredits = Math.floor(validatedCredits * 100) / 100; // round to cents
+    }
+
+    const discountCents = Math.round(validatedCredits * 100);
+    unitAmountCents = Math.max(50, unitAmountCents - discountCents);
+
     if (unitAmountCents < 50) {
       return NextResponse.json(
         { error: "Invalid amount: must be at least 50 cents (Stripe minimum for CAD)." },
@@ -233,6 +253,7 @@ export async function POST(req: Request) {
         student_id: booking.student_id,
         teaching_mode: teachingMode,
         student_address: studentAddress,
+        credits_applied: validatedCredits > 0 ? String(validatedCredits) : "0",
       },
       line_items: [
         {
@@ -257,6 +278,7 @@ export async function POST(req: Request) {
           student_id: booking.student_id,
           teaching_mode: teachingMode,
           student_address: studentAddress,
+          credits_applied: validatedCredits > 0 ? String(validatedCredits) : "0",
         },
         ...(destination
           ? {
