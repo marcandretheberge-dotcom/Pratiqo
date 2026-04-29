@@ -110,8 +110,15 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
     typeof teacher.homeLessonPrice === "number" &&
     Number(teacher.homeLessonPrice) > 0;
 
-  const showStudio = teacher.teachingMode === "person" || teacher.teachingMode === "both";
-  const showOnline = teacher.teachingMode === "online" || teacher.teachingMode === "both";
+  // "all" comes from encodeTeachingMode when teacher has person + online + home selected
+  const showStudio = ["person", "both", "all"].includes(teacher.teachingMode);
+  const showOnline = ["online", "both", "all"].includes(teacher.teachingMode);
+
+  // Fall back to standard levels when teacher hasn't configured any
+  const displayLevels =
+    teacher.levels && teacher.levels.length > 0
+      ? teacher.levels
+      : [t("levelBeginner"), t("levelIntermediate"), t("levelAdvanced")];
 
   const loadAvailableDays = useCallback(async () => {
     setLoadingDays(true);
@@ -172,9 +179,10 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
     setSlots([]);
     setDaysError(null);
     setSlotsError(null);
+    setGeo(null);
   }, [teacher.id, initialLessonKind]);
 
-  useEffect(() => {
+  const requestBookingGeo = useCallback(() => {
     if (!("geolocation" in navigator)) return;
     navigator.geolocation.getCurrentPosition(
       (pos) => setGeo({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
@@ -370,12 +378,12 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
       >
         <div className="p-6 border-b border-slate-100 flex items-center justify-between">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "#1D9E75" }}>
+            <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "#0F6E56" }}>
               {t("bookingTitle")}
             </p>
             <h3 className="text-xl font-bold text-slate-900">{teacher.name}</h3>
           </div>
-          <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-600 text-sm font-bold">
+          <button type="button" onClick={onClose} className="text-slate-600 hover:text-slate-600 text-sm font-bold">
             {t("bookingClose")}
           </button>
         </div>
@@ -398,7 +406,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
             <div className="space-y-4">
               <p className="text-sm font-semibold text-slate-800">{t("bookingYourLevel")}</p>
               <div className="flex flex-wrap gap-2">
-                {teacher.levels.map((lvl) => (
+                {displayLevels.map((lvl) => (
                   <button
                     key={lvl}
                     type="button"
@@ -409,7 +417,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                     )}
                     style={
                       selectedLevel === lvl
-                        ? { backgroundColor: "#1D9E75", borderColor: "#1D9E75" }
+                        ? { backgroundColor: "#0F6E56", borderColor: "#0F6E56" }
                         : undefined
                     }
                   >
@@ -469,7 +477,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
               {teachingMode === "domicile" ? (
                 <div className="space-y-2 rounded-2xl border border-slate-100 bg-slate-50/80 p-4">
                   <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                    <MapPin size={14} className="text-[#1D9E75]" />
+                    <MapPin size={14} className="text-[#0F6E56]" />
                     {t("bookingAddressLabel")}
                   </label>
                   <textarea
@@ -483,7 +491,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                     <span className="font-semibold text-slate-700">
                       ${hourlyRate.toFixed(0)} / h × {lessonHours === 1 ? "1 h" : `${lessonHours} h`}
                     </span>
-                    <span className="font-bold text-[#1D9E75]">
+                    <span className="font-bold text-[#0F6E56]">
                       {t("bookingTotalLine")} : ${totalPrice.toFixed(2)}
                     </span>
                   </div>
@@ -491,6 +499,15 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                     <p className="text-[11px] text-amber-800 bg-amber-50 border border-amber-100 rounded-lg px-2 py-1.5">
                       {t("bookingManualConfirmHome")}
                     </p>
+                  ) : null}
+                  {!geo ? (
+                    <button
+                      type="button"
+                      onClick={requestBookingGeo}
+                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-left text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
+                    >
+                      Activer la localisation pour affiner la durée du cours
+                    </button>
                   ) : null}
                 </div>
               ) : (
@@ -536,8 +553,12 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
               ) : null}
               {loadingDays ? (
                 <div className="flex justify-center py-8">
-                  <Loader2 className="animate-spin text-[#1D9E75]" size={28} />
+                  <Loader2 className="animate-spin text-[#0F6E56]" size={28} />
                 </div>
+              ) : !daysError && Object.keys(availableDays).length === 0 ? (
+                <p className="text-sm text-slate-500 text-center py-6">
+                  Ce professeur n&apos;a pas encore configuré ses disponibilités.
+                </p>
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {calendarCells.map((cell) => (
@@ -561,13 +582,13 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                     >
                       <span className="block capitalize">{cell.label}</span>
                       {!cell.disabled ? (
-                        <span className="text-[10px] font-bold text-[#1D9E75]">
+                        <span className="text-[10px] font-bold text-[#0F6E56]">
                           {t("slotsAvailableBadge").replace("{n}", String(cell.count))}
                         </span>
                       ) : cell.iso < todayIso ? (
-                        <span className="text-[10px] text-slate-400">{t("pastLabel")}</span>
+                        <span className="text-[10px] text-slate-600">{t("pastLabel")}</span>
                       ) : (
-                        <span className="text-[10px] text-slate-400">{t("fullLabel")}</span>
+                        <span className="text-[10px] text-slate-600">{t("fullLabel")}</span>
                       )}
                     </button>
                   ))}
@@ -597,7 +618,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
               ) : null}
               {loadingSlots ? (
                 <div className="flex justify-center py-8">
-                  <Loader2 className="animate-spin text-[#1D9E75]" size={28} />
+                  <Loader2 className="animate-spin text-[#0F6E56]" size={28} />
                 </div>
               ) : slots.length === 0 ? (
                 <p className="text-sm text-slate-500">{t("noSlotsPickOther")}</p>
@@ -605,7 +626,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                 <div className="space-y-4 max-h-[40vh] overflow-y-auto pr-1">
                   {slotsByPeriod.map((g) => (
                     <div key={g.key}>
-                      <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-2">
+                      <p className="text-[11px] font-bold uppercase tracking-widest text-slate-600 mb-2">
                         {g.emoji} {g.label}
                       </p>
                       <div className="grid grid-cols-2 gap-2">
@@ -620,7 +641,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                             className={cn(
                               "py-2.5 rounded-xl border text-xs font-bold transition-colors",
                               selectedSlot === s
-                                ? "border-[#1D9E75] bg-[#1D9E75] text-white"
+                                ? "border-[#0F6E56] bg-[#0F6E56] text-white"
                                 : "border-slate-200 hover:border-[#1D9E75]/40",
                             )}
                           >
@@ -665,7 +686,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                 </div>
                 <div className="flex justify-between gap-2">
                   <span className="text-slate-600">{t("bookingAmountLabel")}</span>
-                  <span className="font-bold text-[#1D9E75]">${totalPrice.toFixed(2)}</span>
+                  <span className="font-bold text-[#0F6E56]">${totalPrice.toFixed(2)}</span>
                 </div>
               </div>
               <p className="text-xs text-slate-600 leading-relaxed">{t("bookingExclusiveText")}</p>
@@ -683,7 +704,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                   )}
                 >
                   <div className="flex items-center gap-2.5">
-                    <Gift size={16} className={applyCredits ? "text-[#1D9E75]" : "text-slate-400"} />
+                    <Gift size={16} className={applyCredits ? "text-[#0F6E56]" : "text-slate-600"} />
                     <div>
                       <p className={cn("text-sm font-semibold", applyCredits ? "text-[#0f6e56]" : "text-slate-700")}>
                         {t("creditsApply")}
@@ -695,7 +716,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     {applyCredits && (
-                      <span className="text-sm font-bold text-[#1D9E75]">
+                      <span className="text-sm font-bold text-[#0F6E56]">
                         −${creditsDiscount.toFixed(2)}
                       </span>
                     )}
@@ -748,7 +769,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                   disabled={isSubmitting}
                   onClick={() => void handleConfirmAndPay()}
                   className="flex-[2] h-11 rounded-2xl text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-2 text-white shadow-md transition hover:opacity-95"
-                  style={{ backgroundColor: "#1D9E75" }}
+                  style={{ backgroundColor: "#0F6E56" }}
                 >
                   {isSubmitting ? (
                     <>

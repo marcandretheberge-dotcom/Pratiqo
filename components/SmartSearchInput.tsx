@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { MapPin, Search, Users } from "lucide-react";
 import type { Teacher } from "@/types";
 import type { Discipline } from "@/lib/disciplines";
@@ -78,6 +78,9 @@ export function SmartSearchInput({
   onSelectCity,
 }: SmartSearchInputProps) {
   const { t, locale } = useLocale();
+  const uid = useId();
+  const inputId = `${uid}-search-input`;
+  const listboxId = `${uid}-search-listbox`;
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef     = useRef<HTMLInputElement>(null);
 
@@ -217,8 +220,9 @@ export function SmartSearchInput({
     <div ref={containerRef} className="relative flex-1 min-w-0">
       {/* Input */}
       <div className="flex items-center gap-2 rounded-2xl bg-white px-4 py-3 text-[#2C2C2A] shadow-sm">
-        <Search size={18} className="shrink-0 text-slate-400" />
+        <Search size={18} className="shrink-0 text-slate-600" aria-hidden />
         <input
+          id={inputId}
           ref={inputRef}
           value={value}
           onChange={(e) => {
@@ -228,11 +232,15 @@ export function SmartSearchInput({
           onFocus={() => { if (debouncedQuery.length >= 2) setOpen(true); }}
           onKeyDown={handleKeyDown}
           placeholder={t("searchInputPlaceholder")}
-          className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-slate-400"
+          className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-slate-600"
           autoComplete="off"
           spellCheck={false}
+          role="combobox"
           aria-autocomplete="list"
           aria-expanded={isOpen}
+          aria-controls={listboxId}
+          aria-activedescendant={activeIndex >= 0 ? `${uid}-search-option-${activeIndex}` : undefined}
+          aria-label={t("searchInputPlaceholder")}
         />
         {value && (
           <button
@@ -249,7 +257,9 @@ export function SmartSearchInput({
       {/* Dropdown */}
       {isOpen && (
         <div
+          id={listboxId}
           role="listbox"
+          aria-labelledby={inputId}
           className={cn(
             "absolute left-0 right-0 top-full z-50 mt-1.5",
             "rounded-2xl border border-[#E8E6DF] bg-white shadow-xl overflow-hidden",
@@ -258,7 +268,7 @@ export function SmartSearchInput({
           {sections.map((section) => (
             <div key={section.key}>
               <div className="px-4 pt-3 pb-1">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-[#888780]">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-[#6B6760]">
                   {section.key === "disciplines" && "📚 "}
                   {section.key === "teachers"    && "👨‍🏫 "}
                   {section.key === "cities"      && "📍 "}
@@ -275,9 +285,10 @@ export function SmartSearchInput({
                       : item.kind === "teacher"  ? item.teacher.id
                       : item.city.name
                     }
+                    id={`${uid}-search-option-${idx}`}
                     type="button"
                     role="option"
-                    aria-selected={isActive}
+                    aria-selected={activeIndex === idx}
                     onMouseEnter={() => setActiveIndex(idx)}
                     onMouseLeave={() => setActiveIndex(-1)}
                     onClick={() => select(item)}
@@ -304,7 +315,7 @@ export function SmartSearchInput({
                           <p className="text-sm font-semibold text-[#2C2C2A] truncate">
                             <Highlight text={item.teacher.name} query={debouncedQuery} />
                           </p>
-                          <p className="text-xs text-[#888780] truncate">
+                          <p className="text-xs text-[#6B6760] truncate">
                             {item.teacher.discipline}
                             {item.teacher.location?.neighborhood
                               ? ` · ${item.teacher.location.neighborhood}`
@@ -317,17 +328,17 @@ export function SmartSearchInput({
 
                     {item.kind === "city" && (
                       <>
-                        <MapPin size={16} className="shrink-0 text-[#888780]" />
+                        <MapPin size={16} className="shrink-0 text-[#6B6760]" />
                         <div className="min-w-0 flex-1">
                           <p className="text-sm font-semibold text-[#2C2C2A]">
                             <Highlight text={item.city.name} query={debouncedQuery} />
                             {item.city.province ? (
-                              <span className="font-normal text-[#888780]">, {item.city.province}</span>
+                              <span className="font-normal text-[#6B6760]">, {item.city.province}</span>
                             ) : null}
                           </p>
                         </div>
                         {item.distanceKm != null && (
-                          <span className="shrink-0 text-xs text-[#888780] font-medium">
+                          <span className="shrink-0 text-xs text-[#6B6760] font-medium">
                             {item.distanceKm} {t("searchKmFromYou")}
                           </span>
                         )}

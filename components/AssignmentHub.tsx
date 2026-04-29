@@ -193,7 +193,7 @@ export function AssignmentHub({ mode }: AssignmentHubProps) {
     return (
       <div className="bg-white p-12 rounded-3xl border border-slate-200 flex flex-col items-center justify-center">
         <Loader2 className="animate-spin text-brand-primary mb-4" />
-        <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px]">{t("assignmentHubLoading")}</p>
+        <p className="text-slate-600 font-bold uppercase tracking-widest text-[10px]">{t("assignmentHubLoading")}</p>
       </div>
     );
   }
@@ -239,7 +239,7 @@ export function AssignmentHub({ mode }: AssignmentHubProps) {
           >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-slate-400 uppercase">{t("assignmentHubStudentLabel")}</label>
+                <label className="text-[10px] font-bold text-slate-600 uppercase">{t("assignmentHubStudentLabel")}</label>
                 <select
                   required
                   value={newAssignment.studentId}
@@ -255,7 +255,7 @@ export function AssignmentHub({ mode }: AssignmentHubProps) {
                 </select>
               </div>
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-slate-400 uppercase">{t("assignmentHubDueShort")}</label>
+                <label className="text-[10px] font-bold text-slate-600 uppercase">{t("assignmentHubDueShort")}</label>
                 <input
                   type="date"
                   value={newAssignment.dueDate}
@@ -265,7 +265,7 @@ export function AssignmentHub({ mode }: AssignmentHubProps) {
               </div>
             </div>
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-slate-400 uppercase">{t("assignmentHomeworkTitleLabel")}</label>
+              <label className="text-[10px] font-bold text-slate-600 uppercase">{t("assignmentHomeworkTitleLabel")}</label>
               <input
                 required
                 placeholder={t("assignmentHomeworkTitlePlaceholder")}
@@ -275,7 +275,7 @@ export function AssignmentHub({ mode }: AssignmentHubProps) {
               />
             </div>
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-slate-400 uppercase">{t("assignmentHomeworkDescLabel")}</label>
+              <label className="text-[10px] font-bold text-slate-600 uppercase">{t("assignmentHomeworkDescLabel")}</label>
               <textarea
                 rows={3}
                 placeholder={t("assignmentHomeworkDescPlaceholder")}
@@ -290,7 +290,7 @@ export function AssignmentHub({ mode }: AssignmentHubProps) {
                 onClick={() => {
                   setHubTab("homework");
                 }}
-                className="px-4 py-2 text-xs font-bold text-slate-400 hover:text-slate-600 transition-all"
+                className="px-4 py-2 text-xs font-bold text-slate-600 hover:text-slate-800 transition-all"
               >
                 {t("cancel")}
               </button>
@@ -309,7 +309,7 @@ export function AssignmentHub({ mode }: AssignmentHubProps) {
         <div className="rounded-3xl border border-slate-200 bg-slate-50/80 p-8 text-center space-y-3">
           <p className="text-sm font-bold text-slate-800">{t("practiceTitle")}</p>
           <p className="text-sm text-slate-600 max-w-lg mx-auto">{t("assignmentHubPracticeBlurb")}</p>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 pt-2">{t("watchPoints")}</p>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-600 pt-2">{t("watchPoints")}</p>
           <p className="text-xs text-slate-500">{t("addWatchPoint")}</p>
         </div>
       ) : hubTab === "homework" ? (
@@ -360,7 +360,7 @@ export function AssignmentHub({ mode }: AssignmentHubProps) {
                   <p className="text-xs text-slate-500 line-clamp-2">{a.description || t("assignmentNoInstructions")}</p>
 
                   <div className="flex items-center gap-4 pt-2 flex-wrap">
-                    <div className="flex items-center gap-1.5 text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+                    <div className="flex items-center gap-1.5 text-[9px] font-bold text-slate-600 uppercase tracking-widest">
                       <Calendar size={12} />{" "}
                       {a.dueDate ? t("assignmentDuePrefix").replace("{date}", a.dueDate) : t("assignmentNoDue")}
                     </div>
@@ -384,7 +384,7 @@ export function AssignmentHub({ mode }: AssignmentHubProps) {
                     )}
                   </div>
                   {mode === "teacher" ? (
-                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest pt-1">{t("teacherNotes")}</p>
+                    <p className="text-[9px] font-bold text-slate-600 uppercase tracking-widest pt-1">{t("teacherNotes")}</p>
                   ) : null}
                 </div>
               </motion.div>
@@ -392,7 +392,7 @@ export function AssignmentHub({ mode }: AssignmentHubProps) {
           ) : (
             <div className="text-center py-12 border-2 border-dashed border-slate-100 rounded-3xl space-y-3">
               <FileText size={48} className="mx-auto text-slate-100 mb-4" />
-              <p className="text-slate-400 font-medium">{t("noHomework")}</p>
+              <p className="text-slate-600 font-medium">{t("noHomework")}</p>
               {mode === "teacher" ? (
                 <button
                   type="button"

@@ -491,7 +491,7 @@ export function Dashboard() {
           <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
             <div className="flex items-center justify-between border-b border-slate-50 pb-4">
               <h3 className="font-bold text-slate-900 text-[10px] uppercase tracking-widest">Ma semaine</h3>
-              <Calendar size={14} className="text-slate-400" />
+              <Calendar size={14} className="text-slate-600" />
             </div>
             <div className="space-y-3">
               {bookings.length > 0 ? (
@@ -504,12 +504,12 @@ export function Dashboard() {
                       <span className="text-[10px] font-bold text-slate-900">{b.teacherName}</span>
                       <span className="text-[9px] font-bold text-brand-primary uppercase tracking-tighter">{b.time}</span>
                     </div>
-                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">{b.date}</p>
+                    <p className="text-[9px] text-slate-600 font-bold uppercase tracking-widest">{b.date}</p>
                   </div>
                 ))
               ) : (
                 <div className="text-center py-8">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">{t("dashboardNoLessonsWeek")}</p>
+                  <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mb-3">{t("dashboardNoLessonsWeek")}</p>
                   <button
                     type="button"
                     onClick={() => router.push("/student/search")}

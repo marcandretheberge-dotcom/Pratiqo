@@ -142,7 +142,7 @@ export function SearchMapView({
 
   if (!apiKey) {
     return (
-      <div className="rounded-xl border border-dashed border-[#E8E6DF] bg-white p-4 text-sm text-[#888780]">
+      <div className="rounded-xl border border-dashed border-[#E8E6DF] bg-white p-4 text-sm text-[#6B6A65]">
         {t("noCoordinates")} — <code className="text-xs">NEXT_PUBLIC_GOOGLE_MAPS_API_KEY</code>
       </div>
     );
@@ -184,8 +184,8 @@ export function SearchMapView({
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <p className="truncate font-semibold text-[#2C2C2A]">{selectedTeacher.name}</p>
-                <p className="truncate text-xs text-[#888780]">{selectedTeacher.discipline}</p>
-                <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-[#888780]">
+                <p className="truncate text-xs text-[#6B6A65]">{selectedTeacher.discipline}</p>
+                <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-[#6B6A65]">
                   <span className="inline-flex items-center gap-1">
                     <Star size={14} className="text-[#1D9E75]" /> {selectedTeacher.rating}
                   </span>

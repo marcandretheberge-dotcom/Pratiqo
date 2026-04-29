@@ -1,19 +1,39 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { Providers } from "./providers";
 
-const inter = Inter({
-  subsets: ["latin"],
+const inter = localFont({
+  src: "../public/fonts/inter.woff2",
   variable: "--font-inter",
   display: "swap",
-  weight: ["400", "500"],
 });
 
 export const metadata: Metadata = {
-  title: "Pratiqo — Trouve ton prof idéal",
+  metadataBase: new URL("https://pratiqo.ca"),
+  title: {
+    default: "Pratiqo — Trouve ton prof idéal au Québec",
+    template: "%s | Pratiqo",
+  },
   description:
-    "Marketplace de cours particuliers — musique, danse, arts martiaux, langues et plus.",
+    "La marketplace québécoise pour trouver un professeur de musique, langue ou tuteur. D'ici, pour ici. Profs vérifiés, paiements sécurisés.",
+  keywords: [
+    "cours particuliers Québec",
+    "professeur de piano",
+    "tuteur Québec",
+    "cours de musique",
+    "cours de langue",
+    "professeur particulier",
+  ],
+  openGraph: {
+    title: "Pratiqo — Trouve ton prof idéal",
+    description: "La marketplace québécoise pour cours particuliers",
+    url: "https://pratiqo.ca",
+    siteName: "Pratiqo",
+    locale: "fr_CA",
+    type: "website",
+    images: [{ url: "/og-image.png", width: 1200, height: 630 }],
+  },
   other: {
     copyright: "© 2026 Pratiqo inc.",
   },
@@ -26,6 +46,18 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fr" className={`${inter.variable} h-full antialiased`}>
+      <head>
+        <link
+          rel="preload"
+          href="/fonts/inter.woff2"
+          as="font"
+          type="font/woff2"
+          crossOrigin="anonymous"
+        />
+        {/* Preconnect to Supabase to cut TTFB on first API call */}
+        <link rel="preconnect" href="https://jwlbwmxoradmbuvqfkhe.supabase.co" />
+        <link rel="dns-prefetch" href="https://jwlbwmxoradmbuvqfkhe.supabase.co" />
+      </head>
       <body className="min-h-full flex flex-col">
         <Providers>{children}</Providers>
       </body>

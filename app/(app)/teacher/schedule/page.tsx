@@ -475,7 +475,7 @@ function TeacherScheduleInner() {
       ) : (
         <div className="space-y-6">
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
-            <p className="text-xs font-bold uppercase tracking-widest text-slate-400">{t("gridWeeklyTitle")}</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-slate-600">{t("gridWeeklyTitle")}</p>
             <div className="flex flex-wrap gap-4 text-xs text-[#2C2C2A]">
               <span className="inline-flex items-center gap-2">
                 <span className="h-3 w-3 rounded-sm bg-[#1D9E75]" /> {t("legendAvailable")}
@@ -493,7 +493,7 @@ function TeacherScheduleInner() {
                 {DAYS.map((d, di) => (
                   <div key={d} className="text-[11px] font-bold uppercase tracking-widest text-slate-500 text-center">
                     {t(DAY_TKEY[d])}{" "}
-                    <span className="block font-normal text-slate-400 normal-case">
+                    <span className="block font-normal text-slate-600 normal-case">
                       {weekDays[di] ? weekDays[di].getDate() : ""}/{weekDays[di] ? weekDays[di].getMonth() + 1 : ""}
                     </span>
                   </div>

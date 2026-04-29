@@ -148,13 +148,13 @@ function buildEmail(opts: TemplateOpts): string {
         <!-- FOOTER -->
         <tr>
           <td style="padding:28px 16px 8px;text-align:center;
-                     color:#888780;font-size:12px;line-height:1.8;">
+                     color:#6B6A65;font-size:12px;line-height:1.8;">
             ${opts.footerExtra
               ? `<p style="margin:0 0 8px;">${opts.footerExtra}</p>`
               : ""}
             <p style="margin:0 0 4px;font-weight:600;color:#2C2C2A;">
               Marc-André Théberge<br>
-              <span style="font-weight:400;color:#888780;">Fondateur de Pratiqo</span>
+              <span style="font-weight:400;color:#6B6A65;">Fondateur de Pratiqo</span>
             </p>
             <p style="margin:8px 0 0;">
               <span style="color:#1D9E75;font-weight:600;">D&apos;ici, pour ici</span>
@@ -175,7 +175,7 @@ function buildEmail(opts: TemplateOpts): string {
 function infoRow(label: string, value: string): string {
   return `<tr>
     <td style="padding:7px 0;border-bottom:1px solid #F1EFE8;font-size:14px;">
-      <span style="color:#888780;">${escapeHtml(label)}</span>
+      <span style="color:#6B6A65;">${escapeHtml(label)}</span>
     </td>
     <td style="padding:7px 0;border-bottom:1px solid #F1EFE8;
                font-size:14px;font-weight:600;text-align:right;">
@@ -239,7 +239,7 @@ export async function sendWelcomeStudent(email: string, name: string) {
         `)}
 
         <p>Ces crédits s'appliquent directement à ta prochaine réservation, automatiquement.</p>
-        <p style="margin-top:24px;font-size:14px;color:#888780;">
+        <p style="margin-top:24px;font-size:14px;color:#6B6A65;">
           Des questions? Réponds à cet email, on est là.
         </p>
       `,
@@ -284,7 +284,7 @@ export async function sendWelcomeTeacher(email: string, name: string) {
         </h2>
         <p>Pratiqo, c'est une initiative québécoise. Chaque professeur sur notre plateforme contribue à bâtir un écosystème éducatif local, équitable et transparent. On publie un rapport annuel de nos finances — parce que la transparence, ça devrait être la norme.</p>
 
-        <p style="margin-top:24px;font-size:14px;color:#888780;">
+        <p style="margin-top:24px;font-size:14px;color:#6B6A65;">
           Questions ou suggestions? Réponds directement à cet email — je lis tout personnellement.
         </p>
       `,
@@ -330,7 +330,7 @@ export async function sendCompanionEvolution(
           Ces crédits s'appliquent automatiquement à ta prochaine réservation.
         `)}
         <p>Chaque cours que tu prends fait progresser ton compagnon. Continue comme ça — la maîtrise, ça se construit un cours à la fois.</p>
-        <p style="font-size:14px;color:#888780;">
+        <p style="font-size:14px;color:#6B6A65;">
           Tu peux voir la progression de ton compagnon et ton solde de crédits dans ton profil.
         </p>
       `,
@@ -386,7 +386,7 @@ export async function sendBookingConfirmedStudent(opts: {
           · Tu peux envoyer un message à ton professeur via l'application<br>
           · Après le cours, laisse un avis pour <strong>gagner +1 $ de crédit</strong>
         `)}
-        <p style="font-size:14px;color:#888780;">
+        <p style="font-size:14px;color:#6B6A65;">
           Merci de faire confiance à Pratiqo et à nos professeurs locaux. 🌱
         </p>
       `,
@@ -441,7 +441,7 @@ export async function sendBookingConfirmedTeacher(opts: {
           · Prépare un plan de leçon adapté à son niveau<br>
           · Ajoute des notes après le cours pour suivre sa progression
         `)}
-        <p style="font-size:14px;color:#888780;">
+        <p style="font-size:14px;color:#6B6A65;">
           Merci d'être sur Pratiqo. Ensemble, on bâtit l'écosystème éducatif que le Québec mérite. 🇨🇦
         </p>
       `,
@@ -489,7 +489,7 @@ export async function sendProUpgrade(email: string, name: string) {
         <p>Chez la majorité des plateformes, les profits vont aux actionnaires. Chez Pratiqo, une partie des profits nets revient aux professeurs — la <strong>ristourne annuelle</strong>. Plus tu enseignes, plus tu contribues au pool, plus tu en reçois.</p>
         <p>On publie un <strong>rapport de transparence financière</strong> chaque année. Parce que tu mérites de savoir où va ton argent.</p>
 
-        <p style="margin-top:24px;font-size:14px;color:#888780;">
+        <p style="margin-top:24px;font-size:14px;color:#6B6A65;">
           Des questions sur ton abonnement Pro? Réponds à cet email directement.
         </p>
       `,

@@ -31,7 +31,7 @@ export function LocaleSwitcher({
         <label
           className={cn(
             "mb-1.5 block px-1 text-[10px] font-semibold uppercase tracking-wide",
-            light ? "text-[#888780]" : "text-white/50",
+            light ? "text-[#6B6A65]" : "text-white/50",
           )}
         >
           {t("localeSwitcherLabel")}

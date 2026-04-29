@@ -262,9 +262,9 @@ using (true);
                   {r.description ? (
                     <p className="text-sm text-slate-600 mt-1 line-clamp-2">{r.description}</p>
                   ) : (
-                    <p className="text-sm text-slate-400 mt-1 italic">Sans description</p>
+                    <p className="text-sm text-slate-600 mt-1 italic">Sans description</p>
                   )}
-                  <p className="text-[10px] text-slate-400 font-semibold mt-2">id: {r.id}</p>
+                  <p className="text-[10px] text-slate-600 font-semibold mt-2">id: {r.id}</p>
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -302,7 +302,7 @@ function Field({
   return (
     <div className="space-y-1">
       <div className="flex items-center justify-between">
-        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{label}</label>
+        <label className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">{label}</label>
         {error ? <span className="text-[10px] font-bold text-rose-600">{error}</span> : null}
       </div>
       {children}

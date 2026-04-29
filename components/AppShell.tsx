@@ -150,13 +150,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 "relative inline-flex h-9 w-9 items-center justify-center rounded-full transition-colors",
                 pathname?.startsWith("/messages")
                   ? "bg-[rgba(29,158,117,0.18)] text-[#0f6d52]"
-                  : "text-[#1D9E75] hover:bg-[rgba(29,158,117,0.12)]",
+                  : "text-[#0F6E56] hover:bg-[rgba(29,158,117,0.12)]",
               )}
               aria-label={t("ariaMessages")}
             >
               <MessageCircle size={20} />
               {unreadMessages > 0 ? (
-                <span className="absolute -top-0.5 -right-0.5 min-w-[1rem] h-4 px-0.5 rounded-full bg-[#1D9E75] text-white text-[9px] font-bold leading-none inline-flex items-center justify-center border-2 border-white">
+                <span className="absolute -top-0.5 -right-0.5 min-w-[1rem] h-4 px-0.5 rounded-full bg-[#0F6E56] text-white text-[9px] font-bold leading-none inline-flex items-center justify-center border-2 border-white">
                   {unreadMessages > 99 ? "99+" : unreadMessages}
                 </span>
               ) : null}
@@ -209,7 +209,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     "relative inline-flex h-10 w-10 items-center justify-center rounded-full transition-colors",
                     pathname?.startsWith("/messages")
                       ? "bg-[rgba(29,158,117,0.18)] text-[#0f6d52]"
-                      : "text-[#1D9E75] hover:bg-[rgba(29,158,117,0.12)]",
+                      : "text-[#0F6E56] hover:bg-[rgba(29,158,117,0.12)]",
                   )}
                   aria-label={t("ariaMessages")}
                 >
@@ -249,8 +249,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       padding: "10px 16px",
                       fontSize: 13,
                       fontWeight: active ? 500 : 400,
-                      color: active ? "#1D9E75" : "#888780",
-                      borderBottom: active ? "2px solid #1D9E75" : "2px solid transparent",
+                      color: active ? "#0F6E56" : "#6B6760",
+                      borderBottom: active ? "2px solid #0F6E56" : "2px solid transparent",
                       textDecoration: "none",
                       whiteSpace: "nowrap",
                       transition: "all 0.15s",
@@ -282,7 +282,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   "relative inline-flex h-9 w-9 items-center justify-center rounded-full transition-colors",
                   pathname?.startsWith("/messages")
                     ? "bg-[rgba(29,158,117,0.18)] text-[#0f6d52]"
-                    : "text-[#1D9E75] hover:bg-[rgba(29,158,117,0.12)]",
+                    : "text-[#0F6E56] hover:bg-[rgba(29,158,117,0.12)]",
                 )}
                 aria-label={t("ariaMessages")}
               >
@@ -446,7 +446,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <div
                   style={{
                     fontSize: 10,
-                    color: active ? "#1D9E75" : "#888780",
+                    color: active ? "#0F6E56" : "#6B6760",
                     fontWeight: active ? 500 : 400,
                     marginTop: 2,
                   }}
@@ -511,7 +511,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     </span>
                   ) : null}
                 </div>
-                <div style={{ fontSize: 10, color: tab.active ? "#1D9E75" : "#888780", fontWeight: tab.active ? 500 : 400, marginTop: 2 }}>
+                <div style={{ fontSize: 10, color: tab.active ? "#0F6E56" : "#6B6760", fontWeight: tab.active ? 500 : 400, marginTop: 2 }}>
                   {t(tab.labelKey)}
                 </div>
               </Link>
@@ -527,7 +527,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 style={{
                   fontSize: 10,
                   fontWeight: teacherMoreOpen || ["/loyalty", "/teacher/verification", "/teacher/settings"].some((p) => pathname?.startsWith(p)) ? 500 : 400,
-                  color: teacherMoreOpen || ["/loyalty", "/teacher/verification", "/teacher/settings"].some((p) => pathname?.startsWith(p)) ? "#1D9E75" : "#888780",
+                  color: teacherMoreOpen || ["/loyalty", "/teacher/verification", "/teacher/settings"].some((p) => pathname?.startsWith(p)) ? "#0F6E56" : "#6B6760",
                   marginTop: 2,
                 }}
               >
@@ -553,7 +553,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   borderTop: "0.5px solid #D3D1C7",
                 }}
               >
-                <p style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#888780", padding: "0 8px 12px" }}>
+                <p style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#6B6760", padding: "0 8px 12px" }}>
                   Menu
                 </p>
                 {[
@@ -582,7 +582,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     </span>
                     <span style={{ flex: 1, fontSize: 14, fontWeight: 600 }}>{item.label}</span>
                     {"badge" in item && item.badge ? (
-                      <span style={{ fontSize: 10, fontWeight: 700, color: "#1D9E75" }}>{item.badge}</span>
+                      <span style={{ fontSize: 10, fontWeight: 700, color: "#0F6E56" }}>{item.badge}</span>
                     ) : null}
                   </Link>
                 ))}

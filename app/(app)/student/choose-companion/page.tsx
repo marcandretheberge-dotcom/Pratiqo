@@ -134,7 +134,7 @@ export default function ChooseCompanionPage() {
       <div className="max-w-3xl mx-auto px-4 sm:px-6">
         <div className="space-y-2">
           <h1 className="text-2xl font-bold text-[#2C2C2A]">{t("companionTitle")}</h1>
-          <p className="text-sm text-[#888780]">{t("companionSubtitle")}</p>
+          <p className="text-sm text-[#6B6A65]">{t("companionSubtitle")}</p>
         </div>
 
         {/* CHOOSE */}
@@ -226,7 +226,7 @@ export default function ChooseCompanionPage() {
               {stageEmoji}
             </div>
             <div className="mt-4 text-lg font-bold text-[#2C2C2A]">{selectedName}</div>
-            <div className="mt-1 text-sm font-semibold text-[#888780]">{stageName}</div>
+            <div className="mt-1 text-sm font-semibold text-[#6B6A65]">{stageName}</div>
 
             <div className="mt-5 flex items-center gap-2">
               {stages.map((_, idx) => {
@@ -288,7 +288,7 @@ export default function ChooseCompanionPage() {
                       key={idx}
                       className={cn(
                         "relative shrink-0 rounded-2xl px-3 py-3",
-                        current ? "bg-[#1D9E75] text-white" : "bg-[#F4F4F3] text-[#888780]",
+                        current ? "bg-[#1D9E75] text-white" : "bg-[#F4F4F3] text-[#6B6A65]",
                       )}
                       style={{
                         minWidth: 132,
@@ -298,7 +298,7 @@ export default function ChooseCompanionPage() {
                     >
                       <div className={cn("leading-none", current ? "text-[28px]" : "text-[22px]")}>{s.emoji}</div>
                       <div className={cn("mt-2 text-xs font-bold", current ? "text-white" : "text-[#6B6A64]")}>{label}</div>
-                      <div className={cn("mt-1 text-[10px] font-semibold", current ? "text-white/80" : "text-[#888780]")}>
+                      <div className={cn("mt-1 text-[10px] font-semibold", current ? "text-white/80" : "text-[#6B6A65]")}>
                         {range}
                       </div>
                       {!current ? <span className="absolute top-2 right-2 text-xs">🔒</span> : null}

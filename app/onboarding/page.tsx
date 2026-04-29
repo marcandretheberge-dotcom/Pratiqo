@@ -9,7 +9,7 @@ import { useAuth } from "../../components/AuthProvider";
 import { getSupabaseClient } from "../../lib/supabase";
 import { getEnabledDisciplines } from "../../lib/disciplines";
 
-type Step = 1 | 2 | 3 | "done";
+type Step = 1 | 2 | 3 | 4 | "done";
 type Mode = "person" | "online" | "both";
 
 const MAX_DISCIPLINES = 3;
@@ -56,6 +56,12 @@ function OnboardingInner() {
 
   // Step 3
   const [availability, setAvailability] = useState<string[]>([]);
+
+  // Step 4 — tax acknowledgment
+  const [taxAck1, setTaxAck1] = useState(false);
+  const [taxAck2, setTaxAck2] = useState(false);
+  const [taxAck3, setTaxAck3] = useState(false);
+  const allTaxAcknowledged = taxAck1 && taxAck2 && taxAck3;
   const [city, setCity] = useState("");
   const [homeEnabled, setHomeEnabled] = useState(false);
   const [homeRadius, setHomeRadius] = useState(25);
@@ -273,6 +279,9 @@ function OnboardingInner() {
         home_lesson_enabled: homeEnabled,
         home_lesson_radius_km: homeRadius,
         home_lesson_price: homePrice,
+        tax_status_acknowledged: taxAck1,
+        no_exclusivity_acknowledged: taxAck2,
+        no_income_guarantee_acknowledged: taxAck3,
       };
 
       console.log("[onboarding] Payload ready, calling /api/onboarding/complete");
@@ -344,7 +353,15 @@ function OnboardingInner() {
             <div>
               <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--p-text-subtle)]">Progression</p>
               <h1 className="mt-1 text-2xl font-bold text-[var(--p-text)]">
-                {step === "done" ? "Ton profil est prêt !" : step === 1 ? "Parle-nous de toi" : step === 2 ? "Ton enseignement" : "Tes disponibilités"}
+                {step === "done"
+                  ? "Ton profil est prêt !"
+                  : step === 1
+                    ? "Parle-nous de toi"
+                    : step === 2
+                      ? "Ton enseignement"
+                      : step === 3
+                        ? "Tes disponibilités"
+                        : "Statut de travailleur autonome"}
               </h1>
               {stripeStatus ? (
                 <p className="mt-2 text-sm text-[var(--p-text-muted)]">Stripe : {stripeStatus}</p>
@@ -356,7 +373,7 @@ function OnboardingInner() {
             </div>
             {step !== "done" ? (
               <span className="text-xs font-bold text-[#1D9E75]">
-                Étape {step}/3
+                Étape {step}/4
               </span>
             ) : (
               <span className="text-xs font-bold text-[#1D9E75] inline-flex items-center gap-1">
@@ -368,7 +385,7 @@ function OnboardingInner() {
           <div className="mt-5 h-2 rounded-full bg-slate-100 overflow-hidden border border-slate-200">
             <div
               className="h-full bg-[#1D9E75] rounded-full transition-all"
-              style={{ width: step === "done" ? "100%" : step === 1 ? "33%" : step === 2 ? "66%" : "92%" }}
+              style={{ width: step === "done" ? "100%" : step === 1 ? "25%" : step === 2 ? "50%" : step === 3 ? "75%" : "92%" }}
             />
           </div>
 
@@ -445,8 +462,8 @@ function OnboardingInner() {
                     ))}
                   </div>
                 ) : null}
-                <p className="mt-2 text-xs italic text-[#888780]">Tu peux modifier tes disciplines dans Paramètres.</p>
-                <p className="mt-1 italic text-[12px] text-[#888780]">D&apos;autres disciplines seront bientôt disponibles.</p>
+                <p className="mt-2 text-xs italic text-[#6B6A65]">Tu peux modifier tes disciplines dans Paramètres.</p>
+                <p className="mt-1 italic text-[12px] text-[#6B6A65]">D&apos;autres disciplines seront bientôt disponibles.</p>
               </Field>
 
               <Field label="Tarif horaire ($)">
@@ -510,7 +527,7 @@ function OnboardingInner() {
                       />
                       <div style={{ textAlign: "left" }}>
                         <p style={{ fontSize: "13px", fontWeight: 500, margin: "0 0 4px" }}>Photo ajoutée ✓</p>
-                        <p style={{ fontSize: "11px", color: "#888780", margin: 0 }}>Clique ou glisse pour changer</p>
+                        <p style={{ fontSize: "11px", color: "#6B6A65", margin: 0 }}>Clique ou glisse pour changer</p>
                       </div>
                     </div>
                   ) : (
@@ -519,7 +536,7 @@ function OnboardingInner() {
                       <p style={{ fontSize: "13px", fontWeight: 500, color: "#2C2C2A", margin: "0 0 4px" }}>
                         Glisse ta photo ici
                       </p>
-                      <p style={{ fontSize: "11px", color: "#888780", margin: 0 }}>
+                      <p style={{ fontSize: "11px", color: "#6B6A65", margin: 0 }}>
                         ou clique pour choisir · JPG, PNG · Max 5MB
                       </p>
                     </div>
@@ -565,7 +582,7 @@ function OnboardingInner() {
                     >
                       {aiLoading ? "⏳ Génération..." : "✨ Générer avec l'IA"}
                     </button>
-                    <p style={{ fontSize: "11px", color: "#888780", marginTop: "4px" }}>
+                    <p style={{ fontSize: "11px", color: "#6B6A65", marginTop: "4px" }}>
                       Disponible une fois pendant la création de ton profil — choisis tes disciplines ci-dessus, puis reviens ici si besoin.
                     </p>
                   </div>
@@ -755,6 +772,65 @@ function OnboardingInner() {
             </div>
           ) : null}
 
+          {step === 4 ? (
+            <div className="mt-8 space-y-5">
+              <p className="text-sm text-[var(--p-text-muted)]">
+                Avant de continuer, il est important que tu comprennes ton statut sur Pratiqo.
+              </p>
+
+              <div className="rounded-2xl border border-amber-200 bg-amber-50/60 p-5 space-y-4">
+                {[
+                  {
+                    state: taxAck1,
+                    setter: setTaxAck1,
+                    text: "Je confirme être un TRAVAILLEUR AUTONOME et non un employé de Pratiqo. Pratiqo agit uniquement comme intermédiaire technologique entre les professeurs et les élèves.",
+                  },
+                  {
+                    state: taxAck2,
+                    setter: setTaxAck2,
+                    text: "Je suis SEUL RESPONSABLE de déclarer mes revenus et de respecter mes obligations fiscales (TPS, TVQ, impôts personnels) auprès de Revenu Québec et de l'Agence du Revenu du Canada.",
+                  },
+                  {
+                    state: taxAck3,
+                    setter: setTaxAck3,
+                    text: "Je comprends qu'AUCUN REVENU n'est garanti par Pratiqo et que mes gains dépendent uniquement de mon activité personnelle, de la qualité de mon profil et de la demande dans ma région.",
+                  },
+                ].map(({ state, setter, text }, i) => (
+                  <label
+                    key={i}
+                    className="flex items-start gap-3 cursor-pointer group"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={state}
+                      onChange={(e) => setter(e.target.checked)}
+                      className="mt-0.5 h-5 w-5 shrink-0 rounded border-slate-300 text-[#1D9E75] focus:ring-[#1D9E75] accent-[#1D9E75]"
+                    />
+                    <span
+                      className={cn(
+                        "text-sm leading-relaxed transition-colors",
+                        state ? "text-[#0f6d52] font-medium" : "text-[var(--p-text)]",
+                      )}
+                    >
+                      {text}
+                    </span>
+                  </label>
+                ))}
+              </div>
+
+              <p className="text-xs text-[var(--p-text-muted)] leading-relaxed border-t border-slate-200 pt-4">
+                Ces déclarations sont obligatoires conformément aux lois canadiennes sur le travail autonome. Si tu as des questions, consulte nos{" "}
+                <a href="/legal/cgu" target="_blank" className="text-[#1D9E75] underline font-medium">
+                  CGU
+                </a>{" "}
+                ou contacte{" "}
+                <a href="mailto:support@pratiqo.ca" className="text-[#1D9E75] underline font-medium">
+                  support@pratiqo.ca
+                </a>
+              </p>
+            </div>
+          ) : null}
+
           {step === "done" ? (
             <div className="mt-8 rounded-2xl border border-[rgba(29,158,117,0.22)] bg-[rgba(29,158,117,0.08)] p-6">
               <p className="text-lg font-bold text-[#0f6d52]">Ton profil est prêt!</p>
@@ -783,18 +859,22 @@ function OnboardingInner() {
             <div className="mt-10 flex items-center justify-between gap-3">
               <button
                 type="button"
-                onClick={() => setStep((prev) => (prev === 1 ? 1 : prev === 2 ? 1 : 2))}
+                onClick={() =>
+                  setStep((prev) =>
+                    prev === 1 ? 1 : prev === 2 ? 1 : prev === 3 ? 2 : 3,
+                  )
+                }
                 disabled={step === 1}
                 className="inline-flex h-11 items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-[var(--p-text)] disabled:opacity-40"
               >
                 <ChevronLeft size={18} /> Retour
               </button>
-              {step === 3 ? (
+              {step === 4 ? (
                 <button
                   type="button"
                   onClick={() => void saveAll()}
-                  disabled={saving}
-                  className="inline-flex h-11 items-center gap-2 rounded-2xl bg-[#1D9E75] px-5 text-sm font-bold text-white hover:brightness-[0.98] disabled:opacity-60"
+                  disabled={saving || !allTaxAcknowledged}
+                  className="inline-flex h-11 items-center gap-2 rounded-2xl bg-[#1D9E75] px-5 text-sm font-bold text-white hover:brightness-[0.98] disabled:opacity-50"
                 >
                   {saving ? <Loader2 className="h-5 w-5 animate-spin" /> : <CheckCircle2 size={18} />}
                   Terminer
@@ -814,7 +894,7 @@ function OnboardingInner() {
                         return;
                       }
                     }
-                    setStep((prev) => (prev === 1 ? 2 : 3));
+                    setStep((prev) => (prev === 1 ? 2 : prev === 2 ? 3 : 4));
                   }}
                   className="inline-flex h-11 items-center gap-2 rounded-2xl bg-[#1D9E75] px-5 text-sm font-bold text-white hover:brightness-[0.98]"
                 >

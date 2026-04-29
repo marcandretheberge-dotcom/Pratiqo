@@ -218,16 +218,16 @@ export default function TeacherProgressPage() {
                       <span className="text-xs text-slate-500">{s.levelLabel}</span>
                     </div>
                   </div>
-                  {open ? <ChevronUp className="text-slate-400 shrink-0" size={20} /> : <ChevronDown className="text-slate-400 shrink-0" size={20} />}
+                  {open ? <ChevronUp className="text-slate-600 shrink-0" size={20} /> : <ChevronDown className="text-slate-600 shrink-0" size={20} />}
                 </button>
                 {open ? (
                   <div className="border-t border-slate-100 px-4 py-4 space-y-4 bg-slate-50/50">
                     <div>
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Notes de progression</p>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-600 mb-1">Notes de progression</p>
                       <p className="text-sm text-[#2C2C2A] whitespace-pre-wrap">{notesByStudent[s.studentId] || "—"}</p>
                     </div>
                     <div>
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">{t("progressHomeworkTitle")}</p>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-600 mb-2">{t("progressHomeworkTitle")}</p>
                       {(homeworkByStudent[s.studentId] || []).length === 0 ? (
                         <p className="text-xs text-slate-500">{t("progressNoHomework")}</p>
                       ) : (

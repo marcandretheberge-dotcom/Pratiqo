@@ -47,11 +47,11 @@ export function TeacherAgenda({ bookings }: TeacherAgendaProps) {
       <div className="p-6 border-b border-slate-50 flex items-center justify-between bg-slate-50/30">
         <h3 className="font-bold text-slate-900 text-[10px] uppercase tracking-widest">{t("agendaProfessionalTitle")}</h3>
         <div className="flex items-center gap-2">
-          <button type="button" className="p-1.5 hover:bg-white rounded-lg text-slate-400 transition-colors" aria-label={t("back")}>
+          <button type="button" className="p-1.5 hover:bg-white rounded-lg text-slate-600 transition-colors" aria-label={t("back")}>
             <ChevronLeft size={16} />
           </button>
           <span className="text-xs font-bold text-slate-600 capitalize">{monthYearLabel}</span>
-          <button type="button" className="p-1.5 hover:bg-white rounded-lg text-slate-400 transition-colors" aria-label={t("next")}>
+          <button type="button" className="p-1.5 hover:bg-white rounded-lg text-slate-600 transition-colors" aria-label={t("next")}>
             <ChevronRight size={16} />
           </button>
         </div>
@@ -67,7 +67,7 @@ export function TeacherAgenda({ bookings }: TeacherAgendaProps) {
               "flex-1 py-4 flex flex-col items-center gap-1 transition-all border-b-2",
               selectedDay === d.toDateString()
                 ? "border-brand-primary bg-teal-50/30"
-                : "border-transparent text-slate-400 hover:text-slate-600",
+                : "border-transparent text-slate-600 hover:text-slate-600",
             )}
           >
             <span className="text-[9px] font-bold uppercase">{d.toLocaleDateString(dateLocale, { weekday: "short" })}</span>
@@ -94,20 +94,20 @@ export function TeacherAgenda({ bookings }: TeacherAgendaProps) {
               className="flex gap-4 group"
             >
               <div className="flex flex-col items-center gap-2">
-                <span className="text-[10px] font-bold text-slate-400 tracking-tighter">{b.time}</span>
+                <span className="text-[10px] font-bold text-slate-600 tracking-tighter">{b.time}</span>
                 <div className="w-px flex-1 bg-slate-100 group-last:bg-transparent" />
               </div>
 
               <div className="flex-1 bg-slate-50 border border-slate-100 rounded-2xl p-4 flex items-center justify-between hover:border-brand-primary/30 hover:bg-white transition-all cursor-pointer">
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-white border border-slate-100 flex items-center justify-center text-slate-400">
+                    <div className="w-8 h-8 rounded-lg bg-white border border-slate-100 flex items-center justify-center text-slate-600">
                       <User size={16} />
                     </div>
                     <span className="text-sm font-bold text-slate-900">{b.studentName}</span>
                   </div>
                   <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-1 text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+                    <div className="flex items-center gap-1 text-[9px] font-bold text-slate-600 uppercase tracking-widest">
                       {b.teachingMode === "online" ? <Video size={10} /> : <MapPin size={10} />}
                       {b.teachingMode === "online" ? t("agendaOnline") : t("agendaInPerson")}
                     </div>
@@ -145,7 +145,7 @@ export function TeacherAgenda({ bookings }: TeacherAgendaProps) {
         ) : (
           <div className="py-12 text-center">
             <Calendar size={32} className="mx-auto text-slate-100 mb-2" />
-            <p className="text-xs text-slate-400 font-medium">{t("agendaNoBookingsDay")}</p>
+            <p className="text-xs text-slate-600 font-medium">{t("agendaNoBookingsDay")}</p>
           </div>
         )}
       </div>

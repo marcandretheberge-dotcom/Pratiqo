@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import type { Teacher } from "../../../../types";
-import { BookingModal, type BookingInitialLessonKind } from "../../../../components/BookingModal";
-import { TeacherProfile } from "../../../../components/TeacherProfile";
+import type { BookingInitialLessonKind } from "../../../../components/BookingModal";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Star, Users, Video } from "lucide-react";
 import { useLocale } from "../../../../lib/locale-context";
@@ -21,9 +21,29 @@ import { teacherRowToTeacher, type TeacherRow } from "../../../../lib/teacherMap
 import { TEACHERS } from "../../../../constants";
 import { getVerificationLevel } from "../../../../lib/verification";
 import { VerificationBadge } from "../../../../components/VerificationBadge";
-import { SearchMapView } from "../../../../components/SearchMapView";
 import { SmartSearchInput } from "../../../../components/SmartSearchInput";
 import type { City } from "../../../../lib/cities";
+
+const TeacherProfile = dynamic(
+  () => import("../../../../components/TeacherProfile").then((m) => m.TeacherProfile),
+  { ssr: false, loading: () => <p className="p-4 text-center text-sm text-[#6B6A65]">Chargement…</p> },
+);
+const BookingModal = dynamic(
+  () => import("../../../../components/BookingModal").then((m) => m.BookingModal),
+  { ssr: false, loading: () => <p className="p-4 text-center text-sm text-[#6B6A65]">Chargement…</p> },
+);
+const SearchMapView = dynamic(
+  () => import("../../../../components/SearchMapView").then((m) => m.SearchMapView),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex flex-col items-center justify-center gap-2 min-h-[480px] rounded-2xl bg-[#F1EFE8] text-sm text-[#6B6A65]">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#0F6E56] border-t-transparent" />
+        <p>Chargement…</p>
+      </div>
+    ),
+  },
+);
 
 export default function StudentSearchPage() {
   const router = useRouter();
@@ -93,14 +113,6 @@ export default function StudentSearchPage() {
     };
     void load();
   }, []);
-
-  useEffect(() => {
-    const near = searchParams.get("near");
-    if (near === "1") {
-      requestGeolocation();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
 
   const requestGeolocation = () => {
     if (!("geolocation" in navigator)) return;
@@ -241,7 +253,7 @@ export default function StudentSearchPage() {
 
               <div className="flex items-center gap-2">
                 <label className="inline-flex items-center gap-2 text-sm text-[#2C2C2A]">
-                  <span className="text-[#888780]">{t("sortLabel")}</span>
+                  <span className="text-[#6B6A65]">{t("sortLabel")}</span>
                   <select
                     value={sortMode}
                     onChange={(e) => setSortMode(e.target.value as typeof sortMode)}
@@ -256,8 +268,11 @@ export default function StudentSearchPage() {
                 <button
                   type="button"
                   onClick={() => {
-                    setViewMode((v) => (v === "list" ? "map" : "list"));
-                    setMapLoaded(true);
+                    setViewMode((v) => {
+                      const next = v === "list" ? "map" : "list";
+                      if (next === "map") setMapLoaded(true);
+                      return next;
+                    });
                   }}
                   style={{
                     display: "flex",
@@ -496,7 +511,7 @@ function TeacherCard({
               <p className="truncate font-semibold text-[#2C2C2A]">{teacher.name}</p>
               <VerificationBadge level={verificationLevel} size="sm" showLabel={false} className="shrink-0 scale-90" />
             </div>
-            <p className="truncate text-xs text-[#888780]">{teacher.discipline}</p>
+            <p className="truncate text-xs text-[#6B6A65]">{teacher.discipline}</p>
           </div>
         </div>
         <span className="shrink-0 rounded-lg bg-white px-2 py-1 text-[11px] font-bold text-[#2C2C2A] border border-[#E8E6DF]">
@@ -504,7 +519,7 @@ function TeacherCard({
         </span>
       </div>
 
-      <div className="mt-3 flex items-center justify-between border-t border-[#E8E6DF] pt-3 text-xs text-[#888780]">
+      <div className="mt-3 flex items-center justify-between border-t border-[#E8E6DF] pt-3 text-xs text-[#6B6A65]">
         <span className="inline-flex items-center gap-2">
           {teacher.teachingMode === "online" ? <Video size={12} /> : <Users size={12} />}
           {teacher.teachingMode === "online" ? t("bookingOnline") : t("inPerson")}
@@ -521,7 +536,7 @@ function TeacherCard({
           </span>
         ) : null}
         {String(teacher.profilePlan || "").toLowerCase() === "enterprise" ? (
-          <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase text-[#888780]">
+          <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase text-[#6B6A65]">
             <Star size={12} className="text-[#1D9E75]" /> {t("sortTrusted")}
           </span>
         ) : null}

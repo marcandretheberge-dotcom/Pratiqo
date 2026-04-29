@@ -27,6 +27,10 @@ type Body = {
   home_lesson_enabled?: boolean;
   home_lesson_radius_km?: number;
   home_lesson_price?: number | null;
+  // step 4 — legal acknowledgments
+  tax_status_acknowledged?: boolean;
+  no_exclusivity_acknowledged?: boolean;
+  no_income_guarantee_acknowledged?: boolean;
 };
 
 function clamp(n: number, min: number, max: number) {
@@ -65,6 +69,17 @@ export async function POST(req: Request) {
     if (!body) return NextResponse.json({ error: "Invalid body." }, { status: 400 });
     console.log("[onboarding/complete] Role:", body.role, "Name:", body.name);
 
+    // Teachers must acknowledge autonomous worker status before completing onboarding
+    if (body.role === "teacher") {
+      if (!body.tax_status_acknowledged || !body.no_exclusivity_acknowledged || !body.no_income_guarantee_acknowledged) {
+        console.warn("[onboarding/complete] Missing legal acknowledgments");
+        return NextResponse.json(
+          { error: "Vous devez accepter les conditions de travailleur autonome pour continuer." },
+          { status: 400 },
+        );
+      }
+    }
+
     const admin = getSupabaseAdmin();
 
     // Always ensure profile exists; AuthProvider usually does this already.
@@ -83,20 +98,26 @@ export async function POST(req: Request) {
     // Legacy (kept for backwards compatibility with earlier builds)
     if (role === "teacher") nextDash.teacher_onboarding_complete = true;
 
+    const profileUpsert: Record<string, unknown> = {
+      id: user.id,
+      name,
+      email: user.email ?? (prof?.email as string) ?? "",
+      role,
+      photo_url: photoUrl,
+      teacher_onboarding_complete: role === "teacher",
+      dashboard: nextDash,
+    };
+
+    if (body.role === "teacher" && body.tax_status_acknowledged) {
+      profileUpsert.tax_status_acknowledged = true;
+      profileUpsert.tax_status_acknowledged_at = new Date().toISOString();
+      profileUpsert.no_exclusivity_acknowledged = Boolean(body.no_exclusivity_acknowledged);
+      profileUpsert.no_income_guarantee_acknowledged = Boolean(body.no_income_guarantee_acknowledged);
+    }
+
     const { error: pErr } = await admin
       .from("profiles")
-      .upsert(
-        {
-          id: user.id,
-          name,
-          email: user.email ?? (prof?.email as string) ?? "",
-          role,
-          photo_url: photoUrl,
-          teacher_onboarding_complete: role === "teacher",
-          dashboard: nextDash,
-        },
-        { onConflict: "id" },
-      );
+      .upsert(profileUpsert, { onConflict: "id" });
     if (pErr) {
       console.error("[onboarding/complete] Profile upsert failed:", pErr.message);
       return NextResponse.json({ error: pErr.message }, { status: 500 });

@@ -99,6 +99,8 @@ export default function TeacherSettingsPage() {
   const [addDiscId, setAddDiscId] = useState("");
   const [addSpec, setAddSpec] = useState("");
   const [discSaving, setDiscSaving] = useState(false);
+  const [taxAckDate, setTaxAckDate] = useState<string | null>(null);
+  const [taxAcknowledged, setTaxAcknowledged] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -108,7 +110,7 @@ export default function TeacherSettingsPage() {
     }
     const supabase = getSupabaseClient();
     const load = async () => {
-      const { data: prof } = await supabase.from("profiles").select("email, name, photo_url, plan, dashboard").eq("id", user.id).maybeSingle();
+      const { data: prof } = await supabase.from("profiles").select("email, name, photo_url, plan, dashboard, tax_status_acknowledged, tax_status_acknowledged_at").eq("id", user.id).maybeSingle();
       setEmail(String((prof as { email?: string })?.email || user.email || ""));
       setDisplayName(String((prof as { name?: string })?.name || ""));
       setPhotoUrl(((prof as { photo_url?: string | null })?.photo_url as string | null) ?? null);
@@ -117,6 +119,9 @@ export default function TeacherSettingsPage() {
       const d = typeof dash === "object" && dash !== null ? (dash as Record<string, unknown>) : {};
       setDashboardJson(d);
       setNotif(readNotifPrefs(d));
+      setTaxAcknowledged(Boolean((prof as { tax_status_acknowledged?: boolean })?.tax_status_acknowledged));
+      const taxDate = (prof as { tax_status_acknowledged_at?: string | null })?.tax_status_acknowledged_at;
+      setTaxAckDate(taxDate ?? null);
 
       const { data, error } = await supabase.from("teachers").select("*").eq("user_id", user.id).maybeSingle();
       if (error || !data) {
@@ -607,6 +612,23 @@ export default function TeacherSettingsPage() {
         >
           {t("signOut")}
         </button>
+      </section>
+
+      <section className="rounded-2xl border border-slate-100 bg-slate-50/60 p-5 space-y-1.5">
+        <h2 className="text-sm font-bold text-slate-500 uppercase tracking-widest">{t("taxSettingsSectionTitle")}</h2>
+        {taxAcknowledged ? (
+          <>
+            <p className="text-sm text-slate-600">{t("taxSettingsStatus")}</p>
+            {taxAckDate ? (
+              <p className="text-xs text-slate-600">
+                {t("taxSettingsDate")}{" "}
+                {new Date(taxAckDate).toLocaleDateString("fr-CA", { year: "numeric", month: "long", day: "numeric" })}
+              </p>
+            ) : null}
+          </>
+        ) : (
+          <p className="text-xs text-slate-600">{t("taxSettingsNotYet")}</p>
+        )}
       </section>
 
       {message ? <p className={cn("text-sm text-center", message === t("savedOk") ? "text-[#1D9E75]" : "text-rose-600")}>{message}</p> : null}

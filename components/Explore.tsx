@@ -409,7 +409,7 @@ export function Explore({
           >
             <div className="bg-slate-50 rounded-3xl p-6 border border-slate-200 grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="space-y-3">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">
                   Mode de cours
                 </p>
                 <div className="flex gap-2">
@@ -421,7 +421,7 @@ export function Explore({
                         "flex-1 px-3 py-2 rounded-xl border text-[10px] font-bold uppercase transition-all",
                         teachingMode === mode
                           ? "bg-brand-primary border-brand-primary text-white"
-                          : "bg-white border-slate-200 text-slate-400 hover:border-slate-300",
+                          : "bg-white border-slate-200 text-slate-600 hover:border-slate-300",
                       )}
                     >
                       {mode === "all" ? "Tous" : mode === "online" ? "En ligne" : "Présentiel"}
@@ -431,7 +431,7 @@ export function Explore({
               </div>
 
               <div className="space-y-3">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">
                   Confiance & Sécurité
                 </p>
                 <button
@@ -440,7 +440,7 @@ export function Explore({
                     "w-full flex items-center justify-between px-4 py-2 rounded-xl border text-[10px] font-bold uppercase transition-all",
                     onlyVerified
                       ? "bg-white border-brand-primary text-brand-primary"
-                      : "bg-white border-slate-200 text-slate-400 hover:border-slate-300",
+                      : "bg-white border-slate-200 text-slate-600 hover:border-slate-300",
                   )}
                 >
                   <span className="flex items-center gap-2">
@@ -451,14 +451,14 @@ export function Explore({
               </div>
 
               <div className="space-y-3">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">
                   Rayon d'action
                 </p>
                 <div className="h-2 bg-slate-200 rounded-full relative">
                   <div className="absolute top-0 left-0 w-1/2 h-full bg-brand-primary rounded-full" />
                   <div className="absolute -top-1.5 left-1/2 w-5 h-5 bg-white border-2 border-brand-primary rounded-full shadow-md" />
                 </div>
-                <div className="flex justify-between text-[9px] font-bold text-slate-400 uppercase">
+                <div className="flex justify-between text-[9px] font-bold text-slate-600 uppercase">
                   <span>0 km</span>
                   <span>50 km+</span>
                 </div>
@@ -488,7 +488,7 @@ export function Explore({
             </div>
           ) : filteredGroupSessions.length === 0 ? (
             <div className="col-span-full text-center p-20 bg-white rounded-2xl border border-dashed border-slate-200">
-              <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Aucun cours de groupe</p>
+              <p className="text-sm font-bold text-slate-600 uppercase tracking-widest">Aucun cours de groupe</p>
               <p className="mt-3 text-[13px] text-[var(--p-text-muted)]">Essaie une autre discipline ou reviens plus tard.</p>
             </div>
           ) : (
@@ -500,7 +500,7 @@ export function Explore({
           </div>
         ) : filteredTeachers.length === 0 && geo && radiusFilter !== "all" && radiusFilter !== "online" ? (
           <div className="col-span-full text-center p-20 bg-white rounded-2xl border border-dashed border-slate-200">
-            <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Aucun prof trouvé</p>
+            <p className="text-sm font-bold text-slate-600 uppercase tracking-widest">Aucun prof trouvé</p>
             <p className="mt-3 text-[13px] text-[var(--p-text-muted)] max-w-[520px] mx-auto">
               Aucun prof trouvé dans ce rayon. Essaie un rayon plus grand ou cherche en ligne.
             </p>
@@ -513,7 +513,7 @@ export function Explore({
           </div>
         ) : filteredTeachers.length === 0 ? (
           <div className="col-span-full text-center p-20 bg-white rounded-2xl border border-dashed border-slate-200">
-            <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">
+            <p className="text-sm font-bold text-slate-600 uppercase tracking-widest">
               Aucun professeur trouvé
             </p>
             <button

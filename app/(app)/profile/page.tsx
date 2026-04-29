@@ -214,7 +214,7 @@ export default function StudentProfilePage() {
             </span>
             <span className="text-sm font-semibold text-[var(--p-text)]">{t("profilePayments")}</span>
           </div>
-          <ChevronRight size={18} className="text-slate-400" />
+          <ChevronRight size={18} className="text-slate-600" />
         </Link>
 
         <button

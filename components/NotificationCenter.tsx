@@ -48,7 +48,7 @@ export function NotificationCenter() {
       case "assignment":
         return <BookOpen size={16} className="text-amber-500" />;
       default:
-        return <AlertCircle size={16} className="text-slate-400" />;
+        return <AlertCircle size={16} className="text-slate-600" />;
     }
   };
 
@@ -61,7 +61,7 @@ export function NotificationCenter() {
         <Bell
           size={20}
           className={cn(
-            "text-slate-400 group-hover:text-slate-600 transition-colors",
+            "text-slate-600 group-hover:text-slate-600 transition-colors",
             unreadCount > 0 && "animate-tada",
           )}
         />
@@ -109,7 +109,7 @@ export function NotificationCenter() {
                             {n.title}
                           </p>
                           <p className="text-xs text-slate-500 leading-relaxed">{n.message}</p>
-                          <p className="text-[10px] text-slate-400 font-medium">Il y a un instant</p>
+                          <p className="text-[10px] text-slate-600 font-medium">Il y a un instant</p>
                         </div>
                       </div>
 
@@ -136,7 +136,7 @@ export function NotificationCenter() {
                 ) : (
                   <div className="p-12 text-center space-y-3">
                     <Bell size={32} className="mx-auto text-slate-100" />
-                    <p className="text-xs text-slate-400 font-medium tracking-wide">
+                    <p className="text-xs text-slate-600 font-medium tracking-wide">
                       Vous êtes à jour !
                     </p>
                   </div>

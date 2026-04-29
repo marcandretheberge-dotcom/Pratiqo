@@ -75,7 +75,7 @@ export default function TeacherGroupSessionsPage() {
           <p style={{ fontSize: "16px", margin: "0 0 8px", fontWeight: 600, color: "var(--p-text, #2C2C2A)" }}>
             Cours de groupe — bientôt disponibles
           </p>
-          <p style={{ fontSize: "14px", margin: 0, color: "#888780", lineHeight: 1.5, maxWidth: "420px", marginLeft: "auto", marginRight: "auto" }}>
+          <p style={{ fontSize: "14px", margin: 0, color: "#6B6A65", lineHeight: 1.5, maxWidth: "420px", marginLeft: "auto", marginRight: "auto" }}>
             Tu pourras bientôt créer des séances collectives depuis cet espace. Merci de ta patience !
           </p>
         </div>

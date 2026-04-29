@@ -360,7 +360,7 @@ export function CreditsWidget({
                   {Number(tx.amount) > 0 ? (
                     <Gift size={13} className="text-[#1D9E75] shrink-0" />
                   ) : (
-                    <span className="w-[13px] shrink-0 text-center text-[#888780]">−</span>
+                    <span className="w-[13px] shrink-0 text-center text-[#6B6A65]">−</span>
                   )}
                   <span className="flex-1 text-[var(--p-text-muted)] truncate">
                     {typeLabel(tx.type, t)} — {tx.description}

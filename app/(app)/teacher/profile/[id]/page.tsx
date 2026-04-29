@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import type { Teacher } from "../../../../../types";
 import { getSupabaseClient } from "../../../../../lib/supabase";
 import {
@@ -98,7 +98,7 @@ export default function TeacherProfilePage({ params }: { params: { id: string } 
     };
   }, [params.id]);
 
-  useEffect(() => {
+  const requestGeo = useCallback(() => {
     if (!("geolocation" in navigator)) {
       setGeoDeniedOrUnavailable(true);
       return;
@@ -131,6 +131,19 @@ export default function TeacherProfilePage({ params }: { params: { id: string } 
 
   return (
     <>
+      {!geo ? (
+        <div className="fixed bottom-6 left-1/2 z-[220] -translate-x-1/2 px-4">
+          <button
+            type="button"
+            onClick={requestGeo}
+            className="rounded-full border border-[#E8E6DF] bg-white px-4 py-2.5 text-sm font-semibold text-[#0F6E56] shadow-lg hover:bg-[#FAFCFB]"
+          >
+            {geoDeniedOrUnavailable
+              ? "Réessayer la localisation"
+              : "Activer la localisation pour voir la distance"}
+          </button>
+        </div>
+      ) : null}
       <TeacherProfile
         teacher={teacher}
         embeddedPlan={embeddedPlan}

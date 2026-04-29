@@ -11,8 +11,12 @@ const TOC = [
   { id: "definitions", label: "2. Définitions" },
   { id: "inscription", label: "3. Inscription et compte utilisateur" },
   { id: "services", label: "4. Services offerts" },
+  { id: "statut-prof", label: "4bis. Statut des professeurs — Travailleur autonome" },
+  { id: "garantie-emploi", label: "4ter. Aucune garantie d'emploi ou de revenu" },
+  { id: "obligations-fiscales", label: "4quater. Obligations fiscales du professeur" },
   { id: "frais", label: "5. Frais et commissions" },
-  { id: "ristourne-5bis-6", label: "5bis.6 Ristourne annuelle — Protections financières" },
+  { id: "credits-eleve", label: "5bis. Programme de crédits élève" },
+  { id: "ristourne-5bis-6", label: "5ter. Ristourne annuelle — Protections financières" },
   { id: "paiements", label: "6. Paiements et remboursements" },
   { id: "domicile", label: "7. Cours à domicile" },
   { id: "conduite", label: "8. Contenu et conduite des utilisateurs" },
@@ -136,6 +140,62 @@ export default function CguPage() {
 
       <hr className="my-8 border-slate-200" />
 
+      <LegalSection id="statut-prof" title="4bis. Statut des professeurs — Travailleur autonome">
+        <div className="rounded-xl border-l-4 border-amber-400 bg-amber-50 px-4 py-3 mb-4">
+          <p className="font-bold text-amber-900 text-sm">
+            ⚠️ Les professeurs inscrits sur Pratiqo sont des <strong>TRAVAILLEURS AUTONOMES</strong> et NON des employés de Pratiqo.
+          </p>
+        </div>
+        <p className="mt-2">À ce titre :</p>
+        <ul className="list-disc pl-5 space-y-2 mt-2">
+          <li>Pratiqo agit <strong>UNIQUEMENT comme intermédiaire technologique</strong> mettant en relation élèves et professeurs</li>
+          <li>Chaque professeur est <strong>seul responsable</strong> de déclarer ses revenus et de respecter ses obligations fiscales (TPS, TVQ, impôts personnels)</li>
+          <li>Il n&apos;existe <strong>AUCUNE relation d&apos;emploi</strong> entre Pratiqo et les professeurs</li>
+          <li>Aucune exclusivité n&apos;est exigée — les professeurs peuvent enseigner sur d&apos;autres plateformes</li>
+          <li>Les professeurs fixent leurs propres tarifs, horaires et méthodes pédagogiques</li>
+        </ul>
+      </LegalSection>
+
+      <hr className="my-8 border-slate-200" />
+
+      <LegalSection id="garantie-emploi" title="4ter. Aucune garantie d'emploi ou de revenu">
+        <p>
+          Pratiqo <strong>NE PROMET PAS</strong> et <strong>NE GARANTIT PAS</strong> :
+        </p>
+        <ul className="list-disc pl-5 space-y-2 mt-2">
+          <li>Un revenu minimum</li>
+          <li>Un nombre minimum d&apos;élèves ou de cours</li>
+          <li>Une fréquence de réservations</li>
+          <li>Un emploi ou une relation d&apos;employeur</li>
+        </ul>
+        <p className="mt-4">Les revenus dépendent uniquement de :</p>
+        <ul className="list-disc pl-5 space-y-2 mt-2">
+          <li>L&apos;activité du professeur</li>
+          <li>La qualité de son profil</li>
+          <li>La satisfaction de ses élèves</li>
+          <li>La demande dans sa région</li>
+        </ul>
+      </LegalSection>
+
+      <hr className="my-8 border-slate-200" />
+
+      <LegalSection id="obligations-fiscales" title="4quater. Obligations fiscales du professeur">
+        <p>En s&apos;inscrivant sur Pratiqo, le professeur s&apos;engage à :</p>
+        <ul className="list-disc pl-5 space-y-2 mt-2">
+          <li>Déclarer ses revenus aux autorités fiscales (<strong>Revenu Québec</strong> et <strong>Agence du Revenu du Canada</strong>)</li>
+          <li>Facturer la TPS/TVQ si applicable selon son chiffre d&apos;affaires (seuil 30 000 $/an)</li>
+          <li>Respecter les lois sur le travail autonome applicables dans sa juridiction</li>
+          <li>Souscrire ses propres assurances responsabilité civile professionnelle</li>
+          <li>Maintenir son équipement et son lieu d&apos;enseignement</li>
+          <li>Respecter le code de conduite Pratiqo</li>
+        </ul>
+        <p className="mt-4 text-sm italic text-[var(--p-text-muted)]">
+          Pratiqo ne fournit aucun conseil fiscal. Nous recommandons de consulter un comptable ou un conseiller fiscal qualifié.
+        </p>
+      </LegalSection>
+
+      <hr className="my-8 border-slate-200" />
+
       <LegalSection id="frais" title="5. Frais et commissions">
         <h3 className="text-base font-semibold text-[var(--p-text)] mt-2 mb-2">5.1 Pour les élèves</h3>
         <p>
@@ -171,15 +231,98 @@ export default function CguPage() {
           clairement à l&apos;élève avant toute réservation.
         </p>
 
+        <h3 className="text-base font-semibold text-[var(--p-text)] mt-6 mb-2">5.4bis Programme fidélité — Commission dégressive</h3>
+        <p>La commission s&apos;ajuste automatiquement en temps réel selon le volume cumulé annuel du professeur :</p>
+        <div className="mt-3 overflow-x-auto">
+          <table className="w-full text-sm border-collapse">
+            <thead>
+              <tr className="bg-slate-100">
+                <th className="text-left px-3 py-2 border border-slate-200 font-semibold">Palier</th>
+                <th className="text-left px-3 py-2 border border-slate-200 font-semibold">Volume annuel</th>
+                <th className="text-center px-3 py-2 border border-slate-200 font-semibold">Plan Gratuit</th>
+                <th className="text-center px-3 py-2 border border-slate-200 font-semibold">Plan Pro</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td className="px-3 py-2 border border-slate-200">🥉 Bronze</td>
+                <td className="px-3 py-2 border border-slate-200">0 – 5 000 $</td>
+                <td className="text-center px-3 py-2 border border-slate-200">10 %</td>
+                <td className="text-center px-3 py-2 border border-slate-200">5 %</td>
+              </tr>
+              <tr className="bg-slate-50">
+                <td className="px-3 py-2 border border-slate-200">🥈 Argent</td>
+                <td className="px-3 py-2 border border-slate-200">5 000 – 15 000 $</td>
+                <td className="text-center px-3 py-2 border border-slate-200">9 %</td>
+                <td className="text-center px-3 py-2 border border-slate-200">4,5 %</td>
+              </tr>
+              <tr>
+                <td className="px-3 py-2 border border-slate-200">🥇 Or</td>
+                <td className="px-3 py-2 border border-slate-200">15 000 – 30 000 $</td>
+                <td className="text-center px-3 py-2 border border-slate-200">8 %</td>
+                <td className="text-center px-3 py-2 border border-slate-200">4 % + 0,5 % ristourne</td>
+              </tr>
+              <tr className="bg-slate-50">
+                <td className="px-3 py-2 border border-slate-200">💎 Platine</td>
+                <td className="px-3 py-2 border border-slate-200">30 000 $ +</td>
+                <td className="text-center px-3 py-2 border border-slate-200">7 %</td>
+                <td className="text-center px-3 py-2 border border-slate-200">3,5 % + 1 % ristourne</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p className="mt-3 text-sm text-[var(--p-text-muted)]">
+          <strong>Important :</strong> Aucun cashback récurrent pour les professeurs. Le programme fidélité réduit la commission, et la ristourne annuelle est la seule forme de redistribution financière.
+        </p>
+
         <h3 className="text-base font-semibold text-[var(--p-text)] mt-6 mb-2">5.5 Modifications tarifaires</h3>
         <p>
           Pratiqo se réserve le droit de modifier ses tarifs et commissions avec un préavis de <strong>30 jours</strong>{" "}
           par courriel aux utilisateurs concernés.
         </p>
 
+      </LegalSection>
+
+      <hr className="my-8 border-slate-200" />
+
+      <LegalSection id="credits-eleve" title="5bis. Programme de crédits élève">
+        <p>Les élèves peuvent gagner des crédits Pratiqo via :</p>
+        <ul className="list-disc pl-5 space-y-2 mt-2">
+          <li><strong>Évolution du compagnon</strong> : 5 $ / 10 $ / 15 $ / 25 $ aux paliers 5 / 15 / 30 / 50 cours</li>
+          <li><strong>Évaluation d&apos;un professeur</strong> : +1 $ par cours évalué (une fois par professeur)</li>
+          <li><strong>Parrainage d&apos;un ami</strong> : +1 $ par parrainage validé, plafonné à 20 $/an pour prévenir les abus</li>
+        </ul>
+        <p className="mt-4">Les crédits :</p>
+        <ul className="list-disc pl-5 space-y-2 mt-2">
+          <li>Sont utilisables <strong>uniquement sur Pratiqo</strong></li>
+          <li>Ne sont <strong>PAS convertibles</strong> en argent</li>
+          <li>Expirent après 12 mois d&apos;inactivité</li>
+          <li>Sont plafonnés à 50 % du prix d&apos;un cours</li>
+        </ul>
+        <p className="mt-4 text-sm italic text-[var(--p-text-muted)]">
+          Aucun cashback récurrent n&apos;est offert aux élèves. Les crédits sont liés exclusivement à la progression du compagnon et aux actions communautaires.
+        </p>
+      </LegalSection>
+
+      <hr className="my-8 border-slate-200" />
+
+      <LegalSection id="ristourne-5bis-6" title="5ter. Ristourne annuelle aux professeurs Pro">
+        <div className="rounded-xl border border-[rgba(29,158,117,0.3)] bg-[rgba(29,158,117,0.06)] px-4 py-3 mb-4">
+          <p className="text-sm font-semibold text-[#0f6e56]">
+            Pratiqo redistribue annuellement à ses professeurs Pro éligibles <strong>5 % de ses profits nets</strong> (après toutes les dépenses d&apos;opération, marketing, salaires et infrastructure).
+          </p>
+        </div>
+
+        <h3 className="text-base font-semibold text-[var(--p-text)] mt-4 mb-2">Conditions d&apos;éligibilité</h3>
+        <ul className="list-disc pl-5 space-y-2">
+          <li>Être abonné au plan Pro durant l&apos;année concernée</li>
+          <li>Avoir maintenu un statut actif minimum de 6 mois</li>
+          <li>Ne pas avoir de pénalités ou avertissements</li>
+        </ul>
+
         <h3
-          id="ristourne-5bis-6"
-          className="text-base font-semibold text-[var(--p-text)] mt-10 mb-3 scroll-mt-24"
+          id="ristourne-5bis-6-legacy"
+          className="text-base font-semibold text-[var(--p-text)] mt-6 mb-3 scroll-mt-24 hidden"
         >
           5bis.6 Ristourne annuelle — Protections financières
         </h3>

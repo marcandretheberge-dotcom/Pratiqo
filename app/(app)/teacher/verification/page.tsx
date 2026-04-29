@@ -98,7 +98,7 @@ export default function TeacherVerificationPage() {
 
   if (loading || !user) {
     return (
-      <div className="min-h-[50vh] flex items-center justify-center text-[#888780]">
+      <div className="min-h-[50vh] flex items-center justify-center text-[#6B6A65]">
         <Loader2 className="h-8 w-8 animate-spin text-[#1D9E75]" />
       </div>
     );
@@ -128,12 +128,12 @@ export default function TeacherVerificationPage() {
     <div className="space-y-8">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-xs font-bold uppercase tracking-widest text-[#888780]">{t("verificationTrustLabel")}</p>
+          <p className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">{t("verificationTrustLabel")}</p>
           <h1 className="mt-1 text-2xl font-bold text-[#2C2C2A] flex items-center gap-2">
             <ShieldCheck className="text-[#1D9E75]" size={28} />
             {t("verificationTitle")}
           </h1>
-          <p className="mt-2 text-sm text-[#888780] max-w-xl">{t("verificationSubtitle")}</p>
+          <p className="mt-2 text-sm text-[#6B6A65] max-w-xl">{t("verificationSubtitle")}</p>
         </div>
         <VerificationBadge level={level} size="md" />
       </div>
@@ -157,7 +157,7 @@ export default function TeacherVerificationPage() {
         <section className="rounded-2xl border border-[#E8E6DF] bg-white p-6 space-y-3">
           <h2 className="text-sm font-bold uppercase tracking-wider text-[#2C2C2A]">{t("verificationNextLevel")}</h2>
           <p className="text-lg font-semibold text-[#2C2C2A]">{t(verificationLevelTitleKey(next))}</p>
-          <ul className="list-disc pl-5 text-sm text-[#888780] space-y-1">
+          <ul className="list-disc pl-5 text-sm text-[#6B6A65] space-y-1">
             {nextReqKeys.map((key) => (
               <li key={key}>{t(key)}</li>
             ))}
@@ -173,7 +173,7 @@ export default function TeacherVerificationPage() {
             <CheckCircle2 className="text-[#1D9E75] shrink-0 mt-0.5" size={22} />
             <div>
               <p className="font-semibold text-[#2C2C2A]">{t("verificationLevel1Title")}</p>
-              <p className="text-sm text-[#888780]">{t("verificationLevel1Body")}</p>
+              <p className="text-sm text-[#6B6A65]">{t("verificationLevel1Body")}</p>
             </div>
           </div>
           {level >= 1 ? <span className="text-xs font-bold text-[#1D9E75]">{t("verificationOk")}</span> : null}
@@ -184,7 +184,7 @@ export default function TeacherVerificationPage() {
             <ShieldCheck className="text-[#BA7517] shrink-0 mt-0.5" size={22} />
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-[#2C2C2A]">{t("verificationLevel2Title")}</p>
-              <p className="text-sm text-[#888780] mt-1">{t("verificationLevel2Body")}</p>
+              <p className="text-sm text-[#6B6A65] mt-1">{t("verificationLevel2Body")}</p>
               {teacherRow.identity_verified ? (
                 <p className="mt-2 text-sm font-semibold text-[#1D9E75]">{t("verificationIdentityValidated")}</p>
               ) : (
@@ -206,7 +206,7 @@ export default function TeacherVerificationPage() {
             <ShieldCheck className="text-[#534AB7] shrink-0 mt-0.5" size={22} />
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-[#2C2C2A]">{t("verificationLevel3Title")}</p>
-              <p className="text-sm text-[#888780] mt-1">{t("verificationLevel3Body")}</p>
+              <p className="text-sm text-[#6B6A65] mt-1">{t("verificationLevel3Body")}</p>
               {teacherRow.diploma_verified ? (
                 <p className="mt-2 text-sm font-semibold text-[#1D9E75]">{t("verificationDiplomaValidated")}</p>
               ) : (
@@ -234,7 +234,7 @@ export default function TeacherVerificationPage() {
 
         <div className="rounded-2xl border border-[#E8E6DF] bg-[#F1EFE8] p-5">
           <p className="font-semibold text-[#2C2C2A]">{t("verificationLevel4Title")}</p>
-          <p className="mt-2 text-sm text-[#888780]">
+          <p className="mt-2 text-sm text-[#6B6A65]">
             {isPro ? t("verificationLevel4BodyPro") : t("verificationLevel4BodyFree")}
           </p>
           {!isPro ? (

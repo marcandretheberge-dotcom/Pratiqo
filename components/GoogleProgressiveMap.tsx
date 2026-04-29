@@ -152,7 +152,7 @@ export function GoogleProgressiveMap({ mapKey, exactLat, exactLng, locked, neigh
 
       {neighborhood ? (
         <p className="text-[13px] font-medium text-slate-600">
-          <span className="text-slate-400">Quartier : </span>
+          <span className="text-slate-600">Quartier : </span>
           {neighborhood}
         </p>
       ) : null}

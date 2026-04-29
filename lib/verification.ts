@@ -18,7 +18,7 @@ export const VERIFICATION_LEVELS: Record<VerificationLevel, VerificationInfo> = 
     level: 0,
     label: "Non vérifié",
     badge: "○",
-    color: "#888780",
+    color: "#6B6A65",
     bgColor: "#F1EFE8",
     description: "Profil non vérifié",
     perks: ["Profil visible", "Messages autorisés", "Max 2 élèves"],

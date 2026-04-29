@@ -81,7 +81,7 @@ export default function UpgradePage() {
             accent="bg-[rgba(29,158,117,0.12)] text-[#1D9E75]"
           />
         </div>
-        <p className="mt-5 text-center text-[12px]" style={{ color: "#888780" }}>
+        <p className="mt-5 text-center text-[12px]" style={{ color: "#6B6A65" }}>
           Plan Entreprise et cours de groupe — bientôt disponibles.
         </p>
 
