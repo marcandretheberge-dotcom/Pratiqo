@@ -11,7 +11,7 @@ import { getSupabaseClient } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 
 function localizedText(locale: string, fr: string, en: string, es: string) {
-  if (locale === "en-CA") return en;
+  if (locale === "en") return en;
   if (locale === "es") return es;
   return fr;
 }

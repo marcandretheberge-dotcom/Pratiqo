@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Bell, ChevronRight, CreditCard, Loader2 } from "lucide-react";
+import { Bell, ChevronRight, CreditCard, Loader2, MapPin } from "lucide-react";
 import { useAuth } from "../../../components/AuthProvider";
 import { getSupabaseClient } from "../../../lib/supabase";
 import { authDisplayName } from "../../../lib/authDisplay";
@@ -13,6 +13,25 @@ import { COMPANIONS, getCompanionStage, getLessonsToNextStage, getProgressPercen
 import { LocaleSwitcher } from "../../../components/LocaleSwitcher";
 import { CreditsWidget } from "../../../components/CreditsWidget";
 import { cn } from "../../../lib/utils";
+import type { TranslationKey } from "../../../lib/translations";
+
+const LEARNING_FORMAT_VALUES = ["no_preference", "at_home", "in_person", "online", "hybrid"] as const;
+
+type LearningFormatPref = (typeof LEARNING_FORMAT_VALUES)[number];
+
+const FORMAT_LABEL_KEYS: Record<LearningFormatPref, TranslationKey> = {
+  no_preference: "formatNoPreference",
+  at_home: "formatAtHome",
+  in_person: "formatInPerson",
+  online: "formatOnline",
+  hybrid: "formatHybrid",
+};
+
+function coerceLearningFormatPref(v: string | null | undefined): LearningFormatPref {
+  const x = String(v ?? "").trim();
+  if (x === "at_home" || x === "in_person" || x === "online" || x === "hybrid" || x === "no_preference") return x;
+  return "no_preference";
+}
 
 export default function StudentProfilePage() {
   const { user, profile } = useAuth();
@@ -27,6 +46,12 @@ export default function StudentProfilePage() {
   const [companionChosen, setCompanionChosen] = useState(false);
   const [memberYear, setMemberYear] = useState<number | null>(null);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [locCity, setLocCity] = useState("");
+  const [locRegion, setLocRegion] = useState("");
+  const [locCountry, setLocCountry] = useState("");
+  const [locFormat, setLocFormat] = useState<LearningFormatPref>("no_preference");
+  const [locSaving, setLocSaving] = useState(false);
+  const [locMsg, setLocMsg] = useState<string | null>(null);
 
   useEffect(() => {
     if (profile?.role === "teacher") {
@@ -43,7 +68,13 @@ export default function StudentProfilePage() {
       setLoading(true);
 
       const [{ data: prof }, { data: bRows }, { count: confirmedCount }] = await Promise.all([
-        supabase.from("profiles").select("companion_type, companion_chosen, created_at, dashboard").eq("id", user.id).maybeSingle(),
+        supabase
+          .from("profiles")
+          .select(
+            "companion_type, companion_chosen, created_at, dashboard, city, region, country_code, preferred_learning_format",
+          )
+          .eq("id", user.id)
+          .maybeSingle(),
         supabase.from("bookings").select("teacher_id, status").eq("student_id", user.id),
         supabase.from("bookings").select("id", { count: "exact", head: true }).eq("student_id", user.id).eq("status", "confirmed"),
       ]);
@@ -51,7 +82,16 @@ export default function StudentProfilePage() {
       if (cancelled) return;
 
       const p = prof as
-        | { companion_type?: string | null; companion_chosen?: boolean | null; created_at?: string | null; dashboard?: any | null }
+        | {
+            companion_type?: string | null;
+            companion_chosen?: boolean | null;
+            created_at?: string | null;
+            dashboard?: any | null;
+            city?: string | null;
+            region?: string | null;
+            country_code?: string | null;
+            preferred_learning_format?: string | null;
+          }
         | null;
       const ctype = p?.companion_type;
       setCompanionType(ctype === "phoenix" || ctype === "forest" || ctype === "dragon" || ctype === "star" ? (ctype as CompanionType) : null);
@@ -61,6 +101,11 @@ export default function StudentProfilePage() {
 
       const dash = p?.dashboard && typeof p.dashboard === "object" ? (p.dashboard as Record<string, unknown>) : {};
       setNotificationsEnabled(dash.notificationsEnabled !== false);
+
+      setLocCity(String(p?.city ?? "").trim());
+      setLocRegion(String(p?.region ?? "").trim());
+      setLocCountry(String(p?.country_code ?? "").trim().toUpperCase().slice(0, 2));
+      setLocFormat(coerceLearningFormatPref(p?.preferred_learning_format ?? undefined));
 
       const bookings = (bRows || []) as unknown as { teacher_id: string; status: string }[];
       const distinctTeacherIds = new Set<string>();
@@ -99,14 +144,14 @@ export default function StudentProfilePage() {
   const stage = useMemo(() => (companionType ? getCompanionStage(companionType, lessonCount) : null), [companionType, lessonCount]);
   const stageName = useMemo(() => {
     if (!stage) return "";
-    if (locale === "en-CA") return stage.nameEn;
+    if (locale === "en") return stage.nameEn;
     if (locale === "es") return stage.nameEs;
     return stage.name;
   }, [stage, locale]);
   const companionName = useMemo(() => {
     if (!companionType) return "";
     const c = COMPANIONS[companionType];
-    if (locale === "en-CA") return c.nameEn;
+    if (locale === "en") return c.nameEn;
     if (locale === "es") return c.nameEs;
     return c.name;
   }, [companionType, locale]);
@@ -120,8 +165,8 @@ export default function StudentProfilePage() {
         <div className="mx-auto h-16 w-16 rounded-full bg-[#1D9E75] text-white flex items-center justify-center text-lg font-bold">
           {initials || "?"}
         </div>
-        <p className="text-[16px] font-bold text-[var(--p-text)]">{authDisplayName(user)}</p>
-        <p className="text-[12px] text-[var(--p-text-muted)]">
+        <p className="text-[16px] font-bold text-slate-900">{authDisplayName(user)}</p>
+        <p className="text-[12px] text-slate-600">
           {t("student")} · {t("profileMemberSince")} {memberYear ?? "—"}
         </p>
       </section>
@@ -173,8 +218,8 @@ export default function StudentProfilePage() {
       {/* SETTINGS */}
       <section className="rounded-3xl border border-[var(--p-border-light)] bg-white p-4 shadow-sm space-y-3">
         <Row label={t("profileLanguage")}>
-          <div className="scale-90 origin-right">
-            <LocaleSwitcher />
+          <div className="shrink-0 max-w-[200px] sm:max-w-none sm:scale-95 sm:origin-right">
+            <LocaleSwitcher variant="light" compact />
           </div>
         </Row>
 
@@ -204,6 +249,98 @@ export default function StudentProfilePage() {
           </button>
         </Row>
 
+        <div className="space-y-3 border-t border-[var(--p-border-light)] pt-4">
+          <div className="flex items-center gap-3 px-3 pb-1">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#E1F5EE] text-[#0F6E56]">
+              <MapPin size={18} />
+            </span>
+            <p className="text-sm font-bold text-slate-900">{t("studentFindTeacher")}</p>
+          </div>
+          <label className="block px-3">
+            <span className="text-[13px] font-semibold text-slate-700">{t("studentCity")}</span>
+            <input
+              value={locCity}
+              onChange={(e) => setLocCity(e.target.value)}
+              className="mt-1 h-11 w-full rounded-2xl border border-[var(--p-border-light)] bg-[#fafaf8] px-3 text-sm outline-none focus:border-[#1D9E75]"
+              autoComplete="address-level2"
+            />
+          </label>
+          <label className="block px-3">
+            <span className="text-[13px] font-semibold text-slate-700">{t("studentRegion")}</span>
+            <input
+              value={locRegion}
+              onChange={(e) => setLocRegion(e.target.value)}
+              className="mt-1 h-11 w-full rounded-2xl border border-[var(--p-border-light)] bg-[#fafaf8] px-3 text-sm outline-none focus:border-[#1D9E75]"
+              autoComplete="address-level1"
+            />
+          </label>
+          <label className="block px-3">
+            <span className="text-[13px] font-semibold text-slate-700">{t("studentCountry")}</span>
+            <input
+              value={locCountry}
+              maxLength={2}
+              placeholder="CA"
+              onChange={(e) => setLocCountry(e.target.value.toUpperCase())}
+              className="mt-1 h-11 w-full rounded-2xl border border-[var(--p-border-light)] bg-[#fafaf8] px-3 text-sm uppercase outline-none tracking-widest focus:border-[#1D9E75]"
+              autoComplete="country"
+              inputMode="text"
+              aria-label={t("studentCountry")}
+            />
+          </label>
+          <label className="block px-3">
+            <span className="text-[13px] font-semibold text-slate-700">{t("studentPreferredFormat")}</span>
+            <select
+              value={locFormat}
+              onChange={(e) => setLocFormat(coerceLearningFormatPref(e.target.value))}
+              className="mt-1 h-11 w-full rounded-2xl border border-[var(--p-border-light)] bg-[#fafaf8] px-3 text-sm outline-none focus:border-[#1D9E75]"
+            >
+              {LEARNING_FORMAT_VALUES.map((fk) => (
+                <option key={fk} value={fk}>
+                  {t(FORMAT_LABEL_KEYS[fk])}
+                </option>
+              ))}
+            </select>
+          </label>
+          <div className="px-3 pb-1">
+            <button
+              type="button"
+              disabled={locSaving}
+              onClick={async () => {
+                setLocSaving(true);
+                setLocMsg(null);
+                try {
+                  const supabase = getSupabaseClient();
+                  const cc = locCountry.trim().toUpperCase().slice(0, 2);
+                  const { error: upErr } = await supabase
+                    .from("profiles")
+                    .update({
+                      city: locCity.trim() || null,
+                      region: locRegion.trim() || null,
+                      country_code: cc || "CA",
+                      preferred_learning_format: locFormat,
+                    })
+                    .eq("id", user.id);
+                  if (upErr) {
+                    setLocMsg(t("errorGeneric"));
+                  } else {
+                    setLocMsg(t("savedOk"));
+                  }
+                } catch {
+                  setLocMsg(t("errorGeneric"));
+                } finally {
+                  setLocSaving(false);
+                  window.setTimeout(() => setLocMsg(null), 4000);
+                }
+              }}
+              className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-2xl bg-[#1D9E75] px-4 text-sm font-bold text-white disabled:opacity-60"
+            >
+              {locSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+              {t("save")}
+            </button>
+            {locMsg ? <p className="mt-2 text-xs text-slate-600">{locMsg}</p> : null}
+          </div>
+        </div>
+
         <Link
           href="/api/stripe/portal"
           className="flex items-center justify-between rounded-2xl px-3 py-3 hover:bg-slate-50"
@@ -212,7 +349,7 @@ export default function StudentProfilePage() {
             <span className="h-9 w-9 rounded-xl bg-[#E1F5EE] text-[#0F6E56] flex items-center justify-center">
               <CreditCard size={18} />
             </span>
-            <span className="text-sm font-semibold text-[var(--p-text)]">{t("profilePayments")}</span>
+            <span className="text-sm font-semibold text-slate-800">{t("profilePayments")}</span>
           </div>
           <ChevronRight size={18} className="text-slate-600" />
         </Link>
@@ -236,7 +373,7 @@ export default function StudentProfilePage() {
 function StatCard({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-2xl border border-[var(--p-border-light)] bg-white p-3 shadow-sm text-center">
-      <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--p-text-muted)]">{label}</p>
+      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-600">{label}</p>
       <p className="mt-1 text-[18px] font-bold text-[#1D9E75]">{value}</p>
     </div>
   );
@@ -249,7 +386,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
         <span className="h-9 w-9 rounded-xl bg-[#F1EFE8] text-[#2C2C2A] flex items-center justify-center">
           <Bell size={18} />
         </span>
-        <span className="text-sm font-semibold text-[var(--p-text)]">{label}</span>
+        <span className="text-sm font-semibold text-slate-800">{label}</span>
       </div>
       <div className="shrink-0">{children}</div>
     </div>

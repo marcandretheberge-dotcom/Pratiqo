@@ -1,0 +1,137 @@
+"use client";
+
+import { Search } from "lucide-react";
+import { SmartSearchInput } from "@/components/SmartSearchInput";
+import { LandingLocationSearch } from "@/components/marketing/LandingLocationSearch";
+import { useLocale } from "@/lib/locale-context";
+import type { Teacher } from "@/types";
+import type { City } from "@/lib/cities";
+import type { LandingFormatFilter } from "@/lib/landingTeacherFilter";
+import { cn } from "@/lib/utils";
+import type { TranslationKey } from "@/lib/translations";
+
+export function LandingDiscoveryHeader({
+  searchQuery,
+  onSearchQueryChange,
+  locationSearch,
+  onLocationSearchChange,
+  geo,
+  onSelectTeacher,
+  onSelectDiscipline,
+  onSelectCity,
+  formatFilter,
+  onFormatFilterChange,
+  onSearchSubmit,
+  searchInputPlaceholderKey,
+  teachersForSearch,
+}: {
+  teachersForSearch: Teacher[];
+  searchQuery: string;
+  onSearchQueryChange: (v: string) => void;
+  locationSearch: string;
+  onLocationSearchChange: (v: string) => void;
+  geo: { lat: number; lng: number } | null;
+  onSelectTeacher: (t: Teacher) => void;
+  onSelectDiscipline: (label: string) => void;
+  onSelectCity: (c: City) => void;
+  formatFilter: LandingFormatFilter;
+  onFormatFilterChange: (v: LandingFormatFilter) => void;
+  onSearchSubmit: () => void;
+  searchInputPlaceholderKey: TranslationKey;
+}) {
+  const { t } = useLocale();
+
+  const fmtOptions: { v: LandingFormatFilter; lab: TranslationKey }[] = [
+    { v: "all", lab: "landingFormatSelectOptionAll" },
+    { v: "online", lab: "landingFormatOnlineOpt" },
+    { v: "in_person", lab: "landingFormatInPersonOpt" },
+    { v: "hybrid", lab: "landingFormatHybridOpt" },
+  ];
+
+  return (
+    <div className="mx-auto max-w-4xl space-y-5 text-center">
+      <div>
+        <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#00694c]">{t("landingEyebrowLocal")}</p>
+        <p className="mt-3 text-[15px] font-semibold text-[#0F6E56] lg:hidden">{t("landingMobileNearYou")}</p>
+        <p className="mt-1 text-sm leading-snug text-[#526056] lg:hidden">{t("landingMobileCornerHint")}</p>
+        <h1 className="mt-4 text-2xl font-bold tracking-tight text-[#1a1f1d] sm:text-3xl lg:mt-2 lg:text-[2.15rem] lg:leading-[1.12]">
+          {t("landingNeighborhoodHeadline")}
+        </h1>
+        <p className="mx-auto mt-3 hidden max-w-2xl text-[15px] leading-relaxed text-[#526056] sm:text-base lg:block">{t("teacherGridCornerLesson")}</p>
+      </div>
+
+      <div
+        role="search"
+        className="rounded-3xl border border-[#E4E2DA] bg-white p-2 text-left shadow-[0_8px_32px_rgba(44,44,42,0.07)] lg:p-3"
+      >
+        <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:gap-2">
+          <div className="min-w-0 flex-1 space-y-1">
+            <label htmlFor="landing-discipline" className="block pl-1 text-[10px] font-bold uppercase tracking-wider text-[#6B6760]">
+              {t("landingSearchDisciplineLabel")}
+            </label>
+            <div className="[&_input]:rounded-2xl [&_>div]:rounded-2xl [&_>div]:border-[#EFECE6] [&_>div]:shadow-none">
+              <SmartSearchInput
+                value={searchQuery}
+                onChange={onSearchQueryChange}
+                teachers={teachersForSearch}
+                geo={geo}
+                onSelectTeacher={onSelectTeacher}
+                onSelectDiscipline={(label) => {
+                  onSelectDiscipline(label);
+                  onSearchQueryChange("");
+                }}
+                onSelectCity={onSelectCity}
+                inputPlaceholderKey={searchInputPlaceholderKey}
+                className=""
+              />
+            </div>
+          </div>
+
+          <div className="min-w-0 flex-1 space-y-1 lg:max-w-[260px]">
+            <label className="block pl-1 text-[10px] font-bold uppercase tracking-wider text-[#6B6760]" htmlFor="landing-loc-trigger">
+              {t("landingSearchLocationLabel")}
+            </label>
+            <LandingLocationSearch
+              value={locationSearch}
+              onChange={onLocationSearchChange}
+              geo={geo}
+              onSelectCity={onSelectCity}
+              placeholderKey="landingSearchLocationPlaceholder"
+              className="w-full [&_>_div]:rounded-2xl"
+            />
+          </div>
+
+          <div className="min-w-0 flex-1 space-y-1 lg:max-w-[200px]">
+            <label htmlFor="landing-format" className="block pl-1 text-[10px] font-bold uppercase tracking-wider text-[#6B6760]">
+              {t("landingSearchFormatLabel")}
+            </label>
+            <select
+              id="landing-format"
+              value={formatFilter}
+              onChange={(e) => onFormatFilterChange(e.target.value as LandingFormatFilter)}
+              aria-label={t("landingSearchFormatLabel")}
+              className="h-[46px] w-full rounded-2xl border border-[#E8E6DF] bg-[#FAFCFB] px-4 text-sm font-medium text-[#2C2C2A] outline-none ring-0 focus:border-[#0F6E56]/40"
+            >
+              {fmtOptions.map((o) => (
+                <option key={o.v} value={o.v}>
+                  {t(o.lab)}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="shrink-0 pt-5 lg:pt-0 lg:pb-px">
+            <button
+              type="button"
+              onClick={onSearchSubmit}
+              className="flex h-[46px] w-full items-center justify-center gap-2 rounded-full bg-[#0F6E56] px-8 text-sm font-bold text-white shadow-sm transition-colors hover:bg-[#0c5c48] lg:w-auto lg:min-w-[132px]"
+            >
+              <Search size={16} aria-hidden />
+              {t("landingSearchSubmit")}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

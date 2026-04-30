@@ -5,7 +5,7 @@ import { Calendar, CheckCircle2, ChevronLeft, ChevronRight, MapPin, User, Video 
 import { cn } from "../lib/utils";
 import { motion } from "motion/react";
 import { useLocale } from "../lib/locale-context";
-import { localeToBcp47 } from "../lib/i18n";
+import { localeToBcp47 } from "../lib/i18n/types";
 
 interface TeacherAgendaProps {
   bookings: any[];
@@ -135,7 +135,7 @@ export function TeacherAgenda({ bookings }: TeacherAgendaProps) {
                         ? t("agendaStatusPendingPayment")
                         : t("agendaStatusUpcoming")}
                   </span>
-                  <button type="button" className="text-slate-300 hover:text-brand-primary transition-colors" aria-label={t("markComplete")}>
+                  <button type="button" className="text-slate-500 hover:text-brand-primary transition-colors" aria-label={t("markComplete")}>
                     <CheckCircle2 size={18} />
                   </button>
                 </div>

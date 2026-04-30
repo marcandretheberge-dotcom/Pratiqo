@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { Calendar, Flame, Loader2, MessageSquare, ShieldCheck, X } from "lucide-react";
+import Link from "next/link";
+import { Calendar, Flame, Loader2, ShieldCheck } from "lucide-react";
 import { useAuth } from "./AuthProvider";
 import { getSupabaseClient } from "../lib/supabase";
 import { authDisplayName } from "../lib/authDisplay";
@@ -11,7 +12,18 @@ import { useRouter } from "next/navigation";
 import { formatLocalISODate, slotStartMinutes } from "../lib/slots";
 import { cn } from "../lib/utils";
 import { useLocale } from "../lib/locale-context";
-import { localeToBcp47 } from "../lib/i18n";
+import { localeToBcp47 } from "@/lib/i18n/types";
+import { TeacherDashboardStats } from "@/components/dashboard/teacher/TeacherDashboardStats";
+import { TeacherProfileCompletenessCard } from "@/components/dashboard/teacher/TeacherProfileCompletenessCard";
+import { TeacherRequestCard } from "@/components/dashboard/teacher/TeacherRequestCard";
+import { TeacherScheduleCard } from "@/components/dashboard/teacher/TeacherScheduleCard";
+import { ConfirmCancelBookingDialog } from "@/components/ConfirmCancelBookingDialog";
+import {
+  STUDENT_CANCEL_STATUSES,
+  isBookingLessonDateOnOrAfterToday,
+  isLateCancellation,
+} from "@/lib/bookingCancellation";
+import { postCancelBooking } from "@/lib/bookingCancellationClient";
 
 interface BookingWithTeacher {
   id: string;
@@ -22,6 +34,8 @@ interface BookingWithTeacher {
   status: string;
   studentLevel?: string;
   teachingMode?: string;
+  slotDate?: string | null;
+  timeSlot?: string | null;
 }
 
 function bookingSortKey(b: { slot_date?: string | null; date?: string | null; time_slot?: string | null; time?: string | null }) {
@@ -42,26 +56,39 @@ export function Dashboard() {
   const [profile, setProfile] = useState<StudentProfile | null>(null);
   const [bookings, setBookings] = useState<BookingWithTeacher[]>([]);
   const [teacherBookings, setTeacherBookings] = useState<any[]>([]);
-  const [teacherMeta, setTeacherMeta] = useState<{ discipline: string; hourlyRate: number } | null>(null);
+  const [teacherMeta, setTeacherMeta] = useState<{
+    discipline: string;
+    hourlyRate: number;
+    bio: string;
+    teacherImageUrl: string | null;
+    profilePhotoUrl: string | null;
+    disciplineCount: number;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
+  // id → "accepting" | "declining"
+  const [bookingAction, setBookingAction] = useState<Record<string, "accepting" | "declining">>({});
+  const [actionFlash, setActionFlash] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+  const [cancelBooking, setCancelBooking] = useState<{ id: string; side: "student" | "teacher" } | null>(null);
+  const [cancelBusy, setCancelBusy] = useState(false);
 
   const teacherDash = useMemo(() => {
     if (!isTeacherRole) return null;
     const today = formatLocalISODate(new Date());
     const activeStatuses = ["confirmed", "booked"];
-    const upcoming = teacherBookings
+    const confirmedUpcoming = teacherBookings
       .filter((b) => activeStatuses.includes(b.status))
       .filter((b) => {
         const d = String(b.slot_date || b.date || "");
         return d >= today;
       })
       .sort((a, b) => bookingSortKey(a).localeCompare(bookingSortKey(b)));
-    const next = upcoming[0] ?? null;
     const todayList = teacherBookings
       .filter((b) => activeStatuses.includes(b.status) || b.status === "pending_payment")
       .filter((b) => String(b.slot_date || b.date || "") === today)
       .sort((a, b) => bookingSortKey(a).localeCompare(bookingSortKey(b)));
-    const pendingList = teacherBookings.filter((b) => b.status === "pending_payment" || b.status === "pending_teacher");
+    const pendingList = teacherBookings.filter((b) =>
+      ["pending", "pending_teacher", "pending_payment"].includes(b.status),
+    );
     const monthStart = new Date();
     monthStart.setDate(1);
     monthStart.setHours(0, 0, 0, 0);
@@ -78,30 +105,167 @@ export function Dashboard() {
       teacherBookings.filter((b) => activeStatuses.includes(b.status)).map((b) => String(b.student_id)),
     ).size;
     const coursesTodayCount = todayList.filter((b) => activeStatuses.includes(b.status)).length;
-    return { next, todayList, pendingList, today, monthRevenue, distinctStudents, coursesTodayCount };
+    return {
+      confirmedUpcoming,
+      todayList,
+      pendingList,
+      today,
+      monthRevenue,
+      distinctStudents,
+      coursesTodayCount,
+    };
   }, [isTeacherRole, teacherBookings]);
 
-  const cancelTeacherBooking = async (id: string) => {
-    if (!confirm("Annuler cette réservation ?")) return;
-    const supabase = getSupabaseClient();
-    const { error } = await supabase.from("bookings").update({ status: "cancelled" }).eq("id", id);
-    if (error) {
-      alert(error.message);
-      return;
+  const showFlash = (kind: "ok" | "err", text: string) => {
+    setActionFlash({ kind, text });
+    setTimeout(() => setActionFlash(null), 4000);
+  };
+
+  const studentSidebarBookings = useMemo(() => {
+    return bookings
+      .filter(
+        (b) =>
+          (STUDENT_CANCEL_STATUSES as readonly string[]).includes(b.status) &&
+          isBookingLessonDateOnOrAfterToday({
+            slot_date: b.slotDate ?? b.date,
+            date: b.date,
+            time_slot: b.timeSlot ?? b.time,
+            time: b.time,
+          }),
+      )
+      .sort((a, z) =>
+        bookingSortKey({
+          slot_date: a.slotDate,
+          date: a.date,
+          time_slot: a.timeSlot,
+          time: a.time,
+        }).localeCompare(
+          bookingSortKey({
+            slot_date: z.slotDate,
+            date: z.date,
+            time_slot: z.timeSlot,
+            time: z.time,
+          }),
+        ),
+      )
+      .slice(0, 3);
+  }, [bookings]);
+
+  const cancelLessonRow = useMemo(() => {
+    if (!cancelBooking) return null;
+    if (cancelBooking.side === "student") {
+      const row = bookings.find((b) => b.id === cancelBooking.id);
+      if (!row) return null;
+      return {
+        slot_date: row.slotDate ?? row.date ?? null,
+        date: row.date ?? null,
+        time_slot: row.timeSlot ?? row.time ?? null,
+        time: row.time ?? null,
+      };
     }
-    setTeacherBookings((prev) => prev.filter((b) => b.id !== id));
+    const row = teacherBookings.find((b) => String(b.id) === cancelBooking.id);
+    if (!row) return null;
+    return {
+      slot_date: (row.slot_date as string | null | undefined) ?? null,
+      date: (row.date as string | null | undefined) ?? null,
+      time_slot: (row.time_slot as string | null | undefined) ?? null,
+      time: (row.time as string | null | undefined) ?? null,
+    };
+  }, [cancelBooking, bookings, teacherBookings]);
+
+  const cancelIsLate = cancelLessonRow ? isLateCancellation(cancelLessonRow) : false;
+
+  const runConfirmedCancelFromDialog = async ({
+    reason,
+    message,
+  }: {
+    reason: string;
+    message: string;
+  }) => {
+    if (!cancelBooking) return;
+    setCancelBusy(true);
+    try {
+      const supabase = getSupabaseClient();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) throw new Error(t("bookingSessionExpired"));
+      const res = await postCancelBooking(cancelBooking.id, {
+        accessToken: token,
+        reason: reason || undefined,
+        message: message || undefined,
+      });
+      if ("error" in res) throw new Error(res.error);
+      if (cancelBooking.side === "student") {
+        setBookings((prev) => prev.filter((x) => x.id !== cancelBooking.id));
+      } else {
+        setTeacherBookings((prev) => prev.filter((x) => String(x.id) !== cancelBooking.id));
+      }
+      setCancelBooking(null);
+      showFlash("ok", t("classCancelled"));
+    } catch (e) {
+      showFlash("err", e instanceof Error ? e.message : t("anErrorOccurred"));
+    } finally {
+      setCancelBusy(false);
+    }
+  };
+
+  const cancelTeacherBooking = async (id: string) => {
+    if (!confirm(t("declineBookingConfirm"))) return;
+    setBookingAction((prev) => ({ ...prev, [id]: "declining" }));
+    try {
+      const supabase = getSupabaseClient();
+      const { error } = await supabase.from("bookings").update({ status: "cancelled" }).eq("id", id);
+      if (error) throw error;
+      // Optimistic: remove from list immediately
+      setTeacherBookings((prev) => prev.filter((b) => b.id !== id));
+      showFlash("ok", t("bookingDeclined"));
+    } catch (e) {
+      showFlash("err", e instanceof Error ? e.message : t("anErrorOccurred"));
+    } finally {
+      setBookingAction((prev) => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
+    }
   };
 
   const acceptTeacherBooking = async (id: string) => {
-    const supabase = getSupabaseClient();
-    const { error } = await supabase.from("bookings").update({ status: "confirmed" }).eq("id", id).eq("status", "pending_teacher");
-    if (error) {
-      alert(error.message);
-      return;
-    }
+    const prevRow = teacherBookings.find((b) => b.id === id);
+    const previousStatus = (prevRow?.status as string) || "pending_teacher";
+    setBookingAction((prev) => ({ ...prev, [id]: "accepting" }));
+    // Optimistic update: move to confirmed right away
     setTeacherBookings((prev) =>
       prev.map((b) => (b.id === id ? { ...b, status: "confirmed" } : b)),
     );
+    try {
+      const supabase = getSupabaseClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      const res = await fetch(`/api/bookings/${id}/accept`, {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error((body as { error?: string }).error ?? t("anErrorOccurred"));
+      }
+      showFlash("ok", t("classAcceptedCanMessage"));
+    } catch (e) {
+      // Roll back on failure
+      setTeacherBookings((prev) =>
+        prev.map((b) => (b.id === id ? { ...b, status: previousStatus } : b)),
+      );
+      showFlash("err", e instanceof Error ? e.message : t("anErrorOccurred"));
+    } finally {
+      setBookingAction((prev) => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
+    }
   };
 
   useEffect(() => {
@@ -180,21 +344,26 @@ export function Dashboard() {
         list.push({
           id: row.id as string,
           teacherId: tid,
-          teacherName: (trow?.name as string) || "Professeur",
+          teacherName: (trow?.name as string) || "?",
           date: (row.date as string) || "",
           time: (row.time as string) || "",
           status: row.status as string,
           studentLevel: row.student_level as string | undefined,
           teachingMode: row.teaching_mode as string | undefined,
+          slotDate: (row.slot_date as string | null) ?? null,
+          timeSlot: (row.time_slot as string | null) ?? null,
         });
       }
       setBookings(list);
     };
 
     const loadTeacherBookings = async () => {
+      const { data: myProf } = await supabase.from("profiles").select("photo_url").eq("id", user.id).maybeSingle();
+      const profilePhotoUrlRaw = (myProf as { photo_url?: string | null } | null)?.photo_url ?? null;
+
       const { data: t } = await supabase
         .from("teachers")
-        .select("id, discipline, price_per_lesson")
+        .select("id, discipline, price_per_lesson, bio, image_url")
         .eq("user_id", user.id)
         .maybeSingle();
       if (!t?.id) {
@@ -202,11 +371,26 @@ export function Dashboard() {
         setTeacherMeta(null);
         return;
       }
+      const row = t as {
+        id: string;
+        discipline?: string;
+        price_per_lesson?: number;
+        bio?: string | null;
+        image_url?: string | null;
+      };
+      const { data: drows } = await supabase.from("teacher_disciplines").select("id").eq("teacher_id", row.id);
+      const img = row.image_url != null ? String(row.image_url).trim() : "";
+      const pPhoto = profilePhotoUrlRaw != null ? String(profilePhotoUrlRaw).trim() : "";
+
       setTeacherMeta({
-        discipline: String((t as { discipline?: string }).discipline || "—"),
-        hourlyRate: Number((t as { price_per_lesson?: number }).price_per_lesson) || 0,
+        discipline: String(row.discipline || "—"),
+        hourlyRate: Number(row.price_per_lesson) || 0,
+        bio: String(row.bio || "").trim(),
+        teacherImageUrl: img ? img : null,
+        profilePhotoUrl: pPhoto ? pPhoto : null,
+        disciplineCount: drows?.length ?? 0,
       });
-      const teacherSlug = t.id as string;
+      const teacherSlug = row.id;
       const { data: rows, error } = await supabase
         .from("bookings")
         .select("*")
@@ -220,7 +404,7 @@ export function Dashboard() {
         list.push({
           id: row.id,
           ...row,
-          studentName: (prow?.name as string) || "Élève",
+          studentName: (prow?.name as string) || "?",
           studentPhotoUrl: (prow?.photo_url as string) || null,
         });
       }
@@ -235,9 +419,9 @@ export function Dashboard() {
         } else if (isTeacherRole) {
           await loadTeacherBookings();
         }
-      } catch (e) {
-        console.error("Dashboard refresh", e);
-      } finally {
+    } catch (e) {
+      void e;
+    } finally {
         if (!cancelled) setLoading(false);
       }
     };
@@ -269,7 +453,7 @@ export function Dashboard() {
     return (
       <div className="h-[calc(100vh-200px)] flex flex-col items-center justify-center p-12 text-center">
         <Loader2 size={48} className="text-brand-primary animate-spin mb-4" />
-        <h2 className="text-xl font-bold text-slate-800">Chargement du compte…</h2>
+        <h2 className="text-xl font-bold text-slate-800">{t("loadingAccount")}</h2>
       </div>
     );
   }
@@ -277,8 +461,8 @@ export function Dashboard() {
   if (!isTeacherRole && !isStudentRole) {
     return (
       <div className="flex flex-col items-center justify-center p-12 text-center space-y-4">
-        <p className="text-slate-600 font-medium">Configuration du profil en cours…</p>
-        <p className="text-sm text-slate-500">Tu seras redirigé pour finaliser ton inscription.</p>
+        <p className="text-slate-600 font-medium">{t("configuringProfile")}</p>
+        <p className="text-sm text-slate-600">{t("redirectingEnroll")}</p>
       </div>
     );
   }
@@ -293,145 +477,115 @@ export function Dashboard() {
   }
 
   if (isTeacherRole && teacherDash) {
-    const { next, pendingList, today, monthRevenue, distinctStudents, coursesTodayCount } = teacherDash;
+    const { confirmedUpcoming, pendingList, monthRevenue, distinctStudents, coursesTodayCount } = teacherDash;
     const displayName = authProfile?.name || authDisplayName(user);
     const dateLocale = localeToBcp47(locale);
-    const todayLabel = new Date().toLocaleDateString(dateLocale, { weekday: "long", day: "numeric", month: "long" });
-    const lessonPrice = (b: (typeof teacherBookings)[0]) =>
-      Number(b.price) > 0 ? Number(b.price) : teacherMeta?.hourlyRate ?? 0;
+    const todayLabel = new Date().toLocaleDateString(dateLocale, {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+    });
     const fmtMoney = (n: number) =>
       new Intl.NumberFormat(dateLocale, { style: "currency", currency: "CAD", maximumFractionDigits: 0 }).format(n);
 
+    const completenessChecks = teacherMeta
+      ? [
+          Boolean(teacherMeta.profilePhotoUrl || teacherMeta.teacherImageUrl),
+          teacherMeta.bio.trim().length >= 20,
+          teacherMeta.hourlyRate > 0,
+          teacherMeta.disciplineCount >= 1,
+        ]
+      : [false, false, false, false];
+    const completenessPct = Math.round(
+      (completenessChecks.filter(Boolean).length / completenessChecks.length) * 100,
+    );
+
     return (
-      <div className="space-y-5 pb-12">
-        <div className="rounded-2xl bg-[#2C2C2A] text-white p-6 shadow-md">
-          <p className="text-xs text-white/50 capitalize">{todayLabel}</p>
-          <h2 className="text-2xl sm:text-3xl font-bold mt-2">
-            {t("greeting")} {displayName} <span className="inline-block">👋</span>
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
-            <div className="rounded-xl bg-white/10 px-4 py-3 border border-white/10">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-[#5DCAA5]">{t("lessonsToday")}</p>
-              <p className="text-2xl font-bold mt-1">{coursesTodayCount}</p>
+      <div className="mx-auto w-full max-w-[1280px] space-y-6 pb-12">
+        <header className="space-y-1">
+          <p className="text-xs font-medium capitalize text-slate-600">{todayLabel}</p>
+          <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
+            {t("greeting")} {displayName}
+          </h1>
+          <p className="text-sm text-slate-600">{t("dashboardTeacherSubtitle")}</p>
+        </header>
+
+        <TeacherDashboardStats
+          items={[
+            { labelKey: "lessonsToday", value: coursesTodayCount },
+            { labelKey: "activeStudentsLabel", value: distinctStudents },
+            { labelKey: "thisMonthLabel", value: fmtMoney(monthRevenue) },
+          ]}
+        />
+
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <div className="space-y-6 lg:col-span-2">
+            <div className="rounded-xl border border-slate-200/90 bg-white p-5 shadow-[0_4px_24px_rgba(0,0,0,0.04)]">
+              <p className="mb-4 text-[11px] font-bold uppercase tracking-widest text-[#00694c]">{t("pendingRequests")}</p>
+              {actionFlash ? (
+                <p
+                  className={cn(
+                    "mb-3 rounded-xl px-3 py-2 text-sm font-medium",
+                    actionFlash.kind === "ok" ? "bg-[rgba(0,105,76,0.08)] text-[#004d38]" : "bg-rose-50 text-rose-700",
+                  )}
+                >
+                  {actionFlash.text}
+                </p>
+              ) : null}
+              {pendingList.length === 0 ? (
+                <p className="text-sm text-slate-600">{t("noPending")}</p>
+              ) : (
+                <ul className="space-y-3">
+                  {pendingList.map((b) => (
+                    <TeacherRequestCard
+                      key={b.id as string}
+                      booking={b}
+                      disciplineLabel={teacherMeta?.discipline ?? "—"}
+                      action={bookingAction[b.id as string]}
+                      onAccept={() => void acceptTeacherBooking(b.id as string)}
+                      onDecline={() => void cancelTeacherBooking(b.id as string)}
+                    />
+                  ))}
+                </ul>
+              )}
             </div>
-            <div className="rounded-xl bg-white/10 px-4 py-3 border border-white/10">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-[#5DCAA5]">{t("activeStudentsLabel")}</p>
-              <p className="text-2xl font-bold mt-1">{distinctStudents}</p>
-            </div>
-            <div className="rounded-xl bg-white/10 px-4 py-3 border border-white/10">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-[#5DCAA5]">{t("thisMonthLabel")}</p>
-              <p className="text-2xl font-bold mt-1">{fmtMoney(monthRevenue)}</p>
-            </div>
+
+            <TeacherScheduleCard
+              titleKey="upcomingConfirmedClasses"
+              items={confirmedUpcoming.map((b) => ({
+                id: b.id as string,
+                studentName: b.studentName as string | undefined,
+                studentUserId: (b.student_id as string | undefined) ?? null,
+                slot_date: b.slot_date as string | null | undefined,
+                date: b.date as string | null | undefined,
+                time_slot: b.time_slot as string | null | undefined,
+                time: b.time as string | null | undefined,
+              }))}
+              emptyHint={t("dashboardNoLessonsWeek")}
+              onRequestCancelClass={(bookingId) => setCancelBooking({ id: bookingId, side: "teacher" })}
+              cancelBusy={cancelBusy}
+            />
+
+        <ConfirmCancelBookingDialog
+          open={cancelBooking?.side === "teacher"}
+          onClose={() => {
+            if (!cancelBusy) setCancelBooking(null);
+          }}
+          onConfirm={async (payload) => {
+            await runConfirmedCancelFromDialog(payload);
+          }}
+          busy={cancelBusy}
+          role="teacher"
+          isLate={cancelBooking?.side === "teacher" ? cancelIsLate : false}
+        />
+
+            <AssignmentHub mode="teacher" />
+          </div>
+
+          <div className="space-y-6 lg:col-span-1">
+            <TeacherProfileCompletenessCard percent={completenessPct} ctaHref="/teacher/my-profile" />
           </div>
         </div>
-
-        {next ? (
-          <div className="rounded-2xl border-2 border-[#1D9E75] bg-white p-6 shadow-sm">
-            <p className="text-[11px] font-bold uppercase tracking-widest text-[#1D9E75] mb-4">Prochain cours</p>
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
-              <div className="flex items-center gap-4 min-w-0">
-                {next.studentPhotoUrl ? (
-                  <img
-                    src={next.studentPhotoUrl}
-                    alt=""
-                    className="h-16 w-16 rounded-full object-cover border-2 border-[rgba(29,158,117,0.4)] shrink-0"
-                  />
-                ) : (
-                  <div
-                    className="h-16 w-16 rounded-full shrink-0 flex items-center justify-center text-xl font-bold text-white"
-                    style={{ background: "linear-gradient(135deg,#1D9E75,#0f6e56)" }}
-                  >
-                    {(next.studentName || "?").slice(0, 2).toUpperCase()}
-                  </div>
-                )}
-                <div className="min-w-0">
-                  <p className="text-lg font-bold text-[#2C2C2A] truncate">{next.studentName}</p>
-                  <p className="text-sm text-[#2C2C2A]/70">{teacherMeta?.discipline ?? "—"}</p>
-                  <p className="text-sm text-[#2C2C2A]/80 mt-1">
-                    {next.slot_date || next.date} · {next.time_slot || next.time} · 1 h · {fmtMoney(lessonPrice(next))}
-                  </p>
-                  <p className="text-xs text-[#2C2C2A]/60 mt-0.5">
-                    {next.teaching_mode === "domicile"
-                      ? t("homeVisit")
-                      : next.teaching_mode === "online"
-                        ? t("online")
-                        : t("inPerson")}
-                  </p>
-                </div>
-              </div>
-              <div className="flex flex-wrap gap-2 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => router.push("/messages")}
-                  className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-full bg-[#1D9E75] text-white text-sm font-semibold hover:brightness-[0.98]"
-                >
-                  {t("startLesson")}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => router.push("/messages")}
-                  className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-full border-2 border-[#2C2C2A]/15 bg-white text-sm font-semibold text-[#2C2C2A] hover:bg-slate-50"
-                >
-                  <MessageSquare size={16} /> {t("messageButton")}
-                </button>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="rounded-2xl border border-[#1D9E75]/30 bg-[rgba(29,158,117,0.06)] p-6 text-sm text-[#2C2C2A]/80">{t("noNextLesson")}</div>
-        )}
-
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <p className="text-[11px] font-bold uppercase tracking-widest text-[#1D9E75] mb-4">{t("pendingTitle")}</p>
-          {pendingList.length === 0 ? (
-            <p className="text-sm text-slate-500">{t("noPending")}</p>
-          ) : (
-            <ul className="space-y-3">
-              {pendingList.map((b) => (
-                <li
-                  key={b.id}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-100 px-4 py-4 bg-slate-50/50"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div
-                      className="h-11 w-11 rounded-full shrink-0 flex items-center justify-center text-sm font-bold text-white"
-                      style={{ background: "linear-gradient(135deg,#6366f1,#1D9E75)" }}
-                    >
-                      {(b.studentName || "?").slice(0, 2).toUpperCase()}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-bold text-slate-900 truncate">{b.studentName}</p>
-                      <p className="text-xs text-slate-600">{teacherMeta?.discipline ?? "—"}</p>
-                      <p className="text-xs text-slate-500">
-                        {b.slot_date || b.date} · {b.time_slot || b.time}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex gap-2 shrink-0">
-                    {b.status === "pending_teacher" ? (
-                      <button
-                        type="button"
-                        onClick={() => void acceptTeacherBooking(b.id)}
-                        className="h-9 px-4 rounded-full bg-[#1D9E75] text-white text-xs font-bold"
-                      >
-                        {t("acceptButton")}
-                      </button>
-                    ) : null}
-                    <button
-                      type="button"
-                      onClick={() => void cancelTeacherBooking(b.id)}
-                      className="h-9 px-4 rounded-full border border-slate-200 bg-white text-xs font-bold text-slate-700 inline-flex items-center gap-1"
-                    >
-                      <X size={14} /> {t("declineButton")}
-                    </button>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        <AssignmentHub mode="teacher" />
       </div>
     );
   }
@@ -440,9 +594,9 @@ export function Dashboard() {
     <div className="space-y-6 pb-12">
       <section className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div>
-          <p className="ds-label text-[var(--p-text-subtle)]">{t("dashboardStudentSpace")}</p>
-          <h2 className="text-[32px] sm:text-[40px] leading-[1.1] text-[var(--p-text)]">{t("dashboard")}</h2>
-          <p className="text-[14px] text-[var(--p-text-muted)] mt-1">{t("dashboardStudentSubtitle")}</p>
+          <p className="ds-label text-slate-600">{t("dashboardStudentSpace")}</p>
+          <h2 className="text-[32px] sm:text-[40px] leading-[1.1] text-slate-900">{t("dashboard")}</h2>
+          <p className="text-[14px] text-slate-600 mt-1">{t("dashboardStudentSubtitle")}</p>
         </div>
       </section>
 
@@ -494,17 +648,31 @@ export function Dashboard() {
               <Calendar size={14} className="text-slate-600" />
             </div>
             <div className="space-y-3">
-              {bookings.length > 0 ? (
-                bookings.slice(0, 3).map((b) => (
+              {studentSidebarBookings.length > 0 ? (
+                studentSidebarBookings.map((b) => (
                   <div
                     key={b.id}
-                    className="flex flex-col p-3 rounded-2xl bg-slate-50 border border-slate-100 hover:border-brand-primary transition-all"
+                    className="flex flex-col gap-2 p-3 rounded-2xl bg-slate-50 border border-slate-100 hover:border-brand-primary transition-all"
                   >
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-[10px] font-bold text-slate-900">{b.teacherName}</span>
                       <span className="text-[9px] font-bold text-brand-primary uppercase tracking-tighter">{b.time}</span>
                     </div>
                     <p className="text-[9px] text-slate-600 font-bold uppercase tracking-widest">{b.date}</p>
+                    <button
+                      type="button"
+                      onClick={() => setCancelBooking({ id: b.id, side: "student" })}
+                      disabled={cancelBusy}
+                      className="inline-flex min-h-[44px] w-full items-center justify-center rounded-xl border-2 border-rose-600/90 bg-white px-3 text-[10px] font-bold uppercase tracking-wide text-rose-600 hover:bg-rose-50 disabled:opacity-50"
+                    >
+                      {t("cancelClass")}
+                    </button>
+                    <Link
+                      href="/legal/annulation"
+                      className="block text-center text-[9px] font-bold uppercase tracking-wide text-brand-primary hover:underline"
+                    >
+                      {t("viewCancellationPolicy")}
+                    </Link>
                   </div>
                 ))
               ) : (
@@ -529,6 +697,19 @@ export function Dashboard() {
           </div>
         </div>
       </div>
+
+      <ConfirmCancelBookingDialog
+        open={cancelBooking?.side === "student"}
+        onClose={() => {
+          if (!cancelBusy) setCancelBooking(null);
+        }}
+        onConfirm={async (payload) => {
+          await runConfirmedCancelFromDialog(payload);
+        }}
+        busy={cancelBusy}
+        role="student"
+        isLate={cancelBooking?.side === "student" ? cancelIsLate : false}
+      />
     </div>
   );
 }

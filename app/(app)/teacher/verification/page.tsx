@@ -1,8 +1,17 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { CheckCircle2, Loader2, ShieldCheck } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import {
+  CheckCircle2,
+  ExternalLink,
+  Loader2,
+  Paperclip,
+  ShieldCheck,
+  UploadCloud,
+  X,
+} from "lucide-react";
 import { useAuth } from "../../../../components/AuthProvider";
 import { getSupabaseClient } from "../../../../lib/supabase";
 import { VerificationBadge } from "../../../../components/VerificationBadge";
@@ -20,7 +29,9 @@ type TeacherVerifyRow = {
   id: string;
   verification_level: number | null;
   identity_verified: boolean | null;
+  identity_status: string | null;
   diploma_verified: boolean | null;
+  diploma_url: string | null;
   phone_verified: boolean | null;
   is_verified: boolean | null;
 };
@@ -28,30 +39,57 @@ type TeacherVerifyRow = {
 export default function TeacherVerificationPage() {
   const { user, profile, loading } = useAuth();
   const { t } = useLocale();
+  const searchParams = useSearchParams();
+
   const [busy, setBusy] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
-  const [diplomaNote, setDiplomaNote] = useState("");
+  const [messageKind, setMessageKind] = useState<"ok" | "error">("ok");
   const [teacherRow, setTeacherRow] = useState<TeacherVerifyRow | null>(null);
   const [plan, setPlan] = useState<string>("free");
+
+  // Diploma file state
+  const [diplomaFile, setDiplomaFile] = useState<File | null>(null);
+  const [diplomaNote, setDiplomaNote] = useState("");
+  const [diplomaProgress, setDiplomaProgress] = useState<number | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
     if (!user?.id) return;
     const supabase = getSupabaseClient();
-    const [{ data: t }, { data: p }] = await Promise.all([
+    const [{ data: tr }, { data: p }] = await Promise.all([
       supabase
         .from("teachers")
-        .select("id, verification_level, identity_verified, diploma_verified, phone_verified, is_verified")
+        .select(
+          "id, verification_level, identity_verified, identity_status, diploma_verified, diploma_url, phone_verified, is_verified",
+        )
         .eq("user_id", user.id)
         .maybeSingle(),
       supabase.from("profiles").select("plan").eq("id", user.id).maybeSingle(),
     ]);
-    setTeacherRow(t as TeacherVerifyRow | null);
+    setTeacherRow(tr as TeacherVerifyRow | null);
     setPlan(String((p as { plan?: string } | null)?.plan || "free"));
   }, [user?.id]);
 
   useEffect(() => {
     void load();
   }, [load]);
+
+  // Show success banner if Stripe Identity redirected back here
+  useEffect(() => {
+    if (searchParams.get("identity") === "completed") {
+      showMsg(
+        t("stripeIdSubmitted"),
+        "ok",
+      );
+      void load();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const showMsg = (text: string, kind: "ok" | "error" = "ok") => {
+    setMessage(text);
+    setMessageKind(kind);
+  };
 
   const level = useMemo((): VerificationLevel => {
     if (!teacherRow) return 1;
@@ -73,8 +111,41 @@ export default function TeacherVerificationPage() {
       })
     : [];
 
-  const postRequest = async (kind: "identity" | "diploma", description?: string) => {
+  // ── Stripe Identity flow ─────────────────────────────────────────────────
+  const startIdentityVerification = async () => {
     if (!user) return;
+    setMessage(null);
+    setBusy("identity");
+    try {
+      const { data: sess } = await getSupabaseClient().auth.getSession();
+      const token = sess.session?.access_token;
+      if (!token) throw new Error(t("verificationSessionExpired"));
+
+      const res = await fetch("/api/verify-identity", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const j = (await res.json().catch(() => ({}))) as { url?: string; error?: string; detail?: string };
+
+      if (!res.ok || !j.url) {
+        // Fallback: Stripe Identity not enabled — send email request instead
+        if (res.status === 503) {
+          await sendEmailRequest("identity");
+          return;
+        }
+        throw new Error(j.error || t("verificationCannotStart"));
+      }
+
+      // Redirect teacher to Stripe-hosted verification page
+      window.location.href = j.url;
+    } catch (e) {
+      showMsg(e instanceof Error ? e.message : t("verificationErrorGeneric"), "error");
+      setBusy(null);
+    }
+  };
+
+  // Fallback email-based request (used when Stripe Identity is unavailable)
+  const sendEmailRequest = async (kind: "identity" | "diploma", description?: string) => {
     setMessage(null);
     setBusy(kind);
     try {
@@ -88,11 +159,58 @@ export default function TeacherVerificationPage() {
       });
       const j = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string };
       if (!res.ok || !j.ok) throw new Error(j.error || t("verificationSendFailed"));
-      setMessage(kind === "identity" ? t("verificationSentIdentity") : t("verificationSentDiploma"));
+      showMsg(kind === "identity" ? t("verificationSentIdentity") : t("verificationSentDiploma"), "ok");
     } catch (e) {
-      setMessage(e instanceof Error ? e.message : t("verificationErrorGeneric"));
+      showMsg(e instanceof Error ? e.message : t("verificationErrorGeneric"), "error");
     } finally {
       setBusy(null);
+    }
+  };
+
+  // ── Diploma file upload ──────────────────────────────────────────────────
+  const uploadDiploma = async () => {
+    if (!diplomaFile || !user) return;
+    setMessage(null);
+    setBusy("diploma");
+    setDiplomaProgress(0);
+
+    try {
+      const { data: sess } = await getSupabaseClient().auth.getSession();
+      const token = sess.session?.access_token;
+      if (!token) throw new Error(t("verificationSessionExpired"));
+
+      const form = new FormData();
+      form.append("file", diplomaFile);
+      if (diplomaNote.trim()) form.append("note", diplomaNote.trim());
+
+      // Simulate progress (XHR would give real progress; fetch does not)
+      const progressTimer = setInterval(
+        () => setDiplomaProgress((p) => Math.min((p ?? 0) + 15, 85)),
+        300,
+      );
+
+      const res = await fetch("/api/teacher/diploma", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: form,
+      });
+
+      clearInterval(progressTimer);
+      setDiplomaProgress(100);
+
+      const j = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string };
+      if (!res.ok || !j.ok) throw new Error(j.error || t("uploadFailed"));
+
+      showMsg(t("diplomaUploadSuccess"), "ok");
+      setDiplomaFile(null);
+      setDiplomaNote("");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      await load(); // refresh diploma_url state
+    } catch (e) {
+      showMsg(e instanceof Error ? e.message : t("verificationErrorGeneric"), "error");
+    } finally {
+      setBusy(null);
+      setDiplomaProgress(null);
     }
   };
 
@@ -117,12 +235,16 @@ export default function TeacherVerificationPage() {
 
   if (!teacherRow) {
     return (
-      <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-sm text-[#633806]">{t("verificationNoTeacherRow")}</div>
+      <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-sm text-[#633806]">
+        {t("verificationNoTeacherRow")}
+      </div>
     );
   }
 
   const planNorm = plan.toLowerCase();
   const isPro = planNorm === "pro" || planNorm === "enterprise";
+  const identityStatus = teacherRow.identity_status ?? "none";
+  const hasDiplomaUploaded = Boolean(teacherRow.diploma_url);
 
   return (
     <div className="space-y-8">
@@ -144,7 +266,7 @@ export default function TeacherVerificationPage() {
         <div
           className={cn(
             "rounded-xl px-4 py-3 text-sm font-medium",
-            message === t("verificationSentIdentity") || message === t("verificationSentDiploma")
+            messageKind === "ok"
               ? "bg-[#E1F5EE] text-[#085041] border border-[#1D9E75]/25"
               : "bg-red-50 text-red-800 border border-red-200",
           )}
@@ -168,6 +290,7 @@ export default function TeacherVerificationPage() {
       <section className="space-y-4">
         <h2 className="text-sm font-bold uppercase tracking-wider text-[#2C2C2A]">{t("verificationChecklistTitle")}</h2>
 
+        {/* ── Level 1 — Email ────────────────────────────────────────────── */}
         <div className="rounded-2xl border border-[#E8E6DF] bg-white p-5 flex flex-wrap items-start justify-between gap-4">
           <div className="flex gap-3">
             <CheckCircle2 className="text-[#1D9E75] shrink-0 mt-0.5" size={22} />
@@ -179,59 +302,179 @@ export default function TeacherVerificationPage() {
           {level >= 1 ? <span className="text-xs font-bold text-[#1D9E75]">{t("verificationOk")}</span> : null}
         </div>
 
+        {/* ── Level 2 — Identity (Stripe) ────────────────────────────────── */}
         <div className="rounded-2xl border border-[#E8E6DF] bg-white p-5 space-y-3">
           <div className="flex gap-3">
             <ShieldCheck className="text-[#BA7517] shrink-0 mt-0.5" size={22} />
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-[#2C2C2A]">{t("verificationLevel2Title")}</p>
               <p className="text-sm text-[#6B6A65] mt-1">{t("verificationLevel2Body")}</p>
+
               {teacherRow.identity_verified ? (
                 <p className="mt-2 text-sm font-semibold text-[#1D9E75]">{t("verificationIdentityValidated")}</p>
+              ) : identityStatus === "pending" ? (
+                <div className="mt-3 flex items-center gap-2 rounded-xl bg-amber-50 border border-amber-200 px-4 py-2.5">
+                  <Loader2 size={16} className="animate-spin text-amber-600 shrink-0" />
+                  <p className="text-sm text-amber-800 font-medium">
+                    {t("verifyIdPending")}
+                  </p>
+                </div>
+              ) : identityStatus === "failed" ? (
+                <div className="mt-3 space-y-2">
+                  <p className="text-sm font-semibold text-rose-600">
+                    {t("verificationFailed")}
+                  </p>
+                  <button
+                    type="button"
+                    disabled={busy !== null}
+                    onClick={() => void startIdentityVerification()}
+                    className="h-11 rounded-xl bg-[#2C2C2A] px-5 text-sm font-semibold text-white hover:bg-[#1a1a18] disabled:opacity-50 inline-flex items-center gap-2"
+                  >
+                    {busy === "identity" ? (
+                      <Loader2 size={16} className="animate-spin" />
+                    ) : (
+                      <ExternalLink size={16} />
+                    )}
+                    {t("retryVerification")}
+                  </button>
+                </div>
               ) : (
                 <button
                   type="button"
                   disabled={busy !== null}
-                  onClick={() => void postRequest("identity")}
-                  className="mt-3 h-11 rounded-xl bg-[#2C2C2A] px-5 text-sm font-semibold text-white hover:bg-[#1a1a18] disabled:opacity-50"
+                  onClick={() => void startIdentityVerification()}
+                  className="mt-3 h-11 rounded-xl bg-[#2C2C2A] px-5 text-sm font-semibold text-white hover:bg-[#1a1a18] disabled:opacity-50 inline-flex items-center gap-2"
                 >
-                  {busy === "identity" ? t("verificationSending") : t("verificationUploadId")}
+                  {busy === "identity" ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : (
+                    <ExternalLink size={16} />
+                  )}
+                  {t("verificationUploadId")}
                 </button>
               )}
+
+              <p className="mt-2 text-[11px] text-[#6B6A65]">
+                {t("poweredByStripe")}
+              </p>
             </div>
           </div>
         </div>
 
+        {/* ── Level 3 — Diploma ─────────────────────────────────────────── */}
         <div className="rounded-2xl border border-[#E8E6DF] bg-white p-5 space-y-3">
           <div className="flex gap-3">
             <ShieldCheck className="text-[#534AB7] shrink-0 mt-0.5" size={22} />
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-[#2C2C2A]">{t("verificationLevel3Title")}</p>
               <p className="text-sm text-[#6B6A65] mt-1">{t("verificationLevel3Body")}</p>
+
               {teacherRow.diploma_verified ? (
                 <p className="mt-2 text-sm font-semibold text-[#1D9E75]">{t("verificationDiplomaValidated")}</p>
               ) : (
-                <>
+                <div className="mt-3 space-y-3">
+                  {hasDiplomaUploaded ? (
+                    <div className="flex items-center gap-2 rounded-xl bg-[#E1F5EE] border border-[#1D9E75]/25 px-4 py-2.5">
+                      <CheckCircle2 size={16} className="text-[#1D9E75] shrink-0" />
+                      <p className="text-sm text-[#085041] font-medium">
+                        {t("diplomaReceived")}
+                      </p>
+                    </div>
+                  ) : null}
+
+                  {/* File picker */}
+                  <div>
+                    <label
+                      htmlFor="diploma-file"
+                      className={cn(
+                        "flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed px-4 py-6 cursor-pointer transition-colors",
+                        diplomaFile
+                          ? "border-[#1D9E75] bg-[rgba(29,158,117,0.05)]"
+                          : "border-[#E8E6DF] hover:border-[#1D9E75]/50 hover:bg-slate-50",
+                      )}
+                    >
+                      {diplomaFile ? (
+                        <>
+                          <Paperclip size={22} className="text-[#1D9E75]" />
+                          <span className="text-sm font-medium text-[#2C2C2A] text-center truncate max-w-xs">
+                            {diplomaFile.name}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setDiplomaFile(null);
+                              if (fileInputRef.current) fileInputRef.current.value = "";
+                            }}
+                            className="text-xs text-rose-500 hover:underline flex items-center gap-1"
+                          >
+                            <X size={12} /> {t("removeFile")}
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <UploadCloud size={24} className="text-[#6B6A65]" />
+                          <span className="text-sm text-[#6B6A65] text-center">
+                            <span className="font-semibold text-[#1D9E75]">{t("chooseFile")}</span>{" "}
+                            {t("orDropFile")}
+                          </span>
+                          <span className="text-[11px] text-[#6B6A65]">{t("fileTypes")}</span>
+                        </>
+                      )}
+                    </label>
+                    <input
+                      id="diploma-file"
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,application/pdf"
+                      className="sr-only"
+                      onChange={(e) => setDiplomaFile(e.target.files?.[0] ?? null)}
+                    />
+                  </div>
+
                   <textarea
                     value={diplomaNote}
                     onChange={(e) => setDiplomaNote(e.target.value)}
                     placeholder={t("verificationDiplomaPlaceholder")}
-                    rows={3}
-                    className="mt-3 w-full rounded-xl border border-[#E8E6DF] px-3 py-2 text-sm outline-none focus:border-[#1D9E75]"
+                    rows={2}
+                    className="w-full rounded-xl border border-[#E8E6DF] px-3 py-2 text-sm outline-none focus:border-[#1D9E75]"
                   />
+
+                  {/* Progress bar */}
+                  {diplomaProgress !== null ? (
+                    <div className="space-y-1">
+                      <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-[#1D9E75] transition-all duration-300"
+                          style={{ width: `${diplomaProgress}%` }}
+                        />
+                      </div>
+                      <p className="text-xs text-[#6B6A65]">
+                        {diplomaProgress < 100 ? t("uploading") : t("uploadedDone")}
+                      </p>
+                    </div>
+                  ) : null}
+
                   <button
                     type="button"
-                    disabled={busy !== null || !diplomaNote.trim()}
-                    onClick={() => void postRequest("diploma", diplomaNote.trim())}
-                    className="mt-2 h-11 rounded-xl bg-[#534AB7] px-5 text-sm font-semibold text-white hover:brightness-105 disabled:opacity-50"
+                    disabled={busy !== null || !diplomaFile}
+                    onClick={() => void uploadDiploma()}
+                    className="h-11 rounded-xl bg-[#534AB7] px-5 text-sm font-semibold text-white hover:brightness-105 disabled:opacity-50 inline-flex items-center gap-2"
                   >
-                    {busy === "diploma" ? t("verificationSending") : t("verificationRequest")}
+                    {busy === "diploma" ? (
+                      <Loader2 size={16} className="animate-spin" />
+                    ) : (
+                      <UploadCloud size={16} />
+                    )}
+                    {hasDiplomaUploaded ? t("replaceDiploma") : t("verificationRequest")}
                   </button>
-                </>
+                </div>
               )}
             </div>
           </div>
         </div>
 
+        {/* ── Level 4 — Pro ─────────────────────────────────────────────── */}
         <div className="rounded-2xl border border-[#E8E6DF] bg-[#F1EFE8] p-5">
           <p className="font-semibold text-[#2C2C2A]">{t("verificationLevel4Title")}</p>
           <p className="mt-2 text-sm text-[#6B6A65]">

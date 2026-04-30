@@ -9,6 +9,7 @@ import Logo from "../../components/ui/Logo";
 import { LocaleSwitcher } from "../../components/LocaleSwitcher";
 import { loginWithGoogle } from "../../lib/auth";
 import { useAuth } from "../../components/AuthProvider";
+import { useLocale } from "../../lib/locale-context";
 
 function LoginForm() {
   const searchParams = useSearchParams();
@@ -26,6 +27,7 @@ function LoginForm() {
     }
   }, [loading, user, router, next, role]);
 
+  const { t } = useLocale();
   const [legalAccepted, setLegalAccepted] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -92,18 +94,18 @@ function LoginForm() {
             className="mt-1 h-4 w-4 shrink-0 rounded border-slate-300 text-[#1D9E75] focus:ring-2 focus:ring-[#1D9E75]"
           />
           <span className="text-sm font-semibold text-[var(--p-text)] leading-snug">
-            J&apos;accepte les CGU et la politique de confidentialité
+            {t("loginAcceptTermsLabel")}
           </span>
         </label>
 
         <p className="text-xs text-[var(--p-text-muted)] mb-6 text-center leading-relaxed">
-          En continuant, vous acceptez nos{" "}
+          {t("loginContinueAccept")}{" "}
           <Link href="/legal/cgu" className="font-semibold text-[#1D9E75] underline underline-offset-2">
-            CGU
+            {t("footerTerms")}
           </Link>{" "}
-          et notre{" "}
+          {t("loginConsentAnd")}{" "}
           <Link href="/legal/confidentialite" className="font-semibold text-[#1D9E75] underline underline-offset-2">
-            politique de confidentialité
+            {t("loginPrivacyPolicy")}
           </Link>
           .
         </p>

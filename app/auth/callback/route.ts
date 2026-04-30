@@ -4,6 +4,28 @@ import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { awardCredit } from "@/lib/credits";
 import { sendWelcomeStudent } from "@/lib/email";
+import { normalizeLocale } from "@/lib/i18n/types";
+
+async function trySendStudentWelcomeOnce(
+  admin: ReturnType<typeof getSupabaseAdmin>,
+  userId: string,
+  email: string,
+  displayName: string,
+) {
+  try {
+    await sendWelcomeStudent(email, displayName);
+    const { error } = await admin
+      .from("profiles")
+      .update({ welcome_student_email_sent_at: new Date().toISOString() })
+      .eq("id", userId)
+      .is("welcome_student_email_sent_at", null);
+    if (error) {
+      console.error("[auth/callback] welcome_student_email_sent_at update failed", error);
+    }
+  } catch (e) {
+    console.error("[auth/callback] sendWelcomeStudent failed", e);
+  }
+}
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
@@ -40,13 +62,19 @@ export async function GET(request: Request) {
     if (user) {
       // Detect new users before the upsert so we can send a welcome email
       const admin = getSupabaseAdmin();
-      const { data: existingProfile } = await admin
-        .from("profiles")
-        .select("id")
-        .eq("id", user.id)
-        .maybeSingle();
-      const isNewUser = !existingProfile;
-
+      const preferredLocale = normalizeLocale(
+        cookieStore.get("pratiqo-locale")?.value ?? (user.user_metadata?.locale as string | undefined),
+      );
+      try {
+        await admin.auth.admin.updateUserById(user.id, {
+          user_metadata: {
+            ...user.user_metadata,
+            locale: preferredLocale,
+          },
+        });
+      } catch (err) {
+        console.warn("[auth/callback] locale metadata update failed", err);
+      }
       // First upsert (no select) so profile exists immediately after OAuth.
       const { error: upsertErr } = await supabase
         .from("profiles")
@@ -122,10 +150,17 @@ export async function GET(request: Request) {
         }
       }
 
-      // Welcome email for new students (teachers get theirs on onboarding/complete)
-      if (isNewUser && profile?.role === "student" && user.email) {
-        const displayName = (user.user_metadata?.full_name as string) || user.email.split("@")[0] || "toi";
-        void sendWelcomeStudent(user.email, displayName);
+      // Welcome email once per student (OAuth users often already have a profile row from triggers).
+      if (profile?.role === "student" && user.email) {
+        const { data: welcomeRow } = await admin
+          .from("profiles")
+          .select("welcome_student_email_sent_at")
+          .eq("id", user.id)
+          .maybeSingle();
+        if (!welcomeRow?.welcome_student_email_sent_at) {
+          const displayName = (user.user_metadata?.full_name as string) || user.email.split("@")[0] || "toi";
+          void trySendStudentWelcomeOnce(admin, user.id, user.email, displayName);
+        }
       }
 
       if (profile?.role === "teacher") {

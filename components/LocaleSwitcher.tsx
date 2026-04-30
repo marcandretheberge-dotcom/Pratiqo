@@ -1,12 +1,12 @@
 "use client";
 
 import { useLocale } from "../lib/locale-context";
-import type { Locale } from "../lib/i18n";
+import type { Locale } from "../lib/i18n/types";
 import { cn } from "../lib/utils";
 
 const OPTIONS: { locale: Locale; flag: string; label: string }[] = [
-  { locale: "fr-CA", flag: "🇨🇦", label: "Français" },
-  { locale: "en-CA", flag: "🇨🇦", label: "English" },
+  { locale: "fr", flag: "🇨🇦", label: "Français" },
+  { locale: "en", flag: "🇨🇦", label: "English" },
   { locale: "es", flag: "🇪🇸", label: "Español" },
 ];
 
@@ -31,7 +31,7 @@ export function LocaleSwitcher({
         <label
           className={cn(
             "mb-1.5 block px-1 text-[10px] font-semibold uppercase tracking-wide",
-            light ? "text-[#6B6A65]" : "text-white/50",
+            light ? "text-slate-600" : "text-white/70",
           )}
         >
           {t("localeSwitcherLabel")}
@@ -41,7 +41,7 @@ export function LocaleSwitcher({
         value={locale}
         onChange={(e) => {
           const v = e.target.value;
-          if (v === "fr-CA" || v === "en-CA" || v === "es") setLocale(v);
+          if (v === "fr" || v === "en" || v === "es") setLocale(v);
         }}
         className={cn(
           "w-full cursor-pointer rounded-md border px-2 py-1.5 text-xs font-medium outline-none focus:ring-1",

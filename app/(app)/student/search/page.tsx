@@ -18,11 +18,16 @@ import {
   teacherMatchesExploreSearch,
 } from "../../../../lib/teacherDisciplines";
 import { teacherRowToTeacher, type TeacherRow } from "../../../../lib/teacherMapper";
+import { TEACHERS_LIST_SELECT } from "../../../../lib/supabase/queries";
+import { TeacherAvatar } from "../../../../components/TeacherAvatar";
 import { TEACHERS } from "../../../../constants";
 import { getVerificationLevel } from "../../../../lib/verification";
 import { VerificationBadge } from "../../../../components/VerificationBadge";
 import { SmartSearchInput } from "../../../../components/SmartSearchInput";
 import type { City } from "../../../../lib/cities";
+import type { MapBounds } from "../../../../components/SearchMapView";
+import { useAuth } from "../../../../components/AuthProvider";
+import { teacherPrefCompareStudents, type StudentLocationPrefs } from "../../../../lib/studentLocationSearch";
 
 const TeacherProfile = dynamic(
   () => import("../../../../components/TeacherProfile").then((m) => m.TeacherProfile),
@@ -57,17 +62,62 @@ export default function StudentSearchPage() {
   const [radius, setRadius] = useState<5 | 10 | 25 | 50 | "all" | "online">("all");
   const [sortMode, setSortMode] = useState<"relevance" | "nearest" | "trusted">("relevance");
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
+  const [mapBounds, setMapBounds] = useState<MapBounds | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [selectedMapTeacher, setSelectedMapTeacher] = useState<Teacher | null>(null);
   const [bookingTeacher, setBookingTeacher] = useState<Teacher | null>(null);
   const [bookingInitialKind, setBookingInitialKind] = useState<BookingInitialLessonKind>("standard");
   const [selectedTeacherProfile, setSelectedTeacherProfile] = useState<Teacher | null>(null);
   const searchParams = useSearchParams();
+  const { user } = useAuth();
+  const [studentPrefs, setStudentPrefs] = useState<StudentLocationPrefs | null>(null);
 
   useEffect(() => {
     const q = searchParams.get("q");
     if (q) setSearchQuery(q);
   }, [searchParams]);
+
+  useEffect(() => {
+    const supabase = getSupabaseClient();
+    let cancelled = false;
+    const loadPrefs = async () => {
+      if (!user?.id) {
+        setStudentPrefs(null);
+        return;
+      }
+      const { data } = await supabase
+        .from("profiles")
+        .select("country_code, timezone, currency, city, region, preferred_learning_format")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (!cancelled) {
+        const row = data as {
+          country_code?: string | null;
+          timezone?: string | null;
+          currency?: string | null;
+          city?: string | null;
+          region?: string | null;
+          preferred_learning_format?: string | null;
+        } | null;
+        setStudentPrefs(
+          row
+            ? {
+                country_code: row.country_code ?? null,
+                timezone: row.timezone ?? null,
+                currency: row.currency ?? null,
+                city: row.city ?? null,
+                region: row.region ?? null,
+                preferred_learning_format: row.preferred_learning_format ?? null,
+              }
+            : null,
+        );
+      }
+    };
+    void loadPrefs();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
 
   useEffect(() => {
     const supabase = getSupabaseClient();
@@ -88,12 +138,9 @@ export default function StudentSearchPage() {
         }
       };
 
-      const TEACHERS_SELECT =
-        "id, user_id, name, discipline, category, rating, reviews, price_per_lesson, monthly_subscription, bio, image_url, availability, location, is_verified, teaching_mode, languages, levels, home_lesson_enabled, home_lesson_price, home_lesson_radius_km, home_lesson_min_duration, home_lesson_requires_confirmation, home_lesson_force_2h_over_20km, verification_level, identity_verified, diploma_verified, phone_verified";
-
       const { data, error } = await supabase
         .from("teachers")
-        .select(TEACHERS_SELECT)
+        .select(TEACHERS_LIST_SELECT)
         .order("verification_level", { ascending: false })
         .order("rating", { ascending: false });
 
@@ -130,10 +177,15 @@ export default function StudentSearchPage() {
     );
   };
 
+  // Clear map-bounds filter whenever the user changes their text/category/radius search
+  useEffect(() => {
+    setMapBounds(null);
+  }, [searchQuery, activeCat, radius]);
+
   const enabledDisciplines = useMemo(() => getEnabledDisciplines(), []);
 
   const disciplineLabel = (d: Discipline) => {
-    if (locale === "en-CA") return d.labelEn ?? d.label;
+    if (locale === "en") return d.labelEn ?? d.label;
     if (locale === "es") return d.labelEs ?? d.label;
     return d.label;
   };
@@ -162,9 +214,25 @@ export default function StudentSearchPage() {
       }
     }
 
-    filtered.sort((a, b) => compareTeachers(a, b, { geo: Boolean(geo), sortMode }));
+    // Apply map-bounds filter when the user has clicked "Search this area"
+    if (mapBounds) {
+      filtered = filtered.filter(({ teacher: tt }) => {
+        const lat = tt.location?.lat;
+        const lng = tt.location?.lng;
+        if (typeof lat !== "number" || typeof lng !== "number") return false;
+        const { ne, sw } = mapBounds;
+        // Handle antimeridian wrapping for longitude
+        const lngInBounds =
+          ne.lng < sw.lng
+            ? lng >= sw.lng || lng <= ne.lng
+            : lng >= sw.lng && lng <= ne.lng;
+        return lat >= sw.lat && lat <= ne.lat && lngInBounds;
+      });
+    }
+
+    filtered.sort((a, b) => compareTeachers(a, b, { geo: Boolean(geo), sortMode, studentPrefs }));
     return filtered;
-  }, [teachers, activeCat, searchQuery, geo, radius, sortMode]);
+  }, [teachers, activeCat, searchQuery, geo, radius, sortMode, mapBounds, studentPrefs]);
 
   return (
     <>
@@ -332,6 +400,7 @@ export default function StudentSearchPage() {
                         onTeacherSelect={(teacher) => setSelectedMapTeacher(teacher)}
                         onCloseSelected={() => setSelectedMapTeacher(null)}
                         onViewProfile={(teacher) => setSelectedTeacherProfile(teacher)}
+                        onBoundsSearch={(bounds) => setMapBounds(bounds)}
                       />
                     )}
                   </>
@@ -431,13 +500,15 @@ function verificationSortKey(t: Teacher) {
 function compareTeachers(
   a: { teacher: Teacher; distanceKm: number | null },
   b: { teacher: Teacher; distanceKm: number | null },
-  opts: { geo: boolean; sortMode: "relevance" | "nearest" | "trusted" },
+  opts: { geo: boolean; sortMode: "relevance" | "nearest" | "trusted"; studentPrefs: StudentLocationPrefs | null },
 ) {
   const va = verificationSortKey(a.teacher);
   const vb = verificationSortKey(b.teacher);
 
   if (opts.sortMode === "trusted") {
     if (vb !== va) return vb - va;
+    const prefTrusted = teacherPrefCompareStudents(a.teacher, b.teacher, opts.studentPrefs);
+    if (prefTrusted !== 0) return prefTrusted;
     return (b.teacher.rating ?? 0) - (a.teacher.rating ?? 0);
   }
 
@@ -446,11 +517,15 @@ function compareTeachers(
       return a.distanceKm - b.distanceKm;
     }
     if (vb !== va) return vb - va;
+    const prefNearest = teacherPrefCompareStudents(a.teacher, b.teacher, opts.studentPrefs);
+    if (prefNearest !== 0) return prefNearest;
     return (b.teacher.rating ?? 0) - (a.teacher.rating ?? 0);
   }
 
   // relevance
   if (vb !== va) return vb - va;
+  const prefRel = teacherPrefCompareStudents(a.teacher, b.teacher, opts.studentPrefs);
+  if (prefRel !== 0) return prefRel;
   return (b.teacher.rating ?? 0) - (a.teacher.rating ?? 0);
 }
 
@@ -467,21 +542,6 @@ function TeacherCard({
   formatPrice: (amount: number) => string;
   t: (key: any) => string;
 }) {
-  const initials = teacher.name
-    .split(" ")
-    .slice(0, 2)
-    .map((x) => x[0]?.toUpperCase())
-    .join("");
-
-  const avatarBg =
-    teacher.category === "Musique"
-      ? "bg-[rgba(29,158,117,0.14)] text-[#085041]"
-      : teacher.category === "Arts Martiaux"
-        ? "bg-[rgba(255,153,102,0.18)] text-[#C2462E]"
-        : teacher.category === "Langues"
-          ? "bg-[rgba(146,106,255,0.16)] text-[#5B3EC8]"
-          : "bg-[rgba(29,158,117,0.14)] text-[#085041]";
-
   const availability = teacher.availability?.[0] ? String(teacher.availability[0]) : null;
 
   const verificationLevel = getVerificationLevel({
@@ -503,9 +563,7 @@ function TeacherCard({
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 items-center gap-3">
-          <div className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-bold", avatarBg)}>
-            {initials}
-          </div>
+          <TeacherAvatar name={teacher.name} category={teacher.category} imageUrl={teacher.imageUrl} size={44} />
           <div className="min-w-0">
             <div className="flex items-center gap-2 min-w-0">
               <p className="truncate font-semibold text-[#2C2C2A]">{teacher.name}</p>

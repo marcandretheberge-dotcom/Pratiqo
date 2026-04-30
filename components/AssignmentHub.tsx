@@ -203,7 +203,7 @@ export function AssignmentHub({ mode }: AssignmentHubProps) {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h3 className="text-xl font-bold text-slate-900">{t("assignmentHubDeckTitle")}</h3>
-          <p className="text-xs text-slate-500">{t("assignmentHubDeckSubtitle")}</p>
+          <p className="text-xs text-slate-600">{t("assignmentHubDeckSubtitle")}</p>
         </div>
         <div className="flex flex-wrap gap-1 p-1 rounded-xl bg-slate-100 border border-slate-200">
           {tabs.map((tab) => (
@@ -310,7 +310,7 @@ export function AssignmentHub({ mode }: AssignmentHubProps) {
           <p className="text-sm font-bold text-slate-800">{t("practiceTitle")}</p>
           <p className="text-sm text-slate-600 max-w-lg mx-auto">{t("assignmentHubPracticeBlurb")}</p>
           <p className="text-[10px] font-bold uppercase tracking-widest text-slate-600 pt-2">{t("watchPoints")}</p>
-          <p className="text-xs text-slate-500">{t("addWatchPoint")}</p>
+          <p className="text-xs text-slate-600">{t("addWatchPoint")}</p>
         </div>
       ) : hubTab === "homework" ? (
         <div className="grid grid-cols-1 gap-4">
@@ -357,7 +357,7 @@ export function AssignmentHub({ mode }: AssignmentHubProps) {
                     </div>
                   </div>
 
-                  <p className="text-xs text-slate-500 line-clamp-2">{a.description || t("assignmentNoInstructions")}</p>
+                  <p className="text-xs text-slate-600 line-clamp-2">{a.description || t("assignmentNoInstructions")}</p>
 
                   <div className="flex items-center gap-4 pt-2 flex-wrap">
                     <div className="flex items-center gap-1.5 text-[9px] font-bold text-slate-600 uppercase tracking-widest">

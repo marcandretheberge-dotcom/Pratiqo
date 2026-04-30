@@ -32,6 +32,9 @@ import {
   nextVerificationLevel,
   verificationLevelTitleKey,
 } from "../lib/verification";
+import { getEmbedUrl } from "../lib/videoEmbed";
+import { VerifiedBadge } from "./VerifiedBadge";
+import { TeacherAvatar } from "./TeacherAvatar";
 
 export type TeacherBookKind = "standard" | "home";
 
@@ -95,7 +98,7 @@ export function TeacherProfile({
 
   const handleStartChat = async () => {
     if (!user) {
-      alert("Veuillez vous connecter pour envoyer un message.");
+      alert(t("loginToMessage"));
       return;
     }
     if (teacher.userId) {
@@ -209,7 +212,7 @@ export function TeacherProfile({
 
   const standardLabel =
     teacher.teachingMode === "both"
-      ? "En studio / En ligne"
+      ? t("modeStudioOnline")
       : teacher.teachingMode === "online"
         ? "En ligne"
         : "En studio";
@@ -229,11 +232,11 @@ export function TeacherProfile({
   const teachingModes = useMemo(() => {
     const modes: { icon: React.ReactNode; label: string }[] = [];
     if (["person", "both", "all"].includes(teacher.teachingMode))
-      modes.push({ icon: <Users size={14} />, label: "Présentiel" });
+      modes.push({ icon: <Users size={14} />, label: t("filterInPerson") });
     if (["online", "both", "all"].includes(teacher.teachingMode))
-      modes.push({ icon: <Video size={14} />, label: "En ligne" });
+      modes.push({ icon: <Video size={14} />, label: t("filterOnline") });
     if (homeConfigured)
-      modes.push({ icon: <Home size={14} />, label: "À domicile" });
+      modes.push({ icon: <Home size={14} />, label: t("modeHome") });
     return modes;
   }, [teacher.teachingMode, homeConfigured]);
 
@@ -273,15 +276,13 @@ export function TeacherProfile({
 
                 {/* Compact header */}
                 <div className="flex items-start gap-4 pr-12">
-                  {/* Circle photo */}
-                  <div className="w-20 h-20 lg:w-24 lg:h-24 rounded-full overflow-hidden border-2 border-white shadow-lg shrink-0 ring-2 ring-[rgba(29,158,117,0.25)]">
-                    <img
-                      src={teacher.imageUrl}
-                      className="w-full h-full object-cover"
-                      alt={teacher.name}
-                      referrerPolicy="no-referrer"
-                    />
-                  </div>
+                  <TeacherAvatar
+                    name={teacher.name}
+                    category={teacher.category}
+                    imageUrl={teacher.imageUrl}
+                    size={96}
+                    ringClassName="border-2 border-white shadow-lg ring-2 ring-[rgba(29,158,117,0.25)]"
+                  />
 
                   <div className="flex-1 min-w-0 pt-1">
                     <div className="flex flex-wrap items-center gap-1.5 mb-1">
@@ -290,7 +291,13 @@ export function TeacherProfile({
                       </span>
                       <PlanBadge plan={displayPlan} />
                     </div>
-                    <h2 className="text-xl lg:text-2xl font-bold text-slate-900 leading-tight">{teacher.name}</h2>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h2 className="text-xl lg:text-2xl font-bold text-slate-900 leading-tight">{teacher.name}</h2>
+                      <VerifiedBadge
+                        verified={teacher.isVerified || Boolean(teacher.identityVerified)}
+                        size="sm"
+                      />
+                    </div>
                     <div className="flex flex-wrap items-center gap-2 mt-1.5">
                       <div className="flex items-center gap-1">
                         <Star size={13} fill="currentColor" className="text-amber-400" />
@@ -304,10 +311,10 @@ export function TeacherProfile({
                       <MapPin size={11} className="text-[#1D9E75] shrink-0" />
                       {displayDistanceKm !== null ? `${displayDistanceKm.toFixed(1)} km · ` : ""}
                       {["both", "all"].includes(teacher.teachingMode)
-                        ? "Hybride"
+                        ? t("modeHybrid")
                         : teacher.teachingMode === "online"
                           ? "En ligne"
-                          : "Présentiel"}
+                          : t("filterInPerson")}
                     </p>
                   </div>
                 </div>
@@ -328,29 +335,32 @@ export function TeacherProfile({
 
                 {/* Bio */}
                 <div className="space-y-1.5">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-600">À propos</p>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-600">{t("aboutSection")}</p>
                   <p className="text-slate-600 leading-relaxed text-sm">
                     {teacher.bio ||
                       `${teacher.name} est un(e) expert(e) en ${teacher.discipline.toLowerCase()}. Sa méthode d'enseignement repose sur la pratique immédiate et l'adaptation aux objectifs de chaque élève.`}
                   </p>
                 </div>
 
+                {/* Intro video — only rendered when teacher.videoUrl is a valid YT/Vimeo URL */}
+                <TeacherVideoEmbed videoUrl={teacher.videoUrl} />
+
                 {/* Quick stats */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  <QuickStat icon={<Clock className="text-indigo-500" size={15} />} label="Cours d'essai" value="45 min" />
+                  <QuickStat icon={<Clock className="text-indigo-500" size={15} />} label={t("trialLesson")} value={t("trialLessonDuration")} />
                   <QuickStat
                     icon={<Globe className="text-emerald-500" size={15} />}
-                    label="Langues"
+                    label={t("languagesLabel")}
                     value={teacher.languages.join(", ") || "—"}
                   />
                   <QuickStat
                     icon={<Users className="text-rose-500" size={15} />}
-                    label="Niveaux"
-                    value={teacher.levels.length > 2 ? "Tous niveaux" : (teacher.levels[0] ?? "—")}
+                    label={t("levelsLabel")}
+                    value={teacher.levels.length > 2 ? t("allLevels") : (teacher.levels[0] ?? "—")}
                   />
                   <QuickStat
                     icon={<CreditCard className="text-teal-500" size={15} />}
-                    label="Tarif"
+                    label={t("rateLabel")}
                     value={formatPrice(Number(teacher.pricePerLesson))}
                   />
                 </div>
@@ -358,7 +368,7 @@ export function TeacherProfile({
                 {/* Teaching modes */}
                 {teachingModes.length > 0 ? (
                   <div className="space-y-2">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-600">Options de cours</p>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-600">{t("coursesOptionsSection")}</p>
                     <div className="flex flex-wrap gap-2">
                       {teachingModes.map((m) => (
                         <div
@@ -418,7 +428,7 @@ export function TeacherProfile({
                       className="w-full h-11 rounded-2xl text-white text-sm font-semibold shadow-sm hover:opacity-95 transition-opacity flex items-center justify-center gap-2"
                       style={{ backgroundColor: "#0F6E56" }}
                     >
-                      Réserver maintenant
+                      {t("bookNow")}
                       <ChevronRight size={15} />
                     </button>
 
@@ -542,6 +552,32 @@ export function TeacherProfile({
         </div>
 
       </motion.div>
+    </div>
+  );
+}
+
+function TeacherVideoEmbed({ videoUrl }: { videoUrl?: string | null }) {
+  const embedUrl = getEmbedUrl(videoUrl);
+  const { t } = useLocale();
+  if (!embedUrl) return null;
+
+  return (
+    <div className="space-y-1.5">
+      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-600">
+        {t("videoPresentation")}
+      </p>
+      {/* 16:9 responsive wrapper */}
+      <div className="relative w-full overflow-hidden rounded-2xl border border-slate-100 bg-slate-50"
+           style={{ paddingBottom: "56.25%" }}>
+        <iframe
+          src={embedUrl}
+          title={t("videoPresentationTitle")}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+          loading="lazy"
+          className="absolute inset-0 w-full h-full rounded-2xl"
+        />
+      </div>
     </div>
   );
 }

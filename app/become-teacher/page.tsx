@@ -34,7 +34,7 @@ function tierFromAnnualVolume(volume: number): Tier {
 }
 
 function formatCad(amount: number): string {
-  return new Intl.NumberFormat("fr-CA", {
+  return new Intl.NumberFormat("fr", {
     style: "currency",
     currency: "CAD",
     maximumFractionDigits: 0,
@@ -86,16 +86,16 @@ export default function BecomeTeacherPage() {
         <div className="mx-auto max-w-6xl px-4 sm:px-6 py-14 sm:py-20">
           <div className="max-w-2xl">
             <span className="inline-block mb-4 px-3 py-1 rounded-full bg-[#1D9E75]/20 text-[#7FE0C3] text-xs font-bold uppercase tracking-widest">
-              Travailleur autonome · Québec & Canada
+              {t("btHeroBadge")}
             </span>
             <h1 className="text-4xl sm:text-5xl font-bold tracking-tight leading-[1.05]">
-              Enseigne sur Pratiqo.
+              {t("btHeroH1")}
             </h1>
             <p className="text-3xl sm:text-4xl font-bold text-white/60 mt-1">
-              Pas un employé. Un partenaire.
+              {t("btHeroH1Sub")}
             </p>
             <p className="mt-5 text-white/75 text-base sm:text-lg leading-relaxed max-w-xl">
-              Fixe tes propres tarifs, horaires et méthodes. Pratiqo s&apos;occupe des paiements, des réservations et de ta visibilité.
+              {t("btHeroSub")}
             </p>
             <div className="mt-8 flex flex-col sm:flex-row gap-3">
               <Link
@@ -108,15 +108,15 @@ export default function BecomeTeacherPage() {
                 href="/"
                 className="inline-flex h-12 items-center justify-center rounded-2xl border border-white/15 bg-white/5 px-7 text-sm font-semibold text-white/90 hover:bg-white/10"
               >
-                Voir la plateforme
+                {t("btHeroCtaSecondary")}
               </Link>
             </div>
             <div className="mt-10 flex flex-wrap gap-x-5 gap-y-2 text-xs font-bold uppercase tracking-widest text-white/50">
-              <span>2 400+ profs</span>
+              <span>{t("btHeroStats1")}</span>
               <span className="text-white/20">·</span>
-              <span>Paiements automatiques</span>
+              <span>{t("btHeroStats2")}</span>
               <span className="text-white/20">·</span>
-              <span>Aucune exclusivité</span>
+              <span>{t("btHeroStats3")}</span>
             </div>
           </div>
         </div>
@@ -125,9 +125,9 @@ export default function BecomeTeacherPage() {
       {/* ── PRICING ────────────────────────────── */}
       <section className="bg-[#121212] border-y border-white/10">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 py-14 sm:py-18">
-          <h2 className="text-2xl sm:text-3xl font-bold">Plans disponibles</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold">{t("btPlansTitle")}</h2>
           <p className="mt-2 text-white/60 text-sm">
-            Commence gratuitement. Passe au Pro quand tu es prêt.
+            {t("btPlansSub")}
           </p>
 
           <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -135,18 +135,18 @@ export default function BecomeTeacherPage() {
             {/* FREE */}
             <div className="rounded-3xl border border-white/10 bg-white/5 p-6 flex flex-col gap-4">
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-white/50">Gratuit</p>
-                <p className="mt-1 text-3xl font-bold">0 $</p>
-                <p className="text-xs text-white/50 mt-0.5">Pour toujours</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-white/50">{t("btPlanFreeLabel")}</p>
+                <p className="mt-1 text-3xl font-bold">{t("btPlanFreePrice")}</p>
+                <p className="text-xs text-white/50 mt-0.5">{t("btPlanFreeForever")}</p>
               </div>
               <ul className="space-y-2.5 flex-1">
                 {[
-                  "10% commission par cours",
-                  "Maximum 5 élèves actifs",
-                  "Profil public géolocalisé",
-                  "Wizard d'onboarding",
-                  "Gestion des disponibilités",
-                  "Paiements Stripe automatiques",
+                  t("btPlanFreeF1"),
+                  t("btPlanFreeF2"),
+                  t("btPlanFreeF3"),
+                  t("btPlanFreeF4"),
+                  t("btPlanFreeF5"),
+                  t("btPlanFreeF6"),
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-2 text-sm text-white/75">
                     <CheckCircle2 size={15} className="text-white/40 shrink-0 mt-0.5" />
@@ -158,7 +158,7 @@ export default function BecomeTeacherPage() {
                 href="/login?role=teacher"
                 className="inline-flex h-11 items-center justify-center rounded-2xl border border-white/20 text-sm font-semibold text-white/90 hover:bg-white/5 transition-colors"
               >
-                Commencer
+                {t("btPlanFreeBtn")}
               </Link>
             </div>
 
@@ -166,22 +166,22 @@ export default function BecomeTeacherPage() {
             <div className="rounded-3xl border-2 border-[#1D9E75] bg-[#1D9E75]/8 p-6 flex flex-col gap-4 relative">
               <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                 <span className="bg-[#1D9E75] text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full">
-                  Recommandé
+                  {t("btPlanProRecommended")}
                 </span>
               </div>
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-[#7FE0C3]">Pro</p>
-                <p className="mt-1 text-3xl font-bold text-white">29,99 $<span className="text-lg font-normal text-white/60">/mois</span></p>
-                <p className="text-xs text-white/50 mt-0.5">359,88 $/an</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-[#7FE0C3]">{t("btPlanProLabel")}</p>
+                <p className="mt-1 text-3xl font-bold text-white">{t("btPlanProPrice")}<span className="text-lg font-normal text-white/60">{t("btPlanProMonth")}</span></p>
+                <p className="text-xs text-white/50 mt-0.5">{t("btPlanProAnnualPrice")}</p>
               </div>
               <ul className="space-y-2.5 flex-1">
                 {[
-                  "5% commission par cours",
-                  "Élèves illimités",
-                  "Commission dégressive Bronze→Platine",
-                  "Ristourne annuelle 5% des profits nets",
-                  "Support prioritaire",
-                  "Badge Pro visible",
+                  t("btPlanProF1"),
+                  t("btPlanProF2"),
+                  t("btPlanProF3"),
+                  t("btPlanProF4"),
+                  t("btPlanProF5"),
+                  t("btPlanProF6"),
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-2 text-sm text-white/90">
                     <CheckCircle2 size={15} className="text-[#1D9E75] shrink-0 mt-0.5" />
@@ -200,17 +200,17 @@ export default function BecomeTeacherPage() {
             {/* ENTERPRISE */}
             <div className="rounded-3xl border border-white/10 bg-white/5 p-6 flex flex-col gap-4">
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-white/50">Entreprise</p>
-                <p className="mt-1 text-3xl font-bold">399 $<span className="text-lg font-normal text-white/60">/an</span></p>
-                <p className="text-xs text-amber-400/80 font-semibold mt-0.5">Phase 2 — Liste d&apos;attente</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-white/50">{t("btPlanEntLabel")}</p>
+                <p className="mt-1 text-3xl font-bold">{t("btPlanEntPrice")}<span className="text-lg font-normal text-white/60">{t("btPlanEntYear")}</span></p>
+                <p className="text-xs text-amber-400/80 font-semibold mt-0.5">{t("btPlanEntPhase")}</p>
               </div>
               <ul className="space-y-2.5 flex-1">
                 {[
-                  "Multi-profs sous un compte",
-                  "Tableau de bord central",
-                  "Statistiques avancées",
-                  "Carte studio Google Maps",
-                  "Facturation groupée",
+                  t("btPlanEntF1"),
+                  t("btPlanEntF2"),
+                  t("btPlanEntF3"),
+                  t("btPlanEntF4"),
+                  t("btPlanEntF5"),
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-2 text-sm text-white/60">
                     <CheckCircle2 size={15} className="text-white/25 shrink-0 mt-0.5" />
@@ -222,7 +222,7 @@ export default function BecomeTeacherPage() {
                 href="/waitlist"
                 className="inline-flex h-11 items-center justify-center rounded-2xl border border-white/20 text-sm font-semibold text-white/60 hover:text-white/90 transition-colors"
               >
-                Rejoindre la liste
+                {t("btPlanEntBtn")}
               </Link>
             </div>
 
@@ -235,9 +235,9 @@ export default function BecomeTeacherPage() {
         <div className="mx-auto max-w-6xl px-4 sm:px-6 py-14 sm:py-18">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
             <div className="space-y-4">
-              <h2 className="text-2xl sm:text-3xl font-bold">Combien peux-tu gagner?</h2>
+              <h2 className="text-2xl sm:text-3xl font-bold">{t("btCalcTitle")}</h2>
               <p className="text-white/70 text-sm leading-relaxed max-w-xl">
-                Ajuste les curseurs. La commission baisse automatiquement selon ton volume annuel (programme fidélité).
+                {t("btCalcSub")}
               </p>
 
               {/* Plan toggle */}
@@ -250,7 +250,7 @@ export default function BecomeTeacherPage() {
                     calcPlan === "free" ? "bg-white text-[#0f0f0f] shadow" : "text-white/60 hover:text-white/90",
                   )}
                 >
-                  Plan Gratuit
+                  {t("btCalcPlanFree")}
                 </button>
                 <button
                   type="button"
@@ -260,21 +260,21 @@ export default function BecomeTeacherPage() {
                     calcPlan === "pro" ? "bg-[#1D9E75] text-white shadow" : "text-white/60 hover:text-white/90",
                   )}
                 >
-                  Plan Pro
+                  {t("btCalcPlanPro")}
                 </button>
               </div>
 
               <div className="mt-4 space-y-6">
-                <SliderRow label="Nombre d'élèves" value={students} min={1} max={20} onChange={setStudents} />
-                <SliderRow label="Prix moyen par cours ($)" value={avgPrice} min={20} max={150} onChange={setAvgPrice} />
-                <SliderRow label="Cours par semaine" value={coursesPerWeek} min={1} max={20} onChange={setCoursesPerWeek} />
+                <SliderRow label={t("btCalcStudentsLabel")} value={students} min={1} max={20} onChange={setStudents} />
+                <SliderRow label={t("btCalcAvgPriceLabel")} value={avgPrice} min={20} max={150} onChange={setAvgPrice} />
+                <SliderRow label={t("btCalcCoursesWeekLabel")} value={coursesPerWeek} min={1} max={20} onChange={setCoursesPerWeek} />
               </div>
             </div>
 
             <div className="rounded-3xl border border-white/10 bg-white/5 p-6 sm:p-8 space-y-6">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-white/50">Niveau fidélité estimé</p>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-white/50">{t("btCalcFidelityLabel")}</p>
                   <p className="mt-2 text-2xl font-bold" style={{ color: calc.tier.accent }}>
                     {calc.tier.emoji} {calc.tier.label}
                   </p>
@@ -284,21 +284,21 @@ export default function BecomeTeacherPage() {
                   </p>
                 </div>
                 <div className="text-right shrink-0">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-white/50">Mensuel brut</p>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-white/50">{t("btCalcMonthlyGrossLabel")}</p>
                   <p className="mt-2 text-2xl font-bold text-white">{formatCad(calc.monthlyGross)}</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Metric label="Revenu annuel brut" value={formatCad(calc.annualGross)} />
-                <Metric label={`Commission Pratiqo (${calc.commissionRate}%)`} value={`— ${formatCad(calc.annualCommission)}`} negative />
+                <Metric label={t("btCalcAnnualGrossLabel")} value={formatCad(calc.annualGross)} />
+                <Metric label={`${t("btCalcCommissionLabel")} (${calc.commissionRate}%)`} value={`— ${formatCad(calc.annualCommission)}`} negative />
                 {calcPlan === "pro" ? (
-                  <Metric label="Abonnement Pro" value={`— ${formatCad(PRO_ANNUAL)}`} negative />
+                  <Metric label={t("btCalcSubscriptionLabel")} value={`— ${formatCad(PRO_ANNUAL)}`} negative />
                 ) : null}
                 {calcPlan === "pro" && calc.annualRistourneEst > 0 ? (
-                  <Metric label="Ristourne estimée" value={`+ ${formatCad(calc.annualRistourneEst)}`} accent />
+                  <Metric label={t("btCalcRistourneLabel")} value={`+ ${formatCad(calc.annualRistourneEst)}`} accent />
                 ) : null}
-                <Metric label="Revenu net estimé" value={formatCad(calc.annualNet)} accentStrong />
+                <Metric label={t("btCalcNetLabel")} value={formatCad(calc.annualNet)} accentStrong />
               </div>
 
               <Link
@@ -308,7 +308,7 @@ export default function BecomeTeacherPage() {
                 {t("joinFree")}
               </Link>
               <p className="text-xs text-white/40 text-center">
-                Estimations indicatives. Ristourne conditionnelle aux profits nets annuels de Pratiqo.
+                {t("btCalcDisclaimer")}
               </p>
             </div>
           </div>
@@ -319,18 +319,18 @@ export default function BecomeTeacherPage() {
       <section className="bg-[#121212] border-y border-white/10">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 py-14 sm:py-18 space-y-8">
           <div>
-            <h2 className="text-2xl sm:text-3xl font-bold">Commission dégressive</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold">{t("btCommTitle")}</h2>
             <p className="mt-3 text-white/65 text-sm max-w-2xl leading-relaxed">
-              Plus tu enseignes, moins tu paies. La commission s&apos;ajuste en temps réel selon ton volume cumulé annuel.
+              {t("btCommSub")}
             </p>
           </div>
 
           <div className="rounded-3xl border border-white/10 overflow-hidden">
             <div className="grid grid-cols-4 text-[11px] uppercase tracking-widest font-bold text-white/40 px-6 py-3 bg-white/5">
-              <span>Niveau</span>
-              <span>Volume annuel</span>
-              <span className="text-center">Gratuit</span>
-              <span className="text-center">Pro</span>
+              <span>{t("btCommColLevel")}</span>
+              <span>{t("btCommColVolume")}</span>
+              <span className="text-center">{t("btCommColFree")}</span>
+              <span className="text-center">{t("btCommColPro")}</span>
             </div>
             {TIERS.map((tier) => (
               <div key={tier.id} className="grid grid-cols-4 px-6 py-4 border-t border-white/8 text-sm hover:bg-white/3 transition-colors">
@@ -354,14 +354,12 @@ export default function BecomeTeacherPage() {
           </div>
 
           <div className="rounded-3xl border border-[#1D9E75]/25 bg-[#1D9E75]/8 p-6 sm:p-8">
-            <p className="text-sm font-bold text-[#7FE0C3]">Ristourne annuelle — 5% des profits nets de Pratiqo</p>
+            <p className="text-sm font-bold text-[#7FE0C3]">{t("btRistourneTitle")}</p>
             <p className="mt-3 text-sm text-white/65 leading-relaxed">
-              Chaque année en janvier, Pratiqo redistribue 5% de ses profits nets aux professeurs Pro éligibles.
-              Le pool est plafonné à 150 000 $ et activé si au moins 10 profs sont éligibles.
-              Chaque prof reçoit au maximum 10 000 $ selon son volume relatif.
+              {t("btRistourneBody")}
             </p>
             <p className="mt-3 text-xs text-white/40">
-              Pratiqo ne garantit aucun revenu minimum. Tu es travailleur autonome — tes gains dépendent de ton activité.
+              {t("btRistourneDisclaimer")}
             </p>
           </div>
         </div>
@@ -370,11 +368,11 @@ export default function BecomeTeacherPage() {
       {/* ── HOW IT WORKS ───────────────────────── */}
       <section className="bg-[#0f0f0f]">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 py-14 sm:py-18">
-          <h2 className="text-2xl sm:text-3xl font-bold">Comment ça marche</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold">{t("btHowTitle")}</h2>
           <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <StepCard step="1" title="Crée ton profil en 5 minutes" desc="Photo, disciplines, tarif, disponibilités. Wizard intégré." />
-            <StepCard step="2" title="Les élèves te trouvent" desc="Géolocalisation, recherche intelligente, réservation automatique." />
-            <StepCard step="3" title="Reçois tes paiements" desc="Virement automatique via Stripe dans les 7 jours ouvrables." />
+            <StepCard step="1" title={t("btHowStep1Title")} desc={t("btHowStep1Desc")} />
+            <StepCard step="2" title={t("btHowStep2Title")} desc={t("btHowStep2Desc")} />
+            <StepCard step="3" title={t("btHowStep3Title")} desc={t("btHowStep3Desc")} />
           </div>
         </div>
       </section>
@@ -382,7 +380,7 @@ export default function BecomeTeacherPage() {
       {/* ── TESTIMONIALS ───────────────────────── */}
       <section className="bg-[#121212] border-y border-white/10">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 py-14 sm:py-18">
-          <h2 className="text-2xl sm:text-3xl font-bold">Témoignages</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold">{t("btTestimonialsTitle")}</h2>
           <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
             <Testimonial name="Sophie M." meta="Piano" quote="J'ai doublé mes élèves en 3 mois. La visibilité est incroyable." />
             <Testimonial name="Karim L." meta="Judo" quote="Les paiements automatiques m'ont sauvé des heures de gestion." />
@@ -394,14 +392,14 @@ export default function BecomeTeacherPage() {
       {/* ── FAQ ────────────────────────────────── */}
       <section className="bg-[#0f0f0f]">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 py-14 sm:py-18">
-          <h2 className="text-2xl sm:text-3xl font-bold">FAQ</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold">{t("btFaqTitle")}</h2>
           <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FaqItem q="Est-ce vraiment gratuit?" a="Oui. Jusqu'à 5 élèves, aucun abonnement. Commission de 10% uniquement quand tu gagnes." />
-            <FaqItem q="Comment fonctionne la commission dégressive?" a="Ta commission baisse automatiquement selon ton volume annuel: 10%→9%→8%→7% (Gratuit) ou 5%→4.5%→4%→3.5% (Pro)." />
-            <FaqItem q="C'est quoi la ristourne?" a="5% des profits nets annuels de Pratiqo redistribués aux profs Pro actifs. Plafond 10 000$/prof. Payée en janvier." />
-            <FaqItem q="Suis-je employé de Pratiqo?" a="Non. Tu es travailleur autonome. Pratiqo agit uniquement comme intermédiaire technologique. Tu fixes tes tarifs et horaires." />
-            <FaqItem q="Puis-je enseigner sur d'autres plateformes?" a="Oui. Aucune exclusivité n'est exigée. Tu restes libre." />
-            <FaqItem q="Puis-je offrir des cours à domicile?" a="Oui. Tu fixes ton rayon de déplacement (5-50 km) et ton tarif majoré." />
+            <FaqItem q={t("btFaq1Q")} a={t("btFaq1A")} />
+            <FaqItem q={t("btFaq2Q")} a={t("btFaq2A")} />
+            <FaqItem q={t("btFaq3Q")} a={t("btFaq3A")} />
+            <FaqItem q={t("btFaq4Q")} a={t("btFaq4A")} />
+            <FaqItem q={t("btFaq5Q")} a={t("btFaq5A")} />
+            <FaqItem q={t("btFaq6Q")} a={t("btFaq6A")} />
           </div>
         </div>
       </section>
@@ -410,21 +408,21 @@ export default function BecomeTeacherPage() {
       <section className="bg-[#1D9E75] text-white">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 py-14 sm:py-18 flex flex-col md:flex-row items-center justify-between gap-6">
           <div>
-            <h2 className="text-2xl sm:text-3xl font-bold">Prêt à rejoindre les meilleurs profs?</h2>
-            <p className="mt-2 text-white/85">Crée ton compte, publie ton profil, commence à enseigner.</p>
+            <h2 className="text-2xl sm:text-3xl font-bold">{t("btFinalH2")}</h2>
+            <p className="mt-2 text-white/85">{t("btFinalSub")}</p>
           </div>
           <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto shrink-0">
             <Link
               href="/login?role=teacher"
               className="inline-flex h-12 items-center justify-center rounded-2xl bg-white px-7 text-sm font-bold text-[#0F6E56] hover:bg-white/95"
             >
-              Rejoindre gratuitement
+              {t("btFinalCta")}
             </Link>
             <Link
               href="/student/search"
               className="inline-flex h-12 items-center justify-center rounded-2xl border border-white/30 bg-white/10 px-7 text-sm font-semibold text-white hover:bg-white/15"
             >
-              Voir les profs
+              {t("btFinalCtaSecondary")}
             </Link>
           </div>
         </div>

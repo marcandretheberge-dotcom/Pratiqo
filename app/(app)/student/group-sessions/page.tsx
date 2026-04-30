@@ -72,7 +72,7 @@ export default function StudentGroupSessionsPage() {
 
   if (!user) {
     return (
-      <div className="max-w-md mx-auto text-center py-16 text-sm text-[var(--p-text-muted)]">
+      <div className="max-w-md mx-auto text-center py-16 text-sm text-slate-600">
         Connecte-toi pour voir tes inscriptions.
       </div>
     );
@@ -100,14 +100,14 @@ export default function StudentGroupSessionsPage() {
   return (
     <div className="max-w-3xl mx-auto space-y-10">
       <div>
-        <h1 className="text-3xl font-bold text-[var(--p-text)]">Mes cours de groupe</h1>
-        <p className="text-sm text-[var(--p-text-muted)] mt-2">Inscriptions confirmées et historique.</p>
+        <h1 className="text-3xl font-bold text-slate-900">Mes cours de groupe</h1>
+        <p className="text-sm text-slate-600 mt-2">Inscriptions confirmées et historique.</p>
       </div>
 
       <section>
-        <h2 className="text-sm font-bold uppercase tracking-widest text-[var(--p-text-subtle)] mb-4">À venir</h2>
+        <h2 className="text-sm font-bold uppercase tracking-widest text-slate-700 mb-4">À venir</h2>
         {upcoming.length === 0 ? (
-          <p className="text-sm text-[var(--p-text-muted)]">Aucune séance à venir.</p>
+          <p className="text-sm text-slate-700">Aucune séance à venir.</p>
         ) : (
           <ul className="space-y-3">
             {upcoming.map((r) => {
@@ -116,13 +116,13 @@ export default function StudentGroupSessionsPage() {
               return (
                 <li
                   key={r.id}
-                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-[var(--p-border-light)] bg-[var(--p-surface)] p-4"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-[var(--p-border-light)] bg-white p-4 shadow-sm"
                 >
                   <div>
-                    <Link href={`/group-sessions/${s.id}`} className="font-bold text-[#1D9E75] hover:underline">
+                    <Link href={`/group-sessions/${s.id}`} className="font-bold text-[#0f6d52] hover:underline">
                       {s.title}
                     </Link>
-                    <p className="text-xs text-[var(--p-text-muted)] mt-1">
+                    <p className="text-xs font-medium text-slate-600 mt-1">
                       {s.date} · {s.time}
                     </p>
                   </div>
@@ -141,11 +141,11 @@ export default function StudentGroupSessionsPage() {
       </section>
 
       <section>
-        <h2 className="text-sm font-bold uppercase tracking-widest text-[var(--p-text-subtle)] mb-4">Passées</h2>
+        <h2 className="text-sm font-bold uppercase tracking-widest text-slate-700 mb-4">Passées</h2>
         {past.length === 0 ? (
-          <p className="text-sm text-[var(--p-text-muted)]">Aucun historique.</p>
+          <p className="text-sm text-slate-700">Aucun historique.</p>
         ) : (
-          <ul className="space-y-2 text-sm text-[var(--p-text-muted)]">
+          <ul className="space-y-2 text-sm text-slate-800">
             {past.map((r) => {
               const s = sessionFromReg(r);
               if (!s) return null;

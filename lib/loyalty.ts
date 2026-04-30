@@ -72,7 +72,7 @@ export function teacherRistourneHitsPerProfCap(
 }
 
 export function formatCadWhole(amount: number): string {
-  return new Intl.NumberFormat("fr-CA", {
+  return new Intl.NumberFormat("fr", {
     style: "currency",
     currency: "CAD",
     maximumFractionDigits: 0,

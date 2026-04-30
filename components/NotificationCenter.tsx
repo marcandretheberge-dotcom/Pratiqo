@@ -15,10 +15,12 @@ import { AnimatePresence, motion } from "motion/react";
 import { notificationService } from "../services/notificationService";
 import type { PratiqoNotification } from "../types";
 import { useAuth } from "./AuthProvider";
+import { useLocale } from "../lib/locale-context";
 import { cn } from "../lib/utils";
 
 export function NotificationCenter() {
   const { user } = useAuth();
+  const { t } = useLocale();
   const [notifications, setNotifications] = useState<PratiqoNotification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const unreadCount = notifications.filter((n) => !n.read).length;
@@ -83,10 +85,10 @@ export function NotificationCenter() {
               className="absolute right-0 mt-3 w-80 bg-white rounded-2xl shadow-2xl border border-slate-200 z-50 overflow-hidden flex flex-col max-h-[480px]"
             >
               <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-                <h4 className="font-bold text-slate-900">Notifications</h4>
+                <h4 className="font-bold text-slate-900">{t("notificationsTitle")}</h4>
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="text-slate-300 hover:text-slate-600"
+                  className="text-slate-500 hover:text-slate-800 transition-colors"
                 >
                   <X size={18} />
                 </button>
@@ -108,8 +110,8 @@ export function NotificationCenter() {
                           <p className="text-sm font-bold text-slate-900 leading-tight">
                             {n.title}
                           </p>
-                          <p className="text-xs text-slate-500 leading-relaxed">{n.message}</p>
-                          <p className="text-[10px] text-slate-600 font-medium">Il y a un instant</p>
+                          <p className="text-xs text-slate-600 leading-relaxed">{n.message}</p>
+                          <p className="text-[10px] text-slate-600 font-medium">{t("justNow")}</p>
                         </div>
                       </div>
 
@@ -118,7 +120,7 @@ export function NotificationCenter() {
                           <button
                             onClick={(e) => handleMarkAsRead(e, n.id)}
                             className="p-1 bg-white border border-slate-200 rounded-lg text-brand-primary hover:bg-brand-primary hover:text-white transition-all shadow-sm"
-                            title="Marquer comme lu"
+                            title={t("markAsRead")}
                           >
                             <CheckCircle2 size={12} />
                           </button>
@@ -126,7 +128,7 @@ export function NotificationCenter() {
                         <button
                           onClick={(e) => handleDelete(e, n.id)}
                           className="p-1 bg-white border border-slate-200 rounded-lg text-rose-500 hover:bg-rose-500 hover:text-white transition-all shadow-sm"
-                          title="Supprimer"
+                          title={t("deleteNotification")}
                         >
                           <Trash2 size={12} />
                         </button>
@@ -137,7 +139,7 @@ export function NotificationCenter() {
                   <div className="p-12 text-center space-y-3">
                     <Bell size={32} className="mx-auto text-slate-100" />
                     <p className="text-xs text-slate-600 font-medium tracking-wide">
-                      Vous êtes à jour !
+                      {t("allCaughtUp")}
                     </p>
                   </div>
                 )}

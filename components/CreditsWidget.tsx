@@ -175,13 +175,13 @@ export function CreditsWidget({
 
         {/* How to earn */}
         <div className="rounded-2xl bg-[#F9F8F5] border border-[var(--p-border-light)] p-4 space-y-3">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--p-text-subtle)]">{t("creditsHowToEarn")}</p>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-700">{t("creditsHowToEarn")}</p>
 
           {/* Companion milestones */}
           <div className="space-y-1.5">
             <div className="flex items-center gap-2">
               <Zap size={14} className="text-amber-500 shrink-0" />
-              <span className="text-xs font-semibold text-[var(--p-text)]">{t("creditsEvolution")}</span>
+              <span className="text-xs font-semibold text-slate-900">{t("creditsEvolution")}</span>
             </div>
             <div className="grid grid-cols-2 gap-1.5 ml-5">
               {MILESTONES.map((m) => {
@@ -200,7 +200,7 @@ export function CreditsWidget({
                         ? "bg-[#E1F5EE] text-[#0F6E56]"
                         : isCurrent
                           ? "bg-amber-50 text-amber-800 ring-1 ring-amber-200"
-                          : "bg-white text-[var(--p-text-muted)] border border-[var(--p-border-light)]",
+                          : "bg-white text-slate-800 border border-[var(--p-border-light)]",
                     )}
                   >
                     {earned ? (
@@ -222,8 +222,8 @@ export function CreditsWidget({
           <div className="flex items-start gap-2">
             <Star size={14} className="text-purple-500 shrink-0 mt-0.5" />
             <div>
-              <p className="text-xs font-semibold text-[var(--p-text)]">{t("creditsReview")}</p>
-              <p className="text-[11px] text-[var(--p-text-muted)]">{t("creditsReviewDesc")}</p>
+              <p className="text-xs font-semibold text-slate-900">{t("creditsReview")}</p>
+              <p className="text-[11px] leading-snug text-slate-600">{t("creditsReviewDesc")}</p>
             </div>
           </div>
 
@@ -231,8 +231,8 @@ export function CreditsWidget({
           <div className="flex items-start gap-2">
             <Users size={14} className="text-blue-500 shrink-0 mt-0.5" />
             <div>
-              <p className="text-xs font-semibold text-[var(--p-text)]">{t("creditsReferral")}</p>
-              <p className="text-[11px] text-[var(--p-text-muted)]">{t("creditsReferralBoth")}</p>
+              <p className="text-xs font-semibold text-slate-900">{t("creditsReferral")}</p>
+              <p className="text-[11px] leading-snug text-slate-600">{t("creditsReferralBoth")}</p>
             </div>
           </div>
         </div>
@@ -240,10 +240,10 @@ export function CreditsWidget({
         {/* Referral link */}
         {data?.referralCode ? (
           <div className="space-y-2">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--p-text-subtle)]">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-700">
               {t("creditsReferralLink")}
             </p>
-            <p className="text-xs text-[var(--p-text-muted)]">{t("creditsReferralDesc")}</p>
+            <p className="text-xs text-slate-600">{t("creditsReferralDesc")}</p>
             <div className="flex items-center gap-2">
               <div className="flex-1 rounded-xl border border-[var(--p-border-light)] bg-[#F9F8F5] px-3 py-2 overflow-hidden">
                 <span className="font-mono text-sm font-bold text-[#1D9E75] tracking-widest">
@@ -266,7 +266,7 @@ export function CreditsWidget({
             </div>
             {/* Yearly cap progress */}
             <div className="space-y-1">
-              <div className="flex justify-between text-[10px] text-[var(--p-text-muted)] font-medium">
+              <div className="flex justify-between text-[10px] text-slate-600 font-semibold">
                 <span>{t("creditsReferralYearlyCap")}</span>
                 <span>{yearTotal.toFixed(0)} $ / {yearCap} $</span>
               </div>
@@ -280,16 +280,16 @@ export function CreditsWidget({
         {/* Leave a review */}
         {teachers && teachers.length > 0 ? (
           <div className="space-y-2">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--p-text-subtle)]">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-700">
               {t("creditsLeaveReview")}
             </p>
             {review ? (
               <div className="rounded-2xl border border-[var(--p-border-light)] bg-[#F9F8F5] p-4 space-y-3">
-                <p className="text-xs font-semibold text-[var(--p-text)]">{review.teacherName}</p>
+                <p className="text-xs font-semibold text-slate-900">{review.teacherName}</p>
                 {review.status === "done" ? (
                   <p className="text-sm font-bold text-[#1D9E75]">{t("creditsReviewSuccess")}</p>
                 ) : review.status === "already" ? (
-                  <p className="text-sm text-[var(--p-text-muted)]">{t("creditsReviewAlready")}</p>
+                  <p className="text-sm text-slate-700">{t("creditsReviewAlready")}</p>
                 ) : review.status === "error" ? (
                   <p className="text-sm text-rose-500">{t("creditsReviewError")}</p>
                 ) : (
@@ -303,7 +303,7 @@ export function CreditsWidget({
                       onChange={(e) => setReview((r) => r && { ...r, body: e.target.value })}
                       placeholder={t("creditsReviewOptional")}
                       rows={2}
-                      className="w-full rounded-xl border border-[var(--p-border-light)] bg-white px-3 py-2 text-xs resize-none focus:outline-none focus:ring-1 focus:ring-[#1D9E75]"
+                      className="w-full rounded-xl border border-[var(--p-border-light)] bg-white px-3 py-2 text-xs text-slate-800 placeholder:text-slate-400 resize-none focus:outline-none focus:ring-1 focus:ring-[#1D9E75]"
                     />
                     <div className="flex gap-2">
                       <button
@@ -320,7 +320,7 @@ export function CreditsWidget({
                       <button
                         type="button"
                         onClick={() => setReview(null)}
-                        className="px-3 h-8 rounded-xl text-xs font-semibold text-[var(--p-text-muted)] border border-[var(--p-border-light)]"
+                        className="px-3 h-8 rounded-xl text-xs font-semibold text-slate-700 border border-[var(--p-border-light)] bg-white hover:bg-slate-50"
                       >
                         {t("creditsReviewCancel")}
                       </button>
@@ -332,7 +332,7 @@ export function CreditsWidget({
               <ul className="space-y-1.5">
                 {teachers.map((tc) => (
                   <li key={tc.teacherId} className="flex items-center justify-between gap-3 rounded-xl border border-[var(--p-border-light)] bg-[#F9F8F5] px-3 py-2">
-                    <span className="text-xs font-medium text-[var(--p-text)] truncate">{tc.name}</span>
+                    <span className="text-xs font-semibold text-slate-900 truncate">{tc.name}</span>
                     <button
                       type="button"
                       onClick={() => setReview({ teacherId: tc.teacherId, teacherName: tc.name, rating: 0, body: "", status: "idle" })}
@@ -351,7 +351,7 @@ export function CreditsWidget({
         {/* Transaction history */}
         {!loading && data && data.transactions.length > 0 ? (
           <div className="space-y-2">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--p-text-subtle)]">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-700">
               {t("creditsHistory")}
             </p>
             <ul className="space-y-1.5">
@@ -360,12 +360,12 @@ export function CreditsWidget({
                   {Number(tx.amount) > 0 ? (
                     <Gift size={13} className="text-[#1D9E75] shrink-0" />
                   ) : (
-                    <span className="w-[13px] shrink-0 text-center text-[#6B6A65]">−</span>
+                    <span className="w-[13px] shrink-0 text-center text-slate-600 font-bold">−</span>
                   )}
-                  <span className="flex-1 text-[var(--p-text-muted)] truncate">
+                  <span className="flex-1 text-slate-700 truncate">
                     {typeLabel(tx.type, t)} — {tx.description}
                   </span>
-                  <span className={cn("shrink-0 font-bold", Number(tx.amount) > 0 ? "text-[#1D9E75]" : "text-[var(--p-text-muted)]")}>
+                  <span className={cn("shrink-0 font-bold", Number(tx.amount) > 0 ? "text-[#1D9E75]" : "text-slate-700")}>
                     {Number(tx.amount) > 0 ? "+" : ""}${Math.abs(Number(tx.amount)).toFixed(2)}
                   </span>
                 </li>
@@ -373,7 +373,7 @@ export function CreditsWidget({
             </ul>
           </div>
         ) : !loading && data?.transactions.length === 0 ? (
-          <p className="text-xs text-[var(--p-text-muted)] italic">{t("creditsNoHistory")}</p>
+          <p className="text-xs text-slate-600 font-medium">{t("creditsNoHistory")}</p>
         ) : null}
       </div>
     </div>

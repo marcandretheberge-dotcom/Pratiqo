@@ -475,10 +475,101 @@ export async function POST(req: Request) {
       const sub = event.data.object as Stripe.Subscription;
       await setUserPlanFromSubscription(sub);
     }
+
+    // ── Stripe Identity ────────────────────────────────────────────────────
+    if (event.type === "identity.verification_session.verified") {
+      await handleIdentityVerified(event.data.object as Stripe.Identity.VerificationSession);
+    }
+
+    if (event.type === "identity.verification_session.requires_input") {
+      await handleIdentityFailed(event.data.object as Stripe.Identity.VerificationSession);
+    }
   } catch (e) {
     console.error("[stripe/webhook] handler error", e);
     return NextResponse.json({ error: "Webhook handler failed." }, { status: 500 });
   }
 
   return NextResponse.json({ received: true });
+}
+
+// ─── Stripe Identity handlers ──────────────────────────────────────────────────
+
+async function handleIdentityVerified(session: Stripe.Identity.VerificationSession) {
+  const teacherId = session.metadata?.teacher_id;
+  if (!teacherId) {
+    console.warn("[stripe/webhook] identity.verified — missing teacher_id in metadata");
+    return;
+  }
+
+  const admin = getSupabaseAdmin();
+
+  // Idempotent: skip if already verified
+  const { data: existing } = await admin
+    .from("teachers")
+    .select("identity_verified")
+    .eq("id", teacherId)
+    .maybeSingle();
+
+  if ((existing as { identity_verified?: boolean } | null)?.identity_verified) {
+    console.log("[stripe/webhook] identity already verified, skipping:", teacherId);
+    return;
+  }
+
+  const { error } = await admin
+    .from("teachers")
+    .update({
+      identity_verified: true,
+      identity_status: "verified",
+      // Ensure verification_level is at least 2 (identity verified)
+      verification_level: 2,
+    })
+    .eq("id", teacherId);
+
+  if (error) {
+    console.error("[stripe/webhook] identity update failed:", error);
+    return;
+  }
+
+  console.log("[stripe/webhook] identity verified for teacher:", teacherId);
+
+  // Optional: notify teacher via in-app notification
+  const userId = session.metadata?.user_id;
+  if (userId) {
+    await admin.from("notifications").insert({
+      user_id: userId,
+      title: "Identité vérifiée ✓",
+      message: "Votre identité a été confirmée par Stripe. Votre badge « Identité vérifiée » est maintenant visible sur votre profil.",
+      type: "system",
+      read: false,
+    }).then(({ error: nErr }) => {
+      if (nErr) console.warn("[stripe/webhook] identity notification failed:", nErr);
+    });
+  }
+}
+
+async function handleIdentityFailed(session: Stripe.Identity.VerificationSession) {
+  const teacherId = session.metadata?.teacher_id;
+  if (!teacherId) return;
+
+  const admin = getSupabaseAdmin();
+  await admin
+    .from("teachers")
+    .update({ identity_status: "failed" })
+    .eq("id", teacherId);
+
+  console.log("[stripe/webhook] identity verification failed for teacher:", teacherId);
+
+  // Notify teacher of failure so they can retry
+  const userId = session.metadata?.user_id;
+  if (userId) {
+    await admin.from("notifications").insert({
+      user_id: userId,
+      title: "Vérification d'identité échouée",
+      message: "Votre vérification d'identité n'a pas abouti. Vous pouvez réessayer depuis la page Vérification.",
+      type: "system",
+      read: false,
+    }).then(({ error: nErr }) => {
+      if (nErr) console.warn("[stripe/webhook] identity-failed notification:", nErr);
+    });
+  }
 }

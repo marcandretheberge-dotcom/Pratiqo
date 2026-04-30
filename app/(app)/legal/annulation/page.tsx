@@ -35,27 +35,37 @@ export default function AnnulationPage() {
             <tbody className="divide-y divide-slate-100">
               <tr className="hover:bg-[rgba(29,158,117,0.06)]">
                 <td className="px-4 py-3 text-slate-700">Plus de 24 heures</td>
-                <td className="px-4 py-3 text-slate-700">100 % — remboursement complet</td>
+                <td className="px-4 py-3 text-slate-700">
+                  100&nbsp;% — remboursement complet ou crédit Pratiqo complet
+                </td>
               </tr>
               <tr className="hover:bg-[rgba(29,158,117,0.06)]">
                 <td className="px-4 py-3 text-slate-700">Moins de 24 heures</td>
-                <td className="px-4 py-3 text-slate-700">Aucun remboursement</td>
+                <td className="px-4 py-3 text-slate-700">
+                  Crédit Pratiqo possible&nbsp;; remboursement examiné selon la situation
+                </td>
               </tr>
               <tr className="hover:bg-[rgba(29,158,117,0.06)]">
                 <td className="px-4 py-3 text-slate-700">No-show (absent sans annulation)</td>
-                <td className="px-4 py-3 text-slate-700">Aucun remboursement</td>
+                <td className="px-4 py-3 text-slate-700">
+                  Aucun remboursement, sauf force majeure ou décision du support
+                </td>
               </tr>
             </tbody>
           </table>
         </div>
+
+        <p className="mt-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-[13px] text-slate-700">
+          Cette politique s&apos;applique sous réserve des lois applicables en matière de protection du consommateur.
+        </p>
 
         <h3 className="text-base font-semibold text-[var(--p-text)] mt-6 mb-2">1.1 Comment annuler</h3>
         <ul className="list-disc pl-5 space-y-2">
           <li>Via l&apos;application Pratiqo : Mon compte → Mes réservations → Annuler</li>
           <li>
             Par courriel :{" "}
-            <a href="mailto:support@pratiqo.com" className="text-[#1D9E75] underline font-medium">
-              support@pratiqo.com
+            <a href="mailto:support@pratiqo.ca" className="text-[#1D9E75] underline font-medium">
+              support@pratiqo.ca
             </a>{" "}
             (inclure le numéro de réservation)
           </li>
@@ -97,8 +107,8 @@ export default function AnnulationPage() {
         </div>
 
         <p className="mt-4">
-          L&apos;élève est remboursé <strong>intégralement</strong> dans tous les cas d&apos;annulation par le
-          professeur.
+          Si le professeur annule, <strong>l&apos;élève reçoit un remboursement complet ou un crédit Pratiqo
+          complet</strong>.
         </p>
       </LegalSection>
 
@@ -132,14 +142,14 @@ export default function AnnulationPage() {
         <ul className="list-disc pl-5 space-y-2 mt-2">
           <li>
             Email :{" "}
-            <a href="mailto:support@pratiqo.com" className="text-[#1D9E75] underline font-medium">
-              support@pratiqo.com
+            <a href="mailto:support@pratiqo.ca" className="text-[#1D9E75] underline font-medium">
+              support@pratiqo.ca
             </a>
           </li>
           <li>
             Formulaire :{" "}
-            <a href="https://pratiqo.com/support" className="text-[#1D9E75] underline font-medium" rel="noopener noreferrer">
-              pratiqo.com/support
+            <a href="https://pratiqo.ca/support" className="text-[#1D9E75] underline font-medium" rel="noopener noreferrer">
+              pratiqo.ca/support
             </a>
           </li>
         </ul>
@@ -150,13 +160,13 @@ export default function AnnulationPage() {
 
       <LegalSection id="contact" title="6. Contact">
         <p>
-          <a href="mailto:support@pratiqo.com" className="text-[#1D9E75] underline font-medium">
-            support@pratiqo.com
+          <a href="mailto:support@pratiqo.ca" className="text-[#1D9E75] underline font-medium">
+            support@pratiqo.ca
           </a>
         </p>
         <p>
-          <a href="https://pratiqo.com/support" className="text-[#1D9E75] underline font-medium" rel="noopener noreferrer">
-            pratiqo.com/support
+          <a href="https://pratiqo.ca/support" className="text-[#1D9E75] underline font-medium" rel="noopener noreferrer">
+            pratiqo.ca/support
           </a>
         </p>
       </LegalSection>

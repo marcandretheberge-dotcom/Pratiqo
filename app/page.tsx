@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { AnimatePresence, motion } from "motion/react";
-import { LayoutList, Map, MapPin, Star } from "lucide-react";
+import { BookOpen, GraduationCap, LayoutGrid, LayoutList, Map, MapPin, Music, Sparkles } from "lucide-react";
 import type { Teacher } from "../types";
 import { TEACHERS } from "../constants";
 import { cn } from "../lib/utils";
@@ -21,12 +21,26 @@ import {
   teacherMatchesExploreSearch,
 } from "../lib/teacherDisciplines";
 import { teacherRowToTeacher, type TeacherRow } from "../lib/teacherMapper";
-import { getVerificationLevel } from "../lib/verification";
-import { VerificationBadge } from "../components/VerificationBadge";
+import { TEACHERS_LIST_SELECT } from "../lib/supabase/queries";
 import { useLocale } from "../lib/locale-context";
 import { useAuth } from "../components/AuthProvider";
-import { SmartSearchInput } from "../components/SmartSearchInput";
 import type { BookingInitialLessonKind } from "../components/BookingModal";
+import type { MapBounds } from "../components/SearchMapView";
+import { TeacherQuiz } from "../components/marketing/TeacherQuiz";
+import { LegalFooterLinks } from "../components/LegalFooterLinks";
+import { LandingDiscoveryHeader } from "../components/marketing/LandingDiscoveryHeader";
+import { LandingHowItWorks } from "../components/marketing/LandingHowItWorks";
+import { LandingHeroTrustStrip } from "../components/marketing/LandingHeroTrustStrip";
+import { LandingNeighborhoodSignals } from "../components/marketing/LandingNeighborhoodSignals";
+import { LandingTeacherListingCard } from "../components/marketing/LandingTeacherListingCard";
+import { SocialProofTestimonials } from "../components/marketing/SocialProofTestimonials";
+import { TrustSafetySection } from "../components/marketing/TrustSafetySection";
+import { MarketplaceFinalCta } from "../components/marketing/MarketplaceFinalCta";
+import type { TranslationKey } from "../lib/translations";
+import {
+  teacherMatchesLandingFormatFilter,
+  type LandingFormatFilter,
+} from "../lib/landingTeacherFilter";
 
 const TeacherProfile = dynamic(
   () => import("../components/TeacherProfile").then((m) => m.TeacherProfile),
@@ -53,16 +67,27 @@ const SearchMapView = dynamic(
 
 type HeroMode = "student" | "teacher";
 
-const TEACHERS_SELECT =
-  "id, user_id, name, discipline, category, rating, reviews, price_per_lesson, monthly_subscription, bio, image_url, availability, location, is_verified, teaching_mode, languages, levels, home_lesson_enabled, home_lesson_price, home_lesson_radius_km, home_lesson_min_duration, home_lesson_requires_confirmation, home_lesson_force_2h_over_20km, verification_level, identity_verified, diploma_verified, phone_verified";
-
 export default function LandingPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const { t, formatPrice } = useLocale();
   const [mode, setMode] = useState<HeroMode>("student");
+  const [quizOpen, setQuizOpen] = useState(false);
+
+  const CATEGORY_I18N: Record<string, TranslationKey> = {
+    musique: "marketplaceCategoryMusic",
+    langues: "marketplaceCategoryLanguages",
+    tuteurs: "marketplaceCategoryAcademic",
+  };
+
+  const CATEGORY_ICON: Record<string, typeof Music> = {
+    musique: Music,
+    langues: BookOpen,
+    tuteurs: GraduationCap,
+  };
 
   // Teachers + search state
+  const [locationSearch, setLocationSearch] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCat, setActiveCat] = useState<string>("All");
   const [teachers, setTeachers] = useState<Teacher[]>([]);
@@ -71,6 +96,11 @@ export default function LandingPage() {
   // Geo
   const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(null);
   const [sortMode, setSortMode] = useState<"relevance" | "nearest">("relevance");
+
+  // Map bounds (set when user clicks "Search this area"; null = show all)
+  const [mapBounds, setMapBounds] = useState<MapBounds | null>(null);
+
+  const [formatFilter, setFormatFilter] = useState<LandingFormatFilter>("all");
 
   // View
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
@@ -81,6 +111,8 @@ export default function LandingPage() {
   const [selectedMapTeacher, setSelectedMapTeacher] = useState<Teacher | null>(null);
   const [bookingTeacher, setBookingTeacher] = useState<Teacher | null>(null);
   const [bookingInitialKind, setBookingInitialKind] = useState<BookingInitialLessonKind>("standard");
+
+  const teacherResultsRef = useRef<HTMLDivElement>(null);
 
   // Auth redirect for logged-in users
   useEffect(() => {
@@ -120,7 +152,7 @@ export default function LandingPage() {
           setTeachers(list.map((t) => ({ ...t, profilePlan: "free" })));
         }
       };
-      const { data, error } = await supabase.from("teachers").select(TEACHERS_SELECT).order("verification_level", { ascending: false }).order("rating", { ascending: false });
+      const { data, error } = await supabase.from("teachers").select(TEACHERS_LIST_SELECT).order("verification_level", { ascending: false }).order("rating", { ascending: false });
       if (error || !data?.length) { await mergePlans(TEACHERS); setLoadingTeachers(false); return; }
       const mapped = data.map((r) => teacherRowToTeacher(r as TeacherRow));
       const discMap = await fetchTeacherDisciplinesMap(supabase, mapped.map((t) => t.id));
@@ -144,35 +176,131 @@ export default function LandingPage() {
     );
   }, [geo]);
 
-  // Filter + sort
+  // Clear map-bounds filter whenever the user changes their text/category/format search
+  useEffect(() => {
+    setMapBounds(null);
+  }, [searchQuery, activeCat, formatFilter]);
+
+  // Filter + sort (+ optional bounds filter when user has searched an area)
   const filtered = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    const list = teachers.filter((t) => {
+    let list = teachers.filter((t) => {
       const catOk = teacherMatchesExploreCategory(t, activeCat);
       const qOk = !q || teacherMatchesExploreSearch(t, searchQuery);
-      return catOk && qOk;
+      const fmtOk = teacherMatchesLandingFormatFilter(t, formatFilter);
+      return catOk && qOk && fmtOk;
     });
+
     if (sortMode === "nearest" && geo) {
-      return [...list].sort((a, b) => {
+      list = [...list].sort((a, b) => {
         const da = a.location?.lat && a.location?.lng ? Math.hypot(a.location.lat - geo.lat, a.location.lng - geo.lng) : 999;
         const db = b.location?.lat && b.location?.lng ? Math.hypot(b.location.lat - geo.lat, b.location.lng - geo.lng) : 999;
         return da - db;
       });
     }
+
+    if (mapBounds) {
+      list = list.filter((tt) => {
+        const lat = tt.location?.lat;
+        const lng = tt.location?.lng;
+        if (typeof lat !== "number" || typeof lng !== "number") return false;
+        const { ne, sw } = mapBounds;
+        // Handle antimeridian wrapping for longitude
+        const lngInBounds =
+          ne.lng < sw.lng
+            ? lng >= sw.lng || lng <= ne.lng
+            : lng >= sw.lng && lng <= ne.lng;
+        return lat >= sw.lat && lat <= ne.lat && lngInBounds;
+      });
+    }
+
     return list;
-  }, [teachers, searchQuery, activeCat, sortMode, geo]);
+  }, [teachers, searchQuery, activeCat, sortMode, geo, mapBounds, formatFilter]);
+
+  const scrollToTeacherResults = useCallback(() => {
+    teacherResultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
+
+  const selectCityForSearch = useCallback((city: City) => {
+    setLocationSearch("");
+    setGeo({ lat: city.lat, lng: city.lng });
+    setSortMode("nearest");
+    setSearchQuery(city.name);
+  }, []);
 
   if (authLoading) return null;
   if (user) return null;
 
+  // ── LocalBusiness JSON-LD ─────────────────────────────────────────────────
+  // Targets "tuteur Saint-Georges" / "cours particuliers Québec" queries.
+  // AggregateRating omitted at org level — individual teacher pages carry it.
   const orgJsonLd = {
     "@context": "https://schema.org",
-    "@type": "Organization",
+    "@type": ["LocalBusiness", "EducationalOrganization"],
     name: "Pratiqo",
     url: "https://pratiqo.ca",
-    logo: "https://pratiqo.ca/logo-email.png",
-    description: "Marketplace québécoise de cours particuliers",
-    address: { "@type": "PostalAddress", addressCountry: "CA", addressRegion: "QC" },
+    logo: {
+      "@type": "ImageObject",
+      url: "https://pratiqo.ca/logo-email.png",
+    },
+    image: "https://pratiqo.ca/og-image.png",
+    description:
+      "La marketplace québécoise pour trouver un professeur de musique, de langue ou un tuteur. Profs vérifiés, paiements sécurisés, cours en ligne ou en présentiel.",
+    priceRange: "$$",
+    address: {
+      "@type": "PostalAddress",
+      addressLocality: "Saint-Georges",
+      addressRegion: "QC",
+      addressCountry: "CA",
+      postalCode: "G5Y",
+    },
+    areaServed: [
+      {
+        "@type": "AdministrativeArea",
+        name: "Québec",
+        containedInPlace: { "@type": "Country", name: "Canada" },
+      },
+      {
+        "@type": "Country",
+        name: "Uruguay",
+        sameAs: "https://en.wikipedia.org/wiki/Uruguay",
+      },
+    ],
+    contactPoint: {
+      "@type": "ContactPoint",
+      contactType: "customer service",
+      availableLanguage: ["French", "English", "Spanish"],
+    },
+    hasOfferCatalog: {
+      "@type": "OfferCatalog",
+      name: "Cours particuliers — Québec, Canada & Uruguay",
+      itemListElement: [
+        {
+          "@type": "Offer",
+          itemOffered: { "@type": "Course", name: "Cours de Musique" },
+        },
+        {
+          "@type": "Offer",
+          itemOffered: { "@type": "Course", name: "Cours de Langue" },
+        },
+        {
+          "@type": "Offer",
+          itemOffered: { "@type": "Course", name: "Cours d'Arts Martiaux" },
+        },
+        {
+          "@type": "Offer",
+          itemOffered: { "@type": "Course", name: "Cours de Danse" },
+        },
+        {
+          "@type": "Offer",
+          itemOffered: { "@type": "Course", name: "Cours de Sport" },
+        },
+        {
+          "@type": "Offer",
+          itemOffered: { "@type": "Course", name: "Soutien Scolaire" },
+        },
+      ],
+    },
   };
 
   return (
@@ -186,6 +314,12 @@ export default function LandingPage() {
         </Link>
         <div className="flex items-center gap-3">
           <LocaleSwitcher />
+          <Link
+            href="/devenir-enseignant"
+            className="hidden sm:inline-flex items-center rounded-xl border border-[#0F6E56] px-3 py-1.5 text-xs font-semibold text-[#0F6E56] hover:bg-[#0F6E56]/8 transition-colors"
+          >
+            {t("becomeTeacher")}
+          </Link>
           <Link href="/login" className="text-sm text-[#0F6E56] font-medium hover:underline">
             {t("signIn")}
           </Link>
@@ -202,139 +336,189 @@ export default function LandingPage() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="bg-[#0F6E56] text-white"
+              className="bg-[#FAFCFB] text-[#2C2C2A]"
             >
-              <div className="mx-auto max-w-6xl px-4 sm:px-6 pt-10 pb-8">
-                {/* Mode toggle */}
-                <div className="mb-8 flex flex-wrap justify-center gap-2 rounded-2xl bg-black/20 p-1 sm:inline-flex">
-                  <TogglePill active onClick={() => setMode("student")}>{t("iAmStudent")}</TogglePill>
-                  <TogglePill active={false} onClick={() => setMode("teacher")}>{t("iAmTeacher")}</TogglePill>
-                </div>
+              <div className="relative border-b border-[#E8E6DF]/80 bg-gradient-to-b from-[#EFF8F4] via-[#FAFCFB] to-[#FAFCFB]">
+                <div className="relative mx-auto max-w-[1440px] px-4 pb-8 pt-6 sm:px-6 lg:pb-10 lg:pt-8">
+                  <div className="mb-6 flex justify-center">
+                    <div className="flex flex-wrap justify-center gap-1 rounded-2xl border border-[#E8E6DF] bg-white p-1 shadow-sm">
+                      <ToggleSegment active onClick={() => setMode("student")}>
+                        {t("iAmStudent")}
+                      </ToggleSegment>
+                      <ToggleSegment active={false} onClick={() => setMode("teacher")}>
+                        {t("iAmTeacher")}
+                      </ToggleSegment>
+                    </div>
+                  </div>
 
-                <h1 className="text-center text-3xl font-bold tracking-tight sm:text-4xl">{t("heroStudentTitle")}</h1>
-                <p className="mt-2 text-center text-sm text-white/80 sm:text-base">{t("heroStudentSubtitle")}</p>
-
-                {/* Smart search */}
-                <div className="mx-auto mt-7 max-w-xl">
-                  <SmartSearchInput
-                    value={searchQuery}
-                    onChange={setSearchQuery}
-                    teachers={teachers}
+                  <LandingDiscoveryHeader
+                    teachersForSearch={teachers}
+                    searchQuery={searchQuery}
+                    onSearchQueryChange={setSearchQuery}
+                    locationSearch={locationSearch}
+                    onLocationSearchChange={setLocationSearch}
                     geo={geo}
                     onSelectTeacher={(teacher) => setSelectedTeacherProfile(teacher)}
                     onSelectDiscipline={(label) => {
                       setActiveCat(label);
                       setSearchQuery("");
                     }}
-                    onSelectCity={(city: City) => {
-                      setGeo({ lat: city.lat, lng: city.lng });
-                      setSortMode("nearest");
-                      setSearchQuery(city.name);
-                    }}
+                    onSelectCity={selectCityForSearch}
+                    formatFilter={formatFilter}
+                    onFormatFilterChange={setFormatFilter}
+                    onSearchSubmit={scrollToTeacherResults}
+                    searchInputPlaceholderKey="landingSearchDisciplinePlaceholder"
                   />
-                </div>
 
-                {/* Discipline chips */}
-                <div className="mx-auto mt-5 max-w-3xl">
-                  <div className="flex flex-wrap justify-center gap-2">
-                    {getEnabledDisciplines().map((d) => (
+                  <div className="mx-auto mt-5 max-w-4xl">
+                    <div className="flex flex-wrap justify-center gap-2">
+                      {getEnabledDisciplines().map((d) => {
+                        const catKey = CATEGORY_I18N[d.id];
+                        const Icon = CATEGORY_ICON[d.id];
+                        const active = activeCat === d.label;
+                        return (
+                          <button
+                            key={d.id}
+                            type="button"
+                            onClick={() => setActiveCat(active ? "All" : d.label)}
+                            className={cn(
+                              "inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-semibold transition-colors",
+                              active
+                                ? "border-[#0F6E56] bg-[#0F6E56] text-white shadow-sm"
+                                : "border-[#E0DED5] bg-white text-[#2C2C2A] hover:border-[#0F6E56]/35 hover:bg-[#F9F8F5]",
+                            )}
+                          >
+                            {Icon ? <Icon size={15} aria-hidden strokeWidth={2.25} /> : null}
+                            {catKey ? t(catKey) : d.label}
+                          </button>
+                        );
+                      })}
+                      {isEnabled("group_sessions") ? (
+                        <Link
+                          href="/group-sessions"
+                          className="inline-flex items-center rounded-full border border-[#E0DED5] bg-white px-4 py-2 text-xs font-semibold text-[#2C2C2A] transition-colors hover:border-[#0F6E56]/35 hover:bg-[#F9F8F5]"
+                        >
+                          {t("groupCoursesLink")}
+                        </Link>
+                      ) : null}
                       <button
-                        key={d.id}
                         type="button"
-                        onClick={() => setActiveCat(activeCat === d.label ? "All" : d.label)}
+                        onClick={() => setActiveCat("All")}
                         className={cn(
-                          "rounded-full border px-4 py-2 text-xs font-semibold transition-colors",
-                          activeCat === d.label
-                            ? "border-white bg-white text-[#0F6E56]"
-                            : "border-white/30 bg-white/15 text-white hover:bg-white/20",
+                          "inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-semibold transition-colors",
+                          activeCat === "All"
+                            ? "border-[#0F6E56] bg-[#0F6E56] text-white shadow-sm"
+                            : "border-[#E0DED5] bg-white text-[#2C2C2A] hover:border-[#0F6E56]/35",
                         )}
                       >
-                        {d.emoji} {d.label}
+                        <LayoutGrid size={15} aria-hidden strokeWidth={2.25} />
+                        {t("filterAll")}
                       </button>
-                    ))}
-                    {isEnabled("group_sessions") ? (
-                      <Link href="/group-sessions" className="rounded-full border border-white/30 bg-white/15 px-4 py-2 text-xs font-semibold text-white hover:bg-white/20">
-                        Cours groupe
-                      </Link>
-                    ) : null}
+                    </div>
+                    <p className="mt-3 text-center text-[11px] text-[#6B6760]">{t("otherDisciplines")}</p>
+                  </div>
+
+                  <div className="mx-auto mt-10 w-full max-w-lg px-2 text-center">
                     <button
                       type="button"
-                      onClick={() => setActiveCat("All")}
-                      className={cn("rounded-full border px-4 py-2 text-xs font-semibold", activeCat === "All" ? "border-white bg-white text-[#0F6E56]" : "border-white/30 bg-white/15 text-white hover:bg-white/20")}
+                      onClick={() => setQuizOpen(true)}
+                      className="inline-flex min-h-[52px] w-full max-w-md items-center justify-center gap-2.5 rounded-2xl border-2 border-[#C5E7DB] bg-white px-6 py-3.5 text-sm font-bold text-[#0F6E56] shadow-[0_10px_36px_rgba(15,110,86,0.08)] transition-all hover:border-[#0F6E56]/40 hover:bg-[#FAFFFC] hover:shadow-[0_14px_40px_rgba(15,110,86,0.12)] motion-safe:active:scale-[0.99]"
                     >
-                      Tous
+                      <Sparkles size={20} className="shrink-0 text-[#F4B400]" strokeWidth={2.25} aria-hidden />
+                      {t("marketplaceQuizCta")}
                     </button>
+                    <p className="mx-auto mt-3 max-w-md text-[13px] leading-relaxed text-[#526056]">{t("landingQuizHelper")}</p>
+                    <LandingHeroTrustStrip className="mt-8" />
                   </div>
-                  <p className="mt-3 text-center text-[11px] text-white/50">D&apos;autres disciplines arrivent bientôt 🚀</p>
                 </div>
               </div>
 
-              {/* ── TEACHER LIST / MAP ─────────── */}
-              <div className="bg-[#F1EFE8]">
-                <div className="mx-auto max-w-6xl px-4 sm:px-6 py-6">
+              <div ref={teacherResultsRef} id="teacher-results" className="scroll-mt-24 bg-[#F3FAF6]">
+                <div className="mx-auto max-w-[1440px] px-4 py-8 sm:px-6 sm:py-10">
+                  <LandingNeighborhoodSignals className="mb-4" />
 
-                  {/* List/map toggle header */}
-                  <div className="flex items-center justify-between mb-5">
-                    <div className="flex items-center gap-3">
+                  <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
                       <p className="text-[11px] font-bold uppercase tracking-widest text-[#6B6760]">
-                        {loadingTeachers ? "Chargement…" : `${filtered.length} profil${filtered.length !== 1 ? "s" : ""}`}
+                        {loadingTeachers
+                          ? t("loading")
+                          : `${filtered.length} ${filtered.length !== 1 ? t("profilesPlural") : t("profileSingular")}`}
                       </p>
+                      <span aria-hidden className="hidden h-3 w-px shrink-0 bg-[#D3D1C7] sm:inline-block" />
+                      <span className="text-sm font-semibold text-[#2C2C2A]">{t("teacherGridNearYou")}</span>
                       <button
                         type="button"
                         onClick={requestGeo}
                         className={cn(
-                          "flex items-center gap-1 text-[10px] font-semibold rounded-lg px-2 py-1 transition-colors",
+                          "inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-semibold transition-colors",
                           sortMode === "nearest" && geo
-                            ? "text-[#0F6E56] bg-[rgba(29,158,117,0.1)]"
+                            ? "bg-[rgba(29,158,117,0.12)] text-[#0F6E56]"
                             : "text-[#6B6760] hover:text-[#0F6E56]",
                         )}
                         aria-pressed={sortMode === "nearest" && !!geo}
                       >
-                        <MapPin size={11} /> Trouver des profs près de moi
+                        <MapPin size={11} aria-hidden /> {t("findNearMe")}
                       </button>
                     </div>
-                    <div className="flex items-center gap-1 rounded-xl bg-white border border-[#E8E6DF] p-1">
+                    <div className="flex items-center gap-1 self-stretch rounded-xl border border-[#E8E6DF] bg-white p-1 sm:self-auto sm:shrink-0">
                       <button
                         type="button"
                         onClick={() => setViewMode("list")}
-                        className={cn("flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors", viewMode === "list" ? "bg-[#0F6E56] text-white shadow-sm" : "text-[#6B6760] hover:text-[#2C2C2A]")}
+                        className={cn(
+                          "flex min-h-[40px] flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition-colors sm:min-h-0 sm:flex-initial",
+                          viewMode === "list"
+                            ? "bg-[#0F6E56] text-white shadow-sm"
+                            : "text-[#6B6760] hover:text-[#2C2C2A]",
+                        )}
                       >
-                        <LayoutList size={13} /> Liste
+                        <LayoutList size={13} aria-hidden /> {t("viewList")}
                       </button>
                       <button
                         type="button"
-                        onClick={() => { setViewMode("map"); setMapLoaded(true); }}
-                        className={cn("flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors", viewMode === "map" ? "bg-[#0F6E56] text-white shadow-sm" : "text-[#6B6760] hover:text-[#2C2C2A]")}
+                        onClick={() => {
+                          setViewMode("map");
+                          setMapLoaded(true);
+                        }}
+                        className={cn(
+                          "flex min-h-[40px] flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition-colors sm:min-h-0 sm:flex-initial",
+                          viewMode === "map"
+                            ? "bg-[#0F6E56] text-white shadow-sm"
+                            : "text-[#6B6760] hover:text-[#2C2C2A]",
+                        )}
                       >
-                        <Map size={13} /> Carte
+                        <Map size={13} aria-hidden /> {t("viewMap")}
                       </button>
                     </div>
                   </div>
 
-                  {/* List view */}
                   {viewMode === "list" ? (
                     loadingTeachers ? (
-                      <div className="flex justify-center py-12">
-                        <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#1D9E75] border-t-transparent" />
+                      <div className="flex justify-center py-14">
+                        <div className="h-9 w-9 animate-spin rounded-full border-2 border-[#1D9E75] border-t-transparent" />
                       </div>
+                    ) : filtered.length === 0 ? (
+                      <p className="py-14 text-center text-sm text-[#6B6760]">{t("noTeacherSearch")}</p>
                     ) : (
                       <>
-                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
                           {filtered.slice(0, 9).map((teacher) => (
-                            <LandingTeacherCard
+                            <LandingTeacherListingCard
                               key={teacher.id}
                               teacher={teacher}
                               formatPrice={formatPrice}
+                              geo={geo}
+                              isHighlighted={selectedMapTeacher?.id === teacher.id}
                               onOpen={() => setSelectedTeacherProfile(teacher)}
                             />
                           ))}
                         </div>
-                        {filtered.length === 0 ? (
-                          <p className="text-center py-10 text-sm text-[#6B6760]">Aucun prof trouvé pour cette recherche.</p>
-                        ) : filtered.length > 9 ? (
-                          <div className="mt-6 text-center">
-                            <Link href="/login?next=/student/search" className="inline-flex h-11 items-center rounded-2xl bg-[#0F6E56] px-6 text-sm font-semibold text-white hover:brightness-105">
-                              Voir tous les profs →
+                        {filtered.length > 9 ? (
+                          <div className="mt-8 text-center">
+                            <Link
+                              href="/login?next=/student/search"
+                              className="inline-flex h-11 items-center rounded-2xl bg-[#0F6E56] px-6 text-sm font-semibold text-white hover:brightness-105"
+                            >
+                              {t("viewAllTeachers")}
                             </Link>
                           </div>
                         ) : null}
@@ -342,38 +526,24 @@ export default function LandingPage() {
                     )
                   ) : null}
 
-                  {/* Map view (lazy) */}
                   {viewMode === "map" && mapLoaded ? (
-                    <div className="h-[480px] rounded-2xl overflow-hidden border border-[#E8E6DF] shadow-sm">
+                    <div className="mt-2 h-[min(520px,calc(100dvh-12rem))] overflow-hidden rounded-3xl border border-[#E8E6DF] bg-white shadow-sm">
+                      {/*
+                       * Future enhancement: sync visible teacher results with current map bounds.
+                       */}
                       <SearchMapView
                         teachers={filtered}
                         userLat={geo?.lat ?? null}
                         userLng={geo?.lng ?? null}
                         selectedTeacher={selectedMapTeacher}
-                        onTeacherSelect={(t) => setSelectedMapTeacher(t)}
-                        onViewProfile={(t) => setSelectedTeacherProfile(t)}
+                        onTeacherSelect={(tt) => setSelectedMapTeacher(tt)}
+                        onViewProfile={(tt) => setSelectedTeacherProfile(tt)}
                         onCloseSelected={() => setSelectedMapTeacher(null)}
+                        onBoundsSearch={(bounds) => setMapBounds(bounds)}
+                        highlightedTeacherId={selectedMapTeacher?.id ?? null}
                       />
                     </div>
                   ) : null}
-                </div>
-              </div>
-
-              {/* ── VALUE PROPS (student) ────────── */}
-              <div className="bg-white border-t border-[#E8E6DF] min-h-[400px]">
-                <div className="mx-auto max-w-6xl px-4 sm:px-6 py-12">
-                  <p className="text-center text-[11px] font-bold uppercase tracking-widest text-[#6B6760] mb-8">
-                    Pourquoi Pratiqo
-                  </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 min-h-[200px]">
-                    <ValueProp emoji="🐣" title="Compagnon évolutif" desc="Gagne 5$/10$/15$/25$ aux paliers de 5, 15, 30 et 50 cours." />
-                    <ValueProp emoji="⭐" title="+1$ par évaluation" desc="Chaque avis laissé sur un prof te rapporte 1$ de crédit." />
-                    <ValueProp emoji="💌" title="+1$ par parrainage" desc="Invite un ami. Vous gagnez tous les deux. Plafonné à 20$/an." />
-                    <ValueProp emoji="🍁" title="D&apos;ici, pour ici" desc="Profs locaux vérifiés. Vision Québec et Canada." />
-                  </div>
-                  <p className="mt-6 text-center text-xs text-slate-600">
-                    Les crédits sont utilisables sur Pratiqo uniquement. Aucun cashback récurrent.
-                  </p>
                 </div>
               </div>
             </motion.div>
@@ -394,26 +564,26 @@ export default function LandingPage() {
                 </div>
 
                 <h2 className="text-center text-2xl font-bold leading-tight sm:text-4xl">
-                  Enseigne sur Pratiqo.
+                  {t("homeTeacherH1")}
                   <br />
-                  <span className="text-white/60">Pas un employé. Un partenaire.</span>
+                  <span className="text-white/60">{t("homeTeacherH1Sub")}</span>
                 </h2>
                 <p className="mt-4 text-center text-sm text-white/70 max-w-xl mx-auto">
-                  Fixe tes tarifs, horaires et méthodes. Commission dégressive selon ton volume. Ristourne annuelle pour les profs Pro.
+                  {t("homeTeacherSub")}
                 </p>
 
                 {/* 3-stat row */}
                 <div className="mx-auto mt-10 grid max-w-3xl gap-3 grid-cols-3">
-                  <StatCard label="Commission Gratuit" value="7-10%" />
-                  <StatCard label="Commission Pro" value="3.5-5%" />
-                  <StatCard label="Ristourne annuelle" value="5% profits" />
+                  <StatCard label={t("homeStatCommFree")} value="7-10%" />
+                  <StatCard label={t("homeStatCommPro")} value="3.5-5%" />
+                  <StatCard label={t("homeStatRistourne")} value="5% profits" />
                 </div>
 
                 <ul className="mx-auto mt-8 max-w-xl space-y-2.5 text-sm text-white/80">
                   {[
-                    "Commission dégressive Bronze → Platine",
-                    "Paiements automatiques via Stripe",
-                    "Cours en ligne, en studio ou à domicile",
+                    t("homeBullet1"),
+                    t("homeBullet2"),
+                    t("homeBullet3"),
                   ].map((b) => (
                     <li key={b} className="flex items-center gap-2 rounded-xl bg-white/5 px-4 py-3">
                       <span className="h-2 w-2 shrink-0 rounded-full bg-[#1D9E75]" />
@@ -424,7 +594,7 @@ export default function LandingPage() {
 
                 <div className="mt-10 flex flex-col items-center gap-3">
                   <Link href="/become-teacher" className="inline-flex h-12 items-center justify-center rounded-2xl bg-[#0F6E56] px-8 text-sm font-bold text-white hover:brightness-105">
-                    Voir les plans et commissions →
+                    {t("homeTeacherSeePlans")}
                   </Link>
                   <Link href="/login?role=teacher" className="text-sm font-medium text-white/70 underline underline-offset-2 hover:text-white">
                     {t("joinFree")}
@@ -436,36 +606,20 @@ export default function LandingPage() {
         </AnimatePresence>
       </section>
 
-      {/* ── STAT BAR ───────────────────────────── */}
-      <div className="border-y border-[#E8E6DF] bg-[#F1EFE8] py-4 text-center text-xs font-bold uppercase tracking-widest text-[#2C2C2A]">
-        <span className="text-[#0F6E56]">{t("statProfCount").split(" ")[0]}</span>{" "}
-        {t("statProfCount").split(" ").slice(1).join(" ")}
-        <span className="mx-3 text-[#D3D1C7]">·</span>
-        {t("statWorldwide")}
-        <span className="mx-3 text-[#D3D1C7]">·</span>
-        <span className="text-[#0F6E56]">{t("statCashback")}</span>
-        <span className="mx-3 text-[#D3D1C7]">·</span>
-        {t("statRistourne")}
+      <SocialProofTestimonials className="bg-[#FAFCFB] py-14 sm:py-20" />
+      <TrustSafetySection className="border-t border-[#E8E6DF] bg-[#F8F6F1] py-14 sm:py-20" />
+      <LandingHowItWorks className="border-t border-[#E8E6DF] bg-[#FAFCFB] py-14 sm:py-20" />
+
+      <div className="mx-auto max-w-[1440px] bg-[#F8F6F1] pb-6 text-center">
+        <p className="mx-auto max-w-xl px-4 text-xs leading-relaxed text-[#6B6760]">{t("creditsDisclaimer")}</p>
       </div>
 
-      {/* ── DUAL CTA FOOTER ────────────────────── */}
-      <div className="bg-white border-t border-[#E8E6DF] py-6 px-4">
-        <div className="mx-auto max-w-3xl flex flex-col sm:flex-row items-center justify-center gap-4">
-          <Link href="/login" className="inline-flex h-11 items-center justify-center rounded-2xl bg-[#0F6E56] px-6 text-sm font-bold text-white hover:brightness-105 w-full sm:w-auto">
-            Je cherche un prof →
-          </Link>
-          <Link href="/become-teacher" className="inline-flex h-11 items-center justify-center rounded-2xl border-2 border-[#2C2C2A] px-6 text-sm font-bold text-[#2C2C2A] hover:bg-[#2C2C2A] hover:text-white transition-colors w-full sm:w-auto">
-            Je veux enseigner →
-          </Link>
-        </div>
-      </div>
+      <MarketplaceFinalCta />
 
       {/* ── FOOTER ─────────────────────────────── */}
       <footer className="bg-white border-t border-[#E8E6DF]">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 py-5 flex flex-wrap items-center justify-center gap-4 text-xs text-[#6B6760]">
-          <Link href="/legal/cgu" className="hover:text-[#2C2C2A] hover:underline">CGU</Link>
-          <Link href="/legal/confidentialite" className="hover:text-[#2C2C2A] hover:underline">Confidentialité</Link>
-          <Link href="/legal/annulation" className="hover:text-[#2C2C2A] hover:underline">Annulation</Link>
+        <div className="mx-auto max-w-[1440px] px-4 sm:px-6 py-5 flex flex-wrap items-center justify-center gap-4 text-xs text-[#6B6760]">
+          <LegalFooterLinks />
           <span className="text-[#D3D1C7]">·</span>
           <span>© 2026 Pratiqo inc.</span>
         </div>
@@ -500,11 +654,32 @@ export default function LandingPage() {
           onClose={() => { setBookingTeacher(null); setBookingInitialKind("standard"); }}
         />
       ) : null}
+
+      <AnimatePresence>
+        {quizOpen && (
+          <TeacherQuiz onClose={() => setQuizOpen(false)} />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────
+
+function ToggleSegment({ children, active, onClick }: { children: React.ReactNode; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "min-w-[128px] rounded-xl px-4 py-2.5 text-xs font-bold transition-colors",
+        active ? "bg-[#0F6E56] text-white shadow-sm" : "text-[#526056] hover:bg-[#f0f0eb]",
+      )}
+    >
+      {children}
+    </button>
+  );
+}
 
 function TogglePill({ children, active, onClick, darkMode }: { children: React.ReactNode; active: boolean; onClick: () => void; darkMode?: boolean }) {
   return (
@@ -529,67 +704,5 @@ function StatCard({ label, value }: { label: string; value: string }) {
       <p className="text-[10px] font-bold uppercase tracking-widest text-white/50">{label}</p>
       <p className="mt-2 text-xl font-bold text-[#7FE0C3]">{value}</p>
     </div>
-  );
-}
-
-function ValueProp({ emoji, title, desc }: { emoji: string; title: string; desc: string }) {
-  return (
-    <div className="rounded-2xl border border-[#E8E6DF] bg-[#FAFCFB] p-5 space-y-2">
-      <span className="text-2xl">{emoji}</span>
-      <p className="font-bold text-sm text-[#2C2C2A]">{title}</p>
-      <p className="text-xs text-[#6B6760] leading-relaxed">{desc}</p>
-    </div>
-  );
-}
-
-function LandingTeacherCard({
-  teacher,
-  formatPrice,
-  onOpen,
-}: {
-  teacher: Teacher;
-  formatPrice: (n: number) => string;
-  onOpen: () => void;
-}) {
-  const initials = teacher.name.split(" ").slice(0, 2).map((x) => x[0]?.toUpperCase()).join("");
-  const avatarBg =
-    teacher.category === "Musique" ? "bg-[rgba(29,158,117,0.14)] text-[#085041]"
-    : teacher.category === "Arts Martiaux" ? "bg-[rgba(255,153,102,0.18)] text-[#C2462E]"
-    : teacher.category === "Langues" ? "bg-[rgba(146,106,255,0.16)] text-[#5B3EC8]"
-    : "bg-[rgba(29,158,117,0.14)] text-[#085041]";
-
-  return (
-    <button
-      type="button"
-      onClick={onOpen}
-      className="block w-full text-left rounded-2xl bg-white p-4 border border-[#E8E6DF] shadow-[0_8px_32px_rgba(44,44,42,0.05)] hover:shadow-[0_12px_40px_rgba(44,44,42,0.08)] transition-shadow"
-    >
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex min-w-0 items-center gap-3">
-          <div className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-bold", avatarBg)}>
-            {initials}
-          </div>
-          <div className="min-w-0">
-            <div className="flex items-center gap-2 min-w-0">
-              <p className="truncate font-semibold text-[#2C2C2A] text-sm">{teacher.name}</p>
-              <VerificationBadge
-                level={getVerificationLevel({ plan: teacher.profilePlan, identity_verified: teacher.identityVerified, diploma_verified: teacher.diplomaVerified, is_verified: teacher.isVerified, verification_level: teacher.verificationLevel ?? null })}
-                size="sm"
-                showLabel={false}
-                className="shrink-0 scale-90"
-              />
-            </div>
-            <p className="truncate text-xs text-[#6B6760]">{teacher.discipline}</p>
-          </div>
-        </div>
-        <span className="shrink-0 rounded-lg bg-white px-2 py-1 text-[11px] font-bold text-[#2C2C2A] border border-[#E8E6DF] flex items-center gap-0.5">
-          <Star size={10} className="text-amber-400 fill-amber-400" /> {teacher.rating}
-        </span>
-      </div>
-      <div className="mt-3 flex items-center justify-between border-t border-[#E8E6DF] pt-3 text-xs text-[#6B6760]">
-        <span>{teacher.teachingMode === "online" ? "En ligne" : "Présentiel / mixte"}</span>
-        <span className="font-bold text-[#0F6E56]">{formatPrice(Number(teacher.pricePerLesson))}/h</span>
-      </div>
-    </button>
   );
 }

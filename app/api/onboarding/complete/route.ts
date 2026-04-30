@@ -239,9 +239,25 @@ export async function POST(req: Request) {
         console.warn("[onboarding/complete] No email on user — skipping welcome email");
       }
     } else {
-      // Student welcome already sent from auth/callback on first signup.
       if (user.email) {
-        void sendWelcomeStudent(user.email, name);
+        const { data: welcomeRow } = await admin
+          .from("profiles")
+          .select("welcome_student_email_sent_at")
+          .eq("id", user.id)
+          .maybeSingle();
+        if (!welcomeRow?.welcome_student_email_sent_at) {
+          try {
+            await sendWelcomeStudent(user.email, name);
+            const { error: wErr } = await admin
+              .from("profiles")
+              .update({ welcome_student_email_sent_at: new Date().toISOString() })
+              .eq("id", user.id)
+              .is("welcome_student_email_sent_at", null);
+            if (wErr) console.error("[onboarding/complete] welcome_student_email_sent_at update failed:", wErr.message);
+          } catch (emailErr) {
+            console.error("[onboarding/complete] sendWelcomeStudent failed:", emailErr);
+          }
+        }
       }
     }
 

@@ -35,6 +35,9 @@ interface SmartSearchInputProps {
   onSelectTeacher: (teacher: Teacher) => void;
   onSelectDiscipline: (label: string) => void;
   onSelectCity: (city: City) => void;
+  /** Defaults to `searchInputPlaceholder`. */
+  inputPlaceholderKey?: TranslationKey;
+  className?: string;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -76,8 +79,11 @@ export function SmartSearchInput({
   onSelectTeacher,
   onSelectDiscipline,
   onSelectCity,
+  inputPlaceholderKey = "searchInputPlaceholder",
+  className,
 }: SmartSearchInputProps) {
   const { t, locale } = useLocale();
+  const ph = t(inputPlaceholderKey);
   const uid = useId();
   const inputId = `${uid}-search-input`;
   const listboxId = `${uid}-search-listbox`;
@@ -110,7 +116,7 @@ export function SmartSearchInput({
 
   const disciplineLabel = useCallback(
     (d: Discipline) => {
-      if (locale === "en-CA") return d.labelEn ?? d.label;
+      if (locale === "en") return d.labelEn ?? d.label;
       if (locale === "es")    return d.labelEs ?? d.label;
       return d.label;
     },
@@ -217,7 +223,7 @@ export function SmartSearchInput({
   let flatIdx = 0;
 
   return (
-    <div ref={containerRef} className="relative flex-1 min-w-0">
+    <div ref={containerRef} className={cn("relative min-w-0 flex-1", className)}>
       {/* Input */}
       <div className="flex items-center gap-2 rounded-2xl bg-white px-4 py-3 text-[#2C2C2A] shadow-sm">
         <Search size={18} className="shrink-0 text-slate-600" aria-hidden />
@@ -231,7 +237,7 @@ export function SmartSearchInput({
           }}
           onFocus={() => { if (debouncedQuery.length >= 2) setOpen(true); }}
           onKeyDown={handleKeyDown}
-          placeholder={t("searchInputPlaceholder")}
+          placeholder={ph}
           className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-slate-600"
           autoComplete="off"
           spellCheck={false}
@@ -240,13 +246,13 @@ export function SmartSearchInput({
           aria-expanded={isOpen}
           aria-controls={listboxId}
           aria-activedescendant={activeIndex >= 0 ? `${uid}-search-option-${activeIndex}` : undefined}
-          aria-label={t("searchInputPlaceholder")}
+          aria-label={ph}
         />
         {value && (
           <button
             type="button"
             onClick={() => { onChange(""); setOpen(false); }}
-            className="shrink-0 text-slate-300 hover:text-slate-500 transition-colors text-lg leading-none"
+            className="shrink-0 text-slate-500 hover:text-slate-700 transition-colors text-lg leading-none"
             aria-label="Clear"
           >
             ×

@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Loader2, Send } from "lucide-react";
+import { Loader2, Send, ChevronLeft } from "lucide-react";
 import { useAuth } from "../../../components/AuthProvider";
 import { getSupabaseClient } from "../../../lib/supabase";
 import {
@@ -18,11 +18,12 @@ import {
   type MessageRow,
 } from "../../../lib/messaging";
 import { cn } from "../../../lib/utils";
+import { useLocale } from "../../../lib/locale-context";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function formatMsgTime(iso: string) {
-  return new Date(iso).toLocaleString("fr-CA", { dateStyle: "short", timeStyle: "short" });
+  return new Date(iso).toLocaleString("fr", { dateStyle: "short", timeStyle: "short" });
 }
 
 function initials(name: string) {
@@ -36,6 +37,7 @@ function initials(name: string) {
 
 export default function MessagesPage() {
   const { user } = useAuth();
+  const { t } = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -63,11 +65,11 @@ export default function MessagesPage() {
       setConversations(list);
     } catch (e) {
       console.error(e);
-      setError(e instanceof Error ? e.message : "Impossible de charger les conversations.");
+      setError(e instanceof Error ? e.message : t("cannotLoadConversations"));
     } finally {
       setLoadingList(false);
     }
-  }, [supabase, user?.id]);
+  }, [supabase, user?.id, t]);
 
   const loadThread = useCallback(
     async (conversationId: string) => {
@@ -81,7 +83,7 @@ export default function MessagesPage() {
         await refreshConversations();
       } catch (e) {
         console.error(e);
-        setError(e instanceof Error ? e.message : "Impossible de charger les messages.");
+        setError(e instanceof Error ? e.message : t("cannotLoadMessages"));
       } finally {
         setLoadingThread(false);
       }
@@ -144,7 +146,6 @@ export default function MessagesPage() {
           filter: `receiver_id=eq.${user.id}`,
         },
         (payload) => {
-          console.log("[realtime] new INSERT payload", payload);
           const newMsg = payload.new as MessageRow;
 
           // Always refresh conversation list
@@ -152,17 +153,12 @@ export default function MessagesPage() {
 
           // If conversation is open, append message
           if (newMsg.conversation_id === activeConversationId) {
-            console.log("[realtime] append message", newMsg.id, newMsg.conversation_id);
             setMessages((prev) => (prev.some((m) => m.id === newMsg.id) ? prev : [...prev, newMsg]));
             void markAsRead(supabase, newMsg.conversation_id, user.id);
-          } else {
-            console.log("[realtime] message for other conversation", newMsg.conversation_id);
           }
         },
       )
-      .subscribe((status) => {
-        console.log("[realtime] status:", status);
-      });
+      .subscribe();
 
     return () => {
       void supabase.removeChannel(channel);
@@ -177,7 +173,7 @@ export default function MessagesPage() {
       conversationId: pendingPeer.conversationId,
       peerId: pendingPeer.peerId,
       peerLabel: pendingPeer.label,
-      lastPreview: "Nouvelle conversation",
+      lastPreview: t("newConversation"),
       lastAt: new Date().toISOString(),
       unreadCount: 0,
     };
@@ -193,7 +189,6 @@ export default function MessagesPage() {
 
   const handleSend = async () => {
     if (!user?.id || !activePeerId || !input.trim()) return;
-    console.log("[send] handleSend", { activePeerId, activeConversationId });
     setSending(true);
     setError(null);
     const optimisticId = `temp-${Date.now()}`;
@@ -210,17 +205,14 @@ export default function MessagesPage() {
     setInput("");
     setMessages((prev) => [...prev, optimistic]);
     try {
-      console.log("[send] inserting to Supabase…");
       const row = await sendMessage(supabase, user.id, activePeerId, contentToSend);
-      console.log("[send] insert ok", row.id);
       setMessages((prev) => prev.map((m) => (m.id === optimisticId ? row : m)));
       setPendingPeer(null);
       await refreshConversations();
     } catch (e) {
-      console.log("[send] insert failed", e);
       setMessages((prev) => prev.filter((m) => m.id !== optimisticId));
       setInput(contentToSend);
-      setError(e instanceof Error ? e.message : "Envoi impossible.");
+      setError(e instanceof Error ? e.message : t("cannotSendMessage"));
     } finally {
       setSending(false);
     }
@@ -229,7 +221,7 @@ export default function MessagesPage() {
   if (!user) {
     return (
       <div className="max-w-md mx-auto rounded-3xl border border-[var(--p-border-light)] bg-white p-8 text-center">
-        <p className="text-sm text-[var(--p-text-muted)]">Connecte-toi pour voir tes messages.</p>
+        <p className="text-sm text-[var(--p-text-muted)]">{t("loginForMessages")}</p>
         <Link href="/" className="mt-4 inline-block text-sm font-semibold text-[#1D9E75] hover:underline">
           Accueil
         </Link>
@@ -240,8 +232,8 @@ export default function MessagesPage() {
   return (
     <div className="flex flex-col gap-4 -mx-2 sm:mx-0">
       <div>
-        <h1 className="text-2xl font-bold text-[var(--p-text)] tracking-tight">Messages</h1>
-        <p className="text-sm text-[var(--p-text-muted)] mt-1">Conversations en temps réel avec les professeurs.</p>
+        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{t("messages")}</h1>
+        <p className="text-sm text-slate-600 mt-1">{t("messagesSubtitle")}</p>
       </div>
 
       {error ? (
@@ -249,9 +241,14 @@ export default function MessagesPage() {
       ) : null}
 
       <div className="flex rounded-2xl border border-[var(--p-border-light)] bg-white overflow-hidden min-h-[520px] max-h-[calc(100dvh-220px)] shadow-sm">
-        <aside className="w-full max-w-[320px] shrink-0 border-r border-[var(--p-border-light)] flex flex-col bg-[#fafaf8]">
-          <div className="p-3 border-b border-[var(--p-border-light)] text-[11px] font-bold uppercase tracking-widest text-[var(--p-text-subtle)]">
-            Conversations
+        <aside
+          className={cn(
+            "shrink-0 border-r border-[var(--p-border-light)] flex flex-col bg-[#fafaf8]",
+            activeConversationId ? "hidden lg:flex lg:w-[320px]" : "flex w-full lg:w-[320px] lg:max-w-[320px]",
+          )}
+        >
+          <div className="p-3 border-b border-[var(--p-border-light)] text-[11px] font-bold uppercase tracking-widest text-slate-700">
+            {t("conversationsLabel")}
           </div>
           <div className="flex-1 overflow-y-auto">
             {loadingList && !displayConversations.length ? (
@@ -259,7 +256,7 @@ export default function MessagesPage() {
                 <Loader2 className="animate-spin text-[#1D9E75]" size={28} />
               </div>
             ) : displayConversations.length === 0 ? (
-              <p className="p-4 text-sm text-[var(--p-text-muted)]">Aucun message pour le moment.</p>
+              <p className="p-4 text-sm text-slate-700">{t("noMessages")}</p>
             ) : (
               displayConversations.map((c) => {
                 const active = c.conversationId === activeConversationId;
@@ -282,12 +279,12 @@ export default function MessagesPage() {
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between gap-2">
-                          <span className="text-sm font-semibold text-[var(--p-text)] truncate">{c.peerLabel}</span>
+                          <span className="text-sm font-semibold text-slate-900 truncate">{c.peerLabel}</span>
                           {c.unreadCount > 0 ? (
-                            <span className="flex h-2 w-2 rounded-full bg-[#1D9E75] shrink-0" title={`${c.unreadCount} non lus`} />
+                            <span className="flex h-2 w-2 rounded-full bg-[#1D9E75] shrink-0" title={`${c.unreadCount} ${t("unreadCountLabel")}`} />
                           ) : null}
                         </div>
-                        <p className="text-xs text-[var(--p-text-muted)] truncate mt-0.5">{c.lastPreview}</p>
+                        <p className="text-xs text-slate-600 truncate mt-0.5">{c.lastPreview}</p>
                       </div>
                     </div>
                   </button>
@@ -297,21 +294,34 @@ export default function MessagesPage() {
           </div>
         </aside>
 
-        <section className="flex-1 flex flex-col min-w-0 bg-white">
+        <section
+          className={cn(
+            "min-w-0 bg-white flex-1 flex flex-col",
+            !activeConversationId ? "hidden lg:flex" : "flex",
+          )}
+        >
           {!activeConversationId ? (
-            <div className="flex-1 flex items-center justify-center p-8 text-sm text-[var(--p-text-muted)]">
-              Sélectionne une conversation.
+            <div className="flex-1 flex items-center justify-center p-8 text-sm text-slate-600">
+              {t("selectConversation")}
             </div>
           ) : (
             <>
-              <header className="px-4 py-3 border-b border-[var(--p-border-light)] flex items-center gap-3 bg-white">
+              <header className="px-4 py-3 border-b border-[var(--p-border-light)] flex items-center gap-2 bg-white">
+                <button
+                  type="button"
+                  className="lg:hidden shrink-0 flex items-center gap-0.5 text-sm font-semibold text-slate-800 -ml-1 px-2 py-1.5 rounded-lg hover:bg-slate-100"
+                  onClick={() => setActiveConversationId(null)}
+                >
+                  <ChevronLeft size={20} strokeWidth={2.25} aria-hidden />
+                  {t("mobileChatBack")}
+                </button>
                 <div className="w-9 h-9 rounded-full bg-[var(--p-light-teal-bg)] text-[var(--p-dark-teal)] flex items-center justify-center text-[11px] font-bold">
                   {initials(displayConversations.find((x) => x.conversationId === activeConversationId)?.peerLabel ?? "?")}
                 </div>
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold text-[var(--p-text)] truncate">
+                  <p className="text-sm font-semibold text-slate-900 truncate">
                     {displayConversations.find((x) => x.conversationId === activeConversationId)?.peerLabel ??
-                      "Conversation"}
+                      t("conversationsLabel")}
                   </p>
                 </div>
               </header>
@@ -329,7 +339,7 @@ export default function MessagesPage() {
                         <div
                           className={cn(
                             "rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed shadow-sm",
-                            mine ? "text-white rounded-br-md" : "text-[var(--p-text)] rounded-bl-md border border-slate-100",
+                            mine ? "text-white rounded-br-md" : "text-slate-800 rounded-bl-md border border-slate-100",
                           )}
                           style={
                             mine
@@ -339,7 +349,7 @@ export default function MessagesPage() {
                         >
                           {m.content}
                         </div>
-                        <span className="text-[10px] text-[var(--p-text-subtle)] px-1">{formatMsgTime(m.created_at)}</span>
+                        <span className="text-[10px] text-slate-500 px-1">{formatMsgTime(m.created_at)}</span>
                       </div>
                     );
                   })
@@ -359,8 +369,8 @@ export default function MessagesPage() {
                       }
                     }}
                     rows={1}
-                    placeholder="Écrire un message…"
-                    className="flex-1 min-h-[40px] max-h-32 resize-none bg-transparent text-sm outline-none text-[var(--p-text)] placeholder:text-[var(--p-text-subtle)]"
+                    placeholder={t("messagePlaceholder")}
+                    className="flex-1 min-h-[40px] max-h-32 resize-none bg-transparent text-sm outline-none text-slate-800 placeholder:text-slate-400"
                   />
                   <button
                     type="button"
@@ -368,7 +378,7 @@ export default function MessagesPage() {
                     onClick={() => void handleSend()}
                     className="shrink-0 h-10 w-10 rounded-full flex items-center justify-center text-white disabled:opacity-40 transition hover:brightness-95"
                     style={{ backgroundColor: "#1D9E75" }}
-                    title="Envoyer"
+                    title={t("sendButtonTitle")}
                   >
                     {sending ? <Loader2 className="animate-spin" size={18} /> : <Send size={18} />}
                   </button>

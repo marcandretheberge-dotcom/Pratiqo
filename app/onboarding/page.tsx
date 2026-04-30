@@ -8,6 +8,7 @@ import { cn } from "../../lib/utils";
 import { useAuth } from "../../components/AuthProvider";
 import { getSupabaseClient } from "../../lib/supabase";
 import { getEnabledDisciplines } from "../../lib/disciplines";
+import { useLocale } from "../../lib/locale-context";
 
 type Step = 1 | 2 | 3 | 4 | "done";
 type Mode = "person" | "online" | "both";
@@ -30,6 +31,7 @@ function OnboardingInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, loading, profile } = useAuth();
+  const { t } = useLocale();
   const roleParam = searchParams.get("role");
   const stripeStatus = searchParams.get("stripe");
   const force = searchParams.get("force") === "true";
@@ -819,9 +821,9 @@ function OnboardingInner() {
               </div>
 
               <p className="text-xs text-[var(--p-text-muted)] leading-relaxed border-t border-slate-200 pt-4">
-                Ces déclarations sont obligatoires conformément aux lois canadiennes sur le travail autonome. Si tu as des questions, consulte nos{" "}
+                {t("loginConsentNote")}{" "}
                 <a href="/legal/cgu" target="_blank" className="text-[#1D9E75] underline font-medium">
-                  CGU
+                  {t("footerTerms")}
                 </a>{" "}
                 ou contacte{" "}
                 <a href="mailto:support@pratiqo.ca" className="text-[#1D9E75] underline font-medium">

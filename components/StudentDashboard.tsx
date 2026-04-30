@@ -8,6 +8,9 @@ import { getSupabaseClient } from "@/lib/supabase";
 import { useLocale } from "@/lib/locale-context";
 import { cn } from "@/lib/utils";
 import { CreditsWidget } from "@/components/CreditsWidget";
+import { ConfirmCancelBookingDialog } from "@/components/ConfirmCancelBookingDialog";
+import { STUDENT_CANCEL_STATUSES, isBookingLessonDateOnOrAfterToday, isLateCancellation } from "@/lib/bookingCancellation";
+import { postCancelBooking } from "@/lib/bookingCancellationClient";
 
 type BookingRow = {
   id: string;
@@ -40,6 +43,7 @@ type BookingWithTeacher = {
   durationMinutes: number | null;
   price: number | null;
   teachingMode: string | null;
+  status: string;
 };
 
 function sortKey(b: { date: string; time: string }) {
@@ -55,6 +59,10 @@ export function StudentDashboard() {
   const [teachers, setTeachers] = useState<{ teacherId: string; name: string; discipline: string; avatarUrl: string | null; lessons: number; teacherUserId: string | null }[]>(
     [],
   );
+  const [reloadKey, setReloadKey] = useState(0);
+  const [cancelBookingId, setCancelBookingId] = useState<string | null>(null);
+  const [cancelBusy, setCancelBusy] = useState(false);
+  const [localFlash, setLocalFlash] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -67,7 +75,7 @@ export function StudentDashboard() {
         .from("bookings")
         .select("id, teacher_id, status, date, time, duration_minutes, price, teaching_mode")
         .eq("student_id", user.id)
-        .in("status", ["confirmed", "booked"])
+        .in("status", [...STUDENT_CANCEL_STATUSES])
         .order("date", { ascending: true })
         .order("time", { ascending: true });
 
@@ -98,12 +106,22 @@ export function StudentDashboard() {
             durationMinutes: typeof r.duration_minutes === "number" ? r.duration_minutes : null,
             price: typeof r.price === "number" ? r.price : r.price != null ? Number(r.price) : null,
             teachingMode: r.teaching_mode ?? null,
+            status: r.status,
           };
         })
+        .filter((row) =>
+          isBookingLessonDateOnOrAfterToday({
+            slot_date: row.date,
+            date: row.date,
+            time_slot: row.time,
+            time: row.time,
+          }),
+        )
         .sort((a, b) => sortKey(a).localeCompare(sortKey(b)));
 
       const teacherCounts = new Map<string, { lessons: number; row: TeacherRow | undefined }>();
       for (const r of rows) {
+        if (r.status !== "confirmed" && r.status !== "booked") continue;
         const cur = teacherCounts.get(r.teacher_id) ?? { lessons: 0, row: teacherMap.get(r.teacher_id) };
         cur.lessons += 1;
         teacherCounts.set(r.teacher_id, cur);
@@ -128,34 +146,84 @@ export function StudentDashboard() {
     return () => {
       cancelled = true;
     };
-  }, [user?.id, t]);
+  }, [user?.id, t, reloadKey]);
 
   const nextLesson = upcoming[0] ?? null;
+  const cancelIsLate = useMemo(() => {
+    if (!cancelBookingId) return false;
+    const b = upcoming.find((x) => x.bookingId === cancelBookingId);
+    if (!b) return false;
+    return isLateCancellation({ slot_date: b.date, date: b.date, time_slot: b.time, time: b.time });
+  }, [cancelBookingId, upcoming]);
+
+  const executeStudentCancel = async (payload: { reason: string; message: string }) => {
+    if (!cancelBookingId || !user?.id) return;
+    setCancelBusy(true);
+    try {
+      const supabase = getSupabaseClient();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) throw new Error(t("bookingSessionExpired"));
+      const res = await postCancelBooking(cancelBookingId, {
+        accessToken: token,
+        reason: payload.reason || undefined,
+        message: payload.message || undefined,
+      });
+      if ("error" in res) throw new Error(res.error);
+      setCancelBookingId(null);
+      setLocalFlash(t("classCancelled"));
+      setReloadKey((k) => k + 1);
+      window.setTimeout(() => setLocalFlash(null), 4000);
+    } catch {
+      setLocalFlash(t("anErrorOccurred"));
+      window.setTimeout(() => setLocalFlash(null), 4000);
+    } finally {
+      setCancelBusy(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
+      {localFlash ? (
+        <div className="rounded-2xl border border-[var(--p-border-light)] bg-white px-4 py-3 text-sm font-semibold text-slate-800 shadow-sm">
+          {localFlash}
+        </div>
+      ) : null}
       {/* NEXT LESSON */}
       <section
         className="rounded-3xl p-6 text-white shadow-[0_24px_80px_rgba(15,110,86,0.20)]"
         style={{ background: "#0F6E56" }}
       >
-        <p className="text-[10px] font-bold uppercase tracking-widest text-white/80">{t("studentNextLesson")}</p>
+        <p className="text-[10px] font-bold uppercase tracking-widest text-white/90">{t("studentNextLesson")}</p>
         {loading ? (
           <div className="mt-4 h-12 rounded-2xl bg-white/10" />
         ) : nextLesson ? (
           <div className="mt-3 space-y-2">
-            <div className="text-lg font-bold leading-tight">
-              {nextLesson.teacherName} {nextLesson.discipline ? <span className="text-white/80">· {nextLesson.discipline}</span> : null}
+            <div className="text-lg font-bold leading-tight text-white">
+              {nextLesson.teacherName}{" "}
+              {nextLesson.discipline ? <span className="font-semibold text-white/95">· {nextLesson.discipline}</span> : null}
             </div>
-            <div className="text-sm text-white/90 flex flex-wrap gap-x-3 gap-y-1">
+            <div className="text-sm text-white/95 flex flex-wrap gap-x-3 gap-y-1">
               <span className="inline-flex items-center gap-2">
-                <CalendarDays size={16} className="text-white/85" />
+                <CalendarDays size={16} className="text-white shrink-0 opacity-95" />
                 {nextLesson.date} · {nextLesson.time}
               </span>
               {nextLesson.durationMinutes ? <span>{nextLesson.durationMinutes} min</span> : null}
               {nextLesson.price != null ? <span>{formatPrice(nextLesson.price)}</span> : null}
-              {nextLesson.teachingMode ? <span className="text-white/70">{nextLesson.teachingMode}</span> : null}
+              {nextLesson.teachingMode ? <span className="text-white/90">{nextLesson.teachingMode}</span> : null}
             </div>
+            {(STUDENT_CANCEL_STATUSES as readonly string[]).includes(nextLesson.status) ? (
+              <button
+                type="button"
+                onClick={() => setCancelBookingId(nextLesson.bookingId)}
+                disabled={cancelBusy}
+                className="mt-3 inline-flex min-h-[44px] w-full items-center justify-center rounded-2xl border-2 border-white/95 bg-transparent px-4 text-sm font-bold text-white hover:bg-white/10 disabled:opacity-60"
+              >
+                {t("cancelClass")}
+              </button>
+            ) : null}
           </div>
         ) : (
           <div className="mt-3 space-y-3">
@@ -175,30 +243,31 @@ export function StudentDashboard() {
 
       {/* UPCOMING */}
       <section className="space-y-3">
-        <h2 className="text-[11px] font-bold uppercase tracking-widest text-[var(--p-text-subtle)]">{t("studentUpcoming")}</h2>
+        <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-700">{t("studentUpcoming")}</h2>
         {loading ? (
-          <div className="rounded-2xl border border-[var(--p-border-light)] bg-white p-6 text-sm text-[var(--p-text-muted)]">
+          <div className="rounded-2xl border border-[var(--p-border-light)] bg-white p-6 text-sm text-slate-600">
             …
           </div>
         ) : upcoming.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-[var(--p-border-light)] bg-white p-6 text-sm text-[var(--p-text-muted)]">
+          <div className="rounded-2xl border border-dashed border-[var(--p-border-light)] bg-white p-6 text-sm text-slate-700">
             {t("studentNoLesson")}
           </div>
         ) : (
           <ul className="space-y-2">
             {upcoming.slice(0, 8).map((b) => (
-              <li key={b.bookingId} className="rounded-2xl border border-[var(--p-border-light)] bg-white px-4 py-3 shadow-sm">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="min-w-0">
+              <li key={b.bookingId} className="rounded-2xl border border-[var(--p-border-light)] bg-white px-4 py-3 shadow-sm space-y-3">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <div className="h-9 w-9 rounded-full bg-[#E1F5EE] text-[#0F6E56] flex items-center justify-center font-bold text-xs">
                         {(b.teacherName || "?").slice(0, 2).toUpperCase()}
                       </div>
                       <div className="min-w-0">
-                        <p className="font-semibold text-[var(--p-text)] truncate">
-                          {b.teacherName} {b.discipline ? <span className="text-[var(--p-text-muted)]">· {b.discipline}</span> : null}
+                        <p className="font-semibold text-slate-900 truncate">
+                          {b.teacherName}{" "}
+                          {b.discipline ? <span className="font-medium text-slate-600">· {b.discipline}</span> : null}
                         </p>
-                        <p className="text-xs text-[var(--p-text-muted)]">
+                        <p className="text-xs font-medium text-slate-600">
                           {b.date} · {b.time} {b.price != null ? `· ${formatPrice(b.price)}` : ""}
                         </p>
                       </div>
@@ -207,12 +276,28 @@ export function StudentDashboard() {
                   {b.teacherUserId ? (
                     <Link
                       href={`/messages?peer=${encodeURIComponent(b.teacherUserId)}`}
-                      className="inline-flex h-9 items-center gap-2 rounded-full border border-[var(--p-border-light)] px-4 text-xs font-bold text-[#1D9E75] hover:bg-[rgba(29,158,117,0.06)]"
+                      className="inline-flex min-h-[44px] sm:min-h-9 w-full sm:w-auto shrink-0 items-center justify-center gap-2 rounded-full border border-[var(--p-border-light)] px-4 text-xs font-bold text-[#1D9E75] hover:bg-[rgba(29,158,117,0.06)]"
                     >
                       <MessageSquare size={16} />
                       Message
                     </Link>
                   ) : null}
+                </div>
+                <div className="flex flex-col gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setCancelBookingId(b.bookingId)}
+                    disabled={cancelBusy}
+                    className="inline-flex min-h-[44px] w-full items-center justify-center rounded-xl border-2 border-rose-600/90 bg-white px-3 text-xs font-bold uppercase tracking-wide text-rose-600 hover:bg-rose-50 disabled:opacity-50"
+                  >
+                    {t("cancelClass")}
+                  </button>
+                  <Link
+                    href="/legal/annulation"
+                    className="block text-center text-[11px] font-bold text-[#1D9E75] hover:underline"
+                  >
+                    {t("viewCancellationPolicy")}
+                  </Link>
                 </div>
               </li>
             ))}
@@ -229,9 +314,9 @@ export function StudentDashboard() {
 
       {/* MY TEACHERS */}
       <section className="space-y-3">
-        <h2 className="text-[11px] font-bold uppercase tracking-widest text-[var(--p-text-subtle)]">{t("studentMyTeachers")}</h2>
+        <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-700">{t("studentMyTeachers")}</h2>
         {loading ? null : teachers.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-[var(--p-border-light)] bg-white p-6 text-sm text-[var(--p-text-muted)]">
+          <div className="rounded-2xl border border-dashed border-[var(--p-border-light)] bg-white p-6 text-sm text-slate-700">
             {t("studentMyTeachers")}
           </div>
         ) : (
@@ -244,10 +329,11 @@ export function StudentDashboard() {
                       {(x.name || "?").slice(0, 2).toUpperCase()}
                     </div>
                     <div className="min-w-0">
-                      <p className="font-semibold text-[var(--p-text)] truncate">
-                        {x.name} {x.discipline ? <span className="text-[var(--p-text-muted)]">· {x.discipline}</span> : null}
+                      <p className="font-semibold text-slate-900 truncate">
+                        {x.name}{" "}
+                        {x.discipline ? <span className="font-medium text-slate-600">· {x.discipline}</span> : null}
                       </p>
-                      <p className="text-xs text-[var(--p-text-muted)]">{x.lessons} cours</p>
+                      <p className="text-xs font-medium text-slate-600">{x.lessons} cours</p>
                     </div>
                   </div>
                   <Link
@@ -266,6 +352,19 @@ export function StudentDashboard() {
           </ul>
         )}
       </section>
+
+      <ConfirmCancelBookingDialog
+        open={Boolean(cancelBookingId)}
+        onClose={() => {
+          if (!cancelBusy) setCancelBookingId(null);
+        }}
+        onConfirm={async (payload) => {
+          await executeStudentCancel(payload);
+        }}
+        busy={cancelBusy}
+        role="student"
+        isLate={cancelIsLate}
+      />
     </div>
   );
 }

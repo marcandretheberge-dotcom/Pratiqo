@@ -33,6 +33,12 @@ export interface Teacher {
     /** Adresse complète après réservation confirmée */
     address?: string;
   };
+  /** Columns on `teachers` — soft geo / market matching (optional on legacy rows). */
+  countryCode?: string | null;
+  timezone?: string | null;
+  currency?: string | null;
+  city?: string | null;
+  region?: string | null;
   isVerified: boolean;
   teachingMode: TeachingMode;
   languages: string[];
@@ -45,6 +51,8 @@ export interface Teacher {
   homeLessonRequiresConfirmation?: boolean;
   /** Si distance élève → prof &gt; 20 km, durée min 2 h */
   homeLessonForce2hOver20km?: boolean;
+  /** Optional YouTube / Vimeo intro video URL (stored as embed-ready URL in teachers.video_url). */
+  videoUrl?: string | null;
   /** Plan profil (profiles.plan), renseigné côté Explore via API — lecture seule marketplace */
   profilePlan?: string | null;
   /** Colonnes `teachers` — confiance progressive */

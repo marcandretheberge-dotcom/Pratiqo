@@ -209,16 +209,15 @@ export async function POST(req: Request) {
     }
 
     const baseUrl = origin;
-    const successUrlRaw = `${baseUrl}/booking/success?session_id={CHECKOUT_SESSION_ID}`;
-    const cancelUrlRaw = `${baseUrl}/booking`;
-    const successUrl = encodeURI(successUrlRaw);
-    const cancelUrl = encodeURI(cancelUrlRaw);
+    // NOTE: Do NOT encodeURI here — encodeURI would percent-encode the { } in the Stripe
+    // placeholder, turning {CHECKOUT_SESSION_ID} into %7BCHECKOUT_SESSION_ID%7D.
+    // Stripe recognises the literal braces and replaces the placeholder on redirect.
+    const successUrl = `${baseUrl}/booking/success?session_id={CHECKOUT_SESSION_ID}`;
+    const cancelUrl = `${baseUrl}/booking`;
 
     console.log("[stripe/checkout] redirect base (STRIPE_CHECKOUT_BASE_URL):", baseUrl);
-    console.log("[stripe/checkout] success_url (raw):", successUrlRaw);
-    console.log("[stripe/checkout] cancel_url (raw):", cancelUrlRaw);
-    console.log("[stripe/checkout] success_url (encoded):", successUrl);
-    console.log("[stripe/checkout] cancel_url (encoded):", cancelUrl);
+    console.log("[stripe/checkout] success_url:", successUrl);
+    console.log("[stripe/checkout] cancel_url:", cancelUrl);
 
     // Commission based on teacher plan (default: free).
     let commissionRate = 0.1;

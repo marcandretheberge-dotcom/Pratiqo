@@ -70,6 +70,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           typeof existing.dashboard === "object" && existing.dashboard !== null
             ? (existing.dashboard as Record<string, unknown>)
             : {};
+        const ext = existing as Record<string, unknown>;
         setProfile({
           id: existing.id,
           name: existing.name,
@@ -77,6 +78,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           role: existing.role,
           photo_url: existing.photo_url,
           ...dash,
+          country_code: ext.country_code ?? null,
+          timezone: ext.timezone ?? null,
+          currency: ext.currency ?? null,
+          city: ext.city ?? null,
+          region: ext.region ?? null,
+          preferred_learning_format: ext.preferred_learning_format ?? null,
         });
       } else {
         const dash = defaultDashboard();

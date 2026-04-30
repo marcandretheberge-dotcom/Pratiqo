@@ -9,12 +9,30 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { DEFAULT_LOCALE, detectLocale, isLocale, type Locale } from "./i18n";
+import { DEFAULT_LOCALE, detectLocale, normalizeLocale, type Locale } from "./i18n/client";
 import { t as translate, type TranslationKey } from "./translations";
-import { formatPrice as formatGeoPrice, type Currency, getDefaultGeoConfig } from "@/lib/geoLocale";
+import {
+  formatPrice as formatGeoPrice,
+  formatDualPrice as formatGeoDualPrice,
+  type Currency,
+  getDefaultGeoConfig,
+} from "@/lib/geoLocale";
 
 const STORAGE_KEY = "pratiqo-locale";
 const STORAGE_KEY_CURRENCY = "pratiqo-currency";
+
+function persistLocale(locale: Locale) {
+  try {
+    localStorage.setItem(STORAGE_KEY, locale);
+  } catch {
+    /* ignore */
+  }
+  try {
+    document.cookie = `${STORAGE_KEY}=${locale}; path=/; max-age=31536000; samesite=lax`;
+  } catch {
+    /* ignore */
+  }
+}
 
 interface LocaleContextType {
   locale: Locale;
@@ -22,7 +40,15 @@ interface LocaleContextType {
   t: (key: TranslationKey) => string;
   currency: Currency;
   setCurrency: (currency: Currency) => void;
+  /** ISO 3166-1 alpha-2 country code detected from IP geo, e.g. "CA", "UY". */
+  countryCode: string | null;
+  /** Single-currency price: uses the user's detected currency. */
   formatPrice: (amount: number) => string;
+  /**
+   * Dual-price string for UY ("$U 1.000 (US$ 25)").
+   * Returns null for all other markets — fall back to formatPrice in that case.
+   */
+  formatDualPrice: (amountUSD: number) => string | null;
 }
 
 const LocaleContext = createContext<LocaleContextType>({
@@ -31,22 +57,26 @@ const LocaleContext = createContext<LocaleContextType>({
   t: (key) => String(key),
   currency: getDefaultGeoConfig().currency,
   setCurrency: () => {},
+  countryCode: null,
   formatPrice: (amount) => String(amount),
+  formatDualPrice: () => null,
 });
 
 export function LocaleProvider({ children }: { children: ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>(DEFAULT_LOCALE);
   const [currency, setCurrencyState] = useState<Currency>(getDefaultGeoConfig().currency);
+  const [countryCode, setCountryCode] = useState<string | null>(null);
 
   useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved && isLocale(saved)) {
-        setLocaleState(saved);
+      const normalizedSaved = normalizeLocale(saved);
+      if (saved) {
+        setLocaleState(normalizedSaved);
       }
       const savedCur = localStorage.getItem(STORAGE_KEY_CURRENCY);
       if (savedCur) setCurrencyState(savedCur as Currency);
-      if (saved && isLocale(saved)) return;
+      if (saved) return;
     } catch {
       /* ignore */
     }
@@ -55,16 +85,19 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
       try {
         const resp = await fetch("/api/geo", { method: "GET" });
         if (resp.ok) {
-          const body = (await resp.json()) as { locale?: Locale; currency?: Currency } | null;
-          if (body?.locale && isLocale(body.locale)) {
-            setLocaleState(body.locale);
-            try {
-              localStorage.setItem(STORAGE_KEY, body.locale);
-            } catch {
-              /* ignore */
-            }
+          const body = (await resp.json()) as {
+            locale?: string | null;
+            currency?: Currency;
+            country?: string;
+          } | null;
+          if (body?.locale) {
+            const nextLocale = normalizeLocale(body.locale);
+            setLocaleState(nextLocale);
+            persistLocale(nextLocale);
           } else {
-            setLocaleState(detectLocale());
+            const detected = detectLocale();
+            setLocaleState(detected);
+            persistLocale(detected);
           }
           if (body?.currency) {
             setCurrencyState(body.currency);
@@ -74,22 +107,24 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
               /* ignore */
             }
           }
+          if (body?.country) {
+            setCountryCode(body.country);
+          }
           return;
         }
       } catch {
         /* ignore */
       }
-      setLocaleState(detectLocale());
+      const detected = detectLocale();
+      setLocaleState(detected);
+      persistLocale(detected);
     })();
   }, []);
 
   const setLocale = useCallback((newLocale: Locale) => {
-    setLocaleState(newLocale);
-    try {
-      localStorage.setItem(STORAGE_KEY, newLocale);
-    } catch {
-      /* ignore */
-    }
+    const normalized = normalizeLocale(newLocale);
+    setLocaleState(normalized);
+    persistLocale(normalized);
   }, []);
 
   const setCurrency = useCallback((newCurrency: Currency) => {
@@ -110,6 +145,13 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
     [currency, locale],
   );
 
+  const formatDualPrice = useCallback(
+    (amountUSD: number) => {
+      return formatGeoDualPrice(amountUSD, currency, locale);
+    },
+    [currency, locale],
+  );
+
   const value = useMemo(
     () => ({
       locale,
@@ -117,9 +159,11 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
       t,
       currency,
       setCurrency,
+      countryCode,
       formatPrice,
+      formatDualPrice,
     }),
-    [locale, setLocale, t, currency, setCurrency, formatPrice],
+    [locale, setLocale, t, currency, setCurrency, countryCode, formatPrice, formatDualPrice],
   );
 
   return <LocaleContext.Provider value={value}>{children}</LocaleContext.Provider>;

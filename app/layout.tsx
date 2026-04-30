@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { Providers } from "./providers";
+import { TeacherRecruitStrip } from "@/components/TeacherRecruitStrip";
 
 const inter = localFont({
   src: "../public/fonts/inter.woff2",
@@ -24,6 +25,12 @@ export const metadata: Metadata = {
     "cours de musique",
     "cours de langue",
     "professeur particulier",
+    "music teacher Canada",
+    "language teacher Canada",
+    "maestro de música México",
+    "profesor de idiomas",
+    "clases particulares Quebec",
+    "online tutor",
   ],
   openGraph: {
     title: "Pratiqo — Trouve ton prof idéal",
@@ -33,6 +40,21 @@ export const metadata: Metadata = {
     locale: "fr_CA",
     type: "website",
     images: [{ url: "/og-image.png", width: 1200, height: 630 }],
+  },
+  // hreflang: all locales currently served at the same URL (locale is switched
+  // client-side). Will be updated to subpath URLs once locale routing launches:
+  //   pratiqo.ca/en/  →  en-CA
+  //   pratiqo.ca/mx/  →  es (Mexico / LatAm)
+  //   pratiqo.ca/uy/  →  es-UY (Uruguay)
+  alternates: {
+    canonical: "https://pratiqo.ca",
+    languages: {
+      fr: "https://pratiqo.ca",
+      en: "https://pratiqo.ca",
+      es:      "https://pratiqo.ca",
+      "es-UY": "https://pratiqo.ca",
+      "x-default": "https://pratiqo.ca",
+    },
   },
   other: {
     copyright: "© 2026 Pratiqo inc.",
@@ -60,6 +82,7 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col">
         <Providers>{children}</Providers>
+        <TeacherRecruitStrip />
       </body>
     </html>
   );

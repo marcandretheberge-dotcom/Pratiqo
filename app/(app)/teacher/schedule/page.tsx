@@ -8,7 +8,7 @@ import { getSupabaseClient } from "../../../../lib/supabase";
 import { cn } from "../../../../lib/utils";
 import { formatLocalISODate } from "../../../../lib/slots";
 import { useLocale } from "../../../../lib/locale-context";
-import { localeToBcp47 } from "../../../../lib/i18n";
+import { localeToBcp47 } from "../../../../lib/i18n/types";
 import type { TranslationKey } from "../../../../lib/translations";
 
 const DAYS = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"] as const;

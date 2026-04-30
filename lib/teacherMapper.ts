@@ -18,7 +18,7 @@ export type TeacherRow = {
   price_per_lesson: number;
   monthly_subscription: number | null;
   bio: string;
-  image_url: string;
+  image_url: string | null;
   availability: unknown;
   location: unknown;
   is_verified: boolean;
@@ -36,6 +36,12 @@ export type TeacherRow = {
   diploma_verified?: boolean | null;
   phone_verified?: boolean | null;
   verification_notes?: string | null;
+  video_url?: string | null;
+  country_code?: string | null;
+  timezone?: string | null;
+  currency?: string | null;
+  city?: string | null;
+  region?: string | null;
 };
 
 export function teacherRowToTeacher(row: TeacherRow): Teacher {
@@ -52,7 +58,7 @@ export function teacherRowToTeacher(row: TeacherRow): Teacher {
     pricePerLesson: Number(row.price_per_lesson),
     monthlySubscription: row.monthly_subscription != null ? Number(row.monthly_subscription) : undefined,
     bio: row.bio,
-    imageUrl: row.image_url,
+    imageUrl: row.image_url ?? "",
     availability: Array.isArray(row.availability) ? (row.availability as string[]) : [],
     location: {
       lat: Number(loc.lat ?? 0),
@@ -78,7 +84,13 @@ export function teacherRowToTeacher(row: TeacherRow): Teacher {
     identityVerified: Boolean(row.identity_verified),
     diplomaVerified: Boolean(row.diploma_verified),
     phoneVerified: Boolean(row.phone_verified),
+    videoUrl: row.video_url ?? null,
     additionalDisciplines: undefined,
+    countryCode: row.country_code ?? undefined,
+    timezone: row.timezone ?? undefined,
+    currency: row.currency ?? undefined,
+    city: row.city ?? undefined,
+    region: row.region ?? undefined,
   };
 }
 
@@ -123,5 +135,10 @@ export function teacherToRow(t: Teacher): Record<string, unknown> {
     identity_verified: t.identityVerified ?? false,
     diploma_verified: t.diplomaVerified ?? false,
     phone_verified: t.phoneVerified ?? false,
+    country_code: t.countryCode ?? null,
+    timezone: t.timezone ?? null,
+    currency: t.currency ?? null,
+    city: t.city ?? null,
+    region: t.region ?? null,
   };
 }

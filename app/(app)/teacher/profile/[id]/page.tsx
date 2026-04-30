@@ -1,177 +1,194 @@
-"use client";
-
-import React, { useCallback, useEffect, useState } from "react";
-import type { Teacher } from "../../../../../types";
-import { getSupabaseClient } from "../../../../../lib/supabase";
+import type { Metadata } from "next";
+import { cache } from "react";
+import { getSupabaseAdmin } from "../../../../../lib/supabaseAdmin";
 import {
-  fetchTeacherDisciplinesMap,
-  mergeTeachersWithDisciplines,
-} from "../../../../../lib/teacherDisciplines";
-import { teacherRowToTeacher, type TeacherRow } from "../../../../../lib/teacherMapper";
-import { TeacherProfile } from "../../../../../components/TeacherProfile";
-import { BookingModal, type BookingInitialLessonKind } from "../../../../../components/BookingModal";
-import { useRouter } from "next/navigation";
-import { haversineDistance } from "../../../../../lib/geo";
-import { hasConfirmedBooking } from "../../../../../lib/maps";
-import { useAuth } from "../../../../../components/AuthProvider";
+  buildTeacherSeoTitle,
+  buildTeacherSeoDescription,
+  buildJobTitle,
+  getSchemaEntityType,
+} from "../../../../../lib/constants/vocabulary";
+import { usdToUyu } from "../../../../../lib/geoLocale";
+import TeacherProfileClient from "./TeacherProfileClient";
 
-export default function TeacherProfilePage({ params }: { params: { id: string } }) {
-  const router = useRouter();
-  const { user } = useAuth();
-  const [teacher, setTeacher] = useState<Teacher | null>(null);
-  const [embeddedPlan, setEmbeddedPlan] = useState<{ plan: string | null; loading: boolean }>({
-    plan: null,
-    loading: true,
-  });
-  const [booking, setBooking] = useState(false);
-  const [bookingInitialKind, setBookingInitialKind] = useState<BookingInitialLessonKind>("standard");
-  const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(null);
-  const [geoDeniedOrUnavailable, setGeoDeniedOrUnavailable] = useState(false);
-  const [studioMapHasConfirmedBooking, setStudioMapHasConfirmedBooking] = useState(false);
+const BASE_URL = "https://pratiqo.ca";
 
-  useEffect(() => {
-    if (!teacher?.id || !user?.id) {
-      setStudioMapHasConfirmedBooking(false);
-      return;
-    }
-    let cancelled = false;
-    void hasConfirmedBooking(user.id, teacher.id).then((ok) => {
-      if (!cancelled) setStudioMapHasConfirmedBooking(ok);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [teacher?.id, user?.id]);
+// Minimal row shape — server-only, never imported on the client.
+type TeacherMetaRow = {
+  name: string;
+  discipline: string;
+  category: string;
+  bio: string;
+  image_url: string;
+  rating: number;
+  reviews: number;
+  price_per_lesson: number;
+  location: {
+    neighborhood?: string;
+    addressLocality?: string;
+    /** ISO 3166-1 alpha-2 country code stored with the teacher's location. */
+    addressCountry?: string;
+  } | null;
+};
 
-  useEffect(() => {
-    if (!teacher?.id) return;
-    let cancelled = false;
-    setEmbeddedPlan({ plan: null, loading: true });
-    void fetch(`/api/teachers/plan?teacherId=${encodeURIComponent(teacher.id)}`)
-      .then((r) => r.json())
-      .then((j: { plan?: string }) => {
-        if (cancelled) return;
-        setEmbeddedPlan({ plan: j.plan ?? "free", loading: false });
-      })
-      .catch(() => {
-        if (!cancelled) setEmbeddedPlan({ plan: "free", loading: false });
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [teacher?.id]);
-
-  useEffect(() => {
-    const supabase = getSupabaseClient();
-
-    const load = async () => {
-      const { data, error } = await supabase.from("teachers").select("*").eq("id", params.id).maybeSingle();
-      if (error || !data) {
-        setTeacher(null);
-        return;
-      }
-      const base = teacherRowToTeacher(data as TeacherRow);
-      const discMap = await fetchTeacherDisciplinesMap(supabase, [params.id]);
-      setTeacher(mergeTeachersWithDisciplines([base], discMap)[0] ?? base);
-    };
-
-    void load();
-
-    const channel = supabase
-      .channel(`teacher-${params.id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "teachers",
-          filter: `id=eq.${params.id}`,
-        },
-        () => {
-          void load();
-        },
-      )
-      .subscribe();
-
-    return () => {
-      void supabase.removeChannel(channel);
-    };
-  }, [params.id]);
-
-  const requestGeo = useCallback(() => {
-    if (!("geolocation" in navigator)) {
-      setGeoDeniedOrUnavailable(true);
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setGeo({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-        setGeoDeniedOrUnavailable(false);
-      },
-      () => {
-        setGeo(null);
-        setGeoDeniedOrUnavailable(true);
-      },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 },
-    );
-  }, []);
-
-  const distanceKm =
-    !teacher || !geo || geoDeniedOrUnavailable
-      ? null
-      : haversineDistance(geo.lat, geo.lng, teacher.location.lat, teacher.location.lng);
-
-  if (!teacher) {
-    return (
-      <div className="bg-white border border-slate-200 rounded-3xl p-8">
-        <p className="text-sm font-semibold text-slate-600">Professeur introuvable.</p>
-      </div>
-    );
+// `cache` deduplicates the DB call within a single request so
+// generateMetadata and the page function share one round-trip.
+const getTeacherMeta = cache(async (id: string): Promise<TeacherMetaRow | null> => {
+  try {
+    const supabase = getSupabaseAdmin();
+    const { data, error } = await supabase
+      .from("teachers")
+      .select("name, discipline, category, bio, image_url, rating, reviews, price_per_lesson, location")
+      .eq("id", id)
+      .maybeSingle();
+    if (error || !data) return null;
+    return data as TeacherMetaRow;
+  } catch {
+    return null;
   }
+});
+
+// ── generateMetadata ──────────────────────────────────────────────────────────
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const teacher = await getTeacherMeta(id);
+
+  if (!teacher) return { title: "Professeur | Pratiqo" };
+
+  const countryCode = teacher.location?.addressCountry ?? undefined;
+  const isUruguay = countryCode === "UY";
+
+  const title = buildTeacherSeoTitle(
+    teacher.name,
+    teacher.discipline,
+    teacher.category ?? "",
+    isUruguay ? "es" : "fr",
+    teacher.location?.addressLocality,
+    countryCode,
+  );
+
+  // For UY teachers: append peso price so local parents see it in the SERP snippet.
+  let description = buildTeacherSeoDescription(
+    teacher.name,
+    teacher.discipline,
+    teacher.category ?? "",
+    teacher.bio,
+    isUruguay ? "es" : "fr",
+    countryCode,
+  );
+
+  if (isUruguay && teacher.price_per_lesson) {
+    const priceUSD = Math.round(Number(teacher.price_per_lesson));
+    const priceUYU = usdToUyu(priceUSD);
+    const priceSuffix = ` — Desde $U ${priceUYU.toLocaleString("es-UY")} / hora (US$ ${priceUSD}).`;
+    if (description.length + priceSuffix.length <= 160) {
+      description = description.trimEnd().replace(/\.$/, "") + priceSuffix;
+    }
+  }
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: `${BASE_URL}/teacher/profile/${encodeURIComponent(id)}`,
+      images: teacher.image_url ? [{ url: teacher.image_url, width: 400, height: 400 }] : [],
+      type: "profile",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: teacher.image_url ? [teacher.image_url] : [],
+    },
+  };
+}
+
+// ── Page ─────────────────────────────────────────────────────────────────────
+
+export default async function TeacherProfilePage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const teacher = await getTeacherMeta(id);
+
+  const locality =
+    (teacher?.location as { neighborhood?: string } | null)?.neighborhood ?? "Saint-Georges";
+
+  // ── JSON-LD: Person + AggregateRating + Offer ────────────────────────────
+  const entityType = teacher ? getSchemaEntityType(teacher.category ?? "") : null;
+
+  const jsonLd = teacher
+    ? {
+        "@context": "https://schema.org",
+        "@type": "Person",
+        name: teacher.name,
+        jobTitle: buildJobTitle(teacher.discipline, teacher.category ?? ""),
+        knowsAbout: [teacher.discipline, teacher.category].filter(Boolean),
+        hasOccupation: {
+          "@type": "Occupation",
+          name: buildJobTitle(teacher.discipline, teacher.category ?? ""),
+          occupationLocation: {
+            "@type": "City",
+            name: locality,
+          },
+        },
+        worksFor: {
+          "@type": entityType ?? "EducationalOrganization",
+          name: "Pratiqo",
+          url: BASE_URL,
+        },
+        ...(teacher.bio ? { description: teacher.bio.slice(0, 500) } : {}),
+        ...(teacher.image_url ? { image: teacher.image_url } : {}),
+        url: `${BASE_URL}/teacher/profile/${encodeURIComponent(id)}`,
+        address: {
+          "@type": "PostalAddress",
+          addressLocality: locality,
+          addressRegion: "QC",
+          addressCountry: "CA",
+        },
+        ...(teacher.price_per_lesson
+          ? {
+              makesOffer: {
+                "@type": "Offer",
+                description: `Cours de ${teacher.discipline}`,
+                price: String(Math.round(Number(teacher.price_per_lesson))),
+                priceCurrency: "CAD",
+                availability: "https://schema.org/InStock",
+              },
+            }
+          : {}),
+        ...(teacher.reviews > 0
+          ? {
+              aggregateRating: {
+                "@type": "AggregateRating",
+                ratingValue: String(teacher.rating),
+                reviewCount: String(teacher.reviews),
+                bestRating: "5",
+                worstRating: "1",
+              },
+            }
+          : {}),
+      }
+    : null;
 
   return (
     <>
-      {!geo ? (
-        <div className="fixed bottom-6 left-1/2 z-[220] -translate-x-1/2 px-4">
-          <button
-            type="button"
-            onClick={requestGeo}
-            className="rounded-full border border-[#E8E6DF] bg-white px-4 py-2.5 text-sm font-semibold text-[#0F6E56] shadow-lg hover:bg-[#FAFCFB]"
-          >
-            {geoDeniedOrUnavailable
-              ? "Réessayer la localisation"
-              : "Activer la localisation pour voir la distance"}
-          </button>
-        </div>
-      ) : null}
-      <TeacherProfile
-        teacher={teacher}
-        embeddedPlan={embeddedPlan}
-        showGoogleStudioMap
-        studioMapHasConfirmedBooking={studioMapHasConfirmedBooking}
-        onClose={() => router.push("/teacher/profile")}
-        onBook={(kind) => {
-          setBookingInitialKind(kind);
-          setBooking(true);
-        }}
-        onSendMessage={
-          teacher.userId
-            ? () => router.push(`/messages?peer=${encodeURIComponent(teacher.userId!)}`)
-            : undefined
-        }
-        distanceKm={geoDeniedOrUnavailable ? null : distanceKm}
-      />
-      {booking && (
-        <BookingModal
-          key={`${teacher.id}-${bookingInitialKind}`}
-          teacher={teacher}
-          initialLessonKind={bookingInitialKind}
-          onClose={() => {
-            setBooking(false);
-            setBookingInitialKind("standard");
-          }}
+      {jsonLd ? (
+        <script
+          type="application/ld+json"
+          // JSON.stringify produces valid JSON; no additional escaping needed.
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
-      )}
+      ) : null}
+      <TeacherProfileClient id={id} />
     </>
   );
 }

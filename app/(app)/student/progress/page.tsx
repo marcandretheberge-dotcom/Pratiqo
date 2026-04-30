@@ -33,10 +33,7 @@ export default function StudentProgressPage() {
         supabase.from("assignments").select("id, title, due_date, status").eq("student_id", user.id).order("created_at", { ascending: false }),
         // `watch_points` may not exist in all DBs. We try and fall back to achievements.
         supabase.from("student_progress").select("watch_points, achievements").eq("student_id", user.id).order("created_at", { ascending: false }).limit(20),
-      ]).catch((e) => {
-        console.error(e);
-        return [{ data: null }, { count: 0 }, { data: [] }, { data: [] }] as any;
-      });
+      ]).catch(() => [{ data: null }, { count: 0 }, { data: [] }, { data: [] }] as any);
 
       if (cancelled) return;
       const p = profile as { companion_type?: string | null; companion_chosen?: boolean | null } | null;
@@ -86,7 +83,7 @@ export default function StudentProgressPage() {
 
   const stageName = useMemo(() => {
     if (!stage) return "";
-    if (locale === "en-CA") return stage.nameEn;
+    if (locale === "en") return stage.nameEn;
     if (locale === "es") return stage.nameEs;
     return stage.name;
   }, [stage, locale]);
@@ -94,7 +91,7 @@ export default function StudentProgressPage() {
   const companionName = useMemo(() => {
     if (!companionType) return "";
     const c = COMPANIONS[companionType];
-    if (locale === "en-CA") return c.nameEn;
+    if (locale === "en") return c.nameEn;
     if (locale === "es") return c.nameEs;
     return c.name;
   }, [companionType, locale]);
@@ -143,12 +140,12 @@ export default function StudentProgressPage() {
 
       {/* HOMEWORK */}
       <section className="space-y-3">
-        <h2 className="text-[11px] font-bold uppercase tracking-widest text-[var(--p-text-subtle)]">{t("homeworkTitle")}</h2>
+        <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-700">{t("homeworkTitle")}</h2>
 
         {loading ? (
-          <div className="rounded-2xl border border-[var(--p-border-light)] bg-white p-6 text-sm text-[var(--p-text-muted)]">…</div>
+          <div className="rounded-2xl border border-[var(--p-border-light)] bg-white p-6 text-sm text-slate-600">…</div>
         ) : homework.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-[var(--p-border-light)] bg-white p-6 text-sm text-[var(--p-text-muted)]">
+          <div className="rounded-2xl border border-dashed border-[var(--p-border-light)] bg-white p-6 text-sm text-slate-700">
             Aucun devoir en attente 🎉
           </div>
         ) : (
@@ -177,7 +174,7 @@ export default function StudentProgressPage() {
       {/* WATCH POINTS */}
       {watchPoints.length > 0 ? (
         <section className="space-y-3">
-          <h2 className="text-[11px] font-bold uppercase tracking-widest text-[var(--p-text-subtle)]">{t("watchPoints")}</h2>
+          <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-700">{t("watchPoints")}</h2>
           <ul className="space-y-2">
             {watchPoints.map((w, i) => (
               <li
@@ -185,7 +182,7 @@ export default function StudentProgressPage() {
                 className="rounded-2xl border border-[var(--p-border-light)] bg-white p-4 shadow-sm"
                 style={{ borderLeft: "4px solid #BA7517" }}
               >
-                <p className="text-sm text-[var(--p-text)]">{w}</p>
+                <p className="text-sm text-slate-800 font-medium">{w}</p>
               </li>
             ))}
           </ul>
@@ -217,11 +214,11 @@ function HomeworkRow({
           {item.completed ? <Check size={16} /> : null}
         </span>
         <span className="min-w-0 flex-1">
-          <span className={item.completed ? "block text-sm text-[var(--p-text)] line-through opacity-70" : "block text-sm text-[var(--p-text)]"}>
+          <span className={item.completed ? "block text-sm text-slate-600 line-through" : "block text-sm font-medium text-slate-900"}>
             {item.title}
           </span>
           {item.dueDate ? (
-            <span className={cn("block text-xs", dueSoon ? "text-[#BA7517] font-semibold" : "text-[var(--p-text-muted)]")}>
+            <span className={cn("block text-xs mt-0.5", dueSoon ? "text-[#BA7517] font-semibold" : "text-slate-600 font-medium")}>
               {item.dueDate}
             </span>
           ) : null}

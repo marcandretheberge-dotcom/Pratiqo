@@ -21,7 +21,7 @@ import { useAuth } from "./AuthProvider";
 import { getSupabaseClient } from "../lib/supabase";
 import { haversineDistance } from "../lib/geo";
 import { formatLocalISODate, periodForSlot } from "../lib/slots";
-import { localeToBcp47 } from "../lib/i18n";
+import { localeToBcp47 } from "../lib/i18n/types";
 import { useLocale } from "../lib/locale-context";
 
 export type BookingInitialLessonKind = "standard" | "home";
@@ -235,9 +235,9 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
 
   const slotsByPeriod = useMemo(() => {
     const groups: { key: "matin" | "apresmidi" | "soir"; label: string; emoji: string; items: string[] }[] = [
-      { key: "matin", label: "Matin", emoji: "🌅", items: [] },
-      { key: "apresmidi", label: "Après-midi", emoji: "☀️", items: [] },
-      { key: "soir", label: "Soir", emoji: "🌙", items: [] },
+      { key: "matin", label: t("morning"), emoji: "🌅", items: [] },
+      { key: "apresmidi", label: t("afternoon"), emoji: "☀️", items: [] },
+      { key: "soir", label: t("evening"), emoji: "🌙", items: [] },
     ];
     for (const s of slots) {
       const p = periodForSlot(s);

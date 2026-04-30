@@ -3,14 +3,9 @@
 import React from "react";
 import Link from "next/link";
 import { cn } from "../lib/utils";
+import { useLocale } from "@/lib/locale-context";
 
 export type LegalTocItem = { id: string; label: string };
-
-const LEGAL_LINKS = [
-  { href: "/legal/cgu", label: "CGU" },
-  { href: "/legal/confidentialite", label: "Confidentialité" },
-  { href: "/legal/annulation", label: "Annulation" },
-] as const;
 
 export function LegalLayout({
   title,
@@ -25,6 +20,14 @@ export function LegalLayout({
   currentPath: "/legal/cgu" | "/legal/confidentialite" | "/legal/annulation";
   children: React.ReactNode;
 }) {
+  const { t } = useLocale();
+
+  const LEGAL_LINKS = [
+    { href: "/legal/cgu", label: t("footerTerms") },
+    { href: "/legal/confidentialite", label: t("footerPrivacy") },
+    { href: "/legal/annulation", label: t("footerCancellation") },
+  ] as const;
+
   return (
     <div className="max-w-[720px] mx-auto pb-16">
       <div
@@ -68,7 +71,7 @@ export function LegalLayout({
       <article className="space-y-10 text-[15px] leading-relaxed text-[var(--p-text)]">{children}</article>
 
       <footer className="mt-14 pt-8 border-t border-[var(--p-border-light)]">
-        <p className="text-[12px] text-[var(--p-text-muted)] mb-2">Autres documents</p>
+        <p className="text-[12px] text-[var(--p-text-muted)] mb-2">{t("footerOtherDocs")}</p>
         <div className="flex flex-wrap gap-x-4 gap-y-1 text-[13px]">
           {LEGAL_LINKS.map((l) => (
             <Link

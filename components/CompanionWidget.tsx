@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import type { Locale } from "@/lib/i18n";
+import type { Locale } from "@/lib/i18n/types";
 import type { CompanionType } from "@/lib/companions";
 import { COMPANIONS, getCompanionStage, getLessonsToNextStage, getNextStage, getProgressPercent } from "@/lib/companions";
 import { useLocale } from "@/lib/locale-context";
@@ -22,7 +22,7 @@ export function CompanionWidget({
   const next = getNextStage(companionType, lessonCount);
   const remaining = getLessonsToNextStage(companionType, lessonCount);
 
-  const stageName = locale === "en-CA" ? stage.nameEn : locale === "es" ? stage.nameEs : stage.name;
+  const stageName = locale === "en" ? stage.nameEn : locale === "es" ? stage.nameEs : stage.name;
 
   const gradient =
     companionType === "phoenix"

@@ -8,13 +8,14 @@
   --p-light-teal-bg: #e1f5ee;
   --p-mint-accent: #9fe1cb;
 
+  /* Light surfaces: primary / secondary / muted / placeholder-friendly hierarchy */
   --p-text: #2c2c2a;
-  --p-text-muted: #6b6760;
-  --p-text-subtle: #908d84;
+  --p-text-muted: #4b5563;
+  --p-text-subtle: #6b7280;
 
-  /* Semantic aliases (WCAG AA compliant) */
-  --color-text-secondary: #6B6A65;  /* ~5.5:1 on white (WCAG AA) */
-  --color-text-muted: #555550;      /* ~7.5:1 on white (WCAG AA) */
+  /* Semantic aliases (WCAG AA on white / cream) */
+  --color-text-secondary: #4b5563;
+  --color-text-muted: #374151;
   --color-link-on-white: #0F6E56;   /* ~6.2:1 on white (WCAG AA) */
 
   --p-border-light: #d3d1c7;

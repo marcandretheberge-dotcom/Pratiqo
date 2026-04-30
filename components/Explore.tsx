@@ -35,11 +35,11 @@ import { getVerificationLevel } from "../lib/verification";
 import { useAuth } from "./AuthProvider";
 import { useRouter } from "next/navigation";
 import { VerificationBadge } from "./VerificationBadge";
+import { VerifiedBadge } from "./VerifiedBadge";
 import { useLocale } from "@/lib/locale-context";
-
-/** Colonnes nécessaires au mapper + cours à domicile (évite les réponses PostgREST incomplètes). */
-const TEACHERS_SELECT =
-  "id, user_id, name, discipline, category, rating, reviews, price_per_lesson, monthly_subscription, bio, image_url, availability, location, is_verified, teaching_mode, languages, levels, home_lesson_enabled, home_lesson_price, home_lesson_radius_km, home_lesson_min_duration, home_lesson_requires_confirmation, home_lesson_force_2h_over_20km, verification_level, identity_verified, diploma_verified, phone_verified";
+import { TEACHERS_LIST_SELECT } from "@/lib/supabase/queries";
+import { TeacherAvatar } from "@/components/TeacherAvatar";
+import { teacherPrefCompareStudents, type StudentLocationPrefs } from "@/lib/studentLocationSearch";
 
 function verificationSortKey(t: Teacher) {
   return getVerificationLevel({
@@ -54,7 +54,7 @@ function verificationSortKey(t: Teacher) {
 function compareExploreTeachers(
   a: { teacher: Teacher; distanceKm: number | null },
   b: { teacher: Teacher; distanceKm: number | null },
-  opts: { geo: boolean; sortMode: "default" | "reliable" },
+  opts: { geo: boolean; sortMode: "default" | "reliable"; studentPrefs: StudentLocationPrefs | null },
 ) {
   const la = verificationSortKey(a.teacher);
   const lb = verificationSortKey(b.teacher);
@@ -65,6 +65,8 @@ function compareExploreTeachers(
     if (da !== db) return da - db;
   }
   if (opts.sortMode === "default" && lb !== la) return lb - la;
+  const prefDelta = teacherPrefCompareStudents(a.teacher, b.teacher, opts.studentPrefs);
+  if (prefDelta !== 0) return prefDelta;
   return (b.teacher.rating ?? 0) - (a.teacher.rating ?? 0);
 }
 
@@ -83,9 +85,53 @@ export function Explore({
   searchQuery: string;
   onSearchChange: (q: string) => void;
 }) {
-  const { formatPrice } = useLocale();
+  const { user } = useAuth();
+  const { formatPrice, t } = useLocale();
+  const [studentPrefs, setStudentPrefs] = useState<StudentLocationPrefs | null>(null);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const supabase = getSupabaseClient();
+    let cancelled = false;
+    const loadPrefs = async () => {
+      if (!user?.id) {
+        setStudentPrefs(null);
+        return;
+      }
+      const { data } = await supabase
+        .from("profiles")
+        .select("country_code, timezone, currency, city, region, preferred_learning_format")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (!cancelled) {
+        const row = data as {
+          country_code?: string | null;
+          timezone?: string | null;
+          currency?: string | null;
+          city?: string | null;
+          region?: string | null;
+          preferred_learning_format?: string | null;
+        } | null;
+        setStudentPrefs(
+          row
+            ? {
+                country_code: row.country_code ?? null,
+                timezone: row.timezone ?? null,
+                currency: row.currency ?? null,
+                city: row.city ?? null,
+                region: row.region ?? null,
+                preferred_learning_format: row.preferred_learning_format ?? null,
+              }
+            : null,
+        );
+      }
+    };
+    void loadPrefs();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [teachingMode, setTeachingMode] = useState<TeachingMode | "all">("all");
   const [onlyVerified, setOnlyVerified] = useState(false);
@@ -153,7 +199,7 @@ export function Explore({
 
       const { data, error } = await supabase
         .from("teachers")
-        .select(TEACHERS_SELECT)
+        .select(TEACHERS_LIST_SELECT)
         .order("verification_level", { ascending: false })
         .order("rating", { ascending: false });
       if (error || !data?.length) {
@@ -193,7 +239,7 @@ export function Explore({
   const requestGeolocation = () => {
     setGeoError(null);
     if (!("geolocation" in navigator)) {
-      setGeoError("La géolocalisation n'est pas disponible sur ce navigateur.");
+      setGeoError(t("geoNotAvailable"));
       return;
     }
     setGeoLoading(true);
@@ -205,18 +251,18 @@ export function Explore({
       (err) => {
         setGeoLoading(false);
         if (err.code === err.PERMISSION_DENIED) {
-          setGeoError("Permission GPS refusée. Autorise la localisation puis réessaie.");
+          setGeoError(t("geoPermissionDenied"));
           setGeo(null);
           return;
         }
-        setGeoError("Impossible de récupérer votre position.");
+        setGeoError(t("geoPositionError"));
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
     );
   };
 
   const filteredTeachers = useMemo(() => {
-    const sortOpts = (geo: boolean) => ({ geo, sortMode } as const);
+    const sortOpts = (geo: boolean) => ({ geo, sortMode, studentPrefs } as const);
     const base = teachers
       .filter((t) => {
         const matchesCategory = teacherMatchesExploreCategory(t, selectedCategory);
@@ -265,7 +311,7 @@ export function Explore({
     withinRadius.sort((a, b) => compareExploreTeachers(a, b, sortOpts(Boolean(geo))));
 
     return withinRadius;
-  }, [teachers, selectedCategory, searchQuery, teachingMode, onlyVerified, geo, radiusFilter, sortMode]);
+  }, [teachers, selectedCategory, searchQuery, teachingMode, onlyVerified, geo, radiusFilter, sortMode, studentPrefs]);
 
   const filteredGroupSessions = useMemo(() => {
     return groupSessions.filter((s) => {
@@ -283,12 +329,12 @@ export function Explore({
     <div className="space-y-6">
       <section className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <p className="ds-label text-[var(--p-text-subtle)]">Marketplace</p>
+          <p className="ds-label text-[var(--p-text-subtle)]">{t("exploreMarketplaceLabel")}</p>
           <h2 className="text-[32px] sm:text-[40px] leading-[1.1] text-[var(--p-text)]">
             Recherche d’élève par géolocalisation
           </h2>
           <p className="text-[14px] text-[var(--p-text-muted)] max-w-[560px]">
-            Active votre position pour voir en priorité les professeurs près de toi.
+            {t("exploreSubtitle")}
           </p>
           <div className="flex flex-wrap gap-2 mt-4">
             <button
@@ -301,7 +347,7 @@ export function Explore({
                   : "bg-[var(--p-surface)] text-[var(--p-text-muted)] border-[var(--p-border-light)] hover:border-[#1D9E75]/40",
               )}
             >
-              Cours individuels
+              {t("individualCourses")}
             </button>
             {isEnabled("group_sessions") ? (
               <button
@@ -314,7 +360,7 @@ export function Explore({
                     : "bg-[var(--p-surface)] text-[var(--p-text-muted)] border-[var(--p-border-light)] hover:border-[#1D9E75]/40",
                 )}
               >
-                <UsersRound size={16} /> Cours de groupe
+                <UsersRound size={16} /> {t("groupClasses")}
               </button>
             ) : null}
           </div>
@@ -327,8 +373,8 @@ export function Explore({
               onChange={(e) => setSortMode(e.target.value === "reliable" ? "reliable" : "default")}
               className="h-10 rounded-[14px] border border-[var(--p-border-light)] bg-white px-3 text-sm font-medium text-[var(--p-text)] outline-none focus:border-[#1D9E75]"
             >
-              <option value="default">Pertinence</option>
-              <option value="reliable">Les plus fiables</option>
+              <option value="default">{t("sortRelevance")}</option>
+              <option value="reliable">{t("sortMostReliable")}</option>
             </select>
           </label>
           <button
@@ -340,10 +386,10 @@ export function Explore({
                 : "bg-[#1D9E75] text-white hover:brightness-[0.98]",
             )}
             disabled={geoLoading}
-            title="Déclencher le GPS"
+            title={t("useMyLocation")}
           >
             <MapPin size={14} />
-            {geoLoading ? "Localisation…" : geo ? "Position active" : "Utiliser ma position"}
+            {geoLoading ? t("locating") : geo ? t("locationActive") : t("useMyLocation")}
           </button>
           <button
             onClick={() => setShowFilters(!showFilters)}
@@ -354,11 +400,11 @@ export function Explore({
                 : "bg-white border-[var(--p-border-light)] text-[var(--p-text)] hover:bg-[rgba(225,245,238,0.6)]",
             )}
           >
-            <Filter size={14} /> Filtres
+            <Filter size={14} /> {t("filtersButton")}
           </button>
           <div className="hidden sm:flex items-center gap-2 ds-pill">
             <CheckCircle2 size={12} />{" "}
-            {exploreTab === "cours" ? filteredTeachers.length : filteredGroupSessions.length} disponibles
+            {exploreTab === "cours" ? filteredTeachers.length : filteredGroupSessions.length} {t("countAvailable")}
           </div>
         </div>
       </section>
@@ -392,10 +438,10 @@ export function Explore({
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder={
             exploreTab === "groupe"
-              ? "Rechercher un cours ou un professeur…"
-              : "Rechercher un prof (nom, discipline)..."
+              ? t("searchGroupPlaceholder")
+              : t("searchIndividualPlaceholder")
           }
-          className="w-full bg-transparent outline-none text-[14px] text-[var(--p-text)] placeholder:text-[var(--p-text-subtle)]"
+          className="w-full bg-transparent outline-none text-[14px] text-slate-800 placeholder:text-slate-400"
         />
       </div>
 
@@ -424,7 +470,7 @@ export function Explore({
                           : "bg-white border-slate-200 text-slate-600 hover:border-slate-300",
                       )}
                     >
-                      {mode === "all" ? "Tous" : mode === "online" ? "En ligne" : "Présentiel"}
+                      {mode === "all" ? t("filterAll") : mode === "online" ? t("filterOnline") : t("filterInPerson")}
                     </button>
                   ))}
                 </div>
@@ -444,7 +490,7 @@ export function Explore({
                   )}
                 >
                   <span className="flex items-center gap-2">
-                    <ShieldCheck size={14} /> Profils Vérifiés
+                    <ShieldCheck size={14} /> {t("verifiedProfiles")}
                   </span>
                   {onlyVerified && <X size={12} />}
                 </button>
@@ -452,7 +498,7 @@ export function Explore({
 
               <div className="space-y-3">
                 <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">
-                  Rayon d'action
+                  {t("searchRadius")}
                 </p>
                 <div className="h-2 bg-slate-200 rounded-full relative">
                   <div className="absolute top-0 left-0 w-1/2 h-full bg-brand-primary rounded-full" />
@@ -469,7 +515,7 @@ export function Explore({
       </AnimatePresence>
 
       <section className="flex gap-2 overflow-x-auto pb-4 no-scrollbar">
-        <CategoryPill label="Tous" active={selectedCategory === "All"} onClick={() => setSelectedCategory("All")} />
+        <CategoryPill label={t("filterAll")} active={selectedCategory === "All"} onClick={() => setSelectedCategory("All")} />
         {getEnabledDisciplines().map((d) => (
           <CategoryPill
             key={d.id}
@@ -488,8 +534,8 @@ export function Explore({
             </div>
           ) : filteredGroupSessions.length === 0 ? (
             <div className="col-span-full text-center p-20 bg-white rounded-2xl border border-dashed border-slate-200">
-              <p className="text-sm font-bold text-slate-600 uppercase tracking-widest">Aucun cours de groupe</p>
-              <p className="mt-3 text-[13px] text-[var(--p-text-muted)]">Essaie une autre discipline ou reviens plus tard.</p>
+              <p className="text-sm font-bold text-slate-600 uppercase tracking-widest">{t("noGroupSessions")}</p>
+              <p className="mt-3 text-[13px] text-[var(--p-text-muted)]">{t("noGroupSessionsSub")}</p>
             </div>
           ) : (
             filteredGroupSessions.map((s, index) => <ExploreGroupCard key={s.id} session={s} index={index} />)
@@ -500,9 +546,9 @@ export function Explore({
           </div>
         ) : filteredTeachers.length === 0 && geo && radiusFilter !== "all" && radiusFilter !== "online" ? (
           <div className="col-span-full text-center p-20 bg-white rounded-2xl border border-dashed border-slate-200">
-            <p className="text-sm font-bold text-slate-600 uppercase tracking-widest">Aucun prof trouvé</p>
+            <p className="text-sm font-bold text-slate-600 uppercase tracking-widest">{t("noTeachersFound")}</p>
             <p className="mt-3 text-[13px] text-[var(--p-text-muted)] max-w-[520px] mx-auto">
-              Aucun prof trouvé dans ce rayon. Essaie un rayon plus grand ou cherche en ligne.
+              {t("noTeachersFoundRadius")}
             </p>
             <button
               onClick={() => setRadiusFilter("all")}
@@ -525,7 +571,7 @@ export function Explore({
               }}
               className="mt-4 text-brand-primary text-xs font-bold hover:underline"
             >
-              Réinitialiser les filtres
+              {t("resetFilters")}
             </button>
           </div>
         ) : (
@@ -547,7 +593,7 @@ export function Explore({
 
 function ExploreGroupCard({ session, index }: { session: ExploreGroupSession; index: number }) {
   const router = useRouter();
-  const { formatPrice } = useLocale();
+  const { formatPrice, t } = useLocale();
   const max = Number(session.max_participants);
   const cur = Number(session.current_participants);
   const remaining = spotsRemaining(session);
@@ -575,7 +621,7 @@ function ExploreGroupCard({ session, index }: { session: ExploreGroupSession; in
         )}
         <span
           className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-violet-600 text-white flex items-center justify-center border-2 border-white shadow-sm"
-          title="Cours de groupe"
+          title={t("groupClasses")}
         >
           <UsersRound size={14} />
         </span>
@@ -599,7 +645,7 @@ function ExploreGroupCard({ session, index }: { session: ExploreGroupSession; in
           </div>
           <div className="text-right shrink-0">
             <p className="text-[18px] font-semibold text-[#1D9E75]">{formatPrice(Number(session.price_per_person))}</p>
-            <p className="text-[11px] text-[var(--p-text-muted)]">/ personne</p>
+            <p className="text-[11px] text-[var(--p-text-muted)]">{t("perPerson")}</p>
           </div>
         </div>
 
@@ -619,7 +665,7 @@ function ExploreGroupCard({ session, index }: { session: ExploreGroupSession; in
             <div className={cn("h-full rounded-full transition-all", barColor)} style={{ width: `${max ? (remaining / max) * 100 : 0}%` }} />
           </div>
           <p className="text-[11px] text-[var(--p-text-muted)]">
-            {remaining > 0 ? `${remaining} place${remaining > 1 ? "s" : ""} restante${remaining > 1 ? "s" : ""}` : "Complet"}
+            {remaining > 0 ? `${remaining} place${remaining > 1 ? "s" : ""} restante${remaining > 1 ? "s" : ""}` : t("groupSessionFull")}
           </p>
         </div>
       </div>
@@ -688,7 +734,7 @@ function TeacherCard({
   onViewProfile: () => void;
   distanceKm: number | null;
 }) {
-  const { formatPrice } = useLocale();
+  const { formatPrice, t } = useLocale();
   const { user } = useAuth();
   const router = useRouter();
   const [isStartingChat, setIsStartingChat] = useState(false);
@@ -697,7 +743,7 @@ function TeacherCard({
   const handleStartChat = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!user) {
-      alert("Veuillez vous connecter pour envoyer un message.");
+      alert(t("loginToMessage"));
       return;
     }
 
@@ -729,9 +775,7 @@ function TeacherCard({
       onClick={onViewProfile}
       className="ds-card p-5 hover:shadow-[0_22px_70px_rgba(15,110,86,0.12)] transition-all cursor-pointer flex gap-5 group relative"
     >
-      <div className={cn("w-11 h-11 rounded-full flex items-center justify-center font-medium text-[14px]", avatarBgFor(teacher.category))}>
-        {initialsFor(teacher.name)}
-      </div>
+      <TeacherAvatar name={teacher.name} category={teacher.category} imageUrl={teacher.imageUrl} size={44} />
 
       <div className="flex-1 min-w-0 flex flex-col justify-between py-1">
         <div className="space-y-2">
@@ -744,7 +788,7 @@ function TeacherCard({
               {String(teacher.profilePlan || "").toLowerCase() === "enterprise" ? (
                 <span
                   className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full bg-[rgba(29,158,117,0.14)] text-[#0f6d52] border border-[rgba(29,158,117,0.35)]"
-                  title="Carte Google Maps sur le profil — plan Entreprise"
+                  title={t("verifiedStudioTitle")}
                 >
                   <MapPin size={12} className="shrink-0 text-[#1D9E75]" />
                   Studio vérifié
@@ -762,7 +806,7 @@ function TeacherCard({
             <div className="flex items-center gap-2">
               {distanceKm !== null && (
                 <span className="px-3 py-1 rounded-[10px] text-[11px] font-medium bg-[rgba(29,158,117,0.12)] text-[#1D9E75]">
-                  {distanceKm.toFixed(1)} km de vous
+                  {distanceKm.toFixed(1)} {t("kmFromYou")}
                 </span>
               )}
               <span className={cn("px-3 py-1 rounded-[10px] text-[11px] font-medium", ratingPillFor(teacher.category))}>
@@ -795,18 +839,16 @@ function TeacherCard({
 
         <div className="flex items-end justify-between mt-4 pt-4 border-t border-[var(--p-light-teal-bg)]">
           <div className="space-y-1">
-            <p className="ds-label text-[var(--p-text-subtle)]">Prochain cours disponible</p>
+            <p className="ds-label text-[var(--p-text-subtle)]">{t("nextAvailableLesson")}</p>
             <div className="flex items-center gap-2">
-              {teacher.isVerified && (
-                <span className="ds-pill inline-flex items-center gap-1">
-                  <ShieldCheck size={14} /> Vérifié
-                </span>
-              )}
+              <VerifiedBadge
+              verified={teacher.isVerified || Boolean(teacher.identityVerified)}
+            />
             </div>
           </div>
           <div className="text-right">
             <p className="text-[18px] font-medium text-[var(--p-text)]">{formatPrice(Number(teacher.pricePerLesson))}</p>
-            <p className="text-[12px] text-[var(--p-text-muted)]">/ heure</p>
+            <p className="text-[12px] text-[var(--p-text-muted)]">{t("perHourSuffix")}</p>
           </div>
         </div>
       </div>
