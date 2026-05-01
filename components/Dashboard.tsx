@@ -17,6 +17,8 @@ import { TeacherDashboardStats } from "@/components/dashboard/teacher/TeacherDas
 import { TeacherProfileCompletenessCard } from "@/components/dashboard/teacher/TeacherProfileCompletenessCard";
 import { TeacherRequestCard } from "@/components/dashboard/teacher/TeacherRequestCard";
 import { TeacherScheduleCard } from "@/components/dashboard/teacher/TeacherScheduleCard";
+import { TeacherChangeClassModal } from "@/components/dashboard/teacher/TeacherChangeClassModal";
+import { TeacherScheduleChangeHelperPanel } from "@/components/dashboard/teacher/TeacherScheduleChangeHelperPanel";
 import { ConfirmCancelBookingDialog } from "@/components/ConfirmCancelBookingDialog";
 import {
   STUDENT_CANCEL_STATUSES,
@@ -36,6 +38,15 @@ interface BookingWithTeacher {
   teachingMode?: string;
   slotDate?: string | null;
   timeSlot?: string | null;
+}
+
+const TEACHER_MSG_PEER_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function messagesHrefForStudentId(studentId: string | null | undefined): string {
+  const p = typeof studentId === "string" ? studentId.trim() : "";
+  if (!p || !TEACHER_MSG_PEER_RE.test(p)) return "/messages";
+  return `/messages?peer=${encodeURIComponent(p)}`;
 }
 
 function bookingSortKey(b: { slot_date?: string | null; date?: string | null; time_slot?: string | null; time?: string | null }) {
@@ -70,6 +81,7 @@ export function Dashboard() {
   const [actionFlash, setActionFlash] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
   const [cancelBooking, setCancelBooking] = useState<{ id: string; side: "student" | "teacher" } | null>(null);
   const [cancelBusy, setCancelBusy] = useState(false);
+  const [rescheduleModalBookingId, setRescheduleModalBookingId] = useState<string | null>(null);
 
   const teacherDash = useMemo(() => {
     if (!isTeacherRole) return null;
@@ -500,8 +512,11 @@ export function Dashboard() {
       (completenessChecks.filter(Boolean).length / completenessChecks.length) * 100,
     );
 
+    const firstConfirmed = confirmedUpcoming[0] as { id?: string; student_id?: string | null } | undefined;
+    const firstMessagesHref = messagesHrefForStudentId(firstConfirmed?.student_id ?? null);
+
     return (
-      <div className="mx-auto w-full max-w-[1280px] space-y-6 pb-12">
+      <div className="mx-auto w-full max-w-[1280px] space-y-8 bg-[#F3FAF6] pb-16 px-4 sm:px-6 lg:rounded-3xl lg:p-8 lg:shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]">
         <header className="space-y-1">
           <p className="text-xs font-medium capitalize text-slate-600">{todayLabel}</p>
           <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
@@ -550,34 +565,80 @@ export function Dashboard() {
               )}
             </div>
 
-            <TeacherScheduleCard
-              titleKey="upcomingConfirmedClasses"
-              items={confirmedUpcoming.map((b) => ({
-                id: b.id as string,
-                studentName: b.studentName as string | undefined,
-                studentUserId: (b.student_id as string | undefined) ?? null,
-                slot_date: b.slot_date as string | null | undefined,
-                date: b.date as string | null | undefined,
-                time_slot: b.time_slot as string | null | undefined,
-                time: b.time as string | null | undefined,
-              }))}
-              emptyHint={t("dashboardNoLessonsWeek")}
-              onRequestCancelClass={(bookingId) => setCancelBooking({ id: bookingId, side: "teacher" })}
-              cancelBusy={cancelBusy}
+            <div
+              className={
+                confirmedUpcoming.length > 0
+                  ? "grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(260px,300px)] lg:items-start lg:gap-8"
+                  : "grid gap-6"
+              }
+            >
+              <TeacherScheduleCard
+                titleKey="upcomingConfirmedClasses"
+                items={confirmedUpcoming.map((b) => ({
+                  id: b.id as string,
+                  studentName: b.studentName as string | undefined,
+                  studentPhotoUrl: (b.studentPhotoUrl as string | null | undefined) ?? null,
+                  studentUserId: (b.student_id as string | undefined) ?? null,
+                  slot_date: b.slot_date as string | null | undefined,
+                  date: b.date as string | null | undefined,
+                  time_slot: b.time_slot as string | null | undefined,
+                  time: b.time as string | null | undefined,
+                }))}
+                emptyHint={t("dashboardNoLessonsWeek")}
+                onRequestCancelClass={(bookingId) => setCancelBooking({ id: bookingId, side: "teacher" })}
+                onOpenReschedule={(bookingId) => setRescheduleModalBookingId(bookingId)}
+                cancelBusy={cancelBusy}
+              />
+              {confirmedUpcoming.length > 0 ? (
+                <div className="hidden min-w-0 lg:block">
+                  <TeacherScheduleChangeHelperPanel
+                    messagesHref={firstMessagesHref}
+                    onOpenRescheduleModal={() => {
+                      const id = firstConfirmed?.id;
+                      if (id) setRescheduleModalBookingId(String(id));
+                    }}
+                    onRequestCancelThisClass={() => {
+                      const id = firstConfirmed?.id;
+                      if (id) setCancelBooking({ id: String(id), side: "teacher" });
+                    }}
+                    cancelBusy={cancelBusy}
+                  />
+                </div>
+              ) : null}
+            </div>
+
+            <TeacherChangeClassModal
+              open={Boolean(rescheduleModalBookingId)}
+              onClose={() => setRescheduleModalBookingId(null)}
+              messagesHref={
+                rescheduleModalBookingId
+                  ? messagesHrefForStudentId(
+                      teacherBookings.find((x) => String(x.id) === rescheduleModalBookingId)?.student_id as
+                        | string
+                        | undefined,
+                    )
+                  : "/messages"
+              }
+              onRequestCancelThisClass={() => {
+                const id = rescheduleModalBookingId;
+                if (!id) return;
+                setRescheduleModalBookingId(null);
+                setCancelBooking({ id, side: "teacher" });
+              }}
             />
 
-        <ConfirmCancelBookingDialog
-          open={cancelBooking?.side === "teacher"}
-          onClose={() => {
-            if (!cancelBusy) setCancelBooking(null);
-          }}
-          onConfirm={async (payload) => {
-            await runConfirmedCancelFromDialog(payload);
-          }}
-          busy={cancelBusy}
-          role="teacher"
-          isLate={cancelBooking?.side === "teacher" ? cancelIsLate : false}
-        />
+            <ConfirmCancelBookingDialog
+              open={cancelBooking?.side === "teacher"}
+              onClose={() => {
+                if (!cancelBusy) setCancelBooking(null);
+              }}
+              onConfirm={async (payload) => {
+                await runConfirmedCancelFromDialog(payload);
+              }}
+              busy={cancelBusy}
+              role="teacher"
+              isLate={cancelBooking?.side === "teacher" ? cancelIsLate : false}
+            />
 
             <AssignmentHub mode="teacher" />
           </div>

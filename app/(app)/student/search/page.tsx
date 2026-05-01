@@ -11,12 +11,7 @@ import { cn } from "../../../../lib/utils";
 import { getEnabledDisciplines, type Discipline } from "../../../../lib/disciplines";
 import { getSupabaseClient } from "../../../../lib/supabase";
 import { haversineDistance } from "../../../../lib/geo";
-import {
-  fetchTeacherDisciplinesMap,
-  mergeTeachersWithDisciplines,
-  teacherMatchesExploreCategory,
-  teacherMatchesExploreSearch,
-} from "../../../../lib/teacherDisciplines";
+import { fetchTeacherDisciplinesMap, mergeTeachersWithDisciplines } from "../../../../lib/teacherDisciplines";
 import { teacherRowToTeacher, type TeacherRow } from "../../../../lib/teacherMapper";
 import { TEACHERS_LIST_SELECT } from "../../../../lib/supabase/queries";
 import { TeacherAvatar } from "../../../../components/TeacherAvatar";
@@ -27,7 +22,11 @@ import { SmartSearchInput } from "../../../../components/SmartSearchInput";
 import type { City } from "../../../../lib/cities";
 import type { MapBounds } from "../../../../components/SearchMapView";
 import { useAuth } from "../../../../components/AuthProvider";
-import { teacherPrefCompareStudents, type StudentLocationPrefs } from "../../../../lib/studentLocationSearch";
+import type { StudentLocationPrefs } from "../../../../lib/studentLocationSearch";
+import { applyRadiusFilter, buildTeacherSearchRows, filterTeacherPool, sortRows } from "../../../../lib/teacherSearchEngine";
+import { TeacherSearchAdvancedPanel, type AdvancedFilterValues } from "../../../../components/TeacherSearchAdvancedPanel";
+import type { TeacherSearchFormat } from "../../../../lib/teacherSearchCriteria";
+import { logSearchEvent } from "../../../../lib/searchAnalytics";
 
 const TeacherProfile = dynamic(
   () => import("../../../../components/TeacherProfile").then((m) => m.TeacherProfile),
@@ -71,6 +70,17 @@ export default function StudentSearchPage() {
   const searchParams = useSearchParams();
   const { user } = useAuth();
   const [studentPrefs, setStudentPrefs] = useState<StudentLocationPrefs | null>(null);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [adv, setAdv] = useState<AdvancedFilterValues>({
+    minRating: "",
+    maxPrice: "",
+    verifiedOnly: false,
+    language: "",
+    level: "",
+    availability: "",
+    teacherPreference: "",
+    formatExtra: "",
+  });
 
   useEffect(() => {
     const q = searchParams.get("q");
@@ -180,7 +190,7 @@ export default function StudentSearchPage() {
   // Clear map-bounds filter whenever the user changes their text/category/radius search
   useEffect(() => {
     setMapBounds(null);
-  }, [searchQuery, activeCat, radius]);
+  }, [searchQuery, activeCat, radius, adv]);
 
   const enabledDisciplines = useMemo(() => getEnabledDisciplines(), []);
 
@@ -191,28 +201,9 @@ export default function StudentSearchPage() {
   };
 
   const results = useMemo(() => {
-    const base = teachers
-      .filter((tt) => {
-        const catOk = teacherMatchesExploreCategory(tt, activeCat);
-        const qOk = teacherMatchesExploreSearch(tt, searchQuery);
-        return catOk && qOk;
-      })
-      .map((tt) => ({
-        teacher: tt,
-        distanceKm:
-          geo && teacherHasCoords(tt) ? haversineDistance(geo.lat, geo.lng, tt.location.lat, tt.location.lng) : null,
-      }));
-
-    let filtered = base;
-
-    if (radius === "online") {
-      filtered = filtered.filter((x) => x.teacher.teachingMode === "online" || x.teacher.teachingMode === "both");
-    } else if (radius !== "all") {
-      // Only apply physical radius if we actually have geo.
-      if (geo) {
-        filtered = filtered.filter((x) => x.distanceKm != null && x.distanceKm <= radius);
-      }
-    }
+    const pool = filterTeacherPool(teachers, { category: activeCat, searchQuery });
+    const base = buildTeacherSearchRows(pool, { geo });
+    let filtered = applyRadiusFilter(base, geo ? radius : radius === "online" ? "online" : "all");
 
     // Apply map-bounds filter when the user has clicked "Search this area"
     if (mapBounds) {
@@ -230,8 +221,9 @@ export default function StudentSearchPage() {
       });
     }
 
-    filtered.sort((a, b) => compareTeachers(a, b, { geo: Boolean(geo), sortMode, studentPrefs }));
-    return filtered;
+    // Unify sorting across search surfaces. Keep existing modes, but fold in student prefs.
+    const rows = sortRows(filtered, { sortMode, studentPrefs });
+    return rows;
   }, [teachers, activeCat, searchQuery, geo, radius, sortMode, mapBounds, studentPrefs]);
 
   return (
@@ -308,6 +300,17 @@ export default function StudentSearchPage() {
               <RadiusPill active={radius === "online"} onClick={() => setRadius("online")}>
                 {t("radiusOnline")}
               </RadiusPill>
+            </div>
+
+            <div className="mx-auto mt-5 max-w-xl">
+              <TeacherSearchAdvancedPanel
+                open={advancedOpen}
+                onToggle={() => setAdvancedOpen((o) => !o)}
+                values={adv}
+                onChange={(patch) => setAdv((a) => ({ ...a, ...patch }))}
+                t={t}
+                showFormatRow
+              />
             </div>
           </div>
         </div>
@@ -415,6 +418,10 @@ export default function StudentSearchPage() {
           teacher={selectedTeacherProfile}
           onClose={() => setSelectedTeacherProfile(null)}
           onBook={(kind) => {
+            if (!user) {
+              router.push(`/login?next=${encodeURIComponent("/student/search")}`);
+              return;
+            }
             setBookingInitialKind(kind);
             setBookingTeacher(selectedTeacherProfile);
             setSelectedTeacherProfile(null);
@@ -422,6 +429,11 @@ export default function StudentSearchPage() {
           onSendMessage={
             selectedTeacherProfile.userId
               ? () => {
+                  if (!user) {
+                    const uid = selectedTeacherProfile.userId!;
+                    router.push(`/login?next=${encodeURIComponent(`/messages?peer=${encodeURIComponent(uid)}`)}`);
+                    return;
+                  }
                   const uid = selectedTeacherProfile.userId!;
                   setSelectedTeacherProfile(null);
                   router.push(`/messages?peer=${encodeURIComponent(uid)}`);
@@ -474,59 +486,6 @@ function RadiusPill({ active, onClick, children }: { active: boolean; onClick: (
       {children}
     </button>
   );
-}
-
-function teacherHasCoords(t: Teacher) {
-  const { lat, lng } = t.location || ({} as Teacher["location"]);
-  return (
-    typeof lat === "number" &&
-    typeof lng === "number" &&
-    Number.isFinite(lat) &&
-    Number.isFinite(lng) &&
-    !(lat === 0 && lng === 0)
-  );
-}
-
-function verificationSortKey(t: Teacher) {
-  return getVerificationLevel({
-    plan: t.profilePlan,
-    identity_verified: t.identityVerified,
-    diploma_verified: t.diplomaVerified,
-    is_verified: t.isVerified,
-    verification_level: t.verificationLevel ?? null,
-  });
-}
-
-function compareTeachers(
-  a: { teacher: Teacher; distanceKm: number | null },
-  b: { teacher: Teacher; distanceKm: number | null },
-  opts: { geo: boolean; sortMode: "relevance" | "nearest" | "trusted"; studentPrefs: StudentLocationPrefs | null },
-) {
-  const va = verificationSortKey(a.teacher);
-  const vb = verificationSortKey(b.teacher);
-
-  if (opts.sortMode === "trusted") {
-    if (vb !== va) return vb - va;
-    const prefTrusted = teacherPrefCompareStudents(a.teacher, b.teacher, opts.studentPrefs);
-    if (prefTrusted !== 0) return prefTrusted;
-    return (b.teacher.rating ?? 0) - (a.teacher.rating ?? 0);
-  }
-
-  if (opts.sortMode === "nearest") {
-    if (opts.geo && a.distanceKm != null && b.distanceKm != null && a.distanceKm !== b.distanceKm) {
-      return a.distanceKm - b.distanceKm;
-    }
-    if (vb !== va) return vb - va;
-    const prefNearest = teacherPrefCompareStudents(a.teacher, b.teacher, opts.studentPrefs);
-    if (prefNearest !== 0) return prefNearest;
-    return (b.teacher.rating ?? 0) - (a.teacher.rating ?? 0);
-  }
-
-  // relevance
-  if (vb !== va) return vb - va;
-  const prefRel = teacherPrefCompareStudents(a.teacher, b.teacher, opts.studentPrefs);
-  if (prefRel !== 0) return prefRel;
-  return (b.teacher.rating ?? 0) - (a.teacher.rating ?? 0);
 }
 
 function TeacherCard({

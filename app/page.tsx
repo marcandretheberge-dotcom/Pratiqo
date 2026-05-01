@@ -14,12 +14,7 @@ import { isEnabled } from "../lib/features";
 import Logo from "../components/ui/Logo";
 import { LocaleSwitcher } from "../components/LocaleSwitcher";
 import { getSupabaseClient } from "../lib/supabase";
-import {
-  fetchTeacherDisciplinesMap,
-  mergeTeachersWithDisciplines,
-  teacherMatchesExploreCategory,
-  teacherMatchesExploreSearch,
-} from "../lib/teacherDisciplines";
+import { fetchTeacherDisciplinesMap, mergeTeachersWithDisciplines } from "../lib/teacherDisciplines";
 import { teacherRowToTeacher, type TeacherRow } from "../lib/teacherMapper";
 import { TEACHERS_LIST_SELECT } from "../lib/supabase/queries";
 import { useLocale } from "../lib/locale-context";
@@ -37,10 +32,10 @@ import { SocialProofTestimonials } from "../components/marketing/SocialProofTest
 import { TrustSafetySection } from "../components/marketing/TrustSafetySection";
 import { MarketplaceFinalCta } from "../components/marketing/MarketplaceFinalCta";
 import type { TranslationKey } from "../lib/translations";
-import {
-  teacherMatchesLandingFormatFilter,
-  type LandingFormatFilter,
-} from "../lib/landingTeacherFilter";
+import type { LandingFormatFilter } from "../lib/landingTeacherFilter";
+import { filterTeacherPool, buildTeacherSearchRows, sortRows } from "../lib/teacherSearchEngine";
+import { TeacherSearchAdvancedPanel, type AdvancedFilterValues } from "../components/TeacherSearchAdvancedPanel";
+import { logSearchEvent } from "../lib/searchAnalytics";
 
 const TeacherProfile = dynamic(
   () => import("../components/TeacherProfile").then((m) => m.TeacherProfile),
@@ -101,6 +96,17 @@ export default function LandingPage() {
   const [mapBounds, setMapBounds] = useState<MapBounds | null>(null);
 
   const [formatFilter, setFormatFilter] = useState<LandingFormatFilter>("all");
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [adv, setAdv] = useState<AdvancedFilterValues>({
+    minRating: "",
+    maxPrice: "",
+    verifiedOnly: false,
+    language: "",
+    level: "",
+    availability: "",
+    teacherPreference: "",
+    formatExtra: "",
+  });
 
   // View
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
@@ -179,47 +185,73 @@ export default function LandingPage() {
   // Clear map-bounds filter whenever the user changes their text/category/format search
   useEffect(() => {
     setMapBounds(null);
-  }, [searchQuery, activeCat, formatFilter]);
+  }, [searchQuery, activeCat, formatFilter, adv]);
 
   // Filter + sort (+ optional bounds filter when user has searched an area)
   const filtered = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
-    let list = teachers.filter((t) => {
-      const catOk = teacherMatchesExploreCategory(t, activeCat);
-      const qOk = !q || teacherMatchesExploreSearch(t, searchQuery);
-      const fmtOk = teacherMatchesLandingFormatFilter(t, formatFilter);
-      return catOk && qOk && fmtOk;
+    const fmtMain =
+      formatFilter === "all"
+        ? "no_preference"
+        : formatFilter === "online"
+          ? "online"
+          : formatFilter === "in_person"
+            ? "in_person"
+            : "hybrid";
+    const fmt = adv.formatExtra || fmtMain;
+    const minR = adv.minRating.trim() ? Number(adv.minRating) : undefined;
+    const maxP = adv.maxPrice.trim() ? Number(adv.maxPrice) : undefined;
+    const pool = filterTeacherPool(teachers, {
+      category: activeCat,
+      searchQuery,
+      format: fmt,
+      minRating: typeof minR === "number" && Number.isFinite(minR) ? minR : undefined,
+      maxPrice: typeof maxP === "number" && Number.isFinite(maxP) ? maxP : undefined,
+      verifiedOnly: adv.verifiedOnly ? true : undefined,
+      language: adv.language.trim() || undefined,
+      level: adv.level.trim() || undefined,
+      availability: adv.availability.trim() || undefined,
+      teacherPreference: adv.teacherPreference || undefined,
     });
-
-    if (sortMode === "nearest" && geo) {
-      list = [...list].sort((a, b) => {
-        const da = a.location?.lat && a.location?.lng ? Math.hypot(a.location.lat - geo.lat, a.location.lng - geo.lng) : 999;
-        const db = b.location?.lat && b.location?.lng ? Math.hypot(b.location.lat - geo.lat, b.location.lng - geo.lng) : 999;
-        return da - db;
-      });
-    }
+    let rows = buildTeacherSearchRows(pool, { geo });
 
     if (mapBounds) {
-      list = list.filter((tt) => {
+      rows = rows.filter(({ teacher: tt }) => {
         const lat = tt.location?.lat;
         const lng = tt.location?.lng;
         if (typeof lat !== "number" || typeof lng !== "number") return false;
         const { ne, sw } = mapBounds;
         // Handle antimeridian wrapping for longitude
-        const lngInBounds =
-          ne.lng < sw.lng
-            ? lng >= sw.lng || lng <= ne.lng
-            : lng >= sw.lng && lng <= ne.lng;
+        const lngInBounds = ne.lng < sw.lng ? lng >= sw.lng || lng <= ne.lng : lng >= sw.lng && lng <= ne.lng;
         return lat >= sw.lat && lat <= ne.lat && lngInBounds;
       });
     }
 
-    return list;
-  }, [teachers, searchQuery, activeCat, sortMode, geo, mapBounds, formatFilter]);
+    const sorted = sortRows(rows, { sortMode: sortMode === "nearest" ? "nearest" : "relevance", studentPrefs: null });
+    return sorted.map((r) => r.teacher);
+  }, [teachers, searchQuery, activeCat, sortMode, geo, mapBounds, formatFilter, adv]);
+
+  const resultCountRef = useRef(0);
+  resultCountRef.current = filtered.length;
 
   const scrollToTeacherResults = useCallback(() => {
     teacherResultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, []);
+    logSearchEvent({
+      source: "landing",
+      category: activeCat === "All" ? null : activeCat,
+      subject: searchQuery.trim() || null,
+      format: formatFilter === "all" ? null : formatFilter,
+      result_count: resultCountRef.current,
+      filters: {
+        minRating: adv.minRating,
+        maxPrice: adv.maxPrice,
+        verifiedOnly: adv.verifiedOnly,
+        language: adv.language,
+        level: adv.level,
+        availability: adv.availability,
+        teacherPreference: adv.teacherPreference,
+      },
+    });
+  }, [activeCat, searchQuery, formatFilter, adv]);
 
   const selectCityForSearch = useCallback((city: City) => {
     setLocationSearch("");
@@ -416,6 +448,15 @@ export default function LandingPage() {
                       </button>
                     </div>
                     <p className="mt-3 text-center text-[11px] text-[#6B6760]">{t("otherDisciplines")}</p>
+                    <div className="mx-auto mt-4 max-w-xl">
+                      <TeacherSearchAdvancedPanel
+                        open={advancedOpen}
+                        onToggle={() => setAdvancedOpen((o) => !o)}
+                        values={adv}
+                        onChange={(patch) => setAdv((a) => ({ ...a, ...patch }))}
+                        t={t}
+                      />
+                    </div>
                   </div>
 
                   <div className="mx-auto mt-10 w-full max-w-lg px-2 text-center">
@@ -633,13 +674,24 @@ export default function LandingPage() {
             teacher={selectedTeacherProfile}
             onClose={() => setSelectedTeacherProfile(null)}
             onBook={(kind) => {
+              if (!user) {
+                router.push(`/login?next=${encodeURIComponent("/student/search")}`);
+                return;
+              }
               setBookingInitialKind(kind);
               setBookingTeacher(selectedTeacherProfile);
               setSelectedTeacherProfile(null);
             }}
             onSendMessage={
               selectedTeacherProfile.userId
-                ? () => router.push(`/login?next=${encodeURIComponent(`/messages?peer=${selectedTeacherProfile.userId!}`)}`)
+                ? () => {
+                    const uid = selectedTeacherProfile.userId!;
+                    if (!user) {
+                      router.push(`/login?next=${encodeURIComponent(`/messages?peer=${encodeURIComponent(uid)}`)}`);
+                      return;
+                    }
+                    router.push(`/messages?peer=${encodeURIComponent(uid)}`);
+                  }
                 : undefined
             }
           />

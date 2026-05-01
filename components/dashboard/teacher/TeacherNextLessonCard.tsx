@@ -74,21 +74,21 @@ export function TeacherNextLessonCard({
             </p>
           </div>
         </div>
-        <div className="flex shrink-0 flex-wrap gap-2">
+        <div className="flex w-full min-w-0 shrink-0 flex-col gap-2.5 sm:w-auto sm:flex-row sm:flex-wrap sm:gap-2">
           <button
             type="button"
             onClick={() => router.push(messagesHref)}
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-[#00694c] px-5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#008560] hover:shadow"
+            className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-full bg-[#00694c] px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#008560] hover:shadow sm:min-h-0 sm:h-11 sm:w-auto sm:px-5 sm:py-0"
           >
-            {t("startLesson")}
+            <MessageCircle className="h-[18px] w-[18px] shrink-0 sm:h-4 sm:w-4" aria-hidden />
+            {t("messageStudent")}
           </button>
           <button
             type="button"
             onClick={() => router.push(messagesHref)}
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-5 text-sm font-semibold text-[#00694c] hover:bg-slate-50"
+            className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-[#00694c] hover:bg-slate-50 sm:min-h-0 sm:h-11 sm:w-auto sm:px-5 sm:py-0"
           >
-            <MessageCircle size={16} className="shrink-0" aria-hidden />
-            {t("messageStudent")}
+            {t("rescheduleClass")}
           </button>
         </div>
       </div>

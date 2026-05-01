@@ -1,19 +1,13 @@
 "use client";
 
 /**
- * TeacherQuiz — 5-step matching modal
- *
- * Step 1 — Subject (Musique / Langues / Académique)
- * Step 2 — Format  (Online / Home / Studio)
- * Step 3 — Level   (Beginner / Intermediate / Advanced)
- * Step 4 — Budget  (optional slider)
- * Step 5 — Email   (optional lead capture)
- * Step 6 — Results (Top 3 teachers from Supabase)
+ * TeacherQuiz — guided matching (category → subject → audience → format → priority → comfort preference → results).
+ * Uses shared {@link filterTeacherPool} / {@link TeacherSearchCriteria} for consistent marketplace matching.
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { X, ArrowLeft, ArrowRight, Star, Sparkles, Music, BookOpen, Languages, Monitor, Home, Building2, ChevronRight, RefreshCw } from "lucide-react";
+import { X, ArrowLeft, ArrowRight, Star, Sparkles, Music, BookOpen, Languages, Monitor, Home, MapPin, LayoutGrid, ChevronRight, RefreshCw } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useLocale } from "@/lib/locale-context";
@@ -24,14 +18,21 @@ import { VerificationBadge } from "@/components/VerificationBadge";
 import type { VerificationLevel } from "@/lib/verification";
 import { useAuth } from "@/components/AuthProvider";
 import { teacherStudentPrefScoreFromQuizRow, type QuizTeacherMatchRow, type StudentLocationPrefs } from "@/lib/studentLocationSearch";
+import { filterTeacherPool } from "@/lib/teacherSearchEngine";
+import type { TeacherSearchCriteria } from "@/lib/teacherSearchCriteria";
+import type { Teacher } from "@/types";
+import { teacherRowToTeacher, type TeacherRow } from "@/lib/teacherMapper";
+import { logSearchEvent } from "@/lib/searchAnalytics";
+import type { TranslationKey } from "@/lib/i18n/types";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 type QuizAnswers = {
-  subject: string | null;
-  format: string | null;
-  level: string | null;
-  budget: number | null;
-  email: string;
+  category: "music" | "languages" | "academic" | null;
+  subcategory: string | null;
+  whoFor: "me" | "child" | "someone_else" | null;
+  format: "at_home" | "in_person" | "online" | "hybrid" | "no_preference" | null;
+  priority: "closest" | "best_rated" | "available_soon" | "budget_friendly" | null;
+  teacherPreference: "no_preference" | "female_preferred" | "male_preferred" | null;
 };
 
 type TeacherMatch = {
@@ -57,67 +58,49 @@ type TeacherMatch = {
   location?: unknown;
 };
 
-type Step = "subject" | "format" | "level" | "budget" | "email" | "results";
+type Step = "category" | "subcategory" | "who_for" | "format" | "priority" | "teacher_pref" | "results";
 
-const STEPS: Step[] = ["subject", "format", "level", "budget", "email", "results"];
-const QUESTION_STEPS: Step[] = ["subject", "format", "level", "budget", "email"];
+const STEPS: Step[] = ["category", "subcategory", "who_for", "format", "priority", "teacher_pref", "results"];
+const QUESTION_STEPS: Step[] = ["category", "subcategory", "who_for", "format", "priority", "teacher_pref"];
 const INITIAL_ANSWERS: QuizAnswers = {
-  subject: null,
+  category: null,
+  subcategory: null,
+  whoFor: null,
   format: null,
-  level: null,
-  budget: null,
-  email: "",
+  priority: null,
+  teacherPreference: null,
 };
 
 function foldAscii(s: string): string {
   return s.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().trim();
 }
 
-function subjectMatchesRow(subject: string | null, discipline: string | null | undefined, category: string | null | undefined): boolean {
-  if (!subject) return true;
-  const d = foldAscii(discipline || "");
-  const c = foldAscii(category || "");
-  if (subject === "music") {
-    return (
-      c.includes("musique") ||
-      d.includes("musique") ||
-      d.includes("music") ||
-      d.includes("piano") ||
-      d.includes("violon") ||
-      d.includes("guitare") ||
-      d.includes("chant")
-    );
-  }
-  if (subject === "languages") {
-    return (
-      c.includes("langue") ||
-      d.includes("espagnol") ||
-      d.includes("spanish") ||
-      d.includes("ingles") ||
-      d.includes("anglais") ||
-      d.includes("english") ||
-      d.includes("francais") ||
-      d.includes("italien") ||
-      d.includes("allemand") ||
-      d.includes("mandarin") ||
-      d.includes("latin")
-    );
-  }
-  // academic — tolerant: DB category/discipline wording varies (math, sciences, tutoring, etc.)
-  return (
-    c.includes("scolaire") ||
-    c.includes("academ") ||
-    c.includes("science") ||
-    c.includes("math") ||
-    d.includes("math") ||
-    d.includes("physique") ||
-    d.includes("chimie") ||
-    d.includes("biologie") ||
-    d.includes("espagnol") ||
-    d.includes("spanish") ||
-    d.includes("francais") ||
-    d.includes("anglais")
-  );
+const SUBJECT_TOKEN: Record<string, string> = {
+  m_piano: "piano",
+  m_guitar: "guit",
+  m_violin: "viol",
+  l_en: "anglais",
+  l_fr: "fran",
+  l_es: "espan",
+  a_math: "math",
+  a_fr: "fran",
+  a_en: "anglais",
+  a_sci: "science",
+};
+
+function quizSubjectToken(sub: string | null): string | undefined {
+  if (!sub || sub === "other") return undefined;
+  return SUBJECT_TOKEN[sub];
+}
+
+function quizSearchCriteria(answers: QuizAnswers): TeacherSearchCriteria {
+  const subject = quizSubjectToken(answers.subcategory);
+  return {
+    category: answers.category ?? undefined,
+    subject,
+    format: answers.format ?? undefined,
+    teacherPreference: answers.teacherPreference ?? undefined,
+  };
 }
 
 function teachingModeAllowsOnline(mode: string | null): boolean {
@@ -125,20 +108,153 @@ function teachingModeAllowsOnline(mode: string | null): boolean {
   return m === "online" || m === "both" || m === "all" || m === "hybrid";
 }
 
-function teachingModeAllowsInPerson(mode: string | null): boolean {
-  const m = foldAscii(mode || "");
-  return m === "person" || m === "both" || m === "all" || m === "hybrid" || m === "home";
+function teacherToMatchRow(t: Teacher): TeacherMatch {
+  return {
+    id: t.id,
+    name: t.name,
+    discipline: t.discipline,
+    category: String(t.category),
+    image_url: t.imageUrl || null,
+    rating: t.rating,
+    reviews: t.reviews,
+    price_per_lesson: t.pricePerLesson,
+    teaching_mode: t.teachingMode,
+    home_lesson_enabled: t.homeLessonEnabled ?? null,
+    verification_level: t.verificationLevel ?? null,
+    identity_verified: t.identityVerified ?? null,
+    diploma_verified: t.diplomaVerified ?? null,
+    is_verified: t.isVerified,
+    country_code: t.countryCode ?? null,
+    city: t.city ?? null,
+    region: t.region ?? null,
+    timezone: t.timezone ?? null,
+    location: t.location,
+  };
+}
+
+function regionMatchScore(row: TeacherMatch, prefs: StudentLocationPrefs | null): number {
+  if (!prefs?.country_code) return 0;
+  let s = 0;
+  if (row.country_code && prefs.country_code && row.country_code === prefs.country_code) s += 3;
+  const pc = foldAscii(prefs.city || "");
+  const rc = foldAscii(row.city || "");
+  if (pc && rc && (rc.includes(pc) || pc.includes(rc))) s += 4;
+  const pr = foldAscii(prefs.region || "");
+  const rr = foldAscii(row.region || "");
+  if (pr && rr && (rr.includes(pr) || pr.includes(rr))) s += 2;
+  return s;
+}
+
+function sortQuizTeachers(
+  rows: TeacherMatch[],
+  priority: QuizAnswers["priority"],
+  studentPrefs: StudentLocationPrefs | null,
+): TeacherMatch[] {
+  const scoreRow = (row: TeacherMatch) => teacherStudentPrefScoreFromQuizRow(row as QuizTeacherMatchRow, studentPrefs);
+  const copy = [...rows];
+  if (priority === "best_rated") {
+    copy.sort((a, b) => (Number(b.rating ?? 0) - Number(a.rating ?? 0)) || scoreRow(b) - scoreRow(a));
+    return copy;
+  }
+  if (priority === "budget_friendly") {
+    copy.sort(
+      (a, b) =>
+        (Number(a.price_per_lesson ?? 1e9) - Number(b.price_per_lesson ?? 1e9)) ||
+        scoreRow(b) - scoreRow(a) ||
+        (Number(b.rating ?? 0) - Number(a.rating ?? 0)),
+    );
+    return copy;
+  }
+  if (priority === "available_soon") {
+    copy.sort(
+      (a, b) =>
+        (Number(b.verification_level ?? 0) - Number(a.verification_level ?? 0)) ||
+        scoreRow(b) - scoreRow(a) ||
+        (Number(b.rating ?? 0) - Number(a.rating ?? 0)),
+    );
+    return copy;
+  }
+  copy.sort((a, b) => scoreRow(b) - scoreRow(a) || regionMatchScore(b, studentPrefs) - regionMatchScore(a, studentPrefs));
+  return copy;
+}
+
+type QuizBuckets = { best: TeacherMatch[]; closest: TeacherMatch[]; week: TeacherMatch[]; online: TeacherMatch[] };
+
+function buildQuizBuckets(ordered: TeacherMatch[], prefs: StudentLocationPrefs | null): QuizBuckets {
+  const used = new Set<string>();
+  const take = (candidates: TeacherMatch[], n: number) => {
+    const out: TeacherMatch[] = [];
+    for (const row of candidates) {
+      if (out.length >= n) break;
+      if (used.has(row.id)) continue;
+      used.add(row.id);
+      out.push(row);
+    }
+    return out;
+  };
+
+  const best = take(ordered, 3);
+
+  const closestSorted = [...ordered].sort(
+    (a, b) => regionMatchScore(b, prefs) - regionMatchScore(a, prefs) || (Number(b.rating ?? 0) - Number(a.rating ?? 0)),
+  );
+  const closest = take(closestSorted, 3);
+
+  const weekSorted = [...ordered].sort(
+    (a, b) =>
+      (Number(b.verification_level ?? 0) - Number(a.verification_level ?? 0)) ||
+      (Number(b.rating ?? 0) - Number(a.rating ?? 0)),
+  );
+  const week = take(weekSorted, 3);
+
+  const onlinePool = ordered.filter((t) => teachingModeAllowsOnline(t.teaching_mode));
+  const onlineSorted = [...onlinePool].sort((a, b) => (Number(b.rating ?? 0) - Number(a.rating ?? 0)));
+  const online = take(onlineSorted, 3);
+
+  return { best, closest, week, online };
+}
+
+type SubOption = { value: string; labelKey: TranslationKey; emoji: string; color: string };
+
+function getSubcategoryOptions(cat: QuizAnswers["category"]): SubOption[] {
+  if (cat === "music") {
+    return [
+      { value: "m_piano", labelKey: "quizInstrumentPiano", emoji: "🎹", color: "#8B5CF6" },
+      { value: "m_guitar", labelKey: "quizInstrumentGuitar", emoji: "🎸", color: "#F59E0B" },
+      { value: "m_violin", labelKey: "quizInstrumentViolin", emoji: "🎻", color: "#EC4899" },
+      { value: "other", labelKey: "quizSubOther", emoji: "✨", color: "#64748B" },
+    ];
+  }
+  if (cat === "languages") {
+    return [
+      { value: "l_en", labelKey: "quizLangEnglish", emoji: "🇬🇧", color: "#3B82F6" },
+      { value: "l_fr", labelKey: "quizLangFrench", emoji: "🇫🇷", color: "#6366F1" },
+      { value: "l_es", labelKey: "quizLangSpanish", emoji: "🇪🇸", color: "#F97316" },
+      { value: "other", labelKey: "quizSubOther", emoji: "✨", color: "#64748B" },
+    ];
+  }
+  if (cat === "academic") {
+    return [
+      { value: "a_math", labelKey: "quizAcadMath", emoji: "📐", color: "#0EA5E9" },
+      { value: "a_fr", labelKey: "quizAcadFrench", emoji: "📘", color: "#8B5CF6" },
+      { value: "a_en", labelKey: "quizAcadEnglish", emoji: "📗", color: "#22C55E" },
+      { value: "a_sci", labelKey: "quizAcadScience", emoji: "🔬", color: "#F59E0B" },
+      { value: "other", labelKey: "quizSubOther", emoji: "✨", color: "#64748B" },
+    ];
+  }
+  return [];
 }
 
 // ── Main component ─────────────────────────────────────────────────────────────
 export function TeacherQuiz({ onClose }: { onClose: () => void }) {
   const { t, formatPrice } = useLocale();
   const { user } = useAuth();
-  const [step, setStep] = useState<Step>("subject");
+  const [step, setStep] = useState<Step>("category");
   const [answers, setAnswers] = useState<QuizAnswers>(INITIAL_ANSWERS);
   const [direction, setDirection] = useState<1 | -1>(1);
   const [loading, setLoading] = useState(false);
   const [matches, setMatches] = useState<TeacherMatch[]>([]);
+  const [matchPrefs, setMatchPrefs] = useState<StudentLocationPrefs | null>(null);
 
   // Lock body scroll while modal is open
   useEffect(() => {
@@ -202,63 +318,52 @@ export function TeacherQuiz({ onClose }: { onClose: () => void }) {
           : null;
       }
 
-      const budgetedQuery = () => {
-        let q = supabase
-          .from("teachers")
-          .select(TEACHER_QUIZ_SELECT)
-          .neq("identity_status", "failed")
-          .order("rating", { ascending: false });
-        if (answers.budget && answers.budget > 0) {
-          q = q.lte("price_per_lesson", answers.budget);
-        }
-        return q;
-      };
+      const stripFailed = (rows: TeacherRow[]) =>
+        rows.filter((r) => foldAscii(String(r.identity_status ?? "none")) !== "failed");
 
-      function applySubject(rows: TeacherMatch[]): TeacherMatch[] {
-        if (!answers.subject) return rows;
-        const matched = rows.filter((t) => subjectMatchesRow(answers.subject, t.discipline, t.category));
-        return matched.length >= 1 ? matched : rows;
+      const { data, error } = await supabase
+        .from("teachers")
+        .select(TEACHER_QUIZ_SELECT)
+        .neq("identity_status", "failed")
+        .order("rating", { ascending: false })
+        .limit(96);
+
+      const rows = stripFailed((data ?? []) as TeacherRow[]);
+      const teachers = rows.map((r) => teacherRowToTeacher(r));
+
+      const crit = quizSearchCriteria(answers);
+      let filtered = filterTeacherPool(teachers, crit);
+      if (filtered.length < 4 && crit.subject) {
+        filtered = filterTeacherPool(teachers, { ...crit, subject: undefined });
+      }
+      if (filtered.length < 2) {
+        filtered = filterTeacherPool(teachers, { format: crit.format, category: crit.category });
+      }
+      if (filtered.length === 0) {
+        filtered = teachers.slice(0, 24);
       }
 
-      function applyFormat(rows: TeacherMatch[]): TeacherMatch[] {
-        let filtered = rows;
-        if (answers.format === "online") {
-          // DB uses online | person | both | home | all (legacy "hybrid" kept for tolerance).
-          const online = filtered.filter((t) => teachingModeAllowsOnline(t.teaching_mode));
-          if (online.length >= 1) filtered = online;
-        } else if (answers.format === "home") {
-          const home = filtered.filter((t) => t.home_lesson_enabled);
-          if (home.length >= 1) filtered = home;
-        } else if (answers.format === "studio") {
-          const studio = filtered.filter(
-            (t) => teachingModeAllowsInPerson(t.teaching_mode) && foldAscii(t.teaching_mode || "") !== "online",
-          );
-          if (studio.length >= 1) filtered = studio;
-        }
-        return filtered;
-      }
+      const matchRows = filtered.map(teacherToMatchRow);
+      const sorted = sortQuizTeachers(matchRows, answers.priority, studentPrefs);
+      const ordered = sorted.slice(0, 36);
+      setMatches(ordered);
 
-      const stripFailed = (rows: TeacherMatch[]) =>
-        rows.filter((t) => foldAscii(String(t.identity_status ?? "none")) !== "failed");
-
-      const { data, error } = await budgetedQuery().limit(48);
-      let pool = stripFailed((data ?? []) as TeacherMatch[]);
-
-      pool = applySubject(pool);
-      pool = applyFormat(pool);
-
-      const scoreRow = (row: TeacherMatch) => teacherStudentPrefScoreFromQuizRow(row as QuizTeacherMatchRow, studentPrefs);
-      pool = [...pool].sort((x, y) => scoreRow(y) - scoreRow(x));
-
-      if (error || pool.length === 0) {
-        const { data: fb } = await budgetedQuery().limit(36);
-        let broad = stripFailed((fb ?? []) as TeacherMatch[]);
-        broad = applyFormat(broad);
-        broad = [...broad].sort((x, y) => scoreRow(y) - scoreRow(x));
-        setMatches(broad.slice(0, 3));
-      } else {
-        setMatches(pool.slice(0, 3));
-      }
+      logSearchEvent({
+        source: "quiz",
+        category: answers.category,
+        subject: answers.subcategory,
+        format: answers.format ?? null,
+        city: studentPrefs?.city ?? null,
+        region: studentPrefs?.region ?? null,
+        country_code: studentPrefs?.country_code ?? null,
+        timezone: studentPrefs?.timezone ?? null,
+        result_count: ordered.length,
+        filters: {
+          whoFor: answers.whoFor,
+          priority: answers.priority,
+          teacherPreference: answers.teacherPreference,
+        },
+      });
     } catch {
       setMatches([]);
     } finally {
@@ -266,15 +371,14 @@ export function TeacherQuiz({ onClose }: { onClose: () => void }) {
     }
   }, [answers, user?.id]);
 
-  const handleEmailSubmit = () => {
-    void fetchMatches();
-  };
-
   const restart = () => {
     setAnswers(INITIAL_ANSWERS);
+    setMatchPrefs(null);
     setDirection(-1);
-    setStep("subject");
+    setStep("category");
   };
+
+  const resultBuckets = useMemo(() => buildQuizBuckets(matches, matchPrefs), [matches, matchPrefs]);
 
   // ── Slide variants ────────────────────────────────────────────────────────
   const variants = {
@@ -353,40 +457,96 @@ export function TeacherQuiz({ onClose }: { onClose: () => void }) {
               transition={transition}
               className="px-5 pb-6"
             >
-              {/* ── STEP 1: SUBJECT ───────────────────────────────────── */}
-              {step === "subject" && (
+              {step === "category" && (
                 <StepLayout title={t("quizStep1Title")}>
                   <OptionGrid>
                     <OptionCard
                       icon={<Music size={28} />}
                       label={t("quizSubjectMusic")}
                       emoji="🎵"
-                      selected={answers.subject === "music"}
+                      selected={answers.category === "music"}
                       color="#8B5CF6"
                       onClick={() => {
-                        setAnswers((a) => ({ ...a, subject: "music" }));
-                        goNext("format");
+                        setAnswers((a) => ({ ...a, category: "music", subcategory: null }));
+                        goNext("subcategory");
                       }}
                     />
                     <OptionCard
                       icon={<Languages size={28} />}
                       label={t("quizSubjectLanguages")}
                       emoji="🌍"
-                      selected={answers.subject === "languages"}
+                      selected={answers.category === "languages"}
                       color="#3B82F6"
                       onClick={() => {
-                        setAnswers((a) => ({ ...a, subject: "languages" }));
-                        goNext("format");
+                        setAnswers((a) => ({ ...a, category: "languages", subcategory: null }));
+                        goNext("subcategory");
                       }}
                     />
                     <OptionCard
                       icon={<BookOpen size={28} />}
                       label={t("quizSubjectAcademic")}
                       emoji="📚"
-                      selected={answers.subject === "academic"}
+                      selected={answers.category === "academic"}
                       color="#F59E0B"
                       onClick={() => {
-                        setAnswers((a) => ({ ...a, subject: "academic" }));
+                        setAnswers((a) => ({ ...a, category: "academic", subcategory: null }));
+                        goNext("subcategory");
+                      }}
+                    />
+                  </OptionGrid>
+                </StepLayout>
+              )}
+
+              {step === "subcategory" && (
+                <StepLayout title={t("quizSubcategoryTitle")}>
+                  <OptionGrid cols={2}>
+                    {getSubcategoryOptions(answers.category).map((opt) => (
+                      <OptionCard
+                        key={opt.value}
+                        label={t(opt.labelKey)}
+                        emoji={opt.emoji}
+                        selected={answers.subcategory === opt.value}
+                        color={opt.color}
+                        onClick={() => {
+                          setAnswers((a) => ({ ...a, subcategory: opt.value }));
+                          goNext("who_for");
+                        }}
+                      />
+                    ))}
+                  </OptionGrid>
+                </StepLayout>
+              )}
+
+              {step === "who_for" && (
+                <StepLayout title={t("quizWhoFor")}>
+                  <OptionGrid cols={1}>
+                    <LevelCard
+                      label={t("quizForMe")}
+                      emoji="🙋"
+                      color="#1D9E75"
+                      selected={answers.whoFor === "me"}
+                      onClick={() => {
+                        setAnswers((a) => ({ ...a, whoFor: "me" }));
+                        goNext("format");
+                      }}
+                    />
+                    <LevelCard
+                      label={t("quizForChild")}
+                      emoji="👧"
+                      color="#EC4899"
+                      selected={answers.whoFor === "child"}
+                      onClick={() => {
+                        setAnswers((a) => ({ ...a, whoFor: "child" }));
+                        goNext("format");
+                      }}
+                    />
+                    <LevelCard
+                      label={t("quizForSomeoneElse")}
+                      emoji="🤝"
+                      color="#6366F1"
+                      selected={answers.whoFor === "someone_else"}
+                      onClick={() => {
+                        setAnswers((a) => ({ ...a, whoFor: "someone_else" }));
                         goNext("format");
                       }}
                     />
@@ -394,10 +554,31 @@ export function TeacherQuiz({ onClose }: { onClose: () => void }) {
                 </StepLayout>
               )}
 
-              {/* ── STEP 2: FORMAT ────────────────────────────────────── */}
               {step === "format" && (
                 <StepLayout title={t("quizStep2Title")}>
-                  <OptionGrid>
+                  <OptionGrid cols={2}>
+                    <OptionCard
+                      icon={<Home size={28} />}
+                      label={t("quizFormatHome")}
+                      emoji="🏠"
+                      selected={answers.format === "at_home"}
+                      color="#EC4899"
+                      onClick={() => {
+                        setAnswers((a) => ({ ...a, format: "at_home" }));
+                        goNext("priority");
+                      }}
+                    />
+                    <OptionCard
+                      icon={<MapPin size={28} />}
+                      label={t("quizFormatInPersonNearby")}
+                      emoji="📍"
+                      selected={answers.format === "in_person"}
+                      color="#F97316"
+                      onClick={() => {
+                        setAnswers((a) => ({ ...a, format: "in_person" }));
+                        goNext("priority");
+                      }}
+                    />
                     <OptionCard
                       icon={<Monitor size={28} />}
                       label={t("quizFormatOnline")}
@@ -406,127 +587,110 @@ export function TeacherQuiz({ onClose }: { onClose: () => void }) {
                       color="#1D9E75"
                       onClick={() => {
                         setAnswers((a) => ({ ...a, format: "online" }));
-                        goNext("level");
+                        goNext("priority");
                       }}
                     />
                     <OptionCard
-                      icon={<Home size={28} />}
-                      label={t("quizFormatHome")}
-                      emoji="🏠"
-                      selected={answers.format === "home"}
-                      color="#EC4899"
+                      icon={<LayoutGrid size={28} />}
+                      label={t("quizFormatHybridNoPreference")}
+                      emoji="🔀"
+                      selected={answers.format === "no_preference" || answers.format === "hybrid"}
+                      color="#64748B"
                       onClick={() => {
-                        setAnswers((a) => ({ ...a, format: "home" }));
-                        goNext("level");
-                      }}
-                    />
-                    <OptionCard
-                      icon={<Building2 size={28} />}
-                      label={t("quizFormatStudio")}
-                      emoji="🎓"
-                      selected={answers.format === "studio"}
-                      color="#F97316"
-                      onClick={() => {
-                        setAnswers((a) => ({ ...a, format: "studio" }));
-                        goNext("level");
+                        setAnswers((a) => ({ ...a, format: "no_preference" }));
+                        goNext("priority");
                       }}
                     />
                   </OptionGrid>
                 </StepLayout>
               )}
 
-              {/* ── STEP 3: LEVEL ─────────────────────────────────────── */}
-              {step === "level" && (
-                <StepLayout title={t("quizStep3Title")}>
+              {step === "priority" && (
+                <StepLayout title={t("quizPriority")}>
+                  <OptionGrid cols={2}>
+                    <OptionCard
+                      icon={<MapPin size={28} />}
+                      label={t("priorityClosest")}
+                      emoji="📍"
+                      selected={answers.priority === "closest"}
+                      color="#0EA5E9"
+                      onClick={() => {
+                        setAnswers((a) => ({ ...a, priority: "closest" }));
+                        goNext("teacher_pref");
+                      }}
+                    />
+                    <OptionCard
+                      icon={<Star size={28} />}
+                      label={t("priorityBestRated")}
+                      emoji="⭐"
+                      color="#F59E0B"
+                      selected={answers.priority === "best_rated"}
+                      onClick={() => {
+                        setAnswers((a) => ({ ...a, priority: "best_rated" }));
+                        goNext("teacher_pref");
+                      }}
+                    />
+                    <OptionCard
+                      icon={<Sparkles size={28} />}
+                      label={t("priorityAvailableSoon")}
+                      emoji="⏳"
+                      color="#8B5CF6"
+                      selected={answers.priority === "available_soon"}
+                      onClick={() => {
+                        setAnswers((a) => ({ ...a, priority: "available_soon" }));
+                        goNext("teacher_pref");
+                      }}
+                    />
+                    <OptionCard
+                      label={t("priorityBudgetFriendly")}
+                      emoji="💰"
+                      color="#22C55E"
+                      selected={answers.priority === "budget_friendly"}
+                      onClick={() => {
+                        setAnswers((a) => ({ ...a, priority: "budget_friendly" }));
+                        goNext("teacher_pref");
+                      }}
+                    />
+                  </OptionGrid>
+                </StepLayout>
+              )}
+
+              {step === "teacher_pref" && (
+                <StepLayout title={t("teacherPreference")}>
+                  <p className="text-xs text-[#6B6760] mb-4">{t("teacherPreferenceComfortHint")}</p>
                   <OptionGrid cols={1}>
-                    {(["beginner", "intermediate", "advanced"] as const).map((lvl, i) => {
-                      const labels = [t("quizLevelBeginner"), t("quizLevelIntermediate"), t("quizLevelAdvanced")];
-                      const emojis = ["🌱", "🌿", "🌳"];
-                      const colors = ["#22C55E", "#1D9E75", "#0F6E56"];
-                      return (
-                        <LevelCard
-                          key={lvl}
-                          label={labels[i]!}
-                          emoji={emojis[i]!}
-                          color={colors[i]!}
-                          selected={answers.level === lvl}
-                          onClick={() => {
-                            setAnswers((a) => ({ ...a, level: lvl }));
-                            goNext("budget");
-                          }}
-                        />
-                      );
-                    })}
-                  </OptionGrid>
-                </StepLayout>
-              )}
-
-              {/* ── STEP 4: BUDGET ────────────────────────────────────── */}
-              {step === "budget" && (
-                <StepLayout title={t("quizStep4Title")}>
-                  <BudgetStep
-                    value={answers.budget}
-                    label={t("quizBudgetLabel")}
-                    anyLabel={t("quizBudgetAny")}
-                    onChange={(v) => setAnswers((a) => ({ ...a, budget: v }))}
-                    formatPrice={formatPrice}
-                  />
-                  <div className="flex gap-3 mt-6">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setAnswers((a) => ({ ...a, budget: null }));
-                        goNext("email");
-                      }}
-                      className="flex-1 h-11 rounded-2xl border border-[#E8E6DF] text-sm font-semibold text-[#6B6760] hover:border-[#1D9E75]/40 transition-colors"
-                    >
-                      {t("quizSkip")}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => goNext("email")}
-                      className="flex-1 h-11 rounded-2xl bg-[#1D9E75] text-sm font-bold text-white hover:brightness-105 transition-all flex items-center justify-center gap-1.5"
-                    >
-                      {t("quizNext")} <ArrowRight size={14} />
-                    </button>
-                  </div>
-                </StepLayout>
-              )}
-
-              {/* ── STEP 5: EMAIL ─────────────────────────────────────── */}
-              {step === "email" && (
-                <StepLayout title={t("quizStep5Title")}>
-                  <p className="text-xs text-[#6B6760] mb-4">{t("quizEmailHelper")}</p>
-                  <label className="block space-y-1.5">
-                    <span className="text-xs font-semibold text-[#2C2C2A]">{t("quizEmailLabel")}</span>
-                    <input
-                      type="email"
-                      value={answers.email}
-                      onChange={(e) => setAnswers((a) => ({ ...a, email: e.target.value }))}
-                      placeholder={t("quizEmailPlaceholder")}
-                      className="w-full h-11 rounded-xl border border-[#E8E6DF] px-4 text-sm focus:outline-none focus:border-[#1D9E75] focus:ring-1 focus:ring-[#1D9E75]/30 transition-all"
+                    <LevelCard
+                      label={t("teacherPreferenceNone")}
+                      emoji="✨"
+                      color="#64748B"
+                      selected={answers.teacherPreference === "no_preference" || answers.teacherPreference === null}
+                      onClick={() => setAnswers((a) => ({ ...a, teacherPreference: "no_preference" }))}
                     />
-                  </label>
-                  <div className="flex gap-3 mt-5">
-                    <button
-                      type="button"
-                      onClick={handleEmailSubmit}
-                      className="flex-1 h-11 rounded-2xl border border-[#E8E6DF] text-sm font-semibold text-[#6B6760] hover:border-[#1D9E75]/40 transition-colors"
-                    >
-                      {t("quizSkip")}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleEmailSubmit}
-                      className="flex-1 h-11 rounded-2xl bg-[#1D9E75] text-sm font-bold text-white hover:brightness-105 transition-all flex items-center justify-center gap-1.5"
-                    >
-                      {t("quizSeeResults")} <ArrowRight size={14} />
-                    </button>
-                  </div>
+                    <LevelCard
+                      label={t("teacherPreferenceFemale")}
+                      emoji="👩‍🏫"
+                      color="#EC4899"
+                      selected={answers.teacherPreference === "female_preferred"}
+                      onClick={() => setAnswers((a) => ({ ...a, teacherPreference: "female_preferred" }))}
+                    />
+                    <LevelCard
+                      label={t("teacherPreferenceMale")}
+                      emoji="👨‍🏫"
+                      color="#3B82F6"
+                      selected={answers.teacherPreference === "male_preferred"}
+                      onClick={() => setAnswers((a) => ({ ...a, teacherPreference: "male_preferred" }))}
+                    />
+                  </OptionGrid>
+                  <button
+                    type="button"
+                    onClick={() => void fetchMatches()}
+                    className="mt-6 w-full h-11 rounded-2xl bg-[#1D9E75] text-sm font-bold text-white hover:brightness-105 transition-all flex items-center justify-center gap-1.5"
+                  >
+                    {t("quizSeeResults")} <ArrowRight size={14} />
+                  </button>
                 </StepLayout>
               )}
 
-              {/* ── STEP 6: RESULTS ───────────────────────────────────── */}
               {step === "results" && (
                 <div>
                   {loading ? (
@@ -536,15 +700,8 @@ export function TeacherQuiz({ onClose }: { onClose: () => void }) {
                     </div>
                   ) : (
                     <>
-                      <div className="flex items-center justify-between mb-5">
-                        <div>
-                          <div className="flex items-center gap-1.5 mb-1">
-                            <span className="inline-flex items-center gap-1 rounded-full bg-[#1D9E75]/12 px-2.5 py-0.5 text-[11px] font-bold text-[#1D9E75] uppercase tracking-wide">
-                              <Sparkles size={10} /> {t("quizTopPicksLabel")}
-                            </span>
-                          </div>
-                          <h3 className="text-lg font-bold text-[#2C2C2A]">{t("quizResultsTitle")}</h3>
-                        </div>
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-bold text-[#2C2C2A]">{t("quizResultsTitle")}</h3>
                         <button
                           type="button"
                           onClick={restart}
@@ -553,6 +710,10 @@ export function TeacherQuiz({ onClose }: { onClose: () => void }) {
                           <RefreshCw size={11} /> {t("quizRestart")}
                         </button>
                       </div>
+
+                      {!user ? (
+                        <p className="text-xs text-[#6B6760] mb-4 rounded-xl bg-[#F1EFE8] px-3 py-2">{t("signInToSaveMatches")}</p>
+                      ) : null}
 
                       {matches.length === 0 ? (
                         <div className="py-10 text-center">
@@ -566,18 +727,43 @@ export function TeacherQuiz({ onClose }: { onClose: () => void }) {
                           </Link>
                         </div>
                       ) : (
-                        <div className="space-y-3">
-                          {matches.map((teacher, idx) => (
-                            <MatchCard
-                              key={teacher.id}
-                              teacher={teacher}
-                              rank={idx + 1}
-                              formatPrice={formatPrice}
-                              bookLabel={t("quizBookNow")}
-                              profileLabel={t("quizSeeProfile")}
-                              onClose={onClose}
-                            />
-                          ))}
+                        <div className="space-y-6">
+                          <QuizBucketSection
+                            title={t("bestMatch")}
+                            teachers={resultBuckets.best}
+                            formatPrice={formatPrice}
+                            bookLabel={t("quizBookNow")}
+                            profileLabel={t("quizSeeProfile")}
+                            onClose={onClose}
+                            isLoggedIn={Boolean(user)}
+                          />
+                          <QuizBucketSection
+                            title={t("closestMatch")}
+                            teachers={resultBuckets.closest}
+                            formatPrice={formatPrice}
+                            bookLabel={t("quizBookNow")}
+                            profileLabel={t("quizSeeProfile")}
+                            onClose={onClose}
+                            isLoggedIn={Boolean(user)}
+                          />
+                          <QuizBucketSection
+                            title={t("availableThisWeekMatch")}
+                            teachers={resultBuckets.week}
+                            formatPrice={formatPrice}
+                            bookLabel={t("quizBookNow")}
+                            profileLabel={t("quizSeeProfile")}
+                            onClose={onClose}
+                            isLoggedIn={Boolean(user)}
+                          />
+                          <QuizBucketSection
+                            title={t("bestOnlineMatch")}
+                            teachers={resultBuckets.online}
+                            formatPrice={formatPrice}
+                            bookLabel={t("quizBookNow")}
+                            profileLabel={t("quizSeeProfile")}
+                            onClose={onClose}
+                            isLoggedIn={Boolean(user)}
+                          />
                           <Link
                             href="/student/search"
                             onClick={onClose}
@@ -596,7 +782,7 @@ export function TeacherQuiz({ onClose }: { onClose: () => void }) {
         </div>
 
         {/* ── Back button (for question steps only) ──────────────────────── */}
-        {step !== "subject" && step !== "results" && (
+        {step !== "category" && step !== "results" && (
           <div className="px-5 pb-5 shrink-0">
             <button
               type="button"
@@ -625,18 +811,28 @@ function StepLayout({ title, children }: { title: string; children: React.ReactN
 
 function OptionGrid({ children, cols = 3 }: { children: React.ReactNode; cols?: number }) {
   return (
-    <div className={cn("grid gap-3", cols === 1 ? "grid-cols-1" : "grid-cols-3")}>
+    <div
+      className={cn(
+        "grid gap-3",
+        cols === 1 ? "grid-cols-1" : cols === 2 ? "grid-cols-2" : "grid-cols-3",
+      )}
+    >
       {children}
     </div>
   );
 }
 
 function OptionCard({
-  icon, label, emoji, selected, color, onClick,
+  icon,
+  label,
+  emoji,
+  selected,
+  color: _color,
+  onClick,
 }: {
-  icon: React.ReactNode;
+  icon?: React.ReactNode;
   label: string;
-  emoji: string;
+  emoji?: string;
   selected: boolean;
   color: string;
   onClick: () => void;
@@ -649,10 +845,12 @@ function OptionCard({
         "flex flex-col items-center justify-center gap-2 rounded-2xl border-2 p-4 py-5 text-center transition-all",
         selected
           ? "border-[#1D9E75] bg-[rgba(29,158,117,0.08)] shadow-sm"
-          : "border-[#E8E6DF] bg-white hover:border-[#1D9E75]/40 hover:bg-[#FAFAF8]"
+          : "border-[#E8E6DF] bg-white hover:border-[#1D9E75]/40 hover:bg-[#FAFAF8]",
       )}
     >
-      <span className="text-2xl">{emoji}</span>
+      <span className="flex min-h-9 items-center justify-center text-2xl text-[#2C2C2A]">
+        {emoji ? emoji : icon}
+      </span>
       <span
         className="text-xs font-bold leading-tight"
         style={{ color: selected ? "#0F6E56" : "#2C2C2A" }}
@@ -692,56 +890,47 @@ function LevelCard({
   );
 }
 
-function BudgetStep({
-  value, label, anyLabel, onChange, formatPrice,
+function QuizBucketSection({
+  title,
+  teachers,
+  formatPrice,
+  bookLabel,
+  profileLabel,
+  onClose,
+  isLoggedIn,
 }: {
-  value: number | null;
-  label: string;
-  anyLabel: string;
-  onChange: (v: number | null) => void;
+  title: string;
+  teachers: TeacherMatch[];
   formatPrice: (n: number) => string;
+  bookLabel: string;
+  profileLabel: string;
+  onClose: () => void;
+  isLoggedIn: boolean;
 }) {
-  const budgetOptions = [25, 40, 60, 80, 100];
+  if (!teachers.length) return null;
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-3 gap-2">
-        {budgetOptions.map((amt) => (
-          <button
-            key={amt}
-            type="button"
-            onClick={() => onChange(value === amt ? null : amt)}
-            className={cn(
-              "rounded-xl border-2 py-3 text-sm font-bold transition-all",
-              value === amt
-                ? "border-[#1D9E75] bg-[rgba(29,158,117,0.1)] text-[#0F6E56]"
-                : "border-[#E8E6DF] text-[#2C2C2A] hover:border-[#1D9E75]/40"
-            )}
-          >
-            ≤ {formatPrice(amt)}
-          </button>
+    <div>
+      <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-[#6B6760]">{title}</p>
+      <div className="space-y-2">
+        {teachers.map((teacher, idx) => (
+          <MatchCard
+            key={`${title}-${teacher.id}`}
+            teacher={teacher}
+            rank={idx + 1}
+            formatPrice={formatPrice}
+            bookLabel={bookLabel}
+            profileLabel={profileLabel}
+            onClose={onClose}
+            isLoggedIn={isLoggedIn}
+          />
         ))}
-        <button
-          type="button"
-          onClick={() => onChange(null)}
-          className={cn(
-            "rounded-xl border-2 py-3 text-xs font-bold transition-all col-span-1",
-            value === null
-              ? "border-[#1D9E75] bg-[rgba(29,158,117,0.1)] text-[#0F6E56]"
-              : "border-[#E8E6DF] text-[#6B6760] hover:border-[#1D9E75]/40"
-          )}
-        >
-          {anyLabel}
-        </button>
       </div>
-      <p className="text-center text-xs text-[#6B6760]">
-        {value != null ? `${label}: ${formatPrice(value)}` : anyLabel}
-      </p>
     </div>
   );
 }
 
 function MatchCard({
-  teacher, rank, formatPrice, bookLabel, profileLabel, onClose,
+  teacher, rank, formatPrice, bookLabel, profileLabel, onClose, isLoggedIn,
 }: {
   teacher: TeacherMatch;
   rank: number;
@@ -749,6 +938,7 @@ function MatchCard({
   bookLabel: string;
   profileLabel: string;
   onClose: () => void;
+  isLoggedIn: boolean;
 }) {
   const initials = teacher.name
     .split(" ")
@@ -757,6 +947,8 @@ function MatchCard({
     .join("");
 
   const verificationLevel = (teacher.verification_level ?? 0) as VerificationLevel;
+  const profilePath = `/teacher/profile/${encodeURIComponent(teacher.id)}`;
+  const bookHref = isLoggedIn ? profilePath : `/login?next=${encodeURIComponent(profilePath)}`;
 
   return (
     <div className="rounded-2xl border border-[#E8E6DF] bg-white p-4 flex items-start gap-3">
@@ -823,14 +1015,14 @@ function MatchCard({
         {/* CTAs */}
         <div className="mt-3 flex items-center gap-2">
           <Link
-            href={`/teacher/profile/${encodeURIComponent(teacher.id)}`}
+            href={bookHref}
             onClick={onClose}
             className="flex-1 h-8 rounded-xl bg-[#1D9E75] flex items-center justify-center text-xs font-bold text-white hover:brightness-105 transition-all"
           >
             {bookLabel}
           </Link>
           <Link
-            href={`/teacher/profile/${encodeURIComponent(teacher.id)}`}
+            href={profilePath}
             onClick={onClose}
             className="h-8 px-3 rounded-xl border border-[#E8E6DF] flex items-center justify-center text-xs font-semibold text-[#6B6760] hover:border-[#1D9E75]/40 transition-colors whitespace-nowrap"
           >

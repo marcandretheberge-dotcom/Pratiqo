@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { CalendarDays, MessageSquare, Search, UserRound } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
@@ -9,8 +10,13 @@ import { useLocale } from "@/lib/locale-context";
 import { cn } from "@/lib/utils";
 import { CreditsWidget } from "@/components/CreditsWidget";
 import { ConfirmCancelBookingDialog } from "@/components/ConfirmCancelBookingDialog";
+import { StudentChangeClassModal } from "@/components/dashboard/student/StudentChangeClassModal";
 import { STUDENT_CANCEL_STATUSES, isBookingLessonDateOnOrAfterToday, isLateCancellation } from "@/lib/bookingCancellation";
 import { postCancelBooking } from "@/lib/bookingCancellationClient";
+import type { TranslationKey } from "@/lib/translations";
+
+const PEER_UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 type BookingRow = {
   id: string;
@@ -50,6 +56,24 @@ function sortKey(b: { date: string; time: string }) {
   return `${b.date}#${b.time}`.replaceAll("h", ":");
 }
 
+function messagesHrefForTeacherUser(teacherUserId: string | null | undefined): string {
+  const peer = typeof teacherUserId === "string" ? teacherUserId.trim() : "";
+  return peer && PEER_UUID_RE.test(peer) ? `/messages?peer=${encodeURIComponent(peer)}` : "/messages";
+}
+
+function formatTeachingModeLabel(mode: string | null, t: (key: TranslationKey) => string): string | null {
+  if (!mode) return null;
+  const m = mode.toLowerCase().trim();
+  if (m === "online") return t("online");
+  if (m === "domicile" || m === "person" || m === "in_person" || m === "at_home") return t("inPerson");
+  if (m === "hybrid" || m === "both") return t("teachingFormatHybrid");
+  return mode;
+}
+
+function canStudentCancelBooking(status: string): boolean {
+  return (STUDENT_CANCEL_STATUSES as readonly string[]).includes(status);
+}
+
 export function StudentDashboard() {
   const { user } = useAuth();
   const { t, formatPrice } = useLocale();
@@ -61,6 +85,7 @@ export function StudentDashboard() {
   );
   const [reloadKey, setReloadKey] = useState(0);
   const [cancelBookingId, setCancelBookingId] = useState<string | null>(null);
+  const [rescheduleBookingId, setRescheduleBookingId] = useState<string | null>(null);
   const [cancelBusy, setCancelBusy] = useState(false);
   const [localFlash, setLocalFlash] = useState<string | null>(null);
 
@@ -149,6 +174,18 @@ export function StudentDashboard() {
   }, [user?.id, t, reloadKey]);
 
   const nextLesson = upcoming[0] ?? null;
+  const nextLessonModeLabel = useMemo(
+    () => formatTeachingModeLabel(nextLesson?.teachingMode ?? null, t),
+    [nextLesson?.teachingMode, t],
+  );
+  const restUpcoming = useMemo(() => upcoming.slice(1), [upcoming]);
+
+  const rescheduleBooking = useMemo(
+    () => upcoming.find((x) => x.bookingId === rescheduleBookingId) ?? null,
+    [upcoming, rescheduleBookingId],
+  );
+  const rescheduleMessagesHref = messagesHrefForTeacherUser(rescheduleBooking?.teacherUserId);
+
   const cancelIsLate = useMemo(() => {
     if (!cancelBookingId) return false;
     const b = upcoming.find((x) => x.bookingId === cancelBookingId);
@@ -184,46 +221,108 @@ export function StudentDashboard() {
     }
   };
 
+  const openRescheduleFor = (bookingId: string) => setRescheduleBookingId(bookingId);
+
   return (
-    <div className="space-y-6">
+    <div className="mx-auto w-full max-w-[1280px] space-y-8 bg-[#F3FAF6] pb-16 px-4 sm:px-6 lg:rounded-3xl lg:p-8 lg:shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]">
+      <header className="space-y-1">
+        <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">{t("studentTabLessons")}</h1>
+      </header>
+
       {localFlash ? (
         <div className="rounded-2xl border border-[var(--p-border-light)] bg-white px-4 py-3 text-sm font-semibold text-slate-800 shadow-sm">
           {localFlash}
         </div>
       ) : null}
-      {/* NEXT LESSON */}
+
+      {/* NEXT CLASS — hero */}
       <section
-        className="rounded-3xl p-6 text-white shadow-[0_24px_80px_rgba(15,110,86,0.20)]"
+        className="rounded-3xl p-5 text-white shadow-[0_24px_80px_rgba(15,110,86,0.22)] sm:p-6"
         style={{ background: "#0F6E56" }}
       >
-        <p className="text-[10px] font-bold uppercase tracking-widest text-white/90">{t("studentNextLesson")}</p>
+        <p className="text-[10px] font-bold uppercase tracking-widest text-white/90">{t("studentNextClass")}</p>
         {loading ? (
           <div className="mt-4 h-12 rounded-2xl bg-white/10" />
         ) : nextLesson ? (
-          <div className="mt-3 space-y-2">
-            <div className="text-lg font-bold leading-tight text-white">
-              {nextLesson.teacherName}{" "}
-              {nextLesson.discipline ? <span className="font-semibold text-white/95">· {nextLesson.discipline}</span> : null}
+          <div className="mt-4 space-y-4">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0 flex flex-1 gap-3">
+                {nextLesson.avatarUrl?.trim() ? (
+                  <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full ring-2 ring-white/30">
+                    <Image
+                      src={nextLesson.avatarUrl.trim()}
+                      alt=""
+                      width={56}
+                      height={56}
+                      className="h-full w-full object-cover"
+                      unoptimized
+                    />
+                  </div>
+                ) : (
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-white/15 text-sm font-bold text-white ring-2 ring-white/25">
+                    {(nextLesson.teacherName || "?").slice(0, 2).toUpperCase()}
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <div className="text-lg font-bold leading-tight text-white">
+                    {nextLesson.teacherName}
+                    {nextLesson.discipline ? (
+                      <span className="font-semibold text-white/95"> · {nextLesson.discipline}</span>
+                    ) : null}
+                  </div>
+                  <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-white/90">
+                    <span className="inline-flex items-center gap-2">
+                      <CalendarDays size={16} className="shrink-0 opacity-95" />
+                      {nextLesson.date} · {nextLesson.time}
+                    </span>
+                    {nextLesson.durationMinutes ? <span>{nextLesson.durationMinutes} min</span> : null}
+                    {nextLesson.price != null ? <span>{formatPrice(nextLesson.price)}</span> : null}
+                    {nextLessonModeLabel ? <span className="text-white/85">{nextLessonModeLabel}</span> : null}
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="text-sm text-white/95 flex flex-wrap gap-x-3 gap-y-1">
-              <span className="inline-flex items-center gap-2">
-                <CalendarDays size={16} className="text-white shrink-0 opacity-95" />
-                {nextLesson.date} · {nextLesson.time}
-              </span>
-              {nextLesson.durationMinutes ? <span>{nextLesson.durationMinutes} min</span> : null}
-              {nextLesson.price != null ? <span>{formatPrice(nextLesson.price)}</span> : null}
-              {nextLesson.teachingMode ? <span className="text-white/90">{nextLesson.teachingMode}</span> : null}
-            </div>
-            {(STUDENT_CANCEL_STATUSES as readonly string[]).includes(nextLesson.status) ? (
-              <button
-                type="button"
-                onClick={() => setCancelBookingId(nextLesson.bookingId)}
-                disabled={cancelBusy}
-                className="mt-3 inline-flex min-h-[44px] w-full items-center justify-center rounded-2xl border-2 border-white/95 bg-transparent px-4 text-sm font-bold text-white hover:bg-white/10 disabled:opacity-60"
+
+            <div className="flex flex-col gap-3 border-t border-white/15 pt-4">
+              <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-3">
+                <Link
+                  href={messagesHrefForTeacherUser(nextLesson.teacherUserId)}
+                  className={cn(
+                    "inline-flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-2xl bg-white px-5 text-sm font-semibold text-[#0F6E56] shadow-sm transition hover:bg-white/95",
+                    "sm:flex-none sm:min-w-[160px]",
+                  )}
+                >
+                  <MessageSquare size={18} className="shrink-0" />
+                  {t("messageTeacher")}
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => openRescheduleFor(nextLesson.bookingId)}
+                  className={cn(
+                    "inline-flex min-h-[44px] flex-1 items-center justify-center rounded-2xl border-2 border-white/85 bg-transparent px-5 text-sm font-semibold text-white transition hover:bg-white/10",
+                    "sm:flex-none sm:min-w-[160px]",
+                  )}
+                >
+                  {t("rescheduleClass")}
+                </button>
+              </div>
+              <Link
+                href="/legal/annulation"
+                className="text-xs font-medium text-white/90 underline-offset-4 transition hover:underline"
               >
-                {t("cancelClass")}
-              </button>
-            ) : null}
+                {t("viewCancellationPolicy")}
+              </Link>
+              {canStudentCancelBooking(nextLesson.status) ? (
+                <button
+                  type="button"
+                  onClick={() => setCancelBookingId(nextLesson.bookingId)}
+                  disabled={cancelBusy}
+                  className="self-start bg-transparent text-left text-xs font-medium text-rose-200 underline-offset-4 transition hover:text-white hover:underline disabled:opacity-50"
+                >
+                  {t("cancelClass")}
+                </button>
+              ) : null}
+            </div>
           </div>
         ) : (
           <div className="mt-3 space-y-3">
@@ -232,7 +331,7 @@ export function StudentDashboard() {
             </p>
             <Link
               href="/student/search"
-              className="inline-flex h-11 items-center justify-center rounded-2xl bg-white px-5 text-sm font-bold text-[#0F6E56]"
+              className="inline-flex h-11 min-h-[44px] items-center justify-center rounded-2xl bg-white px-5 text-sm font-bold text-[#0F6E56]"
             >
               <Search size={16} className="mr-2" />
               {t("studentFindTeacher")}
@@ -243,76 +342,110 @@ export function StudentDashboard() {
 
       {/* UPCOMING */}
       <section className="space-y-3">
-        <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-700">{t("studentUpcoming")}</h2>
+        <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-700">{t("studentUpcomingClasses")}</h2>
         {loading ? (
-          <div className="rounded-2xl border border-[var(--p-border-light)] bg-white p-6 text-sm text-slate-600">
-            …
-          </div>
+          <div className="rounded-2xl border border-[var(--p-border-light)] bg-white p-6 text-sm text-slate-600">…</div>
         ) : upcoming.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-[var(--p-border-light)] bg-white p-6 text-sm text-slate-700">
+          <div className="rounded-2xl border border-dashed border-slate-200/90 bg-white p-6 text-sm text-slate-700 shadow-sm">
             {t("studentNoLesson")}
           </div>
         ) : (
-          <ul className="space-y-2">
-            {upcoming.slice(0, 8).map((b) => (
-              <li key={b.bookingId} className="rounded-2xl border border-[var(--p-border-light)] bg-white px-4 py-3 shadow-sm space-y-3">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <div className="h-9 w-9 rounded-full bg-[#E1F5EE] text-[#0F6E56] flex items-center justify-center font-bold text-xs">
-                        {(b.teacherName || "?").slice(0, 2).toUpperCase()}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="font-semibold text-slate-900 truncate">
-                          {b.teacherName}{" "}
-                          {b.discipline ? <span className="font-medium text-slate-600">· {b.discipline}</span> : null}
-                        </p>
-                        <p className="text-xs font-medium text-slate-600">
-                          {b.date} · {b.time} {b.price != null ? `· ${formatPrice(b.price)}` : ""}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  {b.teacherUserId ? (
-                    <Link
-                      href={`/messages?peer=${encodeURIComponent(b.teacherUserId)}`}
-                      className="inline-flex min-h-[44px] sm:min-h-9 w-full sm:w-auto shrink-0 items-center justify-center gap-2 rounded-full border border-[var(--p-border-light)] px-4 text-xs font-bold text-[#1D9E75] hover:bg-[rgba(29,158,117,0.06)]"
+          <>
+            {restUpcoming.length === 0 && nextLesson ? (
+              <p className="text-sm text-slate-600">{t("studentUpcomingNoMore")}</p>
+            ) : null}
+            {restUpcoming.length > 0 ? (
+              <ul className="space-y-3">
+                {restUpcoming.map((b) => {
+                  const modeLabel = formatTeachingModeLabel(b.teachingMode, t);
+                  const msgHref = messagesHrefForTeacherUser(b.teacherUserId);
+                  return (
+                    <li
+                      key={b.bookingId}
+                      className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-[0_4px_24px_rgba(0,0,0,0.04)] sm:rounded-3xl sm:p-5"
                     >
-                      <MessageSquare size={16} />
-                      Message
-                    </Link>
-                  ) : null}
-                </div>
-                <div className="flex flex-col gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setCancelBookingId(b.bookingId)}
-                    disabled={cancelBusy}
-                    className="inline-flex min-h-[44px] w-full items-center justify-center rounded-xl border-2 border-rose-600/90 bg-white px-3 text-xs font-bold uppercase tracking-wide text-rose-600 hover:bg-rose-50 disabled:opacity-50"
-                  >
-                    {t("cancelClass")}
-                  </button>
-                  <Link
-                    href="/legal/annulation"
-                    className="block text-center text-[11px] font-bold text-[#1D9E75] hover:underline"
-                  >
-                    {t("viewCancellationPolicy")}
-                  </Link>
-                </div>
-              </li>
-            ))}
-          </ul>
+                      <div className="flex flex-col gap-4 lg:flex-row lg:items-stretch lg:justify-between lg:gap-6">
+                        <div className="flex min-w-0 flex-1 gap-3">
+                          {b.avatarUrl?.trim() ? (
+                            <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full border border-slate-100">
+                              <Image
+                                src={b.avatarUrl.trim()}
+                                alt=""
+                                width={44}
+                                height={44}
+                                className="h-full w-full object-cover"
+                                unoptimized
+                              />
+                            </div>
+                          ) : (
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#E1F5EE] text-xs font-bold text-[#0F6E56]">
+                              {(b.teacherName || "?").slice(0, 2).toUpperCase()}
+                            </div>
+                          )}
+                          <div className="min-w-0 flex-1">
+                            <p className="font-semibold text-slate-900">
+                              {b.teacherName}
+                              {b.discipline ? <span className="font-medium text-slate-600"> · {b.discipline}</span> : null}
+                            </p>
+                            <p className="mt-1 text-sm text-slate-600">
+                              {b.date} · {b.time}
+                              {b.durationMinutes != null ? ` · ${b.durationMinutes} min` : ""}
+                              {modeLabel ? ` · ${modeLabel}` : ""}
+                              {b.price != null ? ` · ${formatPrice(b.price)}` : ""}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col gap-2 border-t border-slate-100 pt-3 lg:w-[min(100%,280px)] lg:shrink-0 lg:border-t-0 lg:border-l lg:border-slate-100 lg:pl-6 lg:pt-0">
+                          <div className="flex flex-col gap-2 sm:flex-row lg:flex-col xl:flex-row">
+                            <Link
+                              href={msgHref}
+                              className={cn(
+                                "inline-flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl bg-[#0F6E56] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0c5a47]",
+                              )}
+                            >
+                              <MessageSquare size={18} className="shrink-0" />
+                              {t("messageTeacher")}
+                            </Link>
+                            <button
+                              type="button"
+                              onClick={() => openRescheduleFor(b.bookingId)}
+                              className="inline-flex min-h-[44px] flex-1 items-center justify-center rounded-xl border border-[#0F6E56]/35 bg-white px-4 text-sm font-semibold text-[#0F6E56] transition hover:bg-[#0F6E56]/[0.06]"
+                            >
+                              {t("rescheduleClass")}
+                            </button>
+                          </div>
+                          <Link
+                            href="/legal/annulation"
+                            className="text-center text-xs font-medium text-[#0F6E56]/80 underline-offset-4 hover:underline lg:text-left"
+                          >
+                            {t("viewCancellationPolicy")}
+                          </Link>
+                          {canStudentCancelBooking(b.status) ? (
+                            <button
+                              type="button"
+                              onClick={() => setCancelBookingId(b.bookingId)}
+                              disabled={cancelBusy}
+                              className="text-center text-xs font-medium text-rose-500 underline-offset-4 transition hover:text-rose-600 hover:underline disabled:opacity-50 lg:text-left"
+                            >
+                              {t("cancelClass")}
+                            </button>
+                          ) : null}
+                        </div>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : null}
+          </>
         )}
       </section>
 
-      {/* CREDITS — shown only when student has at least one teacher */}
       {!loading && teachers.length > 0 && (
-        <CreditsWidget
-          teachers={teachers.map((x) => ({ teacherId: x.teacherId, name: x.name }))}
-        />
+        <CreditsWidget teachers={teachers.map((x) => ({ teacherId: x.teacherId, name: x.name }))} />
       )}
 
-      {/* MY TEACHERS */}
       <section className="space-y-3">
         <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-700">{t("studentMyTeachers")}</h2>
         {loading ? null : teachers.length === 0 ? (
@@ -325,15 +458,17 @@ export function StudentDashboard() {
               <li key={x.teacherId} className="rounded-2xl border border-[var(--p-border-light)] bg-white px-4 py-3 shadow-sm">
                 <div className="flex items-center justify-between gap-3">
                   <div className="min-w-0 flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-[#F1EFE8] flex items-center justify-center text-sm font-bold text-[#2C2C2A]">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#F1EFE8] text-sm font-bold text-[#2C2C2A]">
                       {(x.name || "?").slice(0, 2).toUpperCase()}
                     </div>
                     <div className="min-w-0">
-                      <p className="font-semibold text-slate-900 truncate">
-                        {x.name}{" "}
-                        {x.discipline ? <span className="font-medium text-slate-600">· {x.discipline}</span> : null}
+                      <p className="truncate font-semibold text-slate-900">
+                        {x.name}
+                        {x.discipline ? <span className="font-medium text-slate-600"> · {x.discipline}</span> : null}
                       </p>
-                      <p className="text-xs font-medium text-slate-600">{x.lessons} cours</p>
+                      <p className="text-xs font-medium text-slate-600">
+                        {x.lessons} cours
+                      </p>
                     </div>
                   </div>
                   <Link
@@ -353,6 +488,15 @@ export function StudentDashboard() {
         )}
       </section>
 
+      <StudentChangeClassModal
+        open={Boolean(rescheduleBookingId)}
+        onClose={() => setRescheduleBookingId(null)}
+        messagesHref={rescheduleMessagesHref}
+        onRequestCancelThisClass={() => {
+          if (rescheduleBookingId) setCancelBookingId(rescheduleBookingId);
+        }}
+      />
+
       <ConfirmCancelBookingDialog
         open={Boolean(cancelBookingId)}
         onClose={() => {
@@ -368,4 +512,3 @@ export function StudentDashboard() {
     </div>
   );
 }
-

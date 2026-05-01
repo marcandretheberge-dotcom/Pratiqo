@@ -42,6 +42,7 @@ export type TeacherRow = {
   currency?: string | null;
   city?: string | null;
   region?: string | null;
+  identity_status?: string | null;
 };
 
 export function teacherRowToTeacher(row: TeacherRow): Teacher {
