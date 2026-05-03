@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../../../../components/AuthProvider";
 import { getSupabaseClient } from "../../../../lib/supabase";
+import { IdentityVerificationCard } from "../../../../components/IdentityVerificationCard";
 import { VerificationBadge } from "../../../../components/VerificationBadge";
 import {
   getVerificationLevel,
@@ -30,6 +31,8 @@ type TeacherVerifyRow = {
   verification_level: number | null;
   identity_verified: boolean | null;
   identity_status: string | null;
+  stripe_identity_status: string | null;
+  stripe_identity_failed_reason: string | null;
   diploma_verified: boolean | null;
   diploma_url: string | null;
   phone_verified: boolean | null;
@@ -60,7 +63,7 @@ export default function TeacherVerificationPage() {
       supabase
         .from("teachers")
         .select(
-          "id, verification_level, identity_verified, identity_status, diploma_verified, diploma_url, phone_verified, is_verified",
+          "id, verification_level, identity_verified, identity_status, stripe_identity_status, stripe_identity_failed_reason, diploma_verified, diploma_url, phone_verified, is_verified",
         )
         .eq("user_id", user.id)
         .maybeSingle(),
@@ -246,8 +249,22 @@ export default function TeacherVerificationPage() {
   const identityStatus = teacherRow.identity_status ?? "none";
   const hasDiplomaUploaded = Boolean(teacherRow.diploma_url);
 
+  const stripeStatus = (teacherRow.stripe_identity_status ?? null) as
+    | "not_started"
+    | "requires_input"
+    | "processing"
+    | "verified"
+    | "failed"
+    | "canceled"
+    | null;
+
   return (
     <div className="space-y-8">
+      <IdentityVerificationCard
+        status={stripeStatus ?? "not_started"}
+        failedReason={teacherRow.stripe_identity_failed_reason}
+      />
+
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">{t("verificationTrustLabel")}</p>

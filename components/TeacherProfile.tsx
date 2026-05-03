@@ -10,6 +10,7 @@ import {
   Home,
   MapPin,
   MessageSquare,
+  Shield,
   Star,
   Users,
   Video,
@@ -297,6 +298,11 @@ export function TeacherProfile({
                         verified={teacher.isVerified || Boolean(teacher.identityVerified)}
                         size="sm"
                       />
+                      {Boolean(teacher.identityVerified) && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-green-100 text-green-700 px-2.5 py-0.5 text-xs font-semibold">
+                          <Shield size={11} /> Identité vérifiée
+                        </span>
+                      )}
                     </div>
                     <div className="flex flex-wrap items-center gap-2 mt-1.5">
                       <div className="flex items-center gap-1">

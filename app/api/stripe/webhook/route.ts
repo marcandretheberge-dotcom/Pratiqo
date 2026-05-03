@@ -9,6 +9,8 @@ import {
   sendBookingConfirmedStudent,
   sendBookingConfirmedTeacher,
   sendProUpgrade,
+  sendIdentityVerified,
+  sendIdentityFailed,
 } from "@/lib/email";
 
 export const runtime = "nodejs";
@@ -484,6 +486,10 @@ export async function POST(req: Request) {
     if (event.type === "identity.verification_session.requires_input") {
       await handleIdentityFailed(event.data.object as Stripe.Identity.VerificationSession);
     }
+
+    if (event.type === "identity.verification_session.canceled") {
+      await handleIdentityCanceled(event.data.object as Stripe.Identity.VerificationSession);
+    }
   } catch (e) {
     console.error("[stripe/webhook] handler error", e);
     return NextResponse.json({ error: "Webhook handler failed." }, { status: 500 });
@@ -495,9 +501,9 @@ export async function POST(req: Request) {
 // ─── Stripe Identity handlers ──────────────────────────────────────────────────
 
 async function handleIdentityVerified(session: Stripe.Identity.VerificationSession) {
-  const teacherId = session.metadata?.teacher_id;
-  if (!teacherId) {
-    console.warn("[stripe/webhook] identity.verified — missing teacher_id in metadata");
+  const userId = session.metadata?.user_id;
+  if (!userId) {
+    console.warn("[stripe/webhook] identity.verified — missing user_id in metadata");
     return;
   }
 
@@ -507,69 +513,116 @@ async function handleIdentityVerified(session: Stripe.Identity.VerificationSessi
   const { data: existing } = await admin
     .from("teachers")
     .select("identity_verified")
-    .eq("id", teacherId)
+    .eq("user_id", userId)
     .maybeSingle();
 
   if ((existing as { identity_verified?: boolean } | null)?.identity_verified) {
-    console.log("[stripe/webhook] identity already verified, skipping:", teacherId);
+    console.log("[stripe/webhook] identity already verified, skipping:", userId);
     return;
   }
 
   const { error } = await admin
     .from("teachers")
     .update({
+      stripe_identity_status: "verified",
+      stripe_identity_verified_at: new Date().toISOString(),
       identity_verified: true,
       identity_status: "verified",
-      // Ensure verification_level is at least 2 (identity verified)
       verification_level: 2,
     })
-    .eq("id", teacherId);
+    .eq("user_id", userId);
 
   if (error) {
     console.error("[stripe/webhook] identity update failed:", error);
     return;
   }
 
-  console.log("[stripe/webhook] identity verified for teacher:", teacherId);
+  console.log("[stripe/webhook] identity verified for user:", userId);
 
-  // Optional: notify teacher via in-app notification
-  const userId = session.metadata?.user_id;
-  if (userId) {
-    await admin.from("notifications").insert({
-      user_id: userId,
-      title: "Identité vérifiée ✓",
-      message: "Votre identité a été confirmée par Stripe. Votre badge « Identité vérifiée » est maintenant visible sur votre profil.",
-      type: "system",
-      read: false,
-    }).then(({ error: nErr }) => {
-      if (nErr) console.warn("[stripe/webhook] identity notification failed:", nErr);
-    });
+  await admin.from("notifications").insert({
+    user_id: userId,
+    title: "Identité vérifiée ✓",
+    message: "Votre identité a été confirmée par Stripe. Votre badge « Identité vérifiée » est maintenant visible sur votre profil.",
+    type: "system",
+    read: false,
+  }).then(({ error: nErr }) => {
+    if (nErr) console.warn("[stripe/webhook] identity notification failed:", nErr);
+  });
+
+  try {
+    const { data: prof } = await admin
+      .from("profiles")
+      .select("email, name")
+      .eq("id", userId)
+      .maybeSingle();
+    const profEmail = (prof as { email?: string | null } | null)?.email ?? null;
+    const profName = (prof as { name?: string | null } | null)?.name ?? "Professeur";
+    if (profEmail) {
+      await sendIdentityVerified(profEmail, profName);
+    }
+  } catch (e) {
+    console.error("[stripe/webhook] identity verified email failed", e);
   }
 }
 
 async function handleIdentityFailed(session: Stripe.Identity.VerificationSession) {
-  const teacherId = session.metadata?.teacher_id;
-  if (!teacherId) return;
+  const userId = session.metadata?.user_id;
+  if (!userId) return;
+
+  const reason =
+    (session as unknown as { last_error?: { reason?: string } }).last_error?.reason ||
+    "Vérification échouée";
 
   const admin = getSupabaseAdmin();
   await admin
     .from("teachers")
-    .update({ identity_status: "failed" })
-    .eq("id", teacherId);
+    .update({
+      stripe_identity_status: "failed",
+      stripe_identity_failed_reason: reason,
+      identity_status: "failed",
+    })
+    .eq("user_id", userId);
 
-  console.log("[stripe/webhook] identity verification failed for teacher:", teacherId);
+  console.log("[stripe/webhook] identity verification failed for user:", userId);
 
-  // Notify teacher of failure so they can retry
-  const userId = session.metadata?.user_id;
-  if (userId) {
-    await admin.from("notifications").insert({
-      user_id: userId,
-      title: "Vérification d'identité échouée",
-      message: "Votre vérification d'identité n'a pas abouti. Vous pouvez réessayer depuis la page Vérification.",
-      type: "system",
-      read: false,
-    }).then(({ error: nErr }) => {
-      if (nErr) console.warn("[stripe/webhook] identity-failed notification:", nErr);
-    });
+  await admin.from("notifications").insert({
+    user_id: userId,
+    title: "Vérification d'identité échouée",
+    message: "Votre vérification d'identité n'a pas abouti. Vous pouvez réessayer depuis la page Vérification.",
+    type: "system",
+    read: false,
+  }).then(({ error: nErr }) => {
+    if (nErr) console.warn("[stripe/webhook] identity-failed notification:", nErr);
+  });
+
+  try {
+    const { data: prof } = await admin
+      .from("profiles")
+      .select("email, name")
+      .eq("id", userId)
+      .maybeSingle();
+    const profEmail = (prof as { email?: string | null } | null)?.email ?? null;
+    const profName = (prof as { name?: string | null } | null)?.name ?? "Professeur";
+    if (profEmail) {
+      await sendIdentityFailed(profEmail, profName, reason);
+    }
+  } catch (e) {
+    console.error("[stripe/webhook] identity failed email failed", e);
   }
+}
+
+async function handleIdentityCanceled(session: Stripe.Identity.VerificationSession) {
+  const userId = session.metadata?.user_id;
+  if (!userId) return;
+
+  const admin = getSupabaseAdmin();
+  await admin
+    .from("teachers")
+    .update({
+      stripe_identity_status: "canceled",
+      identity_status: "none",
+    })
+    .eq("user_id", userId);
+
+  console.log("[stripe/webhook] identity verification canceled for user:", userId);
 }
