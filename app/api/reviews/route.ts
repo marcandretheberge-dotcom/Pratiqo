@@ -3,7 +3,6 @@ import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
-import { awardCredit } from "@/lib/credits";
 
 export const runtime = "nodejs";
 
@@ -27,7 +26,9 @@ async function getSupabaseForRequest(request: Request) {
   });
 }
 
-type Body = { teacherId?: string; rating?: number; body?: string };
+type Body = { bookingId?: string; rating?: number; body?: string };
+
+const REVIEW_WINDOW_DAYS = 30;
 
 export async function POST(request: Request) {
   const supabase = await getSupabaseForRequest(request);
@@ -37,30 +38,58 @@ export async function POST(request: Request) {
   if (userErr || !user) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
   const raw = (await request.json().catch(() => null)) as Body | null;
-  const teacherId = raw?.teacherId;
+  const bookingId = raw?.bookingId;
   const rating = Number(raw?.rating ?? 0);
-  const body = raw?.body ?? "";
+  const body = (raw?.body ?? "").trim();
 
-  if (!teacherId) return NextResponse.json({ error: "teacherId manquant" }, { status: 400 });
+  if (!bookingId) return NextResponse.json({ error: "bookingId manquant" }, { status: 400 });
   if (rating < 1 || rating > 5) return NextResponse.json({ error: "Note invalide (1–5)" }, { status: 400 });
 
   const admin = getSupabaseAdmin();
 
-  // Verify the student has at least one confirmed booking with this teacher
-  const { count: bookingCount } = await admin
+  // Validate booking: exists + belongs to user + confirmed + past + within window
+  const { data: booking, error: bookingErr } = await admin
     .from("bookings")
-    .select("id", { count: "exact", head: true })
-    .eq("student_id", user.id)
-    .eq("teacher_id", teacherId)
-    .eq("status", "confirmed");
+    .select("id, teacher_id, student_id, status, slot_date, duration_minutes")
+    .eq("id", bookingId)
+    .maybeSingle();
 
-  if (!bookingCount || bookingCount < 1) {
-    return NextResponse.json({ error: "Réservation confirmée requise pour laisser un avis." }, { status: 403 });
+  if (bookingErr || !booking) {
+    return NextResponse.json({ error: "Réservation introuvable." }, { status: 404 });
   }
 
-  // Insert review (unique constraint on student_id + teacher_id prevents duplicates)
+  if (booking.student_id !== user.id) {
+    return NextResponse.json({ error: "Cette réservation ne vous appartient pas." }, { status: 403 });
+  }
+
+  if (booking.status !== "confirmed") {
+    return NextResponse.json({ error: "Seules les réservations confirmées peuvent être évaluées." }, { status: 403 });
+  }
+
+  if (!booking.slot_date) {
+    return NextResponse.json({ error: "Date de cours manquante." }, { status: 400 });
+  }
+
+  const lessonStart = new Date(booking.slot_date as string);
+  const durationMin = Number(booking.duration_minutes ?? 60);
+  const lessonEnd = new Date(lessonStart.getTime() + durationMin * 60 * 1000);
+  const now = new Date();
+  const windowEnd = new Date(lessonEnd.getTime() + REVIEW_WINDOW_DAYS * 24 * 60 * 60 * 1000);
+
+  if (lessonEnd > now) {
+    return NextResponse.json({ error: "Le cours n'a pas encore eu lieu." }, { status: 403 });
+  }
+
+  if (windowEnd < now) {
+    return NextResponse.json({
+      error: `La fenêtre de ${REVIEW_WINDOW_DAYS} jours pour évaluer ce cours est dépassée.`
+    }, { status: 403 });
+  }
+
+  // Insert review (UNIQUE constraint on booking_id prevents duplicates)
   const { error: insErr } = await admin.from("reviews").insert({
-    teacher_id: teacherId,
+    booking_id: bookingId,
+    teacher_id: booking.teacher_id,
     student_id: user.id,
     rating,
     body: body || null,
@@ -68,7 +97,7 @@ export async function POST(request: Request) {
 
   if (insErr) {
     if (insErr.code === "23505") {
-      return NextResponse.json({ error: "Tu as déjà laissé un avis pour ce professeur." }, { status: 409 });
+      return NextResponse.json({ error: "Vous avez déjà évalué ce cours." }, { status: 409 });
     }
     console.error("[reviews] insert failed", insErr);
     return NextResponse.json({ error: "Erreur lors de l'enregistrement." }, { status: 500 });
@@ -78,25 +107,21 @@ export async function POST(request: Request) {
   const { data: allReviews } = await admin
     .from("reviews")
     .select("rating")
-    .eq("teacher_id", teacherId);
+    .eq("teacher_id", booking.teacher_id);
 
   if (allReviews && allReviews.length > 0) {
-    const avg = allReviews.reduce((sum: number, r: { rating: number }) => sum + Number(r.rating), 0) / allReviews.length;
+    const avg = allReviews.reduce(
+      (sum: number, r: { rating: number }) => sum + Number(r.rating),
+      0
+    ) / allReviews.length;
     await admin
       .from("teachers")
       .update({ rating: Math.round(avg * 10) / 10, reviews: allReviews.length })
-      .eq("id", teacherId);
+      .eq("id", booking.teacher_id);
   }
 
-  // Award $1 credit — reference_id prevents double-awarding same teacher
-  const { awarded, newBalance } = await awardCredit(
-    user.id,
-    "review",
-    `Avis laissé pour le prof ${teacherId}`,
-    `review:${teacherId}`,
-  );
-
-  return NextResponse.json({ ok: true, creditAwarded: awarded, newBalance });
+  // No more $ credit awarded for reviews — pure community contribution
+  return NextResponse.json({ ok: true });
 }
 
 export async function GET(request: Request) {
@@ -109,16 +134,10 @@ export async function GET(request: Request) {
 
   const { data: reviews } = await supabase
     .from("reviews")
-    .select("id, rating, body, created_at, student_id")
+    .select("id, rating, body, created_at, student_id, booking_id")
     .eq("teacher_id", teacherId)
     .order("created_at", { ascending: false })
     .limit(50);
 
-  // Check if current user already reviewed
-  const { data: { user } } = await supabase.auth.getUser();
-  const myReview = user
-    ? (reviews ?? []).find((r: { student_id: string }) => r.student_id === user.id)
-    : null;
-
-  return NextResponse.json({ reviews: reviews ?? [], hasReviewed: !!myReview });
+  return NextResponse.json({ reviews: reviews ?? [] });
 }
