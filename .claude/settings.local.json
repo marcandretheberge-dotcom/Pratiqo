@@ -8,7 +8,8 @@
       "mcp__stitch__update_design_system",
       "Bash(python *)",
       "Bash(py --version)",
-      "Bash(where python*)"
+      "Bash(where python*)",
+      "PowerShell(New-Item *)"
     ]
   }
 }

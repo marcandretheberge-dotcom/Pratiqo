@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
-import { Check, ChevronRight, Copy, Gift, Star, Users, Zap } from "lucide-react";
+import { Check, ChevronRight, Copy, Gift, Users, Zap } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { getSupabaseClient } from "@/lib/supabase";
 import { useLocale } from "@/lib/locale-context";
@@ -36,8 +36,18 @@ export type CreditsTeacherOption = {
   imageUrl?: string | null;
 };
 
-type ReviewState = {
+type EligibleBooking = {
+  bookingId: string;
   teacherId: string;
+  teacherName: string;
+  teacherDiscipline: string | null;
+  teacherImageUrl: string | null;
+  slotDate: string;
+  durationMinutes: number;
+};
+
+type ReviewState = {
+  bookingId: string;
   teacherName: string;
   teacherDiscipline?: string | null;
   rating: number;
@@ -109,11 +119,13 @@ function TeacherAvatarRow({ name, imageUrl }: { name: string; imageUrl?: string 
 }
 
 export function CreditsWidget({
-  teachers,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  teachers: _teachers,
   lessonCount,
   companionType,
   layout = "default",
 }: {
+  /** @deprecated Widget now self-fetches eligible bookings. Kept for parent compat. */
   teachers?: CreditsTeacherOption[];
   lessonCount?: number;
   companionType?: CompanionType | null;
@@ -126,6 +138,7 @@ export function CreditsWidget({
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [review, setReview] = useState<ReviewState | null>(null);
+  const [eligibleBookings, setEligibleBookings] = useState<EligibleBooking[]>([]);
 
   const loadCredits = useCallback(async () => {
     if (!user) {
@@ -137,11 +150,19 @@ export function CreditsWidget({
     const {
       data: { session },
     } = await supabase.auth.getSession();
+    const authHeader: Record<string, string> = session?.access_token
+      ? { Authorization: `Bearer ${session.access_token}` }
+      : {};
     try {
-      const res = await fetch("/api/credits", {
-        headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {},
-      });
-      if (res.ok) setData((await res.json()) as CreditsData);
+      const [creditsRes, eligibleRes] = await Promise.all([
+        fetch("/api/credits", { headers: authHeader }),
+        fetch("/api/reviews/eligible", { headers: authHeader }),
+      ]);
+      if (creditsRes.ok) setData((await creditsRes.json()) as CreditsData);
+      if (eligibleRes.ok) {
+        const j = (await eligibleRes.json()) as { bookings?: EligibleBooking[] };
+        setEligibleBookings(j.bookings ?? []);
+      }
     } catch {
       /* silent */
     }
@@ -173,7 +194,7 @@ export function CreditsWidget({
         "Content-Type": "application/json",
         ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
       },
-      body: JSON.stringify({ teacherId: review.teacherId, rating: review.rating, body: review.body }),
+      body: JSON.stringify({ bookingId: review.bookingId, rating: review.rating, body: review.body }),
     });
     if (res.ok) {
       setReview((r) => r && { ...r, status: "done" });
@@ -265,14 +286,6 @@ export function CreditsWidget({
       <h2 className="text-sm font-semibold text-slate-900">{t("creditsHowToEarn")}</h2>
       <ul className="mt-4 space-y-0 divide-y divide-slate-100">
         <li className="flex items-start gap-3 py-3 first:pt-0">
-          <Star size={16} className="mt-0.5 shrink-0 text-amber-500" aria-hidden />
-          <div className="min-w-0 flex-1">
-            <p className="text-xs font-semibold text-slate-800">{t("creditsReview")}</p>
-            <p className="mt-0.5 text-[11px] leading-snug text-slate-600">{t("creditsReviewDescriptionShort")}</p>
-          </div>
-          <ChevronRight size={16} className="mt-0.5 shrink-0 text-slate-300" aria-hidden />
-        </li>
-        <li className="flex items-start gap-3 py-3">
           <Users size={16} className="mt-0.5 shrink-0 text-[#1D9E75]" aria-hidden />
           <div className="min-w-0 flex-1">
             <p className="text-xs font-semibold text-slate-800">{t("creditsReferral")}</p>
@@ -332,7 +345,7 @@ export function CreditsWidget({
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
           <h2 className="text-sm font-semibold text-slate-900">{t("creditsLeaveReview")}</h2>
-          <p className="mt-0.5 text-[11px] text-slate-600">{t("creditsReviewDescriptionShort")}</p>
+          <p className="mt-0.5 text-[11px] text-slate-600">{t("creditsReviewCommunityHelp")}</p>
         </div>
       </div>
       {review ? (
@@ -378,35 +391,43 @@ export function CreditsWidget({
             </>
           )}
         </div>
-      ) : teachers && teachers.length > 0 ? (
+      ) : eligibleBookings.length > 0 ? (
         <ul className="mt-3 space-y-2">
-          {teachers.map((tc) => (
+          {eligibleBookings.map((booking) => (
             <li
-              key={tc.teacherId}
+              key={booking.bookingId}
               className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/50 px-3 py-2.5"
             >
               <div className="flex min-w-0 flex-1 items-center gap-2.5">
-                <TeacherAvatarRow name={tc.name} imageUrl={tc.imageUrl} />
+                <TeacherAvatarRow name={booking.teacherName} imageUrl={booking.teacherImageUrl} />
                 <div className="min-w-0">
-                  <p className="truncate text-xs font-semibold text-slate-900">{tc.name}</p>
-                  {tc.discipline ? <p className="truncate text-[11px] text-slate-600">{tc.discipline}</p> : null}
+                  <p className="truncate text-xs font-semibold text-slate-900">{booking.teacherName}</p>
+                  {booking.teacherDiscipline ? (
+                    <p className="truncate text-[11px] text-slate-600">{booking.teacherDiscipline}</p>
+                  ) : null}
+                  <p className="text-[11px] text-slate-400">
+                    {new Date(booking.slotDate).toLocaleDateString("fr-CA", {
+                      day: "numeric",
+                      month: "long",
+                    })}
+                  </p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() =>
                   setReview({
-                    teacherId: tc.teacherId,
-                    teacherName: tc.name,
-                    teacherDiscipline: tc.discipline ?? null,
+                    bookingId: booking.bookingId,
+                    teacherName: booking.teacherName,
+                    teacherDiscipline: booking.teacherDiscipline,
                     rating: 0,
                     body: "",
                     status: "idle",
                   })
                 }
-                className="shrink-0 rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-900 ring-1 ring-amber-200/80 transition hover:bg-amber-100/90"
+                className="shrink-0 rounded-full bg-[#E1F5EE] px-2.5 py-1 text-[11px] font-semibold text-[#0F6E56] ring-1 ring-[#1D9E75]/30 transition hover:bg-[#c8eddf]"
               >
-                {t("creditsReviewRewardBadge")}
+                {t("creditsReviewSubmitInline")}
               </button>
             </li>
           ))}

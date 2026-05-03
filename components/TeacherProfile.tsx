@@ -46,6 +46,24 @@ function normalizeMarketPlan(p: string | null | undefined): "free" | "pro" | "en
   return "free";
 }
 
+type ReviewRow = {
+  id: string;
+  rating: number;
+  body: string | null;
+  created_at: string;
+  student_id: string;
+};
+
+type ReportStatus = "idle" | "submitting" | "success" | "already" | "error";
+
+function formatReviewerName(fullName: string): string {
+  const trimmed = fullName.trim();
+  if (!trimmed) return "Élève";
+  const parts = trimmed.split(/\s+/);
+  if (parts.length === 1) return parts[0];
+  return `${parts[0]} ${parts[parts.length - 1][0]}.`;
+}
+
 interface TeacherProfileProps {
   teacher: Teacher;
   onClose: () => void;
@@ -77,6 +95,13 @@ export function TeacherProfile({
   const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(null);
   const [plan, setPlan] = useState<"free" | "pro" | "enterprise">("free");
   const [hasBooking, setHasBooking] = useState(false);
+  const [reviews, setReviews] = useState<ReviewRow[]>([]);
+  const [reviewerNames, setReviewerNames] = useState<Map<string, string>>(new Map());
+  const [reportedIds, setReportedIds] = useState<Set<string>>(new Set());
+  const [reportTarget, setReportTarget] = useState<string | null>(null);
+  const [reportReason, setReportReason] = useState("");
+  const [reportDetails, setReportDetails] = useState("");
+  const [reportStatus, setReportStatus] = useState<ReportStatus>("idle");
 
   // Check whether this student has a confirmed booking with the teacher
   useEffect(() => {
@@ -96,6 +121,77 @@ export function TeacherProfile({
       cancelled = true;
     };
   }, [user?.id, teacher.id]);
+
+  // Fetch reviews + reviewer display names; reset when teacher changes
+  useEffect(() => {
+    if (!teacher.id) return;
+    setReviews([]);
+    setReviewerNames(new Map());
+    setReportTarget(null);
+    setReportReason("");
+    setReportDetails("");
+    setReportStatus("idle");
+    let cancelled = false;
+    const load = async () => {
+      const res = await fetch(`/api/reviews?teacherId=${encodeURIComponent(teacher.id)}`).catch(() => null);
+      if (!res?.ok || cancelled) return;
+      const json = (await res.json().catch(() => null)) as { reviews?: ReviewRow[] } | null;
+      const rows = json?.reviews ?? [];
+      if (cancelled) return;
+      setReviews(rows);
+      const studentIds = [...new Set(rows.map((r) => r.student_id))];
+      if (!studentIds.length) return;
+      const { data: profiles } = await getSupabaseClient()
+        .from("profiles")
+        .select("id, name")
+        .in("id", studentIds);
+      if (cancelled) return;
+      setReviewerNames(
+        new Map((profiles ?? []).map((p) => [p.id as string, (p.name as string | null) ?? ""])),
+      );
+    };
+    void load();
+    return () => { cancelled = true; };
+  }, [teacher.id]);
+
+  const closeReport = () => {
+    setReportTarget(null);
+    setReportReason("");
+    setReportDetails("");
+    setReportStatus("idle");
+  };
+
+  const submitReport = async () => {
+    if (!reportTarget || !reportReason || reportStatus === "submitting") return;
+    setReportStatus("submitting");
+    try {
+      const { data: { session } } = await getSupabaseClient().auth.getSession();
+      const res = await fetch("/api/reviews/report", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        },
+        body: JSON.stringify({
+          reviewId: reportTarget,
+          reason: reportReason,
+          details: reportDetails.trim().slice(0, 500),
+        }),
+      });
+      if (res.ok) {
+        setReportStatus("success");
+        const captured = reportTarget;
+        setReportedIds((prev) => new Set([...prev, captured]));
+        setTimeout(closeReport, 3000);
+      } else if (res.status === 409) {
+        setReportStatus("already");
+      } else {
+        setReportStatus("error");
+      }
+    } catch {
+      setReportStatus("error");
+    }
+  };
 
   const handleStartChat = async () => {
     if (!user) {
@@ -308,7 +404,7 @@ export function TeacherProfile({
                       <div className="flex items-center gap-1">
                         <Star size={13} fill="currentColor" className="text-amber-400" />
                         <span className="text-sm font-semibold text-slate-700">{teacher.rating}</span>
-                        <span className="text-xs text-slate-600 ml-0.5">(24 avis)</span>
+                        <span className="text-xs text-slate-600 ml-0.5">({reviews.length} avis)</span>
                       </div>
                       <span className="text-slate-300 text-xs">·</span>
                       <VerificationBadge level={verificationLevel} size="sm" showLabel />
@@ -412,6 +508,54 @@ export function TeacherProfile({
                     </ul>
                   </div>
                 ) : null}
+
+                {/* ── Reviews ────────────────────────────────────────────── */}
+                <div className="space-y-3">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-600">
+                    Avis des élèves
+                  </p>
+                  {reviews.length === 0 ? (
+                    <p className="text-[11px] text-slate-500 py-1">{t("reviewsEmptyState")}</p>
+                  ) : (
+                    <ul className="space-y-3">
+                      {reviews.map((review) => {
+                        const displayName = formatReviewerName(reviewerNames.get(review.student_id) ?? "");
+                        const isOwn = user?.id === review.student_id;
+                        const alreadyReported = reportedIds.has(review.id);
+                        return (
+                          <li key={review.id} className="rounded-2xl border border-slate-200/80 bg-slate-50/60 p-4">
+                            <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                              <StarDisplay rating={review.rating} />
+                              <span className="text-[11px] font-semibold text-slate-700">{displayName}</span>
+                              <span className="text-[11px] text-slate-400 ml-auto">
+                                {new Date(review.created_at).toLocaleDateString("fr-CA", {
+                                  day: "numeric",
+                                  month: "long",
+                                  year: "numeric",
+                                })}
+                              </span>
+                            </div>
+                            {review.body ? (
+                              <p className="text-xs italic text-slate-700 leading-relaxed">{review.body}</p>
+                            ) : null}
+                            {!isOwn ? (
+                              <div className="flex justify-end mt-2">
+                                <button
+                                  type="button"
+                                  disabled={alreadyReported}
+                                  onClick={() => setReportTarget(review.id)}
+                                  className="text-[11px] text-slate-500 hover:text-slate-700 disabled:text-slate-300 disabled:cursor-default transition-colors"
+                                >
+                                  {alreadyReported ? `✓ ${t("reviewReportButton")}` : t("reviewReportButton")}
+                                </button>
+                              </div>
+                            ) : null}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </div>
               </div>
 
               {/* ── RIGHT COLUMN (sticky sidebar) ────── */}
@@ -558,6 +702,86 @@ export function TeacherProfile({
         </div>
 
       </motion.div>
+
+      {/* ── Report modal overlay ─────────────────────────────── */}
+      {reportTarget ? (
+        <div className="absolute inset-0 z-20 flex items-center justify-center p-6 bg-slate-900/50">
+          <div className="w-full max-w-sm rounded-2xl bg-white shadow-xl p-6 space-y-4">
+            <h3 className="text-sm font-bold text-slate-900">{t("reviewReportTitle")}</h3>
+
+            {reportStatus === "success" ? (
+              <p className="text-sm font-semibold text-[#0F6E56]">{t("reviewReportSuccess")}</p>
+            ) : (
+              <>
+                <fieldset className="space-y-2">
+                  {(
+                    [
+                      { value: "inappropriate", label: t("reviewReportReasonInappropriate") },
+                      { value: "fake",          label: t("reviewReportReasonFake") },
+                      { value: "harassment",    label: t("reviewReportReasonHarassment") },
+                      { value: "spam",          label: t("reviewReportReasonSpam") },
+                      { value: "other",         label: t("reviewReportReasonOther") },
+                    ] as const
+                  ).map(({ value, label }) => (
+                    <label key={value} className="flex items-center gap-2.5 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="report-reason"
+                        value={value}
+                        checked={reportReason === value}
+                        onChange={() => setReportReason(value)}
+                        className="accent-[#0F6E56]"
+                      />
+                      <span className="text-sm text-slate-700">{label}</span>
+                    </label>
+                  ))}
+                </fieldset>
+
+                <div className="space-y-1">
+                  <label className="text-[11px] font-medium text-slate-600">
+                    {t("reviewReportDetailsLabel")}
+                  </label>
+                  <textarea
+                    value={reportDetails}
+                    onChange={(e) => setReportDetails(e.target.value.slice(0, 500))}
+                    rows={2}
+                    placeholder="…"
+                    className="w-full resize-none rounded-xl border border-slate-200/90 bg-white px-3 py-2 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-[#1D9E75]"
+                  />
+                </div>
+
+                {reportStatus === "already" ? (
+                  <p className="text-xs text-amber-700">{t("reviewReportAlreadySent")}</p>
+                ) : reportStatus === "error" ? (
+                  <p className="text-xs text-rose-600">Erreur, réessayez.</p>
+                ) : null}
+
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => void submitReport()}
+                    disabled={!reportReason || reportStatus === "submitting"}
+                    className={cn(
+                      "flex-1 min-h-[36px] rounded-xl bg-[#0F6E56] text-xs font-semibold text-white transition-all",
+                      (!reportReason || reportStatus === "submitting") && "opacity-50 cursor-not-allowed",
+                    )}
+                  >
+                    {reportStatus === "submitting" ? "…" : t("reviewReportSubmit")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={closeReport}
+                    className="min-h-[36px] rounded-xl border border-slate-200/90 bg-white px-3 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                  >
+                    {t("reviewReportCancel")}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      ) : null}
+
     </div>
   );
 }
@@ -596,6 +820,21 @@ function QuickStat({ icon, label, value }: { icon: React.ReactNode; label: strin
         <span className="text-[9px] font-bold uppercase tracking-widest text-slate-600">{label}</span>
       </div>
       <p className="text-xs font-bold text-slate-900 truncate">{value}</p>
+    </div>
+  );
+}
+
+function StarDisplay({ rating }: { rating: number }) {
+  return (
+    <div className="flex gap-0.5" aria-label={`${rating}/5`}>
+      {[1, 2, 3, 4, 5].map((n) => (
+        <span
+          key={n}
+          className={cn("text-sm leading-none", n <= rating ? "text-amber-400" : "text-slate-200")}
+        >
+          ★
+        </span>
+      ))}
     </div>
   );
 }
