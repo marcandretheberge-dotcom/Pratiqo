@@ -47,19 +47,19 @@ const STATIC_ROUTES: MetadataRoute.Sitemap = [
     priority: 0.6,
   },
   {
-    url: `${BASE_URL}/legal/cgu`,
+    url: `${BASE_URL}/cgu`,
     lastModified: new Date(),
     changeFrequency: "yearly",
     priority: 0.4,
   },
   {
-    url: `${BASE_URL}/legal/confidentialite`,
+    url: `${BASE_URL}/confidentialite`,
     lastModified: new Date(),
     changeFrequency: "yearly",
     priority: 0.4,
   },
   {
-    url: `${BASE_URL}/legal/annulation`,
+    url: `${BASE_URL}/annulation`,
     lastModified: new Date(),
     changeFrequency: "yearly",
     priority: 0.4,

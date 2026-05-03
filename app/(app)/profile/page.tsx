@@ -42,7 +42,7 @@ export default function StudentProfilePage() {
   const [teacherCount, setTeacherCount] = useState(0);
   const [points] = useState(0);
   const [companionType, setCompanionType] = useState<CompanionType | null>(null);
-  const [myTeachers, setMyTeachers] = useState<{ teacherId: string; name: string }[]>([]);
+  const [myTeachers, setMyTeachers] = useState<{ teacherId: string; name: string; discipline: string | null; imageUrl: string | null }[]>([]);
   const [companionChosen, setCompanionChosen] = useState(false);
   const [memberYear, setMemberYear] = useState<number | null>(null);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
@@ -116,11 +116,19 @@ export default function StudentProfilePage() {
       setLessonCount(typeof confirmedCount === "number" ? confirmedCount : 0);
 
       // Fetch teacher names for review widget
-      const teacherList: { teacherId: string; name: string }[] = [];
+      const teacherList: { teacherId: string; name: string; discipline: string | null; imageUrl: string | null }[] = [];
       await Promise.all(
         Array.from(distinctTeacherIds).map(async (tid) => {
-          const { data: tr } = await supabase.from("teachers").select("id, name").eq("id", tid).maybeSingle();
-          if (tr) teacherList.push({ teacherId: (tr as { id: string; name: string | null }).id, name: (tr as { id: string; name: string | null }).name ?? tid });
+          const { data: tr } = await supabase.from("teachers").select("id, name, discipline, image_url").eq("id", tid).maybeSingle();
+          if (tr) {
+            const row = tr as { id: string; name: string | null; discipline: string | null; image_url: string | null };
+            teacherList.push({
+              teacherId: row.id,
+              name: row.name ?? tid,
+              discipline: row.discipline,
+              imageUrl: row.image_url,
+            });
+          }
         }),
       );
       setMyTeachers(teacherList);
@@ -208,11 +216,18 @@ export default function StudentProfilePage() {
 
       {/* MES CRÉDITS */}
       {!loading && (
-        <CreditsWidget
-          teachers={myTeachers}
-          lessonCount={lessonCount}
-          companionType={companionType}
-        />
+        <div className="rounded-3xl bg-[#F3FAF6] p-4 sm:p-6">
+          <CreditsWidget
+            teachers={myTeachers.map((x) => ({
+              teacherId: x.teacherId,
+              name: x.name,
+              discipline: x.discipline,
+              imageUrl: x.imageUrl,
+            }))}
+            lessonCount={lessonCount}
+            companionType={companionType}
+          />
+        </div>
       )}
 
       {/* SETTINGS */}

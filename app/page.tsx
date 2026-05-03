@@ -663,6 +663,13 @@ export default function LandingPage() {
           <LegalFooterLinks />
           <span className="text-[#D3D1C7]">·</span>
           <span>© 2026 Pratiqo inc.</span>
+          <span className="text-[#D3D1C7]">·</span>
+          <a href="mailto:info@pratiqo.ca" className="text-[#0F6E56] hover:underline">info@pratiqo.ca</a>
+          <span className="text-[#D3D1C7]">·</span>
+          <span>
+            <span className="text-[#6B6A65]">Aide&nbsp;: </span>
+            <a href="mailto:support@pratiqo.ca" className="text-[#0F6E56] hover:underline">support@pratiqo.ca</a>
+          </span>
         </div>
       </footer>
 

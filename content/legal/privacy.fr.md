@@ -104,7 +104,7 @@ Conformément à la Loi 25, vous avez le droit de :
 - **Retirer votre consentement** à tout moment
 - **Déposer une plainte** auprès de la Commission d'accès à l'information (CAI) du Québec
 
-Pour exercer ces droits, contactez-nous à : [privacy@pratiqo.com](mailto:privacy@pratiqo.com)
+Pour exercer ces droits, contactez-nous à : [marc-andre.theberge@pratiqo.ca](mailto:marc-andre.theberge@pratiqo.ca)
 
 Nous répondrons dans un délai de **30 jours**.
 
@@ -139,5 +139,5 @@ Nous vous informerons de toute modification substantielle par courriel avec un p
 
 **Responsable de la protection des données (RPD)**  
 Pratiqo inc.  
-[privacy@pratiqo.com](mailto:privacy@pratiqo.com)  
+[marc-andre.theberge@pratiqo.ca](mailto:marc-andre.theberge@pratiqo.ca)  
 [pratiqo.com/confidentialite](https://pratiqo.com/confidentialite)

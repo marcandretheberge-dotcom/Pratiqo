@@ -339,13 +339,11 @@ export default function MessagesPage() {
                         <div
                           className={cn(
                             "rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed shadow-sm",
-                            mine ? "text-white rounded-br-md" : "text-slate-800 rounded-bl-md border border-slate-100",
-                          )}
-                          style={
+                            // Important: explicit colors for readability across dark-mode/mobile webviews.
                             mine
-                              ? { backgroundColor: "#1D9E75" }
-                              : { background: "var(--color-background-secondary)" }
-                          }
+                              ? "bg-[#1D9E75] text-white/95 rounded-br-md"
+                              : "bg-white text-slate-800 rounded-bl-md border border-slate-100",
+                          )}
                         >
                           {m.content}
                         </div>

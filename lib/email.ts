@@ -152,9 +152,12 @@ function buildEmail(opts: TemplateOpts): string {
             ${opts.footerExtra
               ? `<p style="margin:0 0 8px;">${opts.footerExtra}</p>`
               : ""}
-            <p style="margin:0 0 4px;font-weight:600;color:#2C2C2A;">
-              Marc-André Théberge<br>
-              <span style="font-weight:400;color:#6B6A65;">Fondateur de Pratiqo</span>
+            <p style="margin:0 0 4px;color:#6B6A65;">
+              Questions&nbsp;?
+              <a href="mailto:support@pratiqo.ca"
+                 style="color:#1D9E75;font-weight:600;text-decoration:none;">
+                support@pratiqo.ca
+              </a>
             </p>
             <p style="margin:8px 0 0;">
               <span style="color:#1D9E75;font-weight:600;">D&apos;ici, pour ici</span>

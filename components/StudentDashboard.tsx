@@ -443,7 +443,14 @@ export function StudentDashboard() {
       </section>
 
       {!loading && teachers.length > 0 && (
-        <CreditsWidget teachers={teachers.map((x) => ({ teacherId: x.teacherId, name: x.name }))} />
+        <CreditsWidget
+          teachers={teachers.map((x) => ({
+            teacherId: x.teacherId,
+            name: x.name,
+            discipline: x.discipline,
+            imageUrl: x.avatarUrl,
+          }))}
+        />
       )}
 
       <section className="space-y-3">

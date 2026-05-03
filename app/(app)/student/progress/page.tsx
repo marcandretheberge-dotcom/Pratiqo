@@ -8,6 +8,8 @@ import { getSupabaseClient } from "@/lib/supabase";
 import type { CompanionType } from "@/lib/companions";
 import { COMPANIONS, getCompanionStage, getLessonsToNextStage, getProgressPercent } from "@/lib/companions";
 import { useAuth } from "@/components/AuthProvider";
+import { CreditsWidget, type CreditsTeacherOption } from "@/components/CreditsWidget";
+import { cn } from "@/lib/utils";
 
 export default function StudentProgressPage() {
   const { t, locale } = useLocale();
@@ -16,6 +18,7 @@ export default function StudentProgressPage() {
   const [companionType, setCompanionType] = useState<CompanionType | null>(null);
   const [companionChosen, setCompanionChosen] = useState<boolean>(false);
   const [lessonCount, setLessonCount] = useState<number>(0);
+  const [creditTeachers, setCreditTeachers] = useState<CreditsTeacherOption[]>([]);
   const [homework, setHomework] = useState<{ id: string; title: string; dueDate: string | null; completed: boolean }[]>([]);
   const [watchPoints, setWatchPoints] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -27,13 +30,17 @@ export default function StudentProgressPage() {
 
     void (async () => {
       setLoading(true);
-      const [{ data: profile }, { count: confirmedCount }, { data: asg }, progRes] = await Promise.all([
+      const [profRes, countRes, asgRes, progRes, bookingsRes] = await Promise.all([
         supabase.from("profiles").select("companion_type, companion_chosen").eq("id", user.id).maybeSingle(),
         supabase.from("bookings").select("id", { count: "exact", head: true }).eq("student_id", user.id).eq("status", "confirmed"),
         supabase.from("assignments").select("id, title, due_date, status").eq("student_id", user.id).order("created_at", { ascending: false }),
-        // `watch_points` may not exist in all DBs. We try and fall back to achievements.
         supabase.from("student_progress").select("watch_points, achievements").eq("student_id", user.id).order("created_at", { ascending: false }).limit(20),
-      ]).catch(() => [{ data: null }, { count: 0 }, { data: [] }, { data: [] }] as any);
+        supabase.from("bookings").select("teacher_id").eq("student_id", user.id),
+      ]);
+      const profile = profRes.data;
+      const confirmedCount = countRes.count;
+      const asg = asgRes.data;
+      const bRows = bookingsRes.data;
 
       if (cancelled) return;
       const p = profile as { companion_type?: string | null; companion_chosen?: boolean | null } | null;
@@ -49,7 +56,6 @@ export default function StudentProgressPage() {
         dueDate: r.due_date || null,
         completed: String(r.status || "").toLowerCase() === "reviewed",
       }));
-      // incomplete first
       mapped.sort((a, b) => Number(a.completed) - Number(b.completed));
       setHomework(mapped);
 
@@ -66,6 +72,32 @@ export default function StudentProgressPage() {
         }
       }
       setWatchPoints(Array.from(new Set(points)).slice(0, 8));
+
+      const bookingTeachers = (bRows || []) as { teacher_id: string | null }[];
+      const distinctTeacherIds = Array.from(
+        new Set(bookingTeachers.map((r) => r.teacher_id).filter((x): x is string => Boolean(x))),
+      );
+      const teacherList: CreditsTeacherOption[] = [];
+      await Promise.all(
+        distinctTeacherIds.map(async (tid) => {
+          const { data: tr } = await supabase
+            .from("teachers")
+            .select("id, name, discipline, image_url")
+            .eq("id", tid)
+            .maybeSingle();
+          if (tr) {
+            const row = tr as { id: string; name: string | null; discipline: string | null; image_url: string | null };
+            teacherList.push({
+              teacherId: row.id,
+              name: row.name ?? tid,
+              discipline: row.discipline,
+              imageUrl: row.image_url,
+            });
+          }
+        }),
+      );
+      setCreditTeachers(teacherList);
+
       setLoading(false);
     })();
 
@@ -100,53 +132,62 @@ export default function StudentProgressPage() {
   const remaining = useMemo(() => (companionType ? getLessonsToNextStage(companionType, lessonCount) : 0), [companionType, lessonCount]);
 
   return (
-    <div className="space-y-6 pb-10">
-      {/* COMPANION */}
-      <section
-        className="w-full rounded-3xl p-6 text-white shadow-[0_24px_80px_rgba(15,110,86,0.22)]"
-        style={{ background: "linear-gradient(135deg, #0F6E56, #1D9E75)" }}
-      >
+    <div className="mx-auto w-full max-w-[1280px] space-y-6 bg-[#F3FAF6] pb-16 px-4 sm:px-6 lg:rounded-3xl lg:p-8 lg:shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]">
+      <header className="space-y-1">
+        <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">{t("progressionTitle")}</h1>
+        <p className="text-sm text-slate-600">{t("progressionSubtitle")}</p>
+      </header>
+
+      {!loading && user ? (
+        <CreditsWidget
+          layout="progress"
+          teachers={creditTeachers}
+          lessonCount={lessonCount}
+          companionType={companionType}
+        />
+      ) : (
+        <div className="h-40 animate-pulse rounded-2xl bg-white/60" />
+      )}
+
+      {/* Companion — compact */}
+      <section className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm sm:p-5">
+        <h2 className="text-sm font-semibold text-slate-900">{t("progressionYourCompanion")}</h2>
+        <p className="mt-0.5 text-xs text-slate-600">{t("companionSubtitle")}</p>
         {loading ? (
-          <div className="h-20 rounded-2xl bg-white/10" />
+          <div className="mt-3 h-14 rounded-xl bg-slate-100" />
         ) : hasCompanion && stage ? (
-          <div className="text-center space-y-3">
-            <div className="text-[40px] leading-none">{stage.emoji}</div>
-            <div>
-              <p className="text-[16px] font-bold">{stageName}</p>
-              <p className="text-[12px] text-white/80">{companionName}</p>
+          <Link href="/student/choose-companion" className="mt-3 flex items-center gap-3 rounded-xl p-2 transition hover:bg-slate-50">
+            <span className="text-2xl leading-none">{stage.emoji}</span>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-slate-900">{stageName}</p>
+              <p className="text-xs text-slate-600">{companionName}</p>
+              <div className="mt-2 h-1 overflow-hidden rounded-full bg-slate-100">
+                <div className="h-full rounded-full bg-[#1D9E75]" style={{ width: `${percent}%` }} />
+              </div>
+              <p className="mt-1.5 text-[11px] text-slate-600">
+                {remaining > 0 ? `${remaining} ${t("companionMoreLessons")}` : t("companionMaxLevel")}
+              </p>
             </div>
-            <p className="text-[12px] text-white/90">
-              {lessonCount} {lessonCount === 1 ? t("lesson") : t("lessons")}
-            </p>
-            <div className="h-1.5 w-full rounded-full bg-white/25 overflow-hidden">
-              <div className="h-full rounded-full bg-white" style={{ width: `${percent}%` }} />
-            </div>
-            <p className="text-[12px] text-white/85">
-              {remaining > 0 ? `${remaining} ${t("companionMoreLessons")}` : t("companionMaxLevel")}
-            </p>
-          </div>
+            <ChevronRight className="shrink-0 text-slate-400" size={18} />
+          </Link>
         ) : (
-          <div className="text-center space-y-4">
-            <p className="text-sm text-white/90">{t("companionNoCompanion")}</p>
-            <Link
-              href="/student/choose-companion"
-              className="inline-flex h-11 items-center justify-center rounded-2xl bg-white px-5 text-sm font-bold text-[#0F6E56]"
-            >
-              {t("companionNoCompanion")} <ChevronRight size={16} className="ml-1" />
-            </Link>
-          </div>
+          <Link
+            href="/student/choose-companion"
+            className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-dashed border-slate-200 px-3 py-3 text-sm font-medium text-[#0F6E56] hover:bg-slate-50"
+          >
+            {t("companionNoCompanion")}
+            <ChevronRight size={18} />
+          </Link>
         )}
       </section>
 
-      {/* HOMEWORK */}
       <section className="space-y-3">
-        <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-700">{t("homeworkTitle")}</h2>
-
+        <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-600">{t("homeworkTitle")}</h2>
         {loading ? (
-          <div className="rounded-2xl border border-[var(--p-border-light)] bg-white p-6 text-sm text-slate-600">…</div>
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-6 text-sm text-slate-600">…</div>
         ) : homework.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-[var(--p-border-light)] bg-white p-6 text-sm text-slate-700">
-            Aucun devoir en attente 🎉
+          <div className="rounded-2xl border border-dashed border-slate-200/90 bg-white p-6 text-sm text-slate-700 shadow-sm">
+            {t("progressNoHomework")}
           </div>
         ) : (
           <ul className="space-y-2">
@@ -171,18 +212,16 @@ export default function StudentProgressPage() {
         )}
       </section>
 
-      {/* WATCH POINTS */}
       {watchPoints.length > 0 ? (
         <section className="space-y-3">
-          <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-700">{t("watchPoints")}</h2>
+          <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-600">{t("watchPoints")}</h2>
           <ul className="space-y-2">
             {watchPoints.map((w, i) => (
               <li
                 key={`${w}-${i}`}
-                className="rounded-2xl border border-[var(--p-border-light)] bg-white p-4 shadow-sm"
-                style={{ borderLeft: "4px solid #BA7517" }}
+                className="rounded-2xl border border-slate-100 bg-white px-4 py-3 text-sm font-medium text-slate-800 shadow-sm"
               >
-                <p className="text-sm text-slate-800 font-medium">{w}</p>
+                {w}
               </li>
             ))}
           </ul>
@@ -201,24 +240,33 @@ function HomeworkRow({
 }) {
   const dueSoon = Boolean(item.dueDate);
   return (
-    <li className="rounded-2xl border border-[var(--p-border-light)] bg-white px-4 py-3 shadow-sm">
-      <button
-        type="button"
-        onClick={() => onToggle(!item.completed)}
-        className="w-full flex items-center gap-3 text-left"
-      >
+    <li className="rounded-2xl border border-slate-200/80 bg-white px-4 py-3 shadow-sm">
+      <button type="button" onClick={() => onToggle(!item.completed)} className="flex w-full items-center gap-3 text-left">
         <span
-          className={item.completed ? "h-6 w-6 rounded-lg bg-[#1D9E75] text-white flex items-center justify-center" : "h-6 w-6 rounded-lg border border-[var(--p-border-light)] bg-white"}
+          className={
+            item.completed
+              ? "flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-[#1D9E75] text-white"
+              : "h-6 w-6 shrink-0 rounded-lg border border-slate-200 bg-white"
+          }
           aria-hidden
         >
           {item.completed ? <Check size={16} /> : null}
         </span>
         <span className="min-w-0 flex-1">
-          <span className={item.completed ? "block text-sm text-slate-600 line-through" : "block text-sm font-medium text-slate-900"}>
+          <span
+            className={
+              item.completed ? "block text-sm text-slate-600 line-through" : "block text-sm font-medium text-slate-900"
+            }
+          >
             {item.title}
           </span>
           {item.dueDate ? (
-            <span className={cn("block text-xs mt-0.5", dueSoon ? "text-[#BA7517] font-semibold" : "text-slate-600 font-medium")}>
+            <span
+              className={cn(
+                "mt-0.5 block text-xs font-medium",
+                dueSoon ? "font-semibold text-amber-700" : "text-slate-600",
+              )}
+            >
               {item.dueDate}
             </span>
           ) : null}
@@ -226,8 +274,4 @@ function HomeworkRow({
       </button>
     </li>
   );
-}
-
-function cn(...x: Array<string | false | null | undefined>) {
-  return x.filter(Boolean).join(" ");
 }

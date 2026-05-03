@@ -231,7 +231,7 @@ Pratiqo se réserve le droit de modifier les présentes CGU à tout moment. Les 
 ## 14. Contact
 
 **Pratiqo inc.** — Montréal, Québec, Canada  
-courriel : [legal@pratiqo.com](mailto:legal@pratiqo.com)  
+courriel : [marc-andre.theberge@pratiqo.ca](mailto:marc-andre.theberge@pratiqo.ca)  
 site web : [pratiqo.com](https://pratiqo.com)
 
 ---
