@@ -20,6 +20,7 @@ import { cn } from "../lib/utils";
 import { useAuth } from "./AuthProvider";
 import { getSupabaseClient } from "../lib/supabase";
 import { haversineDistance } from "../lib/geo";
+import { isBookingAtLeast24hAhead } from "@/lib/bookingCancellation";
 import { formatLocalISODate, periodForSlot } from "../lib/slots";
 import { localeToBcp47 } from "../lib/i18n/types";
 import { useLocale } from "../lib/locale-context";
@@ -226,7 +227,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
       d.setDate(start.getDate() + i);
       const iso = formatLocalISODate(d);
       const count = availableDays[iso] ?? 0;
-      const disabled = iso < todayIso || count === 0;
+      const disabled = iso <= todayIso || count === 0;
       const label = d.toLocaleDateString(dateLocale, { weekday: "short", day: "numeric", month: "short" });
       cells.push({ iso, label, count, disabled });
     }
@@ -283,6 +284,13 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
     setCheckoutError(null);
     let redirecting = false;
     try {
+      if (!isBookingAtLeast24hAhead({ slot_date: selectedDate, time_slot: selectedSlot })) {
+        setCheckoutError(
+          "Cette réservation nécessite au moins 24h de préavis. Le créneau choisi est trop proche. Veuillez choisir un créneau plus tardif.",
+        );
+        return;
+      }
+
       const supabase = getSupabaseClient();
       const bookingData = {
         teacher_id: teacher.id,
@@ -585,7 +593,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                         <span className="text-[10px] font-bold text-[#0F6E56]">
                           {t("slotsAvailableBadge").replace("{n}", String(cell.count))}
                         </span>
-                      ) : cell.iso < todayIso ? (
+                      ) : cell.iso <= todayIso ? (
                         <span className="text-[10px] text-slate-600">{t("pastLabel")}</span>
                       ) : (
                         <span className="text-[10px] text-slate-600">{t("fullLabel")}</span>

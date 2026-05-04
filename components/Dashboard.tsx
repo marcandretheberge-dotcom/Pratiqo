@@ -17,7 +17,7 @@ import { TeacherDashboardStats } from "@/components/dashboard/teacher/TeacherDas
 import { TeacherProfileCompletenessCard } from "@/components/dashboard/teacher/TeacherProfileCompletenessCard";
 import { TeacherRequestCard } from "@/components/dashboard/teacher/TeacherRequestCard";
 import { TeacherScheduleCard } from "@/components/dashboard/teacher/TeacherScheduleCard";
-import { TeacherChangeClassModal } from "@/components/dashboard/teacher/TeacherChangeClassModal";
+import { RescheduleModal, type RescheduleModalBooking } from "@/components/RescheduleModal";
 import { TeacherScheduleChangeHelperPanel } from "@/components/dashboard/teacher/TeacherScheduleChangeHelperPanel";
 import { ConfirmCancelBookingDialog } from "@/components/ConfirmCancelBookingDialog";
 import {
@@ -77,16 +77,36 @@ export function Dashboard() {
   } | null>(null);
   const [loading, setLoading] = useState(true);
   // id → "accepting" | "declining"
-  const [bookingAction, setBookingAction] = useState<Record<string, "accepting" | "declining">>({});
+  const [bookingAction, setBookingAction] = useState<Record<string, "declining">>({});
   const [actionFlash, setActionFlash] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
   const [cancelBooking, setCancelBooking] = useState<{ id: string; side: "student" | "teacher" } | null>(null);
   const [cancelBusy, setCancelBusy] = useState(false);
   const [rescheduleModalBookingId, setRescheduleModalBookingId] = useState<string | null>(null);
 
+  const teacherRescheduleBooking = useMemo((): RescheduleModalBooking | null => {
+    if (!rescheduleModalBookingId) return null;
+    const row = teacherBookings.find((x) => String(x.id) === rescheduleModalBookingId);
+    if (!row) return null;
+    return {
+      id: String(row.id),
+      slotDate: String(row.slot_date || row.date || ""),
+      timeSlot: (row.time_slot || row.time) as string | null | undefined,
+      price: Number(row.price) || 0,
+      otherPartyName: String(row.studentName || "?"),
+      otherPartyId: String(row.student_id || ""),
+      durationMinutes:
+        typeof row.duration_minutes === "number"
+          ? row.duration_minutes
+          : row.duration_minutes != null
+            ? Number(row.duration_minutes)
+            : null,
+    };
+  }, [rescheduleModalBookingId, teacherBookings]);
+
   const teacherDash = useMemo(() => {
     if (!isTeacherRole) return null;
     const today = formatLocalISODate(new Date());
-    const activeStatuses = ["confirmed", "booked"];
+    const activeStatuses = ["confirmed"];
     const confirmedUpcoming = teacherBookings
       .filter((b) => activeStatuses.includes(b.status))
       .filter((b) => {
@@ -106,7 +126,7 @@ export function Dashboard() {
     monthStart.setHours(0, 0, 0, 0);
     const monthRevenue = teacherBookings
       .filter((b) => {
-        if (!["confirmed", "booked"].includes(b.status)) return false;
+        if (b.status !== "confirmed") return false;
         if (!b.created_at) return false;
         const c = new Date(b.created_at as string);
         if (Number.isNaN(c.getTime())) return false;
@@ -234,42 +254,6 @@ export function Dashboard() {
       setTeacherBookings((prev) => prev.filter((b) => b.id !== id));
       showFlash("ok", t("bookingDeclined"));
     } catch (e) {
-      showFlash("err", e instanceof Error ? e.message : t("anErrorOccurred"));
-    } finally {
-      setBookingAction((prev) => {
-        const next = { ...prev };
-        delete next[id];
-        return next;
-      });
-    }
-  };
-
-  const acceptTeacherBooking = async (id: string) => {
-    const prevRow = teacherBookings.find((b) => b.id === id);
-    const previousStatus = (prevRow?.status as string) || "pending_teacher";
-    setBookingAction((prev) => ({ ...prev, [id]: "accepting" }));
-    // Optimistic update: move to confirmed right away
-    setTeacherBookings((prev) =>
-      prev.map((b) => (b.id === id ? { ...b, status: "confirmed" } : b)),
-    );
-    try {
-      const supabase = getSupabaseClient();
-      const { data: { session } } = await supabase.auth.getSession();
-      const token = session?.access_token;
-      const res = await fetch(`/api/bookings/${id}/accept`, {
-        method: "POST",
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error((body as { error?: string }).error ?? t("anErrorOccurred"));
-      }
-      showFlash("ok", t("classAcceptedCanMessage"));
-    } catch (e) {
-      // Roll back on failure
-      setTeacherBookings((prev) =>
-        prev.map((b) => (b.id === id ? { ...b, status: previousStatus } : b)),
-      );
       showFlash("err", e instanceof Error ? e.message : t("anErrorOccurred"));
     } finally {
       setBookingAction((prev) => {
@@ -557,7 +541,6 @@ export function Dashboard() {
                       booking={b}
                       disciplineLabel={teacherMeta?.discipline ?? "—"}
                       action={bookingAction[b.id as string]}
-                      onAccept={() => void acceptTeacherBooking(b.id as string)}
                       onDecline={() => void cancelTeacherBooking(b.id as string)}
                     />
                   ))}
@@ -607,25 +590,20 @@ export function Dashboard() {
               ) : null}
             </div>
 
-            <TeacherChangeClassModal
-              open={Boolean(rescheduleModalBookingId)}
-              onClose={() => setRescheduleModalBookingId(null)}
-              messagesHref={
-                rescheduleModalBookingId
-                  ? messagesHrefForStudentId(
-                      teacherBookings.find((x) => String(x.id) === rescheduleModalBookingId)?.student_id as
-                        | string
-                        | undefined,
-                    )
-                  : "/messages"
-              }
-              onRequestCancelThisClass={() => {
-                const id = rescheduleModalBookingId;
-                if (!id) return;
-                setRescheduleModalBookingId(null);
-                setCancelBooking({ id, side: "teacher" });
-              }}
-            />
+            {teacherRescheduleBooking ? (
+              <RescheduleModal
+                isOpen
+                onClose={() => setRescheduleModalBookingId(null)}
+                booking={teacherRescheduleBooking}
+                userRole="teacher"
+                currentUserName={String(authProfile?.name || authDisplayName(user) || "")}
+                onCancelLesson={() => {
+                  const id = teacherRescheduleBooking.id;
+                  setRescheduleModalBookingId(null);
+                  setCancelBooking({ id, side: "teacher" });
+                }}
+              />
+            ) : null}
 
             <ConfirmCancelBookingDialog
               open={cancelBooking?.side === "teacher"}

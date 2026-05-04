@@ -1,10 +1,10 @@
 import { formatLocalISODate, parseHHMMToMinutes, slotStartMinutes } from "@/lib/slots";
 
 /** Status values a student may cancel via the structured cancel API (released slot, before or after acceptance). */
-export const STUDENT_CANCEL_STATUSES = ["confirmed", "booked", "pending_payment", "pending_teacher", "pending"] as const;
+export const STUDENT_CANCEL_STATUSES = ["confirmed", "pending_payment"] as const;
 
 /** Status values a teacher may cancel only once the class is firmly scheduled — pending requests stay on accept/decline. */
-export const TEACHER_CANCEL_SCHEDULE_STATUSES = ["confirmed", "booked"] as const;
+export const TEACHER_CANCEL_SCHEDULE_STATUSES = ["confirmed"] as const;
 
 /** Hours before lesson under which a student cancellation is treated as late (refund pending review). */
 export const LATE_CANCEL_HOURS = 24;
@@ -96,6 +96,23 @@ export function isLateCancellation(row: BookingDateFields, now: Date = new Date(
   if (!start) return false;
   const diffMs = start.getTime() - now.getTime();
   return diffMs < LATE_CANCEL_HOURS * 60 * 60 * 1000;
+}
+
+/**
+ * Returns true if the lesson start is at least LATE_CANCEL_HOURS
+ * (currently 24h) away from `now`. Used to validate that a NEW
+ * booking respects the minimum advance notice rule.
+ *
+ * Returns false if:
+ *  - The lesson start can't be computed (missing slot_date/time)
+ *  - The lesson is in the past
+ *  - The lesson is too close to now (less than 24h away)
+ */
+export function isBookingAtLeast24hAhead(row: BookingDateFields, now: Date = new Date()): boolean {
+  const start = bookingLessonStartDate(row);
+  if (!start) return false;
+  const diffMs = start.getTime() - now.getTime();
+  return diffMs >= LATE_CANCEL_HOURS * 60 * 60 * 1000;
 }
 
 export type RefundPlan = {

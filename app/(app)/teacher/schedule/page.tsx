@@ -354,7 +354,7 @@ function TeacherScheduleInner() {
                 const mins = now.getHours() * 60 + now.getMinutes();
                 const sm = slotStartApprox(b.time_slot || b.time);
                 const isCurrentOrNext =
-                  ["confirmed", "booked"].includes(b.status) && sm >= mins - 30 && sm <= mins + 90;
+                  b.status === "confirmed" && sm >= mins - 30 && sm <= mins + 90;
                 const isFirst = idx === 0;
                 const boldTeal = isCurrentOrNext;
                 return (

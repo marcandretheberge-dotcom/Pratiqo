@@ -35,7 +35,7 @@ export function TeacherScheduleCard({
   emptyHint: string;
   /** i18n key for the card heading (default: generic schedule). */
   titleKey?: "upcomingScheduleTitle" | "upcomingConfirmedClasses";
-  /** Confirmed/booked lessons only — opens parent cancel modal. */
+  /** Confirmed lessons only — opens parent cancel modal. */
   onRequestCancelClass?: (bookingId: string) => void;
   /** Opens “change class” flow (modal → message / cancel). */
   onOpenReschedule?: (bookingId: string) => void;

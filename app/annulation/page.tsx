@@ -9,6 +9,7 @@ export const metadata: Metadata = {
 const TOC = [
   { id: "eleve", label: "Annulation par l'élève" },
   { id: "professeur", label: "Annulation par le professeur" },
+  { id: "reprogrammer", label: "Reprogrammer un cours (reschedule)" },
   { id: "domicile", label: "Cours à domicile" },
   { id: "delais", label: "Délais de remboursement" },
   { id: "litiges", label: "Litiges" },
@@ -212,9 +213,60 @@ export default function AnnulationPublicPage() {
 
             <hr className="border-slate-200" />
 
+            <section id="reprogrammer" className="scroll-mt-28">
+              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-[#1D9E75] pl-4 mb-4">
+                3. Reprogrammer un cours (reschedule)
+              </h2>
+              <p>
+                Reprogrammer un cours est différent de l&apos;annuler. Dans le cadre d&apos;un reschedule, l&apos;élève
+                et le professeur s&apos;entendent ensemble sur un nouveau créneau.
+              </p>
+              <h3 className="text-base font-semibold text-[var(--p-text)] mt-6 mb-2">3.1 Plus de 24h avant le cours</h3>
+              <p>Vous avez deux options :</p>
+              <ul className="list-disc pl-5 space-y-2 mt-2 marker:text-[#1D9E75]">
+                <li>Annuler ce cours (remboursement 100%) puis réserver un nouveau créneau directement.</li>
+                <li>
+                  Discuter avec votre professeur (ou votre élève) via la messagerie pour convenir d&apos;un nouveau
+                  créneau, sans frais supplémentaire.
+                </li>
+              </ul>
+              <h3 className="text-base font-semibold text-[var(--p-text)] mt-6 mb-2">3.2 Moins de 24h avant le cours</h3>
+              <p>Reprogrammer reste possible, mais uniquement si les deux parties sont d&apos;accord.</p>
+              <p className="mt-3 font-medium text-[var(--p-text)]">Procédure :</p>
+              <ol className="list-decimal pl-5 space-y-2 mt-2 marker:text-[#1D9E75]">
+                <li>Envoyez un message via la messagerie Pratiqo pour proposer un nouveau créneau.</li>
+                <li>
+                  Si votre professeur (ou votre élève) accepte, contactez{" "}
+                  <a href="mailto:support@pratiqo.ca" className="text-[#1D9E75] underline font-medium">
+                    support@pratiqo.ca
+                  </a>{" "}
+                  avec :
+                  <ul className="list-disc pl-5 mt-2 space-y-1">
+                    <li>votre numéro de réservation</li>
+                    <li>la nouvelle date sur laquelle vous vous êtes entendus</li>
+                  </ul>
+                </li>
+                <li>Notre équipe mettra votre réservation à jour sous 24h.</li>
+              </ol>
+              <p className="mt-4">
+                Si aucun accord mutuel n&apos;est trouvé, la politique d&apos;annulation ci-dessus (section 1 ou 2)
+                prend effet.
+              </p>
+              <h3 className="text-base font-semibold text-[var(--p-text)] mt-6 mb-2">3.3 Cas particuliers</h3>
+              <p>
+                Pour les urgences ou cas de force majeure (voir section 1.2), contactez directement{" "}
+                <a href="mailto:support@pratiqo.ca" className="text-[#1D9E75] underline font-medium">
+                  support@pratiqo.ca
+                </a>
+                , peu importe le délai.
+              </p>
+            </section>
+
+            <hr className="border-slate-200" />
+
             <section id="domicile" className="scroll-mt-28">
               <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-[#1D9E75] pl-4 mb-4">
-                3. Cours à domicile
+                4. Cours à domicile
               </h2>
               <p>Pour les cours à domicile, les mêmes règles s&apos;appliquent avec une condition supplémentaire :</p>
               <ul className="list-disc pl-5 space-y-2 mt-2 marker:text-[#1D9E75]">
@@ -230,7 +282,7 @@ export default function AnnulationPublicPage() {
 
             <section id="delais" className="scroll-mt-28">
               <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-[#1D9E75] pl-4 mb-4">
-                4. Délais de remboursement
+                5. Délais de remboursement
               </h2>
               <ul className="list-disc pl-5 space-y-2 marker:text-[#1D9E75]">
                 <li>
@@ -245,7 +297,7 @@ export default function AnnulationPublicPage() {
 
             <section id="litiges" className="scroll-mt-28">
               <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-[#1D9E75] pl-4 mb-4">
-                5. Litiges
+                6. Litiges
               </h2>
               <p>
                 Tout litige concernant un remboursement doit être signalé dans les{" "}
@@ -272,7 +324,7 @@ export default function AnnulationPublicPage() {
 
             <section id="contact" className="scroll-mt-28">
               <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-[#1D9E75] pl-4 mb-4">
-                6. Contact
+                7. Contact
               </h2>
               <p>
                 <a href="mailto:support@pratiqo.ca" className="text-[#1D9E75] underline font-medium">

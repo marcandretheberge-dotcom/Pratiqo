@@ -9,6 +9,7 @@ import {
   weeklyAvailabilityFromTeacherRows,
 } from "@/lib/slots";
 import { defaultLessonDurationMinutes } from "@/lib/teacherSlotQueries";
+import { isBookingAtLeast24hAhead } from "@/lib/bookingCancellation";
 
 export const runtime = "nodejs";
 
@@ -54,7 +55,7 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
       .select("time_slot")
       .eq("teacher_id", teacherId)
       .eq("slot_date", date)
-      .in("status", ["pending_payment", "confirmed", "booked"])
+      .in("status", ["pending_payment", "confirmed"])
       .not("time_slot", "is", null);
 
     const bookedSlots = ((bookedRows || []) as { time_slot?: string }[])
@@ -77,7 +78,12 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
 
     const slots = generateSlots(dayAvail, durationMinutes, date, bookedSlots, blockedPeriods, blockedRanges);
 
-    return NextResponse.json({ slots, durationMinutes, date });
+    const now = new Date();
+    const filteredSlots = slots.filter((slot) =>
+      isBookingAtLeast24hAhead({ slot_date: date, time_slot: slot }, now),
+    );
+
+    return NextResponse.json({ slots: filteredSlots, durationMinutes, date });
   } catch (e) {
     console.error("[teachers/slots]", e);
     return NextResponse.json({ error: "Erreur serveur." }, { status: 500 });

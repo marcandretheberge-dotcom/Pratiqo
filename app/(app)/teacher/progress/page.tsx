@@ -63,13 +63,13 @@ export default function TeacherProgressPage() {
         .from("bookings")
         .select("id, student_id, student_level, status")
         .eq("teacher_id", tid)
-        .in("status", ["confirmed", "booked", "pending_payment"]);
+        .in("status", ["confirmed", "pending_payment"]);
 
       const list = (rows || []) as BookingRow[];
       const lessonCounts = new Map<string, number>();
       for (const r of list) {
         if (!r.student_id) continue;
-        if (r.status === "confirmed" || r.status === "booked") {
+        if (r.status === "confirmed") {
           lessonCounts.set(r.student_id, (lessonCounts.get(r.student_id) ?? 0) + 1);
         }
       }

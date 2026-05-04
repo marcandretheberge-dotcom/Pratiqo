@@ -51,7 +51,7 @@ export async function POST(req: Request) {
       .select("id")
       .eq("student_id", user.id)
       .eq("teacher_id", (teacherRow as { id: string }).id)
-      .in("status", ["confirmed", "booked"])
+      .in("status", ["confirmed"])
       .limit(1);
 
     if (!bookings || bookings.length === 0) {

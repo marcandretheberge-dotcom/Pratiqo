@@ -5,12 +5,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { CalendarDays, MessageSquare, Search, UserRound } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
+import { authDisplayName } from "@/lib/authDisplay";
 import { getSupabaseClient } from "@/lib/supabase";
 import { useLocale } from "@/lib/locale-context";
 import { cn } from "@/lib/utils";
 import { CreditsWidget } from "@/components/CreditsWidget";
 import { ConfirmCancelBookingDialog } from "@/components/ConfirmCancelBookingDialog";
-import { StudentChangeClassModal } from "@/components/dashboard/student/StudentChangeClassModal";
+import { RescheduleModal, type RescheduleModalBooking } from "@/components/RescheduleModal";
 import { STUDENT_CANCEL_STATUSES, isBookingLessonDateOnOrAfterToday, isLateCancellation } from "@/lib/bookingCancellation";
 import { postCancelBooking } from "@/lib/bookingCancellationClient";
 import type { TranslationKey } from "@/lib/translations";
@@ -75,7 +76,7 @@ function canStudentCancelBooking(status: string): boolean {
 }
 
 export function StudentDashboard() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { t, formatPrice } = useLocale();
 
   const [loading, setLoading] = useState(true);
@@ -146,7 +147,7 @@ export function StudentDashboard() {
 
       const teacherCounts = new Map<string, { lessons: number; row: TeacherRow | undefined }>();
       for (const r of rows) {
-        if (r.status !== "confirmed" && r.status !== "booked") continue;
+        if (r.status !== "confirmed") continue;
         const cur = teacherCounts.get(r.teacher_id) ?? { lessons: 0, row: teacherMap.get(r.teacher_id) };
         cur.lessons += 1;
         teacherCounts.set(r.teacher_id, cur);
@@ -184,7 +185,18 @@ export function StudentDashboard() {
     () => upcoming.find((x) => x.bookingId === rescheduleBookingId) ?? null,
     [upcoming, rescheduleBookingId],
   );
-  const rescheduleMessagesHref = messagesHrefForTeacherUser(rescheduleBooking?.teacherUserId);
+  const studentReschedulePayload = useMemo((): RescheduleModalBooking | null => {
+    if (!rescheduleBooking) return null;
+    return {
+      id: rescheduleBooking.bookingId,
+      slotDate: rescheduleBooking.date,
+      timeSlot: rescheduleBooking.time,
+      price: Number(rescheduleBooking.price ?? 0),
+      otherPartyName: rescheduleBooking.teacherName,
+      otherPartyId: rescheduleBooking.teacherUserId ?? "",
+      durationMinutes: rescheduleBooking.durationMinutes,
+    };
+  }, [rescheduleBooking]);
 
   const cancelIsLate = useMemo(() => {
     if (!cancelBookingId) return false;
@@ -495,14 +507,19 @@ export function StudentDashboard() {
         )}
       </section>
 
-      <StudentChangeClassModal
-        open={Boolean(rescheduleBookingId)}
-        onClose={() => setRescheduleBookingId(null)}
-        messagesHref={rescheduleMessagesHref}
-        onRequestCancelThisClass={() => {
-          if (rescheduleBookingId) setCancelBookingId(rescheduleBookingId);
-        }}
-      />
+      {studentReschedulePayload ? (
+        <RescheduleModal
+          isOpen
+          onClose={() => setRescheduleBookingId(null)}
+          booking={studentReschedulePayload}
+          userRole="student"
+          currentUserName={String(profile?.name || (user ? authDisplayName(user) : "") || "")}
+          onCancelLesson={() => {
+            if (rescheduleBookingId) setCancelBookingId(rescheduleBookingId);
+            setRescheduleBookingId(null);
+          }}
+        />
+      ) : null}
 
       <ConfirmCancelBookingDialog
         open={Boolean(cancelBookingId)}

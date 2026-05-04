@@ -23,7 +23,7 @@ export async function fetchBookedSlotsByDate(
     .from("bookings")
     .select("slot_date, time_slot, status")
     .eq("teacher_id", teacherId)
-    .in("status", ["pending_payment", "confirmed", "booked"])
+    .in("status", ["pending_payment", "confirmed"])
     .not("slot_date", "is", null)
     .not("time_slot", "is", null)
     .gte("slot_date", fromIso)

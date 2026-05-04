@@ -53,6 +53,8 @@ export default function MessagesPage() {
   const [pendingPeer, setPendingPeer] = useState<{ peerId: string; label: string; conversationId: string } | null>(
     null,
   );
+  const [draftHint, setDraftHint] = useState(false);
+  const draftAppliedKeyRef = useRef<string | null>(null);
 
   const supabase = useMemo(() => getSupabaseClient(), []);
 
@@ -96,12 +98,25 @@ export default function MessagesPage() {
   }, [refreshConversations]);
 
   const peerFromQuery = searchParams.get("peer");
+  const draftFromQuery = searchParams.get("draft");
 
   useEffect(() => {
     if (!user?.id || !peerFromQuery || !UUID_RE.test(peerFromQuery)) return;
 
     const cid = getConversationId(user.id, peerFromQuery);
     setActiveConversationId(cid);
+
+    const draftKey = `${peerFromQuery}|${draftFromQuery ?? ""}`;
+    if (draftFromQuery && draftAppliedKeyRef.current !== draftKey) {
+      try {
+        const text = decodeURIComponent(draftFromQuery.replace(/\+/g, " "));
+        setInput(text);
+        setDraftHint(true);
+      } catch {
+        /* ignore malformed draft */
+      }
+      draftAppliedKeyRef.current = draftKey;
+    }
 
     void (async () => {
       const labels = await resolvePeerLabels(supabase, user.id, [peerFromQuery]);
@@ -114,7 +129,7 @@ export default function MessagesPage() {
     })();
 
     router.replace("/messages", { scroll: false });
-  }, [user?.id, peerFromQuery, supabase, router]);
+  }, [user?.id, peerFromQuery, draftFromQuery, supabase, router]);
 
   useEffect(() => {
     if (!pendingPeer) return;
@@ -209,6 +224,9 @@ export default function MessagesPage() {
       setMessages((prev) => prev.map((m) => (m.id === optimisticId ? row : m)));
       setPendingPeer(null);
       await refreshConversations();
+      setDraftHint(false);
+      draftAppliedKeyRef.current = null;
+      router.replace("/messages", { scroll: false });
     } catch (e) {
       setMessages((prev) => prev.filter((m) => m.id !== optimisticId));
       setInput(contentToSend);
@@ -267,6 +285,8 @@ export default function MessagesPage() {
                     onClick={() => {
                       setActiveConversationId(c.conversationId);
                       if (pendingPeer?.conversationId === c.conversationId) setPendingPeer(null);
+                      setDraftHint(false);
+                      router.replace("/messages", { scroll: false });
                     }}
                     className={cn(
                       "w-full text-left px-4 py-3 border-b border-[var(--p-border-light)]/60 transition-colors hover:bg-white/90",
@@ -310,7 +330,10 @@ export default function MessagesPage() {
                 <button
                   type="button"
                   className="lg:hidden shrink-0 flex items-center gap-0.5 text-sm font-semibold text-slate-800 -ml-1 px-2 py-1.5 rounded-lg hover:bg-slate-100"
-                  onClick={() => setActiveConversationId(null)}
+                  onClick={() => {
+                    setDraftHint(false);
+                    setActiveConversationId(null);
+                  }}
                 >
                   <ChevronLeft size={20} strokeWidth={2.25} aria-hidden />
                   {t("mobileChatBack")}
@@ -356,6 +379,11 @@ export default function MessagesPage() {
               </div>
 
               <div className="p-3 border-t border-[var(--p-border-light)] bg-[#fafaf8]">
+                {draftHint ? (
+                  <p className="mb-2 rounded-xl border border-[#1D9E75]/25 bg-[#E1F5EE]/80 px-3 py-2 text-[11px] font-medium text-slate-800">
+                    Brouillon pré-rempli — modifiez et envoyez quand vous êtes prêt(e).
+                  </p>
+                ) : null}
                 <div className="flex items-end gap-2 rounded-[22px] border border-[var(--p-border-light)] bg-white pl-4 pr-2 py-2 focus-within:ring-2 focus-within:ring-[#1D9E75]/25">
                   <textarea
                     value={input}

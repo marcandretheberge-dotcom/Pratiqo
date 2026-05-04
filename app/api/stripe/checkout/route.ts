@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import Stripe from "stripe";
 import { stripe } from "@/lib/stripe";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { isBookingAtLeast24hAhead } from "@/lib/bookingCancellation";
 
 function trimTrailingSlash(url: string) {
   return url.replace(/\/+$/, "");
@@ -124,6 +125,16 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Créneau (date / heure) manquant sur la réservation." }, { status: 400 });
     }
 
+    if (!isBookingAtLeast24hAhead({ slot_date: bSlotDate, time_slot: bTimeSlot })) {
+      return NextResponse.json(
+        {
+          error:
+            "Cette réservation nécessite au moins 24h de préavis. Le créneau choisi est trop proche. Veuillez choisir un créneau plus tardif.",
+        },
+        { status: 400 },
+      );
+    }
+
     const { count: otherCount, error: occErr } = await admin
       .from("bookings")
       .select("id", { count: "exact", head: true })
@@ -131,7 +142,7 @@ export async function POST(req: Request) {
       .eq("slot_date", bSlotDate)
       .eq("time_slot", bTimeSlot)
       .neq("id", bookingId)
-      .in("status", ["pending_payment", "confirmed", "booked"]);
+      .in("status", ["pending_payment", "confirmed"]);
 
     if (!occErr && otherCount && otherCount > 0) {
       return NextResponse.json({ error: "Ce créneau vient d'être réservé." }, { status: 409 });

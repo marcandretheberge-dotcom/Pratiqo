@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Loader2, X } from "lucide-react";
+import { Loader2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLocale } from "@/lib/locale-context";
 
@@ -18,20 +18,16 @@ export function TeacherRequestCard({
   booking,
   disciplineLabel,
   action,
-  onAccept,
   onDecline,
 }: {
   booking: PendingBooking;
   disciplineLabel: string;
-  action?: "accepting" | "declining";
-  onAccept: () => void;
+  action?: "declining";
   onDecline: () => void;
 }) {
   const { t } = useLocale();
-  const isAccepting = action === "accepting";
   const isDeclining = action === "declining";
   const isBusy = Boolean(action);
-  const showAccept = booking.status === "pending_teacher" || booking.status === "pending";
 
   return (
     <li className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200/90 bg-white px-4 py-4 shadow-[0_2px_12px_rgba(0,0,0,0.03)]">
@@ -51,20 +47,6 @@ export function TeacherRequestCard({
         </div>
       </div>
       <div className="flex shrink-0 gap-2">
-        {showAccept ? (
-          <button
-            type="button"
-            disabled={isBusy}
-            onClick={onAccept}
-            className={cn(
-              "inline-flex h-9 items-center gap-1.5 rounded-full px-4 text-xs font-bold transition-all shadow-sm",
-              isBusy ? "cursor-not-allowed bg-[#00694c]/50 text-white" : "bg-[#00694c] text-white hover:bg-[#008560] hover:shadow",
-            )}
-          >
-            {isAccepting ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
-            {t("acceptButton")}
-          </button>
-        ) : null}
         <button
           type="button"
           disabled={isBusy}
