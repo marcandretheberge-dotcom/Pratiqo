@@ -1,6 +1,6 @@
 import type { Teacher } from "@/types";
 
-export type LandingFormatFilter = "all" | "online" | "in_person" | "hybrid";
+export type LandingFormatFilter = "all" | "online" | "in_person" | "at_home" | "hybrid";
 
 export function teacherMatchesLandingFormatFilter(
   teacher: Teacher,
@@ -10,6 +10,7 @@ export function teacherMatchesLandingFormatFilter(
   const m = teacher.teachingMode;
   if (filter === "online") return m === "online";
   if (filter === "in_person") return m === "person" || m === "home";
+  if (filter === "at_home") return m === "home" || m === "all" || Boolean(teacher.homeLessonEnabled);
   if (filter === "hybrid") return m === "both" || m === "all";
   return true;
 }

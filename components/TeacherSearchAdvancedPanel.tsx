@@ -25,6 +25,7 @@ export function TeacherSearchAdvancedPanel({
   onChange,
   t,
   showFormatRow,
+  hideTrigger,
 }: {
   open: boolean;
   onToggle: () => void;
@@ -32,7 +33,111 @@ export function TeacherSearchAdvancedPanel({
   onChange: (patch: Partial<AdvancedFilterValues>) => void;
   t: T;
   showFormatRow?: boolean;
+  hideTrigger?: boolean;
 }) {
+  if (hideTrigger) {
+    return open ? (
+      <div className="mt-4 rounded-2xl border border-[#DCEAE3] bg-white shadow-[0_8px_28px_rgba(15,110,86,0.06)]">
+        <div id="advanced-search-filters" className="space-y-3 px-4 pb-4 pt-4">
+          {showFormatRow ? (
+            <label className="block space-y-1">
+              <span className="text-[11px] font-semibold text-[#6B6760]">{t("landingSearchFormatLabel")}</span>
+              <select
+                value={values.formatExtra}
+                onChange={(e) => onChange({ formatExtra: e.target.value as TeacherSearchFormat | "" })}
+                className="h-10 w-full rounded-xl border border-[#E8E6DF] bg-white px-3 text-sm font-medium text-[#2C2C2A] outline-none"
+              >
+                <option value="">{t("radiusAll")}</option>
+                <option value="no_preference">{t("quizFormatHybridNoPreference")}</option>
+                <option value="online">{t("teachingFormatOnline")}</option>
+                <option value="in_person">{t("teachingFormatInPerson")}</option>
+                <option value="at_home">{t("teachingFormatHome")}</option>
+                <option value="hybrid">{t("teachingFormatHybrid")}</option>
+              </select>
+            </label>
+          ) : null}
+          <label className="block space-y-1">
+            <span className="text-[11px] font-semibold text-[#6B6760]">{t("searchFieldMinRating")}</span>
+            <input
+              type="number"
+              min={0}
+              max={5}
+              step={0.5}
+              value={values.minRating}
+              onChange={(e) => onChange({ minRating: e.target.value })}
+              placeholder="4"
+              className="h-10 w-full rounded-xl border border-[#E8E6DF] px-3 text-sm outline-none"
+            />
+          </label>
+          <label className="block space-y-1">
+            <span className="text-[11px] font-semibold text-[#6B6760]">{t("searchFieldMaxPrice")}</span>
+            <input
+              type="number"
+              min={0}
+              step={1}
+              value={values.maxPrice}
+              onChange={(e) => onChange({ maxPrice: e.target.value })}
+              placeholder="60"
+              className="h-10 w-full rounded-xl border border-[#E8E6DF] px-3 text-sm outline-none"
+            />
+          </label>
+          <label className="flex items-center justify-between gap-3 rounded-xl border border-[#E8E6DF] bg-white px-3 py-2.5">
+            <span className="text-sm font-semibold text-[#2C2C2A]">{t("verifiedTeachersOnly")}</span>
+            <input
+              type="checkbox"
+              checked={values.verifiedOnly}
+              onChange={(e) => onChange({ verifiedOnly: e.target.checked })}
+              className="h-4 w-4 accent-[#0F6E56]"
+            />
+          </label>
+          <label className="block space-y-1">
+            <span className="text-[11px] font-semibold text-[#6B6760]">{t("searchFieldLanguage")}</span>
+            <input
+              type="text"
+              value={values.language}
+              onChange={(e) => onChange({ language: e.target.value })}
+              placeholder={t("searchFieldLanguagePlaceholder")}
+              className="h-10 w-full rounded-xl border border-[#E8E6DF] px-3 text-sm outline-none"
+            />
+          </label>
+          <label className="block space-y-1">
+            <span className="text-[11px] font-semibold text-[#6B6760]">{t("searchFieldLevel")}</span>
+            <input
+              type="text"
+              value={values.level}
+              onChange={(e) => onChange({ level: e.target.value })}
+              placeholder={t("searchFieldLevelPlaceholder")}
+              className="h-10 w-full rounded-xl border border-[#E8E6DF] px-3 text-sm outline-none"
+            />
+          </label>
+          <label className="block space-y-1">
+            <span className="text-[11px] font-semibold text-[#6B6760]">{t("searchFieldAvailability")}</span>
+            <input
+              type="text"
+              value={values.availability}
+              onChange={(e) => onChange({ availability: e.target.value })}
+              placeholder={t("searchFieldAvailabilityPlaceholder")}
+              className="h-10 w-full rounded-xl border border-[#E8E6DF] px-3 text-sm outline-none"
+            />
+          </label>
+          <label className="block space-y-1">
+            <span className="text-[11px] font-semibold text-[#6B6760]">{t("searchFieldTeacherPreference")}</span>
+            <select
+              value={values.teacherPreference}
+              onChange={(e) => onChange({ teacherPreference: e.target.value as TeacherPreference | "" })}
+              className="h-10 w-full rounded-xl border border-[#E8E6DF] bg-white px-3 text-sm font-medium text-[#2C2C2A] outline-none"
+            >
+              <option value="">{t("radiusAll")}</option>
+              <option value="no_preference">{t("teacherPrefNoPreference")}</option>
+              <option value="female_preferred">{t("teacherPrefFemale")}</option>
+              <option value="male_preferred">{t("teacherPrefMale")}</option>
+            </select>
+          </label>
+        </div>
+      </div>
+    ) : null;
+  }
+
   return (
     <div className="mt-3 rounded-2xl border border-[#E8E6DF] bg-white/90">
       <button

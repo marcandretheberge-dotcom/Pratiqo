@@ -38,6 +38,10 @@ interface SmartSearchInputProps {
   /** Defaults to `searchInputPlaceholder`. */
   inputPlaceholderKey?: TranslationKey;
   className?: string;
+  /** Optional class overrides for the outer input shell (landing/student hero sizing). */
+  shellClassName?: string;
+  /** Optional class overrides for the text input element. */
+  inputClassName?: string;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -81,6 +85,8 @@ export function SmartSearchInput({
   onSelectCity,
   inputPlaceholderKey = "searchInputPlaceholder",
   className,
+  shellClassName,
+  inputClassName,
 }: SmartSearchInputProps) {
   const { t, locale } = useLocale();
   const ph = t(inputPlaceholderKey);
@@ -225,7 +231,12 @@ export function SmartSearchInput({
   return (
     <div ref={containerRef} className={cn("relative min-w-0 flex-1", className)}>
       {/* Input */}
-      <div className="flex items-center gap-2 rounded-2xl bg-white px-4 py-3 text-[#2C2C2A] shadow-sm">
+      <div
+        className={cn(
+          "flex items-center gap-2 rounded-2xl bg-white px-4 py-3 text-[#2C2C2A] shadow-sm",
+          shellClassName,
+        )}
+      >
         <Search size={18} className="shrink-0 text-slate-600" aria-hidden />
         <input
           id={inputId}
@@ -238,7 +249,10 @@ export function SmartSearchInput({
           onFocus={() => { if (debouncedQuery.length >= 2) setOpen(true); }}
           onKeyDown={handleKeyDown}
           placeholder={ph}
-          className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-slate-600"
+          className={cn(
+            "min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-slate-600",
+            inputClassName,
+          )}
           autoComplete="off"
           spellCheck={false}
           role="combobox"

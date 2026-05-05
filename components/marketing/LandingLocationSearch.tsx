@@ -15,6 +15,10 @@ type Props = {
   onSelectCity: (city: City) => void;
   className?: string;
   placeholderKey?: TranslationKey;
+  /** Optional class overrides for the outer input shell (landing/student hero sizing). */
+  shellClassName?: string;
+  /** Optional class overrides for the text input element. */
+  inputClassName?: string;
 };
 
 function contains(haystack: string, needle: string) {
@@ -28,6 +32,8 @@ export function LandingLocationSearch({
   onSelectCity,
   className,
   placeholderKey = "marketplaceLocationPlaceholder",
+  shellClassName,
+  inputClassName,
 }: Props) {
   const { t } = useLocale();
   const uid = useId();
@@ -80,7 +86,12 @@ export function LandingLocationSearch({
 
   return (
     <div ref={ref} className={cn("relative shrink-0", className)}>
-      <div className="flex h-full items-center gap-2 rounded-2xl border border-[#E8E6DF] bg-white px-4 py-3 text-[#2C2C2A] shadow-sm">
+      <div
+        className={cn(
+          "flex h-full items-center gap-2 rounded-2xl border border-[#E8E6DF] bg-white px-4 py-3 text-[#2C2C2A] shadow-sm",
+          shellClassName,
+        )}
+      >
         <MapPin size={18} className="shrink-0 text-[#00694c]" aria-hidden />
         <input
           id={inputId}
@@ -108,7 +119,10 @@ export function LandingLocationSearch({
           placeholder={ph}
           autoComplete="off"
           spellCheck={false}
-          className="min-w-0 flex-1 bg-transparent text-sm text-slate-800 outline-none placeholder:text-slate-400"
+          className={cn(
+            "min-w-0 flex-1 bg-transparent text-sm text-slate-800 outline-none placeholder:text-slate-400",
+            inputClassName,
+          )}
         />
         {value ? (
           <button
