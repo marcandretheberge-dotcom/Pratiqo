@@ -22,7 +22,6 @@ import { useAuth } from "./AuthProvider";
 import { getSupabaseClient } from "../lib/supabase";
 import { useRouter } from "next/navigation";
 import { haversineDistance } from "../lib/geo";
-import { PlanBadge } from "./PlanBadge";
 import { TeacherMap } from "./TeacherMap";
 import { VerificationBadge } from "./VerificationBadge";
 import { getAllDisciplines, getDisciplineById } from "../lib/disciplines";
@@ -386,7 +385,6 @@ export function TeacherProfile({
                       <span className="px-2.5 py-0.5 bg-[#0F6E56] text-white text-[9px] font-bold uppercase tracking-widest rounded-full">
                         {teacher.category}
                       </span>
-                      <PlanBadge plan={displayPlan} />
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
                       <h2 className="text-xl lg:text-2xl font-bold text-slate-900 leading-tight">{teacher.name}</h2>
@@ -407,7 +405,7 @@ export function TeacherProfile({
                         <span className="text-xs text-slate-600 ml-0.5">({reviews.length} avis)</span>
                       </div>
                       <span className="text-slate-300 text-xs">·</span>
-                      <VerificationBadge level={verificationLevel} size="sm" showLabel />
+                      <VerificationBadge level={verificationLevel} size="sm" showLabel={false} />
                     </div>
                     <p className="text-xs text-slate-600 flex items-center gap-1.5 mt-1.5">
                       <MapPin size={11} className="text-[#1D9E75] shrink-0" />
