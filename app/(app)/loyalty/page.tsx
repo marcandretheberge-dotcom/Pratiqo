@@ -10,8 +10,6 @@ import {
 import { useLocale } from "../../../lib/locale-context";
 import type { TranslationKey } from "../../../lib/translations";
 
-type LoyaltyTab = "fidelite" | "ristourne" | "calculateur" | "rapport";
-
 type TierId = "bronze" | "argent" | "or" | "platine";
 
 type TierDef = {
@@ -21,7 +19,6 @@ type TierDef = {
   circle: string;
   freeCommissionPct: number;
   proCommissionPct: number;
-  annualRebateBonusPct: number;
 };
 
 const TIER_I18N: Record<TierId, TranslationKey> = {
@@ -32,10 +29,10 @@ const TIER_I18N: Record<TierId, TranslationKey> = {
 };
 
 const TIERS: TierDef[] = [
-  { id: "bronze", min: 0, max: 5000, circle: "#CD7F32", freeCommissionPct: 10, proCommissionPct: 5, annualRebateBonusPct: 0 },
-  { id: "argent", min: 5000, max: 15000, circle: "#C0C0C0", freeCommissionPct: 9, proCommissionPct: 4.5, annualRebateBonusPct: 0 },
-  { id: "or", min: 15000, max: 30000, circle: "#FFD700", freeCommissionPct: 8, proCommissionPct: 4, annualRebateBonusPct: 0.5 },
-  { id: "platine", min: 30000, max: Infinity, circle: "#1D9E75", freeCommissionPct: 7, proCommissionPct: 3.5, annualRebateBonusPct: 1 },
+  { id: "bronze", min: 0, max: 5000, circle: "#CD7F32", freeCommissionPct: 10, proCommissionPct: 5 },
+  { id: "argent", min: 5000, max: 15000, circle: "#C0C0C0", freeCommissionPct: 9, proCommissionPct: 4.5 },
+  { id: "or", min: 15000, max: 30000, circle: "#FFD700", freeCommissionPct: 8, proCommissionPct: 4 },
+  { id: "platine", min: 30000, max: Infinity, circle: "#1D9E75", freeCommissionPct: 7, proCommissionPct: 3.5 },
 ];
 
 function tierFromVolume(volume: number): TierDef {
@@ -76,19 +73,9 @@ type ProfileLoyaltyRow = {
   active_student_count: number | string | null;
 };
 
-const TAB_KEYS: { id: LoyaltyTab; labelKey: TranslationKey }[] = [
-  { id: "fidelite", labelKey: "loyaltyFidelity" },
-];
-
-/** Estimation réseau (illustrative) pour l’onglet Ristourne. */
-const ESTIMATE_TOTAL_ELIGIBLE_VOLUME = 1_500_000;
-const ESTIMATE_NET_PROFIT = 900_000;
-const ESTIMATE_ELIGIBLE_TEACHERS = 45;
-
 export default function LoyaltyPage() {
   const { user } = useAuth();
   const { t } = useLocale();
-  const [tab, setTab] = useState<LoyaltyTab>("fidelite");
   const [loading, setLoading] = useState(true);
   const [row, setRow] = useState<ProfileLoyaltyRow | null>(null);
 
@@ -137,26 +124,7 @@ export default function LoyaltyPage() {
   return (
     <div className="max-w-5xl mx-auto pb-12 text-[var(--p-text)]">
       <h1 className="text-2xl sm:text-3xl font-bold text-[var(--p-text)] mb-6">{t("loyaltyTitle")}</h1>
-      <div className="flex flex-wrap gap-2 mb-8 p-1 rounded-[999px] bg-[var(--p-surface-muted)] border border-[var(--p-border-light)] w-fit max-w-full">
-        {TAB_KEYS.map((tabDef) => (
-          <button
-            key={tabDef.id}
-            type="button"
-            onClick={() => setTab(tabDef.id)}
-            className={cn(
-              "px-4 py-2.5 rounded-full text-sm font-semibold transition-all",
-              tab === tabDef.id
-                ? "bg-[#1D9E75] text-white shadow-sm"
-                : "text-[var(--p-text-muted)] hover:text-[var(--p-text)] bg-transparent",
-            )}
-          >
-            {t(tabDef.labelKey)}
-          </button>
-        ))}
-      </div>
-
-      {tab === "fidelite" && (
-        <div className="space-y-8">
+      <div className="space-y-8">
           <div
             className="rounded-3xl p-8 sm:p-10 text-white shadow-xl overflow-hidden relative"
             style={{ backgroundColor: "#0F6E56" }}
@@ -252,9 +220,6 @@ export default function LoyaltyPage() {
                       <span>{t("loyaltyPlanProShort")}</span>
                       <strong className="text-[var(--p-text)]">
                         {String(tier.proCommissionPct).replace(".", ",")} %
-                        {tier.annualRebateBonusPct > 0
-                          ? ` + ${String(tier.annualRebateBonusPct).replace(".", ",")} % ${t("loyaltyAnnualRebate")}`
-                          : ""}
                       </strong>
                     </li>
                   </ul>
@@ -293,16 +258,19 @@ export default function LoyaltyPage() {
                 <p className="text-[11px] font-bold uppercase tracking-widest text-[var(--p-text-subtle)]">{t("loyaltyForStudents")}</p>
                 <ul className="mt-3 space-y-2 text-sm text-[var(--p-text-muted)]">
                   <li>{t("loyaltyStudentsFreePlatform")}</li>
-                  <li>{t("loyaltyStudentsServiceFee10")}</li>
-                  <li>{t("loyaltyStudentsFeeShown")}</li>
+                  <li>{t("loyaltyStudentsNoHiddenFee")}</li>
+                  <li>{t("loyaltyStudentsPayShownAmount")}</li>
+                  <li>{t("loyaltyStudentsPratiqoPaidByTeacherCommission")}</li>
                 </ul>
               </div>
               <div className="rounded-2xl border border-[var(--p-border-light)] bg-[var(--color-background-secondary)] p-5">
                 <p className="text-[11px] font-bold uppercase tracking-widest text-[var(--p-text-subtle)]">{t("loyaltyTeacherFreePlan")}</p>
                 <ul className="mt-3 space-y-2 text-sm text-[var(--p-text-muted)]">
+                  <li>{t("loyaltyFreeNoSubscription")}</li>
                   <li>{t("loyaltyFreeUpTo5Students")}</li>
                   <li>{t("loyaltyFreeCommission10")}</li>
                   <li>{t("loyaltyFreeBasics")}</li>
+                  <li>{t("loyaltyFreeOver5Clarification")}</li>
                 </ul>
               </div>
               <div className="rounded-2xl border border-[var(--p-border-light)] bg-[var(--color-background-secondary)] p-5">
@@ -313,6 +281,9 @@ export default function LoyaltyPage() {
                   <li>{t("loyaltyProCommission5")}</li>
                   <li>{t("loyaltyProFeatures")}</li>
                   <li>{t("loyaltyProBilledStripe")}</li>
+                  <li>{t("loyaltyProCancelAnytime")}</li>
+                  <li>{t("loyaltyProCancelEndOfPeriod")}</li>
+                  <li>{t("loyaltyProNoProrataRefund")}</li>
                 </ul>
               </div>
             </div>
@@ -323,9 +294,7 @@ export default function LoyaltyPage() {
             <p className="text-sm text-[var(--p-text-muted)] leading-relaxed">{t("loyaltyHowBody")}</p>
             <p className="text-sm text-[var(--p-text-muted)] leading-relaxed">{t("loyaltyNoCashbackBody")}</p>
           </div>
-        </div>
-      )}
-
+      </div>
     </div>
   );
 }
