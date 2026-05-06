@@ -37,7 +37,7 @@ import { useRouter } from "next/navigation";
 import { VerificationBadge } from "./VerificationBadge";
 import { VerifiedBadge } from "./VerifiedBadge";
 import { useLocale } from "@/lib/locale-context";
-import { TEACHERS_LIST_SELECT } from "@/lib/supabase/queries";
+import { TEACHERS_LIST_SELECT, TEACHERS_PUBLIC_TABLE } from "@/lib/supabase/queries";
 import { TeacherAvatar } from "@/components/TeacherAvatar";
 import { teacherPrefCompareStudents, type StudentLocationPrefs } from "@/lib/studentLocationSearch";
 
@@ -198,7 +198,7 @@ export function Explore({
       };
 
       const { data, error } = await supabase
-        .from("teachers")
+        .from(TEACHERS_PUBLIC_TABLE)
         .select(TEACHERS_LIST_SELECT)
         .order("verification_level", { ascending: false })
         .order("rating", { ascending: false });
@@ -772,8 +772,20 @@ function TeacherCard({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05 }}
+      role="button"
+      tabIndex={0}
       onClick={onViewProfile}
-      className="ds-card p-5 hover:shadow-[0_22px_70px_rgba(15,110,86,0.12)] transition-all cursor-pointer flex gap-5 group relative"
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onViewProfile();
+        }
+      }}
+      className={cn(
+        "ds-card group relative flex cursor-pointer gap-5 p-5 transition-all duration-200 ease-out",
+        "hover:-translate-y-1 hover:scale-[1.015] hover:border-[#1D9E75]/30 hover:shadow-xl",
+        "active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1D9E75]/40",
+      )}
     >
       <TeacherAvatar name={teacher.name} category={teacher.category} imageUrl={teacher.imageUrl} size={44} />
 

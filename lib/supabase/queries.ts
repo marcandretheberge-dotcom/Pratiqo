@@ -1,4 +1,11 @@
 /**
+ * Read-only relation: same row shape as `teachers` but `location` JSON excludes `private`
+ * (see migration 031). Use for any browser-side listing or profile read that must not
+ * expose exact address / private coordinates over the wire.
+ */
+export const TEACHERS_PUBLIC_TABLE = "teachers_public";
+
+/**
  * Shared column lists for public teacher listings (search, landing, Explore).
  * Keep in sync with {@link teacherRowToTeacher} / {@link Teacher}.
  */

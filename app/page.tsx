@@ -16,7 +16,7 @@ import { LocaleSwitcher } from "../components/LocaleSwitcher";
 import { getSupabaseClient } from "../lib/supabase";
 import { fetchTeacherDisciplinesMap, mergeTeachersWithDisciplines } from "../lib/teacherDisciplines";
 import { teacherRowToTeacher, type TeacherRow } from "../lib/teacherMapper";
-import { TEACHERS_LIST_SELECT } from "../lib/supabase/queries";
+import { TEACHERS_LIST_SELECT, TEACHERS_PUBLIC_TABLE } from "../lib/supabase/queries";
 import { useLocale } from "../lib/locale-context";
 import { useAuth } from "../components/AuthProvider";
 import type { BookingInitialLessonKind } from "../components/BookingModal";
@@ -158,7 +158,7 @@ export default function LandingPage() {
           setTeachers(list.map((t) => ({ ...t, profilePlan: "free" })));
         }
       };
-      const { data, error } = await supabase.from("teachers").select(TEACHERS_LIST_SELECT).order("verification_level", { ascending: false }).order("rating", { ascending: false });
+      const { data, error } = await supabase.from(TEACHERS_PUBLIC_TABLE).select(TEACHERS_LIST_SELECT).order("verification_level", { ascending: false }).order("rating", { ascending: false });
       if (error || !data?.length) { await mergePlans(TEACHERS); setLoadingTeachers(false); return; }
       const mapped = data.map((r) => teacherRowToTeacher(r as TeacherRow));
       const discMap = await fetchTeacherDisciplinesMap(supabase, mapped.map((t) => t.id));

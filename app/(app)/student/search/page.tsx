@@ -8,17 +8,15 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Star, Users, Video } from "lucide-react";
 import { useLocale } from "../../../../lib/locale-context";
 import { cn } from "../../../../lib/utils";
-import { getEnabledDisciplines, type Discipline } from "../../../../lib/disciplines";
 import { getSupabaseClient } from "../../../../lib/supabase";
 import { haversineDistance } from "../../../../lib/geo";
 import { fetchTeacherDisciplinesMap, mergeTeachersWithDisciplines } from "../../../../lib/teacherDisciplines";
 import { teacherRowToTeacher, type TeacherRow } from "../../../../lib/teacherMapper";
-import { TEACHERS_LIST_SELECT } from "../../../../lib/supabase/queries";
+import { TEACHERS_LIST_SELECT, TEACHERS_PUBLIC_TABLE } from "../../../../lib/supabase/queries";
 import { TeacherAvatar } from "../../../../components/TeacherAvatar";
 import { TEACHERS } from "../../../../constants";
 import { getVerificationLevel } from "../../../../lib/verification";
 import { VerificationBadge } from "../../../../components/VerificationBadge";
-import { SmartSearchInput } from "../../../../components/SmartSearchInput";
 import type { City } from "../../../../lib/cities";
 import type { MapBounds } from "../../../../components/SearchMapView";
 import { useAuth } from "../../../../components/AuthProvider";
@@ -27,6 +25,8 @@ import { applyRadiusFilter, buildTeacherSearchRows, filterTeacherPool, sortRows 
 import { TeacherSearchAdvancedPanel, type AdvancedFilterValues } from "../../../../components/TeacherSearchAdvancedPanel";
 import type { TeacherSearchFormat } from "../../../../lib/teacherSearchCriteria";
 import { logSearchEvent } from "../../../../lib/searchAnalytics";
+import { LandingSearchHero } from "@/components/marketing/LandingSearchHero";
+import type { LandingFormatFilter } from "@/lib/landingTeacherFilter";
 
 const TeacherProfile = dynamic(
   () => import("../../../../components/TeacherProfile").then((m) => m.TeacherProfile),
@@ -67,6 +67,7 @@ export default function StudentSearchPage() {
   const [bookingTeacher, setBookingTeacher] = useState<Teacher | null>(null);
   const [bookingInitialKind, setBookingInitialKind] = useState<BookingInitialLessonKind>("standard");
   const [selectedTeacherProfile, setSelectedTeacherProfile] = useState<Teacher | null>(null);
+  const [landingLocQuery, setLandingLocQuery] = useState("");
   const searchParams = useSearchParams();
   const { user } = useAuth();
   const [studentPrefs, setStudentPrefs] = useState<StudentLocationPrefs | null>(null);
@@ -149,7 +150,7 @@ export default function StudentSearchPage() {
       };
 
       const { data, error } = await supabase
-        .from("teachers")
+        .from(TEACHERS_PUBLIC_TABLE)
         .select(TEACHERS_LIST_SELECT)
         .order("verification_level", { ascending: false })
         .order("rating", { ascending: false });
@@ -192,12 +193,16 @@ export default function StudentSearchPage() {
     setMapBounds(null);
   }, [searchQuery, activeCat, radius, adv]);
 
-  const enabledDisciplines = useMemo(() => getEnabledDisciplines(), []);
+  const formatValue = useMemo((): LandingFormatFilter => {
+    const raw = (adv.formatExtra || "").trim() as TeacherSearchFormat | "";
+    if (raw === "online" || raw === "in_person" || raw === "hybrid" || raw === "at_home") return raw;
+    return "all";
+  }, [adv.formatExtra]);
 
-  const disciplineLabel = (d: Discipline) => {
-    if (locale === "en") return d.labelEn ?? d.label;
-    if (locale === "es") return d.labelEs ?? d.label;
-    return d.label;
+  const setFormatValue = (v: LandingFormatFilter) => {
+    const fmt: TeacherSearchFormat | "" =
+      v === "all" ? "" : (v as unknown as TeacherSearchFormat);
+    setAdv((a) => ({ ...a, formatExtra: fmt }));
   };
 
   const results = useMemo(() => {
@@ -228,95 +233,98 @@ export default function StudentSearchPage() {
 
   return (
     <>
-      <div style={{ minHeight: "100vh", background: "#F1EFE8" }}>
-        {/* Hero - full width */}
-        <div style={{ background: "#0F6E56", width: "100%", padding: "32px 24px" }}>
-          <div style={{ maxWidth: 800, margin: "0 auto" }}>
-            <h1 className="text-center text-3xl font-bold tracking-tight sm:text-4xl">{t("heroStudentTitle")}</h1>
-            <p className="mt-3 text-center text-sm text-white/85 sm:text-base">{t("heroStudentSubtitle")}</p>
-
-            <div className="mx-auto mt-8 flex max-w-xl flex-col gap-3 sm:flex-row sm:items-center">
-              <SmartSearchInput
-                value={searchQuery}
-                onChange={setSearchQuery}
-                teachers={teachers}
-                geo={geo}
-                onSelectTeacher={(teacher) => setSelectedTeacherProfile(teacher)}
-                onSelectDiscipline={(label) => {
-                  setActiveCat(label);
-                  setSearchQuery("");
-                }}
-                onSelectCity={(city: City) => {
-                  setGeo({ lat: city.lat, lng: city.lng });
-                  setSortMode("nearest");
-                  setSearchQuery(city.name);
-                }}
-              />
-
+      <div className="min-h-[100vh] bg-[#F3FAF6]">
+        <LandingSearchHero
+          query={searchQuery}
+          onQueryChange={setSearchQuery}
+          teachers={teachers}
+          geo={geo}
+          onSelectTeacher={(teacher) => setSelectedTeacherProfile(teacher)}
+          onSelectDiscipline={(label) => {
+            setSearchQuery(label);
+          }}
+          locationQuery={landingLocQuery}
+          onLocationQueryChange={setLandingLocQuery}
+          onSelectCity={(city: City) => {
+            setGeo({ lat: city.lat, lng: city.lng });
+            setSortMode("nearest");
+            setLandingLocQuery("");
+          }}
+          formatValue={formatValue}
+          onFormatChange={setFormatValue}
+          onSubmit={() => {
+            logSearchEvent({
+              source: "student_search",
+              category: activeCat,
+              format: formatValue,
+              subject: searchQuery,
+              filters: { radius },
+            });
+            document.getElementById("student-search-results")?.scrollIntoView({ behavior: "smooth", block: "start" });
+          }}
+          selectedCategory={activeCat}
+          onCategoryChange={(cat) => {
+            setActiveCat(cat);
+            // Keep subject input; only reset when switching away from current chip.
+            if (cat !== activeCat && cat !== "All") setSearchQuery("");
+          }}
+          advancedOpen={advancedOpen}
+          onToggleAdvanced={() => setAdvancedOpen((o) => !o)}
+          showIntentToggle={false}
+          showQuizCta={false}
+          extraUnderAdvanced={
+            <div className="flex flex-wrap justify-center gap-2">
+              {[
+                { v: 5, label: "5km" },
+                { v: 10, label: "10km" },
+                { v: 25, label: "25km" },
+                { v: 50, label: "50km" },
+                { v: "all", label: t("radiusAll") },
+                { v: "online", label: t("radiusOnline") },
+              ].map((opt) => (
+                <button
+                  key={String(opt.v)}
+                  type="button"
+                  onClick={() => setRadius(opt.v as any)}
+                  className={cn(
+                    "h-11 rounded-full border px-4 text-sm font-semibold shadow-sm transition-colors",
+                    radius === opt.v
+                      ? "border-[#0F6E56] bg-[#0F6E56] text-white"
+                      : "border-[#DCEAE3] bg-white text-[#2C2C2A] hover:bg-[#FAFCFB]",
+                  )}
+                >
+                  {opt.label}
+                </button>
+              ))}
               <button
                 type="button"
                 onClick={() => requestGeolocation()}
                 className={cn(
-                  "h-12 shrink-0 rounded-2xl bg-white px-5 text-sm font-bold text-[#0F6E56] hover:bg-white/95",
+                  "h-11 rounded-full border border-[#DCEAE3] bg-white px-4 text-sm font-semibold text-[#2C2C2A] shadow-sm hover:bg-[#FAFCFB]",
                   geoLoading && "opacity-80",
                 )}
               >
-                <span className="inline-flex items-center gap-2 whitespace-nowrap">
-                  📍 {t("nearMe")}
-                </span>
+                📍 {t("nearMe")}
               </button>
             </div>
+          }
+        />
 
-            <div className="mx-auto mt-5 flex max-w-4xl flex-wrap justify-center gap-2">
-              <Chip active={activeCat === "All"} onClick={() => setActiveCat("All")}>
-                {t("radiusAll")}
-              </Chip>
-              {enabledDisciplines.map((d) => {
-                const label = disciplineLabel(d);
-                return (
-                  <Chip key={d.id} active={activeCat === label} onClick={() => setActiveCat(label)}>
-                    {label}
-                  </Chip>
-                );
-              })}
-            </div>
-
-            <div className="mx-auto mt-5 flex max-w-4xl flex-wrap justify-center gap-2">
-              <RadiusPill active={radius === 5} onClick={() => setRadius(5)}>
-                5km
-              </RadiusPill>
-              <RadiusPill active={radius === 10} onClick={() => setRadius(10)}>
-                10km
-              </RadiusPill>
-              <RadiusPill active={radius === 25} onClick={() => setRadius(25)}>
-                25km
-              </RadiusPill>
-              <RadiusPill active={radius === 50} onClick={() => setRadius(50)}>
-                50km
-              </RadiusPill>
-              <RadiusPill active={radius === "all"} onClick={() => setRadius("all")}>
-                {t("radiusAll")}
-              </RadiusPill>
-              <RadiusPill active={radius === "online"} onClick={() => setRadius("online")}>
-                {t("radiusOnline")}
-              </RadiusPill>
-            </div>
-
-            <div className="mx-auto mt-5 max-w-xl">
-              <TeacherSearchAdvancedPanel
-                open={advancedOpen}
-                onToggle={() => setAdvancedOpen((o) => !o)}
-                values={adv}
-                onChange={(patch) => setAdv((a) => ({ ...a, ...patch }))}
-                t={t}
-                showFormatRow
-              />
-            </div>
+        <div className="bg-[#F3FAF6] px-4 pb-2 pt-2 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-[1280px]">
+            <TeacherSearchAdvancedPanel
+              open={advancedOpen}
+              onToggle={() => setAdvancedOpen((o) => !o)}
+              values={adv}
+              onChange={(patch) => setAdv((a) => ({ ...a, ...patch }))}
+              t={t}
+              hideTrigger
+            />
           </div>
         </div>
 
-        {/* Results - full width with padding */}
-        <div style={{ padding: "20px 24px", maxWidth: 900, margin: "0 auto", paddingBottom: 80 }}>
+        <div id="student-search-results" className="bg-[#F3FAF6] px-4 pb-20 pt-4 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-[1280px]">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm font-semibold text-[#2C2C2A]">
                 {results.length} {t("searchResults")}
@@ -410,6 +418,7 @@ export default function StudentSearchPage() {
                 )}
               </div>
             )}
+          </div>
         </div>
       </div>
 
@@ -516,8 +525,10 @@ function TeacherCard({
       type="button"
       onClick={onOpen}
       className={cn(
-        "block w-full rounded-2xl bg-white p-4 text-left transition",
-        "border border-[#E8E6DF] shadow-[0_12px_40px_rgba(44,44,42,0.06)] hover:shadow-[0_16px_55px_rgba(44,44,42,0.08)]",
+        "block w-full rounded-2xl border border-[#E8E6DF] bg-white p-4 text-left shadow-[0_12px_40px_rgba(44,44,42,0.06)]",
+        "cursor-pointer transition-all duration-200 ease-out",
+        "hover:-translate-y-1 hover:scale-[1.015] hover:border-[#1D9E75]/30 hover:shadow-xl",
+        "active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1D9E75]/40",
       )}
     >
       <div className="flex items-start justify-between gap-2">

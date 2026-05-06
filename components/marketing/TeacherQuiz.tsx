@@ -12,7 +12,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useLocale } from "@/lib/locale-context";
 import { getSupabaseClient } from "@/lib/supabase";
-import { TEACHER_QUIZ_SELECT } from "@/lib/supabase/queries";
+import { TEACHER_QUIZ_SELECT, TEACHERS_PUBLIC_TABLE } from "@/lib/supabase/queries";
 import { cn } from "@/lib/utils";
 import { VerificationBadge } from "@/components/VerificationBadge";
 import type { VerificationLevel } from "@/lib/verification";
@@ -322,7 +322,7 @@ export function TeacherQuiz({ onClose }: { onClose: () => void }) {
         rows.filter((r) => foldAscii(String(r.identity_status ?? "none")) !== "failed");
 
       const { data, error } = await supabase
-        .from("teachers")
+        .from(TEACHERS_PUBLIC_TABLE)
         .select(TEACHER_QUIZ_SELECT)
         .neq("identity_status", "failed")
         .order("rating", { ascending: false })

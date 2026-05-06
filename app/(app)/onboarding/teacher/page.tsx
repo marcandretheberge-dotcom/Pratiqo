@@ -1,0 +1,709 @@
+"use client";
+
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
+import { useRouter } from "next/navigation";
+import { Check, ChevronLeft, ChevronRight, Loader2, MapPin, ShieldCheck } from "lucide-react";
+import { useAuth } from "@/components/AuthProvider";
+import { getSupabaseClient } from "@/lib/supabase";
+import { cn } from "@/lib/utils";
+import { useLocale } from "@/lib/locale-context";
+import { getTeacherOnboardingMissingFields, isTeacherProfileComplete } from "@/lib/teacherOnboarding";
+import { parseGooglePlace } from "@/lib/googleAddressParser";
+import { blurCoordinates } from "@/lib/maps";
+
+type StepId = 1 | 2 | 3;
+type Category = "music" | "languages" | "academic" | "other";
+type TeachingMode = "online" | "in_person" | "at_home" | "hybrid";
+
+const LEVELS = ["beginner", "intermediate", "advanced", "kids", "teens", "adults"] as const;
+const DAYS = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"] as const;
+const PERIODS = [
+  { id: "Matin", label: "08:00–12:00" },
+  { id: "Après-midi", label: "12:00–17:00" },
+  { id: "Soir", label: "17:00–21:00" },
+] as const;
+
+function dbCategoryFromWizard(c: Category): string {
+  if (c === "languages") return "Langues";
+  if (c === "academic") return "Scolaire";
+  // DB enum is legacy; safest fallback is Musique.
+  return "Musique";
+}
+
+function encodeTeachingMode(mode: TeachingMode): string {
+  if (mode === "online") return "online";
+  if (mode === "in_person") return "person";
+  if (mode === "at_home") return "home";
+  return "all";
+}
+
+function currencyDefault(countryCode: string | null | undefined): string {
+  if (String(countryCode || "").toUpperCase() === "CA") return "CAD";
+  return "CAD";
+}
+
+export default function TeacherOnboardingPage() {
+  const { user, loading, profile } = useAuth();
+  const { t } = useLocale();
+  const router = useRouter();
+
+  const [step, setStep] = useState<StepId>(1);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Step 1
+  const [displayName, setDisplayName] = useState("");
+  const [category, setCategory] = useState<Category>("music");
+  const [discipline, setDiscipline] = useState("");
+  const [levels, setLevels] = useState<(typeof LEVELS)[number][]>([]);
+  const [bio, setBio] = useState("");
+
+  // Step 2
+  const [teachingMode, setTeachingMode] = useState<TeachingMode>("hybrid");
+  const [city, setCity] = useState("");
+  const [region, setRegion] = useState("");
+  const [countryCode, setCountryCode] = useState("CA");
+  const [timezone, setTimezone] = useState<string>("");
+  const [currency, setCurrency] = useState("CAD");
+
+  const [googleReady, setGoogleReady] = useState(false);
+  const [googleError, setGoogleError] = useState(false);
+  const addressInputRef = useRef<HTMLInputElement | null>(null);
+  const [addressValue, setAddressValue] = useState("");
+  const [parsedPlace, setParsedPlace] = useState<ReturnType<typeof parseGooglePlace> | null>(null);
+
+  // Step 3
+  const [pricePerLesson, setPricePerLesson] = useState<string>("");
+  const [homeRadiusKm, setHomeRadiusKm] = useState<string>("25");
+  const [availability, setAvailability] = useState<string[]>([]);
+
+  const progressLabel = useMemo(() => `${step}/3`, [step]);
+
+  const missingPreview = useMemo(() => {
+    const teacherLike = {
+      name: displayName,
+      discipline,
+      category: dbCategoryFromWizard(category),
+      city,
+      region,
+      country_code: countryCode,
+      timezone,
+      teaching_mode: encodeTeachingMode(teachingMode),
+      price_per_lesson: Number(pricePerLesson),
+      availability,
+    };
+    return getTeacherOnboardingMissingFields(teacherLike as any);
+  }, [displayName, discipline, category, city, region, countryCode, timezone, teachingMode, pricePerLesson, availability]);
+
+  // Initial defaults / guard
+  useEffect(() => {
+    if (loading) return;
+    if (!user) {
+      router.replace(`/login?next=${encodeURIComponent("/onboarding/teacher")}`);
+      return;
+    }
+    if (profile?.role === "student") {
+      router.replace("/dashboard");
+    }
+  }, [loading, user, profile?.role, router]);
+
+  useEffect(() => {
+    // Best-effort defaults.
+    try {
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      if (tz && !timezone) setTimezone(tz);
+    } catch {
+      // ignore
+    }
+  }, [timezone]);
+
+  useEffect(() => {
+    if (!currency) setCurrency(currencyDefault(countryCode));
+  }, [currency, countryCode]);
+
+  // If teacher already complete, bounce back to dashboard.
+  useEffect(() => {
+    if (!user?.id) return;
+    let cancelled = false;
+    const supabase = getSupabaseClient();
+    void (async () => {
+      const { data: trow } = await supabase
+        .from("teachers")
+        .select("name, discipline, category, city, region, country_code, timezone, teaching_mode, price_per_lesson, availability")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (cancelled) return;
+      if (isTeacherProfileComplete((trow as any) ?? null)) {
+        router.replace("/dashboard");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id, router]);
+
+  // Google Places Autocomplete (optional)
+  useEffect(() => {
+    const key = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+    if (!key) {
+      setGoogleError(true);
+      return;
+    }
+    if (typeof window !== "undefined" && (window as any).google?.maps?.places) {
+      setGoogleReady(true);
+      return;
+    }
+    let cancelled = false;
+    const script = document.createElement("script");
+    script.async = true;
+    script.defer = true;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&libraries=places`;
+    script.onload = () => {
+      if (cancelled) return;
+      if ((window as any).google?.maps?.places) setGoogleReady(true);
+      else setGoogleError(true);
+    };
+    script.onerror = () => {
+      if (!cancelled) setGoogleError(true);
+    };
+    document.head.appendChild(script);
+    return () => {
+      cancelled = true;
+      script.remove();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!googleReady) return;
+    const el = addressInputRef.current;
+    if (!el) return;
+    if (!("google" in window)) return;
+    const ac = new google.maps.places.Autocomplete(el, {
+      fields: ["address_components", "formatted_address", "geometry"],
+      types: ["address"],
+    });
+    ac.addListener("place_changed", () => {
+      const place = ac.getPlace();
+      const parsed = parseGooglePlace(place);
+      setParsedPlace(parsed);
+      if (parsed.formattedAddress) setAddressValue(parsed.formattedAddress);
+      if (parsed.city) setCity(parsed.city);
+      if (parsed.region) setRegion(parsed.region);
+      if (parsed.countryCode) setCountryCode(parsed.countryCode);
+    });
+    return () => {
+      // Autocomplete has no official dispose; just detach ref by unmounting.
+    };
+  }, [googleReady]);
+
+  const toggleLevel = (lvl: (typeof LEVELS)[number]) => {
+    setLevels((prev) => (prev.includes(lvl) ? prev.filter((x) => x !== lvl) : [...prev, lvl]));
+  };
+
+  const toggleAvail = (day: (typeof DAYS)[number], period: (typeof PERIODS)[number]["id"]) => {
+    const key = `${day} ${period}`;
+    setAvailability((prev) => (prev.includes(key) ? prev.filter((x) => x !== key) : [...prev, key]));
+  };
+
+  const canGoNext = useMemo(() => {
+    if (step === 1) {
+      return displayName.trim().length > 1 && discipline.trim().length > 1;
+    }
+    if (step === 2) {
+      return city.trim().length > 1 && region.trim().length > 1 && countryCode.trim().length === 2 && timezone.trim().length > 2;
+    }
+    const priceOk = Number(pricePerLesson) > 0;
+    return priceOk && availability.length > 0;
+  }, [step, displayName, discipline, city, region, countryCode, timezone, pricePerLesson, availability.length]);
+
+  const goNext = () => {
+    if (!canGoNext) return;
+    setError(null);
+    setStep((s) => (s === 3 ? 3 : ((s + 1) as StepId)));
+  };
+
+  const goBack = () => {
+    setError(null);
+    setStep((s) => (s === 1 ? 1 : ((s - 1) as StepId)));
+  };
+
+  const save = async () => {
+    if (!user?.id) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const supabase = getSupabaseClient();
+
+      const { data: existing } = await supabase
+        .from("teachers")
+        .select("id, image_url, location")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      const teacherId = (existing as { id?: string } | null)?.id ?? user.id;
+
+      const nextLocation: Record<string, unknown> = {
+        ...(typeof (existing as any)?.location === "object" && (existing as any)?.location !== null ? ((existing as any).location as any) : {}),
+      };
+
+      // Public fields used by search/cards must remain non-exact.
+      const privateBlock: Record<string, unknown> = {};
+      if (parsedPlace?.formattedAddress) privateBlock.formatted_address = parsedPlace.formattedAddress;
+      if (parsedPlace?.streetNumber) privateBlock.street_number = parsedPlace.streetNumber;
+      if (parsedPlace?.route) privateBlock.route = parsedPlace.route;
+      if (parsedPlace?.postalCode) privateBlock.postal_code = parsedPlace.postalCode;
+      if (parsedPlace?.latitude != null) privateBlock.latitude = parsedPlace.latitude;
+      if (parsedPlace?.longitude != null) privateBlock.longitude = parsedPlace.longitude;
+
+      const publicCity = city.trim();
+      const publicRegion = region.trim();
+      const publicCountry = countryCode.trim().toUpperCase();
+
+      // Backwards compatibility: keep flat keys used by existing UI.
+      nextLocation.neighborhood = publicCity;
+      nextLocation.public = {
+        city: publicCity,
+        region: publicRegion,
+        country_code: publicCountry,
+      };
+
+      // Use fuzzed coords for public lat/lng only.
+      if (parsedPlace?.latitude != null && parsedPlace?.longitude != null) {
+        const fuzzed = blurCoordinates(parsedPlace.latitude, parsedPlace.longitude);
+        nextLocation.lat = fuzzed.lat;
+        nextLocation.lng = fuzzed.lng;
+        (nextLocation.public as any).lat = fuzzed.lat;
+        (nextLocation.public as any).lng = fuzzed.lng;
+      }
+
+      if (Object.keys(privateBlock).length > 0) {
+        nextLocation.private = {
+          ...(typeof (nextLocation.private as any) === "object" && (nextLocation.private as any) !== null ? (nextLocation.private as any) : {}),
+          ...privateBlock,
+        };
+      }
+
+      const updates: Record<string, unknown> = {};
+      const nameTrim = displayName.trim();
+      if (nameTrim) updates.name = nameTrim;
+      updates.category = dbCategoryFromWizard(category);
+      const discTrim = discipline.trim();
+      if (discTrim) updates.discipline = discTrim;
+      const bioTrim = bio.trim();
+      if (bioTrim) updates.bio = bioTrim;
+      if (levels.length > 0) updates.levels = levels;
+
+      updates.teaching_mode = encodeTeachingMode(teachingMode);
+      updates.city = publicCity || null;
+      updates.region = publicRegion || null;
+      updates.country_code = publicCountry || null;
+      updates.timezone = timezone.trim() || null;
+      updates.currency = currency.trim() || null;
+
+      updates.price_per_lesson = Number(pricePerLesson) || 0;
+      updates.availability = availability;
+      updates.location = nextLocation;
+
+      // Home lessons fields (optional columns exist in types).
+      const homeOn = teachingMode === "at_home" || teachingMode === "hybrid";
+      updates.home_lesson_enabled = homeOn;
+      if (homeOn) {
+        const r = Number(homeRadiusKm);
+        if (Number.isFinite(r) && r > 0) updates.home_lesson_radius_km = r;
+      }
+
+      // Insert if missing (must satisfy not-null constraints).
+      if (!existing?.id) {
+        const payload = {
+          id: teacherId,
+          user_id: user.id,
+          rating: 0,
+          reviews: 0,
+          monthly_subscription: null,
+          is_verified: false,
+          languages: [],
+          image_url: (existing as any)?.image_url ?? (typeof profile?.photo_url === "string" ? profile.photo_url : null),
+          ...updates,
+        };
+        const { error: insErr } = await supabase.from("teachers").insert(payload);
+        if (insErr) throw insErr;
+      } else {
+        const { error: upErr } = await supabase.from("teachers").update(updates).eq("id", teacherId);
+        if (upErr) throw upErr;
+      }
+
+      router.replace("/dashboard");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t("anErrorOccurred"));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="mx-auto w-full max-w-4xl px-4 sm:px-6 pb-12">
+      <div className="pt-8 sm:pt-10">
+        <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#0F6E56]/80">{progressLabel}</p>
+        <h1 className="mt-2 text-2xl sm:text-3xl font-bold text-[var(--p-text)]">{t("teacherOnboardingTitle")}</h1>
+        <p className="mt-2 text-sm text-[var(--p-text-muted)] max-w-2xl">{t("teacherOnboardingSubtitle")}</p>
+      </div>
+
+      <div className="mt-6 rounded-3xl bg-white border border-[rgba(0,0,0,0.06)] shadow-[0_12px_40px_rgba(0,0,0,0.06)] overflow-hidden">
+        <div className="px-6 sm:px-8 py-4 border-b border-[rgba(0,0,0,0.06)] bg-[#F3FAF6]">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2 text-sm font-semibold text-[#0F6E56]">
+              <ShieldCheck size={18} />
+              <span>{t(step === 1 ? "teacherOnboardingStepProfile" : step === 2 ? "teacherOnboardingStepLocation" : "teacherOnboardingStepPricing")}</span>
+            </div>
+            {missingPreview.length > 0 ? (
+              <span className="text-xs text-[var(--p-text-muted)]">
+                {t("teacherOnboardingMissingFields")} {missingPreview.length}
+              </span>
+            ) : (
+              <span className="text-xs text-[#0F6E56] font-semibold inline-flex items-center gap-1">
+                <Check size={14} /> {t("teacherOnboardingComplete")}
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="px-6 sm:px-8 py-6">
+          {error ? (
+            <div className="mb-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+              {error}
+            </div>
+          ) : null}
+
+          <AnimatePresence mode="wait">
+            {step === 1 ? (
+              <motion.div
+                key="step-1"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-6"
+              >
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <label className="block">
+                    <span className="block text-xs font-bold uppercase tracking-widest text-[var(--p-text-subtle)]">
+                      {t("teacherOnboardingName")}
+                    </span>
+                    <input
+                      value={displayName}
+                      onChange={(e) => setDisplayName(e.target.value)}
+                      className="mt-2 w-full h-12 rounded-2xl border border-[var(--p-border-light)] px-4 text-sm"
+                      placeholder="Ex. Marie Dupont"
+                    />
+                  </label>
+
+                  <label className="block">
+                    <span className="block text-xs font-bold uppercase tracking-widest text-[var(--p-text-subtle)]">
+                      {t("teacherOnboardingCategory")}
+                    </span>
+                    <select
+                      value={category}
+                      onChange={(e) => setCategory(e.target.value as Category)}
+                      className="mt-2 w-full h-12 rounded-2xl border border-[var(--p-border-light)] px-4 text-sm bg-white"
+                    >
+                      <option value="music">Musique</option>
+                      <option value="languages">Langues</option>
+                      <option value="academic">Scolaire</option>
+                      <option value="other">Autre</option>
+                    </select>
+                  </label>
+                </div>
+
+                <label className="block">
+                  <span className="block text-xs font-bold uppercase tracking-widest text-[var(--p-text-subtle)]">
+                    {t("teacherOnboardingDiscipline")}
+                  </span>
+                  <input
+                    value={discipline}
+                    onChange={(e) => setDiscipline(e.target.value)}
+                    className="mt-2 w-full h-12 rounded-2xl border border-[var(--p-border-light)] px-4 text-sm"
+                    placeholder="Ex. Piano, Anglais, Mathématiques…"
+                  />
+                </label>
+
+                <div>
+                  <span className="block text-xs font-bold uppercase tracking-widest text-[var(--p-text-subtle)]">
+                    {t("teacherOnboardingLevels")}
+                  </span>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {LEVELS.map((lvl) => {
+                      const on = levels.includes(lvl);
+                      return (
+                        <button
+                          key={lvl}
+                          type="button"
+                          onClick={() => toggleLevel(lvl)}
+                          className={cn(
+                            "h-10 px-4 rounded-full border text-sm font-semibold transition-colors",
+                            on
+                              ? "border-[#1D9E75] bg-[rgba(29,158,117,0.12)] text-[#0F6E56]"
+                              : "border-[var(--p-border-light)] bg-white text-[var(--p-text-muted)] hover:text-[var(--p-text)]",
+                          )}
+                        >
+                          {lvl}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <label className="block">
+                  <span className="block text-xs font-bold uppercase tracking-widest text-[var(--p-text-subtle)]">
+                    {t("teacherOnboardingBio")}
+                  </span>
+                  <textarea
+                    value={bio}
+                    onChange={(e) => setBio(e.target.value)}
+                    rows={4}
+                    className="mt-2 w-full rounded-2xl border border-[var(--p-border-light)] px-4 py-3 text-sm"
+                    placeholder="Quelques lignes sur votre approche, votre expérience, et votre style d’enseignement…"
+                  />
+                </label>
+              </motion.div>
+            ) : null}
+
+            {step === 2 ? (
+              <motion.div
+                key="step-2"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-6"
+              >
+                <label className="block">
+                  <span className="block text-xs font-bold uppercase tracking-widest text-[var(--p-text-subtle)]">
+                    {t("teacherOnboardingTeachingMode")}
+                  </span>
+                  <select
+                    value={teachingMode}
+                    onChange={(e) => setTeachingMode(e.target.value as TeachingMode)}
+                    className="mt-2 w-full h-12 rounded-2xl border border-[var(--p-border-light)] px-4 text-sm bg-white"
+                  >
+                    <option value="online">En ligne</option>
+                    <option value="in_person">En personne</option>
+                    <option value="at_home">À domicile</option>
+                    <option value="hybrid">Hybride</option>
+                  </select>
+                </label>
+
+                <div className="rounded-2xl border border-[rgba(29,158,117,0.25)] bg-[rgba(29,158,117,0.06)] px-4 py-3 text-sm text-[#0F6E56] flex gap-2">
+                  <MapPin className="mt-0.5" size={16} />
+                  <p>{t("teacherOnboardingPrivacyNote")}</p>
+                </div>
+
+                <label className="block">
+                  <span className="block text-xs font-bold uppercase tracking-widest text-[var(--p-text-subtle)]">
+                    {t("teacherOnboardingManualLocation")}
+                  </span>
+                  <div className="mt-2">
+                    <input
+                      ref={addressInputRef}
+                      value={addressValue}
+                      onChange={(e) => setAddressValue(e.target.value)}
+                      className="w-full h-12 rounded-2xl border border-[var(--p-border-light)] px-4 text-sm"
+                      placeholder="Adresse (optionnel)"
+                      disabled={!googleReady && !googleError}
+                    />
+                    {!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || googleError ? (
+                      <p className="mt-2 text-xs text-[var(--p-text-muted)]">{t("teacherOnboardingGoogleUnavailable")}</p>
+                    ) : null}
+                  </div>
+                </label>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <label className="block">
+                    <span className="block text-xs font-bold uppercase tracking-widest text-[var(--p-text-subtle)]">
+                      {t("teacherOnboardingCity")}
+                    </span>
+                    <input
+                      value={city}
+                      onChange={(e) => setCity(e.target.value)}
+                      className="mt-2 w-full h-12 rounded-2xl border border-[var(--p-border-light)] px-4 text-sm"
+                      placeholder="Ex. Montréal"
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="block text-xs font-bold uppercase tracking-widest text-[var(--p-text-subtle)]">
+                      {t("teacherOnboardingRegion")}
+                    </span>
+                    <input
+                      value={region}
+                      onChange={(e) => setRegion(e.target.value)}
+                      className="mt-2 w-full h-12 rounded-2xl border border-[var(--p-border-light)] px-4 text-sm"
+                      placeholder="Ex. Québec"
+                    />
+                  </label>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <label className="block">
+                    <span className="block text-xs font-bold uppercase tracking-widest text-[var(--p-text-subtle)]">
+                      {t("teacherOnboardingCountry")}
+                    </span>
+                    <input
+                      value={countryCode}
+                      onChange={(e) => setCountryCode(e.target.value.toUpperCase())}
+                      className="mt-2 w-full h-12 rounded-2xl border border-[var(--p-border-light)] px-4 text-sm"
+                      placeholder="CA"
+                    />
+                  </label>
+                  <label className="block sm:col-span-2">
+                    <span className="block text-xs font-bold uppercase tracking-widest text-[var(--p-text-subtle)]">
+                      {t("teacherOnboardingTimezone")}
+                    </span>
+                    <input
+                      value={timezone}
+                      onChange={(e) => setTimezone(e.target.value)}
+                      className="mt-2 w-full h-12 rounded-2xl border border-[var(--p-border-light)] px-4 text-sm"
+                      placeholder="America/Toronto"
+                    />
+                  </label>
+                </div>
+
+                <label className="block">
+                  <span className="block text-xs font-bold uppercase tracking-widest text-[var(--p-text-subtle)]">
+                    {t("teacherOnboardingCurrency")}
+                  </span>
+                  <input
+                    value={currency}
+                    onChange={(e) => setCurrency(e.target.value.toUpperCase())}
+                    className="mt-2 w-full h-12 rounded-2xl border border-[var(--p-border-light)] px-4 text-sm"
+                    placeholder="CAD"
+                  />
+                </label>
+              </motion.div>
+            ) : null}
+
+            {step === 3 ? (
+              <motion.div
+                key="step-3"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-6"
+              >
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <label className="block">
+                    <span className="block text-xs font-bold uppercase tracking-widest text-[var(--p-text-subtle)]">
+                      {t("teacherOnboardingPrice")}
+                    </span>
+                    <input
+                      value={pricePerLesson}
+                      onChange={(e) => setPricePerLesson(e.target.value)}
+                      type="number"
+                      min={0}
+                      step="0.5"
+                      className="mt-2 w-full h-12 rounded-2xl border border-[var(--p-border-light)] px-4 text-sm"
+                      placeholder="50"
+                    />
+                  </label>
+
+                  <label className="block">
+                    <span className="block text-xs font-bold uppercase tracking-widest text-[var(--p-text-subtle)]">
+                      {t("teacherOnboardingAvailability")}
+                    </span>
+                    <p className="mt-3 text-xs text-[var(--p-text-muted)]">
+                      Sélectionnez vos plages hebdomadaires (vous pourrez affiner plus tard).
+                    </p>
+                  </label>
+                </div>
+
+                {(teachingMode === "at_home" || teachingMode === "hybrid") ? (
+                  <label className="block">
+                    <span className="block text-xs font-bold uppercase tracking-widest text-[var(--p-text-subtle)]">
+                      Rayon (km) — à domicile
+                    </span>
+                    <input
+                      value={homeRadiusKm}
+                      onChange={(e) => setHomeRadiusKm(e.target.value)}
+                      type="number"
+                      min={1}
+                      step="1"
+                      className="mt-2 w-full h-12 rounded-2xl border border-[var(--p-border-light)] px-4 text-sm"
+                    />
+                  </label>
+                ) : null}
+
+                <div className="rounded-2xl border border-[var(--p-border-light)] bg-[var(--color-background-secondary)] p-4 sm:p-5 overflow-x-auto">
+                  <div className="min-w-[560px] grid grid-cols-[100px_repeat(3,1fr)] gap-2">
+                    <div />
+                    {PERIODS.map((p) => (
+                      <div key={p.id} className="text-[11px] font-bold uppercase tracking-widest text-[var(--p-text-subtle)] text-center">
+                        {p.id}
+                        <span className="block font-normal normal-case text-[10px]">{p.label}</span>
+                      </div>
+                    ))}
+                    {DAYS.map((d) => (
+                      <React.Fragment key={d}>
+                        <div className="text-sm font-semibold text-[var(--p-text)]">{d}</div>
+                        {PERIODS.map((p) => {
+                          const key = `${d} ${p.id}`;
+                          const on = availability.includes(key);
+                          return (
+                            <button
+                              key={key}
+                              type="button"
+                              onClick={() => toggleAvail(d, p.id)}
+                              className={cn(
+                                "h-11 rounded-xl border transition-colors",
+                                on ? "border-[#1D9E75] bg-[rgba(29,158,117,0.12)]" : "border-[var(--p-border-light)] bg-white hover:bg-[#F3FAF6]",
+                              )}
+                              aria-pressed={on}
+                            />
+                          );
+                        })}
+                      </React.Fragment>
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
+        </div>
+
+        <div className="px-6 sm:px-8 py-5 border-t border-[rgba(0,0,0,0.06)] bg-white flex items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={goBack}
+            disabled={step === 1 || saving}
+            className="h-11 px-4 rounded-full border border-[var(--p-border-light)] text-sm font-semibold text-[var(--p-text)] disabled:opacity-40 inline-flex items-center gap-2"
+          >
+            <ChevronLeft size={18} />
+            {t("teacherOnboardingBack")}
+          </button>
+
+          {step < 3 ? (
+            <button
+              type="button"
+              onClick={goNext}
+              disabled={!canGoNext || saving}
+              className="h-11 px-5 rounded-full bg-[#1D9E75] hover:bg-[#0F6E56] text-white text-sm font-semibold disabled:opacity-40 inline-flex items-center gap-2 shadow-sm"
+            >
+              {t("teacherOnboardingNext")}
+              <ChevronRight size={18} />
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => void save()}
+              disabled={!canGoNext || saving}
+              className="h-11 px-5 rounded-full bg-[#1D9E75] hover:bg-[#0F6E56] text-white text-sm font-semibold disabled:opacity-40 inline-flex items-center gap-2 shadow-sm"
+            >
+              {saving ? <Loader2 size={18} className="animate-spin" /> : null}
+              {t("teacherOnboardingSave")}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+

@@ -46,7 +46,20 @@ export type TeacherRow = {
 };
 
 export function teacherRowToTeacher(row: TeacherRow): Teacher {
-  const loc = (row.location || {}) as { lat?: number; lng?: number; neighborhood?: string; address?: string };
+  const loc = (row.location || {}) as any;
+  const publicLoc = (loc && typeof loc === "object" ? (loc.public as any) : null) ?? null;
+  const latCandidate =
+    (publicLoc && typeof publicLoc.lat === "number" ? publicLoc.lat : undefined) ??
+    (typeof loc.lat === "number" ? loc.lat : undefined) ??
+    (publicLoc && typeof publicLoc.latitude === "number" ? publicLoc.latitude : undefined);
+  const lngCandidate =
+    (publicLoc && typeof publicLoc.lng === "number" ? publicLoc.lng : undefined) ??
+    (typeof loc.lng === "number" ? loc.lng : undefined) ??
+    (publicLoc && typeof publicLoc.longitude === "number" ? publicLoc.longitude : undefined);
+  const neighborhoodCandidate =
+    (publicLoc && typeof publicLoc.city === "string" ? publicLoc.city : undefined) ??
+    (typeof loc.neighborhood === "string" ? loc.neighborhood : undefined);
+  const addressCandidate = typeof loc.address === "string" ? loc.address : undefined;
   return {
     id: row.id,
     userId: row.user_id ?? undefined,
@@ -62,10 +75,10 @@ export function teacherRowToTeacher(row: TeacherRow): Teacher {
     imageUrl: row.image_url ?? "",
     availability: Array.isArray(row.availability) ? (row.availability as string[]) : [],
     location: {
-      lat: Number(loc.lat ?? 0),
-      lng: Number(loc.lng ?? 0),
-      neighborhood: loc.neighborhood,
-      address: loc.address,
+      lat: Number(latCandidate ?? 0),
+      lng: Number(lngCandidate ?? 0),
+      neighborhood: neighborhoodCandidate,
+      address: addressCandidate,
     },
     isVerified: row.is_verified,
     teachingMode: row.teaching_mode as Teacher["teachingMode"],
