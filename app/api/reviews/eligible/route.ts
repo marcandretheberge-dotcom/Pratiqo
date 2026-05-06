@@ -41,13 +41,14 @@ export async function GET(request: Request) {
     const now = new Date();
     const windowStart = new Date(now.getTime() - REVIEW_WINDOW_DAYS * 24 * 60 * 60 * 1000);
 
-    // Fetch finished/confirmed bookings with a slot_date within the review window.
+    // Fetch completed and paid bookings with a slot_date within the review window.
     // Use date-only strings for the slot_date column (stored as DATE in Postgres).
     const { data: bookings } = await admin
       .from("bookings")
-      .select("id, teacher_id, status, slot_date, time_slot, date, time, duration_minutes")
+      .select("id, teacher_id, status, slot_date, time_slot, date, time, duration_minutes, stripe_payment_intent_id")
       .eq("student_id", user.id)
-      .in("status", ["confirmed", "completed"])
+      .eq("status", "completed")
+      .not("stripe_payment_intent_id", "is", null)
       .not("slot_date", "is", null)
       .gte("slot_date", windowStart.toISOString().split("T")[0])
       .lte("slot_date", now.toISOString().split("T")[0]);

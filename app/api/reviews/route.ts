@@ -4,6 +4,7 @@ import { createServerClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { bookingEndAt } from "@/lib/bookingLifecycle";
+import { checkReviewSafety } from "@/lib/reviewSafety";
 
 export const runtime = "nodejs";
 
@@ -31,6 +32,26 @@ type Body = { bookingId?: string; rating?: number; body?: string };
 
 const REVIEW_WINDOW_DAYS = 30;
 
+async function refreshTeacherRating(admin: ReturnType<typeof getSupabaseAdmin>, teacherId: string) {
+  const { data: allReviews } = await admin
+    .from("reviews")
+    .select("rating")
+    .eq("teacher_id", teacherId)
+    .eq("moderation_status", "approved")
+    .eq("is_flagged", false);
+
+  const rows = allReviews ?? [];
+  const count = rows.length;
+  const avg = count > 0
+    ? rows.reduce((sum: number, r: { rating: number }) => sum + Number(r.rating), 0) / count
+    : 0;
+
+  await admin
+    .from("teachers")
+    .update({ rating: Math.round(avg * 10) / 10, reviews: count })
+    .eq("id", teacherId);
+}
+
 export async function POST(request: Request) {
   const supabase = await getSupabaseForRequest(request);
   if (!supabase) return NextResponse.json({ error: "Config missing." }, { status: 500 });
@@ -46,12 +67,20 @@ export async function POST(request: Request) {
   if (!bookingId) return NextResponse.json({ error: "bookingId manquant" }, { status: 400 });
   if (rating < 1 || rating > 5) return NextResponse.json({ error: "Note invalide (1–5)" }, { status: 400 });
 
+  const safety = checkReviewSafety(body);
+  if (!safety.ok) {
+    return NextResponse.json({
+      error: safety.message,
+      moderationReason: safety.reason,
+    }, { status: 422 });
+  }
+
   const admin = getSupabaseAdmin();
 
-  // Validate booking: exists + belongs to user + confirmed + past + within window
+  // Validate booking: exists + belongs to user + completed + paid + within window
   const { data: booking, error: bookingErr } = await admin
     .from("bookings")
-    .select("id, teacher_id, student_id, status, slot_date, time_slot, date, time, duration_minutes")
+    .select("id, teacher_id, student_id, status, slot_date, time_slot, date, time, duration_minutes, stripe_payment_intent_id")
     .eq("id", bookingId)
     .maybeSingle();
 
@@ -63,8 +92,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Cette réservation ne vous appartient pas." }, { status: 403 });
   }
 
-  if (!["confirmed", "completed"].includes(String(booking.status))) {
-    return NextResponse.json({ error: "Seules les réservations confirmées ou terminées peuvent être évaluées." }, { status: 403 });
+  if (String(booking.status) !== "completed") {
+    return NextResponse.json({ error: "Seuls les cours complétés peuvent être évalués." }, { status: 403 });
+  }
+
+  if (!booking.stripe_payment_intent_id) {
+    return NextResponse.json({ error: "Seuls les cours payés via Pratiqo peuvent être évalués." }, { status: 403 });
   }
 
   if (!booking.slot_date) {
@@ -95,6 +128,9 @@ export async function POST(request: Request) {
     student_id: user.id,
     rating,
     body: body || null,
+    moderation_status: "approved",
+    moderation_reason: null,
+    is_flagged: false,
   });
 
   if (insErr) {
@@ -105,22 +141,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Erreur lors de l'enregistrement." }, { status: 500 });
   }
 
-  // Recalculate teacher average rating
-  const { data: allReviews } = await admin
-    .from("reviews")
-    .select("rating")
-    .eq("teacher_id", booking.teacher_id);
-
-  if (allReviews && allReviews.length > 0) {
-    const avg = allReviews.reduce(
-      (sum: number, r: { rating: number }) => sum + Number(r.rating),
-      0
-    ) / allReviews.length;
-    await admin
-      .from("teachers")
-      .update({ rating: Math.round(avg * 10) / 10, reviews: allReviews.length })
-      .eq("id", booking.teacher_id);
-  }
+  await refreshTeacherRating(admin, booking.teacher_id);
 
   // No more $ credit awarded for reviews — pure community contribution
   return NextResponse.json({ ok: true });
@@ -136,8 +157,10 @@ export async function GET(request: Request) {
 
   const { data: reviews } = await supabase
     .from("reviews")
-    .select("id, rating, body, created_at, student_id, booking_id")
+    .select("id, rating, body, created_at, student_id, booking_id, teacher_reply, teacher_reply_created_at, teacher_reply_updated_at")
     .eq("teacher_id", teacherId)
+    .eq("moderation_status", "approved")
+    .eq("is_flagged", false)
     .order("created_at", { ascending: false })
     .limit(50);
 

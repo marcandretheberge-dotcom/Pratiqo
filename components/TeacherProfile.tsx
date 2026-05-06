@@ -51,6 +51,9 @@ type ReviewRow = {
   body: string | null;
   created_at: string;
   student_id: string;
+  teacher_reply?: string | null;
+  teacher_reply_created_at?: string | null;
+  teacher_reply_updated_at?: string | null;
 };
 
 type ReportStatus = "idle" | "submitting" | "success" | "already" | "error";
@@ -101,6 +104,9 @@ export function TeacherProfile({
   const [reportReason, setReportReason] = useState("");
   const [reportDetails, setReportDetails] = useState("");
   const [reportStatus, setReportStatus] = useState<ReportStatus>("idle");
+  const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
+  const [replySavingId, setReplySavingId] = useState<string | null>(null);
+  const [replyErrorId, setReplyErrorId] = useState<string | null>(null);
 
   // Check whether this student has a confirmed booking with the teacher
   useEffect(() => {
@@ -138,6 +144,7 @@ export function TeacherProfile({
       const rows = json?.reviews ?? [];
       if (cancelled) return;
       setReviews(rows);
+      setReplyDrafts(Object.fromEntries(rows.map((r) => [r.id, r.teacher_reply ?? ""])));
       const studentIds = [...new Set(rows.map((r) => r.student_id))];
       if (!studentIds.length) return;
       const { data: profiles } = await getSupabaseClient()
@@ -181,6 +188,7 @@ export function TeacherProfile({
         setReportStatus("success");
         const captured = reportTarget;
         setReportedIds((prev) => new Set([...prev, captured]));
+        setReviews((prev) => prev.filter((review) => review.id !== captured));
         setTimeout(closeReport, 3000);
       } else if (res.status === 409) {
         setReportStatus("already");
@@ -189,6 +197,43 @@ export function TeacherProfile({
       }
     } catch {
       setReportStatus("error");
+    }
+  };
+
+  const submitReply = async (reviewId: string) => {
+    const reply = (replyDrafts[reviewId] ?? "").trim();
+    if (!reply || replySavingId) return;
+    setReplySavingId(reviewId);
+    setReplyErrorId(null);
+    try {
+      const { data: { session } } = await getSupabaseClient().auth.getSession();
+      const res = await fetch(`/api/reviews/${encodeURIComponent(reviewId)}/reply`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        },
+        body: JSON.stringify({ reply }),
+      });
+      const json = (await res.json().catch(() => null)) as { review?: Partial<ReviewRow> } | null;
+      if (!res.ok || !json?.review) {
+        setReplyErrorId(reviewId);
+        return;
+      }
+      setReviews((prev) => prev.map((row) => (
+        row.id === reviewId
+          ? {
+            ...row,
+            teacher_reply: json.review?.teacher_reply ?? reply,
+            teacher_reply_created_at: json.review?.teacher_reply_created_at ?? row.teacher_reply_created_at ?? new Date().toISOString(),
+            teacher_reply_updated_at: json.review?.teacher_reply_updated_at ?? new Date().toISOString(),
+          }
+          : row
+      )));
+    } catch {
+      setReplyErrorId(reviewId);
+    } finally {
+      setReplySavingId(null);
     }
   };
 
@@ -312,6 +357,8 @@ export function TeacherProfile({
       : teacher.teachingMode === "online"
         ? "En ligne"
         : "En studio";
+
+  const isTeacherOwner = Boolean(user?.id && teacher.userId && user.id === teacher.userId);
 
   const disciplineChips = useMemo(() => {
     const primaryEmoji = getAllDisciplines().find((d) => d.label === teacher.category)?.emoji ?? "✨";
@@ -535,6 +582,50 @@ export function TeacherProfile({
                             </div>
                             {review.body ? (
                               <p className="text-xs italic text-slate-700 leading-relaxed">{review.body}</p>
+                            ) : null}
+                            {review.teacher_reply ? (
+                              <div className="mt-3 rounded-xl border border-[#1D9E75]/20 bg-[#E1F5EE]/70 px-3 py-2">
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-[#0F6E56]">
+                                  Reponse du professeur
+                                </p>
+                                <p className="mt-1 text-xs leading-relaxed text-slate-700">{review.teacher_reply}</p>
+                              </div>
+                            ) : null}
+                            {isTeacherOwner ? (
+                              <div className="mt-3 space-y-2">
+                                <textarea
+                                  value={replyDrafts[review.id] ?? ""}
+                                  onChange={(e) => {
+                                    const value = e.target.value.slice(0, 1000);
+                                    setReplyDrafts((prev) => ({ ...prev, [review.id]: value }));
+                                    if (replyErrorId === review.id) setReplyErrorId(null);
+                                  }}
+                                  rows={2}
+                                  placeholder="Repondre publiquement a cet avis..."
+                                  className="w-full resize-none rounded-xl border border-slate-200/90 bg-white px-3 py-2 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-[#1D9E75]"
+                                />
+                                {replyErrorId === review.id ? (
+                                  <p className="text-[11px] text-rose-600">La reponse n&apos;a pas pu etre enregistree.</p>
+                                ) : null}
+                                <div className="flex justify-end">
+                                  <button
+                                    type="button"
+                                    onClick={() => void submitReply(review.id)}
+                                    disabled={
+                                      replySavingId === review.id ||
+                                      !(replyDrafts[review.id] ?? "").trim() ||
+                                      (replyDrafts[review.id] ?? "").trim() === (review.teacher_reply ?? "").trim()
+                                    }
+                                    className="min-h-[32px] rounded-xl bg-[#0F6E56] px-3 text-[11px] font-semibold text-white transition-all disabled:cursor-not-allowed disabled:opacity-50"
+                                  >
+                                    {replySavingId === review.id
+                                      ? "..."
+                                      : review.teacher_reply
+                                        ? "Modifier la reponse"
+                                        : "Repondre publiquement"}
+                                  </button>
+                                </div>
+                              </div>
                             ) : null}
                             {!isOwn ? (
                               <div className="flex justify-end mt-2">

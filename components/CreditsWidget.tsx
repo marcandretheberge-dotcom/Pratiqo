@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { Check, ChevronRight, Copy, Gift, Users, Zap } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { getSupabaseClient } from "@/lib/supabase";
@@ -53,6 +54,7 @@ type ReviewState = {
   rating: number;
   body: string;
   status: "idle" | "submitting" | "done" | "already" | "error";
+  errorMessage?: string;
 };
 
 const MILESTONES = [
@@ -196,13 +198,14 @@ export function CreditsWidget({
       },
       body: JSON.stringify({ bookingId: review.bookingId, rating: review.rating, body: review.body }),
     });
+    const json = (await res.json().catch(() => null)) as { error?: string } | null;
     if (res.ok) {
       setReview((r) => r && { ...r, status: "done" });
       void loadCredits();
     } else if (res.status === 409) {
       setReview((r) => r && { ...r, status: "already" });
     } else {
-      setReview((r) => r && { ...r, status: "error" });
+      setReview((r) => r && { ...r, status: "error", errorMessage: json?.error });
     }
   };
 
@@ -357,10 +360,19 @@ export function CreditsWidget({
           ) : review.status === "already" ? (
             <p className="text-sm text-slate-700">{t("creditsReviewAlready")}</p>
           ) : review.status === "error" ? (
-            <p className="text-sm text-rose-500">{t("creditsReviewError")}</p>
+            <p className="text-sm text-rose-500">{review.errorMessage || t("creditsReviewError")}</p>
           ) : (
             <>
               <StarRating value={review.rating} onChange={(v) => setReview((r) => r && { ...r, rating: v })} />
+              <div className="rounded-xl border border-[#1D9E75]/20 bg-[#E1F5EE]/70 px-3 py-2 text-[11px] leading-relaxed text-[#0F6E56]">
+                <p className="font-semibold">{t("reviewStandardsReminderTitle")}</p>
+                <p className="mt-0.5">
+                  {t("reviewStandardsReminderBody")}{" "}
+                  <Link href="/charte-de-confiance" className="font-semibold underline">
+                    {t("reviewStandardsReminderLink")}
+                  </Link>
+                </p>
+              </div>
               <textarea
                 value={review.body}
                 onChange={(e) => setReview((r) => r && { ...r, body: e.target.value })}

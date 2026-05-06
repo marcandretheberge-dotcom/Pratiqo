@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { sendReviewFlaggedAdminAlert } from "@/lib/email";
 
 export const runtime = "nodejs";
 
@@ -52,7 +53,7 @@ export async function POST(request: Request) {
 
   const { data: review } = await admin
     .from("reviews")
-    .select("id")
+    .select("id, teacher_id")
     .eq("id", reviewId)
     .maybeSingle();
   if (!review) return NextResponse.json({ error: "Avis introuvable" }, { status: 404 });
@@ -71,6 +72,42 @@ export async function POST(request: Request) {
     console.error("[reviews/report] insert failed", insErr);
     return NextResponse.json({ error: "Erreur lors du signalement." }, { status: 500 });
   }
+
+  await admin
+    .from("reviews")
+    .update({
+      is_flagged: true,
+      flagged_at: new Date().toISOString(),
+      moderation_status: "flagged",
+    })
+    .eq("id", reviewId);
+
+  if (review.teacher_id) {
+    const { data: allReviews } = await admin
+      .from("reviews")
+      .select("rating")
+      .eq("teacher_id", review.teacher_id)
+      .eq("moderation_status", "approved")
+      .eq("is_flagged", false);
+
+    const rows = allReviews ?? [];
+    const count = rows.length;
+    const avg = count > 0
+      ? rows.reduce((sum: number, r: { rating: number }) => sum + Number(r.rating), 0) / count
+      : 0;
+
+    await admin
+      .from("teachers")
+      .update({ rating: Math.round(avg * 10) / 10, reviews: count })
+      .eq("id", review.teacher_id);
+  }
+
+  void sendReviewFlaggedAdminAlert({
+    reviewId,
+    reporterId: user.id,
+    reason,
+    details,
+  });
 
   return NextResponse.json({ ok: true });
 }
