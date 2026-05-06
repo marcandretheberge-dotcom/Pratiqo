@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { BookOpen, Calendar, CheckCircle2, FileText, Loader2, Plus, Send, ChevronRight } from "lucide-react";
+import React, { useEffect, useMemo, useState } from "react";
+import { BookOpen, Calendar, CheckCircle2, ChevronRight, Clock3, FileText, History, Loader2, Plus, Send } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { getSupabaseClient } from "../lib/supabase";
 import { useAuth } from "./AuthProvider";
@@ -14,7 +14,7 @@ interface AssignmentHubProps {
   mode: "student" | "teacher";
 }
 
-type HubTab = "homework" | "practice" | "assign";
+type HubTab = "homework" | "submitted" | "completed" | "practice" | "assign";
 
 function mapAssignment(row: Record<string, unknown>): Assignment {
   return {
@@ -26,13 +26,51 @@ function mapAssignment(row: Record<string, unknown>): Assignment {
     dueDate: (row.due_date as string) || undefined,
     status: row.status as Assignment["status"],
     createdAt: row.created_at as string,
+    submittedAt: (row.submitted_at as string) || undefined,
+    reviewedAt: (row.reviewed_at as string) || undefined,
+    archivedAt: (row.archived_at as string) || undefined,
     feedback: (row.feedback as string) || undefined,
   };
 }
 
+function toTime(value?: string | null, fallback = Number.POSITIVE_INFINITY) {
+  if (!value) return fallback;
+  const time = new Date(value).getTime();
+  return Number.isFinite(time) ? time : fallback;
+}
+
+function sortActiveAssignments(items: Assignment[], mode: AssignmentHubProps["mode"]) {
+  const statusWeight = (status: Assignment["status"]) => {
+    if (mode === "teacher") return status === "submitted" ? 0 : 1;
+    return status === "pending" ? 0 : 1;
+  };
+
+  return [...items].sort((a, b) => {
+    const statusDelta = statusWeight(a.status) - statusWeight(b.status);
+    if (statusDelta !== 0) return statusDelta;
+
+    const dueDelta = toTime(a.dueDate) - toTime(b.dueDate);
+    if (dueDelta !== 0) return dueDelta;
+
+    return toTime(b.createdAt, 0) - toTime(a.createdAt, 0);
+  });
+}
+
+function sortCompletedAssignments(items: Assignment[]) {
+  return [...items].sort((a, b) => toTime(b.reviewedAt || b.createdAt, 0) - toTime(a.reviewedAt || a.createdAt, 0));
+}
+
+function formatAssignmentDate(value: string | undefined, locale: string) {
+  if (!value) return "";
+  const parsed = new Date(value);
+  if (!Number.isFinite(parsed.getTime())) return value;
+  const intlLocale = locale === "fr" ? "fr-CA" : locale === "es" ? "es-UY" : "en-CA";
+  return new Intl.DateTimeFormat(intlLocale, { month: "short", day: "numeric" }).format(parsed);
+}
+
 export function AssignmentHub({ mode }: AssignmentHubProps) {
   const { user } = useAuth();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [hubTab, setHubTab] = useState<HubTab>("homework");
@@ -111,6 +149,26 @@ export function AssignmentHub({ mode }: AssignmentHubProps) {
     };
   }, [user, mode, t]);
 
+  const visibleAssignments = useMemo(() => assignments.filter((a) => !a.archivedAt), [assignments]);
+  const activeAssignments = useMemo(
+    () => sortActiveAssignments(visibleAssignments.filter((a) => a.status !== "reviewed"), mode),
+    [visibleAssignments, mode],
+  );
+  const submittedAssignments = useMemo(
+    () => sortActiveAssignments(visibleAssignments.filter((a) => a.status === "submitted"), "teacher"),
+    [visibleAssignments],
+  );
+  const completedAssignments = useMemo(
+    () => sortCompletedAssignments(visibleAssignments.filter((a) => a.status === "reviewed")),
+    [visibleAssignments],
+  );
+
+  const displayedAssignments = useMemo(() => {
+    if (hubTab === "submitted") return submittedAssignments;
+    if (hubTab === "completed") return completedAssignments;
+    return activeAssignments;
+  }, [activeAssignments, completedAssignments, hubTab, submittedAssignments]);
+
   const handleCreateAssignment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !newAssignment.studentId || !newAssignment.title) return;
@@ -150,16 +208,47 @@ export function AssignmentHub({ mode }: AssignmentHubProps) {
 
   const handleUpdateStatus = async (id: string, status: Assignment["status"]) => {
     const supabase = getSupabaseClient();
+    const assignment = assignments.find((a) => a.id === id);
+    const now = new Date().toISOString();
+    const patch: Record<string, string | null> = { status };
+
+    if (status === "submitted") {
+      patch.submitted_at = now;
+      patch.reviewed_at = null;
+      patch.archived_at = null;
+    } else if (status === "reviewed") {
+      patch.submitted_at = assignment?.submittedAt || now;
+      patch.reviewed_at = now;
+      patch.archived_at = null;
+    } else {
+      patch.submitted_at = null;
+      patch.reviewed_at = null;
+      patch.archived_at = null;
+    }
+
     try {
-      const { error } = await supabase.from("assignments").update({ status }).eq("id", id);
+      const { error } = await supabase.from("assignments").update(patch).eq("id", id);
       if (error) throw error;
 
-      const assignment = assignments.find((a) => a.id === id);
+      setAssignments((prev) =>
+        prev.map((a) =>
+          a.id === id
+            ? {
+                ...a,
+                status,
+                submittedAt: patch.submitted_at || undefined,
+                reviewedAt: patch.reviewed_at || undefined,
+                archivedAt: patch.archived_at || undefined,
+              }
+            : a,
+        ),
+      );
+
       if (assignment) {
         const { data: trow } = await supabase.from("teachers").select("user_id").eq("id", assignment.teacherId).maybeSingle();
         const teacherUserId = trow?.user_id as string | undefined;
 
-        if (mode === "student" && teacherUserId) {
+        if (mode === "student" && status === "submitted" && teacherUserId) {
           await notificationService.sendNotification({
             userId: teacherUserId,
             title: t("notificationHomeworkSubmittedTitle"),
@@ -167,7 +256,7 @@ export function AssignmentHub({ mode }: AssignmentHubProps) {
             type: "assignment",
           });
         }
-        if (mode === "teacher") {
+        if (mode === "teacher" && status === "reviewed") {
           await notificationService.sendNotification({
             userId: assignment.studentId,
             title: t("notificationHomeworkReviewedTitle"),
@@ -181,13 +270,30 @@ export function AssignmentHub({ mode }: AssignmentHubProps) {
     }
   };
 
-  const tabs: HubTab[] = mode === "teacher" ? ["homework", "practice", "assign"] : ["homework", "practice"];
+  const tabs: HubTab[] =
+    mode === "teacher" ? ["homework", "submitted", "completed", "practice", "assign"] : ["homework", "completed", "practice"];
 
   const tabLabel = (tab: HubTab) => {
-    if (tab === "homework") return t("homeworkTitle");
+    if (tab === "homework") return t("assignmentTabActive");
+    if (tab === "submitted") return t("assignmentTabSubmitted");
+    if (tab === "completed") return t("assignmentTabCompleted");
     if (tab === "practice") return t("practiceTitle");
     return t("assignTitle");
   };
+
+  const tabCount = (tab: HubTab) => {
+    if (tab === "homework") return activeAssignments.length;
+    if (tab === "submitted") return submittedAssignments.length;
+    if (tab === "completed") return completedAssignments.length;
+    return null;
+  };
+
+  const emptyMessage =
+    hubTab === "completed"
+      ? t("assignmentCompletedEmpty")
+      : hubTab === "submitted"
+        ? t("assignmentSubmittedEmpty")
+        : t("assignmentActiveEmpty");
 
   if (loading) {
     return (
@@ -206,25 +312,28 @@ export function AssignmentHub({ mode }: AssignmentHubProps) {
           <p className="text-xs text-slate-600">{t("assignmentHubDeckSubtitle")}</p>
         </div>
         <div className="flex flex-wrap gap-1 p-1 rounded-xl bg-slate-100 border border-slate-200">
-          {tabs.map((tab) => (
-            <button
-              key={tab}
-              type="button"
-              onClick={() => setHubTab(tab)}
-              className={cn(
-                "px-3 py-2 rounded-lg text-xs font-bold transition-colors",
-                hubTab === tab ? "bg-white text-brand-primary shadow-sm" : "text-slate-600 hover:text-slate-900",
-              )}
-            >
-              {tab === "assign" && mode === "teacher" ? (
-                <span className="inline-flex items-center gap-1">
-                  <Plus size={14} /> {tabLabel(tab)}
-                </span>
-              ) : (
-                tabLabel(tab)
-              )}
-            </button>
-          ))}
+          {tabs.map((tab) => {
+            const count = tabCount(tab);
+            return (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => setHubTab(tab)}
+                className={cn(
+                  "px-3 py-2 rounded-lg text-xs font-bold transition-colors inline-flex items-center gap-1.5",
+                  hubTab === tab ? "bg-white text-brand-primary shadow-sm" : "text-slate-600 hover:text-slate-900",
+                )}
+              >
+                {tab === "assign" && mode === "teacher" ? <Plus size={14} /> : null}
+                {tabLabel(tab)}
+                {typeof count === "number" ? (
+                  <span className="min-w-5 rounded-full bg-slate-200/80 px-1.5 py-0.5 text-[10px] leading-none text-slate-700">
+                    {count}
+                  </span>
+                ) : null}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -312,88 +421,111 @@ export function AssignmentHub({ mode }: AssignmentHubProps) {
           <p className="text-[10px] font-bold uppercase tracking-widest text-slate-600 pt-2">{t("watchPoints")}</p>
           <p className="text-xs text-slate-600">{t("addWatchPoint")}</p>
         </div>
-      ) : hubTab === "homework" ? (
+      ) : hubTab === "homework" || hubTab === "submitted" || hubTab === "completed" ? (
         <div className="grid grid-cols-1 gap-4">
-          {assignments.length > 0 ? (
-            assignments.map((a, idx) => (
-              <motion.div
-                key={a.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: idx * 0.1 }}
-                className="bg-white border border-slate-200 rounded-3xl p-5 flex items-start gap-4 hover:shadow-lg transition-all group"
-              >
-                <div
-                  className={cn(
-                    "w-12 h-12 rounded-2xl flex items-center justify-center shrink-0",
-                    a.status === "pending"
-                      ? "bg-amber-50 text-amber-500"
-                      : a.status === "submitted"
-                        ? "bg-indigo-50 text-indigo-500"
-                        : "bg-emerald-50 text-emerald-500",
-                  )}
+          {displayedAssignments.length > 0 ? (
+            displayedAssignments.map((a, idx) => {
+              const statusTone =
+                a.status === "pending"
+                  ? "bg-amber-50 text-amber-500"
+                  : a.status === "submitted"
+                    ? "bg-indigo-50 text-indigo-500"
+                    : "bg-emerald-50 text-emerald-500";
+              const badgeTone =
+                a.status === "pending"
+                  ? "bg-amber-50 text-amber-600 border-amber-100"
+                  : a.status === "submitted"
+                    ? "bg-indigo-50 text-indigo-600 border-indigo-100"
+                    : "bg-emerald-50 text-emerald-600 border-emerald-100";
+              const statusLabel =
+                a.status === "pending"
+                  ? t("assignmentStatusTodo")
+                  : a.status === "submitted"
+                    ? t("assignmentStatusSubmitted")
+                    : t("assignmentStatusDone");
+              const lifecycleDate =
+                a.status === "submitted"
+                  ? a.submittedAt
+                  : a.status === "reviewed"
+                    ? a.reviewedAt || a.createdAt
+                    : undefined;
+              const lifecycleLabel =
+                a.status === "submitted"
+                  ? t("assignmentSubmittedOn")
+                  : a.status === "reviewed"
+                    ? t("assignmentReviewedOn")
+                    : "";
+
+              return (
+                <motion.div
+                  key={a.id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: idx * 0.05 }}
+                  className="bg-white border border-slate-200 rounded-3xl p-5 flex items-start gap-4 hover:shadow-lg transition-all group"
                 >
-                  {a.status === "reviewed" ? <CheckCircle2 size={24} /> : <BookOpen size={24} />}
-                </div>
+                  <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center shrink-0", statusTone)}>
+                    {a.status === "reviewed" ? (
+                      <CheckCircle2 size={24} />
+                    ) : a.status === "submitted" ? (
+                      <Clock3 size={24} />
+                    ) : (
+                      <BookOpen size={24} />
+                    )}
+                  </div>
 
-                <div className="flex-1 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <h4 className="font-bold text-slate-900">{a.title}</h4>
-                    <div
-                      className={cn(
-                        "text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border",
-                        a.status === "pending"
-                          ? "bg-amber-50 text-amber-600 border-amber-100"
-                          : a.status === "submitted"
-                            ? "bg-indigo-50 text-indigo-600 border-indigo-100"
-                            : "bg-emerald-50 text-emerald-600 border-emerald-100",
+                  <div className="flex-1 space-y-2">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                      <h4 className="font-bold text-slate-900">{a.title}</h4>
+                      <div className={cn("text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border w-fit", badgeTone)}>
+                        {statusLabel}
+                      </div>
+                    </div>
+
+                    <p className="text-xs text-slate-600 line-clamp-2">{a.description || t("assignmentNoInstructions")}</p>
+
+                    <div className="flex items-center gap-4 pt-2 flex-wrap">
+                      <div className="flex items-center gap-1.5 text-[9px] font-bold text-slate-600 uppercase tracking-widest">
+                        <Calendar size={12} />{" "}
+                        {a.dueDate ? t("assignmentDuePrefix").replace("{date}", a.dueDate) : t("assignmentNoDue")}
+                      </div>
+                      {lifecycleDate ? (
+                        <div className="flex items-center gap-1.5 text-[9px] font-bold text-slate-500 uppercase tracking-widest">
+                          <History size={12} />{" "}
+                          {lifecycleLabel.replace("{date}", formatAssignmentDate(lifecycleDate, locale))}
+                        </div>
+                      ) : null}
+                      {a.status === "pending" && mode === "student" && (
+                        <button
+                          type="button"
+                          onClick={() => handleUpdateStatus(a.id, "submitted")}
+                          className="ml-auto text-[10px] font-bold text-brand-primary hover:underline flex items-center gap-1"
+                        >
+                          {t("assignmentSubmitForReview")} <ChevronRight size={10} />
+                        </button>
                       )}
-                    >
-                      {a.status === "pending"
-                        ? t("assignmentStatusTodo")
-                        : a.status === "submitted"
-                          ? t("assignmentStatusSubmitted")
-                          : t("completed")}
+                      {a.status === "submitted" && mode === "teacher" && (
+                        <button
+                          type="button"
+                          onClick={() => handleUpdateStatus(a.id, "reviewed")}
+                          className="ml-auto text-[10px] font-bold text-indigo-500 hover:underline flex items-center gap-1"
+                        >
+                          {t("validateHomework")} <ChevronRight size={10} />
+                        </button>
+                      )}
                     </div>
+                    {mode === "teacher" ? (
+                      <p className="text-[9px] font-bold text-slate-600 uppercase tracking-widest pt-1">{t("teacherNotes")}</p>
+                    ) : null}
                   </div>
-
-                  <p className="text-xs text-slate-600 line-clamp-2">{a.description || t("assignmentNoInstructions")}</p>
-
-                  <div className="flex items-center gap-4 pt-2 flex-wrap">
-                    <div className="flex items-center gap-1.5 text-[9px] font-bold text-slate-600 uppercase tracking-widest">
-                      <Calendar size={12} />{" "}
-                      {a.dueDate ? t("assignmentDuePrefix").replace("{date}", a.dueDate) : t("assignmentNoDue")}
-                    </div>
-                    {a.status === "pending" && mode === "student" && (
-                      <button
-                        type="button"
-                        onClick={() => handleUpdateStatus(a.id, "submitted")}
-                        className="ml-auto text-[10px] font-bold text-brand-primary hover:underline flex items-center gap-1"
-                      >
-                        {t("markComplete")} <ChevronRight size={10} />
-                      </button>
-                    )}
-                    {a.status === "submitted" && mode === "teacher" && (
-                      <button
-                        type="button"
-                        onClick={() => handleUpdateStatus(a.id, "reviewed")}
-                        className="ml-auto text-[10px] font-bold text-indigo-500 hover:underline flex items-center gap-1"
-                      >
-                        {t("validateHomework")} <ChevronRight size={10} />
-                      </button>
-                    )}
-                  </div>
-                  {mode === "teacher" ? (
-                    <p className="text-[9px] font-bold text-slate-600 uppercase tracking-widest pt-1">{t("teacherNotes")}</p>
-                  ) : null}
-                </div>
-              </motion.div>
-            ))
+                </motion.div>
+              );
+            })
           ) : (
             <div className="text-center py-12 border-2 border-dashed border-slate-100 rounded-3xl space-y-3">
               <FileText size={48} className="mx-auto text-slate-100 mb-4" />
-              <p className="text-slate-600 font-medium">{t("noHomework")}</p>
-              {mode === "teacher" ? (
+              <p className="text-slate-600 font-medium">{emptyMessage}</p>
+              {mode === "teacher" && hubTab === "homework" ? (
                 <button
                   type="button"
                   onClick={() => setHubTab("assign")}

@@ -11,6 +11,13 @@ import { useAuth } from "@/components/AuthProvider";
 import { CreditsWidget, type CreditsTeacherOption } from "@/components/CreditsWidget";
 import { cn } from "@/lib/utils";
 
+type HomeworkItem = {
+  id: string;
+  title: string;
+  dueDate: string | null;
+  status: "pending" | "submitted" | "reviewed";
+};
+
 export default function StudentProgressPage() {
   const { t, locale } = useLocale();
   const { user } = useAuth();
@@ -19,7 +26,8 @@ export default function StudentProgressPage() {
   const [companionChosen, setCompanionChosen] = useState<boolean>(false);
   const [lessonCount, setLessonCount] = useState<number>(0);
   const [creditTeachers, setCreditTeachers] = useState<CreditsTeacherOption[]>([]);
-  const [homework, setHomework] = useState<{ id: string; title: string; dueDate: string | null; completed: boolean }[]>([]);
+  const [homework, setHomework] = useState<HomeworkItem[]>([]);
+  const [completedHomeworkCount, setCompletedHomeworkCount] = useState(0);
   const [watchPoints, setWatchPoints] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -50,16 +58,22 @@ export default function StudentProgressPage() {
       setLessonCount(typeof confirmedCount === "number" ? confirmedCount : 0);
 
       const hwRows = (asg || []) as unknown as { id: string; title: string; due_date: string | null; status: string | null }[];
-      const mapped = hwRows.map((r) => ({
+      const mapped = hwRows.map((r): HomeworkItem => ({
         id: r.id,
         title: r.title,
         dueDate: r.due_date || null,
-        completed: String(r.status || "").toLowerCase() === "reviewed",
+        status: r.status === "submitted" || r.status === "reviewed" ? r.status : "pending",
       }));
-      mapped.sort((a, b) => Number(a.completed) - Number(b.completed));
-      setHomework(mapped);
+      const active = mapped.filter((item) => item.status !== "reviewed");
+      active.sort((a, b) => {
+        const statusDelta = (a.status === "submitted" ? 1 : 0) - (b.status === "submitted" ? 1 : 0);
+        if (statusDelta !== 0) return statusDelta;
+        return String(a.dueDate || "9999-12-31").localeCompare(String(b.dueDate || "9999-12-31"));
+      });
+      setHomework(active);
+      setCompletedHomeworkCount(mapped.length - active.length);
 
-      const progRows = ((progRes as any)?.data || []) as { watch_points?: unknown; achievements?: unknown }[];
+      const progRows = (progRes.data || []) as { watch_points?: unknown; achievements?: unknown }[];
       const points: string[] = [];
       for (const r of progRows) {
         const wp = r.watch_points;
@@ -182,7 +196,14 @@ export default function StudentProgressPage() {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-600">{t("homeworkTitle")}</h2>
+        <div className="flex flex-wrap items-end justify-between gap-2">
+          <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-600">{t("progressHomeworkActiveTitle")}</h2>
+          {completedHomeworkCount > 0 ? (
+            <p className="text-[11px] font-semibold text-slate-500">
+              {t("progressHomeworkCompletedCount").replace("{count}", String(completedHomeworkCount))}
+            </p>
+          ) : null}
+        </div>
         {loading ? (
           <div className="rounded-2xl border border-slate-200/80 bg-white p-6 text-sm text-slate-600">…</div>
         ) : homework.length === 0 ? (
@@ -196,14 +217,16 @@ export default function StudentProgressPage() {
                 key={h.id}
                 item={h}
                 onToggle={async (next) => {
-                  setHomework((prev) => prev.map((x) => (x.id === h.id ? { ...x, completed: next } : x)));
+                  const previousStatus = h.status;
+                  const nextStatus = next ? "submitted" : "pending";
+                  setHomework((prev) => prev.map((x) => (x.id === h.id ? { ...x, status: nextStatus } : x)));
                   const res = await fetch("/api/homework", {
                     method: "PATCH",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ id: h.id, completed: next }),
                   });
                   if (!res.ok) {
-                    setHomework((prev) => prev.map((x) => (x.id === h.id ? { ...x, completed: !next } : x)));
+                    setHomework((prev) => prev.map((x) => (x.id === h.id ? { ...x, status: previousStatus } : x)));
                   }
                 }}
               />
@@ -235,39 +258,42 @@ function HomeworkRow({
   item,
   onToggle,
 }: {
-  item: { id: string; title: string; dueDate: string | null; completed: boolean };
+  item: HomeworkItem;
   onToggle: (next: boolean) => void;
 }) {
+  const { t } = useLocale();
   const dueSoon = Boolean(item.dueDate);
+  const submitted = item.status === "submitted";
+  const secondary = [submitted ? t("assignmentStatusSubmitted") : null, item.dueDate].filter(Boolean).join(" - ");
   return (
     <li className="rounded-2xl border border-slate-200/80 bg-white px-4 py-3 shadow-sm">
-      <button type="button" onClick={() => onToggle(!item.completed)} className="flex w-full items-center gap-3 text-left">
+      <button type="button" onClick={() => onToggle(!submitted)} className="flex w-full items-center gap-3 text-left">
         <span
           className={
-            item.completed
+            submitted
               ? "flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-[#1D9E75] text-white"
               : "h-6 w-6 shrink-0 rounded-lg border border-slate-200 bg-white"
           }
           aria-hidden
         >
-          {item.completed ? <Check size={16} /> : null}
+          {submitted ? <Check size={16} /> : null}
         </span>
         <span className="min-w-0 flex-1">
           <span
             className={
-              item.completed ? "block text-sm text-slate-600 line-through" : "block text-sm font-medium text-slate-900"
+              submitted ? "block text-sm font-medium text-slate-700" : "block text-sm font-medium text-slate-900"
             }
           >
             {item.title}
           </span>
-          {item.dueDate ? (
+          {secondary ? (
             <span
               className={cn(
                 "mt-0.5 block text-xs font-medium",
-                dueSoon ? "font-semibold text-amber-700" : "text-slate-600",
+                submitted ? "text-[#0F6E56]" : dueSoon ? "font-semibold text-amber-700" : "text-slate-600",
               )}
             >
-              {item.dueDate}
+              {secondary}
             </span>
           ) : null}
         </span>

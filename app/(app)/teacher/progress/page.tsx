@@ -7,7 +7,7 @@ import { getSupabaseClient } from "../../../../lib/supabase";
 import { useLocale } from "../../../../lib/locale-context";
 import type { TranslationKey } from "../../../../lib/translations";
 import type { CompanionType } from "../../../../lib/companions";
-import { COMPANIONS, getCompanionStage, getLessonsToNextStage, getProgressPercent } from "../../../../lib/companions";
+import { getCompanionStage, getLessonsToNextStage, getProgressPercent } from "../../../../lib/companions";
 
 type BookingRow = {
   id: string;
@@ -27,11 +27,25 @@ type StudentAgg = {
   lessonCount: number;
 };
 
+type HomeworkStatus = "pending" | "submitted" | "reviewed";
+type HomeworkSummary = { id: string; title: string; status: HomeworkStatus };
+type StudentProfileRow = { name?: string | null; companion_type?: string | null; companion_chosen?: boolean | null };
+
 function badgeFromLevel(lvl: string | null | undefined, t: (key: TranslationKey) => string): string {
   const s = (lvl || "").toLowerCase();
   if (s.includes("avanc") || s.includes("advanced")) return t("levelAdvanced");
   if (s.includes("inter") || s.includes("mid")) return t("levelIntermediate");
   return t("levelBeginner");
+}
+
+function normalizeHomeworkStatus(status: string | null | undefined): HomeworkStatus {
+  return status === "submitted" || status === "reviewed" ? status : "pending";
+}
+
+function homeworkStatusLabel(status: HomeworkStatus, t: (key: TranslationKey) => string): string {
+  if (status === "submitted") return t("assignmentStatusSubmitted");
+  if (status === "reviewed") return t("assignmentStatusDone");
+  return t("assignmentStatusTodo");
 }
 
 export default function TeacherProgressPage() {
@@ -41,7 +55,7 @@ export default function TeacherProgressPage() {
   const [students, setStudents] = useState<StudentAgg[]>([]);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [notesByStudent, setNotesByStudent] = useState<Record<string, string>>({});
-  const [homeworkByStudent, setHomeworkByStudent] = useState<Record<string, { id: string; title: string; status: string }[]>>({});
+  const [homeworkByStudent, setHomeworkByStudent] = useState<Record<string, HomeworkSummary[]>>({});
   useEffect(() => {
     if (!user?.id) return;
     const supabase = getSupabaseClient();
@@ -83,9 +97,10 @@ export default function TeacherProgressPage() {
           .select("name, companion_type, companion_chosen")
           .eq("id", sid)
           .maybeSingle();
-        map.set(sid, { name: (prow?.name as string) || t("studentDefaultName"), level: row.student_level ?? null });
-        const ct = (prow as any)?.companion_type as string | null | undefined;
-        const chosen = Boolean((prow as any)?.companion_chosen);
+        const profileRow = prow as StudentProfileRow | null;
+        map.set(sid, { name: profileRow?.name || t("studentDefaultName"), level: row.student_level ?? null });
+        const ct = profileRow?.companion_type;
+        const chosen = Boolean(profileRow?.companion_chosen);
         const type =
           ct === "phoenix" || ct === "forest" || ct === "dragon" || ct === "star" ? (ct as CompanionType) : null;
         companionByStudent.set(sid, { type, chosen });
@@ -102,7 +117,7 @@ export default function TeacherProgressPage() {
       }));
 
       const notes: Record<string, string> = {};
-      const hw: Record<string, { id: string; title: string; status: string }[]> = {};
+      const hw: Record<string, HomeworkSummary[]> = {};
       for (const sid of map.keys()) {
         const { data: prog } = await supabase
           .from("student_progress")
@@ -119,13 +134,21 @@ export default function TeacherProgressPage() {
           .select("id, title, status")
           .eq("teacher_id", tid)
           .eq("student_id", sid)
+          .is("archived_at", null)
+          .in("status", ["pending", "submitted"])
           .order("created_at", { ascending: false })
           .limit(8);
-        hw[sid] = ((asg || []) as { id: string; title: string; status: string }[]).map((a) => ({
-          id: a.id,
-          title: a.title,
-          status: a.status,
-        }));
+        hw[sid] = ((asg || []) as { id: string; title: string; status: string | null }[])
+          .map((a) => ({
+            id: a.id,
+            title: a.title,
+            status: normalizeHomeworkStatus(a.status),
+          }))
+          .sort((a, b) => {
+            const statusDelta = (a.status === "submitted" ? 0 : 1) - (b.status === "submitted" ? 0 : 1);
+            if (statusDelta !== 0) return statusDelta;
+            return a.title.localeCompare(b.title);
+          });
       }
 
       if (!cancelled) {
@@ -235,7 +258,7 @@ export default function TeacherProgressPage() {
                           {homeworkByStudent[s.studentId].map((a) => (
                             <li key={a.id} className="text-sm flex justify-between gap-2">
                               <span className="truncate">{a.title}</span>
-                              <span className="text-xs text-slate-500 shrink-0">{a.status}</span>
+                              <span className="text-xs text-slate-500 shrink-0">{homeworkStatusLabel(a.status, t)}</span>
                             </li>
                           ))}
                         </ul>

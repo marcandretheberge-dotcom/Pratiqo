@@ -51,11 +51,14 @@ export async function PATCH(request: Request) {
   const completed = typeof body?.completed === "boolean" ? body.completed : null;
   if (!id || completed === null) return NextResponse.json({ error: "Invalid body" }, { status: 400 });
 
-  // Uses `assignments` as the homework backend (existing table). `reviewed` = completed.
-  const nextStatus = completed ? "reviewed" : "pending";
-  const { error } = await supabase.from("assignments").update({ status: nextStatus }).eq("id", id).eq("student_id", user.id);
+  // Student completion means "submitted to the teacher"; the teacher review moves it to `reviewed`.
+  const nextStatus = completed ? "submitted" : "pending";
+  const patch = completed
+    ? { status: nextStatus, submitted_at: new Date().toISOString(), reviewed_at: null, archived_at: null }
+    : { status: nextStatus, submitted_at: null, reviewed_at: null, archived_at: null };
+  const { error } = await supabase.from("assignments").update(patch).eq("id", id).eq("student_id", user.id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, status: nextStatus });
 }
 

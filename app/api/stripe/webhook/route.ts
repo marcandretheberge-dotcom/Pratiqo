@@ -15,8 +15,6 @@ import {
 
 export const runtime = "nodejs";
 
-console.log('[webhook init] using service role:', !!process.env.SUPABASE_SERVICE_ROLE_KEY, 'key prefix:', process.env.SUPABASE_SERVICE_ROLE_KEY?.slice(0, 10));
-
 async function confirmGroupSessionCheckout(
   metadata: Record<string, string> | null | undefined,
   paymentIntentId: string,

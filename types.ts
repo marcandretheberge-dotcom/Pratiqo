@@ -93,6 +93,9 @@ export interface Assignment {
   dueDate?: string;
   status: "pending" | "submitted" | "reviewed";
   createdAt: string;
+  submittedAt?: string;
+  reviewedAt?: string;
+  archivedAt?: string;
   feedback?: string;
 }
 
