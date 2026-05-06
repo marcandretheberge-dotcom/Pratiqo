@@ -17,7 +17,7 @@ const TOC = [
   { id: "fiscalite", label: "Obligations fiscales" },
   { id: "frais", label: "Frais et commissions" },
   { id: "credits", label: "Crédits élève" },
-  { id: "ristourne", label: "Ristourne Pro" },
+  { id: "ristourne", label: "Reconnaissance ponctuelle" },
   { id: "paiements", label: "Paiements et remboursements" },
   { id: "domicile", label: "Cours à domicile" },
   { id: "conduite", label: "Conduite des utilisateurs" },
@@ -92,7 +92,7 @@ export default function CguPage() {
               Conditions Générales d&apos;Utilisation
             </h1>
             <p className="mt-3 text-sm text-[var(--p-text-muted)]">
-              Version : 1.0 · Dernière mise à jour : avril 2026
+              Version 1.1 · En vigueur à compter du 1er mai 2026
             </p>
           </header>
 
@@ -140,7 +140,7 @@ export default function CguPage() {
               </h2>
               <ul className="list-disc pl-5 space-y-2 marker:text-[#1D9E75]">
                 <li>
-                  <strong className="text-[var(--p-text)]">Plateforme</strong> : le site web pratiqo.com et
+                  <strong className="text-[var(--p-text)]">Plateforme</strong> : le site web pratiqo.ca et
                   l&apos;application mobile Pratiqo
                 </li>
                 <li>
@@ -334,35 +334,51 @@ export default function CguPage() {
               </h2>
 
               <h3 className="text-base font-semibold text-[var(--p-text)] mt-5 mb-2">8.1 Pour les élèves</h3>
-              <p>
-                L&apos;accès à la plateforme Pratiqo est{" "}
-                <strong className="text-[var(--p-text)]">gratuit</strong> pour les élèves. Des frais de service
-                de <strong className="text-[var(--p-text)]">10 %</strong> du montant du cours sont ajoutés au
-                moment du paiement et clairement affichés avant la confirmation de la réservation.
+              <p>L&apos;inscription et l&apos;utilisation de la plateforme sont gratuites pour les Élèves.</p>
+              <p className="mt-3">
+                Le prix affiché sur le profil du Professeur est le prix horaire fixé par celui-ci.{" "}
+                <strong className="text-[var(--p-text)]">Aucun frais caché</strong> n&apos;est ajouté au moment
+                du paiement : l&apos;Élève paie le montant indiqué lors de la confirmation de la réservation.
+              </p>
+              <p className="mt-3">
+                Pratiqo se rémunère exclusivement par la commission prélevée sur la rémunération versée au
+                Professeur, telle que décrite ci-dessous.
               </p>
 
               <h3 className="text-base font-semibold text-[var(--p-text)] mt-5 mb-2">
                 8.2 Pour les professeurs — Plan Gratuit
               </h3>
               <ul className="list-disc pl-5 space-y-2 marker:text-[#1D9E75]">
-                <li>Accès gratuit jusqu&apos;à 5 élèves actifs simultanément</li>
+                <li>Accès gratuit à la plateforme, sans abonnement</li>
+                <li>Jusqu&apos;à cinq (5) élèves actifs simultanément</li>
                 <li>
                   Commission de <strong className="text-[var(--p-text)]">10 %</strong> prélevée sur chaque
                   transaction
                 </li>
-                <li>Fonctionnalités de base incluses</li>
+                <li>
+                  Fonctionnalités de base : profil public, calendrier, messagerie, réception des paiements, reçus
+                  automatiques, suivi des élèves
+                </li>
+                <li>
+                  Si un professeur dépasse cinq (5) élèves actifs, il peut continuer à utiliser la plateforme dans
+                  le Plan Gratuit, mais les fonctionnalités Pro demeurent réservées au Plan Pro.
+                </li>
               </ul>
 
-              <h3 className="text-base font-semibold text-[var(--p-text)] mt-5 mb-2">
-                8.3 Pour les professeurs — Plan Pro (29,99 $/mois)
-              </h3>
+              <h3 className="text-base font-semibold text-[var(--p-text)] mt-5 mb-2">8.3 Pour les professeurs — Plan Pro</h3>
               <ul className="list-disc pl-5 space-y-2 marker:text-[#1D9E75]">
+                <li>29,99 $ CAD par mois, taxes en sus, facturé mensuellement via Stripe</li>
                 <li>Élèves illimités</li>
                 <li>
                   Commission réduite à <strong className="text-[var(--p-text)]">5 %</strong> par transaction
                 </li>
-                <li>Fonctionnalités avancées (analytics, priorité dans la recherche, badge Pro)</li>
-                <li>Facturation mensuelle via Stripe</li>
+                <li>Badge Pro affiché sur le profil</li>
+                <li>Priorité d&apos;affichage dans les résultats de recherche à pertinence égale</li>
+                <li>Accès aux statistiques avancées : revenus, taux de rétention, heures travaillées</li>
+                <li>Possibilité d&apos;offrir des cours de groupe lorsque cette fonctionnalité sera lancée en Phase 2</li>
+                <li>Annulable en tout temps via le tableau de bord</li>
+                <li>Annulation effective à la fin de la période mensuelle en cours</li>
+                <li>Aucun remboursement au prorata</li>
               </ul>
 
               <h3 className="text-base font-semibold text-[var(--p-text)] mt-6 mb-3">
@@ -373,7 +389,7 @@ export default function CguPage() {
                   <thead>
                     <tr className="bg-slate-50 border-b border-slate-200">
                       <th className="px-4 py-3 font-semibold text-slate-800">Palier</th>
-                      <th className="px-4 py-3 font-semibold text-slate-800">Volume annuel</th>
+                      <th className="px-4 py-3 font-semibold text-slate-800">Volume annuel cumulé</th>
                       <th className="px-4 py-3 font-semibold text-slate-800">Plan Gratuit</th>
                       <th className="px-4 py-3 font-semibold text-slate-800">Plan Pro</th>
                     </tr>
@@ -395,20 +411,20 @@ export default function CguPage() {
                       <td className="px-4 py-3 text-slate-700">🥇 Or</td>
                       <td className="px-4 py-3 text-slate-700">15 000 – 30 000 $</td>
                       <td className="px-4 py-3 text-slate-700">8 %</td>
-                      <td className="px-4 py-3 text-slate-700">4 % + 0,5 % ristourne</td>
+                      <td className="px-4 py-3 text-slate-700">4 %</td>
                     </tr>
                     <tr className="hover:bg-[rgba(29,158,117,0.06)]">
                       <td className="px-4 py-3 text-slate-700">💎 Platine</td>
                       <td className="px-4 py-3 text-slate-700">30 000 $ +</td>
                       <td className="px-4 py-3 text-slate-700">7 %</td>
-                      <td className="px-4 py-3 text-slate-700">3,5 % + 1 % ristourne</td>
+                      <td className="px-4 py-3 text-slate-700">3,5 %</td>
                     </tr>
                   </tbody>
                 </table>
               </div>
               <p className="text-[13px] text-[var(--p-text-subtle)]">
-                Aucun cashback récurrent pour les professeurs. Le programme fidélité réduit la commission, et la
-                ristourne annuelle est la seule forme de redistribution financière.
+                Le programme de fidélité ne verse pas de cashback ni de ristourne. Il réduit uniquement la
+                commission applicable.
               </p>
 
               <h3 className="text-base font-semibold text-[var(--p-text)] mt-5 mb-2">
@@ -453,25 +469,28 @@ export default function CguPage() {
 
             <hr className="border-slate-200" />
 
-            {/* 10. Ristourne */}
+            {/* 10. Reconnaissance ponctuelle */}
             <section id="ristourne" className="scroll-mt-28">
               <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-[#1D9E75] pl-4 mb-4">
-                10. Ristourne annuelle aux professeurs Pro
+                10. Reconnaissance ponctuelle des Professeurs
               </h2>
               <p>
-                Pratiqo redistribue annuellement à ses professeurs Pro éligibles{" "}
-                <strong className="text-[var(--p-text)]">5 % de ses profits nets</strong> (après toutes les
-                dépenses d&apos;opération, marketing, salaires et infrastructure).
+                Pratiqo peut, à sa seule discrétion, reconnaître ponctuellement certains Professeurs particulièrement
+                actifs, engagés ou appréciés sur la plateforme.
               </p>
-              <p className="mt-3 font-medium text-[var(--p-text)]">Conditions d&apos;éligibilité :</p>
-              <ul className="list-disc pl-5 space-y-2 mt-2 marker:text-[#1D9E75]">
-                <li>Être abonné au plan Pro durant l&apos;année concernée</li>
-                <li>Avoir maintenu un statut actif minimum de 6 mois</li>
-                <li>Ne pas avoir de pénalités ou avertissements</li>
-              </ul>
-              <p className="mt-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-[13px] text-slate-700">
-                Le pool annuel est calculé comme suit : MIN(profits nets × 5 %, 150 000 $ CAD). La ristourne
-                n&apos;est activée que si au moins 10 professeurs remplissent toutes les conditions.
+              <p className="mt-3">
+                Cette reconnaissance peut prendre différentes formes, notamment une mise en avant promotionnelle,
+                une visibilité accrue dans certaines campagnes, une invitation à participer à des événements, ou tout
+                autre avantage non monétaire déterminé par Pratiqo.
+              </p>
+              <p className="mt-3">
+                Ces reconnaissances sont discrétionnaires, non automatiques et ne constituent pas un droit acquis,
+                une ristourne, un cashback, un partage de bénéfices, une participation au capital, ni une obligation
+                contractuelle de Pratiqo.
+              </p>
+              <p className="mt-3">
+                Pratiqo se réserve le droit de modifier, suspendre ou mettre fin à tout programme de reconnaissance
+                ponctuelle, en tout temps, sans préavis, sous réserve des lois applicables.
               </p>
             </section>
 
@@ -570,8 +589,9 @@ export default function CguPage() {
                 cours, des pertes de données ou des dommages indirects.
               </p>
               <p className="mt-3">
-                La responsabilité de Pratiqo est limitée au montant des frais de service perçus au cours des 3
-                derniers mois.
+                La responsabilité totale cumulée de Pratiqo envers tout Utilisateur est limitée au montant des frais
+                et commissions effectivement perçus par Pratiqo de cet Utilisateur au cours des trois (3) mois
+                précédant le fait générateur du litige.
               </p>
             </section>
 
@@ -606,7 +626,7 @@ export default function CguPage() {
                 <strong className="text-[var(--p-text)]">province de Québec</strong> et les lois fédérales du{" "}
                 <strong className="text-[var(--p-text)]">Canada</strong>. Tout litige sera soumis à la
                 compétence exclusive des tribunaux du district judiciaire de{" "}
-                <strong className="text-[var(--p-text)]">Montréal, Québec</strong>.
+                <strong className="text-[var(--p-text)]">Beauce, Québec</strong>.
               </p>
             </section>
 
@@ -632,7 +652,7 @@ export default function CguPage() {
                 19. Contact
               </h2>
               <p>
-                <strong className="text-[var(--p-text)]">Pratiqo inc.</strong> — Montréal, Québec, Canada
+                <strong className="text-[var(--p-text)]">Pratiqo inc.</strong> — Saint-Georges, Québec, Canada
               </p>
               <p className="mt-2">
                 Courriel :{" "}
@@ -643,7 +663,7 @@ export default function CguPage() {
               <p className="mt-1">
                 Site web :{" "}
                 <Link href="/" className="text-[#1D9E75] underline font-medium">
-                  pratiqo.com
+                  pratiqo.ca
                 </Link>
               </p>
               <p className="mt-4 text-[12px] text-[var(--p-text-subtle)] italic">

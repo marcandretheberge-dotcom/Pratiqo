@@ -41,7 +41,7 @@ export default function DashboardPage() {
           .eq("user_id", profile?.id)
           .maybeSingle();
         if (cancelled) return;
-        const missing = getTeacherOnboardingMissingFields((teacher as any) ?? null);
+        const missing = getTeacherOnboardingMissingFields(teacher ?? null);
         setTeacherOk(missing.length === 0);
       } catch {
         if (!cancelled) setTeacherOk(false);

@@ -86,7 +86,10 @@ export function HeroTeacherPreviewCards({
               type="button"
               onClick={() => onOpen(teacher)}
               className={cn(
-                "absolute left-0 right-0 px-1 text-left transition-transform duration-200 hover:z-40 hover:-translate-y-1",
+                "group absolute left-0 right-0 px-1 text-left transition-all duration-200 ease-out hover:z-40",
+                "cursor-pointer hover:-translate-y-1 hover:scale-[1.015] active:scale-[0.99]",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1D9E75]/40",
+                "hover:[&_article]:border-[#1D9E75]/30 hover:[&_article]:shadow-xl",
                 rotations[idx % 3],
               )}
               style={{
@@ -94,7 +97,7 @@ export function HeroTeacherPreviewCards({
                 zIndex: 11 + idx,
               }}
             >
-              <article className="rounded-3xl border border-[#E8E6DF] bg-white p-4 shadow-[0_14px_48px_rgba(44,44,42,0.1)] ring-1 ring-black/[0.02]">
+              <article className="rounded-3xl border border-[#E8E6DF] bg-white p-4 shadow-[0_14px_48px_rgba(44,44,42,0.1)] ring-1 ring-black/[0.02] transition-all duration-200">
                 {isExampleFallback ? (
                   <p className="mb-2 text-[10px] font-bold uppercase tracking-wide text-[#6B6760]">
                     {t("heroTeacherPreviewSampleLabel")}

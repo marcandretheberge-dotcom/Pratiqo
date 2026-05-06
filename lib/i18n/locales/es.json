@@ -1197,6 +1197,7 @@
   "teacherOnboardingStepProfile": "Perfil de enseñanza",
   "teacherOnboardingStepLocation": "Ubicación y formato",
   "teacherOnboardingStepPricing": "Precio y disponibilidad",
+  "teacherOnboardingStepLegal": "Estado y condiciones",
   "teacherOnboardingName": "Nombre visible",
   "teacherOnboardingCategory": "Categoría",
   "teacherOnboardingDiscipline": "Disciplina",
@@ -1218,5 +1219,11 @@
   "teacherOnboardingGoogleUnavailable": "La búsqueda de direcciones no está disponible. Podés continuar ingresando tu ciudad/región manualmente.",
   "teacherOnboardingManualLocation": "Dirección (opcional) y zona pública",
   "teacherOnboardingPrivacyNote": "Tu dirección exacta queda privada. Las y los estudiantes solo ven una posición aproximada hasta que una reserva confirmada requiera compartir la dirección.",
+  "teacherOnboardingLegalTitle": "Estado de trabajador independiente",
+  "teacherOnboardingLegalSubtitle": "Antes de publicar tu perfil, confirmá tu estado y las condiciones esenciales de la plataforma.",
+  "teacherOnboardingLegalSelfEmployed": "Confirmo que soy trabajador independiente y no empleado de Pratiqo. Pratiqo actúa como intermediario tecnológico entre profesores y estudiantes.",
+  "teacherOnboardingLegalNoExclusivity": "Entiendo que sigo siendo libre de enseñar en otros lugares y que Pratiqo no exige exclusividad.",
+  "teacherOnboardingLegalNoIncomeGuarantee": "Entiendo que Pratiqo no garantiza ningún ingreso y que mis ganancias dependen de mi actividad, mi perfil y la demanda en mi zona.",
+  "teacherOnboardingLegalRequired": "Confirmá las tres declaraciones para publicar tu perfil.",
   "youAreHere": "Estás aquí"
 }

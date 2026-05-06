@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import type { Teacher } from "../../../types";
 import { getSupabaseClient } from "../../../lib/supabase";
 import { teacherRowToTeacher, type TeacherRow } from "../../../lib/teacherMapper";
+import { TEACHERS_PUBLIC_TABLE } from "../../../lib/supabase/queries";
 import { TEACHERS } from "../../../constants";
 import { BookingModal } from "../../../components/BookingModal";
 import { cn } from "../../../lib/utils";
@@ -20,7 +21,7 @@ export default function BookingPage() {
     const supabase = getSupabaseClient();
 
     const load = async () => {
-      const { data, error } = await supabase.from("teachers").select("*").order("id");
+      const { data, error } = await supabase.from(TEACHERS_PUBLIC_TABLE).select("*").order("id");
       if (error || !data?.length) {
         setTeachers(TEACHERS);
         return;

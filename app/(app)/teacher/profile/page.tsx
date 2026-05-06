@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { Teacher } from "../../../../types";
 import { getSupabaseClient } from "../../../../lib/supabase";
 import { teacherRowToTeacher, type TeacherRow } from "../../../../lib/teacherMapper";
+import { TEACHERS_PUBLIC_TABLE } from "../../../../lib/supabase/queries";
 import { TEACHERS } from "../../../../constants";
 
 export default function TeacherProfileIndexPage() {
@@ -14,7 +15,7 @@ export default function TeacherProfileIndexPage() {
     const supabase = getSupabaseClient();
 
     const load = async () => {
-      const { data, error } = await supabase.from("teachers").select("*").order("id");
+      const { data, error } = await supabase.from(TEACHERS_PUBLIC_TABLE).select("*").order("id");
       if (error || !data?.length) {
         setTeachers(TEACHERS);
         return;

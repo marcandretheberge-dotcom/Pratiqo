@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Star, ArrowRight } from "lucide-react";
 import { getSupabaseClient } from "@/lib/supabase";
+import { TEACHERS_PUBLIC_TABLE } from "@/lib/supabase/queries";
 import { useLocale } from "@/lib/locale-context";
 import { VerificationBadge } from "@/components/VerificationBadge";
 import type { VerificationLevel } from "@/lib/verification";
@@ -32,7 +33,7 @@ export function RelatedTeachersWidget({ category }: { category: string }) {
 
       // First try: match by category
       const { data: exact } = await supabase
-        .from("teachers")
+        .from(TEACHERS_PUBLIC_TABLE)
         .select("id, name, discipline, image_url, rating, reviews, price_per_lesson, location, verification_level")
         .ilike("category", `%${category}%`)
         .order("rating", { ascending: false })
@@ -46,7 +47,7 @@ export function RelatedTeachersWidget({ category }: { category: string }) {
 
       // Fallback: top verified teachers regardless of category
       const { data: fallback } = await supabase
-        .from("teachers")
+        .from(TEACHERS_PUBLIC_TABLE)
         .select("id, name, discipline, image_url, rating, reviews, price_per_lesson, location, verification_level")
         .order("verification_level", { ascending: false })
         .order("rating", { ascending: false })

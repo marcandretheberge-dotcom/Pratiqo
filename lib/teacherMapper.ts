@@ -46,8 +46,8 @@ export type TeacherRow = {
 };
 
 export function teacherRowToTeacher(row: TeacherRow): Teacher {
-  const loc = (row.location || {}) as any;
-  const publicLoc = (loc && typeof loc === "object" ? (loc.public as any) : null) ?? null;
+  const loc = typeof row.location === "object" && row.location !== null ? (row.location as Record<string, unknown>) : {};
+  const publicLoc = typeof loc.public === "object" && loc.public !== null ? (loc.public as Record<string, unknown>) : null;
   const latCandidate =
     (publicLoc && typeof publicLoc.lat === "number" ? publicLoc.lat : undefined) ??
     (typeof loc.lat === "number" ? loc.lat : undefined) ??

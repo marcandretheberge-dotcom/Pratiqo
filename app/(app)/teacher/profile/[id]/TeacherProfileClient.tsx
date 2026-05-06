@@ -8,6 +8,7 @@ import {
   mergeTeachersWithDisciplines,
 } from "../../../../../lib/teacherDisciplines";
 import { teacherRowToTeacher, type TeacherRow } from "../../../../../lib/teacherMapper";
+import { TEACHERS_PUBLIC_TABLE } from "../../../../../lib/supabase/queries";
 import { TeacherProfile } from "../../../../../components/TeacherProfile";
 import { BookingModal, type BookingInitialLessonKind } from "../../../../../components/BookingModal";
 import { useRouter } from "next/navigation";
@@ -65,7 +66,7 @@ export default function TeacherProfileClient({ id }: { id: string }) {
     const supabase = getSupabaseClient();
 
     const load = async () => {
-      const { data, error } = await supabase.from("teachers").select("*").eq("id", id).maybeSingle();
+      const { data, error } = await supabase.from(TEACHERS_PUBLIC_TABLE).select("*").eq("id", id).maybeSingle();
       if (error || !data) {
         setTeacher(null);
         return;

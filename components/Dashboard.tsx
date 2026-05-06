@@ -26,6 +26,11 @@ import {
   isLateCancellation,
 } from "@/lib/bookingCancellation";
 import { postCancelBooking } from "@/lib/bookingCancellationClient";
+import {
+  bookingLifecycleRank,
+  getBookingLifecycleState,
+  isBookingVisibleForTeacher,
+} from "@/lib/bookingLifecycle";
 
 interface BookingWithTeacher {
   id: string;
@@ -39,6 +44,25 @@ interface BookingWithTeacher {
   slotDate?: string | null;
   timeSlot?: string | null;
 }
+
+type TeacherBookingRow = {
+  id: string;
+  status: string;
+  student_id: string;
+  studentName?: string;
+  studentPhotoUrl?: string | null;
+  slot_date?: string | null;
+  date?: string | null;
+  time_slot?: string | null;
+  time?: string | null;
+  price?: number | string | null;
+  created_at?: string | null;
+  duration_minutes?: number | string | null;
+  teaching_mode?: string | null;
+  student_address?: string | null;
+  completion_outcome?: string | null;
+  completed_at?: string | null;
+};
 
 const TEACHER_MSG_PEER_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -66,7 +90,7 @@ export function Dashboard() {
 
   const [profile, setProfile] = useState<StudentProfile | null>(null);
   const [bookings, setBookings] = useState<BookingWithTeacher[]>([]);
-  const [teacherBookings, setTeacherBookings] = useState<any[]>([]);
+  const [teacherBookings, setTeacherBookings] = useState<TeacherBookingRow[]>([]);
   const [teacherMeta, setTeacherMeta] = useState<{
     discipline: string;
     hourlyRate: number;
@@ -109,11 +133,19 @@ export function Dashboard() {
     const activeStatuses = ["confirmed"];
     const confirmedUpcoming = teacherBookings
       .filter((b) => activeStatuses.includes(b.status))
+      .filter((b) => isBookingVisibleForTeacher(b))
       .filter((b) => {
+        const state = getBookingLifecycleState(b);
+        if (state === "needs_review" || state === "ready") return true;
         const d = String(b.slot_date || b.date || "");
         return d >= today;
       })
-      .sort((a, b) => bookingSortKey(a).localeCompare(bookingSortKey(b)));
+      .sort((a, b) => {
+        const ar = bookingLifecycleRank(getBookingLifecycleState(a));
+        const br = bookingLifecycleRank(getBookingLifecycleState(b));
+        if (ar !== br) return ar - br;
+        return bookingSortKey(a).localeCompare(bookingSortKey(b));
+      });
     const todayList = teacherBookings
       .filter((b) => activeStatuses.includes(b.status) || b.status === "pending_payment")
       .filter((b) => String(b.slot_date || b.date || "") === today)
@@ -136,7 +168,10 @@ export function Dashboard() {
     const distinctStudents = new Set(
       teacherBookings.filter((b) => activeStatuses.includes(b.status)).map((b) => String(b.student_id)),
     ).size;
-    const coursesTodayCount = todayList.filter((b) => activeStatuses.includes(b.status)).length;
+    const coursesTodayCount = todayList.filter((b) => {
+      if (!activeStatuses.includes(b.status)) return false;
+      return getBookingLifecycleState(b) !== "completed";
+    }).length;
     return {
       confirmedUpcoming,
       todayList,
@@ -262,6 +297,34 @@ export function Dashboard() {
         return next;
       });
     }
+  };
+
+  const markTeacherBookingCompleted = async (
+    id: string,
+    outcome: "held" | "absent" | "technical_issue",
+  ) => {
+    const supabase = getSupabaseClient();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    const token = session?.access_token;
+    if (!token) throw new Error(t("bookingSessionExpired"));
+    const res = await fetch(`/api/bookings/${encodeURIComponent(id)}/complete`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ outcome }),
+    });
+    const payload = (await res.json().catch(() => ({}))) as { error?: string; completed_at?: string };
+    if (!res.ok) throw new Error(payload.error || t("anErrorOccurred"));
+    const completedAt = payload.completed_at || new Date().toISOString();
+    setTeacherBookings((prev) =>
+      prev.map((b) =>
+        String(b.id) === id
+          ? { ...b, status: "completed", completion_outcome: outcome, completed_at: completedAt }
+          : b,
+      ),
+    );
+    showFlash("ok", "Bravo ! Un email a été envoyé à l'élève pour recueillir son avis.");
   };
 
   useEffect(() => {
@@ -393,13 +456,15 @@ export function Dashboard() {
         .eq("teacher_id", teacherSlug)
         .order("created_at", { ascending: false });
       if (cancelled || error) return;
-      const list: any[] = [];
+      const list: TeacherBookingRow[] = [];
       for (const row of rows || []) {
         const sid = row.student_id as string;
         const { data: prow } = await supabase.from("profiles").select("name, photo_url").eq("id", sid).maybeSingle();
         list.push({
-          id: row.id,
-          ...row,
+          ...(row as Omit<TeacherBookingRow, "studentName" | "studentPhotoUrl">),
+          id: String(row.id),
+          status: String(row.status || ""),
+          student_id: sid,
           studentName: (prow?.name as string) || "?",
           studentPhotoUrl: (prow?.photo_url as string) || null,
         });
@@ -566,10 +631,20 @@ export function Dashboard() {
                   date: b.date as string | null | undefined,
                   time_slot: b.time_slot as string | null | undefined,
                   time: b.time as string | null | undefined,
+                  status: b.status as string | null | undefined,
+                  teachingMode: b.teaching_mode as string | null | undefined,
+                  durationMinutes:
+                    typeof b.duration_minutes === "number"
+                      ? b.duration_minutes
+                      : b.duration_minutes != null
+                        ? Number(b.duration_minutes)
+                        : null,
+                  studentAddress: b.student_address as string | null | undefined,
                 }))}
                 emptyHint={t("dashboardNoLessonsWeek")}
                 onRequestCancelClass={(bookingId) => setCancelBooking({ id: bookingId, side: "teacher" })}
                 onOpenReschedule={(bookingId) => setRescheduleModalBookingId(bookingId)}
+                onMarkCompleted={markTeacherBookingCompleted}
                 cancelBusy={cancelBusy}
               />
               {confirmedUpcoming.length > 0 ? (

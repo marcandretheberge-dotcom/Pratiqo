@@ -1197,6 +1197,7 @@
   "teacherOnboardingStepProfile": "Teaching profile",
   "teacherOnboardingStepLocation": "Location and format",
   "teacherOnboardingStepPricing": "Pricing and availability",
+  "teacherOnboardingStepLegal": "Status and terms",
   "teacherOnboardingName": "Display name",
   "teacherOnboardingCategory": "Category",
   "teacherOnboardingDiscipline": "Discipline",
@@ -1218,5 +1219,11 @@
   "teacherOnboardingGoogleUnavailable": "Address search is unavailable. You can continue by entering your city/region manually.",
   "teacherOnboardingManualLocation": "Address (optional) and public area",
   "teacherOnboardingPrivacyNote": "Your exact address stays private. Students only see an approximate position until a confirmed booking requires sharing the address.",
+  "teacherOnboardingLegalTitle": "Independent contractor status",
+  "teacherOnboardingLegalSubtitle": "Before publishing your profile, confirm your status and the platform’s essential terms.",
+  "teacherOnboardingLegalSelfEmployed": "I confirm that I am an independent contractor, not a Pratiqo employee. Pratiqo acts as a technology intermediary between teachers and students.",
+  "teacherOnboardingLegalNoExclusivity": "I understand that I remain free to teach elsewhere and that Pratiqo requires no exclusivity.",
+  "teacherOnboardingLegalNoIncomeGuarantee": "I understand that Pratiqo does not guarantee any income and that my earnings depend on my activity, profile, and local demand.",
+  "teacherOnboardingLegalRequired": "Confirm all three statements to publish your profile.",
   "youAreHere": "You are here"
 }

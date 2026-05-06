@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { bookingEndAt } from "@/lib/bookingLifecycle";
 
 export const runtime = "nodejs";
 
@@ -40,13 +41,13 @@ export async function GET(request: Request) {
     const now = new Date();
     const windowStart = new Date(now.getTime() - REVIEW_WINDOW_DAYS * 24 * 60 * 60 * 1000);
 
-    // Fetch confirmed bookings with a slot_date within the review window.
+    // Fetch finished/confirmed bookings with a slot_date within the review window.
     // Use date-only strings for the slot_date column (stored as DATE in Postgres).
     const { data: bookings } = await admin
       .from("bookings")
-      .select("id, teacher_id, slot_date, duration_minutes")
+      .select("id, teacher_id, status, slot_date, time_slot, date, time, duration_minutes")
       .eq("student_id", user.id)
-      .eq("status", "confirmed")
+      .in("status", ["confirmed", "completed"])
       .not("slot_date", "is", null)
       .gte("slot_date", windowStart.toISOString().split("T")[0])
       .lte("slot_date", now.toISOString().split("T")[0]);
@@ -55,9 +56,8 @@ export async function GET(request: Request) {
 
     // Keep only lessons that have actually finished.
     const finished = bookings.filter((b) => {
-      const lessonStart = new Date(b.slot_date as string);
-      const durationMin = Number(b.duration_minutes ?? 60);
-      const lessonEnd = new Date(lessonStart.getTime() + durationMin * 60 * 1000);
+      const lessonEnd = bookingEndAt(b);
+      if (!lessonEnd) return false;
       return lessonEnd < now;
     });
 

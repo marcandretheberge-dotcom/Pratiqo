@@ -104,7 +104,10 @@ export function LandingTeacherListingCard({
     <button
       {...commonButtonProps}
       className={cn(
-        "group block w-full rounded-3xl border border-[#E8E6DF] bg-white text-left shadow-[0_10px_40px_rgba(44,44,42,0.06)] ring-1 ring-black/[0.02] transition-all duration-200 motion-safe:hover:-translate-y-1 motion-safe:hover:shadow-[0_18px_50px_rgba(44,44,42,0.11)]",
+        "group block w-full rounded-3xl border border-[#E8E6DF] bg-white text-left shadow-[0_10px_40px_rgba(44,44,42,0.06)] ring-1 ring-black/[0.02]",
+        "cursor-pointer transition-all duration-200 ease-out",
+        "hover:-translate-y-1 hover:scale-[1.015] hover:border-[#1D9E75]/30 hover:shadow-xl",
+        "active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1D9E75]/40",
         isHighlighted
           ? "border-[#0F6E56] shadow-[0_14px_48px_rgba(15,110,86,0.15)] ring-[#0F6E56]/15"
           : "",

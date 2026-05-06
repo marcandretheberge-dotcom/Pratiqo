@@ -80,12 +80,18 @@ export const notificationService = {
   async markAsRead(notificationId: string) {
     const supabase = getSupabaseClient();
     const { error } = await supabase.from("notifications").update({ read: true }).eq("id", notificationId);
-    if (error) console.error("Error marking notification as read:", error);
+    if (error) {
+      console.error("Error marking notification as read:", error);
+      throw error;
+    }
   },
 
   async deleteNotification(notificationId: string) {
     const supabase = getSupabaseClient();
     const { error } = await supabase.from("notifications").delete().eq("id", notificationId);
-    if (error) console.error("Error deleting notification:", error);
+    if (error) {
+      console.error("Error deleting notification:", error);
+      throw error;
+    }
   },
 };

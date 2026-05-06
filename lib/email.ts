@@ -454,6 +454,31 @@ export async function sendBookingConfirmedTeacher(opts: {
   });
 }
 
+export async function sendPostClassReviewRequest(opts: {
+  email: string;
+  studentName: string;
+  teacherName: string;
+  bookingId: string;
+}) {
+  const base = appBaseUrl();
+  await send({
+    to: opts.email,
+    subject: `Comment s'est passé votre cours avec ${opts.teacherName} ?`,
+    html: buildEmail({
+      heroEmoji: "⭐",
+      heroTitle: "Votre avis compte",
+      heroSubtitle: `Cours avec ${opts.teacherName}`,
+      bodyHtml: `
+        <p>Bonjour ${escapeHtml(opts.studentName)},</p>
+        <p>Votre cours avec <strong>${escapeHtml(opts.teacherName)}</strong> vient d'être marqué comme terminé.</p>
+        <p>Votre avis aide les autres élèves à choisir un professeur en confiance et aide aussi votre professeur à progresser sur Pratiqo.</p>
+      `,
+      ctaText: "Laisser un avis",
+      ctaUrl: `${base}/student/progress?review=${encodeURIComponent(opts.bookingId)}`,
+    }),
+  });
+}
+
 // ─── 6. Pro Upgrade ──────────────────────────────────────────────────────────
 
 export async function sendProUpgrade(email: string, name: string) {

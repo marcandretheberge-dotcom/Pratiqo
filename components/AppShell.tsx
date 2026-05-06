@@ -10,7 +10,6 @@ import { authDisplayName } from "../lib/authDisplay";
 import { getSupabaseClient } from "../lib/supabase";
 import { fetchUnreadMessageCount } from "../lib/messaging";
 import Logo from "./ui/Logo";
-import { NotificationCenter } from "./NotificationCenter";
 import { useLocale } from "../lib/locale-context";
 import { LocaleSwitcher } from "./LocaleSwitcher";
 import { TeacherTopNav } from "./TeacherTopNav";

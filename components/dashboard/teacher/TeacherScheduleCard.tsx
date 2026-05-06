@@ -1,11 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Calendar, MessageCircle, CalendarClock } from "lucide-react";
+import { Calendar, CalendarClock, Copy, ExternalLink, MapPin, MessageCircle, Video } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useLocale } from "@/lib/locale-context";
 import { cn } from "@/lib/utils";
+import { getBookingLifecycleState, type BookingLifecycleState } from "@/lib/bookingLifecycle";
 
 /** Same UUID shape as `/messages` `peer` param (student auth user id). */
 const PEER_UUID_RE =
@@ -15,13 +17,32 @@ export type TeacherScheduleRow = {
   id: string;
   studentName?: string;
   studentPhotoUrl?: string | null;
-  /** `bookings.student_id` → profile/auth user UUID for messaging. */
+  /** `bookings.student_id` -> profile/auth user UUID for messaging. */
   studentUserId?: string | null;
   slot_date?: string | null;
   date?: string | null;
   time_slot?: string | null;
   time?: string | null;
+  status?: string | null;
+  teachingMode?: string | null;
+  durationMinutes?: number | null;
+  studentAddress?: string | null;
 };
+
+function normalizeTeachingMode(mode: string | null | undefined): "online" | "at_home" | "in_person" {
+  const raw = String(mode || "").toLowerCase();
+  if (raw === "online") return "online";
+  if (raw === "domicile" || raw === "home" || raw === "at_home") return "at_home";
+  return "in_person";
+}
+
+function videoRoomUrl(bookingId: string): string {
+  return `https://meet.jit.si/pratiqo-${encodeURIComponent(bookingId)}`;
+}
+
+function directionsUrl(address: string): string {
+  return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address)}`;
+}
 
 export function TeacherScheduleCard({
   items,
@@ -29,22 +50,38 @@ export function TeacherScheduleCard({
   titleKey = "upcomingScheduleTitle",
   onRequestCancelClass,
   onOpenReschedule,
+  onMarkCompleted,
   cancelBusy,
 }: {
   items: TeacherScheduleRow[];
   emptyHint: string;
   /** i18n key for the card heading (default: generic schedule). */
   titleKey?: "upcomingScheduleTitle" | "upcomingConfirmedClasses";
-  /** Confirmed lessons only — opens parent cancel modal. */
+  /** Confirmed lessons only - opens parent cancel modal. */
   onRequestCancelClass?: (bookingId: string) => void;
-  /** Opens “change class” flow (modal → message / cancel). */
+  /** Opens change-class flow (modal -> message / cancel). */
   onOpenReschedule?: (bookingId: string) => void;
+  /** Marks a past lesson as completed after teacher confirmation. */
+  onMarkCompleted?: (bookingId: string, outcome: "held" | "absent" | "technical_issue") => Promise<void> | void;
   /** While the cancel API runs, disables actions. */
   cancelBusy?: boolean;
 }) {
   const { t } = useLocale();
   const router = useRouter();
   const relationshipMode = Boolean(onRequestCancelClass && onOpenReschedule);
+  const [completionTarget, setCompletionTarget] = useState<TeacherScheduleRow | null>(null);
+  const [completing, setCompleting] = useState(false);
+
+  const finishBooking = async (outcome: "held" | "absent" | "technical_issue") => {
+    if (!completionTarget) return;
+    setCompleting(true);
+    try {
+      await onMarkCompleted?.(completionTarget.id, outcome);
+      setCompletionTarget(null);
+    } finally {
+      setCompleting(false);
+    }
+  };
 
   return (
     <div className="rounded-2xl border border-[#E8E6DF] bg-white p-5 shadow-[0_8px_40px_rgba(44,44,42,0.06)] sm:p-6">
@@ -55,6 +92,7 @@ export function TeacherScheduleCard({
         </div>
         <Calendar size={18} className="shrink-0 text-[#0F6E56]" aria-hidden />
       </div>
+
       {items.length === 0 ? (
         <div className="py-10 text-center text-sm text-[#6B6760]">
           <p>{emptyHint}</p>
@@ -72,12 +110,20 @@ export function TeacherScheduleCard({
             const canMessage = peer.length > 0 && PEER_UUID_RE.test(peer);
             const messagesHref = canMessage ? `/messages?peer=${encodeURIComponent(peer)}` : "/messages";
             const photoUrl = b.studentPhotoUrl?.trim();
+            const lifecycle = getBookingLifecycleState({
+              slot_date: b.slot_date,
+              date: b.date,
+              time_slot: b.time_slot,
+              time: b.time,
+              duration_minutes: b.durationMinutes,
+              status: b.status,
+            });
+            const mode = normalizeTeachingMode(b.teachingMode);
+            const roomUrl = videoRoomUrl(b.id);
+            const mapUrl = b.studentAddress?.trim() ? directionsUrl(b.studentAddress.trim()) : null;
 
             return (
-              <li
-                key={b.id}
-                className="rounded-2xl border border-[#F1EFE8] bg-white p-4 sm:p-5"
-              >
+              <li key={b.id} className="rounded-2xl border border-[#F1EFE8] bg-white p-4 sm:p-5">
                 <div className="flex gap-3 sm:gap-4">
                   {photoUrl ? (
                     <Image
@@ -101,8 +147,18 @@ export function TeacherScheduleCard({
                     <p className="truncate font-semibold text-[#2C2C2A]">{b.studentName}</p>
                     <p className="mt-0.5 text-sm text-[#6B6760]">{b.slot_date || b.date}</p>
                     <p className="mt-0.5 text-sm font-medium text-[#0F6E56]">{b.time_slot || b.time}</p>
+                    <LifecycleBadge state={lifecycle} />
                   </div>
                 </div>
+
+                <ContextualBookingAction
+                  lifecycle={lifecycle}
+                  mode={mode}
+                  roomUrl={roomUrl}
+                  mapUrl={mapUrl}
+                  disabled={Boolean(cancelBusy)}
+                  onNeedsReview={() => setCompletionTarget(b)}
+                />
 
                 {relationshipMode ? (
                   <div className="mt-4 flex w-full flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:gap-2">
@@ -136,7 +192,7 @@ export function TeacherScheduleCard({
                   <button
                     type="button"
                     onClick={() => router.push(messagesHref)}
-                    className="mt-4 inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-[#0F6E56] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0c5a47] sm:min-h-0 sm:h-11 sm:py-0"
+                    className="mt-4 inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-[#0F6E56] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0c5a47] sm:h-11 sm:min-h-0 sm:py-0"
                   >
                     <MessageCircle className="h-[18px] w-[18px] shrink-0 sm:h-4 sm:w-4" aria-hidden />
                     {t("messageStudent")}
@@ -172,10 +228,7 @@ export function TeacherScheduleCard({
                     >
                       {t("cancelThisClass")}
                     </button>
-                    <Link
-                      href="/legal/annulation"
-                      className="mt-1 inline-block text-xs font-medium text-[#0F6E56]/80 hover:underline"
-                    >
+                    <Link href="/legal/annulation" className="mt-1 inline-block text-xs font-medium text-[#0F6E56]/80 hover:underline">
                       {t("viewCancellationPolicy")}
                     </Link>
                   </>
@@ -185,6 +238,161 @@ export function TeacherScheduleCard({
           })}
         </ul>
       )}
+
+      {completionTarget ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 px-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl">
+            <h4 className="text-base font-bold text-[#2C2C2A]">Le cours a-t-il eu lieu ?</h4>
+            <p className="mt-2 text-sm text-[#6B6760]">
+              Cette confirmation clôture le cours et déclenche la suite post-cours.
+            </p>
+            <div className="mt-5 grid gap-2">
+              <button
+                type="button"
+                disabled={completing}
+                onClick={() => void finishBooking("held")}
+                className="h-11 rounded-xl bg-[#0F6E56] px-4 text-sm font-semibold text-white disabled:opacity-60"
+              >
+                Oui, le cours a eu lieu
+              </button>
+              <button
+                type="button"
+                disabled={completing}
+                onClick={() => void finishBooking("absent")}
+                className="h-11 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-[#2C2C2A] disabled:opacity-60"
+              >
+                Élève absent
+              </button>
+              <button
+                type="button"
+                disabled={completing}
+                onClick={() => void finishBooking("technical_issue")}
+                className="h-11 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-[#2C2C2A] disabled:opacity-60"
+              >
+                Problème technique
+              </button>
+              <button
+                type="button"
+                disabled={completing}
+                onClick={() => setCompletionTarget(null)}
+                className="h-10 rounded-xl px-4 text-sm font-semibold text-[#6B6760] disabled:opacity-60"
+              >
+                Annuler
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
+  );
+}
+
+function LifecycleBadge({ state }: { state: BookingLifecycleState }) {
+  const label =
+    state === "ready"
+      ? "En cours"
+      : state === "needs_review"
+        ? "À confirmer"
+        : state === "completed"
+          ? "Terminé"
+          : "À venir";
+  return (
+    <span
+      className={cn(
+        "mt-2 inline-flex rounded-full px-2.5 py-1 text-[11px] font-bold",
+        state === "ready" ? "bg-[#E1F5EE] text-[#0F6E56]" : "",
+        state === "needs_review" ? "bg-amber-100 text-amber-800" : "",
+        state === "completed" ? "bg-slate-100 text-slate-600" : "",
+        state === "upcoming" ? "bg-slate-100 text-slate-700" : "",
+      )}
+    >
+      {label}
+    </span>
+  );
+}
+
+function ContextualBookingAction({
+  lifecycle,
+  mode,
+  roomUrl,
+  mapUrl,
+  disabled,
+  onNeedsReview,
+}: {
+  lifecycle: BookingLifecycleState;
+  mode: "online" | "at_home" | "in_person";
+  roomUrl: string;
+  mapUrl: string | null;
+  disabled: boolean;
+  onNeedsReview: () => void;
+}) {
+  const [copied, setCopied] = useState(false);
+  if (lifecycle === "completed") return null;
+
+  if (lifecycle === "needs_review") {
+    return (
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={onNeedsReview}
+        className="mt-4 inline-flex min-h-[44px] w-full items-center justify-center rounded-xl bg-amber-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-amber-700 disabled:opacity-50"
+      >
+        Marquer comme terminé
+      </button>
+    );
+  }
+
+  if (mode === "online") {
+    return (
+      <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+        <a
+          href={roomUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl bg-[#0F6E56] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0c5a47]"
+        >
+          <Video className="h-4 w-4" aria-hidden />
+          Rejoindre l’appel
+          <ExternalLink className="h-4 w-4" aria-hidden />
+        </a>
+        <button
+          type="button"
+          onClick={async () => {
+            await navigator.clipboard?.writeText(roomUrl);
+            setCopied(true);
+            window.setTimeout(() => setCopied(false), 1800);
+          }}
+          className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-[#0F6E56]/35 bg-white px-4 py-3 text-sm font-semibold text-[#0F6E56]"
+        >
+          <Copy className="h-4 w-4" aria-hidden />
+          {copied ? "Copié" : "Copier le lien"}
+        </button>
+      </div>
+    );
+  }
+
+  if (mode === "at_home") {
+    return (
+      <a
+        href={mapUrl ?? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent("adresse de l'élève")}`}
+        target="_blank"
+        rel="noreferrer"
+        className="mt-4 inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-[#0F6E56] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0c5a47]"
+      >
+        <MapPin className="h-4 w-4" aria-hidden />
+        Itinéraire
+        <ExternalLink className="h-4 w-4" aria-hidden />
+      </a>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => window.alert("Arrivée prête à être enregistrée.")}
+      className="mt-4 inline-flex min-h-[44px] w-full items-center justify-center rounded-xl bg-[#0F6E56] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0c5a47]"
+    >
+      Démarrer
+    </button>
   );
 }

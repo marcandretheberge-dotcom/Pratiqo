@@ -12,9 +12,11 @@ import { getTeacherOnboardingMissingFields, isTeacherProfileComplete } from "@/l
 import { parseGooglePlace } from "@/lib/googleAddressParser";
 import { blurCoordinates } from "@/lib/maps";
 
-type StepId = 1 | 2 | 3;
+type StepId = 1 | 2 | 3 | 4;
 type Category = "music" | "languages" | "academic" | "other";
 type TeachingMode = "online" | "in_person" | "at_home" | "hybrid";
+type JsonRecord = Record<string, unknown>;
+type ExistingTeacherRow = { id?: string; image_url?: string | null; location?: unknown } | null;
 
 const LEVELS = ["beginner", "intermediate", "advanced", "kids", "teens", "adults"] as const;
 const DAYS = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"] as const;
@@ -38,9 +40,20 @@ function encodeTeachingMode(mode: TeachingMode): string {
   return "all";
 }
 
-function currencyDefault(countryCode: string | null | undefined): string {
-  if (String(countryCode || "").toUpperCase() === "CA") return "CAD";
-  return "CAD";
+function initialTimezone(): string {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || "";
+  } catch {
+    return "";
+  }
+}
+
+function isRecord(value: unknown): value is JsonRecord {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function initialGoogleReady(): boolean {
+  return typeof window !== "undefined" && Boolean(window.google?.maps?.places);
 }
 
 export default function TeacherOnboardingPage() {
@@ -64,11 +77,11 @@ export default function TeacherOnboardingPage() {
   const [city, setCity] = useState("");
   const [region, setRegion] = useState("");
   const [countryCode, setCountryCode] = useState("CA");
-  const [timezone, setTimezone] = useState<string>("");
+  const [timezone, setTimezone] = useState<string>(() => initialTimezone());
   const [currency, setCurrency] = useState("CAD");
 
-  const [googleReady, setGoogleReady] = useState(false);
-  const [googleError, setGoogleError] = useState(false);
+  const [googleReady, setGoogleReady] = useState(() => initialGoogleReady());
+  const [googleError, setGoogleError] = useState(() => !process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY);
   const addressInputRef = useRef<HTMLInputElement | null>(null);
   const [addressValue, setAddressValue] = useState("");
   const [parsedPlace, setParsedPlace] = useState<ReturnType<typeof parseGooglePlace> | null>(null);
@@ -78,7 +91,13 @@ export default function TeacherOnboardingPage() {
   const [homeRadiusKm, setHomeRadiusKm] = useState<string>("25");
   const [availability, setAvailability] = useState<string[]>([]);
 
-  const progressLabel = useMemo(() => `${step}/3`, [step]);
+  // Step 4
+  const [taxStatusAck, setTaxStatusAck] = useState(false);
+  const [noExclusivityAck, setNoExclusivityAck] = useState(false);
+  const [noIncomeGuaranteeAck, setNoIncomeGuaranteeAck] = useState(false);
+  const legalComplete = taxStatusAck && noExclusivityAck && noIncomeGuaranteeAck;
+
+  const progressLabel = useMemo(() => `${step}/4`, [step]);
 
   const missingPreview = useMemo(() => {
     const teacherLike = {
@@ -93,7 +112,7 @@ export default function TeacherOnboardingPage() {
       price_per_lesson: Number(pricePerLesson),
       availability,
     };
-    return getTeacherOnboardingMissingFields(teacherLike as any);
+    return getTeacherOnboardingMissingFields(teacherLike);
   }, [displayName, discipline, category, city, region, countryCode, timezone, teachingMode, pricePerLesson, availability]);
 
   // Initial defaults / guard
@@ -108,20 +127,6 @@ export default function TeacherOnboardingPage() {
     }
   }, [loading, user, profile?.role, router]);
 
-  useEffect(() => {
-    // Best-effort defaults.
-    try {
-      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      if (tz && !timezone) setTimezone(tz);
-    } catch {
-      // ignore
-    }
-  }, [timezone]);
-
-  useEffect(() => {
-    if (!currency) setCurrency(currencyDefault(countryCode));
-  }, [currency, countryCode]);
-
   // If teacher already complete, bounce back to dashboard.
   useEffect(() => {
     if (!user?.id) return;
@@ -134,7 +139,7 @@ export default function TeacherOnboardingPage() {
         .eq("user_id", user.id)
         .maybeSingle();
       if (cancelled) return;
-      if (isTeacherProfileComplete((trow as any) ?? null)) {
+      if (isTeacherProfileComplete(trow ?? null)) {
         router.replace("/dashboard");
       }
     })();
@@ -147,13 +152,9 @@ export default function TeacherOnboardingPage() {
   useEffect(() => {
     const key = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
     if (!key) {
-      setGoogleError(true);
       return;
     }
-    if (typeof window !== "undefined" && (window as any).google?.maps?.places) {
-      setGoogleReady(true);
-      return;
-    }
+    if (typeof window !== "undefined" && window.google?.maps?.places) return;
     let cancelled = false;
     const script = document.createElement("script");
     script.async = true;
@@ -161,7 +162,7 @@ export default function TeacherOnboardingPage() {
     script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&libraries=places`;
     script.onload = () => {
       if (cancelled) return;
-      if ((window as any).google?.maps?.places) setGoogleReady(true);
+      if (window.google?.maps?.places) setGoogleReady(true);
       else setGoogleError(true);
     };
     script.onerror = () => {
@@ -214,13 +215,14 @@ export default function TeacherOnboardingPage() {
       return city.trim().length > 1 && region.trim().length > 1 && countryCode.trim().length === 2 && timezone.trim().length > 2;
     }
     const priceOk = Number(pricePerLesson) > 0;
-    return priceOk && availability.length > 0;
-  }, [step, displayName, discipline, city, region, countryCode, timezone, pricePerLesson, availability.length]);
+    if (step === 3) return priceOk && availability.length > 0;
+    return priceOk && availability.length > 0 && legalComplete;
+  }, [step, displayName, discipline, city, region, countryCode, timezone, pricePerLesson, availability.length, legalComplete]);
 
   const goNext = () => {
     if (!canGoNext) return;
     setError(null);
-    setStep((s) => (s === 3 ? 3 : ((s + 1) as StepId)));
+    setStep((s) => (s === 4 ? 4 : ((s + 1) as StepId)));
   };
 
   const goBack = () => {
@@ -230,6 +232,10 @@ export default function TeacherOnboardingPage() {
 
   const save = async () => {
     if (!user?.id) return;
+    if (!legalComplete) {
+      setError(t("teacherOnboardingLegalRequired"));
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
@@ -240,11 +246,12 @@ export default function TeacherOnboardingPage() {
         .select("id, image_url, location")
         .eq("user_id", user.id)
         .maybeSingle();
+      const existingTeacher = existing as ExistingTeacherRow;
 
-      const teacherId = (existing as { id?: string } | null)?.id ?? user.id;
+      const teacherId = existingTeacher?.id ?? user.id;
 
-      const nextLocation: Record<string, unknown> = {
-        ...(typeof (existing as any)?.location === "object" && (existing as any)?.location !== null ? ((existing as any).location as any) : {}),
+      const nextLocation: JsonRecord = {
+        ...(isRecord(existingTeacher?.location) ? existingTeacher.location : {}),
       };
 
       // Public fields used by search/cards must remain non-exact.
@@ -262,24 +269,25 @@ export default function TeacherOnboardingPage() {
 
       // Backwards compatibility: keep flat keys used by existing UI.
       nextLocation.neighborhood = publicCity;
-      nextLocation.public = {
+      const publicLocation: JsonRecord = {
         city: publicCity,
         region: publicRegion,
         country_code: publicCountry,
       };
+      nextLocation.public = publicLocation;
 
       // Use fuzzed coords for public lat/lng only.
       if (parsedPlace?.latitude != null && parsedPlace?.longitude != null) {
         const fuzzed = blurCoordinates(parsedPlace.latitude, parsedPlace.longitude);
         nextLocation.lat = fuzzed.lat;
         nextLocation.lng = fuzzed.lng;
-        (nextLocation.public as any).lat = fuzzed.lat;
-        (nextLocation.public as any).lng = fuzzed.lng;
+        publicLocation.lat = fuzzed.lat;
+        publicLocation.lng = fuzzed.lng;
       }
 
       if (Object.keys(privateBlock).length > 0) {
         nextLocation.private = {
-          ...(typeof (nextLocation.private as any) === "object" && (nextLocation.private as any) !== null ? (nextLocation.private as any) : {}),
+          ...(isRecord(nextLocation.private) ? nextLocation.private : {}),
           ...privateBlock,
         };
       }
@@ -314,7 +322,7 @@ export default function TeacherOnboardingPage() {
       }
 
       // Insert if missing (must satisfy not-null constraints).
-      if (!existing?.id) {
+      if (!existingTeacher?.id) {
         const payload = {
           id: teacherId,
           user_id: user.id,
@@ -323,7 +331,9 @@ export default function TeacherOnboardingPage() {
           monthly_subscription: null,
           is_verified: false,
           languages: [],
-          image_url: (existing as any)?.image_url ?? (typeof profile?.photo_url === "string" ? profile.photo_url : null),
+          image_url:
+            existingTeacher?.image_url ??
+            (typeof profile?.photo_url === "string" && profile.photo_url ? profile.photo_url : "https://picsum.photos/seed/teacher/400/400"),
           ...updates,
         };
         const { error: insErr } = await supabase.from("teachers").insert(payload);
@@ -332,6 +342,19 @@ export default function TeacherOnboardingPage() {
         const { error: upErr } = await supabase.from("teachers").update(updates).eq("id", teacherId);
         if (upErr) throw upErr;
       }
+
+      const { error: profileErr } = await supabase
+        .from("profiles")
+        .update({
+          role: "teacher",
+          teacher_onboarding_complete: true,
+          tax_status_acknowledged: true,
+          tax_status_acknowledged_at: new Date().toISOString(),
+          no_exclusivity_acknowledged: true,
+          no_income_guarantee_acknowledged: true,
+        })
+        .eq("id", user.id);
+      if (profileErr) throw profileErr;
 
       router.replace("/dashboard");
     } catch (e) {
@@ -354,7 +377,17 @@ export default function TeacherOnboardingPage() {
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-2 text-sm font-semibold text-[#0F6E56]">
               <ShieldCheck size={18} />
-              <span>{t(step === 1 ? "teacherOnboardingStepProfile" : step === 2 ? "teacherOnboardingStepLocation" : "teacherOnboardingStepPricing")}</span>
+              <span>
+                {t(
+                  step === 1
+                    ? "teacherOnboardingStepProfile"
+                    : step === 2
+                      ? "teacherOnboardingStepLocation"
+                      : step === 3
+                        ? "teacherOnboardingStepPricing"
+                        : "teacherOnboardingStepLegal",
+                )}
+              </span>
             </div>
             {missingPreview.length > 0 ? (
               <span className="text-xs text-[var(--p-text-muted)]">
@@ -666,6 +699,54 @@ export default function TeacherOnboardingPage() {
                 </div>
               </motion.div>
             ) : null}
+
+            {step === 4 ? (
+              <motion.div
+                key="step-4"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-5"
+              >
+                <div>
+                  <h2 className="text-lg font-bold text-[var(--p-text)]">{t("teacherOnboardingLegalTitle")}</h2>
+                  <p className="mt-2 text-sm text-[var(--p-text-muted)]">{t("teacherOnboardingLegalSubtitle")}</p>
+                </div>
+
+                <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-4 sm:p-5 space-y-4">
+                  {[
+                    {
+                      checked: taxStatusAck,
+                      onChange: setTaxStatusAck,
+                      label: t("teacherOnboardingLegalSelfEmployed"),
+                    },
+                    {
+                      checked: noExclusivityAck,
+                      onChange: setNoExclusivityAck,
+                      label: t("teacherOnboardingLegalNoExclusivity"),
+                    },
+                    {
+                      checked: noIncomeGuaranteeAck,
+                      onChange: setNoIncomeGuaranteeAck,
+                      label: t("teacherOnboardingLegalNoIncomeGuarantee"),
+                    },
+                  ].map((item) => (
+                    <label key={item.label} className="flex items-start gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={item.checked}
+                        onChange={(e) => item.onChange(e.target.checked)}
+                        className="mt-0.5 h-5 w-5 shrink-0 rounded border-slate-300 accent-[#1D9E75]"
+                      />
+                      <span className={cn("text-sm leading-relaxed", item.checked ? "text-[#0F6E56] font-medium" : "text-[var(--p-text)]")}>
+                        {item.label}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </motion.div>
+            ) : null}
           </AnimatePresence>
         </div>
 
@@ -680,7 +761,7 @@ export default function TeacherOnboardingPage() {
             {t("teacherOnboardingBack")}
           </button>
 
-          {step < 3 ? (
+          {step < 4 ? (
             <button
               type="button"
               onClick={goNext}

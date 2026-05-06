@@ -165,7 +165,7 @@ export async function GET(request: Request) {
 
       if (profile?.role === "teacher") {
         if (!profile?.teacher_onboarding_complete) {
-          return NextResponse.redirect(new URL("/onboarding", requestUrl.origin));
+          return NextResponse.redirect(new URL("/onboarding/teacher", requestUrl.origin));
         }
         return NextResponse.redirect(new URL("/dashboard", requestUrl.origin));
       }

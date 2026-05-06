@@ -132,7 +132,7 @@ export default function LandingPage() {
         .maybeSingle();
       const row = profile as { role?: string | null; teacher_onboarding_complete?: boolean | null; companion_chosen?: boolean | null } | null;
       if (row?.role === "teacher") {
-        router.push(row.teacher_onboarding_complete ? "/dashboard" : "/onboarding");
+        router.push(row.teacher_onboarding_complete ? "/dashboard" : "/onboarding/teacher");
       } else if (!row?.companion_chosen) {
         router.push("/student/choose-companion");
       } else {

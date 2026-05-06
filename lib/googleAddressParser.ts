@@ -13,9 +13,11 @@ export type ParsedGooglePlace = {
 function readComponent(
   comps: google.maps.GeocoderAddressComponent[] | undefined,
   type: string,
+  format: "long" | "short" = "long",
 ): string | null {
   const c = comps?.find((x) => Array.isArray(x.types) && x.types.includes(type));
-  const v = (c?.long_name || c?.short_name || "").trim();
+  const raw = format === "short" ? c?.short_name || c?.long_name : c?.long_name || c?.short_name;
+  const v = (raw || "").trim();
   return v ? v : null;
 }
 
@@ -29,7 +31,7 @@ export function parseGooglePlace(place: google.maps.places.PlaceResult | null | 
     readComponent(comps, "sublocality") ||
     readComponent(comps, "sublocality_level_1");
   const region = readComponent(comps, "administrative_area_level_1");
-  const countryCode = readComponent(comps, "country");
+  const countryCode = readComponent(comps, "country", "short");
   const postalCode = readComponent(comps, "postal_code");
 
   const lat = place?.geometry?.location?.lat?.();

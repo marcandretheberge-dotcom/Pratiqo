@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { bookingEndAt } from "@/lib/bookingLifecycle";
 
 export const runtime = "nodejs";
 
@@ -50,7 +51,7 @@ export async function POST(request: Request) {
   // Validate booking: exists + belongs to user + confirmed + past + within window
   const { data: booking, error: bookingErr } = await admin
     .from("bookings")
-    .select("id, teacher_id, student_id, status, slot_date, duration_minutes")
+    .select("id, teacher_id, student_id, status, slot_date, time_slot, date, time, duration_minutes")
     .eq("id", bookingId)
     .maybeSingle();
 
@@ -62,18 +63,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Cette réservation ne vous appartient pas." }, { status: 403 });
   }
 
-  if (booking.status !== "confirmed") {
-    return NextResponse.json({ error: "Seules les réservations confirmées peuvent être évaluées." }, { status: 403 });
+  if (!["confirmed", "completed"].includes(String(booking.status))) {
+    return NextResponse.json({ error: "Seules les réservations confirmées ou terminées peuvent être évaluées." }, { status: 403 });
   }
 
   if (!booking.slot_date) {
     return NextResponse.json({ error: "Date de cours manquante." }, { status: 400 });
   }
 
-  const lessonStart = new Date(booking.slot_date as string);
-  const durationMin = Number(booking.duration_minutes ?? 60);
-  const lessonEnd = new Date(lessonStart.getTime() + durationMin * 60 * 1000);
+  const lessonEnd = bookingEndAt(booking);
   const now = new Date();
+  if (!lessonEnd) {
+    return NextResponse.json({ error: "Heure de cours manquante." }, { status: 400 });
+  }
   const windowEnd = new Date(lessonEnd.getTime() + REVIEW_WINDOW_DAYS * 24 * 60 * 60 * 1000);
 
   if (lessonEnd > now) {
