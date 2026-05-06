@@ -29,10 +29,23 @@ CREATE INDEX IF NOT EXISTS idx_credit_txn_user ON public.credit_transactions (us
 
 ALTER TABLE public.credit_transactions ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users read own credit transactions" ON public.credit_transactions;
 CREATE POLICY "Users read own credit transactions"
   ON public.credit_transactions FOR SELECT
   USING (auth.uid() = user_id);
 
 -- Prevent duplicate reviews per student/teacher pair
-ALTER TABLE public.reviews
-  ADD CONSTRAINT reviews_student_teacher_unique UNIQUE (student_id, teacher_id);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'reviews_student_teacher_unique'
+      AND conrelid = 'public.reviews'::regclass
+  ) THEN
+    ALTER TABLE public.reviews
+      ADD CONSTRAINT reviews_student_teacher_unique UNIQUE (student_id, teacher_id);
+  END IF;
+EXCEPTION
+  WHEN duplicate_object OR duplicate_table THEN NULL;
+END $$;

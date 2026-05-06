@@ -324,7 +324,7 @@ export function Dashboard() {
           : b,
       ),
     );
-    showFlash("ok", "Bravo ! Un email a été envoyé à l'élève pour recueillir son avis.");
+    showFlash("ok", t("bookingCompletionSuccess"));
   };
 
   useEffect(() => {

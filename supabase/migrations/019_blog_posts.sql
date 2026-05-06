@@ -32,6 +32,7 @@ begin
 end;
 $$;
 
+drop trigger if exists blog_posts_updated_at on blog_posts;
 create trigger blog_posts_updated_at
   before update on blog_posts
   for each row execute procedure update_blog_posts_updated_at();
@@ -40,6 +41,7 @@ create trigger blog_posts_updated_at
 alter table blog_posts enable row level security;
 
 -- Anyone can read published posts (published_at is not null and <= now)
+drop policy if exists "Public read published blog posts" on blog_posts;
 create policy "Public read published blog posts"
   on blog_posts for select
   using (published_at is not null and published_at <= now());

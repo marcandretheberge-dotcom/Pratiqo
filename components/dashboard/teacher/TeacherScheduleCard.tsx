@@ -6,10 +6,10 @@ import Link from "next/link";
 import { Calendar, CalendarClock, Copy, ExternalLink, MapPin, MessageCircle, Video } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useLocale } from "@/lib/locale-context";
+import type { TranslationKey } from "@/lib/translations";
 import { cn } from "@/lib/utils";
 import { getBookingLifecycleState, type BookingLifecycleState } from "@/lib/bookingLifecycle";
 
-/** Same UUID shape as `/messages` `peer` param (student auth user id). */
 const PEER_UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -17,7 +17,6 @@ export type TeacherScheduleRow = {
   id: string;
   studentName?: string;
   studentPhotoUrl?: string | null;
-  /** `bookings.student_id` -> profile/auth user UUID for messaging. */
   studentUserId?: string | null;
   slot_date?: string | null;
   date?: string | null;
@@ -28,6 +27,8 @@ export type TeacherScheduleRow = {
   durationMinutes?: number | null;
   studentAddress?: string | null;
 };
+
+type CompletionOutcome = "held" | "absent" | "technical_issue";
 
 function normalizeTeachingMode(mode: string | null | undefined): "online" | "at_home" | "in_person" {
   const raw = String(mode || "").toLowerCase();
@@ -55,15 +56,10 @@ export function TeacherScheduleCard({
 }: {
   items: TeacherScheduleRow[];
   emptyHint: string;
-  /** i18n key for the card heading (default: generic schedule). */
   titleKey?: "upcomingScheduleTitle" | "upcomingConfirmedClasses";
-  /** Confirmed lessons only - opens parent cancel modal. */
   onRequestCancelClass?: (bookingId: string) => void;
-  /** Opens change-class flow (modal -> message / cancel). */
   onOpenReschedule?: (bookingId: string) => void;
-  /** Marks a past lesson as completed after teacher confirmation. */
-  onMarkCompleted?: (bookingId: string, outcome: "held" | "absent" | "technical_issue") => Promise<void> | void;
-  /** While the cancel API runs, disables actions. */
+  onMarkCompleted?: (bookingId: string, outcome: CompletionOutcome) => Promise<void> | void;
   cancelBusy?: boolean;
 }) {
   const { t } = useLocale();
@@ -71,16 +67,25 @@ export function TeacherScheduleCard({
   const relationshipMode = Boolean(onRequestCancelClass && onOpenReschedule);
   const [completionTarget, setCompletionTarget] = useState<TeacherScheduleRow | null>(null);
   const [completing, setCompleting] = useState(false);
+  const [completionError, setCompletionError] = useState<string | null>(null);
 
-  const finishBooking = async (outcome: "held" | "absent" | "technical_issue") => {
+  const finishBooking = async (outcome: CompletionOutcome) => {
     if (!completionTarget) return;
     setCompleting(true);
+    setCompletionError(null);
     try {
       await onMarkCompleted?.(completionTarget.id, outcome);
       setCompletionTarget(null);
+    } catch (error) {
+      setCompletionError(error instanceof Error ? error.message : t("anErrorOccurred"));
     } finally {
       setCompleting(false);
     }
+  };
+
+  const openCompletionDialog = (booking: TeacherScheduleRow) => {
+    setCompletionError(null);
+    setCompletionTarget(booking);
   };
 
   return (
@@ -156,8 +161,8 @@ export function TeacherScheduleCard({
                   mode={mode}
                   roomUrl={roomUrl}
                   mapUrl={mapUrl}
-                  disabled={Boolean(cancelBusy)}
-                  onNeedsReview={() => setCompletionTarget(b)}
+                  disabled={Boolean(cancelBusy) || completing}
+                  onNeedsReview={() => openCompletionDialog(b)}
                 />
 
                 {relationshipMode ? (
@@ -242,10 +247,13 @@ export function TeacherScheduleCard({
       {completionTarget ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 px-4">
           <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl">
-            <h4 className="text-base font-bold text-[#2C2C2A]">Le cours a-t-il eu lieu ?</h4>
-            <p className="mt-2 text-sm text-[#6B6760]">
-              Cette confirmation clôture le cours et déclenche la suite post-cours.
-            </p>
+            <h4 className="text-base font-bold text-[#2C2C2A]">{t("bookingCompletionDialogTitle")}</h4>
+            <p className="mt-2 text-sm text-[#6B6760]">{t("bookingCompletionDialogBody")}</p>
+            {completionError ? (
+              <p className="mt-3 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-medium text-rose-700">
+                {completionError}
+              </p>
+            ) : null}
             <div className="mt-5 grid gap-2">
               <button
                 type="button"
@@ -253,7 +261,7 @@ export function TeacherScheduleCard({
                 onClick={() => void finishBooking("held")}
                 className="h-11 rounded-xl bg-[#0F6E56] px-4 text-sm font-semibold text-white disabled:opacity-60"
               >
-                Oui, le cours a eu lieu
+                {completing ? t("saving") : t("bookingCompletionHeld")}
               </button>
               <button
                 type="button"
@@ -261,7 +269,7 @@ export function TeacherScheduleCard({
                 onClick={() => void finishBooking("absent")}
                 className="h-11 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-[#2C2C2A] disabled:opacity-60"
               >
-                Élève absent
+                {t("bookingCompletionAbsent")}
               </button>
               <button
                 type="button"
@@ -269,15 +277,18 @@ export function TeacherScheduleCard({
                 onClick={() => void finishBooking("technical_issue")}
                 className="h-11 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-[#2C2C2A] disabled:opacity-60"
               >
-                Problème technique
+                {t("bookingCompletionTechnicalIssue")}
               </button>
               <button
                 type="button"
                 disabled={completing}
-                onClick={() => setCompletionTarget(null)}
+                onClick={() => {
+                  setCompletionError(null);
+                  setCompletionTarget(null);
+                }}
                 className="h-10 rounded-xl px-4 text-sm font-semibold text-[#6B6760] disabled:opacity-60"
               >
-                Annuler
+                {t("cancel")}
               </button>
             </div>
           </div>
@@ -288,14 +299,14 @@ export function TeacherScheduleCard({
 }
 
 function LifecycleBadge({ state }: { state: BookingLifecycleState }) {
-  const label =
-    state === "ready"
-      ? "En cours"
-      : state === "needs_review"
-        ? "À confirmer"
-        : state === "completed"
-          ? "Terminé"
-          : "À venir";
+  const { t } = useLocale();
+  const labels: Record<BookingLifecycleState, TranslationKey> = {
+    upcoming: "bookingLifecycleUpcoming",
+    ready: "bookingLifecycleReady",
+    needs_review: "bookingLifecycleNeedsReview",
+    completed: "bookingLifecycleCompleted",
+    inactive: "bookingLifecycleInactive",
+  };
   return (
     <span
       className={cn(
@@ -306,7 +317,7 @@ function LifecycleBadge({ state }: { state: BookingLifecycleState }) {
         state === "upcoming" ? "bg-slate-100 text-slate-700" : "",
       )}
     >
-      {label}
+      {t(labels[state])}
     </span>
   );
 }
@@ -326,6 +337,7 @@ function ContextualBookingAction({
   disabled: boolean;
   onNeedsReview: () => void;
 }) {
+  const { t } = useLocale();
   const [copied, setCopied] = useState(false);
   if (lifecycle === "completed") return null;
 
@@ -337,7 +349,7 @@ function ContextualBookingAction({
         onClick={onNeedsReview}
         className="mt-4 inline-flex min-h-[44px] w-full items-center justify-center rounded-xl bg-amber-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-amber-700 disabled:opacity-50"
       >
-        Marquer comme terminé
+        {t("bookingMarkCompleted")}
       </button>
     );
   }
@@ -352,7 +364,7 @@ function ContextualBookingAction({
           className="inline-flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl bg-[#0F6E56] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0c5a47]"
         >
           <Video className="h-4 w-4" aria-hidden />
-          Rejoindre l’appel
+          {t("bookingJoinCall")}
           <ExternalLink className="h-4 w-4" aria-hidden />
         </a>
         <button
@@ -365,7 +377,7 @@ function ContextualBookingAction({
           className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-[#0F6E56]/35 bg-white px-4 py-3 text-sm font-semibold text-[#0F6E56]"
         >
           <Copy className="h-4 w-4" aria-hidden />
-          {copied ? "Copié" : "Copier le lien"}
+          {copied ? t("copied") : t("bookingCopyLink")}
         </button>
       </div>
     );
@@ -374,13 +386,13 @@ function ContextualBookingAction({
   if (mode === "at_home") {
     return (
       <a
-        href={mapUrl ?? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent("adresse de l'élève")}`}
+        href={mapUrl ?? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(t("bookingStudentAddressFallback"))}`}
         target="_blank"
         rel="noreferrer"
         className="mt-4 inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-[#0F6E56] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0c5a47]"
       >
         <MapPin className="h-4 w-4" aria-hidden />
-        Itinéraire
+        {t("bookingDirections")}
         <ExternalLink className="h-4 w-4" aria-hidden />
       </a>
     );
@@ -389,10 +401,10 @@ function ContextualBookingAction({
   return (
     <button
       type="button"
-      onClick={() => window.alert("Arrivée prête à être enregistrée.")}
+      onClick={() => window.alert(t("bookingArrivalReady"))}
       className="mt-4 inline-flex min-h-[44px] w-full items-center justify-center rounded-xl bg-[#0F6E56] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0c5a47]"
     >
-      Démarrer
+      {t("bookingStart")}
     </button>
   );
 }

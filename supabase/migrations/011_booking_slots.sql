@@ -5,10 +5,17 @@ ALTER TABLE public.bookings
 
 DO $$
 BEGIN
-  ALTER TABLE public.bookings
-    ADD CONSTRAINT unique_teacher_slot UNIQUE (teacher_id, slot_date, time_slot);
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'unique_teacher_slot'
+      AND conrelid = 'public.bookings'::regclass
+  ) THEN
+    ALTER TABLE public.bookings
+      ADD CONSTRAINT unique_teacher_slot UNIQUE (teacher_id, slot_date, time_slot);
+  END IF;
 EXCEPTION
-  WHEN duplicate_object THEN NULL;
+  WHEN duplicate_object OR duplicate_table THEN NULL;
 END $$;
 
 CREATE TABLE IF NOT EXISTS public.blocked_slots (
