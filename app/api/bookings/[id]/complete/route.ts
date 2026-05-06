@@ -97,15 +97,33 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     .eq("id", booking.student_id as string)
     .maybeSingle();
 
-  const studentEmail = typeof student?.email === "string" ? student.email.trim() : "";
-  if (studentEmail) {
-    void sendPostClassReviewRequest({
+  const profileEmail = typeof student?.email === "string" ? student.email.trim() : "";
+  const { data: authStudent } = profileEmail
+    ? { data: null }
+    : await admin.auth.admin.getUserById(booking.student_id as string);
+  const authEmail = authStudent?.user?.email?.trim() ?? "";
+  const studentEmail = profileEmail || authEmail;
+  let reviewEmailSent = false;
+
+  if (outcome === "held" && studentEmail) {
+    await sendPostClassReviewRequest({
       email: studentEmail,
-      studentName: typeof student?.name === "string" && student.name.trim() ? student.name.trim() : "Bonjour",
+      studentName: typeof student?.name === "string" && student.name.trim() ? student.name.trim() : "élève",
       teacherName: typeof teacher.name === "string" && teacher.name.trim() ? teacher.name.trim() : "votre professeur",
       bookingId,
     });
+    reviewEmailSent = true;
   }
 
-  return NextResponse.json({ ok: true, completed_at: completedAt, completion_outcome: outcome });
+  return NextResponse.json({
+    ok: true,
+    completed_at: completedAt,
+    completion_outcome: outcome,
+    review_email_sent: reviewEmailSent,
+    review_email_skipped_reason: reviewEmailSent
+      ? null
+      : outcome !== "held"
+        ? "completion_outcome_not_held"
+        : "student_email_missing",
+  });
 }
