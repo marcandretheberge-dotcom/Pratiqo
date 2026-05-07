@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import {
   ChevronDown,
   LayoutDashboard,
+  CircleDollarSign,
   Menu,
   MessageCircle,
   Shield,
@@ -38,15 +39,27 @@ function isTeacherNavActive(pathname: string | null, href: string): boolean {
   if (href === "/teacher/settings") return pathname.startsWith("/teacher/settings");
   if (href === "/teacher/schedule") return pathname.startsWith("/teacher/schedule");
   if (href === "/teacher/progress") return pathname.startsWith("/teacher/progress");
+  if (href === "/teacher/revenue") return pathname.startsWith("/teacher/revenue");
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-type NavItem = { href: string; labelKey: "teacherDashboard" | "teacherSchedule" | "teacherStudents" | "teacherMessages" | "teacherLoyalty" | "teacherVerification" };
+type NavItem = {
+  href: string;
+  labelKey:
+    | "teacherDashboard"
+    | "teacherSchedule"
+    | "teacherStudents"
+    | "teacherMessages"
+    | "teacherLoyalty"
+    | "teacherVerification"
+    | "teacherNavRevenue";
+};
 
 const DESKTOP_NAV: NavItem[] = [
   { href: "/dashboard", labelKey: "teacherDashboard" },
   { href: "/teacher/schedule", labelKey: "teacherSchedule" },
   { href: "/teacher/progress", labelKey: "teacherStudents" },
+  { href: "/teacher/revenue", labelKey: "teacherNavRevenue" },
   { href: "/messages", labelKey: "teacherMessages" },
   { href: "/loyalty", labelKey: "teacherLoyalty" },
   { href: "/teacher/verification", labelKey: "teacherVerification" },
@@ -121,6 +134,8 @@ export function TeacherTopNav({
                     ? Calendar
                     : item.href === "/teacher/progress"
                       ? Users
+                      : item.href === "/teacher/revenue"
+                        ? CircleDollarSign
                       : item.href === "/messages"
                         ? MessageCircle
                         : item.href === "/loyalty"
@@ -185,6 +200,15 @@ export function TeacherTopNav({
                   >
                     <User size={16} className="text-[#00694c]" />
                     {t("teacherNavMyProfile")}
+                  </Link>
+                  <Link
+                    href="/teacher/revenue"
+                    className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                    role="menuitem"
+                    onClick={() => setAvatarOpen(false)}
+                  >
+                    <CircleDollarSign size={16} className="text-slate-500" />
+                    {t("teacherNavRevenue")}
                   </Link>
                   <Link
                     href="/teacher/settings"
@@ -262,6 +286,13 @@ export function TeacherTopNav({
                 onClick={() => setMenuOpen(false)}
               >
                 {t("teacherNavMyProfile")}
+              </Link>
+              <Link
+                href="/teacher/revenue"
+                className="block px-4 py-3 text-sm font-semibold text-slate-800"
+                onClick={() => setMenuOpen(false)}
+              >
+                {t("teacherNavRevenue")}
               </Link>
               <Link
                 href="/teacher/settings"
