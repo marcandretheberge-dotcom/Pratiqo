@@ -659,6 +659,9 @@ export function TeacherProfile({
                         <span className="text-sm font-normal text-slate-600 ml-1">/ heure</span>
                       </p>
                       <p className="text-xs text-slate-600 mt-0.5">{standardLabel}</p>
+                      <p className="mt-2 text-[11px] font-semibold text-[#0F6E56]">
+                        {t("bookingNoHiddenFees").replace("{price}", formatPrice(Number(teacher.pricePerLesson)))}
+                      </p>
                     </div>
 
                     <button

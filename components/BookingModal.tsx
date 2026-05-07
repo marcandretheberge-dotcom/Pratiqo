@@ -9,8 +9,10 @@ import {
   Clock,
   Gift,
   Home,
+  Info,
   Loader2,
   MapPin,
+  Star,
   Users,
   Video,
 } from "lucide-react";
@@ -24,6 +26,7 @@ import { isBookingAtLeast24hAhead } from "@/lib/bookingCancellation";
 import { formatLocalISODate, periodForSlot } from "../lib/slots";
 import { localeToBcp47 } from "../lib/i18n/types";
 import { useLocale } from "../lib/locale-context";
+import { TeacherAvatar } from "./TeacherAvatar";
 
 export type BookingInitialLessonKind = "standard" | "home";
 
@@ -46,7 +49,7 @@ interface BookingModalProps {
 
 export function BookingModal({ teacher, onClose, initialLessonKind = "standard" }: BookingModalProps) {
   const { user } = useAuth();
-  const { locale, t } = useLocale();
+  const { locale, t, formatPrice } = useLocale();
   const dateLocale = localeToBcp47(locale);
   const [step, setStep] = useState<Step>("info");
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
@@ -100,6 +103,8 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
   const lessonHours = lessonMinutes / 60;
   const hourlyRate = teachingMode === "domicile" ? Number(teacher.homeLessonPrice ?? 0) : teacher.pricePerLesson;
   const totalPrice = Math.round(lessonHours * hourlyRate * 100) / 100;
+  const displayPrice = formatPrice(totalPrice);
+  const displayedHourlyPrice = formatPrice(hourlyRate);
 
   // Credits: can apply up to balance, but leave at least $0.50 for Stripe minimum
   const maxCreditsApplicable = Math.max(0, Math.floor(Math.min(creditBalance, totalPrice - 0.5) * 100) / 100);
@@ -114,6 +119,21 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
   // "all" comes from encodeTeachingMode when teacher has person + online + home selected
   const showStudio = ["person", "both", "all"].includes(teacher.teachingMode);
   const showOnline = ["online", "both", "all"].includes(teacher.teachingMode);
+
+  const areaLabel =
+    teacher.location?.neighborhood ||
+    [teacher.city, teacher.region].filter(Boolean).join(", ") ||
+    (distanceKm !== null ? `${distanceKm.toFixed(1)} km` : t("bookingApproxArea"));
+
+  const selectedFormatLabel =
+    teachingMode === "online" ? t("bookingOnline") :
+    teachingMode === "domicile" ? t("bookingHome") :
+    t("bookingStudio");
+
+  const currentStepNumber =
+    step === "info" || step === "preferences" ? 1 :
+    step === "pickDate" || step === "pickSlot" ? 2 :
+    3;
 
   // Fall back to standard levels when teacher hasn't configured any
   const displayLevels =
@@ -257,7 +277,11 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
 
   const handleConfirmAndPay = async () => {
     if (!user) {
-      setCheckoutError(t("bookingLoginAlert"));
+      const next =
+        typeof window !== "undefined"
+          ? `${window.location.pathname}${window.location.search}`
+          : "/student/search";
+      window.location.assign(`/login?next=${encodeURIComponent(next)}`);
       return;
     }
     if (!selectedDate || !selectedSlot) {
@@ -271,11 +295,11 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
 
     if (modeForDb === "domicile") {
       if (!homeAvailable) {
-        setCheckoutError("Cours à domicile non disponible pour ce professeur.");
+        setCheckoutError(t("bookingHomeUnavailable"));
         return;
       }
       if (!addressTrim) {
-        setCheckoutError("Indiquez l’adresse du cours à domicile.");
+        setCheckoutError(t("bookingAddressRequired"));
         return;
       }
     }
@@ -285,9 +309,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
     let redirecting = false;
     try {
       if (!isBookingAtLeast24hAhead({ slot_date: selectedDate, time_slot: selectedSlot })) {
-        setCheckoutError(
-          "Cette réservation nécessite au moins 24h de préavis. Le créneau choisi est trop proche. Veuillez choisir un créneau plus tardif.",
-        );
+        setCheckoutError(t("bookingMinimumNoticeError"));
         return;
       }
 
@@ -303,6 +325,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
         teaching_mode: modeForDb,
         status: "pending_payment",
         price: totalPrice,
+        duration_minutes: lessonMinutes,
         student_address: modeForDb === "domicile" ? addressTrim : null,
       };
 
@@ -384,22 +407,86 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
         animate={{ opacity: 1, scale: 1 }}
         className="relative bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-slate-200 overflow-hidden max-h-[90vh] overflow-y-auto"
       >
-        <div className="p-6 border-b border-slate-100 flex items-center justify-between">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "#0F6E56" }}>
-              {t("bookingTitle")}
-            </p>
-            <h3 className="text-xl font-bold text-slate-900">{teacher.name}</h3>
+        <div className="p-5 sm:p-6 border-b border-slate-100 space-y-4">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "#0F6E56" }}>
+                {t("bookingTitle")}
+              </p>
+              <h3 className="text-xl font-bold text-slate-900">{teacher.name}</h3>
+            </div>
+            <button type="button" onClick={onClose} className="text-slate-600 hover:text-slate-800 text-sm font-bold">
+              {t("bookingClose")}
+            </button>
           </div>
-          <button type="button" onClick={onClose} className="text-slate-600 hover:text-slate-600 text-sm font-bold">
-            {t("bookingClose")}
-          </button>
+          <div className="grid grid-cols-3 gap-2 text-[11px] font-semibold">
+            {[t("bookingStepDetails"), t("bookingStepSlot"), t("bookingStepPayment")].map((label, idx) => {
+              const active = idx + 1 <= currentStepNumber;
+              return (
+                <div
+                  key={label}
+                  className={cn(
+                    "rounded-full px-2 py-1.5 text-center",
+                    active ? "bg-[#E1F5EE] text-[#0F6E56]" : "bg-slate-100 text-slate-400",
+                  )}
+                >
+                  {idx + 1}. {label}
+                </div>
+              );
+            })}
+          </div>
         </div>
 
-        <div className="p-6 space-y-6">
+        <div className="p-5 sm:p-6 space-y-6">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+            <div className="flex items-start gap-3">
+              <TeacherAvatar
+                name={teacher.name}
+                category={teacher.category}
+                imageUrl={teacher.imageUrl}
+                size={52}
+                ringClassName="border-2 border-white shadow-sm"
+              />
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <p className="font-bold text-slate-900 leading-tight">{teacher.name}</p>
+                    <p className="text-xs text-slate-600">{teacher.discipline}</p>
+                    <p className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-slate-600">
+                      <Star size={12} fill="currentColor" className="text-amber-400" />
+                      {teacher.rating} · {teacher.reviews} {t("bookingReviewsShort")}
+                    </p>
+                  </div>
+                  <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-[#0F6E56] shadow-sm">
+                    {displayPrice}
+                  </span>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-semibold text-slate-600">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-1">
+                    {teachingMode === "online" ? <Video size={12} /> : teachingMode === "domicile" ? <Home size={12} /> : <Users size={12} />}
+                    {selectedFormatLabel}
+                  </span>
+                  <span className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-1">
+                    <MapPin size={12} />
+                    {areaLabel}
+                  </span>
+                </div>
+                <p className="mt-3 text-[11px] font-semibold text-[#0F6E56]">
+                  {t("bookingNoHiddenFees").replace("{price}", displayPrice)}
+                </p>
+              </div>
+            </div>
+          </div>
+
           {step === "info" && (
             <div className="space-y-4">
-              <p className="text-sm text-slate-600">{teacher.bio}</p>
+              <p className="text-sm text-slate-600 leading-relaxed">
+                {teacher.bio || t("bookingTeacherSummaryFallback")}
+              </p>
+              <div className="rounded-2xl border border-[#DCEAE3] bg-[#F3FAF6] px-4 py-3 text-xs text-slate-700 flex gap-2">
+                <Info size={15} className="mt-0.5 shrink-0 text-[#0F6E56]" />
+                <span>{t("bookingSecurePaymentNote")}</span>
+              </div>
               <button
                 type="button"
                 onClick={() => setStep("preferences")}
@@ -497,10 +584,10 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                   />
                   <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
                     <span className="font-semibold text-slate-700">
-                      ${hourlyRate.toFixed(0)} / h × {lessonHours === 1 ? "1 h" : `${lessonHours} h`}
+                      {displayedHourlyPrice} / h × {lessonHours === 1 ? t("bookingOneHour") : `${lessonHours} ${t("bookingHours")}`}
                     </span>
                     <span className="font-bold text-[#0F6E56]">
-                      {t("bookingTotalLine")} : ${totalPrice.toFixed(2)}
+                      {t("bookingTotalLine")} : {displayPrice}
                     </span>
                   </div>
                   {teacher.homeLessonRequiresConfirmation ? (
@@ -514,13 +601,13 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                       onClick={requestBookingGeo}
                       className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-left text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
                     >
-                      Activer la localisation pour affiner la durée du cours
+                      {t("bookingRefineLocationCta")}
                     </button>
                   ) : null}
                 </div>
               ) : (
                 <p className="text-xs text-slate-500">
-                  {t("bookingRateHint")} : <strong className="text-slate-800">${teacher.pricePerLesson}</strong> /{" "}
+                  {t("bookingRateHint")} : <strong className="text-slate-800">{formatPrice(teacher.pricePerLesson)}</strong> /{" "}
                   {t("bookingPerHourWord")}
                 </p>
               )}
@@ -565,7 +652,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                 </div>
               ) : !daysError && Object.keys(availableDays).length === 0 ? (
                 <p className="text-sm text-slate-500 text-center py-6">
-                  Ce professeur n&apos;a pas encore configuré ses disponibilités.
+                  {t("bookingNoAvailability")}
                 </p>
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -693,8 +780,12 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                   </span>
                 </div>
                 <div className="flex justify-between gap-2">
+                  <span className="text-slate-600">{t("bookingLocationTitle")}</span>
+                  <span className="font-semibold text-slate-900 text-right">{selectedFormatLabel}</span>
+                </div>
+                <div className="flex justify-between gap-2">
                   <span className="text-slate-600">{t("bookingAmountLabel")}</span>
-                  <span className="font-bold text-[#0F6E56]">${totalPrice.toFixed(2)}</span>
+                  <span className="font-bold text-[#0F6E56]">{displayPrice}</span>
                 </div>
               </div>
               <p className="text-xs text-slate-600 leading-relaxed">{t("bookingExclusiveText")}</p>
@@ -790,11 +881,11 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                       {t("bookingPay")}{" "}
                       {creditsDiscount > 0 ? (
                         <>
-                          <span className="line-through opacity-60 mr-1">${totalPrice.toFixed(2)}</span>
-                          ${effectivePrice.toFixed(2)}
+                          <span className="line-through opacity-60 mr-1">{displayPrice}</span>
+                          {formatPrice(effectivePrice)}
                         </>
                       ) : (
-                        `$${totalPrice.toFixed(2)}`
+                        displayPrice
                       )}
                     </>
                   )}

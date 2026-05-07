@@ -3,11 +3,13 @@ import type Stripe from "stripe";
 import {
   CheckCircle2,
   Calendar,
+  Download,
   LayoutDashboard,
   User,
   Clock,
   MapPin,
   AlertCircle,
+  MessageSquare,
 } from "lucide-react";
 import { stripe } from "@/lib/stripe";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
@@ -40,12 +42,40 @@ interface BookingDetails {
   discipline: string;
   date: string;
   time: string;
+  durationMinutes: number;
   /** Display — translate with bookingOnline | bookingHome | bookingStudio */
   locationKind: "online" | "domicile" | "person";
   amountLabel: string;
   bookingId: string;
+  status: string;
   alreadyConfirmed: boolean;
   studentHasProfileName: boolean;
+}
+
+function parseBookingStart(dateIso: string, slot: string): Date | null {
+  const date = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateIso);
+  const time = /^(\d{1,2})h(\d{2})$/.exec(slot);
+  if (!date || !time) return null;
+  return new Date(Number(date[1]), Number(date[2]) - 1, Number(date[3]), Number(time[1]), Number(time[2]));
+}
+
+function googleDateValue(date: Date): string {
+  return date.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
+}
+
+function buildGoogleCalendarUrl(booking: BookingDetails, locationLabel: string): string | null {
+  const start = parseBookingStart(booking.date, booking.time);
+  if (!start) return null;
+  const end = new Date(start.getTime() + Math.max(30, booking.durationMinutes || 60) * 60_000);
+  const title = `Pratiqo · ${booking.discipline} avec ${booking.teacherName}`;
+  const details = `Cours confirmé avec ${booking.teacherName}. Consultez votre tableau de bord Pratiqo pour les détails à jour.`;
+  const url = new URL("https://calendar.google.com/calendar/render");
+  url.searchParams.set("action", "TEMPLATE");
+  url.searchParams.set("text", title);
+  url.searchParams.set("dates", `${googleDateValue(start)}/${googleDateValue(end)}`);
+  url.searchParams.set("details", details);
+  url.searchParams.set("location", locationLabel);
+  return url.toString();
 }
 
 function emailLocationLabel(dict: Dictionary, teachingMode: string): string {
@@ -251,6 +281,7 @@ async function verifyAndConfirm(sessionId: string, locale: Locale): Promise<Veri
       : "";
 
   const locationKind = parseLocationKind(bookingMode);
+  const durationMinutes = Number((booking as { duration_minutes?: number | string | null }).duration_minutes ?? 60);
 
   return {
     ok: true,
@@ -260,9 +291,11 @@ async function verifyAndConfirm(sessionId: string, locale: Locale): Promise<Veri
       discipline: teacherDiscipline,
       date: displayDate ?? "",
       time: displayTime ?? "",
+      durationMinutes: Number.isFinite(durationMinutes) ? durationMinutes : 60,
       locationKind,
       amountLabel,
       bookingId,
+      status: String(booking.status ?? "confirmed"),
       alreadyConfirmed,
       studentHasProfileName: Boolean(studentProfileName?.trim()),
     },
@@ -351,6 +384,14 @@ export default async function BookingSuccessPage({
       : booking.locationKind === "domicile"
         ? dict.bookingHome
         : dict.bookingStudio;
+  const googleCalendarUrl = buildGoogleCalendarUrl(booking, locationLabel);
+  const calendarDownloadUrl = `/api/bookings/${encodeURIComponent(booking.bookingId)}/calendar?session_id=${encodeURIComponent(sessionId)}`;
+  const meetingNote =
+    booking.locationKind === "online"
+      ? dict.bookingMeetingLinkPending
+      : booking.locationKind === "domicile"
+        ? dict.bookingExactAddressAfterConfirmation
+        : dict.bookingExactAddressAfterConfirmation;
 
   return (
     <>
@@ -370,7 +411,7 @@ export default async function BookingSuccessPage({
                 {dict.paymentConfirmed}
               </p>
               <h1 className="text-[26px] sm:text-[32px] font-semibold leading-tight mt-2">
-                {dict.congratsBookingReserved}
+                {dict.bookingConfirmedTitle}
               </h1>
               <p className="text-sm text-white/85 mt-3 leading-relaxed">
                 {booking.studentHasProfileName ? (
@@ -380,7 +421,7 @@ export default async function BookingSuccessPage({
                 ) : null}
                 {dict.bookingSuccessLessonBefore}
                 <strong className="text-white font-semibold">{booking.teacherName}</strong>
-                {dict.bookingSuccessLessonAfter} {dict.confirmationEmailSent}
+                {dict.bookingSuccessLessonAfter} {dict.bookingConfirmedSubtitle}
               </p>
             </div>
           </div>
@@ -426,7 +467,44 @@ export default async function BookingSuccessPage({
               )}
               <span>{locationLabel}</span>
             </li>
+
+            <li className="flex items-center justify-between gap-4 border-t border-[var(--p-light-teal-bg)] pt-4">
+              <span className="text-[var(--p-text-muted)] font-medium">{dict.bookingDurationLabel}</span>
+              <span className="font-semibold">{booking.durationMinutes} min</span>
+            </li>
+
+            <li className="flex items-center justify-between gap-4">
+              <span className="text-[var(--p-text-muted)] font-medium">{dict.bookingStatusLabel}</span>
+              <span className="rounded-full bg-[#E1F5EE] px-3 py-1 text-xs font-bold text-[#0F6E56]">
+                {dict.bookingStatusConfirmed}
+              </span>
+            </li>
           </ul>
+
+          <div className="rounded-2xl border border-[#DCEAE3] bg-[#F3FAF6] px-4 py-3 text-xs text-slate-700">
+            {meetingNote}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {googleCalendarUrl ? (
+              <a
+                href={googleCalendarUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold border border-[var(--p-border-light)] text-[var(--p-text)] hover:bg-[var(--p-light-teal-bg)]/60 transition"
+              >
+                <Calendar className="w-4 h-4" />
+                {dict.bookingAddToGoogleCalendar}
+              </a>
+            ) : null}
+            <a
+              href={calendarDownloadUrl}
+              className="inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold border border-[var(--p-border-light)] text-[var(--p-text)] hover:bg-[var(--p-light-teal-bg)]/60 transition"
+            >
+              <Download className="w-4 h-4" />
+              {dict.bookingDownloadCalendarFile}
+            </a>
+          </div>
 
           <div className="pt-2 flex flex-col sm:flex-row gap-3">
             <Link
@@ -435,13 +513,14 @@ export default async function BookingSuccessPage({
               style={{ backgroundColor: "#1D9E75" }}
             >
               <LayoutDashboard className="w-4 h-4" />
-              {dict.dashboard}
+              {dict.bookingViewMyLessons}
             </Link>
             <Link
-              href="/booking"
-              className="inline-flex items-center justify-center rounded-2xl px-6 py-3.5 text-sm font-semibold border border-[var(--p-border-light)] text-[var(--p-text)] hover:bg-[var(--p-light-teal-bg)]/60 transition"
+              href="/messages"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl px-6 py-3.5 text-sm font-semibold border border-[var(--p-border-light)] text-[var(--p-text)] hover:bg-[var(--p-light-teal-bg)]/60 transition"
             >
-              {dict.bookingSuccessBackToBooking}
+              <MessageSquare className="w-4 h-4" />
+              {dict.bookingMessageTeacher}
             </Link>
           </div>
         </div>
