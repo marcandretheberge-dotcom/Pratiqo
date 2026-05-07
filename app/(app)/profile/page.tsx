@@ -357,7 +357,7 @@ export default function StudentProfilePage() {
         </div>
 
         <Link
-          href="/api/stripe/portal"
+          href="/student/payments"
           className="flex items-center justify-between rounded-2xl px-3 py-3 hover:bg-slate-50"
         >
           <div className="flex items-center gap-3">
