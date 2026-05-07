@@ -27,6 +27,10 @@ import {
   retrievePaymentIntentChargeId,
   upsertPaidBookingPayment,
 } from "@/lib/payments/ledger";
+import {
+  bookingWallTimeRangeToUtc,
+  formatBookingTimeForBothZones,
+} from "@/lib/timezones";
 
 export const dynamic = "force-dynamic";
 
@@ -50,6 +54,11 @@ interface BookingDetails {
   status: string;
   alreadyConfirmed: boolean;
   studentHasProfileName: boolean;
+  learnerName: string | null;
+  startIso: string | null;
+  endIso: string | null;
+  studentTimeZone: string | null;
+  teacherTimeZone: string | null;
 }
 
 function parseBookingStart(dateIso: string, slot: string): Date | null {
@@ -64,9 +73,11 @@ function googleDateValue(date: Date): string {
 }
 
 function buildGoogleCalendarUrl(booking: BookingDetails, locationLabel: string): string | null {
-  const start = parseBookingStart(booking.date, booking.time);
+  const start = booking.startIso ? new Date(booking.startIso) : parseBookingStart(booking.date, booking.time);
   if (!start) return null;
-  const end = new Date(start.getTime() + Math.max(30, booking.durationMinutes || 60) * 60_000);
+  const end = booking.endIso
+    ? new Date(booking.endIso)
+    : new Date(start.getTime() + Math.max(30, booking.durationMinutes || 60) * 60_000);
   const title = `Pratiqo · ${booking.discipline} avec ${booking.teacherName}`;
   const details = `Cours confirmé avec ${booking.teacherName}. Consultez votre tableau de bord Pratiqo pour les détails à jour.`;
   const url = new URL("https://calendar.google.com/calendar/render");
@@ -134,7 +145,7 @@ async function verifyAndConfirm(sessionId: string, locale: Locale): Promise<Veri
   const bookingRes = await admin
     .from("bookings")
     .select(
-      "id, teacher_id, student_id, status, date, time, slot_date, time_slot, price, duration_minutes, teaching_mode, credits_applied",
+      "id, teacher_id, student_id, status, date, time, slot_date, time_slot, price, duration_minutes, teaching_mode, credits_applied, learner_profile_id",
     )
     .eq("id", bookingId)
     .maybeSingle();
@@ -147,8 +158,8 @@ async function verifyAndConfirm(sessionId: string, locale: Locale): Promise<Veri
 
   // Fetch teacher + student profiles
   const [teacherData, studentData] = await Promise.all([
-    admin.from("teachers").select("user_id, name, discipline").eq("id", booking.teacher_id).maybeSingle(),
-    admin.from("profiles").select("name, email, plan").eq("id", booking.student_id).maybeSingle(),
+    admin.from("teachers").select("user_id, name, discipline, timezone").eq("id", booking.teacher_id).maybeSingle(),
+    admin.from("profiles").select("name, email, plan, timezone").eq("id", booking.student_id).maybeSingle(),
   ]);
 
   const studentProfileName = studentData.data?.name as string | null | undefined;
@@ -282,6 +293,28 @@ async function verifyAndConfirm(sessionId: string, locale: Locale): Promise<Veri
 
   const locationKind = parseLocationKind(bookingMode);
   const durationMinutes = Number((booking as { duration_minutes?: number | string | null }).duration_minutes ?? 60);
+  const teacherTimeZone = (teacherData.data as { timezone?: string | null } | null)?.timezone ?? null;
+  const studentTimeZone = (studentData.data as { timezone?: string | null } | null)?.timezone ?? null;
+  const utcRange =
+    displayDate && displayTime
+      ? bookingWallTimeRangeToUtc({
+          dateIso: displayDate,
+          slot: displayTime,
+          durationMinutes,
+          timeZone: teacherTimeZone,
+        })
+      : null;
+  const learnerId = (booking as { learner_profile_id?: string | null }).learner_profile_id ?? null;
+  let learnerName: string | null = null;
+  if (learnerId) {
+    const { data: learner } = await admin
+      .from("learner_profiles")
+      .select("display_name")
+      .eq("id", learnerId)
+      .eq("owner_user_id", booking.student_id)
+      .maybeSingle();
+    learnerName = (learner as { display_name?: string | null } | null)?.display_name ?? null;
+  }
 
   return {
     ok: true,
@@ -298,6 +331,11 @@ async function verifyAndConfirm(sessionId: string, locale: Locale): Promise<Veri
       status: String(booking.status ?? "confirmed"),
       alreadyConfirmed,
       studentHasProfileName: Boolean(studentProfileName?.trim()),
+      learnerName,
+      startIso: utcRange?.start.toISOString() ?? null,
+      endIso: utcRange?.end.toISOString() ?? null,
+      studentTimeZone,
+      teacherTimeZone,
     },
   };
 }
@@ -451,6 +489,13 @@ export default async function BookingSuccessPage({
                 ) : null}
               </div>
             </li>
+
+            {booking.learnerName ? (
+              <li className="flex items-center gap-3">
+                <User className="w-5 h-5 shrink-0" style={{ color: "#1D9E75" }} />
+                <span>{dict.studentCourseForLearner} : {booking.learnerName}</span>
+              </li>
+            ) : null}
 
             {(booking.date || booking.time) ? (
               <li className="flex items-center gap-3">

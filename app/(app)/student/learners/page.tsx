@@ -13,11 +13,25 @@ import {
 } from "@/components/student/LearnerProfileForm";
 
 function compactContext(row: LearnerProfileRow) {
-  return [
-    row.grade_level,
-    row.academic_program?.toUpperCase(),
-    row.learning_goals?.slice(0, 2).join(", "),
-  ].filter(Boolean).join(" · ");
+  const type = row.context_type ?? "general";
+  if (type === "academic") {
+    return [
+      row.grade_level,
+      row.academic_program_label || row.academic_program?.toUpperCase(),
+      row.subject_struggles?.slice(0, 2).join(", "),
+    ].filter(Boolean).join(" · ");
+  }
+  if (type === "language") {
+    return [row.target_language, row.current_level, row.learning_goals?.slice(0, 2).join(", ")]
+      .filter(Boolean)
+      .join(" · ");
+  }
+  if (type === "music") {
+    return [row.instrument, row.current_level, row.learning_goals?.slice(0, 2).join(", ")]
+      .filter(Boolean)
+      .join(" · ");
+  }
+  return [row.current_level, row.learning_goals?.slice(0, 2).join(", ")].filter(Boolean).join(" · ");
 }
 
 export default function StudentLearnersPage() {

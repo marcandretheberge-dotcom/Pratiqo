@@ -28,22 +28,54 @@ import { formatLocalISODate, periodForSlot } from "../lib/slots";
 import { localeToBcp47 } from "../lib/i18n/types";
 import { useLocale } from "../lib/locale-context";
 import { TeacherAvatar } from "./TeacherAvatar";
+import {
+  bookingWallTimeRangeToUtc,
+  formatBookingTimeForBothZones,
+  getBrowserTimeZone,
+} from "@/lib/timezones";
+import { getAcademicSystemConfig, getAcademicProgramHelperKey, getProgramTrackLabelKey } from "@/lib/academicSystems";
+import type { TranslationKey } from "@/lib/translations";
 
 export type BookingInitialLessonKind = "standard" | "home";
 
 type StoredTeachingMode = "person" | "online" | "domicile";
 
 type Step = "info" | "preferences" | "pickDate" | "pickSlot" | "confirm";
+type LearnerContextType = "academic" | "language" | "music" | "general";
 
 type BookingLearnerProfile = {
   id: string;
   display_name: string;
+  context_type: LearnerContextType | null;
   grade_level: string | null;
   academic_program: string | null;
+  academic_program_label: string | null;
+  academic_program_unsure: boolean | null;
+  school_level: string | null;
+  target_language: string | null;
+  current_level: string | null;
+  instrument: string | null;
+  practice_frequency: string | null;
+  exam_date: string | null;
+  notes_for_teacher: string | null;
   learning_goals: string[] | null;
   subject_struggles: string[] | null;
   explanation_preference: string | null;
   is_default: boolean | null;
+};
+
+type BookingContextDraft = {
+  context_type: LearnerContextType;
+  grade_level: string;
+  academic_program: string;
+  subject_struggles: string;
+  exam_date: string;
+  target_language: string;
+  current_level: string;
+  instrument: string;
+  practice_frequency: string;
+  learning_goals: string;
+  notes_for_teacher: string;
 };
 
 function defaultTeachingMode(teacher: Teacher, initial: BookingInitialLessonKind): StoredTeachingMode {
@@ -51,6 +83,51 @@ function defaultTeachingMode(teacher: Teacher, initial: BookingInitialLessonKind
   if (teacher.teachingMode === "online") return "online";
   if (teacher.teachingMode === "person") return "person";
   return "person";
+}
+
+function suggestLearnerContextType(teacher: Teacher): LearnerContextType {
+  const raw = [
+    (teacher as { category?: string | null }).category,
+    (teacher as { discipline?: string | null }).discipline,
+    teacher.name,
+  ].filter(Boolean).join(" ").toLowerCase();
+  if (/(scolaire|school|tutor|tuteur|math|science|physique|chimie|devoir|examen|exam|academic|soutien)/.test(raw)) {
+    return "academic";
+  }
+  if (/(langue|language|fran|english|anglais|spanish|espagnol|conversation|ielts|delf|tef)/.test(raw)) {
+    return "language";
+  }
+  if (/(musique|music|piano|guitar|guitare|chant|voice|batterie|drum|violon|solf)/.test(raw)) {
+    return "music";
+  }
+  return "general";
+}
+
+function csvToArray(value: string): string[] {
+  return value.split(",").map((x) => x.trim()).filter(Boolean);
+}
+
+function programLabelFromValue(value: string, config: ReturnType<typeof getAcademicSystemConfig>, t: (key: TranslationKey) => string) {
+  const key = getProgramTrackLabelKey(config, value);
+  if (key) return t(key as TranslationKey);
+  if (value === "ib") return "IB";
+  return value || null;
+}
+
+function draftFromLearner(learner: BookingLearnerProfile | null, fallback: LearnerContextType): BookingContextDraft {
+  return {
+    context_type: learner?.context_type ?? fallback,
+    grade_level: learner?.grade_level ?? "",
+    academic_program: learner?.academic_program ?? "",
+    subject_struggles: (learner?.subject_struggles ?? []).join(", "),
+    exam_date: learner?.exam_date ?? "",
+    target_language: learner?.target_language ?? "",
+    current_level: learner?.current_level ?? "",
+    instrument: learner?.instrument ?? "",
+    practice_frequency: learner?.practice_frequency ?? "",
+    learning_goals: (learner?.learning_goals ?? []).join(", "),
+    notes_for_teacher: learner?.notes_for_teacher ?? "",
+  };
 }
 
 interface BookingModalProps {
@@ -63,6 +140,11 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
   const { user, profile } = useAuth();
   const { locale, t, formatPrice } = useLocale();
   const dateLocale = localeToBcp47(locale);
+  const browserTimeZone = useMemo(() => getBrowserTimeZone(), []);
+  const academicConfig = useMemo(
+    () => getAcademicSystemConfig({ countryCode: teacher.countryCode, regionCode: teacher.region, locale }),
+    [teacher.countryCode, teacher.region, locale],
+  );
   const [step, setStep] = useState<Step>("info");
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
@@ -81,6 +163,9 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
   const [selectedLearnerId, setSelectedLearnerId] = useState<string>("");
   const [loadingLearners, setLoadingLearners] = useState(false);
   const [learnerSaving, setLearnerSaving] = useState(false);
+  const suggestedContextType = useMemo(() => suggestLearnerContextType(teacher), [teacher]);
+  const [contextDraft, setContextDraft] = useState<BookingContextDraft>(() => draftFromLearner(null, suggestedContextType));
+  const [contextDirty, setContextDirty] = useState(false);
 
   const [availableDays, setAvailableDays] = useState<Record<string, number>>({});
   const [slots, setSlots] = useState<string[]>([]);
@@ -222,7 +307,14 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
     setDaysError(null);
     setSlotsError(null);
     setGeo(null);
-  }, [teacher.id, initialLessonKind]);
+    setContextDraft(draftFromLearner(null, suggestedContextType));
+    setContextDirty(false);
+  }, [teacher.id, initialLessonKind, suggestedContextType]);
+
+  useEffect(() => {
+    setContextDraft(draftFromLearner(selectedLearner, suggestedContextType));
+    setContextDirty(false);
+  }, [selectedLearner, suggestedContextType]);
 
   useEffect(() => {
     if (!user?.id) {
@@ -235,7 +327,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
     setLoadingLearners(true);
     void supabase
       .from("learner_profiles")
-      .select("id, display_name, grade_level, academic_program, learning_goals, subject_struggles, explanation_preference, is_default")
+      .select("id, display_name, context_type, school_level, grade_level, academic_program, academic_program_label, academic_program_unsure, target_language, current_level, instrument, practice_frequency, exam_date, learning_goals, subject_struggles, explanation_preference, notes_for_teacher, is_default")
       .eq("owner_user_id", user.id)
       .is("archived_at", null)
       .order("is_default", { ascending: false })
@@ -267,10 +359,11 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
           owner_user_id: user.id,
           display_name: displayName,
           relationship: "self",
+          context_type: suggestedContextType,
           school_level: "adult",
           is_default: makeDefault,
         })
-        .select("id, display_name, grade_level, academic_program, learning_goals, subject_struggles, explanation_preference, is_default")
+        .select("id, display_name, context_type, school_level, grade_level, academic_program, academic_program_label, academic_program_unsure, target_language, current_level, instrument, practice_frequency, exam_date, learning_goals, subject_struggles, explanation_preference, notes_for_teacher, is_default")
         .single();
       if (error) throw error;
       const row = data as BookingLearnerProfile;
@@ -281,6 +374,54 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
     } finally {
       setLearnerSaving(false);
     }
+  };
+
+  const updateContextDraft = (patch: Partial<BookingContextDraft>) => {
+    setContextDraft((current) => ({ ...current, ...patch }));
+    setContextDirty(true);
+  };
+
+  const saveSelectedLearnerContext = async () => {
+    if (!user?.id || !selectedLearnerId || !contextDirty) return;
+    const payload = {
+      context_type: contextDraft.context_type,
+      grade_level: contextDraft.context_type === "academic" ? contextDraft.grade_level.trim() || null : null,
+      academic_program: contextDraft.context_type === "academic" ? contextDraft.academic_program || null : null,
+      academic_program_label:
+        contextDraft.context_type === "academic" && contextDraft.academic_program
+          ? programLabelFromValue(contextDraft.academic_program, academicConfig, t)
+          : null,
+      academic_program_unsure: contextDraft.context_type === "academic" && contextDraft.academic_program === "unsure",
+      subject_struggles: contextDraft.context_type === "academic" ? csvToArray(contextDraft.subject_struggles) : [],
+      exam_date: contextDraft.context_type === "academic" ? contextDraft.exam_date || null : null,
+      target_language: contextDraft.context_type === "language" ? contextDraft.target_language.trim() || null : null,
+      instrument: contextDraft.context_type === "music" ? contextDraft.instrument.trim() || null : null,
+      current_level:
+        contextDraft.context_type !== "academic" ? contextDraft.current_level.trim() || null : null,
+      practice_frequency:
+        contextDraft.context_type === "music" ? contextDraft.practice_frequency.trim() || null : null,
+      learning_goals:
+        contextDraft.context_type === "academic"
+          ? Array.isArray(selectedLearner?.learning_goals)
+            ? selectedLearner.learning_goals
+            : []
+          : csvToArray(contextDraft.learning_goals),
+      notes_for_teacher: contextDraft.notes_for_teacher.trim() || null,
+      updated_at: new Date().toISOString(),
+    };
+
+    const supabase = getSupabaseClient();
+    const { data, error } = await supabase
+      .from("learner_profiles")
+      .update(payload)
+      .eq("id", selectedLearnerId)
+      .eq("owner_user_id", user.id)
+      .select("id, display_name, context_type, school_level, grade_level, academic_program, academic_program_label, academic_program_unsure, target_language, current_level, instrument, practice_frequency, exam_date, learning_goals, subject_struggles, explanation_preference, notes_for_teacher, is_default")
+      .single();
+    if (error) throw error;
+    const updated = data as BookingLearnerProfile;
+    setLearnerProfiles((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
+    setContextDirty(false);
   };
 
   const requestBookingGeo = useCallback(() => {
@@ -355,6 +496,24 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
     return dt.toLocaleDateString(dateLocale, { weekday: "long", day: "numeric", month: "long", year: "numeric" });
   }, [selectedDate, dateLocale]);
 
+  const selectedTimeLabels = useMemo(() => {
+    if (!selectedDate || !selectedSlot) return null;
+    const range = bookingWallTimeRangeToUtc({
+      dateIso: selectedDate,
+      slot: selectedSlot,
+      durationMinutes,
+      timeZone: teacher.timezone,
+    });
+    if (!range) return null;
+    return formatBookingTimeForBothZones({
+      startIso: range.start,
+      endIso: range.end,
+      userTimeZone: browserTimeZone,
+      teacherTimeZone: teacher.timezone,
+      locale: dateLocale,
+    });
+  }, [browserTimeZone, dateLocale, durationMinutes, selectedDate, selectedSlot, teacher.timezone]);
+
   const handleConfirmAndPay = async () => {
     if (!user) {
       const next =
@@ -394,6 +553,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
       }
 
       const supabase = getSupabaseClient();
+      await saveSelectedLearnerContext();
       const bookingData = {
         teacher_id: teacher.id,
         student_id: user.id,
@@ -628,7 +788,9 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                     {learnerProfiles.map((learner) => (
                       <option key={learner.id} value={learner.id}>
                         {learner.display_name}
-                        {learner.grade_level ? ` · ${learner.grade_level}` : ""}
+                        {learner.context_type === "academic" && learner.grade_level ? ` · ${learner.grade_level}` : ""}
+                        {learner.context_type === "music" && learner.instrument ? ` · ${learner.instrument}` : ""}
+                        {learner.context_type === "language" && learner.target_language ? ` · ${learner.target_language}` : ""}
                       </option>
                     ))}
                   </select>
@@ -652,6 +814,14 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                   </div>
                 )}
               </div>
+
+              {selectedLearner ? (
+                <LearnerBookingContextPanel
+                  draft={contextDraft}
+                  academicConfig={academicConfig}
+                  onChange={updateContextDraft}
+                />
+              ) : null}
 
               <div className="space-y-2">
                 <p className="text-sm font-semibold text-slate-800">{t("bookingLocationTitle")}</p>
@@ -905,6 +1075,21 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                   <span className="text-slate-600">{t("bookingTimeLabel")}</span>
                   <span className="font-semibold text-slate-900">{selectedSlot}</span>
                 </div>
+                {selectedTimeLabels ? (
+                  <div className="rounded-xl border border-[#DCEAE3] bg-white px-3 py-2 text-xs text-slate-700">
+                    <p>
+                      <span className="font-semibold text-slate-900">{t("yourLocalTime")}:</span>{" "}
+                      {selectedTimeLabels.userLabel}
+                    </p>
+                    {selectedTimeLabels.showTeacherTime ? (
+                      <p className="mt-1">
+                        <span className="font-semibold text-slate-900">{t("teacherLocalTime")}:</span>{" "}
+                        {selectedTimeLabels.teacherLabel}
+                      </p>
+                    ) : null}
+                    <p className="mt-1 text-[11px] text-slate-500">{t("timezoneDisplayedInYourZone")}</p>
+                  </div>
+                ) : null}
                 <div className="flex justify-between gap-2">
                   <span className="text-slate-600">{t("bookingDurationLabel")}</span>
                   <span className="font-semibold text-slate-900">
@@ -921,8 +1106,12 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                     <span className="font-semibold text-slate-900 text-right">
                       {[
                         selectedLearner.display_name,
-                        selectedLearner.grade_level,
-                        selectedLearner.academic_program?.toUpperCase(),
+                        contextDraft.context_type === "academic" ? contextDraft.grade_level : null,
+                        contextDraft.context_type === "academic"
+                          ? programLabelFromValue(contextDraft.academic_program, academicConfig, t) ?? selectedLearner.academic_program_label
+                          : null,
+                        contextDraft.context_type === "language" ? contextDraft.target_language || contextDraft.current_level : null,
+                        contextDraft.context_type === "music" ? contextDraft.instrument || contextDraft.current_level : null,
                       ].filter(Boolean).join(" · ")}
                     </span>
                   </div>
@@ -1039,6 +1228,142 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
           )}
         </div>
       </motion.div>
+    </div>
+  );
+}
+
+function LearnerBookingContextPanel({
+  draft,
+  academicConfig,
+  onChange,
+}: {
+  draft: BookingContextDraft;
+  academicConfig: ReturnType<typeof getAcademicSystemConfig>;
+  onChange: (patch: Partial<BookingContextDraft>) => void;
+}) {
+  const { t } = useLocale();
+  const academicProgramHelperKey = getAcademicProgramHelperKey(academicConfig);
+
+  const fieldClass = "h-10 w-full rounded-xl border border-[#DCEAE3] bg-white px-3 text-xs outline-none focus:border-[#1D9E75]";
+  const areaClass = "w-full rounded-xl border border-[#DCEAE3] bg-white px-3 py-2 text-xs outline-none focus:border-[#1D9E75]";
+
+  return (
+    <div className="space-y-3 rounded-2xl border border-[#DCEAE3] bg-white p-4">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="text-sm font-semibold text-slate-800">{t("bookingLearnerContextHint")}</p>
+          <p className="mt-1 text-xs leading-relaxed text-slate-600">{t("learnerContextHelpfulHint")}</p>
+        </div>
+        <select
+          value={draft.context_type}
+          onChange={(e) => onChange({ context_type: e.target.value as LearnerContextType })}
+          className="h-9 rounded-xl border border-[#DCEAE3] bg-[#F3FAF6] px-2 text-xs font-semibold text-[#0F6E56]"
+        >
+          <option value="academic">{t("contextTypeAcademic")}</option>
+          <option value="language">{t("contextTypeLanguage")}</option>
+          <option value="music">{t("contextTypeMusic")}</option>
+          <option value="general">{t("contextTypeGeneral")}</option>
+        </select>
+      </div>
+
+      {draft.context_type === "academic" ? (
+        <div className="grid gap-2 sm:grid-cols-2">
+          <label className="space-y-1">
+            <span className="text-[11px] font-bold uppercase text-slate-600">{t("gradeLevel")}</span>
+            <input value={draft.grade_level} onChange={(e) => onChange({ grade_level: e.target.value })} className={fieldClass} />
+          </label>
+          <label className="space-y-1">
+            <span className="text-[11px] font-bold uppercase text-slate-600">{t("academicProgram")}</span>
+            <select value={draft.academic_program} onChange={(e) => onChange({ academic_program: e.target.value })} className={fieldClass}>
+              <option value="">-</option>
+              {academicConfig.programTracks.map((track) => (
+                <option key={track.value} value={track.value}>
+                  {t((track.parentFriendlyLabelKey || track.labelKey) as TranslationKey)}
+                </option>
+              ))}
+            </select>
+            {academicProgramHelperKey ? (
+              <span className="block text-[11px] leading-relaxed text-slate-500">
+                {t(academicProgramHelperKey as TranslationKey)}
+              </span>
+            ) : null}
+          </label>
+          <label className="space-y-1 sm:col-span-2">
+            <span className="text-[11px] font-bold uppercase text-slate-600">{t("subjectStruggles")}</span>
+            <input
+              value={draft.subject_struggles}
+              onChange={(e) => onChange({ subject_struggles: e.target.value })}
+              placeholder="Fractions, fonctions..."
+              className={fieldClass}
+            />
+          </label>
+          <label className="space-y-1">
+            <span className="text-[11px] font-bold uppercase text-slate-600">{t("examDate")}</span>
+            <input type="date" value={draft.exam_date} onChange={(e) => onChange({ exam_date: e.target.value })} className={fieldClass} />
+          </label>
+        </div>
+      ) : null}
+
+      {draft.context_type === "language" ? (
+        <div className="grid gap-2 sm:grid-cols-2">
+          <label className="space-y-1">
+            <span className="text-[11px] font-bold uppercase text-slate-600">{t("targetLanguage")}</span>
+            <input value={draft.target_language} onChange={(e) => onChange({ target_language: e.target.value })} className={fieldClass} />
+          </label>
+          <label className="space-y-1">
+            <span className="text-[11px] font-bold uppercase text-slate-600">{t("currentLevel")}</span>
+            <input value={draft.current_level} onChange={(e) => onChange({ current_level: e.target.value })} className={fieldClass} />
+          </label>
+          <label className="space-y-1 sm:col-span-2">
+            <span className="text-[11px] font-bold uppercase text-slate-600">{t("learningGoals")}</span>
+            <input value={draft.learning_goals} onChange={(e) => onChange({ learning_goals: e.target.value })} className={fieldClass} />
+          </label>
+        </div>
+      ) : null}
+
+      {draft.context_type === "music" ? (
+        <div className="grid gap-2 sm:grid-cols-2">
+          <label className="space-y-1">
+            <span className="text-[11px] font-bold uppercase text-slate-600">{t("instrument")}</span>
+            <input value={draft.instrument} onChange={(e) => onChange({ instrument: e.target.value })} className={fieldClass} />
+          </label>
+          <label className="space-y-1">
+            <span className="text-[11px] font-bold uppercase text-slate-600">{t("currentLevel")}</span>
+            <input value={draft.current_level} onChange={(e) => onChange({ current_level: e.target.value })} className={fieldClass} />
+          </label>
+          <label className="space-y-1">
+            <span className="text-[11px] font-bold uppercase text-slate-600">{t("practiceFrequency")}</span>
+            <input value={draft.practice_frequency} onChange={(e) => onChange({ practice_frequency: e.target.value })} className={fieldClass} />
+          </label>
+          <label className="space-y-1">
+            <span className="text-[11px] font-bold uppercase text-slate-600">{t("learningGoals")}</span>
+            <input value={draft.learning_goals} onChange={(e) => onChange({ learning_goals: e.target.value })} className={fieldClass} />
+          </label>
+        </div>
+      ) : null}
+
+      {draft.context_type === "general" ? (
+        <div className="grid gap-2 sm:grid-cols-2">
+          <label className="space-y-1">
+            <span className="text-[11px] font-bold uppercase text-slate-600">{t("currentLevel")}</span>
+            <input value={draft.current_level} onChange={(e) => onChange({ current_level: e.target.value })} className={fieldClass} />
+          </label>
+          <label className="space-y-1">
+            <span className="text-[11px] font-bold uppercase text-slate-600">{t("learningGoals")}</span>
+            <input value={draft.learning_goals} onChange={(e) => onChange({ learning_goals: e.target.value })} className={fieldClass} />
+          </label>
+        </div>
+      ) : null}
+
+      <label className="block space-y-1">
+        <span className="text-[11px] font-bold uppercase text-slate-600">{t("notesForTeacher")}</span>
+        <textarea
+          value={draft.notes_for_teacher}
+          onChange={(e) => onChange({ notes_for_teacher: e.target.value })}
+          rows={2}
+          className={areaClass}
+        />
+      </label>
     </div>
   );
 }

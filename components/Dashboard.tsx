@@ -69,8 +69,18 @@ type TeacherBookingRow = {
 
 type LearnerContext = {
   displayName: string;
+  contextType: "academic" | "language" | "music" | "general" | null;
+  schoolLevel: string | null;
   gradeLevel: string | null;
   academicProgram: string | null;
+  academicProgramLabel: string | null;
+  academicProgramUnsure: boolean;
+  targetLanguage: string | null;
+  currentLevel: string | null;
+  instrument: string | null;
+  practiceFrequency: string | null;
+  examDate: string | null;
+  currentGradePercent: number | null;
   learningGoals: string[];
   subjectStruggles: string[];
   explanationPreference: string | null;
@@ -499,13 +509,23 @@ export function Dashboard() {
       if (learnerIds.length) {
         const { data: learnerRows } = await supabase
           .from("learner_profiles")
-          .select("id, display_name, grade_level, academic_program, learning_goals, subject_struggles, explanation_preference, notes_for_teacher")
+          .select("id, display_name, context_type, school_level, grade_level, academic_program, academic_program_label, academic_program_unsure, target_language, current_level, instrument, practice_frequency, exam_date, current_grade_percent, learning_goals, subject_struggles, explanation_preference, notes_for_teacher")
           .in("id", learnerIds);
         for (const learner of (learnerRows || []) as {
           id: string;
           display_name?: string | null;
+          context_type?: "academic" | "language" | "music" | "general" | null;
+          school_level?: string | null;
           grade_level?: string | null;
           academic_program?: string | null;
+          academic_program_label?: string | null;
+          academic_program_unsure?: boolean | null;
+          target_language?: string | null;
+          current_level?: string | null;
+          instrument?: string | null;
+          practice_frequency?: string | null;
+          exam_date?: string | null;
+          current_grade_percent?: number | string | null;
           learning_goals?: string[] | null;
           subject_struggles?: string[] | null;
           explanation_preference?: string | null;
@@ -513,8 +533,21 @@ export function Dashboard() {
         }[]) {
           learnerMap.set(learner.id, {
             displayName: learner.display_name || "?",
+            contextType: learner.context_type ?? null,
+            schoolLevel: learner.school_level ?? null,
             gradeLevel: learner.grade_level ?? null,
             academicProgram: learner.academic_program ?? null,
+            academicProgramLabel: learner.academic_program_label ?? null,
+            academicProgramUnsure: Boolean(learner.academic_program_unsure),
+            targetLanguage: learner.target_language ?? null,
+            currentLevel: learner.current_level ?? null,
+            instrument: learner.instrument ?? null,
+            practiceFrequency: learner.practice_frequency ?? null,
+            examDate: learner.exam_date ?? null,
+            currentGradePercent:
+              learner.current_grade_percent != null && Number.isFinite(Number(learner.current_grade_percent))
+                ? Number(learner.current_grade_percent)
+                : null,
             learningGoals: Array.isArray(learner.learning_goals) ? learner.learning_goals : [],
             subjectStruggles: Array.isArray(learner.subject_struggles) ? learner.subject_struggles : [],
             explanationPreference: learner.explanation_preference ?? null,

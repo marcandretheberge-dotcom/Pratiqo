@@ -20,8 +20,18 @@ export type TeacherScheduleRow = {
   studentUserId?: string | null;
   learnerContext?: {
     displayName: string;
+    contextType: "academic" | "language" | "music" | "general" | null;
+    schoolLevel: string | null;
     gradeLevel: string | null;
     academicProgram: string | null;
+    academicProgramLabel: string | null;
+    academicProgramUnsure: boolean;
+    targetLanguage: string | null;
+    currentLevel: string | null;
+    instrument: string | null;
+    practiceFrequency: string | null;
+    examDate: string | null;
+    currentGradePercent: number | null;
     learningGoals: string[];
     subjectStruggles: string[];
     explanationPreference: string | null;
@@ -178,37 +188,7 @@ export function TeacherScheduleCard({
                 <div className="mt-4 rounded-2xl border border-[#DCEAE3] bg-[#F3FAF6] p-3 text-xs text-slate-700">
                   <p className="font-bold uppercase tracking-widest text-[#0F6E56]">{t("teacherLearnerContextTitle")}</p>
                   {learner ? (
-                    <div className="mt-2 space-y-1.5">
-                      <p>
-                        <span className="font-semibold text-slate-900">{t("student")}:</span>{" "}
-                        {learner.displayName}
-                      </p>
-                      {[learner.gradeLevel, learner.academicProgram?.toUpperCase()].filter(Boolean).length ? (
-                        <p>
-                          <span className="font-semibold text-slate-900">{t("gradeLevel")}:</span>{" "}
-                          {[learner.gradeLevel, learner.academicProgram?.toUpperCase()].filter(Boolean).join(" · ")}
-                        </p>
-                      ) : null}
-                      {learner.learningGoals.length ? (
-                        <p>
-                          <span className="font-semibold text-slate-900">{t("learningGoals")}:</span>{" "}
-                          {learner.learningGoals.join(", ")}
-                        </p>
-                      ) : null}
-                      {learner.subjectStruggles.length ? (
-                        <p>
-                          <span className="font-semibold text-slate-900">{t("subjectStruggles")}:</span>{" "}
-                          {learner.subjectStruggles.join(", ")}
-                        </p>
-                      ) : null}
-                      {learner.explanationPreference ? (
-                        <p>
-                          <span className="font-semibold text-slate-900">{t("explanationPreferenceShort")}:</span>{" "}
-                          {t(explanationPreferenceKey(learner.explanationPreference))}
-                        </p>
-                      ) : null}
-                      {learner.notesForTeacher ? <p className="pt-1 text-slate-600">{learner.notesForTeacher}</p> : null}
-                    </div>
+                    <LearnerContextSummary learner={learner} />
                   ) : (
                     <p className="mt-2 text-slate-600">{t("teacherLearnerContextEmpty")}</p>
                   )}
@@ -352,6 +332,114 @@ export function TeacherScheduleCard({
           </div>
         </div>
       ) : null}
+    </div>
+  );
+}
+
+function LearnerContextSummary({ learner }: { learner: NonNullable<TeacherScheduleRow["learnerContext"]> }) {
+  const { t } = useLocale();
+  const contextType = learner.contextType ?? "general";
+  const programLabel =
+    learner.academicProgramLabel ||
+    (learner.academicProgram === "unsure" ? t("programIDontKnow") : learner.academicProgram?.toUpperCase() ?? null);
+
+  return (
+    <div className="mt-2 space-y-1.5">
+      <p>
+        <span className="font-semibold text-slate-900">{t("student")}:</span>{" "}
+        {learner.displayName}
+      </p>
+
+      {contextType === "academic" ? (
+        <>
+          {[learner.schoolLevel, learner.gradeLevel].filter(Boolean).length ? (
+            <p>
+              <span className="font-semibold text-slate-900">{t("gradeLevel")}:</span>{" "}
+              {[learner.schoolLevel, learner.gradeLevel].filter(Boolean).join(" · ")}
+            </p>
+          ) : null}
+          {programLabel ? (
+            <p>
+              <span className="font-semibold text-slate-900">{t("academicProgram")}:</span>{" "}
+              {programLabel}
+            </p>
+          ) : null}
+          {learner.subjectStruggles.length ? (
+            <p>
+              <span className="font-semibold text-slate-900">{t("subjectStruggles")}:</span>{" "}
+              {learner.subjectStruggles.join(", ")}
+            </p>
+          ) : null}
+          {learner.examDate ? (
+            <p>
+              <span className="font-semibold text-slate-900">{t("examDate")}:</span>{" "}
+              {learner.examDate}
+            </p>
+          ) : null}
+          {learner.currentGradePercent != null ? (
+            <p>
+              <span className="font-semibold text-slate-900">{t("currentGradePercent")}:</span>{" "}
+              {learner.currentGradePercent}%
+            </p>
+          ) : null}
+          {learner.explanationPreference ? (
+            <p>
+              <span className="font-semibold text-slate-900">{t("explanationPreferenceShort")}:</span>{" "}
+              {t(explanationPreferenceKey(learner.explanationPreference))}
+            </p>
+          ) : null}
+        </>
+      ) : null}
+
+      {contextType === "language" ? (
+        <>
+          {learner.targetLanguage ? (
+            <p><span className="font-semibold text-slate-900">{t("targetLanguage")}:</span> {learner.targetLanguage}</p>
+          ) : null}
+          {learner.currentLevel ? (
+            <p><span className="font-semibold text-slate-900">{t("currentLevel")}:</span> {learner.currentLevel}</p>
+          ) : null}
+          {learner.learningGoals.length ? (
+            <p><span className="font-semibold text-slate-900">{t("learningGoals")}:</span> {learner.learningGoals.join(", ")}</p>
+          ) : null}
+          {learner.explanationPreference ? (
+            <p>
+              <span className="font-semibold text-slate-900">{t("explanationPreferenceShort")}:</span>{" "}
+              {t(explanationPreferenceKey(learner.explanationPreference))}
+            </p>
+          ) : null}
+        </>
+      ) : null}
+
+      {contextType === "music" ? (
+        <>
+          {learner.instrument ? (
+            <p><span className="font-semibold text-slate-900">{t("instrument")}:</span> {learner.instrument}</p>
+          ) : null}
+          {learner.currentLevel ? (
+            <p><span className="font-semibold text-slate-900">{t("currentLevel")}:</span> {learner.currentLevel}</p>
+          ) : null}
+          {learner.practiceFrequency ? (
+            <p><span className="font-semibold text-slate-900">{t("practiceFrequency")}:</span> {learner.practiceFrequency}</p>
+          ) : null}
+          {learner.learningGoals.length ? (
+            <p><span className="font-semibold text-slate-900">{t("learningGoals")}:</span> {learner.learningGoals.join(", ")}</p>
+          ) : null}
+        </>
+      ) : null}
+
+      {contextType === "general" ? (
+        <>
+          {learner.currentLevel ? (
+            <p><span className="font-semibold text-slate-900">{t("currentLevel")}:</span> {learner.currentLevel}</p>
+          ) : null}
+          {learner.learningGoals.length ? (
+            <p><span className="font-semibold text-slate-900">{t("learningGoals")}:</span> {learner.learningGoals.join(", ")}</p>
+          ) : null}
+        </>
+      ) : null}
+
+      {learner.notesForTeacher ? <p className="pt-1 text-slate-600">{learner.notesForTeacher}</p> : null}
     </div>
   );
 }

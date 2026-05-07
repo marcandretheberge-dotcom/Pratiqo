@@ -4,15 +4,28 @@ import { useMemo, useState } from "react";
 import { Loader2, X } from "lucide-react";
 import { useLocale } from "@/lib/locale-context";
 import { cn } from "@/lib/utils";
+import {
+  getAcademicProgramHelperKey,
+  getAcademicSystemConfig,
+  getProgramTrackLabelKey,
+} from "@/lib/academicSystems";
+import type { TranslationKey } from "@/lib/translations";
 
 export type LearnerProfileInput = {
   display_name: string;
   relationship: "self" | "child" | "other";
   birth_year: number | null;
+  context_type: "academic" | "language" | "music" | "general" | null;
   school_level: string | null;
   grade_level: string | null;
   academic_program: string | null;
+  academic_program_label: string | null;
+  academic_program_unsure: boolean;
   primary_language: string | null;
+  target_language: string | null;
+  current_level: string | null;
+  instrument: string | null;
+  practice_frequency: string | null;
   learning_goals: string[];
   subject_struggles: string[];
   current_grade_percent: number | null;
@@ -34,10 +47,17 @@ const emptyProfile: LearnerProfileInput = {
   display_name: "",
   relationship: "self",
   birth_year: null,
+  context_type: "general",
   school_level: null,
   grade_level: null,
   academic_program: null,
+  academic_program_label: null,
+  academic_program_unsure: false,
   primary_language: null,
+  target_language: null,
+  current_level: null,
+  instrument: null,
+  practice_frequency: null,
   learning_goals: [],
   subject_struggles: [],
   current_grade_percent: null,
@@ -68,6 +88,16 @@ const goalSeeds = [
   "Progresser par plaisir",
 ];
 
+const currentLevelSeeds = ["Debutant", "Intermediaire", "Avance", "A1-A2", "B1-B2", "C1-C2"];
+const practiceFrequencySeeds = ["Quelques fois par mois", "1 fois par semaine", "2-3 fois par semaine", "Chaque jour"];
+
+function academicProgramLabel(value: string | null, labelKey: string | null, t: (key: TranslationKey) => string) {
+  if (!value) return null;
+  if (labelKey) return t(labelKey as TranslationKey);
+  if (value === "ib") return "IB";
+  return value;
+}
+
 function toggleTag(items: string[], tag: string) {
   return items.includes(tag) ? items.filter((x) => x !== tag) : [...items, tag];
 }
@@ -82,6 +112,14 @@ function normalizeInitial(initial?: Partial<LearnerProfileInput> | null): Learne
         : "self",
     learning_goals: Array.isArray(initial?.learning_goals) ? initial.learning_goals : [],
     subject_struggles: Array.isArray(initial?.subject_struggles) ? initial.subject_struggles : [],
+    context_type:
+      initial?.context_type === "academic" ||
+      initial?.context_type === "language" ||
+      initial?.context_type === "music" ||
+      initial?.context_type === "general"
+        ? initial.context_type
+        : "general",
+    academic_program_unsure: Boolean(initial?.academic_program_unsure),
   };
 }
 
@@ -90,16 +128,25 @@ export function LearnerProfileForm({
   saving,
   onCancel,
   onSubmit,
+  countryCode,
+  regionCode,
 }: {
   initial?: Partial<LearnerProfileInput> | null;
   saving?: boolean;
   onCancel?: () => void;
+  countryCode?: string | null;
+  regionCode?: string | null;
   onSubmit: (value: LearnerProfileInput) => Promise<void> | void;
 }) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const [form, setForm] = useState<LearnerProfileInput>(() => normalizeInitial(initial));
   const [customStruggle, setCustomStruggle] = useState("");
   const [customGoal, setCustomGoal] = useState("");
+  const academicConfig = useMemo(
+    () => getAcademicSystemConfig({ countryCode, regionCode, locale }),
+    [countryCode, regionCode, locale],
+  );
+  const academicProgramHelperKey = getAcademicProgramHelperKey(academicConfig);
 
   const yearOptions = useMemo(() => {
     const y = new Date().getFullYear();
@@ -112,8 +159,18 @@ export function LearnerProfileForm({
     await onSubmit({
       ...form,
       display_name: display,
+      context_type: form.context_type || "general",
       grade_level: form.grade_level?.trim() || null,
+      academic_program_label:
+        form.academic_program_label?.trim() ||
+        academicProgramLabel(form.academic_program, getProgramTrackLabelKey(academicConfig, form.academic_program), t) ||
+        null,
+      academic_program_unsure: form.academic_program === "unsure" || Boolean(form.academic_program_unsure),
       primary_language: form.primary_language?.trim() || null,
+      target_language: form.target_language?.trim() || null,
+      current_level: form.current_level?.trim() || null,
+      instrument: form.instrument?.trim() || null,
+      practice_frequency: form.practice_frequency?.trim() || null,
       notes_for_teacher: form.notes_for_teacher?.trim() || null,
     });
   };
@@ -154,6 +211,24 @@ export function LearnerProfileForm({
           </select>
         </label>
         <label className="block space-y-1">
+          <span className="text-xs font-bold uppercase text-slate-600">{t("contextType")}</span>
+          <select
+            value={form.context_type ?? "general"}
+            onChange={(e) =>
+              setForm((f) => ({
+                ...f,
+                context_type: e.target.value as LearnerProfileInput["context_type"],
+              }))
+            }
+            className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-[#1D9E75]"
+          >
+            <option value="academic">{t("contextTypeAcademic")}</option>
+            <option value="language">{t("contextTypeLanguage")}</option>
+            <option value="music">{t("contextTypeMusic")}</option>
+            <option value="general">{t("contextTypeGeneral")}</option>
+          </select>
+        </label>
+        <label className="block space-y-1">
           <span className="text-xs font-bold uppercase text-slate-600">{t("learnerBirthYear")}</span>
           <select
             value={form.birth_year ?? ""}
@@ -166,103 +241,123 @@ export function LearnerProfileForm({
             ))}
           </select>
         </label>
-        <label className="block space-y-1">
-          <span className="text-xs font-bold uppercase text-slate-600">{t("schoolLevel")}</span>
-          <select
-            value={form.school_level ?? ""}
-            onChange={(e) => setForm((f) => ({ ...f, school_level: e.target.value || null }))}
-            className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-[#1D9E75]"
-          >
-            <option value="">-</option>
-            <option value="primary">{t("schoolLevelPrimary")}</option>
-            <option value="secondary">{t("schoolLevelSecondary")}</option>
-            <option value="cegep">{t("schoolLevelCegep")}</option>
-            <option value="university">{t("schoolLevelUniversity")}</option>
-            <option value="adult">{t("schoolLevelAdult")}</option>
-            <option value="other">{t("schoolLevelOther")}</option>
-          </select>
-        </label>
-        <label className="block space-y-1">
-          <span className="text-xs font-bold uppercase text-slate-600">{t("gradeLevel")}</span>
-          <input
-            value={form.grade_level ?? ""}
-            onChange={(e) => setForm((f) => ({ ...f, grade_level: e.target.value }))}
-            placeholder="Secondaire 4"
-            className="h-11 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-[#1D9E75]"
-          />
-        </label>
-        <label className="block space-y-1">
-          <span className="text-xs font-bold uppercase text-slate-600">{t("academicProgram")}</span>
-          <select
-            value={form.academic_program ?? ""}
-            onChange={(e) => setForm((f) => ({ ...f, academic_program: e.target.value || null }))}
-            className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-[#1D9E75]"
-          >
-            <option value="">-</option>
-            <option value="regular">{t("academicProgramRegular")}</option>
-            <option value="sn">SN</option>
-            <option value="ts">TS</option>
-            <option value="ib">PEI / IB</option>
-            <option value="enriched">{t("academicProgramEnriched")}</option>
-            <option value="other">{t("schoolLevelOther")}</option>
-          </select>
-        </label>
-        <label className="block space-y-1">
-          <span className="text-xs font-bold uppercase text-slate-600">{t("currentGradePercent")}</span>
-          <input
-            type="number"
-            min={0}
-            max={100}
-            value={form.current_grade_percent ?? ""}
-            onChange={(e) => setForm((f) => ({ ...f, current_grade_percent: e.target.value ? Number(e.target.value) : null }))}
-            className="h-11 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-[#1D9E75]"
-          />
-        </label>
-        <label className="block space-y-1">
-          <span className="text-xs font-bold uppercase text-slate-600">{t("examDate")}</span>
-          <input
-            type="date"
-            value={form.exam_date ?? ""}
-            onChange={(e) => setForm((f) => ({ ...f, exam_date: e.target.value || null }))}
-            className="h-11 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-[#1D9E75]"
-          />
-        </label>
       </div>
 
-      <ChipEditor
-        title={t("subjectStruggles")}
-        seeds={struggleSeeds}
-        selected={form.subject_struggles}
-        custom={customStruggle}
-        setCustom={setCustomStruggle}
-        onToggle={(tag) => setForm((f) => ({ ...f, subject_struggles: toggleTag(f.subject_struggles, tag) }))}
-        onAdd={() => addCustomTag("struggle")}
-      />
-      <ChipEditor
-        title={t("learningGoals")}
-        seeds={goalSeeds}
-        selected={form.learning_goals}
-        custom={customGoal}
-        setCustom={setCustomGoal}
-        onToggle={(tag) => setForm((f) => ({ ...f, learning_goals: toggleTag(f.learning_goals, tag) }))}
-        onAdd={() => addCustomTag("goal")}
-      />
+      {form.context_type === "academic" ? (
+        <div className="space-y-4 rounded-2xl border border-[#DCEAE3] bg-[#F3FAF6] p-4">
+          <p className="text-xs font-bold uppercase text-[#0F6E56]">{t("learnerAcademicContext")}</p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="block space-y-1">
+              <span className="text-xs font-bold uppercase text-slate-600">{t("schoolLevel")}</span>
+              <select
+                value={form.school_level ?? ""}
+                onChange={(e) => setForm((f) => ({ ...f, school_level: e.target.value || null }))}
+                className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-[#1D9E75]"
+              >
+                <option value="">-</option>
+                {academicConfig.schoolLevels.map((level) => (
+                  <option key={level.value} value={level.value}>
+                    {t(level.labelKey as TranslationKey)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="block space-y-1">
+              <span className="text-xs font-bold uppercase text-slate-600">{t("gradeLevel")}</span>
+              <input
+                value={form.grade_level ?? ""}
+                onChange={(e) => setForm((f) => ({ ...f, grade_level: e.target.value }))}
+                placeholder="Secondaire 4"
+                className="h-11 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-[#1D9E75]"
+              />
+            </label>
+            <label className="block space-y-1 sm:col-span-2">
+              <span className="text-xs font-bold uppercase text-slate-600">{t("academicProgram")}</span>
+              <select
+                value={form.academic_program ?? ""}
+                onChange={(e) => {
+                  const value = e.target.value || null;
+                  setForm((f) => ({
+                    ...f,
+                    academic_program: value,
+                    academic_program_label: academicProgramLabel(value, getProgramTrackLabelKey(academicConfig, value), t),
+                    academic_program_unsure: value === "unsure",
+                  }));
+                }}
+                className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-[#1D9E75]"
+              >
+                <option value="">-</option>
+                {academicConfig.programTracks.map((track) => (
+                  <option key={track.value} value={track.value}>
+                    {t((track.parentFriendlyLabelKey || track.labelKey) as TranslationKey)}
+                  </option>
+                ))}
+              </select>
+              {academicProgramHelperKey ? (
+                <p className="text-[11px] leading-relaxed text-slate-500">{t(academicProgramHelperKey as TranslationKey)}</p>
+              ) : null}
+            </label>
+            <label className="block space-y-1">
+              <span className="text-xs font-bold uppercase text-slate-600">{t("currentGradePercent")}</span>
+              <input
+                type="number"
+                min={0}
+                max={100}
+                value={form.current_grade_percent ?? ""}
+                onChange={(e) => setForm((f) => ({ ...f, current_grade_percent: e.target.value ? Number(e.target.value) : null }))}
+                className="h-11 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-[#1D9E75]"
+              />
+            </label>
+            <label className="block space-y-1">
+              <span className="text-xs font-bold uppercase text-slate-600">{t("examDate")}</span>
+              <input
+                type="date"
+                value={form.exam_date ?? ""}
+                onChange={(e) => setForm((f) => ({ ...f, exam_date: e.target.value || null }))}
+                className="h-11 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-[#1D9E75]"
+              />
+            </label>
+          </div>
+          <ChipEditor
+            title={t("subjectStruggles")}
+            seeds={struggleSeeds}
+            selected={form.subject_struggles}
+            custom={customStruggle}
+            setCustom={setCustomStruggle}
+            onToggle={(tag) => setForm((f) => ({ ...f, subject_struggles: toggleTag(f.subject_struggles, tag) }))}
+            onAdd={() => addCustomTag("struggle")}
+          />
+          <ExplanationPreferenceSelect value={form.explanation_preference} onChange={(value) => setForm((f) => ({ ...f, explanation_preference: value }))} />
+        </div>
+      ) : null}
 
-      <label className="block space-y-1">
-        <span className="text-xs font-bold uppercase text-slate-600">{t("explanationPreference")}</span>
-        <select
-          value={form.explanation_preference ?? ""}
-          onChange={(e) => setForm((f) => ({ ...f, explanation_preference: e.target.value || null }))}
-          className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-[#1D9E75]"
-        >
-          <option value="">-</option>
-          <option value="examples_first">{t("explanationExamplesFirst")}</option>
-          <option value="theory_first">{t("explanationTheoryFirst")}</option>
-          <option value="step_by_step">{t("explanationStepByStep")}</option>
-          <option value="visual_schema">{t("explanationVisualSchema")}</option>
-          <option value="practice_first">{t("explanationPracticeFirst")}</option>
-        </select>
-      </label>
+      {form.context_type === "language" ? (
+        <div className="space-y-4 rounded-2xl border border-[#DCEAE3] bg-[#F3FAF6] p-4">
+          <p className="text-xs font-bold uppercase text-[#0F6E56]">{t("learnerLanguageContext")}</p>
+          <ContextInput label={t("targetLanguage")} value={form.target_language ?? ""} onChange={(value) => setForm((f) => ({ ...f, target_language: value }))} />
+          <ContextInput label={t("currentLevel")} value={form.current_level ?? ""} onChange={(value) => setForm((f) => ({ ...f, current_level: value }))} suggestions={currentLevelSeeds} />
+          <ChipEditor title={t("learningGoals")} seeds={goalSeeds} selected={form.learning_goals} custom={customGoal} setCustom={setCustomGoal} onToggle={(tag) => setForm((f) => ({ ...f, learning_goals: toggleTag(f.learning_goals, tag) }))} onAdd={() => addCustomTag("goal")} />
+          <ExplanationPreferenceSelect value={form.explanation_preference} onChange={(value) => setForm((f) => ({ ...f, explanation_preference: value }))} />
+        </div>
+      ) : null}
+
+      {form.context_type === "music" ? (
+        <div className="space-y-4 rounded-2xl border border-[#DCEAE3] bg-[#F3FAF6] p-4">
+          <p className="text-xs font-bold uppercase text-[#0F6E56]">{t("learnerMusicContext")}</p>
+          <ContextInput label={t("instrument")} value={form.instrument ?? ""} onChange={(value) => setForm((f) => ({ ...f, instrument: value }))} />
+          <ContextInput label={t("currentLevel")} value={form.current_level ?? ""} onChange={(value) => setForm((f) => ({ ...f, current_level: value }))} suggestions={currentLevelSeeds} />
+          <ContextInput label={t("practiceFrequency")} value={form.practice_frequency ?? ""} onChange={(value) => setForm((f) => ({ ...f, practice_frequency: value }))} suggestions={practiceFrequencySeeds} />
+          <ChipEditor title={t("learningGoals")} seeds={goalSeeds} selected={form.learning_goals} custom={customGoal} setCustom={setCustomGoal} onToggle={(tag) => setForm((f) => ({ ...f, learning_goals: toggleTag(f.learning_goals, tag) }))} onAdd={() => addCustomTag("goal")} />
+        </div>
+      ) : null}
+
+      {form.context_type === "general" || !form.context_type ? (
+        <div className="space-y-4 rounded-2xl border border-[#DCEAE3] bg-[#F3FAF6] p-4">
+          <p className="text-xs font-bold uppercase text-[#0F6E56]">{t("learnerGeneralContext")}</p>
+          <ContextInput label={t("currentLevel")} value={form.current_level ?? ""} onChange={(value) => setForm((f) => ({ ...f, current_level: value }))} suggestions={currentLevelSeeds} />
+          <ChipEditor title={t("learningGoals")} seeds={goalSeeds} selected={form.learning_goals} custom={customGoal} setCustom={setCustomGoal} onToggle={(tag) => setForm((f) => ({ ...f, learning_goals: toggleTag(f.learning_goals, tag) }))} onAdd={() => addCustomTag("goal")} />
+        </div>
+      ) : null}
 
       <label className="block space-y-1">
         <span className="text-xs font-bold uppercase text-slate-600">{t("notesForTeacher")}</span>
@@ -301,6 +396,73 @@ export function LearnerProfileForm({
         </button>
       </div>
     </div>
+  );
+}
+
+function ContextInput({
+  label,
+  value,
+  onChange,
+  suggestions = [],
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  suggestions?: string[];
+}) {
+  return (
+    <label className="block space-y-2">
+      <span className="text-xs font-bold uppercase text-slate-600">{label}</span>
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-[#1D9E75]"
+      />
+      {suggestions.length ? (
+        <div className="flex flex-wrap gap-2">
+          {suggestions.map((item) => (
+            <button
+              key={item}
+              type="button"
+              onClick={() => onChange(item)}
+              className={cn(
+                "rounded-full border px-3 py-1.5 text-xs font-semibold",
+                value === item ? "border-[#0F6E56] bg-[#E1F5EE] text-[#0F6E56]" : "border-slate-200 bg-white text-slate-600",
+              )}
+            >
+              {item}
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </label>
+  );
+}
+
+function ExplanationPreferenceSelect({
+  value,
+  onChange,
+}: {
+  value: string | null;
+  onChange: (value: string | null) => void;
+}) {
+  const { t } = useLocale();
+  return (
+    <label className="block space-y-1">
+      <span className="text-xs font-bold uppercase text-slate-600">{t("explanationPreference")}</span>
+      <select
+        value={value ?? ""}
+        onChange={(e) => onChange(e.target.value || null)}
+        className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-[#1D9E75]"
+      >
+        <option value="">-</option>
+        <option value="examples_first">{t("explanationExamplesFirst")}</option>
+        <option value="theory_first">{t("explanationTheoryFirst")}</option>
+        <option value="step_by_step">{t("explanationStepByStep")}</option>
+        <option value="visual_schema">{t("explanationVisualSchema")}</option>
+        <option value="practice_first">{t("explanationPracticeFirst")}</option>
+      </select>
+    </label>
   );
 }
 
