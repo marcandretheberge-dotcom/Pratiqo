@@ -22,12 +22,18 @@ const PEER_UUID_RE =
 type BookingRow = {
   id: string;
   teacher_id: string;
+  learner_profile_id?: string | null;
   status: string;
   date: string | null;
   time: string | null;
   duration_minutes?: number | null;
   price?: number | null;
   teaching_mode?: string | null;
+};
+
+type LearnerRow = {
+  id: string;
+  display_name: string | null;
 };
 
 type TeacherRow = {
@@ -51,6 +57,7 @@ type BookingWithTeacher = {
   price: number | null;
   teachingMode: string | null;
   status: string;
+  learnerName: string | null;
 };
 
 function sortKey(b: { date: string; time: string }) {
@@ -99,7 +106,7 @@ export function StudentDashboard() {
       setLoading(true);
       const { data: bookings } = await supabase
         .from("bookings")
-        .select("id, teacher_id, status, date, time, duration_minutes, price, teaching_mode")
+        .select("id, teacher_id, learner_profile_id, status, date, time, duration_minutes, price, teaching_mode")
         .eq("student_id", user.id)
         .in("status", [...STUDENT_CANCEL_STATUSES])
         .order("date", { ascending: true })
@@ -107,14 +114,25 @@ export function StudentDashboard() {
 
       const rows = (bookings || []) as unknown as BookingRow[];
       const teacherIds = Array.from(new Set(rows.map((r) => r.teacher_id)));
+      const learnerIds = Array.from(new Set(rows.map((r) => r.learner_profile_id).filter(Boolean))) as string[];
       const teacherMap = new Map<string, TeacherRow>();
+      const learnerMap = new Map<string, LearnerRow>();
 
-      await Promise.all(
-        teacherIds.map(async (tid) => {
+      await Promise.all([
+        ...teacherIds.map(async (tid) => {
           const { data } = await supabase.from("teachers").select("id, user_id, name, discipline, image_url").eq("id", tid).maybeSingle();
           if (data) teacherMap.set(tid, data as unknown as TeacherRow);
         }),
-      );
+        learnerIds.length
+          ? supabase
+              .from("learner_profiles")
+              .select("id, display_name")
+              .in("id", learnerIds)
+              .then(({ data }) => {
+                for (const row of (data ?? []) as LearnerRow[]) learnerMap.set(row.id, row);
+              })
+          : Promise.resolve(),
+      ]);
 
       const upcomingList: BookingWithTeacher[] = rows
         .filter((r) => r.date && r.time)
@@ -133,6 +151,7 @@ export function StudentDashboard() {
             price: typeof r.price === "number" ? r.price : r.price != null ? Number(r.price) : null,
             teachingMode: r.teaching_mode ?? null,
             status: r.status,
+            learnerName: r.learner_profile_id ? learnerMap.get(r.learner_profile_id)?.display_name ?? null : null,
           };
         })
         .filter((row) =>
@@ -291,6 +310,11 @@ export function StudentDashboard() {
                     {nextLesson.price != null ? <span>{formatPrice(nextLesson.price)}</span> : null}
                     {nextLessonModeLabel ? <span className="text-white/85">{nextLessonModeLabel}</span> : null}
                   </div>
+                  {nextLesson.learnerName ? (
+                    <p className="mt-2 text-sm font-semibold text-white/90">
+                      {t("studentCourseForLearner")} : {nextLesson.learnerName}
+                    </p>
+                  ) : null}
                 </div>
               </div>
             </div>
@@ -405,6 +429,11 @@ export function StudentDashboard() {
                               {modeLabel ? ` · ${modeLabel}` : ""}
                               {b.price != null ? ` · ${formatPrice(b.price)}` : ""}
                             </p>
+                            {b.learnerName ? (
+                              <p className="mt-1 text-xs font-semibold text-[#0F6E56]">
+                                {t("studentCourseForLearner")} : {b.learnerName}
+                              </p>
+                            ) : null}
                           </div>
                         </div>
 

@@ -36,6 +36,7 @@ interface BookingWithTeacher {
   id: string;
   teacherId: string;
   teacherName: string;
+  learnerName?: string | null;
   date: string;
   time: string;
   status: string;
@@ -49,8 +50,10 @@ type TeacherBookingRow = {
   id: string;
   status: string;
   student_id: string;
+  learner_profile_id?: string | null;
   studentName?: string;
   studentPhotoUrl?: string | null;
+  learnerContext?: LearnerContext | null;
   slot_date?: string | null;
   date?: string | null;
   time_slot?: string | null;
@@ -62,6 +65,16 @@ type TeacherBookingRow = {
   student_address?: string | null;
   completion_outcome?: string | null;
   completed_at?: string | null;
+};
+
+type LearnerContext = {
+  displayName: string;
+  gradeLevel: string | null;
+  academicProgram: string | null;
+  learningGoals: string[];
+  subjectStruggles: string[];
+  explanationPreference: string | null;
+  notesForTeacher: string | null;
 };
 
 const TEACHER_MSG_PEER_RE =
@@ -396,14 +409,33 @@ export function Dashboard() {
         .eq("student_id", user.id)
         .order("created_at", { ascending: false });
       if (cancelled || error) return;
+      const learnerIds = Array.from(
+        new Set(
+          ((rows || []) as { learner_profile_id?: string | null }[])
+            .map((r) => r.learner_profile_id)
+            .filter(Boolean),
+        ),
+      ) as string[];
+      const learnerMap = new Map<string, string>();
+      if (learnerIds.length) {
+        const { data: learners } = await supabase
+          .from("learner_profiles")
+          .select("id, display_name")
+          .in("id", learnerIds);
+        for (const learner of (learners || []) as { id: string; display_name?: string | null }[]) {
+          learnerMap.set(learner.id, learner.display_name || "");
+        }
+      }
       const list: BookingWithTeacher[] = [];
       for (const row of rows || []) {
         const tid = row.teacher_id as string;
+        const learnerId = (row as { learner_profile_id?: string | null }).learner_profile_id ?? null;
         const { data: trow } = await supabase.from("teachers").select("name").eq("id", tid).maybeSingle();
         list.push({
           id: row.id as string,
           teacherId: tid,
           teacherName: (trow?.name as string) || "?",
+          learnerName: learnerId ? learnerMap.get(learnerId) ?? null : null,
           date: (row.date as string) || "",
           time: (row.time as string) || "",
           status: row.status as string,
@@ -456,9 +488,44 @@ export function Dashboard() {
         .eq("teacher_id", teacherSlug)
         .order("created_at", { ascending: false });
       if (cancelled || error) return;
+      const learnerIds = Array.from(
+        new Set(
+          ((rows || []) as { learner_profile_id?: string | null }[])
+            .map((r) => r.learner_profile_id)
+            .filter(Boolean),
+        ),
+      ) as string[];
+      const learnerMap = new Map<string, LearnerContext>();
+      if (learnerIds.length) {
+        const { data: learnerRows } = await supabase
+          .from("learner_profiles")
+          .select("id, display_name, grade_level, academic_program, learning_goals, subject_struggles, explanation_preference, notes_for_teacher")
+          .in("id", learnerIds);
+        for (const learner of (learnerRows || []) as {
+          id: string;
+          display_name?: string | null;
+          grade_level?: string | null;
+          academic_program?: string | null;
+          learning_goals?: string[] | null;
+          subject_struggles?: string[] | null;
+          explanation_preference?: string | null;
+          notes_for_teacher?: string | null;
+        }[]) {
+          learnerMap.set(learner.id, {
+            displayName: learner.display_name || "?",
+            gradeLevel: learner.grade_level ?? null,
+            academicProgram: learner.academic_program ?? null,
+            learningGoals: Array.isArray(learner.learning_goals) ? learner.learning_goals : [],
+            subjectStruggles: Array.isArray(learner.subject_struggles) ? learner.subject_struggles : [],
+            explanationPreference: learner.explanation_preference ?? null,
+            notesForTeacher: learner.notes_for_teacher ?? null,
+          });
+        }
+      }
       const list: TeacherBookingRow[] = [];
       for (const row of rows || []) {
         const sid = row.student_id as string;
+        const learnerId = (row as { learner_profile_id?: string | null }).learner_profile_id ?? null;
         const { data: prow } = await supabase.from("profiles").select("name, photo_url").eq("id", sid).maybeSingle();
         list.push({
           ...(row as Omit<TeacherBookingRow, "studentName" | "studentPhotoUrl">),
@@ -467,6 +534,8 @@ export function Dashboard() {
           student_id: sid,
           studentName: (prow?.name as string) || "?",
           studentPhotoUrl: (prow?.photo_url as string) || null,
+          learner_profile_id: learnerId,
+          learnerContext: learnerId ? learnerMap.get(learnerId) ?? null : null,
         });
       }
       setTeacherBookings(list);
@@ -627,6 +696,7 @@ export function Dashboard() {
                   studentName: b.studentName as string | undefined,
                   studentPhotoUrl: (b.studentPhotoUrl as string | null | undefined) ?? null,
                   studentUserId: (b.student_id as string | undefined) ?? null,
+                  learnerContext: b.learnerContext ?? null,
                   slot_date: b.slot_date as string | null | undefined,
                   date: b.date as string | null | undefined,
                   time_slot: b.time_slot as string | null | undefined,
@@ -773,6 +843,11 @@ export function Dashboard() {
                       <span className="text-[9px] font-bold text-brand-primary uppercase tracking-tighter">{b.time}</span>
                     </div>
                     <p className="text-[9px] text-slate-600 font-bold uppercase tracking-widest">{b.date}</p>
+                    {b.learnerName ? (
+                      <p className="text-[10px] font-semibold text-[#0F6E56]">
+                        {t("studentCourseForLearner")} : {b.learnerName}
+                      </p>
+                    ) : null}
                     <button
                       type="button"
                       onClick={() => setCancelBooking({ id: b.id, side: "student" })}

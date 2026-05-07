@@ -74,10 +74,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const studentDisplayName = (profile?.name as string | undefined) || (user ? authDisplayName(user) : "");
   const studentInitials = initialsFromDisplay(studentDisplayName, user?.email || undefined);
 
-  const STUDENT_NAV: { href: string; labelKey: "studentTabFind" | "studentTabLessons" | "studentTabProgress" | "studentTabProfile" }[] = [
+  const STUDENT_NAV: { href: string; labelKey: "studentTabFind" | "studentTabLessons" | "studentTabProgress" | "studentTabLearners" | "studentTabProfile" }[] = [
     { href: "/student/search", labelKey: "studentTabFind" },
     { href: "/dashboard", labelKey: "studentTabLessons" },
     { href: "/student/progress", labelKey: "studentTabProgress" },
+    { href: "/student/learners", labelKey: "studentTabLearners" },
     { href: "/profile", labelKey: "studentTabProfile" },
   ];
 
@@ -277,6 +278,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             { href: "/student/search", icon: "🔍", labelKey: "studentTabFind" as const },
             { href: "/dashboard", icon: "📅", labelKey: "studentTabLessons" as const },
             { href: "/student/progress", icon: "🌱", labelKey: "studentTabProgress" as const },
+            { href: "/student/learners", icon: "🎓", labelKey: "studentTabLearners" as const },
             { href: "/profile", icon: "👤", labelKey: "studentTabProfile" as const },
           ].map((tab) => {
             const active = isStudentNavActive(pathname, tab.href);

@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Bell, ChevronRight, CreditCard, Loader2, MapPin } from "lucide-react";
+import { Bell, ChevronRight, CreditCard, GraduationCap, Loader2, MapPin } from "lucide-react";
 import { useAuth } from "../../../components/AuthProvider";
 import { getSupabaseClient } from "../../../lib/supabase";
 import { authDisplayName } from "../../../lib/authDisplay";
@@ -366,6 +366,19 @@ export default function StudentProfilePage() {
               <CreditCard size={18} />
             </span>
             <span className="text-sm font-semibold text-slate-800">{t("profilePayments")}</span>
+          </div>
+          <ChevronRight size={18} className="text-slate-600" />
+        </Link>
+
+        <Link
+          href="/student/learners"
+          className="flex items-center justify-between rounded-2xl px-3 py-3 hover:bg-slate-50"
+        >
+          <div className="flex items-center gap-3">
+            <span className="h-9 w-9 rounded-xl bg-[#E1F5EE] text-[#0F6E56] flex items-center justify-center">
+              <GraduationCap size={18} />
+            </span>
+            <span className="text-sm font-semibold text-slate-800">{t("learnerProfilesTitle")}</span>
           </div>
           <ChevronRight size={18} className="text-slate-600" />
         </Link>

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import {
   Calendar,
   CheckCircle2,
@@ -34,6 +35,17 @@ type StoredTeachingMode = "person" | "online" | "domicile";
 
 type Step = "info" | "preferences" | "pickDate" | "pickSlot" | "confirm";
 
+type BookingLearnerProfile = {
+  id: string;
+  display_name: string;
+  grade_level: string | null;
+  academic_program: string | null;
+  learning_goals: string[] | null;
+  subject_struggles: string[] | null;
+  explanation_preference: string | null;
+  is_default: boolean | null;
+};
+
 function defaultTeachingMode(teacher: Teacher, initial: BookingInitialLessonKind): StoredTeachingMode {
   if (initial === "home") return "domicile";
   if (teacher.teachingMode === "online") return "online";
@@ -48,7 +60,7 @@ interface BookingModalProps {
 }
 
 export function BookingModal({ teacher, onClose, initialLessonKind = "standard" }: BookingModalProps) {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { locale, t, formatPrice } = useLocale();
   const dateLocale = localeToBcp47(locale);
   const [step, setStep] = useState<Step>("info");
@@ -65,6 +77,10 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
   const [creditBalance, setCreditBalance] = useState(0);
   const [applyCredits, setApplyCredits] = useState(false);
   const [loadingCredits, setLoadingCredits] = useState(false);
+  const [learnerProfiles, setLearnerProfiles] = useState<BookingLearnerProfile[]>([]);
+  const [selectedLearnerId, setSelectedLearnerId] = useState<string>("");
+  const [loadingLearners, setLoadingLearners] = useState(false);
+  const [learnerSaving, setLearnerSaving] = useState(false);
 
   const [availableDays, setAvailableDays] = useState<Record<string, number>>({});
   const [slots, setSlots] = useState<string[]>([]);
@@ -129,6 +145,11 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
     teachingMode === "online" ? t("bookingOnline") :
     teachingMode === "domicile" ? t("bookingHome") :
     t("bookingStudio");
+
+  const selectedLearner = useMemo(
+    () => learnerProfiles.find((learner) => learner.id === selectedLearnerId) ?? null,
+    [learnerProfiles, selectedLearnerId],
+  );
 
   const currentStepNumber =
     step === "info" || step === "preferences" ? 1 :
@@ -202,6 +223,65 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
     setSlotsError(null);
     setGeo(null);
   }, [teacher.id, initialLessonKind]);
+
+  useEffect(() => {
+    if (!user?.id) {
+      setLearnerProfiles([]);
+      setSelectedLearnerId("");
+      return;
+    }
+    let cancelled = false;
+    const supabase = getSupabaseClient();
+    setLoadingLearners(true);
+    void supabase
+      .from("learner_profiles")
+      .select("id, display_name, grade_level, academic_program, learning_goals, subject_struggles, explanation_preference, is_default")
+      .eq("owner_user_id", user.id)
+      .is("archived_at", null)
+      .order("is_default", { ascending: false })
+      .order("created_at", { ascending: false })
+      .then(({ data }) => {
+        if (cancelled) return;
+        const rows = (data ?? []) as BookingLearnerProfile[];
+        setLearnerProfiles(rows);
+        setSelectedLearnerId((current) => current || rows.find((r) => r.is_default)?.id || rows[0]?.id || "");
+        setLoadingLearners(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
+
+  const createSelfLearner = async () => {
+    if (!user?.id) return;
+    setLearnerSaving(true);
+    setCheckoutError(null);
+    try {
+      const supabase = getSupabaseClient();
+      const displayName =
+        String((profile as { name?: string | null } | null)?.name || user.email || t("learnerRelationshipSelf")).trim();
+      const makeDefault = learnerProfiles.length === 0;
+      const { data, error } = await supabase
+        .from("learner_profiles")
+        .insert({
+          owner_user_id: user.id,
+          display_name: displayName,
+          relationship: "self",
+          school_level: "adult",
+          is_default: makeDefault,
+        })
+        .select("id, display_name, grade_level, academic_program, learning_goals, subject_struggles, explanation_preference, is_default")
+        .single();
+      if (error) throw error;
+      const row = data as BookingLearnerProfile;
+      setLearnerProfiles((prev) => [row, ...prev]);
+      setSelectedLearnerId(row.id);
+    } catch (e) {
+      setCheckoutError(e instanceof Error ? e.message : t("anErrorOccurred"));
+    } finally {
+      setLearnerSaving(false);
+    }
+  };
 
   const requestBookingGeo = useCallback(() => {
     if (!("geolocation" in navigator)) return;
@@ -327,6 +407,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
         price: totalPrice,
         duration_minutes: lessonMinutes,
         student_address: modeForDb === "domicile" ? addressTrim : null,
+        learner_profile_id: selectedLearnerId || null,
       };
 
       const { data: inserted, error: insErr } = await supabase.from("bookings").insert(bookingData).select("id").single();
@@ -360,6 +441,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
           booking_details: { booking_id: bookingId },
           teaching_mode: modeForDb,
           student_address: modeForDb === "domicile" ? addressTrim : "",
+          learner_profile_id: selectedLearnerId || undefined,
           credits_to_apply: creditsDiscount > 0 ? creditsDiscount : undefined,
         }),
       });
@@ -519,6 +601,56 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                     {lvl}
                   </button>
                 ))}
+              </div>
+
+              <div className="space-y-2 rounded-2xl border border-[#DCEAE3] bg-[#F3FAF6] p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-800">{t("bookingSelectLearner")}</p>
+                    <p className="mt-1 text-xs leading-relaxed text-slate-600">{t("bookingLearnerContextHint")}</p>
+                  </div>
+                  <Link href="/student/learners" className="shrink-0 text-xs font-bold text-[#0F6E56] hover:underline">
+                    {t("bookingCreateLearnerProfile")}
+                  </Link>
+                </div>
+                {loadingLearners ? (
+                  <div className="flex items-center gap-2 text-xs font-semibold text-slate-600">
+                    <Loader2 className="h-4 w-4 animate-spin text-[#0F6E56]" />
+                    {t("loading")}
+                  </div>
+                ) : learnerProfiles.length > 0 ? (
+                  <select
+                    value={selectedLearnerId}
+                    onChange={(e) => setSelectedLearnerId(e.target.value)}
+                    className="h-11 w-full rounded-xl border border-[#DCEAE3] bg-white px-3 text-sm outline-none focus:border-[#1D9E75]"
+                  >
+                    <option value="">{t("bookingLearnerOptionalSelf")}</option>
+                    {learnerProfiles.map((learner) => (
+                      <option key={learner.id} value={learner.id}>
+                        {learner.display_name}
+                        {learner.grade_level ? ` · ${learner.grade_level}` : ""}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    <button
+                      type="button"
+                      disabled={learnerSaving}
+                      onClick={() => void createSelfLearner()}
+                      className="inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-xl bg-white px-3 text-xs font-bold text-[#0F6E56] disabled:opacity-60"
+                    >
+                      {learnerSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                      {t("bookingCreateSelfLearner")}
+                    </button>
+                    <Link
+                      href="/student/learners"
+                      className="inline-flex min-h-10 flex-1 items-center justify-center rounded-xl border border-[#DCEAE3] bg-white px-3 text-xs font-bold text-slate-700"
+                    >
+                      {t("bookingCreateLearnerProfile")}
+                    </Link>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -783,6 +915,18 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                   <span className="text-slate-600">{t("bookingLocationTitle")}</span>
                   <span className="font-semibold text-slate-900 text-right">{selectedFormatLabel}</span>
                 </div>
+                {selectedLearner ? (
+                  <div className="flex justify-between gap-2">
+                    <span className="text-slate-600">{t("studentCourseForLearner")}</span>
+                    <span className="font-semibold text-slate-900 text-right">
+                      {[
+                        selectedLearner.display_name,
+                        selectedLearner.grade_level,
+                        selectedLearner.academic_program?.toUpperCase(),
+                      ].filter(Boolean).join(" · ")}
+                    </span>
+                  </div>
+                ) : null}
                 <div className="flex justify-between gap-2">
                   <span className="text-slate-600">{t("bookingAmountLabel")}</span>
                   <span className="font-bold text-[#0F6E56]">{displayPrice}</span>

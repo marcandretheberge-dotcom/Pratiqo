@@ -18,6 +18,15 @@ export type TeacherScheduleRow = {
   studentName?: string;
   studentPhotoUrl?: string | null;
   studentUserId?: string | null;
+  learnerContext?: {
+    displayName: string;
+    gradeLevel: string | null;
+    academicProgram: string | null;
+    learningGoals: string[];
+    subjectStruggles: string[];
+    explanationPreference: string | null;
+    notesForTeacher: string | null;
+  } | null;
   slot_date?: string | null;
   date?: string | null;
   time_slot?: string | null;
@@ -43,6 +52,15 @@ function videoRoomUrl(bookingId: string): string {
 
 function directionsUrl(address: string): string {
   return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address)}`;
+}
+
+function explanationPreferenceKey(value: string): TranslationKey {
+  if (value === "examples_first") return "explanationExamplesFirst";
+  if (value === "theory_first") return "explanationTheoryFirst";
+  if (value === "step_by_step") return "explanationStepByStep";
+  if (value === "visual_schema") return "explanationVisualSchema";
+  if (value === "practice_first") return "explanationPracticeFirst";
+  return "explanationPreference";
 }
 
 export function TeacherScheduleCard({
@@ -126,6 +144,7 @@ export function TeacherScheduleCard({
             const mode = normalizeTeachingMode(b.teachingMode);
             const roomUrl = videoRoomUrl(b.id);
             const mapUrl = b.studentAddress?.trim() ? directionsUrl(b.studentAddress.trim()) : null;
+            const learner = b.learnerContext ?? null;
 
             return (
               <li key={b.id} className="rounded-2xl border border-[#F1EFE8] bg-white p-4 sm:p-5">
@@ -154,6 +173,45 @@ export function TeacherScheduleCard({
                     <p className="mt-0.5 text-sm font-medium text-[#0F6E56]">{b.time_slot || b.time}</p>
                     <LifecycleBadge state={lifecycle} />
                   </div>
+                </div>
+
+                <div className="mt-4 rounded-2xl border border-[#DCEAE3] bg-[#F3FAF6] p-3 text-xs text-slate-700">
+                  <p className="font-bold uppercase tracking-widest text-[#0F6E56]">{t("teacherLearnerContextTitle")}</p>
+                  {learner ? (
+                    <div className="mt-2 space-y-1.5">
+                      <p>
+                        <span className="font-semibold text-slate-900">{t("student")}:</span>{" "}
+                        {learner.displayName}
+                      </p>
+                      {[learner.gradeLevel, learner.academicProgram?.toUpperCase()].filter(Boolean).length ? (
+                        <p>
+                          <span className="font-semibold text-slate-900">{t("gradeLevel")}:</span>{" "}
+                          {[learner.gradeLevel, learner.academicProgram?.toUpperCase()].filter(Boolean).join(" · ")}
+                        </p>
+                      ) : null}
+                      {learner.learningGoals.length ? (
+                        <p>
+                          <span className="font-semibold text-slate-900">{t("learningGoals")}:</span>{" "}
+                          {learner.learningGoals.join(", ")}
+                        </p>
+                      ) : null}
+                      {learner.subjectStruggles.length ? (
+                        <p>
+                          <span className="font-semibold text-slate-900">{t("subjectStruggles")}:</span>{" "}
+                          {learner.subjectStruggles.join(", ")}
+                        </p>
+                      ) : null}
+                      {learner.explanationPreference ? (
+                        <p>
+                          <span className="font-semibold text-slate-900">{t("explanationPreferenceShort")}:</span>{" "}
+                          {t(explanationPreferenceKey(learner.explanationPreference))}
+                        </p>
+                      ) : null}
+                      {learner.notesForTeacher ? <p className="pt-1 text-slate-600">{learner.notesForTeacher}</p> : null}
+                    </div>
+                  ) : (
+                    <p className="mt-2 text-slate-600">{t("teacherLearnerContextEmpty")}</p>
+                  )}
                 </div>
 
                 <ContextualBookingAction
