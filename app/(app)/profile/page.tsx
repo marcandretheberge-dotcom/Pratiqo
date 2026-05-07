@@ -12,6 +12,7 @@ import type { CompanionType } from "../../../lib/companions";
 import { COMPANIONS, getCompanionStage, getLessonsToNextStage, getProgressPercent } from "../../../lib/companions";
 import { LocaleSwitcher } from "../../../components/LocaleSwitcher";
 import { CreditsWidget } from "../../../components/CreditsWidget";
+import { AccountDeletionSection } from "../../../components/account/AccountDeletionSection";
 import { cn } from "../../../lib/utils";
 import type { TranslationKey } from "../../../lib/translations";
 
@@ -368,6 +369,8 @@ export default function StudentProfilePage() {
           </div>
           <ChevronRight size={18} className="text-slate-600" />
         </Link>
+
+        <AccountDeletionSection />
 
         <button
           type="button"

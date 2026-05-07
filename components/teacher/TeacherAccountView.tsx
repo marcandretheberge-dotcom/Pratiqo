@@ -13,6 +13,7 @@ import { disciplineLabelToTeacherCategory, getDisciplineById, getEnabledDiscipli
 import type { TeacherRow } from "@/lib/teacherMapper";
 import { isValidVideoUrl } from "@/lib/videoEmbed";
 import { TeacherPayoutPreview } from "@/components/teacher/TeacherPayoutPreview";
+import { AccountDeletionSection } from "@/components/account/AccountDeletionSection";
 
 type TeacherDisciplineDbRow = {
   id: string;
@@ -83,6 +84,8 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [teacherId, setTeacherId] = useState<string | null>(null);
+  const [teacherIsPublic, setTeacherIsPublic] = useState(true);
+  const [visibilitySaving, setVisibilitySaving] = useState(false);
   const [email, setEmail] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");
@@ -158,8 +161,15 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
         setLoading(false);
         return;
       }
-      const row = data as TeacherRow & { stripe_account_id?: string | null; video_url?: string | null };
+      const row = data as TeacherRow & {
+        stripe_account_id?: string | null;
+        video_url?: string | null;
+        is_public?: boolean | null;
+        deactivated_at?: string | null;
+        deleted_at?: string | null;
+      };
       setTeacherId(row.id);
+      setTeacherIsPublic(row.is_public !== false && !row.deactivated_at && !row.deleted_at);
       setBio(row.bio || "");
       setHourly(String(row.price_per_lesson ?? ""));
       setTeachingMode(row.teaching_mode || "both");
@@ -330,6 +340,28 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
       return;
     }
     window.location.href = body.url;
+  };
+
+  const toggleProfileVisibility = async () => {
+    if (!teacherId) return;
+    const nextPublic = !teacherIsPublic;
+    setVisibilitySaving(true);
+    setMessage(null);
+    const supabase = getSupabaseClient();
+    const { error } = await supabase
+      .from("teachers")
+      .update({
+        is_public: nextPublic,
+        deactivated_at: nextPublic ? null : new Date().toISOString(),
+      })
+      .eq("id", teacherId);
+    if (error) {
+      setMessage(error.message);
+    } else {
+      setTeacherIsPublic(nextPublic);
+      setMessage(nextPublic ? t("profileReactivatedSuccess") : t("profileHiddenSuccess"));
+    }
+    setVisibilitySaving(false);
   };
 
   const startProCheckout = async () => {
@@ -751,6 +783,26 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+        <h2 className="text-lg font-bold text-[#2C2C2A]">{t("profileVisibilityTitle")}</h2>
+        <p className="text-sm leading-relaxed text-slate-600">{t("profileVisibilityDescription")}</p>
+        <div className="rounded-2xl border border-[#DCEAE3] bg-[#F3FAF6] px-4 py-3 text-sm text-slate-700">
+          <span className="font-semibold text-slate-900">{t("profileVisibilityTitle")}:</span>{" "}
+          <span className="font-bold text-[#00694c]">
+            {teacherIsPublic ? t("profileVisibleStatus") : t("profileHiddenStatus")}
+          </span>
+        </div>
+        <button
+          type="button"
+          disabled={visibilitySaving}
+          onClick={() => void toggleProfileVisibility()}
+          className="inline-flex h-10 items-center justify-center gap-2 rounded-full border-2 border-[#2C2C2A]/15 bg-white px-5 text-sm font-semibold text-[#2C2C2A] disabled:opacity-60"
+        >
+          {visibilitySaving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+          {teacherIsPublic ? t("hideMyProfile") : t("reactivateMyProfile")}
+        </button>
+      </section>
+
+      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
         <h2 className="text-lg font-bold text-[#2C2C2A]">{t("sectionPayments")}</h2>
         <p className="text-sm text-slate-600">
           {t("stripeConnectLabel")}{" "}
@@ -823,6 +875,8 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
           {t("signOut")}
         </button>
       </section>
+
+      <AccountDeletionSection />
 
       <section className="rounded-2xl border border-slate-100 bg-slate-50/60 p-5 space-y-1.5">
         <h2 className="text-sm font-bold text-slate-700 uppercase tracking-widest">{t("taxSettingsSectionTitle")}</h2>
