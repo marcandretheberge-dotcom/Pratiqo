@@ -27,6 +27,9 @@ type PaymentRow = {
   payment_status: string | null;
   transfer_status: string | null;
   paid_at: string | null;
+  refunded_at?: string | null;
+  refund_status?: string | null;
+  stripe_receipt_url?: string | null;
 };
 
 type TeacherRow = {
@@ -41,9 +44,12 @@ type PaymentItem = {
   teacher: TeacherRow | null;
 };
 
-function paymentStatusKey(status: string | null | undefined): "paymentStatusPaid" | "paymentStatusPending" | "paymentStatusRefunded" {
+function paymentStatusKey(
+  status: string | null | undefined,
+): "paymentStatusPaid" | "paymentStatusPending" | "paymentStatusRefunded" | "paymentStatusFailed" {
   if (status === "paid") return "paymentStatusPaid";
-  if (status === "refunded") return "paymentStatusRefunded";
+  if (status === "refunded" || status === "partially_refunded") return "paymentStatusRefunded";
+  if (status === "failed" || status === "cancelled" || status === "disputed") return "paymentStatusFailed";
   return "paymentStatusPending";
 }
 
@@ -99,7 +105,9 @@ export default function StudentPaymentsPage() {
       const [{ data: payments }, { data: teachers }] = await Promise.all([
         supabase
           .from("booking_payments")
-          .select("booking_id, amount_cents, currency, payment_status, transfer_status, paid_at")
+          .select(
+            "booking_id, amount_cents, currency, payment_status, transfer_status, paid_at, refunded_at, refund_status, stripe_receipt_url",
+          )
           .in("booking_id", bookingIds),
         teacherIds.length
           ? supabase.from("teachers").select("id, name, discipline").in("id", teacherIds)
@@ -154,21 +162,22 @@ export default function StudentPaymentsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6 pb-10">
-      <section className="rounded-3xl bg-[#0F6E56] p-6 text-white shadow-[0_18px_60px_rgba(15,110,86,0.20)]">
-        <div className="flex items-start gap-4">
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/15">
-            <CreditCard size={24} />
-          </span>
-          <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/70">{t("profilePayments")}</p>
-            <h1 className="mt-1 text-2xl font-bold">{t("studentPaymentsTitle")}</h1>
-            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-white/82">{t("studentPaymentsSubtitle")}</p>
+    <main className="min-h-[70dvh] bg-[#F3FAF6] px-4 py-8">
+      <div className="mx-auto max-w-4xl space-y-6 pb-10">
+        <section className="rounded-3xl border border-[#DCEAE3] bg-white p-6 shadow-sm">
+          <div className="flex items-start gap-4">
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#E1F5EE] text-[#0F6E56]">
+              <CreditCard size={24} />
+            </span>
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">{t("profilePayments")}</p>
+              <h1 className="mt-1 text-2xl font-bold text-[#2C2C2A]">{t("studentPaymentsTitle")}</h1>
+              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-600">{t("studentPaymentsSubtitle")}</p>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section className="rounded-3xl border border-[var(--p-border-light)] bg-white p-4 shadow-sm">
+        <section className="rounded-3xl border border-[#DCEAE3] bg-white p-4 shadow-sm">
         {loading ? (
           <div className="flex items-center justify-center gap-3 py-12 text-sm font-semibold text-slate-600">
             <Loader2 className="h-5 w-5 animate-spin text-[#1D9E75]" />
@@ -189,13 +198,26 @@ export default function StudentPaymentsPage() {
               const amountCents = payment?.amount_cents ?? fallbackAmountCents(booking);
               const currency = (payment?.currency || "cad").toUpperCase();
               const amount = formatter.format(amountCents / 100).replace("CA$", "$");
+              const statusKey = paymentStatusKey(payment?.payment_status);
+              const receiptUrl = payment?.stripe_receipt_url ?? null;
+              const isPaid = statusKey === "paymentStatusPaid";
+              const isRefunded = statusKey === "paymentStatusRefunded";
+              const isFailed = statusKey === "paymentStatusFailed";
               return (
                 <article key={booking.id} className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="font-bold text-slate-900">{teacher?.name ?? t("bookingFallbackTeacherName")}</p>
-                      <span className="rounded-full bg-[#E1F5EE] px-2.5 py-1 text-[11px] font-bold text-[#0F6E56]">
-                        {t(paymentStatusKey(payment?.payment_status))}
+                      <span
+                        className={[
+                          "rounded-full px-2.5 py-1 text-[11px] font-bold",
+                          isPaid ? "bg-[#E1F5EE] text-[#0F6E56]" : "",
+                          isRefunded ? "bg-slate-100 text-slate-700" : "",
+                          isFailed ? "bg-rose-50 text-rose-700" : "",
+                          !isPaid && !isRefunded && !isFailed ? "bg-amber-50 text-amber-800" : "",
+                        ].join(" ")}
+                      >
+                        {t(statusKey)}
                       </span>
                     </div>
                     <p className="mt-1 text-sm text-slate-600">
@@ -208,12 +230,29 @@ export default function StudentPaymentsPage() {
                   </div>
                   <div className="flex items-center justify-between gap-4 sm:justify-end">
                     <div className="text-left sm:text-right">
-                      <p className="text-lg font-bold text-[#0F6E56]">{amount}</p>
+                      <p className={["text-lg font-bold", isFailed ? "text-rose-700" : isRefunded ? "text-slate-700" : "text-[#0F6E56]"].join(" ")}>
+                        {amount}
+                      </p>
                       <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">{currency}</p>
                     </div>
+                    {receiptUrl ? (
+                      <a
+                        href={receiptUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-[#DCEAE3] bg-white px-4 text-xs font-bold text-[#0F6E56] hover:bg-[#F3FAF6]"
+                      >
+                        <ReceiptText size={16} />
+                        {t("studentPaymentsDownloadReceipt")}
+                      </a>
+                    ) : (
+                      <span className="inline-flex min-h-10 items-center justify-center rounded-full border border-[#E5E7EB] bg-slate-50 px-4 text-xs font-bold text-slate-400">
+                        {t("studentPaymentsReceiptUnavailable")}
+                      </span>
+                    )}
                     <Link
                       href="/dashboard"
-                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[var(--p-border-light)] text-slate-500 hover:bg-slate-50"
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#DCEAE3] text-slate-500 hover:bg-[#F3FAF6]"
                       aria-label={t("bookingViewMyLessons")}
                     >
                       <ChevronRight size={18} />
@@ -225,10 +264,7 @@ export default function StudentPaymentsPage() {
           </div>
         )}
       </section>
-
-      <p className="px-2 text-xs text-slate-500">
-        {t("stripePortalUnavailable")}
-      </p>
-    </div>
+      </div>
+    </main>
   );
 }
