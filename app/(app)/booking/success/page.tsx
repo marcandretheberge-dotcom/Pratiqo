@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type Stripe from "stripe";
 import {
   CheckCircle2,
   Calendar,
@@ -18,6 +19,12 @@ import { SuccessCleaner } from "./SuccessCleaner";
 import { getDictionary, getLocale } from "@/lib/i18n/server";
 import type { Dictionary, Locale } from "@/lib/i18n/types";
 import { localeToBcp47 } from "@/lib/i18n/types";
+import { getPlatformFeeRate } from "@/lib/payments/amounts";
+import {
+  chargeIdFromPaymentIntent,
+  retrievePaymentIntentChargeId,
+  upsertPaidBookingPayment,
+} from "@/lib/payments/ledger";
 
 export const dynamic = "force-dynamic";
 
@@ -89,6 +96,10 @@ async function verifyAndConfirm(sessionId: string, locale: Locale): Promise<Veri
       : typeof session.payment_intent === "object" && session.payment_intent !== null
         ? (session.payment_intent as { id: string }).id
         : null;
+  const paymentIntent =
+    typeof session.payment_intent === "object" && session.payment_intent !== null
+      ? (session.payment_intent as Stripe.PaymentIntent)
+      : null;
 
   const bookingRes = await admin
     .from("bookings")
@@ -120,6 +131,33 @@ async function verifyAndConfirm(sessionId: string, locale: Locale): Promise<Veri
 
   const alreadyConfirmed = booking.status === "confirmed";
 
+  if (paymentIntentId) {
+    const metadata = (paymentIntent?.metadata ?? session.metadata ?? {}) as Record<string, string>;
+    const amountCents = session.amount_total ?? Number(metadata.amount_cents ?? 0);
+    const platformFeeCents = Number(metadata.platform_fee_cents ?? 0);
+    const teacherNetCents = Number(metadata.teacher_net_cents ?? Math.max(0, amountCents - platformFeeCents));
+    const stripeChargeId = (paymentIntent ? chargeIdFromPaymentIntent(paymentIntent) : null) ??
+      (await retrievePaymentIntentChargeId(paymentIntentId).catch(() => null));
+
+    await upsertPaidBookingPayment(admin, {
+      bookingId,
+      teacherId: booking.teacher_id as string,
+      studentId: booking.student_id as string,
+      stripeCheckoutSessionId: session.id,
+      stripePaymentIntentId: paymentIntentId,
+      stripeChargeId,
+      amountCents,
+      platformFeeCents,
+      teacherNetCents,
+      currency: session.currency ?? "cad",
+      transferGroup: metadata.transfer_group ?? `booking_${bookingId}`,
+      metadata: {
+        ...metadata,
+        fallback_source: "booking_success_page",
+      },
+    }).catch((e) => console.error("[booking/success] booking payment ledger upsert failed", e));
+  }
+
   // Idempotent fallback confirmation: only runs if the webhook hasn't fired yet
   if (!alreadyConfirmed && booking.status === "pending_payment" && paymentIntentId) {
     const { data: updatedRows } = await admin
@@ -140,7 +178,7 @@ async function verifyAndConfirm(sessionId: string, locale: Locale): Promise<Veri
           .maybeSingle();
         teacherEmail = (teacherProf as { email?: string | null } | null)?.email ?? null;
         const plan = (teacherProf as { plan?: string | null } | null)?.plan ?? "free";
-        commissionRate = plan === "pro" ? 0.05 : 0.1;
+        commissionRate = getPlatformFeeRate(plan, "individual");
       }
 
       const bookingDate =

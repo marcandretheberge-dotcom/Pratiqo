@@ -2,6 +2,11 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { stripe } from "@/lib/stripe";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import {
+  connectStatusFromStripeAccount,
+  summarizeConnectStatus,
+  syncTeacherConnectStatus,
+} from "@/lib/payments/connect";
 
 export const runtime = "nodejs";
 
@@ -14,28 +19,82 @@ function publicBase(): string {
   return trimTrailingSlash(raw);
 }
 
+async function authenticatedUser(req: Request) {
+  const authHeader = req.headers.get("authorization");
+  const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
+  if (!token) {
+    return { user: null, error: NextResponse.json({ error: "Missing Authorization bearer token." }, { status: 401 }) };
+  }
+
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !anonKey) {
+    return { user: null, error: NextResponse.json({ error: "Missing Supabase env." }, { status: 500 }) };
+  }
+
+  const supabaseUser = createClient(url, anonKey);
+  const {
+    data: { user },
+    error: userErr,
+  } = await supabaseUser.auth.getUser(token);
+  if (userErr || !user) {
+    return { user: null, error: NextResponse.json({ error: "Invalid or expired session." }, { status: 401 }) };
+  }
+
+  return { user, error: null };
+}
+
+export async function GET(req: Request) {
+  try {
+    const auth = await authenticatedUser(req);
+    if (auth.error) return auth.error;
+    const user = auth.user!;
+
+    const admin = getSupabaseAdmin();
+    const { data: teacher, error: teacherErr } = await admin
+      .from("teachers")
+      .select(
+        "id, stripe_account_id, stripe_connect_onboarding_complete, stripe_connect_charges_enabled, stripe_connect_payouts_enabled, stripe_connect_requirements_due, stripe_connect_disabled_reason, stripe_connect_last_synced_at",
+      )
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (teacherErr || !teacher) {
+      return NextResponse.json({ error: "Teacher profile not found." }, { status: 404 });
+    }
+
+    const accountId = (teacher as { stripe_account_id?: string | null }).stripe_account_id?.trim();
+    if (!accountId) {
+      return NextResponse.json({
+        stripe_account_id: null,
+        canReceivePayments: false,
+        stripe_connect_onboarding_complete: false,
+        stripe_connect_charges_enabled: false,
+        stripe_connect_payouts_enabled: false,
+        stripe_connect_requirements_due: [],
+        stripe_connect_disabled_reason: null,
+        stripe_connect_last_synced_at: null,
+      });
+    }
+
+    const account = await stripe.accounts.retrieve(accountId);
+    const status = await syncTeacherConnectStatus(admin, account, {
+      teacherId: (teacher as { id: string }).id,
+      userId: user.id,
+    });
+
+    return NextResponse.json(status);
+  } catch (e) {
+    console.error("[stripe/connect][GET]", e);
+    return NextResponse.json({ error: e instanceof Error ? e.message : "Stripe Connect status error" }, { status: 500 });
+  }
+}
+
 export async function POST(req: Request) {
   try {
-    const authHeader = req.headers.get("authorization");
-    const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
-    if (!token) {
-      return NextResponse.json({ error: "Missing Authorization bearer token." }, { status: 401 });
-    }
-
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    if (!url || !anonKey) {
-      return NextResponse.json({ error: "Missing Supabase env." }, { status: 500 });
-    }
-
-    const supabaseUser = createClient(url, anonKey);
-    const {
-      data: { user },
-      error: userErr,
-    } = await supabaseUser.auth.getUser(token);
-    if (userErr || !user) {
-      return NextResponse.json({ error: "Invalid or expired session." }, { status: 401 });
-    }
+    const auth = await authenticatedUser(req);
+    if (auth.error) return auth.error;
+    const user = auth.user!;
 
     const base = publicBase();
     const admin = getSupabaseAdmin();
@@ -51,6 +110,7 @@ export async function POST(req: Request) {
     const teacherName = (existingTeacher as { name?: string } | null)?.name ?? (user.user_metadata?.full_name as string) ?? "Professeur";
 
     let stripeAccountId = (existingTeacher as { stripe_account_id?: string | null } | null)?.stripe_account_id ?? null;
+    let connectStatus = null;
 
     if (!stripeAccountId) {
       const account = await stripe.accounts.create({
@@ -66,6 +126,7 @@ export async function POST(req: Request) {
         },
       });
       stripeAccountId = account.id;
+      connectStatus = summarizeConnectStatus(connectStatusFromStripeAccount(account));
 
       // Create teacher row if missing, otherwise update connect id
       if (!existingTeacher) {
@@ -84,11 +145,14 @@ export async function POST(req: Request) {
           teaching_mode: "both",
           languages: [],
           levels: [],
-          stripe_account_id: stripeAccountId,
+          ...connectStatusFromStripeAccount(account),
         });
       } else {
-        await admin.from("teachers").update({ stripe_account_id: stripeAccountId }).eq("id", teacherId);
+        await syncTeacherConnectStatus(admin, account, { teacherId, userId: user.id });
       }
+    } else {
+      const account = await stripe.accounts.retrieve(stripeAccountId);
+      connectStatus = await syncTeacherConnectStatus(admin, account, { teacherId, userId: user.id });
     }
 
     const accountLink = await stripe.accountLinks.create({
@@ -98,7 +162,7 @@ export async function POST(req: Request) {
       return_url: `${base}/onboarding?stripe=success`,
     });
 
-    return NextResponse.json({ url: accountLink.url, stripe_account_id: stripeAccountId });
+    return NextResponse.json({ url: accountLink.url, stripe_account_id: stripeAccountId, connect_status: connectStatus });
   } catch (e) {
     console.error("[stripe/connect]", e);
     return NextResponse.json({ error: e instanceof Error ? e.message : "Stripe Connect error" }, { status: 500 });

@@ -12,6 +12,7 @@ import { localeToBcp47 } from "@/lib/i18n/types";
 import { disciplineLabelToTeacherCategory, getDisciplineById, getEnabledDisciplines } from "@/lib/disciplines";
 import type { TeacherRow } from "@/lib/teacherMapper";
 import { isValidVideoUrl } from "@/lib/videoEmbed";
+import { TeacherPayoutPreview } from "@/components/teacher/TeacherPayoutPreview";
 
 type TeacherDisciplineDbRow = {
   id: string;
@@ -76,7 +77,7 @@ function encodeTeachingMode(p: boolean, o: boolean, h: boolean): string {
 }
 
 export function TeacherAccountView({ variant }: { variant: "profile" | "system" }) {
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   const { t, locale } = useLocale();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -92,6 +93,8 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
   const [teachingMode, setTeachingMode] = useState("both");
   const [stripeAccountId, setStripeAccountId] = useState<string | null>(null);
   const [plan, setPlan] = useState("free");
+  const [loyaltyTier, setLoyaltyTier] = useState<string | null>(null);
+  const [annualVolumeCents, setAnnualVolumeCents] = useState(0);
   const [notif, setNotif] = useState<NotifPrefs>(defaultNotif);
   const [dashboardJson, setDashboardJson] = useState<Record<string, unknown>>({});
 
@@ -107,18 +110,28 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
   const [videoUrlError, setVideoUrlError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!user) {
-      setDiscLoading(false);
-      setLoading(false);
-      return;
-    }
+    let cancelled = false;
     const supabase = getSupabaseClient();
     const load = async () => {
-      const { data: prof } = await supabase.from("profiles").select("email, name, photo_url, plan, dashboard, tax_status_acknowledged, tax_status_acknowledged_at").eq("id", user.id).maybeSingle();
+      if (!user) {
+        if (!cancelled) {
+          setDiscLoading(false);
+          setLoading(false);
+        }
+        return;
+      }
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("email, name, photo_url, plan, loyalty_tier, loyalty_annual_volume, dashboard, tax_status_acknowledged, tax_status_acknowledged_at")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (cancelled) return;
       setEmail(String((prof as { email?: string })?.email || user.email || ""));
       setDisplayName(String((prof as { name?: string })?.name || ""));
       setPhotoUrl(((prof as { photo_url?: string | null })?.photo_url as string | null) ?? null);
       setPlan(String((prof as { plan?: string | null })?.plan || "free"));
+      setLoyaltyTier((prof as { loyalty_tier?: string | null } | null)?.loyalty_tier ?? null);
+      setAnnualVolumeCents(Math.round(Math.max(0, Number((prof as { loyalty_annual_volume?: number | string | null } | null)?.loyalty_annual_volume ?? 0)) * 100));
       const dash = (prof as { dashboard?: unknown })?.dashboard;
       const d = typeof dash === "object" && dash !== null ? (dash as Record<string, unknown>) : {};
       setDashboardJson(d);
@@ -128,6 +141,7 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
       setTaxAckDate(taxDate ?? null);
 
       const { data, error } = await supabase.from("teachers").select("*").eq("user_id", user.id).maybeSingle();
+      if (cancelled) return;
       if (error || !data) {
         setTeacherId(null);
         setDiscLoading(false);
@@ -152,12 +166,16 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
         .select("id, discipline_id, specialite, sort_order")
         .eq("teacher_id", row.id)
         .order("sort_order", { ascending: true });
+      if (cancelled) return;
       if (!dErr && drows) setDiscRows(drows as TeacherDisciplineDbRow[]);
       else setDiscRows([]);
       setDiscLoading(false);
       setLoading(false);
     };
     void load();
+    return () => {
+      cancelled = true;
+    };
   }, [user]);
 
   const reloadDisciplines = async (tid: string) => {
@@ -406,6 +424,13 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
             min={0}
             step="0.5"
             className="w-full h-11 rounded-xl border border-slate-200 px-3 text-sm text-[#00694c] font-semibold"
+          />
+          <TeacherPayoutPreview
+            grossAmount={hourly}
+            currency="CAD"
+            teacherPlan={plan}
+            annualVolumeCents={annualVolumeCents}
+            loyaltyTier={loyaltyTier}
           />
         </label>
         <label className="block space-y-1">

@@ -4,6 +4,9 @@ import Stripe from "stripe";
 import { stripe } from "@/lib/stripe";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { isBookingAtLeast24hAhead } from "@/lib/bookingCancellation";
+import { transferGroupForBooking } from "@/lib/payments/amounts";
+import { calculateBookingAmounts } from "@/lib/payments/commission";
+import { upsertUnpaidBookingPayment } from "@/lib/payments/ledger";
 
 function trimTrailingSlash(url: string) {
   return url.replace(/\/+$/, "");
@@ -29,7 +32,6 @@ type TeacherRow = {
   name: string;
   price_per_lesson: number | string | null;
   user_id?: string | null;
-  stripe_account_id?: string | null;
   home_lesson_enabled?: boolean | null;
   home_lesson_price?: number | string | null;
 };
@@ -155,7 +157,7 @@ export async function POST(req: Request) {
     const { data: teacher, error: tErr } = await admin
       .from("teachers")
       .select(
-        "id, user_id, stripe_account_id, name, price_per_lesson, home_lesson_enabled, home_lesson_price",
+        "id, user_id, name, price_per_lesson, home_lesson_enabled, home_lesson_price",
       )
       .eq("id", booking.teacher_id)
       .maybeSingle();
@@ -230,27 +232,36 @@ export async function POST(req: Request) {
     console.log("[stripe/checkout] success_url:", successUrl);
     console.log("[stripe/checkout] cancel_url:", cancelUrl);
 
-    // Commission based on teacher plan (default: free).
-    let commissionRate = 0.1;
+    // Commission based on teacher plan (default: free). The charge stays on
+    // Pratiqo now; the teacher net is transferred after post-class completion.
+    let teacherPlan = "free";
+    let annualVolumeCents = 0;
+    let loyaltyTier: string | null = null;
     if (typed.user_id) {
       const { data: prof } = await admin
         .from("profiles")
-        .select("plan")
+        .select("plan, loyalty_tier, loyalty_annual_volume")
         .eq("id", typed.user_id)
         .maybeSingle();
-      const plan = (prof as { plan?: string | null } | null)?.plan;
-      commissionRate = plan === "pro" ? 0.05 : 0.1;
+      const profile = prof as {
+        plan?: string | null;
+        loyalty_tier?: string | null;
+        loyalty_annual_volume?: number | string | null;
+      } | null;
+      teacherPlan = profile?.plan ?? "free";
+      loyaltyTier = profile?.loyalty_tier ?? null;
+      annualVolumeCents = Math.round(Math.max(0, Number(profile?.loyalty_annual_volume ?? 0)) * 100);
     }
 
-    const applicationFeeAmount = Math.max(0, Math.round(unitAmountCents * commissionRate));
-    console.log("[stripe/checkout] commissionRate:", commissionRate, "applicationFeeAmount:", applicationFeeAmount);
-
-    const destination = typed.stripe_account_id?.trim() || null;
-    if (!destination) {
-      console.warn(
-        "[stripe/checkout] Missing teacher.stripe_account_id; skipping application_fee_amount (Connect not configured).",
-      );
-    }
+    const amounts = calculateBookingAmounts({
+      priceCents: unitAmountCents,
+      teacherPlan,
+      bookingType: "individual",
+      annualVolumeCents,
+      loyaltyTier,
+    });
+    const transferGroup = transferGroupForBooking(bookingId);
+    console.log("[stripe/checkout] commissionRate:", amounts.feeRate, "platformFeeCents:", amounts.platformFeeCents);
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
@@ -264,6 +275,12 @@ export async function POST(req: Request) {
         teaching_mode: teachingMode,
         student_address: studentAddress,
         credits_applied: validatedCredits > 0 ? String(validatedCredits) : "0",
+        transfer_group: transferGroup,
+        platform_fee_cents: String(amounts.platformFeeCents),
+        teacher_net_cents: String(amounts.teacherNetCents),
+        commission_rate: String(amounts.feeRate),
+        commission_basis_points: String(amounts.feeBasisPoints),
+        loyalty_tier: amounts.loyaltyTier,
       },
       line_items: [
         {
@@ -289,18 +306,52 @@ export async function POST(req: Request) {
           teaching_mode: teachingMode,
           student_address: studentAddress,
           credits_applied: validatedCredits > 0 ? String(validatedCredits) : "0",
+          transfer_group: transferGroup,
+          platform_fee_cents: String(amounts.platformFeeCents),
+          teacher_net_cents: String(amounts.teacherNetCents),
+          commission_rate: String(amounts.feeRate),
+          commission_basis_points: String(amounts.feeBasisPoints),
+          loyalty_tier: amounts.loyaltyTier,
         },
-        ...(destination
-          ? {
-              application_fee_amount: applicationFeeAmount,
-              transfer_data: { destination },
-            }
-          : {}),
+        transfer_group: transferGroup,
       },
     });
 
     if (!session.url) {
       return NextResponse.json({ error: "Stripe did not return a checkout URL." }, { status: 500 });
+    }
+
+    try {
+      await upsertUnpaidBookingPayment(admin, {
+        bookingId,
+        teacherId: booking.teacher_id as string,
+        studentId: booking.student_id as string,
+        stripeCheckoutSessionId: session.id,
+        amountCents: amounts.amountCents,
+        platformFeeCents: amounts.platformFeeCents,
+        teacherNetCents: amounts.teacherNetCents,
+        currency: "cad",
+        transferGroup,
+        metadata: {
+          teaching_mode: teachingMode,
+          credits_applied: validatedCredits,
+          commission_rate: amounts.feeRate,
+          commission_basis_points: amounts.feeBasisPoints,
+          loyalty_tier: amounts.loyaltyTier,
+          teacher_plan: amounts.teacherPlan,
+        },
+      });
+    } catch (ledgerErr) {
+      console.error("[stripe/checkout] booking payment ledger insert failed", ledgerErr);
+      try {
+        await stripe.checkout.sessions.expire(session.id);
+      } catch (expireErr) {
+        console.error("[stripe/checkout] failed to expire checkout session after ledger error", expireErr);
+      }
+      return NextResponse.json(
+        { error: "Payment setup failed. Please try again or contact support." },
+        { status: 500 },
+      );
     }
 
     return NextResponse.json({ url: session.url });

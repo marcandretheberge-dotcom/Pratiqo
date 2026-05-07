@@ -1,8 +1,16 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import Stripe from "stripe";
+import { stripe } from "@/lib/stripe";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { bookingEndAt } from "@/lib/bookingLifecycle";
 import { sendPostClassReviewRequest } from "@/lib/email";
+import { transferGroupForBooking } from "@/lib/payments/amounts";
+import {
+  getBookingPaymentForTransfer,
+  markBookingPaymentTransferred,
+  markBookingPaymentTransferFailed,
+} from "@/lib/payments/ledger";
 
 export const runtime = "nodejs";
 
@@ -40,7 +48,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   const { data: booking, error: bookingErr } = await admin
     .from("bookings")
-    .select("id, teacher_id, student_id, status, slot_date, date, time_slot, time, duration_minutes")
+    .select("id, teacher_id, student_id, status, slot_date, date, time_slot, time, duration_minutes, stripe_payment_intent_id")
     .eq("id", bookingId)
     .maybeSingle();
 
@@ -50,7 +58,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   const { data: teacher } = await admin
     .from("teachers")
-    .select("id, user_id, name")
+    .select("id, user_id, name, stripe_account_id, stripe_connect_payouts_enabled")
     .eq("id", booking.teacher_id as string)
     .maybeSingle();
 
@@ -69,6 +77,74 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   if (lessonEnd > new Date()) {
     return NextResponse.json({ error: "The lesson has not ended yet" }, { status: 409 });
+  }
+
+  let payoutStatus: "not_required" | "legacy_no_payment_ledger" | "transferred" | "already_transferred" = "not_required";
+  let stripeTransferId: string | null = null;
+
+  if (outcome === "held") {
+    const payment = await getBookingPaymentForTransfer(admin, bookingId);
+
+    if (!payment) {
+      // Legacy bookings created before the payment ledger may already have used the previous payout path.
+      payoutStatus = "legacy_no_payment_ledger";
+    } else if (payment.transfer_status === "transferred" && payment.stripe_transfer_id) {
+      payoutStatus = "already_transferred";
+      stripeTransferId = payment.stripe_transfer_id;
+    } else {
+      if (payment.payment_status !== "paid") {
+        return NextResponse.json({ error: "Payment is not confirmed for this booking" }, { status: 409 });
+      }
+
+      if (!payment.stripe_charge_id) {
+        return NextResponse.json({ error: "Missing Stripe charge for teacher payout" }, { status: 409 });
+      }
+
+      const destination = (teacher as { stripe_account_id?: string | null }).stripe_account_id?.trim();
+      const payoutsEnabled = Boolean(
+        (teacher as { stripe_connect_payouts_enabled?: boolean | null }).stripe_connect_payouts_enabled,
+      );
+      if (!destination || !payoutsEnabled) {
+        await markBookingPaymentTransferFailed(
+          admin,
+          bookingId,
+          "Teacher Stripe Connect account is not payout-ready.",
+        );
+        return NextResponse.json(
+          { error: "Teacher Stripe Connect account is not ready for payouts" },
+          { status: 409 },
+        );
+      }
+
+      if (payment.teacher_net_cents <= 0) {
+        return NextResponse.json({ error: "Teacher payout amount is invalid" }, { status: 409 });
+      }
+
+      let transfer: Stripe.Transfer;
+      try {
+        transfer = await stripe.transfers.create(
+          {
+            amount: payment.teacher_net_cents,
+            currency: payment.currency,
+            destination,
+            source_transaction: payment.stripe_charge_id,
+            transfer_group: transferGroupForBooking(bookingId),
+            metadata: { booking_id: bookingId },
+          },
+          { idempotencyKey: `booking_transfer_${bookingId}` },
+        );
+      } catch (e) {
+        const message = e instanceof Error ? e.message : "Stripe transfer failed";
+        await markBookingPaymentTransferFailed(admin, bookingId, message).catch((err) =>
+          console.error("[bookings/complete] failed to mark transfer failed", err),
+        );
+        return NextResponse.json({ error: message }, { status: 502 });
+      }
+
+      await markBookingPaymentTransferred(admin, bookingId, transfer);
+      payoutStatus = "transferred";
+      stripeTransferId = transfer.id;
+    }
   }
 
   const completedAt = new Date().toISOString();
@@ -119,6 +195,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     ok: true,
     completed_at: completedAt,
     completion_outcome: outcome,
+    payout_status: payoutStatus,
+    stripe_transfer_id: stripeTransferId,
     review_email_sent: reviewEmailSent,
     review_email_skipped_reason: reviewEmailSent
       ? null

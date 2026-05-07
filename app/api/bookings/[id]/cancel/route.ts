@@ -124,6 +124,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     hasStripePaymentIntent: stripePI,
     bookingPrice,
   });
+  // TODO(payment): execute Stripe refunds from booking_payments.
+  // Before teacher transfer: refund the original Stripe payment.
+  // After teacher transfer: reverse the transfer first, then refund when Stripe allows it.
+  // For now this route preserves the existing metadata workflow for support review.
 
   const cancelledAtIso = new Date().toISOString();
   const { data: updatedRows, error: updateErr } = await admin

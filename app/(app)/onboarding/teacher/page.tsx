@@ -11,6 +11,7 @@ import { useLocale } from "@/lib/locale-context";
 import { getTeacherOnboardingMissingFields, isTeacherProfileComplete } from "@/lib/teacherOnboarding";
 import { parseGooglePlace } from "@/lib/googleAddressParser";
 import { blurCoordinates } from "@/lib/maps";
+import { TeacherPayoutPreview } from "@/components/teacher/TeacherPayoutPreview";
 
 type StepId = 1 | 2 | 3 | 4;
 type Category = "music" | "languages" | "academic" | "other";
@@ -90,6 +91,9 @@ export default function TeacherOnboardingPage() {
   const [pricePerLesson, setPricePerLesson] = useState<string>("");
   const [homeRadiusKm, setHomeRadiusKm] = useState<string>("25");
   const [availability, setAvailability] = useState<string[]>([]);
+  const [teacherPlan, setTeacherPlan] = useState<string | null>(null);
+  const [loyaltyTier, setLoyaltyTier] = useState<string | null>(null);
+  const [annualVolumeCents, setAnnualVolumeCents] = useState(0);
 
   // Step 4
   const [taxStatusAck, setTaxStatusAck] = useState(false);
@@ -133,6 +137,22 @@ export default function TeacherOnboardingPage() {
     let cancelled = false;
     const supabase = getSupabaseClient();
     void (async () => {
+      const { data: profileRow } = await supabase
+        .from("profiles")
+        .select("plan, loyalty_tier, loyalty_annual_volume")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (!cancelled) {
+        const row = profileRow as {
+          plan?: string | null;
+          loyalty_tier?: string | null;
+          loyalty_annual_volume?: number | string | null;
+        } | null;
+        setTeacherPlan(row?.plan ?? null);
+        setLoyaltyTier(row?.loyalty_tier ?? null);
+        setAnnualVolumeCents(Math.round(Math.max(0, Number(row?.loyalty_annual_volume ?? 0)) * 100));
+      }
+
       const { data: trow } = await supabase
         .from("teachers")
         .select("name, discipline, category, city, region, country_code, timezone, teaching_mode, price_per_lesson, availability")
@@ -636,6 +656,13 @@ export default function TeacherOnboardingPage() {
                       step="0.5"
                       className="mt-2 w-full h-12 rounded-2xl border border-[var(--p-border-light)] px-4 text-sm"
                       placeholder="50"
+                    />
+                    <TeacherPayoutPreview
+                      grossAmount={pricePerLesson}
+                      currency={currency}
+                      teacherPlan={teacherPlan}
+                      annualVolumeCents={annualVolumeCents}
+                      loyaltyTier={loyaltyTier}
                     />
                   </label>
 

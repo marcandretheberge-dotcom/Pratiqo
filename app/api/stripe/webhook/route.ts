@@ -12,6 +12,13 @@ import {
   sendIdentityVerified,
   sendIdentityFailed,
 } from "@/lib/email";
+import { syncTeacherConnectStatus } from "@/lib/payments/connect";
+import { getPlatformFeeRate } from "@/lib/payments/amounts";
+import {
+  chargeIdFromPaymentIntent,
+  retrievePaymentIntentChargeId,
+  upsertPaidBookingPayment,
+} from "@/lib/payments/ledger";
 
 export const runtime = "nodejs";
 
@@ -128,6 +135,12 @@ async function confirmBookingAndNotify(
   bookingId: string,
   paymentIntentId: string,
   piMetadata?: Record<string, string> | null,
+  opts: {
+    checkoutSessionId?: string | null;
+    stripeChargeId?: string | null;
+    amountCents?: number | null;
+    currency?: string | null;
+  } = {},
 ) {
   const admin = getSupabaseAdmin();
 
@@ -142,14 +155,13 @@ async function confirmBookingAndNotify(
     return;
   }
 
-  if (booking.status === "confirmed") {
-    return;
-  }
+  const bookingStatus = String(booking.status ?? "");
+  const alreadyConfirmed = bookingStatus === "confirmed" || bookingStatus === "completed";
 
   const slotDate = (booking as { slot_date?: string | null }).slot_date;
   const timeSlot = (booking as { time_slot?: string | null }).time_slot;
 
-  if (slotDate && timeSlot) {
+  if (!alreadyConfirmed && slotDate && timeSlot) {
     const { data: otherConfirmed } = await admin
       .from("bookings")
       .select("id")
@@ -172,26 +184,31 @@ async function confirmBookingAndNotify(
     }
   }
 
-  const { data: updatedRows, error: updErr } = await admin
-    .from("bookings")
-    .update({ status: "confirmed", stripe_payment_intent_id: paymentIntentId })
-    .eq("id", bookingId)
-    .eq("status", "pending_payment")
-    .select("id");
+  let shouldSendConfirmation = false;
+  if (!alreadyConfirmed) {
+    const { data: updatedRows, error: updErr } = await admin
+      .from("bookings")
+      .update({ status: "confirmed", stripe_payment_intent_id: paymentIntentId })
+      .eq("id", bookingId)
+      .eq("status", "pending_payment")
+      .select("id");
 
-  if (updErr) {
-    console.error("[stripe/webhook] booking update", updErr);
-    return;
-  }
-
-  if (!updatedRows?.length) {
-    console.warn("[stripe/webhook] booking not pending_payment at confirm; refunding", bookingId);
-    try {
-      await stripe.refunds.create({ payment_intent: paymentIntentId });
-    } catch (re) {
-      console.error("[stripe/webhook] refund failed", re);
+    if (updErr) {
+      console.error("[stripe/webhook] booking update", updErr);
+      return;
     }
-    return;
+
+    if (!updatedRows?.length) {
+      console.warn("[stripe/webhook] booking not pending_payment at confirm; refunding", bookingId);
+      try {
+        await stripe.refunds.create({ payment_intent: paymentIntentId });
+      } catch (re) {
+        console.error("[stripe/webhook] refund failed", re);
+      }
+      return;
+    }
+
+    shouldSendConfirmation = true;
   }
 
   const { data: teacher } = await admin
@@ -224,7 +241,51 @@ async function confirmBookingAndNotify(
       .maybeSingle();
     teacherEmail = (teacherProf as { email?: string | null } | null)?.email ?? null;
     const plan = (teacherProf as { plan?: string | null } | null)?.plan ?? "free";
-    commissionRate = plan === "pro" ? 0.05 : 0.1;
+    commissionRate = getPlatformFeeRate(plan, "individual");
+  }
+
+  const amountFromMetadata = Number(piMetadata?.amount_cents ?? piMetadata?.payment_amount_cents ?? NaN);
+  const amountCents =
+    typeof opts.amountCents === "number" && Number.isFinite(opts.amountCents)
+      ? opts.amountCents
+      : Number.isFinite(amountFromMetadata)
+        ? amountFromMetadata
+        : Math.max(0, Math.round(Number((booking as { price?: number | string | null }).price ?? 0) * 100));
+  const platformFeeFromMetadata = Number(piMetadata?.platform_fee_cents ?? NaN);
+  const platformFeeCents = Number.isFinite(platformFeeFromMetadata)
+    ? Math.max(0, Math.round(platformFeeFromMetadata))
+    : Math.max(0, Math.round(amountCents * commissionRate));
+  const teacherNetFromMetadata = Number(piMetadata?.teacher_net_cents ?? NaN);
+  const teacherNetCents = Number.isFinite(teacherNetFromMetadata)
+    ? Math.max(0, Math.round(teacherNetFromMetadata))
+    : Math.max(0, amountCents - platformFeeCents);
+  const stripeChargeId = opts.stripeChargeId ?? (await retrievePaymentIntentChargeId(paymentIntentId).catch(() => null));
+
+  try {
+    await upsertPaidBookingPayment(admin, {
+      bookingId,
+      teacherId: booking.teacher_id as string,
+      studentId: booking.student_id as string,
+      stripeCheckoutSessionId: opts.checkoutSessionId ?? null,
+      stripePaymentIntentId: paymentIntentId,
+      stripeChargeId,
+      amountCents,
+      platformFeeCents,
+      teacherNetCents,
+      currency: opts.currency ?? "cad",
+      transferGroup: piMetadata?.transfer_group ?? `booking_${bookingId}`,
+      metadata: {
+        ...(piMetadata ?? {}),
+        webhook_source: opts.checkoutSessionId ? "checkout.session.completed" : "payment_intent.succeeded",
+      },
+    });
+  } catch (ledgerErr) {
+    console.error("[stripe/webhook] booking payment ledger upsert failed", ledgerErr);
+    return;
+  }
+
+  if (!shouldSendConfirmation) {
+    return;
   }
 
   const rows = [
@@ -409,6 +470,15 @@ async function setUserPlanFromSubscription(subscription: Stripe.Subscription) {
   }
 }
 
+async function handleConnectAccountUpdated(account: Stripe.Account) {
+  const admin = getSupabaseAdmin();
+  try {
+    await syncTeacherConnectStatus(admin, account);
+  } catch (e) {
+    console.error("[stripe/webhook] connect account sync failed", e);
+  }
+}
+
 export async function POST(req: Request) {
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
   if (!webhookSecret) {
@@ -438,7 +508,11 @@ export async function POST(req: Request) {
       } else {
         const bookingId = pi.metadata?.booking_id;
         if (bookingId) {
-          await confirmBookingAndNotify(bookingId, pi.id, pi.metadata as Record<string, string>);
+          await confirmBookingAndNotify(bookingId, pi.id, pi.metadata as Record<string, string>, {
+            stripeChargeId: chargeIdFromPaymentIntent(pi),
+            amountCents: pi.amount_received || pi.amount,
+            currency: pi.currency,
+          });
         }
       }
     }
@@ -459,7 +533,13 @@ export async function POST(req: Request) {
       } else {
         const bookingId = sess.metadata?.booking_id;
         if (bookingId && piId) {
-          await confirmBookingAndNotify(bookingId, piId, md);
+          const stripeChargeId = await retrievePaymentIntentChargeId(piId).catch(() => null);
+          await confirmBookingAndNotify(bookingId, piId, md, {
+            checkoutSessionId: sess.id,
+            stripeChargeId,
+            amountCents: sess.amount_total ?? null,
+            currency: sess.currency,
+          });
         }
       }
 
@@ -476,6 +556,10 @@ export async function POST(req: Request) {
     if (event.type === "customer.subscription.updated" || event.type === "customer.subscription.deleted") {
       const sub = event.data.object as Stripe.Subscription;
       await setUserPlanFromSubscription(sub);
+    }
+
+    if (event.type === "account.updated") {
+      await handleConnectAccountUpdated(event.data.object as Stripe.Account);
     }
 
     // ── Stripe Identity ────────────────────────────────────────────────────
