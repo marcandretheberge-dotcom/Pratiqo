@@ -31,7 +31,7 @@ export default function UpgradePage() {
     }
     setLoading(true);
     try {
-      const res = await fetch("/api/stripe/subscription", {
+      const res = await fetch("/api/stripe/pro/checkout", {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });

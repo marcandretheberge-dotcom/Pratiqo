@@ -427,32 +427,73 @@ async function confirmBookingAndNotify(
   }
 }
 
-async function setUserPlanFromSubscription(subscription: Stripe.Subscription) {
-  const userId = (subscription.metadata?.user_id as string | undefined) ?? undefined;
-  if (!userId) return;
+function stripeId(value: string | { id?: string } | null | undefined): string | null {
+  if (typeof value === "string") return value;
+  if (value && typeof value.id === "string") return value.id;
+  return null;
+}
 
-  const isPro =
-    subscription.status === "active" ||
-    subscription.status === "trialing" ||
-    subscription.status === "past_due";
+function subscriptionPeriodEnd(subscription: Stripe.Subscription): string | null {
+  const itemEnd = subscription.items?.data?.[0]?.current_period_end;
+  if (typeof itemEnd === "number") return new Date(itemEnd * 1000).toISOString();
+  const rootEnd = (subscription as unknown as { current_period_end?: number | null }).current_period_end;
+  return typeof rootEnd === "number" ? new Date(rootEnd * 1000).toISOString() : null;
+}
+
+async function resolveSubscriptionUserId(subscription: Stripe.Subscription): Promise<string | null> {
+  const metadataUserId = subscription.metadata?.user_id;
+  if (metadataUserId) return metadataUserId;
 
   const admin = getSupabaseAdmin();
-  const plan = isPro ? "pro" : "free";
-  // Stripe API 2026+: period bounds live on subscription items, not the subscription root.
-  const currentPeriodEnd = subscription.items?.data?.[0]?.current_period_end ?? null;
-  const expiresAt =
-    subscription.cancel_at_period_end && typeof currentPeriodEnd === "number"
-      ? new Date(currentPeriodEnd * 1000).toISOString()
-      : null;
+  const subscriptionId = subscription.id;
+  const customerId = stripeId(subscription.customer);
+  const query = admin.from("profiles").select("id").limit(1);
+  const { data } = subscriptionId
+    ? await query.eq("stripe_subscription_id", subscriptionId).maybeSingle()
+    : customerId
+      ? await query.eq("stripe_customer_id", customerId).maybeSingle()
+      : { data: null };
+  return (data as { id?: string } | null)?.id ?? null;
+}
 
-  const { error } = await admin
+async function setUserPlanFromSubscription(subscription: Stripe.Subscription, fallback?: { userId?: string | null; customerId?: string | null }) {
+  const userId = fallback?.userId ?? (await resolveSubscriptionUserId(subscription));
+  if (!userId) {
+    console.warn("[stripe/webhook] subscription missing user id", subscription.id);
+    return;
+  }
+
+  const admin = getSupabaseAdmin();
+  const customerId = fallback?.customerId ?? stripeId(subscription.customer);
+  const status = String(subscription.status);
+  const plan = status === "active" || status === "trialing" ? "pro" : "free";
+  const periodEnd = subscriptionPeriodEnd(subscription);
+  const startedAt = plan === "pro" ? new Date().toISOString() : null;
+
+  const { data: previous } = await admin
     .from("profiles")
-    .update({ plan, plan_expires_at: expiresAt })
-    .eq("id", userId);
+    .select("plan, pro_started_at")
+    .eq("id", userId)
+    .maybeSingle();
+
+  const patch: Record<string, unknown> = {
+    plan,
+    subscription_status: status,
+    stripe_subscription_id: subscription.id,
+    pro_current_period_end: periodEnd,
+    pro_cancel_at_period_end: Boolean(subscription.cancel_at_period_end),
+    plan_expires_at: subscription.cancel_at_period_end ? periodEnd : null,
+  };
+  if (customerId) patch.stripe_customer_id = customerId;
+  if (plan === "pro" && !(previous as { pro_started_at?: string | null } | null)?.pro_started_at) {
+    patch.pro_started_at = startedAt;
+  }
+
+  const { error } = await admin.from("profiles").update(patch).eq("id", userId);
   if (error) console.error("[stripe/webhook] plan update failed", error);
 
-  // Pro upgrade welcome email (only on activation, not on cancellation)
-  if (isPro && plan === "pro") {
+  const wasPro = String((previous as { plan?: string | null } | null)?.plan ?? "free").toLowerCase() === "pro";
+  if (!wasPro && plan === "pro") {
     try {
       const { data: prof } = await admin
         .from("profiles")
@@ -461,13 +502,22 @@ async function setUserPlanFromSubscription(subscription: Stripe.Subscription) {
         .maybeSingle();
       const profName = (prof as { name?: string | null } | null)?.name ?? "Professeur";
       const profEmail = (prof as { email?: string | null } | null)?.email ?? null;
-      if (profEmail) {
-        await sendProUpgrade(profEmail, profName);
-      }
+      if (profEmail) await sendProUpgrade(profEmail, profName);
     } catch (e) {
       console.error("[stripe/webhook] pro upgrade email failed", e);
     }
   }
+}
+
+async function syncSubscriptionFromInvoice(invoice: Stripe.Invoice) {
+  const parent = (invoice as unknown as {
+    subscription?: string | Stripe.Subscription | null;
+    parent?: { subscription_details?: { subscription?: string | null } | null } | null;
+  }).subscription ?? (invoice as unknown as { parent?: { subscription_details?: { subscription?: string | null } | null } | null }).parent?.subscription_details?.subscription;
+  const subscriptionId = stripeId(parent);
+  if (!subscriptionId) return;
+  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+  await setUserPlanFromSubscription(subscription);
 }
 
 async function handleConnectAccountUpdated(account: Stripe.Account) {
@@ -548,14 +598,25 @@ export async function POST(req: Request) {
         const subId = typeof sess.subscription === "string" ? sess.subscription : null;
         if (subId) {
           const sub = await stripe.subscriptions.retrieve(subId);
-          await setUserPlanFromSubscription(sub);
+          await setUserPlanFromSubscription(sub, {
+            userId: sess.metadata?.user_id ?? sess.client_reference_id ?? null,
+            customerId: stripeId(sess.customer),
+          });
         }
       }
     }
 
-    if (event.type === "customer.subscription.updated" || event.type === "customer.subscription.deleted") {
+    if (
+      event.type === "customer.subscription.created" ||
+      event.type === "customer.subscription.updated" ||
+      event.type === "customer.subscription.deleted"
+    ) {
       const sub = event.data.object as Stripe.Subscription;
       await setUserPlanFromSubscription(sub);
+    }
+
+    if (event.type === "invoice.payment_succeeded" || event.type === "invoice.payment_failed") {
+      await syncSubscriptionFromInvoice(event.data.object as Stripe.Invoice);
     }
 
     if (event.type === "account.updated") {

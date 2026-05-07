@@ -93,6 +93,11 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
   const [teachingMode, setTeachingMode] = useState("both");
   const [stripeAccountId, setStripeAccountId] = useState<string | null>(null);
   const [plan, setPlan] = useState("free");
+  const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null);
+  const [stripeCustomerId, setStripeCustomerId] = useState<string | null>(null);
+  const [proCurrentPeriodEnd, setProCurrentPeriodEnd] = useState<string | null>(null);
+  const [proCancelAtPeriodEnd, setProCancelAtPeriodEnd] = useState(false);
+  const [proBusy, setProBusy] = useState(false);
   const [loyaltyTier, setLoyaltyTier] = useState<string | null>(null);
   const [annualVolumeCents, setAnnualVolumeCents] = useState(0);
   const [notif, setNotif] = useState<NotifPrefs>(defaultNotif);
@@ -122,7 +127,7 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
       }
       const { data: prof } = await supabase
         .from("profiles")
-        .select("email, name, photo_url, plan, loyalty_tier, loyalty_annual_volume, dashboard, tax_status_acknowledged, tax_status_acknowledged_at")
+        .select("email, name, photo_url, plan, subscription_status, stripe_customer_id, stripe_subscription_id, pro_current_period_end, pro_cancel_at_period_end, loyalty_tier, loyalty_annual_volume, dashboard, tax_status_acknowledged, tax_status_acknowledged_at")
         .eq("id", user.id)
         .maybeSingle();
       if (cancelled) return;
@@ -130,6 +135,10 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
       setDisplayName(String((prof as { name?: string })?.name || ""));
       setPhotoUrl(((prof as { photo_url?: string | null })?.photo_url as string | null) ?? null);
       setPlan(String((prof as { plan?: string | null })?.plan || "free"));
+      setSubscriptionStatus((prof as { subscription_status?: string | null } | null)?.subscription_status ?? null);
+      setStripeCustomerId((prof as { stripe_customer_id?: string | null } | null)?.stripe_customer_id?.trim() || null);
+      setProCurrentPeriodEnd((prof as { pro_current_period_end?: string | null } | null)?.pro_current_period_end ?? null);
+      setProCancelAtPeriodEnd(Boolean((prof as { pro_cancel_at_period_end?: boolean | null } | null)?.pro_cancel_at_period_end));
       setLoyaltyTier((prof as { loyalty_tier?: string | null } | null)?.loyalty_tier ?? null);
       setAnnualVolumeCents(Math.round(Math.max(0, Number((prof as { loyalty_annual_volume?: number | string | null } | null)?.loyalty_annual_volume ?? 0)) * 100));
       const dash = (prof as { dashboard?: unknown })?.dashboard;
@@ -322,6 +331,62 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
     window.location.href = body.url;
   };
 
+  const startProCheckout = async () => {
+    const supabase = getSupabaseClient();
+    const { data: s } = await supabase.auth.getSession();
+    const token = s.session?.access_token;
+    if (!token) {
+      setMessage(t("sessionExpiredShort"));
+      return;
+    }
+    setProBusy(true);
+    setMessage(null);
+    try {
+      const res = await fetch("/api/stripe/pro/checkout", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const body = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
+      if (!res.ok || !body.url) {
+        setMessage(body.error || t("proCheckoutFailed"));
+        return;
+      }
+      window.location.href = body.url;
+    } catch {
+      setMessage(t("proCheckoutFailed"));
+    } finally {
+      setProBusy(false);
+    }
+  };
+
+  const openBillingPortal = async () => {
+    const supabase = getSupabaseClient();
+    const { data: s } = await supabase.auth.getSession();
+    const token = s.session?.access_token;
+    if (!token) {
+      setMessage(t("sessionExpiredShort"));
+      return;
+    }
+    setProBusy(true);
+    setMessage(null);
+    try {
+      const res = await fetch("/api/stripe/portal", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const body = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
+      if (!res.ok || !body.url) {
+        setMessage(body.error || t("stripePortalUnavailable"));
+        return;
+      }
+      window.location.href = body.url;
+    } catch {
+      setMessage(t("stripePortalUnavailable"));
+    } finally {
+      setProBusy(false);
+    }
+  };
+
   const chipsPerson = teachingMode === "person" || teachingMode === "both" || teachingMode === "all";
   const chipsOnline = teachingMode === "online" || teachingMode === "both" || teachingMode === "all";
   const chipsHome = teachingMode === "home" || teachingMode === "all";
@@ -333,6 +398,14 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
   };
 
   const initials = (displayName || email || "?").slice(0, 2).toUpperCase();
+  const hasProSubscription = Boolean(stripeCustomerId || subscriptionStatus);
+  const normalizedSubStatus = String(subscriptionStatus || "").toLowerCase();
+  const proStatusLabel =
+    proCancelAtPeriodEnd ? t("proCancelAtPeriodEnd") :
+    normalizedSubStatus === "active" || normalizedSubStatus === "trialing" ? t("proSubscriptionActive") :
+    normalizedSubStatus === "past_due" ? t("proSubscriptionPastDue") :
+    normalizedSubStatus === "canceled" || normalizedSubStatus === "cancelled" ? t("proSubscriptionCanceled") :
+    normalizedSubStatus || (plan === "pro" ? t("proSubscriptionActive") : t("planFreeLabel"));
 
   if (!user) {
     return (
@@ -686,12 +759,42 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
         <p className="text-sm text-slate-600">
           {t("currentPlanPrefix")} <span className="font-bold text-[#00694c]">{plan === "pro" ? t("planProLabel") : t("planFreeLabel")}</span>
         </p>
-        <Link
-          href="/upgrade"
-          className="inline-flex h-10 px-5 rounded-full bg-[#00694c] hover:bg-[#008560] text-white text-sm font-semibold items-center shadow-sm hover:shadow transition-all"
-        >
-          {t("upgradeToPro")}
-        </Link>
+        <div className="rounded-2xl border border-[#DCEAE3] bg-[#F3FAF6] px-4 py-3 text-sm text-slate-700 space-y-1">
+          <p>
+            <span className="font-semibold text-slate-900">Pro:</span>{" "}
+            <span className="font-bold text-[#00694c]">{proStatusLabel}</span>
+          </p>
+          {proCurrentPeriodEnd ? (
+            <p className="text-xs text-slate-600">
+              {new Date(proCurrentPeriodEnd).toLocaleDateString(localeToBcp47(locale), {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })}
+            </p>
+          ) : null}
+        </div>
+        {plan === "pro" || hasProSubscription ? (
+          <button
+            type="button"
+            disabled={proBusy}
+            onClick={() => void openBillingPortal()}
+            className="inline-flex h-10 px-5 rounded-full bg-[#00694c] hover:bg-[#008560] text-white text-sm font-semibold items-center justify-center gap-2 shadow-sm hover:shadow transition-all disabled:opacity-60"
+          >
+            {proBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+            {t("manageProSubscription")}
+          </button>
+        ) : (
+          <button
+            type="button"
+            disabled={proBusy}
+            onClick={() => void startProCheckout()}
+            className="inline-flex h-10 px-5 rounded-full bg-[#00694c] hover:bg-[#008560] text-white text-sm font-semibold items-center justify-center gap-2 shadow-sm hover:shadow transition-all disabled:opacity-60"
+          >
+            {proBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+            {t("upgradeToPro")}
+          </button>
+        )}
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-3">
