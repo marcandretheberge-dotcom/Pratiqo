@@ -53,7 +53,13 @@ export async function POST(req: Request) {
 
     const customerId = (profile as { stripe_customer_id?: string | null } | null)?.stripe_customer_id?.trim();
     if (!customerId) {
-      return NextResponse.json({ error: "No Stripe customer found for this account." }, { status: 404 });
+      return NextResponse.json(
+        {
+          error:
+            "Votre abonnement Stripe n'est pas encore associe a votre profil. Veuillez reessayer ou contacter le support.",
+        },
+        { status: 404 },
+      );
     }
 
     const session = await stripe.billingPortal.sessions.create({
