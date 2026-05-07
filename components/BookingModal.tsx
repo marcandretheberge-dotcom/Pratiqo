@@ -204,6 +204,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
   const lessonHours = lessonMinutes / 60;
   const hourlyRate = teachingMode === "domicile" ? Number(teacher.homeLessonPrice ?? 0) : teacher.pricePerLesson;
   const totalPrice = Math.round(lessonHours * hourlyRate * 100) / 100;
+  // Future: show approximate converted price using FX service, but charge in the configured Stripe currency.
   const displayPrice = formatPrice(totalPrice);
   const displayedHourlyPrice = formatPrice(hourlyRate);
 

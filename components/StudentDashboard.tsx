@@ -15,6 +15,12 @@ import { RescheduleModal, type RescheduleModalBooking } from "@/components/Resch
 import { STUDENT_CANCEL_STATUSES, isBookingLessonDateOnOrAfterToday, isLateCancellation } from "@/lib/bookingCancellation";
 import { postCancelBooking } from "@/lib/bookingCancellationClient";
 import type { TranslationKey } from "@/lib/translations";
+import { localeToBcp47 } from "@/lib/i18n/types";
+import {
+  bookingWallTimeRangeToUtc,
+  formatBookingTimeForBothZones,
+  getBrowserTimeZone,
+} from "@/lib/timezones";
 
 const PEER_UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -42,6 +48,7 @@ type TeacherRow = {
   name: string | null;
   discipline: string | null;
   image_url: string | null;
+  timezone: string | null;
 };
 
 type BookingWithTeacher = {
@@ -53,6 +60,9 @@ type BookingWithTeacher = {
   avatarUrl: string | null;
   date: string;
   time: string;
+  startIso: string | null;
+  endIso: string | null;
+  teacherTimeZone: string | null;
   durationMinutes: number | null;
   price: number | null;
   teachingMode: string | null;
@@ -84,7 +94,9 @@ function canStudentCancelBooking(status: string): boolean {
 
 export function StudentDashboard() {
   const { user, profile } = useAuth();
-  const { t, formatPrice } = useLocale();
+  const { t, formatPrice, locale } = useLocale();
+  const dateLocale = localeToBcp47(locale);
+  const browserTimeZone = useMemo(() => getBrowserTimeZone(), []);
 
   const [loading, setLoading] = useState(true);
   const [upcoming, setUpcoming] = useState<BookingWithTeacher[]>([]);
@@ -120,7 +132,7 @@ export function StudentDashboard() {
 
       await Promise.all([
         ...teacherIds.map(async (tid) => {
-          const { data } = await supabase.from("teachers").select("id, user_id, name, discipline, image_url").eq("id", tid).maybeSingle();
+          const { data } = await supabase.from("teachers").select("id, user_id, name, discipline, image_url, timezone").eq("id", tid).maybeSingle();
           if (data) teacherMap.set(tid, data as unknown as TeacherRow);
         }),
         learnerIds.length
@@ -138,6 +150,15 @@ export function StudentDashboard() {
         .filter((r) => r.date && r.time)
         .map((r) => {
           const tr = teacherMap.get(r.teacher_id);
+          const range =
+            r.date && r.time
+              ? bookingWallTimeRangeToUtc({
+                  dateIso: String(r.date),
+                  slot: String(r.time),
+                  durationMinutes: r.duration_minutes,
+                  timeZone: tr?.timezone,
+                })
+              : null;
           return {
             bookingId: r.id,
             teacherId: r.teacher_id,
@@ -147,6 +168,9 @@ export function StudentDashboard() {
             avatarUrl: tr?.image_url ?? null,
             date: String(r.date || ""),
             time: String(r.time || ""),
+            startIso: range?.start.toISOString() ?? null,
+            endIso: range?.end.toISOString() ?? null,
+            teacherTimeZone: tr?.timezone ?? null,
             durationMinutes: typeof r.duration_minutes === "number" ? r.duration_minutes : null,
             price: typeof r.price === "number" ? r.price : r.price != null ? Number(r.price) : null,
             teachingMode: r.teaching_mode ?? null,
@@ -198,6 +222,28 @@ export function StudentDashboard() {
     () => formatTeachingModeLabel(nextLesson?.teachingMode ?? null, t),
     [nextLesson?.teachingMode, t],
   );
+  const timeLabelFor = (booking: BookingWithTeacher) => {
+    if (!booking.startIso || !booking.endIso) return `${booking.date} · ${booking.time}`;
+    const labels = formatBookingTimeForBothZones({
+      startIso: booking.startIso,
+      endIso: booking.endIso,
+      userTimeZone: browserTimeZone,
+      teacherTimeZone: booking.teacherTimeZone,
+      locale: dateLocale,
+    });
+    return labels.userLabel;
+  };
+  const teacherTimeLabelFor = (booking: BookingWithTeacher) => {
+    if (!booking.startIso || !booking.endIso) return null;
+    const labels = formatBookingTimeForBothZones({
+      startIso: booking.startIso,
+      endIso: booking.endIso,
+      userTimeZone: browserTimeZone,
+      teacherTimeZone: booking.teacherTimeZone,
+      locale: dateLocale,
+    });
+    return labels.showTeacherTime ? labels.teacherLabel : null;
+  };
   const restUpcoming = useMemo(() => upcoming.slice(1), [upcoming]);
 
   const rescheduleBooking = useMemo(
@@ -304,7 +350,7 @@ export function StudentDashboard() {
                   <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-white/90">
                     <span className="inline-flex items-center gap-2">
                       <CalendarDays size={16} className="shrink-0 opacity-95" />
-                      {nextLesson.date} · {nextLesson.time}
+                      {timeLabelFor(nextLesson)}
                     </span>
                     {nextLesson.durationMinutes ? <span>{nextLesson.durationMinutes} min</span> : null}
                     {nextLesson.price != null ? <span>{formatPrice(nextLesson.price)}</span> : null}
@@ -313,6 +359,11 @@ export function StudentDashboard() {
                   {nextLesson.learnerName ? (
                     <p className="mt-2 text-sm font-semibold text-white/90">
                       {t("studentCourseForLearner")} : {nextLesson.learnerName}
+                    </p>
+                  ) : null}
+                  {teacherTimeLabelFor(nextLesson) ? (
+                    <p className="mt-1 text-xs text-white/80">
+                      {t("teacherLocalTime")} : {teacherTimeLabelFor(nextLesson)}
                     </p>
                   ) : null}
                 </div>
@@ -424,11 +475,16 @@ export function StudentDashboard() {
                               {b.discipline ? <span className="font-medium text-slate-600"> · {b.discipline}</span> : null}
                             </p>
                             <p className="mt-1 text-sm text-slate-600">
-                              {b.date} · {b.time}
+                              {timeLabelFor(b)}
                               {b.durationMinutes != null ? ` · ${b.durationMinutes} min` : ""}
                               {modeLabel ? ` · ${modeLabel}` : ""}
                               {b.price != null ? ` · ${formatPrice(b.price)}` : ""}
                             </p>
+                            {teacherTimeLabelFor(b) ? (
+                              <p className="mt-1 text-xs text-slate-500">
+                                {t("teacherLocalTime")} : {teacherTimeLabelFor(b)}
+                              </p>
+                            ) : null}
                             {b.learnerName ? (
                               <p className="mt-1 text-xs font-semibold text-[#0F6E56]">
                                 {t("studentCourseForLearner")} : {b.learnerName}

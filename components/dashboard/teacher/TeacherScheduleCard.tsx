@@ -9,6 +9,8 @@ import { useLocale } from "@/lib/locale-context";
 import type { TranslationKey } from "@/lib/translations";
 import { cn } from "@/lib/utils";
 import { getBookingLifecycleState, type BookingLifecycleState } from "@/lib/bookingLifecycle";
+import { localeToBcp47 } from "@/lib/i18n/types";
+import { bookingWallTimeRangeToUtc, formatTimeRangeForUser } from "@/lib/timezones";
 
 const PEER_UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -81,6 +83,7 @@ export function TeacherScheduleCard({
   onOpenReschedule,
   onMarkCompleted,
   cancelBusy,
+  timeZone,
 }: {
   items: TeacherScheduleRow[];
   emptyHint: string;
@@ -89,8 +92,10 @@ export function TeacherScheduleCard({
   onOpenReschedule?: (bookingId: string) => void;
   onMarkCompleted?: (bookingId: string, outcome: CompletionOutcome) => Promise<void> | void;
   cancelBusy?: boolean;
+  timeZone?: string | null;
 }) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
+  const dateLocale = localeToBcp47(locale);
   const router = useRouter();
   const relationshipMode = Boolean(onRequestCancelClass && onOpenReschedule);
   const [completionTarget, setCompletionTarget] = useState<TeacherScheduleRow | null>(null);
@@ -155,6 +160,19 @@ export function TeacherScheduleCard({
             const roomUrl = videoRoomUrl(b.id);
             const mapUrl = b.studentAddress?.trim() ? directionsUrl(b.studentAddress.trim()) : null;
             const learner = b.learnerContext ?? null;
+            const dateIso = String(b.slot_date || b.date || "");
+            const slot = String(b.time_slot || b.time || "");
+            const utcRange = dateIso && slot
+              ? bookingWallTimeRangeToUtc({
+                  dateIso,
+                  slot,
+                  durationMinutes: b.durationMinutes,
+                  timeZone,
+                })
+              : null;
+            const timeLabel = utcRange
+              ? formatTimeRangeForUser(utcRange.start, utcRange.end, dateLocale, timeZone || undefined)
+              : [b.slot_date || b.date, b.time_slot || b.time].filter(Boolean).join(" · ");
 
             return (
               <li key={b.id} className="rounded-2xl border border-[#F1EFE8] bg-white p-4 sm:p-5">
@@ -179,8 +197,8 @@ export function TeacherScheduleCard({
                   )}
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-semibold text-[#2C2C2A]">{b.studentName}</p>
-                    <p className="mt-0.5 text-sm text-[#6B6760]">{b.slot_date || b.date}</p>
-                    <p className="mt-0.5 text-sm font-medium text-[#0F6E56]">{b.time_slot || b.time}</p>
+                    <p className="mt-0.5 text-sm font-medium text-[#0F6E56]">{timeLabel}</p>
+                    {timeZone ? <p className="mt-0.5 text-xs text-[#6B6760]">{t("teacherLocalTime")}</p> : null}
                     <LifecycleBadge state={lifecycle} />
                   </div>
                 </div>

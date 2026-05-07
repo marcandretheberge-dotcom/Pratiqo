@@ -31,6 +31,7 @@ import {
   getBookingLifecycleState,
   isBookingVisibleForTeacher,
 } from "@/lib/bookingLifecycle";
+import { formatCurrencyAmount } from "@/lib/formatters";
 
 interface BookingWithTeacher {
   id: string;
@@ -121,6 +122,7 @@ export function Dashboard() {
     teacherImageUrl: string | null;
     profilePhotoUrl: string | null;
     disciplineCount: number;
+    timezone: string | null;
   } | null>(null);
   const [loading, setLoading] = useState(true);
   // id → "accepting" | "declining"
@@ -464,7 +466,7 @@ export function Dashboard() {
 
       const { data: t } = await supabase
         .from("teachers")
-        .select("id, discipline, price_per_lesson, bio, image_url")
+        .select("id, discipline, price_per_lesson, bio, image_url, timezone")
         .eq("user_id", user.id)
         .maybeSingle();
       if (!t?.id) {
@@ -478,6 +480,7 @@ export function Dashboard() {
         price_per_lesson?: number;
         bio?: string | null;
         image_url?: string | null;
+        timezone?: string | null;
       };
       const { data: drows } = await supabase.from("teacher_disciplines").select("id").eq("teacher_id", row.id);
       const img = row.image_url != null ? String(row.image_url).trim() : "";
@@ -490,6 +493,7 @@ export function Dashboard() {
         teacherImageUrl: img ? img : null,
         profilePhotoUrl: pPhoto ? pPhoto : null,
         disciplineCount: drows?.length ?? 0,
+        timezone: row.timezone ?? null,
       });
       const teacherSlug = row.id;
       const { data: rows, error } = await supabase
@@ -647,9 +651,9 @@ export function Dashboard() {
       weekday: "long",
       day: "numeric",
       month: "long",
+      timeZone: teacherMeta?.timezone || undefined,
     });
-    const fmtMoney = (n: number) =>
-      new Intl.NumberFormat(dateLocale, { style: "currency", currency: "CAD", maximumFractionDigits: 0 }).format(n);
+    const fmtMoney = (n: number) => formatCurrencyAmount(n, "CAD", dateLocale);
 
     const completenessChecks = teacherMeta
       ? [
@@ -749,6 +753,7 @@ export function Dashboard() {
                 onOpenReschedule={(bookingId) => setRescheduleModalBookingId(bookingId)}
                 onMarkCompleted={markTeacherBookingCompleted}
                 cancelBusy={cancelBusy}
+                timeZone={teacherMeta?.timezone ?? null}
               />
               {confirmedUpcoming.length > 0 ? (
                 <div className="hidden min-w-0 lg:block">

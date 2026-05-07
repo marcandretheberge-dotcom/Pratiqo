@@ -1,15 +1,9 @@
 import { NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { bookingWallTimeRangeToUtc } from "@/lib/timezones";
 
 export const runtime = "nodejs";
-
-function parseStart(dateIso: string, slot: string): Date | null {
-  const d = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateIso);
-  const t = /^(\d{1,2})h(\d{2})$/.exec(slot);
-  if (!d || !t) return null;
-  return new Date(Number(d[1]), Number(d[2]) - 1, Number(d[3]), Number(t[1]), Number(t[2]));
-}
 
 function icsDate(date: Date): string {
   return date.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
@@ -51,19 +45,20 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
 
   const { data: teacher } = await admin
     .from("teachers")
-    .select("name, discipline")
+    .select("name, discipline, timezone")
     .eq("id", booking.teacher_id as string)
     .maybeSingle();
 
   const dateIso = String((booking as { slot_date?: string | null }).slot_date ?? booking.date ?? "");
   const slot = String((booking as { time_slot?: string | null }).time_slot ?? booking.time ?? "");
-  const start = parseStart(dateIso, slot);
-  if (!start) {
+  const durationMinutes = Math.max(30, Number((booking as { duration_minutes?: number | null }).duration_minutes ?? 60));
+  const teacherTimeZone = (teacher as { timezone?: string | null } | null)?.timezone ?? null;
+  const range = bookingWallTimeRangeToUtc({ dateIso, slot, durationMinutes, timeZone: teacherTimeZone });
+  if (!range) {
     return NextResponse.json({ error: "Booking time is incomplete." }, { status: 400 });
   }
 
-  const durationMinutes = Math.max(30, Number((booking as { duration_minutes?: number | null }).duration_minutes ?? 60));
-  const end = new Date(start.getTime() + durationMinutes * 60_000);
+  const { start, end } = range;
   const teacherName = String((teacher as { name?: string | null } | null)?.name ?? "Professeur");
   const discipline = String((teacher as { discipline?: string | null } | null)?.discipline ?? "Cours privé");
   const mode = String((booking as { teaching_mode?: string | null }).teaching_mode ?? "person");

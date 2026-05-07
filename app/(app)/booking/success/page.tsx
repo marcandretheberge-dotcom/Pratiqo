@@ -31,6 +31,7 @@ import {
   bookingWallTimeRangeToUtc,
   formatBookingTimeForBothZones,
 } from "@/lib/timezones";
+import { formatCurrencyAmount } from "@/lib/formatters";
 
 export const dynamic = "force-dynamic";
 
@@ -286,9 +287,7 @@ async function verifyAndConfirm(sessionId: string, locale: Locale): Promise<Veri
   const cur = (session.currency || "cad").toUpperCase();
   const amountLabel =
     total != null
-      ? new Intl.NumberFormat(localeToBcp47(locale), { style: "currency", currency: cur }).format(
-          total / 100,
-        )
+      ? formatCurrencyAmount(total / 100, cur, localeToBcp47(locale))
       : "";
 
   const locationKind = parseLocationKind(bookingMode);
@@ -424,6 +423,16 @@ export default async function BookingSuccessPage({
         : dict.bookingStudio;
   const googleCalendarUrl = buildGoogleCalendarUrl(booking, locationLabel);
   const calendarDownloadUrl = `/api/bookings/${encodeURIComponent(booking.bookingId)}/calendar?session_id=${encodeURIComponent(sessionId)}`;
+  const timeLabels =
+    booking.startIso && booking.endIso
+      ? formatBookingTimeForBothZones({
+          startIso: booking.startIso,
+          endIso: booking.endIso,
+          userTimeZone: booking.studentTimeZone,
+          teacherTimeZone: booking.teacherTimeZone,
+          locale: localeToBcp47(locale),
+        })
+      : null;
   const meetingNote =
     booking.locationKind === "online"
       ? dict.bookingMeetingLinkPending
@@ -500,7 +509,14 @@ export default async function BookingSuccessPage({
             {(booking.date || booking.time) ? (
               <li className="flex items-center gap-3">
                 <Calendar className="w-5 h-5 shrink-0" style={{ color: "#1D9E75" }} />
-                <span>{[booking.date, booking.time].filter(Boolean).join(" · ")}</span>
+                <span>{timeLabels?.userLabel || [booking.date, booking.time].filter(Boolean).join(" · ")}</span>
+              </li>
+            ) : null}
+
+            {timeLabels?.showTeacherTime ? (
+              <li className="flex items-center gap-3 text-sm text-[var(--p-text-muted)]">
+                <Clock className="w-5 h-5 shrink-0" style={{ color: "#1D9E75" }} />
+                <span>{dict.teacherLocalTime} : {timeLabels.teacherLabel}</span>
               </li>
             ) : null}
 
