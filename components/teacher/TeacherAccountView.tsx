@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Info, Loader2, X } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
@@ -14,6 +14,7 @@ import type { TeacherRow } from "@/lib/teacherMapper";
 import { isValidVideoUrl } from "@/lib/videoEmbed";
 import { TeacherPayoutPreview } from "@/components/teacher/TeacherPayoutPreview";
 import { AccountDeletionSection } from "@/components/account/AccountDeletionSection";
+import { TeacherDisciplinesEditor, type DisciplineCardDraft } from "@/components/teacher/TeacherDisciplinesEditor";
 
 type TeacherDisciplineDbRow = {
   id: string;
@@ -21,6 +22,16 @@ type TeacherDisciplineDbRow = {
   specialite: string | null;
   sort_order: number;
 };
+
+type DisciplineCard = {
+  disciplineId: string;
+  specialties: string[];
+  minSort: number;
+};
+
+function normalizeSpec(s: string | null | undefined): string {
+  return String(s ?? "").replace(/\s+/g, " ").trim();
+}
 
 type NotifPrefs = {
   newBooking: boolean;
@@ -109,10 +120,13 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
 
   const [discRows, setDiscRows] = useState<TeacherDisciplineDbRow[]>([]);
   const [discLoading, setDiscLoading] = useState(true);
-  const [showAddDisc, setShowAddDisc] = useState(false);
-  const [addDiscId, setAddDiscId] = useState("");
-  const [addSpec, setAddSpec] = useState("");
   const [discSaving, setDiscSaving] = useState(false);
+  const [discEditorOpen, setDiscEditorOpen] = useState(false);
+  const [discEditorMode, setDiscEditorMode] = useState<"add" | "edit">("add");
+  const [discEditorInitial, setDiscEditorInitial] = useState<DisciplineCardDraft>({
+    disciplineId: "musique",
+    specialties: [],
+  });
   const [taxAckDate, setTaxAckDate] = useState<string | null>(null);
   const [taxAcknowledged, setTaxAcknowledged] = useState(false);
   const [videoUrl, setVideoUrl] = useState("");
@@ -179,8 +193,6 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
       setLocationJson(loc);
       setCity(typeof loc.neighborhood === "string" ? loc.neighborhood : "");
 
-      const enabledList = getEnabledDisciplines();
-      setAddDiscId(enabledList[0]?.id ?? "musique");
       const { data: drows, error: dErr } = await supabase
         .from("teacher_disciplines")
         .select("id, discipline_id, specialite, sort_order")
@@ -208,12 +220,51 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
     setDiscRows((drows as TeacherDisciplineDbRow[]) ?? []);
   };
 
-  const removeDiscipline = async (rowId: string) => {
-    if (!teacherId || discRows.length <= 1) return;
+  const disciplineCards = useMemo<DisciplineCard[]>(() => {
+    const map = new Map<string, { specs: string[]; minSort: number }>();
+    for (const r of discRows) {
+      const id = r.discipline_id;
+      if (!id) continue;
+      const spec = normalizeSpec(r.specialite);
+      const cur = map.get(id) ?? { specs: [], minSort: r.sort_order ?? 0 };
+      cur.minSort = Math.min(cur.minSort, r.sort_order ?? 0);
+      if (spec) cur.specs.push(spec);
+      map.set(id, cur);
+    }
+    const cards: DisciplineCard[] = Array.from(map.entries()).map(([disciplineId, v]) => ({
+      disciplineId,
+      specialties: Array.from(new Set(v.specs.map((x) => x.toLowerCase()))).map(
+        (k) => v.specs.find((s) => s.toLowerCase() === k)!,
+      ),
+      minSort: v.minSort,
+    }));
+    cards.sort((a, b) => a.minSort - b.minSort);
+    return cards;
+  }, [discRows]);
+
+  const openAddDiscipline = () => {
+    const enabled = getEnabledDisciplines();
+    setDiscEditorMode("add");
+    setDiscEditorInitial({ disciplineId: enabled[0]?.id ?? "musique", specialties: [] });
+    setDiscEditorOpen(true);
+  };
+
+  const openEditDiscipline = (card: DisciplineCard) => {
+    setDiscEditorMode("edit");
+    setDiscEditorInitial({ disciplineId: card.disciplineId, specialties: card.specialties });
+    setDiscEditorOpen(true);
+  };
+
+  const deleteDisciplineCard = async (disciplineId: string) => {
+    if (!teacherId) return;
+    if (disciplineCards.length <= 1) {
+      setMessage(t("disciplineValidationRequired"));
+      return;
+    }
     setDiscSaving(true);
     setMessage(null);
     const supabase = getSupabaseClient();
-    const { error } = await supabase.from("teacher_disciplines").delete().eq("id", rowId);
+    const { error } = await supabase.from("teacher_disciplines").delete().eq("teacher_id", teacherId).eq("discipline_id", disciplineId);
     if (error) {
       setMessage(error.message);
       setDiscSaving(false);
@@ -225,37 +276,45 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
     setMessage(t("savedOk"));
   };
 
-  const addDiscipline = async () => {
-    if (!teacherId || discRows.length >= 3) return;
-    const spec = addSpec.trim();
-    if (!spec) {
-      setMessage(t("specialtyRequired"));
+  const saveDisciplineCard = async (draft: DisciplineCardDraft) => {
+    if (!teacherId) return;
+    const nextSpecs = draft.specialties.map((s) => normalizeSpec(s)).filter(Boolean);
+    if (nextSpecs.length === 0) {
+      setMessage(t("specialtyValidationRequired"));
       return;
     }
-    if (discRows.some((r) => r.discipline_id === addDiscId)) {
-      setMessage(t("disciplineDuplicate"));
+    const exists = disciplineCards.some((c) => c.disciplineId === draft.disciplineId);
+    if (discEditorMode === "add" && disciplineCards.length >= 3 && !exists) {
+      setMessage(t("maxDisciplinesReached"));
       return;
     }
     setDiscSaving(true);
     setMessage(null);
     const supabase = getSupabaseClient();
-    const nextOrder = discRows.length ? Math.max(...discRows.map((r) => r.sort_order)) + 1 : 0;
-    const { error } = await supabase.from("teacher_disciplines").insert({
+
+    // If editing, clear all rows for that discipline (replace set of specialties).
+    await supabase.from("teacher_disciplines").delete().eq("teacher_id", teacherId).eq("discipline_id", draft.disciplineId);
+
+    const baseSort =
+      disciplineCards.find((c) => c.disciplineId === draft.disciplineId)?.minSort ??
+      (disciplineCards.length ? Math.max(...disciplineCards.map((c) => c.minSort)) + 100 : 0);
+
+    const inserts = nextSpecs.map((spec, i) => ({
       teacher_id: teacherId,
-      discipline_id: addDiscId,
+      discipline_id: draft.disciplineId,
       specialite: spec,
-      sort_order: nextOrder,
-    });
-    if (error) {
-      setMessage(error.message);
+      sort_order: baseSort + i,
+    }));
+    const { error: insErr } = await supabase.from("teacher_disciplines").insert(inserts);
+    if (insErr) {
+      setMessage(insErr.message);
       setDiscSaving(false);
       return;
     }
     await syncTeacherPrimaryFromDisciplines(supabase, teacherId);
     await reloadDisciplines(teacherId);
-    setAddSpec("");
-    setShowAddDisc(false);
     setDiscSaving(false);
+    setDiscEditorOpen(false);
     setMessage(t("savedOk"));
   };
 
@@ -476,7 +535,7 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
     );
   }
 
-  const addableDisciplines = getEnabledDisciplines().filter((d) => !discRows.some((r) => r.discipline_id === d.id));
+  const maxDisciplinesReached = disciplineCards.length >= 3;
 
   return (
     <div className="max-w-xl mx-auto space-y-8 pb-16">
@@ -616,89 +675,77 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
-        <h2 className="text-lg font-bold text-[#2C2C2A]">{t("sectionDisciplines")}</h2>
+        <h2 className="text-lg font-bold text-[#2C2C2A]">{t("teacherDisciplinesTitle")}</h2>
+        <p className="text-sm leading-relaxed text-slate-600">{t("teacherDisciplinesDescription")}</p>
         {discLoading ? (
           <Loader2 className="animate-spin text-[#00694c]" size={24} />
         ) : (
           <>
-            <div className="flex flex-wrap gap-2">
-              {discRows.map((r) => {
-                const meta = getDisciplineById(r.discipline_id);
-                const label = `${meta?.emoji ?? "✨"} ${meta?.label ?? r.discipline_id}${r.specialite ? ` — ${r.specialite}` : ""}`;
-                return (
-                  <span
-                    key={r.id}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-[rgba(0,105,76,0.35)] bg-[rgba(0,105,76,0.08)] px-3 py-1.5 text-xs font-semibold text-[#0f6d52]"
-                  >
-                    {label}
-                    <button
-                      type="button"
-                      disabled={discRows.length <= 1 || discSaving}
-                      onClick={() => void removeDiscipline(r.id)}
-                      className="rounded-full p-0.5 hover:bg-[rgba(0,105,76,0.2)] disabled:opacity-30"
-                      aria-label={t("removeAria")}
-                    >
-                      <X size={14} />
-                    </button>
-                  </span>
-                );
-              })}
-            </div>
-            {discRows.length < 3 ? (
-              <div className="space-y-3">
-                {!showAddDisc ? (
-                  <button
-                    type="button"
-                    disabled={discSaving || addableDisciplines.length === 0}
-                    onClick={() => setShowAddDisc(true)}
-                    className="w-full py-3 rounded-xl border-2 border-dashed border-[#00694c]/40 text-[#0f6e56] text-sm font-semibold hover:bg-[#e1f5ee]/50"
-                  >
-                    {t("addDiscipline")}
-                  </button>
-                ) : (
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-3">
-                    <select
-                      value={addDiscId}
-                      onChange={(e) => setAddDiscId(e.target.value)}
-                      className="w-full h-11 rounded-xl border border-slate-200 px-3 text-sm bg-white text-slate-800"
-                    >
-                      {addableDisciplines.map((d) => (
-                        <option key={d.id} value={d.id}>
-                          {d.emoji} {d.label}
-                        </option>
-                      ))}
-                    </select>
-                    <input
-                      value={addSpec}
-                      onChange={(e) => setAddSpec(e.target.value)}
-                      placeholder={t("specialtyPlaceholder")}
-                      className="w-full h-11 rounded-xl border border-slate-200 px-3 text-sm bg-white text-slate-800 placeholder:text-slate-400"
-                    />
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        disabled={discSaving}
-                        onClick={() => void addDiscipline()}
-                        className="h-10 px-4 rounded-full bg-[#00694c] hover:bg-[#008560] text-white text-sm font-semibold shadow-sm hover:shadow transition-all"
-                      >
-                        {t("disciplineAdd")}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowAddDisc(false);
-                          setAddSpec("");
-                        }}
-                        className="h-10 px-4 rounded-full border border-slate-200 text-sm text-slate-600"
-                      >
-                        {t("cancelAction")}
-                      </button>
+            {disciplineCards.length === 0 ? (
+              <p className="text-sm text-slate-600">{t("teacherDisciplinesEmpty")}</p>
+            ) : (
+              <div className="grid grid-cols-1 gap-3">
+                {disciplineCards.map((card) => {
+                  const meta = getDisciplineById(card.disciplineId);
+                  const title = `${meta?.emoji ?? "✨"} ${meta?.label ?? card.disciplineId}`;
+                  return (
+                    <div key={card.disciplineId} className="rounded-2xl border border-[#DCEAE3] bg-white p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-sm font-extrabold text-[#2C2C2A]">{title}</p>
+                          <p className="mt-1 text-sm text-slate-600">
+                            {card.specialties.length ? card.specialties.join(" · ") : "—"}
+                          </p>
+                        </div>
+                        <div className="shrink-0 flex items-center gap-2">
+                          <button
+                            type="button"
+                            disabled={discSaving}
+                            onClick={() => openEditDiscipline(card)}
+                            className="h-9 rounded-full border border-slate-200 bg-white px-4 text-xs font-bold text-slate-800 hover:bg-slate-50 disabled:opacity-60"
+                          >
+                            {t("editDiscipline")}
+                          </button>
+                          <button
+                            type="button"
+                            disabled={discSaving || disciplineCards.length <= 1}
+                            onClick={() => void deleteDisciplineCard(card.disciplineId)}
+                            className="h-9 rounded-full border border-rose-200 bg-rose-50 px-4 text-xs font-bold text-rose-700 hover:bg-rose-100/60 disabled:opacity-50"
+                          >
+                            {t("deleteDiscipline")}
+                          </button>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  );
+                })}
               </div>
-            ) : null}
-            <p className="text-xs text-slate-600">{t("maxDisciplines")}</p>
+            )}
+
+            <button
+              type="button"
+              disabled={discSaving || maxDisciplinesReached}
+              onClick={openAddDiscipline}
+              className={cn(
+                "w-full py-3 rounded-xl border-2 border-dashed text-sm font-semibold",
+                maxDisciplinesReached
+                  ? "border-slate-200 text-slate-400 bg-slate-50"
+                  : "border-[#00694c]/40 text-[#0f6e56] hover:bg-[#e1f5ee]/50",
+              )}
+            >
+              {t("addDiscipline")}
+            </button>
+            {maxDisciplinesReached ? <p className="text-xs font-semibold text-slate-500">{t("maxDisciplinesReached")}</p> : null}
+
+            <TeacherDisciplinesEditor
+              open={discEditorOpen}
+              mode={discEditorMode}
+              initial={discEditorInitial}
+              busy={discSaving}
+              maxReached={maxDisciplinesReached}
+              onClose={() => setDiscEditorOpen(false)}
+              onSave={saveDisciplineCard}
+            />
           </>
         )}
       </section>
