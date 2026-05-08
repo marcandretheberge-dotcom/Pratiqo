@@ -14,3 +14,43 @@ export const TEACHERS_LIST_SELECT =
 
 /** Public listing fields used by TeacherQuiz matching (alignment with {@link teacherRowToTeacher} / {@link Teacher}). */
 export const TEACHER_QUIZ_SELECT = TEACHERS_LIST_SELECT;
+
+export type TeacherCredentialInsert = {
+  teacher_id: string;
+  type: "degree" | "certificate" | "license" | "experience" | "portfolio";
+  title: string;
+  institution_name?: string | null;
+  country?: string | null;
+  issued_year?: number | null;
+  verification_method?: string | null;
+  public_label?: string | null;
+};
+
+export function getTeacherIdentityVerification(supabase: { from: (t: string) => any }, teacherId: string) {
+  // Identity verification currently lives on `teachers` (Stripe Identity columns).
+  return supabase
+    .from("teachers")
+    .select("id, user_id, identity_verified, identity_status, stripe_identity_status, stripe_identity_verified_at, country_code")
+    .eq("id", teacherId)
+    .maybeSingle();
+}
+
+export function getTeacherCredentials(supabase: { from: (t: string) => any }, teacherId: string) {
+  return supabase
+    .from("teacher_credentials")
+    .select("id, teacher_id, type, title, institution_name, country, issued_year, verification_status, verification_method, confidence_level, public_label, verified_at, expires_at, created_at, updated_at")
+    .eq("teacher_id", teacherId)
+    .order("created_at", { ascending: false });
+}
+
+export function createTeacherCredential(supabase: { from: (t: string) => any }, input: TeacherCredentialInsert) {
+  return supabase.from("teacher_credentials").insert(input).select("*").maybeSingle();
+}
+
+export function getPublicTeacherCredentials(supabase: { from: (t: string) => any }, teacherId: string) {
+  return supabase
+    .from("teacher_credentials_public")
+    .select("id, teacher_id, type, public_label, institution_name, country, issued_year, verification_method, confidence_level, verified_at, expires_at")
+    .eq("teacher_id", teacherId)
+    .order("verified_at", { ascending: false });
+}

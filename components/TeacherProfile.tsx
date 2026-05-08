@@ -31,7 +31,8 @@ import { haversineDistance } from "../lib/geo";
 import { TeacherMap } from "./TeacherMap";
 import { getAllDisciplines, getDisciplineById } from "../lib/disciplines";
 import { useLocale } from "../lib/locale-context";
-import { buildTeacherTrustItems, getPublicTeacherTrustBadgeKey, type TeacherTrustItem } from "../lib/teacherTrust";
+import { buildTeacherTrustBadges, buildTeacherTrustItems, getPublicTeacherTrustBadgeKey, type TeacherCredential, type TeacherTrustItem } from "../lib/teacherTrust";
+import { getPublicTeacherCredentials } from "@/lib/supabase/queries";
 import { getEmbedUrl } from "../lib/videoEmbed";
 import { TeacherAvatar } from "./TeacherAvatar";
 import { calculateIntroSessionPriceCents } from "@/lib/introSession";
@@ -360,6 +361,62 @@ export function TeacherProfile({
   );
   const publicTrustBadgeKey = useMemo(() => getPublicTeacherTrustBadgeKey(trustItems), [trustItems]);
 
+  const [publicCredentials, setPublicCredentials] = useState<TeacherCredential[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    const supabase = getSupabaseClient();
+    void (async () => {
+      const { data, error } = await getPublicTeacherCredentials(supabase, teacher.id);
+      if (cancelled) return;
+      if (error) return;
+      const rows = (data ?? []) as Array<{
+        id: string;
+        teacher_id: string;
+        type: string;
+        public_label: string | null;
+        institution_name: string | null;
+        country: string | null;
+        issued_year: number | null;
+        verification_method: string | null;
+        confidence_level: string | null;
+        verified_at: string | null;
+        expires_at: string | null;
+      }>;
+      setPublicCredentials(
+        rows.map((r) => ({
+          id: r.id,
+          teacherId: r.teacher_id,
+          type: r.type as TeacherCredential["type"],
+          title: r.public_label || "",
+          institutionName: r.institution_name,
+          country: r.country,
+          issuedYear: r.issued_year,
+          verificationStatus: "verified",
+          verificationMethod: (r.verification_method as TeacherCredential["verificationMethod"]) ?? null,
+          confidenceLevel: (r.confidence_level as TeacherCredential["confidenceLevel"]) ?? null,
+          publicLabel: r.public_label,
+          verifiedAt: r.verified_at,
+          expiresAt: r.expires_at,
+        })),
+      );
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [teacher.id]);
+
+  const trustBadges = useMemo(() => {
+    return buildTeacherTrustBadges({
+      identity: {
+        identityVerified: teacher.identityVerified,
+        identityStatus: teacher.identityStatus ?? null,
+        stripeIdentityStatus: teacher.stripeIdentityStatus ?? null,
+      },
+      credentials: publicCredentials,
+      averageRating: teacher.rating,
+    });
+  }, [teacher.identityVerified, teacher.identityStatus, teacher.stripeIdentityStatus, publicCredentials, teacher.rating]);
+
   const homeConfigured =
     Boolean(teacher.homeLessonEnabled) &&
     typeof teacher.homeLessonPrice === "number" &&
@@ -484,6 +541,27 @@ export function TeacherProfile({
                         </span>
                       ) : null}
                     </div>
+                    {trustBadges.length ? (
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {trustBadges.map((b) => (
+                          <span
+                            key={b.key}
+                            title={t(b.descriptionKey)}
+                            className={cn(
+                              "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold",
+                              b.strength === "official"
+                                ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                                : b.strength === "strong"
+                                  ? "bg-[#E1F5EE] text-[#0F6E56] border border-[#DCEAE3]"
+                                  : "bg-slate-100 text-slate-700 border border-slate-200",
+                            )}
+                          >
+                            <CheckCircle2 size={12} className="shrink-0" aria-hidden />
+                            <span>{t(b.labelKey)}</span>
+                          </span>
+                        ))}
+                      </div>
+                    ) : null}
                     <div className="flex flex-wrap items-center gap-2 mt-1.5">
                       <div className="flex items-center gap-1">
                         <Star size={13} fill="currentColor" className="text-amber-400" />

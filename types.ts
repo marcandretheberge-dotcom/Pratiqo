@@ -72,6 +72,13 @@ export interface Teacher {
   locationVerificationStatus?: string | null;
   cvSummary?: string | null;
   cvVerificationStatus?: string | null;
+  /** Computed public trust badges (optional; may be computed lazily on profile). */
+  trustBadges?: Array<{
+    key: string;
+    labelKey: string;
+    descriptionKey: string;
+    strength: "basic" | "strong" | "official";
+  }>;
 }
 
 export interface ProgressData {
