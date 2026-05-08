@@ -39,11 +39,11 @@ import { logSearchEvent } from "../lib/searchAnalytics";
 
 const TeacherProfile = dynamic(
   () => import("../components/TeacherProfile").then((m) => m.TeacherProfile),
-  { ssr: false, loading: () => <p className="p-4 text-center text-sm text-[#6B6A65]">Chargement…</p> },
+  { ssr: false, loading: () => <p className="p-4 text-center text-sm text-neutral-700">Chargement…</p> },
 );
 const BookingModal = dynamic(
   () => import("../components/BookingModal").then((m) => m.BookingModal),
-  { ssr: false, loading: () => <p className="p-4 text-center text-sm text-[#6B6A65]">Chargement…</p> },
+  { ssr: false, loading: () => <p className="p-4 text-center text-sm text-neutral-700">Chargement…</p> },
 );
 import type { City } from "../lib/cities";
 
@@ -52,7 +52,7 @@ const SearchMapView = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex flex-col items-center justify-center gap-2 h-[480px] rounded-2xl bg-[#F1EFE8] text-sm text-[#6B6A65]">
+      <div className="flex flex-col items-center justify-center gap-2 h-[480px] rounded-2xl bg-[#F1EFE8] text-sm text-neutral-700">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-teal-700 border-t-transparent" />
         <p>Chargement…</p>
       </div>
@@ -336,7 +336,7 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="min-h-[100dvh] flex flex-col bg-[#FAFCFB]">
+    <div className="relative flex min-h-[100dvh] flex-col bg-[#FAFCFB]">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }} />
 
       {/* ── HEADER ─────────────────────────────── */}
@@ -358,6 +358,11 @@ export default function LandingPage() {
         </div>
       </header>
 
+      <a href="#main-content" className="skip-link">
+        {t("skipToMainContent")}
+      </a>
+
+      <main id="main-content">
       {/* ── HERO (animated student/teacher toggle) ── */}
       <section className="relative overflow-hidden">
         <AnimatePresence mode="wait">
@@ -447,7 +452,7 @@ export default function LandingPage() {
                         {t("filterAll")}
                       </button>
                     </div>
-                    <p className="mt-3 text-center text-[11px] text-[#6B6760]">{t("otherDisciplines")}</p>
+                    <p className="mt-3 text-center text-[11px] text-neutral-700">{t("otherDisciplines")}</p>
                     <div className="mx-auto mt-4 max-w-xl">
                       <TeacherSearchAdvancedPanel
                         open={advancedOpen}
@@ -468,7 +473,7 @@ export default function LandingPage() {
                       <Sparkles size={20} className="shrink-0 text-[#F4B400]" strokeWidth={2.25} aria-hidden />
                       {t("marketplaceQuizCta")}
                     </button>
-                    <p className="mx-auto mt-3 max-w-md text-[13px] leading-relaxed text-[#526056]">{t("landingQuizHelper")}</p>
+                    <p className="mx-auto mt-3 max-w-md text-[13px] leading-relaxed text-neutral-700">{t("landingQuizHelper")}</p>
                     <LandingHeroTrustStrip className="mt-8" />
                   </div>
                 </div>
@@ -480,7 +485,7 @@ export default function LandingPage() {
 
                   <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                      <p className="text-[11px] font-bold uppercase tracking-widest text-[#6B6760]">
+                      <p className="text-[11px] font-bold uppercase tracking-widest text-neutral-700">
                         {loadingTeachers
                           ? t("loading")
                           : `${filtered.length} ${filtered.length !== 1 ? t("profilesPlural") : t("profileSingular")}`}
@@ -494,7 +499,7 @@ export default function LandingPage() {
                           "inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-semibold transition-colors",
                           sortMode === "nearest" && geo
                             ? "bg-teal-500/15 text-teal-700"
-                            : "text-[#6B6760] hover:text-teal-700",
+                            : "text-neutral-700 hover:text-teal-700",
                         )}
                         aria-pressed={sortMode === "nearest" && !!geo}
                       >
@@ -509,7 +514,7 @@ export default function LandingPage() {
                           "flex min-h-[40px] flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition-colors sm:min-h-0 sm:flex-initial",
                           viewMode === "list"
                             ? "bg-teal-700 text-white shadow-sm"
-                            : "text-[#6B6760] hover:text-[#2C2C2A]",
+                            : "text-neutral-700 hover:text-[#2C2C2A]",
                         )}
                       >
                         <LayoutList size={13} aria-hidden /> {t("viewList")}
@@ -524,7 +529,7 @@ export default function LandingPage() {
                           "flex min-h-[40px] flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition-colors sm:min-h-0 sm:flex-initial",
                           viewMode === "map"
                             ? "bg-teal-700 text-white shadow-sm"
-                            : "text-[#6B6760] hover:text-[#2C2C2A]",
+                            : "text-neutral-700 hover:text-[#2C2C2A]",
                         )}
                       >
                         <Map size={13} aria-hidden /> {t("viewMap")}
@@ -538,7 +543,7 @@ export default function LandingPage() {
                         <div className="h-9 w-9 animate-spin rounded-full border-2 border-teal-500 border-t-transparent" />
                       </div>
                     ) : filtered.length === 0 ? (
-                      <p className="py-14 text-center text-sm text-[#6B6760]">{t("noTeacherSearch")}</p>
+                      <p className="py-14 text-center text-sm text-neutral-700">{t("noTeacherSearch")}</p>
                     ) : (
                       <>
                         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
@@ -607,9 +612,9 @@ export default function LandingPage() {
                 <h2 className="text-center text-2xl font-bold leading-tight sm:text-4xl">
                   {t("homeTeacherH1")}
                   <br />
-                  <span className="text-white/60">{t("homeTeacherH1Sub")}</span>
+                  <span className="text-white/75">{t("homeTeacherH1Sub")}</span>
                 </h2>
-                <p className="mt-4 text-center text-sm text-white/70 max-w-xl mx-auto">
+                <p className="mt-4 text-center text-sm text-white/80 max-w-xl mx-auto">
                   {t("homeTeacherSub")}
                 </p>
 
@@ -620,7 +625,7 @@ export default function LandingPage() {
                   <StatCard label={t("homeStatRistourne")} value="5% profits" />
                 </div>
 
-                <ul className="mx-auto mt-8 max-w-xl space-y-2.5 text-sm text-white/80">
+                <ul className="mx-auto mt-8 max-w-xl space-y-2.5 text-sm text-white/85">
                   {[
                     t("homeBullet1"),
                     t("homeBullet2"),
@@ -637,7 +642,7 @@ export default function LandingPage() {
                   <Link href="/become-teacher" className="inline-flex h-12 items-center justify-center rounded-2xl bg-teal-700 px-8 text-sm font-bold text-white hover:brightness-105">
                     {t("homeTeacherSeePlans")}
                   </Link>
-                  <Link href="/login?role=teacher" className="text-sm font-medium text-white/70 underline underline-offset-2 hover:text-white">
+                  <Link href="/login?role=teacher" className="text-sm font-medium text-white/80 underline underline-offset-2 hover:text-white">
                     {t("joinFree")}
                   </Link>
                 </div>
@@ -652,14 +657,15 @@ export default function LandingPage() {
       <LandingHowItWorks className="border-t border-[#E8E6DF] bg-[#FAFCFB] py-14 sm:py-20" />
 
       <div className="mx-auto max-w-[1440px] bg-[#F8F6F1] pb-6 text-center">
-        <p className="mx-auto max-w-xl px-4 text-xs leading-relaxed text-[#6B6760]">{t("creditsDisclaimer")}</p>
+        <p className="mx-auto max-w-xl px-4 text-xs leading-relaxed text-neutral-700">{t("creditsDisclaimer")}</p>
       </div>
 
       <MarketplaceFinalCta />
+      </main>
 
       {/* ── FOOTER ─────────────────────────────── */}
       <footer className="bg-white border-t border-[#E8E6DF]">
-        <div className="mx-auto max-w-[1440px] px-4 sm:px-6 py-5 flex flex-wrap items-center justify-center gap-4 text-xs text-[#6B6760]">
+        <div className="mx-auto max-w-[1440px] px-4 sm:px-6 py-5 flex flex-wrap items-center justify-center gap-4 text-xs text-neutral-700">
           <LegalFooterLinks />
           <span className="text-[#D3D1C7]">·</span>
           <span>© 2026 Pratiqo inc.</span>
@@ -667,7 +673,7 @@ export default function LandingPage() {
           <a href="mailto:info@pratiqo.ca" className="text-teal-700 hover:underline">info@pratiqo.ca</a>
           <span className="text-[#D3D1C7]">·</span>
           <span>
-            <span className="text-[#6B6A65]">Aide&nbsp;: </span>
+            <span className="text-neutral-700">Aide&nbsp;: </span>
             <a href="mailto:support@pratiqo.ca" className="text-teal-700 hover:underline">support@pratiqo.ca</a>
           </span>
         </div>
@@ -732,7 +738,7 @@ function ToggleSegment({ children, active, onClick }: { children: React.ReactNod
       onClick={onClick}
       className={cn(
         "min-w-[128px] rounded-xl px-4 py-2.5 text-xs font-bold transition-colors",
-        active ? "bg-teal-700 text-white shadow-sm" : "text-[#526056] hover:bg-[#f0f0eb]",
+        active ? "bg-teal-700 text-white shadow-sm" : "text-neutral-700 hover:bg-[#f0f0eb]",
       )}
     >
       {children}
@@ -760,7 +766,7 @@ function TogglePill({ children, active, onClick, darkMode }: { children: React.R
 function StatCard({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-center">
-      <p className="text-[10px] font-bold uppercase tracking-widest text-white/50">{label}</p>
+      <p className="text-[10px] font-bold uppercase tracking-widest text-white/75">{label}</p>
       <p className="mt-2 text-xl font-bold text-[#7FE0C3]">{value}</p>
     </div>
   );

@@ -424,7 +424,7 @@ export function TeacherQuiz({ onClose }: { onClose: () => void }) {
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full p-1.5 text-[#6B6760] hover:bg-[#F1EFE8] transition-colors"
+            className="rounded-full p-1.5 text-neutral-700 hover:bg-[#F1EFE8] transition-colors"
             aria-label={t("quizClose")}
           >
             <X size={16} />
@@ -657,7 +657,7 @@ export function TeacherQuiz({ onClose }: { onClose: () => void }) {
 
               {step === "teacher_pref" && (
                 <StepLayout title={t("teacherPreference")}>
-                  <p className="text-xs text-[#6B6760] mb-4">{t("teacherPreferenceComfortHint")}</p>
+                  <p className="text-xs text-neutral-700 mb-4">{t("teacherPreferenceComfortHint")}</p>
                   <OptionGrid cols={1}>
                     <LevelCard
                       label={t("teacherPreferenceNone")}
@@ -695,8 +695,8 @@ export function TeacherQuiz({ onClose }: { onClose: () => void }) {
                 <div>
                   {loading ? (
                     <div className="flex flex-col items-center justify-center py-16 gap-4">
-                      <div className="h-10 w-10 rounded-full border-2 border-teal-500 border-t-transparent animate-spin" />
-                      <p className="text-sm text-[#6B6760]">{t("quizLoading")}</p>
+                      <div className="h-10 w-10 rounded-full border-2 border-teal-600 border-t-transparent animate-spin" />
+                      <p className="text-sm text-neutral-700">{t("quizLoading")}</p>
                     </div>
                   ) : (
                     <>
@@ -705,19 +705,19 @@ export function TeacherQuiz({ onClose }: { onClose: () => void }) {
                         <button
                           type="button"
                           onClick={restart}
-                          className="flex items-center gap-1 text-[11px] text-[#6B6760] hover:text-[#2C2C2A] transition-colors"
+                          className="flex items-center gap-1 text-[11px] text-neutral-700 hover:text-[#2C2C2A] transition-colors"
                         >
                           <RefreshCw size={11} /> {t("quizRestart")}
                         </button>
                       </div>
 
                       {!user ? (
-                        <p className="text-xs text-[#6B6760] mb-4 rounded-xl bg-[#F1EFE8] px-3 py-2">{t("signInToSaveMatches")}</p>
+                        <p className="text-xs text-neutral-700 mb-4 rounded-xl bg-[#F1EFE8] px-3 py-2">{t("signInToSaveMatches")}</p>
                       ) : null}
 
                       {matches.length === 0 ? (
                         <div className="py-10 text-center">
-                          <p className="text-sm text-[#6B6760] mb-4">{t("quizNoResults")}</p>
+                          <p className="text-sm text-neutral-700 mb-4">{t("quizNoResults")}</p>
                           <Link
                             href="/student/search"
                             onClick={onClose}
@@ -787,7 +787,7 @@ export function TeacherQuiz({ onClose }: { onClose: () => void }) {
             <button
               type="button"
               onClick={goBack}
-              className="flex items-center gap-1.5 text-xs font-semibold text-[#6B6760] hover:text-[#2C2C2A] transition-colors"
+              className="flex items-center gap-1.5 text-xs font-semibold text-neutral-700 hover:text-[#2C2C2A] transition-colors"
             >
               <ArrowLeft size={13} /> {t("quizBack")}
             </button>
@@ -910,7 +910,7 @@ function QuizBucketSection({
   if (!teachers.length) return null;
   return (
     <div>
-      <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-[#6B6760]">{title}</p>
+      <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-neutral-700">{title}</p>
       <div className="space-y-2">
         {teachers.map((teacher, idx) => (
           <MatchCard
@@ -994,7 +994,7 @@ function MatchCard({
         <div className="flex items-start justify-between gap-1">
           <div className="min-w-0">
             <p className="font-bold text-sm text-[#2C2C2A] truncate">{teacher.name}</p>
-            <p className="text-[11px] text-[#6B6760] truncate">{teacher.discipline}</p>
+            <p className="text-[11px] text-neutral-700 truncate">{teacher.discipline}</p>
           </div>
           {teacher.rating != null && teacher.rating > 0 && (
             <span className="shrink-0 flex items-center gap-0.5 text-[11px] font-bold text-[#2C2C2A]">
@@ -1024,7 +1024,7 @@ function MatchCard({
           <Link
             href={profilePath}
             onClick={onClose}
-            className="h-8 px-3 rounded-xl border border-[#E8E6DF] flex items-center justify-center text-xs font-semibold text-[#6B6760] hover:border-teal-500/40 transition-colors whitespace-nowrap"
+            className="h-8 px-3 rounded-xl border border-[#E8E6DF] flex items-center justify-center text-xs font-semibold text-neutral-700 hover:border-teal-500/40 transition-colors whitespace-nowrap"
           >
             {profileLabel}
           </Link>

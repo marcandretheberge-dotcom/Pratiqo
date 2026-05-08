@@ -24,11 +24,11 @@ export function TrustSafetySection({ className }: { className?: string }) {
               key={title}
               className="rounded-3xl border border-[#E8E6DF] bg-white p-5 shadow-[0_8px_28px_rgba(44,44,42,0.05)]"
             >
-              <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#F1EFE8] text-[#00694c]" aria-hidden>
+              <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#F1EFE8] text-teal-800" aria-hidden>
                 <Icon size={20} strokeWidth={2} />
               </span>
               <h3 className="mt-4 text-base font-semibold text-[#2C2C2A]">{t(title)}</h3>
-              <p className="mt-2 text-[13px] leading-relaxed text-[#526056]">{t(desc)}</p>
+              <p className="mt-2 text-[13px] leading-relaxed text-neutral-700">{t(desc)}</p>
             </li>
           ))}
         </ul>

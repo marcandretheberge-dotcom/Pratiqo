@@ -25,7 +25,7 @@ export function LandingLiveSignals({ className }: { className?: string }) {
               key={key}
               className="flex items-start gap-3 rounded-2xl border border-white/60 bg-white/70 px-4 py-3 shadow-sm"
             >
-              <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#E9F6F1] text-[#00694c]">
+              <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#E9F6F1] text-teal-800">
                 <Icon size={17} aria-hidden strokeWidth={2} />
               </span>
               <p className="text-[13px] leading-snug text-[#374038]">{t(key)}</p>

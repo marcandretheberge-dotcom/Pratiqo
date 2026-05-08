@@ -36,7 +36,7 @@ function TestimonialPortrait({
   if (failed) {
     return (
       <div
-        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#E9F6F1] to-[#D4EFE5] text-sm font-bold text-[#00694c]"
+        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#E9F6F1] to-[#D4EFE5] text-sm font-bold text-teal-800"
         aria-hidden
       >
         {fallbackLetter}
@@ -92,13 +92,13 @@ export function SocialProofTestimonials({ className }: { className?: string }) {
   return (
     <section className={className}>
       <div className="mx-auto max-w-[1280px] px-4 sm:px-6">
-        <p className="text-center text-[11px] font-bold uppercase tracking-widest text-[#6B6760]">
+        <p className="text-center text-[11px] font-bold uppercase tracking-widest text-neutral-700">
           {t("socialProofEarlyFeedbackLabel")}
         </p>
         <h2 className="mx-auto mt-2 max-w-2xl text-center text-2xl font-bold tracking-tight text-[#2C2C2A] sm:text-3xl">
           {t("socialProofSectionTitle")}
         </h2>
-        <p className="mx-auto mt-2 max-w-2xl text-center text-[15px] leading-relaxed text-[#526056]">{t("socialProofSectionSubtitle")}</p>
+        <p className="mx-auto mt-2 max-w-2xl text-center text-[15px] leading-relaxed text-neutral-700">{t("socialProofSectionSubtitle")}</p>
 
         <ul className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {cards.map((c) => (

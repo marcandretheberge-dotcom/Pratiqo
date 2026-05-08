@@ -99,7 +99,7 @@ export function HeroTeacherPreviewCards({
             >
               <article className="rounded-3xl border border-[#E8E6DF] bg-white p-4 shadow-[0_14px_48px_rgba(44,44,42,0.1)] ring-1 ring-black/[0.02] transition-all duration-200">
                 {isExampleFallback ? (
-                  <p className="mb-2 text-[10px] font-bold uppercase tracking-wide text-[#6B6760]">
+                  <p className="mb-2 text-[10px] font-bold uppercase tracking-wide text-neutral-700">
                     {t("heroTeacherPreviewSampleLabel")}
                   </p>
                 ) : null}
@@ -126,17 +126,17 @@ export function HeroTeacherPreviewCards({
                       <span className="truncate font-semibold text-[#2C2C2A]">{teacher.name}</span>
                       <VerificationBadge level={lvl} size="sm" showLabel={false} className="scale-90" />
                     </div>
-                    <p className="truncate text-xs text-[#6B6760]">{teacher.discipline}</p>
+                    <p className="truncate text-xs text-neutral-700">{teacher.discipline}</p>
                     <div className="mt-2 flex flex-wrap items-center gap-2">
                       <span className="inline-flex items-center gap-0.5 rounded-lg bg-[#FAFCFB] px-2 py-0.5 text-[11px] font-bold text-amber-600">
                         <Star size={11} className="fill-amber-400 text-amber-400" aria-hidden /> {teacher.rating}
-                        <span className="font-medium text-[#6B6760]">({teacher.reviews})</span>
+                        <span className="font-medium text-neutral-700">({teacher.reviews})</span>
                       </span>
                       <span className="text-[11px] font-bold text-teal-700">
                         {formatPrice(Number(teacher.pricePerLesson))}/h
                       </span>
                     </div>
-                    <div className="mt-2 flex flex-wrap gap-1 text-[10px] text-[#6B6760]">
+                    <div className="mt-2 flex flex-wrap gap-1 text-[10px] text-neutral-700">
                       <span className="rounded-full bg-[#F1EFE8] px-2 py-0.5 font-medium text-[#2C2C2A]">
                         {formatTeaching(teacher, t)}
                       </span>

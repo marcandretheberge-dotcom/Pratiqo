@@ -15,7 +15,7 @@ export function LandingHowItWorks({ className }: { className?: string }) {
     <section className={className}>
       <div className="mx-auto max-w-[1440px] px-4 sm:px-6">
         <h2 className="text-center text-2xl font-bold tracking-tight text-[#1a1f1d] sm:text-3xl">{t("landingHowTitle")}</h2>
-        <p className="mx-auto mt-2 max-w-2xl text-center text-sm leading-relaxed text-[#526056]">{t("landingHowSubtitle")}</p>
+        <p className="mx-auto mt-2 max-w-2xl text-center text-sm leading-relaxed text-neutral-700">{t("landingHowSubtitle")}</p>
         <ul className="mt-10 grid gap-4 sm:grid-cols-3">
           {steps.map(({ icon: Icon, title, body }) => (
             <li
@@ -26,7 +26,7 @@ export function LandingHowItWorks({ className }: { className?: string }) {
                 <Icon size={22} strokeWidth={2} aria-hidden />
               </div>
               <h3 className="mt-4 text-lg font-bold text-[#2C2C2A]">{t(title)}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-[#526056]">{t(body)}</p>
+              <p className="mt-2 text-sm leading-relaxed text-neutral-700">{t(body)}</p>
             </li>
           ))}
         </ul>

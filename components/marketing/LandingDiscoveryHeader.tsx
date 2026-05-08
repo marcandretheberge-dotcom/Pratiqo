@@ -51,13 +51,13 @@ export function LandingDiscoveryHeader({
   return (
     <div className="mx-auto max-w-4xl space-y-5 text-center">
       <div>
-        <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#00694c]">{t("landingEyebrowLocal")}</p>
+        <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-teal-800">{t("landingEyebrowLocal")}</p>
         <p className="mt-3 text-[15px] font-semibold text-teal-700 lg:hidden">{t("landingMobileNearYou")}</p>
-        <p className="mt-1 text-sm leading-snug text-[#526056] lg:hidden">{t("landingMobileCornerHint")}</p>
+        <p className="mt-1 text-sm leading-snug text-neutral-700 lg:hidden">{t("landingMobileCornerHint")}</p>
         <h1 className="mt-4 text-2xl font-bold tracking-tight text-[#1a1f1d] sm:text-3xl lg:mt-2 lg:text-[2.15rem] lg:leading-[1.12]">
           {t("landingNeighborhoodHeadline")}
         </h1>
-        <p className="mx-auto mt-3 hidden max-w-2xl text-[15px] leading-relaxed text-[#526056] sm:text-base lg:block">{t("teacherGridCornerLesson")}</p>
+        <p className="mx-auto mt-3 hidden max-w-2xl text-[15px] leading-relaxed text-neutral-700 sm:text-base lg:block">{t("teacherGridCornerLesson")}</p>
       </div>
 
       <div
@@ -66,7 +66,7 @@ export function LandingDiscoveryHeader({
       >
         <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:gap-2">
           <div className="min-w-0 flex-1 space-y-1">
-            <label htmlFor="landing-discipline" className="block pl-1 text-[10px] font-bold uppercase tracking-wider text-[#6B6760]">
+            <label htmlFor="landing-discipline" className="block pl-1 text-[10px] font-bold uppercase tracking-wider text-neutral-700">
               {t("landingSearchDisciplineLabel")}
             </label>
             <div className="[&_input]:rounded-2xl [&_>div]:rounded-2xl [&_>div]:border-[#EFECE6] [&_>div]:shadow-none">
@@ -88,7 +88,7 @@ export function LandingDiscoveryHeader({
           </div>
 
           <div className="min-w-0 flex-1 space-y-1 lg:max-w-[260px]">
-            <label className="block pl-1 text-[10px] font-bold uppercase tracking-wider text-[#6B6760]" htmlFor="landing-loc-trigger">
+            <label className="block pl-1 text-[10px] font-bold uppercase tracking-wider text-neutral-700" htmlFor="landing-loc-trigger">
               {t("landingSearchLocationLabel")}
             </label>
             <LandingLocationSearch
@@ -102,7 +102,7 @@ export function LandingDiscoveryHeader({
           </div>
 
           <div className="min-w-0 flex-1 space-y-1 lg:max-w-[200px]">
-            <label htmlFor="landing-format" className="block pl-1 text-[10px] font-bold uppercase tracking-wider text-[#6B6760]">
+            <label htmlFor="landing-format" className="block pl-1 text-[10px] font-bold uppercase tracking-wider text-neutral-700">
               {t("landingSearchFormatLabel")}
             </label>
             <select

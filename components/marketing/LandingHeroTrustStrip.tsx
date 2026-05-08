@@ -23,7 +23,7 @@ export function LandingHeroTrustStrip({ className }: { className?: string }) {
             </span>
             <span className="min-w-0 text-left sm:text-center">
               <span className="block text-[13px] font-bold tracking-tight text-[#1a1f1d]">{t(title)}</span>
-              <span className="mt-1 block text-[12px] leading-snug text-[#526056]">{t(body)}</span>
+              <span className="mt-1 block text-[12px] leading-snug text-neutral-700">{t(body)}</span>
             </span>
           </li>
         ))}

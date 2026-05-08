@@ -173,7 +173,7 @@ export function LandingSearchHero({
                       inputPlaceholderKey="landingSearchDisciplinePlaceholder"
                       className="w-full"
                       shellClassName="h-16 min-h-[56px] border-slate-200 py-0 shadow-none [&_svg]:h-5 [&_svg]:w-5 [&_svg]:text-teal-700"
-                      inputClassName="text-lg placeholder:text-slate-400"
+                      inputClassName="text-lg placeholder:text-slate-500"
                     />
                   </div>
 
@@ -187,7 +187,7 @@ export function LandingSearchHero({
                       placeholderKey="landingSearchLocationPlaceholder"
                       className="w-full"
                       shellClassName="h-16 min-h-[56px] border-slate-200 py-0 shadow-none [&_svg]:text-teal-700"
-                      inputClassName="text-lg placeholder:text-slate-400"
+                      inputClassName="text-lg placeholder:text-slate-500"
                     />
                   </div>
 
@@ -251,7 +251,7 @@ export function LandingSearchHero({
                     <SlidersHorizontal className="h-5 w-5 text-teal-700" aria-hidden />
                     {t("advancedFilters")}
                   </span>
-                  <ChevronRight className={cn("h-5 w-5 text-[#6B6A65] transition-transform", advancedOpen && "rotate-90")} aria-hidden />
+                  <ChevronRight className={cn("h-5 w-5 text-neutral-700 transition-transform", advancedOpen && "rotate-90")} aria-hidden />
                 </button>
               </div>
 

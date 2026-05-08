@@ -92,7 +92,7 @@ export function LandingLocationSearch({
           shellClassName,
         )}
       >
-        <MapPin size={18} className="shrink-0 text-[#00694c]" aria-hidden />
+        <MapPin size={18} className="shrink-0 text-teal-800" aria-hidden />
         <input
           id={inputId}
           ref={inputRef}
@@ -120,7 +120,7 @@ export function LandingLocationSearch({
           autoComplete="off"
           spellCheck={false}
           className={cn(
-            "min-w-0 flex-1 bg-transparent text-sm text-slate-800 outline-none placeholder:text-slate-400",
+            "min-w-0 flex-1 bg-transparent text-sm text-slate-800 outline-none placeholder:text-slate-500",
             inputClassName,
           )}
         />
@@ -157,11 +157,11 @@ export function LandingLocationSearch({
               <span className="min-w-0 flex-1 font-semibold text-[#2C2C2A]">
                 {city.name}
                 {city.province ? (
-                  <span className="font-normal text-[#6B6760]">, {city.province}</span>
+                  <span className="font-normal text-neutral-700">, {city.province}</span>
                 ) : null}
               </span>
               {distanceKm != null ? (
-                <span className="shrink-0 text-xs text-[#6B6760]">
+                <span className="shrink-0 text-xs text-neutral-700">
                   {distanceKm} {t("searchKmFromYou")}
                 </span>
               ) : null}

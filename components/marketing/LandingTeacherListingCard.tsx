@@ -159,23 +159,23 @@ export function LandingTeacherListingCard({
                   </p>
                   <VerificationBadge level={lvl} size="sm" showLabel={false} className="shrink-0 scale-95" />
                 </div>
-                <p className="mt-0.5 truncate text-sm text-[#6B6760]">{teacher.discipline}</p>
+                <p className="mt-0.5 truncate text-sm text-neutral-700">{teacher.discipline}</p>
                 {showVerifiedTag ? (
-                  <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-[#00694c]">
+                  <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-teal-800">
                     {t("landingCardVerifiedTeacher")}
                   </p>
                 ) : null}
                 {bioOneLine ? (
-                  <p className="mt-1.5 line-clamp-1 text-xs leading-snug text-[#6B6760]">{bioOneLine}</p>
+                  <p className="mt-1.5 line-clamp-1 text-xs leading-snug text-neutral-700">{bioOneLine}</p>
                 ) : null}
                 {neighborhoodHint ? (
-                  <p className="mt-1 flex items-center gap-1 truncate text-[11px] font-medium text-[#526056]">
+                  <p className="mt-1 flex items-center gap-1 truncate text-[11px] font-medium text-neutral-700">
                     <MapPin size={11} className="shrink-0 text-teal-700" aria-hidden /> {neighborhoodHint}
                   </p>
                 ) : null}
                 {distKm != null ? (
-                  <p className="mt-0.5 flex items-center gap-1 text-[11px] font-medium text-[#6B6760]">
-                    <MapPin size={11} className="text-[#00694c]" aria-hidden />
+                  <p className="mt-0.5 flex items-center gap-1 text-[11px] font-medium text-neutral-700">
+                    <MapPin size={11} className="text-teal-800" aria-hidden />
                     {t("distanceFromYouKm").replace("{{n}}", String(distKm))}
                   </p>
                 ) : null}
@@ -185,7 +185,7 @@ export function LandingTeacherListingCard({
                   <Star size={14} fill="#F4B400" className="text-[#F4B400]" strokeWidth={2} aria-hidden />
                   <span>{teacher.rating}</span>
                 </span>
-                <span className="text-[10px] font-normal text-[#6B6760] sm:text-[11px]">({teacher.reviews})</span>
+                <span className="text-[10px] font-normal text-neutral-700 sm:text-[11px]">({teacher.reviews})</span>
               </span>
             </div>
 
@@ -206,7 +206,7 @@ export function LandingTeacherListingCard({
               </p>
             </div>
 
-            <p className="mt-2 line-clamp-2 text-[11px] leading-relaxed text-[#6B6760] sm:text-xs">{availabilityHint}</p>
+            <p className="mt-2 line-clamp-2 text-[11px] leading-relaxed text-neutral-700 sm:text-xs">{availabilityHint}</p>
           </div>
         </div>
       </div>
