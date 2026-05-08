@@ -9,6 +9,7 @@ import { haversineDistance } from "@/lib/geo";
 import { cn } from "@/lib/utils";
 import { useLocale } from "@/lib/locale-context";
 import type { TranslationKey } from "@/lib/translations";
+import { getTeacherImageUrl, shouldUseUnoptimizedImage } from "@/lib/images";
 
 function landingCardFormatSummary(teacher: Teacher, t: (k: TranslationKey) => string) {
   const m = teacher.teachingMode;
@@ -81,7 +82,7 @@ export function LandingTeacherListingCard({
     ? teacher.availability!.slice(0, 2).join(" · ")
     : t("availabilityHintGeneric");
 
-  const photoUrl = typeof teacher.imageUrl === "string" ? teacher.imageUrl.trim() : "";
+  const photoUrl = getTeacherImageUrl(teacher.imageUrl, { width: 176, height: 176, quality: 75, format: "webp" });
   const showVerifiedTag = lvl > 0;
   const neighborhoodHint = teacher.location?.neighborhood?.trim();
 
@@ -118,10 +119,12 @@ export function LandingTeacherListingCard({
           {photoUrl ? (
             <Image
               src={photoUrl}
-              alt=""
+              alt={t("imageAltTeacherProfile").replace("{name}", teacher.name)}
               width={88}
               height={88}
-              unoptimized={photoUrl.startsWith("http")}
+              sizes="(max-width: 640px) 72px, 84px"
+              loading="lazy"
+              unoptimized={shouldUseUnoptimizedImage(photoUrl)}
               className="h-[4.5rem] w-[4.5rem] shrink-0 rounded-full border border-black/[0.04] object-cover shadow-sm sm:h-[5.25rem] sm:w-[5.25rem]"
             />
           ) : (

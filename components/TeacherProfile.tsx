@@ -398,8 +398,16 @@ export function TeacherProfile({
     return modes;
   }, [teacher.teachingMode, homeConfigured]);
 
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
+
   return (
-    <div className="fixed inset-0 z-[210] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[210] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="teacher-profile-modal-title">
       {/* Backdrop */}
       <motion.div
         initial={{ opacity: 0 }}
@@ -418,7 +426,9 @@ export function TeacherProfile({
       >
         {/* Close */}
         <button
+          type="button"
           onClick={onClose}
+          aria-label={t("accessibilityCloseDialog")}
           className="absolute top-5 right-5 z-20 p-2 bg-white/90 backdrop-blur-md rounded-full shadow-md border border-slate-200 text-slate-600 hover:text-slate-800 transition-all"
         >
           <X size={18} />
@@ -449,7 +459,7 @@ export function TeacherProfile({
                       </span>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
-                      <h2 className="text-xl lg:text-2xl font-bold text-slate-900 leading-tight">{teacher.name}</h2>
+                      <h2 id="teacher-profile-modal-title" className="text-xl lg:text-2xl font-bold text-slate-900 leading-tight">{teacher.name}</h2>
                       <VerifiedBadge
                         verified={teacher.isVerified || Boolean(teacher.identityVerified)}
                         size="sm"

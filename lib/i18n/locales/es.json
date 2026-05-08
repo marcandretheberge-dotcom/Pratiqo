@@ -1500,5 +1500,11 @@
   "requestedResolutionInformationOnly": "Solo información",
   "requestedResolutionOther": "Otro",
   "payoutHeldDueToSupportCase": "Hay un problema en revisión para esta clase. El pago al profesor se gestionará después de la resolución.",
-  "navMore": "Más"
+  "navMore": "Más",
+  "loadingMap": "Cargando mapa…",
+  "translateReview": "Traducir reseña",
+  "smsRemindersComingLater": "Recordatorios por SMS próximamente",
+  "accessibilityCloseDialog": "Cerrar ventana",
+  "imageAltTeacherProfile": "Foto de perfil de {name}",
+  "offlineScheduleComingLater": "Horario sin conexión próximamente"
 }

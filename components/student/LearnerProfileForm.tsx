@@ -527,7 +527,7 @@ function ChipEditor({
           }}
           className="h-10 min-w-0 flex-1 rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-[#1D9E75]"
         />
-        <button type="button" onClick={onAdd} className="h-10 rounded-xl border border-slate-200 px-3 text-sm font-bold text-slate-700">
+        <button type="button" onClick={onAdd} aria-label={`Ajouter ${title}`} className="h-10 rounded-xl border border-slate-200 px-3 text-sm font-bold text-slate-700">
           +
         </button>
       </div>

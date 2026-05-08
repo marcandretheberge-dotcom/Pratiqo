@@ -1500,5 +1500,11 @@
   "requestedResolutionInformationOnly": "Information seulement",
   "requestedResolutionOther": "Autre",
   "payoutHeldDueToSupportCase": "Un problème est en cours de révision pour ce cours. Le versement sera traité après résolution.",
-  "navMore": "Plus"
+  "navMore": "Plus",
+  "loadingMap": "Chargement de la carte…",
+  "translateReview": "Traduire l’avis",
+  "smsRemindersComingLater": "Rappels SMS bientôt disponibles",
+  "accessibilityCloseDialog": "Fermer la fenêtre",
+  "imageAltTeacherProfile": "Photo de profil de {name}",
+  "offlineScheduleComingLater": "Horaire hors ligne bientôt disponible"
 }

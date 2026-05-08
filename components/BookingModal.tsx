@@ -167,6 +167,14 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
   const [contextDraft, setContextDraft] = useState<BookingContextDraft>(() => draftFromLearner(null, suggestedContextType));
   const [contextDirty, setContextDirty] = useState(false);
 
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
+
   const [availableDays, setAvailableDays] = useState<Record<string, number>>({});
   const [slots, setSlots] = useState<string[]>([]);
   const [durationMinutes, setDurationMinutes] = useState(60);
@@ -643,7 +651,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
   };
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="booking-modal-title">
       <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose} />
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
@@ -656,9 +664,9 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
               <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "#0F6E56" }}>
                 {t("bookingTitle")}
               </p>
-              <h3 className="text-xl font-bold text-slate-900">{teacher.name}</h3>
+              <h3 id="booking-modal-title" className="text-xl font-bold text-slate-900">{teacher.name}</h3>
             </div>
-            <button type="button" onClick={onClose} className="text-slate-600 hover:text-slate-800 text-sm font-bold">
+            <button type="button" onClick={onClose} aria-label={t("accessibilityCloseDialog")} className="text-slate-600 hover:text-slate-800 text-sm font-bold">
               {t("bookingClose")}
             </button>
           </div>

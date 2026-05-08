@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AlertTriangle, Loader2, X } from "lucide-react";
 import { getSupabaseClient } from "@/lib/supabase";
 import { useLocale } from "@/lib/locale-context";
@@ -33,6 +33,15 @@ export function SupportCaseModal({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successId, setSuccessId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") close();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  });
 
   if (!open) return null;
 
@@ -81,16 +90,16 @@ export function SupportCaseModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[220] flex items-center justify-center bg-black/40 px-4">
+    <div className="fixed inset-0 z-[220] flex items-center justify-center bg-black/40 px-4" role="dialog" aria-modal="true" aria-labelledby="support-case-modal-title">
       <div className="w-full max-w-lg rounded-3xl bg-white shadow-2xl">
         <div className="flex items-start justify-between gap-3 border-b border-slate-100 p-5">
           <div>
             <p className="text-[11px] font-bold uppercase tracking-widest text-[#0F6E56]">
               {t("resolutionCenterTitle")}
             </p>
-            <h2 className="mt-1 text-lg font-bold text-slate-900">{t("reportProblem")}</h2>
+            <h2 id="support-case-modal-title" className="mt-1 text-lg font-bold text-slate-900">{t("reportProblem")}</h2>
           </div>
-          <button type="button" onClick={close} className="rounded-full p-2 text-slate-500 hover:bg-slate-50">
+          <button type="button" onClick={close} aria-label={t("accessibilityCloseDialog")} className="rounded-full p-2 text-slate-500 hover:bg-slate-50">
             <X size={18} />
           </button>
         </div>

@@ -1500,5 +1500,11 @@
   "requestedResolutionInformationOnly": "Information only",
   "requestedResolutionOther": "Other",
   "payoutHeldDueToSupportCase": "A support case is under review for this lesson. The payout will be handled after resolution.",
-  "navMore": "More"
+  "navMore": "More",
+  "loadingMap": "Loading map…",
+  "translateReview": "Translate review",
+  "smsRemindersComingLater": "SMS reminders coming later",
+  "accessibilityCloseDialog": "Close dialog",
+  "imageAltTeacherProfile": "Profile photo of {name}",
+  "offlineScheduleComingLater": "Offline schedule coming later"
 }

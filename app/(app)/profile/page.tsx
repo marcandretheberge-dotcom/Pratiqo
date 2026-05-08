@@ -265,6 +265,12 @@ export default function StudentProfilePage() {
           </button>
         </Row>
 
+        <Row label="SMS">
+          <span className="rounded-full border border-[#DCEAE3] bg-[#F3FAF6] px-3 py-1 text-xs font-bold text-[#0F6E56]">
+            {t("smsRemindersComingLater")}
+          </span>
+        </Row>
+
         <div className="space-y-3 border-t border-[var(--p-border-light)] pt-4">
           <div className="flex items-center gap-3 px-3 pb-1">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#E1F5EE] text-[#0F6E56]">

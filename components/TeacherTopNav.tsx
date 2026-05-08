@@ -19,7 +19,7 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import Logo from "@/components/ui/Logo";
+import PratiqoLogo from "@/components/PratiqoLogo";
 import { NotificationCenter } from "@/components/NotificationCenter";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 import { useLocale } from "@/lib/locale-context";
@@ -145,8 +145,8 @@ export function TeacherTopNav({ unreadMessages }: { unreadMessages: number }) {
               <Menu size={22} />
             </button>
             <Link href="/dashboard" className="shrink-0" aria-label={t("ariaHome")}>
-              <Logo variant="dark" size="sm" className="md:hidden" />
-              <Logo variant="dark" size="md" className="hidden md:block" />
+              <PratiqoLogo variant="icon" size="sm" className="md:hidden" />
+              <PratiqoLogo variant="full" size="md" className="hidden md:block" />
             </Link>
           </div>
 

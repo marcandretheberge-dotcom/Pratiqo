@@ -346,6 +346,8 @@ export default function StudentSearchPage() {
 
                 <button
                   type="button"
+                  aria-label={viewMode === "map" ? t("listView") : t("mapView")}
+                  aria-pressed={viewMode === "map"}
                   onClick={() => {
                     setViewMode((v) => {
                       const next = v === "list" ? "map" : "list";

@@ -3,6 +3,8 @@
 import Image from "next/image";
 import type { Discipline } from "@/types";
 import { cn } from "@/lib/utils";
+import { getTeacherImageUrl, shouldUseUnoptimizedImage } from "@/lib/images";
+import { useLocale } from "@/lib/locale-context";
 
 function initialsFor(name: string) {
   return name
@@ -36,7 +38,14 @@ export function TeacherAvatar({
   /** e.g. ring for profile modal header */
   ringClassName?: string;
 }) {
+  const { t } = useLocale();
   const url = typeof imageUrl === "string" ? imageUrl.trim() : "";
+  const optimizedUrl = getTeacherImageUrl(url, {
+    width: Math.max(96, size * 2),
+    height: Math.max(96, size * 2),
+    quality: 75,
+    format: "webp",
+  });
   const initials = initialsFor(name);
 
   return (
@@ -51,15 +60,17 @@ export function TeacherAvatar({
     >
       {url ? (
         <Image
-          src={url}
-          alt={name}
+          src={optimizedUrl}
+          alt={t("imageAltTeacherProfile").replace("{name}", name)}
           width={size}
           height={size}
+          sizes={`${size}px`}
+          loading="lazy"
           className="h-full w-full object-cover"
-          unoptimized
+          unoptimized={shouldUseUnoptimizedImage(optimizedUrl)}
         />
       ) : (
-        <span aria-hidden>{initials}</span>
+        <span aria-label={name}>{initials}</span>
       )}
     </div>
   );

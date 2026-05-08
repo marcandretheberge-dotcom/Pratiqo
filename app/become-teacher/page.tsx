@@ -4,7 +4,7 @@ import React, { useMemo, useState } from "react";
 import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
 import { cn } from "../../lib/utils";
-import Logo from "../../components/ui/Logo";
+import PratiqoLogo from "../../components/PratiqoLogo";
 import { useLocale } from "../../lib/locale-context";
 
 type TierId = "bronze" | "argent" | "or" | "platine";
@@ -70,7 +70,7 @@ export default function BecomeTeacherPage() {
       <header className="bg-[#2C2C2A] border-b border-white/10">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center">
-            <Logo size="sm" variant="light" />
+            <PratiqoLogo variant="full" size="sm" />
           </Link>
           <Link
             href="/login?role=teacher"

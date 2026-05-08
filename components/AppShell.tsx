@@ -9,7 +9,7 @@ import { useAuth } from "./AuthProvider";
 import { authDisplayName } from "../lib/authDisplay";
 import { getSupabaseClient } from "../lib/supabase";
 import { fetchUnreadMessageCount } from "../lib/messaging";
-import Logo from "./ui/Logo";
+import PratiqoLogo from "./PratiqoLogo";
 import { useLocale } from "../lib/locale-context";
 import { LocaleSwitcher } from "./LocaleSwitcher";
 import { TeacherTopNav } from "./TeacherTopNav";
@@ -105,7 +105,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {!isStudent && !isTeacher ? (
         <header className="sticky top-0 z-40 h-14 shrink-0 border-b border-[var(--p-border-light)] bg-white flex items-center justify-between px-4 sm:px-5">
           <Link href={logoHref} className="flex items-center gap-2 min-w-0" aria-label={t("ariaHome")}>
-            <Logo size="md" variant="dark" />
+            <PratiqoLogo variant="full" size="md" />
           </Link>
           <div className="shrink-0 origin-right scale-[0.98]">
             <LocaleSwitcher variant="light" />
@@ -132,7 +132,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               }}
             >
               <Link href="/student/search" className="shrink-0" aria-label={t("ariaHome")}>
-                <Logo variant="dark" size="md" />
+                <PratiqoLogo variant="full" size="md" />
               </Link>
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                 <Link
@@ -205,7 +205,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             }}
           >
             <Link href="/student/search" className="shrink-0" aria-label={t("ariaHome")}>
-              <Logo variant="dark" size="sm" />
+              <PratiqoLogo variant="icon" size="sm" />
             </Link>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <Link

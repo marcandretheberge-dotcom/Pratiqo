@@ -11,7 +11,7 @@ import { TEACHERS } from "../constants";
 import { cn } from "../lib/utils";
 import { getEnabledDisciplines } from "../lib/disciplines";
 import { isEnabled } from "../lib/features";
-import Logo from "../components/ui/Logo";
+import PratiqoLogo from "../components/PratiqoLogo";
 import { LocaleSwitcher } from "../components/LocaleSwitcher";
 import { getSupabaseClient } from "../lib/supabase";
 import { fetchTeacherDisciplinesMap, mergeTeachersWithDisciplines } from "../lib/teacherDisciplines";
@@ -342,7 +342,7 @@ export default function LandingPage() {
       {/* ── HEADER ─────────────────────────────── */}
       <header className="sticky top-0 z-50 bg-white border-b border-[#D3D1C7] h-14 flex items-center justify-between px-4 sm:px-6">
         <Link href="/" className="flex items-center gap-2">
-          <Logo variant="dark" size="md" />
+          <PratiqoLogo variant="full" size="md" />
         </Link>
         <div className="flex items-center gap-3">
           <LocaleSwitcher />

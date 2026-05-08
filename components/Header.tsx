@@ -1,15 +1,9 @@
-import Image from "next/image";
+import PratiqoLogo from "@/components/PratiqoLogo";
 
 export function Header() {
   return (
     <header>
-      <Image
-        src="/logo-300w.png"
-        alt="Pratiqo"
-        width={300}
-        height={64}
-        priority
-      />
+      <PratiqoLogo variant="full" size="md" />
     </header>
   );
 }

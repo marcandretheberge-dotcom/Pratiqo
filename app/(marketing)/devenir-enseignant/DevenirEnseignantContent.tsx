@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { CheckCircle2, DollarSign, Calendar, Globe, ArrowRight } from "lucide-react";
-import Logo from "@/components/ui/Logo";
+import PratiqoLogo from "@/components/PratiqoLogo";
 import { useLocale } from "@/lib/locale-context";
 import type { Locale } from "@/lib/i18n/types";
 
@@ -167,7 +167,7 @@ export default function DevenirEnseignantContent() {
       <header className="bg-[#2C2C2A] border-b border-white/10">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center">
-            <Logo size="sm" variant="light" />
+            <PratiqoLogo variant="full" size="sm" />
           </Link>
           <div className="flex items-center gap-4">
             <Link

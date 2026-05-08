@@ -357,7 +357,7 @@ export function SearchMapView({
       {!mapsReady ? (
         <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-[#0F6E56]">
           <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-[#1D9E75] border-t-transparent" />
-          {t("loading")}
+          {t("loadingMap")}
         </div>
       ) : null}
 
@@ -444,6 +444,7 @@ export function SearchMapView({
               <button
                 type="button"
                 onClick={onCloseSelected}
+                aria-label={t("accessibilityCloseDialog")}
                 className="shrink-0 rounded-full border border-[#E8E6DF] bg-white px-3 py-1 text-xs font-semibold text-[#2C2C2A] hover:bg-[#FAFCFB]"
               >
                 ×

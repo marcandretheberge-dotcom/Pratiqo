@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { LogIn } from "lucide-react";
 import { cn } from "../../lib/utils";
-import Logo from "../../components/ui/Logo";
+import PratiqoLogo from "../../components/PratiqoLogo";
 import { LocaleSwitcher } from "../../components/LocaleSwitcher";
 import { loginWithGoogle } from "../../lib/auth";
 import { useAuth } from "../../components/AuthProvider";
@@ -67,7 +67,7 @@ function LoginForm() {
         }}
       >
         <Link href="/" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none" }}>
-          <Logo variant="dark" size="md" />
+          <PratiqoLogo variant="full" size="md" />
         </Link>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <LocaleSwitcher />
@@ -77,7 +77,7 @@ function LoginForm() {
       <div className="flex flex-col items-center justify-center px-5 py-12">
       <div className="w-full max-w-md rounded-3xl border border-[var(--p-border-light)] bg-white p-8 sm:p-10 shadow-[0_24px_80px_rgba(15,110,86,0.08)]">
         <div className="flex justify-center mb-8">
-          <Logo size="md" />
+          <PratiqoLogo variant="full" size="md" />
         </div>
 
         {isTeacherInvite ? (
