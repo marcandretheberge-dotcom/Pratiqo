@@ -1506,5 +1506,16 @@
   "smsRemindersComingLater": "SMS reminders coming later",
   "accessibilityCloseDialog": "Close dialog",
   "imageAltTeacherProfile": "Profile photo of {name}",
-  "offlineScheduleComingLater": "Offline schedule coming later"
+  "offlineScheduleComingLater": "Offline schedule coming later",
+  "businessPlanWaitlist": "Join the waitlist",
+  "joinBusinessWaitlist": "Join the waitlist",
+  "businessWaitlistTitle": "Business Plan",
+  "businessWaitlistSubtitle": "Leave your details and we’ll contact you when the Business Plan is available.",
+  "businessWaitlistSuccess": "Thank you! We’ll contact you when the Business Plan is available.",
+  "businessWaitlistError": "We couldn’t send your request right now. Please try again.",
+  "waitlistName": "Name",
+  "waitlistEmail": "Email",
+  "waitlistOrganization": "Organization or studio",
+  "waitlistRole": "Role",
+  "waitlistMessage": "Message"
 }

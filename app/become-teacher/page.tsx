@@ -49,6 +49,50 @@ export default function BecomeTeacherPage() {
   const [avgPrice, setAvgPrice] = useState(55);
   const [coursesPerWeek, setCoursesPerWeek] = useState(6);
   const [calcPlan, setCalcPlan] = useState<Plan>("pro");
+  const [businessWaitlistOpen, setBusinessWaitlistOpen] = useState(false);
+  const [waitlistName, setWaitlistName] = useState("");
+  const [waitlistEmail, setWaitlistEmail] = useState("");
+  const [waitlistOrganization, setWaitlistOrganization] = useState("");
+  const [waitlistRole, setWaitlistRole] = useState("");
+  const [waitlistMessage, setWaitlistMessage] = useState("");
+  const [waitlistBusy, setWaitlistBusy] = useState(false);
+  const [waitlistStatus, setWaitlistStatus] = useState<"idle" | "success" | "error">("idle");
+
+  const submitBusinessWaitlist = async () => {
+    const email = waitlistEmail.trim().toLowerCase();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setWaitlistStatus("error");
+      return;
+    }
+    setWaitlistBusy(true);
+    setWaitlistStatus("idle");
+    try {
+      const res = await fetch("/api/waitlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          feature: "business_plan",
+          name: waitlistName.trim() || undefined,
+          organization: waitlistOrganization.trim() || undefined,
+          role: waitlistRole.trim() || undefined,
+          message: waitlistMessage.trim() || undefined,
+        }),
+      });
+      const payload = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string };
+      if (!res.ok || !payload.ok) throw new Error(payload.error || t("businessWaitlistError"));
+      setWaitlistStatus("success");
+      setWaitlistName("");
+      setWaitlistEmail("");
+      setWaitlistOrganization("");
+      setWaitlistRole("");
+      setWaitlistMessage("");
+    } catch {
+      setWaitlistStatus("error");
+    } finally {
+      setWaitlistBusy(false);
+    }
+  };
 
   const calc = useMemo(() => {
     const annualGross = students * avgPrice * coursesPerWeek * 52;
@@ -218,12 +262,76 @@ export default function BecomeTeacherPage() {
                   </li>
                 ))}
               </ul>
-              <Link
-                href="/waitlist"
+              <button
+                type="button"
+                onClick={() => {
+                  setBusinessWaitlistOpen((open) => !open);
+                  setWaitlistStatus("idle");
+                }}
                 className="inline-flex h-11 items-center justify-center rounded-2xl border border-white/20 text-sm font-semibold text-white/60 hover:text-white/90 transition-colors"
               >
-                {t("btPlanEntBtn")}
-              </Link>
+                {t("joinBusinessWaitlist")}
+              </button>
+              {businessWaitlistOpen ? (
+                <div className="rounded-2xl border border-white/10 bg-black/25 p-4">
+                  <div className="mb-3">
+                    <p className="text-sm font-bold text-white">{t("businessWaitlistTitle")}</p>
+                    <p className="mt-1 text-xs leading-relaxed text-white/55">{t("businessWaitlistSubtitle")}</p>
+                  </div>
+                  <div className="grid gap-2">
+                    <input
+                      value={waitlistName}
+                      onChange={(e) => setWaitlistName(e.target.value)}
+                      placeholder={t("waitlistName")}
+                      className="h-10 rounded-xl border border-white/10 bg-white/10 px-3 text-sm text-white outline-none placeholder:text-white/35 focus:border-[#1D9E75]"
+                    />
+                    <input
+                      type="email"
+                      value={waitlistEmail}
+                      onChange={(e) => setWaitlistEmail(e.target.value)}
+                      placeholder={t("waitlistEmail")}
+                      className="h-10 rounded-xl border border-white/10 bg-white/10 px-3 text-sm text-white outline-none placeholder:text-white/35 focus:border-[#1D9E75]"
+                    />
+                    <input
+                      value={waitlistOrganization}
+                      onChange={(e) => setWaitlistOrganization(e.target.value)}
+                      placeholder={t("waitlistOrganization")}
+                      className="h-10 rounded-xl border border-white/10 bg-white/10 px-3 text-sm text-white outline-none placeholder:text-white/35 focus:border-[#1D9E75]"
+                    />
+                    <input
+                      value={waitlistRole}
+                      onChange={(e) => setWaitlistRole(e.target.value)}
+                      placeholder={t("waitlistRole")}
+                      className="h-10 rounded-xl border border-white/10 bg-white/10 px-3 text-sm text-white outline-none placeholder:text-white/35 focus:border-[#1D9E75]"
+                    />
+                    <textarea
+                      value={waitlistMessage}
+                      onChange={(e) => setWaitlistMessage(e.target.value)}
+                      placeholder={t("waitlistMessage")}
+                      rows={3}
+                      className="rounded-xl border border-white/10 bg-white/10 px-3 py-2 text-sm text-white outline-none placeholder:text-white/35 focus:border-[#1D9E75]"
+                    />
+                    <button
+                      type="button"
+                      disabled={waitlistBusy || !waitlistEmail.trim()}
+                      onClick={() => void submitBusinessWaitlist()}
+                      className="h-10 rounded-xl bg-[#1D9E75] text-sm font-bold text-white transition hover:brightness-105 disabled:opacity-50"
+                    >
+                      {waitlistBusy ? "..." : t("businessPlanWaitlist")}
+                    </button>
+                    {waitlistStatus === "success" ? (
+                      <p className="rounded-xl border border-[#1D9E75]/30 bg-[#1D9E75]/10 px-3 py-2 text-xs font-semibold text-[#B7F5DE]">
+                        {t("businessWaitlistSuccess")}
+                      </p>
+                    ) : null}
+                    {waitlistStatus === "error" ? (
+                      <p className="rounded-xl border border-rose-400/25 bg-rose-500/10 px-3 py-2 text-xs font-semibold text-rose-100">
+                        {t("businessWaitlistError")}
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+              ) : null}
             </div>
 
           </div>

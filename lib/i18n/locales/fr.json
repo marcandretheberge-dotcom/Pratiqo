@@ -1506,5 +1506,16 @@
   "smsRemindersComingLater": "Rappels SMS bientôt disponibles",
   "accessibilityCloseDialog": "Fermer la fenêtre",
   "imageAltTeacherProfile": "Photo de profil de {name}",
-  "offlineScheduleComingLater": "Horaire hors ligne bientôt disponible"
+  "offlineScheduleComingLater": "Horaire hors ligne bientôt disponible",
+  "businessPlanWaitlist": "Rejoindre la liste d’attente",
+  "joinBusinessWaitlist": "Rejoindre la liste d’attente",
+  "businessWaitlistTitle": "Plan Business",
+  "businessWaitlistSubtitle": "Laissez vos coordonnées et nous vous contacterons lorsque le Plan Business sera disponible.",
+  "businessWaitlistSuccess": "Merci ! Nous vous contacterons lorsque le Plan Business sera disponible.",
+  "businessWaitlistError": "Impossible d’envoyer votre demande pour le moment. Veuillez réessayer.",
+  "waitlistName": "Nom",
+  "waitlistEmail": "Courriel",
+  "waitlistOrganization": "Organisation ou studio",
+  "waitlistRole": "Rôle",
+  "waitlistMessage": "Message"
 }
