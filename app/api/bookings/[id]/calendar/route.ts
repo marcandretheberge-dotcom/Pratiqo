@@ -35,7 +35,7 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
   const admin = getSupabaseAdmin();
   const { data: booking } = await admin
     .from("bookings")
-    .select("id, teacher_id, status, date, time, slot_date, time_slot, duration_minutes, teaching_mode")
+    .select("id, teacher_id, status, date, time, slot_date, time_slot, duration_minutes, teaching_mode, meeting_url")
     .eq("id", bookingId)
     .maybeSingle();
 
@@ -64,7 +64,14 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
   const mode = String((booking as { teaching_mode?: string | null }).teaching_mode ?? "person");
   const location = mode === "online" ? "En ligne" : mode === "domicile" ? "À domicile" : "En studio";
   const summary = `Pratiqo - ${discipline} avec ${teacherName}`;
-  const description = "Cours confirme sur Pratiqo. Consultez votre tableau de bord pour les details a jour.";
+  const meetingUrl =
+    typeof (booking as { meeting_url?: string | null }).meeting_url === "string"
+      ? (booking as { meeting_url?: string | null }).meeting_url!.trim()
+      : "";
+  const description =
+    mode === "online"
+      ? `Cours confirme sur Pratiqo. ${meetingUrl ? `Lien video: ${meetingUrl}` : "Lien vidéo à venir."}`
+      : "Cours confirme sur Pratiqo. Consultez votre tableau de bord pour les details a jour.";
 
   const ics = [
     "BEGIN:VCALENDAR",

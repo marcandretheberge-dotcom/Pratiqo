@@ -747,6 +747,7 @@ export function Dashboard() {
                         ? Number(b.duration_minutes)
                         : null,
                   studentAddress: b.student_address as string | null | undefined,
+                  meetingUrl: (b as { meeting_url?: string | null }).meeting_url ?? null,
                 }))}
                 emptyHint={t("dashboardNoLessonsWeek")}
                 onRequestCancelClass={(bookingId) => setCancelBooking({ id: bookingId, side: "teacher" })}

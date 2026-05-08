@@ -36,6 +36,7 @@ type BookingRow = {
   duration_minutes?: number | null;
   price?: number | null;
   teaching_mode?: string | null;
+  meeting_url?: string | null;
 };
 
 type LearnerRow = {
@@ -69,6 +70,7 @@ type BookingWithTeacher = {
   teachingMode: string | null;
   status: string;
   learnerName: string | null;
+  meetingUrl: string | null;
 };
 
 function sortKey(b: { date: string; time: string }) {
@@ -120,7 +122,7 @@ export function StudentDashboard() {
       setLoading(true);
       const { data: bookings } = await supabase
         .from("bookings")
-        .select("id, teacher_id, learner_profile_id, status, date, time, duration_minutes, price, teaching_mode")
+        .select("id, teacher_id, learner_profile_id, status, date, time, duration_minutes, price, teaching_mode, meeting_url")
         .eq("student_id", user.id)
         .in("status", [...STUDENT_CANCEL_STATUSES])
         .order("date", { ascending: true })
@@ -178,6 +180,7 @@ export function StudentDashboard() {
             teachingMode: r.teaching_mode ?? null,
             status: r.status,
             learnerName: r.learner_profile_id ? learnerMap.get(r.learner_profile_id)?.display_name ?? null : null,
+            meetingUrl: typeof r.meeting_url === "string" && r.meeting_url.trim() ? r.meeting_url.trim() : null,
           };
         })
         .filter((row) =>
@@ -502,6 +505,26 @@ export function StudentDashboard() {
                               <p className="mt-1 text-xs font-semibold text-[#0F6E56]">
                                 {t("studentCourseForLearner")} : {b.learnerName}
                               </p>
+                            ) : null}
+
+                            {String(b.teachingMode || "").toLowerCase() === "online" ? (
+                              b.meetingUrl ? (
+                                <div className="mt-2 rounded-xl border border-[#DCEAE3] bg-[#F3FAF6] px-3 py-2 text-xs">
+                                  <p className="font-bold uppercase tracking-widest text-[#0F6E56]">{t("onlineLessonLink")}</p>
+                                  <a
+                                    href={b.meetingUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="mt-1 inline-flex items-center gap-2 font-semibold text-[#0F6E56] hover:underline"
+                                  >
+                                    {t("joinCall")}
+                                  </a>
+                                </div>
+                              ) : (
+                                <p className="mt-2 text-xs font-semibold text-slate-600">
+                                  {t("onlineLessonLinkPending")}
+                                </p>
+                              )
                             ) : null}
                           </div>
                         </div>

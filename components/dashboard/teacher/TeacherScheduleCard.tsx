@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { AlertTriangle, Calendar, CalendarClock, Copy, ExternalLink, MapPin, MessageCircle, Video } from "lucide-react";
+import { AlertTriangle, Calendar, CalendarClock, ExternalLink, MapPin, MessageCircle, Video } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useLocale } from "@/lib/locale-context";
 import type { TranslationKey } from "@/lib/translations";
@@ -12,6 +12,7 @@ import { getBookingLifecycleState, type BookingLifecycleState } from "@/lib/book
 import { localeToBcp47 } from "@/lib/i18n/types";
 import { bookingWallTimeRangeToUtc, formatTimeRangeForUser } from "@/lib/timezones";
 import { SupportCaseModal } from "@/components/support/SupportCaseModal";
+import { AddMeetingLinkModal } from "@/components/bookings/AddMeetingLinkModal";
 
 const PEER_UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -48,6 +49,7 @@ export type TeacherScheduleRow = {
   teachingMode?: string | null;
   durationMinutes?: number | null;
   studentAddress?: string | null;
+  meetingUrl?: string | null;
 };
 
 type CompletionOutcome = "held" | "absent" | "technical_issue";
@@ -57,10 +59,6 @@ function normalizeTeachingMode(mode: string | null | undefined): "online" | "at_
   if (raw === "online") return "online";
   if (raw === "domicile" || raw === "home" || raw === "at_home") return "at_home";
   return "in_person";
-}
-
-function videoRoomUrl(bookingId: string): string {
-  return `https://meet.jit.si/pratiqo-${encodeURIComponent(bookingId)}`;
 }
 
 function directionsUrl(address: string): string {
@@ -101,6 +99,7 @@ export function TeacherScheduleCard({
   const relationshipMode = Boolean(onRequestCancelClass && onOpenReschedule);
   const [completionTarget, setCompletionTarget] = useState<TeacherScheduleRow | null>(null);
   const [supportTarget, setSupportTarget] = useState<TeacherScheduleRow | null>(null);
+  const [meetingTarget, setMeetingTarget] = useState<TeacherScheduleRow | null>(null);
   const [completing, setCompleting] = useState(false);
   const [completionError, setCompletionError] = useState<string | null>(null);
   const [supportFlash, setSupportFlash] = useState<string | null>(null);
@@ -165,8 +164,8 @@ export function TeacherScheduleCard({
               status: b.status,
             });
             const mode = normalizeTeachingMode(b.teachingMode);
-            const roomUrl = videoRoomUrl(b.id);
             const mapUrl = b.studentAddress?.trim() ? directionsUrl(b.studentAddress.trim()) : null;
+            const meetingUrl = typeof b.meetingUrl === "string" ? b.meetingUrl.trim() : "";
             const learner = b.learnerContext ?? null;
             const dateIso = String(b.slot_date || b.date || "");
             const slot = String(b.time_slot || b.time || "");
@@ -223,10 +222,11 @@ export function TeacherScheduleCard({
                 <ContextualBookingAction
                   lifecycle={lifecycle}
                   mode={mode}
-                  roomUrl={roomUrl}
+                  meetingUrl={meetingUrl}
                   mapUrl={mapUrl}
                   disabled={Boolean(cancelBusy) || completing}
                   onNeedsReview={() => openCompletionDialog(b)}
+                  onAddMeetingLink={() => setMeetingTarget(b)}
                 />
 
                 {relationshipMode ? (
@@ -379,6 +379,28 @@ export function TeacherScheduleCard({
           window.setTimeout(() => setSupportFlash(null), 4000);
         }}
       />
+      <AddMeetingLinkModal
+        bookingId={meetingTarget?.id ?? ""}
+        isOpen={Boolean(meetingTarget)}
+        onClose={() => setMeetingTarget(null)}
+        onSaved={(data) => {
+          const id = meetingTarget?.id;
+          if (!id) return;
+          setSupportFlash(t("videoLinkAddedSuccess"));
+          window.setTimeout(() => setSupportFlash(null), 4000);
+          // Optimistic: update local meeting URL so CTA flips immediately.
+          const nextUrl = data.meeting_url;
+          setMeetingTarget(null);
+          // Update the corresponding item in-place (source list may be owned by parent, so we only adjust UI here).
+          // Parent dashboard also listens to bookings changes, so it will refresh from DB.
+          try {
+            // no-op: this component is stateless w.r.t items; rely on realtime refresh
+            void nextUrl;
+          } catch {
+            /* ignore */
+          }
+        }}
+      />
     </div>
   );
 }
@@ -518,20 +540,21 @@ function LifecycleBadge({ state }: { state: BookingLifecycleState }) {
 function ContextualBookingAction({
   lifecycle,
   mode,
-  roomUrl,
+  meetingUrl,
   mapUrl,
   disabled,
   onNeedsReview,
+  onAddMeetingLink,
 }: {
   lifecycle: BookingLifecycleState;
   mode: "online" | "at_home" | "in_person";
-  roomUrl: string;
+  meetingUrl: string;
   mapUrl: string | null;
   disabled: boolean;
   onNeedsReview: () => void;
+  onAddMeetingLink: () => void;
 }) {
   const { t } = useLocale();
-  const [copied, setCopied] = useState(false);
   if (lifecycle === "completed") return null;
 
   if (lifecycle === "needs_review") {
@@ -548,44 +571,56 @@ function ContextualBookingAction({
   }
 
   if (mode === "online") {
-    return (
-      <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-        <a
-          href={roomUrl}
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl bg-[#0F6E56] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0c5a47]"
-        >
-          <Video className="h-4 w-4" aria-hidden />
-          {t("bookingJoinCall")}
-          <ExternalLink className="h-4 w-4" aria-hidden />
-        </a>
+    if (!meetingUrl) {
+      return (
         <button
           type="button"
-          onClick={async () => {
-            await navigator.clipboard?.writeText(roomUrl);
-            setCopied(true);
-            window.setTimeout(() => setCopied(false), 1800);
-          }}
-          className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-[#0F6E56]/35 bg-white px-4 py-3 text-sm font-semibold text-[#0F6E56]"
+          disabled={disabled}
+          onClick={onAddMeetingLink}
+          className="mt-4 inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-[#0F6E56] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0c5a47] disabled:opacity-50"
         >
-          <Copy className="h-4 w-4" aria-hidden />
-          {copied ? t("copied") : t("bookingCopyLink")}
+          <Video className="h-4 w-4" aria-hidden />
+          {t("addVideoLink")}
         </button>
-      </div>
+      );
+    }
+    return (
+      <a
+        href={meetingUrl}
+        target="_blank"
+        rel="noreferrer"
+        className="mt-4 inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-[#0F6E56] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0c5a47]"
+      >
+        <Video className="h-4 w-4" aria-hidden />
+        {t("joinCall")}
+        <ExternalLink className="h-4 w-4" aria-hidden />
+      </a>
     );
   }
 
   if (mode === "at_home") {
+    if (!mapUrl) {
+      return (
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => window.alert(t("lessonAddressPending"))}
+          className="mt-4 inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-[#0F6E56] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0c5a47] disabled:opacity-50"
+        >
+          <MapPin className="h-4 w-4" aria-hidden />
+          {t("routeToLesson")}
+        </button>
+      );
+    }
     return (
       <a
-        href={mapUrl ?? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(t("bookingStudentAddressFallback"))}`}
+        href={mapUrl}
         target="_blank"
         rel="noreferrer"
         className="mt-4 inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-[#0F6E56] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0c5a47]"
       >
         <MapPin className="h-4 w-4" aria-hidden />
-        {t("bookingDirections")}
+        {t("routeToLesson")}
         <ExternalLink className="h-4 w-4" aria-hidden />
       </a>
     );

@@ -10,6 +10,7 @@ import {
   MapPin,
   AlertCircle,
   MessageSquare,
+  Video,
 } from "lucide-react";
 import { stripe } from "@/lib/stripe";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
@@ -60,6 +61,7 @@ interface BookingDetails {
   endIso: string | null;
   studentTimeZone: string | null;
   teacherTimeZone: string | null;
+  meetingUrl: string | null;
 }
 
 function parseBookingStart(dateIso: string, slot: string): Date | null {
@@ -146,7 +148,7 @@ async function verifyAndConfirm(sessionId: string, locale: Locale): Promise<Veri
   const bookingRes = await admin
     .from("bookings")
     .select(
-      "id, teacher_id, student_id, status, date, time, slot_date, time_slot, price, duration_minutes, teaching_mode, credits_applied, learner_profile_id",
+      "id, teacher_id, student_id, status, date, time, slot_date, time_slot, price, duration_minutes, teaching_mode, credits_applied, learner_profile_id, meeting_url",
     )
     .eq("id", bookingId)
     .maybeSingle();
@@ -335,6 +337,11 @@ async function verifyAndConfirm(sessionId: string, locale: Locale): Promise<Veri
       endIso: utcRange?.end.toISOString() ?? null,
       studentTimeZone,
       teacherTimeZone,
+      meetingUrl:
+        typeof (booking as { meeting_url?: string | null }).meeting_url === "string" &&
+        (booking as { meeting_url?: string | null }).meeting_url!.trim()
+          ? (booking as { meeting_url?: string | null }).meeting_url!.trim()
+          : null,
     },
   };
 }
@@ -435,7 +442,7 @@ export default async function BookingSuccessPage({
       : null;
   const meetingNote =
     booking.locationKind === "online"
-      ? dict.bookingMeetingLinkPending
+      ? (booking.meetingUrl ? dict.onlineLessonLink : dict.onlineLessonLinkPending)
       : booking.locationKind === "domicile"
         ? dict.bookingExactAddressAfterConfirmation
         : dict.bookingExactAddressAfterConfirmation;
@@ -545,6 +552,19 @@ export default async function BookingSuccessPage({
           <div className="rounded-2xl border border-[#DCEAE3] bg-[#F3FAF6] px-4 py-3 text-xs text-slate-700">
             {meetingNote}
           </div>
+
+          {booking.locationKind === "online" && booking.meetingUrl ? (
+            <a
+              href={booking.meetingUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold text-white shadow-lg transition hover:opacity-95"
+              style={{ backgroundColor: "#0F6E56" }}
+            >
+              <Video className="w-4 h-4" />
+              {dict.joinCall}
+            </a>
+          ) : null}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {googleCalendarUrl ? (
