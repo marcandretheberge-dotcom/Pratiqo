@@ -42,7 +42,7 @@ export function CompanionWidget({
       <div className="mt-2 text-sm font-semibold text-[#2C2C2A]">{stageName}</div>
 
       <div className="mt-3 h-1.5 w-full rounded-full bg-black/5 overflow-hidden">
-        <div className="h-full rounded-full bg-[#1D9E75]" style={{ width: `${percent}%` }} />
+        <div className="h-full rounded-full bg-teal-600" style={{ width: `${percent}%` }} />
       </div>
 
       <div className="mt-2 text-[11px] text-[#6B6A64]">

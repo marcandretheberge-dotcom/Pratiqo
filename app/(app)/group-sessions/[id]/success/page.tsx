@@ -28,7 +28,7 @@ export default function GroupSessionSuccessPage() {
         >
           Fiche séance
         </Link>
-        <Link href="/student/group-sessions" className="inline-flex justify-center items-center h-11 px-6 rounded-full font-semibold text-white bg-[#1D9E75]">
+        <Link href="/student/group-sessions" className="inline-flex justify-center items-center h-11 px-6 rounded-full font-semibold text-white bg-teal-600">
           Mes cours de groupe
         </Link>
       </div>

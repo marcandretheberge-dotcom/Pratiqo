@@ -201,16 +201,16 @@ export default async function CityTutorsPage({
 
         {/* ── HEADER ────────────────────────────────────────────────────── */}
         <header className="sticky top-0 z-50 h-14 flex items-center justify-between bg-white border-b border-[#D3D1C7] px-4 sm:px-6">
-          <Link href="/" className="text-lg font-black tracking-tight text-[#0F6E56]">
+          <Link href="/" className="text-lg font-black tracking-tight text-teal-700">
             Pratiqo
           </Link>
           <div className="flex items-center gap-3">
-            <Link href="/login" className="text-sm font-medium text-[#0F6E56] hover:underline">
+            <Link href="/login" className="text-sm font-medium text-teal-700 hover:underline">
               Connexion
             </Link>
             <Link
               href="/login"
-              className="rounded-xl bg-[#0F6E56] px-4 py-2 text-sm font-bold text-white hover:brightness-105"
+              className="rounded-xl bg-teal-700 px-4 py-2 text-sm font-bold text-white hover:brightness-105"
             >
               Créer un compte
             </Link>
@@ -218,7 +218,7 @@ export default async function CityTutorsPage({
         </header>
 
         {/* ── HERO ──────────────────────────────────────────────────────── */}
-        <section className="bg-[#0F6E56] text-white py-10 px-4 sm:px-6">
+        <section className="bg-teal-700 text-white py-10 px-4 sm:px-6">
           <div className="mx-auto max-w-4xl text-center">
             <div className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold mb-4">
               <MapPin size={12} aria-hidden />
@@ -235,7 +235,7 @@ export default async function CityTutorsPage({
             <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link
                 href="/login"
-                className="inline-flex h-11 items-center rounded-2xl bg-white px-6 text-sm font-bold text-[#0F6E56] hover:brightness-95 shadow"
+                className="inline-flex h-11 items-center rounded-2xl bg-white px-6 text-sm font-bold text-teal-700 hover:brightness-95 shadow"
               >
                 Je cherche un tuteur →
               </Link>
@@ -290,7 +290,7 @@ export default async function CityTutorsPage({
                 </p>
                 <Link
                   href="/login"
-                  className="mt-5 inline-flex items-center rounded-xl bg-[#0F6E56] px-5 py-2.5 text-sm font-bold text-white hover:brightness-105"
+                  className="mt-5 inline-flex items-center rounded-xl bg-teal-700 px-5 py-2.5 text-sm font-bold text-white hover:brightness-105"
                 >
                   Voir tous les tuteurs →
                 </Link>
@@ -307,7 +307,7 @@ export default async function CityTutorsPage({
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center gap-3 min-w-0">
                           <div
-                            className="h-11 w-11 shrink-0 rounded-full bg-[rgba(29,158,117,0.14)] text-[#085041] flex items-center justify-center text-sm font-bold overflow-hidden"
+                            className="h-11 w-11 shrink-0 rounded-full bg-teal-500/15 text-teal-800 flex items-center justify-center text-sm font-bold overflow-hidden"
                             aria-hidden
                           >
                             {teacher.imageUrl ? (
@@ -341,7 +341,7 @@ export default async function CityTutorsPage({
 
                       <div className="mt-3 flex items-center justify-between border-t border-[#E8E6DF] pt-3 text-xs text-[#6B6760]">
                         <span>{teachingModeLabel(teacher.teachingMode)}</span>
-                        <span className="font-bold text-[#0F6E56]">
+                        <span className="font-bold text-teal-700">
                           {Math.round(Number(teacher.pricePerLesson))}$/h
                         </span>
                       </div>
@@ -352,7 +352,7 @@ export default async function CityTutorsPage({
                 <div className="mt-8 text-center">
                   <Link
                     href="/login"
-                    className="inline-flex h-11 items-center rounded-2xl bg-[#0F6E56] px-7 text-sm font-bold text-white hover:brightness-105 shadow-sm"
+                    className="inline-flex h-11 items-center rounded-2xl bg-teal-700 px-7 text-sm font-bold text-white hover:brightness-105 shadow-sm"
                   >
                     Voir tous les tuteurs disponibles →
                   </Link>
@@ -393,7 +393,7 @@ export default async function CityTutorsPage({
                   key={step.n}
                   className="rounded-2xl border border-[#E8E6DF] bg-[#FAFCFB] p-5"
                 >
-                  <div className="mb-3 inline-flex h-8 w-8 items-center justify-center rounded-full bg-[rgba(29,158,117,0.12)] text-sm font-bold text-[#0F6E56]">
+                  <div className="mb-3 inline-flex h-8 w-8 items-center justify-center rounded-full bg-teal-500/15 text-sm font-bold text-teal-700">
                     {step.n}
                   </div>
                   <p className="font-bold text-sm text-[#2C2C2A]">{step.title}</p>
@@ -412,7 +412,7 @@ export default async function CityTutorsPage({
           <div className="mx-auto max-w-6xl px-4 sm:px-6 py-5 flex flex-wrap items-center justify-center gap-4 text-xs text-[#6B6760]">
             <LegalFooterLinks />
             <span className="text-[#D3D1C7]">·</span>
-            <Link href="/" className="font-semibold text-[#0F6E56] hover:underline">
+            <Link href="/" className="font-semibold text-teal-700 hover:underline">
               Pratiqo
             </Link>
             <span className="text-[#D3D1C7]">·</span>

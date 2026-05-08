@@ -153,7 +153,7 @@ export default function StudentPaymentsPage() {
       <div className="mx-auto max-w-3xl space-y-4">
         <section className="rounded-3xl border border-[var(--p-border-light)] bg-white p-6 text-center shadow-sm">
           <p className="text-sm font-semibold text-slate-700">{t("bookingLoginAlert")}</p>
-          <Link href="/login?next=/student/payments" className="mt-4 inline-flex rounded-2xl bg-[#1D9E75] px-5 py-3 text-sm font-bold text-white">
+          <Link href="/login?next=/student/payments" className="mt-4 inline-flex rounded-2xl bg-teal-600 px-5 py-3 text-sm font-bold text-white">
             {t("signIn")}
           </Link>
         </section>
@@ -166,7 +166,7 @@ export default function StudentPaymentsPage() {
       <div className="mx-auto max-w-4xl space-y-6 pb-10">
         <section className="rounded-3xl border border-[#DCEAE3] bg-white p-6 shadow-sm">
           <div className="flex items-start gap-4">
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#E1F5EE] text-[#0F6E56]">
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-teal-50 text-teal-700">
               <CreditCard size={24} />
             </span>
             <div>
@@ -180,12 +180,12 @@ export default function StudentPaymentsPage() {
         <section className="rounded-3xl border border-[#DCEAE3] bg-white p-4 shadow-sm">
         {loading ? (
           <div className="flex items-center justify-center gap-3 py-12 text-sm font-semibold text-slate-600">
-            <Loader2 className="h-5 w-5 animate-spin text-[#1D9E75]" />
+            <Loader2 className="h-5 w-5 animate-spin text-teal-700" />
             {t("loading")}
           </div>
         ) : items.length === 0 ? (
           <div className="py-12 text-center">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#E1F5EE] text-[#0F6E56]">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-teal-50 text-teal-700">
               <ReceiptText size={26} />
             </div>
             <p className="mt-4 text-sm font-semibold text-slate-700">{t("studentPaymentsEmpty")}</p>
@@ -211,7 +211,7 @@ export default function StudentPaymentsPage() {
                       <span
                         className={[
                           "rounded-full px-2.5 py-1 text-[11px] font-bold",
-                          isPaid ? "bg-[#E1F5EE] text-[#0F6E56]" : "",
+                          isPaid ? "bg-teal-50 text-teal-700" : "",
                           isRefunded ? "bg-slate-100 text-slate-700" : "",
                           isFailed ? "bg-rose-50 text-rose-700" : "",
                           !isPaid && !isRefunded && !isFailed ? "bg-amber-50 text-amber-800" : "",
@@ -230,7 +230,7 @@ export default function StudentPaymentsPage() {
                   </div>
                   <div className="flex items-center justify-between gap-4 sm:justify-end">
                     <div className="text-left sm:text-right">
-                      <p className={["text-lg font-bold", isFailed ? "text-rose-700" : isRefunded ? "text-slate-700" : "text-[#0F6E56]"].join(" ")}>
+                      <p className={["text-lg font-bold", isFailed ? "text-rose-700" : isRefunded ? "text-slate-700" : "text-teal-700"].join(" ")}>
                         {amount}
                       </p>
                       <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">{currency}</p>
@@ -240,7 +240,7 @@ export default function StudentPaymentsPage() {
                         href={receiptUrl}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-[#DCEAE3] bg-white px-4 text-xs font-bold text-[#0F6E56] hover:bg-[#F3FAF6]"
+                        className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-[#DCEAE3] bg-white px-4 text-xs font-bold text-teal-700 hover:bg-[#F3FAF6]"
                       >
                         <ReceiptText size={16} />
                         {t("studentPaymentsDownloadReceipt")}

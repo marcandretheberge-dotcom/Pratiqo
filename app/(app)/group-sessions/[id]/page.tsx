@@ -99,7 +99,7 @@ export default function GroupSessionDetailPage() {
   if (loadingSession) {
     return (
       <div className="flex justify-center py-24">
-        <Loader2 className="animate-spin text-[#1D9E75]" size={36} />
+        <Loader2 className="animate-spin text-teal-700" size={36} />
       </div>
     );
   }
@@ -108,7 +108,7 @@ export default function GroupSessionDetailPage() {
     return (
       <div className="max-w-lg mx-auto text-center py-16">
         <p className="text-[var(--p-text-muted)]">Séance introuvable.</p>
-        <Link href="/group-sessions" className="text-[#1D9E75] font-semibold mt-4 inline-block">
+        <Link href="/group-sessions" className="text-teal-700 font-semibold mt-4 inline-block">
           Retour aux cours de groupe
         </Link>
       </div>
@@ -120,11 +120,11 @@ export default function GroupSessionDetailPage() {
   const cur = Number(session.current_participants);
   const bookable = isSessionBookable(session);
   const ratio = max ? rem / max : 0;
-  const barColor = ratio > 0.5 ? "bg-[#1D9E75]" : ratio < 0.25 ? "bg-amber-500" : "bg-amber-400";
+  const barColor = ratio > 0.5 ? "bg-teal-600" : ratio < 0.25 ? "bg-amber-500" : "bg-amber-400";
 
   return (
     <div className="max-w-3xl mx-auto space-y-8">
-      <Link href="/group-sessions" className="text-sm font-semibold text-[#1D9E75] hover:underline">
+      <Link href="/group-sessions" className="text-sm font-semibold text-teal-700 hover:underline">
         ← Tous les cours de groupe
       </Link>
 
@@ -167,7 +167,7 @@ export default function GroupSessionDetailPage() {
             <button
               type="button"
               onClick={() => router.push(`/teacher/profile/${session.teacher_id}`)}
-              className="mt-3 text-sm font-semibold text-[#1D9E75] hover:underline"
+              className="mt-3 text-sm font-semibold text-teal-700 hover:underline"
             >
               Voir le profil
             </button>
@@ -188,7 +188,7 @@ export default function GroupSessionDetailPage() {
           <p className="text-sm text-[var(--p-text)] break-all">{session.online_link || "Lien communiqué après inscription."}</p>
         ) : groupRegistered ? (
           <p className="text-sm text-[var(--p-text)] flex items-start gap-2">
-            <MapPin className="text-[#1D9E75] shrink-0 mt-0.5" size={18} />
+            <MapPin className="text-teal-700 shrink-0 mt-0.5" size={18} />
             {session.location || "Adresse communiquée après inscription."}
           </p>
         ) : (
@@ -227,7 +227,7 @@ export default function GroupSessionDetailPage() {
           <ul className="space-y-2">
             {related.map((r) => (
               <li key={r.id}>
-                <Link href={`/group-sessions/${r.id}`} className="text-sm font-medium text-[#1D9E75] hover:underline">
+                <Link href={`/group-sessions/${r.id}`} className="text-sm font-medium text-teal-700 hover:underline">
                   {r.title} — {r.date} {r.time}
                 </Link>
               </li>
@@ -237,7 +237,7 @@ export default function GroupSessionDetailPage() {
       ) : null}
 
       <div className="sticky bottom-4 rounded-2xl border border-[var(--p-border-light)] bg-[var(--p-surface)] p-4 shadow-lg flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
-        <p className="text-lg font-bold text-[#1D9E75]">
+        <p className="text-lg font-bold text-teal-700">
           Réserver ma place — {Number(session.price_per_person).toFixed(0)} $ / pers.
         </p>
         {bookable ? (
@@ -245,7 +245,7 @@ export default function GroupSessionDetailPage() {
             type="button"
             disabled={paying}
             onClick={() => void startCheckout()}
-            className="h-11 px-6 rounded-full font-bold text-white bg-[#1D9E75] hover:brightness-[0.98] disabled:opacity-50"
+            className="h-11 px-6 rounded-full font-bold text-white bg-teal-600 hover:brightness-[0.98] disabled:opacity-50"
           >
             {paying ? "Redirection…" : "Payer avec Stripe"}
           </button>

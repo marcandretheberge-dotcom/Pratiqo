@@ -33,7 +33,7 @@ export default function ConfidentialitePage() {
         <div className="mx-auto max-w-6xl px-4 sm:px-6 py-3 flex items-center gap-3">
           <Link
             href="/"
-            className="text-sm text-[var(--p-text-muted)] hover:text-[#1D9E75] flex items-center gap-1.5 transition-colors"
+            className="text-sm text-[var(--p-text-muted)] hover:text-teal-700 flex items-center gap-1.5 transition-colors"
           >
             ← Retour à l&apos;accueil
           </Link>
@@ -57,7 +57,7 @@ export default function ConfidentialitePage() {
                 <li key={item.id}>
                   <a
                     href={`#${item.id}`}
-                    className="text-[var(--p-text-muted)] hover:text-[#1D9E75] hover:underline transition-colors leading-snug block"
+                    className="text-[var(--p-text-muted)] hover:text-teal-700 hover:underline transition-colors leading-snug block"
                   >
                     {i + 1}. {item.label}
                   </a>
@@ -80,7 +80,7 @@ export default function ConfidentialitePage() {
 
           <header className="mb-10">
             <p className="ds-label text-[var(--p-text-subtle)] mb-2">Pratiqo</p>
-            <h1 className="text-[28px] sm:text-[34px] font-semibold text-[var(--p-text)] leading-tight border-l-4 border-[#1D9E75] pl-4">
+            <h1 className="text-[28px] sm:text-[34px] font-semibold text-[var(--p-text)] leading-tight border-l-4 border-teal-500 pl-4">
               Politique de confidentialité
             </h1>
             <p className="mt-3 text-sm text-[var(--p-text-muted)]">
@@ -96,7 +96,7 @@ export default function ConfidentialitePage() {
             <ol className="mt-3 space-y-2 text-[13px]">
               {TOC.map((item, i) => (
                 <li key={item.id}>
-                  <a href={`#${item.id}`} className="text-[#1D9E75] hover:underline">
+                  <a href={`#${item.id}`} className="text-teal-700 hover:underline">
                     {i + 1}. {item.label}
                   </a>
                 </li>
@@ -107,7 +107,7 @@ export default function ConfidentialitePage() {
           <article className="space-y-12 text-[15px] leading-relaxed text-[var(--p-text-muted)]">
             {/* 1. Introduction */}
             <section id="introduction" className="scroll-mt-28">
-              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-[#1D9E75] pl-4 mb-4">
+              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-teal-500 pl-4 mb-4">
                 1. Introduction
               </h2>
               <p>
@@ -130,14 +130,14 @@ export default function ConfidentialitePage() {
 
             {/* 2. Données collectées */}
             <section id="donnees-collectees" className="scroll-mt-28">
-              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-[#1D9E75] pl-4 mb-4">
+              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-teal-500 pl-4 mb-4">
                 2. Données collectées
               </h2>
 
               <h3 className="text-base font-semibold text-[var(--p-text)] mt-5 mb-2">
                 2.1 Données fournies par l&apos;utilisateur
               </h3>
-              <ul className="list-disc pl-5 space-y-2 marker:text-[#1D9E75]">
+              <ul className="list-disc pl-5 space-y-2 marker:text-teal-700">
                 <li>Nom, prénom, adresse courriel</li>
                 <li>Photo de profil (optionnel)</li>
                 <li>Adresse (pour les cours à domicile)</li>
@@ -152,7 +152,7 @@ export default function ConfidentialitePage() {
               <h3 className="text-base font-semibold text-[var(--p-text)] mt-5 mb-2">
                 2.2 Données collectées automatiquement
               </h3>
-              <ul className="list-disc pl-5 space-y-2 marker:text-[#1D9E75]">
+              <ul className="list-disc pl-5 space-y-2 marker:text-teal-700">
                 <li>Adresse IP et données de navigation</li>
                 <li>Type d&apos;appareil et système d&apos;exploitation</li>
                 <li>Géolocalisation (avec votre consentement explicite)</li>
@@ -162,7 +162,7 @@ export default function ConfidentialitePage() {
               <h3 className="text-base font-semibold text-[var(--p-text)] mt-5 mb-2">
                 2.3 Données de tiers
               </h3>
-              <ul className="list-disc pl-5 space-y-2 marker:text-[#1D9E75]">
+              <ul className="list-disc pl-5 space-y-2 marker:text-teal-700">
                 <li>Informations de connexion via Google (nom, courriel, photo de profil)</li>
               </ul>
             </section>
@@ -171,11 +171,11 @@ export default function ConfidentialitePage() {
 
             {/* 3. Utilisation */}
             <section id="utilisation" className="scroll-mt-28">
-              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-[#1D9E75] pl-4 mb-4">
+              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-teal-500 pl-4 mb-4">
                 3. Utilisation des données
               </h2>
               <p>Nous utilisons vos données pour :</p>
-              <ul className="list-disc pl-5 space-y-2 mt-2 marker:text-[#1D9E75]">
+              <ul className="list-disc pl-5 space-y-2 mt-2 marker:text-teal-700">
                 <li>Créer et gérer votre compte</li>
                 <li>Faciliter la mise en relation professeurs-élèves</li>
                 <li>Traiter les paiements et versements</li>
@@ -183,7 +183,7 @@ export default function ConfidentialitePage() {
                 <li>Améliorer la plateforme et personnaliser l&apos;expérience</li>
                 <li>Respecter nos obligations légales</li>
               </ul>
-              <p className="mt-4 rounded-xl border border-[#1D9E75]/20 bg-[#1D9E75]/5 px-4 py-3 text-[14px] text-[var(--p-text)]">
+              <p className="mt-4 rounded-xl border border-teal-500/20 bg-teal-600/5 px-4 py-3 text-[14px] text-[var(--p-text)]">
                 Nous <strong>ne vendons jamais</strong> vos données personnelles à des tiers.
               </p>
             </section>
@@ -192,11 +192,11 @@ export default function ConfidentialitePage() {
 
             {/* 4. Partage */}
             <section id="partage" className="scroll-mt-28">
-              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-[#1D9E75] pl-4 mb-4">
+              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-teal-500 pl-4 mb-4">
                 4. Partage des données
               </h2>
               <p>Nous partageons vos données uniquement avec :</p>
-              <ul className="list-disc pl-5 space-y-2 mt-2 marker:text-[#1D9E75]">
+              <ul className="list-disc pl-5 space-y-2 mt-2 marker:text-teal-700">
                 <li>
                   <strong className="text-[var(--p-text)]">Stripe</strong> : traitement des paiements
                 </li>
@@ -219,7 +219,7 @@ export default function ConfidentialitePage() {
 
             {/* 5. Géolocalisation */}
             <section id="geolocalisation" className="scroll-mt-28">
-              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-[#1D9E75] pl-4 mb-4">
+              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-teal-500 pl-4 mb-4">
                 5. Géolocalisation
               </h2>
               <p>
@@ -234,11 +234,11 @@ export default function ConfidentialitePage() {
 
             {/* 6. Cookies */}
             <section id="cookies" className="scroll-mt-28">
-              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-[#1D9E75] pl-4 mb-4">
+              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-teal-500 pl-4 mb-4">
                 6. Cookies
               </h2>
               <p>Pratiqo utilise des cookies pour :</p>
-              <ul className="list-disc pl-5 space-y-2 mt-2 marker:text-[#1D9E75]">
+              <ul className="list-disc pl-5 space-y-2 mt-2 marker:text-teal-700">
                 <li>Maintenir votre session connectée</li>
                 <li>Mémoriser vos préférences</li>
                 <li>Analyser l&apos;utilisation de la plateforme (Google Analytics)</li>
@@ -253,11 +253,11 @@ export default function ConfidentialitePage() {
 
             {/* 7. Conservation */}
             <section id="conservation" className="scroll-mt-28">
-              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-[#1D9E75] pl-4 mb-4">
+              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-teal-500 pl-4 mb-4">
                 7. Conservation des données
               </h2>
               <p>Vos données sont conservées :</p>
-              <ul className="list-disc pl-5 space-y-2 mt-2 marker:text-[#1D9E75]">
+              <ul className="list-disc pl-5 space-y-2 mt-2 marker:text-teal-700">
                 <li>Tant que votre compte est actif</li>
                 <li>
                   Pendant <strong className="text-[var(--p-text)]">3 ans</strong> après la fermeture du compte
@@ -274,11 +274,11 @@ export default function ConfidentialitePage() {
 
             {/* 8. Droits */}
             <section id="droits" className="scroll-mt-28">
-              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-[#1D9E75] pl-4 mb-4">
+              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-teal-500 pl-4 mb-4">
                 8. Vos droits (Loi 25 — Québec)
               </h2>
               <p>Conformément à la Loi 25, vous avez le droit de :</p>
-              <ul className="list-disc pl-5 space-y-2 mt-2 marker:text-[#1D9E75]">
+              <ul className="list-disc pl-5 space-y-2 mt-2 marker:text-teal-700">
                 <li>
                   <strong className="text-[var(--p-text)]">Accéder</strong> à vos données personnelles
                 </li>
@@ -303,7 +303,7 @@ export default function ConfidentialitePage() {
               </ul>
               <p className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-[13px] text-slate-700">
                 Pour exercer ces droits, contactez-nous à{" "}
-                <a href="mailto:marc-andre.theberge@pratiqo.ca" className="text-[#1D9E75] underline font-medium">
+                <a href="mailto:marc-andre.theberge@pratiqo.ca" className="text-teal-700 underline font-medium">
                   marc-andre.theberge@pratiqo.ca
                 </a>
                 . Nous répondrons dans un délai de <strong>30 jours</strong>.
@@ -314,11 +314,11 @@ export default function ConfidentialitePage() {
 
             {/* 9. Sécurité */}
             <section id="securite" className="scroll-mt-28">
-              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-[#1D9E75] pl-4 mb-4">
+              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-teal-500 pl-4 mb-4">
                 9. Sécurité
               </h2>
               <p>Nous appliquons des mesures de sécurité incluant :</p>
-              <ul className="list-disc pl-5 space-y-2 mt-2 marker:text-[#1D9E75]">
+              <ul className="list-disc pl-5 space-y-2 mt-2 marker:text-teal-700">
                 <li>Chiffrement SSL/TLS pour toutes les transmissions de données</li>
                 <li>Authentification sécurisée via Supabase Auth</li>
                 <li>Accès restreint aux données par rôle (RLS — Row Level Security)</li>
@@ -334,7 +334,7 @@ export default function ConfidentialitePage() {
 
             {/* 10. Mineurs */}
             <section id="mineurs" className="scroll-mt-28">
-              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-[#1D9E75] pl-4 mb-4">
+              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-teal-500 pl-4 mb-4">
                 10. Mineurs
               </h2>
               <p>
@@ -348,7 +348,7 @@ export default function ConfidentialitePage() {
 
             {/* 11. Modifications */}
             <section id="modifications" className="scroll-mt-28">
-              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-[#1D9E75] pl-4 mb-4">
+              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-teal-500 pl-4 mb-4">
                 11. Modifications
               </h2>
               <p>
@@ -361,7 +361,7 @@ export default function ConfidentialitePage() {
 
             {/* 12. Contact */}
             <section id="contact" className="scroll-mt-28">
-              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-[#1D9E75] pl-4 mb-4">
+              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-teal-500 pl-4 mb-4">
                 12. Contact
               </h2>
               <p className="font-medium text-[var(--p-text)]">Responsable de la protection des données (RPD)</p>
@@ -370,13 +370,13 @@ export default function ConfidentialitePage() {
               </p>
               <p className="mt-2">
                 Courriel :{" "}
-                <a href="mailto:marc-andre.theberge@pratiqo.ca" className="text-[#1D9E75] underline font-medium">
+                <a href="mailto:marc-andre.theberge@pratiqo.ca" className="text-teal-700 underline font-medium">
                   marc-andre.theberge@pratiqo.ca
                 </a>
               </p>
               <p className="mt-1">
                 Site web :{" "}
-                <Link href="/" className="text-[#1D9E75] underline font-medium">
+                <Link href="/" className="text-teal-700 underline font-medium">
                   pratiqo.com
                 </Link>
               </p>
@@ -387,13 +387,13 @@ export default function ConfidentialitePage() {
           <footer className="mt-14 pt-8 border-t border-[var(--p-border-light)]">
             <p className="text-[12px] text-[var(--p-text-muted)] mb-2">Autres documents légaux</p>
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-[13px]">
-              <Link href="/cgu" className="text-[var(--p-text-muted)] hover:text-[#1D9E75] hover:underline">
+              <Link href="/cgu" className="text-[var(--p-text-muted)] hover:text-teal-700 hover:underline">
                 CGU
               </Link>
-              <span className="text-[#1D9E75] font-medium">Confidentialité</span>
+              <span className="text-teal-700 font-medium">Confidentialité</span>
               <Link
                 href="/code-de-conduite"
-                className="text-[var(--p-text-muted)] hover:text-[#1D9E75] hover:underline"
+                className="text-[var(--p-text-muted)] hover:text-teal-700 hover:underline"
               >
                 Code de conduite
               </Link>

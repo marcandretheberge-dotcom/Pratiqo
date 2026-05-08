@@ -137,7 +137,7 @@ export default function TeacherProfileClient({ id }: { id: string }) {
           <button
             type="button"
             onClick={requestGeo}
-            className="rounded-full border border-[#E8E6DF] bg-white px-4 py-2.5 text-sm font-semibold text-[#0F6E56] shadow-lg hover:bg-[#FAFCFB]"
+            className="rounded-full border border-[#E8E6DF] bg-white px-4 py-2.5 text-sm font-semibold text-teal-700 shadow-lg hover:bg-[#FAFCFB]"
           >
             {geoDeniedOrUnavailable
               ? "Réessayer la localisation"

@@ -178,14 +178,14 @@ export default function TeacherProgressPage() {
   return (
     <div className="space-y-6 pb-8">
       <div>
-        <p className="text-[10px] font-bold uppercase tracking-widest text-[#1D9E75]">{t("teacherSpaceLabel")}</p>
+        <p className="text-[10px] font-bold uppercase tracking-widest text-teal-700">{t("teacherSpaceLabel")}</p>
         <h1 className="mt-1 text-2xl font-bold text-[#2C2C2A] sm:text-3xl">{t("myStudents")}</h1>
         <p className="mt-2 text-sm text-slate-600">{t("studentsSubtitle")}</p>
       </div>
 
       {loading ? (
         <div className="flex justify-center py-16">
-          <Loader2 className="h-9 w-9 animate-spin text-[#1D9E75]" />
+          <Loader2 className="h-9 w-9 animate-spin text-teal-700" />
         </div>
       ) : sorted.length === 0 ? (
         <p className="text-sm text-slate-500 rounded-2xl border border-slate-200 bg-white p-6">{t("noStudents")}</p>
@@ -200,7 +200,7 @@ export default function TeacherProgressPage() {
                   onClick={() => setExpanded(open ? null : s.studentId)}
                   className="w-full flex items-center gap-3 p-4 text-left hover:bg-slate-50/80 transition-colors"
                 >
-                  <div className="h-12 w-12 rounded-full bg-gradient-to-br from-[#1D9E75] to-[#0f6e56] text-white flex items-center justify-center text-sm font-bold shrink-0">
+                  <div className="h-12 w-12 rounded-full bg-gradient-to-br from-teal-500 to-teal-700 text-white flex items-center justify-center text-sm font-bold shrink-0">
                     {s.name.slice(0, 2).toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -226,7 +226,7 @@ export default function TeacherProgressPage() {
                         </p>
                         <div className="h-1 rounded-full bg-slate-100 overflow-hidden">
                           <div
-                            className="h-full rounded-full bg-[#1D9E75]"
+                            className="h-full rounded-full bg-teal-600"
                             style={{ width: `${getProgressPercent(s.companionType, s.lessonCount)}%` }}
                           />
                         </div>
@@ -235,7 +235,7 @@ export default function TeacherProgressPage() {
                       <p className="text-xs text-slate-600 truncate">{s.discipline}</p>
                     )}
                     <div className="flex flex-wrap items-center gap-2 mt-1">
-                      <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-[#e1f5ee] text-[#085041]">
+                      <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-teal-50 text-teal-800">
                         {badgeFromLevel(s.levelLabel, t)}
                       </span>
                       <span className="text-xs text-slate-500">{s.levelLabel}</span>

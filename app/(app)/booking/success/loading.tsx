@@ -3,7 +3,7 @@ export default function BookingSuccessLoading() {
     <div className="max-w-xl mx-auto flex flex-col items-center justify-center gap-6 py-24">
       {/* Spinner */}
       <div
-        className="w-14 h-14 rounded-full border-4 border-[#1D9E75]/20 border-t-[#1D9E75] animate-spin"
+        className="w-14 h-14 rounded-full border-4 border-teal-500/20 border-t-teal-600 animate-spin"
         role="status"
         aria-label="Vérification du paiement en cours…"
       />

@@ -57,7 +57,7 @@ function Highlight({ text, query }: { text: string; query: string }) {
   return (
     <>
       {text.slice(0, idx)}
-      <mark className="bg-[rgba(29,158,117,0.18)] text-[#0F6E56] not-italic font-semibold rounded-sm px-0.5">
+      <mark className="bg-teal-500/20 text-teal-700 not-italic font-semibold rounded-sm px-0.5">
         {text.slice(idx, idx + query.length)}
       </mark>
       {text.slice(idx + query.length)}
@@ -314,7 +314,7 @@ export function SmartSearchInput({
                     onClick={() => select(item)}
                     className={cn(
                       "w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors",
-                      isActive ? "bg-[rgba(29,158,117,0.08)]" : "hover:bg-[#F9F8F5]",
+                      isActive ? "bg-teal-500/10" : "hover:bg-[#F9F8F5]",
                     )}
                   >
                     {item.kind === "discipline" && (
@@ -328,7 +328,7 @@ export function SmartSearchInput({
 
                     {item.kind === "teacher" && (
                       <>
-                        <div className="shrink-0 h-8 w-8 rounded-full bg-[#E1F5EE] text-[#0F6E56] flex items-center justify-center text-xs font-bold">
+                        <div className="shrink-0 h-8 w-8 rounded-full bg-teal-50 text-teal-700 flex items-center justify-center text-xs font-bold">
                           {initials(item.teacher.name)}
                         </div>
                         <div className="min-w-0 flex-1">

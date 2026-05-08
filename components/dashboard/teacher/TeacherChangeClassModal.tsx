@@ -78,21 +78,21 @@ export function TeacherChangeClassModal({
           <button
             type="button"
             onClick={goMessages}
-            className="inline-flex h-11 w-full items-center justify-center rounded-xl bg-[#0F6E56] text-sm font-semibold text-white shadow-sm transition hover:bg-[#0c5a47]"
+            className="inline-flex h-11 w-full items-center justify-center rounded-xl bg-teal-700 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-800"
           >
             {t("proposeNewTime")}
           </button>
           <button
             type="button"
             onClick={goMessages}
-            className="inline-flex h-11 w-full items-center justify-center rounded-xl border border-[#0F6E56]/35 bg-white text-sm font-semibold text-[#0F6E56] transition hover:bg-[#0F6E56]/[0.06]"
+            className="inline-flex h-11 w-full items-center justify-center rounded-xl border border-teal-700/35 bg-white text-sm font-semibold text-teal-700 transition hover:bg-teal-700/[0.06]"
           >
             {t("messageStudent")}
           </button>
           <Link
             href="/legal/annulation"
             onClick={onClose}
-            className="text-center text-xs font-medium text-[#0F6E56]/85 underline-offset-2 hover:underline"
+            className="text-center text-xs font-medium text-teal-700/85 underline-offset-2 hover:underline"
           >
             {t("viewCancellationPolicy")}
           </Link>

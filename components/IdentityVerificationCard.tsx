@@ -101,9 +101,9 @@ export function IdentityVerificationCard({ status, failedReason }: Props) {
 
   // not_started, canceled, requires_input, or default
   return (
-    <div className="rounded-2xl border-2 border-[#1D9E75] bg-[#F1EFE8] p-6 space-y-4">
+    <div className="rounded-2xl border-2 border-teal-500 bg-[#F1EFE8] p-6 space-y-4">
       <div className="flex items-start gap-3">
-        <Shield className="text-[#1D9E75] mt-0.5 shrink-0" size={24} />
+        <Shield className="text-teal-700 mt-0.5 shrink-0" size={24} />
         <div>
           <h3 className="font-bold text-lg text-[#2C2C2A]">Vérifie ton identité</h3>
           <p className="text-sm text-[#555550] mt-1">
@@ -123,7 +123,7 @@ export function IdentityVerificationCard({ status, failedReason }: Props) {
       <button
         onClick={() => void handleVerify()}
         disabled={loading}
-        className="w-full rounded-xl bg-[#1D9E75] px-4 py-3 text-white font-semibold hover:bg-[#0F6E56] disabled:opacity-50 transition-colors"
+        className="w-full rounded-xl bg-teal-600 px-4 py-3 text-white font-semibold hover:bg-teal-700 disabled:opacity-50 transition-colors"
       >
         {loading ? (
           <Loader2 className="animate-spin mx-auto" size={20} />

@@ -58,7 +58,7 @@ const FALLBACK_CENTER = { lat: 45.5017, lng: -73.5673 } as const;
 const pratiqoClusterRenderer: Renderer = {
   render({ count, position }) {
     const svg = window.btoa(
-      `<svg fill="#1D9E75" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">` +
+      `<svg fill="#50BEB2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">` +
         `<circle cx="120" cy="120" opacity=".9" r="68"/>` +
         `<circle cx="120" cy="120" opacity=".35" r="92"/>` +
         `<circle cx="120" cy="120" opacity=".18" r="116"/>` +
@@ -270,7 +270,7 @@ export function SearchMapView({
         icon: {
           path: google.maps.SymbolPath.CIRCLE,
           scale: 8,
-          fillColor: "#1D9E75",
+          fillColor: "#50BEB2",
           fillOpacity: 1,
           strokeColor: "white",
           strokeWeight: 3,
@@ -315,7 +315,7 @@ export function SearchMapView({
         icon: {
           path: google.maps.SymbolPath.CIRCLE,
           scale: isHighlight ? 23 : 20,
-          fillColor: isHighlight ? "#0F6E56" : "#1D9E75",
+          fillColor: isHighlight ? "#2D7B72" : "#50BEB2",
           fillOpacity: 1,
           strokeColor: "white",
           strokeWeight: isHighlight ? 3 : 2,
@@ -355,8 +355,8 @@ export function SearchMapView({
   return (
     <div className="relative">
       {!mapsReady ? (
-        <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-[#0F6E56]">
-          <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-[#1D9E75] border-t-transparent" />
+        <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-teal-700">
+          <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-teal-500 border-t-transparent" />
           {t("loadingMap")}
         </div>
       ) : null}
@@ -385,8 +385,8 @@ export function SearchMapView({
             type="button"
             className={cn(
               "pointer-events-auto",
-              "flex items-center gap-1.5 rounded-full border border-[#1D9E75]",
-              "bg-white px-4 py-2 text-xs font-bold text-[#0F6E56]",
+              "flex items-center gap-1.5 rounded-full border border-teal-500",
+              "bg-white px-4 py-2 text-xs font-bold text-teal-700",
               "shadow-[0_4px_16px_rgba(44,44,42,0.14)] hover:bg-[#FAFCFB]",
               "transition-all duration-150 active:scale-95",
             )}
@@ -424,18 +424,18 @@ export function SearchMapView({
             "bottom-20 md:bottom-6",
           )}
         >
-          <div className="mx-auto max-w-3xl rounded-2xl border border-[#1D9E75] bg-white p-4 shadow-[0_20px_60px_rgba(44,44,42,0.18)]">
+          <div className="mx-auto max-w-3xl rounded-2xl border border-teal-500 bg-white p-4 shadow-[0_20px_60px_rgba(44,44,42,0.18)]">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <p className="truncate font-semibold text-[#2C2C2A]">{selectedTeacher.name}</p>
                 <p className="truncate text-xs text-[#6B6A65]">{selectedTeacher.discipline}</p>
                 <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-[#6B6A65]">
                   <span className="inline-flex items-center gap-1">
-                    <Star size={14} className="text-[#1D9E75]" />
+                    <Star size={14} className="text-teal-700" />
                     {selectedTeacher.rating}
                   </span>
                   <span className="text-[#D3D1C7]">·</span>
-                  <span className="font-bold text-[#1D9E75]">
+                  <span className="font-bold text-teal-700">
                     {formatPrice(Number(selectedTeacher.pricePerLesson))}/h
                   </span>
                 </div>
@@ -455,7 +455,7 @@ export function SearchMapView({
               <button
                 type="button"
                 onClick={() => onViewProfile(selectedTeacher)}
-                className="rounded-full bg-[#1D9E75] px-4 py-2 text-xs font-bold text-white hover:brightness-[0.98]"
+                className="rounded-full bg-teal-600 px-4 py-2 text-xs font-bold text-white hover:brightness-[0.98]"
               >
                 {t("viewProfile")}
               </button>

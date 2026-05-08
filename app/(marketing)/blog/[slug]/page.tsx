@@ -212,7 +212,7 @@ export default async function BlogArticlePage({
 
             {/* Category pill */}
             <div className="mb-4">
-              <span className="rounded-full bg-[#1D9E75]/25 px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-[#7FE0C3]">
+              <span className="rounded-full bg-teal-600/25 px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-[#7FE0C3]">
                 {post.category}
               </span>
             </div>
@@ -262,12 +262,12 @@ export default async function BlogArticlePage({
             prose-h2:text-xl prose-h2:mt-8 prose-h2:mb-3
             prose-h3:text-lg prose-h3:mt-6 prose-h3:mb-2
             prose-p:text-[#4A4845] prose-p:leading-relaxed prose-p:mb-4
-            prose-a:text-[#1D9E75] prose-a:font-medium prose-a:no-underline hover:prose-a:underline
+            prose-a:text-teal-700 prose-a:font-medium prose-a:no-underline hover:prose-a:underline
             prose-strong:text-[#2C2C2A]
             prose-ul:my-4 prose-li:text-[#4A4845] prose-li:mb-1
             prose-ol:my-4
-            prose-blockquote:border-l-4 prose-blockquote:border-[#1D9E75] prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-[#6B6760]
-            prose-code:text-[#0f6e56] prose-code:bg-[rgba(29,158,117,0.08)] prose-code:px-1 prose-code:rounded
+            prose-blockquote:border-l-4 prose-blockquote:border-teal-500 prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-[#6B6760]
+            prose-code:text-teal-700 prose-code:bg-teal-500/10 prose-code:px-1 prose-code:rounded
             prose-hr:border-[#E8E6DF]
           ">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
@@ -299,7 +299,7 @@ export default async function BlogArticlePage({
             </Link>
             <Link
               href="/student/search"
-              className="inline-flex h-9 items-center justify-center rounded-xl bg-[#1D9E75] px-5 text-xs font-bold text-white hover:brightness-105 transition-all"
+              className="inline-flex h-9 items-center justify-center rounded-xl bg-teal-600 px-5 text-xs font-bold text-white hover:brightness-105 transition-all"
             >
               {labels.bookNow}
             </Link>

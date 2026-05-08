@@ -164,7 +164,7 @@ export default function ChooseCompanionPage() {
                     onClick={() => setSelected(c.id)}
                     className={cn("text-left w-full rounded-2xl border bg-white p-5")}
                     style={{
-                      borderColor: active ? "#1D9E75" : "#E8E6DF",
+                      borderColor: active ? "var(--palette-teal-500)" : "#E8E6DF",
                       opacity: active ? 1 : dim ? 0.5 : 1,
                       transform: active ? "scale(1.02)" : dim ? "scale(0.97)" : "scale(1)",
                       transition: "all 0.2s",
@@ -175,7 +175,7 @@ export default function ChooseCompanionPage() {
                         <div className="text-[40px] leading-none">{emoji}</div>
                         <div className="mt-2 font-semibold text-[#2C2C2A]">{name}</div>
                       </div>
-                      <span className="text-[10px] font-bold uppercase tracking-widest rounded-full px-2 py-1 bg-[#E1F5EE] text-[#1D9E75]">
+                      <span className="text-[10px] font-bold uppercase tracking-widest rounded-full px-2 py-1 bg-teal-50 text-teal-700">
                         {c.tag}
                       </span>
                     </div>
@@ -194,7 +194,7 @@ export default function ChooseCompanionPage() {
                 }}
                 disabled={saving}
                 className={cn(
-                  "rounded-xl px-5 py-3 text-sm font-bold text-white bg-[#1D9E75] hover:bg-[#178C67] transition-all",
+                  "rounded-xl px-5 py-3 text-sm font-bold text-white bg-teal-600 hover:bg-[#178C67] transition-all",
                   saving && "opacity-70 cursor-not-allowed",
                 )}
                 style={{ transition: "all 0.2s" }}
@@ -238,7 +238,7 @@ export default function ChooseCompanionPage() {
                       width: 10,
                       height: 10,
                       borderRadius: 999,
-                      background: reached ? "#1D9E75" : "#D3D1C7",
+                      background: reached ? "var(--palette-teal-500)" : "#D3D1C7",
                       transition: "all 0.2s",
                       display: "inline-block",
                     }}
@@ -246,7 +246,7 @@ export default function ChooseCompanionPage() {
                 );
               })}
             </div>
-            <div className="mt-4 text-sm font-semibold text-[#0F6E56]">Chargement…</div>
+            <div className="mt-4 text-sm font-semibold text-teal-700">Chargement…</div>
           </div>
         ) : null}
 
@@ -261,7 +261,7 @@ export default function ChooseCompanionPage() {
           >
             <div
               className="rounded-3xl p-5 text-white shadow-[0_18px_60px_rgba(15,110,86,0.20)]"
-              style={{ background: "linear-gradient(135deg, #0F6E56, #1D9E75)" }}
+              style={{ background: "linear-gradient(135deg, var(--palette-teal-700), var(--palette-teal-500))" }}
             >
               <div className="flex items-start gap-4">
                 <div className="text-[48px] leading-none">{stages[0]?.emoji}</div>
@@ -288,7 +288,7 @@ export default function ChooseCompanionPage() {
                       key={idx}
                       className={cn(
                         "relative shrink-0 rounded-2xl px-3 py-3",
-                        current ? "bg-[#1D9E75] text-white" : "bg-[#F4F4F3] text-[#6B6A65]",
+                        current ? "bg-teal-600 text-white" : "bg-[#F4F4F3] text-[#6B6A65]",
                       )}
                       style={{
                         minWidth: 132,
@@ -314,7 +314,7 @@ export default function ChooseCompanionPage() {
                 onClick={startAdventure}
                 disabled={saving}
                 className={cn(
-                  "rounded-xl px-5 py-3 text-sm font-bold text-white bg-[#1D9E75] hover:bg-[#178C67] transition-all",
+                  "rounded-xl px-5 py-3 text-sm font-bold text-white bg-teal-600 hover:bg-[#178C67] transition-all",
                   saving && "opacity-70 cursor-not-allowed",
                 )}
               >

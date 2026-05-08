@@ -178,7 +178,7 @@ export default function DevenirEnseignantContent() {
             </Link>
             <Link
               href="/login?role=teacher"
-              className="rounded-xl border border-[#1D9E75] px-4 py-2 text-sm font-semibold text-[#7FE0C3] hover:bg-[#1D9E75]/15 transition-colors"
+              className="rounded-xl border border-teal-500 px-4 py-2 text-sm font-semibold text-[#7FE0C3] hover:bg-teal-600/15 transition-colors"
             >
               {locale === "es" ? "Iniciar sesión" : locale === "en" ? "Sign in" : "Se connecter"}
             </Link>
@@ -190,7 +190,7 @@ export default function DevenirEnseignantContent() {
       <section className="bg-[#2C2C2A]">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 py-14 sm:py-20">
           <div className="max-w-2xl">
-            <span className="inline-block mb-5 px-3 py-1 rounded-full bg-[#1D9E75]/20 text-[#7FE0C3] text-xs font-bold uppercase tracking-widest">
+            <span className="inline-block mb-5 px-3 py-1 rounded-full bg-teal-600/20 text-[#7FE0C3] text-xs font-bold uppercase tracking-widest">
               {c.badge}
             </span>
             <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight leading-[1.05]">
@@ -205,7 +205,7 @@ export default function DevenirEnseignantContent() {
             <div className="mt-8 flex flex-col sm:flex-row gap-3">
               <Link
                 href="/login?role=teacher"
-                className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-[#1D9E75] px-7 text-sm font-bold text-white hover:brightness-105 transition-all"
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-teal-600 px-7 text-sm font-bold text-white hover:brightness-105 transition-all"
               >
                 {c.ctaPrimary}
                 <ArrowRight size={16} />
@@ -236,9 +236,9 @@ export default function DevenirEnseignantContent() {
             {c.benefits.map(({ icon: Icon, title, body }) => (
               <div
                 key={title}
-                className="rounded-3xl border border-white/10 bg-white/4 p-6 flex flex-col gap-4 hover:border-[#1D9E75]/40 transition-colors"
+                className="rounded-3xl border border-white/10 bg-white/4 p-6 flex flex-col gap-4 hover:border-teal-500/40 transition-colors"
               >
-                <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[#1D9E75]/15 text-[#7FE0C3]">
+                <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-teal-600/15 text-[#7FE0C3]">
                   <Icon size={22} />
                 </div>
                 <div>
@@ -258,7 +258,7 @@ export default function DevenirEnseignantContent() {
           <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
             {c.steps.map(({ n, title, desc }) => (
               <div key={n} className="rounded-3xl border border-white/10 bg-white/4 p-6">
-                <div className="inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-[#1D9E75] text-sm font-extrabold text-white">
+                <div className="inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-teal-600 text-sm font-extrabold text-white">
                   {n}
                 </div>
                 <h3 className="mt-4 text-base font-bold text-white">{title}</h3>
@@ -347,14 +347,14 @@ export default function DevenirEnseignantContent() {
                   : ["Une discipline que vous maîtrisez et aimez enseigner", "Une connexion internet et un appareil", "Des disponibilités régulières (minimum 2 h/semaine)", "Un compte bancaire pour les virements (Stripe)"]
                 ).map((item) => (
                   <li key={item} className="flex items-start gap-3 text-sm text-white/80">
-                    <CheckCircle2 size={17} className="text-[#1D9E75] shrink-0 mt-0.5" />
+                    <CheckCircle2 size={17} className="text-teal-700 shrink-0 mt-0.5" />
                     {item}
                   </li>
                 ))}
               </ul>
             </div>
 
-            <div className="rounded-3xl border-2 border-[#1D9E75]/40 bg-[#1D9E75]/6 p-6 sm:p-8 space-y-5">
+            <div className="rounded-3xl border-2 border-teal-500/40 bg-teal-600/6 p-6 sm:p-8 space-y-5">
               <p className="text-lg font-bold text-white">
                 {locale === "es" ? "Empezá ahora — es gratis" : locale === "en" ? "Start now — it's free" : "Commencez maintenant — c'est gratuit"}
               </p>
@@ -367,7 +367,7 @@ export default function DevenirEnseignantContent() {
               </p>
               <Link
                 href="/login?role=teacher"
-                className="inline-flex w-full h-12 items-center justify-center gap-2 rounded-2xl bg-[#1D9E75] text-sm font-bold text-white hover:brightness-105 transition-all"
+                className="inline-flex w-full h-12 items-center justify-center gap-2 rounded-2xl bg-teal-600 text-sm font-bold text-white hover:brightness-105 transition-all"
               >
                 {c.ctaPrimary}
                 <ArrowRight size={16} />
@@ -379,7 +379,7 @@ export default function DevenirEnseignantContent() {
       </section>
 
       {/* ── FINAL CTA BAND ─────────────────────────────────────────────── */}
-      <section className="bg-[#1D9E75]">
+      <section className="bg-teal-600">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 py-12 sm:py-16 flex flex-col md:flex-row items-center justify-between gap-6">
           <div>
             <h2 className="text-2xl sm:text-3xl font-bold text-white">{c.finalH2}</h2>
@@ -387,7 +387,7 @@ export default function DevenirEnseignantContent() {
           </div>
           <Link
             href="/login?role=teacher"
-            className="shrink-0 inline-flex h-12 items-center justify-center rounded-2xl bg-white px-8 text-sm font-bold text-[#0F6E56] hover:bg-white/95 transition-colors"
+            className="shrink-0 inline-flex h-12 items-center justify-center rounded-2xl bg-white px-8 text-sm font-bold text-teal-700 hover:bg-white/95 transition-colors"
           >
             {c.finalCta}
           </Link>

@@ -24,7 +24,7 @@ export default function UpgradeSuccessPage() {
     <div className="max-w-2xl mx-auto">
       <div className="bg-white border border-slate-200 rounded-3xl p-8 space-y-4">
         <div className="flex items-center gap-3">
-          <CheckCircle2 className="text-[#1D9E75]" />
+          <CheckCircle2 className="text-teal-700" />
           <h1 className="text-2xl font-bold text-slate-900">Paiement reçu</h1>
         </div>
         <p className="text-sm text-slate-600 font-medium">
@@ -33,7 +33,7 @@ export default function UpgradeSuccessPage() {
         <div className="flex flex-col sm:flex-row gap-3 pt-2">
           <button
             onClick={refreshSession}
-            className="h-11 px-6 rounded-[22px] text-sm font-medium bg-[#1D9E75] text-white hover:brightness-[0.98]"
+            className="h-11 px-6 rounded-[22px] text-sm font-medium bg-teal-600 text-white hover:brightness-[0.98]"
           >
             Continuer
           </button>

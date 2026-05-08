@@ -453,8 +453,8 @@ export default async function BookingSuccessPage({
 
       <div className="max-w-xl mx-auto space-y-6 py-4">
         <div
-          className="rounded-[28px] p-8 sm:p-10 text-white shadow-[0_24px_80px_rgba(29,158,117,0.25)] border border-white/20"
-          style={{ background: "linear-gradient(145deg, #1D9E75 0%, #0f6e56 100%)" }}
+          className="rounded-[28px] p-8 sm:p-10 text-white shadow-[0_24px_80px_rgb(80_190_178/0.25)] border border-white/20"
+          style={{ background: "linear-gradient(145deg, var(--palette-teal-500) 0%, var(--palette-teal-700) 100%)" }}
         >
           <div className="flex flex-col items-center text-center gap-4">
             <div className="w-16 h-16 rounded-2xl bg-white/15 flex items-center justify-center border border-white/25">
@@ -490,14 +490,14 @@ export default async function BookingSuccessPage({
             {booking.amountLabel ? (
               <li className="flex items-center justify-between gap-4 border-b border-[var(--p-light-teal-bg)] pb-4">
                 <span className="text-[var(--p-text-muted)] font-medium">{dict.amountPaid}</span>
-                <span className="font-semibold tabular-nums" style={{ color: "#1D9E75" }}>
+                <span className="font-semibold tabular-nums" style={{ color: "var(--palette-teal-500)" }}>
                   {booking.amountLabel}
                 </span>
               </li>
             ) : null}
 
             <li className="flex items-center gap-3">
-              <User className="w-5 h-5 shrink-0" style={{ color: "#1D9E75" }} />
+              <User className="w-5 h-5 shrink-0" style={{ color: "var(--palette-teal-500)" }} />
               <div>
                 <span className="font-medium">{booking.teacherName}</span>
                 {booking.discipline ? (
@@ -508,30 +508,30 @@ export default async function BookingSuccessPage({
 
             {booking.learnerName ? (
               <li className="flex items-center gap-3">
-                <User className="w-5 h-5 shrink-0" style={{ color: "#1D9E75" }} />
+                <User className="w-5 h-5 shrink-0" style={{ color: "var(--palette-teal-500)" }} />
                 <span>{dict.studentCourseForLearner} : {booking.learnerName}</span>
               </li>
             ) : null}
 
             {(booking.date || booking.time) ? (
               <li className="flex items-center gap-3">
-                <Calendar className="w-5 h-5 shrink-0" style={{ color: "#1D9E75" }} />
+                <Calendar className="w-5 h-5 shrink-0" style={{ color: "var(--palette-teal-500)" }} />
                 <span>{timeLabels?.userLabel || [booking.date, booking.time].filter(Boolean).join(" · ")}</span>
               </li>
             ) : null}
 
             {timeLabels?.showTeacherTime ? (
               <li className="flex items-center gap-3 text-sm text-[var(--p-text-muted)]">
-                <Clock className="w-5 h-5 shrink-0" style={{ color: "#1D9E75" }} />
+                <Clock className="w-5 h-5 shrink-0" style={{ color: "var(--palette-teal-500)" }} />
                 <span>{dict.teacherLocalTime} : {timeLabels.teacherLabel}</span>
               </li>
             ) : null}
 
             <li className="flex items-center gap-3">
               {booking.locationKind === "online" ? (
-                <Clock className="w-5 h-5 shrink-0" style={{ color: "#1D9E75" }} />
+                <Clock className="w-5 h-5 shrink-0" style={{ color: "var(--palette-teal-500)" }} />
               ) : (
-                <MapPin className="w-5 h-5 shrink-0" style={{ color: "#1D9E75" }} />
+                <MapPin className="w-5 h-5 shrink-0" style={{ color: "var(--palette-teal-500)" }} />
               )}
               <span>{locationLabel}</span>
             </li>
@@ -543,7 +543,7 @@ export default async function BookingSuccessPage({
 
             <li className="flex items-center justify-between gap-4">
               <span className="text-[var(--p-text-muted)] font-medium">{dict.bookingStatusLabel}</span>
-              <span className="rounded-full bg-[#E1F5EE] px-3 py-1 text-xs font-bold text-[#0F6E56]">
+              <span className="rounded-full bg-teal-50 px-3 py-1 text-xs font-bold text-teal-700">
                 {dict.bookingStatusConfirmed}
               </span>
             </li>
@@ -559,7 +559,7 @@ export default async function BookingSuccessPage({
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold text-white shadow-lg transition hover:opacity-95"
-              style={{ backgroundColor: "#0F6E56" }}
+              style={{ backgroundColor: "var(--palette-teal-700)" }}
             >
               <Video className="w-4 h-4" />
               {dict.joinCall}
@@ -591,7 +591,7 @@ export default async function BookingSuccessPage({
             <Link
               href="/dashboard"
               className="inline-flex items-center justify-center gap-2 rounded-2xl px-6 py-3.5 text-sm font-semibold text-white shadow-lg transition hover:opacity-95"
-              style={{ backgroundColor: "#1D9E75" }}
+              style={{ backgroundColor: "var(--palette-teal-500)" }}
             >
               <LayoutDashboard className="w-4 h-4" />
               {dict.bookingViewMyLessons}
@@ -610,7 +610,7 @@ export default async function BookingSuccessPage({
           {dict.bookingSuccessFooterProblem}{" "}
           <a
             href="mailto:support@pratiqo.ca"
-            className="underline hover:text-[#1D9E75] transition-colors"
+            className="underline hover:text-teal-700 transition-colors"
           >
             support@pratiqo.ca
           </a>
@@ -655,7 +655,7 @@ function ErrorCard({
         <Link
           href={href}
           className="inline-flex items-center justify-center gap-2 rounded-2xl px-6 py-3.5 text-sm font-semibold text-white transition hover:opacity-95"
-          style={{ backgroundColor: "#1D9E75" }}
+          style={{ backgroundColor: "var(--palette-teal-500)" }}
         >
           {cta}
         </Link>

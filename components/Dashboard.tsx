@@ -883,7 +883,7 @@ export function Dashboard() {
                     </div>
                     <p className="text-[9px] text-slate-600 font-bold uppercase tracking-widest">{b.date}</p>
                     {b.learnerName ? (
-                      <p className="text-[10px] font-semibold text-[#0F6E56]">
+                      <p className="text-[10px] font-semibold text-teal-700">
                         {t("studentCourseForLearner")} : {b.learnerName}
                       </p>
                     ) : null}

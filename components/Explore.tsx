@@ -343,8 +343,8 @@ export function Explore({
               className={cn(
                 "h-10 px-4 rounded-full text-sm font-semibold transition-all border",
                 exploreTab === "cours"
-                  ? "bg-[#1D9E75] text-white border-[#1D9E75]"
-                  : "bg-[var(--p-surface)] text-[var(--p-text-muted)] border-[var(--p-border-light)] hover:border-[#1D9E75]/40",
+                  ? "bg-teal-600 text-white border-teal-500"
+                  : "bg-[var(--p-surface)] text-[var(--p-text-muted)] border-[var(--p-border-light)] hover:border-teal-500/40",
               )}
             >
               {t("individualCourses")}
@@ -356,8 +356,8 @@ export function Explore({
                 className={cn(
                   "h-10 px-4 rounded-full text-sm font-semibold transition-all border inline-flex items-center gap-2",
                   exploreTab === "groupe"
-                    ? "bg-[#1D9E75] text-white border-[#1D9E75]"
-                    : "bg-[var(--p-surface)] text-[var(--p-text-muted)] border-[var(--p-border-light)] hover:border-[#1D9E75]/40",
+                    ? "bg-teal-600 text-white border-teal-500"
+                    : "bg-[var(--p-surface)] text-[var(--p-text-muted)] border-[var(--p-border-light)] hover:border-teal-500/40",
                 )}
               >
                 <UsersRound size={16} /> {t("groupClasses")}
@@ -371,7 +371,7 @@ export function Explore({
             <select
               value={sortMode}
               onChange={(e) => setSortMode(e.target.value === "reliable" ? "reliable" : "default")}
-              className="h-10 rounded-[14px] border border-[var(--p-border-light)] bg-white px-3 text-sm font-medium text-[var(--p-text)] outline-none focus:border-[#1D9E75]"
+              className="h-10 rounded-[14px] border border-[var(--p-border-light)] bg-white px-3 text-sm font-medium text-[var(--p-text)] outline-none focus:border-teal-500"
             >
               <option value="default">{t("sortRelevance")}</option>
               <option value="reliable">{t("sortMostReliable")}</option>
@@ -382,8 +382,8 @@ export function Explore({
             className={cn(
               "h-10 px-5 rounded-[22px] text-sm font-medium transition-all flex items-center gap-2",
               geo
-                ? "bg-[rgba(29,158,117,0.12)] text-[#1D9E75] border border-[rgba(29,158,117,0.22)]"
-                : "bg-[#1D9E75] text-white hover:brightness-[0.98]",
+                ? "bg-teal-500/15 text-teal-700 border border-teal-500/25"
+                : "bg-teal-600 text-white hover:brightness-[0.98]",
             )}
             disabled={geoLoading}
             title={t("useMyLocation")}
@@ -552,7 +552,7 @@ export function Explore({
             </p>
             <button
               onClick={() => setRadiusFilter("all")}
-              className="mt-5 h-10 px-5 rounded-[22px] text-sm font-medium bg-[#1D9E75] text-white hover:brightness-[0.98]"
+              className="mt-5 h-10 px-5 rounded-[22px] text-sm font-medium bg-teal-600 text-white hover:brightness-[0.98]"
             >
               Voir tous les profs
             </button>
@@ -599,7 +599,7 @@ function ExploreGroupCard({ session, index }: { session: ExploreGroupSession; in
   const remaining = spotsRemaining(session);
   const ratio = max > 0 ? remaining / max : 0;
   const barColor =
-    remaining === 0 ? "bg-amber-500" : ratio > 0.5 ? "bg-[#1D9E75]" : ratio < 0.25 ? "bg-amber-500" : "bg-[#1D9E75]/70";
+    remaining === 0 ? "bg-amber-500" : ratio > 0.5 ? "bg-teal-600" : ratio < 0.25 ? "bg-amber-500" : "bg-teal-600/70";
   const teacherName = session.teachers?.name ?? "Professeur";
   const img = session.teachers?.image_url;
 
@@ -609,7 +609,7 @@ function ExploreGroupCard({ session, index }: { session: ExploreGroupSession; in
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05 }}
       onClick={() => router.push(`/group-sessions/${session.id}`)}
-      className="ds-card p-5 hover:shadow-[0_22px_70px_rgba(15,110,86,0.12)] transition-all cursor-pointer flex gap-5 group relative border-l-4 border-l-[#1D9E75]"
+      className="ds-card p-5 hover:shadow-[0_22px_70px_rgb(45_123_114/0.12)] transition-all cursor-pointer flex gap-5 group relative border-l-4 border-l-teal-500"
     >
       <div className="relative shrink-0">
         {img ? (
@@ -644,7 +644,7 @@ function ExploreGroupCard({ session, index }: { session: ExploreGroupSession; in
             <p className="text-[13px] text-[var(--p-text-muted)] truncate">{teacherName}</p>
           </div>
           <div className="text-right shrink-0">
-            <p className="text-[18px] font-semibold text-[#1D9E75]">{formatPrice(Number(session.price_per_person))}</p>
+            <p className="text-[18px] font-semibold text-teal-700">{formatPrice(Number(session.price_per_person))}</p>
             <p className="text-[11px] text-[var(--p-text-muted)]">{t("perPerson")}</p>
           </div>
         </div>
@@ -655,7 +655,7 @@ function ExploreGroupCard({ session, index }: { session: ExploreGroupSession; in
           </span>
           <span>{session.duration_minutes} min</span>
           <span className="inline-flex items-center gap-1 text-[var(--p-text)]">
-            <Users size={12} className="text-[#1D9E75]" />
+            <Users size={12} className="text-teal-700" />
             {cur}/{max} inscrits
           </span>
         </div>
@@ -712,7 +712,7 @@ function RadiusPill({
       className={cn(
         "whitespace-nowrap text-[11px] font-medium rounded-[10px] px-4 py-2 border transition-all",
         active
-          ? "bg-[rgba(29,158,117,0.12)] border-[rgba(29,158,117,0.22)] text-[#1D9E75]"
+          ? "bg-teal-500/15 border-teal-500/25 text-teal-700"
           : "bg-white border-[var(--p-border-light)] text-[var(--p-text-muted)] hover:text-[var(--p-text)] hover:bg-[rgba(225,245,238,0.6)]",
       )}
     >
@@ -783,8 +783,8 @@ function TeacherCard({
       }}
       className={cn(
         "ds-card group relative flex cursor-pointer gap-5 p-5 transition-all duration-200 ease-out",
-        "hover:-translate-y-1 hover:scale-[1.015] hover:border-[#1D9E75]/30 hover:shadow-xl",
-        "active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1D9E75]/40",
+        "hover:-translate-y-1 hover:scale-[1.015] hover:border-teal-500/30 hover:shadow-xl",
+        "active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/40",
       )}
     >
       <TeacherAvatar name={teacher.name} category={teacher.category} imageUrl={teacher.imageUrl} size={44} />
@@ -799,10 +799,10 @@ function TeacherCard({
               ) : null}
               {String(teacher.profilePlan || "").toLowerCase() === "enterprise" ? (
                 <span
-                  className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full bg-[rgba(29,158,117,0.14)] text-[#0f6d52] border border-[rgba(29,158,117,0.35)]"
+                  className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full bg-teal-500/15 text-[#0f6d52] border border-teal-500/35"
                   title={t("verifiedStudioTitle")}
                 >
-                  <MapPin size={12} className="shrink-0 text-[#1D9E75]" />
+                  <MapPin size={12} className="shrink-0 text-teal-700" />
                   Studio vérifié
                 </span>
               ) : null}
@@ -817,7 +817,7 @@ function TeacherCard({
             </div>
             <div className="flex items-center gap-2">
               {distanceKm !== null && (
-                <span className="px-3 py-1 rounded-[10px] text-[11px] font-medium bg-[rgba(29,158,117,0.12)] text-[#1D9E75]">
+                <span className="px-3 py-1 rounded-[10px] text-[11px] font-medium bg-teal-500/15 text-teal-700">
                   {distanceKm.toFixed(1)} {t("kmFromYou")}
                 </span>
               )}
@@ -840,7 +840,7 @@ function TeacherCard({
           <p className="text-[13px] text-[var(--p-text-muted)] -mt-1 flex flex-wrap items-center gap-2">
             <span>{teacher.discipline} · Montréal</span>
             {(teacher.additionalDisciplines?.length ?? 0) > 0 ? (
-              <span className="inline-flex items-center rounded-full border border-[rgba(29,158,117,0.35)] bg-[rgba(29,158,117,0.1)] px-2 py-0.5 text-[11px] font-bold text-[#0f6d52]">
+              <span className="inline-flex items-center rounded-full border border-teal-500/35 bg-teal-500/10 px-2 py-0.5 text-[11px] font-bold text-teal-700">
                 {teacher.additionalDisciplines!.length === 1
                   ? "+ 1 autre"
                   : `+ ${teacher.additionalDisciplines!.length} autres`}

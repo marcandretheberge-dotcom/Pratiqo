@@ -26,7 +26,7 @@ export default function AnnulationPublicPage() {
         <div className="mx-auto max-w-6xl px-4 sm:px-6 py-3 flex items-center gap-3">
           <Link
             href="/"
-            className="text-sm text-[var(--p-text-muted)] hover:text-[#1D9E75] flex items-center gap-1.5 transition-colors"
+            className="text-sm text-[var(--p-text-muted)] hover:text-teal-700 flex items-center gap-1.5 transition-colors"
           >
             ← Retour à l&apos;accueil
           </Link>
@@ -49,7 +49,7 @@ export default function AnnulationPublicPage() {
                 <li key={item.id}>
                   <a
                     href={`#${item.id}`}
-                    className="text-[var(--p-text-muted)] hover:text-[#1D9E75] hover:underline transition-colors leading-snug block"
+                    className="text-[var(--p-text-muted)] hover:text-teal-700 hover:underline transition-colors leading-snug block"
                   >
                     {i + 1}. {item.label}
                   </a>
@@ -70,24 +70,24 @@ export default function AnnulationPublicPage() {
 
           <header className="mb-10">
             <p className="ds-label text-[var(--p-text-subtle)] mb-2">Pratiqo</p>
-            <h1 className="text-[28px] sm:text-[34px] font-semibold text-[var(--p-text)] leading-tight border-l-4 border-[#1D9E75] pl-4">
+            <h1 className="text-[28px] sm:text-[34px] font-semibold text-[var(--p-text)] leading-tight border-l-4 border-teal-500 pl-4">
               Politique d&apos;annulation et de remboursement
             </h1>
             <p className="mt-3 text-sm text-[var(--p-text-muted)]">
               Dernière mise à jour : avril 2026 · Documents connexes :{" "}
-              <Link href="/cgu" className="text-[#1D9E75] underline font-medium">
+              <Link href="/cgu" className="text-teal-700 underline font-medium">
                 CGU
               </Link>
               {" · "}
-              <Link href="/confidentialite" className="text-[#1D9E75] underline font-medium">
+              <Link href="/confidentialite" className="text-teal-700 underline font-medium">
                 Confidentialité
               </Link>
               {" · "}
-              <Link href="/support" className="text-[#1D9E75] underline font-medium">
+              <Link href="/support" className="text-teal-700 underline font-medium">
                 Support
               </Link>
               {" · "}
-              <Link href="/code-de-conduite" className="text-[#1D9E75] underline font-medium">
+              <Link href="/code-de-conduite" className="text-teal-700 underline font-medium">
                 Code de conduite
               </Link>
             </p>
@@ -100,7 +100,7 @@ export default function AnnulationPublicPage() {
             <ol className="mt-3 space-y-2 text-[13px]">
               {TOC.map((item, i) => (
                 <li key={item.id}>
-                  <a href={`#${item.id}`} className="text-[#1D9E75] hover:underline">
+                  <a href={`#${item.id}`} className="text-teal-700 hover:underline">
                     {i + 1}. {item.label}
                   </a>
                 </li>
@@ -110,7 +110,7 @@ export default function AnnulationPublicPage() {
 
           <article className="space-y-12 text-[15px] leading-relaxed text-[var(--p-text-muted)]">
             <section id="eleve" className="scroll-mt-28">
-              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-[#1D9E75] pl-4 mb-4">
+              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-teal-500 pl-4 mb-4">
                 1. Annulation par l&apos;élève
               </h2>
               <div className="overflow-x-auto rounded-xl border border-[var(--p-border-light)] bg-white shadow-sm my-4">
@@ -122,19 +122,19 @@ export default function AnnulationPublicPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    <tr className="hover:bg-[rgba(29,158,117,0.06)]">
+                    <tr className="hover:bg-teal-500/10">
                       <td className="px-4 py-3 text-slate-700">Plus de 24 heures</td>
                       <td className="px-4 py-3 text-slate-700">
                         100&nbsp;% — remboursement complet ou crédit Pratiqo complet
                       </td>
                     </tr>
-                    <tr className="hover:bg-[rgba(29,158,117,0.06)]">
+                    <tr className="hover:bg-teal-500/10">
                       <td className="px-4 py-3 text-slate-700">Moins de 24 heures</td>
                       <td className="px-4 py-3 text-slate-700">
                         Crédit Pratiqo possible&nbsp;; remboursement examiné selon la situation
                       </td>
                     </tr>
-                    <tr className="hover:bg-[rgba(29,158,117,0.06)]">
+                    <tr className="hover:bg-teal-500/10">
                       <td className="px-4 py-3 text-slate-700">No-show (absent sans annulation)</td>
                       <td className="px-4 py-3 text-slate-700">
                         Aucun remboursement, sauf force majeure ou décision du support
@@ -150,11 +150,11 @@ export default function AnnulationPublicPage() {
               </p>
 
               <h3 className="text-base font-semibold text-[var(--p-text)] mt-6 mb-2">1.1 Comment annuler</h3>
-              <ul className="list-disc pl-5 space-y-2 marker:text-[#1D9E75]">
+              <ul className="list-disc pl-5 space-y-2 marker:text-teal-700">
                 <li>Via l&apos;application Pratiqo : Mon compte → Mes réservations → Annuler</li>
                 <li>
                   Par courriel :{" "}
-                  <a href="mailto:support@pratiqo.ca" className="text-[#1D9E75] underline font-medium">
+                  <a href="mailto:support@pratiqo.ca" className="text-teal-700 underline font-medium">
                     support@pratiqo.ca
                   </a>{" "}
                   (inclure le numéro de réservation)
@@ -174,7 +174,7 @@ export default function AnnulationPublicPage() {
             <hr className="border-slate-200" />
 
             <section id="professeur" className="scroll-mt-28">
-              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-[#1D9E75] pl-4 mb-4">
+              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-teal-500 pl-4 mb-4">
                 2. Annulation par le professeur
               </h2>
               <div className="overflow-x-auto rounded-xl border border-[var(--p-border-light)] bg-white shadow-sm my-4">
@@ -186,15 +186,15 @@ export default function AnnulationPublicPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    <tr className="hover:bg-[rgba(29,158,117,0.06)]">
+                    <tr className="hover:bg-teal-500/10">
                       <td className="px-4 py-3 text-slate-700">Annulation plus de 24h avant</td>
                       <td className="px-4 py-3 text-slate-700">Aucune pénalité</td>
                     </tr>
-                    <tr className="hover:bg-[rgba(29,158,117,0.06)]">
+                    <tr className="hover:bg-teal-500/10">
                       <td className="px-4 py-3 text-slate-700">Annulation moins de 24h avant</td>
                       <td className="px-4 py-3 text-slate-700">Avertissement — 3 avertissements = suspension</td>
                     </tr>
-                    <tr className="hover:bg-[rgba(29,158,117,0.06)]">
+                    <tr className="hover:bg-teal-500/10">
                       <td className="px-4 py-3 text-slate-700">No-show sans annulation</td>
                       <td className="px-4 py-3 text-slate-700">Suspension immédiate possible</td>
                     </tr>
@@ -214,7 +214,7 @@ export default function AnnulationPublicPage() {
             <hr className="border-slate-200" />
 
             <section id="reprogrammer" className="scroll-mt-28">
-              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-[#1D9E75] pl-4 mb-4">
+              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-teal-500 pl-4 mb-4">
                 3. Reprogrammer un cours (reschedule)
               </h2>
               <p>
@@ -223,7 +223,7 @@ export default function AnnulationPublicPage() {
               </p>
               <h3 className="text-base font-semibold text-[var(--p-text)] mt-6 mb-2">3.1 Plus de 24h avant le cours</h3>
               <p>Vous avez deux options :</p>
-              <ul className="list-disc pl-5 space-y-2 mt-2 marker:text-[#1D9E75]">
+              <ul className="list-disc pl-5 space-y-2 mt-2 marker:text-teal-700">
                 <li>Annuler ce cours (remboursement 100%) puis réserver un nouveau créneau directement.</li>
                 <li>
                   Discuter avec votre professeur (ou votre élève) via la messagerie pour convenir d&apos;un nouveau
@@ -233,11 +233,11 @@ export default function AnnulationPublicPage() {
               <h3 className="text-base font-semibold text-[var(--p-text)] mt-6 mb-2">3.2 Moins de 24h avant le cours</h3>
               <p>Reprogrammer reste possible, mais uniquement si les deux parties sont d&apos;accord.</p>
               <p className="mt-3 font-medium text-[var(--p-text)]">Procédure :</p>
-              <ol className="list-decimal pl-5 space-y-2 mt-2 marker:text-[#1D9E75]">
+              <ol className="list-decimal pl-5 space-y-2 mt-2 marker:text-teal-700">
                 <li>Envoyez un message via la messagerie Pratiqo pour proposer un nouveau créneau.</li>
                 <li>
                   Si votre professeur (ou votre élève) accepte, contactez{" "}
-                  <a href="mailto:support@pratiqo.ca" className="text-[#1D9E75] underline font-medium">
+                  <a href="mailto:support@pratiqo.ca" className="text-teal-700 underline font-medium">
                     support@pratiqo.ca
                   </a>{" "}
                   avec :
@@ -255,7 +255,7 @@ export default function AnnulationPublicPage() {
               <h3 className="text-base font-semibold text-[var(--p-text)] mt-6 mb-2">3.3 Cas particuliers</h3>
               <p>
                 Pour les urgences ou cas de force majeure (voir section 1.2), contactez directement{" "}
-                <a href="mailto:support@pratiqo.ca" className="text-[#1D9E75] underline font-medium">
+                <a href="mailto:support@pratiqo.ca" className="text-teal-700 underline font-medium">
                   support@pratiqo.ca
                 </a>
                 , peu importe le délai.
@@ -265,11 +265,11 @@ export default function AnnulationPublicPage() {
             <hr className="border-slate-200" />
 
             <section id="domicile" className="scroll-mt-28">
-              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-[#1D9E75] pl-4 mb-4">
+              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-teal-500 pl-4 mb-4">
                 4. Cours à domicile
               </h2>
               <p>Pour les cours à domicile, les mêmes règles s&apos;appliquent avec une condition supplémentaire :</p>
-              <ul className="list-disc pl-5 space-y-2 mt-2 marker:text-[#1D9E75]">
+              <ul className="list-disc pl-5 space-y-2 mt-2 marker:text-teal-700">
                 <li>
                   Si le professeur refuse le déplacement après avoir accepté la demande : remboursement complet
                   à l&apos;élève + avertissement au professeur
@@ -281,10 +281,10 @@ export default function AnnulationPublicPage() {
             <hr className="border-slate-200" />
 
             <section id="delais" className="scroll-mt-28">
-              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-[#1D9E75] pl-4 mb-4">
+              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-teal-500 pl-4 mb-4">
                 5. Délais de remboursement
               </h2>
-              <ul className="list-disc pl-5 space-y-2 marker:text-[#1D9E75]">
+              <ul className="list-disc pl-5 space-y-2 marker:text-teal-700">
                 <li>
                   Les remboursements sont traités dans les <strong className="text-[var(--p-text)]">5 à 10 jours ouvrables</strong>
                 </li>
@@ -296,23 +296,23 @@ export default function AnnulationPublicPage() {
             <hr className="border-slate-200" />
 
             <section id="litiges" className="scroll-mt-28">
-              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-[#1D9E75] pl-4 mb-4">
+              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-teal-500 pl-4 mb-4">
                 6. Litiges
               </h2>
               <p>
                 Tout litige concernant un remboursement doit être signalé dans les{" "}
                 <strong className="text-[var(--p-text)]">7 jours</strong> suivant le cours via :
               </p>
-              <ul className="list-disc pl-5 space-y-2 mt-2 marker:text-[#1D9E75]">
+              <ul className="list-disc pl-5 space-y-2 mt-2 marker:text-teal-700">
                 <li>
                   Courriel :{" "}
-                  <a href="mailto:support@pratiqo.ca" className="text-[#1D9E75] underline font-medium">
+                  <a href="mailto:support@pratiqo.ca" className="text-teal-700 underline font-medium">
                     support@pratiqo.ca
                   </a>
                 </li>
                 <li>
                   Page support :{" "}
-                  <Link href="/support" className="text-[#1D9E75] underline font-medium">
+                  <Link href="/support" className="text-teal-700 underline font-medium">
                     /support
                   </Link>
                 </li>
@@ -323,16 +323,16 @@ export default function AnnulationPublicPage() {
             <hr className="border-slate-200" />
 
             <section id="contact" className="scroll-mt-28">
-              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-[#1D9E75] pl-4 mb-4">
+              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-teal-500 pl-4 mb-4">
                 7. Contact
               </h2>
               <p>
-                <a href="mailto:support@pratiqo.ca" className="text-[#1D9E75] underline font-medium">
+                <a href="mailto:support@pratiqo.ca" className="text-teal-700 underline font-medium">
                   support@pratiqo.ca
                 </a>
               </p>
               <p className="mt-2">
-                <Link href="/support" className="text-[#1D9E75] underline font-medium">
+                <Link href="/support" className="text-teal-700 underline font-medium">
                   Centre d&apos;aide / support
                 </Link>
               </p>
@@ -342,16 +342,16 @@ export default function AnnulationPublicPage() {
           <footer className="mt-14 pt-8 border-t border-[var(--p-border-light)]">
             <p className="text-[12px] text-[var(--p-text-muted)] mb-2">Autres documents légaux</p>
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-[13px]">
-              <Link href="/cgu" className="text-[var(--p-text-muted)] hover:text-[#1D9E75] hover:underline">
+              <Link href="/cgu" className="text-[var(--p-text-muted)] hover:text-teal-700 hover:underline">
                 CGU
               </Link>
-              <Link href="/confidentialite" className="text-[var(--p-text-muted)] hover:text-[#1D9E75] hover:underline">
+              <Link href="/confidentialite" className="text-[var(--p-text-muted)] hover:text-teal-700 hover:underline">
                 Confidentialité
               </Link>
-              <span className="text-[#1D9E75] font-medium">Annulation</span>
+              <span className="text-teal-700 font-medium">Annulation</span>
               <Link
                 href="/code-de-conduite"
-                className="text-[var(--p-text-muted)] hover:text-[#1D9E75] hover:underline"
+                className="text-[var(--p-text-muted)] hover:text-teal-700 hover:underline"
               >
                 Code de conduite
               </Link>

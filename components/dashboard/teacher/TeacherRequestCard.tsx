@@ -34,7 +34,7 @@ export function TeacherRequestCard({
       <div className="flex min-w-0 items-center gap-3">
         <div
           className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white"
-          style={{ background: "linear-gradient(135deg,#6366f1,#1D9E75)" }}
+          style={{ background: "linear-gradient(135deg,#6366f1,var(--palette-teal-500))" }}
         >
           {(booking.studentName || "?").slice(0, 2).toUpperCase()}
         </div>

@@ -416,8 +416,8 @@ export function TeacherQuiz({ onClose }: { onClose: () => void }) {
         {/* ── Header ─────────────────────────────────────────────────────── */}
         <div className="flex items-center justify-between px-5 pt-5 pb-3 shrink-0">
           <div className="flex items-center gap-2">
-            <Sparkles size={16} className="text-[#1D9E75]" />
-            <span className="text-xs font-bold uppercase tracking-widest text-[#1D9E75]">
+            <Sparkles size={16} className="text-teal-700" />
+            <span className="text-xs font-bold uppercase tracking-widest text-teal-700">
               {t("quizStepOfLabel")} {Math.min(questionStepIndex + 1, QUESTION_STEPS.length)} {t("quizProgress")} {QUESTION_STEPS.length}
             </span>
           </div>
@@ -436,7 +436,7 @@ export function TeacherQuiz({ onClose }: { onClose: () => void }) {
           <div className="px-5 pb-4 shrink-0">
             <div className="h-1.5 w-full rounded-full bg-[#F1EFE8] overflow-hidden">
               <motion.div
-                className="h-full rounded-full bg-[#1D9E75]"
+                className="h-full rounded-full bg-teal-600"
                 animate={{ width: `${((questionStepIndex + 1) / QUESTION_STEPS.length) * 100}%` }}
                 transition={{ duration: 0.3 }}
               />
@@ -523,7 +523,7 @@ export function TeacherQuiz({ onClose }: { onClose: () => void }) {
                     <LevelCard
                       label={t("quizForMe")}
                       emoji="🙋"
-                      color="#1D9E75"
+                      color="var(--palette-teal-500)"
                       selected={answers.whoFor === "me"}
                       onClick={() => {
                         setAnswers((a) => ({ ...a, whoFor: "me" }));
@@ -584,7 +584,7 @@ export function TeacherQuiz({ onClose }: { onClose: () => void }) {
                       label={t("quizFormatOnline")}
                       emoji="💻"
                       selected={answers.format === "online"}
-                      color="#1D9E75"
+                      color="var(--palette-teal-500)"
                       onClick={() => {
                         setAnswers((a) => ({ ...a, format: "online" }));
                         goNext("priority");
@@ -684,7 +684,7 @@ export function TeacherQuiz({ onClose }: { onClose: () => void }) {
                   <button
                     type="button"
                     onClick={() => void fetchMatches()}
-                    className="mt-6 w-full h-11 rounded-2xl bg-[#1D9E75] text-sm font-bold text-white hover:brightness-105 transition-all flex items-center justify-center gap-1.5"
+                    className="mt-6 w-full h-11 rounded-2xl bg-teal-600 text-sm font-bold text-white hover:brightness-105 transition-all flex items-center justify-center gap-1.5"
                   >
                     {t("quizSeeResults")} <ArrowRight size={14} />
                   </button>
@@ -695,7 +695,7 @@ export function TeacherQuiz({ onClose }: { onClose: () => void }) {
                 <div>
                   {loading ? (
                     <div className="flex flex-col items-center justify-center py-16 gap-4">
-                      <div className="h-10 w-10 rounded-full border-2 border-[#1D9E75] border-t-transparent animate-spin" />
+                      <div className="h-10 w-10 rounded-full border-2 border-teal-500 border-t-transparent animate-spin" />
                       <p className="text-sm text-[#6B6760]">{t("quizLoading")}</p>
                     </div>
                   ) : (
@@ -721,7 +721,7 @@ export function TeacherQuiz({ onClose }: { onClose: () => void }) {
                           <Link
                             href="/student/search"
                             onClick={onClose}
-                            className="inline-flex items-center gap-1 text-sm font-semibold text-[#1D9E75] hover:underline"
+                            className="inline-flex items-center gap-1 text-sm font-semibold text-teal-700 hover:underline"
                           >
                             {t("quizSeeAll")} <ChevronRight size={13} />
                           </Link>
@@ -767,7 +767,7 @@ export function TeacherQuiz({ onClose }: { onClose: () => void }) {
                           <Link
                             href="/student/search"
                             onClick={onClose}
-                            className="flex items-center justify-center gap-1 text-sm font-semibold text-[#1D9E75] hover:underline pt-1"
+                            className="flex items-center justify-center gap-1 text-sm font-semibold text-teal-700 hover:underline pt-1"
                           >
                             {t("quizSeeAll")} <ChevronRight size={13} />
                           </Link>
@@ -844,8 +844,8 @@ function OptionCard({
       className={cn(
         "flex flex-col items-center justify-center gap-2 rounded-2xl border-2 p-4 py-5 text-center transition-all",
         selected
-          ? "border-[#1D9E75] bg-[rgba(29,158,117,0.08)] shadow-sm"
-          : "border-[#E8E6DF] bg-white hover:border-[#1D9E75]/40 hover:bg-[#FAFAF8]",
+          ? "border-teal-500 bg-teal-500/10 shadow-sm"
+          : "border-[#E8E6DF] bg-white hover:border-teal-500/40 hover:bg-[#FAFAF8]",
       )}
     >
       <span className="flex min-h-9 items-center justify-center text-2xl text-[#2C2C2A]">
@@ -853,7 +853,7 @@ function OptionCard({
       </span>
       <span
         className="text-xs font-bold leading-tight"
-        style={{ color: selected ? "#0F6E56" : "#2C2C2A" }}
+                    style={{ color: selected ? "var(--palette-teal-700)" : "#2C2C2A" }}
       >
         {label}
       </span>
@@ -877,15 +877,15 @@ function LevelCard({
       className={cn(
         "flex items-center gap-3 rounded-2xl border-2 px-4 py-4 text-left transition-all",
         selected
-          ? "border-[#1D9E75] bg-[rgba(29,158,117,0.08)] shadow-sm"
-          : "border-[#E8E6DF] bg-white hover:border-[#1D9E75]/40 hover:bg-[#FAFAF8]"
+          ? "border-teal-500 bg-teal-500/10 shadow-sm"
+          : "border-[#E8E6DF] bg-white hover:border-teal-500/40 hover:bg-[#FAFAF8]"
       )}
     >
       <span className="text-xl">{emoji}</span>
-      <span className={cn("font-bold text-sm", selected ? "text-[#0F6E56]" : "text-[#2C2C2A]")}>
+      <span className={cn("font-bold text-sm", selected ? "text-teal-700" : "text-[#2C2C2A]")}>
         {label}
       </span>
-      {selected && <ChevronRight size={14} className="ml-auto text-[#1D9E75]" />}
+      {selected && <ChevronRight size={14} className="ml-auto text-teal-700" />}
     </button>
   );
 }
@@ -972,12 +972,12 @@ function MatchCard({
             alt={teacher.name}
             width={44}
             height={44}
-            className="rounded-full object-cover border-2 border-[rgba(29,158,117,0.25)]"
+            className="rounded-full object-cover border-2 border-teal-500/25"
           />
         ) : (
           <div
             className="h-11 w-11 rounded-full flex items-center justify-center text-sm font-bold text-white"
-            style={{ background: "linear-gradient(135deg,#1D9E75,#0f6e56)" }}
+            style={{ background: "linear-gradient(135deg,var(--palette-teal-500),var(--palette-teal-700))" }}
           >
             {initials}
           </div>
@@ -1006,7 +1006,7 @@ function MatchCard({
 
         <div className="mt-2 flex items-center gap-2">
           {teacher.price_per_lesson != null && teacher.price_per_lesson > 0 && (
-            <span className="text-xs font-bold text-[#1D9E75]">
+            <span className="text-xs font-bold text-teal-700">
               {formatPrice(teacher.price_per_lesson)}/h
             </span>
           )}
@@ -1017,14 +1017,14 @@ function MatchCard({
           <Link
             href={bookHref}
             onClick={onClose}
-            className="flex-1 h-8 rounded-xl bg-[#1D9E75] flex items-center justify-center text-xs font-bold text-white hover:brightness-105 transition-all"
+            className="flex-1 h-8 rounded-xl bg-teal-600 flex items-center justify-center text-xs font-bold text-white hover:brightness-105 transition-all"
           >
             {bookLabel}
           </Link>
           <Link
             href={profilePath}
             onClick={onClose}
-            className="h-8 px-3 rounded-xl border border-[#E8E6DF] flex items-center justify-center text-xs font-semibold text-[#6B6760] hover:border-[#1D9E75]/40 transition-colors whitespace-nowrap"
+            className="h-8 px-3 rounded-xl border border-[#E8E6DF] flex items-center justify-center text-xs font-semibold text-[#6B6760] hover:border-teal-500/40 transition-colors whitespace-nowrap"
           >
             {profileLabel}
           </Link>

@@ -26,7 +26,7 @@ const TIERS: Tier[] = [
   { id: "bronze", label: "Bronze",  emoji: "🥉", min: 0,     max: 5000,    freeCommission: 10, proCommission: 5,   ristourneBonus: 0,   accent: "#CD7F32" },
   { id: "argent", label: "Argent",  emoji: "🥈", min: 5000,  max: 15000,   freeCommission: 9,  proCommission: 4.5, ristourneBonus: 0,   accent: "#B0B0B0" },
   { id: "or",     label: "Or",      emoji: "🥇", min: 15000, max: 30000,   freeCommission: 8,  proCommission: 4,   ristourneBonus: 0.5, accent: "#FFD700" },
-  { id: "platine",label: "Platine", emoji: "💎", min: 30000, max: Infinity, freeCommission: 7,  proCommission: 3.5, ristourneBonus: 1,   accent: "#1D9E75" },
+  { id: "platine",label: "Platine", emoji: "💎", min: 30000, max: Infinity, freeCommission: 7,  proCommission: 3.5, ristourneBonus: 1,   accent: "#50BEB2" },
 ];
 
 function tierFromAnnualVolume(volume: number): Tier {
@@ -129,7 +129,7 @@ export default function BecomeTeacherPage() {
       <section className="bg-[#2C2C2A]">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 py-14 sm:py-20">
           <div className="max-w-2xl">
-            <span className="inline-block mb-4 px-3 py-1 rounded-full bg-[#1D9E75]/20 text-[#7FE0C3] text-xs font-bold uppercase tracking-widest">
+            <span className="inline-block mb-4 px-3 py-1 rounded-full bg-teal-600/20 text-[#7FE0C3] text-xs font-bold uppercase tracking-widest">
               {t("btHeroBadge")}
             </span>
             <h1 className="text-4xl sm:text-5xl font-bold tracking-tight leading-[1.05]">
@@ -144,7 +144,7 @@ export default function BecomeTeacherPage() {
             <div className="mt-8 flex flex-col sm:flex-row gap-3">
               <Link
                 href="/login?role=teacher"
-                className="inline-flex h-12 items-center justify-center rounded-2xl bg-[#1D9E75] px-7 text-sm font-bold text-white hover:brightness-105"
+                className="inline-flex h-12 items-center justify-center rounded-2xl bg-teal-600 px-7 text-sm font-bold text-white hover:brightness-105"
               >
                 {t("startFree")}
               </Link>
@@ -207,9 +207,9 @@ export default function BecomeTeacherPage() {
             </div>
 
             {/* PRO */}
-            <div className="rounded-3xl border-2 border-[#1D9E75] bg-[#1D9E75]/8 p-6 flex flex-col gap-4 relative">
+            <div className="rounded-3xl border-2 border-teal-500 bg-teal-600/8 p-6 flex flex-col gap-4 relative">
               <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                <span className="bg-[#1D9E75] text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full">
+                <span className="bg-teal-600 text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full">
                   {t("btPlanProRecommended")}
                 </span>
               </div>
@@ -228,14 +228,14 @@ export default function BecomeTeacherPage() {
                   t("btPlanProF6"),
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-2 text-sm text-white/90">
-                    <CheckCircle2 size={15} className="text-[#1D9E75] shrink-0 mt-0.5" />
+                    <CheckCircle2 size={15} className="text-teal-700 shrink-0 mt-0.5" />
                     {item}
                   </li>
                 ))}
               </ul>
               <Link
                 href="/login?role=teacher"
-                className="inline-flex h-11 items-center justify-center rounded-2xl bg-[#1D9E75] text-sm font-bold text-white hover:brightness-105 transition-all"
+                className="inline-flex h-11 items-center justify-center rounded-2xl bg-teal-600 text-sm font-bold text-white hover:brightness-105 transition-all"
               >
                 {t("joinFree")}
               </Link>
@@ -283,44 +283,44 @@ export default function BecomeTeacherPage() {
                       value={waitlistName}
                       onChange={(e) => setWaitlistName(e.target.value)}
                       placeholder={t("waitlistName")}
-                      className="h-10 rounded-xl border border-white/10 bg-white/10 px-3 text-sm text-white outline-none placeholder:text-white/35 focus:border-[#1D9E75]"
+                      className="h-10 rounded-xl border border-white/10 bg-white/10 px-3 text-sm text-white outline-none placeholder:text-white/35 focus:border-teal-500"
                     />
                     <input
                       type="email"
                       value={waitlistEmail}
                       onChange={(e) => setWaitlistEmail(e.target.value)}
                       placeholder={t("waitlistEmail")}
-                      className="h-10 rounded-xl border border-white/10 bg-white/10 px-3 text-sm text-white outline-none placeholder:text-white/35 focus:border-[#1D9E75]"
+                      className="h-10 rounded-xl border border-white/10 bg-white/10 px-3 text-sm text-white outline-none placeholder:text-white/35 focus:border-teal-500"
                     />
                     <input
                       value={waitlistOrganization}
                       onChange={(e) => setWaitlistOrganization(e.target.value)}
                       placeholder={t("waitlistOrganization")}
-                      className="h-10 rounded-xl border border-white/10 bg-white/10 px-3 text-sm text-white outline-none placeholder:text-white/35 focus:border-[#1D9E75]"
+                      className="h-10 rounded-xl border border-white/10 bg-white/10 px-3 text-sm text-white outline-none placeholder:text-white/35 focus:border-teal-500"
                     />
                     <input
                       value={waitlistRole}
                       onChange={(e) => setWaitlistRole(e.target.value)}
                       placeholder={t("waitlistRole")}
-                      className="h-10 rounded-xl border border-white/10 bg-white/10 px-3 text-sm text-white outline-none placeholder:text-white/35 focus:border-[#1D9E75]"
+                      className="h-10 rounded-xl border border-white/10 bg-white/10 px-3 text-sm text-white outline-none placeholder:text-white/35 focus:border-teal-500"
                     />
                     <textarea
                       value={waitlistMessage}
                       onChange={(e) => setWaitlistMessage(e.target.value)}
                       placeholder={t("waitlistMessage")}
                       rows={3}
-                      className="rounded-xl border border-white/10 bg-white/10 px-3 py-2 text-sm text-white outline-none placeholder:text-white/35 focus:border-[#1D9E75]"
+                      className="rounded-xl border border-white/10 bg-white/10 px-3 py-2 text-sm text-white outline-none placeholder:text-white/35 focus:border-teal-500"
                     />
                     <button
                       type="button"
                       disabled={waitlistBusy || !waitlistEmail.trim()}
                       onClick={() => void submitBusinessWaitlist()}
-                      className="h-10 rounded-xl bg-[#1D9E75] text-sm font-bold text-white transition hover:brightness-105 disabled:opacity-50"
+                      className="h-10 rounded-xl bg-teal-600 text-sm font-bold text-white transition hover:brightness-105 disabled:opacity-50"
                     >
                       {waitlistBusy ? "..." : t("businessPlanWaitlist")}
                     </button>
                     {waitlistStatus === "success" ? (
-                      <p className="rounded-xl border border-[#1D9E75]/30 bg-[#1D9E75]/10 px-3 py-2 text-xs font-semibold text-[#B7F5DE]">
+                      <p className="rounded-xl border border-teal-500/30 bg-teal-600/10 px-3 py-2 text-xs font-semibold text-[#B7F5DE]">
                         {t("businessWaitlistSuccess")}
                       </p>
                     ) : null}
@@ -365,7 +365,7 @@ export default function BecomeTeacherPage() {
                   onClick={() => setCalcPlan("pro")}
                   className={cn(
                     "px-4 py-2 rounded-lg text-sm font-semibold transition-colors",
-                    calcPlan === "pro" ? "bg-[#1D9E75] text-white shadow" : "text-white/60 hover:text-white/90",
+                    calcPlan === "pro" ? "bg-teal-600 text-white shadow" : "text-white/60 hover:text-white/90",
                   )}
                 >
                   {t("btCalcPlanPro")}
@@ -411,7 +411,7 @@ export default function BecomeTeacherPage() {
 
               <Link
                 href="/login?role=teacher"
-                className="inline-flex w-full h-12 items-center justify-center rounded-2xl bg-[#1D9E75] text-sm font-bold text-white hover:brightness-105"
+                className="inline-flex w-full h-12 items-center justify-center rounded-2xl bg-teal-600 text-sm font-bold text-white hover:brightness-105"
               >
                 {t("joinFree")}
               </Link>
@@ -461,7 +461,7 @@ export default function BecomeTeacherPage() {
             ))}
           </div>
 
-          <div className="rounded-3xl border border-[#1D9E75]/25 bg-[#1D9E75]/8 p-6 sm:p-8">
+          <div className="rounded-3xl border border-teal-500/25 bg-teal-600/8 p-6 sm:p-8">
             <p className="text-sm font-bold text-[#7FE0C3]">{t("btRistourneTitle")}</p>
             <p className="mt-3 text-sm text-white/65 leading-relaxed">
               {t("btRistourneBody")}
@@ -513,7 +513,7 @@ export default function BecomeTeacherPage() {
       </section>
 
       {/* ── FINAL CTA ──────────────────────────── */}
-      <section className="bg-[#1D9E75] text-white">
+      <section className="bg-teal-600 text-white">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 py-14 sm:py-18 flex flex-col md:flex-row items-center justify-between gap-6">
           <div>
             <h2 className="text-2xl sm:text-3xl font-bold">{t("btFinalH2")}</h2>
@@ -522,7 +522,7 @@ export default function BecomeTeacherPage() {
           <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto shrink-0">
             <Link
               href="/login?role=teacher"
-              className="inline-flex h-12 items-center justify-center rounded-2xl bg-white px-7 text-sm font-bold text-[#0F6E56] hover:bg-white/95"
+              className="inline-flex h-12 items-center justify-center rounded-2xl bg-white px-7 text-sm font-bold text-teal-700 hover:bg-white/95"
             >
               {t("btFinalCta")}
             </Link>
@@ -549,7 +549,7 @@ function SliderRow({ label, value, min, max, onChange }: { label: string; value:
         <p className="text-sm font-semibold text-white/85">{label}</p>
         <span className="text-xs font-bold text-white/60">{value}</span>
       </div>
-      <input type="range" min={min} max={max} value={value} onChange={(e) => onChange(Number(e.target.value))} className="w-full accent-[#1D9E75]" />
+      <input type="range" min={min} max={max} value={value} onChange={(e) => onChange(Number(e.target.value))} className="w-full accent-teal-500" />
       <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-white/35">
         <span>{min}</span>
         <span>{max}</span>
@@ -560,7 +560,7 @@ function SliderRow({ label, value, min, max, onChange }: { label: string; value:
 
 function Metric({ label, value, accent, accentStrong, negative }: { label: string; value: string; accent?: boolean; accentStrong?: boolean; negative?: boolean }) {
   return (
-    <div className={cn("rounded-2xl border border-white/8 bg-black/15 p-4", accentStrong && "bg-[#1D9E75]/12 border-[#1D9E75]/25")}>
+    <div className={cn("rounded-2xl border border-white/8 bg-black/15 p-4", accentStrong && "bg-teal-600/12 border-teal-500/25")}>
       <p className="text-[10px] font-bold uppercase tracking-widest text-white/50">{label}</p>
       <p className={cn("mt-2 text-lg font-bold", accentStrong ? "text-[#B8F5DC]" : accent ? "text-[#7FE0C3]" : negative ? "text-rose-400" : "text-white")}>
         {value}
@@ -572,7 +572,7 @@ function Metric({ label, value, accent, accentStrong, negative }: { label: strin
 function StepCard({ step, title, desc }: { step: string; title: string; desc: string }) {
   return (
     <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
-      <div className="inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-[#1D9E75] text-sm font-extrabold">{step}</div>
+      <div className="inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-teal-600 text-sm font-extrabold">{step}</div>
       <h3 className="mt-4 text-lg font-bold">{title}</h3>
       <p className="mt-2 text-sm text-white/65 leading-relaxed">{desc}</p>
     </div>

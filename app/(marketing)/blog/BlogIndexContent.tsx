@@ -40,7 +40,7 @@ const CATEGORY_COLOURS: Record<string, string> = {
   Español: "bg-orange-100 text-orange-700",
   Piano: "bg-indigo-100 text-indigo-700",
   Guitare: "bg-green-100 text-green-700",
-  default: "bg-[rgba(29,158,117,0.12)] text-[#0f6e56]",
+  default: "bg-teal-500/15 text-teal-700",
 };
 
 function categoryColour(cat: string): string {
@@ -96,7 +96,7 @@ export default function BlogIndexContent({ posts }: { posts: BlogPost[] }) {
                 onClick={() => setActiveCategory("all")}
                 className={`shrink-0 rounded-full px-4 py-1.5 text-xs font-bold transition-colors ${
                   activeCategory === "all"
-                    ? "bg-[#1D9E75] text-white"
+                    ? "bg-teal-600 text-white"
                     : "bg-[#F1EFE8] text-[#6B6760] hover:bg-[#E8E6DF]"
                 }`}
               >
@@ -109,7 +109,7 @@ export default function BlogIndexContent({ posts }: { posts: BlogPost[] }) {
                   onClick={() => setActiveCategory(cat)}
                   className={`shrink-0 rounded-full px-4 py-1.5 text-xs font-bold transition-colors ${
                     activeCategory === cat
-                      ? "bg-[#1D9E75] text-white"
+                      ? "bg-teal-600 text-white"
                       : "bg-[#F1EFE8] text-[#6B6760] hover:bg-[#E8E6DF]"
                   }`}
                 >
@@ -130,7 +130,7 @@ export default function BlogIndexContent({ posts }: { posts: BlogPost[] }) {
             <p className="text-[#6B6760] text-sm max-w-xs">{t("blogNoArticles")}</p>
             <Link
               href="/"
-              className="mt-2 inline-flex h-10 items-center justify-center rounded-2xl bg-[#1D9E75] px-6 text-sm font-semibold text-white hover:brightness-105 transition-all"
+              className="mt-2 inline-flex h-10 items-center justify-center rounded-2xl bg-teal-600 px-6 text-sm font-semibold text-white hover:brightness-105 transition-all"
             >
               Pratiqo
             </Link>
@@ -163,7 +163,7 @@ export default function BlogIndexContent({ posts }: { posts: BlogPost[] }) {
                       {estimateReadTime(featured.excerpt)} {t("blogMinRead")}
                     </span>
                   </div>
-                  <h2 className="text-xl sm:text-2xl font-bold text-[#2C2C2A] group-hover:text-[#1D9E75] transition-colors leading-snug">
+                  <h2 className="text-xl sm:text-2xl font-bold text-[#2C2C2A] group-hover:text-teal-700 transition-colors leading-snug">
                     {featured.title}
                   </h2>
                   <p className="mt-2 text-sm text-[#6B6760] leading-relaxed line-clamp-3">
@@ -180,7 +180,7 @@ export default function BlogIndexContent({ posts }: { posts: BlogPost[] }) {
                         {formatDate(featured.published_at, bcp47)}
                       </span>
                     </div>
-                    <span className="inline-flex items-center gap-1 text-sm font-semibold text-[#1D9E75] group-hover:gap-2 transition-all">
+                    <span className="inline-flex items-center gap-1 text-sm font-semibold text-teal-700 group-hover:gap-2 transition-all">
                       {t("blogReadMore")} <ArrowRight size={14} />
                     </span>
                   </div>
@@ -207,7 +207,7 @@ export default function BlogIndexContent({ posts }: { posts: BlogPost[] }) {
                         />
                       </div>
                     ) : (
-                      <div className="h-2 w-full bg-gradient-to-r from-[#1D9E75] to-[#0f6e56]" />
+                      <div className="h-2 w-full bg-gradient-to-r from-teal-500 to-teal-700" />
                     )}
                     <div className="flex flex-col flex-1 p-5">
                       <div className="flex items-center gap-2 mb-2">
@@ -218,7 +218,7 @@ export default function BlogIndexContent({ posts }: { posts: BlogPost[] }) {
                           {estimateReadTime(post.excerpt)} {t("blogMinRead")}
                         </span>
                       </div>
-                      <h3 className="font-bold text-[#2C2C2A] group-hover:text-[#1D9E75] transition-colors leading-snug line-clamp-2">
+                      <h3 className="font-bold text-[#2C2C2A] group-hover:text-teal-700 transition-colors leading-snug line-clamp-2">
                         {post.title}
                       </h3>
                       <p className="mt-1.5 text-xs text-[#6B6760] leading-relaxed line-clamp-3 flex-1">
@@ -229,7 +229,7 @@ export default function BlogIndexContent({ posts }: { posts: BlogPost[] }) {
                           <Calendar size={10} />
                           {formatDate(post.published_at, bcp47)}
                         </span>
-                        <span className="flex items-center gap-1 font-semibold text-[#1D9E75] group-hover:gap-1.5 transition-all">
+                        <span className="flex items-center gap-1 font-semibold text-teal-700 group-hover:gap-1.5 transition-all">
                           {t("blogReadMore")} <ArrowRight size={11} />
                         </span>
                       </div>

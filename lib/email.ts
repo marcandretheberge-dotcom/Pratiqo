@@ -32,11 +32,11 @@ function escapeHtml(s: string): string {
 async function send(opts: { to: string; subject: string; html: string }) {
   const key = process.env.RESEND_API_KEY?.trim();
   if (!key) {
-    console.warn("[email] RESEND_API_KEY missing — skipping email to:", opts.to, "subject:", opts.subject);
+    console.warn("[email] RESEND_API_KEY missing — skipping email send");
     return;
   }
   const resend = new Resend(key);
-  console.log("[email] Sending to:", opts.to, "| subject:", opts.subject);
+  console.log("[email] Sending email");
   try {
     const result = await resend.emails.send({
       from: "Pratiqo <onboarding@pratiqo.ca>",
@@ -47,7 +47,7 @@ async function send(opts: { to: string; subject: string; html: string }) {
     });
     console.log("[email] ✓ Sent successfully — id:", (result as { data?: { id?: string } }).data?.id ?? "unknown");
   } catch (e) {
-    console.error("[email] ✗ Send failed — to:", opts.to, "subject:", opts.subject, "error:", e);
+    console.error("[email] ✗ Send failed", e);
     // never rethrow — email failures must not block payments or bookings
   }
 }
@@ -69,7 +69,7 @@ function buildEmail(opts: TemplateOpts): string {
   const cta = opts.ctaText && opts.ctaUrl
     ? `<div style="text-align:center;margin:32px 0 8px;">
         <a href="${opts.ctaUrl}"
-           style="background:#1D9E75;color:#ffffff;text-decoration:none;
+           style="background:#409A8E;color:#ffffff;text-decoration:none;
                   padding:14px 32px;border-radius:12px;font-weight:700;
                   font-size:15px;display:inline-block;letter-spacing:-0.2px;">
           ${escapeHtml(opts.ctaText)}
@@ -117,7 +117,7 @@ function buildEmail(opts: TemplateOpts): string {
 
         <!-- HERO -->
         <tr>
-          <td style="background:#0F6E56;border-radius:16px 16px 0 0;
+          <td style="background:#2D7B72;border-radius:16px 16px 0 0;
                      padding:36px 32px 28px;text-align:center;color:#ffffff;">
             ${opts.heroEmoji
               ? `<div style="font-size:48px;line-height:1;margin-bottom:16px;">${opts.heroEmoji}</div>`
@@ -155,14 +155,14 @@ function buildEmail(opts: TemplateOpts): string {
             <p style="margin:0 0 4px;color:#6B6A65;">
               Questions&nbsp;?
               <a href="mailto:support@pratiqo.ca"
-                 style="color:#1D9E75;font-weight:600;text-decoration:none;">
+                 style="color:#409A8E;font-weight:600;text-decoration:none;">
                 support@pratiqo.ca
               </a>
             </p>
             <p style="margin:8px 0 0;">
-              <span style="color:#1D9E75;font-weight:600;">D&apos;ici, pour ici</span>
+              <span style="color:#409A8E;font-weight:600;">D&apos;ici, pour ici</span>
               &nbsp;·&nbsp;Pratiqo inc. © 2026
-              &nbsp;·&nbsp;<a href="${base}" style="color:#1D9E75;text-decoration:none;">pratiqo.ca</a>
+              &nbsp;·&nbsp;<a href="${base}" style="color:#409A8E;text-decoration:none;">pratiqo.ca</a>
             </p>
           </td>
         </tr>
@@ -200,9 +200,9 @@ function infoTable(rows: [string, string][]): string {
 }
 
 function tealBox(html: string): string {
-  return `<div style="background:#E1F5EE;border-left:3px solid #1D9E75;
+  return `<div style="background:#E8F5F3;border-left:3px solid #50BEB2;
                       border-radius:8px;padding:14px 16px;margin:20px 0;
-                      font-size:14px;color:#0F6E56;line-height:1.6;">
+                      font-size:14px;color:#2D7B72;line-height:1.6;">
     ${html}
   </div>`;
 }
@@ -326,7 +326,7 @@ export async function sendCompanionEvolution(
         <p style="text-align:center;">
           <strong>${escapeHtml(oldStage)}</strong>
           &nbsp;→&nbsp;
-          <strong style="color:#1D9E75;">${escapeHtml(newStage)}</strong>
+          <strong style="color:#409A8E;">${escapeHtml(newStage)}</strong>
         </p>
         ${tealBox(`
           <strong>+${creditAmount} $ de crédit</strong> ont été ajoutés à ton solde Pratiqo.<br>
@@ -621,7 +621,7 @@ export async function sendTeacherVerificationRequestToAdmin(opts: {
           ${opts.description
             ? `<p><strong>Message :</strong><br>${escapeHtml(opts.description)}</p>`
             : ""}
-          <p><a href="${base}/teacher/verification" style="color:#1D9E75;font-weight:600;">
+          <p><a href="${base}/teacher/verification" style="color:#409A8E;font-weight:600;">
             Voir dans l'admin (traitement manuel)
           </a></p>
         `,
@@ -715,7 +715,7 @@ export async function sendSupportCaseAdminAlert(opts: {
             ["payout_hold", opts.payoutHold ? "true" : "false"],
           ])}
           <p><strong>Description :</strong><br>${escapeHtml(opts.description)}</p>
-          <p><a href="${base}/resolution/${encodeURIComponent(opts.caseId)}" style="color:#1D9E75;font-weight:600;">
+          <p><a href="${base}/resolution/${encodeURIComponent(opts.caseId)}" style="color:#409A8E;font-weight:600;">
             Voir le dossier
           </a></p>
           <p style="font-size:13px;color:#6B6A65;">Si aucun admin dashboard n'est disponible, traiter depuis Supabase.</p>

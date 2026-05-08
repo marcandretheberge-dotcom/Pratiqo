@@ -130,7 +130,7 @@ export default function StudentLearnersPage() {
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 pb-10">
-      <header className="rounded-3xl bg-[#0F6E56] p-6 text-white shadow-[0_18px_60px_rgba(15,110,86,0.20)]">
+      <header className="rounded-3xl bg-teal-700 p-6 text-white shadow-[0_18px_60px_rgba(15,110,86,0.20)]">
         <Link href="/profile" className="mb-5 inline-flex items-center gap-2 text-sm font-semibold text-white/85 hover:text-white">
           <ArrowLeft size={16} />
           {t("studentTabProfile")}
@@ -159,7 +159,7 @@ export default function StudentLearnersPage() {
         <button
           type="button"
           onClick={() => setCreating(true)}
-          className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[#0F6E56] px-5 text-sm font-bold text-white"
+          className="inline-flex min-h-11 items-center gap-2 rounded-full bg-teal-700 px-5 text-sm font-bold text-white"
         >
           <Plus size={17} />
           {t("addLearnerProfile")}
@@ -169,7 +169,7 @@ export default function StudentLearnersPage() {
       <section className="rounded-3xl border border-[#DCEAE3] bg-[#F3FAF6] p-4">
         {loading ? (
           <div className="flex items-center justify-center gap-3 py-12 text-sm font-semibold text-slate-600">
-            <Loader2 className="h-5 w-5 animate-spin text-[#1D9E75]" />
+            <Loader2 className="h-5 w-5 animate-spin text-teal-700" />
             {t("loading")}
           </div>
         ) : rows.length === 0 ? (
@@ -185,7 +185,7 @@ export default function StudentLearnersPage() {
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="font-bold text-slate-900">{row.display_name}</p>
                       {row.is_default ? (
-                        <span className="rounded-full bg-[#E1F5EE] px-2 py-0.5 text-[10px] font-bold text-[#0F6E56]">
+                        <span className="rounded-full bg-teal-50 px-2 py-0.5 text-[10px] font-bold text-teal-700">
                           {t("setDefaultLearnerProfile")}
                         </span>
                       ) : null}
@@ -210,7 +210,7 @@ export default function StudentLearnersPage() {
                       type="button"
                       disabled={saving}
                       onClick={() => void setDefault(row)}
-                      className="inline-flex h-9 items-center gap-1.5 rounded-full border border-slate-200 px-3 text-xs font-bold text-[#0F6E56]"
+                      className="inline-flex h-9 items-center gap-1.5 rounded-full border border-slate-200 px-3 text-xs font-bold text-teal-700"
                     >
                       <Star size={13} />
                       {t("setDefaultLearnerProfile")}

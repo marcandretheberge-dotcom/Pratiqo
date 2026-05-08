@@ -105,14 +105,14 @@ export default function GroupSessionsMarketplacePage() {
             step={5}
             value={priceMax}
             onChange={(e) => setPriceMax(Number(e.target.value))}
-            className="mt-2 w-full accent-[#1D9E75]"
+            className="mt-2 w-full accent-teal-500"
           />
         </label>
       </div>
 
       {loading ? (
         <div className="flex justify-center py-20">
-          <Loader2 className="animate-spin text-[#1D9E75]" size={36} />
+          <Loader2 className="animate-spin text-teal-700" size={36} />
         </div>
       ) : filtered.length === 0 ? (
         <p className="text-center text-sm text-[var(--p-text-muted)] py-16">Aucune séance ne correspond à tes filtres.</p>
@@ -132,7 +132,7 @@ function GroupMarketCard({ session }: { session: RowWithTeacher }) {
   const max = Number(session.max_participants);
   const cur = Number(session.current_participants);
   const ratio = max ? rem / max : 0;
-  const barColor = ratio > 0.5 ? "bg-[#1D9E75]" : ratio < 0.25 ? "bg-amber-500" : "bg-amber-400";
+  const barColor = ratio > 0.5 ? "bg-teal-600" : ratio < 0.25 ? "bg-amber-500" : "bg-amber-400";
   const bookable = isSessionBookable(session);
 
   return (
@@ -168,18 +168,18 @@ function GroupMarketCard({ session }: { session: RowWithTeacher }) {
           <div className={cn("h-full rounded-full transition-all", barColor)} style={{ width: `${max ? (rem / max) * 100 : 0}%` }} />
         </div>
       </div>
-      <p className="text-xl font-bold text-[#1D9E75]">{Number(session.price_per_person).toFixed(0)} $ / pers.</p>
+      <p className="text-xl font-bold text-teal-700">{Number(session.price_per_person).toFixed(0)} $ / pers.</p>
       <div className="mt-auto flex flex-col gap-2">
         <Link
           href={`/group-sessions/${session.id}`}
-          className="w-full text-center py-2.5 rounded-xl text-sm font-bold bg-[#1D9E75] text-white hover:brightness-[0.98]"
+          className="w-full text-center py-2.5 rounded-xl text-sm font-bold bg-teal-600 text-white hover:brightness-[0.98]"
         >
           Détails
         </Link>
         {bookable ? (
           <Link
             href={`/group-sessions/${session.id}`}
-            className="w-full text-center py-2.5 rounded-xl text-sm font-bold border-2 border-[#1D9E75] text-[#0f6e56] hover:bg-[#E1F5EE]"
+            className="w-full text-center py-2.5 rounded-xl text-sm font-bold border-2 border-teal-500 text-teal-700 hover:bg-teal-50"
           >
             Réserver ma place
           </Link>

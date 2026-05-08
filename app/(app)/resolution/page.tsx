@@ -112,7 +112,7 @@ export default function ResolutionCenterPage() {
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 pb-10">
-      <header className="rounded-3xl bg-[#0F6E56] p-6 text-white shadow-[0_18px_60px_rgba(15,110,86,0.20)]">
+      <header className="rounded-3xl bg-teal-700 p-6 text-white shadow-[0_18px_60px_rgba(15,110,86,0.20)]">
         <Link href="/dashboard" className="mb-5 inline-flex items-center gap-2 text-sm font-semibold text-white/85 hover:text-white">
           <ArrowLeft size={16} />
           {t("dashboard")}
@@ -123,14 +123,14 @@ export default function ResolutionCenterPage() {
 
       {loading ? (
         <div className="flex items-center justify-center gap-3 rounded-3xl border border-[#DCEAE3] bg-white p-12 text-sm font-semibold text-slate-600">
-          <Loader2 className="h-5 w-5 animate-spin text-[#0F6E56]" />
+          <Loader2 className="h-5 w-5 animate-spin text-teal-700" />
           {t("loading")}
         </div>
       ) : cases.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-[#DCEAE3] bg-white p-10 text-center">
-          <ClipboardList className="mx-auto h-8 w-8 text-[#0F6E56]" />
+          <ClipboardList className="mx-auto h-8 w-8 text-teal-700" />
           <p className="mt-3 text-sm font-semibold text-slate-700">{t("supportCaseNoCases")}</p>
-          <Link href="/dashboard" className="mt-5 inline-flex h-11 items-center rounded-full bg-[#0F6E56] px-5 text-sm font-bold text-white">
+          <Link href="/dashboard" className="mt-5 inline-flex h-11 items-center rounded-full bg-teal-700 px-5 text-sm font-bold text-white">
             {t("dashboard")}
           </Link>
         </div>
@@ -143,7 +143,7 @@ export default function ResolutionCenterPage() {
               <li key={item.id} className="rounded-3xl border border-[#DCEAE3] bg-white p-5 shadow-sm">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0">
-                    <p className="text-xs font-bold uppercase tracking-widest text-[#0F6E56]">
+                    <p className="text-xs font-bold uppercase tracking-widest text-teal-700">
                       {t(supportCategoryLabelKey(category))}
                     </p>
                     <p className="mt-2 line-clamp-2 text-sm text-slate-700">{item.description}</p>
@@ -157,10 +157,10 @@ export default function ResolutionCenterPage() {
                     ) : null}
                   </div>
                   <div className="flex shrink-0 flex-col gap-2 sm:items-end">
-                    <span className="rounded-full bg-[#F3FAF6] px-3 py-1 text-xs font-bold text-[#0F6E56]">
+                    <span className="rounded-full bg-[#F3FAF6] px-3 py-1 text-xs font-bold text-teal-700">
                       {t(supportStatusLabelKey(item.status))}
                     </span>
-                    <Link href={`/resolution/${item.id}`} className="text-xs font-bold text-[#0F6E56] hover:underline">
+                    <Link href={`/resolution/${item.id}`} className="text-xs font-bold text-teal-700 hover:underline">
                       {t("supportCaseViewDetails")}
                     </Link>
                   </div>

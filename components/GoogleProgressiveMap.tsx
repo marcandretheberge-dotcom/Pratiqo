@@ -78,10 +78,10 @@ export function GoogleProgressiveMap({ mapKey, exactLat, exactLng, locked, neigh
             map,
             center,
             radius: 500,
-            strokeColor: "#1D9E75",
+            strokeColor: "#50BEB2",
             strokeOpacity: 0.85,
             strokeWeight: 2,
-            fillColor: "#1D9E75",
+            fillColor: "#50BEB2",
             fillOpacity: 0.12,
           });
         } else {
@@ -90,7 +90,7 @@ export function GoogleProgressiveMap({ mapKey, exactLat, exactLng, locked, neigh
             position: { lat: exactLat, lng: exactLng },
             icon: {
               path: google.maps.SymbolPath.CIRCLE,
-              fillColor: "#1D9E75",
+              fillColor: "#50BEB2",
               fillOpacity: 1,
               strokeColor: "#0d7a5a",
               strokeWeight: 2,
@@ -144,7 +144,7 @@ export function GoogleProgressiveMap({ mapKey, exactLat, exactLng, locked, neigh
 
         {locked && mapsReady ? (
           <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-xl bg-white/55 px-4 text-center backdrop-blur-[2px]">
-            <Lock className="text-[#1D9E75]" size={28} strokeWidth={2.2} />
+            <Lock className="text-teal-700" size={28} strokeWidth={2.2} />
             <p className="max-w-[280px] text-xs font-semibold leading-snug text-slate-800">{lockedMessage}</p>
           </div>
         ) : null}
@@ -164,7 +164,7 @@ export function GoogleProgressiveMap({ mapKey, exactLat, exactLng, locked, neigh
             href={directionsHref}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex h-10 items-center justify-center rounded-full bg-[#1D9E75] px-5 text-sm font-semibold text-white hover:brightness-[0.98]"
+            className="inline-flex h-10 items-center justify-center rounded-full bg-teal-600 px-5 text-sm font-semibold text-white hover:brightness-[0.98]"
           >
             Obtenir l&apos;itinéraire
           </a>

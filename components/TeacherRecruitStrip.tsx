@@ -65,7 +65,7 @@ export function TeacherRecruitStrip() {
     <div
       role="banner"
       aria-label={t("bannerAreYouTeacher")}
-      className="fixed bottom-0 inset-x-0 z-50 flex items-center justify-between gap-3 bg-[#0F6E56] px-4 sm:px-6 h-11 shadow-lg"
+      className="fixed bottom-0 inset-x-0 z-50 flex items-center justify-between gap-3 bg-teal-700 px-4 sm:px-6 h-11 shadow-lg"
     >
       <span className="text-xs text-white/85 font-medium truncate">{t("bannerAreYouTeacher")}</span>
 

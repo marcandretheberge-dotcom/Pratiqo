@@ -318,7 +318,7 @@ function OnboardingInner() {
   if (loading || !user) {
     return (
       <div className="min-h-[70vh] flex items-center justify-center text-[var(--p-text-muted)]">
-        <Loader2 className="h-9 w-9 animate-spin text-[#1D9E75]" />
+        <Loader2 className="h-9 w-9 animate-spin text-teal-700" />
       </div>
     );
   }
@@ -329,7 +329,7 @@ function OnboardingInner() {
         <p className="text-sm text-[var(--p-text-muted)]">
           Cette page est réservée aux professeurs.
         </p>
-        <Link href="/become-teacher" className="mt-4 text-sm font-semibold text-[#1D9E75] hover:underline">
+        <Link href="/become-teacher" className="mt-4 text-sm font-semibold text-teal-700 hover:underline">
           Devenir professeur →
         </Link>
       </div>
@@ -340,11 +340,11 @@ function OnboardingInner() {
     <div className="min-h-[100dvh] bg-[#FAFCFB]">
       <header className="bg-white border-b border-[var(--p-border-light)]">
         <div className="mx-auto max-w-3xl px-4 sm:px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="text-sm font-semibold text-[#1D9E75] hover:underline">
+          <Link href="/" className="text-sm font-semibold text-teal-700 hover:underline">
             ← Accueil
           </Link>
           <p className="text-sm font-bold text-[#2C2C2A]">Onboarding professeur</p>
-          <Link href="/dashboard" className="text-sm font-semibold text-[#1D9E75] hover:underline">
+          <Link href="/dashboard" className="text-sm font-semibold text-teal-700 hover:underline">
             Tableau de bord
           </Link>
         </div>
@@ -375,11 +375,11 @@ function OnboardingInner() {
               )}
             </div>
             {step !== "done" ? (
-              <span className="text-xs font-bold text-[#1D9E75]">
+              <span className="text-xs font-bold text-teal-700">
                 Étape {step}/4
               </span>
             ) : (
-              <span className="text-xs font-bold text-[#1D9E75] inline-flex items-center gap-1">
+              <span className="text-xs font-bold text-teal-700 inline-flex items-center gap-1">
                 <CheckCircle2 size={16} /> Terminé
               </span>
             )}
@@ -387,7 +387,7 @@ function OnboardingInner() {
 
           <div className="mt-5 h-2 rounded-full bg-slate-100 overflow-hidden border border-slate-200">
             <div
-              className="h-full bg-[#1D9E75] rounded-full transition-all"
+              className="h-full bg-teal-600 rounded-full transition-all"
               style={{ width: step === "done" ? "100%" : step === 1 ? "25%" : step === 2 ? "50%" : step === 3 ? "75%" : "92%" }}
             />
           </div>
@@ -433,7 +433,7 @@ function OnboardingInner() {
                         className={cn(
                           "inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-semibold transition-colors",
                           active
-                            ? "border-[#1D9E75] bg-[rgba(29,158,117,0.12)] text-[#0f6d52]"
+                            ? "border-teal-500 bg-teal-500/15 text-[#0f6d52]"
                             : "border-slate-200 bg-white text-slate-600 hover:border-slate-300",
                           !active && atMax ? "opacity-45 cursor-not-allowed" : "",
                         )}
@@ -505,12 +505,12 @@ function OnboardingInner() {
                   }}
                   onClick={() => !photoUploading && fileInputRef.current?.click()}
                   style={{
-                    border: `2px dashed ${isDragging ? "#1D9E75" : "#D3D1C7"}`,
+                    border: `2px dashed ${isDragging ? "var(--palette-teal-500)" : "#D3D1C7"}`,
                     borderRadius: "12px",
                     padding: "24px",
                     textAlign: "center",
                     cursor: photoUploading ? "wait" : "pointer",
-                    background: isDragging ? "#E1F5EE" : "#F4F4F3",
+                    background: isDragging ? "#E8F5F3" : "#F4F4F3",
                     transition: "all 0.2s",
                     opacity: photoUploading ? 0.75 : 1,
                     position: "relative",
@@ -518,8 +518,8 @@ function OnboardingInner() {
                 >
                   {photoUploading ? (
                     <div className="flex flex-col items-center gap-2 py-1">
-                      <Loader2 className="animate-spin text-[#1D9E75]" size={28} />
-                      <p style={{ fontSize: "12px", color: "#085041", margin: 0 }}>Envoi en cours…</p>
+                      <Loader2 className="animate-spin text-teal-700" size={28} />
+                      <p style={{ fontSize: "12px", color: "var(--palette-teal-800)", margin: 0 }}>Envoi en cours…</p>
                     </div>
                   ) : photoUrl ? (
                     <div style={{ display: "flex", alignItems: "center", gap: "12px", justifyContent: "center" }}>
@@ -574,8 +574,8 @@ function OnboardingInner() {
                       onClick={() => void generateDescription()}
                       disabled={aiLoading || !canGenerateAiBio}
                       style={{
-                        background: aiLoading ? "#9FE1CB" : "#E1F5EE",
-                        color: "#085041",
+                        background: aiLoading ? "var(--palette-teal-200)" : "#E8F5F3",
+                        color: "var(--palette-teal-800)",
                         border: "none",
                         borderRadius: "20px",
                         padding: "6px 14px",
@@ -626,7 +626,7 @@ function OnboardingInner() {
                       className={cn(
                         "px-4 py-2 rounded-full border text-xs font-semibold transition-colors",
                         teachingMode === m.id
-                          ? "border-[#1D9E75] bg-[rgba(29,158,117,0.12)] text-[#0f6d52]"
+                          ? "border-teal-500 bg-teal-500/15 text-[#0f6d52]"
                           : "border-slate-200 bg-white text-slate-600 hover:border-slate-300",
                       )}
                     >
@@ -648,7 +648,7 @@ function OnboardingInner() {
                         className={cn(
                           "px-4 py-2 rounded-full border text-xs font-semibold transition-colors",
                           active
-                            ? "border-[#1D9E75] bg-[rgba(29,158,117,0.12)] text-[#0f6d52]"
+                            ? "border-teal-500 bg-teal-500/15 text-[#0f6d52]"
                             : "border-slate-200 bg-white text-slate-600 hover:border-slate-300",
                         )}
                       >
@@ -688,7 +688,7 @@ function OnboardingInner() {
                               className={cn(
                                 "h-11 rounded-xl border transition-colors",
                                 on
-                                  ? "border-[#1D9E75] bg-[rgba(29,158,117,0.12)]"
+                                  ? "border-teal-500 bg-teal-500/15"
                                   : "border-slate-200 bg-white hover:border-slate-300",
                               )}
                               aria-pressed={on}
@@ -717,7 +717,7 @@ function OnboardingInner() {
                     type="checkbox"
                     checked={homeEnabled}
                     onChange={(e) => setHomeEnabled(e.target.checked)}
-                    className="h-5 w-5 rounded border-slate-300 text-[#1D9E75] focus:ring-[#1D9E75]"
+                    className="h-5 w-5 rounded border-slate-300 text-teal-700 focus:ring-teal-500"
                   />
                 </label>
                 {homeEnabled ? (
@@ -732,7 +732,7 @@ function OnboardingInner() {
                         max={50}
                         value={homeRadius}
                         onChange={(e) => setHomeRadius(Number(e.target.value))}
-                        className="w-full accent-[#1D9E75]"
+                        className="w-full accent-teal-500"
                       />
                     </div>
                     <div>
@@ -761,13 +761,13 @@ function OnboardingInner() {
                       Configure tes virements pour recevoir tes paiements.
                     </p>
                   </div>
-                  <ShieldCheck size={20} className="text-[#1D9E75]" />
+                  <ShieldCheck size={20} className="text-teal-700" />
                 </div>
                 <button
                   type="button"
                   onClick={() => void connectStripe()}
                   disabled={stripeBusy}
-                  className="mt-4 inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-[#1D9E75]/30 bg-[rgba(29,158,117,0.10)] px-5 text-sm font-bold text-[#0f6d52] hover:bg-[rgba(29,158,117,0.14)] disabled:opacity-60"
+                  className="mt-4 inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-teal-500/30 bg-teal-500/10 px-5 text-sm font-bold text-teal-700 hover:bg-teal-500/15 disabled:opacity-60"
                 >
                   <Upload size={18} />
                   {stripeBusy ? "Ouverture…" : "Configurer Stripe"}
@@ -808,7 +808,7 @@ function OnboardingInner() {
                       type="checkbox"
                       checked={state}
                       onChange={(e) => setter(e.target.checked)}
-                      className="mt-0.5 h-5 w-5 shrink-0 rounded border-slate-300 text-[#1D9E75] focus:ring-[#1D9E75] accent-[#1D9E75]"
+                      className="mt-0.5 h-5 w-5 shrink-0 rounded border-slate-300 text-teal-700 focus:ring-teal-500 accent-teal-500"
                     />
                     <span
                       className={cn(
@@ -824,11 +824,11 @@ function OnboardingInner() {
 
               <p className="text-xs text-[var(--p-text-muted)] leading-relaxed border-t border-slate-200 pt-4">
                 {t("loginConsentNote")}{" "}
-                <a href="/legal/cgu" target="_blank" className="text-[#1D9E75] underline font-medium">
+                <a href="/legal/cgu" target="_blank" className="text-teal-700 underline font-medium">
                   {t("footerTerms")}
                 </a>{" "}
                 ou contacte{" "}
-                <a href="mailto:support@pratiqo.ca" className="text-[#1D9E75] underline font-medium">
+                <a href="mailto:support@pratiqo.ca" className="text-teal-700 underline font-medium">
                   support@pratiqo.ca
                 </a>
               </p>
@@ -836,7 +836,7 @@ function OnboardingInner() {
           ) : null}
 
           {step === "done" ? (
-            <div className="mt-8 rounded-2xl border border-[rgba(29,158,117,0.22)] bg-[rgba(29,158,117,0.08)] p-6">
+            <div className="mt-8 rounded-2xl border border-teal-500/25 bg-teal-500/10 p-6">
               <p className="text-lg font-bold text-[#0f6d52]">Ton profil est prêt!</p>
               <p className="mt-2 text-sm text-[var(--p-text-muted)]">
                 Tu peux maintenant apparaître dans la recherche et accepter des réservations.
@@ -844,13 +844,13 @@ function OnboardingInner() {
               <div className="mt-5 flex flex-col sm:flex-row gap-3">
                 <Link
                   href={`/teacher/profile/${user.id}`}
-                  className="inline-flex h-11 items-center justify-center rounded-2xl bg-[#1D9E75] px-5 text-sm font-bold text-white hover:brightness-[0.98]"
+                  className="inline-flex h-11 items-center justify-center rounded-2xl bg-teal-600 px-5 text-sm font-bold text-white hover:brightness-[0.98]"
                 >
                   Voir mon profil
                 </Link>
                 <Link
                   href="/dashboard"
-                  className="inline-flex h-11 items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 text-sm font-semibold text-[var(--p-text)] hover:border-[#1D9E75]/40 hover:text-[#1D9E75]"
+                  className="inline-flex h-11 items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 text-sm font-semibold text-[var(--p-text)] hover:border-teal-500/40 hover:text-teal-700"
                 >
                   Aller au tableau de bord
                 </Link>
@@ -878,7 +878,7 @@ function OnboardingInner() {
                   type="button"
                   onClick={() => void saveAll()}
                   disabled={saving || !allTaxAcknowledged}
-                  className="inline-flex h-11 items-center gap-2 rounded-2xl bg-[#1D9E75] px-5 text-sm font-bold text-white hover:brightness-[0.98] disabled:opacity-50"
+                  className="inline-flex h-11 items-center gap-2 rounded-2xl bg-teal-600 px-5 text-sm font-bold text-white hover:brightness-[0.98] disabled:opacity-50"
                 >
                   {saving ? <Loader2 className="h-5 w-5 animate-spin" /> : <CheckCircle2 size={18} />}
                   Terminer
@@ -900,7 +900,7 @@ function OnboardingInner() {
                     }
                     setStep((prev) => (prev === 1 ? 2 : prev === 2 ? 3 : 4));
                   }}
-                  className="inline-flex h-11 items-center gap-2 rounded-2xl bg-[#1D9E75] px-5 text-sm font-bold text-white hover:brightness-[0.98]"
+                  className="inline-flex h-11 items-center gap-2 rounded-2xl bg-teal-600 px-5 text-sm font-bold text-white hover:brightness-[0.98]"
                 >
                   Suivant <ChevronRight size={18} />
                 </button>

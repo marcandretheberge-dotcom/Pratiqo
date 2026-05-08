@@ -134,7 +134,7 @@ export default function ResolutionCaseDetailPage({ params }: { params: { id: str
   if (loading) {
     return (
       <div className="flex min-h-[360px] items-center justify-center gap-3 text-sm font-semibold text-slate-600">
-        <Loader2 className="h-5 w-5 animate-spin text-[#0F6E56]" />
+        <Loader2 className="h-5 w-5 animate-spin text-teal-700" />
         {t("loading")}
       </div>
     );
@@ -144,7 +144,7 @@ export default function ResolutionCaseDetailPage({ params }: { params: { id: str
     return (
       <div className="mx-auto max-w-3xl rounded-3xl border border-[#DCEAE3] bg-white p-8 text-center">
         <p className="text-sm font-semibold text-slate-700">{t("supportCaseNoCases")}</p>
-        <Link href="/resolution" className="mt-5 inline-flex h-11 items-center rounded-full bg-[#0F6E56] px-5 text-sm font-bold text-white">
+        <Link href="/resolution" className="mt-5 inline-flex h-11 items-center rounded-full bg-teal-700 px-5 text-sm font-bold text-white">
           {t("resolutionCenterTitle")}
         </Link>
       </div>
@@ -158,7 +158,7 @@ export default function ResolutionCaseDetailPage({ params }: { params: { id: str
 
   return (
     <div className="mx-auto max-w-3xl space-y-5 pb-10">
-      <Link href="/resolution" className="inline-flex items-center gap-2 text-sm font-bold text-[#0F6E56] hover:underline">
+      <Link href="/resolution" className="inline-flex items-center gap-2 text-sm font-bold text-teal-700 hover:underline">
         <ArrowLeft size={16} />
         {t("supportCaseBackToResolution")}
       </Link>
@@ -166,13 +166,13 @@ export default function ResolutionCaseDetailPage({ params }: { params: { id: str
       <article className="rounded-3xl border border-[#DCEAE3] bg-white p-6 shadow-sm">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <p className="text-xs font-bold uppercase tracking-widest text-[#0F6E56]">{t("resolutionCenterTitle")}</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-teal-700">{t("resolutionCenterTitle")}</p>
             <h1 className="mt-2 text-2xl font-bold text-slate-900">{t(supportCategoryLabelKey(category))}</h1>
             <p className="mt-2 text-sm text-slate-500">
               {t("supportCaseOpenedOn")} {new Date(supportCase.created_at).toLocaleDateString()}
             </p>
           </div>
-          <span className="w-fit rounded-full bg-[#F3FAF6] px-3 py-1 text-xs font-bold text-[#0F6E56]">
+          <span className="w-fit rounded-full bg-[#F3FAF6] px-3 py-1 text-xs font-bold text-teal-700">
             {t(supportStatusLabelKey(supportCase.status))}
           </span>
         </div>
@@ -212,7 +212,7 @@ export default function ResolutionCaseDetailPage({ params }: { params: { id: str
             <ul className="mt-2 space-y-2">
               {supportCase.evidence_urls.map((url) => (
                 <li key={url}>
-                  <a href={url} target="_blank" rel="noreferrer" className="text-sm font-semibold text-[#0F6E56] hover:underline">
+                  <a href={url} target="_blank" rel="noreferrer" className="text-sm font-semibold text-teal-700 hover:underline">
                     {url}
                   </a>
                 </li>

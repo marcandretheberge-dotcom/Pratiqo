@@ -39,7 +39,7 @@ export function LegalLayout({
 
       <header className="mb-10">
         <p className="ds-label text-[var(--p-text-subtle)] mb-2">Pratiqo</p>
-        <h1 className="text-[28px] sm:text-[34px] font-semibold text-[var(--p-text)] leading-tight border-l-4 border-[#1D9E75] pl-4">
+        <h1 className="text-[28px] sm:text-[34px] font-semibold text-[var(--p-text)] leading-tight border-l-4 border-teal-500 pl-4">
           {title}
         </h1>
         <p className="mt-3 text-sm text-[var(--p-text-muted)]">Dernière mise à jour : {lastUpdated}</p>
@@ -58,7 +58,7 @@ export function LegalLayout({
               <li key={item.id}>
                 <a
                   href={`#${item.id}`}
-                  className="text-[#1D9E75] hover:underline font-medium"
+                  className="text-teal-700 hover:underline font-medium"
                 >
                   {i + 1}. {item.label}
                 </a>
@@ -78,8 +78,8 @@ export function LegalLayout({
               key={l.href}
               href={l.href}
               className={cn(
-                "hover:text-[#1D9E75] hover:underline",
-                l.href === currentPath ? "text-[#1D9E75] font-medium" : "text-[var(--p-text-muted)]",
+                "hover:text-teal-700 hover:underline",
+                l.href === currentPath ? "text-teal-700 font-medium" : "text-[var(--p-text-muted)]",
               )}
             >
               {l.label}
@@ -94,7 +94,7 @@ export function LegalLayout({
 export function LegalSection({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
   return (
     <section id={id} className="scroll-mt-24">
-      <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-[#1D9E75] pl-4 mb-4">
+      <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-teal-500 pl-4 mb-4">
         {title}
       </h2>
       <div className="pl-1 space-y-3 text-[var(--p-text-muted)] [&_strong]:text-[var(--p-text)]">{children}</div>

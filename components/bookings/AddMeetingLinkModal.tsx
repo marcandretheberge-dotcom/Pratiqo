@@ -96,9 +96,9 @@ export function AddMeetingLinkModal({
       <div className="relative w-full max-w-lg overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl">
         <div className="flex items-start justify-between gap-3 border-b border-slate-100 p-5 sm:p-6">
           <div className="min-w-0">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-[#0F6E56]">{t("addVideoLink")}</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-teal-700">{t("addVideoLink")}</p>
             <h3 className="mt-1 flex items-center gap-2 text-lg font-extrabold text-slate-900">
-              <Video size={18} className="text-[#0F6E56]" aria-hidden />
+              <Video size={18} className="text-teal-700" aria-hidden />
               {t("videoLinkTitle")}
             </h3>
             <p className="mt-2 text-sm text-slate-600">{t("videoLinkDescription")}</p>
@@ -129,7 +129,7 @@ export function AddMeetingLinkModal({
               placeholder={t("videoLinkPlaceholder")}
               className={cn(
                 "h-12 w-full rounded-2xl border px-4 text-sm outline-none",
-                error ? "border-rose-300 focus:border-rose-400" : "border-slate-200 focus:border-[#1D9E75]",
+                error ? "border-rose-300 focus:border-rose-400" : "border-slate-200 focus:border-teal-500",
               )}
               inputMode="url"
               autoComplete="off"
@@ -155,7 +155,7 @@ export function AddMeetingLinkModal({
               type="button"
               onClick={() => void submit()}
               disabled={saving}
-              className="h-11 rounded-2xl bg-[#0F6E56] px-5 text-sm font-semibold text-white shadow-sm hover:bg-[#0c5a47] disabled:opacity-60"
+              className="h-11 rounded-2xl bg-teal-700 px-5 text-sm font-semibold text-white shadow-sm hover:bg-teal-800 disabled:opacity-60"
             >
               {saving ? (
                 <span className="inline-flex items-center gap-2">

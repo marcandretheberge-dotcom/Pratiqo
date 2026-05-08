@@ -27,7 +27,7 @@ export function TeacherScheduleChangeHelperPanel({
         "lg:sticky lg:top-24 lg:self-start",
       )}
     >
-      <div className="mb-1 flex items-center gap-2 text-[#0F6E56]">
+      <div className="mb-1 flex items-center gap-2 text-teal-700">
         <CalendarHeart size={18} className="shrink-0 opacity-90" aria-hidden />
         <h3 className="text-sm font-bold leading-snug text-[#2C2C2A]">{t("needToChangeClassTitle")}</h3>
       </div>
@@ -38,7 +38,7 @@ export function TeacherScheduleChangeHelperPanel({
           type="button"
           onClick={onOpenRescheduleModal}
           disabled={cancelBusy}
-          className="inline-flex h-10 w-full items-center justify-center rounded-xl bg-[#0F6E56] text-sm font-semibold text-white shadow-sm transition hover:bg-[#0c5a47] disabled:opacity-50"
+          className="inline-flex h-10 w-full items-center justify-center rounded-xl bg-teal-700 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-800 disabled:opacity-50"
         >
           {t("proposeNewTime")}
         </button>
@@ -46,13 +46,13 @@ export function TeacherScheduleChangeHelperPanel({
           type="button"
           onClick={() => router.push(messagesHref)}
           disabled={cancelBusy}
-          className="inline-flex h-10 w-full items-center justify-center rounded-xl border border-[#0F6E56]/30 bg-white text-sm font-semibold text-[#0F6E56] transition hover:bg-[#0F6E56]/[0.05] disabled:opacity-50"
+          className="inline-flex h-10 w-full items-center justify-center rounded-xl border border-teal-700/30 bg-white text-sm font-semibold text-teal-700 transition hover:bg-teal-700/[0.05] disabled:opacity-50"
         >
           {t("messageStudent")}
         </button>
         <Link
           href="/legal/annulation"
-          className="text-center text-xs font-medium text-[#0F6E56]/80 underline-offset-2 hover:underline"
+          className="text-center text-xs font-medium text-teal-700/80 underline-offset-2 hover:underline"
         >
           {t("viewCancellationPolicy")}
         </Link>

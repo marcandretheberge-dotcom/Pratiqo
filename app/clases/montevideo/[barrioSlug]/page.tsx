@@ -237,16 +237,16 @@ export default async function BarrioPage({
 
         {/* ── HEADER ────────────────────────────────────────────────────── */}
         <header className="sticky top-0 z-50 h-14 flex items-center justify-between bg-white border-b border-[#D3D1C7] px-4 sm:px-6">
-          <Link href="/" className="text-lg font-black tracking-tight text-[#0F6E56]">
+          <Link href="/" className="text-lg font-black tracking-tight text-teal-700">
             Pratiqo
           </Link>
           <div className="flex items-center gap-3">
-            <Link href="/login" className="text-sm font-medium text-[#0F6E56] hover:underline">
+            <Link href="/login" className="text-sm font-medium text-teal-700 hover:underline">
               Ingresar
             </Link>
             <Link
               href="/login"
-              className="rounded-xl bg-[#0F6E56] px-4 py-2 text-sm font-bold text-white hover:brightness-105"
+              className="rounded-xl bg-teal-700 px-4 py-2 text-sm font-bold text-white hover:brightness-105"
             >
               Crear cuenta
             </Link>
@@ -260,15 +260,15 @@ export default async function BarrioPage({
         >
           <ol className="mx-auto max-w-5xl flex items-center gap-1.5 text-xs text-[#6B6760]">
             <li>
-              <Link href="/" className="hover:text-[#0F6E56] hover:underline">Pratiqo</Link>
+              <Link href="/" className="hover:text-teal-700 hover:underline">Pratiqo</Link>
             </li>
             <li aria-hidden="true" className="text-[#C5C2B8]">/</li>
             <li>
-              <Link href="/clases" className="hover:text-[#0F6E56] hover:underline">Uruguay</Link>
+              <Link href="/clases" className="hover:text-teal-700 hover:underline">Uruguay</Link>
             </li>
             <li aria-hidden="true" className="text-[#C5C2B8]">/</li>
             <li>
-              <Link href="/clases/montevideo" className="hover:text-[#0F6E56] hover:underline">Montevideo</Link>
+              <Link href="/clases/montevideo" className="hover:text-teal-700 hover:underline">Montevideo</Link>
             </li>
             <li aria-hidden="true" className="text-[#C5C2B8]">/</li>
             <li aria-current="page" className="font-semibold text-[#2C2C2A]">{barrio.name}</li>
@@ -279,8 +279,8 @@ export default async function BarrioPage({
         <section className="bg-[#F1EFE8] px-4 sm:px-6 py-10">
           <div className="mx-auto max-w-5xl">
             <div className="flex items-center gap-2 mb-2">
-              <MapPin size={16} className="text-[#1D9E75]" />
-              <span className="text-sm font-medium text-[#1D9E75]">
+              <MapPin size={16} className="text-teal-700" />
+              <span className="text-sm font-medium text-teal-700">
                 {barrio.name} · Montevideo, Uruguay
               </span>
             </div>
@@ -293,7 +293,7 @@ export default async function BarrioPage({
                 ? `No encontramos profesores exactamente en ${barrio.name}. Aquí los más cercanos disponibles en Montevideo.`
                 : `Encontrá tu profesor particular de música, idiomas o materias académicas en ${barrio.name}.`}
             </p>
-            <p className="mt-2 text-sm font-medium text-[#0F6E56]">{countLabel}</p>
+            <p className="mt-2 text-sm font-medium text-teal-700">{countLabel}</p>
           </div>
         </section>
 
@@ -325,7 +325,7 @@ export default async function BarrioPage({
                 </p>
                 <Link
                   href="/student/search"
-                  className="mt-4 inline-block rounded-xl bg-[#0F6E56] px-5 py-2.5 text-sm font-bold text-white hover:brightness-105"
+                  className="mt-4 inline-block rounded-xl bg-teal-700 px-5 py-2.5 text-sm font-bold text-white hover:brightness-105"
                 >
                   Ver todos los profesores
                 </Link>
@@ -336,7 +336,7 @@ export default async function BarrioPage({
                   <li key={teacher.id}>
                     <Link
                       href={`/teacher/profile/${encodeURIComponent(teacher.id)}`}
-                      className="group flex flex-col gap-3 rounded-2xl border border-[#E8E6DF] bg-white p-4 shadow-sm hover:shadow-md hover:border-[#1D9E75] transition-all"
+                      className="group flex flex-col gap-3 rounded-2xl border border-[#E8E6DF] bg-white p-4 shadow-sm hover:shadow-md hover:border-teal-500 transition-all"
                     >
                       {/* Avatar + name */}
                       <div className="flex items-center gap-3">
@@ -350,7 +350,7 @@ export default async function BarrioPage({
                             className="h-12 w-12 rounded-full object-cover flex-shrink-0"
                           />
                         ) : (
-                          <div className="h-12 w-12 rounded-full bg-[#D6F5EC] flex items-center justify-center text-sm font-bold text-[#0F6E56] flex-shrink-0">
+                          <div className="h-12 w-12 rounded-full bg-[#D6F5EC] flex items-center justify-center text-sm font-bold text-teal-700 flex-shrink-0">
                             {initials(teacher.name)}
                           </div>
                         )}
@@ -386,7 +386,7 @@ export default async function BarrioPage({
                       {/* Price */}
                       <div className="mt-auto pt-3 border-t border-[#F0EEE8] flex items-center justify-between">
                         <span className="text-xs text-[#6B6760]">Tarifa / hora</span>
-                        <span className="text-sm font-bold text-[#1D9E75]">
+                        <span className="text-sm font-bold text-teal-700">
                           US$ {Math.round(Number(teacher.pricePerLesson))}
                           <span className="text-xs font-normal text-[#6B6760] ml-1">/h</span>
                         </span>

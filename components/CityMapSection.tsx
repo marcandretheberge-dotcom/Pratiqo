@@ -12,7 +12,7 @@ const SearchMapView = dynamic(
     ssr: false,
     loading: () => (
       <div className="flex h-full items-center justify-center rounded-2xl bg-[#F1EFE8]">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#0F6E56] border-t-transparent" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-teal-700 border-t-transparent" />
       </div>
     ),
   },

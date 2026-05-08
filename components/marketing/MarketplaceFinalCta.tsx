@@ -15,13 +15,13 @@ export function MarketplaceFinalCta({ className }: { className?: string }) {
         <div className="mt-8 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
           <Link
             href="/login?next=/student/search"
-            className="inline-flex h-12 min-h-[48px] items-center justify-center rounded-2xl bg-[#0F6E56] px-8 text-sm font-bold text-white shadow-sm transition-all hover:bg-[#0c5c48] hover:shadow-md"
+            className="inline-flex h-12 min-h-[48px] items-center justify-center rounded-2xl bg-teal-700 px-8 text-sm font-bold text-white shadow-sm transition-all hover:bg-[#0c5c48] hover:shadow-md"
           >
             {t("marketplaceFindTeacherCta")}
           </Link>
           <Link
             href="/become-teacher"
-            className="inline-flex h-12 min-h-[48px] items-center justify-center rounded-2xl border-2 border-[#2C2C2A]/15 bg-white px-8 text-sm font-bold text-[#2C2C2A] transition-colors hover:border-[#0F6E56]/30 hover:bg-[#F9F8F5]"
+            className="inline-flex h-12 min-h-[48px] items-center justify-center rounded-2xl border-2 border-[#2C2C2A]/15 bg-white px-8 text-sm font-bold text-[#2C2C2A] transition-colors hover:border-teal-700/30 hover:bg-[#F9F8F5]"
           >
             {t("homeCtaTeacher")}
           </Link>

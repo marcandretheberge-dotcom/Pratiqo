@@ -387,7 +387,7 @@ export default function TeacherOnboardingPage() {
   return (
     <div className="mx-auto w-full max-w-4xl px-4 sm:px-6 pb-12">
       <div className="pt-8 sm:pt-10">
-        <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#0F6E56]/80">{progressLabel}</p>
+        <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-teal-700/80">{progressLabel}</p>
         <h1 className="mt-2 text-2xl sm:text-3xl font-bold text-[var(--p-text)]">{t("teacherOnboardingTitle")}</h1>
         <p className="mt-2 text-sm text-[var(--p-text-muted)] max-w-2xl">{t("teacherOnboardingSubtitle")}</p>
       </div>
@@ -395,7 +395,7 @@ export default function TeacherOnboardingPage() {
       <div className="mt-6 rounded-3xl bg-white border border-[rgba(0,0,0,0.06)] shadow-[0_12px_40px_rgba(0,0,0,0.06)] overflow-hidden">
         <div className="px-6 sm:px-8 py-4 border-b border-[rgba(0,0,0,0.06)] bg-[#F3FAF6]">
           <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2 text-sm font-semibold text-[#0F6E56]">
+            <div className="flex items-center gap-2 text-sm font-semibold text-teal-700">
               <ShieldCheck size={18} />
               <span>
                 {t(
@@ -414,7 +414,7 @@ export default function TeacherOnboardingPage() {
                 {t("teacherOnboardingMissingFields")} {missingPreview.length}
               </span>
             ) : (
-              <span className="text-xs text-[#0F6E56] font-semibold inline-flex items-center gap-1">
+              <span className="text-xs text-teal-700 font-semibold inline-flex items-center gap-1">
                 <Check size={14} /> {t("teacherOnboardingComplete")}
               </span>
             )}
@@ -495,7 +495,7 @@ export default function TeacherOnboardingPage() {
                           className={cn(
                             "h-10 px-4 rounded-full border text-sm font-semibold transition-colors",
                             on
-                              ? "border-[#1D9E75] bg-[rgba(29,158,117,0.12)] text-[#0F6E56]"
+                              ? "border-teal-500 bg-teal-500/15 text-teal-700"
                               : "border-[var(--p-border-light)] bg-white text-[var(--p-text-muted)] hover:text-[var(--p-text)]",
                           )}
                         >
@@ -546,7 +546,7 @@ export default function TeacherOnboardingPage() {
                   </select>
                 </label>
 
-                <div className="rounded-2xl border border-[rgba(29,158,117,0.25)] bg-[rgba(29,158,117,0.06)] px-4 py-3 text-sm text-[#0F6E56] flex gap-2">
+                <div className="rounded-2xl border border-teal-500/25 bg-teal-500/10 px-4 py-3 text-sm text-teal-700 flex gap-2">
                   <MapPin className="mt-0.5" size={16} />
                   <p>{t("teacherOnboardingPrivacyNote")}</p>
                 </div>
@@ -714,7 +714,7 @@ export default function TeacherOnboardingPage() {
                               onClick={() => toggleAvail(d, p.id)}
                               className={cn(
                                 "h-11 rounded-xl border transition-colors",
-                                on ? "border-[#1D9E75] bg-[rgba(29,158,117,0.12)]" : "border-[var(--p-border-light)] bg-white hover:bg-[#F3FAF6]",
+                                on ? "border-teal-500 bg-teal-500/15" : "border-[var(--p-border-light)] bg-white hover:bg-[#F3FAF6]",
                               )}
                               aria-pressed={on}
                             />
@@ -764,9 +764,9 @@ export default function TeacherOnboardingPage() {
                         type="checkbox"
                         checked={item.checked}
                         onChange={(e) => item.onChange(e.target.checked)}
-                        className="mt-0.5 h-5 w-5 shrink-0 rounded border-slate-300 accent-[#1D9E75]"
+                        className="mt-0.5 h-5 w-5 shrink-0 rounded border-slate-300 accent-teal-500"
                       />
-                      <span className={cn("text-sm leading-relaxed", item.checked ? "text-[#0F6E56] font-medium" : "text-[var(--p-text)]")}>
+                      <span className={cn("text-sm leading-relaxed", item.checked ? "text-teal-700 font-medium" : "text-[var(--p-text)]")}>
                         {item.label}
                       </span>
                     </label>
@@ -793,7 +793,7 @@ export default function TeacherOnboardingPage() {
               type="button"
               onClick={goNext}
               disabled={!canGoNext || saving}
-              className="h-11 px-5 rounded-full bg-[#1D9E75] hover:bg-[#0F6E56] text-white text-sm font-semibold disabled:opacity-40 inline-flex items-center gap-2 shadow-sm"
+              className="h-11 px-5 rounded-full bg-teal-600 hover:bg-teal-700 text-white text-sm font-semibold disabled:opacity-40 inline-flex items-center gap-2 shadow-sm"
             >
               {t("teacherOnboardingNext")}
               <ChevronRight size={18} />
@@ -803,7 +803,7 @@ export default function TeacherOnboardingPage() {
               type="button"
               onClick={() => void save()}
               disabled={!canGoNext || saving}
-              className="h-11 px-5 rounded-full bg-[#1D9E75] hover:bg-[#0F6E56] text-white text-sm font-semibold disabled:opacity-40 inline-flex items-center gap-2 shadow-sm"
+              className="h-11 px-5 rounded-full bg-teal-600 hover:bg-teal-700 text-white text-sm font-semibold disabled:opacity-40 inline-flex items-center gap-2 shadow-sm"
             >
               {saving ? <Loader2 size={18} className="animate-spin" /> : null}
               {t("teacherOnboardingSave")}

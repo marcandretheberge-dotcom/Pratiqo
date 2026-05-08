@@ -52,7 +52,7 @@ export type LandingSearchHeroProps = {
 function intentButton(active: boolean) {
   return cn(
     "inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-xl px-6 text-sm font-semibold transition-colors sm:flex-initial sm:px-7",
-    active ? "bg-[#0F6E56] text-white shadow-sm" : "bg-transparent text-[#2C2C2A] hover:bg-white/70",
+    active ? "bg-teal-700 text-white shadow-sm" : "bg-transparent text-[#2C2C2A] hover:bg-white/70",
   );
 }
 
@@ -60,9 +60,9 @@ function categoryChip(active: boolean, isAll: boolean) {
   return cn(
     "inline-flex h-12 items-center gap-2 rounded-full border px-6 text-sm font-semibold shadow-sm transition-colors",
     isAll && active
-      ? "border-[#0F6E56] bg-[#0F6E56] text-white"
+      ? "border-teal-700 bg-teal-700 text-white"
       : active
-        ? "border-[rgba(29,158,117,0.35)] bg-[rgba(29,158,117,0.12)] text-[#0F6E56]"
+        ? "border-teal-500/35 bg-teal-500/15 text-teal-700"
         : "border-[#DCEAE3] bg-white text-[#2C2C2A] hover:bg-[#FAFCFB]",
   );
 }
@@ -126,7 +126,7 @@ export function LandingSearchHero({
           ) : null}
 
           <div className={cn("text-center", showIntentToggle ? "mt-10" : "mt-2 sm:mt-4")}>
-            <p className="text-sm font-semibold uppercase tracking-[0.20em] text-[#0F6E56]">{t("landingEyebrowLocal")}</p>
+            <p className="text-sm font-semibold uppercase tracking-[0.20em] text-teal-700">{t("landingEyebrowLocal")}</p>
 
             {mode === "student" ? (
               <>
@@ -146,7 +146,7 @@ export function LandingSearchHero({
                 <div className="mt-8 flex justify-center">
                   <Link
                     href="/devenir-enseignant"
-                    className="inline-flex h-12 items-center justify-center rounded-2xl bg-[#0F6E56] px-6 text-sm font-semibold text-white shadow-[0_14px_40px_rgba(15,110,86,0.18)] hover:bg-[#0B5F4A]"
+                    className="inline-flex h-12 items-center justify-center rounded-2xl bg-teal-700 px-6 text-sm font-semibold text-white shadow-[0_14px_40px_rgba(15,110,86,0.18)] hover:bg-[#0B5F4A]"
                   >
                     {t("becomeTeacher")}
                   </Link>
@@ -172,7 +172,7 @@ export function LandingSearchHero({
                       onSelectCity={(city) => onSelectCity(city)}
                       inputPlaceholderKey="landingSearchDisciplinePlaceholder"
                       className="w-full"
-                      shellClassName="h-16 min-h-[56px] border-slate-200 py-0 shadow-none [&_svg]:h-5 [&_svg]:w-5 [&_svg]:text-[#0F6E56]"
+                      shellClassName="h-16 min-h-[56px] border-slate-200 py-0 shadow-none [&_svg]:h-5 [&_svg]:w-5 [&_svg]:text-teal-700"
                       inputClassName="text-lg placeholder:text-slate-400"
                     />
                   </div>
@@ -186,7 +186,7 @@ export function LandingSearchHero({
                       onSelectCity={onSelectCity}
                       placeholderKey="landingSearchLocationPlaceholder"
                       className="w-full"
-                      shellClassName="h-16 min-h-[56px] border-slate-200 py-0 shadow-none [&_svg]:text-[#0F6E56]"
+                      shellClassName="h-16 min-h-[56px] border-slate-200 py-0 shadow-none [&_svg]:text-teal-700"
                       inputClassName="text-lg placeholder:text-slate-400"
                     />
                   </div>
@@ -196,7 +196,7 @@ export function LandingSearchHero({
                     <select
                       value={formatValue}
                       onChange={(e) => onFormatChange(e.target.value as LandingFormatFilter)}
-                      className="h-16 w-full rounded-2xl border border-slate-200 bg-white px-4 text-lg font-semibold text-[#2C2C2A] shadow-sm outline-none focus:ring-2 focus:ring-[#1D9E75]/35"
+                      className="h-16 w-full rounded-2xl border border-slate-200 bg-white px-4 text-lg font-semibold text-[#2C2C2A] shadow-sm outline-none focus:ring-2 focus:ring-teal-500/35"
                     >
                       <option value="all">{t("landingFormatSelectOptionAll")}</option>
                       <option value="online">{t("teachingFormatOnline")}</option>
@@ -210,7 +210,7 @@ export function LandingSearchHero({
                     <button
                       type="button"
                       onClick={onSubmit}
-                      className="inline-flex h-16 w-full items-center justify-center gap-2 rounded-[24px] bg-[#0F6E56] px-8 text-lg font-semibold text-white shadow-[0_10px_24px_rgba(15,110,86,0.22)] transition-colors hover:bg-[#0B5F4A] lg:w-auto"
+                      className="inline-flex h-16 w-full items-center justify-center gap-2 rounded-[24px] bg-teal-700 px-8 text-lg font-semibold text-white shadow-[0_10px_24px_rgba(15,110,86,0.22)] transition-colors hover:bg-[#0B5F4A] lg:w-auto"
                     >
                       <Search className="h-5 w-5" aria-hidden />
                       {t("landingSearchSubmit")}
@@ -248,7 +248,7 @@ export function LandingSearchHero({
                   className="flex h-16 w-full items-center justify-between rounded-2xl border border-[#DCEAE3] bg-white px-5 text-left text-sm font-semibold text-[#2C2C2A] shadow-sm transition hover:bg-[#FAFCFB]"
                 >
                   <span className="inline-flex items-center gap-2">
-                    <SlidersHorizontal className="h-5 w-5 text-[#0F6E56]" aria-hidden />
+                    <SlidersHorizontal className="h-5 w-5 text-teal-700" aria-hidden />
                     {t("advancedFilters")}
                   </span>
                   <ChevronRight className={cn("h-5 w-5 text-[#6B6A65] transition-transform", advancedOpen && "rotate-90")} aria-hidden />

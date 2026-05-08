@@ -75,7 +75,7 @@ export function RelatedTeachersWidget({ category }: { category: string }) {
         <p className="text-sm text-[#6B6760]">{t("blogNoRelatedTeachers")}</p>
         <Link
           href="/student/search"
-          className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-[#1D9E75] hover:underline"
+          className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-teal-700 hover:underline"
         >
           {t("blogSeeAllTeachers")} <ArrowRight size={14} />
         </Link>
@@ -89,7 +89,7 @@ export function RelatedTeachersWidget({ category }: { category: string }) {
         {teachers.map((teacher) => (
           <div
             key={teacher.id}
-            className="group rounded-2xl border border-[#E8E6DF] bg-white p-4 flex flex-col gap-3 hover:border-[#1D9E75]/40 hover:shadow-sm transition-all"
+            className="group rounded-2xl border border-[#E8E6DF] bg-white p-4 flex flex-col gap-3 hover:border-teal-500/40 hover:shadow-sm transition-all"
           >
             {/* Avatar + badge */}
             <div className="flex items-center gap-3">
@@ -100,12 +100,12 @@ export function RelatedTeachersWidget({ category }: { category: string }) {
                     alt={teacher.name}
                     width={48}
                     height={48}
-                    className="rounded-full object-cover border-2 border-[rgba(29,158,117,0.3)]"
+                    className="rounded-full object-cover border-2 border-teal-500/30"
                   />
                 ) : (
                   <div
                     className="h-12 w-12 rounded-full flex items-center justify-center text-sm font-bold text-white"
-                    style={{ background: "linear-gradient(135deg,#1D9E75,#0f6e56)" }}
+                    style={{ background: "linear-gradient(135deg,var(--palette-teal-500),var(--palette-teal-700))" }}
                   >
                     {teacher.name.slice(0, 2).toUpperCase()}
                   </div>
@@ -136,7 +136,7 @@ export function RelatedTeachersWidget({ category }: { category: string }) {
                 <span />
               )}
               {teacher.price_per_lesson != null && teacher.price_per_lesson > 0 && (
-                <span className="font-bold text-[#1D9E75] text-xs">
+                <span className="font-bold text-teal-700 text-xs">
                   {formatPrice(teacher.price_per_lesson)}/h
                 </span>
               )}
@@ -145,7 +145,7 @@ export function RelatedTeachersWidget({ category }: { category: string }) {
             {/* CTA */}
             <Link
               href={`/teacher/profile/${encodeURIComponent(teacher.id)}`}
-              className="mt-auto inline-flex h-8 w-full items-center justify-center rounded-xl bg-[#1D9E75] text-xs font-bold text-white hover:brightness-105 transition-all"
+              className="mt-auto inline-flex h-8 w-full items-center justify-center rounded-xl bg-teal-600 text-xs font-bold text-white hover:brightness-105 transition-all"
             >
               {t("blogViewProfile")}
             </Link>
@@ -156,7 +156,7 @@ export function RelatedTeachersWidget({ category }: { category: string }) {
       <div className="text-center">
         <Link
           href="/student/search"
-          className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#1D9E75] hover:underline"
+          className="inline-flex items-center gap-1.5 text-sm font-semibold text-teal-700 hover:underline"
         >
           {t("blogSeeAllTeachers")} <ArrowRight size={14} />
         </Link>

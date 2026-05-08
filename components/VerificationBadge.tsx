@@ -64,7 +64,7 @@ export function VerificationBadge({
               key={pk}
               className={cn("flex items-start gap-2 text-sm font-medium", dark ? "text-white/95" : "text-[#2C2C2A]")}
             >
-              <span className={cn("mt-0.5", dark ? "text-[#B8F5DC]" : "text-[#1D9E75]")}>✓</span>
+              <span className={cn("mt-0.5", dark ? "text-[#B8F5DC]" : "text-teal-700")}>✓</span>
               {t(pk)}
             </li>
           ))}

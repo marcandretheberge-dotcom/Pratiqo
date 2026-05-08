@@ -46,7 +46,7 @@ export function LocaleSwitcher({
         className={cn(
           "w-full cursor-pointer rounded-md border px-2 py-1.5 text-xs font-medium outline-none focus:ring-1",
           light
-            ? "border-[#E8E6DF] bg-white text-[#2C2C2A] focus:ring-[#1D9E75]/30"
+            ? "border-[#E8E6DF] bg-white text-[#2C2C2A] focus:ring-teal-500/30"
             : "border-white/15 bg-[#252524] text-white focus:ring-white/30",
           compact && "py-1 text-[11px]",
         )}

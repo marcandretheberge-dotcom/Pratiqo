@@ -34,19 +34,19 @@ export default function AnnulationPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              <tr className="hover:bg-[rgba(29,158,117,0.06)]">
+              <tr className="hover:bg-teal-500/10">
                 <td className="px-4 py-3 text-slate-700">Plus de 24 heures</td>
                 <td className="px-4 py-3 text-slate-700">
                   100&nbsp;% — remboursement complet ou crédit Pratiqo complet
                 </td>
               </tr>
-              <tr className="hover:bg-[rgba(29,158,117,0.06)]">
+              <tr className="hover:bg-teal-500/10">
                 <td className="px-4 py-3 text-slate-700">Moins de 24 heures</td>
                 <td className="px-4 py-3 text-slate-700">
                   Crédit Pratiqo possible&nbsp;; remboursement examiné selon la situation
                 </td>
               </tr>
-              <tr className="hover:bg-[rgba(29,158,117,0.06)]">
+              <tr className="hover:bg-teal-500/10">
                 <td className="px-4 py-3 text-slate-700">No-show (absent sans annulation)</td>
                 <td className="px-4 py-3 text-slate-700">
                   Aucun remboursement, sauf force majeure ou décision du support
@@ -65,7 +65,7 @@ export default function AnnulationPage() {
           <li>Via l&apos;application Pratiqo : Mon compte → Mes réservations → Annuler</li>
           <li>
             Par courriel :{" "}
-            <a href="mailto:support@pratiqo.ca" className="text-[#1D9E75] underline font-medium">
+            <a href="mailto:support@pratiqo.ca" className="text-teal-700 underline font-medium">
               support@pratiqo.ca
             </a>{" "}
             (inclure le numéro de réservation)
@@ -91,15 +91,15 @@ export default function AnnulationPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              <tr className="hover:bg-[rgba(29,158,117,0.06)]">
+              <tr className="hover:bg-teal-500/10">
                 <td className="px-4 py-3 text-slate-700">Annulation plus de 24h avant</td>
                 <td className="px-4 py-3 text-slate-700">Aucune pénalité</td>
               </tr>
-              <tr className="hover:bg-[rgba(29,158,117,0.06)]">
+              <tr className="hover:bg-teal-500/10">
                 <td className="px-4 py-3 text-slate-700">Annulation moins de 24h avant</td>
                 <td className="px-4 py-3 text-slate-700">Avertissement — 3 avertissements = suspension</td>
               </tr>
-              <tr className="hover:bg-[rgba(29,158,117,0.06)]">
+              <tr className="hover:bg-teal-500/10">
                 <td className="px-4 py-3 text-slate-700">No-show sans annulation</td>
                 <td className="px-4 py-3 text-slate-700">Suspension immédiate possible</td>
               </tr>
@@ -140,7 +140,7 @@ export default function AnnulationPage() {
           <li>Envoyez un message via la messagerie Pratiqo pour proposer un nouveau créneau.</li>
           <li>
             Si votre professeur (ou votre élève) accepte, contactez{" "}
-            <a href="mailto:support@pratiqo.ca" className="text-[#1D9E75] underline font-medium">
+            <a href="mailto:support@pratiqo.ca" className="text-teal-700 underline font-medium">
               support@pratiqo.ca
             </a>{" "}
             avec :
@@ -159,7 +159,7 @@ export default function AnnulationPage() {
         <h3 className="text-base font-semibold text-[var(--p-text)] mt-6 mb-2">3.3 Cas particuliers</h3>
         <p>
           Pour les urgences ou cas de force majeure (voir section 1.2), contactez directement{" "}
-          <a href="mailto:support@pratiqo.ca" className="text-[#1D9E75] underline font-medium">
+          <a href="mailto:support@pratiqo.ca" className="text-teal-700 underline font-medium">
             support@pratiqo.ca
           </a>
           , peu importe le délai.
@@ -196,13 +196,13 @@ export default function AnnulationPage() {
         <ul className="list-disc pl-5 space-y-2 mt-2">
           <li>
             Email :{" "}
-            <a href="mailto:support@pratiqo.ca" className="text-[#1D9E75] underline font-medium">
+            <a href="mailto:support@pratiqo.ca" className="text-teal-700 underline font-medium">
               support@pratiqo.ca
             </a>
           </li>
           <li>
             Formulaire :{" "}
-            <a href="https://pratiqo.ca/support" className="text-[#1D9E75] underline font-medium" rel="noopener noreferrer">
+            <a href="https://pratiqo.ca/support" className="text-teal-700 underline font-medium" rel="noopener noreferrer">
               pratiqo.ca/support
             </a>
           </li>
@@ -214,12 +214,12 @@ export default function AnnulationPage() {
 
       <LegalSection id="contact" title="7. Contact">
         <p>
-          <a href="mailto:support@pratiqo.ca" className="text-[#1D9E75] underline font-medium">
+          <a href="mailto:support@pratiqo.ca" className="text-teal-700 underline font-medium">
             support@pratiqo.ca
           </a>
         </p>
         <p>
-          <a href="https://pratiqo.ca/support" className="text-[#1D9E75] underline font-medium" rel="noopener noreferrer">
+          <a href="https://pratiqo.ca/support" className="text-teal-700 underline font-medium" rel="noopener noreferrer">
             pratiqo.ca/support
           </a>
         </p>

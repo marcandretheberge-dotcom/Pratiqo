@@ -714,7 +714,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
         <div className="p-5 sm:p-6 border-b border-slate-100 space-y-4">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "#0F6E56" }}>
+              <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--palette-teal-700)" }}>
                 {t("bookingTitle")}
               </p>
               <h3 id="booking-modal-title" className="text-xl font-bold text-slate-900">{teacher.name}</h3>
@@ -731,7 +731,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                   key={label}
                   className={cn(
                     "rounded-full px-2 py-1.5 text-center",
-                    active ? "bg-[#E1F5EE] text-[#0F6E56]" : "bg-slate-100 text-slate-400",
+                    active ? "bg-teal-50 text-teal-700" : "bg-slate-100 text-slate-400",
                   )}
                 >
                   {idx + 1}. {label}
@@ -761,7 +761,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                       {teacher.rating} · {teacher.reviews} {t("bookingReviewsShort")}
                     </p>
                   </div>
-                  <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-[#0F6E56] shadow-sm">
+                  <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-teal-700 shadow-sm">
                     {displayPrice}
                   </span>
                 </div>
@@ -775,7 +775,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                     {areaLabel}
                   </span>
                 </div>
-                <p className="mt-3 text-[11px] font-semibold text-[#0F6E56]">
+                <p className="mt-3 text-[11px] font-semibold text-teal-700">
                   {t("bookingNoHiddenFees").replace("{price}", displayPrice)}
                 </p>
               </div>
@@ -788,7 +788,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                 {teacher.bio || t("bookingTeacherSummaryFallback")}
               </p>
               <div className="rounded-2xl border border-[#DCEAE3] bg-[#F3FAF6] px-4 py-3 text-xs text-slate-700 flex gap-2">
-                <Info size={15} className="mt-0.5 shrink-0 text-[#0F6E56]" />
+                <Info size={15} className="mt-0.5 shrink-0 text-teal-700" />
                 <span>{t("bookingSecurePaymentNote")}</span>
               </div>
               <button
@@ -818,7 +818,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                         "px-3 py-1.5 rounded-full text-xs border font-semibold",
                         lessonType === "intro" ? "text-white border-transparent" : "border-slate-200 text-slate-600",
                       )}
-                      style={lessonType === "intro" ? { backgroundColor: "#0F6E56", borderColor: "#0F6E56" } : undefined}
+                      style={lessonType === "intro" ? { backgroundColor: "var(--palette-teal-700)", borderColor: "var(--palette-teal-700)" } : undefined}
                     >
                       {t("introLesson")}
                     </button>
@@ -830,7 +830,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                         lessonType === "regular" ? "text-white border-transparent" : "border-slate-200 text-slate-600",
                       )}
                       style={
-                        lessonType === "regular" ? { backgroundColor: "#0F6E56", borderColor: "#0F6E56" } : undefined
+                        lessonType === "regular" ? { backgroundColor: "var(--palette-teal-700)", borderColor: "var(--palette-teal-700)" } : undefined
                       }
                     >
                       {t("regularLesson")}
@@ -855,7 +855,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                     )}
                     style={
                       selectedLevel === lvl
-                        ? { backgroundColor: "#0F6E56", borderColor: "#0F6E56" }
+                        ? { backgroundColor: "var(--palette-teal-700)", borderColor: "var(--palette-teal-700)" }
                         : undefined
                     }
                   >
@@ -870,20 +870,20 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                     <p className="text-sm font-semibold text-slate-800">{t("bookingSelectLearner")}</p>
                     <p className="mt-1 text-xs leading-relaxed text-slate-600">{t("bookingLearnerContextHint")}</p>
                   </div>
-                  <Link href="/student/learners" className="shrink-0 text-xs font-bold text-[#0F6E56] hover:underline">
+                  <Link href="/student/learners" className="shrink-0 text-xs font-bold text-teal-700 hover:underline">
                     {t("bookingCreateLearnerProfile")}
                   </Link>
                 </div>
                 {loadingLearners ? (
                   <div className="flex items-center gap-2 text-xs font-semibold text-slate-600">
-                    <Loader2 className="h-4 w-4 animate-spin text-[#0F6E56]" />
+                    <Loader2 className="h-4 w-4 animate-spin text-teal-700" />
                     {t("loading")}
                   </div>
                 ) : learnerProfiles.length > 0 ? (
                   <select
                     value={selectedLearnerId}
                     onChange={(e) => setSelectedLearnerId(e.target.value)}
-                    className="h-11 w-full rounded-xl border border-[#DCEAE3] bg-white px-3 text-sm outline-none focus:border-[#1D9E75]"
+                    className="h-11 w-full rounded-xl border border-[#DCEAE3] bg-white px-3 text-sm outline-none focus:border-teal-500"
                   >
                     <option value="">{t("bookingLearnerOptionalSelf")}</option>
                     {learnerProfiles.map((learner) => (
@@ -901,7 +901,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                       type="button"
                       disabled={learnerSaving}
                       onClick={() => void createSelfLearner()}
-                      className="inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-xl bg-white px-3 text-xs font-bold text-[#0F6E56] disabled:opacity-60"
+                      className="inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-xl bg-white px-3 text-xs font-bold text-teal-700 disabled:opacity-60"
                     >
                       {learnerSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                       {t("bookingCreateSelfLearner")}
@@ -934,7 +934,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                       className={cn(
                         "flex-1 min-w-[100px] py-2.5 px-2 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5",
                         teachingMode === "person"
-                          ? "border-[#1D9E75] bg-[#e1f5ee] text-[#0f6e56]"
+                          ? "border-teal-500 bg-teal-50 text-teal-700"
                           : "border-slate-200",
                       )}
                     >
@@ -948,7 +948,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                       className={cn(
                         "flex-1 min-w-[100px] py-2.5 px-2 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5",
                         teachingMode === "online"
-                          ? "border-[#1D9E75] bg-[#e1f5ee] text-[#0f6e56]"
+                          ? "border-teal-500 bg-teal-50 text-teal-700"
                           : "border-slate-200",
                       )}
                     >
@@ -962,7 +962,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                       className={cn(
                         "flex-1 min-w-[100px] py-2.5 px-2 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5",
                         teachingMode === "domicile"
-                          ? "border-[#1D9E75] bg-[#e1f5ee] text-[#0f6e56]"
+                          ? "border-teal-500 bg-teal-50 text-teal-700"
                           : "border-slate-200",
                       )}
                     >
@@ -975,7 +975,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
               {teachingMode === "domicile" ? (
                 <div className="space-y-2 rounded-2xl border border-slate-100 bg-slate-50/80 p-4">
                   <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                    <MapPin size={14} className="text-[#0F6E56]" />
+                    <MapPin size={14} className="text-teal-700" />
                     {t("bookingAddressLabel")}
                   </label>
                   <textarea
@@ -983,7 +983,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                     onChange={(e) => setStudentAddress(e.target.value)}
                     rows={3}
                     placeholder={t("bookingAddressPlaceholder")}
-                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm resize-none focus:ring-2 focus:ring-[#1D9E75]/30 focus:border-[#1D9E75] outline-none"
+                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm resize-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 outline-none"
                   />
                   <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
                     <span className="font-semibold text-slate-700">
@@ -991,7 +991,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                         ? `${introDurationMinutes} min`
                         : `${displayedHourlyPrice} / h × ${lessonHours === 1 ? t("bookingOneHour") : `${lessonHours} ${t("bookingHours")}`}`}
                     </span>
-                    <span className="font-bold text-[#0F6E56]">
+                    <span className="font-bold text-teal-700">
                       {t("bookingTotalLine")} : {displayPrice}
                     </span>
                   </div>
@@ -1053,7 +1053,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
               ) : null}
               {loadingDays ? (
                 <div className="flex justify-center py-8">
-                  <Loader2 className="animate-spin text-[#0F6E56]" size={28} />
+                  <Loader2 className="animate-spin text-teal-700" size={28} />
                 </div>
               ) : !daysError && Object.keys(availableDays).length === 0 ? (
                 <p className="text-sm text-slate-500 text-center py-6">
@@ -1076,13 +1076,13 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                         cell.disabled
                           ? "border-slate-100 bg-slate-50 text-slate-300 cursor-not-allowed opacity-60"
                           : selectedDate === cell.iso
-                            ? "border-[#1D9E75] bg-[#e1f5ee] text-[#0f6e56]"
-                            : "border-slate-200 hover:border-[#1D9E75]/50",
+                            ? "border-teal-500 bg-teal-50 text-teal-700"
+                            : "border-slate-200 hover:border-teal-500/50",
                       )}
                     >
                       <span className="block capitalize">{cell.label}</span>
                       {!cell.disabled ? (
-                        <span className="text-[10px] font-bold text-[#0F6E56]">
+                        <span className="text-[10px] font-bold text-teal-700">
                           {t("slotsAvailableBadge").replace("{n}", String(cell.count))}
                         </span>
                       ) : cell.iso <= todayIso ? (
@@ -1118,7 +1118,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
               ) : null}
               {loadingSlots ? (
                 <div className="flex justify-center py-8">
-                  <Loader2 className="animate-spin text-[#0F6E56]" size={28} />
+                  <Loader2 className="animate-spin text-teal-700" size={28} />
                 </div>
               ) : slots.length === 0 ? (
                 <p className="text-sm text-slate-500">{t("noSlotsPickOther")}</p>
@@ -1141,8 +1141,8 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                             className={cn(
                               "py-2.5 rounded-xl border text-xs font-bold transition-colors",
                               selectedSlot === s
-                                ? "border-[#0F6E56] bg-[#0F6E56] text-white"
-                                : "border-slate-200 hover:border-[#1D9E75]/40",
+                                ? "border-teal-700 bg-teal-700 text-white"
+                                : "border-slate-200 hover:border-teal-500/40",
                             )}
                           >
                             {s} · {durationMinutes} min
@@ -1169,7 +1169,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
           {step === "confirm" && (
             <div className="space-y-4">
               <p className="text-sm font-bold text-slate-900">{t("bookingConfirmTitle")}</p>
-              <div className="rounded-2xl border border-[rgba(29,158,117,0.35)] bg-[rgba(29,158,117,0.06)] p-4 space-y-2 text-sm">
+              <div className="rounded-2xl border border-teal-500/35 bg-teal-500/10 p-4 space-y-2 text-sm">
                 <div className="flex justify-between gap-2">
                   <span className="text-slate-600">{t("bookingDateLabel")}</span>
                   <span className="font-semibold text-slate-900 text-right capitalize">{formattedSelectedDate}</span>
@@ -1221,7 +1221,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                 ) : null}
                 <div className="flex justify-between gap-2">
                   <span className="text-slate-600">{t("bookingAmountLabel")}</span>
-                  <span className="font-bold text-[#0F6E56]">{displayPrice}</span>
+                  <span className="font-bold text-teal-700">{displayPrice}</span>
                 </div>
               </div>
               <p className="text-xs text-slate-600 leading-relaxed">{t("bookingExclusiveText")}</p>
@@ -1234,14 +1234,14 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                   className={cn(
                     "w-full flex items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-left transition-all",
                     applyCredits
-                      ? "border-[#1D9E75] bg-[rgba(29,158,117,0.06)]"
+                      ? "border-teal-500 bg-teal-500/10"
                       : "border-slate-200 bg-slate-50/60 hover:border-slate-300",
                   )}
                 >
                   <div className="flex items-center gap-2.5">
-                    <Gift size={16} className={applyCredits ? "text-[#0F6E56]" : "text-slate-600"} />
+                    <Gift size={16} className={applyCredits ? "text-teal-700" : "text-slate-600"} />
                     <div>
-                      <p className={cn("text-sm font-semibold", applyCredits ? "text-[#0f6e56]" : "text-slate-700")}>
+                      <p className={cn("text-sm font-semibold", applyCredits ? "text-teal-700" : "text-slate-700")}>
                         {t("creditsApply")}
                       </p>
                       <p className="text-xs text-slate-500">
@@ -1251,14 +1251,14 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     {applyCredits && (
-                      <span className="text-sm font-bold text-[#0F6E56]">
+                      <span className="text-sm font-bold text-teal-700">
                         −${creditsDiscount.toFixed(2)}
                       </span>
                     )}
                     <div
                       className={cn(
                         "relative h-6 w-11 rounded-full border transition-colors",
-                        applyCredits ? "bg-[#1D9E75] border-[#1D9E75]" : "bg-slate-200 border-slate-200",
+                        applyCredits ? "bg-teal-600 border-teal-500" : "bg-slate-200 border-slate-200",
                       )}
                     >
                       <span
@@ -1273,8 +1273,8 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
               ) : null}
 
               {teachingMode === "domicile" ? (
-                <div className="rounded-xl border border-[rgba(29,158,117,0.25)] bg-[rgba(29,158,117,0.06)] px-3 py-2 text-xs text-slate-700">
-                  <span className="font-semibold text-[#0f6e56]">{t("bookingAtHomeLabel")}</span>
+                <div className="rounded-xl border border-teal-500/25 bg-teal-500/10 px-3 py-2 text-xs text-slate-700">
+                  <span className="font-semibold text-teal-700">{t("bookingAtHomeLabel")}</span>
                   {lessonHours > 1 ? (
                     <span className="block mt-1">
                       {t("bookingBilledDuration")} : {lessonHours} {t("bookingHours")} {t("bookingDistancePolicy")}
@@ -1304,7 +1304,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                   disabled={isSubmitting}
                   onClick={() => void handleConfirmAndPay()}
                   className="flex-[2] h-11 rounded-2xl text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-2 text-white shadow-md transition hover:opacity-95"
-                  style={{ backgroundColor: "#0F6E56" }}
+                  style={{ backgroundColor: "var(--palette-teal-700)" }}
                 >
                   {isSubmitting ? (
                     <>
@@ -1347,8 +1347,8 @@ function LearnerBookingContextPanel({
   const { t } = useLocale();
   const academicProgramHelperKey = getAcademicProgramHelperKey(academicConfig);
 
-  const fieldClass = "h-10 w-full rounded-xl border border-[#DCEAE3] bg-white px-3 text-xs outline-none focus:border-[#1D9E75]";
-  const areaClass = "w-full rounded-xl border border-[#DCEAE3] bg-white px-3 py-2 text-xs outline-none focus:border-[#1D9E75]";
+  const fieldClass = "h-10 w-full rounded-xl border border-[#DCEAE3] bg-white px-3 text-xs outline-none focus:border-teal-500";
+  const areaClass = "w-full rounded-xl border border-[#DCEAE3] bg-white px-3 py-2 text-xs outline-none focus:border-teal-500";
 
   return (
     <div className="space-y-3 rounded-2xl border border-[#DCEAE3] bg-white p-4">
@@ -1360,7 +1360,7 @@ function LearnerBookingContextPanel({
         <select
           value={draft.context_type}
           onChange={(e) => onChange({ context_type: e.target.value as LearnerContextType })}
-          className="h-9 rounded-xl border border-[#DCEAE3] bg-[#F3FAF6] px-2 text-xs font-semibold text-[#0F6E56]"
+          className="h-9 rounded-xl border border-[#DCEAE3] bg-[#F3FAF6] px-2 text-xs font-semibold text-teal-700"
         >
           <option value="academic">{t("contextTypeAcademic")}</option>
           <option value="language">{t("contextTypeLanguage")}</option>

@@ -240,7 +240,7 @@ export default function MessagesPage() {
     return (
       <div className="max-w-md mx-auto rounded-3xl border border-[var(--p-border-light)] bg-white p-8 text-center">
         <p className="text-sm text-[var(--p-text-muted)]">{t("loginForMessages")}</p>
-        <Link href="/" className="mt-4 inline-block text-sm font-semibold text-[#1D9E75] hover:underline">
+        <Link href="/" className="mt-4 inline-block text-sm font-semibold text-teal-700 hover:underline">
           Accueil
         </Link>
       </div>
@@ -271,7 +271,7 @@ export default function MessagesPage() {
           <div className="flex-1 overflow-y-auto">
             {loadingList && !displayConversations.length ? (
               <div className="flex justify-center py-12">
-                <Loader2 className="animate-spin text-[#1D9E75]" size={28} />
+                <Loader2 className="animate-spin text-teal-700" size={28} />
               </div>
             ) : displayConversations.length === 0 ? (
               <p className="p-4 text-sm text-slate-700">{t("noMessages")}</p>
@@ -290,7 +290,7 @@ export default function MessagesPage() {
                     }}
                     className={cn(
                       "w-full text-left px-4 py-3 border-b border-[var(--p-border-light)]/60 transition-colors hover:bg-white/90",
-                      active ? "bg-[#E1F5EE]" : "bg-transparent",
+                      active ? "bg-teal-50" : "bg-transparent",
                     )}
                   >
                     <div className="flex items-center gap-3">
@@ -301,7 +301,7 @@ export default function MessagesPage() {
                         <div className="flex items-center justify-between gap-2">
                           <span className="text-sm font-semibold text-slate-900 truncate">{c.peerLabel}</span>
                           {c.unreadCount > 0 ? (
-                            <span className="flex h-2 w-2 rounded-full bg-[#1D9E75] shrink-0" title={`${c.unreadCount} ${t("unreadCountLabel")}`} />
+                            <span className="flex h-2 w-2 rounded-full bg-teal-600 shrink-0" title={`${c.unreadCount} ${t("unreadCountLabel")}`} />
                           ) : null}
                         </div>
                         <p className="text-xs text-slate-600 truncate mt-0.5">{c.lastPreview}</p>
@@ -352,7 +352,7 @@ export default function MessagesPage() {
               <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
                 {loadingThread ? (
                   <div className="flex justify-center py-16">
-                    <Loader2 className="animate-spin text-[#1D9E75]" size={28} />
+                    <Loader2 className="animate-spin text-teal-700" size={28} />
                   </div>
                 ) : (
                   messages.map((m) => {
@@ -364,7 +364,7 @@ export default function MessagesPage() {
                             "rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed shadow-sm",
                             // Important: explicit colors for readability across dark-mode/mobile webviews.
                             mine
-                              ? "bg-[#1D9E75] text-white/95 rounded-br-md"
+                              ? "bg-teal-600 text-white/95 rounded-br-md"
                               : "bg-white text-slate-800 rounded-bl-md border border-slate-100",
                           )}
                         >
@@ -380,11 +380,11 @@ export default function MessagesPage() {
 
               <div className="p-3 border-t border-[var(--p-border-light)] bg-[#fafaf8]">
                 {draftHint ? (
-                  <p className="mb-2 rounded-xl border border-[#1D9E75]/25 bg-[#E1F5EE]/80 px-3 py-2 text-[11px] font-medium text-slate-800">
+                  <p className="mb-2 rounded-xl border border-teal-500/25 bg-teal-50/80 px-3 py-2 text-[11px] font-medium text-slate-800">
                     Brouillon pré-rempli — modifiez et envoyez quand vous êtes prêt(e).
                   </p>
                 ) : null}
-                <div className="flex items-end gap-2 rounded-[22px] border border-[var(--p-border-light)] bg-white pl-4 pr-2 py-2 focus-within:ring-2 focus-within:ring-[#1D9E75]/25">
+                <div className="flex items-end gap-2 rounded-[22px] border border-[var(--p-border-light)] bg-white pl-4 pr-2 py-2 focus-within:ring-2 focus-within:ring-teal-500/25">
                   <textarea
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
@@ -403,7 +403,7 @@ export default function MessagesPage() {
                     disabled={sending || !input.trim() || !activePeerId}
                     onClick={() => void handleSend()}
                     className="shrink-0 h-10 w-10 rounded-full flex items-center justify-center text-white disabled:opacity-40 transition hover:brightness-95"
-                    style={{ backgroundColor: "#1D9E75" }}
+                    style={{ backgroundColor: "var(--palette-teal-500)" }}
                     title={t("sendButtonTitle")}
                   >
                     {sending ? <Loader2 className="animate-spin" size={18} /> : <Send size={18} />}

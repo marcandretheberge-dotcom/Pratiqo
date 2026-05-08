@@ -114,7 +114,7 @@ function TeacherAvatarRow({ name, imageUrl }: { name: string; imageUrl?: string 
     );
   }
   return (
-    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#E1F5EE] text-[11px] font-bold text-[#0F6E56]">
+    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-teal-50 text-[11px] font-bold text-teal-700">
       {initials}
     </div>
   );
@@ -224,7 +224,7 @@ export function CreditsWidget({
     <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white px-4 py-3 shadow-sm">
       <div>
         <p className="text-xs font-medium text-slate-500">{t("creditsTitle")}</p>
-        <p className="text-lg font-bold tabular-nums text-[#0F6E56]">${loading ? "—" : balance.toFixed(2)}</p>
+        <p className="text-lg font-bold tabular-nums text-teal-700">${loading ? "—" : balance.toFixed(2)}</p>
       </div>
       <p className="max-w-[12rem] text-right text-[11px] leading-snug text-slate-500">{t("creditsBalance")}</p>
     </div>
@@ -233,7 +233,7 @@ export function CreditsWidget({
   const milestoneCard = (
     <section
       className="rounded-3xl border border-white/15 p-5 text-white shadow-[0_20px_50px_rgba(15,110,86,0.2)] sm:p-6"
-      style={{ background: "#0F6E56" }}
+      style={{ background: "var(--palette-teal-700)" }}
     >
       <h2 className="text-sm font-semibold leading-tight text-white">{t("creditsEvolution")}</h2>
       <p className="mt-1 text-xs leading-relaxed text-white/85">{t("creditsMilestoneDescription")}</p>
@@ -266,7 +266,7 @@ export function CreditsWidget({
                   className={cn(
                     "relative z-[1] flex h-5 w-5 items-center justify-center rounded-full border text-[10px] font-bold",
                     earned
-                      ? "border-white/40 bg-white text-[#0F6E56]"
+                      ? "border-white/40 bg-white text-teal-700"
                       : isNext
                         ? "border-amber-200 bg-amber-100/90 text-amber-900"
                         : "border-white/35 bg-white/10 text-white/90",
@@ -289,7 +289,7 @@ export function CreditsWidget({
       <h2 className="text-sm font-semibold text-slate-900">{t("creditsHowToEarn")}</h2>
       <ul className="mt-4 space-y-0 divide-y divide-slate-100">
         <li className="flex items-start gap-3 py-3 first:pt-0">
-          <Users size={16} className="mt-0.5 shrink-0 text-[#1D9E75]" aria-hidden />
+          <Users size={16} className="mt-0.5 shrink-0 text-teal-700" aria-hidden />
           <div className="min-w-0 flex-1">
             <p className="text-xs font-semibold text-slate-800">{t("creditsReferral")}</p>
             <p className="mt-0.5 text-[11px] leading-snug text-slate-600">{t("creditsReferralDescriptionShort")}</p>
@@ -315,14 +315,14 @@ export function CreditsWidget({
         <p className="mt-1 text-[11px] leading-relaxed text-slate-600">{t("creditsReferralDesc")}</p>
         <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-stretch">
           <div className="min-h-[40px] flex-1 rounded-xl border border-slate-200/90 bg-[#F9FAF8] px-3 py-2.5">
-            <span className="font-mono text-sm font-semibold tracking-widest text-[#0F6E56]">{data.referralCode}</span>
+            <span className="font-mono text-sm font-semibold tracking-widest text-teal-700">{data.referralCode}</span>
           </div>
           <button
             type="button"
             onClick={() => void copyReferral()}
             className={cn(
               "inline-flex min-h-[40px] shrink-0 items-center justify-center gap-1.5 rounded-xl px-4 text-xs font-semibold transition-all sm:min-w-[96px]",
-              copied ? "bg-[#0F6E56] text-white" : "border border-[#0F6E56]/40 text-[#0F6E56] hover:bg-[#0F6E56]/[0.06]",
+              copied ? "bg-teal-700 text-white" : "border border-teal-700/40 text-teal-700 hover:bg-teal-700/[0.06]",
             )}
           >
             {copied ? <Check size={14} /> : <Copy size={14} />}
@@ -337,7 +337,7 @@ export function CreditsWidget({
             </span>
           </div>
           <div className="h-1 overflow-hidden rounded-full bg-slate-200/80">
-            <div className="h-full rounded-full bg-[#1D9E75]/85 transition-all" style={{ width: `${yearPct}%` }} />
+            <div className="h-full rounded-full bg-teal-600/85 transition-all" style={{ width: `${yearPct}%` }} />
           </div>
         </div>
       </div>
@@ -356,7 +356,7 @@ export function CreditsWidget({
           <p className="text-xs font-semibold text-slate-900">{review.teacherName}</p>
           {review.teacherDiscipline ? <p className="text-[11px] text-slate-600">{review.teacherDiscipline}</p> : null}
           {review.status === "done" ? (
-            <p className="text-sm font-semibold text-[#0F6E56]">{t("creditsReviewSuccess")}</p>
+            <p className="text-sm font-semibold text-teal-700">{t("creditsReviewSuccess")}</p>
           ) : review.status === "already" ? (
             <p className="text-sm text-slate-700">{t("creditsReviewAlready")}</p>
           ) : review.status === "error" ? (
@@ -364,7 +364,7 @@ export function CreditsWidget({
           ) : (
             <>
               <StarRating value={review.rating} onChange={(v) => setReview((r) => r && { ...r, rating: v })} />
-              <div className="rounded-xl border border-[#1D9E75]/20 bg-[#E1F5EE]/70 px-3 py-2 text-[11px] leading-relaxed text-[#0F6E56]">
+              <div className="rounded-xl border border-teal-500/20 bg-teal-50/70 px-3 py-2 text-[11px] leading-relaxed text-teal-700">
                 <p className="font-semibold">{t("reviewStandardsReminderTitle")}</p>
                 <p className="mt-0.5">
                   {t("reviewStandardsReminderBody")}{" "}
@@ -378,7 +378,7 @@ export function CreditsWidget({
                 onChange={(e) => setReview((r) => r && { ...r, body: e.target.value })}
                 placeholder={t("creditsReviewOptional")}
                 rows={2}
-                className="w-full resize-none rounded-xl border border-slate-200/90 bg-white px-3 py-2 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-[#1D9E75]"
+                className="w-full resize-none rounded-xl border border-slate-200/90 bg-white px-3 py-2 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-teal-500"
               />
               <div className="flex flex-wrap gap-2">
                 <button
@@ -386,7 +386,7 @@ export function CreditsWidget({
                   onClick={() => void submitReview()}
                   disabled={review.rating < 1 || review.status === "submitting"}
                   className={cn(
-                    "min-h-[36px] flex-1 rounded-xl bg-[#0F6E56] text-xs font-semibold text-white transition-all",
+                    "min-h-[36px] flex-1 rounded-xl bg-teal-700 text-xs font-semibold text-white transition-all",
                     (review.rating < 1 || review.status === "submitting") && "cursor-not-allowed opacity-50",
                   )}
                 >
@@ -437,7 +437,7 @@ export function CreditsWidget({
                     status: "idle",
                   })
                 }
-                className="shrink-0 rounded-full bg-[#E1F5EE] px-2.5 py-1 text-[11px] font-semibold text-[#0F6E56] ring-1 ring-[#1D9E75]/30 transition hover:bg-[#c8eddf]"
+                className="shrink-0 rounded-full bg-teal-50 px-2.5 py-1 text-[11px] font-semibold text-teal-700 ring-1 ring-teal-500/30 transition hover:bg-[#c8eddf]"
               >
                 {t("creditsReviewSubmitInline")}
               </button>
@@ -458,14 +458,14 @@ export function CreditsWidget({
           {data.transactions.slice(0, 6).map((tx) => (
             <li key={tx.id} className="flex items-center gap-2 text-xs">
               {Number(tx.amount) > 0 ? (
-                <Gift size={13} className="shrink-0 text-[#1D9E75]" />
+                <Gift size={13} className="shrink-0 text-teal-700" />
               ) : (
                 <span className="w-[13px] shrink-0 text-center font-bold text-slate-500">−</span>
               )}
               <span className="min-w-0 flex-1 truncate text-slate-700">
                 {typeLabel(tx.type, t)} — {tx.description}
               </span>
-              <span className={cn("shrink-0 font-semibold tabular-nums", Number(tx.amount) > 0 ? "text-[#0F6E56]" : "text-slate-700")}>
+              <span className={cn("shrink-0 font-semibold tabular-nums", Number(tx.amount) > 0 ? "text-teal-700" : "text-slate-700")}>
                 {Number(tx.amount) > 0 ? "+" : ""}${Math.abs(Number(tx.amount)).toFixed(2)}
               </span>
             </li>

@@ -87,7 +87,7 @@ export function TeacherSearchAdvancedPanel({
               type="checkbox"
               checked={values.verifiedOnly}
               onChange={(e) => onChange({ verifiedOnly: e.target.checked })}
-              className="h-4 w-4 accent-[#0F6E56]"
+              className="h-4 w-4 accent-teal-700"
             />
           </label>
           <label className="block space-y-1">

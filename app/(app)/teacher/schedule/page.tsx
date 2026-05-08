@@ -298,7 +298,7 @@ function TeacherScheduleInner() {
   return (
     <div className="max-w-5xl mx-auto space-y-5">
       <div>
-        <p className="text-[10px] font-bold uppercase tracking-widest text-[#1D9E75]">{t("scheduleTeacherLabel")}</p>
+        <p className="text-[10px] font-bold uppercase tracking-widest text-teal-700">{t("scheduleTeacherLabel")}</p>
         <h1 className="text-2xl sm:text-3xl font-bold text-[#2C2C2A]">{t("schedulePageTitle")}</h1>
       </div>
 
@@ -316,7 +316,7 @@ function TeacherScheduleInner() {
             onClick={() => setSubtab(key)}
             className={cn(
               "flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors",
-              subtab === key ? "bg-[#1D9E75] text-white shadow-sm" : "text-slate-600 hover:text-slate-900",
+              subtab === key ? "bg-teal-600 text-white shadow-sm" : "text-slate-600 hover:text-slate-900",
             )}
           >
             {t(labelKey)}
@@ -325,12 +325,12 @@ function TeacherScheduleInner() {
       </div>
 
       {flash ? (
-        <p className={cn("text-sm", flash.kind === "err" ? "text-rose-600" : "text-[#085041]")}>{flash.text}</p>
+        <p className={cn("text-sm", flash.kind === "err" ? "text-rose-600" : "text-teal-800")}>{flash.text}</p>
       ) : null}
 
       {loading ? (
         <div className="flex justify-center py-20">
-          <Loader2 className="animate-spin text-[#1D9E75]" size={36} />
+          <Loader2 className="animate-spin text-teal-700" size={36} />
         </div>
       ) : !teacherId ? (
         <p className="text-sm text-slate-500">{t("noTeacherProfile")}</p>
@@ -362,20 +362,20 @@ function TeacherScheduleInner() {
                     key={b.id}
                     className={cn(
                       "rounded-2xl border p-4 flex flex-wrap items-center justify-between gap-3",
-                      isFirst ? "border-[#1D9E75] bg-[rgba(29,158,117,0.12)]" : "border-slate-200 bg-slate-100",
+                      isFirst ? "border-teal-500 bg-teal-500/15" : "border-slate-200 bg-slate-100",
                     )}
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <div
                         className={cn(
                           "h-12 w-12 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0",
-                          isFirst ? "bg-[#1D9E75]" : "bg-slate-400",
+                          isFirst ? "bg-teal-600" : "bg-slate-400",
                         )}
                       >
                         {(b.studentName || "?").slice(0, 2).toUpperCase()}
                       </div>
                       <div className="min-w-0">
-                        <p className={cn("text-base font-bold", boldTeal ? "text-[#1D9E75]" : "text-[#2C2C2A]")}>
+                        <p className={cn("text-base font-bold", boldTeal ? "text-teal-700" : "text-[#2C2C2A]")}>
                           {b.time_slot || b.time}
                         </p>
                         <p className="text-sm font-semibold text-[#2C2C2A] truncate">{b.studentName}</p>
@@ -390,7 +390,7 @@ function TeacherScheduleInner() {
                     {idx === 0 ? (
                       <button
                         type="button"
-                        className="h-10 px-5 rounded-full bg-[#1D9E75] text-white text-sm font-semibold"
+                        className="h-10 px-5 rounded-full bg-teal-600 text-white text-sm font-semibold"
                         onClick={() => router.push("/messages")}
                       >
                         Démarrer
@@ -443,7 +443,7 @@ function TeacherScheduleInner() {
                   onClick={() => setSelectedDayIndex(i)}
                   className={cn(
                     "flex flex-col items-center rounded-xl border py-2 px-1 text-center transition-colors",
-                    selectedDayIndex === i ? "border-[#1D9E75] bg-[#1D9E75] text-white" : "border-slate-200 bg-white hover:border-slate-300",
+                    selectedDayIndex === i ? "border-teal-500 bg-teal-600 text-white" : "border-slate-200 bg-white hover:border-slate-300",
                   )}
                 >
                   <span className="text-[10px] font-bold uppercase leading-tight">{label}</span>
@@ -463,7 +463,7 @@ function TeacherScheduleInner() {
               <ul className="space-y-2">
                 {selectedDayBookings.map((b) => (
                   <li key={b.id} className="flex items-center justify-between gap-2 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2">
-                    <span className="text-sm font-bold text-[#1D9E75]">{b.time_slot || b.time}</span>
+                    <span className="text-sm font-bold text-teal-700">{b.time_slot || b.time}</span>
                     <span className="text-sm font-semibold truncate">{b.studentName}</span>
                     <span className="text-xs text-slate-500 shrink-0">{formatLabel(b)}</span>
                   </li>
@@ -478,7 +478,7 @@ function TeacherScheduleInner() {
             <p className="text-xs font-bold uppercase tracking-widest text-slate-600">{t("gridWeeklyTitle")}</p>
             <div className="flex flex-wrap gap-4 text-xs text-[#2C2C2A]">
               <span className="inline-flex items-center gap-2">
-                <span className="h-3 w-3 rounded-sm bg-[#1D9E75]" /> {t("legendAvailable")}
+                <span className="h-3 w-3 rounded-sm bg-teal-600" /> {t("legendAvailable")}
               </span>
               <span className="inline-flex items-center gap-2">
                 <span className="h-3 w-3 rounded-sm bg-slate-200 border border-slate-300" /> {t("legendClosed")}
@@ -514,7 +514,7 @@ function TeacherScheduleInner() {
                           className={cn(
                             "h-11 rounded-xl border transition-colors",
                             locked ? "border-[#F5C478] bg-[#FAEEDA] cursor-not-allowed" : "",
-                            !locked && on ? "border-[#1D9E75] bg-[rgba(29,158,117,0.12)]" : "",
+                            !locked && on ? "border-teal-500 bg-teal-500/15" : "",
                             !locked && !on ? "border-slate-200 bg-slate-100 hover:border-slate-300" : "",
                           )}
                           title={locked ? t("titleCellBooked") : on ? t("titleCellAvailable") : t("titleCellUnavailable")}
@@ -539,7 +539,7 @@ function TeacherScheduleInner() {
                       onClick={() => toggleFormat(keys[i])}
                       className={cn(
                         "h-10 px-4 rounded-full text-sm font-semibold border transition-colors",
-                        on ? "border-[#1D9E75] bg-[rgba(29,158,117,0.12)] text-[#0f6e56]" : "border-slate-200 bg-slate-100 text-slate-600",
+                        on ? "border-teal-500 bg-teal-500/15 text-teal-700" : "border-slate-200 bg-slate-100 text-slate-600",
                       )}
                     >
                       {t(labelKey)}
@@ -583,7 +583,7 @@ function TeacherScheduleInner() {
               type="button"
               disabled={saving}
               onClick={() => void saveAll()}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 h-12 px-8 rounded-full bg-[#1D9E75] text-white text-sm font-semibold hover:brightness-[0.98] disabled:opacity-60"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 h-12 px-8 rounded-full bg-teal-600 text-white text-sm font-semibold hover:brightness-[0.98] disabled:opacity-60"
             >
               <Save size={18} />
               {saving ? t("savingDots") : t("saveAvailability")}
@@ -600,7 +600,7 @@ export default function TeacherSchedulePage() {
     <Suspense
       fallback={
         <div className="max-w-5xl mx-auto py-20 flex justify-center">
-          <Loader2 className="animate-spin text-[#1D9E75]" size={32} />
+          <Loader2 className="animate-spin text-teal-700" size={32} />
         </div>
       }
     >

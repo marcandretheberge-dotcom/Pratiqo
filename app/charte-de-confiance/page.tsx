@@ -215,7 +215,7 @@ export default async function TrustCharterPage({
     <main className="min-h-screen bg-[#F9FAF8]">
       <div className="border-b border-slate-200 bg-white/90 backdrop-blur">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6">
-          <Link href="/" className="text-sm font-medium text-slate-600 hover:text-[#0F6E56]">
+          <Link href="/" className="text-sm font-medium text-slate-600 hover:text-teal-700">
             {content.back}
           </Link>
           <div className="flex gap-2 text-xs font-semibold">
@@ -225,8 +225,8 @@ export default async function TrustCharterPage({
                 href={`/charte-de-confiance?lang=${lang}`}
                 className={`rounded-full px-3 py-1.5 transition ${
                   lang === locale
-                    ? "bg-[#0F6E56] text-white"
-                    : "border border-slate-200 bg-white text-slate-600 hover:border-[#1D9E75]"
+                    ? "bg-teal-700 text-white"
+                    : "border border-slate-200 bg-white text-slate-600 hover:border-teal-500"
                 }`}
               >
                 {CONTENT[lang].languageLabel}
@@ -238,7 +238,7 @@ export default async function TrustCharterPage({
 
       <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:py-14">
         <header className="max-w-3xl">
-          <p className="text-xs font-bold uppercase tracking-widest text-[#0F6E56]">Pratiqo</p>
+          <p className="text-xs font-bold uppercase tracking-widest text-teal-700">Pratiqo</p>
           <h1 className="mt-3 text-3xl font-bold leading-tight text-slate-950 sm:text-4xl">
             {content.title}
           </h1>
@@ -246,8 +246,8 @@ export default async function TrustCharterPage({
           <p className="mt-3 text-xs font-medium text-slate-500">{content.updated}</p>
         </header>
 
-        <section className="mt-8 rounded-2xl border border-[#1D9E75]/20 bg-[#E1F5EE] p-5">
-          <h2 className="text-sm font-bold text-[#0F6E56]">{content.examplesTitle}</h2>
+        <section className="mt-8 rounded-2xl border border-teal-500/20 bg-teal-50 p-5">
+          <h2 className="text-sm font-bold text-teal-700">{content.examplesTitle}</h2>
           <div className="mt-3 grid gap-3 md:grid-cols-2">
             <p className="rounded-xl bg-white/80 p-3 text-sm text-slate-700">{content.accepted}</p>
             <p className="rounded-xl bg-white/80 p-3 text-sm text-slate-700">{content.rejected}</p>
@@ -259,7 +259,7 @@ export default async function TrustCharterPage({
             <section key={section.title} className="border-t border-slate-200 pt-6">
               <h2 className="text-lg font-bold text-slate-950">{section.title}</h2>
               {section.body ? <p className="mt-2 text-sm leading-relaxed text-slate-600">{section.body}</p> : null}
-              <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-relaxed text-slate-700 marker:text-[#1D9E75]">
+              <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-relaxed text-slate-700 marker:text-teal-700">
                 {section.bullets.map((item) => (
                   <li key={item}>{item}</li>
                 ))}

@@ -32,8 +32,8 @@ export function CityLinksFooter({ currentSlug }: { currentSlug?: string }) {
                 aria-current={city.slug === currentSlug ? "page" : undefined}
                 className={
                   city.slug === currentSlug
-                    ? "text-xs font-semibold text-[#0F6E56]"
-                    : "text-xs text-[#6B6760] transition-colors hover:text-[#0F6E56] hover:underline"
+                    ? "text-xs font-semibold text-teal-700"
+                    : "text-xs text-[#6B6760] transition-colors hover:text-teal-700 hover:underline"
                 }
               >
                 Tuteurs à {city.name}
@@ -55,8 +55,8 @@ export function CityLinksFooter({ currentSlug }: { currentSlug?: string }) {
                 aria-current={barrio.slug === currentSlug ? "page" : undefined}
                 className={
                   barrio.slug === currentSlug
-                    ? "text-xs font-semibold text-[#0F6E56]"
-                    : "text-xs text-[#6B6760] transition-colors hover:text-[#0F6E56] hover:underline"
+                    ? "text-xs font-semibold text-teal-700"
+                    : "text-xs text-[#6B6760] transition-colors hover:text-teal-700 hover:underline"
                 }
               >
                 Clases en {barrio.name}

@@ -52,7 +52,7 @@ export function LandingDiscoveryHeader({
     <div className="mx-auto max-w-4xl space-y-5 text-center">
       <div>
         <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#00694c]">{t("landingEyebrowLocal")}</p>
-        <p className="mt-3 text-[15px] font-semibold text-[#0F6E56] lg:hidden">{t("landingMobileNearYou")}</p>
+        <p className="mt-3 text-[15px] font-semibold text-teal-700 lg:hidden">{t("landingMobileNearYou")}</p>
         <p className="mt-1 text-sm leading-snug text-[#526056] lg:hidden">{t("landingMobileCornerHint")}</p>
         <h1 className="mt-4 text-2xl font-bold tracking-tight text-[#1a1f1d] sm:text-3xl lg:mt-2 lg:text-[2.15rem] lg:leading-[1.12]">
           {t("landingNeighborhoodHeadline")}
@@ -110,7 +110,7 @@ export function LandingDiscoveryHeader({
               value={formatFilter}
               onChange={(e) => onFormatFilterChange(e.target.value as LandingFormatFilter)}
               aria-label={t("landingSearchFormatLabel")}
-              className="h-[46px] w-full rounded-2xl border border-[#E8E6DF] bg-[#FAFCFB] px-4 text-sm font-medium text-[#2C2C2A] outline-none ring-0 focus:border-[#0F6E56]/40"
+              className="h-[46px] w-full rounded-2xl border border-[#E8E6DF] bg-[#FAFCFB] px-4 text-sm font-medium text-[#2C2C2A] outline-none ring-0 focus:border-teal-700/40"
             >
               {fmtOptions.map((o) => (
                 <option key={o.v} value={o.v}>
@@ -124,7 +124,7 @@ export function LandingDiscoveryHeader({
             <button
               type="button"
               onClick={onSearchSubmit}
-              className="flex h-[46px] w-full items-center justify-center gap-2 rounded-full bg-[#0F6E56] px-8 text-sm font-bold text-white shadow-sm transition-colors hover:bg-[#0c5c48] lg:w-auto lg:min-w-[132px]"
+              className="flex h-[46px] w-full items-center justify-center gap-2 rounded-full bg-teal-700 px-8 text-sm font-bold text-white shadow-sm transition-colors hover:bg-[#0c5c48] lg:w-auto lg:min-w-[132px]"
             >
               <Search size={16} aria-hidden />
               {t("landingSearchSubmit")}

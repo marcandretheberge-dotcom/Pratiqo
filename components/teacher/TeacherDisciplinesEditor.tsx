@@ -147,7 +147,7 @@ export function TeacherDisciplinesEditor({
                       onClick={() => togglePreset(lab)}
                       className={cn(
                         "h-9 px-3 rounded-full text-xs font-bold border transition-colors",
-                        on ? "border-[#00694c] bg-[rgba(0,105,76,0.12)] text-[#0f6e56]" : "border-slate-200 bg-slate-100 text-slate-700",
+                        on ? "border-[#00694c] bg-[rgba(0,105,76,0.12)] text-teal-700" : "border-slate-200 bg-slate-100 text-slate-700",
                       )}
                     >
                       {lab}

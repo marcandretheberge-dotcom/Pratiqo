@@ -1,25 +1,66 @@
 @import "tailwindcss";
 
 :root {
-  --color-background-secondary: #f0f2f4;
-  /* Design System */
-  --p-primary: #1d9e75;
-  --p-dark-teal: #0f6e56;
-  --p-light-teal-bg: #e1f5ee;
-  --p-mint-accent: #9fe1cb;
+  /* -------------------------------------------------------------------------
+     Pratiqo design tokens (logo teal #50BEB2 + accessible companions)
+     ------------------------------------------------------------------------- */
+  --color-base-cream: #fafaf8;
+  --color-base-ivory: #f5f3f0;
+  --color-text-base: #2c2c2c;
+  --color-text-secondary: #6b6b6b;
 
-  /* Light surfaces: primary / secondary / muted / placeholder-friendly hierarchy */
-  --p-text: #2c2c2a;
-  --p-text-muted: #4b5563;
+  --palette-teal-50: #e8f5f3;
+  --palette-teal-100: #d0ebe8;
+  --palette-teal-200: #a8d6d0;
+  --palette-teal-300: #7fc8c1;
+  --palette-teal-400: #58beb6;
+  --palette-teal-500: #50beb2;
+  --palette-teal-600: #409a8e;
+  --palette-teal-700: #2d7b72;
+  --palette-teal-800: #1f5a54;
+  --palette-teal-900: #0f3a34;
+
+  --palette-accent-500: #ff6b35;
+  --palette-accent-700: #e85a2a;
+
+  --palette-secondary-500: #9caf88;
+  --palette-secondary-700: #6b8b70;
+
+  /* Semantic teal aliases (use in CSS / inline styles) */
+  --color-teal-50: var(--palette-teal-50);
+  --color-teal-100: var(--palette-teal-100);
+  --color-teal-200: var(--palette-teal-200);
+  --color-teal-300: var(--palette-teal-300);
+  --color-teal-400: var(--palette-teal-400);
+  --color-teal-500: var(--palette-teal-500);
+  --color-teal-600: var(--palette-teal-600);
+  --color-teal-700: var(--palette-teal-700);
+  --color-teal-800: var(--palette-teal-800);
+  --color-teal-900: var(--palette-teal-900);
+
+  --color-accent-500: var(--palette-accent-500);
+  --color-accent-700: var(--palette-accent-700);
+
+  --color-secondary-500: var(--palette-secondary-500);
+  --color-secondary-700: var(--palette-secondary-700);
+
+  /* Legacy semantic aliases (keep existing var() usages working) */
+  --p-primary: var(--palette-teal-500);
+  --p-dark-teal: var(--palette-teal-700);
+  --p-light-teal-bg: var(--palette-teal-50);
+  --p-mint-accent: var(--palette-teal-200);
+
+  --color-background-secondary: #f0f2f4;
+
+  --p-text: var(--color-text-base);
+  --p-text-muted: var(--color-text-secondary);
   --p-text-subtle: #6b7280;
 
-  /* Semantic aliases (WCAG AA on white / cream) */
-  --color-text-secondary: #4b5563;
   --color-text-muted: #374151;
-  --color-link-on-white: #0F6E56;   /* ~6.2:1 on white (WCAG AA) */
+  --color-link-on-white: var(--color-teal-700);
 
   --p-border-light: #d3d1c7;
-  --p-page-bg: rgba(241, 239, 232, 0.4);
+  --p-page-bg: rgba(250, 250, 248, 0.65);
 
   --background: #ffffff;
   --foreground: var(--p-text);
@@ -27,6 +68,9 @@
   --p-surface-muted: #f6f6f3;
   --p-watch-bg: #fffbeb;
   --p-watch-border: #f59e0b;
+
+  /* Strong CTA / danger-adjacent accent (use sparingly) */
+  --p-coral: var(--color-accent-500);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -59,9 +103,27 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-inter);
-  --color-brand-primary: var(--p-primary);
-  --color-brand-secondary: var(--p-dark-teal);
-  --color-brand-accent: var(--p-mint-accent);
+
+  --color-teal-50: var(--palette-teal-50);
+  --color-teal-100: var(--palette-teal-100);
+  --color-teal-200: var(--palette-teal-200);
+  --color-teal-300: var(--palette-teal-300);
+  --color-teal-400: var(--palette-teal-400);
+  --color-teal-500: var(--palette-teal-500);
+  --color-teal-600: var(--palette-teal-600);
+  --color-teal-700: var(--palette-teal-700);
+  --color-teal-800: var(--palette-teal-800);
+  --color-teal-900: var(--palette-teal-900);
+
+  --color-accent-500: var(--palette-accent-500);
+  --color-accent-700: var(--palette-accent-700);
+
+  --color-secondary-500: var(--palette-secondary-500);
+  --color-secondary-700: var(--palette-secondary-700);
+
+  --color-brand-primary: var(--palette-teal-500);
+  --color-brand-secondary: var(--palette-teal-700);
+  --color-brand-accent: var(--palette-teal-200);
 }
 
 body {
@@ -69,7 +131,7 @@ body {
   font-family: var(--font-inter);
   font-weight: 400;
   line-height: 1.6;
-  background: linear-gradient(var(--p-page-bg), var(--p-page-bg)), #fff;
+  background: linear-gradient(var(--p-page-bg), var(--p-page-bg)), var(--color-base-cream);
 }
 
 h1,
@@ -88,29 +150,34 @@ h3 {
 
 .ds-card {
   background: #fff;
-  border: 1.5px solid var(--p-light-teal-bg);
+  border: 1.5px solid var(--color-teal-100);
   border-radius: 14px;
 }
 
+/* Solid teal-600 for readable white label on buttons */
 .ds-btn-primary {
-  background: var(--p-dark-teal);
+  background: linear-gradient(180deg, var(--color-teal-500) 0%, var(--color-teal-600) 100%);
   color: #fff;
   border-radius: 22px;
   padding: 10px 24px;
   font-weight: 500;
 }
 
+.ds-btn-primary:hover {
+  filter: brightness(0.97);
+}
+
 .ds-btn-secondary {
-  background: var(--p-light-teal-bg);
-  color: #085041;
+  background: var(--color-teal-50);
+  color: var(--color-teal-800);
   border-radius: 22px;
   padding: 10px 24px;
   font-weight: 500;
 }
 
 .ds-pill {
-  background: var(--p-light-teal-bg);
-  color: var(--p-dark-teal);
+  background: var(--color-teal-50);
+  color: var(--color-teal-800);
   border-radius: 10px;
   font-size: 11px;
   font-weight: 500;
@@ -125,9 +192,9 @@ h3 {
   font-weight: 700;
   letter-spacing: 0.02em;
   text-transform: uppercase;
-  color: var(--p-dark-teal);
-  background: rgba(29, 158, 117, 0.14);
-  border: 1px solid rgba(29, 158, 117, 0.25);
+  color: var(--color-teal-800);
+  background: rgb(80 190 178 / 0.14);
+  border: 1px solid rgb(80 190 178 / 0.25);
 }
 
 .ds-search {

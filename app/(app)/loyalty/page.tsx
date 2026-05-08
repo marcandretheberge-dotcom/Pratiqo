@@ -32,7 +32,7 @@ const TIERS: TierDef[] = [
   { id: "bronze", min: 0, max: 5000, circle: "#CD7F32", freeCommissionPct: 10, proCommissionPct: 5 },
   { id: "argent", min: 5000, max: 15000, circle: "#C0C0C0", freeCommissionPct: 9, proCommissionPct: 4.5 },
   { id: "or", min: 15000, max: 30000, circle: "#FFD700", freeCommissionPct: 8, proCommissionPct: 4 },
-  { id: "platine", min: 30000, max: Infinity, circle: "#1D9E75", freeCommissionPct: 7, proCommissionPct: 3.5 },
+  { id: "platine", min: 30000, max: Infinity, circle: "var(--palette-teal-500)", freeCommissionPct: 7, proCommissionPct: 3.5 },
 ];
 
 function tierFromVolume(volume: number): TierDef {
@@ -127,7 +127,7 @@ export default function LoyaltyPage() {
       <div className="space-y-8">
           <div
             className="rounded-3xl p-8 sm:p-10 text-white shadow-xl overflow-hidden relative"
-            style={{ backgroundColor: "#0F6E56" }}
+            style={{ backgroundColor: "var(--palette-teal-700)" }}
           >
             <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/75">{t("loyaltyCurrentLevel")}</p>
             {loading ? (
@@ -186,7 +186,7 @@ export default function LoyaltyPage() {
                   key={tier.id}
                   className={cn(
                     "rounded-2xl border-2 p-5 bg-[var(--p-surface)] transition-shadow",
-                    active ? "border-[#1D9E75] shadow-[0_12px_40px_rgba(29,158,117,0.15)]" : "border-[var(--p-border-light)]",
+                    active ? "border-teal-500 shadow-[0_12px_40px_rgb(80_190_178/0.15)]" : "border-[var(--p-border-light)]",
                   )}
                 >
                   <div className="flex items-center gap-3 mb-4">

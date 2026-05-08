@@ -107,10 +107,10 @@ export function LandingTeacherListingCard({
       className={cn(
         "group block w-full rounded-3xl border border-[#E8E6DF] bg-white text-left shadow-[0_10px_40px_rgba(44,44,42,0.06)] ring-1 ring-black/[0.02]",
         "cursor-pointer transition-all duration-200 ease-out",
-        "hover:-translate-y-1 hover:scale-[1.015] hover:border-[#1D9E75]/30 hover:shadow-xl",
-        "active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1D9E75]/40",
+        "hover:-translate-y-1 hover:scale-[1.015] hover:border-teal-500/30 hover:shadow-xl",
+        "active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/40",
         isHighlighted
-          ? "border-[#0F6E56] shadow-[0_14px_48px_rgba(15,110,86,0.15)] ring-[#0F6E56]/15"
+          ? "border-teal-500 shadow-[0_14px_48px_rgb(45_123_114/0.15)] ring-teal-500/15"
           : "",
       )}
     >
@@ -129,7 +129,7 @@ export function LandingTeacherListingCard({
                 className="h-[4.5rem] w-[4.5rem] rounded-full border border-black/[0.04] object-cover shadow-sm sm:h-[5.25rem] sm:w-[5.25rem]"
               />
               {teacher.introSessionEnabled ? (
-                <span className="absolute -bottom-1 -right-1 rounded-full bg-[#E1F5EE] px-2 py-0.5 text-[10px] font-extrabold text-[#0F6E56] shadow-sm ring-1 ring-white">
+                <span className="absolute -bottom-1 -right-1 rounded-full bg-teal-50 px-2 py-0.5 text-[10px] font-extrabold text-teal-700 shadow-sm ring-1 ring-white">
                   {t("introSessionBadge").replace("{n}", String(teacher.introSessionDurationMinutes ?? 45))}
                 </span>
               ) : null}
@@ -138,12 +138,12 @@ export function LandingTeacherListingCard({
             <div className="relative shrink-0">
               <div
                 className="flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full border border-black/[0.04] text-lg font-bold text-white shadow-inner sm:h-[5.25rem] sm:w-[5.25rem] sm:text-xl"
-                style={{ background: "linear-gradient(135deg,#1D9E75,#0f6e56)" }}
+                style={{ background: "linear-gradient(135deg,var(--palette-teal-500),var(--palette-teal-700))" }}
               >
                 {initials(teacher.name)}
               </div>
               {teacher.introSessionEnabled ? (
-                <span className="absolute -bottom-1 -right-1 rounded-full bg-[#E1F5EE] px-2 py-0.5 text-[10px] font-extrabold text-[#0F6E56] shadow-sm ring-1 ring-white">
+                <span className="absolute -bottom-1 -right-1 rounded-full bg-teal-50 px-2 py-0.5 text-[10px] font-extrabold text-teal-700 shadow-sm ring-1 ring-white">
                   {t("introSessionBadge").replace("{n}", String(teacher.introSessionDurationMinutes ?? 45))}
                 </span>
               ) : null}
@@ -170,7 +170,7 @@ export function LandingTeacherListingCard({
                 ) : null}
                 {neighborhoodHint ? (
                   <p className="mt-1 flex items-center gap-1 truncate text-[11px] font-medium text-[#526056]">
-                    <MapPin size={11} className="shrink-0 text-[#0F6E56]" aria-hidden /> {neighborhoodHint}
+                    <MapPin size={11} className="shrink-0 text-teal-700" aria-hidden /> {neighborhoodHint}
                   </p>
                 ) : null}
                 {distKm != null ? (
@@ -200,7 +200,7 @@ export function LandingTeacherListingCard({
                   </span>
                 ) : null}
               </div>
-              <p className="shrink-0 text-right text-[15px] font-bold tracking-tight text-[#0F6E56]">
+              <p className="shrink-0 text-right text-[15px] font-bold tracking-tight text-teal-700">
                 {formatPrice(Number(teacher.pricePerLesson))}
                 /h
               </p>

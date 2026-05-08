@@ -79,7 +79,7 @@ export function AuthenticatedShell({ children }: { children: React.ReactNode }) 
   if (loading) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3 text-[var(--p-text-muted)]">
-        <Loader2 className="h-9 w-9 animate-spin text-[#1D9E75]" />
+        <Loader2 className="h-9 w-9 animate-spin text-teal-700" />
         <p className="text-sm font-medium">Chargement…</p>
       </div>
     );

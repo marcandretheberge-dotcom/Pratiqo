@@ -42,7 +42,7 @@ const SearchMapView = dynamic(
     ssr: false,
     loading: () => (
       <div className="flex flex-col items-center justify-center gap-2 min-h-[480px] rounded-2xl bg-[#F1EFE8] text-sm text-[#6B6A65]">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#0F6E56] border-t-transparent" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-teal-700 border-t-transparent" />
         <p>Chargement…</p>
       </div>
     ),
@@ -289,7 +289,7 @@ export default function StudentSearchPage() {
                   className={cn(
                     "h-11 rounded-full border px-4 text-sm font-semibold shadow-sm transition-colors",
                     radius === opt.v
-                      ? "border-[#0F6E56] bg-[#0F6E56] text-white"
+                      ? "border-teal-700 bg-teal-700 text-white"
                       : "border-[#DCEAE3] bg-white text-[#2C2C2A] hover:bg-[#FAFCFB]",
                   )}
                 >
@@ -365,7 +365,7 @@ export default function StudentSearchPage() {
                     fontWeight: 500,
                     cursor: "pointer",
                     border: "0.5px solid #D3D1C7",
-                    background: viewMode === "map" ? "#1D9E75" : "white",
+                    background: viewMode === "map" ? "var(--palette-teal-600)" : "white",
                     color: viewMode === "map" ? "white" : "#2C2C2A",
                     transition: "all 0.2s",
                   }}
@@ -400,8 +400,8 @@ export default function StudentSearchPage() {
                 {!mapLoaded ? null : (
                   <>
                     {loadingTeachers ? (
-                      <div className="flex items-center gap-2 text-sm font-semibold text-[#0F6E56]">
-                        <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-[#1D9E75] border-t-transparent" />
+                      <div className="flex items-center gap-2 text-sm font-semibold text-teal-700">
+                        <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-teal-500 border-t-transparent" />
                         {t("loading")}
                       </div>
                     ) : (
@@ -476,7 +476,7 @@ function Chip({ active, onClick, children }: { active: boolean; onClick: () => v
       onClick={onClick}
       className={cn(
         "rounded-full px-4 py-2 text-xs font-bold transition",
-        active ? "bg-white text-[#0F6E56]" : "bg-white/15 text-white hover:bg-white/25",
+        active ? "bg-white text-teal-700" : "bg-white/15 text-white hover:bg-white/25",
       )}
     >
       {children}
@@ -491,7 +491,7 @@ function RadiusPill({ active, onClick, children }: { active: boolean; onClick: (
       onClick={onClick}
       className={cn(
         "rounded-full px-4 py-2 text-xs font-bold transition",
-        active ? "bg-white text-[#0F6E56]" : "bg-white/15 text-white hover:bg-white/25",
+        active ? "bg-white text-teal-700" : "bg-white/15 text-white hover:bg-white/25",
       )}
     >
       {children}
@@ -529,8 +529,8 @@ function TeacherCard({
       className={cn(
         "block w-full rounded-2xl border border-[#E8E6DF] bg-white p-4 text-left shadow-[0_12px_40px_rgba(44,44,42,0.06)]",
         "cursor-pointer transition-all duration-200 ease-out",
-        "hover:-translate-y-1 hover:scale-[1.015] hover:border-[#1D9E75]/30 hover:shadow-xl",
-        "active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1D9E75]/40",
+        "hover:-translate-y-1 hover:scale-[1.015] hover:border-teal-500/30 hover:shadow-xl",
+        "active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/40",
       )}
     >
       <div className="flex items-start justify-between gap-2">
@@ -556,18 +556,18 @@ function TeacherCard({
           {distanceKm != null ? <span className="text-[#D3D1C7]">·</span> : null}
           {distanceKm != null ? <span>{Math.round(distanceKm)}km</span> : null}
         </span>
-        <span className="font-bold text-[#1D9E75]">{formatPrice(Number(teacher.pricePerLesson))}/h</span>
+        <span className="font-bold text-teal-700">{formatPrice(Number(teacher.pricePerLesson))}/h</span>
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
         {availability ? (
-          <span className="inline-flex items-center rounded-full bg-[#E1F5EE] px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-[#085041]">
+          <span className="inline-flex items-center rounded-full bg-teal-50 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-teal-800">
             {availability}
           </span>
         ) : null}
         {String(teacher.profilePlan || "").toLowerCase() === "enterprise" ? (
           <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase text-[#6B6A65]">
-            <Star size={12} className="text-[#1D9E75]" /> {t("sortTrusted")}
+            <Star size={12} className="text-teal-700" /> {t("sortTrusted")}
           </span>
         ) : null}
       </div>

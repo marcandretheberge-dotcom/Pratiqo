@@ -64,7 +64,7 @@ function transferStatusKey(status: string | null | undefined) {
 }
 
 function classStatusPill(kind: "good" | "warn" | "bad" | "muted"): string {
-  if (kind === "good") return "bg-[#E1F5EE] text-[#0F6E56]";
+  if (kind === "good") return "bg-teal-50 text-teal-700";
   if (kind === "warn") return "bg-amber-50 text-amber-800";
   if (kind === "bad") return "bg-rose-50 text-rose-700";
   return "bg-slate-100 text-slate-700";
@@ -207,7 +207,7 @@ export default function TeacherRevenuePage() {
       <div className="mx-auto max-w-6xl space-y-6 pb-10">
         <section className="rounded-3xl border border-[#DCEAE3] bg-white p-6 shadow-sm">
           <div className="flex items-start gap-4">
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#E1F5EE] text-[#0F6E56]">
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-teal-50 text-teal-700">
               <CircleDollarSign size={26} />
             </span>
             <div className="min-w-0">
@@ -247,18 +247,18 @@ export default function TeacherRevenuePage() {
         <section className="rounded-3xl border border-[#DCEAE3] bg-white p-4 shadow-sm">
           {loading ? (
             <div className="flex items-center justify-center gap-3 py-12 text-sm font-semibold text-slate-600">
-              <Loader2 className="h-5 w-5 animate-spin text-[#1D9E75]" />
+              <Loader2 className="h-5 w-5 animate-spin text-teal-700" />
               {t("loading")}
             </div>
           ) : rows.length === 0 ? (
             <div className="py-12 text-center">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#E1F5EE] text-[#0F6E56]">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-teal-50 text-teal-700">
                 <CircleDollarSign size={26} />
               </div>
               <p className="mt-4 text-sm font-semibold text-slate-700">{t("teacherRevenueEmpty")}</p>
               <Link
                 href="/dashboard"
-                className="mt-5 inline-flex min-h-11 items-center justify-center rounded-full bg-[#0F6E56] px-6 text-sm font-bold text-white hover:bg-[#128061]"
+                className="mt-5 inline-flex min-h-11 items-center justify-center rounded-full bg-teal-700 px-6 text-sm font-bold text-white hover:bg-[#128061]"
               >
                 {t("teacherRevenueViewDashboard")}
               </Link>
@@ -298,7 +298,7 @@ export default function TeacherRevenuePage() {
                           <td className="px-3 py-3 text-slate-700">{r.student?.name || "—"}</td>
                           <td className="px-3 py-3 font-bold text-slate-900">{gross}</td>
                           <td className="px-3 py-3 font-semibold text-slate-700">{fee}</td>
-                          <td className="px-3 py-3 font-bold text-[#0F6E56]">{net}</td>
+                          <td className="px-3 py-3 font-bold text-teal-700">{net}</td>
                           <td className="px-3 py-3">
                             <span
                               className={cn(
@@ -347,7 +347,7 @@ export default function TeacherRevenuePage() {
                           <p className="mt-1 text-sm text-slate-600">{r.student?.name || "—"}</p>
                         </div>
                         <div className="text-right">
-                          <p className="text-lg font-bold text-[#0F6E56]">{net}</p>
+                          <p className="text-lg font-bold text-teal-700">{net}</p>
                           <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">{t("teacherRevenueTeacherNet")}</p>
                         </div>
                       </div>
@@ -396,9 +396,9 @@ function SummaryCard({
     <div className="rounded-3xl border border-[#DCEAE3] bg-white p-5 shadow-sm">
       <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500">{title}</p>
       <div className="mt-2 flex items-center justify-between gap-3">
-        <p className={cn("text-2xl font-extrabold", tone === "warn" ? "text-rose-700" : "text-[#0F6E56]")}>{value}</p>
+        <p className={cn("text-2xl font-extrabold", tone === "warn" ? "text-rose-700" : "text-teal-700")}>{value}</p>
         {icon ? (
-          <span className={cn("flex h-10 w-10 items-center justify-center rounded-2xl", tone === "warn" ? "bg-rose-50 text-rose-700" : "bg-[#E1F5EE] text-[#0F6E56]")}>
+          <span className={cn("flex h-10 w-10 items-center justify-center rounded-2xl", tone === "warn" ? "bg-rose-50 text-rose-700" : "bg-teal-50 text-teal-700")}>
             {icon}
           </span>
         ) : null}

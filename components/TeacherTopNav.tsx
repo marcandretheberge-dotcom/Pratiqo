@@ -122,8 +122,8 @@ export function TeacherTopNav({ unreadMessages }: { unreadMessages: number }) {
       "inline-flex h-10 items-center gap-1.5 border-b-2 px-3 text-sm font-semibold transition-colors whitespace-nowrap",
       extra,
       isTeacherNavActive(pathname, href)
-        ? "border-[#0F6E56] text-[#0F6E56]"
-        : "border-transparent text-slate-600 hover:border-slate-200 hover:text-[#0F6E56]",
+        ? "border-teal-500 text-teal-700"
+        : "border-transparent text-slate-600 hover:border-slate-200 hover:text-teal-700",
     );
 
   const moreActive = hasActiveItem(pathname, SECONDARY_NAV) || isTeacherNavActive(pathname, "/teacher/settings");
@@ -156,8 +156,8 @@ export function TeacherTopNav({ unreadMessages }: { unreadMessages: number }) {
               className={cn(
                 "relative inline-flex h-10 w-10 items-center justify-center rounded-full transition-colors",
                 pathname?.startsWith("/messages")
-                  ? "bg-[rgba(29,158,117,0.18)] text-[#0F6E56]"
-                  : "text-[#0F6E56] hover:bg-[rgba(29,158,117,0.12)]",
+                  ? "bg-teal-500/20 text-teal-700"
+                  : "text-teal-700 hover:bg-teal-500/15",
               )}
               aria-label={t("ariaMessages")}
             >
@@ -191,7 +191,7 @@ export function TeacherTopNav({ unreadMessages }: { unreadMessages: number }) {
                 ) : (
                   <div
                     className="flex h-8 w-8 items-center justify-center rounded-full border border-white text-[11px] font-bold text-white shadow-sm"
-                    style={{ backgroundColor: "#1D9E75" }}
+                    style={{ backgroundColor: "var(--palette-teal-500)" }}
                   >
                     {initials}
                   </div>
@@ -270,8 +270,8 @@ export function TeacherTopNav({ unreadMessages }: { unreadMessages: number }) {
               className={cn(
                 "inline-flex h-10 items-center gap-1.5 border-b-2 px-3 text-sm font-semibold transition-colors",
                 moreActive
-                  ? "border-[#0F6E56] text-[#0F6E56]"
-                  : "border-transparent text-slate-600 hover:border-slate-200 hover:text-[#0F6E56]",
+                  ? "border-teal-500 text-teal-700"
+                  : "border-transparent text-slate-600 hover:border-slate-200 hover:text-teal-700",
               )}
               onClick={() => setMoreOpen((open) => !open)}
               aria-expanded={moreOpen}
@@ -295,7 +295,7 @@ export function TeacherTopNav({ unreadMessages }: { unreadMessages: number }) {
                       role="menuitem"
                       className={cn(
                         "flex items-center gap-2 px-4 py-2.5 text-sm font-semibold hover:bg-slate-50",
-                        isTeacherNavActive(pathname, item.href) ? "text-[#0F6E56]" : "text-slate-700",
+                        isTeacherNavActive(pathname, item.href) ? "text-teal-700" : "text-slate-700",
                       )}
                     >
                       <Icon size={16} className="shrink-0 text-slate-500" />

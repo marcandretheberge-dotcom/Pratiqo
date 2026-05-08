@@ -100,7 +100,7 @@ export default function TeacherGroupSessionsPage() {
               setEditing(null);
               setModalOpen(true);
             }}
-            className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-full text-sm font-semibold text-white bg-[#1D9E75] hover:brightness-[0.98] shadow-sm"
+            className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-full text-sm font-semibold text-white bg-teal-600 hover:brightness-[0.98] shadow-sm"
           >
             <Plus size={18} /> Nouvelle séance
           </button>
@@ -116,7 +116,7 @@ export default function TeacherGroupSessionsPage() {
           <p className="text-[var(--p-text-muted)] mt-2">
             Passe à un plan supérieur pour publier des séances et gérer les inscriptions.
           </p>
-          <Link href="/upgrade" className="inline-block mt-3 text-sm font-semibold text-[#1D9E75] hover:underline">
+          <Link href="/upgrade" className="inline-block mt-3 text-sm font-semibold text-teal-700 hover:underline">
             Voir les offres →
           </Link>
         </div>
@@ -131,7 +131,7 @@ export default function TeacherGroupSessionsPage() {
 
       {loading ? (
         <div className="flex justify-center py-20">
-          <Loader2 className="animate-spin text-[#1D9E75]" size={36} />
+          <Loader2 className="animate-spin text-teal-700" size={36} />
         </div>
       ) : (
         <ul className="space-y-4">
@@ -152,7 +152,7 @@ export default function TeacherGroupSessionsPage() {
                       <span
                         className={cn(
                           "text-[10px] font-bold uppercase px-2 py-0.5 rounded-full",
-                          s.status === "open" && "bg-[rgba(29,158,117,0.15)] text-[#0f6e56]",
+                          s.status === "open" && "bg-teal-500/15 text-teal-700",
                           s.status === "full" && "bg-amber-100 text-amber-900",
                           s.status === "cancelled" && "bg-slate-200 text-slate-700",
                         )}
@@ -180,13 +180,13 @@ export default function TeacherGroupSessionsPage() {
                         <div
                           className={cn(
                             "h-full rounded-full transition-all",
-                            pct >= 100 ? "bg-amber-500" : "bg-[#1D9E75]",
+                            pct >= 100 ? "bg-amber-500" : "bg-teal-600",
                           )}
                           style={{ width: `${Math.min(100, pct)}%` }}
                         />
                       </div>
                     </div>
-                    <p className="text-sm font-semibold text-[#1D9E75] mt-3">
+                    <p className="text-sm font-semibold text-teal-700 mt-3">
                       {Number(s.price_per_person).toFixed(0)} $ CAD / pers.
                     </p>
                   </div>
@@ -198,7 +198,7 @@ export default function TeacherGroupSessionsPage() {
                           setEditing(s);
                           setModalOpen(true);
                         }}
-                        className="p-2 rounded-xl border border-[var(--p-border-light)] text-[var(--p-text-muted)] hover:text-[#1D9E75] hover:border-[#1D9E75]/40"
+                        className="p-2 rounded-xl border border-[var(--p-border-light)] text-[var(--p-text-muted)] hover:text-teal-700 hover:border-teal-500/40"
                         title="Modifier"
                       >
                         <Pencil size={18} />
@@ -416,7 +416,7 @@ function SessionModal({
               onClick={() => setMode("person")}
               className={cn(
                 "flex-1 py-2 rounded-xl border text-xs font-bold",
-                mode === "person" ? "border-[#1D9E75] bg-[#E1F5EE] text-[#0f6e56]" : "border-[var(--p-border-light)]",
+                mode === "person" ? "border-teal-500 bg-teal-50 text-teal-700" : "border-[var(--p-border-light)]",
               )}
             >
               En personne
@@ -426,7 +426,7 @@ function SessionModal({
               onClick={() => setMode("online")}
               className={cn(
                 "flex-1 py-2 rounded-xl border text-xs font-bold",
-                mode === "online" ? "border-[#1D9E75] bg-[#E1F5EE] text-[#0f6e56]" : "border-[var(--p-border-light)]",
+                mode === "online" ? "border-teal-500 bg-teal-50 text-teal-700" : "border-[var(--p-border-light)]",
               )}
             >
               En ligne
@@ -444,7 +444,7 @@ function SessionModal({
             </label>
           )}
           <label className="flex items-center gap-2 font-semibold">
-            <input type="checkbox" checked={recurring} onChange={(e) => setRecurring(e.target.checked)} className="rounded accent-[#1D9E75]" />
+            <input type="checkbox" checked={recurring} onChange={(e) => setRecurring(e.target.checked)} className="rounded accent-teal-500" />
             Séance récurrente
           </label>
           {recurring ? (
@@ -464,7 +464,7 @@ function SessionModal({
             type="button"
             disabled={saving}
             onClick={() => void save()}
-            className="w-full h-11 rounded-2xl font-semibold text-white bg-[#1D9E75] hover:brightness-[0.98] disabled:opacity-50"
+            className="w-full h-11 rounded-2xl font-semibold text-white bg-teal-600 hover:brightness-[0.98] disabled:opacity-50"
           >
             {saving ? "Enregistrement…" : "Enregistrer"}
           </button>

@@ -62,7 +62,7 @@ export default function UpgradePage() {
               Pro: étudiants illimités, 5% de commission, 29$/mois.
             </p>
           </div>
-          <span className="inline-flex items-center gap-2 px-4 py-2 rounded-[16px] bg-[rgba(29,158,117,0.12)] text-[#1D9E75] font-medium">
+          <span className="inline-flex items-center gap-2 px-4 py-2 rounded-[16px] bg-teal-500/15 text-teal-700 font-medium">
             <Star size={16} /> Pro
           </span>
         </div>
@@ -78,7 +78,7 @@ export default function UpgradePage() {
             title="Pro"
             price="29$/mois"
             items={["Élèves illimités", "5% de commission", "Support prioritaire (bientôt)"]}
-            accent="bg-[rgba(29,158,117,0.12)] text-[#1D9E75]"
+            accent="bg-teal-500/15 text-teal-700"
           />
         </div>
         <p className="mt-5 text-center text-[12px]" style={{ color: "#6B6A65" }}>
@@ -90,15 +90,15 @@ export default function UpgradePage() {
             type="checkbox"
             checked={legalAccepted}
             onChange={(e) => setLegalAccepted(e.target.checked)}
-            className="mt-1 h-4 w-4 rounded border-slate-300 text-[#1D9E75] focus:ring-[#1D9E75]"
+            className="mt-1 h-4 w-4 rounded border-slate-300 text-teal-700 focus:ring-teal-500"
           />
           <span>
             J&apos;accepte les{" "}
-            <Link href="/legal/cgu" className="text-[#1D9E75] underline font-medium">
+            <Link href="/legal/cgu" className="text-teal-700 underline font-medium">
               CGU
             </Link>{" "}
             et la{" "}
-            <Link href="/legal/confidentialite" className="text-[#1D9E75] underline font-medium">
+            <Link href="/legal/confidentialite" className="text-teal-700 underline font-medium">
               politique de confidentialité
             </Link>
             .
@@ -109,7 +109,7 @@ export default function UpgradePage() {
           <button
             onClick={startUpgrade}
             disabled={loading || !legalAccepted}
-            className="h-11 px-6 rounded-[22px] text-sm font-medium bg-[#1D9E75] text-white hover:brightness-[0.98] disabled:opacity-60"
+            className="h-11 px-6 rounded-[22px] text-sm font-medium bg-teal-600 text-white hover:brightness-[0.98] disabled:opacity-60"
           >
             {loading ? "Redirection…" : "Passer à Pro"}
           </button>
@@ -145,7 +145,7 @@ function PlanCard({
       <div className="mt-4 space-y-2">
         {items.map((x) => (
           <div key={x} className="flex items-center gap-2 text-[13px] text-[var(--p-text-muted)]">
-            <Check size={16} className="text-[#1D9E75]" />
+            <Check size={16} className="text-teal-700" />
             <span>{x}</span>
           </div>
         ))}

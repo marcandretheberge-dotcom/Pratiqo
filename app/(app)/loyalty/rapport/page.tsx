@@ -19,7 +19,7 @@ export default function LoyaltyRapportPage() {
   return (
     <div className="max-w-3xl mx-auto space-y-10">
       <div>
-        <Link href="/loyalty" className="text-sm font-semibold text-[#1D9E75] hover:underline">
+        <Link href="/loyalty" className="text-sm font-semibold text-teal-700 hover:underline">
           ← Fidélité & calculateur
         </Link>
         <h1 className="mt-4 text-3xl font-bold text-[var(--p-text)] tracking-tight">Rapport — programme de ristourne</h1>
@@ -29,7 +29,7 @@ export default function LoyaltyRapportPage() {
       </div>
 
       <section className="rounded-2xl border border-[var(--p-border-light)] bg-white p-6 shadow-sm space-y-4">
-        <h2 className="text-lg font-bold text-[var(--p-text)] border-l-4 border-[#1D9E75] pl-3">
+        <h2 className="text-lg font-bold text-[var(--p-text)] border-l-4 border-teal-500 pl-3">
           Règles de protection financière
         </h2>
         <ul className="text-sm text-[var(--p-text-muted)] space-y-3 list-disc pl-5">
@@ -60,7 +60,7 @@ export default function LoyaltyRapportPage() {
         <p>
           Les montants et pourcentages sont donnés à titre indicatif. Les conditions définitives de versement figurent
           dans les{" "}
-          <Link href="/legal/cgu#ristourne-5bis-6" className="text-[#1D9E75] font-semibold hover:underline">
+          <Link href="/legal/cgu#ristourne-5bis-6" className="text-teal-700 font-semibold hover:underline">
             CGU (section 5bis.6)
           </Link>
           .

@@ -31,14 +31,14 @@ interface PriceDisplayProps {
   priceUSD: number;
   /** Append " /h" suffix. */
   perHour?: boolean;
-  /** Override the primary text colour class (default: text-[#1D9E75]). */
+  /** Override the primary text colour class (default: text-teal-700). */
   primaryClassName?: string;
 }
 
 export function PriceDisplay({
   priceUSD,
   perHour = false,
-  primaryClassName = "font-bold text-[#1D9E75]",
+  primaryClassName = "font-bold text-teal-700",
 }: PriceDisplayProps) {
   const { formatPrice, formatDualPrice } = useLocale();
 

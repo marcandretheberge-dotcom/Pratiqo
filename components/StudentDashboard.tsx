@@ -320,7 +320,7 @@ export function StudentDashboard() {
       {/* NEXT CLASS — hero */}
       <section
         className="rounded-3xl p-5 text-white shadow-[0_24px_80px_rgba(15,110,86,0.22)] sm:p-6"
-        style={{ background: "#0F6E56" }}
+        style={{ background: "var(--palette-teal-700)" }}
       >
         <p className="text-[10px] font-bold uppercase tracking-widest text-white/90">{t("studentNextClass")}</p>
         {loading ? (
@@ -380,7 +380,7 @@ export function StudentDashboard() {
                 <Link
                   href={messagesHrefForTeacherUser(nextLesson.teacherUserId)}
                   className={cn(
-                    "inline-flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-2xl bg-white px-5 text-sm font-semibold text-[#0F6E56] shadow-sm transition hover:bg-white/95",
+                    "inline-flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-2xl bg-white px-5 text-sm font-semibold text-teal-700 shadow-sm transition hover:bg-white/95",
                     "sm:flex-none sm:min-w-[160px]",
                   )}
                 >
@@ -434,7 +434,7 @@ export function StudentDashboard() {
             </p>
             <Link
               href="/student/search"
-              className="inline-flex h-11 min-h-[44px] items-center justify-center rounded-2xl bg-white px-5 text-sm font-bold text-[#0F6E56]"
+              className="inline-flex h-11 min-h-[44px] items-center justify-center rounded-2xl bg-white px-5 text-sm font-bold text-teal-700"
             >
               <Search size={16} className="mr-2" />
               {t("studentFindTeacher")}
@@ -481,7 +481,7 @@ export function StudentDashboard() {
                               />
                             </div>
                           ) : (
-                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#E1F5EE] text-xs font-bold text-[#0F6E56]">
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-teal-50 text-xs font-bold text-teal-700">
                               {(b.teacherName || "?").slice(0, 2).toUpperCase()}
                             </div>
                           )}
@@ -502,7 +502,7 @@ export function StudentDashboard() {
                               </p>
                             ) : null}
                             {b.learnerName ? (
-                              <p className="mt-1 text-xs font-semibold text-[#0F6E56]">
+                              <p className="mt-1 text-xs font-semibold text-teal-700">
                                 {t("studentCourseForLearner")} : {b.learnerName}
                               </p>
                             ) : null}
@@ -510,12 +510,12 @@ export function StudentDashboard() {
                             {String(b.teachingMode || "").toLowerCase() === "online" ? (
                               b.meetingUrl ? (
                                 <div className="mt-2 rounded-xl border border-[#DCEAE3] bg-[#F3FAF6] px-3 py-2 text-xs">
-                                  <p className="font-bold uppercase tracking-widest text-[#0F6E56]">{t("onlineLessonLink")}</p>
+                                  <p className="font-bold uppercase tracking-widest text-teal-700">{t("onlineLessonLink")}</p>
                                   <a
                                     href={b.meetingUrl}
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="mt-1 inline-flex items-center gap-2 font-semibold text-[#0F6E56] hover:underline"
+                                    className="mt-1 inline-flex items-center gap-2 font-semibold text-teal-700 hover:underline"
                                   >
                                     {t("joinCall")}
                                   </a>
@@ -534,7 +534,7 @@ export function StudentDashboard() {
                             <Link
                               href={msgHref}
                               className={cn(
-                                "inline-flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl bg-[#0F6E56] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0c5a47]",
+                                "inline-flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl bg-teal-700 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-800",
                               )}
                             >
                               <MessageSquare size={18} className="shrink-0" />
@@ -543,7 +543,7 @@ export function StudentDashboard() {
                             <button
                               type="button"
                               onClick={() => openRescheduleFor(b.bookingId)}
-                              className="inline-flex min-h-[44px] flex-1 items-center justify-center rounded-xl border border-[#0F6E56]/35 bg-white px-4 text-sm font-semibold text-[#0F6E56] transition hover:bg-[#0F6E56]/[0.06]"
+                              className="inline-flex min-h-[44px] flex-1 items-center justify-center rounded-xl border border-teal-700/35 bg-white px-4 text-sm font-semibold text-teal-700 transition hover:bg-teal-700/[0.06]"
                             >
                               {t("rescheduleClass")}
                             </button>
@@ -558,7 +558,7 @@ export function StudentDashboard() {
                           </button>
                           <Link
                             href="/legal/annulation"
-                            className="text-center text-xs font-medium text-[#0F6E56]/80 underline-offset-4 hover:underline lg:text-left"
+                            className="text-center text-xs font-medium text-teal-700/80 underline-offset-4 hover:underline lg:text-left"
                           >
                             {t("viewCancellationPolicy")}
                           </Link>
@@ -623,7 +623,7 @@ export function StudentDashboard() {
                     href={`/teacher/profile/${x.teacherId}`}
                     className={cn(
                       "inline-flex h-9 items-center gap-2 rounded-full px-4 text-xs font-bold",
-                      "bg-[#1D9E75] text-white hover:brightness-[0.98]",
+                      "bg-teal-600 text-white hover:brightness-[0.98]",
                     )}
                   >
                     <UserRound size={16} />

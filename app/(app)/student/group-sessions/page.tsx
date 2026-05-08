@@ -81,7 +81,7 @@ export default function StudentGroupSessionsPage() {
   if (loading) {
     return (
       <div className="flex justify-center py-24">
-        <Loader2 className="animate-spin text-[#1D9E75]" size={36} />
+        <Loader2 className="animate-spin text-teal-700" size={36} />
       </div>
     );
   }

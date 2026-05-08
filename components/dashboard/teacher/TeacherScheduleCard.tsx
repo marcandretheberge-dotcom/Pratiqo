@@ -130,10 +130,10 @@ export function TeacherScheduleCard({
           <h3 className="text-[11px] font-bold uppercase tracking-widest text-[#526056]">{t(titleKey)}</h3>
           <p className="mt-0.5 text-xs text-[#6B6760]">{t("scheduleCardSubtitle")}</p>
         </div>
-        <Calendar size={18} className="shrink-0 text-[#0F6E56]" aria-hidden />
+        <Calendar size={18} className="shrink-0 text-teal-700" aria-hidden />
       </div>
       {supportFlash ? (
-        <p className="mb-4 rounded-xl border border-[#DCEAE3] bg-[#F3FAF6] px-3 py-2 text-xs font-semibold text-[#0F6E56]">
+        <p className="mb-4 rounded-xl border border-[#DCEAE3] bg-[#F3FAF6] px-3 py-2 text-xs font-semibold text-teal-700">
           {supportFlash}
         </p>
       ) : null}
@@ -143,7 +143,7 @@ export function TeacherScheduleCard({
           <p>{emptyHint}</p>
           <Link
             href="/teacher/schedule"
-            className="mt-4 inline-block text-xs font-semibold text-[#0F6E56] underline-offset-2 hover:underline"
+            className="mt-4 inline-block text-xs font-semibold text-teal-700 underline-offset-2 hover:underline"
           >
             {t("tabAvailability")}
           </Link>
@@ -191,12 +191,12 @@ export function TeacherScheduleCard({
                       width={48}
                       height={48}
                       unoptimized
-                      className="h-12 w-12 shrink-0 rounded-full border border-[#0F6E56]/20 object-cover"
+                      className="h-12 w-12 shrink-0 rounded-full border border-teal-700/20 object-cover"
                     />
                   ) : (
                     <div
                       className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white"
-                      style={{ background: "linear-gradient(135deg,#1D9E75,#0f6e56)" }}
+                      style={{ background: "linear-gradient(135deg,var(--palette-teal-500),var(--palette-teal-700))" }}
                       aria-hidden
                     >
                       {(b.studentName || "?").slice(0, 2).toUpperCase()}
@@ -204,14 +204,14 @@ export function TeacherScheduleCard({
                   )}
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-semibold text-[#2C2C2A]">{b.studentName}</p>
-                    <p className="mt-0.5 text-sm font-medium text-[#0F6E56]">{timeLabel}</p>
+                    <p className="mt-0.5 text-sm font-medium text-teal-700">{timeLabel}</p>
                     {timeZone ? <p className="mt-0.5 text-xs text-[#6B6760]">{t("teacherLocalTime")}</p> : null}
                     <LifecycleBadge state={lifecycle} />
                   </div>
                 </div>
 
                 <div className="mt-4 rounded-2xl border border-[#DCEAE3] bg-[#F3FAF6] p-3 text-xs text-slate-700">
-                  <p className="font-bold uppercase tracking-widest text-[#0F6E56]">{t("teacherLearnerContextTitle")}</p>
+                  <p className="font-bold uppercase tracking-widest text-teal-700">{t("teacherLearnerContextTitle")}</p>
                   {learner ? (
                     <LearnerContextSummary learner={learner} />
                   ) : (
@@ -237,7 +237,7 @@ export function TeacherScheduleCard({
                       disabled={Boolean(cancelBusy) || !canMessage}
                       className={cn(
                         "inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold text-white shadow-sm transition",
-                        "bg-[#0F6E56] hover:bg-[#0c5a47] disabled:cursor-not-allowed disabled:opacity-45",
+                        "bg-teal-700 hover:bg-teal-800 disabled:cursor-not-allowed disabled:opacity-45",
                         "sm:h-11 sm:min-h-0 sm:w-auto sm:flex-1 sm:min-w-[160px] sm:py-0",
                       )}
                     >
@@ -249,7 +249,7 @@ export function TeacherScheduleCard({
                       onClick={() => onOpenReschedule?.(b.id)}
                       disabled={Boolean(cancelBusy)}
                       className={cn(
-                        "inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl border border-[#0F6E56]/35 bg-white px-4 py-3 text-sm font-semibold text-[#0F6E56] transition hover:bg-[#0F6E56]/[0.06] disabled:opacity-50",
+                        "inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl border border-teal-700/35 bg-white px-4 py-3 text-sm font-semibold text-teal-700 transition hover:bg-teal-700/[0.06] disabled:opacity-50",
                         "sm:h-11 sm:min-h-0 sm:w-auto sm:flex-1 sm:min-w-[160px] sm:py-0",
                       )}
                     >
@@ -273,7 +273,7 @@ export function TeacherScheduleCard({
                   <button
                     type="button"
                     onClick={() => router.push(messagesHref)}
-                    className="mt-4 inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-[#0F6E56] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0c5a47] sm:h-11 sm:min-h-0 sm:py-0"
+                    className="mt-4 inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-teal-700 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-800 sm:h-11 sm:min-h-0 sm:py-0"
                   >
                     <MessageCircle className="h-[18px] w-[18px] shrink-0 sm:h-4 sm:w-4" aria-hidden />
                     {t("messageStudent")}
@@ -284,7 +284,7 @@ export function TeacherScheduleCard({
                   <div className="mt-3 flex flex-col gap-2 border-t border-[#F1EFE8] pt-3">
                     <Link
                       href="/legal/annulation"
-                      className="text-xs font-medium text-[#0F6E56]/85 underline-offset-2 hover:underline"
+                      className="text-xs font-medium text-teal-700/85 underline-offset-2 hover:underline"
                     >
                       {t("viewCancellationPolicy")}
                     </Link>
@@ -309,7 +309,7 @@ export function TeacherScheduleCard({
                     >
                       {t("cancelThisClass")}
                     </button>
-                    <Link href="/legal/annulation" className="mt-1 inline-block text-xs font-medium text-[#0F6E56]/80 hover:underline">
+                    <Link href="/legal/annulation" className="mt-1 inline-block text-xs font-medium text-teal-700/80 hover:underline">
                       {t("viewCancellationPolicy")}
                     </Link>
                   </>
@@ -335,7 +335,7 @@ export function TeacherScheduleCard({
                 type="button"
                 disabled={completing}
                 onClick={() => void finishBooking("held")}
-                className="h-11 rounded-xl bg-[#0F6E56] px-4 text-sm font-semibold text-white disabled:opacity-60"
+                className="h-11 rounded-xl bg-teal-700 px-4 text-sm font-semibold text-white disabled:opacity-60"
               >
                 {completing ? t("saving") : t("bookingCompletionHeld")}
               </button>
@@ -526,7 +526,7 @@ function LifecycleBadge({ state }: { state: BookingLifecycleState }) {
     <span
       className={cn(
         "mt-2 inline-flex rounded-full px-2.5 py-1 text-[11px] font-bold",
-        state === "ready" ? "bg-[#E1F5EE] text-[#0F6E56]" : "",
+        state === "ready" ? "bg-teal-50 text-teal-700" : "",
         state === "needs_review" ? "bg-amber-100 text-amber-800" : "",
         state === "completed" ? "bg-slate-100 text-slate-600" : "",
         state === "upcoming" ? "bg-slate-100 text-slate-700" : "",
@@ -577,7 +577,7 @@ function ContextualBookingAction({
           type="button"
           disabled={disabled}
           onClick={onAddMeetingLink}
-          className="mt-4 inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-[#0F6E56] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0c5a47] disabled:opacity-50"
+          className="mt-4 inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-teal-700 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-800 disabled:opacity-50"
         >
           <Video className="h-4 w-4" aria-hidden />
           {t("addVideoLink")}
@@ -589,7 +589,7 @@ function ContextualBookingAction({
         href={meetingUrl}
         target="_blank"
         rel="noreferrer"
-        className="mt-4 inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-[#0F6E56] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0c5a47]"
+        className="mt-4 inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-teal-700 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-800"
       >
         <Video className="h-4 w-4" aria-hidden />
         {t("joinCall")}
@@ -605,7 +605,7 @@ function ContextualBookingAction({
           type="button"
           disabled={disabled}
           onClick={() => window.alert(t("lessonAddressPending"))}
-          className="mt-4 inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-[#0F6E56] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0c5a47] disabled:opacity-50"
+          className="mt-4 inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-teal-700 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-800 disabled:opacity-50"
         >
           <MapPin className="h-4 w-4" aria-hidden />
           {t("routeToLesson")}
@@ -617,7 +617,7 @@ function ContextualBookingAction({
         href={mapUrl}
         target="_blank"
         rel="noreferrer"
-        className="mt-4 inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-[#0F6E56] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0c5a47]"
+        className="mt-4 inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-teal-700 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-800"
       >
         <MapPin className="h-4 w-4" aria-hidden />
         {t("routeToLesson")}
@@ -630,7 +630,7 @@ function ContextualBookingAction({
     <button
       type="button"
       onClick={() => window.alert(t("bookingArrivalReady"))}
-      className="mt-4 inline-flex min-h-[44px] w-full items-center justify-center rounded-xl bg-[#0F6E56] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0c5a47]"
+      className="mt-4 inline-flex min-h-[44px] w-full items-center justify-center rounded-xl bg-teal-700 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-800"
     >
       {t("bookingStart")}
     </button>

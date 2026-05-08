@@ -587,7 +587,7 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
             {photoUrl ? (
               <img src={photoUrl} alt="" className="h-20 w-20 rounded-full object-cover border-2 border-[#00694c]/30" />
             ) : (
-              <div className="h-20 w-20 rounded-full bg-[#1D9E75] text-white flex items-center justify-center text-lg font-bold border-2 border-white shadow">
+              <div className="h-20 w-20 rounded-full bg-teal-600 text-white flex items-center justify-center text-lg font-bold border-2 border-white shadow">
                 {initials}
               </div>
             )}
@@ -697,7 +697,7 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
           {/* Conversion tip */}
           <div className="flex items-start gap-2 rounded-xl border border-[rgba(0,105,76,0.25)] bg-[rgba(0,105,76,0.05)] px-3 py-2.5">
             <Info size={14} className="text-[#00694c] shrink-0 mt-0.5" aria-hidden />
-            <p className="text-[11px] text-[#0f6e56] leading-relaxed">
+            <p className="text-[11px] text-teal-700 leading-relaxed">
               {t("videoHelperText")}
             </p>
           </div>
@@ -788,7 +788,7 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
                 "w-full py-3 rounded-xl border-2 border-dashed text-sm font-semibold",
                 maxDisciplinesReached
                   ? "border-slate-200 text-slate-400 bg-slate-50"
-                  : "border-[#00694c]/40 text-[#0f6e56] hover:bg-[#e1f5ee]/50",
+                  : "border-[#00694c]/40 text-teal-700 hover:bg-teal-50/50",
               )}
             >
               {t("addDiscipline")}
@@ -821,7 +821,7 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
                 onClick={() => toggleFormat(keys[i])}
                 className={cn(
                   "h-10 px-4 rounded-full text-sm font-semibold border",
-                  on ? "border-[#00694c] bg-[rgba(0,105,76,0.12)] text-[#0f6e56]" : "border-slate-200 bg-slate-100 text-slate-600",
+                  on ? "border-[#00694c] bg-[rgba(0,105,76,0.12)] text-teal-700" : "border-slate-200 bg-slate-100 text-slate-600",
                 )}
               >
                 {t(labelKey)}

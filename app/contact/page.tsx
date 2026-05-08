@@ -26,7 +26,7 @@ export default function ContactPage() {
           </p>
           <a
             href="mailto:support@pratiqo.ca"
-            className="inline-flex items-center text-[#0F6E56] font-semibold hover:underline"
+            className="inline-flex items-center text-teal-700 font-semibold hover:underline"
           >
             support@pratiqo.ca →
           </a>
@@ -41,7 +41,7 @@ export default function ContactPage() {
           </p>
           <a
             href="mailto:info@pratiqo.ca"
-            className="inline-flex items-center text-[#0F6E56] font-semibold hover:underline"
+            className="inline-flex items-center text-teal-700 font-semibold hover:underline"
           >
             info@pratiqo.ca →
           </a>
@@ -59,7 +59,7 @@ export default function ContactPage() {
       </div>
 
       <div className="mt-10 pt-6 border-t border-[var(--p-border-light)]">
-        <Link href="/" className="text-sm text-[var(--p-text-muted)] hover:text-[#1D9E75] transition-colors">
+        <Link href="/" className="text-sm text-[var(--p-text-muted)] hover:text-teal-700 transition-colors">
           ← Retour à l&apos;accueil
         </Link>
       </div>

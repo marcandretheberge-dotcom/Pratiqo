@@ -176,7 +176,7 @@ export default function StudentProgressPage() {
               <p className="text-sm font-semibold text-slate-900">{stageName}</p>
               <p className="text-xs text-slate-600">{companionName}</p>
               <div className="mt-2 h-1 overflow-hidden rounded-full bg-slate-100">
-                <div className="h-full rounded-full bg-[#1D9E75]" style={{ width: `${percent}%` }} />
+                <div className="h-full rounded-full bg-teal-600" style={{ width: `${percent}%` }} />
               </div>
               <p className="mt-1.5 text-[11px] text-slate-600">
                 {remaining > 0 ? `${remaining} ${t("companionMoreLessons")}` : t("companionMaxLevel")}
@@ -187,7 +187,7 @@ export default function StudentProgressPage() {
         ) : (
           <Link
             href="/student/choose-companion"
-            className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-dashed border-slate-200 px-3 py-3 text-sm font-medium text-[#0F6E56] hover:bg-slate-50"
+            className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-dashed border-slate-200 px-3 py-3 text-sm font-medium text-teal-700 hover:bg-slate-50"
           >
             {t("companionNoCompanion")}
             <ChevronRight size={18} />
@@ -271,7 +271,7 @@ function HomeworkRow({
         <span
           className={
             submitted
-              ? "flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-[#1D9E75] text-white"
+              ? "flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-teal-600 text-white"
               : "h-6 w-6 shrink-0 rounded-lg border border-slate-200 bg-white"
           }
           aria-hidden
@@ -290,7 +290,7 @@ function HomeworkRow({
             <span
               className={cn(
                 "mt-0.5 block text-xs font-medium",
-                submitted ? "text-[#0F6E56]" : dueSoon ? "font-semibold text-amber-700" : "text-slate-600",
+                submitted ? "text-teal-700" : dueSoon ? "font-semibold text-amber-700" : "text-slate-600",
               )}
             >
               {secondary}

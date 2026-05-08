@@ -140,8 +140,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   className={cn(
                     "relative inline-flex h-10 w-10 items-center justify-center rounded-full transition-colors",
                     pathname?.startsWith("/messages")
-                      ? "bg-[rgba(29,158,117,0.18)] text-[#0f6d52]"
-                      : "text-[#0F6E56] hover:bg-[rgba(29,158,117,0.12)]",
+                      ? "bg-teal-500/20 text-teal-700"
+                      : "text-teal-700 hover:bg-teal-500/15",
                   )}
                   aria-label={t("ariaMessages")}
                 >
@@ -157,7 +157,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 </div>
                 <Link
                   href="/profile"
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#E1F5EE] text-xs font-bold text-[#085041]"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-teal-50 text-xs font-bold text-teal-800"
                   aria-label={t("studentTabProfile")}
                 >
                   {studentInitials}
@@ -181,8 +181,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       padding: "10px 16px",
                       fontSize: 13,
                       fontWeight: active ? 500 : 400,
-                      color: active ? "#0F6E56" : "#4B5563",
-                      borderBottom: active ? "2px solid #0F6E56" : "2px solid transparent",
+                      color: active ? "var(--palette-teal-700)" : "#4B5563",
+                      borderBottom: active ? "2px solid var(--palette-teal-500)" : "2px solid transparent",
                       textDecoration: "none",
                       whiteSpace: "nowrap",
                       transition: "all 0.15s",
@@ -213,8 +213,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 className={cn(
                   "relative inline-flex h-9 w-9 items-center justify-center rounded-full transition-colors",
                   pathname?.startsWith("/messages")
-                    ? "bg-[rgba(29,158,117,0.18)] text-[#0f6d52]"
-                    : "text-[#0F6E56] hover:bg-[rgba(29,158,117,0.12)]",
+                    ? "bg-teal-500/20 text-teal-700"
+                    : "text-teal-700 hover:bg-teal-500/15",
                 )}
                 aria-label={t("ariaMessages")}
               >
@@ -308,7 +308,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <div
                   style={{
                     fontSize: 10,
-                    color: active ? "#0F6E56" : "#4B5563",
+                    color: active ? "var(--palette-teal-700)" : "#4B5563",
                     fontWeight: active ? 500 : 400,
                     marginTop: 2,
                   }}

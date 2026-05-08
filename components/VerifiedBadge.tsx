@@ -30,11 +30,11 @@ export function VerifiedBadge({ verified, size = "md", className }: VerifiedBadg
         title="Identité vérifiée"
         aria-label="Identité vérifiée"
         className={cn(
-          "inline-flex items-center justify-center h-5 w-5 rounded-full bg-[#E1F5EE] border border-[#1D9E75]/30",
+          "inline-flex items-center justify-center h-5 w-5 rounded-full bg-teal-50 border border-teal-500/30",
           className,
         )}
       >
-        <ShieldCheck size={11} className="text-[#1D9E75]" strokeWidth={2.5} aria-hidden />
+        <ShieldCheck size={11} className="text-teal-700" strokeWidth={2.5} aria-hidden />
       </span>
     );
   }
@@ -44,7 +44,7 @@ export function VerifiedBadge({ verified, size = "md", className }: VerifiedBadg
       title="Identité vérifiée par Pratiqo"
       aria-label="Identité vérifiée"
       className={cn(
-        "inline-flex items-center gap-1 rounded-full border border-[#1D9E75]/30 bg-[#E1F5EE] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#0F6E56] shrink-0",
+        "inline-flex items-center gap-1 rounded-full border border-teal-500/30 bg-teal-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-teal-700 shrink-0",
         className,
       )}
     >

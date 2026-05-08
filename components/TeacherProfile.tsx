@@ -60,7 +60,7 @@ type ReviewRow = {
 type ReportStatus = "idle" | "submitting" | "success" | "already" | "error";
 
 function TrustItemIcon({ item }: { item: TeacherTrustItem }) {
-  const iconClass = item.status === "pending" ? "text-amber-600" : item.status === "provided" ? "text-slate-600" : "text-[#0F6E56]";
+  const iconClass = item.status === "pending" ? "text-amber-600" : item.status === "provided" ? "text-slate-600" : "text-teal-700";
   if (item.status === "pending") return <Hourglass size={15} className={iconClass} />;
   if (item.icon === "mail") return <MailCheck size={15} className={iconClass} />;
   if (item.icon === "map") return <MapPinned size={15} className={iconClass} />;
@@ -524,19 +524,19 @@ export function TeacherProfile({
                     category={teacher.category}
                     imageUrl={teacher.imageUrl}
                     size={96}
-                    ringClassName="border-2 border-white shadow-lg ring-2 ring-[rgba(29,158,117,0.25)]"
+                    ringClassName="border-2 border-white shadow-lg ring-2 ring-teal-500/25"
                   />
 
                   <div className="flex-1 min-w-0 pt-1">
                     <div className="flex flex-wrap items-center gap-1.5 mb-1">
-                      <span className="px-2.5 py-0.5 bg-[#0F6E56] text-white text-[9px] font-bold uppercase tracking-widest rounded-full">
+                      <span className="px-2.5 py-0.5 bg-teal-700 text-white text-[9px] font-bold uppercase tracking-widest rounded-full">
                         {teacher.category}
                       </span>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
                       <h2 id="teacher-profile-modal-title" className="text-xl lg:text-2xl font-bold text-slate-900 leading-tight">{teacher.name}</h2>
                       {publicTrustBadgeKey ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-[#E1F5EE] text-[#0F6E56] px-2.5 py-0.5 text-xs font-semibold">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-teal-50 text-teal-700 px-2.5 py-0.5 text-xs font-semibold">
                           <Shield size={11} /> {t(publicTrustBadgeKey)}
                         </span>
                       ) : null}
@@ -552,7 +552,7 @@ export function TeacherProfile({
                               b.strength === "official"
                                 ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
                                 : b.strength === "strong"
-                                  ? "bg-[#E1F5EE] text-[#0F6E56] border border-[#DCEAE3]"
+                                  ? "bg-teal-50 text-teal-700 border border-[#DCEAE3]"
                                   : "bg-slate-100 text-slate-700 border border-slate-200",
                             )}
                           >
@@ -570,7 +570,7 @@ export function TeacherProfile({
                       </div>
                     </div>
                     <p className="text-xs text-slate-600 flex items-center gap-1.5 mt-1.5">
-                      <MapPin size={11} className="text-[#1D9E75] shrink-0" />
+                      <MapPin size={11} className="text-teal-700 shrink-0" />
                       {displayDistanceKm !== null ? `${displayDistanceKm.toFixed(1)} km · ` : ""}
                       {["both", "all"].includes(teacher.teachingMode)
                         ? t("modeHybrid")
@@ -587,7 +587,7 @@ export function TeacherProfile({
                     {disciplineChips.map((text, i) => (
                       <span
                         key={`${text}-${i}`}
-                        className="inline-flex items-center rounded-full border border-[rgba(29,158,117,0.35)] bg-[rgba(29,158,117,0.1)] px-3 py-1 text-xs font-semibold text-[#0f6d52]"
+                        className="inline-flex items-center rounded-full border border-teal-500/35 bg-teal-500/10 px-3 py-1 text-xs font-semibold text-teal-700"
                       >
                         {text}
                       </span>
@@ -635,7 +635,7 @@ export function TeacherProfile({
                       {teachingModes.map((m) => (
                         <div
                           key={String(m.label)}
-                          className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-[rgba(29,158,117,0.3)] bg-[rgba(29,158,117,0.06)] text-[#0f6e56] text-xs font-semibold"
+                          className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-teal-500/30 bg-teal-500/10 text-teal-700 text-xs font-semibold"
                         >
                           {m.icon}
                           {m.label}
@@ -684,8 +684,8 @@ export function TeacherProfile({
                               <p className="text-xs italic text-slate-700 leading-relaxed">{review.body}</p>
                             ) : null}
                             {review.teacher_reply ? (
-                              <div className="mt-3 rounded-xl border border-[#1D9E75]/20 bg-[#E1F5EE]/70 px-3 py-2">
-                                <p className="text-[10px] font-bold uppercase tracking-widest text-[#0F6E56]">
+                              <div className="mt-3 rounded-xl border border-teal-500/20 bg-teal-50/70 px-3 py-2">
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-teal-700">
                                   Reponse du professeur
                                 </p>
                                 <p className="mt-1 text-xs leading-relaxed text-slate-700">{review.teacher_reply}</p>
@@ -702,7 +702,7 @@ export function TeacherProfile({
                                   }}
                                   rows={2}
                                   placeholder="Repondre publiquement a cet avis..."
-                                  className="w-full resize-none rounded-xl border border-slate-200/90 bg-white px-3 py-2 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-[#1D9E75]"
+                                  className="w-full resize-none rounded-xl border border-slate-200/90 bg-white px-3 py-2 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-teal-500"
                                 />
                                 {replyErrorId === review.id ? (
                                   <p className="text-[11px] text-rose-600">La reponse n&apos;a pas pu etre enregistree.</p>
@@ -716,7 +716,7 @@ export function TeacherProfile({
                                       !(replyDrafts[review.id] ?? "").trim() ||
                                       (replyDrafts[review.id] ?? "").trim() === (review.teacher_reply ?? "").trim()
                                     }
-                                    className="min-h-[32px] rounded-xl bg-[#0F6E56] px-3 text-[11px] font-semibold text-white transition-all disabled:cursor-not-allowed disabled:opacity-50"
+                                    className="min-h-[32px] rounded-xl bg-teal-700 px-3 text-[11px] font-semibold text-white transition-all disabled:cursor-not-allowed disabled:opacity-50"
                                   >
                                     {replySavingId === review.id
                                       ? "..."
@@ -759,7 +759,7 @@ export function TeacherProfile({
                         <span className="text-sm font-normal text-slate-600 ml-1">/ heure</span>
                       </p>
                       <p className="text-xs text-slate-600 mt-0.5">{standardLabel}</p>
-                      <p className="mt-2 text-[11px] font-semibold text-[#0F6E56]">
+                      <p className="mt-2 text-[11px] font-semibold text-teal-700">
                         {t("bookingNoHiddenFees").replace("{price}", formatPrice(Number(teacher.pricePerLesson)))}
                       </p>
                     </div>
@@ -783,7 +783,7 @@ export function TeacherProfile({
                           return (
                             <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
                               <span className="font-semibold text-slate-700">
-                                {t("introSessionPrice")} : <span className="font-extrabold text-[#0F6E56]">{formatPrice(cents / 100)}</span>
+                                {t("introSessionPrice")} : <span className="font-extrabold text-teal-700">{formatPrice(cents / 100)}</span>
                               </span>
                               <span className="font-semibold text-slate-600">
                                 {t("regularLesson")} : {formatPrice(Number(teacher.pricePerLesson))}/h
@@ -798,7 +798,7 @@ export function TeacherProfile({
                       type="button"
                       onClick={() => onBook("standard")}
                       className="w-full h-11 rounded-2xl text-white text-sm font-semibold shadow-sm hover:opacity-95 transition-opacity flex items-center justify-center gap-2"
-                      style={{ backgroundColor: "#0F6E56" }}
+                      style={{ backgroundColor: "var(--palette-teal-700)" }}
                     >
                       {t("bookNow")}
                       <ChevronRight size={15} />
@@ -809,7 +809,7 @@ export function TeacherProfile({
                         <div className="w-full rounded-xl border border-slate-200 bg-slate-50/80 p-3 text-left text-sm">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-1.5 font-semibold text-slate-700 text-xs">
-                              <Home size={13} className="text-[#1D9E75]" />
+                              <Home size={13} className="text-teal-700" />
                               À domicile
                             </div>
                             <span className="font-bold text-sm text-slate-900">
@@ -818,7 +818,7 @@ export function TeacherProfile({
                             </span>
                           </div>
                           <div className="mt-2 flex flex-wrap gap-1">
-                            <span className="rounded-full bg-[rgba(29,158,117,0.12)] px-2 py-0.5 text-[9px] font-bold uppercase text-[#0f6e56]">
+                            <span className="rounded-full bg-teal-500/15 px-2 py-0.5 text-[9px] font-bold uppercase text-teal-700">
                               Rayon {radiusKm} km
                             </span>
                             {teacher.homeLessonRequiresConfirmation ? (
@@ -844,12 +844,12 @@ export function TeacherProfile({
                             "w-full rounded-xl border p-3 text-left text-sm transition-all",
                             homeDisabled
                               ? "cursor-not-allowed border-slate-100 bg-slate-50 opacity-60"
-                              : "border-slate-200 bg-slate-50/80 hover:border-[#1D9E75] hover:bg-[rgba(29,158,117,0.04)]",
+                              : "border-slate-200 bg-slate-50/80 hover:border-teal-500 hover:bg-teal-500/10",
                           )}
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-1.5 font-semibold text-slate-700 text-xs">
-                              <Home size={13} className={homeDisabled ? "text-slate-300" : "text-[#1D9E75]"} />
+                              <Home size={13} className={homeDisabled ? "text-slate-300" : "text-teal-700"} />
                               À domicile
                             </div>
                             <span className="font-bold text-sm text-slate-900">
@@ -858,7 +858,7 @@ export function TeacherProfile({
                             </span>
                           </div>
                           <div className="mt-2 flex flex-wrap gap-1">
-                            <span className="rounded-full bg-[rgba(29,158,117,0.12)] px-2 py-0.5 text-[9px] font-bold uppercase text-[#0f6e56]">
+                            <span className="rounded-full bg-teal-500/15 px-2 py-0.5 text-[9px] font-bold uppercase text-teal-700">
                               Rayon {radiusKm} km
                             </span>
                             {teacher.homeLessonRequiresConfirmation ? (
@@ -894,7 +894,7 @@ export function TeacherProfile({
                                 ? "bg-amber-50"
                                 : item.status === "provided"
                                   ? "bg-slate-100"
-                                  : "bg-[#E1F5EE]",
+                                  : "bg-teal-50",
                             )}
                           >
                             <TrustItemIcon item={item} />
@@ -914,7 +914,7 @@ export function TeacherProfile({
                       <button
                         type="button"
                         onClick={handleMessage}
-                        className="w-full py-3 rounded-2xl text-sm font-bold border-2 border-[#1D9E75] text-[#0f6e56] bg-[#E1F5EE] hover:bg-[rgba(29,158,117,0.18)] transition-colors flex items-center justify-center gap-2"
+                        className="w-full py-3 rounded-2xl text-sm font-bold border-2 border-teal-500 text-teal-700 bg-teal-50 hover:bg-teal-500/20 transition-colors flex items-center justify-center gap-2"
                       >
                         <MessageSquare size={15} />
                         Envoyer un message
@@ -942,7 +942,7 @@ export function TeacherProfile({
             type="button"
             onClick={() => onBook("standard")}
             className="w-full h-11 rounded-2xl text-white text-sm font-semibold flex items-center justify-center gap-2 shadow-sm hover:opacity-95 transition-opacity"
-            style={{ backgroundColor: "#0F6E56" }}
+            style={{ backgroundColor: "var(--palette-teal-700)" }}
           >
             Réserver — {formatPrice(Number(teacher.pricePerLesson))}/h
           </button>
@@ -957,7 +957,7 @@ export function TeacherProfile({
             <h3 className="text-sm font-bold text-slate-900">{t("reviewReportTitle")}</h3>
 
             {reportStatus === "success" ? (
-              <p className="text-sm font-semibold text-[#0F6E56]">{t("reviewReportSuccess")}</p>
+              <p className="text-sm font-semibold text-teal-700">{t("reviewReportSuccess")}</p>
             ) : (
               <>
                 <fieldset className="space-y-2">
@@ -977,7 +977,7 @@ export function TeacherProfile({
                         value={value}
                         checked={reportReason === value}
                         onChange={() => setReportReason(value)}
-                        className="accent-[#0F6E56]"
+                        className="accent-teal-700"
                       />
                       <span className="text-sm text-slate-700">{label}</span>
                     </label>
@@ -993,7 +993,7 @@ export function TeacherProfile({
                     onChange={(e) => setReportDetails(e.target.value.slice(0, 500))}
                     rows={2}
                     placeholder="…"
-                    className="w-full resize-none rounded-xl border border-slate-200/90 bg-white px-3 py-2 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-[#1D9E75]"
+                    className="w-full resize-none rounded-xl border border-slate-200/90 bg-white px-3 py-2 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-teal-500"
                   />
                 </div>
 
@@ -1009,7 +1009,7 @@ export function TeacherProfile({
                     onClick={() => void submitReport()}
                     disabled={!reportReason || reportStatus === "submitting"}
                     className={cn(
-                      "flex-1 min-h-[36px] rounded-xl bg-[#0F6E56] text-xs font-semibold text-white transition-all",
+                      "flex-1 min-h-[36px] rounded-xl bg-teal-700 text-xs font-semibold text-white transition-all",
                       (!reportReason || reportStatus === "submitting") && "opacity-50 cursor-not-allowed",
                     )}
                   >

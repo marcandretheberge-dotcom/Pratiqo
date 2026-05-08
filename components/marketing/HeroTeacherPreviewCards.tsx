@@ -88,8 +88,8 @@ export function HeroTeacherPreviewCards({
               className={cn(
                 "group absolute left-0 right-0 px-1 text-left transition-all duration-200 ease-out hover:z-40",
                 "cursor-pointer hover:-translate-y-1 hover:scale-[1.015] active:scale-[0.99]",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1D9E75]/40",
-                "hover:[&_article]:border-[#1D9E75]/30 hover:[&_article]:shadow-xl",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/40",
+                "hover:[&_article]:border-teal-500/30 hover:[&_article]:shadow-xl",
                 rotations[idx % 3],
               )}
               style={{
@@ -116,7 +116,7 @@ export function HeroTeacherPreviewCards({
                   ) : (
                     <div
                       className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-2xl text-sm font-bold text-white shadow-inner"
-                      style={{ background: "linear-gradient(135deg,#1D9E75,#0f6e56)" }}
+                      style={{ background: "linear-gradient(135deg,var(--palette-teal-500),var(--palette-teal-700))" }}
                     >
                       {initials(teacher.name)}
                     </div>
@@ -132,7 +132,7 @@ export function HeroTeacherPreviewCards({
                         <Star size={11} className="fill-amber-400 text-amber-400" aria-hidden /> {teacher.rating}
                         <span className="font-medium text-[#6B6760]">({teacher.reviews})</span>
                       </span>
-                      <span className="text-[11px] font-bold text-[#0F6E56]">
+                      <span className="text-[11px] font-bold text-teal-700">
                         {formatPrice(Number(teacher.pricePerLesson))}/h
                       </span>
                     </div>

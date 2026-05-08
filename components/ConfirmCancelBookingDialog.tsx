@@ -149,7 +149,7 @@ export function ConfirmCancelBookingDialog({
             disabled={busy}
             required={reasonRequired}
             className={cn(
-              "mt-1 w-full rounded-2xl border border-[var(--p-border-light)] bg-[#fafaf8] px-3 py-2 text-sm outline-none focus:border-[#1D9E75]",
+              "mt-1 w-full rounded-2xl border border-[var(--p-border-light)] bg-[#fafaf8] px-3 py-2 text-sm outline-none focus:border-teal-500",
               "min-h-[44px]",
             )}
           >
@@ -173,7 +173,7 @@ export function ConfirmCancelBookingDialog({
             maxLength={2000}
             placeholder={t("cancellationMessagePlaceholder")}
             className={cn(
-              "mt-1 w-full resize-y rounded-2xl border border-[var(--p-border-light)] bg-[#fafaf8] px-3 py-2 text-sm outline-none focus:border-[#1D9E75]",
+              "mt-1 w-full resize-y rounded-2xl border border-[var(--p-border-light)] bg-[#fafaf8] px-3 py-2 text-sm outline-none focus:border-teal-500",
               "min-h-[88px]",
             )}
           />
@@ -203,7 +203,7 @@ export function ConfirmCancelBookingDialog({
         <p className="mt-4 border-t border-[var(--p-border-light)] pt-3 text-center">
           <Link
             href="/legal/annulation"
-            className="text-xs font-semibold text-[#1D9E75] hover:underline"
+            className="text-xs font-semibold text-teal-700 hover:underline"
             onClick={() => (!busy ? onClose() : null)}
           >
             {t("viewCancellationPolicy")}

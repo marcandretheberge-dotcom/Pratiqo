@@ -208,7 +208,7 @@ export function RescheduleModal({
             <button
               type="button"
               onClick={onClose}
-              className="w-full rounded-2xl bg-[#0F6E56] py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0c5a47]"
+              className="w-full rounded-2xl bg-teal-700 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-800"
             >
               Fermer
             </button>
@@ -221,7 +221,7 @@ export function RescheduleModal({
             <button
               type="button"
               onClick={onClose}
-              className="w-full rounded-2xl bg-[#0F6E56] py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0c5a47]"
+              className="w-full rounded-2xl bg-teal-700 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-800"
             >
               Fermer
             </button>
@@ -233,7 +233,7 @@ export function RescheduleModal({
               <span className="font-semibold text-slate-900">{booking.otherPartyName}</span>
             </p>
             <div className="flex gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-[13px] text-emerald-900">
-              <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-[#1D9E75]" aria-hidden />
+              <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-teal-700" aria-hidden />
               <p>Vous êtes à plus de 24h du cours.</p>
             </div>
             <div className="space-y-3 rounded-2xl border border-slate-200/80 bg-slate-50/60 p-4">
@@ -261,7 +261,7 @@ export function RescheduleModal({
               <button
                 type="button"
                 onClick={() => void handleSendMessage()}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#0F6E56] py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0c5a47]"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-teal-700 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-800"
               >
                 <MessageSquare className="h-4 w-4 shrink-0" aria-hidden />
                 💬 Envoyer un message
@@ -288,11 +288,11 @@ export function RescheduleModal({
             <p className="text-[13px] leading-relaxed">
               Selon notre politique, l&apos;annulation à ce stade ne donne pas droit au remboursement automatique.
             </p>
-            <div className="space-y-3 rounded-2xl border-2 border-[#1D9E75]/40 bg-emerald-50/50 p-4">
+            <div className="space-y-3 rounded-2xl border-2 border-teal-500/40 bg-emerald-50/50 p-4">
               <p className="text-[13px] font-semibold leading-relaxed text-slate-900">
                 Solution recommandée : envoyez un message à {booking.otherPartyName}. Si vous vous entendez sur un
                 nouveau créneau, contactez ensuite{" "}
-                <a href="mailto:support@pratiqo.ca" className="text-[#1D9E75] underline font-medium">
+                <a href="mailto:support@pratiqo.ca" className="text-teal-700 underline font-medium">
                   support@pratiqo.ca
                 </a>{" "}
                 avec la date confirmée pour qu&apos;on mette votre réservation à jour.
@@ -300,7 +300,7 @@ export function RescheduleModal({
               <button
                 type="button"
                 onClick={() => void handleSendMessage()}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#0F6E56] py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0c5a47]"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-teal-700 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-800"
               >
                 <MessageSquare className="h-4 w-4 shrink-0" aria-hidden />
                 💬 Envoyer un message à {booking.otherPartyName}

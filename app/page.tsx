@@ -53,7 +53,7 @@ const SearchMapView = dynamic(
     ssr: false,
     loading: () => (
       <div className="flex flex-col items-center justify-center gap-2 h-[480px] rounded-2xl bg-[#F1EFE8] text-sm text-[#6B6A65]">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#0F6E56] border-t-transparent" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-teal-700 border-t-transparent" />
         <p>Chargement…</p>
       </div>
     ),
@@ -348,11 +348,11 @@ export default function LandingPage() {
           <LocaleSwitcher />
           <Link
             href="/devenir-enseignant"
-            className="hidden sm:inline-flex items-center rounded-xl border border-[#0F6E56] px-3 py-1.5 text-xs font-semibold text-[#0F6E56] hover:bg-[#0F6E56]/8 transition-colors"
+            className="hidden sm:inline-flex items-center rounded-xl border border-teal-700 px-3 py-1.5 text-xs font-semibold text-teal-700 hover:bg-teal-700/8 transition-colors"
           >
             {t("becomeTeacher")}
           </Link>
-          <Link href="/login" className="text-sm text-[#0F6E56] font-medium hover:underline">
+          <Link href="/login" className="text-sm text-teal-700 font-medium hover:underline">
             {t("signIn")}
           </Link>
         </div>
@@ -416,8 +416,8 @@ export default function LandingPage() {
                             className={cn(
                               "inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-semibold transition-colors",
                               active
-                                ? "border-[#0F6E56] bg-[#0F6E56] text-white shadow-sm"
-                                : "border-[#E0DED5] bg-white text-[#2C2C2A] hover:border-[#0F6E56]/35 hover:bg-[#F9F8F5]",
+                                ? "border-teal-700 bg-teal-700 text-white shadow-sm"
+                                : "border-[#E0DED5] bg-white text-[#2C2C2A] hover:border-teal-700/35 hover:bg-[#F9F8F5]",
                             )}
                           >
                             {Icon ? <Icon size={15} aria-hidden strokeWidth={2.25} /> : null}
@@ -428,7 +428,7 @@ export default function LandingPage() {
                       {isEnabled("group_sessions") ? (
                         <Link
                           href="/group-sessions"
-                          className="inline-flex items-center rounded-full border border-[#E0DED5] bg-white px-4 py-2 text-xs font-semibold text-[#2C2C2A] transition-colors hover:border-[#0F6E56]/35 hover:bg-[#F9F8F5]"
+                          className="inline-flex items-center rounded-full border border-[#E0DED5] bg-white px-4 py-2 text-xs font-semibold text-[#2C2C2A] transition-colors hover:border-teal-700/35 hover:bg-[#F9F8F5]"
                         >
                           {t("groupCoursesLink")}
                         </Link>
@@ -439,8 +439,8 @@ export default function LandingPage() {
                         className={cn(
                           "inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-semibold transition-colors",
                           activeCat === "All"
-                            ? "border-[#0F6E56] bg-[#0F6E56] text-white shadow-sm"
-                            : "border-[#E0DED5] bg-white text-[#2C2C2A] hover:border-[#0F6E56]/35",
+                            ? "border-teal-700 bg-teal-700 text-white shadow-sm"
+                            : "border-[#E0DED5] bg-white text-[#2C2C2A] hover:border-teal-700/35",
                         )}
                       >
                         <LayoutGrid size={15} aria-hidden strokeWidth={2.25} />
@@ -463,7 +463,7 @@ export default function LandingPage() {
                     <button
                       type="button"
                       onClick={() => setQuizOpen(true)}
-                      className="inline-flex min-h-[52px] w-full max-w-md items-center justify-center gap-2.5 rounded-2xl border-2 border-[#C5E7DB] bg-white px-6 py-3.5 text-sm font-bold text-[#0F6E56] shadow-[0_10px_36px_rgba(15,110,86,0.08)] transition-all hover:border-[#0F6E56]/40 hover:bg-[#FAFFFC] hover:shadow-[0_14px_40px_rgba(15,110,86,0.12)] motion-safe:active:scale-[0.99]"
+                      className="inline-flex min-h-[52px] w-full max-w-md items-center justify-center gap-2.5 rounded-2xl border-2 border-[#C5E7DB] bg-white px-6 py-3.5 text-sm font-bold text-teal-700 shadow-[0_10px_36px_rgba(15,110,86,0.08)] transition-all hover:border-teal-700/40 hover:bg-[#FAFFFC] hover:shadow-[0_14px_40px_rgba(15,110,86,0.12)] motion-safe:active:scale-[0.99]"
                     >
                       <Sparkles size={20} className="shrink-0 text-[#F4B400]" strokeWidth={2.25} aria-hidden />
                       {t("marketplaceQuizCta")}
@@ -493,8 +493,8 @@ export default function LandingPage() {
                         className={cn(
                           "inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-semibold transition-colors",
                           sortMode === "nearest" && geo
-                            ? "bg-[rgba(29,158,117,0.12)] text-[#0F6E56]"
-                            : "text-[#6B6760] hover:text-[#0F6E56]",
+                            ? "bg-teal-500/15 text-teal-700"
+                            : "text-[#6B6760] hover:text-teal-700",
                         )}
                         aria-pressed={sortMode === "nearest" && !!geo}
                       >
@@ -508,7 +508,7 @@ export default function LandingPage() {
                         className={cn(
                           "flex min-h-[40px] flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition-colors sm:min-h-0 sm:flex-initial",
                           viewMode === "list"
-                            ? "bg-[#0F6E56] text-white shadow-sm"
+                            ? "bg-teal-700 text-white shadow-sm"
                             : "text-[#6B6760] hover:text-[#2C2C2A]",
                         )}
                       >
@@ -523,7 +523,7 @@ export default function LandingPage() {
                         className={cn(
                           "flex min-h-[40px] flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition-colors sm:min-h-0 sm:flex-initial",
                           viewMode === "map"
-                            ? "bg-[#0F6E56] text-white shadow-sm"
+                            ? "bg-teal-700 text-white shadow-sm"
                             : "text-[#6B6760] hover:text-[#2C2C2A]",
                         )}
                       >
@@ -535,7 +535,7 @@ export default function LandingPage() {
                   {viewMode === "list" ? (
                     loadingTeachers ? (
                       <div className="flex justify-center py-14">
-                        <div className="h-9 w-9 animate-spin rounded-full border-2 border-[#1D9E75] border-t-transparent" />
+                        <div className="h-9 w-9 animate-spin rounded-full border-2 border-teal-500 border-t-transparent" />
                       </div>
                     ) : filtered.length === 0 ? (
                       <p className="py-14 text-center text-sm text-[#6B6760]">{t("noTeacherSearch")}</p>
@@ -557,7 +557,7 @@ export default function LandingPage() {
                           <div className="mt-8 text-center">
                             <Link
                               href="/login?next=/student/search"
-                              className="inline-flex h-11 items-center rounded-2xl bg-[#0F6E56] px-6 text-sm font-semibold text-white hover:brightness-105"
+                              className="inline-flex h-11 items-center rounded-2xl bg-teal-700 px-6 text-sm font-semibold text-white hover:brightness-105"
                             >
                               {t("viewAllTeachers")}
                             </Link>
@@ -627,14 +627,14 @@ export default function LandingPage() {
                     t("homeBullet3"),
                   ].map((b) => (
                     <li key={b} className="flex items-center gap-2 rounded-xl bg-white/5 px-4 py-3">
-                      <span className="h-2 w-2 shrink-0 rounded-full bg-[#1D9E75]" />
+                      <span className="h-2 w-2 shrink-0 rounded-full bg-teal-600" />
                       {b}
                     </li>
                   ))}
                 </ul>
 
                 <div className="mt-10 flex flex-col items-center gap-3">
-                  <Link href="/become-teacher" className="inline-flex h-12 items-center justify-center rounded-2xl bg-[#0F6E56] px-8 text-sm font-bold text-white hover:brightness-105">
+                  <Link href="/become-teacher" className="inline-flex h-12 items-center justify-center rounded-2xl bg-teal-700 px-8 text-sm font-bold text-white hover:brightness-105">
                     {t("homeTeacherSeePlans")}
                   </Link>
                   <Link href="/login?role=teacher" className="text-sm font-medium text-white/70 underline underline-offset-2 hover:text-white">
@@ -664,11 +664,11 @@ export default function LandingPage() {
           <span className="text-[#D3D1C7]">·</span>
           <span>© 2026 Pratiqo inc.</span>
           <span className="text-[#D3D1C7]">·</span>
-          <a href="mailto:info@pratiqo.ca" className="text-[#0F6E56] hover:underline">info@pratiqo.ca</a>
+          <a href="mailto:info@pratiqo.ca" className="text-teal-700 hover:underline">info@pratiqo.ca</a>
           <span className="text-[#D3D1C7]">·</span>
           <span>
             <span className="text-[#6B6A65]">Aide&nbsp;: </span>
-            <a href="mailto:support@pratiqo.ca" className="text-[#0F6E56] hover:underline">support@pratiqo.ca</a>
+            <a href="mailto:support@pratiqo.ca" className="text-teal-700 hover:underline">support@pratiqo.ca</a>
           </span>
         </div>
       </footer>
@@ -732,7 +732,7 @@ function ToggleSegment({ children, active, onClick }: { children: React.ReactNod
       onClick={onClick}
       className={cn(
         "min-w-[128px] rounded-xl px-4 py-2.5 text-xs font-bold transition-colors",
-        active ? "bg-[#0F6E56] text-white shadow-sm" : "text-[#526056] hover:bg-[#f0f0eb]",
+        active ? "bg-teal-700 text-white shadow-sm" : "text-[#526056] hover:bg-[#f0f0eb]",
       )}
     >
       {children}
@@ -748,7 +748,7 @@ function TogglePill({ children, active, onClick, darkMode }: { children: React.R
       className={cn(
         "min-w-[130px] rounded-xl px-4 py-2.5 text-xs font-bold transition-colors",
         active
-          ? darkMode ? "bg-white text-[#2C2C2A] shadow-sm" : "bg-white text-[#0F6E56] shadow-sm"
+          ? darkMode ? "bg-white text-[#2C2C2A] shadow-sm" : "bg-white text-teal-700 shadow-sm"
           : "bg-transparent text-white/85 hover:bg-white/10",
       )}
     >

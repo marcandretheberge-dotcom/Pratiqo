@@ -73,19 +73,19 @@ export function TeacherPayoutPreview({
   return (
     <div className="mt-3 rounded-2xl border border-[#DCEAE3] bg-[#F3FAF6] p-4 text-sm text-slate-700">
       <div className="flex items-start gap-3">
-        <Info className="mt-0.5 h-4 w-4 shrink-0 text-[#0F6E56]" aria-hidden />
+        <Info className="mt-0.5 h-4 w-4 shrink-0 text-teal-700" aria-hidden />
         <div className="min-w-0 space-y-1">
-          <p className="text-[11px] font-bold uppercase tracking-widest text-[#0F6E56]">
+          <p className="text-[11px] font-bold uppercase tracking-widest text-teal-700">
             {t("teacherPayoutPreviewTitle")}
           </p>
           <p className="leading-relaxed">
             {beforeNet}
-            <strong className="font-bold text-[#0F6E56]">{preview.formattedTeacherNet}</strong>
+            <strong className="font-bold text-teal-700">{preview.formattedTeacherNet}</strong>
             {afterNet}
           </p>
           <p className="text-xs text-slate-600">{breakdown}</p>
           {planLine ? <p className="text-xs text-slate-600">{planLine}</p> : null}
-          <p className="text-xs font-medium text-[#0F6E56]">{tierLine}</p>
+          <p className="text-xs font-medium text-teal-700">{tierLine}</p>
         </div>
       </div>
     </div>

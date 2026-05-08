@@ -81,7 +81,7 @@ function LoginForm() {
         </div>
 
         {isTeacherInvite ? (
-          <p className="text-center text-sm font-semibold text-[#0f6d52] bg-[rgba(29,158,117,0.1)] rounded-2xl px-4 py-3 mb-6">
+          <p className="text-center text-sm font-semibold text-teal-700 bg-teal-500/10 rounded-2xl px-4 py-3 mb-6">
             Bienvenue professeur ! Crée ton compte gratuitement.
           </p>
         ) : null}
@@ -91,7 +91,7 @@ function LoginForm() {
             type="checkbox"
             checked={legalAccepted}
             onChange={(e) => setLegalAccepted(e.target.checked)}
-            className="mt-1 h-4 w-4 shrink-0 rounded border-slate-300 text-[#1D9E75] focus:ring-2 focus:ring-[#1D9E75]"
+            className="mt-1 h-4 w-4 shrink-0 rounded border-slate-300 text-teal-700 focus:ring-2 focus:ring-teal-500"
           />
           <span className="text-sm font-semibold text-[var(--p-text)] leading-snug">
             {t("loginAcceptTermsLabel")}
@@ -100,11 +100,11 @@ function LoginForm() {
 
         <p className="text-xs text-[var(--p-text-muted)] mb-6 text-center leading-relaxed">
           {t("loginContinueAccept")}{" "}
-          <Link href="/legal/cgu" className="font-semibold text-[#1D9E75] underline underline-offset-2">
+          <Link href="/legal/cgu" className="font-semibold text-teal-700 underline underline-offset-2">
             {t("footerTerms")}
           </Link>{" "}
           {t("loginConsentAnd")}{" "}
-          <Link href="/legal/confidentialite" className="font-semibold text-[#1D9E75] underline underline-offset-2">
+          <Link href="/legal/confidentialite" className="font-semibold text-teal-700 underline underline-offset-2">
             {t("loginPrivacyPolicy")}
           </Link>
           .
@@ -116,7 +116,7 @@ function LoginForm() {
           onClick={() => void handleLogin()}
           className={cn(
             "w-full h-12 rounded-2xl text-sm font-bold text-white flex items-center justify-center gap-2 transition-all",
-            "bg-[#1D9E75] hover:brightness-[0.98] disabled:cursor-not-allowed disabled:opacity-45",
+            "bg-teal-600 hover:brightness-[0.98] disabled:cursor-not-allowed disabled:opacity-45",
           )}
         >
           <LogIn size={18} />
@@ -124,7 +124,7 @@ function LoginForm() {
         </button>
 
         <p className="mt-8 text-center text-sm text-[var(--p-text-muted)]">
-          <Link href="/" className="font-semibold text-[#1D9E75] hover:underline">
+          <Link href="/" className="font-semibold text-teal-700 hover:underline">
             ← Retour à l&apos;accueil
           </Link>
         </p>

@@ -94,7 +94,7 @@ export function SupportCaseModal({
       <div className="w-full max-w-lg rounded-3xl bg-white shadow-2xl">
         <div className="flex items-start justify-between gap-3 border-b border-slate-100 p-5">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-widest text-[#0F6E56]">
+            <p className="text-[11px] font-bold uppercase tracking-widest text-teal-700">
               {t("resolutionCenterTitle")}
             </p>
             <h2 id="support-case-modal-title" className="mt-1 text-lg font-bold text-slate-900">{t("reportProblem")}</h2>
@@ -107,10 +107,10 @@ export function SupportCaseModal({
         {successId ? (
           <div className="space-y-4 p-5">
             <div className="rounded-2xl border border-[#DCEAE3] bg-[#F3FAF6] p-4 text-sm text-slate-700">
-              <p className="font-bold text-[#0F6E56]">{t("supportCaseSubmitted")}</p>
+              <p className="font-bold text-teal-700">{t("supportCaseSubmitted")}</p>
               <p className="mt-1 text-xs">#{successId.slice(0, 8)}</p>
             </div>
-            <button type="button" onClick={close} className="h-11 w-full rounded-2xl bg-[#0F6E56] text-sm font-bold text-white">
+            <button type="button" onClick={close} className="h-11 w-full rounded-2xl bg-teal-700 text-sm font-bold text-white">
               {t("supportCaseViewDetails")}
             </button>
           </div>
@@ -126,7 +126,7 @@ export function SupportCaseModal({
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value as SupportCaseCategory)}
-                className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-[#1D9E75]"
+                className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-teal-500"
               >
                 {SUPPORT_CASE_CATEGORIES.map((item) => (
                   <option key={item} value={item}>
@@ -141,7 +141,7 @@ export function SupportCaseModal({
               <select
                 value={requestedResolution}
                 onChange={(e) => setRequestedResolution(e.target.value as RequestedResolution)}
-                className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-[#1D9E75]"
+                className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-teal-500"
               >
                 {REQUESTED_RESOLUTIONS.map((item) => (
                   <option key={item} value={item}>
@@ -157,7 +157,7 @@ export function SupportCaseModal({
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={5}
-                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-[#1D9E75]"
+                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-teal-500"
               />
             </label>
 
@@ -167,7 +167,7 @@ export function SupportCaseModal({
                 value={evidenceUrl}
                 onChange={(e) => setEvidenceUrl(e.target.value)}
                 placeholder="https://..."
-                className="h-11 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-[#1D9E75]"
+                className="h-11 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-teal-500"
               />
             </label>
 
@@ -181,7 +181,7 @@ export function SupportCaseModal({
                 type="button"
                 disabled={submitting || !bookingId || description.trim().length < 10}
                 onClick={() => void submit()}
-                className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-[#0F6E56] px-5 text-sm font-bold text-white disabled:opacity-50"
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-teal-700 px-5 text-sm font-bold text-white disabled:opacity-50"
               >
                 {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                 {t("supportCaseSubmit" as TranslationKey)}

@@ -22,7 +22,7 @@ export function LandingHowItWorks({ className }: { className?: string }) {
               key={title}
               className="rounded-3xl border border-[#E8E6DF] bg-white p-6 shadow-[0_6px_28px_rgba(44,44,42,0.05)]"
             >
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#E9F6F1] text-[#0F6E56]">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#E9F6F1] text-teal-700">
                 <Icon size={22} strokeWidth={2} aria-hidden />
               </div>
               <h3 className="mt-4 text-lg font-bold text-[#2C2C2A]">{t(title)}</h3>

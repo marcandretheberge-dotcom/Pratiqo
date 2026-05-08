@@ -26,7 +26,7 @@ export function PlanBadge({ plan }: { plan: "free" | "pro" | "enterprise" | stri
       <span
         className={cn(
           "inline-flex items-center gap-1 px-3 py-1 rounded-[10px] text-[11px] font-medium",
-          "bg-[rgba(29,158,117,0.12)] text-[#1D9E75]",
+          "bg-teal-500/15 text-teal-700",
         )}
         title="Plan Pro"
       >

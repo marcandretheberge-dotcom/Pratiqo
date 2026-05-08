@@ -40,7 +40,7 @@ export default function CguPage() {
         <div className="mx-auto max-w-6xl px-4 sm:px-6 py-3 flex items-center gap-3">
           <Link
             href="/"
-            className="text-sm text-[var(--p-text-muted)] hover:text-[#1D9E75] flex items-center gap-1.5 transition-colors"
+            className="text-sm text-[var(--p-text-muted)] hover:text-teal-700 flex items-center gap-1.5 transition-colors"
           >
             ← Retour à l&apos;accueil
           </Link>
@@ -64,7 +64,7 @@ export default function CguPage() {
                 <li key={item.id}>
                   <a
                     href={`#${item.id}`}
-                    className="text-[var(--p-text-muted)] hover:text-[#1D9E75] hover:underline transition-colors leading-snug block"
+                    className="text-[var(--p-text-muted)] hover:text-teal-700 hover:underline transition-colors leading-snug block"
                   >
                     {i + 1}. {item.label}
                   </a>
@@ -88,7 +88,7 @@ export default function CguPage() {
 
           <header className="mb-10">
             <p className="ds-label text-[var(--p-text-subtle)] mb-2">Pratiqo</p>
-            <h1 className="text-[28px] sm:text-[34px] font-semibold text-[var(--p-text)] leading-tight border-l-4 border-[#1D9E75] pl-4">
+            <h1 className="text-[28px] sm:text-[34px] font-semibold text-[var(--p-text)] leading-tight border-l-4 border-teal-500 pl-4">
               Conditions Générales d&apos;Utilisation
             </h1>
             <p className="mt-3 text-sm text-[var(--p-text-muted)]">
@@ -104,7 +104,7 @@ export default function CguPage() {
             <ol className="mt-3 space-y-2 text-[13px]">
               {TOC.map((item, i) => (
                 <li key={item.id}>
-                  <a href={`#${item.id}`} className="text-[#1D9E75] hover:underline">
+                  <a href={`#${item.id}`} className="text-teal-700 hover:underline">
                     {i + 1}. {item.label}
                   </a>
                 </li>
@@ -115,7 +115,7 @@ export default function CguPage() {
           <article className="space-y-12 text-[15px] leading-relaxed text-[var(--p-text-muted)]">
             {/* 1. Présentation */}
             <section id="presentation" className="scroll-mt-28">
-              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-[#1D9E75] pl-4 mb-4">
+              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-teal-500 pl-4 mb-4">
                 1. Présentation de Pratiqo
               </h2>
               <p>
@@ -135,10 +135,10 @@ export default function CguPage() {
 
             {/* 2. Définitions */}
             <section id="definitions" className="scroll-mt-28">
-              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-[#1D9E75] pl-4 mb-4">
+              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-teal-500 pl-4 mb-4">
                 2. Définitions
               </h2>
-              <ul className="list-disc pl-5 space-y-2 marker:text-[#1D9E75]">
+              <ul className="list-disc pl-5 space-y-2 marker:text-teal-700">
                 <li>
                   <strong className="text-[var(--p-text)]">Plateforme</strong> : le site web pratiqo.ca et
                   l&apos;application mobile Pratiqo
@@ -170,7 +170,7 @@ export default function CguPage() {
 
             {/* 3. Inscription */}
             <section id="inscription" className="scroll-mt-28">
-              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-[#1D9E75] pl-4 mb-4">
+              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-teal-500 pl-4 mb-4">
                 3. Inscription et compte utilisateur
               </h2>
 
@@ -178,7 +178,7 @@ export default function CguPage() {
                 3.1 Conditions d&apos;admissibilité
               </h3>
               <p>Pour utiliser Pratiqo, vous devez :</p>
-              <ul className="list-disc pl-5 space-y-2 mt-2 marker:text-[#1D9E75]">
+              <ul className="list-disc pl-5 space-y-2 mt-2 marker:text-teal-700">
                 <li>
                   Avoir au moins 18 ans, ou être mineur avec le consentement d&apos;un parent ou tuteur légal
                 </li>
@@ -207,12 +207,12 @@ export default function CguPage() {
 
             {/* 4. Services */}
             <section id="services" className="scroll-mt-28">
-              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-[#1D9E75] pl-4 mb-4">
+              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-teal-500 pl-4 mb-4">
                 4. Services offerts
               </h2>
 
               <h3 className="text-base font-semibold text-[var(--p-text)] mt-5 mb-2">4.1 Pour les élèves</h3>
-              <ul className="list-disc pl-5 space-y-2 marker:text-[#1D9E75]">
+              <ul className="list-disc pl-5 space-y-2 marker:text-teal-700">
                 <li>Recherche de professeurs par discipline, localisation et disponibilité</li>
                 <li>Réservation et paiement de cours en ligne, en personne ou à domicile</li>
                 <li>Accès aux devoirs et notes de progression partagés par le professeur</li>
@@ -222,7 +222,7 @@ export default function CguPage() {
               <h3 className="text-base font-semibold text-[var(--p-text)] mt-5 mb-2">
                 4.2 Pour les professeurs
               </h3>
-              <ul className="list-disc pl-5 space-y-2 marker:text-[#1D9E75]">
+              <ul className="list-disc pl-5 space-y-2 marker:text-teal-700">
                 <li>Création d&apos;un profil public géolocalisé</li>
                 <li>Gestion des disponibilités et de l&apos;agenda</li>
                 <li>Réception des paiements via la plateforme</li>
@@ -235,7 +235,7 @@ export default function CguPage() {
 
             {/* 5. Statut professeurs */}
             <section id="statut" className="scroll-mt-28">
-              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-[#1D9E75] pl-4 mb-4">
+              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-teal-500 pl-4 mb-4">
                 5. Statut des professeurs — Travailleur autonome
               </h2>
               <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-[13px] text-amber-900 mb-4">
@@ -243,7 +243,7 @@ export default function CguPage() {
                 <strong>TRAVAILLEURS AUTONOMES</strong> et NON des employés de Pratiqo.
               </div>
               <p>À ce titre :</p>
-              <ul className="list-disc pl-5 space-y-2 mt-2 marker:text-[#1D9E75]">
+              <ul className="list-disc pl-5 space-y-2 mt-2 marker:text-teal-700">
                 <li>
                   Pratiqo agit{" "}
                   <strong className="text-[var(--p-text)]">
@@ -273,14 +273,14 @@ export default function CguPage() {
 
             {/* 6. Garantie */}
             <section id="garantie" className="scroll-mt-28">
-              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-[#1D9E75] pl-4 mb-4">
+              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-teal-500 pl-4 mb-4">
                 6. Aucune garantie d&apos;emploi ou de revenu
               </h2>
               <p>
                 Pratiqo <strong className="text-[var(--p-text)]">NE PROMET PAS</strong> et{" "}
                 <strong className="text-[var(--p-text)]">NE GARANTIT PAS</strong> :
               </p>
-              <ul className="list-disc pl-5 space-y-2 mt-2 marker:text-[#1D9E75]">
+              <ul className="list-disc pl-5 space-y-2 mt-2 marker:text-teal-700">
                 <li>Un revenu minimum</li>
                 <li>Un nombre minimum d&apos;élèves ou de cours</li>
                 <li>Une fréquence de réservations</li>
@@ -296,11 +296,11 @@ export default function CguPage() {
 
             {/* 7. Fiscalité */}
             <section id="fiscalite" className="scroll-mt-28">
-              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-[#1D9E75] pl-4 mb-4">
+              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-teal-500 pl-4 mb-4">
                 7. Obligations fiscales du professeur
               </h2>
               <p>En s&apos;inscrivant sur Pratiqo, le professeur s&apos;engage à :</p>
-              <ul className="list-disc pl-5 space-y-2 mt-2 marker:text-[#1D9E75]">
+              <ul className="list-disc pl-5 space-y-2 mt-2 marker:text-teal-700">
                 <li>
                   Déclarer ses revenus aux autorités fiscales (
                   <strong className="text-[var(--p-text)]">Revenu Québec</strong> et{" "}
@@ -314,7 +314,7 @@ export default function CguPage() {
                 <li>Maintenir son équipement et son lieu d&apos;enseignement</li>
                 <li>
                   Respecter le{" "}
-                  <Link href="/code-de-conduite" className="text-[#1D9E75] underline font-medium">
+                  <Link href="/code-de-conduite" className="text-teal-700 underline font-medium">
                     code de conduite Pratiqo
                   </Link>
                 </li>
@@ -329,7 +329,7 @@ export default function CguPage() {
 
             {/* 8. Frais */}
             <section id="frais" className="scroll-mt-28">
-              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-[#1D9E75] pl-4 mb-4">
+              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-teal-500 pl-4 mb-4">
                 8. Frais et commissions
               </h2>
 
@@ -348,7 +348,7 @@ export default function CguPage() {
               <h3 className="text-base font-semibold text-[var(--p-text)] mt-5 mb-2">
                 8.2 Pour les professeurs — Plan Gratuit
               </h3>
-              <ul className="list-disc pl-5 space-y-2 marker:text-[#1D9E75]">
+              <ul className="list-disc pl-5 space-y-2 marker:text-teal-700">
                 <li>Accès gratuit à la plateforme, sans abonnement</li>
                 <li>Jusqu&apos;à cinq (5) élèves actifs simultanément</li>
                 <li>
@@ -366,7 +366,7 @@ export default function CguPage() {
               </ul>
 
               <h3 className="text-base font-semibold text-[var(--p-text)] mt-5 mb-2">8.3 Pour les professeurs — Plan Pro</h3>
-              <ul className="list-disc pl-5 space-y-2 marker:text-[#1D9E75]">
+              <ul className="list-disc pl-5 space-y-2 marker:text-teal-700">
                 <li>29,99 $ CAD par mois, taxes en sus, facturé mensuellement via Stripe</li>
                 <li>Élèves illimités</li>
                 <li>
@@ -395,25 +395,25 @@ export default function CguPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    <tr className="hover:bg-[rgba(29,158,117,0.06)]">
+                    <tr className="hover:bg-teal-500/10">
                       <td className="px-4 py-3 text-slate-700">🥉 Bronze</td>
                       <td className="px-4 py-3 text-slate-700">0 – 5 000 $</td>
                       <td className="px-4 py-3 text-slate-700">10 %</td>
                       <td className="px-4 py-3 text-slate-700">5 %</td>
                     </tr>
-                    <tr className="hover:bg-[rgba(29,158,117,0.06)]">
+                    <tr className="hover:bg-teal-500/10">
                       <td className="px-4 py-3 text-slate-700">🥈 Argent</td>
                       <td className="px-4 py-3 text-slate-700">5 000 – 15 000 $</td>
                       <td className="px-4 py-3 text-slate-700">9 %</td>
                       <td className="px-4 py-3 text-slate-700">4,5 %</td>
                     </tr>
-                    <tr className="hover:bg-[rgba(29,158,117,0.06)]">
+                    <tr className="hover:bg-teal-500/10">
                       <td className="px-4 py-3 text-slate-700">🥇 Or</td>
                       <td className="px-4 py-3 text-slate-700">15 000 – 30 000 $</td>
                       <td className="px-4 py-3 text-slate-700">8 %</td>
                       <td className="px-4 py-3 text-slate-700">4 %</td>
                     </tr>
-                    <tr className="hover:bg-[rgba(29,158,117,0.06)]">
+                    <tr className="hover:bg-teal-500/10">
                       <td className="px-4 py-3 text-slate-700">💎 Platine</td>
                       <td className="px-4 py-3 text-slate-700">30 000 $ +</td>
                       <td className="px-4 py-3 text-slate-700">7 %</td>
@@ -441,11 +441,11 @@ export default function CguPage() {
 
             {/* 9. Crédits */}
             <section id="credits" className="scroll-mt-28">
-              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-[#1D9E75] pl-4 mb-4">
+              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-teal-500 pl-4 mb-4">
                 9. Programme de crédits élève
               </h2>
               <p>Les élèves peuvent gagner des crédits Pratiqo via :</p>
-              <ul className="list-disc pl-5 space-y-2 mt-2 marker:text-[#1D9E75]">
+              <ul className="list-disc pl-5 space-y-2 mt-2 marker:text-teal-700">
                 <li>
                   <strong className="text-[var(--p-text)]">Évolution du compagnon</strong> : 5 $ / 10 $ / 15 $
                   / 25 $ aux paliers 5 / 15 / 30 / 50 cours
@@ -471,7 +471,7 @@ export default function CguPage() {
 
             {/* 10. Reconnaissance ponctuelle */}
             <section id="ristourne" className="scroll-mt-28">
-              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-[#1D9E75] pl-4 mb-4">
+              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-teal-500 pl-4 mb-4">
                 10. Reconnaissance ponctuelle des Professeurs
               </h2>
               <p>
@@ -498,7 +498,7 @@ export default function CguPage() {
 
             {/* 11. Paiements */}
             <section id="paiements" className="scroll-mt-28">
-              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-[#1D9E75] pl-4 mb-4">
+              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-teal-500 pl-4 mb-4">
                 11. Paiements et remboursements
               </h2>
               <p>
@@ -512,7 +512,7 @@ export default function CguPage() {
                 cours, déduction faite de la commission applicable.
               </p>
               <p className="mt-4 font-medium text-[var(--p-text)]">Politique d&apos;annulation :</p>
-              <ul className="list-disc pl-5 space-y-2 mt-2 marker:text-[#1D9E75]">
+              <ul className="list-disc pl-5 space-y-2 mt-2 marker:text-teal-700">
                 <li>
                   Annulation{" "}
                   <strong className="text-[var(--p-text)]">plus de 24 heures</strong> avant le cours :
@@ -531,7 +531,7 @@ export default function CguPage() {
 
             {/* 12. Domicile */}
             <section id="domicile" className="scroll-mt-28">
-              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-[#1D9E75] pl-4 mb-4">
+              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-teal-500 pl-4 mb-4">
                 12. Cours à domicile
               </h2>
               <p>
@@ -544,7 +544,7 @@ export default function CguPage() {
 
             {/* 13. Conduite */}
             <section id="conduite" className="scroll-mt-28">
-              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-[#1D9E75] pl-4 mb-4">
+              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-teal-500 pl-4 mb-4">
                 13. Contenu et conduite des utilisateurs
               </h2>
               <p>
@@ -557,7 +557,7 @@ export default function CguPage() {
               </p>
               <p className="mt-3">
                 Consultez notre{" "}
-                <Link href="/code-de-conduite" className="text-[#1D9E75] underline font-medium">
+                <Link href="/code-de-conduite" className="text-teal-700 underline font-medium">
                   Code de conduite
                 </Link>{" "}
                 pour plus de détails.
@@ -568,7 +568,7 @@ export default function CguPage() {
 
             {/* 14. Propriété intellectuelle */}
             <section id="propriete" className="scroll-mt-28">
-              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-[#1D9E75] pl-4 mb-4">
+              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-teal-500 pl-4 mb-4">
                 14. Propriété intellectuelle
               </h2>
               <p>
@@ -581,7 +581,7 @@ export default function CguPage() {
 
             {/* 15. Limitation de responsabilité */}
             <section id="responsabilite" className="scroll-mt-28">
-              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-[#1D9E75] pl-4 mb-4">
+              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-teal-500 pl-4 mb-4">
                 15. Limitation de responsabilité
               </h2>
               <p>
@@ -599,7 +599,7 @@ export default function CguPage() {
 
             {/* 16. Données personnelles */}
             <section id="donnees" className="scroll-mt-28">
-              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-[#1D9E75] pl-4 mb-4">
+              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-teal-500 pl-4 mb-4">
                 16. Protection des données personnelles (LPRPDE / Loi 25)
               </h2>
               <p>
@@ -607,7 +607,7 @@ export default function CguPage() {
                 <strong className="text-[var(--p-text)]">LPRPDE</strong> et à la{" "}
                 <strong className="text-[var(--p-text)]">Loi 25</strong> du Québec. Pour plus
                 d&apos;informations, consultez notre{" "}
-                <Link href="/confidentialite" className="text-[#1D9E75] underline font-medium">
+                <Link href="/confidentialite" className="text-teal-700 underline font-medium">
                   Politique de confidentialité
                 </Link>
                 .
@@ -618,7 +618,7 @@ export default function CguPage() {
 
             {/* 17. Droit applicable */}
             <section id="droit" className="scroll-mt-28">
-              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-[#1D9E75] pl-4 mb-4">
+              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-teal-500 pl-4 mb-4">
                 17. Droit applicable et juridiction
               </h2>
               <p>
@@ -634,7 +634,7 @@ export default function CguPage() {
 
             {/* 18. Modifications */}
             <section id="modifications" className="scroll-mt-28">
-              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-[#1D9E75] pl-4 mb-4">
+              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-teal-500 pl-4 mb-4">
                 18. Modifications des CGU
               </h2>
               <p>
@@ -648,7 +648,7 @@ export default function CguPage() {
 
             {/* 19. Contact */}
             <section id="contact" className="scroll-mt-28">
-              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-[#1D9E75] pl-4 mb-4">
+              <h2 className="text-lg font-semibold text-[var(--p-text)] border-l-4 border-teal-500 pl-4 mb-4">
                 19. Contact
               </h2>
               <p>
@@ -656,13 +656,13 @@ export default function CguPage() {
               </p>
               <p className="mt-2">
                 Courriel :{" "}
-                <a href="mailto:marc-andre.theberge@pratiqo.ca" className="text-[#1D9E75] underline font-medium">
+                <a href="mailto:marc-andre.theberge@pratiqo.ca" className="text-teal-700 underline font-medium">
                   marc-andre.theberge@pratiqo.ca
                 </a>
               </p>
               <p className="mt-1">
                 Site web :{" "}
-                <Link href="/" className="text-[#1D9E75] underline font-medium">
+                <Link href="/" className="text-teal-700 underline font-medium">
                   pratiqo.ca
                 </Link>
               </p>
@@ -676,16 +676,16 @@ export default function CguPage() {
           <footer className="mt-14 pt-8 border-t border-[var(--p-border-light)]">
             <p className="text-[12px] text-[var(--p-text-muted)] mb-2">Autres documents légaux</p>
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-[13px]">
-              <span className="text-[#1D9E75] font-medium">CGU</span>
+              <span className="text-teal-700 font-medium">CGU</span>
               <Link
                 href="/confidentialite"
-                className="text-[var(--p-text-muted)] hover:text-[#1D9E75] hover:underline"
+                className="text-[var(--p-text-muted)] hover:text-teal-700 hover:underline"
               >
                 Confidentialité
               </Link>
               <Link
                 href="/code-de-conduite"
-                className="text-[var(--p-text-muted)] hover:text-[#1D9E75] hover:underline"
+                className="text-[var(--p-text-muted)] hover:text-teal-700 hover:underline"
               >
                 Code de conduite
               </Link>

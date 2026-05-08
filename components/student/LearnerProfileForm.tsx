@@ -195,7 +195,7 @@ export function LearnerProfileForm({
           <input
             value={form.display_name}
             onChange={(e) => setForm((f) => ({ ...f, display_name: e.target.value }))}
-            className="h-11 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-[#1D9E75]"
+            className="h-11 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-teal-500"
           />
         </label>
         <label className="block space-y-1">
@@ -203,7 +203,7 @@ export function LearnerProfileForm({
           <select
             value={form.relationship}
             onChange={(e) => setForm((f) => ({ ...f, relationship: e.target.value as LearnerProfileInput["relationship"] }))}
-            className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-[#1D9E75]"
+            className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-teal-500"
           >
             <option value="self">{t("learnerRelationshipSelf")}</option>
             <option value="child">{t("learnerRelationshipChild")}</option>
@@ -220,7 +220,7 @@ export function LearnerProfileForm({
                 context_type: e.target.value as LearnerProfileInput["context_type"],
               }))
             }
-            className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-[#1D9E75]"
+            className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-teal-500"
           >
             <option value="academic">{t("contextTypeAcademic")}</option>
             <option value="language">{t("contextTypeLanguage")}</option>
@@ -233,7 +233,7 @@ export function LearnerProfileForm({
           <select
             value={form.birth_year ?? ""}
             onChange={(e) => setForm((f) => ({ ...f, birth_year: e.target.value ? Number(e.target.value) : null }))}
-            className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-[#1D9E75]"
+            className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-teal-500"
           >
             <option value="">-</option>
             {yearOptions.map((year) => (
@@ -245,14 +245,14 @@ export function LearnerProfileForm({
 
       {form.context_type === "academic" ? (
         <div className="space-y-4 rounded-2xl border border-[#DCEAE3] bg-[#F3FAF6] p-4">
-          <p className="text-xs font-bold uppercase text-[#0F6E56]">{t("learnerAcademicContext")}</p>
+          <p className="text-xs font-bold uppercase text-teal-700">{t("learnerAcademicContext")}</p>
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="block space-y-1">
               <span className="text-xs font-bold uppercase text-slate-600">{t("schoolLevel")}</span>
               <select
                 value={form.school_level ?? ""}
                 onChange={(e) => setForm((f) => ({ ...f, school_level: e.target.value || null }))}
-                className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-[#1D9E75]"
+                className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-teal-500"
               >
                 <option value="">-</option>
                 {academicConfig.schoolLevels.map((level) => (
@@ -268,7 +268,7 @@ export function LearnerProfileForm({
                 value={form.grade_level ?? ""}
                 onChange={(e) => setForm((f) => ({ ...f, grade_level: e.target.value }))}
                 placeholder="Secondaire 4"
-                className="h-11 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-[#1D9E75]"
+                className="h-11 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-teal-500"
               />
             </label>
             <label className="block space-y-1 sm:col-span-2">
@@ -284,7 +284,7 @@ export function LearnerProfileForm({
                     academic_program_unsure: value === "unsure",
                   }));
                 }}
-                className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-[#1D9E75]"
+                className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-teal-500"
               >
                 <option value="">-</option>
                 {academicConfig.programTracks.map((track) => (
@@ -305,7 +305,7 @@ export function LearnerProfileForm({
                 max={100}
                 value={form.current_grade_percent ?? ""}
                 onChange={(e) => setForm((f) => ({ ...f, current_grade_percent: e.target.value ? Number(e.target.value) : null }))}
-                className="h-11 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-[#1D9E75]"
+                className="h-11 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-teal-500"
               />
             </label>
             <label className="block space-y-1">
@@ -314,7 +314,7 @@ export function LearnerProfileForm({
                 type="date"
                 value={form.exam_date ?? ""}
                 onChange={(e) => setForm((f) => ({ ...f, exam_date: e.target.value || null }))}
-                className="h-11 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-[#1D9E75]"
+                className="h-11 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-teal-500"
               />
             </label>
           </div>
@@ -333,7 +333,7 @@ export function LearnerProfileForm({
 
       {form.context_type === "language" ? (
         <div className="space-y-4 rounded-2xl border border-[#DCEAE3] bg-[#F3FAF6] p-4">
-          <p className="text-xs font-bold uppercase text-[#0F6E56]">{t("learnerLanguageContext")}</p>
+          <p className="text-xs font-bold uppercase text-teal-700">{t("learnerLanguageContext")}</p>
           <ContextInput label={t("targetLanguage")} value={form.target_language ?? ""} onChange={(value) => setForm((f) => ({ ...f, target_language: value }))} />
           <ContextInput label={t("currentLevel")} value={form.current_level ?? ""} onChange={(value) => setForm((f) => ({ ...f, current_level: value }))} suggestions={currentLevelSeeds} />
           <ChipEditor title={t("learningGoals")} seeds={goalSeeds} selected={form.learning_goals} custom={customGoal} setCustom={setCustomGoal} onToggle={(tag) => setForm((f) => ({ ...f, learning_goals: toggleTag(f.learning_goals, tag) }))} onAdd={() => addCustomTag("goal")} />
@@ -343,7 +343,7 @@ export function LearnerProfileForm({
 
       {form.context_type === "music" ? (
         <div className="space-y-4 rounded-2xl border border-[#DCEAE3] bg-[#F3FAF6] p-4">
-          <p className="text-xs font-bold uppercase text-[#0F6E56]">{t("learnerMusicContext")}</p>
+          <p className="text-xs font-bold uppercase text-teal-700">{t("learnerMusicContext")}</p>
           <ContextInput label={t("instrument")} value={form.instrument ?? ""} onChange={(value) => setForm((f) => ({ ...f, instrument: value }))} />
           <ContextInput label={t("currentLevel")} value={form.current_level ?? ""} onChange={(value) => setForm((f) => ({ ...f, current_level: value }))} suggestions={currentLevelSeeds} />
           <ContextInput label={t("practiceFrequency")} value={form.practice_frequency ?? ""} onChange={(value) => setForm((f) => ({ ...f, practice_frequency: value }))} suggestions={practiceFrequencySeeds} />
@@ -353,7 +353,7 @@ export function LearnerProfileForm({
 
       {form.context_type === "general" || !form.context_type ? (
         <div className="space-y-4 rounded-2xl border border-[#DCEAE3] bg-[#F3FAF6] p-4">
-          <p className="text-xs font-bold uppercase text-[#0F6E56]">{t("learnerGeneralContext")}</p>
+          <p className="text-xs font-bold uppercase text-teal-700">{t("learnerGeneralContext")}</p>
           <ContextInput label={t("currentLevel")} value={form.current_level ?? ""} onChange={(value) => setForm((f) => ({ ...f, current_level: value }))} suggestions={currentLevelSeeds} />
           <ChipEditor title={t("learningGoals")} seeds={goalSeeds} selected={form.learning_goals} custom={customGoal} setCustom={setCustomGoal} onToggle={(tag) => setForm((f) => ({ ...f, learning_goals: toggleTag(f.learning_goals, tag) }))} onAdd={() => addCustomTag("goal")} />
         </div>
@@ -365,7 +365,7 @@ export function LearnerProfileForm({
           value={form.notes_for_teacher ?? ""}
           onChange={(e) => setForm((f) => ({ ...f, notes_for_teacher: e.target.value }))}
           rows={3}
-          className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-[#1D9E75]"
+          className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-teal-500"
         />
       </label>
 
@@ -389,7 +389,7 @@ export function LearnerProfileForm({
           type="button"
           disabled={saving || !form.display_name.trim()}
           onClick={() => void submit()}
-          className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-[#0F6E56] px-5 text-sm font-bold text-white disabled:opacity-50"
+          className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-teal-700 px-5 text-sm font-bold text-white disabled:opacity-50"
         >
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
           {t("saveLearnerProfile")}
@@ -416,7 +416,7 @@ function ContextInput({
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-[#1D9E75]"
+        className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-teal-500"
       />
       {suggestions.length ? (
         <div className="flex flex-wrap gap-2">
@@ -427,7 +427,7 @@ function ContextInput({
               onClick={() => onChange(item)}
               className={cn(
                 "rounded-full border px-3 py-1.5 text-xs font-semibold",
-                value === item ? "border-[#0F6E56] bg-[#E1F5EE] text-[#0F6E56]" : "border-slate-200 bg-white text-slate-600",
+                value === item ? "border-teal-700 bg-teal-50 text-teal-700" : "border-slate-200 bg-white text-slate-600",
               )}
             >
               {item}
@@ -453,7 +453,7 @@ function ExplanationPreferenceSelect({
       <select
         value={value ?? ""}
         onChange={(e) => onChange(e.target.value || null)}
-        className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-[#1D9E75]"
+        className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-teal-500"
       >
         <option value="">-</option>
         <option value="examples_first">{t("explanationExamplesFirst")}</option>
@@ -496,7 +496,7 @@ function ChipEditor({
               onClick={() => onToggle(tag)}
               className={cn(
                 "rounded-full border px-3 py-1.5 text-xs font-semibold",
-                on ? "border-[#0F6E56] bg-[#E1F5EE] text-[#0F6E56]" : "border-slate-200 bg-white text-slate-600",
+                on ? "border-teal-700 bg-teal-50 text-teal-700" : "border-slate-200 bg-white text-slate-600",
               )}
             >
               {tag}
@@ -508,7 +508,7 @@ function ChipEditor({
             key={tag}
             type="button"
             onClick={() => onToggle(tag)}
-            className="inline-flex items-center gap-1 rounded-full border border-[#0F6E56] bg-[#E1F5EE] px-3 py-1.5 text-xs font-semibold text-[#0F6E56]"
+            className="inline-flex items-center gap-1 rounded-full border border-teal-700 bg-teal-50 px-3 py-1.5 text-xs font-semibold text-teal-700"
           >
             {tag}
             <X size={12} />
@@ -525,7 +525,7 @@ function ChipEditor({
               onAdd();
             }
           }}
-          className="h-10 min-w-0 flex-1 rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-[#1D9E75]"
+          className="h-10 min-w-0 flex-1 rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-teal-500"
         />
         <button type="button" onClick={onAdd} aria-label={`Ajouter ${title}`} className="h-10 rounded-xl border border-slate-200 px-3 text-sm font-bold text-slate-700">
           +

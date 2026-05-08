@@ -18,7 +18,7 @@ export function LandingHeroTrustStrip({ className }: { className?: string }) {
       <ul className="mx-auto grid max-w-5xl gap-4 sm:grid-cols-3 sm:gap-5">
         {rows.map(({ title, body, icon: Icon }) => (
           <li key={title} className="flex gap-3 text-center sm:flex-col sm:items-center sm:text-center md:gap-3.5">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center self-start rounded-xl bg-[#E9F6F1] text-[#0F6E56] shadow-sm sm:self-center md:h-11 md:w-11">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center self-start rounded-xl bg-[#E9F6F1] text-teal-700 shadow-sm sm:self-center md:h-11 md:w-11">
               <Icon size={22} strokeWidth={2} aria-hidden />
             </span>
             <span className="min-w-0 text-left sm:text-center">

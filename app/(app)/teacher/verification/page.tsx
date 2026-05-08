@@ -273,7 +273,7 @@ export default function TeacherVerificationPage() {
   if (loading || !user) {
     return (
       <div className="min-h-[50vh] flex items-center justify-center text-[#6B6A65]">
-        <Loader2 className="h-8 w-8 animate-spin text-[#1D9E75]" />
+        <Loader2 className="h-8 w-8 animate-spin text-teal-700" />
       </div>
     );
   }
@@ -282,7 +282,7 @@ export default function TeacherVerificationPage() {
     return (
       <div className="rounded-2xl border border-[#E8E6DF] bg-white p-8 text-center">
         <p className="text-[#2C2C2A] font-semibold">{t("verificationTeachersOnly")}</p>
-        <Link href="/dashboard" className="mt-4 inline-block text-sm font-semibold text-[#1D9E75] hover:underline">
+        <Link href="/dashboard" className="mt-4 inline-block text-sm font-semibold text-teal-700 hover:underline">
           {t("back")}
         </Link>
       </div>
@@ -405,7 +405,7 @@ export default function TeacherVerificationPage() {
         <div>
           <p className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">{t("verificationTrustLabel")}</p>
           <h1 className="mt-1 text-2xl font-bold text-[#2C2C2A] flex items-center gap-2">
-            <ShieldCheck className="text-[#1D9E75]" size={28} />
+            <ShieldCheck className="text-teal-700" size={28} />
             {t("verificationTitle")}
           </h1>
           <p className="mt-2 text-sm text-[#6B6A65] max-w-xl">{t("verificationSubtitle")}</p>
@@ -430,7 +430,7 @@ export default function TeacherVerificationPage() {
                       ? "text-amber-600"
                       : item.status === "provided"
                         ? "text-slate-500"
-                        : "text-[#1D9E75]",
+                        : "text-teal-700",
                   )}
                 />
                 <span>
@@ -448,15 +448,15 @@ export default function TeacherVerificationPage() {
           </h2>
           <ul className="mt-4 space-y-2 text-sm text-[#6B6A65]">
             <li className="flex gap-2">
-              <CheckCircle2 size={16} className="mt-0.5 shrink-0 text-[#1D9E75]" />
+              <CheckCircle2 size={16} className="mt-0.5 shrink-0 text-teal-700" />
               <span>{t("verificationBenefitHomeLessons")}</span>
             </li>
             <li className="flex gap-2">
-              <CheckCircle2 size={16} className="mt-0.5 shrink-0 text-[#1D9E75]" />
+              <CheckCircle2 size={16} className="mt-0.5 shrink-0 text-teal-700" />
               <span>{t("verificationBenefitPublicClarity")}</span>
             </li>
             <li className="flex gap-2">
-              <CheckCircle2 size={16} className="mt-0.5 shrink-0 text-[#1D9E75]" />
+              <CheckCircle2 size={16} className="mt-0.5 shrink-0 text-teal-700" />
               <span>{t("verificationBenefitProSeparated")}</span>
             </li>
           </ul>
@@ -468,7 +468,7 @@ export default function TeacherVerificationPage() {
           className={cn(
             "rounded-xl px-4 py-3 text-sm font-medium",
             messageKind === "ok"
-              ? "bg-[#E1F5EE] text-[#085041] border border-[#1D9E75]/25"
+              ? "bg-teal-50 text-teal-800 border border-teal-500/25"
               : "bg-red-50 text-red-800 border border-red-200",
           )}
         >
@@ -494,13 +494,13 @@ export default function TeacherVerificationPage() {
         {/* ── Level 1 — Email ────────────────────────────────────────────── */}
         <div className="rounded-2xl border border-[#E8E6DF] bg-white p-5 flex flex-wrap items-start justify-between gap-4">
           <div className="flex gap-3">
-            <CheckCircle2 className="text-[#1D9E75] shrink-0 mt-0.5" size={22} />
+            <CheckCircle2 className="text-teal-700 shrink-0 mt-0.5" size={22} />
             <div>
               <p className="font-semibold text-[#2C2C2A]">{t("verificationLevel1Title")}</p>
               <p className="text-sm text-[#6B6A65]">{t("verificationLevel1Body")}</p>
             </div>
           </div>
-          {level >= 1 ? <span className="text-xs font-bold text-[#1D9E75]">{t("verificationOk")}</span> : null}
+          {level >= 1 ? <span className="text-xs font-bold text-teal-700">{t("verificationOk")}</span> : null}
         </div>
 
         {/* ── Level 2 — Identity (Stripe) ────────────────────────────────── */}
@@ -512,7 +512,7 @@ export default function TeacherVerificationPage() {
               <p className="text-sm text-[#6B6A65] mt-1">{t("verificationLevel2Body")}</p>
 
               {teacherRow.identity_verified ? (
-                <p className="mt-2 text-sm font-semibold text-[#1D9E75]">{t("verificationIdentityValidated")}</p>
+                <p className="mt-2 text-sm font-semibold text-teal-700">{t("verificationIdentityValidated")}</p>
               ) : identityStatus === "pending" ? (
                 <div className="mt-3 flex items-center gap-2 rounded-xl bg-amber-50 border border-amber-200 px-4 py-2.5">
                   <Loader2 size={16} className="animate-spin text-amber-600 shrink-0" />
@@ -571,13 +571,13 @@ export default function TeacherVerificationPage() {
               <p className="text-sm text-[#6B6A65] mt-1">{t("verificationLevel3Body")}</p>
 
               {teacherRow.diploma_verified ? (
-                <p className="mt-2 text-sm font-semibold text-[#1D9E75]">{t("verificationDiplomaValidated")}</p>
+                <p className="mt-2 text-sm font-semibold text-teal-700">{t("verificationDiplomaValidated")}</p>
               ) : (
                 <div className="mt-3 space-y-3">
                   {hasDiplomaUploaded ? (
-                    <div className="flex items-center gap-2 rounded-xl bg-[#E1F5EE] border border-[#1D9E75]/25 px-4 py-2.5">
-                      <CheckCircle2 size={16} className="text-[#1D9E75] shrink-0" />
-                      <p className="text-sm text-[#085041] font-medium">
+                    <div className="flex items-center gap-2 rounded-xl bg-teal-50 border border-teal-500/25 px-4 py-2.5">
+                      <CheckCircle2 size={16} className="text-teal-700 shrink-0" />
+                      <p className="text-sm text-teal-800 font-medium">
                         {t("diplomaReceived")}
                       </p>
                     </div>
@@ -590,13 +590,13 @@ export default function TeacherVerificationPage() {
                       className={cn(
                         "flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed px-4 py-6 cursor-pointer transition-colors",
                         diplomaFile
-                          ? "border-[#1D9E75] bg-[rgba(29,158,117,0.05)]"
-                          : "border-[#E8E6DF] hover:border-[#1D9E75]/50 hover:bg-slate-50",
+                          ? "border-teal-500 bg-teal-500/10"
+                          : "border-[#E8E6DF] hover:border-teal-500/50 hover:bg-slate-50",
                       )}
                     >
                       {diplomaFile ? (
                         <>
-                          <Paperclip size={22} className="text-[#1D9E75]" />
+                          <Paperclip size={22} className="text-teal-700" />
                           <span className="text-sm font-medium text-[#2C2C2A] text-center truncate max-w-xs">
                             {diplomaFile.name}
                           </span>
@@ -616,7 +616,7 @@ export default function TeacherVerificationPage() {
                         <>
                           <UploadCloud size={24} className="text-[#6B6A65]" />
                           <span className="text-sm text-[#6B6A65] text-center">
-                            <span className="font-semibold text-[#1D9E75]">{t("chooseFile")}</span>{" "}
+                            <span className="font-semibold text-teal-700">{t("chooseFile")}</span>{" "}
                             {t("orDropFile")}
                           </span>
                           <span className="text-[11px] text-[#6B6A65]">{t("fileTypes")}</span>
@@ -638,7 +638,7 @@ export default function TeacherVerificationPage() {
                     onChange={(e) => setDiplomaNote(e.target.value)}
                     placeholder={t("verificationDiplomaPlaceholder")}
                     rows={2}
-                    className="w-full rounded-xl border border-[#E8E6DF] px-3 py-2 text-sm outline-none focus:border-[#1D9E75]"
+                    className="w-full rounded-xl border border-[#E8E6DF] px-3 py-2 text-sm outline-none focus:border-teal-500"
                   />
 
                   {/* Progress bar */}
@@ -646,7 +646,7 @@ export default function TeacherVerificationPage() {
                     <div className="space-y-1">
                       <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
                         <div
-                          className="h-full rounded-full bg-[#1D9E75] transition-all duration-300"
+                          className="h-full rounded-full bg-teal-600 transition-all duration-300"
                           style={{ width: `${diplomaProgress}%` }}
                         />
                       </div>
@@ -677,12 +677,12 @@ export default function TeacherVerificationPage() {
 
         <div className="rounded-2xl border border-[#E8E6DF] bg-white p-5 space-y-3">
           <div className="flex gap-3">
-            <MapPinned className="text-[#0F6E56] shrink-0 mt-0.5" size={22} />
+            <MapPinned className="text-teal-700 shrink-0 mt-0.5" size={22} />
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-[#2C2C2A]">{t("verificationLevel4Title")}</p>
               <p className="text-sm text-[#6B6A65] mt-1">{t("verificationLevel4BodyZone")}</p>
               {zoneVerified ? (
-                <p className="mt-2 text-sm font-semibold text-[#1D9E75]">{t("trustZoneVerified")}</p>
+                <p className="mt-2 text-sm font-semibold text-teal-700">{t("trustZoneVerified")}</p>
               ) : zonePending ? (
                 <p className="mt-2 text-sm font-semibold text-amber-700">{t("trustZonePending")}</p>
               ) : (
@@ -695,7 +695,7 @@ export default function TeacherVerificationPage() {
         {/* ── Credentials / qualifications (Pratiqo-reviewed) ─────────────── */}
         <div className="rounded-2xl border border-[#E8E6DF] bg-white p-5 space-y-4">
           <div className="flex gap-3">
-            <ShieldCheck className="text-[#0F6E56] shrink-0 mt-0.5" size={22} />
+            <ShieldCheck className="text-teal-700 shrink-0 mt-0.5" size={22} />
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-[#2C2C2A]">{t("credentialsTitle")}</p>
               <p className="text-sm text-[#6B6A65] mt-1">{t("credentialsSubtitle")}</p>
@@ -708,7 +708,7 @@ export default function TeacherVerificationPage() {
               <select
                 value={credType}
                 onChange={(e) => setCredType(e.target.value as TeacherCredentialRow["type"])}
-                className="h-11 w-full rounded-xl border border-[#E8E6DF] bg-white px-3 text-sm outline-none focus:border-[#1D9E75]"
+                className="h-11 w-full rounded-xl border border-[#E8E6DF] bg-white px-3 text-sm outline-none focus:border-teal-500"
               >
                 <option value="degree">{t("credentialTypeDegree")}</option>
                 <option value="certificate">{t("credentialTypeCertificate")}</option>
@@ -723,7 +723,7 @@ export default function TeacherVerificationPage() {
               <select
                 value={credMethod}
                 onChange={(e) => setCredMethod(e.target.value)}
-                className="h-11 w-full rounded-xl border border-[#E8E6DF] bg-white px-3 text-sm outline-none focus:border-[#1D9E75]"
+                className="h-11 w-full rounded-xl border border-[#E8E6DF] bg-white px-3 text-sm outline-none focus:border-teal-500"
               >
                 <option value="mycreds">{t("credentialMethodMyCreds")}</option>
                 <option value="document_review">{t("credentialMethodDocumentReview")}</option>
@@ -741,7 +741,7 @@ export default function TeacherVerificationPage() {
               value={credTitle}
               onChange={(e) => setCredTitle(e.target.value)}
               placeholder={t("credentialTitlePlaceholder")}
-              className="h-11 w-full rounded-xl border border-[#E8E6DF] bg-white px-3 text-sm outline-none focus:border-[#1D9E75]"
+              className="h-11 w-full rounded-xl border border-[#E8E6DF] bg-white px-3 text-sm outline-none focus:border-teal-500"
             />
           </label>
 
@@ -751,7 +751,7 @@ export default function TeacherVerificationPage() {
               <input
                 value={credInstitution}
                 onChange={(e) => setCredInstitution(e.target.value)}
-                className="h-11 w-full rounded-xl border border-[#E8E6DF] bg-white px-3 text-sm outline-none focus:border-[#1D9E75]"
+                className="h-11 w-full rounded-xl border border-[#E8E6DF] bg-white px-3 text-sm outline-none focus:border-teal-500"
               />
             </label>
             <label className="space-y-1">
@@ -760,7 +760,7 @@ export default function TeacherVerificationPage() {
                 value={credCountry}
                 onChange={(e) => setCredCountry(e.target.value)}
                 placeholder="CA"
-                className="h-11 w-full rounded-xl border border-[#E8E6DF] bg-white px-3 text-sm outline-none focus:border-[#1D9E75]"
+                className="h-11 w-full rounded-xl border border-[#E8E6DF] bg-white px-3 text-sm outline-none focus:border-teal-500"
               />
             </label>
             <label className="space-y-1">
@@ -770,7 +770,7 @@ export default function TeacherVerificationPage() {
                 onChange={(e) => setCredIssuedYear(e.target.value)}
                 inputMode="numeric"
                 placeholder="2020"
-                className="h-11 w-full rounded-xl border border-[#E8E6DF] bg-white px-3 text-sm outline-none focus:border-[#1D9E75]"
+                className="h-11 w-full rounded-xl border border-[#E8E6DF] bg-white px-3 text-sm outline-none focus:border-teal-500"
               />
             </label>
           </div>
@@ -779,7 +779,7 @@ export default function TeacherVerificationPage() {
             type="button"
             onClick={() => void submitCredential()}
             disabled={busy !== null}
-            className="h-11 rounded-xl bg-[#0F6E56] px-5 text-sm font-semibold text-white hover:bg-[#0c5a47] disabled:opacity-50 inline-flex items-center gap-2"
+            className="h-11 rounded-xl bg-teal-700 px-5 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-50 inline-flex items-center gap-2"
           >
             {busy === "credentials" ? <Loader2 size={16} className="animate-spin" /> : <UploadCloud size={16} />}
             {t("credentialSubmit")}
@@ -800,7 +800,7 @@ export default function TeacherVerificationPage() {
                     <span className={cn(
                       "rounded-full px-2.5 py-0.5 text-xs font-bold",
                       c.verification_status === "verified"
-                        ? "bg-[#E1F5EE] text-[#0F6E56]"
+                        ? "bg-teal-50 text-teal-700"
                         : c.verification_status === "needs_review"
                           ? "bg-amber-100 text-amber-800"
                           : c.verification_status === "rejected"
@@ -816,10 +816,10 @@ export default function TeacherVerificationPage() {
           ) : null}
 
           <div className="rounded-xl border border-[#DCEAE3] bg-[#F3FAF6] p-4">
-            <p className="text-xs font-bold uppercase tracking-widest text-[#0F6E56]">{t("publicBadgePreview")}</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-teal-700">{t("publicBadgePreview")}</p>
             <div className="mt-2 flex flex-wrap gap-2">
               {badgePreview.length ? badgePreview.map((b) => (
-                <span key={b.key} title={t(b.descriptionKey)} className="inline-flex items-center gap-1 rounded-full bg-white border border-[#DCEAE3] px-2.5 py-0.5 text-xs font-semibold text-[#0F6E56]">
+                <span key={b.key} title={t(b.descriptionKey)} className="inline-flex items-center gap-1 rounded-full bg-white border border-[#DCEAE3] px-2.5 py-0.5 text-xs font-semibold text-teal-700">
                   <CheckCircle2 size={12} aria-hidden />
                   {t(b.labelKey)}
                 </span>
@@ -837,7 +837,7 @@ export default function TeacherVerificationPage() {
               <p className="font-semibold text-[#2C2C2A]">{t("verificationLevel5Title")}</p>
               <p className="text-sm text-[#6B6A65] mt-1">{t("verificationLevel5Body")}</p>
               {backgroundVerified ? (
-                <p className="mt-2 text-sm font-semibold text-[#1D9E75]">{t("trustBackgroundVerified")}</p>
+                <p className="mt-2 text-sm font-semibold text-teal-700">{t("trustBackgroundVerified")}</p>
               ) : backgroundProvided ? (
                 <p className="mt-2 text-sm font-semibold text-slate-700">{t("trustBackgroundProvided")}</p>
               ) : (
@@ -856,7 +856,7 @@ export default function TeacherVerificationPage() {
           {!isPro ? (
             <Link
               href="/upgrade"
-              className="mt-4 inline-flex h-10 items-center rounded-xl bg-[#0F6E56] px-4 text-sm font-bold text-white hover:brightness-105"
+              className="mt-4 inline-flex h-10 items-center rounded-xl bg-teal-700 px-4 text-sm font-bold text-white hover:brightness-105"
             >
               {t("verificationViewPlans")}
             </Link>

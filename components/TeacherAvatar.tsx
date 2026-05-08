@@ -16,10 +16,10 @@ function initialsFor(name: string) {
 }
 
 function avatarBgClass(category: Discipline) {
-  if (category === "Musique") return "bg-[rgba(29,158,117,0.14)] text-[#085041]";
+  if (category === "Musique") return "bg-teal-500/15 text-teal-800";
   if (category === "Arts Martiaux") return "bg-[rgba(255,153,102,0.18)] text-[#C2462E]";
   if (category === "Langues") return "bg-[rgba(146,106,255,0.16)] text-[#5B3EC8]";
-  return "bg-[rgba(29,158,117,0.14)] text-[#085041]";
+  return "bg-teal-500/15 text-teal-800";
 }
 
 export function TeacherAvatar({

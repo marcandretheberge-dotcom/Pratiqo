@@ -54,7 +54,7 @@ export function TeacherNextLessonCard({
           ) : (
             <div
               className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full text-xl font-bold text-white"
-              style={{ background: "linear-gradient(135deg,#1D9E75,#0f6e56)" }}
+              style={{ background: "linear-gradient(135deg,var(--palette-teal-500),var(--palette-teal-700))" }}
             >
               {(next.studentName || "?").slice(0, 2).toUpperCase()}
             </div>
