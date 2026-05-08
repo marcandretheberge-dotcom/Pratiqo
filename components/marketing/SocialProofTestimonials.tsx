@@ -50,6 +50,9 @@ function TestimonialPortrait({
       alt={altText}
       width={40}
       height={40}
+      sizes="40px"
+      loading="lazy"
+      fetchPriority="low"
       unoptimized
       className="h-10 w-10 shrink-0 rounded-full object-cover shadow-sm ring-2 ring-[#EFECE6]"
       onError={() => setFailed(true)}

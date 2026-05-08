@@ -8,6 +8,9 @@ type PratiqoLogoProps = {
   variant?: PratiqoLogoVariant;
   size?: PratiqoLogoSize;
   className?: string;
+  /** When false, avoids competing with hero LCP (e.g. landing h1). Defaults true for backward compatibility. */
+  priority?: boolean;
+  fetchPriority?: "high" | "low" | "auto";
 };
 
 const fullWidths: Record<PratiqoLogoSize, number> = {
@@ -22,18 +25,39 @@ const iconSizes: Record<PratiqoLogoSize, number> = {
   lg: 56,
 };
 
-export function PratiqoLogo({ variant = "full", size = "md", className }: PratiqoLogoProps) {
+/** Display width in CSS px — used for `sizes` so the browser picks an appropriate src. */
+const fullSizesAttr: Record<PratiqoLogoSize, string> = {
+  sm: "120px",
+  md: "160px",
+  lg: "220px",
+};
+
+const iconSizesAttr: Record<PratiqoLogoSize, string> = {
+  sm: "36px",
+  md: "44px",
+  lg: "56px",
+};
+
+export function PratiqoLogo({
+  variant = "full",
+  size = "md",
+  className,
+  priority = true,
+  fetchPriority,
+}: PratiqoLogoProps) {
   if (variant === "icon") {
     const iconSize = iconSizes[size];
     return (
       <Image
         src="/branding/pratiqo-icon.png"
         alt="Pratiqo"
-        width={320}
-        height={320}
+        width={128}
+        height={128}
+        sizes={iconSizesAttr[size]}
         className={cn("block h-auto shrink-0 object-contain", className)}
         style={{ width: iconSize, height: iconSize }}
-        priority
+        priority={priority}
+        fetchPriority={fetchPriority}
       />
     );
   }
@@ -43,11 +67,13 @@ export function PratiqoLogo({ variant = "full", size = "md", className }: Pratiq
     <Image
       src="/branding/pratiqo-logo.png"
       alt="Pratiqo"
-      width={2048}
-      height={512}
+      width={640}
+      height={160}
+      sizes={fullSizesAttr[size]}
       className={cn("block h-auto shrink-0 object-contain", className)}
       style={{ width }}
-      priority
+      priority={priority}
+      fetchPriority={fetchPriority}
     />
   );
 }

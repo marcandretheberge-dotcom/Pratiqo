@@ -82,7 +82,7 @@ export function LandingTeacherListingCard({
     ? teacher.availability!.slice(0, 2).join(" · ")
     : t("availabilityHintGeneric");
 
-  const photoUrl = getTeacherImageUrl(teacher.imageUrl, { width: 176, height: 176, quality: 75, format: "webp" });
+  const photoUrl = getTeacherImageUrl(teacher.imageUrl, { width: 160, height: 160, quality: 72, format: "webp" });
   const showVerifiedTag = lvl > 0;
   const neighborhoodHint = teacher.location?.neighborhood?.trim();
 

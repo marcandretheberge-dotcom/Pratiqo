@@ -21,21 +21,17 @@ import { useLocale } from "../lib/locale-context";
 import { useAuth } from "../components/AuthProvider";
 import type { BookingInitialLessonKind } from "../components/BookingModal";
 import type { MapBounds } from "../components/SearchMapView";
-import { TeacherQuiz } from "../components/marketing/TeacherQuiz";
 import { LegalFooterLinks } from "../components/LegalFooterLinks";
 import { LandingDiscoveryHeader } from "../components/marketing/LandingDiscoveryHeader";
-import { LandingHowItWorks } from "../components/marketing/LandingHowItWorks";
 import { LandingHeroTrustStrip } from "../components/marketing/LandingHeroTrustStrip";
 import { LandingNeighborhoodSignals } from "../components/marketing/LandingNeighborhoodSignals";
 import { LandingTeacherListingCard } from "../components/marketing/LandingTeacherListingCard";
-import { SocialProofTestimonials } from "../components/marketing/SocialProofTestimonials";
-import { TrustSafetySection } from "../components/marketing/TrustSafetySection";
-import { MarketplaceFinalCta } from "../components/marketing/MarketplaceFinalCta";
 import type { TranslationKey } from "../lib/translations";
 import type { LandingFormatFilter } from "../lib/landingTeacherFilter";
 import { filterTeacherPool, buildTeacherSearchRows, sortRows } from "../lib/teacherSearchEngine";
 import { TeacherSearchAdvancedPanel, type AdvancedFilterValues } from "../components/TeacherSearchAdvancedPanel";
 import { logSearchEvent } from "../lib/searchAnalytics";
+import type { City } from "../lib/cities";
 
 const TeacherProfile = dynamic(
   () => import("../components/TeacherProfile").then((m) => m.TeacherProfile),
@@ -45,7 +41,6 @@ const BookingModal = dynamic(
   () => import("../components/BookingModal").then((m) => m.BookingModal),
   { ssr: false, loading: () => <p className="p-4 text-center text-sm text-neutral-700">Chargement…</p> },
 );
-import type { City } from "../lib/cities";
 
 const SearchMapView = dynamic(
   () => import("../components/SearchMapView").then((m) => m.SearchMapView),
@@ -58,6 +53,31 @@ const SearchMapView = dynamic(
       </div>
     ),
   },
+);
+
+const SocialProofTestimonials = dynamic(
+  () => import("../components/marketing/SocialProofTestimonials").then((m) => m.SocialProofTestimonials),
+  { loading: () => <div className="min-h-[280px] bg-[#FAFCFB] py-14 sm:min-h-[320px]" /> },
+);
+
+const TrustSafetySection = dynamic(
+  () => import("../components/marketing/TrustSafetySection").then((m) => m.TrustSafetySection),
+  { loading: () => <div className="min-h-[320px] border-t border-[#E8E6DF] bg-[#F8F6F1] py-14" /> },
+);
+
+const LandingHowItWorks = dynamic(
+  () => import("../components/marketing/LandingHowItWorks").then((m) => m.LandingHowItWorks),
+  { loading: () => <div className="min-h-[280px] border-t border-[#E8E6DF] bg-[#FAFCFB] py-14" /> },
+);
+
+const MarketplaceFinalCta = dynamic(
+  () => import("../components/marketing/MarketplaceFinalCta").then((m) => m.MarketplaceFinalCta),
+  { loading: () => <div className="min-h-[120px] bg-[#F8F6F1]" /> },
+);
+
+const TeacherQuiz = dynamic(
+  () => import("../components/marketing/TeacherQuiz").then((m) => m.TeacherQuiz),
+  { ssr: false, loading: () => null },
 );
 
 type HeroMode = "student" | "teacher";
@@ -342,7 +362,7 @@ export default function LandingPage() {
       {/* ── HEADER ─────────────────────────────── */}
       <header className="sticky top-0 z-50 bg-white border-b border-[#D3D1C7] h-14 flex items-center justify-between px-4 sm:px-6">
         <Link href="/" className="flex items-center gap-2">
-          <PratiqoLogo variant="full" size="md" />
+          <PratiqoLogo variant="full" size="md" priority={false} fetchPriority="low" />
         </Link>
         <div className="flex items-center gap-3">
           <LocaleSwitcher />
@@ -547,18 +567,19 @@ export default function LandingPage() {
                     ) : (
                       <>
                         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
-                          {filtered.slice(0, 9).map((teacher) => (
-                            <LandingTeacherListingCard
-                              key={teacher.id}
-                              teacher={teacher}
-                              formatPrice={formatPrice}
-                              geo={geo}
-                              isHighlighted={selectedMapTeacher?.id === teacher.id}
-                              onOpen={() => setSelectedTeacherProfile(teacher)}
-                            />
+                          {filtered.slice(0, 9).map((teacher, index) => (
+                            <div key={teacher.id} className={cn(index >= 6 && "hidden lg:block")}>
+                              <LandingTeacherListingCard
+                                teacher={teacher}
+                                formatPrice={formatPrice}
+                                geo={geo}
+                                isHighlighted={selectedMapTeacher?.id === teacher.id}
+                                onOpen={() => setSelectedTeacherProfile(teacher)}
+                              />
+                            </div>
                           ))}
                         </div>
-                        {filtered.length > 9 ? (
+                        {filtered.length > 6 ? (
                           <div className="mt-8 text-center">
                             <Link
                               href="/login?next=/student/search"

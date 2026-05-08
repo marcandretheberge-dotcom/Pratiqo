@@ -9,6 +9,7 @@ import { haversineDistance } from "@/lib/geo";
 import { cn } from "@/lib/utils";
 import { useLocale } from "@/lib/locale-context";
 import type { TranslationKey } from "@/lib/translations";
+import { getTeacherImageUrl, shouldUseUnoptimizedImage } from "@/lib/images";
 
 function formatTeaching(teacher: Teacher, t: (k: TranslationKey) => string) {
   switch (teacher.teachingMode) {
@@ -77,7 +78,10 @@ export function HeroTeacherPreviewCards({
                 )
               : null;
 
-          const photoUrl = typeof teacher.imageUrl === "string" ? teacher.imageUrl.trim() : "";
+          const rawPhoto = typeof teacher.imageUrl === "string" ? teacher.imageUrl.trim() : "";
+          const photoUrl = rawPhoto
+            ? getTeacherImageUrl(rawPhoto, { width: 104, height: 104, quality: 75, format: "webp" })
+            : "";
           const rotations = ["-rotate-1", "rotate-1", "-rotate-[0.4deg]"] as const;
 
           return (
@@ -110,7 +114,10 @@ export function HeroTeacherPreviewCards({
                       alt=""
                       width={52}
                       height={52}
-                      unoptimized={photoUrl.startsWith("http")}
+                      sizes="52px"
+                      loading="lazy"
+                      fetchPriority="low"
+                      unoptimized={shouldUseUnoptimizedImage(photoUrl)}
                       className="h-[52px] w-[52px] shrink-0 rounded-2xl object-cover"
                     />
                   ) : (
