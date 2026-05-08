@@ -3,12 +3,18 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { motion } from "motion/react";
 import {
+  BriefcaseBusiness,
   ChevronRight,
+  CheckCircle2,
   Clock,
   CreditCard,
+  FileCheck2,
   Globe,
   Home,
+  Hourglass,
+  MailCheck,
   MapPin,
+  MapPinned,
   MessageSquare,
   Shield,
   Star,
@@ -23,17 +29,10 @@ import { getSupabaseClient } from "../lib/supabase";
 import { useRouter } from "next/navigation";
 import { haversineDistance } from "../lib/geo";
 import { TeacherMap } from "./TeacherMap";
-import { VerificationBadge } from "./VerificationBadge";
 import { getAllDisciplines, getDisciplineById } from "../lib/disciplines";
 import { useLocale } from "../lib/locale-context";
-import {
-  getVerificationLevel,
-  nextLevelRequirementKeys,
-  nextVerificationLevel,
-  verificationLevelTitleKey,
-} from "../lib/verification";
+import { buildTeacherTrustItems, getPublicTeacherTrustBadgeKey, type TeacherTrustItem } from "../lib/teacherTrust";
 import { getEmbedUrl } from "../lib/videoEmbed";
-import { VerifiedBadge } from "./VerifiedBadge";
 import { TeacherAvatar } from "./TeacherAvatar";
 
 export type TeacherBookKind = "standard" | "home";
@@ -57,6 +56,16 @@ type ReviewRow = {
 };
 
 type ReportStatus = "idle" | "submitting" | "success" | "already" | "error";
+
+function TrustItemIcon({ item }: { item: TeacherTrustItem }) {
+  const iconClass = item.status === "pending" ? "text-amber-600" : item.status === "provided" ? "text-slate-600" : "text-[#0F6E56]";
+  if (item.status === "pending") return <Hourglass size={15} className={iconClass} />;
+  if (item.icon === "mail") return <MailCheck size={15} className={iconClass} />;
+  if (item.icon === "map") return <MapPinned size={15} className={iconClass} />;
+  if (item.icon === "diploma") return <FileCheck2 size={15} className={iconClass} />;
+  if (item.icon === "briefcase") return <BriefcaseBusiness size={15} className={iconClass} />;
+  return <CheckCircle2 size={15} className={iconClass} />;
+}
 
 function formatReviewerName(fullName: string): string {
   const trimmed = fullName.trim();
@@ -321,26 +330,34 @@ export function TeacherProfile({
 
   const displayDistanceKm = distanceKm !== undefined ? distanceKm : computedDistanceKm;
 
-  const verificationLevel = useMemo(
+  const trustItems = useMemo(
     () =>
-      getVerificationLevel({
-        plan: displayPlan,
-        identity_verified: teacher.identityVerified,
-        diploma_verified: teacher.diplomaVerified,
-        is_verified: teacher.isVerified,
-        verification_level: teacher.verificationLevel ?? null,
+      buildTeacherTrustItems({
+        isVerified: teacher.isVerified,
+        identityVerified: teacher.identityVerified,
+        identityStatus: teacher.identityStatus,
+        stripeIdentityStatus: teacher.stripeIdentityStatus,
+        diplomaVerified: teacher.diplomaVerified,
+        diplomaUrl: teacher.diplomaUrl,
+        locationVerificationStatus: teacher.locationVerificationStatus,
+        cvSummary: teacher.cvSummary,
+        cvVerificationStatus: teacher.cvVerificationStatus,
+        bio: teacher.bio,
       }),
-    [displayPlan, teacher.identityVerified, teacher.diplomaVerified, teacher.isVerified, teacher.verificationLevel],
+    [
+      teacher.bio,
+      teacher.cvSummary,
+      teacher.cvVerificationStatus,
+      teacher.diplomaUrl,
+      teacher.diplomaVerified,
+      teacher.identityStatus,
+      teacher.identityVerified,
+      teacher.isVerified,
+      teacher.locationVerificationStatus,
+      teacher.stripeIdentityStatus,
+    ],
   );
-
-  const nextLevel = nextVerificationLevel(verificationLevel);
-  const nextReqKeys = nextLevel
-    ? nextLevelRequirementKeys(verificationLevel, {
-        plan: displayPlan,
-        identity_verified: teacher.identityVerified,
-        diploma_verified: teacher.diplomaVerified,
-      })
-    : [];
+  const publicTrustBadgeKey = useMemo(() => getPublicTeacherTrustBadgeKey(trustItems), [trustItems]);
 
   const homeConfigured =
     Boolean(teacher.homeLessonEnabled) &&
@@ -460,15 +477,11 @@ export function TeacherProfile({
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
                       <h2 id="teacher-profile-modal-title" className="text-xl lg:text-2xl font-bold text-slate-900 leading-tight">{teacher.name}</h2>
-                      <VerifiedBadge
-                        verified={teacher.isVerified || Boolean(teacher.identityVerified)}
-                        size="sm"
-                      />
-                      {Boolean(teacher.identityVerified) && (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-green-100 text-green-700 px-2.5 py-0.5 text-xs font-semibold">
-                          <Shield size={11} /> Identité vérifiée
+                      {publicTrustBadgeKey ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-[#E1F5EE] text-[#0F6E56] px-2.5 py-0.5 text-xs font-semibold">
+                          <Shield size={11} /> {t(publicTrustBadgeKey)}
                         </span>
-                      )}
+                      ) : null}
                     </div>
                     <div className="flex flex-wrap items-center gap-2 mt-1.5">
                       <div className="flex items-center gap-1">
@@ -476,8 +489,6 @@ export function TeacherProfile({
                         <span className="text-sm font-semibold text-slate-700">{teacher.rating}</span>
                         <span className="text-xs text-slate-600 ml-0.5">({reviews.length} avis)</span>
                       </div>
-                      <span className="text-slate-300 text-xs">·</span>
-                      <VerificationBadge level={verificationLevel} size="sm" showLabel={false} />
                     </div>
                     <p className="text-xs text-slate-600 flex items-center gap-1.5 mt-1.5">
                       <MapPin size={11} className="text-[#1D9E75] shrink-0" />
@@ -562,21 +573,6 @@ export function TeacherProfile({
                     isBooked={Boolean(studioMapHasConfirmedBooking)}
                     isEnterprise={displayPlan === "enterprise"}
                   />
-                ) : null}
-
-                {/* Next verification level */}
-                {nextLevel ? (
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 space-y-2">
-                    <p className="text-xs font-bold uppercase tracking-wider text-slate-600">{t("verificationNextLevel")}</p>
-                    <p className="text-sm font-semibold text-slate-800">
-                      {t("verificationNextTierLabel")} : {t(verificationLevelTitleKey(nextLevel))}
-                    </p>
-                    <ul className="list-disc pl-4 text-sm text-slate-600 space-y-1">
-                      {nextReqKeys.map((key) => (
-                        <li key={key}>{t(key)}</li>
-                      ))}
-                    </ul>
-                  </div>
                 ) : null}
 
                 {/* ── Reviews ────────────────────────────────────────────── */}
@@ -770,12 +766,37 @@ export function TeacherProfile({
                     ) : null}
                   </div>
 
-                  {/* Verification level */}
+                  {/* Public trust card */}
                   <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-600 mb-2">
-                      Niveau de confiance
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-600">
+                      {t("trustVerificationTitle")}
                     </p>
-                    <VerificationBadge level={verificationLevel} size="lg" showLabel />
+                    <h3 className="mt-1 text-sm font-bold text-slate-900">{t("trustVerifiedElements")}</h3>
+                    <p className="mt-1 text-[11px] leading-relaxed text-slate-600">
+                      {t("trustSensitiveDocumentsHidden")}
+                    </p>
+                    <ul className="mt-3 space-y-2.5">
+                      {trustItems.map((item) => (
+                        <li key={item.key} className="flex gap-2.5">
+                          <span
+                            className={cn(
+                              "mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full",
+                              item.status === "pending"
+                                ? "bg-amber-50"
+                                : item.status === "provided"
+                                  ? "bg-slate-100"
+                                  : "bg-[#E1F5EE]",
+                            )}
+                          >
+                            <TrustItemIcon item={item} />
+                          </span>
+                          <span>
+                            <span className="block text-xs font-semibold text-slate-900">{t(item.publicLabelKey)}</span>
+                            <span className="block text-[11px] leading-relaxed text-slate-600">{t(item.publicDescriptionKey)}</span>
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
 
                   {/* Message: locked until first booking */}

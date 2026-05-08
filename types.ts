@@ -60,6 +60,12 @@ export interface Teacher {
   identityVerified?: boolean;
   diplomaVerified?: boolean;
   phoneVerified?: boolean;
+  identityStatus?: string | null;
+  stripeIdentityStatus?: string | null;
+  diplomaUrl?: string | null;
+  locationVerificationStatus?: string | null;
+  cvSummary?: string | null;
+  cvVerificationStatus?: string | null;
 }
 
 export interface ProgressData {

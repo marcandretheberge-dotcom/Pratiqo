@@ -43,6 +43,11 @@ export type TeacherRow = {
   city?: string | null;
   region?: string | null;
   identity_status?: string | null;
+  stripe_identity_status?: string | null;
+  diploma_url?: string | null;
+  location_verification_status?: string | null;
+  cv_summary?: string | null;
+  cv_verification_status?: string | null;
 };
 
 export function teacherRowToTeacher(row: TeacherRow): Teacher {
@@ -98,6 +103,12 @@ export function teacherRowToTeacher(row: TeacherRow): Teacher {
     identityVerified: Boolean(row.identity_verified),
     diplomaVerified: Boolean(row.diploma_verified),
     phoneVerified: Boolean(row.phone_verified),
+    identityStatus: row.identity_status ?? null,
+    stripeIdentityStatus: row.stripe_identity_status ?? null,
+    diplomaUrl: row.diploma_url ?? null,
+    locationVerificationStatus: row.location_verification_status ?? null,
+    cvSummary: row.cv_summary ?? null,
+    cvVerificationStatus: row.cv_verification_status ?? null,
     videoUrl: row.video_url ?? null,
     additionalDisciplines: undefined,
     countryCode: row.country_code ?? undefined,
@@ -149,6 +160,12 @@ export function teacherToRow(t: Teacher): Record<string, unknown> {
     identity_verified: t.identityVerified ?? false,
     diploma_verified: t.diplomaVerified ?? false,
     phone_verified: t.phoneVerified ?? false,
+    identity_status: t.identityStatus ?? null,
+    stripe_identity_status: t.stripeIdentityStatus ?? null,
+    diploma_url: t.diplomaUrl ?? null,
+    location_verification_status: t.locationVerificationStatus ?? "missing",
+    cv_summary: t.cvSummary ?? null,
+    cv_verification_status: t.cvVerificationStatus ?? "missing",
     country_code: t.countryCode ?? null,
     timezone: t.timezone ?? null,
     currency: t.currency ?? null,

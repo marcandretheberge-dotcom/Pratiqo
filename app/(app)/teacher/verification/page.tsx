@@ -4,9 +4,11 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
+  BriefcaseBusiness,
   CheckCircle2,
   ExternalLink,
   Loader2,
+  MapPinned,
   Paperclip,
   ShieldCheck,
   UploadCloud,
@@ -25,6 +27,7 @@ import {
 } from "../../../../lib/verification";
 import { useLocale } from "../../../../lib/locale-context";
 import { cn } from "../../../../lib/utils";
+import { buildTeacherTrustItems } from "../../../../lib/teacherTrust";
 
 type TeacherVerifyRow = {
   id: string;
@@ -37,6 +40,10 @@ type TeacherVerifyRow = {
   diploma_url: string | null;
   phone_verified: boolean | null;
   is_verified: boolean | null;
+  location_verification_status: string | null;
+  cv_summary: string | null;
+  cv_verification_status: string | null;
+  bio?: string | null;
 };
 
 export default function TeacherVerificationPage() {
@@ -63,7 +70,7 @@ export default function TeacherVerificationPage() {
       supabase
         .from("teachers")
         .select(
-          "id, verification_level, identity_verified, identity_status, stripe_identity_status, stripe_identity_failed_reason, diploma_verified, diploma_url, phone_verified, is_verified",
+          "id, verification_level, identity_verified, identity_status, stripe_identity_status, stripe_identity_failed_reason, diploma_verified, diploma_url, phone_verified, is_verified, location_verification_status, cv_summary, cv_verification_status, bio",
         )
         .eq("user_id", user.id)
         .maybeSingle(),
@@ -257,6 +264,26 @@ export default function TeacherVerificationPage() {
     | "failed"
     | "canceled"
     | null;
+  const trustItems = buildTeacherTrustItems({
+    isVerified: teacherRow.is_verified,
+    identityVerified: teacherRow.identity_verified,
+    identityStatus: teacherRow.identity_status,
+    stripeIdentityStatus: teacherRow.stripe_identity_status,
+    diplomaVerified: teacherRow.diploma_verified,
+    diplomaUrl: teacherRow.diploma_url,
+    locationVerificationStatus: teacherRow.location_verification_status,
+    cvSummary: teacherRow.cv_summary,
+    cvVerificationStatus: teacherRow.cv_verification_status,
+    bio: teacherRow.bio,
+  });
+  const zoneVerified = teacherRow.location_verification_status === "verified";
+  const zonePending = teacherRow.location_verification_status === "pending";
+  const backgroundVerified = teacherRow.cv_verification_status === "verified";
+  const backgroundProvided =
+    backgroundVerified ||
+    teacherRow.cv_verification_status === "provided" ||
+    teacherRow.cv_verification_status === "pending" ||
+    Boolean(teacherRow.cv_summary?.trim() || teacherRow.bio?.trim());
 
   return (
     <div className="space-y-8">
@@ -277,7 +304,55 @@ export default function TeacherVerificationPage() {
         <VerificationBadge level={level} size="md" />
       </div>
 
-      <VerificationBadge level={level} size="lg" />
+      <section className="grid gap-4 lg:grid-cols-2">
+        <div className="rounded-2xl border border-[#DCEAE3] bg-white p-5">
+          <h2 className="text-sm font-bold uppercase tracking-wider text-[#2C2C2A]">
+            {t("teacherVerificationTrustRequirements")}
+          </h2>
+          <p className="mt-2 text-sm text-[#6B6A65]">{t("trustSensitiveDocumentsHidden")}</p>
+          <ul className="mt-4 space-y-2.5">
+            {trustItems.map((item) => (
+              <li key={item.key} className="flex items-start gap-2.5 text-sm">
+                <CheckCircle2
+                  size={17}
+                  className={cn(
+                    "mt-0.5 shrink-0",
+                    item.status === "pending"
+                      ? "text-amber-600"
+                      : item.status === "provided"
+                        ? "text-slate-500"
+                        : "text-[#1D9E75]",
+                  )}
+                />
+                <span>
+                  <span className="block font-semibold text-[#2C2C2A]">{t(item.publicLabelKey)}</span>
+                  <span className="block text-xs leading-relaxed text-[#6B6A65]">{t(item.publicDescriptionKey)}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="rounded-2xl border border-[#E8E6DF] bg-[#F8F7F2] p-5">
+          <h2 className="text-sm font-bold uppercase tracking-wider text-[#2C2C2A]">
+            {t("teacherVerificationMarketplaceBenefits")}
+          </h2>
+          <ul className="mt-4 space-y-2 text-sm text-[#6B6A65]">
+            <li className="flex gap-2">
+              <CheckCircle2 size={16} className="mt-0.5 shrink-0 text-[#1D9E75]" />
+              <span>{t("verificationBenefitHomeLessons")}</span>
+            </li>
+            <li className="flex gap-2">
+              <CheckCircle2 size={16} className="mt-0.5 shrink-0 text-[#1D9E75]" />
+              <span>{t("verificationBenefitPublicClarity")}</span>
+            </li>
+            <li className="flex gap-2">
+              <CheckCircle2 size={16} className="mt-0.5 shrink-0 text-[#1D9E75]" />
+              <span>{t("verificationBenefitProSeparated")}</span>
+            </li>
+          </ul>
+        </div>
+      </section>
 
       {message ? (
         <div
@@ -491,9 +566,43 @@ export default function TeacherVerificationPage() {
           </div>
         </div>
 
-        {/* ── Level 4 — Pro ─────────────────────────────────────────────── */}
+        <div className="rounded-2xl border border-[#E8E6DF] bg-white p-5 space-y-3">
+          <div className="flex gap-3">
+            <MapPinned className="text-[#0F6E56] shrink-0 mt-0.5" size={22} />
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-[#2C2C2A]">{t("verificationLevel4Title")}</p>
+              <p className="text-sm text-[#6B6A65] mt-1">{t("verificationLevel4BodyZone")}</p>
+              {zoneVerified ? (
+                <p className="mt-2 text-sm font-semibold text-[#1D9E75]">{t("trustZoneVerified")}</p>
+              ) : zonePending ? (
+                <p className="mt-2 text-sm font-semibold text-amber-700">{t("trustZonePending")}</p>
+              ) : (
+                <p className="mt-2 text-xs text-[#6B6A65]">{t("locationVerificationStatus")}: {t("verificationUnverified")}</p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-[#E8E6DF] bg-white p-5 space-y-3">
+          <div className="flex gap-3">
+            <BriefcaseBusiness className="text-slate-600 shrink-0 mt-0.5" size={22} />
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-[#2C2C2A]">{t("verificationLevel5Title")}</p>
+              <p className="text-sm text-[#6B6A65] mt-1">{t("verificationLevel5Body")}</p>
+              {backgroundVerified ? (
+                <p className="mt-2 text-sm font-semibold text-[#1D9E75]">{t("trustBackgroundVerified")}</p>
+              ) : backgroundProvided ? (
+                <p className="mt-2 text-sm font-semibold text-slate-700">{t("trustBackgroundProvided")}</p>
+              ) : (
+                <p className="mt-2 text-xs text-[#6B6A65]">{t("backgroundVerificationStatus")}: {t("verificationUnverified")}</p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* ── Marketplace plan benefits ─────────────────────────────────── */}
         <div className="rounded-2xl border border-[#E8E6DF] bg-[#F1EFE8] p-5">
-          <p className="font-semibold text-[#2C2C2A]">{t("verificationLevel4Title")}</p>
+          <p className="font-semibold text-[#2C2C2A]">{t("verificationMarketplacePlanTitle")}</p>
           <p className="mt-2 text-sm text-[#6B6A65]">
             {isPro ? t("verificationLevel4BodyPro") : t("verificationLevel4BodyFree")}
           </p>
