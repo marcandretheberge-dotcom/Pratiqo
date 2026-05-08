@@ -74,11 +74,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const studentDisplayName = (profile?.name as string | undefined) || (user ? authDisplayName(user) : "");
   const studentInitials = initialsFromDisplay(studentDisplayName, user?.email || undefined);
 
-  const STUDENT_NAV: { href: string; labelKey: "studentTabFind" | "studentTabLessons" | "studentTabProgress" | "studentTabLearners" | "studentTabProfile" }[] = [
+  const STUDENT_NAV: {
+    href: string;
+    labelKey:
+      | "studentTabFind"
+      | "studentTabLessons"
+      | "studentTabProgress"
+      | "studentTabLearners"
+      | "resolutionCenterTitle"
+      | "studentTabProfile";
+  }[] = [
     { href: "/student/search", labelKey: "studentTabFind" },
     { href: "/dashboard", labelKey: "studentTabLessons" },
     { href: "/student/progress", labelKey: "studentTabProgress" },
     { href: "/student/learners", labelKey: "studentTabLearners" },
+    { href: "/resolution", labelKey: "resolutionCenterTitle" },
     { href: "/profile", labelKey: "studentTabProfile" },
   ];
 
@@ -280,6 +290,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             { href: "/student/progress", icon: "🌱", labelKey: "studentTabProgress" as const },
             { href: "/student/learners", icon: "🎓", labelKey: "studentTabLearners" as const },
             { href: "/profile", icon: "👤", labelKey: "studentTabProfile" as const },
+            { href: "/resolution", icon: "!", labelKey: "resolutionCenterTitle" as const },
           ].map((tab) => {
             const active = isStudentNavActive(pathname, tab.href);
             return (

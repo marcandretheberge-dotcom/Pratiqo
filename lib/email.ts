@@ -675,6 +675,58 @@ export async function sendReviewFlaggedAdminAlert(opts: {
   }
 }
 
+export async function sendSupportCaseAdminAlert(opts: {
+  caseId: string;
+  bookingId: string;
+  category: string;
+  role: string;
+  userId: string;
+  description: string;
+  payoutHold: boolean;
+}) {
+  const to =
+    process.env.ADMIN_VERIFICATION_EMAIL?.trim() ||
+    process.env.RESEND_ADMIN_EMAIL?.trim() ||
+    process.env.SUPPORT_EMAIL?.trim();
+  if (!to) {
+    console.warn("[email] admin/support email missing; skipping support case alert");
+    return { skipped: true as const };
+  }
+  const resend = resendClient();
+  if (!resend) return { skipped: true as const };
+
+  const base = appBaseUrl();
+  try {
+    await resend.emails.send({
+      from: "Pratiqo <onboarding@pratiqo.ca>",
+      replyTo: "support@pratiqo.ca",
+      to,
+      subject: `[Pratiqo] Nouveau dossier de resolution - ${opts.category}`,
+      html: buildEmail({
+        heroTitle: "Nouveau dossier de resolution",
+        heroSubtitle: opts.payoutHold ? "Versement a reviser avant transfert" : "Suivi support",
+        bodyHtml: `
+          ${infoTable([
+            ["case.id", opts.caseId],
+            ["booking.id", opts.bookingId],
+            ["Categorie", opts.category],
+            ["Role", opts.role],
+            ["user.id", opts.userId],
+            ["payout_hold", opts.payoutHold ? "true" : "false"],
+          ])}
+          <p><strong>Description :</strong><br>${escapeHtml(opts.description)}</p>
+          <p><a href="${base}/resolution/${encodeURIComponent(opts.caseId)}" style="color:#1D9E75;font-weight:600;">
+            Voir le dossier
+          </a></p>
+          <p style="font-size:13px;color:#6B6A65;">Si aucun admin dashboard n'est disponible, traiter depuis Supabase.</p>
+        `,
+      }),
+    });
+  } catch (e) {
+    console.error("[email] Support case alert failed:", e);
+  }
+}
+
 export async function sendReviewPublishedTeacherEmail(opts: {
   email: string;
   teacherName: string;

@@ -96,6 +96,27 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         return NextResponse.json({ error: "Payment is not confirmed for this booking" }, { status: 409 });
       }
 
+      const { data: openPayoutHoldCases, error: holdErr } = await admin
+        .from("support_cases")
+        .select("id")
+        .eq("booking_id", bookingId)
+        .eq("payout_hold", true)
+        .in("status", ["new", "waiting_other_party", "under_review"])
+        .limit(1);
+      if (holdErr) {
+        return NextResponse.json({ error: holdErr.message }, { status: 500 });
+      }
+      if (openPayoutHoldCases?.length) {
+        return NextResponse.json(
+          {
+            error:
+              "Un problème est en cours de révision pour ce cours. Le versement sera traité après résolution.",
+            payout_status: "held_for_support_case",
+          },
+          { status: 409 },
+        );
+      }
+
       if (!payment.stripe_charge_id) {
         return NextResponse.json({ error: "Missing Stripe charge for teacher payout" }, { status: 409 });
       }

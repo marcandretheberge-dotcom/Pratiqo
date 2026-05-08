@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Calendar, CalendarClock, Copy, ExternalLink, MapPin, MessageCircle, Video } from "lucide-react";
+import { AlertTriangle, Calendar, CalendarClock, Copy, ExternalLink, MapPin, MessageCircle, Video } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useLocale } from "@/lib/locale-context";
 import type { TranslationKey } from "@/lib/translations";
@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { getBookingLifecycleState, type BookingLifecycleState } from "@/lib/bookingLifecycle";
 import { localeToBcp47 } from "@/lib/i18n/types";
 import { bookingWallTimeRangeToUtc, formatTimeRangeForUser } from "@/lib/timezones";
+import { SupportCaseModal } from "@/components/support/SupportCaseModal";
 
 const PEER_UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -99,8 +100,10 @@ export function TeacherScheduleCard({
   const router = useRouter();
   const relationshipMode = Boolean(onRequestCancelClass && onOpenReschedule);
   const [completionTarget, setCompletionTarget] = useState<TeacherScheduleRow | null>(null);
+  const [supportTarget, setSupportTarget] = useState<TeacherScheduleRow | null>(null);
   const [completing, setCompleting] = useState(false);
   const [completionError, setCompletionError] = useState<string | null>(null);
+  const [supportFlash, setSupportFlash] = useState<string | null>(null);
 
   const finishBooking = async (outcome: CompletionOutcome) => {
     if (!completionTarget) return;
@@ -130,6 +133,11 @@ export function TeacherScheduleCard({
         </div>
         <Calendar size={18} className="shrink-0 text-[#0F6E56]" aria-hidden />
       </div>
+      {supportFlash ? (
+        <p className="mb-4 rounded-xl border border-[#DCEAE3] bg-[#F3FAF6] px-3 py-2 text-xs font-semibold text-[#0F6E56]">
+          {supportFlash}
+        </p>
+      ) : null}
 
       {items.length === 0 ? (
         <div className="py-10 text-center text-sm text-[#6B6760]">
@@ -248,6 +256,18 @@ export function TeacherScheduleCard({
                       <CalendarClock className="h-[18px] w-[18px] shrink-0 sm:h-4 sm:w-4" aria-hidden />
                       {t("rescheduleClass")}
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => setSupportTarget(b)}
+                      disabled={Boolean(cancelBusy)}
+                      className={cn(
+                        "inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800 transition hover:bg-amber-100 disabled:opacity-50",
+                        "sm:h-11 sm:min-h-0 sm:w-auto sm:flex-1 sm:min-w-[160px] sm:py-0",
+                      )}
+                    >
+                      <AlertTriangle className="h-[18px] w-[18px] shrink-0 sm:h-4 sm:w-4" aria-hidden />
+                      {t("reportProblem")}
+                    </button>
                   </div>
                 ) : canMessage ? (
                   <button
@@ -350,6 +370,15 @@ export function TeacherScheduleCard({
           </div>
         </div>
       ) : null}
+      <SupportCaseModal
+        open={Boolean(supportTarget)}
+        bookingId={supportTarget?.id ?? null}
+        onClose={() => setSupportTarget(null)}
+        onSubmitted={(caseId) => {
+          setSupportFlash(`${t("supportCaseSubmitted")} #${caseId.slice(0, 8)}`);
+          window.setTimeout(() => setSupportFlash(null), 4000);
+        }}
+      />
     </div>
   );
 }

@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { CalendarDays, MessageSquare, Search, UserRound } from "lucide-react";
+import { AlertTriangle, CalendarDays, MessageSquare, Search, UserRound } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { authDisplayName } from "@/lib/authDisplay";
 import { getSupabaseClient } from "@/lib/supabase";
@@ -21,6 +21,7 @@ import {
   formatBookingTimeForBothZones,
   getBrowserTimeZone,
 } from "@/lib/timezones";
+import { SupportCaseModal } from "@/components/support/SupportCaseModal";
 
 const PEER_UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -108,6 +109,7 @@ export function StudentDashboard() {
   const [rescheduleBookingId, setRescheduleBookingId] = useState<string | null>(null);
   const [cancelBusy, setCancelBusy] = useState(false);
   const [localFlash, setLocalFlash] = useState<string | null>(null);
+  const [supportBookingId, setSupportBookingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -392,6 +394,17 @@ export function StudentDashboard() {
                 >
                   {t("rescheduleClass")}
                 </button>
+                <button
+                  type="button"
+                  onClick={() => setSupportBookingId(nextLesson.bookingId)}
+                  className={cn(
+                    "inline-flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-2xl border-2 border-white/70 bg-transparent px-5 text-sm font-semibold text-white transition hover:bg-white/10",
+                    "sm:flex-none sm:min-w-[160px]",
+                  )}
+                >
+                  <AlertTriangle size={17} className="shrink-0" />
+                  {t("reportProblem")}
+                </button>
               </div>
               <Link
                 href="/legal/annulation"
@@ -512,6 +525,14 @@ export function StudentDashboard() {
                               {t("rescheduleClass")}
                             </button>
                           </div>
+                          <button
+                            type="button"
+                            onClick={() => setSupportBookingId(b.bookingId)}
+                            className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-amber-300 bg-amber-50 px-4 text-sm font-semibold text-amber-800 transition hover:bg-amber-100"
+                          >
+                            <AlertTriangle size={17} className="shrink-0" />
+                            {t("reportProblem")}
+                          </button>
                           <Link
                             href="/legal/annulation"
                             className="text-center text-xs font-medium text-[#0F6E56]/80 underline-offset-4 hover:underline lg:text-left"
@@ -617,6 +638,15 @@ export function StudentDashboard() {
         busy={cancelBusy}
         role="student"
         isLate={cancelIsLate}
+      />
+      <SupportCaseModal
+        open={Boolean(supportBookingId)}
+        bookingId={supportBookingId}
+        onClose={() => setSupportBookingId(null)}
+        onSubmitted={(caseId) => {
+          setLocalFlash(`${t("supportCaseSubmitted")} #${caseId.slice(0, 8)}`);
+          window.setTimeout(() => setLocalFlash(null), 4000);
+        }}
       />
     </div>
   );
