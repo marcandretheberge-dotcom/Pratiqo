@@ -101,6 +101,8 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
   const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");
   const [hourly, setHourly] = useState("");
+  const [introEnabled, setIntroEnabled] = useState(false);
+  const [introCustomPrice, setIntroCustomPrice] = useState("");
   const [city, setCity] = useState("");
   const [locationJson, setLocationJson] = useState<Record<string, unknown>>({});
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
@@ -181,11 +183,16 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
         is_public?: boolean | null;
         deactivated_at?: string | null;
         deleted_at?: string | null;
+        intro_session_enabled?: boolean | null;
+        intro_session_price_cents?: number | null;
       };
       setTeacherId(row.id);
       setTeacherIsPublic(row.is_public !== false && !row.deactivated_at && !row.deleted_at);
       setBio(row.bio || "");
       setHourly(String(row.price_per_lesson ?? ""));
+      setIntroEnabled(row.intro_session_enabled === true);
+      const introCents = typeof row.intro_session_price_cents === "number" ? row.intro_session_price_cents : null;
+      setIntroCustomPrice(introCents != null && Number.isFinite(introCents) && introCents > 0 ? String(Math.round(introCents) / 100) : "");
       setTeachingMode(row.teaching_mode || "both");
       setStripeAccountId(row.stripe_account_id?.trim() || null);
       setVideoUrl(row.video_url ?? "");
@@ -341,6 +348,14 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
         name: displayName.trim() || undefined,
         bio: bio.trim(),
         price_per_lesson: Number(hourly) || 0,
+        intro_session_enabled: introEnabled,
+        intro_session_duration_minutes: 45,
+        intro_session_discount_percent: 50,
+        intro_session_price_cents: (() => {
+          const dollars = Number(String(introCustomPrice || "").trim());
+          if (!Number.isFinite(dollars) || dollars <= 0) return null;
+          return Math.max(0, Math.round(dollars * 100));
+        })(),
         location: nextLocation,
         video_url: trimmedVideo || null,
       })
@@ -606,6 +621,49 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
             loyaltyTier={loyaltyTier}
           />
         </label>
+
+        <div className="rounded-2xl border border-[#DCEAE3] bg-[#F3FAF6] p-4 space-y-3">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-sm font-extrabold text-[#2C2C2A]">{t("introSessionTitle")}</p>
+              <p className="mt-1 text-xs leading-relaxed text-slate-600">{t("introSessionDescription")}</p>
+            </div>
+            <label className="inline-flex items-center gap-2 text-sm font-semibold text-slate-700">
+              <input
+                type="checkbox"
+                checked={introEnabled}
+                onChange={(e) => setIntroEnabled(e.target.checked)}
+                className="h-4 w-4 rounded border-slate-300 text-[#00694c]"
+              />
+              {t("enableIntroSession")}
+            </label>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="rounded-2xl bg-white border border-slate-200 p-3">
+              <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500">{t("introSessionDuration")}</p>
+              <p className="mt-1 text-sm font-bold text-slate-900">45 min</p>
+            </div>
+            <div className="rounded-2xl bg-white border border-slate-200 p-3 space-y-1">
+              <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500">{t("introSessionPrice")}</p>
+              <input
+                value={introCustomPrice}
+                onChange={(e) => setIntroCustomPrice(e.target.value)}
+                disabled={!introEnabled}
+                type="number"
+                min={0}
+                step="0.5"
+                placeholder="(auto)"
+                className="w-full h-10 rounded-xl border border-slate-200 px-3 text-sm text-slate-900 disabled:bg-slate-50 disabled:text-slate-400"
+              />
+              <p className="text-[11px] text-slate-500">
+                {t("regularLesson")}: <span className="font-semibold text-slate-700">{hourly || "—"} $/h</span>
+              </p>
+            </div>
+          </div>
+
+          <p className="text-[11px] font-semibold text-slate-600">{t("introSessionOnePerTeacher")}</p>
+        </div>
         <label className="block space-y-1">
           <span className="text-xs font-bold text-slate-600 uppercase">{t("cityLabel")}</span>
           <input

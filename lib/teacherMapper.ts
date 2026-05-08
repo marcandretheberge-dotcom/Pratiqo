@@ -31,6 +31,10 @@ export type TeacherRow = {
   home_lesson_min_duration?: number | null;
   home_lesson_requires_confirmation?: boolean | null;
   home_lesson_force_2h_over_20km?: boolean | null;
+  intro_session_enabled?: boolean | null;
+  intro_session_duration_minutes?: number | null;
+  intro_session_price_cents?: number | null;
+  intro_session_discount_percent?: number | null;
   verification_level?: number | null;
   identity_verified?: boolean | null;
   diploma_verified?: boolean | null;
@@ -99,6 +103,19 @@ export function teacherRowToTeacher(row: TeacherRow): Teacher {
     homeLessonMinDuration: row.home_lesson_min_duration ?? 60,
     homeLessonRequiresConfirmation: row.home_lesson_requires_confirmation ?? true,
     homeLessonForce2hOver20km: Boolean(row.home_lesson_force_2h_over_20km),
+    introSessionEnabled: row.intro_session_enabled === true,
+    introSessionDurationMinutes:
+      typeof row.intro_session_duration_minutes === "number" && Number.isFinite(row.intro_session_duration_minutes)
+        ? Math.max(15, Math.round(row.intro_session_duration_minutes))
+        : undefined,
+    introSessionPriceCents:
+      typeof row.intro_session_price_cents === "number" && Number.isFinite(row.intro_session_price_cents)
+        ? Math.max(0, Math.round(row.intro_session_price_cents))
+        : null,
+    introSessionDiscountPercent:
+      typeof row.intro_session_discount_percent === "number" && Number.isFinite(row.intro_session_discount_percent)
+        ? Math.max(0, Math.min(95, Math.round(row.intro_session_discount_percent)))
+        : undefined,
     verificationLevel: row.verification_level ?? undefined,
     identityVerified: Boolean(row.identity_verified),
     diplomaVerified: Boolean(row.diploma_verified),

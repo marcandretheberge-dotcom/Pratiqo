@@ -24,6 +24,7 @@ import { useAuth } from "./AuthProvider";
 import { getSupabaseClient } from "../lib/supabase";
 import { haversineDistance } from "../lib/geo";
 import { isBookingAtLeast24hAhead } from "@/lib/bookingCancellation";
+import { calculateIntroSessionPriceCents } from "@/lib/introSession";
 import { formatLocalISODate, periodForSlot } from "../lib/slots";
 import { localeToBcp47 } from "../lib/i18n/types";
 import { useLocale } from "../lib/locale-context";
@@ -39,6 +40,7 @@ import type { TranslationKey } from "@/lib/translations";
 export type BookingInitialLessonKind = "standard" | "home";
 
 type StoredTeachingMode = "person" | "online" | "domicile";
+type LessonType = "regular" | "intro";
 
 type Step = "info" | "preferences" | "pickDate" | "pickSlot" | "confirm";
 type LearnerContextType = "academic" | "language" | "music" | "general";
@@ -149,6 +151,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [selectedLevel, setSelectedLevel] = useState<string | null>(null);
+  const [lessonType, setLessonType] = useState<LessonType>("regular");
   const [teachingMode, setTeachingMode] = useState<StoredTeachingMode>(() =>
     defaultTeachingMode(teacher, initialLessonKind),
   );
@@ -200,26 +203,56 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
     return haversineDistance(geo.lat, geo.lng, lat, lng);
   }, [geo, teacher.location?.lat, teacher.location?.lng]);
 
+  const introAvailable = teacher.introSessionEnabled === true;
+  const introDurationMinutes =
+    typeof teacher.introSessionDurationMinutes === "number" && Number.isFinite(teacher.introSessionDurationMinutes)
+      ? Math.max(30, Math.round(teacher.introSessionDurationMinutes))
+      : 45;
+  const introDiscountPercent =
+    typeof teacher.introSessionDiscountPercent === "number" && Number.isFinite(teacher.introSessionDiscountPercent)
+      ? Math.max(0, Math.min(95, Math.round(teacher.introSessionDiscountPercent)))
+      : 50;
+
   const lessonMinutes = useMemo(() => {
+    if (lessonType === "intro") return introDurationMinutes;
     if (teachingMode !== "domicile") return 60;
     let h = (teacher.homeLessonMinDuration ?? 60) / 60;
     if (teacher.homeLessonForce2hOver20km && distanceKm !== null && distanceKm > 20) {
       h = Math.max(h, 2);
     }
     return Math.round(h * 60);
-  }, [teachingMode, teacher.homeLessonMinDuration, teacher.homeLessonForce2hOver20km, distanceKm]);
+  }, [
+    lessonType,
+    introDurationMinutes,
+    teachingMode,
+    teacher.homeLessonMinDuration,
+    teacher.homeLessonForce2hOver20km,
+    distanceKm,
+  ]);
 
   const lessonHours = lessonMinutes / 60;
   const hourlyRate = teachingMode === "domicile" ? Number(teacher.homeLessonPrice ?? 0) : teacher.pricePerLesson;
   const totalPrice = Math.round(lessonHours * hourlyRate * 100) / 100;
+
+  const introPriceCents = useMemo(() => {
+    if (!introAvailable) return null;
+    return calculateIntroSessionPriceCents({
+      hourlyPrice: teacher.pricePerLesson,
+      durationMinutes: introDurationMinutes,
+      discountPercent: introDiscountPercent,
+      explicitPriceCents: teacher.introSessionPriceCents ?? null,
+    });
+  }, [introAvailable, teacher.introSessionPriceCents, teacher.pricePerLesson, introDurationMinutes, introDiscountPercent]);
+
+  const basePrice = lessonType === "intro" && introPriceCents != null ? Math.round(introPriceCents) / 100 : totalPrice;
   // Future: show approximate converted price using FX service, but charge in the configured Stripe currency.
-  const displayPrice = formatPrice(totalPrice);
+  const displayPrice = formatPrice(basePrice);
   const displayedHourlyPrice = formatPrice(hourlyRate);
 
   // Credits: can apply up to balance, but leave at least $0.50 for Stripe minimum
-  const maxCreditsApplicable = Math.max(0, Math.floor(Math.min(creditBalance, totalPrice - 0.5) * 100) / 100);
+  const maxCreditsApplicable = Math.max(0, Math.floor(Math.min(creditBalance, basePrice - 0.5) * 100) / 100);
   const creditsDiscount = applyCredits ? maxCreditsApplicable : 0;
-  const effectivePrice = Math.max(0.5, totalPrice - creditsDiscount);
+  const effectivePrice = Math.max(0.5, basePrice - creditsDiscount);
 
   const homeAvailable =
     Boolean(teacher.homeLessonEnabled) &&
@@ -229,6 +262,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
   // "all" comes from encodeTeachingMode when teacher has person + online + home selected
   const showStudio = ["person", "both", "all"].includes(teacher.teachingMode);
   const showOnline = ["online", "both", "all"].includes(teacher.teachingMode);
+  const showHome = lessonType !== "intro";
 
   const areaLabel =
     teacher.location?.neighborhood ||
@@ -304,6 +338,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
   );
 
   useEffect(() => {
+    setLessonType("regular");
     setTeachingMode(defaultTeachingMode(teacher, initialLessonKind));
     setStudentAddress("");
     setStep("info");
@@ -563,6 +598,22 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
 
       const supabase = getSupabaseClient();
       await saveSelectedLearnerContext();
+
+      if (lessonType === "intro") {
+        const base = supabase
+          .from("bookings")
+          .select("id", { head: true, count: "exact" })
+          .eq("teacher_id", teacher.id)
+          .eq("lesson_type", "intro");
+        const { count, error: checkErr } = selectedLearnerId
+          ? await base.eq("learner_profile_id", selectedLearnerId)
+          : await base.eq("student_id", user.id);
+        if (checkErr) throw checkErr;
+        if ((count ?? 0) > 0) {
+          setCheckoutError(t("introSessionAlreadyUsed"));
+          return;
+        }
+      }
       const bookingData = {
         teacher_id: teacher.id,
         student_id: user.id,
@@ -573,7 +624,8 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
         student_level: selectedLevel,
         teaching_mode: modeForDb,
         status: "pending_payment",
-        price: totalPrice,
+        lesson_type: lessonType,
+        price: basePrice,
         duration_minutes: lessonMinutes,
         student_address: modeForDb === "domicile" ? addressTrim : null,
         learner_profile_id: selectedLearnerId || null,
@@ -606,7 +658,8 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
         },
         body: JSON.stringify({
           teacher_id: teacher.id,
-          amount: totalPrice,
+          amount: basePrice,
+          lesson_type: lessonType,
           booking_details: { booking_id: bookingId },
           teaching_mode: modeForDb,
           student_address: modeForDb === "domicile" ? addressTrim : "",
@@ -750,6 +803,45 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
 
           {step === "preferences" && (
             <div className="space-y-4">
+              {introAvailable ? (
+                <div className="space-y-2">
+                  <p className="text-sm font-semibold text-slate-800">{t("chooseLessonType")}</p>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setLessonType("intro");
+                        // V1: keep intro simple; avoid 45-min home lessons when teacher enforces 60+.
+                        if (teachingMode === "domicile") setTeachingMode("person");
+                      }}
+                      className={cn(
+                        "px-3 py-1.5 rounded-full text-xs border font-semibold",
+                        lessonType === "intro" ? "text-white border-transparent" : "border-slate-200 text-slate-600",
+                      )}
+                      style={lessonType === "intro" ? { backgroundColor: "#0F6E56", borderColor: "#0F6E56" } : undefined}
+                    >
+                      {t("introLesson")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setLessonType("regular")}
+                      className={cn(
+                        "px-3 py-1.5 rounded-full text-xs border font-semibold",
+                        lessonType === "regular" ? "text-white border-transparent" : "border-slate-200 text-slate-600",
+                      )}
+                      style={
+                        lessonType === "regular" ? { backgroundColor: "#0F6E56", borderColor: "#0F6E56" } : undefined
+                      }
+                    >
+                      {t("regularLesson")}
+                    </button>
+                  </div>
+                  {lessonType === "intro" ? (
+                    <p className="text-xs font-semibold text-slate-600">{t("introSessionOnePerTeacher")}</p>
+                  ) : null}
+                </div>
+              ) : null}
+
               <p className="text-sm font-semibold text-slate-800">{t("bookingYourLevel")}</p>
               <div className="flex flex-wrap gap-2">
                 {displayLevels.map((lvl) => (
@@ -863,7 +955,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                       <Video size={14} /> {t("bookingOnline")}
                     </button>
                   ) : null}
-                  {homeAvailable ? (
+                  {homeAvailable && showHome ? (
                     <button
                       type="button"
                       onClick={() => setTeachingMode("domicile")}
@@ -895,7 +987,9 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                   />
                   <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
                     <span className="font-semibold text-slate-700">
-                      {displayedHourlyPrice} / h × {lessonHours === 1 ? t("bookingOneHour") : `${lessonHours} ${t("bookingHours")}`}
+                      {lessonType === "intro"
+                        ? `${introDurationMinutes} min`
+                        : `${displayedHourlyPrice} / h × ${lessonHours === 1 ? t("bookingOneHour") : `${lessonHours} ${t("bookingHours")}`}`}
                     </span>
                     <span className="font-bold text-[#0F6E56]">
                       {t("bookingTotalLine")} : {displayPrice}

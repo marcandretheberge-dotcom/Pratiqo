@@ -22,9 +22,11 @@ function checkoutPublicBase(): string {
 type CheckoutBody = {
   teacher_id?: string;
   amount?: number;
+  lesson_type?: "regular" | "intro";
   booking_details?: { booking_id?: string };
   booking_id?: string;
   credits_to_apply?: number;
+  learner_profile_id?: string;
 };
 
 type TeacherRow = {
@@ -34,12 +36,15 @@ type TeacherRow = {
   user_id?: string | null;
   home_lesson_enabled?: boolean | null;
   home_lesson_price?: number | string | null;
+  intro_session_enabled?: boolean | null;
 };
 
 type BookingRow = {
   price: number | string | null;
   teaching_mode?: string | null;
   student_address?: string | null;
+  lesson_type?: string | null;
+  learner_profile_id?: string | null;
 };
 
 /** Hourly amount in CAD cents from `teachers.price_per_lesson` (stored as main-currency dollars). */
@@ -104,7 +109,7 @@ export async function POST(req: Request) {
     const { data: booking, error: bookErr } = await admin
       .from("bookings")
       .select(
-        "id, teacher_id, student_id, status, price, date, time, slot_date, time_slot, student_level, teaching_mode, student_address",
+        "id, teacher_id, student_id, status, price, date, time, slot_date, time_slot, student_level, teaching_mode, student_address, lesson_type, learner_profile_id",
       )
       .eq("id", bookingId)
       .maybeSingle();
@@ -157,7 +162,7 @@ export async function POST(req: Request) {
     const { data: teacher, error: tErr } = await admin
       .from("teachers")
       .select(
-        "id, user_id, name, price_per_lesson, home_lesson_enabled, home_lesson_price",
+        "id, user_id, name, price_per_lesson, home_lesson_enabled, home_lesson_price, intro_session_enabled",
       )
       .eq("id", booking.teacher_id)
       .maybeSingle();
@@ -170,6 +175,28 @@ export async function POST(req: Request) {
     const b = booking as BookingRow;
     const teachingMode = (b.teaching_mode || "person").toLowerCase();
     const studentAddress = (b.student_address || "").trim();
+    const lessonType = (b.lesson_type || body?.lesson_type || "regular").toLowerCase();
+
+    if (lessonType === "intro") {
+      if (!typed.intro_session_enabled) {
+        return NextResponse.json({ error: "Séance d’introduction non disponible pour ce professeur." }, { status: 400 });
+      }
+      const base = admin
+        .from("bookings")
+        .select("id", { head: true, count: "exact" })
+        .eq("teacher_id", booking.teacher_id)
+        .eq("lesson_type", "intro")
+        .neq("id", bookingId);
+
+      const { count: usedCount, error: usedErr } = b.learner_profile_id
+        ? await base.eq("learner_profile_id", b.learner_profile_id)
+        : await base.eq("student_id", booking.student_id);
+
+      if (usedErr) throw usedErr;
+      if ((usedCount ?? 0) > 0) {
+        return NextResponse.json({ error: "Intro session already used." }, { status: 409 });
+      }
+    }
 
     let unitAmountCents = 0;
     const bookingPriceDollars = Number(b.price);
@@ -195,6 +222,8 @@ export async function POST(req: Request) {
 
     const modeLabel =
       teachingMode === "domicile" ? "À domicile" : teachingMode === "online" ? "En ligne" : "En studio";
+
+    const lessonLabel = lessonType === "intro" ? "Séance d’introduction" : "Cours";
 
     // Apply credits: validate server-side against actual balance
     let validatedCredits = 0;
@@ -234,6 +263,7 @@ export async function POST(req: Request) {
 
     // Commission based on teacher plan (default: free). The charge stays on
     // Pratiqo now; the teacher net is transferred after post-class completion.
+    // TODO: Future: evaluate reduced Pratiqo commission for intro sessions once Stripe/payment costs are measured.
     let teacherPlan = "free";
     let annualVolumeCents = 0;
     let loyaltyTier: string | null = null;
@@ -272,6 +302,8 @@ export async function POST(req: Request) {
         booking_id: bookingId,
         teacher_id: booking.teacher_id,
         student_id: booking.student_id,
+        lesson_type: lessonType,
+        learner_profile_id: b.learner_profile_id ?? "",
         teaching_mode: teachingMode,
         student_address: studentAddress,
         credits_applied: validatedCredits > 0 ? String(validatedCredits) : "0",
@@ -289,7 +321,7 @@ export async function POST(req: Request) {
             currency: "cad",
             unit_amount: unitAmountCents,
             product_data: {
-              name: `Cours avec ${typed.name} (${modeLabel})`,
+              name: `${lessonLabel} avec ${typed.name} (${modeLabel})`,
               description:
                 [bSlotDate, bTimeSlot].filter(Boolean).join(" · ") ||
                 [booking.date, booking.time].filter(Boolean).join(" · ") ||
@@ -303,6 +335,8 @@ export async function POST(req: Request) {
           booking_id: bookingId,
           teacher_id: booking.teacher_id,
           student_id: booking.student_id,
+          lesson_type: lessonType,
+          learner_profile_id: b.learner_profile_id ?? "",
           teaching_mode: teachingMode,
           student_address: studentAddress,
           credits_applied: validatedCredits > 0 ? String(validatedCredits) : "0",
@@ -333,6 +367,7 @@ export async function POST(req: Request) {
         currency: "cad",
         transferGroup,
         metadata: {
+          lesson_type: lessonType,
           teaching_mode: teachingMode,
           credits_applied: validatedCredits,
           commission_rate: amounts.feeRate,

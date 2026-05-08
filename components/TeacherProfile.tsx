@@ -34,6 +34,7 @@ import { useLocale } from "../lib/locale-context";
 import { buildTeacherTrustItems, getPublicTeacherTrustBadgeKey, type TeacherTrustItem } from "../lib/teacherTrust";
 import { getEmbedUrl } from "../lib/videoEmbed";
 import { TeacherAvatar } from "./TeacherAvatar";
+import { calculateIntroSessionPriceCents } from "@/lib/introSession";
 
 export type TeacherBookKind = "standard" | "home";
 
@@ -684,6 +685,36 @@ export function TeacherProfile({
                         {t("bookingNoHiddenFees").replace("{price}", formatPrice(Number(teacher.pricePerLesson)))}
                       </p>
                     </div>
+
+                    {teacher.introSessionEnabled ? (
+                      <div className="rounded-2xl border border-[#DCEAE3] bg-[#F3FAF6] p-4 space-y-2">
+                        <p className="text-sm font-extrabold text-slate-900">
+                          {t("introSessionPublicLabel").replace("{n}", String(teacher.introSessionDurationMinutes ?? 45))}
+                        </p>
+                        <p className="text-xs leading-relaxed text-slate-600">{t("introSessionPublicDescription")}</p>
+                        {(() => {
+                          const dur = teacher.introSessionDurationMinutes ?? 45;
+                          const discount = teacher.introSessionDiscountPercent ?? 50;
+                          const override = teacher.introSessionPriceCents;
+                          const cents = calculateIntroSessionPriceCents({
+                            hourlyPrice: teacher.pricePerLesson,
+                            durationMinutes: dur,
+                            discountPercent: discount,
+                            explicitPriceCents: override ?? null,
+                          });
+                          return (
+                            <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                              <span className="font-semibold text-slate-700">
+                                {t("introSessionPrice")} : <span className="font-extrabold text-[#0F6E56]">{formatPrice(cents / 100)}</span>
+                              </span>
+                              <span className="font-semibold text-slate-600">
+                                {t("regularLesson")} : {formatPrice(Number(teacher.pricePerLesson))}/h
+                              </span>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    ) : null}
 
                     <button
                       type="button"

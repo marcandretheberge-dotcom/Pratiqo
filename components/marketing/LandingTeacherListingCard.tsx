@@ -117,22 +117,36 @@ export function LandingTeacherListingCard({
       <div className="relative p-4 sm:p-[1.125rem]">
         <div className="flex items-start gap-3.5 sm:gap-4">
           {photoUrl ? (
-            <Image
-              src={photoUrl}
-              alt={t("imageAltTeacherProfile").replace("{name}", teacher.name)}
-              width={88}
-              height={88}
-              sizes="(max-width: 640px) 72px, 84px"
-              loading="lazy"
-              unoptimized={shouldUseUnoptimizedImage(photoUrl)}
-              className="h-[4.5rem] w-[4.5rem] shrink-0 rounded-full border border-black/[0.04] object-cover shadow-sm sm:h-[5.25rem] sm:w-[5.25rem]"
-            />
+            <div className="relative shrink-0">
+              <Image
+                src={photoUrl}
+                alt={t("imageAltTeacherProfile").replace("{name}", teacher.name)}
+                width={88}
+                height={88}
+                sizes="(max-width: 640px) 72px, 84px"
+                loading="lazy"
+                unoptimized={shouldUseUnoptimizedImage(photoUrl)}
+                className="h-[4.5rem] w-[4.5rem] rounded-full border border-black/[0.04] object-cover shadow-sm sm:h-[5.25rem] sm:w-[5.25rem]"
+              />
+              {teacher.introSessionEnabled ? (
+                <span className="absolute -bottom-1 -right-1 rounded-full bg-[#E1F5EE] px-2 py-0.5 text-[10px] font-extrabold text-[#0F6E56] shadow-sm ring-1 ring-white">
+                  {t("introSessionBadge").replace("{n}", String(teacher.introSessionDurationMinutes ?? 45))}
+                </span>
+              ) : null}
+            </div>
           ) : (
-            <div
-              className="flex h-[4.5rem] w-[4.5rem] shrink-0 items-center justify-center rounded-full border border-black/[0.04] text-lg font-bold text-white shadow-inner sm:h-[5.25rem] sm:w-[5.25rem] sm:text-xl"
-              style={{ background: "linear-gradient(135deg,#1D9E75,#0f6e56)" }}
-            >
-              {initials(teacher.name)}
+            <div className="relative shrink-0">
+              <div
+                className="flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full border border-black/[0.04] text-lg font-bold text-white shadow-inner sm:h-[5.25rem] sm:w-[5.25rem] sm:text-xl"
+                style={{ background: "linear-gradient(135deg,#1D9E75,#0f6e56)" }}
+              >
+                {initials(teacher.name)}
+              </div>
+              {teacher.introSessionEnabled ? (
+                <span className="absolute -bottom-1 -right-1 rounded-full bg-[#E1F5EE] px-2 py-0.5 text-[10px] font-extrabold text-[#0F6E56] shadow-sm ring-1 ring-white">
+                  {t("introSessionBadge").replace("{n}", String(teacher.introSessionDurationMinutes ?? 45))}
+                </span>
+              ) : null}
             </div>
           )}
 

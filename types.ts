@@ -51,6 +51,12 @@ export interface Teacher {
   homeLessonRequiresConfirmation?: boolean;
   /** Si distance élève → prof &gt; 20 km, durée min 2 h */
   homeLessonForce2hOver20km?: boolean;
+  /** Optional paid introductory/diagnostic session. */
+  introSessionEnabled?: boolean;
+  introSessionDurationMinutes?: number;
+  /** Optional custom intro price override (in cents). */
+  introSessionPriceCents?: number | null;
+  introSessionDiscountPercent?: number;
   /** Optional YouTube / Vimeo intro video URL (stored as embed-ready URL in teachers.video_url). */
   videoUrl?: string | null;
   /** Plan profil (profiles.plan), renseigné côté Explore via API — lecture seule marketplace */
