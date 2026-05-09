@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import type { Discipline } from "@/types";
 import { cn } from "@/lib/utils";
@@ -39,6 +40,7 @@ export function TeacherAvatar({
   ringClassName?: string;
 }) {
   const { t } = useLocale();
+  const [imageFailed, setImageFailed] = useState(false);
   const url = typeof imageUrl === "string" ? imageUrl.trim() : "";
   const optimizedUrl = getTeacherImageUrl(url, {
     width: Math.max(96, size * 2),
@@ -58,7 +60,7 @@ export function TeacherAvatar({
       )}
       style={{ width: size, height: size, fontSize: Math.max(11, Math.round(size * 0.32)) }}
     >
-      {url ? (
+      {url && !imageFailed ? (
         <Image
           src={optimizedUrl}
           alt={t("imageAltTeacherProfile").replace("{name}", name)}
@@ -68,6 +70,7 @@ export function TeacherAvatar({
           loading="lazy"
           className="h-full w-full object-cover"
           unoptimized={shouldUseUnoptimizedImage(optimizedUrl)}
+          onError={() => setImageFailed(true)}
         />
       ) : (
         <span aria-label={name}>{initials}</span>

@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { Star, ArrowRight } from "lucide-react";
 import { getSupabaseClient } from "@/lib/supabase";
 import { TEACHERS_PUBLIC_TABLE } from "@/lib/supabase/queries";
 import { useLocale } from "@/lib/locale-context";
 import { VerificationBadge } from "@/components/VerificationBadge";
+import { TeacherAvatar } from "@/components/TeacherAvatar";
 import type { VerificationLevel } from "@/lib/verification";
+import type { Discipline } from "@/types";
 
 type TeacherSnippet = {
   id: string;
@@ -21,6 +22,22 @@ type TeacherSnippet = {
   location: string | null;
   verification_level: number | null;
 };
+
+function inferDiscipline(disciplineField: string | null, blogCategory: string): Discipline {
+  const s = `${disciplineField ?? ""} ${blogCategory}`.toLowerCase();
+  if (s.includes("musique") || s.includes("music") || s.includes("piano") || s.includes("guit")) return "Musique";
+  if (
+    s.includes("langue") ||
+    s.includes("language") ||
+    s.includes("espagnol") ||
+    s.includes("spanish") ||
+    s.includes("english") ||
+    s.includes("français")
+  ) {
+    return "Langues";
+  }
+  return "Scolaire";
+}
 
 export function RelatedTeachersWidget({ category }: { category: string }) {
   const { t, formatPrice } = useLocale();
@@ -92,24 +109,15 @@ export function RelatedTeachersWidget({ category }: { category: string }) {
             className="group rounded-2xl border border-[#E8E6DF] bg-white p-4 flex flex-col gap-3 hover:border-teal-500/40 hover:shadow-sm transition-all"
           >
             {/* Avatar + badge */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-start gap-3">
               <div className="relative shrink-0">
-                {teacher.image_url ? (
-                  <Image
-                    src={teacher.image_url}
-                    alt={teacher.name}
-                    width={48}
-                    height={48}
-                    className="rounded-full object-cover border-2 border-teal-500/30"
-                  />
-                ) : (
-                  <div
-                    className="h-12 w-12 rounded-full flex items-center justify-center text-sm font-bold text-white"
-                    style={{ background: "linear-gradient(135deg,var(--palette-teal-500),var(--palette-teal-700))" }}
-                  >
-                    {teacher.name.slice(0, 2).toUpperCase()}
-                  </div>
-                )}
+                <TeacherAvatar
+                  name={teacher.name}
+                  category={inferDiscipline(teacher.discipline, category)}
+                  imageUrl={teacher.image_url}
+                  size={52}
+                  ringClassName="ring-2 ring-teal-500/20"
+                />
                 {teacher.verification_level != null && teacher.verification_level > 0 && (
                   <span className="absolute -bottom-0.5 -right-0.5">
                     <VerificationBadge level={teacher.verification_level as VerificationLevel} size="sm" showLabel={false} />
