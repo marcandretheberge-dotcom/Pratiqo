@@ -14,7 +14,7 @@ export function LandingHeroTrustStrip({ className }: { className?: string }) {
   ];
 
   return (
-    <div className={cn("w-full rounded-3xl border border-[#DCF0E8] bg-white/95 px-4 py-5 shadow-[0_6px_24px_rgba(15,110,86,0.06)] backdrop-blur-sm sm:px-6 md:py-6", className)}>
+    <div className={cn("w-full rounded-3xl border border-[#DCF0E8] bg-white/95 px-4 py-5 shadow-[0_4px_16px_rgba(15,110,86,0.05)] sm:shadow-[0_6px_24px_rgba(15,110,86,0.06)] lg:backdrop-blur-sm sm:px-6 md:py-6", className)}>
       <ul className="mx-auto grid max-w-5xl gap-4 sm:grid-cols-3 sm:gap-5">
         {rows.map(({ title, body, icon: Icon }) => (
           <li key={title} className="flex gap-3 text-center sm:flex-col sm:items-center sm:text-center md:gap-3.5">
