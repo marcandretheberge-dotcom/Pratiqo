@@ -6,7 +6,9 @@ function client(): Stripe {
   if (!_client) {
     const key = process.env.STRIPE_SECRET_KEY;
     if (!key) throw new Error("Missing STRIPE_SECRET_KEY environment variable");
-    _client = new Stripe(key, { apiVersion: "2026-04-22.dahlia" });
+    // Omit apiVersion so the installed stripe package uses its bundled default.
+    // Pinning a string literal breaks CI when npm resolves a different stripe minor (TS literal mismatch).
+    _client = new Stripe(key);
   }
   return _client;
 }
