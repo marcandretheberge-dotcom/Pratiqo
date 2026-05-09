@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { CheckCircle2, DollarSign, Calendar, Globe, ArrowRight } from "lucide-react";
 import PratiqoLogo from "@/components/PratiqoLogo";
+import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 import { useLocale } from "@/lib/locale-context";
 import type { Locale } from "@/lib/i18n/types";
 
@@ -176,6 +177,7 @@ export default function DevenirEnseignantContent() {
             >
               {locale === "es" ? "Ver profesores" : locale === "en" ? "Browse teachers" : "Voir les profs"}
             </Link>
+            <LocaleSwitcher variant="dark" compact />
             <Link
               href="/login?role=teacher"
               className="rounded-xl border border-teal-500 px-4 py-2 text-sm font-semibold text-[#7FE0C3] hover:bg-teal-600/15 transition-colors"

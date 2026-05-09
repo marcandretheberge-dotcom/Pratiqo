@@ -5,6 +5,7 @@ import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
 import { cn } from "../../lib/utils";
 import PratiqoLogo from "../../components/PratiqoLogo";
+import { LocaleSwitcher } from "../../components/LocaleSwitcher";
 import { useLocale } from "../../lib/locale-context";
 
 type TierId = "bronze" | "argent" | "or" | "platine";
@@ -116,12 +117,15 @@ export default function BecomeTeacherPage() {
           <Link href="/" className="flex items-center">
             <PratiqoLogo variant="full" size="sm" />
           </Link>
-          <Link
-            href="/login?role=teacher"
-            className="text-sm font-semibold text-white/85 hover:text-white underline underline-offset-4"
-          >
-            {t("signIn")}
-          </Link>
+          <div className="flex items-center gap-4">
+            <LocaleSwitcher variant="dark" compact />
+            <Link
+              href="/login?role=teacher"
+              className="text-sm font-semibold text-white/85 hover:text-white underline underline-offset-4"
+            >
+              {t("signIn")}
+            </Link>
+          </div>
         </div>
       </header>
 
