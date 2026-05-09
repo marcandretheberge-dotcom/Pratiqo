@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { getSupabaseAdmin } from "../lib/supabaseAdmin";
 import { QC_CITIES, MV_BARRIOS } from "../lib/constants/cities";
+import { DISCIPLINE_CITY_PAIRS } from "../lib/seo/disciplines";
 
 const BASE_URL = "https://pratiqo.ca";
 
@@ -39,6 +40,24 @@ const STATIC_ROUTES: MetadataRoute.Sitemap = [
     lastModified: new Date(),
     changeFrequency: "daily",
     priority: 0.8,
+  },
+  {
+    url: `${BASE_URL}/tarifs`,
+    lastModified: new Date(),
+    changeFrequency: "monthly",
+    priority: 0.8,
+  },
+  {
+    url: `${BASE_URL}/trouver-un-prof`,
+    lastModified: new Date(),
+    changeFrequency: "monthly",
+    priority: 0.85,
+  },
+  {
+    url: `${BASE_URL}/francisation`,
+    lastModified: new Date(),
+    changeFrequency: "monthly",
+    priority: 0.85,
   },
   {
     url: `${BASE_URL}/login`,
@@ -140,6 +159,17 @@ const BARRIO_ROUTES: MetadataRoute.Sitemap = MV_BARRIOS.map((b) => ({
   priority: 0.75,
 }));
 
+// ── Discipline × city landing pages ───────────────────────────────────────────
+//
+// Pre-rendered pages for /cours/[disciplineSlug]/[citySlug].
+// Limited to a curated set of discipline × city combinations.
+const DISCIPLINE_CITY_ROUTES: MetadataRoute.Sitemap = DISCIPLINE_CITY_PAIRS.map((pair) => ({
+  url: `${BASE_URL}/cours/${pair.disciplineSlug}/${pair.citySlug}`,
+  lastModified: new Date(),
+  changeFrequency: "monthly" as const,
+  priority: 0.75,
+}));
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [teacherEntries, blogEntries] = await Promise.all([
     fetchTeacherEntries(),
@@ -159,6 +189,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...blogHubRoute,
     ...blogEntries,
     ...CITY_ROUTES,
+    ...DISCIPLINE_CITY_ROUTES,
     ...BARRIO_ROUTES,
     ...teacherEntries,
   ];

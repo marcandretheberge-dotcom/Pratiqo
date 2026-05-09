@@ -7,6 +7,9 @@ import remarkGfm from "remark-gfm";
 import { Calendar, User, ArrowLeft, Clock } from "lucide-react";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { RelatedTeachersWidget } from "@/components/blog/RelatedTeachersWidget";
+import { FAQSchema } from "@/components/seo/FAQSchema";
+import { BreadcrumbSchema } from "@/components/seo/BreadcrumbSchema";
+import { getBlogPostFaq, getRelatedPosts } from "@/lib/seo/blogPosts";
 
 export const revalidate = 3600;
 export const dynamicParams = true;
@@ -148,11 +151,11 @@ const LABELS: Record<string, { backToBlog: string; publishedOn: string; writtenB
   },
 };
 
-// ── JSON-LD Article schema ─────────────────────────────────────────────────────
+// ── JSON-LD BlogPosting schema ─────────────────────────────────────────────────
 function buildArticleJsonLd(post: BlogPostFull) {
   return {
     "@context": "https://schema.org",
-    "@type": "Article",
+    "@type": "BlogPosting",
     headline: post.title,
     description: post.excerpt,
     datePublished: post.published_at,
@@ -169,8 +172,9 @@ function buildArticleJsonLd(post: BlogPostFull) {
     },
     image: post.cover_image_url ?? `${BASE_URL}/og-image.png`,
     url: `${BASE_URL}/blog/${post.slug}`,
+    mainEntityOfPage: { "@type": "WebPage", "@id": `${BASE_URL}/blog/${post.slug}` },
     articleSection: post.category,
-    inLanguage: post.language === "fr" ? "fr" : post.language === "es" ? "es-UY" : "en",
+    inLanguage: post.language === "fr" ? "fr-CA" : post.language === "es" ? "es-UY" : "en-CA",
   };
 }
 
@@ -187,6 +191,8 @@ export default async function BlogArticlePage({
 
   const labels = LABELS[post.language] ?? LABELS.fr;
   const readTime = estimateReadTime(post.content);
+  const faqItems = getBlogPostFaq(post.slug);
+  const relatedPosts = getRelatedPosts(post.slug, post.category);
 
   return (
     <>
@@ -195,6 +201,15 @@ export default async function BlogArticlePage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(buildArticleJsonLd(post)) }}
       />
+      <BreadcrumbSchema
+        items={[
+          { name: "Accueil", href: "/" },
+          { name: "Blog", href: "/blog" },
+          { name: post.category, href: `/blog` },
+          { name: post.title, href: `/blog/${post.slug}` },
+        ]}
+      />
+      {faqItems && faqItems.length > 0 && <FAQSchema items={faqItems} />}
 
       <div className="min-h-[100dvh] bg-[#FAFAF8]">
 
@@ -286,6 +301,31 @@ export default async function BlogArticlePage({
             <RelatedTeachersWidget category={post.category} />
           </div>
         </section>
+
+        {/* ── RELATED POSTS ───────────────────────────────────────────────── */}
+        {relatedPosts.length > 0 && (
+          <section className="bg-[#F1EFE8] border-t border-[#E8E6DF]">
+            <div className="mx-auto max-w-3xl px-4 sm:px-6 py-10">
+              <h2 className="text-lg font-bold text-[#2C2C2A] mb-5">Articles similaires</h2>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {relatedPosts.map((related) => (
+                  <Link
+                    key={related.slug}
+                    href={`/blog/${related.slug}`}
+                    className="group block rounded-xl border border-[#E8E6DF] bg-white p-4 hover:shadow-md transition-shadow"
+                  >
+                    <span className="text-[10px] font-bold uppercase tracking-wide text-teal-700">
+                      {related.category}
+                    </span>
+                    <p className="mt-1.5 font-semibold text-sm text-[#2C2C2A] group-hover:text-teal-700 transition-colors leading-snug line-clamp-3">
+                      {related.title}
+                    </p>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* ── FOOTER BACK LINK ────────────────────────────────────────────── */}
         <div className="bg-[#FAFAF8] border-t border-[#E8E6DF]">

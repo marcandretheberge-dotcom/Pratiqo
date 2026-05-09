@@ -1,0 +1,244 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { Search, Shield, Star, Clock, ArrowRight } from "lucide-react";
+import { FAQSchema } from "@/components/seo/FAQSchema";
+import { BreadcrumbSchema } from "@/components/seo/BreadcrumbSchema";
+
+const BASE_URL = "https://pratiqo.ca";
+
+export const metadata: Metadata = {
+  title: "Trouver un prof particulier au Québec | Pratiqo",
+  description:
+    "Trouvez un professeur particulier ou un tuteur vérifié au Québec en quelques minutes. Mathématiques, musique, langues, sciences — en ligne ou à domicile. Réservation simple sur Pratiqo.",
+  keywords: [
+    "trouver un prof particulier québec",
+    "tuteur privé québec",
+    "cours particuliers québec",
+    "professeur à domicile montréal",
+    "tuteur en ligne québec",
+  ],
+  openGraph: {
+    title: "Trouver un prof particulier au Québec | Pratiqo",
+    description:
+      "Des centaines de professeurs vérifiés pour toutes les matières et tous les niveaux. Réservez votre premier cours en ligne.",
+    url: `${BASE_URL}/trouver-un-prof`,
+    siteName: "Pratiqo",
+    locale: "fr_CA",
+    type: "website",
+  },
+  alternates: {
+    canonical: `${BASE_URL}/trouver-un-prof`,
+  },
+};
+
+const FAQ_ITEMS = [
+  {
+    question: "Comment fonctionne la recherche de tuteur sur Pratiqo?",
+    answer:
+      "Entrez la matière, votre ville et votre disponibilité. Vous verrez les profils des professeurs disponibles avec leurs tarifs, avis et niveau de vérification. Réservez directement en ligne.",
+  },
+  {
+    question: "Les professeurs sont-ils vérifiés?",
+    answer:
+      "Oui. Tous les professeurs sur Pratiqo vérifient leur identité. Certains ont aussi fait valider leurs diplômes. Vous pouvez filtrer par niveau de vérification dans la recherche.",
+  },
+  {
+    question: "Quel est le coût d'un cours particulier?",
+    answer:
+      "Les tarifs varient selon la matière et le professeur — généralement entre 25 $ et 75 $/heure. Chaque profil affiche clairement le prix. Aucune frais de plateforme pour les étudiants.",
+  },
+  {
+    question: "Puis-je prendre des cours en ligne?",
+    answer:
+      "Oui. De nombreux professeurs proposent les cours en ligne via vidéoconférence. Filtrez par mode d'enseignement pour trouver les cours en ligne, à domicile ou les deux.",
+  },
+];
+
+const DISCIPLINES = [
+  { label: "Mathématiques", slug: "mathematiques" },
+  { label: "Français", slug: "francais" },
+  { label: "Anglais", slug: "anglais" },
+  { label: "Sciences", slug: "sciences" },
+  { label: "Piano", slug: "piano" },
+  { label: "Guitare", slug: "guitare" },
+  { label: "Espagnol", slug: "espagnol" },
+  { label: "Francisation", slug: "francisation" },
+];
+
+const CITIES = [
+  { label: "Montréal", slug: "montreal" },
+  { label: "Québec", slug: "quebec" },
+  { label: "Laval", slug: "laval" },
+  { label: "Longueuil", slug: "longueuil" },
+  { label: "Sherbrooke", slug: "sherbrooke" },
+  { label: "Gatineau", slug: "gatineau" },
+];
+
+export default function TrouverUnProfPage() {
+  return (
+    <>
+      <BreadcrumbSchema
+        items={[
+          { name: "Accueil", href: "/" },
+          { name: "Trouver un prof", href: "/trouver-un-prof" },
+        ]}
+      />
+      <FAQSchema items={FAQ_ITEMS} />
+
+      <div className="min-h-[100dvh] bg-[#FAFAF8]">
+
+        {/* ── HEADER ─────────────────────────────────────────────────────── */}
+        <header className="sticky top-0 z-50 h-14 flex items-center justify-between bg-white border-b border-[#D3D1C7] px-4 sm:px-6">
+          <Link href="/" className="text-lg font-black tracking-tight text-teal-700">
+            Pratiqo
+          </Link>
+          <div className="flex items-center gap-3">
+            <Link href="/login" className="text-sm font-medium text-teal-700 hover:underline">
+              Connexion
+            </Link>
+            <Link
+              href="/login"
+              className="rounded-xl bg-teal-700 px-4 py-2 text-sm font-bold text-white hover:brightness-105"
+            >
+              S&apos;inscrire
+            </Link>
+          </div>
+        </header>
+
+        {/* ── HERO ───────────────────────────────────────────────────────── */}
+        <section className="bg-teal-700 text-white py-16 sm:py-20 px-4 sm:px-6">
+          <div className="mx-auto max-w-3xl text-center">
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold mb-5">
+              <Search size={12} aria-hidden />
+              Cours particuliers · Québec
+            </div>
+            <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight leading-tight">
+              Trouvez le bon prof,<br />
+              <span className="text-[#7FE0C3]">dès maintenant</span>
+            </h1>
+            <p className="mt-4 text-lg text-white/80 max-w-xl mx-auto">
+              Des professeurs vérifiés dans toutes les matières, disponibles en ligne ou près de chez vous. Réservez votre premier cours en quelques minutes.
+            </p>
+            <div className="mt-8">
+              <Link
+                href="/login"
+                className="inline-flex h-13 items-center gap-2 rounded-2xl bg-white px-8 py-3 text-base font-bold text-teal-700 hover:brightness-95 shadow-lg"
+              >
+                Chercher un professeur <ArrowRight size={18} />
+              </Link>
+              <p className="mt-3 text-xs text-white/55">Inscription gratuite · Aucun engagement</p>
+            </div>
+          </div>
+        </section>
+
+        {/* ── TRUST BAR ──────────────────────────────────────────────────── */}
+        <section className="bg-white border-b border-[#E8E6DF] py-6 px-4 sm:px-6">
+          <div className="mx-auto max-w-4xl grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
+            {[
+              { icon: Shield, title: "Identité vérifiée", desc: "Tous les professeurs vérifient leur identité avant d'enseigner." },
+              { icon: Star, title: "Avis authentiques", desc: "Des avis laissés par de vraies familles après chaque cours." },
+              { icon: Clock, title: "Réservation instantanée", desc: "Choisissez un créneau et réservez directement en ligne." },
+            ].map((item) => (
+              <div key={item.title} className="flex flex-col items-center gap-2 p-4">
+                <item.icon size={20} className="text-teal-600" />
+                <p className="font-bold text-sm text-[#2C2C2A]">{item.title}</p>
+                <p className="text-xs text-[#6B6760] leading-relaxed">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ── DISCIPLINES ────────────────────────────────────────────────── */}
+        <section className="py-10 px-4 sm:px-6">
+          <div className="mx-auto max-w-4xl">
+            <h2 className="text-xl font-bold text-[#2C2C2A] mb-2">
+              Toutes les matières
+            </h2>
+            <p className="text-sm text-[#6B6760] mb-6">
+              Musique, langues, matières scolaires et plus — trouvez votre spécialité.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {DISCIPLINES.map((d) => (
+                <Link
+                  key={d.slug}
+                  href={`/cours/${d.slug}/montreal`}
+                  className="rounded-full border border-[#D3D1C7] bg-white px-4 py-2 text-sm font-medium text-[#2C2C2A] hover:border-teal-500 hover:text-teal-700 transition-colors"
+                >
+                  {d.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── CITIES ─────────────────────────────────────────────────────── */}
+        <section className="bg-white border-t border-[#E8E6DF] py-10 px-4 sm:px-6">
+          <div className="mx-auto max-w-4xl">
+            <h2 className="text-xl font-bold text-[#2C2C2A] mb-2">
+              Professeurs près de chez vous
+            </h2>
+            <p className="text-sm text-[#6B6760] mb-6">
+              Cours en présentiel ou à domicile dans les principales villes du Québec.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {CITIES.map((c) => (
+                <Link
+                  key={c.slug}
+                  href={`/tuteurs-prive/${c.slug}`}
+                  className="rounded-full border border-[#D3D1C7] bg-white px-4 py-2 text-sm font-medium text-[#2C2C2A] hover:border-teal-500 hover:text-teal-700 transition-colors"
+                >
+                  {c.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── FAQ ────────────────────────────────────────────────────────── */}
+        <section className="py-10 px-4 sm:px-6">
+          <div className="mx-auto max-w-3xl">
+            <h2 className="text-xl font-bold text-[#2C2C2A] mb-6">Questions fréquentes</h2>
+            <div className="space-y-4">
+              {FAQ_ITEMS.map((item, i) => (
+                <div key={i} className="rounded-xl border border-[#E8E6DF] bg-white p-5">
+                  <p className="font-semibold text-sm text-[#2C2C2A] mb-2">{item.question}</p>
+                  <p className="text-sm text-[#6B6760] leading-relaxed">{item.answer}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── CTA ────────────────────────────────────────────────────────── */}
+        <section className="bg-teal-700 text-white py-12 px-4 sm:px-6">
+          <div className="mx-auto max-w-xl text-center">
+            <h2 className="text-2xl font-bold mb-3">Prêt à commencer?</h2>
+            <p className="text-white/75 text-sm mb-6">
+              Créez un compte gratuit et trouvez votre professeur en moins de 5 minutes.
+            </p>
+            <Link
+              href="/login"
+              className="inline-flex h-11 items-center gap-2 rounded-2xl bg-white px-7 text-sm font-bold text-teal-700 hover:brightness-95 shadow"
+            >
+              Trouver mon professeur <ArrowRight size={16} />
+            </Link>
+          </div>
+        </section>
+
+        {/* ── FOOTER ─────────────────────────────────────────────────────── */}
+        <footer className="bg-white border-t border-[#E8E6DF]">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6 py-5 flex flex-wrap items-center justify-center gap-4 text-xs text-[#6B6760]">
+            <Link href="/cgu" className="hover:underline">CGU</Link>
+            <span className="text-[#D3D1C7]">·</span>
+            <Link href="/confidentialite" className="hover:underline">Confidentialité</Link>
+            <span className="text-[#D3D1C7]">·</span>
+            <Link href="/" className="font-semibold text-teal-700 hover:underline">Pratiqo</Link>
+            <span className="text-[#D3D1C7]">·</span>
+            <span>© 2026 Pratiqo inc.</span>
+          </div>
+        </footer>
+
+      </div>
+    </>
+  );
+}

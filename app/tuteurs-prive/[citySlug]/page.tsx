@@ -12,6 +12,8 @@ import { LegalFooterLinks } from "../../../components/LegalFooterLinks";
 import type { Teacher } from "../../../types";
 import { CityMapSection } from "../../../components/CityMapSection";
 import { CityLinksFooter } from "../../../components/CityLinksFooter";
+import { FAQSchema } from "../../../components/seo/FAQSchema";
+import { BreadcrumbSchema } from "../../../components/seo/BreadcrumbSchema";
 
 const BASE_URL = "https://pratiqo.ca";
 
@@ -151,6 +153,25 @@ export default async function CityTutorsPage({
 
   const { teachers, isNearby } = await findTeachersForCity(city.lat, city.lng);
 
+  const cityFaq = [
+    {
+      question: `Comment trouver un tuteur privé à ${city.name}?`,
+      answer: `Recherchez un tuteur sur Pratiqo en filtrant par matière, disponibilité et mode d'enseignement. Vous verrez les profils des tuteurs disponibles à ${city.name} et à proximité, avec leurs tarifs et leurs avis.`,
+    },
+    {
+      question: `Les cours particuliers sont-ils disponibles en ligne à ${city.name}?`,
+      answer: `Oui. La majorité des professeurs sur Pratiqo proposent des cours en ligne via vidéoconférence, en plus des cours à domicile ou en présentiel à ${city.name}.`,
+    },
+    {
+      question: `Quel est le tarif moyen d'un tuteur à ${city.name}?`,
+      answer: `Les tarifs varient entre 25 $ et 75 $/heure selon la matière, le niveau scolaire et l'expérience du tuteur. Chaque profil Pratiqo affiche clairement le prix par cours.`,
+    },
+    {
+      question: `Les tuteurs sur Pratiqo sont-ils vérifiés?`,
+      answer: `Oui. Chaque tuteur vérifie son identité avant de pouvoir enseigner. Certains ont aussi fait valider leurs diplômes et sont identifiés par un badge sur leur profil.`,
+    },
+  ];
+
   // ── JSON-LD: ItemList of tutors ────────────────────────────────────────────
 
   const jsonLd = {
@@ -196,6 +217,14 @@ export default async function CityTutorsPage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
+      <BreadcrumbSchema
+        items={[
+          { name: "Accueil", href: "/" },
+          { name: "Tuteurs privés", href: "/student/search" },
+          { name: city.name, href: `/tuteurs-prive/${citySlug}` },
+        ]}
+      />
+      <FAQSchema items={cityFaq} />
 
       <div className="min-h-[100dvh] flex flex-col bg-[#FAFCFB]">
 
@@ -398,6 +427,23 @@ export default async function CityTutorsPage({
                   </div>
                   <p className="font-bold text-sm text-[#2C2C2A]">{step.title}</p>
                   <p className="mt-1 text-xs text-[#6B6760] leading-relaxed">{step.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── FAQ ───────────────────────────────────────────────────────── */}
+        <section className="bg-[#FAFAF8] border-t border-[#E8E6DF] py-10 px-4 sm:px-6">
+          <div className="mx-auto max-w-4xl">
+            <h2 className="text-lg font-bold text-[#2C2C2A] mb-6">
+              Questions fréquentes — cours particuliers à {city.name}
+            </h2>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {cityFaq.map((item, i) => (
+                <div key={i} className="rounded-xl border border-[#E8E6DF] bg-white p-5">
+                  <p className="font-semibold text-sm text-[#2C2C2A] mb-2">{item.question}</p>
+                  <p className="text-sm text-[#6B6760] leading-relaxed">{item.answer}</p>
                 </div>
               ))}
             </div>
