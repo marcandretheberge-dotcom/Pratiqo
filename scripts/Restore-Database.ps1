@@ -19,6 +19,8 @@ $ErrorActionPreference = "Stop"
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $ProjectRoot = Split-Path -Parent $ScriptDir
 $EnvFile = Join-Path $ProjectRoot ".env.local"
+$CommonPath = Join-Path $ScriptDir "SupabaseDbConnection.ps1"
+. $CommonPath
 
 function Get-PgRestoreExecutable {
   $candidates = @(
@@ -34,32 +36,30 @@ function Get-PgRestoreExecutable {
   throw "pg_restore.exe not found. Install PostgreSQL client tools or add pg_restore to PATH."
 }
 
-function Read-DotEnvLocal {
-  param([string]$Path)
-  if (-not (Test-Path -LiteralPath $Path)) {
-    throw "Missing file: $Path"
+$resolvedBackup = Resolve-Path -LiteralPath $BackupPath -ErrorAction Stop
+
+$envMap = Read-DotEnvLocal -Path $EnvFile
+
+$required = @("SUPABASE_HOST", "SUPABASE_USER", "SUPABASE_PASSWORD", "SUPABASE_PORT")
+foreach ($k in $required) {
+  if (-not $envMap.ContainsKey($k) -or [string]::IsNullOrWhiteSpace($envMap[$k])) {
+    throw "Missing or empty required key in .env.local: $k"
   }
-  $raw = [System.IO.File]::ReadAllText($Path)
-  if ($raw.Length -ge 1 -and [int][char]$raw[0] -eq 0xFEFF) {
-    $raw = $raw.Substring(1)
-  }
-  $map = @{}
-  foreach ($line in $raw -split "`r?`n") {
-    $t = $line.Trim()
-    if ($t.Length -eq 0 -or $t.StartsWith("#")) { continue }
-    $eq = $t.IndexOf("=")
-    if ($eq -lt 1) { continue }
-    $key = $t.Substring(0, $eq).Trim()
-    $val = $t.Substring($eq + 1).Trim()
-    if (($val.StartsWith('"') -and $val.EndsWith('"')) -or ($val.StartsWith("'") -and $val.EndsWith("'"))) {
-      $val = $val.Substring(1, $val.Length - 2)
-    }
-    $map[$key] = $val
-  }
-  return $map
 }
 
-$resolvedBackup = Resolve-Path -LiteralPath $BackupPath -ErrorAction Stop
+try {
+  Assert-SupabaseHostFormat -HostValue $envMap["SUPABASE_HOST"]
+} catch {
+  Write-Host $_.Exception.Message -ForegroundColor Red
+  Write-SupabaseConnectionHelp
+  exit 1
+}
+
+$pgHost = $envMap["SUPABASE_HOST"].Trim()
+$pgUser = $envMap["SUPABASE_USER"].Trim()
+$pgPassword = $envMap["SUPABASE_PASSWORD"]
+$pgPort = $envMap["SUPABASE_PORT"].Trim()
+$pgDb = Get-PgDatabaseNameFromMap -EnvMap $envMap
 
 Write-Host "Backup file: $($resolvedBackup.Path)"
 Write-Host ""
@@ -75,28 +75,6 @@ if ($confirm -ne "YES") {
 try {
   $pgRestore = Get-PgRestoreExecutable
   Write-Host "Using pg_restore: $pgRestore"
-
-  $envMap = Read-DotEnvLocal -Path $EnvFile
-
-  $required = @("SUPABASE_HOST", "SUPABASE_USER", "SUPABASE_PASSWORD", "SUPABASE_PORT")
-  foreach ($k in $required) {
-    if (-not $envMap.ContainsKey($k) -or [string]::IsNullOrWhiteSpace($envMap[$k])) {
-      throw "Missing or empty required key in .env.local: $k"
-    }
-  }
-
-  $pgHost = $envMap["SUPABASE_HOST"].Trim()
-  $pgUser = $envMap["SUPABASE_USER"].Trim()
-  $pgPassword = $envMap["SUPABASE_PASSWORD"]
-  $pgPort = $envMap["SUPABASE_PORT"].Trim()
-
-  $pgDb = "postgres"
-  if ($envMap.ContainsKey("SUPABASE_DB") -and -not [string]::IsNullOrWhiteSpace($envMap["SUPABASE_DB"])) {
-    $pgDb = $envMap["SUPABASE_DB"].Trim()
-  }
-  elseif ($envMap.ContainsKey("POSTGRES_DB") -and -not [string]::IsNullOrWhiteSpace($envMap["POSTGRES_DB"])) {
-    $pgDb = $envMap["POSTGRES_DB"].Trim()
-  }
 
   $env:PGPASSWORD = $pgPassword
 

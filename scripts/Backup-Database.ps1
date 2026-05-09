@@ -1,115 +1,140 @@
-#Requires -Version 5.1
-<#
-.SYNOPSIS
-  Backs up the Pratiqo Supabase Postgres database using pg_dump (custom format).
+param(
+  [switch]$TestConnection
+)
 
-  Reads connection settings from .env.local at the repository root. Never prints the password.
-#>
-Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$ProjectRoot = Split-Path -Parent $ScriptDir
-$EnvFile = Join-Path $ProjectRoot ".env.local"
-$BackupsDir = Join-Path $ProjectRoot "backups"
+$RepoRoot = Split-Path -Parent $ScriptDir
+$EnvPath = Join-Path $RepoRoot ".env.local"
+$CommonPath = Join-Path $ScriptDir "SupabaseDbConnection.ps1"
+. $CommonPath
 
-function Get-PgDumpExecutable {
-  $candidates = @(
-    (Get-Command "pg_dump.exe" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source),
-    "C:\Program Files\PostgreSQL\18\bin\pg_dump.exe",
-    "C:\Program Files\PostgreSQL\17\bin\pg_dump.exe",
-    "C:\Program Files\PostgreSQL\16\bin\pg_dump.exe"
-  )
-  foreach ($p in $candidates) {
-    if ([string]::IsNullOrWhiteSpace($p)) { continue }
-    if (Test-Path -LiteralPath $p) { return (Resolve-Path -LiteralPath $p).Path }
+function Find-PgDumpPath {
+  $cmd = Get-Command pg_dump -ErrorAction SilentlyContinue
+  if ($cmd -and $cmd.Source) {
+    return $cmd.Source
   }
-  throw "pg_dump.exe not found. Install PostgreSQL client tools or add pg_dump to PATH."
+
+  $roots = @(
+    # PostgreSQL Windows installers commonly install here:
+    "C:\Program Files\PostgreSQL",
+    "C:\Program Files (x86)\PostgreSQL"
+  )
+
+  foreach ($root in $roots) {
+    if (-not (Test-Path -LiteralPath $root)) { continue }
+    $bins = Get-ChildItem -LiteralPath $root -Directory -ErrorAction SilentlyContinue |
+      Sort-Object Name -Descending
+
+    foreach ($dir in $bins) {
+      $candidate = Join-Path $dir.FullName "bin\pg_dump.exe"
+      if (Test-Path -LiteralPath $candidate) {
+        return $candidate
+      }
+    }
+  }
+
+  throw @"
+Could not find pg_dump.
+
+Install PostgreSQL client tools (Windows installer), then either:
+- Add PostgreSQL `bin` to PATH, OR
+- Install into the default location:
+  `C:\Program Files\PostgreSQL\<version>\bin\`
+"@
 }
 
-function Read-DotEnvLocal {
-  param([string]$Path)
-  if (-not (Test-Path -LiteralPath $Path)) {
-    throw "Missing file: $Path"
-  }
-  $raw = [System.IO.File]::ReadAllText($Path)
-  # Strip UTF-8 BOM if present
-  if ($raw.Length -ge 1 -and [int][char]$raw[0] -eq 0xFEFF) {
-    $raw = $raw.Substring(1)
-  }
-  $map = @{}
-  foreach ($line in $raw -split "`r?`n") {
-    $t = $line.Trim()
-    if ($t.Length -eq 0 -or $t.StartsWith("#")) { continue }
-    $eq = $t.IndexOf("=")
-    if ($eq -lt 1) { continue }
-    $key = $t.Substring(0, $eq).Trim()
-    $val = $t.Substring($eq + 1).Trim()
-    if (($val.StartsWith('"') -and $val.EndsWith('"')) -or ($val.StartsWith("'") -and $val.EndsWith("'"))) {
-      $val = $val.Substring(1, $val.Length - 2)
-    }
-    $map[$key] = $val
-  }
-  return $map
+$pgDumpPath = Find-PgDumpPath
+Write-Host "Using pg_dump: $pgDumpPath"
+
+$envMap = Read-DotEnvLocal -Path $EnvPath
+
+if (-not $envMap.ContainsKey("SUPABASE_HOST") -or [string]::IsNullOrWhiteSpace($envMap["SUPABASE_HOST"])) {
+  throw "Missing SUPABASE_HOST in .env.local"
+}
+if (-not $envMap.ContainsKey("SUPABASE_USER") -or [string]::IsNullOrWhiteSpace($envMap["SUPABASE_USER"])) {
+  throw "Missing SUPABASE_USER in .env.local"
+}
+if (-not $envMap.ContainsKey("SUPABASE_PORT") -or [string]::IsNullOrWhiteSpace($envMap["SUPABASE_PORT"])) {
+  throw "Missing SUPABASE_PORT in .env.local"
 }
 
 try {
-  $pgDump = Get-PgDumpExecutable
-  Write-Host "Using pg_dump: $pgDump"
+  Assert-SupabaseHostFormat -HostValue $envMap["SUPABASE_HOST"]
+} catch {
+  Write-Host $_.Exception.Message -ForegroundColor Red
+  Write-SupabaseConnectionHelp
+  exit 1
+}
 
-  $envMap = Read-DotEnvLocal -Path $EnvFile
+$pgHost = $envMap["SUPABASE_HOST"].Trim()
+$pgUser = $envMap["SUPABASE_USER"].Trim()
+$pgPort = $envMap["SUPABASE_PORT"].Trim()
+$pgDb = Get-PgDatabaseNameFromMap -EnvMap $envMap
 
-  $required = @("SUPABASE_HOST", "SUPABASE_USER", "SUPABASE_PASSWORD", "SUPABASE_PORT")
-  foreach ($k in $required) {
-    if (-not $envMap.ContainsKey($k) -or [string]::IsNullOrWhiteSpace($envMap[$k])) {
-      throw "Missing or empty required key in .env.local: $k"
-    }
+if ($TestConnection) {
+  $portNum = 0
+  if (-not [int]::TryParse($pgPort, [ref]$portNum)) {
+    throw "SUPABASE_PORT must be a number (got: $pgPort)"
   }
 
-  $pgHost = $envMap["SUPABASE_HOST"].Trim()
-  $pgUser = $envMap["SUPABASE_USER"].Trim()
-  $pgPassword = $envMap["SUPABASE_PASSWORD"]
-  $pgPort = $envMap["SUPABASE_PORT"].Trim()
-
-  $pgDb = "postgres"
-  if ($envMap.ContainsKey("SUPABASE_DB") -and -not [string]::IsNullOrWhiteSpace($envMap["SUPABASE_DB"])) {
-    $pgDb = $envMap["SUPABASE_DB"].Trim()
-  }
-  elseif ($envMap.ContainsKey("POSTGRES_DB") -and -not [string]::IsNullOrWhiteSpace($envMap["POSTGRES_DB"])) {
-    $pgDb = $envMap["POSTGRES_DB"].Trim()
+  Write-Host "Testing DNS resolution for host: $pgHost"
+  try {
+    $addrs = [System.Net.Dns]::GetHostAddresses($pgHost)
+    Write-Host "DNS: OK - $($addrs.Count) address(es) returned." -ForegroundColor Green
+  } catch {
+    Write-Host "DNS: FAILED - $($_.Exception.Message)" -ForegroundColor Red
+    Write-SupabaseConnectionHelp
+    exit 1
   }
 
-  if (-not (Test-Path -LiteralPath $BackupsDir)) {
-    New-Item -ItemType Directory -Path $BackupsDir | Out-Null
+  Write-Host "Testing TCP connectivity to ${pgHost}:${portNum} ..."
+  $tnc = Test-NetConnection -ComputerName $pgHost -Port $portNum -WarningAction SilentlyContinue
+  Write-Host "TCP reachable: $($tnc.TcpTestSucceeded)" -ForegroundColor $(if ($tnc.TcpTestSucceeded) { "Green" } else { "Red" })
+
+  if (-not $tnc.TcpTestSucceeded) {
+    Write-SupabaseConnectionHelp
+    exit 1
   }
 
-  $stamp = Get-Date -Format "yyyy-MM-dd-HH-mm"
-  $outFile = Join-Path $BackupsDir "pratiqo-backup-$stamp.dump"
+  Write-Host "Connection test passed." -ForegroundColor Green
+  exit 0
+}
 
-  $env:PGPASSWORD = $pgPassword
+if (-not $envMap.ContainsKey("SUPABASE_PASSWORD") -or [string]::IsNullOrWhiteSpace($envMap["SUPABASE_PASSWORD"])) {
+  throw "Missing SUPABASE_PASSWORD in .env.local"
+}
 
-  $dumpArgs = @(
-    "-Fc",
-    "-h", $pgHost,
-    "-p", $pgPort,
-    "-U", $pgUser,
-    "-d", $pgDb,
-    "-f", $outFile
-  )
+$backupDir = Join-Path $RepoRoot "backups"
+if (-not (Test-Path -LiteralPath $backupDir)) {
+  New-Item -ItemType Directory -Path $backupDir | Out-Null
+}
 
-  Write-Host "Starting backup (custom format)..."
-  Write-Host "  Host:     $pgHost"
-  Write-Host "  Port:     $pgPort"
-  Write-Host "  User:     $pgUser"
-  Write-Host "  Database: $pgDb"
-  Write-Host "  Output:   $outFile"
+$timestamp = Get-Date -Format "yyyy-MM-dd-HH-mm"
+$outFile = Join-Path $backupDir "pratiqo-backup-$timestamp.dump"
 
-  & $pgDump @dumpArgs
+$env:PGPASSWORD = $envMap["SUPABASE_PASSWORD"]
+
+try {
+  Write-Host "Backing up database '$pgDb' to:"
+  Write-Host $outFile
+
+  & $pgDumpPath `
+    --host $pgHost `
+    --port $pgPort `
+    --username $pgUser `
+    --dbname $pgDb `
+    --format=custom `
+    --no-owner `
+    --no-acl `
+    --file $outFile
+
   if ($LASTEXITCODE -ne 0) {
-    throw "pg_dump exited with code $LASTEXITCODE"
+    throw "pg_dump failed with exit code $LASTEXITCODE"
   }
 
-  Write-Host "Backup completed successfully."
+  Write-Host "Backup complete." -ForegroundColor Green
 }
 finally {
   Remove-Item Env:\PGPASSWORD -ErrorAction SilentlyContinue
