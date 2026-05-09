@@ -82,7 +82,7 @@ export function LandingTeacherListingCard({
     ? teacher.availability!.slice(0, 2).join(" · ")
     : t("availabilityHintGeneric");
 
-  const photoUrl = getTeacherImageUrl(teacher.imageUrl, { width: 160, height: 160, quality: 72, format: "webp" });
+  const photoUrl = getTeacherImageUrl(teacher.imageUrl, { width: 128, height: 128, quality: 72, format: "webp" });
   const showVerifiedTag = lvl > 0;
   const neighborhoodHint = teacher.location?.neighborhood?.trim();
 
@@ -125,6 +125,8 @@ export function LandingTeacherListingCard({
                 height={88}
                 sizes="(max-width: 640px) 72px, 84px"
                 loading="lazy"
+                fetchPriority="low"
+                decoding="async"
                 unoptimized={shouldUseUnoptimizedImage(photoUrl)}
                 className="h-[4.5rem] w-[4.5rem] rounded-full border border-black/[0.04] object-cover shadow-sm sm:h-[5.25rem] sm:w-[5.25rem]"
               />

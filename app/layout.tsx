@@ -77,13 +77,7 @@ export default function RootLayout({
   return (
     <html lang="fr" className={`${inter.variable} h-full antialiased`}>
       <head>
-        <link
-          rel="preload"
-          href="/fonts/inter.woff2"
-          as="font"
-          type="font/woff2"
-          crossOrigin="anonymous"
-        />
+        {/* next/font/local already loads Inter; avoid duplicate font preload competing with LCP. */}
         {/* Preconnect to Supabase to cut TTFB on first API call */}
         <link rel="preconnect" href="https://jwlbwmxoradmbuvqfkhe.supabase.co" />
         <link rel="dns-prefetch" href="https://jwlbwmxoradmbuvqfkhe.supabase.co" />

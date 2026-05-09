@@ -362,7 +362,13 @@ export default function LandingPage() {
       {/* ── HEADER ─────────────────────────────── */}
       <header className="sticky top-0 z-50 bg-white border-b border-[#D3D1C7] h-14 flex items-center justify-between px-4 sm:px-6">
         <Link href="/" className="flex items-center gap-2">
-          <PratiqoLogo variant="full" size="md" priority={false} fetchPriority="low" />
+          {/* Mobile: small icon only so the mark does not compete with hero h1 for LCP. Desktop: full wordmark. */}
+          <span className="md:hidden">
+            <PratiqoLogo variant="icon" size="md" priority={false} fetchPriority="low" loading="lazy" />
+          </span>
+          <span className="hidden md:block">
+            <PratiqoLogo variant="full" size="md" priority={false} fetchPriority="low" loading="lazy" />
+          </span>
         </Link>
         <div className="flex items-center gap-3">
           <LocaleSwitcher />
@@ -389,7 +395,7 @@ export default function LandingPage() {
           {mode === "student" ? (
             <motion.div
               key="student"
-              initial={{ opacity: 0 }}
+              initial={{ opacity: 1 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
@@ -568,7 +574,7 @@ export default function LandingPage() {
                       <>
                         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
                           {filtered.slice(0, 9).map((teacher, index) => (
-                            <div key={teacher.id} className={cn(index >= 6 && "hidden lg:block")}>
+                            <div key={teacher.id} className={cn(index >= 4 && "hidden lg:block")}>
                               <LandingTeacherListingCard
                                 teacher={teacher}
                                 formatPrice={formatPrice}
@@ -579,7 +585,7 @@ export default function LandingPage() {
                             </div>
                           ))}
                         </div>
-                        {filtered.length > 6 ? (
+                        {filtered.length > 4 ? (
                           <div className="mt-8 text-center">
                             <Link
                               href="/login?next=/student/search"
@@ -618,7 +624,7 @@ export default function LandingPage() {
           ) : (
             <motion.div
               key="teacher"
-              initial={{ opacity: 0 }}
+              initial={{ opacity: 1 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}

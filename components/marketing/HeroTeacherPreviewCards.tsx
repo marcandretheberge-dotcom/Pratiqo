@@ -80,7 +80,7 @@ export function HeroTeacherPreviewCards({
 
           const rawPhoto = typeof teacher.imageUrl === "string" ? teacher.imageUrl.trim() : "";
           const photoUrl = rawPhoto
-            ? getTeacherImageUrl(rawPhoto, { width: 104, height: 104, quality: 75, format: "webp" })
+            ? getTeacherImageUrl(rawPhoto, { width: 96, height: 96, quality: 72, format: "webp" })
             : "";
           const rotations = ["-rotate-1", "rotate-1", "-rotate-[0.4deg]"] as const;
 

@@ -11,6 +11,8 @@ type PratiqoLogoProps = {
   /** When false, avoids competing with hero LCP (e.g. landing h1). Defaults true for backward compatibility. */
   priority?: boolean;
   fetchPriority?: "high" | "low" | "auto";
+  /** Use `lazy` for non-LCP marks (e.g. desktop-only full logo while mobile shows icon). */
+  loading?: "eager" | "lazy";
 };
 
 const fullWidths: Record<PratiqoLogoSize, number> = {
@@ -44,6 +46,7 @@ export function PratiqoLogo({
   className,
   priority = true,
   fetchPriority,
+  loading,
 }: PratiqoLogoProps) {
   if (variant === "icon") {
     const iconSize = iconSizes[size];
@@ -51,13 +54,14 @@ export function PratiqoLogo({
       <Image
         src="/branding/pratiqo-icon.png"
         alt="Pratiqo"
-        width={128}
-        height={128}
+        width={80}
+        height={80}
         sizes={iconSizesAttr[size]}
         className={cn("block h-auto shrink-0 object-contain", className)}
         style={{ width: iconSize, height: iconSize }}
         priority={priority}
         fetchPriority={fetchPriority}
+        loading={loading}
       />
     );
   }
@@ -67,13 +71,14 @@ export function PratiqoLogo({
     <Image
       src="/branding/pratiqo-logo.png"
       alt="Pratiqo"
-      width={640}
-      height={160}
+      width={480}
+      height={120}
       sizes={fullSizesAttr[size]}
       className={cn("block h-auto shrink-0 object-contain", className)}
       style={{ width }}
       priority={priority}
       fetchPriority={fetchPriority}
+      loading={loading}
     />
   );
 }

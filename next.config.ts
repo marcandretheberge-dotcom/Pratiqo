@@ -26,6 +26,7 @@ const cspValue = [
 const nextConfig: NextConfig = {
   experimental: {
     forceSwcTransforms: true,
+    optimizePackageImports: ["lucide-react"],
   },
   async headers() {
     return [
