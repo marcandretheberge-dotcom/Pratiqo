@@ -1,10 +1,20 @@
 import Stripe from "stripe";
 
-/** Pinned to the Stripe Node SDK bundled API version (see `stripe` package `apiVersion.js`). */
-const API_VERSION = "2026-03-25.dahlia" as const;
+let _client: Stripe | undefined;
 
-const secretKey = process.env.STRIPE_SECRET_KEY;
+function client(): Stripe {
+  if (!_client) {
+    const key = process.env.STRIPE_SECRET_KEY;
+    if (!key) throw new Error("Missing STRIPE_SECRET_KEY environment variable");
+    _client = new Stripe(key, { apiVersion: "2026-04-22.dahlia" });
+  }
+  return _client;
+}
 
-export const stripe = new Stripe(secretKey ?? "", {
-  apiVersion: API_VERSION,
+// Lazy proxy: the Stripe client is created on first property access (request time),
+// not at module evaluation time, so builds without STRIPE_SECRET_KEY in env succeed.
+export const stripe = new Proxy({} as unknown as Stripe, {
+  get(_target, prop: string | symbol) {
+    return Reflect.get(client(), prop);
+  },
 });
