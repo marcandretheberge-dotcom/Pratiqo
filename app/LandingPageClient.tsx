@@ -22,6 +22,7 @@ import { LandingDiscoverySearch } from "../components/marketing/LandingDiscovery
 import { LandingHeroTrustStrip } from "../components/marketing/LandingHeroTrustStrip";
 import { LandingNeighborhoodSignals } from "../components/marketing/LandingNeighborhoodSignals";
 import { LandingTeacherListingCard } from "../components/marketing/LandingTeacherListingCard";
+import { LandingResourcesSection } from "../components/marketing/LandingResourcesSection";
 import type { TranslationKey } from "../lib/translations";
 import type { LandingFormatFilter } from "../lib/landingTeacherFilter";
 import { filterTeacherPool, buildTeacherSearchRows, sortRows } from "../lib/teacherSearchEngine";
@@ -541,6 +542,8 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
       <div className="mx-auto max-w-[1440px] bg-[#F8F6F1] pb-6 text-center">
         <p className="mx-auto max-w-xl px-4 text-xs leading-relaxed text-neutral-700">{t("creditsDisclaimer")}</p>
       </div>
+
+      <LandingResourcesSection />
 
       <MarketplaceFinalCta />
 

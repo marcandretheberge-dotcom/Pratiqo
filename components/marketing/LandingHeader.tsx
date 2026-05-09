@@ -26,6 +26,12 @@ export function LandingHeader() {
           {t("navPricing") || "Tarifs"}
         </Link>
         <Link
+          href="/blog"
+          className="hidden sm:inline-flex items-center text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors"
+        >
+          {t("navResources")}
+        </Link>
+        <Link
           href="/devenir-enseignant"
           className="hidden sm:inline-flex items-center rounded-xl border border-teal-700 px-3 py-1.5 text-xs font-semibold text-teal-700 hover:bg-teal-700/8 transition-colors"
         >
