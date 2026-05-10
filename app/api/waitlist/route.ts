@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { logError } from "@/lib/log";
+import { rateLimitByIp, rateLimitResponse } from "@/lib/rateLimit";
 import { validateJsonBody } from "@/lib/validation/api";
 import { waitlistPostSchema } from "@/lib/validation/schemas";
 
@@ -11,6 +12,15 @@ export async function POST(req: Request) {
     const validated = await validateJsonBody(waitlistPostSchema, req);
     if (!validated.ok) return validated.response;
     const { email, feature } = validated.data;
+
+    const rl = await rateLimitByIp(req, "waitlist", { limit: 5, windowSeconds: 600 });
+    if (!rl.allowed && rl.retryAfterSeconds != null) {
+      return rateLimitResponse(rl.retryAfterSeconds, {
+        limit: rl.limit,
+        remaining: rl.remaining,
+        reset: rl.reset,
+      });
+    }
 
     const admin = getSupabaseAdmin();
     const { error } = await admin.from("waitlist").insert({ email, feature });

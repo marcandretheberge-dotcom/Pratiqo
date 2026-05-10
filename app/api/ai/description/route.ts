@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import { logError } from "@/lib/log";
+import { rateLimitByIp, rateLimitResponse } from "@/lib/rateLimit";
 import { validateJsonBody } from "@/lib/validation/api";
 import { aiDescriptionPostSchema } from "@/lib/validation/schemas";
 
@@ -89,6 +90,19 @@ export async function POST(request: Request) {
   const validated = await validateJsonBody(aiDescriptionPostSchema, request);
   if (!validated.ok) return validated.response;
   const { discipline, specialite } = validated.data;
+
+  const rl = await rateLimitByIp(request, "ai-description", {
+    limit: 10,
+    windowSeconds: 3600,
+    identifier: user.id,
+  });
+  if (!rl.allowed && rl.retryAfterSeconds != null) {
+    return rateLimitResponse(rl.retryAfterSeconds, {
+      limit: rl.limit,
+      remaining: rl.remaining,
+      reset: rl.reset,
+    });
+  }
 
   const apiKey = process.env.ANTHROPIC_API_KEY?.trim();
   if (!apiKey) {
