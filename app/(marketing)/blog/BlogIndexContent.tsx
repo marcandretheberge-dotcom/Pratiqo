@@ -4,10 +4,23 @@ import Link from "next/link";
 import Image from "next/image";
 import { Calendar, User, ArrowRight, BookOpen } from "lucide-react";
 import { useLocale } from "@/lib/locale-context";
-import { localeToBcp47, type Locale } from "@/lib/i18n/types";import type { BlogPost } from "./page";
+import { localeToBcp47, type Locale, type TranslationKey } from "@/lib/i18n/types";
+import type { BlogPost } from "./page";
 import { useState } from "react";
 import { getBlogLocaleBundle } from "@/lib/seo/blogLocaleOverrides";
 import { BlogPublicHeader } from "@/components/blog/BlogPublicHeader";
+import { postMatchesBlogCluster, type BlogIndexClusterId } from "@/lib/seo/internalLinks";
+
+const CLUSTER_ORDER: BlogIndexClusterId[] = ["all", "parents", "teachers", "music", "languages", "pricing"];
+
+const CLUSTER_LABEL_KEY: Record<BlogIndexClusterId, TranslationKey> = {
+  all: "seoBlogClusterAll",
+  parents: "seoBlogClusterParents",
+  teachers: "seoBlogClusterTeachers",
+  music: "seoBlogClusterMusic",
+  languages: "seoBlogClusterLanguages",
+  pricing: "seoBlogClusterPricing",
+};
 
 function estimateReadTime(excerpt: string): number {
   return Math.max(2, Math.ceil(excerpt.split(" ").length / 50));
@@ -61,10 +74,12 @@ export default function BlogIndexContent({ posts }: { posts: BlogPost[] }) {
   const bcp47 = localeToBcp47(locale);
 
   const [activeCategory, setActiveCategory] = useState("all");
+  const [activeCluster, setActiveCluster] = useState<BlogIndexClusterId>("all");
 
   const filtered = posts.filter((p) => {
     const catOk = activeCategory === "all" || p.category === activeCategory;
-    return catOk;
+    const clusterOk = postMatchesBlogCluster(p.slug, activeCluster);
+    return catOk && clusterOk;
   });
 
   const categories = Array.from(new Set(posts.map((p) => p.category)));
@@ -91,40 +106,58 @@ export default function BlogIndexContent({ posts }: { posts: BlogPost[] }) {
         </div>
       </header>
 
-      {/* ── CATEGORY FILTERS ─────────────────────────────────────────────── */}
-      {categories.length > 1 && (
+      {/* ── CATEGORY + AUDIENCE FILTERS ─────────────────────────────────── */}
+      {posts.length > 0 ? (
         <div className="sticky top-[5.75rem] z-30 border-b border-[#E8E6DF] bg-white md:top-14">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <div className="flex gap-2 overflow-x-auto py-3 scrollbar-none">
-              <button
-                type="button"
-                onClick={() => setActiveCategory("all")}
-                className={`shrink-0 rounded-full px-4 py-1.5 text-xs font-bold transition-colors ${
-                  activeCategory === "all"
-                    ? "bg-teal-600 text-white"
-                    : "bg-[#F1EFE8] text-[#6B6760] hover:bg-[#E8E6DF]"
-                }`}
-              >
-                {t("blogAllCategories")}
-              </button>
-              {categories.map((cat) => (
+            {categories.length > 1 ? (
+              <div className="flex gap-2 overflow-x-auto py-3 scrollbar-none border-b border-[#F0EFE8]">
                 <button
-                  key={cat}
                   type="button"
-                  onClick={() => setActiveCategory(cat)}
+                  onClick={() => setActiveCategory("all")}
                   className={`shrink-0 rounded-full px-4 py-1.5 text-xs font-bold transition-colors ${
-                    activeCategory === cat
+                    activeCategory === "all"
                       ? "bg-teal-600 text-white"
                       : "bg-[#F1EFE8] text-[#6B6760] hover:bg-[#E8E6DF]"
                   }`}
                 >
-                  {cat}
+                  {t("blogAllCategories")}
+                </button>
+                {categories.map((cat) => (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setActiveCategory(cat)}
+                    className={`shrink-0 rounded-full px-4 py-1.5 text-xs font-bold transition-colors ${
+                      activeCategory === cat
+                        ? "bg-teal-600 text-white"
+                        : "bg-[#F1EFE8] text-[#6B6760] hover:bg-[#E8E6DF]"
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+            ) : null}
+            <div className="flex gap-2 overflow-x-auto py-3 scrollbar-none">
+              {CLUSTER_ORDER.map((cid) => (
+                <button
+                  key={cid}
+                  type="button"
+                  onClick={() => setActiveCluster(cid)}
+                  className={`shrink-0 rounded-full px-3 py-1.5 text-[11px] font-bold transition-colors ${
+                    activeCluster === cid
+                      ? "bg-[#2D7B72] text-white"
+                      : "bg-[#EFF8F4] text-[#2D7B72] hover:bg-[#D5EFE6]"
+                  }`}
+                >
+                  {t(CLUSTER_LABEL_KEY[cid])}
                 </button>
               ))}
             </div>
           </div>
         </div>
-      )}
+      ) : null}
 
       <main className="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-14">
 
@@ -132,7 +165,9 @@ export default function BlogIndexContent({ posts }: { posts: BlogPost[] }) {
           /* ── EMPTY STATE ─────────────────────────────────────────────── */
           <div className="flex flex-col items-center justify-center py-24 text-center gap-4">
             <BookOpen size={40} className="text-[#D3D1C7]" />
-            <p className="text-[#6B6760] text-sm max-w-xs">{t("blogNoArticles")}</p>
+            <p className="text-[#6B6760] text-sm max-w-xs">
+              {posts.length > 0 ? t("seoBlogClusterEmpty") : t("blogNoArticles")}
+            </p>
             <Link
               href="/"
               className="mt-2 inline-flex h-10 items-center justify-center rounded-2xl bg-teal-600 px-6 text-sm font-semibold text-white hover:brightness-105 transition-all"

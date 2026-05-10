@@ -21,6 +21,8 @@ import { BlogRelatedArticles } from "@/components/blog/BlogRelatedArticles";
 import { BlogArticleHeroChips } from "@/components/blog/BlogArticleHeroChips";
 import { BlogArticleClosingCta } from "@/components/blog/BlogArticleClosingCta";
 import { BlogArticleMarkdownBody } from "@/components/blog/BlogArticleMarkdownBody";
+import { MarketingResourceBlock } from "@/components/seo/MarketingResourceBlock";
+import { getBlogContinuationLinks } from "@/lib/seo/internalLinks";
 import type { TranslationKey } from "@/lib/i18n/types";
 
 export const revalidate = 3600;
@@ -296,6 +298,13 @@ export default async function BlogArticlePage({
           </article>
 
           <BlogFaqAccordion items={faqItems} />
+
+          <MarketingResourceBlock
+            id="blog-continue-reading"
+            className="mt-8"
+            title={dict.seoContinueReadingTitle}
+            links={getBlogContinuationLinks(slug, locale)}
+          />
         </div>
 
         <BlogRelatedArticles

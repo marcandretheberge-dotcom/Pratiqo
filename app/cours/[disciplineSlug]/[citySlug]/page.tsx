@@ -12,6 +12,9 @@ import { LegalFooterLinks } from "@/components/LegalFooterLinks";
 import { CityLinksFooter } from "@/components/CityLinksFooter";
 import { FAQSchema } from "@/components/seo/FAQSchema";
 import { BreadcrumbSchema } from "@/components/seo/BreadcrumbSchema";
+import { MarketingResourceBlock } from "@/components/seo/MarketingResourceBlock";
+import { getLocale, getDictionary } from "@/lib/i18n/server";
+import { getDisciplineCitySeoGuideLinks } from "@/lib/seo/internalLinks";
 import type { Teacher } from "@/types";
 
 const BASE_URL = "https://pratiqo.ca";
@@ -145,6 +148,10 @@ export default async function DisciplineCityPage({
     discipline.dbCategory,
     discipline.dbDiscipline,
   );
+
+  const locale = await getLocale();
+  const dict = getDictionary(locale);
+  const disciplineGuideLinks = getDisciplineCitySeoGuideLinks(disciplineSlug, citySlug, locale);
 
   const faqWithCity = discipline.faq.map((item) => ({
     question: item.question.replace("{city}", city.name),
@@ -387,6 +394,17 @@ export default async function DisciplineCityPage({
                 </div>
               ))}
             </div>
+          </div>
+        </section>
+
+        <section className="bg-white border-t border-[#E8E6DF] py-8 px-4 sm:px-6">
+          <div className="mx-auto max-w-4xl">
+            <MarketingResourceBlock
+              id="discipline-city-seo-guides"
+              title={dict.seoLocalGuidesTitle}
+              links={disciplineGuideLinks}
+              className="border-[#E8E6DF] bg-[#FAFAF8]"
+            />
           </div>
         </section>
 

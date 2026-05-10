@@ -14,6 +14,9 @@ import { CityMapSection } from "../../../components/CityMapSection";
 import { CityLinksFooter } from "../../../components/CityLinksFooter";
 import { FAQSchema } from "../../../components/seo/FAQSchema";
 import { BreadcrumbSchema } from "../../../components/seo/BreadcrumbSchema";
+import { MarketingResourceBlock } from "../../../components/seo/MarketingResourceBlock";
+import { getLocale, getDictionary } from "../../../lib/i18n/server";
+import { getCitySeoGuideLinks } from "../../../lib/seo/internalLinks";
 
 const BASE_URL = "https://pratiqo.ca";
 
@@ -152,6 +155,10 @@ export default async function CityTutorsPage({
   if (!city) notFound();
 
   const { teachers, isNearby } = await findTeachersForCity(city.lat, city.lng);
+
+  const locale = await getLocale();
+  const dict = getDictionary(locale);
+  const cityGuideLinks = getCitySeoGuideLinks(citySlug, locale);
 
   const cityFaq = [
     {
@@ -430,6 +437,17 @@ export default async function CityTutorsPage({
                 </div>
               ))}
             </div>
+          </div>
+        </section>
+
+        <section className="bg-white border-t border-[#E8E6DF] py-8 px-4 sm:px-6">
+          <div className="mx-auto max-w-4xl">
+            <MarketingResourceBlock
+              id="city-seo-guides"
+              title={dict.seoLocalGuidesTitle}
+              links={cityGuideLinks}
+              className="border-[#E8E6DF] bg-[#FAFAF8]"
+            />
           </div>
         </section>
 

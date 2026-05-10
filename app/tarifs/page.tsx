@@ -506,6 +506,84 @@ export default function TarifsPage() {
           </ul>
         </section>
 
+        {/* Helpful guides (internal linking) */}
+        <section className="mx-auto mt-24 max-w-5xl px-4 sm:px-6">
+          <h2 className="text-center text-xl font-bold tracking-tight text-[#2C2C2C] sm:text-2xl">
+            {t("seoHelpfulGuidesTitle")}
+          </h2>
+          <div className="mt-10 grid gap-6 md:grid-cols-3">
+            <div className="rounded-2xl border border-[#E8E6DE] bg-white p-6 shadow-sm">
+              <h3 className="text-xs font-bold uppercase tracking-wide text-[#2D7B72]">
+                {t("seoPricingGuidesStudentsTitle")}
+              </h3>
+              <ul className="mt-4 space-y-2.5">
+                <li>
+                  <Link
+                    href="/blog/comment-choisir-tuteur-enfant-quebec"
+                    className="text-sm font-semibold text-[#0F6E56] hover:underline"
+                  >
+                    {t("seoGuideLinkChoixTuteur")}
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/blog/combien-coute-tuteur-prive-quebec"
+                    className="text-sm font-semibold text-[#0F6E56] hover:underline"
+                  >
+                    {t("seoGuideLinkCombienCouteTuteur")}
+                  </Link>
+                </li>
+              </ul>
+            </div>
+            <div className="rounded-2xl border border-[#E8E6DE] bg-white p-6 shadow-sm">
+              <h3 className="text-xs font-bold uppercase tracking-wide text-[#2D7B72]">
+                {t("seoPricingGuidesTeachersTitle")}
+              </h3>
+              <ul className="mt-4 space-y-2.5">
+                <li>
+                  <Link
+                    href="/blog/combien-charger-cours-prive-quebec"
+                    className="text-sm font-semibold text-[#0F6E56] hover:underline"
+                  >
+                    {t("seoGuideLinkCombienCharger")}
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/blog/creer-profil-professeur-attirer-eleves"
+                    className="text-sm font-semibold text-[#0F6E56] hover:underline"
+                  >
+                    {t("seoGuideLinkCreerProfil")}
+                  </Link>
+                </li>
+              </ul>
+            </div>
+            <div className="rounded-2xl border border-[#E8E6DE] bg-white p-6 shadow-sm">
+              <h3 className="text-xs font-bold uppercase tracking-wide text-[#2D7B72]">
+                {t("seoPricingGuidesFreelancersTitle")}
+              </h3>
+              <ul className="mt-4 space-y-2.5">
+                <li>
+                  <Link
+                    href="/blog/donner-cours-prives-side-hustle-etudiants"
+                    className="text-sm font-semibold text-[#0F6E56] hover:underline"
+                  >
+                    {t("seoGuideLinkSideHustleStudent")}
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/blog/emplois-temps-partiel-bien-payes-etudiants-universitaires"
+                    className="text-sm font-semibold text-[#0F6E56] hover:underline"
+                  >
+                    {t("seoGuideLinkEmploisEtudiants")}
+                  </Link>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
         {/* FAQ */}
         <section className="mx-auto mt-28 max-w-2xl">
           <h2 className="text-center text-xl font-bold tracking-tight text-[#2C2C2C] sm:text-2xl md:text-3xl">{t("pricingPageFaqSectionTitle")}</h2>

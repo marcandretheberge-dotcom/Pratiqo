@@ -489,6 +489,35 @@ export default function BecomeTeacherPage() {
         </div>
       </section>
 
+      {/* Guides (internal linking) */}
+      <section className="bg-[#121212] border-y border-white/10">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-12">
+          <h2 className="text-lg font-bold text-white sm:text-xl">{t("seoTeacherGuidesTitle")}</h2>
+          <ul className="mt-4 space-y-2.5 text-sm">
+            <li>
+              <Link href="/blog/donner-cours-prives-quebec" className="font-semibold text-[#7FE0C3] hover:underline">
+                {t("seoGuideLinkDonnerCoursQuebec")}
+              </Link>
+            </li>
+            <li>
+              <Link href="/blog/combien-charger-cours-prive-quebec" className="font-semibold text-[#7FE0C3] hover:underline">
+                {t("seoGuideLinkCombienCharger")}
+              </Link>
+            </li>
+            <li>
+              <Link href="/blog/creer-profil-professeur-attirer-eleves" className="font-semibold text-[#7FE0C3] hover:underline">
+                {t("seoGuideLinkCreerProfil")}
+              </Link>
+            </li>
+            <li>
+              <Link href="/blog/donner-cours-prives-side-hustle-etudiants" className="font-semibold text-[#7FE0C3] hover:underline">
+                {t("seoGuideLinkSideHustleStudent")}
+              </Link>
+            </li>
+          </ul>
+        </div>
+      </section>
+
       {/* ── TESTIMONIALS ───────────────────────── */}
       <section className="bg-[#121212] border-y border-white/10">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 py-14 sm:py-18">
