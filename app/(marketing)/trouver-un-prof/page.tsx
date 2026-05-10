@@ -4,7 +4,9 @@ import { Search, Shield, Star, Clock, ArrowRight } from "lucide-react";
 import { FAQSchema } from "@/components/seo/FAQSchema";
 import { BreadcrumbSchema } from "@/components/seo/BreadcrumbSchema";
 
-const BASE_URL = "https://pratiqo.ca";
+import { SITE_URL } from "@/lib/seo/site";
+
+const BASE_URL = SITE_URL;
 
 export const metadata: Metadata = {
   title: "Trouver un prof particulier au Québec | Pratiqo",
@@ -25,6 +27,14 @@ export const metadata: Metadata = {
     siteName: "Pratiqo",
     locale: "fr_CA",
     type: "website",
+    images: [{ url: "/og-image.png", width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Trouver un prof particulier au Québec | Pratiqo",
+    description:
+      "Recherchez un tuteur vérifié près de chez vous ou en ligne — matières scolaires, musique, langues.",
+    images: ["/og-image.png"],
   },
   alternates: {
     canonical: `${BASE_URL}/trouver-un-prof`,

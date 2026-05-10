@@ -12,7 +12,9 @@ import type { Teacher } from "../../../../types";
 import { CityMapSection } from "../../../../components/CityMapSection";
 import { CityLinksFooter } from "../../../../components/CityLinksFooter";
 
-const BASE_URL = "https://pratiqo.ca";
+import { SITE_URL } from "@/lib/seo/site";
+
+const BASE_URL = SITE_URL;
 
 // ── Teacher columns needed for the mapper ─────────────────────────────────────
 

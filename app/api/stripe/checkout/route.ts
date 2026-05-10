@@ -9,6 +9,7 @@ import { calculateBookingAmounts } from "@/lib/payments/commission";
 import { upsertUnpaidBookingPayment } from "@/lib/payments/ledger";
 import { validateJsonBody } from "@/lib/validation/api";
 import { stripeCheckoutPostSchema } from "@/lib/validation/schemas";
+import { SITE_URL } from "@/lib/seo/site";
 
 export const runtime = "nodejs";
 
@@ -19,7 +20,7 @@ function trimTrailingSlash(url: string) {
 /** Stripe success/cancel URLs — must be set for checkout (no Connect / no dynamic origin fallback). */
 function checkoutPublicBase(): string {
   const raw =
-    process.env.STRIPE_CHECKOUT_BASE_URL?.trim() || "https://pratiqo.ca";
+    process.env.STRIPE_CHECKOUT_BASE_URL?.trim() || SITE_URL;
   return trimTrailingSlash(raw);
 }
 

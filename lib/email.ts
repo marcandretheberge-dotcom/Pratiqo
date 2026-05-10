@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { SITE_URL } from "@/lib/seo/site";
 
 // ─── Infrastructure ──────────────────────────────────────────────────────────
 
@@ -12,7 +13,7 @@ function appBaseUrl(): string {
   return (
     process.env.APP_BASE_URL?.trim() ||
     process.env.STRIPE_CHECKOUT_BASE_URL?.trim() ||
-    "https://pratiqo.ca"
+    SITE_URL
   );
 }
 
@@ -102,7 +103,7 @@ function buildEmail(opts: TemplateOpts): string {
                 <td align="center">
                   <a href="${base}" style="text-decoration:none;display:block;">
                     <img
-                      src="https://pratiqo.ca/logo-email.png"
+                      src="${SITE_URL}/logo-email.png"
                       alt="Pratiqo"
                       width="160"
                       height="48"

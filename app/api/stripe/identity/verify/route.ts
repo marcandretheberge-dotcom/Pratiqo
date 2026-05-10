@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { stripe } from "@/lib/stripe";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { SITE_URL } from "@/lib/seo/site";
 
 export const runtime = "nodejs";
 
@@ -9,7 +10,7 @@ function publicBase(): string {
   return (
     process.env.APP_BASE_URL?.trim() ||
     process.env.STRIPE_CHECKOUT_BASE_URL?.trim() ||
-    "https://pratiqo.ca"
+    SITE_URL
   ).replace(/\/+$/, "");
 }
 

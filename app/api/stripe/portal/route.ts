@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import Stripe from "stripe";
 import { stripe } from "@/lib/stripe";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { SITE_URL } from "@/lib/seo/site";
 
 export const runtime = "nodejs";
 
@@ -15,7 +16,7 @@ function publicBase(): string {
     process.env.APP_URL?.trim() ||
     process.env.APP_BASE_URL?.trim() ||
     process.env.STRIPE_CHECKOUT_BASE_URL?.trim() ||
-    "https://pratiqo.ca";
+    SITE_URL;
   return trimTrailingSlash(raw);
 }
 

@@ -4,7 +4,9 @@ import { notFound } from "next/navigation";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import GroupSessionDetailClient from "@/components/GroupSessionDetailClient";
 
-const BASE_URL = "https://pratiqo.ca";
+import { SITE_URL } from "@/lib/seo/site";
+
+const BASE_URL = SITE_URL;
 
 type GroupSessionMetaRow = {
   id: string;

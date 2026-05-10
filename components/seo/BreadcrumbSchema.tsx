@@ -1,4 +1,4 @@
-const BASE_URL = "https://pratiqo.ca";
+import { SITE_URL } from "@/lib/seo/site";
 
 interface BreadcrumbItem {
   name: string;
@@ -17,7 +17,7 @@ export function BreadcrumbSchema({ items }: Props) {
       "@type": "ListItem",
       position: i + 1,
       name: item.name,
-      item: `${BASE_URL}${item.href}`,
+      item: `${SITE_URL}${item.href}`,
     })),
   };
 

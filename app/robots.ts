@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { SITE_URL } from "../lib/seo/site";
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -21,6 +22,7 @@ export default function robots(): MetadataRoute.Robots {
           "/booking",
           "/upgrade",
           "/loyalty",
+          "/resolution",
           // Teacher-side private pages
           "/teacher/schedule",
           "/teacher/settings",
@@ -33,6 +35,6 @@ export default function robots(): MetadataRoute.Robots {
         ],
       },
     ],
-    sitemap: "https://pratiqo.ca/sitemap.xml",
+    sitemap: `${SITE_URL}/sitemap.xml`,
   };
 }

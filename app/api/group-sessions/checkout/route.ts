@@ -4,13 +4,14 @@ import Stripe from "stripe";
 import { stripe } from "@/lib/stripe";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import type { GroupSessionRow } from "@/lib/groupSessions";
+import { SITE_URL } from "@/lib/seo/site";
 
 function trimTrailingSlash(url: string) {
   return url.replace(/\/+$/, "");
 }
 
 function checkoutPublicBase(): string {
-  const raw = process.env.STRIPE_CHECKOUT_BASE_URL?.trim() || "https://pratiqo.ca";
+  const raw = process.env.STRIPE_CHECKOUT_BASE_URL?.trim() || SITE_URL;
   return trimTrailingSlash(raw);
 }
 

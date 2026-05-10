@@ -18,7 +18,9 @@ import { MarketingResourceBlock } from "../../../components/seo/MarketingResourc
 import { getLocale, getDictionary } from "../../../lib/i18n/server";
 import { getCitySeoGuideLinks } from "../../../lib/seo/internalLinks";
 
-const BASE_URL = "https://pratiqo.ca";
+import { SITE_URL } from "@/lib/seo/site";
+
+const BASE_URL = SITE_URL;
 
 // Columns needed for teacherRowToTeacher + map markers.
 const TEACHER_SELECT =
@@ -120,6 +122,13 @@ export async function generateMetadata({
       siteName: "Pratiqo",
       locale: "fr_CA",
       type: "website",
+      images: [{ url: "/og-image.png", width: 1200, height: 630 }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: ["/og-image.png"],
     },
     alternates: {
       canonical: `${BASE_URL}/tuteurs-prive/${citySlug}`,

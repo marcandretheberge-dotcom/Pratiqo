@@ -28,7 +28,9 @@ import type { TranslationKey } from "@/lib/i18n/types";
 export const revalidate = 3600;
 export const dynamicParams = true;
 
-const BASE_URL = "https://pratiqo.ca";
+import { SITE_URL } from "@/lib/seo/site";
+
+const BASE_URL = SITE_URL;
 
 type BlogPostFull = {
   id: string;
@@ -107,7 +109,11 @@ export async function generateMetadata({
   const { slug } = await params;
   const post = await fetchPost(slug);
   if (!post) {
-    return { title: "Article introuvable | Pratiqo Blog" };
+    return {
+      title: "Article introuvable | Pratiqo Blog",
+      robots: { index: false, follow: false },
+      alternates: { canonical: `${BASE_URL}/blog` },
+    };
   }
   const locale = await getLocale();
   const bundle = getBlogLocaleBundle(slug, locale);

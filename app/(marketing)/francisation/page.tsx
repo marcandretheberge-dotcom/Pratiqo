@@ -4,7 +4,9 @@ import { Globe, Shield, MessageCircle, ArrowRight } from "lucide-react";
 import { FAQSchema } from "@/components/seo/FAQSchema";
 import { BreadcrumbSchema } from "@/components/seo/BreadcrumbSchema";
 
-const BASE_URL = "https://pratiqo.ca";
+import { SITE_URL } from "@/lib/seo/site";
+
+const BASE_URL = SITE_URL;
 
 export const metadata: Metadata = {
   title: "Cours de francisation au Québec — Trouver un professeur | Pratiqo",
@@ -25,6 +27,14 @@ export const metadata: Metadata = {
     siteName: "Pratiqo",
     locale: "fr_CA",
     type: "website",
+    images: [{ url: "/og-image.png", width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Cours de francisation au Québec | Pratiqo",
+    description:
+      "Professeurs de français pour nouveaux arrivants — conversation et intégration au Québec.",
+    images: ["/og-image.png"],
   },
   alternates: {
     canonical: `${BASE_URL}/francisation`,

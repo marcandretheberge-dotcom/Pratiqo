@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 import { Providers } from "./providers";
 import { TeacherRecruitStrip } from "@/components/TeacherRecruitStrip";
+import { SITE_URL } from "@/lib/seo/site";
 
 const inter = localFont({
   src: "../public/fonts/inter.woff2",
@@ -11,7 +12,7 @@ const inter = localFont({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://pratiqo.ca"),
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "Pratiqo — Trouve ton prof idéal au Québec",
     template: "%s | Pratiqo",
@@ -35,25 +36,22 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Pratiqo — Trouve ton prof idéal",
     description: "La marketplace québécoise pour cours particuliers",
-    url: "https://pratiqo.ca",
+    url: SITE_URL,
     siteName: "Pratiqo",
     locale: "fr_CA",
     type: "website",
     images: [{ url: "/og-image.png", width: 1200, height: 630 }],
   },
-  // hreflang: all locales currently served at the same URL (locale is switched
-  // client-side). Will be updated to subpath URLs once locale routing launches:
-  //   pratiqo.ca/en/  →  en-CA
-  //   pratiqo.ca/mx/  →  es (Mexico / LatAm)
-  //   pratiqo.ca/uy/  →  es-UY (Uruguay)
+  // Same URL for every locale today (cookie/client locale). Do not treat these as
+  // distinct hreflang targets until real localized routes exist (see lib/seo/site.ts).
   alternates: {
-    canonical: "https://pratiqo.ca",
+    canonical: SITE_URL,
     languages: {
-      fr: "https://pratiqo.ca",
-      en: "https://pratiqo.ca",
-      es:      "https://pratiqo.ca",
-      "es-UY": "https://pratiqo.ca",
-      "x-default": "https://pratiqo.ca",
+      fr: SITE_URL,
+      en: SITE_URL,
+      es: SITE_URL,
+      "es-UY": SITE_URL,
+      "x-default": SITE_URL,
     },
   },
   icons: {

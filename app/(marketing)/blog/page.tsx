@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import BlogIndexContent from "./BlogIndexContent";
+import { SITE_URL } from "@/lib/seo/site";
 
 export const revalidate = 3600; // ISR — revalidate every hour
 
-const BASE_URL = "https://pratiqo.ca";
+const BASE_URL = SITE_URL;
 
 export const metadata: Metadata = {
   title: "Blog Pratiqo — Conseils, guides et ressources pour apprendre mieux",
@@ -29,6 +30,13 @@ export const metadata: Metadata = {
     siteName: "Pratiqo",
     images: [{ url: "/og-image.png", width: 1200, height: 630 }],
     type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Blog Pratiqo — Guides et ressources",
+    description:
+      "Articles pour progresser en musique, langues et matières scolaires avec des professeurs vérifiés.",
+    images: ["/og-image.png"],
   },
   alternates: {
     canonical: `${BASE_URL}/blog`,

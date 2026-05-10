@@ -1,15 +1,17 @@
+import { SITE_URL } from "@/lib/seo/site";
+
 /** LocalBusiness JSON-LD for landing SEO — server-only, no client JS. */
 export function LandingOrgJsonLd() {
   const orgJsonLd = {
     "@context": "https://schema.org",
     "@type": ["LocalBusiness", "EducationalOrganization"],
     name: "Pratiqo",
-    url: "https://pratiqo.ca",
+    url: SITE_URL,
     logo: {
       "@type": "ImageObject",
-      url: "https://pratiqo.ca/logo-email.png",
+      url: `${SITE_URL}/logo-email.png`,
     },
-    image: "https://pratiqo.ca/og-image.png",
+    image: `${SITE_URL}/og-image.png`,
     description:
       "La marketplace québécoise pour trouver un professeur de musique, de langue ou un tuteur. Profs vérifiés, paiements sécurisés, cours en ligne ou en présentiel.",
     priceRange: "$$",

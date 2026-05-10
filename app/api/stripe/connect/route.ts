@@ -7,6 +7,7 @@ import {
   summarizeConnectStatus,
   syncTeacherConnectStatus,
 } from "@/lib/payments/connect";
+import { SITE_URL } from "@/lib/seo/site";
 
 export const runtime = "nodejs";
 
@@ -15,7 +16,7 @@ function trimTrailingSlash(url: string) {
 }
 
 function publicBase(): string {
-  const raw = process.env.APP_BASE_URL?.trim() || process.env.STRIPE_CHECKOUT_BASE_URL?.trim() || "https://pratiqo.ca";
+  const raw = process.env.APP_BASE_URL?.trim() || process.env.STRIPE_CHECKOUT_BASE_URL?.trim() || SITE_URL;
   return trimTrailingSlash(raw);
 }
 

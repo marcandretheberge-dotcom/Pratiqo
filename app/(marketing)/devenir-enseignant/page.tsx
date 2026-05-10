@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import DevenirEnseignantContent from "./DevenirEnseignantContent";
 
-const BASE_URL = "https://pratiqo.ca";
+import { SITE_URL } from "@/lib/seo/site";
+
+const BASE_URL = SITE_URL;
 
 // ── Metadata ──────────────────────────────────────────────────────────────────
 //
@@ -39,6 +41,13 @@ export const metadata: Metadata = {
     siteName: "Pratiqo",
     images: [{ url: "/og-image.png", width: 1200, height: 630 }],
     type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Devenez enseignant ou tuteur | Pratiqo",
+    description:
+      "Enseignez musique, langues ou matières scolaires — tarifs et horaires à votre façon.",
+    images: ["/og-image.png"],
   },
   alternates: {
     canonical: `${BASE_URL}/devenir-enseignant`,

@@ -12,7 +12,9 @@ import {
 import { usdToUyu } from "@/lib/geoLocale";
 import TeacherProfileClient from "./TeacherProfileClient";
 
-const BASE_URL = "https://pratiqo.ca";
+import { SITE_URL } from "@/lib/seo/site";
+
+const BASE_URL = SITE_URL;
 
 // Minimal row shape — server-only, never imported on the client.
 type TeacherMetaRow = {

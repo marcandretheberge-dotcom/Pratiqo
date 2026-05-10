@@ -17,7 +17,9 @@ import { getLocale, getDictionary } from "@/lib/i18n/server";
 import { getDisciplineCitySeoGuideLinks } from "@/lib/seo/internalLinks";
 import type { Teacher } from "@/types";
 
-const BASE_URL = "https://pratiqo.ca";
+import { SITE_URL } from "@/lib/seo/site";
+
+const BASE_URL = SITE_URL;
 
 const TEACHER_SELECT =
   "id, user_id, name, discipline, category, rating, reviews, price_per_lesson, bio, image_url, availability, location, is_verified, teaching_mode, languages, levels, verification_level, identity_verified, diploma_verified, phone_verified, country_code, timezone, currency, city, region";
@@ -110,6 +112,13 @@ export async function generateMetadata({
       siteName: "Pratiqo",
       locale: "fr_CA",
       type: "website",
+      images: [{ url: "/og-image.png", width: 1200, height: 630 }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: discipline.metaTitle(city.name, city.region),
+      description: discipline.metaDescription(city.name),
+      images: ["/og-image.png"],
     },
     alternates: {
       canonical: `${BASE_URL}/cours/${disciplineSlug}/${citySlug}`,

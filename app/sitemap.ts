@@ -3,8 +3,9 @@ import { getSupabaseAdmin } from "../lib/supabaseAdmin";
 import { TEACHERS_PUBLIC_TABLE } from "../lib/supabase/queries";
 import { QC_CITIES, MV_BARRIOS } from "../lib/constants/cities";
 import { DISCIPLINE_CITY_PAIRS } from "../lib/seo/disciplines";
+import { SITE_URL } from "../lib/seo/site";
 
-const BASE_URL = "https://pratiqo.ca";
+const BASE_URL = SITE_URL;
 
 // ── Static public routes ──────────────────────────────────────────────────────
 //
@@ -35,12 +36,6 @@ const STATIC_ROUTES: MetadataRoute.Sitemap = [
     lastModified: new Date(),
     changeFrequency: "weekly",
     priority: 0.75,
-  },
-  {
-    url: `${BASE_URL}/student/search`,
-    lastModified: new Date(),
-    changeFrequency: "daily",
-    priority: 0.9,
   },
   {
     url: `${BASE_URL}/group-sessions`,
@@ -94,8 +89,9 @@ const STATIC_ROUTES: MetadataRoute.Sitemap = [
 
 // ── Dynamic tutor profile routes ──────────────────────────────────────────────
 //
-// Fetched server-side at request/build time via the service-role Supabase
-// client.  Wrapped in try/catch so a DB outage never breaks the build.
+// Uses TEACHERS_PUBLIC_TABLE (public listing view — excludes deactivated/deleted
+// rows per view definition). Count scales with active teachers; omit from sitemap
+// if build-time queries become too heavy.
 async function fetchTeacherEntries(): Promise<MetadataRoute.Sitemap> {
   try {
     const supabase = getSupabaseAdmin();
@@ -165,6 +161,11 @@ const BARRIO_ROUTES: MetadataRoute.Sitemap = MV_BARRIOS.map((b) => ({
   changeFrequency: "monthly" as const,
   priority: 0.75,
 }));
+
+// ── Group session detail URLs ──────────────────────────────────────────────────
+//
+// Not listed individually: sessions change often (dates, capacity). The hub
+// `/group-sessions` is enough for discovery; detail pages stay crawlable via links.
 
 // ── Discipline × city landing pages ───────────────────────────────────────────
 //
