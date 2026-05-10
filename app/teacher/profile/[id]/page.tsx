@@ -13,6 +13,7 @@ import { usdToUyu } from "@/lib/geoLocale";
 import TeacherProfileClient from "./TeacherProfileClient";
 
 import { SITE_URL } from "@/lib/seo/site";
+import { isUuidString } from "@/lib/uuid";
 
 const BASE_URL = SITE_URL;
 
@@ -58,8 +59,17 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   const { id } = await params;
-  const teacher = await getTeacherMeta(id);
   const canonical = `${BASE_URL}/teacher/profile/${encodeURIComponent(id)}`;
+
+  if (!isUuidString(id)) {
+    return {
+      title: "Professeur | Pratiqo",
+      robots: { index: false, follow: false },
+      alternates: { canonical },
+    };
+  }
+
+  const teacher = await getTeacherMeta(id);
 
   if (!teacher) {
     return {
@@ -125,6 +135,7 @@ export default async function TeacherProfilePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  if (!isUuidString(id)) notFound();
   const teacher = await getTeacherMeta(id);
   if (!teacher) notFound();
 

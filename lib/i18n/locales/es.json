@@ -223,6 +223,8 @@
   "bookingRedirecting": "Redirigiendo…",
   "bookingSelectDateTimeError": "Elige una fecha y un horario.",
   "bookingSessionExpired": "Sesión expirada. Vuelve a iniciar sesión.",
+  "bookingInvalidTeacherId": "Falta un identificador válido del profesor. Actualizá la página e intentá de nuevo.",
+  "bookingInvalidLearnerProfileId": "El perfil del estudiante seleccionado no es válido. Elegí otro perfil o actualizá.",
   "bookingStripeFail": "Error de pago con Stripe.",
   "bookingStudio": "En estudio",
   "bookingsWidget": "Reservas",

@@ -223,6 +223,8 @@
   "bookingRedirecting": "Redirecting…",
   "bookingSelectDateTimeError": "Choose a date and a time slot.",
   "bookingSessionExpired": "Session expired. Please log in again.",
+  "bookingInvalidTeacherId": "Teacher profile is missing a valid ID. Please refresh and try again.",
+  "bookingInvalidLearnerProfileId": "Learner profile selection is invalid. Please choose another profile or refresh.",
   "bookingStripeFail": "Stripe payment failed.",
   "bookingStudio": "In studio",
   "bookingsWidget": "Bookings",

@@ -17,7 +17,6 @@ import {
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import type { Discipline, Teacher, TeachingMode } from "../types";
-import { TEACHERS } from "../constants";
 import { displayTeacherMarketplaceCategory, getEnabledDisciplines } from "../lib/disciplines";
 import { isEnabled } from "../lib/features";
 import { cn } from "../lib/utils";
@@ -203,8 +202,11 @@ export function Explore({
         .order("verification_level", { ascending: false })
         .order("rating", { ascending: false });
       if (error || !data?.length) {
-        console.warn("Supabase teachers load failed, using local TEACHERS.", error);
-        await mergePlans(TEACHERS);
+        console.warn(
+          "Supabase teachers load failed or empty; skipping demo teachers (booking requires real teacher UUIDs).",
+          error,
+        );
+        await mergePlans([]);
         setLoading(false);
         return;
       }

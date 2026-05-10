@@ -14,7 +14,6 @@ import { fetchTeacherDisciplinesMap, mergeTeachersWithDisciplines } from "../../
 import { teacherRowToTeacher, type TeacherRow } from "../../../../lib/teacherMapper";
 import { TEACHERS_LIST_SELECT, TEACHERS_PUBLIC_TABLE } from "../../../../lib/supabase/queries";
 import { TeacherAvatar } from "../../../../components/TeacherAvatar";
-import { TEACHERS } from "../../../../constants";
 import { getVerificationLevel } from "../../../../lib/verification";
 import { VerificationBadge } from "../../../../components/VerificationBadge";
 import type { City } from "../../../../lib/cities";
@@ -156,7 +155,13 @@ export default function StudentSearchPage() {
         .order("rating", { ascending: false });
 
       if (error || !data?.length) {
-        await mergePlans(TEACHERS);
+        if (process.env.NODE_ENV === "development") {
+          console.warn(
+            "[student/search] teachers_public unavailable or empty; skipping demo teachers (IDs must be UUIDs).",
+            error,
+          );
+        }
+        await mergePlans([]);
         setLoadingTeachers(false);
         return;
       }

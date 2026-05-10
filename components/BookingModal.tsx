@@ -36,6 +36,7 @@ import {
 } from "@/lib/timezones";
 import { getAcademicSystemConfig, getAcademicProgramHelperKey, getProgramTrackLabelKey } from "@/lib/academicSystems";
 import type { TranslationKey } from "@/lib/translations";
+import { isUuidString } from "@/lib/uuid";
 
 export type BookingInitialLessonKind = "standard" | "home";
 
@@ -170,14 +171,6 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
   const [contextDraft, setContextDraft] = useState<BookingContextDraft>(() => draftFromLearner(null, suggestedContextType));
   const [contextDirty, setContextDirty] = useState(false);
 
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, [onClose]);
-
   const [availableDays, setAvailableDays] = useState<Record<string, number>>({});
   const [slots, setSlots] = useState<string[]>([]);
   const [durationMinutes, setDurationMinutes] = useState(60);
@@ -185,6 +178,22 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [daysError, setDaysError] = useState<string | null>(null);
   const [slotsError, setSlotsError] = useState<string | null>(null);
+
+  const teacherIdInvalid = useMemo(() => !isUuidString(teacher.id), [teacher.id]);
+
+  useEffect(() => {
+    if (process.env.NODE_ENV === "development" && teacherIdInvalid) {
+      console.warn("[BookingModal] teacher.id is not a valid UUID:", teacher.id);
+    }
+  }, [teacher.id, teacherIdInvalid]);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
 
   const todayIso = useMemo(() => formatLocalISODate(new Date()), []);
 
@@ -587,6 +596,16 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
       }
     }
 
+    if (!isUuidString(teacher.id)) {
+      setCheckoutError(t("bookingInvalidTeacherId"));
+      return;
+    }
+    const learnerTrim = selectedLearnerId.trim();
+    if (learnerTrim !== "" && !isUuidString(learnerTrim)) {
+      setCheckoutError(t("bookingInvalidLearnerProfileId"));
+      return;
+    }
+
     setIsSubmitting(true);
     setCheckoutError(null);
     let redirecting = false;
@@ -605,8 +624,8 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
           .select("id", { head: true, count: "exact" })
           .eq("teacher_id", teacher.id)
           .eq("lesson_type", "intro");
-        const { count, error: checkErr } = selectedLearnerId
-          ? await base.eq("learner_profile_id", selectedLearnerId)
+        const { count, error: checkErr } = learnerTrim
+          ? await base.eq("learner_profile_id", learnerTrim)
           : await base.eq("student_id", user.id);
         if (checkErr) throw checkErr;
         if ((count ?? 0) > 0) {
@@ -628,7 +647,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
         price: basePrice,
         duration_minutes: lessonMinutes,
         student_address: modeForDb === "domicile" ? addressTrim : null,
-        learner_profile_id: selectedLearnerId || null,
+        learner_profile_id: learnerTrim === "" ? null : learnerTrim,
       };
 
       const { data: inserted, error: insErr } = await supabase.from("bookings").insert(bookingData).select("id").single();
@@ -663,7 +682,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
           booking_details: { booking_id: bookingId },
           teaching_mode: modeForDb,
           student_address: modeForDb === "domicile" ? addressTrim : "",
-          learner_profile_id: selectedLearnerId || undefined,
+          learner_profile_id: learnerTrim === "" ? undefined : learnerTrim,
           credits_to_apply: creditsDiscount > 0 ? creditsDiscount : undefined,
         }),
       });
@@ -1168,6 +1187,14 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
 
           {step === "confirm" && (
             <div className="space-y-4">
+              {teacherIdInvalid ? (
+                <div
+                  role="alert"
+                  className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950"
+                >
+                  {t("bookingInvalidTeacherId")}
+                </div>
+              ) : null}
               <p className="text-sm font-bold text-slate-900">{t("bookingConfirmTitle")}</p>
               <div className="rounded-2xl border border-teal-500/35 bg-teal-500/10 p-4 space-y-2 text-sm">
                 <div className="flex justify-between gap-2">
@@ -1301,7 +1328,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                 </button>
                 <button
                   type="button"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || teacherIdInvalid}
                   onClick={() => void handleConfirmAndPay()}
                   className="flex-[2] h-11 rounded-2xl text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-2 text-white shadow-md transition hover:opacity-95"
                   style={{ backgroundColor: "var(--palette-teal-700)" }}

@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { BookOpen, GraduationCap, LayoutGrid, LayoutList, Map, MapPin, Music, Sparkles } from "lucide-react";
 import type { Teacher } from "../types";
-import { TEACHERS } from "../constants";
 import { cn } from "../lib/utils";
 import { getEnabledDisciplines } from "../lib/disciplines";
 import { isEnabled } from "../lib/features";
@@ -155,7 +154,17 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
         }
       };
       const { data, error } = await supabase.from(TEACHERS_PUBLIC_TABLE).select(TEACHERS_LIST_SELECT).order("verification_level", { ascending: false }).order("rating", { ascending: false });
-      if (error || !data?.length) { await mergePlans(TEACHERS); setLoadingTeachers(false); return; }
+      if (error || !data?.length) {
+        if (process.env.NODE_ENV === "development") {
+          console.warn(
+            "[LandingPageClient] teachers_public unavailable or empty; skipping demo teachers (IDs must be UUIDs).",
+            error,
+          );
+        }
+        await mergePlans([]);
+        setLoadingTeachers(false);
+        return;
+      }
       const mapped = data.map((r) => teacherRowToTeacher(r as TeacherRow));
       const discMap = await fetchTeacherDisciplinesMap(supabase, mapped.map((t) => t.id));
       await mergePlans(mergeTeachersWithDisciplines(mapped, discMap));

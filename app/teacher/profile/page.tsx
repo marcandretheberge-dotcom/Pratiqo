@@ -6,7 +6,6 @@ import type { Teacher } from "@/types";
 import { getSupabaseClient } from "@/lib/supabase";
 import { teacherRowToTeacher, type TeacherRow } from "@/lib/teacherMapper";
 import { TEACHERS_PUBLIC_TABLE } from "@/lib/supabase/queries";
-import { TEACHERS } from "@/constants";
 
 export default function TeacherProfileIndexPage() {
   const [teachers, setTeachers] = useState<Teacher[]>([]);
@@ -17,7 +16,13 @@ export default function TeacherProfileIndexPage() {
     const load = async () => {
       const { data, error } = await supabase.from(TEACHERS_PUBLIC_TABLE).select("*").order("id");
       if (error || !data?.length) {
-        setTeachers(TEACHERS);
+        if (process.env.NODE_ENV === "development") {
+          console.warn(
+            "[teacher/profile index] teachers_public unavailable or empty; skipping demo teachers (IDs must be UUIDs).",
+            error,
+          );
+        }
+        setTeachers([]);
         return;
       }
       setTeachers(data.map((r) => teacherRowToTeacher(r as TeacherRow)));

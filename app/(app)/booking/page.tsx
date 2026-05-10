@@ -5,7 +5,6 @@ import type { Teacher } from "../../../types";
 import { getSupabaseClient } from "../../../lib/supabase";
 import { teacherRowToTeacher, type TeacherRow } from "../../../lib/teacherMapper";
 import { TEACHERS_PUBLIC_TABLE } from "../../../lib/supabase/queries";
-import { TEACHERS } from "../../../constants";
 import { BookingModal } from "../../../components/BookingModal";
 import { cn } from "../../../lib/utils";
 import { useLocale } from "../../../lib/locale-context";
@@ -23,7 +22,13 @@ export default function BookingPage() {
     const load = async () => {
       const { data, error } = await supabase.from(TEACHERS_PUBLIC_TABLE).select("*").order("id");
       if (error || !data?.length) {
-        setTeachers(TEACHERS);
+        if (process.env.NODE_ENV === "development") {
+          console.warn(
+            "[booking page] teachers_public unavailable or empty; skipping demo teachers (IDs must be UUIDs).",
+            error,
+          );
+        }
+        setTeachers([]);
         return;
       }
       setTeachers(data.map((r) => teacherRowToTeacher(r as TeacherRow)));
