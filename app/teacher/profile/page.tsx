@@ -2,11 +2,11 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import type { Teacher } from "../../../../types";
-import { getSupabaseClient } from "../../../../lib/supabase";
-import { teacherRowToTeacher, type TeacherRow } from "../../../../lib/teacherMapper";
-import { TEACHERS_PUBLIC_TABLE } from "../../../../lib/supabase/queries";
-import { TEACHERS } from "../../../../constants";
+import type { Teacher } from "@/types";
+import { getSupabaseClient } from "@/lib/supabase";
+import { teacherRowToTeacher, type TeacherRow } from "@/lib/teacherMapper";
+import { TEACHERS_PUBLIC_TABLE } from "@/lib/supabase/queries";
+import { TEACHERS } from "@/constants";
 
 export default function TeacherProfileIndexPage() {
   const [teachers, setTeachers] = useState<Teacher[]>([]);

@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { getSupabaseAdmin } from "../lib/supabaseAdmin";
+import { TEACHERS_PUBLIC_TABLE } from "../lib/supabase/queries";
 import { QC_CITIES, MV_BARRIOS } from "../lib/constants/cities";
 import { DISCIPLINE_CITY_PAIRS } from "../lib/seo/disciplines";
 
@@ -28,6 +29,12 @@ const STATIC_ROUTES: MetadataRoute.Sitemap = [
     lastModified: new Date(),
     changeFrequency: "monthly",
     priority: 0.9,
+  },
+  {
+    url: `${BASE_URL}/teacher/profile`,
+    lastModified: new Date(),
+    changeFrequency: "weekly",
+    priority: 0.75,
   },
   {
     url: `${BASE_URL}/student/search`,
@@ -93,7 +100,7 @@ async function fetchTeacherEntries(): Promise<MetadataRoute.Sitemap> {
   try {
     const supabase = getSupabaseAdmin();
     const { data, error } = await supabase
-      .from("teachers")
+      .from(TEACHERS_PUBLIC_TABLE)
       .select("id, updated_at")
       .order("updated_at", { ascending: false });
 

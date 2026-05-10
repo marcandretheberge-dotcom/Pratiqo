@@ -8,18 +8,13 @@ import { AppShell } from "./AppShell";
 
 const LEGAL_PREFIX = "/legal";
 
-function isPublicTeacherProfileView(pathname: string) {
-  return /^\/teacher\/profile\/[^/]+$/.test(pathname);
-}
-
 function studentForbiddenPath(pathname: string) {
   if (pathname === "/loyalty" || pathname.startsWith("/loyalty/")) return true;
   if (pathname.startsWith("/teacher/settings")) return true;
   if (pathname.startsWith("/teacher/progress")) return true;
   if (pathname.startsWith("/teacher/group-sessions")) return true;
   if (pathname.startsWith("/teacher/verification")) return true;
-  if (pathname === "/teacher/profile") return true;
-  if (pathname.startsWith("/teacher/") && !isPublicTeacherProfileView(pathname)) return true;
+  if (pathname.startsWith("/teacher/")) return true;
   return false;
 }
 

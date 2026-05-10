@@ -1,20 +1,17 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
-import type { Teacher } from "../../../../../types";
-import { getSupabaseClient } from "../../../../../lib/supabase";
-import {
-  fetchTeacherDisciplinesMap,
-  mergeTeachersWithDisciplines,
-} from "../../../../../lib/teacherDisciplines";
-import { teacherRowToTeacher, type TeacherRow } from "../../../../../lib/teacherMapper";
-import { TEACHERS_PUBLIC_TABLE } from "../../../../../lib/supabase/queries";
-import { TeacherProfile } from "../../../../../components/TeacherProfile";
-import { BookingModal, type BookingInitialLessonKind } from "../../../../../components/BookingModal";
+import type { Teacher } from "@/types";
+import { getSupabaseClient } from "@/lib/supabase";
+import { fetchTeacherDisciplinesMap, mergeTeachersWithDisciplines } from "@/lib/teacherDisciplines";
+import { teacherRowToTeacher, type TeacherRow } from "@/lib/teacherMapper";
+import { TEACHERS_PUBLIC_TABLE } from "@/lib/supabase/queries";
+import { TeacherProfile } from "@/components/TeacherProfile";
+import { BookingModal, type BookingInitialLessonKind } from "@/components/BookingModal";
 import { useRouter } from "next/navigation";
-import { haversineDistance } from "../../../../../lib/geo";
-import { hasConfirmedBooking } from "../../../../../lib/maps";
-import { useAuth } from "../../../../../components/AuthProvider";
+import { haversineDistance } from "@/lib/geo";
+import { hasConfirmedBooking } from "@/lib/maps";
+import { useAuth } from "@/components/AuthProvider";
 
 export default function TeacherProfileClient({ id }: { id: string }) {
   const router = useRouter();
@@ -130,6 +127,8 @@ export default function TeacherProfileClient({ id }: { id: string }) {
     );
   }
 
+  const profilePath = `/teacher/profile/${encodeURIComponent(id)}`;
+
   return (
     <>
       {!geo ? (
@@ -157,7 +156,13 @@ export default function TeacherProfileClient({ id }: { id: string }) {
         }}
         onSendMessage={
           teacher.userId
-            ? () => router.push(`/messages?peer=${encodeURIComponent(teacher.userId!)}`)
+            ? () => {
+                if (!user?.id) {
+                  router.push(`/login?next=${encodeURIComponent(profilePath)}`);
+                  return;
+                }
+                router.push(`/messages?peer=${encodeURIComponent(teacher.userId!)}`);
+              }
             : undefined
         }
         distanceKm={geoDeniedOrUnavailable ? null : distanceKm}
