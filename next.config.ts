@@ -21,6 +21,12 @@ const cspValue = [
   "frame-src https://js.stripe.com https://hooks.stripe.com https://www.google.com"
     + " https://www.youtube.com https://www.youtube-nocookie.com"
     + " https://player.vimeo.com",
+  // Phase A — additive hardening (no removal of unsafe-inline / unsafe-eval or domain narrowing)
+  "object-src 'none'",
+  "base-uri 'self'",
+  "frame-ancestors 'self'",
+  "manifest-src 'self'",
+  "form-action 'self' https://*.stripe.com",
 ].join("; ");
 
 const nextConfig: NextConfig = {
