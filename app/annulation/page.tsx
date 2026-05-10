@@ -83,7 +83,7 @@ export default function AnnulationPublicPage() {
                 Confidentialité
               </Link>
               {" · "}
-              <Link href="/support" className="text-teal-700 underline font-medium">
+              <Link href="/contact" className="text-teal-700 underline font-medium">
                 Support
               </Link>
               {" · "}
@@ -311,9 +311,9 @@ export default function AnnulationPublicPage() {
                   </a>
                 </li>
                 <li>
-                  Page support :{" "}
-                  <Link href="/support" className="text-teal-700 underline font-medium">
-                    /support
+                  Page contact :{" "}
+                  <Link href="/contact" className="text-teal-700 underline font-medium">
+                    /contact
                   </Link>
                 </li>
               </ul>
@@ -332,7 +332,7 @@ export default function AnnulationPublicPage() {
                 </a>
               </p>
               <p className="mt-2">
-                <Link href="/support" className="text-teal-700 underline font-medium">
+                <Link href="/contact" className="text-teal-700 underline font-medium">
                   Centre d&apos;aide / support
                 </Link>
               </p>
@@ -362,3 +362,5 @@ export default function AnnulationPublicPage() {
     </div>
   );
 }
+
+
