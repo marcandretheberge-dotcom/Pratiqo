@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
+import { logError } from "@/lib/log";
 import { validateJsonBody } from "@/lib/validation/api";
 import { aiDescriptionPostSchema } from "@/lib/validation/schemas";
 
@@ -122,7 +123,10 @@ export async function POST(request: Request) {
     } catch {
       err = await response.text();
     }
-    console.error("[ai/description] Anthropic error:", err);
+    logError("[ai/description] Anthropic error", {
+      status: response.status,
+      body: err,
+    });
     return NextResponse.json({ error: "Erreur lors de la génération" }, { status: 500 });
   }
 

@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { disciplineLabelToTeacherCategory, getAllDisciplines, getDisciplineById } from "@/lib/disciplines";
 import { sendWelcomeTeacher, sendWelcomeStudent } from "@/lib/email";
+import { logError, logInfo, logWarn } from "@/lib/log";
 import { validateJsonBody } from "@/lib/validation/api";
 import { onboardingCompletePostSchema } from "@/lib/validation/schemas";
 
@@ -13,19 +14,19 @@ function clamp(n: number, min: number, max: number) {
 }
 
 export async function POST(req: Request) {
-  console.log("[onboarding/complete] Request received");
+  logInfo("[onboarding/complete] Request received");
   try {
     const authHeader = req.headers.get("authorization");
     const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
     if (!token) {
-      console.error("[onboarding/complete] Missing bearer token");
+      logError("[onboarding/complete] Missing bearer token");
       return NextResponse.json({ error: "Missing Authorization bearer token." }, { status: 401 });
     }
 
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     if (!url || !anonKey) {
-      console.error("[onboarding/complete] Missing Supabase env vars");
+      logError("[onboarding/complete] Missing Supabase env vars");
       return NextResponse.json({ error: "Missing Supabase env." }, { status: 500 });
     }
 
@@ -35,20 +36,23 @@ export async function POST(req: Request) {
       error: userErr,
     } = await supabaseUser.auth.getUser(token);
     if (userErr || !user) {
-      console.error("[onboarding/complete] Auth failed:", userErr?.message);
+      logError("[onboarding/complete] Auth failed", { message: userErr?.message });
       return NextResponse.json({ error: "Invalid or expired session." }, { status: 401 });
     }
-    console.log("[onboarding/complete] Authenticated user:", user.id, user.email);
+    logInfo("[onboarding/complete] Authenticated user", {
+      userId: user.id,
+      hasEmail: Boolean(user.email),
+    });
 
     const validated = await validateJsonBody(onboardingCompletePostSchema, req);
     if (!validated.ok) return validated.response;
     const body = validated.data;
-    console.log("[onboarding/complete] Role:", body.role, "Name:", body.name);
+    logInfo("[onboarding/complete] Role and name", { role: body.role, name: body.name });
 
     // Teachers must acknowledge autonomous worker status before completing onboarding
     if (body.role === "teacher") {
       if (!body.tax_status_acknowledged || !body.no_exclusivity_acknowledged || !body.no_income_guarantee_acknowledged) {
-        console.warn("[onboarding/complete] Missing legal acknowledgments");
+        logWarn("[onboarding/complete] Missing legal acknowledgments");
         return NextResponse.json(
           { error: "Vous devez accepter les conditions de travailleur autonome pour continuer." },
           { status: 400 },
@@ -95,10 +99,13 @@ export async function POST(req: Request) {
       .from("profiles")
       .upsert(profileUpsert, { onConflict: "id" });
     if (pErr) {
-      console.error("[onboarding/complete] Profile upsert failed:", pErr.message);
+      logError("[onboarding/complete] Profile upsert failed", { message: pErr.message });
       return NextResponse.json({ error: pErr.message }, { status: 500 });
     }
-    console.log("[onboarding/complete] Step 1 ✓ Profile upserted — role:", role, "teacher_onboarding_complete:", role === "teacher");
+    logInfo("[onboarding/complete] Step 1 profile upserted", {
+      role,
+      teacher_onboarding_complete: role === "teacher",
+    });
 
     if (role === "teacher") {
       const teachingMode = body.teaching_mode || "both";
@@ -173,10 +180,10 @@ export async function POST(req: Request) {
         );
 
       if (tErr) {
-        console.error("[onboarding/complete] Teacher upsert failed:", tErr.message);
+        logError("[onboarding/complete] Teacher upsert failed", { message: tErr.message });
         return NextResponse.json({ error: tErr.message }, { status: 500 });
       }
-      console.log("[onboarding/complete] Step 2 ✓ Teacher row upserted:", teacherId);
+      logInfo("[onboarding/complete] Step 2 teacher row upserted", { teacherId });
 
       await admin.from("teacher_disciplines").delete().eq("teacher_id", teacherId);
 
@@ -189,7 +196,7 @@ export async function POST(req: Request) {
         }));
         const { error: dErr } = await admin.from("teacher_disciplines").insert(rows);
         if (dErr) {
-          console.error("[onboarding/complete] Disciplines insert failed:", dErr.message);
+          logError("[onboarding/complete] Disciplines insert failed", { message: dErr.message });
           return NextResponse.json({ error: dErr.message }, { status: 500 });
         }
       } else {
@@ -202,17 +209,17 @@ export async function POST(req: Request) {
           sort_order: 0,
         });
         if (dErr) {
-          console.error("[onboarding/complete] Fallback discipline insert failed:", dErr.message);
+          logError("[onboarding/complete] Fallback discipline insert failed", { message: dErr.message });
           return NextResponse.json({ error: dErr.message }, { status: 500 });
         }
       }
-      console.log("[onboarding/complete] Step 3 ✓ Disciplines saved");
+      logInfo("[onboarding/complete] Step 3 disciplines saved");
 
       if (user.email) {
-        console.log("[onboarding/complete] Step 4 — Sending welcome teacher email to:", user.email);
+        logInfo("[onboarding/complete] Step 4 sending welcome teacher email", { hasEmail: true });
         void sendWelcomeTeacher(user.email, name);
       } else {
-        console.warn("[onboarding/complete] No email on user — skipping welcome email");
+        logWarn("[onboarding/complete] No email on user — skipping welcome email");
       }
     } else {
       if (user.email) {
@@ -229,18 +236,18 @@ export async function POST(req: Request) {
               .update({ welcome_student_email_sent_at: new Date().toISOString() })
               .eq("id", user.id)
               .is("welcome_student_email_sent_at", null);
-            if (wErr) console.error("[onboarding/complete] welcome_student_email_sent_at update failed:", wErr.message);
+            if (wErr) logError("[onboarding/complete] welcome_student_email_sent_at update failed", { message: wErr.message });
           } catch (emailErr) {
-            console.error("[onboarding/complete] sendWelcomeStudent failed:", emailErr);
+            logError("[onboarding/complete] sendWelcomeStudent failed", { err: emailErr });
           }
         }
       }
     }
 
-    console.log("[onboarding/complete] ✓ Done — returning { ok: true, role:", role, "}");
+    logInfo("[onboarding/complete] Done", { ok: true, role });
     return NextResponse.json({ ok: true, role });
   } catch (e) {
-    console.error("[onboarding/complete]", e);
+    logError("[onboarding/complete] unexpected error", { err: e });
     return NextResponse.json({ error: e instanceof Error ? e.message : "Onboarding error" }, { status: 500 });
   }
 }

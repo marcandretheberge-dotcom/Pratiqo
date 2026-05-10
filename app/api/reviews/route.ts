@@ -4,6 +4,7 @@ import { createServerClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { bookingEndAt } from "@/lib/bookingLifecycle";
+import { logError } from "@/lib/log";
 import { checkReviewSafety } from "@/lib/reviewSafety";
 import { validateJsonBody } from "@/lib/validation/api";
 import { reviewPostSchema } from "@/lib/validation/schemas";
@@ -134,7 +135,10 @@ export async function POST(request: Request) {
     if (insErr.code === "23505") {
       return NextResponse.json({ error: "Vous avez déjà évalué ce cours." }, { status: 409 });
     }
-    console.error("[reviews] insert failed", insErr);
+    logError("[reviews] insert failed", {
+      message: insErr.message,
+      code: insErr.code,
+    });
     return NextResponse.json({ error: "Erreur lors de l'enregistrement." }, { status: 500 });
   }
 
