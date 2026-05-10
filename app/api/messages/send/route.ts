@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { validateJsonBody } from "@/lib/validation/api";
+import { messageSendPostSchema } from "@/lib/validation/schemas";
 
 export const runtime = "nodejs";
 
@@ -26,15 +28,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid session." }, { status: 401 });
   }
 
-  const body = (await req.json().catch(() => null)) as
-    | { receiver_id?: string; content?: string }
-    | null;
-  const receiverId = body?.receiver_id?.trim();
-  const content = body?.content?.trim();
-
-  if (!receiverId || !content) {
-    return NextResponse.json({ error: "receiver_id and content are required." }, { status: 400 });
-  }
+  const validated = await validateJsonBody(messageSendPostSchema, req);
+  if (!validated.ok) return validated.response;
+  const { receiver_id: receiverId, content } = validated.data;
 
   const admin = getSupabaseAdmin();
 

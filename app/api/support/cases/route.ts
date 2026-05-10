@@ -6,20 +6,12 @@ import {
   buildSupportCasePayload,
   canUserOpenCaseForBooking,
   inferSupportCaseRole,
-  isRequestedResolution,
-  isSupportCaseCategory,
   type BookingForSupportCase,
 } from "@/lib/supportCases";
+import { validateJsonBody } from "@/lib/validation/api";
+import { supportCasePostSchema } from "@/lib/validation/schemas";
 
 export const runtime = "nodejs";
-
-type Body = {
-  booking_id?: string;
-  category?: unknown;
-  description?: unknown;
-  requested_resolution?: unknown;
-  evidence_url?: unknown;
-};
 
 export async function POST(req: Request) {
   const authHeader = req.headers.get("authorization") ?? "";
@@ -41,18 +33,13 @@ export async function POST(req: Request) {
   } = await supabaseUser.auth.getUser();
   if (authErr || !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const body = (await req.json().catch(() => ({}))) as Body;
-  const bookingId = typeof body.booking_id === "string" ? body.booking_id.trim() : "";
-  const description = typeof body.description === "string" ? body.description.trim() : "";
-  if (!bookingId) return NextResponse.json({ error: "booking_id is required." }, { status: 400 });
-  if (!isSupportCaseCategory(body.category)) {
-    return NextResponse.json({ error: "Invalid support case category." }, { status: 400 });
-  }
-  if (description.length < 10 || description.length > 4000) {
-    return NextResponse.json({ error: "Description must be between 10 and 4000 characters." }, { status: 400 });
-  }
-  const requestedResolution = isRequestedResolution(body.requested_resolution) ? body.requested_resolution : null;
-  const evidenceUrl = typeof body.evidence_url === "string" ? body.evidence_url.trim() : "";
+  const validated = await validateJsonBody(supportCasePostSchema, req);
+  if (!validated.ok) return validated.response;
+  const body = validated.data;
+  const bookingId = body.booking_id;
+  const description = body.description;
+  const requestedResolution = body.requested_resolution ?? null;
+  const evidenceUrl = body.evidence_url?.trim() ?? "";
   const evidenceUrls = evidenceUrl ? [evidenceUrl] : [];
 
   const admin = getSupabaseAdmin();

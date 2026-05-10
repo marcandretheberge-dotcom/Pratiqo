@@ -5,8 +5,12 @@ import { cookies } from "next/headers";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { bookingEndAt } from "@/lib/bookingLifecycle";
 import { checkReviewSafety } from "@/lib/reviewSafety";
+import { validateJsonBody } from "@/lib/validation/api";
+import { reviewPostSchema } from "@/lib/validation/schemas";
 
 export const runtime = "nodejs";
+
+const REVIEW_WINDOW_DAYS = 30;
 
 async function getSupabaseForRequest(request: Request) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -28,9 +32,6 @@ async function getSupabaseForRequest(request: Request) {
   });
 }
 
-type Body = { bookingId?: string; rating?: number; body?: string };
-
-const REVIEW_WINDOW_DAYS = 30;
 
 async function refreshTeacherRating(admin: ReturnType<typeof getSupabaseAdmin>, teacherId: string) {
   const { data: allReviews } = await admin
@@ -59,15 +60,11 @@ export async function POST(request: Request) {
   const { data: { user }, error: userErr } = await supabase.auth.getUser();
   if (userErr || !user) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
-  const raw = (await request.json().catch(() => null)) as Body | null;
-  const bookingId = raw?.bookingId;
-  const rating = Number(raw?.rating ?? 0);
-  const body = (raw?.body ?? "").trim();
+  const validated = await validateJsonBody(reviewPostSchema, request);
+  if (!validated.ok) return validated.response;
+  const { bookingId, rating, body: reviewBody } = validated.data;
 
-  if (!bookingId) return NextResponse.json({ error: "bookingId manquant" }, { status: 400 });
-  if (rating < 1 || rating > 5) return NextResponse.json({ error: "Note invalide (1–5)" }, { status: 400 });
-
-  const safety = checkReviewSafety(body);
+  const safety = checkReviewSafety(reviewBody);
   if (!safety.ok) {
     return NextResponse.json({
       error: safety.message,
@@ -127,7 +124,7 @@ export async function POST(request: Request) {
     teacher_id: booking.teacher_id,
     student_id: user.id,
     rating,
-    body: body || null,
+    body: reviewBody || null,
     moderation_status: "approved",
     moderation_reason: null,
     is_flagged: false,

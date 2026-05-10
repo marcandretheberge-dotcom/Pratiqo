@@ -2,13 +2,10 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
+import { validateJsonBody } from "@/lib/validation/api";
+import { aiDescriptionPostSchema } from "@/lib/validation/schemas";
 
 export const runtime = "nodejs";
-
-type Body = {
-  discipline?: string;
-  specialite?: string;
-};
 
 function extractAnthropicText(data: unknown): string {
   if (!data || typeof data !== "object") return "";
@@ -88,13 +85,9 @@ export async function POST(request: Request) {
     );
   }
 
-  const body = (await request.json().catch(() => null)) as Body | null;
-  const discipline = typeof body?.discipline === "string" ? body.discipline.trim() : "";
-  const specialite = typeof body?.specialite === "string" ? body.specialite.trim() : "";
-
-  if (!discipline) {
-    return NextResponse.json({ error: "Discipline requise" }, { status: 400 });
-  }
+  const validated = await validateJsonBody(aiDescriptionPostSchema, request);
+  if (!validated.ok) return validated.response;
+  const { discipline, specialite } = validated.data;
 
   const apiKey = process.env.ANTHROPIC_API_KEY?.trim();
   if (!apiKey) {

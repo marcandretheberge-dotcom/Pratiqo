@@ -7,6 +7,10 @@ import { isBookingAtLeast24hAhead } from "@/lib/bookingCancellation";
 import { transferGroupForBooking } from "@/lib/payments/amounts";
 import { calculateBookingAmounts } from "@/lib/payments/commission";
 import { upsertUnpaidBookingPayment } from "@/lib/payments/ledger";
+import { validateJsonBody } from "@/lib/validation/api";
+import { stripeCheckoutPostSchema } from "@/lib/validation/schemas";
+
+export const runtime = "nodejs";
 
 function trimTrailingSlash(url: string) {
   return url.replace(/\/+$/, "");
@@ -18,16 +22,6 @@ function checkoutPublicBase(): string {
     process.env.STRIPE_CHECKOUT_BASE_URL?.trim() || "https://pratiqo.ca";
   return trimTrailingSlash(raw);
 }
-
-type CheckoutBody = {
-  teacher_id?: string;
-  amount?: number;
-  lesson_type?: "regular" | "intro";
-  booking_details?: { booking_id?: string };
-  booking_id?: string;
-  credits_to_apply?: number;
-  learner_profile_id?: string;
-};
 
 type TeacherRow = {
   id: string;
@@ -93,7 +87,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid or expired session." }, { status: 401 });
     }
 
-    const body = (await req.json().catch(() => null)) as CheckoutBody | null;
+    const validated = await validateJsonBody(stripeCheckoutPostSchema, req);
+    if (!validated.ok) return validated.response;
+    const body = validated.data;
     const bookingId = body?.booking_details?.booking_id ?? body?.booking_id;
     const teacherIdFromBody = body?.teacher_id;
     const creditsToApply = Math.max(0, Number(body?.credits_to_apply ?? 0));

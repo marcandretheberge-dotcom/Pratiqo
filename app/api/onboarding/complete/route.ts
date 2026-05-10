@@ -3,35 +3,10 @@ import { createClient } from "@supabase/supabase-js";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { disciplineLabelToTeacherCategory, getAllDisciplines, getDisciplineById } from "@/lib/disciplines";
 import { sendWelcomeTeacher, sendWelcomeStudent } from "@/lib/email";
+import { validateJsonBody } from "@/lib/validation/api";
+import { onboardingCompletePostSchema } from "@/lib/validation/schemas";
 
 export const runtime = "nodejs";
-
-type Body = {
-  role?: "teacher" | "student";
-  // step 1
-  name?: string;
-  photo_url?: string | null;
-  bio?: string;
-  teaching_since?: number | null;
-  // step 2
-  categories?: string[];
-  discipline?: string;
-  /** Multi-discipline (max 3); first = primary for `teachers.discipline` / `category`. */
-  disciplines?: { discipline_id: string; specialite: string }[];
-  teaching_mode?: "person" | "online" | "both";
-  hourly_rate?: number;
-  levels?: string[];
-  // step 3
-  availability?: string[];
-  city?: string;
-  home_lesson_enabled?: boolean;
-  home_lesson_radius_km?: number;
-  home_lesson_price?: number | null;
-  // step 4 — legal acknowledgments
-  tax_status_acknowledged?: boolean;
-  no_exclusivity_acknowledged?: boolean;
-  no_income_guarantee_acknowledged?: boolean;
-};
 
 function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n));
@@ -65,8 +40,9 @@ export async function POST(req: Request) {
     }
     console.log("[onboarding/complete] Authenticated user:", user.id, user.email);
 
-    const body = (await req.json().catch(() => null)) as Body | null;
-    if (!body) return NextResponse.json({ error: "Invalid body." }, { status: 400 });
+    const validated = await validateJsonBody(onboardingCompletePostSchema, req);
+    if (!validated.ok) return validated.response;
+    const body = validated.data;
     console.log("[onboarding/complete] Role:", body.role, "Name:", body.name);
 
     // Teachers must acknowledge autonomous worker status before completing onboarding
