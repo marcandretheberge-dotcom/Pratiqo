@@ -3,11 +3,11 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Loader2, UsersRound } from "lucide-react";
-import { getSupabaseClient } from "../../../lib/supabase";
-import { CATEGORIES } from "../../../constants";
-import type { Discipline } from "../../../types";
-import { cn } from "../../../lib/utils";
-import { isSessionBookable, spotsRemaining, type GroupSessionRow } from "../../../lib/groupSessions";
+import { getSupabaseClient } from "@/lib/supabase";
+import { CATEGORIES } from "@/constants";
+import type { Discipline } from "@/types";
+import { cn } from "@/lib/utils";
+import { isSessionBookable, spotsRemaining, type GroupSessionRow } from "@/lib/groupSessions";
 
 type RowWithTeacher = GroupSessionRow & { teachers?: { name: string; image_url: string } | null };
 
@@ -130,7 +130,6 @@ export default function GroupSessionsMarketplacePage() {
 function GroupMarketCard({ session }: { session: RowWithTeacher }) {
   const rem = spotsRemaining(session);
   const max = Number(session.max_participants);
-  const cur = Number(session.current_participants);
   const ratio = max ? rem / max : 0;
   const barColor = ratio > 0.5 ? "bg-teal-600" : ratio < 0.25 ? "bg-amber-500" : "bg-amber-400";
   const bookable = isSessionBookable(session);

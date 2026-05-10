@@ -21,7 +21,6 @@ function studentForbiddenPath(pathname: string) {
 function teacherForbiddenPath(pathname: string) {
   if (pathname.startsWith("/student")) return true;
   if (pathname === "/profile" || pathname.startsWith("/profile/")) return true;
-  if (pathname === "/group-sessions" || pathname.startsWith("/group-sessions/")) return true;
   return false;
 }
 

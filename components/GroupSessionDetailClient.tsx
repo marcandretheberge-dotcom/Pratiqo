@@ -2,20 +2,18 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Loader2, MapPin, UsersRound } from "lucide-react";
-import { getSupabaseClient } from "../../../../lib/supabase";
-import { cn } from "../../../../lib/utils";
-import { isSessionBookable, spotsRemaining, type GroupSessionRow } from "../../../../lib/groupSessions";
-import { useAuth } from "../../../../components/AuthProvider";
-import { GroupSessionMap } from "../../../../components/GroupSessionMap";
-import { hasConfirmedGroupRegistration } from "../../../../lib/maps";
+import { getSupabaseClient } from "@/lib/supabase";
+import { cn } from "@/lib/utils";
+import { isSessionBookable, spotsRemaining, type GroupSessionRow } from "@/lib/groupSessions";
+import { useAuth } from "@/components/AuthProvider";
+import { GroupSessionMap } from "@/components/GroupSessionMap";
+import { hasConfirmedGroupRegistration } from "@/lib/maps";
 
 type Row = GroupSessionRow & { teachers?: { name: string; image_url: string; bio: string } | null };
 
-export default function GroupSessionDetailPage() {
-  const params = useParams();
-  const id = params.id as string;
+export default function GroupSessionDetailClient({ sessionId: id }: { sessionId: string }) {
   const router = useRouter();
   const { user } = useAuth();
   const [session, setSession] = useState<Row | null>(null);
@@ -70,7 +68,7 @@ export default function GroupSessionDetailPage() {
 
   const startCheckout = async () => {
     if (!user) {
-      alert("Connecte-toi pour réserver.");
+      router.push(`/login?next=${encodeURIComponent(`/group-sessions/${id}`)}`);
       return;
     }
     setPaying(true);
@@ -121,6 +119,7 @@ export default function GroupSessionDetailPage() {
   const bookable = isSessionBookable(session);
   const ratio = max ? rem / max : 0;
   const barColor = ratio > 0.5 ? "bg-teal-600" : ratio < 0.25 ? "bg-amber-500" : "bg-amber-400";
+  const showOnlineLink = session.teaching_mode === "online" && groupRegistered && Boolean(session.online_link?.trim());
 
   return (
     <div className="max-w-3xl mx-auto space-y-8">
@@ -185,7 +184,13 @@ export default function GroupSessionDetailPage() {
       <section className="rounded-2xl border border-[var(--p-border-light)] bg-[var(--color-background-secondary)] p-6">
         <h2 className="text-sm font-bold uppercase tracking-widest text-[var(--p-text-subtle)] mb-3">Lieu</h2>
         {session.teaching_mode === "online" ? (
-          <p className="text-sm text-[var(--p-text)] break-all">{session.online_link || "Lien communiqué après inscription."}</p>
+          <p className="text-sm text-[var(--p-text)] break-words">
+            {showOnlineLink ? (
+              session.online_link
+            ) : (
+              <span className="text-[var(--p-text-muted)]">Lien communiqué après inscription confirmée.</span>
+            )}
+          </p>
         ) : groupRegistered ? (
           <p className="text-sm text-[var(--p-text)] flex items-start gap-2">
             <MapPin className="text-teal-700 shrink-0 mt-0.5" size={18} />
