@@ -202,8 +202,8 @@ export default function AnnulationPage() {
           </li>
           <li>
             Formulaire :{" "}
-            <a href="https://www.pratiqo.ca/support" className="text-teal-700 underline font-medium" rel="noopener noreferrer">
-              pratiqo.ca/support
+            <a href="https://www.pratiqo.ca/contact" className="text-teal-700 underline font-medium" rel="noopener noreferrer">
+              pratiqo.ca/contact
             </a>
           </li>
         </ul>
@@ -219,11 +219,12 @@ export default function AnnulationPage() {
           </a>
         </p>
         <p>
-          <a href="https://www.pratiqo.ca/support" className="text-teal-700 underline font-medium" rel="noopener noreferrer">
-            pratiqo.ca/support
+          <a href="https://www.pratiqo.ca/contact" className="text-teal-700 underline font-medium" rel="noopener noreferrer">
+            pratiqo.ca/contact
           </a>
         </p>
       </LegalSection>
     </LegalLayout>
   );
 }
+
