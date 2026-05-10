@@ -1,6 +1,6 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# dependencies
+# Dependencies
 /node_modules
 /.pnp
 .pnp.*
@@ -10,50 +10,51 @@
 !.yarn/releases
 !.yarn/versions
 
-# testing
+# Testing
 /coverage
 
-# next.js
+# Next.js
 /.next/
 /out/
 
-# production
+# Production
 /build
 
-# misc
+# Misc
 .DS_Store
+Thumbs.db
 *.pem
 
-# debug
+# Debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# Env files (never commit secrets)
 .env
 .env.local
+.env.*.local
 .env*.local
 .env*
 !.env.example
 
-# vercel
+# Vercel / Netlify
 .vercel
+.netlify
 
-# typescript
+# TypeScript
 *.tsbuildinfo
 next-env.d.ts
 
-.vercel
+# Local backups & database dumps (never commit)
+backups/
+*.dump
+*.sql.gz
+*.backup
 
-# Local Netlify folder
-.netlify
+# Logs
+*.log
 
 # Office lock files
-**/~$*
-
-backups/
-
-backups/
-
 **/~$*

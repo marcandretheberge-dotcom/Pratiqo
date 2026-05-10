@@ -12,5 +12,7 @@ Marketplace for independent teachers — music, dance, martial arts, languages a
 ## Run Locally
 
 1. `npm install`
-2. Copy `.env.example` to `.env.local` and fill in values
+2. Copy `.env.example` to `.env.local` and fill in values (see [docs/environment.md](docs/environment.md))
 3. `npm run dev`
+
+Optional: database backup/restore scripts are documented in [docs/backup-and-restore.md](docs/backup-and-restore.md).
