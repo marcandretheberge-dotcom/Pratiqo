@@ -20,6 +20,16 @@ export interface BlogPostMeta {
   relatedLinks?: RelatedLink[];
 }
 
+/** In-registry blog translations (FR source typically lives in Supabase). */
+export interface BlogLocaleBundle {
+  title: string;
+  excerpt: string;
+  /** Full markdown body (avoid duplicating FAQ — rendered from `faq` when present). */
+  contentMarkdown: string;
+  keyTakeaways: string[];
+  faq: FAQItem[];
+}
+
 export interface DisciplineConfig {
   slug: string;
   name: string;

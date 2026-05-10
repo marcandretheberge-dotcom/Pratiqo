@@ -1,18 +1,11 @@
 import type { Locale } from "@/lib/i18n/types";
-import type { FAQItem } from "./types";
+import type { BlogLocaleBundle, FAQItem } from "./types";
+import {
+  SUPPLY_PHASE2_FR_TAKEAWAYS,
+  SUPPLY_PHASE2_LOCALE_OVERRIDES,
+} from "./blogLocaleOverridesSupplyPhase2";
 
-/**
- * In-registry translations for selected blog slugs (French remains source in DB).
- * Extend with new slugs/locales as translations are added.
- */
-export type BlogLocaleBundle = {
-  title: string;
-  excerpt: string;
-  /** Full markdown body (no duplicate FAQ block — FAQ rendered separately when provided). */
-  contentMarkdown: string;
-  keyTakeaways: string[];
-  faq: FAQItem[];
-};
+export type { BlogLocaleBundle } from "./types";
 
 const EN_TUTEUR: BlogLocaleBundle = {
   title: "Online tutor or at-home tutor: which should you choose?",
@@ -319,6 +312,7 @@ export const BLOG_LOCALE_OVERRIDES: Partial<Record<string, Partial<Record<Locale
     en: EN_DONNER,
     es: ES_DONNER,
   },
+  ...SUPPLY_PHASE2_LOCALE_OVERRIDES,
 };
 
 export function getBlogLocaleBundle(slug: string, locale: Locale): BlogLocaleBundle | undefined {
@@ -343,6 +337,7 @@ export const BLOG_FR_KEY_TAKEAWAYS: Partial<Record<string, string[]>> = {
     "Planifiez fiscalité et tarifs en vous comparant à des profils proches sur Pratiqo.",
     "Une annonce claire, des réponses rapides et une politique d’annulation transparente fidélisent.",
   ],
+  ...SUPPLY_PHASE2_FR_TAKEAWAYS,
 };
 
 export function getKeyTakeawaysForArticle(slug: string, locale: Locale): string[] {
