@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
+import { rateLimitByIp, rateLimitResponse } from "@/lib/rateLimit";
 import type { CompanionType } from "@/lib/companions";
 
 export const runtime = "nodejs";
@@ -59,6 +60,15 @@ export async function POST(request: Request) {
   const companionType = body?.companionType;
   if (!isCompanionType(companionType)) {
     return NextResponse.json({ error: "Type de compagnon invalide." }, { status: 400 });
+  }
+
+  const rl = await rateLimitByIp(request, "companion", { limit: 30, windowSeconds: 60 });
+  if (!rl.allowed && rl.retryAfterSeconds != null) {
+    return rateLimitResponse(rl.retryAfterSeconds, {
+      limit: rl.limit,
+      remaining: rl.remaining,
+      reset: rl.reset,
+    });
   }
 
   const { error } = await supabase

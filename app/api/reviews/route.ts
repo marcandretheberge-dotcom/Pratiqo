@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { bookingEndAt } from "@/lib/bookingLifecycle";
 import { logError } from "@/lib/log";
+import { rateLimitByIp, rateLimitResponse } from "@/lib/rateLimit";
 import { checkReviewSafety } from "@/lib/reviewSafety";
 import { validateJsonBody } from "@/lib/validation/api";
 import { reviewPostSchema } from "@/lib/validation/schemas";
@@ -64,6 +65,15 @@ export async function POST(request: Request) {
   const validated = await validateJsonBody(reviewPostSchema, request);
   if (!validated.ok) return validated.response;
   const { bookingId, rating, body: reviewBody } = validated.data;
+
+  const rl = await rateLimitByIp(request, "review", { limit: 10, windowSeconds: 60 });
+  if (!rl.allowed && rl.retryAfterSeconds != null) {
+    return rateLimitResponse(rl.retryAfterSeconds, {
+      limit: rl.limit,
+      remaining: rl.remaining,
+      reset: rl.reset,
+    });
+  }
 
   const safety = checkReviewSafety(reviewBody);
   if (!safety.ok) {
