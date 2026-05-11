@@ -8,27 +8,20 @@ function hasSupabaseAuthCookie(req: NextRequest): boolean {
   return req.cookies.getAll().some((c) => c.name.startsWith("sb-") && c.name.includes("auth-token"));
 }
 
-function isPublicTeacherProfile(pathname: string): boolean {
-  return pathname === "/teacher/profile" || pathname.startsWith("/teacher/profile/");
-}
+/**
+ * Protected app surface only. Everything else stays public (marketing, SEO, public teacher/group pages).
+ */
+function isProtectedPath(pathname: string): boolean {
+  // Post-payment group session page
+  if (/^\/group-sessions\/[^/]+\/success/.test(pathname)) return true;
 
-/** Public: listing + detail; not /group-sessions/:id/success */
-function isPublicGroupSessionsPath(pathname: string): boolean {
-  if (pathname === "/group-sessions" || pathname === "/group-sessions/") return true;
-  return /^\/group-sessions\/[^/]+\/?$/.test(pathname);
-}
+  // Teacher app area — not public profiles
+  if (pathname === "/teacher" || pathname.startsWith("/teacher/")) {
+    if (pathname === "/teacher/profile" || pathname.startsWith("/teacher/profile/")) return false;
+    return true;
+  }
 
-function isGroupSessionSuccessPath(pathname: string): boolean {
-  return /^\/group-sessions\/[^/]+\/success/.test(pathname);
-}
-
-function requiresAuthForPath(pathname: string): boolean {
-  if (isPublicTeacherProfile(pathname)) return false;
-  if (isPublicGroupSessionsPath(pathname)) return false;
-
-  if (isGroupSessionSuccessPath(pathname)) return true;
-
-  const protectedPrefixes = [
+  const protectedRoots = [
     "/dashboard",
     "/onboarding",
     "/profile",
@@ -40,11 +33,9 @@ function requiresAuthForPath(pathname: string): boolean {
     "/supabase",
     "/student",
   ];
-  for (const p of protectedPrefixes) {
-    if (pathname === p || pathname.startsWith(`${p}/`)) return true;
+  for (const root of protectedRoots) {
+    if (pathname === root || pathname.startsWith(`${root}/`)) return true;
   }
-
-  if (pathname.startsWith("/teacher")) return true;
 
   return false;
 }
@@ -56,7 +47,7 @@ export function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  if (!requiresAuthForPath(pathname)) {
+  if (!isProtectedPath(pathname)) {
     return NextResponse.next();
   }
 
