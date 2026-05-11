@@ -168,7 +168,7 @@ function TeacherScheduleInner() {
     void load();
   }, [load]);
 
-  const activeBooking = (b: BookingRow) => !["cancelled", "cancelled_conflict"].includes(b.status);
+  const activeBooking = (b: BookingRow) => !["cancelled", "cancelled_conflict", "completed"].includes(b.status);
 
   const bookingsForDay = useCallback(
     (iso: string) =>

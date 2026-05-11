@@ -1500,6 +1500,7 @@
   "bookingCompletionHeld": "Oui, le cours a eu lieu",
   "bookingCompletionSuccess": "Bravo ! Un email a été envoyé à l'élève pour recueillir son avis.",
   "bookingCompletionTechnicalIssue": "Problème technique",
+  "completedCoursesInHistory": "Les cours terminés apparaîtront dans l'historique.",
   "bookingDirections": "Itinéraire",
   "bookingJoinCall": "Rejoindre l'appel",
   "bookingCopyLink": "Copier le lien",

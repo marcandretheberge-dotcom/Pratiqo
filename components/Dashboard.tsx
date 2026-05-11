@@ -340,15 +340,14 @@ export function Dashboard() {
       body: JSON.stringify({ outcome }),
     });
     const payload = (await res.json().catch(() => ({}))) as { error?: string; completed_at?: string };
-    if (!res.ok) throw new Error(payload.error || t("anErrorOccurred"));
-    const completedAt = payload.completed_at || new Date().toISOString();
-    setTeacherBookings((prev) =>
-      prev.map((b) =>
-        String(b.id) === id
-          ? { ...b, status: "completed", completion_outcome: outcome, completed_at: completedAt }
-          : b,
-      ),
-    );
+    if (!res.ok) {
+      // 502 originates from Stripe; don't surface raw payment errors to the teacher
+      const msg = res.status === 502 ? t("anErrorOccurred") : (payload.error || t("anErrorOccurred"));
+      throw new Error(msg);
+    }
+    // Remove from active list immediately — "completed" is already excluded by confirmedUpcoming
+    // (activeStatuses = ["confirmed"]). Realtime will re-sync the row as completed.
+    setTeacherBookings((prev) => prev.filter((b) => String(b.id) !== id));
     showFlash("ok", t("bookingCompletionSuccess"));
   };
 
@@ -756,6 +755,8 @@ export function Dashboard() {
                 cancelBusy={cancelBusy}
                 timeZone={teacherMeta?.timezone ?? null}
               />
+              {/* TODO: link to a dedicated history page once it exists */}
+              <p className="mt-2 text-center text-xs text-slate-400">{t("completedCoursesInHistory")}</p>
               {confirmedUpcoming.length > 0 ? (
                 <div className="hidden min-w-0 lg:block">
                   <TeacherScheduleChangeHelperPanel
