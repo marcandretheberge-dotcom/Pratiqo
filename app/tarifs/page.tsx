@@ -18,6 +18,7 @@ import PratiqoLogo from "@/components/PratiqoLogo";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 import { FAQSchema } from "@/components/seo/FAQSchema";
 import { useLocale } from "@/lib/locale-context";
+import { useAuth } from "@/components/AuthProvider";
 import type { Locale } from "@/lib/i18n/types";
 import { cn } from "@/lib/utils";
 
@@ -76,6 +77,8 @@ const VALUE_ICONS = [Wallet, Receipt, MapPinned, BarChart3, Headphones, Sparkles
 
 export default function TarifsPage() {
   const { t, locale } = useLocale();
+  const { user } = useAuth();
+  const upgradeHref = user ? "/upgrade" : "/login?next=/upgrade";
 
   const faqItems = useMemo(
     () => [
@@ -333,7 +336,8 @@ export default function TarifsPage() {
                 ))}
               </ul>
               <Link
-                href="/upgrade"
+                href={upgradeHref}
+                prefetch={false}
                 className="mt-8 inline-flex min-h-[48px] w-full items-center justify-center rounded-2xl bg-[#FF6B35] px-4 py-3 text-sm font-semibold text-white shadow-md transition-colors hover:bg-[#e85f2d]"
               >
                 {t("pricingPagePlanProCta")}
