@@ -57,15 +57,22 @@ export function teacherMatchesExploreCategory(teacher: Teacher, selectedLabel: s
   return false;
 }
 
+function foldAscii(s: string): string {
+  return s.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().trim();
+}
+
 export function teacherMatchesExploreSearch(teacher: Teacher, searchQuery: string): boolean {
-  const q = searchQuery.trim().toLowerCase();
+  const q = foldAscii(searchQuery);
   if (!q) return true;
-  if (teacher.name.toLowerCase().includes(q)) return true;
-  if (teacher.discipline.toLowerCase().includes(q)) return true;
+  if (foldAscii(teacher.name).includes(q)) return true;
+  if (foldAscii(teacher.discipline).includes(q)) return true;
+  if (foldAscii(String(teacher.city ?? "")).includes(q)) return true;
+  if (foldAscii(String(teacher.region ?? "")).includes(q)) return true;
+  if (foldAscii(String(teacher.location?.neighborhood ?? "")).includes(q)) return true;
   for (const ad of teacher.additionalDisciplines ?? []) {
     const d = getDisciplineById(ad.disciplineId);
-    if (d?.label.toLowerCase().includes(q)) return true;
-    if (ad.specialite.toLowerCase().includes(q)) return true;
+    if (d?.label && foldAscii(d.label).includes(q)) return true;
+    if (foldAscii(ad.specialite).includes(q)) return true;
   }
   return false;
 }
