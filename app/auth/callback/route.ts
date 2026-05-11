@@ -30,8 +30,11 @@ async function trySendStudentWelcomeOnce(
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
+  const next = requestUrl.searchParams.get("next") ?? "/dashboard";
   const role = requestUrl.searchParams.get("role");
   const refCode = requestUrl.searchParams.get("ref");
+
+  console.log("[auth/callback] received code:", !!code, "next:", next);
 
   if (code) {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -53,11 +56,13 @@ export async function GET(request: Request) {
         },
       },
     });
-    await supabase.auth.exchangeCodeForSession(code);
+    const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+    console.log("[auth/callback] exchangeCodeForSession:", exchangeError ? `error: ${exchangeError.message}` : "ok");
 
     const {
       data: { user },
     } = await supabase.auth.getUser();
+    console.log("[auth/callback] user after exchange:", user ? `id=${user.id} email=${user.email}` : "null");
 
     if (user) {
       // Detect new users before the upsert so we can send a welcome email
