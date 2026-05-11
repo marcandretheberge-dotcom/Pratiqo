@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import Stripe from "stripe";
 import { stripe } from "@/lib/stripe";
+import { logError } from "@/lib/log";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import {
   connectStatusFromStripeAccount,
@@ -164,9 +166,37 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json({ url: accountLink.url, stripe_account_id: stripeAccountId, connect_status: connectStatus });
-  } catch (e) {
-    console.error("[stripe/connect]", e);
-    return NextResponse.json({ error: e instanceof Error ? e.message : "Stripe Connect error" }, { status: 500 });
+  } catch (e: unknown) {
+    if (e instanceof Stripe.errors.StripeInvalidRequestError) {
+      logError("[stripe/connect][POST] StripeInvalidRequestError", {
+        type: e.type,
+        statusCode: e.statusCode ?? null,
+        requestId: e.requestId ?? null,
+        message: e.message,
+      });
+      const msg = e.message.toLowerCase();
+      const connectNotEnabled =
+        msg.includes("signed up for connect") ||
+        msg.includes("dashboard.stripe.com/connect") ||
+        /create new accounts.*connect/i.test(e.message);
+      if (connectNotEnabled) {
+        return NextResponse.json(
+          {
+            error:
+              "Stripe Connect is not enabled for this platform account. Enable Connect in Stripe Dashboard, then try again.",
+          },
+          { status: 502 },
+        );
+      }
+      return NextResponse.json({ error: "Stripe Connect request could not be completed." }, { status: 400 });
+    }
+
+    const message = e instanceof Error ? e.message : "Stripe Connect error";
+    logError("[stripe/connect][POST] unexpected error", {
+      message,
+      name: e instanceof Error ? e.name : typeof e,
+    });
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
