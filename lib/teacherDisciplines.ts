@@ -57,8 +57,14 @@ export function teacherMatchesExploreCategory(teacher: Teacher, selectedLabel: s
   return false;
 }
 
-function foldAscii(s: string): string {
-  return s.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().trim();
+function foldAscii(value: unknown): string {
+  // Avoid Unicode property escapes (\p{M}) for broader browser compatibility.
+  // Strip common combining diacritics after NFD normalization.
+  return String(value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
 }
 
 export function teacherMatchesExploreSearch(teacher: Teacher, searchQuery: string): boolean {
