@@ -1,16 +1,16 @@
 import type { NextConfig } from "next";
 
-/** Enforcing CSP — unchanged (Phase A included; unsafe-inline / unsafe-eval retained). */
+/** Enforcing CSP — Phase A hardening; unsafe-inline kept where required; no eval in script/default. */
 const cspValue = [
   // Fallback for any directive not explicitly listed below
-  "default-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.supabase.co https://*.stripe.com https://*.googleapis.com https://*.gstatic.com data: blob:",
+  "default-src 'self' 'unsafe-inline' https://*.supabase.co https://*.stripe.com https://*.googleapis.com https://*.gstatic.com data: blob:",
   // Network requests: must list every origin explicitly — default-src does NOT apply here
   "connect-src 'self'"
     + " https://*.supabase.co wss://*.supabase.co"
     + " https://*.stripe.com https://api.stripe.com"
     + " https://maps.googleapis.com https://*.googleapis.com https://maps.gstatic.com",
   // Script sources (explicit so Google Maps JS API loads without relying on default-src)
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
+  "script-src 'self' 'unsafe-inline'"
     + " https://maps.googleapis.com https://maps.gstatic.com"
     + " https://*.supabase.co https://*.stripe.com https://js.stripe.com",
   // Stylesheets (Google Maps injects inline styles; unsafe-inline is required)
@@ -22,7 +22,7 @@ const cspValue = [
   "frame-src https://js.stripe.com https://hooks.stripe.com https://www.google.com"
     + " https://www.youtube.com https://www.youtube-nocookie.com"
     + " https://player.vimeo.com",
-  // Phase A — additive hardening (no removal of unsafe-inline / unsafe-eval or domain narrowing)
+  // Phase A — additive hardening (no domain narrowing)
   "object-src 'none'",
   "base-uri 'self'",
   "frame-ancestors 'self'",
@@ -33,7 +33,7 @@ const cspValue = [
 /**
  * Stricter candidate policy for Report-Only only (ENABLE_CSP_REPORT_ONLY=1).
  * — default-src tightened to 'self' to surface violations without enforcing.
- * — script-src matches enforcing except unsafe-eval omitted (JSON-LD keeps unsafe-inline).
+ * — script-src matches enforcing except eval omitted (JSON-LD keeps unsafe-inline).
  * — No report-uri/report-to until a collector endpoint exists.
  */
 const cspReportOnlyValue = [
