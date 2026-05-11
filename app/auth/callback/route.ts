@@ -34,8 +34,6 @@ export async function GET(request: Request) {
   const role = requestUrl.searchParams.get("role");
   const refCode = requestUrl.searchParams.get("ref");
 
-  console.log("[auth/callback] received code:", !!code, "next:", next);
-
   if (code) {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -57,12 +55,13 @@ export async function GET(request: Request) {
       },
     });
     const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
-    console.log("[auth/callback] exchangeCodeForSession:", exchangeError ? `error: ${exchangeError.message}` : "ok");
+    if (exchangeError) {
+      console.error("[auth/callback] exchangeCodeForSession failed:", exchangeError.message);
+    }
 
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    console.log("[auth/callback] user after exchange:", user ? `id=${user.id} email=${user.email}` : "null");
 
     if (user) {
       // Detect new users before the upsert so we can send a welcome email
