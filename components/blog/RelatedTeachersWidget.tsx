@@ -6,6 +6,7 @@ import { Star, ArrowRight } from "lucide-react";
 import { getSupabaseClient } from "@/lib/supabase";
 import { TEACHERS_PUBLIC_TABLE } from "@/lib/supabase/queries";
 import { useLocale } from "@/lib/locale-context";
+import { useAuth } from "@/components/AuthProvider";
 import { VerificationBadge } from "@/components/VerificationBadge";
 import { TeacherAvatar } from "@/components/TeacherAvatar";
 import type { VerificationLevel } from "@/lib/verification";
@@ -41,6 +42,8 @@ function inferDiscipline(disciplineField: string | null, blogCategory: string): 
 
 export function RelatedTeachersWidget({ category }: { category: string }) {
   const { t, formatPrice } = useLocale();
+  const { user } = useAuth();
+  const studentSearchHref = user ? "/student/search" : "/login?next=/student/search";
   const [teachers, setTeachers] = useState<TeacherSnippet[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -91,7 +94,8 @@ export function RelatedTeachersWidget({ category }: { category: string }) {
       <div className="text-center py-6">
         <p className="text-sm text-[#6B6760]">{t("blogNoRelatedTeachers")}</p>
         <Link
-          href="/student/search"
+          href={studentSearchHref}
+          prefetch={false}
           className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-teal-700 hover:underline"
         >
           {t("blogSeeAllTeachers")} <ArrowRight size={14} />
@@ -163,7 +167,8 @@ export function RelatedTeachersWidget({ category }: { category: string }) {
 
       <div className="text-center">
         <Link
-          href="/student/search"
+          href={studentSearchHref}
+          prefetch={false}
           className="inline-flex items-center gap-1.5 text-sm font-semibold text-teal-700 hover:underline"
         >
           {t("blogSeeAllTeachers")} <ArrowRight size={14} />

@@ -326,7 +326,8 @@ export default async function BarrioPage({
                   Aquí los profesores disponibles cerca o en línea.
                 </p>
                 <Link
-                  href="/student/search"
+                  href="/login?next=/student/search"
+                  prefetch={false}
                   className="mt-4 inline-block rounded-xl bg-teal-700 px-5 py-2.5 text-sm font-bold text-white hover:brightness-105"
                 >
                   Ver todos los profesores

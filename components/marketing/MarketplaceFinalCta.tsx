@@ -15,6 +15,7 @@ export function MarketplaceFinalCta({ className }: { className?: string }) {
         <div className="mt-8 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
           <Link
             href="/login?next=/student/search"
+            prefetch={false}
             className="inline-flex h-12 min-h-[48px] items-center justify-center rounded-2xl bg-teal-700 px-8 text-sm font-bold text-white shadow-sm transition-all hover:bg-teal-800 hover:shadow-md"
           >
             {t("marketplaceFindTeacherCta")}

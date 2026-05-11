@@ -5,6 +5,7 @@ import { CheckCircle2, DollarSign, Calendar, Globe, ArrowRight } from "lucide-re
 import PratiqoLogo from "@/components/PratiqoLogo";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 import { useLocale } from "@/lib/locale-context";
+import { useAuth } from "@/components/AuthProvider";
 import type { Locale } from "@/lib/i18n/types";
 
 // ── Locale-keyed copy ─────────────────────────────────────────────────────────
@@ -159,6 +160,8 @@ const COPY: Record<Locale, {
 
 export default function DevenirEnseignantContent() {
   const { locale, t } = useLocale();
+  const { user } = useAuth();
+  const studentSearchHref = user ? "/student/search" : "/login?next=/student/search";
   const c = COPY[locale] ?? COPY["fr"];
 
   return (
@@ -172,7 +175,8 @@ export default function DevenirEnseignantContent() {
           </Link>
           <div className="flex items-center gap-4">
             <Link
-              href="/student/search"
+              href={studentSearchHref}
+              prefetch={false}
               className="hidden sm:block text-sm text-white/60 hover:text-white transition-colors"
             >
               {locale === "es" ? "Ver profesores" : locale === "en" ? "Browse teachers" : "Voir les profs"}
@@ -213,7 +217,8 @@ export default function DevenirEnseignantContent() {
                 <ArrowRight size={16} />
               </Link>
               <Link
-                href="/student/search"
+                href={studentSearchHref}
+                prefetch={false}
                 className="inline-flex h-12 items-center justify-center rounded-2xl border border-white/15 bg-white/5 px-7 text-sm font-semibold text-white/85 hover:bg-white/10 transition-colors"
               >
                 {c.ctaSecondary}

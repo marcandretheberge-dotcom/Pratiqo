@@ -462,6 +462,7 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
                           <div className="mt-8 text-center">
                             <Link
                               href="/login?next=/student/search"
+                              prefetch={false}
                               className="inline-flex h-11 items-center rounded-2xl bg-teal-700 px-6 text-sm font-semibold text-white hover:brightness-105"
                             >
                               {t("viewAllTeachers")}
@@ -535,7 +536,7 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
                   <Link href="/become-teacher" className="inline-flex h-12 items-center justify-center rounded-2xl bg-teal-700 px-8 text-sm font-bold text-white hover:brightness-105">
                     {t("homeTeacherSeePlans")}
                   </Link>
-                  <Link href="/login?role=teacher" className="text-sm font-medium text-white/80 underline underline-offset-2 hover:text-white">
+                  <Link href="/login?role=teacher" prefetch={false} className="text-sm font-medium text-white/80 underline underline-offset-2 hover:text-white">
                     {t("joinFree")}
                   </Link>
                 </div>

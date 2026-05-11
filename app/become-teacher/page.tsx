@@ -7,6 +7,7 @@ import { cn } from "../../lib/utils";
 import PratiqoLogo from "../../components/PratiqoLogo";
 import { LocaleSwitcher } from "../../components/LocaleSwitcher";
 import { useLocale } from "../../lib/locale-context";
+import { useAuth } from "../../components/AuthProvider";
 
 type TierId = "bronze" | "argent" | "or" | "platine";
 type Plan = "free" | "pro";
@@ -46,6 +47,8 @@ const PRO_ANNUAL = 29.99 * 12; // 359.88
 
 export default function BecomeTeacherPage() {
   const { t } = useLocale();
+  const { user } = useAuth();
+  const studentSearchHref = user ? "/student/search" : "/login?next=/student/search";
   const [students, setStudents] = useState(6);
   const [avgPrice, setAvgPrice] = useState(55);
   const [coursesPerWeek, setCoursesPerWeek] = useState(6);
@@ -560,7 +563,8 @@ export default function BecomeTeacherPage() {
               {t("btFinalCta")}
             </Link>
             <Link
-              href="/student/search"
+              href={studentSearchHref}
+              prefetch={false}
               className="inline-flex h-12 items-center justify-center rounded-2xl border border-white/30 bg-white/10 px-7 text-sm font-semibold text-white hover:bg-white/15"
             >
               {t("btFinalCtaSecondary")}

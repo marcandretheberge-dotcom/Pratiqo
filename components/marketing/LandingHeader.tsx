@@ -37,7 +37,7 @@ export function LandingHeader() {
         >
           {t("becomeTeacher")}
         </Link>
-        <Link href="/login" className="text-sm text-teal-700 font-medium hover:underline">
+        <Link href="/login" prefetch={false} className="text-sm text-teal-700 font-medium hover:underline">
           {t("signIn")}
         </Link>
       </div>

@@ -249,6 +249,7 @@ function getSubcategoryOptions(cat: QuizAnswers["category"]): SubOption[] {
 export function TeacherQuiz({ onClose }: { onClose: () => void }) {
   const { t, formatPrice } = useLocale();
   const { user } = useAuth();
+  const studentSearchBrowseHref = user ? "/student/search" : "/login?next=/student/search";
   const [step, setStep] = useState<Step>("category");
   const [answers, setAnswers] = useState<QuizAnswers>(INITIAL_ANSWERS);
   const [direction, setDirection] = useState<1 | -1>(1);
@@ -719,7 +720,8 @@ export function TeacherQuiz({ onClose }: { onClose: () => void }) {
                         <div className="py-10 text-center">
                           <p className="text-sm text-neutral-700 mb-4">{t("quizNoResults")}</p>
                           <Link
-                            href="/student/search"
+                            href={studentSearchBrowseHref}
+                            prefetch={false}
                             onClick={onClose}
                             className="inline-flex items-center gap-1 text-sm font-semibold text-teal-700 hover:underline"
                           >
@@ -765,7 +767,8 @@ export function TeacherQuiz({ onClose }: { onClose: () => void }) {
                             isLoggedIn={Boolean(user)}
                           />
                           <Link
-                            href="/student/search"
+                            href={studentSearchBrowseHref}
+                            prefetch={false}
                             onClick={onClose}
                             className="flex items-center justify-center gap-1 text-sm font-semibold text-teal-700 hover:underline pt-1"
                           >
@@ -1016,6 +1019,7 @@ function MatchCard({
         <div className="mt-3 flex items-center gap-2">
           <Link
             href={bookHref}
+            prefetch={false}
             onClick={onClose}
             className="flex-1 h-8 rounded-xl bg-teal-600 flex items-center justify-center text-xs font-bold text-white hover:brightness-105 transition-all"
           >
@@ -1023,6 +1027,7 @@ function MatchCard({
           </Link>
           <Link
             href={profilePath}
+            prefetch={false}
             onClick={onClose}
             className="h-8 px-3 rounded-xl border border-[#E8E6DF] flex items-center justify-center text-xs font-semibold text-neutral-700 hover:border-teal-500/40 transition-colors whitespace-nowrap"
           >

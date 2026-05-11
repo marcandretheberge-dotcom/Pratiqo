@@ -342,7 +342,8 @@ export default async function BlogArticlePage({
               {dict.blogBackToBlog}
             </Link>
             <Link
-              href="/student/search"
+              href="/login?next=/student/search"
+              prefetch={false}
               className="inline-flex h-10 items-center justify-center rounded-2xl bg-[#0F6E56] px-6 text-xs font-bold text-white transition-colors hover:bg-[#0c5a46]"
             >
               {dict.blogSeeAllTeachers}
