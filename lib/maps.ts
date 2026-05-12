@@ -1,10 +1,14 @@
 import { getSupabaseClient } from "./supabase";
 
-export function blurCoordinates(lat: number, lng: number) {
-  const offset = 0.005;
+export function blurCoordinates(lat: number, lng: number, radiusKm = 0.5) {
+  // Convert km radius to approximate degrees. 1° latitude ≈ 111 km.
+  // Longitude compression at given latitude is accounted for with cosine.
+  // Full offset range is ±radiusKm so the maximum displacement equals radiusKm.
+  const latDelta = radiusKm / 111;
+  const lngDelta = radiusKm / (111 * Math.cos((lat * Math.PI) / 180));
   return {
-    lat: lat + (Math.random() - 0.5) * offset,
-    lng: lng + (Math.random() - 0.5) * offset,
+    lat: lat + (Math.random() - 0.5) * 2 * latDelta,
+    lng: lng + (Math.random() - 0.5) * 2 * lngDelta,
   };
 }
 

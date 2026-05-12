@@ -45,6 +45,12 @@ type TeacherVerifyRow = {
   cv_summary: string | null;
   cv_verification_status: string | null;
   bio?: string | null;
+  // Zone fields (loaded so the form can be pre-populated)
+  city?: string | null;
+  region?: string | null;
+  country_code?: string | null;
+  home_lesson_radius_km?: number | null;
+  location?: unknown;
 };
 
 type TeacherCredentialRow = {
@@ -91,6 +97,18 @@ export default function TeacherVerificationPage() {
   const [credIssuedYear, setCredIssuedYear] = useState("");
   const [credMethod, setCredMethod] = useState<string>("document_review");
 
+  // Zone form state
+  const [zoneAddressLine1, setZoneAddressLine1] = useState("");
+  const [zoneAddressLine2, setZoneAddressLine2] = useState("");
+  const [zoneCity, setZoneCity] = useState("");
+  const [zoneRegion, setZoneRegion] = useState("");
+  const [zonePostalCode, setZonePostalCode] = useState("");
+  const [zoneCountryCode, setZoneCountryCode] = useState("");
+  const [zoneRadiusKm, setZoneRadiusKm] = useState("");
+  // Public summary shown after save
+  const [zoneSavedStatus, setZoneSavedStatus] = useState<string | null>(null);
+  const [zoneFuzzRadiusKm, setZoneFuzzRadiusKm] = useState<number | null>(null);
+
   // Diploma file state
   const [diplomaFile, setDiplomaFile] = useState<File | null>(null);
   const [diplomaNote, setDiplomaNote] = useState("");
@@ -104,7 +122,7 @@ export default function TeacherVerificationPage() {
       supabase
         .from("teachers")
         .select(
-          "id, verification_level, identity_verified, identity_status, stripe_identity_status, stripe_identity_failed_reason, diploma_verified, diploma_url, phone_verified, is_verified, location_verification_status, cv_summary, cv_verification_status, bio",
+          "id, verification_level, identity_verified, identity_status, stripe_identity_status, stripe_identity_failed_reason, diploma_verified, diploma_url, phone_verified, is_verified, location_verification_status, cv_summary, cv_verification_status, bio, city, region, country_code, home_lesson_radius_km, location",
         )
         .eq("user_id", user.id)
         .maybeSingle(),
@@ -129,6 +147,73 @@ export default function TeacherVerificationPage() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  // Pre-populate zone form whenever teacher data loads
+  useEffect(() => {
+    if (!teacherRow) return;
+    setZoneCity(teacherRow.city ?? "");
+    setZoneRegion(teacherRow.region ?? "");
+    setZoneCountryCode(teacherRow.country_code ?? "");
+    setZoneRadiusKm(teacherRow.home_lesson_radius_km != null ? String(teacherRow.home_lesson_radius_km) : "");
+    // Read private address from location.private (teacher owns this data — display back to them)
+    const loc =
+      typeof teacherRow.location === "object" && teacherRow.location !== null
+        ? (teacherRow.location as Record<string, unknown>)
+        : {};
+    const priv =
+      typeof loc.private === "object" && loc.private !== null
+        ? (loc.private as Record<string, unknown>)
+        : {};
+    setZoneAddressLine1(typeof priv.address_line1 === "string" ? priv.address_line1 : "");
+    setZoneAddressLine2(typeof priv.address_line2 === "string" ? priv.address_line2 : "");
+    setZonePostalCode(typeof priv.postal_code === "string" ? priv.postal_code : "");
+    // Restore saved public summary state
+    if (teacherRow.location_verification_status) {
+      setZoneSavedStatus(teacherRow.location_verification_status);
+    }
+    if (typeof loc.fuzz_radius_km === "number") {
+      setZoneFuzzRadiusKm(loc.fuzz_radius_km);
+    }
+  }, [teacherRow]);
+
+  const submitZone = async () => {
+    if (!user) return;
+    setMessage(null);
+    setBusy("zone");
+    try {
+      const { data: sess } = await getSupabaseClient().auth.getSession();
+      const token = sess.session?.access_token;
+      if (!token) throw new Error(t("verificationSessionExpired"));
+      const res = await fetch("/api/teacher/location/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          address_line1: zoneAddressLine1.trim() || undefined,
+          address_line2: zoneAddressLine2.trim() || undefined,
+          city: zoneCity.trim(),
+          region: zoneRegion.trim(),
+          postal_code: zonePostalCode.trim() || undefined,
+          country_code: zoneCountryCode.trim(),
+          home_lesson_radius_km: zoneRadiusKm.trim() ? Number(zoneRadiusKm.trim()) : undefined,
+        }),
+      });
+      const j = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        error?: string;
+        status?: string;
+        fuzz_radius_km?: number;
+      };
+      if (!res.ok || !j.ok) throw new Error(j.error || t("verificationErrorGeneric"));
+      setZoneSavedStatus(j.status ?? "pending");
+      setZoneFuzzRadiusKm(j.fuzz_radius_km ?? null);
+      showMsg(t("zoneSaved"), "ok");
+      await load();
+    } catch (e) {
+      showMsg(e instanceof Error ? e.message : t("verificationErrorGeneric"), "error");
+    } finally {
+      setBusy(null);
+    }
+  };
 
   // Show success banner if Stripe Identity redirected back here
   useEffect(() => {
@@ -675,21 +760,134 @@ export default function TeacherVerificationPage() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-[#E8E6DF] bg-white p-5 space-y-3">
+        {/* ── Level 4 — Zone d'enseignement ─────────────────────────────── */}
+        <div className="rounded-2xl border border-[#E8E6DF] bg-white p-5 space-y-4">
           <div className="flex gap-3">
             <MapPinned className="text-teal-700 shrink-0 mt-0.5" size={22} />
-            <div className="flex-1 min-w-0">
+            <div className="min-w-0">
               <p className="font-semibold text-[#2C2C2A]">{t("verificationLevel4Title")}</p>
               <p className="text-sm text-[#6B6A65] mt-1">{t("verificationLevel4BodyZone")}</p>
-              {zoneVerified ? (
-                <p className="mt-2 text-sm font-semibold text-teal-700">{t("trustZoneVerified")}</p>
-              ) : zonePending ? (
-                <p className="mt-2 text-sm font-semibold text-amber-700">{t("trustZonePending")}</p>
-              ) : (
-                <p className="mt-2 text-xs text-[#6B6A65]">{t("locationVerificationStatus")}: {t("verificationUnverified")}</p>
-              )}
             </div>
           </div>
+
+          {/* Privacy note */}
+          <div className="rounded-xl border border-[#DCEAE3] bg-[#F3FAF6] px-4 py-3 text-xs text-teal-800">
+            {t("teacherOnboardingPrivacyNote")}
+          </div>
+
+          {/* Address form */}
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="space-y-1 sm:col-span-2">
+              <span className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
+                {t("zoneAddressLine1Label")}
+              </span>
+              <input
+                value={zoneAddressLine1}
+                onChange={(e) => setZoneAddressLine1(e.target.value)}
+                placeholder="123 Rue Principale"
+                className="h-11 w-full rounded-xl border border-[#E8E6DF] bg-white px-3 text-sm outline-none focus:border-teal-500"
+              />
+            </label>
+            <label className="space-y-1 sm:col-span-2">
+              <span className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
+                {t("zoneAddressLine2Label")}
+              </span>
+              <input
+                value={zoneAddressLine2}
+                onChange={(e) => setZoneAddressLine2(e.target.value)}
+                placeholder="Apt 2"
+                className="h-11 w-full rounded-xl border border-[#E8E6DF] bg-white px-3 text-sm outline-none focus:border-teal-500"
+              />
+            </label>
+            <label className="space-y-1">
+              <span className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
+                {t("teacherOnboardingCity")}
+              </span>
+              <input
+                value={zoneCity}
+                onChange={(e) => setZoneCity(e.target.value)}
+                placeholder="Montréal"
+                className="h-11 w-full rounded-xl border border-[#E8E6DF] bg-white px-3 text-sm outline-none focus:border-teal-500"
+              />
+            </label>
+            <label className="space-y-1">
+              <span className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
+                {t("teacherOnboardingRegion")}
+              </span>
+              <input
+                value={zoneRegion}
+                onChange={(e) => setZoneRegion(e.target.value)}
+                placeholder="Québec"
+                className="h-11 w-full rounded-xl border border-[#E8E6DF] bg-white px-3 text-sm outline-none focus:border-teal-500"
+              />
+            </label>
+            <label className="space-y-1">
+              <span className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
+                {t("zonePostalCodeLabel")}
+              </span>
+              <input
+                value={zonePostalCode}
+                onChange={(e) => setZonePostalCode(e.target.value)}
+                placeholder="H2X 1Y1"
+                className="h-11 w-full rounded-xl border border-[#E8E6DF] bg-white px-3 text-sm outline-none focus:border-teal-500"
+              />
+            </label>
+            <label className="space-y-1">
+              <span className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
+                {t("zoneCountryCodeLabel")}
+              </span>
+              <input
+                value={zoneCountryCode}
+                onChange={(e) => setZoneCountryCode(e.target.value.toUpperCase().slice(0, 2))}
+                placeholder="CA"
+                maxLength={2}
+                className="h-11 w-full rounded-xl border border-[#E8E6DF] bg-white px-3 text-sm outline-none focus:border-teal-500"
+              />
+            </label>
+            <label className="space-y-1">
+              <span className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
+                {t("zoneRadiusKmLabel")}
+              </span>
+              <input
+                value={zoneRadiusKm}
+                onChange={(e) => setZoneRadiusKm(e.target.value)}
+                placeholder="10"
+                inputMode="numeric"
+                className="h-11 w-full rounded-xl border border-[#E8E6DF] bg-white px-3 text-sm outline-none focus:border-teal-500"
+              />
+            </label>
+          </div>
+
+          <button
+            type="button"
+            disabled={busy !== null || !zoneCity.trim() || !zoneRegion.trim() || !zoneCountryCode.trim()}
+            onClick={() => void submitZone()}
+            className="h-11 rounded-xl bg-teal-700 px-5 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-50 inline-flex items-center gap-2"
+          >
+            {busy === "zone" ? <Loader2 size={16} className="animate-spin" /> : <MapPinned size={16} />}
+            {t("zoneSaveButton")}
+          </button>
+
+          {/* Public summary — shown after first save or if already verified */}
+          {(zoneSavedStatus || zoneVerified || zonePending) && (zoneCity || teacherRow?.city) ? (
+            <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 space-y-1">
+              <p className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                {t("zonePublicDisplay")}
+              </p>
+              <p className="text-sm font-semibold text-[#2C2C2A]">
+                {zoneCity || teacherRow?.city}
+                {(zoneRegion || teacherRow?.region) ? `, ${zoneRegion || teacherRow?.region}` : ""}
+              </p>
+              <p className="text-xs text-[#6B6A65]">
+                ± {zoneFuzzRadiusKm ?? 1} km
+              </p>
+              {(zoneSavedStatus === "auto_verified" || zoneVerified) ? (
+                <p className="text-xs font-semibold text-teal-700">{t("trustZoneVerified")}</p>
+              ) : (
+                <p className="text-xs font-semibold text-amber-700">{t("trustZonePending")}</p>
+              )}
+            </div>
+          ) : null}
         </div>
 
         {/* ── Credentials / qualifications (Pratiqo-reviewed) ─────────────── */}
