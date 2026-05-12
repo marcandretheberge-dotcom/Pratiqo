@@ -348,10 +348,7 @@ export default function TeacherVerificationPage() {
         city = zoneCity.trim();
         region = zoneRegion.trim();
         countryCode = zoneCountryCode.trim();
-        // Prefer the live value from the PlaceAutocompleteElement (user may have typed
-        // without selecting; fall back to React state if element is not mounted).
-        const elementValue = zoneAutocompleteElementRef.current?.value ?? "";
-        addressLine1 = (elementValue.trim() || zoneSingleLine.trim()) || undefined;
+        addressLine1 = zoneSingleLine.trim() || undefined;
         postalCode = zonePostalCode.trim() || undefined;
         lat = zoneParsedPlace?.latitude ?? undefined;
         lng = zoneParsedPlace?.longitude ?? undefined;
@@ -951,36 +948,39 @@ export default function TeacherVerificationPage() {
             {t("addressPrivacyHelp")}
           </div>
 
-          {/* Primary address input — PlaceAutocompleteElement (new API) or plain fallback */}
+          {/* Primary address input — always visible native input */}
           <div className="space-y-1.5">
-            <span className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
+            <label
+              htmlFor="zone-address-single"
+              className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]"
+            >
               {t("privateTeachingAddress")}
-            </span>
-            {zoneGoogleError ? (
-              /* Fallback plain input when Google Maps is unavailable */
-              <input
-                type="text"
-                value={zoneSingleLine}
-                onChange={(e) => { setZoneSingleLine(e.target.value); setZoneParsedPlace(null); }}
-                placeholder={t("privateTeachingAddressPlaceholder")}
-                autoComplete="off"
-                className="h-11 w-full rounded-xl border border-[#E8E6DF] bg-white px-3 text-sm outline-none focus:border-teal-500"
-              />
-            ) : !zoneGoogleReady ? (
-              /* Placeholder shown while Places library is loading */
-              <div className="h-11 w-full rounded-xl border border-[#E8E6DF] bg-[#F8F7F2] px-3 flex items-center">
-                <span className="text-sm text-[#6B6A65] animate-pulse">Chargement…</span>
-              </div>
-            ) : (
-              /* Container div where PlaceAutocompleteElement is imperatively mounted */
-              <div ref={zoneAutocompleteContainerRef} className="w-full" />
-            )}
+            </label>
+            <input
+              id="zone-address-single"
+              type="text"
+              value={zoneSingleLine}
+              onChange={(e) => { setZoneSingleLine(e.target.value); setZoneParsedPlace(null); }}
+              placeholder="Commencez à écrire votre adresse..."
+              autoComplete="off"
+              className="h-11 w-full rounded-xl border border-[#E8E6DF] bg-white px-3 text-sm outline-none focus:border-teal-500"
+            />
             {zoneGeometryWarn ? (
               <p className="text-xs text-amber-700">{t("zoneSelectSuggestion")}</p>
-            ) : zoneGoogleError ? (
-              <p className="text-xs text-[#6B6A65]">{t("teacherOnboardingGoogleUnavailable")}</p>
+            ) : (!zoneGoogleReady || zoneGoogleError) ? (
+              <p className="text-xs text-[#6B6A65]">
+                Suggestions Google indisponibles pour le moment — vous pouvez quand même saisir l&apos;adresse.
+              </p>
             ) : null}
           </div>
+
+          {/* Google PlaceAutocompleteElement — progressive enhancement only, mounts below native input */}
+          {zoneGoogleReady && !zoneGoogleError && (
+            <div className="space-y-1">
+              <span className="text-xs text-[#6B6A65]">Ou sélectionnez dans les suggestions :</span>
+              <div ref={zoneAutocompleteContainerRef} className="w-full min-h-[44px]" />
+            </div>
+          )}
 
           {/* Toggle to manual fields */}
           <button
