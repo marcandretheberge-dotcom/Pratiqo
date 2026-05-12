@@ -28,8 +28,8 @@ import {
 import { useLocale } from "../../../../lib/locale-context";
 import { cn } from "../../../../lib/utils";
 import { buildTeacherTrustBadges, buildTeacherTrustItems, type TeacherCredential } from "../../../../lib/teacherTrust";
-import { parseGooglePlace } from "../../../../lib/googleAddressParser";
 import { importLibrary, setOptions } from "@googlemaps/js-api-loader";
+import type { ParsedGooglePlace } from "../../../../lib/googleAddressParser";
 import type { TranslationKey } from "../../../../lib/translations";
 
 type TeacherVerifyRow = {
@@ -106,11 +106,16 @@ export default function TeacherVerificationPage() {
   // Zone form state
   const [zoneShowManual, setZoneShowManual] = useState(false);
   const [zoneSingleLine, setZoneSingleLine] = useState("");
-  const [zoneParsedPlace, setZoneParsedPlace] = useState<ReturnType<typeof parseGooglePlace> | null>(null);
+  const [zoneParsedPlace, setZoneParsedPlace] = useState<ParsedGooglePlace | null>(null);
   const [zoneGoogleReady, setZoneGoogleReady] = useState(() => initialGoogleReady());
   const [zoneGoogleError, setZoneGoogleError] = useState(() => !process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY);
   const [zoneGeometryWarn, setZoneGeometryWarn] = useState(false);
-  const zoneAddressInputRef = useRef<HTMLInputElement | null>(null);
+  // Container div ref where PlaceAutocompleteElement is mounted; element ref for direct property access
+  const zoneAutocompleteContainerRef = useRef<HTMLDivElement | null>(null);
+  const zoneAutocompleteElementRef = useRef<google.maps.places.PlaceAutocompleteElement | null>(null);
+  // Kept as a ref so the mount effect can read the latest placeholder without re-creating the element
+  const _zonePlaceholderRef = useRef("");
+  _zonePlaceholderRef.current = t("privateTeachingAddressPlaceholder");
   const [zoneAddressLine1, setZoneAddressLine1] = useState("");
   const [zoneAddressLine2, setZoneAddressLine2] = useState("");
   const [zoneCity, setZoneCity] = useState("");
@@ -219,38 +224,99 @@ export default function TeacherVerificationPage() {
     return () => { cancelled = true; };
   }, []);
 
-  // Attach Google Places Autocomplete to single-line address input
+  // Mount PlaceAutocompleteElement (new API — replaces deprecated google.maps.places.Autocomplete)
   useEffect(() => {
     if (!zoneGoogleReady) return;
-    const el = zoneAddressInputRef.current;
-    if (!el || !("google" in window)) return;
-    const ac = new google.maps.places.Autocomplete(el, {
-      fields: ["address_components", "formatted_address", "geometry", "name"],
-      types: ["address"],
-    });
-    ac.addListener("place_changed", () => {
-      const place = ac.getPlace();
-      if (!place.geometry?.location) {
-        // User typed and pressed Enter without selecting a dropdown suggestion.
-        // Clear parsed place (no lat/lng to send), open manual fields so they
-        // can fill in city/region/country themselves.
-        setZoneParsedPlace(null);
-        setZoneGeometryWarn(true);
-        setZoneShowManual(true);
-        return;
-      }
-      setZoneGeometryWarn(false);
-      const parsed = parseGooglePlace(place);
-      setZoneParsedPlace(parsed);
-      if (parsed.formattedAddress) setZoneSingleLine(parsed.formattedAddress);
-      if (parsed.city) setZoneCity(parsed.city);
-      if (parsed.region) setZoneRegion(parsed.region);
-      if (parsed.countryCode) setZoneCountryCode(parsed.countryCode);
-      if (parsed.postalCode) setZonePostalCode(parsed.postalCode);
-      const street = [parsed.streetNumber, parsed.route].filter(Boolean).join(" ");
-      if (street) setZoneAddressLine1(street);
-    });
-  }, [zoneGoogleReady]);
+    const container = zoneAutocompleteContainerRef.current;
+    if (!container || !("google" in window)) return;
+
+    const element = new google.maps.places.PlaceAutocompleteElement({});
+    Object.assign(element.style, { width: "100%", display: "block" });
+    element.placeholder = _zonePlaceholderRef.current;
+    // Pre-populate if teacher address was already loaded before Google finished initialising
+    if (zoneSingleLine) element.value = zoneSingleLine;
+    zoneAutocompleteElementRef.current = element;
+    container.appendChild(element);
+
+    const handleSelect = (ev: google.maps.places.PlacePredictionSelectEvent) => {
+      const place = ev.placePrediction.toPlace();
+      void (async () => {
+        try {
+          await place.fetchFields({
+            fields: ["displayName", "formattedAddress", "addressComponents", "location"],
+          });
+
+          if (!place.location) {
+            setZoneParsedPlace(null);
+            setZoneGeometryWarn(true);
+            setZoneShowManual(true);
+            return;
+          }
+          setZoneGeometryWarn(false);
+
+          // Parse new AddressComponent API (.longText/.shortText instead of .long_name/.short_name)
+          const comps = place.addressComponents ?? [];
+          const getComp = (type: string, format: "long" | "short" = "long"): string | null => {
+            const c = comps.find((ac) => ac.types.includes(type));
+            return format === "short" ? (c?.shortText ?? null) : (c?.longText ?? null);
+          };
+          const streetNumber = getComp("street_number");
+          const route = getComp("route");
+          const city =
+            getComp("locality") ??
+            getComp("postal_town") ??
+            getComp("sublocality_level_1") ??
+            getComp("sublocality") ??
+            getComp("administrative_area_level_3");
+          const region = getComp("administrative_area_level_1");
+          const countryCode = getComp("country", "short")?.toUpperCase() ?? null;
+          const postalCode = getComp("postal_code");
+          const latitude = place.location.lat();
+          const longitude = place.location.lng();
+          const formattedAddress = place.formattedAddress ?? null;
+
+          const parsed: ParsedGooglePlace = {
+            streetNumber,
+            route,
+            city,
+            region,
+            countryCode,
+            postalCode,
+            latitude,
+            longitude,
+            formattedAddress,
+          };
+          setZoneParsedPlace(parsed);
+          if (formattedAddress) setZoneSingleLine(formattedAddress);
+          if (city) setZoneCity(city);
+          if (region) setZoneRegion(region);
+          if (countryCode) setZoneCountryCode(countryCode);
+          if (postalCode) setZonePostalCode(postalCode);
+          const street = [streetNumber, route].filter(Boolean).join(" ");
+          if (street) setZoneAddressLine1(street);
+        } catch {
+          setZoneGeometryWarn(true);
+          setZoneShowManual(true);
+        }
+      })();
+    };
+
+    element.addEventListener("gmp-select", handleSelect);
+
+    return () => {
+      element.removeEventListener("gmp-select", handleSelect as unknown as EventListener);
+      if (container.contains(element)) container.removeChild(element);
+      zoneAutocompleteElementRef.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [zoneGoogleReady]); // State setters and _zonePlaceholderRef are stable; element recreated only on load state change
+
+  // Keep the PlaceAutocompleteElement value in sync when state is updated externally (pre-populate from teacherRow)
+  useEffect(() => {
+    const el = zoneAutocompleteElementRef.current;
+    if (!el || el.value === zoneSingleLine) return;
+    el.value = zoneSingleLine;
+  }, [zoneSingleLine]);
 
   const submitZone = async () => {
     if (!user) return;
@@ -282,7 +348,10 @@ export default function TeacherVerificationPage() {
         city = zoneCity.trim();
         region = zoneRegion.trim();
         countryCode = zoneCountryCode.trim();
-        addressLine1 = zoneSingleLine.trim() || undefined;
+        // Prefer the live value from the PlaceAutocompleteElement (user may have typed
+        // without selecting; fall back to React state if element is not mounted).
+        const elementValue = zoneAutocompleteElementRef.current?.value ?? "";
+        addressLine1 = (elementValue.trim() || zoneSingleLine.trim()) || undefined;
         postalCode = zonePostalCode.trim() || undefined;
         lat = zoneParsedPlace?.latitude ?? undefined;
         lng = zoneParsedPlace?.longitude ?? undefined;
@@ -882,21 +951,30 @@ export default function TeacherVerificationPage() {
             {t("addressPrivacyHelp")}
           </div>
 
-          {/* Primary single-line address input */}
+          {/* Primary address input — PlaceAutocompleteElement (new API) or plain fallback */}
           <div className="space-y-1.5">
-            <label htmlFor="zone-address-single" className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
+            <span className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
               {t("privateTeachingAddress")}
-            </label>
-            <input
-              id="zone-address-single"
-              ref={zoneAddressInputRef}
-              type="text"
-              value={zoneSingleLine}
-              onChange={(e) => { setZoneSingleLine(e.target.value); setZoneParsedPlace(null); }}
-              placeholder={t("privateTeachingAddressPlaceholder")}
-              autoComplete="off"
-              className="h-11 w-full rounded-xl border border-[#E8E6DF] bg-white px-3 text-sm outline-none focus:border-teal-500"
-            />
+            </span>
+            {zoneGoogleError ? (
+              /* Fallback plain input when Google Maps is unavailable */
+              <input
+                type="text"
+                value={zoneSingleLine}
+                onChange={(e) => { setZoneSingleLine(e.target.value); setZoneParsedPlace(null); }}
+                placeholder={t("privateTeachingAddressPlaceholder")}
+                autoComplete="off"
+                className="h-11 w-full rounded-xl border border-[#E8E6DF] bg-white px-3 text-sm outline-none focus:border-teal-500"
+              />
+            ) : !zoneGoogleReady ? (
+              /* Placeholder shown while Places library is loading */
+              <div className="h-11 w-full rounded-xl border border-[#E8E6DF] bg-[#F8F7F2] px-3 flex items-center">
+                <span className="text-sm text-[#6B6A65] animate-pulse">Chargement…</span>
+              </div>
+            ) : (
+              /* Container div where PlaceAutocompleteElement is imperatively mounted */
+              <div ref={zoneAutocompleteContainerRef} className="w-full" />
+            )}
             {zoneGeometryWarn ? (
               <p className="text-xs text-amber-700">{t("zoneSelectSuggestion")}</p>
             ) : zoneGoogleError ? (
