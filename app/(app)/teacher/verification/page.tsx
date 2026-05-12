@@ -28,8 +28,6 @@ import {
 import { useLocale } from "../../../../lib/locale-context";
 import { cn } from "../../../../lib/utils";
 import { buildTeacherTrustBadges, buildTeacherTrustItems, type TeacherCredential } from "../../../../lib/teacherTrust";
-import { importLibrary, setOptions } from "@googlemaps/js-api-loader";
-import type { ParsedGooglePlace } from "../../../../lib/googleAddressParser";
 import type { TranslationKey } from "../../../../lib/translations";
 
 type TeacherVerifyRow = {
@@ -72,10 +70,6 @@ type TeacherCredentialRow = {
   created_at: string | null;
 };
 
-function initialGoogleReady(): boolean {
-  return typeof window !== "undefined" && Boolean(window.google?.maps?.places);
-}
-
 function statusLabelKey(status: TeacherCredentialRow["verification_status"]): TranslationKey {
   if (status === "verified") return "credentialStatusVerified";
   if (status === "needs_review") return "credentialStatusNeedsReview";
@@ -106,16 +100,7 @@ export default function TeacherVerificationPage() {
   // Zone form state
   const [zoneShowManual, setZoneShowManual] = useState(false);
   const [zoneSingleLine, setZoneSingleLine] = useState("");
-  const [zoneParsedPlace, setZoneParsedPlace] = useState<ParsedGooglePlace | null>(null);
-  const [zoneGoogleReady, setZoneGoogleReady] = useState(() => initialGoogleReady());
-  const [zoneGoogleError, setZoneGoogleError] = useState(() => !process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY);
-  const [zoneGeometryWarn, setZoneGeometryWarn] = useState(false);
-  // Container div ref where PlaceAutocompleteElement is mounted; element ref for direct property access
-  const zoneAutocompleteContainerRef = useRef<HTMLDivElement | null>(null);
-  const zoneAutocompleteElementRef = useRef<google.maps.places.PlaceAutocompleteElement | null>(null);
-  // Kept as a ref so the mount effect can read the latest placeholder without re-creating the element
-  const _zonePlaceholderRef = useRef("");
-  _zonePlaceholderRef.current = t("privateTeachingAddressPlaceholder");
+  const [zoneHasPrivateAddress, setZoneHasPrivateAddress] = useState(false);
   const [zoneAddressLine1, setZoneAddressLine1] = useState("");
   const [zoneAddressLine2, setZoneAddressLine2] = useState("");
   const [zoneCity, setZoneCity] = useState("");
@@ -187,6 +172,7 @@ export default function TeacherVerificationPage() {
     setZoneAddressLine2(typeof priv.address_line2 === "string" ? priv.address_line2 : "");
     setZonePostalCode(typeof priv.postal_code === "string" ? priv.postal_code : "");
     setZoneSingleLine(savedLine1);
+    setZoneHasPrivateAddress(Boolean(savedLine1));
     // Restore saved public summary state
     if (teacherRow.location_verification_status) {
       setZoneSavedStatus(teacherRow.location_verification_status);
@@ -195,128 +181,6 @@ export default function TeacherVerificationPage() {
       setZoneFuzzRadiusKm(loc.fuzz_radius_km);
     }
   }, [teacherRow]);
-
-  // Load Google Maps Places library via @googlemaps/js-api-loader.
-  // Using importLibrary instead of a raw <script> tag prevents conflicts when
-  // GoogleProgressiveMap (which also uses the loader) has already initialised
-  // the Maps API without the places library on a previous page.
-  useEffect(() => {
-    const key = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-    if (!key) {
-      setZoneGoogleError(true);
-      return;
-    }
-    if (window.google?.maps?.places) {
-      setZoneGoogleReady(true);
-      return;
-    }
-    let cancelled = false;
-    const run = async () => {
-      try {
-        setOptions({ key, v: "weekly" });
-        await importLibrary("places");
-        if (!cancelled) setZoneGoogleReady(true);
-      } catch {
-        if (!cancelled) setZoneGoogleError(true);
-      }
-    };
-    void run();
-    return () => { cancelled = true; };
-  }, []);
-
-  // Mount PlaceAutocompleteElement (new API — replaces deprecated google.maps.places.Autocomplete)
-  useEffect(() => {
-    if (!zoneGoogleReady) return;
-    const container = zoneAutocompleteContainerRef.current;
-    if (!container || !("google" in window)) return;
-
-    const element = new google.maps.places.PlaceAutocompleteElement({});
-    Object.assign(element.style, { width: "100%", display: "block" });
-    element.placeholder = _zonePlaceholderRef.current;
-    // Pre-populate if teacher address was already loaded before Google finished initialising
-    if (zoneSingleLine) element.value = zoneSingleLine;
-    zoneAutocompleteElementRef.current = element;
-    container.appendChild(element);
-
-    const handleSelect = (ev: google.maps.places.PlacePredictionSelectEvent) => {
-      const place = ev.placePrediction.toPlace();
-      void (async () => {
-        try {
-          await place.fetchFields({
-            fields: ["displayName", "formattedAddress", "addressComponents", "location"],
-          });
-
-          if (!place.location) {
-            setZoneParsedPlace(null);
-            setZoneGeometryWarn(true);
-            setZoneShowManual(true);
-            return;
-          }
-          setZoneGeometryWarn(false);
-
-          // Parse new AddressComponent API (.longText/.shortText instead of .long_name/.short_name)
-          const comps = place.addressComponents ?? [];
-          const getComp = (type: string, format: "long" | "short" = "long"): string | null => {
-            const c = comps.find((ac) => ac.types.includes(type));
-            return format === "short" ? (c?.shortText ?? null) : (c?.longText ?? null);
-          };
-          const streetNumber = getComp("street_number");
-          const route = getComp("route");
-          const city =
-            getComp("locality") ??
-            getComp("postal_town") ??
-            getComp("sublocality_level_1") ??
-            getComp("sublocality") ??
-            getComp("administrative_area_level_3");
-          const region = getComp("administrative_area_level_1");
-          const countryCode = getComp("country", "short")?.toUpperCase() ?? null;
-          const postalCode = getComp("postal_code");
-          const latitude = place.location.lat();
-          const longitude = place.location.lng();
-          const formattedAddress = place.formattedAddress ?? null;
-
-          const parsed: ParsedGooglePlace = {
-            streetNumber,
-            route,
-            city,
-            region,
-            countryCode,
-            postalCode,
-            latitude,
-            longitude,
-            formattedAddress,
-          };
-          setZoneParsedPlace(parsed);
-          if (formattedAddress) setZoneSingleLine(formattedAddress);
-          if (city) setZoneCity(city);
-          if (region) setZoneRegion(region);
-          if (countryCode) setZoneCountryCode(countryCode);
-          if (postalCode) setZonePostalCode(postalCode);
-          const street = [streetNumber, route].filter(Boolean).join(" ");
-          if (street) setZoneAddressLine1(street);
-        } catch {
-          setZoneGeometryWarn(true);
-          setZoneShowManual(true);
-        }
-      })();
-    };
-
-    element.addEventListener("gmp-select", handleSelect);
-
-    return () => {
-      element.removeEventListener("gmp-select", handleSelect as unknown as EventListener);
-      if (container.contains(element)) container.removeChild(element);
-      zoneAutocompleteElementRef.current = null;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [zoneGoogleReady]); // State setters and _zonePlaceholderRef are stable; element recreated only on load state change
-
-  // Keep the PlaceAutocompleteElement value in sync when state is updated externally (pre-populate from teacherRow)
-  useEffect(() => {
-    const el = zoneAutocompleteElementRef.current;
-    if (!el || el.value === zoneSingleLine) return;
-    el.value = zoneSingleLine;
-  }, [zoneSingleLine]);
 
   const submitZone = async () => {
     if (!user) return;
@@ -327,32 +191,14 @@ export default function TeacherVerificationPage() {
       const token = sess.session?.access_token;
       if (!token) throw new Error(t("verificationSessionExpired"));
 
-      let city: string;
-      let region: string;
-      let countryCode: string;
-      let addressLine1: string | undefined;
-      let addressLine2: string | undefined;
-      let postalCode: string | undefined;
-      let lat: number | undefined;
-      let lng: number | undefined;
-
-      if (zoneShowManual) {
-        city = zoneCity.trim();
-        region = zoneRegion.trim();
-        countryCode = zoneCountryCode.trim();
-        addressLine1 = zoneAddressLine1.trim() || undefined;
-        addressLine2 = zoneAddressLine2.trim() || undefined;
-        postalCode = zonePostalCode.trim() || undefined;
-      } else {
-        // Single-line mode: city/region/country come from autocomplete or pre-loaded fallback
-        city = zoneCity.trim();
-        region = zoneRegion.trim();
-        countryCode = zoneCountryCode.trim();
-        addressLine1 = zoneSingleLine.trim() || undefined;
-        postalCode = zonePostalCode.trim() || undefined;
-        lat = zoneParsedPlace?.latitude ?? undefined;
-        lng = zoneParsedPlace?.longitude ?? undefined;
-      }
+      const city = zoneCity.trim();
+      const region = zoneRegion.trim();
+      const countryCode = zoneCountryCode.trim();
+      const addressLine1 = zoneShowManual
+        ? zoneAddressLine1.trim() || undefined
+        : zoneSingleLine.trim() || undefined;
+      const addressLine2 = zoneShowManual ? zoneAddressLine2.trim() || undefined : undefined;
+      const postalCode = zonePostalCode.trim() || undefined;
 
       const res = await fetch("/api/teacher/location/verify", {
         method: "POST",
@@ -364,8 +210,6 @@ export default function TeacherVerificationPage() {
           region,
           postal_code: postalCode,
           country_code: countryCode,
-          lat,
-          lng,
           home_lesson_radius_km: zoneRadiusKm.trim() ? Number(zoneRadiusKm.trim()) : undefined,
         }),
       });
@@ -379,6 +223,7 @@ export default function TeacherVerificationPage() {
       if (!res.ok || !j.ok) throw new Error(j.error || t("verificationErrorGeneric"));
       setZoneSavedStatus(j.status ?? "pending");
       setZoneFuzzRadiusKm(j.fuzz_radius_km ?? null);
+      setZoneHasPrivateAddress(true);
       showMsg(j.geocoded ? t("zoneSavedApproximate") : t("zoneSavedPending"), "ok");
       await load();
     } catch (e) {
@@ -943,128 +788,109 @@ export default function TeacherVerificationPage() {
             </div>
           </div>
 
-          {/* Privacy note */}
+          {/* Privacy banner */}
           <div className="rounded-xl border border-[#DCEAE3] bg-[#F3FAF6] px-4 py-3 text-xs text-teal-800">
-            {t("addressPrivacyHelp")}
+            Votre adresse exacte reste privée. Seule une position approximative est affichée publiquement.
           </div>
 
-          {/* Primary address input — always visible native input */}
+          {/* Primary address input — always visible */}
           <div className="space-y-1.5">
             <label
               htmlFor="zone-address-single"
               className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]"
             >
-              {t("privateTeachingAddress")}
+              Adresse privée d&apos;enseignement
             </label>
             <input
               id="zone-address-single"
               type="text"
               value={zoneSingleLine}
-              onChange={(e) => { setZoneSingleLine(e.target.value); setZoneParsedPlace(null); }}
-              placeholder="Commencez à écrire votre adresse..."
+              onChange={(e) => setZoneSingleLine(e.target.value)}
+              placeholder="Ex. : 123 rue Principale, Saint-Georges"
               autoComplete="off"
               className="h-11 w-full rounded-xl border border-[#E8E6DF] bg-white px-3 text-sm outline-none focus:border-teal-500"
             />
-            {zoneGeometryWarn ? (
-              <p className="text-xs text-amber-700">{t("zoneSelectSuggestion")}</p>
-            ) : (!zoneGoogleReady || zoneGoogleError) ? (
-              <p className="text-xs text-[#6B6A65]">
-                Suggestions Google indisponibles pour le moment — vous pouvez quand même saisir l&apos;adresse.
-              </p>
-            ) : null}
+            <p className="text-xs text-[#6B6A65]">
+              Entrez l&apos;adresse complète. Le serveur la géocode automatiquement.
+            </p>
           </div>
 
-          {/* Google PlaceAutocompleteElement — progressive enhancement only, mounts below native input */}
-          {zoneGoogleReady && !zoneGoogleError && (
-            <div className="space-y-1">
-              <span className="text-xs text-[#6B6A65]">Ou sélectionnez dans les suggestions :</span>
-              <div ref={zoneAutocompleteContainerRef} className="w-full min-h-[44px]" />
-            </div>
-          )}
-
-          {/* Toggle to manual fields */}
+          {/* Manual fields toggle */}
           <button
             type="button"
             onClick={() => setZoneShowManual((v) => !v)}
-            className="text-xs font-semibold text-teal-700 hover:underline"
+            className="text-xs font-semibold text-teal-700 hover:underline inline-flex items-center gap-1"
           >
-            {zoneShowManual ? t("hideManualAddress") : t("enterAddressManually")}
+            {zoneShowManual ? "▲ Masquer les champs manuels" : "▼ Saisir l'adresse manuellement"}
           </button>
 
-          {/* Manual fields — hidden by default */}
+          {/* Manual fields panel — clearly bordered when open */}
           {zoneShowManual ? (
-            <div className="grid gap-3 sm:grid-cols-2">
-              <label className="space-y-1 sm:col-span-2">
-                <span className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
-                  {t("zoneAddressLine1Label")}
-                </span>
-                <input
-                  value={zoneAddressLine1}
-                  onChange={(e) => setZoneAddressLine1(e.target.value)}
-                  placeholder="123 Rue Principale"
-                  className="h-11 w-full rounded-xl border border-[#E8E6DF] bg-white px-3 text-sm outline-none focus:border-teal-500"
-                />
-              </label>
-              <label className="space-y-1 sm:col-span-2">
-                <span className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
-                  {t("zoneAddressLine2Label")}
-                </span>
-                <input
-                  value={zoneAddressLine2}
-                  onChange={(e) => setZoneAddressLine2(e.target.value)}
-                  placeholder="Apt 2"
-                  className="h-11 w-full rounded-xl border border-[#E8E6DF] bg-white px-3 text-sm outline-none focus:border-teal-500"
-                />
-              </label>
-              <label className="space-y-1">
-                <span className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
-                  {t("teacherOnboardingCity")}
-                </span>
-                <input
-                  value={zoneCity}
-                  onChange={(e) => setZoneCity(e.target.value)}
-                  placeholder="Montréal"
-                  className="h-11 w-full rounded-xl border border-[#E8E6DF] bg-white px-3 text-sm outline-none focus:border-teal-500"
-                />
-              </label>
-              <label className="space-y-1">
-                <span className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
-                  {t("teacherOnboardingRegion")}
-                </span>
-                <input
-                  value={zoneRegion}
-                  onChange={(e) => setZoneRegion(e.target.value)}
-                  placeholder="Québec"
-                  className="h-11 w-full rounded-xl border border-[#E8E6DF] bg-white px-3 text-sm outline-none focus:border-teal-500"
-                />
-              </label>
-              <label className="space-y-1">
-                <span className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
-                  {t("zonePostalCodeLabel")}
-                </span>
-                <input
-                  value={zonePostalCode}
-                  onChange={(e) => setZonePostalCode(e.target.value)}
-                  placeholder="H2X 1Y1"
-                  className="h-11 w-full rounded-xl border border-[#E8E6DF] bg-white px-3 text-sm outline-none focus:border-teal-500"
-                />
-              </label>
-              <label className="space-y-1">
-                <span className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
-                  {t("zoneCountryCodeLabel")}
-                </span>
-                <input
-                  value={zoneCountryCode}
-                  onChange={(e) => setZoneCountryCode(e.target.value.toUpperCase().slice(0, 2))}
-                  placeholder="CA"
-                  maxLength={2}
-                  className="h-11 w-full rounded-xl border border-[#E8E6DF] bg-white px-3 text-sm outline-none focus:border-teal-500"
-                />
-              </label>
+            <div className="rounded-xl border border-[#DCEAE3] bg-[#F8F7F2] p-4 space-y-3">
+              <p className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
+                Détails de l&apos;adresse
+              </p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="space-y-1 sm:col-span-2">
+                  <span className="text-xs font-medium text-[#6B6A65]">Adresse</span>
+                  <input
+                    value={zoneAddressLine1}
+                    onChange={(e) => setZoneAddressLine1(e.target.value)}
+                    placeholder="123 Rue Principale"
+                    className="h-11 w-full rounded-xl border border-[#E8E6DF] bg-white px-3 text-sm outline-none focus:border-teal-500"
+                  />
+                </label>
+                <label className="space-y-1 sm:col-span-2">
+                  <span className="text-xs font-medium text-[#6B6A65]">Appartement / bureau</span>
+                  <input
+                    value={zoneAddressLine2}
+                    onChange={(e) => setZoneAddressLine2(e.target.value)}
+                    placeholder="Apt 2"
+                    className="h-11 w-full rounded-xl border border-[#E8E6DF] bg-white px-3 text-sm outline-none focus:border-teal-500"
+                  />
+                </label>
+                <label className="space-y-1">
+                  <span className="text-xs font-medium text-[#6B6A65]">Ville</span>
+                  <input
+                    value={zoneCity}
+                    onChange={(e) => setZoneCity(e.target.value)}
+                    placeholder="Montréal"
+                    className="h-11 w-full rounded-xl border border-[#E8E6DF] bg-white px-3 text-sm outline-none focus:border-teal-500"
+                  />
+                </label>
+                <label className="space-y-1">
+                  <span className="text-xs font-medium text-[#6B6A65]">Région / province</span>
+                  <input
+                    value={zoneRegion}
+                    onChange={(e) => setZoneRegion(e.target.value)}
+                    placeholder="Québec"
+                    className="h-11 w-full rounded-xl border border-[#E8E6DF] bg-white px-3 text-sm outline-none focus:border-teal-500"
+                  />
+                </label>
+                <label className="space-y-1">
+                  <span className="text-xs font-medium text-[#6B6A65]">Code postal</span>
+                  <input
+                    value={zonePostalCode}
+                    onChange={(e) => setZonePostalCode(e.target.value)}
+                    placeholder="H2X 1Y1"
+                    className="h-11 w-full rounded-xl border border-[#E8E6DF] bg-white px-3 text-sm outline-none focus:border-teal-500"
+                  />
+                </label>
+                <label className="space-y-1">
+                  <span className="text-xs font-medium text-[#6B6A65]">Pays (code)</span>
+                  <input
+                    value={zoneCountryCode}
+                    onChange={(e) => setZoneCountryCode(e.target.value.toUpperCase().slice(0, 2))}
+                    placeholder="CA"
+                    maxLength={2}
+                    className="h-11 w-full rounded-xl border border-[#E8E6DF] bg-white px-3 text-sm outline-none focus:border-teal-500"
+                  />
+                </label>
+              </div>
             </div>
           ) : null}
 
-          {/* Radius */}
+          {/* Radius — always visible */}
           <label className="space-y-1 block">
             <span className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
               {t("zoneRadiusKmLabel")}
@@ -1090,14 +916,14 @@ export default function TeacherVerificationPage() {
             className="h-11 rounded-xl bg-teal-700 px-5 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-50 inline-flex items-center gap-2"
           >
             {busy === "zone" ? <Loader2 size={16} className="animate-spin" /> : <MapPinned size={16} />}
-            {t("zoneSaveButton")}
+            Enregistrer et vérifier ma zone
           </button>
 
-          {/* Public summary — shown after first save or if already verified */}
+          {/* Public summary — only shown when a location status exists and a city is known */}
           {(zoneSavedStatus || zoneVerified || zonePending) && (zoneCity || teacherRow?.city) ? (
             <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 space-y-1">
               <p className="text-xs font-bold uppercase tracking-widest text-slate-500">
-                {t("publicApproximatePosition")}
+                Position publique approximative
               </p>
               <p className="text-sm font-semibold text-[#2C2C2A]">
                 {zoneCity || teacherRow?.city}
@@ -1109,7 +935,17 @@ export default function TeacherVerificationPage() {
               ) : (
                 <p className="text-xs font-semibold text-amber-700">{t("trustZonePending")}</p>
               )}
-              <p className="text-[11px] text-slate-400">{t("exactAddressPrivate")}</p>
+              <p className="text-[11px] text-slate-400">Adresse exacte : privée</p>
+              {zoneHasPrivateAddress ? (
+                <p className="text-[11px] text-slate-400">Source : adresse enregistrée sur cette page</p>
+              ) : (
+                <>
+                  <p className="text-[11px] text-slate-400">Source : ancienne localisation du profil</p>
+                  <p className="text-[11px] text-amber-600">
+                    Enregistrez votre adresse privée ci-dessus pour confirmer cette zone.
+                  </p>
+                </>
+              )}
             </div>
           ) : null}
         </div>
