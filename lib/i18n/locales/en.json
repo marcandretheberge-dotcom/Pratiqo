@@ -1508,6 +1508,7 @@
   "exactAddressPrivate": "Exact address: private",
   "zoneSavedApproximate": "Zone saved. Your approximate location is now visible to students.",
   "zoneSavedPending": "Zone saved. Your location will be visible after manual review.",
+  "zoneSelectSuggestion": "No exact location found. Please select a suggestion from the dropdown, or enter your address manually below.",
   "teacherPayoutPreviewTitle": "Earnings estimate",
   "teacherPayoutPreviewSentence": "At this rate, you’ll receive about {net} per class after Pratiqo’s {rate}% commission.",
   "teacherPayoutPreviewBreakdown": "Displayed price: {gross} · Commission: {commission} · Estimated net: {net}",

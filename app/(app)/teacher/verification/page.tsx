@@ -29,6 +29,7 @@ import { useLocale } from "../../../../lib/locale-context";
 import { cn } from "../../../../lib/utils";
 import { buildTeacherTrustBadges, buildTeacherTrustItems, type TeacherCredential } from "../../../../lib/teacherTrust";
 import { parseGooglePlace } from "../../../../lib/googleAddressParser";
+import { importLibrary, setOptions } from "@googlemaps/js-api-loader";
 import type { TranslationKey } from "../../../../lib/translations";
 
 type TeacherVerifyRow = {
@@ -108,6 +109,7 @@ export default function TeacherVerificationPage() {
   const [zoneParsedPlace, setZoneParsedPlace] = useState<ReturnType<typeof parseGooglePlace> | null>(null);
   const [zoneGoogleReady, setZoneGoogleReady] = useState(() => initialGoogleReady());
   const [zoneGoogleError, setZoneGoogleError] = useState(() => !process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY);
+  const [zoneGeometryWarn, setZoneGeometryWarn] = useState(false);
   const zoneAddressInputRef = useRef<HTMLInputElement | null>(null);
   const [zoneAddressLine1, setZoneAddressLine1] = useState("");
   const [zoneAddressLine2, setZoneAddressLine2] = useState("");
@@ -189,32 +191,32 @@ export default function TeacherVerificationPage() {
     }
   }, [teacherRow]);
 
-  // Load Google Maps script for address autocomplete
+  // Load Google Maps Places library via @googlemaps/js-api-loader.
+  // Using importLibrary instead of a raw <script> tag prevents conflicts when
+  // GoogleProgressiveMap (which also uses the loader) has already initialised
+  // the Maps API without the places library on a previous page.
   useEffect(() => {
     const key = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-    if (!key) return;
-    if (typeof window !== "undefined" && window.google?.maps?.places) {
+    if (!key) {
+      setZoneGoogleError(true);
+      return;
+    }
+    if (window.google?.maps?.places) {
       setZoneGoogleReady(true);
       return;
     }
     let cancelled = false;
-    const script = document.createElement("script");
-    script.async = true;
-    script.defer = true;
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&libraries=places`;
-    script.onload = () => {
-      if (cancelled) return;
-      if (window.google?.maps?.places) setZoneGoogleReady(true);
-      else setZoneGoogleError(true);
+    const run = async () => {
+      try {
+        setOptions({ key, v: "weekly" });
+        await importLibrary("places");
+        if (!cancelled) setZoneGoogleReady(true);
+      } catch {
+        if (!cancelled) setZoneGoogleError(true);
+      }
     };
-    script.onerror = () => {
-      if (!cancelled) setZoneGoogleError(true);
-    };
-    document.head.appendChild(script);
-    return () => {
-      cancelled = true;
-      script.remove();
-    };
+    void run();
+    return () => { cancelled = true; };
   }, []);
 
   // Attach Google Places Autocomplete to single-line address input
@@ -223,11 +225,22 @@ export default function TeacherVerificationPage() {
     const el = zoneAddressInputRef.current;
     if (!el || !("google" in window)) return;
     const ac = new google.maps.places.Autocomplete(el, {
-      fields: ["address_components", "formatted_address", "geometry"],
+      fields: ["address_components", "formatted_address", "geometry", "name"],
       types: ["address"],
     });
     ac.addListener("place_changed", () => {
-      const parsed = parseGooglePlace(ac.getPlace());
+      const place = ac.getPlace();
+      if (!place.geometry?.location) {
+        // User typed and pressed Enter without selecting a dropdown suggestion.
+        // Clear parsed place (no lat/lng to send), open manual fields so they
+        // can fill in city/region/country themselves.
+        setZoneParsedPlace(null);
+        setZoneGeometryWarn(true);
+        setZoneShowManual(true);
+        return;
+      }
+      setZoneGeometryWarn(false);
+      const parsed = parseGooglePlace(place);
       setZoneParsedPlace(parsed);
       if (parsed.formattedAddress) setZoneSingleLine(parsed.formattedAddress);
       if (parsed.city) setZoneCity(parsed.city);
@@ -884,7 +897,9 @@ export default function TeacherVerificationPage() {
               autoComplete="off"
               className="h-11 w-full rounded-xl border border-[#E8E6DF] bg-white px-3 text-sm outline-none focus:border-teal-500"
             />
-            {zoneGoogleError ? (
+            {zoneGeometryWarn ? (
+              <p className="text-xs text-amber-700">{t("zoneSelectSuggestion")}</p>
+            ) : zoneGoogleError ? (
               <p className="text-xs text-[#6B6A65]">{t("teacherOnboardingGoogleUnavailable")}</p>
             ) : null}
           </div>

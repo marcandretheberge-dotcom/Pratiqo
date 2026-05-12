@@ -1508,6 +1508,7 @@
   "exactAddressPrivate": "Dirección exacta: privada",
   "zoneSavedApproximate": "Zona guardada. Tu ubicación aproximada ahora es visible para los estudiantes.",
   "zoneSavedPending": "Zona guardada. Tu ubicación será visible después de revisión manual.",
+  "zoneSelectSuggestion": "No se encontró ubicación exacta. Seleccioná una sugerencia de la lista o ingresá la dirección manualmente.",
   "teacherPayoutPreviewTitle": "Estimación de tus ingresos",
   "teacherPayoutPreviewSentence": "Con esta tarifa, recibís aproximadamente {net} por clase después de la comisión de Pratiqo de {rate}%.",
   "teacherPayoutPreviewBreakdown": "Precio mostrado: {gross} · Comisión: {commission} · Neto estimado: {net}",
