@@ -771,8 +771,15 @@ export function Dashboard() {
                 cancelBusy={cancelBusy}
                 timeZone={teacherMeta?.timezone ?? null}
               />
-              {/* TODO: link to a dedicated history page once it exists */}
-              <p className="mt-2 text-center text-xs text-slate-400">{t("completedCoursesInHistory")}</p>
+              <div className="mt-2 flex items-center justify-center gap-2 text-xs text-slate-400">
+                <span>{t("completedCoursesInHistory")}</span>
+                <Link
+                  href="/teacher/history"
+                  className="font-semibold text-teal-700 underline-offset-2 hover:underline"
+                >
+                  {t("viewHistory")}
+                </Link>
+              </div>
               {confirmedUpcoming.length > 0 ? (
                 <div className="hidden min-w-0 lg:block">
                   <TeacherScheduleChangeHelperPanel
