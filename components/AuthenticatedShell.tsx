@@ -35,7 +35,7 @@ export function AuthenticatedShell({ children }: { children: React.ReactNode }) 
 
     const role = profile?.role as string | undefined;
 
-    if (role !== "teacher" && role !== "student") {
+    if (role !== "teacher" && role !== "student" && role !== "admin") {
       if (!pathname.startsWith("/onboarding")) {
         router.replace("/onboarding");
       }
