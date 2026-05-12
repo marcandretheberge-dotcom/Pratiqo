@@ -622,8 +622,8 @@ export async function sendTeacherVerificationRequestToAdmin(opts: {
           ${opts.description
             ? `<p><strong>Message :</strong><br>${escapeHtml(opts.description)}</p>`
             : ""}
-          <p><a href="${base}/teacher/verification" style="color:#409A8E;font-weight:600;">
-            Voir dans l'admin (traitement manuel)
+          <p><a href="${base}/admin/credentials" style="color:#409A8E;font-weight:600;">
+            Voir les demandes dans l'espace admin
           </a></p>
         `,
       }),

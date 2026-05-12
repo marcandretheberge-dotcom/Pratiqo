@@ -22,6 +22,7 @@ function isProtectedPath(pathname: string): boolean {
   }
 
   const protectedRoots = [
+    "/admin",
     "/dashboard",
     "/onboarding",
     "/profile",
