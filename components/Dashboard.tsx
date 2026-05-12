@@ -156,12 +156,20 @@ export function Dashboard() {
     if (!isTeacherRole) return null;
     const today = formatLocalISODate(new Date());
     const activeStatuses = ["confirmed"];
+    const needsReviewCutoff = new Date();
+    needsReviewCutoff.setDate(needsReviewCutoff.getDate() - 14);
+    const needsReviewCutoffIso = formatLocalISODate(needsReviewCutoff);
     const confirmedUpcoming = teacherBookings
       .filter((b) => activeStatuses.includes(b.status))
       .filter((b) => isBookingVisibleForTeacher(b))
       .filter((b) => {
         const state = getBookingLifecycleState(b);
-        if (state === "needs_review" || state === "ready") return true;
+        if (state === "ready") return true;
+        if (state === "needs_review") {
+          // Only surface pending reviews for lessons from the last 14 days; older ones are stale
+          const d = String(b.slot_date || b.date || "");
+          return d >= needsReviewCutoffIso;
+        }
         const d = String(b.slot_date || b.date || "");
         return d >= today;
       })
@@ -175,9 +183,16 @@ export function Dashboard() {
       .filter((b) => activeStatuses.includes(b.status) || b.status === "pending_payment")
       .filter((b) => String(b.slot_date || b.date || "") === today)
       .sort((a, b) => bookingSortKey(a).localeCompare(bookingSortKey(b)));
-    const pendingList = teacherBookings.filter((b) =>
-      ["pending", "pending_teacher", "pending_payment"].includes(b.status),
-    );
+    const pendingPaymentTtlMs = 60 * 60 * 1000; // 1 h — Stripe checkout sessions expire quickly
+    const nowMs = Date.now();
+    const pendingList = teacherBookings.filter((b) => {
+      if (!["pending", "pending_teacher", "pending_payment"].includes(b.status)) return false;
+      if (b.status === "pending_payment") {
+        const createdAt = b.created_at ? new Date(b.created_at as string).getTime() : 0;
+        return nowMs - createdAt <= pendingPaymentTtlMs;
+      }
+      return true;
+    });
     const monthStart = new Date();
     monthStart.setDate(1);
     monthStart.setHours(0, 0, 0, 0);
@@ -499,6 +514,7 @@ export function Dashboard() {
         .from("bookings")
         .select("*")
         .eq("teacher_id", teacherSlug)
+        .in("status", ["confirmed", "pending", "pending_teacher", "pending_payment"])
         .order("created_at", { ascending: false });
       if (cancelled || error) return;
       const learnerIds = Array.from(
