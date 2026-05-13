@@ -15,15 +15,20 @@
 
 ## Applying the migration
 
+Run both 056 and 057 in order. 056 ships the column / index / trigger / RPC; 057 is the hotfix that corrects the RPC return type from `uuid` to `text` because `public.teachers.id` is `text` in this schema (legacy demo rows used short numeric ids and `054_filter_teachers_public_uuid_ids.sql` filters those out at the view level rather than at the column level).
+
 ```sql
 -- In the Supabase SQL editor or via `supabase db push`:
--- 1. Run the contents of supabase/migrations/056_teachers_postgis_search.sql.
--- 2. Spot-check the backfill:
+-- 1. Run supabase/migrations/056_teachers_postgis_search.sql.
+-- 2. Run supabase/migrations/057_fix_nearby_teachers_return_type.sql.
+--    (057 is idempotent on top of any partial 056 state, so it's safe to
+--     run even if 056 errored midway.)
+-- 3. Spot-check the backfill:
 select count(*) filter (where location_point is not null) as with_point,
        count(*) as total
 from public.teachers;
 
--- 3. Sanity-check the RPC against a known city (Montreal, for example):
+-- 4. Sanity-check the RPC against a known city (Montreal, for example):
 select id, distance_km
 from public.nearby_teachers(45.5019, -73.5674, 25, 10);
 ```

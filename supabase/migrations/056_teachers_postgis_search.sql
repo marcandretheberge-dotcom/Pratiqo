@@ -104,7 +104,7 @@ CREATE OR REPLACE FUNCTION public.nearby_teachers(
   p_limit integer DEFAULT 200
 )
 RETURNS TABLE (
-  id uuid,
+  id text,
   distance_km double precision
 )
 LANGUAGE sql
