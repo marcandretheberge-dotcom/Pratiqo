@@ -13,6 +13,8 @@ import { parseGooglePlace } from "@/lib/googleAddressParser";
 import { blurCoordinates } from "@/lib/maps";
 import { TeacherPayoutPreview } from "@/components/teacher/TeacherPayoutPreview";
 
+import { importLibrary, setOptions } from "@googlemaps/js-api-loader";
+
 type StepId = 1 | 2 | 3 | 4;
 type Category = "music" | "languages" | "academic" | "other";
 type TeachingMode = "online" | "in_person" | "at_home" | "hybrid";
@@ -171,27 +173,25 @@ export default function TeacherOnboardingPage() {
   // Google Places Autocomplete (optional)
   useEffect(() => {
     const key = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-    if (!key) {
+    if (!key) return;
+    if (typeof window !== "undefined" && window.google?.maps?.places) {
+      setGoogleReady(true);
       return;
     }
-    if (typeof window !== "undefined" && window.google?.maps?.places) return;
     let cancelled = false;
-    const script = document.createElement("script");
-    script.async = true;
-    script.defer = true;
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&libraries=places`;
-    script.onload = () => {
-      if (cancelled) return;
-      if (window.google?.maps?.places) setGoogleReady(true);
-      else setGoogleError(true);
-    };
-    script.onerror = () => {
-      if (!cancelled) setGoogleError(true);
-    };
-    document.head.appendChild(script);
+    setOptions({ key, v: "weekly" });
+    importLibrary("places")
+      .then(() => {
+        if (!cancelled) {
+          setGoogleReady(true);
+          setGoogleError(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setGoogleError(true);
+      });
     return () => {
       cancelled = true;
-      script.remove();
     };
   }, []);
 

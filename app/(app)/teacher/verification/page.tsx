@@ -65,6 +65,8 @@ type TeacherCredentialRow = {
   created_at: string | null;
 };
 
+import { importLibrary, setOptions } from "@googlemaps/js-api-loader";
+
 export default function TeacherVerificationPage() {
   const { user, profile, loading } = useAuth();
   const { t } = useLocale();
@@ -111,19 +113,19 @@ export default function TeacherVerificationPage() {
   useEffect(() => {
     const key = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
     if (!key) return;
-    if (typeof window !== "undefined" && window.google?.maps?.places) return;
+    if (typeof window !== "undefined" && window.google?.maps?.places) {
+      setGoogleReady(true);
+      return;
+    }
     let cancelled = false;
-    const script = document.createElement("script");
-    script.async = true;
-    script.defer = true;
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&libraries=places`;
-    script.onload = () => {
-      if (!cancelled && window.google?.maps?.places) setGoogleReady(true);
-    };
-    document.head.appendChild(script);
+    setOptions({ key, v: "weekly" });
+    importLibrary("places")
+      .then(() => {
+        if (!cancelled) setGoogleReady(true);
+      })
+      .catch(() => {});
     return () => {
       cancelled = true;
-      script.remove();
     };
   }, []);
 
