@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
+import * as Sentry from "@sentry/nextjs";
 import { stripe } from "@/lib/stripe";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { COMPANIONS, getCompanionStage } from "@/lib/companions";
@@ -329,6 +330,20 @@ async function confirmBookingAndNotify(
     });
   } catch (ledgerErr) {
     console.error("[stripe/webhook] booking payment ledger upsert failed", ledgerErr);
+    Sentry.captureException(ledgerErr, {
+      tags: { surface: "stripe.webhook", phase: "ledger_upsert" },
+      contexts: {
+        booking_payment: {
+          bookingId,
+          paymentIntentId,
+          amountCents,
+          platformFeeCents,
+          teacherNetCents,
+          stripeChargeId,
+          checkoutSessionId: opts.checkoutSessionId ?? null,
+        },
+      },
+    });
     return;
   }
 
@@ -595,8 +610,24 @@ export async function POST(req: Request) {
     event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
   } catch (err) {
     console.error("[stripe/webhook] signature verify failed", err);
+    // Capture as warning, not error — this is also the path that fires on
+    // ordinary replay attempts and probes. We still want it visible so we can
+    // detect a misconfigured webhook secret or rotated key.
+    Sentry.captureException(err, {
+      level: "warning",
+      tags: { surface: "stripe.webhook", phase: "signature_verify" },
+      contexts: {
+        webhook: {
+          signaturePresent: Boolean(signature),
+          bodyBytes: body.length,
+        },
+      },
+    });
     return NextResponse.json({ error: "Invalid signature." }, { status: 400 });
   }
+
+  Sentry.setTag("stripe.event_type", event.type);
+  Sentry.setTag("stripe.event_id", event.id);
 
   try {
     if (event.type === "payment_intent.succeeded") {
@@ -688,6 +719,17 @@ export async function POST(req: Request) {
     }
   } catch (e) {
     console.error("[stripe/webhook] handler error", e);
+    Sentry.captureException(e, {
+      tags: { surface: "stripe.webhook", phase: "handler" },
+      contexts: {
+        stripe_event: {
+          id: event.id,
+          type: event.type,
+          livemode: event.livemode,
+          api_version: event.api_version,
+        },
+      },
+    });
     return NextResponse.json({ error: "Webhook handler failed." }, { status: 500 });
   }
 

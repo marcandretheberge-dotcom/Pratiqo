@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs";
 
 /** Enforcing CSP — Phase A hardening; unsafe-inline kept where required; no eval in script/default. */
 const cspValue = [
@@ -8,7 +9,8 @@ const cspValue = [
   "connect-src 'self'"
     + " https://*.supabase.co wss://*.supabase.co"
     + " https://*.stripe.com https://api.stripe.com"
-    + " https://maps.googleapis.com https://*.googleapis.com https://maps.gstatic.com",
+    + " https://maps.googleapis.com https://*.googleapis.com https://maps.gstatic.com"
+    + " https://*.ingest.sentry.io https://*.ingest.us.sentry.io",
   // Script sources (explicit so Google Maps JS API loads without relying on default-src)
   "script-src 'self' 'unsafe-inline'"
     + " https://maps.googleapis.com https://maps.gstatic.com"
@@ -41,7 +43,8 @@ const cspReportOnlyValue = [
   "connect-src 'self'"
     + " https://*.supabase.co wss://*.supabase.co"
     + " https://*.stripe.com https://api.stripe.com"
-    + " https://maps.googleapis.com https://*.googleapis.com https://maps.gstatic.com",
+    + " https://maps.googleapis.com https://*.googleapis.com https://maps.gstatic.com"
+    + " https://*.ingest.sentry.io https://*.ingest.us.sentry.io",
   "script-src 'self' 'unsafe-inline'"
     + " https://maps.googleapis.com https://maps.gstatic.com"
     + " https://*.supabase.co https://*.stripe.com https://js.stripe.com",
@@ -91,4 +94,25 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+// Sentry build-time integration: uploads source maps + creates releases when
+// SENTRY_AUTH_TOKEN is set in the build environment. Falls back to a no-op
+// wrapper when no token is present (e.g. local dev), so the build still works
+// without any Sentry env vars.
+export default withSentryConfig(nextConfig, {
+  org: "pratiqo",
+  project: "javascript-nextjs",
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  // Silence the verbose CLI banner in CI.
+  silent: !process.env.CI,
+  // Hide source maps from public access after upload (the Sentry-uploaded copy
+  // is still available for symbolication in the dashboard).
+  sourcemaps: { disable: false, deleteSourcemapsAfterUpload: true },
+  // Tunnel adblocker-blocked requests through our own /monitoring endpoint.
+  // We're starting with this off; revisit if we see meaningful drop-off.
+  tunnelRoute: undefined,
+  // Don't fail the build if Sentry CLI can't talk to the API (e.g. token rev).
+  errorHandler: (err) => {
+    // eslint-disable-next-line no-console
+    console.warn("[sentry] non-fatal build-time error:", err.message);
+  },
+});
