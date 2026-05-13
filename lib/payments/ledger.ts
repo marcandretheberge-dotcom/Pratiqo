@@ -38,6 +38,23 @@ export type BookingPaymentRowForTransfer = {
   transfer_status: string;
 };
 
+export type BookingPaymentRowForRefund = {
+  id: string;
+  booking_id: string;
+  stripe_payment_intent_id: string | null;
+  stripe_charge_id: string | null;
+  stripe_transfer_id: string | null;
+  stripe_refund_id: string | null;
+  stripe_transfer_reversal_id: string | null;
+  amount_cents: number;
+  refunded_cents: number;
+  teacher_net_cents: number;
+  currency: string;
+  payment_status: string;
+  transfer_status: string;
+  refund_status: string;
+};
+
 function safeCents(value: number): number {
   return Math.max(0, Math.round(Number.isFinite(value) ? value : 0));
 }
@@ -238,5 +255,78 @@ export async function markBookingPaymentTransferred(
 
   if (error) {
     throw new Error(`Failed to mark booking payment transferred: ${error.message}`);
+  }
+}
+
+export async function getBookingPaymentForRefund(
+  admin: SupabaseClient,
+  bookingId: string,
+): Promise<BookingPaymentRowForRefund | null> {
+  const { data, error } = await admin
+    .from("booking_payments")
+    .select(
+      "id, booking_id, stripe_payment_intent_id, stripe_charge_id, stripe_transfer_id, stripe_refund_id, stripe_transfer_reversal_id, amount_cents, refunded_cents, teacher_net_cents, currency, payment_status, transfer_status, refund_status",
+    )
+    .eq("booking_id", bookingId)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(`Failed to fetch booking payment for refund: ${error.message}`);
+  }
+
+  return (data as BookingPaymentRowForRefund | null) ?? null;
+}
+
+export async function markBookingPaymentRefunded(
+  admin: SupabaseClient,
+  bookingId: string,
+  params: {
+    refund: Stripe.Refund;
+    reversal?: Stripe.TransferReversal | null;
+    isFull: boolean;
+  },
+): Promise<void> {
+  const now = new Date().toISOString();
+  const { refund, reversal, isFull } = params;
+  const refundedCents = Math.max(0, Math.round(refund.amount ?? 0));
+
+  const patch: Record<string, unknown> = {
+    refund_status: isFull ? "refunded" : "partially_refunded",
+    payment_status: isFull ? "refunded" : "partially_refunded",
+    stripe_refund_id: refund.id,
+    refunded_cents: refundedCents,
+    refunded_at: now,
+    failure_reason: null,
+    updated_at: now,
+  };
+
+  if (reversal?.id) {
+    patch.stripe_transfer_reversal_id = reversal.id;
+    patch.transfer_status = "reversed";
+  }
+
+  const { error } = await admin.from("booking_payments").update(patch).eq("booking_id", bookingId);
+  if (error) {
+    throw new Error(`Failed to mark booking payment refunded: ${error.message}`);
+  }
+}
+
+export async function markBookingPaymentRefundFailed(
+  admin: SupabaseClient,
+  bookingId: string,
+  reason: string,
+): Promise<void> {
+  const now = new Date().toISOString();
+  const { error } = await admin
+    .from("booking_payments")
+    .update({
+      refund_status: "failed",
+      failure_reason: reason.slice(0, 500),
+      updated_at: now,
+    })
+    .eq("booking_id", bookingId);
+
+  if (error) {
+    throw new Error(`Failed to mark booking payment refund failed: ${error.message}`);
   }
 }

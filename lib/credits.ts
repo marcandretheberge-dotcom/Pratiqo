@@ -11,7 +11,13 @@ export const COMPANION_MILESTONE_AMOUNTS: Record<number, number> = {
   4: 25,  // Stage 5 (max — Phoenix / Forest / Legendary / Supernova)
 };
 
-export type CreditType = "companion_evolution" | "referral" | "referee_bonus" | "review" | "credit_used";
+export type CreditType =
+  | "companion_evolution"
+  | "referral"
+  | "referee_bonus"
+  | "review"
+  | "credit_used"
+  | "booking_refund";
 
 async function currentBalance(userId: string): Promise<number> {
   const { data } = await getSupabaseAdmin()

@@ -11,6 +11,7 @@ import {
   type BookingDateFields,
   type CancellerRole,
 } from "@/lib/bookingCancellation";
+import { executeBookingRefund } from "@/lib/payments/refunds";
 import { t as translate } from "@/lib/translations";
 import type { Locale } from "@/lib/i18n/types";
 
@@ -124,10 +125,6 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     hasStripePaymentIntent: stripePI,
     bookingPrice,
   });
-  // TODO(payment): execute Stripe refunds from booking_payments.
-  // Before teacher transfer: refund the original Stripe payment.
-  // After teacher transfer: reverse the transfer first, then refund when Stripe allows it.
-  // For now this route preserves the existing metadata workflow for support review.
 
   const cancelledAtIso = new Date().toISOString();
   const { data: updatedRows, error: updateErr } = await admin
@@ -153,6 +150,54 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   if (!updatedRows || updatedRows.length === 0) {
     return NextResponse.json({ error: "Booking status changed — try refreshing" }, { status: 409 });
+  }
+
+  // Execute the refund whenever the plan calls for an automatic action. The
+  // helper handles three cases: Pratiqo credit award, full Stripe refund of
+  // the original payment, and transfer reversal + Stripe refund when the
+  // teacher payout already went out. `pending_review` (student late cancel)
+  // is left untouched for the resolution center.
+  let finalRefundStatus = refundPlan.refund_status;
+  let finalRefundMethod = refundPlan.refund_method;
+  if (refundPlan.refund_status === "pending") {
+    const refundOutcome = await executeBookingRefund({
+      admin,
+      bookingId,
+      studentId: booking.student_id as string,
+      plan: refundPlan,
+      lessonDate:
+        String((booking.slot_date as string | null) ?? (booking.date as string | null) ?? "").trim() ||
+        null,
+      bookingStripePaymentIntentId:
+        typeof booking.stripe_payment_intent_id === "string"
+          ? booking.stripe_payment_intent_id
+          : null,
+    });
+
+    finalRefundStatus = refundOutcome.finalStatus;
+    finalRefundMethod = refundOutcome.method;
+
+    if (refundOutcome.finalStatus !== refundPlan.refund_status || refundOutcome.method !== refundPlan.refund_method) {
+      const { error: refundUpdateErr } = await admin
+        .from("bookings")
+        .update({
+          refund_status: refundOutcome.finalStatus,
+          refund_method: refundOutcome.method,
+        })
+        .eq("id", bookingId);
+      if (refundUpdateErr) {
+        // Soft-fail: cancellation succeeded; surfacing the refund status is best-effort.
+        console.error("[bookings/cancel] failed to persist refund outcome", refundUpdateErr);
+      }
+    }
+
+    if (refundOutcome.finalStatus === "pending" && refundOutcome.reason) {
+      console.warn("[bookings/cancel] refund deferred", {
+        bookingId,
+        method: refundOutcome.method,
+        reason: refundOutcome.reason,
+      });
+    }
   }
 
   const uiLocale = localeFromAcceptLanguage(req.headers.get("accept-language"));
@@ -189,8 +234,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   return NextResponse.json({
     ok: true,
-    refund_status: refundPlan.refund_status,
-    refund_method: refundPlan.refund_method,
+    refund_status: finalRefundStatus,
+    refund_method: finalRefundMethod,
     refund_amount: refundPlan.refund_amount,
   });
 }
