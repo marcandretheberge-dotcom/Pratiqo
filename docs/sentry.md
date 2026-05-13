@@ -12,6 +12,12 @@ Wiring (Phase 0, item 5). One Sentry project (`org=pratiqo`, `project=javascript
 | `instrumentation.ts` | All | Dispatches the right init at boot. Exports `onRequestError` for route-handler throws. |
 | `next.config.ts` | Build | Wrapped with `withSentryConfig({...})` so source maps upload + releases are created when `SENTRY_AUTH_TOKEN` is set. |
 
+## Turbopack + browser bundle
+
+Production `next build` can emit Turbopack-style chunks (`turbopack-*.js` in HTML). In that mode the Sentry webpack plugin may **not** inject `sentry.client.config.ts` into the browser graph, so grepping `/_next/static/chunks/*.js` finds no `Sentry` / DSN strings even when `NEXT_PUBLIC_SENTRY_DSN` is set.
+
+We explicitly import `../sentry.client.config` from `app/providers.tsx` (a `"use client"` module that wraps the whole app) so the browser SDK is always bundled. Server/edge init still comes from `instrumentation.ts` + the Sentry config files.
+
 ## Environment variables
 
 | Variable | Where it's used | Required? |
