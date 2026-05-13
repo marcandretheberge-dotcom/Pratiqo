@@ -2,7 +2,9 @@
 -- Demo rows with ids like '1', '2', etc. can break booking because
 -- booking.teacher_id expects a real teachers.id UUID.
 
-create or replace view public.teachers_public as
+drop view if exists public.teachers_public;
+
+create view public.teachers_public as
 select
   id,
   name,
