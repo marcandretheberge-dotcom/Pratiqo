@@ -14,9 +14,9 @@
 
 -- -----------------------------------------------------------------------------
 -- Helper: can the current user (auth.uid) read a learner profile as the teacher?
+-- Use CREATE OR REPLACE without dropping first: remote databases may already have
+-- a learner_profiles policy depending on the helper.
 -- -----------------------------------------------------------------------------
-DROP FUNCTION IF EXISTS public.can_teacher_read_learner_profile(uuid);
-
 CREATE OR REPLACE FUNCTION public.can_teacher_read_learner_profile(p_learner_profile_id uuid)
 RETURNS boolean
 LANGUAGE sql
