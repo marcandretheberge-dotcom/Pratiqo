@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Loader2, UsersRound } from "lucide-react";
 import { getSupabaseClient } from "@/lib/supabase";
-import { CATEGORIES } from "@/constants";
+import { CATEGORIES } from "@/lib/disciplineCategories";
 import type { Discipline } from "@/types";
 import { cn } from "@/lib/utils";
 import { isSessionBookable, spotsRemaining, type GroupSessionRow } from "@/lib/groupSessions";

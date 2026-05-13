@@ -1,11 +1,40 @@
-import { TEACHERS } from "../constants";
 import { getSupabaseClient } from "./supabase";
 import { teacherToRow } from "./teacherMapper";
 
-/** Upsert demo teachers into `public.teachers` (requires RLS to allow your key, or use SQL seed in migration). */
-export async function seedTeachers() {
+/**
+ * Demo data is gated behind an explicit env flag so production builds never
+ * write fake teachers or student progress rows. Set
+ * `NEXT_PUBLIC_ENABLE_DEMO_SEED=true` in `.env.local` (and only there) to
+ * enable the dev seed flow.
+ *
+ * `NEXT_PUBLIC_*` is required because `seedStudentProgress` runs from the
+ * client `AuthProvider`. Reading the flag at module scope keeps it
+ * tree-shakeable: when the flag is unset, the demo data import below is
+ * skipped at runtime and never reaches the production wire.
+ */
+const DEMO_SEED_ENABLED =
+  typeof process !== "undefined" &&
+  process.env.NEXT_PUBLIC_ENABLE_DEMO_SEED === "true";
+
+let warned = false;
+function warnOnce(name: string): void {
+  if (warned) return;
+  warned = true;
+  console.info(
+    `[seed] ${name} skipped — set NEXT_PUBLIC_ENABLE_DEMO_SEED=true to enable demo seeding (dev/staging only).`,
+  );
+}
+
+/** Upsert demo teachers into `public.teachers`. No-op unless the demo seed flag is on. */
+export async function seedTeachers(): Promise<void> {
+  if (!DEMO_SEED_ENABLED) {
+    warnOnce("seedTeachers");
+    return;
+  }
+
+  const { DEMO_TEACHERS } = await import("./dev/demoTeachers");
   const supabase = getSupabaseClient();
-  for (const teacher of TEACHERS) {
+  for (const teacher of DEMO_TEACHERS) {
     const row = teacherToRow(teacher);
     const { error } = await supabase.from("teachers").upsert(row, { onConflict: "id" });
     if (error) {
@@ -14,7 +43,14 @@ export async function seedTeachers() {
   }
 }
 
-export async function seedStudentProgress(studentId: string) {
+/**
+ * Seed a couple of `student_progress` rows for a freshly signed-up user.
+ * No-op unless the demo seed flag is on — this used to run on every sign-in
+ * and silently inserted demo data against fake teacher ids in production.
+ */
+export async function seedStudentProgress(studentId: string): Promise<void> {
+  if (!DEMO_SEED_ENABLED) return;
+
   const supabase = getSupabaseClient();
 
   const { data: existing, error: selErr } = await supabase

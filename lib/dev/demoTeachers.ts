@@ -1,6 +1,14 @@
-import type { Discipline, Teacher } from "./types";
+import type { Teacher } from "@/types";
 
-export const TEACHERS: Teacher[] = [
+/**
+ * Hand-curated demo teachers used by the local dev/staging seed flow.
+ *
+ * NEVER import this from a production code path — it is only meant to be
+ * loaded by `lib/seed.ts`, which is gated behind
+ * `NEXT_PUBLIC_ENABLE_DEMO_SEED === "true"`. Surface area is kept minimal so
+ * tree-shaking can drop the data entirely from real builds.
+ */
+export const DEMO_TEACHERS: Teacher[] = [
   {
     id: "1",
     name: "Sophie Martin",
@@ -168,7 +176,7 @@ export const TEACHERS: Teacher[] = [
     distance: 0,
     pricePerLesson: 32,
     monthlySubscription: 110,
-    bio: "Prof d’anglais à Québec — conversation naturelle, vocabulaire et préparation aux examens.",
+    bio: "Prof d'anglais à Québec — conversation naturelle, vocabulaire et préparation aux examens.",
     imageUrl: "https://picsum.photos/seed/englishqc/160/160",
     availability: ["Mardi 09:00", "Jeudi 19:00", "Dimanche 11:00"],
     location: { lat: 46.8139, lng: -71.208 },
@@ -178,13 +186,3 @@ export const TEACHERS: Teacher[] = [
     levels: ["Tous niveaux"],
   },
 ];
-
-export const CATEGORIES: Discipline[] = [
-  "Musique",
-  "Arts Martiaux",
-  "Langues",
-  "Danse",
-  "Sports",
-  "Scolaire",
-];
-

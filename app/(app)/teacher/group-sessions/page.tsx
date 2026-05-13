@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Loader2, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useAuth } from "../../../../components/AuthProvider";
 import { getSupabaseClient } from "../../../../lib/supabase";
-import { CATEGORIES } from "../../../../constants";
+import { CATEGORIES } from "../../../../lib/disciplineCategories";
 import type { Discipline } from "../../../../types";
 import { cn } from "../../../../lib/utils";
 import { isEnabled } from "../../../../lib/features";
