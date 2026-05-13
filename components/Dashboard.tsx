@@ -754,7 +754,7 @@ export function Dashboard() {
                   ))}
                 </ul>
               )}
-            </div>
+            </motion.div>
 
             <motion.div variants={itemVariants}
               className={
@@ -911,8 +911,8 @@ export function Dashboard() {
                   {t("findTeacher")}
                 </button>
               </div>
-            </motion.div>
-          </div>
+            </div>
+          </motion.div>
 
           <motion.div variants={itemVariants}>
             <AssignmentHub mode="student" />
@@ -978,7 +978,7 @@ export function Dashboard() {
             <h4 className="font-bold text-lg leading-tight">{t("dashboardSecurityTitle")}</h4>
             <p className="text-xs opacity-80 leading-relaxed">{t("dashboardSecurityBlurb")}</p>
           </div>
-        </div>
+        </motion.div>
       </div>
 
       <ConfirmCancelBookingDialog
