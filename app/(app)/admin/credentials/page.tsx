@@ -183,6 +183,12 @@ export default function AdminCredentialsPage() {
               <p className="mt-2 text-sm leading-relaxed text-slate-600">
                 Approuvez ou refusez les diplômes uploadés et les qualifications soumises par les enseignants.
               </p>
+              <Link
+                href="/admin/operations"
+                className="mt-4 inline-flex h-9 items-center rounded-full border border-slate-200 bg-white px-4 text-xs font-bold text-slate-700 hover:bg-slate-50"
+              >
+                Voir toutes les operations
+              </Link>
             </div>
           </div>
         </section>
