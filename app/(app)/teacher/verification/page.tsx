@@ -804,7 +804,7 @@ export default function TeacherVerificationPage() {
 
           {/* Privacy banner */}
           <div className="rounded-xl border border-[#DCEAE3] bg-[#F3FAF6] px-4 py-3 text-xs text-teal-800">
-            Votre adresse exacte reste privée. Seule une position approximative est affichée publiquement.
+            {t("verificationZonePrivacyNote")}
           </div>
 
           {/* Primary address input — always visible */}
@@ -813,19 +813,19 @@ export default function TeacherVerificationPage() {
               htmlFor="zone-address-single"
               className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]"
             >
-              Adresse privée d&apos;enseignement
+              {t("verificationZoneAddressLabel")}
             </label>
             <input
               id="zone-address-single"
               type="text"
               value={zoneSingleLine}
               onChange={(e) => setZoneSingleLine(e.target.value)}
-              placeholder="Ex. : 123 rue Principale, Saint-Georges"
+              placeholder={t("verificationZoneAddressPlaceholder")}
               autoComplete="off"
               className="h-11 w-full rounded-xl border border-[#E8E6DF] bg-white px-3 text-sm outline-none focus:border-teal-500"
             />
             <p className="text-xs text-[#6B6A65]">
-              Entrez l&apos;adresse complète. Le serveur la géocode automatiquement.
+              {t("verificationZoneAddressHint")}
             </p>
           </div>
 
@@ -835,18 +835,18 @@ export default function TeacherVerificationPage() {
             onClick={() => setZoneShowManual((v) => !v)}
             className="text-xs font-semibold text-teal-700 hover:underline inline-flex items-center gap-1"
           >
-            {zoneShowManual ? "▲ Masquer les champs manuels" : "▼ Saisir l'adresse manuellement"}
+            {zoneShowManual ? t("verificationZoneHideManual") : t("verificationZoneShowManual")}
           </button>
 
           {/* Manual fields panel — clearly bordered when open */}
           {zoneShowManual ? (
             <div className="rounded-xl border border-[#DCEAE3] bg-[#F8F7F2] p-4 space-y-3">
               <p className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
-                Détails de l&apos;adresse
+                {t("verificationZoneManualHeading")}
               </p>
               <div className="grid gap-3 sm:grid-cols-2">
                 <label className="space-y-1 sm:col-span-2">
-                  <span className="text-xs font-medium text-[#6B6A65]">Adresse</span>
+                  <span className="text-xs font-medium text-[#6B6A65]">{t("zoneAddressLine1Label")}</span>
                   <input
                     value={zoneAddressLine1}
                     onChange={(e) => setZoneAddressLine1(e.target.value)}
@@ -855,7 +855,7 @@ export default function TeacherVerificationPage() {
                   />
                 </label>
                 <label className="space-y-1 sm:col-span-2">
-                  <span className="text-xs font-medium text-[#6B6A65]">Appartement / bureau</span>
+                  <span className="text-xs font-medium text-[#6B6A65]">{t("verificationZoneAptLabel")}</span>
                   <input
                     value={zoneAddressLine2}
                     onChange={(e) => setZoneAddressLine2(e.target.value)}
@@ -864,7 +864,7 @@ export default function TeacherVerificationPage() {
                   />
                 </label>
                 <label className="space-y-1">
-                  <span className="text-xs font-medium text-[#6B6A65]">Ville</span>
+                  <span className="text-xs font-medium text-[#6B6A65]">{t("verificationZoneCityLabel")}</span>
                   <input
                     value={zoneCity}
                     onChange={(e) => setZoneCity(e.target.value)}
@@ -873,7 +873,7 @@ export default function TeacherVerificationPage() {
                   />
                 </label>
                 <label className="space-y-1">
-                  <span className="text-xs font-medium text-[#6B6A65]">Région / province</span>
+                  <span className="text-xs font-medium text-[#6B6A65]">{t("verificationZoneRegionLabel")}</span>
                   <input
                     value={zoneRegion}
                     onChange={(e) => setZoneRegion(e.target.value)}
@@ -882,7 +882,7 @@ export default function TeacherVerificationPage() {
                   />
                 </label>
                 <label className="space-y-1">
-                  <span className="text-xs font-medium text-[#6B6A65]">Code postal</span>
+                  <span className="text-xs font-medium text-[#6B6A65]">{t("zonePostalCodeLabel")}</span>
                   <input
                     value={zonePostalCode}
                     onChange={(e) => setZonePostalCode(e.target.value)}
@@ -891,7 +891,7 @@ export default function TeacherVerificationPage() {
                   />
                 </label>
                 <label className="space-y-1">
-                  <span className="text-xs font-medium text-[#6B6A65]">Pays (code)</span>
+                  <span className="text-xs font-medium text-[#6B6A65]">{t("verificationZoneCountryCodeLabel")}</span>
                   <input
                     value={zoneCountryCode}
                     onChange={(e) => setZoneCountryCode(e.target.value.toUpperCase().slice(0, 2))}
@@ -930,14 +930,14 @@ export default function TeacherVerificationPage() {
             className="h-11 rounded-xl bg-teal-700 px-5 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-50 inline-flex items-center gap-2"
           >
             {busy === "zone" ? <Loader2 size={16} className="animate-spin" /> : <MapPinned size={16} />}
-            Enregistrer et vérifier ma zone
+            {t("zoneSaveButton")}
           </button>
 
           {/* Public summary — only shown when a location status exists and a city is known */}
           {(zoneSavedStatus || vState.zone.kind === "verified" || vState.zone.kind === "pending") && (zoneCity || teacherRow?.city) ? (
             <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 space-y-1">
               <p className="text-xs font-bold uppercase tracking-widest text-slate-500">
-                Position publique approximative
+                {t("zonePublicDisplay")}
               </p>
               <p className="text-sm font-semibold text-[#2C2C2A]">
                 {zoneCity || teacherRow?.city}
@@ -949,14 +949,14 @@ export default function TeacherVerificationPage() {
               ) : (
                 <p className="text-xs font-semibold text-amber-700">{t("trustZonePending")}</p>
               )}
-              <p className="text-[11px] text-slate-400">Adresse exacte : privée</p>
+              <p className="text-[11px] text-slate-400">{t("exactAddressPrivate")}</p>
               {zoneHasPrivateAddress ? (
-                <p className="text-[11px] text-slate-400">Source : adresse enregistrée sur cette page</p>
+                <p className="text-[11px] text-slate-400">{t("verificationZoneSummarySourceSaved")}</p>
               ) : (
                 <>
-                  <p className="text-[11px] text-slate-400">Source : ancienne localisation du profil</p>
+                  <p className="text-[11px] text-slate-400">{t("verificationZoneSummarySourceOld")}</p>
                   <p className="text-[11px] text-amber-600">
-                    Enregistrez votre adresse privée ci-dessus pour confirmer cette zone.
+                    {t("verificationZoneSummarySourceOldPrompt")}
                   </p>
                 </>
               )}
