@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { computeAvailableDaysForTeacher } from "@/lib/teacherSlotQueries";
 
-export const runtime = "nodejs";
+export const runtime = "edge";
 
 export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }) {
   try {

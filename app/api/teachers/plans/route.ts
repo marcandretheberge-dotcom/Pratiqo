@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
-export const runtime = "nodejs";
+export const runtime = "edge";
 
 function normalizePlan(p: string | null | undefined): string {
   const raw = String(p || "free").toLowerCase();

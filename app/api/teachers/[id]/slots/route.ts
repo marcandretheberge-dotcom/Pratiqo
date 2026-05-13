@@ -11,7 +11,7 @@ import {
 import { defaultLessonDurationMinutes } from "@/lib/teacherSlotQueries";
 import { isBookingAtLeast24hAhead } from "@/lib/bookingCancellation";
 
-export const runtime = "nodejs";
+export const runtime = "edge";
 
 export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }) {
   try {
