@@ -47,7 +47,10 @@ export function GoogleProgressiveMap({ mapKey, exactLat, exactLng, locked, neigh
       setLoadError(null);
       try {
         setOptions({ key: apiKey, v: "weekly" });
-        await importLibrary("maps");
+        await Promise.all([
+          importLibrary("maps"),
+          importLibrary("marker"),
+        ]);
         if (cancelled || !containerRef.current) return;
 
         const blurKey = `${mapKey}|${exactLat}|${exactLng}|locked`;

@@ -199,22 +199,41 @@ export default function TeacherOnboardingPage() {
     if (!googleReady || step !== 2) return;
     const el = addressInputRef.current;
     if (!el) return;
-    if (!("google" in window)) return;
-    const ac = new google.maps.places.Autocomplete(el, {
-      fields: ["address_components", "formatted_address", "geometry"],
-      types: ["address"],
-    });
-    ac.addListener("place_changed", () => {
-      const place = ac.getPlace();
-      const parsed = parseGooglePlace(place);
-      setParsedPlace(parsed);
-      if (parsed.formattedAddress) setAddressValue(parsed.formattedAddress);
-      if (parsed.city) setCity(parsed.city);
-      if (parsed.region) setRegion(parsed.region);
-      if (parsed.countryCode) setCountryCode(parsed.countryCode);
-    });
+    
+    let ac: google.maps.places.Autocomplete;
+    let listener: google.maps.MapsEventListener;
+    
+    const initAutocomplete = async () => {
+      try {
+        const { Autocomplete } = await importLibrary("places") as google.maps.PlacesLibrary;
+        if (!addressInputRef.current) return;
+
+        ac = new Autocomplete(el, {
+          fields: ["address_components", "formatted_address", "geometry"],
+          types: ["address"],
+        });
+        
+        listener = ac.addListener("place_changed", () => {
+          const place = ac.getPlace();
+          const parsed = parseGooglePlace(place);
+          setParsedPlace(parsed);
+          if (parsed.formattedAddress) setAddressValue(parsed.formattedAddress);
+          if (parsed.city) setCity(parsed.city);
+          if (parsed.region) setRegion(parsed.region);
+          if (parsed.countryCode) setCountryCode(parsed.countryCode);
+        });
+      } catch (e) {
+        console.error("Failed to initialize Google Places Autocomplete:", e);
+      }
+    };
+
+    void initAutocomplete();
+
     return () => {
-      window.google?.maps?.event?.clearInstanceListeners(ac);
+      if (listener) listener.remove();
+      if (ac && window.google?.maps?.event) {
+        window.google.maps.event.clearInstanceListeners(ac);
+      }
     };
   }, [googleReady, step]);
 

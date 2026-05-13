@@ -155,7 +155,10 @@ export function SearchMapView({
       setLoadError(null);
       try {
         setOptions({ key: apiKey, v: "weekly" });
-        await importLibrary("maps");
+        await Promise.all([
+          importLibrary("maps"),
+          importLibrary("marker"),
+        ]);
         if (cancelled || !mapRef.current) return;
 
         // Determine initial centre (priority: props → browser geo → fallback).

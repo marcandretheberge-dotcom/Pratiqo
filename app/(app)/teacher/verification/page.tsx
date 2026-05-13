@@ -133,25 +133,44 @@ export default function TeacherVerificationPage() {
     if (!googleReady || !teacherRow) return;
     const el = addressInputRef.current;
     if (!el) return;
-    if (!("google" in window)) return;
-    const ac = new google.maps.places.Autocomplete(el, {
-      fields: ["address_components", "formatted_address", "geometry"],
-      types: ["address"],
-    });
-    ac.addListener("place_changed", () => {
-      const place = ac.getPlace();
-      const parsed = parseGooglePlace(place);
-      if (parsed.formattedAddress) setZoneSingleLine(parsed.formattedAddress);
-      if (parsed.city) setZoneCity(parsed.city);
-      if (parsed.region) setZoneRegion(parsed.region);
-      if (parsed.countryCode) setZoneCountryCode(parsed.countryCode);
-      if (parsed.postalCode) setZonePostalCode(parsed.postalCode);
-      if (parsed.streetNumber || parsed.route) {
-        setZoneAddressLine1([parsed.streetNumber, parsed.route].filter(Boolean).join(" "));
+    
+    let ac: google.maps.places.Autocomplete;
+    let listener: google.maps.MapsEventListener;
+    
+    const initAutocomplete = async () => {
+      try {
+        const { Autocomplete } = await importLibrary("places") as google.maps.PlacesLibrary;
+        if (!addressInputRef.current) return;
+        
+        ac = new Autocomplete(el, {
+          fields: ["address_components", "formatted_address", "geometry"],
+          types: ["address"],
+        });
+        
+        listener = ac.addListener("place_changed", () => {
+          const place = ac.getPlace();
+          const parsed = parseGooglePlace(place);
+          if (parsed.formattedAddress) setZoneSingleLine(parsed.formattedAddress);
+          if (parsed.city) setZoneCity(parsed.city);
+          if (parsed.region) setZoneRegion(parsed.region);
+          if (parsed.countryCode) setZoneCountryCode(parsed.countryCode);
+          if (parsed.postalCode) setZonePostalCode(parsed.postalCode);
+          if (parsed.streetNumber || parsed.route) {
+            setZoneAddressLine1([parsed.streetNumber, parsed.route].filter(Boolean).join(" "));
+          }
+        });
+      } catch (e) {
+        console.error("Failed to initialize Google Places Autocomplete:", e);
       }
-    });
+    };
+    
+    void initAutocomplete();
+
     return () => {
-      window.google?.maps?.event?.clearInstanceListeners(ac);
+      if (listener) listener.remove();
+      if (ac && window.google?.maps?.event) {
+        window.google.maps.event.clearInstanceListeners(ac);
+      }
     };
   }, [googleReady, teacherRow]);
 
