@@ -1287,6 +1287,8 @@
   "verifiedStudio": "Studio vérifié",
   "verifiedStudioTitle": "Carte Google Maps sur le profil — plan Entreprise",
   "verifiedTeachersOnly": "Profs vérifiés seulement",
+  "verifiedPillLabel": "Pratiqo Vérifié",
+  "verifiedPillTooltip": "Afficher uniquement les profs dont l'identité a été vérifiée par Pratiqo",
   "teacherVerificationMarketplaceBenefits": "Avantages marketplace",
   "teacherVerificationTrustRequirements": "Exigences de confiance",
   "locationVerificationStatus": "Statut de la zone",

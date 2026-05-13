@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import type { Teacher } from "../../../../types";
 import type { BookingInitialLessonKind } from "../../../../components/BookingModal";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Star, Users, Video } from "lucide-react";
+import { ShieldCheck, Star, Users, Video } from "lucide-react";
 import { useLocale } from "../../../../lib/locale-context";
 import { cn } from "../../../../lib/utils";
 import { getSupabaseClient } from "../../../../lib/supabase";
@@ -14,7 +14,7 @@ import { fetchTeacherDisciplinesMap, mergeTeachersWithDisciplines } from "../../
 import { teacherRowToTeacher, type TeacherRow } from "../../../../lib/teacherMapper";
 import { TEACHERS_LIST_SELECT, TEACHERS_PUBLIC_TABLE } from "../../../../lib/supabase/queries";
 import { TeacherAvatar } from "../../../../components/TeacherAvatar";
-import { getVerificationLevel } from "../../../../lib/verification";
+import { getVerificationLevel, isPratiqoVerified } from "../../../../lib/verification";
 import { VerificationBadge } from "../../../../components/VerificationBadge";
 import type { City } from "../../../../lib/cities";
 import type { MapBounds } from "../../../../components/SearchMapView";
@@ -210,8 +210,24 @@ export default function StudentSearchPage() {
     setAdv((a) => ({ ...a, formatExtra: fmt }));
   };
 
+  const verifiedTeacherCount = useMemo(
+    () =>
+      teachers.filter((t) =>
+        isPratiqoVerified({
+          isVerified: t.isVerified,
+          identityVerified: t.identityVerified,
+          verificationLevel: t.verificationLevel ?? null,
+        }),
+      ).length,
+    [teachers],
+  );
+
   const results = useMemo(() => {
-    const pool = filterTeacherPool(teachers, { category: activeCat, searchQuery });
+    const pool = filterTeacherPool(teachers, {
+      category: activeCat,
+      searchQuery,
+      verifiedOnly: adv.verifiedOnly || undefined,
+    });
     const base = buildTeacherSearchRows(pool, { geo });
     let filtered = applyRadiusFilter(base, geo ? radius : radius === "online" ? "online" : "all");
 
@@ -234,7 +250,7 @@ export default function StudentSearchPage() {
     // Unify sorting across search surfaces. Keep existing modes, but fold in student prefs.
     const rows = sortRows(filtered, { sortMode, studentPrefs });
     return rows;
-  }, [teachers, activeCat, searchQuery, geo, radius, sortMode, mapBounds, studentPrefs]);
+  }, [teachers, activeCat, searchQuery, geo, radius, sortMode, mapBounds, studentPrefs, adv.verifiedOnly]);
 
   return (
     <>
@@ -310,6 +326,31 @@ export default function StudentSearchPage() {
                 )}
               >
                 📍 {t("nearMe")}
+              </button>
+              <button
+                type="button"
+                onClick={() => setAdv((a) => ({ ...a, verifiedOnly: !a.verifiedOnly }))}
+                aria-pressed={adv.verifiedOnly}
+                title={t("verifiedPillTooltip")}
+                className={cn(
+                  "inline-flex h-11 items-center gap-2 rounded-full border px-4 text-sm font-semibold shadow-sm transition-colors",
+                  adv.verifiedOnly
+                    ? "border-teal-700 bg-teal-700 text-white"
+                    : "border-[#DCEAE3] bg-white text-[#2C2C2A] hover:bg-[#FAFCFB]",
+                )}
+              >
+                <ShieldCheck size={14} strokeWidth={2.5} aria-hidden />
+                <span>{t("verifiedPillLabel")}</span>
+                {verifiedTeacherCount > 0 ? (
+                  <span
+                    className={cn(
+                      "rounded-full px-2 py-0.5 text-[10px] font-bold leading-none",
+                      adv.verifiedOnly ? "bg-white/20 text-white" : "bg-teal-50 text-teal-700",
+                    )}
+                  >
+                    {verifiedTeacherCount}
+                  </span>
+                ) : null}
               </button>
             </div>
           }

@@ -3,6 +3,7 @@ import { haversineDistance } from "@/lib/geo";
 import { teacherMatchesExploreCategory, teacherMatchesExploreSearch } from "@/lib/teacherDisciplines";
 import type { TeacherSearchCriteria, TeacherSearchFormat } from "@/lib/teacherSearchCriteria";
 import { teacherStudentPrefScore } from "@/lib/studentLocationSearch";
+import { isPratiqoVerified } from "@/lib/verification";
 
 function foldAscii(s: string): string {
   return s.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().trim();
@@ -69,7 +70,16 @@ export function filterTeacherPool(teachers: Teacher[], criteria: TeacherSearchCr
   const cat = criteria.category;
 
   return teachers.filter((t) => {
-    if (criteria.verifiedOnly && !t.isVerified) return false;
+    if (
+      criteria.verifiedOnly &&
+      !isPratiqoVerified({
+        isVerified: t.isVerified,
+        identityVerified: t.identityVerified,
+        verificationLevel: t.verificationLevel ?? null,
+      })
+    ) {
+      return false;
+    }
     if (typeof criteria.minRating === "number" && Number.isFinite(criteria.minRating) && (t.rating ?? 0) < criteria.minRating) {
       return false;
     }

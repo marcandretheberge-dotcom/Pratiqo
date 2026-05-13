@@ -100,6 +100,31 @@ export function getVerificationLevel(teacher: LevelInput): VerificationLevel {
   return Math.min(4, Math.max(0, merged)) as VerificationLevel;
 }
 
+/**
+ * Public "Pratiqo Verified" trust signal — used by the marketplace search
+ * filter and the front-facing badge. A teacher is Pratiqo Verified when any
+ * of the following is true:
+ *
+ * - `verificationLevel >= 2` (computed tier on identity verified)
+ * - `identityVerified === true` (Stripe Identity confirmed)
+ * - the legacy admin-vetted `isVerified` boolean is on
+ *
+ * Centralized here so the filter, the badge, and the trust panel agree on
+ * who qualifies for the tier — and so future trust paths (e.g. background
+ * checks) extend in one place.
+ */
+export function isPratiqoVerified(input: {
+  isVerified?: boolean | null;
+  identityVerified?: boolean | null;
+  verificationLevel?: number | null;
+}): boolean {
+  const level =
+    typeof input.verificationLevel === "number" && Number.isFinite(input.verificationLevel)
+      ? input.verificationLevel
+      : 0;
+  return Boolean(input.isVerified) || Boolean(input.identityVerified) || level >= 2;
+}
+
 export function nextVerificationLevel(level: VerificationLevel): VerificationLevel | null {
   if (level >= 4) return null;
   return (level + 1) as VerificationLevel;
