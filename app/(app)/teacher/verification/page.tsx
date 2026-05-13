@@ -434,14 +434,14 @@ export default function TeacherVerificationPage() {
     | "failed"
     | "canceled"
     | null;
-  // buildTeacherTrustItems owns its own trust-item logic; feed it raw fields as before
+  // Public trust helpers receive only safe status flags, never document paths.
   const trustItems = buildTeacherTrustItems({
     isVerified: teacherRow.is_verified,
     identityVerified: teacherRow.identity_verified,
     identityStatus: teacherRow.identity_status,
     stripeIdentityStatus: teacherRow.stripe_identity_status,
     diplomaVerified: teacherRow.diploma_verified,
-    diplomaUrl: teacherRow.diploma_url,
+    diplomaPending: Boolean(teacherRow.diploma_url && !teacherRow.diploma_verified),
     locationVerificationStatus: teacherRow.location_verification_status,
     cvSummary: teacherRow.cv_summary,
     cvVerificationStatus: teacherRow.cv_verification_status,

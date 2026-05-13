@@ -68,7 +68,7 @@ export type TeacherTrustInput = {
   identityStatus?: string | null;
   stripeIdentityStatus?: string | null;
   diplomaVerified?: boolean | null;
-  diplomaUrl?: string | null;
+  diplomaPending?: boolean | null;
   locationVerificationStatus?: string | null;
   cvSummary?: string | null;
   cvVerificationStatus?: string | null;
@@ -149,7 +149,7 @@ export function buildTeacherTrustItems(input: TeacherTrustInput): TeacherTrustIt
       publicDescriptionKey: "trustDiplomaVerifiedDescription",
       icon: "diploma",
     });
-  } else if (input.diplomaUrl) {
+  } else if (input.diplomaPending) {
     items.push({
       key: "diploma",
       status: "pending",

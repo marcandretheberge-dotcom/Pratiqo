@@ -49,6 +49,7 @@ export type TeacherRow = {
   identity_status?: string | null;
   stripe_identity_status?: string | null;
   diploma_url?: string | null;
+  diploma_pending?: boolean | null;
   location_verification_status?: string | null;
   cv_summary?: string | null;
   cv_verification_status?: string | null;
@@ -123,6 +124,7 @@ export function teacherRowToTeacher(row: TeacherRow): Teacher {
     identityStatus: row.identity_status ?? null,
     stripeIdentityStatus: row.stripe_identity_status ?? null,
     diplomaUrl: row.diploma_url ?? null,
+    diplomaPending: Boolean(row.diploma_pending),
     locationVerificationStatus: row.location_verification_status ?? null,
     cvSummary: row.cv_summary ?? null,
     cvVerificationStatus: row.cv_verification_status ?? null,

@@ -68,6 +68,8 @@ export interface Teacher {
   phoneVerified?: boolean;
   identityStatus?: string | null;
   stripeIdentityStatus?: string | null;
+  /** Public-safe signal from teachers_public; does not expose the document URL/path. */
+  diplomaPending?: boolean | null;
   diplomaUrl?: string | null;
   locationVerificationStatus?: string | null;
   cvSummary?: string | null;
