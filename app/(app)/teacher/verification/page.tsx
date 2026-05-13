@@ -19,6 +19,7 @@ import { useLocale } from "../../../../lib/locale-context";
 import { cn } from "../../../../lib/utils";
 import { buildTeacherTrustBadges, buildTeacherTrustItems, type TeacherCredential } from "../../../../lib/teacherTrust";
 import { deriveVerificationState } from "../../../../lib/verificationState";
+import { parseGooglePlace } from "../../../../lib/googleAddressParser";
 import type { TranslationKey } from "../../../../lib/translations";
 import { DiplomaStep } from "./components/DiplomaStep";
 import { CredentialsStep } from "./components/CredentialsStep";
@@ -103,6 +104,52 @@ export default function TeacherVerificationPage() {
   const [diplomaNote, setDiplomaNote] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const redirectHandledRef = useRef(false);
+
+  const [googleReady, setGoogleReady] = useState(() => typeof window !== "undefined" && Boolean(window.google?.maps?.places));
+  const addressInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const key = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+    if (!key) return;
+    if (typeof window !== "undefined" && window.google?.maps?.places) return;
+    let cancelled = false;
+    const script = document.createElement("script");
+    script.async = true;
+    script.defer = true;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&libraries=places`;
+    script.onload = () => {
+      if (!cancelled && window.google?.maps?.places) setGoogleReady(true);
+    };
+    document.head.appendChild(script);
+    return () => {
+      cancelled = true;
+      script.remove();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!googleReady) return;
+    const el = addressInputRef.current;
+    if (!el) return;
+    if (!("google" in window)) return;
+    const ac = new google.maps.places.Autocomplete(el, {
+      fields: ["address_components", "formatted_address", "geometry"],
+      types: ["address"],
+    });
+    ac.addListener("place_changed", () => {
+      const place = ac.getPlace();
+      const parsed = parseGooglePlace(place);
+      if (parsed.formattedAddress) setZoneSingleLine(parsed.formattedAddress);
+      if (parsed.city) setZoneCity(parsed.city);
+      if (parsed.region) setZoneRegion(parsed.region);
+      if (parsed.countryCode) setZoneCountryCode(parsed.countryCode);
+      if (parsed.postalCode) setZonePostalCode(parsed.postalCode);
+      if (parsed.streetNumber || parsed.route) {
+        setZoneAddressLine1([parsed.streetNumber, parsed.route].filter(Boolean).join(" "));
+      }
+    });
+    return () => {};
+  }, [googleReady]);
 
   const load = useCallback(async () => {
     if (!user?.id) return;
@@ -634,6 +681,7 @@ export default function TeacherVerificationPage() {
           onRadiusChange={setZoneRadiusKm}
           onSubmit={() => void submitZone()}
           t={t}
+          addressInputRef={addressInputRef}
         />
 
         {/* ── Credentials / qualifications (Pratiqo-reviewed) ─────────────── */}

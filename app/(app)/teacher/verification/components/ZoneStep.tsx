@@ -32,6 +32,7 @@ type Props = {
   onRadiusChange: (v: string) => void;
   onSubmit: () => void;
   t: (key: TranslationKey) => string;
+  addressInputRef?: React.RefObject<HTMLInputElement | null>;
 };
 
 export function ZoneStep({
@@ -62,6 +63,7 @@ export function ZoneStep({
   onRadiusChange,
   onSubmit,
   t,
+  addressInputRef,
 }: Props) {
   const displayCity = zoneCity || savedCity;
   const displayRegion = zoneRegion || savedRegion;
@@ -90,6 +92,7 @@ export function ZoneStep({
           {t("verificationZoneAddressLabel")}
         </label>
         <input
+          ref={addressInputRef}
           id="zone-address-single"
           type="text"
           value={zoneSingleLine}
