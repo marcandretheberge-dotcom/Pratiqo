@@ -1,6 +1,21 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+/**
+ * Edge-runtime request proxy (Next 16 convention).
+ *
+ * Previously this file lived at `middleware.ts`; the "middleware" file
+ * convention is deprecated in Next 16 in favour of "proxy" with identical
+ * runtime semantics. See: https://nextjs.org/docs/messages/middleware-to-proxy
+ *
+ * Current responsibilities:
+ *   - Gate the authenticated app surface behind a Supabase auth-cookie check.
+ *
+ * Locale routing (planned, item 1.3 of Phase 1):
+ *   - Detect locale from path → cookie → Accept-Language / IP geo.
+ *   - 301-redirect unprefixed canonical URLs to /{defaultLocale}/...
+ */
+
 const LOGIN_PATH = "/login";
 
 /** Presence-only: do not verify JWT at the edge. */
@@ -41,7 +56,7 @@ function isProtectedPath(pathname: string): boolean {
   return false;
 }
 
-export function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
 
   if (pathname.startsWith(LOGIN_PATH)) {

@@ -110,7 +110,7 @@ export default function TeacherHistoryPage() {
     [locale],
   );
 
-  // Redirect non-teachers — middleware handles the unauthenticated case since
+  // Redirect non-teachers — proxy handles the unauthenticated case since
   // /teacher/* is in the protected path list; this covers the wrong-role case.
   useEffect(() => {
     if (!user) return;

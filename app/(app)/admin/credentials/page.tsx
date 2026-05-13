@@ -83,7 +83,7 @@ export default function AdminCredentialsPage() {
   const [flash, setFlash] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
 
-  // Role guard — middleware already checks for auth cookie; this checks for admin role.
+  // Role guard — proxy already checks for auth cookie; this checks for admin role.
   useEffect(() => {
     if (!user) return;
     if (!isAdmin) router.replace("/dashboard");
