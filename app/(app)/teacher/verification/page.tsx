@@ -130,7 +130,7 @@ export default function TeacherVerificationPage() {
   }, []);
 
   useEffect(() => {
-    if (!googleReady) return;
+    if (!googleReady || !teacherRow) return;
     const el = addressInputRef.current;
     if (!el) return;
     if (!("google" in window)) return;
@@ -150,8 +150,10 @@ export default function TeacherVerificationPage() {
         setZoneAddressLine1([parsed.streetNumber, parsed.route].filter(Boolean).join(" "));
       }
     });
-    return () => {};
-  }, [googleReady]);
+    return () => {
+      window.google?.maps?.event?.clearInstanceListeners(ac);
+    };
+  }, [googleReady, teacherRow]);
 
   const load = useCallback(async () => {
     if (!user?.id) return;

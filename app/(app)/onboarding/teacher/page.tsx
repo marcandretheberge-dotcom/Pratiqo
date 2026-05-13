@@ -196,7 +196,7 @@ export default function TeacherOnboardingPage() {
   }, []);
 
   useEffect(() => {
-    if (!googleReady) return;
+    if (!googleReady || step !== 2) return;
     const el = addressInputRef.current;
     if (!el) return;
     if (!("google" in window)) return;
@@ -214,9 +214,9 @@ export default function TeacherOnboardingPage() {
       if (parsed.countryCode) setCountryCode(parsed.countryCode);
     });
     return () => {
-      // Autocomplete has no official dispose; just detach ref by unmounting.
+      window.google?.maps?.event?.clearInstanceListeners(ac);
     };
-  }, [googleReady]);
+  }, [googleReady, step]);
 
   const toggleLevel = (lvl: (typeof LEVELS)[number]) => {
     setLevels((prev) => (prev.includes(lvl) ? prev.filter((x) => x !== lvl) : [...prev, lvl]));

@@ -169,12 +169,21 @@ export function SearchMapView({
               resolve(FALLBACK_CENTER);
               return;
             }
+            // Enforce a strict fallback timeout in case the browser swallows the permission prompt or hangs
+            const fallbackTimeout = setTimeout(() => {
+              resolve(FALLBACK_CENTER);
+            }, 3000);
+            
             navigator.geolocation.getCurrentPosition(
               (pos) => {
+                clearTimeout(fallbackTimeout);
                 centeredOnUserRef.current = true;
                 resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude });
               },
-              () => resolve(FALLBACK_CENTER),
+              () => {
+                clearTimeout(fallbackTimeout);
+                resolve(FALLBACK_CENTER);
+              },
               { enableHighAccuracy: false, timeout: 5000, maximumAge: 300_000 },
             );
           });
