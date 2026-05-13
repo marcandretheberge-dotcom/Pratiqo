@@ -1,5 +1,6 @@
 // Server (Node.js) runtime Sentry initialization.
 // Loaded by instrumentation.ts when NEXT_RUNTIME === "nodejs".
+// Cache-bust marker: see sentry.client.config.ts for the rationale.
 
 import * as Sentry from "@sentry/nextjs";
 

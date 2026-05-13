@@ -1,5 +1,10 @@
 // Browser-side Sentry initialization.
 // Auto-discovered by @sentry/nextjs at build time (no explicit import needed).
+//
+// Cache-bust marker (safe to keep): forces webpack persistent cache to
+// recompile this module when env vars change. NEXT_PUBLIC_* values are
+// inlined at compile time, so a stale cache key would otherwise reuse
+// modules built with the previous env-var values.
 
 import * as Sentry from "@sentry/nextjs";
 

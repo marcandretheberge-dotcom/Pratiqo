@@ -65,6 +65,12 @@ export async function GET(request: Request): Promise<NextResponse> {
   const sha = process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA;
   const vercelEnv = process.env.NEXT_PUBLIC_VERCEL_ENV;
 
+  // Confirm Sentry.init actually ran on the server. sdkLoaded only proves
+  // the module was imported; getClient() returning a client proves init
+  // succeeded (DSN was non-empty + recognized).
+  const client = Sentry.getClient();
+  const transportName = client?.getTransport()?.constructor?.name ?? null;
+
   return NextResponse.json({
     runtime: "nodejs",
     vercelEnv: vercelEnv ?? null,
@@ -79,5 +85,7 @@ export async function GET(request: Request): Promise<NextResponse> {
       length: srvDsn?.length ?? 0,
     },
     sdkLoaded: typeof Sentry.captureException === "function",
+    sentryClientInitialized: Boolean(client),
+    transportName,
   });
 }

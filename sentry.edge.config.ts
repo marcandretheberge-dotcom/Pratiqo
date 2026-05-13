@@ -1,5 +1,6 @@
 // Edge runtime Sentry initialization.
 // Loaded by instrumentation.ts when NEXT_RUNTIME === "edge".
+// Cache-bust marker: see sentry.client.config.ts for the rationale.
 //
 // Edge has a much smaller SDK footprint than the Node SDK. Performance tracing
 // is intentionally off here — edge functions are short-lived and tracing
