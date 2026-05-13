@@ -28,6 +28,7 @@ import {
 import { useLocale } from "../../../../lib/locale-context";
 import { cn } from "../../../../lib/utils";
 import { buildTeacherTrustBadges, buildTeacherTrustItems, type TeacherCredential } from "../../../../lib/teacherTrust";
+import { deriveVerificationState } from "../../../../lib/verificationState";
 import type { TranslationKey } from "../../../../lib/translations";
 
 type TeacherVerifyRow = {
@@ -400,11 +401,26 @@ export default function TeacherVerificationPage() {
     );
   }
 
-  const planNorm = plan.toLowerCase();
-  const isPro = planNorm === "pro" || planNorm === "enterprise";
-  const identityStatus = teacherRow.identity_status ?? "none";
-  const hasDiplomaUploaded = Boolean(teacherRow.diploma_url);
+  const vState = deriveVerificationState({
+    plan,
+    identity_verified: teacherRow.identity_verified,
+    identity_status: teacherRow.identity_status,
+    stripe_identity_status: teacherRow.stripe_identity_status,
+    stripe_identity_failed_reason: teacherRow.stripe_identity_failed_reason,
+    diploma_verified: teacherRow.diploma_verified,
+    diploma_url: teacherRow.diploma_url,
+    location_verification_status: teacherRow.location_verification_status,
+    cv_verification_status: teacherRow.cv_verification_status,
+    cv_summary: teacherRow.cv_summary,
+    bio: teacherRow.bio ?? null,
+    is_verified: teacherRow.is_verified,
+    verification_level: teacherRow.verification_level,
+  });
+  const { isPro } = vState;
+  // diploma_url exists ↔ diploma is pending or verified
+  const hasDiplomaUploaded = vState.diploma.kind !== "not_started";
 
+  // stripeStatus stays as raw DB value — IdentityVerificationCard expects Stripe's own enum strings
   const stripeStatus = (teacherRow.stripe_identity_status ?? null) as
     | "not_started"
     | "requires_input"
@@ -413,6 +429,7 @@ export default function TeacherVerificationPage() {
     | "failed"
     | "canceled"
     | null;
+  // buildTeacherTrustItems owns its own trust-item logic; feed it raw fields as before
   const trustItems = buildTeacherTrustItems({
     isVerified: teacherRow.is_verified,
     identityVerified: teacherRow.identity_verified,
@@ -425,14 +442,11 @@ export default function TeacherVerificationPage() {
     cvVerificationStatus: teacherRow.cv_verification_status,
     bio: teacherRow.bio,
   });
-  const zoneVerified = teacherRow.location_verification_status === "verified";
-  const zonePending = teacherRow.location_verification_status === "pending";
-  const backgroundVerified = teacherRow.cv_verification_status === "verified";
+  const backgroundVerified = vState.background.kind === "verified";
   const backgroundProvided =
-    backgroundVerified ||
-    teacherRow.cv_verification_status === "provided" ||
-    teacherRow.cv_verification_status === "pending" ||
-    Boolean(teacherRow.cv_summary?.trim() || teacherRow.bio?.trim());
+    vState.background.kind === "verified" ||
+    vState.background.kind === "pending" ||
+    vState.background.kind === "provided";
 
   const badgePreview = buildTeacherTrustBadges({
     identity: {
@@ -614,16 +628,16 @@ export default function TeacherVerificationPage() {
               <p className="font-semibold text-[#2C2C2A]">{t("verificationLevel2Title")}</p>
               <p className="text-sm text-[#6B6A65] mt-1">{t("verificationLevel2Body")}</p>
 
-              {teacherRow.identity_verified ? (
+              {vState.identity.kind === "verified" ? (
                 <p className="mt-2 text-sm font-semibold text-teal-700">{t("verificationIdentityValidated")}</p>
-              ) : identityStatus === "pending" ? (
+              ) : vState.identity.kind === "pending" ? (
                 <div className="mt-3 flex items-center gap-2 rounded-xl bg-amber-50 border border-amber-200 px-4 py-2.5">
                   <Loader2 size={16} className="animate-spin text-amber-600 shrink-0" />
                   <p className="text-sm text-amber-800 font-medium">
                     {t("verifyIdPending")}
                   </p>
                 </div>
-              ) : identityStatus === "failed" ? (
+              ) : vState.identity.kind === "failed" ? (
                 <div className="mt-3 space-y-2">
                   <p className="text-sm font-semibold text-rose-600">
                     {t("verificationFailed")}
@@ -673,7 +687,7 @@ export default function TeacherVerificationPage() {
               <p className="font-semibold text-[#2C2C2A]">{t("verificationLevel3Title")}</p>
               <p className="text-sm text-[#6B6A65] mt-1">{t("verificationLevel3Body")}</p>
 
-              {teacherRow.diploma_verified ? (
+              {vState.diploma.kind === "verified" ? (
                 <p className="mt-2 text-sm font-semibold text-teal-700">{t("verificationDiplomaValidated")}</p>
               ) : (
                 <div className="mt-3 space-y-3">
@@ -920,7 +934,7 @@ export default function TeacherVerificationPage() {
           </button>
 
           {/* Public summary — only shown when a location status exists and a city is known */}
-          {(zoneSavedStatus || zoneVerified || zonePending) && (zoneCity || teacherRow?.city) ? (
+          {(zoneSavedStatus || vState.zone.kind === "verified" || vState.zone.kind === "pending") && (zoneCity || teacherRow?.city) ? (
             <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 space-y-1">
               <p className="text-xs font-bold uppercase tracking-widest text-slate-500">
                 Position publique approximative
@@ -930,7 +944,7 @@ export default function TeacherVerificationPage() {
                 {(zoneRegion || teacherRow?.region) ? `, ${zoneRegion || teacherRow?.region}` : ""}
               </p>
               <p className="text-xs text-[#6B6A65]">± {zoneFuzzRadiusKm ?? 1} km</p>
-              {(zoneSavedStatus === "auto_verified" || zoneVerified) ? (
+              {(zoneSavedStatus === "auto_verified" || vState.zone.kind === "verified") ? (
                 <p className="text-xs font-semibold text-teal-700">{t("trustZoneVerified")}</p>
               ) : (
                 <p className="text-xs font-semibold text-amber-700">{t("trustZonePending")}</p>
