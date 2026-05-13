@@ -12,6 +12,8 @@ import {
   XCircle,
 } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
+import { useLocale } from "@/lib/locale-context";
+import { localeToBcp47, type TranslationKey } from "@/lib/i18n/types";
 import { getSupabaseClient } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 
@@ -45,35 +47,41 @@ type PendingCredential = {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function credentialTypeLabel(type: string): string {
-  const map: Record<string, string> = {
-    degree: "Diplôme",
-    certificate: "Certificat",
-    license: "Licence",
-    experience: "Expérience",
-    portfolio: "Portfolio",
+type Translator = (key: TranslationKey) => string;
+
+function credentialTypeLabel(type: string, t: Translator): string {
+  const map: Record<string, TranslationKey> = {
+    degree: "adminCredentialTypeDegree",
+    certificate: "adminCredentialTypeCertificate",
+    license: "adminCredentialTypeLicense",
+    experience: "adminCredentialTypeExperience",
+    portfolio: "adminCredentialTypePortfolio",
   };
-  return map[type] ?? type;
+  const key = map[type];
+  return key ? t(key) : type;
 }
 
-function credentialMethodLabel(method: string | null): string {
+function credentialMethodLabel(method: string | null, t: Translator): string {
   if (!method) return "—";
-  const map: Record<string, string> = {
-    mycreds: "MyCreds",
-    document_review: "Révision document",
-    institution_direct: "Institution directe",
-    official_registry: "Registre officiel",
-    reference_check: "Références",
-    manual: "Manuel",
+  const map: Record<string, TranslationKey> = {
+    mycreds: "adminCredentialMethodMyCreds",
+    document_review: "adminCredentialMethodDocumentReview",
+    institution_direct: "adminCredentialMethodInstitutionDirect",
+    official_registry: "adminCredentialMethodOfficialRegistry",
+    reference_check: "adminCredentialMethodReferenceCheck",
+    manual: "adminCredentialMethodManual",
   };
-  return map[method] ?? method;
+  const key = map[method];
+  return key ? t(key) : method;
 }
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function AdminCredentialsPage() {
   const { user, profile } = useAuth();
+  const { t, locale } = useLocale();
   const router = useRouter();
+  const intlLocale = localeToBcp47(locale);
 
   const isAdmin = (profile?.role as string | undefined) === "admin";
 
@@ -111,15 +119,15 @@ export default function AdminCredentialsPage() {
         credentials?: PendingCredential[];
         error?: string;
       };
-      if (!res.ok) throw new Error(data.error ?? "Erreur lors du chargement.");
+      if (!res.ok) throw new Error(t("adminLoadError"));
       setDiplomas(data.diplomas ?? []);
       setCredentials(data.credentials ?? []);
     } catch (e) {
-      showFlash("err", e instanceof Error ? e.message : "Erreur lors du chargement.");
+      showFlash("err", e instanceof Error ? e.message : t("adminLoadError"));
     } finally {
       setLoading(false);
     }
-  }, [user?.id, isAdmin]);
+  }, [user?.id, isAdmin, t]);
 
   useEffect(() => {
     void load();
@@ -147,14 +155,14 @@ export default function AdminCredentialsPage() {
         body: JSON.stringify(params),
       });
       const data = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string };
-      if (!res.ok) throw new Error(data.error ?? "Action échouée.");
+      if (!res.ok) throw new Error(t("adminActionFailed"));
       showFlash(
         "ok",
-        params.action === "approve" ? "Approuvé avec succès." : "Refusé avec succès.",
+        params.action === "approve" ? t("adminApprovedSuccess") : t("adminRejectedSuccess"),
       );
       await load();
     } catch (e) {
-      showFlash("err", e instanceof Error ? e.message : "Erreur lors de l'action.");
+      showFlash("err", e instanceof Error ? e.message : t("adminActionFailed"));
     } finally {
       setBusy(null);
     }
@@ -175,19 +183,19 @@ export default function AdminCredentialsPage() {
             </span>
             <div className="min-w-0">
               <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">
-                Espace admin
+                {t("adminSpaceLabel")}
               </p>
               <h1 className="mt-1 text-2xl font-bold text-[#2C2C2A]">
-                Vérifications enseignants
+                {t("adminCredentialsTitle")}
               </h1>
               <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                Approuvez ou refusez les diplômes uploadés et les qualifications soumises par les enseignants.
+                {t("adminCredentialsSubtitle")}
               </p>
               <Link
                 href="/admin/operations"
                 className="mt-4 inline-flex h-9 items-center rounded-full border border-slate-200 bg-white px-4 text-xs font-bold text-slate-700 hover:bg-slate-50"
               >
-                Voir toutes les operations
+                {t("adminViewAllOperations")}
               </Link>
             </div>
           </div>
@@ -215,7 +223,7 @@ export default function AdminCredentialsPage() {
         {loading ? (
           <div className="flex items-center justify-center gap-3 py-20 text-sm font-semibold text-slate-600">
             <Loader2 className="h-6 w-6 animate-spin text-teal-700" />
-            Chargement...
+            {t("adminLoading")}
           </div>
         ) : (
           <>
@@ -223,7 +231,7 @@ export default function AdminCredentialsPage() {
             <section className="space-y-3">
               <div className="flex items-center gap-2">
                 <h2 className="text-sm font-bold uppercase tracking-widest text-[#2C2C2A]">
-                  Diplômes à vérifier
+                  {t("adminDiplomasToReview")}
                 </h2>
                 <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-600">
                   {diplomas.length}
@@ -234,7 +242,7 @@ export default function AdminCredentialsPage() {
                 <div className="rounded-2xl border border-[#DCEAE3] bg-white p-8 text-center">
                   <CheckCircle2 size={32} className="mx-auto mb-3 text-teal-300" />
                   <p className="text-sm font-semibold text-slate-500">
-                    Aucun diplôme en attente de vérification.
+                    {t("adminNoDiplomasPending")}
                   </p>
                 </div>
               ) : (
@@ -257,20 +265,20 @@ export default function AdminCredentialsPage() {
                             ) : null}
                             <div className="flex flex-wrap gap-2 pt-1">
                               <span className="inline-flex rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-bold text-slate-600">
-                                Niveau {d.verificationLevel ?? "—"}
+                                {t("adminLevel")} {d.verificationLevel ?? "—"}
                               </span>
                               {d.identityVerified ? (
                                 <span className="inline-flex rounded-full bg-teal-50 px-2.5 py-0.5 text-[11px] font-bold text-teal-700">
-                                  Identité ✓
+                                  {t("adminIdentity")} ✓
                                 </span>
                               ) : (
                                 <span className="inline-flex rounded-full bg-amber-50 px-2.5 py-0.5 text-[11px] font-bold text-amber-700">
-                                  Identité non vérifiée
+                                  {t("adminIdentityNotVerified")}
                                 </span>
                               )}
                             </div>
                             <p className="pt-1 text-[11px] text-slate-400 break-all">
-                              Fichier : {d.diplomaPath}
+                              {t("adminFile")}: {d.diplomaPath}
                             </p>
                           </div>
 
@@ -284,10 +292,10 @@ export default function AdminCredentialsPage() {
                                 className="inline-flex h-9 items-center gap-1.5 rounded-full border border-slate-200 bg-white px-4 text-xs font-bold text-slate-700 hover:bg-slate-50"
                               >
                                 <ExternalLink size={13} />
-                                Voir le fichier
+                                {t("adminViewFile")}
                               </a>
                             ) : (
-                              <span className="text-xs text-slate-400">URL indisponible</span>
+                              <span className="text-xs text-slate-400">{t("adminFileUnavailable")}</span>
                             )}
                             <button
                               type="button"
@@ -306,7 +314,7 @@ export default function AdminCredentialsPage() {
                               ) : (
                                 <CheckCircle2 size={13} />
                               )}
-                              Approuver
+                              {t("adminApprove")}
                             </button>
                             <button
                               type="button"
@@ -325,7 +333,7 @@ export default function AdminCredentialsPage() {
                               ) : (
                                 <XCircle size={13} />
                               )}
-                              Refuser
+                              {t("adminReject")}
                             </button>
                           </div>
                         </div>
@@ -340,7 +348,7 @@ export default function AdminCredentialsPage() {
             <section className="space-y-3">
               <div className="flex items-center gap-2">
                 <h2 className="text-sm font-bold uppercase tracking-widest text-[#2C2C2A]">
-                  Qualifications à vérifier
+                  {t("adminQualificationsToReview")}
                 </h2>
                 <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-600">
                   {credentials.length}
@@ -351,7 +359,7 @@ export default function AdminCredentialsPage() {
                 <div className="rounded-2xl border border-[#DCEAE3] bg-white p-8 text-center">
                   <CheckCircle2 size={32} className="mx-auto mb-3 text-teal-300" />
                   <p className="text-sm font-semibold text-slate-500">
-                    Aucune qualification en attente de vérification.
+                    {t("adminNoCredentialsPending")}
                   </p>
                 </div>
               ) : (
@@ -371,7 +379,7 @@ export default function AdminCredentialsPage() {
                             <div className="flex flex-wrap items-center gap-2">
                               <p className="font-bold text-[#2C2C2A]">{c.teacherName}</p>
                               <span className="inline-flex rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-bold text-slate-600">
-                                {credentialTypeLabel(c.type)}
+                                {credentialTypeLabel(c.type, t)}
                               </span>
                             </div>
                             {c.teacherEmail ? (
@@ -385,13 +393,13 @@ export default function AdminCredentialsPage() {
                             </p>
                             {c.verificationMethod ? (
                               <p className="text-xs text-slate-400">
-                                Méthode : {credentialMethodLabel(c.verificationMethod)}
+                                {t("adminMethod")}: {credentialMethodLabel(c.verificationMethod, t)}
                               </p>
                             ) : null}
                             {c.createdAt ? (
                               <p className="text-[11px] text-slate-400">
-                                Soumis le{" "}
-                                {new Date(c.createdAt).toLocaleDateString("fr-CA", {
+                                {t("adminSubmittedOn")}{" "}
+                                {new Date(c.createdAt).toLocaleDateString(intlLocale, {
                                   day: "numeric",
                                   month: "long",
                                   year: "numeric",
@@ -421,7 +429,7 @@ export default function AdminCredentialsPage() {
                               ) : (
                                 <CheckCircle2 size={13} />
                               )}
-                              Approuver
+                              {t("adminApprove")}
                             </button>
                             <button
                               type="button"
@@ -440,7 +448,7 @@ export default function AdminCredentialsPage() {
                               ) : (
                                 <XCircle size={13} />
                               )}
-                              Refuser
+                              {t("adminReject")}
                             </button>
                           </div>
                         </div>
@@ -453,10 +461,10 @@ export default function AdminCredentialsPage() {
 
             <div className="text-center">
               <Link
-                href="/dashboard"
+                href="/admin/operations"
                 className="text-sm font-semibold text-teal-700 underline-offset-2 hover:underline"
               >
-                ← Tableau de bord
+                ← {t("adminNavOperations")}
               </Link>
             </div>
           </>

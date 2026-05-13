@@ -3,10 +3,11 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { MessageCircle } from "lucide-react";
+import { LogOut, MessageCircle, ShieldCheck } from "lucide-react";
 import { cn } from "../lib/utils";
 import { useAuth } from "./AuthProvider";
 import { authDisplayName } from "../lib/authDisplay";
+import { logout } from "../lib/auth";
 import { getSupabaseClient } from "../lib/supabase";
 import { fetchUnreadMessageCount } from "../lib/messaging";
 import PratiqoLogo from "./PratiqoLogo";
@@ -40,6 +41,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const role = profile?.role as Role | undefined;
   const isTeacher = role === "teacher";
   const isStudent = role === "student";
+  const isAdmin = role === "admin";
 
   const [unreadMessages, setUnreadMessages] = useState(0);
   useEffect(() => {
@@ -70,9 +72,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     };
   }, [user?.id]);
 
-  const logoHref = !user ? "/" : isTeacher ? "/dashboard" : "/student/search";
+  const logoHref = !user ? "/" : isAdmin ? "/admin/operations" : isTeacher ? "/dashboard" : "/student/search";
   const studentDisplayName = (profile?.name as string | undefined) || (user ? authDisplayName(user) : "");
   const studentInitials = initialsFromDisplay(studentDisplayName, user?.email || undefined);
+  const adminDisplayName = (profile?.name as string | undefined) || (user ? authDisplayName(user) : "");
+  const adminInitials = initialsFromDisplay(adminDisplayName, user?.email || undefined);
 
   const STUDENT_NAV: {
     href: string;
@@ -101,8 +105,81 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     >
       {isTeacher ? <TeacherTopNav unreadMessages={unreadMessages} /> : null}
 
-      {/* Default top bar (non-student, non-teacher: logged-out or unknown role) */}
-      {!isStudent && !isTeacher ? (
+      {isAdmin ? (
+        <header className="sticky top-0 z-50 shrink-0 border-b border-[#DCEAE3] bg-white">
+          <div className="flex h-14 items-center justify-between gap-4 px-4 sm:px-6">
+            <Link href="/admin/operations" className="flex items-center gap-2 min-w-0" aria-label={t("ariaHome")}>
+              <PratiqoLogo variant="full" size="md" />
+            </Link>
+            <div className="flex items-center gap-2 sm:gap-3">
+              <Link
+                href="/admin/operations"
+                className={cn(
+                  "hidden rounded-full px-3 py-2 text-xs font-bold transition-colors sm:inline-flex",
+                  pathname?.startsWith("/admin/operations") || pathname === "/admin"
+                    ? "bg-teal-50 text-teal-800"
+                    : "text-slate-600 hover:bg-slate-50",
+                )}
+              >
+                {t("adminNavOperations")}
+              </Link>
+              <Link
+                href="/admin/credentials"
+                className={cn(
+                  "hidden items-center gap-1.5 rounded-full px-3 py-2 text-xs font-bold transition-colors sm:inline-flex",
+                  pathname?.startsWith("/admin/credentials")
+                    ? "bg-teal-50 text-teal-800"
+                    : "text-slate-600 hover:bg-slate-50",
+                )}
+              >
+                <ShieldCheck size={14} />
+                {t("adminNavCredentials")}
+              </Link>
+              <div className="w-[132px] shrink-0 sm:w-[180px]">
+                <LocaleSwitcher variant="light" compact />
+              </div>
+              <span
+                className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-full bg-teal-50 text-xs font-bold text-teal-800 sm:inline-flex"
+                aria-label={adminDisplayName}
+                title={adminDisplayName}
+              >
+                {adminInitials}
+              </span>
+              <button
+                type="button"
+                onClick={() => void logout()}
+                className="inline-flex h-9 items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 hover:bg-slate-50"
+              >
+                <LogOut size={14} />
+                <span className="hidden sm:inline">{t("signOut")}</span>
+              </button>
+            </div>
+          </div>
+          <nav className="flex gap-1 border-t border-[#F1EFE8] px-4 sm:hidden">
+            {[
+              { href: "/admin/operations", label: t("adminNavOperations") },
+              { href: "/admin/credentials", label: t("adminNavCredentials") },
+            ].map((tab) => {
+              const active = pathname === tab.href || pathname?.startsWith(`${tab.href}/`);
+              return (
+                <Link
+                  key={tab.href}
+                  href={tab.href}
+                  className={cn(
+                    "border-b-2 px-3 py-2 text-xs font-bold",
+                    active ? "border-teal-500 text-teal-800" : "border-transparent text-slate-600",
+                  )}
+                >
+                  {tab.label}
+                </Link>
+              );
+            })}
+          </nav>
+        </header>
+      ) : null}
+
+      {/* Default top bar (non-student, non-teacher, non-admin: logged-out or unknown role) */}
+      {!isStudent && !isTeacher && !isAdmin ? (
         <header className="sticky top-0 z-40 h-14 shrink-0 border-b border-[var(--p-border-light)] bg-white flex items-center justify-between px-4 sm:px-5">
           <Link href={logoHref} className="flex items-center gap-2 min-w-0" aria-label={t("ariaHome")}>
             <PratiqoLogo variant="full" size="md" />
@@ -254,7 +331,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           {isStudent ? (
             <div className="w-full">{children}</div>
           ) : (
-            <div className={cn("mx-auto w-full", !isTeacher && "max-w-[960px]", isTeacher && "w-full")}>{children}</div>
+            <div className={cn("mx-auto w-full", !isTeacher && !isAdmin && "max-w-[960px]", isTeacher && "w-full", isAdmin && "w-full")}>{children}</div>
           )}
         </main>
       </div>

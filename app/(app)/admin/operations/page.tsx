@@ -15,6 +15,8 @@ import {
   Trash2,
 } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
+import { useLocale } from "@/lib/locale-context";
+import { localeToBcp47, type TranslationKey } from "@/lib/i18n/types";
 import { getSupabaseClient } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 
@@ -104,9 +106,30 @@ const emptyPayload: OperationsPayload = {
   verification: { pendingDiplomas: 0, pendingCredentials: 0 },
 };
 
-function formatDate(value: string | null | undefined) {
+type Translator = (key: TranslationKey) => string;
+
+const SUPPORT_CATEGORY_KEYS: Record<string, TranslationKey> = {
+  teacher_no_show: "supportCategoryTeacherNoShow",
+  student_no_show: "supportCategoryStudentNoShow",
+  late_cancellation: "supportCategoryLateCancellation",
+  lesson_too_short: "supportCategoryLessonTooShort",
+  technical_issue: "supportCategoryTechnicalIssue",
+  wrong_address_or_location: "supportCategoryWrongAddress",
+  refund_request: "supportCategoryRefundRequest",
+  payment_or_receipt_issue: "supportCategoryPaymentIssue",
+  inappropriate_behavior: "supportCategoryInappropriateBehavior",
+  other: "supportCategoryOther",
+};
+
+function labelFromKey(value: string | null | undefined, map: Record<string, TranslationKey>, t: Translator) {
   if (!value) return "-";
-  return new Intl.DateTimeFormat("fr-CA", {
+  const key = map[value];
+  return key ? t(key) : value;
+}
+
+function formatDate(value: string | null | undefined, locale: string) {
+  if (!value) return "-";
+  return new Intl.DateTimeFormat(locale, {
     day: "2-digit",
     month: "short",
     year: "numeric",
@@ -115,8 +138,8 @@ function formatDate(value: string | null | undefined) {
   }).format(new Date(value));
 }
 
-function formatMoney(cents: number, currency: string) {
-  return new Intl.NumberFormat("fr-CA", {
+function formatMoney(cents: number, currency: string, locale: string) {
+  return new Intl.NumberFormat(locale, {
     style: "currency",
     currency: currency.toUpperCase(),
   }).format(Math.max(0, cents) / 100);
@@ -182,8 +205,10 @@ function EmptyState({ text }: { text: string }) {
 
 export default function AdminOperationsPage() {
   const { user, profile } = useAuth();
+  const { t, locale } = useLocale();
   const router = useRouter();
   const isAdmin = (profile?.role as string | undefined) === "admin";
+  const intlLocale = localeToBcp47(locale);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<OperationsPayload>(emptyPayload);
@@ -207,7 +232,7 @@ export default function AdminOperationsPage() {
         headers: { Authorization: `Bearer ${token}` },
       });
       const json = (await res.json().catch(() => ({}))) as Partial<OperationsPayload> & { error?: string };
-      if (!res.ok) throw new Error(json.error ?? "Impossible de charger les operations.");
+      if (!res.ok) throw new Error(t("adminOperationsLoadError"));
       setData({
         ...emptyPayload,
         ...json,
@@ -215,11 +240,11 @@ export default function AdminOperationsPage() {
         verification: { ...emptyPayload.verification, ...(json.verification ?? {}) },
       });
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Erreur serveur.");
+      setError(e instanceof Error ? e.message : t("adminServerError"));
     } finally {
       setLoading(false);
     }
-  }, [isAdmin, user?.id]);
+  }, [isAdmin, t, user?.id]);
 
   useEffect(() => {
     void load();
@@ -248,11 +273,10 @@ export default function AdminOperationsPage() {
                 <ClipboardList size={26} />
               </span>
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Espace admin</p>
-                <h1 className="mt-1 text-2xl font-bold text-[#2C2C2A]">Operations Pratiqo</h1>
+                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">{t("adminSpaceLabel")}</p>
+                <h1 className="mt-1 text-2xl font-bold text-[#2C2C2A]">{t("adminOperationsTitle")}</h1>
                 <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-600">
-                  Une file unique pour voir les sujets qui demandent une intervention: support, avis signales,
-                  suppression de compte, verification et paiements a reconciler.
+                  {t("adminOperationsSubtitle")}
                 </p>
               </div>
             </div>
@@ -264,14 +288,14 @@ export default function AdminOperationsPage() {
                 className="inline-flex h-10 items-center gap-2 rounded-full border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
               >
                 {loading ? <Loader2 size={15} className="animate-spin" /> : null}
-                Actualiser
+                {t("adminRefresh")}
               </button>
               <Link
                 href="/admin/credentials"
                 className="inline-flex h-10 items-center gap-2 rounded-full bg-teal-700 px-4 text-sm font-bold text-white hover:bg-teal-800"
               >
                 <FileCheck2 size={15} />
-                Verifications
+                {t("adminNavCredentials")}
               </Link>
             </div>
           </div>
@@ -287,18 +311,18 @@ export default function AdminOperationsPage() {
         {loading ? (
           <div className="flex items-center justify-center gap-3 py-20 text-sm font-semibold text-slate-600">
             <Loader2 className="h-6 w-6 animate-spin text-teal-700" />
-            Chargement des operations...
+            {t("adminLoadingOperations")}
           </div>
         ) : (
           <>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
               {[
-                ["Total ouvert", totalOpen],
-                ["Support", data.summary.supportCases],
-                ["Blocages payout", data.summary.payoutHolds],
-                ["Avis signales", data.summary.reviewReports],
-                ["Suppressions", data.summary.deletionRequests],
-                ["Payouts echoues", data.summary.payoutFailures],
+                [t("adminTotalOpen"), totalOpen],
+                [t("adminSupport"), data.summary.supportCases],
+                [t("adminPayoutHolds"), data.summary.payoutHolds],
+                [t("adminFlaggedReviews"), data.summary.reviewReports],
+                [t("adminDeletionRequests"), data.summary.deletionRequests],
+                [t("adminPayoutFailures"), data.summary.payoutFailures],
               ].map(([label, value]) => (
                 <div key={String(label)} className="rounded-2xl border border-[#DCEAE3] bg-white p-4 shadow-sm">
                   <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">{label}</p>
@@ -308,9 +332,9 @@ export default function AdminOperationsPage() {
             </div>
 
             <div className="grid gap-5 lg:grid-cols-2">
-              <Section title="Support et resolution" count={data.supportCases.length} icon={ShieldAlert}>
+              <Section title={t("adminSupportResolution")} count={data.supportCases.length} icon={ShieldAlert}>
                 {data.supportCases.length === 0 ? (
-                  <EmptyState text="Aucun cas support ouvert." />
+                  <EmptyState text={t("adminNoOpenSupportCases")} />
                 ) : (
                   <ul className="space-y-3">
                     {data.supportCases.map((c) => (
@@ -322,28 +346,30 @@ export default function AdminOperationsPage() {
                           {statusPill(c.status)}
                           {c.payoutHold ? (
                             <span className="rounded-full border border-red-200 bg-red-50 px-2 py-0.5 text-[11px] font-bold text-red-800">
-                              Versement bloque
+                              {t("adminPayoutBlocked")}
                             </span>
                           ) : null}
                         </div>
-                        <p className="mt-3 text-sm font-bold text-[#2C2C2A]">{c.category}</p>
+                        <p className="mt-3 text-sm font-bold text-[#2C2C2A]">
+                          {labelFromKey(c.category, SUPPORT_CATEGORY_KEYS, t)}
+                        </p>
                         <p className="mt-1 text-xs text-slate-500">
-                          {formatDate(c.createdAt)} · Ouvert par {c.openedByName ?? "-"} · Prof: {c.teacherName ?? "-"} · Eleve: {c.studentName ?? "-"}
+                          {formatDate(c.createdAt, intlLocale)} · {t("adminOpenedBy")} {c.openedByName ?? "-"} · {t("adminTeacher")}: {c.teacherName ?? "-"} · {t("adminStudent")}: {c.studentName ?? "-"}
                         </p>
                         <p className="mt-2 text-sm text-slate-700">{shortText(c.description)}</p>
                         <p className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900">
-                          Prochaine action: {c.nextStep}
+                          {t("adminNextAction")}: {t(c.payoutHold ? "adminNextStepReviewBeforePayout" : "adminNextStepAssignSupport")}
                         </p>
-                        {c.bookingId ? <p className="mt-2 text-[11px] text-slate-400">Booking: {c.bookingId}</p> : null}
+                        {c.bookingId ? <p className="mt-2 text-[11px] text-slate-400">{t("adminBooking")}: {c.bookingId}</p> : null}
                       </li>
                     ))}
                   </ul>
                 )}
               </Section>
 
-              <Section title="Avis signales" count={data.reviewReports.length} icon={Flag}>
+              <Section title={t("adminFlaggedReviewsTitle")} count={data.reviewReports.length} icon={Flag}>
                 {data.reviewReports.length === 0 ? (
-                  <EmptyState text="Aucun avis signale." />
+                  <EmptyState text={t("adminNoFlaggedReviews")} />
                 ) : (
                   <ul className="space-y-3">
                     {data.reviewReports.map((r) => (
@@ -356,15 +382,15 @@ export default function AdminOperationsPage() {
                           {r.isFlagged ? statusPill("flagged") : null}
                         </div>
                         <p className="mt-3 text-sm font-bold text-[#2C2C2A]">
-                          Avis {r.rating ? `${r.rating}/5` : ""} · {r.teacherName ?? "Professeur inconnu"}
+                          {t("adminReview")} {r.rating ? `${r.rating}/5` : ""} · {r.teacherName ?? t("adminUnknownTeacher")}
                         </p>
                         <p className="mt-1 text-xs text-slate-500">
-                          {formatDate(r.createdAt)} · Signale par {r.reporterName ?? "-"}
+                          {formatDate(r.createdAt, intlLocale)} · {t("adminReportedBy")} {r.reporterName ?? "-"}
                         </p>
                         <p className="mt-2 text-sm text-slate-700">{shortText(r.reviewBody)}</p>
-                        {r.details ? <p className="mt-2 text-xs text-slate-500">Signalement: {shortText(r.details, 120)}</p> : null}
+                        {r.details ? <p className="mt-2 text-xs text-slate-500">{t("adminReportDetails")}: {shortText(r.details, 120)}</p> : null}
                         <p className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900">
-                          Prochaine action: {r.nextStep}
+                          {t("adminNextAction")}: {t("adminNextStepReviewFlaggedReview")}
                         </p>
                       </li>
                     ))}
@@ -372,19 +398,19 @@ export default function AdminOperationsPage() {
                 )}
               </Section>
 
-              <Section title="Suppressions de compte" count={data.deletionRequests.length} icon={Trash2}>
+              <Section title={t("adminAccountDeletionTitle")} count={data.deletionRequests.length} icon={Trash2}>
                 {data.deletionRequests.length === 0 ? (
-                  <EmptyState text="Aucune demande de suppression en attente." />
+                  <EmptyState text={t("adminNoDeletionRequests")} />
                 ) : (
                   <ul className="space-y-3">
                     {data.deletionRequests.map((d) => (
                       <li key={d.userId} className="rounded-2xl border border-slate-200 p-4">
                         <p className="text-sm font-bold text-[#2C2C2A]">{d.name}</p>
                         <p className="mt-1 text-xs text-slate-500">
-                          {d.email ?? "-"} · {d.role ?? "-"} · Demande: {formatDate(d.deletionRequestedAt)}
+                          {d.email ?? "-"} · {d.role ?? "-"} · {t("adminDeletionRequestedAt")}: {formatDate(d.deletionRequestedAt, intlLocale)}
                         </p>
                         <p className="mt-3 rounded-xl bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700">
-                          Prochaine action: {d.nextStep}
+                          {t("adminNextAction")}: {t("adminNextStepDeletionReview")}
                         </p>
                         <p className="mt-2 text-[11px] text-slate-400">User: {d.userId}</p>
                       </li>
@@ -393,9 +419,9 @@ export default function AdminOperationsPage() {
                 )}
               </Section>
 
-              <Section title="Paiements a reconciler" count={data.payoutFailures.length} icon={CreditCard}>
+              <Section title={t("adminPaymentsToReconcile")} count={data.payoutFailures.length} icon={CreditCard}>
                 {data.payoutFailures.length === 0 ? (
-                  <EmptyState text="Aucun payout ou remboursement echoue." />
+                  <EmptyState text={t("adminNoFailedPayouts")} />
                 ) : (
                   <ul className="space-y-3">
                     {data.payoutFailures.map((p) => (
@@ -406,16 +432,16 @@ export default function AdminOperationsPage() {
                           {statusPill(`refund: ${p.refundStatus ?? "-"}`)}
                         </div>
                         <p className="mt-3 text-sm font-bold text-[#2C2C2A]">
-                          {formatMoney(p.amountCents, p.currency)} · Prof: {p.teacherName ?? "-"}
+                          {formatMoney(p.amountCents, p.currency, intlLocale)} · {t("adminTeacher")}: {p.teacherName ?? "-"}
                         </p>
                         <p className="mt-1 text-xs text-slate-500">
-                          Eleve: {p.studentName ?? "-"} · Echec: {formatDate(p.failedAt)}
+                          {t("adminStudent")}: {p.studentName ?? "-"} · {t("adminFailedAt")}: {formatDate(p.failedAt, intlLocale)}
                         </p>
                         {p.failureReason ? <p className="mt-2 text-sm text-rose-700">{shortText(p.failureReason)}</p> : null}
                         <p className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-xs font-semibold text-red-900">
-                          Prochaine action: {p.nextStep}
+                          {t("adminNextAction")}: {t(p.transferStatus === "failed" ? "adminNextStepSyncStripePayout" : "adminNextStepReconcileRefund")}
                         </p>
-                        <p className="mt-2 text-[11px] text-slate-400">Booking: {p.bookingId}</p>
+                        <p className="mt-2 text-[11px] text-slate-400">{t("adminBooking")}: {p.bookingId}</p>
                       </li>
                     ))}
                   </ul>
@@ -424,24 +450,24 @@ export default function AdminOperationsPage() {
             </div>
 
             <Section
-              title="Verification enseignants"
+              title={t("adminVerificationTeachers")}
               count={data.verification.pendingDiplomas + data.verification.pendingCredentials}
               icon={FileCheck2}
             >
               <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200 p-4">
                 <div>
                   <p className="text-sm font-bold text-[#2C2C2A]">
-                    {data.verification.pendingDiplomas} diplomes · {data.verification.pendingCredentials} qualifications
+                    {data.verification.pendingDiplomas} {t("adminDiplomas")} · {data.verification.pendingCredentials} {t("adminQualifications")}
                   </p>
                   <p className="mt-1 text-sm text-slate-600">
-                    La revue de documents reste dans la page specialisee pour garder les fichiers signes separes du cockpit general.
+                    {t("adminVerificationDescription")}
                   </p>
                 </div>
                 <Link
                   href="/admin/credentials"
                   className="inline-flex h-10 items-center rounded-full bg-teal-700 px-4 text-sm font-bold text-white hover:bg-teal-800"
                 >
-                  Ouvrir la file verification
+                  {t("adminOpenVerificationQueue")}
                 </Link>
               </div>
             </Section>
