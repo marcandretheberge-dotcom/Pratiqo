@@ -1,19 +1,17 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { getLocaleFromPath, stripLocale } from "@/lib/i18n/routing";
+import {
+  isUnprefixedMarketingPath,
+  legacyMarketingRedirectPath,
+} from "@/lib/i18n/marketingPaths";
 
 /**
  * Edge-runtime request proxy (Next 16 convention).
  *
- * Previously this file lived at `middleware.ts`; the "middleware" file
- * convention is deprecated in Next 16 in favour of "proxy" with identical
- * runtime semantics. See: https://nextjs.org/docs/messages/middleware-to-proxy
- *
- * Current responsibilities:
+ * Responsibilities:
+ *   - 301-redirect unprefixed marketing URLs to `/{locale}/…` (step 1.3).
  *   - Gate the authenticated app surface behind a Supabase auth-cookie check.
- *
- * Locale routing (planned, item 1.3 of Phase 1):
- *   - Detect locale from path → cookie → Accept-Language / IP geo.
- *   - 301-redirect unprefixed canonical URLs to /{defaultLocale}/...
  */
 
 const LOGIN_PATH = "/login";
@@ -24,7 +22,9 @@ function hasSupabaseAuthCookie(req: NextRequest): boolean {
 }
 
 /**
- * Protected app surface only. Everything else stays public (marketing, SEO, public teacher/group pages).
+ * Protected app surface only. Pass **pathname without locale prefix** once
+ * marketing routes are prefixed; bare paths like `/dashboard` stay supported
+ * until step 1.4 migrates the app tree.
  */
 function isProtectedPath(pathname: string): boolean {
   // Post-payment group session page
@@ -63,7 +63,16 @@ export function proxy(req: NextRequest) {
     return NextResponse.next();
   }
 
-  if (!isProtectedPath(pathname)) {
+  const pathForAuth = getLocaleFromPath(pathname) ? stripLocale(pathname) : pathname;
+
+  // ── Marketing locale prefix (301) ─────────────────────────────────────────
+  if (!getLocaleFromPath(pathname) && isUnprefixedMarketingPath(pathname)) {
+    const target = legacyMarketingRedirectPath(pathname, search, req.cookies.get("pratiqo-locale")?.value);
+    const dest = new URL(target, req.url);
+    return NextResponse.redirect(dest, 301);
+  }
+
+  if (!isProtectedPath(pathForAuth)) {
     return NextResponse.next();
   }
 

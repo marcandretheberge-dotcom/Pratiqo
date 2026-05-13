@@ -7,34 +7,28 @@
  *
  * Each entry has a `localized` flag and a `paths: Record<Locale, string>` map:
  *
- *   - `localized: false` (today, pre-migration) — the route is served from a
- *     single non-prefixed URL. All three locale slots in `paths` point to the
- *     same string. The sitemap emits ONE entry per route; `metadata.alternates`
- *     emits only `canonical` (no hreflang languages map) because emitting
- *     hreflang where every alternate resolves to the same URL is a documented
- *     Google anti-pattern.
+ *   - `localized: true` (default for marketing/SEO routes post step 1.3) — the
+ *     route is served from `app/[locale]/…`. Each locale gets a URL prefixed
+ *     with its short code (e.g. `/fr/tarifs`, `/en/tarifs`, `/es/tarifs`). The
+ *     sitemap emits one entry per route with `alternates.languages`; the
+ *     page's `metadata.alternates.languages` is the same map. The unprefixed
+ *     form 301-redirects to the cookie-detected (or default) locale at the
+ *     proxy layer.
  *
- *   - `localized: true` (post step 1.3 for marketing, step 1.4 for app) — the
- *     route is migrated to `app/[locale]/...`. Each locale gets a distinct URL
- *     (e.g. fr=/fr/tarifs, en=/en/tarifs, es=/es/tarifs). The sitemap emits
- *     one entry per route with `alternates.languages`; the page's
- *     `metadata.alternates.languages` is the same map. The unprefixed form
- *     301-redirects to the default locale.
+ *     Most routes share the same slug across locales because their slug is
+ *     already a brand term (`/blog`, `/group-sessions`, `/teacher/profile`)
+ *     or a French marketing slug we keep for SEO equity (`/tarifs`,
+ *     `/trouver-un-prof`, `/francisation`). The `become-teacher` route is the
+ *     one early case of true per-locale slugs (`/en/become-teacher` vs
+ *     `/fr/devenir-enseignant`).
  *
- * This shape lets steps 1.3/1.4 migrate routes one at a time by flipping
- * `localized: true` and updating `paths`, without touching sitemap/metadata
- * code.
- *
- * Marketing routes that today exist as pseudo-localized siblings
- * (`/become-teacher` + `/devenir-enseignant`) stay as separate registry
- * entries until step 1.3; at that point they collapse into a single
- * `localized: true` entry whose `paths` map carries the historic French slug
- * (`/fr/devenir-enseignant`) and the English slug (`/en/become-teacher`).
- * Until then we keep both URLs indexed and 301 them to the new shape in 1.3.
+ *   - `localized: false` — the route is served from a single unprefixed URL
+ *     and ignores the locale segment (e.g. `/login` and other auth/OAuth
+ *     callbacks). The sitemap emits ONE entry with no hreflang languages map.
  */
 
 import type { Locale } from "./types";
-import { ROUTING_DEFAULT_LOCALE } from "./routing";
+import { ROUTING_DEFAULT_LOCALE, withLocale } from "./routing";
 
 export type RouteChangeFrequency =
   | "always"
@@ -59,10 +53,25 @@ export interface PublicRoute {
 }
 
 /**
- * Convenience: build a registry entry whose three locales share the same
- * (unprefixed) path. Used during the pre-migration phase.
+ * Convenience: build a localized registry entry whose three locales share the
+ * same slug (e.g. `/tarifs` → `/{locale}/tarifs`).
  */
-function shared(
+function localizedSame(
+  key: string,
+  path: string,
+  meta?: Pick<PublicRoute, "changeFrequency" | "priority">,
+): PublicRoute {
+  return {
+    key,
+    paths: { en: path, fr: path, es: path },
+    localized: true,
+    changeFrequency: meta?.changeFrequency,
+    priority: meta?.priority,
+  };
+}
+
+/** Public URL that stays unprefixed (OAuth, auth flows). */
+function unlocalized(
   key: string,
   path: string,
   meta?: Pick<PublicRoute, "changeFrequency" | "priority">,
@@ -85,19 +94,24 @@ function shared(
  * sitemap on purpose.
  */
 export const PUBLIC_STATIC_ROUTES: readonly PublicRoute[] = [
-  shared("home", "/", { changeFrequency: "weekly", priority: 1.0 }),
-  shared("become-teacher", "/become-teacher", { changeFrequency: "monthly", priority: 0.9 }),
-  shared("devenir-enseignant", "/devenir-enseignant", { changeFrequency: "monthly", priority: 0.9 }),
-  shared("teacher-profile-hub", "/teacher/profile", { changeFrequency: "weekly", priority: 0.75 }),
-  shared("group-sessions", "/group-sessions", { changeFrequency: "daily", priority: 0.8 }),
-  shared("tarifs", "/tarifs", { changeFrequency: "monthly", priority: 0.8 }),
-  shared("trouver-un-prof", "/trouver-un-prof", { changeFrequency: "monthly", priority: 0.85 }),
-  shared("francisation", "/francisation", { changeFrequency: "monthly", priority: 0.85 }),
-  shared("login", "/login", { changeFrequency: "yearly", priority: 0.6 }),
-  shared("cgu", "/cgu", { changeFrequency: "yearly", priority: 0.4 }),
-  shared("confidentialite", "/confidentialite", { changeFrequency: "yearly", priority: 0.4 }),
-  shared("annulation", "/annulation", { changeFrequency: "yearly", priority: 0.4 }),
-  shared("blog", "/blog", { changeFrequency: "daily", priority: 0.9 }),
+  localizedSame("home", "/", { changeFrequency: "weekly", priority: 1.0 }),
+  {
+    key: "become-teacher",
+    paths: { en: "/become-teacher", fr: "/devenir-enseignant", es: "/become-teacher" },
+    localized: true,
+    changeFrequency: "monthly",
+    priority: 0.9,
+  },
+  localizedSame("teacher-profile-hub", "/teacher/profile", { changeFrequency: "weekly", priority: 0.75 }),
+  localizedSame("group-sessions", "/group-sessions", { changeFrequency: "daily", priority: 0.8 }),
+  localizedSame("tarifs", "/tarifs", { changeFrequency: "monthly", priority: 0.8 }),
+  localizedSame("trouver-un-prof", "/trouver-un-prof", { changeFrequency: "monthly", priority: 0.85 }),
+  localizedSame("francisation", "/francisation", { changeFrequency: "monthly", priority: 0.85 }),
+  unlocalized("login", "/login", { changeFrequency: "yearly", priority: 0.6 }),
+  localizedSame("cgu", "/cgu", { changeFrequency: "yearly", priority: 0.4 }),
+  localizedSame("confidentialite", "/confidentialite", { changeFrequency: "yearly", priority: 0.4 }),
+  localizedSame("annulation", "/annulation", { changeFrequency: "yearly", priority: 0.4 }),
+  localizedSame("blog", "/blog", { changeFrequency: "daily", priority: 0.9 }),
 ];
 
 /**
@@ -114,5 +128,8 @@ export function findRoute(key: string): PublicRoute | undefined {
  * the single shared path; post-migration this is the default-locale variant.
  */
 export function canonicalPathFor(route: PublicRoute): string {
+  if (route.localized) {
+    return withLocale(route.paths[ROUTING_DEFAULT_LOCALE], ROUTING_DEFAULT_LOCALE);
+  }
   return route.paths[ROUTING_DEFAULT_LOCALE];
 }

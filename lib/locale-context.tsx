@@ -9,8 +9,11 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { DEFAULT_LOCALE, detectLocale, normalizeLocale, type Locale } from "./i18n/client";
 import { t as translate, type TranslationKey } from "./translations";
+import { getLocaleFromPath, stripLocale } from "./i18n/routing";
+import { marketingPathForLocale, isUnprefixedMarketingPath } from "./i18n/marketingPaths";
 import {
   formatPrice as formatGeoPrice,
   formatDualPrice as formatGeoDualPrice,
@@ -63,11 +66,23 @@ const LocaleContext = createContext<LocaleContextType>({
 });
 
 export function LocaleProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>(DEFAULT_LOCALE);
+  const router = useRouter();
+  const pathname = usePathname();
+  const urlLocale = pathname ? getLocaleFromPath(pathname) : null;
+  const [locale, setLocaleState] = useState<Locale>(urlLocale ?? DEFAULT_LOCALE);
   const [currency, setCurrencyState] = useState<Currency>(getDefaultGeoConfig().currency);
   const [countryCode, setCountryCode] = useState<string | null>(null);
 
+  // Keep state in sync with URL locale (most authoritative source post-1.3).
   useEffect(() => {
+    if (urlLocale && urlLocale !== locale) {
+      setLocaleState(urlLocale);
+      persistLocale(urlLocale);
+    }
+  }, [urlLocale, locale]);
+
+  useEffect(() => {
+    if (urlLocale) return; // URL already pinned the locale
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       const normalizedSaved = normalizeLocale(saved);
@@ -119,13 +134,27 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
       setLocaleState(detected);
       persistLocale(detected);
     })();
-  }, []);
+  }, [urlLocale]);
 
-  const setLocale = useCallback((newLocale: Locale) => {
-    const normalized = normalizeLocale(newLocale);
-    setLocaleState(normalized);
-    persistLocale(normalized);
-  }, []);
+  const setLocale = useCallback(
+    (newLocale: Locale) => {
+      const normalized = normalizeLocale(newLocale);
+      setLocaleState(normalized);
+      persistLocale(normalized);
+
+      // If we're on a marketing page, navigate to the equivalent localized URL
+      // so the user stays on the same page in the new language.
+      const current = pathname ?? "/";
+      const stripped = stripLocale(current);
+      if (getLocaleFromPath(current) || isUnprefixedMarketingPath(stripped)) {
+        const next = marketingPathForLocale(stripped, normalized);
+        if (next !== current) {
+          router.replace(next);
+        }
+      }
+    },
+    [pathname, router],
+  );
 
   const setCurrency = useCallback((newCurrency: Currency) => {
     setCurrencyState(newCurrency);

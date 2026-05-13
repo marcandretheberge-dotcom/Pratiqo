@@ -14,6 +14,7 @@ import {
   UserRoundSearch,
 } from "lucide-react";
 import { useLocale } from "@/lib/locale-context";
+import { withLocaleHref } from "@/lib/i18n/marketingPaths";
 import type { TranslationKey } from "@/lib/i18n/types";
 import type { Teacher } from "@/types";
 import type { City } from "@/lib/cities";
@@ -90,7 +91,7 @@ export function LandingSearchHero({
   showOtherDisciplinesNote = true,
   extraUnderAdvanced,
 }: LandingSearchHeroProps) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const [mode, setMode] = useState<"student" | "teacher">("student");
 
   const categories = useMemo(
@@ -145,7 +146,7 @@ export function LandingSearchHero({
                 </p>
                 <div className="mt-8 flex justify-center">
                   <Link
-                    href="/devenir-enseignant"
+                    href={withLocaleHref("/become-teacher", locale)}
                     className="inline-flex h-12 items-center justify-center rounded-2xl bg-teal-700 px-6 text-sm font-semibold text-white shadow-[0_14px_40px_rgba(15,110,86,0.18)] hover:bg-[#0B5F4A]"
                   >
                     {t("becomeTeacher")}

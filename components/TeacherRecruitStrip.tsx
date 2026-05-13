@@ -17,6 +17,7 @@ import Link from "next/link";
 import { X } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useLocale } from "@/lib/locale-context";
+import { withLocaleHref } from "@/lib/i18n/marketingPaths";
 
 const STORAGE_KEY = "pratiqo-teacher-strip-dismissed";
 
@@ -24,7 +25,7 @@ const STORAGE_KEY = "pratiqo-teacher-strip-dismissed";
 const SUPPRESSED_PATHS = ["/devenir-enseignant", "/become-teacher", "/onboarding", "/login"];
 
 export function TeacherRecruitStrip() {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const pathname = usePathname();
   const [visible, setVisible] = useState(false);
 
@@ -70,7 +71,7 @@ export function TeacherRecruitStrip() {
       <span className="text-xs text-white/85 font-medium truncate">{t("bannerAreYouTeacher")}</span>
 
       <Link
-        href="/devenir-enseignant"
+        href={withLocaleHref("/become-teacher", locale)}
         className="shrink-0 text-xs font-bold text-white underline underline-offset-2 hover:text-white/85 transition-colors"
       >
         {t("bannerJoinCta")}

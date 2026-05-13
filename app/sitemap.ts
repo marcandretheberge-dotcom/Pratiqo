@@ -11,8 +11,31 @@ import {
   type RouteChangeFrequency,
 } from "../lib/i18n/routes";
 import { sitemapAlternates } from "../lib/seo/alternates";
+import { LOCALE_BCP47, LOCALES, ROUTING_DEFAULT_LOCALE, withLocale } from "../lib/i18n/routing";
 
 const BASE_URL = SITE_URL;
+
+/**
+ * Build a Sitemap entry where the same path is served for every locale (city
+ * pages, discipline pages, etc. — the URL slugs are identical across locales).
+ */
+function localizedDynamicEntry(
+  path: string,
+  meta: { lastModified: Date; changeFrequency: RouteChangeFrequency; priority: number },
+): MetadataRoute.Sitemap[number] {
+  const languages: Record<string, string> = {};
+  for (const locale of LOCALES) {
+    languages[LOCALE_BCP47[locale]] = `${BASE_URL}${withLocale(path, locale)}`;
+  }
+  languages["x-default"] = `${BASE_URL}${withLocale(path, ROUTING_DEFAULT_LOCALE)}`;
+  return {
+    url: `${BASE_URL}${withLocale(path, ROUTING_DEFAULT_LOCALE)}`,
+    lastModified: meta.lastModified,
+    changeFrequency: meta.changeFrequency,
+    priority: meta.priority,
+    alternates: { languages },
+  };
+}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -52,12 +75,14 @@ async function fetchTeacherEntries(): Promise<MetadataRoute.Sitemap> {
 
     if (error || !data) return [];
 
-    return (data as { id: string; updated_at: string | null }[]).map((row) => ({
-      url: `${BASE_URL}/teacher/profile/${encodeURIComponent(row.id)}`,
-      lastModified: row.updated_at ? new Date(row.updated_at) : new Date(),
-      changeFrequency: "weekly" as const,
-      priority: 0.8,
-    }));
+    return (data as { id: string; updated_at: string | null }[]).map((row) => {
+      const path = `/teacher/profile/${encodeURIComponent(row.id)}`;
+      return localizedDynamicEntry(path, {
+        lastModified: row.updated_at ? new Date(row.updated_at) : new Date(),
+        changeFrequency: "weekly",
+        priority: 0.8,
+      });
+    });
   } catch {
     return [];
   }
@@ -76,40 +101,44 @@ async function fetchBlogEntries(): Promise<MetadataRoute.Sitemap> {
 
     if (error || !data) return [];
 
-    return (data as { slug: string; updated_at: string | null }[]).map((row) => ({
-      url: `${BASE_URL}/blog/${row.slug}`,
-      lastModified: row.updated_at ? new Date(row.updated_at) : new Date(),
-      changeFrequency: "weekly" as const,
-      priority: 0.85,
-    }));
+    return (data as { slug: string; updated_at: string | null }[]).map((row) =>
+      localizedDynamicEntry(`/blog/${row.slug}`, {
+        lastModified: row.updated_at ? new Date(row.updated_at) : new Date(),
+        changeFrequency: "weekly",
+        priority: 0.85,
+      }),
+    );
   } catch {
     return [];
   }
 }
 
 // ── City landing-page routes ───────────────────────────────────────────────────
-const CITY_ROUTES: MetadataRoute.Sitemap = QC_CITIES.map((city) => ({
-  url: `${BASE_URL}/tuteurs-prive/${city.slug}`,
-  lastModified: new Date(),
-  changeFrequency: "monthly" as const,
-  priority: 0.8,
-}));
+const CITY_ROUTES: MetadataRoute.Sitemap = QC_CITIES.map((city) =>
+  localizedDynamicEntry(`/tuteurs-prive/${city.slug}`, {
+    lastModified: new Date(),
+    changeFrequency: "monthly",
+    priority: 0.8,
+  }),
+);
 
 // ── Montevideo barrio routes ───────────────────────────────────────────────────
-const BARRIO_ROUTES: MetadataRoute.Sitemap = MV_BARRIOS.map((b) => ({
-  url: `${BASE_URL}/clases/montevideo/${b.slug}`,
-  lastModified: new Date(),
-  changeFrequency: "monthly" as const,
-  priority: 0.75,
-}));
+const BARRIO_ROUTES: MetadataRoute.Sitemap = MV_BARRIOS.map((b) =>
+  localizedDynamicEntry(`/clases/montevideo/${b.slug}`, {
+    lastModified: new Date(),
+    changeFrequency: "monthly",
+    priority: 0.75,
+  }),
+);
 
 // ── Discipline × city landing pages ───────────────────────────────────────────
-const DISCIPLINE_CITY_ROUTES: MetadataRoute.Sitemap = DISCIPLINE_CITY_PAIRS.map((pair) => ({
-  url: `${BASE_URL}/cours/${pair.disciplineSlug}/${pair.citySlug}`,
-  lastModified: new Date(),
-  changeFrequency: "monthly" as const,
-  priority: 0.75,
-}));
+const DISCIPLINE_CITY_ROUTES: MetadataRoute.Sitemap = DISCIPLINE_CITY_PAIRS.map((pair) =>
+  localizedDynamicEntry(`/cours/${pair.disciplineSlug}/${pair.citySlug}`, {
+    lastModified: new Date(),
+    changeFrequency: "monthly",
+    priority: 0.75,
+  }),
+);
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();

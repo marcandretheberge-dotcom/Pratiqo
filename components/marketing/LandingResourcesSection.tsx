@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { useLocale } from "@/lib/locale-context";
+import { withLocaleHref } from "@/lib/i18n/marketingPaths";
 
 const RESOURCE_CARDS = [
   {
@@ -26,7 +27,7 @@ const RESOURCE_CARDS = [
 ] as const;
 
 export function LandingResourcesSection({ className }: { className?: string }) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
 
   return (
     <section
@@ -41,7 +42,7 @@ export function LandingResourcesSection({ className }: { className?: string }) {
           <p className="mt-4 text-sm leading-relaxed text-neutral-700 sm:text-base">{t("landingResourcesSubtitle")}</p>
           <div className="mt-8">
             <Link
-              href="/blog"
+              href={withLocaleHref("/blog", locale)}
               className="inline-flex min-h-[44px] items-center justify-center rounded-2xl bg-[#0F6E56] px-6 py-2.5 text-sm font-semibold text-white shadow-md transition-colors hover:bg-[#0d5c48]"
             >
               {t("landingResourcesCta")}
@@ -60,7 +61,7 @@ export function LandingResourcesSection({ className }: { className?: string }) {
                 <h3 className="mt-4 text-lg font-bold leading-snug text-[#2C2C2A]">{t(card.titleKey)}</h3>
                 <p className="mt-3 flex-1 text-sm leading-relaxed text-neutral-700">{t(card.descKey)}</p>
                 <Link
-                  href={card.href}
+                  href={withLocaleHref(card.href, locale)}
                   className="mt-6 inline-flex items-center text-sm font-semibold text-[#0F6E56] underline-offset-4 hover:underline"
                 >
                   {t("landingResourceReadArticle")}

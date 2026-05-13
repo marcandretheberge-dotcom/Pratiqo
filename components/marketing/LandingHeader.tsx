@@ -4,12 +4,13 @@ import Link from "next/link";
 import PratiqoLogo from "@/components/PratiqoLogo";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 import { useLocale } from "@/lib/locale-context";
+import { withLocaleHref } from "@/lib/i18n/marketingPaths";
 
 export function LandingHeader() {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-[#D3D1C7] h-14 flex items-center justify-between px-4 sm:px-6">
-      <Link href="/" className="flex items-center gap-2">
+      <Link href={withLocaleHref("/", locale)} className="flex items-center gap-2">
         <span className="md:hidden">
           <PratiqoLogo variant="icon" size="md" priority={false} fetchPriority="low" loading="lazy" />
         </span>
@@ -20,19 +21,19 @@ export function LandingHeader() {
       <div className="flex items-center gap-3">
         <LocaleSwitcher variant="light" />
         <Link
-          href="/tarifs"
+          href={withLocaleHref("/tarifs", locale)}
           className="hidden sm:inline-flex items-center text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors"
         >
           {t("navPricing") || "Tarifs"}
         </Link>
         <Link
-          href="/blog"
+          href={withLocaleHref("/blog", locale)}
           className="hidden sm:inline-flex items-center text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors"
         >
           {t("navResources")}
         </Link>
         <Link
-          href="/devenir-enseignant"
+          href={withLocaleHref("/become-teacher", locale)}
           className="hidden sm:inline-flex items-center rounded-xl border border-teal-700 px-3 py-1.5 text-xs font-semibold text-teal-700 hover:bg-teal-700/8 transition-colors"
         >
           {t("becomeTeacher")}

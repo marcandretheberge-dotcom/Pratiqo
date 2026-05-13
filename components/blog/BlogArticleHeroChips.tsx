@@ -3,16 +3,12 @@
 import Link from "next/link";
 import { useLocale } from "@/lib/locale-context";
 import { useAuth } from "@/components/AuthProvider";
-import type { Locale } from "@/lib/i18n/types";
-
-function teacherSignupHref(locale: Locale): string {
-  return locale === "fr" ? "/devenir-enseignant" : "/become-teacher";
-}
+import { withLocaleHref } from "@/lib/i18n/marketingPaths";
 
 export function BlogArticleHeroChips({ showTeacherChip }: { showTeacherChip: boolean }) {
   const { t, locale } = useLocale();
   const { user } = useAuth();
-  const teach = teacherSignupHref(locale);
+  const teach = withLocaleHref("/become-teacher", locale);
   const studentSearchHref = user ? "/student/search" : "/login?next=/student/search";
 
   return (
@@ -25,7 +21,7 @@ export function BlogArticleHeroChips({ showTeacherChip }: { showTeacherChip: boo
         {t("blogFindTeacherCta")}
       </Link>
       <Link
-        href="/tarifs"
+        href={withLocaleHref("/tarifs", locale)}
         className="inline-flex items-center rounded-full border border-white/25 bg-white/10 px-4 py-2 text-xs font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/20"
       >
         {t("blogViewPricingCta")}

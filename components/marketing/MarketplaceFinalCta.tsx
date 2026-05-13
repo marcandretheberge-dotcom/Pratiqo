@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { useLocale } from "@/lib/locale-context";
 import { cn } from "@/lib/utils";
+import { withLocaleHref } from "@/lib/i18n/marketingPaths";
 
 export function MarketplaceFinalCta({ className }: { className?: string }) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
 
   return (
     <section className={cn("border-t border-[#E8E6DF] bg-[#FAFCFB]", className)}>
@@ -21,7 +22,7 @@ export function MarketplaceFinalCta({ className }: { className?: string }) {
             {t("marketplaceFindTeacherCta")}
           </Link>
           <Link
-            href="/become-teacher"
+            href={withLocaleHref("/become-teacher", locale)}
             className="inline-flex h-12 min-h-[48px] items-center justify-center rounded-2xl border-2 border-[#2C2C2A]/15 bg-white px-8 text-sm font-bold text-[#2C2C2A] transition-colors hover:border-teal-700/30 hover:bg-[#F9F8F5]"
           >
             {t("homeCtaTeacher")}

@@ -9,13 +9,19 @@
  * whether any specific route has been migrated yet.
  */
 
-import { DEFAULT_LOCALE, SUPPORTED_LOCALES, isLocale, type Locale } from "./types";
+import { SUPPORTED_LOCALES, isLocale, type Locale } from "./types";
 
 /** All locales the app serves URLs for, in priority order. */
 export const LOCALES = SUPPORTED_LOCALES;
 
-/** Default locale that owns the canonical (root-level) URL space. */
-export const ROUTING_DEFAULT_LOCALE: Locale = DEFAULT_LOCALE;
+/**
+ * Default locale that owns the canonical (root-level) URL space. Pratiqo is
+ * a French-Canadian first product, so French wins the canonical slot — bare
+ * paths like `/tarifs` 301 to `/fr/tarifs` here. This is intentionally
+ * decoupled from `DEFAULT_LOCALE` (which still falls back to `en` for
+ * translation lookups on first paint before geo/cookie hydration).
+ */
+export const ROUTING_DEFAULT_LOCALE: Locale = "fr";
 
 /**
  * BCP-47 tag emitted in `<html lang>` and hreflang attributes for each app

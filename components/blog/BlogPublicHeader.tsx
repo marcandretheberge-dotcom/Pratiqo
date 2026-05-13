@@ -4,20 +4,16 @@ import Link from "next/link";
 import PratiqoLogo from "@/components/PratiqoLogo";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 import { useLocale } from "@/lib/locale-context";
-import type { Locale } from "@/lib/i18n/types";
-
-function teacherSignupHref(locale: Locale): string {
-  return locale === "fr" ? "/devenir-enseignant" : "/become-teacher";
-}
+import { withLocaleHref } from "@/lib/i18n/marketingPaths";
 
 export function BlogPublicHeader() {
   const { t, locale } = useLocale();
-  const applyHref = teacherSignupHref(locale);
+  const applyHref = withLocaleHref("/become-teacher", locale);
 
   return (
     <header className="sticky top-0 z-50 border-b border-[#E8E6DE] bg-white/95 backdrop-blur-md">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
-        <Link href="/" className="flex shrink-0 items-center gap-2" aria-label={t("navHome")}>
+        <Link href={withLocaleHref("/", locale)} className="flex shrink-0 items-center gap-2" aria-label={t("navHome")}>
           <span className="md:hidden">
             <PratiqoLogo variant="icon" size="md" priority={false} fetchPriority="low" loading="lazy" />
           </span>
@@ -28,13 +24,13 @@ export function BlogPublicHeader() {
 
         <nav className="hidden flex-wrap items-center justify-end gap-x-1 md:flex" aria-label="Blog">
           <Link
-            href="/blog"
+            href={withLocaleHref("/blog", locale)}
             className="rounded-lg px-2.5 py-2 text-xs font-semibold text-[#5C5C5C] transition-colors hover:bg-black/[0.03] hover:text-[#0F6E56]"
           >
             {t("blogNavResources")}
           </Link>
           <Link
-            href="/tarifs"
+            href={withLocaleHref("/tarifs", locale)}
             className="rounded-lg px-2.5 py-2 text-xs font-semibold text-[#5C5C5C] transition-colors hover:bg-black/[0.03] hover:text-[#0F6E56]"
           >
             {t("navPricing")}
@@ -65,10 +61,10 @@ export function BlogPublicHeader() {
         className="flex justify-center gap-3 border-t border-[#F0EFE8] px-4 py-2 text-[11px] font-semibold md:hidden"
         aria-label="Blog mobile"
       >
-        <Link href="/blog" className="text-[#5C5C5C]">
+        <Link href={withLocaleHref("/blog", locale)} className="text-[#5C5C5C]">
           {t("blogNavResources")}
         </Link>
-        <Link href="/tarifs" className="text-[#5C5C5C]">
+        <Link href={withLocaleHref("/tarifs", locale)} className="text-[#5C5C5C]">
           {t("navPricing")}
         </Link>
         <Link href={applyHref} className="text-[#5C5C5C]">

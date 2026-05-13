@@ -24,6 +24,7 @@ import {
   LOCALE_BCP47,
   LOCALES,
   ROUTING_DEFAULT_LOCALE,
+  withLocale,
 } from "../i18n/routing";
 import {
   findRoute,
@@ -66,25 +67,26 @@ export interface BuildAlternatesOptions {
 export function buildAlternates(options: BuildAlternatesOptions): Pick<Metadata, "alternates"> {
   const route = options.routeKey ? findRoute(options.routeKey) : undefined;
 
-  // Resolve canonical path
-  const canonicalPath =
+  const segmentPath =
     route?.paths[ROUTING_DEFAULT_LOCALE] ??
     options.localizedPaths?.[ROUTING_DEFAULT_LOCALE] ??
     options.path ??
     "/";
 
-  const canonical = absUrl(canonicalPath);
-
-  // Decide whether to emit hreflang alternates.
   const localized = route?.localized ?? Boolean(options.localizedPaths);
+
+  const canonical = localized
+    ? absUrl(withLocale(segmentPath, ROUTING_DEFAULT_LOCALE))
+    : absUrl(segmentPath);
+
   if (!localized) {
     return { alternates: { canonical } };
   }
 
   const languages: Record<string, string> = {};
   for (const locale of LOCALES) {
-    const localePath = route?.paths[locale] ?? options.localizedPaths?.[locale];
-    if (localePath) languages[LOCALE_BCP47[locale]] = absUrl(localePath);
+    const segment = route?.paths[locale] ?? options.localizedPaths?.[locale];
+    if (segment) languages[LOCALE_BCP47[locale]] = absUrl(withLocale(segment, locale));
   }
   languages["x-default"] = canonical;
 
@@ -101,9 +103,9 @@ export function sitemapAlternates(route: PublicRoute): Record<string, string> | 
   if (!route.localized) return undefined;
   const map: Record<string, string> = {};
   for (const locale of LOCALES) {
-    map[LOCALE_BCP47[locale]] = absUrl(route.paths[locale]);
+    map[LOCALE_BCP47[locale]] = absUrl(withLocale(route.paths[locale], locale));
   }
-  map["x-default"] = absUrl(route.paths[ROUTING_DEFAULT_LOCALE]);
+  map["x-default"] = absUrl(withLocale(route.paths[ROUTING_DEFAULT_LOCALE], ROUTING_DEFAULT_LOCALE));
   return map;
 }
 

@@ -7,21 +7,22 @@
 
 import Link from "next/link";
 import { useLocale } from "@/lib/locale-context";
+import { withLocaleHref } from "@/lib/i18n/marketingPaths";
 
 export function LegalFooterLinks() {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   return (
     <>
-      <Link href="/cgu" className="hover:text-[#2C2C2A] hover:underline">
+      <Link href={withLocaleHref("/cgu", locale)} className="hover:text-[#2C2C2A] hover:underline">
         {t("footerTerms")}
       </Link>
-      <Link href="/confidentialite" className="hover:text-[#2C2C2A] hover:underline">
+      <Link href={withLocaleHref("/confidentialite", locale)} className="hover:text-[#2C2C2A] hover:underline">
         {t("footerPrivacy")}
       </Link>
-      <Link href="/annulation" className="hover:text-[#2C2C2A] hover:underline">
+      <Link href={withLocaleHref("/annulation", locale)} className="hover:text-[#2C2C2A] hover:underline">
         {t("footerCancellation")}
       </Link>
-      <Link href="/contact" className="hover:text-[#2C2C2A] hover:underline">
+      <Link href={withLocaleHref("/contact", locale)} className="hover:text-[#2C2C2A] hover:underline">
         {t("footerContact")}
       </Link>
     </>
