@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { MapPin, Star } from "lucide-react";
+import { MapPin, Star, ShieldCheck } from "lucide-react";
 import type { Teacher } from "@/types";
 import { VerificationBadge } from "@/components/VerificationBadge";
 import { getVerificationLevel } from "@/lib/verification";
@@ -128,10 +128,10 @@ export function LandingTeacherListingCard({
                 fetchPriority="low"
                 decoding="async"
                 unoptimized={shouldUseUnoptimizedImage(photoUrl)}
-                className="h-[4.5rem] w-[4.5rem] rounded-full border border-black/[0.04] object-cover shadow-sm sm:h-[5.25rem] sm:w-[5.25rem]"
+                className="h-24 w-24 rounded-2xl border border-black/[0.04] object-cover shadow-md sm:h-28 sm:w-28"
               />
               {teacher.introSessionEnabled ? (
-                <span className="absolute -bottom-1 -right-1 rounded-full bg-teal-50 px-2 py-0.5 text-[10px] font-extrabold text-teal-700 shadow-sm ring-1 ring-white">
+                <span className="absolute -bottom-2 right-0 rounded-full bg-teal-50 px-2 py-1 text-[10px] font-extrabold text-teal-700 shadow-md ring-2 ring-white z-10">
                   {t("introSessionBadge").replace("{n}", String(teacher.introSessionDurationMinutes ?? 45))}
                 </span>
               ) : null}
@@ -139,13 +139,13 @@ export function LandingTeacherListingCard({
           ) : (
             <div className="relative shrink-0">
               <div
-                className="flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full border border-black/[0.04] text-lg font-bold text-white shadow-inner sm:h-[5.25rem] sm:w-[5.25rem] sm:text-xl"
+                className="flex h-24 w-24 items-center justify-center rounded-2xl border border-black/[0.04] text-2xl font-bold text-white shadow-inner sm:h-28 sm:w-28 sm:text-3xl"
                 style={{ background: "linear-gradient(135deg,var(--palette-teal-500),var(--palette-teal-700))" }}
               >
                 {initials(teacher.name)}
               </div>
               {teacher.introSessionEnabled ? (
-                <span className="absolute -bottom-1 -right-1 rounded-full bg-teal-50 px-2 py-0.5 text-[10px] font-extrabold text-teal-700 shadow-sm ring-1 ring-white">
+                <span className="absolute -bottom-2 right-0 rounded-full bg-teal-50 px-2 py-1 text-[10px] font-extrabold text-teal-700 shadow-md ring-2 ring-white z-10">
                   {t("introSessionBadge").replace("{n}", String(teacher.introSessionDurationMinutes ?? 45))}
                 </span>
               ) : null}
@@ -156,19 +156,19 @@ export function LandingTeacherListingCard({
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                  <p className="truncate text-[15px] font-bold leading-tight tracking-tight text-[#2C2C2A]">
+                  <p className="truncate text-lg font-bold leading-tight tracking-tight text-[#2C2C2A]">
                     {teacher.name}
                   </p>
                   <VerificationBadge level={lvl} size="sm" showLabel={false} className="shrink-0 scale-95" />
                 </div>
-                <p className="mt-0.5 truncate text-sm text-neutral-700">{teacher.discipline}</p>
+                <p className="mt-0.5 truncate text-sm font-medium text-neutral-600">{teacher.discipline}</p>
                 {showVerifiedTag ? (
-                  <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-teal-800">
-                    {t("landingCardVerifiedTeacher")}
+                  <p className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-teal-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-teal-800">
+                    <ShieldCheck size={12} className="text-teal-600" /> {t("landingCardVerifiedTeacher")}
                   </p>
                 ) : null}
                 {bioOneLine ? (
-                  <p className="mt-1.5 line-clamp-1 text-xs leading-snug text-neutral-700">{bioOneLine}</p>
+                  <p className="mt-2 line-clamp-1 text-xs leading-snug text-neutral-700">{bioOneLine}</p>
                 ) : null}
                 {neighborhoodHint ? (
                   <p className="mt-1 flex items-center gap-1 truncate text-[11px] font-medium text-neutral-700">

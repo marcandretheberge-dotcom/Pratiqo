@@ -29,6 +29,8 @@ import { postCancelBooking } from "@/lib/bookingCancellationClient";
 import { bookingLifecycleRank, getBookingLifecycleState, isBookingVisibleForTeacher } from "@/lib/bookingLifecycle";
 import { formatCurrencyAmount } from "@/lib/formatters";
 import { DashboardSkeleton } from "@/components/DashboardSkeleton";
+import { EmptyState } from "@/components/EmptyState";
+import { Coffee, Search, CalendarPlus } from "lucide-react";
 
 interface BookingWithTeacher {
   id: string;
@@ -727,7 +729,12 @@ export function Dashboard() {
                 </p>
               ) : null}
               {pendingList.length === 0 ? (
-                <p className="text-sm text-slate-600">{t("noPending")}</p>
+                <EmptyState
+                  icon={<Coffee size={40} className="text-teal-200" strokeWidth={1.5} />}
+                  title={t("noPending")}
+                  description="Les nouvelles demandes de cours apparaîtront ici."
+                  className="py-12"
+                />
               ) : (
                 <ul className="space-y-3">
                   {pendingList.map((b) => (
@@ -946,16 +953,20 @@ export function Dashboard() {
                   </div>
                 ))
               ) : (
-                <div className="text-center py-8">
-                  <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mb-3">{t("dashboardNoLessonsWeek")}</p>
-                  <button
-                    type="button"
-                    onClick={() => router.push("/student/search")}
-                    className="text-[10px] font-bold text-brand-primary uppercase tracking-widest hover:underline"
-                  >
-                    {t("dashboardFindMentor")}
-                  </button>
-                </div>
+                <EmptyState
+                  icon={<Search size={32} className="text-teal-200" strokeWidth={2} />}
+                  title={t("dashboardNoLessonsWeek")}
+                  description="Trouvez le professeur idéal pour atteindre vos objectifs."
+                  action={
+                    <button
+                      type="button"
+                      onClick={() => router.push("/student/search")}
+                      className="mt-2 text-[10px] font-bold text-teal-700 uppercase tracking-widest hover:underline px-4 py-2 bg-teal-50 rounded-full"
+                    >
+                      {t("dashboardFindMentor")}
+                    </button>
+                  }
+                />
               )}
             </div>
           </div>

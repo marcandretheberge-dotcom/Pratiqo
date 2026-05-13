@@ -13,6 +13,8 @@ import { localeToBcp47 } from "@/lib/i18n/types";
 import { bookingWallTimeRangeToUtc, formatTimeRangeForUser } from "@/lib/timezones";
 import { SupportCaseModal } from "@/components/support/SupportCaseModal";
 import { AddMeetingLinkModal } from "@/components/bookings/AddMeetingLinkModal";
+import { EmptyState } from "@/components/EmptyState";
+import { CalendarPlus } from "lucide-react";
 
 const PEER_UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -139,15 +141,19 @@ export function TeacherScheduleCard({
       ) : null}
 
       {items.length === 0 ? (
-        <div className="py-10 text-center text-sm text-[#6B6760]">
-          <p>{emptyHint}</p>
-          <Link
-            href="/teacher/schedule"
-            className="mt-4 inline-block text-xs font-semibold text-teal-700 underline-offset-2 hover:underline"
-          >
-            {t("tabAvailability")}
-          </Link>
-        </div>
+        <EmptyState
+          icon={<CalendarPlus size={40} className="text-teal-200" strokeWidth={1.5} />}
+          title={emptyHint}
+          description="Assurez-vous que vos disponibilités sont à jour pour recevoir de nouvelles réservations."
+          action={
+            <Link
+              href="/teacher/schedule"
+              className="mt-2 inline-block text-xs font-semibold text-teal-700 bg-teal-50 px-4 py-2 rounded-full hover:bg-teal-100 transition-colors"
+            >
+              {t("tabAvailability")}
+            </Link>
+          }
+        />
       ) : (
         <ul className="space-y-4">
           {items.map((b) => {
