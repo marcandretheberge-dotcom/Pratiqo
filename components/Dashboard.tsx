@@ -104,6 +104,21 @@ function bookingSortKey(b: { slot_date?: string | null; date?: string | null; ti
   return `${d}#${String(mins).padStart(5, "0")}`;
 }
 
+import { motion } from "motion/react";
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1, delayChildren: 0.1 },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 15 },
+  show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } },
+};
+
 export function Dashboard() {
   const { user, profile: authProfile, loading: authLoading } = useAuth();
   const { t, locale } = useLocale();
@@ -686,26 +701,33 @@ export function Dashboard() {
     const firstMessagesHref = messagesHrefForStudentId(firstConfirmed?.student_id ?? null);
 
     return (
-      <div className="mx-auto w-full max-w-[1280px] space-y-8 bg-[#F3FAF6] pb-16 px-4 sm:px-6 lg:rounded-3xl lg:p-8 lg:shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]">
-        <header className="space-y-1">
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="show"
+        className="mx-auto w-full max-w-[1280px] space-y-8 bg-[#F3FAF6] pb-16 px-4 sm:px-6 lg:rounded-3xl lg:p-8 lg:shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]"
+      >
+        <motion.header variants={itemVariants} className="space-y-1">
           <p className="text-xs font-medium capitalize text-slate-600">{todayLabel}</p>
           <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
             {t("greeting")} {displayName}
           </h1>
           <p className="text-sm text-slate-600">{t("dashboardTeacherSubtitle")}</p>
-        </header>
+        </motion.header>
 
-        <TeacherDashboardStats
-          items={[
-            { labelKey: "lessonsToday", value: coursesTodayCount },
-            { labelKey: "activeStudentsLabel", value: distinctStudents },
-            { labelKey: "thisMonthLabel", value: fmtMoney(monthRevenue) },
-          ]}
-        />
+        <motion.div variants={itemVariants}>
+          <TeacherDashboardStats
+            items={[
+              { labelKey: "lessonsToday", value: coursesTodayCount },
+              { labelKey: "activeStudentsLabel", value: distinctStudents },
+              { labelKey: "thisMonthLabel", value: fmtMoney(monthRevenue) },
+            ]}
+          />
+        </motion.div>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <div className="space-y-6 lg:col-span-2">
-            <div className="rounded-xl border border-slate-200/90 bg-white p-5 shadow-[0_4px_24px_rgba(0,0,0,0.04)]">
+            <motion.div variants={itemVariants} className="rounded-xl border border-slate-200/90 bg-white p-5 shadow-[0_4px_24px_rgba(0,0,0,0.04)]">
               <p className="mb-4 text-[11px] font-bold uppercase tracking-widest text-[#00694c]">{t("pendingRequests")}</p>
               {actionFlash ? (
                 <p
@@ -734,7 +756,7 @@ export function Dashboard() {
               )}
             </div>
 
-            <div
+            <motion.div variants={itemVariants}
               className={
                 confirmedUpcoming.length > 0
                   ? "grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(260px,300px)] lg:items-start lg:gap-8"
@@ -796,7 +818,7 @@ export function Dashboard() {
                   />
                 </div>
               ) : null}
-            </div>
+            </motion.div>
 
             {teacherRescheduleBooking ? (
               <RescheduleModal
@@ -826,30 +848,37 @@ export function Dashboard() {
               isLate={cancelBooking?.side === "teacher" ? cancelIsLate : false}
             />
 
-            <AssignmentHub mode="teacher" />
+            <motion.div variants={itemVariants}>
+              <AssignmentHub mode="teacher" />
+            </motion.div>
           </div>
 
-          <div className="space-y-6 lg:col-span-1">
+          <motion.div variants={itemVariants} className="space-y-6 lg:col-span-1">
             <TeacherProfileCompletenessCard percent={completenessPct} ctaHref="/teacher/my-profile" />
-          </div>
+          </motion.div>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
   return (
-    <div className="space-y-6 pb-12">
-      <section className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+    <motion.div
+      variants={containerVariants}
+      initial="hidden"
+      animate="show"
+      className="space-y-6 pb-12"
+    >
+      <motion.section variants={itemVariants} className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div>
           <p className="ds-label text-slate-600">{t("dashboardStudentSpace")}</p>
           <h2 className="text-[32px] sm:text-[40px] leading-[1.1] text-slate-900">{t("dashboard")}</h2>
           <p className="text-[14px] text-slate-600 mt-1">{t("dashboardStudentSubtitle")}</p>
         </div>
-      </section>
+      </motion.section>
 
       <div className="grid grid-cols-12 gap-6">
         <div className="col-span-12 lg:col-span-8 space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div className="bg-gradient-to-br from-orange-500 to-rose-500 p-6 rounded-3xl text-white shadow-xl shadow-orange-100 relative overflow-hidden group">
               <div className="relative z-10 space-y-4">
                 <div className="flex items-center gap-2">
@@ -882,13 +911,15 @@ export function Dashboard() {
                   {t("findTeacher")}
                 </button>
               </div>
-            </div>
+            </motion.div>
           </div>
 
-          <AssignmentHub mode="student" />
+          <motion.div variants={itemVariants}>
+            <AssignmentHub mode="student" />
+          </motion.div>
         </div>
 
-        <div className="col-span-12 lg:col-span-4 space-y-6">
+        <motion.div variants={itemVariants} className="col-span-12 lg:col-span-4 space-y-6">
           <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
             <div className="flex items-center justify-between border-b border-slate-50 pb-4">
               <h3 className="font-bold text-slate-900 text-[10px] uppercase tracking-widest">Ma semaine</h3>
@@ -962,7 +993,7 @@ export function Dashboard() {
         role="student"
         isLate={cancelBooking?.side === "student" ? cancelIsLate : false}
       />
-    </div>
+    </motion.div>
   );
 }
 
