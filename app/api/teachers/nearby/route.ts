@@ -64,12 +64,19 @@ export async function GET(request: Request) {
   if (error) {
     // Migration not yet applied (function missing) or RLS denial — surface
     // a structured error so the client can fall back without retrying.
+    // Postgres returns 42883 ("undefined_function") for missing SQL functions;
+    // PostgREST returns PGRST202 with "Could not find the function ... in the
+    // schema cache" when the OpenAPI cache hasn't picked it up yet.
+    const message = error.message ?? "";
     const isMissing =
-      error.code === "42883" || /function .*nearby_teachers.* does not exist/i.test(error.message);
+      error.code === "42883" ||
+      error.code === "PGRST202" ||
+      /function .*nearby_teachers.* does not exist/i.test(message) ||
+      /could not find the function .*nearby_teachers/i.test(message);
     return NextResponse.json(
       {
         error: isMissing ? "nearby_teachers_unavailable" : "rpc_failed",
-        message: error.message,
+        message,
       },
       { status: isMissing ? 503 : 500 },
     );
