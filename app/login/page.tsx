@@ -14,7 +14,7 @@ import { useLocale } from "../../lib/locale-context";
 function LoginForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { user, loading } = useAuth();
+  const { user, loading, profile } = useAuth();
   const role = searchParams.get("role");
   const nextRaw = searchParams.get("next") || "/dashboard";
   const next = nextRaw.startsWith("/") ? nextRaw : `/${nextRaw}`;
@@ -23,9 +23,13 @@ function LoginForm() {
 
   useEffect(() => {
     if (!loading && user) {
+      if ((profile?.role as string | undefined) === "admin") {
+        router.replace(next.startsWith("/admin") ? next : "/admin/operations");
+        return;
+      }
       router.replace(next);
     }
-  }, [loading, user, router, next, role]);
+  }, [loading, user, router, next, profile?.role]);
 
   const { t } = useLocale();
   const [legalAccepted, setLegalAccepted] = useState(false);

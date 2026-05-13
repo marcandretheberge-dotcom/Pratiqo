@@ -24,6 +24,14 @@ function teacherForbiddenPath(pathname: string) {
   return false;
 }
 
+function adminForbiddenPath(pathname: string) {
+  if (pathname.startsWith("/student")) return true;
+  if (pathname.startsWith("/teacher")) return true;
+  if (pathname === "/profile" || pathname.startsWith("/profile/")) return true;
+  if (pathname.startsWith("/onboarding")) return true;
+  return false;
+}
+
 export function AuthenticatedShell({ children }: { children: React.ReactNode }) {
   const { user, loading, profile } = useAuth();
   const pathname = usePathname();
@@ -56,6 +64,13 @@ export function AuthenticatedShell({ children }: { children: React.ReactNode }) 
     if (role === "teacher") {
       if (teacherForbiddenPath(pathname)) {
         router.replace("/dashboard");
+      }
+      return;
+    }
+
+    if (role === "admin") {
+      if (adminForbiddenPath(pathname)) {
+        router.replace("/admin/operations");
       }
     }
   }, [loading, isLegal, user, pathname, router, profile?.role]);

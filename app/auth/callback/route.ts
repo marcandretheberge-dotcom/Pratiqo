@@ -27,6 +27,21 @@ async function trySendStudentWelcomeOnce(
   }
 }
 
+function configuredAdminEmails(): Set<string> {
+  const raw = [
+    process.env.ADMIN_LOGIN_EMAILS,
+    process.env.ADMIN_VERIFICATION_EMAIL,
+  ]
+    .filter(Boolean)
+    .join(",");
+  return new Set(
+    raw
+      .split(",")
+      .map((email) => email.trim().toLowerCase())
+      .filter(Boolean),
+  );
+}
+
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
@@ -79,8 +94,35 @@ export async function GET(request: Request) {
       } catch (err) {
         console.warn("[auth/callback] locale metadata update failed", err);
       }
+      const { data: existingProfile, error: existingReadErr } = await admin
+        .from("profiles")
+        .select("role, companion_chosen, teacher_onboarding_complete")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (existingReadErr) {
+        console.error("[auth/callback] existing profile read failed", existingReadErr);
+      }
+
+      const existingRole = (existingProfile as { role?: string | null } | null)?.role ?? null;
+      const isConfiguredAdminEmail = user.email
+        ? configuredAdminEmails().has(user.email.trim().toLowerCase())
+        : false;
+      const nextRole =
+        existingRole === "admin" || isConfiguredAdminEmail
+          ? "admin"
+          : role === "teacher"
+            ? "teacher"
+            : existingRole === "teacher" || existingRole === "student"
+              ? existingRole
+              : "student";
+      const existingCompanionChosen =
+        (existingProfile as { companion_chosen?: boolean | null } | null)?.companion_chosen ?? false;
+
       // First upsert (no select) so profile exists immediately after OAuth.
-      const { error: upsertErr } = await supabase
+      // Preserve existing roles: OAuth logins must never demote admins or reset
+      // student companion state.
+      const { error: upsertErr } = await admin
         .from("profiles")
         .upsert(
           {
@@ -88,9 +130,8 @@ export async function GET(request: Request) {
             email: user.email,
             name: (user.user_metadata?.full_name as string) || null,
             updated_at: new Date().toISOString(),
-            // Ensure new users default to student flow.
-            role: role === "teacher" ? "teacher" : "student",
-            companion_chosen: false,
+            role: nextRole,
+            companion_chosen: existingCompanionChosen,
           },
           { onConflict: "id" },
         );
@@ -100,7 +141,7 @@ export async function GET(request: Request) {
       }
 
       // Then select separately (avoids Supabase typechain edge cases).
-      const { data: profile, error: readErr } = await supabase
+      const { data: profile, error: readErr } = await admin
         .from("profiles")
         .select("role, teacher_onboarding_complete, companion_chosen")
         .eq("id", user.id)
@@ -172,6 +213,13 @@ export async function GET(request: Request) {
           return NextResponse.redirect(new URL("/onboarding/teacher", requestUrl.origin));
         }
         return NextResponse.redirect(new URL("/dashboard", requestUrl.origin));
+      }
+
+      if (profile?.role === "admin") {
+        const safeNext = next.startsWith("/") && !next.startsWith("//") ? next : "/admin/operations";
+        const adminNext =
+          safeNext.startsWith("/admin") || safeNext.startsWith("/dashboard") ? safeNext : "/admin/operations";
+        return NextResponse.redirect(new URL(adminNext, requestUrl.origin));
       }
 
       if (!profile?.companion_chosen) {
