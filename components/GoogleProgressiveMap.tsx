@@ -47,9 +47,10 @@ export function GoogleProgressiveMap({ mapKey, exactLat, exactLng, locked, neigh
       setLoadError(null);
       try {
         setOptions({ key: apiKey, v: "weekly" });
-        await Promise.all([
-          importLibrary("maps"),
-          importLibrary("marker"),
+        const [coreResult, mapsResult, markerResult] = await Promise.all([
+          importLibrary("core") as Promise<google.maps.CoreLibrary>,
+          importLibrary("maps") as Promise<google.maps.MapsLibrary>,
+          importLibrary("marker") as Promise<google.maps.MarkerLibrary>,
         ]);
         if (cancelled || !containerRef.current) return;
 
@@ -61,7 +62,7 @@ export function GoogleProgressiveMap({ mapKey, exactLat, exactLng, locked, neigh
         }
         const center: LatLng = locked ? blurCacheRef.current!.point : { lat: exactLat, lng: exactLng };
 
-        const map = new google.maps.Map(el, {
+        const map = new mapsResult.Map(el, {
           center,
           zoom: locked ? 14 : 16,
           disableDefaultUI: true,
@@ -77,7 +78,7 @@ export function GoogleProgressiveMap({ mapKey, exactLat, exactLng, locked, neigh
         markerRef.current = null;
 
         if (locked) {
-          circleRef.current = new google.maps.Circle({
+          circleRef.current = new mapsResult.Circle({
             map,
             center,
             radius: 500,
@@ -88,11 +89,11 @@ export function GoogleProgressiveMap({ mapKey, exactLat, exactLng, locked, neigh
             fillOpacity: 0.12,
           });
         } else {
-          markerRef.current = new google.maps.Marker({
+          markerRef.current = new markerResult.Marker({
             map,
             position: { lat: exactLat, lng: exactLng },
             icon: {
-              path: google.maps.SymbolPath.CIRCLE,
+              path: coreResult.SymbolPath.CIRCLE,
               fillColor: "#50BEB2",
               fillOpacity: 1,
               strokeColor: "#0d7a5a",

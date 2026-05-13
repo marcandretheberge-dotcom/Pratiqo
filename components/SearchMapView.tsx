@@ -52,35 +52,33 @@ const MAP_MINIMAL_STYLES: google.maps.MapTypeStyle[] = [
 // Fallback center: Montréal, QC
 const FALLBACK_CENTER = { lat: 45.5017, lng: -73.5673 } as const;
 
-// ── Pratiqo-branded cluster renderer ─────────────────────────────────────────
-//
-// Called lazily by MarkerClusterer after the Maps API is loaded, so using
-// google.maps.* at call time (not at module-parse time) is safe.
-const pratiqoClusterRenderer: Renderer = {
-  render({ count, position }) {
-    const svg = window.btoa(
-      `<svg fill="#50BEB2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">` +
-        `<circle cx="120" cy="120" opacity=".9" r="68"/>` +
-        `<circle cx="120" cy="120" opacity=".35" r="92"/>` +
-        `<circle cx="120" cy="120" opacity=".18" r="116"/>` +
-        `</svg>`,
-    );
-    return new google.maps.Marker({
-      position,
-      icon: {
-        url: `data:image/svg+xml;base64,${svg}`,
-        scaledSize: new google.maps.Size(52, 52),
-      },
-      label: {
-        text: String(count),
-        color: "#ffffff",
-        fontSize: "13px",
-        fontWeight: "700",
-      },
-      zIndex: 1000 + count,
-    });
-  },
-};
+function createPratiqoClusterRenderer(MarkerClass: typeof google.maps.Marker, SizeClass: typeof google.maps.Size): Renderer {
+  return {
+    render({ count, position }) {
+      const svg = window.btoa(
+        `<svg fill="#50BEB2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">` +
+          `<circle cx="120" cy="120" opacity=".9" r="68"/>` +
+          `<circle cx="120" cy="120" opacity=".35" r="92"/>` +
+          `<circle cx="120" cy="120" opacity=".18" r="116"/>` +
+          `</svg>`,
+      );
+      return new MarkerClass({
+        position,
+        icon: {
+          url: `data:image/svg+xml;base64,${svg}`,
+          scaledSize: new SizeClass(52, 52),
+        },
+        label: {
+          text: String(count),
+          color: "#ffffff",
+          fontSize: "13px",
+          fontWeight: "700",
+        },
+        zIndex: 1000 + count,
+      });
+    },
+  };
+}
 
 function hasCoords(t: Teacher) {
   const lat = t?.location?.lat;
@@ -134,7 +132,12 @@ export function SearchMapView({
   const boundsRef = useRef<MapBounds | null>(null);
 
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [mapsReady, setMapsReady] = useState(false);
+  const [googleCore, setGoogleCore] = useState<google.maps.CoreLibrary | null>(null);
+  const [googleMaps, setGoogleMaps] = useState<google.maps.MapsLibrary | null>(null);
+  const [googleMarker, setGoogleMarker] = useState<google.maps.MarkerLibrary | null>(null);
+  
+  const mapsReady = !!googleCore && !!googleMaps && !!googleMarker;
+
   // True only after the user has interacted with the map (drag / zoom).
   // Resets to false when the "Search this area" button is clicked.
   const [showSearchButton, setShowSearchButton] = useState(false);
@@ -155,11 +158,16 @@ export function SearchMapView({
       setLoadError(null);
       try {
         setOptions({ key: apiKey, v: "weekly" });
-        await Promise.all([
-          importLibrary("maps"),
-          importLibrary("marker"),
+        const [coreResult, mapsResult, markerResult] = await Promise.all([
+          importLibrary("core") as Promise<google.maps.CoreLibrary>,
+          importLibrary("maps") as Promise<google.maps.MapsLibrary>,
+          importLibrary("marker") as Promise<google.maps.MarkerLibrary>,
         ]);
         if (cancelled || !mapRef.current) return;
+
+        setGoogleCore(coreResult);
+        setGoogleMaps(mapsResult);
+        setGoogleMarker(markerResult);
 
         // Determine initial centre (priority: props → browser geo → fallback).
         let center: { lat: number; lng: number };
@@ -194,7 +202,7 @@ export function SearchMapView({
 
         if (cancelled) return;
 
-        const map = new google.maps.Map(el, {
+        const map = new mapsResult.Map(el, {
           center,
           zoom: initialZoom,
           disableDefaultUI: true,
@@ -206,7 +214,7 @@ export function SearchMapView({
         // ── Marker clusterer — initialized once with the map ──────────────
         clustererRef.current = new MarkerClusterer({
           map,
-          renderer: pratiqoClusterRenderer,
+          renderer: createPratiqoClusterRenderer(markerResult.Marker, coreResult.Size),
         });
 
         // ── "Search this area" — idle-based listener ─────────────────────
@@ -267,7 +275,7 @@ export function SearchMapView({
   // ── Effect 2: "You are here" marker — no map re-creation ─────────────────
   useEffect(() => {
     const map = mapInstanceRef.current;
-    if (!map || !mapsReady) return;
+    if (!map || !mapsReady || !googleMarker || !googleCore) return;
 
     userMarkerRef.current?.setMap(null);
     userMarkerRef.current = null;
@@ -277,11 +285,11 @@ export function SearchMapView({
         map.panTo({ lat: userLat, lng: userLng });
         centeredOnUserRef.current = true;
       }
-      userMarkerRef.current = new google.maps.Marker({
+      userMarkerRef.current = new googleMarker.Marker({
         position: { lat: userLat, lng: userLng },
         map,
         icon: {
-          path: google.maps.SymbolPath.CIRCLE,
+          path: googleCore.SymbolPath.CIRCLE,
           scale: 8,
           fillColor: "#50BEB2",
           fillOpacity: 1,
@@ -291,7 +299,7 @@ export function SearchMapView({
         title: t("youAreHere"),
       });
     }
-  }, [mapsReady, userLat, userLng, t]);
+  }, [mapsReady, googleMarker, googleCore, userLat, userLng, t]);
 
   // ── Effect 3: Teacher price-pin markers — no map re-creation ─────────────
   //
@@ -305,7 +313,7 @@ export function SearchMapView({
   // Effect 1 and are never touched here.
   useEffect(() => {
     const clusterer = clustererRef.current;
-    if (!clusterer || !mapsReady) return;
+    if (!clusterer || !mapsReady || !googleMarker || !googleCore) return;
 
     // Remove previous set of markers from the clusterer (and thus from the map).
     clusterer.clearMarkers();
@@ -334,7 +342,7 @@ export function SearchMapView({
       const markerColor = getMarkerColor(teacher.discipline || "", isHighlight);
       
       // NOTE: no `map` prop — the clusterer controls placement on the map.
-      const marker = new google.maps.Marker({
+      const marker = new googleMarker.Marker({
         position: { lat: teacher.location.lat, lng: teacher.location.lng },
         label: {
           text: label,
@@ -343,7 +351,7 @@ export function SearchMapView({
           fontWeight: "600",
         },
         icon: {
-          path: google.maps.SymbolPath.CIRCLE,
+          path: googleCore.SymbolPath.CIRCLE,
           scale: isHighlight ? 23 : 20,
           fillColor: markerColor,
           fillOpacity: 1,
@@ -362,7 +370,7 @@ export function SearchMapView({
     // Hand all markers to the clusterer at once — a single render pass is
     // more efficient than adding them one-by-one.
     clusterer.addMarkers(newMarkers);
-  }, [mapsReady, teachersWithCoords, highlightedTeacherId]); // onTeacherSelect deliberately excluded
+  }, [mapsReady, googleMarker, googleCore, teachersWithCoords, highlightedTeacherId]); // onTeacherSelect deliberately excluded
 
   // ── Early returns ─────────────────────────────────────────────────────────
   if (!apiKey) {
