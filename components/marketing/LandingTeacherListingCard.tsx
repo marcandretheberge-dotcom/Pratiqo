@@ -4,12 +4,14 @@ import Image from "next/image";
 import { MapPin, Star, ShieldCheck } from "lucide-react";
 import type { Teacher } from "@/types";
 import { VerificationBadge } from "@/components/VerificationBadge";
+import { TeacherPriceTag } from "@/components/TeacherPriceTag";
 import { getVerificationLevel } from "@/lib/verification";
 import { haversineDistance } from "@/lib/geo";
 import { cn } from "@/lib/utils";
 import { useLocale } from "@/lib/locale-context";
 import type { TranslationKey } from "@/lib/translations";
 import { getTeacherImageUrl, shouldUseUnoptimizedImage } from "@/lib/images";
+import type { Currency } from "@/lib/geoLocale";
 
 function landingCardFormatSummary(teacher: Teacher, t: (k: TranslationKey) => string) {
   const m = teacher.teachingMode;
@@ -44,14 +46,14 @@ function trimBio(bio: string) {
 
 export function LandingTeacherListingCard({
   teacher,
-  formatPrice,
   geo,
   onOpen,
   isHighlighted,
   onHoverChange,
 }: {
   teacher: Teacher;
-  formatPrice: (n: number) => string;
+  /** @deprecated Price formatting now happens inside the card via `TeacherPriceTag`. Kept optional for backward compat. */
+  formatPrice?: (n: number) => string;
   geo: { lat: number; lng: number } | null;
   onOpen: () => void;
   isHighlighted?: boolean;
@@ -202,10 +204,14 @@ export function LandingTeacherListingCard({
                   </span>
                 ) : null}
               </div>
-              <p className="shrink-0 text-right text-[15px] font-bold tracking-tight text-teal-700">
-                {formatPrice(Number(teacher.pricePerLesson))}
-                /h
-              </p>
+              <span className="shrink-0 text-right">
+                <TeacherPriceTag
+                  amount={Number(teacher.pricePerLesson)}
+                  teacherCurrency={(teacher.currency as Currency | undefined) ?? null}
+                  perHour
+                  primaryClassName="text-[15px] font-bold tracking-tight text-teal-700"
+                />
+              </span>
             </div>
 
             <p className="mt-2 line-clamp-2 text-[11px] leading-relaxed text-neutral-700 sm:text-xs">{availabilityHint}</p>

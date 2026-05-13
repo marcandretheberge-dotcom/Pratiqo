@@ -3,6 +3,7 @@
 import Link from "next/link";
 import PratiqoLogo from "@/components/PratiqoLogo";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
+import { CurrencySwitcher } from "@/components/CurrencySwitcher";
 import { useLocale } from "@/lib/locale-context";
 import { withLocaleHref } from "@/lib/i18n/marketingPaths";
 
@@ -18,7 +19,8 @@ export function LandingHeader() {
           <PratiqoLogo variant="full" size="md" priority={false} fetchPriority="low" loading="lazy" />
         </span>
       </Link>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3">
+        <CurrencySwitcher variant="light" />
         <LocaleSwitcher variant="light" />
         <Link
           href={withLocaleHref("/tarifs", locale)}

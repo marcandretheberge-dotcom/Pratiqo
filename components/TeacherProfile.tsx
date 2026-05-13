@@ -35,7 +35,9 @@ import { buildTeacherTrustBadges, buildTeacherTrustItems, getPublicTeacherTrustB
 import { getPublicTeacherCredentials } from "@/lib/supabase/queries";
 import { getEmbedUrl } from "../lib/videoEmbed";
 import { TeacherAvatar } from "./TeacherAvatar";
+import { TeacherPriceTag } from "./TeacherPriceTag";
 import { calculateIntroSessionPriceCents } from "@/lib/introSession";
+import type { Currency } from "@/lib/geoLocale";
 
 export type TeacherBookKind = "standard" | "home";
 
@@ -623,7 +625,13 @@ export function TeacherProfile({
                   <QuickStat
                     icon={<CreditCard className="text-teal-500" size={15} />}
                     label={t("rateLabel")}
-                    value={formatPrice(Number(teacher.pricePerLesson))}
+                    value={
+                      <TeacherPriceTag
+                        amount={Number(teacher.pricePerLesson)}
+                        teacherCurrency={(teacher.currency as Currency | undefined) ?? null}
+                        primaryClassName="font-bold text-slate-900"
+                      />
+                    }
                   />
                 </div>
 
@@ -1059,14 +1067,14 @@ function TeacherVideoEmbed({ videoUrl }: { videoUrl?: string | null }) {
   );
 }
 
-function QuickStat({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+function QuickStat({ icon, label, value }: { icon: React.ReactNode; label: string; value: React.ReactNode }) {
   return (
     <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100 space-y-1.5">
       <div className="flex items-center gap-1.5">
         {icon}
         <span className="text-[9px] font-bold uppercase tracking-widest text-slate-600">{label}</span>
       </div>
-      <p className="text-xs font-bold text-slate-900 truncate">{value}</p>
+      <div className="text-xs font-bold text-slate-900 truncate">{value}</div>
     </div>
   );
 }

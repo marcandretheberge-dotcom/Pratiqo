@@ -14,7 +14,9 @@ import { fetchTeacherDisciplinesMap, mergeTeachersWithDisciplines } from "../../
 import { teacherRowToTeacher, type TeacherRow } from "../../../../lib/teacherMapper";
 import { TEACHERS_LIST_SELECT, TEACHERS_PUBLIC_TABLE } from "../../../../lib/supabase/queries";
 import { TeacherAvatar } from "../../../../components/TeacherAvatar";
+import { TeacherPriceTag } from "../../../../components/TeacherPriceTag";
 import { getVerificationLevel, isPratiqoVerified } from "../../../../lib/verification";
+import type { Currency } from "../../../../lib/geoLocale";
 import { VerificationBadge } from "../../../../components/VerificationBadge";
 import type { City } from "../../../../lib/cities";
 import type { MapBounds } from "../../../../components/SearchMapView";
@@ -50,7 +52,7 @@ const SearchMapView = dynamic(
 
 export default function StudentSearchPage() {
   const router = useRouter();
-  const { t, formatPrice, locale } = useLocale();
+  const { t, locale } = useLocale();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCat, setActiveCat] = useState<string>("All");
   const [teachers, setTeachers] = useState<Teacher[]>([]);
@@ -435,7 +437,6 @@ export default function StudentSearchPage() {
                         key={teacher.id}
                         teacher={teacher}
                         distanceKm={distanceKm}
-                        formatPrice={formatPrice}
                         t={t}
                         onOpen={() => setSelectedTeacherProfile(teacher)}
                       />
@@ -549,13 +550,11 @@ function TeacherCard({
   teacher,
   distanceKm,
   onOpen,
-  formatPrice,
   t,
 }: {
   teacher: Teacher;
   distanceKm: number | null;
   onOpen: () => void;
-  formatPrice: (amount: number) => string;
   t: (key: any) => string;
 }) {
   const availability = teacher.availability?.[0] ? String(teacher.availability[0]) : null;
@@ -602,7 +601,11 @@ function TeacherCard({
           {distanceKm != null ? <span className="text-[#D3D1C7]">·</span> : null}
           {distanceKm != null ? <span>{Math.round(distanceKm)}km</span> : null}
         </span>
-        <span className="font-bold text-teal-700">{formatPrice(Number(teacher.pricePerLesson))}/h</span>
+        <TeacherPriceTag
+          amount={Number(teacher.pricePerLesson)}
+          teacherCurrency={(teacher.currency as Currency | undefined) ?? null}
+          perHour
+        />
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-2">

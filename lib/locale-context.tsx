@@ -20,6 +20,7 @@ import {
   type Currency,
   getDefaultGeoConfig,
 } from "@/lib/geoLocale";
+import { formatTeacherPrice as formatTeacherPriceImpl, type TeacherPriceParts } from "@/lib/currency/format";
 
 const STORAGE_KEY = "pratiqo-locale";
 const STORAGE_KEY_CURRENCY = "pratiqo-currency";
@@ -52,6 +53,15 @@ interface LocaleContextType {
    * Returns null for all other markets — fall back to formatPrice in that case.
    */
   formatDualPrice: (amountUSD: number) => string | null;
+  /**
+   * Format a teacher's price honoring their NATIVE currency (the one Stripe
+   * charges in), with an optional ≈ approximation in the viewer's currency.
+   *
+   * Pass `teacherCurrency` from `teacher.currency`. When omitted, falls back
+   * to the viewer's currency (preserves legacy single-currency behavior for
+   * rows that haven't been backfilled yet).
+   */
+  formatTeacherPrice: (amount: number, teacherCurrency?: Currency | null) => TeacherPriceParts;
 }
 
 const LocaleContext = createContext<LocaleContextType>({
@@ -63,6 +73,12 @@ const LocaleContext = createContext<LocaleContextType>({
   countryCode: null,
   formatPrice: (amount) => String(amount),
   formatDualPrice: () => null,
+  formatTeacherPrice: (amount) => ({
+    primary: String(amount),
+    approximation: null,
+    isApproximate: false,
+    primaryCurrency: getDefaultGeoConfig().currency,
+  }),
 });
 
 export function LocaleProvider({ children }: { children: ReactNode }) {
@@ -181,6 +197,17 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
     [currency, locale],
   );
 
+  const formatTeacherPrice = useCallback(
+    (amount: number, teacherCurrency?: Currency | null) =>
+      formatTeacherPriceImpl({
+        amount,
+        teacherCurrency: teacherCurrency ?? null,
+        viewerCurrency: currency,
+        locale,
+      }),
+    [currency, locale],
+  );
+
   const value = useMemo(
     () => ({
       locale,
@@ -191,8 +218,9 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
       countryCode,
       formatPrice,
       formatDualPrice,
+      formatTeacherPrice,
     }),
-    [locale, setLocale, t, currency, setCurrency, countryCode, formatPrice, formatDualPrice],
+    [locale, setLocale, t, currency, setCurrency, countryCode, formatPrice, formatDualPrice, formatTeacherPrice],
   );
 
   return <LocaleContext.Provider value={value}>{children}</LocaleContext.Provider>;
