@@ -20,6 +20,7 @@ If this fails, do not deploy.
 
 ## Payment Gate
 
+- `npm run payment:safety` passes.
 - Lesson checkout still creates a booking payment ledger row.
 - Stripe webhook confirms paid bookings idempotently.
 - Teacher transfer still happens only after completion.

@@ -146,7 +146,7 @@ async function confirmBookingAndNotify(
 
   const { data: booking, error: fetchErr } = await admin
     .from("bookings")
-    .select("id, teacher_id, student_id, status, date, time, slot_date, time_slot, credits_applied, price, duration_minutes, teaching_mode")
+    .select("id, teacher_id, student_id, status, date, time, slot_date, time_slot, credits_applied, price, duration_minutes, teaching_mode, stripe_payment_intent_id")
     .eq("id", bookingId)
     .maybeSingle();
 
@@ -157,6 +157,24 @@ async function confirmBookingAndNotify(
 
   const bookingStatus = String(booking.status ?? "");
   const alreadyConfirmed = bookingStatus === "confirmed" || bookingStatus === "completed";
+  const existingBookingPaymentIntent =
+    typeof (booking as { stripe_payment_intent_id?: string | null }).stripe_payment_intent_id === "string"
+      ? (booking as { stripe_payment_intent_id: string }).stripe_payment_intent_id
+      : null;
+
+  if (alreadyConfirmed && existingBookingPaymentIntent && existingBookingPaymentIntent !== paymentIntentId) {
+    console.warn("[stripe/webhook] confirmed booking has a different payment intent; refunding incoming payment", {
+      bookingId,
+      existingPaymentIntent: existingBookingPaymentIntent,
+      incomingPaymentIntent: paymentIntentId,
+    });
+    try {
+      await stripe.refunds.create({ payment_intent: paymentIntentId });
+    } catch (re) {
+      console.error("[stripe/webhook] refund failed", re);
+    }
+    return;
+  }
 
   const slotDate = (booking as { slot_date?: string | null }).slot_date;
   const timeSlot = (booking as { time_slot?: string | null }).time_slot;
@@ -199,16 +217,46 @@ async function confirmBookingAndNotify(
     }
 
     if (!updatedRows?.length) {
-      console.warn("[stripe/webhook] booking not pending_payment at confirm; refunding", bookingId);
-      try {
-        await stripe.refunds.create({ payment_intent: paymentIntentId });
-      } catch (re) {
-        console.error("[stripe/webhook] refund failed", re);
+      const { data: currentBooking, error: currentErr } = await admin
+        .from("bookings")
+        .select("status, stripe_payment_intent_id")
+        .eq("id", bookingId)
+        .maybeSingle();
+      const currentStatus = String((currentBooking as { status?: string | null } | null)?.status ?? "");
+      const currentPaymentIntent =
+        (currentBooking as { stripe_payment_intent_id?: string | null } | null)?.stripe_payment_intent_id ?? null;
+      const wasConfirmedByConcurrentWebhook =
+        !currentErr &&
+        (currentStatus === "confirmed" || currentStatus === "completed") &&
+        (!currentPaymentIntent || currentPaymentIntent === paymentIntentId);
+
+      if (wasConfirmedByConcurrentWebhook) {
+        if (!currentPaymentIntent) {
+          await admin
+            .from("bookings")
+            .update({ stripe_payment_intent_id: paymentIntentId })
+            .eq("id", bookingId)
+            .is("stripe_payment_intent_id", null);
+        }
+        console.info("[stripe/webhook] booking already confirmed by another webhook delivery", bookingId);
+      } else {
+        console.warn("[stripe/webhook] booking not payable at confirm; refunding", {
+          bookingId,
+          currentStatus,
+          currentPaymentIntent,
+        });
+        try {
+          await stripe.refunds.create({ payment_intent: paymentIntentId });
+        } catch (re) {
+          console.error("[stripe/webhook] refund failed", re);
+        }
+        return;
       }
-      return;
     }
 
-    shouldSendConfirmation = true;
+    if (updatedRows?.length) {
+      shouldSendConfirmation = true;
+    }
   }
 
   const { data: teacher } = await admin

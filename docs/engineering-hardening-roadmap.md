@@ -101,6 +101,8 @@ npm run quality
 
 This currently runs:
 
+- public DB/schema safety checks
+- payment reliability safety checks
 - i18n dictionary validation
 - TypeScript typecheck
 - production build
