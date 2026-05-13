@@ -23,6 +23,7 @@ import type { MapBounds } from "../../../../components/SearchMapView";
 import { useAuth } from "../../../../components/AuthProvider";
 import type { StudentLocationPrefs } from "../../../../lib/studentLocationSearch";
 import { applyRadiusFilter, buildTeacherSearchRows, filterTeacherPool, sortRows } from "../../../../lib/teacherSearchEngine";
+import { fetchNearbyTeachers } from "../../../../lib/teacherNearby";
 import { TeacherSearchAdvancedPanel, type AdvancedFilterValues } from "../../../../components/TeacherSearchAdvancedPanel";
 import type { TeacherSearchFormat } from "../../../../lib/teacherSearchCriteria";
 import { logSearchEvent } from "../../../../lib/searchAnalytics";
@@ -60,6 +61,9 @@ export default function StudentSearchPage() {
   const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(null);
   const [geoLoading, setGeoLoading] = useState(false);
   const [radius, setRadius] = useState<5 | 10 | 25 | 50 | "all" | "online">("all");
+  // Server-side PostGIS lookup result. `null` = not used (no geo, "all"/"online" radius, or RPC unavailable).
+  // When populated, takes precedence over the client-side haversine path for both filtering and distance display.
+  const [nearbyServerResult, setNearbyServerResult] = useState<Map<string, number> | null>(null);
   const [sortMode, setSortMode] = useState<"relevance" | "nearest" | "trusted">("relevance");
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
   const [mapBounds, setMapBounds] = useState<MapBounds | null>(null);
@@ -200,6 +204,38 @@ export default function StudentSearchPage() {
     setMapBounds(null);
   }, [searchQuery, activeCat, radius, adv]);
 
+  // PostGIS-backed nearby lookup. Runs whenever radius is a concrete number and geo is set.
+  // We deliberately don't block render — the client-side haversine path handles the gap
+  // (and stays the fallback if the RPC isn't deployed yet).
+  useEffect(() => {
+    if (!geo || typeof radius !== "number") {
+      setNearbyServerResult(null);
+      return;
+    }
+    const controller = new AbortController();
+    let cancelled = false;
+    (async () => {
+      const result = await fetchNearbyTeachers({
+        lat: geo.lat,
+        lng: geo.lng,
+        radiusKm: radius,
+        signal: controller.signal,
+      });
+      if (cancelled) return;
+      if (!result) {
+        setNearbyServerResult(null);
+        return;
+      }
+      const map = new Map<string, number>();
+      for (const row of result) map.set(row.id, row.distanceKm);
+      setNearbyServerResult(map);
+    })();
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [geo, radius]);
+
   const formatValue = useMemo((): LandingFormatFilter => {
     const raw = (adv.formatExtra || "").trim() as TeacherSearchFormat | "";
     if (raw === "online" || raw === "in_person" || raw === "hybrid" || raw === "at_home") return raw;
@@ -231,7 +267,22 @@ export default function StudentSearchPage() {
       verifiedOnly: adv.verifiedOnly || undefined,
     });
     const base = buildTeacherSearchRows(pool, { geo });
-    let filtered = applyRadiusFilter(base, geo ? radius : radius === "online" ? "online" : "all");
+
+    // Server-side path: use the PostGIS RPC result both for filtering AND
+    // for authoritative distance values (handles antimeridian/curvature
+    // correctly, which the client haversine approximates).
+    let filtered: typeof base;
+    if (nearbyServerResult && geo && typeof radius === "number") {
+      filtered = base
+        .filter(({ teacher }) => nearbyServerResult.has(teacher.id))
+        .map((row) => ({
+          ...row,
+          distanceKm: nearbyServerResult.get(row.teacher.id) ?? row.distanceKm,
+        }));
+    } else {
+      // Client haversine fallback (no geo, RPC unavailable, or "all"/"online").
+      filtered = applyRadiusFilter(base, geo ? radius : radius === "online" ? "online" : "all");
+    }
 
     // Apply map-bounds filter when the user has clicked "Search this area"
     if (mapBounds) {
@@ -252,7 +303,7 @@ export default function StudentSearchPage() {
     // Unify sorting across search surfaces. Keep existing modes, but fold in student prefs.
     const rows = sortRows(filtered, { sortMode, studentPrefs });
     return rows;
-  }, [teachers, activeCat, searchQuery, geo, radius, sortMode, mapBounds, studentPrefs, adv.verifiedOnly]);
+  }, [teachers, activeCat, searchQuery, geo, radius, sortMode, mapBounds, studentPrefs, adv.verifiedOnly, nearbyServerResult]);
 
   return (
     <>
