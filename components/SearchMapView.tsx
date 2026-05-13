@@ -13,6 +13,7 @@ import type { Teacher } from "../types";
 import { cn } from "../lib/utils";
 import { useLocale } from "../lib/locale-context";
 import { Star } from "lucide-react";
+import { Drawer } from "vaul";
 
 // ── Public types ──────────────────────────────────────────────────────────────
 
@@ -300,9 +301,26 @@ export function SearchMapView({
 
     const newMarkers: google.maps.Marker[] = [];
 
+    const getMarkerColor = (discipline: string, isHighlight: boolean) => {
+      if (isHighlight) return "#2D7B72"; // Highlighted
+      const d = discipline.toLowerCase();
+      // Languages
+      if (d.includes("anglais") || d.includes("espagnol") || d.includes("francais") || d.includes("langue") || d.includes("francisation")) {
+        return "#9CAF88"; 
+      }
+      // Academic/Sciences
+      if (d.includes("math") || d.includes("physique") || d.includes("science") || d.includes("scolaire") || d.includes("aide") || d.includes("chimie") || d.includes("biologie")) {
+        return "#FF6B35"; 
+      }
+      // Default (Music, Arts, etc.)
+      return "#50BEB2"; 
+    };
+
     for (const teacher of teachersWithCoords) {
       const label = `${Math.round(Number(teacher.pricePerLesson || 0)) || "?"}$`;
       const isHighlight = highlightedTeacherId != null && teacher.id === highlightedTeacherId;
+      const markerColor = getMarkerColor(teacher.discipline || "", isHighlight);
+      
       // NOTE: no `map` prop — the clusterer controls placement on the map.
       const marker = new google.maps.Marker({
         position: { lat: teacher.location.lat, lng: teacher.location.lng },
@@ -315,7 +333,7 @@ export function SearchMapView({
         icon: {
           path: google.maps.SymbolPath.CIRCLE,
           scale: isHighlight ? 23 : 20,
-          fillColor: isHighlight ? "#2D7B72" : "#50BEB2",
+          fillColor: markerColor,
           fillOpacity: 1,
           strokeColor: "white",
           strokeWeight: isHighlight ? 3 : 2,
@@ -416,53 +434,63 @@ export function SearchMapView({
         </div>
       ) : null}
 
-      {/* Teacher mini-card overlay — completely decoupled from map state */}
-      {selectedTeacher ? (
-        <div
-          className={cn(
-            "fixed left-0 right-0 z-[55] px-4 sm:px-6",
-            "bottom-20 md:bottom-6",
-          )}
-        >
-          <div className="mx-auto max-w-3xl rounded-2xl border border-teal-500 bg-white p-4 shadow-[0_20px_60px_rgba(44,44,42,0.18)]">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <p className="truncate font-semibold text-[#2C2C2A]">{selectedTeacher.name}</p>
-                <p className="truncate text-xs text-[#6B6A65]">{selectedTeacher.discipline}</p>
-                <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-[#6B6A65]">
-                  <span className="inline-flex items-center gap-1">
-                    <Star size={14} className="text-teal-700" />
-                    {selectedTeacher.rating}
-                  </span>
-                  <span className="text-[#D3D1C7]">·</span>
-                  <span className="font-bold text-teal-700">
-                    {formatPrice(Number(selectedTeacher.pricePerLesson))}/h
-                  </span>
+      {/* Teacher mini-card overlay using Vaul for native bottom sheet feel */}
+      <Drawer.Root open={!!selectedTeacher} onOpenChange={(open) => !open && onCloseSelected()}>
+        <Drawer.Portal>
+          <Drawer.Overlay className="fixed inset-0 bg-black/40 z-[50]" />
+          <Drawer.Content className="bg-white flex flex-col rounded-t-3xl fixed bottom-0 left-0 right-0 z-[55] outline-none shadow-[0_-8px_40px_rgba(0,0,0,0.12)]">
+            {selectedTeacher && (
+              <div className="p-6 pb-8 mx-auto w-full max-w-3xl relative">
+                {/* Drag handle */}
+                <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-slate-200 mb-6" />
+                
+                <button
+                  type="button"
+                  onClick={onCloseSelected}
+                  aria-label={t("accessibilityCloseDialog")}
+                  className="absolute top-6 right-6 shrink-0 rounded-full bg-slate-100 p-2 text-slate-500 hover:bg-slate-200 transition-colors"
+                >
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M13 1L1 13M1 1L13 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                </button>
+
+                <div className="flex items-start justify-between gap-4 pr-12">
+                  <div className="min-w-0">
+                    <p className="truncate text-2xl font-bold text-slate-900">{selectedTeacher.name}</p>
+                    <p className="truncate text-base text-slate-600">{selectedTeacher.discipline}</p>
+                    <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-slate-600">
+                      <span className="inline-flex items-center gap-1 font-medium text-slate-700">
+                        <Star size={16} className="text-teal-500" fill="currentColor" />
+                        {selectedTeacher.rating}
+                      </span>
+                      <span className="text-slate-300">•</span>
+                      <span className="font-bold text-teal-700">
+                        {formatPrice(Number(selectedTeacher.pricePerLesson))}/h
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-8 flex flex-col sm:flex-row gap-3">
+                  <button
+                    type="button"
+                    onClick={() => onViewProfile(selectedTeacher)}
+                    className="w-full flex-1 rounded-2xl bg-teal-600 px-4 py-3.5 text-center text-sm font-bold text-white hover:bg-teal-700 transition-colors"
+                  >
+                    {t("viewProfile")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onCloseSelected}
+                    className="w-full flex-none sm:w-auto rounded-2xl border-2 border-slate-200 bg-white px-6 py-3.5 text-center text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors"
+                  >
+                    Fermer
+                  </button>
                 </div>
               </div>
-
-              <button
-                type="button"
-                onClick={onCloseSelected}
-                aria-label={t("accessibilityCloseDialog")}
-                className="shrink-0 rounded-full border border-[#E8E6DF] bg-white px-3 py-1 text-xs font-semibold text-[#2C2C2A] hover:bg-[#FAFCFB]"
-              >
-                ×
-              </button>
-            </div>
-
-            <div className="mt-3 flex items-center justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => onViewProfile(selectedTeacher)}
-                className="rounded-full bg-teal-600 px-4 py-2 text-xs font-bold text-white hover:brightness-[0.98]"
-              >
-                {t("viewProfile")}
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
+            )}
+          </Drawer.Content>
+        </Drawer.Portal>
+      </Drawer.Root>
     </div>
   );
 }
