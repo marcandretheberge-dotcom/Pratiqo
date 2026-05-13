@@ -81,7 +81,7 @@ export async function POST(req: Request) {
           allowed_types: ["driving_license", "passport", "id_card"],
         },
       },
-      return_url: `${publicBase()}/teacher/verification?status=complete`,
+      return_url: `${publicBase()}/teacher/verification?identity=completed`,
     });
 
     await admin

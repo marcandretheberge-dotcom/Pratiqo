@@ -280,7 +280,7 @@ export default function TeacherVerificationPage() {
       const token = sess.session?.access_token;
       if (!token) throw new Error(t("verificationSessionExpired"));
 
-      const res = await fetch("/api/verify-identity", {
+      const res = await fetch("/api/stripe/identity/verify", {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
