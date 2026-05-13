@@ -9,9 +9,10 @@ type Status = "not_started" | "requires_input" | "processing" | "verified" | "fa
 interface Props {
   status: Status;
   failedReason?: string | null;
+  onFallback?: () => Promise<void>;
 }
 
-export function IdentityVerificationCard({ status, failedReason }: Props) {
+export function IdentityVerificationCard({ status, failedReason, onFallback }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,6 +32,8 @@ export function IdentityVerificationCard({ status, failedReason }: Props) {
 
       if (data.url) {
         window.location.href = data.url;
+      } else if (res.status === 503 && onFallback) {
+        await onFallback();
       } else if (res.status === 503) {
         setError("Stripe Identity n'est pas encore activé. Contacte le support.");
       } else {

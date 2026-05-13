@@ -84,6 +84,31 @@ export const onboardingCompletePostSchema = z
   })
   .passthrough();
 
+/** Teacher credential submission — teacher_id resolved server-side from auth */
+export const teacherCredentialPostSchema = z.object({
+  type: z.enum(["degree", "certificate", "license", "experience", "portfolio"]),
+  title: z.string().trim().min(1, { message: "Le titre est requis." }).max(200),
+  institution_name: z.string().trim().max(200).optional().nullable(),
+  country: z.string().trim().max(2).optional().nullable(),
+  issued_year: z.coerce
+    .number()
+    .int()
+    .min(1900, { message: "Année invalide (min 1900)." })
+    .max(new Date().getFullYear() + 1, { message: "Année invalide." })
+    .optional()
+    .nullable(),
+  verification_method: z
+    .enum([
+      "mycreds",
+      "document_review",
+      "institution_direct",
+      "official_registry",
+      "reference_check",
+      "manual",
+    ])
+    .default("document_review"),
+});
+
 /** Stripe checkout session — shape only; payment math unchanged */
 export const stripeCheckoutPostSchema = z
   .object({
