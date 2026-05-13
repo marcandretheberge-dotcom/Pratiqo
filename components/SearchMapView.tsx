@@ -246,7 +246,6 @@ export function SearchMapView({
           }
         });
 
-        setMapsReady(true);
       } catch (e) {
         if (!cancelled) setLoadError(e instanceof Error ? e.message : t("noCoordinates"));
       }
@@ -266,7 +265,6 @@ export function SearchMapView({
       centeredOnUserRef.current = false;
       boundsRef.current = null;
       if (mapRef.current) mapRef.current.innerHTML = "";
-      setMapsReady(false);
       setShowSearchButton(false);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
