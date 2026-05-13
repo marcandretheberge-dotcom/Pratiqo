@@ -42,17 +42,14 @@ export const metadata: Metadata = {
     type: "website",
     images: [{ url: "/og-image.png", width: 1200, height: 630 }],
   },
-  // Same URL for every locale today (cookie/client locale). Do not treat these as
-  // distinct hreflang targets until real localized routes exist (see lib/seo/site.ts).
+  // Pre-migration: serve a single non-prefixed URL per route. We deliberately
+  // do NOT emit hreflang `languages` alternates here — Google's docs flag a
+  // languages map where every alternate resolves to the same URL as an
+  // anti-pattern. Step 1.3/1.4 of Phase 1 migrates routes to /{locale}/... at
+  // which point the per-page `buildAlternates({ routeKey })` helper
+  // (lib/seo/alternates.ts) emits the correct languages map.
   alternates: {
     canonical: SITE_URL,
-    languages: {
-      fr: SITE_URL,
-      en: SITE_URL,
-      es: SITE_URL,
-      "es-UY": SITE_URL,
-      "x-default": SITE_URL,
-    },
   },
   icons: {
     icon: [
