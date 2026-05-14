@@ -10,6 +10,7 @@ import { upsertUnpaidBookingPayment } from "@/lib/payments/ledger";
 import { validateJsonBody } from "@/lib/validation/api";
 import { stripeCheckoutPostSchema } from "@/lib/validation/schemas";
 import { SITE_URL } from "@/lib/seo/site";
+import { logError, logInfo } from "@/lib/log";
 
 export const runtime = "nodejs";
 
@@ -58,10 +59,9 @@ function homeRateCentsFromTeacher(teacher: TeacherRow): number {
 export async function POST(req: Request) {
   try {
     const hasStripeKey = Boolean(process.env.STRIPE_SECRET_KEY?.trim());
-    console.log("[stripe/checkout] STRIPE_SECRET_KEY configured:", hasStripeKey);
     if (!hasStripeKey) {
       const msg = "STRIPE_SECRET_KEY is missing or empty.";
-      console.error("[stripe/checkout]", msg);
+      logError("[stripe/checkout] missing Stripe secret key");
       return NextResponse.json({ error: msg }, { status: 500 });
     }
 
@@ -254,9 +254,6 @@ export async function POST(req: Request) {
     const successUrl = `${baseUrl}/booking/success?session_id={CHECKOUT_SESSION_ID}`;
     const cancelUrl = `${baseUrl}/booking`;
 
-    console.log("[stripe/checkout] redirect base (STRIPE_CHECKOUT_BASE_URL):", baseUrl);
-    console.log("[stripe/checkout] success_url:", successUrl);
-    console.log("[stripe/checkout] cancel_url:", cancelUrl);
 
     // Commission based on teacher plan (default: free). The charge stays on
     // Pratiqo now; the teacher net is transferred after post-class completion.
@@ -288,7 +285,12 @@ export async function POST(req: Request) {
       loyaltyTier,
     });
     const transferGroup = transferGroupForBooking(bookingId);
-    console.log("[stripe/checkout] commissionRate:", amounts.feeRate, "platformFeeCents:", amounts.platformFeeCents);
+    logInfo("[stripe/checkout] calculated booking amounts", {
+      bookingId,
+      feeBasisPoints: amounts.feeBasisPoints,
+      platformFeeCents: amounts.platformFeeCents,
+      teacherNetCents: amounts.teacherNetCents,
+    });
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
@@ -374,11 +376,15 @@ export async function POST(req: Request) {
         },
       });
     } catch (ledgerErr) {
-      console.error("[stripe/checkout] booking payment ledger insert failed", ledgerErr);
+      logError("[stripe/checkout] booking payment ledger insert failed", { bookingId, error: ledgerErr });
       try {
         await stripe.checkout.sessions.expire(session.id);
       } catch (expireErr) {
-        console.error("[stripe/checkout] failed to expire checkout session after ledger error", expireErr);
+        logError("[stripe/checkout] failed to expire checkout session after ledger error", {
+          bookingId,
+          checkoutSessionId: session.id,
+          error: expireErr,
+        });
       }
       return NextResponse.json(
         { error: "Payment setup failed. Please try again or contact support." },
@@ -393,12 +399,11 @@ export async function POST(req: Request) {
         "decline_code" in e && typeof (e as { decline_code?: string }).decline_code === "string"
           ? (e as { decline_code: string }).decline_code
           : undefined;
-      console.error("[stripe/checkout] Stripe API error:", {
+      logError("[stripe/checkout] Stripe API error", {
         type: e.type,
         code: e.code,
         message: e.message,
         decline_code: declineCode,
-        raw: e.raw,
       });
       const status =
         e instanceof Stripe.errors.StripeAuthenticationError
@@ -413,12 +418,12 @@ export async function POST(req: Request) {
     }
 
     if (e instanceof Error && e.message.includes("SUPABASE_SERVICE_ROLE_KEY")) {
-      console.error("[stripe/checkout] Supabase admin:", e.message);
+      logError("[stripe/checkout] Supabase admin misconfiguration", { message: e.message });
       return NextResponse.json({ error: "Server misconfiguration: " + e.message }, { status: 500 });
     }
 
     const message = e instanceof Error ? e.message : "Stripe checkout error";
-    console.error("[stripe/checkout] Unexpected error:", e);
+    logError("[stripe/checkout] unexpected error", { error: e });
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
