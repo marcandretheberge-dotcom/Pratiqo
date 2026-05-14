@@ -8,14 +8,19 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
+  CreditCard,
   Gift,
   Home,
-  Info,
   Loader2,
   MapPin,
+  Moon,
+  ShieldCheck,
   Star,
+  Sun,
+  Sunrise,
   Users,
   Video,
+  X,
 } from "lucide-react";
 import { motion } from "motion/react";
 import type { Teacher } from "../types";
@@ -45,6 +50,7 @@ type LessonType = "regular" | "intro";
 
 type Step = "info" | "preferences" | "pickDate" | "pickSlot" | "confirm";
 type LearnerContextType = "academic" | "language" | "music" | "general";
+type SlotPeriodKey = "matin" | "apresmidi" | "soir";
 
 type BookingLearnerProfile = {
   id: string;
@@ -86,6 +92,12 @@ function defaultTeachingMode(teacher: Teacher, initial: BookingInitialLessonKind
   if (teacher.teachingMode === "online") return "online";
   if (teacher.teachingMode === "person") return "person";
   return "person";
+}
+
+function SlotPeriodIcon({ period }: { period: SlotPeriodKey }) {
+  if (period === "matin") return <Sunrise size={14} className="text-amber-500" />;
+  if (period === "apresmidi") return <Sun size={14} className="text-teal-700" />;
+  return <Moon size={14} className="text-indigo-500" />;
 }
 
 function suggestLearnerContextType(teacher: Teacher): LearnerContextType {
@@ -262,6 +274,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
   const maxCreditsApplicable = Math.max(0, Math.floor(Math.min(creditBalance, basePrice - 0.5) * 100) / 100);
   const creditsDiscount = applyCredits ? maxCreditsApplicable : 0;
   const effectivePrice = Math.max(0.5, basePrice - creditsDiscount);
+  const effectiveDisplayPrice = formatPrice(effectivePrice);
 
   const homeAvailable =
     Boolean(teacher.homeLessonEnabled) &&
@@ -287,6 +300,19 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
     () => learnerProfiles.find((learner) => learner.id === selectedLearnerId) ?? null,
     [learnerProfiles, selectedLearnerId],
   );
+
+  const selectedLearnerSummary = useMemo(() => {
+    if (!selectedLearner) return "";
+    return [
+      selectedLearner.display_name,
+      contextDraft.context_type === "academic" ? contextDraft.grade_level : null,
+      contextDraft.context_type === "academic"
+        ? programLabelFromValue(contextDraft.academic_program, academicConfig, t) ?? selectedLearner.academic_program_label
+        : null,
+      contextDraft.context_type === "language" ? contextDraft.target_language || contextDraft.current_level : null,
+      contextDraft.context_type === "music" ? contextDraft.instrument || contextDraft.current_level : null,
+    ].filter(Boolean).join(" · ");
+  }, [academicConfig, contextDraft, selectedLearner, t]);
 
   const currentStepNumber =
     step === "info" || step === "preferences" ? 1 :
@@ -529,10 +555,10 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
   }, [availableDays, todayIso, dateLocale]);
 
   const slotsByPeriod = useMemo(() => {
-    const groups: { key: "matin" | "apresmidi" | "soir"; label: string; emoji: string; items: string[] }[] = [
-      { key: "matin", label: t("morning"), emoji: "🌅", items: [] },
-      { key: "apresmidi", label: t("afternoon"), emoji: "☀️", items: [] },
-      { key: "soir", label: t("evening"), emoji: "🌙", items: [] },
+    const groups: { key: SlotPeriodKey; label: string; items: string[] }[] = [
+      { key: "matin", label: t("morning"), items: [] },
+      { key: "apresmidi", label: t("afternoon"), items: [] },
+      { key: "soir", label: t("evening"), items: [] },
     ];
     for (const s of slots) {
       const p = periodForSlot(s);
@@ -723,12 +749,12 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
   };
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="booking-modal-title">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-4" role="dialog" aria-modal="true" aria-labelledby="booking-modal-title">
       <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose} />
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="relative bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-slate-200 overflow-hidden max-h-[90vh] overflow-y-auto"
+        className="relative bg-white w-full max-w-2xl rounded-3xl shadow-2xl border border-slate-200 overflow-hidden max-h-[92vh] overflow-y-auto"
       >
         <div className="p-5 sm:p-6 border-b border-slate-100 space-y-4">
           <div className="flex items-center justify-between gap-4">
@@ -737,22 +763,32 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                 {t("bookingTitle")}
               </p>
               <h3 id="booking-modal-title" className="text-xl font-bold text-slate-900">{teacher.name}</h3>
+              <p className="mt-1 text-xs text-slate-500">{t("bookingModalSubtitle")}</p>
             </div>
-            <button type="button" onClick={onClose} aria-label={t("accessibilityCloseDialog")} className="text-slate-600 hover:text-slate-800 text-sm font-bold">
-              {t("bookingClose")}
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label={t("accessibilityCloseDialog")}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:bg-slate-50 hover:text-slate-900"
+            >
+              <X size={16} />
             </button>
           </div>
-          <div className="grid grid-cols-3 gap-2 text-[11px] font-semibold">
+          <div className="grid grid-cols-3 gap-2 text-[11px] font-semibold" aria-label={t("bookingProgressLabel")}>
             {[t("bookingStepDetails"), t("bookingStepSlot"), t("bookingStepPayment")].map((label, idx) => {
+              const isCurrent = idx + 1 === currentStepNumber;
               const active = idx + 1 <= currentStepNumber;
               return (
                 <div
                   key={label}
+                  aria-current={isCurrent ? "step" : undefined}
                   className={cn(
-                    "rounded-full px-2 py-1.5 text-center",
-                    active ? "bg-teal-50 text-teal-700" : "bg-slate-100 text-slate-400",
+                    "rounded-2xl border px-2 py-2 text-center transition-colors",
+                    active ? "border-teal-100 bg-teal-50 text-teal-700" : "border-slate-100 bg-slate-50 text-slate-400",
+                    isCurrent && "shadow-sm ring-1 ring-teal-500/20",
                   )}
                 >
+                  <span className="mb-1 block h-1 rounded-full bg-current opacity-40" />
                   {idx + 1}. {label}
                 </div>
               );
@@ -806,8 +842,23 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
               <p className="text-sm text-slate-600 leading-relaxed">
                 {teacher.bio || t("bookingTeacherSummaryFallback")}
               </p>
+              <div className="grid gap-2 sm:grid-cols-3">
+                {[
+                  { icon: <Users size={15} />, title: t("bookingNextStepDetails"), body: t("bookingNextStepDetailsBody") },
+                  { icon: <Calendar size={15} />, title: t("bookingNextStepSlot"), body: t("bookingNextStepSlotBody") },
+                  { icon: <CreditCard size={15} />, title: t("bookingNextStepPay"), body: t("bookingNextStepPayBody") },
+                ].map((item) => (
+                  <div key={item.title} className="rounded-2xl border border-slate-100 bg-white p-3 shadow-sm">
+                    <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-teal-50 text-teal-700">
+                      {item.icon}
+                    </div>
+                    <p className="text-xs font-bold text-slate-900">{item.title}</p>
+                    <p className="mt-1 text-[11px] leading-relaxed text-slate-500">{item.body}</p>
+                  </div>
+                ))}
+              </div>
               <div className="rounded-2xl border border-[#DCEAE3] bg-[#F3FAF6] px-4 py-3 text-xs text-slate-700 flex gap-2">
-                <Info size={15} className="mt-0.5 shrink-0 text-teal-700" />
+                <ShieldCheck size={15} className="mt-0.5 shrink-0 text-teal-700" />
                 <span>{t("bookingSecurePaymentNote")}</span>
               </div>
               <button
@@ -825,7 +876,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
               {introAvailable ? (
                 <div className="space-y-2">
                   <p className="text-sm font-semibold text-slate-800">{t("chooseLessonType")}</p>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="grid gap-2 sm:grid-cols-2">
                     <button
                       type="button"
                       onClick={() => {
@@ -834,25 +885,39 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                         if (teachingMode === "domicile") setTeachingMode("person");
                       }}
                       className={cn(
-                        "px-3 py-1.5 rounded-full text-xs border font-semibold",
-                        lessonType === "intro" ? "text-white border-transparent" : "border-slate-200 text-slate-600",
+                        "rounded-2xl border p-3 text-left transition-all",
+                        lessonType === "intro"
+                          ? "border-teal-500 bg-teal-50 text-teal-900 ring-1 ring-teal-500/20"
+                          : "border-slate-200 bg-white text-slate-700 hover:border-teal-200",
                       )}
-                      style={lessonType === "intro" ? { backgroundColor: "var(--palette-teal-700)", borderColor: "var(--palette-teal-700)" } : undefined}
                     >
-                      {t("introLesson")}
+                      <span className="flex items-center justify-between gap-2">
+                        <span className="text-sm font-bold">{t("introLesson")}</span>
+                        <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-extrabold text-teal-700 shadow-sm">
+                          {introPriceCents != null ? formatPrice(introPriceCents / 100) : displayPrice}
+                        </span>
+                      </span>
+                      <span className="mt-1 block text-xs leading-relaxed text-slate-600">
+                        {t("bookingIntroLessonCardBody").replace("{n}", String(introDurationMinutes))}
+                      </span>
                     </button>
                     <button
                       type="button"
                       onClick={() => setLessonType("regular")}
                       className={cn(
-                        "px-3 py-1.5 rounded-full text-xs border font-semibold",
-                        lessonType === "regular" ? "text-white border-transparent" : "border-slate-200 text-slate-600",
+                        "rounded-2xl border p-3 text-left transition-all",
+                        lessonType === "regular"
+                          ? "border-teal-500 bg-teal-50 text-teal-900 ring-1 ring-teal-500/20"
+                          : "border-slate-200 bg-white text-slate-700 hover:border-teal-200",
                       )}
-                      style={
-                        lessonType === "regular" ? { backgroundColor: "var(--palette-teal-700)", borderColor: "var(--palette-teal-700)" } : undefined
-                      }
                     >
-                      {t("regularLesson")}
+                      <span className="flex items-center justify-between gap-2">
+                        <span className="text-sm font-bold">{t("regularLesson")}</span>
+                        <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-extrabold text-slate-800 shadow-sm">
+                          {formatPrice(teacher.pricePerLesson)}
+                        </span>
+                      </span>
+                      <span className="mt-1 block text-xs leading-relaxed text-slate-600">{t("bookingRegularLessonCardBody")}</span>
                     </button>
                   </div>
                   {lessonType === "intro" ? (
@@ -861,7 +926,12 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                 </div>
               ) : null}
 
-              <p className="text-sm font-semibold text-slate-800">{t("bookingYourLevel")}</p>
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-semibold text-slate-800">{t("bookingYourLevel")}</p>
+                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                  {t("optionalBadge")}
+                </span>
+              </div>
               <div className="flex flex-wrap gap-2">
                 {displayLevels.map((lvl) => (
                   <button
@@ -1047,13 +1117,12 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                 </button>
                 <button
                   type="button"
-                  disabled={!selectedLevel}
                   onClick={() => {
                     setSelectedDate(null);
                     setSelectedSlot(null);
                     setStep("pickDate");
                   }}
-                  className="flex-[2] ds-btn-primary h-11 rounded-2xl text-sm font-semibold disabled:opacity-50"
+                  className="flex-[2] ds-btn-primary h-11 rounded-2xl text-sm font-semibold"
                 >
                   {t("chooseSlotCta")}
                 </button>
@@ -1145,8 +1214,9 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                 <div className="space-y-4 max-h-[40vh] overflow-y-auto pr-1">
                   {slotsByPeriod.map((g) => (
                     <div key={g.key}>
-                      <p className="text-[11px] font-bold uppercase tracking-widest text-slate-600 mb-2">
-                        {g.emoji} {g.label}
+                      <p className="mb-2 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-slate-600">
+                        <SlotPeriodIcon period={g.key} />
+                        {g.label}
                       </p>
                       <div className="grid grid-cols-2 gap-2">
                         {g.items.map((s) => (
@@ -1158,7 +1228,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                               setStep("confirm");
                             }}
                             className={cn(
-                              "py-2.5 rounded-xl border text-xs font-bold transition-colors",
+                              "rounded-xl border px-2 py-3 text-xs font-bold transition-colors",
                               selectedSlot === s
                                 ? "border-teal-700 bg-teal-700 text-white"
                                 : "border-slate-200 hover:border-teal-500/40",
@@ -1195,8 +1265,16 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                   {t("bookingInvalidTeacherId")}
                 </div>
               ) : null}
-              <p className="text-sm font-bold text-slate-900">{t("bookingConfirmTitle")}</p>
-              <div className="rounded-2xl border border-teal-500/35 bg-teal-500/10 p-4 space-y-2 text-sm">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-bold text-slate-900">{t("bookingConfirmTitle")}</p>
+                  <p className="mt-1 text-xs text-slate-500">{t("bookingConfirmSubtitle")}</p>
+                </div>
+                <span className="rounded-full bg-teal-50 px-3 py-1 text-xs font-extrabold text-teal-700">
+                  {effectiveDisplayPrice}
+                </span>
+              </div>
+              <div className="rounded-3xl border border-[#DCEAE3] bg-[#F3FAF6] p-4 space-y-3 text-sm">
                 <div className="flex justify-between gap-2">
                   <span className="text-slate-600">{t("bookingDateLabel")}</span>
                   <span className="font-semibold text-slate-900 text-right capitalize">{formattedSelectedDate}</span>
@@ -1234,15 +1312,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                   <div className="flex justify-between gap-2">
                     <span className="text-slate-600">{t("studentCourseForLearner")}</span>
                     <span className="font-semibold text-slate-900 text-right">
-                      {[
-                        selectedLearner.display_name,
-                        contextDraft.context_type === "academic" ? contextDraft.grade_level : null,
-                        contextDraft.context_type === "academic"
-                          ? programLabelFromValue(contextDraft.academic_program, academicConfig, t) ?? selectedLearner.academic_program_label
-                          : null,
-                        contextDraft.context_type === "language" ? contextDraft.target_language || contextDraft.current_level : null,
-                        contextDraft.context_type === "music" ? contextDraft.instrument || contextDraft.current_level : null,
-                      ].filter(Boolean).join(" · ")}
+                      {selectedLearnerSummary}
                     </span>
                   </div>
                 ) : null}
@@ -1250,8 +1320,26 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                   <span className="text-slate-600">{t("bookingAmountLabel")}</span>
                   <span className="font-bold text-teal-700">{displayPrice}</span>
                 </div>
+                {creditsDiscount > 0 ? (
+                  <div className="flex justify-between gap-2">
+                    <span className="text-slate-600">{t("creditsApply")}</span>
+                    <span className="font-bold text-teal-700">-{formatPrice(creditsDiscount)}</span>
+                  </div>
+                ) : null}
+                <div className="flex justify-between gap-2 border-t border-teal-500/20 pt-3">
+                  <span className="font-semibold text-slate-900">{t("bookingDueToday")}</span>
+                  <span className="font-extrabold text-teal-700">{effectiveDisplayPrice}</span>
+                </div>
               </div>
-              <p className="text-xs text-slate-600 leading-relaxed">{t("bookingExclusiveText")}</p>
+              <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-600">
+                <div className="flex gap-2">
+                  <ShieldCheck size={15} className="mt-0.5 shrink-0 text-teal-700" />
+                  <p className="leading-relaxed">
+                    <span className="font-semibold text-slate-800">{t("bookingPaymentNote")}</span>{" "}
+                    {t("bookingExclusiveText")}
+                  </p>
+                </div>
+              </div>
 
               {/* Credits toggle */}
               {!loadingCredits && creditBalance > 0 && maxCreditsApplicable > 0 ? (
@@ -1272,14 +1360,14 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                         {t("creditsApply")}
                       </p>
                       <p className="text-xs text-slate-500">
-                        ${creditBalance.toFixed(2)} {t("creditsAvailable")}
+                        {formatPrice(creditBalance)} {t("creditsAvailable")}
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     {applyCredits && (
                       <span className="text-sm font-bold text-teal-700">
-                        −${creditsDiscount.toFixed(2)}
+                        -{formatPrice(creditsDiscount)}
                       </span>
                     )}
                     <div
@@ -1345,7 +1433,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                       {creditsDiscount > 0 ? (
                         <>
                           <span className="line-through opacity-60 mr-1">{displayPrice}</span>
-                          {formatPrice(effectivePrice)}
+                          {effectiveDisplayPrice}
                         </>
                       ) : (
                         displayPrice
