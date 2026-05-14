@@ -30,6 +30,7 @@ import { logSearchEvent } from "../../../../lib/searchAnalytics";
 import { LandingSearchHero } from "@/components/marketing/LandingSearchHero";
 import { LandingTeacherCardSkeleton } from "@/components/marketing/LandingTeacherCardSkeleton";
 import type { LandingFormatFilter } from "@/lib/landingTeacherFilter";
+import { formatTeacherCardShortName, teacherCardLocationPlace } from "@/lib/teacherDisplayName";
 
 const TeacherProfile = dynamic(
   () => import("../../../../components/TeacherProfile").then((m) => m.TeacherProfile),
@@ -720,12 +721,25 @@ function TeacherCard({
     verification_level: teacher.verificationLevel ?? null,
   });
 
+  const neighborhoodHint = teacher.location?.neighborhood?.trim();
+  const placeFallback = teacherCardLocationPlace(teacher);
+  const cardShortName = formatTeacherCardShortName(teacher.name);
+  const distancePrimary =
+    distanceKm != null
+      ? t("distanceFromYouEmphasis").replace("{{n}}", String(Math.round(distanceKm)))
+      : placeFallback
+        ? t("teacherCardBasedInPlace").replace("{{place}}", placeFallback)
+        : neighborhoodHint
+          ? t("teacherCardNearPlace").replace("{{place}}", neighborhoodHint)
+          : t("teacherCardDistanceNeedGeo");
+  const distanceLineIsGeoHint = distanceKm == null && !placeFallback && !neighborhoodHint;
+
   return (
     <button
       type="button"
       onClick={onOpen}
       className={cn(
-        "group block min-h-[188px] w-full rounded-3xl border border-[#E8E6DF] bg-white p-4 text-left shadow-[0_12px_40px_rgba(44,44,42,0.06)]",
+        "group block min-h-[168px] w-full rounded-3xl border border-[#E8E6DF] bg-white p-3.5 text-left shadow-[0_12px_40px_rgba(44,44,42,0.06)]",
         "cursor-pointer transition-all duration-200 ease-out",
         "hover:-translate-y-0.5 hover:border-teal-500/35 hover:shadow-[0_18px_46px_rgba(44,44,42,0.10)]",
         "active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/40",
@@ -733,13 +747,22 @@ function TeacherCard({
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
-          <TeacherAvatar name={teacher.name} category={teacher.category} imageUrl={teacher.imageUrl} size={52} />
+          <TeacherAvatar name={teacher.name} category={teacher.category} imageUrl={teacher.imageUrl} size={48} />
           <div className="min-w-0">
-            <div className="flex items-center gap-2 min-w-0">
-              <p className="truncate text-[15px] font-bold text-[#2C2C2A]">{teacher.name}</p>
+            <div className="flex min-w-0 items-center gap-2">
+              <p className="truncate text-[15px] font-bold text-[#2C2C2A]">{cardShortName}</p>
               <VerificationBadge level={verificationLevel} size="sm" showLabel={false} className="shrink-0 scale-90" />
             </div>
             <p className="mt-0.5 truncate text-xs font-medium text-[#6B6A65]">{teacher.discipline}</p>
+            <p
+              className={cn(
+                "mt-1 flex min-h-[1.125rem] items-center gap-1.5 text-[13px] tabular-nums",
+                distanceLineIsGeoHint ? "font-semibold text-[#6B6A65]" : "font-bold text-teal-800",
+              )}
+            >
+              <MapPin size={14} className={cn("shrink-0", distanceLineIsGeoHint ? "text-neutral-500" : "text-teal-700")} aria-hidden />
+              <span className="min-w-0 truncate">{distancePrimary}</span>
+            </p>
           </div>
         </div>
         <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-amber-100 bg-amber-50 px-2.5 py-1 text-[11px] font-bold text-amber-800">
@@ -748,22 +771,16 @@ function TeacherCard({
         </span>
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-[#6B6A65]">
+      <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-[#6B6A65]">
         {formatLabels.slice(0, 3).map((label) => (
           <span key={label} className="inline-flex items-center gap-1 rounded-full bg-[#F3FAF6] px-2.5 py-1 font-semibold text-[#2C2C2A]">
             {label === t("bookingOnline") ? <Video size={12} aria-hidden /> : label === t("modeHome") ? <Home size={12} aria-hidden /> : <Users size={12} aria-hidden />}
             {label}
           </span>
         ))}
-        {distanceKm != null ? (
-          <span className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2.5 py-1 font-semibold text-slate-600">
-            <MapPin size={12} aria-hidden />
-            {Math.round(distanceKm)} km
-          </span>
-        ) : null}
       </div>
 
-      <div className="mt-4 flex items-end justify-between gap-3 border-t border-[#E8E6DF] pt-3">
+      <div className="mt-3 flex items-end justify-between gap-3 border-t border-[#E8E6DF] pt-2.5">
         <div className="min-w-0">
           <TeacherPriceTag
             amount={Number(teacher.pricePerLesson)}

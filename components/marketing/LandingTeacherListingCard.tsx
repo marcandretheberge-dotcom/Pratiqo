@@ -12,6 +12,7 @@ import { useLocale } from "@/lib/locale-context";
 import type { TranslationKey } from "@/lib/translations";
 import { getTeacherImageUrl, shouldUseUnoptimizedImage } from "@/lib/images";
 import type { Currency } from "@/lib/geoLocale";
+import { formatTeacherCardShortName, teacherCardLocationPlace } from "@/lib/teacherDisplayName";
 
 function landingCardFormatSummary(teacher: Teacher, t: (k: TranslationKey) => string) {
   const m = teacher.teachingMode;
@@ -84,9 +85,20 @@ export function LandingTeacherListingCard({
     ? teacher.availability!.slice(0, 2).join(" · ")
     : t("availabilityHintGeneric");
 
-  const photoUrl = getTeacherImageUrl(teacher.imageUrl, { width: 128, height: 128, quality: 72, format: "webp" });
+  const photoUrl = getTeacherImageUrl(teacher.imageUrl, { width: 112, height: 112, quality: 72, format: "webp" });
   const showVerifiedTag = lvl > 0;
   const neighborhoodHint = teacher.location?.neighborhood?.trim();
+  const placeFallback = teacherCardLocationPlace(teacher);
+  const cardShortName = formatTeacherCardShortName(teacher.name);
+  const distancePrimary =
+    distKm != null
+      ? t("distanceFromYouEmphasis").replace("{{n}}", String(distKm))
+      : placeFallback
+        ? t("teacherCardBasedInPlace").replace("{{place}}", placeFallback)
+        : neighborhoodHint
+          ? t("teacherCardNearPlace").replace("{{place}}", neighborhoodHint)
+          : t("teacherCardDistanceNeedGeo");
+  const distanceLineIsGeoHint = distKm == null && !placeFallback && !neighborhoodHint;
 
   const formatSummary = landingCardFormatSummary(teacher, t);
 
@@ -107,7 +119,7 @@ export function LandingTeacherListingCard({
     <button
       {...commonButtonProps}
       className={cn(
-        "group block w-full min-h-[280px] sm:min-h-[300px] rounded-3xl border border-[#E8E6DF] bg-white text-left shadow-[0_10px_40px_rgba(44,44,42,0.06)] ring-1 ring-black/[0.02]",
+        "group block w-full min-h-[200px] sm:min-h-[212px] rounded-3xl border border-[#E8E6DF] bg-white text-left shadow-[0_10px_40px_rgba(44,44,42,0.06)] ring-1 ring-black/[0.02]",
         "cursor-pointer transition-all duration-200 ease-out",
         "hover:-translate-y-0.5 hover:border-teal-500/30 hover:shadow-xl",
         "active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/40",
@@ -116,21 +128,21 @@ export function LandingTeacherListingCard({
           : "",
       )}
     >
-      <div className="relative p-4 sm:p-[1.125rem]">
-        <div className="flex items-start gap-3.5 sm:gap-4">
+      <div className="relative p-3 sm:p-3.5">
+        <div className="flex items-start gap-3 sm:gap-3.5">
           {photoUrl ? (
             <div className="relative shrink-0">
               <Image
                 src={photoUrl}
                 alt={t("imageAltTeacherProfile").replace("{name}", teacher.name)}
-                width={88}
-                height={88}
-                sizes="(max-width: 640px) 72px, 84px"
+                width={80}
+                height={80}
+                sizes="(max-width: 640px) 64px, 72px"
                 loading="lazy"
                 fetchPriority="low"
                 decoding="async"
                 unoptimized={shouldUseUnoptimizedImage(photoUrl)}
-                className="h-24 w-24 rounded-2xl border border-black/[0.04] object-cover shadow-md sm:h-28 sm:w-28"
+                className="h-20 w-20 rounded-2xl border border-black/[0.04] object-cover shadow-md sm:h-[4.5rem] sm:w-[4.5rem]"
               />
               {teacher.introSessionEnabled ? (
                 <span className="absolute -bottom-2 right-0 rounded-full bg-teal-50 px-2 py-1 text-[10px] font-extrabold text-teal-700 shadow-md ring-2 ring-white z-10">
@@ -141,7 +153,7 @@ export function LandingTeacherListingCard({
           ) : (
             <div className="relative shrink-0">
               <div
-                className="flex h-24 w-24 items-center justify-center rounded-2xl border border-black/[0.04] text-2xl font-bold text-white shadow-inner sm:h-28 sm:w-28 sm:text-3xl"
+                className="flex h-20 w-20 items-center justify-center rounded-2xl border border-black/[0.04] text-xl font-bold text-white shadow-inner sm:h-[4.5rem] sm:w-[4.5rem] sm:text-2xl"
                 style={{ background: "linear-gradient(135deg,var(--palette-teal-500),var(--palette-teal-700))" }}
               >
                 {initials(teacher.name)}
@@ -158,21 +170,35 @@ export function LandingTeacherListingCard({
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                  <p className="truncate text-lg font-bold leading-tight tracking-tight text-[#2C2C2A]">
-                    {teacher.name}
+                  <p className="truncate text-base font-bold leading-tight tracking-tight text-[#2C2C2A]">
+                    {cardShortName}
                   </p>
                   <VerificationBadge level={lvl} size="sm" showLabel={false} className="shrink-0 scale-95" />
                 </div>
                 <p className="mt-0.5 truncate text-sm font-medium text-neutral-600">{teacher.discipline}</p>
+                <p
+                  className={cn(
+                    "mt-1.5 flex min-h-[1.25rem] items-center gap-1.5 text-sm tabular-nums",
+                    distanceLineIsGeoHint
+                      ? "font-semibold text-neutral-600"
+                      : "font-bold text-teal-800",
+                  )}
+                >
+                  <MapPin
+                    size={15}
+                    className={cn("shrink-0", distanceLineIsGeoHint ? "text-neutral-500" : "text-teal-700")}
+                    aria-hidden
+                  />
+                  <span className="min-w-0 truncate">{distancePrimary}</span>
+                </p>
                 {showVerifiedTag ? (
-                  <p className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-teal-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-teal-800">
+                  <p className="mt-1 inline-flex items-center gap-1 rounded-full bg-teal-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-teal-800">
                     <ShieldCheck size={12} className="text-teal-600" /> {t("landingCardVerifiedTeacher")}
                   </p>
                 ) : (
-                  <p className="mt-1.5 h-[22px]" aria-hidden />
+                  <p className="mt-1 h-[20px]" aria-hidden />
                 )}
-                {/* Fixed-height meta block so every card aligns in the grid */}
-                <div className="mt-2 min-h-[3.75rem] space-y-1">
+                <div className="mt-1.5 min-h-[2.5rem] space-y-1">
                   <p
                     className={cn(
                       "line-clamp-1 text-xs leading-snug text-neutral-700",
@@ -185,20 +211,11 @@ export function LandingTeacherListingCard({
                   <p
                     className={cn(
                       "flex min-h-[1.125rem] items-center gap-1 truncate text-[11px] font-medium text-neutral-700",
-                      !neighborhoodHint && "invisible",
+                      !(distKm != null && neighborhoodHint) && "invisible",
                     )}
                   >
                     <MapPin size={11} className="shrink-0 text-teal-700" aria-hidden />
                     {neighborhoodHint || "—"}
-                  </p>
-                  <p
-                    className={cn(
-                      "flex min-h-[1.125rem] items-center gap-1 text-[11px] font-medium text-neutral-700",
-                      distKm == null && "invisible",
-                    )}
-                  >
-                    <MapPin size={11} className="text-teal-800" aria-hidden />
-                    {distKm != null ? t("distanceFromYouKm").replace("{{n}}", String(distKm)) : "—"}
                   </p>
                 </div>
               </div>
@@ -211,7 +228,7 @@ export function LandingTeacherListingCard({
               </span>
             </div>
 
-            <div className="mt-3 flex items-start justify-between gap-3 border-t border-[#EFECE6] pt-3">
+            <div className="mt-2.5 flex items-start justify-between gap-3 border-t border-[#EFECE6] pt-2.5">
               <div className="min-w-0 flex flex-wrap items-center gap-2">
                 <p className="max-w-[min(100%,12rem)] text-left text-[13px] font-semibold leading-snug tracking-tight text-[#374038] sm:max-w-[70%]">
                   {formatSummary}
@@ -232,7 +249,7 @@ export function LandingTeacherListingCard({
               </span>
             </div>
 
-            <p className="mt-2 line-clamp-2 min-h-[2.5rem] text-[11px] leading-relaxed text-neutral-700 sm:text-xs">
+            <p className="mt-1.5 line-clamp-2 min-h-[2.25rem] text-[11px] leading-relaxed text-neutral-700 sm:text-xs">
               {availabilityHint}
             </p>
           </div>

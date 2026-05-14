@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { useLocale } from "@/lib/locale-context";
 import type { TranslationKey } from "@/lib/translations";
 import { getTeacherImageUrl, shouldUseUnoptimizedImage } from "@/lib/images";
+import { formatTeacherCardShortName } from "@/lib/teacherDisplayName";
 
 function formatTeaching(teacher: Teacher, t: (k: TranslationKey) => string) {
   switch (teacher.teachingMode) {
@@ -130,7 +131,9 @@ export function HeroTeacherPreviewCards({
                   )}
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="truncate font-semibold text-[#2C2C2A]">{teacher.name}</span>
+                      <span className="truncate font-semibold text-[#2C2C2A]">
+                        {formatTeacherCardShortName(teacher.name)}
+                      </span>
                       <VerificationBadge level={lvl} size="sm" showLabel={false} className="scale-90" />
                     </div>
                     <p className="truncate text-xs text-neutral-700">{teacher.discipline}</p>
@@ -148,8 +151,9 @@ export function HeroTeacherPreviewCards({
                         {formatTeaching(teacher, t)}
                       </span>
                       {distKm != null ? (
-                        <span className="inline-flex items-center gap-0.5 rounded-full bg-[#F1EFE8] px-2 py-0.5 font-medium text-[#2C2C2A]">
-                          <MapPin size={10} aria-hidden /> {t("distanceFromYouKm").replace("{{n}}", String(distKm))}
+                        <span className="inline-flex items-center gap-0.5 rounded-full bg-[#F1EFE8] px-2 py-0.5 font-bold text-[#2C2C2A]">
+                          <MapPin size={10} aria-hidden />{" "}
+                          {t("distanceFromYouEmphasis").replace("{{n}}", String(distKm))}
                         </span>
                       ) : null}
                     </div>
