@@ -14,6 +14,8 @@ function fail(message: string): never {
 
 const lessonCheckout = read("app/api/stripe/checkout/route.ts");
 const stripeWebhook = read("app/api/stripe/webhook/route.ts");
+const stripeWebhookBookings = read("lib/stripeWebhook/bookings.ts");
+const stripeLessonWebhookSurface = `${stripeWebhook}\n${stripeWebhookBookings}`;
 const completeBooking = read("app/api/bookings/[id]/complete/route.ts");
 
 if (lessonCheckout.includes("transfer_data")) {
@@ -28,15 +30,15 @@ if (!lessonCheckout.includes("transfer_group")) {
   fail("Lesson checkout should set transfer_group for later reconciliation.");
 }
 
-if (stripeWebhook.includes("booking not pending_payment at confirm; refunding")) {
+if (stripeLessonWebhookSurface.includes("booking not pending_payment at confirm; refunding")) {
   fail("Webhook contains the old non-idempotent refund-on-race branch.");
 }
 
-if (!stripeWebhook.includes("booking already confirmed by another webhook delivery")) {
+if (!stripeLessonWebhookSurface.includes("booking already confirmed by another webhook delivery")) {
   fail("Webhook should explicitly tolerate concurrent duplicate Stripe deliveries.");
 }
 
-if (!stripeWebhook.includes("stripe_payment_intent_id")) {
+if (!stripeLessonWebhookSurface.includes("stripe_payment_intent_id")) {
   fail("Webhook should persist or validate the Stripe payment intent on bookings.");
 }
 
