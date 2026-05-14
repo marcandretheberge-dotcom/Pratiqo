@@ -304,6 +304,77 @@ test("stops notifications and emails when ledger upsert fails", async () => {
   assert.equal(depsFailure.calls.teacherEmails.length, 0);
 });
 
+test("deducts credits after a successful first confirmation", async () => {
+  const { admin, calls, confirmBookingAndNotify } = createHarness();
+
+  await confirmBookingAndNotify("booking_1", "pi_1", { credits_applied: "2" });
+
+  assert.deepEqual(calls.credits, [["student_1", 2, "booking_1"]]);
+  assert(admin.updates.some((u) => u.table === "bookings" && u.patch.credits_applied === 2));
+  assert.equal(calls.studentEmails.length, 1);
+  assert.equal(calls.teacherEmails.length, 1);
+});
+
+test("does not deduct credits again for duplicate confirmed deliveries", async () => {
+  const { admin, calls, confirmBookingAndNotify } = createHarness();
+  admin.booking = {
+    ...baseBooking(),
+    status: "confirmed",
+    stripe_payment_intent_id: "pi_1",
+    credits_applied: 2,
+  };
+
+  await confirmBookingAndNotify("booking_1", "pi_1", { credits_applied: "2" });
+
+  assert.equal(calls.refunds.length, 0);
+  assert.equal(calls.ledger.length, 1);
+  assert.equal(calls.credits.length, 0);
+  assert.equal(calls.studentEmails.length, 0);
+  assert.equal(calls.teacherEmails.length, 0);
+});
+
+test("preserves Stripe amount and checkout session details in the ledger", async () => {
+  const { calls, confirmBookingAndNotify } = createHarness();
+
+  await confirmBookingAndNotify(
+    "booking_1",
+    "pi_1",
+    {
+      amount_cents: "12500",
+      platform_fee_cents: "1875",
+      teacher_net_cents: "10625",
+      transfer_group: "booking_booking_1",
+    },
+    {
+      checkoutSessionId: "cs_1",
+      stripeChargeId: "ch_from_session",
+      currency: "usd",
+    },
+  );
+
+  assert.equal(calls.ledger.length, 1);
+  assert.deepEqual(calls.ledger[0], {
+    bookingId: "booking_1",
+    teacherId: "teacher_1",
+    studentId: "student_1",
+    stripeCheckoutSessionId: "cs_1",
+    stripePaymentIntentId: "pi_1",
+    stripeChargeId: "ch_from_session",
+    amountCents: 12500,
+    platformFeeCents: 1875,
+    teacherNetCents: 10625,
+    currency: "usd",
+    transferGroup: "booking_booking_1",
+    metadata: {
+      amount_cents: "12500",
+      platform_fee_cents: "1875",
+      teacher_net_cents: "10625",
+      transfer_group: "booking_booking_1",
+      webhook_source: "checkout.session.completed",
+    },
+  });
+});
+
 async function run() {
   console.info = () => undefined;
   console.warn = () => undefined;
