@@ -1,8 +1,10 @@
 "use client";
 
 /**
- * Future enhancement: sync visible teacher results with current map bounds.
- * (Debounced bounds → parent list filter beyond the current “Search this area” tap.)
+ * Map + MarkerClusterer for teacher discovery.
+ * Optional `onBoundsSearch` powers "Search this area"; when the parent marks
+ * `boundsFilterActive`, we clear that filter on user drag (not on programmatic
+ * `fitBounds`) so the list stays in sync with the camera.
  */
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
@@ -33,6 +35,14 @@ type Props = {
   /** Called when the user clicks "Search this area". Parent should filter
    *  its teacher list to those whose coords fall inside the given bounds. */
   onBoundsSearch?: (bounds: MapBounds) => void;
+  /**
+   * When true, the parent is filtering results to a map-bounds search.
+   * After the user pans or zooms, we clear that filter so markers and the
+   * list stay in sync with the viewport (Airbnb-style).
+   */
+  boundsFilterActive?: boolean;
+  /** Fired when the user moves the map while `boundsFilterActive` is true. */
+  onBoundsFilterCleared?: () => void;
   /** Override the map container height. Defaults to "calc(100vh - 200px)". */
   mapHeight?: string;
   /**
@@ -101,6 +111,8 @@ export function SearchMapView({
   selectedTeacher,
   onCloseSelected,
   onBoundsSearch,
+  boundsFilterActive = false,
+  onBoundsFilterCleared,
   mapHeight = "calc(100vh - 200px)",
   initialZoom = 12,
   highlightedTeacherId = null,
@@ -120,10 +132,14 @@ export function SearchMapView({
   const userLngRef = useRef(userLng);
   const onTeacherSelectRef = useRef(onTeacherSelect);
   const onBoundsSearchRef = useRef(onBoundsSearch);
+  const onBoundsFilterClearedRef = useRef(onBoundsFilterCleared);
+  const boundsFilterActiveRef = useRef(boundsFilterActive);
   userLatRef.current = userLat;
   userLngRef.current = userLng;
   onTeacherSelectRef.current = onTeacherSelect;
   onBoundsSearchRef.current = onBoundsSearch;
+  onBoundsFilterClearedRef.current = onBoundsFilterCleared;
+  boundsFilterActiveRef.current = boundsFilterActive;
 
   // Whether the map's initial view has been centred on the user's real coords.
   const centeredOnUserRef = useRef(false);
@@ -144,6 +160,12 @@ export function SearchMapView({
 
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
   const teachersWithCoords = useMemo(() => teachers.filter(hasCoords), [teachers]);
+
+  /** Stable key so we refit when the set of plotted teachers changes, not on every parent re-render. */
+  const teacherCoordsFitKey = useMemo(
+    () => teachersWithCoords.map((t) => `${t.id}:${t.location.lat}:${t.location.lng}`).join("|"),
+    [teachersWithCoords],
+  );
 
   // ── Effect 1: Initialize the map ONCE ────────────────────────────────────
   //
@@ -243,6 +265,12 @@ export function SearchMapView({
           } else {
             // User has moved the map — reveal the "Search this area" button.
             setShowSearchButton(true);
+          }
+        });
+
+        map.addListener("dragstart", () => {
+          if (boundsFilterActiveRef.current) {
+            onBoundsFilterClearedRef.current?.();
           }
         });
 
@@ -369,6 +397,41 @@ export function SearchMapView({
     // more efficient than adding them one-by-one.
     clusterer.addMarkers(newMarkers);
   }, [mapsReady, googleMarker, googleCore, teachersWithCoords, highlightedTeacherId]); // onTeacherSelect deliberately excluded
+
+  // ── Effect 4: Fit camera to all teacher markers (+ user) when the plotted set changes ─
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map || !mapsReady || teachersWithCoords.length === 0) return;
+    const g = typeof google !== "undefined" ? google.maps : null;
+    if (!g?.LatLngBounds) return;
+
+    const bounds = new g.LatLngBounds();
+    for (const t of teachersWithCoords) {
+      bounds.extend({ lat: t.location.lat, lng: t.location.lng });
+    }
+    if (
+      userLat != null &&
+      userLng != null &&
+      Number.isFinite(userLat) &&
+      Number.isFinite(userLng)
+    ) {
+      bounds.extend({ lat: userLat, lng: userLng });
+    }
+
+    const ne = bounds.getNorthEast();
+    const sw = bounds.getSouthWest();
+    if (ne.lat() === sw.lat() && ne.lng() === sw.lng()) {
+      map.setCenter({ lat: ne.lat(), lng: ne.lng() });
+      map.setZoom(Math.max(map.getZoom() ?? initialZoom, 13));
+      return;
+    }
+
+    try {
+      map.fitBounds(bounds, { top: 56, right: 48, bottom: 48, left: 48 });
+    } catch {
+      // fitBounds can throw on degenerate geometry in edge environments
+    }
+  }, [mapsReady, teacherCoordsFitKey, teachersWithCoords.length, userLat, userLng, initialZoom]);
 
   // ── Early returns ─────────────────────────────────────────────────────────
   if (!apiKey) {

@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import type { Teacher } from "../../../../types";
 import type { BookingInitialLessonKind } from "../../../../components/BookingModal";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ChevronRight, Clock, Home, List, Map as MapIcon, MapPin, ShieldCheck, Star, Users, Video } from "lucide-react";
+import { ChevronRight, Clock, Home, List, Map as MapIcon, MapPin, ShieldCheck, Star, Users, Video, X } from "lucide-react";
 import { useLocale } from "../../../../lib/locale-context";
 import { cn } from "../../../../lib/utils";
 import { getSupabaseClient } from "../../../../lib/supabase";
@@ -28,6 +28,7 @@ import { TeacherSearchAdvancedPanel, type AdvancedFilterValues } from "../../../
 import type { TeacherSearchFormat } from "../../../../lib/teacherSearchCriteria";
 import { logSearchEvent } from "../../../../lib/searchAnalytics";
 import { LandingSearchHero } from "@/components/marketing/LandingSearchHero";
+import { LandingTeacherCardSkeleton } from "@/components/marketing/LandingTeacherCardSkeleton";
 import type { LandingFormatFilter } from "@/lib/landingTeacherFilter";
 
 const TeacherProfile = dynamic(
@@ -150,22 +151,6 @@ export default function StudentSearchPage() {
   useEffect(() => {
     const supabase = getSupabaseClient();
     const load = async () => {
-      const mergePlans = async (list: Teacher[]) => {
-        const ids = list.map((x) => x.id).join(",");
-        if (!ids) {
-          setTeachers(list);
-          return;
-        }
-        try {
-          const pr = await fetch(`/api/teachers/plans?ids=${encodeURIComponent(ids)}`);
-          const body = (await pr.json()) as { plans?: Record<string, string> };
-          const plans = body.plans ?? {};
-          setTeachers(list.map((x) => ({ ...x, profilePlan: plans[x.id] ?? "free" })));
-        } catch {
-          setTeachers(list.map((x) => ({ ...x, profilePlan: "free" })));
-        }
-      };
-
       const { data, error } = await supabase
         .from(TEACHERS_PUBLIC_TABLE)
         .select(TEACHERS_LIST_SELECT)
@@ -179,21 +164,56 @@ export default function StudentSearchPage() {
             error,
           );
         }
-        await mergePlans([]);
+        setTeachers([]);
         setLoadingTeachers(false);
         return;
       }
 
       const mapped = data.map((r) => teacherRowToTeacher(r as TeacherRow));
-      const discMap = await fetchTeacherDisciplinesMap(
-        supabase,
-        mapped.map((x) => x.id),
-      );
-      await mergePlans(mergeTeachersWithDisciplines(mapped, discMap));
+      const ids = mapped.map((x) => x.id).join(",");
+      if (!ids) {
+        setTeachers(mapped);
+        setLoadingTeachers(false);
+        return;
+      }
+
+      let merged: Teacher[];
+      try {
+        const [discMap, plansRes] = await Promise.all([
+          fetchTeacherDisciplinesMap(supabase, mapped.map((x) => x.id)),
+          fetch(`/api/teachers/plans?ids=${encodeURIComponent(ids)}`).then((r) => r.json() as Promise<{ plans?: Record<string, string> }>),
+        ]);
+        const plans = plansRes.plans ?? {};
+        merged = mergeTeachersWithDisciplines(mapped, discMap).map((x) => ({
+          ...x,
+          profilePlan: plans[x.id] ?? "free",
+        }));
+      } catch {
+        merged = mergeTeachersWithDisciplines(mapped, new Map()).map((x) => ({ ...x, profilePlan: "free" as const }));
+      }
+      setTeachers(merged);
       setLoadingTeachers(false);
     };
     void load();
   }, []);
+
+  useEffect(() => {
+    if (teachers.length === 0) return;
+    let idleId: number | undefined;
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+    const run = () => void import("../../../../components/SearchMapView");
+    if (typeof window !== "undefined" && "requestIdleCallback" in window) {
+      idleId = window.requestIdleCallback(run, { timeout: 2500 });
+    } else {
+      timeoutId = setTimeout(run, 1200);
+    }
+    return () => {
+      if (idleId != null && typeof window !== "undefined" && "cancelIdleCallback" in window) {
+        window.cancelIdleCallback(idleId);
+      }
+      if (timeoutId != null) clearTimeout(timeoutId);
+    };
+  }, [teachers.length]);
 
   const requestGeolocation = () => {
     if (!("geolocation" in navigator)) return;
@@ -496,10 +516,7 @@ export default function StudentSearchPage() {
               loadingTeachers ? (
                 <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {Array.from({ length: 6 }).map((_, i) => (
-                    <div
-                      key={i}
-                      className="h-[180px] animate-pulse rounded-3xl border border-[#E8E6DF] bg-white shadow-[0_12px_40px_rgba(44,44,42,0.06)]"
-                    />
+                    <LandingTeacherCardSkeleton key={i} />
                   ))}
                 </div>
               ) : results.length === 0 ? (
@@ -557,16 +574,38 @@ export default function StudentSearchPage() {
                         {t("loading")}
                       </div>
                     ) : (
-                      <SearchMapView
-                        teachers={results.map((x) => x.teacher)}
-                        userLat={geo?.lat ?? null}
-                        userLng={geo?.lng ?? null}
-                        selectedTeacher={selectedMapTeacher}
-                        onTeacherSelect={(teacher) => setSelectedMapTeacher(teacher)}
-                        onCloseSelected={() => setSelectedMapTeacher(null)}
-                        onViewProfile={(teacher) => setSelectedTeacherProfile(teacher)}
-                        onBoundsSearch={(bounds) => setMapBounds(bounds)}
-                      />
+                      <>
+                        {mapBounds ? (
+                          <div className="mb-2 flex justify-center sm:mb-3">
+                            <div className="inline-flex max-w-full items-center gap-2 rounded-full border border-teal-600/25 bg-teal-50/95 px-3 py-1.5 text-[11px] font-semibold text-teal-900 shadow-sm sm:text-xs">
+                              <MapPin size={12} className="shrink-0 text-teal-700" aria-hidden />
+                              <span className="truncate">{t("mapBoundsFilterActiveLabel")}</span>
+                              <button
+                                type="button"
+                                onClick={() => setMapBounds(null)}
+                                className="inline-flex shrink-0 items-center gap-1 rounded-full bg-white/90 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-teal-800 ring-1 ring-teal-700/15 hover:bg-white"
+                                aria-label={t("mapBoundsClearFilterAria")}
+                              >
+                                <X size={12} strokeWidth={2.5} aria-hidden />
+                                <span className="hidden sm:inline">{t("mapBoundsClearFilter")}</span>
+                              </button>
+                            </div>
+                          </div>
+                        ) : null}
+                        <SearchMapView
+                          teachers={results.map((x) => x.teacher)}
+                          userLat={geo?.lat ?? null}
+                          userLng={geo?.lng ?? null}
+                          selectedTeacher={selectedMapTeacher}
+                          onTeacherSelect={(teacher) => setSelectedMapTeacher(teacher)}
+                          onCloseSelected={() => setSelectedMapTeacher(null)}
+                          onViewProfile={(teacher) => setSelectedTeacherProfile(teacher)}
+                          onBoundsSearch={(bounds) => setMapBounds(bounds)}
+                          boundsFilterActive={!!mapBounds}
+                          onBoundsFilterCleared={() => setMapBounds(null)}
+                          mapHeight="min(520px, calc(100dvh - 14rem))"
+                        />
+                      </>
                     )}
                   </>
                 )}

@@ -107,9 +107,9 @@ export function LandingTeacherListingCard({
     <button
       {...commonButtonProps}
       className={cn(
-        "group block w-full rounded-3xl border border-[#E8E6DF] bg-white text-left shadow-[0_10px_40px_rgba(44,44,42,0.06)] ring-1 ring-black/[0.02]",
+        "group block w-full min-h-[280px] sm:min-h-[300px] rounded-3xl border border-[#E8E6DF] bg-white text-left shadow-[0_10px_40px_rgba(44,44,42,0.06)] ring-1 ring-black/[0.02]",
         "cursor-pointer transition-all duration-200 ease-out",
-        "hover:-translate-y-1 hover:scale-[1.015] hover:border-teal-500/30 hover:shadow-xl",
+        "hover:-translate-y-0.5 hover:border-teal-500/30 hover:shadow-xl",
         "active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/40",
         isHighlighted
           ? "border-teal-500 shadow-[0_14px_48px_rgb(45_123_114/0.15)] ring-teal-500/15"
@@ -168,21 +168,39 @@ export function LandingTeacherListingCard({
                   <p className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-teal-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-teal-800">
                     <ShieldCheck size={12} className="text-teal-600" /> {t("landingCardVerifiedTeacher")}
                   </p>
-                ) : null}
-                {bioOneLine ? (
-                  <p className="mt-2 line-clamp-1 text-xs leading-snug text-neutral-700">{bioOneLine}</p>
-                ) : null}
-                {neighborhoodHint ? (
-                  <p className="mt-1 flex items-center gap-1 truncate text-[11px] font-medium text-neutral-700">
-                    <MapPin size={11} className="shrink-0 text-teal-700" aria-hidden /> {neighborhoodHint}
+                ) : (
+                  <p className="mt-1.5 h-[22px]" aria-hidden />
+                )}
+                {/* Fixed-height meta block so every card aligns in the grid */}
+                <div className="mt-2 min-h-[3.75rem] space-y-1">
+                  <p
+                    className={cn(
+                      "line-clamp-1 text-xs leading-snug text-neutral-700",
+                      !bioOneLine && "text-transparent select-none",
+                    )}
+                    aria-hidden={!bioOneLine}
+                  >
+                    {bioOneLine || "—"}
                   </p>
-                ) : null}
-                {distKm != null ? (
-                  <p className="mt-0.5 flex items-center gap-1 text-[11px] font-medium text-neutral-700">
+                  <p
+                    className={cn(
+                      "flex min-h-[1.125rem] items-center gap-1 truncate text-[11px] font-medium text-neutral-700",
+                      !neighborhoodHint && "invisible",
+                    )}
+                  >
+                    <MapPin size={11} className="shrink-0 text-teal-700" aria-hidden />
+                    {neighborhoodHint || "—"}
+                  </p>
+                  <p
+                    className={cn(
+                      "flex min-h-[1.125rem] items-center gap-1 text-[11px] font-medium text-neutral-700",
+                      distKm == null && "invisible",
+                    )}
+                  >
                     <MapPin size={11} className="text-teal-800" aria-hidden />
-                    {t("distanceFromYouKm").replace("{{n}}", String(distKm))}
+                    {distKm != null ? t("distanceFromYouKm").replace("{{n}}", String(distKm)) : "—"}
                   </p>
-                ) : null}
+                </div>
               </div>
               <span className="flex shrink-0 flex-col items-end gap-0.5 rounded-xl border border-[#F1EFE8] bg-[#FAFCFB] px-2 py-1.5 text-[12px] font-bold tabular-nums sm:flex-row sm:items-center sm:gap-1">
                 <span className="flex items-center gap-0.5 text-[#CA9A06]">
@@ -214,7 +232,9 @@ export function LandingTeacherListingCard({
               </span>
             </div>
 
-            <p className="mt-2 line-clamp-2 text-[11px] leading-relaxed text-neutral-700 sm:text-xs">{availabilityHint}</p>
+            <p className="mt-2 line-clamp-2 min-h-[2.5rem] text-[11px] leading-relaxed text-neutral-700 sm:text-xs">
+              {availabilityHint}
+            </p>
           </div>
         </div>
       </div>
