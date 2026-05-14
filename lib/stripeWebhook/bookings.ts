@@ -7,18 +7,53 @@ import { retrievePaymentIntentChargeId, upsertPaidBookingPayment } from "@/lib/p
 import { stripe } from "@/lib/stripe";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
-export async function confirmBookingAndNotify(
+export type ConfirmBookingOptions = {
+  checkoutSessionId?: string | null;
+  stripeChargeId?: string | null;
+  amountCents?: number | null;
+  currency?: string | null;
+};
+
+type AdminClient = ReturnType<typeof getSupabaseAdmin>;
+
+export type BookingWebhookDeps = {
+  getSupabaseAdmin: () => AdminClient;
+  refundPaymentIntent: (paymentIntentId: string) => Promise<unknown>;
+  retrievePaymentIntentChargeId: (paymentIntentId: string) => Promise<string | null>;
+  upsertPaidBookingPayment: typeof upsertPaidBookingPayment;
+  captureException: typeof Sentry.captureException;
+  getPlatformFeeRate: typeof getPlatformFeeRate;
+  deductCredits: typeof deductCredits;
+  awardCredit: typeof awardCredit;
+  sendBookingConfirmedStudent: typeof sendBookingConfirmedStudent;
+  sendBookingConfirmedTeacher: typeof sendBookingConfirmedTeacher;
+  sendCompanionEvolution: typeof sendCompanionEvolution;
+  getCompanionStage: typeof getCompanionStage;
+};
+
+const defaultDeps: BookingWebhookDeps = {
+  getSupabaseAdmin,
+  refundPaymentIntent: (paymentIntentId) => stripe.refunds.create({ payment_intent: paymentIntentId }),
+  retrievePaymentIntentChargeId,
+  upsertPaidBookingPayment,
+  captureException: Sentry.captureException,
+  getPlatformFeeRate,
+  deductCredits,
+  awardCredit,
+  sendBookingConfirmedStudent,
+  sendBookingConfirmedTeacher,
+  sendCompanionEvolution,
+  getCompanionStage,
+};
+
+export function createConfirmBookingAndNotify(deps: BookingWebhookDeps) {
+  return async function confirmBookingAndNotify(
   bookingId: string,
   paymentIntentId: string,
   piMetadata?: Record<string, string> | null,
-  opts: {
-    checkoutSessionId?: string | null;
-    stripeChargeId?: string | null;
-    amountCents?: number | null;
-    currency?: string | null;
-  } = {},
-) {
-  const admin = getSupabaseAdmin();
+  opts: ConfirmBookingOptions = {},
+  ) {
+  const admin = deps.getSupabaseAdmin();
 
   const { data: booking, error: fetchErr } = await admin
     .from("bookings")
@@ -45,7 +80,7 @@ export async function confirmBookingAndNotify(
       incomingPaymentIntent: paymentIntentId,
     });
     try {
-      await stripe.refunds.create({ payment_intent: paymentIntentId });
+      await deps.refundPaymentIntent(paymentIntentId);
     } catch (re) {
       console.error("[stripe/webhook] refund failed", re);
     }
@@ -69,7 +104,7 @@ export async function confirmBookingAndNotify(
     if (otherConfirmed) {
       console.warn("[stripe/webhook] slot conflict after payment, refunding", bookingId);
       try {
-        await stripe.refunds.create({ payment_intent: paymentIntentId });
+        await deps.refundPaymentIntent(paymentIntentId);
       } catch (re) {
         console.error("[stripe/webhook] refund failed", re);
       }
@@ -122,7 +157,7 @@ export async function confirmBookingAndNotify(
           currentPaymentIntent,
         });
         try {
-          await stripe.refunds.create({ payment_intent: paymentIntentId });
+          await deps.refundPaymentIntent(paymentIntentId);
         } catch (re) {
           console.error("[stripe/webhook] refund failed", re);
         }
@@ -165,7 +200,7 @@ export async function confirmBookingAndNotify(
       .maybeSingle();
     teacherEmail = (teacherProf as { email?: string | null } | null)?.email ?? null;
     const plan = (teacherProf as { plan?: string | null } | null)?.plan ?? "free";
-    commissionRate = getPlatformFeeRate(plan, "individual");
+    commissionRate = deps.getPlatformFeeRate(plan, "individual");
   }
 
   const amountFromMetadata = Number(piMetadata?.amount_cents ?? piMetadata?.payment_amount_cents ?? NaN);
@@ -183,10 +218,10 @@ export async function confirmBookingAndNotify(
   const teacherNetCents = Number.isFinite(teacherNetFromMetadata)
     ? Math.max(0, Math.round(teacherNetFromMetadata))
     : Math.max(0, amountCents - platformFeeCents);
-  const stripeChargeId = opts.stripeChargeId ?? (await retrievePaymentIntentChargeId(paymentIntentId).catch(() => null));
+  const stripeChargeId = opts.stripeChargeId ?? (await deps.retrievePaymentIntentChargeId(paymentIntentId).catch(() => null));
 
   try {
-    await upsertPaidBookingPayment(admin, {
+    await deps.upsertPaidBookingPayment(admin, {
       bookingId,
       teacherId: booking.teacher_id as string,
       studentId: booking.student_id as string,
@@ -205,7 +240,7 @@ export async function confirmBookingAndNotify(
     });
   } catch (ledgerErr) {
     console.error("[stripe/webhook] booking payment ledger upsert failed", ledgerErr);
-    Sentry.captureException(ledgerErr, {
+    deps.captureException(ledgerErr, {
       tags: { surface: "stripe.webhook", phase: "ledger_upsert" },
       contexts: {
         booking_payment: {
@@ -267,7 +302,7 @@ export async function confirmBookingAndNotify(
 
   if (studentEmail) {
     try {
-      await sendBookingConfirmedStudent({
+      await deps.sendBookingConfirmedStudent({
         email: studentEmail,
         name: studentName,
         teacherName,
@@ -286,7 +321,7 @@ export async function confirmBookingAndNotify(
 
   if (teacherEmail) {
     try {
-      await sendBookingConfirmedTeacher({
+      await deps.sendBookingConfirmedTeacher({
         email: teacherEmail,
         name: teacherName,
         studentName,
@@ -309,7 +344,7 @@ export async function confirmBookingAndNotify(
     Number(piMetadata?.credits_applied ?? 0),
   );
   if (creditsApplied > 0) {
-    const { ok } = await deductCredits(booking.student_id as string, creditsApplied, bookingId);
+    const { ok } = await deps.deductCredits(booking.student_id as string, creditsApplied, bookingId);
     if (!ok) console.warn("[stripe/webhook] credit deduction failed for booking", bookingId);
     // Mirror to booking row so subsequent webhook fires are idempotent
     await admin.from("bookings").update({ credits_applied: creditsApplied }).eq("id", bookingId);
@@ -325,8 +360,8 @@ export async function confirmBookingAndNotify(
 
     const total = typeof count === "number" ? count : 0;
     const prev = Math.max(0, total - 1);
-    const prevStage = getCompanionStage(companionType, prev);
-    const newStage = getCompanionStage(companionType, total);
+    const prevStage = deps.getCompanionStage(companionType, prev);
+    const newStage = deps.getCompanionStage(companionType, total);
     if (prevStage.name !== newStage.name || prevStage.emoji !== newStage.emoji) {
       const companionName = COMPANIONS[companionType].name;
       // Milestone credit: $5/$10/$15/$25 depending on stage reached
@@ -335,7 +370,7 @@ export async function confirmBookingAndNotify(
       );
       const milestoneAmount = COMPANION_MILESTONE_AMOUNTS[newStageIndex] ?? 0;
       try {
-        await sendCompanionEvolution(
+        await deps.sendCompanionEvolution(
           studentEmail,
           studentName,
           companionName,
@@ -350,7 +385,7 @@ export async function confirmBookingAndNotify(
       }
       if (milestoneAmount > 0) {
         try {
-          await awardCredit(
+          await deps.awardCredit(
             booking.student_id as string,
             "companion_evolution",
             `${companionName} : ${newStage.name} (+${milestoneAmount} $)`,
@@ -363,5 +398,7 @@ export async function confirmBookingAndNotify(
       }
     }
   }
+  };
 }
 
+export const confirmBookingAndNotify = createConfirmBookingAndNotify(defaultDeps);
