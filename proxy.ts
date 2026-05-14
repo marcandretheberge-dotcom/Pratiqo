@@ -77,7 +77,11 @@ export function proxy(req: NextRequest) {
   }
 
   if (hasSupabaseAuthCookie(req)) {
-    return NextResponse.next();
+    // Forward the pathname as a header so RSC layouts can read it via
+    // next/headers — needed for the /legal bypass in app/(app)/layout.tsx.
+    const res = NextResponse.next();
+    res.headers.set("x-pathname", pathForAuth);
+    return res;
   }
 
   const nextParam = `${pathname}${search ?? ""}`;
