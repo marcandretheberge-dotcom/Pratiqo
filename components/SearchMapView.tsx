@@ -457,8 +457,8 @@ export function SearchMapView({
         <Drawer.Portal>
           <Drawer.Overlay className="fixed inset-0 bg-black/40 z-[50]" />
           <Drawer.Content className="bg-white flex flex-col rounded-t-3xl fixed bottom-0 left-0 right-0 z-[55] outline-none shadow-[0_-8px_40px_rgba(0,0,0,0.12)]">
-            <Drawer.Title className="sr-only">Teacher Details</Drawer.Title>
-            <Drawer.Description className="sr-only">Details for the selected teacher.</Drawer.Description>
+            <Drawer.Title className="sr-only">{t("teacherMapDetailsTitle")}</Drawer.Title>
+            <Drawer.Description className="sr-only">{t("teacherMapDetailsDescription")}</Drawer.Description>
             {selectedTeacher && (
               <div className="p-6 pb-8 mx-auto w-full max-w-3xl relative">
                 {/* Drag handle */}
@@ -503,7 +503,7 @@ export function SearchMapView({
                     onClick={onCloseSelected}
                     className="w-full flex-none sm:w-auto rounded-2xl border-2 border-slate-200 bg-white px-6 py-3.5 text-center text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors"
                   >
-                    Fermer
+                    {t("close")}
                   </button>
                 </div>
               </div>

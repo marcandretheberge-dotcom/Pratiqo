@@ -432,8 +432,8 @@ export function TeacherProfile({
     teacher.teachingMode === "both"
       ? t("modeStudioOnline")
       : teacher.teachingMode === "online"
-        ? "En ligne"
-        : "En studio";
+        ? t("filterOnline")
+        : t("teacherProfileStudio");
 
   const isTeacherOwner = Boolean(user?.id && teacher.userId && user.id === teacher.userId);
 
@@ -568,7 +568,9 @@ export function TeacherProfile({
                       <div className="flex items-center gap-1">
                         <Star size={13} fill="currentColor" className="text-amber-400" />
                         <span className="text-sm font-semibold text-slate-700">{teacher.rating}</span>
-                        <span className="text-xs text-slate-600 ml-0.5">({reviews.length} avis)</span>
+                        <span className="text-xs text-slate-600 ml-0.5">
+                          ({t("teacherProfileReviewCount").replace("{count}", String(reviews.length))})
+                        </span>
                       </div>
                     </div>
                     <p className="text-xs text-slate-600 flex items-center gap-1.5 mt-1.5">
@@ -577,7 +579,7 @@ export function TeacherProfile({
                       {["both", "all"].includes(teacher.teachingMode)
                         ? t("modeHybrid")
                         : teacher.teachingMode === "online"
-                          ? "En ligne"
+                          ? t("filterOnline")
                           : t("filterInPerson")}
                     </p>
                   </div>
@@ -602,7 +604,9 @@ export function TeacherProfile({
                   <p className="text-[10px] font-bold uppercase tracking-widest text-slate-600">{t("aboutSection")}</p>
                   <p className="text-slate-600 leading-relaxed text-sm">
                     {teacher.bio ||
-                      `${teacher.name} est un(e) expert(e) en ${teacher.discipline.toLowerCase()}. Sa méthode d'enseignement repose sur la pratique immédiate et l'adaptation aux objectifs de chaque élève.`}
+                      t("teacherProfileFallbackBio")
+                        .replace("{name}", teacher.name)
+                        .replace("{discipline}", teacher.discipline.toLowerCase())}
                   </p>
                 </div>
 
@@ -694,7 +698,7 @@ export function TeacherProfile({
                             {review.teacher_reply ? (
                               <div className="mt-3 rounded-xl border border-teal-500/20 bg-teal-50/70 px-3 py-2">
                                 <p className="text-[10px] font-bold uppercase tracking-widest text-teal-700">
-                                  Reponse du professeur
+                                  {t("teacherReplyLabel")}
                                 </p>
                                 <p className="mt-1 text-xs leading-relaxed text-slate-700">{review.teacher_reply}</p>
                               </div>
@@ -709,11 +713,11 @@ export function TeacherProfile({
                                     if (replyErrorId === review.id) setReplyErrorId(null);
                                   }}
                                   rows={2}
-                                  placeholder="Repondre publiquement a cet avis..."
+                                  placeholder={t("teacherReplyPlaceholder")}
                                   className="w-full resize-none rounded-xl border border-slate-200/90 bg-white px-3 py-2 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-teal-500"
                                 />
                                 {replyErrorId === review.id ? (
-                                  <p className="text-[11px] text-rose-600">La reponse n&apos;a pas pu etre enregistree.</p>
+                                  <p className="text-[11px] text-rose-600">{t("teacherReplySaveError")}</p>
                                 ) : null}
                                 <div className="flex justify-end">
                                   <button
@@ -729,8 +733,8 @@ export function TeacherProfile({
                                     {replySavingId === review.id
                                       ? "..."
                                       : review.teacher_reply
-                                        ? "Modifier la reponse"
-                                        : "Repondre publiquement"}
+                                        ? t("teacherReplyUpdate")
+                                        : t("teacherReplyPublic")}
                                   </button>
                                 </div>
                               </div>
@@ -764,7 +768,7 @@ export function TeacherProfile({
                     <div>
                       <p className="text-2xl font-bold text-slate-900">
                         {formatPrice(Number(teacher.pricePerLesson))}
-                        <span className="text-sm font-normal text-slate-600 ml-1">/ heure</span>
+                        <span className="text-sm font-normal text-slate-600 ml-1">{t("pricePerHourSuffix")}</span>
                       </p>
                       <p className="text-xs text-slate-600 mt-0.5">{standardLabel}</p>
                       <p className="mt-2 text-[11px] font-semibold text-teal-700">
@@ -818,7 +822,7 @@ export function TeacherProfile({
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-1.5 font-semibold text-slate-700 text-xs">
                               <Home size={13} className="text-teal-700" />
-                              À domicile
+                              {t("modeHome")}
                             </div>
                             <span className="font-bold text-sm text-slate-900">
                               {formatPrice(Number(teacher.homeLessonPrice))}
@@ -827,11 +831,11 @@ export function TeacherProfile({
                           </div>
                           <div className="mt-2 flex flex-wrap gap-1">
                             <span className="rounded-full bg-teal-500/15 px-2 py-0.5 text-[9px] font-bold uppercase text-teal-700">
-                              Rayon {radiusKm} km
+                              {t("homeLessonRadius").replace("{radius}", String(radiusKm))}
                             </span>
                             {teacher.homeLessonRequiresConfirmation ? (
                               <span className="rounded-full border border-amber-100 bg-amber-50 px-2 py-0.5 text-[9px] font-bold uppercase text-amber-800">
-                                Confirmation requise
+                                {t("homeLessonRequiresConfirmation")}
                               </span>
                             ) : null}
                           </div>
@@ -840,7 +844,7 @@ export function TeacherProfile({
                             onClick={requestGeo}
                             className="mt-1.5 w-full rounded-lg border border-amber-200 bg-amber-50 px-2 py-1.5 text-left text-[11px] font-semibold text-amber-900 hover:bg-amber-100"
                           >
-                            Activer la localisation pour vérifier la zone
+                            {t("homeLessonEnableLocation")}
                           </button>
                         </div>
                       ) : (
@@ -858,7 +862,7 @@ export function TeacherProfile({
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-1.5 font-semibold text-slate-700 text-xs">
                               <Home size={13} className={homeDisabled ? "text-slate-300" : "text-teal-700"} />
-                              À domicile
+                              {t("modeHome")}
                             </div>
                             <span className="font-bold text-sm text-slate-900">
                               {formatPrice(Number(teacher.homeLessonPrice))}
@@ -867,16 +871,16 @@ export function TeacherProfile({
                           </div>
                           <div className="mt-2 flex flex-wrap gap-1">
                             <span className="rounded-full bg-teal-500/15 px-2 py-0.5 text-[9px] font-bold uppercase text-teal-700">
-                              Rayon {radiusKm} km
+                              {t("homeLessonRadius").replace("{radius}", String(radiusKm))}
                             </span>
                             {teacher.homeLessonRequiresConfirmation ? (
                               <span className="rounded-full border border-amber-100 bg-amber-50 px-2 py-0.5 text-[9px] font-bold uppercase text-amber-800">
-                                Confirmation requise
+                                {t("homeLessonRequiresConfirmation")}
                               </span>
                             ) : null}
                           </div>
                           {outOfHomeZone ? (
-                            <p className="mt-1.5 text-[11px] font-semibold text-rose-600">Hors de la zone de déplacement</p>
+                            <p className="mt-1.5 text-[11px] font-semibold text-rose-600">{t("homeLessonOutOfZone")}</p>
                           ) : null}
                         </button>
                       )
@@ -925,13 +929,13 @@ export function TeacherProfile({
                         className="w-full py-3 rounded-2xl text-sm font-bold border-2 border-teal-500 text-teal-700 bg-teal-50 hover:bg-teal-500/20 transition-colors flex items-center justify-center gap-2"
                       >
                         <MessageSquare size={15} />
-                        Envoyer un message
+                        {t("sendMessageButton")}
                       </button>
                     ) : (
                       <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-slate-50 border border-slate-100">
                         <span className="text-sm shrink-0">🔒</span>
                         <p className="text-xs text-slate-600 leading-snug">
-                          La messagerie sera disponible après ta première réservation
+                          {t("messageAvailableAfterBooking")}
                         </p>
                       </div>
                     )
@@ -952,7 +956,7 @@ export function TeacherProfile({
             className="w-full h-11 rounded-2xl text-white text-sm font-semibold flex items-center justify-center gap-2 shadow-sm hover:opacity-95 transition-opacity"
             style={{ backgroundColor: "var(--palette-teal-700)" }}
           >
-            Réserver — {formatPrice(Number(teacher.pricePerLesson))}/h
+            {t("bookAtPrice").replace("{price}", `${formatPrice(Number(teacher.pricePerLesson))}/h`)}
           </button>
         </div>
 
@@ -1008,7 +1012,7 @@ export function TeacherProfile({
                 {reportStatus === "already" ? (
                   <p className="text-xs text-amber-700">{t("reviewReportAlreadySent")}</p>
                 ) : reportStatus === "error" ? (
-                  <p className="text-xs text-rose-600">Erreur, réessayez.</p>
+                  <p className="text-xs text-rose-600">{t("reviewReportError")}</p>
                 ) : null}
 
                 <div className="flex gap-2">

@@ -41,7 +41,7 @@ export function TeacherPriceTag({
   approxClassName = "text-[11px] font-normal text-slate-400",
   hideApproximation = false,
 }: TeacherPriceTagProps) {
-  const { formatTeacherPrice } = useLocale();
+  const { formatTeacherPrice, t } = useLocale();
   const parts = formatTeacherPrice(amount, teacherCurrency ?? null);
 
   const showApprox = !hideApproximation && parts.approximation;
@@ -55,7 +55,7 @@ export function TeacherPriceTag({
       {showApprox ? (
         <span
           className={cn(approxClassName, "whitespace-nowrap")}
-          title={parts.isApproximate ? "Approximate — billing happens in the teacher's currency" : undefined}
+          title={parts.isApproximate ? t("currencyApproximationTooltip") : undefined}
         >
           {parts.approximation}
         </span>

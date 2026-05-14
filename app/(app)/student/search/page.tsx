@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import type { Teacher } from "../../../../types";
 import type { BookingInitialLessonKind } from "../../../../components/BookingModal";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ShieldCheck, Star, Users, Video } from "lucide-react";
+import { ChevronRight, Clock, Home, List, Map as MapIcon, MapPin, ShieldCheck, Star, Users, Video } from "lucide-react";
 import { useLocale } from "../../../../lib/locale-context";
 import { cn } from "../../../../lib/utils";
 import { getSupabaseClient } from "../../../../lib/supabase";
@@ -32,24 +32,36 @@ import type { LandingFormatFilter } from "@/lib/landingTeacherFilter";
 
 const TeacherProfile = dynamic(
   () => import("../../../../components/TeacherProfile").then((m) => m.TeacherProfile),
-  { ssr: false, loading: () => <p className="p-4 text-center text-sm text-[#6B6A65]">Chargement…</p> },
+  { ssr: false, loading: () => <DynamicLoadingBlock /> },
 );
 const BookingModal = dynamic(
   () => import("../../../../components/BookingModal").then((m) => m.BookingModal),
-  { ssr: false, loading: () => <p className="p-4 text-center text-sm text-[#6B6A65]">Chargement…</p> },
+  { ssr: false, loading: () => <DynamicLoadingBlock /> },
 );
 const SearchMapView = dynamic(
   () => import("../../../../components/SearchMapView").then((m) => m.SearchMapView),
   {
     ssr: false,
     loading: () => (
-      <div className="flex flex-col items-center justify-center gap-2 min-h-[480px] rounded-2xl bg-[#F1EFE8] text-sm text-[#6B6A65]">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-teal-700 border-t-transparent" />
-        <p>Chargement…</p>
-      </div>
+      <DynamicLoadingBlock map />
     ),
   },
 );
+
+function DynamicLoadingBlock({ map = false }: { map?: boolean }) {
+  const { t } = useLocale();
+  return (
+    <div
+      className={cn(
+        "flex flex-col items-center justify-center gap-2 rounded-2xl bg-white text-sm font-semibold text-[#6B6A65]",
+        map ? "min-h-[480px] border border-[#E8E6DF]" : "p-8",
+      )}
+    >
+      <div className="h-8 w-8 animate-spin rounded-full border-2 border-teal-700 border-t-transparent" />
+      <p>{map ? t("loadingMap") : t("loading")}</p>
+    </div>
+  );
+}
 
 export default function StudentSearchPage() {
   const router = useRouter();
@@ -374,11 +386,12 @@ export default function StudentSearchPage() {
                 type="button"
                 onClick={() => requestGeolocation()}
                 className={cn(
-                  "h-11 rounded-full border border-[#DCEAE3] bg-white px-4 text-sm font-semibold text-[#2C2C2A] shadow-sm hover:bg-[#FAFCFB]",
+                  "inline-flex h-11 items-center gap-2 rounded-full border border-[#DCEAE3] bg-white px-4 text-sm font-semibold text-[#2C2C2A] shadow-sm hover:bg-[#FAFCFB]",
                   geoLoading && "opacity-80",
                 )}
               >
-                📍 {t("nearMe")}
+                <MapPin size={14} className="text-teal-700" aria-hidden />
+                {t("nearMe")}
               </button>
               <button
                 type="button"
@@ -429,7 +442,7 @@ export default function StudentSearchPage() {
                 {results.length} {t("searchResults")}
               </p>
 
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <label className="inline-flex items-center gap-2 text-sm text-[#2C2C2A]">
                   <span className="text-[#6B6A65]">{t("sortLabel")}</span>
                   <select
@@ -454,45 +467,74 @@ export default function StudentSearchPage() {
                       return next;
                     });
                   }}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 6,
-                    padding: "7px 14px",
-                    borderRadius: 20,
-                    fontSize: 12,
-                    fontWeight: 500,
-                    cursor: "pointer",
-                    border: "0.5px solid #D3D1C7",
-                    background: viewMode === "map" ? "var(--palette-teal-600)" : "white",
-                    color: viewMode === "map" ? "white" : "#2C2C2A",
-                    transition: "all 0.2s",
-                  }}
+                  className={cn(
+                    "inline-flex h-10 items-center gap-2 rounded-full border px-4 text-xs font-bold transition-colors",
+                    viewMode === "map"
+                      ? "border-teal-700 bg-teal-700 text-white"
+                      : "border-[#DCEAE3] bg-white text-[#2C2C2A] hover:bg-[#FAFCFB]",
+                  )}
                 >
-                  {viewMode === "map" ? `☰ ${t("listView")}` : `🗺️ ${t("mapView")}`}
+                  {viewMode === "map" ? <List size={14} aria-hidden /> : <MapIcon size={14} aria-hidden />}
+                  {viewMode === "map" ? t("listView") : t("mapView")}
                 </button>
               </div>
             </div>
 
             {viewMode === "list" ? (
-              <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {loadingTeachers
-                  ? Array.from({ length: 6 }).map((_, i) => (
-                      <div
-                        key={i}
-                        className="h-[140px] rounded-2xl border border-[#E8E6DF] bg-white shadow-[0_12px_40px_rgba(44,44,42,0.06)]"
-                      />
-                    ))
-                  : results.map(({ teacher, distanceKm }) => (
-                      <TeacherCard
-                        key={teacher.id}
-                        teacher={teacher}
-                        distanceKm={distanceKm}
-                        t={t}
-                        onOpen={() => setSelectedTeacherProfile(teacher)}
-                      />
-                    ))}
-              </div>
+              loadingTeachers ? (
+                <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className="h-[180px] animate-pulse rounded-3xl border border-[#E8E6DF] bg-white shadow-[0_12px_40px_rgba(44,44,42,0.06)]"
+                    />
+                  ))}
+                </div>
+              ) : results.length === 0 ? (
+                <div className="mt-5 rounded-3xl border border-dashed border-[#DCEAE3] bg-white p-8 text-center shadow-[0_12px_40px_rgba(44,44,42,0.05)]">
+                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-50 text-teal-700">
+                    <MapPin size={22} />
+                  </div>
+                  <h2 className="mt-4 text-lg font-bold text-[#2C2C2A]">{t("noTeachersFound")}</h2>
+                  <p className="mx-auto mt-2 max-w-xl text-sm leading-relaxed text-[#6B6A65]">
+                    {t("studentSearchEmptyHint")}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchQuery("");
+                      setActiveCat("All");
+                      setRadius("all");
+                      setMapBounds(null);
+                      setAdv({
+                        minRating: "",
+                        maxPrice: "",
+                        verifiedOnly: false,
+                        language: "",
+                        level: "",
+                        availability: "",
+                        teacherPreference: "",
+                        formatExtra: "",
+                      });
+                    }}
+                    className="mt-5 inline-flex h-11 items-center rounded-full bg-teal-700 px-5 text-sm font-bold text-white hover:bg-teal-800"
+                  >
+                    {t("studentSearchResetFilters")}
+                  </button>
+                </div>
+              ) : (
+                <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {results.map(({ teacher, distanceKm }) => (
+                    <TeacherCard
+                      key={teacher.id}
+                      teacher={teacher}
+                      distanceKm={distanceKm}
+                      t={t}
+                      onOpen={() => setSelectedTeacherProfile(teacher)}
+                    />
+                  ))}
+                </div>
+              )
             ) : (
               <div className="mt-5">
                 {!mapLoaded ? null : (
@@ -609,6 +651,15 @@ function TeacherCard({
   t: (key: any) => string;
 }) {
   const availability = teacher.availability?.[0] ? String(teacher.availability[0]) : null;
+  const supportsOnline = ["online", "both", "all"].includes(teacher.teachingMode);
+  const supportsInPerson = ["person", "both", "all"].includes(teacher.teachingMode);
+  const supportsHome = Boolean(teacher.homeLessonEnabled);
+  const formatLabels = [
+    supportsOnline ? t("bookingOnline") : null,
+    supportsInPerson ? t("inPerson") : null,
+    supportsHome ? t("modeHome") : null,
+  ].filter(Boolean) as string[];
+  const introDuration = teacher.introSessionDurationMinutes ?? 45;
 
   const verificationLevel = getVerificationLevel({
     plan: teacher.profilePlan,
@@ -623,51 +674,79 @@ function TeacherCard({
       type="button"
       onClick={onOpen}
       className={cn(
-        "block w-full rounded-2xl border border-[#E8E6DF] bg-white p-4 text-left shadow-[0_12px_40px_rgba(44,44,42,0.06)]",
+        "group block min-h-[188px] w-full rounded-3xl border border-[#E8E6DF] bg-white p-4 text-left shadow-[0_12px_40px_rgba(44,44,42,0.06)]",
         "cursor-pointer transition-all duration-200 ease-out",
-        "hover:-translate-y-1 hover:scale-[1.015] hover:border-teal-500/30 hover:shadow-xl",
+        "hover:-translate-y-0.5 hover:border-teal-500/35 hover:shadow-[0_18px_46px_rgba(44,44,42,0.10)]",
         "active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/40",
       )}
     >
-      <div className="flex items-start justify-between gap-2">
+      <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
-          <TeacherAvatar name={teacher.name} category={teacher.category} imageUrl={teacher.imageUrl} size={44} />
+          <TeacherAvatar name={teacher.name} category={teacher.category} imageUrl={teacher.imageUrl} size={52} />
           <div className="min-w-0">
             <div className="flex items-center gap-2 min-w-0">
-              <p className="truncate font-semibold text-[#2C2C2A]">{teacher.name}</p>
+              <p className="truncate text-[15px] font-bold text-[#2C2C2A]">{teacher.name}</p>
               <VerificationBadge level={verificationLevel} size="sm" showLabel={false} className="shrink-0 scale-90" />
             </div>
-            <p className="truncate text-xs text-[#6B6A65]">{teacher.discipline}</p>
+            <p className="mt-0.5 truncate text-xs font-medium text-[#6B6A65]">{teacher.discipline}</p>
           </div>
         </div>
-        <span className="shrink-0 rounded-lg bg-white px-2 py-1 text-[11px] font-bold text-[#2C2C2A] border border-[#E8E6DF]">
-          ★ {teacher.rating}
+        <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-amber-100 bg-amber-50 px-2.5 py-1 text-[11px] font-bold text-amber-800">
+          <Star size={12} fill="currentColor" aria-hidden />
+          {teacher.rating}
         </span>
       </div>
 
-      <div className="mt-3 flex items-center justify-between border-t border-[#E8E6DF] pt-3 text-xs text-[#6B6A65]">
-        <span className="inline-flex items-center gap-2">
-          {teacher.teachingMode === "online" ? <Video size={12} /> : <Users size={12} />}
-          {teacher.teachingMode === "online" ? t("bookingOnline") : t("inPerson")}
-          {distanceKm != null ? <span className="text-[#D3D1C7]">·</span> : null}
-          {distanceKm != null ? <span>{Math.round(distanceKm)}km</span> : null}
+      <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-[#6B6A65]">
+        {formatLabels.slice(0, 3).map((label) => (
+          <span key={label} className="inline-flex items-center gap-1 rounded-full bg-[#F3FAF6] px-2.5 py-1 font-semibold text-[#2C2C2A]">
+            {label === t("bookingOnline") ? <Video size={12} aria-hidden /> : label === t("modeHome") ? <Home size={12} aria-hidden /> : <Users size={12} aria-hidden />}
+            {label}
+          </span>
+        ))}
+        {distanceKm != null ? (
+          <span className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2.5 py-1 font-semibold text-slate-600">
+            <MapPin size={12} aria-hidden />
+            {Math.round(distanceKm)} km
+          </span>
+        ) : null}
+      </div>
+
+      <div className="mt-4 flex items-end justify-between gap-3 border-t border-[#E8E6DF] pt-3">
+        <div className="min-w-0">
+          <TeacherPriceTag
+            amount={Number(teacher.pricePerLesson)}
+            teacherCurrency={(teacher.currency as Currency | undefined) ?? null}
+            perHour
+            primaryClassName="text-base font-extrabold text-teal-700"
+          />
+          <p className="mt-1 text-[11px] font-medium text-[#6B6A65]">
+            {teacher.reviews > 0
+              ? t("teacherCardReviews").replace("{count}", String(teacher.reviews))
+              : t("teacherCardNoReviewsYet")}
+          </p>
+        </div>
+        <span className="inline-flex shrink-0 items-center gap-1 text-xs font-bold text-teal-700 transition-transform group-hover:translate-x-0.5">
+          {t("teacherCardViewProfile")}
+          <ChevronRight size={14} aria-hidden />
         </span>
-        <TeacherPriceTag
-          amount={Number(teacher.pricePerLesson)}
-          teacherCurrency={(teacher.currency as Currency | undefined) ?? null}
-          perHour
-        />
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
+        {teacher.introSessionEnabled ? (
+          <span className="inline-flex items-center gap-1 rounded-full border border-[#DCEAE3] bg-[#F3FAF6] px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-teal-800">
+            <Clock size={11} aria-hidden />
+            {t("introSessionBadge").replace("{n}", String(introDuration))}
+          </span>
+        ) : null}
         {availability ? (
-          <span className="inline-flex items-center rounded-full bg-teal-50 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-teal-800">
+          <span className="inline-flex items-center rounded-full bg-slate-50 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-slate-600">
             {availability}
           </span>
         ) : null}
         {String(teacher.profilePlan || "").toLowerCase() === "enterprise" ? (
-          <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase text-[#6B6A65]">
-            <Star size={12} className="text-teal-700" /> {t("sortTrusted")}
+          <span className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-3 py-1 text-[10px] font-bold uppercase text-[#6B6A65]">
+            <ShieldCheck size={11} className="text-teal-700" aria-hidden /> {t("sortTrusted")}
           </span>
         ) : null}
       </div>
