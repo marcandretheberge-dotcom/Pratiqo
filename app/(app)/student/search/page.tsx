@@ -9,7 +9,6 @@ import { ChevronRight, Clock, Home, List, Map as MapIcon, MapPin, ShieldCheck, S
 import { useLocale } from "../../../../lib/locale-context";
 import { cn } from "../../../../lib/utils";
 import { getSupabaseClient } from "../../../../lib/supabase";
-import { haversineDistance } from "../../../../lib/geo";
 import { fetchTeacherDisciplinesMap, mergeTeachersWithDisciplines } from "../../../../lib/teacherDisciplines";
 import { teacherRowToTeacher, type TeacherRow } from "../../../../lib/teacherMapper";
 import { TEACHERS_LIST_SELECT, TEACHERS_PUBLIC_TABLE } from "../../../../lib/supabase/queries";
@@ -31,6 +30,7 @@ import { LandingSearchHero } from "@/components/marketing/LandingSearchHero";
 import { LandingTeacherCardSkeleton } from "@/components/marketing/LandingTeacherCardSkeleton";
 import type { LandingFormatFilter } from "@/lib/landingTeacherFilter";
 import { formatTeacherCardShortName, teacherCardLocationPlace } from "@/lib/teacherDisplayName";
+import type { TranslationKey } from "@/lib/i18n/types";
 
 const TeacherProfile = dynamic(
   () => import("../../../../components/TeacherProfile").then((m) => m.TeacherProfile),
@@ -67,7 +67,7 @@ function DynamicLoadingBlock({ map = false }: { map?: boolean }) {
 
 export default function StudentSearchPage() {
   const router = useRouter();
-  const { t, locale } = useLocale();
+  const { t } = useLocale();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCat, setActiveCat] = useState<string>("All");
   const [teachers, setTeachers] = useState<Teacher[]>([]);
@@ -104,7 +104,7 @@ export default function StudentSearchPage() {
 
   useEffect(() => {
     const q = searchParams.get("q");
-    if (q) setSearchQuery(q);
+    if (q) queueMicrotask(() => setSearchQuery(q));
   }, [searchParams]);
 
   useEffect(() => {
@@ -234,7 +234,7 @@ export default function StudentSearchPage() {
 
   // Clear map-bounds filter whenever the user changes their text/category/radius search
   useEffect(() => {
-    setMapBounds(null);
+    queueMicrotask(() => setMapBounds(null));
   }, [searchQuery, activeCat, radius, adv]);
 
   // PostGIS-backed nearby lookup. Runs whenever radius is a concrete number and geo is set.
@@ -242,7 +242,7 @@ export default function StudentSearchPage() {
   // (and stays the fallback if the RPC isn't deployed yet).
   useEffect(() => {
     if (!geo || typeof radius !== "number") {
-      setNearbyServerResult(null);
+      queueMicrotask(() => setNearbyServerResult(null));
       return;
     }
     const controller = new AbortController();
@@ -393,18 +393,20 @@ export default function StudentSearchPage() {
           showQuizCta={false}
           extraUnderAdvanced={
             <div className="flex flex-wrap justify-center gap-2">
-              {[
-                { v: 5, label: "5km" },
-                { v: 10, label: "10km" },
-                { v: 25, label: "25km" },
-                { v: 50, label: "50km" },
-                { v: "all", label: t("radiusAll") },
-                { v: "online", label: t("radiusOnline") },
-              ].map((opt) => (
+              {(
+                [
+                  { v: 5 as const, label: "5km" },
+                  { v: 10 as const, label: "10km" },
+                  { v: 25 as const, label: "25km" },
+                  { v: 50 as const, label: "50km" },
+                  { v: "all" as const, label: t("radiusAll") },
+                  { v: "online" as const, label: t("radiusOnline") },
+                ] satisfies ReadonlyArray<{ v: 5 | 10 | 25 | 50 | "all" | "online"; label: string }>
+              ).map((opt) => (
                 <button
                   key={String(opt.v)}
                   type="button"
-                  onClick={() => setRadius(opt.v as any)}
+                  onClick={() => setRadius(opt.v)}
                   className={cn(
                     "h-11 rounded-full border px-4 text-sm font-semibold shadow-sm transition-colors",
                     radius === opt.v
@@ -661,36 +663,6 @@ export default function StudentSearchPage() {
   );
 }
 
-function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "rounded-full px-4 py-2 text-xs font-bold transition",
-        active ? "bg-white text-teal-700" : "bg-white/15 text-white hover:bg-white/25",
-      )}
-    >
-      {children}
-    </button>
-  );
-}
-
-function RadiusPill({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "rounded-full px-4 py-2 text-xs font-bold transition",
-        active ? "bg-white text-teal-700" : "bg-white/15 text-white hover:bg-white/25",
-      )}
-    >
-      {children}
-    </button>
-  );
-}
-
 function TeacherCard({
   teacher,
   distanceKm,
@@ -700,7 +672,7 @@ function TeacherCard({
   teacher: Teacher;
   distanceKm: number | null;
   onOpen: () => void;
-  t: (key: any) => string;
+  t: (key: TranslationKey) => string;
 }) {
   const availability = teacher.availability?.[0] ? String(teacher.availability[0]) : null;
   const supportsOnline = ["online", "both", "all"].includes(teacher.teachingMode);
