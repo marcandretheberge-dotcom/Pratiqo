@@ -1,57 +1,15 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { requireBearerAdmin } from "@/lib/apiAuth";
 
 export const runtime = "nodejs";
 
 const DIPLOMA_BUCKET = "teacher-diplomas";
 const SIGNED_URL_TTL = 3600; // 1 hour
 
-// ── Auth helper ───────────────────────────────────────────────────────────────
-
-async function requireAdmin(req: Request): Promise<
-  | { user: { id: string }; admin: ReturnType<typeof getSupabaseAdmin> }
-  | NextResponse
-> {
-  const authHeader = req.headers.get("authorization");
-  const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
-  if (!token) {
-    return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
-  }
-
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!supabaseUrl || !anonKey) {
-    return NextResponse.json({ error: "Configuration manquante." }, { status: 500 });
-  }
-
-  const supabaseUser = createClient(supabaseUrl, anonKey);
-  const {
-    data: { user },
-    error: userErr,
-  } = await supabaseUser.auth.getUser(token);
-  if (userErr || !user) {
-    return NextResponse.json({ error: "Session invalide." }, { status: 401 });
-  }
-
-  const admin = getSupabaseAdmin();
-  const { data: profile } = await admin
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  if ((profile as { role?: string } | null)?.role !== "admin") {
-    return NextResponse.json({ error: "Accès refusé. Rôle admin requis." }, { status: 403 });
-  }
-
-  return { user: { id: user.id }, admin };
-}
-
 // ── GET — load pending diplomas and credentials ────────────────────────────────
 
 export async function GET(req: Request) {
-  const auth = await requireAdmin(req);
+  const auth = await requireBearerAdmin(req);
   if (auth instanceof NextResponse) return auth;
   const { admin } = auth;
 
@@ -238,7 +196,7 @@ type ReviewBody = {
 };
 
 export async function POST(req: Request) {
-  const auth = await requireAdmin(req);
+  const auth = await requireBearerAdmin(req);
   if (auth instanceof NextResponse) return auth;
   const { user: adminUser, admin } = auth;
 
