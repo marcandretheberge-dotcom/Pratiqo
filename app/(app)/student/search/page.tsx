@@ -234,7 +234,12 @@ export default function StudentSearchPage() {
         signal: controller.signal,
       });
       if (cancelled) return;
-      if (!result) {
+      if (!result || result.length === 0) {
+        // Empty RPC result must NOT become an empty Map — a truthy empty Map
+        // would still take the "server path" in results and filter every UUID
+        // teacher out (RPC uses teachers.location_point; legacy rows or
+        // teachers without a synced point return nothing while teachers_public
+        // still has JSON lat/lng). Treat like "unavailable" and use haversine.
         setNearbyServerResult(null);
         return;
       }
@@ -284,15 +289,22 @@ export default function StudentSearchPage() {
     // for authoritative distance values (handles antimeridian/curvature
     // correctly, which the client haversine approximates).
     let filtered: typeof base;
-    if (nearbyServerResult && geo && typeof radius === "number") {
-      filtered = base
+    if (nearbyServerResult && nearbyServerResult.size > 0 && geo && typeof radius === "number") {
+      const serverFiltered = base
         .filter(({ teacher }) => nearbyServerResult.has(teacher.id))
         .map((row) => ({
           ...row,
           distanceKm: nearbyServerResult.get(row.teacher.id) ?? row.distanceKm,
         }));
+      // RPC can return legacy demo ids (short keys) not present in
+      // teachers_public (UUID-filtered view). Intersection is then empty while
+      // the pool still has real teachers with JSON coords — fall back.
+      filtered =
+        serverFiltered.length === 0 && base.length > 0
+          ? applyRadiusFilter(base, radius)
+          : serverFiltered;
     } else {
-      // Client haversine fallback (no geo, RPC unavailable, or "all"/"online").
+      // Client haversine fallback (no geo, RPC unavailable, empty RPC, or "all"/"online").
       filtered = applyRadiusFilter(base, geo ? radius : radius === "online" ? "online" : "all");
     }
 
