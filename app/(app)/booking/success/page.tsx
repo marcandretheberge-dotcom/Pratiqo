@@ -11,6 +11,7 @@ import {
   AlertCircle,
   MessageSquare,
   Video,
+  ShieldCheck,
 } from "lucide-react";
 import { stripe } from "@/lib/stripe";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
@@ -43,6 +44,7 @@ type VerifyResult =
   | { ok: false; reason: "no_session_id" | "payment_not_paid" | "booking_not_found" | "stripe_error" };
 
 interface BookingDetails {
+  teacherUserId: string | null;
   teacherName: string;
   studentName: string;
   discipline: string;
@@ -64,6 +66,18 @@ interface BookingDetails {
   meetingUrl: string | null;
 }
 
+const PEER_UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function messagesHrefForTeacherUser(teacherUserId: string | null | undefined): string {
+  const peer = typeof teacherUserId === "string" ? teacherUserId.trim() : "";
+  return peer && PEER_UUID_RE.test(peer) ? `/messages?peer=${encodeURIComponent(peer)}` : "/messages";
+}
+
+function template(value: string, vars: Record<string, string>): string {
+  return Object.entries(vars).reduce((out, [key, replacement]) => out.replaceAll(`{${key}}`, replacement), value);
+}
+
 function parseBookingStart(dateIso: string, slot: string): Date | null {
   const date = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateIso);
   const time = /^(\d{1,2})h(\d{2})$/.exec(slot);
@@ -75,14 +89,15 @@ function googleDateValue(date: Date): string {
   return date.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
 }
 
-function buildGoogleCalendarUrl(booking: BookingDetails, locationLabel: string): string | null {
+function buildGoogleCalendarUrl(booking: BookingDetails, locationLabel: string, dict: Dictionary): string | null {
   const start = booking.startIso ? new Date(booking.startIso) : parseBookingStart(booking.date, booking.time);
   if (!start) return null;
   const end = booking.endIso
     ? new Date(booking.endIso)
     : new Date(start.getTime() + Math.max(30, booking.durationMinutes || 60) * 60_000);
-  const title = `Pratiqo · ${booking.discipline} avec ${booking.teacherName}`;
-  const details = `Cours confirmé avec ${booking.teacherName}. Consultez votre tableau de bord Pratiqo pour les détails à jour.`;
+  const vars = { discipline: booking.discipline, teacher: booking.teacherName };
+  const title = template(dict.bookingCalendarTitleTemplate, vars);
+  const details = template(dict.bookingCalendarDetailsTemplate, vars);
   const url = new URL("https://calendar.google.com/calendar/render");
   url.searchParams.set("action", "TEMPLATE");
   url.searchParams.set("text", title);
@@ -320,6 +335,7 @@ async function verifyAndConfirm(sessionId: string, locale: Locale): Promise<Veri
   return {
     ok: true,
     booking: {
+      teacherUserId: (teacherData.data?.user_id as string | null | undefined) ?? null,
       teacherName,
       studentName,
       discipline: teacherDiscipline,
@@ -428,8 +444,9 @@ export default async function BookingSuccessPage({
       : booking.locationKind === "domicile"
         ? dict.bookingHome
         : dict.bookingStudio;
-  const googleCalendarUrl = buildGoogleCalendarUrl(booking, locationLabel);
+  const googleCalendarUrl = buildGoogleCalendarUrl(booking, locationLabel, dict);
   const calendarDownloadUrl = `/api/bookings/${encodeURIComponent(booking.bookingId)}/calendar?session_id=${encodeURIComponent(sessionId)}`;
+  const messagesHref = messagesHrefForTeacherUser(booking.teacherUserId);
   const timeLabels =
     booking.startIso && booking.endIso
       ? formatBookingTimeForBothZones({
@@ -451,7 +468,7 @@ export default async function BookingSuccessPage({
     <>
       <SuccessCleaner />
 
-      <div className="max-w-xl mx-auto space-y-6 py-4">
+      <div className="mx-auto max-w-5xl space-y-6 px-4 py-4 sm:px-6 lg:px-0">
         <div
           className="rounded-[28px] p-8 sm:p-10 text-white shadow-[0_24px_80px_rgb(80_190_178/0.25)] border border-white/20"
           style={{ background: "linear-gradient(145deg, var(--palette-teal-500) 0%, var(--palette-teal-700) 100%)" }}
@@ -481,6 +498,7 @@ export default async function BookingSuccessPage({
           </div>
         </div>
 
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)] lg:items-start">
         <div className="ds-card p-6 sm:p-8 space-y-5 border border-[var(--p-light-teal-bg)]">
           <h2 className="text-xs font-bold text-[var(--p-text-muted)] uppercase tracking-widest">
             {dict.bookingDetails}
@@ -550,7 +568,13 @@ export default async function BookingSuccessPage({
           </ul>
 
           <div className="rounded-2xl border border-[#DCEAE3] bg-[#F3FAF6] px-4 py-3 text-xs text-slate-700">
-            {meetingNote}
+            <div className="flex gap-2">
+              <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-teal-700" />
+              <div className="space-y-1">
+                <p className="font-semibold text-slate-900">{dict.bookingSuccessPrivacyTitle}</p>
+                <p>{meetingNote}</p>
+              </div>
+            </div>
           </div>
 
           {booking.locationKind === "online" && booking.meetingUrl ? (
@@ -597,13 +621,64 @@ export default async function BookingSuccessPage({
               {dict.bookingViewMyLessons}
             </Link>
             <Link
-              href="/messages"
+              href={messagesHref}
               className="inline-flex items-center justify-center gap-2 rounded-2xl px-6 py-3.5 text-sm font-semibold border border-[var(--p-border-light)] text-[var(--p-text)] hover:bg-[var(--p-light-teal-bg)]/60 transition"
             >
               <MessageSquare className="w-4 h-4" />
               {dict.bookingMessageTeacher}
             </Link>
           </div>
+        </div>
+
+        <aside className="space-y-4">
+          <div className="rounded-[28px] border border-[#DCEAE3] bg-white p-6 shadow-[0_16px_48px_rgba(15,110,86,0.08)]">
+            <p className="text-[11px] font-bold uppercase tracking-widest text-teal-700">
+              {dict.bookingSuccessNextStepsTitle}
+            </p>
+            <ol className="mt-5 space-y-4">
+              {[
+                {
+                  icon: <Calendar className="h-4 w-4" />,
+                  title: dict.bookingSuccessStepCalendar,
+                  body: dict.bookingSuccessStepCalendarBody,
+                },
+                {
+                  icon: <MessageSquare className="h-4 w-4" />,
+                  title: dict.bookingSuccessStepMessage,
+                  body: dict.bookingSuccessStepMessageBody,
+                },
+                {
+                  icon: <LayoutDashboard className="h-4 w-4" />,
+                  title: dict.bookingSuccessStepDashboard,
+                  body: dict.bookingSuccessStepDashboardBody,
+                },
+              ].map((step, index) => (
+                <li key={step.title} className="flex gap-3">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#F3FAF6] text-teal-700">
+                    {step.icon}
+                  </span>
+                  <span>
+                    <span className="block text-sm font-semibold text-slate-900">
+                      {index + 1}. {step.title}
+                    </span>
+                    <span className="mt-0.5 block text-xs leading-relaxed text-slate-600">{step.body}</span>
+                  </span>
+                </li>
+              ))}
+            </ol>
+          </div>
+
+          <div className="rounded-[28px] border border-slate-200 bg-white p-6">
+            <p className="text-sm font-bold text-slate-900">{dict.bookingSuccessNeedHelpTitle}</p>
+            <p className="mt-2 text-xs leading-relaxed text-slate-600">{dict.bookingSuccessNeedHelpBody}</p>
+            <a
+              href="mailto:support@pratiqo.ca"
+              className="mt-4 inline-flex w-full items-center justify-center rounded-2xl border border-[var(--p-border-light)] px-4 py-3 text-sm font-semibold text-[var(--p-text)] transition hover:bg-[var(--p-light-teal-bg)]/60"
+            >
+              {dict.bookingSuccessContactSupport}
+            </a>
+          </div>
+        </aside>
         </div>
 
         <p className="text-center text-xs text-[var(--p-text-muted)] px-4">
