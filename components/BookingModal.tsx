@@ -750,26 +750,26 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-4" role="dialog" aria-modal="true" aria-labelledby="booking-modal-title">
-      <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-slate-950/45 backdrop-blur-md" onClick={onClose} />
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="relative bg-white w-full max-w-2xl rounded-3xl shadow-2xl border border-slate-200 overflow-hidden max-h-[92vh] overflow-y-auto"
+        className="relative w-full max-w-3xl overflow-hidden rounded-[28px] border border-[#DCEAE3] bg-[#FCFBF7] shadow-[0_30px_100px_rgba(15,23,42,0.28)] max-h-[92vh] overflow-y-auto"
       >
-        <div className="p-5 sm:p-6 border-b border-slate-100 space-y-4">
+        <div className="border-b border-[#E8E6DE] bg-white/90 p-5 sm:p-6 space-y-4">
           <div className="flex items-center justify-between gap-4">
-            <div>
+            <div className="min-w-0">
               <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--palette-teal-700)" }}>
                 {t("bookingTitle")}
               </p>
-              <h3 id="booking-modal-title" className="text-xl font-bold text-slate-900">{teacher.name}</h3>
-              <p className="mt-1 text-xs text-slate-500">{t("bookingModalSubtitle")}</p>
+              <h3 id="booking-modal-title" className="truncate text-xl font-bold text-slate-950">{teacher.name}</h3>
+              <p className="mt-1 max-w-xl text-xs leading-relaxed text-slate-600">{t("bookingModalSubtitle")}</p>
             </div>
             <button
               type="button"
               onClick={onClose}
               aria-label={t("accessibilityCloseDialog")}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:bg-slate-50 hover:text-slate-900"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#E8E6DE] bg-white text-slate-600 shadow-sm transition hover:bg-slate-50 hover:text-slate-900"
             >
               <X size={16} />
             </button>
@@ -784,8 +784,8 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                   aria-current={isCurrent ? "step" : undefined}
                   className={cn(
                     "rounded-2xl border px-2 py-2 text-center transition-colors",
-                    active ? "border-teal-100 bg-teal-50 text-teal-700" : "border-slate-100 bg-slate-50 text-slate-400",
-                    isCurrent && "shadow-sm ring-1 ring-teal-500/20",
+                    active ? "border-[#BFE3D6] bg-[#F3FAF6] text-teal-800" : "border-[#E8E6DE] bg-[#FAFAF8] text-slate-400",
+                    isCurrent && "shadow-sm ring-1 ring-teal-500/25",
                   )}
                 >
                   <span className="mb-1 block h-1 rounded-full bg-current opacity-40" />
@@ -797,7 +797,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
         </div>
 
         <div className="p-5 sm:p-6 space-y-6">
-          <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+          <div className="rounded-[24px] border border-[#DCEAE3] bg-white p-4 shadow-[0_14px_44px_rgba(44,44,42,0.06)]">
             <div className="flex items-start gap-3">
               <TeacherAvatar
                 name={teacher.name}
@@ -816,18 +816,22 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                       {teacher.rating} · {teacher.reviews} {t("bookingReviewsShort")}
                     </p>
                   </div>
-                  <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-teal-700 shadow-sm">
+                  <span className="rounded-full bg-[#F3FAF6] px-3 py-1 text-xs font-bold text-teal-800 shadow-sm ring-1 ring-[#DCEAE3]">
                     {displayPrice}
                   </span>
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-semibold text-slate-600">
-                  <span className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-1">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-[#F7FBF8] px-2 py-1 ring-1 ring-[#E8E6DE]">
                     {teachingMode === "online" ? <Video size={12} /> : teachingMode === "domicile" ? <Home size={12} /> : <Users size={12} />}
                     {selectedFormatLabel}
                   </span>
-                  <span className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-1">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-[#F7FBF8] px-2 py-1 ring-1 ring-[#E8E6DE]">
                     <MapPin size={12} />
                     {areaLabel}
+                  </span>
+                  <span className="inline-flex items-center gap-1 rounded-full bg-[#F7FBF8] px-2 py-1 ring-1 ring-[#E8E6DE]">
+                    <ShieldCheck size={12} className="text-teal-700" />
+                    {t("paymentProtectionTitle")}
                   </span>
                 </div>
                 <p className="mt-3 text-[11px] font-semibold text-teal-700">
@@ -1140,13 +1144,14 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                 <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800">{daysError}</div>
               ) : null}
               {loadingDays ? (
-                <div className="flex justify-center py-8">
-                  <Loader2 className="animate-spin text-teal-700" size={28} />
-                </div>
+                <BookingDateSkeleton />
               ) : !daysError && Object.keys(availableDays).length === 0 ? (
-                <p className="text-sm text-slate-500 text-center py-6">
-                  {t("bookingNoAvailability")}
-                </p>
+                <div className="rounded-2xl border border-dashed border-[#DCEAE3] bg-white p-5 text-center">
+                  <Calendar className="mx-auto text-teal-700" size={24} />
+                  <p className="mt-2 text-sm font-semibold text-slate-700">
+                    {t("bookingNoAvailability")}
+                  </p>
+                </div>
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {calendarCells.map((cell) => (
@@ -1205,11 +1210,12 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                 <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800">{slotsError}</div>
               ) : null}
               {loadingSlots ? (
-                <div className="flex justify-center py-8">
-                  <Loader2 className="animate-spin text-teal-700" size={28} />
-                </div>
+                <BookingSlotSkeleton />
               ) : slots.length === 0 ? (
-                <p className="text-sm text-slate-500">{t("noSlotsPickOther")}</p>
+                <div className="rounded-2xl border border-dashed border-[#DCEAE3] bg-white p-5 text-center">
+                  <Clock className="mx-auto text-teal-700" size={24} />
+                  <p className="mt-2 text-sm font-semibold text-slate-700">{t("noSlotsPickOther")}</p>
+                </div>
               ) : (
                 <div className="space-y-4 max-h-[40vh] overflow-y-auto pr-1">
                   {slotsByPeriod.map((g) => (
@@ -1274,7 +1280,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                   {effectiveDisplayPrice}
                 </span>
               </div>
-              <div className="rounded-3xl border border-[#DCEAE3] bg-[#F3FAF6] p-4 space-y-3 text-sm">
+              <div className="rounded-3xl border border-[#DCEAE3] bg-white p-4 space-y-3 text-sm shadow-[0_12px_36px_rgba(44,44,42,0.05)]">
                 <div className="flex justify-between gap-2">
                   <span className="text-slate-600">{t("bookingDateLabel")}</span>
                   <span className="font-semibold text-slate-900 text-right capitalize">{formattedSelectedDate}</span>
@@ -1326,18 +1332,28 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                     <span className="font-bold text-teal-700">-{formatPrice(creditsDiscount)}</span>
                   </div>
                 ) : null}
-                <div className="flex justify-between gap-2 border-t border-teal-500/20 pt-3">
+                <div className="flex justify-between gap-2 rounded-2xl border border-[#DCEAE3] bg-[#F3FAF6] px-3 py-3">
                   <span className="font-semibold text-slate-900">{t("bookingDueToday")}</span>
                   <span className="font-extrabold text-teal-700">{effectiveDisplayPrice}</span>
                 </div>
               </div>
-              <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-600">
+              <div className="rounded-2xl border border-[#DCEAE3] bg-[#F7FBF8] px-4 py-3 text-xs text-slate-600">
                 <div className="flex gap-2">
                   <ShieldCheck size={15} className="mt-0.5 shrink-0 text-teal-700" />
                   <p className="leading-relaxed">
                     <span className="font-semibold text-slate-800">{t("bookingPaymentNote")}</span>{" "}
                     {t("bookingExclusiveText")}
                   </p>
+                </div>
+                <div className="mt-2 grid gap-2 border-t border-[#DCEAE3] pt-2 sm:grid-cols-2">
+                  <span className="inline-flex items-center gap-1.5 font-semibold text-slate-700">
+                    <CreditCard size={13} className="text-teal-700" />
+                    {t("paymentProtectionTitle")}
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 font-semibold text-slate-700">
+                    <CheckCircle2 size={13} className="text-teal-700" />
+                    {t("cancellationProtectionTitle")}
+                  </span>
                 </div>
               </div>
 
@@ -1446,6 +1462,36 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
           )}
         </div>
       </motion.div>
+    </div>
+  );
+}
+
+function BookingDateSkeleton() {
+  return (
+    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3" aria-hidden>
+      {Array.from({ length: 9 }).map((_, index) => (
+        <div key={index} className="h-[58px] animate-pulse rounded-xl border border-[#E8E6DE] bg-white p-2.5">
+          <div className="h-3 w-20 rounded-full bg-[#E8E6DE]" />
+          <div className="mt-2 h-2.5 w-14 rounded-full bg-[#F0EEE7]" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function BookingSlotSkeleton() {
+  return (
+    <div className="space-y-4" aria-hidden>
+      {Array.from({ length: 3 }).map((_, groupIndex) => (
+        <div key={groupIndex}>
+          <div className="mb-2 h-3 w-24 animate-pulse rounded-full bg-[#E8E6DE]" />
+          <div className="grid grid-cols-2 gap-2">
+            {Array.from({ length: 4 }).map((__, slotIndex) => (
+              <div key={slotIndex} className="h-11 animate-pulse rounded-xl border border-[#E8E6DE] bg-white" />
+            ))}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
