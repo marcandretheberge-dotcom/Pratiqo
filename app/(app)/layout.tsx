@@ -1,7 +1,6 @@
 import React from "react";
-import { redirect } from "next/navigation";
 import { headers } from "next/headers";
-import { getCurrentUserServer } from "@/lib/auth/server";
+import { requireCurrentUserServer } from "@/lib/auth/server";
 import { AuthenticatedShell } from "../../components/AuthenticatedShell";
 
 /**
@@ -24,12 +23,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     return <>{children}</>;
   }
 
-  const { user } = await getCurrentUserServer();
-
-  if (!user) {
-    const next = pathname || "/dashboard";
-    redirect(`/login?next=${encodeURIComponent(next)}`);
-  }
+  await requireCurrentUserServer(pathname || "/dashboard");
 
   return <AuthenticatedShell>{children}</AuthenticatedShell>;
 }

@@ -1,6 +1,14 @@
+import "server-only";
+
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { createServerClient } from "@supabase/ssr";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
+
+export type ServerProfile = {
+  id: string;
+  role: string | null;
+};
 
 export type ServerAuthResult = {
   supabase: SupabaseClient;
@@ -22,10 +30,16 @@ export type ServerAuthResult = {
  */
 export async function getCurrentUserServer(): Promise<ServerAuthResult> {
   const cookieStore = await cookies();
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !anonKey) {
+    throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY");
+  }
 
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    anonKey,
     {
       cookies: {
         getAll() {
@@ -43,4 +57,48 @@ export async function getCurrentUserServer(): Promise<ServerAuthResult> {
   } = await supabase.auth.getUser();
 
   return { supabase, user };
+}
+
+export async function requireCurrentUserServer(nextPath = "/dashboard"): Promise<ServerAuthResult & { user: User }> {
+  const auth = await getCurrentUserServer();
+
+  if (!auth.user) {
+    redirect(`/login?next=${encodeURIComponent(nextPath)}`);
+  }
+
+  return auth as ServerAuthResult & { user: User };
+}
+
+export async function getCurrentProfileServer(
+  supabase: SupabaseClient,
+  userId: string,
+): Promise<ServerProfile | null> {
+  const { data: profile, error } = await supabase
+    .from("profiles")
+    .select("id, role")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (error) {
+    console.error("[auth/server] profile lookup failed", { userId });
+    return null;
+  }
+
+  return (profile as ServerProfile | null) ?? null;
+}
+
+export async function requireAdminServer(nextPath = "/admin/operations"): Promise<
+  ServerAuthResult & {
+    user: User;
+    profile: ServerProfile;
+  }
+> {
+  const auth = await requireCurrentUserServer(nextPath);
+  const profile = await getCurrentProfileServer(auth.supabase, auth.user.id);
+
+  if (profile?.role !== "admin") {
+    redirect("/dashboard");
+  }
+
+  return { ...auth, profile };
 }
