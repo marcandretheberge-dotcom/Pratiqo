@@ -88,6 +88,48 @@ function encodeTeachingMode(p: boolean, o: boolean, h: boolean): string {
   return "all";
 }
 
+const premiumPanelClass = "rounded-2xl border border-[#DCEAE3] bg-white p-6 shadow-[0_18px_54px_rgba(44,44,42,0.07)] space-y-4";
+
+function TeacherAccountSkeleton({ variant }: { variant: "profile" | "system" }) {
+  const sectionCount = variant === "profile" ? 3 : 5;
+
+  return (
+    <div className="mx-auto max-w-xl space-y-8 px-4 pb-16 sm:px-0" aria-busy="true">
+      <div className="space-y-3">
+        <div className="h-3 w-32 animate-pulse rounded-full bg-[#BFD8CB]" />
+        <div className="h-8 w-64 max-w-full animate-pulse rounded-xl bg-white shadow-[0_10px_30px_rgba(44,44,42,0.05)]" />
+        <div className="h-4 w-80 max-w-full animate-pulse rounded-full bg-[#E8E6DE]" />
+      </div>
+
+      {Array.from({ length: sectionCount }).map((_, index) => (
+        <section
+          key={index}
+          className="rounded-2xl border border-[#DCEAE3] bg-white p-6 shadow-[0_18px_54px_rgba(44,44,42,0.07)]"
+        >
+          <div className="space-y-4">
+            <div className="h-5 w-36 animate-pulse rounded-full bg-[#E8E6DE]" />
+            <div className="grid gap-3">
+              <div className="h-12 animate-pulse rounded-xl border border-[#DCEAE3] bg-[#F3FAF6]" />
+              <div className="h-12 animate-pulse rounded-xl border border-[#DCEAE3] bg-[#F3FAF6]" />
+            </div>
+            <div className="h-10 w-36 animate-pulse rounded-full bg-[#00694c]/15" />
+          </div>
+        </section>
+      ))}
+    </div>
+  );
+}
+
+function DisciplineEditorSkeleton() {
+  return (
+    <div className="space-y-3" aria-hidden="true">
+      <div className="h-20 animate-pulse rounded-2xl border border-[#DCEAE3] bg-[#F3FAF6]" />
+      <div className="h-20 animate-pulse rounded-2xl border border-[#DCEAE3] bg-[#F3FAF6]" />
+      <div className="h-11 animate-pulse rounded-xl border-2 border-dashed border-[#BFD8CB] bg-white" />
+    </div>
+  );
+}
+
 export function TeacherAccountView({ variant }: { variant: "profile" | "system" }) {
   const { user } = useAuth();
   const { t, locale } = useLocale();
@@ -524,7 +566,7 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
 
   if (!user) {
     return (
-      <div className="max-w-lg mx-auto bg-white border border-slate-200 rounded-3xl p-8 text-center">
+      <div className="mx-auto max-w-lg rounded-3xl border border-[#DCEAE3] bg-white p-8 text-center shadow-[0_18px_54px_rgba(44,44,42,0.07)]">
         <p className="text-sm text-slate-600">{t("loginForSettings")}</p>
         <Link href="/" className="mt-4 inline-block text-[#00694c] font-medium underline">
           {t("teacherHome")}
@@ -534,16 +576,12 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
   }
 
   if (loading) {
-    return (
-      <div className="flex justify-center py-20">
-        <Loader2 className="animate-spin text-[#00694c]" size={32} />
-      </div>
-    );
+    return <TeacherAccountSkeleton variant={variant} />;
   }
 
   if (!teacherId) {
     return (
-      <div className="max-w-lg mx-auto bg-white border border-amber-200 rounded-3xl p-8">
+      <div className="mx-auto max-w-lg rounded-3xl border border-amber-200 bg-white p-8 shadow-[0_18px_54px_rgba(44,44,42,0.07)]">
         <p className="text-sm font-semibold text-slate-800">{t("noTeacherAccountTitle")}</p>
         <p className="mt-2 text-sm text-slate-600">{t("noTeacherAccountBody")}</p>
       </div>
@@ -553,7 +591,7 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
   const maxDisciplinesReached = disciplineCards.length >= 3;
 
   return (
-    <div className="max-w-xl mx-auto space-y-8 pb-16">
+    <div className="mx-auto max-w-xl space-y-8 px-4 pb-16 sm:px-0">
       <div>
         <p className="text-[10px] font-bold uppercase tracking-widest text-[#00694c]">
           {variant === "profile" ? t("teacherSpaceLabel") : t("settingsTeacherLabel")}
@@ -568,7 +606,7 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
 
       {variant === "profile" ? (
         <>
-          <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+          <section className={premiumPanelClass}>
         <h2 className="text-lg font-bold text-[#2C2C2A]">{t("sectionProfile")}</h2>
         <div className="flex items-center gap-4">
           <label className="relative cursor-pointer shrink-0">
@@ -732,11 +770,11 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
         </button>
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+      <section className={premiumPanelClass}>
         <h2 className="text-lg font-bold text-[#2C2C2A]">{t("teacherDisciplinesTitle")}</h2>
         <p className="text-sm leading-relaxed text-slate-600">{t("teacherDisciplinesDescription")}</p>
         {discLoading ? (
-          <Loader2 className="animate-spin text-[#00694c]" size={24} />
+          <DisciplineEditorSkeleton />
         ) : (
           <>
             {disciplineCards.length === 0 ? (
@@ -808,7 +846,7 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
         )}
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+      <section className={premiumPanelClass}>
         <h2 className="text-lg font-bold text-[#2C2C2A]">{t("sectionFormat")}</h2>
         <div className="flex flex-wrap gap-2">
           {(["inPerson", "online", "homeVisit"] as const).map((labelKey, i) => {
@@ -843,7 +881,7 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
 
       {variant === "system" ? (
         <>
-          <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+          <section className={premiumPanelClass}>
         <h2 className="text-lg font-bold text-[#2C2C2A]">{t("sectionNotifications")}</h2>
         {(
           [
@@ -887,7 +925,7 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
         </button>
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+      <section className={premiumPanelClass}>
         <h2 className="text-lg font-bold text-[#2C2C2A]">{t("profileVisibilityTitle")}</h2>
         <p className="text-sm leading-relaxed text-slate-600">{t("profileVisibilityDescription")}</p>
         <div className="rounded-2xl border border-[#DCEAE3] bg-[#F3FAF6] px-4 py-3 text-sm text-slate-700">
@@ -907,7 +945,7 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
         </button>
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+      <section className={premiumPanelClass}>
         <h2 className="text-lg font-bold text-[#2C2C2A]">{t("sectionPayments")}</h2>
         <p className="text-sm text-slate-600">
           {t("stripeConnectLabel")}{" "}
@@ -968,7 +1006,7 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
         ) : null}
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-3">
+      <section className="rounded-2xl border border-[#DCEAE3] bg-white p-6 shadow-[0_18px_54px_rgba(44,44,42,0.07)] space-y-3">
         <h2 className="text-lg font-bold text-[#2C2C2A]">{t("sectionAccount")}</h2>
         <p className="text-sm text-slate-600">{t("emailLabel")}</p>
         <p className="text-sm font-medium text-[#2C2C2A]">{email}</p>
@@ -983,7 +1021,7 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
 
       <AccountDeletionSection />
 
-      <section className="rounded-2xl border border-slate-100 bg-slate-50/60 p-5 space-y-1.5">
+      <section className="rounded-2xl border border-[#DCEAE3] bg-[#F3FAF6] p-5 space-y-1.5">
         <h2 className="text-sm font-bold text-slate-700 uppercase tracking-widest">{t("taxSettingsSectionTitle")}</h2>
         {taxAcknowledged ? (
           <>
