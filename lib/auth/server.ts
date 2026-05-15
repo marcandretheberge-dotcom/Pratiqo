@@ -10,6 +10,8 @@ export type ServerProfile = {
   role: string | null;
 };
 
+export type AppRole = "student" | "teacher" | "admin";
+
 export type ServerAuthResult = {
   supabase: SupabaseClient;
   user: User | null;
@@ -85,6 +87,39 @@ export async function getCurrentProfileServer(
   }
 
   return (profile as ServerProfile | null) ?? null;
+}
+
+function isAppRole(role: string | null | undefined): role is AppRole {
+  return role === "student" || role === "teacher" || role === "admin";
+}
+
+function homeForRole(role: string | null | undefined): string {
+  if (role === "admin") return "/admin/operations";
+  if (role === "teacher" || role === "student") return "/dashboard";
+  return "/onboarding";
+}
+
+export async function requireRoleServer(
+  role: AppRole,
+  nextPath = "/dashboard",
+): Promise<
+  ServerAuthResult & {
+    user: User;
+    profile: ServerProfile & { role: AppRole };
+  }
+> {
+  const auth = await requireCurrentUserServer(nextPath);
+  const profile = await getCurrentProfileServer(auth.supabase, auth.user.id);
+
+  if (!isAppRole(profile?.role)) {
+    redirect("/onboarding");
+  }
+
+  if (profile.role !== role) {
+    redirect(homeForRole(profile.role));
+  }
+
+  return { ...auth, profile: profile as ServerProfile & { role: AppRole } };
 }
 
 export async function requireAdminServer(nextPath = "/admin/operations"): Promise<
