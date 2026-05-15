@@ -860,7 +860,7 @@ export function Dashboard() {
       variants={containerVariants}
       initial="hidden"
       animate="show"
-      className="space-y-6 pb-12"
+      className="mx-auto w-full max-w-[1280px] space-y-6 bg-[#F3FAF6] px-4 pb-16 sm:px-6 lg:rounded-3xl lg:p-8 lg:shadow-[inset_0_1px_0_rgba(255,255,255,0.65)]"
     >
       <motion.section variants={itemVariants} className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div>
@@ -873,35 +873,36 @@ export function Dashboard() {
       <div className="grid grid-cols-12 gap-6">
         <div className="col-span-12 lg:col-span-8 space-y-6">
           <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <div className="bg-gradient-to-br from-orange-500 to-rose-500 p-6 rounded-3xl text-white shadow-xl shadow-orange-100 relative overflow-hidden group">
+            <div className="rounded-3xl border border-[#BFE3D6] bg-[linear-gradient(135deg,#00694c,#0F8B6B)] p-6 text-white shadow-[0_20px_60px_rgba(0,105,76,0.20)] relative overflow-hidden group">
               <div className="relative z-10 space-y-4">
                 <div className="flex items-center gap-2">
-                  <Flame size={24} className="animate-pulse" />
+                  <Flame size={24} className="text-emerald-100" />
                   <span className="text-3xl font-bold">{profile?.streak || 1}</span>
                 </div>
                 <div>
                   <h4 className="font-bold text-lg leading-tight">{t("dashboardStreakTitle")}</h4>
-                  <p className="text-xs opacity-80 font-medium">{t("dashboardStreakEncourage")}</p>
+                  <p className="text-xs font-medium text-emerald-50/90">{t("dashboardStreakEncourage")}</p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between overflow-hidden relative">
+            <div className="bg-white p-6 rounded-3xl border border-[#DCEAE3] shadow-[0_14px_44px_rgba(44,44,42,0.06)] flex flex-col justify-between overflow-hidden relative">
               <div className="flex justify-between items-start">
                 <div>
-                  <h4 className="font-bold text-slate-900 mb-1">Réservations</h4>
+                  <h4 className="font-bold text-slate-900 mb-1">{t("reservationsTitle")}</h4>
                   <p className="text-3xl font-bold text-brand-primary">{bookings.length}</p>
                 </div>
-                <div className="w-12 h-12 bg-teal-50 rounded-2xl flex items-center justify-center text-brand-primary">
+                <div className="w-12 h-12 bg-[#F3FAF6] rounded-2xl flex items-center justify-center text-brand-primary ring-1 ring-[#DCEAE3]">
                   <Calendar size={24} />
                 </div>
               </div>
-              <div className="mt-4 pt-4 border-t border-slate-50 flex items-center justify-between">
+              <div className="mt-4 pt-4 border-t border-[#E8E6DE] flex items-center justify-between">
                 <button
                   type="button"
                   onClick={() => router.push("/student/search")}
-                  className="text-[10px] font-bold text-brand-primary uppercase tracking-widest hover:underline"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-[#F3FAF6] px-3 py-2 text-[10px] font-bold text-brand-primary uppercase tracking-widest hover:bg-[#E8F5F0]"
                 >
+                  <CalendarPlus size={13} aria-hidden />
                   {t("findTeacher")}
                 </button>
               </div>
@@ -914,9 +915,9 @@ export function Dashboard() {
         </div>
 
         <motion.div variants={itemVariants} className="col-span-12 lg:col-span-4 space-y-6">
-          <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-50 pb-4">
-              <h3 className="font-bold text-slate-900 text-[10px] uppercase tracking-widest">Ma semaine</h3>
+          <div className="bg-white p-6 rounded-3xl border border-[#DCEAE3] shadow-[0_14px_44px_rgba(44,44,42,0.06)] space-y-4">
+            <div className="flex items-center justify-between border-b border-[#E8E6DE] pb-4">
+              <h3 className="font-bold text-slate-900 text-[10px] uppercase tracking-widest">{t("dashboardMyWeek")}</h3>
               <Calendar size={14} className="text-slate-600" />
             </div>
             <div className="space-y-3">
@@ -924,7 +925,7 @@ export function Dashboard() {
                 studentSidebarBookings.map((b) => (
                   <div
                     key={b.id}
-                    className="flex flex-col gap-2 p-3 rounded-2xl bg-slate-50 border border-slate-100 hover:border-brand-primary transition-all"
+                    className="flex flex-col gap-2 p-3 rounded-2xl bg-[#F7FBF8] border border-[#DCEAE3] hover:border-brand-primary transition-all"
                   >
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-[10px] font-bold text-slate-900">{b.teacherName}</span>
@@ -956,13 +957,14 @@ export function Dashboard() {
                 <EmptyState
                   icon={<Search size={32} className="text-teal-200" strokeWidth={2} />}
                   title={t("dashboardNoLessonsWeek")}
-                  description="Trouvez le professeur idéal pour atteindre vos objectifs."
+                  description={t("dashboardStudentSubtitle")}
                   action={
                     <button
                       type="button"
                       onClick={() => router.push("/student/search")}
-                      className="mt-2 text-[10px] font-bold text-teal-700 uppercase tracking-widest hover:underline px-4 py-2 bg-teal-50 rounded-full"
+                      className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-teal-50 px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-teal-700 hover:bg-teal-100"
                     >
+                      <CalendarPlus size={13} aria-hidden />
                       {t("dashboardFindMentor")}
                     </button>
                   }
@@ -971,10 +973,10 @@ export function Dashboard() {
             </div>
           </div>
 
-          <div className="bg-teal-900 rounded-3xl p-6 text-white space-y-4">
-            <ShieldCheck size={32} className="text-teal-400" />
+          <div className="rounded-3xl border border-[#BFE3D6] bg-[#073F32] p-6 text-white space-y-4 shadow-[0_18px_46px_rgba(7,63,50,0.18)]">
+            <ShieldCheck size={32} className="text-emerald-200" />
             <h4 className="font-bold text-lg leading-tight">{t("dashboardSecurityTitle")}</h4>
-            <p className="text-xs opacity-80 leading-relaxed">{t("dashboardSecurityBlurb")}</p>
+            <p className="text-xs leading-relaxed text-emerald-50/85">{t("dashboardSecurityBlurb")}</p>
           </div>
         </motion.div>
       </div>
@@ -994,4 +996,3 @@ export function Dashboard() {
     </motion.div>
   );
 }
-
