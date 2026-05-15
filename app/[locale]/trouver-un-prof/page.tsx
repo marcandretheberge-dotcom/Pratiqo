@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Search, Shield, Star, Clock, ArrowRight } from "lucide-react";
+import { Shield, Star, Clock, ArrowRight } from "lucide-react";
 import { FAQSchema } from "@/components/seo/FAQSchema";
 import { BreadcrumbSchema } from "@/components/seo/BreadcrumbSchema";
+import { TrouverUnProfMotionHero } from "@/components/marketing/TrouverUnProfMotionHero";
 
 import { SITE_URL } from "@/lib/seo/site";
 
@@ -115,31 +116,7 @@ export default function TrouverUnProfPage() {
           </div>
         </header>
 
-        {/* ── HERO ───────────────────────────────────────────────────────── */}
-        <section className="bg-teal-700 text-white py-16 sm:py-20 px-4 sm:px-6">
-          <div className="mx-auto max-w-3xl text-center">
-            <div className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold mb-5">
-              <Search size={12} aria-hidden />
-              Cours particuliers · Québec
-            </div>
-            <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight leading-tight">
-              Trouvez le bon prof,<br />
-              <span className="text-[#7FE0C3]">dès maintenant</span>
-            </h1>
-            <p className="mt-4 text-lg text-white/80 max-w-xl mx-auto">
-              Des professeurs vérifiés dans toutes les matières, disponibles en ligne ou près de chez vous. Réservez votre premier cours en quelques minutes.
-            </p>
-            <div className="mt-8">
-              <Link
-                href="/login"
-                className="inline-flex h-13 items-center gap-2 rounded-2xl bg-white px-8 py-3 text-base font-bold text-teal-700 hover:brightness-95 shadow-lg"
-              >
-                Chercher un professeur <ArrowRight size={18} />
-              </Link>
-              <p className="mt-3 text-xs text-white/55">Inscription gratuite · Aucun engagement</p>
-            </div>
-          </div>
-        </section>
+        <TrouverUnProfMotionHero />
 
         {/* ── TRUST BAR ──────────────────────────────────────────────────── */}
         <section className="bg-white border-b border-[#E8E6DF] py-6 px-4 sm:px-6">

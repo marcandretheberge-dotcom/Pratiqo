@@ -1,11 +1,13 @@
 "use client";
 
 import React, { useRef } from "react";
-import { ArrowRight, CalendarCheck, MapPin, ShieldCheck, Sparkles, Star } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, CalendarCheck, MapPin, ShieldCheck, Sparkles, Star, type LucideIcon } from "lucide-react";
 import { motion, useReducedMotion, useScroll, useTransform, type Variants } from "motion/react";
 import { cn } from "@/lib/utils";
 
 const spring = { type: "spring", stiffness: 100, damping: 20 } as const;
+const MotionLink = motion.create(Link);
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
@@ -37,12 +39,33 @@ const cardVariants: Variants = {
   },
 };
 
-const cards = [
+export type ProductMotionHeroCard = {
+  title: string;
+  detail: string;
+  metric: string;
+  meta: string;
+  icon?: LucideIcon;
+  toneClassName?: string;
+};
+
+export type ProductMotionHeroProfile = {
+  eyebrow: string;
+  name: string;
+  initials: string;
+  description: string;
+  trustSignals: string[];
+  stats: Array<{
+    value: string;
+    label: string;
+  }>;
+};
+
+const defaultCards: Required<ProductMotionHeroCard>[] = [
   {
     title: "Verified local teachers",
     detail: "Identity, credentials, reviews, and real availability in one premium profile.",
     icon: ShieldCheck,
-    tone: "bg-[#E6F4EE] text-[#00694c]",
+    toneClassName: "bg-[#E6F4EE] text-[#00694c]",
     metric: "4.9",
     meta: "avg rating",
   },
@@ -50,7 +73,7 @@ const cards = [
     title: "Book the right first lesson",
     detail: "Students compare price, fit, location, and intro slots before committing.",
     icon: CalendarCheck,
-    tone: "bg-[#FFF2D9] text-amber-700",
+    toneClassName: "bg-[#FFF2D9] text-amber-700",
     metric: "45m",
     meta: "intro lesson",
   },
@@ -58,11 +81,24 @@ const cards = [
     title: "Near you or online",
     detail: "Search by neighborhood, discipline, format, and trusted marketplace signals.",
     icon: MapPin,
-    tone: "bg-[#EAF0FF] text-indigo-700",
+    toneClassName: "bg-[#EAF0FF] text-indigo-700",
     metric: "2 km",
     meta: "nearby match",
   },
 ];
+
+const defaultProfile: ProductMotionHeroProfile = {
+  eyebrow: "Top match",
+  name: "Maya R.",
+  initials: "MR",
+  description: "Math tutor · Montreal · Online or nearby",
+  trustSignals: ["Identity verified", "Diploma checked", "Responds fast"],
+  stats: [
+    { value: "$42", label: "per hour" },
+    { value: "4.9", label: "rating" },
+    { value: "18", label: "reviews" },
+  ],
+};
 
 export function ProductMotionHero({
   className,
@@ -71,6 +107,10 @@ export function ProductMotionHero({
   subtitle = "A premium local marketplace experience for comparing teachers, checking trust signals, and booking the first lesson with confidence.",
   primaryCta = "Explore teachers",
   secondaryCta = "Become a teacher",
+  primaryHref,
+  secondaryHref,
+  cards = defaultCards,
+  featuredProfile = defaultProfile,
   onPrimaryClick,
   onSecondaryClick,
 }: {
@@ -80,6 +120,10 @@ export function ProductMotionHero({
   subtitle?: string;
   primaryCta?: string;
   secondaryCta?: string;
+  primaryHref?: string;
+  secondaryHref?: string;
+  cards?: ProductMotionHeroCard[];
+  featuredProfile?: ProductMotionHeroProfile;
   onPrimaryClick?: () => void;
   onSecondaryClick?: () => void;
 }) {
@@ -92,6 +136,25 @@ export function ProductMotionHero({
 
   const cardY = useTransform(scrollYProgress, [0, 1], prefersReducedMotion ? [0, 0] : [34, -42]);
   const cardYSlow = useTransform(scrollYProgress, [0, 1], prefersReducedMotion ? [0, 0] : [18, -26]);
+  const primaryInteraction = {
+    whileHover: { y: -2, scale: 1.02 },
+    whileTap: { scale: 0.98 },
+    whileFocus: { scale: 1.01 },
+    transition: spring,
+    className:
+      "inline-flex h-12 items-center justify-center gap-2 rounded-full bg-[#00694c] px-6 text-sm font-bold text-white shadow-[0_16px_40px_rgba(0,105,76,0.22)] outline-none transition-colors hover:bg-[#008560] focus-visible:ring-4 focus-visible:ring-[#00694c]/20",
+    style: { willChange: "transform" },
+  } as const;
+  const secondaryInteraction = {
+    whileHover: { y: -2, scale: 1.02 },
+    whileTap: { scale: 0.98 },
+    whileFocus: { scale: 1.01 },
+    transition: spring,
+    className:
+      "inline-flex h-12 items-center justify-center rounded-full border border-[#D2DED7] bg-white px-6 text-sm font-bold text-[#2C2C2A] shadow-[0_12px_34px_rgba(44,44,42,0.07)] outline-none transition-colors hover:border-[#00694c]/30 focus-visible:ring-4 focus-visible:ring-[#00694c]/15",
+    style: { willChange: "transform" },
+  } as const;
+
   return (
     <section
       ref={heroRef}
@@ -123,31 +186,26 @@ export function ProductMotionHero({
           </div>
 
           <motion.div variants={fadeUpVariants} className="flex flex-col gap-3 sm:flex-row">
-            <motion.button
-              type="button"
-              onClick={onPrimaryClick}
-              whileHover={{ y: -2, scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              whileFocus={{ scale: 1.01 }}
-              transition={spring}
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-[#00694c] px-6 text-sm font-bold text-white shadow-[0_16px_40px_rgba(0,105,76,0.22)] outline-none transition-colors hover:bg-[#008560] focus-visible:ring-4 focus-visible:ring-[#00694c]/20"
-              style={{ willChange: "transform" }}
-            >
-              {primaryCta}
-              <ArrowRight size={17} aria-hidden />
-            </motion.button>
-            <motion.button
-              type="button"
-              onClick={onSecondaryClick}
-              whileHover={{ y: -2, scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              whileFocus={{ scale: 1.01 }}
-              transition={spring}
-              className="inline-flex h-12 items-center justify-center rounded-full border border-[#D2DED7] bg-white px-6 text-sm font-bold text-[#2C2C2A] shadow-[0_12px_34px_rgba(44,44,42,0.07)] outline-none transition-colors hover:border-[#00694c]/30 focus-visible:ring-4 focus-visible:ring-[#00694c]/15"
-              style={{ willChange: "transform" }}
-            >
-              {secondaryCta}
-            </motion.button>
+            {primaryHref ? (
+              <MotionLink href={primaryHref} {...primaryInteraction}>
+                {primaryCta}
+                <ArrowRight size={17} aria-hidden />
+              </MotionLink>
+            ) : (
+              <motion.button type="button" onClick={onPrimaryClick} {...primaryInteraction}>
+                {primaryCta}
+                <ArrowRight size={17} aria-hidden />
+              </motion.button>
+            )}
+            {secondaryHref ? (
+              <MotionLink href={secondaryHref} {...secondaryInteraction}>
+                {secondaryCta}
+              </MotionLink>
+            ) : (
+              <motion.button type="button" onClick={onSecondaryClick} {...secondaryInteraction}>
+                {secondaryCta}
+              </motion.button>
+            )}
           </motion.div>
         </div>
 
@@ -164,25 +222,23 @@ export function ProductMotionHero({
           >
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#00694c]">Top match</p>
-                <h2 className="mt-2 text-2xl font-bold">Maya R.</h2>
-                <p className="mt-1 text-sm text-neutral-700">Math tutor · Montreal · Online or nearby</p>
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#00694c]">{featuredProfile.eyebrow}</p>
+                <h2 className="mt-2 text-2xl font-bold">{featuredProfile.name}</h2>
+                <p className="mt-1 text-sm text-neutral-700">{featuredProfile.description}</p>
               </div>
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#00694c] text-lg font-bold text-white">MR</div>
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#00694c] text-lg font-bold text-white">
+                {featuredProfile.initials}
+              </div>
             </div>
             <div className="mt-5 flex flex-wrap gap-2">
-              {["Identity verified", "Diploma checked", "Responds fast"].map((label) => (
+              {featuredProfile.trustSignals.map((label) => (
                 <span key={label} className="rounded-full bg-[#F3FAF6] px-3 py-1 text-xs font-bold text-[#00694c]">
                   {label}
                 </span>
               ))}
             </div>
             <div className="mt-6 grid grid-cols-3 gap-3">
-              {[
-                ["$42", "per hour"],
-                ["4.9", "rating"],
-                ["18", "reviews"],
-              ].map(([value, label]) => (
+              {featuredProfile.stats.map(({ value, label }) => (
                 <div key={label} className="rounded-2xl border border-[#E8E6DE] bg-[#FAFCFB] p-3">
                   <p className="text-lg font-bold">{value}</p>
                   <p className="text-xs text-neutral-600">{label}</p>
@@ -193,7 +249,7 @@ export function ProductMotionHero({
 
           <div className="absolute bottom-0 right-0 grid w-[min(92vw,460px)] gap-4">
             {cards.map((card, index) => {
-              const Icon = card.icon;
+              const Icon = card.icon ?? ShieldCheck;
               return (
                 <motion.article
                   key={card.title}
@@ -211,7 +267,7 @@ export function ProductMotionHero({
                   }}
                 >
                   <div className="flex items-center gap-4">
-                    <div className={cn("flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl", card.tone)}>
+                    <div className={cn("flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl", card.toneClassName ?? "bg-[#E6F4EE] text-[#00694c]")}>
                       <Icon size={21} aria-hidden />
                     </div>
                     <div className="min-w-0 flex-1">
