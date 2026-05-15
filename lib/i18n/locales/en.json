@@ -2019,5 +2019,13 @@
   "teacherMapDetailsTitle": "Teacher details",
   "teacherMapDetailsDescription": "Details for the selected teacher.",
   "close": "Close",
-  "currencyApproximationTooltip": "Approximate only. Billing happens in the teacher’s currency."
+  "currencyApproximationTooltip": "Approximate only. Billing happens in the teacher’s currency.",
+  "bookIntroLessonWithPrice": "Book intro lesson - {price}",
+  "paymentProtectionTitle": "Protected payment",
+  "paymentProtectionBody": "Secure payment by Stripe; follow-up stays inside Pratiqo.",
+  "cancellationProtectionTitle": "Clear booking frame",
+  "cancellationProtectionBody": "Cancellation policy and support are available after booking.",
+  "responseTimePlaceholderTitle": "Teacher response",
+  "responseTimePlaceholderBody": "Response time will appear once booking activity is available.",
+  "teacherProfileReviewsEmptyBody": "First reviews will appear here after confirmed lessons."
 }

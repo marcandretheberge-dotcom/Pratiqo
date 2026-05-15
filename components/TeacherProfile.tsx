@@ -435,6 +435,29 @@ export function TeacherProfile({
         ? t("filterOnline")
         : t("teacherProfileStudio");
 
+  const introSessionPricing = useMemo(() => {
+    if (!teacher.introSessionEnabled) return null;
+    const durationMinutes = teacher.introSessionDurationMinutes ?? 45;
+    const cents = calculateIntroSessionPriceCents({
+      hourlyPrice: teacher.pricePerLesson,
+      durationMinutes,
+      discountPercent: teacher.introSessionDiscountPercent ?? 50,
+      explicitPriceCents: teacher.introSessionPriceCents ?? null,
+    });
+    return {
+      durationMinutes,
+      price: cents / 100,
+      formattedPrice: formatPrice(cents / 100),
+    };
+  }, [
+    formatPrice,
+    teacher.introSessionDiscountPercent,
+    teacher.introSessionDurationMinutes,
+    teacher.introSessionEnabled,
+    teacher.introSessionPriceCents,
+    teacher.pricePerLesson,
+  ]);
+
   const isTeacherOwner = Boolean(user?.id && teacher.userId && user.id === teacher.userId);
 
   const disciplineChips = useMemo(() => {
@@ -672,7 +695,19 @@ export function TeacherProfile({
                     Avis des élèves
                   </p>
                   {reviews.length === 0 ? (
-                    <p className="text-[11px] text-slate-500 py-1">{t("reviewsEmptyState")}</p>
+                    <div className="rounded-2xl border border-dashed border-[#DCEAE3] bg-[#F7FBF8] p-4">
+                      <div className="flex items-start gap-3">
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-amber-500 shadow-sm">
+                          <Star size={16} fill="currentColor" />
+                        </span>
+                        <div>
+                          <p className="text-sm font-bold text-slate-900">{t("reviewsEmptyState")}</p>
+                          <p className="mt-1 text-xs leading-relaxed text-slate-600">
+                            {t("teacherProfileReviewsEmptyBody")}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                   ) : (
                     <ul className="space-y-3">
                       {reviews.map((review) => {
@@ -764,57 +799,65 @@ export function TeacherProfile({
                 <div className="lg:sticky lg:top-0 space-y-4">
 
                   {/* Booking widget */}
-                  <div className="rounded-2xl border border-slate-200 bg-white shadow-sm p-5 space-y-4">
+                  <div className="rounded-2xl border border-[#DCEAE3] bg-white shadow-[0_20px_60px_rgba(15,23,42,0.10)] p-5 space-y-4">
                     <div>
-                      <p className="text-2xl font-bold text-slate-900">
-                        {formatPrice(Number(teacher.pricePerLesson))}
-                        <span className="text-sm font-normal text-slate-600 ml-1">{t("pricePerHourSuffix")}</span>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-teal-700">
+                        {introSessionPricing ? t("introSessionTitle") : t("trialLesson")}
                       </p>
-                      <p className="text-xs text-slate-600 mt-0.5">{standardLabel}</p>
-                      <p className="mt-2 text-[11px] font-semibold text-teal-700">
-                        {t("bookingNoHiddenFees").replace("{price}", formatPrice(Number(teacher.pricePerLesson)))}
+                      <div className="mt-1 flex items-end justify-between gap-3">
+                        <p className="text-2xl font-bold text-slate-900">
+                          {introSessionPricing?.formattedPrice ?? formatPrice(Number(teacher.pricePerLesson))}
+                          <span className="text-sm font-normal text-slate-600 ml-1">
+                            {introSessionPricing ? `/${introSessionPricing.durationMinutes} min` : t("pricePerHourSuffix")}
+                          </span>
+                        </p>
+                        <span className="rounded-full bg-teal-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-teal-800">
+                          {standardLabel}
+                        </span>
+                      </div>
+                      <p className="mt-2 text-xs leading-relaxed text-slate-600">
+                        {introSessionPricing ? t("introSessionPublicDescription") : t("bookingNoHiddenFees").replace("{price}", formatPrice(Number(teacher.pricePerLesson)))}
                       </p>
                     </div>
 
-                    {teacher.introSessionEnabled ? (
+                    {introSessionPricing ? (
                       <div className="rounded-2xl border border-[#DCEAE3] bg-[#F3FAF6] p-4 space-y-2">
                         <p className="text-sm font-extrabold text-slate-900">
-                          {t("introSessionPublicLabel").replace("{n}", String(teacher.introSessionDurationMinutes ?? 45))}
+                          {t("introSessionPublicLabel").replace("{n}", String(introSessionPricing.durationMinutes))}
                         </p>
-                        <p className="text-xs leading-relaxed text-slate-600">{t("introSessionPublicDescription")}</p>
-                        {(() => {
-                          const dur = teacher.introSessionDurationMinutes ?? 45;
-                          const discount = teacher.introSessionDiscountPercent ?? 50;
-                          const override = teacher.introSessionPriceCents;
-                          const cents = calculateIntroSessionPriceCents({
-                            hourlyPrice: teacher.pricePerLesson,
-                            durationMinutes: dur,
-                            discountPercent: discount,
-                            explicitPriceCents: override ?? null,
-                          });
-                          return (
-                            <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-                              <span className="font-semibold text-slate-700">
-                                {t("introSessionPrice")} : <span className="font-extrabold text-teal-700">{formatPrice(cents / 100)}</span>
-                              </span>
-                              <span className="font-semibold text-slate-600">
-                                {t("regularLesson")} : {formatPrice(Number(teacher.pricePerLesson))}/h
-                              </span>
-                            </div>
-                          );
-                        })()}
+                        <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                          <span className="font-semibold text-slate-700">
+                            {t("introSessionPrice")} : <span className="font-extrabold text-teal-700">{introSessionPricing.formattedPrice}</span>
+                          </span>
+                          <span className="font-semibold text-slate-600">
+                            {t("regularLesson")} : {formatPrice(Number(teacher.pricePerLesson))}/h
+                          </span>
+                        </div>
                       </div>
                     ) : null}
 
                     <button
                       type="button"
                       onClick={() => onBook("standard")}
-                      className="w-full h-11 rounded-2xl text-white text-sm font-semibold shadow-sm hover:opacity-95 transition-opacity flex items-center justify-center gap-2"
+                      className="w-full h-12 rounded-2xl text-white text-sm font-bold shadow-[0_12px_28px_rgba(0,105,76,0.24)] hover:opacity-95 transition-opacity flex items-center justify-center gap-2"
                       style={{ backgroundColor: "var(--palette-teal-700)" }}
                     >
-                      {t("bookNow")}
+                      {introSessionPricing
+                        ? t("bookIntroLessonWithPrice").replace("{price}", introSessionPricing.formattedPrice)
+                        : t("bookNow")}
                       <ChevronRight size={15} />
                     </button>
+
+                    <div className="grid gap-2 text-[11px] font-semibold text-slate-600">
+                      <div className="flex items-start gap-2 rounded-xl bg-slate-50 px-3 py-2">
+                        <Shield size={14} className="mt-0.5 shrink-0 text-teal-700" />
+                        <span>{t("paymentProtectionBody")}</span>
+                      </div>
+                      <div className="flex items-start gap-2 rounded-xl bg-slate-50 px-3 py-2">
+                        <Clock size={14} className="mt-0.5 shrink-0 text-teal-700" />
+                        <span>{t("responseTimePlaceholderBody")}</span>
+                      </div>
+                    </div>
 
                     {homeConfigured ? (
                       homeNeedsGeo ? (
@@ -918,6 +961,23 @@ export function TeacherProfile({
                         </li>
                       ))}
                     </ul>
+                    <div className="mt-4 grid gap-2 border-t border-slate-100 pt-4">
+                      <TrustAssuranceItem
+                        icon={<CreditCard size={15} />}
+                        title={t("paymentProtectionTitle")}
+                        body={t("paymentProtectionBody")}
+                      />
+                      <TrustAssuranceItem
+                        icon={<Shield size={15} />}
+                        title={t("cancellationProtectionTitle")}
+                        body={t("cancellationProtectionBody")}
+                      />
+                      <TrustAssuranceItem
+                        icon={<Clock size={15} />}
+                        title={t("responseTimePlaceholderTitle")}
+                        body={t("responseTimePlaceholderBody")}
+                      />
+                    </div>
                   </div>
 
                   {/* Message: locked until first booking */}
@@ -949,14 +1009,32 @@ export function TeacherProfile({
         </div>
 
         {/* ── Mobile sticky footer (hidden on lg+) ─── */}
-        <div className="lg:hidden flex-shrink-0 px-4 py-3 border-t border-slate-100 bg-white">
+        <div className="lg:hidden flex-shrink-0 px-4 py-3 border-t border-[#DCEAE3] bg-white/95 backdrop-blur">
+          <div className="mb-2 flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-bold text-slate-900">
+                {introSessionPricing ? t("introSessionTitle") : standardLabel}
+              </p>
+              <p className="text-[11px] text-slate-600">
+                {introSessionPricing
+                  ? `${introSessionPricing.formattedPrice} / ${introSessionPricing.durationMinutes} min`
+                  : t("bookingNoHiddenFees").replace("{price}", formatPrice(Number(teacher.pricePerLesson)))}
+              </p>
+            </div>
+            <div className="flex items-center gap-1 text-xs font-bold text-slate-800">
+              <Star size={13} fill="currentColor" className="text-amber-400" />
+              {teacher.rating}
+            </div>
+          </div>
           <button
             type="button"
             onClick={() => onBook("standard")}
-            className="w-full h-11 rounded-2xl text-white text-sm font-semibold flex items-center justify-center gap-2 shadow-sm hover:opacity-95 transition-opacity"
+            className="w-full h-11 rounded-2xl text-white text-sm font-bold flex items-center justify-center gap-2 shadow-[0_12px_28px_rgba(0,105,76,0.24)] hover:opacity-95 transition-opacity"
             style={{ backgroundColor: "var(--palette-teal-700)" }}
           >
-            {t("bookAtPrice").replace("{price}", `${formatPrice(Number(teacher.pricePerLesson))}/h`)}
+            {introSessionPricing
+              ? t("bookIntroLessonWithPrice").replace("{price}", introSessionPricing.formattedPrice)
+              : t("bookAtPrice").replace("{price}", `${formatPrice(Number(teacher.pricePerLesson))}/h`)}
           </button>
         </div>
 
@@ -1079,6 +1157,20 @@ function QuickStat({ icon, label, value }: { icon: React.ReactNode; label: strin
         <span className="text-[9px] font-bold uppercase tracking-widest text-slate-600">{label}</span>
       </div>
       <div className="text-xs font-bold text-slate-900 truncate">{value}</div>
+    </div>
+  );
+}
+
+function TrustAssuranceItem({ icon, title, body }: { icon: React.ReactNode; title: string; body: string }) {
+  return (
+    <div className="flex gap-2.5 rounded-xl bg-slate-50 px-3 py-2.5">
+      <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white text-teal-700 shadow-sm">
+        {icon}
+      </span>
+      <span>
+        <span className="block text-xs font-bold text-slate-900">{title}</span>
+        <span className="block text-[11px] leading-relaxed text-slate-600">{body}</span>
+      </span>
     </div>
   );
 }

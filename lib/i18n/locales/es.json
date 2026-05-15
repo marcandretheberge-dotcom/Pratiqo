@@ -2019,5 +2019,13 @@
   "teacherMapDetailsTitle": "Detalles del profesor",
   "teacherMapDetailsDescription": "Detalles del profesor seleccionado.",
   "close": "Cerrar",
-  "currencyApproximationTooltip": "Solo aproximado. El cobro se hace en la moneda del profesor."
+  "currencyApproximationTooltip": "Solo aproximado. El cobro se hace en la moneda del profesor.",
+  "bookIntroLessonWithPrice": "Reservar intro - {price}",
+  "paymentProtectionTitle": "Pago protegido",
+  "paymentProtectionBody": "Pago seguro con Stripe; el seguimiento queda dentro de Pratiqo.",
+  "cancellationProtectionTitle": "Marco claro",
+  "cancellationProtectionBody": "Política de cancelación y soporte disponibles después de la reserva.",
+  "responseTimePlaceholderTitle": "Respuesta del profesor",
+  "responseTimePlaceholderBody": "El tiempo de respuesta aparecerá cuando haya actividad de reservas.",
+  "teacherProfileReviewsEmptyBody": "Las primeras reseñas van a aparecer aquí después de clases confirmadas."
 }
