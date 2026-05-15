@@ -7,6 +7,7 @@ import { useAuth } from "../../../components/AuthProvider";
 import { useRouter } from "next/navigation";
 import { getSupabaseClient } from "../../../lib/supabase";
 import { getTeacherOnboardingMissingFields } from "../../../lib/teacherOnboarding";
+import { DashboardGateSkeleton } from "../../../components/PratiqoLoadingStates";
 
 export default function DashboardPage() {
   const { profile } = useAuth();
@@ -61,11 +62,7 @@ export default function DashboardPage() {
 
   if (role === "teacher") {
     if (!teacherChecked || shouldRedirectToOnboarding) {
-      return (
-        <div className="min-h-[40vh] flex items-center justify-center text-sm text-[var(--p-text-muted)]">
-          Chargement…
-        </div>
-      );
+      return <DashboardGateSkeleton />;
     }
     return <Dashboard />;
   }

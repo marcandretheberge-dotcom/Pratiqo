@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useEffect } from "react";
-import { Loader2 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "./AuthProvider";
 import { AppShell } from "./AppShell";
+import { AuthShellLoading, RedirectingToLogin } from "./PratiqoLoadingStates";
 
 const LEGAL_PREFIX = "/legal";
 
@@ -86,20 +86,11 @@ export function AuthenticatedShell({ children }: { children: React.ReactNode }) 
   }
 
   if (loading) {
-    return (
-      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3 text-[var(--p-text-muted)]">
-        <Loader2 className="h-9 w-9 animate-spin text-teal-700" />
-        <p className="text-sm font-medium">Chargement…</p>
-      </div>
-    );
+    return <AuthShellLoading />;
   }
 
   if (!user) {
-    return (
-      <div className="min-h-[40vh] flex flex-col items-center justify-center gap-2 px-6 text-center text-sm text-[var(--p-text-muted)]">
-        <p>Redirection vers la connexion…</p>
-      </div>
-    );
+    return <RedirectingToLogin />;
   }
 
   return <AppShell>{children}</AppShell>;
