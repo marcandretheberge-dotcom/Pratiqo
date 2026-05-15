@@ -80,8 +80,8 @@ export default function StudentSearchPage() {
   const [nearbyServerResult, setNearbyServerResult] = useState<Map<string, number> | null>(null);
   const [sortMode, setSortMode] = useState<"relevance" | "nearest" | "trusted">("relevance");
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
+  const [desktopMapEnabled, setDesktopMapEnabled] = useState(false);
   const [mapBounds, setMapBounds] = useState<MapBounds | null>(null);
-  const [mapLoaded, setMapLoaded] = useState(false);
   const [selectedMapTeacher, setSelectedMapTeacher] = useState<Teacher | null>(null);
   const [bookingTeacher, setBookingTeacher] = useState<Teacher | null>(null);
   const [bookingInitialKind, setBookingInitialKind] = useState<BookingInitialLessonKind>("standard");
@@ -204,6 +204,17 @@ export default function StudentSearchPage() {
       if (timeoutId != null) clearTimeout(timeoutId);
     };
   }, [teachers.length]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const media = window.matchMedia("(min-width: 1024px)");
+    const sync = () => {
+      setDesktopMapEnabled(media.matches);
+    };
+    sync();
+    media.addEventListener("change", sync);
+    return () => media.removeEventListener("change", sync);
+  }, []);
 
   const requestGeolocation = () => {
     if (!("geolocation" in navigator)) return;
@@ -338,6 +349,104 @@ export default function StudentSearchPage() {
     const rows = sortRows(filtered, { sortMode, studentPrefs });
     return rows;
   }, [teachers, activeCat, searchQuery, geo, radius, sortMode, mapBounds, studentPrefs, adv.verifiedOnly, nearbyServerResult]);
+
+  const resetFilters = () => {
+    setSearchQuery("");
+    setActiveCat("All");
+    setRadius("all");
+    setMapBounds(null);
+    setAdv({
+      minRating: "",
+      maxPrice: "",
+      verifiedOnly: false,
+      language: "",
+      level: "",
+      availability: "",
+      teacherPreference: "",
+      formatExtra: "",
+    });
+  };
+
+  const resultsList = loadingTeachers ? (
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <LandingTeacherCardSkeleton key={i} />
+      ))}
+    </div>
+  ) : results.length === 0 ? (
+    <div className="rounded-3xl border border-dashed border-[#DCEAE3] bg-white p-8 text-center shadow-[0_12px_40px_rgba(44,44,42,0.05)]">
+      <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-50 text-teal-700">
+        <MapPin size={22} />
+      </div>
+      <h2 className="mt-4 text-lg font-bold text-[#2C2C2A]">{t("noTeachersFound")}</h2>
+      <p className="mx-auto mt-2 max-w-xl text-sm leading-relaxed text-[#6B6A65]">
+        {t("studentSearchEmptyHint")}
+      </p>
+      <button
+        type="button"
+        onClick={resetFilters}
+        className="mt-5 inline-flex h-11 items-center rounded-full bg-teal-700 px-5 text-sm font-bold text-white hover:bg-teal-800"
+      >
+        {t("studentSearchResetFilters")}
+      </button>
+    </div>
+  ) : (
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
+      {results.map(({ teacher, distanceKm }) => (
+        <TeacherCard
+          key={teacher.id}
+          teacher={teacher}
+          distanceKm={distanceKm}
+          t={t}
+          onOpen={() => setSelectedTeacherProfile(teacher)}
+        />
+      ))}
+    </div>
+  );
+
+  const mapPanel = (
+    <div className="overflow-hidden rounded-[28px] border border-[#DCEAE3] bg-white p-2 shadow-[0_18px_60px_rgba(44,44,42,0.08)]">
+      {loadingTeachers ? (
+        <div className="flex min-h-[480px] items-center justify-center rounded-[22px] bg-[#F8FBF8] text-sm font-semibold text-teal-700">
+          <span className="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-teal-500 border-t-transparent" />
+          {t("loading")}
+        </div>
+      ) : (
+        <>
+          {mapBounds ? (
+            <div className="mb-2 flex justify-center">
+              <div className="inline-flex max-w-full items-center gap-2 rounded-full border border-teal-600/25 bg-teal-50/95 px-3 py-1.5 text-[11px] font-semibold text-teal-900 shadow-sm sm:text-xs">
+                <MapPin size={12} className="shrink-0 text-teal-700" aria-hidden />
+                <span className="truncate">{t("mapBoundsFilterActiveLabel")}</span>
+                <button
+                  type="button"
+                  onClick={() => setMapBounds(null)}
+                  className="inline-flex shrink-0 items-center gap-1 rounded-full bg-white/90 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-teal-800 ring-1 ring-teal-700/15 hover:bg-white"
+                  aria-label={t("mapBoundsClearFilterAria")}
+                >
+                  <X size={12} strokeWidth={2.5} aria-hidden />
+                  <span className="hidden sm:inline">{t("mapBoundsClearFilter")}</span>
+                </button>
+              </div>
+            </div>
+          ) : null}
+          <SearchMapView
+            teachers={results.map((x) => x.teacher)}
+            userLat={geo?.lat ?? null}
+            userLng={geo?.lng ?? null}
+            selectedTeacher={selectedMapTeacher}
+            onTeacherSelect={(teacher) => setSelectedMapTeacher(teacher)}
+            onCloseSelected={() => setSelectedMapTeacher(null)}
+            onViewProfile={(teacher) => setSelectedTeacherProfile(teacher)}
+            onBoundsSearch={(bounds) => setMapBounds(bounds)}
+            boundsFilterActive={!!mapBounds}
+            onBoundsFilterCleared={() => setMapBounds(null)}
+            mapHeight="min(680px, calc(100dvh - 8rem))"
+          />
+        </>
+      )}
+    </div>
+  );
 
   return (
     <>
@@ -487,7 +596,6 @@ export default function StudentSearchPage() {
                   onClick={() => {
                     setViewMode((v) => {
                       const next = v === "list" ? "map" : "list";
-                      if (next === "map") setMapLoaded(true);
                       return next;
                     });
                   }}
@@ -504,105 +612,15 @@ export default function StudentSearchPage() {
               </div>
             </div>
 
-            {viewMode === "list" ? (
-              loadingTeachers ? (
-                <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {Array.from({ length: 6 }).map((_, i) => (
-                    <LandingTeacherCardSkeleton key={i} />
-                  ))}
-                </div>
-              ) : results.length === 0 ? (
-                <div className="mt-5 rounded-3xl border border-dashed border-[#DCEAE3] bg-white p-8 text-center shadow-[0_12px_40px_rgba(44,44,42,0.05)]">
-                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-50 text-teal-700">
-                    <MapPin size={22} />
-                  </div>
-                  <h2 className="mt-4 text-lg font-bold text-[#2C2C2A]">{t("noTeachersFound")}</h2>
-                  <p className="mx-auto mt-2 max-w-xl text-sm leading-relaxed text-[#6B6A65]">
-                    {t("studentSearchEmptyHint")}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSearchQuery("");
-                      setActiveCat("All");
-                      setRadius("all");
-                      setMapBounds(null);
-                      setAdv({
-                        minRating: "",
-                        maxPrice: "",
-                        verifiedOnly: false,
-                        language: "",
-                        level: "",
-                        availability: "",
-                        teacherPreference: "",
-                        formatExtra: "",
-                      });
-                    }}
-                    className="mt-5 inline-flex h-11 items-center rounded-full bg-teal-700 px-5 text-sm font-bold text-white hover:bg-teal-800"
-                  >
-                    {t("studentSearchResetFilters")}
-                  </button>
-                </div>
-              ) : (
-                <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {results.map(({ teacher, distanceKm }) => (
-                    <TeacherCard
-                      key={teacher.id}
-                      teacher={teacher}
-                      distanceKm={distanceKm}
-                      t={t}
-                      onOpen={() => setSelectedTeacherProfile(teacher)}
-                    />
-                  ))}
-                </div>
-              )
-            ) : (
-              <div className="mt-5">
-                {!mapLoaded ? null : (
-                  <>
-                    {loadingTeachers ? (
-                      <div className="flex items-center gap-2 text-sm font-semibold text-teal-700">
-                        <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-teal-500 border-t-transparent" />
-                        {t("loading")}
-                      </div>
-                    ) : (
-                      <>
-                        {mapBounds ? (
-                          <div className="mb-2 flex justify-center sm:mb-3">
-                            <div className="inline-flex max-w-full items-center gap-2 rounded-full border border-teal-600/25 bg-teal-50/95 px-3 py-1.5 text-[11px] font-semibold text-teal-900 shadow-sm sm:text-xs">
-                              <MapPin size={12} className="shrink-0 text-teal-700" aria-hidden />
-                              <span className="truncate">{t("mapBoundsFilterActiveLabel")}</span>
-                              <button
-                                type="button"
-                                onClick={() => setMapBounds(null)}
-                                className="inline-flex shrink-0 items-center gap-1 rounded-full bg-white/90 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-teal-800 ring-1 ring-teal-700/15 hover:bg-white"
-                                aria-label={t("mapBoundsClearFilterAria")}
-                              >
-                                <X size={12} strokeWidth={2.5} aria-hidden />
-                                <span className="hidden sm:inline">{t("mapBoundsClearFilter")}</span>
-                              </button>
-                            </div>
-                          </div>
-                        ) : null}
-                        <SearchMapView
-                          teachers={results.map((x) => x.teacher)}
-                          userLat={geo?.lat ?? null}
-                          userLng={geo?.lng ?? null}
-                          selectedTeacher={selectedMapTeacher}
-                          onTeacherSelect={(teacher) => setSelectedMapTeacher(teacher)}
-                          onCloseSelected={() => setSelectedMapTeacher(null)}
-                          onViewProfile={(teacher) => setSelectedTeacherProfile(teacher)}
-                          onBoundsSearch={(bounds) => setMapBounds(bounds)}
-                          boundsFilterActive={!!mapBounds}
-                          onBoundsFilterCleared={() => setMapBounds(null)}
-                          mapHeight="min(520px, calc(100dvh - 14rem))"
-                        />
-                      </>
-                    )}
-                  </>
-                )}
+            <div className="mt-5 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(420px,0.82fr)] lg:items-start lg:gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(500px,0.9fr)]">
+              <div className={cn(viewMode === "map" ? "hidden lg:block" : "block")}>
+                {resultsList}
               </div>
-            )}
+
+              <div className={cn(viewMode === "map" ? "block" : "hidden lg:block", "lg:sticky lg:top-20")}>
+                {viewMode === "map" || desktopMapEnabled ? mapPanel : null}
+              </div>
+            </div>
           </div>
         </div>
       </div>
