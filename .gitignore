@@ -23,11 +23,23 @@
 
 # Production
 /build
+/dist
 
 # Misc
 .DS_Store
 Thumbs.db
 *.pem
+*.p12
+*.pfx
+*.key
+id_rsa
+id_dsa
+id_ecdsa
+id_ed25519
+id_rsa.pub
+id_dsa.pub
+id_ecdsa.pub
+id_ed25519.pub
 
 # Debug
 npm-debug.log*
@@ -53,9 +65,16 @@ next-env.d.ts
 
 # Local backups & database dumps (never commit)
 backups/
+dumps/
+tmp/
+temp/
 *.dump
 *.sql.gz
 *.backup
+*.bak
+*.sqlite
+*.sqlite3
+*.db
 
 # Logs
 *.log
@@ -65,3 +84,18 @@ backups/
 
 # Project ZIP archives (often created before transfers — must not be committed)
 /*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.7z
+*.rar
+
+# Local credential/config files
+secrets.*
+secret.*
+credentials.*
+credential.*
+service-account.*
+google-application-credentials.*
+*private-key*
+*service-role*

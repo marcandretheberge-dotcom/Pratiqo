@@ -2,159 +2,185 @@ import { spawnSync } from "node:child_process";
 
 const PREFIX = "[repo-hygiene]";
 
+type PathSource = "tracked" | "staged" | "untracked";
+
+type ScannedCandidate = {
+  path: string;
+  source: PathSource;
+};
+
+/** After dedupe, `source` may be e.g. `staged+tracked`. */
+type MergedCandidate = {
+  path: string;
+  source: string;
+};
+
+type ForbiddenRule = {
+  pattern: RegExp;
+  reason: string;
+};
+
 function fail(message: string): never {
   console.error(`${PREFIX} ${message}`);
   process.exit(1);
 }
 
-/** Run a git command and return stdout lines (empty lines stripped). */
 function gitLines(...args: string[]): string[] {
   const result = spawnSync("git", args, { encoding: "utf8" });
   if (result.error) {
     fail(`Could not run git ${args[0]}: ${result.error.message}`);
   }
+  if (result.status !== 0) {
+    fail(`git ${args.join(" ")} failed.`);
+  }
+
   return (result.stdout ?? "")
     .split("\n")
-    .map((l) => l.trim())
-    .filter(Boolean);
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map(normalizePath);
 }
 
-/**
- * Paths that are intentionally tracked and must NOT be flagged.
- * `.env.example` is a template file with no real secrets — explicitly
- * whitelisted in .gitignore with `!.env.example`.
- */
-const ALLOWED = new Set([".env.example"]);
+function normalizePath(path: string): string {
+  return path.replace(/\\/g, "/").replace(/^\.\//, "");
+}
 
-/**
- * Forbidden path patterns. Each entry is tested against every file path that
- * git knows about (tracked) or that is staged (cached diff).
- * Uses simple glob-style matching:
- *   - "*"  matches any characters except "/"
- *   - "**" matches any characters including "/"
- */
-const FORBIDDEN: Array<{ pattern: RegExp; reason: string }> = [
-  // Secret / env files (excluding .env.example which is an intentional template)
+function basename(path: string): string {
+  return path.split("/").at(-1) ?? path;
+}
+
+const ALLOWED_PATHS = new Set([
+  ".env.example",
+  ".vercelignore",
+  "docs/backup-and-restore.md",
+]);
+
+const ALLOWED_BASENAMES = new Set([
+  ".env.example",
+]);
+
+const FORBIDDEN: ForbiddenRule[] = [
   {
-    pattern: /^\.env($|[./])/,
+    pattern: /(^|\/)\.env($|[./-])/i,
     reason: "environment secret file (.env*)",
   },
   {
-    pattern: /\.env\.(local|production|staging|development)(\.local)?$/,
-    reason: "environment secret file (.env.*)",
-  },
-
-  // Build artifacts
-  {
-    pattern: /^\.netlify\//,
-    reason: "Netlify build artifact (.netlify/)",
+    pattern: /(^|\/)\.(netlify|vercel)(\/|$)/i,
+    reason: "deployment provider local state (.netlify/.vercel)",
   },
   {
-    pattern: /^\.vercel\//,
-    reason: "Vercel build artifact (.vercel/)",
+    pattern: /(^|\/)(\.next|out|build|dist|coverage)(\/|$)/i,
+    reason: "generated build or coverage output",
   },
   {
-    pattern: /^\.next\//,
-    reason: "Next.js build output (.next/)",
+    pattern: /(^|\/)(playwright-report|test-results)(\/|$)/i,
+    reason: "Playwright report/artifact output",
   },
   {
-    pattern: /^out\//,
-    reason: "Next.js static export output (out/)",
-  },
-
-  // Database dumps / backups
-  {
-    pattern: /\.dump$/i,
-    reason: "database dump (*.dump)",
+    pattern: /(^|\/)(backups?|dumps?|tmp|temp)(\/|$)/i,
+    reason: "backup, dump, or temporary artifact directory",
   },
   {
-    pattern: /\.sql\.gz$/i,
-    reason: "compressed SQL dump (*.sql.gz)",
+    pattern: /\.(dump|backup|bak|sql\.gz|tar|tgz|tar\.gz|zip|7z|rar)$/i,
+    reason: "archive, backup, or database dump file",
   },
   {
-    pattern: /\.backup$/i,
-    reason: "database backup (*.backup)",
+    pattern: /\.(sqlite|sqlite3|db)$/i,
+    reason: "local database file",
   },
   {
-    pattern: /^backups\//,
-    reason: "backups directory",
-  },
-
-  // Test / CI reports
-  {
-    pattern: /^playwright-report\//,
-    reason: "Playwright HTML report (playwright-report/)",
+    pattern: /\.(pem|p12|pfx|key)$/i,
+    reason: "private key or certificate material",
   },
   {
-    pattern: /^test-results\//,
-    reason: "Playwright test-results (test-results/)",
+    pattern: /(^|\/)(id_rsa|id_dsa|id_ecdsa|id_ed25519)(\.pub)?$/i,
+    reason: "SSH key material",
   },
-
-  // TypeScript cache
+  {
+    pattern: /(^|\/)(secrets?|credentials?|service[-_]?account|google[-_]?application[-_]?credentials)(\.[^.]+)?$/i,
+    reason: "secret or credential file",
+  },
+  {
+    pattern: /(^|\/)(firebase|google|gcp|stripe|supabase|vercel|netlify).*(secret|private[-_]?key|service[-_]?role|token|credential).*\.(json|env|txt|key)$/i,
+    reason: "provider credential/config file",
+  },
+  {
+    pattern: /(^|\/).*private[-_]?key.*$/i,
+    reason: "private key file",
+  },
   {
     pattern: /\.tsbuildinfo$/i,
-    reason: "TypeScript incremental build cache (*.tsbuildinfo)",
+    reason: "TypeScript incremental build cache",
   },
   {
-    pattern: /^next-env\.d\.ts$/,
-    reason: "Next.js auto-generated type file (next-env.d.ts)",
-  },
-
-  // Firebase / Google AI Studio config with embedded API keys
-  {
-    pattern: /firebase-applet-config\.json$/i,
-    reason: "Firebase applet config with embedded API key",
+    pattern: /(^|\/)next-env\.d\.ts$/i,
+    reason: "Next.js auto-generated type file",
   },
   {
-    pattern: /-applet-config\.json$/i,
-    reason: "Google AI Studio applet config (*-applet-config.json)",
-  },
-
-  // Project ZIP archives at repo root (often created before transfers)
-  {
-    pattern: /^[^/]+\.zip$/,
-    reason: "ZIP archive at repo root (*.zip)",
+    pattern: /(^|\/).*applet-config\.json$/i,
+    reason: "generated applet config with embedded API keys",
   },
 ];
 
-function checkPaths(paths: string[]): string[] {
+function isAllowed(path: string): boolean {
+  return ALLOWED_PATHS.has(path) || ALLOWED_BASENAMES.has(basename(path));
+}
+
+function uniqueCandidates(candidates: ScannedCandidate[]): MergedCandidate[] {
+  const byPath = new Map<string, Set<PathSource>>();
+  for (const candidate of candidates) {
+    const sources = byPath.get(candidate.path) ?? new Set<PathSource>();
+    sources.add(candidate.source);
+    byPath.set(candidate.path, sources);
+  }
+
+  return [...byPath.entries()].map(([path, sources]) => ({
+    path,
+    source: [...sources].sort().join("+"),
+  }));
+}
+
+function findViolations(candidates: MergedCandidate[]): string[] {
   const violations: string[] = [];
-  for (const filePath of paths) {
-    if (ALLOWED.has(filePath)) continue;
-    for (const { pattern, reason } of FORBIDDEN) {
-      if (pattern.test(filePath)) {
-        violations.push(`  ${filePath}  →  ${reason}`);
+
+  for (const candidate of candidates) {
+    if (isAllowed(candidate.path)) continue;
+
+    for (const rule of FORBIDDEN) {
+      if (rule.pattern.test(candidate.path)) {
+        violations.push(`  [${candidate.source}] ${candidate.path} -> ${rule.reason}`);
         break;
       }
     }
   }
+
   return violations;
 }
 
-// 1. Files already tracked by git
-const trackedFiles = gitLines("ls-files");
+const trackedFiles = gitLines("ls-files").map((path) => ({ path, source: "tracked" as const }));
+const stagedFiles = gitLines("diff", "--cached", "--name-only", "--diff-filter=ACMR").map((path) => ({
+  path,
+  source: "staged" as const,
+}));
+const untrackedFiles = gitLines("ls-files", "--others", "--exclude-standard").map((path) => ({
+  path,
+  source: "untracked" as const,
+}));
 
-// 2. Files staged for addition/modification (catches `git add -f` on ignored files).
-// Exclude deletions (D) — staging a removal is always safe.
-const stagedFiles = gitLines("diff", "--cached", "--name-only", "--diff-filter=ACMR");
-
-// Deduplicate
-const allPaths = [...new Set([...trackedFiles, ...stagedFiles])];
-
-const violations = checkPaths(allPaths);
+const candidates = uniqueCandidates([...trackedFiles, ...stagedFiles, ...untrackedFiles]);
+const violations = findViolations(candidates);
 
 if (violations.length > 0) {
-  console.error(`${PREFIX} FAIL — risky files found in git index or staging area:\n`);
-  for (const v of violations) {
-    console.error(v);
+  console.error(`${PREFIX} FAIL - risky paths found:\n`);
+  for (const violation of violations) {
+    console.error(violation);
   }
   console.error(
-    `\n${PREFIX} Remove the files above from git tracking:\n` +
+    `\n${PREFIX} Remove tracked/staged files from git, or add local-only artifacts to .gitignore.\n` +
       `  git rm --cached <file>    # stop tracking without deleting locally\n` +
-      `  git rm -r --cached <dir>  # stop tracking a directory\n` +
-      `Then ensure the paths are covered in .gitignore.`,
+      `  git rm -r --cached <dir>  # stop tracking a directory`,
   );
   process.exit(1);
 }
 
-console.log(`${PREFIX} OK — ${allPaths.length} tracked/staged paths checked, none forbidden.`);
+console.log(`${PREFIX} OK - ${candidates.length} tracked/staged/untracked paths checked, none forbidden.`);
