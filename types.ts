@@ -59,7 +59,7 @@ export interface Teacher {
   introSessionDiscountPercent?: number;
   /** Optional YouTube / Vimeo intro video URL (stored as embed-ready URL in teachers.video_url). */
   videoUrl?: string | null;
-  /** Plan profil (profiles.plan), renseigné côté Explore via API — lecture seule marketplace */
+  /** Public marketplace display tier (free/pro/enterprise). Sourced from teachers_public.public_plan_tier — never from profiles directly. */
   profilePlan?: string | null;
   /** Colonnes `teachers` — confiance progressive */
   verificationLevel?: number | null;

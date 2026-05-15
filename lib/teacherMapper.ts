@@ -53,6 +53,8 @@ export type TeacherRow = {
   location_verification_status?: string | null;
   cv_summary?: string | null;
   cv_verification_status?: string | null;
+  /** Public marketplace display tier from teacher_public_marketplace_metadata (via teachers_public view). */
+  public_plan_tier?: string | null;
 };
 
 export function teacherRowToTeacher(row: TeacherRow): Teacher {
@@ -135,6 +137,7 @@ export function teacherRowToTeacher(row: TeacherRow): Teacher {
     currency: row.currency ?? undefined,
     city: row.city ?? undefined,
     region: row.region ?? undefined,
+    profilePlan: row.public_plan_tier ?? null,
   };
 }
 

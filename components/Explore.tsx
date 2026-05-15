@@ -180,22 +180,8 @@ export function Explore({
     const supabase = getSupabaseClient();
 
     const load = async () => {
-      const mergePlans = async (list: Teacher[]) => {
-        const ids = list.map((t) => t.id).join(",");
-        if (!ids) {
-          setTeachers(list);
-          return;
-        }
-        try {
-          const pr = await fetch(`/api/teachers/plans?ids=${encodeURIComponent(ids)}`);
-          const body = (await pr.json()) as { plans?: Record<string, string> };
-          const plans = body.plans ?? {};
-          setTeachers(list.map((t) => ({ ...t, profilePlan: plans[t.id] ?? "free" })));
-        } catch {
-          setTeachers(list.map((t) => ({ ...t, profilePlan: "free" })));
-        }
-      };
-
+      // profilePlan is now mapped directly from teachers_public.public_plan_tier
+      // in teacherRowToTeacher — no secondary plan API call needed.
       const { data, error } = await supabase
         .from(TEACHERS_PUBLIC_TABLE)
         .select(TEACHERS_LIST_SELECT)
@@ -206,7 +192,7 @@ export function Explore({
           "Supabase teachers load failed or empty; skipping demo teachers (booking requires real teacher UUIDs).",
           error,
         );
-        await mergePlans([]);
+        setTeachers([]);
         setLoading(false);
         return;
       }
@@ -215,8 +201,7 @@ export function Explore({
         supabase,
         mapped.map((t) => t.id),
       );
-      const withDisc = mergeTeachersWithDisciplines(mapped, discMap);
-      await mergePlans(withDisc);
+      setTeachers(mergeTeachersWithDisciplines(mapped, discMap));
       setLoading(false);
     };
 

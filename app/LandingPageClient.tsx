@@ -154,27 +154,16 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
         setLoadingTeachers(false);
         return;
       }
+      // profilePlan is now mapped directly from teachers_public.public_plan_tier
+      // in teacherRowToTeacher — no secondary plan API call needed.
       const mapped = data.map((r) => teacherRowToTeacher(r as TeacherRow));
-      const ids = mapped.map((t) => t.id).join(",");
-      if (!ids) {
-        setTeachers(mapped);
-        setLoadingTeachers(false);
-        return;
-      }
 
       let merged: Teacher[];
       try {
-        const [discMap, plansRes] = await Promise.all([
-          fetchTeacherDisciplinesMap(supabase, mapped.map((t) => t.id)),
-          fetch(`/api/teachers/plans?ids=${encodeURIComponent(ids)}`).then((r) => r.json() as Promise<{ plans?: Record<string, string> }>),
-        ]);
-        const plans = plansRes.plans ?? {};
-        merged = mergeTeachersWithDisciplines(mapped, discMap).map((t) => ({
-          ...t,
-          profilePlan: plans[t.id] ?? "free",
-        }));
+        const discMap = await fetchTeacherDisciplinesMap(supabase, mapped.map((t) => t.id));
+        merged = mergeTeachersWithDisciplines(mapped, discMap);
       } catch {
-        merged = mergeTeachersWithDisciplines(mapped, new Map()).map((t) => ({ ...t, profilePlan: "free" as const }));
+        merged = mapped;
       }
       setTeachers(merged);
       setLoadingTeachers(false);

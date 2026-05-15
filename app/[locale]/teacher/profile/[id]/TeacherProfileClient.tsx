@@ -17,6 +17,8 @@ export default function TeacherProfileClient({ id }: { id: string }) {
   const router = useRouter();
   const { user } = useAuth();
   const [teacher, setTeacher] = useState<Teacher | null>(null);
+  // embeddedPlan is derived from teacher.profilePlan (teachers_public.public_plan_tier)
+  // once the teacher loads — no separate API call needed.
   const [embeddedPlan, setEmbeddedPlan] = useState<{ plan: string | null; loading: boolean }>({
     plan: null,
     loading: true,
@@ -41,23 +43,11 @@ export default function TeacherProfileClient({ id }: { id: string }) {
     };
   }, [teacher?.id, user?.id]);
 
+  // Derive plan from profilePlan already present on the teacher object (from teachers_public).
   useEffect(() => {
-    if (!teacher?.id) return;
-    let cancelled = false;
-    setEmbeddedPlan({ plan: null, loading: true });
-    void fetch(`/api/teachers/plan?teacherId=${encodeURIComponent(teacher.id)}`)
-      .then((r) => r.json())
-      .then((j: { plan?: string }) => {
-        if (cancelled) return;
-        setEmbeddedPlan({ plan: j.plan ?? "free", loading: false });
-      })
-      .catch(() => {
-        if (!cancelled) setEmbeddedPlan({ plan: "free", loading: false });
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [teacher?.id]);
+    if (!teacher) return;
+    setEmbeddedPlan({ plan: teacher.profilePlan ?? "free", loading: false });
+  }, [teacher?.id, teacher?.profilePlan]);
 
   useEffect(() => {
     const supabase = getSupabaseClient();

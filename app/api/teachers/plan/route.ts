@@ -1,8 +1,14 @@
 import { NextResponse } from "next/server";
-import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { getSupabaseAnon } from "@/lib/supabaseAnon";
 
 export const runtime = "edge";
 
+/**
+ * Single teacher marketplace plan tier lookup.
+ * Reads from teacher_public_marketplace_metadata via anon client (no service role).
+ * Kept for backwards compatibility; the public teacher profile page now reads
+ * public_plan_tier directly from teachers_public and no longer calls this endpoint.
+ */
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const teacherId = searchParams.get("teacherId");
@@ -10,25 +16,13 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Missing teacherId" }, { status: 400 });
   }
 
-  const admin = getSupabaseAdmin();
-  const { data: teacher, error: tErr } = await admin
-    .from("teachers")
-    .select("id, user_id")
-    .eq("id", teacherId)
+  const db = getSupabaseAnon();
+  const { data } = await db
+    .from("teacher_public_marketplace_metadata")
+    .select("public_plan_tier")
+    .eq("teacher_id", teacherId)
     .maybeSingle();
 
-  if (tErr || !teacher) {
-    return NextResponse.json({ error: "Teacher not found" }, { status: 404 });
-  }
-
-  const userId = (teacher as { user_id?: string | null }).user_id ?? null;
-  if (!userId) {
-    return NextResponse.json({ plan: "free" });
-  }
-
-  const { data: prof } = await admin.from("profiles").select("plan").eq("id", userId).maybeSingle();
-  const raw = String((prof as { plan?: string | null } | null)?.plan || "free").toLowerCase();
-  const plan = raw === "enterprise" ? "enterprise" : raw === "pro" ? "pro" : "free";
-  return NextResponse.json({ plan });
+  const tier = (data as { public_plan_tier?: string } | null)?.public_plan_tier ?? "free";
+  return NextResponse.json({ plan: tier });
 }
-

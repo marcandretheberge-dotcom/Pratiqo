@@ -58,6 +58,10 @@ if (!teachersListSelect.includes("diploma_pending")) {
   fail("TEACHERS_LIST_SELECT should expose diploma_pending instead of diploma_url.");
 }
 
+if (!teachersListSelect.includes("public_plan_tier")) {
+  fail("TEACHERS_LIST_SELECT must include public_plan_tier (public marketplace tier from teacher_public_marketplace_metadata).");
+}
+
 const latestTeachersPublic = latestMigrationContaining("teachers_public");
 const viewSql = latestTeachersPublic.content.toLowerCase();
 
@@ -84,6 +88,10 @@ if (!viewSql.includes("location - 'private'")) {
 
 if (!viewSql.includes("diploma_pending")) {
   fail(`${latestTeachersPublic.file} should expose diploma_pending as the public diploma status.`);
+}
+
+if (!viewSql.includes("public_plan_tier")) {
+  fail(`${latestTeachersPublic.file} must expose public_plan_tier from teacher_public_marketplace_metadata.`);
 }
 
 console.log(`[public-schema-safety] OK (${latestTeachersPublic.file})`);

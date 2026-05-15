@@ -4,6 +4,10 @@ import { computeAvailableDaysForTeacher } from "@/lib/teacherSlotQueries";
 
 export const runtime = "edge";
 
+// Service-role client is intentional here — same reason as /slots.
+// Computing available days requires reading booking occupancy from `bookings`
+// and `blocked_slots`, both of which are restricted to authenticated participants.
+// The response exposes only derived day-level availability, no private booking data.
 export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }) {
   try {
     const { id: teacherId } = await ctx.params;

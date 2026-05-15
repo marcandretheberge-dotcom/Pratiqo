@@ -13,6 +13,13 @@ import { isBookingAtLeast24hAhead } from "@/lib/bookingCancellation";
 
 export const runtime = "edge";
 
+// Service-role client is intentional here.
+// This route computes public derived slot availability, but doing so requires
+// reading `bookings` and `blocked_slots` — both are correctly restricted to
+// authenticated participants in RLS. The anon client would return empty rows,
+// causing all slots to appear available (incorrect — booked slots must be hidden).
+// The response exposes only derived time strings, never booking IDs, student IDs,
+// or any private fields from those tables.
 export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }) {
   try {
     const { id: teacherId } = await ctx.params;
