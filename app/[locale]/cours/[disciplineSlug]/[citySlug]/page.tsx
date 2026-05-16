@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { unstable_cache } from "next/cache";
-import { Star, MapPin, BookOpen } from "lucide-react";
 import { findCityBySlug } from "@/lib/constants/cities";
 import type { Teacher } from "@/types";
 import { findDisciplineBySlug, DISCIPLINE_CITY_PAIRS } from "@/lib/seo/disciplines";
@@ -14,6 +13,15 @@ import { MarketingPublicLayout } from "@/components/marketing/MarketingPublicLay
 import { FAQSchema } from "@/components/seo/FAQSchema";
 import { BreadcrumbSchema } from "@/components/seo/BreadcrumbSchema";
 import { MarketingResourceBlock } from "@/components/seo/MarketingResourceBlock";
+import {
+  SeoBreadcrumbBar,
+  SeoCourseCityEmptyState,
+  SeoDiscoveryGrid,
+  SeoHeroShell,
+  SeoHowPratiqoWorks,
+  SeoTeacherRatingBadge,
+  SeoTransparencyBlock,
+} from "@/components/seo/SeoLandingUi";
 import { getDictionary } from "@/lib/i18n/server";
 import { getDisciplineCitySeoGuideLinks } from "@/lib/seo/internalLinks";
 import type { DisciplineConfig } from "@/lib/seo/types";
@@ -263,59 +271,34 @@ export default async function DisciplineCityPage({
 
       <MarketingPublicLayout className="bg-[#FAFCFB]">
 
-        {/* ── BREADCRUMB ─────────────────────────────────────────────────── */}
-        <nav aria-label="Fil d'Ariane" className="bg-white border-b border-[#E8E6DF] px-4 sm:px-6 py-2">
-          <ol className="flex flex-wrap items-center gap-1.5 text-xs text-[#6B6760] max-w-5xl mx-auto">
-            <li><Link href={withLocale("/", locale)} className="hover:text-teal-700">Accueil</Link></li>
-            <li aria-hidden className="text-[#D3D1C7]">/</li>
-            <li><Link href={withLocale("/trouver-un-prof", locale)} className="hover:text-teal-700">Cours</Link></li>
-            <li aria-hidden className="text-[#D3D1C7]">/</li>
-            <li><Link href={withLocale(`/cours/${disciplineSlug}/${citySlug}`, locale)} className="hover:text-teal-700">{discipline.name}</Link></li>
-            <li aria-hidden className="text-[#D3D1C7]">/</li>
-            <li className="font-semibold text-[#2C2C2A]">{city.name}</li>
-          </ol>
-        </nav>
+        <SeoBreadcrumbBar
+          items={[
+            { label: "Accueil", href: withLocale("/", locale) },
+            { label: "Cours", href: withLocale("/trouver-un-prof", locale) },
+            { label: discipline.name, href: withLocale(`/cours/${disciplineSlug}/${citySlug}`, locale) },
+            { label: city.name, href: withLocale(`/cours/${disciplineSlug}/${citySlug}`, locale) },
+          ]}
+        />
 
-        {/* ── HERO ───────────────────────────────────────────────────────── */}
-        <section className="bg-teal-700 text-white py-10 px-4 sm:px-6">
-          <div className="mx-auto max-w-4xl text-center">
-            <div className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold mb-4">
-              <MapPin size={12} aria-hidden />
-              {city.region}, {seoCity.province}
-            </div>
-            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">
-              Cours de {discipline.name} à {city.name}
-            </h1>
-            <p className="mt-3 text-base text-white/85 max-w-2xl mx-auto leading-relaxed">
-              {courseSeo.intro}
-            </p>
-            <div className="mt-6 flex flex-wrap justify-center gap-4 text-sm text-white/90">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1">
-                <span aria-hidden>✅</span> Profils vérifiés
-              </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1">
-                <span aria-hidden>💳</span> Paiements sécurisés
-              </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1">
-                <span aria-hidden>📍</span> Profs locaux à {city.name}
-              </span>
-            </div>
-            <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
-              <Link
-                href={withLocaleHref("/trouver-un-prof", locale)}
-                className="inline-flex h-11 items-center rounded-2xl bg-white px-6 text-sm font-bold text-teal-700 hover:brightness-95 shadow"
-              >
-                Voir les professeurs disponibles
-              </Link>
-              <Link
-                href={withLocaleHref("/become-teacher", locale)}
-                className="inline-flex h-11 items-center rounded-2xl border border-white/40 px-6 text-sm font-semibold text-white hover:bg-white/10"
-              >
-                Devenir professeur
-              </Link>
-            </div>
-          </div>
-        </section>
+        <SeoHeroShell
+          regionLabel={`${city.region}, ${seoCity.province}`}
+          title={`Cours de ${discipline.name} à ${city.name}`}
+          intro={courseSeo.intro}
+          trustChips={[
+            "Profils clairs",
+            "Réservation simple",
+            "Paiement sécurisé",
+            `Profs locaux à ${city.name}`,
+          ]}
+          primaryCta={{
+            href: withLocaleHref("/trouver-un-prof", locale),
+            label: "Voir les professeurs disponibles",
+          }}
+          secondaryCta={{
+            href: withLocaleHref("/become-teacher", locale),
+            label: "Devenir professeur",
+          }}
+        />
 
         {/* ── TEACHER LIST ───────────────────────────────────────────────── */}
         <section className="flex-1 bg-[#F1EFE8] py-8 px-4 sm:px-6">
@@ -332,26 +315,19 @@ export default async function DisciplineCityPage({
             </div>
 
             {teachers.length === 0 ? (
-              <div className="rounded-2xl bg-white border border-[#E8E6DF] p-10 text-center">
-                <BookOpen size={36} className="mx-auto text-[#D3D1C7] mb-3" />
-                <p className="text-base font-semibold text-[#2C2C2A]">
-                  Aucun professeur n&apos;est encore disponible pour {discipline.name.toLowerCase()} à {city.name}. Vous enseignez cette matière? Soyez le premier prof sur Pratiqo.
-                </p>
-                <div className="mt-5 flex flex-col sm:flex-row gap-3 justify-center">
-                  <Link
-                    href={withLocaleHref("/become-teacher", locale)}
-                    className="inline-flex items-center justify-center rounded-xl bg-teal-700 px-5 py-2.5 text-sm font-bold text-white hover:brightness-105"
-                  >
-                    Devenir professeur
-                  </Link>
-                  <Link
-                    href={withLocaleHref("/trouver-un-prof", locale)}
-                    className="inline-flex items-center justify-center rounded-xl border border-[#D3D1C7] px-5 py-2.5 text-sm font-semibold text-[#2C2C2A] hover:border-teal-500"
-                  >
-                    Explorer Pratiqo
-                  </Link>
-                </div>
-              </div>
+              <SeoCourseCityEmptyState
+                locale={locale}
+                cityName={city.name}
+                subjectLabel={seoSubject.label}
+                disciplineName={discipline.name}
+                disciplineSlug={disciplineSlug}
+                citySlug={citySlug}
+                nearbyCities={nearbyForSubject.map((c) => ({ slug: c.slug, name: c.name }))}
+                relatedSubjects={relatedSubjects.map((s) => ({
+                  slug: s.slug,
+                  label: s.label,
+                }))}
+              />
             ) : (
               <>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -383,10 +359,7 @@ export default async function DisciplineCityPage({
                             <p className="truncate text-xs text-[#6B6760]">{teacher.discipline}</p>
                           </div>
                         </div>
-                        <span className="shrink-0 flex items-center gap-0.5 rounded-lg border border-[#E8E6DF] bg-white px-2 py-1 text-[11px] font-bold text-[#2C2C2A]">
-                          <Star size={10} className="text-amber-400 fill-amber-400" />
-                          {teacher.rating.toFixed(1)}
-                        </span>
+                        <SeoTeacherRatingBadge rating={teacher.rating} reviews={teacher.reviews} />
                       </div>
                       <div className="mt-3 flex items-center justify-between border-t border-[#E8E6DF] pt-3 text-xs text-[#6B6760]">
                         <span>{teachingModeLabel(teacher.teachingMode)}</span>
@@ -401,7 +374,7 @@ export default async function DisciplineCityPage({
                 <div className="mt-8 text-center">
                   <Link
                     href={withLocaleHref("/trouver-un-prof", locale)}
-                    className="inline-flex h-11 items-center rounded-2xl bg-teal-700 px-7 text-sm font-bold text-white hover:brightness-105 shadow-sm"
+                    className="inline-flex h-11 w-full max-w-md items-center justify-center rounded-2xl bg-teal-700 px-7 text-sm font-bold text-white shadow-sm hover:brightness-105 sm:mx-auto sm:w-auto"
                   >
                     Voir les professeurs disponibles
                   </Link>
@@ -412,41 +385,8 @@ export default async function DisciplineCityPage({
           </div>
         </section>
 
-        {/* ── HOW IT WORKS ───────────────────────────────────────────────── */}
-        <section className="bg-white border-t border-[#E8E6DF] py-10 px-4 sm:px-6">
-          <div className="mx-auto max-w-4xl">
-            <p className="text-center text-[11px] font-bold uppercase tracking-widest text-[#6B6760] mb-8">
-              Comment ça marche
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {[
-                {
-                  n: "1",
-                  title: "Comparez les profils",
-                  desc: `Parcourez les profils de professeurs pour ${discipline.name.toLowerCase()} à ${city.name} : expérience, avis, vérifications et tarifs affichés clairement.`,
-                },
-                {
-                  n: "2",
-                  title: "Réservez en ligne",
-                  desc: "Choisissez un créneau et confirmez le format du cours. Paiement sécurisé via Stripe.",
-                },
-                {
-                  n: "3",
-                  title: "Apprenez à votre rythme",
-                  desc: "En ligne ou en présentiel, avec des objectifs ajustés à votre niveau et à votre emploi du temps.",
-                },
-              ].map((step) => (
-                <div key={step.n} className="rounded-2xl border border-[#E8E6DF] bg-[#FAFCFB] p-5">
-                  <div className="mb-3 inline-flex h-8 w-8 items-center justify-center rounded-full bg-teal-500/15 text-sm font-bold text-teal-700">
-                    {step.n}
-                  </div>
-                  <p className="font-bold text-sm text-[#2C2C2A]">{step.title}</p>
-                  <p className="mt-1 text-xs text-[#6B6760] leading-relaxed">{step.desc}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+        <SeoHowPratiqoWorks />
+        <SeoTransparencyBlock />
 
         <section className="bg-white border-t border-[#E8E6DF] py-10 px-4 sm:px-6">
           <div className="mx-auto max-w-3xl space-y-4 text-sm text-[#2C2C2A] leading-relaxed">
@@ -460,77 +400,50 @@ export default async function DisciplineCityPage({
           </div>
         </section>
 
-        <section className="bg-[#FAFAF8] border-t border-[#E8E6DF] py-10 px-4 sm:px-6">
-          <div className="mx-auto max-w-5xl grid gap-10 lg:grid-cols-3">
-            <div>
-              <h2 className="text-sm font-bold uppercase tracking-widest text-[#6B6760] mb-3">
-                Autres villes pour {discipline.name.toLowerCase()}
-              </h2>
-              <ul className="space-y-2 text-sm">
-                {nearbyForSubject.map((c) => (
-                  <li key={c.slug}>
-                    <Link
-                      href={withLocale(getCoursePagePath(disciplineSlug, c.slug), locale)}
-                      className="text-teal-700 font-semibold hover:underline"
-                    >
-                      {discipline.name} à {c.name}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <h2 className="text-sm font-bold uppercase tracking-widest text-[#6B6760] mb-3">
-                Autres cours à {city.name}
-              </h2>
-              <ul className="space-y-2 text-sm">
-                {relatedSubjects.map((s) => (
-                  <li key={s.slug}>
-                    <Link
-                      href={withLocale(getCoursePagePath(s.slug, citySlug), locale)}
-                      className="text-teal-700 font-semibold hover:underline"
-                    >
-                      {s.label.charAt(0).toUpperCase() + s.label.slice(1)} à {city.name}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <h2 className="text-sm font-bold uppercase tracking-widest text-[#6B6760] mb-3">Pages utiles</h2>
-              <ul className="space-y-2 text-sm">
-                <li>
-                  <Link href={withLocale("/trouver-un-prof", locale)} className="text-teal-700 font-semibold hover:underline">
-                    Trouver un prof
-                  </Link>
-                </li>
-                <li>
-                  <Link href={withLocaleHref("/become-teacher", locale)} className="text-teal-700 font-semibold hover:underline">
-                    Devenir enseignant
-                  </Link>
-                </li>
-                <li>
-                  <Link href={withLocale("/tarifs", locale)} className="text-teal-700 font-semibold hover:underline">
-                    Tarifs
-                  </Link>
-                </li>
-                <li>
-                  <Link href={withLocale("/blog", locale)} className="text-teal-700 font-semibold hover:underline">
-                    Blogue Pratiqo
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href={withLocale(getTutorCityPagePath(citySlug), locale)}
-                    className="text-teal-700 font-semibold hover:underline"
-                  >
-                    Tuteurs privés à {city.name}
-                  </Link>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </section>
+        <SeoDiscoveryGrid
+          id="seo-discovery"
+          columns={[
+            {
+              title: `Même matière, autres villes`,
+              links: nearbyForSubject.map((c) => ({
+                href: withLocale(getCoursePagePath(disciplineSlug, c.slug), locale),
+                label: `Cours de ${discipline.name.toLowerCase()} à ${c.name}`,
+              })),
+            },
+            {
+              title: `Autres matières à ${city.name}`,
+              links: relatedSubjects.map((s) => ({
+                href: withLocale(getCoursePagePath(s.slug, citySlug), locale),
+                label: `Cours de ${s.label} à ${city.name}`,
+              })),
+            },
+            {
+              title: "Ressources utiles",
+              links: [
+                {
+                  href: withLocale("/trouver-un-prof", locale),
+                  label: "Trouver un prof",
+                },
+                {
+                  href: withLocaleHref("/become-teacher", locale),
+                  label: "Devenir enseignant",
+                },
+                {
+                  href: withLocale("/tarifs", locale),
+                  label: "Tarifs",
+                },
+                {
+                  href: withLocale("/blog", locale),
+                  label: "Blogue Pratiqo",
+                },
+                {
+                  href: withLocale(getTutorCityPagePath(citySlug), locale),
+                  label: `Tuteurs privés à ${city.name}`,
+                },
+              ],
+            },
+          ]}
+        />
 
         <section className="bg-white border-t border-[#E8E6DF] py-8 px-4 sm:px-6">
           <div className="mx-auto max-w-4xl">

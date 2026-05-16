@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { MarketingPublicLayout } from "@/components/marketing/MarketingPublicLayout";
+import { withLocaleHref } from "@/lib/i18n/marketingPaths";
+import { normalizeLocale, type Locale } from "@/lib/i18n/types";
 
 export const metadata: Metadata = {
   title: "Charte de confiance | Pratiqo",
@@ -7,28 +10,27 @@ export const metadata: Metadata = {
     "Standards de la communauté Pratiqo pour des avis authentiques, respectueux et liés à de vrais cours payés.",
 };
 
-type Locale = "fr" | "en" | "es";
-
 type Section = {
   title: string;
   body?: string;
   bullets: string[];
 };
 
-const CONTENT: Record<Locale, {
-  languageLabel: string;
-  title: string;
-  subtitle: string;
-  updated: string;
-  back: string;
-  support: string;
-  examplesTitle: string;
-  accepted: string;
-  rejected: string;
-  sections: Section[];
-}> = {
+const CONTENT: Record<
+  Locale,
+  {
+    title: string;
+    subtitle: string;
+    updated: string;
+    back: string;
+    support: string;
+    examplesTitle: string;
+    accepted: string;
+    rejected: string;
+    sections: Section[];
+  }
+> = {
   fr: {
-    languageLabel: "Français",
     title: "Charte de confiance Pratiqo",
     subtitle:
       "Les avis doivent aider les élèves à choisir en confiance et aider les professeurs à progresser, sans attaque personnelle ni donnée privée.",
@@ -84,7 +86,6 @@ const CONTENT: Record<Locale, {
     ],
   },
   en: {
-    languageLabel: "English",
     title: "Pratiqo Trust Charter",
     subtitle:
       "Reviews should help students choose with confidence and help teachers improve, without personal attacks or private information.",
@@ -140,7 +141,6 @@ const CONTENT: Record<Locale, {
     ],
   },
   es: {
-    languageLabel: "Español",
     title: "Carta de confianza Pratiqo",
     subtitle:
       "Las reseñas deben ayudar a estudiantes a elegir con confianza y a profes a mejorar, sin ataques personales ni datos privados.",
@@ -197,46 +197,25 @@ const CONTENT: Record<Locale, {
   },
 };
 
-function normalizeLang(value: string | string[] | undefined): Locale {
-  const raw = Array.isArray(value) ? value[0] : value;
-  return raw === "en" || raw === "es" || raw === "fr" ? raw : "fr";
-}
-
 export default async function TrustCharterPage({
-  searchParams,
+  params,
 }: {
-  searchParams: Promise<{ lang?: string | string[] }>;
+  params: Promise<{ locale: string }>;
 }) {
-  const params = await searchParams;
-  const locale = normalizeLang(params.lang);
+  const { locale: loc } = await params;
+  const locale = normalizeLocale(loc);
   const content = CONTENT[locale];
+  const homeHref = withLocaleHref("/", locale);
 
   return (
-    <main className="min-h-screen bg-[#F9FAF8]">
-      <div className="border-b border-slate-200 bg-white/90 backdrop-blur">
-        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6">
-          <Link href="/" className="text-sm font-medium text-slate-600 hover:text-teal-700">
+    <MarketingPublicLayout className="min-h-screen bg-[#F9FAF8]">
+      <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:py-14">
+        <p className="mb-6">
+          <Link href={homeHref} className="text-sm font-medium text-slate-600 hover:text-teal-700">
             {content.back}
           </Link>
-          <div className="flex gap-2 text-xs font-semibold">
-            {(["fr", "en", "es"] as const).map((lang) => (
-              <Link
-                key={lang}
-                href={`/charte-de-confiance?lang=${lang}`}
-                className={`rounded-full px-3 py-1.5 transition ${
-                  lang === locale
-                    ? "bg-teal-700 text-white"
-                    : "border border-slate-200 bg-white text-slate-600 hover:border-teal-500"
-                }`}
-              >
-                {CONTENT[lang].languageLabel}
-              </Link>
-            ))}
-          </div>
-        </div>
-      </div>
+        </p>
 
-      <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:py-14">
         <header className="max-w-3xl">
           <p className="text-xs font-bold uppercase tracking-widest text-teal-700">Pratiqo</p>
           <h1 className="mt-3 text-3xl font-bold leading-tight text-slate-950 sm:text-4xl">
@@ -258,7 +237,9 @@ export default async function TrustCharterPage({
           {content.sections.map((section) => (
             <section key={section.title} className="border-t border-slate-200 pt-6">
               <h2 className="text-lg font-bold text-slate-950">{section.title}</h2>
-              {section.body ? <p className="mt-2 text-sm leading-relaxed text-slate-600">{section.body}</p> : null}
+              {section.body ? (
+                <p className="mt-2 text-sm leading-relaxed text-slate-600">{section.body}</p>
+              ) : null}
               <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-relaxed text-slate-700 marker:text-teal-700">
                 {section.bullets.map((item) => (
                   <li key={item}>{item}</li>
@@ -272,6 +253,6 @@ export default async function TrustCharterPage({
           {content.support}
         </footer>
       </div>
-    </main>
+    </MarketingPublicLayout>
   );
 }

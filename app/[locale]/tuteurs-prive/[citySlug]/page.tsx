@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { unstable_cache } from "next/cache";
-import { Star, MapPin } from "lucide-react";
 import { QC_CITIES, findCityBySlug } from "@/lib/constants/cities";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { haversineDistance } from "@/lib/geo";
@@ -14,6 +13,15 @@ import { MarketingPublicLayout } from "@/components/marketing/MarketingPublicLay
 import { FAQSchema } from "@/components/seo/FAQSchema";
 import { BreadcrumbSchema } from "@/components/seo/BreadcrumbSchema";
 import { MarketingResourceBlock } from "@/components/seo/MarketingResourceBlock";
+import {
+  SeoBreadcrumbBar,
+  SeoDiscoveryGrid,
+  SeoHeroShell,
+  SeoHowPratiqoWorks,
+  SeoTeacherRatingBadge,
+  SeoTransparencyBlock,
+  SeoTutorCityEmptyState,
+} from "@/components/seo/SeoLandingUi";
 import { getDictionary } from "@/lib/i18n/server";
 import { getCitySeoGuideLinks } from "@/lib/seo/internalLinks";
 import { buildAlternates } from "@/lib/seo/alternates";
@@ -31,6 +39,7 @@ import {
   getCoursePagePath,
   getNearbyCities,
   getSubjectBySlug,
+  getTutorCityPagePath,
 } from "@/lib/seo/seo-data";
 
 import { SITE_URL } from "@/lib/seo/site";
@@ -248,37 +257,35 @@ export default async function CityTutorsPage({
 
       <MarketingPublicLayout className="bg-[#FAFCFB]">
 
-        {/* ── HERO ──────────────────────────────────────────────────────── */}
-        <section className="bg-teal-700 text-white py-10 px-4 sm:px-6">
-          <div className="mx-auto max-w-4xl text-center">
-            <div className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold mb-4">
-              <MapPin size={12} aria-hidden />
-              {city.region}, Québec
-            </div>
-            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">
-              Tuteurs privés à {city.name}
-            </h1>
-            <p className="mt-3 text-base text-white/85 max-w-2xl mx-auto leading-relaxed">
-              {tutorSeo.intro}
-            </p>
-            <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
-              <Link
-                href={withLocaleHref("/trouver-un-prof", locale)}
-                className="inline-flex h-11 items-center rounded-2xl bg-white px-6 text-sm font-bold text-teal-700 hover:brightness-95 shadow"
-              >
-                Voir les professeurs disponibles
-              </Link>
-              <Link
-                href={withLocaleHref("/become-teacher", locale)}
-                className="inline-flex h-11 items-center rounded-2xl border border-white/40 px-6 text-sm font-semibold text-white hover:bg-white/10"
-              >
-                Devenir professeur
-              </Link>
-            </div>
-          </div>
-        </section>
+        <SeoBreadcrumbBar
+          items={[
+            { label: "Accueil", href: withLocale("/", locale) },
+            { label: "Trouver un prof", href: withLocale("/trouver-un-prof", locale) },
+            { label: city.name, href: withLocale(`/tuteurs-prive/${citySlug}`, locale) },
+          ]}
+        />
 
-        <section className="bg-white border-b border-[#E8E6DF] py-10 px-4 sm:px-6">
+        <SeoHeroShell
+          regionLabel={`${city.region}, Québec`}
+          title={`Tuteurs privés à ${city.name}`}
+          intro={tutorSeo.intro}
+          trustChips={[
+            "Aide aux devoirs",
+            "Matières scolaires",
+            "Langues et musique",
+            `Profs locaux à ${city.name}`,
+          ]}
+          primaryCta={{
+            href: withLocaleHref("/trouver-un-prof", locale),
+            label: "Trouver un tuteur",
+          }}
+          secondaryCta={{
+            href: withLocaleHref("/become-teacher", locale),
+            label: "Devenir tuteur",
+          }}
+        />
+
+        <section id="matieres-populaires" className="bg-white border-b border-[#E8E6DF] py-10 px-4 sm:px-6">
           <div className="mx-auto max-w-5xl">
             <p className="text-center text-[11px] font-bold uppercase tracking-widest text-[#6B6760] mb-6">
               Cours populaires à {city.name}
@@ -333,29 +340,15 @@ export default async function CityTutorsPage({
             </div>
 
             {teachers.length === 0 ? (
-              /* ── Empty state ─────────────────────────────────────────── */
-              <div className="rounded-2xl bg-white border border-[#E8E6DF] p-10 text-center">
-                <p className="text-base font-semibold text-[#2C2C2A]">
-                  Aucun profil ne correspond encore exactement à {city.name} sur Pratiqo.
-                </p>
-                <p className="mt-2 text-sm text-[#6B6760]">
-                  Explorez la recherche pour voir des professeurs à proximité ou en ligne — les résultats dépendent des enseignants actifs sur la plateforme.
-                </p>
-                <div className="mt-5 flex flex-col sm:flex-row gap-3 justify-center">
-                  <Link
-                    href={withLocaleHref("/trouver-un-prof", locale)}
-                    className="inline-flex items-center justify-center rounded-xl bg-teal-700 px-5 py-2.5 text-sm font-bold text-white hover:brightness-105"
-                  >
-                    Ouvrir la recherche
-                  </Link>
-                  <Link
-                    href={withLocaleHref("/become-teacher", locale)}
-                    className="inline-flex items-center justify-center rounded-xl border border-[#D3D1C7] px-5 py-2.5 text-sm font-semibold text-[#2C2C2A] hover:border-teal-500"
-                  >
-                    Devenir professeur
-                  </Link>
-                </div>
-              </div>
+              <SeoTutorCityEmptyState
+                locale={locale}
+                cityName={city.name}
+                nearbyCities={nearbyCities.map((c) => ({ slug: c.slug, name: c.name }))}
+                subjectQuickLinks={subjectCards.map(({ slug, meta }) => ({
+                  slug,
+                  label: meta.label,
+                }))}
+              />
             ) : (
               <>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -394,10 +387,7 @@ export default async function CityTutorsPage({
                             </p>
                           </div>
                         </div>
-                        <span className="shrink-0 flex items-center gap-0.5 rounded-lg border border-[#E8E6DF] bg-white px-2 py-1 text-[11px] font-bold text-[#2C2C2A]">
-                          <Star size={10} className="text-amber-400 fill-amber-400" />
-                          {teacher.rating.toFixed(1)}
-                        </span>
+                        <SeoTeacherRatingBadge rating={teacher.rating} reviews={teacher.reviews} />
                       </div>
 
                       <div className="mt-3 flex items-center justify-between border-t border-[#E8E6DF] pt-3 text-xs text-[#6B6760]">
@@ -413,9 +403,9 @@ export default async function CityTutorsPage({
                 <div className="mt-8 text-center">
                   <Link
                     href={withLocaleHref("/trouver-un-prof", locale)}
-                    className="inline-flex h-11 items-center rounded-2xl bg-teal-700 px-7 text-sm font-bold text-white hover:brightness-105 shadow-sm"
+                    className="inline-flex h-11 w-full max-w-md items-center justify-center rounded-2xl bg-teal-700 px-7 text-sm font-bold text-white shadow-sm hover:brightness-105 sm:mx-auto sm:w-auto"
                   >
-                    Voir les professeurs disponibles
+                    Trouver un tuteur
                   </Link>
                   <p className="mt-2 text-xs text-[#6B6760]">
                     Inscription gratuite · Aucun engagement
@@ -426,44 +416,8 @@ export default async function CityTutorsPage({
           </div>
         </section>
 
-        {/* ── HOW IT WORKS ──────────────────────────────────────────────── */}
-        <section className="bg-white border-t border-[#E8E6DF] py-10 px-4 sm:px-6">
-          <div className="mx-auto max-w-4xl">
-            <p className="text-center text-[11px] font-bold uppercase tracking-widest text-[#6B6760] mb-8">
-              Comment ça marche
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {[
-                {
-                  n: "1",
-                  title: "Cherchez votre tuteur",
-                  desc: `Parcourez les profils de tuteurs à ${city.name} et filtrez par matière, prix ou disponibilité.`,
-                },
-                {
-                  n: "2",
-                  title: "Réservez un cours",
-                  desc: "Réservez directement en ligne. Paiement sécurisé via Stripe.",
-                },
-                {
-                  n: "3",
-                  title: "Apprenez à votre rythme",
-                  desc: "Cours en ligne ou en présentiel, adapté à votre niveau et vos objectifs.",
-                },
-              ].map((step) => (
-                <div
-                  key={step.n}
-                  className="rounded-2xl border border-[#E8E6DF] bg-[#FAFCFB] p-5"
-                >
-                  <div className="mb-3 inline-flex h-8 w-8 items-center justify-center rounded-full bg-teal-500/15 text-sm font-bold text-teal-700">
-                    {step.n}
-                  </div>
-                  <p className="font-bold text-sm text-[#2C2C2A]">{step.title}</p>
-                  <p className="mt-1 text-xs text-[#6B6760] leading-relaxed">{step.desc}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+        <SeoHowPratiqoWorks />
+        <SeoTransparencyBlock />
 
         <section className="bg-[#FAFAF8] border-t border-[#E8E6DF] py-10 px-4 sm:px-6">
           <div className="mx-auto max-w-3xl space-y-4 text-sm text-[#2C2C2A] leading-relaxed">
@@ -512,7 +466,7 @@ export default async function CityTutorsPage({
           </div>
         </section>
 
-        <section className="bg-white border-t border-[#E8E6DF] py-10 px-4 sm:px-6">
+        <section id="villes-voisines" className="bg-white border-t border-[#E8E6DF] py-10 px-4 sm:px-6">
           <div className="mx-auto max-w-4xl">
             <h2 className="text-sm font-bold uppercase tracking-widest text-[#6B6760] mb-4">Villes voisines</h2>
             <ul className="flex flex-wrap gap-3 text-sm">
@@ -529,6 +483,50 @@ export default async function CityTutorsPage({
             </ul>
           </div>
         </section>
+
+        <SeoDiscoveryGrid
+          columns={[
+            {
+              title: "Matières populaires",
+              links: subjectCards.map(({ slug, meta }) => ({
+                href: withLocale(getCoursePagePath(slug, citySlug), locale),
+                label: `Cours de ${meta.label} à ${city.name}`,
+              })),
+            },
+            {
+              title: "Villes voisines",
+              links: nearbyCities.map((c) => ({
+                href: withLocale(getTutorCityPagePath(c.slug), locale),
+                label: `Tuteurs privés à ${c.name}`,
+              })),
+            },
+            {
+              title: "Ressources utiles",
+              links: [
+                {
+                  href: withLocale("/trouver-un-prof", locale),
+                  label: "Trouver un prof",
+                },
+                {
+                  href: withLocaleHref("/become-teacher", locale),
+                  label: "Devenir enseignant",
+                },
+                {
+                  href: withLocale("/tarifs", locale),
+                  label: "Tarifs",
+                },
+                {
+                  href: withLocale("/charte-de-confiance", locale),
+                  label: "Charte de confiance",
+                },
+                {
+                  href: withLocale("/contact", locale),
+                  label: "Contact",
+                },
+              ],
+            },
+          ]}
+        />
 
         {/* ── CITY LINKS (internal linking) ─────────────────────────────── */}
         <CityLinksFooter currentSlug={citySlug} />
