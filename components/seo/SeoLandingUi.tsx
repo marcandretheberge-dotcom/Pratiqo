@@ -2,14 +2,20 @@ import Link from "next/link";
 import { BookOpen, MapPin, ShieldCheck } from "lucide-react";
 import { withLocale } from "@/lib/i18n/routing";
 import { withLocaleHref } from "@/lib/i18n/marketingPaths";
+import { tFormat } from "@/lib/i18n/format";
+import { t } from "@/lib/i18n/server";
 import type { Locale } from "@/lib/i18n/types";
 import { getCoursePagePath } from "@/lib/seo/seo-data";
+import { seoCourseLinkLabel } from "@/lib/seo/seoLandingI18n";
 
 export type SeoBreadcrumbItem = { label: string; href: string };
 
-export function SeoBreadcrumbBar({ items }: { items: SeoBreadcrumbItem[] }) {
+export function SeoBreadcrumbBar({ locale, items }: { locale: Locale; items: SeoBreadcrumbItem[] }) {
   return (
-    <nav aria-label="Fil d'Ariane" className="border-b border-[#E8E6DF] bg-white px-4 py-2 sm:px-6">
+    <nav
+      aria-label={t(locale, "seoLandingBreadcrumbAria")}
+      className="border-b border-[#E8E6DF] bg-white px-4 py-2 sm:px-6"
+    >
       <ol className="mx-auto flex max-w-5xl flex-wrap items-center gap-1.5 text-xs text-[#6B6760]">
         {items.map((item, i) => (
           <li key={item.href} className="flex items-center gap-1.5">
@@ -29,6 +35,7 @@ export function SeoBreadcrumbBar({ items }: { items: SeoBreadcrumbItem[] }) {
 }
 
 type SeoHeroShellProps = {
+  locale: Locale;
   regionLabel: string;
   title: string;
   intro: string;
@@ -39,14 +46,16 @@ type SeoHeroShellProps = {
 };
 
 export function SeoHeroShell({
+  locale,
   regionLabel,
   title,
   intro,
   trustChips,
   primaryCta,
   secondaryCta,
-  reassurance = "Aucun abonnement obligatoire pour chercher un professeur.",
+  reassurance,
 }: SeoHeroShellProps) {
+  const reassuranceText = reassurance ?? t(locale, "seoLandingNoSubscriptionRequired");
   return (
     <section className="bg-teal-700 px-4 py-10 text-white sm:px-6 sm:py-12">
       <div className="mx-auto max-w-4xl text-center">
@@ -80,37 +89,39 @@ export function SeoHeroShell({
             {secondaryCta.label}
           </Link>
         </div>
-        <p className="mt-3 text-xs text-white/75">{reassurance}</p>
+        <p className="mt-3 text-xs text-white/75">{reassuranceText}</p>
       </div>
     </section>
   );
 }
 
-export function SeoHowPratiqoWorks() {
+export function SeoHowPratiqoWorks({ locale }: { locale: Locale }) {
   const steps = [
     {
       n: "1",
-      title: "Comparez les profils",
-      desc: "Consultez les matières, le format, la description et les informations disponibles sur chaque profil.",
+      title: t(locale, "seoLandingCompareProfilesTitle"),
+      desc: t(locale, "seoLandingCompareProfilesText"),
     },
     {
       n: "2",
-      title: "Réservez simplement",
-      desc: "Choisissez un professeur et envoyez une demande de cours en quelques étapes.",
+      title: t(locale, "seoLandingBookSimplyTitle"),
+      desc: t(locale, "seoLandingBookSimplyText"),
     },
     {
       n: "3",
-      title: "Apprenez avec confiance",
-      desc: "Gardez vos cours, messages et paiements organisés au même endroit sur Pratiqo.",
+      title: t(locale, "seoLandingLearnWithConfidenceTitle"),
+      desc: t(locale, "seoLandingLearnWithConfidenceText"),
     },
   ] as const;
 
   return (
     <section className="border-t border-[#E8E6DF] bg-white px-4 py-10 sm:px-6">
       <div className="mx-auto max-w-4xl">
-        <h2 className="text-center text-lg font-bold text-[#2C2C2A] sm:text-xl">Comment Pratiqo fonctionne</h2>
+        <h2 className="text-center text-lg font-bold text-[#2C2C2A] sm:text-xl">
+          {t(locale, "seoLandingHowItWorksTitle")}
+        </h2>
         <p className="mx-auto mt-2 max-w-2xl text-center text-sm text-[#6B6760]">
-          Une marketplace québécoise pour comparer, réserver et suivre vos cours particuliers.
+          {t(locale, "seoLandingHowItWorksSubtitle")}
         </p>
         <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
           {steps.map((step) => (
@@ -128,13 +139,13 @@ export function SeoHowPratiqoWorks() {
   );
 }
 
-export function SeoTransparencyBlock() {
+export function SeoTransparencyBlock({ locale }: { locale: Locale }) {
   const points = [
-    "Pratiqo centralise la recherche, la comparaison des profils, la réservation et le paiement pour les cours particuliers.",
-    "Les élèves et les parents peuvent comparer les informations de profil avant de réserver.",
-    "Les professeurs présentent leurs services, leurs tarifs et leur disponibilité de façon claire.",
-    "Les paiements passent par un flux sécurisé — vous gardez une trace de vos échanges et réservations.",
-    "La plateforme est conçue pour les cours privés locaux au Québec, en présentiel ou en ligne.",
+    t(locale, "seoLandingTransparencyPoint1"),
+    t(locale, "seoLandingTransparencyPoint2"),
+    t(locale, "seoLandingTransparencyPoint3"),
+    t(locale, "seoLandingTransparencyPoint4"),
+    t(locale, "seoLandingTransparencyPoint5"),
   ] as const;
 
   return (
@@ -143,9 +154,7 @@ export function SeoTransparencyBlock() {
         <div className="flex items-start gap-3">
           <ShieldCheck className="mt-0.5 h-6 w-6 shrink-0 text-teal-700" aria-hidden />
           <div>
-            <h2 className="text-lg font-bold text-[#2C2C2A]">
-              Une façon plus simple et plus transparente de trouver un prof
-            </h2>
+            <h2 className="text-lg font-bold text-[#2C2C2A]">{t(locale, "seoLandingTransparencyTitle")}</h2>
             <ul className="mt-4 space-y-2.5 text-sm leading-relaxed text-[#2C2C2A]">
               {points.map((point) => (
                 <li key={point} className="flex gap-2">
@@ -190,11 +199,10 @@ export function SeoCourseCityEmptyState({
     <div className="rounded-2xl border border-[#E8E6DF] bg-white p-6 sm:p-10">
       <BookOpen size={36} className="mx-auto mb-3 text-[#D3D1C7]" aria-hidden />
       <h2 className="text-center text-base font-bold text-[#2C2C2A] sm:text-lg">
-        Aucun professeur disponible pour l&apos;instant
+        {t(locale, "seoLandingNoTeacherTitle")}
       </h2>
       <p className="mx-auto mt-2 max-w-xl text-center text-sm leading-relaxed text-[#6B6760]">
-        Nous développons encore notre réseau de professeurs pour {subjectLabel} à {cityName}. Vous pouvez
-        explorer les villes voisines, chercher une autre matière ou revenir bientôt.
+        {tFormat(locale, "seoLandingNoTeacherText", { subject: subjectLabel, city: cityName })}
       </p>
 
       <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-center">
@@ -203,7 +211,7 @@ export function SeoCourseCityEmptyState({
             href={`#seo-discovery`}
             className="inline-flex h-11 w-full items-center justify-center rounded-xl bg-teal-700 px-5 text-sm font-bold text-white hover:brightness-105 sm:w-auto"
           >
-            Voir les cours dans les villes voisines
+            {t(locale, "seoLandingExploreNearbyCities")}
           </Link>
         ) : null}
         {relatedSubjects.length > 0 ? (
@@ -211,14 +219,14 @@ export function SeoCourseCityEmptyState({
             href={`#seo-discovery`}
             className="inline-flex h-11 w-full items-center justify-center rounded-xl border border-[#D3D1C7] px-5 text-sm font-semibold text-[#2C2C2A] hover:border-teal-500 sm:w-auto"
           >
-            Explorer d&apos;autres matières à {cityName}
+            {tFormat(locale, "seoLandingExploreOtherSubjects", { city: cityName })}
           </Link>
         ) : null}
         <Link
           href={becomeTeacherHref}
           className="inline-flex h-11 w-full items-center justify-center rounded-xl border border-teal-700/30 bg-teal-50 px-5 text-sm font-semibold text-teal-800 hover:bg-teal-100 sm:w-auto"
         >
-          Devenir professeur
+          {t(locale, "becomeTeacher")}
         </Link>
       </div>
 
@@ -226,7 +234,9 @@ export function SeoCourseCityEmptyState({
         <div className="mt-8 grid gap-6 border-t border-[#F1EFE8] pt-6 sm:grid-cols-2">
           {nearbyCities.length > 0 ? (
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-widest text-[#6B6760]">Villes voisines</p>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-[#6B6760]">
+                {t(locale, "seoLandingNearbyCities")}
+              </p>
               <ul className="mt-2 space-y-1.5 text-sm">
                 {nearbyCities.slice(0, 5).map((c) => (
                   <li key={c.slug}>
@@ -234,7 +244,7 @@ export function SeoCourseCityEmptyState({
                       href={withLocale(getCoursePagePath(disciplineSlug, c.slug), locale)}
                       className="font-semibold text-teal-700 hover:underline"
                     >
-                      Cours de {disciplineName.toLowerCase()} à {c.name}
+                      {seoCourseLinkLabel(locale, disciplineName.toLowerCase(), c.name)}
                     </Link>
                   </li>
                 ))}
@@ -244,7 +254,7 @@ export function SeoCourseCityEmptyState({
           {relatedSubjects.length > 0 ? (
             <div>
               <p className="text-[11px] font-bold uppercase tracking-widest text-[#6B6760]">
-                Autres matières à {cityName}
+                {tFormat(locale, "seoLandingOtherSubjectsInCity", { city: cityName })}
               </p>
               <ul className="mt-2 space-y-1.5 text-sm">
                 {relatedSubjects.slice(0, 5).map((s) => (
@@ -253,7 +263,7 @@ export function SeoCourseCityEmptyState({
                       href={withLocale(getCoursePagePath(s.slug, citySlug), locale)}
                       className="font-semibold text-teal-700 hover:underline"
                     >
-                      Cours de {s.label} à {cityName}
+                      {seoCourseLinkLabel(locale, s.label, cityName)}
                     </Link>
                   </li>
                 ))}
@@ -264,13 +274,13 @@ export function SeoCourseCityEmptyState({
       ) : null}
 
       <p className="mt-6 rounded-xl bg-[#FAFCFB] px-4 py-3 text-center text-xs leading-relaxed text-[#6B6760]">
-        Vous enseignez {subjectLabel} à {cityName}? Soyez parmi les premiers profils visibles sur Pratiqo.{" "}
+        {tFormat(locale, "seoLandingTeacherRecruitmentNote", { subject: subjectLabel, city: cityName })}{" "}
         <Link href={becomeTeacherHref} className="font-semibold text-teal-700 hover:underline">
-          Créer un profil
+          {t(locale, "seoLandingCreateProfile")}
         </Link>
         {" · "}
         <Link href={searchHref} className="font-semibold text-teal-700 hover:underline">
-          Parcourir Pratiqo
+          {t(locale, "seoLandingBrowsePratiqo")}
         </Link>
       </p>
     </div>
@@ -294,11 +304,10 @@ export function SeoTutorCityEmptyState({
   return (
     <div className="rounded-2xl border border-[#E8E6DF] bg-white p-6 sm:p-10">
       <h2 className="text-center text-base font-bold text-[#2C2C2A] sm:text-lg">
-        Nous développons notre réseau à {cityName}
+        {tFormat(locale, "seoLandingNetworkBuildingTitle", { city: cityName })}
       </h2>
       <p className="mx-auto mt-2 max-w-xl text-center text-sm leading-relaxed text-[#6B6760]">
-        Les profils affichés dépendent des enseignants actifs sur Pratiqo. Explorez les matières populaires,
-        les villes voisines ou lancez une recherche plus large.
+        {t(locale, "seoLandingNetworkBuildingText")}
       </p>
 
       <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-center">
@@ -307,28 +316,28 @@ export function SeoTutorCityEmptyState({
             href="#matieres-populaires"
             className="inline-flex h-11 w-full items-center justify-center rounded-xl bg-teal-700 px-5 text-sm font-bold text-white hover:brightness-105 sm:w-auto"
           >
-            Voir les matières populaires
+            {t(locale, "seoLandingSeePopularSubjects")}
           </Link>
         ) : null}
         <Link
           href={becomeTeacherHref}
           className="inline-flex h-11 w-full items-center justify-center rounded-xl border border-[#D3D1C7] px-5 text-sm font-semibold text-[#2C2C2A] hover:border-teal-500 sm:w-auto"
         >
-          Devenir professeur
+          {t(locale, "becomeTeacher")}
         </Link>
         {nearbyCities.length > 0 ? (
           <Link
             href="#villes-voisines"
             className="inline-flex h-11 w-full items-center justify-center rounded-xl border border-teal-700/30 bg-teal-50 px-5 text-sm font-semibold text-teal-800 hover:bg-teal-100 sm:w-auto"
           >
-            Explorer les villes voisines
+            {t(locale, "seoLandingExploreNearbyCitiesShort")}
           </Link>
         ) : null}
       </div>
 
       <p className="mt-6 text-center text-xs text-[#6B6760]">
         <Link href={searchHref} className="font-semibold text-teal-700 hover:underline">
-          Ouvrir la recherche Pratiqo
+          {t(locale, "seoLandingOpenPratiqoSearch")}
         </Link>
       </p>
     </div>
@@ -366,11 +375,19 @@ export function SeoDiscoveryGrid({
   );
 }
 
-export function SeoTeacherRatingBadge({ rating, reviews }: { rating: number; reviews: number }) {
+export function SeoTeacherRatingBadge({
+  locale,
+  rating,
+  reviews,
+}: {
+  locale: Locale;
+  rating: number;
+  reviews: number;
+}) {
   if (reviews <= 0) {
     return (
       <span className="shrink-0 rounded-lg border border-[#E8E6DF] bg-[#FAFCFB] px-2 py-1 text-[10px] font-semibold text-[#6B6760]">
-        Nouveau
+        {t(locale, "seoLandingTeacherBadgeNew")}
       </span>
     );
   }

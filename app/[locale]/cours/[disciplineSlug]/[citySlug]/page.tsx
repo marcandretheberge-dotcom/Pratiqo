@@ -22,7 +22,14 @@ import {
   SeoTeacherRatingBadge,
   SeoTransparencyBlock,
 } from "@/components/seo/SeoLandingUi";
-import { getDictionary } from "@/lib/i18n/server";
+import { getDictionary, t } from "@/lib/i18n/server";
+import { getOpenGraphLocale, tFormat } from "@/lib/i18n/format";
+import {
+  seoCourseTeacherCountLabel,
+  seoCourseLinkLabel,
+  seoPrivateTutorsLinkLabel,
+  seoTeachingModeLabel,
+} from "@/lib/seo/seoLandingI18n";
 import { getDisciplineCitySeoGuideLinks } from "@/lib/seo/internalLinks";
 import type { DisciplineConfig } from "@/lib/seo/types";
 
@@ -132,17 +139,27 @@ export async function generateMetadata({
   const discipline = findDisciplineBySlug(disciplineSlug);
   const city = findCityBySlug(citySlug);
 
-  if (!discipline || !city) return { title: "Cours particuliers | Pratiqo" };
+  if (!discipline || !city) {
+    return { title: t(locale, "seoLandingCourseMetaFallbackTitle") };
+  }
 
   const seoCity = getCityBySlug(citySlug);
   const seoSubject = getSubjectBySlug(disciplineSlug);
-  if (!seoCity || !seoSubject) return { title: "Cours particuliers | Pratiqo" };
+  if (!seoCity || !seoSubject) {
+    return { title: t(locale, "seoLandingCourseMetaFallbackTitle") };
+  }
 
   const path = `/cours/${disciplineSlug}/${citySlug}`;
   const localizedPaths = { en: path, fr: path, es: path };
 
-  const title = `Cours de ${discipline.name} à ${city.name} | Pratiqo`;
-  const description = `Trouvez un ${seoSubject.teacherNoun} à ${city.name}. Comparez les profils, réservez simplement et apprenez avec un professeur local sur Pratiqo.`;
+  const title = tFormat(locale, "seoLandingCourseMetaTitle", {
+    discipline: discipline.name,
+    city: city.name,
+  });
+  const description = tFormat(locale, "seoLandingCourseMetaDescription", {
+    teacherNoun: seoSubject.teacherNoun,
+    city: city.name,
+  });
 
   return {
     title,
@@ -159,7 +176,7 @@ export async function generateMetadata({
       description,
       url: `${BASE_URL}${withLocale(path, locale)}`,
       siteName: "Pratiqo",
-      locale: "fr_CA",
+      locale: getOpenGraphLocale(locale),
       type: "website",
       images: [{ url: "/og-image.png", width: 1200, height: 630 }],
     },
@@ -179,12 +196,6 @@ function initials(name: string): string {
     .slice(0, 2)
     .map((w) => w[0]?.toUpperCase() ?? "")
     .join("");
-}
-
-function teachingModeLabel(mode: string): string {
-  if (mode === "online") return "En ligne";
-  if (mode === "person") return "En présentiel";
-  return "En ligne & présentiel";
 }
 
 export default async function DisciplineCityPage({
@@ -218,6 +229,7 @@ export default async function DisciplineCityPage({
     disciplineName: discipline.name,
   });
   const faqs = buildCourseCityFaqs({
+    locale,
     city: seoCity,
     subject: seoSubject,
     disciplineName: discipline.name,
@@ -240,18 +252,22 @@ export default async function DisciplineCityPage({
 
   const coursePath = `/cours/${disciplineSlug}/${citySlug}`;
   const serviceJsonLd = buildServiceJsonLd({
-    name: `Cours de ${discipline.name} à ${city.name}`,
-    description: `Trouvez un ${seoSubject.teacherNoun} à ${city.name} sur Pratiqo.`,
+    name: tFormat(locale, "seoLandingServiceCourseName", {
+      discipline: discipline.name,
+      city: city.name,
+    }),
+    description: tFormat(locale, "seoLandingServiceCourseDescription", {
+      teacherNoun: seoSubject.teacherNoun,
+      city: city.name,
+    }),
     cityName: city.name,
     serviceType: discipline.name,
     canonicalPath: coursePath,
   });
-  const countLabel =
-    teachers.length === 0
-      ? "Aucun professeur"
-      : teachers.length === 1
-      ? "1 professeur trouvé"
-      : `${teachers.length} professeurs trouvés`;
+  const countLabel = seoCourseTeacherCountLabel(locale, teachers.length);
+  const homeLabel = t(locale, "navHome");
+  const coursesLabel = t(locale, "seoLandingBreadcrumbCourses");
+  const findTeacherLabel = t(locale, "findTeacher");
 
   return (
     <>
@@ -261,8 +277,8 @@ export default async function DisciplineCityPage({
       />
       <BreadcrumbSchema
         items={[
-          { name: "Accueil", href: withLocale("/", locale) },
-          { name: "Cours", href: withLocale("/trouver-un-prof", locale) },
+          { name: homeLabel, href: withLocale("/", locale) },
+          { name: coursesLabel, href: withLocale("/trouver-un-prof", locale) },
           { name: discipline.name, href: withLocale(`/cours/${disciplineSlug}/${citySlug}`, locale) },
           { name: city.name, href: withLocale(`/tuteurs-prive/${citySlug}`, locale) },
         ]}
@@ -272,31 +288,39 @@ export default async function DisciplineCityPage({
       <MarketingPublicLayout className="bg-[#FAFCFB]">
 
         <SeoBreadcrumbBar
+          locale={locale}
           items={[
-            { label: "Accueil", href: withLocale("/", locale) },
-            { label: "Cours", href: withLocale("/trouver-un-prof", locale) },
+            { label: homeLabel, href: withLocale("/", locale) },
+            { label: coursesLabel, href: withLocale("/trouver-un-prof", locale) },
             { label: discipline.name, href: withLocale(`/cours/${disciplineSlug}/${citySlug}`, locale) },
             { label: city.name, href: withLocale(`/cours/${disciplineSlug}/${citySlug}`, locale) },
           ]}
         />
 
         <SeoHeroShell
-          regionLabel={`${city.region}, ${seoCity.province}`}
-          title={`Cours de ${discipline.name} à ${city.name}`}
+          locale={locale}
+          regionLabel={tFormat(locale, "seoLandingRegionLabel", {
+            region: city.region,
+            province: seoCity.province,
+          })}
+          title={tFormat(locale, "seoLandingCourseHeroTitle", {
+            discipline: discipline.name,
+            city: city.name,
+          })}
           intro={courseSeo.intro}
           trustChips={[
-            "Profils clairs",
-            "Réservation simple",
-            "Paiement sécurisé",
-            `Profs locaux à ${city.name}`,
+            t(locale, "seoLandingChipClearProfiles"),
+            t(locale, "seoLandingChipSimpleBooking"),
+            t(locale, "seoLandingChipSecurePayment"),
+            tFormat(locale, "seoLandingChipLocalTeachersInCity", { city: city.name }),
           ]}
           primaryCta={{
             href: withLocaleHref("/trouver-un-prof", locale),
-            label: "Voir les professeurs disponibles",
+            label: t(locale, "seoLandingPrimaryCtaSeeTeachers"),
           }}
           secondaryCta={{
             href: withLocaleHref("/become-teacher", locale),
-            label: "Devenir professeur",
+            label: t(locale, "becomeTeacher"),
           }}
         />
 
@@ -309,7 +333,7 @@ export default async function DisciplineCityPage({
               </p>
               {isNearby && teachers.length > 0 && (
                 <span className="rounded-full bg-[#FFF7E6] border border-[#F6C96E] px-2 py-0.5 text-[10px] font-semibold text-[#92600A]">
-                  proches de {city.name}
+                  {tFormat(locale, "seoLandingNearbyBadge", { city: city.name })}
                 </span>
               )}
             </div>
@@ -359,10 +383,14 @@ export default async function DisciplineCityPage({
                             <p className="truncate text-xs text-[#6B6760]">{teacher.discipline}</p>
                           </div>
                         </div>
-                        <SeoTeacherRatingBadge rating={teacher.rating} reviews={teacher.reviews} />
+                        <SeoTeacherRatingBadge
+                          locale={locale}
+                          rating={teacher.rating}
+                          reviews={teacher.reviews}
+                        />
                       </div>
                       <div className="mt-3 flex items-center justify-between border-t border-[#E8E6DF] pt-3 text-xs text-[#6B6760]">
-                        <span>{teachingModeLabel(teacher.teachingMode)}</span>
+                        <span>{seoTeachingModeLabel(locale, teacher.teachingMode)}</span>
                         <span className="font-bold text-teal-700">
                           {Math.round(Number(teacher.pricePerLesson))}$/h
                         </span>
@@ -376,17 +404,19 @@ export default async function DisciplineCityPage({
                     href={withLocaleHref("/trouver-un-prof", locale)}
                     className="inline-flex h-11 w-full max-w-md items-center justify-center rounded-2xl bg-teal-700 px-7 text-sm font-bold text-white shadow-sm hover:brightness-105 sm:mx-auto sm:w-auto"
                   >
-                    Voir les professeurs disponibles
+                    {t(locale, "seoLandingPrimaryCtaSeeTeachers")}
                   </Link>
-                  <p className="mt-2 text-xs text-[#6B6760]">Inscription gratuite · Aucun engagement</p>
+                  <p className="mt-2 text-xs text-[#6B6760]">
+                    {t(locale, "seoLandingFreeSignupNoCommitment")}
+                  </p>
                 </div>
               </>
             )}
           </div>
         </section>
 
-        <SeoHowPratiqoWorks />
-        <SeoTransparencyBlock />
+        <SeoHowPratiqoWorks locale={locale} />
+        <SeoTransparencyBlock locale={locale} />
 
         <section className="bg-white border-t border-[#E8E6DF] py-10 px-4 sm:px-6">
           <div className="mx-auto max-w-3xl space-y-4 text-sm text-[#2C2C2A] leading-relaxed">
@@ -404,41 +434,41 @@ export default async function DisciplineCityPage({
           id="seo-discovery"
           columns={[
             {
-              title: `Même matière, autres villes`,
+              title: t(locale, "seoLandingSameSubjectOtherCities"),
               links: nearbyForSubject.map((c) => ({
                 href: withLocale(getCoursePagePath(disciplineSlug, c.slug), locale),
-                label: `Cours de ${discipline.name.toLowerCase()} à ${c.name}`,
+                label: seoCourseLinkLabel(locale, discipline.name.toLowerCase(), c.name),
               })),
             },
             {
-              title: `Autres matières à ${city.name}`,
+              title: tFormat(locale, "seoLandingOtherCoursesInCity", { city: city.name }),
               links: relatedSubjects.map((s) => ({
                 href: withLocale(getCoursePagePath(s.slug, citySlug), locale),
-                label: `Cours de ${s.label} à ${city.name}`,
+                label: seoCourseLinkLabel(locale, s.label, city.name),
               })),
             },
             {
-              title: "Ressources utiles",
+              title: t(locale, "seoLandingUsefulPages"),
               links: [
                 {
                   href: withLocale("/trouver-un-prof", locale),
-                  label: "Trouver un prof",
+                  label: findTeacherLabel,
                 },
                 {
                   href: withLocaleHref("/become-teacher", locale),
-                  label: "Devenir enseignant",
+                  label: t(locale, "seoLandingBecomeTeacherNav"),
                 },
                 {
                   href: withLocale("/tarifs", locale),
-                  label: "Tarifs",
+                  label: t(locale, "navPricing"),
                 },
                 {
                   href: withLocale("/blog", locale),
-                  label: "Blogue Pratiqo",
+                  label: t(locale, "seoLandingBlogLabel"),
                 },
                 {
                   href: withLocale(getTutorCityPagePath(citySlug), locale),
-                  label: `Tuteurs privés à ${city.name}`,
+                  label: seoPrivateTutorsLinkLabel(locale, city.name),
                 },
               ],
             },
@@ -460,7 +490,10 @@ export default async function DisciplineCityPage({
         <section className="bg-[#FAFAF8] border-t border-[#E8E6DF] py-10 px-4 sm:px-6">
           <div className="mx-auto max-w-3xl">
             <h2 className="text-lg font-bold text-[#2C2C2A] mb-6">
-              Questions fréquentes — cours de {discipline.name.toLowerCase()} à {city.name}
+              {tFormat(locale, "seoLandingCourseFaqTitle", {
+                discipline: discipline.name.toLowerCase(),
+                city: city.name,
+              })}
             </h2>
             <div className="space-y-3">
               {faqs.map((item, i) => (

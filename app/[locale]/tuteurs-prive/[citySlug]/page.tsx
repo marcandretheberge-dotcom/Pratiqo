@@ -22,7 +22,14 @@ import {
   SeoTransparencyBlock,
   SeoTutorCityEmptyState,
 } from "@/components/seo/SeoLandingUi";
-import { getDictionary } from "@/lib/i18n/server";
+import { getDictionary, t } from "@/lib/i18n/server";
+import { getOpenGraphLocale, tFormat } from "@/lib/i18n/format";
+import {
+  seoCourseLinkLabel,
+  seoPrivateTutorsLinkLabel,
+  seoTeachingModeLabel,
+  seoTutorCountLabel,
+} from "@/lib/seo/seoLandingI18n";
 import { getCitySeoGuideLinks } from "@/lib/seo/internalLinks";
 import { buildAlternates } from "@/lib/seo/alternates";
 import { withLocale } from "@/lib/i18n/routing";
@@ -123,12 +130,10 @@ export async function generateMetadata({
   const { locale: loc, citySlug } = await params;
   const locale = normalizeLocale(loc);
   const city = findCityBySlug(citySlug);
-  if (!city) return { title: "Tuteurs privés | Pratiqo" };
+  if (!city) return { title: t(locale, "seoLandingTutorMetaFallbackTitle") };
 
-  const title = `Tuteurs privés à ${city.name} | Tutorat et cours privés | Pratiqo`;
-  const description =
-    `Trouvez un tuteur privé à ${city.name} pour les devoirs, les matières scolaires, les langues ou la musique. ` +
-    `Profils locaux, réservation simple et paiement sécurisé.`;
+  const title = tFormat(locale, "seoLandingTutorMetaTitle", { city: city.name });
+  const description = tFormat(locale, "seoLandingTutorMetaDescription", { city: city.name });
 
   const path = `/tuteurs-prive/${citySlug}`;
   const localizedPaths = { en: path, fr: path, es: path };
@@ -150,7 +155,7 @@ export async function generateMetadata({
       description,
       url: `${BASE_URL}${withLocale(path, locale)}`,
       siteName: "Pratiqo",
-      locale: "fr_CA",
+      locale: getOpenGraphLocale(locale),
       type: "website",
       images: [{ url: "/og-image.png", width: 1200, height: 630 }],
     },
@@ -162,14 +167,6 @@ export async function generateMetadata({
     },
     ...buildAlternates({ localizedPaths }),
   };
-}
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-function teachingModeLabel(mode: string): string {
-  if (mode === "online") return "En ligne";
-  if (mode === "person") return "En présentiel";
-  return "En ligne & présentiel";
 }
 
 function initials(name: string): string {
@@ -202,7 +199,7 @@ export default async function CityTutorsPage({
   if (!seoCity) notFound();
 
   const tutorSeo = buildTutorCitySeoContent({ locale, city: seoCity, citySlug });
-  const cityFaq = buildTutorCityFaqs(seoCity);
+  const cityFaq = buildTutorCityFaqs(seoCity, locale);
   const hub = PRIORITY_CITY_HUBS[citySlug];
   const geoNearby = getNearbyCities(citySlug, 8).filter((c) => c.slug !== citySlug);
   const hubNearbySlugs = hub?.nearbySlugs ?? [];
@@ -218,10 +215,10 @@ export default async function CityTutorsPage({
 
   const hubPath = `/tuteurs-prive/${citySlug}`;
   const serviceJsonLd = buildServiceJsonLd({
-    name: `Tuteurs privés à ${city.name}`,
-    description: `Tutorat et cours privés à ${city.name} — Pratiqo.`,
+    name: tFormat(locale, "seoLandingServiceTutorName", { city: city.name }),
+    description: tFormat(locale, "seoLandingServiceTutorDescription", { city: city.name }),
     cityName: city.name,
-    serviceType: "Tutorat et cours privés",
+    serviceType: t(locale, "seoLandingServiceTutorType"),
     canonicalPath: hubPath,
   });
 
@@ -233,12 +230,9 @@ export default async function CityTutorsPage({
     })
     .filter(Boolean) as { slug: string; meta: NonNullable<ReturnType<typeof getSubjectBySlug>> }[];
 
-  const countLabel =
-    teachers.length === 0
-      ? "Aucun tuteur"
-      : teachers.length === 1
-      ? "1 tuteur trouvé"
-      : `${teachers.length} tuteurs trouvés`;
+  const countLabel = seoTutorCountLabel(locale, teachers.length);
+  const homeLabel = t(locale, "navHome");
+  const findTeacherLabel = t(locale, "findTeacher");
 
   return (
     <>
@@ -248,8 +242,8 @@ export default async function CityTutorsPage({
       />
       <BreadcrumbSchema
         items={[
-          { name: "Accueil", href: withLocale("/", locale) },
-          { name: "Trouver un prof", href: withLocale("/trouver-un-prof", locale) },
+          { name: homeLabel, href: withLocale("/", locale) },
+          { name: findTeacherLabel, href: withLocale("/trouver-un-prof", locale) },
           { name: city.name, href: withLocale(`/tuteurs-prive/${citySlug}`, locale) },
         ]}
       />
@@ -258,37 +252,42 @@ export default async function CityTutorsPage({
       <MarketingPublicLayout className="bg-[#FAFCFB]">
 
         <SeoBreadcrumbBar
+          locale={locale}
           items={[
-            { label: "Accueil", href: withLocale("/", locale) },
-            { label: "Trouver un prof", href: withLocale("/trouver-un-prof", locale) },
+            { label: homeLabel, href: withLocale("/", locale) },
+            { label: findTeacherLabel, href: withLocale("/trouver-un-prof", locale) },
             { label: city.name, href: withLocale(`/tuteurs-prive/${citySlug}`, locale) },
           ]}
         />
 
         <SeoHeroShell
-          regionLabel={`${city.region}, Québec`}
-          title={`Tuteurs privés à ${city.name}`}
+          locale={locale}
+          regionLabel={tFormat(locale, "seoLandingRegionLabel", {
+            region: city.region,
+            province: seoCity.province,
+          })}
+          title={tFormat(locale, "seoLandingTutorHeroTitle", { city: city.name })}
           intro={tutorSeo.intro}
           trustChips={[
-            "Aide aux devoirs",
-            "Matières scolaires",
-            "Langues et musique",
-            `Profs locaux à ${city.name}`,
+            t(locale, "seoLandingChipHomeworkHelp"),
+            t(locale, "seoLandingChipSchoolSubjects"),
+            t(locale, "seoLandingChipLanguagesAndMusic"),
+            tFormat(locale, "seoLandingChipLocalTeachersInCity", { city: city.name }),
           ]}
           primaryCta={{
             href: withLocaleHref("/trouver-un-prof", locale),
-            label: "Trouver un tuteur",
+            label: t(locale, "seoLandingPrimaryCtaFindTutor"),
           }}
           secondaryCta={{
             href: withLocaleHref("/become-teacher", locale),
-            label: "Devenir tuteur",
+            label: t(locale, "seoLandingSecondaryCtaBecomeTutor"),
           }}
         />
 
         <section id="matieres-populaires" className="bg-white border-b border-[#E8E6DF] py-10 px-4 sm:px-6">
           <div className="mx-auto max-w-5xl">
             <p className="text-center text-[11px] font-bold uppercase tracking-widest text-[#6B6760] mb-6">
-              Cours populaires à {city.name}
+              {tFormat(locale, "seoLandingPopularSubjectsInCity", { city: city.name })}
             </p>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {subjectCards.map(({ slug, meta }) => (
@@ -301,7 +300,10 @@ export default async function CityTutorsPage({
                     {meta.label.charAt(0).toUpperCase() + meta.label.slice(1)}
                   </p>
                   <p className="mt-1 text-xs text-[#6B6760] leading-relaxed">
-                    {meta.searchLabel} à {city.name}
+                    {tFormat(locale, "seoLandingSubjectCardSubtitle", {
+                      searchLabel: meta.searchLabel,
+                      city: city.name,
+                    })}
                   </p>
                 </Link>
               ))}
@@ -334,7 +336,7 @@ export default async function CityTutorsPage({
               </p>
               {isNearby && teachers.length > 0 ? (
                 <span className="rounded-full bg-[#FFF7E6] border border-[#F6C96E] px-2 py-0.5 text-[10px] font-semibold text-[#92600A]">
-                  proches de {city.name}
+                  {tFormat(locale, "seoLandingNearbyBadge", { city: city.name })}
                 </span>
               ) : null}
             </div>
@@ -387,11 +389,15 @@ export default async function CityTutorsPage({
                             </p>
                           </div>
                         </div>
-                        <SeoTeacherRatingBadge rating={teacher.rating} reviews={teacher.reviews} />
+                        <SeoTeacherRatingBadge
+                          locale={locale}
+                          rating={teacher.rating}
+                          reviews={teacher.reviews}
+                        />
                       </div>
 
                       <div className="mt-3 flex items-center justify-between border-t border-[#E8E6DF] pt-3 text-xs text-[#6B6760]">
-                        <span>{teachingModeLabel(teacher.teachingMode)}</span>
+                        <span>{seoTeachingModeLabel(locale, teacher.teachingMode)}</span>
                         <span className="font-bold text-teal-700">
                           {Math.round(Number(teacher.pricePerLesson))}$/h
                         </span>
@@ -405,10 +411,10 @@ export default async function CityTutorsPage({
                     href={withLocaleHref("/trouver-un-prof", locale)}
                     className="inline-flex h-11 w-full max-w-md items-center justify-center rounded-2xl bg-teal-700 px-7 text-sm font-bold text-white shadow-sm hover:brightness-105 sm:mx-auto sm:w-auto"
                   >
-                    Trouver un tuteur
+                    {t(locale, "seoLandingPrimaryCtaFindTutor")}
                   </Link>
                   <p className="mt-2 text-xs text-[#6B6760]">
-                    Inscription gratuite · Aucun engagement
+                    {t(locale, "seoLandingFreeSignupNoCommitment")}
                   </p>
                 </div>
               </>
@@ -416,8 +422,8 @@ export default async function CityTutorsPage({
           </div>
         </section>
 
-        <SeoHowPratiqoWorks />
-        <SeoTransparencyBlock />
+        <SeoHowPratiqoWorks locale={locale} />
+        <SeoTransparencyBlock locale={locale} />
 
         <section className="bg-[#FAFAF8] border-t border-[#E8E6DF] py-10 px-4 sm:px-6">
           <div className="mx-auto max-w-3xl space-y-4 text-sm text-[#2C2C2A] leading-relaxed">
@@ -425,7 +431,7 @@ export default async function CityTutorsPage({
               <p key={i}>{para}</p>
             ))}
             <p className="text-[#6B6760]">
-              Mots-clés utiles : tuteur privé {city.name}, tutorat {city.name}, aide aux devoirs {city.name}, cours privés {city.name}, prof privé {city.name}.
+              {tFormat(locale, "seoLandingTutorKeywordsFooter", { city: city.name })}
             </p>
           </div>
         </section>
@@ -445,7 +451,7 @@ export default async function CityTutorsPage({
         <section className="bg-[#FAFAF8] border-t border-[#E8E6DF] py-10 px-4 sm:px-6">
           <div className="mx-auto max-w-3xl">
             <h2 className="text-lg font-bold text-[#2C2C2A] mb-6">
-              Questions fréquentes — tuteurs privés à {city.name}
+              {tFormat(locale, "seoLandingTutorFaqTitle", { city: city.name })}
             </h2>
             <div className="space-y-3">
               {cityFaq.map((item, i) => (
@@ -468,7 +474,9 @@ export default async function CityTutorsPage({
 
         <section id="villes-voisines" className="bg-white border-t border-[#E8E6DF] py-10 px-4 sm:px-6">
           <div className="mx-auto max-w-4xl">
-            <h2 className="text-sm font-bold uppercase tracking-widest text-[#6B6760] mb-4">Villes voisines</h2>
+            <h2 className="text-sm font-bold uppercase tracking-widest text-[#6B6760] mb-4">
+              {t(locale, "seoLandingNearbyCitiesSection")}
+            </h2>
             <ul className="flex flex-wrap gap-3 text-sm">
               {nearbyCities.map((c) => (
                 <li key={c.slug}>
@@ -476,7 +484,7 @@ export default async function CityTutorsPage({
                     href={withLocale(`/tuteurs-prive/${c.slug}`, locale)}
                     className="rounded-full border border-[#E8E6DF] bg-[#FAFCFB] px-3 py-1.5 font-semibold text-teal-700 hover:border-teal-500/40"
                   >
-                    Tuteurs privés à {c.name}
+                    {seoPrivateTutorsLinkLabel(locale, c.name)}
                   </Link>
                 </li>
               ))}
@@ -487,41 +495,41 @@ export default async function CityTutorsPage({
         <SeoDiscoveryGrid
           columns={[
             {
-              title: "Matières populaires",
+              title: t(locale, "seoLandingPopularSubjects"),
               links: subjectCards.map(({ slug, meta }) => ({
                 href: withLocale(getCoursePagePath(slug, citySlug), locale),
-                label: `Cours de ${meta.label} à ${city.name}`,
+                label: seoCourseLinkLabel(locale, meta.label, city.name),
               })),
             },
             {
-              title: "Villes voisines",
+              title: t(locale, "seoLandingNearbyCitiesSection"),
               links: nearbyCities.map((c) => ({
                 href: withLocale(getTutorCityPagePath(c.slug), locale),
-                label: `Tuteurs privés à ${c.name}`,
+                label: seoPrivateTutorsLinkLabel(locale, c.name),
               })),
             },
             {
-              title: "Ressources utiles",
+              title: t(locale, "seoLandingUsefulPages"),
               links: [
                 {
                   href: withLocale("/trouver-un-prof", locale),
-                  label: "Trouver un prof",
+                  label: findTeacherLabel,
                 },
                 {
                   href: withLocaleHref("/become-teacher", locale),
-                  label: "Devenir enseignant",
+                  label: t(locale, "seoLandingBecomeTeacherNav"),
                 },
                 {
                   href: withLocale("/tarifs", locale),
-                  label: "Tarifs",
+                  label: t(locale, "navPricing"),
                 },
                 {
                   href: withLocale("/charte-de-confiance", locale),
-                  label: "Charte de confiance",
+                  label: t(locale, "seoLandingTrustCharterLink"),
                 },
                 {
                   href: withLocale("/contact", locale),
-                  label: "Contact",
+                  label: t(locale, "footerContact"),
                 },
               ],
             },

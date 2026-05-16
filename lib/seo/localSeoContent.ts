@@ -540,14 +540,83 @@ export function buildTutorCitySeoContent(input: {
 // ── FAQs ──────────────────────────────────────────────────────────────────────
 
 export function buildCourseCityFaqs(input: {
+  locale: Locale;
   city: LocalSeoCity;
   subject: LocalSeoSubject;
   disciplineName: string;
   disciplineSlug: string;
 }): { question: string; answer: string }[] {
-  const { city, subject, disciplineName, disciplineSlug } = input;
+  const { locale, city, subject, disciplineName, disciplineSlug } = input;
   const d = getDepth(disciplineSlug);
   const angle = d?.whatTheyWant ?? subject.faqAngle;
+
+  if (locale === "en") {
+    return [
+      {
+        question: `How much do ${subject.label} lessons cost in ${city.name}?`,
+        answer:
+          "Rates vary by experience, level, and format (online or in person). On Pratiqo, each profile shows a clear price so you can compare before messaging — with no hidden platform fees for basic contact.",
+      },
+      {
+        question: `How do I choose a ${subject.teacherNoun} in ${city.name} for my situation?`,
+        answer: `Start with your goal and context (${angle}). Then read the background, reviews when available, verifications, and teaching mode. Ask a specific question — a strong teacher answers with a method, not vague promises.`,
+      },
+      {
+        question: `Can ${subject.label} lessons happen at home or online in ${city.name}?`,
+        answer:
+          "Often yes — it depends on the profile. Many teachers offer one or both. Check each listing; in Québec winters, many families mix formats week to week.",
+      },
+      {
+        question: `Does Pratiqo verify ${disciplineName} teachers?`,
+        answer:
+          "Yes: identity is verified to teach on Pratiqo. Other badges may appear on the profile. They help you choose, but your judgment still matters.",
+      },
+      {
+        question: `Can we start with a first lesson or short meeting for ${subject.label} in ${city.name}?`,
+        answer:
+          "Many teachers are open to a first meeting or short session to align on a plan. Ask politely in your message after creating an account.",
+      },
+      {
+        question: `Is this aligned with Québec programs or my situation in ${city.name}?`,
+        answer:
+          "Mention your level (elementary, high school, college, adult) and what you want to improve. Many teachers know local expectations; either way, clarity on your real goals makes the difference.",
+      },
+    ];
+  }
+
+  if (locale === "es") {
+    return [
+      {
+        question: `¿Cuánto cuestan las clases de ${subject.label} en ${city.name}?`,
+        answer:
+          "El precio varía según experiencia, nivel y formato (online o presencial). En Pratiqo, cada perfil muestra una tarifa clara para comparar antes de escribir — sin cargos ocultos de plataforma para el contacto básico.",
+      },
+      {
+        question: `¿Cómo elegir un ${subject.teacherNoun} en ${city.name} para mi caso?`,
+        answer: `Empezá por tu objetivo y contexto (${angle}). Luego leé trayectoria, reseñas si hay, verificaciones y modalidad. Hacé una pregunta concreta: un buen profe responde con método, no promesas vagas.`,
+      },
+      {
+        question: `¿Las clases de ${subject.label} pueden ser a domicilio u online en ${city.name}?`,
+        answer:
+          "A menudo sí — depende del perfil. Muchos profes ofrecen una u otra modalidad, o ambas. Revisá cada ficha; en invierno en Québec, muchas familias combinan según la semana.",
+      },
+      {
+        question: `¿Pratiqo verifica a los profesores de ${disciplineName}?`,
+        answer:
+          "Sí: la identidad se verifica para enseñar en Pratiqo. Pueden aparecer otras validaciones en el perfil. Ayudan a elegir, pero tu criterio sigue siendo clave.",
+      },
+      {
+        question: `¿Se puede empezar con una primera clase o reunión corta de ${subject.label} en ${city.name}?`,
+        answer:
+          "Muchos profesores aceptan una primera reunión o sesión corta para alinear el plan. Pedilo con cortesía en tu mensaje después de crear tu cuenta.",
+      },
+      {
+        question: `¿Encaja con programas de Québec o mi realidad en ${city.name}?`,
+        answer:
+          "Mencioná tu nivel (primaria, secundaria, cégep, adulto) y qué querés mejorar. Muchos profes conocen expectativas locales; en todo caso, claridad en tus objetivos reales marca la diferencia.",
+      },
+    ];
+  }
 
   return [
     {
@@ -577,7 +646,77 @@ export function buildCourseCityFaqs(input: {
   ];
 }
 
-export function buildTutorCityFaqs(city: LocalSeoCity): { question: string; answer: string }[] {
+export function buildTutorCityFaqs(city: LocalSeoCity, locale: Locale = "fr"): { question: string; answer: string }[] {
+  if (locale === "en") {
+    return [
+      {
+        question: `How do I find a private tutor in ${city.name} for tutoring or homework help?`,
+        answer:
+          "On Pratiqo, filter by subject and read real profiles (rate, lesson mode, experience). We do not invent teacher counts: you see who is available, then message with a clear goal.",
+      },
+      {
+        question: `What is the difference between a private tutor, homework help, and private lessons in ${city.name}?`,
+        answer:
+          "The words differ; the idea is personalized support for a student or adult. Focus on subject, level, and method — not only the title on the listing.",
+      },
+      {
+        question: `Can sessions be at home or online in ${city.name}?`,
+        answer:
+          "It depends on the profile. Many offer online, in person, or both. In winter, online can keep consistency when travel is harder.",
+      },
+      {
+        question: `How do I avoid a poor match with a local teacher in ${city.name}?`,
+        answer:
+          'Ask a precise question about your goal (e.g. "two sessions per week for secondary 4"). A strong tutor answers with a simple structure and realistic expectations.',
+      },
+      {
+        question: "Does Pratiqo verify tutors?",
+        answer:
+          "Yes: identity is verified to teach. Other profile elements may help. Read the full profile before committing.",
+      },
+      {
+        question: `Can we start with a short session in ${city.name}?`,
+        answer:
+          "Often yes — ask directly. A first meeting helps confirm fit and a plan for the next few weeks.",
+      },
+    ];
+  }
+
+  if (locale === "es") {
+    return [
+      {
+        question: `¿Cómo encontrar un tutor privado en ${city.name} para tutoría o apoyo escolar?`,
+        answer:
+          "En Pratiqo, filtrá por materia y leé perfiles reales (tarifa, modalidad, experiencia). No inventamos cantidades: ves quién está disponible y escribís con un objetivo claro.",
+      },
+      {
+        question: `¿Cuál es la diferencia entre tutor privado, apoyo escolar y clases particulares en ${city.name}?`,
+        answer:
+          "Cambian las palabras; la idea es acompañamiento personalizado. Mirá sobre todo materia, nivel y método — no solo el título del anuncio.",
+      },
+      {
+        question: `¿Las sesiones pueden ser a domicilio u online en ${city.name}?`,
+        answer:
+          "Depende del perfil. Muchos ofrecen online, presencial o ambos. En invierno, online ayuda a mantener la regularidad cuando viajar cuesta más.",
+      },
+      {
+        question: `¿Cómo evitar una mala experiencia con un profe local en ${city.name}?`,
+        answer:
+          'Hacé una pregunta precisa sobre tu objetivo (ej.: "2 sesiones por semana para secundaria 4"). Un buen tutor responde con estructura simple y expectativas realistas.',
+      },
+      {
+        question: "¿Pratiqo verifica a los tutores?",
+        answer:
+          "Sí: la identidad se verifica para enseñar. Otros elementos pueden enriquecer la ficha. Leé el perfil completo antes de comprometerte.",
+      },
+      {
+        question: `¿Se puede empezar con una sesión corta en ${city.name}?`,
+        answer:
+          "A menudo sí — pedilo directamente. Una primera reunión ayuda a validar la dinámica y el plan para las próximas semanas.",
+      },
+    ];
+  }
+
   return [
     {
       question: `Comment trouver un tuteur privé à ${city.name} pour le tutorat ou l’aide aux devoirs?`,
