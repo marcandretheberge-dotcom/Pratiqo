@@ -44,6 +44,7 @@ export function MarketplaceMapPanel({
   onBoundsFilterCleared,
   mapHeight = "min(680px, calc(100dvh - 8rem))",
   className,
+  suppressMarkerPreviewDrawer = false,
 }: {
   loading: boolean;
   teachers: Teacher[];
@@ -58,6 +59,7 @@ export function MarketplaceMapPanel({
   onBoundsFilterCleared: () => void;
   mapHeight?: string;
   className?: string;
+  suppressMarkerPreviewDrawer?: boolean;
 }) {
   const { t } = useLocale();
 
@@ -100,6 +102,7 @@ export function MarketplaceMapPanel({
             onBoundsFilterCleared={onBoundsFilterCleared}
             highlightedTeacherId={highlightedTeacherId}
             mapHeight={mapHeight}
+            suppressMarkerPreviewDrawer={suppressMarkerPreviewDrawer}
           />
         </>
       )}

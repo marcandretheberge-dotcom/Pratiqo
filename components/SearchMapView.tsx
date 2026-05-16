@@ -52,6 +52,8 @@ type Props = {
   initialZoom?: number;
   /** Emphasizes the marker matching this teacher id (e.g. list hover). */
   highlightedTeacherId?: string | null;
+  /** When true, skip the built-in marker preview bottom sheet (mobile results shell). */
+  suppressMarkerPreviewDrawer?: boolean;
 };
 
 const MAP_MINIMAL_STYLES: google.maps.MapTypeStyle[] = [
@@ -116,6 +118,7 @@ export function SearchMapView({
   mapHeight = "calc(100vh - 200px)",
   initialZoom = 12,
   highlightedTeacherId = null,
+  suppressMarkerPreviewDrawer = false,
 }: Props) {
   const { t, formatPrice } = useLocale();
 
@@ -515,7 +518,8 @@ export function SearchMapView({
         </div>
       ) : null}
 
-      {/* Teacher mini-card overlay using Vaul for native bottom sheet feel */}
+      {/* Teacher mini-card overlay — desktop map preview; suppressed on mobile results shell */}
+      {!suppressMarkerPreviewDrawer ? (
       <Drawer.Root open={!!selectedTeacher} onOpenChange={(open) => !open && onCloseSelected()}>
         <Drawer.Portal>
           <Drawer.Overlay className="fixed inset-0 bg-black/40 z-[50]" />
@@ -574,6 +578,7 @@ export function SearchMapView({
           </Drawer.Content>
         </Drawer.Portal>
       </Drawer.Root>
+      ) : null}
     </div>
   );
 }

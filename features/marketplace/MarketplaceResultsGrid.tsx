@@ -13,6 +13,8 @@ export function MarketplaceResultsGrid({
   onResetFilters,
   highlightedTeacherId = null,
   onHoverTeacher,
+  resultAnchorPrefix,
+  layout = "default",
 }: {
   loading: boolean;
   rows: TeacherSearchRow[];
@@ -20,13 +22,22 @@ export function MarketplaceResultsGrid({
   onResetFilters: () => void;
   highlightedTeacherId?: string | null;
   onHoverTeacher?: (id: string | null) => void;
+  /** When set, each card is wrapped with `id="{prefix}-{teacherId}"` for scroll targeting. */
+  resultAnchorPrefix?: string;
+  /** Single-column stack for mobile bottom sheet. */
+  layout?: "default" | "stack";
 }) {
   const { t } = useLocale();
 
+  const gridClass =
+    layout === "stack"
+      ? "grid grid-cols-1 gap-3"
+      : "grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2";
+
   if (loading) {
     return (
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
-        {Array.from({ length: 6 }).map((_, i) => (
+      <div className={gridClass}>
+        {Array.from({ length: layout === "stack" ? 4 : 6 }).map((_, i) => (
           <LandingTeacherCardSkeleton key={i} />
         ))}
       </div>
@@ -55,17 +66,26 @@ export function MarketplaceResultsGrid({
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
-      {rows.map(({ teacher, distanceKm }) => (
-        <TeacherResultCard
-          key={teacher.id}
-          teacher={teacher}
-          distanceKm={distanceKm}
-          isHighlighted={highlightedTeacherId === teacher.id}
-          onHoverChange={onHoverTeacher}
-          onOpen={() => onOpenTeacher(teacher)}
-        />
-      ))}
+    <div className={gridClass}>
+      {rows.map(({ teacher, distanceKm }) => {
+        const card = (
+          <TeacherResultCard
+            teacher={teacher}
+            distanceKm={distanceKm}
+            isHighlighted={highlightedTeacherId === teacher.id}
+            onHoverChange={onHoverTeacher}
+            onOpen={() => onOpenTeacher(teacher)}
+          />
+        );
+        if (!resultAnchorPrefix) {
+          return <div key={teacher.id}>{card}</div>;
+        }
+        return (
+          <div key={teacher.id} id={`${resultAnchorPrefix}-${teacher.id}`}>
+            {card}
+          </div>
+        );
+      })}
     </div>
   );
 }

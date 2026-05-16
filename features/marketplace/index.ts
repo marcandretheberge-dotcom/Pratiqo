@@ -1,5 +1,6 @@
 export { MarketplaceMapPanel } from "./MarketplaceMapPanel";
 export { MarketplaceFiltersSheet } from "./MarketplaceFiltersSheet";
+export { MarketplaceMobileResultsSheet } from "./MarketplaceMobileResultsSheet";
 export { MarketplaceResultsGrid } from "./MarketplaceResultsGrid";
 export { TeacherProfileDrawer } from "./TeacherProfileDrawer";
 export { TeacherResultCard } from "./TeacherResultCard";

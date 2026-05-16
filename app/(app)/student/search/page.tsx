@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import type { Teacher } from "../../../../types";
+import type { MapBounds } from "@/components/SearchMapView";
 import type { BookingInitialLessonKind } from "../../../../components/BookingModal";
 import { useRouter, useSearchParams } from "next/navigation";
 import { List, Map as MapIcon, MapPin, ShieldCheck } from "lucide-react";
@@ -19,6 +20,7 @@ import {
   createDefaultMarketplaceAdvancedFilters,
   MarketplaceFiltersSheet,
   MarketplaceMapPanel,
+  MarketplaceMobileResultsSheet,
   MarketplaceResultsGrid,
   TeacherProfileDrawer,
   useMarketplaceMapState,
@@ -274,19 +276,30 @@ export default function StudentSearchPage() {
     />
   );
 
-  const mapPanel = (
+  const mapTeachers = results.map((x) => x.teacher);
+
+  const mapPanelProps = {
+    loading: loadingTeachers,
+    teachers: mapTeachers,
+    geo,
+    selectedTeacher: selectedMapTeacher,
+    highlightedTeacherId: selectedMapTeacher?.id ?? null,
+    mapBounds,
+    onTeacherSelect: (teacher: Teacher) => setSelectedMapTeacher(teacher),
+    onCloseSelected: () => setSelectedMapTeacher(null),
+    onViewProfile: (teacher: Teacher) => setSelectedTeacherProfile(teacher),
+    onBoundsSearch: (bounds: MapBounds) => setMapBounds(bounds),
+    onBoundsFilterCleared: () => setMapBounds(null),
+  } as const;
+
+  const mapPanel = <MarketplaceMapPanel {...mapPanelProps} />;
+
+  const mobileMapPanel = (
     <MarketplaceMapPanel
-      loading={loadingTeachers}
-      teachers={results.map((x) => x.teacher)}
-      geo={geo}
-      selectedTeacher={selectedMapTeacher}
-      highlightedTeacherId={selectedMapTeacher?.id ?? null}
-      mapBounds={mapBounds}
-      onTeacherSelect={(teacher) => setSelectedMapTeacher(teacher)}
-      onCloseSelected={() => setSelectedMapTeacher(null)}
-      onViewProfile={(teacher) => setSelectedTeacherProfile(teacher)}
-      onBoundsSearch={(bounds) => setMapBounds(bounds)}
-      onBoundsFilterCleared={() => setMapBounds(null)}
+      {...mapPanelProps}
+      suppressMarkerPreviewDrawer
+      mapHeight="100%"
+      className="absolute inset-0 h-full min-h-0 overflow-hidden rounded-[24px] border-0 p-0 shadow-[0_14px_48px_rgba(44,44,42,0.1)]"
     />
   );
 
@@ -440,7 +453,7 @@ export default function StudentSearchPage() {
                     });
                   }}
                   className={cn(
-                    "inline-flex h-10 items-center gap-2 rounded-full border px-4 text-xs font-bold transition-colors",
+                    "hidden h-10 items-center gap-2 rounded-full border px-4 text-xs font-bold transition-colors lg:inline-flex",
                     viewMode === "map"
                       ? "border-teal-700 bg-teal-700 text-white"
                       : "border-[#DCEAE3] bg-white text-[#2C2C2A] hover:bg-[#FAFCFB]",
@@ -452,7 +465,24 @@ export default function StudentSearchPage() {
               </div>
             </div>
 
-            <div className="mt-5 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(420px,0.82fr)] lg:items-start lg:gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(500px,0.9fr)]">
+            <div className="relative mt-4 h-[min(68dvh,calc(100dvh-12rem))] min-h-[420px] lg:hidden">
+              {mobileMapPanel}
+              <MarketplaceMobileResultsSheet
+                resultCount={results.length}
+                loading={loadingTeachers}
+                rows={results}
+                highlightedTeacherId={selectedMapTeacher?.id ?? null}
+                onOpenTeacher={(teacher) => setSelectedTeacherProfile(teacher)}
+                onResetFilters={resetFilters}
+                onHoverTeacher={(id) => {
+                  if (!id) return;
+                  const match = mapTeachers.find((teacher) => teacher.id === id);
+                  if (match) setSelectedMapTeacher(match);
+                }}
+              />
+            </div>
+
+            <div className="mt-5 hidden lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(420px,0.82fr)] lg:items-start lg:gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(500px,0.9fr)]">
               <div className={cn(viewMode === "map" ? "hidden lg:block" : "block")}>
                 {resultsList}
               </div>
