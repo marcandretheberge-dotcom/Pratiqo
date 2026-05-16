@@ -7,6 +7,7 @@ import { MarketingFooter } from "@/components/marketing/MarketingFooter";
 import { useLocale } from "@/lib/locale-context";
 import { useAuth } from "@/components/AuthProvider";
 import type { Locale } from "@/lib/i18n/types";
+import { withLocaleHref } from "@/lib/i18n/marketingPaths";
 
 // ── Locale-keyed copy ─────────────────────────────────────────────────────────
 
@@ -283,7 +284,7 @@ export default function DevenirEnseignantContent() {
           </div>
           <div className="mt-6 text-center">
             <Link
-              href="/become-teacher"
+              href={withLocaleHref("/tarifs", locale)}
               className="text-sm text-[#7FE0C3] underline underline-offset-4 hover:text-[#B8F5DC]"
             >
               {locale === "es" ? "Ver todos los planes →" : locale === "en" ? "See all plans →" : "Voir tous les plans →"}
