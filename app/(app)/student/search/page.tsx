@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import type { Teacher } from "../../../../types";
 import type { BookingInitialLessonKind } from "../../../../components/BookingModal";
@@ -9,19 +9,22 @@ import { List, Map as MapIcon, MapPin, ShieldCheck } from "lucide-react";
 import { useLocale } from "../../../../lib/locale-context";
 import { cn } from "../../../../lib/utils";
 import { getSupabaseClient } from "../../../../lib/supabase";
-import { isPratiqoVerified } from "../../../../lib/verification";
 import type { City } from "../../../../lib/cities";
-import type { MapBounds } from "../../../../components/SearchMapView";
 import { useAuth } from "../../../../components/AuthProvider";
 import type { StudentLocationPrefs } from "../../../../lib/studentLocationSearch";
-import { applyRadiusFilter, buildTeacherSearchRows, filterTeacherPool, sortRows } from "../../../../lib/teacherSearchEngine";
 import { fetchNearbyTeachers } from "../../../../lib/teacherNearby";
-import type { AdvancedFilterValues } from "../../../../components/TeacherSearchAdvancedPanel";
-import type { TeacherSearchFormat } from "../../../../lib/teacherSearchCriteria";
 import { logSearchEvent } from "../../../../lib/searchAnalytics";
 import { LandingSearchHero } from "@/components/marketing/LandingSearchHero";
-import type { LandingFormatFilter } from "@/lib/landingTeacherFilter";
-import { applyMapBoundsFilter, fetchPublicMarketplaceTeachers, MarketplaceFiltersSheet, MarketplaceMapPanel, MarketplaceResultsGrid, TeacherProfileDrawer } from "@/features/marketplace";
+import {
+  createDefaultMarketplaceAdvancedFilters,
+  MarketplaceFiltersSheet,
+  MarketplaceMapPanel,
+  MarketplaceResultsGrid,
+  TeacherProfileDrawer,
+  useMarketplaceMapState,
+  useMarketplaceSearch,
+  usePublicTeachers,
+} from "@/features/marketplace";
 
 const BookingModal = dynamic(
   () => import("../../../../components/BookingModal").then((m) => m.BookingModal),
@@ -45,21 +48,13 @@ function DynamicLoadingBlock({ map = false }: { map?: boolean }) {
 export default function StudentSearchPage() {
   const router = useRouter();
   const { t } = useLocale();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [activeCat, setActiveCat] = useState<string>("All");
-  const [teachers, setTeachers] = useState<Teacher[]>([]);
-  const [loadingTeachers, setLoadingTeachers] = useState(true);
+  const { teachers, loading: loadingTeachers } = usePublicTeachers("student/search");
   const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(null);
   const [geoLoading, setGeoLoading] = useState(false);
   const [radius, setRadius] = useState<5 | 10 | 25 | 50 | "all" | "online">("all");
   // Server-side PostGIS lookup result. `null` = not used (no geo, "all"/"online" radius, or RPC unavailable).
   // When populated, takes precedence over the client-side haversine path for both filtering and distance display.
   const [nearbyServerResult, setNearbyServerResult] = useState<Map<string, number> | null>(null);
-  const [sortMode, setSortMode] = useState<"relevance" | "nearest" | "trusted">("relevance");
-  const [viewMode, setViewMode] = useState<"list" | "map">("list");
-  const [desktopMapEnabled, setDesktopMapEnabled] = useState(false);
-  const [mapBounds, setMapBounds] = useState<MapBounds | null>(null);
-  const [selectedMapTeacher, setSelectedMapTeacher] = useState<Teacher | null>(null);
   const [bookingTeacher, setBookingTeacher] = useState<Teacher | null>(null);
   const [bookingInitialKind, setBookingInitialKind] = useState<BookingInitialLessonKind>("standard");
   const [selectedTeacherProfile, setSelectedTeacherProfile] = useState<Teacher | null>(null);
@@ -67,22 +62,48 @@ export default function StudentSearchPage() {
   const searchParams = useSearchParams();
   const { user } = useAuth();
   const [studentPrefs, setStudentPrefs] = useState<StudentLocationPrefs | null>(null);
-  const [advancedOpen, setAdvancedOpen] = useState(false);
-  const [adv, setAdv] = useState<AdvancedFilterValues>({
-    minRating: "",
-    maxPrice: "",
-    verifiedOnly: false,
-    language: "",
-    level: "",
-    availability: "",
-    teacherPreference: "",
-    formatExtra: "",
+  const {
+    viewMode,
+    setViewMode,
+    desktopMapEnabled,
+    mapBounds,
+    setMapBounds,
+    clearMapBounds,
+    selectedMapTeacher,
+    setSelectedMapTeacher,
+  } = useMarketplaceMapState({ trackDesktopMap: true });
+  const {
+    searchQuery,
+    setSearchQuery,
+    activeCat,
+    setActiveCat,
+    sortMode,
+    setSortMode,
+    formatValue,
+    setFormatValue,
+    advancedOpen,
+    setAdvancedOpen,
+    adv,
+    setAdv,
+    results,
+    verifiedTeacherCount,
+  } = useMarketplaceSearch({
+    teachers,
+    geo,
+    mapBounds,
+    radius,
+    nearbyServerResult,
+    studentPrefs,
+    initialSortMode: "relevance",
+    advancedFilterMode: "verifiedOnly",
+    onCriteriaChange: clearMapBounds,
+    deferCriteriaChange: true,
   });
 
   useEffect(() => {
     const q = searchParams.get("q");
     if (q) queueMicrotask(() => setSearchQuery(q));
-  }, [searchParams]);
+  }, [searchParams, setSearchQuery]);
 
   useEffect(() => {
     const supabase = getSupabaseClient();
@@ -127,16 +148,6 @@ export default function StudentSearchPage() {
   }, [user?.id]);
 
   useEffect(() => {
-    const supabase = getSupabaseClient();
-    const load = async () => {
-      const marketplaceTeachers = await fetchPublicMarketplaceTeachers(supabase, "student/search");
-      setTeachers(marketplaceTeachers);
-      setLoadingTeachers(false);
-    };
-    void load();
-  }, []);
-
-  useEffect(() => {
     if (teachers.length === 0) return;
     let idleId: number | undefined;
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
@@ -154,17 +165,6 @@ export default function StudentSearchPage() {
     };
   }, [teachers.length]);
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const media = window.matchMedia("(min-width: 1024px)");
-    const sync = () => {
-      setDesktopMapEnabled(media.matches);
-    };
-    sync();
-    media.addEventListener("change", sync);
-    return () => media.removeEventListener("change", sync);
-  }, []);
-
   const requestGeolocation = () => {
     if (!("geolocation" in navigator)) return;
     setGeoLoading(true);
@@ -180,11 +180,6 @@ export default function StudentSearchPage() {
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
     );
   };
-
-  // Clear map-bounds filter whenever the user changes their text/category/radius search
-  useEffect(() => {
-    queueMicrotask(() => setMapBounds(null));
-  }, [searchQuery, activeCat, radius, adv]);
 
   // PostGIS-backed nearby lookup. Runs whenever radius is a concrete number and geo is set.
   // We deliberately don't block render — the client-side haversine path handles the gap
@@ -223,83 +218,12 @@ export default function StudentSearchPage() {
     };
   }, [geo, radius]);
 
-  const formatValue = useMemo((): LandingFormatFilter => {
-    const raw = (adv.formatExtra || "").trim() as TeacherSearchFormat | "";
-    if (raw === "online" || raw === "in_person" || raw === "hybrid" || raw === "at_home") return raw;
-    return "all";
-  }, [adv.formatExtra]);
-
-  const setFormatValue = (v: LandingFormatFilter) => {
-    const fmt: TeacherSearchFormat | "" =
-      v === "all" ? "" : (v as unknown as TeacherSearchFormat);
-    setAdv((a) => ({ ...a, formatExtra: fmt }));
-  };
-
-  const verifiedTeacherCount = useMemo(
-    () =>
-      teachers.filter((t) =>
-        isPratiqoVerified({
-          isVerified: t.isVerified,
-          identityVerified: t.identityVerified,
-          verificationLevel: t.verificationLevel ?? null,
-        }),
-      ).length,
-    [teachers],
-  );
-
-  const results = useMemo(() => {
-    const pool = filterTeacherPool(teachers, {
-      category: activeCat,
-      searchQuery,
-      verifiedOnly: adv.verifiedOnly || undefined,
-    });
-    const base = buildTeacherSearchRows(pool, { geo });
-
-    // Server-side path: use the PostGIS RPC result both for filtering AND
-    // for authoritative distance values (handles antimeridian/curvature
-    // correctly, which the client haversine approximates).
-    let filtered: typeof base;
-    if (nearbyServerResult && nearbyServerResult.size > 0 && geo && typeof radius === "number") {
-      const serverFiltered = base
-        .filter(({ teacher }) => nearbyServerResult.has(teacher.id))
-        .map((row) => ({
-          ...row,
-          distanceKm: nearbyServerResult.get(row.teacher.id) ?? row.distanceKm,
-        }));
-      // RPC can return legacy demo ids (short keys) not present in
-      // teachers_public (UUID-filtered view). Intersection is then empty while
-      // the pool still has real teachers with JSON coords — fall back.
-      filtered =
-        serverFiltered.length === 0 && base.length > 0
-          ? applyRadiusFilter(base, radius)
-          : serverFiltered;
-    } else {
-      // Client haversine fallback (no geo, RPC unavailable, empty RPC, or "all"/"online").
-      filtered = applyRadiusFilter(base, geo ? radius : radius === "online" ? "online" : "all");
-    }
-
-    filtered = applyMapBoundsFilter(filtered, mapBounds);
-
-    // Unify sorting across search surfaces. Keep existing modes, but fold in student prefs.
-    const rows = sortRows(filtered, { sortMode, studentPrefs });
-    return rows;
-  }, [teachers, activeCat, searchQuery, geo, radius, sortMode, mapBounds, studentPrefs, adv.verifiedOnly, nearbyServerResult]);
-
   const resetFilters = () => {
     setSearchQuery("");
     setActiveCat("All");
     setRadius("all");
     setMapBounds(null);
-    setAdv({
-      minRating: "",
-      maxPrice: "",
-      verifiedOnly: false,
-      language: "",
-      level: "",
-      availability: "",
-      teacherPreference: "",
-      formatExtra: "",
-    });
+    setAdv(createDefaultMarketplaceAdvancedFilters());
   };
 
   const resultsList = (

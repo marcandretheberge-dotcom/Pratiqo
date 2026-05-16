@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import React, { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
@@ -9,11 +9,9 @@ import type { Teacher } from "../types";
 import { cn } from "../lib/utils";
 import { getEnabledDisciplines } from "../lib/disciplines";
 import { isEnabled } from "../lib/features";
-import { getSupabaseClient } from "../lib/supabase";
 import { useLocale } from "../lib/locale-context";
 import { useAuth } from "../components/AuthProvider";
 import type { BookingInitialLessonKind } from "../components/BookingModal";
-import type { MapBounds } from "../components/SearchMapView";
 import { LandingDiscoverySearch } from "../components/marketing/LandingDiscoverySearch";
 import { LandingHeroTrustStrip } from "../components/marketing/LandingHeroTrustStrip";
 import { LandingNeighborhoodSignals } from "../components/marketing/LandingNeighborhoodSignals";
@@ -21,12 +19,10 @@ import { LandingTeacherListingCard } from "../components/marketing/LandingTeache
 import { LandingTeacherCardSkeleton } from "../components/marketing/LandingTeacherCardSkeleton";
 import { LandingResourcesSection } from "../components/marketing/LandingResourcesSection";
 import type { TranslationKey } from "../lib/translations";
-import type { LandingFormatFilter } from "../lib/landingTeacherFilter";
-import { filterTeacherPool, buildTeacherSearchRows, sortRows } from "../lib/teacherSearchEngine";
-import { TeacherSearchAdvancedPanel, type AdvancedFilterValues } from "../components/TeacherSearchAdvancedPanel";
+import { TeacherSearchAdvancedPanel } from "../components/TeacherSearchAdvancedPanel";
 import { logSearchEvent } from "../lib/searchAnalytics";
 import type { City } from "../lib/cities";
-import { applyMapBoundsFilter, fetchPublicMarketplaceTeachers, MarketplaceMapPanel, TeacherProfileDrawer } from "../features/marketplace";
+import { MarketplaceMapPanel, TeacherProfileDrawer, useMarketplaceMapState, useMarketplaceSearch, usePublicTeachers } from "../features/marketplace";
 
 const BookingModal = dynamic(
   () => import("../components/BookingModal").then((m) => m.BookingModal),
@@ -80,55 +76,47 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
     tuteurs: GraduationCap,
   };
 
-  // Teachers + search state
   const [locationSearch, setLocationSearch] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [activeCat, setActiveCat] = useState<string>("All");
-  const [teachers, setTeachers] = useState<Teacher[]>([]);
-  const [loadingTeachers, setLoadingTeachers] = useState(true);
-
-  // Geo
   const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(null);
-  const [sortMode, setSortMode] = useState<"relevance" | "nearest">("relevance");
-
-  // Map bounds (set when user clicks "Search this area"; null = show all)
-  const [mapBounds, setMapBounds] = useState<MapBounds | null>(null);
-
-  const [formatFilter, setFormatFilter] = useState<LandingFormatFilter>("all");
-  const [advancedOpen, setAdvancedOpen] = useState(false);
-  const [adv, setAdv] = useState<AdvancedFilterValues>({
-    minRating: "",
-    maxPrice: "",
-    verifiedOnly: false,
-    language: "",
-    level: "",
-    availability: "",
-    teacherPreference: "",
-    formatExtra: "",
-  });
-
-  // View
-  const [viewMode, setViewMode] = useState<"list" | "map">("list");
-  const [mapLoaded, setMapLoaded] = useState(false);
-
-  // Profile / booking modals
   const [selectedTeacherProfile, setSelectedTeacherProfile] = useState<Teacher | null>(null);
-  const [selectedMapTeacher, setSelectedMapTeacher] = useState<Teacher | null>(null);
   const [bookingTeacher, setBookingTeacher] = useState<Teacher | null>(null);
   const [bookingInitialKind, setBookingInitialKind] = useState<BookingInitialLessonKind>("standard");
 
   const teacherResultsRef = useRef<HTMLDivElement>(null);
-
-  // Load teachers
-  useEffect(() => {
-    const supabase = getSupabaseClient();
-    const load = async () => {
-      const marketplaceTeachers = await fetchPublicMarketplaceTeachers(supabase, "LandingPageClient");
-      setTeachers(marketplaceTeachers);
-      setLoadingTeachers(false);
-    };
-    void load();
-  }, []);
+  const { teachers, loading: loadingTeachers } = usePublicTeachers("LandingPageClient");
+  const {
+    viewMode,
+    setViewMode,
+    mapLoaded,
+    selectedMapTeacher,
+    setSelectedMapTeacher,
+    mapBounds,
+    setMapBounds,
+    clearMapBounds,
+    showMap,
+  } = useMarketplaceMapState();
+  const {
+    searchQuery,
+    setSearchQuery,
+    activeCat,
+    setActiveCat,
+    sortMode,
+    setSortMode,
+    formatFilter,
+    setFormatFilter,
+    advancedOpen,
+    setAdvancedOpen,
+    adv,
+    setAdv,
+    filteredTeachers: filtered,
+  } = useMarketplaceSearch({
+    teachers,
+    geo,
+    mapBounds,
+    initialSortMode: "relevance",
+    advancedFilterMode: "all",
+    onCriteriaChange: clearMapBounds,
+  });
 
   // Warm the map chunk after teachers resolve so switching to Map feels instant.
   useEffect(() => {
@@ -161,48 +149,7 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
       () => {},
       { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 },
     );
-  }, [geo]);
-
-  // Clear map-bounds filter whenever the user changes their text/category/format search
-  useEffect(() => {
-    setMapBounds(null);
-  }, [searchQuery, activeCat, formatFilter, adv]);
-
-  // Filter + sort (+ optional bounds filter when user has searched an area)
-  const filtered = useMemo(() => {
-    const fmtMain =
-      formatFilter === "all"
-        ? "no_preference"
-        : formatFilter === "online"
-          ? "online"
-          : formatFilter === "in_person"
-            ? "in_person"
-            : "hybrid";
-    const fmt = adv.formatExtra || fmtMain;
-    const minR = adv.minRating.trim() ? Number(adv.minRating) : undefined;
-    const maxP = adv.maxPrice.trim() ? Number(adv.maxPrice) : undefined;
-    const pool = filterTeacherPool(teachers, {
-      category: activeCat,
-      searchQuery,
-      format: fmt,
-      minRating: typeof minR === "number" && Number.isFinite(minR) ? minR : undefined,
-      maxPrice: typeof maxP === "number" && Number.isFinite(maxP) ? maxP : undefined,
-      verifiedOnly: adv.verifiedOnly ? true : undefined,
-      language: adv.language.trim() || undefined,
-      level: adv.level.trim() || undefined,
-      availability: adv.availability.trim() || undefined,
-      teacherPreference: adv.teacherPreference || undefined,
-    });
-    let rows = buildTeacherSearchRows(pool, { geo });
-
-    rows = applyMapBoundsFilter(rows, mapBounds);
-
-    const sorted = sortRows(rows, { sortMode: sortMode === "nearest" ? "nearest" : "relevance", studentPrefs: null });
-    return sorted.map((r) => r.teacher);
-  }, [teachers, searchQuery, activeCat, sortMode, geo, mapBounds, formatFilter, adv]);
-
-  const resultCountRef = useRef(0);
-  resultCountRef.current = filtered.length;
+  }, [geo, setSortMode]);
 
   const scrollToTeacherResults = useCallback(() => {
     teacherResultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -211,7 +158,7 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
       category: activeCat === "All" ? null : activeCat,
       subject: searchQuery.trim() || null,
       format: formatFilter === "all" ? null : formatFilter,
-      result_count: resultCountRef.current,
+      result_count: filtered.length,
       filters: {
         minRating: adv.minRating,
         maxPrice: adv.maxPrice,
@@ -222,14 +169,14 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
         teacherPreference: adv.teacherPreference,
       },
     });
-  }, [activeCat, searchQuery, formatFilter, adv]);
+  }, [activeCat, searchQuery, formatFilter, adv, filtered.length]);
 
   const selectCityForSearch = useCallback((city: City) => {
     setLocationSearch("");
     setGeo({ lat: city.lat, lng: city.lng });
     setSortMode("nearest");
     setSearchQuery(city.name);
-  }, []);
+  }, [setSearchQuery, setSortMode]);
 
   return (
     <>
@@ -386,10 +333,7 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
                       </button>
                       <button
                         type="button"
-                        onClick={() => {
-                          setViewMode("map");
-                          setMapLoaded(true);
-                        }}
+                        onClick={showMap}
                         className={cn(
                           "flex min-h-[40px] flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition-colors sm:min-h-0 sm:flex-initial",
                           viewMode === "map"

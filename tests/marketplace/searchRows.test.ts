@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
 import { applyMapBoundsFilter } from "@/features/marketplace/searchRows";
+import { computeMarketplaceResults } from "@/features/marketplace/utils/computeMarketplaceResults";
+import { createDefaultMarketplaceAdvancedFilters } from "@/features/marketplace/types";
 import type { Teacher } from "@/types";
 import type { TeacherSearchRow } from "@/lib/teacherSearchEngine";
 
@@ -51,4 +53,112 @@ assert.deepEqual(
 
 assert.equal(applyMapBoundsFilter(rows, null), rows);
 
-console.log("[marketplace:test] ok - filters teacher rows by map bounds");
+function teacher(overrides: Partial<Teacher> & Pick<Teacher, "id" | "name" | "discipline">): Teacher {
+  return {
+    category: "Musique",
+    teachingMode: "person",
+    pricePerLesson: 50,
+    rating: 4.5,
+    reviews: 0,
+    availability: [],
+    location: { lat: 45.5, lng: -73.6 },
+    isVerified: false,
+    identityVerified: false,
+    verificationLevel: 0,
+    ...overrides,
+  } as Teacher;
+}
+
+const pianoTeacher = teacher({
+  id: "piano",
+  name: "Alice Piano",
+  discipline: "Piano",
+  teachingMode: "online",
+  pricePerLesson: 45,
+  rating: 4.9,
+  isVerified: true,
+  identityVerified: true,
+  verificationLevel: 2,
+});
+const guitarTeacher = teacher({
+  id: "guitar",
+  name: "Bruno Guitare",
+  discipline: "Guitare",
+  teachingMode: "person",
+  pricePerLesson: 70,
+  rating: 4.1,
+  location: { lat: 46.8, lng: -71.2 },
+});
+const mathTeacher = teacher({
+  id: "math",
+  name: "Carla Maths",
+  discipline: "Mathématiques",
+  category: "Tuteurs académiques",
+  teachingMode: "person",
+  pricePerLesson: 35,
+  rating: 4.7,
+  location: { lat: 45.55, lng: -73.7 },
+});
+const marketplaceTeachers = [pianoTeacher, guitarTeacher, mathTeacher];
+
+function computeIds(patch: Parameters<typeof computeMarketplaceResults>[0]) {
+  return computeMarketplaceResults(patch).map((x) => x.teacher.id);
+}
+
+const baseState = {
+  teachers: marketplaceTeachers,
+  searchQuery: "",
+  activeCat: "All",
+  geo: null,
+  sortMode: "relevance" as const,
+  mapBounds: null,
+  formatFilter: "all" as const,
+  advancedFilters: createDefaultMarketplaceAdvancedFilters(),
+};
+
+assert.deepEqual(
+  computeIds({ ...baseState, searchQuery: "piano" }),
+  ["piano"],
+  "query filtering should match teacher disciplines",
+);
+
+assert.deepEqual(
+  computeIds({ ...baseState, activeCat: "Tuteurs académiques" }),
+  ["math"],
+  "category filtering should match teacher category/discipline groups",
+);
+
+assert.deepEqual(
+  computeIds({ ...baseState, formatFilter: "online" }),
+  ["piano"],
+  "format filtering should keep only online-compatible teachers",
+);
+
+assert.deepEqual(
+  computeIds({
+    ...baseState,
+    advancedFilters: { ...baseState.advancedFilters, verifiedOnly: true },
+  }),
+  ["piano"],
+  "verified filtering should keep Pratiqo-verified teachers",
+);
+
+assert.deepEqual(
+  computeIds({
+    ...baseState,
+    advancedFilters: { ...baseState.advancedFilters, minRating: "4.8", maxPrice: "50" },
+  }),
+  ["piano"],
+  "rating and price filters should apply together",
+);
+
+assert.deepEqual(
+  computeIds({
+    ...baseState,
+    mapBounds: montrealBounds,
+  }),
+  ["piano", "math"],
+  "map bounds filtering should keep teachers inside the selected viewport",
+);
+
+console.log("[marketplace:test] ok - filters teacher rows and computes marketplace results");
