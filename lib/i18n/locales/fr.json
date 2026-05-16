@@ -1395,6 +1395,12 @@
   "landingMobileNearYou": "Des profs près de chez vous",
   "landingNeighborhoodHeadline": "Trouvez le bon prof près de chez vous",
   "landingNeighborhoodSupporting": "Musique, langues et tutorat académique avec des profs vérifiés, en présentiel, en ligne ou en mode hybride.",
+  "landingPremiumPill": "La plateforme qui connecte élèves et professeurs locaux",
+  "landingPremiumH1": "Trouvez le bon prof près de chez vous",
+  "landingPremiumSubtitle": "Réservez des cours de musique, langues et tutorat avec des professeurs locaux, disponibles près de chez vous.",
+  "landingPremiumTrustProfiles": "Profils clairs",
+  "landingPremiumTrustPayments": "Paiements sécurisés",
+  "landingPremiumTrustLocal": "Profs locaux",
   "landingQuizHelper": "Répondez à quelques questions et on vous trouve le prof parfait.",
   "landingResourcesTitle": "Guides pour mieux apprendre et mieux enseigner",
   "landingResourcesSubtitle": "Des conseils pratiques pour choisir un professeur, préparer un premier cours, comprendre les prix et commencer à donner des cours privés.",
@@ -2127,6 +2133,5 @@
   "teacherEarnCalcFreeStudentLimit": "Jusqu'à 5 élèves",
   "teacherEarnCalcProFee": "Abonnement 29,99 $/mois",
   "teacherEarnCalcSeeAllPlans": "Voir tous les plans →",
-  "teacherEarnCalcCommissionDetails": "Voir les détails des commissions →",
   "teacherEarnCalcScrollCta": "Estimer mes revenus"
 }

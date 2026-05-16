@@ -4,7 +4,7 @@ import { LandingOrgJsonLd } from "@/components/marketing/LandingOrgJsonLd";
 import { LandingHeader } from "@/components/marketing/LandingHeader";
 import { LandingSkipLink } from "@/components/marketing/LandingSkipLink";
 import { LandingFooter } from "@/components/marketing/LandingFooter";
-import { LandingHeroStatic } from "@/components/marketing/LandingHeroStatic";
+import { PremiumLandingHeroStatic } from "@/components/marketing/PremiumLandingHeroStatic";
 import { LandingAuthGate } from "@/components/marketing/LandingAuthGate";
 import { LandingQuebecSeoLinks } from "@/components/marketing/LandingQuebecSeoLinks";
 import { LandingPageClient } from "../LandingPageClient";
@@ -113,7 +113,7 @@ export default async function LandingPage({
         <LandingSkipLink locale={locale} />
         <main id="main-content">
           <LandingPageClient>
-            <LandingHeroStatic locale={locale} />
+            <PremiumLandingHeroStatic locale={locale} />
           </LandingPageClient>
         </main>
         <LandingQuebecSeoLinks locale={locale} />

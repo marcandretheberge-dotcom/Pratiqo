@@ -1395,6 +1395,12 @@
   "landingMobileNearYou": "Teachers near you",
   "landingNeighborhoodHeadline": "Find the right teacher near you",
   "landingNeighborhoodSupporting": "Music, languages, and academic tutoring with verified teachers, in-person, online, or hybrid.",
+  "landingPremiumPill": "The platform that connects students with local teachers",
+  "landingPremiumH1": "Find the right teacher near you",
+  "landingPremiumSubtitle": "Book music, language and tutoring lessons with local teachers near you.",
+  "landingPremiumTrustProfiles": "Clear profiles",
+  "landingPremiumTrustPayments": "Secure payments",
+  "landingPremiumTrustLocal": "Local teachers",
   "landingQuizHelper": "Answer a few quick questions — we’ll match you with the perfect teacher.",
   "landingResourcesTitle": "Guides to learn better and teach better",
   "landingResourcesSubtitle": "Practical tips for choosing a teacher, preparing a first lesson, understanding pricing, and starting private tutoring.",
@@ -2127,6 +2133,5 @@
   "teacherEarnCalcFreeStudentLimit": "Up to 5 students",
   "teacherEarnCalcProFee": "CA$29.99/mo subscription",
   "teacherEarnCalcSeeAllPlans": "See all plans →",
-  "teacherEarnCalcCommissionDetails": "Commission details →",
   "teacherEarnCalcScrollCta": "Estimate my earnings"
 }

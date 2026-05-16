@@ -15,7 +15,11 @@ import { useAuth } from "../components/AuthProvider";
 import type { BookingInitialLessonKind } from "../components/BookingModal";
 import type { MapBounds } from "../components/SearchMapView";
 import { LandingDiscoverySearch } from "../components/marketing/LandingDiscoverySearch";
-import { LandingHeroTrustStrip } from "../components/marketing/LandingHeroTrustStrip";
+import {
+  PremiumLandingHeroCtas,
+  PremiumLandingHeroTrustStrip,
+  PremiumLandingHeroVisual,
+} from "../components/marketing/PremiumLandingHero";
 import { LandingNeighborhoodSignals } from "../components/marketing/LandingNeighborhoodSignals";
 import { LandingTeacherListingCard } from "../components/marketing/LandingTeacherListingCard";
 import { LandingTeacherCardSkeleton } from "../components/marketing/LandingTeacherCardSkeleton";
@@ -237,10 +241,18 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
       <section className="relative overflow-hidden">
           {mode === "student" ? (
             <div key="student" className="bg-[#FAFCFB] text-[#2C2C2A]">
-              <div className="relative border-b border-[#E8E6DF]/80 bg-[#FAFCFB] lg:bg-gradient-to-b lg:from-[#EFF8F4] lg:via-[#FAFCFB] lg:to-[#FAFCFB]">
-                <div className="relative mx-auto max-w-[1440px] px-4 pb-8 pt-6 sm:px-6 lg:pb-10 lg:pt-8">
-                  <div className="mb-6 flex justify-center">
-                    <div className="flex flex-wrap justify-center gap-1 rounded-2xl border border-[#E8E6DF] bg-white p-1 shadow-sm">
+              <div className="relative overflow-hidden border-b border-[#E8E6DF]/70 bg-gradient-to-b from-[#E3F2FC] via-[#F6FAFE] to-[#FAFCFB]">
+                <div
+                  aria-hidden
+                  className="pointer-events-none absolute -right-24 top-8 h-72 w-72 rounded-full bg-sky-200/35 blur-3xl"
+                />
+                <div
+                  aria-hidden
+                  className="pointer-events-none absolute -left-16 bottom-0 h-64 w-64 rounded-full bg-teal-200/25 blur-3xl"
+                />
+                <div className="relative mx-auto max-w-[1440px] px-4 pb-8 pt-6 sm:px-6 lg:pb-12 lg:pt-8">
+                  <div className="mb-8 flex justify-center">
+                    <div className="flex flex-wrap justify-center gap-1 rounded-2xl border border-white/80 bg-white/90 p-1 shadow-[0_8px_24px_rgba(20,34,53,0.06)] backdrop-blur-sm">
                       <ToggleSegment active onClick={() => setMode("student")}>
                         {t("iAmStudent")}
                       </ToggleSegment>
@@ -250,29 +262,39 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
                     </div>
                   </div>
 
-                  <div className="mx-auto max-w-4xl space-y-5 text-center">
-                    {children}
-                    <LandingDiscoverySearch
-                      teachersForSearch={teachers}
-                      searchQuery={searchQuery}
-                      onSearchQueryChange={setSearchQuery}
-                      locationSearch={locationSearch}
-                      onLocationSearchChange={setLocationSearch}
-                      geo={geo}
-                      onSelectTeacher={(teacher) => setSelectedTeacherProfile(teacher)}
-                      onSelectDiscipline={(label) => {
-                        setActiveCat(label);
-                        setSearchQuery("");
-                      }}
-                      onSelectCity={selectCityForSearch}
-                      formatFilter={formatFilter}
-                      onFormatFilterChange={setFormatFilter}
-                      onSearchSubmit={scrollToTeacherResults}
-                      searchInputPlaceholderKey="landingSearchDisciplinePlaceholder"
-                    />
+                  <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)] lg:gap-10 xl:gap-14">
+                    <div className="min-w-0">
+                      {children}
+                      <PremiumLandingHeroCtas onFindTeacher={scrollToTeacherResults} />
+                      <PremiumLandingHeroVisual className="mt-8 max-w-[360px] lg:hidden" />
+                      <div className="relative z-10 mt-8">
+                        <div className="rounded-[28px] border border-white/90 bg-white/95 p-2 shadow-[0_20px_50px_rgba(15,110,86,0.10)] backdrop-blur-sm sm:p-3 [&_[role=search]]:border-0 [&_[role=search]]:bg-transparent [&_[role=search]]:p-0 [&_[role=search]]:shadow-none">
+                          <LandingDiscoverySearch
+                            teachersForSearch={teachers}
+                            searchQuery={searchQuery}
+                            onSearchQueryChange={setSearchQuery}
+                            locationSearch={locationSearch}
+                            onLocationSearchChange={setLocationSearch}
+                            geo={geo}
+                            onSelectTeacher={(teacher) => setSelectedTeacherProfile(teacher)}
+                            onSelectDiscipline={(label) => {
+                              setActiveCat(label);
+                              setSearchQuery("");
+                            }}
+                            onSelectCity={selectCityForSearch}
+                            formatFilter={formatFilter}
+                            onFormatFilterChange={setFormatFilter}
+                            onSearchSubmit={scrollToTeacherResults}
+                            searchInputPlaceholderKey="landingSearchDisciplinePlaceholder"
+                          />
+                        </div>
+                      </div>
+                      <PremiumLandingHeroTrustStrip />
+                    </div>
+                    <PremiumLandingHeroVisual className="hidden lg:block" />
                   </div>
 
-                  <div className="mx-auto mt-5 max-w-4xl">
+                  <div className="mx-auto mt-8 max-w-4xl lg:mt-10">
                     <div className="flex flex-wrap justify-center gap-2">
                       {getEnabledDisciplines().map((d) => {
                         const catKey = CATEGORY_I18N[d.id];
@@ -339,7 +361,6 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
                       {t("marketplaceQuizCta")}
                     </button>
                     <p className="mx-auto mt-3 max-w-md text-[13px] leading-relaxed text-neutral-700">{t("landingQuizHelper")}</p>
-                    <LandingHeroTrustStrip className="mt-8" />
                   </div>
                 </div>
               </div>
