@@ -1395,12 +1395,6 @@
   "landingMobileNearYou": "Profes cerca tuyo",
   "landingNeighborhoodHeadline": "Encontrá el profe ideal en tu barrio",
   "landingNeighborhoodSupporting": "Música, idiomas y apoyo académico con profes verificados, presencial, en línea o en formato mixto.",
-  "landingPremiumPill": "La plataforma que conecta estudiantes con profesores locales",
-  "landingPremiumH1": "Encuentra el profesor ideal cerca de ti",
-  "landingPremiumSubtitle": "Reserva clases de música, idiomas y apoyo escolar con profesores locales cerca de ti.",
-  "landingPremiumTrustProfiles": "Perfiles claros",
-  "landingPremiumTrustPayments": "Pagos seguros",
-  "landingPremiumTrustLocal": "Profesores locales",
   "landingQuizHelper": "Respondé unas pocas preguntas y encontramos el profe perfecto para vos.",
   "landingResourcesTitle": "Guías para aprender y enseñar mejor",
   "landingResourcesSubtitle": "Consejos prácticos para elegir un profesor, preparar una primera clase, entender precios y empezar a dar clases particulares.",
@@ -2133,5 +2127,6 @@
   "teacherEarnCalcFreeStudentLimit": "Hasta 5 estudiantes",
   "teacherEarnCalcProFee": "Suscripción 29,99 $/mes",
   "teacherEarnCalcSeeAllPlans": "Ver todos los planes →",
+  "teacherEarnCalcCommissionDetails": "Detalles de comisiones →",
   "teacherEarnCalcScrollCta": "Estimar mis ingresos"
 }
