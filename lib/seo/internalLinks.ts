@@ -1,5 +1,6 @@
 import type { Locale } from "@/lib/i18n/types";
 import { getBlogPostMeta } from "@/lib/seo/blogPosts";
+import { withLocaleHref } from "@/lib/i18n/marketingPaths";
 
 /** Localized anchor text + path (or teacher signup resolves by locale). */
 export type SeoLinkDef =
@@ -28,7 +29,8 @@ export function teacherSignupHref(locale: Locale): string {
 }
 
 export function resolveSeoLink(def: SeoLinkDef, locale: Locale): SeoResolvedLink {
-  const href = def.kind === "teacherSignup" ? teacherSignupHref(locale) : def.href;
+  const raw = def.kind === "teacherSignup" ? teacherSignupHref(locale) : def.href;
+  const href = withLocaleHref(raw, locale);
   const label = locale === "fr" ? def.fr : locale === "es" ? def.es : def.en;
   return { href, label };
 }

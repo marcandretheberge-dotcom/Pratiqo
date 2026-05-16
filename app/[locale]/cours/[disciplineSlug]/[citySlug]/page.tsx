@@ -4,6 +4,7 @@ import Link from "next/link";
 import { unstable_cache } from "next/cache";
 import { Star, MapPin, BookOpen } from "lucide-react";
 import { findCityBySlug } from "@/lib/constants/cities";
+import type { Teacher } from "@/types";
 import { findDisciplineBySlug, DISCIPLINE_CITY_PAIRS } from "@/lib/seo/disciplines";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { haversineDistance } from "@/lib/geo";
@@ -15,13 +16,27 @@ import { BreadcrumbSchema } from "@/components/seo/BreadcrumbSchema";
 import { MarketingResourceBlock } from "@/components/seo/MarketingResourceBlock";
 import { getDictionary } from "@/lib/i18n/server";
 import { getDisciplineCitySeoGuideLinks } from "@/lib/seo/internalLinks";
-import type { Teacher } from "@/types";
+import type { DisciplineConfig } from "@/lib/seo/types";
 
 import { SITE_URL } from "@/lib/seo/site";
 import { buildAlternates } from "@/lib/seo/alternates";
 import { withLocale } from "@/lib/i18n/routing";
 import { normalizeLocale, type Locale } from "@/lib/i18n/types";
 import { withLocaleHref } from "@/lib/i18n/marketingPaths";
+import {
+  buildCourseCityFaqs,
+  getCityBySlug,
+  getCoursePagePath,
+  getNearbyCities,
+  getRelatedSubjects,
+  getSubjectBySlug,
+  getTutorCityPagePath,
+} from "@/lib/seo/seo-data";
+import {
+  buildCourseCitySeoContent,
+  buildServiceJsonLd,
+  PRIORITY_CITY_HUBS,
+} from "@/lib/seo/localSeoContent";
 
 const BASE_URL = SITE_URL;
 
@@ -49,12 +64,15 @@ const getAllTeachers = unstable_cache(
 async function findTeachersForDisciplineCity(
   lat: number,
   lng: number,
-  dbCategory: string,
-  dbDiscipline?: string,
+  discipline: DisciplineConfig,
 ): Promise<{ teachers: Teacher[]; isNearby: boolean }> {
   const all = await getAllTeachers();
+  const { dbCategory, dbDiscipline } = discipline;
 
   const filtered = all.filter((t) => {
+    if (discipline.matchesTeacher) {
+      return discipline.matchesTeacher(t);
+    }
     if (dbDiscipline) {
       return t.discipline === dbDiscipline || t.category === dbCategory;
     }
@@ -108,21 +126,29 @@ export async function generateMetadata({
 
   if (!discipline || !city) return { title: "Cours particuliers | Pratiqo" };
 
+  const seoCity = getCityBySlug(citySlug);
+  const seoSubject = getSubjectBySlug(disciplineSlug);
+  if (!seoCity || !seoSubject) return { title: "Cours particuliers | Pratiqo" };
+
   const path = `/cours/${disciplineSlug}/${citySlug}`;
   const localizedPaths = { en: path, fr: path, es: path };
 
+  const title = `Cours de ${discipline.name} à ${city.name} | Pratiqo`;
+  const description = `Trouvez un ${seoSubject.teacherNoun} à ${city.name}. Comparez les profils, réservez simplement et apprenez avec un professeur local sur Pratiqo.`;
+
   return {
-    title: discipline.metaTitle(city.name, city.region),
-    description: discipline.metaDescription(city.name),
+    title,
+    description,
+    robots: { index: true, follow: true },
     keywords: [
-      `cours ${discipline.name.toLowerCase()} ${city.name}`,
-      `professeur ${discipline.name.toLowerCase()} ${city.name}`,
-      `tuteur ${discipline.name.toLowerCase()} ${city.region}`,
+      `cours ${seoSubject.label} ${city.name}`,
+      `${seoSubject.searchLabel} ${city.name}`,
+      `${seoSubject.teacherNoun} ${city.name}`,
       `cours particuliers ${city.name}`,
     ],
     openGraph: {
-      title: discipline.metaTitle(city.name, city.region),
-      description: discipline.metaDescription(city.name),
+      title,
+      description,
       url: `${BASE_URL}${withLocale(path, locale)}`,
       siteName: "Pratiqo",
       locale: "fr_CA",
@@ -131,8 +157,8 @@ export async function generateMetadata({
     },
     twitter: {
       card: "summary_large_image",
-      title: discipline.metaTitle(city.name, city.region),
-      description: discipline.metaDescription(city.name),
+      title,
+      description,
       images: ["/og-image.png"],
     },
     ...buildAlternates({ localizedPaths }),
@@ -167,48 +193,51 @@ export default async function DisciplineCityPage({
   const { teachers, isNearby } = await findTeachersForDisciplineCity(
     city.lat,
     city.lng,
-    discipline.dbCategory,
-    discipline.dbDiscipline,
+    discipline,
   );
 
   const locale = normalizeLocale(loc);
   const dict = getDictionary(locale);
   const disciplineGuideLinks = getDisciplineCitySeoGuideLinks(disciplineSlug, citySlug, locale);
 
-  const faqWithCity = discipline.faq.map((item) => ({
-    question: item.question.replace("{city}", city.name),
-    answer: item.answer,
-  }));
+  const seoCity = getCityBySlug(citySlug)!;
+  const seoSubject = getSubjectBySlug(disciplineSlug)!;
+  const courseSeo = buildCourseCitySeoContent({
+    locale,
+    subject: seoSubject,
+    city: seoCity,
+    disciplineSlug,
+    disciplineName: discipline.name,
+  });
+  const faqs = buildCourseCityFaqs({
+    city: seoCity,
+    subject: seoSubject,
+    disciplineName: discipline.name,
+    disciplineSlug,
+  });
 
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "ItemList",
-    name: discipline.heroTitle(city.name),
-    description: discipline.heroDesc(city.name),
-    url: `${BASE_URL}${withLocale(`/cours/${disciplineSlug}/${citySlug}`, locale)}`,
-    itemListElement: teachers.map((t, i) => ({
-      "@type": "ListItem",
-      position: i + 1,
-      item: {
-        "@type": "Person",
-        name: t.name,
-        jobTitle: `Professeur de ${discipline.name}`,
-        url: `${BASE_URL}${withLocale(`/teacher/profile/${encodeURIComponent(t.id)}`, locale)}`,
-        ...(t.reviews > 0
-          ? {
-              aggregateRating: {
-                "@type": "AggregateRating",
-                ratingValue: String(t.rating),
-                reviewCount: String(t.reviews),
-                bestRating: "5",
-                worstRating: "1",
-              },
-            }
-          : {}),
-      },
-    })),
-  };
+  const hub = PRIORITY_CITY_HUBS[citySlug];
+  const geoNearby = getNearbyCities(citySlug, 8).filter((c) => c.slug !== citySlug);
+  const hubNearbySlugs = hub?.nearbySlugs ?? [];
+  const mergedNearby = new Map<string, (typeof geoNearby)[0]>();
+  for (const c of geoNearby) mergedNearby.set(c.slug, c);
+  for (const slug of hubNearbySlugs) {
+    if (!mergedNearby.has(slug) && slug !== citySlug) {
+      const c = getCityBySlug(slug);
+      if (c) mergedNearby.set(slug, c);
+    }
+  }
+  const nearbyForSubject = Array.from(mergedNearby.values()).slice(0, 8);
+  const relatedSubjects = getRelatedSubjects(disciplineSlug, 6);
 
+  const coursePath = `/cours/${disciplineSlug}/${citySlug}`;
+  const serviceJsonLd = buildServiceJsonLd({
+    name: `Cours de ${discipline.name} à ${city.name}`,
+    description: `Trouvez un ${seoSubject.teacherNoun} à ${city.name} sur Pratiqo.`,
+    cityName: city.name,
+    serviceType: discipline.name,
+    canonicalPath: coursePath,
+  });
   const countLabel =
     teachers.length === 0
       ? "Aucun professeur"
@@ -220,17 +249,17 @@ export default async function DisciplineCityPage({
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceJsonLd) }}
       />
       <BreadcrumbSchema
         items={[
           { name: "Accueil", href: withLocale("/", locale) },
-          { name: "Cours particuliers", href: "/student/search" },
+          { name: "Cours", href: withLocale("/trouver-un-prof", locale) },
           { name: discipline.name, href: withLocale(`/cours/${disciplineSlug}/${citySlug}`, locale) },
-          { name: city.name, href: withLocale(`/cours/${disciplineSlug}/${citySlug}`, locale) },
+          { name: city.name, href: withLocale(`/tuteurs-prive/${citySlug}`, locale) },
         ]}
       />
-      <FAQSchema items={faqWithCity} />
+      <FAQSchema items={faqs} />
 
       <div className="min-h-[100dvh] flex flex-col bg-[#FAFCFB]">
 
@@ -254,12 +283,14 @@ export default async function DisciplineCityPage({
 
         {/* ── BREADCRUMB ─────────────────────────────────────────────────── */}
         <nav aria-label="Fil d'Ariane" className="bg-white border-b border-[#E8E6DF] px-4 sm:px-6 py-2">
-          <ol className="flex items-center gap-1.5 text-xs text-[#6B6760] max-w-5xl mx-auto">
-            <li><Link href={withLocale("/", locale)} className="hover:text-teal-700">Pratiqo</Link></li>
-            <li aria-hidden>/</li>
-            <li><Link href={withLocale(`/tuteurs-prive/${citySlug}`, locale)} className="hover:text-teal-700">{city.name}</Link></li>
-            <li aria-hidden>/</li>
-            <li className="font-semibold text-[#2C2C2A]">{discipline.name}</li>
+          <ol className="flex flex-wrap items-center gap-1.5 text-xs text-[#6B6760] max-w-5xl mx-auto">
+            <li><Link href={withLocale("/", locale)} className="hover:text-teal-700">Accueil</Link></li>
+            <li aria-hidden className="text-[#D3D1C7]">/</li>
+            <li><Link href={withLocale("/trouver-un-prof", locale)} className="hover:text-teal-700">Cours</Link></li>
+            <li aria-hidden className="text-[#D3D1C7]">/</li>
+            <li><Link href={withLocale(`/cours/${disciplineSlug}/${citySlug}`, locale)} className="hover:text-teal-700">{discipline.name}</Link></li>
+            <li aria-hidden className="text-[#D3D1C7]">/</li>
+            <li className="font-semibold text-[#2C2C2A]">{city.name}</li>
           </ol>
         </nav>
 
@@ -268,26 +299,37 @@ export default async function DisciplineCityPage({
           <div className="mx-auto max-w-4xl text-center">
             <div className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold mb-4">
               <MapPin size={12} aria-hidden />
-              {city.region}
+              {city.region}, {seoCity.province}
             </div>
             <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">
-              {discipline.heroTitle(city.name)}
+              Cours de {discipline.name} à {city.name}
             </h1>
-            <p className="mt-3 text-base text-white/80 max-w-xl mx-auto">
-              {discipline.heroDesc(city.name)}
+            <p className="mt-3 text-base text-white/85 max-w-2xl mx-auto leading-relaxed">
+              {courseSeo.intro}
             </p>
+            <div className="mt-6 flex flex-wrap justify-center gap-4 text-sm text-white/90">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1">
+                <span aria-hidden>✅</span> Profils vérifiés
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1">
+                <span aria-hidden>💳</span> Paiements sécurisés
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1">
+                <span aria-hidden>📍</span> Profs locaux à {city.name}
+              </span>
+            </div>
             <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link
-                href="/login"
+                href={withLocaleHref("/trouver-un-prof", locale)}
                 className="inline-flex h-11 items-center rounded-2xl bg-white px-6 text-sm font-bold text-teal-700 hover:brightness-95 shadow"
               >
-                Trouver mon professeur →
+                Voir les professeurs disponibles
               </Link>
               <Link
                 href={withLocaleHref("/become-teacher", locale)}
                 className="inline-flex h-11 items-center rounded-2xl border border-white/40 px-6 text-sm font-semibold text-white hover:bg-white/10"
               >
-                Enseigner {discipline.name}
+                Devenir professeur
               </Link>
             </div>
           </div>
@@ -311,17 +353,22 @@ export default async function DisciplineCityPage({
               <div className="rounded-2xl bg-white border border-[#E8E6DF] p-10 text-center">
                 <BookOpen size={36} className="mx-auto text-[#D3D1C7] mb-3" />
                 <p className="text-base font-semibold text-[#2C2C2A]">
-                  Aucun professeur de {discipline.name} à {city.name} pour l&apos;instant.
+                  Aucun professeur n&apos;est encore disponible pour {discipline.name.toLowerCase()} à {city.name}. Vous enseignez cette matière? Soyez le premier prof sur Pratiqo.
                 </p>
-                <p className="mt-2 text-sm text-[#6B6760]">
-                  Voici nos professeurs disponibles en ligne ou à proximité.
-                </p>
-                <Link
-                  href="/login"
-                  className="mt-5 inline-flex items-center rounded-xl bg-teal-700 px-5 py-2.5 text-sm font-bold text-white hover:brightness-105"
-                >
-                  Voir tous les professeurs →
-                </Link>
+                <div className="mt-5 flex flex-col sm:flex-row gap-3 justify-center">
+                  <Link
+                    href={withLocaleHref("/become-teacher", locale)}
+                    className="inline-flex items-center justify-center rounded-xl bg-teal-700 px-5 py-2.5 text-sm font-bold text-white hover:brightness-105"
+                  >
+                    Devenir professeur
+                  </Link>
+                  <Link
+                    href={withLocaleHref("/trouver-un-prof", locale)}
+                    className="inline-flex items-center justify-center rounded-xl border border-[#D3D1C7] px-5 py-2.5 text-sm font-semibold text-[#2C2C2A] hover:border-teal-500"
+                  >
+                    Explorer Pratiqo
+                  </Link>
+                </div>
               </div>
             ) : (
               <>
@@ -371,10 +418,10 @@ export default async function DisciplineCityPage({
 
                 <div className="mt-8 text-center">
                   <Link
-                    href="/login"
+                    href={withLocaleHref("/trouver-un-prof", locale)}
                     className="inline-flex h-11 items-center rounded-2xl bg-teal-700 px-7 text-sm font-bold text-white hover:brightness-105 shadow-sm"
                   >
-                    Voir tous les professeurs disponibles →
+                    Voir les professeurs disponibles
                   </Link>
                   <p className="mt-2 text-xs text-[#6B6760]">Inscription gratuite · Aucun engagement</p>
                 </div>
@@ -393,18 +440,18 @@ export default async function DisciplineCityPage({
               {[
                 {
                   n: "1",
-                  title: "Cherchez votre professeur",
-                  desc: `Parcourez les profils de professeurs de ${discipline.name} à ${city.name} et choisissez selon vos critères.`,
+                  title: "Comparez les profils",
+                  desc: `Parcourez les profils de professeurs pour ${discipline.name.toLowerCase()} à ${city.name} : expérience, avis, vérifications et tarifs affichés clairement.`,
                 },
                 {
                   n: "2",
-                  title: "Réservez un cours",
-                  desc: "Réservez directement en ligne. Paiement sécurisé via Stripe.",
+                  title: "Réservez en ligne",
+                  desc: "Choisissez un créneau et confirmez le format du cours. Paiement sécurisé via Stripe.",
                 },
                 {
                   n: "3",
                   title: "Apprenez à votre rythme",
-                  desc: "Cours en ligne ou en présentiel, adapté à votre niveau et à vos objectifs.",
+                  desc: "En ligne ou en présentiel, avec des objectifs ajustés à votre niveau et à votre emploi du temps.",
                 },
               ].map((step) => (
                 <div key={step.n} className="rounded-2xl border border-[#E8E6DF] bg-[#FAFCFB] p-5">
@@ -415,6 +462,90 @@ export default async function DisciplineCityPage({
                   <p className="mt-1 text-xs text-[#6B6760] leading-relaxed">{step.desc}</p>
                 </div>
               ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="bg-white border-t border-[#E8E6DF] py-10 px-4 sm:px-6">
+          <div className="mx-auto max-w-3xl space-y-4 text-sm text-[#2C2C2A] leading-relaxed">
+            {courseSeo.bodyParagraphs.map((para, i) => (
+              <p key={i}>{para}</p>
+            ))}
+            <p className="text-[#6B6760]">
+              Recherche fréquente : cours de {seoSubject.label} à {city.name}, {seoSubject.teacherNoun} à {city.name}, prof{" "}
+              {seoSubject.label} {city.name}.
+            </p>
+          </div>
+        </section>
+
+        <section className="bg-[#FAFAF8] border-t border-[#E8E6DF] py-10 px-4 sm:px-6">
+          <div className="mx-auto max-w-5xl grid gap-10 lg:grid-cols-3">
+            <div>
+              <h2 className="text-sm font-bold uppercase tracking-widest text-[#6B6760] mb-3">
+                Autres villes pour {discipline.name.toLowerCase()}
+              </h2>
+              <ul className="space-y-2 text-sm">
+                {nearbyForSubject.map((c) => (
+                  <li key={c.slug}>
+                    <Link
+                      href={withLocale(getCoursePagePath(disciplineSlug, c.slug), locale)}
+                      className="text-teal-700 font-semibold hover:underline"
+                    >
+                      {discipline.name} à {c.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <h2 className="text-sm font-bold uppercase tracking-widest text-[#6B6760] mb-3">
+                Autres cours à {city.name}
+              </h2>
+              <ul className="space-y-2 text-sm">
+                {relatedSubjects.map((s) => (
+                  <li key={s.slug}>
+                    <Link
+                      href={withLocale(getCoursePagePath(s.slug, citySlug), locale)}
+                      className="text-teal-700 font-semibold hover:underline"
+                    >
+                      {s.label.charAt(0).toUpperCase() + s.label.slice(1)} à {city.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <h2 className="text-sm font-bold uppercase tracking-widest text-[#6B6760] mb-3">Pages utiles</h2>
+              <ul className="space-y-2 text-sm">
+                <li>
+                  <Link href={withLocale("/trouver-un-prof", locale)} className="text-teal-700 font-semibold hover:underline">
+                    Trouver un prof
+                  </Link>
+                </li>
+                <li>
+                  <Link href={withLocaleHref("/become-teacher", locale)} className="text-teal-700 font-semibold hover:underline">
+                    Devenir enseignant
+                  </Link>
+                </li>
+                <li>
+                  <Link href={withLocale("/tarifs", locale)} className="text-teal-700 font-semibold hover:underline">
+                    Tarifs
+                  </Link>
+                </li>
+                <li>
+                  <Link href={withLocale("/blog", locale)} className="text-teal-700 font-semibold hover:underline">
+                    Blogue Pratiqo
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href={withLocale(getTutorCityPagePath(citySlug), locale)}
+                    className="text-teal-700 font-semibold hover:underline"
+                  >
+                    Tuteurs privés à {city.name}
+                  </Link>
+                </li>
+              </ul>
             </div>
           </div>
         </section>
@@ -434,14 +565,22 @@ export default async function DisciplineCityPage({
         <section className="bg-[#FAFAF8] border-t border-[#E8E6DF] py-10 px-4 sm:px-6">
           <div className="mx-auto max-w-3xl">
             <h2 className="text-lg font-bold text-[#2C2C2A] mb-6">
-              Questions fréquentes — cours de {discipline.name} à {city.name}
+              Questions fréquentes — cours de {discipline.name.toLowerCase()} à {city.name}
             </h2>
-            <div className="space-y-4">
-              {faqWithCity.map((item, i) => (
-                <div key={i} className="rounded-xl border border-[#E8E6DF] bg-white p-5">
-                  <p className="font-semibold text-sm text-[#2C2C2A] mb-2">{item.question}</p>
-                  <p className="text-sm text-[#6B6760] leading-relaxed">{item.answer}</p>
-                </div>
+            <div className="space-y-3">
+              {faqs.map((item, i) => (
+                <details
+                  key={i}
+                  className="group rounded-xl border border-[#E8E6DF] bg-white p-0 open:shadow-sm"
+                >
+                  <summary className="cursor-pointer list-none px-5 py-4 font-semibold text-sm text-[#2C2C2A] marker:content-none flex items-center justify-between gap-2">
+                    <span>{item.question}</span>
+                    <span className="text-teal-700 text-xs shrink-0 group-open:rotate-180 transition-transform">▼</span>
+                  </summary>
+                  <div className="px-5 pb-4 text-sm text-[#6B6760] leading-relaxed border-t border-[#F1EFE8] pt-3">
+                    {item.answer}
+                  </div>
+                </details>
               ))}
             </div>
           </div>

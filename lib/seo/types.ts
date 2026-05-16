@@ -1,3 +1,5 @@
+import type { Teacher } from "@/types";
+
 export interface FAQItem {
   question: string;
   answer: string;
@@ -35,6 +37,12 @@ export interface DisciplineConfig {
   name: string;
   dbCategory: string;
   dbDiscipline?: string;
+  /**
+   * When set, only teachers matching this predicate are shown (in addition to
+   * category/discipline rules). Used for slugs like programmation where the
+   * marketplace discipline string varies.
+   */
+  matchesTeacher?: (t: Pick<Teacher, "discipline" | "category">) => boolean;
   metaTitle: (cityName: string, region: string) => string;
   metaDescription: (cityName: string) => string;
   heroTitle: (cityName: string) => string;

@@ -11,9 +11,9 @@
  *     route is served from `app/[locale]/…`. Each locale gets a URL prefixed
  *     with its short code (e.g. `/fr/tarifs`, `/en/tarifs`, `/es/tarifs`). The
  *     sitemap emits one entry per route with `alternates.languages`; the
- *     page's `metadata.alternates.languages` is the same map. The unprefixed
- *     form 301-redirects to the cookie-detected (or default) locale at the
- *     proxy layer.
+ *     page's `metadata.alternates.languages` is the same map. Unprefixed
+ *     marketing URLs 301 to `/fr/...` at the proxy for a single French-first
+ *     crawl target; `hreflang` still lists en/es alternates.
  *
  *     Most routes share the same slug across locales because their slug is
  *     already a brand term (`/blog`, `/group-sessions`, `/teacher/profile`)
@@ -70,21 +70,6 @@ function localizedSame(
   };
 }
 
-/** Public URL that stays unprefixed (OAuth, auth flows). */
-function unlocalized(
-  key: string,
-  path: string,
-  meta?: Pick<PublicRoute, "changeFrequency" | "priority">,
-): PublicRoute {
-  return {
-    key,
-    paths: { en: path, fr: path, es: path },
-    localized: false,
-    changeFrequency: meta?.changeFrequency,
-    priority: meta?.priority,
-  };
-}
-
 /**
  * The complete list of *static* public routes. Dynamic routes (cities,
  * disciplines, blog posts, teacher profiles) are appended by the sitemap.
@@ -104,14 +89,13 @@ export const PUBLIC_STATIC_ROUTES: readonly PublicRoute[] = [
   },
   localizedSame("teacher-profile-hub", "/teacher/profile", { changeFrequency: "weekly", priority: 0.75 }),
   localizedSame("group-sessions", "/group-sessions", { changeFrequency: "daily", priority: 0.8 }),
-  localizedSame("tarifs", "/tarifs", { changeFrequency: "monthly", priority: 0.8 }),
-  localizedSame("trouver-un-prof", "/trouver-un-prof", { changeFrequency: "monthly", priority: 0.85 }),
+  localizedSame("tarifs", "/tarifs", { changeFrequency: "monthly", priority: 0.85 }),
+  localizedSame("trouver-un-prof", "/trouver-un-prof", { changeFrequency: "monthly", priority: 0.95 }),
   localizedSame("francisation", "/francisation", { changeFrequency: "monthly", priority: 0.85 }),
-  unlocalized("login", "/login", { changeFrequency: "yearly", priority: 0.6 }),
-  localizedSame("cgu", "/cgu", { changeFrequency: "yearly", priority: 0.4 }),
-  localizedSame("confidentialite", "/confidentialite", { changeFrequency: "yearly", priority: 0.4 }),
-  localizedSame("annulation", "/annulation", { changeFrequency: "yearly", priority: 0.4 }),
-  localizedSame("blog", "/blog", { changeFrequency: "daily", priority: 0.9 }),
+  localizedSame("cgu", "/cgu", { changeFrequency: "yearly", priority: 0.3 }),
+  localizedSame("confidentialite", "/confidentialite", { changeFrequency: "yearly", priority: 0.3 }),
+  localizedSame("annulation", "/annulation", { changeFrequency: "yearly", priority: 0.3 }),
+  localizedSame("blog", "/blog", { changeFrequency: "daily", priority: 0.85 }),
 ];
 
 /**

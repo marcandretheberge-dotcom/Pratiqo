@@ -1,21 +1,11 @@
 /**
- * Per-page metadata.alternates builder.
+ * Per-page `metadata.alternates` builder for localized marketing routes.
  *
- * Each Next.js `generateMetadata` (or static `metadata`) that wants correct
- * hreflang annotations should call `buildAlternates()` instead of hand-rolling
- * the `alternates: { canonical, languages }` block.
- *
- * Why a helper?
- *   - Pre-migration (today), most public routes are served from a single
- *     non-prefixed URL. The right SEO call is `canonical` ONLY — no hreflang
- *     `languages` map at all, because Google explicitly recommends against
- *     hreflang where every alternate resolves to the same URL.
- *   - Post-migration, the same routes will serve distinct URLs per locale and
- *     should emit a `languages` map with one entry per supported locale plus
- *     `x-default`.
- *
- * The helper handles both states from one call site, so step 1.3/1.4 just
- * need to flip the route registry — no per-page changes required.
+ * For registry routes with `localized: true` (`lib/i18n/routes.ts`), the
+ * **canonical** URL always uses the French prefix (`/fr/...`) while
+ * `alternates.languages` lists absolute URLs per `hreflang` locale. Unprefixed
+ * marketing paths 301 to `/fr/...` at the edge (`proxy.ts`) for crawl
+ * consistency.
  */
 
 import type { Metadata } from "next";
@@ -42,15 +32,15 @@ export interface BuildAlternatesOptions {
   /**
    * Path-relative override for routes not in the static registry (dynamic
    * routes like `/blog/[slug]`, `/teacher/profile/[id]`,
-   * `/tuteurs-prive/[citySlug]`). Pre-migration this becomes the canonical
-   * URL; post-migration callers should pass a `localizedPaths` map alongside
-   * to emit per-locale alternates.
+   * `/tuteurs-prive/[citySlug]`). Pass `localizedPaths` with the same slug per
+   * locale (or overrides) so `buildAlternates` emits `hreflang` + a French
+   * canonical.
    */
   path?: string;
   /**
-   * Optional per-locale paths for dynamic routes that have been migrated
-   * (e.g. `/fr/blog/mon-billet`, `/en/blog/my-post`, `/es/blog/mi-articulo`).
-   * When provided, the helper emits hreflang alternates.
+   * Optional per-locale paths for dynamic routes (e.g. same blog slug in each
+   * locale). When provided with `localized: true` from the registry, emits
+   * hreflang alternates.
    */
   localizedPaths?: Partial<Record<keyof typeof LOCALE_BCP47, string>>;
 }

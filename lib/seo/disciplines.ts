@@ -1,4 +1,5 @@
 import type { DisciplineConfig } from "./types";
+import { SEO_COURSE_CITY_SLUGS } from "./seo-course-city-slugs";
 
 export const DISCIPLINES: DisciplineConfig[] = [
   {
@@ -240,17 +241,112 @@ export const DISCIPLINES: DisciplineConfig[] = [
       },
     ],
   },
+  {
+    slug: "sciences",
+    name: "Sciences",
+    dbCategory: "Scolaire",
+    dbDiscipline: "Sciences",
+    matchesTeacher: (t) =>
+      /sciences|physique|chimie|biologie|science/i.test(t.discipline) || t.discipline === "Sciences",
+    metaTitle: (city, region) =>
+      `Cours de sciences à ${city}, ${region} | Professeurs vérifiés – Pratiqo`,
+    metaDescription: (city) =>
+      `Trouvez un tuteur en sciences à ${city}. Physique, chimie, biologie et méthodologie. Cours particuliers sur Pratiqo.`,
+    heroTitle: (city) => `Cours de sciences à ${city}`,
+    heroDesc: (city) =>
+      `Rattrapez vos notions ou préparez vos examens en sciences à ${city} avec un tuteur qui adapte les explications à votre réalité québécoise.`,
+    faq: [
+      {
+        question: "Un même tuteur peut-il couvrir physique et chimie?",
+        answer:
+          "Souvent oui au secondaire, car les programmes sont liés. Pour le cégep ou l'université, vérifiez dans le profil du tuteur les niveaux couverts et les matières exactes.",
+      },
+      {
+        question: "Comment se déroulent les sciences en ligne?",
+        answer:
+          "Le tuteur utilise un tableau partagé, des schémas et parfois des simulations. Une bonne caméra et une connexion stable suffisent pour un cours efficace.",
+      },
+      {
+        question: "À partir de quel moment faut-il chercher de l'aide en sciences?",
+        answer:
+          "Dès que les notions se brouillent — avant l'examen de mi-session. Les sciences s'accumulent vite; un suivi régulier évite de devoir tout rattraper à la fin.",
+      },
+    ],
+  },
+  {
+    slug: "aide-aux-devoirs",
+    name: "Aide aux devoirs",
+    dbCategory: "Scolaire",
+    dbDiscipline: "Aide aux devoirs",
+    matchesTeacher: (t) =>
+      /aide aux devoirs|devoirs|soutien scolaire|homework/i.test(t.discipline) || t.discipline === "Aide aux devoirs",
+    metaTitle: (city, region) =>
+      `Aide aux devoirs à ${city}, ${region} | Tuteurs vérifiés – Pratiqo`,
+    metaDescription: (city) =>
+      `Trouvez un tuteur pour l'aide aux devoirs à ${city}. Organisation, méthode de travail et révision — profils vérifiés sur Pratiqo.`,
+    heroTitle: (city) => `Aide aux devoirs à ${city}`,
+    heroDesc: (city) =>
+      `Un tuteur pour structurer les devoirs, comprendre les consignes et reprendre confiance — à ${city} ou en ligne, selon vos besoins.`,
+    faq: [
+      {
+        question: "L'aide aux devoirs remplace-t-elle les cours magistraux?",
+        answer:
+          "Non : le tuteur complète l'école en clarifiant les notions, en guidant la méthode et en rendant les devoirs moins stressants. L'élève reste acteur de son apprentissage.",
+      },
+      {
+        question: "Combien de séances par semaine sont raisonnables?",
+        answer:
+          "Pour le primaire ou le secondaire, 1 à 2 séances par semaine de 45 à 60 minutes fonctionnent bien, avec une routine courte entre les cours.",
+      },
+      {
+        question: "Le tuteur connaît-il les programmes québécois?",
+        answer:
+          "Plusieurs tuteurs sur Pratiqo connaissent les attentes des écoles du Québec. Mentionnez le niveau et la matière lors de la réservation pour trouver la bonne personne.",
+      },
+    ],
+  },
+  {
+    slug: "programmation",
+    name: "Programmation",
+    dbCategory: "Scolaire",
+    matchesTeacher: (t) =>
+      /programmation|python|javascript|java|html|css|react|développement|informatique|code|web/i.test(t.discipline),
+    metaTitle: (city, region) =>
+      `Cours de programmation à ${city}, ${region} | Pratiqo`,
+    metaDescription: (city) =>
+      `Trouvez un tuteur en programmation à ${city}. Python, web, logique et projets — cours particuliers avec profils vérifiés sur Pratiqo.`,
+    heroTitle: (city) => `Cours de programmation à ${city}`,
+    heroDesc: (city) =>
+      `Apprenez à coder avec un tuteur qui vous accompagne sur des exercices concrets à ${city} — du débutant au projet personnel.`,
+    faq: [
+      {
+        question: "Faut-il déjà savoir les maths pour apprendre la programmation?",
+        answer:
+          "Non pour débuter : la logique se travage avec la pratique. Pour certains programmes (cégep ou université), des bases d'algèbre aident — le tuteur peut combler les écarts au besoin.",
+      },
+      {
+        question: "Python ou JavaScript pour commencer?",
+        answer:
+          "Python est souvent plus simple pour la logique et les scripts. JavaScript est utile tout de suite pour le web. Le bon choix dépend de votre objectif; le tuteur peut vous orienter.",
+      },
+      {
+        question: "Les cours de programmation en ligne fonctionnent-ils bien?",
+        answer:
+          "Oui : le partage d'écran et l'éditeur de code en direct sont standards. Assurez-vous d'avoir une connexion stable et un casque pour les longues séances.",
+      },
+    ],
+  },
 ];
 
 export function findDisciplineBySlug(slug: string): DisciplineConfig | undefined {
   return DISCIPLINES.find((d) => d.slug === slug);
 }
 
-/** Top cities × disciplines combos to pre-render at build time. */
+/** All supported discipline × SEO city landing pages (pre-render + sitemap). */
 export const DISCIPLINE_CITY_PAIRS: Array<{ disciplineSlug: string; citySlug: string }> =
   DISCIPLINES.flatMap((d) =>
-    [
-      "montreal", "quebec", "laval", "longueuil", "sherbrooke",
-      "trois-rivieres", "gatineau", "drummondville", "levis", "saint-georges",
-    ].map((citySlug) => ({ disciplineSlug: d.slug, citySlug }))
+    SEO_COURSE_CITY_SLUGS.map((citySlug) => ({
+      disciplineSlug: d.slug,
+      citySlug,
+    })),
   );

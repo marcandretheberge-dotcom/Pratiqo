@@ -3,6 +3,7 @@ import { getSupabaseAdmin } from "../lib/supabaseAdmin";
 import { TEACHERS_PUBLIC_TABLE } from "../lib/supabase/queries";
 import { QC_CITIES, MV_BARRIOS } from "../lib/constants/cities";
 import { DISCIPLINE_CITY_PAIRS } from "../lib/seo/disciplines";
+import { isPriorityCoursePage, isPriorityTutorCity } from "../lib/seo/seo-data";
 import { SITE_URL } from "../lib/seo/site";
 import {
   PUBLIC_STATIC_ROUTES,
@@ -70,17 +71,32 @@ async function fetchTeacherEntries(): Promise<MetadataRoute.Sitemap> {
     const supabase = getSupabaseAdmin();
     const { data, error } = await supabase
       .from(TEACHERS_PUBLIC_TABLE)
-      .select("id, updated_at")
+      .select("id, updated_at, bio, image_url, identity_verified")
       .order("updated_at", { ascending: false });
 
     if (error || !data) return [];
 
-    return (data as { id: string; updated_at: string | null }[]).map((row) => {
+    const rows = data as {
+      id: string;
+      updated_at: string | null;
+      bio: string | null;
+      image_url: string | null;
+      identity_verified: boolean | null;
+    }[];
+
+    return rows
+      .filter(
+        (row) =>
+          row.identity_verified === true &&
+          Boolean(row.bio?.trim()) &&
+          Boolean(row.image_url?.trim()),
+      )
+      .map((row) => {
       const path = `/teacher/profile/${encodeURIComponent(row.id)}`;
       return localizedDynamicEntry(path, {
         lastModified: row.updated_at ? new Date(row.updated_at) : new Date(),
         changeFrequency: "weekly",
-        priority: 0.8,
+        priority: 0.75,
       });
     });
   } catch {
@@ -105,7 +121,7 @@ async function fetchBlogEntries(): Promise<MetadataRoute.Sitemap> {
       localizedDynamicEntry(`/blog/${row.slug}`, {
         lastModified: row.updated_at ? new Date(row.updated_at) : new Date(),
         changeFrequency: "weekly",
-        priority: 0.85,
+        priority: 0.8,
       }),
     );
   } catch {
@@ -118,7 +134,7 @@ const CITY_ROUTES: MetadataRoute.Sitemap = QC_CITIES.map((city) =>
   localizedDynamicEntry(`/tuteurs-prive/${city.slug}`, {
     lastModified: new Date(),
     changeFrequency: "monthly",
-    priority: 0.8,
+    priority: isPriorityTutorCity(city.slug) ? 0.85 : 0.75,
   }),
 );
 
@@ -136,7 +152,7 @@ const DISCIPLINE_CITY_ROUTES: MetadataRoute.Sitemap = DISCIPLINE_CITY_PAIRS.map(
   localizedDynamicEntry(`/cours/${pair.disciplineSlug}/${pair.citySlug}`, {
     lastModified: new Date(),
     changeFrequency: "monthly",
-    priority: 0.75,
+    priority: isPriorityCoursePage(pair.citySlug, pair.disciplineSlug) ? 0.85 : 0.75,
   }),
 );
 

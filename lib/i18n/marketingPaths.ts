@@ -53,15 +53,6 @@ export function isUnprefixedMarketingPath(pathname: string): boolean {
 }
 
 /**
- * Target locale for a first visit to an unprefixed marketing URL: cookie
- * `pratiqo-locale` when valid, otherwise `ROUTING_DEFAULT_LOCALE`.
- */
-export function pickRedirectLocale(cookieValue: string | undefined): Locale {
-  if (cookieValue && isLocale(cookieValue)) return cookieValue;
-  return ROUTING_DEFAULT_LOCALE;
-}
-
-/**
  * Maps legacy marketing slugs to the canonical route key so we can resolve
  * per-locale paths (e.g. FR uses `/devenir-enseignant`, EN uses `/become-teacher`).
  */
@@ -123,11 +114,14 @@ export function withLocaleHref(href: string, locale: Locale): string {
 }
 
 /**
- * `/devenir-enseignant` always resolves to the French locale segment (historic URL).
+ * Unprefixed marketing URLs always 301 to the **French** locale prefix (`/fr/…`)
+ * so canonicals, sitemap `<loc>`, and crawl entry points stay aligned for
+ * pratiqo.ca SEO. After redirect, `withLocaleHref` prefixes further in-app
+ * navigation using the active locale segment.
  */
-export function legacyMarketingRedirectPath(pathname: string, search: string, cookieLocale: string | undefined): string {
+export function legacyMarketingRedirectPath(pathname: string, search: string): string {
   const pathOnly = pathname.split("?")[0] || pathname;
-  const target = pickRedirectLocale(cookieLocale);
+  const target = ROUTING_DEFAULT_LOCALE;
 
   // become-teacher / devenir-enseignant share a logical page but use locale-
   // specific slugs (EN: /become-teacher, FR: /devenir-enseignant). Resolve

@@ -67,7 +67,7 @@ export function proxy(req: NextRequest) {
 
   // ── Marketing locale prefix (301) ─────────────────────────────────────────
   if (!getLocaleFromPath(pathname) && isUnprefixedMarketingPath(pathname)) {
-    const target = legacyMarketingRedirectPath(pathname, search, req.cookies.get("pratiqo-locale")?.value);
+    const target = legacyMarketingRedirectPath(pathname, search);
     const dest = new URL(target, req.url);
     return NextResponse.redirect(dest, 301);
   }

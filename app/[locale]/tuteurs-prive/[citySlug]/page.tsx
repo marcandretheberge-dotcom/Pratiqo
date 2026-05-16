@@ -7,7 +7,6 @@ import { QC_CITIES, findCityBySlug } from "@/lib/constants/cities";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { haversineDistance } from "@/lib/geo";
 import { teacherRowToTeacher, type TeacherRow } from "@/lib/teacherMapper";
-import { buildJobTitle } from "@/lib/constants/vocabulary";
 import { LegalFooterLinks } from "@/components/LegalFooterLinks";
 import type { Teacher } from "@/types";
 import { CityMapSection } from "@/components/CityMapSection";
@@ -21,6 +20,18 @@ import { buildAlternates } from "@/lib/seo/alternates";
 import { withLocale } from "@/lib/i18n/routing";
 import { normalizeLocale, type Locale } from "@/lib/i18n/types";
 import { withLocaleHref } from "@/lib/i18n/marketingPaths";
+import {
+  buildServiceJsonLd,
+  buildTutorCitySeoContent,
+  buildTutorCityFaqs,
+  PRIORITY_CITY_HUBS,
+} from "@/lib/seo/localSeoContent";
+import {
+  getCityBySlug,
+  getCoursePagePath,
+  getNearbyCities,
+  getSubjectBySlug,
+} from "@/lib/seo/seo-data";
 
 import { SITE_URL } from "@/lib/seo/site";
 
@@ -105,10 +116,10 @@ export async function generateMetadata({
   const city = findCityBySlug(citySlug);
   if (!city) return { title: "Tuteurs privés | Pratiqo" };
 
-  const title = `Meilleurs professeurs et tuteurs à ${city.name}, ${city.region} | Pratiqo`;
+  const title = `Tuteurs privés à ${city.name} | Tutorat et cours privés | Pratiqo`;
   const description =
-    `Trouvez un professeur de musique, de langues ou un tuteur scolaire à ${city.name}. ` +
-    `Cours particuliers avec des experts vérifiés. Réservez votre premier cours sur Pratiqo.`;
+    `Trouvez un tuteur privé à ${city.name} pour les devoirs, les matières scolaires, les langues ou la musique. ` +
+    `Profils locaux, réservation simple et paiement sécurisé.`;
 
   const path = `/tuteurs-prive/${citySlug}`;
   const localizedPaths = { en: path, fr: path, es: path };
@@ -116,13 +127,14 @@ export async function generateMetadata({
   return {
     title,
     description,
+    robots: { index: true, follow: true },
     keywords: [
-      `professeur ${city.name}`,
-      `tuteur ${city.name}`,
-      `cours de musique ${city.name}`,
-      `cours de langue ${city.name}`,
+      `tuteur privé ${city.name}`,
+      `tutorat ${city.name}`,
+      `aide aux devoirs ${city.name}`,
+      `cours privés ${city.name}`,
+      `prof privé ${city.name}`,
       `cours particuliers ${city.name}`,
-      `professeur particulier ${city.region}`,
     ],
     openGraph: {
       title,
@@ -177,56 +189,40 @@ export default async function CityTutorsPage({
   const dict = getDictionary(locale);
   const cityGuideLinks = getCitySeoGuideLinks(citySlug, locale);
 
-  const cityFaq = [
-    {
-      question: `Comment trouver un tuteur privé à ${city.name}?`,
-      answer: `Recherchez un tuteur sur Pratiqo en filtrant par matière, disponibilité et mode d'enseignement. Vous verrez les profils des tuteurs disponibles à ${city.name} et à proximité, avec leurs tarifs et leurs avis.`,
-    },
-    {
-      question: `Les cours particuliers sont-ils disponibles en ligne à ${city.name}?`,
-      answer: `Oui. La majorité des professeurs sur Pratiqo proposent des cours en ligne via vidéoconférence, en plus des cours à domicile ou en présentiel à ${city.name}.`,
-    },
-    {
-      question: `Quel est le tarif moyen d'un tuteur à ${city.name}?`,
-      answer: `Les tarifs varient entre 25 $ et 75 $/heure selon la matière, le niveau scolaire et l'expérience du tuteur. Chaque profil Pratiqo affiche clairement le prix par cours.`,
-    },
-    {
-      question: `Les tuteurs sur Pratiqo sont-ils vérifiés?`,
-      answer: `Oui. Chaque tuteur vérifie son identité avant de pouvoir enseigner. Certains ont aussi fait valider leurs diplômes et sont identifiés par un badge sur leur profil.`,
-    },
-  ];
+  const seoCity = getCityBySlug(citySlug);
+  if (!seoCity) notFound();
 
-  // ── JSON-LD: ItemList of tutors ────────────────────────────────────────────
+  const tutorSeo = buildTutorCitySeoContent({ locale, city: seoCity, citySlug });
+  const cityFaq = buildTutorCityFaqs(seoCity);
+  const hub = PRIORITY_CITY_HUBS[citySlug];
+  const geoNearby = getNearbyCities(citySlug, 8).filter((c) => c.slug !== citySlug);
+  const hubNearbySlugs = hub?.nearbySlugs ?? [];
+  const merged = new Map<string, (typeof geoNearby)[0]>();
+  for (const c of geoNearby) merged.set(c.slug, c);
+  for (const slug of hubNearbySlugs) {
+    if (!merged.has(slug) && slug !== citySlug) {
+      const c = getCityBySlug(slug);
+      if (c) merged.set(slug, c);
+    }
+  }
+  const nearbyCities = Array.from(merged.values()).slice(0, 8);
 
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "ItemList",
-    name: `Meilleurs professeurs et tuteurs à ${city.name}, ${city.region}`,
-    description: `Professeurs de musique, de langues et tuteurs scolaires à ${city.name}. Cours particuliers vérifiés sur Pratiqo.`,
-    url: `${BASE_URL}${withLocale(`/tuteurs-prive/${citySlug}`, locale)}`,
-    itemListElement: teachers.map((t, i) => ({
-      "@type": "ListItem",
-      position: i + 1,
-      item: {
-        "@type": "Person",
-        name: t.name,
-        jobTitle: buildJobTitle(t.discipline ?? "", t.category ?? ""),
-        knowsAbout: [t.discipline, t.category].filter(Boolean),
-        url: `${BASE_URL}${withLocale(`/teacher/profile/${encodeURIComponent(t.id)}`, locale)}`,
-        ...(t.reviews > 0
-          ? {
-              aggregateRating: {
-                "@type": "AggregateRating",
-                ratingValue: String(t.rating),
-                reviewCount: String(t.reviews),
-                bestRating: "5",
-                worstRating: "1",
-              },
-            }
-          : {}),
-      },
-    })),
-  };
+  const hubPath = `/tuteurs-prive/${citySlug}`;
+  const serviceJsonLd = buildServiceJsonLd({
+    name: `Tuteurs privés à ${city.name}`,
+    description: `Tutorat et cours privés à ${city.name} — Pratiqo.`,
+    cityName: city.name,
+    serviceType: "Tutorat et cours privés",
+    canonicalPath: hubPath,
+  });
+
+  const subjectQuickSlugs = ["mathematiques", "francais", "anglais", "piano", "guitare", "francisation"] as const;
+  const subjectCards = subjectQuickSlugs
+    .map((slug) => {
+      const meta = getSubjectBySlug(slug);
+      return meta ? { slug, meta } : null;
+    })
+    .filter(Boolean) as { slug: string; meta: NonNullable<ReturnType<typeof getSubjectBySlug>> }[];
 
   const countLabel =
     teachers.length === 0
@@ -239,12 +235,12 @@ export default async function CityTutorsPage({
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceJsonLd) }}
       />
       <BreadcrumbSchema
         items={[
           { name: "Accueil", href: withLocale("/", locale) },
-          { name: "Tuteurs privés", href: "/student/search" },
+          { name: "Trouver un prof", href: withLocale("/trouver-un-prof", locale) },
           { name: city.name, href: withLocale(`/tuteurs-prive/${citySlug}`, locale) },
         ]}
       />
@@ -275,29 +271,51 @@ export default async function CityTutorsPage({
           <div className="mx-auto max-w-4xl text-center">
             <div className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold mb-4">
               <MapPin size={12} aria-hidden />
-              {city.region}
+              {city.region}, Québec
             </div>
             <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">
-              Tuteurs et profs privés à {city.name}
+              Tuteurs privés à {city.name}
             </h1>
-            <p className="mt-3 text-base text-white/80 max-w-xl mx-auto">
-              Trouvez le professeur idéal près de chez vous — musique, langues,
-              mathématiques, arts martiaux et plus. Cours en ligne ou en
-              présentiel, à votre rythme.
+            <p className="mt-3 text-base text-white/85 max-w-2xl mx-auto leading-relaxed">
+              {tutorSeo.intro}
             </p>
             <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link
-                href="/login"
+                href={withLocaleHref("/trouver-un-prof", locale)}
                 className="inline-flex h-11 items-center rounded-2xl bg-white px-6 text-sm font-bold text-teal-700 hover:brightness-95 shadow"
               >
-                Je cherche un tuteur →
+                Voir les professeurs disponibles
               </Link>
               <Link
                 href={withLocaleHref("/become-teacher", locale)}
                 className="inline-flex h-11 items-center rounded-2xl border border-white/40 px-6 text-sm font-semibold text-white hover:bg-white/10"
               >
-                Enseigner sur Pratiqo
+                Devenir professeur
               </Link>
+            </div>
+          </div>
+        </section>
+
+        <section className="bg-white border-b border-[#E8E6DF] py-10 px-4 sm:px-6">
+          <div className="mx-auto max-w-5xl">
+            <p className="text-center text-[11px] font-bold uppercase tracking-widest text-[#6B6760] mb-6">
+              Cours populaires à {city.name}
+            </p>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {subjectCards.map(({ slug, meta }) => (
+                <Link
+                  key={slug}
+                  href={withLocale(getCoursePagePath(slug, citySlug), locale)}
+                  className="rounded-2xl border border-[#E8E6DF] bg-[#FAFCFB] p-4 hover:border-teal-500/40 hover:shadow-sm transition-shadow"
+                >
+                  <p className="font-bold text-sm text-[#2C2C2A]">
+                    {meta.label.charAt(0).toUpperCase() + meta.label.slice(1)}
+                  </p>
+                  <p className="mt-1 text-xs text-[#6B6760] leading-relaxed">
+                    {meta.searchLabel} à {city.name}
+                  </p>
+                </Link>
+              ))}
             </div>
           </div>
         </section>
@@ -336,17 +354,25 @@ export default async function CityTutorsPage({
               /* ── Empty state ─────────────────────────────────────────── */
               <div className="rounded-2xl bg-white border border-[#E8E6DF] p-10 text-center">
                 <p className="text-base font-semibold text-[#2C2C2A]">
-                  Aucun tuteur à {city.name} pour l&apos;instant&nbsp;?
+                  Aucun profil ne correspond encore exactement à {city.name} sur Pratiqo.
                 </p>
                 <p className="mt-2 text-sm text-[#6B6760]">
-                  Voici les professeurs disponibles à proximité ou en ligne.
+                  Explorez la recherche pour voir des professeurs à proximité ou en ligne — les résultats dépendent des enseignants actifs sur la plateforme.
                 </p>
-                <Link
-                  href="/login"
-                  className="mt-5 inline-flex items-center rounded-xl bg-teal-700 px-5 py-2.5 text-sm font-bold text-white hover:brightness-105"
-                >
-                  Voir tous les tuteurs →
-                </Link>
+                <div className="mt-5 flex flex-col sm:flex-row gap-3 justify-center">
+                  <Link
+                    href={withLocaleHref("/trouver-un-prof", locale)}
+                    className="inline-flex items-center justify-center rounded-xl bg-teal-700 px-5 py-2.5 text-sm font-bold text-white hover:brightness-105"
+                  >
+                    Ouvrir la recherche
+                  </Link>
+                  <Link
+                    href={withLocaleHref("/become-teacher", locale)}
+                    className="inline-flex items-center justify-center rounded-xl border border-[#D3D1C7] px-5 py-2.5 text-sm font-semibold text-[#2C2C2A] hover:border-teal-500"
+                  >
+                    Devenir professeur
+                  </Link>
+                </div>
               </div>
             ) : (
               <>
@@ -404,10 +430,10 @@ export default async function CityTutorsPage({
 
                 <div className="mt-8 text-center">
                   <Link
-                    href="/login"
+                    href={withLocaleHref("/trouver-un-prof", locale)}
                     className="inline-flex h-11 items-center rounded-2xl bg-teal-700 px-7 text-sm font-bold text-white hover:brightness-105 shadow-sm"
                   >
-                    Voir tous les tuteurs disponibles →
+                    Voir les professeurs disponibles
                   </Link>
                   <p className="mt-2 text-xs text-[#6B6760]">
                     Inscription gratuite · Aucun engagement
@@ -457,6 +483,17 @@ export default async function CityTutorsPage({
           </div>
         </section>
 
+        <section className="bg-[#FAFAF8] border-t border-[#E8E6DF] py-10 px-4 sm:px-6">
+          <div className="mx-auto max-w-3xl space-y-4 text-sm text-[#2C2C2A] leading-relaxed">
+            {tutorSeo.bodyParagraphs.map((para, i) => (
+              <p key={i}>{para}</p>
+            ))}
+            <p className="text-[#6B6760]">
+              Mots-clés utiles : tuteur privé {city.name}, tutorat {city.name}, aide aux devoirs {city.name}, cours privés {city.name}, prof privé {city.name}.
+            </p>
+          </div>
+        </section>
+
         <section className="bg-white border-t border-[#E8E6DF] py-8 px-4 sm:px-6">
           <div className="mx-auto max-w-4xl">
             <MarketingResourceBlock
@@ -470,18 +507,44 @@ export default async function CityTutorsPage({
 
         {/* ── FAQ ───────────────────────────────────────────────────────── */}
         <section className="bg-[#FAFAF8] border-t border-[#E8E6DF] py-10 px-4 sm:px-6">
-          <div className="mx-auto max-w-4xl">
+          <div className="mx-auto max-w-3xl">
             <h2 className="text-lg font-bold text-[#2C2C2A] mb-6">
-              Questions fréquentes — cours particuliers à {city.name}
+              Questions fréquentes — tuteurs privés à {city.name}
             </h2>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-3">
               {cityFaq.map((item, i) => (
-                <div key={i} className="rounded-xl border border-[#E8E6DF] bg-white p-5">
-                  <p className="font-semibold text-sm text-[#2C2C2A] mb-2">{item.question}</p>
-                  <p className="text-sm text-[#6B6760] leading-relaxed">{item.answer}</p>
-                </div>
+                <details
+                  key={i}
+                  className="group rounded-xl border border-[#E8E6DF] bg-white open:shadow-sm"
+                >
+                  <summary className="cursor-pointer list-none px-5 py-4 font-semibold text-sm text-[#2C2C2A] flex items-center justify-between gap-2 marker:content-none">
+                    <span>{item.question}</span>
+                    <span className="text-teal-700 text-xs shrink-0 group-open:rotate-180 transition-transform">▼</span>
+                  </summary>
+                  <div className="px-5 pb-4 text-sm text-[#6B6760] leading-relaxed border-t border-[#F1EFE8] pt-3">
+                    {item.answer}
+                  </div>
+                </details>
               ))}
             </div>
+          </div>
+        </section>
+
+        <section className="bg-white border-t border-[#E8E6DF] py-10 px-4 sm:px-6">
+          <div className="mx-auto max-w-4xl">
+            <h2 className="text-sm font-bold uppercase tracking-widest text-[#6B6760] mb-4">Villes voisines</h2>
+            <ul className="flex flex-wrap gap-3 text-sm">
+              {nearbyCities.map((c) => (
+                <li key={c.slug}>
+                  <Link
+                    href={withLocale(`/tuteurs-prive/${c.slug}`, locale)}
+                    className="rounded-full border border-[#E8E6DF] bg-[#FAFCFB] px-3 py-1.5 font-semibold text-teal-700 hover:border-teal-500/40"
+                  >
+                    Tuteurs privés à {c.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </div>
         </section>
 

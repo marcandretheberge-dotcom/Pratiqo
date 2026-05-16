@@ -2,14 +2,15 @@
  * CityLinksFooter — Strategic internal linking section.
  *
  * Renders two columns of crawlable links:
- *  1. All Quebec city landing pages  (/tuteurs-prive/[citySlug])
- *  2. Montevideo barrios column      (/clases/montevideo/[barrioSlug])
+ *  1. All Quebec city landing pages  (`/fr/tuteurs-prive/[citySlug]`)
+ *  2. Montevideo barrios column      (`/fr/clases/montevideo/[barrioSlug]`)
  *
  * Placed at the bottom of landing pages so Google discovers every entry point
  * from a single crawl. Pure server component — no client JS required.
  */
 import Link from "next/link";
 import { QC_CITIES, MV_BARRIOS } from "../lib/constants/cities";
+import { ROUTING_DEFAULT_LOCALE, withLocale } from "../lib/i18n/routing";
 
 export function CityLinksFooter({ currentSlug }: { currentSlug?: string }) {
   return (
@@ -28,7 +29,7 @@ export function CityLinksFooter({ currentSlug }: { currentSlug?: string }) {
             {QC_CITIES.map((city) => (
               <Link
                 key={city.slug}
-                href={`/tuteurs-prive/${city.slug}`}
+                href={withLocale(`/tuteurs-prive/${city.slug}`, ROUTING_DEFAULT_LOCALE)}
                 aria-current={city.slug === currentSlug ? "page" : undefined}
                 className={
                   city.slug === currentSlug
@@ -51,7 +52,7 @@ export function CityLinksFooter({ currentSlug }: { currentSlug?: string }) {
             {MV_BARRIOS.map((barrio) => (
               <Link
                 key={barrio.slug}
-                href={`/clases/montevideo/${barrio.slug}`}
+                href={withLocale(`/clases/montevideo/${barrio.slug}`, ROUTING_DEFAULT_LOCALE)}
                 aria-current={barrio.slug === currentSlug ? "page" : undefined}
                 className={
                   barrio.slug === currentSlug
