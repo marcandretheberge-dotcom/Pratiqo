@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { MapPin, Star, ShieldCheck } from "lucide-react";
+import { Clock, MapPin, ShieldCheck, Star } from "lucide-react";
 import type { Teacher } from "@/types";
 import { VerificationBadge } from "@/components/VerificationBadge";
 import { TeacherPriceTag } from "@/components/TeacherPriceTag";
@@ -87,6 +87,7 @@ export function LandingTeacherListingCard({
 
   const photoUrl = getTeacherImageUrl(teacher.imageUrl, { width: 112, height: 112, quality: 72, format: "webp" });
   const showVerifiedTag = lvl > 0;
+  const introDuration = teacher.introSessionDurationMinutes ?? 45;
   const neighborhoodHint = teacher.location?.neighborhood?.trim();
   const placeFallback = teacherCardLocationPlace(teacher);
   const cardShortName = formatTeacherCardShortName(teacher.name);
@@ -131,7 +132,7 @@ export function LandingTeacherListingCard({
       <div className="relative p-3 sm:p-3.5">
         <div className="flex items-start gap-3 sm:gap-3.5">
           {photoUrl ? (
-            <div className="relative shrink-0">
+            <div className="shrink-0">
               <Image
                 src={photoUrl}
                 alt={t("imageAltTeacherProfile").replace("{name}", teacher.name)}
@@ -144,25 +145,15 @@ export function LandingTeacherListingCard({
                 unoptimized={shouldUseUnoptimizedImage(photoUrl)}
                 className="h-20 w-20 rounded-2xl border border-black/[0.04] object-cover shadow-md sm:h-[4.5rem] sm:w-[4.5rem]"
               />
-              {teacher.introSessionEnabled ? (
-                <span className="absolute -bottom-2 right-0 rounded-full bg-teal-50 px-2 py-1 text-[10px] font-extrabold text-teal-700 shadow-md ring-2 ring-white z-10">
-                  {t("introSessionBadge").replace("{n}", String(teacher.introSessionDurationMinutes ?? 45))}
-                </span>
-              ) : null}
             </div>
           ) : (
-            <div className="relative shrink-0">
+            <div className="shrink-0">
               <div
                 className="flex h-20 w-20 items-center justify-center rounded-2xl border border-black/[0.04] text-xl font-bold text-white shadow-inner sm:h-[4.5rem] sm:w-[4.5rem] sm:text-2xl"
                 style={{ background: "linear-gradient(135deg,var(--palette-teal-500),var(--palette-teal-700))" }}
               >
                 {initials(teacher.name)}
               </div>
-              {teacher.introSessionEnabled ? (
-                <span className="absolute -bottom-2 right-0 rounded-full bg-teal-50 px-2 py-1 text-[10px] font-extrabold text-teal-700 shadow-md ring-2 ring-white z-10">
-                  {t("introSessionBadge").replace("{n}", String(teacher.introSessionDurationMinutes ?? 45))}
-                </span>
-              ) : null}
             </div>
           )}
 
@@ -191,13 +182,20 @@ export function LandingTeacherListingCard({
                   />
                   <span className="min-w-0 truncate">{distancePrimary}</span>
                 </p>
-                {showVerifiedTag ? (
-                  <p className="mt-1 inline-flex items-center gap-1 rounded-full bg-teal-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-teal-800">
-                    <ShieldCheck size={12} className="text-teal-600" /> {t("landingCardVerifiedTeacher")}
-                  </p>
-                ) : (
-                  <p className="mt-1 h-[20px]" aria-hidden />
-                )}
+                <div className="mt-1 flex min-h-[1.625rem] flex-wrap items-center gap-2">
+                  {showVerifiedTag ? (
+                    <span className="inline-flex items-center gap-1 rounded-full border border-teal-100 bg-teal-50 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-teal-800">
+                      <ShieldCheck size={12} className="shrink-0 text-teal-600" aria-hidden />
+                      {t("landingCardVerifiedTeacher")}
+                    </span>
+                  ) : null}
+                  {teacher.introSessionEnabled ? (
+                    <span className="inline-flex items-center gap-1 rounded-full border border-teal-100 bg-[#F3FAF6] px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-teal-800">
+                      <Clock size={12} className="shrink-0 text-teal-700" aria-hidden />
+                      {t("introSessionBadge").replace("{n}", String(introDuration))}
+                    </span>
+                  ) : null}
+                </div>
                 <div className="mt-1.5 min-h-[2.5rem] space-y-1">
                   <p
                     className={cn(
