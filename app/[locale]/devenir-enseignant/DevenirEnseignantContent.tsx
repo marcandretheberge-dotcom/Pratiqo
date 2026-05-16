@@ -291,18 +291,12 @@ export default function DevenirEnseignantContent() {
           </div>
           <TeacherEarningsCalculator className="mt-10 border-t border-white/10 pt-10 sm:pt-12" />
 
-          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-6">
+          <div className="mt-8 flex justify-center">
             <Link
               href={withLocaleHref("/tarifs", locale)}
               className="text-sm text-[#7FE0C3] underline underline-offset-4 hover:text-[#B8F5DC]"
             >
               {t("teacherEarnCalcSeeAllPlans")}
-            </Link>
-            <Link
-              href={withLocaleHref("/tarifs", locale)}
-              className="text-sm text-white/70 underline underline-offset-4 hover:text-white"
-            >
-              {t("teacherEarnCalcCommissionDetails")}
             </Link>
           </div>
         </div>
