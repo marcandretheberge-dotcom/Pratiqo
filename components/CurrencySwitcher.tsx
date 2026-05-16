@@ -19,7 +19,13 @@ const PROMOTED: { code: Currency; label: string; flag: string }[] = [
   { code: "UYU", label: "UYU", flag: "🇺🇾" },
 ];
 
-export function CurrencySwitcher({ variant = "light" }: { variant?: "dark" | "light" }) {
+export function CurrencySwitcher({
+  variant = "light",
+  size = "default",
+}: {
+  variant?: "dark" | "light";
+  size?: "default" | "sm";
+}) {
   const { currency, setCurrency } = useLocale();
   const [isOpen, setIsOpen] = useState(false);
   const light = variant === "light";
@@ -42,14 +48,15 @@ export function CurrencySwitcher({ variant = "light" }: { variant?: "dark" | "li
         aria-label="Currency"
         onClick={() => setIsOpen((o) => !o)}
         className={cn(
-          "flex items-center gap-1.5 rounded-lg px-2.5 py-2 transition-all",
+          "flex shrink-0 items-center rounded-lg transition-all",
+          size === "sm" ? "gap-1 px-2 py-1.5 text-xs" : "gap-1.5 px-2.5 py-2 text-xs",
           light
             ? "border border-slate-200 bg-white text-slate-900 hover:bg-slate-50"
             : "border border-white/20 bg-white/10 text-white hover:bg-white/15",
         )}
       >
-        <Coins size={14} aria-hidden />
-        <span className="font-semibold text-xs">{currency}</span>
+        <Coins size={size === "sm" ? 12 : 14} aria-hidden />
+        <span className="font-semibold tabular-nums">{currency}</span>
       </button>
 
       {isOpen ? (

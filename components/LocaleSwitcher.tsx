@@ -15,14 +15,17 @@ const OPTIONS: { locale: Locale; flag: string; label: string; code: string }[] =
 export function LocaleSwitcher({
   variant = "dark",
   compact = false,
+  size = "default",
 }: {
   variant?: "dark" | "light";
   compact?: boolean;
+  size?: "default" | "sm";
 }) {
   const { locale, setLocale } = useLocale();
   const [isOpen, setIsOpen] = useState(false);
   const light = variant === "light";
   const current = OPTIONS.find((o) => o.locale === locale);
+  const showCode = !compact;
 
   useEffect(() => {
     if (!isOpen) return;
@@ -43,16 +46,15 @@ export function LocaleSwitcher({
         aria-label="Language"
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "flex items-center gap-2 rounded-lg px-3 py-2 transition-all",
+          "flex shrink-0 items-center rounded-lg transition-all",
+          size === "sm" ? "gap-1 px-2 py-1.5 text-xs" : "gap-2 px-3 py-2 text-sm",
           light
             ? "border border-slate-200 bg-white text-slate-900 hover:bg-slate-50"
             : "border border-white/20 bg-white/10 text-white hover:bg-white/15",
         )}
       >
-        <Globe size={16} />
-        {!compact && (
-          <span className="font-medium text-sm">{current?.code}</span>
-        )}
+        <Globe size={size === "sm" ? 14 : 16} aria-hidden />
+        {showCode ? <span className="font-semibold tabular-nums">{current?.code}</span> : null}
       </button>
 
       {/* Dropdown Menu */}
