@@ -6,7 +6,7 @@ import { tFormat } from "@/lib/i18n/format";
 import { t } from "@/lib/i18n/server";
 import type { Locale } from "@/lib/i18n/types";
 import { getCoursePagePath } from "@/lib/seo/seo-data";
-import { seoCourseLinkLabel } from "@/lib/seo/seoLandingI18n";
+import { seoCourseLinkLabel, seoSubjectLinkLabel } from "@/lib/seo/seoLandingI18n";
 
 export type SeoBreadcrumbItem = { label: string; href: string };
 
@@ -263,7 +263,11 @@ export function SeoCourseCityEmptyState({
                       href={withLocale(getCoursePagePath(s.slug, citySlug), locale)}
                       className="font-semibold text-teal-700 hover:underline"
                     >
-                      {seoCourseLinkLabel(locale, s.label, cityName)}
+                      {seoCourseLinkLabel(
+                        locale,
+                        seoSubjectLinkLabel(locale, s.slug, s.label),
+                        cityName,
+                      )}
                     </Link>
                   </li>
                 ))}

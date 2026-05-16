@@ -4,6 +4,7 @@
  */
 
 import type { Locale } from "@/lib/i18n/types";
+import { seoSubjectLinkLabel } from "@/lib/seo/seoLandingI18n";
 import { ROUTING_DEFAULT_LOCALE, withLocale } from "@/lib/i18n/routing";
 import { SITE_URL } from "@/lib/seo/site";
 
@@ -375,7 +376,7 @@ export function buildCourseCitySeoContent(input: {
         : `Encuentra profesores de ${disciplineLc} en ${city.name}, QC. Perfiles reales y reserva en Pratiqo.`;
     const body: string[] = [
       locale === "en"
-        ? `Whether you're looking for ${labelLc} lessons or a ${disciplineLc} teacher, start with your goal (age, level, online vs in-person). Pratiqo shows real teachers — we never invent availability or headcounts.`
+        ? `Whether you're looking for ${disciplineLc} lessons or a ${disciplineLc} teacher, start with your goal (age, level, online vs in-person). Pratiqo shows real teachers — we never invent availability or headcounts.`
         : `Define tu objetivo (nivel, formato) y compara perfiles reales en Pratiqo.`,
       locale === "en"
         ? `For ${city.name} and nearby areas, many students mix winter-friendly online sessions with in-person meetings when it makes sense. Check each profile for teaching mode and pricing.`
@@ -384,7 +385,7 @@ export function buildCourseCitySeoContent(input: {
     if (long && depth) {
       body.push(
         locale === "en"
-          ? depth.benefits
+          ? "A strong teacher helps you build a clear routine, spot-fix technique, and stay motivated between lessons."
           : `Beneficios: progresión clara y práctica entre sesiones.`,
       );
     }
@@ -550,20 +551,23 @@ export function buildCourseCityFaqs(input: {
   const { locale, city, subject, disciplineName, disciplineSlug } = input;
   const d = getDepth(disciplineSlug);
   const angle = d?.whatTheyWant ?? subject.faqAngle;
+  const disciplineLc = disciplineName.toLowerCase();
+  const subjectLabel =
+    locale === "fr" ? subject.label : seoSubjectLinkLabel(locale, disciplineSlug, subject.label);
 
   if (locale === "en") {
     return [
       {
-        question: `How much do ${subject.label} lessons cost in ${city.name}?`,
+        question: `How much do ${subjectLabel} lessons cost in ${city.name}?`,
         answer:
           "Rates vary by experience, level, and format (online or in person). On Pratiqo, each profile shows a clear price so you can compare before messaging — with no hidden platform fees for basic contact.",
       },
       {
-        question: `How do I choose a ${subject.teacherNoun} in ${city.name} for my situation?`,
+        question: `How do I choose a ${subjectLabel} teacher in ${city.name} for my situation?`,
         answer: `Start with your goal and context (${angle}). Then read the background, reviews when available, verifications, and teaching mode. Ask a specific question — a strong teacher answers with a method, not vague promises.`,
       },
       {
-        question: `Can ${subject.label} lessons happen at home or online in ${city.name}?`,
+        question: `Can ${subjectLabel} lessons happen at home or online in ${city.name}?`,
         answer:
           "Often yes — it depends on the profile. Many teachers offer one or both. Check each listing; in Québec winters, many families mix formats week to week.",
       },
@@ -573,7 +577,7 @@ export function buildCourseCityFaqs(input: {
           "Yes: identity is verified to teach on Pratiqo. Other badges may appear on the profile. They help you choose, but your judgment still matters.",
       },
       {
-        question: `Can we start with a first lesson or short meeting for ${subject.label} in ${city.name}?`,
+        question: `Can we start with a first lesson or short meeting for ${subjectLabel} in ${city.name}?`,
         answer:
           "Many teachers are open to a first meeting or short session to align on a plan. Ask politely in your message after creating an account.",
       },
@@ -588,16 +592,16 @@ export function buildCourseCityFaqs(input: {
   if (locale === "es") {
     return [
       {
-        question: `¿Cuánto cuestan las clases de ${subject.label} en ${city.name}?`,
+        question: `¿Cuánto cuestan las clases de ${subjectLabel} en ${city.name}?`,
         answer:
           "El precio varía según experiencia, nivel y formato (online o presencial). En Pratiqo, cada perfil muestra una tarifa clara para comparar antes de escribir — sin cargos ocultos de plataforma para el contacto básico.",
       },
       {
-        question: `¿Cómo elegir un ${subject.teacherNoun} en ${city.name} para mi caso?`,
+        question: `¿Cómo elegir un profesor de ${subjectLabel} en ${city.name} para mi caso?`,
         answer: `Empezá por tu objetivo y contexto (${angle}). Luego leé trayectoria, reseñas si hay, verificaciones y modalidad. Hacé una pregunta concreta: un buen profe responde con método, no promesas vagas.`,
       },
       {
-        question: `¿Las clases de ${subject.label} pueden ser a domicilio u online en ${city.name}?`,
+        question: `¿Las clases de ${subjectLabel} pueden ser a domicilio u online en ${city.name}?`,
         answer:
           "A menudo sí — depende del perfil. Muchos profes ofrecen una u otra modalidad, o ambas. Revisá cada ficha; en invierno en Québec, muchas familias combinan según la semana.",
       },
@@ -607,7 +611,7 @@ export function buildCourseCityFaqs(input: {
           "Sí: la identidad se verifica para enseñar en Pratiqo. Pueden aparecer otras validaciones en el perfil. Ayudan a elegir, pero tu criterio sigue siendo clave.",
       },
       {
-        question: `¿Se puede empezar con una primera clase o reunión corta de ${subject.label} en ${city.name}?`,
+        question: `¿Se puede empezar con una primera clase o reunión corta de ${subjectLabel} en ${city.name}?`,
         answer:
           "Muchos profesores aceptan una primera reunión o sesión corta para alinear el plan. Pedilo con cortesía en tu mensaje después de crear tu cuenta.",
       },

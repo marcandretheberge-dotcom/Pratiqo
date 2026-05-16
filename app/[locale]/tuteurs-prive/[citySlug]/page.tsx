@@ -26,6 +26,7 @@ import { getDictionary, t } from "@/lib/i18n/server";
 import { getOpenGraphLocale, tFormat } from "@/lib/i18n/format";
 import {
   seoCourseLinkLabel,
+  seoSubjectLinkLabel,
   seoPrivateTutorsLinkLabel,
   seoTeachingModeLabel,
   seoTutorCountLabel,
@@ -498,7 +499,11 @@ export default async function CityTutorsPage({
               title: t(locale, "seoLandingPopularSubjects"),
               links: subjectCards.map(({ slug, meta }) => ({
                 href: withLocale(getCoursePagePath(slug, citySlug), locale),
-                label: seoCourseLinkLabel(locale, meta.label, city.name),
+                label: seoCourseLinkLabel(
+                  locale,
+                  seoSubjectLinkLabel(locale, slug, meta.label),
+                  city.name,
+                ),
               })),
             },
             {

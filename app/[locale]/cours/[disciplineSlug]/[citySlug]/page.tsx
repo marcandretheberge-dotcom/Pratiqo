@@ -27,7 +27,9 @@ import { getOpenGraphLocale, tFormat } from "@/lib/i18n/format";
 import {
   seoCourseTeacherCountLabel,
   seoCourseLinkLabel,
+  seoCourseFrequentSearchParams,
   seoPrivateTutorsLinkLabel,
+  seoSubjectLinkLabel,
   seoTeachingModeLabel,
 } from "@/lib/seo/seoLandingI18n";
 import { getDisciplineCitySeoGuideLinks } from "@/lib/seo/internalLinks";
@@ -424,8 +426,17 @@ export default async function DisciplineCityPage({
               <p key={i}>{para}</p>
             ))}
             <p className="text-[#6B6760]">
-              Recherche fréquente : cours de {seoSubject.label} à {city.name}, {seoSubject.teacherNoun} à {city.name}, prof{" "}
-              {seoSubject.label} {city.name}.
+              {tFormat(
+                locale,
+                "seoLandingCourseFrequentSearch",
+                seoCourseFrequentSearchParams(
+                  locale,
+                  disciplineSlug,
+                  seoSubject.label,
+                  seoSubject.teacherNoun,
+                  city.name,
+                ),
+              )}
             </p>
           </div>
         </section>
@@ -437,14 +448,22 @@ export default async function DisciplineCityPage({
               title: t(locale, "seoLandingSameSubjectOtherCities"),
               links: nearbyForSubject.map((c) => ({
                 href: withLocale(getCoursePagePath(disciplineSlug, c.slug), locale),
-                label: seoCourseLinkLabel(locale, discipline.name.toLowerCase(), c.name),
+                label: seoCourseLinkLabel(
+                  locale,
+                  seoSubjectLinkLabel(locale, disciplineSlug, seoSubject.label),
+                  c.name,
+                ),
               })),
             },
             {
               title: tFormat(locale, "seoLandingOtherCoursesInCity", { city: city.name }),
               links: relatedSubjects.map((s) => ({
                 href: withLocale(getCoursePagePath(s.slug, citySlug), locale),
-                label: seoCourseLinkLabel(locale, s.label, city.name),
+                label: seoCourseLinkLabel(
+                  locale,
+                  seoSubjectLinkLabel(locale, s.slug, s.label),
+                  city.name,
+                ),
               })),
             },
             {
