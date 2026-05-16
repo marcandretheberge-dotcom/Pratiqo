@@ -8,6 +8,7 @@ import { useLocale } from "@/lib/locale-context";
 import { useAuth } from "@/components/AuthProvider";
 import type { Locale } from "@/lib/i18n/types";
 import { withLocaleHref } from "@/lib/i18n/marketingPaths";
+import { TeacherEarningsCalculator } from "@/components/marketing/TeacherEarningsCalculator";
 
 // ── Locale-keyed copy ─────────────────────────────────────────────────────────
 
@@ -201,6 +202,12 @@ export default function DevenirEnseignantContent() {
               >
                 {c.ctaSecondary}
               </Link>
+              <Link
+                href="#calculateur-revenus"
+                className="inline-flex h-12 items-center justify-center rounded-2xl border border-teal-500/30 bg-teal-600/10 px-7 text-sm font-semibold text-[#B8F5DC] hover:bg-teal-600/20 transition-colors sm:col-span-1"
+              >
+                {t("teacherEarnCalcScrollCta")}
+              </Link>
             </div>
             <div className="mt-10 flex flex-wrap gap-x-5 gap-y-2 text-xs font-bold uppercase tracking-widest text-white/45">
               <span>2 400+ {locale === "es" ? "profesores" : "profs"}</span>
@@ -282,12 +289,20 @@ export default function DevenirEnseignantContent() {
               </div>
             ))}
           </div>
-          <div className="mt-6 text-center">
+          <TeacherEarningsCalculator className="mt-10 border-t border-white/10 pt-10 sm:pt-12" />
+
+          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-6">
             <Link
               href={withLocaleHref("/tarifs", locale)}
               className="text-sm text-[#7FE0C3] underline underline-offset-4 hover:text-[#B8F5DC]"
             >
-              {locale === "es" ? "Ver todos los planes →" : locale === "en" ? "See all plans →" : "Voir tous les plans →"}
+              {t("teacherEarnCalcSeeAllPlans")}
+            </Link>
+            <Link
+              href={withLocaleHref("/tarifs", locale)}
+              className="text-sm text-white/70 underline underline-offset-4 hover:text-white"
+            >
+              {t("teacherEarnCalcCommissionDetails")}
             </Link>
           </div>
         </div>
