@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState, type ReactNod
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
-import { BookOpen, GraduationCap, LayoutGrid, LayoutList, Map as MapIcon, MapPin, Music, Sparkles, X } from "lucide-react";
+import { BookOpen, GraduationCap, LayoutGrid, LayoutList, Map as MapIcon, MapPin, Music, Sparkles } from "lucide-react";
 import type { Teacher } from "../types";
 import { cn } from "../lib/utils";
 import { getEnabledDisciplines } from "../lib/disciplines";
@@ -29,27 +29,15 @@ import { filterTeacherPool, buildTeacherSearchRows, sortRows } from "../lib/teac
 import { TeacherSearchAdvancedPanel, type AdvancedFilterValues } from "../components/TeacherSearchAdvancedPanel";
 import { logSearchEvent } from "../lib/searchAnalytics";
 import type { City } from "../lib/cities";
+import { MarketplaceMapPanel } from "../features/marketplace";
 
 const TeacherProfile = dynamic(
   () => import("../components/TeacherProfile").then((m) => m.TeacherProfile),
-  { ssr: false, loading: () => <p className="p-4 text-center text-sm text-neutral-700">Chargement…</p> },
+  { ssr: false, loading: () => <p className="p-4 text-center text-sm text-neutral-700">Chargement...</p> },
 );
 const BookingModal = dynamic(
   () => import("../components/BookingModal").then((m) => m.BookingModal),
-  { ssr: false, loading: () => <p className="p-4 text-center text-sm text-neutral-700">Chargement…</p> },
-);
-
-const SearchMapView = dynamic(
-  () => import("../components/SearchMapView").then((m) => m.SearchMapView),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="flex flex-col items-center justify-center gap-2 h-[480px] rounded-2xl bg-[#F1EFE8] text-sm text-neutral-700">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-teal-700 border-t-transparent" />
-        <p>Chargement…</p>
-      </div>
-    ),
-  },
+  { ssr: false, loading: () => <p className="p-4 text-center text-sm text-neutral-700">Chargement...</p> },
 );
 
 const SocialProofTestimonials = dynamic(
@@ -155,7 +143,7 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
         return;
       }
       // profilePlan is now mapped directly from teachers_public.public_plan_tier
-      // in teacherRowToTeacher — no secondary plan API call needed.
+      // in teacherRowToTeacher - no secondary plan API call needed.
       const mapped = data.map((r) => teacherRowToTeacher(r as TeacherRow));
 
       let merged: Teacher[];
@@ -284,7 +272,7 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
 
   return (
     <>
-      {/* ── HERO (student / teacher toggle; motion deferred — no motion/react in this module) ── */}
+      {/* HERO (student / teacher toggle; motion deferred - no motion/react in this module) */}
       <section className="relative overflow-hidden">
           {mode === "student" ? (
             <div key="student" className="bg-[#FAFCFB] text-[#2C2C2A]">
@@ -495,41 +483,21 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
                   ) : null}
 
                   {viewMode === "map" && mapLoaded ? (
-                    <>
-                      {mapBounds ? (
-                        <div className="mb-2 flex justify-center sm:mb-3">
-                          <div className="inline-flex max-w-full items-center gap-2 rounded-full border border-teal-600/25 bg-teal-50/95 px-3 py-1.5 text-[11px] font-semibold text-teal-900 shadow-sm sm:text-xs">
-                            <MapPin size={12} className="shrink-0 text-teal-700" aria-hidden />
-                            <span className="truncate">{t("mapBoundsFilterActiveLabel")}</span>
-                            <button
-                              type="button"
-                              onClick={() => setMapBounds(null)}
-                              className="inline-flex shrink-0 items-center gap-1 rounded-full bg-white/90 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-teal-800 ring-1 ring-teal-700/15 hover:bg-white"
-                              aria-label={t("mapBoundsClearFilterAria")}
-                            >
-                              <X size={12} strokeWidth={2.5} aria-hidden />
-                              <span className="hidden sm:inline">{t("mapBoundsClearFilter")}</span>
-                            </button>
-                          </div>
-                        </div>
-                      ) : null}
-                      <div className="mt-2 h-[min(520px,calc(100dvh-12rem))] overflow-hidden rounded-3xl border border-[#E8E6DF] bg-white shadow-sm">
-                        <SearchMapView
-                          teachers={filtered}
-                          userLat={geo?.lat ?? null}
-                          userLng={geo?.lng ?? null}
-                          selectedTeacher={selectedMapTeacher}
-                          onTeacherSelect={(tt) => setSelectedMapTeacher(tt)}
-                          onViewProfile={(tt) => setSelectedTeacherProfile(tt)}
-                          onCloseSelected={() => setSelectedMapTeacher(null)}
-                          onBoundsSearch={(bounds) => setMapBounds(bounds)}
-                          boundsFilterActive={!!mapBounds}
-                          onBoundsFilterCleared={() => setMapBounds(null)}
-                          highlightedTeacherId={selectedMapTeacher?.id ?? null}
-                          mapHeight="min(520px, calc(100dvh - 12rem))"
-                        />
-                      </div>
-                    </>
+                    <MarketplaceMapPanel
+                      loading={loadingTeachers}
+                      teachers={filtered}
+                      geo={geo}
+                      selectedTeacher={selectedMapTeacher}
+                      highlightedTeacherId={selectedMapTeacher?.id ?? null}
+                      mapBounds={mapBounds}
+                      onTeacherSelect={(teacher) => setSelectedMapTeacher(teacher)}
+                      onCloseSelected={() => setSelectedMapTeacher(null)}
+                      onViewProfile={(teacher) => setSelectedTeacherProfile(teacher)}
+                      onBoundsSearch={(bounds) => setMapBounds(bounds)}
+                      onBoundsFilterCleared={() => setMapBounds(null)}
+                      mapHeight="min(520px, calc(100dvh - 12rem))"
+                      className="mt-2 rounded-3xl border-[#E8E6DF] shadow-sm"
+                    />
                   ) : null}
                 </div>
               </div>
@@ -640,7 +608,7 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
   );
 }
 
-// ── Sub-components ────────────────────────────────────────────────────────────
+// Sub-components
 
 function ToggleSegment({ children, active, onClick }: { children: React.ReactNode; active: boolean; onClick: () => void }) {
   return (

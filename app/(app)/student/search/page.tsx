@@ -5,18 +5,14 @@ import dynamic from "next/dynamic";
 import type { Teacher } from "../../../../types";
 import type { BookingInitialLessonKind } from "../../../../components/BookingModal";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ChevronRight, Clock, Home, List, Map as MapIcon, MapPin, ShieldCheck, Star, Users, Video, X } from "lucide-react";
+import { List, Map as MapIcon, MapPin, ShieldCheck } from "lucide-react";
 import { useLocale } from "../../../../lib/locale-context";
 import { cn } from "../../../../lib/utils";
 import { getSupabaseClient } from "../../../../lib/supabase";
 import { fetchTeacherDisciplinesMap, mergeTeachersWithDisciplines } from "../../../../lib/teacherDisciplines";
 import { teacherRowToTeacher, type TeacherRow } from "../../../../lib/teacherMapper";
 import { TEACHERS_LIST_SELECT, TEACHERS_PUBLIC_TABLE } from "../../../../lib/supabase/queries";
-import { TeacherAvatar } from "../../../../components/TeacherAvatar";
-import { TeacherPriceTag } from "../../../../components/TeacherPriceTag";
-import { getVerificationLevel, isPratiqoVerified } from "../../../../lib/verification";
-import type { Currency } from "../../../../lib/geoLocale";
-import { VerificationBadge } from "../../../../components/VerificationBadge";
+import { isPratiqoVerified } from "../../../../lib/verification";
 import type { City } from "../../../../lib/cities";
 import type { MapBounds } from "../../../../components/SearchMapView";
 import { useAuth } from "../../../../components/AuthProvider";
@@ -27,10 +23,8 @@ import { TeacherSearchAdvancedPanel, type AdvancedFilterValues } from "../../../
 import type { TeacherSearchFormat } from "../../../../lib/teacherSearchCriteria";
 import { logSearchEvent } from "../../../../lib/searchAnalytics";
 import { LandingSearchHero } from "@/components/marketing/LandingSearchHero";
-import { LandingTeacherCardSkeleton } from "@/components/marketing/LandingTeacherCardSkeleton";
 import type { LandingFormatFilter } from "@/lib/landingTeacherFilter";
-import { formatTeacherCardShortName, teacherCardLocationPlace } from "@/lib/teacherDisplayName";
-import type { TranslationKey } from "@/lib/i18n/types";
+import { MarketplaceMapPanel, MarketplaceResultsGrid } from "@/features/marketplace";
 
 const TeacherProfile = dynamic(
   () => import("../../../../components/TeacherProfile").then((m) => m.TeacherProfile),
@@ -40,16 +34,6 @@ const BookingModal = dynamic(
   () => import("../../../../components/BookingModal").then((m) => m.BookingModal),
   { ssr: false, loading: () => <DynamicLoadingBlock /> },
 );
-const SearchMapView = dynamic(
-  () => import("../../../../components/SearchMapView").then((m) => m.SearchMapView),
-  {
-    ssr: false,
-    loading: () => (
-      <DynamicLoadingBlock map />
-    ),
-  },
-);
-
 function DynamicLoadingBlock({ map = false }: { map?: boolean }) {
   const { t } = useLocale();
   return (
@@ -367,85 +351,30 @@ export default function StudentSearchPage() {
     });
   };
 
-  const resultsList = loadingTeachers ? (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
-      {Array.from({ length: 6 }).map((_, i) => (
-        <LandingTeacherCardSkeleton key={i} />
-      ))}
-    </div>
-  ) : results.length === 0 ? (
-    <div className="rounded-3xl border border-dashed border-[#DCEAE3] bg-white p-8 text-center shadow-[0_12px_40px_rgba(44,44,42,0.05)]">
-      <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-50 text-teal-700">
-        <MapPin size={22} />
-      </div>
-      <h2 className="mt-4 text-lg font-bold text-[#2C2C2A]">{t("noTeachersFound")}</h2>
-      <p className="mx-auto mt-2 max-w-xl text-sm leading-relaxed text-[#6B6A65]">
-        {t("studentSearchEmptyHint")}
-      </p>
-      <button
-        type="button"
-        onClick={resetFilters}
-        className="mt-5 inline-flex h-11 items-center rounded-full bg-teal-700 px-5 text-sm font-bold text-white hover:bg-teal-800"
-      >
-        {t("studentSearchResetFilters")}
-      </button>
-    </div>
-  ) : (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
-      {results.map(({ teacher, distanceKm }) => (
-        <TeacherCard
-          key={teacher.id}
-          teacher={teacher}
-          distanceKm={distanceKm}
-          t={t}
-          onOpen={() => setSelectedTeacherProfile(teacher)}
-        />
-      ))}
-    </div>
+  const resultsList = (
+    <MarketplaceResultsGrid
+      loading={loadingTeachers}
+      rows={results}
+      highlightedTeacherId={selectedMapTeacher?.id ?? null}
+      onOpenTeacher={(teacher) => setSelectedTeacherProfile(teacher)}
+      onResetFilters={resetFilters}
+    />
   );
 
   const mapPanel = (
-    <div className="overflow-hidden rounded-[28px] border border-[#DCEAE3] bg-white p-2 shadow-[0_18px_60px_rgba(44,44,42,0.08)]">
-      {loadingTeachers ? (
-        <div className="flex min-h-[480px] items-center justify-center rounded-[22px] bg-[#F8FBF8] text-sm font-semibold text-teal-700">
-          <span className="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-teal-500 border-t-transparent" />
-          {t("loading")}
-        </div>
-      ) : (
-        <>
-          {mapBounds ? (
-            <div className="mb-2 flex justify-center">
-              <div className="inline-flex max-w-full items-center gap-2 rounded-full border border-teal-600/25 bg-teal-50/95 px-3 py-1.5 text-[11px] font-semibold text-teal-900 shadow-sm sm:text-xs">
-                <MapPin size={12} className="shrink-0 text-teal-700" aria-hidden />
-                <span className="truncate">{t("mapBoundsFilterActiveLabel")}</span>
-                <button
-                  type="button"
-                  onClick={() => setMapBounds(null)}
-                  className="inline-flex shrink-0 items-center gap-1 rounded-full bg-white/90 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-teal-800 ring-1 ring-teal-700/15 hover:bg-white"
-                  aria-label={t("mapBoundsClearFilterAria")}
-                >
-                  <X size={12} strokeWidth={2.5} aria-hidden />
-                  <span className="hidden sm:inline">{t("mapBoundsClearFilter")}</span>
-                </button>
-              </div>
-            </div>
-          ) : null}
-          <SearchMapView
-            teachers={results.map((x) => x.teacher)}
-            userLat={geo?.lat ?? null}
-            userLng={geo?.lng ?? null}
-            selectedTeacher={selectedMapTeacher}
-            onTeacherSelect={(teacher) => setSelectedMapTeacher(teacher)}
-            onCloseSelected={() => setSelectedMapTeacher(null)}
-            onViewProfile={(teacher) => setSelectedTeacherProfile(teacher)}
-            onBoundsSearch={(bounds) => setMapBounds(bounds)}
-            boundsFilterActive={!!mapBounds}
-            onBoundsFilterCleared={() => setMapBounds(null)}
-            mapHeight="min(680px, calc(100dvh - 8rem))"
-          />
-        </>
-      )}
-    </div>
+    <MarketplaceMapPanel
+      loading={loadingTeachers}
+      teachers={results.map((x) => x.teacher)}
+      geo={geo}
+      selectedTeacher={selectedMapTeacher}
+      highlightedTeacherId={selectedMapTeacher?.id ?? null}
+      mapBounds={mapBounds}
+      onTeacherSelect={(teacher) => setSelectedMapTeacher(teacher)}
+      onCloseSelected={() => setSelectedMapTeacher(null)}
+      onViewProfile={(teacher) => setSelectedTeacherProfile(teacher)}
+      onBoundsSearch={(bounds) => setMapBounds(bounds)}
+      onBoundsFilterCleared={() => setMapBounds(null)}
+    />
   );
 
   return (
@@ -667,137 +596,6 @@ export default function StudentSearchPage() {
         />
       )}
     </>
-  );
-}
-
-function TeacherCard({
-  teacher,
-  distanceKm,
-  onOpen,
-  t,
-}: {
-  teacher: Teacher;
-  distanceKm: number | null;
-  onOpen: () => void;
-  t: (key: TranslationKey) => string;
-}) {
-  const availability = teacher.availability?.[0] ? String(teacher.availability[0]) : null;
-  const supportsOnline = ["online", "both", "all"].includes(teacher.teachingMode);
-  const supportsInPerson = ["person", "both", "all"].includes(teacher.teachingMode);
-  const supportsHome = Boolean(teacher.homeLessonEnabled);
-  const formatLabels = [
-    supportsOnline ? t("bookingOnline") : null,
-    supportsInPerson ? t("inPerson") : null,
-    supportsHome ? t("modeHome") : null,
-  ].filter(Boolean) as string[];
-  const introDuration = teacher.introSessionDurationMinutes ?? 45;
-
-  const verificationLevel = getVerificationLevel({
-    plan: teacher.profilePlan,
-    identity_verified: teacher.identityVerified,
-    diploma_verified: teacher.diplomaVerified,
-    is_verified: teacher.isVerified,
-    verification_level: teacher.verificationLevel ?? null,
-  });
-
-  const neighborhoodHint = teacher.location?.neighborhood?.trim();
-  const placeFallback = teacherCardLocationPlace(teacher);
-  const cardShortName = formatTeacherCardShortName(teacher.name);
-  const distancePrimary =
-    distanceKm != null
-      ? t("distanceFromYouEmphasis").replace("{{n}}", String(Math.round(distanceKm)))
-      : placeFallback
-        ? t("teacherCardBasedInPlace").replace("{{place}}", placeFallback)
-        : neighborhoodHint
-          ? t("teacherCardNearPlace").replace("{{place}}", neighborhoodHint)
-          : t("teacherCardDistanceNeedGeo");
-  const distanceLineIsGeoHint = distanceKm == null && !placeFallback && !neighborhoodHint;
-
-  return (
-    <button
-      type="button"
-      onClick={onOpen}
-      className={cn(
-        "group block min-h-[168px] w-full rounded-3xl border border-[#E8E6DF] bg-white p-3.5 text-left shadow-[0_12px_40px_rgba(44,44,42,0.06)]",
-        "cursor-pointer transition-all duration-200 ease-out",
-        "hover:-translate-y-0.5 hover:border-teal-500/35 hover:shadow-[0_18px_46px_rgba(44,44,42,0.10)]",
-        "active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/40",
-      )}
-    >
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-3">
-          <TeacherAvatar name={teacher.name} category={teacher.category} imageUrl={teacher.imageUrl} size={48} />
-          <div className="min-w-0">
-            <div className="flex min-w-0 items-center gap-2">
-              <p className="truncate text-[15px] font-bold text-[#2C2C2A]">{cardShortName}</p>
-              <VerificationBadge level={verificationLevel} size="sm" showLabel={false} className="shrink-0 scale-90" />
-            </div>
-            <p className="mt-0.5 truncate text-xs font-medium text-[#6B6A65]">{teacher.discipline}</p>
-            <p
-              className={cn(
-                "mt-1 flex min-h-[1.125rem] items-center gap-1.5 text-[13px] tabular-nums",
-                distanceLineIsGeoHint ? "font-semibold text-[#6B6A65]" : "font-bold text-teal-800",
-              )}
-            >
-              <MapPin size={14} className={cn("shrink-0", distanceLineIsGeoHint ? "text-neutral-500" : "text-teal-700")} aria-hidden />
-              <span className="min-w-0 truncate">{distancePrimary}</span>
-            </p>
-          </div>
-        </div>
-        <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-amber-100 bg-amber-50 px-2.5 py-1 text-[11px] font-bold text-amber-800">
-          <Star size={12} fill="currentColor" aria-hidden />
-          {teacher.rating}
-        </span>
-      </div>
-
-      <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-[#6B6A65]">
-        {formatLabels.slice(0, 3).map((label) => (
-          <span key={label} className="inline-flex items-center gap-1 rounded-full bg-[#F3FAF6] px-2.5 py-1 font-semibold text-[#2C2C2A]">
-            {label === t("bookingOnline") ? <Video size={12} aria-hidden /> : label === t("modeHome") ? <Home size={12} aria-hidden /> : <Users size={12} aria-hidden />}
-            {label}
-          </span>
-        ))}
-      </div>
-
-      <div className="mt-3 flex items-end justify-between gap-3 border-t border-[#E8E6DF] pt-2.5">
-        <div className="min-w-0">
-          <TeacherPriceTag
-            amount={Number(teacher.pricePerLesson)}
-            teacherCurrency={(teacher.currency as Currency | undefined) ?? null}
-            perHour
-            primaryClassName="text-base font-extrabold text-teal-700"
-          />
-          <p className="mt-1 text-[11px] font-medium text-[#6B6A65]">
-            {teacher.reviews > 0
-              ? t("teacherCardReviews").replace("{count}", String(teacher.reviews))
-              : t("teacherCardNoReviewsYet")}
-          </p>
-        </div>
-        <span className="inline-flex shrink-0 items-center gap-1 text-xs font-bold text-teal-700 transition-transform group-hover:translate-x-0.5">
-          {t("teacherCardViewProfile")}
-          <ChevronRight size={14} aria-hidden />
-        </span>
-      </div>
-
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        {teacher.introSessionEnabled ? (
-          <span className="inline-flex items-center gap-1 rounded-full border border-[#DCEAE3] bg-[#F3FAF6] px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-teal-800">
-            <Clock size={11} aria-hidden />
-            {t("introSessionBadge").replace("{n}", String(introDuration))}
-          </span>
-        ) : null}
-        {availability ? (
-          <span className="inline-flex items-center rounded-full bg-slate-50 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-slate-600">
-            {availability}
-          </span>
-        ) : null}
-        {String(teacher.profilePlan || "").toLowerCase() === "enterprise" ? (
-          <span className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-3 py-1 text-[10px] font-bold uppercase text-[#6B6A65]">
-            <ShieldCheck size={11} className="text-teal-700" aria-hidden /> {t("sortTrusted")}
-          </span>
-        ) : null}
-      </div>
-    </button>
   );
 }
 
