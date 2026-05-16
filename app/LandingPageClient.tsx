@@ -29,7 +29,7 @@ import { filterTeacherPool, buildTeacherSearchRows, sortRows } from "../lib/teac
 import { TeacherSearchAdvancedPanel, type AdvancedFilterValues } from "../components/TeacherSearchAdvancedPanel";
 import { logSearchEvent } from "../lib/searchAnalytics";
 import type { City } from "../lib/cities";
-import { MarketplaceMapPanel } from "../features/marketplace";
+import { applyMapBoundsFilter, MarketplaceMapPanel } from "../features/marketplace";
 
 const TeacherProfile = dynamic(
   () => import("../components/TeacherProfile").then((m) => m.TeacherProfile),
@@ -224,17 +224,7 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
     });
     let rows = buildTeacherSearchRows(pool, { geo });
 
-    if (mapBounds) {
-      rows = rows.filter(({ teacher: tt }) => {
-        const lat = tt.location?.lat;
-        const lng = tt.location?.lng;
-        if (typeof lat !== "number" || typeof lng !== "number") return false;
-        const { ne, sw } = mapBounds;
-        // Handle antimeridian wrapping for longitude
-        const lngInBounds = ne.lng < sw.lng ? lng >= sw.lng || lng <= ne.lng : lng >= sw.lng && lng <= ne.lng;
-        return lat >= sw.lat && lat <= ne.lat && lngInBounds;
-      });
-    }
+    rows = applyMapBoundsFilter(rows, mapBounds);
 
     const sorted = sortRows(rows, { sortMode: sortMode === "nearest" ? "nearest" : "relevance", studentPrefs: null });
     return sorted.map((r) => r.teacher);

@@ -24,7 +24,7 @@ import type { TeacherSearchFormat } from "../../../../lib/teacherSearchCriteria"
 import { logSearchEvent } from "../../../../lib/searchAnalytics";
 import { LandingSearchHero } from "@/components/marketing/LandingSearchHero";
 import type { LandingFormatFilter } from "@/lib/landingTeacherFilter";
-import { MarketplaceMapPanel, MarketplaceResultsGrid } from "@/features/marketplace";
+import { applyMapBoundsFilter, MarketplaceMapPanel, MarketplaceResultsGrid } from "@/features/marketplace";
 
 const TeacherProfile = dynamic(
   () => import("../../../../components/TeacherProfile").then((m) => m.TeacherProfile),
@@ -313,21 +313,7 @@ export default function StudentSearchPage() {
       filtered = applyRadiusFilter(base, geo ? radius : radius === "online" ? "online" : "all");
     }
 
-    // Apply map-bounds filter when the user has clicked "Search this area"
-    if (mapBounds) {
-      filtered = filtered.filter(({ teacher: tt }) => {
-        const lat = tt.location?.lat;
-        const lng = tt.location?.lng;
-        if (typeof lat !== "number" || typeof lng !== "number") return false;
-        const { ne, sw } = mapBounds;
-        // Handle antimeridian wrapping for longitude
-        const lngInBounds =
-          ne.lng < sw.lng
-            ? lng >= sw.lng || lng <= ne.lng
-            : lng >= sw.lng && lng <= ne.lng;
-        return lat >= sw.lat && lat <= ne.lat && lngInBounds;
-      });
-    }
+    filtered = applyMapBoundsFilter(filtered, mapBounds);
 
     // Unify sorting across search surfaces. Keep existing modes, but fold in student prefs.
     const rows = sortRows(filtered, { sortMode, studentPrefs });

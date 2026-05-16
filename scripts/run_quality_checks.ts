@@ -1,6 +1,15 @@
 import { spawnSync } from "node:child_process";
 
-const checks = ["repo:hygiene", "db:safety", "payment:safety", "test:payments", "validate:i18n", "typecheck", "build"];
+const checks = [
+  "repo:hygiene",
+  "db:safety",
+  "payment:safety",
+  "test:payments",
+  "test:marketplace",
+  "validate:i18n",
+  "typecheck",
+  "build",
+];
 
 for (const check of checks) {
   const result =
