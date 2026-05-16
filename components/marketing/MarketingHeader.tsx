@@ -10,7 +10,7 @@ import { withLocaleHref } from "@/lib/i18n/marketingPaths";
 /**
  * Canonical public marketing header — matches the homepage (`/fr`) nav:
  * logo, currency, language, Tarifs, Ressources, Devenir professeur, Se connecter.
- * Mobile: secondary row with main nav links (crawlable in HTML).
+ * Mobile/tablet: secondary row with main nav links (crawlable in HTML).
  */
 export function MarketingHeader() {
   const { t, locale } = useLocale();
@@ -36,29 +36,29 @@ export function MarketingHeader() {
           </span>
         </Link>
 
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
           <CurrencySwitcher variant="light" />
           <LocaleSwitcher variant="light" />
-          <Link href={tarifsHref} className={`${navLinkClass} hidden sm:inline-flex`}>
+          <Link href={tarifsHref} className={`${navLinkClass} hidden lg:inline-flex`}>
             {t("navPricing")}
           </Link>
-          <Link href={resourcesHref} className={`${navLinkClass} hidden sm:inline-flex`}>
+          <Link href={resourcesHref} className={`${navLinkClass} hidden lg:inline-flex`}>
             {t("navResources")}
           </Link>
           <Link
             href={becomeTeacherHref}
-            className="hidden sm:inline-flex items-center rounded-xl border border-teal-700 px-3 py-1.5 text-xs font-semibold text-teal-700 hover:bg-teal-700/8 transition-colors"
+            className="hidden items-center rounded-xl border border-teal-700 px-3 py-1.5 text-xs font-semibold text-teal-700 transition-colors hover:bg-teal-700/8 lg:inline-flex"
           >
             {t("becomeTeacher")}
           </Link>
-          <Link href="/login" prefetch={false} className="text-sm text-teal-700 font-medium hover:underline">
+          <Link href="/login" prefetch={false} className="shrink-0 text-sm font-medium text-teal-700 hover:underline">
             {t("signIn")}
           </Link>
         </div>
       </div>
 
       <nav
-        className="flex justify-center gap-4 border-t border-[#E8E6DF] px-4 py-2 sm:hidden"
+        className="flex justify-center gap-4 border-t border-[#E8E6DF] px-4 py-2 lg:hidden"
         aria-label={t("navResources")}
       >
         <Link href={tarifsHref} className={mobileNavLinkClass}>
