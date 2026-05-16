@@ -9,8 +9,8 @@ import { findDisciplineBySlug, DISCIPLINE_CITY_PAIRS } from "@/lib/seo/disciplin
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { haversineDistance } from "@/lib/geo";
 import { teacherRowToTeacher, type TeacherRow } from "@/lib/teacherMapper";
-import { LegalFooterLinks } from "@/components/LegalFooterLinks";
 import { CityLinksFooter } from "@/components/CityLinksFooter";
+import { MarketingPublicLayout } from "@/components/marketing/MarketingPublicLayout";
 import { FAQSchema } from "@/components/seo/FAQSchema";
 import { BreadcrumbSchema } from "@/components/seo/BreadcrumbSchema";
 import { MarketingResourceBlock } from "@/components/seo/MarketingResourceBlock";
@@ -261,25 +261,7 @@ export default async function DisciplineCityPage({
       />
       <FAQSchema items={faqs} />
 
-      <div className="min-h-[100dvh] flex flex-col bg-[#FAFCFB]">
-
-        {/* ── HEADER ─────────────────────────────────────────────────────── */}
-        <header className="sticky top-0 z-50 h-14 flex items-center justify-between bg-white border-b border-[#D3D1C7] px-4 sm:px-6">
-          <Link href={withLocale("/", locale)} className="text-lg font-black tracking-tight text-teal-700">
-            Pratiqo
-          </Link>
-          <div className="flex items-center gap-3">
-            <Link href="/login" className="text-sm font-medium text-teal-700 hover:underline">
-              Connexion
-            </Link>
-            <Link
-              href="/login"
-              className="rounded-xl bg-teal-700 px-4 py-2 text-sm font-bold text-white hover:brightness-105"
-            >
-              Créer un compte
-            </Link>
-          </div>
-        </header>
+      <MarketingPublicLayout className="bg-[#FAFCFB]">
 
         {/* ── BREADCRUMB ─────────────────────────────────────────────────── */}
         <nav aria-label="Fil d'Ariane" className="bg-white border-b border-[#E8E6DF] px-4 sm:px-6 py-2">
@@ -589,18 +571,7 @@ export default async function DisciplineCityPage({
         {/* ── CITY LINKS ─────────────────────────────────────────────────── */}
         <CityLinksFooter currentSlug={citySlug} />
 
-        {/* ── FOOTER ─────────────────────────────────────────────────────── */}
-        <footer className="bg-white border-t border-[#E8E6DF]">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6 py-5 flex flex-wrap items-center justify-center gap-4 text-xs text-[#6B6760]">
-            <LegalFooterLinks />
-            <span className="text-[#D3D1C7]">·</span>
-            <Link href={withLocale("/", locale)} className="font-semibold text-teal-700 hover:underline">Pratiqo</Link>
-            <span className="text-[#D3D1C7]">·</span>
-            <span>© 2026 Pratiqo inc.</span>
-          </div>
-        </footer>
-
-      </div>
+      </MarketingPublicLayout>
     </>
   );
 }

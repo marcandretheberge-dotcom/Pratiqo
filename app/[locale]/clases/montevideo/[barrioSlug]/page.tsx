@@ -11,6 +11,7 @@ import { buildJobTitle, getTeacherTerm } from "@/lib/constants/vocabulary";
 import type { Teacher } from "@/types";
 import { CityMapSection } from "@/components/CityMapSection";
 import { CityLinksFooter } from "@/components/CityLinksFooter";
+import { MarketingPublicLayout } from "@/components/marketing/MarketingPublicLayout";
 
 import { SITE_URL } from "@/lib/seo/site";
 import { buildAlternates } from "@/lib/seo/alternates";
@@ -243,25 +244,7 @@ export default async function BarrioPage({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd) }}
       />
 
-      <div className="min-h-[100dvh] flex flex-col bg-[#FAFCFB]">
-
-        {/* ── HEADER ────────────────────────────────────────────────────── */}
-        <header className="sticky top-0 z-50 h-14 flex items-center justify-between bg-white border-b border-[#D3D1C7] px-4 sm:px-6">
-          <Link href={withLocale("/", locale)} className="text-lg font-black tracking-tight text-teal-700">
-            Pratiqo
-          </Link>
-          <div className="flex items-center gap-3">
-            <Link href="/login" className="text-sm font-medium text-teal-700 hover:underline">
-              Ingresar
-            </Link>
-            <Link
-              href="/login"
-              className="rounded-xl bg-teal-700 px-4 py-2 text-sm font-bold text-white hover:brightness-105"
-            >
-              Crear cuenta
-            </Link>
-          </div>
-        </header>
+      <MarketingPublicLayout className="bg-[#FAFCFB]">
 
         {/* ── BREADCRUMB ────────────────────────────────────────────────── */}
         <nav
@@ -413,24 +396,7 @@ export default async function BarrioPage({
         {/* ── CITY LINKS FOOTER ─────────────────────────────────────────── */}
         <CityLinksFooter currentSlug={barrioSlug} />
 
-        {/* ── MAIN FOOTER ───────────────────────────────────────────────── */}
-        <footer className="bg-[#2C2C2A] text-white px-4 sm:px-6 py-8">
-          <div className="mx-auto max-w-5xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div>
-              <p className="font-black text-lg tracking-tight">Pratiqo</p>
-              <p className="text-xs text-white/60 mt-0.5">
-                La plataforma de clases particulares para Quebec, Canadá y Uruguay.
-              </p>
-            </div>
-            <div className="flex gap-4 text-xs text-white/60">
-              <Link href="/legal/cgu" className="hover:text-white hover:underline">Términos</Link>
-              <Link href="/legal/confidentialite" className="hover:text-white hover:underline">Privacidad</Link>
-              <Link href={withLocaleHref("/become-teacher", locale)} className="hover:text-white hover:underline">Soy profesor</Link>
-            </div>
-          </div>
-        </footer>
-
-      </div>
+      </MarketingPublicLayout>
     </>
   );
 }

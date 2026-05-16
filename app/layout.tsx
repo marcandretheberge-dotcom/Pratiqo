@@ -4,6 +4,7 @@ import "./globals.css";
 import { Providers } from "./providers";
 import { TeacherRecruitStrip } from "@/components/TeacherRecruitStrip";
 import { SITE_URL } from "@/lib/seo/site";
+import { ROUTING_DEFAULT_LOCALE, withLocale } from "@/lib/i18n/routing";
 
 const inter = localFont({
   src: "../public/fonts/inter.woff2",
@@ -36,20 +37,17 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Pratiqo — Trouve ton prof idéal",
     description: "La marketplace québécoise pour cours particuliers",
-    url: SITE_URL,
+    url: `${SITE_URL}${withLocale("/", ROUTING_DEFAULT_LOCALE)}`,
     siteName: "Pratiqo",
     locale: "fr_CA",
     type: "website",
     images: [{ url: "/og-image.png", width: 1200, height: 630 }],
   },
-  // Pre-migration: serve a single non-prefixed URL per route. We deliberately
-  // do NOT emit hreflang `languages` alternates here — Google's docs flag a
-  // languages map where every alternate resolves to the same URL as an
-  // anti-pattern. Step 1.3/1.4 of Phase 1 migrates routes to /{locale}/... at
-  // which point the per-page `buildAlternates({ routeKey })` helper
-  // (lib/seo/alternates.ts) emits the correct languages map.
+  // Root defaults point at the French-prefixed home (`/fr`) so global fallbacks
+  // match sitemap + marketing 301 strategy. Per-page `buildAlternates()` adds
+  // hreflang where routes are localized.
   alternates: {
-    canonical: SITE_URL,
+    canonical: `${SITE_URL}${withLocale("/", ROUTING_DEFAULT_LOCALE)}`,
   },
   icons: {
     icon: [

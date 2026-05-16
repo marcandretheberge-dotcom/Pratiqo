@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { CheckCircle2, DollarSign, Calendar, Globe, ArrowRight } from "lucide-react";
-import PratiqoLogo from "@/components/PratiqoLogo";
-import { LocaleSwitcher } from "@/components/LocaleSwitcher";
+import { MarketingHeader } from "@/components/marketing/MarketingHeader";
+import { MarketingFooter } from "@/components/marketing/MarketingFooter";
 import { useLocale } from "@/lib/locale-context";
 import { useAuth } from "@/components/AuthProvider";
 import type { Locale } from "@/lib/i18n/types";
@@ -167,30 +167,7 @@ export default function DevenirEnseignantContent() {
   return (
     <div className="min-h-[100dvh] bg-[#0f0f0f] text-white">
 
-      {/* ── HEADER ─────────────────────────────────────────────────────── */}
-      <header className="bg-[#2C2C2A] border-b border-white/10">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center">
-            <PratiqoLogo variant="full" size="sm" />
-          </Link>
-          <div className="flex items-center gap-4">
-            <Link
-              href={studentSearchHref}
-              prefetch={false}
-              className="hidden sm:block text-sm text-white/60 hover:text-white transition-colors"
-            >
-              {locale === "es" ? "Ver profesores" : locale === "en" ? "Browse teachers" : "Voir les profs"}
-            </Link>
-            <LocaleSwitcher variant="dark" compact />
-            <Link
-              href="/login?role=teacher"
-              className="rounded-xl border border-teal-500 px-4 py-2 text-sm font-semibold text-[#7FE0C3] hover:bg-teal-600/15 transition-colors"
-            >
-              {locale === "es" ? "Iniciar sesión" : locale === "en" ? "Sign in" : "Se connecter"}
-            </Link>
-          </div>
-        </div>
-      </header>
+      <MarketingHeader />
 
       {/* ── HERO ───────────────────────────────────────────────────────── */}
       <section className="bg-[#2C2C2A]">
@@ -430,6 +407,7 @@ export default function DevenirEnseignantContent() {
         </div>
       </section>
 
+      <MarketingFooter />
     </div>
   );
 }

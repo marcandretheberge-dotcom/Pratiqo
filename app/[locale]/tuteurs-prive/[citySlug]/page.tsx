@@ -7,10 +7,10 @@ import { QC_CITIES, findCityBySlug } from "@/lib/constants/cities";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { haversineDistance } from "@/lib/geo";
 import { teacherRowToTeacher, type TeacherRow } from "@/lib/teacherMapper";
-import { LegalFooterLinks } from "@/components/LegalFooterLinks";
 import type { Teacher } from "@/types";
 import { CityMapSection } from "@/components/CityMapSection";
 import { CityLinksFooter } from "@/components/CityLinksFooter";
+import { MarketingPublicLayout } from "@/components/marketing/MarketingPublicLayout";
 import { FAQSchema } from "@/components/seo/FAQSchema";
 import { BreadcrumbSchema } from "@/components/seo/BreadcrumbSchema";
 import { MarketingResourceBlock } from "@/components/seo/MarketingResourceBlock";
@@ -246,25 +246,7 @@ export default async function CityTutorsPage({
       />
       <FAQSchema items={cityFaq} />
 
-      <div className="min-h-[100dvh] flex flex-col bg-[#FAFCFB]">
-
-        {/* ── HEADER ────────────────────────────────────────────────────── */}
-        <header className="sticky top-0 z-50 h-14 flex items-center justify-between bg-white border-b border-[#D3D1C7] px-4 sm:px-6">
-          <Link href={withLocale("/", locale)} className="text-lg font-black tracking-tight text-teal-700">
-            Pratiqo
-          </Link>
-          <div className="flex items-center gap-3">
-            <Link href="/login" className="text-sm font-medium text-teal-700 hover:underline">
-              Connexion
-            </Link>
-            <Link
-              href="/login"
-              className="rounded-xl bg-teal-700 px-4 py-2 text-sm font-bold text-white hover:brightness-105"
-            >
-              Créer un compte
-            </Link>
-          </div>
-        </header>
+      <MarketingPublicLayout className="bg-[#FAFCFB]">
 
         {/* ── HERO ──────────────────────────────────────────────────────── */}
         <section className="bg-teal-700 text-white py-10 px-4 sm:px-6">
@@ -551,20 +533,7 @@ export default async function CityTutorsPage({
         {/* ── CITY LINKS (internal linking) ─────────────────────────────── */}
         <CityLinksFooter currentSlug={citySlug} />
 
-        {/* ── FOOTER ────────────────────────────────────────────────────── */}
-        <footer className="bg-white border-t border-[#E8E6DF]">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6 py-5 flex flex-wrap items-center justify-center gap-4 text-xs text-[#6B6760]">
-            <LegalFooterLinks />
-            <span className="text-[#D3D1C7]">·</span>
-            <Link href={withLocale("/", locale)} className="font-semibold text-teal-700 hover:underline">
-              Pratiqo
-            </Link>
-            <span className="text-[#D3D1C7]">·</span>
-            <span>© 2026 Pratiqo inc.</span>
-          </div>
-        </footer>
-
-      </div>
+      </MarketingPublicLayout>
     </>
   );
 }

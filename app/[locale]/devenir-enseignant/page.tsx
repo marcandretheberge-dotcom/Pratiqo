@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import DevenirEnseignantContent from "./DevenirEnseignantContent";
 
 import { SITE_URL } from "@/lib/seo/site";
+import { buildAlternates } from "@/lib/seo/alternates";
+import { ROUTING_DEFAULT_LOCALE, withLocale } from "@/lib/i18n/routing";
 
 const BASE_URL = SITE_URL;
 
@@ -37,7 +39,7 @@ export const metadata: Metadata = {
     description:
       "Fixez vos tarifs, gérez votre horaire, enseignez ce que vous aimez. " +
       "Pratiqo gère les paiements et la visibilité.",
-    url: `${BASE_URL}/devenir-enseignant`,
+    url: `${BASE_URL}${withLocale("/devenir-enseignant", ROUTING_DEFAULT_LOCALE)}`,
     siteName: "Pratiqo",
     images: [{ url: "/og-image.png", width: 1200, height: 630 }],
     type: "website",
@@ -49,9 +51,7 @@ export const metadata: Metadata = {
       "Enseignez musique, langues ou matières scolaires — tarifs et horaires à votre façon.",
     images: ["/og-image.png"],
   },
-  alternates: {
-    canonical: `${BASE_URL}/devenir-enseignant`,
-  },
+  ...buildAlternates({ routeKey: "become-teacher" }),
 };
 
 // ── JSON-LD: JobPosting ───────────────────────────────────────────────────────
@@ -114,7 +114,7 @@ const jobPostingJsonLd = {
   qualifications: "Passion pour l'enseignement. Expérience dans la discipline enseignée.",
   industry: "Education",
   directApply: true,
-  url: `${BASE_URL}/devenir-enseignant`,
+  url: `${BASE_URL}${withLocale("/devenir-enseignant", ROUTING_DEFAULT_LOCALE)}`,
 };
 
 // ── Page ──────────────────────────────────────────────────────────────────────

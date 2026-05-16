@@ -9,6 +9,7 @@ import type { BlogPost } from "./page";
 import { useState } from "react";
 import { getBlogLocaleBundle } from "@/lib/seo/blogLocaleOverrides";
 import { BlogPublicHeader } from "@/components/blog/BlogPublicHeader";
+import { MarketingFooter } from "@/components/marketing/MarketingFooter";
 import { postMatchesBlogCluster, type BlogIndexClusterId } from "@/lib/seo/internalLinks";
 
 const CLUSTER_ORDER: BlogIndexClusterId[] = ["all", "parents", "teachers", "music", "languages", "pricing"];
@@ -108,7 +109,7 @@ export default function BlogIndexContent({ posts }: { posts: BlogPost[] }) {
 
       {/* ── CATEGORY + AUDIENCE FILTERS ─────────────────────────────────── */}
       {posts.length > 0 ? (
-        <div className="sticky top-[5.75rem] z-30 border-b border-[#E8E6DF] bg-white md:top-14">
+        <div className="sticky top-[5.75rem] z-30 border-b border-[#E8E6DF] bg-white sm:top-14">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
             {categories.length > 1 ? (
               <div className="flex gap-2 overflow-x-auto py-3 scrollbar-none border-b border-[#F0EFE8]">
@@ -287,6 +288,8 @@ export default function BlogIndexContent({ posts }: { posts: BlogPost[] }) {
           </>
         )}
       </main>
+
+      <MarketingFooter />
     </div>
   );
 }

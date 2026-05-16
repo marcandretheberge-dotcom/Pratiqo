@@ -4,43 +4,54 @@ import { Shield, Star, Clock, ArrowRight } from "lucide-react";
 import { FAQSchema } from "@/components/seo/FAQSchema";
 import { BreadcrumbSchema } from "@/components/seo/BreadcrumbSchema";
 import { TrouverUnProfMotionHero } from "@/components/marketing/TrouverUnProfMotionHero";
+import { MarketingPublicLayout } from "@/components/marketing/MarketingPublicLayout";
 
 import { SITE_URL } from "@/lib/seo/site";
+import { buildAlternates } from "@/lib/seo/alternates";
+import { withLocale } from "@/lib/i18n/routing";
+import { normalizeLocale } from "@/lib/i18n/types";
+import { withLocaleHref } from "@/lib/i18n/marketingPaths";
 
 const BASE_URL = SITE_URL;
 
-export const metadata: Metadata = {
-  title: "Trouver un prof particulier au Québec | Pratiqo",
-  description:
-    "Trouvez un professeur particulier ou un tuteur vérifié au Québec en quelques minutes. Mathématiques, musique, langues, sciences — en ligne ou à domicile. Réservation simple sur Pratiqo.",
-  keywords: [
-    "trouver un prof particulier québec",
-    "tuteur privé québec",
-    "cours particuliers québec",
-    "professeur à domicile montréal",
-    "tuteur en ligne québec",
-  ],
-  openGraph: {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale: loc } = await params;
+  const locale = normalizeLocale(loc);
+  return {
     title: "Trouver un prof particulier au Québec | Pratiqo",
     description:
-      "Des centaines de professeurs vérifiés pour toutes les matières et tous les niveaux. Réservez votre premier cours en ligne.",
-    url: `${BASE_URL}/trouver-un-prof`,
-    siteName: "Pratiqo",
-    locale: "fr_CA",
-    type: "website",
-    images: [{ url: "/og-image.png", width: 1200, height: 630 }],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Trouver un prof particulier au Québec | Pratiqo",
-    description:
-      "Recherchez un tuteur vérifié près de chez vous ou en ligne — matières scolaires, musique, langues.",
-    images: ["/og-image.png"],
-  },
-  alternates: {
-    canonical: `${BASE_URL}/trouver-un-prof`,
-  },
-};
+      "Trouvez un professeur particulier ou un tuteur vérifié au Québec en quelques minutes. Mathématiques, musique, langues, sciences — en ligne ou à domicile. Réservation simple sur Pratiqo.",
+    keywords: [
+      "trouver un prof particulier québec",
+      "tuteur privé québec",
+      "cours particuliers québec",
+      "professeur à domicile montréal",
+      "tuteur en ligne québec",
+    ],
+    openGraph: {
+      title: "Trouver un prof particulier au Québec | Pratiqo",
+      description:
+        "Des centaines de professeurs vérifiés pour toutes les matières et tous les niveaux. Réservez votre premier cours en ligne.",
+      url: `${BASE_URL}${withLocale("/trouver-un-prof", locale)}`,
+      siteName: "Pratiqo",
+      locale: "fr_CA",
+      type: "website",
+      images: [{ url: "/og-image.png", width: 1200, height: 630 }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: "Trouver un prof particulier au Québec | Pratiqo",
+      description:
+        "Recherchez un tuteur vérifié près de chez vous ou en ligne — matières scolaires, musique, langues.",
+      images: ["/og-image.png"],
+    },
+    ...buildAlternates({ routeKey: "trouver-un-prof" }),
+  };
+}
 
 const FAQ_ITEMS = [
   {
@@ -85,38 +96,23 @@ const CITIES = [
   { label: "Gatineau", slug: "gatineau" },
 ];
 
-export default function TrouverUnProfPage() {
+export default async function TrouverUnProfPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale: loc } = await params;
+  const locale = normalizeLocale(loc);
+
   return (
     <>
       <BreadcrumbSchema
         items={[
-          { name: "Accueil", href: "/" },
-          { name: "Trouver un prof", href: "/trouver-un-prof" },
+          { name: "Accueil", href: withLocale("/", locale) },
+          { name: "Trouver un prof", href: withLocale("/trouver-un-prof", locale) },
         ]}
       />
       <FAQSchema items={FAQ_ITEMS} />
 
-      <div className="min-h-[100dvh] bg-[#FAFAF8]">
+      <MarketingPublicLayout className="bg-[#FAFAF8]">
 
-        {/* ── HEADER ─────────────────────────────────────────────────────── */}
-        <header className="sticky top-0 z-50 h-14 flex items-center justify-between bg-white border-b border-[#D3D1C7] px-4 sm:px-6">
-          <Link href="/" className="text-lg font-black tracking-tight text-teal-700">
-            Pratiqo
-          </Link>
-          <div className="flex items-center gap-3">
-            <Link href="/login" className="text-sm font-medium text-teal-700 hover:underline">
-              Connexion
-            </Link>
-            <Link
-              href="/login"
-              className="rounded-xl bg-teal-700 px-4 py-2 text-sm font-bold text-white hover:brightness-105"
-            >
-              S&apos;inscrire
-            </Link>
-          </div>
-        </header>
-
-        <TrouverUnProfMotionHero />
+        <TrouverUnProfMotionHero tarifsHref={withLocale("/tarifs", locale)} />
 
         {/* ── TRUST BAR ──────────────────────────────────────────────────── */}
         <section className="bg-white border-b border-[#E8E6DF] py-6 px-4 sm:px-6">
@@ -148,7 +144,7 @@ export default function TrouverUnProfPage() {
               {DISCIPLINES.map((d) => (
                 <Link
                   key={d.slug}
-                  href={`/cours/${d.slug}/montreal`}
+                  href={withLocaleHref(`/cours/${d.slug}/montreal`, locale)}
                   className="rounded-full border border-[#D3D1C7] bg-white px-4 py-2 text-sm font-medium text-[#2C2C2A] hover:border-teal-500 hover:text-teal-700 transition-colors"
                 >
                   {d.label}
@@ -171,7 +167,7 @@ export default function TrouverUnProfPage() {
               {CITIES.map((c) => (
                 <Link
                   key={c.slug}
-                  href={`/tuteurs-prive/${c.slug}`}
+                  href={withLocaleHref(`/tuteurs-prive/${c.slug}`, locale)}
                   className="rounded-full border border-[#D3D1C7] bg-white px-4 py-2 text-sm font-medium text-[#2C2C2A] hover:border-teal-500 hover:text-teal-700 transition-colors"
                 >
                   {c.label}
@@ -212,20 +208,7 @@ export default function TrouverUnProfPage() {
           </div>
         </section>
 
-        {/* ── FOOTER ─────────────────────────────────────────────────────── */}
-        <footer className="bg-white border-t border-[#E8E6DF]">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6 py-5 flex flex-wrap items-center justify-center gap-4 text-xs text-[#6B6760]">
-            <Link href="/cgu" className="hover:underline">CGU</Link>
-            <span className="text-[#D3D1C7]">·</span>
-            <Link href="/confidentialite" className="hover:underline">Confidentialité</Link>
-            <span className="text-[#D3D1C7]">·</span>
-            <Link href="/" className="font-semibold text-teal-700 hover:underline">Pratiqo</Link>
-            <span className="text-[#D3D1C7]">·</span>
-            <span>© 2026 Pratiqo inc.</span>
-          </div>
-        </footer>
-
-      </div>
+      </MarketingPublicLayout>
     </>
   );
 }

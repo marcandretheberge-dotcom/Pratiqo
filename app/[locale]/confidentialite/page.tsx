@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { MarketingPublicLayout } from "@/components/marketing/MarketingPublicLayout";
 
 export const metadata: Metadata = {
   title: "Politique de confidentialité | Pratiqo",
@@ -24,25 +25,11 @@ const TOC = [
 
 export default function ConfidentialitePage() {
   return (
-    <div
-      className="min-h-screen"
-      style={{ background: "linear-gradient(var(--p-page-bg), var(--p-page-bg)), #fff" }}
-    >
-      {/* Top bar */}
-      <div className="sticky top-0 z-10 bg-white/90 backdrop-blur border-b border-[var(--p-border-light)]">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 py-3 flex items-center gap-3">
-          <Link
-            href="/"
-            className="text-sm text-[var(--p-text-muted)] hover:text-teal-700 flex items-center gap-1.5 transition-colors"
-          >
-            ← Retour à l&apos;accueil
-          </Link>
-          <span className="text-[var(--p-border-light)]">·</span>
-          <span className="text-sm font-medium text-[var(--p-text)]">Confidentialité</span>
-        </div>
-      </div>
-
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 py-10 lg:flex lg:gap-12">
+    <MarketingPublicLayout className="min-h-screen bg-white">
+      <div
+        className="mx-auto max-w-6xl px-4 sm:px-6 py-10 lg:flex lg:gap-12"
+        style={{ background: "linear-gradient(var(--p-page-bg), var(--p-page-bg)), #fff" }}
+      >
         {/* Sidebar TOC — desktop */}
         <aside className="hidden lg:block w-60 flex-shrink-0">
           <nav
@@ -68,7 +55,7 @@ export default function ConfidentialitePage() {
         </aside>
 
         {/* Main content */}
-        <main className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0">
           {/* Avertissement préliminaire */}
           <div
             className="rounded-[14px] border border-amber-200 bg-amber-50 px-4 py-3 text-[13px] text-amber-950 mb-8"
@@ -399,8 +386,8 @@ export default function ConfidentialitePage() {
               </Link>
             </div>
           </footer>
-        </main>
+        </div>
       </div>
-    </div>
+    </MarketingPublicLayout>
   );
 }

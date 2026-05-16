@@ -3,7 +3,7 @@
 import { CalendarCheck, MapPin, ShieldCheck } from "lucide-react";
 import { ProductMotionHero } from "@/components/marketing/ProductMotionHero";
 
-export function TrouverUnProfMotionHero() {
+export function TrouverUnProfMotionHero({ tarifsHref = "/fr/tarifs" }: { tarifsHref?: string }) {
   return (
     <ProductMotionHero
       className="border-b border-[#E8E6DF]"
@@ -13,7 +13,7 @@ export function TrouverUnProfMotionHero() {
       primaryCta="Chercher un professeur"
       secondaryCta="Voir les tarifs"
       primaryHref="/login?next=/student/search"
-      secondaryHref="/tarifs"
+      secondaryHref={tarifsHref}
       featuredProfile={{
         eyebrow: "Profil recommande",
         name: "Maya R.",

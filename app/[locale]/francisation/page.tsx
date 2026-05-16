@@ -3,43 +3,54 @@ import Link from "next/link";
 import { Globe, Shield, MessageCircle, ArrowRight } from "lucide-react";
 import { FAQSchema } from "@/components/seo/FAQSchema";
 import { BreadcrumbSchema } from "@/components/seo/BreadcrumbSchema";
+import { MarketingPublicLayout } from "@/components/marketing/MarketingPublicLayout";
 
 import { SITE_URL } from "@/lib/seo/site";
+import { buildAlternates } from "@/lib/seo/alternates";
+import { withLocale } from "@/lib/i18n/routing";
+import { normalizeLocale } from "@/lib/i18n/types";
+import { withLocaleHref } from "@/lib/i18n/marketingPaths";
 
 const BASE_URL = SITE_URL;
 
-export const metadata: Metadata = {
-  title: "Cours de francisation au Québec — Trouver un professeur | Pratiqo",
-  description:
-    "Trouvez un professeur de francisation au Québec. Cours de français adaptés aux nouveaux arrivants — conversation, vie quotidienne, intégration. Professeurs vérifiés, cours en ligne ou en présentiel.",
-  keywords: [
-    "cours francisation québec",
-    "professeur français nouveaux arrivants",
-    "apprendre français québec",
-    "francisation montréal",
-    "cours français immigrants québec",
-  ],
-  openGraph: {
-    title: "Cours de francisation au Québec | Pratiqo",
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale: loc } = await params;
+  const locale = normalizeLocale(loc);
+  return {
+    title: "Cours de francisation au Québec — Trouver un professeur | Pratiqo",
     description:
-      "Des professeurs de français expérimentés pour les nouveaux arrivants au Québec. Conversation, intégration, vie quotidienne. Cours en ligne ou près de chez vous.",
-    url: `${BASE_URL}/francisation`,
-    siteName: "Pratiqo",
-    locale: "fr_CA",
-    type: "website",
-    images: [{ url: "/og-image.png", width: 1200, height: 630 }],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Cours de francisation au Québec | Pratiqo",
-    description:
-      "Professeurs de français pour nouveaux arrivants — conversation et intégration au Québec.",
-    images: ["/og-image.png"],
-  },
-  alternates: {
-    canonical: `${BASE_URL}/francisation`,
-  },
-};
+      "Trouvez un professeur de francisation au Québec. Cours de français adaptés aux nouveaux arrivants — conversation, vie quotidienne, intégration. Professeurs vérifiés, cours en ligne ou en présentiel.",
+    keywords: [
+      "cours francisation québec",
+      "professeur français nouveaux arrivants",
+      "apprendre français québec",
+      "francisation montréal",
+      "cours français immigrants québec",
+    ],
+    openGraph: {
+      title: "Cours de francisation au Québec | Pratiqo",
+      description:
+        "Des professeurs de français expérimentés pour les nouveaux arrivants au Québec. Conversation, intégration, vie quotidienne. Cours en ligne ou près de chez vous.",
+      url: `${BASE_URL}${withLocale("/francisation", locale)}`,
+      siteName: "Pratiqo",
+      locale: "fr_CA",
+      type: "website",
+      images: [{ url: "/og-image.png", width: 1200, height: 630 }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: "Cours de francisation au Québec | Pratiqo",
+      description:
+        "Professeurs de français pour nouveaux arrivants — conversation et intégration au Québec.",
+      images: ["/og-image.png"],
+    },
+    ...buildAlternates({ routeKey: "francisation" }),
+  };
+}
 
 const FAQ_ITEMS = [
   {
@@ -73,36 +84,21 @@ const CITIES_FRANCISATION = [
   { label: "Sherbrooke", slug: "sherbrooke" },
 ];
 
-export default function FrancisationPage() {
+export default async function FrancisationPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale: loc } = await params;
+  const locale = normalizeLocale(loc);
+
   return (
     <>
       <BreadcrumbSchema
         items={[
-          { name: "Accueil", href: "/" },
-          { name: "Francisation", href: "/francisation" },
+          { name: "Accueil", href: withLocale("/", locale) },
+          { name: "Francisation", href: withLocale("/francisation", locale) },
         ]}
       />
       <FAQSchema items={FAQ_ITEMS} />
 
-      <div className="min-h-[100dvh] bg-[#FAFAF8]">
-
-        {/* ── HEADER ─────────────────────────────────────────────────────── */}
-        <header className="sticky top-0 z-50 h-14 flex items-center justify-between bg-white border-b border-[#D3D1C7] px-4 sm:px-6">
-          <Link href="/" className="text-lg font-black tracking-tight text-teal-700">
-            Pratiqo
-          </Link>
-          <div className="flex items-center gap-3">
-            <Link href="/login" className="text-sm font-medium text-teal-700 hover:underline">
-              Connexion
-            </Link>
-            <Link
-              href="/login"
-              className="rounded-xl bg-teal-700 px-4 py-2 text-sm font-bold text-white hover:brightness-105"
-            >
-              S&apos;inscrire
-            </Link>
-          </div>
-        </header>
+      <MarketingPublicLayout className="bg-[#FAFAF8]">
 
         {/* ── HERO ───────────────────────────────────────────────────────── */}
         <section className="bg-teal-700 text-white py-16 sm:py-20 px-4 sm:px-6">
@@ -195,7 +191,7 @@ export default function FrancisationPage() {
               {CITIES_FRANCISATION.map((c) => (
                 <Link
                   key={c.slug}
-                  href={`/cours/francisation/${c.slug}`}
+                  href={withLocaleHref(`/cours/francisation/${c.slug}`, locale)}
                   className="rounded-full border border-[#D3D1C7] bg-white px-4 py-2 text-sm font-medium text-[#2C2C2A] hover:border-teal-500 hover:text-teal-700 transition-colors"
                 >
                   Francisation à {c.label}
@@ -240,20 +236,7 @@ export default function FrancisationPage() {
           </div>
         </section>
 
-        {/* ── FOOTER ─────────────────────────────────────────────────────── */}
-        <footer className="bg-white border-t border-[#E8E6DF]">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6 py-5 flex flex-wrap items-center justify-center gap-4 text-xs text-[#6B6760]">
-            <Link href="/cgu" className="hover:underline">CGU</Link>
-            <span className="text-[#D3D1C7]">·</span>
-            <Link href="/confidentialite" className="hover:underline">Confidentialité</Link>
-            <span className="text-[#D3D1C7]">·</span>
-            <Link href="/" className="font-semibold text-teal-700 hover:underline">Pratiqo</Link>
-            <span className="text-[#D3D1C7]">·</span>
-            <span>© 2026 Pratiqo inc.</span>
-          </div>
-        </footer>
-
-      </div>
+      </MarketingPublicLayout>
     </>
   );
 }

@@ -11,6 +11,7 @@ import {
 } from "@/lib/constants/vocabulary";
 import { usdToUyu } from "@/lib/geoLocale";
 import TeacherProfileClient from "./TeacherProfileClient";
+import { MarketingPublicLayout } from "@/components/marketing/MarketingPublicLayout";
 
 import { SITE_URL } from "@/lib/seo/site";
 import { isUuidString } from "@/lib/uuid";
@@ -213,7 +214,9 @@ export default async function TeacherProfilePage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <TeacherProfileClient id={id} />
+      <MarketingPublicLayout>
+        <TeacherProfileClient id={id} />
+      </MarketingPublicLayout>
     </>
   );
 }

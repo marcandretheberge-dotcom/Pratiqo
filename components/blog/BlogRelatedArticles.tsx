@@ -3,6 +3,7 @@ import { ArrowRight } from "lucide-react";
 import type { BlogPostMeta } from "@/lib/seo/types";
 import type { Locale } from "@/lib/i18n/types";
 import { getBlogLocaleBundle } from "@/lib/seo/blogLocaleOverrides";
+import { withLocale } from "@/lib/i18n/routing";
 
 function audienceLabel(locale: Locale, audience: BlogPostMeta["audience"][number]): string {
   const map: Record<string, Record<Locale, string>> = {
@@ -42,7 +43,7 @@ export function BlogRelatedArticles({
             return (
               <li key={p.slug}>
                 <Link
-                  href={`/blog/${p.slug}`}
+                  href={withLocale(`/blog/${p.slug}`, locale)}
                   className="group flex h-full flex-col rounded-3xl border border-[#E8E6DE] bg-white p-6 shadow-sm transition-all hover:border-[#C5E7DB] hover:shadow-md"
                 >
                   <span className="inline-flex w-fit rounded-full bg-[#EFF8F4] px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-[#0F6E56]">

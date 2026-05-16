@@ -121,7 +121,7 @@ async function fetchBlogEntries(): Promise<MetadataRoute.Sitemap> {
       localizedDynamicEntry(`/blog/${row.slug}`, {
         lastModified: row.updated_at ? new Date(row.updated_at) : new Date(),
         changeFrequency: "weekly",
-        priority: 0.8,
+        priority: 0.78,
       }),
     );
   } catch {

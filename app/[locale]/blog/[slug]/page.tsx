@@ -14,10 +14,11 @@ import { getDictionary } from "@/lib/i18n/server";
 import type { Locale } from "@/lib/i18n/types";
 import { normalizeLocale } from "@/lib/i18n/types";
 import { buildAlternates } from "@/lib/seo/alternates";
-import { withLocale } from "@/lib/i18n/routing";
+import { ROUTING_DEFAULT_LOCALE, withLocale } from "@/lib/i18n/routing";
 import { withLocaleHref } from "@/lib/i18n/marketingPaths";
 import type { BlogPostMeta } from "@/lib/seo/types";
 import { BlogPublicHeader } from "@/components/blog/BlogPublicHeader";
+import { MarketingFooter } from "@/components/marketing/MarketingFooter";
 import { BlogKeyTakeawaysBox } from "@/components/blog/BlogKeyTakeawaysBox";
 import { BlogFormatDecisionCards } from "@/components/blog/BlogFormatDecisionCards";
 import { BlogFaqAccordion } from "@/components/blog/BlogFaqAccordion";
@@ -119,7 +120,7 @@ export async function generateMetadata({
     return {
       title: "Article introuvable | Pratiqo Blog",
       robots: { index: false, follow: false },
-      alternates: { canonical: `${BASE_URL}${withLocale("/blog", locale)}` },
+      alternates: { canonical: `${BASE_URL}${withLocale("/blog", ROUTING_DEFAULT_LOCALE)}` },
     };
   }
   const bundle = getBlogLocaleBundle(slug, locale);
@@ -176,8 +177,11 @@ function buildArticleJsonLd(post: BlogPostFull, displayTitle: string, displayDes
       logo: { "@type": "ImageObject", url: `${BASE_URL}/logo-email.png` },
     },
     image: post.cover_image_url ?? `${BASE_URL}/og-image.png`,
-    url: `${BASE_URL}/blog/${post.slug}`,
-    mainEntityOfPage: { "@type": "WebPage", "@id": `${BASE_URL}/blog/${post.slug}` },
+    url: `${BASE_URL}${withLocale(`/blog/${post.slug}`, locale)}`,
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": `${BASE_URL}${withLocale(`/blog/${post.slug}`, locale)}`,
+    },
     articleSection: post.category,
     inLanguage: lang,
   };
@@ -357,6 +361,8 @@ export default async function BlogArticlePage({
             </Link>
           </div>
         </div>
+
+        <MarketingFooter />
       </div>
     </>
   );

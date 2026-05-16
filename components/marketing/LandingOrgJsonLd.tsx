@@ -1,12 +1,14 @@
 import { SITE_URL } from "@/lib/seo/site";
+import { ROUTING_DEFAULT_LOCALE, withLocale } from "@/lib/i18n/routing";
 
 /** LocalBusiness JSON-LD for landing SEO — server-only, no client JS. */
 export function LandingOrgJsonLd() {
+  const canonicalHome = `${SITE_URL}${withLocale("/", ROUTING_DEFAULT_LOCALE)}`;
   const orgJsonLd = {
     "@context": "https://schema.org",
     "@type": ["LocalBusiness", "EducationalOrganization"],
     name: "Pratiqo",
-    url: SITE_URL,
+    url: canonicalHome,
     logo: {
       "@type": "ImageObject",
       url: `${SITE_URL}/logo-email.png`,

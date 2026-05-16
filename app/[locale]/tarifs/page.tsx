@@ -14,8 +14,6 @@ import {
   Sparkles,
   Wallet,
 } from "lucide-react";
-import PratiqoLogo from "@/components/PratiqoLogo";
-import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 import { FAQSchema } from "@/components/seo/FAQSchema";
 import { useLocale } from "@/lib/locale-context";
 import { useAuth } from "@/components/AuthProvider";
@@ -158,69 +156,10 @@ export default function TarifsPage() {
   const whyChips = WHY_CHIPS.map((k) => t(k));
 
   return (
-    <div className="min-h-screen bg-[#FAFAF8] text-[#2C2C2C] antialiased">
+    <>
       <FAQSchema items={faqItems} />
 
-      <header className="sticky top-0 z-50 border-b border-[#E8E6DE] bg-[#FAFAF8]/95 backdrop-blur-md">
-        <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4 sm:px-6">
-          <Link href="/" className="flex items-center gap-2" aria-label={t("navHome")}>
-            <span className="md:hidden">
-              <PratiqoLogo variant="icon" size="md" priority={false} fetchPriority="low" loading="lazy" />
-            </span>
-            <span className="hidden md:block">
-              <PratiqoLogo variant="full" size="md" priority={false} fetchPriority="low" loading="lazy" />
-            </span>
-          </Link>
-
-          <nav className="hidden flex-wrap items-center justify-end gap-x-1 gap-y-2 md:flex" aria-label="Main">
-            <Link
-              href="/"
-              className="rounded-lg px-3 py-2 text-xs font-semibold text-[#6B6B6B] transition-colors hover:bg-black/[0.03] hover:text-[#2D7B72]"
-            >
-              {t("navHome")}
-            </Link>
-            <Link
-              href={applyHref}
-              className="rounded-lg px-3 py-2 text-xs font-semibold text-[#6B6B6B] transition-colors hover:bg-black/[0.03] hover:text-[#2D7B72]"
-            >
-              {t("becomeTeacher")}
-            </Link>
-            <span className="rounded-lg px-3 py-2 text-xs font-semibold text-[#2D7B72]" aria-current="page">
-              {t("navPricing")}
-            </span>
-            <LocaleSwitcher variant="light" compact />
-            <Link
-              href="/login"
-              className="ml-2 rounded-xl border border-[#409A8E]/35 px-3 py-1.5 text-xs font-semibold text-[#2D7B72] transition-colors hover:bg-[#50BEB2]/10"
-            >
-              {t("signIn")}
-            </Link>
-          </nav>
-
-          <div className="flex items-center gap-2 md:hidden">
-            <LocaleSwitcher variant="light" compact />
-            <Link href="/login" className="rounded-lg px-2 py-1.5 text-xs font-semibold text-[#2D7B72]">
-              {t("signIn")}
-            </Link>
-          </div>
-        </div>
-        <nav
-          className="flex justify-center gap-4 border-t border-[#E8E6DE] px-4 py-2.5 text-[11px] font-semibold md:hidden"
-          aria-label="Mobile main"
-        >
-          <Link href="/" className="text-[#6B6B6B]">
-            {t("navHome")}
-          </Link>
-          <Link href={applyHref} className="text-[#6B6B6B]">
-            {t("becomeTeacher")}
-          </Link>
-          <span className="text-[#2D7B72]" aria-current="page">
-            {t("navPricing")}
-          </span>
-        </nav>
-      </header>
-
-      <main className="mx-auto max-w-5xl px-4 pb-28 pt-12 sm:px-6 sm:pt-16">
+      <div className="mx-auto max-w-5xl px-4 pb-28 pt-12 sm:px-6 sm:pt-16">
         {/* Hero */}
         <section className="mx-auto max-w-3xl text-center">
           <h1 className="text-balance text-3xl font-bold tracking-tight text-[#2C2C2C] sm:text-4xl sm:leading-tight md:text-[2.35rem]">
@@ -625,7 +564,7 @@ export default function TarifsPage() {
             </Link>
           </div>
         </section>
-      </main>
-    </div>
+      </div>
+    </>
   );
 }

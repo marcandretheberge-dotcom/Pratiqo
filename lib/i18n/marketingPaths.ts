@@ -8,8 +8,8 @@
  */
 
 import { isLocale, type Locale } from "./types";
-import { ROUTING_DEFAULT_LOCALE, withLocale } from "./routing";
-import { findRoute } from "./routes";
+import { getLocaleFromPath, ROUTING_DEFAULT_LOCALE, stripLocale, withLocale } from "./routing";
+import { findRoute, PUBLIC_STATIC_ROUTES } from "./routes";
 
 /** French-only slug for the “become a teacher” landing (paired with `/become-teacher`). */
 export const DEVENIR_ENSEIGNANT_PATH = "/devenir-enseignant";
@@ -140,4 +140,53 @@ export function legacyMarketingRedirectPath(pathname: string, search: string): s
   }
 
   return `${withLocale(pathOnly, target)}${search}`;
+}
+
+/** Slug aliases for legacy English/Globish paths not present in `PUBLIC_STATIC_ROUTES`. */
+const EXTRA_LOCALIZED_SLUG_PREFIXES: { prefix: string; targetSegment: string }[] = [
+  { prefix: "/find-a-teacher", targetSegment: "/trouver-un-prof" },
+  { prefix: "/pricing", targetSegment: "/tarifs" },
+];
+
+/**
+ * When the URL is already prefixed with `/{locale}/…` but the path segment is
+ * a **different locale’s marketing slug** (e.g. `/fr/become-teacher`), return
+ * the proper 301 target. Returns `null` when no correction applies.
+ *
+ * Does not rewrite app-shell paths (`/student`, `/teacher/schedule`, …).
+ */
+export function localizedMarketingSlugRedirect(pathname: string, search: string): string | null {
+  const locale = getLocaleFromPath(pathname);
+  if (!locale) return null;
+
+  const stripped = stripLocale(pathname);
+  const qIdx = stripped.indexOf("?");
+  const pathOnly = (qIdx >= 0 ? stripped.slice(0, qIdx) : stripped) || "/";
+
+  for (const { prefix, targetSegment } of EXTRA_LOCALIZED_SLUG_PREFIXES) {
+    if (pathOnly === prefix || pathOnly.startsWith(`${prefix}/`)) {
+      const suffix = pathOnly.slice(prefix.length);
+      return `${withLocale(`${targetSegment}${suffix}`, locale)}${search}`;
+    }
+  }
+
+  for (const route of PUBLIC_STATIC_ROUTES) {
+    if (!route.localized) continue;
+
+    const expected = route.paths[locale];
+    if (pathOnly === expected || pathOnly.startsWith(`${expected}/`)) {
+      continue;
+    }
+
+    const variants = new Set(Object.values(route.paths));
+    for (const wrongPath of variants) {
+      if (wrongPath === expected) continue;
+      if (pathOnly === wrongPath || pathOnly.startsWith(`${wrongPath}/`)) {
+        const suffix = pathOnly.slice(wrongPath.length);
+        return `${withLocale(`${expected}${suffix}`, locale)}${search}`;
+      }
+    }
+  }
+
+  return null;
 }

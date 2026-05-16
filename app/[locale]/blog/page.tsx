@@ -3,44 +3,54 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import BlogIndexContent from "./BlogIndexContent";
 import { SITE_URL } from "@/lib/seo/site";
 import { buildAlternates } from "@/lib/seo/alternates";
+import { withLocale } from "@/lib/i18n/routing";
+import { normalizeLocale } from "@/lib/i18n/types";
 
 export const revalidate = 3600; // ISR — revalidate every hour
 
 const BASE_URL = SITE_URL;
 
-export const metadata: Metadata = {
-  title: "Blog Pratiqo — Conseils, guides et ressources pour apprendre mieux",
-  description:
-    "Découvrez nos articles sur l'apprentissage de la musique, des langues et des matières scolaires. " +
-    "Conseils de professeurs vérifiés, guides pratiques et ressources pour étudiants et parents.",
-  keywords: [
-    "blog tutorat québec",
-    "conseils apprentissage musique",
-    "guide cours particuliers",
-    "astuces révision examens",
-    "apprendre piano adulte",
-    "cours de français montréal",
-    "tutor blog canada",
-    "blog clases particulares uruguay",
-  ],
-  openGraph: {
-    title: "Blog Pratiqo — Apprendre mieux avec les meilleurs professeurs",
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale: loc } = await params;
+  const locale = normalizeLocale(loc);
+  return {
+    title: "Blog Pratiqo — Conseils, guides et ressources pour apprendre mieux",
     description:
-      "Guides, conseils et ressources pour progresser en musique, langues et matières scolaires.",
-    url: `${BASE_URL}/blog`,
-    siteName: "Pratiqo",
-    images: [{ url: "/og-image.png", width: 1200, height: 630 }],
-    type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Blog Pratiqo — Guides et ressources",
-    description:
-      "Articles pour progresser en musique, langues et matières scolaires avec des professeurs vérifiés.",
-    images: ["/og-image.png"],
-  },
-  ...buildAlternates({ routeKey: "blog" }),
-};
+      "Découvrez nos articles sur l'apprentissage de la musique, des langues et des matières scolaires. " +
+      "Conseils de professeurs vérifiés, guides pratiques et ressources pour étudiants et parents.",
+    keywords: [
+      "blog tutorat québec",
+      "conseils apprentissage musique",
+      "guide cours particuliers",
+      "astuces révision examens",
+      "apprendre piano adulte",
+      "cours de français montréal",
+      "tutor blog canada",
+      "blog clases particulares uruguay",
+    ],
+    openGraph: {
+      title: "Blog Pratiqo — Apprendre mieux avec les meilleurs professeurs",
+      description:
+        "Guides, conseils et ressources pour progresser en musique, langues et matières scolaires.",
+      url: `${BASE_URL}${withLocale("/blog", locale)}`,
+      siteName: "Pratiqo",
+      images: [{ url: "/og-image.png", width: 1200, height: 630 }],
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: "Blog Pratiqo — Guides et ressources",
+      description:
+        "Articles pour progresser en musique, langues et matières scolaires avec des professeurs vérifiés.",
+      images: ["/og-image.png"],
+    },
+    ...buildAlternates({ routeKey: "blog" }),
+  };
+}
 
 export type BlogPost = {
   id: string;

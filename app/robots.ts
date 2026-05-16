@@ -28,6 +28,8 @@ export default function robots(): MetadataRoute.Robots {
           "/teacher/settings",
           "/teacher/verification",
           // Student-side private pages
+          "/student",
+          "/student/",
           "/student/choose-companion",
           "/student/progress",
           // Internal / debug pages

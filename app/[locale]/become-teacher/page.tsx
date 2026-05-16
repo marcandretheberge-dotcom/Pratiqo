@@ -4,8 +4,8 @@ import React, { useMemo, useState } from "react";
 import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import PratiqoLogo from "@/components/PratiqoLogo";
-import { LocaleSwitcher } from "@/components/LocaleSwitcher";
+import { MarketingHeader } from "@/components/marketing/MarketingHeader";
+import { MarketingFooter } from "@/components/marketing/MarketingFooter";
 import { useLocale } from "@/lib/locale-context";
 import { useAuth } from "@/components/AuthProvider";
 
@@ -114,23 +114,7 @@ export default function BecomeTeacherPage() {
   return (
     <div className="min-h-[100dvh] bg-[#0f0f0f] text-white">
 
-      {/* ── HEADER ─────────────────────────────── */}
-      <header className="bg-[#2C2C2A] border-b border-white/10">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center">
-            <PratiqoLogo variant="full" size="sm" />
-          </Link>
-          <div className="flex items-center gap-4">
-            <LocaleSwitcher variant="dark" compact />
-            <Link
-              href="/login?role=teacher"
-              className="text-sm font-semibold text-white/85 hover:text-white underline underline-offset-4"
-            >
-              {t("signIn")}
-            </Link>
-          </div>
-        </div>
-      </header>
+      <MarketingHeader />
 
       {/* ── HERO ───────────────────────────────── */}
       <section className="bg-[#2C2C2A]">
@@ -573,6 +557,7 @@ export default function BecomeTeacherPage() {
         </div>
       </section>
 
+      <MarketingFooter />
     </div>
   );
 }

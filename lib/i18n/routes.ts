@@ -89,12 +89,12 @@ export const PUBLIC_STATIC_ROUTES: readonly PublicRoute[] = [
   },
   localizedSame("teacher-profile-hub", "/teacher/profile", { changeFrequency: "weekly", priority: 0.75 }),
   localizedSame("group-sessions", "/group-sessions", { changeFrequency: "daily", priority: 0.8 }),
-  localizedSame("tarifs", "/tarifs", { changeFrequency: "monthly", priority: 0.85 }),
+  localizedSame("tarifs", "/tarifs", { changeFrequency: "monthly", priority: 0.8 }),
   localizedSame("trouver-un-prof", "/trouver-un-prof", { changeFrequency: "monthly", priority: 0.95 }),
   localizedSame("francisation", "/francisation", { changeFrequency: "monthly", priority: 0.85 }),
-  localizedSame("cgu", "/cgu", { changeFrequency: "yearly", priority: 0.3 }),
-  localizedSame("confidentialite", "/confidentialite", { changeFrequency: "yearly", priority: 0.3 }),
-  localizedSame("annulation", "/annulation", { changeFrequency: "yearly", priority: 0.3 }),
+  localizedSame("cgu", "/cgu", { changeFrequency: "yearly", priority: 0.35 }),
+  localizedSame("confidentialite", "/confidentialite", { changeFrequency: "yearly", priority: 0.35 }),
+  localizedSame("annulation", "/annulation", { changeFrequency: "yearly", priority: 0.35 }),
   localizedSame("blog", "/blog", { changeFrequency: "daily", priority: 0.85 }),
 ];
 

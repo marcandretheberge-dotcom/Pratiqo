@@ -4,6 +4,7 @@ import { getLocaleFromPath, stripLocale } from "@/lib/i18n/routing";
 import {
   isUnprefixedMarketingPath,
   legacyMarketingRedirectPath,
+  localizedMarketingSlugRedirect,
 } from "@/lib/i18n/marketingPaths";
 
 /**
@@ -70,6 +71,11 @@ export function proxy(req: NextRequest) {
     const target = legacyMarketingRedirectPath(pathname, search);
     const dest = new URL(target, req.url);
     return NextResponse.redirect(dest, 301);
+  }
+
+  const wrongLocaleSlugTarget = localizedMarketingSlugRedirect(pathname, search);
+  if (wrongLocaleSlugTarget) {
+    return NextResponse.redirect(new URL(wrongLocaleSlugTarget, req.url), 301);
   }
 
   if (!isProtectedPath(pathForAuth)) {
