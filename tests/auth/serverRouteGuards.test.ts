@@ -7,10 +7,6 @@ const guardedLayouts = [
     expected: "requireAdminServer",
   },
   {
-    file: "app/(app)/supabase/layout.tsx",
-    expected: "requireAdminServer",
-  },
-  {
     file: "app/(app)/student/layout.tsx",
     expected: 'requireRoleServer("student"',
   },

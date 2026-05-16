@@ -47,7 +47,6 @@ function isProtectedPath(pathname: string): boolean {
     "/booking",
     "/upgrade",
     "/resolution",
-    "/supabase",
     "/student",
   ];
   for (const root of protectedRoots) {

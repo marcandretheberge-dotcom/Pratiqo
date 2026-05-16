@@ -28,7 +28,6 @@ const PROTECTED_ROUTES = [
   "/loyalty",
   "/loyalty/rapport",
   "/admin/operations",
-  "/supabase",
 ] as const;
 
 for (const route of PROTECTED_ROUTES) {
