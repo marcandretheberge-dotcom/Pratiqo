@@ -66,4 +66,18 @@ const authServer = readFileSync("lib/auth/server.ts", "utf8");
 assert.ok(authServer.includes("export async function requireAnyRoleServer"), "server auth must expose multi-role guard");
 assert.ok(authServer.includes("roles.includes(profile.role)"), "multi-role guard must enforce allowed roles");
 
+const proxySource = readFileSync("proxy.ts", "utf8");
+assert.ok(
+  proxySource.includes('const LEGACY_SUPABASE_DEMO_PATH = "/supabase"'),
+  "proxy must explicitly name the removed Supabase demo path",
+);
+assert.ok(
+  proxySource.includes("isBlockedLegacyDemoPath(pathname)"),
+  "proxy must block the removed Supabase demo path before locale/app routing",
+);
+assert.ok(
+  proxySource.includes("pathname.startsWith(`${LEGACY_SUPABASE_DEMO_PATH}/`)"),
+  "proxy must also block nested removed Supabase demo paths",
+);
+
 console.log("[auth:test] ok - protected app routes declare server-side guards");

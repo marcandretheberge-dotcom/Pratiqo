@@ -16,6 +16,7 @@ import {
  */
 
 const LOGIN_PATH = "/login";
+const LEGACY_SUPABASE_DEMO_PATH = "/supabase";
 
 /** Presence-only: do not verify JWT at the edge. */
 function hasSupabaseAuthCookie(req: NextRequest): boolean {
@@ -56,8 +57,16 @@ function isProtectedPath(pathname: string): boolean {
   return false;
 }
 
+function isBlockedLegacyDemoPath(pathname: string): boolean {
+  return pathname === LEGACY_SUPABASE_DEMO_PATH || pathname.startsWith(`${LEGACY_SUPABASE_DEMO_PATH}/`);
+}
+
 export function proxy(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
+
+  if (isBlockedLegacyDemoPath(pathname)) {
+    return new NextResponse(null, { status: 404 });
+  }
 
   if (pathname.startsWith(LOGIN_PATH)) {
     return NextResponse.next();
