@@ -76,8 +76,10 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://jwlbwmxoradmbuvqfkhe.supabase.co" />
       </head>
       <body className="min-h-full flex flex-col">
-        <Providers>{children}</Providers>
-        <TeacherRecruitStrip />
+        <Providers>
+          {children}
+          <TeacherRecruitStrip />
+        </Providers>
       </body>
     </html>
   );

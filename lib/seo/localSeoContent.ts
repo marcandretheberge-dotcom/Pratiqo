@@ -368,13 +368,14 @@ export function buildCourseCitySeoContent(input: {
   const tn = subject.teacherNoun;
 
   if (locale !== "fr") {
+    const disciplineLc = disciplineName.toLowerCase();
     const intro =
       locale === "en"
-        ? `Find ${subject.searchLabel} teachers near ${city.name}, QC. Compare real profiles and book on Pratiqo — identity-verified instructors, clear rates.`
-        : `Encuentra clases de ${labelLc} en ${city.name}, QC. Perfiles reales y reserva en Pratiqo.`;
+        ? `Find ${disciplineLc} teachers near ${city.name}, QC. Compare real profiles and book on Pratiqo — identity-verified instructors, clear rates.`
+        : `Encuentra profesores de ${disciplineLc} en ${city.name}, QC. Perfiles reales y reserva en Pratiqo.`;
     const body: string[] = [
       locale === "en"
-        ? `Whether you're looking for ${labelLc} lessons or a ${tn}, start with your goal (age, level, online vs in-person). Pratiqo shows real teachers — we never invent availability or headcounts.`
+        ? `Whether you're looking for ${labelLc} lessons or a ${disciplineLc} teacher, start with your goal (age, level, online vs in-person). Pratiqo shows real teachers — we never invent availability or headcounts.`
         : `Define tu objetivo (nivel, formato) y compara perfiles reales en Pratiqo.`,
       locale === "en"
         ? `For ${city.name} and nearby areas, many students mix winter-friendly online sessions with in-person meetings when it makes sense. Check each profile for teaching mode and pricing.`
