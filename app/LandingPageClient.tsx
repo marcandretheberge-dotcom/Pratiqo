@@ -16,6 +16,7 @@ import { LandingDiscoverySearch } from "../components/marketing/LandingDiscovery
 import { LandingHeroTrustStrip } from "../components/marketing/LandingHeroTrustStrip";
 import { LandingNeighborhoodSignals } from "../components/marketing/LandingNeighborhoodSignals";
 import { LandingTeacherListingCard } from "../components/marketing/LandingTeacherListingCard";
+import { guestBookLoginHref } from "@/lib/marketplaceGuestBook";
 import { LandingTeacherCardSkeleton } from "../components/marketing/LandingTeacherCardSkeleton";
 import { LandingResourcesSection } from "../components/marketing/LandingResourcesSection";
 import type { TranslationKey } from "../lib/translations";
@@ -477,7 +478,13 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
           onClose={() => setSelectedTeacherProfile(null)}
           onBook={(kind) => {
             if (!user) {
-              router.push(`/login?next=${encodeURIComponent("/student/search")}`);
+              router.push(
+                guestBookLoginHref({
+                  teacherId: selectedTeacherProfile.id,
+                  bookKind: kind,
+                  source: "landing",
+                }),
+              );
               return;
             }
             setBookingInitialKind(kind);

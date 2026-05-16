@@ -7,7 +7,7 @@ export function LandingTeacherCardSkeleton({ className }: { className?: string }
   return (
     <div
       className={cn(
-        "min-h-[280px] sm:min-h-[300px] animate-pulse rounded-3xl border border-[#E8E6DF] bg-white p-4 shadow-[0_10px_40px_rgba(44,44,42,0.06)] sm:p-[1.125rem]",
+        "min-h-[200px] animate-pulse rounded-3xl border border-[#E8E6DF] bg-white p-4 shadow-[0_10px_40px_rgba(44,44,42,0.06)] sm:min-h-[212px] sm:p-[1.125rem]",
         className,
       )}
       aria-hidden

@@ -25,6 +25,8 @@ import {
   useMarketplaceSearch,
   usePublicTeachers,
 } from "@/features/marketplace";
+import { consumeMarketplaceResumeIntent } from "@/lib/marketplaceResumeIntent";
+import { guestBookLoginHref } from "@/lib/marketplaceGuestBook";
 
 const BookingModal = dynamic(
   () => import("../../../../components/BookingModal").then((m) => m.BookingModal),
@@ -104,6 +106,25 @@ export default function StudentSearchPage() {
     const q = searchParams.get("q");
     if (q) queueMicrotask(() => setSearchQuery(q));
   }, [searchParams, setSearchQuery]);
+
+  useEffect(() => {
+    if (!user || loadingTeachers) return;
+    const intent = consumeMarketplaceResumeIntent();
+    if (!intent) return;
+
+    const teacher = teachers.find((row) => row.id === intent.teacherId);
+    if (!teacher) return;
+
+    queueMicrotask(() => {
+      if (intent.bookKind) {
+        setBookingInitialKind(intent.bookKind);
+        setBookingTeacher(teacher);
+        setSelectedTeacherProfile(null);
+        return;
+      }
+      setSelectedTeacherProfile(teacher);
+    });
+  }, [user, loadingTeachers, teachers]);
 
   useEffect(() => {
     const supabase = getSupabaseClient();
@@ -433,7 +454,13 @@ export default function StudentSearchPage() {
           onClose={() => setSelectedTeacherProfile(null)}
           onBook={(kind) => {
             if (!user) {
-              router.push(`/login?next=${encodeURIComponent("/student/search")}`);
+              router.push(
+                guestBookLoginHref({
+                  teacherId: selectedTeacherProfile.id,
+                  bookKind: kind,
+                  source: "search",
+                }),
+              );
               return;
             }
             setBookingInitialKind(kind);

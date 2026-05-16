@@ -11,7 +11,7 @@
     "payment:safety": "tsx scripts/check_payment_reliability.ts",
     "validate:i18n": "tsx scripts/validate_i18n.ts",
     "test:auth": "tsx tests/auth/serverRouteGuards.test.ts",
-    "test:marketplace": "tsx tests/marketplace/searchRows.test.ts",
+    "test:marketplace": "tsx tests/marketplace/searchRows.test.ts && tsx tests/components/TeacherListingCard.test.ts && tsx tests/lib/marketplaceResumeIntent.test.ts",
     "test:payments": "tsx tests/payments/bookingWebhook.test.ts",
     "typecheck": "tsc --noEmit --incremental false",
     "quality": "tsx scripts/run_quality_checks.ts",
