@@ -9,9 +9,6 @@ import { List, Map as MapIcon, MapPin, ShieldCheck } from "lucide-react";
 import { useLocale } from "../../../../lib/locale-context";
 import { cn } from "../../../../lib/utils";
 import { getSupabaseClient } from "../../../../lib/supabase";
-import { fetchTeacherDisciplinesMap, mergeTeachersWithDisciplines } from "../../../../lib/teacherDisciplines";
-import { teacherRowToTeacher, type TeacherRow } from "../../../../lib/teacherMapper";
-import { TEACHERS_LIST_SELECT, TEACHERS_PUBLIC_TABLE } from "../../../../lib/supabase/queries";
 import { isPratiqoVerified } from "../../../../lib/verification";
 import type { City } from "../../../../lib/cities";
 import type { MapBounds } from "../../../../components/SearchMapView";
@@ -24,7 +21,7 @@ import type { TeacherSearchFormat } from "../../../../lib/teacherSearchCriteria"
 import { logSearchEvent } from "../../../../lib/searchAnalytics";
 import { LandingSearchHero } from "@/components/marketing/LandingSearchHero";
 import type { LandingFormatFilter } from "@/lib/landingTeacherFilter";
-import { applyMapBoundsFilter, MarketplaceMapPanel, MarketplaceResultsGrid } from "@/features/marketplace";
+import { applyMapBoundsFilter, fetchPublicMarketplaceTeachers, MarketplaceMapPanel, MarketplaceResultsGrid } from "@/features/marketplace";
 
 const TeacherProfile = dynamic(
   () => import("../../../../components/TeacherProfile").then((m) => m.TeacherProfile),
@@ -136,36 +133,8 @@ export default function StudentSearchPage() {
   useEffect(() => {
     const supabase = getSupabaseClient();
     const load = async () => {
-      const { data, error } = await supabase
-        .from(TEACHERS_PUBLIC_TABLE)
-        .select(TEACHERS_LIST_SELECT)
-        .order("verification_level", { ascending: false })
-        .order("rating", { ascending: false });
-
-      if (error || !data?.length) {
-        if (process.env.NODE_ENV === "development") {
-          console.warn(
-            "[student/search] teachers_public unavailable or empty; skipping demo teachers (IDs must be UUIDs).",
-            error,
-          );
-        }
-        setTeachers([]);
-        setLoadingTeachers(false);
-        return;
-      }
-
-      // profilePlan is now mapped directly from teachers_public.public_plan_tier
-      // in teacherRowToTeacher — no secondary plan API call needed.
-      const mapped = data.map((r) => teacherRowToTeacher(r as TeacherRow));
-
-      let merged: Teacher[];
-      try {
-        const discMap = await fetchTeacherDisciplinesMap(supabase, mapped.map((x) => x.id));
-        merged = mergeTeachersWithDisciplines(mapped, discMap);
-      } catch {
-        merged = mapped;
-      }
-      setTeachers(merged);
+      const marketplaceTeachers = await fetchPublicMarketplaceTeachers(supabase, "student/search");
+      setTeachers(marketplaceTeachers);
       setLoadingTeachers(false);
     };
     void load();
