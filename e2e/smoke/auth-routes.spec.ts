@@ -10,6 +10,17 @@ import { expect, test } from "@playwright/test";
  */
 
 const PROTECTED_ROUTES = [
+  "/dashboard",
+  "/booking",
+  "/booking/success",
+  "/group-sessions/example-session-id/success",
+  "/messages",
+  "/onboarding",
+  "/onboarding/teacher",
+  "/resolution",
+  "/resolution/example-case-id",
+  "/upgrade",
+  "/upgrade/success",
   "/student/search",
   "/teacher/verification",
   "/teacher/my-profile",
@@ -17,6 +28,7 @@ const PROTECTED_ROUTES = [
   "/loyalty",
   "/loyalty/rapport",
   "/admin/operations",
+  "/supabase",
 ] as const;
 
 for (const route of PROTECTED_ROUTES) {

@@ -21,7 +21,7 @@ export type ServerAuthResult = {
  * Server-side auth helper for RSC layouts and Route Handlers.
  *
  * Uses @supabase/ssr createServerClient so the JWT is read from cookies and
- * cryptographically verified by Supabase — not just presence-checked.
+ * cryptographically verified by Supabase, not just presence-checked.
  *
  * Usage in a Server Component layout:
  *   const { user } = await getCurrentUserServer();
@@ -47,7 +47,7 @@ export async function getCurrentUserServer(): Promise<ServerAuthResult> {
         getAll() {
           return cookieStore.getAll();
         },
-        // Layouts are read-only — token refresh writes are intentionally no-ops.
+        // Layouts are read-only, so token refresh writes are intentionally no-ops.
         // Route handlers that need to refresh tokens should handle setAll themselves.
         setAll() {},
       },
@@ -116,6 +116,29 @@ export async function requireRoleServer(
   }
 
   if (profile.role !== role) {
+    redirect(homeForRole(profile.role));
+  }
+
+  return { ...auth, profile: profile as ServerProfile & { role: AppRole } };
+}
+
+export async function requireAnyRoleServer(
+  roles: readonly AppRole[],
+  nextPath = "/dashboard",
+): Promise<
+  ServerAuthResult & {
+    user: User;
+    profile: ServerProfile & { role: AppRole };
+  }
+> {
+  const auth = await requireCurrentUserServer(nextPath);
+  const profile = await getCurrentProfileServer(auth.supabase, auth.user.id);
+
+  if (!isAppRole(profile?.role)) {
+    redirect("/onboarding");
+  }
+
+  if (!roles.includes(profile.role)) {
     redirect(homeForRole(profile.role));
   }
 

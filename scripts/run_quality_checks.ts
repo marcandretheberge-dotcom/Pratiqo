@@ -5,6 +5,7 @@ const checks = [
   "db:safety",
   "payment:safety",
   "test:payments",
+  "test:auth",
   "test:marketplace",
   "validate:i18n",
   "typecheck",
