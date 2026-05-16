@@ -51,6 +51,63 @@ function entryFromRoute(route: PublicRoute, lastMod: Date): MetadataRoute.Sitema
   };
 }
 
+function sitemapPathFromUrl(url: string): string {
+  try {
+    return new URL(url).pathname;
+  } catch {
+    return url;
+  }
+}
+
+function stripLocaleForSitemap(pathname: string): string {
+  const localePrefix = pathname.match(/^\/(?:fr|en|es)(?=\/|$)/)?.[0];
+  if (!localePrefix) return pathname;
+  const stripped = pathname.slice(localePrefix.length);
+  return stripped || "/";
+}
+
+function isPrivateOrAppShellSitemapPath(pathname: string): boolean {
+  const path = stripLocaleForSitemap(pathname);
+
+  if (path === "/login" || path.startsWith("/login/")) return true;
+  if (path === "/teacher/profile") return true;
+
+  const privateRoots = [
+    "/admin",
+    "/dashboard",
+    "/student",
+    "/onboarding",
+    "/profile",
+    "/messages",
+    "/booking",
+    "/upgrade",
+    "/loyalty",
+    "/resolution",
+    "/supabase",
+  ];
+
+  if (privateRoots.some((root) => path === root || path.startsWith(`${root}/`))) {
+    return true;
+  }
+
+  const privateTeacherPaths = [
+    "/teacher/group-sessions",
+    "/teacher/history",
+    "/teacher/my-profile",
+    "/teacher/progress",
+    "/teacher/revenue",
+    "/teacher/schedule",
+    "/teacher/settings",
+    "/teacher/verification",
+  ];
+
+  return privateTeacherPaths.some((root) => path === root || path.startsWith(`${root}/`));
+}
+
+function publicSitemapOnly(entries: MetadataRoute.Sitemap): MetadataRoute.Sitemap {
+  return entries.filter((entry) => !isPrivateOrAppShellSitemapPath(sitemapPathFromUrl(entry.url)));
+}
+
 // ── Static public routes ──────────────────────────────────────────────────────
 //
 // Driven by the central registry (lib/i18n/routes.ts) so steps 1.3/1.4 can
@@ -163,12 +220,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     fetchBlogEntries(),
   ]);
 
-  return [
+  return publicSitemapOnly([
     ...buildStaticRoutes(now),
     ...blogEntries,
     ...CITY_ROUTES,
     ...DISCIPLINE_CITY_ROUTES,
     ...BARRIO_ROUTES,
     ...teacherEntries,
-  ];
+  ]);
 }

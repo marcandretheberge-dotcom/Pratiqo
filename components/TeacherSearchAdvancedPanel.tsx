@@ -26,6 +26,7 @@ export function TeacherSearchAdvancedPanel({
   t,
   showFormatRow,
   hideTrigger,
+  panelId = "advanced-search-filters",
 }: {
   open: boolean;
   onToggle: () => void;
@@ -34,11 +35,12 @@ export function TeacherSearchAdvancedPanel({
   t: T;
   showFormatRow?: boolean;
   hideTrigger?: boolean;
+  panelId?: string;
 }) {
   if (hideTrigger) {
     return open ? (
       <div className="mt-4 rounded-2xl border border-[#DCEAE3] bg-white shadow-[0_8px_28px_rgba(15,110,86,0.06)]">
-        <div id="advanced-search-filters" className="space-y-3 px-4 pb-4 pt-4">
+        <div id={panelId} className="space-y-3 px-4 pb-4 pt-4">
           {showFormatRow ? (
             <label className="block space-y-1">
               <span className="text-[11px] font-semibold text-[#6B6760]">{t("landingSearchFormatLabel")}</span>
@@ -144,14 +146,14 @@ export function TeacherSearchAdvancedPanel({
         type="button"
         onClick={onToggle}
         aria-expanded={open}
-        aria-controls="advanced-search-filters"
+        aria-controls={panelId}
         className="flex w-full items-center justify-between gap-2 px-4 py-3 text-left text-sm font-semibold text-[#2C2C2A]"
       >
         <span>{t("advancedFilters")}</span>
         <ChevronDown className={cn("h-4 w-4 shrink-0 text-[#6B6760] transition-transform", open && "rotate-180")} aria-hidden />
       </button>
       {open ? (
-        <div id="advanced-search-filters" className="space-y-3 border-t border-[#E8E6DF] px-4 pb-4 pt-3">
+        <div id={panelId} className="space-y-3 border-t border-[#E8E6DF] px-4 pb-4 pt-3">
           {showFormatRow ? (
             <label className="block space-y-1">
               <span className="text-[11px] font-semibold text-[#6B6760]">{t("landingSearchFormatLabel")}</span>

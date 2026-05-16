@@ -96,6 +96,8 @@ export const PUBLIC_STATIC_ROUTES: readonly PublicRoute[] = [
   localizedSame("confidentialite", "/confidentialite", { changeFrequency: "yearly", priority: 0.35 }),
   localizedSame("annulation", "/annulation", { changeFrequency: "yearly", priority: 0.35 }),
   localizedSame("blog", "/blog", { changeFrequency: "daily", priority: 0.85 }),
+  localizedSame("contact", "/contact", { changeFrequency: "yearly", priority: 0.5 }),
+  localizedSame("charte-de-confiance", "/charte-de-confiance", { changeFrequency: "yearly", priority: 0.45 }),
 ];
 
 /**

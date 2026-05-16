@@ -16,17 +16,13 @@ import { useAuth } from "../../../../components/AuthProvider";
 import type { StudentLocationPrefs } from "../../../../lib/studentLocationSearch";
 import { applyRadiusFilter, buildTeacherSearchRows, filterTeacherPool, sortRows } from "../../../../lib/teacherSearchEngine";
 import { fetchNearbyTeachers } from "../../../../lib/teacherNearby";
-import { TeacherSearchAdvancedPanel, type AdvancedFilterValues } from "../../../../components/TeacherSearchAdvancedPanel";
+import type { AdvancedFilterValues } from "../../../../components/TeacherSearchAdvancedPanel";
 import type { TeacherSearchFormat } from "../../../../lib/teacherSearchCriteria";
 import { logSearchEvent } from "../../../../lib/searchAnalytics";
 import { LandingSearchHero } from "@/components/marketing/LandingSearchHero";
 import type { LandingFormatFilter } from "@/lib/landingTeacherFilter";
-import { applyMapBoundsFilter, fetchPublicMarketplaceTeachers, MarketplaceMapPanel, MarketplaceResultsGrid } from "@/features/marketplace";
+import { applyMapBoundsFilter, fetchPublicMarketplaceTeachers, MarketplaceFiltersSheet, MarketplaceMapPanel, MarketplaceResultsGrid, TeacherProfileDrawer } from "@/features/marketplace";
 
-const TeacherProfile = dynamic(
-  () => import("../../../../components/TeacherProfile").then((m) => m.TeacherProfile),
-  { ssr: false, loading: () => <DynamicLoadingBlock /> },
-);
 const BookingModal = dynamic(
   () => import("../../../../components/BookingModal").then((m) => m.BookingModal),
   { ssr: false, loading: () => <DynamicLoadingBlock /> },
@@ -441,13 +437,11 @@ export default function StudentSearchPage() {
 
         <div className="bg-[#F3FAF6] px-4 pb-2 pt-2 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-[1280px]">
-            <TeacherSearchAdvancedPanel
+            <MarketplaceFiltersSheet
               open={advancedOpen}
-              onToggle={() => setAdvancedOpen((o) => !o)}
+              onClose={() => setAdvancedOpen(false)}
               values={adv}
               onChange={(patch) => setAdv((a) => ({ ...a, ...patch }))}
-              t={t}
-              hideTrigger
             />
           </div>
         </div>
@@ -510,7 +504,7 @@ export default function StudentSearchPage() {
       </div>
 
       {selectedTeacherProfile && (
-        <TeacherProfile
+        <TeacherProfileDrawer
           teacher={selectedTeacherProfile}
           onClose={() => setSelectedTeacherProfile(null)}
           onBook={(kind) => {

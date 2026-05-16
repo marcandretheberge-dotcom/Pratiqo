@@ -26,12 +26,8 @@ import { filterTeacherPool, buildTeacherSearchRows, sortRows } from "../lib/teac
 import { TeacherSearchAdvancedPanel, type AdvancedFilterValues } from "../components/TeacherSearchAdvancedPanel";
 import { logSearchEvent } from "../lib/searchAnalytics";
 import type { City } from "../lib/cities";
-import { applyMapBoundsFilter, fetchPublicMarketplaceTeachers, MarketplaceMapPanel } from "../features/marketplace";
+import { applyMapBoundsFilter, fetchPublicMarketplaceTeachers, MarketplaceMapPanel, TeacherProfileDrawer } from "../features/marketplace";
 
-const TeacherProfile = dynamic(
-  () => import("../components/TeacherProfile").then((m) => m.TeacherProfile),
-  { ssr: false, loading: () => <p className="p-4 text-center text-sm text-neutral-700">Chargement...</p> },
-);
 const BookingModal = dynamic(
   () => import("../components/BookingModal").then((m) => m.BookingModal),
   { ssr: false, loading: () => <p className="p-4 text-center text-sm text-neutral-700">Chargement...</p> },
@@ -531,7 +527,7 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
       <MarketplaceFinalCta />
 
       {selectedTeacherProfile ? (
-        <TeacherProfile
+        <TeacherProfileDrawer
           key={selectedTeacherProfile.id}
           teacher={selectedTeacherProfile}
           onClose={() => setSelectedTeacherProfile(null)}
