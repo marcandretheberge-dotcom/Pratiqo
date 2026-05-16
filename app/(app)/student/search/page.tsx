@@ -25,7 +25,11 @@ import {
   useMarketplaceSearch,
   usePublicTeachers,
 } from "@/features/marketplace";
-import { consumeMarketplaceResumeIntent } from "@/lib/marketplaceResumeIntent";
+import {
+  clearMarketplaceResumeIntent,
+  consumeMarketplaceResumeIntent,
+  planGuestBookResume,
+} from "@/lib/marketplaceResumeIntent";
 import { guestBookLoginHref } from "@/lib/marketplaceGuestBook";
 
 const BookingModal = dynamic(
@@ -108,12 +112,25 @@ export default function StudentSearchPage() {
   }, [searchParams, setSearchQuery]);
 
   useEffect(() => {
-    if (!user || loadingTeachers) return;
+    if (!user) return;
+
+    const plan = planGuestBookResume({
+      loadingTeachers,
+      teacherIds: teachers.map((row) => row.id),
+    });
+
+    if (plan.status === "noop" || plan.status === "wait") return;
+
+    if (plan.status === "discard") {
+      clearMarketplaceResumeIntent();
+      return;
+    }
+
+    const teacher = teachers.find((row) => row.id === plan.intent.teacherId);
+    if (!teacher) return;
+
     const intent = consumeMarketplaceResumeIntent();
     if (!intent) return;
-
-    const teacher = teachers.find((row) => row.id === intent.teacherId);
-    if (!teacher) return;
 
     queueMicrotask(() => {
       if (intent.bookKind) {
