@@ -11,9 +11,10 @@ async function trySendStudentWelcomeOnce(
   userId: string,
   email: string,
   displayName: string,
+  locale: ReturnType<typeof normalizeLocale>,
 ) {
   try {
-    await sendWelcomeStudent(email, displayName);
+    await sendWelcomeStudent(email, displayName, locale);
     const { error } = await admin
       .from("profiles")
       .update({ welcome_student_email_sent_at: new Date().toISOString() })
@@ -163,7 +164,7 @@ export async function GET(request: Request) {
           .maybeSingle();
         if (!welcomeRow?.welcome_student_email_sent_at) {
           const displayName = (user.user_metadata?.full_name as string) || user.email.split("@")[0] || "toi";
-          void trySendStudentWelcomeOnce(admin, user.id, user.email, displayName);
+          void trySendStudentWelcomeOnce(admin, user.id, user.email, displayName, preferredLocale);
         }
       }
 

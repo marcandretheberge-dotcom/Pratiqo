@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { disciplineLabelToTeacherCategory, getAllDisciplines, getDisciplineById } from "@/lib/disciplines";
 import { sendWelcomeTeacher, sendWelcomeStudent } from "@/lib/email";
+import { resolveEmailLocaleForUser } from "@/lib/email/locale";
 import { logError, logInfo, logWarn } from "@/lib/log";
 import { validateJsonBody } from "@/lib/validation/api";
 import { onboardingCompletePostSchema } from "@/lib/validation/schemas";
@@ -217,7 +218,9 @@ export async function POST(req: Request) {
 
       if (user.email) {
         logInfo("[onboarding/complete] Step 4 sending welcome teacher email", { hasEmail: true });
-        void sendWelcomeTeacher(user.email, name);
+        void resolveEmailLocaleForUser(admin, user.id).then((locale) =>
+          sendWelcomeTeacher(user.email!, name, locale),
+        );
       } else {
         logWarn("[onboarding/complete] No email on user — skipping welcome email");
       }
@@ -230,7 +233,8 @@ export async function POST(req: Request) {
           .maybeSingle();
         if (!welcomeRow?.welcome_student_email_sent_at) {
           try {
-            await sendWelcomeStudent(user.email, name);
+            const welcomeLocale = await resolveEmailLocaleForUser(admin, user.id);
+            await sendWelcomeStudent(user.email, name, welcomeLocale);
             const { error: wErr } = await admin
               .from("profiles")
               .update({ welcome_student_email_sent_at: new Date().toISOString() })

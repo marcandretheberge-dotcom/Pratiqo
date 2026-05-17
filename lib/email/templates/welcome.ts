@@ -1,14 +1,23 @@
 import { send } from "@/lib/email/transport";
 import { appBaseUrl, buildEmail, escapeHtml, tealBox } from "@/lib/email/layout";
+import { resolveEmailLocaleFromOptional, type EmailLocale } from "@/lib/email/locale";
 
 // ─── 1. Welcome Student ──────────────────────────────────────────────────────
 
-export async function sendWelcomeStudent(email: string, name: string) {
+export async function sendWelcomeStudent(email: string, name: string, locale?: EmailLocale) {
+  const resolved = resolveEmailLocaleFromOptional(locale);
   const base = appBaseUrl();
+  const subject =
+    resolved === "en"
+      ? `Welcome to Pratiqo, ${name} — your progress matters here 🌱`
+      : resolved === "es"
+        ? `Bienvenido a Pratiqo, ${name} — aquí tu progreso importa 🌱`
+        : `Bienvenue chez Pratiqo, ${name} — ici, ta progression compte vraiment 🌱`;
   await send({
     to: email,
-    subject: `Bienvenue chez Pratiqo, ${name} — ici, ta progression compte vraiment 🌱`,
+    subject,
     html: buildEmail({
+      locale: resolved,
       heroEmoji: "🌱",
       heroTitle: `Bienvenue chez Pratiqo, ${name}!`,
       heroSubtitle: "La plateforme de cours privés 100 % québécoise",
@@ -47,12 +56,20 @@ export async function sendWelcomeStudent(email: string, name: string) {
 
 // ─── 2. Welcome Teacher ──────────────────────────────────────────────────────
 
-export async function sendWelcomeTeacher(email: string, name: string) {
+export async function sendWelcomeTeacher(email: string, name: string, locale?: EmailLocale) {
+  const resolved = resolveEmailLocaleFromOptional(locale);
   const base = appBaseUrl();
+  const subject =
+    resolved === "en"
+      ? `Welcome, teacher — your expertise deserves fair value on Pratiqo 🎓`
+      : resolved === "es"
+        ? `Bienvenido, profe — tu experiencia merece un valor justo en Pratiqo 🎓`
+        : `Bienvenue Professeur — ici, ton expertise est valorisée à sa juste valeur 🎓`;
   await send({
     to: email,
-    subject: `Bienvenue Professeur — ici, ton expertise est valorisée à sa juste valeur 🎓`,
+    subject,
     html: buildEmail({
+      locale: resolved,
       heroEmoji: "🎓",
       heroTitle: `Bienvenue, ${name}!`,
       heroSubtitle: "Tu rejoins la plateforme qui redistribue ses profits aux profs.",

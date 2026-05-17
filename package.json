@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "payment:safety": "tsx scripts/check_payment_reliability.ts",
-    "test:payments": "tsx tests/bookings/autoComplete.test.ts && tsx tests/payments/paymentRiskWebhook.test.ts",
+    "test:payments": "tsx tests/bookings/autoComplete.test.ts && tsx tests/bookings/reminders.test.ts && tsx tests/email/locale.test.ts && tsx tests/payments/paymentRiskWebhook.test.ts",
     "lint": "eslint"
   },
   "dependencies": {

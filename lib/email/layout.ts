@@ -1,4 +1,7 @@
 import { SITE_URL } from "@/lib/seo/site";
+import type { EmailLocale } from "@/lib/email/locale";
+import { EMAIL_FOOTER_COPY } from "@/lib/email/messages/common";
+import { resolveEmailLocaleFromOptional } from "@/lib/email/locale";
 
 export function appBaseUrl(): string {
   return (
@@ -29,10 +32,13 @@ export interface TemplateOpts {
   ctaText?: string;
   ctaUrl?: string;
   footerExtra?: string;
+  locale?: EmailLocale;
 }
 
 export function buildEmail(opts: TemplateOpts): string {
   const base = appBaseUrl();
+  const locale = resolveEmailLocaleFromOptional(opts.locale);
+  const footer = EMAIL_FOOTER_COPY[locale];
   const cta = opts.ctaText && opts.ctaUrl
     ? `<div style="text-align:center;margin:32px 0 8px;">
         <a href="${opts.ctaUrl}"
@@ -45,7 +51,7 @@ export function buildEmail(opts: TemplateOpts): string {
     : "";
 
   return `<!DOCTYPE html>
-<html lang="fr">
+<html lang="${locale}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -120,14 +126,14 @@ export function buildEmail(opts: TemplateOpts): string {
               ? `<p style="margin:0 0 8px;">${opts.footerExtra}</p>`
               : ""}
             <p style="margin:0 0 4px;color:#6B6A65;">
-              Questions&nbsp;?
-              <a href="mailto:support@pratiqo.ca"
+              ${footer.questions}
+              <a href="mailto:${footer.supportPrompt}"
                  style="color:#409A8E;font-weight:600;text-decoration:none;">
-                support@pratiqo.ca
+                ${footer.supportPrompt}
               </a>
             </p>
             <p style="margin:8px 0 0;">
-              <span style="color:#409A8E;font-weight:600;">D&apos;ici, pour ici</span>
+              <span style="color:#409A8E;font-weight:600;">${footer.tagline}</span>
               &nbsp;·&nbsp;Pratiqo inc. © 2026
               &nbsp;·&nbsp;<a href="${base}" style="color:#409A8E;text-decoration:none;">pratiqo.ca</a>
             </p>

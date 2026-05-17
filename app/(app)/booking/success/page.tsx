@@ -18,6 +18,8 @@ import {
   sendBookingConfirmedStudent,
   sendBookingConfirmedTeacher,
 } from "@/lib/email";
+import { resolveEmailLocaleForUser } from "@/lib/email/locale";
+import { formatEmailTeachingLocation } from "@/lib/email/messages/booking";
 import { SuccessCleaner } from "./SuccessCleaner";
 import { getDictionary, getLocale } from "@/lib/i18n/server";
 import type { Dictionary, Locale } from "@/lib/i18n/types";
@@ -90,12 +92,6 @@ function buildGoogleCalendarUrl(booking: BookingDetails, locationLabel: string):
   url.searchParams.set("details", details);
   url.searchParams.set("location", locationLabel);
   return url.toString();
-}
-
-function emailLocationLabel(dict: Dictionary, teachingMode: string): string {
-  if (teachingMode === "online") return dict.bookingOnline;
-  if (teachingMode === "domicile") return dict.bookingHome;
-  return dict.bookingStudio;
 }
 
 function parseLocationKind(teaching_mode: unknown): BookingDetails["locationKind"] {
@@ -236,7 +232,15 @@ async function verifyAndConfirm(sessionId: string, locale: Locale): Promise<Veri
       const bookingPrice = Number((booking as { price?: number | string | null }).price ?? 0);
       const bookingDuration = Number((booking as { duration_minutes?: number | null }).duration_minutes ?? 60);
       const bookingMode = (booking as { teaching_mode?: string | null }).teaching_mode ?? "person";
-      const locationLabel = emailLocationLabel(dict, bookingMode);
+      const meetingUrl = (booking as { meeting_url?: string | null }).meeting_url ?? null;
+      const [studentLocale, teacherLocale] = await Promise.all([
+        resolveEmailLocaleForUser(admin, booking.student_id as string),
+        teacherData.data?.user_id
+          ? resolveEmailLocaleForUser(admin, teacherData.data.user_id as string)
+          : Promise.resolve(locale),
+      ]);
+      const studentLocationLabel = formatEmailTeachingLocation(studentLocale, bookingMode, meetingUrl);
+      const teacherLocationLabel = formatEmailTeachingLocation(teacherLocale, bookingMode, meetingUrl);
 
       const creditsApplied = Number(
         (booking as { credits_applied?: number | string | null }).credits_applied ?? 0,
@@ -253,7 +257,8 @@ async function verifyAndConfirm(sessionId: string, locale: Locale): Promise<Veri
           durationMinutes: bookingDuration,
           price: bookingPrice,
           creditsApplied,
-          location: locationLabel,
+          location: studentLocationLabel,
+          locale: studentLocale,
         }).catch((e) => console.error("[booking/success] student email failed", e));
       }
 
@@ -268,7 +273,8 @@ async function verifyAndConfirm(sessionId: string, locale: Locale): Promise<Veri
           durationMinutes: bookingDuration,
           price: bookingPrice,
           commissionRate,
-          location: locationLabel,
+          location: teacherLocationLabel,
+          locale: teacherLocale,
         }).catch((e) => console.error("[booking/success] teacher email failed", e));
       }
     }

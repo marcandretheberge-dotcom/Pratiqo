@@ -3,6 +3,7 @@ import Stripe from "stripe";
 import { stripe } from "@/lib/stripe";
 import { bookingEndAt, type BookingTimingInput } from "@/lib/bookingLifecycle";
 import { sendPostClassReviewRequest } from "@/lib/email";
+import { resolveEmailLocaleForUser } from "@/lib/email/locale";
 import { transferGroupForBooking } from "@/lib/payments/amounts";
 import {
   getBookingPaymentForTransfer,
@@ -290,13 +291,22 @@ export async function completeConfirmedBooking(
     const studentEmail = profileEmail || authEmail;
 
     if (studentEmail) {
-      await sendPostClassReviewRequest({
+      const studentLocale = await resolveEmailLocaleForUser(admin, booking.student_id);
+      const sent = await sendPostClassReviewRequest({
         email: studentEmail,
         studentName: typeof student?.name === "string" && student.name.trim() ? student.name.trim() : "élève",
         teacherName: typeof teacher.name === "string" && teacher.name.trim() ? teacher.name.trim() : "votre professeur",
         bookingId,
+        locale: studentLocale,
       });
-      reviewEmailSent = true;
+      if (sent) {
+        await admin
+          .from("bookings")
+          .update({ review_request_email_sent_at: completedAt })
+          .eq("id", bookingId)
+          .is("review_request_email_sent_at", null);
+        reviewEmailSent = true;
+      }
     }
   }
 

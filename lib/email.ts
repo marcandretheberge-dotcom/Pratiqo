@@ -1,6 +1,15 @@
 export { lessonLocationLabel } from "@/lib/email/location";
 
 export {
+  EMAIL_FALLBACK_LOCALE,
+  inferEmailLocaleFromRegion,
+  normalizeEmailLocale,
+  resolveEmailLocale,
+  resolveEmailLocaleForUser,
+  type EmailLocale,
+} from "@/lib/email/locale";
+
+export {
   sendWelcomeStudent,
   sendWelcomeTeacher,
   sendCompanionEvolution,

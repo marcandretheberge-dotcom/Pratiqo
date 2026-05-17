@@ -12,6 +12,8 @@ import {
   sendIdentityVerified,
   sendIdentityFailed,
 } from "@/lib/email";
+import { EMAIL_FALLBACK_LOCALE, resolveEmailLocaleForUser } from "@/lib/email/locale";
+import { formatEmailTeachingLocation } from "@/lib/email/messages/booking";
 import { syncTeacherConnectStatus } from "@/lib/payments/connect";
 import { getPlatformFeeRate } from "@/lib/payments/amounts";
 import {
@@ -322,10 +324,15 @@ async function confirmBookingAndNotify(
   const bookingPrice = Number((booking as { price?: number | string | null }).price ?? 0);
   const bookingDuration = Number((booking as { duration_minutes?: number | null }).duration_minutes ?? 60);
   const bookingMode = (booking as { teaching_mode?: string | null }).teaching_mode ?? "person";
-  const locationLabel =
-    bookingMode === "online" ? "En ligne" :
-    bookingMode === "domicile" ? "À domicile" :
-    "En studio";
+  const meetingUrl = (booking as { meeting_url?: string | null }).meeting_url ?? null;
+  const [studentLocale, teacherLocale] = await Promise.all([
+    resolveEmailLocaleForUser(admin, booking.student_id as string),
+    teacher?.user_id
+      ? resolveEmailLocaleForUser(admin, teacher.user_id as string)
+      : Promise.resolve(EMAIL_FALLBACK_LOCALE),
+  ]);
+  const studentLocationLabel = formatEmailTeachingLocation(studentLocale, bookingMode, meetingUrl);
+  const teacherLocationLabel = formatEmailTeachingLocation(teacherLocale, bookingMode, meetingUrl);
   const creditsAppliedForEmail = Math.max(
     Number((booking as { credits_applied?: number | string | null }).credits_applied ?? 0),
     Number(piMetadata?.credits_applied ?? 0),
@@ -343,7 +350,8 @@ async function confirmBookingAndNotify(
         durationMinutes: bookingDuration,
         price: bookingPrice,
         creditsApplied: creditsAppliedForEmail,
-        location: locationLabel,
+        location: studentLocationLabel,
+        locale: studentLocale,
       });
     } catch (e) {
       console.error("[stripe/webhook] student booking email failed", e);
@@ -362,7 +370,8 @@ async function confirmBookingAndNotify(
         durationMinutes: bookingDuration,
         price: bookingPrice,
         commissionRate,
-        location: locationLabel,
+        location: teacherLocationLabel,
+        locale: teacherLocale,
       });
     } catch (e) {
       console.error("[stripe/webhook] teacher booking email failed", e);

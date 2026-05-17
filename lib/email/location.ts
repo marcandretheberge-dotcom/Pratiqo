@@ -1,13 +1,12 @@
+import type { EmailLocale } from "@/lib/email/locale";
+import { EMAIL_FALLBACK_LOCALE } from "@/lib/email/locale";
+import { formatEmailTeachingLocation } from "@/lib/email/messages/booking";
+
+/** Localized lesson format label for emails (online / home / studio). */
 export function lessonLocationLabel(
   teachingMode?: string | null,
   meetingUrl?: string | null,
+  locale?: EmailLocale,
 ): string {
-  const mode = String(teachingMode ?? "").toLowerCase();
-  if (mode === "online") {
-    const url = typeof meetingUrl === "string" ? meetingUrl.trim() : "";
-    return url ? `En ligne — ${url}` : "En ligne";
-  }
-  if (mode === "domicile" || mode === "home") return "À domicile";
-  if (mode === "person" || mode === "in_person" || mode === "studio") return "En studio";
-  return mode ? mode : "À confirmer";
+  return formatEmailTeachingLocation(locale ?? EMAIL_FALLBACK_LOCALE, teachingMode, meetingUrl);
 }
