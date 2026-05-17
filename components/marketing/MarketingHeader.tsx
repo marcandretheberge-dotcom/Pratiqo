@@ -48,8 +48,8 @@ export function MarketingHeader() {
     "flex items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-teal-50 hover:text-teal-800";
 
   return (
-    <header className="sticky top-0 z-50 overflow-x-clip border-b border-[#D3D1C7] bg-white">
-      <div className="mx-auto flex h-14 max-w-[1440px] items-center justify-between gap-3 px-3 sm:px-6">
+    <header className="sticky top-0 z-50 w-full border-b border-[#D3D1C7] bg-white">
+      <div className="mx-auto flex h-14 min-w-0 max-w-[1440px] items-center justify-between gap-3 px-3 sm:px-6">
         <Link href={homeHref} className="flex shrink-0 items-center gap-2" aria-label={t("navHome")}>
           <span className="md:hidden">
             <PratiqoLogo variant="icon" size="md" priority={false} fetchPriority="low" loading="lazy" />

@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocale } from "@/lib/locale-context";
 import type { Currency } from "@/lib/geoLocale";
 import { cn } from "@/lib/utils";
+import { useAnchoredFixedMenu } from "@/lib/useAnchoredFixedMenu";
 import { Coins } from "lucide-react";
 
 /**
@@ -28,6 +29,8 @@ export function CurrencySwitcher({
 }) {
   const { currency, setCurrency } = useLocale();
   const [isOpen, setIsOpen] = useState(false);
+  const anchorRef = useRef<HTMLDivElement>(null);
+  const menuPosition = useAnchoredFixedMenu(isOpen, anchorRef);
   const light = variant === "light";
 
   useEffect(() => {
@@ -40,7 +43,7 @@ export function CurrencySwitcher({
   }, [isOpen]);
 
   return (
-    <div className="relative">
+    <div ref={anchorRef} className="relative shrink-0">
       <button
         type="button"
         aria-expanded={isOpen}
@@ -59,47 +62,50 @@ export function CurrencySwitcher({
         <span className="font-semibold tabular-nums">{currency}</span>
       </button>
 
+      {isOpen && menuPosition ? (
+        <div
+          data-header-selector-menu
+          role="listbox"
+          className={cn(
+            "fixed z-[120] w-44 rounded-lg border shadow-lg",
+            light ? "border-slate-200 bg-white" : "border-white/20 bg-slate-900",
+          )}
+          style={{ top: menuPosition.top, right: menuPosition.right }}
+        >
+          {PROMOTED.map((opt) => {
+            const active = currency === opt.code;
+            return (
+              <button
+                key={opt.code}
+                type="button"
+                role="option"
+                aria-selected={active}
+                onClick={() => {
+                  setCurrency(opt.code);
+                  setIsOpen(false);
+                }}
+                className={cn(
+                  "flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm transition-all first:rounded-t-lg last:rounded-b-lg",
+                  active
+                    ? light
+                      ? "bg-[#50BEB2]/15 text-[#2D7B72]"
+                      : "bg-white/15 text-white"
+                    : light
+                      ? "text-slate-700 hover:bg-slate-50"
+                      : "text-slate-300 hover:bg-white/10",
+                )}
+              >
+                <span className="text-base leading-none">{opt.flag}</span>
+                <span className="font-semibold">{opt.label}</span>
+                {active ? <span className="ml-auto h-1.5 w-1.5 rounded-full bg-[#409A8E]" /> : null}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+
       {isOpen ? (
-        <>
-          <div
-            className={cn(
-              "absolute right-0 mt-1 w-44 rounded-lg shadow-lg border z-50",
-              light ? "border-slate-200 bg-white" : "border-white/20 bg-slate-900",
-            )}
-            role="listbox"
-          >
-            {PROMOTED.map((opt) => {
-              const active = currency === opt.code;
-              return (
-                <button
-                  key={opt.code}
-                  type="button"
-                  role="option"
-                  aria-selected={active}
-                  onClick={() => {
-                    setCurrency(opt.code);
-                    setIsOpen(false);
-                  }}
-                  className={cn(
-                    "w-full text-left px-3 py-2.5 flex items-center gap-2.5 transition-all first:rounded-t-lg last:rounded-b-lg text-sm",
-                    active
-                      ? light
-                        ? "bg-[#50BEB2]/15 text-[#2D7B72]"
-                        : "bg-white/15 text-white"
-                      : light
-                        ? "text-slate-700 hover:bg-slate-50"
-                        : "text-slate-300 hover:bg-white/10",
-                  )}
-                >
-                  <span className="text-base leading-none">{opt.flag}</span>
-                  <span className="font-semibold">{opt.label}</span>
-                  {active ? <span className="ml-auto h-1.5 w-1.5 rounded-full bg-[#409A8E]" /> : null}
-                </button>
-              );
-            })}
-          </div>
-          <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
-        </>
+        <div className="fixed inset-0 z-[110]" aria-hidden onClick={() => setIsOpen(false)} />
       ) : null}
     </div>
   );

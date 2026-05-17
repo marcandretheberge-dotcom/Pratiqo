@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocale } from "../lib/locale-context";
 import type { Locale } from "../lib/i18n/types";
 import { cn } from "../lib/utils";
+import { useAnchoredFixedMenu } from "../lib/useAnchoredFixedMenu";
 import { Globe } from "lucide-react";
 
 const OPTIONS: { locale: Locale; flag: string; label: string; code: string }[] = [
@@ -23,6 +24,8 @@ export function LocaleSwitcher({
 }) {
   const { locale, setLocale } = useLocale();
   const [isOpen, setIsOpen] = useState(false);
+  const anchorRef = useRef<HTMLDivElement>(null);
+  const menuPosition = useAnchoredFixedMenu(isOpen, anchorRef);
   const light = variant === "light";
   const current = OPTIONS.find((o) => o.locale === locale);
   const showCode = !compact;
@@ -37,8 +40,7 @@ export function LocaleSwitcher({
   }, [isOpen]);
 
   return (
-    <div className="relative">
-      {/* Button */}
+    <div ref={anchorRef} className="relative shrink-0">
       <button
         type="button"
         aria-expanded={isOpen}
@@ -57,25 +59,28 @@ export function LocaleSwitcher({
         {showCode ? <span className="font-semibold tabular-nums">{current?.code}</span> : null}
       </button>
 
-      {/* Dropdown Menu */}
-      {isOpen && (
+      {isOpen && menuPosition ? (
         <div
+          data-header-selector-menu
+          role="listbox"
           className={cn(
-            "absolute right-0 mt-1 w-48 rounded-lg shadow-lg border z-50",
-            light
-              ? "border-slate-200 bg-white"
-              : "border-white/20 bg-slate-900",
+            "fixed z-[120] w-48 rounded-lg border shadow-lg",
+            light ? "border-slate-200 bg-white" : "border-white/20 bg-slate-900",
           )}
+          style={{ top: menuPosition.top, right: menuPosition.right }}
         >
           {OPTIONS.map((option) => (
             <button
               key={option.locale}
+              type="button"
+              role="option"
+              aria-selected={locale === option.locale}
               onClick={() => {
                 setLocale(option.locale);
                 setIsOpen(false);
               }}
               className={cn(
-                "w-full text-left px-4 py-3 flex items-center gap-3 transition-all first:rounded-t-lg last:rounded-b-lg",
+                "flex w-full items-center gap-3 px-4 py-3 text-left transition-all first:rounded-t-lg last:rounded-b-lg",
                 locale === option.locale
                   ? light
                     ? "bg-[#50BEB2]/15 text-[#2D7B72]"
@@ -87,24 +92,18 @@ export function LocaleSwitcher({
             >
               <span className="text-xl">{option.flag}</span>
               <div className="flex-1">
-                <p className="font-medium text-sm">{option.label}</p>
+                <p className="text-sm font-medium">{option.label}</p>
                 <p className="text-xs opacity-60">{option.code}</p>
               </div>
-              {locale === option.locale && (
-                <div className="h-2 w-2 rounded-full bg-[#409A8E]" />
-              )}
+              {locale === option.locale ? <div className="h-2 w-2 rounded-full bg-[#409A8E]" /> : null}
             </button>
           ))}
         </div>
-      )}
+      ) : null}
 
-      {/* Close dropdown when clicking outside */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 z-40"
-          onClick={() => setIsOpen(false)}
-        />
-      )}
+      {isOpen ? (
+        <div className="fixed inset-0 z-[110]" aria-hidden onClick={() => setIsOpen(false)} />
+      ) : null}
     </div>
   );
 }
