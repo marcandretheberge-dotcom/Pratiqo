@@ -19,6 +19,10 @@ import {
   retrievePaymentIntentChargeId,
   upsertPaidBookingPayment,
 } from "@/lib/payments/ledger";
+import {
+  handleStripeChargeDisputeCreated,
+  handleStripeTransferFailed,
+} from "@/lib/payments/webhookRiskEvents";
 
 export const runtime = "nodejs";
 
@@ -621,6 +625,23 @@ export async function POST(req: Request) {
 
     if (event.type === "account.updated") {
       await handleConnectAccountUpdated(event.data.object as Stripe.Account);
+    }
+
+    const eventType = event.type as string;
+    if (eventType === "transfer.failed") {
+      await handleStripeTransferFailed(
+        getSupabaseAdmin(),
+        event.data.object as Stripe.Transfer,
+        event.id,
+      );
+    }
+
+    if (eventType === "charge.dispute.created") {
+      await handleStripeChargeDisputeCreated(
+        getSupabaseAdmin(),
+        event.data.object as Stripe.Dispute,
+        event.id,
+      );
     }
 
     // ── Stripe Identity ────────────────────────────────────────────────────

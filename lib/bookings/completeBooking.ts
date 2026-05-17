@@ -88,6 +88,7 @@ export function bookingEligibleForAutoComplete(
 export function paymentBlocksAutoComplete(payment: BookingPaymentRowForTransfer | null): boolean {
   if (!payment) return false;
   const status = String(payment.payment_status ?? "").toLowerCase();
+  if (status === "disputed") return true;
   if (status !== "paid") return true;
   const transferStatus = String(payment.transfer_status ?? "").toLowerCase();
   return transferStatus === "reversed";

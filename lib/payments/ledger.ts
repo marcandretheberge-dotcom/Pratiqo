@@ -38,6 +38,11 @@ export type BookingPaymentRowForTransfer = {
   transfer_status: string;
 };
 
+export type BookingPaymentRiskRow = BookingPaymentRowForTransfer & {
+  teacher_id: string;
+  student_id: string;
+};
+
 function safeCents(value: number): number {
   return Math.max(0, Math.round(Number.isFinite(value) ? value : 0));
 }
@@ -216,6 +221,50 @@ export async function markBookingPaymentTransferFailed(
 
   if (error) {
     throw new Error(`Failed to mark booking transfer failed: ${error.message}`);
+  }
+}
+
+export async function markBookingPaymentDisputed(
+  admin: SupabaseClient,
+  bookingId: string,
+  params: { disputeId: string; reason?: string },
+): Promise<void> {
+  const now = new Date().toISOString();
+  const { data: existing, error: readErr } = await admin
+    .from("booking_payments")
+    .select("metadata, payment_status")
+    .eq("booking_id", bookingId)
+    .maybeSingle();
+
+  if (readErr) {
+    throw new Error(`Failed to read booking payment for dispute: ${readErr.message}`);
+  }
+
+  if (String(existing?.payment_status ?? "") === "disputed") {
+    return;
+  }
+
+  const priorMeta =
+    existing?.metadata && typeof existing.metadata === "object" && !Array.isArray(existing.metadata)
+      ? (existing.metadata as Record<string, unknown>)
+      : {};
+
+  const { error } = await admin
+    .from("booking_payments")
+    .update({
+      payment_status: "disputed",
+      failure_reason: (params.reason ?? `Stripe dispute ${params.disputeId}`).slice(0, 500),
+      metadata: {
+        ...priorMeta,
+        stripe_dispute_id: params.disputeId,
+        stripe_dispute_recorded_at: now,
+      },
+      updated_at: now,
+    })
+    .eq("booking_id", bookingId);
+
+  if (error) {
+    throw new Error(`Failed to mark booking payment disputed: ${error.message}`);
   }
 }
 
