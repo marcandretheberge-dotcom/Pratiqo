@@ -16,7 +16,8 @@ const lessonCheckout = read("app/api/stripe/checkout/route.ts");
 const stripeWebhook = read("app/api/stripe/webhook/route.ts");
 const stripeWebhookBookings = read("lib/stripeWebhook/bookings.ts");
 const stripeLessonWebhookSurface = `${stripeWebhook}\n${stripeWebhookBookings}`;
-const completeBooking = read("app/api/bookings/[id]/complete/route.ts");
+const completeBooking = read("lib/bookings/completeBooking.ts");
+const autoCompleteCron = read("app/api/cron/bookings/complete/route.ts");
 
 if (lessonCheckout.includes("transfer_data")) {
   fail("Lesson checkout must not use destination charges / transfer_data.");
@@ -52,6 +53,14 @@ if (!completeBooking.includes("idempotencyKey: `booking_transfer_${bookingId}`")
 
 if (!completeBooking.includes("stripe_transfer_id")) {
   fail("Completion route should return/store the real Stripe transfer id.");
+}
+
+if (!autoCompleteCron.includes("verifyCronSecret")) {
+  fail("Auto-complete cron route must verify CRON_SECRET.");
+}
+
+if (!autoCompleteCron.includes("processAutoCompleteBookings")) {
+  fail("Auto-complete cron route must call processAutoCompleteBookings.");
 }
 
 console.log("[payment-reliability] OK");
