@@ -19,6 +19,7 @@ import {
   sendBookingConfirmedTeacher,
 } from "@/lib/email";
 import { resolveEmailLocaleForUser } from "@/lib/email/locale";
+import { formatEmailLessonScheduleLabels } from "@/lib/email/formatSchedule";
 import { formatEmailTeachingLocation } from "@/lib/email/messages/booking";
 import { SuccessCleaner } from "./SuccessCleaner";
 import { getDictionary, getLocale } from "@/lib/i18n/server";
@@ -221,14 +222,12 @@ async function verifyAndConfirm(sessionId: string, locale: Locale): Promise<Veri
         commissionRate = getPlatformFeeRate(plan, "individual");
       }
 
-      const bookingDate =
-        (booking.date as string | null) ??
-        (booking as { slot_date?: string | null }).slot_date ??
-        "—";
-      const bookingTime =
-        (booking.time as string | null) ??
-        (booking as { time_slot?: string | null }).time_slot ??
-        "—";
+      const bookingTiming = {
+        slot_date: (booking as { slot_date?: string | null }).slot_date,
+        date: booking.date as string | null,
+        time_slot: (booking as { time_slot?: string | null }).time_slot,
+        time: booking.time as string | null,
+      };
       const bookingPrice = Number((booking as { price?: number | string | null }).price ?? 0);
       const bookingDuration = Number((booking as { duration_minutes?: number | null }).duration_minutes ?? 60);
       const bookingMode = (booking as { teaching_mode?: string | null }).teaching_mode ?? "person";
@@ -241,6 +240,8 @@ async function verifyAndConfirm(sessionId: string, locale: Locale): Promise<Veri
       ]);
       const studentLocationLabel = formatEmailTeachingLocation(studentLocale, bookingMode, meetingUrl);
       const teacherLocationLabel = formatEmailTeachingLocation(teacherLocale, bookingMode, meetingUrl);
+      const studentSchedule = formatEmailLessonScheduleLabels(bookingTiming, studentLocale);
+      const teacherSchedule = formatEmailLessonScheduleLabels(bookingTiming, teacherLocale);
 
       const creditsApplied = Number(
         (booking as { credits_applied?: number | string | null }).credits_applied ?? 0,
@@ -252,8 +253,8 @@ async function verifyAndConfirm(sessionId: string, locale: Locale): Promise<Veri
           name: studentName,
           teacherName,
           discipline: teacherDiscipline,
-          date: bookingDate,
-          time: bookingTime,
+          date: studentSchedule.dateLabel,
+          time: studentSchedule.timeLabel,
           durationMinutes: bookingDuration,
           price: bookingPrice,
           creditsApplied,
@@ -268,8 +269,8 @@ async function verifyAndConfirm(sessionId: string, locale: Locale): Promise<Veri
           name: teacherName,
           studentName,
           discipline: teacherDiscipline,
-          date: bookingDate,
-          time: bookingTime,
+          date: teacherSchedule.dateLabel,
+          time: teacherSchedule.timeLabel,
           durationMinutes: bookingDuration,
           price: bookingPrice,
           commissionRate,

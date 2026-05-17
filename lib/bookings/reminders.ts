@@ -7,6 +7,7 @@ import {
   sendLessonReminderTeacher,
   sendPostClassReviewRequest,
 } from "@/lib/email";
+import { formatEmailLessonScheduleLabels } from "@/lib/email/formatSchedule";
 import { resolveEmailLocaleForUser, type EmailLocale } from "@/lib/email/locale";
 import { getDictionary } from "@/lib/i18n/server";
 
@@ -47,40 +48,6 @@ export type ReminderSentColumn =
   | "reminder_24h_sent_at"
   | "reminder_1h_sent_at"
   | "review_request_email_sent_at";
-
-export function formatLessonDateLabel(slotDate: string): string {
-  const [y, m, d] = slotDate.split("-").map(Number);
-  if (!y || !m || !d) return slotDate;
-  const date = new Date(y, m - 1, d);
-  if (Number.isNaN(date.getTime())) return slotDate;
-  return new Intl.DateTimeFormat("fr-CA", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  }).format(date);
-}
-
-export function formatLessonTimeLabel(booking: BookingTimingInput): string {
-  const raw = String(booking.time_slot || booking.time || "").trim();
-  if (!raw) return "—";
-  const compact = /^(\d{1,2}):(\d{2})/.exec(raw);
-  if (!compact) return raw;
-  const hh = Number(compact[1]);
-  const mm = compact[2];
-  return `${String(hh).padStart(2, "0")}:${mm}`;
-}
-
-export function lessonScheduleLabels(booking: BookingTimingInput): {
-  dateLabel: string;
-  timeLabel: string;
-} {
-  const slotDate = String(booking.slot_date || booking.date || "").trim();
-  return {
-    dateLabel: slotDate ? formatLessonDateLabel(slotDate) : "Date à confirmer",
-    timeLabel: formatLessonTimeLabel(booking),
-  };
-}
 
 export function bookingStartsInWindow(
   booking: BookingTimingInput,
@@ -273,12 +240,13 @@ async function sendReminderPair(
     return { ok: false, skipped: "already_sent" };
   }
 
-  const { dateLabel, timeLabel } = lessonScheduleLabels(booking);
   const teacherName =
     typeof teacher.name === "string" && teacher.name.trim() ? teacher.name.trim() : "Professeur";
 
   const student = await resolveStudentEmail(admin, booking.student_id);
   const teacherContact = await resolveTeacherEmail(admin, teacher.user_id);
+  const studentSchedule = formatEmailLessonScheduleLabels(booking, student.locale);
+  const teacherSchedule = formatEmailLessonScheduleLabels(booking, teacherContact.locale);
   const studentLocation = lessonLocationLabel(
     booking.teaching_mode,
     booking.meeting_url,
@@ -308,8 +276,8 @@ async function sendReminderPair(
         studentName: student.name,
         teacherName,
         discipline: studentDiscipline,
-        dateLabel,
-        timeLabel,
+        dateLabel: studentSchedule.dateLabel,
+        timeLabel: studentSchedule.timeLabel,
         location: studentLocation,
         window,
         locale: student.locale,
@@ -322,8 +290,8 @@ async function sendReminderPair(
         teacherName,
         studentName: student.name,
         discipline: teacherDiscipline,
-        dateLabel,
-        timeLabel,
+        dateLabel: teacherSchedule.dateLabel,
+        timeLabel: teacherSchedule.timeLabel,
         location: teacherLocation,
         window,
         locale: teacherContact.locale,

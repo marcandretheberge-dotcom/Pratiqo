@@ -13,6 +13,7 @@ import {
   sendIdentityFailed,
 } from "@/lib/email";
 import { EMAIL_FALLBACK_LOCALE, resolveEmailLocaleForUser } from "@/lib/email/locale";
+import { formatEmailLessonScheduleLabels } from "@/lib/email/formatSchedule";
 import { formatEmailTeachingLocation } from "@/lib/email/messages/booking";
 import { syncTeacherConnectStatus } from "@/lib/payments/connect";
 import { getPlatformFeeRate } from "@/lib/payments/amounts";
@@ -319,8 +320,12 @@ async function confirmBookingAndNotify(
   }
 
   // Booking confirmation emails
-  const bookingDate = (booking.date as string | null) ?? (booking as { slot_date?: string | null }).slot_date ?? "—";
-  const bookingTime = (booking.time as string | null) ?? (booking as { time_slot?: string | null }).time_slot ?? "—";
+  const bookingTiming = {
+    slot_date: (booking as { slot_date?: string | null }).slot_date,
+    date: booking.date as string | null,
+    time_slot: (booking as { time_slot?: string | null }).time_slot,
+    time: booking.time as string | null,
+  };
   const bookingPrice = Number((booking as { price?: number | string | null }).price ?? 0);
   const bookingDuration = Number((booking as { duration_minutes?: number | null }).duration_minutes ?? 60);
   const bookingMode = (booking as { teaching_mode?: string | null }).teaching_mode ?? "person";
@@ -333,6 +338,8 @@ async function confirmBookingAndNotify(
   ]);
   const studentLocationLabel = formatEmailTeachingLocation(studentLocale, bookingMode, meetingUrl);
   const teacherLocationLabel = formatEmailTeachingLocation(teacherLocale, bookingMode, meetingUrl);
+  const studentSchedule = formatEmailLessonScheduleLabels(bookingTiming, studentLocale);
+  const teacherSchedule = formatEmailLessonScheduleLabels(bookingTiming, teacherLocale);
   const creditsAppliedForEmail = Math.max(
     Number((booking as { credits_applied?: number | string | null }).credits_applied ?? 0),
     Number(piMetadata?.credits_applied ?? 0),
@@ -345,8 +352,8 @@ async function confirmBookingAndNotify(
         name: studentName,
         teacherName,
         discipline: teacherDiscipline,
-        date: bookingDate,
-        time: bookingTime,
+        date: studentSchedule.dateLabel,
+        time: studentSchedule.timeLabel,
         durationMinutes: bookingDuration,
         price: bookingPrice,
         creditsApplied: creditsAppliedForEmail,
@@ -365,8 +372,8 @@ async function confirmBookingAndNotify(
         name: teacherName,
         studentName,
         discipline: teacherDiscipline,
-        date: bookingDate,
-        time: bookingTime,
+        date: teacherSchedule.dateLabel,
+        time: teacherSchedule.timeLabel,
         durationMinutes: bookingDuration,
         price: bookingPrice,
         commissionRate,

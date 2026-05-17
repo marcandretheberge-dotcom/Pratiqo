@@ -10,6 +10,12 @@ export {
 } from "@/lib/email/locale";
 
 export {
+  formatEmailLessonDateLabel,
+  formatEmailLessonScheduleLabels,
+  formatEmailLessonTimeLabel,
+} from "@/lib/email/formatSchedule";
+
+export {
   sendWelcomeStudent,
   sendWelcomeTeacher,
   sendCompanionEvolution,
