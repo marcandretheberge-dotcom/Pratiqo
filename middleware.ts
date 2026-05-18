@@ -8,6 +8,10 @@ function hasSupabaseAuthCookie(req: NextRequest): boolean {
   return req.cookies.getAll().some((c) => c.name.startsWith("sb-") && c.name.includes("auth-token"));
 }
 
+export function isBlockedSupabaseDemoPath(pathname: string): boolean {
+  return pathname === "/supabase" || pathname.startsWith("/supabase/");
+}
+
 /**
  * Protected app surface only. Everything else stays public (marketing, SEO, public teacher/group pages).
  */
@@ -31,7 +35,6 @@ function isProtectedPath(pathname: string): boolean {
     "/booking",
     "/upgrade",
     "/resolution",
-    "/supabase",
     "/student",
   ];
   for (const root of protectedRoots) {
@@ -43,6 +46,10 @@ function isProtectedPath(pathname: string): boolean {
 
 export function middleware(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
+
+  if (isBlockedSupabaseDemoPath(pathname)) {
+    return new NextResponse(null, { status: 404 });
+  }
 
   if (pathname.startsWith(LOGIN_PATH)) {
     return NextResponse.next();
