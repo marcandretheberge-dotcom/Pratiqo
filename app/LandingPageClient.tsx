@@ -12,7 +12,7 @@ import { isEnabled } from "../lib/features";
 import { getSupabaseClient } from "../lib/supabase";
 import { fetchTeacherDisciplinesMap, mergeTeachersWithDisciplines } from "../lib/teacherDisciplines";
 import { teacherRowToTeacher, type TeacherRow } from "../lib/teacherMapper";
-import { TEACHERS_LIST_SELECT, TEACHERS_PUBLIC_TABLE } from "../lib/supabase/queries";
+import { TEACHERS_LIST_SELECT, TEACHERS_LIST_SELECT_LEGACY_PUBLIC, TEACHERS_PUBLIC_TABLE } from "../lib/supabase/queries";
 import { useLocale } from "../lib/locale-context";
 import { useAuth } from "../components/AuthProvider";
 import type { BookingInitialLessonKind } from "../components/BookingModal";
@@ -31,11 +31,11 @@ import type { City } from "../lib/cities";
 
 const TeacherProfile = dynamic(
   () => import("../components/TeacherProfile").then((m) => m.TeacherProfile),
-  { ssr: false, loading: () => <p className="p-4 text-center text-sm text-neutral-700">Chargement…</p> },
+  { ssr: false, loading: () => <InlineLoading /> },
 );
 const BookingModal = dynamic(
   () => import("../components/BookingModal").then((m) => m.BookingModal),
-  { ssr: false, loading: () => <p className="p-4 text-center text-sm text-neutral-700">Chargement…</p> },
+  { ssr: false, loading: () => <InlineLoading /> },
 );
 
 const SearchMapView = dynamic(
@@ -45,7 +45,7 @@ const SearchMapView = dynamic(
     loading: () => (
       <div className="flex flex-col items-center justify-center gap-2 h-[480px] rounded-2xl bg-[#F1EFE8] text-sm text-neutral-700">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-teal-700 border-t-transparent" />
-        <p>Chargement…</p>
+        <MapLoadingLabel />
       </div>
     ),
   },
@@ -78,11 +78,45 @@ const TeacherQuiz = dynamic(
 
 type HeroMode = "student" | "teacher";
 
+function InlineLoading() {
+  const { t } = useLocale();
+  return <p className="p-4 text-center text-sm text-neutral-700">{t("loading")}</p>;
+}
+
+function MapLoadingLabel() {
+  const { t } = useLocale();
+  return <p>{t("loadingMap")}</p>;
+}
+
+function LandingHeroClientCopy() {
+  const { t } = useLocale();
+  return (
+    <div suppressHydrationWarning>
+      <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-teal-800">{t("landingEyebrowLocal")}</p>
+      <p className="mt-3 text-[15px] font-semibold text-teal-700 lg:hidden">{t("landingMobileNearYou")}</p>
+      <p className="mt-1 text-sm leading-snug text-neutral-700 lg:hidden">{t("landingMobileCornerHint")}</p>
+      <h1 className="mt-4 text-2xl font-bold tracking-tight text-[#1a1f1d] sm:text-3xl lg:mt-2 lg:text-[2.15rem] lg:leading-[1.12]">
+        {t("landingNeighborhoodHeadline")}
+      </h1>
+      <p className="mx-auto mt-3 hidden max-w-2xl text-[15px] leading-relaxed text-neutral-700 sm:text-base lg:block">
+        {t("teacherGridCornerLesson")}
+      </p>
+    </div>
+  );
+}
+
+function isMissingStripeIdentityStatus(error: unknown) {
+  if (!error || typeof error !== "object") return false;
+  const message = "message" in error ? String(error.message ?? "") : "";
+  return /stripe_identity_status/i.test(message);
+}
+
 /** Interactive landing body only: server-rendered hero copy is passed as `children` from app/page.tsx (RSC slot, not a heroHeading prop). */
 export function LandingPageClient({ children }: { children: ReactNode }) {
   const router = useRouter();
   const { user } = useAuth();
   const { t, formatPrice } = useLocale();
+  const [clientHeroReady, setClientHeroReady] = useState(false);
   const [mode, setMode] = useState<HeroMode>("student");
   const [quizOpen, setQuizOpen] = useState(false);
 
@@ -137,6 +171,11 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
 
   const teacherResultsRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    const timer = window.setTimeout(() => setClientHeroReady(true), 0);
+    return () => window.clearTimeout(timer);
+  }, []);
+
   // Load teachers
   useEffect(() => {
     const supabase = getSupabaseClient();
@@ -153,7 +192,19 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
           setTeachers(list.map((t) => ({ ...t, profilePlan: "free" })));
         }
       };
-      const { data, error } = await supabase.from(TEACHERS_PUBLIC_TABLE).select(TEACHERS_LIST_SELECT).order("verification_level", { ascending: false }).order("rating", { ascending: false });
+      const queryPublicTeachers = (select: string) =>
+        supabase
+          .from(TEACHERS_PUBLIC_TABLE)
+          .select(select)
+          .order("verification_level", { ascending: false })
+          .order("rating", { ascending: false });
+
+      let response = await queryPublicTeachers(TEACHERS_LIST_SELECT);
+      if (response.error && isMissingStripeIdentityStatus(response.error)) {
+        response = await queryPublicTeachers(TEACHERS_LIST_SELECT_LEGACY_PUBLIC);
+      }
+
+      const { data, error } = response;
       if (error || !data?.length) {
         if (process.env.NODE_ENV === "development") {
           console.warn(
@@ -165,7 +216,7 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
         setLoadingTeachers(false);
         return;
       }
-      const mapped = data.map((r) => teacherRowToTeacher(r as TeacherRow));
+      const mapped = (data as unknown as TeacherRow[]).map((r) => teacherRowToTeacher(r));
       const discMap = await fetchTeacherDisciplinesMap(supabase, mapped.map((t) => t.id));
       await mergePlans(mergeTeachersWithDisciplines(mapped, discMap));
       setLoadingTeachers(false);
@@ -189,7 +240,8 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
 
   // Clear map-bounds filter whenever the user changes their text/category/format search
   useEffect(() => {
-    setMapBounds(null);
+    const timer = window.setTimeout(() => setMapBounds(null), 0);
+    return () => window.clearTimeout(timer);
   }, [searchQuery, activeCat, formatFilter, adv]);
 
   // Filter + sort (+ optional bounds filter when user has searched an area)
@@ -236,7 +288,9 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
   }, [teachers, searchQuery, activeCat, sortMode, geo, mapBounds, formatFilter, adv]);
 
   const resultCountRef = useRef(0);
-  resultCountRef.current = filtered.length;
+  useEffect(() => {
+    resultCountRef.current = filtered.length;
+  }, [filtered.length]);
 
   const scrollToTeacherResults = useCallback(() => {
     teacherResultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -285,7 +339,7 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
                   </div>
 
                   <div className="mx-auto max-w-4xl space-y-5 text-center">
-                    {children}
+                    {clientHeroReady ? <LandingHeroClientCopy /> : children}
                     <LandingDiscoverySearch
                       teachersForSearch={teachers}
                       searchQuery={searchQuery}

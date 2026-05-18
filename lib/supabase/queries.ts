@@ -1,3 +1,5 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
+
 /**
  * Read-only relation: same row shape as `teachers` but `location` JSON excludes `private`
  * (see migration 031). Use for any browser-side listing or profile read that must not
@@ -11,6 +13,14 @@ export const TEACHERS_PUBLIC_TABLE = "teachers_public";
  */
 export const TEACHERS_LIST_SELECT =
   "id, user_id, name, discipline, category, rating, reviews, price_per_lesson, monthly_subscription, bio, image_url, availability, location, is_verified, teaching_mode, languages, levels, home_lesson_enabled, home_lesson_price, home_lesson_radius_km, home_lesson_min_duration, home_lesson_requires_confirmation, home_lesson_force_2h_over_20km, intro_session_enabled, intro_session_duration_minutes, intro_session_price_cents, intro_session_discount_percent, verification_level, identity_verified, diploma_verified, phone_verified, identity_status, stripe_identity_status, diploma_url, location_verification_status, cv_summary, cv_verification_status, country_code, timezone, currency, city, region";
+
+/**
+ * Temporary compatibility select for deployments where the public view has not
+ * yet been migrated to expose stripe_identity_status. Keep the public shape
+ * minimal and let trust UI fall back to identity_verified / identity_status.
+ */
+export const TEACHERS_LIST_SELECT_LEGACY_PUBLIC =
+  "id, user_id, name, discipline, category, rating, reviews, price_per_lesson, monthly_subscription, bio, image_url, availability, location, is_verified, teaching_mode, languages, levels, home_lesson_enabled, home_lesson_price, home_lesson_radius_km, home_lesson_min_duration, home_lesson_requires_confirmation, home_lesson_force_2h_over_20km, intro_session_enabled, intro_session_duration_minutes, intro_session_price_cents, intro_session_discount_percent, verification_level, identity_verified, diploma_verified, phone_verified, identity_status, diploma_url, location_verification_status, cv_summary, cv_verification_status, country_code, timezone, currency, city, region";
 
 /** Public listing fields used by TeacherQuiz matching (alignment with {@link teacherRowToTeacher} / {@link Teacher}). */
 export const TEACHER_QUIZ_SELECT = TEACHERS_LIST_SELECT;
@@ -26,7 +36,9 @@ export type TeacherCredentialInsert = {
   public_label?: string | null;
 };
 
-export function getTeacherIdentityVerification(supabase: { from: (t: string) => any }, teacherId: string) {
+type SupabaseClientLike = Pick<SupabaseClient, "from">;
+
+export function getTeacherIdentityVerification(supabase: SupabaseClientLike, teacherId: string) {
   // Identity verification currently lives on `teachers` (Stripe Identity columns).
   return supabase
     .from("teachers")
@@ -35,7 +47,7 @@ export function getTeacherIdentityVerification(supabase: { from: (t: string) => 
     .maybeSingle();
 }
 
-export function getTeacherCredentials(supabase: { from: (t: string) => any }, teacherId: string) {
+export function getTeacherCredentials(supabase: SupabaseClientLike, teacherId: string) {
   return supabase
     .from("teacher_credentials")
     .select("id, teacher_id, type, title, institution_name, country, issued_year, verification_status, verification_method, confidence_level, public_label, verified_at, expires_at, created_at, updated_at")
@@ -43,11 +55,11 @@ export function getTeacherCredentials(supabase: { from: (t: string) => any }, te
     .order("created_at", { ascending: false });
 }
 
-export function createTeacherCredential(supabase: { from: (t: string) => any }, input: TeacherCredentialInsert) {
+export function createTeacherCredential(supabase: SupabaseClientLike, input: TeacherCredentialInsert) {
   return supabase.from("teacher_credentials").insert(input).select("*").maybeSingle();
 }
 
-export function getPublicTeacherCredentials(supabase: { from: (t: string) => any }, teacherId: string) {
+export function getPublicTeacherCredentials(supabase: SupabaseClientLike, teacherId: string) {
   return supabase
     .from("teacher_credentials_public")
     .select("id, teacher_id, type, public_label, institution_name, country, issued_year, verification_method, confidence_level, verified_at, expires_at")
