@@ -26,6 +26,7 @@ import {
   handleStripeChargeDisputeCreated,
   handleStripeTransferFailed,
 } from "@/lib/payments/webhookRiskEvents";
+import { issueLessonPaymentReceipt } from "@/lib/payments/receipts";
 
 export const runtime = "nodejs";
 
@@ -289,6 +290,16 @@ async function confirmBookingAndNotify(
   } catch (ledgerErr) {
     console.error("[stripe/webhook] booking payment ledger upsert failed", ledgerErr);
     return;
+  }
+
+  try {
+    await issueLessonPaymentReceipt(admin, {
+      bookingId,
+      stripeChargeId,
+      sendEmail: true,
+    });
+  } catch (receiptErr) {
+    console.error("[stripe/webhook] lesson receipt issue failed", receiptErr);
   }
 
   if (!shouldSendConfirmation) {

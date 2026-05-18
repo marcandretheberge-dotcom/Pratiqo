@@ -31,6 +31,7 @@ import {
   retrievePaymentIntentChargeId,
   upsertPaidBookingPayment,
 } from "@/lib/payments/ledger";
+import { issueLessonPaymentReceipt } from "@/lib/payments/receipts";
 import {
   bookingWallTimeRangeToUtc,
   formatBookingTimeForBothZones,
@@ -197,6 +198,12 @@ async function verifyAndConfirm(sessionId: string, locale: Locale): Promise<Veri
         fallback_source: "booking_success_page",
       },
     }).catch((e) => console.error("[booking/success] booking payment ledger upsert failed", e));
+
+    await issueLessonPaymentReceipt(admin, {
+      bookingId,
+      stripeChargeId,
+      sendEmail: true,
+    }).catch((e) => console.error("[booking/success] lesson receipt issue failed", e));
   }
 
   // Idempotent fallback confirmation: only runs if the webhook hasn't fired yet

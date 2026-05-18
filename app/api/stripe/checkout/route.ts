@@ -310,6 +310,8 @@ export async function POST(req: Request) {
         commission_rate: String(amounts.feeRate),
         commission_basis_points: String(amounts.feeBasisPoints),
         loyalty_tier: amounts.loyaltyTier,
+        tax_behavior: "not_collected",
+        tax_total_cents: "0",
       },
       line_items: [
         {
@@ -343,6 +345,8 @@ export async function POST(req: Request) {
           commission_rate: String(amounts.feeRate),
           commission_basis_points: String(amounts.feeBasisPoints),
           loyalty_tier: amounts.loyaltyTier,
+          tax_behavior: "not_collected",
+          tax_total_cents: "0",
         },
         transfer_group: transferGroup,
       },
@@ -371,6 +375,8 @@ export async function POST(req: Request) {
           commission_basis_points: amounts.feeBasisPoints,
           loyalty_tier: amounts.loyaltyTier,
           teacher_plan: amounts.teacherPlan,
+          tax_behavior: "not_collected",
+          tax_total_cents: 0,
         },
       });
     } catch (ledgerErr) {

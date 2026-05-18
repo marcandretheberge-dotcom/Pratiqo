@@ -27,6 +27,7 @@ export {
   sendPostClassReviewRequest,
   sendLessonReminderStudent,
   sendLessonReminderTeacher,
+  sendLessonPaymentReceipt,
 } from "@/lib/email/templates/booking";
 
 export { sendProUpgrade } from "@/lib/email/templates/billing";

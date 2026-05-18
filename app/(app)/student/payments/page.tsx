@@ -30,6 +30,9 @@ type PaymentRow = {
   refunded_at?: string | null;
   refund_status?: string | null;
   stripe_receipt_url?: string | null;
+  receipt_number?: string | null;
+  receipt_issued_at?: string | null;
+  tax_behavior?: "not_collected" | string | null;
 };
 
 type TeacherRow = {
@@ -73,8 +76,8 @@ export default function StudentPaymentsPage() {
 
   useEffect(() => {
     if (!user?.id) {
-      setLoading(false);
-      return;
+      const timer = window.setTimeout(() => setLoading(false), 0);
+      return () => window.clearTimeout(timer);
     }
 
     let cancelled = false;
@@ -106,7 +109,7 @@ export default function StudentPaymentsPage() {
         supabase
           .from("booking_payments")
           .select(
-            "booking_id, amount_cents, currency, payment_status, transfer_status, paid_at, refunded_at, refund_status, stripe_receipt_url",
+            "booking_id, amount_cents, currency, payment_status, transfer_status, paid_at, refunded_at, refund_status, stripe_receipt_url, receipt_number, receipt_issued_at, tax_behavior",
           )
           .in("booking_id", bookingIds),
         teacherIds.length
@@ -227,6 +230,17 @@ export default function StudentPaymentsPage() {
                       <Calendar size={13} />
                       {[date, time].filter(Boolean).join(" · ") || "—"}
                     </p>
+                    {payment?.receipt_number ? (
+                      <p className="mt-2 text-xs font-semibold text-slate-500">
+                        {t("studentPaymentsPratiqoReceipt")}{" "}
+                        <span className="font-bold text-slate-700">{payment.receipt_number}</span>
+                        {payment.tax_behavior === "not_collected" ? (
+                          <span className="ml-2 text-slate-400">{t("studentPaymentsTaxNotCollected")}</span>
+                        ) : null}
+                      </p>
+                    ) : isPaid ? (
+                      <p className="mt-2 text-xs font-semibold text-slate-400">{t("studentPaymentsPratiqoReceiptPending")}</p>
+                    ) : null}
                   </div>
                   <div className="flex items-center justify-between gap-4 sm:justify-end">
                     <div className="text-left sm:text-right">

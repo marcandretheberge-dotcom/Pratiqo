@@ -6,6 +6,61 @@ import { getBookingEmailCopy } from "@/lib/email/messages/booking";
 
 type LocaleOpts = { locale?: EmailLocale };
 
+export type LessonPaymentReceiptEmailInput = {
+  email: string;
+  studentName: string;
+  receiptNumber: string;
+  paymentDate: string;
+  lessonDescription: string;
+  teacherName: string;
+  amountPaid: string;
+  currency: string;
+  stripeReceiptUrl?: string | null;
+} & LocaleOpts;
+
+export function buildLessonPaymentReceiptEmail(opts: LessonPaymentReceiptEmailInput) {
+  const locale = resolveEmailLocaleFromOptional(opts.locale);
+  const copy = getBookingEmailCopy(locale).lessonPaymentReceipt;
+  const rows: [string, string][] = [
+    [copy.labels.business, "Pratiqo inc."],
+    [copy.labels.receiptNumber, opts.receiptNumber],
+    [copy.labels.paymentDate, opts.paymentDate],
+    [copy.labels.lesson, opts.lessonDescription],
+    [copy.labels.teacher, opts.teacherName],
+    [copy.labels.amountPaid, opts.amountPaid],
+    [copy.labels.currency, opts.currency.toUpperCase()],
+    [copy.labels.tax, copy.taxLine],
+  ];
+
+  return {
+    subject: copy.subject(opts.receiptNumber),
+    html: buildEmail({
+      locale,
+      heroEmoji: "🧾",
+      heroTitle: copy.heroTitle,
+      heroSubtitle: copy.heroSubtitle(opts.receiptNumber),
+      bodyHtml: `
+        <p>${copy.intro(escapeHtml(opts.studentName))}</p>
+        ${infoTable(rows)}
+        ${tealBox(`<strong>${copy.labels.tax}</strong><br>${escapeHtml(copy.taxLine)}`)}
+        ${opts.stripeReceiptUrl ? `<p style="font-size:14px;color:#6B6A65;">${escapeHtml(copy.stripeReceipt)}: <a href="${escapeHtml(opts.stripeReceiptUrl)}" style="color:#2D7B72;font-weight:700;">${escapeHtml(opts.stripeReceiptUrl)}</a></p>` : ""}
+        <p style="font-size:14px;color:#6B6A65;">${copy.thanks}</p>
+      `,
+      ctaText: opts.stripeReceiptUrl ? copy.cta : undefined,
+      ctaUrl: opts.stripeReceiptUrl ?? undefined,
+    }),
+  };
+}
+
+export async function sendLessonPaymentReceipt(opts: LessonPaymentReceiptEmailInput): Promise<boolean> {
+  const message = buildLessonPaymentReceiptEmail(opts);
+  return send({
+    to: opts.email,
+    subject: message.subject,
+    html: message.html,
+  });
+}
+
 export async function sendBookingConfirmedStudent(
   opts: {
     email: string;

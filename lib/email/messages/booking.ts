@@ -110,12 +110,34 @@ type ReminderTeacherCopy = {
   cta: string;
 };
 
+type LessonPaymentReceiptCopy = {
+  subject: (receiptNumber: string) => string;
+  heroTitle: string;
+  heroSubtitle: (receiptNumber: string) => string;
+  intro: (studentName: string) => string;
+  labels: {
+    business: string;
+    receiptNumber: string;
+    paymentDate: string;
+    lesson: string;
+    teacher: string;
+    amountPaid: string;
+    currency: string;
+    tax: string;
+  };
+  taxLine: string;
+  stripeReceipt: string;
+  cta: string;
+  thanks: string;
+};
+
 export type BookingEmailCopy = {
   confirmedStudent: BookingConfirmedStudentCopy;
   confirmedTeacher: BookingConfirmedTeacherCopy;
   postClassReview: PostClassReviewCopy;
   reminderStudent: ReminderStudentCopy;
   reminderTeacher: ReminderTeacherCopy;
+  lessonPaymentReceipt: LessonPaymentReceiptCopy;
 };
 
 const BOOKING_EMAIL_COPY: Record<EmailLocale, BookingEmailCopy> = {
@@ -215,6 +237,26 @@ const BOOKING_EMAIL_COPY: Record<EmailLocale, BookingEmailCopy> = {
       },
       cta: "Voir le cours",
     },
+    lessonPaymentReceipt: {
+      subject: (receiptNumber) => `Reçu Pratiqo ${receiptNumber}`,
+      heroTitle: "Reçu de paiement",
+      heroSubtitle: (receiptNumber) => `Reçu ${receiptNumber}`,
+      intro: (studentName) => `Bonjour ${studentName}, voici votre reçu pour votre cours réservé sur Pratiqo.`,
+      labels: {
+        business: "Émetteur",
+        receiptNumber: "Numéro de reçu",
+        paymentDate: "Date de paiement",
+        lesson: "Cours",
+        teacher: "Professeur",
+        amountPaid: "Montant payé",
+        currency: "Devise",
+        tax: "Taxes",
+      },
+      taxLine: "Taxes de vente non perçues pour le moment.",
+      stripeReceipt: "Reçu Stripe",
+      cta: "Ouvrir le reçu Stripe",
+      thanks: "Merci de faire confiance à Pratiqo inc.",
+    },
   },
   en: {
     confirmedStudent: {
@@ -312,6 +354,26 @@ const BOOKING_EMAIL_COPY: Record<EmailLocale, BookingEmailCopy> = {
       },
       cta: "View lesson",
     },
+    lessonPaymentReceipt: {
+      subject: (receiptNumber) => `Pratiqo receipt ${receiptNumber}`,
+      heroTitle: "Payment receipt",
+      heroSubtitle: (receiptNumber) => `Receipt ${receiptNumber}`,
+      intro: (studentName) => `Hello ${studentName}, here is your receipt for your lesson booked on Pratiqo.`,
+      labels: {
+        business: "Issuer",
+        receiptNumber: "Receipt number",
+        paymentDate: "Payment date",
+        lesson: "Lesson",
+        teacher: "Teacher",
+        amountPaid: "Amount paid",
+        currency: "Currency",
+        tax: "Tax",
+      },
+      taxLine: "Sales tax not collected at this time.",
+      stripeReceipt: "Stripe receipt",
+      cta: "Open Stripe receipt",
+      thanks: "Thank you for trusting Pratiqo inc.",
+    },
   },
   es: {
     confirmedStudent: {
@@ -408,6 +470,26 @@ const BOOKING_EMAIL_COPY: Record<EmailLocale, BookingEmailCopy> = {
         format: "Formato",
       },
       cta: "Ver la clase",
+    },
+    lessonPaymentReceipt: {
+      subject: (receiptNumber) => `Recibo Pratiqo ${receiptNumber}`,
+      heroTitle: "Recibo de pago",
+      heroSubtitle: (receiptNumber) => `Recibo ${receiptNumber}`,
+      intro: (studentName) => `Hola ${studentName}, este es tu recibo por la clase reservada en Pratiqo.`,
+      labels: {
+        business: "Emisor",
+        receiptNumber: "Número de recibo",
+        paymentDate: "Fecha de pago",
+        lesson: "Clase",
+        teacher: "Profesor",
+        amountPaid: "Monto pagado",
+        currency: "Moneda",
+        tax: "Impuestos",
+      },
+      taxLine: "Impuestos sobre ventas no cobrados por el momento.",
+      stripeReceipt: "Recibo de Stripe",
+      cta: "Abrir recibo de Stripe",
+      thanks: "Gracias por confiar en Pratiqo inc.",
     },
   },
 };

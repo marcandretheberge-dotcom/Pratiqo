@@ -36,6 +36,9 @@ export const bookingPaymentRefundStatusSchema = z.enum([
 ]);
 export type BookingPaymentRefundStatus = z.infer<typeof bookingPaymentRefundStatusSchema>;
 
+export const bookingPaymentTaxBehaviorSchema = z.literal("not_collected");
+export type BookingPaymentTaxBehavior = z.infer<typeof bookingPaymentTaxBehaviorSchema>;
+
 export const bookingPaymentRowSchema = z.object({
   id: z.string().uuid(),
   booking_id: z.string().uuid(),
@@ -63,6 +66,19 @@ export const bookingPaymentRowSchema = z.object({
   refunded_at: z.string().nullable(),
   failed_at: z.string().nullable(),
   failure_reason: z.string().nullable(),
+  stripe_receipt_url: z.string().nullable().optional(),
+  stripe_invoice_url: z.string().nullable().optional(),
+  receipt_available_at: z.string().nullable().optional(),
+  receipt_number: z.string().nullable().optional(),
+  receipt_issued_at: z.string().nullable().optional(),
+  receipt_email_sent_at: z.string().nullable().optional(),
+  tax_behavior: bookingPaymentTaxBehaviorSchema.default("not_collected"),
+  tax_total_cents: z.number().int().nonnegative().default(0),
+  gst_cents: z.number().int().nonnegative().default(0),
+  qst_cents: z.number().int().nonnegative().default(0),
+  buyer_country_code: z.string().nullable().optional(),
+  buyer_region: z.string().nullable().optional(),
+  tax_snapshot: z.record(z.string(), z.unknown()).default({}),
   metadata: z.record(z.string(), z.unknown()),
   created_at: z.string(),
   updated_at: z.string(),
