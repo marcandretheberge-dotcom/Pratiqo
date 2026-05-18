@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Bell, ChevronRight, CreditCard, GraduationCap, Loader2, MapPin } from "lucide-react";
@@ -9,10 +9,10 @@ import { getSupabaseClient } from "../../../lib/supabase";
 import { authDisplayName } from "../../../lib/authDisplay";
 import { useLocale } from "../../../lib/locale-context";
 import type { CompanionType } from "../../../lib/companions";
-import { COMPANIONS, getCompanionStage, getLessonsToNextStage, getProgressPercent } from "../../../lib/companions";
 import { LocaleSwitcher } from "../../../components/LocaleSwitcher";
 import { CreditsWidget } from "../../../components/CreditsWidget";
 import { AccountDeletionSection } from "../../../components/account/AccountDeletionSection";
+import { CompanionCard } from "../../../components/companion/CompanionCard";
 import { cn } from "../../../lib/utils";
 import type { TranslationKey } from "../../../lib/translations";
 
@@ -36,10 +36,12 @@ function coerceLearningFormatPref(v: string | null | undefined): LearningFormatP
 
 export default function StudentProfilePage() {
   const { user, profile } = useAuth();
-  const { t, locale } = useLocale();
+  const { t } = useLocale();
   const router = useRouter();
+  const userId = user?.id;
+  const userCreatedAt = user?.created_at ?? null;
   const [loading, setLoading] = useState(true);
-  const [lessonCount, setLessonCount] = useState(0);
+  const [completedLessonCount, setCompletedLessonCount] = useState(0);
   const [teacherCount, setTeacherCount] = useState(0);
   const [points] = useState(0);
   const [companionType, setCompanionType] = useState<CompanionType | null>(null);
@@ -61,23 +63,28 @@ export default function StudentProfilePage() {
   }, [profile?.role, router]);
 
   useEffect(() => {
-    if (!user?.id) return;
+    if (!userId) return;
     const supabase = getSupabaseClient();
     let cancelled = false;
 
     const load = async () => {
       setLoading(true);
 
-      const [{ data: prof }, { data: bRows }, { count: confirmedCount }] = await Promise.all([
+      const [{ data: prof }, { data: bRows }, { count: completedLessons }] = await Promise.all([
         supabase
           .from("profiles")
           .select(
             "companion_type, companion_chosen, created_at, dashboard, city, region, country_code, preferred_learning_format",
           )
-          .eq("id", user.id)
+          .eq("id", userId)
           .maybeSingle(),
-        supabase.from("bookings").select("teacher_id, status").eq("student_id", user.id),
-        supabase.from("bookings").select("id", { count: "exact", head: true }).eq("student_id", user.id).eq("status", "confirmed"),
+        supabase.from("bookings").select("teacher_id, status").eq("student_id", userId),
+        supabase
+          .from("bookings")
+          .select("id", { count: "exact", head: true })
+          .eq("student_id", userId)
+          .eq("status", "completed")
+          .not("completed_at", "is", null),
       ]);
 
       if (cancelled) return;
@@ -87,7 +94,7 @@ export default function StudentProfilePage() {
             companion_type?: string | null;
             companion_chosen?: boolean | null;
             created_at?: string | null;
-            dashboard?: any | null;
+            dashboard?: unknown;
             city?: string | null;
             region?: string | null;
             country_code?: string | null;
@@ -97,7 +104,7 @@ export default function StudentProfilePage() {
       const ctype = p?.companion_type;
       setCompanionType(ctype === "phoenix" || ctype === "forest" || ctype === "dragon" || ctype === "star" ? (ctype as CompanionType) : null);
       setCompanionChosen(Boolean(p?.companion_chosen));
-      const createdAt = p?.created_at || (user as any)?.created_at || null;
+      const createdAt = p?.created_at || userCreatedAt || null;
       setMemberYear(createdAt ? new Date(String(createdAt)).getFullYear() : null);
 
       const dash = p?.dashboard && typeof p.dashboard === "object" ? (p.dashboard as Record<string, unknown>) : {};
@@ -114,7 +121,7 @@ export default function StudentProfilePage() {
         if (r.teacher_id) distinctTeacherIds.add(r.teacher_id);
       }
       setTeacherCount(distinctTeacherIds.size);
-      setLessonCount(typeof confirmedCount === "number" ? confirmedCount : 0);
+      setCompletedLessonCount(typeof completedLessons === "number" ? completedLessons : 0);
 
       // Fetch teacher names for review widget
       const teacherList: { teacherId: string; name: string; discipline: string | null; imageUrl: string | null }[] = [];
@@ -140,7 +147,7 @@ export default function StudentProfilePage() {
     return () => {
       cancelled = true;
     };
-  }, [user?.id]);
+  }, [userCreatedAt, userId]);
 
   if (!user) return null;
 
@@ -149,23 +156,6 @@ export default function StudentProfilePage() {
     .slice(0, 2)
     .map((x) => x[0]?.toUpperCase())
     .join("");
-
-  const stage = useMemo(() => (companionType ? getCompanionStage(companionType, lessonCount) : null), [companionType, lessonCount]);
-  const stageName = useMemo(() => {
-    if (!stage) return "";
-    if (locale === "en") return stage.nameEn;
-    if (locale === "es") return stage.nameEs;
-    return stage.name;
-  }, [stage, locale]);
-  const companionName = useMemo(() => {
-    if (!companionType) return "";
-    const c = COMPANIONS[companionType];
-    if (locale === "en") return c.nameEn;
-    if (locale === "es") return c.nameEs;
-    return c.name;
-  }, [companionType, locale]);
-  const percent = useMemo(() => (companionType ? getProgressPercent(companionType, lessonCount) : 0), [companionType, lessonCount]);
-  const remaining = useMemo(() => (companionType ? getLessonsToNextStage(companionType, lessonCount) : 0), [companionType, lessonCount]);
 
   return (
     <div className="space-y-6 pb-10">
@@ -182,7 +172,7 @@ export default function StudentProfilePage() {
 
       {/* STATS */}
       <section className="grid grid-cols-3 gap-2">
-        <StatCard label={t("profileLessons")} value={loading ? "…" : String(lessonCount)} />
+        <StatCard label={t("profileLessons")} value={loading ? "…" : String(completedLessonCount)} />
         <StatCard label={t("profileTeachers")} value={loading ? "…" : String(teacherCount)} />
         <StatCard label={t("profilePoints")} value={String(points)} />
       </section>
@@ -192,27 +182,13 @@ export default function StudentProfilePage() {
         className="rounded-3xl p-4 text-white shadow-[0_18px_60px_rgba(15,110,86,0.20)]"
         style={{ background: "linear-gradient(135deg, var(--palette-teal-700), var(--palette-teal-500))" }}
       >
-        {companionChosen && companionType && stage ? (
-          <div className="flex items-center gap-4">
-            <div className="text-[34px] leading-none">{stage.emoji}</div>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-bold truncate">{stageName}</p>
-              <p className="text-[12px] text-white/80 truncate">{companionName}</p>
-              <div className="mt-2 h-1.5 rounded-full bg-white/25 overflow-hidden">
-                <div className="h-full rounded-full bg-white" style={{ width: `${percent}%` }} />
-              </div>
-              <p className="mt-2 text-[11px] text-white/85">
-                {remaining > 0 ? `${remaining} ${t("companionMoreLessons")}` : t("companionMaxLevel")}
-              </p>
-            </div>
-            <ChevronRight className="text-white/80" size={18} />
-          </div>
-        ) : (
-          <Link href="/student/choose-companion" className="flex items-center justify-between gap-3">
-            <p className="text-sm font-semibold">{t("companionNoCompanion")}</p>
-            <ChevronRight className="text-white/80" size={18} />
-          </Link>
-        )}
+        <CompanionCard
+          companionType={companionType}
+          companionChosen={companionChosen}
+          lessonCount={completedLessonCount}
+          loading={loading}
+          variant="profile"
+        />
       </section>
 
       {/* MES CRÉDITS */}
@@ -225,7 +201,7 @@ export default function StudentProfilePage() {
               discipline: x.discipline,
               imageUrl: x.imageUrl,
             }))}
-            lessonCount={lessonCount}
+            lessonCount={completedLessonCount}
             companionType={companionType}
           />
         </div>
@@ -247,7 +223,11 @@ export default function StudentProfilePage() {
               setNotificationsEnabled(next);
               const supabase = getSupabaseClient();
               const { data: prof } = await supabase.from("profiles").select("dashboard").eq("id", user.id).maybeSingle();
-              const dash = prof && typeof (prof as any).dashboard === "object" ? ((prof as any).dashboard as Record<string, unknown>) : {};
+              const profileDashboard = (prof as { dashboard?: unknown } | null)?.dashboard;
+              const dash =
+                profileDashboard && typeof profileDashboard === "object" && !Array.isArray(profileDashboard)
+                  ? (profileDashboard as Record<string, unknown>)
+                  : {};
               await supabase.from("profiles").update({ dashboard: { ...dash, notificationsEnabled: next } }).eq("id", user.id);
             }}
             className={cn(
