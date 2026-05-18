@@ -1,14 +1,18 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronRight, ShieldCheck } from "lucide-react";
+import { ChevronRight, Loader2, LogOut, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
+import { logout } from "@/lib/auth";
+import { useLocale } from "@/lib/locale-context";
 
 export default function AdminDashboardPage() {
   const { user, profile } = useAuth();
   const router = useRouter();
+  const { t } = useLocale();
+  const [signingOut, setSigningOut] = useState(false);
   const isAdmin = (profile?.role as string | undefined) === "admin";
 
   useEffect(() => {
@@ -16,23 +20,48 @@ export default function AdminDashboardPage() {
     if (!isAdmin) router.replace("/dashboard");
   }, [isAdmin, router, user]);
 
+  const handleSignOut = async () => {
+    setSigningOut(true);
+    try {
+      await logout();
+    } finally {
+      window.location.href = "/login";
+    }
+  };
+
   if (!user || !isAdmin) return null;
 
   return (
     <main className="min-h-[70dvh] bg-[#F3FAF6] px-4 py-8">
       <div className="mx-auto max-w-3xl space-y-6">
         <section className="rounded-3xl border border-[#DCEAE3] bg-white p-6 shadow-sm">
-          <div className="flex items-start gap-4">
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-teal-50 text-teal-700">
-              <ShieldCheck size={26} />
-            </span>
-            <div className="min-w-0">
-              <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Espace admin</p>
-              <h1 className="mt-1 text-2xl font-bold text-[#2C2C2A]">Tableau de bord</h1>
-              <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                Outils internes pour la modération et la vérification des enseignants.
-              </p>
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex min-w-0 items-start gap-4">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-teal-50 text-teal-700">
+                <ShieldCheck size={26} />
+              </span>
+              <div className="min-w-0">
+                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Espace admin</p>
+                <h1 className="mt-1 text-2xl font-bold text-[#2C2C2A]">Tableau de bord</h1>
+                <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                  Outils internes pour la modération et la vérification des enseignants.
+                </p>
+              </div>
             </div>
+            <button
+              type="button"
+              onClick={() => void handleSignOut()}
+              disabled={signingOut}
+              aria-label={t("signOut")}
+              className="inline-flex shrink-0 items-center gap-2 rounded-full border border-rose-200 bg-white px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-50 disabled:opacity-60"
+            >
+              {signingOut ? (
+                <Loader2 size={16} className="animate-spin" aria-hidden />
+              ) : (
+                <LogOut size={16} aria-hidden />
+              )}
+              {t("signOut")}
+            </button>
           </div>
         </section>
 
