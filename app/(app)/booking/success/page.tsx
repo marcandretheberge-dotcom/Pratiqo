@@ -32,6 +32,7 @@ import {
   upsertPaidBookingPayment,
 } from "@/lib/payments/ledger";
 import { issueLessonPaymentReceipt } from "@/lib/payments/receipts";
+import { shouldDeferLessonPaymentFinalization } from "@/lib/payments/tax";
 import {
   bookingWallTimeRangeToUtc,
   formatBookingTimeForBothZones,
@@ -66,6 +67,7 @@ interface BookingDetails {
   studentTimeZone: string | null;
   teacherTimeZone: string | null;
   meetingUrl: string | null;
+  taxFinalizationPending: boolean;
 }
 
 function parseBookingStart(dateIso: string, slot: string): Date | null {
@@ -173,17 +175,20 @@ async function verifyAndConfirm(sessionId: string, locale: Locale): Promise<Veri
 
   const alreadyConfirmed = booking.status === "confirmed";
 
-  if (paymentIntentId) {
-    const metadata = (paymentIntent?.metadata ?? session.metadata ?? {}) as Record<string, string>;
-    const amountCents = session.amount_total ?? Number(metadata.amount_cents ?? 0);
-    const taxTotalCents = Math.max(0, Number(metadata.tax_total_cents ?? 0));
-    const subtotalFromMetadata = Number(metadata.subtotal_cents ?? NaN);
+  const sessionMetadata = (session.metadata ?? {}) as Record<string, string>;
+  const paymentMetadata = (paymentIntent?.metadata ?? sessionMetadata) as Record<string, string>;
+  const deferPaymentFinalization = shouldDeferLessonPaymentFinalization(paymentMetadata);
+
+  if (paymentIntentId && !deferPaymentFinalization) {
+    const amountCents = session.amount_total ?? Number(paymentMetadata.amount_cents ?? 0);
+    const taxTotalCents = Math.max(0, Number(paymentMetadata.tax_total_cents ?? 0));
+    const subtotalFromMetadata = Number(paymentMetadata.subtotal_cents ?? NaN);
     const subtotalCents = Number.isFinite(subtotalFromMetadata)
       ? Math.max(0, Math.round(subtotalFromMetadata))
       : Math.max(0, amountCents - taxTotalCents);
-    const platformFeeCents = Number(metadata.platform_fee_cents ?? 0);
+    const platformFeeCents = Number(paymentMetadata.platform_fee_cents ?? 0);
     const teacherNetCents = Number(
-      metadata.teacher_net_cents ?? Math.max(0, subtotalCents - platformFeeCents),
+      paymentMetadata.teacher_net_cents ?? Math.max(0, subtotalCents - platformFeeCents),
     );
     const stripeChargeId = (paymentIntent ? chargeIdFromPaymentIntent(paymentIntent) : null) ??
       (await retrievePaymentIntentChargeId(paymentIntentId).catch(() => null));
@@ -201,9 +206,9 @@ async function verifyAndConfirm(sessionId: string, locale: Locale): Promise<Veri
       platformFeeCents,
       teacherNetCents,
       currency: session.currency ?? "cad",
-      transferGroup: metadata.transfer_group ?? `booking_${bookingId}`,
+      transferGroup: paymentMetadata.transfer_group ?? `booking_${bookingId}`,
       metadata: {
-        ...metadata,
+        ...paymentMetadata,
         fallback_source: "booking_success_page",
       },
     }).catch((e) => console.error("[booking/success] booking payment ledger upsert failed", e));
@@ -213,6 +218,11 @@ async function verifyAndConfirm(sessionId: string, locale: Locale): Promise<Veri
       stripeChargeId,
       sendEmail: true,
     }).catch((e) => console.error("[booking/success] lesson receipt issue failed", e));
+  } else if (deferPaymentFinalization) {
+    console.info("[booking/success] deferring ledger/receipt until Stripe Tax webhook finalizes", {
+      bookingId,
+      sessionId,
+    });
   }
 
   // Idempotent fallback confirmation: only runs if the webhook hasn't fired yet
@@ -365,6 +375,7 @@ async function verifyAndConfirm(sessionId: string, locale: Locale): Promise<Veri
         (booking as { meeting_url?: string | null }).meeting_url!.trim()
           ? (booking as { meeting_url?: string | null }).meeting_url!.trim()
           : null,
+      taxFinalizationPending: deferPaymentFinalization,
     },
   };
 }
@@ -571,6 +582,12 @@ export default async function BookingSuccessPage({
               </span>
             </li>
           </ul>
+
+          {booking.taxFinalizationPending ? (
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-900">
+              {dict.bookingSuccessTaxFinalizationPendingNote}
+            </div>
+          ) : null}
 
           <div className="rounded-2xl border border-[#DCEAE3] bg-[#F3FAF6] px-4 py-3 text-xs text-slate-700">
             {meetingNote}

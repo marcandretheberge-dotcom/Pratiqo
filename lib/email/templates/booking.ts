@@ -3,6 +3,7 @@ import { appBaseUrl, buildEmail, escapeHtml, infoTable, tealBox } from "@/lib/em
 import type { EmailLocale } from "@/lib/email/locale";
 import { resolveEmailLocaleFromOptional } from "@/lib/email/locale";
 import { getBookingEmailCopy } from "@/lib/email/messages/booking";
+import type { BookingPaymentTaxBehavior } from "@/lib/payments/types";
 
 type LocaleOpts = { locale?: EmailLocale };
 
@@ -16,21 +17,39 @@ export type LessonPaymentReceiptEmailInput = {
   amountPaid: string;
   currency: string;
   stripeReceiptUrl?: string | null;
+  taxBehavior?: BookingPaymentTaxBehavior;
+  subtotalBeforeTax?: string;
+  gstAmount?: string;
+  qstAmount?: string;
+  taxTotalAmount?: string;
 } & LocaleOpts;
 
 export function buildLessonPaymentReceiptEmail(opts: LessonPaymentReceiptEmailInput) {
   const locale = resolveEmailLocaleFromOptional(opts.locale);
   const copy = getBookingEmailCopy(locale).lessonPaymentReceipt;
+  const taxInclusive = opts.taxBehavior === "stripe_tax_inclusive";
+
   const rows: [string, string][] = [
     [copy.labels.business, "Pratiqo inc."],
     [copy.labels.receiptNumber, opts.receiptNumber],
     [copy.labels.paymentDate, opts.paymentDate],
     [copy.labels.lesson, opts.lessonDescription],
     [copy.labels.teacher, opts.teacherName],
-    [copy.labels.amountPaid, opts.amountPaid],
     [copy.labels.currency, opts.currency.toUpperCase()],
-    [copy.labels.tax, copy.taxLine],
   ];
+
+  if (taxInclusive && opts.subtotalBeforeTax) {
+    rows.push([copy.labels.subtotalBeforeTax, opts.subtotalBeforeTax]);
+    if (opts.gstAmount) rows.push([copy.labels.gst, opts.gstAmount]);
+    if (opts.qstAmount) rows.push([copy.labels.qst, opts.qstAmount]);
+    if (opts.taxTotalAmount) rows.push([copy.labels.taxTotal, opts.taxTotalAmount]);
+  }
+
+  rows.push([copy.labels.amountPaid, opts.amountPaid]);
+
+  const taxBoxHtml = taxInclusive
+    ? `<strong>${escapeHtml(copy.labels.tax)}</strong><br>${escapeHtml(copy.taxInclusiveNote)}`
+    : `<strong>${escapeHtml(copy.labels.tax)}</strong><br>${escapeHtml(copy.taxLine)}`;
 
   return {
     subject: copy.subject(opts.receiptNumber),
@@ -42,7 +61,7 @@ export function buildLessonPaymentReceiptEmail(opts: LessonPaymentReceiptEmailIn
       bodyHtml: `
         <p>${copy.intro(escapeHtml(opts.studentName))}</p>
         ${infoTable(rows)}
-        ${tealBox(`<strong>${copy.labels.tax}</strong><br>${escapeHtml(copy.taxLine)}`)}
+        ${tealBox(taxBoxHtml)}
         ${opts.stripeReceiptUrl ? `<p style="font-size:14px;color:#6B6A65;">${escapeHtml(copy.stripeReceipt)}: <a href="${escapeHtml(opts.stripeReceiptUrl)}" style="color:#2D7B72;font-weight:700;">${escapeHtml(opts.stripeReceiptUrl)}</a></p>` : ""}
         <p style="font-size:14px;color:#6B6A65;">${copy.thanks}</p>
       `,

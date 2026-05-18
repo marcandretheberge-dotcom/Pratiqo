@@ -275,6 +275,7 @@
   "bookingSuccessFooterProblem": "Questions? Reach us at",
   "bookingSuccessLessonAfter": " is confirmed!",
   "bookingSuccessLessonBefore": "Your lesson with ",
+  "bookingSuccessTaxFinalizationPendingNote": "Your payment is confirmed. Your receipt and tax breakdown will appear shortly once processing completes.",
   "bookingSuccessThanksLine": "Thank you, {{name}} — ",
   "bookingTeacherSummaryFallback": "Select a format, choose an available slot, then confirm your lesson with secure payment.",
   "bookingViewMyLessons": "View my lessons",

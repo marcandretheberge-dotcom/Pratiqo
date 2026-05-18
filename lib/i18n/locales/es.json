@@ -275,6 +275,7 @@
   "bookingSuccessFooterProblem": "¿Algún problema? Escribinos a",
   "bookingSuccessLessonAfter": " está confirmada.",
   "bookingSuccessLessonBefore": "Tu clase con ",
+  "bookingSuccessTaxFinalizationPendingNote": "Tu pago está confirmado. Tu recibo y el desglose de impuestos aparecerán en breve cuando termine el procesamiento.",
   "bookingSuccessThanksLine": "¡Gracias, {{name}}! — ",
   "bookingTeacherSummaryFallback": "Elegí el formato, seleccioná un horario disponible y confirmá tu clase con pago seguro.",
   "bookingViewMyLessons": "Ver mis clases",

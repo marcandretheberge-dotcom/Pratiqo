@@ -11,6 +11,7 @@ import {
   markBookingPaymentTransferFailed,
   type BookingPaymentRowForTransfer,
 } from "@/lib/payments/ledger";
+import { paymentTaxBlocksPayout } from "@/lib/payments/tax";
 
 export const AUTO_COMPLETE_GRACE_MS = 2 * 60 * 60 * 1000;
 
@@ -61,6 +62,7 @@ export type CompleteBookingResult =
         | "lesson_not_ended"
         | "payment_not_paid"
         | "payout_hold"
+        | "tax_not_ready"
         | "missing_charge"
         | "connect_not_ready"
         | "invalid_payout_amount"
@@ -114,6 +116,7 @@ export async function hasOpenPayoutHold(admin: SupabaseClient, bookingId: string
 type PayoutReleaseFailureCode =
   | "payment_not_paid"
   | "payout_hold"
+  | "tax_not_ready"
   | "missing_charge"
   | "connect_not_ready"
   | "invalid_payout_amount"
@@ -142,6 +145,18 @@ async function releaseTeacherPayout(
       code: "payout_hold",
       error: "Payout is on hold while a support case is under review",
     };
+  }
+
+  const taxBlock = paymentTaxBlocksPayout(payment);
+  if (taxBlock.blocked) {
+    console.warn("[bookings/complete] payout blocked for tax status", {
+      bookingId,
+      tax_behavior: payment.tax_behavior,
+      tax_status: payment.tax_status,
+      reason: taxBlock.reason,
+    });
+    await markBookingPaymentTransferFailed(admin, bookingId, taxBlock.reason);
+    return { ok: false, code: "tax_not_ready", error: taxBlock.reason };
   }
 
   if (!payment.stripe_charge_id) {

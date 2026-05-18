@@ -36,8 +36,16 @@ export const bookingPaymentRefundStatusSchema = z.enum([
 ]);
 export type BookingPaymentRefundStatus = z.infer<typeof bookingPaymentRefundStatusSchema>;
 
-export const bookingPaymentTaxBehaviorSchema = z.literal("not_collected");
+export const bookingPaymentTaxBehaviorSchema = z.enum(["not_collected", "stripe_tax_inclusive"]);
 export type BookingPaymentTaxBehavior = z.infer<typeof bookingPaymentTaxBehaviorSchema>;
+
+export const bookingPaymentTaxStatusSchema = z.enum([
+  "not_collected",
+  "pending",
+  "calculated",
+  "failed",
+]);
+export type BookingPaymentTaxStatus = z.infer<typeof bookingPaymentTaxStatusSchema>;
 
 export const bookingPaymentRowSchema = z.object({
   id: z.string().uuid(),
@@ -74,6 +82,7 @@ export const bookingPaymentRowSchema = z.object({
   receipt_issued_at: z.string().nullable().optional(),
   receipt_email_sent_at: z.string().nullable().optional(),
   tax_behavior: bookingPaymentTaxBehaviorSchema.default("not_collected"),
+  tax_status: bookingPaymentTaxStatusSchema.default("not_collected"),
   tax_total_cents: z.number().int().nonnegative().default(0),
   gst_cents: z.number().int().nonnegative().default(0),
   qst_cents: z.number().int().nonnegative().default(0),

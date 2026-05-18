@@ -7,6 +7,11 @@ import { isBookingAtLeast24hAhead } from "@/lib/bookingCancellation";
 import { transferGroupForBooking } from "@/lib/payments/amounts";
 import { calculateBookingAmounts } from "@/lib/payments/commission";
 import { upsertUnpaidBookingPayment } from "@/lib/payments/ledger";
+import {
+  buildStripeTaxCheckoutParams,
+  defaultTaxBehaviorForCheckout,
+  defaultTaxStatusForCheckout,
+} from "@/lib/payments/tax";
 import { validateJsonBody } from "@/lib/validation/api";
 import { stripeCheckoutPostSchema } from "@/lib/validation/schemas";
 import { SITE_URL } from "@/lib/seo/site";
@@ -291,6 +296,9 @@ export async function POST(req: Request) {
       annualVolumeCents = Math.round(Math.max(0, Number(profile?.loyalty_annual_volume ?? 0)) * 100);
     }
 
+    const taxParams = buildStripeTaxCheckoutParams();
+    const taxBehavior = defaultTaxBehaviorForCheckout();
+    const taxStatus = defaultTaxStatusForCheckout();
     const taxTotalCents = 0;
     const subtotalCents = unitAmountCents;
     const amounts = calculateBookingAmounts({
@@ -301,6 +309,9 @@ export async function POST(req: Request) {
       annualVolumeCents,
       loyaltyTier,
     });
+    const checkoutAmountCents = unitAmountCents;
+    const ledgerPlatformFeeCents = taxParams.enabled ? 0 : amounts.platformFeeCents;
+    const ledgerTeacherNetCents = taxParams.enabled ? 0 : amounts.teacherNetCents;
     const transferGroup = transferGroupForBooking(bookingId);
     console.log(
       "[stripe/checkout] commissionRate:",
@@ -308,71 +319,65 @@ export async function POST(req: Request) {
       "subtotalCents:",
       amounts.subtotalCents,
       "platformFeeCents:",
-      amounts.platformFeeCents,
+      ledgerPlatformFeeCents,
+      "stripeTax:",
+      taxParams.enabled,
     );
+
+    const sessionMetadata: Record<string, string> = {
+      booking_id: bookingId,
+      teacher_id: booking.teacher_id,
+      student_id: booking.student_id,
+      lesson_type: lessonType,
+      learner_profile_id: b.learner_profile_id ?? "",
+      teaching_mode: teachingMode,
+      student_address: studentAddress,
+      credits_applied: validatedCredits > 0 ? String(validatedCredits) : "0",
+      transfer_group: transferGroup,
+      subtotal_cents: String(subtotalCents),
+      amount_cents: String(checkoutAmountCents),
+      platform_fee_cents: String(ledgerPlatformFeeCents),
+      teacher_net_cents: String(ledgerTeacherNetCents),
+      commission_rate: String(amounts.feeRate),
+      commission_basis_points: String(amounts.feeBasisPoints),
+      loyalty_tier: amounts.loyaltyTier,
+      tax_behavior: taxBehavior,
+      tax_total_cents: String(taxTotalCents),
+      ...taxParams.metadata,
+    };
+
+    const paymentIntentMetadata = { ...sessionMetadata };
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       success_url: successUrl,
       cancel_url: cancelUrl,
       client_reference_id: bookingId,
-      metadata: {
-        booking_id: bookingId,
-        teacher_id: booking.teacher_id,
-        student_id: booking.student_id,
-        lesson_type: lessonType,
-        learner_profile_id: b.learner_profile_id ?? "",
-        teaching_mode: teachingMode,
-        student_address: studentAddress,
-        credits_applied: validatedCredits > 0 ? String(validatedCredits) : "0",
-        transfer_group: transferGroup,
-        subtotal_cents: String(amounts.subtotalCents),
-        amount_cents: String(amounts.amountCents),
-        platform_fee_cents: String(amounts.platformFeeCents),
-        teacher_net_cents: String(amounts.teacherNetCents),
-        commission_rate: String(amounts.feeRate),
-        commission_basis_points: String(amounts.feeBasisPoints),
-        loyalty_tier: amounts.loyaltyTier,
-        tax_behavior: "not_collected",
-        tax_total_cents: String(amounts.taxTotalCents),
-      },
+      ...(taxParams.automaticTax ? { automatic_tax: taxParams.automaticTax } : {}),
+      ...(taxParams.billingAddressCollection
+        ? { billing_address_collection: taxParams.billingAddressCollection }
+        : {}),
+      metadata: sessionMetadata,
       line_items: [
         {
           quantity: 1,
           price_data: {
             currency: "cad",
-            unit_amount: amounts.amountCents,
+            unit_amount: checkoutAmountCents,
+            ...(taxParams.lineItemTaxBehavior ? { tax_behavior: taxParams.lineItemTaxBehavior } : {}),
             product_data: {
               name: `${lessonLabel} avec ${typed.name} (${modeLabel})`,
               description:
                 [bSlotDate, bTimeSlot].filter(Boolean).join(" · ") ||
                 [booking.date, booking.time].filter(Boolean).join(" · ") ||
                 undefined,
+              ...(taxParams.taxCode ? { tax_code: taxParams.taxCode } : {}),
             },
           },
         },
       ],
       payment_intent_data: {
-        metadata: {
-          booking_id: bookingId,
-          teacher_id: booking.teacher_id,
-          student_id: booking.student_id,
-          lesson_type: lessonType,
-          learner_profile_id: b.learner_profile_id ?? "",
-          teaching_mode: teachingMode,
-          student_address: studentAddress,
-          credits_applied: validatedCredits > 0 ? String(validatedCredits) : "0",
-          transfer_group: transferGroup,
-          subtotal_cents: String(amounts.subtotalCents),
-          amount_cents: String(amounts.amountCents),
-          platform_fee_cents: String(amounts.platformFeeCents),
-          teacher_net_cents: String(amounts.teacherNetCents),
-          commission_rate: String(amounts.feeRate),
-          commission_basis_points: String(amounts.feeBasisPoints),
-          loyalty_tier: amounts.loyaltyTier,
-          tax_behavior: "not_collected",
-          tax_total_cents: String(amounts.taxTotalCents),
-        },
+        metadata: paymentIntentMetadata,
         transfer_group: transferGroup,
       },
     });
@@ -387,24 +392,28 @@ export async function POST(req: Request) {
         teacherId: booking.teacher_id as string,
         studentId: booking.student_id as string,
         stripeCheckoutSessionId: session.id,
-        amountCents: amounts.amountCents,
-        subtotalCents: amounts.subtotalCents,
-        taxTotalCents: amounts.taxTotalCents,
-        platformFeeCents: amounts.platformFeeCents,
-        teacherNetCents: amounts.teacherNetCents,
+        amountCents: checkoutAmountCents,
+        subtotalCents,
+        taxTotalCents,
+        platformFeeCents: ledgerPlatformFeeCents,
+        teacherNetCents: ledgerTeacherNetCents,
+        taxBehavior,
+        taxStatus,
         currency: "cad",
         transferGroup,
         metadata: {
           lesson_type: lessonType,
           teaching_mode: teachingMode,
           credits_applied: validatedCredits,
-          subtotal_cents: amounts.subtotalCents,
+          subtotal_cents: subtotalCents,
           commission_rate: amounts.feeRate,
           commission_basis_points: amounts.feeBasisPoints,
           loyalty_tier: amounts.loyaltyTier,
           teacher_plan: amounts.teacherPlan,
-          tax_behavior: "not_collected",
-          tax_total_cents: amounts.taxTotalCents,
+          tax_behavior: taxBehavior,
+          tax_status: taxStatus,
+          tax_total_cents: taxTotalCents,
+          ...taxParams.metadata,
         },
       });
     } catch (ledgerErr) {

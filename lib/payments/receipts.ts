@@ -6,10 +6,12 @@ import { resolveEmailLocaleForUser, type EmailLocale } from "@/lib/email/locale"
 import { formatEmailLessonScheduleLabels } from "@/lib/email/formatSchedule";
 import { formatCurrencyCents, formatDate } from "@/lib/formatters";
 import { localeToBcp47 } from "@/lib/i18n/types";
+import { canIssueLessonPaymentReceipt, isCalculatedStripeTaxPayment } from "@/lib/payments/tax";
+import type { BookingPaymentTaxBehavior } from "@/lib/payments/types";
 
 type JsonRecord = Record<string, unknown>;
 
-export type LessonReceiptTaxBehavior = "not_collected";
+export type LessonReceiptTaxBehavior = BookingPaymentTaxBehavior;
 
 export type LessonPaymentReceiptResult =
   | {
@@ -19,7 +21,10 @@ export type LessonPaymentReceiptResult =
       emailSent: boolean;
       taxBehavior: LessonReceiptTaxBehavior;
     }
-  | { ok: false; reason: "payment_not_found" | "payment_not_paid" | "booking_not_found" };
+  | {
+      ok: false;
+      reason: "payment_not_found" | "payment_not_paid" | "booking_not_found" | "tax_not_calculated";
+    };
 
 type StripeReceiptInfo = {
   receiptUrl: string | null;
@@ -46,6 +51,8 @@ type BookingPaymentReceiptRow = {
   receipt_issued_at?: string | null;
   receipt_email_sent_at?: string | null;
   tax_behavior?: string | null;
+  tax_status?: string | null;
+  subtotal_cents?: number | null;
   tax_total_cents?: number | null;
   gst_cents?: number | null;
   qst_cents?: number | null;
@@ -108,12 +115,23 @@ export function generateLessonReceiptNumber(paymentId: string, issuedAt: string 
 export function buildLessonReceiptTaxSnapshot(issuedAt: string): JsonRecord {
   return {
     tax_behavior: "not_collected",
+    tax_status: "not_collected",
     tax_total_cents: 0,
     gst_cents: 0,
     qst_cents: 0,
     sales_tax_collected: false,
     issued_at: issuedAt,
-    note: "Sales tax not calculated or collected in Phase 1 receipt groundwork.",
+    note: "Sales tax not collected at this time.",
+  };
+}
+
+function mergeReceiptIssuedIntoTaxSnapshot(
+  existing: JsonRecord | null | undefined,
+  issuedAt: string,
+): JsonRecord {
+  return {
+    ...(existing ?? {}),
+    receipt_issued_at: issuedAt,
   };
 }
 
@@ -154,7 +172,7 @@ export async function issueLessonPaymentReceipt(
   const { data: paymentData, error: paymentErr } = await admin
     .from("booking_payments")
     .select(
-      "id, booking_id, teacher_id, student_id, amount_cents, currency, payment_status, paid_at, stripe_charge_id, stripe_receipt_url, stripe_invoice_url, receipt_available_at, receipt_number, receipt_issued_at, receipt_email_sent_at, tax_behavior, tax_total_cents, gst_cents, qst_cents, buyer_country_code, buyer_region, tax_snapshot",
+      "id, booking_id, teacher_id, student_id, amount_cents, subtotal_cents, currency, payment_status, paid_at, stripe_charge_id, stripe_receipt_url, stripe_invoice_url, receipt_available_at, receipt_number, receipt_issued_at, receipt_email_sent_at, tax_behavior, tax_status, tax_total_cents, gst_cents, qst_cents, buyer_country_code, buyer_region, tax_snapshot",
     )
     .eq("booking_id", params.bookingId)
     .maybeSingle();
@@ -166,6 +184,13 @@ export async function issueLessonPaymentReceipt(
   const payment = paymentData as BookingPaymentReceiptRow | null;
   if (!payment) return { ok: false, reason: "payment_not_found" };
   if (payment.payment_status !== "paid") return { ok: false, reason: "payment_not_paid" };
+  if (!canIssueLessonPaymentReceipt(payment)) {
+    return { ok: false, reason: "tax_not_calculated" };
+  }
+
+  const taxBehavior: LessonReceiptTaxBehavior = isCalculatedStripeTaxPayment(payment)
+    ? "stripe_tax_inclusive"
+    : "not_collected";
 
   const [{ data: bookingData, error: bookingErr }, { data: teacherData }, { data: studentData }] = await Promise.all([
     admin
@@ -209,13 +234,19 @@ export async function issueLessonPaymentReceipt(
   }
 
   const update: Record<string, unknown> = {
-    tax_behavior: "not_collected",
-    tax_total_cents: 0,
-    gst_cents: 0,
-    qst_cents: 0,
-    tax_snapshot: buildLessonReceiptTaxSnapshot(issuedAt),
     updated_at: now,
   };
+
+  if (isCalculatedStripeTaxPayment(payment)) {
+    update.tax_snapshot = mergeReceiptIssuedIntoTaxSnapshot(payment.tax_snapshot, issuedAt);
+  } else {
+    update.tax_behavior = "not_collected";
+    update.tax_status = "not_collected";
+    update.tax_total_cents = 0;
+    update.gst_cents = 0;
+    update.qst_cents = 0;
+    update.tax_snapshot = buildLessonReceiptTaxSnapshot(issuedAt);
+  }
 
   if (shouldSet(payment.receipt_number, receiptNumber)) update.receipt_number = receiptNumber;
   if (shouldSet(payment.receipt_issued_at, issuedAt)) update.receipt_issued_at = issuedAt;
@@ -244,6 +275,8 @@ export async function issueLessonPaymentReceipt(
   if (params.sendEmail !== false && student?.email && !payment.receipt_email_sent_at) {
     const locale = await resolveEmailLocaleForUser(admin, payment.student_id);
     const bcp47 = localeToBcp47(locale);
+    const currency = (payment.currency ?? "cad").toUpperCase();
+    const amountCents = Number(payment.amount_cents ?? 0);
     emailSent = await sendLessonPaymentReceipt({
       email: student.email,
       studentName: student.name?.trim() || "Student",
@@ -251,10 +284,23 @@ export async function issueLessonPaymentReceipt(
       paymentDate: formatDate(payment.paid_at ?? issuedAt, bcp47),
       lessonDescription: lessonDescription(booking, teacher, locale),
       teacherName: teacher?.name?.trim() || "Teacher",
-      amountPaid: formatCurrencyCents(Number(payment.amount_cents ?? 0), (payment.currency ?? "cad").toUpperCase(), bcp47),
+      amountPaid: formatCurrencyCents(amountCents, currency, bcp47),
       currency: payment.currency ?? "cad",
       stripeReceiptUrl: stripeInfo.receiptUrl,
       locale,
+      taxBehavior,
+      ...(taxBehavior === "stripe_tax_inclusive"
+        ? {
+            subtotalBeforeTax: formatCurrencyCents(
+              Number(payment.subtotal_cents ?? amountCents),
+              currency,
+              bcp47,
+            ),
+            gstAmount: formatCurrencyCents(Number(payment.gst_cents ?? 0), currency, bcp47),
+            qstAmount: formatCurrencyCents(Number(payment.qst_cents ?? 0), currency, bcp47),
+            taxTotalAmount: formatCurrencyCents(Number(payment.tax_total_cents ?? 0), currency, bcp47),
+          }
+        : {}),
     });
 
     if (emailSent) {
@@ -274,6 +320,6 @@ export async function issueLessonPaymentReceipt(
     receiptNumber,
     stripeReceiptUrl: stripeInfo.receiptUrl ?? null,
     emailSent,
-    taxBehavior: "not_collected",
+    taxBehavior,
   };
 }

@@ -124,8 +124,13 @@ type LessonPaymentReceiptCopy = {
     amountPaid: string;
     currency: string;
     tax: string;
+    subtotalBeforeTax: string;
+    gst: string;
+    qst: string;
+    taxTotal: string;
   };
   taxLine: string;
+  taxInclusiveNote: string;
   stripeReceipt: string;
   cta: string;
   thanks: string;
@@ -248,11 +253,17 @@ const BOOKING_EMAIL_COPY: Record<EmailLocale, BookingEmailCopy> = {
         paymentDate: "Date de paiement",
         lesson: "Cours",
         teacher: "Professeur",
-        amountPaid: "Montant payé",
+        amountPaid: "Total payé",
         currency: "Devise",
         tax: "Taxes",
+        subtotalBeforeTax: "Sous-total avant taxes",
+        gst: "TPS / GST",
+        qst: "TVQ / QST",
+        taxTotal: "Taxes incluses",
       },
       taxLine: "Taxes de vente non perçues pour le moment.",
+      taxInclusiveNote:
+        "Les taxes applicables sont incluses dans le total payé. Ce reçu reprend la ventilation calculée par Stripe au moment du paiement.",
       stripeReceipt: "Reçu Stripe",
       cta: "Ouvrir le reçu Stripe",
       thanks: "Merci de faire confiance à Pratiqo inc.",
@@ -365,11 +376,17 @@ const BOOKING_EMAIL_COPY: Record<EmailLocale, BookingEmailCopy> = {
         paymentDate: "Payment date",
         lesson: "Lesson",
         teacher: "Teacher",
-        amountPaid: "Amount paid",
+        amountPaid: "Total paid",
         currency: "Currency",
         tax: "Tax",
+        subtotalBeforeTax: "Subtotal before tax",
+        gst: "GST",
+        qst: "QST",
+        taxTotal: "Tax included",
       },
       taxLine: "Sales tax not collected at this time.",
+      taxInclusiveNote:
+        "Applicable taxes are included in the total paid. This receipt reflects the breakdown calculated by Stripe at checkout.",
       stripeReceipt: "Stripe receipt",
       cta: "Open Stripe receipt",
       thanks: "Thank you for trusting Pratiqo inc.",
@@ -482,11 +499,17 @@ const BOOKING_EMAIL_COPY: Record<EmailLocale, BookingEmailCopy> = {
         paymentDate: "Fecha de pago",
         lesson: "Clase",
         teacher: "Profesor",
-        amountPaid: "Monto pagado",
+        amountPaid: "Total pagado",
         currency: "Moneda",
         tax: "Impuestos",
+        subtotalBeforeTax: "Subtotal antes de impuestos",
+        gst: "GST / IVA federal",
+        qst: "QST / impuesto provincial",
+        taxTotal: "Impuestos incluidos",
       },
       taxLine: "Impuestos sobre ventas no cobrados por el momento.",
+      taxInclusiveNote:
+        "Los impuestos aplicables están incluidos en el total pagado. Este recibo refleja el desglose calculado por Stripe al pagar.",
       stripeReceipt: "Recibo de Stripe",
       cta: "Abrir recibo de Stripe",
       thanks: "Gracias por confiar en Pratiqo inc.",

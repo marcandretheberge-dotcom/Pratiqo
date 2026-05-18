@@ -2,6 +2,7 @@ import Stripe from "stripe";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { stripe } from "@/lib/stripe";
 import { transferGroupForBooking } from "@/lib/payments/amounts";
+import type { BookingPaymentTaxBehavior, BookingPaymentTaxStatus } from "@/lib/payments/types";
 
 type JsonRecord = Record<string, unknown>;
 
@@ -17,6 +18,11 @@ export type BookingPaymentDraft = {
   currency?: string | null;
   stripeCheckoutSessionId?: string | null;
   transferGroup?: string | null;
+  taxBehavior?: BookingPaymentTaxBehavior;
+  taxStatus?: BookingPaymentTaxStatus;
+  taxSnapshot?: JsonRecord;
+  gstCents?: number;
+  qstCents?: number;
   metadata?: JsonRecord;
 };
 
@@ -38,6 +44,8 @@ export type BookingPaymentRowForTransfer = {
   currency: string;
   payment_status: string;
   transfer_status: string;
+  tax_behavior?: string | null;
+  tax_status?: string | null;
 };
 
 export type BookingPaymentRiskRow = BookingPaymentRowForTransfer & {
@@ -111,6 +119,11 @@ export async function upsertUnpaidBookingPayment(
       amount_cents: safeCents(draft.amountCents),
       subtotal_cents: safeCents(draft.subtotalCents),
       tax_total_cents: safeCents(draft.taxTotalCents ?? 0),
+      tax_behavior: draft.taxBehavior ?? "not_collected",
+      tax_status: draft.taxStatus ?? "not_collected",
+      tax_snapshot: draft.taxSnapshot ?? {},
+      gst_cents: safeCents(draft.gstCents ?? 0),
+      qst_cents: safeCents(draft.qstCents ?? 0),
       platform_fee_cents: safeCents(draft.platformFeeCents),
       teacher_net_cents: safeCents(draft.teacherNetCents),
       currency: normalizeCurrency(draft.currency),
@@ -170,6 +183,11 @@ export async function upsertPaidBookingPayment(
       amount_cents: safeCents(update.amountCents),
       subtotal_cents: safeCents(update.subtotalCents),
       tax_total_cents: safeCents(update.taxTotalCents ?? 0),
+      tax_behavior: update.taxBehavior ?? "not_collected",
+      tax_status: update.taxStatus ?? "not_collected",
+      tax_snapshot: update.taxSnapshot ?? {},
+      gst_cents: safeCents(update.gstCents ?? 0),
+      qst_cents: safeCents(update.qstCents ?? 0),
       platform_fee_cents: safeCents(update.platformFeeCents),
       teacher_net_cents: safeCents(update.teacherNetCents),
       currency: normalizeCurrency(update.currency),
@@ -197,7 +215,7 @@ export async function getBookingPaymentForTransfer(
   const { data, error } = await admin
     .from("booking_payments")
     .select(
-      "id, booking_id, stripe_payment_intent_id, stripe_charge_id, stripe_transfer_id, amount_cents, platform_fee_cents, teacher_net_cents, currency, payment_status, transfer_status",
+      "id, booking_id, stripe_payment_intent_id, stripe_charge_id, stripe_transfer_id, amount_cents, platform_fee_cents, teacher_net_cents, currency, payment_status, transfer_status, tax_behavior, tax_status",
     )
     .eq("booking_id", bookingId)
     .maybeSingle();

@@ -209,6 +209,121 @@ test("issueLessonPaymentReceipt persists Stripe receipt URL and is idempotent", 
   assert.equal(resolverCalls, 1);
 });
 
+test("tax-inclusive receipt preserves calculated tax fields and email shows breakdown", async () => {
+  const admin = new FakeAdmin();
+  admin.payments.set("bk_tax", {
+    id: "pay_tax_1",
+    booking_id: "bk_tax",
+    teacher_id: "teacher_1",
+    student_id: "student_1",
+    amount_cents: 2300,
+    subtotal_cents: 2000,
+    currency: "cad",
+    payment_status: "paid",
+    paid_at: "2026-05-18T10:00:00.000Z",
+    stripe_charge_id: "ch_tax",
+    stripe_receipt_url: "https://pay.stripe.com/receipts/tax",
+    receipt_number: "PRQ-2026-TAX",
+    receipt_issued_at: "2026-05-18T10:00:00.000Z",
+    receipt_email_sent_at: null,
+    tax_behavior: "stripe_tax_inclusive",
+    tax_status: "calculated",
+    tax_total_cents: 300,
+    gst_cents: 100,
+    qst_cents: 200,
+    tax_snapshot: { source: "checkout.session.completed", amount_tax: 300 },
+  });
+  admin.bookings.set("bk_tax", {
+    id: "bk_tax",
+    teacher_id: "teacher_1",
+    student_id: "student_1",
+    slot_date: "2026-05-20",
+    time_slot: "18:00",
+    duration_minutes: 60,
+    teaching_mode: "online",
+  });
+  admin.teachers.set("teacher_1", { id: "teacher_1", name: "Ada", discipline: "Piano" });
+  admin.profiles.set("student_1", {
+    id: "student_1",
+    name: "Sam",
+    email: "sam@example.com",
+    country_code: "CA",
+    region: "QC",
+  });
+
+  const result = await issueLessonPaymentReceipt(admin as unknown as SupabaseClient, {
+    bookingId: "bk_tax",
+    sendEmail: false,
+  });
+
+  const row = admin.payments.get("bk_tax")!;
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+  assert.equal(result.taxBehavior, "stripe_tax_inclusive");
+  assert.equal(row.tax_behavior, "stripe_tax_inclusive");
+  assert.equal(row.tax_status, "calculated");
+  assert.equal(row.tax_total_cents, 300);
+  assert.equal(row.gst_cents, 100);
+  assert.equal(row.qst_cents, 200);
+  assert.equal((row.tax_snapshot as { amount_tax?: number }).amount_tax, 300);
+
+  const email = buildLessonPaymentReceiptEmail({
+    email: "sam@example.com",
+    studentName: "Sam",
+    receiptNumber: "PRQ-2026-TAX",
+    paymentDate: "May 18, 2026",
+    lessonDescription: "Piano",
+    teacherName: "Ada",
+    amountPaid: "$23.00",
+    currency: "CAD",
+    locale: "en",
+    taxBehavior: "stripe_tax_inclusive",
+    subtotalBeforeTax: "$20.00",
+    gstAmount: "$1.00",
+    qstAmount: "$2.00",
+    taxTotalAmount: "$3.00",
+  });
+  assert.match(email.html, /Subtotal before tax/);
+  assert.match(email.html, /Tax included/);
+  assert.doesNotMatch(email.html, /Sales tax not collected/);
+});
+
+test("tax-inclusive receipt is skipped while tax_status is pending", async () => {
+  const admin = new FakeAdmin();
+  admin.payments.set("bk_pending", {
+    id: "pay_pending",
+    booking_id: "bk_pending",
+    teacher_id: "teacher_1",
+    student_id: "student_1",
+    amount_cents: 2300,
+    currency: "cad",
+    payment_status: "paid",
+    paid_at: "2026-05-18T10:00:00.000Z",
+    tax_behavior: "stripe_tax_inclusive",
+    tax_status: "pending",
+    tax_total_cents: 0,
+  });
+  admin.bookings.set("bk_pending", {
+    id: "bk_pending",
+    teacher_id: "teacher_1",
+    student_id: "student_1",
+    slot_date: "2026-05-20",
+    time_slot: "18:00",
+    duration_minutes: 60,
+    teaching_mode: "online",
+  });
+  admin.teachers.set("teacher_1", { id: "teacher_1", name: "Ada", discipline: "Piano" });
+  admin.profiles.set("student_1", { id: "student_1", name: "Sam", email: "sam@example.com" });
+
+  const result = await issueLessonPaymentReceipt(admin as unknown as SupabaseClient, {
+    bookingId: "bk_pending",
+    sendEmail: false,
+  });
+  assert.equal(result.ok, false);
+  if (result.ok) return;
+  assert.equal(result.reason, "tax_not_calculated");
+});
+
 test("receipt emails include localized no-tax-collected disclaimer", () => {
   const base = {
     email: "student@example.com",

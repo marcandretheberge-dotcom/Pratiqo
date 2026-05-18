@@ -16,12 +16,16 @@ import { EMAIL_FALLBACK_LOCALE, resolveEmailLocaleForUser } from "@/lib/email/lo
 import { formatEmailLessonScheduleLabels } from "@/lib/email/formatSchedule";
 import { formatEmailTeachingLocation } from "@/lib/email/messages/booking";
 import { syncTeacherConnectStatus } from "@/lib/payments/connect";
-import { calculateBookingAmounts } from "@/lib/payments/commission";
 import {
   chargeIdFromPaymentIntent,
   retrievePaymentIntentChargeId,
   upsertPaidBookingPayment,
 } from "@/lib/payments/ledger";
+import {
+  finalizeLessonPaymentLedger,
+  shouldDeferPaymentIntentLedgerFinalizationFromMetadata,
+  shouldFinalizeStripeTaxFromCheckoutSessionMetadata,
+} from "@/lib/payments/tax";
 import {
   handleStripeChargeDisputeCreated,
   handleStripeTransferFailed,
@@ -148,6 +152,9 @@ async function confirmBookingAndNotify(
     stripeChargeId?: string | null;
     amountCents?: number | null;
     currency?: string | null;
+    checkoutSession?: Stripe.Checkout.Session | null;
+    checkoutLineItems?: Stripe.LineItem[] | null;
+    deferPaymentLedger?: boolean;
   } = {},
 ) {
   const admin = getSupabaseAdmin();
@@ -257,79 +264,71 @@ async function confirmBookingAndNotify(
     teacherEmail = teacherProfile?.email ?? null;
   }
 
-  const amountFromMetadata = Number(piMetadata?.amount_cents ?? piMetadata?.payment_amount_cents ?? NaN);
-  const amountCents =
-    typeof opts.amountCents === "number" && Number.isFinite(opts.amountCents)
-      ? Math.max(0, Math.round(opts.amountCents))
-      : Number.isFinite(amountFromMetadata)
-        ? Math.max(0, Math.round(amountFromMetadata))
-        : Math.max(0, Math.round(Number((booking as { price?: number | string | null }).price ?? 0) * 100));
-  const taxTotalCents = Math.max(0, Math.round(Number(piMetadata?.tax_total_cents ?? 0)));
-  const subtotalFromMetadata = Number(piMetadata?.subtotal_cents ?? NaN);
-  const subtotalCents = Number.isFinite(subtotalFromMetadata)
-    ? Math.max(0, Math.round(subtotalFromMetadata))
-    : Math.max(0, amountCents - taxTotalCents);
-  const platformFeeFromMetadata = Number(piMetadata?.platform_fee_cents ?? NaN);
-  const teacherNetFromMetadata = Number(piMetadata?.teacher_net_cents ?? NaN);
-  let platformFeeCents: number;
-  let teacherNetCents: number;
-  if (Number.isFinite(platformFeeFromMetadata) && Number.isFinite(teacherNetFromMetadata)) {
-    platformFeeCents = Math.max(0, Math.round(platformFeeFromMetadata));
-    teacherNetCents = Math.max(0, Math.round(teacherNetFromMetadata));
-  } else {
-    const amounts = calculateBookingAmounts({
-      subtotalCents,
-      taxTotalCents,
+  const stripeChargeId = opts.stripeChargeId ?? (await retrievePaymentIntentChargeId(paymentIntentId).catch(() => null));
+
+  if (!opts.deferPaymentLedger) {
+    const ledger = finalizeLessonPaymentLedger({
+      checkoutSession: opts.checkoutSession ?? null,
+      lineItems: opts.checkoutLineItems ?? null,
+      piMetadata: piMetadata ?? null,
+      amountCentsFromStripe: opts.amountCents ?? null,
+      bookingPriceDollars: (booking as { price?: number | string | null }).price,
       teacherPlan: teacherProfile?.plan ?? "free",
-      bookingType: "individual",
       loyaltyTier: piMetadata?.loyalty_tier ?? teacherProfile?.loyalty_tier ?? null,
       annualVolumeCents: Math.round(Math.max(0, Number(teacherProfile?.loyalty_annual_volume ?? 0)) * 100),
     });
-    platformFeeCents = amounts.platformFeeCents;
-    teacherNetCents = amounts.teacherNetCents;
+
+    if (!ledger.ok) {
+      console.error("[stripe/webhook] lesson payment tax finalization failed:", ledger.reason);
+    }
+
+    try {
+      await upsertPaidBookingPayment(admin, {
+        bookingId,
+        teacherId: booking.teacher_id as string,
+        studentId: booking.student_id as string,
+        stripeCheckoutSessionId: opts.checkoutSessionId ?? null,
+        stripePaymentIntentId: paymentIntentId,
+        stripeChargeId,
+        amountCents: ledger.amountCents,
+        subtotalCents: ledger.subtotalCents,
+        taxTotalCents: ledger.taxTotalCents,
+        platformFeeCents: ledger.platformFeeCents,
+        teacherNetCents: ledger.teacherNetCents,
+        taxBehavior: ledger.taxBehavior,
+        taxStatus: ledger.taxStatus,
+        taxSnapshot: ledger.taxSnapshot,
+        gstCents: ledger.gstCents,
+        qstCents: ledger.qstCents,
+        currency: opts.currency ?? "cad",
+        transferGroup: piMetadata?.transfer_group ?? `booking_${bookingId}`,
+        metadata: {
+          ...(piMetadata ?? {}),
+          webhook_source: opts.checkoutSessionId ? "checkout.session.completed" : "payment_intent.succeeded",
+          tax_finalize_ok: String(ledger.ok),
+          ...(ledger.ok ? {} : { tax_finalize_error: ledger.reason }),
+        },
+      });
+    } catch (ledgerErr) {
+      console.error("[stripe/webhook] booking payment ledger upsert failed", ledgerErr);
+      return;
+    }
+
+    if (ledger.ok) {
+      try {
+        await issueLessonPaymentReceipt(admin, {
+          bookingId,
+          stripeChargeId,
+          sendEmail: true,
+        });
+      } catch (receiptErr) {
+        console.error("[stripe/webhook] lesson receipt issue failed", receiptErr);
+      }
+    }
   }
+
   const commissionRateFromMetadata = Number(piMetadata?.commission_rate ?? NaN);
-  const commissionRate = Number.isFinite(commissionRateFromMetadata)
-    ? commissionRateFromMetadata
-    : subtotalCents > 0
-      ? platformFeeCents / subtotalCents
-      : 0;
-  const stripeChargeId = opts.stripeChargeId ?? (await retrievePaymentIntentChargeId(paymentIntentId).catch(() => null));
-
-  try {
-    await upsertPaidBookingPayment(admin, {
-      bookingId,
-      teacherId: booking.teacher_id as string,
-      studentId: booking.student_id as string,
-      stripeCheckoutSessionId: opts.checkoutSessionId ?? null,
-      stripePaymentIntentId: paymentIntentId,
-      stripeChargeId,
-      amountCents,
-      subtotalCents,
-      taxTotalCents,
-      platformFeeCents,
-      teacherNetCents,
-      currency: opts.currency ?? "cad",
-      transferGroup: piMetadata?.transfer_group ?? `booking_${bookingId}`,
-      metadata: {
-        ...(piMetadata ?? {}),
-        webhook_source: opts.checkoutSessionId ? "checkout.session.completed" : "payment_intent.succeeded",
-      },
-    });
-  } catch (ledgerErr) {
-    console.error("[stripe/webhook] booking payment ledger upsert failed", ledgerErr);
-    return;
-  }
-
-  try {
-    await issueLessonPaymentReceipt(admin, {
-      bookingId,
-      stripeChargeId,
-      sendEmail: true,
-    });
-  } catch (receiptErr) {
-    console.error("[stripe/webhook] lesson receipt issue failed", receiptErr);
-  }
+  const commissionRate = Number.isFinite(commissionRateFromMetadata) ? commissionRateFromMetadata : 0.1;
 
   if (!shouldSendConfirmation) {
     return;
@@ -622,6 +621,7 @@ export async function POST(req: Request) {
             stripeChargeId: chargeIdFromPaymentIntent(pi),
             amountCents: pi.amount_received || pi.amount,
             currency: pi.currency,
+            deferPaymentLedger: shouldDeferPaymentIntentLedgerFinalizationFromMetadata(pi.metadata),
           });
         }
       }
@@ -644,11 +644,23 @@ export async function POST(req: Request) {
         const bookingId = sess.metadata?.booking_id;
         if (bookingId && piId) {
           const stripeChargeId = await retrievePaymentIntentChargeId(piId).catch(() => null);
+          let checkoutSession: Stripe.Checkout.Session = sess;
+          let checkoutLineItems: Stripe.LineItem[] | undefined;
+          if (shouldFinalizeStripeTaxFromCheckoutSessionMetadata(md ?? sess.metadata)) {
+            const expanded = await stripe.checkout.sessions.retrieve(sess.id, {
+              expand: ["line_items.data.taxes", "line_items.data.price.product"],
+            });
+            checkoutSession = expanded;
+            checkoutLineItems = expanded.line_items?.data ?? undefined;
+          }
           await confirmBookingAndNotify(bookingId, piId, md, {
             checkoutSessionId: sess.id,
             stripeChargeId,
             amountCents: sess.amount_total ?? null,
             currency: sess.currency,
+            checkoutSession,
+            checkoutLineItems,
+            deferPaymentLedger: false,
           });
         }
       }
