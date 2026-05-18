@@ -176,8 +176,15 @@ async function verifyAndConfirm(sessionId: string, locale: Locale): Promise<Veri
   if (paymentIntentId) {
     const metadata = (paymentIntent?.metadata ?? session.metadata ?? {}) as Record<string, string>;
     const amountCents = session.amount_total ?? Number(metadata.amount_cents ?? 0);
+    const taxTotalCents = Math.max(0, Number(metadata.tax_total_cents ?? 0));
+    const subtotalFromMetadata = Number(metadata.subtotal_cents ?? NaN);
+    const subtotalCents = Number.isFinite(subtotalFromMetadata)
+      ? Math.max(0, Math.round(subtotalFromMetadata))
+      : Math.max(0, amountCents - taxTotalCents);
     const platformFeeCents = Number(metadata.platform_fee_cents ?? 0);
-    const teacherNetCents = Number(metadata.teacher_net_cents ?? Math.max(0, amountCents - platformFeeCents));
+    const teacherNetCents = Number(
+      metadata.teacher_net_cents ?? Math.max(0, subtotalCents - platformFeeCents),
+    );
     const stripeChargeId = (paymentIntent ? chargeIdFromPaymentIntent(paymentIntent) : null) ??
       (await retrievePaymentIntentChargeId(paymentIntentId).catch(() => null));
 
@@ -189,6 +196,8 @@ async function verifyAndConfirm(sessionId: string, locale: Locale): Promise<Veri
       stripePaymentIntentId: paymentIntentId,
       stripeChargeId,
       amountCents,
+      subtotalCents,
+      taxTotalCents,
       platformFeeCents,
       teacherNetCents,
       currency: session.currency ?? "cad",

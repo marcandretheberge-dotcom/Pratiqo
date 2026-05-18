@@ -16,7 +16,7 @@ import { EMAIL_FALLBACK_LOCALE, resolveEmailLocaleForUser } from "@/lib/email/lo
 import { formatEmailLessonScheduleLabels } from "@/lib/email/formatSchedule";
 import { formatEmailTeachingLocation } from "@/lib/email/messages/booking";
 import { syncTeacherConnectStatus } from "@/lib/payments/connect";
-import { getPlatformFeeRate } from "@/lib/payments/amounts";
+import { calculateBookingAmounts } from "@/lib/payments/commission";
 import {
   chargeIdFromPaymentIntent,
   retrievePaymentIntentChargeId,
@@ -240,33 +240,60 @@ async function confirmBookingAndNotify(
 
   // Fetch teacher email and commission plan
   let teacherEmail: string | null = null;
-  let commissionRate = 0.1;
+  type TeacherCommissionProfile = {
+    email?: string | null;
+    plan?: string | null;
+    loyalty_tier?: string | null;
+    loyalty_annual_volume?: number | string | null;
+  };
+  let teacherProfile: TeacherCommissionProfile | null = null;
   if (teacher?.user_id) {
     const { data: teacherProf } = await admin
       .from("profiles")
-      .select("email, plan")
+      .select("email, plan, loyalty_tier, loyalty_annual_volume")
       .eq("id", teacher.user_id as string)
       .maybeSingle();
-    teacherEmail = (teacherProf as { email?: string | null } | null)?.email ?? null;
-    const plan = (teacherProf as { plan?: string | null } | null)?.plan ?? "free";
-    commissionRate = getPlatformFeeRate(plan, "individual");
+    teacherProfile = (teacherProf as TeacherCommissionProfile | null) ?? null;
+    teacherEmail = teacherProfile?.email ?? null;
   }
 
   const amountFromMetadata = Number(piMetadata?.amount_cents ?? piMetadata?.payment_amount_cents ?? NaN);
   const amountCents =
     typeof opts.amountCents === "number" && Number.isFinite(opts.amountCents)
-      ? opts.amountCents
+      ? Math.max(0, Math.round(opts.amountCents))
       : Number.isFinite(amountFromMetadata)
-        ? amountFromMetadata
+        ? Math.max(0, Math.round(amountFromMetadata))
         : Math.max(0, Math.round(Number((booking as { price?: number | string | null }).price ?? 0) * 100));
+  const taxTotalCents = Math.max(0, Math.round(Number(piMetadata?.tax_total_cents ?? 0)));
+  const subtotalFromMetadata = Number(piMetadata?.subtotal_cents ?? NaN);
+  const subtotalCents = Number.isFinite(subtotalFromMetadata)
+    ? Math.max(0, Math.round(subtotalFromMetadata))
+    : Math.max(0, amountCents - taxTotalCents);
   const platformFeeFromMetadata = Number(piMetadata?.platform_fee_cents ?? NaN);
-  const platformFeeCents = Number.isFinite(platformFeeFromMetadata)
-    ? Math.max(0, Math.round(platformFeeFromMetadata))
-    : Math.max(0, Math.round(amountCents * commissionRate));
   const teacherNetFromMetadata = Number(piMetadata?.teacher_net_cents ?? NaN);
-  const teacherNetCents = Number.isFinite(teacherNetFromMetadata)
-    ? Math.max(0, Math.round(teacherNetFromMetadata))
-    : Math.max(0, amountCents - platformFeeCents);
+  let platformFeeCents: number;
+  let teacherNetCents: number;
+  if (Number.isFinite(platformFeeFromMetadata) && Number.isFinite(teacherNetFromMetadata)) {
+    platformFeeCents = Math.max(0, Math.round(platformFeeFromMetadata));
+    teacherNetCents = Math.max(0, Math.round(teacherNetFromMetadata));
+  } else {
+    const amounts = calculateBookingAmounts({
+      subtotalCents,
+      taxTotalCents,
+      teacherPlan: teacherProfile?.plan ?? "free",
+      bookingType: "individual",
+      loyaltyTier: piMetadata?.loyalty_tier ?? teacherProfile?.loyalty_tier ?? null,
+      annualVolumeCents: Math.round(Math.max(0, Number(teacherProfile?.loyalty_annual_volume ?? 0)) * 100),
+    });
+    platformFeeCents = amounts.platformFeeCents;
+    teacherNetCents = amounts.teacherNetCents;
+  }
+  const commissionRateFromMetadata = Number(piMetadata?.commission_rate ?? NaN);
+  const commissionRate = Number.isFinite(commissionRateFromMetadata)
+    ? commissionRateFromMetadata
+    : subtotalCents > 0
+      ? platformFeeCents / subtotalCents
+      : 0;
   const stripeChargeId = opts.stripeChargeId ?? (await retrievePaymentIntentChargeId(paymentIntentId).catch(() => null));
 
   try {
@@ -278,6 +305,8 @@ async function confirmBookingAndNotify(
       stripePaymentIntentId: paymentIntentId,
       stripeChargeId,
       amountCents,
+      subtotalCents,
+      taxTotalCents,
       platformFeeCents,
       teacherNetCents,
       currency: opts.currency ?? "cad",

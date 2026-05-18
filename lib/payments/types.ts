@@ -53,6 +53,7 @@ export const bookingPaymentRowSchema = z.object({
   stripe_transfer_reversal_id: z.string().nullable(),
   transfer_group: z.string().nullable(),
   amount_cents: z.number().int().nonnegative(),
+  subtotal_cents: z.number().int().nonnegative().default(0),
   platform_fee_cents: z.number().int().nonnegative(),
   teacher_net_cents: z.number().int().nonnegative(),
   refunded_cents: z.number().int().nonnegative(),

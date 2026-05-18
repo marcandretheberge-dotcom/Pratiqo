@@ -10,6 +10,8 @@ export type BookingPaymentDraft = {
   teacherId: string;
   studentId: string;
   amountCents: number;
+  subtotalCents: number;
+  taxTotalCents?: number;
   platformFeeCents: number;
   teacherNetCents: number;
   currency?: string | null;
@@ -107,6 +109,8 @@ export async function upsertUnpaidBookingPayment(
       stripe_checkout_session_id: draft.stripeCheckoutSessionId ?? existingPayment?.stripe_checkout_session_id ?? null,
       transfer_group: draft.transferGroup ?? transferGroupForBooking(draft.bookingId),
       amount_cents: safeCents(draft.amountCents),
+      subtotal_cents: safeCents(draft.subtotalCents),
+      tax_total_cents: safeCents(draft.taxTotalCents ?? 0),
       platform_fee_cents: safeCents(draft.platformFeeCents),
       teacher_net_cents: safeCents(draft.teacherNetCents),
       currency: normalizeCurrency(draft.currency),
@@ -164,6 +168,8 @@ export async function upsertPaidBookingPayment(
       stripe_charge_id: update.stripeChargeId,
       transfer_group: update.transferGroup ?? transferGroupForBooking(update.bookingId),
       amount_cents: safeCents(update.amountCents),
+      subtotal_cents: safeCents(update.subtotalCents),
+      tax_total_cents: safeCents(update.taxTotalCents ?? 0),
       platform_fee_cents: safeCents(update.platformFeeCents),
       teacher_net_cents: safeCents(update.teacherNetCents),
       currency: normalizeCurrency(update.currency),

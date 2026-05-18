@@ -291,15 +291,25 @@ export async function POST(req: Request) {
       annualVolumeCents = Math.round(Math.max(0, Number(profile?.loyalty_annual_volume ?? 0)) * 100);
     }
 
+    const taxTotalCents = 0;
+    const subtotalCents = unitAmountCents;
     const amounts = calculateBookingAmounts({
-      priceCents: unitAmountCents,
+      subtotalCents,
+      taxTotalCents,
       teacherPlan,
       bookingType: "individual",
       annualVolumeCents,
       loyaltyTier,
     });
     const transferGroup = transferGroupForBooking(bookingId);
-    console.log("[stripe/checkout] commissionRate:", amounts.feeRate, "platformFeeCents:", amounts.platformFeeCents);
+    console.log(
+      "[stripe/checkout] commissionRate:",
+      amounts.feeRate,
+      "subtotalCents:",
+      amounts.subtotalCents,
+      "platformFeeCents:",
+      amounts.platformFeeCents,
+    );
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
@@ -316,20 +326,22 @@ export async function POST(req: Request) {
         student_address: studentAddress,
         credits_applied: validatedCredits > 0 ? String(validatedCredits) : "0",
         transfer_group: transferGroup,
+        subtotal_cents: String(amounts.subtotalCents),
+        amount_cents: String(amounts.amountCents),
         platform_fee_cents: String(amounts.platformFeeCents),
         teacher_net_cents: String(amounts.teacherNetCents),
         commission_rate: String(amounts.feeRate),
         commission_basis_points: String(amounts.feeBasisPoints),
         loyalty_tier: amounts.loyaltyTier,
         tax_behavior: "not_collected",
-        tax_total_cents: "0",
+        tax_total_cents: String(amounts.taxTotalCents),
       },
       line_items: [
         {
           quantity: 1,
           price_data: {
             currency: "cad",
-            unit_amount: unitAmountCents,
+            unit_amount: amounts.amountCents,
             product_data: {
               name: `${lessonLabel} avec ${typed.name} (${modeLabel})`,
               description:
@@ -351,13 +363,15 @@ export async function POST(req: Request) {
           student_address: studentAddress,
           credits_applied: validatedCredits > 0 ? String(validatedCredits) : "0",
           transfer_group: transferGroup,
+          subtotal_cents: String(amounts.subtotalCents),
+          amount_cents: String(amounts.amountCents),
           platform_fee_cents: String(amounts.platformFeeCents),
           teacher_net_cents: String(amounts.teacherNetCents),
           commission_rate: String(amounts.feeRate),
           commission_basis_points: String(amounts.feeBasisPoints),
           loyalty_tier: amounts.loyaltyTier,
           tax_behavior: "not_collected",
-          tax_total_cents: "0",
+          tax_total_cents: String(amounts.taxTotalCents),
         },
         transfer_group: transferGroup,
       },
@@ -374,6 +388,8 @@ export async function POST(req: Request) {
         studentId: booking.student_id as string,
         stripeCheckoutSessionId: session.id,
         amountCents: amounts.amountCents,
+        subtotalCents: amounts.subtotalCents,
+        taxTotalCents: amounts.taxTotalCents,
         platformFeeCents: amounts.platformFeeCents,
         teacherNetCents: amounts.teacherNetCents,
         currency: "cad",
@@ -382,12 +398,13 @@ export async function POST(req: Request) {
           lesson_type: lessonType,
           teaching_mode: teachingMode,
           credits_applied: validatedCredits,
+          subtotal_cents: amounts.subtotalCents,
           commission_rate: amounts.feeRate,
           commission_basis_points: amounts.feeBasisPoints,
           loyalty_tier: amounts.loyaltyTier,
           teacher_plan: amounts.teacherPlan,
           tax_behavior: "not_collected",
-          tax_total_cents: 0,
+          tax_total_cents: amounts.taxTotalCents,
         },
       });
     } catch (ledgerErr) {
