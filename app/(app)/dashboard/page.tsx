@@ -23,6 +23,10 @@ export default function DashboardPage() {
   }, [shouldCheckTeacher, teacherChecked, teacherOk]);
 
   useEffect(() => {
+    if (role === "admin") {
+      router.replace("/admin");
+      return;
+    }
     if (role === "teacher") return;
     if (role === "student") return;
     // Unknown role: default to student interface.
@@ -58,6 +62,14 @@ export default function DashboardPage() {
     if (!shouldRedirectToOnboarding) return;
     router.replace("/onboarding/teacher");
   }, [shouldRedirectToOnboarding, router]);
+
+  if (role === "admin") {
+    return (
+      <div className="min-h-[40vh] flex items-center justify-center text-sm text-[var(--p-text-muted)]">
+        Chargement…
+      </div>
+    );
+  }
 
   if (role === "teacher") {
     if (!teacherChecked || shouldRedirectToOnboarding) {

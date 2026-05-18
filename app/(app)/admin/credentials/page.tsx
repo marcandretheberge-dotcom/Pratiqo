@@ -447,7 +447,7 @@ export default function AdminCredentialsPage() {
 
             <div className="text-center">
               <Link
-                href="/dashboard"
+                href="/admin"
                 className="text-sm font-semibold text-teal-700 underline-offset-2 hover:underline"
               >
                 ← Tableau de bord
