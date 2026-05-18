@@ -12,6 +12,8 @@ import { getTeacherOnboardingMissingFields, isTeacherProfileComplete } from "@/l
 import { parseGooglePlace } from "@/lib/googleAddressParser";
 import { blurCoordinates } from "@/lib/maps";
 import { TeacherPayoutPreview } from "@/components/teacher/TeacherPayoutPreview";
+import { MIN_LESSON_PRICE_DOLLARS } from "@/lib/pricing/constants";
+import { validateTeacherLessonOffers } from "@/lib/pricing/lessonOffer";
 
 type StepId = 1 | 2 | 3 | 4;
 type Category = "music" | "languages" | "academic" | "other";
@@ -256,6 +258,17 @@ export default function TeacherOnboardingPage() {
       setError(t("teacherOnboardingLegalRequired"));
       return;
     }
+    const hourlyNum = Number(pricePerLesson);
+    const homeOn = teachingMode === "at_home" || teachingMode === "hybrid";
+    const offerCheck = validateTeacherLessonOffers({
+      price_per_lesson: hourlyNum,
+      home_lesson_enabled: homeOn,
+      intro_session_enabled: false,
+    });
+    if (!offerCheck.ok) {
+      setError(`${t("pricingMinLessonPrice")} ${t("pricingMinLessonPriceSuggestion")}`);
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
@@ -334,7 +347,6 @@ export default function TeacherOnboardingPage() {
       updates.location = nextLocation;
 
       // Home lessons fields (optional columns exist in types).
-      const homeOn = teachingMode === "at_home" || teachingMode === "hybrid";
       updates.home_lesson_enabled = homeOn;
       if (homeOn) {
         const r = Number(homeRadiusKm);
@@ -351,6 +363,7 @@ export default function TeacherOnboardingPage() {
           monthly_subscription: null,
           is_verified: false,
           languages: [],
+          price_per_lesson: hourlyNum,
           image_url:
             existingTeacher?.image_url ??
             (typeof profile?.photo_url === "string" && profile.photo_url ? profile.photo_url : "https://picsum.photos/seed/teacher/400/400"),
@@ -361,6 +374,26 @@ export default function TeacherOnboardingPage() {
       } else {
         const { error: upErr } = await supabase.from("teachers").update(updates).eq("id", teacherId);
         if (upErr) throw upErr;
+      }
+
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const accessToken = session?.access_token;
+      if (!accessToken) {
+        throw new Error(t("anErrorOccurred"));
+      }
+      const pricingRes = await fetch("/api/teacher/pricing", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ price_per_lesson: hourlyNum }),
+      });
+      const pricingPayload = (await pricingRes.json().catch(() => ({}))) as { error?: string };
+      if (!pricingRes.ok) {
+        throw new Error(pricingPayload.error || t("anErrorOccurred"));
       }
 
       const { error: profileErr } = await supabase
@@ -652,11 +685,12 @@ export default function TeacherOnboardingPage() {
                       value={pricePerLesson}
                       onChange={(e) => setPricePerLesson(e.target.value)}
                       type="number"
-                      min={0}
+                      min={MIN_LESSON_PRICE_DOLLARS}
                       step="0.5"
                       className="mt-2 w-full h-12 rounded-2xl border border-[var(--p-border-light)] px-4 text-sm"
                       placeholder="50"
                     />
+                    <p className="mt-2 text-xs leading-relaxed text-[var(--p-text-subtle)]">{t("pricingMinLessonPrice")}</p>
                     <TeacherPayoutPreview
                       grossAmount={pricePerLesson}
                       currency={currency}

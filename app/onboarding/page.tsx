@@ -10,6 +10,7 @@ import { getSupabaseClient } from "../../lib/supabase";
 import { getEnabledDisciplines } from "../../lib/disciplines";
 import { useLocale } from "../../lib/locale-context";
 import { TeacherPayoutPreview } from "../../components/teacher/TeacherPayoutPreview";
+import { validateMinimumLessonPriceDollars } from "@/lib/pricing/validateMinimumLessonPrice";
 
 type Step = 1 | 2 | 3 | 4 | "done";
 type Mode = "person" | "online" | "both";
@@ -251,6 +252,14 @@ function OnboardingInner() {
 
   const saveAll = async () => {
     if (!user) return;
+    if (!validateMinimumLessonPriceDollars(hourlyRate).ok) {
+      setMessage(`${t("pricingMinLessonPrice")} ${t("pricingMinLessonPriceSuggestion")}`);
+      return;
+    }
+    if (homeEnabled && homePrice != null && !validateMinimumLessonPriceDollars(homePrice).ok) {
+      setMessage(`${t("pricingMinLessonPrice")} ${t("pricingMinLessonPriceSuggestion")}`);
+      return;
+    }
     setSaving(true);
     setMessage(null);
     console.log("[onboarding] Submitting onboarding...");

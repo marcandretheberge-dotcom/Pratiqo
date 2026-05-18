@@ -25,6 +25,12 @@ import { getSupabaseClient } from "../lib/supabase";
 import { haversineDistance } from "../lib/geo";
 import { isBookingAtLeast24hAhead } from "@/lib/bookingCancellation";
 import { calculateIntroSessionPriceCents } from "@/lib/introSession";
+import {
+  isLessonSessionBookable,
+  maxCreditsApplicableDollars,
+  payableAmountCents,
+} from "@/lib/pricing/credits";
+import { validateMinimumLessonPriceDollars } from "@/lib/pricing/validateMinimumLessonPrice";
 import { formatLocalISODate, periodForSlot } from "../lib/slots";
 import { localeToBcp47 } from "../lib/i18n/types";
 import { useLocale } from "../lib/locale-context";
@@ -258,10 +264,12 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
   const displayPrice = formatPrice(basePrice);
   const displayedHourlyPrice = formatPrice(hourlyRate);
 
-  // Credits: can apply up to balance, but leave at least $0.50 for Stripe minimum
-  const maxCreditsApplicable = Math.max(0, Math.floor(Math.min(creditBalance, basePrice - 0.5) * 100) / 100);
+  const sessionBookable = isLessonSessionBookable(basePrice);
+  const maxCreditsApplicable = sessionBookable
+    ? maxCreditsApplicableDollars(basePrice, creditBalance)
+    : 0;
   const creditsDiscount = applyCredits ? maxCreditsApplicable : 0;
-  const effectivePrice = Math.max(0.5, basePrice - creditsDiscount);
+  const effectivePrice = payableAmountCents(basePrice, creditsDiscount) / 100;
 
   const homeAvailable =
     Boolean(teacher.homeLessonEnabled) &&
@@ -603,6 +611,11 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
     const learnerTrim = selectedLearnerId.trim();
     if (learnerTrim !== "" && !isUuidString(learnerTrim)) {
       setCheckoutError(t("bookingInvalidLearnerProfileId"));
+      return;
+    }
+
+    if (!sessionBookable || !validateMinimumLessonPriceDollars(effectivePrice).ok) {
+      setCheckoutError(`${t("pricingMinLessonPrice")} ${t("pricingMinLessonPriceSuggestion")}`);
       return;
     }
 
@@ -1254,7 +1267,16 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
               <p className="text-xs text-slate-600 leading-relaxed">{t("bookingExclusiveText")}</p>
 
               {/* Credits toggle */}
-              {!loadingCredits && creditBalance > 0 && maxCreditsApplicable > 0 ? (
+              {!sessionBookable ? (
+                <div
+                  role="alert"
+                  className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900"
+                >
+                  {t("pricingMinLessonPrice")} {t("pricingMinLessonPriceSuggestion")}
+                </div>
+              ) : null}
+
+              {!loadingCredits && sessionBookable && creditBalance > 0 && maxCreditsApplicable > 0 ? (
                 <button
                   type="button"
                   onClick={() => setApplyCredits((v) => !v)}
@@ -1299,6 +1321,10 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                 </button>
               ) : null}
 
+              {sessionBookable && creditBalance > 0 && maxCreditsApplicable > 0 ? (
+                <p className="text-xs text-slate-600 leading-relaxed">{t("pricingCreditsMinPayable")}</p>
+              ) : null}
+
               {teachingMode === "domicile" ? (
                 <div className="rounded-xl border border-teal-500/25 bg-teal-500/10 px-3 py-2 text-xs text-slate-700">
                   <span className="font-semibold text-teal-700">{t("bookingAtHomeLabel")}</span>
@@ -1328,7 +1354,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                 </button>
                 <button
                   type="button"
-                  disabled={isSubmitting || teacherIdInvalid}
+                  disabled={isSubmitting || teacherIdInvalid || !sessionBookable}
                   onClick={() => void handleConfirmAndPay()}
                   className="flex-[2] h-11 rounded-2xl text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-2 text-white shadow-md transition hover:opacity-95"
                   style={{ backgroundColor: "var(--palette-teal-700)" }}

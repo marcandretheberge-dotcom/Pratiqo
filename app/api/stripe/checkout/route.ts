@@ -10,6 +10,9 @@ import { upsertUnpaidBookingPayment } from "@/lib/payments/ledger";
 import { validateJsonBody } from "@/lib/validation/api";
 import { stripeCheckoutPostSchema } from "@/lib/validation/schemas";
 import { SITE_URL } from "@/lib/seo/site";
+import { resolveEmailLocaleForUser } from "@/lib/email/locale";
+import { minimumLessonPriceErrorMessage } from "@/lib/pricing/messages";
+import { validateMinimumLessonPrice } from "@/lib/pricing/validateMinimumLessonPrice";
 
 export const runtime = "nodejs";
 
@@ -238,7 +241,15 @@ export async function POST(req: Request) {
     }
 
     const discountCents = Math.round(validatedCredits * 100);
-    unitAmountCents = Math.max(50, unitAmountCents - discountCents);
+    unitAmountCents = Math.max(0, unitAmountCents - discountCents);
+
+    if (!validateMinimumLessonPrice(unitAmountCents).ok) {
+      const locale = await resolveEmailLocaleForUser(admin, user.id);
+      return NextResponse.json(
+        { error: minimumLessonPriceErrorMessage(locale), code: "minimum_lesson_price" },
+        { status: 400 },
+      );
+    }
 
     if (unitAmountCents < 50) {
       return NextResponse.json(
