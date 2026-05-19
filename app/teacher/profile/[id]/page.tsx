@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { cache } from "react";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import {
   TEACHERS_LIST_SELECT,
@@ -26,44 +26,87 @@ const BASE_URL = SITE_URL;
 
 type PublicTeacherLookupColumn = "id" | "user_id";
 
-async function selectPublicTeacherBy(
+function isColumnMismatchError(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const message = "message" in error ? String(error.message ?? "") : "";
+  return /column|does not exist|Could not find/i.test(message);
+}
+
+/** Read one row from teachers_public with select fallbacks (full → legacy → *). */
+async function selectPublicTeacherRow(
   column: PublicTeacherLookupColumn,
   value: string,
 ): Promise<TeacherRow | null> {
   const supabase = getSupabaseAdmin();
 
-  let response = await supabase
+  const parse = (data: unknown): TeacherRow | null =>
+    data && typeof data === "object" && "id" in data ? (data as TeacherRow) : null;
+
+  const full = await supabase
     .from(TEACHERS_PUBLIC_TABLE)
     .select(TEACHERS_LIST_SELECT)
     .eq(column, value)
     .maybeSingle();
-
-  if (response.error) {
-    response = await supabase
-      .from(TEACHERS_PUBLIC_TABLE)
-      .select(TEACHERS_LIST_SELECT_LEGACY_PUBLIC)
-      .eq(column, value)
-      .maybeSingle();
+  if (!full.error) {
+    return parse(full.data);
   }
-
-  if (response.error || !response.data) return null;
-  return response.data as TeacherRow;
-}
-
-const getTeacherForProfilePage = cache(async (routeId: string): Promise<Teacher | null> => {
-  const id = routeId.trim();
-  if (!id) return null;
-
-  try {
-    const row = (await selectPublicTeacherBy("id", id)) ?? (isUuidString(id) ? await selectPublicTeacherBy("user_id", id) : null);
-    if (!row) return null;
-
-    const base = teacherRowToTeacher(row);
-    const discMap = await fetchTeacherDisciplinesMap(getSupabaseAdmin(), [base.id]);
-    return mergeTeachersWithDisciplines([base], discMap)[0] ?? base;
-  } catch {
+  if (!isColumnMismatchError(full.error)) {
     return null;
   }
+
+  const legacy = await supabase
+    .from(TEACHERS_PUBLIC_TABLE)
+    .select(TEACHERS_LIST_SELECT_LEGACY_PUBLIC)
+    .eq(column, value)
+    .maybeSingle();
+  if (!legacy.error) {
+    return parse(legacy.data);
+  }
+  if (!isColumnMismatchError(legacy.error)) {
+    return null;
+  }
+
+  const wide = await supabase.from(TEACHERS_PUBLIC_TABLE).select("*").eq(column, value).maybeSingle();
+  if (!wide.error) {
+    return parse(wide.data);
+  }
+  return null;
+}
+
+/** Lookup by teachers.id, then teachers.user_id when route param is a UUID. */
+const lookupPublicTeacherRowByRouteId = cache(async (routeId: string): Promise<TeacherRow | null> => {
+  const trimmed = routeId.trim();
+  if (!trimmed) return null;
+
+  const byId = await selectPublicTeacherRow("id", trimmed);
+  if (byId) return byId;
+
+  if (isUuidString(trimmed)) {
+    return await selectPublicTeacherRow("user_id", trimmed);
+  }
+  return null;
+});
+
+function rowToTeacherForProfile(row: TeacherRow): Teacher {
+  return teacherRowToTeacher(row);
+}
+
+async function attachDisciplines(teacher: Teacher): Promise<Teacher> {
+  try {
+    const discMap = await fetchTeacherDisciplinesMap(getSupabaseAdmin(), [teacher.id]);
+    return mergeTeachersWithDisciplines([teacher], discMap)[0] ?? teacher;
+  } catch {
+    return teacher;
+  }
+}
+
+/** Single source of truth for metadata + page — only null when teachers_public has no row. */
+const getTeacherForProfilePage = cache(async (routeId: string): Promise<Teacher | null> => {
+  const row = await lookupPublicTeacherRowByRouteId(routeId);
+  if (!row) return null;
+
+  const base = rowToTeacherForProfile(row);
+  return attachDisciplines(base);
 });
 
 export async function generateMetadata({
@@ -71,9 +114,9 @@ export async function generateMetadata({
 }: {
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
-  const { id } = await params;
-  const teacher = await getTeacherForProfilePage(id);
-  const canonical = `${BASE_URL}/teacher/profile/${encodeURIComponent(teacher?.id ?? id)}`;
+  const { id: routeId } = await params;
+  const teacher = await getTeacherForProfilePage(routeId);
+  const canonical = `${BASE_URL}/teacher/profile/${encodeURIComponent(teacher?.id ?? routeId)}`;
 
   if (!teacher) {
     return {
@@ -138,9 +181,13 @@ export default async function TeacherProfilePage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { id } = await params;
-  const initialTeacher = await getTeacherForProfilePage(id);
+  const { id: routeId } = await params;
+  const initialTeacher = await getTeacherForProfilePage(routeId);
   if (!initialTeacher) notFound();
+
+  if (routeId !== initialTeacher.id) {
+    redirect(`/teacher/profile/${encodeURIComponent(initialTeacher.id)}`);
+  }
 
   const locality =
     initialTeacher.location.neighborhood ??

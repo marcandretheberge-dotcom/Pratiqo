@@ -5,13 +5,45 @@ import type { Teacher } from "@/types";
 import { getSupabaseClient } from "@/lib/supabase";
 import { fetchTeacherDisciplinesMap, mergeTeachersWithDisciplines } from "@/lib/teacherDisciplines";
 import { teacherRowToTeacher, type TeacherRow } from "@/lib/teacherMapper";
-import { TEACHERS_PUBLIC_TABLE } from "@/lib/supabase/queries";
+import {
+  TEACHERS_LIST_SELECT,
+  TEACHERS_LIST_SELECT_LEGACY_PUBLIC,
+  TEACHERS_PUBLIC_TABLE,
+} from "@/lib/supabase/queries";
 import { TeacherProfile } from "@/components/TeacherProfile";
 import { BookingModal, type BookingInitialLessonKind } from "@/components/BookingModal";
 import { useRouter } from "next/navigation";
 import { haversineDistance } from "@/lib/geo";
 import { hasConfirmedBooking } from "@/lib/maps";
 import { useAuth } from "@/components/AuthProvider";
+
+function isColumnMismatchError(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const message = "message" in error ? String(error.message ?? "") : "";
+  return /column|does not exist|Could not find/i.test(message);
+}
+
+function parseTeacherRow(data: unknown): TeacherRow | null {
+  return data && typeof data === "object" && "id" in data ? (data as TeacherRow) : null;
+}
+
+async function fetchPublicTeacherById(supabase: ReturnType<typeof getSupabaseClient>, teacherId: string) {
+  const full = await supabase.from(TEACHERS_PUBLIC_TABLE).select(TEACHERS_LIST_SELECT).eq("id", teacherId).maybeSingle();
+  if (!full.error) return parseTeacherRow(full.data);
+  if (!isColumnMismatchError(full.error)) return null;
+
+  const legacy = await supabase
+    .from(TEACHERS_PUBLIC_TABLE)
+    .select(TEACHERS_LIST_SELECT_LEGACY_PUBLIC)
+    .eq("id", teacherId)
+    .maybeSingle();
+  if (!legacy.error) return parseTeacherRow(legacy.data);
+  if (!isColumnMismatchError(legacy.error)) return null;
+
+  const wide = await supabase.from(TEACHERS_PUBLIC_TABLE).select("*").eq("id", teacherId).maybeSingle();
+  if (!wide.error) return parseTeacherRow(wide.data);
+  return null;
+}
 
 export default function TeacherProfileClient({
   id,
@@ -22,7 +54,7 @@ export default function TeacherProfileClient({
 }) {
   const router = useRouter();
   const { user } = useAuth();
-  const hadInitialTeacher = useRef(Boolean(initialTeacher));
+  const serverTeacherRef = useRef(initialTeacher);
   const [teacher, setTeacher] = useState<Teacher | null>(initialTeacher);
   const [embeddedPlan, setEmbeddedPlan] = useState<{ plan: string | null; loading: boolean }>({
     plan: null,
@@ -70,17 +102,19 @@ export default function TeacherProfileClient({
     const supabase = getSupabaseClient();
 
     const load = async () => {
-      const { data, error } = await supabase.from(TEACHERS_PUBLIC_TABLE).select("*").eq("id", id).maybeSingle();
-      if (error || !data) {
-        if (!hadInitialTeacher.current) setTeacher(null);
+      const data = await fetchPublicTeacherById(supabase, id);
+      if (!data) {
+        if (!serverTeacherRef.current) setTeacher(null);
         return;
       }
-      const base = teacherRowToTeacher(data as TeacherRow);
-      const discMap = await fetchTeacherDisciplinesMap(supabase, [id]);
+      const base = teacherRowToTeacher(data);
+      const discMap = await fetchTeacherDisciplinesMap(supabase, [id]).catch(() => new Map());
       setTeacher(mergeTeachersWithDisciplines([base], discMap)[0] ?? base);
     };
 
-    void load();
+    if (!serverTeacherRef.current) {
+      void load();
+    }
 
     const channel = supabase
       .channel(`teacher-${id}`)
@@ -121,12 +155,9 @@ export default function TeacherProfileClient({
     );
   }, []);
 
-  const distanceKm =
-    !teacher || !geo || geoDeniedOrUnavailable
-      ? null
-      : haversineDistance(geo.lat, geo.lng, teacher.location.lat, teacher.location.lng);
+  const displayTeacher = teacher ?? serverTeacherRef.current;
 
-  if (!teacher) {
+  if (!displayTeacher) {
     return (
       <div className="bg-white border border-slate-200 rounded-3xl p-8">
         <p className="text-sm font-semibold text-slate-600">Professeur introuvable.</p>
@@ -134,7 +165,12 @@ export default function TeacherProfileClient({
     );
   }
 
-  const profilePath = `/teacher/profile/${encodeURIComponent(id)}`;
+  const profilePath = `/teacher/profile/${encodeURIComponent(displayTeacher.id)}`;
+
+  const distanceKm =
+    !geo || geoDeniedOrUnavailable
+      ? null
+      : haversineDistance(geo.lat, geo.lng, displayTeacher.location.lat, displayTeacher.location.lng);
 
   return (
     <>
@@ -152,7 +188,7 @@ export default function TeacherProfileClient({
         </div>
       ) : null}
       <TeacherProfile
-        teacher={teacher}
+        teacher={displayTeacher}
         embeddedPlan={embeddedPlan}
         showGoogleStudioMap
         studioMapHasConfirmedBooking={studioMapHasConfirmedBooking}
@@ -162,22 +198,22 @@ export default function TeacherProfileClient({
           setBooking(true);
         }}
         onSendMessage={
-          teacher.userId
+          displayTeacher.userId
             ? () => {
                 if (!user?.id) {
                   router.push(`/login?next=${encodeURIComponent(profilePath)}`);
                   return;
                 }
-                router.push(`/messages?peer=${encodeURIComponent(teacher.userId!)}`);
+                router.push(`/messages?peer=${encodeURIComponent(displayTeacher.userId!)}`);
               }
             : undefined
         }
-        distanceKm={geoDeniedOrUnavailable ? null : distanceKm}
+        distanceKm={distanceKm}
       />
       {booking && (
         <BookingModal
-          key={`${teacher.id}-${bookingInitialKind}`}
-          teacher={teacher}
+          key={`${displayTeacher.id}-${bookingInitialKind}`}
+          teacher={displayTeacher}
           initialLessonKind={bookingInitialKind}
           onClose={() => {
             setBooking(false);
