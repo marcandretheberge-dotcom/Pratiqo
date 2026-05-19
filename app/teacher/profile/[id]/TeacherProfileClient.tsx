@@ -1,22 +1,41 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import type { Teacher } from "@/types";
 import { getSupabaseClient } from "@/lib/supabase";
 import { fetchTeacherDisciplinesMap, mergeTeachersWithDisciplines } from "@/lib/teacherDisciplines";
 import { teacherRowToTeacher, type TeacherRow } from "@/lib/teacherMapper";
-import { TEACHERS_PUBLIC_TABLE } from "@/lib/supabase/queries";
+import { TEACHERS_LIST_SELECT, TEACHERS_PUBLIC_TABLE } from "@/lib/supabase/queries";
 import { TeacherProfile } from "@/components/TeacherProfile";
 import { BookingModal, type BookingInitialLessonKind } from "@/components/BookingModal";
+import { ProfileRouteSkeleton } from "@/components/teacher/ProfileRouteSkeleton";
 import { useRouter } from "next/navigation";
 import { haversineDistance } from "@/lib/geo";
 import { hasConfirmedBooking } from "@/lib/maps";
 import { useAuth } from "@/components/AuthProvider";
 
-export default function TeacherProfileClient({ id }: { id: string }) {
+type LoadState = "loading" | "ready" | "not_found";
+
+function TeacherProfileNotFound() {
+  return (
+    <div className="bg-white border border-slate-200 rounded-3xl p-8">
+      <p className="text-sm font-semibold text-slate-600">Professeur introuvable.</p>
+    </div>
+  );
+}
+
+export default function TeacherProfileClient({
+  id,
+  initialTeacher = null,
+}: {
+  id: string;
+  initialTeacher?: Teacher | null;
+}) {
   const router = useRouter();
   const { user } = useAuth();
-  const [teacher, setTeacher] = useState<Teacher | null>(null);
+  const hadInitialTeacher = useRef(Boolean(initialTeacher));
+  const [teacher, setTeacher] = useState<Teacher | null>(initialTeacher);
+  const [loadState, setLoadState] = useState<LoadState>(initialTeacher ? "ready" : "loading");
   const [embeddedPlan, setEmbeddedPlan] = useState<{ plan: string | null; loading: boolean }>({
     plan: null,
     loading: true,
@@ -62,18 +81,31 @@ export default function TeacherProfileClient({ id }: { id: string }) {
   useEffect(() => {
     const supabase = getSupabaseClient();
 
-    const load = async () => {
-      const { data, error } = await supabase.from(TEACHERS_PUBLIC_TABLE).select("*").eq("id", id).maybeSingle();
+    const load = async (options?: { silent?: boolean }) => {
+      if (!options?.silent && !hadInitialTeacher.current) {
+        setLoadState("loading");
+      }
+      const { data, error } = await supabase
+        .from(TEACHERS_PUBLIC_TABLE)
+        .select(TEACHERS_LIST_SELECT)
+        .eq("id", id)
+        .maybeSingle();
       if (error || !data) {
+        if (hadInitialTeacher.current) return;
         setTeacher(null);
+        setLoadState("not_found");
         return;
       }
       const base = teacherRowToTeacher(data as TeacherRow);
       const discMap = await fetchTeacherDisciplinesMap(supabase, [id]);
-      setTeacher(mergeTeachersWithDisciplines([base], discMap)[0] ?? base);
+      const merged = mergeTeachersWithDisciplines([base], discMap)[0] ?? base;
+      setTeacher(merged);
+      setLoadState("ready");
     };
 
-    void load();
+    if (!hadInitialTeacher.current) {
+      void load();
+    }
 
     const channel = supabase
       .channel(`teacher-${id}`)
@@ -86,7 +118,7 @@ export default function TeacherProfileClient({ id }: { id: string }) {
           filter: `id=eq.${id}`,
         },
         () => {
-          void load();
+          void load({ silent: true });
         },
       )
       .subscribe();
@@ -119,15 +151,15 @@ export default function TeacherProfileClient({ id }: { id: string }) {
       ? null
       : haversineDistance(geo.lat, geo.lng, teacher.location.lat, teacher.location.lng);
 
-  if (!teacher) {
-    return (
-      <div className="bg-white border border-slate-200 rounded-3xl p-8">
-        <p className="text-sm font-semibold text-slate-600">Professeur introuvable.</p>
-      </div>
-    );
+  if (loadState === "loading") {
+    return <ProfileRouteSkeleton />;
   }
 
-  const profilePath = `/teacher/profile/${encodeURIComponent(id)}`;
+  if (loadState === "not_found" || !teacher) {
+    return <TeacherProfileNotFound />;
+  }
+
+  const profilePath = `/teacher/profile/${encodeURIComponent(teacher.id)}`;
 
   return (
     <>

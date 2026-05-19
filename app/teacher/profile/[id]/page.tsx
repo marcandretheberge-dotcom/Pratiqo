@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { cache } from "react";
 import { notFound } from "next/navigation";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
-import { TEACHERS_PUBLIC_TABLE } from "@/lib/supabase/queries";
+import { TEACHERS_PUBLIC_TABLE, TEACHERS_LIST_SELECT } from "@/lib/supabase/queries";
 import {
   buildTeacherSeoTitle,
   buildTeacherSeoDescription,
@@ -11,6 +11,9 @@ import {
 } from "@/lib/constants/vocabulary";
 import { usdToUyu } from "@/lib/geoLocale";
 import TeacherProfileClient from "./TeacherProfileClient";
+import { fetchTeacherDisciplinesMap, mergeTeachersWithDisciplines } from "@/lib/teacherDisciplines";
+import { teacherRowToTeacher, type TeacherRow } from "@/lib/teacherMapper";
+import type { Teacher } from "@/types";
 
 import { SITE_URL } from "@/lib/seo/site";
 import { isUuidString } from "@/lib/uuid";
@@ -36,21 +39,59 @@ type TeacherMetaRow = {
   region: string | null;
 };
 
-const getTeacherMeta = cache(async (id: string): Promise<TeacherMetaRow | null> => {
+function rowToMeta(row: TeacherRow): TeacherMetaRow {
+  return {
+    name: row.name,
+    discipline: row.discipline,
+    category: row.category,
+    bio: row.bio,
+    image_url: row.image_url ?? "",
+    rating: row.rating,
+    reviews: row.reviews,
+    price_per_lesson: row.price_per_lesson,
+    location: row.location as TeacherMetaRow["location"],
+    city: row.city ?? null,
+    region: row.region ?? null,
+  };
+}
+
+/** Resolve by teachers.id first, then teachers.user_id for legacy / mistaken links. */
+const getTeacherRowByRouteId = cache(async (routeId: string): Promise<TeacherRow | null> => {
   try {
     const supabase = getSupabaseAdmin();
-    const { data, error } = await supabase
+    const { data: byId, error: byIdError } = await supabase
       .from(TEACHERS_PUBLIC_TABLE)
-      .select(
-        "name, discipline, category, bio, image_url, rating, reviews, price_per_lesson, location, city, region",
-      )
-      .eq("id", id)
+      .select(TEACHERS_LIST_SELECT)
+      .eq("id", routeId)
       .maybeSingle();
-    if (error || !data) return null;
-    return data as TeacherMetaRow;
+    if (!byIdError && byId) return byId as TeacherRow;
+
+    if (isUuidString(routeId)) {
+      const { data: byUserId, error: byUserError } = await supabase
+        .from(TEACHERS_PUBLIC_TABLE)
+        .select(TEACHERS_LIST_SELECT)
+        .eq("user_id", routeId)
+        .maybeSingle();
+      if (!byUserError && byUserId) return byUserId as TeacherRow;
+    }
+    return null;
   } catch {
     return null;
   }
+});
+
+const getTeacherMeta = cache(async (routeId: string): Promise<TeacherMetaRow | null> => {
+  const row = await getTeacherRowByRouteId(routeId);
+  return row ? rowToMeta(row) : null;
+});
+
+const getTeacherForProfilePage = cache(async (routeId: string): Promise<Teacher | null> => {
+  const row = await getTeacherRowByRouteId(routeId);
+  if (!row) return null;
+  const supabase = getSupabaseAdmin();
+  const discMap = await fetchTeacherDisciplinesMap(supabase, [row.id]);
+  const [teacher] = mergeTeachersWithDisciplines([teacherRowToTeacher(row)], discMap);
+  return teacher ?? null;
 });
 
 export async function generateMetadata({
@@ -134,10 +175,14 @@ export default async function TeacherProfilePage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { id } = await params;
-  if (!isUuidString(id)) notFound();
-  const teacher = await getTeacherMeta(id);
-  if (!teacher) notFound();
+  const { id: routeId } = await params;
+  if (!isUuidString(routeId)) notFound();
+
+  const initialTeacher = await getTeacherForProfilePage(routeId);
+  if (!initialTeacher) notFound();
+
+  const teacher = await getTeacherMeta(routeId);
+  if (!teacher) notFound(); // same row as initialTeacher; defensive only
 
   const locality =
     (teacher.location as { neighborhood?: string; addressLocality?: string } | null)?.neighborhood ??
@@ -147,6 +192,8 @@ export default async function TeacherProfilePage({
     "Québec";
 
   const entityType = getSchemaEntityType(teacher.category ?? "");
+
+  const profileUrl = `${BASE_URL}/teacher/profile/${encodeURIComponent(initialTeacher.id)}`;
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -169,7 +216,7 @@ export default async function TeacherProfilePage({
     },
     ...(teacher.bio ? { description: teacher.bio.slice(0, 500) } : {}),
     ...(teacher.image_url ? { image: teacher.image_url } : {}),
-    url: `${BASE_URL}/teacher/profile/${encodeURIComponent(id)}`,
+    url: profileUrl,
     address: {
       "@type": "PostalAddress",
       addressLocality: locality,
@@ -206,7 +253,7 @@ export default async function TeacherProfilePage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <TeacherProfileClient id={id} />
+      <TeacherProfileClient id={initialTeacher.id} initialTeacher={initialTeacher} />
     </>
   );
 }
