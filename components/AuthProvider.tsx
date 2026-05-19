@@ -9,8 +9,26 @@ import { authAvatarUrl, authDisplayName } from "../lib/authDisplay";
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  profile: any | null;
+  profile: AuthProfile | null;
 }
+
+type AuthProfile = Record<string, unknown> & {
+  id?: string;
+  name?: string | null;
+  email?: string | null;
+  role?: string | null;
+  photo_url?: string | null;
+  plan?: string | null;
+  teacher_onboarding_complete?: boolean | null;
+  companion_type?: string | null;
+  companion_chosen?: boolean | null;
+  country_code?: string | null;
+  timezone?: string | null;
+  currency?: string | null;
+  city?: string | null;
+  region?: string | null;
+  preferred_learning_format?: string | null;
+};
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
@@ -39,7 +57,7 @@ function defaultDashboard() {
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<any | null>(null);
+  const [profile, setProfile] = useState<AuthProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -71,6 +89,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             ? (existing.dashboard as Record<string, unknown>)
             : {};
         const ext = existing as Record<string, unknown>;
+        const stringOrNull = (value: unknown) => (typeof value === "string" ? value : null);
         setProfile({
           id: existing.id,
           name: existing.name,
@@ -78,12 +97,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           role: existing.role,
           photo_url: existing.photo_url,
           ...dash,
-          country_code: ext.country_code ?? null,
-          timezone: ext.timezone ?? null,
-          currency: ext.currency ?? null,
-          city: ext.city ?? null,
-          region: ext.region ?? null,
-          preferred_learning_format: ext.preferred_learning_format ?? null,
+          companion_type: stringOrNull(ext.companion_type),
+          companion_chosen: typeof ext.companion_chosen === "boolean" ? ext.companion_chosen : false,
+          country_code: stringOrNull(ext.country_code),
+          timezone: stringOrNull(ext.timezone),
+          currency: stringOrNull(ext.currency),
+          city: stringOrNull(ext.city),
+          region: stringOrNull(ext.region),
+          preferred_learning_format: stringOrNull(ext.preferred_learning_format),
         });
       } else {
         const dash = defaultDashboard();
@@ -93,6 +114,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           email: u.email || "",
           role: "student",
           photo_url: authAvatarUrl(u),
+          companion_type: null,
+          companion_chosen: false,
           dashboard: dash,
         };
         const { error: insErr } = await supabase.from("profiles").insert(row);

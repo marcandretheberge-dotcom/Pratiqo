@@ -98,6 +98,20 @@ test("resolvePostAuthRedirect keeps teachers off companion flow", () => {
   );
 });
 
+test("resolvePostAuthRedirect sends students without companion to chooser", () => {
+  assert.equal(
+    resolvePostAuthRedirect("student", { companion_chosen: false }, "/dashboard"),
+    "/student/choose-companion",
+  );
+});
+
+test("resolvePostAuthRedirect keeps students with companion on safe next path", () => {
+  assert.equal(
+    resolvePostAuthRedirect("student", { companion_chosen: true }, "/student/search"),
+    "/student/search",
+  );
+});
+
 test("isAdminProfile is the admin authorization predicate", () => {
   assert.equal(isAdminProfile({ role: "admin" }), true);
   assert.equal(isAdminProfile({ role: "student" }), false);

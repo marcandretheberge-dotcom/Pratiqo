@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import { useLocale } from "@/lib/locale-context";
 import type { CompanionType } from "@/lib/companions";
@@ -16,10 +14,13 @@ function localizedText(locale: string, fr: string, en: string, es: string) {
   return fr;
 }
 
+function isCompanionType(value: unknown): value is CompanionType {
+  return value === "phoenix" || value === "forest" || value === "dragon" || value === "star";
+}
+
 export default function ChooseCompanionPage() {
   const { user, loading } = useAuth();
   const { locale, t } = useLocale();
-  const router = useRouter();
 
   const [selected, setSelected] = useState<CompanionType>("phoenix");
   const [saving, setSaving] = useState(false);
@@ -34,13 +35,15 @@ export default function ChooseCompanionPage() {
     void (async () => {
       const { data: profile } = await supabase
         .from("profiles")
-        .select("companion_chosen")
+        .select("companion_type")
         .eq("id", user.id)
         .maybeSingle();
-      const chosen = Boolean((profile as { companion_chosen?: boolean | null } | null)?.companion_chosen);
-      if (chosen) router.replace("/dashboard");
+      const companionType = (profile as { companion_type?: string | null } | null)?.companion_type;
+      if (isCompanionType(companionType)) {
+        setSelected(companionType);
+      }
     })();
-  }, [loading, user, router]);
+  }, [loading, user]);
 
   const companions = useMemo(() => Object.values(COMPANIONS), []);
   const selectedCompanion = COMPANIONS[selected];
@@ -80,7 +83,7 @@ export default function ChooseCompanionPage() {
         console.error("Failed to save companion", await res.text());
         return;
       }
-      router.push("/dashboard");
+      window.location.assign("/dashboard");
     } finally {
       setSaving(false);
     }
@@ -92,9 +95,6 @@ export default function ChooseCompanionPage() {
 
   useEffect(() => {
     if (state !== "animating") return;
-
-    setCurrentStageIndex(0);
-    setBounce(true);
 
     const timeouts: number[] = [];
     const safeSetTimeout = (fn: () => void, ms: number) => {
@@ -189,6 +189,8 @@ export default function ChooseCompanionPage() {
               <button
                 type="button"
                 onClick={() => {
+                  setCurrentStageIndex(0);
+                  setBounce(true);
                   setState("animating");
                   setTimeout(() => setShowCards(false), 300);
                 }}
