@@ -183,7 +183,7 @@ test("transferFailureReason prefers Stripe failure message", () => {
       id: "tr_1",
       failure_message: "Insufficient funds",
       failure_code: "insufficient_funds",
-    } as Stripe.Transfer,
+    } as unknown as Stripe.Transfer,
     "evt_1",
   );
   assert.equal(reason, "Insufficient funds");
@@ -209,7 +209,7 @@ test("handleStripeTransferFailed marks booking payment failed", async () => {
       id: "tr_1",
       metadata: { booking_id: "bk_1" },
       failure_message: "Account restricted",
-    } as Stripe.Transfer,
+    } as unknown as Stripe.Transfer,
     "evt_tf_1",
   );
 
@@ -234,7 +234,7 @@ test("handleStripeTransferFailed is idempotent when already failed", async () =>
 
   const result = await handleStripeTransferFailed(
     admin as unknown as SupabaseClient,
-    { id: "tr_1", metadata: { booking_id: "bk_1" } } as Stripe.Transfer,
+    { id: "tr_1", metadata: { booking_id: "bk_1" } } as unknown as Stripe.Transfer,
     "evt_tf_2",
   );
 
