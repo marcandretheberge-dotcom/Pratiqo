@@ -174,7 +174,7 @@ export default function TeacherProfileClient({
 
   return (
     <>
-      {!geo ? (
+      {!booking && !geo ? (
         <div className="fixed bottom-6 left-1/2 z-[220] -translate-x-1/2 px-4">
           <button
             type="button"
@@ -187,30 +187,32 @@ export default function TeacherProfileClient({
           </button>
         </div>
       ) : null}
-      <TeacherProfile
-        teacher={displayTeacher}
-        embeddedPlan={embeddedPlan}
-        showGoogleStudioMap
-        studioMapHasConfirmedBooking={studioMapHasConfirmedBooking}
-        onClose={() => router.push("/teacher/profile")}
-        onBook={(kind) => {
-          setBookingInitialKind(kind);
-          setBooking(true);
-        }}
-        onSendMessage={
-          displayTeacher.userId
-            ? () => {
-                if (!user?.id) {
-                  router.push(`/login?next=${encodeURIComponent(profilePath)}`);
-                  return;
+      {!booking ? (
+        <TeacherProfile
+          teacher={displayTeacher}
+          embeddedPlan={embeddedPlan}
+          showGoogleStudioMap
+          studioMapHasConfirmedBooking={studioMapHasConfirmedBooking}
+          onClose={() => router.push("/teacher/profile")}
+          onBook={(kind) => {
+            setBookingInitialKind(kind);
+            setBooking(true);
+          }}
+          onSendMessage={
+            displayTeacher.userId
+              ? () => {
+                  if (!user?.id) {
+                    router.push(`/login?next=${encodeURIComponent(profilePath)}`);
+                    return;
+                  }
+                  router.push(`/messages?peer=${encodeURIComponent(displayTeacher.userId!)}`);
                 }
-                router.push(`/messages?peer=${encodeURIComponent(displayTeacher.userId!)}`);
-              }
-            : undefined
-        }
-        distanceKm={distanceKm}
-      />
-      {booking && (
+              : undefined
+          }
+          distanceKm={distanceKm}
+        />
+      ) : null}
+      {booking ? (
         <BookingModal
           key={`${displayTeacher.id}-${bookingInitialKind}`}
           teacher={displayTeacher}
@@ -220,7 +222,7 @@ export default function TeacherProfileClient({
             setBookingInitialKind("standard");
           }}
         />
-      )}
+      ) : null}
     </>
   );
 }
