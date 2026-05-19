@@ -39,7 +39,7 @@ export function CompanionEvolutionCarousel({
               )}
             >
               <div className="flex items-start justify-between gap-2">
-                <CompanionArtwork src={stage.imageSrc} alt={name} size="sm" locked={!stage.isUnlocked} accent={accent} />
+                <CompanionArtwork emoji={stage.emoji} alt={name} size="sm" locked={!stage.isUnlocked} accent={accent} />
                 <span
                   className={cn(
                     "flex h-7 w-7 items-center justify-center rounded-full",

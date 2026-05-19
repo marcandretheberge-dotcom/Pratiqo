@@ -9,52 +9,68 @@ export interface CompanionStage {
   maxLessons: number;
 }
 
-export const COMPANIONS: Record<
-  CompanionType,
-  {
-    id: CompanionType;
-    name: string;
-    nameEn: string;
-    nameEs: string;
-    tagline: string;
-    taglineEn: string;
-    taglineEs: string;
-    tag: string;
-    stages: CompanionStage[];
-  }
-> = {
-  phoenix: {
-    id: "phoenix",
-    name: "L'Oiseau de Feu",
-    nameEn: "The Firebird",
-    nameEs: "El Ave de Fuego",
-    tagline: "Œuf → Poussin → Oiseau → Aigle → Phénix",
-    taglineEn: "Egg → Chick → Bird → Eagle → Phoenix",
-    taglineEs: "Huevo → Pollito → Pájaro → Águila → Fénix",
-    tag: "Populaire",
-    stages: [
-      { emoji: "🥚", name: "L'Œuf", nameEn: "The Egg", nameEs: "El Huevo", minLessons: 0, maxLessons: 5 },
-      { emoji: "🐣", name: "Le Poussin", nameEn: "The Chick", nameEs: "El Pollito", minLessons: 6, maxLessons: 15 },
-      { emoji: "🐦", name: "L'Oiseau", nameEn: "The Bird", nameEs: "El Pájaro", minLessons: 16, maxLessons: 30 },
-      { emoji: "🦅", name: "L'Aigle", nameEn: "The Eagle", nameEs: "El Águila", minLessons: 31, maxLessons: 50 },
-      { emoji: "🔥", name: "Le Phénix", nameEn: "The Phoenix", nameEs: "El Fénix", minLessons: 51, maxLessons: 9999 },
-    ],
-  },
+export interface CompanionConfig {
+  id: CompanionType;
+  name: string;
+  nameEn: string;
+  nameEs: string;
+  tagline: string;
+  taglineEn: string;
+  taglineEs: string;
+  tag: string;
+  stages: CompanionStage[];
+}
+
+const FINAL_STAGE_MAX = 9999;
+const STAGE_RANGES = [
+  { minLessons: 0, maxLessons: 5 },
+  { minLessons: 6, maxLessons: 15 },
+  { minLessons: 16, maxLessons: 30 },
+  { minLessons: 31, maxLessons: 50 },
+  { minLessons: 51, maxLessons: FINAL_STAGE_MAX },
+] as const;
+
+function stage(
+  index: number,
+  details: Pick<CompanionStage, "emoji" | "name" | "nameEn" | "nameEs">,
+): CompanionStage {
+  const range = STAGE_RANGES[index] ?? STAGE_RANGES[0];
+  return { ...details, ...range };
+}
+
+export const COMPANIONS: Record<CompanionType, CompanionConfig> = {
   forest: {
     id: "forest",
     name: "La Forêt",
     nameEn: "The Forest",
     nameEs: "El Bosque",
-    tagline: "Graine -> Pousse -> Jeune arbre -> Grand sapin -> Forêt vivante",
-    taglineEn: "Seed -> Sprout -> Young tree -> Great fir -> Living forest",
-    taglineEs: "Semilla -> Brote -> Árbol joven -> Gran abeto -> Bosque vivo",
+    tagline: "Graine → Pousse → Jeune arbre → Grand sapin → Forêt vivante",
+    taglineEn: "Seed → Sprout → Young tree → Great fir → Living forest",
+    taglineEs: "Semilla → Brote → Árbol joven → Gran abeto → Bosque vivo",
     tag: "Nature",
     stages: [
-      { emoji: "🌱", name: "La Graine", nameEn: "The Seed", nameEs: "La Semilla", minLessons: 0, maxLessons: 5 },
-      { emoji: "🌿", name: "La Pousse", nameEn: "The Sprout", nameEs: "El Brote", minLessons: 6, maxLessons: 11 },
-      { emoji: "🌳", name: "Le Jeune Arbre", nameEn: "The Young Tree", nameEs: "El Árbol Joven", minLessons: 12, maxLessons: 23 },
-      { emoji: "🌲", name: "Le Grand Sapin", nameEn: "The Great Fir", nameEs: "El Gran Abeto", minLessons: 24, maxLessons: 39 },
-      { emoji: "✨", name: "La Forêt Vivante", nameEn: "The Living Forest", nameEs: "El Bosque Vivo", minLessons: 40, maxLessons: 9999 },
+      stage(0, { emoji: "🌱", name: "La Graine", nameEn: "The Seed", nameEs: "La Semilla" }),
+      stage(1, { emoji: "🌿", name: "La Pousse", nameEn: "The Sprout", nameEs: "El Brote" }),
+      stage(2, { emoji: "🌳", name: "Jeune arbre", nameEn: "Young Tree", nameEs: "Árbol joven" }),
+      stage(3, { emoji: "🌲", name: "Grand sapin", nameEn: "Great Fir", nameEs: "Gran abeto" }),
+      stage(4, { emoji: "✨🌲", name: "Forêt vivante", nameEn: "Living Forest", nameEs: "Bosque vivo" }),
+    ],
+  },
+  phoenix: {
+    id: "phoenix",
+    name: "Le Phénix",
+    nameEn: "The Phoenix",
+    nameEs: "El Fénix",
+    tagline: "Œuf → Poussin → Oiseau → Aigle → Phénix",
+    taglineEn: "Egg → Chick → Bird → Eagle → Phoenix",
+    taglineEs: "Huevo → Pollito → Pájaro → Águila → Fénix",
+    tag: "Populaire",
+    stages: [
+      stage(0, { emoji: "🥚", name: "L'Œuf", nameEn: "The Egg", nameEs: "El Huevo" }),
+      stage(1, { emoji: "🐣", name: "Poussin", nameEn: "Chick", nameEs: "Pollito" }),
+      stage(2, { emoji: "🐦", name: "Oiseau", nameEn: "Bird", nameEs: "Pájaro" }),
+      stage(3, { emoji: "🦅", name: "Aigle", nameEn: "Eagle", nameEs: "Águila" }),
+      stage(4, { emoji: "🔥", name: "Phénix", nameEn: "Phoenix", nameEs: "Fénix" }),
     ],
   },
   dragon: {
@@ -62,16 +78,16 @@ export const COMPANIONS: Record<
     name: "Le Dragon",
     nameEn: "The Dragon",
     nameEs: "El Dragón",
-    tagline: "Œuf → Lézard → Jeune Dragon → Dragon → Légendaire",
-    taglineEn: "Egg → Lizard → Young Dragon → Dragon → Legendary",
-    taglineEs: "Huevo → Lagarto → Dragón Joven → Dragón → Legendario",
+    tagline: "Œuf → Lézard → Jeune dragon → Dragon → Dragon légendaire",
+    taglineEn: "Egg → Lizard → Young dragon → Dragon → Legendary dragon",
+    taglineEs: "Huevo → Lagarto → Dragón joven → Dragón → Dragón legendario",
     tag: "Aventure",
     stages: [
-      { emoji: "🥚", name: "L'Œuf", nameEn: "The Egg", nameEs: "El Huevo", minLessons: 0, maxLessons: 5 },
-      { emoji: "🦎", name: "Le Lézard", nameEn: "The Lizard", nameEs: "El Lagarto", minLessons: 6, maxLessons: 15 },
-      { emoji: "🐊", name: "Jeune Dragon", nameEn: "Young Dragon", nameEs: "Dragón Joven", minLessons: 16, maxLessons: 30 },
-      { emoji: "🐉", name: "Le Dragon", nameEn: "The Dragon", nameEs: "El Dragón", minLessons: 31, maxLessons: 50 },
-      { emoji: "🔥🐉", name: "Légendaire", nameEn: "Legendary", nameEs: "Legendario", minLessons: 51, maxLessons: 9999 },
+      stage(0, { emoji: "🥚", name: "L'Œuf", nameEn: "The Egg", nameEs: "El Huevo" }),
+      stage(1, { emoji: "🦎", name: "Lézard", nameEn: "Lizard", nameEs: "Lagarto" }),
+      stage(2, { emoji: "🐉", name: "Jeune dragon", nameEn: "Young dragon", nameEs: "Dragón joven" }),
+      stage(3, { emoji: "🐲", name: "Dragon", nameEn: "Dragon", nameEs: "Dragón" }),
+      stage(4, { emoji: "✨🐉", name: "Dragon légendaire", nameEn: "Legendary dragon", nameEs: "Dragón legendario" }),
     ],
   },
   star: {
@@ -80,44 +96,56 @@ export const COMPANIONS: Record<
     nameEn: "The Star",
     nameEs: "La Estrella",
     tagline: "Étincelle → Étoile → Brillante → Filante → Supernova",
-    taglineEn: "Spark → Star → Bright → Shooting → Supernova",
+    taglineEn: "Spark → Star → Bright → Shooting star → Supernova",
     taglineEs: "Chispa → Estrella → Brillante → Fugaz → Supernova",
     tag: "Mystère",
     stages: [
-      { emoji: "✨", name: "L'Étincelle", nameEn: "The Spark", nameEs: "La Chispa", minLessons: 0, maxLessons: 5 },
-      { emoji: "⭐", name: "L'Étoile", nameEn: "The Star", nameEs: "La Estrella", minLessons: 6, maxLessons: 15 },
-      { emoji: "🌟", name: "Brillante", nameEn: "Bright Star", nameEs: "Estrella Brillante", minLessons: 16, maxLessons: 30 },
-      { emoji: "💫", name: "Filante", nameEn: "Shooting Star", nameEs: "Estrella Fugaz", minLessons: 31, maxLessons: 50 },
-      { emoji: "🌠", name: "Supernova", nameEn: "Supernova", nameEs: "Supernova", minLessons: 51, maxLessons: 9999 },
+      stage(0, { emoji: "✨", name: "Étincelle", nameEn: "Spark", nameEs: "Chispa" }),
+      stage(1, { emoji: "⭐", name: "Étoile", nameEn: "Star", nameEs: "Estrella" }),
+      stage(2, { emoji: "🌟", name: "Brillante", nameEn: "Bright", nameEs: "Brillante" }),
+      stage(3, { emoji: "☄️", name: "Filante", nameEn: "Shooting star", nameEs: "Fugaz" }),
+      stage(4, { emoji: "🌌", name: "Supernova", nameEn: "Supernova", nameEs: "Supernova" }),
     ],
   },
 };
 
-export function getCompanionStage(type: CompanionType, lessonCount: number): CompanionStage {
+export function safeCompanionType(value: string | null | undefined): CompanionType {
+  return value === "phoenix" || value === "forest" || value === "dragon" || value === "star" ? value : "forest";
+}
+
+export function normalizeLessonCount(value: number): number {
+  return Math.max(0, Math.floor(Number.isFinite(value) ? value : 0));
+}
+
+export function getCompanionStageIndex(type: CompanionType, lessonCount: number): number {
+  const safeLessons = normalizeLessonCount(lessonCount);
   const companion = COMPANIONS[type];
-  return (
-    companion.stages.find((s) => lessonCount >= s.minLessons && lessonCount <= s.maxLessons) ?? companion.stages[0]
-  );
+  const index = companion.stages.findIndex((s) => safeLessons >= s.minLessons && safeLessons <= s.maxLessons);
+  return index >= 0 ? index : 0;
+}
+
+export function getCompanionStage(type: CompanionType, lessonCount: number): CompanionStage {
+  return COMPANIONS[type].stages[getCompanionStageIndex(type, lessonCount)] ?? COMPANIONS[type].stages[0];
 }
 
 export function getNextStage(type: CompanionType, lessonCount: number): CompanionStage | null {
   const companion = COMPANIONS[type];
-  const currentIndex = companion.stages.findIndex((s) => lessonCount >= s.minLessons && lessonCount <= s.maxLessons);
+  const currentIndex = getCompanionStageIndex(type, lessonCount);
   return companion.stages[currentIndex + 1] ?? null;
 }
 
 export function getLessonsToNextStage(type: CompanionType, lessonCount: number): number {
   const nextStage = getNextStage(type, lessonCount);
   if (!nextStage) return 0;
-  return nextStage.minLessons - lessonCount;
+  return Math.max(0, nextStage.minLessons - normalizeLessonCount(lessonCount));
 }
 
 export function getProgressPercent(type: CompanionType, lessonCount: number): number {
-  const stage = getCompanionStage(type, lessonCount);
-  if (stage.maxLessons === 9999) return 100;
-  const stageRange = stage.maxLessons - stage.minLessons;
-  const stageProgress = lessonCount - stage.minLessons;
-  if (stageRange <= 0) return 0;
-  return Math.round((stageProgress / stageRange) * 100);
+  const safeLessons = normalizeLessonCount(lessonCount);
+  const currentStage = getCompanionStage(type, safeLessons);
+  const nextStage = getNextStage(type, safeLessons);
+  if (!nextStage) return 100;
+  const span = Math.max(1, nextStage.minLessons - currentStage.minLessons);
+  const progress = Math.max(0, safeLessons - currentStage.minLessons);
+  return Math.max(0, Math.min(100, Math.round((progress / span) * 100)));
 }
-

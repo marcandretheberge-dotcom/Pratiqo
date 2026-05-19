@@ -11,7 +11,7 @@ import {
 import { CompanionArtwork } from "@/components/companion/CompanionArtwork";
 import { cn } from "@/lib/utils";
 
-const FAMILY_IDS: CompanionFamily[] = ["forest", "music", "language"];
+const FAMILY_IDS: CompanionFamily[] = ["forest", "phoenix", "dragon", "star"];
 
 export function CompanionFamilyPicker({
   selectedFamily,
@@ -32,7 +32,7 @@ export function CompanionFamilyPicker({
           <p className="mt-1 text-xs leading-5 text-slate-600">{t("companionStudioFamilyPickerHint")}</p>
         </div>
       </div>
-      <div className="mt-4 grid grid-cols-3 gap-2">
+      <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
         {FAMILY_IDS.map((familyId) => {
           const summary = getCompanionEvolutionSummary(familyId, lessonCount);
           const family = COMPANION_FAMILIES[familyId];
@@ -58,7 +58,7 @@ export function CompanionFamilyPicker({
               )}
             >
               <CompanionArtwork
-                src={summary.currentStage.imageSrc}
+                emoji={summary.currentStage.emoji}
                 alt={stageName}
                 size="sm"
                 accent={family.accent}

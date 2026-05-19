@@ -1,31 +1,28 @@
 import type { Locale } from "@/lib/i18n/types";
 import {
-  getLessonsRemainingToNextStage,
-  getStageProgressPercent,
-  safeCompletedLessonCount,
-} from "@/lib/companion/progress";
+  COMPANIONS,
+  getCompanionStageIndex,
+  getLessonsToNextStage,
+  getProgressPercent,
+  normalizeLessonCount,
+  safeCompanionType,
+  type CompanionConfig,
+  type CompanionStage,
+  type CompanionType,
+} from "@/lib/companions";
 
-export type CompanionFamily = "forest" | "music" | "language";
+export type CompanionFamily = CompanionType;
 
-export type CompanionEvolutionStage = {
+export type CompanionEvolutionStage = CompanionStage & {
   index: number;
-  name: string;
-  nameEn: string;
-  nameEs: string;
   unlockAt: number;
-  imageSrc: string;
   isCurrent: boolean;
   isUnlocked: boolean;
   isComplete: boolean;
 };
 
-export type CompanionFamilyConfig = {
-  id: CompanionFamily;
-  name: string;
-  nameEn: string;
-  nameEs: string;
+export type CompanionFamilyConfig = CompanionConfig & {
   accent: string;
-  stages: Omit<CompanionEvolutionStage, "index" | "imageSrc" | "isCurrent" | "isUnlocked" | "isComplete">[];
 };
 
 export type CompanionEvolutionSummary = {
@@ -38,63 +35,17 @@ export type CompanionEvolutionSummary = {
   stages: CompanionEvolutionStage[];
 };
 
-const STAGE_UNLOCKS = [0, 6, 12, 24, 40] as const;
+const COMPANION_ACCENT = "#1D9E75";
 
 export const COMPANION_FAMILIES: Record<CompanionFamily, CompanionFamilyConfig> = {
-  forest: {
-    id: "forest",
-    name: "La Forêt",
-    nameEn: "Forest",
-    nameEs: "Bosque",
-    accent: "#1D9E75",
-    stages: [
-      { name: "La Graine", nameEn: "The Seed", nameEs: "La Semilla", unlockAt: STAGE_UNLOCKS[0] },
-      { name: "La Pousse", nameEn: "The Sprout", nameEs: "El Brote", unlockAt: STAGE_UNLOCKS[1] },
-      { name: "Le Jeune Arbre", nameEn: "The Young Tree", nameEs: "El Arbol Joven", unlockAt: STAGE_UNLOCKS[2] },
-      { name: "Le Grand Sapin", nameEn: "The Great Fir", nameEs: "El Gran Abeto", unlockAt: STAGE_UNLOCKS[3] },
-      { name: "La Forêt Vivante", nameEn: "The Living Forest", nameEs: "El Bosque Vivo", unlockAt: STAGE_UNLOCKS[4] },
-    ],
-  },
-  music: {
-    id: "music",
-    name: "Musique",
-    nameEn: "Music",
-    nameEs: "Musica",
-    accent: "#B7791F",
-    stages: [
-      { name: "La Note", nameEn: "The Note", nameEs: "La Nota", unlockAt: STAGE_UNLOCKS[0] },
-      { name: "La Mélodie", nameEn: "The Melody", nameEs: "La Melodia", unlockAt: STAGE_UNLOCKS[1] },
-      { name: "Le Petit Virtuose", nameEn: "The Little Virtuoso", nameEs: "El Pequeno Virtuoso", unlockAt: STAGE_UNLOCKS[2] },
-      { name: "Le Maestro", nameEn: "The Maestro", nameEs: "El Maestro", unlockAt: STAGE_UNLOCKS[3] },
-      { name: "La Symphonie Vivante", nameEn: "The Living Symphony", nameEs: "La Sinfonia Viva", unlockAt: STAGE_UNLOCKS[4] },
-    ],
-  },
-  language: {
-    id: "language",
-    name: "Langues",
-    nameEn: "Languages",
-    nameEs: "Idiomas",
-    accent: "#2563EB",
-    stages: [
-      { name: "Le Mot", nameEn: "The Word", nameEs: "La Palabra", unlockAt: STAGE_UNLOCKS[0] },
-      { name: "La Phrase", nameEn: "The Sentence", nameEs: "La Frase", unlockAt: STAGE_UNLOCKS[1] },
-      { name: "Le Voyageur", nameEn: "The Traveler", nameEs: "El Viajero", unlockAt: STAGE_UNLOCKS[2] },
-      { name: "Le Polyglotte", nameEn: "The Polyglot", nameEs: "El Poliglota", unlockAt: STAGE_UNLOCKS[3] },
-      {
-        name: "L'Explorateur du Monde",
-        nameEn: "The World Explorer",
-        nameEs: "El Explorador del Mundo",
-        unlockAt: STAGE_UNLOCKS[4],
-      },
-    ],
-  },
+  forest: { ...COMPANIONS.forest, accent: COMPANION_ACCENT },
+  phoenix: { ...COMPANIONS.phoenix, accent: COMPANION_ACCENT },
+  dragon: { ...COMPANIONS.dragon, accent: COMPANION_ACCENT },
+  star: { ...COMPANIONS.star, accent: COMPANION_ACCENT },
 };
 
 export function resolveCompanionFamily(value: string | null | undefined): CompanionFamily {
-  if (value === "forest" || value === "music" || value === "language") return value;
-  if (value === "phoenix") return "music";
-  if (value === "dragon" || value === "star") return "language";
-  return "forest";
+  return safeCompanionType(value);
 }
 
 export function getLocalizedFamilyName(family: CompanionFamily | CompanionFamilyConfig, locale: Locale): string {
@@ -104,22 +55,10 @@ export function getLocalizedFamilyName(family: CompanionFamily | CompanionFamily
   return config.name;
 }
 
-export function getLocalizedStageName(stage: CompanionEvolutionStage, locale: Locale): string {
+export function getLocalizedStageName(stage: CompanionEvolutionStage | CompanionStage, locale: Locale): string {
   if (locale === "en") return stage.nameEn;
   if (locale === "es") return stage.nameEs;
   return stage.name;
-}
-
-function getStageIndex(family: CompanionFamilyConfig, lessonsCompleted: number): number {
-  let currentIndex = 0;
-  family.stages.forEach((stage, index) => {
-    if (lessonsCompleted >= stage.unlockAt) currentIndex = index;
-  });
-  return currentIndex;
-}
-
-export function getCompanionArtworkSrc(family: CompanionFamily, stageIndex: number): string {
-  return `/images/companions/${family}/stage-${stageIndex + 1}.webp`;
 }
 
 export function getCompanionEvolutionSummary(
@@ -128,15 +67,15 @@ export function getCompanionEvolutionSummary(
 ): CompanionEvolutionSummary {
   const familyId = resolveCompanionFamily(companionFamily);
   const family = COMPANION_FAMILIES[familyId];
-  const safeLessons = safeCompletedLessonCount(lessonsCompleted);
-  const currentIndex = getStageIndex(family, safeLessons);
+  const safeLessons = normalizeLessonCount(lessonsCompleted);
+  const currentIndex = getCompanionStageIndex(familyId, safeLessons);
 
   const stages = family.stages.map((stage, index) => ({
     ...stage,
     index,
-    imageSrc: getCompanionArtworkSrc(family.id, index),
+    unlockAt: stage.minLessons,
     isCurrent: index === currentIndex,
-    isUnlocked: safeLessons >= stage.unlockAt,
+    isUnlocked: safeLessons >= stage.minLessons,
     isComplete: index < currentIndex,
   }));
 
@@ -148,8 +87,8 @@ export function getCompanionEvolutionSummary(
     currentStage,
     nextStage,
     lessonsCompleted: safeLessons,
-    lessonsRemaining: getLessonsRemainingToNextStage(currentStage, nextStage, safeLessons),
-    progressPercent: getStageProgressPercent(currentStage, nextStage, safeLessons),
+    lessonsRemaining: getLessonsToNextStage(familyId, safeLessons),
+    progressPercent: getProgressPercent(familyId, safeLessons),
     stages,
   };
 }

@@ -77,7 +77,7 @@ export function CompanionCard({
         )}
       >
         <CompanionArtwork
-          src={summary.currentStage.imageSrc}
+          emoji={summary.currentStage.emoji}
           alt={stageName}
           size="sm"
           accent={summary.family.accent}

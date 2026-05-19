@@ -82,7 +82,7 @@ export function CompanionStudioSheet({
         <div className="mt-5 overflow-hidden rounded-[28px] bg-gradient-to-br from-[#0F6E56] via-[#1D9E75] to-[#F6C177] p-5 text-white shadow-[0_22px_60px_rgba(29,158,117,0.24)]">
           <div className="flex items-start gap-4">
             <CompanionArtwork
-              src={summary.currentStage.imageSrc}
+              emoji={summary.currentStage.emoji}
               alt={stageName}
               size="lg"
               accent={summary.family.accent}
