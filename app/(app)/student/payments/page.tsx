@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Calendar, CreditCard, ExternalLink, Loader2, ReceiptText } from "lucide-react";
+import { ArrowLeft, Calendar, CreditCard, ExternalLink, Loader2, ReceiptText } from "lucide-react";
 import { useAuth } from "../../../../components/AuthProvider";
 import { getSupabaseClient } from "../../../../lib/supabase";
 import { useLocale } from "../../../../lib/locale-context";
@@ -199,6 +199,20 @@ export default function StudentPaymentsPage() {
     [locale],
   );
 
+  const handleBack = () => {
+    const fallbackPath = "/dashboard";
+    try {
+      const referrer = document.referrer ? new URL(document.referrer) : null;
+      if (referrer?.origin === window.location.origin && referrer.pathname !== window.location.pathname) {
+        router.back();
+        return;
+      }
+    } catch {
+      // Fall back below if the referrer cannot be parsed.
+    }
+    router.replace(fallbackPath);
+  };
+
   if (!user) {
     return (
       <div className="mx-auto max-w-3xl space-y-4">
@@ -215,6 +229,15 @@ export default function StudentPaymentsPage() {
   return (
     <main className="min-h-[70dvh] bg-[#F3FAF6] px-4 py-8">
       <div className="mx-auto max-w-4xl space-y-6 pb-10">
+        <button
+          type="button"
+          onClick={handleBack}
+          aria-label={t("back")}
+          className="inline-flex min-h-11 items-center gap-2 rounded-full border border-[#DCEAE3] bg-white px-4 text-sm font-semibold text-[#1D9E75] shadow-sm transition hover:border-[#1D9E75]/35 hover:bg-[#F3FAF6] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1D9E75] focus-visible:ring-offset-2"
+        >
+          <ArrowLeft size={18} aria-hidden />
+          {t("back")}
+        </button>
         <section className="rounded-3xl border border-[#DCEAE3] bg-white p-6 shadow-sm">
           <div className="flex items-start gap-4">
             <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-teal-50 text-teal-700">
