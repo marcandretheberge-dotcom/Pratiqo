@@ -253,23 +253,9 @@ export function TeacherProfile({
       alert(t("loginToMessage"));
       return;
     }
-    if (teacher.userId) {
-      router.push(`/messages?peer=${encodeURIComponent(teacher.userId)}`);
-      onClose();
-      return;
-    }
     try {
-      const supabase = getSupabaseClient();
-      const chatId = [user.id, teacher.id].sort().join("_");
-      const { data: existing } = await supabase.from("chats").select("id").eq("id", chatId).maybeSingle();
-      if (!existing) {
-        await supabase.from("chats").insert({
-          id: chatId,
-          participant_ids: [user.id, teacher.id],
-          last_message: "",
-        });
-      }
-      router.push("/messages");
+      const peerId = teacher.userId?.trim();
+      router.push(peerId ? `/messages?peer=${encodeURIComponent(peerId)}` : "/messages");
       onClose();
     } catch (error) {
       console.error("Chat error", error);

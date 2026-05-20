@@ -751,17 +751,8 @@ function TeacherCard({
 
     setIsStartingChat(true);
     try {
-      const supabase = getSupabaseClient();
-      const chatId = [user.id, teacher.id].sort().join("_");
-      const { data: existing } = await supabase.from("chats").select("id").eq("id", chatId).maybeSingle();
-      if (!existing) {
-        await supabase.from("chats").insert({
-          id: chatId,
-          participant_ids: [user.id, teacher.id],
-          last_message: "",
-        });
-      }
-      router.push("/messages");
+      const peerId = teacher.userId?.trim();
+      router.push(peerId ? `/messages?peer=${encodeURIComponent(peerId)}` : "/messages");
     } catch (error) {
       console.error("Chat error", error);
     } finally {

@@ -46,6 +46,7 @@ function OnboardingInner() {
   const [isDragging, setIsDragging] = useState(false);
   const [photoUploading, setPhotoUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const roleSelectionKeyRef = useRef<string | null>(null);
 
   // Step 1
   const [name, setName] = useState("");
@@ -173,14 +174,43 @@ function OnboardingInner() {
     if (!user) router.replace("/login?next=/onboarding");
   }, [loading, user, router]);
 
-  // If role=teacher in URL, ensure profile.role is teacher (client-side update)
+  // If role=teacher in URL, ensure profile.role is teacher through a narrow server route.
   useEffect(() => {
     if (!user?.id) return;
     if (roleParam !== "teacher") return;
     if (profile?.role === "teacher") return;
-    const supabase = getSupabaseClient();
-    void supabase.from("profiles").update({ role: "teacher" }).eq("id", user.id);
-  }, [user?.id, roleParam, profile?.role]);
+    if (profile?.role === "admin") return;
+    const key = `${user.id}:teacher`;
+    if (roleSelectionKeyRef.current === key) return;
+    roleSelectionKeyRef.current = key;
+    void (async () => {
+      try {
+        const supabase = getSupabaseClient();
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        const token = session?.access_token;
+        if (!token) throw new Error("Session expirée.");
+
+        const res = await fetch("/api/onboarding/select-role", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ role: "teacher" }),
+        });
+        const payload = (await res.json().catch(() => ({}))) as { error?: string };
+        if (!res.ok) {
+          roleSelectionKeyRef.current = null;
+          setMessage(payload.error || t("anErrorOccurred"));
+        }
+      } catch (e) {
+        roleSelectionKeyRef.current = null;
+        setMessage(e instanceof Error ? e.message : t("anErrorOccurred"));
+      }
+    })();
+  }, [user?.id, roleParam, profile?.role, t]);
 
   // Pre-fill from profile
   useEffect(() => {

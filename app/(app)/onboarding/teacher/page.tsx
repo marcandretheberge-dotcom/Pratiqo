@@ -396,18 +396,22 @@ export default function TeacherOnboardingPage() {
         throw new Error(pricingPayload.error || t("anErrorOccurred"));
       }
 
-      const { error: profileErr } = await supabase
-        .from("profiles")
-        .update({
-          role: "teacher",
-          teacher_onboarding_complete: true,
+      const completeRes = await fetch("/api/teacher/onboarding/complete", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
           tax_status_acknowledged: true,
-          tax_status_acknowledged_at: new Date().toISOString(),
           no_exclusivity_acknowledged: true,
           no_income_guarantee_acknowledged: true,
-        })
-        .eq("id", user.id);
-      if (profileErr) throw profileErr;
+        }),
+      });
+      const completePayload = (await completeRes.json().catch(() => ({}))) as { error?: string };
+      if (!completeRes.ok) {
+        throw new Error(completePayload.error || t("anErrorOccurred"));
+      }
 
       router.replace("/dashboard");
     } catch (e) {
