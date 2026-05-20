@@ -10,6 +10,7 @@ import {
   MapPin,
   AlertCircle,
   MessageSquare,
+  ReceiptText,
   Video,
 } from "lucide-react";
 import { stripe } from "@/lib/stripe";
@@ -626,6 +627,21 @@ export default async function BookingSuccessPage({
               {dict.bookingDownloadCalendarFile}
             </a>
           </div>
+
+          <Link
+            href="/student/payments"
+            className="flex items-start gap-3 rounded-2xl border border-[#DCEAE3] bg-[#F3FAF6] px-4 py-3.5 transition hover:border-teal-500/40 hover:bg-teal-50/50"
+          >
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-teal-700 shadow-sm">
+              <ReceiptText className="h-5 w-5" aria-hidden />
+            </span>
+            <span className="min-w-0 text-left">
+              <span className="block text-sm font-semibold text-[var(--p-text)]">{dict.bookingSuccessViewReceipt}</span>
+              <span className="mt-0.5 block text-xs leading-relaxed text-[var(--p-text-muted)]">
+                {dict.bookingSuccessReceiptHint}
+              </span>
+            </span>
+          </Link>
 
           <div className="pt-2 flex flex-col sm:flex-row gap-3">
             <Link

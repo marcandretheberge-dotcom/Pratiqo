@@ -281,6 +281,8 @@
   "bookingSuccessLessonBefore": "Tu clase con ",
   "bookingSuccessTaxFinalizationPendingNote": "Tu pago está confirmado. Tu recibo y el desglose de impuestos aparecerán en breve cuando termine el procesamiento.",
   "bookingSuccessThanksLine": "¡Gracias, {{name}}! — ",
+  "bookingSuccessViewReceipt": "Ver mi recibo",
+  "bookingSuccessReceiptHint": "Encuentra tu recibo y el historial de pagos.",
   "bookingTeacherSummaryFallback": "Elegí el formato, seleccioná un horario disponible y confirmá tu clase con pago seguro.",
   "bookingViewMyLessons": "Ver mis clases",
   "congratsBookingReserved": "¡Felicitaciones! Tu clase está reservada.",
