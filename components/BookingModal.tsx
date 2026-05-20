@@ -195,11 +195,15 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape" && !isSubmitting) onClose();
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [onClose]);
+  }, [onClose, isSubmitting]);
+
+  const requestClose = useCallback(() => {
+    if (!isSubmitting) onClose();
+  }, [isSubmitting, onClose]);
 
   const todayIso = useMemo(() => formatLocalISODate(new Date()), []);
 
@@ -290,6 +294,23 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
     teachingMode === "online" ? t("bookingOnline") :
     teachingMode === "domicile" ? t("bookingHome") :
     t("bookingStudio");
+
+  const sessionDurationLabel = useMemo(() => {
+    const minutes = lessonType === "intro" ? introDurationMinutes : lessonMinutes;
+    if (minutes === 60) return t("bookingOneHour");
+    if (minutes > 60 && minutes % 60 === 0) {
+      return `${minutes / 60} ${t("bookingHours")}`;
+    }
+    return `${minutes} ${t("freeSlotsMinSuffix")}`;
+  }, [introDurationMinutes, lessonMinutes, lessonType, t]);
+
+  const confirmSessionTotalLabel = useMemo(
+    () =>
+      t("bookingConfirmTotalFor")
+        .replace("{duration}", sessionDurationLabel)
+        .replace("{format}", selectedFormatLabel),
+    [sessionDurationLabel, selectedFormatLabel, t],
+  );
 
   const selectedLearner = useMemo(
     () => learnerProfiles.find((learner) => learner.id === selectedLearnerId) ?? null,
@@ -737,12 +758,28 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="booking-modal-title">
-      <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose} />
+      <div
+        className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+        onClick={requestClose}
+        aria-hidden={isSubmitting}
+      />
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         className="relative bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-slate-200 overflow-hidden max-h-[90vh] overflow-y-auto"
       >
+        {isSubmitting ? (
+          <div
+            className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-3 rounded-3xl bg-white/92 px-6 py-8 backdrop-blur-sm"
+            role="status"
+            aria-live="polite"
+            aria-busy="true"
+          >
+            <Loader2 className="h-10 w-10 animate-spin text-teal-700" aria-hidden />
+            <p className="text-center text-sm font-semibold text-slate-900">{t("bookingRedirectingSecurePayment")}</p>
+            <p className="max-w-xs text-center text-xs leading-relaxed text-slate-600">{t("bookingPaymentNote")}</p>
+          </div>
+        ) : null}
         <div className="p-5 sm:p-6 border-b border-slate-100 space-y-4">
           <div className="flex items-center justify-between gap-4">
             <div>
@@ -751,7 +788,16 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
               </p>
               <h3 id="booking-modal-title" className="text-xl font-bold text-slate-900">{teacher.name}</h3>
             </div>
-            <button type="button" onClick={onClose} aria-label={t("accessibilityCloseDialog")} className="text-slate-600 hover:text-slate-800 text-sm font-bold">
+            <button
+              type="button"
+              onClick={requestClose}
+              disabled={isSubmitting}
+              aria-label={t("accessibilityCloseDialog")}
+              className={cn(
+                "text-sm font-bold text-slate-600 hover:text-slate-800",
+                isSubmitting && "cursor-not-allowed opacity-40 hover:text-slate-600",
+              )}
+            >
               {t("bookingClose")}
             </button>
           </div>
@@ -1259,9 +1305,15 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                     </span>
                   </div>
                 ) : null}
-                <div className="flex justify-between gap-2">
-                  <span className="text-slate-600">{t("bookingAmountLabel")}</span>
-                  <span className="font-bold text-teal-700">{displayPrice}</span>
+                <div className="rounded-xl border border-teal-500/30 bg-white px-3 py-3 space-y-2">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold text-slate-800">{confirmSessionTotalLabel}</p>
+                      <p className="mt-1 text-[11px] leading-relaxed text-slate-600">{t("bookingConfirmFinalPriceNote")}</p>
+                    </div>
+                    <p className="text-xl font-bold tabular-nums text-teal-700 shrink-0">{displayPrice}</p>
+                  </div>
+                  <p className="text-[11px] font-semibold leading-relaxed text-teal-700">{t("bookingConfirmNoHiddenFees")}</p>
                 </div>
               </div>
               <p className="text-xs text-slate-600 leading-relaxed">{t("bookingExclusiveText")}</p>
@@ -1279,6 +1331,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
               {!loadingCredits && sessionBookable && creditBalance > 0 && maxCreditsApplicable > 0 ? (
                 <button
                   type="button"
+                  disabled={isSubmitting}
                   onClick={() => setApplyCredits((v) => !v)}
                   className={cn(
                     "w-full flex items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-left transition-all",
@@ -1343,11 +1396,19 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                   {checkoutError}
                 </div>
               ) : null}
+              <div className="rounded-2xl border border-[#DCEAE3] bg-[#F3FAF6] px-4 py-3 text-xs text-slate-700 flex gap-2">
+                <Info size={15} className="mt-0.5 shrink-0 text-teal-700" aria-hidden />
+                <span>{t("bookingPaymentNote")}</span>
+              </div>
               <div className="flex gap-2">
                 <button
                   type="button"
+                  disabled={isSubmitting}
                   onClick={() => setStep("pickSlot")}
-                  className="flex-1 h-11 rounded-2xl border border-slate-200 text-sm font-semibold text-slate-600"
+                  className={cn(
+                    "flex-1 h-11 rounded-2xl border border-slate-200 text-sm font-semibold text-slate-600",
+                    isSubmitting && "cursor-not-allowed opacity-50",
+                  )}
                 >
                   <ChevronLeft className="inline mr-1" size={16} />
                   {t("backToSlot")}

@@ -150,8 +150,9 @@ export function StudentDashboard() {
           : Promise.resolve(),
       ]);
 
+      // Hero + upcoming list: confirmed lessons only — pending_payment is not a scheduled class.
       const upcomingList: BookingWithTeacher[] = rows
-        .filter((r) => r.date && r.time)
+        .filter((r) => r.status === "confirmed" && r.date && r.time)
         .map((r) => {
           const tr = teacherMap.get(r.teacher_id);
           const range =
