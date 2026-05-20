@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import { useLocale } from "@/lib/locale-context";
 import type { CompanionType } from "@/lib/companions";
@@ -22,7 +22,6 @@ function isCompanionType(value: unknown): value is CompanionType {
 export default function ChooseCompanionPage() {
   const { user, loading } = useAuth();
   const { locale, t } = useLocale();
-  const router = useRouter();
 
   const [selected, setSelected] = useState<CompanionType>("phoenix");
   const [saving, setSaving] = useState(false);
@@ -95,20 +94,6 @@ export default function ChooseCompanionPage() {
     await handleStart();
   };
 
-  const handleBack = () => {
-    const fallbackPath = "/profile";
-    try {
-      const referrer = document.referrer ? new URL(document.referrer) : null;
-      if (referrer?.origin === window.location.origin && referrer.pathname !== window.location.pathname) {
-        router.back();
-        return;
-      }
-    } catch {
-      // Fall back below if the referrer cannot be parsed.
-    }
-    router.replace(fallbackPath);
-  };
-
   useEffect(() => {
     if (state !== "animating") return;
 
@@ -148,15 +133,14 @@ export default function ChooseCompanionPage() {
       }}
     >
       <div className="max-w-3xl mx-auto px-4 sm:px-6">
-        <button
-          type="button"
-          onClick={handleBack}
+        <Link
+          href="/profile"
           aria-label={localizedText(locale, "Retour", "Back", "Volver")}
           className="mb-5 inline-flex min-h-10 items-center gap-2 rounded-full border border-[#E8E6DF] bg-white px-4 text-sm font-semibold text-[#0F6E56] shadow-sm transition hover:border-teal-200 hover:bg-teal-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
         >
           <span aria-hidden>←</span>
           {localizedText(locale, "Retour", "Back", "Volver")}
-        </button>
+        </Link>
         <div className="space-y-2">
           <h1 className="text-2xl font-bold text-[#2C2C2A]">{t("companionTitle")}</h1>
           <p className="text-sm text-[#6B6A65]">{t("companionSubtitle")}</p>
