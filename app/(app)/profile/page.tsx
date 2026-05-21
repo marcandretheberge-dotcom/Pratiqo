@@ -12,6 +12,7 @@ import type { CompanionType } from "../../../lib/companions";
 import { LocaleSwitcher } from "../../../components/LocaleSwitcher";
 import { AccountDeletionSection } from "../../../components/account/AccountDeletionSection";
 import { CompanionCard } from "../../../components/companion/CompanionCard";
+import { AvatarUpload } from "../../../components/profile/AvatarUpload";
 import { cn } from "../../../lib/utils";
 import type { TranslationKey } from "../../../lib/translations";
 import { COMPLETED_LESSON_FOR_COMPANION_FILTER } from "../../../lib/companion/rewards";
@@ -45,6 +46,7 @@ export default function StudentProfilePage() {
   const [teacherCount, setTeacherCount] = useState(0);
   const [companionType, setCompanionType] = useState<CompanionType | null>(null);
   const [companionChosen, setCompanionChosen] = useState(false);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [memberYear, setMemberYear] = useState<number | null>(null);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [locCity, setLocCity] = useState("");
@@ -72,7 +74,7 @@ export default function StudentProfilePage() {
         supabase
           .from("profiles")
           .select(
-            "companion_type, companion_chosen, created_at, dashboard, city, region, country_code, preferred_learning_format",
+            "photo_url, companion_type, companion_chosen, created_at, dashboard, city, region, country_code, preferred_learning_format",
           )
           .eq("id", userId)
           .maybeSingle(),
@@ -90,6 +92,7 @@ export default function StudentProfilePage() {
         | {
             companion_type?: string | null;
             companion_chosen?: boolean | null;
+            photo_url?: string | null;
             created_at?: string | null;
             dashboard?: unknown;
             city?: string | null;
@@ -101,6 +104,8 @@ export default function StudentProfilePage() {
       const ctype = p?.companion_type;
       setCompanionType(ctype === "phoenix" || ctype === "forest" || ctype === "dragon" || ctype === "star" ? (ctype as CompanionType) : null);
       setCompanionChosen(Boolean(p?.companion_chosen));
+      const loadedPhotoUrl = typeof p?.photo_url === "string" && p.photo_url.trim() ? p.photo_url.trim() : null;
+      setPhotoUrl(loadedPhotoUrl);
       const createdAt = p?.created_at || userCreatedAt || null;
       setMemberYear(createdAt ? new Date(String(createdAt)).getFullYear() : null);
 
@@ -130,19 +135,11 @@ export default function StudentProfilePage() {
 
   if (!user) return null;
 
-  const initials = authDisplayName(user)
-    .split(" ")
-    .slice(0, 2)
-    .map((x) => x[0]?.toUpperCase())
-    .join("");
-
   return (
     <div className="space-y-6 pb-10">
       {/* HEADER */}
       <section className="text-center space-y-2">
-        <div className="mx-auto h-16 w-16 rounded-full bg-teal-600 text-white flex items-center justify-center text-lg font-bold">
-          {initials || "?"}
-        </div>
+        <AvatarUpload userId={user.id} displayName={authDisplayName(user)} currentPhotoUrl={photoUrl} onPhotoUrlChange={setPhotoUrl} />
         <p className="text-[16px] font-bold text-slate-900">{authDisplayName(user)}</p>
         <p className="text-[12px] text-slate-600">
           {t("student")} · {t("profileMemberSince")} {memberYear ?? "—"}
