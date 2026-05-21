@@ -115,7 +115,7 @@ function isMissingStripeIdentityStatus(error: unknown) {
 export function LandingPageClient({ children }: { children: ReactNode }) {
   const router = useRouter();
   const { user } = useAuth();
-  const { t, formatPrice } = useLocale();
+  const { t } = useLocale();
   const [clientHeroReady, setClientHeroReady] = useState(false);
   const [mode, setMode] = useState<HeroMode>("student");
   const [quizOpen, setQuizOpen] = useState(false);
@@ -504,7 +504,6 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
                             <div key={teacher.id} className={cn(index >= 4 && "hidden lg:block")}>
                               <LandingTeacherListingCard
                                 teacher={teacher}
-                                formatPrice={formatPrice}
                                 geo={geo}
                                 isHighlighted={selectedMapTeacher?.id === teacher.id}
                                 onOpen={() => setSelectedTeacherProfile(teacher)}

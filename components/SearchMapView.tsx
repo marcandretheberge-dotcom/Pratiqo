@@ -13,6 +13,7 @@ import type { Teacher } from "../types";
 import { cn } from "../lib/utils";
 import { useLocale } from "../lib/locale-context";
 import { Star } from "lucide-react";
+import { PriceDisplay } from "@/components/PriceDisplay";
 
 // ── Public types ──────────────────────────────────────────────────────────────
 
@@ -106,7 +107,7 @@ export function SearchMapView({
   initialZoom = 12,
   highlightedTeacherId = null,
 }: Props) {
-  const { t, formatPrice } = useLocale();
+  const { t, formatDisplayPrice } = useLocale();
 
   // ── Stable DOM / instance refs ────────────────────────────────────────────
   const mapRef = useRef<HTMLDivElement>(null);
@@ -301,7 +302,12 @@ export function SearchMapView({
     const newMarkers: google.maps.Marker[] = [];
 
     for (const teacher of teachersWithCoords) {
-      const label = `${Math.round(Number(teacher.pricePerLesson || 0)) || "?"}$`;
+      const amount = Number(teacher.pricePerLesson || 0);
+      const display =
+        Number.isFinite(amount) && amount > 0
+          ? formatDisplayPrice(amount, teacher.currency ?? "CAD").primary.replace(/\s+/g, " ")
+          : "?";
+      const label = display.length > 10 ? display.replace(/^≈\s*/, "") : display;
       const isHighlight = highlightedTeacherId != null && teacher.id === highlightedTeacherId;
       // NOTE: no `map` prop — the clusterer controls placement on the map.
       const marker = new google.maps.Marker({
@@ -332,7 +338,7 @@ export function SearchMapView({
     // Hand all markers to the clusterer at once — a single render pass is
     // more efficient than adding them one-by-one.
     clusterer.addMarkers(newMarkers);
-  }, [mapsReady, teachersWithCoords, highlightedTeacherId]); // onTeacherSelect deliberately excluded
+  }, [mapsReady, teachersWithCoords, highlightedTeacherId, formatDisplayPrice]); // onTeacherSelect deliberately excluded
 
   // ── Early returns ─────────────────────────────────────────────────────────
   if (!apiKey) {
@@ -436,7 +442,13 @@ export function SearchMapView({
                   </span>
                   <span className="text-[#D3D1C7]">·</span>
                   <span className="font-bold text-teal-700">
-                    {formatPrice(Number(selectedTeacher.pricePerLesson))}/h
+                    <PriceDisplay
+                      amount={Number(selectedTeacher.pricePerLesson)}
+                      sourceCurrency={selectedTeacher.currency ?? "CAD"}
+                      perHour
+                      primaryClassName="font-bold text-teal-700"
+                      secondaryClassName="block w-full text-[9px] font-semibold text-slate-500"
+                    />
                   </span>
                 </div>
               </div>
