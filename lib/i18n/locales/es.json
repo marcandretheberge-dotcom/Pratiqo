@@ -1381,6 +1381,8 @@
   "liveSignalAvailable": "Hay profes disponibles cerca tuyo esta semana",
   "liveSignalBooked": "Recién reservaron una clase de piano en Quebec",
   "liveSignalVerified": "Perfiles verificados, reseñas reales y reserva simple",
+  "localeCurrencyLabel": "Moneda",
+  "localeLanguageLabel": "Idioma",
   "marketplaceCategoryAcademic": "Apoyo académico",
   "marketplaceCategoryLanguages": "Idiomas",
   "marketplaceCategoryMusic": "Música",

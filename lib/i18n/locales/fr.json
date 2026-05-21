@@ -1383,6 +1383,8 @@
   "liveSignalAvailable": "Des profs sont disponibles près de chez vous cette semaine",
   "liveSignalBooked": "Un cours de piano vient d’être réservé à Québec",
   "liveSignalVerified": "Profils vérifiés, avis réels et réservation simple",
+  "localeCurrencyLabel": "Devise",
+  "localeLanguageLabel": "Langue",
   "marketplaceCategoryAcademic": "Tuteurs académiques",
   "marketplaceCategoryLanguages": "Langues",
   "marketplaceCategoryMusic": "Musique",

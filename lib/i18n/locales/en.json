@@ -1381,6 +1381,8 @@
   "liveSignalAvailable": "Teachers are available near you this week",
   "liveSignalBooked": "A piano lesson was just booked in Quebec City",
   "liveSignalVerified": "Verified profiles, real reviews, simple booking",
+  "localeCurrencyLabel": "Currency",
+  "localeLanguageLabel": "Language",
   "marketplaceCategoryAcademic": "Academic tutoring",
   "marketplaceCategoryLanguages": "Languages",
   "marketplaceCategoryMusic": "Music",
