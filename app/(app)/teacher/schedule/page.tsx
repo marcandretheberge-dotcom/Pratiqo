@@ -13,6 +13,14 @@ import type { TranslationKey } from "../../../../lib/translations";
 
 const DAYS = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"] as const;
 const SLOTS = ["Matin", "Après-midi", "Soir"] as const;
+const BUFFER_OPTIONS = [0, 5, 10, 15, 30, 45, 60] as const;
+const MAX_BUFFER_MINUTES = 240;
+
+function clampBufferMinutes(raw: unknown): number {
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n <= 0) return 0;
+  return Math.min(MAX_BUFFER_MINUTES, Math.round(n));
+}
 
 const DAY_TKEY: Record<(typeof DAYS)[number], TranslationKey> = {
   Lun: "mon",
@@ -92,6 +100,8 @@ function TeacherScheduleInner() {
   const [teacherDiscipline, setTeacherDiscipline] = useState("—");
   const [availability, setAvailability] = useState<string[]>([]);
   const [teachingMode, setTeachingMode] = useState<string>("both");
+  const [bufferBefore, setBufferBefore] = useState<number>(0);
+  const [bufferAfter, setBufferAfter] = useState<number>(0);
   const [weekAnchor, setWeekAnchor] = useState(() => startOfWeekMonday(new Date()));
   const [selectedDayIndex, setSelectedDayIndex] = useState(() => {
     const w = startOfWeekMonday(new Date());
@@ -124,12 +134,16 @@ function TeacherScheduleInner() {
     const supabase = getSupabaseClient();
     const { data: trow } = await supabase
       .from("teachers")
-      .select("id, availability, home_lesson_min_duration, teaching_mode")
+      .select(
+        "id, availability, home_lesson_min_duration, teaching_mode, booking_buffer_before_minutes, booking_buffer_after_minutes",
+      )
       .eq("user_id", user.id)
       .maybeSingle();
     const tid = (trow as { id?: string } | null)?.id ?? null;
     setTeacherId(tid);
     setTeachingMode(String((trow as { teaching_mode?: string })?.teaching_mode || "both"));
+    setBufferBefore(clampBufferMinutes((trow as { booking_buffer_before_minutes?: number | null })?.booking_buffer_before_minutes));
+    setBufferAfter(clampBufferMinutes((trow as { booking_buffer_after_minutes?: number | null })?.booking_buffer_after_minutes));
     if (!tid) {
       setBookings([]);
       setLoading(false);
@@ -226,7 +240,12 @@ function TeacherScheduleInner() {
       const supabase = getSupabaseClient();
       const { error } = await supabase
         .from("teachers")
-        .update({ availability, teaching_mode: teachingMode })
+        .update({
+          availability,
+          teaching_mode: teachingMode,
+          booking_buffer_before_minutes: clampBufferMinutes(bufferBefore),
+          booking_buffer_after_minutes: clampBufferMinutes(bufferAfter),
+        })
         .eq("user_id", user.id);
       if (error) throw error;
       setFlash({ kind: "ok", text: t("availabilitySaved") });
@@ -546,6 +565,43 @@ function TeacherScheduleInner() {
                     </button>
                   );
                 })}
+              </div>
+            </div>
+
+            <div className="border-t border-slate-100 pt-4 space-y-3">
+              <div>
+                <p className="text-sm font-bold text-[#2C2C2A]">{t("bufferSectionTitle")}</p>
+                <p className="text-xs text-slate-600 mt-1">{t("bufferSectionHelp")}</p>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="space-y-1">
+                  <span className="text-[11px] font-bold uppercase text-slate-600">{t("bufferBeforeLabel")}</span>
+                  <select
+                    value={bufferBefore}
+                    onChange={(e) => setBufferBefore(clampBufferMinutes(e.target.value))}
+                    className="h-11 w-full rounded-xl border border-slate-200 px-3 text-sm"
+                  >
+                    {BUFFER_OPTIONS.map((m) => (
+                      <option key={`before-${m}`} value={m}>
+                        {m === 0 ? t("bufferNone") : `${m} min`}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="space-y-1">
+                  <span className="text-[11px] font-bold uppercase text-slate-600">{t("bufferAfterLabel")}</span>
+                  <select
+                    value={bufferAfter}
+                    onChange={(e) => setBufferAfter(clampBufferMinutes(e.target.value))}
+                    className="h-11 w-full rounded-xl border border-slate-200 px-3 text-sm"
+                  >
+                    {BUFFER_OPTIONS.map((m) => (
+                      <option key={`after-${m}`} value={m}>
+                        {m === 0 ? t("bufferNone") : `${m} min`}
+                      </option>
+                    ))}
+                  </select>
+                </label>
               </div>
             </div>
 

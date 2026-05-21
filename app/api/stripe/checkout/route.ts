@@ -12,6 +12,8 @@ import {
   defaultTaxBehaviorForCheckout,
   defaultTaxStatusForCheckout,
 } from "@/lib/payments/tax";
+import { expandBookingInterval, intervalsOverlap, slotStartMinutes } from "@/lib/slots";
+import { normalizeTeacherBufferSettings } from "@/lib/teacherSlotQueries";
 import { validateJsonBody } from "@/lib/validation/api";
 import { stripeCheckoutPostSchema } from "@/lib/validation/schemas";
 import { SITE_URL } from "@/lib/seo/site";
@@ -114,7 +116,7 @@ export async function POST(req: Request) {
     const { data: booking, error: bookErr } = await admin
       .from("bookings")
       .select(
-        "id, teacher_id, student_id, status, price, date, time, slot_date, time_slot, student_level, teaching_mode, student_address, lesson_type, learner_profile_id",
+        "id, teacher_id, student_id, status, price, date, time, slot_date, time_slot, duration_minutes, student_level, teaching_mode, student_address, lesson_type, learner_profile_id",
       )
       .eq("id", bookingId)
       .maybeSingle();
@@ -167,13 +169,71 @@ export async function POST(req: Request) {
     const { data: teacher, error: tErr } = await admin
       .from("teachers")
       .select(
-        "id, user_id, name, price_per_lesson, home_lesson_enabled, home_lesson_price, intro_session_enabled",
+        "id, user_id, name, price_per_lesson, home_lesson_enabled, home_lesson_price, intro_session_enabled, booking_buffer_before_minutes, booking_buffer_after_minutes",
       )
       .eq("id", booking.teacher_id)
       .maybeSingle();
 
     if (tErr || !teacher) {
       return NextResponse.json({ error: "Teacher not found." }, { status: 404 });
+    }
+
+    // Buffer-aware conflict check. The simple equality test above only catches
+    // bookings with the exact same start label. With per-teacher buffers (or
+    // bookings of different durations), two non-overlapping start times can
+    // still collide once you account for prep time. Validate here so a client
+    // that bypasses the slots API cannot create a conflicting checkout, and
+    // so the unique_teacher_slot constraint never becomes the sole defense.
+    const buffers = normalizeTeacherBufferSettings(
+      teacher as Parameters<typeof normalizeTeacherBufferSettings>[0],
+    );
+    if (buffers.bookingBufferBeforeMinutes > 0 || buffers.bookingBufferAfterMinutes > 0) {
+      const candidateStartMin = slotStartMinutes(bTimeSlot);
+      if (candidateStartMin < 0) {
+        return NextResponse.json({ error: "Heure de réservation invalide." }, { status: 400 });
+      }
+      const candidateDurMinRaw = Number((booking as { duration_minutes?: number | null }).duration_minutes);
+      const candidateDurMin =
+        Number.isFinite(candidateDurMinRaw) && candidateDurMinRaw > 0 ? Math.round(candidateDurMinRaw) : 60;
+      const candidateInterval = expandBookingInterval(
+        candidateStartMin,
+        candidateDurMin,
+        buffers.bookingBufferBeforeMinutes,
+        buffers.bookingBufferAfterMinutes,
+      );
+
+      const { data: sameDayRows, error: sameDayErr } = await admin
+        .from("bookings")
+        .select("id, time_slot, duration_minutes")
+        .eq("teacher_id", booking.teacher_id)
+        .eq("slot_date", bSlotDate)
+        .neq("id", bookingId)
+        .in("status", ["pending_payment", "confirmed"])
+        .not("time_slot", "is", null);
+
+      if (sameDayErr) {
+        console.error("[stripe/checkout] buffer overlap query failed", sameDayErr);
+        return NextResponse.json({ error: "Impossible de vérifier les conflits de créneau." }, { status: 500 });
+      }
+
+      for (const row of (sameDayRows ?? []) as { time_slot: string; duration_minutes?: number | null }[]) {
+        const otherStart = slotStartMinutes(row.time_slot);
+        if (otherStart < 0) continue;
+        const otherDurRaw = Number(row.duration_minutes);
+        const otherDur = Number.isFinite(otherDurRaw) && otherDurRaw > 0 ? Math.round(otherDurRaw) : 60;
+        const otherInterval = expandBookingInterval(
+          otherStart,
+          otherDur,
+          buffers.bookingBufferBeforeMinutes,
+          buffers.bookingBufferAfterMinutes,
+        );
+        if (intervalsOverlap(candidateInterval, otherInterval)) {
+          return NextResponse.json(
+            { error: "Ce créneau est trop proche d'une autre réservation (temps de préparation)." },
+            { status: 409 },
+          );
+        }
+      }
     }
 
     const typed = teacher as TeacherRow;
