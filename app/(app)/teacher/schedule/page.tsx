@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useState, Suspense } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ChevronLeft, ChevronRight, Loader2, Save } from "lucide-react";
 import { useAuth } from "../../../../components/AuthProvider";
 import { getSupabaseClient } from "../../../../lib/supabase";
@@ -82,20 +82,18 @@ function TeacherScheduleInner() {
   const { locale, t } = useLocale();
   const dateLocale = localeToBcp47(locale);
   const router = useRouter();
-  const pathname = usePathname();
   const searchParams = useSearchParams();
 
+  // Horaire is now the availability editor. The today/week branches are kept
+  // only for backwards-compatible bookmark URLs (?tab=today, ?tab=week); the
+  // segmented tab UI was removed because both views duplicate the teacher
+  // dashboard (TeacherDashboardStats + TeacherScheduleCard).
   const subtab = useMemo<ScheduleTab>(() => {
-    const raw = (searchParams.get("tab") || "today").toLowerCase();
+    const raw = (searchParams.get("tab") || "").toLowerCase();
+    if (raw === "today" || raw === "aujourdhui") return "today";
     if (raw === "week" || raw === "semaine") return "week";
-    if (raw === "dispo" || raw === "availability" || raw === "disponibilites") return "dispo";
-    return "today";
+    return "dispo";
   }, [searchParams]);
-
-  const setSubtab = (next: ScheduleTab) => {
-    const q = next === "today" ? "today" : next === "week" ? "week" : "dispo";
-    router.replace(`${pathname}?tab=${q}`, { scroll: false });
-  };
 
   const [teacherId, setTeacherId] = useState<string | null>(null);
   const [teacherDiscipline, setTeacherDiscipline] = useState("—");
@@ -343,31 +341,10 @@ function TeacherScheduleInner() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-5">
-      <div>
+      <div className="space-y-1">
         <p className="text-[10px] font-bold uppercase tracking-widest text-teal-700">{t("scheduleTeacherLabel")}</p>
         <h1 className="text-2xl sm:text-3xl font-bold text-[#2C2C2A]">{t("schedulePageTitle")}</h1>
-      </div>
-
-      <div className="flex gap-1 p-1 rounded-2xl bg-slate-100 border border-slate-200 w-full max-w-md">
-        {(
-          [
-            ["today", "tabToday"],
-            ["week", "tabWeek"],
-            ["dispo", "tabAvailability"],
-          ] as const
-        ).map(([key, labelKey]) => (
-          <button
-            key={key}
-            type="button"
-            onClick={() => setSubtab(key)}
-            className={cn(
-              "flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors",
-              subtab === key ? "bg-teal-600 text-white shadow-sm" : "text-slate-600 hover:text-slate-900",
-            )}
-          >
-            {t(labelKey)}
-          </button>
-        ))}
+        <p className="text-sm text-slate-600">{t("schedulePageSubtitle")}</p>
       </div>
 
       {flash ? (
