@@ -78,6 +78,7 @@ function slotStartApprox(ts: string | null | undefined): number {
 
 function TeacherScheduleInner() {
   const { user } = useAuth();
+  const userId = user?.id ?? null;
   const { locale, t } = useLocale();
   const dateLocale = localeToBcp47(locale);
   const router = useRouter();
@@ -121,23 +122,50 @@ function TeacherScheduleInner() {
 
   const todayIso = formatLocalISODate(new Date());
   const weekDays = useMemo(() => Array.from({ length: 7 }, (_, i) => addDays(weekAnchor, i)), [weekAnchor]);
+  const formatDayMonthLabel = useCallback(
+    (date: Date) =>
+      new Intl.DateTimeFormat(dateLocale, { day: "numeric", month: "short" })
+        .format(date)
+        .replace(/\.$/, "")
+        .toUpperCase(),
+    [dateLocale],
+  );
+  const weekRangeLabel = useMemo(
+    () => `${formatDayMonthLabel(weekAnchor)} – ${formatDayMonthLabel(addDays(weekAnchor, 6))}`,
+    [formatDayMonthLabel, weekAnchor],
+  );
+  const resetToThisWeek = useCallback(() => {
+    const now = new Date();
+    setWeekAnchor(startOfWeekMonday(now));
+    setSelectedDayIndex((now.getDay() + 6) % 7);
+  }, []);
   const selectedDateIso = useMemo(
     () => formatLocalISODate(weekDays[selectedDayIndex] ?? weekAnchor),
     [weekDays, selectedDayIndex, weekAnchor],
   );
+  const selectedDateLabel = useMemo(
+    () =>
+      (weekDays[selectedDayIndex] ?? weekAnchor).toLocaleDateString(dateLocale, {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+      }),
+    [dateLocale, selectedDayIndex, weekAnchor, weekDays],
+  );
 
   const load = useCallback(async () => {
-    if (!user?.id) {
+    if (!userId) {
       setLoading(false);
       return;
     }
+    setLoading(true);
     const supabase = getSupabaseClient();
     const { data: trow } = await supabase
       .from("teachers")
       .select(
         "id, availability, home_lesson_min_duration, teaching_mode, booking_buffer_before_minutes, booking_buffer_after_minutes",
       )
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .maybeSingle();
     const tid = (trow as { id?: string } | null)?.id ?? null;
     setTeacherId(tid);
@@ -175,11 +203,10 @@ function TeacherScheduleInner() {
     setBookings(withNames);
     setBlockedRows((bl || []) as { id: string; blocked_date: string; period: string | null }[]);
     setLoading(false);
-  }, [user?.id, weekAnchor, t]);
+  }, [userId, weekAnchor, t]);
 
   useEffect(() => {
-    setLoading(true);
-    void load();
+    void Promise.resolve().then(() => load());
   }, [load]);
 
   const activeBooking = (b: BookingRow) => !["cancelled", "cancelled_conflict", "completed"].includes(b.status);
@@ -233,7 +260,7 @@ function TeacherScheduleInner() {
   };
 
   const saveAll = async () => {
-    if (!user?.id) return;
+    if (!userId) return;
     setSaving(true);
     setFlash(null);
     try {
@@ -246,7 +273,7 @@ function TeacherScheduleInner() {
           booking_buffer_before_minutes: clampBufferMinutes(bufferBefore),
           booking_buffer_after_minutes: clampBufferMinutes(bufferAfter),
         })
-        .eq("user_id", user.id);
+        .eq("user_id", userId);
       if (error) throw error;
       setFlash({ kind: "ok", text: t("availabilitySaved") });
     } catch (e) {
@@ -440,7 +467,7 @@ function TeacherScheduleInner() {
               <ChevronLeft size={18} /> {t("weekNav")}
             </button>
             <p className="text-sm font-semibold text-slate-700">
-              {formatLocalISODate(weekAnchor)} → {formatLocalISODate(addDays(weekAnchor, 6))}
+              {weekRangeLabel}
             </p>
             <button
               type="button"
@@ -475,7 +502,7 @@ function TeacherScheduleInner() {
             })}
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white p-5 space-y-3">
-            <p className="text-sm font-bold text-[#2C2C2A]">{selectedDateIso}</p>
+            <p className="text-sm font-bold text-[#2C2C2A] capitalize">{selectedDateLabel}</p>
             {selectedDayBookings.length === 0 ? (
               <p className="text-sm text-slate-500">Aucun cours ce jour-là.</p>
             ) : (
@@ -494,7 +521,40 @@ function TeacherScheduleInner() {
       ) : (
         <div className="space-y-6">
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
-            <p className="text-xs font-bold uppercase tracking-widest text-slate-600">{t("gridWeeklyTitle")}</p>
+            <div className="space-y-3">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-widest text-slate-600">{t("gridWeeklyTitle")}</p>
+                <p className="mt-1 text-xs leading-5 text-slate-600">{t("availabilityRecurringHint")}</p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setWeekAnchor((w) => addDays(w, -7))}
+                  className="inline-flex h-9 items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 hover:bg-slate-50"
+                >
+                  <ChevronLeft size={15} />
+                  {t("weekNavPrev")}
+                </button>
+                <button
+                  type="button"
+                  onClick={resetToThisWeek}
+                  className="inline-flex h-9 items-center rounded-xl border border-teal-100 bg-teal-50 px-3 text-xs font-bold text-teal-800 hover:bg-teal-100"
+                >
+                  {t("weekToday")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setWeekAnchor((w) => addDays(w, 7))}
+                  className="inline-flex h-9 items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 hover:bg-slate-50"
+                >
+                  {t("weekNavNext")}
+                  <ChevronRight size={15} />
+                </button>
+                <span className="ml-auto text-xs font-bold uppercase tracking-wide text-slate-500">
+                  {weekRangeLabel}
+                </span>
+              </div>
+            </div>
             <div className="flex flex-wrap gap-4 text-xs text-[#2C2C2A]">
               <span className="inline-flex items-center gap-2">
                 <span className="h-3 w-3 rounded-sm bg-teal-600" /> {t("legendAvailable")}
@@ -512,8 +572,8 @@ function TeacherScheduleInner() {
                 {DAYS.map((d, di) => (
                   <div key={d} className="text-[11px] font-bold uppercase tracking-widest text-slate-500 text-center">
                     {t(DAY_TKEY[d])}{" "}
-                    <span className="block font-normal text-slate-600 normal-case">
-                      {weekDays[di] ? weekDays[di].getDate() : ""}/{weekDays[di] ? weekDays[di].getMonth() + 1 : ""}
+                    <span className="block font-semibold text-slate-600">
+                      {weekDays[di] ? formatDayMonthLabel(weekDays[di]) : ""}
                     </span>
                   </div>
                 ))}
