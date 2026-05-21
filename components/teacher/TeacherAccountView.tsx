@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Info, Loader2, X } from "lucide-react";
+import { ExternalLink, Info, Loader2, X } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { logout } from "@/lib/auth";
 import { getSupabaseClient } from "@/lib/supabase";
@@ -606,6 +606,24 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
         ) : (
           <p className="text-sm text-slate-600 mt-2">{t("teacherSettingsSystemLead")}</p>
         )}
+        {variant === "profile" && teacherId ? (
+          teacherIsPublic ? (
+            <a
+              href={`/teacher/profile/${teacherId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              title={t("previewProfileAsStudentHint")}
+              className="mt-3 inline-flex items-center gap-2 h-10 px-4 rounded-full border-2 border-[#00694c]/20 bg-white text-sm font-semibold text-[#00694c] hover:bg-[#00694c]/5 transition-colors"
+            >
+              <ExternalLink size={14} aria-hidden />
+              {t("previewProfileAsStudent")}
+            </a>
+          ) : (
+            <p className="mt-3 inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-800">
+              {t("previewProfileHiddenWarning")}
+            </p>
+          )
+        ) : null}
       </div>
 
       {variant === "profile" ? (
