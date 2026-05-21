@@ -10,6 +10,7 @@ import { formatLocalISODate } from "../../../../lib/slots";
 import { useLocale } from "../../../../lib/locale-context";
 import { localeToBcp47 } from "../../../../lib/i18n/types";
 import type { TranslationKey } from "../../../../lib/translations";
+import { isScheduleEditLockedByNotice, type ScheduleLockPeriod } from "../../../../lib/scheduleLockout";
 
 const DAYS = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"] as const;
 const SLOTS = ["Matin", "Après-midi", "Soir"] as const;
@@ -36,6 +37,12 @@ const SLOT_TKEY: Record<(typeof SLOTS)[number], TranslationKey> = {
   Matin: "morning",
   "Après-midi": "afternoon",
   Soir: "evening",
+};
+
+const SLOT_PERIOD: Record<(typeof SLOTS)[number], ScheduleLockPeriod> = {
+  Matin: "matin",
+  "Après-midi": "apresmidi",
+  Soir: "soir",
 };
 
 type ScheduleTab = "today" | "week" | "dispo";
@@ -232,6 +239,11 @@ function TeacherScheduleInner() {
     setAvailability((prev) => (prev.includes(key) ? prev.filter((x) => x !== key) : [...prev, key]));
   };
 
+  const cellLockedByNotice = (dayColumnIndex: number, slotFr: (typeof SLOTS)[number]): boolean => {
+    const iso = formatLocalISODate(weekDays[dayColumnIndex] ?? weekAnchor);
+    return isScheduleEditLockedByNotice(iso, SLOT_PERIOD[slotFr]);
+  };
+
   const cellHasBooking = (dayColumnIndex: number, slotFr: string): boolean => {
     const iso = formatLocalISODate(weekDays[dayColumnIndex] ?? weekAnchor);
     const period =
@@ -283,6 +295,10 @@ function TeacherScheduleInner() {
 
   const addBlocked = async () => {
     if (!teacherId || !blockDate) return;
+    if (isScheduleEditLockedByNotice(blockDate, blockPeriod)) {
+      setFlash({ kind: "err", text: t("scheduleLockedNotice") });
+      return;
+    }
     setSaving(true);
     setFlash(null);
     try {
@@ -502,6 +518,7 @@ function TeacherScheduleInner() {
               <div>
                 <p className="text-xs font-bold uppercase tracking-widest text-slate-600">{t("gridWeeklyTitle")}</p>
                 <p className="mt-1 text-xs leading-5 text-slate-600">{t("availabilityRecurringHint")}</p>
+                <p className="mt-1 text-xs leading-5 font-semibold text-amber-800">{t("scheduleLockedNotice")}</p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <button
@@ -542,6 +559,9 @@ function TeacherScheduleInner() {
               <span className="inline-flex items-center gap-2">
                 <span className="h-3 w-3 rounded-sm bg-[#FAEEDA] border border-[#F5C478]" /> {t("legendBooked")}
               </span>
+              <span className="inline-flex items-center gap-2">
+                <span className="h-3 w-3 rounded-sm border border-slate-300 bg-slate-50 opacity-60" /> {t("legendLockedNotice")}
+              </span>
             </div>
             <div className="overflow-x-auto">
               <div className="min-w-[560px] grid grid-cols-[120px_repeat(7,1fr)] gap-2">
@@ -560,7 +580,9 @@ function TeacherScheduleInner() {
                     {DAYS.map((d, di) => {
                       const key = `${d} ${s}`;
                       const on = availability.includes(key);
-                      const locked = cellHasBooking(di, s);
+                      const lockedByBooking = cellHasBooking(di, s);
+                      const lockedByNotice = cellLockedByNotice(di, s);
+                      const locked = lockedByBooking || lockedByNotice;
                       return (
                         <button
                           key={key}
@@ -569,11 +591,12 @@ function TeacherScheduleInner() {
                           onClick={() => !locked && toggleAvail(d, s)}
                           className={cn(
                             "h-11 rounded-xl border transition-colors",
-                            locked ? "border-[#F5C478] bg-[#FAEEDA] cursor-not-allowed" : "",
+                            lockedByBooking ? "border-[#F5C478] bg-[#FAEEDA] cursor-not-allowed" : "",
+                            lockedByNotice && !lockedByBooking ? "cursor-not-allowed border-slate-200 bg-slate-50 opacity-55" : "",
                             !locked && on ? "border-teal-500 bg-teal-500/15" : "",
                             !locked && !on ? "border-slate-200 bg-slate-100 hover:border-slate-300" : "",
                           )}
-                          title={locked ? t("titleCellBooked") : on ? t("titleCellAvailable") : t("titleCellUnavailable")}
+                          title={lockedByBooking ? t("titleCellBooked") : lockedByNotice ? t("scheduleLockedCellLabel") : on ? t("titleCellAvailable") : t("titleCellUnavailable")}
                         />
                       );
                     })}
@@ -648,6 +671,7 @@ function TeacherScheduleInner() {
                 <input
                   type="date"
                   value={blockDate}
+                  min={todayIso}
                   onChange={(e) => setBlockDate(e.target.value)}
                   className="h-11 rounded-xl border border-slate-200 px-3 text-sm"
                 />
@@ -663,9 +687,10 @@ function TeacherScheduleInner() {
                 </select>
                 <button
                   type="button"
-                  disabled={saving || !blockDate}
+                  disabled={saving || !blockDate || isScheduleEditLockedByNotice(blockDate, blockPeriod)}
                   onClick={() => void addBlocked()}
                   className="h-11 px-5 rounded-full bg-red-600 text-white text-sm font-semibold hover:bg-red-700 disabled:opacity-50"
+                  title={blockDate && isScheduleEditLockedByNotice(blockDate, blockPeriod) ? t("scheduleLockedCellLabel") : undefined}
                 >
                   {t("blockButton")}
                 </button>
