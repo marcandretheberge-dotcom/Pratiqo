@@ -2,6 +2,14 @@ import { createServerClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import {
+  sanitizeAdminRedirectPath,
+  sanitizeRelativeRedirectPath,
+} from "@/lib/auth/redirects";
+
+// Re-exported for back-compat with existing callers (route handlers, tests).
+// New code should prefer importing directly from `@/lib/auth/redirects`.
+export { sanitizeAdminRedirectPath, sanitizeRelativeRedirectPath };
 
 export type ProfileRole = "student" | "teacher" | "admin";
 
@@ -51,25 +59,6 @@ export function resolveProfileRoleOnAuth(input: {
     return input.existingRole;
   }
   return "student";
-}
-
-/**
- * Accept only same-origin relative paths (single leading slash, no protocol-relative URLs).
- */
-export function sanitizeRelativeRedirectPath(path: string | null | undefined): string | null {
-  if (path == null) return null;
-  const trimmed = path.trim();
-  if (!trimmed.startsWith("/") || trimmed.startsWith("//")) return null;
-  if (trimmed.includes("://")) return null;
-  return trimmed;
-}
-
-/** Admin post-login next param must stay under /admin. */
-export function sanitizeAdminRedirectPath(path: string | null | undefined): string | null {
-  const safe = sanitizeRelativeRedirectPath(path);
-  if (!safe) return null;
-  if (safe === "/admin" || safe.startsWith("/admin/")) return safe;
-  return null;
 }
 
 export function resolvePostAuthRedirect(

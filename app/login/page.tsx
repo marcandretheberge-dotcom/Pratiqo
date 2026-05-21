@@ -8,16 +8,22 @@ import { cn } from "../../lib/utils";
 import PratiqoLogo from "../../components/PratiqoLogo";
 import { LocaleSwitcher } from "../../components/LocaleSwitcher";
 import { loginWithGoogle } from "../../lib/auth";
+import { sanitizeRelativeRedirectPath } from "../../lib/auth/redirects";
 import { useAuth } from "../../components/AuthProvider";
 import { useLocale } from "../../lib/locale-context";
+
+const DEFAULT_POST_LOGIN_REDIRECT = "/dashboard";
 
 function LoginForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { user, loading } = useAuth();
   const role = searchParams.get("role");
-  const nextRaw = searchParams.get("next") || "/dashboard";
-  const next = nextRaw.startsWith("/") ? nextRaw : `/${nextRaw}`;
+  // Sanitize to reject open-redirect attempts (e.g. //evil.com, https://…)
+  // before the value is forwarded into Google OAuth state OR used to
+  // redirect already-authenticated users on this page.
+  const next =
+    sanitizeRelativeRedirectPath(searchParams.get("next")) ?? DEFAULT_POST_LOGIN_REDIRECT;
   const refCode = searchParams.get("ref") ?? undefined;
   const isTeacherInvite = role === "teacher";
 
@@ -35,10 +41,16 @@ function LoginForm() {
     if (!legalAccepted || busy) return;
     setBusy(true);
     try {
+      // Forward the sanitized `next` through Google OAuth so users land on the
+      // page they were trying to reach (e.g. /student/progress from a reward
+      // email) instead of being dumped on /dashboard. Without this, mobile
+      // visitors who must complete OAuth lose their intended destination —
+      // desktop users with a live session bypass OAuth via the useEffect
+      // above and so didn't surface the regression.
       if (role === "teacher") {
-        await loginWithGoogle("/dashboard", "teacher", refCode);
+        await loginWithGoogle(next, "teacher", refCode);
       } else {
-        await loginWithGoogle("/dashboard", undefined, refCode);
+        await loginWithGoogle(next, undefined, refCode);
       }
     } catch (e) {
       console.error(e);

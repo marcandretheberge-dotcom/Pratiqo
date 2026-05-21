@@ -141,6 +141,113 @@ test("migration 061 SQL logic blocks self-promotion to admin for non-service cal
   assert.match(sql, /NEW\.role := OLD\.role;/);
 });
 
+// ── Mobile email-link / OAuth `next` preservation regression tests ──────────
+// Background: students opening a reward email ("Voir mon compagnon" →
+// /student/progress) on mobile had to complete Google OAuth and were landing
+// on /dashboard instead of the linked destination. Root cause: the login page
+// hard-coded /dashboard when forwarding into Google OAuth. These tests pin
+// the contract that `resolvePostAuthRedirect` + `sanitizeRelativeRedirectPath`
+// must honour so the regression cannot return silently.
+
+test("resolvePostAuthRedirect preserves /student/progress for students with companion (email-link flow)", () => {
+  assert.equal(
+    resolvePostAuthRedirect("student", { companion_chosen: true }, "/student/progress"),
+    "/student/progress",
+  );
+});
+
+test("resolvePostAuthRedirect funnels students without companion to chooser even when next is /student/progress", () => {
+  assert.equal(
+    resolvePostAuthRedirect("student", { companion_chosen: false }, "/student/progress"),
+    "/student/choose-companion",
+  );
+});
+
+test("resolvePostAuthRedirect rejects open-redirect next for students and falls back to /dashboard", () => {
+  assert.equal(
+    resolvePostAuthRedirect("student", { companion_chosen: true }, "https://evil.com"),
+    "/dashboard",
+  );
+  assert.equal(
+    resolvePostAuthRedirect("student", { companion_chosen: true }, "//evil.com"),
+    "/dashboard",
+  );
+});
+
+test("resolvePostAuthRedirect rejects open-redirect next for teachers and falls back to /dashboard", () => {
+  assert.equal(
+    resolvePostAuthRedirect(
+      "teacher",
+      { teacher_onboarding_complete: true, companion_chosen: true },
+      "https://evil.com",
+    ),
+    "/dashboard",
+  );
+});
+
+test("resolvePostAuthRedirect keeps teacher onboarding gate ahead of any next", () => {
+  assert.equal(
+    resolvePostAuthRedirect(
+      "teacher",
+      { teacher_onboarding_complete: false, companion_chosen: true },
+      "/student/progress",
+    ),
+    "/onboarding/teacher",
+  );
+});
+
+test("sanitizeRelativeRedirectPath preserves /student/progress query/hash payloads", () => {
+  assert.equal(
+    sanitizeRelativeRedirectPath("/student/progress?from=email"),
+    "/student/progress?from=email",
+  );
+  assert.equal(
+    sanitizeRelativeRedirectPath("/student/progress#milestones"),
+    "/student/progress#milestones",
+  );
+});
+
+test("sanitizeRelativeRedirectPath rejects javascript: and data: schemes", () => {
+  assert.equal(sanitizeRelativeRedirectPath("javascript:alert(1)"), null);
+  assert.equal(sanitizeRelativeRedirectPath("data:text/html,evil"), null);
+});
+
+test("login page forwards sanitized `next` (not hard-coded /dashboard) into Google OAuth", () => {
+  // Pins the mobile-email regression: app/login/page.tsx must pass the
+  // parsed `next` into loginWithGoogle() so users completing OAuth land on
+  // the destination from their email link (e.g. /student/progress).
+  const source = readFileSync(join(process.cwd(), "app/login/page.tsx"), "utf8");
+  assert.match(
+    source,
+    /loginWithGoogle\(\s*next\s*,\s*"teacher"/,
+    "teacher branch must forward `next` to loginWithGoogle",
+  );
+  assert.match(
+    source,
+    /loginWithGoogle\(\s*next\s*,\s*undefined/,
+    "student branch must forward `next` to loginWithGoogle",
+  );
+  assert.doesNotMatch(
+    source,
+    /loginWithGoogle\(\s*"\/dashboard"\s*,/,
+    "login page must not hard-code /dashboard when starting OAuth",
+  );
+  assert.match(
+    source,
+    /sanitizeRelativeRedirectPath\(\s*searchParams\.get\("next"\)\s*\)/,
+    "login page must sanitize `next` before forwarding it through OAuth",
+  );
+});
+
+test("companion-evolution email CTA points to /student/progress", () => {
+  // The email template is the trigger for this entire mobile redirect bug:
+  // if the CTA URL ever drifts we want loud test failure rather than a
+  // silent UX regression.
+  const source = readFileSync(join(process.cwd(), "lib/email/templates/welcome.ts"), "utf8");
+  assert.match(source, /ctaText:\s*"Voir mon compagnon"/);
+  assert.match(source, /ctaUrl:\s*`\$\{base\}\/student\/progress`/);
+});
+
 async function run() {
   for (const { name, fn } of tests) {
     await fn();
