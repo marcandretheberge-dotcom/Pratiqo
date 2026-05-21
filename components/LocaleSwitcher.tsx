@@ -135,7 +135,7 @@ export function LocaleSwitcher({
         type="button"
         aria-expanded={isOpen}
         aria-haspopup="menu"
-        aria-label={t("localeLanguageLabel")}
+        aria-label={`${t("localeLanguageLabel")} ${current?.code ?? locale}, ${t("localeCurrencyLabel")} ${currency}`}
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
           "flex items-center gap-2 rounded-lg px-3 py-2 transition-all",
@@ -145,9 +145,9 @@ export function LocaleSwitcher({
         )}
       >
         <Globe size={16} />
-        {!compact && (
-          <span className="font-medium text-sm">{current?.code}</span>
-        )}
+        <span className={cn("font-medium", compact ? "text-xs" : "text-sm")}>{currency}</span>
+        <span className={cn("h-3 w-px", light ? "bg-slate-200" : "bg-white/25")} aria-hidden />
+        <span className={cn("font-medium", compact ? "text-xs" : "text-sm")}>{current?.code}</span>
       </button>
 
       {/* Dropdown Menu */}
