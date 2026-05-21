@@ -5,15 +5,21 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { awardCredit } from "@/lib/credits";
 import { sendWelcomeStudent } from "@/lib/email";
 import { normalizeLocale } from "@/lib/i18n/types";
+import {
+  parseAdminLoginEmails,
+  resolvePostAuthRedirect,
+  resolveProfileRoleOnAuth,
+} from "@/lib/auth/admin";
 
 async function trySendStudentWelcomeOnce(
   admin: ReturnType<typeof getSupabaseAdmin>,
   userId: string,
   email: string,
   displayName: string,
+  locale: ReturnType<typeof normalizeLocale>,
 ) {
   try {
-    await sendWelcomeStudent(email, displayName);
+    await sendWelcomeStudent(email, displayName, locale);
     const { error } = await admin
       .from("profiles")
       .update({ welcome_student_email_sent_at: new Date().toISOString() })
@@ -64,7 +70,6 @@ export async function GET(request: Request) {
     } = await supabase.auth.getUser();
 
     if (user) {
-      // Detect new users before the upsert so we can send a welcome email
       const admin = getSupabaseAdmin();
       const preferredLocale = normalizeLocale(
         cookieStore.get("pratiqo-locale")?.value ?? (user.user_metadata?.locale as string | undefined),
@@ -79,28 +84,40 @@ export async function GET(request: Request) {
       } catch (err) {
         console.warn("[auth/callback] locale metadata update failed", err);
       }
-      // First upsert (no select) so profile exists immediately after OAuth.
-      const { error: upsertErr } = await supabase
+
+      const { data: existingProfile } = await admin
         .from("profiles")
-        .upsert(
-          {
-            id: user.id,
-            email: user.email,
-            name: (user.user_metadata?.full_name as string) || null,
-            updated_at: new Date().toISOString(),
-            // Ensure new users default to student flow.
-            role: role === "teacher" ? "teacher" : "student",
-            companion_chosen: false,
-          },
-          { onConflict: "id" },
-        );
+        .select("role, teacher_onboarding_complete, companion_chosen, welcome_student_email_sent_at")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      const adminLoginEmails = parseAdminLoginEmails(process.env.ADMIN_LOGIN_EMAILS);
+      const resolvedRole = resolveProfileRoleOnAuth({
+        existingRole: (existingProfile as { role?: string } | null)?.role,
+        signUpRoleParam: role,
+        email: user.email,
+        adminLoginEmails,
+      });
+
+      const profileUpsert: Record<string, unknown> = {
+        id: user.id,
+        email: user.email,
+        name: (user.user_metadata?.full_name as string) || (existingProfile as { name?: string } | null)?.name || null,
+        updated_at: new Date().toISOString(),
+        role: resolvedRole,
+      };
+
+      if (!existingProfile) {
+        profileUpsert.companion_chosen = false;
+      }
+
+      const { error: upsertErr } = await admin.from("profiles").upsert(profileUpsert, { onConflict: "id" });
 
       if (upsertErr) {
         console.error("[auth/callback] profile upsert failed", upsertErr);
       }
 
-      // Then select separately (avoids Supabase typechain edge cases).
-      const { data: profile, error: readErr } = await supabase
+      const { data: profile, error: readErr } = await admin
         .from("profiles")
         .select("role, teacher_onboarding_complete, companion_chosen")
         .eq("id", user.id)
@@ -108,13 +125,14 @@ export async function GET(request: Request) {
 
       if (readErr || !profile) {
         console.error("[auth/callback] profile read failed", readErr);
-        return NextResponse.redirect(new URL("/dashboard", requestUrl.origin));
+        const fallbackRedirect =
+          resolvedRole === "admin" ? "/admin" : "/dashboard";
+        return NextResponse.redirect(new URL(fallbackRedirect, requestUrl.origin));
       }
 
       // Handle referral attribution (only for new users — referred_by IS NULL)
       if (refCode) {
         try {
-          const admin = getSupabaseAdmin();
           const { data: referrer } = await admin
             .from("profiles")
             .select("id")
@@ -131,7 +149,6 @@ export async function GET(request: Request) {
               .select("id");
 
             if (updated?.length) {
-              // +$1 to the referrer
               await awardCredit(
                 referrer.id,
                 "referral",
@@ -139,7 +156,6 @@ export async function GET(request: Request) {
                 `referral:${user.id}`,
                 1,
               );
-              // +$1 to the new user (referee bonus)
               await awardCredit(
                 user.id,
                 "referee_bonus",
@@ -154,33 +170,25 @@ export async function GET(request: Request) {
         }
       }
 
-      // Welcome email once per student (OAuth users often already have a profile row from triggers).
-      if (profile?.role === "student" && user.email) {
-        const { data: welcomeRow } = await admin
-          .from("profiles")
-          .select("welcome_student_email_sent_at")
-          .eq("id", user.id)
-          .maybeSingle();
-        if (!welcomeRow?.welcome_student_email_sent_at) {
+      const profileRole = (profile as { role?: string }).role;
+      if (profileRole === "student" && user.email) {
+        const welcomeSentAt = (existingProfile as { welcome_student_email_sent_at?: string | null } | null)
+          ?.welcome_student_email_sent_at;
+        if (!welcomeSentAt) {
           const displayName = (user.user_metadata?.full_name as string) || user.email.split("@")[0] || "toi";
-          void trySendStudentWelcomeOnce(admin, user.id, user.email, displayName);
+          void trySendStudentWelcomeOnce(admin, user.id, user.email, displayName, preferredLocale);
         }
       }
 
-      if (profile?.role === "teacher") {
-        if (!profile?.teacher_onboarding_complete) {
-          return NextResponse.redirect(new URL("/onboarding/teacher", requestUrl.origin));
-        }
-        return NextResponse.redirect(new URL("/dashboard", requestUrl.origin));
-      }
+      const redirectPath = resolvePostAuthRedirect(
+        profileRole === "admin" ? "admin" : profileRole === "teacher" ? "teacher" : "student",
+        profile as { teacher_onboarding_complete?: boolean | null; companion_chosen?: boolean | null },
+        next,
+      );
 
-      if (!profile?.companion_chosen) {
-        return NextResponse.redirect(new URL("/student/choose-companion", requestUrl.origin));
-      }
-      return NextResponse.redirect(new URL("/dashboard", requestUrl.origin));
+      return NextResponse.redirect(new URL(redirectPath, requestUrl.origin));
     }
   }
 
   return NextResponse.redirect(new URL("/login", requestUrl.origin));
 }
-

@@ -10,6 +10,7 @@ import {
   MapPin,
   AlertCircle,
   MessageSquare,
+  ReceiptText,
   Video,
 } from "lucide-react";
 import { stripe } from "@/lib/stripe";
@@ -18,6 +19,9 @@ import {
   sendBookingConfirmedStudent,
   sendBookingConfirmedTeacher,
 } from "@/lib/email";
+import { resolveEmailLocaleForUser } from "@/lib/email/locale";
+import { formatEmailLessonScheduleLabels } from "@/lib/email/formatSchedule";
+import { formatEmailTeachingLocation } from "@/lib/email/messages/booking";
 import { SuccessCleaner } from "./SuccessCleaner";
 import { getDictionary, getLocale } from "@/lib/i18n/server";
 import type { Dictionary, Locale } from "@/lib/i18n/types";
@@ -28,6 +32,8 @@ import {
   retrievePaymentIntentChargeId,
   upsertPaidBookingPayment,
 } from "@/lib/payments/ledger";
+import { issueLessonPaymentReceipt } from "@/lib/payments/receipts";
+import { shouldDeferLessonPaymentFinalization } from "@/lib/payments/tax";
 import {
   bookingWallTimeRangeToUtc,
   formatBookingTimeForBothZones,
@@ -62,6 +68,7 @@ interface BookingDetails {
   studentTimeZone: string | null;
   teacherTimeZone: string | null;
   meetingUrl: string | null;
+  taxFinalizationPending: boolean;
 }
 
 function parseBookingStart(dateIso: string, slot: string): Date | null {
@@ -90,12 +97,6 @@ function buildGoogleCalendarUrl(booking: BookingDetails, locationLabel: string):
   url.searchParams.set("details", details);
   url.searchParams.set("location", locationLabel);
   return url.toString();
-}
-
-function emailLocationLabel(dict: Dictionary, teachingMode: string): string {
-  if (teachingMode === "online") return dict.bookingOnline;
-  if (teachingMode === "domicile") return dict.bookingHome;
-  return dict.bookingStudio;
 }
 
 function parseLocationKind(teaching_mode: unknown): BookingDetails["locationKind"] {
@@ -175,11 +176,21 @@ async function verifyAndConfirm(sessionId: string, locale: Locale): Promise<Veri
 
   const alreadyConfirmed = booking.status === "confirmed";
 
-  if (paymentIntentId) {
-    const metadata = (paymentIntent?.metadata ?? session.metadata ?? {}) as Record<string, string>;
-    const amountCents = session.amount_total ?? Number(metadata.amount_cents ?? 0);
-    const platformFeeCents = Number(metadata.platform_fee_cents ?? 0);
-    const teacherNetCents = Number(metadata.teacher_net_cents ?? Math.max(0, amountCents - platformFeeCents));
+  const sessionMetadata = (session.metadata ?? {}) as Record<string, string>;
+  const paymentMetadata = (paymentIntent?.metadata ?? sessionMetadata) as Record<string, string>;
+  const deferPaymentFinalization = shouldDeferLessonPaymentFinalization(paymentMetadata);
+
+  if (paymentIntentId && !deferPaymentFinalization) {
+    const amountCents = session.amount_total ?? Number(paymentMetadata.amount_cents ?? 0);
+    const taxTotalCents = Math.max(0, Number(paymentMetadata.tax_total_cents ?? 0));
+    const subtotalFromMetadata = Number(paymentMetadata.subtotal_cents ?? NaN);
+    const subtotalCents = Number.isFinite(subtotalFromMetadata)
+      ? Math.max(0, Math.round(subtotalFromMetadata))
+      : Math.max(0, amountCents - taxTotalCents);
+    const platformFeeCents = Number(paymentMetadata.platform_fee_cents ?? 0);
+    const teacherNetCents = Number(
+      paymentMetadata.teacher_net_cents ?? Math.max(0, subtotalCents - platformFeeCents),
+    );
     const stripeChargeId = (paymentIntent ? chargeIdFromPaymentIntent(paymentIntent) : null) ??
       (await retrievePaymentIntentChargeId(paymentIntentId).catch(() => null));
 
@@ -191,15 +202,28 @@ async function verifyAndConfirm(sessionId: string, locale: Locale): Promise<Veri
       stripePaymentIntentId: paymentIntentId,
       stripeChargeId,
       amountCents,
+      subtotalCents,
+      taxTotalCents,
       platformFeeCents,
       teacherNetCents,
       currency: session.currency ?? "cad",
-      transferGroup: metadata.transfer_group ?? `booking_${bookingId}`,
+      transferGroup: paymentMetadata.transfer_group ?? `booking_${bookingId}`,
       metadata: {
-        ...metadata,
+        ...paymentMetadata,
         fallback_source: "booking_success_page",
       },
     }).catch((e) => console.error("[booking/success] booking payment ledger upsert failed", e));
+
+    await issueLessonPaymentReceipt(admin, {
+      bookingId,
+      stripeChargeId,
+      sendEmail: true,
+    }).catch((e) => console.error("[booking/success] lesson receipt issue failed", e));
+  } else if (deferPaymentFinalization) {
+    console.info("[booking/success] deferring ledger/receipt until Stripe Tax webhook finalizes", {
+      bookingId,
+      sessionId,
+    });
   }
 
   // Idempotent fallback confirmation: only runs if the webhook hasn't fired yet
@@ -225,18 +249,26 @@ async function verifyAndConfirm(sessionId: string, locale: Locale): Promise<Veri
         commissionRate = getPlatformFeeRate(plan, "individual");
       }
 
-      const bookingDate =
-        (booking.date as string | null) ??
-        (booking as { slot_date?: string | null }).slot_date ??
-        "—";
-      const bookingTime =
-        (booking.time as string | null) ??
-        (booking as { time_slot?: string | null }).time_slot ??
-        "—";
+      const bookingTiming = {
+        slot_date: (booking as { slot_date?: string | null }).slot_date,
+        date: booking.date as string | null,
+        time_slot: (booking as { time_slot?: string | null }).time_slot,
+        time: booking.time as string | null,
+      };
       const bookingPrice = Number((booking as { price?: number | string | null }).price ?? 0);
       const bookingDuration = Number((booking as { duration_minutes?: number | null }).duration_minutes ?? 60);
       const bookingMode = (booking as { teaching_mode?: string | null }).teaching_mode ?? "person";
-      const locationLabel = emailLocationLabel(dict, bookingMode);
+      const meetingUrl = (booking as { meeting_url?: string | null }).meeting_url ?? null;
+      const [studentLocale, teacherLocale] = await Promise.all([
+        resolveEmailLocaleForUser(admin, booking.student_id as string),
+        teacherData.data?.user_id
+          ? resolveEmailLocaleForUser(admin, teacherData.data.user_id as string)
+          : Promise.resolve(locale),
+      ]);
+      const studentLocationLabel = formatEmailTeachingLocation(studentLocale, bookingMode, meetingUrl);
+      const teacherLocationLabel = formatEmailTeachingLocation(teacherLocale, bookingMode, meetingUrl);
+      const studentSchedule = formatEmailLessonScheduleLabels(bookingTiming, studentLocale);
+      const teacherSchedule = formatEmailLessonScheduleLabels(bookingTiming, teacherLocale);
 
       const creditsApplied = Number(
         (booking as { credits_applied?: number | string | null }).credits_applied ?? 0,
@@ -248,12 +280,13 @@ async function verifyAndConfirm(sessionId: string, locale: Locale): Promise<Veri
           name: studentName,
           teacherName,
           discipline: teacherDiscipline,
-          date: bookingDate,
-          time: bookingTime,
+          date: studentSchedule.dateLabel,
+          time: studentSchedule.timeLabel,
           durationMinutes: bookingDuration,
           price: bookingPrice,
           creditsApplied,
-          location: locationLabel,
+          location: studentLocationLabel,
+          locale: studentLocale,
         }).catch((e) => console.error("[booking/success] student email failed", e));
       }
 
@@ -263,12 +296,13 @@ async function verifyAndConfirm(sessionId: string, locale: Locale): Promise<Veri
           name: teacherName,
           studentName,
           discipline: teacherDiscipline,
-          date: bookingDate,
-          time: bookingTime,
+          date: teacherSchedule.dateLabel,
+          time: teacherSchedule.timeLabel,
           durationMinutes: bookingDuration,
           price: bookingPrice,
           commissionRate,
-          location: locationLabel,
+          location: teacherLocationLabel,
+          locale: teacherLocale,
         }).catch((e) => console.error("[booking/success] teacher email failed", e));
       }
     }
@@ -342,6 +376,7 @@ async function verifyAndConfirm(sessionId: string, locale: Locale): Promise<Veri
         (booking as { meeting_url?: string | null }).meeting_url!.trim()
           ? (booking as { meeting_url?: string | null }).meeting_url!.trim()
           : null,
+      taxFinalizationPending: deferPaymentFinalization,
     },
   };
 }
@@ -549,6 +584,12 @@ export default async function BookingSuccessPage({
             </li>
           </ul>
 
+          {booking.taxFinalizationPending ? (
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-900">
+              {dict.bookingSuccessTaxFinalizationPendingNote}
+            </div>
+          ) : null}
+
           <div className="rounded-2xl border border-[#DCEAE3] bg-[#F3FAF6] px-4 py-3 text-xs text-slate-700">
             {meetingNote}
           </div>
@@ -586,6 +627,21 @@ export default async function BookingSuccessPage({
               {dict.bookingDownloadCalendarFile}
             </a>
           </div>
+
+          <Link
+            href="/student/payments"
+            className="flex items-start gap-3 rounded-2xl border border-[#DCEAE3] bg-[#F3FAF6] px-4 py-3.5 transition hover:border-teal-500/40 hover:bg-teal-50/50"
+          >
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-teal-700 shadow-sm">
+              <ReceiptText className="h-5 w-5" aria-hidden />
+            </span>
+            <span className="min-w-0 text-left">
+              <span className="block text-sm font-semibold text-[var(--p-text)]">{dict.bookingSuccessViewReceipt}</span>
+              <span className="mt-0.5 block text-xs leading-relaxed text-[var(--p-text-muted)]">
+                {dict.bookingSuccessReceiptHint}
+              </span>
+            </span>
+          </Link>
 
           <div className="pt-2 flex flex-col sm:flex-row gap-3">
             <Link

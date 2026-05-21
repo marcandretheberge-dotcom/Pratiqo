@@ -7,9 +7,19 @@ import { isBookingAtLeast24hAhead } from "@/lib/bookingCancellation";
 import { transferGroupForBooking } from "@/lib/payments/amounts";
 import { calculateBookingAmounts } from "@/lib/payments/commission";
 import { upsertUnpaidBookingPayment } from "@/lib/payments/ledger";
+import {
+  buildStripeTaxCheckoutParams,
+  defaultTaxBehaviorForCheckout,
+  defaultTaxStatusForCheckout,
+} from "@/lib/payments/tax";
+import { expandBookingInterval, intervalsOverlap, slotStartMinutes } from "@/lib/slots";
+import { normalizeTeacherBufferSettings } from "@/lib/teacherSlotQueries";
 import { validateJsonBody } from "@/lib/validation/api";
 import { stripeCheckoutPostSchema } from "@/lib/validation/schemas";
 import { SITE_URL } from "@/lib/seo/site";
+import { resolveEmailLocaleForUser } from "@/lib/email/locale";
+import { minimumLessonPriceErrorMessage } from "@/lib/pricing/messages";
+import { validateMinimumLessonPrice } from "@/lib/pricing/validateMinimumLessonPrice";
 
 export const runtime = "nodejs";
 
@@ -106,7 +116,7 @@ export async function POST(req: Request) {
     const { data: booking, error: bookErr } = await admin
       .from("bookings")
       .select(
-        "id, teacher_id, student_id, status, price, date, time, slot_date, time_slot, student_level, teaching_mode, student_address, lesson_type, learner_profile_id",
+        "id, teacher_id, student_id, status, price, date, time, slot_date, time_slot, duration_minutes, student_level, teaching_mode, student_address, lesson_type, learner_profile_id",
       )
       .eq("id", bookingId)
       .maybeSingle();
@@ -159,13 +169,71 @@ export async function POST(req: Request) {
     const { data: teacher, error: tErr } = await admin
       .from("teachers")
       .select(
-        "id, user_id, name, price_per_lesson, home_lesson_enabled, home_lesson_price, intro_session_enabled",
+        "id, user_id, name, price_per_lesson, home_lesson_enabled, home_lesson_price, intro_session_enabled, booking_buffer_before_minutes, booking_buffer_after_minutes",
       )
       .eq("id", booking.teacher_id)
       .maybeSingle();
 
     if (tErr || !teacher) {
       return NextResponse.json({ error: "Teacher not found." }, { status: 404 });
+    }
+
+    // Buffer-aware conflict check. The simple equality test above only catches
+    // bookings with the exact same start label. With per-teacher buffers (or
+    // bookings of different durations), two non-overlapping start times can
+    // still collide once you account for prep time. Validate here so a client
+    // that bypasses the slots API cannot create a conflicting checkout, and
+    // so the unique_teacher_slot constraint never becomes the sole defense.
+    const buffers = normalizeTeacherBufferSettings(
+      teacher as Parameters<typeof normalizeTeacherBufferSettings>[0],
+    );
+    if (buffers.bookingBufferBeforeMinutes > 0 || buffers.bookingBufferAfterMinutes > 0) {
+      const candidateStartMin = slotStartMinutes(bTimeSlot);
+      if (candidateStartMin < 0) {
+        return NextResponse.json({ error: "Heure de réservation invalide." }, { status: 400 });
+      }
+      const candidateDurMinRaw = Number((booking as { duration_minutes?: number | null }).duration_minutes);
+      const candidateDurMin =
+        Number.isFinite(candidateDurMinRaw) && candidateDurMinRaw > 0 ? Math.round(candidateDurMinRaw) : 60;
+      const candidateInterval = expandBookingInterval(
+        candidateStartMin,
+        candidateDurMin,
+        buffers.bookingBufferBeforeMinutes,
+        buffers.bookingBufferAfterMinutes,
+      );
+
+      const { data: sameDayRows, error: sameDayErr } = await admin
+        .from("bookings")
+        .select("id, time_slot, duration_minutes")
+        .eq("teacher_id", booking.teacher_id)
+        .eq("slot_date", bSlotDate)
+        .neq("id", bookingId)
+        .in("status", ["pending_payment", "confirmed"])
+        .not("time_slot", "is", null);
+
+      if (sameDayErr) {
+        console.error("[stripe/checkout] buffer overlap query failed", sameDayErr);
+        return NextResponse.json({ error: "Impossible de vérifier les conflits de créneau." }, { status: 500 });
+      }
+
+      for (const row of (sameDayRows ?? []) as { time_slot: string; duration_minutes?: number | null }[]) {
+        const otherStart = slotStartMinutes(row.time_slot);
+        if (otherStart < 0) continue;
+        const otherDurRaw = Number(row.duration_minutes);
+        const otherDur = Number.isFinite(otherDurRaw) && otherDurRaw > 0 ? Math.round(otherDurRaw) : 60;
+        const otherInterval = expandBookingInterval(
+          otherStart,
+          otherDur,
+          buffers.bookingBufferBeforeMinutes,
+          buffers.bookingBufferAfterMinutes,
+        );
+        if (intervalsOverlap(candidateInterval, otherInterval)) {
+          return NextResponse.json(
+            { error: "Ce créneau est trop proche d'une autre réservation (temps de préparation)." },
+            { status: 409 },
+          );
+        }
+      }
     }
 
     const typed = teacher as TeacherRow;
@@ -238,7 +306,15 @@ export async function POST(req: Request) {
     }
 
     const discountCents = Math.round(validatedCredits * 100);
-    unitAmountCents = Math.max(50, unitAmountCents - discountCents);
+    unitAmountCents = Math.max(0, unitAmountCents - discountCents);
+
+    if (!validateMinimumLessonPrice(unitAmountCents).ok) {
+      const locale = await resolveEmailLocaleForUser(admin, user.id);
+      return NextResponse.json(
+        { error: minimumLessonPriceErrorMessage(locale), code: "minimum_lesson_price" },
+        { status: 400 },
+      );
+    }
 
     if (unitAmountCents < 50) {
       return NextResponse.json(
@@ -280,70 +356,88 @@ export async function POST(req: Request) {
       annualVolumeCents = Math.round(Math.max(0, Number(profile?.loyalty_annual_volume ?? 0)) * 100);
     }
 
+    const taxParams = buildStripeTaxCheckoutParams();
+    const taxBehavior = defaultTaxBehaviorForCheckout();
+    const taxStatus = defaultTaxStatusForCheckout();
+    const taxTotalCents = 0;
+    const subtotalCents = unitAmountCents;
     const amounts = calculateBookingAmounts({
-      priceCents: unitAmountCents,
+      subtotalCents,
+      taxTotalCents,
       teacherPlan,
       bookingType: "individual",
       annualVolumeCents,
       loyaltyTier,
     });
+    const checkoutAmountCents = unitAmountCents;
+    const ledgerPlatformFeeCents = taxParams.enabled ? 0 : amounts.platformFeeCents;
+    const ledgerTeacherNetCents = taxParams.enabled ? 0 : amounts.teacherNetCents;
     const transferGroup = transferGroupForBooking(bookingId);
-    console.log("[stripe/checkout] commissionRate:", amounts.feeRate, "platformFeeCents:", amounts.platformFeeCents);
+    console.log(
+      "[stripe/checkout] commissionRate:",
+      amounts.feeRate,
+      "subtotalCents:",
+      amounts.subtotalCents,
+      "platformFeeCents:",
+      ledgerPlatformFeeCents,
+      "stripeTax:",
+      taxParams.enabled,
+    );
+
+    const sessionMetadata: Record<string, string> = {
+      booking_id: bookingId,
+      teacher_id: booking.teacher_id,
+      student_id: booking.student_id,
+      lesson_type: lessonType,
+      learner_profile_id: b.learner_profile_id ?? "",
+      teaching_mode: teachingMode,
+      student_address: studentAddress,
+      credits_applied: validatedCredits > 0 ? String(validatedCredits) : "0",
+      transfer_group: transferGroup,
+      subtotal_cents: String(subtotalCents),
+      amount_cents: String(checkoutAmountCents),
+      platform_fee_cents: String(ledgerPlatformFeeCents),
+      teacher_net_cents: String(ledgerTeacherNetCents),
+      commission_rate: String(amounts.feeRate),
+      commission_basis_points: String(amounts.feeBasisPoints),
+      loyalty_tier: amounts.loyaltyTier,
+      tax_behavior: taxBehavior,
+      tax_total_cents: String(taxTotalCents),
+      ...taxParams.metadata,
+    };
+
+    const paymentIntentMetadata = { ...sessionMetadata };
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       success_url: successUrl,
       cancel_url: cancelUrl,
       client_reference_id: bookingId,
-      metadata: {
-        booking_id: bookingId,
-        teacher_id: booking.teacher_id,
-        student_id: booking.student_id,
-        lesson_type: lessonType,
-        learner_profile_id: b.learner_profile_id ?? "",
-        teaching_mode: teachingMode,
-        student_address: studentAddress,
-        credits_applied: validatedCredits > 0 ? String(validatedCredits) : "0",
-        transfer_group: transferGroup,
-        platform_fee_cents: String(amounts.platformFeeCents),
-        teacher_net_cents: String(amounts.teacherNetCents),
-        commission_rate: String(amounts.feeRate),
-        commission_basis_points: String(amounts.feeBasisPoints),
-        loyalty_tier: amounts.loyaltyTier,
-      },
+      ...(taxParams.automaticTax ? { automatic_tax: taxParams.automaticTax } : {}),
+      ...(taxParams.billingAddressCollection
+        ? { billing_address_collection: taxParams.billingAddressCollection }
+        : {}),
+      metadata: sessionMetadata,
       line_items: [
         {
           quantity: 1,
           price_data: {
             currency: "cad",
-            unit_amount: unitAmountCents,
+            unit_amount: checkoutAmountCents,
+            ...(taxParams.lineItemTaxBehavior ? { tax_behavior: taxParams.lineItemTaxBehavior } : {}),
             product_data: {
               name: `${lessonLabel} avec ${typed.name} (${modeLabel})`,
               description:
                 [bSlotDate, bTimeSlot].filter(Boolean).join(" · ") ||
                 [booking.date, booking.time].filter(Boolean).join(" · ") ||
                 undefined,
+              ...(taxParams.taxCode ? { tax_code: taxParams.taxCode } : {}),
             },
           },
         },
       ],
       payment_intent_data: {
-        metadata: {
-          booking_id: bookingId,
-          teacher_id: booking.teacher_id,
-          student_id: booking.student_id,
-          lesson_type: lessonType,
-          learner_profile_id: b.learner_profile_id ?? "",
-          teaching_mode: teachingMode,
-          student_address: studentAddress,
-          credits_applied: validatedCredits > 0 ? String(validatedCredits) : "0",
-          transfer_group: transferGroup,
-          platform_fee_cents: String(amounts.platformFeeCents),
-          teacher_net_cents: String(amounts.teacherNetCents),
-          commission_rate: String(amounts.feeRate),
-          commission_basis_points: String(amounts.feeBasisPoints),
-          loyalty_tier: amounts.loyaltyTier,
-        },
+        metadata: paymentIntentMetadata,
         transfer_group: transferGroup,
       },
     });
@@ -358,19 +452,28 @@ export async function POST(req: Request) {
         teacherId: booking.teacher_id as string,
         studentId: booking.student_id as string,
         stripeCheckoutSessionId: session.id,
-        amountCents: amounts.amountCents,
-        platformFeeCents: amounts.platformFeeCents,
-        teacherNetCents: amounts.teacherNetCents,
+        amountCents: checkoutAmountCents,
+        subtotalCents,
+        taxTotalCents,
+        platformFeeCents: ledgerPlatformFeeCents,
+        teacherNetCents: ledgerTeacherNetCents,
+        taxBehavior,
+        taxStatus,
         currency: "cad",
         transferGroup,
         metadata: {
           lesson_type: lessonType,
           teaching_mode: teachingMode,
           credits_applied: validatedCredits,
+          subtotal_cents: subtotalCents,
           commission_rate: amounts.feeRate,
           commission_basis_points: amounts.feeBasisPoints,
           loyalty_tier: amounts.loyaltyTier,
           teacher_plan: amounts.teacherPlan,
+          tax_behavior: taxBehavior,
+          tax_status: taxStatus,
+          tax_total_cents: taxTotalCents,
+          ...taxParams.metadata,
         },
       });
     } catch (ledgerErr) {

@@ -10,6 +10,8 @@ export type TeacherPlanForPayments = TeacherPaymentPlan;
 export type BookingPaymentKind = BookingPaymentType;
 
 export type BookingPaymentAmounts = {
+  subtotalCents: number;
+  taxTotalCents: number;
   amountCents: number;
   platformFeeCents: number;
   teacherNetCents: number;
@@ -37,16 +39,20 @@ export function centsToDollars(cents: number): number {
 }
 
 export function calculateBookingPaymentAmounts(
-  amountCents: number,
+  subtotalCents: number,
   plan: string | null | undefined,
   kind: BookingPaymentKind = "individual",
+  taxTotalCents = 0,
 ): BookingPaymentAmounts {
   const amounts = calculateBookingAmounts({
-    priceCents: amountCents,
+    subtotalCents,
+    taxTotalCents,
     teacherPlan: plan,
     bookingType: kind,
   });
   return {
+    subtotalCents: amounts.subtotalCents,
+    taxTotalCents: amounts.taxTotalCents,
     amountCents: amounts.amountCents,
     platformFeeCents: amounts.platformFeeCents,
     teacherNetCents: amounts.teacherNetCents,

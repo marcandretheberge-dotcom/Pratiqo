@@ -1,14 +1,16 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import {
+  type BookedSlotInterval,
   blockedPeriodsFromRows,
   blockedTimeRangesFromRows,
   dayShortKeyForISODate,
   formatLocalISODate,
   generateSlots,
+  slotStartMinutes,
   weeklyAvailabilityFromTeacherRows,
 } from "@/lib/slots";
-import { defaultLessonDurationMinutes } from "@/lib/teacherSlotQueries";
+import { defaultLessonDurationMinutes, normalizeTeacherBufferSettings } from "@/lib/teacherSlotQueries";
 import { isBookingAtLeast24hAhead } from "@/lib/bookingCancellation";
 
 export const runtime = "nodejs";
@@ -30,7 +32,9 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
     const admin = getSupabaseAdmin();
     const { data: teacher, error: tErr } = await admin
       .from("teachers")
-      .select("id, availability, home_lesson_min_duration")
+      .select(
+        "id, availability, home_lesson_min_duration, booking_buffer_before_minutes, booking_buffer_after_minutes",
+      )
       .eq("id", teacherId)
       .maybeSingle();
 
@@ -47,20 +51,32 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
             (teacher as { home_lesson_min_duration?: number | null }).home_lesson_min_duration,
           );
     const weekly = weeklyAvailabilityFromTeacherRows((teacher as { availability?: unknown }).availability);
+    const buffers = normalizeTeacherBufferSettings(
+      teacher as Parameters<typeof normalizeTeacherBufferSettings>[0],
+    );
     const dayKey = dayShortKeyForISODate(date);
     const dayAvail = weekly[dayKey] || { matin: false, apresmidi: false, soir: false };
 
     const { data: bookedRows } = await admin
       .from("bookings")
-      .select("time_slot")
+      .select("time_slot, duration_minutes")
       .eq("teacher_id", teacherId)
       .eq("slot_date", date)
       .in("status", ["pending_payment", "confirmed"])
       .not("time_slot", "is", null);
 
-    const bookedSlots = ((bookedRows || []) as { time_slot?: string }[])
-      .map((r) => r.time_slot)
-      .filter((x): x is string => Boolean(x));
+    const bookedRaw = ((bookedRows || []) as { time_slot?: string; duration_minutes?: number | null }[]).filter(
+      (r): r is { time_slot: string; duration_minutes?: number | null } => Boolean(r.time_slot),
+    );
+    const bookedSlots = bookedRaw.map((r) => r.time_slot);
+    const bookedIntervals: BookedSlotInterval[] = [];
+    for (const r of bookedRaw) {
+      const startMin = slotStartMinutes(r.time_slot);
+      if (startMin < 0) continue;
+      const rawDur = Number(r.duration_minutes);
+      const durMin = Number.isFinite(rawDur) && rawDur > 0 ? Math.round(rawDur) : 60;
+      bookedIntervals.push({ startMin, durationMin: durMin });
+    }
 
     const { data: blockedRows } = await admin
       .from("blocked_slots")
@@ -76,7 +92,11 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
     const blockedPeriods = blockedPeriodsFromRows(blockedDayRows);
     const blockedRanges = blockedTimeRangesFromRows(blockedDayRows);
 
-    const slots = generateSlots(dayAvail, durationMinutes, date, bookedSlots, blockedPeriods, blockedRanges);
+    const slots = generateSlots(dayAvail, durationMinutes, date, bookedSlots, blockedPeriods, blockedRanges, {
+      bookedIntervals,
+      bufferBeforeMin: buffers.bookingBufferBeforeMinutes,
+      bufferAfterMin: buffers.bookingBufferAfterMinutes,
+    });
 
     const now = new Date();
     const filteredSlots = slots.filter((slot) =>

@@ -16,8 +16,25 @@ function fail(message: string): never {
   process.exit(1);
 }
 
+/** Accepts direct event.type checks or eventType string routing used for Stripe TS gaps. */
+function webhookHandlesStripeEvent(
+  webhookRoute: string,
+  handlerName: string,
+  eventName: string,
+): boolean {
+  if (!webhookRoute.includes(handlerName)) return false;
+  if (!webhookRoute.includes(`"${eventName}"`)) return false;
+  if (webhookRoute.includes(`event.type === "${eventName}"`)) return true;
+  return (
+    webhookRoute.includes("event.type as string") &&
+    webhookRoute.includes(`eventType === "${eventName}"`)
+  );
+}
+
 const completeBooking = read("lib/bookings/completeBooking.ts");
 const autoCompleteCron = read("app/api/cron/bookings/complete/route.ts");
+const webhookRoute = read("app/api/stripe/webhook/route.ts");
+const webhookRisk = read("lib/payments/webhookRiskEvents.ts");
 
 if (exists("app/api/stripe/checkout/route.ts")) {
   const lessonCheckout = read("app/api/stripe/checkout/route.ts");
@@ -71,6 +88,26 @@ if (!autoCompleteCron.includes("verifyCronSecret")) {
 
 if (!autoCompleteCron.includes("processAutoCompleteBookings")) {
   fail("Auto-complete cron route must call processAutoCompleteBookings.");
+}
+
+if (!webhookHandlesStripeEvent(webhookRoute, "handleStripeTransferFailed", "transfer.failed")) {
+  fail("Stripe webhook must handle transfer.failed.");
+}
+
+if (!webhookHandlesStripeEvent(webhookRoute, "handleStripeChargeDisputeCreated", "charge.dispute.created")) {
+  fail("Stripe webhook must handle charge.dispute.created.");
+}
+
+if (!webhookRisk.includes("handleStripeTransferFailed")) {
+  fail("Payment risk webhook module must handle transfer failures.");
+}
+
+if (!webhookRisk.includes("handleStripeChargeDisputeCreated")) {
+  fail("Payment risk webhook module must handle charge disputes.");
+}
+
+if (!webhookRisk.includes('payment_status: "disputed"') && !webhookRisk.includes("markBookingPaymentDisputed")) {
+  fail("Dispute handler must flag booking payments as disputed.");
 }
 
 console.log("[payment-reliability] OK");

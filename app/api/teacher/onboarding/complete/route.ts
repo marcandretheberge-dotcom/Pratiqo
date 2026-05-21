@@ -1,0 +1,103 @@
+import { NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+
+export const runtime = "nodejs";
+
+function requireAck(value: unknown): boolean {
+  return value === true;
+}
+
+function asObject(value: unknown): Record<string, unknown> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  return value as Record<string, unknown>;
+}
+
+export async function POST(req: Request) {
+  const authHeader = req.headers.get("authorization") ?? "";
+  const token = authHeader.replace(/^Bearer\s+/i, "").trim();
+  if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return NextResponse.json({ error: "Missing Supabase env." }, { status: 500 });
+  }
+
+  const supabaseUser = createClient(supabaseUrl, supabaseAnonKey, {
+    global: { headers: { Authorization: `Bearer ${token}` } },
+  });
+
+  const {
+    data: { user },
+    error: authErr,
+  } = await supabaseUser.auth.getUser();
+
+  if (authErr || !user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
+  if (
+    !requireAck(body.tax_status_acknowledged) ||
+    !requireAck(body.no_exclusivity_acknowledged) ||
+    !requireAck(body.no_income_guarantee_acknowledged)
+  ) {
+    return NextResponse.json({ error: "Missing required teacher acknowledgements." }, { status: 400 });
+  }
+
+  const admin = getSupabaseAdmin();
+
+  const { data: teacher, error: teacherErr } = await admin
+    .from("teachers")
+    .select("id")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (teacherErr) {
+    return NextResponse.json({ error: teacherErr.message }, { status: 500 });
+  }
+  if (!teacher?.id) {
+    return NextResponse.json({ error: "Teacher profile not found." }, { status: 404 });
+  }
+
+  const { data: profile, error: profileErr } = await admin
+    .from("profiles")
+    .select("role,dashboard")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (profileErr) {
+    return NextResponse.json({ error: profileErr.message }, { status: 500 });
+  }
+  if (profile?.role === "admin") {
+    return NextResponse.json({ error: "Admin profiles cannot complete teacher onboarding here." }, { status: 403 });
+  }
+
+  const now = new Date().toISOString();
+  const currentDashboard = asObject(profile?.dashboard);
+  const nextDashboard = { ...currentDashboard, teacher_onboarding_complete: true };
+
+  const { data: updatedRows, error: updateErr } = await admin
+    .from("profiles")
+    .update({
+      role: "teacher",
+      teacher_onboarding_complete: true,
+      tax_status_acknowledged: true,
+      tax_status_acknowledged_at: now,
+      no_exclusivity_acknowledged: true,
+      no_income_guarantee_acknowledged: true,
+      dashboard: nextDashboard,
+    })
+    .eq("id", user.id)
+    .select("id");
+
+  if (updateErr) {
+    return NextResponse.json({ error: updateErr.message }, { status: 500 });
+  }
+  if (!updatedRows || updatedRows.length === 0) {
+    return NextResponse.json({ error: "Profile not found." }, { status: 404 });
+  }
+
+  return NextResponse.json({ ok: true });
+}

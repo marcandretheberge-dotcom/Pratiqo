@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Info, Loader2, X } from "lucide-react";
+import { ExternalLink, Info, Loader2, X } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { logout } from "@/lib/auth";
 import { getSupabaseClient } from "@/lib/supabase";
@@ -15,6 +15,8 @@ import { isValidVideoUrl } from "@/lib/videoEmbed";
 import { TeacherPayoutPreview } from "@/components/teacher/TeacherPayoutPreview";
 import { AccountDeletionSection } from "@/components/account/AccountDeletionSection";
 import { TeacherDisciplinesEditor, type DisciplineCardDraft } from "@/components/teacher/TeacherDisciplinesEditor";
+import { MIN_LESSON_PRICE_DOLLARS } from "@/lib/pricing/constants";
+import { validateTeacherLessonOffers } from "@/lib/pricing/lessonOffer";
 
 type TeacherDisciplineDbRow = {
   id: string;
@@ -336,9 +338,56 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
     }
     setVideoUrlError(null);
 
+    const hourlyNum = Number(hourly);
+    const introPriceCents = (() => {
+      const dollars = Number(String(introCustomPrice || "").trim());
+      if (!Number.isFinite(dollars) || dollars <= 0) return null;
+      return Math.max(0, Math.round(dollars * 100));
+    })();
+
+    const offerCheck = validateTeacherLessonOffers({
+      price_per_lesson: hourlyNum,
+      intro_session_enabled: introEnabled,
+      intro_session_price_cents: introPriceCents,
+      intro_session_duration_minutes: 45,
+      intro_session_discount_percent: 50,
+    });
+    if (!offerCheck.ok) {
+      setMessage(`${t("pricingMinLessonPrice")} ${t("pricingMinLessonPriceSuggestion")}`);
+      return;
+    }
+
     setSaving(true);
     setMessage(null);
     const supabase = getSupabaseClient();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    const accessToken = session?.access_token;
+    if (!accessToken) {
+      setMessage(t("anErrorOccurred"));
+      return;
+    }
+
+    const pricingRes = await fetch("/api/teacher/pricing", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({
+        price_per_lesson: hourlyNum,
+        intro_session_enabled: introEnabled,
+        intro_session_price_cents: introPriceCents,
+      }),
+    });
+    const pricingPayload = (await pricingRes.json().catch(() => ({}))) as { error?: string };
+    if (!pricingRes.ok) {
+      setSaving(false);
+      setMessage(pricingPayload.error || t("anErrorOccurred"));
+      return;
+    }
+
     const nextLocation: Record<string, unknown> = { ...locationJson };
     if (city.trim()) nextLocation.neighborhood = city.trim();
     else delete nextLocation.neighborhood;
@@ -347,15 +396,8 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
       .update({
         name: displayName.trim() || undefined,
         bio: bio.trim(),
-        price_per_lesson: Number(hourly) || 0,
-        intro_session_enabled: introEnabled,
         intro_session_duration_minutes: 45,
         intro_session_discount_percent: 50,
-        intro_session_price_cents: (() => {
-          const dollars = Number(String(introCustomPrice || "").trim());
-          if (!Number.isFinite(dollars) || dollars <= 0) return null;
-          return Math.max(0, Math.round(dollars * 100));
-        })(),
         location: nextLocation,
         video_url: trimmedVideo || null,
       })
@@ -564,6 +606,24 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
         ) : (
           <p className="text-sm text-slate-600 mt-2">{t("teacherSettingsSystemLead")}</p>
         )}
+        {variant === "profile" && teacherId ? (
+          teacherIsPublic ? (
+            <a
+              href={`/teacher/profile/${teacherId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              title={t("previewProfileAsStudentHint")}
+              className="mt-3 inline-flex items-center gap-2 h-10 px-4 rounded-full border-2 border-[#00694c]/20 bg-white text-sm font-semibold text-[#00694c] hover:bg-[#00694c]/5 transition-colors"
+            >
+              <ExternalLink size={14} aria-hidden />
+              {t("previewProfileAsStudent")}
+            </a>
+          ) : (
+            <p className="mt-3 inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-800">
+              {t("previewProfileHiddenWarning")}
+            </p>
+          )
+        ) : null}
       </div>
 
       {variant === "profile" ? (
@@ -609,10 +669,11 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
             value={hourly}
             onChange={(e) => setHourly(e.target.value)}
             type="number"
-            min={0}
+            min={MIN_LESSON_PRICE_DOLLARS}
             step="0.5"
             className="w-full h-11 rounded-xl border border-slate-200 px-3 text-sm text-[#00694c] font-semibold"
           />
+          <p className="text-[11px] leading-relaxed text-slate-500">{t("pricingMinLessonPrice")}</p>
           <TeacherPayoutPreview
             grossAmount={hourly}
             currency="CAD"
@@ -651,7 +712,7 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
                 onChange={(e) => setIntroCustomPrice(e.target.value)}
                 disabled={!introEnabled}
                 type="number"
-                min={0}
+                min={MIN_LESSON_PRICE_DOLLARS}
                 step="0.5"
                 placeholder="(auto)"
                 className="w-full h-10 rounded-xl border border-slate-200 px-3 text-sm text-slate-900 disabled:bg-slate-50 disabled:text-slate-400"

@@ -43,6 +43,10 @@ export function AuthenticatedShell({ children }: { children: React.ReactNode }) 
     }
 
     if (role === "student") {
+      if (profile?.companion_chosen === false && pathname !== "/student/choose-companion") {
+        router.replace("/student/choose-companion");
+        return;
+      }
       if (pathname.startsWith("/onboarding")) {
         router.replace("/dashboard");
         return;
@@ -58,7 +62,7 @@ export function AuthenticatedShell({ children }: { children: React.ReactNode }) 
         router.replace("/dashboard");
       }
     }
-  }, [loading, isLegal, user, pathname, router, profile?.role]);
+  }, [loading, isLegal, user, pathname, router, profile?.role, profile?.companion_chosen]);
 
   useEffect(() => {
     if (loading || isLegal || user) return;

@@ -2,23 +2,33 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { stripe } from "@/lib/stripe";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
-import { COMPANIONS, getCompanionStage } from "@/lib/companions";
-import { awardCredit, deductCredits, COMPANION_MILESTONE_AMOUNTS } from "@/lib/credits";
+import { deductCredits } from "@/lib/credits";
 import {
-  sendCompanionEvolution,
   sendBookingConfirmedStudent,
   sendBookingConfirmedTeacher,
   sendProUpgrade,
   sendIdentityVerified,
   sendIdentityFailed,
 } from "@/lib/email";
+import { EMAIL_FALLBACK_LOCALE, resolveEmailLocaleForUser } from "@/lib/email/locale";
+import { formatEmailLessonScheduleLabels } from "@/lib/email/formatSchedule";
+import { formatEmailTeachingLocation } from "@/lib/email/messages/booking";
 import { syncTeacherConnectStatus } from "@/lib/payments/connect";
-import { getPlatformFeeRate } from "@/lib/payments/amounts";
 import {
   chargeIdFromPaymentIntent,
   retrievePaymentIntentChargeId,
   upsertPaidBookingPayment,
 } from "@/lib/payments/ledger";
+import {
+  finalizeLessonPaymentLedger,
+  shouldDeferPaymentIntentLedgerFinalizationFromMetadata,
+  shouldFinalizeStripeTaxFromCheckoutSessionMetadata,
+} from "@/lib/payments/tax";
+import {
+  handleStripeChargeDisputeCreated,
+  handleStripeTransferFailed,
+} from "@/lib/payments/webhookRiskEvents";
+import { issueLessonPaymentReceipt } from "@/lib/payments/receipts";
 
 export const runtime = "nodejs";
 
@@ -140,6 +150,9 @@ async function confirmBookingAndNotify(
     stripeChargeId?: string | null;
     amountCents?: number | null;
     currency?: string | null;
+    checkoutSession?: Stripe.Checkout.Session | null;
+    checkoutLineItems?: Stripe.LineItem[] | null;
+    deferPaymentLedger?: boolean;
   } = {},
 ) {
   const admin = getSupabaseAdmin();
@@ -219,70 +232,100 @@ async function confirmBookingAndNotify(
 
   const { data: studentProfile } = await admin
     .from("profiles")
-    .select("name, email, companion_type")
+    .select("name, email")
     .eq("id", booking.student_id)
     .maybeSingle();
 
   const studentName = (studentProfile?.name as string) || "Élève";
   const studentEmail = (studentProfile as { email?: string | null } | null)?.email ?? null;
-  const companionType = (studentProfile as { companion_type?: string | null } | null)?.companion_type ?? null;
   const teacherName = (teacher?.name as string) || "Professeur";
   const teacherDiscipline = (teacher as { discipline?: string | null } | null)?.discipline ?? "Cours privé";
   const when = [booking.date, booking.time].filter(Boolean).join(" · ");
 
   // Fetch teacher email and commission plan
   let teacherEmail: string | null = null;
-  let commissionRate = 0.1;
+  type TeacherCommissionProfile = {
+    email?: string | null;
+    plan?: string | null;
+    loyalty_tier?: string | null;
+    loyalty_annual_volume?: number | string | null;
+  };
+  let teacherProfile: TeacherCommissionProfile | null = null;
   if (teacher?.user_id) {
     const { data: teacherProf } = await admin
       .from("profiles")
-      .select("email, plan")
+      .select("email, plan, loyalty_tier, loyalty_annual_volume")
       .eq("id", teacher.user_id as string)
       .maybeSingle();
-    teacherEmail = (teacherProf as { email?: string | null } | null)?.email ?? null;
-    const plan = (teacherProf as { plan?: string | null } | null)?.plan ?? "free";
-    commissionRate = getPlatformFeeRate(plan, "individual");
+    teacherProfile = (teacherProf as TeacherCommissionProfile | null) ?? null;
+    teacherEmail = teacherProfile?.email ?? null;
   }
 
-  const amountFromMetadata = Number(piMetadata?.amount_cents ?? piMetadata?.payment_amount_cents ?? NaN);
-  const amountCents =
-    typeof opts.amountCents === "number" && Number.isFinite(opts.amountCents)
-      ? opts.amountCents
-      : Number.isFinite(amountFromMetadata)
-        ? amountFromMetadata
-        : Math.max(0, Math.round(Number((booking as { price?: number | string | null }).price ?? 0) * 100));
-  const platformFeeFromMetadata = Number(piMetadata?.platform_fee_cents ?? NaN);
-  const platformFeeCents = Number.isFinite(platformFeeFromMetadata)
-    ? Math.max(0, Math.round(platformFeeFromMetadata))
-    : Math.max(0, Math.round(amountCents * commissionRate));
-  const teacherNetFromMetadata = Number(piMetadata?.teacher_net_cents ?? NaN);
-  const teacherNetCents = Number.isFinite(teacherNetFromMetadata)
-    ? Math.max(0, Math.round(teacherNetFromMetadata))
-    : Math.max(0, amountCents - platformFeeCents);
   const stripeChargeId = opts.stripeChargeId ?? (await retrievePaymentIntentChargeId(paymentIntentId).catch(() => null));
 
-  try {
-    await upsertPaidBookingPayment(admin, {
-      bookingId,
-      teacherId: booking.teacher_id as string,
-      studentId: booking.student_id as string,
-      stripeCheckoutSessionId: opts.checkoutSessionId ?? null,
-      stripePaymentIntentId: paymentIntentId,
-      stripeChargeId,
-      amountCents,
-      platformFeeCents,
-      teacherNetCents,
-      currency: opts.currency ?? "cad",
-      transferGroup: piMetadata?.transfer_group ?? `booking_${bookingId}`,
-      metadata: {
-        ...(piMetadata ?? {}),
-        webhook_source: opts.checkoutSessionId ? "checkout.session.completed" : "payment_intent.succeeded",
-      },
+  if (!opts.deferPaymentLedger) {
+    const ledger = finalizeLessonPaymentLedger({
+      checkoutSession: opts.checkoutSession ?? null,
+      lineItems: opts.checkoutLineItems ?? null,
+      piMetadata: piMetadata ?? null,
+      amountCentsFromStripe: opts.amountCents ?? null,
+      bookingPriceDollars: (booking as { price?: number | string | null }).price,
+      teacherPlan: teacherProfile?.plan ?? "free",
+      loyaltyTier: piMetadata?.loyalty_tier ?? teacherProfile?.loyalty_tier ?? null,
+      annualVolumeCents: Math.round(Math.max(0, Number(teacherProfile?.loyalty_annual_volume ?? 0)) * 100),
     });
-  } catch (ledgerErr) {
-    console.error("[stripe/webhook] booking payment ledger upsert failed", ledgerErr);
-    return;
+
+    if (!ledger.ok) {
+      console.error("[stripe/webhook] lesson payment tax finalization failed:", ledger.reason);
+    }
+
+    try {
+      await upsertPaidBookingPayment(admin, {
+        bookingId,
+        teacherId: booking.teacher_id as string,
+        studentId: booking.student_id as string,
+        stripeCheckoutSessionId: opts.checkoutSessionId ?? null,
+        stripePaymentIntentId: paymentIntentId,
+        stripeChargeId,
+        amountCents: ledger.amountCents,
+        subtotalCents: ledger.subtotalCents,
+        taxTotalCents: ledger.taxTotalCents,
+        platformFeeCents: ledger.platformFeeCents,
+        teacherNetCents: ledger.teacherNetCents,
+        taxBehavior: ledger.taxBehavior,
+        taxStatus: ledger.taxStatus,
+        taxSnapshot: ledger.taxSnapshot,
+        gstCents: ledger.gstCents,
+        qstCents: ledger.qstCents,
+        currency: opts.currency ?? "cad",
+        transferGroup: piMetadata?.transfer_group ?? `booking_${bookingId}`,
+        metadata: {
+          ...(piMetadata ?? {}),
+          webhook_source: opts.checkoutSessionId ? "checkout.session.completed" : "payment_intent.succeeded",
+          tax_finalize_ok: String(ledger.ok),
+          ...(ledger.ok ? {} : { tax_finalize_error: ledger.reason }),
+        },
+      });
+    } catch (ledgerErr) {
+      console.error("[stripe/webhook] booking payment ledger upsert failed", ledgerErr);
+      return;
+    }
+
+    if (ledger.ok) {
+      try {
+        await issueLessonPaymentReceipt(admin, {
+          bookingId,
+          stripeChargeId,
+          sendEmail: true,
+        });
+      } catch (receiptErr) {
+        console.error("[stripe/webhook] lesson receipt issue failed", receiptErr);
+      }
+    }
   }
+
+  const commissionRateFromMetadata = Number(piMetadata?.commission_rate ?? NaN);
+  const commissionRate = Number.isFinite(commissionRateFromMetadata) ? commissionRateFromMetadata : 0.1;
 
   if (!shouldSendConfirmation) {
     return;
@@ -313,15 +356,26 @@ async function confirmBookingAndNotify(
   }
 
   // Booking confirmation emails
-  const bookingDate = (booking.date as string | null) ?? (booking as { slot_date?: string | null }).slot_date ?? "—";
-  const bookingTime = (booking.time as string | null) ?? (booking as { time_slot?: string | null }).time_slot ?? "—";
+  const bookingTiming = {
+    slot_date: (booking as { slot_date?: string | null }).slot_date,
+    date: booking.date as string | null,
+    time_slot: (booking as { time_slot?: string | null }).time_slot,
+    time: booking.time as string | null,
+  };
   const bookingPrice = Number((booking as { price?: number | string | null }).price ?? 0);
   const bookingDuration = Number((booking as { duration_minutes?: number | null }).duration_minutes ?? 60);
   const bookingMode = (booking as { teaching_mode?: string | null }).teaching_mode ?? "person";
-  const locationLabel =
-    bookingMode === "online" ? "En ligne" :
-    bookingMode === "domicile" ? "À domicile" :
-    "En studio";
+  const meetingUrl = (booking as { meeting_url?: string | null }).meeting_url ?? null;
+  const [studentLocale, teacherLocale] = await Promise.all([
+    resolveEmailLocaleForUser(admin, booking.student_id as string),
+    teacher?.user_id
+      ? resolveEmailLocaleForUser(admin, teacher.user_id as string)
+      : Promise.resolve(EMAIL_FALLBACK_LOCALE),
+  ]);
+  const studentLocationLabel = formatEmailTeachingLocation(studentLocale, bookingMode, meetingUrl);
+  const teacherLocationLabel = formatEmailTeachingLocation(teacherLocale, bookingMode, meetingUrl);
+  const studentSchedule = formatEmailLessonScheduleLabels(bookingTiming, studentLocale);
+  const teacherSchedule = formatEmailLessonScheduleLabels(bookingTiming, teacherLocale);
   const creditsAppliedForEmail = Math.max(
     Number((booking as { credits_applied?: number | string | null }).credits_applied ?? 0),
     Number(piMetadata?.credits_applied ?? 0),
@@ -334,12 +388,13 @@ async function confirmBookingAndNotify(
         name: studentName,
         teacherName,
         discipline: teacherDiscipline,
-        date: bookingDate,
-        time: bookingTime,
+        date: studentSchedule.dateLabel,
+        time: studentSchedule.timeLabel,
         durationMinutes: bookingDuration,
         price: bookingPrice,
         creditsApplied: creditsAppliedForEmail,
-        location: locationLabel,
+        location: studentLocationLabel,
+        locale: studentLocale,
       });
     } catch (e) {
       console.error("[stripe/webhook] student booking email failed", e);
@@ -353,12 +408,13 @@ async function confirmBookingAndNotify(
         name: teacherName,
         studentName,
         discipline: teacherDiscipline,
-        date: bookingDate,
-        time: bookingTime,
+        date: teacherSchedule.dateLabel,
+        time: teacherSchedule.timeLabel,
         durationMinutes: bookingDuration,
         price: bookingPrice,
         commissionRate,
-        location: locationLabel,
+        location: teacherLocationLabel,
+        locale: teacherLocale,
       });
     } catch (e) {
       console.error("[stripe/webhook] teacher booking email failed", e);
@@ -375,55 +431,6 @@ async function confirmBookingAndNotify(
     if (!ok) console.warn("[stripe/webhook] credit deduction failed for booking", bookingId);
     // Mirror to booking row so subsequent webhook fires are idempotent
     await admin.from("bookings").update({ credits_applied: creditsApplied }).eq("id", bookingId);
-  }
-
-  // Companion evolution email (only celebratory notification).
-  if (studentEmail && companionType && (companionType === "phoenix" || companionType === "forest" || companionType === "dragon" || companionType === "star")) {
-    const { count } = await admin
-      .from("bookings")
-      .select("id", { count: "exact", head: true })
-      .eq("student_id", booking.student_id)
-      .eq("status", "confirmed");
-
-    const total = typeof count === "number" ? count : 0;
-    const prev = Math.max(0, total - 1);
-    const prevStage = getCompanionStage(companionType, prev);
-    const newStage = getCompanionStage(companionType, total);
-    if (prevStage.name !== newStage.name || prevStage.emoji !== newStage.emoji) {
-      const companionName = COMPANIONS[companionType].name;
-      // Milestone credit: $5/$10/$15/$25 depending on stage reached
-      const newStageIndex = COMPANIONS[companionType].stages.findIndex(
-        (s) => s.name === newStage.name && s.emoji === newStage.emoji,
-      );
-      const milestoneAmount = COMPANION_MILESTONE_AMOUNTS[newStageIndex] ?? 0;
-      try {
-        await sendCompanionEvolution(
-          studentEmail,
-          studentName,
-          companionName,
-          prevStage.emoji,
-          newStage.emoji,
-          prevStage.name,
-          newStage.name,
-          milestoneAmount,
-        );
-      } catch (e) {
-        console.error("[stripe/webhook] evolution email failed", e);
-      }
-      if (milestoneAmount > 0) {
-        try {
-          await awardCredit(
-            booking.student_id as string,
-            "companion_evolution",
-            `${companionName} : ${newStage.name} (+${milestoneAmount} $)`,
-            `evolution:${bookingId}`,
-            milestoneAmount,
-          );
-        } catch (e) {
-          console.error("[stripe/webhook] evolution credit failed", e);
-        }
-      }
-    }
   }
 }
 
@@ -562,6 +569,7 @@ export async function POST(req: Request) {
             stripeChargeId: chargeIdFromPaymentIntent(pi),
             amountCents: pi.amount_received || pi.amount,
             currency: pi.currency,
+            deferPaymentLedger: shouldDeferPaymentIntentLedgerFinalizationFromMetadata(pi.metadata),
           });
         }
       }
@@ -584,11 +592,23 @@ export async function POST(req: Request) {
         const bookingId = sess.metadata?.booking_id;
         if (bookingId && piId) {
           const stripeChargeId = await retrievePaymentIntentChargeId(piId).catch(() => null);
+          let checkoutSession: Stripe.Checkout.Session = sess;
+          let checkoutLineItems: Stripe.LineItem[] | undefined;
+          if (shouldFinalizeStripeTaxFromCheckoutSessionMetadata(md ?? sess.metadata)) {
+            const expanded = await stripe.checkout.sessions.retrieve(sess.id, {
+              expand: ["line_items.data.taxes", "line_items.data.price.product"],
+            });
+            checkoutSession = expanded;
+            checkoutLineItems = expanded.line_items?.data ?? undefined;
+          }
           await confirmBookingAndNotify(bookingId, piId, md, {
             checkoutSessionId: sess.id,
             stripeChargeId,
             amountCents: sess.amount_total ?? null,
             currency: sess.currency,
+            checkoutSession,
+            checkoutLineItems,
+            deferPaymentLedger: false,
           });
         }
       }
@@ -621,6 +641,23 @@ export async function POST(req: Request) {
 
     if (event.type === "account.updated") {
       await handleConnectAccountUpdated(event.data.object as Stripe.Account);
+    }
+
+    const eventType = event.type as string;
+    if (eventType === "transfer.failed") {
+      await handleStripeTransferFailed(
+        getSupabaseAdmin(),
+        event.data.object as Stripe.Transfer,
+        event.id,
+      );
+    }
+
+    if (eventType === "charge.dispute.created") {
+      await handleStripeChargeDisputeCreated(
+        getSupabaseAdmin(),
+        event.data.object as Stripe.Dispute,
+        event.id,
+      );
     }
 
     // ── Stripe Identity ────────────────────────────────────────────────────

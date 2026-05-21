@@ -3,8 +3,11 @@ import { createClient } from "@supabase/supabase-js";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { disciplineLabelToTeacherCategory, getAllDisciplines, getDisciplineById } from "@/lib/disciplines";
 import { sendWelcomeTeacher, sendWelcomeStudent } from "@/lib/email";
+import { resolveEmailLocaleForUser } from "@/lib/email/locale";
 import { logError, logInfo, logWarn } from "@/lib/log";
 import { validateJsonBody } from "@/lib/validation/api";
+import { minimumLessonPriceErrorMessage } from "@/lib/pricing/messages";
+import { validateTeacherLessonOffers } from "@/lib/pricing/lessonOffer";
 import { onboardingCompletePostSchema } from "@/lib/validation/schemas";
 
 export const runtime = "nodejs";
@@ -109,7 +112,26 @@ export async function POST(req: Request) {
 
     if (role === "teacher") {
       const teachingMode = body.teaching_mode || "both";
-      const hourlyRate = clamp(Number(body.hourly_rate || 50), 10, 500);
+      const hourlyRate = clamp(Number(body.hourly_rate || 50), 20, 500);
+      const locale = await resolveEmailLocaleForUser(admin, user.id);
+      const homeLessonEnabled = Boolean(body.home_lesson_enabled);
+      const homeLessonPrice =
+        body.home_lesson_price != null && Number.isFinite(Number(body.home_lesson_price))
+          ? Number(body.home_lesson_price)
+          : null;
+      const offerCheck = validateTeacherLessonOffers({
+        price_per_lesson: hourlyRate,
+        home_lesson_enabled: homeLessonEnabled,
+        home_lesson_price: homeLessonPrice,
+        home_lesson_min_duration: 60,
+        intro_session_enabled: false,
+      });
+      if (!offerCheck.ok) {
+        return NextResponse.json(
+          { error: minimumLessonPriceErrorMessage(locale), code: "minimum_lesson_price" },
+          { status: 400 },
+        );
+      }
       const teacherBio = (body.bio || "").slice(0, 300);
       const levels = Array.isArray(body.levels) ? body.levels.slice(0, 10) : [];
       const availability = Array.isArray(body.availability) ? body.availability.slice(0, 128) : [];
@@ -174,7 +196,7 @@ export async function POST(req: Request) {
             levels,
             home_lesson_enabled: Boolean(body.home_lesson_enabled),
             home_lesson_radius_km: body.home_lesson_radius_km ? clamp(Number(body.home_lesson_radius_km), 5, 50) : 25,
-            home_lesson_price: body.home_lesson_price != null ? Number(body.home_lesson_price) : null,
+            home_lesson_price: homeLessonPrice,
           },
           { onConflict: "id" },
         );
@@ -217,7 +239,9 @@ export async function POST(req: Request) {
 
       if (user.email) {
         logInfo("[onboarding/complete] Step 4 sending welcome teacher email", { hasEmail: true });
-        void sendWelcomeTeacher(user.email, name);
+        void resolveEmailLocaleForUser(admin, user.id).then((locale) =>
+          sendWelcomeTeacher(user.email!, name, locale),
+        );
       } else {
         logWarn("[onboarding/complete] No email on user — skipping welcome email");
       }
@@ -230,7 +254,8 @@ export async function POST(req: Request) {
           .maybeSingle();
         if (!welcomeRow?.welcome_student_email_sent_at) {
           try {
-            await sendWelcomeStudent(user.email, name);
+            const welcomeLocale = await resolveEmailLocaleForUser(admin, user.id);
+            await sendWelcomeStudent(user.email, name, welcomeLocale);
             const { error: wErr } = await admin
               .from("profiles")
               .update({ welcome_student_email_sent_at: new Date().toISOString() })

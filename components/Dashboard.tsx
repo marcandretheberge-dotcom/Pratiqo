@@ -323,8 +323,18 @@ export function Dashboard() {
     setBookingAction((prev) => ({ ...prev, [id]: "declining" }));
     try {
       const supabase = getSupabaseClient();
-      const { error } = await supabase.from("bookings").update({ status: "cancelled" }).eq("id", id);
-      if (error) throw error;
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) throw new Error(t("bookingSessionExpired"));
+      const res = await fetch(`/api/bookings/${encodeURIComponent(id)}/decline`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ reason: "teacher_declined" }),
+      });
+      const payload = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) throw new Error(payload.error || t("anErrorOccurred"));
       // Optimistic: remove from list immediately
       setTeacherBookings((prev) => prev.filter((b) => b.id !== id));
       showFlash("ok", t("bookingDeclined"));

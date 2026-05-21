@@ -71,6 +71,53 @@ export type BlockedSlotDayRow = {
 
 export type BlockedTimeRange = { start: number; end: number };
 
+/**
+ * Half-open interval [startMin, endMin) in minutes-from-midnight.
+ * Used by buffer-aware availability and checkout overlap checks.
+ */
+export type BookingInterval = { startMin: number; endMin: number };
+
+/**
+ * Existing booking expressed as a starting minute + duration.
+ * Used when generating availability with buffers so that we can reason about
+ * the booking's full interval (not just its start label).
+ */
+export type BookedSlotInterval = { startMin: number; durationMin: number };
+
+/**
+ * Expand a booking [start, start+duration) by per-side buffer minutes.
+ *
+ * The same expansion is applied symmetrically to existing bookings and to the
+ * candidate booking, which matches the product spec:
+ *   existingBlocked = [existingStart - bufferBefore, existingEnd + bufferAfter]
+ *   candidateBlocked = [candidateStart - bufferBefore, candidateEnd + bufferAfter]
+ * Two bookings conflict iff their expanded intervals overlap.
+ *
+ * - Negative buffers are clamped to 0.
+ * - Duration is clamped to >= 1 so a zero/negative duration cannot collapse.
+ * - The lower bound is clamped to 0 (midnight) so we never produce negative
+ *   minutes; this never hides a conflict because the upper bound still extends.
+ */
+export function expandBookingInterval(
+  startMin: number,
+  durationMin: number,
+  bufferBeforeMin: number,
+  bufferAfterMin: number,
+): BookingInterval {
+  const before = Math.max(0, Math.floor(bufferBeforeMin || 0));
+  const after = Math.max(0, Math.floor(bufferAfterMin || 0));
+  const duration = Math.max(1, Math.floor(durationMin || 0));
+  return {
+    startMin: Math.max(0, startMin - before),
+    endMin: startMin + duration + after,
+  };
+}
+
+/** Half-open overlap test for two BookingIntervals. */
+export function intervalsOverlap(a: BookingInterval, b: BookingInterval): boolean {
+  return a.startMin < b.endMin && b.startMin < a.endMin;
+}
+
 /** Rows with both start_time and end_time contribute only as ranges (period ignored for slot exclusion). */
 export function blockedTimeRangesFromRows(rows: BlockedSlotDayRow[]): BlockedTimeRange[] {
   const out: BlockedTimeRange[] = [];
@@ -131,6 +178,24 @@ export function weeklyAvailabilityFromTeacherRows(avail: unknown): Record<string
   return out;
 }
 
+/**
+ * Optional buffer-aware inputs for {@link generateSlots}.
+ *
+ * When both buffers are 0 (or `bookedIntervals` is undefined), the function
+ * walks the legacy code path bit-for-bit: it only filters by exact string
+ * match on `bookedSlots`. This preserves current production behavior.
+ *
+ * When at least one buffer is > 0, the candidate's expanded interval is also
+ * tested against every `bookedIntervals` entry's expanded interval. Admin
+ * `blockedTimeRanges` are intentionally NOT expanded with buffer — those are
+ * explicit teacher blocks and should be honored as-is.
+ */
+export interface GenerateSlotsOptions {
+  bookedIntervals?: BookedSlotInterval[];
+  bufferBeforeMin?: number;
+  bufferAfterMin?: number;
+}
+
 export function generateSlots(
   availability: DayAvailability,
   durationMinutes: number,
@@ -138,9 +203,15 @@ export function generateSlots(
   bookedSlots: string[],
   blockedPeriods: string[],
   blockedTimeRanges: BlockedTimeRange[] = [],
+  options: GenerateSlotsOptions = {},
 ): string[] {
   const slots: string[] = [];
   if (blockedPeriods.includes("all")) return slots;
+
+  const bufferBeforeMin = Math.max(0, Math.floor(options.bufferBeforeMin ?? 0));
+  const bufferAfterMin = Math.max(0, Math.floor(options.bufferAfterMin ?? 0));
+  const useBufferAware = bufferBeforeMin > 0 || bufferAfterMin > 0;
+  const bookedIntervals: BookedSlotInterval[] = useBufferAware ? options.bookedIntervals ?? [] : [];
 
   (Object.entries(PERIODS) as [PeriodKey, { start: number; end: number }][]).forEach(([period, range]) => {
     if (!availability[period]) return;
@@ -160,6 +231,17 @@ export function generateSlots(
         timeMinutes += durationMinutes;
         continue;
       }
+      if (useBufferAware) {
+        const candidate = expandBookingInterval(timeMinutes, durationMinutes, bufferBeforeMin, bufferAfterMin);
+        const conflicts = bookedIntervals.some((b) => {
+          const existing = expandBookingInterval(b.startMin, b.durationMin, bufferBeforeMin, bufferAfterMin);
+          return intervalsOverlap(candidate, existing);
+        });
+        if (conflicts) {
+          timeMinutes += durationMinutes;
+          continue;
+        }
+      }
       slots.push(slot);
       timeMinutes += durationMinutes;
     }
@@ -169,17 +251,32 @@ export function generateSlots(
   return slots;
 }
 
+export interface GetAvailableDaysOptions {
+  /**
+   * Existing booked intervals keyed by YYYY-MM-DD. Used by buffer-aware
+   * generation when at least one buffer is > 0. Optional for back-compat.
+   */
+  bookedIntervalsByDate?: Record<string, BookedSlotInterval[]>;
+  bufferBeforeMin?: number;
+  bufferAfterMin?: number;
+}
+
 export function getAvailableDays(
   weeklyAvailability: Record<string, DayAvailability>,
   durationMinutes: number,
   bookedByDate: Record<string, string[]>,
   blockedByDate: Record<string, BlockedSlotDayRow[]>,
   weeks = 4,
+  options: GetAvailableDaysOptions = {},
 ): Record<string, number> {
   const result: Record<string, number> = {};
   const daysTotal = Math.max(1, weeks) * 7;
   const start = new Date();
   start.setHours(0, 0, 0, 0);
+
+  const bufferBeforeMin = Math.max(0, Math.floor(options.bufferBeforeMin ?? 0));
+  const bufferAfterMin = Math.max(0, Math.floor(options.bufferAfterMin ?? 0));
+  const bookedIntervalsByDate = options.bookedIntervalsByDate ?? {};
 
   for (let i = 0; i < daysTotal; i++) {
     const date = new Date(start);
@@ -193,7 +290,11 @@ export function getAvailableDays(
     const blockedRows = blockedByDate[dateStr] || [];
     const blocked = blockedPeriodsFromRows(blockedRows);
     const ranges = blockedTimeRangesFromRows(blockedRows);
-    const slots = generateSlots(avail, durationMinutes, dateStr, booked, blocked, ranges);
+    const slots = generateSlots(avail, durationMinutes, dateStr, booked, blocked, ranges, {
+      bookedIntervals: bookedIntervalsByDate[dateStr] ?? [],
+      bufferBeforeMin,
+      bufferAfterMin,
+    });
     if (slots.length > 0) result[dateStr] = slots.length;
   }
 

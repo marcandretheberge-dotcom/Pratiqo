@@ -10,10 +10,17 @@ export type PlatformFeeRateInput = {
 };
 
 export type BookingAmountInput = PlatformFeeRateInput & {
-  priceCents: number;
+  /** Pre-tax lesson subtotal in cents; platform fee is calculated on this amount. */
+  subtotalCents?: number;
+  /** Included sales tax in cents (0 in Phase 1; Stripe Tax not enabled). */
+  taxTotalCents?: number;
+  /** @deprecated Use subtotalCents. Treated as subtotal when subtotalCents is omitted. */
+  priceCents?: number;
 };
 
 export type BookingAmountBreakdown = {
+  subtotalCents: number;
+  taxTotalCents: number;
   amountCents: number;
   platformFeeCents: number;
   teacherNetCents: number;
@@ -43,6 +50,10 @@ const PRO_PLAN_BPS: Record<LoyaltyTier, number> = {
   or: 400,
   platine: 350,
 };
+
+function safeCents(value: number | undefined): number {
+  return Math.max(0, Math.round(Number.isFinite(value) ? (value as number) : 0));
+}
 
 export function normalizeTeacherPaymentPlan(plan: string | null | undefined): TeacherPaymentPlan {
   const p = String(plan ?? "free").trim().toLowerCase();
@@ -81,16 +92,25 @@ export function getPlatformFeeRate(input: PlatformFeeRateInput): number {
 }
 
 export function calculateBookingAmounts(input: BookingAmountInput): BookingAmountBreakdown {
-  const amountCents = Math.max(0, Math.round(Number.isFinite(input.priceCents) ? input.priceCents : 0));
+  const taxTotalCents = safeCents(input.taxTotalCents);
+  const subtotalCents = safeCents(
+    input.subtotalCents ?? input.priceCents,
+  );
+  const amountCents = subtotalCents + taxTotalCents;
   const teacherPlan = normalizeTeacherPaymentPlan(input.teacherPlan);
   const loyaltyTier = resolveLoyaltyTier(input);
   const feeBasisPoints = getPlatformFeeBasisPoints(input);
-  const platformFeeCents = Math.min(amountCents, Math.floor((amountCents * feeBasisPoints + 5_000) / 10_000));
+  const platformFeeCents = Math.min(
+    subtotalCents,
+    Math.floor((subtotalCents * feeBasisPoints + 5_000) / 10_000),
+  );
 
   return {
+    subtotalCents,
+    taxTotalCents,
     amountCents,
     platformFeeCents,
-    teacherNetCents: amountCents - platformFeeCents,
+    teacherNetCents: subtotalCents - platformFeeCents,
     feeRate: feeBasisPoints / 10_000,
     feeBasisPoints,
     loyaltyTier,

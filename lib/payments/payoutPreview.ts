@@ -44,7 +44,8 @@ export function getTeacherPayoutPreview(input: TeacherPayoutPreviewInput): Teach
   const isPlanKnown = Boolean(input.teacherPlan && String(input.teacherPlan).trim());
   const plan = isPlanKnown ? String(input.teacherPlan).trim().toLowerCase() : "free";
   const amounts = calculateBookingAmounts({
-    priceCents: grossCents,
+    subtotalCents: grossCents,
+    taxTotalCents: 0,
     teacherPlan: plan,
     bookingType: input.bookingType ?? "individual",
     annualVolumeCents: input.annualVolumeCents ?? null,
@@ -52,7 +53,7 @@ export function getTeacherPayoutPreview(input: TeacherPayoutPreviewInput): Teach
   });
 
   return {
-    grossCents: amounts.amountCents,
+    grossCents: amounts.subtotalCents,
     commissionCents: amounts.platformFeeCents,
     teacherNetCents: amounts.teacherNetCents,
     feeRate: amounts.feeRate,

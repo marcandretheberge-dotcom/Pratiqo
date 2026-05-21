@@ -58,3 +58,7 @@ backups/
 
 # Office lock files
 **/~$*
+
+# Editor/Office temporary lock files
+~$*
+**/~$*

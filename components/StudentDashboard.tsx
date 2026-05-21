@@ -22,6 +22,7 @@ import {
   getBrowserTimeZone,
 } from "@/lib/timezones";
 import { SupportCaseModal } from "@/components/support/SupportCaseModal";
+import { compareBookingsByStartAsc } from "@/lib/bookings/sort";
 
 const PEER_UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -33,6 +34,9 @@ type BookingRow = {
   status: string;
   date: string | null;
   time: string | null;
+  slot_date?: string | null;
+  time_slot?: string | null;
+  created_at?: string | null;
   duration_minutes?: number | null;
   price?: number | null;
   teaching_mode?: string | null;
@@ -71,11 +75,10 @@ type BookingWithTeacher = {
   status: string;
   learnerName: string | null;
   meetingUrl: string | null;
+  slotDate: string | null;
+  timeSlot: string | null;
+  createdAt: string | null;
 };
-
-function sortKey(b: { date: string; time: string }) {
-  return `${b.date}#${b.time}`.replaceAll("h", ":");
-}
 
 function messagesHrefForTeacherUser(teacherUserId: string | null | undefined): string {
   const peer = typeof teacherUserId === "string" ? teacherUserId.trim() : "";
@@ -122,7 +125,7 @@ export function StudentDashboard() {
       setLoading(true);
       const { data: bookings } = await supabase
         .from("bookings")
-        .select("id, teacher_id, learner_profile_id, status, date, time, duration_minutes, price, teaching_mode, meeting_url")
+        .select("id, teacher_id, learner_profile_id, status, date, time, slot_date, time_slot, created_at, duration_minutes, price, teaching_mode, meeting_url")
         .eq("student_id", user.id)
         .in("status", [...STUDENT_CANCEL_STATUSES])
         .order("date", { ascending: true })
@@ -150,15 +153,18 @@ export function StudentDashboard() {
           : Promise.resolve(),
       ]);
 
+      // Hero + upcoming list: confirmed lessons only — pending_payment is not a scheduled class.
       const upcomingList: BookingWithTeacher[] = rows
-        .filter((r) => r.date && r.time)
+        .filter((r) => r.status === "confirmed" && (r.slot_date || r.date) && (r.time_slot || r.time))
         .map((r) => {
           const tr = teacherMap.get(r.teacher_id);
+          const lessonDate = String(r.slot_date || r.date || "");
+          const lessonTime = String(r.time_slot || r.time || "");
           const range =
-            r.date && r.time
+            lessonDate && lessonTime
               ? bookingWallTimeRangeToUtc({
-                  dateIso: String(r.date),
-                  slot: String(r.time),
+                  dateIso: lessonDate,
+                  slot: lessonTime,
                   durationMinutes: r.duration_minutes,
                   timeZone: tr?.timezone,
                 })
@@ -170,8 +176,8 @@ export function StudentDashboard() {
             teacherName: (tr?.name ?? t("teacher")).toString(),
             discipline: (tr?.discipline ?? "").toString(),
             avatarUrl: tr?.image_url ?? null,
-            date: String(r.date || ""),
-            time: String(r.time || ""),
+            date: lessonDate,
+            time: lessonTime,
             startIso: range?.start.toISOString() ?? null,
             endIso: range?.end.toISOString() ?? null,
             teacherTimeZone: tr?.timezone ?? null,
@@ -181,6 +187,9 @@ export function StudentDashboard() {
             status: r.status,
             learnerName: r.learner_profile_id ? learnerMap.get(r.learner_profile_id)?.display_name ?? null : null,
             meetingUrl: typeof r.meeting_url === "string" && r.meeting_url.trim() ? r.meeting_url.trim() : null,
+            slotDate: r.slot_date ?? null,
+            timeSlot: r.time_slot ?? null,
+            createdAt: r.created_at ?? null,
           };
         })
         .filter((row) =>
@@ -191,7 +200,26 @@ export function StudentDashboard() {
             time: row.time,
           }),
         )
-        .sort((a, b) => sortKey(a).localeCompare(sortKey(b)));
+        .sort((a, b) =>
+          compareBookingsByStartAsc(
+            {
+              id: a.bookingId,
+              slot_date: a.slotDate,
+              date: a.date,
+              time_slot: a.timeSlot,
+              time: a.time,
+              created_at: a.createdAt,
+            },
+            {
+              id: b.bookingId,
+              slot_date: b.slotDate,
+              date: b.date,
+              time_slot: b.timeSlot,
+              time: b.time,
+              created_at: b.createdAt,
+            },
+          ),
+        );
 
       const teacherCounts = new Map<string, { lessons: number; row: TeacherRow | undefined }>();
       for (const r of rows) {

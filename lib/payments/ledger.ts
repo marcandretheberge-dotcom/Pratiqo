@@ -2,6 +2,7 @@ import Stripe from "stripe";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { stripe } from "@/lib/stripe";
 import { transferGroupForBooking } from "@/lib/payments/amounts";
+import type { BookingPaymentTaxBehavior, BookingPaymentTaxStatus } from "@/lib/payments/types";
 
 type JsonRecord = Record<string, unknown>;
 
@@ -10,11 +11,18 @@ export type BookingPaymentDraft = {
   teacherId: string;
   studentId: string;
   amountCents: number;
+  subtotalCents: number;
+  taxTotalCents?: number;
   platformFeeCents: number;
   teacherNetCents: number;
   currency?: string | null;
   stripeCheckoutSessionId?: string | null;
   transferGroup?: string | null;
+  taxBehavior?: BookingPaymentTaxBehavior;
+  taxStatus?: BookingPaymentTaxStatus;
+  taxSnapshot?: JsonRecord;
+  gstCents?: number;
+  qstCents?: number;
   metadata?: JsonRecord;
 };
 
@@ -36,6 +44,13 @@ export type BookingPaymentRowForTransfer = {
   currency: string;
   payment_status: string;
   transfer_status: string;
+  tax_behavior?: string | null;
+  tax_status?: string | null;
+};
+
+export type BookingPaymentRiskRow = BookingPaymentRowForTransfer & {
+  teacher_id: string;
+  student_id: string;
 };
 
 function safeCents(value: number): number {
@@ -102,6 +117,13 @@ export async function upsertUnpaidBookingPayment(
       stripe_checkout_session_id: draft.stripeCheckoutSessionId ?? existingPayment?.stripe_checkout_session_id ?? null,
       transfer_group: draft.transferGroup ?? transferGroupForBooking(draft.bookingId),
       amount_cents: safeCents(draft.amountCents),
+      subtotal_cents: safeCents(draft.subtotalCents),
+      tax_total_cents: safeCents(draft.taxTotalCents ?? 0),
+      tax_behavior: draft.taxBehavior ?? "not_collected",
+      tax_status: draft.taxStatus ?? "not_collected",
+      tax_snapshot: draft.taxSnapshot ?? {},
+      gst_cents: safeCents(draft.gstCents ?? 0),
+      qst_cents: safeCents(draft.qstCents ?? 0),
       platform_fee_cents: safeCents(draft.platformFeeCents),
       teacher_net_cents: safeCents(draft.teacherNetCents),
       currency: normalizeCurrency(draft.currency),
@@ -159,6 +181,13 @@ export async function upsertPaidBookingPayment(
       stripe_charge_id: update.stripeChargeId,
       transfer_group: update.transferGroup ?? transferGroupForBooking(update.bookingId),
       amount_cents: safeCents(update.amountCents),
+      subtotal_cents: safeCents(update.subtotalCents),
+      tax_total_cents: safeCents(update.taxTotalCents ?? 0),
+      tax_behavior: update.taxBehavior ?? "not_collected",
+      tax_status: update.taxStatus ?? "not_collected",
+      tax_snapshot: update.taxSnapshot ?? {},
+      gst_cents: safeCents(update.gstCents ?? 0),
+      qst_cents: safeCents(update.qstCents ?? 0),
       platform_fee_cents: safeCents(update.platformFeeCents),
       teacher_net_cents: safeCents(update.teacherNetCents),
       currency: normalizeCurrency(update.currency),
@@ -186,7 +215,7 @@ export async function getBookingPaymentForTransfer(
   const { data, error } = await admin
     .from("booking_payments")
     .select(
-      "id, booking_id, stripe_payment_intent_id, stripe_charge_id, stripe_transfer_id, amount_cents, platform_fee_cents, teacher_net_cents, currency, payment_status, transfer_status",
+      "id, booking_id, stripe_payment_intent_id, stripe_charge_id, stripe_transfer_id, amount_cents, platform_fee_cents, teacher_net_cents, currency, payment_status, transfer_status, tax_behavior, tax_status",
     )
     .eq("booking_id", bookingId)
     .maybeSingle();
@@ -216,6 +245,50 @@ export async function markBookingPaymentTransferFailed(
 
   if (error) {
     throw new Error(`Failed to mark booking transfer failed: ${error.message}`);
+  }
+}
+
+export async function markBookingPaymentDisputed(
+  admin: SupabaseClient,
+  bookingId: string,
+  params: { disputeId: string; reason?: string },
+): Promise<void> {
+  const now = new Date().toISOString();
+  const { data: existing, error: readErr } = await admin
+    .from("booking_payments")
+    .select("metadata, payment_status")
+    .eq("booking_id", bookingId)
+    .maybeSingle();
+
+  if (readErr) {
+    throw new Error(`Failed to read booking payment for dispute: ${readErr.message}`);
+  }
+
+  if (String(existing?.payment_status ?? "") === "disputed") {
+    return;
+  }
+
+  const priorMeta =
+    existing?.metadata && typeof existing.metadata === "object" && !Array.isArray(existing.metadata)
+      ? (existing.metadata as Record<string, unknown>)
+      : {};
+
+  const { error } = await admin
+    .from("booking_payments")
+    .update({
+      payment_status: "disputed",
+      failure_reason: (params.reason ?? `Stripe dispute ${params.disputeId}`).slice(0, 500),
+      metadata: {
+        ...priorMeta,
+        stripe_dispute_id: params.disputeId,
+        stripe_dispute_recorded_at: now,
+      },
+      updated_at: now,
+    })
+    .eq("booking_id", bookingId);
+
+  if (error) {
+    throw new Error(`Failed to mark booking payment disputed: ${error.message}`);
   }
 }
 
