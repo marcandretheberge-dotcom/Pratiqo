@@ -15,6 +15,7 @@ import { AccountDeletionSection } from "../../../components/account/AccountDelet
 import { CompanionCard } from "../../../components/companion/CompanionCard";
 import { cn } from "../../../lib/utils";
 import type { TranslationKey } from "../../../lib/translations";
+import { COMPLETED_LESSON_FOR_COMPANION_FILTER } from "../../../lib/companion/rewards";
 
 const LEARNING_FORMAT_VALUES = ["no_preference", "at_home", "in_person", "online", "hybrid"] as const;
 
@@ -83,8 +84,7 @@ export default function StudentProfilePage() {
           .from("bookings")
           .select("id", { count: "exact", head: true })
           .eq("student_id", userId)
-          .eq("status", "completed")
-          .not("completed_at", "is", null),
+          .or(COMPLETED_LESSON_FOR_COMPANION_FILTER),
       ]);
 
       if (cancelled) return;

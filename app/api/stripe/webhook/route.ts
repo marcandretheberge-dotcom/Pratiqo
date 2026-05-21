@@ -2,10 +2,8 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { stripe } from "@/lib/stripe";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
-import { COMPANIONS, getCompanionStage } from "@/lib/companions";
-import { awardCredit, deductCredits, COMPANION_MILESTONE_AMOUNTS } from "@/lib/credits";
+import { deductCredits } from "@/lib/credits";
 import {
-  sendCompanionEvolution,
   sendBookingConfirmedStudent,
   sendBookingConfirmedTeacher,
   sendProUpgrade,
@@ -234,13 +232,12 @@ async function confirmBookingAndNotify(
 
   const { data: studentProfile } = await admin
     .from("profiles")
-    .select("name, email, companion_type")
+    .select("name, email")
     .eq("id", booking.student_id)
     .maybeSingle();
 
   const studentName = (studentProfile?.name as string) || "Élève";
   const studentEmail = (studentProfile as { email?: string | null } | null)?.email ?? null;
-  const companionType = (studentProfile as { companion_type?: string | null } | null)?.companion_type ?? null;
   const teacherName = (teacher?.name as string) || "Professeur";
   const teacherDiscipline = (teacher as { discipline?: string | null } | null)?.discipline ?? "Cours privé";
   const when = [booking.date, booking.time].filter(Boolean).join(" · ");
@@ -434,55 +431,6 @@ async function confirmBookingAndNotify(
     if (!ok) console.warn("[stripe/webhook] credit deduction failed for booking", bookingId);
     // Mirror to booking row so subsequent webhook fires are idempotent
     await admin.from("bookings").update({ credits_applied: creditsApplied }).eq("id", bookingId);
-  }
-
-  // Companion evolution email (only celebratory notification).
-  if (studentEmail && companionType && (companionType === "phoenix" || companionType === "forest" || companionType === "dragon" || companionType === "star")) {
-    const { count } = await admin
-      .from("bookings")
-      .select("id", { count: "exact", head: true })
-      .eq("student_id", booking.student_id)
-      .eq("status", "confirmed");
-
-    const total = typeof count === "number" ? count : 0;
-    const prev = Math.max(0, total - 1);
-    const prevStage = getCompanionStage(companionType, prev);
-    const newStage = getCompanionStage(companionType, total);
-    if (prevStage.name !== newStage.name || prevStage.emoji !== newStage.emoji) {
-      const companionName = COMPANIONS[companionType].name;
-      // Milestone credit: $5/$10/$15/$25 depending on stage reached
-      const newStageIndex = COMPANIONS[companionType].stages.findIndex(
-        (s) => s.name === newStage.name && s.emoji === newStage.emoji,
-      );
-      const milestoneAmount = COMPANION_MILESTONE_AMOUNTS[newStageIndex] ?? 0;
-      try {
-        await sendCompanionEvolution(
-          studentEmail,
-          studentName,
-          companionName,
-          prevStage.emoji,
-          newStage.emoji,
-          prevStage.name,
-          newStage.name,
-          milestoneAmount,
-        );
-      } catch (e) {
-        console.error("[stripe/webhook] evolution email failed", e);
-      }
-      if (milestoneAmount > 0) {
-        try {
-          await awardCredit(
-            booking.student_id as string,
-            "companion_evolution",
-            `${companionName} : ${newStage.name} (+${milestoneAmount} $)`,
-            `evolution:${bookingId}`,
-            milestoneAmount,
-          );
-        } catch (e) {
-          console.error("[stripe/webhook] evolution credit failed", e);
-        }
-      }
-    }
   }
 }
 

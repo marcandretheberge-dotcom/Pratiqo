@@ -9,6 +9,7 @@ import { useAuth } from "@/components/AuthProvider";
 import { CreditsWidget, type CreditsTeacherOption } from "@/components/CreditsWidget";
 import { CompanionCard } from "@/components/companion/CompanionCard";
 import { cn } from "@/lib/utils";
+import { COMPLETED_LESSON_FOR_COMPANION_FILTER } from "@/lib/companion/rewards";
 
 type HomeworkItem = {
   id: string;
@@ -43,8 +44,7 @@ export default function StudentProgressPage() {
           .from("bookings")
           .select("id", { count: "exact", head: true })
           .eq("student_id", user.id)
-          .eq("status", "completed")
-          .not("completed_at", "is", null),
+          .or(COMPLETED_LESSON_FOR_COMPANION_FILTER),
         supabase.from("assignments").select("id, title, due_date, status").eq("student_id", user.id).order("created_at", { ascending: false }),
         supabase.from("student_progress").select("watch_points, achievements").eq("student_id", user.id).order("created_at", { ascending: false }).limit(20),
         supabase.from("bookings").select("teacher_id").eq("student_id", user.id),

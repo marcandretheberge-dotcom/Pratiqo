@@ -2,8 +2,9 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import Stripe from "stripe";
 import { stripe } from "@/lib/stripe";
 import { bookingEndAt, type BookingTimingInput } from "@/lib/bookingLifecycle";
-import { sendPostClassReviewRequest } from "@/lib/email";
+import { sendCompanionEvolution, sendPostClassReviewRequest } from "@/lib/email";
 import { resolveEmailLocaleForUser } from "@/lib/email/locale";
+import { awardCredit } from "@/lib/credits";
 import { transferGroupForBooking } from "@/lib/payments/amounts";
 import {
   getBookingPaymentForTransfer,
@@ -12,6 +13,11 @@ import {
   type BookingPaymentRowForTransfer,
 } from "@/lib/payments/ledger";
 import { paymentTaxBlocksPayout } from "@/lib/payments/tax";
+import {
+  COMPLETED_LESSON_FOR_COMPANION_FILTER,
+  getCompanionMilestoneForCompletedLesson,
+  isRewardCompanionType,
+} from "@/lib/companion/rewards";
 
 export const AUTO_COMPLETE_GRACE_MS = 2 * 60 * 60 * 1000;
 
@@ -95,6 +101,58 @@ export function paymentBlocksAutoComplete(payment: BookingPaymentRowForTransfer 
   if (status !== "paid") return true;
   const transferStatus = String(payment.transfer_status ?? "").toLowerCase();
   return transferStatus === "reversed";
+}
+
+async function notifyCompanionEvolutionAfterCompletion(
+  admin: SupabaseClient,
+  booking: BookingRowForCompletion,
+): Promise<void> {
+  const { data: student } = await admin
+    .from("profiles")
+    .select("name, email, companion_type")
+    .eq("id", booking.student_id)
+    .maybeSingle();
+
+  const companionType = (student as { companion_type?: string | null } | null)?.companion_type ?? null;
+  if (!isRewardCompanionType(companionType)) return;
+
+  const { count } = await admin
+    .from("bookings")
+    .select("id", { count: "exact", head: true })
+    .eq("student_id", booking.student_id)
+    .or(COMPLETED_LESSON_FOR_COMPANION_FILTER);
+
+  const completedLessonCount = typeof count === "number" ? count : 0;
+  const milestone = getCompanionMilestoneForCompletedLesson(companionType, completedLessonCount);
+  if (!milestone) return;
+
+  const studentName = typeof student?.name === "string" && student.name.trim() ? student.name.trim() : "eleve";
+  const profileEmail = typeof student?.email === "string" ? student.email.trim() : "";
+  const { data: authStudent } = profileEmail ? { data: null } : await admin.auth.admin.getUserById(booking.student_id);
+  const studentEmail = profileEmail || authStudent?.user?.email?.trim() || "";
+  if (!studentEmail) return;
+
+  if (milestone.amount > 0) {
+    const award = await awardCredit(
+      booking.student_id,
+      "companion_evolution",
+      `${milestone.companionName} : ${milestone.nextStageName} (+${milestone.amount} $)`,
+      `evolution:${booking.id}`,
+      milestone.amount,
+    );
+    if (!award.awarded) return;
+  }
+
+  await sendCompanionEvolution(
+    studentEmail,
+    studentName,
+    milestone.companionName,
+    milestone.previousEmoji,
+    milestone.nextEmoji,
+    milestone.previousStageName,
+    milestone.nextStageName,
+    milestone.amount,
+  );
 }
 
 export async function hasOpenPayoutHold(admin: SupabaseClient, bookingId: string): Promise<boolean> {
@@ -288,6 +346,12 @@ export async function completeConfirmedBooking(
       code: "status_race",
       error: "Booking status changed - try refreshing",
     };
+  }
+
+  try {
+    await notifyCompanionEvolutionAfterCompletion(admin, booking);
+  } catch (e) {
+    console.error("[bookings/complete] companion evolution reward failed", e);
   }
 
   let reviewEmailSent = false;
