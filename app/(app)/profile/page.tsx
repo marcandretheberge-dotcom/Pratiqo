@@ -3,14 +3,13 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Bell, ChevronRight, CreditCard, GraduationCap, Loader2, MapPin } from "lucide-react";
+import { ArrowRight, Bell, ChevronRight, CreditCard, GraduationCap, Loader2, MapPin, Sparkles, TrendingUp } from "lucide-react";
 import { useAuth } from "../../../components/AuthProvider";
 import { getSupabaseClient } from "../../../lib/supabase";
 import { authDisplayName } from "../../../lib/authDisplay";
 import { useLocale } from "../../../lib/locale-context";
 import type { CompanionType } from "../../../lib/companions";
 import { LocaleSwitcher } from "../../../components/LocaleSwitcher";
-import { CreditsWidget } from "../../../components/CreditsWidget";
 import { AccountDeletionSection } from "../../../components/account/AccountDeletionSection";
 import { CompanionCard } from "../../../components/companion/CompanionCard";
 import { cn } from "../../../lib/utils";
@@ -44,9 +43,7 @@ export default function StudentProfilePage() {
   const [loading, setLoading] = useState(true);
   const [completedLessonCount, setCompletedLessonCount] = useState(0);
   const [teacherCount, setTeacherCount] = useState(0);
-  const [points] = useState(0);
   const [companionType, setCompanionType] = useState<CompanionType | null>(null);
-  const [myTeachers, setMyTeachers] = useState<{ teacherId: string; name: string; discipline: string | null; imageUrl: string | null }[]>([]);
   const [companionChosen, setCompanionChosen] = useState(false);
   const [memberYear, setMemberYear] = useState<number | null>(null);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
@@ -122,24 +119,6 @@ export default function StudentProfilePage() {
       }
       setTeacherCount(distinctTeacherIds.size);
       setCompletedLessonCount(typeof completedLessons === "number" ? completedLessons : 0);
-
-      // Fetch teacher names for review widget
-      const teacherList: { teacherId: string; name: string; discipline: string | null; imageUrl: string | null }[] = [];
-      await Promise.all(
-        Array.from(distinctTeacherIds).map(async (tid) => {
-          const { data: tr } = await supabase.from("teachers").select("id, name, discipline, image_url").eq("id", tid).maybeSingle();
-          if (tr) {
-            const row = tr as { id: string; name: string | null; discipline: string | null; image_url: string | null };
-            teacherList.push({
-              teacherId: row.id,
-              name: row.name ?? tid,
-              discipline: row.discipline,
-              imageUrl: row.image_url,
-            });
-          }
-        }),
-      );
-      setMyTeachers(teacherList);
       setLoading(false);
     };
 
@@ -174,38 +153,46 @@ export default function StudentProfilePage() {
       <section className="grid grid-cols-3 gap-2">
         <StatCard label={t("profileLessons")} value={loading ? "…" : String(completedLessonCount)} />
         <StatCard label={t("profileTeachers")} value={loading ? "…" : String(teacherCount)} />
-        <StatCard label={t("profilePoints")} value={String(points)} />
+        <CreditsStatLink label={t("profileCredits")} cta={t("profileViewCredits")} />
       </section>
 
       {/* COMPANION */}
-      <section
-        className="rounded-3xl p-4 text-white shadow-[0_18px_60px_rgba(15,110,86,0.20)]"
-        style={{ background: "linear-gradient(135deg, var(--palette-teal-700), var(--palette-teal-500))" }}
-      >
-        <CompanionCard
-          companionType={companionType}
-          companionChosen={companionChosen}
-          lessonCount={completedLessonCount}
-          loading={loading}
-          variant="profile"
-        />
-      </section>
-
-      {/* MES CRÉDITS */}
-      {!loading && (
-        <div className="rounded-3xl bg-[#F3FAF6] p-4 sm:p-6">
-          <CreditsWidget
-            teachers={myTeachers.map((x) => ({
-              teacherId: x.teacherId,
-              name: x.name,
-              discipline: x.discipline,
-              imageUrl: x.imageUrl,
-            }))}
-            lessonCount={completedLessonCount}
+      <section className="space-y-3">
+        <div
+          className="rounded-3xl p-4 text-white shadow-[0_18px_60px_rgba(15,110,86,0.20)]"
+          style={{ background: "linear-gradient(135deg, var(--palette-teal-700), var(--palette-teal-500))" }}
+        >
+          <CompanionCard
             companionType={companionType}
+            companionChosen={companionChosen}
+            lessonCount={completedLessonCount}
+            loading={loading}
+            variant="profile"
           />
         </div>
-      )}
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <Link
+            href="/student/progress"
+            className="inline-flex min-h-11 items-center justify-between gap-2 rounded-2xl border border-[#DCEAE3] bg-white px-4 py-3 text-sm font-semibold text-[#0F6E56] shadow-sm transition hover:border-[#1D9E75]/40 hover:bg-[#F3FAF6] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1D9E75] focus-visible:ring-offset-2"
+          >
+            <span className="inline-flex items-center gap-2">
+              <TrendingUp size={16} aria-hidden />
+              {t("profileViewMyProgress")}
+            </span>
+            <ArrowRight size={16} aria-hidden />
+          </Link>
+          <Link
+            href="/student/choose-companion"
+            className="inline-flex min-h-11 items-center justify-between gap-2 rounded-2xl border border-[#DCEAE3] bg-white px-4 py-3 text-sm font-semibold text-[#0F6E56] shadow-sm transition hover:border-[#1D9E75]/40 hover:bg-[#F3FAF6] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1D9E75] focus-visible:ring-offset-2"
+          >
+            <span className="inline-flex items-center gap-2">
+              <Sparkles size={16} aria-hidden />
+              {t("profileChangeCompanion")}
+            </span>
+            <ArrowRight size={16} aria-hidden />
+          </Link>
+        </div>
+      </section>
 
       {/* SETTINGS */}
       <section className="rounded-3xl border border-[var(--p-border-light)] bg-white p-4 shadow-sm space-y-3">
@@ -393,6 +380,21 @@ function StatCard({ label, value }: { label: string; value: string }) {
       <p className="text-[10px] font-bold uppercase tracking-widest text-slate-600">{label}</p>
       <p className="mt-1 text-[18px] font-bold text-teal-700">{value}</p>
     </div>
+  );
+}
+
+function CreditsStatLink({ label, cta }: { label: string; cta: string }) {
+  return (
+    <Link
+      href="/student/progress"
+      className="flex flex-col items-center justify-center rounded-2xl border border-[var(--p-border-light)] bg-white p-3 text-center shadow-sm transition hover:border-[#1D9E75]/40 hover:bg-[#F3FAF6] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1D9E75] focus-visible:ring-offset-2"
+    >
+      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-600">{label}</p>
+      <p className="mt-1 inline-flex items-center gap-1 text-[14px] font-bold text-teal-700">
+        {cta}
+        <ArrowRight size={14} aria-hidden />
+      </p>
+    </Link>
   );
 }
 
