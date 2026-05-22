@@ -1,0 +1,64 @@
+name: Booking reminders cron
+
+# Scheduling-only workflow.
+# Reminder logic, idempotency, payment-status gating, and email sending all
+# live in the existing Vercel API route at
+# /api/cron/bookings/reminders (lib/bookings/reminders.ts). GitHub Actions is
+# used purely as an external scheduler because Vercel's Hobby plan only
+# allows daily cron paths, and 24h/1h booking reminders need a higher cadence.
+#
+# Why every 10 minutes, offset off the top of the hour:
+#   - The 24h reminder selector accepts bookings starting in [23h, 25h]
+#   - The 1h reminder selector accepts bookings starting in [50 min, 70 min]
+#   - 10-minute polling cleanly fits inside the narrowest (1h) window
+#   - "7,17,27,37,47,57" avoids the noisy *:00 minute that GitHub Actions
+#     queues most heavily, reducing schedule-skew risk
+#
+# Secrets required (Settings -> Secrets and variables -> Actions):
+#   - CRON_SECRET : same value as the CRON_SECRET env var in Vercel prod.
+#
+# Manual trigger: Actions tab -> "Booking reminders cron" -> "Run workflow".
+
+on:
+  schedule:
+    - cron: "7,17,27,37,47,57 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  # Prevent overlapping runs if a previous invocation is still in flight.
+  # The cron route is idempotent server-side (atomic UPDATE WHERE col IS NULL),
+  # but skipping overlaps keeps the Actions usage tab tidy.
+  group: booking-reminders-cron
+  cancel-in-progress: false
+
+jobs:
+  trigger-reminders:
+    name: Trigger reminders endpoint
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Call /api/cron/bookings/reminders
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          # Fail loudly if the secret is missing in repo settings.
+          if [ -z "${CRON_SECRET}" ]; then
+            echo "::error::CRON_SECRET secret is not configured in this repository."
+            exit 1
+          fi
+
+          # -H reads the bearer from $CRON_SECRET so it never appears in argv,
+          # in the workflow file, or in any -v / debug output GitHub captures.
+          # --fail flips non-2xx into a non-zero exit so the job fails.
+          curl \
+            --fail \
+            --silent \
+            --show-error \
+            --max-time 55 \
+            --retry 2 \
+            --retry-delay 5 \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            "https://www.pratiqo.ca/api/cron/bookings/reminders"
