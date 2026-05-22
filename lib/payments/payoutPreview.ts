@@ -32,10 +32,14 @@ function amountToCents(amount: number | string | null | undefined): number {
 }
 
 function formatCents(cents: number, currency: string, locale: Locale | string | null | undefined): string {
+  // Format-only change (no payout math touched): pin currencyDisplay: "code"
+  // so the teacher pricing-preview card reads "CAD 45.50" instead of the
+  // ambiguous "$" symbol that varies by viewer locale.
   return new Intl.NumberFormat(localeToBcp47(locale), {
     style: "currency",
     currency,
-  }).format(cents / 100);
+    currencyDisplay: "code",
+  }).format(cents / 100).replace(/\s+/g, " ").trim();
 }
 
 export function getTeacherPayoutPreview(input: TeacherPayoutPreviewInput): TeacherPayoutPreview {

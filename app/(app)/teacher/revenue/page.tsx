@@ -8,6 +8,16 @@ import { useAuth } from "@/components/AuthProvider";
 import { getSupabaseClient } from "@/lib/supabase";
 import { useLocale } from "@/lib/locale-context";
 import { cn } from "@/lib/utils";
+import { formatAccountingDisplay } from "@/lib/currency/format";
+
+/**
+ * Accounting currency for all teacher money on Pratiqo.
+ * Stripe charges, the booking_payments ledger, the platform commission,
+ * teacher payouts, and tax reporting are all calculated and settled in CAD.
+ * The viewer's selected display currency only powers the optional
+ * "≈ {currency} {amount}" secondary line — it never replaces the CAD truth.
+ */
+const ACCOUNTING_CURRENCY = "CAD";
 
 type TeacherRow = { id: string };
 
@@ -88,7 +98,7 @@ function transferPillKind(status: string | null | undefined): "good" | "warn" | 
 
 export default function TeacherRevenuePage() {
   const { user, profile } = useAuth();
-  const { t, locale } = useLocale();
+  const { t, locale, currency: displayCurrency } = useLocale();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState<TxRow[]>([]);
@@ -178,13 +188,23 @@ export default function TeacherRevenuePage() {
     };
   }, [isTeacher, user?.id]);
 
-  const formatter = useMemo(
-    () =>
-      new Intl.NumberFormat(locale === "fr" ? "fr-CA" : locale === "es" ? "es-UY" : "en-CA", {
-        style: "currency",
-        currency: "CAD",
+  // Renders an accounting amount as "CAD 45.50" (never "$" / "CA$") plus an
+  // optional "≈ EUR 32.85" secondary when the viewer picked a non-CAD currency.
+  // Conversion is informational only; the CAD value remains the source of truth.
+  const formatAccounting = useMemo(
+    () => (amount: number) =>
+      formatAccountingDisplay({
+        amount,
+        sourceCurrency: ACCOUNTING_CURRENCY,
+        displayCurrency,
+        locale,
       }),
-    [locale],
+    [displayCurrency, locale],
+  );
+
+  const accountingNotice = t("teacherAccountingCurrencyNotice").replace(
+    "{currency}",
+    ACCOUNTING_CURRENCY,
   );
 
   const summary = useMemo(() => {
@@ -219,18 +239,18 @@ export default function TeacherRevenuePage() {
         </section>
 
         <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <SummaryCard
+          <SummaryMoneyCard
             title={t("teacherRevenueNetEstimated")}
-            value={formatter.format(summary.netEstimatedCents / 100).replace("CA$", "$")}
+            display={formatAccounting(summary.netEstimatedCents / 100)}
             icon={<CheckCircle2 size={18} />}
           />
-          <SummaryCard
+          <SummaryMoneyCard
             title={t("teacherRevenuePendingPayout")}
-            value={formatter.format(summary.pendingPayoutCents / 100).replace("CA$", "$")}
+            display={formatAccounting(summary.pendingPayoutCents / 100)}
           />
-          <SummaryCard
+          <SummaryMoneyCard
             title={t("teacherRevenuePaidOut")}
-            value={formatter.format(summary.paidOutCents / 100).replace("CA$", "$")}
+            display={formatAccounting(summary.paidOutCents / 100)}
           />
           <SummaryCard
             title={t("teacherRevenueNeedsReview")}
@@ -240,8 +260,9 @@ export default function TeacherRevenuePage() {
           />
         </section>
 
-        <section className="rounded-3xl border border-[#DCEAE3] bg-white p-5 shadow-sm">
+        <section className="rounded-3xl border border-[#DCEAE3] bg-white p-5 shadow-sm space-y-2">
           <p className="text-sm leading-relaxed text-slate-700">{t("teacherRevenueInfo")}</p>
+          <p className="text-xs font-semibold leading-relaxed text-teal-700">{accountingNotice}</p>
         </section>
 
         <section className="rounded-3xl border border-[#DCEAE3] bg-white p-4 shadow-sm">
@@ -285,9 +306,9 @@ export default function TeacherRevenuePage() {
                       const p = r.payment;
                       const date = b.slot_date || b.date || "";
                       const time = b.time_slot || b.time || "";
-                      const gross = formatter.format(cents(p?.amount_cents) / 100).replace("CA$", "$");
-                      const fee = formatter.format(cents(p?.platform_fee_cents) / 100).replace("CA$", "$");
-                      const net = formatter.format(cents(p?.teacher_net_cents) / 100).replace("CA$", "$");
+                      const gross = formatAccounting(cents(p?.amount_cents) / 100).primary;
+                      const fee = formatAccounting(cents(p?.platform_fee_cents) / 100).primary;
+                      const net = formatAccounting(cents(p?.teacher_net_cents) / 100).primary;
                       const payKey = paymentStatusKey(p?.payment_status);
                       const trKey = transferStatusKey(p?.transfer_status);
                       return (
@@ -334,9 +355,9 @@ export default function TeacherRevenuePage() {
                   const p = r.payment;
                   const date = b.slot_date || b.date || "";
                   const time = b.time_slot || b.time || "";
-                  const gross = formatter.format(cents(p?.amount_cents) / 100).replace("CA$", "$");
-                  const fee = formatter.format(cents(p?.platform_fee_cents) / 100).replace("CA$", "$");
-                  const net = formatter.format(cents(p?.teacher_net_cents) / 100).replace("CA$", "$");
+                  const gross = formatAccounting(cents(p?.amount_cents) / 100).primary;
+                  const fee = formatAccounting(cents(p?.platform_fee_cents) / 100).primary;
+                  const net = formatAccounting(cents(p?.teacher_net_cents) / 100).primary;
                   const payKey = paymentStatusKey(p?.payment_status);
                   const trKey = transferStatusKey(p?.transfer_status);
                   return (
@@ -399,6 +420,37 @@ function SummaryCard({
         <p className={cn("text-2xl font-extrabold", tone === "warn" ? "text-rose-700" : "text-teal-700")}>{value}</p>
         {icon ? (
           <span className={cn("flex h-10 w-10 items-center justify-center rounded-2xl", tone === "warn" ? "bg-rose-50 text-rose-700" : "bg-teal-50 text-teal-700")}>
+            {icon}
+          </span>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function SummaryMoneyCard({
+  title,
+  display,
+  icon,
+}: {
+  title: string;
+  display: ReturnType<typeof formatAccountingDisplay>;
+  icon?: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-3xl border border-[#DCEAE3] bg-white p-5 shadow-sm">
+      <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500">{title}</p>
+      <div className="mt-2 flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-2xl font-extrabold text-teal-700 tabular-nums">{display.primary}</p>
+          {display.approx ? (
+            <p className="mt-0.5 text-[11px] font-semibold text-slate-500 tabular-nums">
+              ≈ {display.approx}
+            </p>
+          ) : null}
+        </div>
+        {icon ? (
+          <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-teal-50 text-teal-700 shrink-0">
             {icon}
           </span>
         ) : null}

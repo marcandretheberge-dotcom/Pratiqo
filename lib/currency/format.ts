@@ -1,7 +1,7 @@
 import { localeToBcp47 } from "@/lib/i18n/types";
 import type { Currency } from "@/lib/geoLocale";
 import { convertCurrencyAmount } from "@/lib/currency/convert";
-import { normalizeCurrency } from "@/lib/currency/rates";
+import { CAD_DISPLAY_RATES, normalizeCurrency } from "@/lib/currency/rates";
 
 export function formatCurrencyAmount(
   amount: number,
@@ -70,5 +70,70 @@ export function formatDisplayPrice({
     sourceCurrency: safe.sourceCurrency,
     displayCurrency: safe.displayCurrency,
     asOf: safe.asOf,
+  };
+}
+
+export interface AccountingDisplay {
+  /** Always rendered in the source/accounting currency (e.g. CAD). */
+  primary: string;
+  /**
+   * Optional secondary line in the viewer's display currency, formatted as
+   * "≈ {currency} {amount}". Null when the display currency equals the
+   * accounting currency, or when a rate is missing.
+   */
+  approx: string | null;
+  sourceCurrency: Currency;
+  displayCurrency: Currency;
+}
+
+/**
+ * Accounting-first formatter for teacher-facing money surfaces
+ * (revenue, history, payout preview, "this month" tile).
+ *
+ * Unlike `formatDisplayPrice`, this NEVER replaces the accounting amount
+ * with a converted figure. The primary string is always in the actual
+ * source currency (CAD today). The optional `approx` line is a *secondary*
+ * estimate in the viewer's selected currency, shown only when it differs
+ * from the source and a rate is available.
+ *
+ * This shape is intentional for legal/accounting screens: the truthful
+ * payout number stays prominent, conversion is informational only.
+ */
+export function formatAccountingDisplay({
+  amount,
+  sourceCurrency,
+  displayCurrency,
+  locale,
+}: {
+  amount: number;
+  sourceCurrency?: Currency | string | null;
+  displayCurrency?: Currency | string | null;
+  locale: string;
+}): AccountingDisplay {
+  const source = normalizeCurrency(sourceCurrency, "CAD");
+  const display = normalizeCurrency(displayCurrency, source);
+  const primary = formatCurrencyAmount(amount, source, locale);
+
+  if (display === source) {
+    return { primary, approx: null, sourceCurrency: source, displayCurrency: source };
+  }
+
+  // Skip the secondary when we don't have a usable rate — surfacing a stale
+  // or missing conversion on an accounting screen is worse than silence.
+  if (!CAD_DISPLAY_RATES[display] || !CAD_DISPLAY_RATES[source]) {
+    return { primary, approx: null, sourceCurrency: source, displayCurrency: source };
+  }
+
+  const converted = convertCurrencyAmount(amount, source, display);
+  if (!converted || !converted.approximate) {
+    return { primary, approx: null, sourceCurrency: source, displayCurrency: source };
+  }
+
+  const approx = formatCurrencyAmount(converted.amount, converted.displayCurrency, locale);
+  return {
+    primary,
+    approx,
+    sourceCurrency: source,
+    displayCurrency: converted.displayCurrency,
   };
 }

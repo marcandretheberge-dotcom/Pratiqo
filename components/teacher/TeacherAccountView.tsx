@@ -665,15 +665,26 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
         </label>
         <label className="block space-y-1">
           <span className="text-xs font-bold text-slate-600 uppercase">{t("profileHourlyRate")}</span>
-          <input
-            value={hourly}
-            onChange={(e) => setHourly(e.target.value)}
-            type="number"
-            min={MIN_LESSON_PRICE_DOLLARS}
-            step="0.5"
-            className="w-full h-11 rounded-xl border border-slate-200 px-3 text-sm text-[#00694c] font-semibold"
-          />
+          <div className="relative">
+            <span
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold uppercase tracking-wide text-slate-500"
+              aria-hidden
+            >
+              CAD
+            </span>
+            <input
+              value={hourly}
+              onChange={(e) => setHourly(e.target.value)}
+              type="number"
+              min={MIN_LESSON_PRICE_DOLLARS}
+              step="0.5"
+              className="w-full h-11 rounded-xl border border-slate-200 pl-14 pr-3 text-sm text-[#00694c] font-semibold"
+            />
+          </div>
           <p className="text-[11px] leading-relaxed text-slate-500">{t("pricingMinLessonPrice")}</p>
+          <p className="text-[11px] font-semibold leading-relaxed text-teal-700">
+            {t("teacherPriceChargedInCurrency").replace("{currency}", "CAD")}
+          </p>
           <TeacherPayoutPreview
             grossAmount={hourly}
             currency="CAD"
@@ -718,7 +729,10 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
                 className="w-full h-10 rounded-xl border border-slate-200 px-3 text-sm text-slate-900 disabled:bg-slate-50 disabled:text-slate-400"
               />
               <p className="text-[11px] text-slate-500">
-                {t("regularLesson")}: <span className="font-semibold text-slate-700">{hourly || "—"} $/h</span>
+                {t("regularLesson")}:{" "}
+                <span className="font-semibold text-slate-700">
+                  {hourly ? `CAD ${hourly}` : "—"}/h
+                </span>
               </p>
             </div>
           </div>
