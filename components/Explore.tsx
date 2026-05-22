@@ -39,6 +39,7 @@ import { useLocale } from "@/lib/locale-context";
 import { TEACHERS_LIST_SELECT, TEACHERS_PUBLIC_TABLE } from "@/lib/supabase/queries";
 import { TeacherAvatar } from "@/components/TeacherAvatar";
 import { teacherPrefCompareStudents, type StudentLocationPrefs } from "@/lib/studentLocationSearch";
+import { PriceDisplay } from "@/components/PriceDisplay";
 
 function verificationSortKey(t: Teacher) {
   return getVerificationLevel({
@@ -85,7 +86,7 @@ export function Explore({
   onSearchChange: (q: string) => void;
 }) {
   const { user } = useAuth();
-  const { formatPrice, t } = useLocale();
+  const { t } = useLocale();
   const [studentPrefs, setStudentPrefs] = useState<StudentLocationPrefs | null>(null);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [loading, setLoading] = useState(true);
@@ -595,7 +596,7 @@ export function Explore({
 
 function ExploreGroupCard({ session, index }: { session: ExploreGroupSession; index: number }) {
   const router = useRouter();
-  const { formatPrice, t } = useLocale();
+  const { t, formatPrice } = useLocale();
   const max = Number(session.max_participants);
   const cur = Number(session.current_participants);
   const remaining = spotsRemaining(session);
@@ -736,7 +737,7 @@ function TeacherCard({
   onViewProfile: () => void;
   distanceKm: number | null;
 }) {
-  const { formatPrice, t } = useLocale();
+  const { t } = useLocale();
   const { user } = useAuth();
   const router = useRouter();
   const [isStartingChat, setIsStartingChat] = useState(false);
@@ -852,7 +853,15 @@ function TeacherCard({
             </div>
           </div>
           <div className="text-right">
-            <p className="text-[18px] font-medium text-[var(--p-text)]">{formatPrice(Number(teacher.pricePerLesson))}</p>
+            <p className="text-[18px] font-medium text-[var(--p-text)]">
+              <PriceDisplay
+                amount={Number(teacher.pricePerLesson)}
+                sourceCurrency={teacher.currency ?? "CAD"}
+                primaryClassName="font-medium text-[var(--p-text)]"
+                secondaryClassName="block text-[10px] font-semibold text-[var(--p-text-muted)]"
+                className="justify-end"
+              />
+            </p>
             <p className="text-[12px] text-[var(--p-text-muted)]">{t("perHourSuffix")}</p>
           </div>
         </div>

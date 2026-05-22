@@ -17,6 +17,8 @@ import {
   type Currency,
   getDefaultGeoConfig,
 } from "@/lib/geoLocale";
+import { formatDisplayPrice as formatConvertedDisplayPrice } from "@/lib/currency/format";
+import { normalizeCurrency } from "@/lib/currency/rates";
 
 const STORAGE_KEY = "pratiqo-locale";
 const STORAGE_KEY_CURRENCY = "pratiqo-currency";
@@ -44,6 +46,7 @@ interface LocaleContextType {
   countryCode: string | null;
   /** Single-currency price: uses the user's detected currency. */
   formatPrice: (amount: number) => string;
+  formatDisplayPrice: (amount: number, sourceCurrency?: Currency | string | null) => ReturnType<typeof formatConvertedDisplayPrice>;
   /**
    * Dual-price string for UY ("$U 1.000 (US$ 25)").
    * Returns null for all other markets — fall back to formatPrice in that case.
@@ -59,6 +62,14 @@ const LocaleContext = createContext<LocaleContextType>({
   setCurrency: () => {},
   countryCode: null,
   formatPrice: (amount) => String(amount),
+  formatDisplayPrice: (amount) => ({
+    primary: String(amount),
+    original: String(amount),
+    approximate: false,
+    sourceCurrency: "CAD",
+    displayCurrency: "CAD",
+    asOf: "",
+  }),
   formatDualPrice: () => null,
 });
 
@@ -75,7 +86,7 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
         setLocaleState(normalizedSaved);
       }
       const savedCur = localStorage.getItem(STORAGE_KEY_CURRENCY);
-      if (savedCur) setCurrencyState(savedCur as Currency);
+      if (savedCur) setCurrencyState(normalizeCurrency(savedCur, getDefaultGeoConfig().currency));
       if (saved) return;
     } catch {
       /* ignore */
@@ -87,7 +98,7 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
         if (resp.ok) {
           const body = (await resp.json()) as {
             locale?: string | null;
-            currency?: Currency;
+            currency?: Currency | string;
             country?: string;
           } | null;
           if (body?.locale) {
@@ -100,9 +111,10 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
             persistLocale(detected);
           }
           if (body?.currency) {
-            setCurrencyState(body.currency);
+            const nextCurrency = normalizeCurrency(body.currency, getDefaultGeoConfig().currency);
+            setCurrencyState(nextCurrency);
             try {
-              localStorage.setItem(STORAGE_KEY_CURRENCY, body.currency);
+              localStorage.setItem(STORAGE_KEY_CURRENCY, nextCurrency);
             } catch {
               /* ignore */
             }
@@ -128,9 +140,10 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const setCurrency = useCallback((newCurrency: Currency) => {
-    setCurrencyState(newCurrency);
+    const normalized = normalizeCurrency(newCurrency, getDefaultGeoConfig().currency);
+    setCurrencyState(normalized);
     try {
-      localStorage.setItem(STORAGE_KEY_CURRENCY, newCurrency);
+      localStorage.setItem(STORAGE_KEY_CURRENCY, normalized);
     } catch {
       /* ignore */
     }
@@ -140,7 +153,19 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
 
   const formatPrice = useCallback(
     (amount: number) => {
-      return formatGeoPrice(amount, currency, locale);
+      return formatGeoPrice(amount, "CAD", locale);
+    },
+    [locale],
+  );
+
+  const formatDisplayPrice = useCallback(
+    (amount: number, sourceCurrency?: Currency | string | null) => {
+      return formatConvertedDisplayPrice({
+        amount,
+        sourceCurrency: sourceCurrency ?? "CAD",
+        displayCurrency: currency,
+        locale,
+      });
     },
     [currency, locale],
   );
@@ -161,9 +186,10 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
       setCurrency,
       countryCode,
       formatPrice,
+      formatDisplayPrice,
       formatDualPrice,
     }),
-    [locale, setLocale, t, currency, setCurrency, countryCode, formatPrice, formatDualPrice],
+    [locale, setLocale, t, currency, setCurrency, countryCode, formatPrice, formatDisplayPrice, formatDualPrice],
   );
 
   return <LocaleContext.Provider value={value}>{children}</LocaleContext.Provider>;

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ExternalLink, Info, Loader2, X } from "lucide-react";
+import { ExternalLink, Info, Loader2 } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { logout } from "@/lib/auth";
 import { getSupabaseClient } from "@/lib/supabase";
@@ -17,6 +17,15 @@ import { AccountDeletionSection } from "@/components/account/AccountDeletionSect
 import { TeacherDisciplinesEditor, type DisciplineCardDraft } from "@/components/teacher/TeacherDisciplinesEditor";
 import { MIN_LESSON_PRICE_DOLLARS } from "@/lib/pricing/constants";
 import { validateTeacherLessonOffers } from "@/lib/pricing/lessonOffer";
+import { AvatarUpload } from "@/components/profile/AvatarUpload";
+
+/**
+ * Public listing card fallback used by the onboarding routes
+ * (app/api/onboarding/complete/route.ts and app/(app)/onboarding/teacher/page.tsx).
+ * We mirror it here so removing the account photo never violates the
+ * `teachers.image_url NOT NULL` constraint.
+ */
+const TEACHER_IMAGE_URL_FALLBACK = "https://picsum.photos/seed/teacher/400/400";
 
 type TeacherDisciplineDbRow = {
   id: string;
@@ -108,6 +117,10 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
   const [city, setCity] = useState("");
   const [locationJson, setLocationJson] = useState<Record<string, unknown>>({});
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  // Last-known value of teachers.image_url (the *public* listing photo).
+  // We keep it in state so saveProfile can preserve it when the teacher
+  // removes their account avatar — the column is NOT NULL.
+  const [teacherImageUrl, setTeacherImageUrl] = useState<string | null>(null);
   const [teachingMode, setTeachingMode] = useState("both");
   const [stripeAccountId, setStripeAccountId] = useState<string | null>(null);
   const [plan, setPlan] = useState("free");
@@ -190,6 +203,9 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
       };
       setTeacherId(row.id);
       setTeacherIsPublic(row.is_public !== false && !row.deactivated_at && !row.deleted_at);
+      setTeacherImageUrl(
+        typeof row.image_url === "string" && row.image_url.trim() ? row.image_url : null,
+      );
       setBio(row.bio || "");
       setHourly(String(row.price_per_lesson ?? ""));
       setIntroEnabled(row.intro_session_enabled === true);
@@ -391,6 +407,20 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
     const nextLocation: Record<string, unknown> = { ...locationJson };
     if (city.trim()) nextLocation.neighborhood = city.trim();
     else delete nextLocation.neighborhood;
+
+    // Sync the public listing photo (teachers.image_url) with the account
+    // avatar (profiles.photo_url) so a teacher's new photo actually surfaces
+    // on Explore / public profile / map / quiz. Constraints:
+    //   • teachers.image_url is NOT NULL — never push null.
+    //   • If the teacher removes their account avatar (photoUrl === null),
+    //     preserve the existing teachers.image_url so we don't blank out
+    //     their public card. If neither is available, fall back to the same
+    //     seed URL used by the onboarding routes.
+    const nextTeacherImageUrl =
+      (photoUrl && photoUrl.trim()) ||
+      (teacherImageUrl && teacherImageUrl.trim()) ||
+      TEACHER_IMAGE_URL_FALLBACK;
+
     const { error: e1 } = await supabase
       .from("teachers")
       .update({
@@ -400,6 +430,7 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
         intro_session_discount_percent: 50,
         location: nextLocation,
         video_url: trimmedVideo || null,
+        image_url: nextTeacherImageUrl,
       })
       .eq("id", teacherId);
     const { error: e2 } = await supabase
@@ -412,6 +443,7 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
       return;
     }
     setLocationJson(nextLocation);
+    setTeacherImageUrl(nextTeacherImageUrl);
     setMessage(t("savedOk"));
   };
 
@@ -554,7 +586,6 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
     setTeachingMode(encodeTeachingMode(p, o, h));
   };
 
-  const initials = (displayName || email || "?").slice(0, 2).toUpperCase();
   const hasProSubscription = Boolean(stripeCustomerId || subscriptionStatus);
   const normalizedSubStatus = String(subscriptionStatus || "").toLowerCase();
   const proStatusLabel =
@@ -630,31 +661,12 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
         <>
           <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
         <h2 className="text-lg font-bold text-[#2C2C2A]">{t("sectionProfile")}</h2>
-        <div className="flex items-center gap-4">
-          <label className="relative cursor-pointer shrink-0">
-            <input
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (!f) return;
-                const r = new FileReader();
-                r.onload = () => setPhotoUrl(typeof r.result === "string" ? r.result : photoUrl);
-                r.readAsDataURL(f);
-              }}
-            />
-            {photoUrl ? (
-              <img src={photoUrl} alt="" className="h-20 w-20 rounded-full object-cover border-2 border-[#00694c]/30" />
-            ) : (
-              <div className="h-20 w-20 rounded-full bg-teal-600 text-white flex items-center justify-center text-lg font-bold border-2 border-white shadow">
-                {initials}
-              </div>
-            )}
-            <span className="block text-center text-[10px] text-slate-600 mt-1">{t("profilePhotoEdit")}</span>
-          </label>
-          <p className="text-xs text-slate-600">{t("profilePhotoHint")}</p>
-        </div>
+        <AvatarUpload
+          userId={user.id}
+          displayName={displayName || user.email || "Teacher"}
+          currentPhotoUrl={photoUrl}
+          onPhotoUrlChange={setPhotoUrl}
+        />
         <label className="block space-y-1">
           <span className="text-xs font-bold text-slate-600 uppercase">{t("profileDisplayName")}</span>
           <input
@@ -665,15 +677,26 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
         </label>
         <label className="block space-y-1">
           <span className="text-xs font-bold text-slate-600 uppercase">{t("profileHourlyRate")}</span>
-          <input
-            value={hourly}
-            onChange={(e) => setHourly(e.target.value)}
-            type="number"
-            min={MIN_LESSON_PRICE_DOLLARS}
-            step="0.5"
-            className="w-full h-11 rounded-xl border border-slate-200 px-3 text-sm text-[#00694c] font-semibold"
-          />
+          <div className="relative">
+            <span
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold uppercase tracking-wide text-slate-500"
+              aria-hidden
+            >
+              CAD
+            </span>
+            <input
+              value={hourly}
+              onChange={(e) => setHourly(e.target.value)}
+              type="number"
+              min={MIN_LESSON_PRICE_DOLLARS}
+              step="0.5"
+              className="w-full h-11 rounded-xl border border-slate-200 pl-14 pr-3 text-sm text-[#00694c] font-semibold"
+            />
+          </div>
           <p className="text-[11px] leading-relaxed text-slate-500">{t("pricingMinLessonPrice")}</p>
+          <p className="text-[11px] font-semibold leading-relaxed text-teal-700">
+            {t("teacherPriceChargedInCurrency").replace("{currency}", "CAD")}
+          </p>
           <TeacherPayoutPreview
             grossAmount={hourly}
             currency="CAD"
@@ -718,7 +741,10 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
                 className="w-full h-10 rounded-xl border border-slate-200 px-3 text-sm text-slate-900 disabled:bg-slate-50 disabled:text-slate-400"
               />
               <p className="text-[11px] text-slate-500">
-                {t("regularLesson")}: <span className="font-semibold text-slate-700">{hourly || "—"} $/h</span>
+                {t("regularLesson")}:{" "}
+                <span className="font-semibold text-slate-700">
+                  {hourly ? `CAD ${hourly}` : "—"}/h
+                </span>
               </p>
             </div>
           </div>

@@ -36,6 +36,7 @@ import { getPublicTeacherCredentials } from "@/lib/supabase/queries";
 import { getEmbedUrl } from "../lib/videoEmbed";
 import { TeacherAvatar } from "./TeacherAvatar";
 import { calculateIntroSessionPriceCents } from "@/lib/introSession";
+import { PriceDisplay } from "@/components/PriceDisplay";
 
 export type TeacherBookKind = "standard" | "home";
 
@@ -103,7 +104,7 @@ export function TeacherProfile({
   studioMapHasConfirmedBooking,
 }: TeacherProfileProps) {
   const { user } = useAuth();
-  const { t, formatPrice } = useLocale();
+  const { t, formatDisplayPrice } = useLocale();
   const router = useRouter();
   const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(null);
   const [plan, setPlan] = useState<"free" | "pro" | "enterprise">("free");
@@ -407,6 +408,7 @@ export function TeacherProfile({
     Boolean(teacher.homeLessonEnabled) &&
     typeof teacher.homeLessonPrice === "number" &&
     Number(teacher.homeLessonPrice) > 0;
+  const standardOriginalPrice = formatDisplayPrice(Number(teacher.pricePerLesson), teacher.currency ?? "CAD").original;
   const radiusKm = teacher.homeLessonRadiusKm ?? 25;
   const outOfHomeZone = homeConfigured && displayDistanceKm !== null && displayDistanceKm > radiusKm;
   const homeNeedsGeo = homeConfigured && displayDistanceKm === null;
@@ -609,7 +611,7 @@ export function TeacherProfile({
                   <QuickStat
                     icon={<CreditCard className="text-teal-500" size={15} />}
                     label={t("rateLabel")}
-                    value={formatPrice(Number(teacher.pricePerLesson))}
+                    value={standardOriginalPrice}
                   />
                 </div>
 
@@ -741,12 +743,17 @@ export function TeacherProfile({
                   <div className="rounded-2xl border border-slate-200 bg-white shadow-sm p-5 space-y-4">
                     <div>
                       <p className="text-2xl font-bold text-slate-900">
-                        {formatPrice(Number(teacher.pricePerLesson))}
-                        <span className="text-sm font-normal text-slate-600 ml-1">/ heure</span>
+                        <PriceDisplay
+                          amount={Number(teacher.pricePerLesson)}
+                          sourceCurrency={teacher.currency ?? "CAD"}
+                          perHour
+                          primaryClassName="font-bold text-slate-900"
+                          secondaryClassName="block w-full text-xs font-semibold text-slate-500"
+                        />
                       </p>
                       <p className="text-xs text-slate-600 mt-0.5">{standardLabel}</p>
                       <p className="mt-2 text-[11px] font-semibold text-teal-700">
-                        {t("bookingNoHiddenFees").replace("{price}", formatPrice(Number(teacher.pricePerLesson)))}
+                        {t("bookingNoHiddenFees").replace("{price}", standardOriginalPrice)}
                       </p>
                     </div>
 
@@ -769,10 +776,23 @@ export function TeacherProfile({
                           return (
                             <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
                               <span className="font-semibold text-slate-700">
-                                {t("introSessionPrice")} : <span className="font-extrabold text-teal-700">{formatPrice(cents / 100)}</span>
+                                {t("introSessionPrice")} :{" "}
+                                <PriceDisplay
+                                  amount={cents / 100}
+                                  sourceCurrency={teacher.currency ?? "CAD"}
+                                  primaryClassName="font-extrabold text-teal-700"
+                                  secondaryClassName="block text-[10px] font-semibold text-slate-500"
+                                />
                               </span>
                               <span className="font-semibold text-slate-600">
-                                {t("regularLesson")} : {formatPrice(Number(teacher.pricePerLesson))}/h
+                                {t("regularLesson")} :{" "}
+                                <PriceDisplay
+                                  amount={Number(teacher.pricePerLesson)}
+                                  sourceCurrency={teacher.currency ?? "CAD"}
+                                  perHour
+                                  primaryClassName="font-semibold text-slate-700"
+                                  secondaryClassName="block text-[10px] font-semibold text-slate-500"
+                                />
                               </span>
                             </div>
                           );
@@ -799,8 +819,13 @@ export function TeacherProfile({
                               À domicile
                             </div>
                             <span className="font-bold text-sm text-slate-900">
-                              {formatPrice(Number(teacher.homeLessonPrice))}
-                              <span className="text-xs text-slate-600 font-normal ml-0.5">/h</span>
+                              <PriceDisplay
+                                amount={Number(teacher.homeLessonPrice)}
+                                sourceCurrency={teacher.currency ?? "CAD"}
+                                perHour
+                                primaryClassName="font-bold text-slate-900"
+                                secondaryClassName="block text-[9px] font-semibold text-slate-500"
+                              />
                             </span>
                           </div>
                           <div className="mt-2 flex flex-wrap gap-1">
@@ -839,8 +864,13 @@ export function TeacherProfile({
                               À domicile
                             </div>
                             <span className="font-bold text-sm text-slate-900">
-                              {formatPrice(Number(teacher.homeLessonPrice))}
-                              <span className="text-xs text-slate-600 font-normal ml-0.5">/h</span>
+                            <PriceDisplay
+                              amount={Number(teacher.homeLessonPrice)}
+                              sourceCurrency={teacher.currency ?? "CAD"}
+                              perHour
+                              primaryClassName="font-bold text-slate-900"
+                              secondaryClassName="block text-[9px] font-semibold text-slate-500"
+                            />
                             </span>
                           </div>
                           <div className="mt-2 flex flex-wrap gap-1">
@@ -930,7 +960,15 @@ export function TeacherProfile({
             className="w-full h-11 rounded-2xl text-white text-sm font-semibold flex items-center justify-center gap-2 shadow-sm hover:opacity-95 transition-opacity"
             style={{ backgroundColor: "var(--palette-teal-700)" }}
           >
-            Réserver — {formatPrice(Number(teacher.pricePerLesson))}/h
+            Réserver —{" "}
+            <PriceDisplay
+              amount={Number(teacher.pricePerLesson)}
+              sourceCurrency={teacher.currency ?? "CAD"}
+              perHour
+              primaryClassName="font-semibold text-white"
+              secondaryClassName="hidden"
+              showOriginal={false}
+            />
           </button>
         </div>
 

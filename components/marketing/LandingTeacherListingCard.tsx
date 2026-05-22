@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { useLocale } from "@/lib/locale-context";
 import type { TranslationKey } from "@/lib/translations";
 import { getTeacherImageUrl, shouldUseUnoptimizedImage } from "@/lib/images";
+import { PriceDisplay } from "@/components/PriceDisplay";
 
 function landingCardFormatSummary(teacher: Teacher, t: (k: TranslationKey) => string) {
   const m = teacher.teachingMode;
@@ -44,14 +45,12 @@ function trimBio(bio: string) {
 
 export function LandingTeacherListingCard({
   teacher,
-  formatPrice,
   geo,
   onOpen,
   isHighlighted,
   onHoverChange,
 }: {
   teacher: Teacher;
-  formatPrice: (n: number) => string;
   geo: { lat: number; lng: number } | null;
   onOpen: () => void;
   isHighlighted?: boolean;
@@ -203,8 +202,14 @@ export function LandingTeacherListingCard({
                 ) : null}
               </div>
               <p className="shrink-0 text-right text-[15px] font-bold tracking-tight text-teal-700">
-                {formatPrice(Number(teacher.pricePerLesson))}
-                /h
+                <PriceDisplay
+                  amount={Number(teacher.pricePerLesson)}
+                  sourceCurrency={teacher.currency ?? "CAD"}
+                  perHour
+                  primaryClassName="font-bold text-teal-700"
+                  secondaryClassName="block w-full text-[9px] font-semibold text-slate-500"
+                  className="justify-end"
+                />
               </p>
             </div>
 

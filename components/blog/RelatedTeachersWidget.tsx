@@ -11,6 +11,7 @@ import { VerificationBadge } from "@/components/VerificationBadge";
 import { TeacherAvatar } from "@/components/TeacherAvatar";
 import type { VerificationLevel } from "@/lib/verification";
 import type { Discipline } from "@/types";
+import { PriceDisplay } from "@/components/PriceDisplay";
 
 type TeacherSnippet = {
   id: string;
@@ -20,6 +21,7 @@ type TeacherSnippet = {
   rating: number | null;
   reviews: number | null;
   price_per_lesson: number | null;
+  currency?: string | null;
   location: string | null;
   verification_level: number | null;
 };
@@ -41,7 +43,7 @@ function inferDiscipline(disciplineField: string | null, blogCategory: string): 
 }
 
 export function RelatedTeachersWidget({ category }: { category: string }) {
-  const { t, formatPrice } = useLocale();
+  const { t } = useLocale();
   const { user } = useAuth();
   const studentSearchHref = user ? "/student/search" : "/login?next=/student/search";
   const [teachers, setTeachers] = useState<TeacherSnippet[]>([]);
@@ -54,7 +56,7 @@ export function RelatedTeachersWidget({ category }: { category: string }) {
       // First try: match by category
       const { data: exact } = await supabase
         .from(TEACHERS_PUBLIC_TABLE)
-        .select("id, name, discipline, image_url, rating, reviews, price_per_lesson, location, verification_level")
+        .select("id, name, discipline, image_url, rating, reviews, price_per_lesson, currency, location, verification_level")
         .ilike("category", `%${category}%`)
         .order("rating", { ascending: false })
         .limit(3);
@@ -68,7 +70,7 @@ export function RelatedTeachersWidget({ category }: { category: string }) {
       // Fallback: top verified teachers regardless of category
       const { data: fallback } = await supabase
         .from(TEACHERS_PUBLIC_TABLE)
-        .select("id, name, discipline, image_url, rating, reviews, price_per_lesson, location, verification_level")
+        .select("id, name, discipline, image_url, rating, reviews, price_per_lesson, currency, location, verification_level")
         .order("verification_level", { ascending: false })
         .order("rating", { ascending: false })
         .limit(3);
@@ -149,7 +151,13 @@ export function RelatedTeachersWidget({ category }: { category: string }) {
               )}
               {teacher.price_per_lesson != null && teacher.price_per_lesson > 0 && (
                 <span className="font-bold text-teal-700 text-xs">
-                  {formatPrice(teacher.price_per_lesson)}/h
+                  <PriceDisplay
+                    amount={teacher.price_per_lesson}
+                    sourceCurrency={teacher.currency ?? "CAD"}
+                    perHour
+                    primaryClassName="font-bold text-teal-700"
+                    secondaryClassName="block text-[9px] font-semibold text-slate-500"
+                  />
                 </span>
               )}
             </div>

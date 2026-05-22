@@ -35,6 +35,7 @@ import { formatLocalISODate, periodForSlot } from "../lib/slots";
 import { localeToBcp47 } from "../lib/i18n/types";
 import { useLocale } from "../lib/locale-context";
 import { TeacherAvatar } from "./TeacherAvatar";
+import { PriceDisplay } from "@/components/PriceDisplay";
 import {
   bookingWallTimeRangeToUtc,
   formatBookingTimeForBothZones,
@@ -147,7 +148,7 @@ interface BookingModalProps {
 
 export function BookingModal({ teacher, onClose, initialLessonKind = "standard" }: BookingModalProps) {
   const { user, profile } = useAuth();
-  const { locale, t, formatPrice } = useLocale();
+  const { locale, t, formatDisplayPrice } = useLocale();
   const dateLocale = localeToBcp47(locale);
   const browserTimeZone = useMemo(() => getBrowserTimeZone(), []);
   const academicConfig = useMemo(
@@ -264,9 +265,11 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
   }, [introAvailable, teacher.introSessionPriceCents, teacher.pricePerLesson, introDurationMinutes, introDiscountPercent]);
 
   const basePrice = lessonType === "intro" && introPriceCents != null ? Math.round(introPriceCents) / 100 : totalPrice;
-  // Future: show approximate converted price using FX service, but charge in the configured Stripe currency.
-  const displayPrice = formatPrice(basePrice);
-  const displayedHourlyPrice = formatPrice(hourlyRate);
+  const chargeCurrency = "CAD";
+  const displayPriceInfo = formatDisplayPrice(basePrice, chargeCurrency);
+  const displayPrice = displayPriceInfo.original;
+  const displayedHourlyPrice = formatDisplayPrice(hourlyRate, chargeCurrency).original;
+  const paymentProcessedInCurrency = t("paymentProcessedInCurrency").replace("{currency}", chargeCurrency);
 
   const sessionBookable = isLessonSessionBookable(basePrice);
   const maxCreditsApplicable = sessionBookable
@@ -274,6 +277,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
     : 0;
   const creditsDiscount = applyCredits ? maxCreditsApplicable : 0;
   const effectivePrice = payableAmountCents(basePrice, creditsDiscount) / 100;
+  const effectivePriceDisplay = formatDisplayPrice(effectivePrice, chargeCurrency).original;
 
   const homeAvailable =
     Boolean(teacher.homeLessonEnabled) &&
@@ -840,7 +844,12 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                     </p>
                   </div>
                   <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-teal-700 shadow-sm">
-                    {displayPrice}
+                    <PriceDisplay
+                      amount={basePrice}
+                      sourceCurrency={chargeCurrency}
+                      primaryClassName="font-bold text-teal-700"
+                      secondaryClassName="block text-[9px] font-semibold text-slate-500"
+                    />
                   </span>
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-semibold text-slate-600">
@@ -1090,7 +1099,14 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                 </div>
               ) : (
                 <p className="text-xs text-slate-500">
-                  {t("bookingRateHint")} : <strong className="text-slate-800">{formatPrice(teacher.pricePerLesson)}</strong> /{" "}
+                  {t("bookingRateHint")} :{" "}
+                  <PriceDisplay
+                    amount={teacher.pricePerLesson}
+                    sourceCurrency={chargeCurrency}
+                    primaryClassName="font-bold text-slate-800"
+                    secondaryClassName="block text-[10px] font-semibold text-slate-500"
+                  />{" "}
+                  /
                   {t("bookingPerHourWord")}
                 </p>
               )}
@@ -1311,9 +1327,18 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                       <p className="text-xs font-semibold text-slate-800">{confirmSessionTotalLabel}</p>
                       <p className="mt-1 text-[11px] leading-relaxed text-slate-600">{t("bookingConfirmFinalPriceNote")}</p>
                     </div>
-                    <p className="text-xl font-bold tabular-nums text-teal-700 shrink-0">{displayPrice}</p>
+                    <p className="text-xl font-bold tabular-nums text-teal-700 shrink-0">
+                      <PriceDisplay
+                        amount={basePrice}
+                        sourceCurrency={chargeCurrency}
+                        primaryClassName="font-bold text-teal-700"
+                        secondaryClassName="block text-[10px] font-semibold text-slate-500"
+                        className="justify-end"
+                      />
+                    </p>
                   </div>
                   <p className="text-[11px] font-semibold leading-relaxed text-teal-700">{t("bookingConfirmNoHiddenFees")}</p>
+                  <p className="text-[11px] font-semibold leading-relaxed text-slate-600">{paymentProcessedInCurrency}</p>
                 </div>
               </div>
               <p className="text-xs text-slate-600 leading-relaxed">{t("bookingExclusiveText")}</p>
@@ -1398,7 +1423,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
               ) : null}
               <div className="rounded-2xl border border-[#DCEAE3] bg-[#F3FAF6] px-4 py-3 text-xs text-slate-700 flex gap-2">
                 <Info size={15} className="mt-0.5 shrink-0 text-teal-700" aria-hidden />
-                <span>{t("bookingPaymentNote")}</span>
+                <span>{t("bookingPaymentNote")} {paymentProcessedInCurrency}</span>
               </div>
               <div className="flex gap-2">
                 <button
@@ -1432,7 +1457,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                       {creditsDiscount > 0 ? (
                         <>
                           <span className="line-through opacity-60 mr-1">{displayPrice}</span>
-                          {formatPrice(effectivePrice)}
+                          {effectivePriceDisplay}
                         </>
                       ) : (
                         displayPrice

@@ -31,7 +31,7 @@ import {
   getBookingLifecycleState,
   isBookingVisibleForTeacher,
 } from "@/lib/bookingLifecycle";
-import { formatCurrencyAmount } from "@/lib/formatters";
+import { formatAccountingDisplay } from "@/lib/currency/format";
 
 interface BookingWithTeacher {
   id: string;
@@ -106,7 +106,7 @@ function bookingSortKey(b: { slot_date?: string | null; date?: string | null; ti
 
 export function Dashboard() {
   const { user, profile: authProfile, loading: authLoading } = useAuth();
-  const { t, locale } = useLocale();
+  const { t, locale, currency: displayCurrency } = useLocale();
   const router = useRouter();
   const role = authProfile?.role as string | undefined;
   const isTeacherRole = role === "teacher";
@@ -678,7 +678,18 @@ export function Dashboard() {
       month: "long",
       timeZone: teacherMeta?.timezone || undefined,
     });
-    const fmtMoney = (n: number) => formatCurrencyAmount(n, "CAD", dateLocale);
+    // Accounting helper: primary is always CAD (the actual revenue currency);
+    // approx is an informational "≈ EUR 314" string when the viewer picked a
+    // non-CAD display currency. We do not replace the CAD figure.
+    const teacherAccountingCurrency = "CAD";
+    const fmtAccounting = (n: number) =>
+      formatAccountingDisplay({
+        amount: n,
+        sourceCurrency: teacherAccountingCurrency,
+        displayCurrency,
+        locale,
+      });
+    const monthRevenueDisplay = fmtAccounting(monthRevenue);
 
     const completenessChecks = teacherMeta
       ? [
@@ -709,7 +720,11 @@ export function Dashboard() {
           items={[
             { labelKey: "lessonsToday", value: coursesTodayCount },
             { labelKey: "activeStudentsLabel", value: distinctStudents },
-            { labelKey: "thisMonthLabel", value: fmtMoney(monthRevenue) },
+            {
+              labelKey: "thisMonthLabel",
+              value: monthRevenueDisplay.primary,
+              approx: monthRevenueDisplay.approx ? `≈ ${monthRevenueDisplay.approx}` : null,
+            },
           ]}
         />
 

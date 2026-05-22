@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { useLocale } from "@/lib/locale-context";
 import type { TranslationKey } from "@/lib/translations";
 import { getTeacherImageUrl, shouldUseUnoptimizedImage } from "@/lib/images";
+import { PriceDisplay } from "@/components/PriceDisplay";
 
 function formatTeaching(teacher: Teacher, t: (k: TranslationKey) => string) {
   switch (teacher.teachingMode) {
@@ -39,13 +40,11 @@ export function HeroTeacherPreviewCards({
   teachers,
   isExampleFallback,
   geo,
-  formatPrice,
   onOpen,
 }: {
   teachers: Teacher[];
   isExampleFallback: boolean;
   geo: { lat: number; lng: number } | null;
-  formatPrice: (n: number) => string;
   onOpen: (t: Teacher) => void;
 }) {
   const { t } = useLocale();
@@ -140,7 +139,13 @@ export function HeroTeacherPreviewCards({
                         <span className="font-medium text-neutral-700">({teacher.reviews})</span>
                       </span>
                       <span className="text-[11px] font-bold text-teal-700">
-                        {formatPrice(Number(teacher.pricePerLesson))}/h
+                        <PriceDisplay
+                          amount={Number(teacher.pricePerLesson)}
+                          sourceCurrency={teacher.currency ?? "CAD"}
+                          perHour
+                          primaryClassName="font-bold text-teal-700"
+                          secondaryClassName="block w-full text-[9px] font-semibold text-slate-500"
+                        />
                       </span>
                     </div>
                     <div className="mt-2 flex flex-wrap gap-1 text-[10px] text-neutral-700">

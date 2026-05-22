@@ -72,23 +72,18 @@ export function getGeoConfig(countryCode: string): GeoConfig {
 
 // ── formatPrice ───────────────────────────────────────────────────────────────
 //
-// Single-currency price formatter.
-//
-// IMPORTANT: For UY (currency === "UYU"), the `amount` is assumed to be in USD
-// (as stored in the DB). The function converts it to UYU automatically using
-// UYU_USD_RATE before formatting.
+// Single-currency formatter. Conversion now lives in lib/currency/* so this
+// helper never changes the numeric amount behind the caller's back.
 
 export function formatPrice(amount: number, currency: Currency, locale: string): string {
   const fmtLocale = localeToBcp47(locale);
 
-  // DB prices are in USD; convert to UYU for display.
-  const displayAmount = currency === "UYU" ? Math.round(amount * UYU_USD_RATE) : amount;
-
   return new Intl.NumberFormat(fmtLocale, {
     style: "currency",
     currency,
+    currencyDisplay: "code",
     maximumFractionDigits: 0,
-  }).format(displayAmount);
+  }).format(amount);
 }
 
 // ── formatDualPrice ───────────────────────────────────────────────────────────

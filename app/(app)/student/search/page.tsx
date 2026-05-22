@@ -9,7 +9,6 @@ import { Star, Users, Video } from "lucide-react";
 import { useLocale } from "../../../../lib/locale-context";
 import { cn } from "../../../../lib/utils";
 import { getSupabaseClient } from "../../../../lib/supabase";
-import { haversineDistance } from "../../../../lib/geo";
 import { fetchTeacherDisciplinesMap, mergeTeachersWithDisciplines } from "../../../../lib/teacherDisciplines";
 import { teacherRowToTeacher, type TeacherRow } from "../../../../lib/teacherMapper";
 import { TEACHERS_LIST_SELECT, TEACHERS_PUBLIC_TABLE } from "../../../../lib/supabase/queries";
@@ -26,6 +25,7 @@ import type { TeacherSearchFormat } from "../../../../lib/teacherSearchCriteria"
 import { logSearchEvent } from "../../../../lib/searchAnalytics";
 import { LandingSearchHero } from "@/components/marketing/LandingSearchHero";
 import type { LandingFormatFilter } from "@/lib/landingTeacherFilter";
+import { PriceDisplay } from "@/components/PriceDisplay";
 
 const TeacherProfile = dynamic(
   () => import("../../../../components/TeacherProfile").then((m) => m.TeacherProfile),
@@ -50,7 +50,7 @@ const SearchMapView = dynamic(
 
 export default function StudentSearchPage() {
   const router = useRouter();
-  const { t, formatPrice, locale } = useLocale();
+  const { t } = useLocale();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCat, setActiveCat] = useState<string>("All");
   const [teachers, setTeachers] = useState<Teacher[]>([]);
@@ -394,7 +394,6 @@ export default function StudentSearchPage() {
                         key={teacher.id}
                         teacher={teacher}
                         distanceKm={distanceKm}
-                        formatPrice={formatPrice}
                         t={t}
                         onOpen={() => setSelectedTeacherProfile(teacher)}
                       />
@@ -508,13 +507,11 @@ function TeacherCard({
   teacher,
   distanceKm,
   onOpen,
-  formatPrice,
   t,
 }: {
   teacher: Teacher;
   distanceKm: number | null;
   onOpen: () => void;
-  formatPrice: (amount: number) => string;
   t: (key: any) => string;
 }) {
   const availability = teacher.availability?.[0] ? String(teacher.availability[0]) : null;
@@ -561,7 +558,16 @@ function TeacherCard({
           {distanceKm != null ? <span className="text-[#D3D1C7]">·</span> : null}
           {distanceKm != null ? <span>{Math.round(distanceKm)}km</span> : null}
         </span>
-        <span className="font-bold text-teal-700">{formatPrice(Number(teacher.pricePerLesson))}/h</span>
+        <span className="font-bold text-teal-700">
+          <PriceDisplay
+            amount={Number(teacher.pricePerLesson)}
+            sourceCurrency={teacher.currency ?? "CAD"}
+            perHour
+            primaryClassName="font-bold text-teal-700"
+            secondaryClassName="block w-full text-[9px] font-semibold text-slate-500"
+            className="justify-end"
+          />
+        </span>
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-2">

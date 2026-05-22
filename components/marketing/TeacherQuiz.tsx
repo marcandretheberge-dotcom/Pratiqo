@@ -24,6 +24,7 @@ import type { Teacher } from "@/types";
 import { teacherRowToTeacher, type TeacherRow } from "@/lib/teacherMapper";
 import { logSearchEvent } from "@/lib/searchAnalytics";
 import type { TranslationKey } from "@/lib/i18n/types";
+import { PriceDisplay } from "@/components/PriceDisplay";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 type QuizAnswers = {
@@ -55,6 +56,7 @@ type TeacherMatch = {
   city?: string | null;
   region?: string | null;
   timezone?: string | null;
+  currency?: string | null;
   location?: unknown;
 };
 
@@ -247,7 +249,7 @@ function getSubcategoryOptions(cat: QuizAnswers["category"]): SubOption[] {
 
 // ── Main component ─────────────────────────────────────────────────────────────
 export function TeacherQuiz({ onClose }: { onClose: () => void }) {
-  const { t, formatPrice } = useLocale();
+  const { t } = useLocale();
   const { user } = useAuth();
   const studentSearchBrowseHref = user ? "/student/search" : "/login?next=/student/search";
   const [step, setStep] = useState<Step>("category");
@@ -733,7 +735,6 @@ export function TeacherQuiz({ onClose }: { onClose: () => void }) {
                           <QuizBucketSection
                             title={t("bestMatch")}
                             teachers={resultBuckets.best}
-                            formatPrice={formatPrice}
                             bookLabel={t("quizBookNow")}
                             profileLabel={t("quizSeeProfile")}
                             onClose={onClose}
@@ -742,7 +743,6 @@ export function TeacherQuiz({ onClose }: { onClose: () => void }) {
                           <QuizBucketSection
                             title={t("closestMatch")}
                             teachers={resultBuckets.closest}
-                            formatPrice={formatPrice}
                             bookLabel={t("quizBookNow")}
                             profileLabel={t("quizSeeProfile")}
                             onClose={onClose}
@@ -751,7 +751,6 @@ export function TeacherQuiz({ onClose }: { onClose: () => void }) {
                           <QuizBucketSection
                             title={t("availableThisWeekMatch")}
                             teachers={resultBuckets.week}
-                            formatPrice={formatPrice}
                             bookLabel={t("quizBookNow")}
                             profileLabel={t("quizSeeProfile")}
                             onClose={onClose}
@@ -760,7 +759,6 @@ export function TeacherQuiz({ onClose }: { onClose: () => void }) {
                           <QuizBucketSection
                             title={t("bestOnlineMatch")}
                             teachers={resultBuckets.online}
-                            formatPrice={formatPrice}
                             bookLabel={t("quizBookNow")}
                             profileLabel={t("quizSeeProfile")}
                             onClose={onClose}
@@ -896,7 +894,6 @@ function LevelCard({
 function QuizBucketSection({
   title,
   teachers,
-  formatPrice,
   bookLabel,
   profileLabel,
   onClose,
@@ -904,7 +901,6 @@ function QuizBucketSection({
 }: {
   title: string;
   teachers: TeacherMatch[];
-  formatPrice: (n: number) => string;
   bookLabel: string;
   profileLabel: string;
   onClose: () => void;
@@ -920,7 +916,6 @@ function QuizBucketSection({
             key={`${title}-${teacher.id}`}
             teacher={teacher}
             rank={idx + 1}
-            formatPrice={formatPrice}
             bookLabel={bookLabel}
             profileLabel={profileLabel}
             onClose={onClose}
@@ -933,11 +928,10 @@ function QuizBucketSection({
 }
 
 function MatchCard({
-  teacher, rank, formatPrice, bookLabel, profileLabel, onClose, isLoggedIn,
+  teacher, rank, bookLabel, profileLabel, onClose, isLoggedIn,
 }: {
   teacher: TeacherMatch;
   rank: number;
-  formatPrice: (n: number) => string;
   bookLabel: string;
   profileLabel: string;
   onClose: () => void;
@@ -1010,7 +1004,13 @@ function MatchCard({
         <div className="mt-2 flex items-center gap-2">
           {teacher.price_per_lesson != null && teacher.price_per_lesson > 0 && (
             <span className="text-xs font-bold text-teal-700">
-              {formatPrice(teacher.price_per_lesson)}/h
+              <PriceDisplay
+                amount={teacher.price_per_lesson}
+                sourceCurrency={teacher.currency ?? "CAD"}
+                perHour
+                primaryClassName="font-bold text-teal-700"
+                secondaryClassName="block text-[9px] font-semibold text-slate-500"
+              />
             </span>
           )}
         </div>

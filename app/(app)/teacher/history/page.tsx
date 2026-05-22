@@ -11,6 +11,13 @@ import { cn } from "@/lib/utils";
 import { localeToBcp47 } from "@/lib/i18n/types";
 import type { TranslationKey } from "@/lib/translations";
 
+/**
+ * History rows show the actual booking_payments amount, always settled in CAD.
+ * The viewer's display-currency selector does not convert these numbers —
+ * teacher history is an accounting screen.
+ */
+const ACCOUNTING_CURRENCY = "CAD";
+
 type HistoryTab = "completed" | "cancelled" | "payments";
 
 type BookingRow = {
@@ -101,11 +108,14 @@ export default function TeacherHistoryPage() {
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState<Row[]>([]);
 
+  // Pin currencyDisplay: "code" so accounting amounts always read "CAD 45.50"
+  // — never the ambiguous "$" or the viewer's display-currency symbol.
   const fmt = useMemo(
     () =>
       new Intl.NumberFormat(localeToBcp47(locale), {
         style: "currency",
-        currency: "CAD",
+        currency: ACCOUNTING_CURRENCY,
+        currencyDisplay: "code",
       }),
     [locale],
   );
@@ -327,12 +337,13 @@ export default function TeacherHistoryPage() {
                 const time = b.time_slot || b.time || "";
                 const dateLabel = [date, time].filter(Boolean).join(" · ") || "—";
 
-                // Prefer payment amount_cents; fall back to booking price (stored as dollars)
+                // Prefer payment amount_cents; fall back to booking price (stored as dollars).
+                // Output is always CAD-labelled (e.g. "CAD 45.50"), never "$".
                 const priceDisplay =
                   p?.amount_cents != null && p.amount_cents > 0
-                    ? fmt.format(p.amount_cents / 100).replace("CA$", "$")
+                    ? fmt.format(p.amount_cents / 100).replace(/\s+/g, " ").trim()
                     : b.price != null && Number(b.price) > 0
-                      ? fmt.format(Number(b.price)).replace("CA$", "$")
+                      ? fmt.format(Number(b.price)).replace(/\s+/g, " ").trim()
                       : null;
 
                 const si = statusInfo(b.status, t);
