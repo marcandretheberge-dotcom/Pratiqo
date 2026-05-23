@@ -11,9 +11,10 @@ const TOC = [
   { id: "professeur", label: "2. Annulation par le professeur" },
   { id: "reprogrammer", label: "3. Reprogrammer un cours (reschedule)" },
   { id: "domicile", label: "4. Cours à domicile" },
-  { id: "delais", label: "5. Délais de remboursement" },
-  { id: "litiges", label: "6. Litiges" },
-  { id: "contact", label: "7. Contact" },
+  { id: "garantie-premier-cours", label: "5. Garantie satisfaction du premier cours" },
+  { id: "delais", label: "6. Délais de remboursement" },
+  { id: "litiges", label: "7. Litiges" },
+  { id: "contact", label: "8. Contact" },
 ] as const;
 
 export default function AnnulationPage() {
@@ -181,7 +182,63 @@ export default function AnnulationPage() {
 
       <hr className="my-8 border-slate-200" />
 
-      <LegalSection id="delais" title="5. Délais de remboursement">
+      <LegalSection id="garantie-premier-cours" title="5. Garantie satisfaction du premier cours">
+        <p>
+          Pratiqo offre une garantie satisfaction sur le tout premier cours terminé d&apos;un élève sur la plateforme.
+          Cette garantie a pour objectif de faciliter le premier contact avec un professeur sans risque perçu.
+        </p>
+
+        <h3 className="text-base font-semibold text-[var(--p-text)] mt-6 mb-2">5.1 Comment ça fonctionne</h3>
+        <ul className="list-disc pl-5 space-y-2 mt-2">
+          <li>
+            La garantie s&apos;applique uniquement au premier cours terminé sur le compte de l&apos;élève.
+          </li>
+          <li>
+            La demande doit être déposée dans les <strong>24 heures</strong> qui suivent la fin du cours.
+          </li>
+          <li>
+            La demande se fait depuis <strong>Mes paiements et reçus</strong>, ou par courriel à
+            {" "}
+            <a href="mailto:support@pratiqo.ca" className="text-teal-700 underline font-medium">
+              support@pratiqo.ca
+            </a>.
+          </li>
+          <li>
+            Une seule demande de garantie premier cours est possible par compte.
+          </li>
+        </ul>
+
+        <h3 className="text-base font-semibold text-[var(--p-text)] mt-6 mb-2">5.2 Examen de la demande</h3>
+        <p>
+          La demande ouvre automatiquement un dossier de résolution traité <strong>manuellement par l&apos;équipe
+          Pratiqo</strong>. Le versement au professeur peut être mis en attente le temps de l&apos;examen.
+          L&apos;équipe peut contacter l&apos;élève et le professeur pour comprendre la situation avant toute décision.
+        </p>
+        <p className="mt-4">
+          Cette garantie ne remplace pas les recours existants&nbsp;: au-delà des 24 heures, la procédure standard
+          de litige (section 7) s&apos;applique. Aucune décision n&apos;est prise de manière automatique&nbsp;:
+          chaque dossier est examiné individuellement selon les faits.
+        </p>
+
+        <h3 className="text-base font-semibold text-[var(--p-text)] mt-6 mb-2">5.3 Limites</h3>
+        <ul className="list-disc pl-5 space-y-2 mt-2">
+          <li>
+            La garantie ne s&apos;applique pas si le cours a été marqué comme absence côté élève.
+          </li>
+          <li>
+            Pratiqo se réserve le droit de refuser une demande manifestement abusive (par exemple
+            usage répété par plusieurs comptes liés à la même personne).
+          </li>
+          <li>
+            La garantie porte sur la satisfaction de l&apos;élève vis-à-vis de la prestation. Elle ne constitue
+            pas une garantie de résultat pédagogique ni une évaluation de la qualité du professeur.
+          </li>
+        </ul>
+      </LegalSection>
+
+      <hr className="my-8 border-slate-200" />
+
+      <LegalSection id="delais" title="6. Délais de remboursement">
         <ul className="list-disc pl-5 space-y-2">
           <li>Les remboursements sont traités dans les <strong>5 à 10 jours ouvrables</strong></li>
           <li>Le remboursement apparaît sur le relevé de la carte de crédit originale</li>
@@ -191,7 +248,7 @@ export default function AnnulationPage() {
 
       <hr className="my-8 border-slate-200" />
 
-      <LegalSection id="litiges" title="6. Litiges">
+      <LegalSection id="litiges" title="7. Litiges">
         <p>Tout litige concernant un remboursement doit être signalé dans les <strong>7 jours</strong> suivant le cours via :</p>
         <ul className="list-disc pl-5 space-y-2 mt-2">
           <li>
@@ -212,7 +269,7 @@ export default function AnnulationPage() {
 
       <hr className="my-8 border-slate-200" />
 
-      <LegalSection id="contact" title="7. Contact">
+      <LegalSection id="contact" title="8. Contact">
         <p>
           <a href="mailto:support@pratiqo.ca" className="text-teal-700 underline font-medium">
             support@pratiqo.ca
