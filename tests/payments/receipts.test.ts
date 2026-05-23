@@ -342,6 +342,125 @@ test("receipt emails include localized no-tax-collected disclaimer", () => {
   assert.match(buildLessonPaymentReceiptEmail({ ...base, locale: "es" }).html, /Impuestos sobre ventas no cobrados/);
 });
 
+test("receipt email footer includes localized 'service provided by' marketplace line", () => {
+  const base = {
+    email: "student@example.com",
+    studentName: "Sam",
+    receiptNumber: "PRQ-2026-ABC",
+    paymentDate: "May 18, 2026",
+    lessonDescription: "Piano · 60 min",
+    teacherName: "Ada Lovelace",
+    amountPaid: "$75.00",
+    currency: "CAD",
+    stripeReceiptUrl: "https://pay.stripe.com/receipts/test",
+  };
+
+  assert.match(
+    buildLessonPaymentReceiptEmail({ ...base, locale: "fr" }).html,
+    /Service fourni par Ada Lovelace, paiement traité par Pratiqo inc\./,
+  );
+  assert.match(
+    buildLessonPaymentReceiptEmail({ ...base, locale: "en" }).html,
+    /Service provided by Ada Lovelace, payment processed by Pratiqo inc\./,
+  );
+  assert.match(
+    buildLessonPaymentReceiptEmail({ ...base, locale: "es" }).html,
+    /Servicio prestado por Ada Lovelace, pago procesado por Pratiqo inc\./,
+  );
+});
+
+test("receipt email falls back to /student/payments CTA when Stripe receipt URL is missing", () => {
+  const base = {
+    email: "student@example.com",
+    studentName: "Sam",
+    receiptNumber: "PRQ-2026-ABC",
+    paymentDate: "May 18, 2026",
+    lessonDescription: "Piano · 60 min",
+    teacherName: "Ada",
+    amountPaid: "$75.00",
+    currency: "CAD",
+  };
+
+  // When Stripe has a hosted receipt URL, the CTA goes to Stripe and the
+  // fallback CTA / fallback URL must NOT appear.
+  const withStripe = buildLessonPaymentReceiptEmail({
+    ...base,
+    stripeReceiptUrl: "https://pay.stripe.com/receipts/test",
+    locale: "en",
+  });
+  assert.match(withStripe.html, /https:\/\/pay\.stripe\.com\/receipts\/test/);
+  assert.match(withStripe.html, /Open Stripe receipt/);
+  assert.doesNotMatch(withStripe.html, /View my payments and receipts/);
+
+  // When there is no Stripe receipt URL yet, the email must still have a CTA
+  // pointing to the in-app vault so it's never dead-end.
+  const withoutStripe = buildLessonPaymentReceiptEmail({
+    ...base,
+    stripeReceiptUrl: null,
+    locale: "en",
+  });
+  assert.match(withoutStripe.html, /\/student\/payments/);
+  assert.match(withoutStripe.html, /View my payments and receipts/);
+
+  // Same fallback works in FR + ES.
+  assert.match(
+    buildLessonPaymentReceiptEmail({ ...base, stripeReceiptUrl: null, locale: "fr" }).html,
+    /Voir mes paiements et reçus/,
+  );
+  assert.match(
+    buildLessonPaymentReceiptEmail({ ...base, stripeReceiptUrl: null, locale: "es" }).html,
+    /Ver mis pagos y recibos/,
+  );
+});
+
+// Pratiqo issues a "payment receipt", never a "tax receipt". This guard
+// blocks any future copy edit that would imply tax-deductibility, Revenu
+// Québec recognition, or fiscal receipt status — none of which apply to a
+// regular non-incorporated student/parent paying for music lessons today.
+test("receipt email never claims to be a tax receipt or deductible", () => {
+  const base = {
+    email: "student@example.com",
+    studentName: "Sam",
+    receiptNumber: "PRQ-2026-ABC",
+    paymentDate: "May 18, 2026",
+    lessonDescription: "Piano · 60 min",
+    teacherName: "Ada",
+    amountPaid: "$75.00",
+    currency: "CAD",
+  };
+
+  const FORBIDDEN_FRAGMENTS = [
+    /tax receipt/i,
+    /reçu fiscal/i,
+    /recibo fiscal/i,
+    /\bdeductible\b/i,
+    /\bdéductible\b/i,
+    /\bdeducible\b/i,
+    /Revenu Québec/i,
+    /\$1 review/i,
+  ];
+
+  for (const locale of ["fr", "en", "es"] as const) {
+    for (const stripeReceiptUrl of [
+      "https://pay.stripe.com/receipts/test",
+      null,
+    ] as const) {
+      const html = buildLessonPaymentReceiptEmail({
+        ...base,
+        stripeReceiptUrl,
+        locale,
+      }).html;
+      for (const pattern of FORBIDDEN_FRAGMENTS) {
+        assert.doesNotMatch(
+          html,
+          pattern,
+          `receipt email [${locale}, stripeUrl=${String(Boolean(stripeReceiptUrl))}] must not contain ${pattern}`,
+        );
+      }
+    }
+  }
+});
+
 async function run() {
   for (const { name, fn } of tests) {
     await fn();

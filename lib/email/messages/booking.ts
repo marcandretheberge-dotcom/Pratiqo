@@ -173,6 +173,17 @@ type LessonPaymentReceiptCopy = {
   taxInclusiveNote: string;
   stripeReceipt: string;
   cta: string;
+  /**
+   * Fallback CTA label used when no Stripe receipt URL is available yet.
+   * Points students to /student/payments so the email is never CTA-less.
+   */
+  viewReceiptFallbackCta: string;
+  /**
+   * Footer line clarifying marketplace framing: the service is delivered
+   * by the teacher and the payment is processed by Pratiqo inc.
+   * Intentionally neutral — no tax/deductibility/legal claims.
+   */
+  serviceProvidedBy: (teacherName: string) => string;
   thanks: string;
 };
 
@@ -309,6 +320,9 @@ const BOOKING_EMAIL_COPY: Record<EmailLocale, BookingEmailCopy> = {
         "Les taxes applicables sont incluses dans le total payé. Ce reçu reprend la ventilation calculée par Stripe au moment du paiement.",
       stripeReceipt: "Reçu Stripe",
       cta: "Ouvrir le reçu Stripe",
+      viewReceiptFallbackCta: "Voir mes paiements et reçus",
+      serviceProvidedBy: (teacherName) =>
+        `Service fourni par ${teacherName}, paiement traité par Pratiqo inc.`,
       thanks: "Merci de faire confiance à Pratiqo inc.",
     },
     declinedStudent: {
@@ -476,6 +490,9 @@ const BOOKING_EMAIL_COPY: Record<EmailLocale, BookingEmailCopy> = {
         "Applicable taxes are included in the total paid. This receipt reflects the breakdown calculated by Stripe at checkout.",
       stripeReceipt: "Stripe receipt",
       cta: "Open Stripe receipt",
+      viewReceiptFallbackCta: "View my payments and receipts",
+      serviceProvidedBy: (teacherName) =>
+        `Service provided by ${teacherName}, payment processed by Pratiqo inc.`,
       thanks: "Thank you for trusting Pratiqo inc.",
     },
     declinedStudent: {
@@ -643,6 +660,9 @@ const BOOKING_EMAIL_COPY: Record<EmailLocale, BookingEmailCopy> = {
         "Los impuestos aplicables están incluidos en el total pagado. Este recibo refleja el desglose calculado por Stripe al pagar.",
       stripeReceipt: "Recibo de Stripe",
       cta: "Abrir recibo de Stripe",
+      viewReceiptFallbackCta: "Ver mis pagos y recibos",
+      serviceProvidedBy: (teacherName) =>
+        `Servicio prestado por ${teacherName}, pago procesado por Pratiqo inc.`,
       thanks: "Gracias por confiar en Pratiqo inc.",
     },
     declinedStudent: {

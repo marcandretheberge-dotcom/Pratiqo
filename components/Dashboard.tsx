@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Calendar, Flame, Loader2, ShieldCheck } from "lucide-react";
+import { Calendar, CreditCard, Flame, Loader2, ShieldCheck } from "lucide-react";
 import { useAuth } from "./AuthProvider";
 import { getSupabaseClient } from "../lib/supabase";
 import { authDisplayName } from "../lib/authDisplay";
@@ -908,6 +908,27 @@ export function Dashboard() {
                 </button>
               </div>
             </div>
+
+            {/* Discoverability tile for the student payment vault. Uses the
+                existing dashboard tile style; intentionally restrained so it
+                doesn't compete with the streak / bookings cards above. */}
+            <Link
+              href="/student/payments"
+              className="sm:col-span-2 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex items-center justify-between overflow-hidden relative hover:border-brand-primary/50 hover:shadow-md transition group"
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-teal-50 rounded-2xl flex items-center justify-center text-brand-primary shrink-0">
+                  <CreditCard size={24} aria-hidden />
+                </div>
+                <div className="min-w-0">
+                  <h4 className="font-bold text-slate-900">{t("studentPaymentsAndReceiptsLabel")}</h4>
+                  <p className="text-xs text-slate-600 mt-0.5 leading-snug">{t("studentPaymentsSubtitle")}</p>
+                </div>
+              </div>
+              <span className="text-[10px] font-bold text-brand-primary uppercase tracking-widest group-hover:underline shrink-0 ml-3">
+                {t("studentPaymentsViewReceiptFallback")}
+              </span>
+            </Link>
           </div>
 
           <AssignmentHub mode="student" />
