@@ -69,10 +69,33 @@ const nextConfig: NextConfig = {
     optimizePackageImports: ["lucide-react"],
   },
   async headers() {
+    // Permissions-Policy: Pratiqo does not currently request camera, microphone,
+    // geolocation, payment, USB, or other privileged surfaces from the browser
+    // (Stripe handles payment inside its own iframe, Maps uses lat/lng we
+    // compute server-side). Disabling these by default reduces blast radius
+    // from XSS or compromised third-party scripts.
+    const permissionsPolicy = [
+      "camera=()",
+      "microphone=()",
+      "geolocation=()",
+      "payment=()",
+      "usb=()",
+      "magnetometer=()",
+      "accelerometer=()",
+      "gyroscope=()",
+    ].join(", ");
+
     const routeHeaders: { key: string; value: string }[] = [
       { key: "Content-Security-Policy", value: cspValue },
       { key: "X-Frame-Options", value: "SAMEORIGIN" },
       { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
+      // Defense-in-depth: stop the browser from MIME-sniffing user-uploaded
+      // content (avatar bucket is public) into executable types.
+      { key: "X-Content-Type-Options", value: "nosniff" },
+      // Privacy: prevent the full URL (which can include a sanitized `next`
+      // query string or a teacher slug) from leaking to third-party origins.
+      { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+      { key: "Permissions-Policy", value: permissionsPolicy },
     ];
 
     if (isCspReportOnlyEnabled()) {
