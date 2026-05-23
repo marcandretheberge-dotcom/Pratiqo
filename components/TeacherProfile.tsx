@@ -3,7 +3,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { motion } from "motion/react";
 import {
-  BriefcaseBusiness,
   ChevronRight,
   CheckCircle2,
   Clock,
@@ -11,10 +10,7 @@ import {
   FileCheck2,
   Globe,
   Home,
-  Hourglass,
-  MailCheck,
   MapPin,
-  MapPinned,
   MessageSquare,
   Shield,
   Star,
@@ -31,13 +27,21 @@ import { haversineDistance } from "../lib/geo";
 import { TeacherMap } from "./TeacherMap";
 import { getAllDisciplines, getDisciplineById } from "../lib/disciplines";
 import { useLocale } from "../lib/locale-context";
-import { buildTeacherTrustBadges, buildTeacherTrustItems, getPublicTeacherTrustBadgeKey, type TeacherCredential, type TeacherTrustItem } from "../lib/teacherTrust";
+import type { TeacherCredential } from "../lib/teacherTrust";
 import { getPublicTeacherCredentials } from "@/lib/supabase/queries";
 import { getEmbedUrl } from "../lib/videoEmbed";
 import { TeacherAvatar } from "./TeacherAvatar";
 import { calculateIntroSessionPriceCents } from "@/lib/introSession";
 import { PriceDisplay } from "@/components/PriceDisplay";
 import { sanitizePublicTeacherBio } from "@/lib/teacherProfile/sanitizePublicBio";
+import { TeacherBadgePill } from "@/components/TeacherBadgePill";
+import {
+  buildTeacherBadges,
+  getCompactTeacherBadges,
+  hasPublicTeacherReviews,
+  hasVerifiedDiplomaEvidence,
+  isPublicTeacherIdentityVerified,
+} from "@/lib/teachers/badges";
 
 export type TeacherBookKind = "standard" | "home";
 
@@ -60,16 +64,6 @@ type ReviewRow = {
 };
 
 type ReportStatus = "idle" | "submitting" | "success" | "already" | "error";
-
-function TrustItemIcon({ item }: { item: TeacherTrustItem }) {
-  const iconClass = item.status === "pending" ? "text-amber-600" : item.status === "provided" ? "text-slate-600" : "text-teal-700";
-  if (item.status === "pending") return <Hourglass size={15} className={iconClass} />;
-  if (item.icon === "mail") return <MailCheck size={15} className={iconClass} />;
-  if (item.icon === "map") return <MapPinned size={15} className={iconClass} />;
-  if (item.icon === "diploma") return <FileCheck2 size={15} className={iconClass} />;
-  if (item.icon === "briefcase") return <BriefcaseBusiness size={15} className={iconClass} />;
-  return <CheckCircle2 size={15} className={iconClass} />;
-}
 
 function formatReviewerName(fullName: string): string {
   const trimmed = fullName.trim();
@@ -320,35 +314,6 @@ export function TeacherProfile({
 
   const displayDistanceKm = distanceKm !== undefined ? distanceKm : computedDistanceKm;
 
-  const trustItems = useMemo(
-    () =>
-      buildTeacherTrustItems({
-        isVerified: teacher.isVerified,
-        identityVerified: teacher.identityVerified,
-        identityStatus: teacher.identityStatus,
-        stripeIdentityStatus: teacher.stripeIdentityStatus,
-        diplomaVerified: teacher.diplomaVerified,
-        diplomaUrl: teacher.diplomaUrl,
-        locationVerificationStatus: teacher.locationVerificationStatus,
-        cvSummary: teacher.cvSummary,
-        cvVerificationStatus: teacher.cvVerificationStatus,
-        bio: teacher.bio,
-      }),
-    [
-      teacher.bio,
-      teacher.cvSummary,
-      teacher.cvVerificationStatus,
-      teacher.diplomaUrl,
-      teacher.diplomaVerified,
-      teacher.identityStatus,
-      teacher.identityVerified,
-      teacher.isVerified,
-      teacher.locationVerificationStatus,
-      teacher.stripeIdentityStatus,
-    ],
-  );
-  const publicTrustBadgeKey = useMemo(() => getPublicTeacherTrustBadgeKey(trustItems), [trustItems]);
-
   // Mask personal contact info from the rendered bio. The stored
   // `teachers.bio` row is never mutated — sanitization is presentation-only.
   // The notice below the bio is shown only when at least one mask hit, so
@@ -402,17 +367,35 @@ export function TeacherProfile({
     };
   }, [teacher.id]);
 
-  const trustBadges = useMemo(() => {
-    return buildTeacherTrustBadges({
-      identity: {
-        identityVerified: teacher.identityVerified,
-        identityStatus: teacher.identityStatus ?? null,
-        stripeIdentityStatus: teacher.stripeIdentityStatus ?? null,
-      },
+  const displayReviewCount = Math.max(Number(teacher.reviews ?? 0), reviews.length);
+  const hasReviews = hasPublicTeacherReviews({ rating: teacher.rating, reviewCount: displayReviewCount });
+
+  const badgeInput = useMemo(
+    () => ({
+      teacherId: teacher.id,
+      identityVerified: teacher.identityVerified,
+      identityStatus: teacher.identityStatus ?? null,
+      stripeIdentityStatus: teacher.stripeIdentityStatus ?? null,
+      diplomaVerified: teacher.diplomaVerified,
       credentials: publicCredentials,
-      averageRating: teacher.rating,
-    });
-  }, [teacher.identityVerified, teacher.identityStatus, teacher.stripeIdentityStatus, publicCredentials, teacher.rating]);
+      profilePlan: displayPlan,
+      reviewCount: displayReviewCount,
+    }),
+    [
+      displayPlan,
+      displayReviewCount,
+      publicCredentials,
+      teacher.diplomaVerified,
+      teacher.id,
+      teacher.identityStatus,
+      teacher.identityVerified,
+      teacher.stripeIdentityStatus,
+    ],
+  );
+  const headlineBadges = useMemo(() => getCompactTeacherBadges(badgeInput, 2), [badgeInput]);
+  const profileBadges = useMemo(() => buildTeacherBadges(badgeInput), [badgeInput]);
+  const identityVerifiedForTrustBox = isPublicTeacherIdentityVerified(badgeInput);
+  const diplomaVerifiedForTrustBox = hasVerifiedDiplomaEvidence(badgeInput);
 
   const homeConfigured =
     Boolean(teacher.homeLessonEnabled) &&
@@ -533,39 +516,31 @@ export function TeacherProfile({
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
                       <h2 id="teacher-profile-modal-title" className="text-xl lg:text-2xl font-bold text-slate-900 leading-tight">{teacher.name}</h2>
-                      {publicTrustBadgeKey ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-teal-50 text-teal-700 px-2.5 py-0.5 text-xs font-semibold">
-                          <Shield size={11} /> {t(publicTrustBadgeKey)}
-                        </span>
-                      ) : null}
+                      {headlineBadges.map((badge) => (
+                        <TeacherBadgePill key={badge.id} badge={badge} compact />
+                      ))}
                     </div>
-                    {trustBadges.length ? (
+                    {profileBadges.length > headlineBadges.length ? (
                       <div className="mt-2 flex flex-wrap gap-2">
-                        {trustBadges.map((b) => (
-                          <span
-                            key={b.key}
-                            title={t(b.descriptionKey)}
-                            className={cn(
-                              "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold",
-                              b.strength === "official"
-                                ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
-                                : b.strength === "strong"
-                                  ? "bg-teal-50 text-teal-700 border border-[#DCEAE3]"
-                                  : "bg-slate-100 text-slate-700 border border-slate-200",
-                            )}
-                          >
-                            <CheckCircle2 size={12} className="shrink-0" aria-hidden />
-                            <span>{t(b.labelKey)}</span>
-                          </span>
-                        ))}
+                        {profileBadges
+                          .filter((badge) => !headlineBadges.some((headlineBadge) => headlineBadge.id === badge.id))
+                          .map((badge) => (
+                            <TeacherBadgePill key={badge.id} badge={badge} compact />
+                          ))}
                       </div>
                     ) : null}
                     <div className="flex flex-wrap items-center gap-2 mt-1.5">
-                      <div className="flex items-center gap-1">
-                        <Star size={13} fill="currentColor" className="text-amber-400" />
-                        <span className="text-sm font-semibold text-slate-700">{teacher.rating}</span>
-                        <span className="text-xs text-slate-600 ml-0.5">({reviews.length} avis)</span>
-                      </div>
+                      {hasReviews ? (
+                        <div className="flex items-center gap-1">
+                          <Star size={13} fill="currentColor" className="text-amber-400" />
+                          <span className="text-sm font-semibold text-slate-700">{Number(teacher.rating).toFixed(1)}</span>
+                          <span className="text-xs text-slate-600 ml-0.5">
+                            ({displayReviewCount} {t("bookingReviewsShort")})
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-xs font-semibold text-slate-600">{t("teacherNoReviewsYet")}</span>
+                      )}
                     </div>
                     <p className="text-xs text-slate-600 flex items-center gap-1.5 mt-1.5">
                       <MapPin size={11} className="text-teal-700 shrink-0" />
@@ -910,34 +885,53 @@ export function TeacherProfile({
 
                   {/* Public trust card */}
                   <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-600">
-                      {t("trustVerificationTitle")}
-                    </p>
-                    <h3 className="mt-1 text-sm font-bold text-slate-900">{t("trustVerifiedElements")}</h3>
-                    <p className="mt-1 text-[11px] leading-relaxed text-slate-600">
-                      {t("trustSensitiveDocumentsHidden")}
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-teal-50 text-teal-700">
+                        <Shield size={16} aria-hidden />
+                      </span>
+                      <h3 className="text-sm font-bold text-slate-900">{t("teacherTrustTitle")}</h3>
+                    </div>
                     <ul className="mt-3 space-y-2.5">
-                      {trustItems.map((item) => (
-                        <li key={item.key} className="flex gap-2.5">
-                          <span
-                            className={cn(
-                              "mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full",
-                              item.status === "pending"
-                                ? "bg-amber-50"
-                                : item.status === "provided"
-                                  ? "bg-slate-100"
-                                  : "bg-teal-50",
-                            )}
-                          >
-                            <TrustItemIcon item={item} />
+                      {identityVerifiedForTrustBox ? (
+                        <li className="flex gap-2.5">
+                          <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-teal-50">
+                            <CheckCircle2 size={15} className="text-teal-700" aria-hidden />
                           </span>
                           <span>
-                            <span className="block text-xs font-semibold text-slate-900">{t(item.publicLabelKey)}</span>
-                            <span className="block text-[11px] leading-relaxed text-slate-600">{t(item.publicDescriptionKey)}</span>
+                            <span className="block text-xs font-semibold text-slate-900">{t("teacherBadgeIdentityVerified")}</span>
+                            <span className="block text-[11px] leading-relaxed text-slate-600">{t("teacherTrustIdentityVerifiedDescription")}</span>
                           </span>
                         </li>
-                      ))}
+                      ) : null}
+                      {diplomaVerifiedForTrustBox ? (
+                        <li className="flex gap-2.5">
+                          <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-teal-50">
+                            <FileCheck2 size={15} className="text-teal-700" aria-hidden />
+                          </span>
+                          <span>
+                            <span className="block text-xs font-semibold text-slate-900">{t("teacherBadgeDiplomaVerified")}</span>
+                            <span className="block text-[11px] leading-relaxed text-slate-600">{t("trustDiplomaVerifiedDescription")}</span>
+                          </span>
+                        </li>
+                      ) : null}
+                      <li className="flex gap-2.5">
+                        <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-teal-50">
+                          <CreditCard size={15} className="text-teal-700" aria-hidden />
+                        </span>
+                        <span>
+                          <span className="block text-xs font-semibold text-slate-900">{t("teacherTrustPaymentProtected")}</span>
+                          <span className="block text-[11px] leading-relaxed text-slate-600">{t("teacherTrustPaymentProtectedDescription")}</span>
+                        </span>
+                      </li>
+                      <li className="flex gap-2.5">
+                        <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-teal-50">
+                          <Shield size={15} className="text-teal-700" aria-hidden />
+                        </span>
+                        <span>
+                          <span className="block text-xs font-semibold text-slate-900">{t("teacherTrustContactProtected")}</span>
+                          <span className="block text-[11px] leading-relaxed text-slate-600">{t("teacherTrustContactProtectedDescription")}</span>
+                        </span>
+                      </li>
                     </ul>
                   </div>
 

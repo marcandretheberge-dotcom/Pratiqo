@@ -7,11 +7,11 @@ import { getSupabaseClient } from "@/lib/supabase";
 import { TEACHERS_PUBLIC_TABLE } from "@/lib/supabase/queries";
 import { useLocale } from "@/lib/locale-context";
 import { useAuth } from "@/components/AuthProvider";
-import { VerificationBadge } from "@/components/VerificationBadge";
 import { TeacherAvatar } from "@/components/TeacherAvatar";
-import type { VerificationLevel } from "@/lib/verification";
 import type { Discipline } from "@/types";
 import { PriceDisplay } from "@/components/PriceDisplay";
+import { TeacherBadgePill } from "@/components/TeacherBadgePill";
+import { getCompactTeacherBadges } from "@/lib/teachers/badges";
 
 type TeacherSnippet = {
   id: string;
@@ -24,6 +24,8 @@ type TeacherSnippet = {
   currency?: string | null;
   location: string | null;
   verification_level: number | null;
+  identity_verified?: boolean | null;
+  diploma_verified?: boolean | null;
 };
 
 function inferDiscipline(disciplineField: string | null, blogCategory: string): Discipline {
@@ -56,7 +58,7 @@ export function RelatedTeachersWidget({ category }: { category: string }) {
       // First try: match by category
       const { data: exact } = await supabase
         .from(TEACHERS_PUBLIC_TABLE)
-        .select("id, name, discipline, image_url, rating, reviews, price_per_lesson, currency, location, verification_level")
+        .select("id, name, discipline, image_url, rating, reviews, price_per_lesson, currency, location, verification_level, identity_verified, diploma_verified")
         .ilike("category", `%${category}%`)
         .order("rating", { ascending: false })
         .limit(3);
@@ -70,7 +72,7 @@ export function RelatedTeachersWidget({ category }: { category: string }) {
       // Fallback: top verified teachers regardless of category
       const { data: fallback } = await supabase
         .from(TEACHERS_PUBLIC_TABLE)
-        .select("id, name, discipline, image_url, rating, reviews, price_per_lesson, currency, location, verification_level")
+        .select("id, name, discipline, image_url, rating, reviews, price_per_lesson, currency, location, verification_level, identity_verified, diploma_verified")
         .order("verification_level", { ascending: false })
         .order("rating", { ascending: false })
         .limit(3);
@@ -109,7 +111,15 @@ export function RelatedTeachersWidget({ category }: { category: string }) {
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {teachers.map((teacher) => (
+        {teachers.map((teacher) => {
+          const badges = getCompactTeacherBadges({
+            teacherId: teacher.id,
+            identityVerified: teacher.identity_verified,
+            diplomaVerified: teacher.diploma_verified,
+            reviewCount: teacher.reviews,
+          });
+
+          return (
           <div
             key={teacher.id}
             className="group rounded-2xl border border-[#E8E6DF] bg-white p-4 flex flex-col gap-3 hover:border-teal-500/40 hover:shadow-sm transition-all"
@@ -124,11 +134,11 @@ export function RelatedTeachersWidget({ category }: { category: string }) {
                   size={52}
                   ringClassName="ring-2 ring-teal-500/20"
                 />
-                {teacher.verification_level != null && teacher.verification_level > 0 && (
+                {badges[0] ? (
                   <span className="absolute -bottom-0.5 -right-0.5">
-                    <VerificationBadge level={teacher.verification_level as VerificationLevel} size="sm" showLabel={false} />
+                    <TeacherBadgePill badge={badges[0]} compact className="shadow-sm" />
                   </span>
-                )}
+                ) : null}
               </div>
               <div className="min-w-0">
                 <p className="font-bold text-[#2C2C2A] text-sm truncate">{teacher.name}</p>
@@ -138,7 +148,7 @@ export function RelatedTeachersWidget({ category }: { category: string }) {
 
             {/* Rating + price */}
             <div className="flex items-center justify-between text-xs text-[#6B6760]">
-              {teacher.rating != null && teacher.rating > 0 ? (
+              {teacher.rating != null && teacher.rating > 0 && teacher.reviews != null && teacher.reviews > 0 ? (
                 <span className="flex items-center gap-1 font-medium">
                   <Star size={11} className="fill-amber-400 text-amber-400" />
                   {teacher.rating.toFixed(1)}
@@ -170,7 +180,8 @@ export function RelatedTeachersWidget({ category }: { category: string }) {
               {t("blogViewProfile")}
             </Link>
           </div>
-        ))}
+          );
+        })}
       </div>
 
       <div className="text-center">

@@ -3,14 +3,14 @@
 import Image from "next/image";
 import { MapPin, Star } from "lucide-react";
 import type { Teacher } from "@/types";
-import { VerificationBadge } from "@/components/VerificationBadge";
-import { getVerificationLevel } from "@/lib/verification";
 import { haversineDistance } from "@/lib/geo";
 import { cn } from "@/lib/utils";
 import { useLocale } from "@/lib/locale-context";
 import type { TranslationKey } from "@/lib/translations";
 import { getTeacherImageUrl, shouldUseUnoptimizedImage } from "@/lib/images";
 import { PriceDisplay } from "@/components/PriceDisplay";
+import { TeacherBadgePill } from "@/components/TeacherBadgePill";
+import { getCompactTeacherBadges } from "@/lib/teachers/badges";
 
 function formatTeaching(teacher: Teacher, t: (k: TranslationKey) => string) {
   switch (teacher.teachingMode) {
@@ -58,12 +58,14 @@ export function HeroTeacherPreviewCards({
     >
       <div className="relative min-h-[300px] sm:min-h-[320px]">
         {stack.map((teacher, idx) => {
-          const lvl = getVerificationLevel({
-            plan: teacher.profilePlan,
-            identity_verified: teacher.identityVerified,
-            diploma_verified: teacher.diplomaVerified,
-            is_verified: teacher.isVerified,
-            verification_level: teacher.verificationLevel ?? null,
+          const badges = getCompactTeacherBadges({
+            teacherId: teacher.id,
+            identityVerified: teacher.identityVerified,
+            identityStatus: teacher.identityStatus,
+            stripeIdentityStatus: teacher.stripeIdentityStatus,
+            diplomaVerified: teacher.diplomaVerified,
+            profilePlan: teacher.profilePlan,
+            reviewCount: teacher.reviews,
           });
           const distKm =
             geo && teacher.location?.lat != null && teacher.location?.lng != null
@@ -130,14 +132,18 @@ export function HeroTeacherPreviewCards({
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="truncate font-semibold text-[#2C2C2A]">{teacher.name}</span>
-                      <VerificationBadge level={lvl} size="sm" showLabel={false} className="scale-90" />
+                      {badges.slice(0, 1).map((badge) => (
+                        <TeacherBadgePill key={badge.id} badge={badge} compact />
+                      ))}
                     </div>
                     <p className="truncate text-xs text-neutral-700">{teacher.discipline}</p>
                     <div className="mt-2 flex flex-wrap items-center gap-2">
-                      <span className="inline-flex items-center gap-0.5 rounded-lg bg-[#FAFCFB] px-2 py-0.5 text-[11px] font-bold text-amber-600">
-                        <Star size={11} className="fill-amber-400 text-amber-400" aria-hidden /> {teacher.rating}
-                        <span className="font-medium text-neutral-700">({teacher.reviews})</span>
-                      </span>
+                      {Number(teacher.reviews ?? 0) > 0 ? (
+                        <span className="inline-flex items-center gap-0.5 rounded-lg bg-[#FAFCFB] px-2 py-0.5 text-[11px] font-bold text-amber-600">
+                          <Star size={11} className="fill-amber-400 text-amber-400" aria-hidden /> {Number(teacher.rating).toFixed(1)}
+                          <span className="font-medium text-neutral-700">({teacher.reviews})</span>
+                        </span>
+                      ) : null}
                       <span className="text-[11px] font-bold text-teal-700">
                         <PriceDisplay
                           amount={Number(teacher.pricePerLesson)}

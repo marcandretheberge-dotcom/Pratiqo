@@ -3,14 +3,14 @@
 import Image from "next/image";
 import { MapPin, Star } from "lucide-react";
 import type { Teacher } from "@/types";
-import { VerificationBadge } from "@/components/VerificationBadge";
-import { getVerificationLevel } from "@/lib/verification";
 import { haversineDistance } from "@/lib/geo";
 import { cn } from "@/lib/utils";
 import { useLocale } from "@/lib/locale-context";
 import type { TranslationKey } from "@/lib/translations";
 import { getTeacherImageUrl, shouldUseUnoptimizedImage } from "@/lib/images";
 import { PriceDisplay } from "@/components/PriceDisplay";
+import { TeacherBadgePill } from "@/components/TeacherBadgePill";
+import { getCompactTeacherBadges } from "@/lib/teachers/badges";
 
 function landingCardFormatSummary(teacher: Teacher, t: (k: TranslationKey) => string) {
   const m = teacher.teachingMode;
@@ -57,12 +57,14 @@ export function LandingTeacherListingCard({
   onHoverChange?: (id: string | null) => void;
 }) {
   const { t } = useLocale();
-  const lvl = getVerificationLevel({
-    plan: teacher.profilePlan,
-    identity_verified: teacher.identityVerified,
-    diploma_verified: teacher.diplomaVerified,
-    is_verified: teacher.isVerified,
-    verification_level: teacher.verificationLevel ?? null,
+  const badges = getCompactTeacherBadges({
+    teacherId: teacher.id,
+    identityVerified: teacher.identityVerified,
+    identityStatus: teacher.identityStatus,
+    stripeIdentityStatus: teacher.stripeIdentityStatus,
+    diplomaVerified: teacher.diplomaVerified,
+    profilePlan: teacher.profilePlan,
+    reviewCount: teacher.reviews,
   });
   const distKm =
     geo && teacher.location?.lat != null && teacher.location?.lng != null
@@ -82,7 +84,6 @@ export function LandingTeacherListingCard({
     : t("availabilityHintGeneric");
 
   const photoUrl = getTeacherImageUrl(teacher.imageUrl, { width: 128, height: 128, quality: 72, format: "webp" });
-  const showVerifiedTag = lvl > 0;
   const neighborhoodHint = teacher.location?.neighborhood?.trim();
 
   const formatSummary = landingCardFormatSummary(teacher, t);
@@ -158,14 +159,11 @@ export function LandingTeacherListingCard({
                   <p className="truncate text-[15px] font-bold leading-tight tracking-tight text-[#2C2C2A]">
                     {teacher.name}
                   </p>
-                  <VerificationBadge level={lvl} size="sm" showLabel={false} className="shrink-0 scale-95" />
+                  {badges.map((badge) => (
+                    <TeacherBadgePill key={badge.id} badge={badge} compact className="shrink-0" />
+                  ))}
                 </div>
                 <p className="mt-0.5 truncate text-sm text-neutral-700">{teacher.discipline}</p>
-                {showVerifiedTag ? (
-                  <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-teal-800">
-                    {t("landingCardVerifiedTeacher")}
-                  </p>
-                ) : null}
                 {bioOneLine ? (
                   <p className="mt-1.5 line-clamp-1 text-xs leading-snug text-neutral-700">{bioOneLine}</p>
                 ) : null}
@@ -181,13 +179,15 @@ export function LandingTeacherListingCard({
                   </p>
                 ) : null}
               </div>
-              <span className="flex shrink-0 flex-col items-end gap-0.5 rounded-xl border border-[#F1EFE8] bg-[#FAFCFB] px-2 py-1.5 text-[12px] font-bold tabular-nums sm:flex-row sm:items-center sm:gap-1">
-                <span className="flex items-center gap-0.5 text-[#CA9A06]">
-                  <Star size={14} fill="#F4B400" className="text-[#F4B400]" strokeWidth={2} aria-hidden />
-                  <span>{teacher.rating}</span>
+              {Number(teacher.reviews ?? 0) > 0 ? (
+                <span className="flex shrink-0 flex-col items-end gap-0.5 rounded-xl border border-[#F1EFE8] bg-[#FAFCFB] px-2 py-1.5 text-[12px] font-bold tabular-nums sm:flex-row sm:items-center sm:gap-1">
+                  <span className="flex items-center gap-0.5 text-[#CA9A06]">
+                    <Star size={14} fill="#F4B400" className="text-[#F4B400]" strokeWidth={2} aria-hidden />
+                    <span>{Number(teacher.rating).toFixed(1)}</span>
+                  </span>
+                  <span className="text-[10px] font-normal text-neutral-700 sm:text-[11px]">({teacher.reviews})</span>
                 </span>
-                <span className="text-[10px] font-normal text-neutral-700 sm:text-[11px]">({teacher.reviews})</span>
-              </span>
+              ) : null}
             </div>
 
             <div className="mt-3 flex items-start justify-between gap-3 border-t border-[#EFECE6] pt-3">

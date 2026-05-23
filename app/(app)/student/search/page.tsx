@@ -13,8 +13,6 @@ import { fetchTeacherDisciplinesMap, mergeTeachersWithDisciplines } from "../../
 import { teacherRowToTeacher, type TeacherRow } from "../../../../lib/teacherMapper";
 import { TEACHERS_LIST_SELECT, TEACHERS_PUBLIC_TABLE } from "../../../../lib/supabase/queries";
 import { TeacherAvatar } from "../../../../components/TeacherAvatar";
-import { getVerificationLevel } from "../../../../lib/verification";
-import { VerificationBadge } from "../../../../components/VerificationBadge";
 import type { City } from "../../../../lib/cities";
 import type { MapBounds } from "../../../../components/SearchMapView";
 import { useAuth } from "../../../../components/AuthProvider";
@@ -26,6 +24,9 @@ import { logSearchEvent } from "../../../../lib/searchAnalytics";
 import { LandingSearchHero } from "@/components/marketing/LandingSearchHero";
 import type { LandingFormatFilter } from "@/lib/landingTeacherFilter";
 import { PriceDisplay } from "@/components/PriceDisplay";
+import { TeacherBadgePill } from "@/components/TeacherBadgePill";
+import { getCompactTeacherBadges } from "@/lib/teachers/badges";
+import type { TranslationKey } from "@/lib/translations";
 
 const TeacherProfile = dynamic(
   () => import("../../../../components/TeacherProfile").then((m) => m.TeacherProfile),
@@ -48,6 +49,8 @@ const SearchMapView = dynamic(
   },
 );
 
+type SearchRadius = 5 | 10 | 25 | 50 | "all" | "online";
+
 export default function StudentSearchPage() {
   const router = useRouter();
   const { t } = useLocale();
@@ -57,7 +60,7 @@ export default function StudentSearchPage() {
   const [loadingTeachers, setLoadingTeachers] = useState(true);
   const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(null);
   const [geoLoading, setGeoLoading] = useState(false);
-  const [radius, setRadius] = useState<5 | 10 | 25 | 50 | "all" | "online">("all");
+  const [radius, setRadius] = useState<SearchRadius>("all");
   const [sortMode, setSortMode] = useState<"relevance" | "nearest" | "trusted">("relevance");
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
   const [mapBounds, setMapBounds] = useState<MapBounds | null>(null);
@@ -290,7 +293,7 @@ export default function StudentSearchPage() {
                 <button
                   key={String(opt.v)}
                   type="button"
-                  onClick={() => setRadius(opt.v as any)}
+                  onClick={() => setRadius(opt.v as SearchRadius)}
                   className={cn(
                     "h-11 rounded-full border px-4 text-sm font-semibold shadow-sm transition-colors",
                     radius === opt.v
@@ -512,16 +515,18 @@ function TeacherCard({
   teacher: Teacher;
   distanceKm: number | null;
   onOpen: () => void;
-  t: (key: any) => string;
+  t: (key: TranslationKey) => string;
 }) {
   const availability = teacher.availability?.[0] ? String(teacher.availability[0]) : null;
 
-  const verificationLevel = getVerificationLevel({
-    plan: teacher.profilePlan,
-    identity_verified: teacher.identityVerified,
-    diploma_verified: teacher.diplomaVerified,
-    is_verified: teacher.isVerified,
-    verification_level: teacher.verificationLevel ?? null,
+  const badges = getCompactTeacherBadges({
+    teacherId: teacher.id,
+    identityVerified: teacher.identityVerified,
+    identityStatus: teacher.identityStatus,
+    stripeIdentityStatus: teacher.stripeIdentityStatus,
+    diplomaVerified: teacher.diplomaVerified,
+    profilePlan: teacher.profilePlan,
+    reviewCount: teacher.reviews,
   });
 
   return (
@@ -541,14 +546,18 @@ function TeacherCard({
           <div className="min-w-0">
             <div className="flex items-center gap-2 min-w-0">
               <p className="truncate font-semibold text-[#2C2C2A]">{teacher.name}</p>
-              <VerificationBadge level={verificationLevel} size="sm" showLabel={false} className="shrink-0 scale-90" />
+              {badges.map((badge) => (
+                <TeacherBadgePill key={badge.id} badge={badge} compact className="shrink-0" />
+              ))}
             </div>
             <p className="truncate text-xs text-[#6B6A65]">{teacher.discipline}</p>
           </div>
         </div>
-        <span className="shrink-0 rounded-lg bg-white px-2 py-1 text-[11px] font-bold text-[#2C2C2A] border border-[#E8E6DF]">
-          ★ {teacher.rating}
-        </span>
+        {Number(teacher.reviews ?? 0) > 0 ? (
+          <span className="shrink-0 rounded-lg bg-white px-2 py-1 text-[11px] font-bold text-[#2C2C2A] border border-[#E8E6DF]">
+            ★ {Number(teacher.rating).toFixed(1)}
+          </span>
+        ) : null}
       </div>
 
       <div className="mt-3 flex items-center justify-between border-t border-[#E8E6DF] pt-3 text-xs text-[#6B6A65]">

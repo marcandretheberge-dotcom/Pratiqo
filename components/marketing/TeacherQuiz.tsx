@@ -14,8 +14,6 @@ import { useLocale } from "@/lib/locale-context";
 import { getSupabaseClient } from "@/lib/supabase";
 import { TEACHER_QUIZ_SELECT, TEACHERS_PUBLIC_TABLE } from "@/lib/supabase/queries";
 import { cn } from "@/lib/utils";
-import { VerificationBadge } from "@/components/VerificationBadge";
-import type { VerificationLevel } from "@/lib/verification";
 import { useAuth } from "@/components/AuthProvider";
 import { teacherStudentPrefScoreFromQuizRow, type QuizTeacherMatchRow, type StudentLocationPrefs } from "@/lib/studentLocationSearch";
 import { filterTeacherPool } from "@/lib/teacherSearchEngine";
@@ -25,6 +23,8 @@ import { teacherRowToTeacher, type TeacherRow } from "@/lib/teacherMapper";
 import { logSearchEvent } from "@/lib/searchAnalytics";
 import type { TranslationKey } from "@/lib/i18n/types";
 import { PriceDisplay } from "@/components/PriceDisplay";
+import { TeacherBadgePill } from "@/components/TeacherBadgePill";
+import { getCompactTeacherBadges } from "@/lib/teachers/badges";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 type QuizAnswers = {
@@ -943,7 +943,13 @@ function MatchCard({
     .map((x) => x[0]?.toUpperCase() ?? "")
     .join("");
 
-  const verificationLevel = (teacher.verification_level ?? 0) as VerificationLevel;
+  const badges = getCompactTeacherBadges({
+    teacherId: teacher.id,
+    identityVerified: teacher.identity_verified,
+    identityStatus: teacher.identity_status,
+    diplomaVerified: teacher.diploma_verified,
+    reviewCount: teacher.reviews,
+  });
   const profilePath = `/teacher/profile/${encodeURIComponent(teacher.id)}`;
   const bookHref = isLoggedIn ? profilePath : `/login?next=${encodeURIComponent(profilePath)}`;
 
@@ -979,11 +985,11 @@ function MatchCard({
             {initials}
           </div>
         )}
-        {verificationLevel > 0 && (
+        {badges[0] ? (
           <span className="absolute -bottom-0.5 -right-0.5">
-            <VerificationBadge level={verificationLevel} size="sm" showLabel={false} />
+            <TeacherBadgePill badge={badges[0]} compact className="shadow-sm" />
           </span>
-        )}
+        ) : null}
       </div>
 
       {/* Info */}
@@ -993,7 +999,7 @@ function MatchCard({
             <p className="font-bold text-sm text-[#2C2C2A] truncate">{teacher.name}</p>
             <p className="text-[11px] text-neutral-700 truncate">{teacher.discipline}</p>
           </div>
-          {teacher.rating != null && teacher.rating > 0 && (
+          {teacher.rating != null && teacher.rating > 0 && teacher.reviews != null && teacher.reviews > 0 && (
             <span className="shrink-0 flex items-center gap-0.5 text-[11px] font-bold text-[#2C2C2A]">
               <Star size={10} className="fill-amber-400 text-amber-400" />
               {teacher.rating.toFixed(1)}
