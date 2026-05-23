@@ -52,12 +52,12 @@ export const VERIFICATION_LEVELS: Record<VerificationLevel, VerificationInfo> = 
   },
   4: {
     level: 4,
-    label: "Pro Vérifié Pratiqo",
+    label: "Pratiqo Pro",
     badge: "⭐",
     color: "#FFFFFF",
     bgColor: "#1F5A54",
-    description: "Niveau maximum de confiance",
-    perks: ["Position #1 recherche", "Programme Platine", "Ristourne annuelle"],
+    description: "Plan Pro actif",
+    perks: ["Badge Pro visible", "Commission réduite", "Outils avancés"],
   },
 };
 
