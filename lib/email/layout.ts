@@ -11,6 +11,26 @@ export function appBaseUrl(): string {
   );
 }
 
+/**
+ * Absolute, production-canonical URL for the Pratiqo logo used in every
+ * transactional email. Anchored to {@link SITE_URL} (not `appBaseUrl()`) so
+ * that preview/staging deployments still emit an image src Gmail can fetch —
+ * preview hosts are usually not publicly reachable by Gmail's image proxy.
+ *
+ * The asset must be a real PNG file present at:
+ *   public/images/email/pratiqo-email-logo.png
+ *
+ * Never reference an SVG here: Gmail strips SVG from the rendered DOM, and
+ * many other clients (Outlook, Apple Mail on iOS <14) silently drop them too.
+ */
+export const EMAIL_LOGO_PATH = "/images/email/pratiqo-email-logo.png" as const;
+export const EMAIL_LOGO_ALT = "Pratiqo" as const;
+export const EMAIL_LOGO_DISPLAY_WIDTH = 140 as const;
+
+export function emailLogoUrl(): string {
+  return `${SITE_URL}${EMAIL_LOGO_PATH}`;
+}
+
 export function escapeHtml(s: string): string {
   return s.replace(/[&<>"']/g, (c) => {
     switch (c) {
@@ -68,18 +88,24 @@ export function buildEmail(opts: TemplateOpts): string {
              cellspacing="0" cellpadding="0">
 
         <!-- LOGO -->
+        <!-- Email-safe header logo. PNG only (Gmail strips SVG), absolute
+             HTTPS URL anchored to SITE_URL so preview deployments do not
+             emit a host Gmail cannot reach. Wrapped in a marketing-site
+             link via appBaseUrl() so dev/preview click-throughs still work,
+             without affecting the image src. The alt text "Pratiqo" gives
+             a readable brand fallback when images are blocked. -->
         <tr>
           <td style="padding-bottom:20px;">
             <table cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;">
               <tr>
                 <td align="center">
-                  <a href="${base}" style="text-decoration:none;display:block;">
+                  <a href="${base}" style="text-decoration:none;display:block;color:#2D7B72;font-weight:700;font-size:20px;letter-spacing:-0.3px;">
                     <img
-                      src="${SITE_URL}/logo-email.png"
-                      alt="Pratiqo"
-                      width="160"
-                      height="48"
-                      style="display:block;border:0;max-width:160px;height:auto;"
+                      src="${emailLogoUrl()}"
+                      alt="${EMAIL_LOGO_ALT}"
+                      width="${EMAIL_LOGO_DISPLAY_WIDTH}"
+                      height="auto"
+                      style="display:block;border:0;outline:none;text-decoration:none;max-width:${EMAIL_LOGO_DISPLAY_WIDTH}px;height:auto;margin:0 auto;"
                     />
                   </a>
                 </td>
