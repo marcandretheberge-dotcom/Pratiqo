@@ -55,6 +55,90 @@ test("booking subject lines differ by locale", () => {
   assert.doesNotMatch(fr.postClassReview.community, /\$1|1 \$/);
 });
 
+test("decline-student subject differs by locale", () => {
+  const fr = getBookingEmailCopy("fr");
+  const en = getBookingEmailCopy("en");
+  const es = getBookingEmailCopy("es");
+
+  assert.match(fr.declinedStudent.subject("Marie"), /Réservation refusée — Marie/);
+  assert.match(en.declinedStudent.subject("Marie"), /Booking declined — Marie/);
+  assert.match(es.declinedStudent.subject("Marie"), /Reserva rechazada — Marie/);
+});
+
+test("cancellation-student subject (teacher cancelled) differs by locale", () => {
+  const fr = getBookingEmailCopy("fr");
+  const en = getBookingEmailCopy("en");
+  const es = getBookingEmailCopy("es");
+
+  assert.match(fr.cancelledStudent.subject("Marie"), /Cours annulé — Marie/);
+  assert.match(en.cancelledStudent.subject("Marie"), /Lesson cancelled — Marie/);
+  assert.match(es.cancelledStudent.subject("Marie"), /Clase cancelada — Marie/);
+});
+
+test("cancellation-teacher subject (student cancelled) differs by locale", () => {
+  const fr = getBookingEmailCopy("fr");
+  const en = getBookingEmailCopy("en");
+  const es = getBookingEmailCopy("es");
+
+  assert.match(fr.cancelledTeacher.subject("Alex"), /Cours annulé — Alex/);
+  assert.match(en.cancelledTeacher.subject("Alex"), /Lesson cancelled — Alex/);
+  assert.match(es.cancelledTeacher.subject("Alex"), /Clase cancelada — Alex/);
+});
+
+// The cancel route stamps a refund plan into bookings.refund_status but does
+// NOT execute Stripe refunds today (see TODO in cancel/route.ts). The email
+// copy must therefore stay neutral about refunds. This regression check
+// guards against well-meaning copy edits that would promise money back.
+test("decline and cancellation copy never promises a refund", () => {
+  const REFUND_PROMISE = /\b(refund|remboursement|reembolso|reembolsado|refunded)\b/i;
+
+  for (const locale of ["fr", "en", "es"] as const) {
+    const copy = getBookingEmailCopy(locale);
+
+    const declineBlob = [
+      copy.declinedStudent.subject("Marie"),
+      copy.declinedStudent.heroTitle,
+      copy.declinedStudent.heroSubtitle("Marie"),
+      copy.declinedStudent.intro("Alex", "Marie"),
+      copy.declinedStudent.reassurance,
+      copy.declinedStudent.paymentNote,
+      copy.declinedStudent.nextStep,
+      copy.declinedStudent.cta,
+    ].join("\n");
+
+    const cancelStudentBlob = [
+      copy.cancelledStudent.subject("Marie"),
+      copy.cancelledStudent.heroTitle,
+      copy.cancelledStudent.heroSubtitle("Marie", "1 jan", "10:00"),
+      copy.cancelledStudent.intro("Alex", "Marie"),
+      copy.cancelledStudent.paymentNote,
+      copy.cancelledStudent.nextStep,
+      copy.cancelledStudent.cta,
+    ].join("\n");
+
+    const cancelTeacherBlob = [
+      copy.cancelledTeacher.subject("Alex"),
+      copy.cancelledTeacher.heroTitle,
+      copy.cancelledTeacher.heroSubtitle("Alex", "1 jan", "10:00"),
+      copy.cancelledTeacher.intro("Marie", "Alex"),
+      copy.cancelledTeacher.slotNote,
+      copy.cancelledTeacher.cta,
+    ].join("\n");
+
+    assert.doesNotMatch(declineBlob, REFUND_PROMISE, `decline copy [${locale}] promises a refund`);
+    assert.doesNotMatch(
+      cancelStudentBlob,
+      REFUND_PROMISE,
+      `cancel-student copy [${locale}] promises a refund`,
+    );
+    assert.doesNotMatch(
+      cancelTeacherBlob,
+      REFUND_PROMISE,
+      `cancel-teacher copy [${locale}] promises a refund`,
+    );
+  }
+});
+
 async function run() {
   for (const { name, fn } of tests) {
     await fn();

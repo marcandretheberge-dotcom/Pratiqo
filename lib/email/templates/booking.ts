@@ -258,6 +258,115 @@ export async function sendLessonReminderStudent(
   });
 }
 
+export async function sendBookingDeclinedStudent(
+  opts: {
+    email: string;
+    studentName: string;
+    teacherName: string;
+  } & LocaleOpts,
+): Promise<boolean> {
+  const locale = resolveEmailLocaleFromOptional(opts.locale);
+  const copy = getBookingEmailCopy(locale).declinedStudent;
+  const base = appBaseUrl();
+  return send({
+    to: opts.email,
+    subject: copy.subject(opts.teacherName),
+    html: buildEmail({
+      locale,
+      heroEmoji: "ℹ️",
+      heroTitle: copy.heroTitle,
+      heroSubtitle: copy.heroSubtitle(escapeHtml(opts.teacherName)),
+      bodyHtml: `
+        <p>${copy.intro(escapeHtml(opts.studentName), escapeHtml(opts.teacherName))}</p>
+        <p>${copy.reassurance}</p>
+        ${tealBox(copy.paymentNote)}
+        <p>${copy.nextStep}</p>
+      `,
+      ctaText: copy.cta,
+      ctaUrl: `${base}/student/search`,
+    }),
+  });
+}
+
+export async function sendBookingCancelledStudent(
+  opts: {
+    email: string;
+    studentName: string;
+    teacherName: string;
+    dateLabel: string;
+    timeLabel: string;
+  } & LocaleOpts,
+): Promise<boolean> {
+  const locale = resolveEmailLocaleFromOptional(opts.locale);
+  const copy = getBookingEmailCopy(locale).cancelledStudent;
+  const base = appBaseUrl();
+  return send({
+    to: opts.email,
+    subject: copy.subject(opts.teacherName),
+    html: buildEmail({
+      locale,
+      heroEmoji: "🛑",
+      heroTitle: copy.heroTitle,
+      heroSubtitle: copy.heroSubtitle(
+        escapeHtml(opts.teacherName),
+        escapeHtml(opts.dateLabel),
+        escapeHtml(opts.timeLabel),
+      ),
+      bodyHtml: `
+        <p>${copy.intro(escapeHtml(opts.studentName), escapeHtml(opts.teacherName))}</p>
+        ${infoTable([
+          [copy.labels.teacher, opts.teacherName],
+          [copy.labels.date, opts.dateLabel],
+          [copy.labels.time, opts.timeLabel],
+        ])}
+        ${tealBox(copy.paymentNote)}
+        <p>${copy.nextStep}</p>
+      `,
+      ctaText: copy.cta,
+      ctaUrl: `${base}/student/payments`,
+    }),
+  });
+}
+
+export async function sendBookingCancelledTeacherEmail(
+  opts: {
+    email: string;
+    teacherName: string;
+    studentName: string;
+    dateLabel: string;
+    timeLabel: string;
+  } & LocaleOpts,
+): Promise<boolean> {
+  const locale = resolveEmailLocaleFromOptional(opts.locale);
+  const copy = getBookingEmailCopy(locale).cancelledTeacher;
+  const base = appBaseUrl();
+  return send({
+    to: opts.email,
+    subject: copy.subject(opts.studentName),
+    html: buildEmail({
+      locale,
+      heroEmoji: "🛑",
+      heroTitle: copy.heroTitle,
+      heroSubtitle: copy.heroSubtitle(
+        escapeHtml(opts.studentName),
+        escapeHtml(opts.dateLabel),
+        escapeHtml(opts.timeLabel),
+      ),
+      bodyHtml: `
+        <p>${copy.intro(escapeHtml(opts.teacherName), escapeHtml(opts.studentName))}</p>
+        ${infoTable([
+          [copy.labels.student, opts.studentName],
+          [copy.labels.date, opts.dateLabel],
+          [copy.labels.time, opts.timeLabel],
+        ])}
+        ${tealBox(copy.slotNote)}
+      `,
+      ctaText: copy.cta,
+      ctaUrl: `${base}/teacher/schedule`,
+    }),
+  });
+}
+
 export async function sendLessonReminderTeacher(
   opts: {
     email: string;

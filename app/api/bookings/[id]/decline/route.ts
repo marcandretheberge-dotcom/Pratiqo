@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { notifyBookingDeclined } from "@/lib/bookings/cancellationNotifications";
 
 export const runtime = "nodejs";
 
@@ -45,7 +46,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const admin = getSupabaseAdmin();
   const { data: booking, error: bookingErr } = await admin
     .from("bookings")
-    .select("id, teacher_id, status")
+    .select("id, teacher_id, student_id, status")
     .eq("id", bookingId)
     .maybeSingle();
 
@@ -94,6 +95,15 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   if (!updatedRows || updatedRows.length === 0) {
     return NextResponse.json({ error: "Booking status changed - try refreshing." }, { status: 409 });
   }
+
+  // The status transition already succeeded; failing to send the decline
+  // email must not roll the booking back. notifyBookingDeclined handles
+  // its own errors via console.error per the existing email philosophy.
+  await notifyBookingDeclined(admin, {
+    id: bookingId,
+    teacher_id: booking.teacher_id as string,
+    student_id: booking.student_id as string,
+  });
 
   return NextResponse.json({ ok: true });
 }

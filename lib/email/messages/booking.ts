@@ -110,6 +110,46 @@ type ReminderTeacherCopy = {
   cta: string;
 };
 
+type BookingDeclinedStudentCopy = {
+  subject: (teacherName: string) => string;
+  heroTitle: string;
+  heroSubtitle: (teacherName: string) => string;
+  intro: (studentName: string, teacherName: string) => string;
+  reassurance: string;
+  paymentNote: string;
+  nextStep: string;
+  cta: string;
+};
+
+type BookingCancelledStudentCopy = {
+  subject: (teacherName: string) => string;
+  heroTitle: string;
+  heroSubtitle: (teacherName: string, date: string, time: string) => string;
+  intro: (studentName: string, teacherName: string) => string;
+  labels: {
+    teacher: string;
+    date: string;
+    time: string;
+  };
+  paymentNote: string;
+  nextStep: string;
+  cta: string;
+};
+
+type BookingCancelledTeacherCopy = {
+  subject: (studentName: string) => string;
+  heroTitle: string;
+  heroSubtitle: (studentName: string, date: string, time: string) => string;
+  intro: (teacherName: string, studentName: string) => string;
+  labels: {
+    student: string;
+    date: string;
+    time: string;
+  };
+  slotNote: string;
+  cta: string;
+};
+
 type LessonPaymentReceiptCopy = {
   subject: (receiptNumber: string) => string;
   heroTitle: string;
@@ -143,6 +183,9 @@ export type BookingEmailCopy = {
   reminderStudent: ReminderStudentCopy;
   reminderTeacher: ReminderTeacherCopy;
   lessonPaymentReceipt: LessonPaymentReceiptCopy;
+  declinedStudent: BookingDeclinedStudentCopy;
+  cancelledStudent: BookingCancelledStudentCopy;
+  cancelledTeacher: BookingCancelledTeacherCopy;
 };
 
 const BOOKING_EMAIL_COPY: Record<EmailLocale, BookingEmailCopy> = {
@@ -268,6 +311,50 @@ const BOOKING_EMAIL_COPY: Record<EmailLocale, BookingEmailCopy> = {
       cta: "Ouvrir le reçu Stripe",
       thanks: "Merci de faire confiance à Pratiqo inc.",
     },
+    declinedStudent: {
+      subject: (teacherName) => `Réservation refusée — ${teacherName}`,
+      heroTitle: "Demande non acceptée",
+      heroSubtitle: (teacherName) => `${teacherName} n'a pas pu confirmer votre cours.`,
+      intro: (studentName, teacherName) =>
+        `Bonjour ${studentName}, ${teacherName} n'a pas pu accepter votre demande de cours.`,
+      reassurance:
+        "Cela peut arriver — plage horaire qui ne convenait plus, conflit d'agenda, ou simplement l'agenda du professeur qui s'est rempli.",
+      paymentNote: "Si un paiement est concerné, vous pouvez suivre son état dans votre espace.",
+      nextStep:
+        "Il y a d'autres super profs sur Pratiqo qui pourraient correspondre à votre objectif. Lancez une nouvelle recherche pour trouver un cours adapté.",
+      cta: "Trouver un autre professeur",
+    },
+    cancelledStudent: {
+      subject: (teacherName) => `Cours annulé — ${teacherName}`,
+      heroTitle: "Cours annulé",
+      heroSubtitle: (teacherName, date, time) => `${teacherName} · ${date} à ${time}`,
+      intro: (studentName, teacherName) =>
+        `Bonjour ${studentName}, ${teacherName} a dû annuler le cours suivant.`,
+      labels: {
+        teacher: "Professeur",
+        date: "Date",
+        time: "Heure",
+      },
+      paymentNote: "Si un paiement est concerné, vous pouvez suivre son état dans votre espace.",
+      nextStep:
+        "Vous pouvez réserver un autre créneau avec ce professeur depuis son profil, ou explorer d'autres enseignants qui correspondent à votre objectif.",
+      cta: "Voir mes paiements",
+    },
+    cancelledTeacher: {
+      subject: (studentName) => `Cours annulé — ${studentName}`,
+      heroTitle: "Cours annulé par l'élève",
+      heroSubtitle: (studentName, date, time) => `${studentName} · ${date} à ${time}`,
+      intro: (teacherName, studentName) =>
+        `Bonjour ${teacherName}, ${studentName} a annulé le cours suivant.`,
+      labels: {
+        student: "Élève",
+        date: "Date",
+        time: "Heure",
+      },
+      slotNote:
+        "Ce créneau redevient disponible pour d'autres élèves dès que vos disponibilités le permettent.",
+      cta: "Voir mon horaire",
+    },
   },
   en: {
     confirmedStudent: {
@@ -391,6 +478,50 @@ const BOOKING_EMAIL_COPY: Record<EmailLocale, BookingEmailCopy> = {
       cta: "Open Stripe receipt",
       thanks: "Thank you for trusting Pratiqo inc.",
     },
+    declinedStudent: {
+      subject: (teacherName) => `Booking declined — ${teacherName}`,
+      heroTitle: "Request not accepted",
+      heroSubtitle: (teacherName) => `${teacherName} couldn't confirm your lesson.`,
+      intro: (studentName, teacherName) =>
+        `Hi ${studentName}, ${teacherName} was unable to accept your lesson request.`,
+      reassurance:
+        "It happens — a time slot that no longer worked, a scheduling conflict, or simply a teacher whose calendar has filled up.",
+      paymentNote: "If a payment is involved, you can follow its status in your account.",
+      nextStep:
+        "There are other great teachers on Pratiqo who could match your goal. Start a new search to find a lesson that fits.",
+      cta: "Find another teacher",
+    },
+    cancelledStudent: {
+      subject: (teacherName) => `Lesson cancelled — ${teacherName}`,
+      heroTitle: "Lesson cancelled",
+      heroSubtitle: (teacherName, date, time) => `${teacherName} · ${date} at ${time}`,
+      intro: (studentName, teacherName) =>
+        `Hi ${studentName}, ${teacherName} had to cancel the following lesson.`,
+      labels: {
+        teacher: "Teacher",
+        date: "Date",
+        time: "Time",
+      },
+      paymentNote: "If a payment is involved, you can follow its status in your account.",
+      nextStep:
+        "You can book another time slot with this teacher from their profile, or explore other teachers who match your goal.",
+      cta: "View my payments",
+    },
+    cancelledTeacher: {
+      subject: (studentName) => `Lesson cancelled — ${studentName}`,
+      heroTitle: "Lesson cancelled by the student",
+      heroSubtitle: (studentName, date, time) => `${studentName} · ${date} at ${time}`,
+      intro: (teacherName, studentName) =>
+        `Hi ${teacherName}, ${studentName} cancelled the following lesson.`,
+      labels: {
+        student: "Student",
+        date: "Date",
+        time: "Time",
+      },
+      slotNote:
+        "This slot becomes available again for other students as soon as your schedule allows.",
+      cta: "View my schedule",
+    },
   },
   es: {
     confirmedStudent: {
@@ -513,6 +644,50 @@ const BOOKING_EMAIL_COPY: Record<EmailLocale, BookingEmailCopy> = {
       stripeReceipt: "Recibo de Stripe",
       cta: "Abrir recibo de Stripe",
       thanks: "Gracias por confiar en Pratiqo inc.",
+    },
+    declinedStudent: {
+      subject: (teacherName) => `Reserva rechazada — ${teacherName}`,
+      heroTitle: "Solicitud no aceptada",
+      heroSubtitle: (teacherName) => `${teacherName} no pudo confirmar tu clase.`,
+      intro: (studentName, teacherName) =>
+        `Hola ${studentName}, ${teacherName} no pudo aceptar tu solicitud de clase.`,
+      reassurance:
+        "Puede pasar — un horario que ya no funcionaba, un conflicto de agenda o simplemente la agenda del profesor que se llenó.",
+      paymentNote: "Si hay un pago relacionado, puedes seguir su estado en tu cuenta.",
+      nextStep:
+        "Hay otros excelentes profesores en Pratiqo que podrían encajar con tu objetivo. Iniciá una nueva búsqueda para encontrar la clase adecuada.",
+      cta: "Buscar otro profesor",
+    },
+    cancelledStudent: {
+      subject: (teacherName) => `Clase cancelada — ${teacherName}`,
+      heroTitle: "Clase cancelada",
+      heroSubtitle: (teacherName, date, time) => `${teacherName} · ${date} a las ${time}`,
+      intro: (studentName, teacherName) =>
+        `Hola ${studentName}, ${teacherName} tuvo que cancelar la siguiente clase.`,
+      labels: {
+        teacher: "Profesor",
+        date: "Fecha",
+        time: "Hora",
+      },
+      paymentNote: "Si hay un pago relacionado, puedes seguir su estado en tu cuenta.",
+      nextStep:
+        "Podés reservar otro horario con este profesor desde su perfil, o explorar otros profesores que encajen con tu objetivo.",
+      cta: "Ver mis pagos",
+    },
+    cancelledTeacher: {
+      subject: (studentName) => `Clase cancelada — ${studentName}`,
+      heroTitle: "Clase cancelada por el estudiante",
+      heroSubtitle: (studentName, date, time) => `${studentName} · ${date} a las ${time}`,
+      intro: (teacherName, studentName) =>
+        `Hola ${teacherName}, ${studentName} canceló la siguiente clase.`,
+      labels: {
+        student: "Estudiante",
+        date: "Fecha",
+        time: "Hora",
+      },
+      slotNote:
+        "Este horario vuelve a estar disponible para otros estudiantes apenas tu agenda lo permita.",
+      cta: "Ver mi agenda",
     },
   },
 };
