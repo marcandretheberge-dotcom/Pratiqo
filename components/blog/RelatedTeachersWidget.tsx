@@ -12,6 +12,7 @@ import type { Discipline } from "@/types";
 import { PriceDisplay } from "@/components/PriceDisplay";
 import { TeacherBadgePill } from "@/components/TeacherBadgePill";
 import { getCompactTeacherBadges } from "@/lib/teachers/badges";
+import { publicFirstNameWithInitial } from "@/lib/identity/displayName";
 
 type TeacherSnippet = {
   id: string;
@@ -141,7 +142,7 @@ export function RelatedTeachersWidget({ category }: { category: string }) {
                 ) : null}
               </div>
               <div className="min-w-0">
-                <p className="font-bold text-[#2C2C2A] text-sm truncate">{teacher.name}</p>
+                <p className="font-bold text-[#2C2C2A] text-sm truncate">{publicFirstNameWithInitial(teacher.name)}</p>
                 <p className="text-[11px] text-[#6B6760] truncate">{teacher.discipline}</p>
               </div>
             </div>

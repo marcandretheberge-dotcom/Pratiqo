@@ -6,6 +6,7 @@ import { getSupabaseClient } from "../../../lib/supabase";
 import { teacherRowToTeacher, type TeacherRow } from "../../../lib/teacherMapper";
 import { TEACHERS_PUBLIC_TABLE } from "../../../lib/supabase/queries";
 import { BookingModal } from "../../../components/BookingModal";
+import { publicFirstNameWithInitial } from "@/lib/identity/displayName";
 import { cn } from "../../../lib/utils";
 import { useLocale } from "../../../lib/locale-context";
 import { useSearchParams } from "next/navigation";
@@ -101,7 +102,7 @@ export default function BookingPage() {
                 />
                 <div className="min-w-0">
                   <span className="ds-pill">{teacher.category}</span>
-                  <p className="text-[16px] font-medium text-[var(--p-text)] truncate mt-2">{teacher.name}</p>
+                  <p className="text-[16px] font-medium text-[var(--p-text)] truncate mt-2">{publicFirstNameWithInitial(teacher.name)}</p>
                   <p className="text-[13px] text-[var(--p-text-muted)] truncate">{teacher.discipline}</p>
                 </div>
               </div>

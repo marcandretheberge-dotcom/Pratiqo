@@ -34,6 +34,7 @@ import { TeacherAvatar } from "./TeacherAvatar";
 import { calculateIntroSessionPriceCents } from "@/lib/introSession";
 import { PriceDisplay } from "@/components/PriceDisplay";
 import { sanitizePublicTeacherBio } from "@/lib/teacherProfile/sanitizePublicBio";
+import { publicFirstNameWithInitial } from "@/lib/identity/displayName";
 import { TeacherBadgePill } from "@/components/TeacherBadgePill";
 import {
   buildTeacherBadges,
@@ -323,6 +324,12 @@ export function TeacherProfile({
     [teacher.bio, locale],
   );
 
+  // Public display name: first name + last-name initial. Stored
+  // `teacher.name` is unchanged; this is presentation-only and only used
+  // on the public profile (receipts/admin/emails continue to show the
+  // full name via `teacher.name`).
+  const publicName = useMemo(() => publicFirstNameWithInitial(teacher.name), [teacher.name]);
+
   const [publicCredentials, setPublicCredentials] = useState<TeacherCredential[]>([]);
   useEffect(() => {
     let cancelled = false;
@@ -515,7 +522,7 @@ export function TeacherProfile({
                       </span>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
-                      <h2 id="teacher-profile-modal-title" className="text-xl lg:text-2xl font-bold text-slate-900 leading-tight">{teacher.name}</h2>
+                      <h2 id="teacher-profile-modal-title" className="text-xl lg:text-2xl font-bold text-slate-900 leading-tight">{publicName}</h2>
                       {headlineBadges.map((badge) => (
                         <TeacherBadgePill key={badge.id} badge={badge} compact />
                       ))}
@@ -575,7 +582,7 @@ export function TeacherProfile({
                   <p className="text-[10px] font-bold uppercase tracking-widest text-slate-600">{t("aboutSection")}</p>
                   <p className="text-slate-600 leading-relaxed text-sm">
                     {sanitizedBio.content ||
-                      `${teacher.name} est un(e) expert(e) en ${teacher.discipline.toLowerCase()}. Sa méthode d'enseignement repose sur la pratique immédiate et l'adaptation aux objectifs de chaque élève.`}
+                      `${publicName} est un(e) expert(e) en ${teacher.discipline.toLowerCase()}. Sa méthode d'enseignement repose sur la pratique immédiate et l'adaptation aux objectifs de chaque élève.`}
                   </p>
                   {sanitizedBio.masked ? (
                     <p className="text-[11px] leading-snug text-slate-500">

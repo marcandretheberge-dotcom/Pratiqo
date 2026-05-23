@@ -7,6 +7,7 @@ import { MV_BARRIOS } from "../../../../lib/constants/cities";
 import { getSupabaseAdmin } from "../../../../lib/supabaseAdmin";
 import { haversineDistance } from "../../../../lib/geo";
 import { teacherRowToTeacher, type TeacherRow } from "../../../../lib/teacherMapper";
+import { publicFirstNameWithInitial } from "@/lib/identity/displayName";
 import { buildJobTitle, getTeacherTerm } from "../../../../lib/constants/vocabulary";
 import type { Teacher } from "../../../../types";
 import { CityMapSection } from "../../../../components/CityMapSection";
@@ -358,7 +359,7 @@ export default async function BarrioPage({
                           </div>
                         )}
                         <div className="min-w-0">
-                          <p className="font-semibold text-[#2C2C2A] truncate">{teacher.name}</p>
+                          <p className="font-semibold text-[#2C2C2A] truncate">{publicFirstNameWithInitial(teacher.name)}</p>
                           <p className="text-xs text-[#6B6760] truncate">
                             {getTeacherTerm(teacher.category ?? "", "es", "UY")} de {teacher.discipline}
                           </p>

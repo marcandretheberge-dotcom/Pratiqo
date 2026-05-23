@@ -8,6 +8,7 @@ import { findDisciplineBySlug, DISCIPLINE_CITY_PAIRS } from "@/lib/seo/disciplin
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { haversineDistance } from "@/lib/geo";
 import { teacherRowToTeacher, type TeacherRow } from "@/lib/teacherMapper";
+import { publicFirstNameWithInitial } from "@/lib/identity/displayName";
 import { LegalFooterLinks } from "@/components/LegalFooterLinks";
 import { CityLinksFooter } from "@/components/CityLinksFooter";
 import { FAQSchema } from "@/components/seo/FAQSchema";
@@ -337,7 +338,7 @@ export default async function DisciplineCityPage({
                             )}
                           </div>
                           <div className="min-w-0">
-                            <p className="truncate font-semibold text-sm text-[#2C2C2A]">{teacher.name}</p>
+                            <p className="truncate font-semibold text-sm text-[#2C2C2A]">{publicFirstNameWithInitial(teacher.name)}</p>
                             <p className="truncate text-xs text-[#6B6760]">{teacher.discipline}</p>
                           </div>
                         </div>
