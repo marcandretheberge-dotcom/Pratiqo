@@ -509,7 +509,10 @@ async function setUserPlanFromSubscription(subscription: Stripe.Subscription, fa
         .maybeSingle();
       const profName = (prof as { name?: string | null } | null)?.name ?? "Professeur";
       const profEmail = (prof as { email?: string | null } | null)?.email ?? null;
-      if (profEmail) await sendProUpgrade(profEmail, profName);
+      if (profEmail) {
+        const locale = await resolveEmailLocaleForUser(admin, userId);
+        await sendProUpgrade(profEmail, profName, locale);
+      }
     } catch (e) {
       console.error("[stripe/webhook] pro upgrade email failed", e);
     }
@@ -772,7 +775,8 @@ async function handleIdentityVerified(session: Stripe.Identity.VerificationSessi
     const profName = (prof as { name?: string | null } | null)?.name ?? "Professeur";
     console.log("[identity/verified] sending email to:", profEmail ?? "(no email found)");
     if (profEmail) {
-      await sendIdentityVerified(profEmail, profName);
+      const locale = await resolveEmailLocaleForUser(admin, userId);
+      await sendIdentityVerified(profEmail, profName, locale);
       console.log("[identity/verified] email sent");
     }
   } catch (e) {
@@ -838,7 +842,8 @@ async function handleIdentityFailed(session: Stripe.Identity.VerificationSession
     const profName = (prof as { name?: string | null } | null)?.name ?? "Professeur";
     console.log("[identity/failed] sending email to:", profEmail ?? "(no email found)");
     if (profEmail) {
-      await sendIdentityFailed(profEmail, profName, reason);
+      const locale = await resolveEmailLocaleForUser(admin, userId);
+      await sendIdentityFailed(profEmail, profName, reason, locale);
       console.log("[identity/failed] email sent");
     }
   } catch (e) {

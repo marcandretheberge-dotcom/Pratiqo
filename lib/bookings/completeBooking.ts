@@ -131,6 +131,7 @@ async function notifyCompanionEvolutionAfterCompletion(
   const { data: authStudent } = profileEmail ? { data: null } : await admin.auth.admin.getUserById(booking.student_id);
   const studentEmail = profileEmail || authStudent?.user?.email?.trim() || "";
   if (!studentEmail) return;
+  const studentLocale = await resolveEmailLocaleForUser(admin, booking.student_id);
 
   if (milestone.amount > 0) {
     const award = await awardCredit(
@@ -152,6 +153,7 @@ async function notifyCompanionEvolutionAfterCompletion(
     milestone.previousStageName,
     milestone.nextStageName,
     milestone.amount,
+    studentLocale,
   );
 }
 

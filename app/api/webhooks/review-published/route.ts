@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { sendReviewPublishedTeacherEmail } from "@/lib/email";
+import { resolveEmailLocale } from "@/lib/email/locale";
 
 export const runtime = "nodejs";
 
@@ -80,7 +81,7 @@ export async function POST(request: Request) {
 
   const { data: teacherProfile } = await admin
     .from("profiles")
-    .select("email, name")
+    .select("email, name, country_code, region")
     .eq("id", teacher.user_id as string)
     .maybeSingle();
 
@@ -108,6 +109,10 @@ export async function POST(request: Request) {
     reviewContent: record.content ?? record.body ?? null,
     studentFirstName: firstName(studentProfile?.name as string | null | undefined),
     reviewId: record.id,
+    locale: resolveEmailLocale({
+      countryCode: (teacherProfile as { country_code?: string | null } | null)?.country_code,
+      region: (teacherProfile as { region?: string | null } | null)?.region,
+    }),
   });
 
   return NextResponse.json({ ok: true });
