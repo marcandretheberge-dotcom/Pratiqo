@@ -13,6 +13,7 @@ import {
 } from "@/lib/bookingCancellation";
 import { t as translate } from "@/lib/translations";
 import type { Locale } from "@/lib/i18n/types";
+import { notifyBookingCancelled } from "@/lib/bookings/cancellationNotifications";
 
 export const runtime = "nodejs";
 
@@ -186,6 +187,23 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       /* Non-fatal: booking is cancelled; inbox line is best-effort. */
     }
   }
+
+  // Send cancellation email to the OPPOSITE participant. The status
+  // transition is already committed above; helper handles its own errors
+  // so an email failure cannot reverse a successful cancellation.
+  await notifyBookingCancelled(
+    admin,
+    {
+      id: bookingId,
+      teacher_id: booking.teacher_id as string,
+      student_id: booking.student_id as string,
+      slot_date: booking.slot_date as string | null,
+      date: booking.date as string | null,
+      time_slot: booking.time_slot as string | null,
+      time: booking.time as string | null,
+    },
+    cancellerRole,
+  );
 
   return NextResponse.json({
     ok: true,
