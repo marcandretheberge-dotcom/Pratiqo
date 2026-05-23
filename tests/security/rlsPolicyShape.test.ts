@@ -2,10 +2,12 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import assert from "node:assert/strict";
 
+// Normalize CRLF -> LF so regex anchors that depend on `\n\n` work the
+// same on Windows checkouts as on Linux CI.
 const migration = readFileSync(
   join(process.cwd(), "supabase/migrations/065_rls_p0_policy_hardening.sql"),
   "utf8",
-);
+).replace(/\r\n/g, "\n");
 
 function test(name: string, fn: () => void) {
   try {
