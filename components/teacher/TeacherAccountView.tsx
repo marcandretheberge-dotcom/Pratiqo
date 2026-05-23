@@ -18,6 +18,7 @@ import { TeacherDisciplinesEditor, type DisciplineCardDraft } from "@/components
 import { MIN_LESSON_PRICE_DOLLARS } from "@/lib/pricing/constants";
 import { validateTeacherLessonOffers } from "@/lib/pricing/lessonOffer";
 import { AvatarUpload } from "@/components/profile/AvatarUpload";
+import { ProfileAiAssistant } from "@/components/teacher/ProfileAiAssistant";
 
 /**
  * Public listing card fallback used by the onboarding routes
@@ -111,6 +112,10 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
   const [email, setEmail] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");
+  // Teacher Launch Center: AI bio assistant is available outside of first onboarding too.
+  // We keep the rough notes in component state so the teacher's draft survives re-renders.
+  const [aiOpen, setAiOpen] = useState(false);
+  const [aiNotes, setAiNotes] = useState("");
   const [hourly, setHourly] = useState("");
   const [introEnabled, setIntroEnabled] = useState(false);
   const [introCustomPrice, setIntroCustomPrice] = useState("");
@@ -768,6 +773,32 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
             rows={4}
             className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400"
           />
+          <div className="pt-1">
+            <button
+              type="button"
+              onClick={() => setAiOpen((v) => !v)}
+              className="text-xs font-semibold text-teal-700 hover:underline"
+              data-testid="teacher-account-ai-toggle"
+            >
+              {aiOpen ? "▾ " : "✨ "}
+              {t("aiAssistantHeadline")}
+            </button>
+          </div>
+          {aiOpen ? (
+            <div className="pt-2">
+              <ProfileAiAssistant
+                discipline={(disciplineCards[0]?.specialties[0]) || disciplineCards[0]?.disciplineId || "musique"}
+                specialty={disciplineCards[0]?.specialties.join(", ") || ""}
+                notes={aiNotes}
+                onNotesChange={setAiNotes}
+                onAccept={(next) => {
+                  setBio(next);
+                  setAiOpen(false);
+                }}
+                compact
+              />
+            </div>
+          ) : null}
         </label>
 
         {/* ── Video URL ──────────────────────────────────────────────────── */}

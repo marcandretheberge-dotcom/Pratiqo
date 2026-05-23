@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { useRouter } from "next/navigation";
-import { Check, ChevronLeft, ChevronRight, Loader2, MapPin, ShieldCheck } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Loader2, MapPin, Rocket, ShieldCheck, SkipForward } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { getSupabaseClient } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
@@ -12,8 +12,31 @@ import { getTeacherOnboardingMissingFields, isTeacherProfileComplete } from "@/l
 import { parseGooglePlace } from "@/lib/googleAddressParser";
 import { blurCoordinates } from "@/lib/maps";
 import { TeacherPayoutPreview } from "@/components/teacher/TeacherPayoutPreview";
+import { ProfileAiAssistant } from "@/components/teacher/ProfileAiAssistant";
 import { MIN_LESSON_PRICE_DOLLARS } from "@/lib/pricing/constants";
 import { validateTeacherLessonOffers } from "@/lib/pricing/lessonOffer";
+
+/**
+ * Teacher Launch Center
+ * --------------------
+ * Single canonical onboarding flow for new teachers. Mounted at /onboarding/teacher.
+ * The auth callback and dashboard both redirect here when a teacher hasn't
+ * completed onboarding yet (see lib/auth/admin.ts and app/(app)/dashboard/page.tsx).
+ *
+ * UX shape:
+ * - First visit shows a friendly "Let's get started" hero (`started === false`).
+ *   After the teacher clicks it, the wizard appears at step 1.
+ * - Return visits with a saved draft show a "Continue where you left off" CTA
+ *   instead of starting the user from scratch.
+ * - Each step can be skipped; we surface a calm consequence message
+ *   (visibility, payments, identity, etc.) instead of blocking progress.
+ * - Drafts are persisted to localStorage so the teacher's typing survives
+ *   reloads. The real DB write still happens only on final save.
+ */
+
+const LAUNCH_TOTAL_STEPS = 4;
+const LAUNCH_DRAFT_STORAGE_PREFIX = "pratiqo-teacher-launch-draft:";
+const LAUNCH_STARTED_STORAGE_PREFIX = "pratiqo-teacher-launch-started:";
 
 type StepId = 1 | 2 | 3 | 4;
 type Category = "music" | "languages" | "academic" | "other";
@@ -67,6 +90,14 @@ export default function TeacherOnboardingPage() {
   const [step, setStep] = useState<StepId>(1);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Launch Center hero: hidden once the teacher has explicitly clicked "Let's get started"
+  // on this device (persisted) OR once they already have a saved draft / partial profile.
+  const [started, setStarted] = useState(false);
+  const [hasSavedDraft, setHasSavedDraft] = useState(false);
+  const draftRestoredRef = useRef(false);
+  const [aiBioNotes, setAiBioNotes] = useState("");
+  const [aiBioOpen, setAiBioOpen] = useState(false);
 
   // Step 1
   const [displayName, setDisplayName] = useState("");
@@ -252,6 +283,136 @@ export default function TeacherOnboardingPage() {
     setStep((s) => (s === 1 ? 1 : ((s - 1) as StepId)));
   };
 
+  /**
+   * Skip the current step without losing the wizard. We deliberately do NOT
+   * advance past the legal step — `tax_status` / `no_exclusivity` / `no_income`
+   * acknowledgements are legally meaningful, so the final save still requires
+   * them. Earlier steps can be skipped: the consequence copy is shown on the
+   * step itself before the teacher clicks "Skip for now".
+   */
+  const skipStep = () => {
+    if (step >= 4) return;
+    setError(null);
+    setStep((s) => ((s + 1) as StepId));
+  };
+
+  // ── Save / resume via localStorage ────────────────────────────────────────
+  // We persist the wizard draft per-user on this device so a refresh, accidental
+  // tab close, or "save and finish later" never costs the teacher their typing.
+  // The DB write only happens at final save (POST /api/teacher/onboarding/complete).
+  const draftKey = user?.id ? `${LAUNCH_DRAFT_STORAGE_PREFIX}${user.id}` : null;
+  const startedKey = user?.id ? `${LAUNCH_STARTED_STORAGE_PREFIX}${user.id}` : null;
+
+  // Restore once per user.
+  useEffect(() => {
+    if (!draftKey || !startedKey) return;
+    if (draftRestoredRef.current) return;
+    draftRestoredRef.current = true;
+    try {
+      const raw = localStorage.getItem(draftKey);
+      if (raw) {
+        const d = JSON.parse(raw) as Record<string, unknown>;
+        if (typeof d.displayName === "string") setDisplayName(d.displayName);
+        if (typeof d.category === "string") setCategory(d.category as Category);
+        if (typeof d.discipline === "string") setDiscipline(d.discipline);
+        if (Array.isArray(d.levels)) setLevels(d.levels as (typeof LEVELS)[number][]);
+        if (typeof d.bio === "string") setBio(d.bio);
+        if (typeof d.teachingMode === "string") setTeachingMode(d.teachingMode as TeachingMode);
+        if (typeof d.city === "string") setCity(d.city);
+        if (typeof d.region === "string") setRegion(d.region);
+        if (typeof d.countryCode === "string") setCountryCode(d.countryCode);
+        if (typeof d.timezone === "string") setTimezone(d.timezone);
+        if (typeof d.currency === "string") setCurrency(d.currency);
+        if (typeof d.pricePerLesson === "string") setPricePerLesson(d.pricePerLesson);
+        if (typeof d.homeRadiusKm === "string") setHomeRadiusKm(d.homeRadiusKm);
+        if (Array.isArray(d.availability)) setAvailability(d.availability as string[]);
+        if (typeof d.addressValue === "string") setAddressValue(d.addressValue);
+        if (typeof d.step === "number" && d.step >= 1 && d.step <= 4) setStep(d.step as StepId);
+        if (typeof d.aiBioNotes === "string") setAiBioNotes(d.aiBioNotes);
+        setHasSavedDraft(true);
+      }
+      const wasStarted = localStorage.getItem(startedKey) === "1";
+      // If they already started OR have a draft, skip the hero so they don't
+      // feel like Pratiqo lost their work.
+      if (wasStarted || raw) setStarted(true);
+    } catch {
+      /* localStorage unavailable — non-fatal */
+    }
+  }, [draftKey, startedKey]);
+
+  // Persist draft on relevant changes (cheap enough to do on every render).
+  useEffect(() => {
+    if (!draftKey || !draftRestoredRef.current) return;
+    try {
+      const draft = {
+        displayName,
+        category,
+        discipline,
+        levels,
+        bio,
+        teachingMode,
+        city,
+        region,
+        countryCode,
+        timezone,
+        currency,
+        pricePerLesson,
+        homeRadiusKm,
+        availability,
+        addressValue,
+        step,
+        aiBioNotes,
+      };
+      localStorage.setItem(draftKey, JSON.stringify(draft));
+    } catch {
+      /* localStorage unavailable — non-fatal */
+    }
+  }, [
+    draftKey,
+    displayName,
+    category,
+    discipline,
+    levels,
+    bio,
+    teachingMode,
+    city,
+    region,
+    countryCode,
+    timezone,
+    currency,
+    pricePerLesson,
+    homeRadiusKm,
+    availability,
+    addressValue,
+    step,
+    aiBioNotes,
+  ]);
+
+  const launchStarted = useCallback(() => {
+    setStarted(true);
+    if (startedKey) {
+      try {
+        localStorage.setItem(startedKey, "1");
+      } catch {
+        /* ignore */
+      }
+    }
+  }, [startedKey]);
+
+  const saveAndExit = useCallback(() => {
+    // Draft is already in localStorage; just leave the wizard. The dashboard
+    // will bounce them back here on next login because onboarding isn't complete.
+    router.replace("/dashboard");
+  }, [router]);
+
+  const skipConsequenceKey = useMemo(() => {
+    if (step === 1) return "teacherLaunchSkipProfile";
+    if (step === 2) return "teacherLaunchSkipLocation";
+    if (step === 3) return "teacherLaunchSkipPricing";
+    // Step 4 cannot be skipped — legal acknowledgements are required by design.
+    return null;
+  }, [step]);
+
   const save = async () => {
     if (!user?.id) return;
     if (!legalComplete) {
@@ -424,11 +585,51 @@ export default function TeacherOnboardingPage() {
   return (
     <div className="mx-auto w-full max-w-4xl px-4 sm:px-6 pb-12">
       <div className="pt-8 sm:pt-10">
-        <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-teal-700/80">{progressLabel}</p>
-        <h1 className="mt-2 text-2xl sm:text-3xl font-bold text-[var(--p-text)]">{t("teacherOnboardingTitle")}</h1>
-        <p className="mt-2 text-sm text-[var(--p-text-muted)] max-w-2xl">{t("teacherOnboardingSubtitle")}</p>
+        <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-teal-700/80">
+          {t("teacherLaunchHeroEyebrow")}
+        </p>
+        <h1 className="mt-2 text-2xl sm:text-3xl font-bold text-[var(--p-text)]">
+          {started ? t("teacherOnboardingTitle") : t("teacherLaunchHeroTitle")}
+        </h1>
+        <p className="mt-2 text-sm text-[var(--p-text-muted)] max-w-2xl">
+          {started ? t("teacherOnboardingSubtitle") : t("teacherLaunchHeroSubtitle")}
+        </p>
       </div>
 
+      {!started ? (
+        // ── Launch Center hero ──────────────────────────────────────────────
+        // One big friendly entry point. No bureaucratic checklist visible yet.
+        <div
+          className="mt-6 rounded-3xl bg-white border border-[rgba(0,0,0,0.06)] shadow-[0_12px_40px_rgba(0,0,0,0.06)] p-6 sm:p-10 text-center"
+          data-testid="teacher-launch-hero"
+        >
+          <div className="mx-auto inline-flex h-14 w-14 items-center justify-center rounded-full bg-teal-500/15 text-teal-700">
+            <Rocket size={26} aria-hidden />
+          </div>
+          <h2 className="mt-5 text-xl sm:text-2xl font-bold text-[var(--p-text)]">
+            {t("teacherLaunchHeroTitle")}
+          </h2>
+          <p className="mt-3 text-sm text-[var(--p-text-muted)] max-w-xl mx-auto">
+            {t("teacherLaunchHeroBody")}
+          </p>
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            <button
+              type="button"
+              onClick={launchStarted}
+              className="inline-flex h-12 items-center gap-2 rounded-full bg-teal-600 px-6 text-sm font-bold text-white hover:bg-teal-700 shadow-sm"
+              data-testid="teacher-launch-start-cta"
+            >
+              <Rocket size={16} />
+              {hasSavedDraft ? t("teacherLaunchResumeCta") : t("teacherLaunchStartCta")}
+            </button>
+          </div>
+          {hasSavedDraft ? (
+            <p className="mt-4 text-[11px] text-[var(--p-text-subtle)]">
+              {t("teacherLaunchSavedDraft")}
+            </p>
+          ) : null}
+        </div>
+      ) : (
       <div className="mt-6 rounded-3xl bg-white border border-[rgba(0,0,0,0.06)] shadow-[0_12px_40px_rgba(0,0,0,0.06)] overflow-hidden">
         <div className="px-6 sm:px-8 py-4 border-b border-[rgba(0,0,0,0.06)] bg-[#F3FAF6]">
           <div className="flex items-center justify-between gap-4">
@@ -437,24 +638,20 @@ export default function TeacherOnboardingPage() {
               <span>
                 {t(
                   step === 1
-                    ? "teacherOnboardingStepProfile"
+                    ? "teacherLaunchStepProfileTitle"
                     : step === 2
-                      ? "teacherOnboardingStepLocation"
+                      ? "teacherLaunchStepLocationTitle"
                       : step === 3
-                        ? "teacherOnboardingStepPricing"
+                        ? "teacherLaunchStepPricingTitle"
                         : "teacherOnboardingStepLegal",
                 )}
               </span>
             </div>
-            {missingPreview.length > 0 ? (
-              <span className="text-xs text-[var(--p-text-muted)]">
-                {t("teacherOnboardingMissingFields")} {missingPreview.length}
-              </span>
-            ) : (
-              <span className="text-xs text-teal-700 font-semibold inline-flex items-center gap-1">
-                <Check size={14} /> {t("teacherOnboardingComplete")}
-              </span>
-            )}
+            <span className="text-xs text-[var(--p-text-muted)]">
+              {t("teacherLaunchProgressLabel")
+                .replace("{step}", String(step))
+                .replace("{total}", String(LAUNCH_TOTAL_STEPS))}
+            </span>
           </div>
         </div>
 
@@ -554,6 +751,32 @@ export default function TeacherOnboardingPage() {
                     className="mt-2 w-full rounded-2xl border border-[var(--p-border-light)] px-4 py-3 text-sm"
                     placeholder="Quelques lignes sur votre approche, votre expérience, et votre style d’enseignement…"
                   />
+                  <div className="mt-2">
+                    <button
+                      type="button"
+                      onClick={() => setAiBioOpen((v) => !v)}
+                      className="text-xs font-semibold text-teal-700 hover:underline"
+                      data-testid="teacher-launch-ai-toggle"
+                    >
+                      {aiBioOpen ? "▾ " : "✨ "}
+                      {t("aiAssistantHeadline")}
+                    </button>
+                  </div>
+                  {aiBioOpen ? (
+                    <div className="mt-2">
+                      <ProfileAiAssistant
+                        discipline={discipline || category}
+                        specialty={discipline}
+                        notes={aiBioNotes}
+                        onNotesChange={setAiBioNotes}
+                        onAccept={(next) => {
+                          setBio(next);
+                          setAiBioOpen(false);
+                        }}
+                        compact
+                      />
+                    </div>
+                  ) : null}
                 </label>
               </motion.div>
             ) : null}
@@ -815,40 +1038,74 @@ export default function TeacherOnboardingPage() {
           </AnimatePresence>
         </div>
 
-        <div className="px-6 sm:px-8 py-5 border-t border-[rgba(0,0,0,0.06)] bg-white flex items-center justify-between gap-3">
-          <button
-            type="button"
-            onClick={goBack}
-            disabled={step === 1 || saving}
-            className="h-11 px-4 rounded-full border border-[var(--p-border-light)] text-sm font-semibold text-[var(--p-text)] disabled:opacity-40 inline-flex items-center gap-2"
-          >
-            <ChevronLeft size={18} />
-            {t("teacherOnboardingBack")}
-          </button>
+        {/* Skip-with-consequence — calm explanation, then "Skip for now". */}
+        {skipConsequenceKey ? (
+          <div className="mx-6 sm:mx-8 mb-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs leading-relaxed text-[var(--p-text-muted)]">
+            <p data-testid="teacher-launch-skip-consequence">{t(skipConsequenceKey)}</p>
+          </div>
+        ) : null}
 
-          {step < 4 ? (
+        <div className="px-6 sm:px-8 py-5 border-t border-[rgba(0,0,0,0.06)] bg-white flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
-              onClick={goNext}
-              disabled={!canGoNext || saving}
-              className="h-11 px-5 rounded-full bg-teal-600 hover:bg-teal-700 text-white text-sm font-semibold disabled:opacity-40 inline-flex items-center gap-2 shadow-sm"
+              onClick={goBack}
+              disabled={step === 1 || saving}
+              className="h-11 px-4 rounded-full border border-[var(--p-border-light)] text-sm font-semibold text-[var(--p-text)] disabled:opacity-40 inline-flex items-center gap-2"
             >
-              {t("teacherOnboardingNext")}
-              <ChevronRight size={18} />
+              <ChevronLeft size={18} />
+              {t("teacherOnboardingBack")}
             </button>
-          ) : (
             <button
               type="button"
-              onClick={() => void save()}
-              disabled={!canGoNext || saving}
-              className="h-11 px-5 rounded-full bg-teal-600 hover:bg-teal-700 text-white text-sm font-semibold disabled:opacity-40 inline-flex items-center gap-2 shadow-sm"
+              onClick={saveAndExit}
+              disabled={saving}
+              className="h-11 px-4 rounded-full border border-[var(--p-border-light)] bg-white text-sm font-semibold text-[var(--p-text-muted)] disabled:opacity-40 hover:text-[var(--p-text)] inline-flex items-center gap-2"
+              data-testid="teacher-launch-save-exit"
             >
-              {saving ? <Loader2 size={18} className="animate-spin" /> : null}
-              {t("teacherOnboardingSave")}
+              {t("teacherLaunchSaveAndExitCta")}
             </button>
-          )}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 ml-auto">
+            {step < 4 ? (
+              <button
+                type="button"
+                onClick={skipStep}
+                disabled={saving}
+                className="h-11 px-4 rounded-full border border-slate-200 bg-white text-sm font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-40 inline-flex items-center gap-2"
+                data-testid="teacher-launch-skip-cta"
+              >
+                <SkipForward size={16} />
+                {t("teacherLaunchSkipCta")}
+              </button>
+            ) : null}
+
+            {step < 4 ? (
+              <button
+                type="button"
+                onClick={goNext}
+                disabled={!canGoNext || saving}
+                className="h-11 px-5 rounded-full bg-teal-600 hover:bg-teal-700 text-white text-sm font-semibold disabled:opacity-40 inline-flex items-center gap-2 shadow-sm"
+              >
+                {t("teacherOnboardingNext")}
+                <ChevronRight size={18} />
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => void save()}
+                disabled={!canGoNext || saving}
+                className="h-11 px-5 rounded-full bg-teal-600 hover:bg-teal-700 text-white text-sm font-semibold disabled:opacity-40 inline-flex items-center gap-2 shadow-sm"
+              >
+                {saving ? <Loader2 size={18} className="animate-spin" /> : null}
+                {t("teacherOnboardingSave")}
+              </button>
+            )}
+          </div>
         </div>
       </div>
+      )}
     </div>
   );
 }

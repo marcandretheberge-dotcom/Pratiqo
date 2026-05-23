@@ -18,10 +18,29 @@ export const waitlistPostSchema = z.object({
     .max(120, { message: "Feature trop longue." }),
 });
 
-/** Teacher onboarding AI bio helper */
+/**
+ * Teacher AI bio helper. Available during onboarding AND for already-launched
+ * teachers (Teacher Launch Center, account edit, Trust & Visibility surfaces).
+ *
+ * - `discipline` stays required so the prompt always has subject-matter context.
+ * - `specialite` is the teacher's specialty (optional).
+ * - `notes` lets the teacher seed the AI with their own rough notes — we ask
+ *   the model to improve them rather than ignore them. Capped to keep prompt
+ *   cost predictable.
+ * - `tone` lets the teacher request a particular flavor. The route maps each
+ *   tone to a small instruction snippet; unknown values fall back to neutral.
+ * - `locale` lets the route generate copy in the teacher's UI language instead
+ *   of always defaulting to French.
+ */
+export const aiDescriptionTones = ["neutral", "warm", "professional", "shorter"] as const;
+export type AiDescriptionTone = (typeof aiDescriptionTones)[number];
+
 export const aiDescriptionPostSchema = z.object({
   discipline: z.string().trim().min(1, { message: "Discipline requise" }).max(200),
   specialite: z.string().trim().max(200).optional().default(""),
+  notes: z.string().trim().max(800).optional().default(""),
+  tone: z.enum(aiDescriptionTones).optional().default("neutral"),
+  locale: z.enum(["fr", "en", "es"]).optional().default("fr"),
 });
 
 /** Authenticated support case creation */

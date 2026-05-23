@@ -1,24 +1,47 @@
 "use client";
 
+/**
+ * Trust & Visibility (formerly /teacher/verification compliance dashboard)
+ * -----------------------------------------------------------------------
+ * This page used to expose "Niveau 1..5" as the primary structure, which
+ * read as a bureaucratic compliance checklist. The Teacher Launch Center
+ * redesign replaces that with five user-facing "unlock cards" tied to the
+ * concrete student-visible thing each trust step unlocks:
+ *
+ *   1. Appear on the map         (needs verified teaching zone)
+ *   2. Offer lessons at home     (needs identity + zone)
+ *   3. Show verified identity    (needs Stripe Identity)
+ *   4. Show verified diploma     (optional, helps booking confidence)
+ *   5. Receive payments          (needs Stripe Connect)
+ *
+ * The underlying upload / form components (DiplomaStep, ZoneStep, etc.)
+ * are still mounted below so each card's CTA can scroll/anchor into the
+ * matching action surface — we did NOT rebuild the upload pipelines.
+ *
+ * Pro is intentionally NOT mixed into the unlock cards. Pro is a separate
+ * business/visibility plan, not a trust signal.
+ */
+
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { BriefcaseBusiness, CheckCircle2, Loader2, ShieldCheck } from "lucide-react";
+import {
+  CheckCircle2,
+  CircleDashed,
+  CreditCard,
+  FileBadge,
+  Home,
+  Loader2,
+  MapPin,
+  ShieldCheck,
+  Sparkles,
+} from "lucide-react";
 import { useAuth } from "../../../../components/AuthProvider";
 import { getSupabaseClient } from "../../../../lib/supabase";
 import { IdentityVerificationCard } from "../../../../components/IdentityVerificationCard";
-import { VerificationBadge } from "../../../../components/VerificationBadge";
-import {
-  getVerificationLevel,
-  nextLevelRequirementKeys,
-  nextVerificationLevel,
-  verificationLevelTitleKey,
-  type VerificationLevel,
-} from "../../../../lib/verification";
 import { useLocale } from "../../../../lib/locale-context";
 import { cn } from "../../../../lib/utils";
-import { buildTeacherTrustBadges, buildTeacherTrustItems, type TeacherCredential } from "../../../../lib/teacherTrust";
-import { deriveVerificationState } from "../../../../lib/verificationState";
+import { deriveVerificationState, type VerificationStepState } from "../../../../lib/verificationState";
 import type { TranslationKey } from "../../../../lib/translations";
 import { DiplomaStep } from "./components/DiplomaStep";
 import { CredentialsStep } from "./components/CredentialsStep";
@@ -45,6 +68,13 @@ type TeacherVerifyRow = {
   country_code?: string | null;
   home_lesson_radius_km?: number | null;
   location?: unknown;
+  // Home lessons + payments (used to derive unlock-card status only — no
+  // payment behavior or Stripe writes happen on this page).
+  home_lesson_enabled?: boolean | null;
+  stripe_connect_onboarding_complete?: boolean | null;
+  stripe_connect_charges_enabled?: boolean | null;
+  stripe_connect_payouts_enabled?: boolean | null;
+  stripe_account_id?: string | null;
 };
 
 type TeacherCredentialRow = {
@@ -111,7 +141,10 @@ export default function TeacherVerificationPage() {
       supabase
         .from("teachers")
         .select(
-          "id, verification_level, identity_verified, identity_status, stripe_identity_status, stripe_identity_failed_reason, diploma_verified, diploma_url, phone_verified, is_verified, location_verification_status, cv_summary, cv_verification_status, bio, city, region, country_code, home_lesson_radius_km, location",
+          // Teacher reads their own row — RLS allows it. We include
+          // stripe_connect_* + home_lesson_enabled so the unlock cards can
+          // display real status. None of these are written from this page.
+          "id, verification_level, identity_verified, identity_status, stripe_identity_status, stripe_identity_failed_reason, diploma_verified, diploma_url, phone_verified, is_verified, location_verification_status, cv_summary, cv_verification_status, bio, city, region, country_code, home_lesson_radius_km, home_lesson_enabled, location, stripe_account_id, stripe_connect_onboarding_complete, stripe_connect_charges_enabled, stripe_connect_payouts_enabled",
         )
         .eq("user_id", user.id)
         .maybeSingle(),
@@ -233,26 +266,6 @@ export default function TeacherVerificationPage() {
     void load();
   }, [searchParams, showMsg, load, t]);
 
-  const level = useMemo((): VerificationLevel => {
-    if (!teacherRow) return 1;
-    return getVerificationLevel({
-      plan,
-      identity_verified: Boolean(teacherRow.identity_verified),
-      diploma_verified: Boolean(teacherRow.diploma_verified),
-      is_verified: teacherRow.is_verified !== false,
-      verification_level: teacherRow.verification_level,
-    });
-  }, [teacherRow, plan]);
-
-  const next = nextVerificationLevel(level);
-  const nextReqKeys = next
-    ? nextLevelRequirementKeys(level, {
-        plan,
-        identity_verified: Boolean(teacherRow?.identity_verified),
-        diploma_verified: Boolean(teacherRow?.diploma_verified),
-      })
-    : [];
-
   // Fallback email-based request (used when Stripe Identity is unavailable)
   const sendEmailRequest = async (kind: "identity" | "diploma", description?: string) => {
     setMessage(null);
@@ -353,7 +366,6 @@ export default function TeacherVerificationPage() {
     is_verified: teacherRow.is_verified,
     verification_level: teacherRow.verification_level,
   });
-  const { isPro } = vState;
 
   // stripeStatus stays as raw DB value — IdentityVerificationCard expects Stripe's own enum strings
   const stripeStatus = (teacherRow.stripe_identity_status ?? null) as
@@ -364,49 +376,32 @@ export default function TeacherVerificationPage() {
     | "failed"
     | "canceled"
     | null;
-  // buildTeacherTrustItems owns its own trust-item logic; feed it raw fields as before
-  const trustItems = buildTeacherTrustItems({
-    isVerified: teacherRow.is_verified,
-    identityVerified: teacherRow.identity_verified,
-    identityStatus: teacherRow.identity_status,
-    stripeIdentityStatus: teacherRow.stripe_identity_status,
-    diplomaVerified: teacherRow.diploma_verified,
-    diplomaUrl: teacherRow.diploma_url,
-    locationVerificationStatus: teacherRow.location_verification_status,
-    cvSummary: teacherRow.cv_summary,
-    cvVerificationStatus: teacherRow.cv_verification_status,
-    bio: teacherRow.bio,
-  });
-  const backgroundVerified = vState.background.kind === "verified";
-  const backgroundProvided =
-    vState.background.kind === "verified" ||
-    vState.background.kind === "pending" ||
-    vState.background.kind === "provided";
 
-  const badgePreview = buildTeacherTrustBadges({
-    identity: {
-      identityVerified: teacherRow.identity_verified,
-      identityStatus: teacherRow.identity_status,
-      stripeIdentityStatus: teacherRow.stripe_identity_status,
-    },
-    credentials: credentials.map(
-      (c): TeacherCredential => ({
-        id: c.id,
-        teacherId: c.teacher_id,
-        type: c.type,
-        title: c.title,
-        institutionName: c.institution_name,
-        country: c.country,
-        issuedYear: c.issued_year,
-        verificationStatus: c.verification_status,
-        verificationMethod: (c.verification_method as TeacherCredential["verificationMethod"]) ?? null,
-        confidenceLevel: (c.confidence_level as TeacherCredential["confidenceLevel"]) ?? null,
-        publicLabel: c.public_label,
-        verifiedAt: c.verified_at,
-        expiresAt: c.expires_at,
-      }),
-    ),
-  });
+  // Derived payments unlock — read-only summary used by the "Receive payments" card.
+  // We do NOT mutate Stripe/payment data on this page; the CTA simply links to
+  // the existing /api/stripe/connect flow used elsewhere in the app.
+  const paymentsReady = Boolean(
+    teacherRow.stripe_connect_onboarding_complete &&
+      teacherRow.stripe_connect_charges_enabled &&
+      teacherRow.stripe_connect_payouts_enabled,
+  );
+  const paymentsState: VerificationStepState = paymentsReady
+    ? { kind: "verified" }
+    : teacherRow.stripe_account_id
+      ? { kind: "pending" }
+      : { kind: "not_started" };
+
+  // "Offer lessons at home" depends on the COMBINATION of identity + zone.
+  // A teacher with no identity but enabled home_lesson_enabled would mislead
+  // students — so we surface "Action needed" if home is on but identity isn't.
+  const homeReady = vState.identity.kind === "verified" && vState.zone.kind === "verified";
+  const homeState: VerificationStepState = homeReady
+    ? { kind: "verified" }
+    : teacherRow.home_lesson_enabled && vState.identity.kind !== "verified"
+      ? { kind: "failed", reason: null }
+      : vState.identity.kind === "pending" || vState.zone.kind === "pending"
+        ? { kind: "pending" }
+        : { kind: "not_started" };
 
   const submitCredential = async () => {
     setMessage(null);
@@ -452,6 +447,58 @@ export default function TeacherVerificationPage() {
     }
   };
 
+  // Five unlock cards — one per concrete student-visible thing.
+  // Order is intentional: marketplace visibility first, then identity/diploma,
+  // then payments. Diploma is explicitly Optional.
+  const unlockCards: UnlockCardSpec[] = [
+    {
+      key: "map",
+      icon: <MapPin size={18} aria-hidden />,
+      titleKey: "teacherTrustCardMapTitle",
+      descKey: "teacherTrustCardMapDescription",
+      ctaKey: "teacherTrustCardMapCta",
+      state: vState.zone,
+      anchor: "trust-zone",
+    },
+    {
+      key: "home",
+      icon: <Home size={18} aria-hidden />,
+      titleKey: "teacherTrustCardHomeTitle",
+      descKey: "teacherTrustCardHomeDescription",
+      ctaKey: "teacherTrustCardHomeCta",
+      state: homeState,
+      anchor: "trust-zone",
+    },
+    {
+      key: "identity",
+      icon: <ShieldCheck size={18} aria-hidden />,
+      titleKey: "teacherTrustCardIdentityTitle",
+      descKey: "teacherTrustCardIdentityDescription",
+      ctaKey: "teacherTrustCardIdentityCta",
+      state: vState.identity,
+      anchor: "trust-identity",
+    },
+    {
+      key: "diploma",
+      icon: <FileBadge size={18} aria-hidden />,
+      titleKey: "teacherTrustCardDiplomaTitle",
+      descKey: "teacherTrustCardDiplomaDescription",
+      ctaKey: "teacherTrustCardDiplomaCta",
+      state: vState.diploma,
+      anchor: "trust-diploma",
+      optional: true,
+    },
+    {
+      key: "payments",
+      icon: <CreditCard size={18} aria-hidden />,
+      titleKey: "teacherTrustCardPaymentsTitle",
+      descKey: "teacherTrustCardPaymentsDescription",
+      ctaKey: "teacherTrustCardPaymentsCta",
+      state: paymentsState,
+      ctaHref: "/teacher/settings#payouts",
+    },
+  ];
+
   return (
     <div className="space-y-8">
       {vState.identity.kind !== "verified" && (
@@ -462,67 +509,18 @@ export default function TeacherVerificationPage() {
         />
       )}
 
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">{t("verificationTrustLabel")}</p>
-          <h1 className="mt-1 text-2xl font-bold text-[#2C2C2A] flex items-center gap-2">
-            <ShieldCheck className="text-teal-700" size={28} />
-            {t("verificationTitle")}
-          </h1>
-          <p className="mt-2 text-sm text-[#6B6A65] max-w-xl">{t("verificationSubtitle")}</p>
-        </div>
-        <VerificationBadge level={level} size="md" />
+      <div>
+        <p className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
+          {t("teacherTrustVisibilitySubtitle")}
+        </p>
+        <h1 className="mt-1 text-2xl font-bold text-[#2C2C2A] flex items-center gap-2">
+          <Sparkles className="text-teal-700" size={26} />
+          {t("teacherTrustVisibilityTitle")}
+        </h1>
+        <p className="mt-2 text-sm text-[#6B6A65] max-w-xl">
+          {t("teacherTrustVisibilityIntro")}
+        </p>
       </div>
-
-      <section className="grid gap-4 lg:grid-cols-2">
-        <div className="rounded-2xl border border-[#DCEAE3] bg-white p-5">
-          <h2 className="text-sm font-bold uppercase tracking-wider text-[#2C2C2A]">
-            {t("teacherVerificationTrustRequirements")}
-          </h2>
-          <p className="mt-2 text-sm text-[#6B6A65]">{t("trustSensitiveDocumentsHidden")}</p>
-          <ul className="mt-4 space-y-2.5">
-            {trustItems.map((item) => (
-              <li key={item.key} className="flex items-start gap-2.5 text-sm">
-                <CheckCircle2
-                  size={17}
-                  className={cn(
-                    "mt-0.5 shrink-0",
-                    item.status === "pending"
-                      ? "text-amber-600"
-                      : item.status === "provided"
-                        ? "text-slate-500"
-                        : "text-teal-700",
-                  )}
-                />
-                <span>
-                  <span className="block font-semibold text-[#2C2C2A]">{t(item.publicLabelKey)}</span>
-                  <span className="block text-xs leading-relaxed text-[#6B6A65]">{t(item.publicDescriptionKey)}</span>
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="rounded-2xl border border-[#E8E6DF] bg-[#F8F7F2] p-5">
-          <h2 className="text-sm font-bold uppercase tracking-wider text-[#2C2C2A]">
-            {t("teacherVerificationMarketplaceBenefits")}
-          </h2>
-          <ul className="mt-4 space-y-2 text-sm text-[#6B6A65]">
-            <li className="flex gap-2">
-              <CheckCircle2 size={16} className="mt-0.5 shrink-0 text-teal-700" />
-              <span>{t("verificationBenefitHomeLessons")}</span>
-            </li>
-            <li className="flex gap-2">
-              <CheckCircle2 size={16} className="mt-0.5 shrink-0 text-teal-700" />
-              <span>{t("verificationBenefitPublicClarity")}</span>
-            </li>
-            <li className="flex gap-2">
-              <CheckCircle2 size={16} className="mt-0.5 shrink-0 text-teal-700" />
-              <span>{t("verificationBenefitProSeparated")}</span>
-            </li>
-          </ul>
-        </div>
-      </section>
 
       {message ? (
         <div
@@ -537,75 +535,44 @@ export default function TeacherVerificationPage() {
         </div>
       ) : null}
 
-      {next ? (
-        <section className="rounded-2xl border border-[#E8E6DF] bg-white p-6 space-y-3">
-          <h2 className="text-sm font-bold uppercase tracking-wider text-[#2C2C2A]">{t("verificationNextLevel")}</h2>
-          <p className="text-lg font-semibold text-[#2C2C2A]">{t(verificationLevelTitleKey(next))}</p>
-          <ul className="list-disc pl-5 text-sm text-[#6B6A65] space-y-1">
-            {nextReqKeys.map((key) => (
-              <li key={key}>{t(key)}</li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
+      {/* ── Five unlock cards ─────────────────────────────────────────────── */}
+      <section
+        className="grid gap-4 sm:grid-cols-2"
+        aria-label={t("teacherTrustVisibilityTitle")}
+        data-testid="teacher-trust-unlock-cards"
+      >
+        {unlockCards.map((card) => (
+          <UnlockCard key={card.key} card={card} t={t} />
+        ))}
+      </section>
 
-      <section className="space-y-4">
-        <h2 className="text-sm font-bold uppercase tracking-wider text-[#2C2C2A]">{t("verificationChecklistTitle")}</h2>
+      <hr className="border-[#E8E6DF]" />
 
-        {/* ── Level 1 — Email ────────────────────────────────────────────── */}
-        <div className="rounded-2xl border border-[#E8E6DF] bg-white p-5 flex flex-wrap items-start justify-between gap-4">
-          <div className="flex gap-3">
-            <CheckCircle2 className="text-teal-700 shrink-0 mt-0.5" size={22} />
-            <div>
-              <p className="font-semibold text-[#2C2C2A]">{t("verificationLevel1Title")}</p>
-              <p className="text-sm text-[#6B6A65]">{t("verificationLevel1Body")}</p>
+      {/* ── Action surfaces (forms backing each card) ─────────────────────── */}
+      <section id="trust-identity" className="space-y-4 scroll-mt-24">
+        <h2 className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
+          {t("teacherTrustCardIdentityTitle")}
+        </h2>
+        <div className="rounded-2xl border border-[#E8E6DF] bg-white p-5">
+          {vState.identity.kind === "verified" ? (
+            <p className="text-sm font-semibold text-teal-700">
+              {t("verificationIdentityValidated")}
+            </p>
+          ) : vState.identity.kind === "pending" ? (
+            <div className="flex items-center gap-2 rounded-xl bg-amber-50 border border-amber-200 px-4 py-2.5">
+              <Loader2 size={16} className="animate-spin text-amber-600 shrink-0" />
+              <p className="text-sm text-amber-800 font-medium">{t("verifyIdPending")}</p>
             </div>
-          </div>
-          {level >= 1 ? <span className="text-xs font-bold text-teal-700">{t("verificationOk")}</span> : null}
+          ) : vState.identity.kind === "failed" ? (
+            <p className="text-sm font-semibold text-rose-600">{t("verificationFailed")}</p>
+          ) : (
+            <p className="text-sm text-[#6B6A65]">{t("teacherTrustCardIdentityDescription")}</p>
+          )}
+          <p className="mt-2 text-[11px] text-[#6B6A65]">{t("poweredByStripe")}</p>
         </div>
+      </section>
 
-        {/* ── Level 2 — Identity (Stripe) ────────────────────────────────── */}
-        <div className="rounded-2xl border border-[#E8E6DF] bg-white p-5 space-y-3">
-          <div className="flex gap-3">
-            <ShieldCheck className="text-[#BA7517] shrink-0 mt-0.5" size={22} />
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold text-[#2C2C2A]">{t("verificationLevel2Title")}</p>
-              <p className="text-sm text-[#6B6A65] mt-1">{t("verificationLevel2Body")}</p>
-
-              {vState.identity.kind === "verified" ? (
-                <p className="mt-2 text-sm font-semibold text-teal-700">
-                  {t("verificationIdentityValidated")}
-                </p>
-              ) : vState.identity.kind === "pending" ? (
-                <div className="mt-3 flex items-center gap-2 rounded-xl bg-amber-50 border border-amber-200 px-4 py-2.5">
-                  <Loader2 size={16} className="animate-spin text-amber-600 shrink-0" />
-                  <p className="text-sm text-amber-800 font-medium">{t("verifyIdPending")}</p>
-                </div>
-              ) : vState.identity.kind === "failed" ? (
-                <p className="mt-2 text-sm font-semibold text-rose-600">
-                  {t("verificationFailed")}
-                </p>
-              ) : null}
-
-              <p className="mt-2 text-[11px] text-[#6B6A65]">{t("poweredByStripe")}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* ── Level 3 — Diploma ─────────────────────────────────────────── */}
-        <DiplomaStep
-          diploma={vState.diploma}
-          busy={busy}
-          diplomaFile={diplomaFile}
-          diplomaNote={diplomaNote}
-          fileInputRef={fileInputRef}
-          onFileChange={setDiplomaFile}
-          onNoteChange={setDiplomaNote}
-          onUpload={() => void uploadDiploma()}
-          t={t}
-        />
-
-        {/* ── Level 4 — Zone d'enseignement ─────────────────────────────── */}
+      <section id="trust-zone" className="scroll-mt-24">
         <ZoneStep
           zone={vState.zone}
           busy={busy}
@@ -635,8 +602,26 @@ export default function TeacherVerificationPage() {
           onSubmit={() => void submitZone()}
           t={t}
         />
+      </section>
 
-        {/* ── Credentials / qualifications (Pratiqo-reviewed) ─────────────── */}
+      <section id="trust-diploma" className="scroll-mt-24">
+        <DiplomaStep
+          diploma={vState.diploma}
+          busy={busy}
+          diplomaFile={diplomaFile}
+          diplomaNote={diplomaNote}
+          fileInputRef={fileInputRef}
+          onFileChange={setDiplomaFile}
+          onNoteChange={setDiplomaNote}
+          onUpload={() => void uploadDiploma()}
+          t={t}
+        />
+        <p className="mt-2 text-xs text-[#6B6A65]" data-testid="teacher-trust-diploma-optional">
+          {t("teacherTrustCardDiplomaDescription")}
+        </p>
+      </section>
+
+      <section className="scroll-mt-24">
         <CredentialsStep
           credentials={credentials}
           credType={credType}
@@ -646,7 +631,7 @@ export default function TeacherVerificationPage() {
           credIssuedYear={credIssuedYear}
           credMethod={credMethod}
           busy={busy}
-          badgePreview={badgePreview}
+          badgePreview={[]}
           onTypeChange={setCredType}
           onTitleChange={setCredTitle}
           onInstitutionChange={setCredInstitution}
@@ -656,40 +641,92 @@ export default function TeacherVerificationPage() {
           onSubmit={() => void submitCredential()}
           t={t}
         />
-
-        <div className="rounded-2xl border border-[#E8E6DF] bg-white p-5 space-y-3">
-          <div className="flex gap-3">
-            <BriefcaseBusiness className="text-slate-600 shrink-0 mt-0.5" size={22} />
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold text-[#2C2C2A]">{t("verificationLevel5Title")}</p>
-              <p className="text-sm text-[#6B6A65] mt-1">{t("verificationLevel5Body")}</p>
-              {backgroundVerified ? (
-                <p className="mt-2 text-sm font-semibold text-teal-700">{t("trustBackgroundVerified")}</p>
-              ) : backgroundProvided ? (
-                <p className="mt-2 text-sm font-semibold text-slate-700">{t("trustBackgroundProvided")}</p>
-              ) : (
-                <p className="mt-2 text-xs text-[#6B6A65]">{t("backgroundVerificationStatus")}: {t("verificationUnverified")}</p>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* ── Marketplace plan benefits ─────────────────────────────────── */}
-        <div className="rounded-2xl border border-[#E8E6DF] bg-[#F1EFE8] p-5">
-          <p className="font-semibold text-[#2C2C2A]">{t("verificationMarketplacePlanTitle")}</p>
-          <p className="mt-2 text-sm text-[#6B6A65]">
-            {isPro ? t("verificationLevel4BodyPro") : t("verificationLevel4BodyFree")}
-          </p>
-          {!isPro ? (
-            <Link
-              href="/upgrade"
-              className="mt-4 inline-flex h-10 items-center rounded-xl bg-teal-700 px-4 text-sm font-bold text-white hover:brightness-105"
-            >
-              {t("verificationViewPlans")}
-            </Link>
-          ) : null}
-        </div>
       </section>
     </div>
+  );
+}
+
+// ── Unlock card primitives ──────────────────────────────────────────────────
+
+type UnlockCardSpec = {
+  key: string;
+  icon: React.ReactNode;
+  titleKey: TranslationKey;
+  descKey: TranslationKey;
+  ctaKey: TranslationKey;
+  state: VerificationStepState;
+  /** Anchor inside this page to scroll to (when no `ctaHref` is set). */
+  anchor?: string;
+  /** External CTA href (e.g. Stripe payouts). */
+  ctaHref?: string;
+  optional?: boolean;
+};
+
+function statusInfo(
+  state: VerificationStepState,
+  optional: boolean,
+  t: (k: TranslationKey) => string,
+): { label: string; tone: "complete" | "missing" | "review" | "optional" | "action" } {
+  if (state.kind === "verified") return { label: t("teacherTrustStatusComplete"), tone: "complete" };
+  if (state.kind === "pending") return { label: t("teacherTrustStatusInReview"), tone: "review" };
+  if (state.kind === "failed") return { label: t("teacherTrustStatusActionNeeded"), tone: "action" };
+  if (optional) return { label: t("teacherTrustStatusOptional"), tone: "optional" };
+  return { label: t("teacherTrustStatusMissing"), tone: "missing" };
+}
+
+function UnlockCard({ card, t }: { card: UnlockCardSpec; t: (k: TranslationKey) => string }) {
+  const { label, tone } = statusInfo(card.state, Boolean(card.optional), t);
+
+  const toneClasses =
+    tone === "complete"
+      ? "bg-teal-500/15 text-teal-800 border-teal-500/30"
+      : tone === "review"
+        ? "bg-amber-50 text-amber-800 border-amber-200"
+        : tone === "action"
+          ? "bg-rose-50 text-rose-700 border-rose-200"
+          : tone === "optional"
+            ? "bg-slate-100 text-slate-600 border-slate-200"
+            : "bg-white text-slate-700 border-slate-200";
+
+  const isCta = tone !== "complete";
+  const cta = card.ctaHref ? (
+    <Link
+      href={card.ctaHref}
+      className="inline-flex h-10 items-center rounded-full bg-teal-600 px-4 text-xs font-bold text-white hover:bg-teal-700"
+    >
+      {t(card.ctaKey)}
+    </Link>
+  ) : (
+    <a
+      href={`#${card.anchor ?? ""}`}
+      className="inline-flex h-10 items-center rounded-full bg-teal-600 px-4 text-xs font-bold text-white hover:bg-teal-700"
+    >
+      {t(card.ctaKey)}
+    </a>
+  );
+
+  return (
+    <article
+      className="rounded-2xl border border-[#E8E6DF] bg-white p-5 flex flex-col gap-3"
+      data-testid={`teacher-trust-card-${card.key}`}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-2 text-teal-700">
+          {card.icon}
+          <h3 className="text-sm font-bold text-[#2C2C2A]">{t(card.titleKey)}</h3>
+        </div>
+        <span
+          className={cn(
+            "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider",
+            toneClasses,
+          )}
+        >
+          {tone === "complete" ? <CheckCircle2 size={11} /> : <CircleDashed size={11} />}
+          {label}
+        </span>
+      </div>
+      <p className="text-xs leading-relaxed text-[#6B6A65]">{t(card.descKey)}</p>
+      {isCta ? <div>{cta}</div> : null}
+    </article>
   );
 }
