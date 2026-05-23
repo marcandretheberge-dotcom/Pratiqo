@@ -8,6 +8,7 @@ import { findDisciplineBySlug, DISCIPLINE_CITY_PAIRS } from "@/lib/seo/disciplin
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { haversineDistance } from "@/lib/geo";
 import { teacherRowToTeacher, type TeacherRow } from "@/lib/teacherMapper";
+import { TEACHERS_PUBLIC_TABLE } from "@/lib/supabase/queries";
 import { publicFirstNameWithInitial } from "@/lib/identity/displayName";
 import { LegalFooterLinks } from "@/components/LegalFooterLinks";
 import { CityLinksFooter } from "@/components/CityLinksFooter";
@@ -22,15 +23,19 @@ import { SITE_URL } from "@/lib/seo/site";
 
 const BASE_URL = SITE_URL;
 
+// Read through teachers_public so this SEO page never ships private workflow
+// fields (Stripe Connect/Identity, diploma_url, phone_verified, identity_status,
+// stripe_identity_status, location_verification_*, cv_verification_status) in
+// the rendered HTML payload. See migration 070.
 const TEACHER_SELECT =
-  "id, user_id, name, discipline, category, rating, reviews, price_per_lesson, bio, image_url, availability, location, is_verified, teaching_mode, languages, levels, verification_level, identity_verified, diploma_verified, phone_verified, country_code, timezone, currency, city, region";
+  "id, user_id, name, discipline, category, rating, reviews, price_per_lesson, bio, image_url, availability, location, is_verified, teaching_mode, languages, levels, verification_level, identity_verified, diploma_verified, country_code, timezone, currency, city, region";
 
 const getAllTeachers = unstable_cache(
   async (): Promise<Teacher[]> => {
     try {
       const supabase = getSupabaseAdmin();
       const { data, error } = await supabase
-        .from("teachers")
+        .from(TEACHERS_PUBLIC_TABLE)
         .select(TEACHER_SELECT)
         .order("rating", { ascending: false });
       if (error || !data) return [];

@@ -322,17 +322,17 @@ export function TeacherQuiz({ onClose }: { onClose: () => void }) {
           : null;
       }
 
-      const stripFailed = (rows: TeacherRow[]) =>
-        rows.filter((r) => foldAscii(String(r.identity_status ?? "none")) !== "failed");
-
+      // Failed Stripe Identity verifications are filtered out at the view level
+      // by public.teachers_public (migration 070). The previous client-side
+      // .neq("identity_status", "failed") and JS stripFailed are no longer
+      // needed and would fail to compile against the safe-public column list.
       const { data, error } = await supabase
         .from(TEACHERS_PUBLIC_TABLE)
         .select(TEACHER_QUIZ_SELECT)
-        .neq("identity_status", "failed")
         .order("rating", { ascending: false })
         .limit(96);
 
-      const rows = stripFailed((data ?? []) as TeacherRow[]);
+      const rows = (data ?? []) as TeacherRow[];
       const teachers = rows.map((r) => teacherRowToTeacher(r));
 
       const crit = quizSearchCriteria(answers);
