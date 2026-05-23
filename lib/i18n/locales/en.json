@@ -785,6 +785,8 @@
   "messagesSubtitle": "Real-time conversations with teachers.",
   "mobileChatBack": "Back",
   "messagingAfterBooking": "Messaging will be available after your first booking",
+  "messagingContactGateNotice": "For your safety, sharing personal contact details is limited until your first completed lesson.",
+  "messagingContactMaskedPlaceholder": "[hidden — contact info]",
   "modeHome": "Home lesson",
   "modeHybrid": "Hybrid",
   "modeStudio": "Studio",

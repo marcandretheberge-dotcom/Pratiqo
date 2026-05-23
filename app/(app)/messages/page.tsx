@@ -55,6 +55,7 @@ export default function MessagesPage() {
   );
   const [draftHint, setDraftHint] = useState(false);
   const draftAppliedKeyRef = useRef<string | null>(null);
+  const [contactGateNotice, setContactGateNotice] = useState(false);
 
   const supabase = useMemo(() => getSupabaseClient(), []);
 
@@ -141,6 +142,10 @@ export default function MessagesPage() {
   useEffect(() => {
     if (!activeConversationId || !user?.id) return;
     void loadThread(activeConversationId);
+    // Dismiss any leftover gate notice when switching conversations; the
+    // next masked send for this peer will re-surface it (gated by the
+    // per-peer sessionStorage key).
+    setContactGateNotice(false);
   }, [activeConversationId, user?.id, loadThread]);
 
   useEffect(() => {
@@ -220,13 +225,24 @@ export default function MessagesPage() {
     setInput("");
     setMessages((prev) => [...prev, optimistic]);
     try {
-      const row = await sendMessage(supabase, user.id, activePeerId, contentToSend);
-      setMessages((prev) => prev.map((m) => (m.id === optimisticId ? row : m)));
+      const result = await sendMessage(supabase, user.id, activePeerId, contentToSend);
+      setMessages((prev) => prev.map((m) => (m.id === optimisticId ? result.message : m)));
       setPendingPeer(null);
       await refreshConversations();
       setDraftHint(false);
       draftAppliedKeyRef.current = null;
       router.replace("/messages", { scroll: false });
+
+      // Anti-circumvention notice: show once per peer per browser session.
+      // `sessionStorage` (not `localStorage`) means a fresh sign-in or new
+      // tab re-shows it, which is the intended reminder cadence.
+      if (result.safetyNotice && activePeerId) {
+        const sessionKey = `contactGateNoticeShown:${activePeerId}`;
+        if (typeof window !== "undefined" && !window.sessionStorage.getItem(sessionKey)) {
+          window.sessionStorage.setItem(sessionKey, "1");
+          setContactGateNotice(true);
+        }
+      }
     } catch (e) {
       setMessages((prev) => prev.filter((m) => m.id !== optimisticId));
       setInput(contentToSend);
@@ -379,6 +395,22 @@ export default function MessagesPage() {
               </div>
 
               <div className="p-3 border-t border-[var(--p-border-light)] bg-[#fafaf8]">
+                {contactGateNotice ? (
+                  <div
+                    role="status"
+                    className="mb-2 flex items-start justify-between gap-3 rounded-xl border border-amber-300/60 bg-amber-50 px-3 py-2 text-[12px] font-medium text-amber-900"
+                  >
+                    <span>{t("messagingContactGateNotice")}</span>
+                    <button
+                      type="button"
+                      onClick={() => setContactGateNotice(false)}
+                      className="shrink-0 text-amber-900/70 hover:text-amber-900"
+                      aria-label="close"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ) : null}
                 {draftHint ? (
                   <p className="mb-2 rounded-xl border border-teal-500/25 bg-teal-50/80 px-3 py-2 text-[11px] font-medium text-slate-800">
                     Brouillon pré-rempli — modifiez et envoyez quand vous êtes prêt(e).
