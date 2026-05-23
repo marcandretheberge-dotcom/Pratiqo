@@ -131,30 +131,65 @@ export async function getMessages(supabase: SupabaseClient, conversationId: stri
   return (data ?? []) as MessageRow[];
 }
 
+export type SendMessageResult = {
+  message: MessageRow;
+  safetyNotice: boolean;
+  maskedReasons?: string[];
+};
+
+/**
+ * Sends a user-composed message via the `/api/messages/send` route.
+ *
+ * Historically this function performed a direct `supabase.from("messages").insert(...)`
+ * from the browser, which let users bypass the server-side
+ * anti-circumvention sanitizer (`lib/messaging/sanitizeContactInfo.ts`).
+ * To close that hole the function now POSTs to the API route with the
+ * caller's Supabase session token; the route owns rate limiting, the
+ * booking-relationship check, the contact-info gate, and the actual
+ * insert. The `supabase` parameter is kept (1) to preserve the existing
+ * call signature for `app/(app)/messages/page.tsx` and (2) to fetch the
+ * session token without forcing the caller to plumb it through.
+ */
 export async function sendMessage(
   supabase: SupabaseClient,
-  senderId: string,
+  _senderId: string,
   receiverId: string,
   content: string,
-): Promise<MessageRow> {
+): Promise<SendMessageResult> {
   const trimmed = content.trim();
   if (!trimmed) throw new Error("Message vide.");
 
-  const conversation_id = getConversationId(senderId, receiverId);
-  const { data, error } = await supabase
-    .from("messages")
-    .insert({
-      conversation_id,
-      sender_id: senderId,
-      receiver_id: receiverId,
-      content: trimmed,
-      read: false,
-    })
-    .select("id, conversation_id, sender_id, receiver_id, content, read, created_at")
-    .single();
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData.session?.access_token;
+  if (!token) {
+    throw new Error("Session expirée. Reconnectez-vous pour envoyer un message.");
+  }
 
-  if (error) throw error;
-  return data as MessageRow;
+  const res = await fetch("/api/messages/send", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ receiver_id: receiverId, content: trimmed }),
+  });
+
+  if (!res.ok) {
+    const payload = (await res.json().catch(() => ({}))) as { error?: string };
+    throw new Error(payload.error || `Send failed (${res.status})`);
+  }
+
+  const body = (await res.json()) as {
+    ok: boolean;
+    message: MessageRow;
+    safetyNotice?: boolean;
+    maskedReasons?: string[];
+  };
+  return {
+    message: body.message,
+    safetyNotice: Boolean(body.safetyNotice),
+    maskedReasons: body.maskedReasons,
+  };
 }
 
 export async function markAsRead(supabase: SupabaseClient, conversationId: string, userId: string): Promise<void> {

@@ -4,8 +4,18 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { rateLimitByIp, rateLimitResponse } from "@/lib/rateLimit";
 import { validateJsonBody } from "@/lib/validation/api";
 import { messageSendPostSchema } from "@/lib/validation/schemas";
+import { hasCompletedLessonBetween } from "@/lib/messaging/contactGate";
+import { sanitizeContactInfo } from "@/lib/messaging/sanitizeContactInfo";
+import type { Locale } from "@/lib/i18n/types";
 
 export const runtime = "nodejs";
+
+function localeFromAcceptLanguage(header: string | null | undefined): Locale {
+  const h = (header ?? "").split(",")[0]?.trim().toLowerCase() ?? "";
+  if (h.startsWith("fr")) return "fr";
+  if (h.startsWith("es")) return "es";
+  return "en";
+}
 
 export async function POST(req: Request) {
   const authHeader = req.headers.get("authorization");
@@ -65,6 +75,18 @@ export async function POST(req: Request) {
     }
   }
 
+  // Anti-circumvention gate: mask personal contact details until this
+  // student/teacher pair has completed at least one lesson together.
+  // Failing closed (`gateOpen = false`) means a transient lookup error
+  // applies stricter masking — never breaks the send.
+  const gateOpen = await hasCompletedLessonBetween(admin, user.id, receiverId);
+  const senderLocale = localeFromAcceptLanguage(req.headers.get("accept-language"));
+  const { content: sanitizedContent, masked, reasons } = sanitizeContactInfo(
+    content,
+    senderLocale,
+    gateOpen,
+  );
+
   const conversationId = [user.id, receiverId].sort().join("_");
   const { data: message, error: msgErr } = await admin
     .from("messages")
@@ -72,7 +94,9 @@ export async function POST(req: Request) {
       conversation_id: conversationId,
       sender_id: user.id,
       receiver_id: receiverId,
-      content,
+      // The persisted content is always the sanitized version. We do not
+      // keep the unmasked original anywhere — that's the privacy contract.
+      content: sanitizedContent,
       read: false,
     })
     .select("id, conversation_id, sender_id, receiver_id, content, read, created_at")
@@ -82,5 +106,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: msgErr.message }, { status: 500 });
   }
 
-  return NextResponse.json({ ok: true, message });
+  return NextResponse.json({
+    ok: true,
+    message,
+    safetyNotice: masked,
+    ...(masked ? { maskedReasons: reasons } : {}),
+  });
 }

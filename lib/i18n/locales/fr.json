@@ -787,6 +787,8 @@
   "messagesSubtitle": "Conversations en temps réel avec les professeurs.",
   "mobileChatBack": "Retour",
   "messagingAfterBooking": "La messagerie sera disponible après ta première réservation",
+  "messagingContactGateNotice": "Pour votre sécurité, l’échange de coordonnées personnelles est limité jusqu’à votre première leçon complétée.",
+  "messagingContactMaskedPlaceholder": "[masqué — info de contact]",
   "modeHome": "À domicile",
   "modeHybrid": "Hybride",
   "modeStudio": "En studio",
