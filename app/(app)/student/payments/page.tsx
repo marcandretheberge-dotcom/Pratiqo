@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Calendar, CreditCard, ExternalLink, Loader2, ReceiptText } from "lucide-react";
+import { ArrowLeft, Calendar, CreditCard, ExternalLink, Loader2, ReceiptText, ShieldCheck } from "lucide-react";
 import { useAuth } from "../../../../components/AuthProvider";
 import { getSupabaseClient } from "../../../../lib/supabase";
 import { useLocale } from "../../../../lib/locale-context";
+import { formatAccountingDisplay } from "@/lib/currency/format";
 import type { TranslationKey } from "@/lib/translations";
 
 type BookingRow = {
@@ -111,7 +112,7 @@ function renderReceiptAction(
 
 export default function StudentPaymentsPage() {
   const { user, profile } = useAuth();
-  const { t, locale } = useLocale();
+  const { t, locale, currency: displayCurrency } = useLocale();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<PaymentItem[]>([]);
@@ -190,13 +191,20 @@ export default function StudentPaymentsPage() {
     };
   }, [user?.id]);
 
-  const formatter = useMemo(
-    () =>
-      new Intl.NumberFormat(locale === "fr" ? "fr-CA" : locale === "es" ? "es-UY" : "en-CA", {
-        style: "currency",
-        currency: "CAD",
+  // Accounting-style formatter: the primary string is always in the actual
+  // source currency of the payment (CAD today), with the same `currencyDisplay:
+  // "code"` style used on the teacher revenue/history screens. An optional
+  // `approx` line is shown when the viewer's display currency differs and a
+  // conversion rate is available. We never *replace* the source amount.
+  const fmtAmount = useCallback(
+    (amountCents: number, sourceCurrency: string) =>
+      formatAccountingDisplay({
+        amount: amountCents / 100,
+        sourceCurrency,
+        displayCurrency,
+        locale,
       }),
-    [locale],
+    [displayCurrency, locale],
   );
 
   if (!user) {
@@ -236,6 +244,18 @@ export default function StudentPaymentsPage() {
           </div>
         </section>
 
+        {/* Value-prop banner. Restrained teal. No tax / deductibility / legal claims —
+            framed strictly as marketplace + record-keeping value. */}
+        <section
+          aria-label={t("studentPaymentsTitle")}
+          className="flex items-start gap-3 rounded-3xl border border-[#DCEAE3] bg-[#F3FAF6] p-4 shadow-sm"
+        >
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-white text-teal-700 ring-1 ring-[#DCEAE3]">
+            <ShieldCheck size={18} aria-hidden />
+          </span>
+          <p className="text-sm leading-relaxed text-slate-700">{t("studentPaymentsValueProp")}</p>
+        </section>
+
         <section className="rounded-3xl border border-[#DCEAE3] bg-white p-4 shadow-sm">
         {loading ? (
           <div className="flex items-center justify-center gap-3 py-12 text-sm font-semibold text-slate-600">
@@ -255,12 +275,22 @@ export default function StudentPaymentsPage() {
               const date = booking.slot_date || booking.date || "";
               const time = booking.time_slot || booking.time || "";
               const amountCents = payment?.amount_cents ?? fallbackAmountCents(booking);
-              const currency = (payment?.currency || "cad").toUpperCase();
-              const amount = formatter.format(amountCents / 100).replace("CA$", "$");
+              const sourceCurrency = (payment?.currency || "cad").toUpperCase();
+              const amountDisplay = fmtAmount(amountCents, sourceCurrency);
               const statusKey = paymentStatusKey(payment?.payment_status);
               const isPaid = statusKey === "paymentStatusPaid";
               const isRefunded = statusKey === "paymentStatusRefunded";
               const isFailed = statusKey === "paymentStatusFailed";
+              const teacherDisplayName = teacher?.name ?? t("bookingFallbackTeacherName");
+              // Marketplace framing: shown whenever the booking has any
+              // payment record (paid, refunded, or even a pending row),
+              // so the student always sees who provided the service vs. who
+              // processed the payment. Neutral wording, no legal/tax claims.
+              const showServiceProvidedBy = Boolean(payment);
+              const serviceProvidedByLine = t("studentPaymentsServiceProvidedBy").replace(
+                "{teacher}",
+                teacherDisplayName,
+              );
               return (
                 <article
                   key={booking.id}
@@ -269,7 +299,7 @@ export default function StudentPaymentsPage() {
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
-                      <p className="font-bold text-slate-900">{teacher?.name ?? t("bookingFallbackTeacherName")}</p>
+                      <p className="font-bold text-slate-900">{teacherDisplayName}</p>
                       <span
                         className={[
                           "rounded-full px-2.5 py-1 text-[11px] font-bold",
@@ -292,6 +322,9 @@ export default function StudentPaymentsPage() {
                       {payment?.tax_behavior === "not_collected" ? (
                         <p className="mt-2 text-xs text-slate-400">{t("studentPaymentsTaxNotCollected")}</p>
                       ) : null}
+                      {showServiceProvidedBy ? (
+                        <p className="mt-2 text-[11px] leading-snug text-slate-500">{serviceProvidedByLine}</p>
+                      ) : null}
                     </div>
                     <div className="flex flex-col items-stretch gap-3 sm:items-end sm:shrink-0">
                       <div className="text-left sm:text-right">
@@ -301,9 +334,13 @@ export default function StudentPaymentsPage() {
                             isFailed ? "text-rose-700" : isRefunded ? "text-slate-700" : "text-[#1D9E75]",
                           ].join(" ")}
                         >
-                          {amount}
+                          {amountDisplay.primary}
                         </p>
-                        <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">{currency}</p>
+                        {amountDisplay.approx ? (
+                          <p className="text-[11px] font-semibold tabular-nums text-slate-400">
+                            ≈ {amountDisplay.approx}
+                          </p>
+                        ) : null}
                       </div>
                       {renderReceiptAction(payment, isPaid, t)}
                     </div>

@@ -51,6 +51,20 @@ export function buildLessonPaymentReceiptEmail(opts: LessonPaymentReceiptEmailIn
     ? `<strong>${escapeHtml(copy.labels.tax)}</strong><br>${escapeHtml(copy.taxInclusiveNote)}`
     : `<strong>${escapeHtml(copy.labels.tax)}</strong><br>${escapeHtml(copy.taxLine)}`;
 
+  // The receipt email must always have a CTA so the student can land somewhere
+  // useful. When Stripe has a hosted receipt URL we send them there; otherwise
+  // we fall back to the in-app /student/payments vault, which holds the
+  // Pratiqo-issued receipt number and lesson context.
+  const fallbackReceiptUrl = `${appBaseUrl()}/student/payments`;
+  const ctaUrl = opts.stripeReceiptUrl ?? fallbackReceiptUrl;
+  const ctaText = opts.stripeReceiptUrl ? copy.cta : copy.viewReceiptFallbackCta;
+
+  const stripeLinkHtml = opts.stripeReceiptUrl
+    ? `<p style="font-size:14px;color:#6B6A65;">${escapeHtml(copy.stripeReceipt)}: <a href="${escapeHtml(opts.stripeReceiptUrl)}" style="color:#2D7B72;font-weight:700;">${escapeHtml(opts.stripeReceiptUrl)}</a></p>`
+    : "";
+
+  const serviceProvidedByHtml = `<p style="font-size:12px;color:#6B6A65;margin-top:24px;">${escapeHtml(copy.serviceProvidedBy(opts.teacherName))}</p>`;
+
   return {
     subject: copy.subject(opts.receiptNumber),
     html: buildEmail({
@@ -62,11 +76,12 @@ export function buildLessonPaymentReceiptEmail(opts: LessonPaymentReceiptEmailIn
         <p>${copy.intro(escapeHtml(opts.studentName))}</p>
         ${infoTable(rows)}
         ${tealBox(taxBoxHtml)}
-        ${opts.stripeReceiptUrl ? `<p style="font-size:14px;color:#6B6A65;">${escapeHtml(copy.stripeReceipt)}: <a href="${escapeHtml(opts.stripeReceiptUrl)}" style="color:#2D7B72;font-weight:700;">${escapeHtml(opts.stripeReceiptUrl)}</a></p>` : ""}
+        ${stripeLinkHtml}
         <p style="font-size:14px;color:#6B6A65;">${copy.thanks}</p>
+        ${serviceProvidedByHtml}
       `,
-      ctaText: opts.stripeReceiptUrl ? copy.cta : undefined,
-      ctaUrl: opts.stripeReceiptUrl ?? undefined,
+      ctaText,
+      ctaUrl,
     }),
   };
 }

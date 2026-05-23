@@ -10,7 +10,7 @@
     "test:auth": "tsx tests/auth/adminAuthorization.test.ts && tsx tests/auth/serverRouteGuards.test.ts",
     "test:currency": "tsx tests/currency/conversion.test.ts",
     "test:launch-critical": "tsx tests/bookings/studentBookingSort.test.ts && tsx tests/bookings/bookingBuffers.test.ts && tsx tests/bookings/scheduleLockout.test.ts && tsx tests/companion/rewards.test.ts",
-    "test:payments": "tsx tests/bookings/autoComplete.test.ts && tsx tests/bookings/reminders.test.ts && tsx tests/email/locale.test.ts && tsx tests/email/welcome.test.ts && tsx tests/email/notifications.test.ts && tsx tests/email/formatSchedule.test.ts && tsx tests/pricing/minimumLessonPrice.test.ts && tsx tests/payments/commissionSubtotal.test.ts && tsx tests/payments/stripeTaxInclusive.test.ts && tsx tests/payments/receipts.test.ts && tsx tests/payments/paymentRiskWebhook.test.ts",
+    "test:payments": "tsx tests/bookings/autoComplete.test.ts && tsx tests/bookings/reminders.test.ts && tsx tests/email/locale.test.ts && tsx tests/email/welcome.test.ts && tsx tests/email/notifications.test.ts && tsx tests/email/formatSchedule.test.ts && tsx tests/pricing/minimumLessonPrice.test.ts && tsx tests/payments/commissionSubtotal.test.ts && tsx tests/payments/stripeTaxInclusive.test.ts && tsx tests/payments/receipts.test.ts && tsx tests/payments/paymentRiskWebhook.test.ts && tsx tests/i18n/uniqueKeys.test.ts",
     "validate:launch": "npm run test:auth && npm run test:payments && npm run test:launch-critical && npm run test:currency && npm run payment:safety && tsx scripts/validate_i18n.ts && npm run build",
     "lint": "eslint"
   },
