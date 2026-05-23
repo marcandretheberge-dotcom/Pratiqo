@@ -249,6 +249,7 @@
   "bookingTotalLine": "Total",
   "bookingUnknownError": "Une erreur est survenue.",
   "bookingYourLevel": "Votre niveau",
+  "bookingLevelOptionalHelp": "Optionnel — aide le professeur à mieux préparer le cours.",
   "bookingDetails": "Détails de la réservation",
   "bookingErrorBookingNotFoundMessage": "Nous ne trouvons pas la réservation associée à ce paiement. Contactez le soutien avec votre référence de session.",
   "bookingErrorBookingNotFoundTitle": "Réservation introuvable",

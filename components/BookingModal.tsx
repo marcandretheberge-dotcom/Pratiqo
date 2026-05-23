@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   Calendar,
@@ -167,6 +167,11 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
   const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  // Field-anchored inline errors. Used in addition to the bottom-of-Confirm
+  // banner so missing fields highlight where the user can actually fix them
+  // (replaces the prior silent-disable + far-away error pattern).
+  const [addressError, setAddressError] = useState<string | null>(null);
+  const addressTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const [creditBalance, setCreditBalance] = useState(0);
   const [applyCredits, setApplyCredits] = useState(false);
   const [loadingCredits, setLoadingCredits] = useState(false);
@@ -388,6 +393,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
     setSelectedSlot(null);
     setSelectedLevel(null);
     setCheckoutError(null);
+    setAddressError(null);
     setAvailableDays({});
     setSlots([]);
     setDaysError(null);
@@ -510,6 +516,21 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
     setContextDirty(false);
   };
 
+  // Used by both the preferences-step Continue button and handleConfirmAndPay
+  // so a missing required field always surfaces inline where the user can
+  // see and fix it. Returns true when focus was applied (i.e. a problem was
+  // surfaced) so callers can short-circuit navigation.
+  const focusAddressField = useCallback((errorMessage: string) => {
+    setAddressError(errorMessage);
+    // Defer to give the textarea time to mount when we just switched steps.
+    requestAnimationFrame(() => {
+      const node = addressTextareaRef.current;
+      if (!node) return;
+      node.scrollIntoView({ behavior: "smooth", block: "center" });
+      node.focus({ preventScroll: true });
+    });
+  }, []);
+
   const requestBookingGeo = useCallback(() => {
     if (!("geolocation" in navigator)) return;
     navigator.geolocation.getCurrentPosition(
@@ -624,7 +645,13 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
         return;
       }
       if (!addressTrim) {
+        // Navigate back to the preferences step where the address field lives
+        // and scroll/focus it, in addition to the bottom Confirm-banner error.
+        // This replaces the previous behavior where the user saw an error far
+        // below the field that needed editing.
         setCheckoutError(t("bookingAddressRequired"));
+        setStep("preferences");
+        focusAddressField(t("bookingAddressRequired"));
         return;
       }
     }
@@ -929,7 +956,10 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                 </div>
               ) : null}
 
-              <p className="text-sm font-semibold text-slate-800">{t("bookingYourLevel")}</p>
+              <div className="space-y-1">
+                <p className="text-sm font-semibold text-slate-800">{t("bookingYourLevel")}</p>
+                <p className="text-xs text-slate-500">{t("bookingLevelOptionalHelp")}</p>
+              </div>
               <div className="flex flex-wrap gap-2">
                 {displayLevels.map((lvl) => (
                   <button
@@ -1017,7 +1047,10 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                   {showStudio ? (
                     <button
                       type="button"
-                      onClick={() => setTeachingMode("person")}
+                      onClick={() => {
+                        setTeachingMode("person");
+                        setAddressError(null);
+                      }}
                       className={cn(
                         "flex-1 min-w-[100px] py-2.5 px-2 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5",
                         teachingMode === "person"
@@ -1031,7 +1064,10 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                   {showOnline ? (
                     <button
                       type="button"
-                      onClick={() => setTeachingMode("online")}
+                      onClick={() => {
+                        setTeachingMode("online");
+                        setAddressError(null);
+                      }}
                       className={cn(
                         "flex-1 min-w-[100px] py-2.5 px-2 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5",
                         teachingMode === "online"
@@ -1066,12 +1102,31 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                     {t("bookingAddressLabel")}
                   </label>
                   <textarea
+                    ref={addressTextareaRef}
                     value={studentAddress}
-                    onChange={(e) => setStudentAddress(e.target.value)}
+                    onChange={(e) => {
+                      const next = e.target.value;
+                      setStudentAddress(next);
+                      if (addressError && next.trim()) setAddressError(null);
+                    }}
                     rows={3}
                     placeholder={t("bookingAddressPlaceholder")}
-                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm resize-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 outline-none"
+                    aria-invalid={addressError ? true : undefined}
+                    aria-describedby={addressError ? "booking-address-error" : undefined}
+                    className={cn(
+                      "w-full rounded-xl border px-3 py-2 text-sm resize-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 outline-none",
+                      addressError ? "border-red-300 bg-red-50/60" : "border-slate-200",
+                    )}
                   />
+                  {addressError ? (
+                    <p
+                      id="booking-address-error"
+                      role="alert"
+                      className="text-xs font-semibold text-red-700"
+                    >
+                      {addressError}
+                    </p>
+                  ) : null}
                   <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
                     <span className="font-semibold text-slate-700">
                       {lessonType === "intro"
@@ -1122,8 +1177,14 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                 </button>
                 <button
                   type="button"
-                  disabled={!selectedLevel}
                   onClick={() => {
+                    // Level is intentionally optional for launch — only address
+                    // (for domicile) is gated here. Surface the missing field
+                    // inline instead of silently disabling the button.
+                    if (teachingMode === "domicile" && !studentAddress.trim()) {
+                      focusAddressField(t("bookingAddressRequired"));
+                      return;
+                    }
                     setSelectedDate(null);
                     setSelectedSlot(null);
                     setStep("pickDate");

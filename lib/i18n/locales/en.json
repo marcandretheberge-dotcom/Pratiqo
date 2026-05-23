@@ -249,6 +249,7 @@
   "bookingTotalLine": "Total",
   "bookingUnknownError": "Something went wrong.",
   "bookingYourLevel": "Your level",
+  "bookingLevelOptionalHelp": "Optional — helps the teacher prepare the lesson.",
   "bookingDetails": "Booking details",
   "bookingErrorBookingNotFoundMessage": "We could not link this payment to a booking. Contact support with your session reference.",
   "bookingErrorBookingNotFoundTitle": "Booking not found",
