@@ -249,6 +249,7 @@
   "bookingTotalLine": "Total",
   "bookingUnknownError": "Algo salió mal.",
   "bookingYourLevel": "Tu nivel",
+  "bookingLevelOptionalHelp": "Opcional — ayuda al profesor a preparar la clase.",
   "bookingDetails": "Detalles de la reserva",
   "bookingErrorBookingNotFoundMessage": "No encontramos la reserva asociada a este pago. Contactá al soporte con tu referencia de sesión.",
   "bookingErrorBookingNotFoundTitle": "Reserva no encontrada",
