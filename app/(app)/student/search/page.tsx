@@ -13,6 +13,7 @@ import { fetchTeacherDisciplinesMap, mergeTeachersWithDisciplines } from "../../
 import { teacherRowToTeacher, type TeacherRow } from "../../../../lib/teacherMapper";
 import { TEACHERS_LIST_SELECT, TEACHERS_PUBLIC_TABLE } from "../../../../lib/supabase/queries";
 import { TeacherAvatar } from "../../../../components/TeacherAvatar";
+import { publicFirstNameWithInitial } from "@/lib/identity/displayName";
 import type { City } from "../../../../lib/cities";
 import type { MapBounds } from "../../../../components/SearchMapView";
 import { useAuth } from "../../../../components/AuthProvider";
@@ -545,7 +546,7 @@ function TeacherCard({
           <TeacherAvatar name={teacher.name} category={teacher.category} imageUrl={teacher.imageUrl} size={44} />
           <div className="min-w-0">
             <div className="flex items-center gap-2 min-w-0">
-              <p className="truncate font-semibold text-[#2C2C2A]">{teacher.name}</p>
+              <p className="truncate font-semibold text-[#2C2C2A]">{publicFirstNameWithInitial(teacher.name)}</p>
               {badges.map((badge) => (
                 <TeacherBadgePill key={badge.id} badge={badge} compact className="shrink-0" />
               ))}

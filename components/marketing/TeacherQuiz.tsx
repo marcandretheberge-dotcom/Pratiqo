@@ -20,6 +20,7 @@ import { filterTeacherPool } from "@/lib/teacherSearchEngine";
 import type { TeacherSearchCriteria } from "@/lib/teacherSearchCriteria";
 import type { Teacher } from "@/types";
 import { teacherRowToTeacher, type TeacherRow } from "@/lib/teacherMapper";
+import { publicFirstNameWithInitial } from "@/lib/identity/displayName";
 import { logSearchEvent } from "@/lib/searchAnalytics";
 import type { TranslationKey } from "@/lib/i18n/types";
 import { PriceDisplay } from "@/components/PriceDisplay";
@@ -996,7 +997,7 @@ function MatchCard({
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-1">
           <div className="min-w-0">
-            <p className="font-bold text-sm text-[#2C2C2A] truncate">{teacher.name}</p>
+            <p className="font-bold text-sm text-[#2C2C2A] truncate">{publicFirstNameWithInitial(teacher.name)}</p>
             <p className="text-[11px] text-neutral-700 truncate">{teacher.discipline}</p>
           </div>
           {teacher.rating != null && teacher.rating > 0 && teacher.reviews != null && teacher.reviews > 0 && (

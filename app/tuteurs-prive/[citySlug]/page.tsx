@@ -7,6 +7,7 @@ import { QC_CITIES, findCityBySlug } from "../../../lib/constants/cities";
 import { getSupabaseAdmin } from "../../../lib/supabaseAdmin";
 import { haversineDistance } from "../../../lib/geo";
 import { teacherRowToTeacher, type TeacherRow } from "../../../lib/teacherMapper";
+import { publicFirstNameWithInitial } from "@/lib/identity/displayName";
 import { buildJobTitle } from "../../../lib/constants/vocabulary";
 import { LegalFooterLinks } from "../../../components/LegalFooterLinks";
 import type { Teacher } from "../../../types";
@@ -371,7 +372,7 @@ export default async function CityTutorsPage({
                           </div>
                           <div className="min-w-0">
                             <p className="truncate font-semibold text-sm text-[#2C2C2A]">
-                              {teacher.name}
+                              {publicFirstNameWithInitial(teacher.name)}
                             </p>
                             <p className="truncate text-xs text-[#6B6760]">
                               {teacher.discipline}

@@ -14,6 +14,7 @@ import { cn } from "../lib/utils";
 import { useLocale } from "../lib/locale-context";
 import { Star } from "lucide-react";
 import { PriceDisplay } from "@/components/PriceDisplay";
+import { publicFirstNameWithInitial } from "@/lib/identity/displayName";
 
 // ── Public types ──────────────────────────────────────────────────────────────
 
@@ -433,7 +434,7 @@ export function SearchMapView({
           <div className="mx-auto max-w-3xl rounded-2xl border border-teal-500 bg-white p-4 shadow-[0_20px_60px_rgba(44,44,42,0.18)]">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="truncate font-semibold text-[#2C2C2A]">{selectedTeacher.name}</p>
+                <p className="truncate font-semibold text-[#2C2C2A]">{publicFirstNameWithInitial(selectedTeacher.name)}</p>
                 <p className="truncate text-xs text-[#6B6A65]">{selectedTeacher.discipline}</p>
                 <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-[#6B6A65]">
                   <span className="inline-flex items-center gap-1">

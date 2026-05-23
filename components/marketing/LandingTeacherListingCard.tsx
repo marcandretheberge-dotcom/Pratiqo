@@ -11,6 +11,7 @@ import { getTeacherImageUrl, shouldUseUnoptimizedImage } from "@/lib/images";
 import { PriceDisplay } from "@/components/PriceDisplay";
 import { TeacherBadgePill } from "@/components/TeacherBadgePill";
 import { getCompactTeacherBadges } from "@/lib/teachers/badges";
+import { publicFirstNameWithInitial } from "@/lib/identity/displayName";
 
 function landingCardFormatSummary(teacher: Teacher, t: (k: TranslationKey) => string) {
   const m = teacher.teachingMode;
@@ -157,7 +158,7 @@ export function LandingTeacherListingCard({
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                   <p className="truncate text-[15px] font-bold leading-tight tracking-tight text-[#2C2C2A]">
-                    {teacher.name}
+                    {publicFirstNameWithInitial(teacher.name)}
                   </p>
                   {badges.map((badge) => (
                     <TeacherBadgePill key={badge.id} badge={badge} compact className="shrink-0" />

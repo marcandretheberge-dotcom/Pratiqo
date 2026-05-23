@@ -11,6 +11,7 @@ import { getTeacherImageUrl, shouldUseUnoptimizedImage } from "@/lib/images";
 import { PriceDisplay } from "@/components/PriceDisplay";
 import { TeacherBadgePill } from "@/components/TeacherBadgePill";
 import { getCompactTeacherBadges } from "@/lib/teachers/badges";
+import { publicFirstNameWithInitial } from "@/lib/identity/displayName";
 
 function formatTeaching(teacher: Teacher, t: (k: TranslationKey) => string) {
   switch (teacher.teachingMode) {
@@ -131,7 +132,7 @@ export function HeroTeacherPreviewCards({
                   )}
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="truncate font-semibold text-[#2C2C2A]">{teacher.name}</span>
+                      <span className="truncate font-semibold text-[#2C2C2A]">{publicFirstNameWithInitial(teacher.name)}</span>
                       {badges.slice(0, 1).map((badge) => (
                         <TeacherBadgePill key={badge.id} badge={badge} compact />
                       ))}

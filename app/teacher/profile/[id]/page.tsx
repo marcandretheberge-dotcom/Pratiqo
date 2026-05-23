@@ -18,6 +18,7 @@ import {
 } from "@/lib/constants/vocabulary";
 import { usdToUyu } from "@/lib/geoLocale";
 import { sanitizePublicTeacherBio } from "@/lib/teacherProfile/sanitizePublicBio";
+import { publicFirstNameWithInitial } from "@/lib/identity/displayName";
 import TeacherProfileClient from "./TeacherProfileClient";
 
 import { SITE_URL } from "@/lib/seo/site";
@@ -130,8 +131,14 @@ export async function generateMetadata({
   const countryCode = teacher.countryCode ?? undefined;
   const isUruguay = countryCode === "UY";
 
+  // Public display name (first + last initial). The stored teacher.name is
+  // untouched — receipts, support, admin, and Stripe metadata continue to
+  // see the full name elsewhere. Only the public SEO/OG/Twitter/JSON-LD
+  // surfaces below get the masked variant.
+  const publicTeacherName = publicFirstNameWithInitial(teacher.name);
+
   const title = buildTeacherSeoTitle(
-    teacher.name,
+    publicTeacherName,
     teacher.discipline,
     teacher.category ?? "",
     isUruguay ? "es" : "fr",
@@ -147,7 +154,7 @@ export async function generateMetadata({
   ).content;
 
   let description = buildTeacherSeoDescription(
-    teacher.name,
+    publicTeacherName,
     teacher.discipline,
     teacher.category ?? "",
     sanitizedBioForMeta,
@@ -216,7 +223,9 @@ export default async function TeacherProfilePage({
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Person",
-    name: initialTeacher.name,
+    // Public masked name. Full legal name is still available in receipts /
+    // support tooling / Stripe metadata where appropriate.
+    name: publicFirstNameWithInitial(initialTeacher.name),
     jobTitle: buildJobTitle(initialTeacher.discipline, initialTeacher.category ?? ""),
     knowsAbout: [initialTeacher.discipline, initialTeacher.category].filter(Boolean),
     hasOccupation: {
