@@ -1,7 +1,7 @@
 "use client";
 
-import { TeacherAccountView } from "@/components/teacher/TeacherAccountView";
+import { TeacherPublicProfilePreview } from "@/components/teacher/TeacherPublicProfilePreview";
 
 export default function TeacherMyProfilePage() {
-  return <TeacherAccountView variant="profile" />;
+  return <TeacherPublicProfilePreview />;
 }
