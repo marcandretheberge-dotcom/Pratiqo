@@ -244,8 +244,8 @@ test("companion-evolution email CTA points to /student/progress", () => {
   // if the CTA URL ever drifts we want loud test failure rather than a
   // silent UX regression.
   const source = readFileSync(join(process.cwd(), "lib/email/templates/welcome.ts"), "utf8");
-  assert.match(source, /ctaText:\s*"Voir mon compagnon"/);
-  assert.match(source, /ctaUrl:\s*`\$\{base\}\/student\/progress`/);
+  assert.match(source, /ctaText:\s*copy\.ctaText/);
+  assert.match(source, /const ctaUrl = `\$\{base\}\/student\/progress`/);
 });
 
 async function run() {

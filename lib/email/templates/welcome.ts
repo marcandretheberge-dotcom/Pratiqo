@@ -1,6 +1,7 @@
 import { send } from "@/lib/email/transport";
 import { appBaseUrl, buildEmail, escapeHtml, tealBox } from "@/lib/email/layout";
 import { resolveEmailLocaleFromOptional, type EmailLocale } from "@/lib/email/locale";
+import { getNotificationEmailCopy } from "@/lib/email/messages/notifications";
 import { getWelcomeStudentCopy, getWelcomeTeacherCopy } from "@/lib/email/messages/welcome";
 
 // ─── 1. Welcome Student ──────────────────────────────────────────────────────
@@ -57,37 +58,61 @@ export async function sendCompanionEvolution(
   oldStage: string,
   newStage: string,
   creditAmount: number,
+  locale?: EmailLocale,
 ) {
-  const base = appBaseUrl();
+  const message = buildCompanionEvolutionEmail({
+    name,
+    companionName,
+    oldEmoji,
+    newEmoji,
+    oldStage,
+    newStage,
+    locale,
+  });
   await send({
     to: email,
-    subject: `${newEmoji} Ton compagnon a évolué ! +${creditAmount} $ de crédit`,
+    subject: message.subject,
+    html: message.html,
+  });
+  void creditAmount;
+}
+
+export function buildCompanionEvolutionEmail(opts: {
+  name: string;
+  companionName: string;
+  oldEmoji: string;
+  newEmoji: string;
+  oldStage: string;
+  newStage: string;
+  locale?: EmailLocale;
+}) {
+  const resolved = resolveEmailLocaleFromOptional(opts.locale);
+  const copy = getNotificationEmailCopy(resolved).companionEvolution;
+  const base = appBaseUrl();
+  const ctaUrl = `${base}/student/progress`;
+
+  return {
+    subject: copy.subject,
+    ctaUrl,
     html: buildEmail({
-      heroTitle: `${name}, ton compagnon a évolué !`,
-      heroSubtitle: `${oldEmoji} ${oldStage} → ${newEmoji} ${newStage}`,
+      locale: resolved,
+      heroEmoji: opts.newEmoji,
+      heroTitle: copy.heroTitle(opts.name),
+      heroSubtitle: `${opts.oldEmoji} ${copy.heroSubtitle(opts.oldStage, opts.newStage)} ${opts.newEmoji}`,
       bodyHtml: `
         <div style="text-align:center;font-size:56px;margin:8px 0 24px;">
-          ${newEmoji}
+          ${escapeHtml(opts.newEmoji)}
         </div>
         <p style="text-align:center;font-size:17px;font-weight:700;color:#2C2C2A;">
-          ${escapeHtml(companionName)} vient de franchir une nouvelle étape!
+          ${escapeHtml(copy.intro(opts.companionName))}
         </p>
         <p style="text-align:center;">
-          <strong>${escapeHtml(oldStage)}</strong>
-          &nbsp;→&nbsp;
-          <strong style="color:#409A8E;">${escapeHtml(newStage)}</strong>
+          <strong>${escapeHtml(copy.stageLine(opts.oldStage, opts.newStage))}</strong>
         </p>
-        ${tealBox(`
-          <strong>+${creditAmount} $ de crédit</strong> ont été ajoutés à ton solde Pratiqo.<br>
-          Ces crédits s'appliquent automatiquement à ta prochaine réservation.
-        `)}
-        <p>Chaque cours que tu prends fait progresser ton compagnon. Continue comme ça — la maîtrise, ça se construit un cours à la fois.</p>
-        <p style="font-size:14px;color:#6B6A65;">
-          Tu peux voir la progression de ton compagnon et ton solde de crédits dans ton profil.
-        </p>
+        ${tealBox(escapeHtml(copy.encouragement))}
       `,
-      ctaText: "Voir mon compagnon",
-      ctaUrl: `${base}/student/progress`,
+      ctaText: copy.ctaText,
+      ctaUrl,
     }),
-  });
+  };
 }
