@@ -12,10 +12,10 @@
  *   3. ProfileAiAssistant is imported by the onboarding wizard AND the
  *      teacher account edit view — i.e. AI is available outside first
  *      onboarding.
- *   4. /teacher/verification no longer uses "verificationLevel{1..5}Title"
- *      as the primary structure. The five new student-facing unlock cards
- *      (map / home / identity / diploma / payments) render via stable
- *      data-testid hooks.
+ *   4. /teacher/verification is now the unified Teacher Launch Center with
+ *      7 inline-expandable cards in 2 sections. No old "Niveau 1..5"
+ *      headings. No anchor-jump CTAs. Zone card uses Google Places
+ *      autocomplete. Profile card exposes ProfileAiAssistant.
  *   5. New i18n keys exist in fr / en / es.
  *   6. The PR does NOT touch Stripe checkout/webhook, payment math,
  *      commission, payouts, refunds, guarantee, RLS/security migrations,
@@ -62,6 +62,8 @@ function stripJsComments(src: string): string {
 
 const ONBOARDING_PATH = "app/(app)/onboarding/teacher/page.tsx";
 const VERIFICATION_PATH = "app/(app)/teacher/verification/page.tsx";
+const ZONE_STEP_PATH = "app/(app)/teacher/verification/components/ZoneStep.tsx";
+const DIPLOMA_STEP_PATH = "app/(app)/teacher/verification/components/DiplomaStep.tsx";
 const AI_ROUTE_PATH = "app/api/ai/description/route.ts";
 const AI_SCHEMA_PATH = "lib/validation/schemas.ts";
 const AI_COMPONENT_PATH = "components/teacher/ProfileAiAssistant.tsx";
@@ -72,6 +74,8 @@ const ES = "lib/i18n/locales/es.json";
 
 const onboardingSrc = read(ONBOARDING_PATH);
 const verificationSrc = read(VERIFICATION_PATH);
+const zoneStepSrc = read(ZONE_STEP_PATH);
+const diplomaStepSrc = read(DIPLOMA_STEP_PATH);
 const aiRouteSrc = read(AI_ROUTE_PATH);
 const aiSchemaSrc = read(AI_SCHEMA_PATH);
 const aiComponentSrc = read(AI_COMPONENT_PATH);
@@ -104,7 +108,6 @@ test("onboarding: per-step skip CTA + consequence text are rendered", () => {
   assert.match(onboardingSrc, /data-testid="teacher-launch-skip-cta"/);
   assert.match(onboardingSrc, /data-testid="teacher-launch-skip-consequence"/);
   assert.match(onboardingSrc, /teacherLaunchSkipCta/);
-  // Per-step skip consequence keys (profile / location / pricing) must be wired.
   const stripped = stripJsComments(onboardingSrc);
   assert.match(stripped, /teacherLaunchSkipProfile/);
   assert.match(stripped, /teacherLaunchSkipLocation/);
@@ -112,9 +115,6 @@ test("onboarding: per-step skip CTA + consequence text are rendered", () => {
 });
 
 test("onboarding: persists draft to localStorage so the teacher can save and resume", () => {
-  // We persist a per-user draft on every relevant state change, AND mark the
-  // wizard as "started" so the hero doesn't reappear after the teacher
-  // returns. These two storage prefixes are part of the Launch Center API.
   assert.match(onboardingSrc, /pratiqo-teacher-launch-draft:/);
   assert.match(onboardingSrc, /pratiqo-teacher-launch-started:/);
   assert.match(onboardingSrc, /localStorage\.setItem\(/);
@@ -132,9 +132,6 @@ test("onboarding: AI assistant toggle exists on the bio step", () => {
 
 test("ai route: removed the post-onboarding 403 gate", () => {
   const stripped = stripJsComments(aiRouteSrc);
-  // The old code returned 403 specifically when teacher_onboarding_complete
-  // was true. That gate must be gone — code may still mention the column
-  // in comments only.
   assert.doesNotMatch(stripped, /teacher_onboarding_complete\s*===\s*true/);
   assert.doesNotMatch(stripped, /Génération IA disponible seulement pendant l'onboarding/);
 });
@@ -163,11 +160,7 @@ test("ai route: forwards tone + locale + notes into the prompt builder", () => {
 // ---------------------------------------------------------------------------
 
 test("ProfileAiAssistant: defines an explicit user-controlled UX (no auto-overwrite, no keystroke calls)", () => {
-  // Suggestion is held in component state and only applied via onAccept(),
-  // never silently. The improve button calls callAi() explicitly.
   assert.match(aiComponentSrc, /onAccept\(suggestion\.trim\(\)\)/);
-  // No setTimeout / debounce on keystrokes — assistant must not call AI
-  // until the teacher clicks a button.
   const stripped = stripJsComments(aiComponentSrc);
   assert.doesNotMatch(stripped, /onChange[^)]*callAi/);
 });
@@ -182,11 +175,14 @@ test("teacher account view: exposes the AI assistant outside first onboarding", 
 });
 
 // ---------------------------------------------------------------------------
-// 4. /teacher/verification is now Trust & Visibility with unlock cards
+// 4. /teacher/verification — Unified Teacher Launch Center
 // ---------------------------------------------------------------------------
 
-test("verification: no longer uses 'verificationLevel{1..5}Title' as primary structure", () => {
+test("unified launch center: renders page title and subtitle with no Niveau headings", () => {
   const stripped = stripJsComments(verificationSrc);
+  assert.match(stripped, /teacherLaunchCenterTitle/);
+  assert.match(stripped, /teacherLaunchCenterSubtitle/);
+  // No old Niveau-based title structure
   for (const k of [
     '"verificationLevel1Title"',
     '"verificationLevel2Title"',
@@ -202,39 +198,44 @@ test("verification: no longer uses 'verificationLevel{1..5}Title' as primary str
     assert.doesNotMatch(
       stripped,
       new RegExp(k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")),
-      `verification page must no longer reference ${k} as primary structure`,
+      `verification page must not reference ${k}`,
     );
   }
 });
 
-test("verification: no Niveau wording, no VerificationBadge, no marketplace-benefits sidebar", () => {
-  const stripped = stripJsComments(verificationSrc);
-  assert.doesNotMatch(stripped, /Niveau\s*[1-5]/);
-  assert.doesNotMatch(stripped, /VerificationBadge/);
-  assert.doesNotMatch(stripped, /teacherVerificationMarketplaceBenefits/);
-  // Pro upsell on this page mixed business plan with trust — removed.
-  assert.doesNotMatch(stripped, /verificationViewPlans/);
+test("unified launch center: renders section 1 (essential) and section 2 (trust)", () => {
+  assert.match(verificationSrc, /data-testid="teacher-launch-section-essential"/);
+  assert.match(verificationSrc, /data-testid="teacher-launch-section-trust"/);
+  assert.match(verificationSrc, /teacherLaunchSectionEssential/);
+  assert.match(verificationSrc, /teacherLaunchSectionTrust/);
 });
 
-test("verification: renders the five unlock cards with stable testids", () => {
-  assert.match(verificationSrc, /data-testid="teacher-trust-unlock-cards"/);
-  for (const key of ["map", "home", "identity", "diploma", "payments"]) {
-    assert.match(
-      verificationSrc,
-      new RegExp(`teacher-trust-card-\\$\\{card\\.key\\}|teacher-trust-card-${key}|key: "${key}"`),
-      `unlock card for "${key}" must exist`,
+test("unified launch center: all 7 launch cards are represented", () => {
+  for (const cardId of [
+    "teacher-launch-card-profile",
+    "teacher-launch-card-pricing",
+    "teacher-launch-card-availability",
+    "teacher-launch-card-zone",
+    "teacher-launch-card-identity",
+    "teacher-launch-card-diploma",
+    "teacher-launch-card-payments",
+  ]) {
+    assert.ok(
+      verificationSrc.includes(`data-testid="${cardId}"`),
+      `unified launch center must include card with data-testid="${cardId}"`,
     );
   }
 });
 
-test("verification: trust cards reference Trust & visibility i18n keys", () => {
+test("unified launch center: references expected i18n keys for all 7 cards", () => {
   for (const k of [
-    "teacherTrustVisibilityTitle",
-    "teacherTrustCardMapTitle",
-    "teacherTrustCardHomeTitle",
-    "teacherTrustCardIdentityTitle",
-    "teacherTrustCardDiplomaTitle",
-    "teacherTrustCardPaymentsTitle",
+    "teacherLaunchCardProfileTitle",
+    "teacherLaunchCardPricingTitle",
+    "teacherLaunchCardAvailabilityTitle",
+    "teacherLaunchCardZoneTitle",
+    "teacherLaunchCardIdentityTitle",
+    "teacherLaunchCardDiplomaTitle",
+    "teacherLaunchCardPaymentsTitle",
     "teacherTrustStatusComplete",
     "teacherTrustStatusMissing",
     "teacherTrustStatusInReview",
@@ -247,9 +248,64 @@ test("verification: trust cards reference Trust & visibility i18n keys", () => {
   }
 });
 
-test("verification: diploma stays explicitly Optional (no implied requirement)", () => {
-  assert.match(verificationSrc, /optional:\s*true/);
-  assert.match(verificationSrc, /data-testid="teacher-trust-diploma-optional"/);
+test("unified launch center: no Niveau wording, no VerificationBadge, no marketplace-benefits sidebar", () => {
+  const stripped = stripJsComments(verificationSrc);
+  assert.doesNotMatch(stripped, /Niveau\s*[1-5]/);
+  assert.doesNotMatch(stripped, /VerificationBadge/);
+  assert.doesNotMatch(stripped, /teacherVerificationMarketplaceBenefits/);
+  assert.doesNotMatch(stripped, /verificationViewPlans/);
+});
+
+test("unified launch center: zone card expands inline — no anchor-jump to old sections", () => {
+  const stripped = stripJsComments(verificationSrc);
+  // Cards must not use old anchor href jumps
+  assert.doesNotMatch(stripped, /href="#trust-zone"/);
+  assert.doesNotMatch(stripped, /href="#trust-identity"/);
+  assert.doesNotMatch(stripped, /href="#trust-diploma"/);
+  // Inline expansion is controlled by expandedCard state
+  assert.match(stripped, /expandedCard/);
+});
+
+test("unified launch center: diploma card expands inline and is clearly optional", () => {
+  const stripped = stripJsComments(verificationSrc);
+  assert.doesNotMatch(stripped, /href="#trust-diploma"/);
+  // optional prop is passed to the diploma LaunchCard
+  assert.match(stripped, /optional/);
+  assert.match(verificationSrc, /data-testid="teacher-launch-diploma-optional"/);
+});
+
+test("unified launch center: profile card exposes ProfileAiAssistant", () => {
+  assert.match(
+    verificationSrc,
+    /import\s*\{[^}]*ProfileAiAssistant[^}]*\}/,
+  );
+  assert.match(verificationSrc, /<ProfileAiAssistant\b/);
+  // AI toggle inside the profile card
+  assert.match(verificationSrc, /teacher-launch-profile-ai-toggle/);
+});
+
+test("unified launch center: zone card wires up Google Places autocomplete (parseGooglePlace)", () => {
+  assert.match(verificationSrc, /parseGooglePlace/);
+  assert.match(verificationSrc, /google\.maps\.places\.Autocomplete/);
+  // addressRef is passed down to ZoneStep so the input gets the autocomplete
+  assert.match(verificationSrc, /addressRef/);
+});
+
+test("ZoneStep: no longer references verificationLevel4Title or verificationLevel4BodyZone", () => {
+  const stripped = stripJsComments(zoneStepSrc);
+  assert.doesNotMatch(stripped, /verificationLevel4Title/);
+  assert.doesNotMatch(stripped, /verificationLevel4BodyZone/);
+});
+
+test("ZoneStep: exposes addressRef prop for Google Places autocomplete", () => {
+  assert.match(zoneStepSrc, /addressRef/);
+  assert.match(zoneStepSrc, /ref=\{addressRef\}/);
+});
+
+test("DiplomaStep: no longer references verificationLevel3Title or verificationLevel3Body", () => {
+  const stripped = stripJsComments(diplomaStepSrc);
+  assert.doesNotMatch(stripped, /verificationLevel3Title/);
+  assert.doesNotMatch(stripped, /verificationLevel3Body/);
 });
 
 // ---------------------------------------------------------------------------
@@ -257,7 +313,7 @@ test("verification: diploma stays explicitly Optional (no implied requirement)",
 // ---------------------------------------------------------------------------
 
 const REQUIRED_KEYS = [
-  // Launch Center
+  // Launch Center (onboarding wizard)
   "teacherLaunchHeroEyebrow",
   "teacherLaunchHeroTitle",
   "teacherLaunchHeroBody",
@@ -273,7 +329,23 @@ const REQUIRED_KEYS = [
   "teacherLaunchSkipLocation",
   "teacherLaunchSkipPricing",
   "teacherLaunchSkipPayments",
-  // Trust & visibility
+  // Unified Teacher Launch Center page
+  "teacherLaunchCenterTitle",
+  "teacherLaunchCenterSubtitle",
+  "teacherLaunchSectionEssential",
+  "teacherLaunchSectionTrust",
+  "teacherLaunchCardProfileTitle",
+  "teacherLaunchCardProfileSaveBtn",
+  "teacherLaunchCardPricingTitle",
+  "teacherLaunchCardPricingSaveBtn",
+  "teacherLaunchCardAvailabilityTitle",
+  "teacherLaunchCardAvailabilityCta",
+  "teacherLaunchCardZoneTitle",
+  "teacherLaunchCardIdentityTitle",
+  "teacherLaunchCardDiplomaTitle",
+  "teacherLaunchCardPaymentsTitle",
+  "teacherLaunchCardPaymentsCta",
+  // Trust & visibility (status labels, still used)
   "teacherTrustVisibilityTitle",
   "teacherTrustVisibilitySubtitle",
   "teacherTrustVisibilityIntro",
@@ -329,10 +401,6 @@ test("i18n: every required key exists in en / fr / es", () => {
 // 6. Forbidden-file safety net — this PR must NOT touch payment/security paths
 // ---------------------------------------------------------------------------
 
-// The user explicitly listed surfaces this PR must not modify. We approximate
-// by diffing this branch against its merge-base with origin/main and asserting
-// that no file changed inside those paths. When the diff command fails (e.g.
-// during local dev with no origin), we softly skip.
 test("forbidden files: PR does not touch Stripe/payments/security/migrations/cron/badge truth/name masking", () => {
   let mergeBase: string;
   try {
@@ -352,7 +420,6 @@ test("forbidden files: PR does not touch Stripe/payments/security/migrations/cro
     return;
   }
 
-  // Forbidden directories/files (regex). Anything that matches must trigger a failure.
   const forbidden: { label: string; re: RegExp }[] = [
     { label: "Stripe checkout/webhook routes", re: /^app\/api\/stripe\// },
     { label: "payment routes (other than read-only summary on verification page)", re: /^app\/api\/(payments|payouts|refunds|webhooks)\// },
@@ -383,9 +450,7 @@ test("forbidden files: PR does not touch Stripe/payments/security/migrations/cro
 
 test("ai route: the only role gate is 'must be teacher' (no completion gate)", () => {
   const stripped = stripJsComments(aiRouteSrc);
-  // The only role-based 403 should be the non-teacher rejection.
   const roleChecks = stripped.match(/NextResponse\.json\([^)]*status:\s*403/g) ?? [];
-  // We expect exactly one 403 branch in this route — the teacher-role gate.
   assert.equal(
     roleChecks.length,
     1,
@@ -394,15 +459,12 @@ test("ai route: the only role gate is 'must be teacher' (no completion gate)", (
 });
 
 // ---------------------------------------------------------------------------
-// Misc: source-scan no public/pre-booking surface re-introduced "Niveau" copy
+// 8. No Niveau 1..5 in any React component source
 // ---------------------------------------------------------------------------
 
 test("source scan: no React component renders 'Niveau 1..5' as a heading anymore", () => {
   const offenders: string[] = [];
-  const allow = new Set<string>([
-    // Existing i18n keys/values still mention "Niveau" — JSON is excluded
-    // from this scan, only TSX/TS source code is checked.
-  ]);
+  const allow = new Set<string>([]);
   function walk(dir: string): void {
     for (const entry of readdirSync(dir)) {
       const full = join(dir, entry);
@@ -418,9 +480,6 @@ test("source scan: no React component renders 'Niveau 1..5' as a heading anymore
       if (allow.has(rel.replaceAll(sep, "/"))) continue;
       const src = readFileSync(full, "utf8").replace(/\r\n/g, "\n");
       const stripped = stripJsComments(src);
-      // Allow translation strings inside JSON, but in TS/TSX a literal "Niveau 1" .. "Niveau 5"
-      // would have to come back. We only flag uppercase 'N' to avoid matching "niveau" as a French
-      // common noun in long-form copy elsewhere.
       if (/"\s*Niveau\s+[1-5]\b/.test(stripped) || />\s*Niveau\s+[1-5]\b/.test(stripped)) {
         offenders.push(rel);
       }

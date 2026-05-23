@@ -1,40 +1,39 @@
 "use client";
 
 /**
- * Trust & Visibility (formerly /teacher/verification compliance dashboard)
- * -----------------------------------------------------------------------
- * This page used to expose "Niveau 1..5" as the primary structure, which
- * read as a bureaucratic compliance checklist. The Teacher Launch Center
- * redesign replaces that with five user-facing "unlock cards" tied to the
- * concrete student-visible thing each trust step unlocks:
+ * Unified Teacher Launch Center (/teacher/verification)
+ * -------------------------------------------------------
+ * One page where the teacher sees what is needed to start receiving requests,
+ * what improves trust, and what can be completed later.
  *
- *   1. Appear on the map         (needs verified teaching zone)
- *   2. Offer lessons at home     (needs identity + zone)
- *   3. Show verified identity    (needs Stripe Identity)
- *   4. Show verified diploma     (optional, helps booking confidence)
- *   5. Receive payments          (needs Stripe Connect)
+ * Section 1 — Essentiel pour recevoir des demandes
+ *   Profile public, Tarif, Disponibilités, Zone d'enseignement
  *
- * The underlying upload / form components (DiplomaStep, ZoneStep, etc.)
- * are still mounted below so each card's CTA can scroll/anchor into the
- * matching action surface — we did NOT rebuild the upload pipelines.
+ * Section 2 — Confiance et sécurité
+ *   Identité vérifiée, Diplôme ou certificat (optional), Paiements Pratiqo
  *
- * Pro is intentionally NOT mixed into the unlock cards. Pro is a separate
- * business/visibility plan, not a trust signal.
+ * Cards expand inline. No old "Niveau 1..5" headings. No anchor-jump CTAs.
+ * The Zone card wires up Google Places autocomplete using the same flow as
+ * /onboarding/teacher. All existing upload/geocode/Stripe logic is preserved.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
+  BookOpen,
+  Calendar,
   CheckCircle2,
+  ChevronDown,
+  ChevronUp,
   CircleDashed,
   CreditCard,
   FileBadge,
-  Home,
   Loader2,
   MapPin,
   ShieldCheck,
   Sparkles,
+  User,
 } from "lucide-react";
 import { useAuth } from "../../../../components/AuthProvider";
 import { getSupabaseClient } from "../../../../lib/supabase";
@@ -44,11 +43,18 @@ import { cn } from "../../../../lib/utils";
 import { deriveVerificationState, type VerificationStepState } from "../../../../lib/verificationState";
 import type { TranslationKey } from "../../../../lib/translations";
 import { DiplomaStep } from "./components/DiplomaStep";
-import { CredentialsStep } from "./components/CredentialsStep";
 import { ZoneStep } from "./components/ZoneStep";
+import { ProfileAiAssistant } from "../../../../components/teacher/ProfileAiAssistant";
+import { parseGooglePlace } from "../../../../lib/googleAddressParser";
+import { MIN_LESSON_PRICE_DOLLARS } from "../../../../lib/pricing/constants";
 
 type TeacherVerifyRow = {
   id: string;
+  name?: string | null;
+  discipline?: string | null;
+  bio?: string | null;
+  price_per_lesson?: number | null;
+  availability?: string[] | null;
   verification_level: number | null;
   identity_verified: boolean | null;
   identity_status: string | null;
@@ -61,15 +67,11 @@ type TeacherVerifyRow = {
   location_verification_status: string | null;
   cv_summary: string | null;
   cv_verification_status: string | null;
-  bio?: string | null;
-  // Zone fields (loaded so the form can be pre-populated)
   city?: string | null;
   region?: string | null;
   country_code?: string | null;
   home_lesson_radius_km?: number | null;
   location?: unknown;
-  // Home lessons + payments (used to derive unlock-card status only — no
-  // payment behavior or Stripe writes happen on this page).
   home_lesson_enabled?: boolean | null;
   stripe_connect_onboarding_complete?: boolean | null;
   stripe_connect_charges_enabled?: boolean | null;
@@ -77,24 +79,7 @@ type TeacherVerifyRow = {
   stripe_account_id?: string | null;
 };
 
-type TeacherCredentialRow = {
-  id: string;
-  teacher_id: string;
-  type: "degree" | "certificate" | "license" | "experience" | "portfolio";
-  title: string;
-  institution_name: string | null;
-  country: string | null;
-  issued_year: number | null;
-  verification_status: "not_started" | "pending" | "verified" | "rejected" | "needs_review" | "expired";
-  verification_method: string | null;
-  confidence_level: string | null;
-  public_label: string | null;
-  verified_at: string | null;
-  expires_at: string | null;
-  created_at: string | null;
-};
-
-export default function TeacherVerificationPage() {
+export default function TeacherLaunchCenterPage() {
   const { user, profile, loading } = useAuth();
   const { t } = useLocale();
   const searchParams = useSearchParams();
@@ -104,14 +89,19 @@ export default function TeacherVerificationPage() {
   const [messageKind, setMessageKind] = useState<"ok" | "error">("ok");
   const [teacherRow, setTeacherRow] = useState<TeacherVerifyRow | null>(null);
   const [plan, setPlan] = useState<string>("free");
-  const [credentials, setCredentials] = useState<TeacherCredentialRow[]>([]);
 
-  const [credType, setCredType] = useState<TeacherCredentialRow["type"]>("degree");
-  const [credTitle, setCredTitle] = useState("");
-  const [credInstitution, setCredInstitution] = useState("");
-  const [credCountry, setCredCountry] = useState("");
-  const [credIssuedYear, setCredIssuedYear] = useState("");
-  const [credMethod, setCredMethod] = useState<string>("document_review");
+  // Which card is currently expanded inline
+  const [expandedCard, setExpandedCard] = useState<string | null>(null);
+
+  // Profile inline editing
+  const [editName, setEditName] = useState("");
+  const [editBio, setEditBio] = useState("");
+  const [editDiscipline, setEditDiscipline] = useState("");
+  const [profileAiOpen, setProfileAiOpen] = useState(false);
+  const [profileAiNotes, setProfileAiNotes] = useState("");
+
+  // Pricing inline editing
+  const [editPrice, setEditPrice] = useState("");
 
   // Zone form state
   const [zoneShowManual, setZoneShowManual] = useState(false);
@@ -124,7 +114,6 @@ export default function TeacherVerificationPage() {
   const [zonePostalCode, setZonePostalCode] = useState("");
   const [zoneCountryCode, setZoneCountryCode] = useState("");
   const [zoneRadiusKm, setZoneRadiusKm] = useState("");
-  // Public summary shown after save
   const [zoneSavedStatus, setZoneSavedStatus] = useState<string | null>(null);
   const [zoneFuzzRadiusKm, setZoneFuzzRadiusKm] = useState<number | null>(null);
 
@@ -134,6 +123,16 @@ export default function TeacherVerificationPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const redirectHandledRef = useRef(false);
 
+  // Google Places autocomplete for Zone card
+  const [googleReady, setGoogleReady] = useState(
+    () => typeof window !== "undefined" && Boolean(window.google?.maps?.places),
+  );
+  const [googleError, setGoogleError] = useState(
+    () => !process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
+  );
+  const zoneAddressRef = useRef<HTMLInputElement | null>(null);
+
+  // ── Data loading ────────────────────────────────────────────────────────────
   const load = useCallback(async () => {
     if (!user?.id) return;
     const supabase = getSupabaseClient();
@@ -141,10 +140,7 @@ export default function TeacherVerificationPage() {
       supabase
         .from("teachers")
         .select(
-          // Teacher reads their own row — RLS allows it. We include
-          // stripe_connect_* + home_lesson_enabled so the unlock cards can
-          // display real status. None of these are written from this page.
-          "id, verification_level, identity_verified, identity_status, stripe_identity_status, stripe_identity_failed_reason, diploma_verified, diploma_url, phone_verified, is_verified, location_verification_status, cv_summary, cv_verification_status, bio, city, region, country_code, home_lesson_radius_km, home_lesson_enabled, location, stripe_account_id, stripe_connect_onboarding_complete, stripe_connect_charges_enabled, stripe_connect_payouts_enabled",
+          "id, name, discipline, bio, price_per_lesson, availability, verification_level, identity_verified, identity_status, stripe_identity_status, stripe_identity_failed_reason, diploma_verified, diploma_url, phone_verified, is_verified, location_verification_status, cv_summary, cv_verification_status, city, region, country_code, home_lesson_radius_km, home_lesson_enabled, location, stripe_account_id, stripe_connect_onboarding_complete, stripe_connect_charges_enabled, stripe_connect_payouts_enabled",
         )
         .eq("user_id", user.id)
         .maybeSingle(),
@@ -152,32 +148,26 @@ export default function TeacherVerificationPage() {
     ]);
     setTeacherRow(tr as TeacherVerifyRow | null);
     setPlan(String((p as { plan?: string } | null)?.plan || "free"));
-
-    const teacherId = (tr as { id?: string } | null)?.id;
-    if (teacherId) {
-      const { data: creds } = await supabase
-        .from("teacher_credentials")
-        .select("id, teacher_id, type, title, institution_name, country, issued_year, verification_status, verification_method, confidence_level, public_label, verified_at, expires_at, created_at")
-        .eq("teacher_id", teacherId)
-        .order("created_at", { ascending: false });
-      setCredentials((creds ?? []) as TeacherCredentialRow[]);
-    } else {
-      setCredentials([]);
-    }
   }, [user?.id]);
 
   useEffect(() => {
     void load();
   }, [load]);
 
-  // Pre-populate zone form whenever teacher data loads
+  // Pre-populate forms from loaded teacher data
   useEffect(() => {
     if (!teacherRow) return;
+    setEditName(teacherRow.name ?? "");
+    setEditBio(teacherRow.bio ?? "");
+    setEditDiscipline(teacherRow.discipline ?? "");
+    setEditPrice(teacherRow.price_per_lesson != null ? String(teacherRow.price_per_lesson) : "");
+
     setZoneCity(teacherRow.city ?? "");
     setZoneRegion(teacherRow.region ?? "");
     setZoneCountryCode(teacherRow.country_code ?? "");
-    setZoneRadiusKm(teacherRow.home_lesson_radius_km != null ? String(teacherRow.home_lesson_radius_km) : "");
-    // Read private address from location.private (teacher owns this data — display back to them)
+    setZoneRadiusKm(
+      teacherRow.home_lesson_radius_km != null ? String(teacherRow.home_lesson_radius_km) : "",
+    );
     const loc =
       typeof teacherRow.location === "object" && teacherRow.location !== null
         ? (teacherRow.location as Record<string, unknown>)
@@ -192,7 +182,6 @@ export default function TeacherVerificationPage() {
     setZonePostalCode(typeof priv.postal_code === "string" ? priv.postal_code : "");
     setZoneSingleLine(savedLine1);
     setZoneHasPrivateAddress(Boolean(savedLine1));
-    // Restore saved public summary state
     if (teacherRow.location_verification_status) {
       setZoneSavedStatus(teacherRow.location_verification_status);
     }
@@ -201,6 +190,130 @@ export default function TeacherVerificationPage() {
     }
   }, [teacherRow]);
 
+  // ── Google Maps script loader ────────────────────────────────────────────────
+  useEffect(() => {
+    const key = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+    if (!key) return;
+    if (typeof window !== "undefined" && window.google?.maps?.places) {
+      setGoogleReady(true);
+      return;
+    }
+    let cancelled = false;
+    const script = document.createElement("script");
+    script.async = true;
+    script.defer = true;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&libraries=places`;
+    script.onload = () => {
+      if (cancelled) return;
+      if (window.google?.maps?.places) setGoogleReady(true);
+      else setGoogleError(true);
+    };
+    script.onerror = () => {
+      if (!cancelled) setGoogleError(true);
+    };
+    document.head.appendChild(script);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Wire up Google Places autocomplete when zone card is expanded and script ready
+  useEffect(() => {
+    if (!googleReady || expandedCard !== "zone") return;
+    const el = zoneAddressRef.current;
+    if (!el) return;
+    if (!("google" in window)) return;
+    const ac = new google.maps.places.Autocomplete(el, {
+      fields: ["address_components", "formatted_address", "geometry"],
+      types: ["address"],
+    });
+    ac.addListener("place_changed", () => {
+      const place = ac.getPlace();
+      const parsed = parseGooglePlace(place);
+      if (parsed.formattedAddress) setZoneSingleLine(parsed.formattedAddress);
+      if (parsed.city) setZoneCity(parsed.city);
+      if (parsed.region) setZoneRegion(parsed.region);
+      if (parsed.countryCode) setZoneCountryCode(parsed.countryCode);
+      if (parsed.streetNumber || parsed.route) {
+        const line1 = [parsed.streetNumber, parsed.route].filter(Boolean).join(" ");
+        setZoneAddressLine1(line1);
+      }
+      if (parsed.postalCode) setZonePostalCode(parsed.postalCode);
+    });
+  }, [googleReady, expandedCard]);
+
+  const showMsg = useCallback((text: string, kind: "ok" | "error" = "ok") => {
+    setMessage(text);
+    setMessageKind(kind);
+  }, []);
+
+  // Redirect banner for Stripe Identity return
+  useEffect(() => {
+    if (redirectHandledRef.current) return;
+    redirectHandledRef.current = true;
+    if (searchParams.get("identity") !== "completed") return;
+    showMsg(t("stripeIdSubmitted"), "ok");
+    void load();
+  }, [searchParams, showMsg, load, t]);
+
+  // ── Profile save ────────────────────────────────────────────────────────────
+  const saveProfile = async () => {
+    if (!user?.id || !teacherRow?.id) return;
+    setBusy("profile");
+    setMessage(null);
+    try {
+      const supabase = getSupabaseClient();
+      const { error: err } = await supabase
+        .from("teachers")
+        .update({
+          name: editName.trim() || null,
+          bio: editBio.trim() || null,
+          discipline: editDiscipline.trim() || null,
+        })
+        .eq("id", teacherRow.id);
+      if (err) throw err;
+      showMsg(t("savedOk"), "ok");
+      setExpandedCard(null);
+      await load();
+    } catch (e) {
+      showMsg(e instanceof Error ? e.message : t("anErrorOccurred"), "error");
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  // ── Pricing save ────────────────────────────────────────────────────────────
+  const savePricing = async () => {
+    if (!user?.id) return;
+    const priceNum = Number(editPrice);
+    if (!Number.isFinite(priceNum) || priceNum < MIN_LESSON_PRICE_DOLLARS) {
+      showMsg(t("pricingMinLessonPrice"), "error");
+      return;
+    }
+    setBusy("pricing");
+    setMessage(null);
+    try {
+      const { data: sess } = await getSupabaseClient().auth.getSession();
+      const token = sess.session?.access_token;
+      if (!token) throw new Error(t("verificationSessionExpired"));
+      const res = await fetch("/api/teacher/pricing", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ price_per_lesson: priceNum }),
+      });
+      const j = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string };
+      if (!res.ok) throw new Error(j.error || t("anErrorOccurred"));
+      showMsg(t("savedOk"), "ok");
+      setExpandedCard(null);
+      await load();
+    } catch (e) {
+      showMsg(e instanceof Error ? e.message : t("anErrorOccurred"), "error");
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  // ── Zone save ────────────────────────────────────────────────────────────────
   const submitZone = async () => {
     if (!user) return;
     setMessage(null);
@@ -244,6 +357,7 @@ export default function TeacherVerificationPage() {
       setZoneFuzzRadiusKm(j.fuzz_radius_km ?? null);
       setZoneHasPrivateAddress(true);
       showMsg(j.geocoded ? t("zoneSavedApproximate") : t("zoneSavedPending"), "ok");
+      setExpandedCard(null);
       await load();
     } catch (e) {
       showMsg(e instanceof Error ? e.message : t("verificationErrorGeneric"), "error");
@@ -252,21 +366,7 @@ export default function TeacherVerificationPage() {
     }
   };
 
-  const showMsg = useCallback((text: string, kind: "ok" | "error" = "ok") => {
-    setMessage(text);
-    setMessageKind(kind);
-  }, []);
-
-  // Show success banner if Stripe Identity redirected back here
-  useEffect(() => {
-    if (redirectHandledRef.current) return;
-    redirectHandledRef.current = true;
-    if (searchParams.get("identity") !== "completed") return;
-    showMsg(t("stripeIdSubmitted"), "ok");
-    void load();
-  }, [searchParams, showMsg, load, t]);
-
-  // Fallback email-based request (used when Stripe Identity is unavailable)
+  // ── Identity (email fallback) ────────────────────────────────────────────────
   const sendEmailRequest = async (kind: "identity" | "diploma", description?: string) => {
     setMessage(null);
     setBusy(kind);
@@ -289,7 +389,7 @@ export default function TeacherVerificationPage() {
     }
   };
 
-  // ── Diploma file upload ──────────────────────────────────────────────────
+  // ── Diploma upload ───────────────────────────────────────────────────────────
   const uploadDiploma = async () => {
     if (!diplomaFile || !user) return;
     setMessage(null);
@@ -316,6 +416,7 @@ export default function TeacherVerificationPage() {
       setDiplomaFile(null);
       setDiplomaNote("");
       if (fileInputRef.current) fileInputRef.current.value = "";
+      setExpandedCard(null);
       await load();
     } catch (e) {
       showMsg(e instanceof Error ? e.message : t("verificationErrorGeneric"), "error");
@@ -324,6 +425,7 @@ export default function TeacherVerificationPage() {
     }
   };
 
+  // ── Loading / access guards ──────────────────────────────────────────────────
   if (loading || !user) {
     return (
       <div className="min-h-[50vh] flex items-center justify-center text-[#6B6A65]">
@@ -367,7 +469,6 @@ export default function TeacherVerificationPage() {
     verification_level: teacherRow.verification_level,
   });
 
-  // stripeStatus stays as raw DB value — IdentityVerificationCard expects Stripe's own enum strings
   const stripeStatus = (teacherRow.stripe_identity_status ?? null) as
     | "not_started"
     | "requires_input"
@@ -377,9 +478,6 @@ export default function TeacherVerificationPage() {
     | "canceled"
     | null;
 
-  // Derived payments unlock — read-only summary used by the "Receive payments" card.
-  // We do NOT mutate Stripe/payment data on this page; the CTA simply links to
-  // the existing /api/stripe/connect flow used elsewhere in the app.
   const paymentsReady = Boolean(
     teacherRow.stripe_connect_onboarding_complete &&
       teacherRow.stripe_connect_charges_enabled &&
@@ -391,134 +489,35 @@ export default function TeacherVerificationPage() {
       ? { kind: "pending" }
       : { kind: "not_started" };
 
-  // "Offer lessons at home" depends on the COMBINATION of identity + zone.
-  // A teacher with no identity but enabled home_lesson_enabled would mislead
-  // students — so we surface "Action needed" if home is on but identity isn't.
-  const homeReady = vState.identity.kind === "verified" && vState.zone.kind === "verified";
-  const homeState: VerificationStepState = homeReady
-    ? { kind: "verified" }
-    : teacherRow.home_lesson_enabled && vState.identity.kind !== "verified"
-      ? { kind: "failed", reason: null }
-      : vState.identity.kind === "pending" || vState.zone.kind === "pending"
-        ? { kind: "pending" }
-        : { kind: "not_started" };
+  // Derived card states
+  const profileState: VerificationStepState =
+    (teacherRow.bio?.trim() ?? "") && (teacherRow.discipline?.trim() ?? "")
+      ? { kind: "verified" }
+      : { kind: "not_started" };
 
-  const submitCredential = async () => {
-    setMessage(null);
-    setBusy("credentials");
-    try {
-      const title = credTitle.trim();
-      if (!title) throw new Error(t("credentialTitleRequired"));
-      const issuedYearNum = credIssuedYear.trim() ? Number(credIssuedYear.trim()) : null;
-      if (issuedYearNum != null && (!Number.isFinite(issuedYearNum) || issuedYearNum < 1900)) {
-        throw new Error(t("credentialIssuedYearInvalid"));
-      }
+  const pricingState: VerificationStepState =
+    (teacherRow.price_per_lesson ?? 0) > 0 ? { kind: "verified" } : { kind: "not_started" };
 
-      const { data: sess } = await getSupabaseClient().auth.getSession();
-      const token = sess.session?.access_token;
-      if (!token) throw new Error(t("verificationSessionExpired"));
+  const availabilityState: VerificationStepState =
+    (teacherRow.availability?.length ?? 0) > 0 ? { kind: "verified" } : { kind: "not_started" };
 
-      const res = await fetch("/api/teacher/credentials", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({
-          type: credType,
-          title,
-          institution_name: credInstitution.trim() || null,
-          country: credCountry.trim() || null,
-          issued_year: issuedYearNum != null ? Math.round(issuedYearNum) : null,
-          verification_method: credMethod,
-        }),
-      });
-      const j = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string };
-      if (!res.ok || !j.ok) throw new Error(j.error || t("verificationErrorGeneric"));
-
-      showMsg(t("credentialSubmitted"), "ok");
-      setCredTitle("");
-      setCredInstitution("");
-      setCredCountry("");
-      setCredIssuedYear("");
-      setCredMethod("document_review");
-      await load();
-    } catch (e) {
-      showMsg(e instanceof Error ? e.message : t("verificationErrorGeneric"), "error");
-    } finally {
-      setBusy(null);
-    }
+  const toggleCard = (key: string) => {
+    setExpandedCard((prev) => (prev === key ? null : key));
   };
-
-  // Five unlock cards — one per concrete student-visible thing.
-  // Order is intentional: marketplace visibility first, then identity/diploma,
-  // then payments. Diploma is explicitly Optional.
-  const unlockCards: UnlockCardSpec[] = [
-    {
-      key: "map",
-      icon: <MapPin size={18} aria-hidden />,
-      titleKey: "teacherTrustCardMapTitle",
-      descKey: "teacherTrustCardMapDescription",
-      ctaKey: "teacherTrustCardMapCta",
-      state: vState.zone,
-      anchor: "trust-zone",
-    },
-    {
-      key: "home",
-      icon: <Home size={18} aria-hidden />,
-      titleKey: "teacherTrustCardHomeTitle",
-      descKey: "teacherTrustCardHomeDescription",
-      ctaKey: "teacherTrustCardHomeCta",
-      state: homeState,
-      anchor: "trust-zone",
-    },
-    {
-      key: "identity",
-      icon: <ShieldCheck size={18} aria-hidden />,
-      titleKey: "teacherTrustCardIdentityTitle",
-      descKey: "teacherTrustCardIdentityDescription",
-      ctaKey: "teacherTrustCardIdentityCta",
-      state: vState.identity,
-      anchor: "trust-identity",
-    },
-    {
-      key: "diploma",
-      icon: <FileBadge size={18} aria-hidden />,
-      titleKey: "teacherTrustCardDiplomaTitle",
-      descKey: "teacherTrustCardDiplomaDescription",
-      ctaKey: "teacherTrustCardDiplomaCta",
-      state: vState.diploma,
-      anchor: "trust-diploma",
-      optional: true,
-    },
-    {
-      key: "payments",
-      icon: <CreditCard size={18} aria-hidden />,
-      titleKey: "teacherTrustCardPaymentsTitle",
-      descKey: "teacherTrustCardPaymentsDescription",
-      ctaKey: "teacherTrustCardPaymentsCta",
-      state: paymentsState,
-      ctaHref: "/teacher/settings#payouts",
-    },
-  ];
 
   return (
     <div className="space-y-8">
-      {vState.identity.kind !== "verified" && (
-        <IdentityVerificationCard
-          status={stripeStatus ?? "not_started"}
-          failedReason={teacherRow.stripe_identity_failed_reason}
-          onFallback={() => sendEmailRequest("identity")}
-        />
-      )}
-
+      {/* ── Page header ─────────────────────────────────────────────────────── */}
       <div>
         <p className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
-          {t("teacherTrustVisibilitySubtitle")}
+          {t("teacherLaunchHeroEyebrow")}
         </p>
         <h1 className="mt-1 text-2xl font-bold text-[#2C2C2A] flex items-center gap-2">
           <Sparkles className="text-teal-700" size={26} />
-          {t("teacherTrustVisibilityTitle")}
+          {t("teacherLaunchCenterTitle")}
         </h1>
         <p className="mt-2 text-sm text-[#6B6A65] max-w-xl">
-          {t("teacherTrustVisibilityIntro")}
+          {t("teacherLaunchCenterSubtitle")}
         </p>
       </div>
 
@@ -535,134 +534,306 @@ export default function TeacherVerificationPage() {
         </div>
       ) : null}
 
-      {/* ── Five unlock cards ─────────────────────────────────────────────── */}
-      <section
-        className="grid gap-4 sm:grid-cols-2"
-        aria-label={t("teacherTrustVisibilityTitle")}
-        data-testid="teacher-trust-unlock-cards"
-      >
-        {unlockCards.map((card) => (
-          <UnlockCard key={card.key} card={card} t={t} />
-        ))}
+      {/* ── Section 1: Essentiel ─────────────────────────────────────────────── */}
+      <section data-testid="teacher-launch-section-essential" className="space-y-4">
+        <h2 className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
+          {t("teacherLaunchSectionEssential")}
+        </h2>
+
+        {/* Profile card */}
+        <LaunchCard
+          cardKey="profile"
+          icon={<User size={18} aria-hidden />}
+          title={t("teacherLaunchCardProfileTitle")}
+          description={t("teacherLaunchCardProfileDesc")}
+          state={profileState}
+          expandedCard={expandedCard}
+          onToggle={() => toggleCard("profile")}
+          t={t}
+          data-testid="teacher-launch-card-profile"
+        >
+          <div className="space-y-4 pt-3">
+            <label className="block">
+              <span className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
+                {t("teacherLaunchNameLabel")}
+              </span>
+              <input
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                className="mt-2 w-full h-11 rounded-xl border border-[#E8E6DF] px-3 text-sm outline-none focus:border-teal-500"
+                placeholder="Ex. Marie Dupont"
+              />
+            </label>
+            <label className="block">
+              <span className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
+                {t("teacherLaunchDisciplineLabel")}
+              </span>
+              <input
+                value={editDiscipline}
+                onChange={(e) => setEditDiscipline(e.target.value)}
+                className="mt-2 w-full h-11 rounded-xl border border-[#E8E6DF] px-3 text-sm outline-none focus:border-teal-500"
+                placeholder="Ex. Piano, Anglais, Mathématiques…"
+              />
+            </label>
+            <label className="block">
+              <span className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
+                {t("teacherLaunchBioLabel")}
+              </span>
+              <textarea
+                value={editBio}
+                onChange={(e) => setEditBio(e.target.value)}
+                rows={4}
+                className="mt-2 w-full rounded-xl border border-[#E8E6DF] px-3 py-2 text-sm outline-none focus:border-teal-500"
+                placeholder="Quelques lignes sur votre approche, votre expérience, et votre style d'enseignement…"
+              />
+            </label>
+            <div>
+              <button
+                type="button"
+                onClick={() => setProfileAiOpen((v) => !v)}
+                className="text-xs font-semibold text-teal-700 hover:underline"
+                data-testid="teacher-launch-profile-ai-toggle"
+              >
+                {profileAiOpen ? "▾ " : "✨ "}
+                {t("aiAssistantHeadline")}
+              </button>
+              {profileAiOpen ? (
+                <div className="mt-2">
+                  <ProfileAiAssistant
+                    discipline={editDiscipline || "Enseignement"}
+                    specialty={editDiscipline}
+                    notes={profileAiNotes}
+                    onNotesChange={setProfileAiNotes}
+                    onAccept={(next) => {
+                      setEditBio(next);
+                      setProfileAiOpen(false);
+                    }}
+                    compact
+                  />
+                </div>
+              ) : null}
+            </div>
+            <button
+              type="button"
+              onClick={() => void saveProfile()}
+              disabled={busy === "profile"}
+              className="h-11 rounded-xl bg-teal-700 px-5 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-50 inline-flex items-center gap-2"
+            >
+              {busy === "profile" ? <Loader2 size={16} className="animate-spin" /> : null}
+              {t("teacherLaunchCardProfileSaveBtn")}
+            </button>
+            <p className="text-[11px] text-[#6B6A65]">
+              <Link href="/teacher/settings" className="underline hover:text-teal-700">
+                {t("teacherLaunchCardProfileDesc")}
+              </Link>
+            </p>
+          </div>
+        </LaunchCard>
+
+        {/* Pricing card */}
+        <LaunchCard
+          cardKey="pricing"
+          icon={<BookOpen size={18} aria-hidden />}
+          title={t("teacherLaunchCardPricingTitle")}
+          description={t("teacherLaunchCardPricingDesc")}
+          state={pricingState}
+          expandedCard={expandedCard}
+          onToggle={() => toggleCard("pricing")}
+          t={t}
+          data-testid="teacher-launch-card-pricing"
+        >
+          <div className="space-y-3 pt-3">
+            <label className="block">
+              <span className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
+                {t("teacherLaunchPriceLabel")}
+              </span>
+              <input
+                value={editPrice}
+                onChange={(e) => setEditPrice(e.target.value)}
+                type="number"
+                min={MIN_LESSON_PRICE_DOLLARS}
+                step="0.5"
+                className="mt-2 w-full h-11 rounded-xl border border-[#E8E6DF] px-3 text-sm outline-none focus:border-teal-500"
+                placeholder="50"
+              />
+              <p className="mt-1 text-xs text-[#6B6A65]">{t("pricingMinLessonPrice")}</p>
+            </label>
+            <button
+              type="button"
+              onClick={() => void savePricing()}
+              disabled={busy === "pricing"}
+              className="h-11 rounded-xl bg-teal-700 px-5 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-50 inline-flex items-center gap-2"
+            >
+              {busy === "pricing" ? <Loader2 size={16} className="animate-spin" /> : null}
+              {t("teacherLaunchCardPricingSaveBtn")}
+            </button>
+          </div>
+        </LaunchCard>
+
+        {/* Availability card — links to schedule editor */}
+        <LaunchCard
+          cardKey="availability"
+          icon={<Calendar size={18} aria-hidden />}
+          title={t("teacherLaunchCardAvailabilityTitle")}
+          description={t("teacherLaunchCardAvailabilityDesc")}
+          state={availabilityState}
+          expandedCard={expandedCard}
+          onToggle={null}
+          t={t}
+          data-testid="teacher-launch-card-availability"
+          ctaHref="/teacher/schedule"
+          ctaLabel={t("teacherLaunchCardAvailabilityCta")}
+        />
+
+        {/* Zone card */}
+        <LaunchCard
+          cardKey="zone"
+          icon={<MapPin size={18} aria-hidden />}
+          title={t("teacherLaunchCardZoneTitle")}
+          description={t("teacherLaunchCardZoneDesc")}
+          state={vState.zone}
+          expandedCard={expandedCard}
+          onToggle={() => toggleCard("zone")}
+          t={t}
+          data-testid="teacher-launch-card-zone"
+        >
+          <div className="pt-3">
+            {!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || googleError ? null : !googleReady ? (
+              <p className="text-xs text-[#6B6A65] mb-2">{t("teacherOnboardingGoogleUnavailable")}</p>
+            ) : null}
+            <ZoneStep
+              zone={vState.zone}
+              busy={busy}
+              zoneShowManual={zoneShowManual}
+              zoneSingleLine={zoneSingleLine}
+              zoneHasPrivateAddress={zoneHasPrivateAddress}
+              zoneAddressLine1={zoneAddressLine1}
+              zoneAddressLine2={zoneAddressLine2}
+              zoneCity={zoneCity}
+              zoneRegion={zoneRegion}
+              zonePostalCode={zonePostalCode}
+              zoneCountryCode={zoneCountryCode}
+              zoneRadiusKm={zoneRadiusKm}
+              zoneSavedStatus={zoneSavedStatus}
+              zoneFuzzRadiusKm={zoneFuzzRadiusKm}
+              savedCity={teacherRow.city ?? ""}
+              savedRegion={teacherRow.region ?? ""}
+              addressRef={zoneAddressRef}
+              onShowManualToggle={() => setZoneShowManual((v) => !v)}
+              onSingleLineChange={setZoneSingleLine}
+              onLine1Change={setZoneAddressLine1}
+              onLine2Change={setZoneAddressLine2}
+              onCityChange={setZoneCity}
+              onRegionChange={setZoneRegion}
+              onPostalCodeChange={setZonePostalCode}
+              onCountryCodeChange={setZoneCountryCode}
+              onRadiusChange={setZoneRadiusKm}
+              onSubmit={() => void submitZone()}
+              t={t}
+            />
+          </div>
+        </LaunchCard>
       </section>
 
       <hr className="border-[#E8E6DF]" />
 
-      {/* ── Action surfaces (forms backing each card) ─────────────────────── */}
-      <section id="trust-identity" className="space-y-4 scroll-mt-24">
+      {/* ── Section 2: Confiance et sécurité ────────────────────────────────── */}
+      <section data-testid="teacher-launch-section-trust" className="space-y-4">
         <h2 className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
-          {t("teacherTrustCardIdentityTitle")}
+          {t("teacherLaunchSectionTrust")}
         </h2>
-        <div className="rounded-2xl border border-[#E8E6DF] bg-white p-5">
-          {vState.identity.kind === "verified" ? (
-            <p className="text-sm font-semibold text-teal-700">
-              {t("verificationIdentityValidated")}
+
+        {/* Identity card */}
+        <LaunchCard
+          cardKey="identity"
+          icon={<ShieldCheck size={18} aria-hidden />}
+          title={t("teacherLaunchCardIdentityTitle")}
+          description={t("teacherLaunchCardIdentityDesc")}
+          state={vState.identity}
+          expandedCard={expandedCard}
+          onToggle={vState.identity.kind !== "verified" ? () => toggleCard("identity") : null}
+          t={t}
+          data-testid="teacher-launch-card-identity"
+        >
+          <div className="pt-3">
+            <IdentityVerificationCard
+              status={stripeStatus ?? "not_started"}
+              failedReason={teacherRow.stripe_identity_failed_reason}
+              onFallback={() => sendEmailRequest("identity")}
+            />
+          </div>
+        </LaunchCard>
+
+        {/* Diploma card — optional */}
+        <LaunchCard
+          cardKey="diploma"
+          icon={<FileBadge size={18} aria-hidden />}
+          title={t("teacherLaunchCardDiplomaTitle")}
+          description={t("teacherLaunchCardDiplomaDesc")}
+          state={vState.diploma}
+          optional
+          expandedCard={expandedCard}
+          onToggle={() => toggleCard("diploma")}
+          t={t}
+          data-testid="teacher-launch-card-diploma"
+        >
+          <div className="pt-3 space-y-3">
+            <DiplomaStep
+              diploma={vState.diploma}
+              busy={busy}
+              diplomaFile={diplomaFile}
+              diplomaNote={diplomaNote}
+              fileInputRef={fileInputRef}
+              onFileChange={setDiplomaFile}
+              onNoteChange={setDiplomaNote}
+              onUpload={() => void uploadDiploma()}
+              t={t}
+            />
+            <p className="text-xs text-[#6B6A65]" data-testid="teacher-launch-diploma-optional">
+              {t("teacherLaunchCardDiplomaDesc")}
             </p>
-          ) : vState.identity.kind === "pending" ? (
-            <div className="flex items-center gap-2 rounded-xl bg-amber-50 border border-amber-200 px-4 py-2.5">
-              <Loader2 size={16} className="animate-spin text-amber-600 shrink-0" />
-              <p className="text-sm text-amber-800 font-medium">{t("verifyIdPending")}</p>
-            </div>
-          ) : vState.identity.kind === "failed" ? (
-            <p className="text-sm font-semibold text-rose-600">{t("verificationFailed")}</p>
-          ) : (
-            <p className="text-sm text-[#6B6A65]">{t("teacherTrustCardIdentityDescription")}</p>
-          )}
-          <p className="mt-2 text-[11px] text-[#6B6A65]">{t("poweredByStripe")}</p>
-        </div>
-      </section>
+          </div>
+        </LaunchCard>
 
-      <section id="trust-zone" className="scroll-mt-24">
-        <ZoneStep
-          zone={vState.zone}
-          busy={busy}
-          zoneShowManual={zoneShowManual}
-          zoneSingleLine={zoneSingleLine}
-          zoneHasPrivateAddress={zoneHasPrivateAddress}
-          zoneAddressLine1={zoneAddressLine1}
-          zoneAddressLine2={zoneAddressLine2}
-          zoneCity={zoneCity}
-          zoneRegion={zoneRegion}
-          zonePostalCode={zonePostalCode}
-          zoneCountryCode={zoneCountryCode}
-          zoneRadiusKm={zoneRadiusKm}
-          zoneSavedStatus={zoneSavedStatus}
-          zoneFuzzRadiusKm={zoneFuzzRadiusKm}
-          savedCity={teacherRow.city ?? ""}
-          savedRegion={teacherRow.region ?? ""}
-          onShowManualToggle={() => setZoneShowManual((v) => !v)}
-          onSingleLineChange={setZoneSingleLine}
-          onLine1Change={setZoneAddressLine1}
-          onLine2Change={setZoneAddressLine2}
-          onCityChange={setZoneCity}
-          onRegionChange={setZoneRegion}
-          onPostalCodeChange={setZonePostalCode}
-          onCountryCodeChange={setZoneCountryCode}
-          onRadiusChange={setZoneRadiusKm}
-          onSubmit={() => void submitZone()}
+        {/* Payments card — links to settings */}
+        <LaunchCard
+          cardKey="payments"
+          icon={<CreditCard size={18} aria-hidden />}
+          title={t("teacherLaunchCardPaymentsTitle")}
+          description={t("teacherLaunchCardPaymentsDesc")}
+          state={paymentsState}
+          expandedCard={expandedCard}
+          onToggle={null}
           t={t}
-        />
-      </section>
-
-      <section id="trust-diploma" className="scroll-mt-24">
-        <DiplomaStep
-          diploma={vState.diploma}
-          busy={busy}
-          diplomaFile={diplomaFile}
-          diplomaNote={diplomaNote}
-          fileInputRef={fileInputRef}
-          onFileChange={setDiplomaFile}
-          onNoteChange={setDiplomaNote}
-          onUpload={() => void uploadDiploma()}
-          t={t}
-        />
-        <p className="mt-2 text-xs text-[#6B6A65]" data-testid="teacher-trust-diploma-optional">
-          {t("teacherTrustCardDiplomaDescription")}
-        </p>
-      </section>
-
-      <section className="scroll-mt-24">
-        <CredentialsStep
-          credentials={credentials}
-          credType={credType}
-          credTitle={credTitle}
-          credInstitution={credInstitution}
-          credCountry={credCountry}
-          credIssuedYear={credIssuedYear}
-          credMethod={credMethod}
-          busy={busy}
-          badgePreview={[]}
-          onTypeChange={setCredType}
-          onTitleChange={setCredTitle}
-          onInstitutionChange={setCredInstitution}
-          onCountryChange={setCredCountry}
-          onIssuedYearChange={setCredIssuedYear}
-          onMethodChange={setCredMethod}
-          onSubmit={() => void submitCredential()}
-          t={t}
+          data-testid="teacher-launch-card-payments"
+          ctaHref="/teacher/settings#payouts"
+          ctaLabel={t("teacherLaunchCardPaymentsCta")}
         />
       </section>
     </div>
   );
 }
 
-// ── Unlock card primitives ──────────────────────────────────────────────────
+// ── LaunchCard primitive ────────────────────────────────────────────────────────
 
-type UnlockCardSpec = {
-  key: string;
+type LaunchCardProps = {
+  cardKey: string;
   icon: React.ReactNode;
-  titleKey: TranslationKey;
-  descKey: TranslationKey;
-  ctaKey: TranslationKey;
+  title: string;
+  description: string;
   state: VerificationStepState;
-  /** Anchor inside this page to scroll to (when no `ctaHref` is set). */
-  anchor?: string;
-  /** External CTA href (e.g. Stripe payouts). */
-  ctaHref?: string;
   optional?: boolean;
+  expandedCard: string | null;
+  /** null means non-expandable (link-only) */
+  onToggle: (() => void) | null;
+  t: (k: TranslationKey) => string;
+  "data-testid": string;
+  ctaHref?: string;
+  ctaLabel?: string;
+  children?: React.ReactNode;
 };
 
-function statusInfo(
+function cardStatusInfo(
   state: VerificationStepState,
   optional: boolean,
   t: (k: TranslationKey) => string,
@@ -674,10 +845,25 @@ function statusInfo(
   return { label: t("teacherTrustStatusMissing"), tone: "missing" };
 }
 
-function UnlockCard({ card, t }: { card: UnlockCardSpec; t: (k: TranslationKey) => string }) {
-  const { label, tone } = statusInfo(card.state, Boolean(card.optional), t);
+function LaunchCard({
+  cardKey,
+  icon,
+  title,
+  description,
+  state,
+  optional = false,
+  expandedCard,
+  onToggle,
+  t,
+  "data-testid": testid,
+  ctaHref,
+  ctaLabel,
+  children,
+}: LaunchCardProps) {
+  const { label, tone } = cardStatusInfo(state, optional, t);
+  const isExpanded = expandedCard === cardKey;
 
-  const toneClasses =
+  const badgeClasses =
     tone === "complete"
       ? "bg-teal-500/15 text-teal-800 border-teal-500/30"
       : tone === "review"
@@ -688,45 +874,55 @@ function UnlockCard({ card, t }: { card: UnlockCardSpec; t: (k: TranslationKey) 
             ? "bg-slate-100 text-slate-600 border-slate-200"
             : "bg-white text-slate-700 border-slate-200";
 
-  const isCta = tone !== "complete";
-  const cta = card.ctaHref ? (
-    <Link
-      href={card.ctaHref}
-      className="inline-flex h-10 items-center rounded-full bg-teal-600 px-4 text-xs font-bold text-white hover:bg-teal-700"
-    >
-      {t(card.ctaKey)}
-    </Link>
-  ) : (
-    <a
-      href={`#${card.anchor ?? ""}`}
-      className="inline-flex h-10 items-center rounded-full bg-teal-600 px-4 text-xs font-bold text-white hover:bg-teal-700"
-    >
-      {t(card.ctaKey)}
-    </a>
-  );
-
   return (
     <article
-      className="rounded-2xl border border-[#E8E6DF] bg-white p-5 flex flex-col gap-3"
-      data-testid={`teacher-trust-card-${card.key}`}
+      className="rounded-2xl border border-[#E8E6DF] bg-white p-5"
+      data-testid={testid}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2 text-teal-700">
-          {card.icon}
-          <h3 className="text-sm font-bold text-[#2C2C2A]">{t(card.titleKey)}</h3>
+          {icon}
+          <h3 className="text-sm font-bold text-[#2C2C2A]">{title}</h3>
         </div>
-        <span
-          className={cn(
-            "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider",
-            toneClasses,
-          )}
-        >
-          {tone === "complete" ? <CheckCircle2 size={11} /> : <CircleDashed size={11} />}
-          {label}
-        </span>
+        <div className="flex items-center gap-2 shrink-0">
+          <span
+            className={cn(
+              "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider",
+              badgeClasses,
+            )}
+          >
+            {tone === "complete" ? <CheckCircle2 size={11} /> : <CircleDashed size={11} />}
+            {label}
+          </span>
+          {onToggle ? (
+            <button
+              type="button"
+              onClick={onToggle}
+              className="text-[#6B6A65] hover:text-teal-700 transition-colors"
+              aria-expanded={isExpanded}
+              aria-label={isExpanded ? "Réduire" : "Modifier"}
+            >
+              {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+            </button>
+          ) : null}
+        </div>
       </div>
-      <p className="text-xs leading-relaxed text-[#6B6A65]">{t(card.descKey)}</p>
-      {isCta ? <div>{cta}</div> : null}
+      {!isExpanded ? (
+        <p className="mt-2 text-xs leading-relaxed text-[#6B6A65]">{description}</p>
+      ) : null}
+
+      {isExpanded && children ? children : null}
+
+      {!isExpanded && !onToggle && ctaHref && ctaLabel && state.kind !== "verified" ? (
+        <div className="mt-3">
+          <Link
+            href={ctaHref}
+            className="inline-flex h-10 items-center rounded-full bg-teal-600 px-4 text-xs font-bold text-white hover:bg-teal-700"
+          >
+            {ctaLabel}
+          </Link>
+        </div>
+      ) : null}
     </article>
   );
 }
