@@ -17,6 +17,7 @@ import {
   getSchemaEntityType,
 } from "@/lib/constants/vocabulary";
 import { usdToUyu } from "@/lib/geoLocale";
+import { sanitizePublicTeacherBio } from "@/lib/teacherProfile/sanitizePublicBio";
 import TeacherProfileClient from "./TeacherProfileClient";
 
 import { SITE_URL } from "@/lib/seo/site";
@@ -138,11 +139,18 @@ export async function generateMetadata({
     countryCode,
   );
 
+  // Mask personal contact info before the bio reaches meta description,
+  // OpenGraph, Twitter cards, or JSON-LD. The stored bio is unchanged.
+  const sanitizedBioForMeta = sanitizePublicTeacherBio(
+    teacher.bio,
+    isUruguay ? "es" : "fr",
+  ).content;
+
   let description = buildTeacherSeoDescription(
     teacher.name,
     teacher.discipline,
     teacher.category ?? "",
-    teacher.bio,
+    sanitizedBioForMeta,
     isUruguay ? "es" : "fr",
     countryCode,
   );
@@ -197,6 +205,14 @@ export default async function TeacherProfilePage({
 
   const entityType = getSchemaEntityType(initialTeacher.category ?? "");
 
+  // JSON-LD must not leak raw contact info either — Google + LLM crawlers
+  // index this. Use the same sanitizer as meta description and the rendered
+  // bio, picking the locale that matches the rest of this page's metadata.
+  const sanitizedBioForJsonLd = sanitizePublicTeacherBio(
+    initialTeacher.bio,
+    initialTeacher.countryCode === "UY" ? "es" : "fr",
+  ).content;
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Person",
@@ -216,7 +232,7 @@ export default async function TeacherProfilePage({
       name: "Pratiqo",
       url: BASE_URL,
     },
-    ...(initialTeacher.bio ? { description: initialTeacher.bio.slice(0, 500) } : {}),
+    ...(sanitizedBioForJsonLd ? { description: sanitizedBioForJsonLd.slice(0, 500) } : {}),
     ...(initialTeacher.imageUrl ? { image: initialTeacher.imageUrl } : {}),
     url: `${BASE_URL}/teacher/profile/${encodeURIComponent(initialTeacher.id)}`,
     address: {

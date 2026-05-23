@@ -37,6 +37,7 @@ import { getEmbedUrl } from "../lib/videoEmbed";
 import { TeacherAvatar } from "./TeacherAvatar";
 import { calculateIntroSessionPriceCents } from "@/lib/introSession";
 import { PriceDisplay } from "@/components/PriceDisplay";
+import { sanitizePublicTeacherBio } from "@/lib/teacherProfile/sanitizePublicBio";
 
 export type TeacherBookKind = "standard" | "home";
 
@@ -104,7 +105,7 @@ export function TeacherProfile({
   studioMapHasConfirmedBooking,
 }: TeacherProfileProps) {
   const { user } = useAuth();
-  const { t, formatDisplayPrice } = useLocale();
+  const { t, formatDisplayPrice, locale } = useLocale();
   const router = useRouter();
   const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(null);
   const [plan, setPlan] = useState<"free" | "pro" | "enterprise">("free");
@@ -348,6 +349,15 @@ export function TeacherProfile({
   );
   const publicTrustBadgeKey = useMemo(() => getPublicTeacherTrustBadgeKey(trustItems), [trustItems]);
 
+  // Mask personal contact info from the rendered bio. The stored
+  // `teachers.bio` row is never mutated — sanitization is presentation-only.
+  // The notice below the bio is shown only when at least one mask hit, so
+  // most teachers see no notice at all.
+  const sanitizedBio = useMemo(
+    () => sanitizePublicTeacherBio(teacher.bio, locale),
+    [teacher.bio, locale],
+  );
+
   const [publicCredentials, setPublicCredentials] = useState<TeacherCredential[]>([]);
   useEffect(() => {
     let cancelled = false;
@@ -583,13 +593,20 @@ export function TeacherProfile({
                   </div>
                 ) : null}
 
-                {/* Bio */}
+                {/* Bio — rendered through sanitizePublicTeacherBio so personal
+                    contact details are masked before the first lesson. The
+                    stored bio is never mutated. */}
                 <div className="space-y-1.5">
                   <p className="text-[10px] font-bold uppercase tracking-widest text-slate-600">{t("aboutSection")}</p>
                   <p className="text-slate-600 leading-relaxed text-sm">
-                    {teacher.bio ||
+                    {sanitizedBio.content ||
                       `${teacher.name} est un(e) expert(e) en ${teacher.discipline.toLowerCase()}. Sa méthode d'enseignement repose sur la pratique immédiate et l'adaptation aux objectifs de chaque élève.`}
                   </p>
+                  {sanitizedBio.masked ? (
+                    <p className="text-[11px] leading-snug text-slate-500">
+                      {t("teacherBioContactHiddenNotice")}
+                    </p>
+                  ) : null}
                 </div>
 
                 {/* Intro video — only rendered when teacher.videoUrl is a valid YT/Vimeo URL */}
