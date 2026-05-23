@@ -66,15 +66,63 @@ A standalone scan script also exists for quick local checks: `npx tsx scripts/se
 
 ---
 
-## Findings intentionally deferred (not fixed in this PR)
+## Findings fixed in a follow-up PR
 
-### D1. Direct anon/authenticated reads of `public.teachers` can leak `stripe_account_id` and `location.private`
+### D1. Direct anon/authenticated reads of `public.teachers` can leak `stripe_account_id`, `diploma_url`, and workflow internals  → **FIXED**
 
-- The `teachers_public` view (with `security_invoker = true`) correctly strips `stripe_account_id`, `stripe_connect_*` flags, and `location.private`, and is the consumer for all public marketing/search pages.
-- However, the underlying `public.teachers` table still grants `SELECT` to `anon` and `authenticated` (the Supabase default), so a curious user could query the base table directly from the browser and read those columns for any row that passes `teachers_select_public` (i.e. any active public teacher).
-- Concretely leaked fields: `stripe_account_id` (opaque `acct_…` id, not a credential), `location.private` (exact street address for teachers offering at-home lessons), Stripe Connect status booleans + Stripe Identity status enum.
-- Why deferred: the proper fix is either (a) split `location` into `location_public` + `location_private` columns and revoke column SELECT on the private one, or (b) move public reads to a `SECURITY DEFINER` view and revoke base-table SELECT from `anon`/`authenticated`. Both are structural changes that touch the onboarding wizard, the teacher account settings page, and the Stripe Connect sync flow. None of the leaked fields are credentials. The trigger added in this PR closes the *write* side; the *read* side stays as-is for now.
-- Recommended follow-up ticket: "Restructure teachers public/private surface so anon cannot read `location.private` or Stripe metadata from the base table."
+Follow-up branch: `fix/teacher-public-read-isolation`.
+Follow-up migration: `supabase/migrations/070_teachers_public_read_isolation.sql`.
+Follow-up tests: `tests/security/teacherPublicReadIsolation.test.ts` (15 deterministic cases).
+
+What was exposed before:
+
+- The base `public.teachers` table granted SELECT to `anon`/`authenticated` and the `teachers_select_public` policy let any active public teacher row be read in full. That meant a browser could `supabase.from("teachers").select("stripe_account_id, stripe_connect_charges_enabled, stripe_identity_status, phone_verified, identity_status, diploma_url, location_verification_*, cv_verification_status, location").eq("id", anyTeacherId)` and pull Stripe Connect/Identity workflow internals, the storage path to the teacher's diploma PDF, the address-verification audit trail, and the `location.private` block (exact street + private coordinates) for any teacher offering at-home lessons.
+- The previous `teachers_public` view ran with `security_invoker = true`, so it inherited the same broad base-table SELECT — it just trimmed the columns at the view layer. The base table was still queryable directly.
+
+What was fixed:
+
+1. **Migration 070 tightens base RLS.** `teachers_select_public` is dropped and replaced with `teachers_select_owner_or_history`:
+
+    ```sql
+    USING (
+      auth.uid() = user_id
+      OR public.user_has_teacher_history(teachers.id, auth.uid())
+    )
+    ```
+
+    Anon and unrelated authenticated readers can no longer SELECT any column on `public.teachers` directly. The owner-self path (teacher dashboard, account settings, verification page, onboarding) still works, and the existing history-based path (students who actually booked or registered for a group session with this teacher) still works for in-app reads of teacher data tied to real relationships. Service-role bypasses RLS automatically, so webhooks/admin/cron are unaffected.
+
+2. **Migration 070 rebuilds `teachers_public` as `SECURITY DEFINER`** (`WITH (security_invoker = false)`). Public marketplace surfaces keep working because the view runs as its owner role and the view's WHERE clause is now the only public-read gate. The new column list intentionally **omits**:
+
+    - `stripe_account_id`, `stripe_connect_*`, `stripe_identity_*` (4 fields), `stripe_identity_status`
+    - `phone_verified`, `identity_status` (raw enum)
+    - `diploma_url` (storage path to the private `teacher-diplomas` PDF)
+    - `location_verification_status`, `location_verified_at`, `location_verification_method`
+    - `cv_verification_status`
+
+    Public trust signals now rely on the `identity_verified` / `diploma_verified` booleans that the Stripe Identity webhook and admin review flow set server-side. The view's `WHERE` also adds `COALESCE(t.identity_status, 'none') <> 'failed'` so failed verifications stay out of marketplace surfaces without needing to expose the raw enum.
+
+3. **Migration 057 is downgraded from `RAISE EXCEPTION` to `RAISE NOTICE`.** 057 was a production-drift guard for a column we are now intentionally removing; the relaxed check still passes on production (which already passed it strictly) and unblocks fresh dev DBs from applying the 055 → 057 → 070 chain.
+
+4. **Code hardening.** `lib/supabase/queries.ts::TEACHERS_LIST_SELECT` no longer requests the dropped columns. The three SEO server pages (`app/clases/montevideo/[barrioSlug]`, `app/cours/[disciplineSlug]/[citySlug]`, `app/tuteurs-prive/[citySlug]`) now read through `TEACHERS_PUBLIC_TABLE` and dropped `phone_verified` from their inline column lists, so they cannot serialize private workflow data into the static HTML payload shipped to anonymous crawlers. `components/marketing/TeacherQuiz.tsx` dropped its `.neq("identity_status", "failed")` filter (the view does this now).
+
+5. **Regression tests.** `tests/security/teacherPublicReadIsolation.test.ts` enforces the migration shape (RLS, view definer mode, column allow-list, WHERE filter, grants), the queries.ts shape, the SEO/pre-booking surface usage of `TEACHERS_PUBLIC_TABLE`, and a broad source scan that flags any non-allowlisted file that reintroduces a public select of `phone_verified`, `identity_status`, `stripe_identity_status`, `diploma_url`, `location_verification_*`, or `cv_verification_status`. The scan allowlists the teacher-own and admin/Stripe-webhook surfaces that legitimately need full reads.
+
+Intentional exception kept:
+
+- The legacy `is_verified` boolean and `verification_level` integer remain in `teachers_public` because they have been part of public trust UI for the entire pre-launch period and existing search / SEO snapshots depend on them. They are coarse, intentionally public signals (not workflow internals).
+
+Manual checks still required:
+
+- After deploying migration 070, run a one-off check in the Supabase SQL editor as `anon` (via the dashboard's "SQL Editor → Run as anon"):
+
+    ```sql
+    select count(*) from public.teachers;            -- expect 0
+    select count(*) from public.teachers_public;     -- expect > 0
+    select stripe_account_id from public.teachers_public limit 1;  -- expect error: column does not exist
+    ```
+
+- Confirm the teacher dashboard, onboarding, account settings, and verification page still load while signed in as a teacher account (those surfaces depend on the owner-self read path of the new RLS policy).
 
 ### D2. Timing-safe compare for `CRON_SECRET` and `SUPABASE_WEBHOOK_SECRET`
 
@@ -142,7 +190,11 @@ Run from the repo root:
 npm run validate:launch
 ```
 
-This now also runs `npm run test:security` which includes the new 30-case `productionAccessAudit.test.ts` suite alongside the existing 5-case `rlsPolicyShape.test.ts`.
+This now also runs `npm run test:security` which includes:
+
+- `rlsPolicyShape.test.ts` (5 cases) — base RLS lockdowns from migration 065 still hold.
+- `productionAccessAudit.test.ts` (30 cases) — main production access audit (69 trigger, API guards, secrets, headers, redirects, storage, server/client boundary).
+- `teacherPublicReadIsolation.test.ts` (15 cases) — D1 follow-up: base `public.teachers` is owner/history only, `teachers_public` is a SECURITY DEFINER projection with a narrow safe column list, no public-facing select re-introduces sensitive teacher columns.
 
 The dedicated security suite can also be run on its own:
 
