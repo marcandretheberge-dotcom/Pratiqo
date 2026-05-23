@@ -1,5 +1,6 @@
 "use client";
 
+import type { RefObject } from "react";
 import { Loader2, MapPinned } from "lucide-react";
 import type { VerificationStepState } from "@/lib/verificationState";
 import type { TranslationKey } from "@/lib/translations";
@@ -21,6 +22,8 @@ type Props = {
   zoneFuzzRadiusKm: number | null;
   savedCity: string;
   savedRegion: string;
+  /** Optional ref forwarded to the single-line address input for Google Places autocomplete. */
+  addressRef?: RefObject<HTMLInputElement | null>;
   onShowManualToggle: () => void;
   onSingleLineChange: (v: string) => void;
   onLine1Change: (v: string) => void;
@@ -51,6 +54,7 @@ export function ZoneStep({
   zoneFuzzRadiusKm,
   savedCity,
   savedRegion,
+  addressRef,
   onShowManualToggle,
   onSingleLineChange,
   onLine1Change,
@@ -69,15 +73,7 @@ export function ZoneStep({
     (zoneSavedStatus || zone.kind === "verified" || zone.kind === "pending") && displayCity;
 
   return (
-    <div className="rounded-2xl border border-[#E8E6DF] bg-white p-5 space-y-4">
-      <div className="flex gap-3">
-        <MapPinned className="text-teal-700 shrink-0 mt-0.5" size={22} />
-        <div className="min-w-0">
-          <p className="font-semibold text-[#2C2C2A]">{t("verificationLevel4Title")}</p>
-          <p className="text-sm text-[#6B6A65] mt-1">{t("verificationLevel4BodyZone")}</p>
-        </div>
-      </div>
-
+    <div className="space-y-4">
       <div className="rounded-xl border border-[#DCEAE3] bg-[#F3FAF6] px-4 py-3 text-xs text-teal-800">
         {t("verificationZonePrivacyNote")}
       </div>
@@ -91,6 +87,7 @@ export function ZoneStep({
         </label>
         <input
           id="zone-address-single"
+          ref={addressRef}
           type="text"
           value={zoneSingleLine}
           onChange={(e) => onSingleLineChange(e.target.value)}

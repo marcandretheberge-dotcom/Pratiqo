@@ -36,9 +36,6 @@ export function DiplomaStep({
       <div className="flex gap-3">
         <ShieldCheck className="text-[#534AB7] shrink-0 mt-0.5" size={22} />
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-[#2C2C2A]">{t("verificationLevel3Title")}</p>
-          <p className="text-sm text-[#6B6A65] mt-1">{t("verificationLevel3Body")}</p>
-
           {diploma.kind === "verified" ? (
             <p className="mt-2 text-sm font-semibold text-teal-700">
               {t("verificationDiplomaValidated")}
