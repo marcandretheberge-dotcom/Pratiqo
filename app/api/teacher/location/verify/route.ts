@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { blurCoordinates } from "@/lib/maps";
+import { resolveLocationVerificationWrite } from "@/lib/teacherLocationVerification";
 
 export const runtime = "nodejs";
 
@@ -219,9 +220,9 @@ export async function POST(req: Request) {
   nextLocation.public = publicBlock;
 
   // ── Determine verification status ─────────────────────────────────────────
-  // If geocoding succeeded: auto-verify (address is plausibly real).
-  // If geocoding failed (city-only entry or network error): pending manual review.
-  const verificationStatus = hasCoords ? "auto_verified" : "pending";
+  // Status/method must match teachers_location_verification_* CHECK constraints (migration 046).
+  const { status: verificationStatus, method: verificationMethod } =
+    resolveLocationVerificationWrite(hasCoords);
 
   // ── Persist ───────────────────────────────────────────────────────────────
   const updates: Record<string, unknown> = {
@@ -230,7 +231,7 @@ export async function POST(req: Request) {
     country_code: countryCode,
     location: nextLocation,
     location_verification_status: verificationStatus,
-    location_verification_method: "address_geocoding",
+    location_verification_method: verificationMethod,
     updated_at: now,
   };
   if (hasCoords) {

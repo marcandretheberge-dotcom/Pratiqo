@@ -12,7 +12,7 @@
  *   7. Payments
  */
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
@@ -34,7 +34,10 @@ import { getSupabaseClient } from "../../../../lib/supabase";
 import { IdentityVerificationCard } from "../../../../components/IdentityVerificationCard";
 import { useLocale } from "../../../../lib/locale-context";
 import { cn } from "../../../../lib/utils";
-import { deriveVerificationState, type VerificationStepState } from "../../../../lib/verificationState";
+import { deriveVerificationState, deriveEffectiveZoneState, type VerificationStepState } from "../../../../lib/verificationState";
+import { getDisciplineById, getEnabledDisciplines } from "../../../../lib/disciplines";
+import { syncTeacherPrimaryFromDisciplines } from "../../../../lib/teacherDisciplines";
+import { TeacherDisciplinesEditor, type DisciplineCardDraft } from "../../../../components/teacher/TeacherDisciplinesEditor";
 import type { TranslationKey } from "../../../../lib/translations";
 import { DiplomaStep } from "./components/DiplomaStep";
 import { ZoneStep } from "./components/ZoneStep";
@@ -103,6 +106,23 @@ function teachingModeToChips(mode: string | null | undefined) {
   };
 }
 
+function normalizeSpec(s: string | null | undefined): string {
+  return String(s ?? "").replace(/\s+/g, " ").trim();
+}
+
+type TeacherDisciplineDbRow = {
+  id: string;
+  discipline_id: string;
+  specialite: string | null;
+  sort_order: number;
+};
+
+type DisciplineCard = {
+  disciplineId: string;
+  specialties: string[];
+  minSort: number;
+};
+
 export default function TeacherProfileManagementPage() {
   const { user, profile, loading } = useAuth();
   const { t } = useLocale();
@@ -120,14 +140,22 @@ export default function TeacherProfileManagementPage() {
   // Profile inline editing
   const [editName, setEditName] = useState("");
   const [editBio, setEditBio] = useState("");
-  const [editDiscipline, setEditDiscipline] = useState("");
   const [editVideoUrl, setEditVideoUrl] = useState("");
   const [editVideoError, setEditVideoError] = useState<string | null>(null);
   const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(null);
   const [profileAiOpen, setProfileAiOpen] = useState(false);
   const [profileAiNotes, setProfileAiNotes] = useState("");
 
-  // Disciplines & formats (teaching mode chips)
+  // Disciplines (teacher_disciplines table) + teaching mode chips
+  const [discRows, setDiscRows] = useState<TeacherDisciplineDbRow[]>([]);
+  const [discLoading, setDiscLoading] = useState(true);
+  const [discSaving, setDiscSaving] = useState(false);
+  const [discEditorOpen, setDiscEditorOpen] = useState(false);
+  const [discEditorMode, setDiscEditorMode] = useState<"add" | "edit">("add");
+  const [discEditorInitial, setDiscEditorInitial] = useState<DisciplineCardDraft>({
+    disciplineId: "musique",
+    specialties: [],
+  });
   const [chipsPerson, setChipsPerson] = useState(true);
   const [chipsOnline, setChipsOnline] = useState(true);
   const [chipsHome, setChipsHome] = useState(false);
@@ -150,6 +178,8 @@ export default function TeacherProfileManagementPage() {
   const [zoneRadiusKm, setZoneRadiusKm] = useState("");
   const [zoneSavedStatus, setZoneSavedStatus] = useState<string | null>(null);
   const [zoneFuzzRadiusKm, setZoneFuzzRadiusKm] = useState<number | null>(null);
+  const [zoneLat, setZoneLat] = useState<number | null>(null);
+  const [zoneLng, setZoneLng] = useState<number | null>(null);
 
   // Diploma file state
   const [diplomaFile, setDiplomaFile] = useState<File | null>(null);
@@ -183,6 +213,18 @@ export default function TeacherProfileManagementPage() {
     setTeacherRow(tr as TeacherVerifyRow | null);
     setPlan(String((p as { plan?: string } | null)?.plan || "free"));
     setProfilePhotoUrl((p as { photo_url?: string | null } | null)?.photo_url ?? null);
+    if (tr?.id) {
+      const { data: drows } = await supabase
+        .from("teacher_disciplines")
+        .select("id, discipline_id, specialite, sort_order")
+        .eq("teacher_id", tr.id)
+        .order("sort_order", { ascending: true });
+      setDiscRows((drows as TeacherDisciplineDbRow[]) ?? []);
+      setDiscLoading(false);
+    } else {
+      setDiscRows([]);
+      setDiscLoading(false);
+    }
   }, [user?.id]);
 
   useEffect(() => {
@@ -194,7 +236,6 @@ export default function TeacherProfileManagementPage() {
     if (!teacherRow) return;
     setEditName(teacherRow.name ?? "");
     setEditBio(teacherRow.bio ?? "");
-    setEditDiscipline(teacherRow.discipline ?? "");
     setEditVideoUrl(teacherRow.video_url ?? "");
     setEditPrice(teacherRow.price_per_lesson != null ? String(teacherRow.price_per_lesson) : "");
     setEditIntroEnabled(teacherRow.intro_session_enabled === true);
@@ -283,6 +324,10 @@ export default function TeacherProfileManagementPage() {
         setZoneAddressLine1(line1);
       }
       if (parsed.postalCode) setZonePostalCode(parsed.postalCode);
+      if (parsed.latitude != null && parsed.longitude != null) {
+        setZoneLat(parsed.latitude);
+        setZoneLng(parsed.longitude);
+      }
     });
   }, [googleReady, expandedCard]);
 
@@ -351,10 +396,7 @@ export default function TeacherProfileManagementPage() {
       const teachingMode = encodeTeachingMode(chipsPerson, chipsOnline, chipsHome);
       const { error } = await supabase
         .from("teachers")
-        .update({
-          discipline: editDiscipline.trim() || null,
-          teaching_mode: teachingMode,
-        })
+        .update({ teaching_mode: teachingMode })
         .eq("id", teacherRow.id);
       if (error) throw error;
       showMsg(t("savedOk"), "ok");
@@ -365,6 +407,118 @@ export default function TeacherProfileManagementPage() {
     } finally {
       setBusy(null);
     }
+  };
+
+  const reloadDisciplines = async (teacherId: string) => {
+    const supabase = getSupabaseClient();
+    const { data: drows } = await supabase
+      .from("teacher_disciplines")
+      .select("id, discipline_id, specialite, sort_order")
+      .eq("teacher_id", teacherId)
+      .order("sort_order", { ascending: true });
+    setDiscRows((drows as TeacherDisciplineDbRow[]) ?? []);
+  };
+
+  const disciplineCards = useMemo<DisciplineCard[]>(() => {
+    const map = new Map<string, { specs: string[]; minSort: number }>();
+    for (const r of discRows) {
+      const id = r.discipline_id;
+      if (!id) continue;
+      const spec = normalizeSpec(r.specialite);
+      const cur = map.get(id) ?? { specs: [], minSort: r.sort_order ?? 0 };
+      cur.minSort = Math.min(cur.minSort, r.sort_order ?? 0);
+      if (spec) cur.specs.push(spec);
+      map.set(id, cur);
+    }
+    return Array.from(map.entries())
+      .map(([disciplineId, v]) => ({
+        disciplineId,
+        specialties: Array.from(new Set(v.specs.map((x) => x.toLowerCase()))).map(
+          (k) => v.specs.find((s) => s.toLowerCase() === k)!,
+        ),
+        minSort: v.minSort,
+      }))
+      .sort((a, b) => a.minSort - b.minSort);
+  }, [discRows]);
+
+  const openAddDiscipline = () => {
+    const enabled = getEnabledDisciplines();
+    setDiscEditorMode("add");
+    setDiscEditorInitial({ disciplineId: enabled[0]?.id ?? "musique", specialties: [] });
+    setDiscEditorOpen(true);
+  };
+
+  const openEditDiscipline = (card: DisciplineCard) => {
+    setDiscEditorMode("edit");
+    setDiscEditorInitial({ disciplineId: card.disciplineId, specialties: card.specialties });
+    setDiscEditorOpen(true);
+  };
+
+  const deleteDisciplineCard = async (disciplineId: string) => {
+    if (!teacherRow?.id) return;
+    if (disciplineCards.length <= 1) {
+      showMsg(t("disciplineValidationRequired"), "error");
+      return;
+    }
+    setDiscSaving(true);
+    const supabase = getSupabaseClient();
+    const { error } = await supabase
+      .from("teacher_disciplines")
+      .delete()
+      .eq("teacher_id", teacherRow.id)
+      .eq("discipline_id", disciplineId);
+    if (error) {
+      showMsg(error.message, "error");
+      setDiscSaving(false);
+      return;
+    }
+    await syncTeacherPrimaryFromDisciplines(supabase, teacherRow.id);
+    await reloadDisciplines(teacherRow.id);
+    await load();
+    setDiscSaving(false);
+    showMsg(t("savedOk"), "ok");
+  };
+
+  const saveDisciplineCard = async (draft: DisciplineCardDraft) => {
+    if (!teacherRow?.id) return;
+    const nextSpecs = draft.specialties.map((s) => normalizeSpec(s)).filter(Boolean);
+    if (nextSpecs.length === 0) {
+      showMsg(t("specialtyValidationRequired"), "error");
+      return;
+    }
+    const exists = disciplineCards.some((c) => c.disciplineId === draft.disciplineId);
+    if (discEditorMode === "add" && disciplineCards.length >= 3 && !exists) {
+      showMsg(t("maxDisciplinesReached"), "error");
+      return;
+    }
+    setDiscSaving(true);
+    const supabase = getSupabaseClient();
+    await supabase
+      .from("teacher_disciplines")
+      .delete()
+      .eq("teacher_id", teacherRow.id)
+      .eq("discipline_id", draft.disciplineId);
+    const baseSort =
+      disciplineCards.find((c) => c.disciplineId === draft.disciplineId)?.minSort ??
+      (disciplineCards.length ? Math.max(...disciplineCards.map((c) => c.minSort)) + 100 : 0);
+    const inserts = nextSpecs.map((spec, i) => ({
+      teacher_id: teacherRow.id,
+      discipline_id: draft.disciplineId,
+      specialite: spec,
+      sort_order: baseSort + i,
+    }));
+    const { error: insErr } = await supabase.from("teacher_disciplines").insert(inserts);
+    if (insErr) {
+      showMsg(insErr.message, "error");
+      setDiscSaving(false);
+      return;
+    }
+    await syncTeacherPrimaryFromDisciplines(supabase, teacherRow.id);
+    await reloadDisciplines(teacherRow.id);
+    await load();
+    setDiscSaving(false);
+    setDiscEditorOpen(false);
+    showMsg(t("savedOk"), "ok");
   };
 
   const toggleFormat = (key: "person" | "online" | "home") => {
@@ -443,6 +597,7 @@ export default function TeacherProfileManagementPage() {
           postal_code: postalCode,
           country_code: countryCode,
           home_lesson_radius_km: zoneRadiusKm.trim() ? Number(zoneRadiusKm.trim()) : undefined,
+          ...(zoneLat != null && zoneLng != null ? { lat: zoneLat, lng: zoneLng } : {}),
         }),
       });
       const j = (await res.json().catch(() => ({}))) as {
@@ -596,7 +751,23 @@ export default function TeacherProfileManagementPage() {
       : { kind: "not_started" };
 
   const disciplinesState: VerificationStepState =
-    (teacherRow.discipline?.trim() ?? "") ? { kind: "verified" } : { kind: "not_started" };
+    disciplineCards.length > 0 ? { kind: "verified" } : { kind: "not_started" };
+
+  const primaryDisciplineForAi = (() => {
+    const first = disciplineCards[0];
+    if (!first) return "";
+    const meta = getDisciplineById(first.disciplineId);
+    return meta?.label ?? first.disciplineId;
+  })();
+
+  const primarySpecialtyForAi = disciplineCards[0]?.specialties.join(", ") ?? "";
+
+  const zoneState: VerificationStepState = deriveEffectiveZoneState({
+    location_verification_status: teacherRow.location_verification_status,
+    zoneSavedStatus,
+    hasPrivateAddress: zoneHasPrivateAddress,
+    city: teacherRow.city,
+  });
 
   const pricingState: VerificationStepState =
     (teacherRow.price_per_lesson ?? 0) > 0 ? { kind: "verified" } : { kind: "not_started" };
@@ -699,8 +870,8 @@ export default function TeacherProfileManagementPage() {
               {profileAiOpen ? (
                 <div className="mt-2">
                   <ProfileAiAssistant
-                    discipline={editDiscipline || "Enseignement"}
-                    specialty={editDiscipline}
+                    discipline={primaryDisciplineForAi || getEnabledDisciplines()[0]?.label || "Musique"}
+                    specialty={primarySpecialtyForAi}
                     notes={profileAiNotes}
                     onNotesChange={setProfileAiNotes}
                     onAccept={(next) => {
@@ -775,17 +946,82 @@ export default function TeacherProfileManagementPage() {
           data-testid="teacher-profile-mgmt-card-disciplines-formats"
         >
           <div className="space-y-4 pt-3">
-            <label className="block">
-              <span className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
-                {t("teacherLaunchDisciplineLabel")}
-              </span>
-              <input
-                value={editDiscipline}
-                onChange={(e) => setEditDiscipline(e.target.value)}
-                className="mt-2 w-full h-11 rounded-xl border border-[#E8E6DF] px-3 text-sm outline-none focus:border-teal-500"
-                placeholder="Ex. Piano, Anglais, Mathématiques…"
-              />
-            </label>
+            {discLoading ? (
+              <Loader2 className="h-6 w-6 animate-spin text-teal-700" />
+            ) : (
+              <>
+                {disciplineCards.length === 0 ? (
+                  <p className="text-sm text-[#6B6A65]">{t("teacherDisciplinesEmpty")}</p>
+                ) : (
+                  <div className="space-y-3">
+                    {disciplineCards.map((card) => {
+                      const meta = getDisciplineById(card.disciplineId);
+                      const title = `${meta?.emoji ?? "✨"} ${meta?.label ?? card.disciplineId}`;
+                      return (
+                        <div
+                          key={card.disciplineId}
+                          className="rounded-xl border border-[#E8E6DF] bg-white p-4"
+                          data-testid="teacher-profile-mgmt-discipline-card"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="text-sm font-bold text-[#2C2C2A]">{title}</p>
+                              <p className="mt-1 text-sm text-[#6B6A65]">
+                                {card.specialties.length ? card.specialties.join(" · ") : "—"}
+                              </p>
+                            </div>
+                            <div className="flex shrink-0 gap-2">
+                              <button
+                                type="button"
+                                disabled={discSaving}
+                                onClick={() => openEditDiscipline(card)}
+                                className="h-9 rounded-full border border-[#E8E6DF] px-3 text-xs font-semibold text-[#2C2C2A] hover:bg-slate-50 disabled:opacity-50"
+                              >
+                                {t("editDiscipline")}
+                              </button>
+                              <button
+                                type="button"
+                                disabled={discSaving || disciplineCards.length <= 1}
+                                onClick={() => void deleteDisciplineCard(card.disciplineId)}
+                                className="h-9 rounded-full border border-rose-200 bg-rose-50 px-3 text-xs font-semibold text-rose-700 hover:bg-rose-100 disabled:opacity-50"
+                              >
+                                {t("deleteDiscipline")}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                <button
+                  type="button"
+                  disabled={discSaving || disciplineCards.length >= 3}
+                  onClick={openAddDiscipline}
+                  className={cn(
+                    "w-full py-3 rounded-xl border-2 border-dashed text-sm font-semibold",
+                    disciplineCards.length >= 3
+                      ? "border-slate-200 text-slate-400 bg-slate-50"
+                      : "border-teal-500/40 text-teal-700 hover:bg-teal-50/50",
+                  )}
+                  data-testid="teacher-profile-mgmt-add-discipline"
+                >
+                  {t("addDiscipline")}
+                </button>
+                {disciplineCards.length >= 3 ? (
+                  <p className="text-xs text-[#6B6A65]">{t("maxDisciplinesReached")}</p>
+                ) : null}
+                <TeacherDisciplinesEditor
+                  open={discEditorOpen}
+                  mode={discEditorMode}
+                  initial={discEditorInitial}
+                  busy={discSaving}
+                  maxReached={disciplineCards.length >= 3}
+                  onClose={() => setDiscEditorOpen(false)}
+                  onSave={saveDisciplineCard}
+                />
+              </>
+            )}
             <div>
               <p className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">{t("sectionFormat")}</p>
               <div className="mt-2 flex flex-wrap gap-2">
@@ -928,7 +1164,7 @@ export default function TeacherProfileManagementPage() {
           icon={<MapPin size={18} aria-hidden />}
           title={t("teacherProfileMgmtSectionTeachingZone")}
           description={t("teacherLaunchCardZoneDesc")}
-          state={vState.zone}
+          state={zoneState}
           expandedCard={expandedCard}
           onToggle={() => toggleCard("zone")}
           t={t}
@@ -939,7 +1175,7 @@ export default function TeacherProfileManagementPage() {
               <p className="text-xs text-[#6B6A65] mb-2">{t("teacherOnboardingGoogleUnavailable")}</p>
             ) : null}
             <ZoneStep
-              zone={vState.zone}
+              zone={zoneState}
               busy={busy}
               zoneShowManual={zoneShowManual}
               zoneSingleLine={zoneSingleLine}
@@ -1144,11 +1380,12 @@ function LaunchCard({
 
       {isExpanded && children ? children : null}
 
-      {!isExpanded && !onToggle && ctaHref && ctaLabel && state.kind !== "verified" ? (
+      {!isExpanded && ctaHref && ctaLabel ? (
         <div className="mt-3">
           <Link
             href={ctaHref}
             className="inline-flex h-10 items-center rounded-full bg-teal-600 px-4 text-xs font-bold text-white hover:bg-teal-700"
+            data-testid={`${testid}-cta`}
           >
             {ctaLabel}
           </Link>

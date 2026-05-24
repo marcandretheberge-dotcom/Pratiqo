@@ -89,14 +89,11 @@ async function getSupabaseForRequest(request: Request) {
   const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
 
   if (token) {
-    const supabase = createClient(url, anonKey, {
-      global: { headers: { Authorization: `Bearer ${token}` } },
-    });
-    return supabase;
+    return { supabase: createClient(url, anonKey), token };
   }
 
   const cookieStore = await cookies();
-  return createServerClient(url, anonKey, {
+  const supabase = createServerClient(url, anonKey, {
     cookies: {
       getAll() {
         return cookieStore.getAll();
@@ -108,18 +105,20 @@ async function getSupabaseForRequest(request: Request) {
       },
     },
   });
+  return { supabase, token: null };
 }
 
 export async function POST(request: Request) {
-  const supabase = await getSupabaseForRequest(request);
-  if (!supabase) {
+  const auth = await getSupabaseForRequest(request);
+  if (!auth) {
     return NextResponse.json({ error: "Configuration Supabase manquante." }, { status: 500 });
   }
 
+  const { supabase, token } = auth;
   const {
     data: { user },
     error: userErr,
-  } = await supabase.auth.getUser();
+  } = token ? await supabase.auth.getUser(token) : await supabase.auth.getUser();
   if (userErr || !user) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   }
@@ -164,7 +163,10 @@ export async function POST(request: Request) {
 
   const apiKey = process.env.ANTHROPIC_API_KEY?.trim();
   if (!apiKey) {
-    return NextResponse.json({ error: "Clé Anthropic non configurée." }, { status: 500 });
+    return NextResponse.json(
+      { error: "Clé Anthropic non configurée.", code: "anthropic_key_missing" },
+      { status: 503 },
+    );
   }
 
   const response = await fetch("https://api.anthropic.com/v1/messages", {

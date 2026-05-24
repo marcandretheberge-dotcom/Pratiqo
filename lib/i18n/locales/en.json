@@ -2077,6 +2077,8 @@
   "aiAssistantRateLimited": "Too many requests. Try again in a moment.",
   "aiAssistantErrorAuth": "Session expired. Please sign in again.",
   "aiAssistantErrorGeneric": "Couldn't generate. Try again.",
+  "aiAssistantErrorMissingKey": "The AI assistant is not configured on this server. Contact support if this persists.",
+  "aiAssistantErrorForbidden": "This feature is for teachers only.",
   "teacherProfileManagementNav": "Profile management",
   "teacherProfileManagementTitle": "Teacher profile management",
   "teacherProfileManagementSubtitle": "Edit everything students need to find and book you. Trust and payouts stay here too.",

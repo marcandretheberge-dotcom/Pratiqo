@@ -2077,6 +2077,8 @@
   "aiAssistantRateLimited": "Trop de demandes. Réessaie dans un instant.",
   "aiAssistantErrorAuth": "Session expirée. Reconnecte-toi.",
   "aiAssistantErrorGeneric": "Impossible de générer. Réessaie.",
+  "aiAssistantErrorMissingKey": "L'assistant IA n'est pas configuré sur ce serveur. Contacte le support si le problème persiste.",
+  "aiAssistantErrorForbidden": "Cette fonctionnalité est réservée aux professeurs.",
   "teacherProfileManagementNav": "Gestion du profil",
   "teacherProfileManagementTitle": "Gestion du profil professeur",
   "teacherProfileManagementSubtitle": "Modifie tout ce dont les élèves ont besoin pour te trouver et réserver. La confiance et les paiements restent ici aussi.",

@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Teacher } from "../types";
-import { displayTeacherMarketplaceCategory, getDisciplineById } from "./disciplines";
+import { disciplineLabelToTeacherCategory, displayTeacherMarketplaceCategory, getDisciplineById } from "./disciplines";
 import { applyAdditionalDisciplines, type TeacherDisciplineRow } from "./teacherMapper";
 
 type DisciplineDbRow = {
@@ -81,4 +81,23 @@ export function teacherMatchesExploreSearch(teacher: Teacher, searchQuery: strin
     if (foldAscii(ad.specialite).includes(q)) return true;
   }
   return false;
+}
+
+/** Sync legacy `teachers.discipline` / `teachers.category` from first teacher_disciplines row. */
+export async function syncTeacherPrimaryFromDisciplines(
+  supabase: SupabaseClient,
+  teacherId: string,
+): Promise<void> {
+  const { data: rows } = await supabase
+    .from("teacher_disciplines")
+    .select("discipline_id, specialite, sort_order")
+    .eq("teacher_id", teacherId)
+    .order("sort_order", { ascending: true });
+  if (!rows?.length) return;
+  const first = rows[0] as { discipline_id: string; specialite: string | null };
+  const meta = getDisciplineById(first.discipline_id);
+  const label = meta?.label ?? "Musique";
+  const category = disciplineLabelToTeacherCategory(label);
+  const discipline = String(first.specialite || "").trim() || "—";
+  await supabase.from("teachers").update({ discipline, category }).eq("id", teacherId);
 }

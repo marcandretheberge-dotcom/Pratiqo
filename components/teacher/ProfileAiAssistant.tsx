@@ -115,9 +115,15 @@ export function ProfileAiAssistant({
           return;
         }
 
-        const payload = (await res.json().catch(() => ({}))) as ApiResponse;
+        const payload = (await res.json().catch(() => ({}))) as ApiResponse & { code?: string };
         if (!res.ok) {
-          setError(payload.error || t("aiAssistantErrorGeneric"));
+          if (payload.code === "anthropic_key_missing" || /anthropic/i.test(payload.error ?? "")) {
+            setError(t("aiAssistantErrorMissingKey"));
+          } else if (res.status === 403) {
+            setError(t("aiAssistantErrorForbidden"));
+          } else {
+            setError(payload.error || t("aiAssistantErrorGeneric"));
+          }
           return;
         }
         const next = (payload.description ?? "").trim();
