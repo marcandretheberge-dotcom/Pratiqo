@@ -44,6 +44,19 @@ test("verification availability card summarizes duration and links to schedule",
   assert.match(verificationSrc, /default_lesson_duration_minutes/);
 });
 
+test("verification: duration useMemo is before loading guards (Rules of Hooks)", () => {
+  const descIdx = verificationSrc.indexOf("const availabilityDescription = useMemo");
+  const guardIdx = verificationSrc.indexOf("if (loading || !user)");
+  assert.ok(descIdx >= 0, "availabilityDescription useMemo missing");
+  assert.ok(guardIdx >= 0, "loading guard missing");
+  assert.ok(descIdx < guardIdx, "availabilityDescription useMemo must run before early returns");
+});
+
+test("verification: normalizes missing duration safely via optional teacherRow", () => {
+  assert.match(verificationSrc, /teacherRow\?\.default_lesson_duration_minutes/);
+  assert.match(verificationSrc, /normalizeLessonDurationMinutes\([\s\S]*?teacherRow\?\.default_lesson_duration_minutes/);
+});
+
 test("BookingModal uses teacher defaultLessonDurationMinutes for studio/online", () => {
   assert.match(bookingModalSrc, /defaultLessonDurationMinutes/);
   assert.match(bookingModalSrc, /sessionDurationLabel/);

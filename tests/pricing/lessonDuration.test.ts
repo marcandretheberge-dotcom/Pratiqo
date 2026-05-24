@@ -6,6 +6,7 @@ import {
   normalizeLessonDurationMinutes,
 } from "../../lib/pricing/lessonDuration";
 import { computeBookingChargeCents } from "../../lib/pricing/bookingCharge";
+import { teacherRowToTeacher } from "../../lib/teacherMapper";
 
 function test(name: string, fn: () => void): void {
   try {
@@ -74,6 +75,53 @@ test("checkout route rejects invalid duration_minutes before charging", () => {
   assert.match(src, /Durée de cours invalide/);
   assert.match(src, /computeBookingChargeCents\(/);
   assert.doesNotMatch(src, /Number\(b\.price\)/);
+  assert.doesNotMatch(src, /bookingPriceDollars/);
+});
+
+test("teacherMapper defaults missing default_lesson_duration_minutes to 60", () => {
+  const baseRow = {
+    id: "00000000-0000-4000-8000-000000000001",
+    user_id: "00000000-0000-4000-8000-000000000002",
+    name: "Test",
+    discipline: "Piano",
+    category: "Musique",
+    rating: 0,
+    reviews: 0,
+    price_per_lesson: 50,
+    monthly_subscription: null,
+    bio: "Bio",
+    image_url: null,
+    availability: [],
+    location: { lat: 0, lng: 0 },
+    is_verified: false,
+    teaching_mode: "both",
+    languages: [],
+    levels: [],
+  };
+  const withNull = teacherRowToTeacher({ ...baseRow, default_lesson_duration_minutes: null });
+  const withMissing = teacherRowToTeacher({ ...baseRow });
+  assert.equal(withNull.defaultLessonDurationMinutes, 60);
+  assert.equal(withMissing.defaultLessonDurationMinutes, 60);
+});
+
+test("i18n: duration keys exist in fr / en / es", () => {
+  for (const path of ["lib/i18n/locales/fr.json", "lib/i18n/locales/en.json", "lib/i18n/locales/es.json"]) {
+    const dict = JSON.parse(readFileSync(path, "utf8")) as Record<string, string>;
+    for (const key of [
+      "lessonDurationTitle",
+      "lessonDurationDescription",
+      "lessonDurationLabel",
+      "lessonDurationSummary",
+      "editScheduleAndDuration",
+      "invalidLessonDuration",
+      "lessonDurationOneHour",
+      "lessonDurationHours",
+      "lessonDurationHoursMinutes",
+      "lessonDurationMinutesShort",
+    ]) {
+      assert.ok(dict[key]?.trim(), `${path} missing ${key}`);
+    }
+  }
 });
 
 console.log("[pricing:lessonDuration] tests passed");
