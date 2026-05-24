@@ -1078,7 +1078,7 @@ export default function TeacherProfileManagementPage() {
           <div className="space-y-4 pt-3">
             <label className="block">
               <span className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
-                {t("profileHourlyRate")}
+                {t("profileBaseRateLabel")}
               </span>
               <input
                 value={editPrice}

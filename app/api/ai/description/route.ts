@@ -4,6 +4,7 @@ import { createServerClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import { logError } from "@/lib/log";
 import { rateLimitByIp, rateLimitResponse } from "@/lib/rateLimit";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { validateJsonBody } from "@/lib/validation/api";
 import { aiDescriptionPostSchema } from "@/lib/validation/schemas";
 
@@ -123,18 +124,26 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   }
 
-  const { data: profile, error: profErr } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .maybeSingle();
+  // Teacher access must be verified server-side. Bearer-authenticated requests
+  // previously queried `profiles` with an anon client (no JWT on PostgREST), so
+  // RLS returned null and every teacher was rejected with 403.
+  const admin = getSupabaseAdmin();
+  const [{ data: profile, error: profErr }, { data: teacherRow, error: teacherErr }] =
+    await Promise.all([
+      admin.from("profiles").select("role").eq("id", user.id).maybeSingle(),
+      admin.from("teachers").select("id").eq("user_id", user.id).maybeSingle(),
+    ]);
 
-  if (profErr) {
-    return NextResponse.json({ error: profErr.message }, { status: 500 });
+  if (profErr || teacherErr) {
+    return NextResponse.json(
+      { error: profErr?.message ?? teacherErr?.message ?? "Erreur serveur." },
+      { status: 500 },
+    );
   }
 
-  const row = profile as { role?: string | null } | null;
-  if (row?.role !== "teacher") {
+  const profileRole = (profile as { role?: string | null } | null)?.role;
+  const isTeacher = profileRole === "teacher" || Boolean(teacherRow?.id);
+  if (!isTeacher) {
     return NextResponse.json({ error: "Réservé aux professeurs." }, { status: 403 });
   }
 
