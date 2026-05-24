@@ -190,6 +190,9 @@ test("profile management page: no Niveau headings, inline cards, Google Places i
     assert.doesNotMatch(stripped, new RegExp(k));
   }
   assert.doesNotMatch(stripped, /VerificationBadge/);
+  assert.doesNotMatch(stripped, /teacherLaunchCenterTitle/);
+  assert.doesNotMatch(stripped, /teacherLaunchSectionEssential/);
+  assert.doesNotMatch(stripped, /teacher-launch-section-trust/);
   assert.match(stripped, /expandedCard/);
   assert.match(verificationSrc, /parseGooglePlace/);
   assert.match(verificationSrc, /google\.maps\.places\.Autocomplete/);
