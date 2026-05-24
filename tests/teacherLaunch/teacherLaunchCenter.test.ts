@@ -126,6 +126,13 @@ test("onboarding: AI assistant toggle exists on the bio step", () => {
   assert.match(onboardingSrc, /<ProfileAiAssistant\b/);
 });
 
+test("onboarding: final save validates required fields even when earlier steps were skipped", () => {
+  const stripped = stripJsComments(onboardingSrc);
+  assert.match(stripped, /getTeacherOnboardingMissingFields\(/);
+  assert.match(stripped, /teacherOnboardingMissingFields/);
+  assert.match(stripped, /if \(missingFields\.length > 0\)/);
+});
+
 // ---------------------------------------------------------------------------
 // 2. AI is available OUTSIDE first onboarding now
 // ---------------------------------------------------------------------------

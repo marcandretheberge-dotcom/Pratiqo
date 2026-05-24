@@ -430,6 +430,22 @@ export default function TeacherOnboardingPage() {
       setError(`${t("pricingMinLessonPrice")} ${t("pricingMinLessonPriceSuggestion")}`);
       return;
     }
+    const missingFields = getTeacherOnboardingMissingFields({
+      name: displayName,
+      discipline,
+      category: dbCategoryFromWizard(category),
+      city,
+      region,
+      country_code: countryCode,
+      timezone,
+      teaching_mode: encodeTeachingMode(teachingMode),
+      price_per_lesson: hourlyNum,
+      availability,
+    });
+    if (missingFields.length > 0) {
+      setError(`${t("teacherOnboardingMissingFields")} ${missingFields.join(", ")}`);
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
