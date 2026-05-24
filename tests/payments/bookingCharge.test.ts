@@ -58,6 +58,26 @@ test("computeBookingChargeCents derives intro price from teacher intro settings"
   );
 });
 
+test("computeBookingChargeCents uses explicit intro_session_price_cents when set", () => {
+  assert.equal(
+    computeBookingChargeCents(
+      { ...teacher, intro_session_price_cents: 3500 },
+      { lesson_type: "intro", teaching_mode: "person", duration_minutes: 45 },
+    ),
+    3500,
+  );
+});
+
+test("computeBookingChargeCents applies duration multiplier for standard studio lessons", () => {
+  assert.equal(
+    computeBookingChargeCents(
+      { ...teacher, price_per_lesson: 40 },
+      { lesson_type: "regular", teaching_mode: "online", duration_minutes: 120 },
+    ),
+    8000,
+  );
+});
+
 test("checkout route derives Stripe amount from computeBookingChargeCents, not bookings.price", () => {
   const src = readFileSync("app/api/stripe/checkout/route.ts", "utf8");
   assert.match(src, /computeBookingChargeCents\(/);
