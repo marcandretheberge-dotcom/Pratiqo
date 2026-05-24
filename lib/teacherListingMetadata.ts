@@ -23,6 +23,7 @@ export function applyTeacherListingMetadata(
     .filter((teacher) => !eligible || eligible.has(teacher.id))
     .map((teacher) => {
       const baseImageUrl = normalizeTeacherImageUrl(teacher);
+
       return {
         ...teacher,
         imageUrl: resolveTeacherPublicPhoto(photos[teacher.id], baseImageUrl),
