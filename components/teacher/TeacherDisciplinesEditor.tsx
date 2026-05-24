@@ -12,7 +12,7 @@ export type DisciplineCardDraft = {
 };
 
 const PRESET_SPECIALTIES: Record<string, string[]> = {
-  langues: ["Espagnol", "Anglais", "Français", "Allemand", "Japonais", "Italien", "Portugais", "Mandarin", "Arabe", "Autre"],
+  langues: ["Français", "Anglais", "Espagnol", "Allemand", "Japonais", "Coréen", "Italien", "Portugais", "Mandarin", "Arabe", "Autre"],
   musique: ["Piano", "Guitare", "Chant", "Violon", "Batterie", "Basse", "Ukulélé", "Théorie musicale", "Autre"],
   tuteurs: ["Mathématiques", "Français", "Anglais", "Sciences", "Physique", "Chimie", "Histoire", "Aide aux devoirs", "Préparation aux examens", "Autre"],
 };

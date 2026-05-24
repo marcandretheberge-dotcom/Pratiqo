@@ -2077,6 +2077,8 @@
   "aiAssistantRateLimited": "Demasiadas solicitudes. Inténtalo en un momento.",
   "aiAssistantErrorAuth": "Sesión expirada. Inicia sesión de nuevo.",
   "aiAssistantErrorGeneric": "No se pudo generar. Inténtalo de nuevo.",
+  "aiAssistantErrorMissingKey": "El asistente de IA no está configurado en este servidor. Contacta al soporte si persiste.",
+  "aiAssistantErrorForbidden": "Esta función es solo para profesores.",
   "teacherProfileManagementNav": "Gestión del perfil",
   "teacherProfileManagementTitle": "Gestión del perfil del profesor",
   "teacherProfileManagementSubtitle": "Edita todo lo que los estudiantes necesitan para encontrarte y reservar. La confianza y los pagos también están aquí.",

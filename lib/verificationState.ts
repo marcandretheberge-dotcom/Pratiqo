@@ -60,8 +60,24 @@ function deriveDiploma(input: VerificationStateInput): VerificationStepState {
 function deriveZone(input: VerificationStateInput): VerificationStepState {
   const s = (input.location_verification_status ?? "").toLowerCase();
   if (s === "verified" || s === "auto_verified") return { kind: "verified" };
-  if (s === "pending") return { kind: "pending" };
+  if (s === "pending" || s === "review") return { kind: "pending" };
   if (s === "failed" || s === "rejected") return { kind: "failed", reason: null };
+  return { kind: "not_started" };
+}
+
+/** Zone card state merging DB row + optimistic local save status. */
+export function deriveEffectiveZoneState(input: {
+  location_verification_status: string | null;
+  zoneSavedStatus?: string | null;
+  hasPrivateAddress?: boolean;
+  city?: string | null;
+}): VerificationStepState {
+  const status = (input.zoneSavedStatus ?? input.location_verification_status ?? "").toLowerCase();
+  if (status === "verified" || status === "auto_verified") return { kind: "verified" };
+  if (status === "pending" || status === "review") return { kind: "pending" };
+  if (status === "failed" || status === "rejected") return { kind: "failed", reason: null };
+  const hasAddress = Boolean(input.hasPrivateAddress) || Boolean(input.city?.trim());
+  if (hasAddress && (status === "missing" || status === "")) return { kind: "pending" };
   return { kind: "not_started" };
 }
 

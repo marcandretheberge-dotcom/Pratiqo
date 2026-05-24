@@ -9,7 +9,8 @@ import { getSupabaseClient } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 import { useLocale } from "@/lib/locale-context";
 import { localeToBcp47 } from "@/lib/i18n/types";
-import { disciplineLabelToTeacherCategory, getDisciplineById, getEnabledDisciplines } from "@/lib/disciplines";
+import { getDisciplineById, getEnabledDisciplines } from "@/lib/disciplines";
+import { syncTeacherPrimaryFromDisciplines } from "@/lib/teacherDisciplines";
 import type { TeacherRow } from "@/lib/teacherMapper";
 import { isValidVideoUrl } from "@/lib/videoEmbed";
 import { TeacherPayoutPreview } from "@/components/teacher/TeacherPayoutPreview";
@@ -58,24 +59,6 @@ const defaultNotif: NotifPrefs = {
   studentMessages: true,
   promotions: false,
 };
-
-async function syncTeacherPrimaryFromDisciplines(
-  supabase: ReturnType<typeof getSupabaseClient>,
-  teacherId: string,
-): Promise<void> {
-  const { data: rows } = await supabase
-    .from("teacher_disciplines")
-    .select("discipline_id, specialite, sort_order")
-    .eq("teacher_id", teacherId)
-    .order("sort_order", { ascending: true });
-  if (!rows?.length) return;
-  const first = rows[0] as { discipline_id: string; specialite: string | null };
-  const meta = getDisciplineById(first.discipline_id);
-  const label = meta?.label ?? "Musique";
-  const category = disciplineLabelToTeacherCategory(label);
-  const discipline = String(first.specialite || "").trim() || "—";
-  await supabase.from("teachers").update({ discipline, category }).eq("id", teacherId);
-}
 
 function readNotifPrefs(dash: Record<string, unknown> | null): NotifPrefs {
   if (!dash || typeof dash !== "object") return { ...defaultNotif };
