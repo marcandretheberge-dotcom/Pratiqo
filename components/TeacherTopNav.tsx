@@ -55,7 +55,7 @@ type NavItem = {
     | "teacherStudents"
     | "teacherMessages"
     | "teacherLoyalty"
-    | "teacherVerification"
+    | "teacherProfileManagementNav"
     | "teacherNavRevenue"
     | "teacherNavMyProfile"
     | "resolutionCenterTitle"
@@ -74,7 +74,7 @@ const PRIMARY_NAV: NavItem[] = [
 const SECONDARY_NAV: NavItem[] = [
   { href: "/resolution", labelKey: "resolutionCenterTitle", icon: LifeBuoy },
   { href: "/loyalty", labelKey: "teacherLoyalty", icon: Star },
-  { href: "/teacher/verification", labelKey: "teacherVerification", icon: Shield },
+  { href: "/teacher/verification", labelKey: "teacherProfileManagementNav", icon: Shield },
 ];
 
 const DRAWER_EXTRA_NAV: NavItem[] = [

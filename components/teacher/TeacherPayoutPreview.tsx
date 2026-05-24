@@ -2,10 +2,12 @@
 
 import { Info } from "lucide-react";
 import { useLocale } from "@/lib/locale-context";
+import { formatCurrencyAmount, formatDisplayPrice } from "@/lib/currency/format";
 import { getTeacherPayoutPreview } from "@/lib/payments/payoutPreview";
 
 type Props = {
   grossAmount: number | string | null | undefined;
+  /** Accounting/source currency stored on the teacher record (CAD today). */
   currency?: string | null;
   teacherPlan?: string | null;
   annualVolumeCents?: number | null;
@@ -31,15 +33,15 @@ function tierLabel(tier: string, t: ReturnType<typeof useLocale>["t"]): string {
 
 export function TeacherPayoutPreview({
   grossAmount,
-  currency = "CAD",
+  currency: sourceCurrency = "CAD",
   teacherPlan,
   annualVolumeCents,
   loyaltyTier,
 }: Props) {
-  const { t, locale } = useLocale();
+  const { t, locale, currency: displayCurrency } = useLocale();
   const preview = getTeacherPayoutPreview({
     grossAmount,
-    currency,
+    currency: sourceCurrency,
     teacherPlan,
     annualVolumeCents,
     loyaltyTier,
@@ -49,15 +51,30 @@ export function TeacherPayoutPreview({
 
   if (preview.grossCents <= 0) return null;
 
+  const grossDollars = preview.grossCents / 100;
+  const commissionDollars = preview.commissionCents / 100;
+  const netDollars = preview.teacherNetCents / 100;
+
+  const grossFormatted = formatCurrencyAmount(grossDollars, sourceCurrency, locale);
+  const commissionFormatted = formatCurrencyAmount(commissionDollars, sourceCurrency, locale);
+  const netDisplay = formatDisplayPrice({
+    amount: netDollars,
+    sourceCurrency,
+    displayCurrency,
+    locale,
+  });
+  const displayNet = netDisplay.approximate ? `≈ ${netDisplay.primary}` : netDisplay.primary;
+
   const rate = formatRate(preview.feePercent, locale);
   const sentence = fill(t("teacherPayoutPreviewSentence"), {
-    net: preview.formattedTeacherNet,
+    net: displayNet,
     rate,
   });
+  const baseLine = fill(t("teacherPayoutPreviewBasePrice"), { gross: grossFormatted });
   const breakdown = fill(t("teacherPayoutPreviewBreakdown"), {
-    gross: preview.formattedGross,
-    commission: preview.formattedCommission,
-    net: preview.formattedTeacherNet,
+    gross: grossFormatted,
+    commission: commissionFormatted,
+    net: displayNet,
   });
   const planLine =
     !preview.isPlanKnown
@@ -68,7 +85,7 @@ export function TeacherPayoutPreview({
   const tierLine = fill(t("teacherPayoutPreviewTier"), {
     tier: tierLabel(preview.tier, t),
   });
-  const [beforeNet, afterNet = ""] = sentence.split(preview.formattedTeacherNet);
+  const [beforeNet, afterNet = ""] = sentence.split(displayNet);
 
   return (
     <div className="mt-3 rounded-2xl border border-[#DCEAE3] bg-[#F3FAF6] p-4 text-sm text-slate-700">
@@ -80,9 +97,10 @@ export function TeacherPayoutPreview({
           </p>
           <p className="leading-relaxed">
             {beforeNet}
-            <strong className="font-bold text-teal-700">{preview.formattedTeacherNet}</strong>
+            <strong className="font-bold text-teal-700">{displayNet}</strong>
             {afterNet}
           </p>
+          <p className="text-xs text-slate-600">{baseLine}</p>
           <p className="text-xs text-slate-600">{breakdown}</p>
           {planLine ? <p className="text-xs text-slate-600">{planLine}</p> : null}
           <p className="text-xs font-medium text-teal-700">{tierLine}</p>

@@ -137,8 +137,9 @@ test("ai route: removed the post-onboarding 403 gate", () => {
 });
 
 test("ai route: still enforces auth + teacher role + rate limit", () => {
-  assert.match(aiRouteSrc, /supabase\.auth\.getUser\(\)/);
-  assert.match(aiRouteSrc, /row\?\.role\s*!==\s*"teacher"/);
+  assert.match(aiRouteSrc, /getUser\(token\)/);
+  assert.match(aiRouteSrc, /getSupabaseAdmin\(\)/);
+  assert.match(aiRouteSrc, /if \(!isTeacher\)/);
   assert.match(aiRouteSrc, /rateLimitByIp\(request,\s*"ai-description"/);
 });
 

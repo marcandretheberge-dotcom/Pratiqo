@@ -36,6 +36,8 @@ const VERIFICATION_PAGE = read("app/(app)/teacher/verification/page.tsx");
 const VERIFICATION_STATE = read("lib/verificationState.ts");
 const AI_ROUTE = read("app/api/ai/description/route.ts");
 const AI_COMPONENT = read("components/teacher/ProfileAiAssistant.tsx");
+const PAYOUT_PREVIEW = read("components/teacher/TeacherPayoutPreview.tsx");
+const PAYOUT_LIB = read("lib/payments/payoutPreview.ts");
 const DISC_EDITOR = read("components/teacher/TeacherDisciplinesEditor.tsx");
 const FR = JSON.parse(read("lib/i18n/locales/fr.json")) as Record<string, string>;
 const EN = JSON.parse(read("lib/i18n/locales/en.json")) as Record<string, string>;
@@ -97,16 +99,85 @@ test("disciplines: teaching formats still saved via teaching_mode update", () =>
   assert.match(VERIFICATION_PAGE, /saveDisciplinesFormats/);
 });
 
+test("profile management: pricing section uses base-rate label and payout preview", () => {
+  assert.match(VERIFICATION_PAGE, /profileBaseRateLabel/);
+  assert.match(VERIFICATION_PAGE, /TeacherPayoutPreview/);
+});
+
 test("AI assistant: bearer token auth uses getUser(token) on server route", () => {
   assert.match(AI_ROUTE, /getUser\(token\)/);
   assert.doesNotMatch(stripJsComments(AI_ROUTE), /teacher_onboarding_complete\s*===\s*true/);
 });
 
-test("AI assistant: surfaces missing-key and forbidden errors without exposing API keys", () => {
+test("AI assistant: server verifies teacher via admin profile role or teachers row", () => {
+  assert.match(AI_ROUTE, /getSupabaseAdmin\(\)/);
+  assert.match(AI_ROUTE, /\.from\("teachers"\)/);
+  assert.match(AI_ROUTE, /profileRole === "teacher"/);
+  assert.match(AI_ROUTE, /Boolean\(teacherRow\?\.id\)/);
+  assert.doesNotMatch(stripJsComments(AI_ROUTE), /\.from\("profiles"\)[\s\S]*?\.eq\("id", user\.id\)[\s\S]*?row\?\.role !== "teacher"/);
+});
+
+test("AI assistant: non-teachers are still rejected with 403", () => {
+  assert.match(AI_ROUTE, /if \(!isTeacher\)/);
+  assert.match(AI_ROUTE, /status: 403/);
+  assert.match(AI_ROUTE, /Réservé aux professeurs/);
+});
+
+test("AI assistant: missing Anthropic key returns 503 with anthropic_key_missing code", () => {
+  assert.match(AI_ROUTE, /anthropic_key_missing/);
+  assert.match(AI_ROUTE, /status: 503/);
+  const keyCheckIdx = AI_ROUTE.indexOf("anthropic_key_missing");
+  const teacherGateIdx = AI_ROUTE.indexOf('if (!isTeacher)');
+  assert.ok(keyCheckIdx > teacherGateIdx, "missing-key check must come after teacher gate");
+});
+
+test("AI assistant: ProfileAiAssistant sends Authorization bearer header", () => {
+  assert.match(AI_COMPONENT, /Authorization:\s*`Bearer \$\{token\}`/);
+  assert.match(AI_COMPONENT, /session\?\.access_token/);
+});
+
+test("AI assistant: surfaces missing-key, forbidden, and generic errors from i18n", () => {
   assert.match(AI_COMPONENT, /aiAssistantErrorMissingKey/);
   assert.match(AI_COMPONENT, /aiAssistantErrorForbidden/);
+  assert.match(AI_COMPONENT, /aiAssistantErrorGeneric/);
+  assert.match(AI_COMPONENT, /payload\.code === "anthropic_key_missing"/);
+  assert.match(AI_COMPONENT, /res\.status === 403/);
   assert.doesNotMatch(AI_COMPONENT, /ANTHROPIC_API_KEY/);
   assert.doesNotMatch(AI_COMPONENT, /x-api-key/);
+});
+
+test("TeacherPayoutPreview: uses locale display currency via formatDisplayPrice", () => {
+  assert.match(PAYOUT_PREVIEW, /currency: displayCurrency/);
+  assert.match(PAYOUT_PREVIEW, /formatDisplayPrice/);
+  assert.match(PAYOUT_PREVIEW, /formatCurrencyAmount/);
+  assert.match(PAYOUT_PREVIEW, /teacherPayoutPreviewBasePrice/);
+});
+
+test("TeacherPayoutPreview: keeps CAD as accounting source for payout math", () => {
+  assert.match(PAYOUT_PREVIEW, /currency: sourceCurrency/);
+  assert.match(PAYOUT_LIB, /calculateBookingAmounts/);
+  assert.doesNotMatch(PAYOUT_PREVIEW, /convertCurrencyAmount/);
+});
+
+test("TeacherPayoutPreview: USD display shows converted net estimate, not CAD-only sentence", () => {
+  assert.match(PAYOUT_PREVIEW, /netDisplay\.approximate \? `≈ \$\{netDisplay\.primary\}`/);
+  assert.match(PAYOUT_PREVIEW, /teacherPayoutPreviewBasePrice/);
+  assert.doesNotMatch(PAYOUT_PREVIEW, /formattedTeacherNet/);
+});
+
+test("currency urgent fix: no Stripe or payment math files touched in this patch set", () => {
+  const touched = [
+    "components/teacher/TeacherPayoutPreview.tsx",
+    "app/(app)/teacher/verification/page.tsx",
+    "lib/i18n/locales/fr.json",
+    "lib/i18n/locales/en.json",
+    "lib/i18n/locales/es.json",
+  ];
+  for (const file of touched) {
+    const src = read(file);
+    assert.doesNotMatch(src, /stripe\.(checkout|webhooks)/i);
+    assert.doesNotMatch(src, /calculateBookingAmounts/);
+  }
 });
 
 test("i18n: live-fix keys exist in fr / en / es", () => {
@@ -114,6 +185,9 @@ test("i18n: live-fix keys exist in fr / en / es", () => {
     for (const key of [
       "aiAssistantErrorMissingKey",
       "aiAssistantErrorForbidden",
+      "aiAssistantErrorGeneric",
+      "profileBaseRateLabel",
+      "teacherPayoutPreviewBasePrice",
       "teacherProfileMgmtAvailabilityCta",
       "zoneRadiusKmLabel",
       "zoneRadiusKmHelper",
@@ -122,6 +196,9 @@ test("i18n: live-fix keys exist in fr / en / es", () => {
       assert.ok(locale[key]?.trim(), `missing ${key}`);
     }
   }
+  assert.match(FR.profileBaseRateLabel, /CAD/);
+  assert.match(FR.aiAssistantErrorMissingKey, /pas encore configuré/i);
+  assert.match(FR.aiAssistantErrorGeneric, /Impossible de générer une suggestion/);
   assert.match(FR.teacherProfileMgmtAvailabilityCta, /Modifier mon horaire/);
   assert.equal(EN.teacherProfileMgmtAvailabilityCta, "Edit my schedule");
   assert.match(ES.teacherProfileMgmtAvailabilityCta, /Editar mi horario/);
