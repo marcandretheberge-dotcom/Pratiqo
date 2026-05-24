@@ -1,12 +1,8 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
 import { resolveTeacherPublicPhoto, isPublicAvatarPhotoUrl, normalizeTeacherImageUrl } from "../../lib/teacherPhoto";
 import { applyTeacherListingMetadata } from "../../lib/teacherListingMetadata";
 import { getTeacherImageUrl } from "../../lib/images";
-import { isLaunchEligibleTeacherRow, teacherRowToTeacher, type TeacherRow } from "../../lib/teacherMapper";
-import type { Teacher } from "../../types";
 import { isLaunchEligibleTeacherRow, teacherRowToTeacher, type TeacherRow } from "../../lib/teacherMapper";
 import type { Teacher } from "../../types";
 
@@ -22,10 +18,9 @@ function test(name: string, fn: () => void): void {
 
 const REAL_TEACHER_ID = "afe6eab4-f40d-4d84-add9-8e061184ef6f";
 const REAL_USER_ID = "0bbed16d-e677-47b3-9c87-03fca0109704";
-const REAL_TEACHER_ID = "afe6eab4-f40d-4d84-add9-8e061184ef6f";
-const REAL_USER_ID = "0bbed16d-e677-47b3-9c87-03fca0109704";
 const REAL_AVATAR_URL =
   "https://jwlbwmxoradmbuvqfkhe.supabase.co/storage/v1/object/public/avatars/0bbed16d-e677-47b3-9c87-03fca0109704/1779594944501-20240220_183240.jpg";
+
 function teacherRow(overrides: Partial<TeacherRow> = {}): TeacherRow {
   return {
     id: REAL_TEACHER_ID,

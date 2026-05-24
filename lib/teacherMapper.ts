@@ -1,5 +1,4 @@
 import type { Teacher } from "../types";
-import type { Teacher } from "../types";
 import { resolveTeacherPublicPhoto, readTeacherPhotoFromRecord } from "@/lib/teacherPhoto";
 
 /** One row from `teacher_disciplines` (same teacher_id may appear in ordered list). */
