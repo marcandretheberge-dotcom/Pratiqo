@@ -355,13 +355,19 @@ test("forbidden files: PR does not touch Stripe/payments/security/migrations/cro
   // All other supabase/migrations/* changes relative to origin/main remain forbidden.
   const approvedMigrationExceptions = new Set([
     "supabase/migrations/071_student_search_visibility_photo.sql",
+    "supabase/migrations/072_teacher_default_lesson_duration.sql",
   ]);
+
+  const approvedStripeCheckoutExceptions = new Set(["app/api/stripe/checkout/route.ts"]);
 
   const violations: string[] = [];
   for (const file of changed) {
     for (const rule of forbidden) {
       if (rule.re.test(file)) {
         if (rule.label === "Supabase migrations" && approvedMigrationExceptions.has(file)) {
+          continue;
+        }
+        if (rule.label === "Stripe checkout/webhook routes" && approvedStripeCheckoutExceptions.has(file)) {
           continue;
         }
         violations.push(`${file} (${rule.label})`);

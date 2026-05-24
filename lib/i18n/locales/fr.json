@@ -2103,5 +2103,15 @@
   "teacherProfileMgmtDisciplinesSaveBtn": "Enregistrer les formats",
   "teacherProfileMgmtTrustDesc": "Étapes optionnelles qui aident les élèves à réserver avec plus de confiance.",
   "teacherProfileMgmtPaymentsDesc": "Connecte Stripe pour recevoir tes virements via Pratiqo.",
-  "teacherProfileMgmtPaymentsCta": "Configurer les virements"
+  "teacherProfileMgmtPaymentsCta": "Configurer les virements",
+  "lessonDurationTitle": "Durée habituelle des cours",
+  "lessonDurationDescription": "Choisis la durée utilisée pour générer tes créneaux de réservation.",
+  "lessonDurationLabel": "Durée du cours",
+  "lessonDurationSummary": "Durée habituelle : {duration}.",
+  "editScheduleAndDuration": "Modifier l'horaire et la durée",
+  "invalidLessonDuration": "Durée de cours invalide (30 min à 3 h, par pas de 15 min).",
+  "lessonDurationOneHour": "1 h",
+  "lessonDurationHours": "{hours} h",
+  "lessonDurationHoursMinutes": "{hours} h {minutes}",
+  "lessonDurationMinutesShort": "{minutes} min"
 }

@@ -11,6 +11,7 @@ import {
   weeklyAvailabilityFromTeacherRows,
 } from "@/lib/slots";
 import { defaultLessonDurationMinutes, normalizeTeacherBufferSettings } from "@/lib/teacherSlotQueries";
+import { isValidLessonDurationMinutes } from "@/lib/pricing/lessonDuration";
 import { isBookingAtLeast24hAhead } from "@/lib/bookingCancellation";
 
 export const runtime = "nodejs";
@@ -33,7 +34,7 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
     const { data: teacher, error: tErr } = await admin
       .from("teachers")
       .select(
-        "id, availability, home_lesson_min_duration, booking_buffer_before_minutes, booking_buffer_after_minutes",
+        "id, availability, default_lesson_duration_minutes, booking_buffer_before_minutes, booking_buffer_after_minutes",
       )
       .eq("id", teacherId)
       .maybeSingle();
@@ -45,10 +46,10 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
     const durationParam = url.searchParams.get("duration");
     const parsedDur = durationParam != null ? Number(durationParam) : NaN;
     const durationMinutes =
-      Number.isFinite(parsedDur) && parsedDur >= 30 && parsedDur <= 180
+      Number.isFinite(parsedDur) && isValidLessonDurationMinutes(parsedDur)
         ? Math.round(parsedDur)
         : defaultLessonDurationMinutes(
-            (teacher as { home_lesson_min_duration?: number | null }).home_lesson_min_duration,
+            (teacher as { default_lesson_duration_minutes?: number | null }).default_lesson_duration_minutes,
           );
     const weekly = weeklyAvailabilityFromTeacherRows((teacher as { availability?: unknown }).availability);
     const buffers = normalizeTeacherBufferSettings(

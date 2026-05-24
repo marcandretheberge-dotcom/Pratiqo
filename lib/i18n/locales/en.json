@@ -2103,5 +2103,15 @@
   "teacherProfileMgmtDisciplinesSaveBtn": "Save formats",
   "teacherProfileMgmtTrustDesc": "Optional steps that help students book with more confidence.",
   "teacherProfileMgmtPaymentsDesc": "Connect Stripe to receive payouts through Pratiqo.",
-  "teacherProfileMgmtPaymentsCta": "Set up payouts"
+  "teacherProfileMgmtPaymentsCta": "Set up payouts",
+  "lessonDurationTitle": "Usual lesson duration",
+  "lessonDurationDescription": "Choose the duration used to generate your booking slots.",
+  "lessonDurationLabel": "Lesson duration",
+  "lessonDurationSummary": "Usual duration: {duration}.",
+  "editScheduleAndDuration": "Edit schedule and duration",
+  "invalidLessonDuration": "Invalid lesson duration (30 min to 3 h, in 15-minute steps).",
+  "lessonDurationOneHour": "1 h",
+  "lessonDurationHours": "{hours} h",
+  "lessonDurationHoursMinutes": "{hours} h {minutes}",
+  "lessonDurationMinutesShort": "{minutes} min"
 }

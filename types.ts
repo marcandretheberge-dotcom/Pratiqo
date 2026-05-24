@@ -48,6 +48,8 @@ export interface Teacher {
   homeLessonPrice?: number;
   homeLessonRadiusKm?: number;
   homeLessonMinDuration?: number;
+  /** Default regular lesson duration (studio/online slots). */
+  defaultLessonDurationMinutes?: number;
   homeLessonRequiresConfirmation?: boolean;
   /** Si distance élève → prof &gt; 20 km, durée min 2 h */
   homeLessonForce2hOver20km?: boolean;

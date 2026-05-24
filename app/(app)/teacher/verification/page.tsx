@@ -47,6 +47,7 @@ import { TeacherPayoutPreview } from "../../../../components/teacher/TeacherPayo
 import { isValidVideoUrl } from "../../../../lib/videoEmbed";
 import { parseGooglePlace } from "../../../../lib/googleAddressParser";
 import { MIN_LESSON_PRICE_DOLLARS } from "../../../../lib/pricing/constants";
+import { lessonDurationSummaryText, normalizeLessonDurationMinutes } from "../../../../lib/pricing/lessonDuration";
 
 type TeacherVerifyRow = {
   id: string;
@@ -60,6 +61,7 @@ type TeacherVerifyRow = {
   intro_session_enabled?: boolean | null;
   intro_session_price_cents?: number | null;
   availability?: string[] | null;
+  default_lesson_duration_minutes?: number | null;
   verification_level: number | null;
   identity_verified: boolean | null;
   identity_status: string | null;
@@ -204,7 +206,7 @@ export default function TeacherProfileManagementPage() {
       supabase
         .from("teachers")
         .select(
-          "id, name, discipline, bio, image_url, video_url, price_per_lesson, teaching_mode, intro_session_enabled, intro_session_price_cents, availability, verification_level, identity_verified, identity_status, stripe_identity_status, stripe_identity_failed_reason, diploma_verified, diploma_url, phone_verified, is_verified, location_verification_status, cv_summary, cv_verification_status, city, region, country_code, home_lesson_radius_km, home_lesson_enabled, location, stripe_account_id, stripe_connect_onboarding_complete, stripe_connect_charges_enabled, stripe_connect_payouts_enabled",
+          "id, name, discipline, bio, image_url, video_url, price_per_lesson, teaching_mode, intro_session_enabled, intro_session_price_cents, availability, default_lesson_duration_minutes, verification_level, identity_verified, identity_status, stripe_identity_status, stripe_identity_failed_reason, diploma_verified, diploma_url, phone_verified, is_verified, location_verification_status, cv_summary, cv_verification_status, city, region, country_code, home_lesson_radius_km, home_lesson_enabled, location, stripe_account_id, stripe_connect_onboarding_complete, stripe_connect_charges_enabled, stripe_connect_payouts_enabled",
         )
         .eq("user_id", user.id)
         .maybeSingle(),
@@ -784,6 +786,11 @@ export default function TeacherProfileManagementPage() {
   const availabilityState: VerificationStepState =
     (teacherRow.availability?.length ?? 0) > 0 ? { kind: "verified" } : { kind: "not_started" };
 
+  const availabilityDescription = useMemo(() => {
+    const durationMinutes = normalizeLessonDurationMinutes(teacherRow.default_lesson_duration_minutes);
+    return `${t("teacherProfileMgmtAvailabilityDesc")} ${lessonDurationSummaryText(durationMinutes, t)}`;
+  }, [teacherRow.default_lesson_duration_minutes, t]);
+
   const toggleCard = (key: string) => {
     setExpandedCard((prev) => (prev === key ? null : key));
   };
@@ -1144,14 +1151,14 @@ export default function TeacherProfileManagementPage() {
           cardKey="availability"
           icon={<Calendar size={18} aria-hidden />}
           title={t("teacherProfileMgmtSectionAvailability")}
-          description={t("teacherProfileMgmtAvailabilityDesc")}
+          description={availabilityDescription}
           state={availabilityState}
           expandedCard={expandedCard}
           onToggle={null}
           t={t}
           data-testid="teacher-profile-mgmt-card-availability"
           ctaHref="/teacher/schedule"
-          ctaLabel={t("teacherProfileMgmtAvailabilityCta")}
+          ctaLabel={t("editScheduleAndDuration")}
         />
       </section>
 

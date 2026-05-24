@@ -66,8 +66,9 @@ test("zone card: deriveEffectiveZoneState treats pending save as in review", () 
   assert.doesNotMatch(VERIFICATION_PAGE, /state=\{vState\.zone\}/);
 });
 
-test("availability card: always shows schedule CTA link", () => {
-  assert.match(VERIFICATION_PAGE, /teacherProfileMgmtAvailabilityCta/);
+test("availability card: always shows schedule CTA link with duration summary", () => {
+  assert.match(VERIFICATION_PAGE, /editScheduleAndDuration/);
+  assert.match(VERIFICATION_PAGE, /lessonDurationSummaryText/);
   assert.match(VERIFICATION_PAGE, /ctaHref="\/teacher\/schedule"/);
   assert.match(VERIFICATION_PAGE, /data-testid=\{\`\$\{testid\}-cta\`\}/);
 });
@@ -189,6 +190,8 @@ test("i18n: live-fix keys exist in fr / en / es", () => {
       "profileBaseRateLabel",
       "teacherPayoutPreviewBasePrice",
       "teacherProfileMgmtAvailabilityCta",
+      "editScheduleAndDuration",
+      "lessonDurationSummary",
       "zoneRadiusKmLabel",
       "zoneRadiusKmHelper",
       "verificationZonePrivacyNote",
@@ -199,7 +202,7 @@ test("i18n: live-fix keys exist in fr / en / es", () => {
   assert.match(FR.profileBaseRateLabel, /CAD/);
   assert.match(FR.aiAssistantErrorMissingKey, /pas encore configuré/i);
   assert.match(FR.aiAssistantErrorGeneric, /Impossible de générer une suggestion/);
-  assert.match(FR.teacherProfileMgmtAvailabilityCta, /Modifier mon horaire/);
-  assert.equal(EN.teacherProfileMgmtAvailabilityCta, "Edit my schedule");
-  assert.match(ES.teacherProfileMgmtAvailabilityCta, /Editar mi horario/);
+  assert.match(FR.editScheduleAndDuration, /Modifier l'horaire et la durée/);
+  assert.equal(EN.editScheduleAndDuration, "Edit schedule and duration");
+  assert.match(ES.editScheduleAndDuration, /Editar horario y duración/);
 });

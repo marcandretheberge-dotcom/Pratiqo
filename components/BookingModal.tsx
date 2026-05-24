@@ -241,7 +241,9 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
 
   const lessonMinutes = useMemo(() => {
     if (lessonType === "intro") return introDurationMinutes;
-    if (teachingMode !== "domicile") return 60;
+    if (teachingMode !== "domicile") {
+      return teacher.defaultLessonDurationMinutes ?? 60;
+    }
     let h = (teacher.homeLessonMinDuration ?? 60) / 60;
     if (teacher.homeLessonForce2hOver20km && distanceKm !== null && distanceKm > 20) {
       h = Math.max(h, 2);
@@ -252,9 +254,14 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
     introDurationMinutes,
     teachingMode,
     teacher.homeLessonMinDuration,
+    teacher.defaultLessonDurationMinutes,
     teacher.homeLessonForce2hOver20km,
     distanceKm,
   ]);
+
+  useEffect(() => {
+    setDurationMinutes(lessonMinutes);
+  }, [lessonMinutes]);
 
   const lessonHours = lessonMinutes / 60;
   const hourlyRate = teachingMode === "domicile" ? Number(teacher.homeLessonPrice ?? 0) : teacher.pricePerLesson;
