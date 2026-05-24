@@ -190,6 +190,7 @@ export function ZoneStep({
           inputMode="numeric"
           className="h-11 w-full rounded-xl border border-[#E8E6DF] bg-white px-3 text-sm outline-none focus:border-teal-500"
         />
+        <p className="text-xs text-[#6B6A65]">{t("zoneRadiusKmHelper")}</p>
       </label>
 
       <button
@@ -208,31 +209,11 @@ export function ZoneStep({
       </button>
 
       {showPublicSummary ? (
-        <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 space-y-1">
-          <p className="text-xs font-bold uppercase tracking-widest text-slate-500">
-            {t("zonePublicDisplay")}
-          </p>
+        <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
           <p className="text-sm font-semibold text-[#2C2C2A]">
             {displayCity}
             {displayRegion ? `, ${displayRegion}` : ""}
           </p>
-          <p className="text-xs text-[#6B6A65]">± {zoneFuzzRadiusKm ?? 1} km</p>
-          {zoneSavedStatus === "auto_verified" || zone.kind === "verified" ? (
-            <p className="text-xs font-semibold text-teal-700">{t("trustZoneVerified")}</p>
-          ) : (
-            <p className="text-xs font-semibold text-amber-700">{t("trustZonePending")}</p>
-          )}
-          <p className="text-[11px] text-slate-400">{t("exactAddressPrivate")}</p>
-          {zoneHasPrivateAddress ? (
-            <p className="text-[11px] text-slate-400">{t("verificationZoneSummarySourceSaved")}</p>
-          ) : (
-            <>
-              <p className="text-[11px] text-slate-400">{t("verificationZoneSummarySourceOld")}</p>
-              <p className="text-[11px] text-amber-600">
-                {t("verificationZoneSummarySourceOldPrompt")}
-              </p>
-            </>
-          )}
         </div>
       ) : null}
     </div>

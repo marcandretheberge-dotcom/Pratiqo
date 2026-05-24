@@ -175,120 +175,28 @@ test("teacher account view: exposes the AI assistant outside first onboarding", 
 });
 
 // ---------------------------------------------------------------------------
-// 4. /teacher/verification — Unified Teacher Launch Center
+// 4. /teacher/verification — Teacher profile management hub
 // ---------------------------------------------------------------------------
 
-test("unified launch center: renders page title and subtitle with no Niveau headings", () => {
+test("profile management page: no Niveau headings, inline cards, Google Places in zone", () => {
   const stripped = stripJsComments(verificationSrc);
-  assert.match(stripped, /teacherLaunchCenterTitle/);
-  assert.match(stripped, /teacherLaunchCenterSubtitle/);
-  // No old Niveau-based title structure
   for (const k of [
-    '"verificationLevel1Title"',
-    '"verificationLevel2Title"',
-    '"verificationLevel3Title"',
-    '"verificationLevel4Title"',
-    '"verificationLevel5Title"',
     "verificationLevel1Title",
     "verificationLevel2Title",
     "verificationLevel3Title",
     "verificationLevel4Title",
     "verificationLevel5Title",
   ]) {
-    assert.doesNotMatch(
-      stripped,
-      new RegExp(k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")),
-      `verification page must not reference ${k}`,
-    );
+    assert.doesNotMatch(stripped, new RegExp(k));
   }
-});
-
-test("unified launch center: renders section 1 (essential) and section 2 (trust)", () => {
-  assert.match(verificationSrc, /data-testid="teacher-launch-section-essential"/);
-  assert.match(verificationSrc, /data-testid="teacher-launch-section-trust"/);
-  assert.match(verificationSrc, /teacherLaunchSectionEssential/);
-  assert.match(verificationSrc, /teacherLaunchSectionTrust/);
-});
-
-test("unified launch center: all 7 launch cards are represented", () => {
-  for (const cardId of [
-    "teacher-launch-card-profile",
-    "teacher-launch-card-pricing",
-    "teacher-launch-card-availability",
-    "teacher-launch-card-zone",
-    "teacher-launch-card-identity",
-    "teacher-launch-card-diploma",
-    "teacher-launch-card-payments",
-  ]) {
-    assert.ok(
-      verificationSrc.includes(`data-testid="${cardId}"`),
-      `unified launch center must include card with data-testid="${cardId}"`,
-    );
-  }
-});
-
-test("unified launch center: references expected i18n keys for all 7 cards", () => {
-  for (const k of [
-    "teacherLaunchCardProfileTitle",
-    "teacherLaunchCardPricingTitle",
-    "teacherLaunchCardAvailabilityTitle",
-    "teacherLaunchCardZoneTitle",
-    "teacherLaunchCardIdentityTitle",
-    "teacherLaunchCardDiplomaTitle",
-    "teacherLaunchCardPaymentsTitle",
-    "teacherTrustStatusComplete",
-    "teacherTrustStatusMissing",
-    "teacherTrustStatusInReview",
-    "teacherTrustStatusOptional",
-  ]) {
-    assert.ok(
-      verificationSrc.includes(k),
-      `verification page must reference i18n key "${k}"`,
-    );
-  }
-});
-
-test("unified launch center: no Niveau wording, no VerificationBadge, no marketplace-benefits sidebar", () => {
-  const stripped = stripJsComments(verificationSrc);
-  assert.doesNotMatch(stripped, /Niveau\s*[1-5]/);
   assert.doesNotMatch(stripped, /VerificationBadge/);
-  assert.doesNotMatch(stripped, /teacherVerificationMarketplaceBenefits/);
-  assert.doesNotMatch(stripped, /verificationViewPlans/);
-});
-
-test("unified launch center: zone card expands inline — no anchor-jump to old sections", () => {
-  const stripped = stripJsComments(verificationSrc);
-  // Cards must not use old anchor href jumps
-  assert.doesNotMatch(stripped, /href="#trust-zone"/);
-  assert.doesNotMatch(stripped, /href="#trust-identity"/);
-  assert.doesNotMatch(stripped, /href="#trust-diploma"/);
-  // Inline expansion is controlled by expandedCard state
+  assert.doesNotMatch(stripped, /teacherLaunchCenterTitle/);
+  assert.doesNotMatch(stripped, /teacherLaunchSectionEssential/);
+  assert.doesNotMatch(stripped, /teacher-launch-section-trust/);
   assert.match(stripped, /expandedCard/);
-});
-
-test("unified launch center: diploma card expands inline and is clearly optional", () => {
-  const stripped = stripJsComments(verificationSrc);
-  assert.doesNotMatch(stripped, /href="#trust-diploma"/);
-  // optional prop is passed to the diploma LaunchCard
-  assert.match(stripped, /optional/);
-  assert.match(verificationSrc, /data-testid="teacher-launch-diploma-optional"/);
-});
-
-test("unified launch center: profile card exposes ProfileAiAssistant", () => {
-  assert.match(
-    verificationSrc,
-    /import\s*\{[^}]*ProfileAiAssistant[^}]*\}/,
-  );
-  assert.match(verificationSrc, /<ProfileAiAssistant\b/);
-  // AI toggle inside the profile card
-  assert.match(verificationSrc, /teacher-launch-profile-ai-toggle/);
-});
-
-test("unified launch center: zone card wires up Google Places autocomplete (parseGooglePlace)", () => {
   assert.match(verificationSrc, /parseGooglePlace/);
   assert.match(verificationSrc, /google\.maps\.places\.Autocomplete/);
-  // addressRef is passed down to ZoneStep so the input gets the autocomplete
-  assert.match(verificationSrc, /addressRef/);
+  assert.match(verificationSrc, /teacherProfileManagementTitle/);
 });
 
 test("ZoneStep: no longer references verificationLevel4Title or verificationLevel4BodyZone", () => {

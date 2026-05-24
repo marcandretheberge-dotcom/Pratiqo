@@ -1,20 +1,15 @@
 "use client";
 
 /**
- * Unified Teacher Launch Center (/teacher/verification)
- * -------------------------------------------------------
- * One page where the teacher sees what is needed to start receiving requests,
- * what improves trust, and what can be completed later.
+ * Teacher profile management (/teacher/verification)
+ * -------------------------------------------------
+ * Route stays /teacher/verification for compatibility. Visible labels use
+ * "Gestion du profil" / "Profile management" — not Verification or Launch Center.
  *
- * Section 1 — Essentiel pour recevoir des demandes
- *   Profile public, Tarif, Disponibilités, Zone d'enseignement
- *
- * Section 2 — Confiance et sécurité
- *   Identité vérifiée, Diplôme ou certificat (optional), Paiements Pratiqo
- *
- * Cards expand inline. No old "Niveau 1..5" headings. No anchor-jump CTAs.
- * The Zone card wires up Google Places autocomplete using the same flow as
- * /onboarding/teacher. All existing upload/geocode/Stripe logic is preserved.
+ * Central editing hub with 7 sections:
+ *   1. Public profile   2. Disciplines & formats   3. Offer & pricing
+ *   4. Availability     5. Teaching zone           6. Trust
+ *   7. Payments
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -28,11 +23,10 @@ import {
   ChevronUp,
   CircleDashed,
   CreditCard,
-  FileBadge,
+  GraduationCap,
   Loader2,
   MapPin,
   ShieldCheck,
-  Sparkles,
   User,
 } from "lucide-react";
 import { useAuth } from "../../../../components/AuthProvider";
@@ -45,6 +39,9 @@ import type { TranslationKey } from "../../../../lib/translations";
 import { DiplomaStep } from "./components/DiplomaStep";
 import { ZoneStep } from "./components/ZoneStep";
 import { ProfileAiAssistant } from "../../../../components/teacher/ProfileAiAssistant";
+import { AvatarUpload } from "../../../../components/profile/AvatarUpload";
+import { TeacherPayoutPreview } from "../../../../components/teacher/TeacherPayoutPreview";
+import { isValidVideoUrl } from "../../../../lib/videoEmbed";
 import { parseGooglePlace } from "../../../../lib/googleAddressParser";
 import { MIN_LESSON_PRICE_DOLLARS } from "../../../../lib/pricing/constants";
 
@@ -53,7 +50,12 @@ type TeacherVerifyRow = {
   name?: string | null;
   discipline?: string | null;
   bio?: string | null;
+  image_url?: string | null;
+  video_url?: string | null;
   price_per_lesson?: number | null;
+  teaching_mode?: string | null;
+  intro_session_enabled?: boolean | null;
+  intro_session_price_cents?: number | null;
   availability?: string[] | null;
   verification_level: number | null;
   identity_verified: boolean | null;
@@ -79,7 +81,29 @@ type TeacherVerifyRow = {
   stripe_account_id?: string | null;
 };
 
-export default function TeacherLaunchCenterPage() {
+const TEACHER_IMAGE_URL_FALLBACK = "https://picsum.photos/seed/teacher/400/400";
+
+function encodeTeachingMode(p: boolean, o: boolean, h: boolean): string {
+  const n = (p ? 1 : 0) + (o ? 1 : 0) + (h ? 1 : 0);
+  if (n === 0) return "both";
+  if (n === 3) return "all";
+  if (p && o && !h) return "both";
+  if (p && !o && !h) return "person";
+  if (!p && o && !h) return "online";
+  if (!p && !o && h) return "home";
+  return "all";
+}
+
+function teachingModeToChips(mode: string | null | undefined) {
+  const m = mode || "both";
+  return {
+    person: m === "person" || m === "both" || m === "all",
+    online: m === "online" || m === "both" || m === "all",
+    home: m === "home" || m === "all",
+  };
+}
+
+export default function TeacherProfileManagementPage() {
   const { user, profile, loading } = useAuth();
   const { t } = useLocale();
   const searchParams = useSearchParams();
@@ -97,11 +121,21 @@ export default function TeacherLaunchCenterPage() {
   const [editName, setEditName] = useState("");
   const [editBio, setEditBio] = useState("");
   const [editDiscipline, setEditDiscipline] = useState("");
+  const [editVideoUrl, setEditVideoUrl] = useState("");
+  const [editVideoError, setEditVideoError] = useState<string | null>(null);
+  const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(null);
   const [profileAiOpen, setProfileAiOpen] = useState(false);
   const [profileAiNotes, setProfileAiNotes] = useState("");
 
-  // Pricing inline editing
+  // Disciplines & formats (teaching mode chips)
+  const [chipsPerson, setChipsPerson] = useState(true);
+  const [chipsOnline, setChipsOnline] = useState(true);
+  const [chipsHome, setChipsHome] = useState(false);
+
+  // Pricing / offer
   const [editPrice, setEditPrice] = useState("");
+  const [editIntroEnabled, setEditIntroEnabled] = useState(false);
+  const [editIntroPrice, setEditIntroPrice] = useState("");
 
   // Zone form state
   const [zoneShowManual, setZoneShowManual] = useState(false);
@@ -140,14 +174,15 @@ export default function TeacherLaunchCenterPage() {
       supabase
         .from("teachers")
         .select(
-          "id, name, discipline, bio, price_per_lesson, availability, verification_level, identity_verified, identity_status, stripe_identity_status, stripe_identity_failed_reason, diploma_verified, diploma_url, phone_verified, is_verified, location_verification_status, cv_summary, cv_verification_status, city, region, country_code, home_lesson_radius_km, home_lesson_enabled, location, stripe_account_id, stripe_connect_onboarding_complete, stripe_connect_charges_enabled, stripe_connect_payouts_enabled",
+          "id, name, discipline, bio, image_url, video_url, price_per_lesson, teaching_mode, intro_session_enabled, intro_session_price_cents, availability, verification_level, identity_verified, identity_status, stripe_identity_status, stripe_identity_failed_reason, diploma_verified, diploma_url, phone_verified, is_verified, location_verification_status, cv_summary, cv_verification_status, city, region, country_code, home_lesson_radius_km, home_lesson_enabled, location, stripe_account_id, stripe_connect_onboarding_complete, stripe_connect_charges_enabled, stripe_connect_payouts_enabled",
         )
         .eq("user_id", user.id)
         .maybeSingle(),
-      supabase.from("profiles").select("plan").eq("id", user.id).maybeSingle(),
+      supabase.from("profiles").select("plan, photo_url").eq("id", user.id).maybeSingle(),
     ]);
     setTeacherRow(tr as TeacherVerifyRow | null);
     setPlan(String((p as { plan?: string } | null)?.plan || "free"));
+    setProfilePhotoUrl((p as { photo_url?: string | null } | null)?.photo_url ?? null);
   }, [user?.id]);
 
   useEffect(() => {
@@ -160,7 +195,16 @@ export default function TeacherLaunchCenterPage() {
     setEditName(teacherRow.name ?? "");
     setEditBio(teacherRow.bio ?? "");
     setEditDiscipline(teacherRow.discipline ?? "");
+    setEditVideoUrl(teacherRow.video_url ?? "");
     setEditPrice(teacherRow.price_per_lesson != null ? String(teacherRow.price_per_lesson) : "");
+    setEditIntroEnabled(teacherRow.intro_session_enabled === true);
+    const introCents =
+      typeof teacherRow.intro_session_price_cents === "number" ? teacherRow.intro_session_price_cents : null;
+    setEditIntroPrice(introCents != null && introCents > 0 ? String(introCents / 100) : "");
+    const chips = teachingModeToChips(teacherRow.teaching_mode);
+    setChipsPerson(chips.person);
+    setChipsOnline(chips.online);
+    setChipsHome(chips.home);
 
     setZoneCity(teacherRow.city ?? "");
     setZoneRegion(teacherRow.region ?? "");
@@ -259,19 +303,35 @@ export default function TeacherLaunchCenterPage() {
   // ── Profile save ────────────────────────────────────────────────────────────
   const saveProfile = async () => {
     if (!user?.id || !teacherRow?.id) return;
+    const trimmedVideo = editVideoUrl.trim();
+    if (trimmedVideo && !isValidVideoUrl(trimmedVideo)) {
+      setEditVideoError(t("invalidVideoUrl"));
+      return;
+    }
+    setEditVideoError(null);
     setBusy("profile");
     setMessage(null);
     try {
       const supabase = getSupabaseClient();
-      const { error: err } = await supabase
+      const nextTeacherImageUrl =
+        (profilePhotoUrl && profilePhotoUrl.trim()) ||
+        (teacherRow.image_url && teacherRow.image_url.trim()) ||
+        TEACHER_IMAGE_URL_FALLBACK;
+      const { error: err1 } = await supabase
         .from("teachers")
         .update({
           name: editName.trim() || null,
           bio: editBio.trim() || null,
-          discipline: editDiscipline.trim() || null,
+          video_url: trimmedVideo || null,
+          image_url: nextTeacherImageUrl,
         })
         .eq("id", teacherRow.id);
-      if (err) throw err;
+      if (err1) throw err1;
+      const { error: err2 } = await supabase
+        .from("profiles")
+        .update({ name: editName.trim() || null, photo_url: profilePhotoUrl })
+        .eq("id", user.id);
+      if (err2) throw err2;
       showMsg(t("savedOk"), "ok");
       setExpandedCard(null);
       await load();
@@ -282,6 +342,37 @@ export default function TeacherLaunchCenterPage() {
     }
   };
 
+  const saveDisciplinesFormats = async () => {
+    if (!teacherRow?.id) return;
+    setBusy("disciplines");
+    setMessage(null);
+    try {
+      const supabase = getSupabaseClient();
+      const teachingMode = encodeTeachingMode(chipsPerson, chipsOnline, chipsHome);
+      const { error } = await supabase
+        .from("teachers")
+        .update({
+          discipline: editDiscipline.trim() || null,
+          teaching_mode: teachingMode,
+        })
+        .eq("id", teacherRow.id);
+      if (error) throw error;
+      showMsg(t("savedOk"), "ok");
+      setExpandedCard(null);
+      await load();
+    } catch (e) {
+      showMsg(e instanceof Error ? e.message : t("anErrorOccurred"), "error");
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const toggleFormat = (key: "person" | "online" | "home") => {
+    if (key === "person") setChipsPerson((v) => !v);
+    if (key === "online") setChipsOnline((v) => !v);
+    if (key === "home") setChipsHome((v) => !v);
+  };
+
   // ── Pricing save ────────────────────────────────────────────────────────────
   const savePricing = async () => {
     if (!user?.id) return;
@@ -290,6 +381,11 @@ export default function TeacherLaunchCenterPage() {
       showMsg(t("pricingMinLessonPrice"), "error");
       return;
     }
+    const introPriceCents = (() => {
+      const dollars = Number(String(editIntroPrice || "").trim());
+      if (!Number.isFinite(dollars) || dollars <= 0) return null;
+      return Math.max(0, Math.round(dollars * 100));
+    })();
     setBusy("pricing");
     setMessage(null);
     try {
@@ -299,7 +395,11 @@ export default function TeacherLaunchCenterPage() {
       const res = await fetch("/api/teacher/pricing", {
         method: "PATCH",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ price_per_lesson: priceNum }),
+        body: JSON.stringify({
+          price_per_lesson: priceNum,
+          intro_session_enabled: editIntroEnabled,
+          intro_session_price_cents: introPriceCents,
+        }),
       });
       const j = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string };
       if (!res.ok) throw new Error(j.error || t("anErrorOccurred"));
@@ -491,12 +591,24 @@ export default function TeacherLaunchCenterPage() {
 
   // Derived card states
   const profileState: VerificationStepState =
-    (teacherRow.bio?.trim() ?? "") && (teacherRow.discipline?.trim() ?? "")
+    (teacherRow.bio?.trim() ?? "") && (teacherRow.name?.trim() ?? "")
       ? { kind: "verified" }
       : { kind: "not_started" };
 
+  const disciplinesState: VerificationStepState =
+    (teacherRow.discipline?.trim() ?? "") ? { kind: "verified" } : { kind: "not_started" };
+
   const pricingState: VerificationStepState =
     (teacherRow.price_per_lesson ?? 0) > 0 ? { kind: "verified" } : { kind: "not_started" };
+
+  const trustState: VerificationStepState =
+    vState.identity.kind === "verified" || vState.diploma.kind === "verified"
+      ? { kind: "verified" }
+      : vState.identity.kind === "pending" || vState.diploma.kind === "pending"
+        ? { kind: "pending" }
+        : { kind: "not_started" };
+
+  const publicProfileHref = `/teacher/profile/${teacherRow.id}`;
 
   const availabilityState: VerificationStepState =
     (teacherRow.availability?.length ?? 0) > 0 ? { kind: "verified" } : { kind: "not_started" };
@@ -506,19 +618,16 @@ export default function TeacherLaunchCenterPage() {
   };
 
   return (
-    <div className="space-y-8">
-      {/* ── Page header ─────────────────────────────────────────────────────── */}
+    <div className="space-y-8" data-testid="teacher-profile-management-page">
       <div>
         <p className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
-          {t("teacherLaunchHeroEyebrow")}
+          {t("teacherSpaceLabel")}
         </p>
         <h1 className="mt-1 text-2xl font-bold text-[#2C2C2A] flex items-center gap-2">
-          <Sparkles className="text-teal-700" size={26} />
-          {t("teacherLaunchCenterTitle")}
+          <User className="text-teal-700" size={26} aria-hidden />
+          {t("teacherProfileManagementTitle")}
         </h1>
-        <p className="mt-2 text-sm text-[#6B6A65] max-w-xl">
-          {t("teacherLaunchCenterSubtitle")}
-        </p>
+        <p className="mt-2 text-sm text-[#6B6A65] max-w-xl">{t("teacherProfileManagementSubtitle")}</p>
       </div>
 
       {message ? (
@@ -534,57 +643,47 @@ export default function TeacherLaunchCenterPage() {
         </div>
       ) : null}
 
-      {/* ── Section 1: Essentiel ─────────────────────────────────────────────── */}
-      <section data-testid="teacher-launch-section-essential" className="space-y-4">
+      <section data-testid="teacher-profile-mgmt-section-public-profile" className="space-y-3">
         <h2 className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
-          {t("teacherLaunchSectionEssential")}
+          {t("teacherProfileMgmtSectionPublicProfile")}
         </h2>
-
-        {/* Profile card */}
         <LaunchCard
           cardKey="profile"
           icon={<User size={18} aria-hidden />}
-          title={t("teacherLaunchCardProfileTitle")}
+          title={t("teacherProfileMgmtSectionPublicProfile")}
           description={t("teacherLaunchCardProfileDesc")}
           state={profileState}
           expandedCard={expandedCard}
           onToggle={() => toggleCard("profile")}
           t={t}
-          data-testid="teacher-launch-card-profile"
+          data-testid="teacher-profile-mgmt-card-public-profile"
         >
           <div className="space-y-4 pt-3">
+            <AvatarUpload
+              userId={user.id}
+              displayName={editName || user.email || "Teacher"}
+              currentPhotoUrl={profilePhotoUrl}
+              onPhotoUrlChange={setProfilePhotoUrl}
+            />
             <label className="block">
               <span className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
-                {t("teacherLaunchNameLabel")}
+                {t("profileDisplayName")}
               </span>
               <input
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
                 className="mt-2 w-full h-11 rounded-xl border border-[#E8E6DF] px-3 text-sm outline-none focus:border-teal-500"
-                placeholder="Ex. Marie Dupont"
               />
             </label>
             <label className="block">
               <span className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
-                {t("teacherLaunchDisciplineLabel")}
-              </span>
-              <input
-                value={editDiscipline}
-                onChange={(e) => setEditDiscipline(e.target.value)}
-                className="mt-2 w-full h-11 rounded-xl border border-[#E8E6DF] px-3 text-sm outline-none focus:border-teal-500"
-                placeholder="Ex. Piano, Anglais, Mathématiques…"
-              />
-            </label>
-            <label className="block">
-              <span className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
-                {t("teacherLaunchBioLabel")}
+                {t("bioLabel")}
               </span>
               <textarea
                 value={editBio}
                 onChange={(e) => setEditBio(e.target.value)}
                 rows={4}
                 className="mt-2 w-full rounded-xl border border-[#E8E6DF] px-3 py-2 text-sm outline-none focus:border-teal-500"
-                placeholder="Quelques lignes sur votre approche, votre expérience, et votre style d'enseignement…"
               />
             </label>
             <div>
@@ -592,7 +691,7 @@ export default function TeacherLaunchCenterPage() {
                 type="button"
                 onClick={() => setProfileAiOpen((v) => !v)}
                 className="text-xs font-semibold text-teal-700 hover:underline"
-                data-testid="teacher-launch-profile-ai-toggle"
+                data-testid="teacher-profile-mgmt-ai-toggle"
               >
                 {profileAiOpen ? "▾ " : "✨ "}
                 {t("aiAssistantHeadline")}
@@ -613,6 +712,22 @@ export default function TeacherLaunchCenterPage() {
                 </div>
               ) : null}
             </div>
+            <label className="block">
+              <span className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
+                {t("videoPresentationLabel")}
+              </span>
+              <span className="ml-2 text-[10px] font-bold uppercase text-[#6B6A65]">{t("optionalBadge")}</span>
+              <input
+                value={editVideoUrl}
+                onChange={(e) => {
+                  setEditVideoUrl(e.target.value);
+                  setEditVideoError(null);
+                }}
+                className="mt-2 w-full h-11 rounded-xl border border-[#E8E6DF] px-3 text-sm outline-none focus:border-teal-500"
+                placeholder="https://youtube.com/..."
+              />
+              {editVideoError ? <p className="mt-1 text-xs text-red-600">{editVideoError}</p> : null}
+            </label>
             <button
               type="button"
               onClick={() => void saveProfile()}
@@ -622,30 +737,112 @@ export default function TeacherLaunchCenterPage() {
               {busy === "profile" ? <Loader2 size={16} className="animate-spin" /> : null}
               {t("teacherLaunchCardProfileSaveBtn")}
             </button>
-            <p className="text-[11px] text-[#6B6A65]">
-              <Link href="/teacher/settings" className="underline hover:text-teal-700">
-                {t("teacherLaunchCardProfileDesc")}
+            <div className="flex flex-wrap gap-3 pt-1">
+              <Link
+                href="/teacher/my-profile"
+                className="text-sm font-semibold text-teal-700 hover:underline"
+                data-testid="teacher-profile-mgmt-preview-link"
+              >
+                {t("teacherPublicProfileLabel")} →
               </Link>
-            </p>
+              <a
+                href={publicProfileHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm font-semibold text-teal-700 hover:underline"
+                data-testid="teacher-profile-mgmt-view-public-link"
+              >
+                {t("teacherPublicProfileViewCta")}
+              </a>
+            </div>
           </div>
         </LaunchCard>
+      </section>
 
-        {/* Pricing card */}
+      <section data-testid="teacher-profile-mgmt-section-disciplines-formats" className="space-y-3">
+        <h2 className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
+          {t("teacherProfileMgmtSectionDisciplinesFormats")}
+        </h2>
+        <LaunchCard
+          cardKey="disciplines"
+          icon={<GraduationCap size={18} aria-hidden />}
+          title={t("teacherProfileMgmtSectionDisciplinesFormats")}
+          description={t("teacherProfileMgmtDisciplinesDesc")}
+          state={disciplinesState}
+          expandedCard={expandedCard}
+          onToggle={() => toggleCard("disciplines")}
+          t={t}
+          data-testid="teacher-profile-mgmt-card-disciplines-formats"
+        >
+          <div className="space-y-4 pt-3">
+            <label className="block">
+              <span className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
+                {t("teacherLaunchDisciplineLabel")}
+              </span>
+              <input
+                value={editDiscipline}
+                onChange={(e) => setEditDiscipline(e.target.value)}
+                className="mt-2 w-full h-11 rounded-xl border border-[#E8E6DF] px-3 text-sm outline-none focus:border-teal-500"
+                placeholder="Ex. Piano, Anglais, Mathématiques…"
+              />
+            </label>
+            <div>
+              <p className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">{t("sectionFormat")}</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {(["inPerson", "online", "homeVisit"] as const).map((labelKey, i) => {
+                  const keys = ["person", "online", "home"] as const;
+                  const on =
+                    keys[i] === "person" ? chipsPerson : keys[i] === "online" ? chipsOnline : chipsHome;
+                  return (
+                    <button
+                      key={labelKey}
+                      type="button"
+                      onClick={() => toggleFormat(keys[i])}
+                      className={cn(
+                        "h-10 px-4 rounded-full text-sm font-semibold border",
+                        on
+                          ? "border-teal-600 bg-teal-500/10 text-teal-800"
+                          : "border-[#E8E6DF] bg-slate-50 text-slate-600",
+                      )}
+                    >
+                      {t(labelKey)}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => void saveDisciplinesFormats()}
+              disabled={busy === "disciplines"}
+              className="h-11 rounded-xl bg-teal-700 px-5 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-50 inline-flex items-center gap-2"
+            >
+              {busy === "disciplines" ? <Loader2 size={16} className="animate-spin" /> : null}
+              {t("teacherProfileMgmtDisciplinesSaveBtn")}
+            </button>
+          </div>
+        </LaunchCard>
+      </section>
+
+      <section data-testid="teacher-profile-mgmt-section-offer-pricing" className="space-y-3">
+        <h2 className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
+          {t("teacherProfileMgmtSectionOfferPricing")}
+        </h2>
         <LaunchCard
           cardKey="pricing"
           icon={<BookOpen size={18} aria-hidden />}
-          title={t("teacherLaunchCardPricingTitle")}
-          description={t("teacherLaunchCardPricingDesc")}
+          title={t("teacherProfileMgmtSectionOfferPricing")}
+          description={t("teacherProfileMgmtOfferPricingDesc")}
           state={pricingState}
           expandedCard={expandedCard}
           onToggle={() => toggleCard("pricing")}
           t={t}
-          data-testid="teacher-launch-card-pricing"
+          data-testid="teacher-profile-mgmt-card-offer-pricing"
         >
-          <div className="space-y-3 pt-3">
+          <div className="space-y-4 pt-3">
             <label className="block">
               <span className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
-                {t("teacherLaunchPriceLabel")}
+                {t("profileHourlyRate")}
               </span>
               <input
                 value={editPrice}
@@ -654,10 +851,42 @@ export default function TeacherLaunchCenterPage() {
                 min={MIN_LESSON_PRICE_DOLLARS}
                 step="0.5"
                 className="mt-2 w-full h-11 rounded-xl border border-[#E8E6DF] px-3 text-sm outline-none focus:border-teal-500"
-                placeholder="50"
               />
               <p className="mt-1 text-xs text-[#6B6A65]">{t("pricingMinLessonPrice")}</p>
+              <TeacherPayoutPreview grossAmount={editPrice} currency="CAD" teacherPlan={plan} />
             </label>
+            <div className="rounded-xl border border-[#E8E6DF] bg-teal-50/40 p-4 space-y-3">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-bold text-[#2C2C2A]">{t("introSessionTitle")}</p>
+                  <p className="mt-1 text-xs text-[#6B6A65]">{t("introSessionDescription")}</p>
+                </div>
+                <label className="inline-flex items-center gap-2 text-sm font-semibold text-[#2C2C2A]">
+                  <input
+                    type="checkbox"
+                    checked={editIntroEnabled}
+                    onChange={(e) => setEditIntroEnabled(e.target.checked)}
+                    className="h-4 w-4 rounded border-slate-300 text-teal-700"
+                  />
+                  {t("enableIntroSession")}
+                </label>
+              </div>
+              <label className="block">
+                <span className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
+                  {t("introSessionPrice")}
+                </span>
+                <input
+                  value={editIntroPrice}
+                  onChange={(e) => setEditIntroPrice(e.target.value)}
+                  disabled={!editIntroEnabled}
+                  type="number"
+                  min={MIN_LESSON_PRICE_DOLLARS}
+                  step="0.5"
+                  placeholder="(auto)"
+                  className="mt-2 w-full h-11 rounded-xl border border-[#E8E6DF] px-3 text-sm outline-none focus:border-teal-500 disabled:bg-slate-50"
+                />
+              </label>
+            </div>
             <button
               type="button"
               onClick={() => void savePricing()}
@@ -665,37 +894,45 @@ export default function TeacherLaunchCenterPage() {
               className="h-11 rounded-xl bg-teal-700 px-5 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-50 inline-flex items-center gap-2"
             >
               {busy === "pricing" ? <Loader2 size={16} className="animate-spin" /> : null}
-              {t("teacherLaunchCardPricingSaveBtn")}
+              {t("teacherProfileMgmtOfferPricingSaveBtn")}
             </button>
           </div>
         </LaunchCard>
+      </section>
 
-        {/* Availability card — links to schedule editor */}
+      <section data-testid="teacher-profile-mgmt-section-availability" className="space-y-3">
+        <h2 className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
+          {t("teacherProfileMgmtSectionAvailability")}
+        </h2>
         <LaunchCard
           cardKey="availability"
           icon={<Calendar size={18} aria-hidden />}
-          title={t("teacherLaunchCardAvailabilityTitle")}
-          description={t("teacherLaunchCardAvailabilityDesc")}
+          title={t("teacherProfileMgmtSectionAvailability")}
+          description={t("teacherProfileMgmtAvailabilityDesc")}
           state={availabilityState}
           expandedCard={expandedCard}
           onToggle={null}
           t={t}
-          data-testid="teacher-launch-card-availability"
+          data-testid="teacher-profile-mgmt-card-availability"
           ctaHref="/teacher/schedule"
-          ctaLabel={t("teacherLaunchCardAvailabilityCta")}
+          ctaLabel={t("teacherProfileMgmtAvailabilityCta")}
         />
+      </section>
 
-        {/* Zone card */}
+      <section data-testid="teacher-profile-mgmt-section-teaching-zone" className="space-y-3">
+        <h2 className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
+          {t("teacherProfileMgmtSectionTeachingZone")}
+        </h2>
         <LaunchCard
           cardKey="zone"
           icon={<MapPin size={18} aria-hidden />}
-          title={t("teacherLaunchCardZoneTitle")}
+          title={t("teacherProfileMgmtSectionTeachingZone")}
           description={t("teacherLaunchCardZoneDesc")}
           state={vState.zone}
           expandedCard={expandedCard}
           onToggle={() => toggleCard("zone")}
           t={t}
-          data-testid="teacher-launch-card-zone"
+          data-testid="teacher-profile-mgmt-card-teaching-zone"
         >
           <div className="pt-3">
             {!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || googleError ? null : !googleReady ? (
@@ -735,79 +972,73 @@ export default function TeacherLaunchCenterPage() {
         </LaunchCard>
       </section>
 
-      <hr className="border-[#E8E6DF]" />
-
-      {/* ── Section 2: Confiance et sécurité ────────────────────────────────── */}
-      <section data-testid="teacher-launch-section-trust" className="space-y-4">
+      <section data-testid="teacher-profile-mgmt-section-trust" className="space-y-3">
         <h2 className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
-          {t("teacherLaunchSectionTrust")}
+          {t("teacherProfileMgmtSectionTrust")}
         </h2>
-
-        {/* Identity card */}
         <LaunchCard
-          cardKey="identity"
+          cardKey="trust"
           icon={<ShieldCheck size={18} aria-hidden />}
-          title={t("teacherLaunchCardIdentityTitle")}
-          description={t("teacherLaunchCardIdentityDesc")}
-          state={vState.identity}
+          title={t("teacherProfileMgmtSectionTrust")}
+          description={t("teacherProfileMgmtTrustDesc")}
+          state={trustState}
           expandedCard={expandedCard}
-          onToggle={vState.identity.kind !== "verified" ? () => toggleCard("identity") : null}
+          onToggle={() => toggleCard("trust")}
           t={t}
-          data-testid="teacher-launch-card-identity"
+          data-testid="teacher-profile-mgmt-card-trust"
         >
-          <div className="pt-3">
-            <IdentityVerificationCard
-              status={stripeStatus ?? "not_started"}
-              failedReason={teacherRow.stripe_identity_failed_reason}
-              onFallback={() => sendEmailRequest("identity")}
-            />
+          <div className="pt-3 space-y-6">
+            <div>
+              <p className="text-sm font-bold text-[#2C2C2A]">{t("teacherLaunchCardIdentityTitle")}</p>
+              <p className="text-xs text-[#6B6A65] mt-1">{t("teacherLaunchCardIdentityDesc")}</p>
+              <div className="mt-3">
+                <IdentityVerificationCard
+                  status={stripeStatus ?? "not_started"}
+                  failedReason={teacherRow.stripe_identity_failed_reason}
+                  onFallback={() => sendEmailRequest("identity")}
+                />
+              </div>
+            </div>
+            <div>
+              <p className="text-sm font-bold text-[#2C2C2A]">
+                {t("teacherLaunchCardDiplomaTitle")}{" "}
+                <span className="text-xs font-normal text-[#6B6A65]">({t("optionalBadge")})</span>
+              </p>
+              <p className="text-xs text-[#6B6A65] mt-1">{t("teacherLaunchCardDiplomaDesc")}</p>
+              <div className="mt-3 space-y-3">
+                <DiplomaStep
+                  diploma={vState.diploma}
+                  busy={busy}
+                  diplomaFile={diplomaFile}
+                  diplomaNote={diplomaNote}
+                  fileInputRef={fileInputRef}
+                  onFileChange={setDiplomaFile}
+                  onNoteChange={setDiplomaNote}
+                  onUpload={() => void uploadDiploma()}
+                  t={t}
+                />
+              </div>
+            </div>
           </div>
         </LaunchCard>
+      </section>
 
-        {/* Diploma card — optional */}
-        <LaunchCard
-          cardKey="diploma"
-          icon={<FileBadge size={18} aria-hidden />}
-          title={t("teacherLaunchCardDiplomaTitle")}
-          description={t("teacherLaunchCardDiplomaDesc")}
-          state={vState.diploma}
-          optional
-          expandedCard={expandedCard}
-          onToggle={() => toggleCard("diploma")}
-          t={t}
-          data-testid="teacher-launch-card-diploma"
-        >
-          <div className="pt-3 space-y-3">
-            <DiplomaStep
-              diploma={vState.diploma}
-              busy={busy}
-              diplomaFile={diplomaFile}
-              diplomaNote={diplomaNote}
-              fileInputRef={fileInputRef}
-              onFileChange={setDiplomaFile}
-              onNoteChange={setDiplomaNote}
-              onUpload={() => void uploadDiploma()}
-              t={t}
-            />
-            <p className="text-xs text-[#6B6A65]" data-testid="teacher-launch-diploma-optional">
-              {t("teacherLaunchCardDiplomaDesc")}
-            </p>
-          </div>
-        </LaunchCard>
-
-        {/* Payments card — links to settings */}
+      <section data-testid="teacher-profile-mgmt-section-payments" className="space-y-3">
+        <h2 className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
+          {t("teacherProfileMgmtSectionPayments")}
+        </h2>
         <LaunchCard
           cardKey="payments"
           icon={<CreditCard size={18} aria-hidden />}
-          title={t("teacherLaunchCardPaymentsTitle")}
-          description={t("teacherLaunchCardPaymentsDesc")}
+          title={t("teacherProfileMgmtSectionPayments")}
+          description={t("teacherProfileMgmtPaymentsDesc")}
           state={paymentsState}
           expandedCard={expandedCard}
           onToggle={null}
           t={t}
-          data-testid="teacher-launch-card-payments"
+          data-testid="teacher-profile-mgmt-card-payments"
           ctaHref="/teacher/settings#payouts"
-          ctaLabel={t("teacherLaunchCardPaymentsCta")}
+          ctaLabel={t("teacherProfileMgmtPaymentsCta")}
         />
       </section>
     </div>
