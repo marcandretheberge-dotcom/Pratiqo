@@ -11,6 +11,12 @@ import { useLocale } from "../../../../lib/locale-context";
 import { localeToBcp47 } from "../../../../lib/i18n/types";
 import type { TranslationKey } from "../../../../lib/translations";
 import { isScheduleEditLockedByNotice, type ScheduleLockPeriod } from "../../../../lib/scheduleLockout";
+import {
+  DEFAULT_LESSON_DURATION_MINUTES,
+  LESSON_DURATION_OPTIONS,
+  formatLessonDurationLabel,
+  normalizeLessonDurationMinutes,
+} from "../../../../lib/pricing/lessonDuration";
 
 const DAYS = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"] as const;
 const SLOTS = ["Matin", "Après-midi", "Soir"] as const;
@@ -108,6 +114,7 @@ function TeacherScheduleInner() {
   const [teachingMode, setTeachingMode] = useState<string>("both");
   const [bufferBefore, setBufferBefore] = useState<number>(0);
   const [bufferAfter, setBufferAfter] = useState<number>(0);
+  const [defaultLessonDuration, setDefaultLessonDuration] = useState<number>(DEFAULT_LESSON_DURATION_MINUTES);
   const [weekAnchor, setWeekAnchor] = useState(() => startOfWeekMonday(new Date()));
   const [selectedDayIndex, setSelectedDayIndex] = useState(() => {
     const w = startOfWeekMonday(new Date());
@@ -168,7 +175,7 @@ function TeacherScheduleInner() {
     const { data: trow } = await supabase
       .from("teachers")
       .select(
-        "id, availability, home_lesson_min_duration, teaching_mode, booking_buffer_before_minutes, booking_buffer_after_minutes",
+        "id, availability, default_lesson_duration_minutes, teaching_mode, booking_buffer_before_minutes, booking_buffer_after_minutes",
       )
       .eq("user_id", userId)
       .maybeSingle();
@@ -177,6 +184,11 @@ function TeacherScheduleInner() {
     setTeachingMode(String((trow as { teaching_mode?: string })?.teaching_mode || "both"));
     setBufferBefore(clampBufferMinutes((trow as { booking_buffer_before_minutes?: number | null })?.booking_buffer_before_minutes));
     setBufferAfter(clampBufferMinutes((trow as { booking_buffer_after_minutes?: number | null })?.booking_buffer_after_minutes));
+    setDefaultLessonDuration(
+      normalizeLessonDurationMinutes(
+        (trow as { default_lesson_duration_minutes?: number | null })?.default_lesson_duration_minutes,
+      ),
+    );
     if (!tid) {
       setBookings([]);
       setLoading(false);
@@ -280,6 +292,7 @@ function TeacherScheduleInner() {
         .update({
           availability,
           teaching_mode: teachingMode,
+          default_lesson_duration_minutes: normalizeLessonDurationMinutes(defaultLessonDuration),
           booking_buffer_before_minutes: clampBufferMinutes(bufferBefore),
           booking_buffer_after_minutes: clampBufferMinutes(bufferAfter),
         })
@@ -513,6 +526,32 @@ function TeacherScheduleInner() {
         </div>
       ) : (
         <div className="space-y-6">
+          <div
+            className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-3"
+            data-testid="teacher-schedule-lesson-duration-card"
+          >
+            <div>
+              <p className="text-sm font-bold text-[#2C2C2A]">{t("lessonDurationTitle")}</p>
+              <p className="mt-1 text-xs leading-5 text-slate-600">{t("lessonDurationDescription")}</p>
+            </div>
+            <label className="block max-w-xs">
+              <span className="text-xs font-bold uppercase tracking-widest text-slate-600">
+                {t("lessonDurationLabel")}
+              </span>
+              <select
+                value={defaultLessonDuration}
+                onChange={(e) => setDefaultLessonDuration(Number(e.target.value))}
+                className="mt-2 h-11 w-full rounded-xl border border-slate-200 px-3 text-sm font-semibold text-[#2C2C2A]"
+                data-testid="teacher-schedule-lesson-duration-select"
+              >
+                {LESSON_DURATION_OPTIONS.map((minutes) => (
+                  <option key={minutes} value={minutes}>
+                    {formatLessonDurationLabel(minutes, t)}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
             <div className="space-y-3">
               <div>

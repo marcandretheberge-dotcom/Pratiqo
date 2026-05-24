@@ -1,4 +1,5 @@
 import { calculateIntroSessionPriceCents } from "@/lib/introSession";
+import { isValidLessonDurationMinutes, normalizeLessonDurationMinutes } from "@/lib/pricing/lessonDuration";
 
 export type BookingChargeTeacher = {
   price_per_lesson: number | string | null;
@@ -16,11 +17,9 @@ export type BookingChargeInput = {
   duration_minutes?: number | string | null;
 };
 
-/** Allowed lesson durations for checkout (matches slots API bounds). */
+/** @deprecated Use normalizeLessonDurationMinutes from lessonDuration.ts */
 export function normalizeBookingDurationMinutes(raw: unknown, fallback = 60): number {
-  const n = Number(raw);
-  if (Number.isFinite(n) && n >= 30 && n <= 180) return Math.round(n);
-  return fallback;
+  return normalizeLessonDurationMinutes(raw, fallback);
 }
 
 /**
@@ -45,7 +44,15 @@ export function computeBookingChargeCents(
     });
   }
 
-  const durationMinutes = normalizeBookingDurationMinutes(booking.duration_minutes);
+  const rawDuration = booking.duration_minutes;
+  if (
+    rawDuration != null &&
+    rawDuration !== "" &&
+    !isValidLessonDurationMinutes(rawDuration)
+  ) {
+    return 0;
+  }
+  const durationMinutes = normalizeLessonDurationMinutes(rawDuration);
 
   if (teachingMode === "domicile") {
     if (teacher.home_lesson_enabled !== true) return 0;

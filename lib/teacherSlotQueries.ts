@@ -7,15 +7,17 @@ import {
   slotStartMinutes,
   weeklyAvailabilityFromTeacherRows,
 } from "@/lib/slots";
+import { normalizeLessonDurationMinutes } from "@/lib/pricing/lessonDuration";
 
 type Admin = SupabaseClient;
 
 /** Default lesson duration in minutes when the candidate booking does not specify one. */
 const DEFAULT_LESSON_DURATION_MIN = 60;
 
-export function defaultLessonDurationMinutes(homeMin: number | null | undefined): number {
-  const n = Number(homeMin);
-  return Number.isFinite(n) && n >= 30 && n <= 180 ? Math.round(n) : 60;
+export function defaultLessonDurationMinutes(
+  teacherDefaultMinutes: number | null | undefined,
+): number {
+  return normalizeLessonDurationMinutes(teacherDefaultMinutes, DEFAULT_LESSON_DURATION_MIN);
 }
 
 /**
@@ -133,7 +135,7 @@ export async function computeAvailableDaysForTeacher(
   const { data: teacher, error } = await admin
     .from("teachers")
     .select(
-      "availability, home_lesson_min_duration, booking_buffer_before_minutes, booking_buffer_after_minutes",
+      "availability, default_lesson_duration_minutes, booking_buffer_before_minutes, booking_buffer_after_minutes",
     )
     .eq("id", teacherId)
     .maybeSingle();
@@ -143,13 +145,14 @@ export async function computeAvailableDaysForTeacher(
   }
 
   const base = defaultLessonDurationMinutes(
-    (teacher as { home_lesson_min_duration?: number | null }).home_lesson_min_duration,
+    (teacher as { default_lesson_duration_minutes?: number | null }).default_lesson_duration_minutes,
   );
   const durationMinutes =
     typeof durationOverride === "number" &&
     Number.isFinite(durationOverride) &&
     durationOverride >= 30 &&
-    durationOverride <= 180
+    durationOverride <= 180 &&
+    durationOverride % 15 === 0
       ? Math.round(durationOverride)
       : base;
   const weekly = weeklyAvailabilityFromTeacherRows((teacher as { availability?: unknown }).availability);

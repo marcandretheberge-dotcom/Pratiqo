@@ -21,6 +21,7 @@ import { resolveEmailLocaleForUser } from "@/lib/email/locale";
 import { minimumLessonPriceErrorMessage } from "@/lib/pricing/messages";
 import { validateMinimumLessonPrice } from "@/lib/pricing/validateMinimumLessonPrice";
 import { computeBookingChargeCents } from "@/lib/pricing/bookingCharge";
+import { isValidLessonDurationMinutes } from "@/lib/pricing/lessonDuration";
 
 export const runtime = "nodejs";
 
@@ -252,6 +253,13 @@ export async function POST(req: Request) {
       if (usedErr) throw usedErr;
       if ((usedCount ?? 0) > 0) {
         return NextResponse.json({ error: "Intro session already used." }, { status: 409 });
+      }
+    }
+
+    if (lessonType !== "intro") {
+      const rawDur = b.duration_minutes;
+      if (rawDur != null && rawDur !== "" && !isValidLessonDurationMinutes(rawDur)) {
+        return NextResponse.json({ error: "Durée de cours invalide." }, { status: 400 });
       }
     }
 

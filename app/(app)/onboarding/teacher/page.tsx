@@ -15,6 +15,12 @@ import { TeacherPayoutPreview } from "@/components/teacher/TeacherPayoutPreview"
 import { ProfileAiAssistant } from "@/components/teacher/ProfileAiAssistant";
 import { MIN_LESSON_PRICE_DOLLARS } from "@/lib/pricing/constants";
 import { validateTeacherLessonOffers } from "@/lib/pricing/lessonOffer";
+import {
+  DEFAULT_LESSON_DURATION_MINUTES,
+  LESSON_DURATION_OPTIONS,
+  formatLessonDurationLabel,
+  normalizeLessonDurationMinutes,
+} from "@/lib/pricing/lessonDuration";
 
 /**
  * Teacher Launch Center
@@ -124,6 +130,9 @@ export default function TeacherOnboardingPage() {
   const [pricePerLesson, setPricePerLesson] = useState<string>("");
   const [homeRadiusKm, setHomeRadiusKm] = useState<string>("25");
   const [availability, setAvailability] = useState<string[]>([]);
+  const [defaultLessonDurationMinutes, setDefaultLessonDurationMinutes] = useState<number>(
+    DEFAULT_LESSON_DURATION_MINUTES,
+  );
   const [teacherPlan, setTeacherPlan] = useState<string | null>(null);
   const [loyaltyTier, setLoyaltyTier] = useState<string | null>(null);
   const [annualVolumeCents, setAnnualVolumeCents] = useState(0);
@@ -326,6 +335,9 @@ export default function TeacherOnboardingPage() {
         if (typeof d.pricePerLesson === "string") setPricePerLesson(d.pricePerLesson);
         if (typeof d.homeRadiusKm === "string") setHomeRadiusKm(d.homeRadiusKm);
         if (Array.isArray(d.availability)) setAvailability(d.availability as string[]);
+        if (typeof d.defaultLessonDurationMinutes === "number") {
+          setDefaultLessonDurationMinutes(normalizeLessonDurationMinutes(d.defaultLessonDurationMinutes));
+        }
         if (typeof d.addressValue === "string") setAddressValue(d.addressValue);
         if (typeof d.step === "number" && d.step >= 1 && d.step <= 4) setStep(d.step as StepId);
         if (typeof d.aiBioNotes === "string") setAiBioNotes(d.aiBioNotes);
@@ -359,6 +371,7 @@ export default function TeacherOnboardingPage() {
         pricePerLesson,
         homeRadiusKm,
         availability,
+        defaultLessonDurationMinutes,
         addressValue,
         step,
         aiBioNotes,
@@ -383,6 +396,7 @@ export default function TeacherOnboardingPage() {
     pricePerLesson,
     homeRadiusKm,
     availability,
+    defaultLessonDurationMinutes,
     addressValue,
     step,
     aiBioNotes,
@@ -521,6 +535,7 @@ export default function TeacherOnboardingPage() {
 
       updates.price_per_lesson = Number(pricePerLesson) || 0;
       updates.availability = availability;
+      updates.default_lesson_duration_minutes = normalizeLessonDurationMinutes(defaultLessonDurationMinutes);
       updates.location = nextLocation;
 
       // Home lessons fields (optional columns exist in types).
@@ -968,6 +983,27 @@ export default function TeacherOnboardingPage() {
                     />
                   </label>
                 ) : null}
+
+                <label className="block max-w-sm">
+                  <span className="block text-xs font-bold uppercase tracking-widest text-[var(--p-text-subtle)]">
+                    {t("lessonDurationLabel")}
+                  </span>
+                  <select
+                    value={defaultLessonDurationMinutes}
+                    onChange={(e) => setDefaultLessonDurationMinutes(Number(e.target.value))}
+                    className="mt-2 w-full h-12 rounded-2xl border border-[var(--p-border-light)] px-4 text-sm font-semibold"
+                    data-testid="teacher-onboarding-lesson-duration-select"
+                  >
+                    {LESSON_DURATION_OPTIONS.map((minutes) => (
+                      <option key={minutes} value={minutes}>
+                        {formatLessonDurationLabel(minutes, t)}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="mt-2 text-xs leading-relaxed text-[var(--p-text-subtle)]">
+                    {t("lessonDurationDescription")}
+                  </p>
+                </label>
 
                 <div className="rounded-2xl border border-[var(--p-border-light)] bg-[var(--color-background-secondary)] p-4 sm:p-5 overflow-x-auto">
                   <div className="min-w-[560px] grid grid-cols-[100px_repeat(3,1fr)] gap-2">

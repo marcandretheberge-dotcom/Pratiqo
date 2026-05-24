@@ -2103,5 +2103,15 @@
   "teacherProfileMgmtDisciplinesSaveBtn": "Guardar formatos",
   "teacherProfileMgmtTrustDesc": "Pasos opcionales que ayudan a los estudiantes a reservar con más confianza.",
   "teacherProfileMgmtPaymentsDesc": "Conecta Stripe para recibir pagos a través de Pratiqo.",
-  "teacherProfileMgmtPaymentsCta": "Configurar pagos"
+  "teacherProfileMgmtPaymentsCta": "Configurar pagos",
+  "lessonDurationTitle": "Duración habitual de las clases",
+  "lessonDurationDescription": "Elige la duración usada para generar tus franjas de reserva.",
+  "lessonDurationLabel": "Duración de la clase",
+  "lessonDurationSummary": "Duración habitual: {duration}.",
+  "editScheduleAndDuration": "Editar horario y duración",
+  "invalidLessonDuration": "Duración de clase no válida (30 min a 3 h, en pasos de 15 min).",
+  "lessonDurationOneHour": "1 h",
+  "lessonDurationHours": "{hours} h",
+  "lessonDurationHoursMinutes": "{hours} h {minutes}",
+  "lessonDurationMinutesShort": "{minutes} min"
 }
