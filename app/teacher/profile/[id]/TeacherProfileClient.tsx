@@ -109,7 +109,11 @@ export default function TeacherProfileClient({
       }
       const base = teacherRowToTeacher(data);
       const discMap = await fetchTeacherDisciplinesMap(supabase, [id]).catch(() => new Map());
-      setTeacher(mergeTeachersWithDisciplines([base], discMap)[0] ?? base);
+      const merged = mergeTeachersWithDisciplines([base], discMap)[0] ?? base;
+      setTeacher((current) => ({
+        ...merged,
+        imageUrl: merged.imageUrl || current?.imageUrl || serverTeacherRef.current?.imageUrl || "",
+      }));
     };
 
     if (!serverTeacherRef.current) {
