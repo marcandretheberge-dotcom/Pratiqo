@@ -20,6 +20,7 @@ import { SITE_URL } from "@/lib/seo/site";
 import { resolveEmailLocaleForUser } from "@/lib/email/locale";
 import { minimumLessonPriceErrorMessage } from "@/lib/pricing/messages";
 import { validateMinimumLessonPrice } from "@/lib/pricing/validateMinimumLessonPrice";
+import { computeBookingChargeCents } from "@/lib/pricing/bookingCharge";
 
 export const runtime = "nodejs";
 
@@ -42,6 +43,9 @@ type TeacherRow = {
   home_lesson_enabled?: boolean | null;
   home_lesson_price?: number | string | null;
   intro_session_enabled?: boolean | null;
+  intro_session_price_cents?: number | string | null;
+  intro_session_duration_minutes?: number | string | null;
+  intro_session_discount_percent?: number | string | null;
 };
 
 type BookingRow = {
@@ -50,20 +54,8 @@ type BookingRow = {
   student_address?: string | null;
   lesson_type?: string | null;
   learner_profile_id?: string | null;
+  duration_minutes?: number | string | null;
 };
-
-/** Hourly amount in CAD cents from `teachers.price_per_lesson` (stored as main-currency dollars). */
-function hourlyRateCentsFromTeacher(teacher: TeacherRow): number {
-  const dollars = Number(teacher.price_per_lesson);
-  if (!Number.isFinite(dollars) || dollars <= 0) return 0;
-  return Math.round(dollars * 100);
-}
-
-function homeRateCentsFromTeacher(teacher: TeacherRow): number {
-  const dollars = Number(teacher.home_lesson_price);
-  if (!Number.isFinite(dollars) || dollars <= 0) return 0;
-  return Math.round(dollars * 100);
-}
 
 export async function POST(req: Request) {
   try {
@@ -169,7 +161,7 @@ export async function POST(req: Request) {
     const { data: teacher, error: tErr } = await admin
       .from("teachers")
       .select(
-        "id, user_id, name, price_per_lesson, home_lesson_enabled, home_lesson_price, intro_session_enabled, booking_buffer_before_minutes, booking_buffer_after_minutes",
+        "id, user_id, name, price_per_lesson, home_lesson_enabled, home_lesson_price, intro_session_enabled, intro_session_price_cents, intro_session_duration_minutes, intro_session_discount_percent, booking_buffer_before_minutes, booking_buffer_after_minutes",
       )
       .eq("id", booking.teacher_id)
       .maybeSingle();
@@ -263,17 +255,14 @@ export async function POST(req: Request) {
       }
     }
 
-    let unitAmountCents = 0;
-    const bookingPriceDollars = Number(b.price);
-    if (Number.isFinite(bookingPriceDollars) && bookingPriceDollars > 0) {
-      unitAmountCents = Math.round(bookingPriceDollars * 100);
-    } else if (teachingMode === "domicile") {
-      if (!typed.home_lesson_enabled) {
-        return NextResponse.json({ error: "Cours à domicile non disponible pour ce professeur." }, { status: 400 });
-      }
-      unitAmountCents = homeRateCentsFromTeacher(typed);
-    } else {
-      unitAmountCents = hourlyRateCentsFromTeacher(typed);
+    let unitAmountCents = computeBookingChargeCents(typed, {
+      lesson_type: lessonType,
+      teaching_mode: teachingMode,
+      duration_minutes: b.duration_minutes,
+    });
+
+    if (unitAmountCents <= 0) {
+      return NextResponse.json({ error: "Montant de cours invalide pour ce professeur." }, { status: 400 });
     }
 
     if (teachingMode === "domicile") {
