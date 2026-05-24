@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import type { Discipline } from "@/types";
 import { cn } from "@/lib/utils";
@@ -41,6 +41,7 @@ export function TeacherAvatar({
 }) {
   const { t } = useLocale();
   const [imageFailed, setImageFailed] = useState(false);
+  const [useRawFallback, setUseRawFallback] = useState(false);
   const url = typeof imageUrl === "string" ? imageUrl.trim() : "";
   const optimizedUrl = getTeacherImageUrl(url, {
     width: Math.max(96, size * 2),
@@ -48,7 +49,13 @@ export function TeacherAvatar({
     quality: 75,
     format: "webp",
   });
+  const displayUrl = useRawFallback || optimizedUrl === url ? url : optimizedUrl;
   const initials = initialsFor(name);
+
+  useEffect(() => {
+    setImageFailed(false);
+    setUseRawFallback(false);
+  }, [url]);
 
   return (
     <div
@@ -62,15 +69,21 @@ export function TeacherAvatar({
     >
       {url && !imageFailed ? (
         <Image
-          src={optimizedUrl}
+          src={displayUrl}
           alt={t("imageAltTeacherProfile").replace("{name}", name)}
           width={size}
           height={size}
           sizes={`${size}px`}
           loading="lazy"
           className="h-full w-full object-cover"
-          unoptimized={shouldUseUnoptimizedImage(optimizedUrl)}
-          onError={() => setImageFailed(true)}
+          unoptimized={shouldUseUnoptimizedImage(displayUrl)}
+          onError={() => {
+            if (!useRawFallback && url && optimizedUrl !== url) {
+              setUseRawFallback(true);
+              return;
+            }
+            setImageFailed(true);
+          }}
         />
       ) : (
         <span aria-label={name}>{initials}</span>

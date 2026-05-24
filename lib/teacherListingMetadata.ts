@@ -1,5 +1,5 @@
 import type { Teacher } from "@/types";
-import { resolveTeacherPublicPhoto } from "@/lib/teacherPhoto";
+import { normalizeTeacherImageUrl, resolveTeacherPublicPhoto } from "@/lib/teacherPhoto";
 
 export type TeacherPlansApiPayload = {
   plans?: Record<string, string>;
@@ -21,9 +21,13 @@ export function applyTeacherListingMetadata(
 
   return teachers
     .filter((teacher) => !eligible || eligible.has(teacher.id))
-    .map((teacher) => ({
-      ...teacher,
-      imageUrl: resolveTeacherPublicPhoto(photos[teacher.id], teacher.imageUrl),
-      profilePlan: plans[teacher.id] ?? teacher.profilePlan ?? "free",
-    }));
+    .map((teacher) => {
+      const baseImageUrl = normalizeTeacherImageUrl(teacher);
+
+      return {
+        ...teacher,
+        imageUrl: resolveTeacherPublicPhoto(photos[teacher.id], baseImageUrl),
+        profilePlan: plans[teacher.id] ?? teacher.profilePlan ?? "free",
+      };
+    });
 }

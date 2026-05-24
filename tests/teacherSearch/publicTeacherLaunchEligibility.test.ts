@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { resolveTeacherPublicPhoto, isPublicAvatarPhotoUrl } from "../../lib/teacherPhoto";
+import { resolveTeacherPublicPhoto, isPublicAvatarPhotoUrl, normalizeTeacherImageUrl } from "../../lib/teacherPhoto";
 import { applyTeacherListingMetadata } from "../../lib/teacherListingMetadata";
+import { getTeacherImageUrl } from "../../lib/images";
 import { isLaunchEligibleTeacherRow, teacherRowToTeacher, type TeacherRow } from "../../lib/teacherMapper";
 import type { Teacher } from "../../types";
 
@@ -17,6 +18,8 @@ function test(name: string, fn: () => void): void {
 
 const REAL_TEACHER_ID = "afe6eab4-f40d-4d84-add9-8e061184ef6f";
 const REAL_USER_ID = "0bbed16d-e677-47b3-9c87-03fca0109704";
+const REAL_AVATAR_URL =
+  "https://jwlbwmxoradmbuvqfkhe.supabase.co/storage/v1/object/public/avatars/0bbed16d-e677-47b3-9c87-03fca0109704/1779594944501-20240220_183240.jpg";
 
 function teacherRow(overrides: Partial<TeacherRow> = {}): TeacherRow {
   return {
@@ -93,6 +96,71 @@ test("teacherRowToTeacher maps profile_photo_url before image_url", () => {
   assert.equal(teacher.imageUrl, "https://cdn.example.com/uploaded.webp");
 });
 
+test("student search card passes teacher.imageUrl into TeacherAvatar", () => {
+  const src = readFileSync("app/(app)/student/search/page.tsx", "utf8");
+  assert.match(src, /TeacherAvatar[\s\S]*imageUrl=\{teacher\.imageUrl\}/);
+});
+
+test("student search detail modal passes teacher.imageUrl into TeacherAvatar", () => {
+  const src = readFileSync("components/TeacherProfile.tsx", "utf8");
+  assert.match(src, /TeacherAvatar[\s\S]*imageUrl=\{teacher\.imageUrl\}/);
+});
+
+test("getTeacherImageUrl keeps avatars bucket on object/public (no render rewrite)", () => {
+  const optimized = getTeacherImageUrl(REAL_AVATAR_URL, { width: 128, height: 128, format: "webp" });
+  assert.equal(optimized, REAL_AVATAR_URL);
+  assert.doesNotMatch(optimized, /render\/image/);
+});
+
+test("valid teacher.imageUrl survives applyTeacherListingMetadata", () => {
+  const merged = applyTeacherListingMetadata([teacherEntity({ imageUrl: REAL_AVATAR_URL })], {
+    photos: {},
+    plans: { [REAL_TEACHER_ID]: "free" },
+    eligibleTeacherIds: [REAL_TEACHER_ID],
+  });
+  assert.equal(merged[0]?.imageUrl, REAL_AVATAR_URL);
+});
+
+test("null/empty plans photo does not erase teacher.imageUrl", () => {
+  const merged = applyTeacherListingMetadata([teacherEntity({ imageUrl: REAL_AVATAR_URL })], {
+    photos: { [REAL_TEACHER_ID]: "" },
+    eligibleTeacherIds: [REAL_TEACHER_ID],
+  });
+  assert.equal(merged[0]?.imageUrl, REAL_AVATAR_URL);
+});
+
+test("normalizeTeacherImageUrl prefers profile_photo_url over imageUrl alias fields", () => {
+  assert.equal(
+    normalizeTeacherImageUrl({
+      imageUrl: "https://cdn.example.com/stale.webp",
+      profile_photo_url: REAL_AVATAR_URL,
+    }),
+    REAL_AVATAR_URL,
+  );
+});
+
+test("TeacherAvatar falls back to initials only when imageUrl is empty", () => {
+  const src = readFileSync("components/TeacherAvatar.tsx", "utf8");
+  assert.match(src, /url && !imageFailed/);
+  assert.match(src, /initialsFor\(name\)/);
+  assert.match(src, /setImageFailed\(true\)/);
+});
+
+test("public profile preview still uses raw image_url or photoUrl (direct route)", () => {
+  const src = readFileSync("components/teacher/TeacherPublicProfilePreview.tsx", "utf8");
+  assert.match(src, /teacher\?\.image_url \|\| photoUrl/);
+});
+
+test("founder teacher row maps production avatar URL through teacherRowToTeacher", () => {
+  const teacher = teacherRowToTeacher(
+    teacherRow({
+      profile_photo_url: REAL_AVATAR_URL,
+      image_url: REAL_AVATAR_URL,
+    }),
+  );
+  assert.equal(teacher.imageUrl, REAL_AVATAR_URL);
+});
+  
 test("applyTeacherListingMetadata does not replace a profile photo with an empty plans payload", () => {
   const merged = applyTeacherListingMetadata([teacherEntity()], {
     photos: { [REAL_TEACHER_ID]: null },
