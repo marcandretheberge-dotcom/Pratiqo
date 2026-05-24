@@ -11,8 +11,9 @@ import { getEnabledDisciplines } from "../lib/disciplines";
 import { isEnabled } from "../lib/features";
 import { getSupabaseClient } from "../lib/supabase";
 import { fetchTeacherDisciplinesMap, mergeTeachersWithDisciplines } from "../lib/teacherDisciplines";
-import { teacherRowToTeacher, type TeacherRow } from "../lib/teacherMapper";
+import { isLaunchEligibleTeacherRow, teacherRowToTeacher, type TeacherRow } from "../lib/teacherMapper";
 import { TEACHERS_LIST_SELECT, TEACHERS_LIST_SELECT_LEGACY_PUBLIC, TEACHERS_PUBLIC_TABLE } from "../lib/supabase/queries";
+import { applyTeacherListingMetadata } from "@/lib/teacherListingMetadata";
 import { useLocale } from "../lib/locale-context";
 import { useAuth } from "../components/AuthProvider";
 import type { BookingInitialLessonKind } from "../components/BookingModal";
@@ -185,9 +186,9 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
         if (!ids) { setTeachers(list); return; }
         try {
           const pr = await fetch(`/api/teachers/plans?ids=${encodeURIComponent(ids)}`);
-          const body = (await pr.json()) as { plans?: Record<string, string> };
-          const plans = body.plans ?? {};
-          setTeachers(list.map((t) => ({ ...t, profilePlan: plans[t.id] ?? "free" })));
+          if (!pr.ok) throw new Error("Teacher public metadata lookup failed");
+          const body = (await pr.json()) as Parameters<typeof applyTeacherListingMetadata>[1];
+          setTeachers(applyTeacherListingMetadata(list, body));
         } catch {
           setTeachers(list.map((t) => ({ ...t, profilePlan: "free" })));
         }
@@ -216,7 +217,9 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
         setLoadingTeachers(false);
         return;
       }
-      const mapped = (data as unknown as TeacherRow[]).map((r) => teacherRowToTeacher(r));
+      const mapped = (data as unknown as TeacherRow[])
+        .filter((r) => isLaunchEligibleTeacherRow(r))
+        .map((r) => teacherRowToTeacher(r));
       const discMap = await fetchTeacherDisciplinesMap(supabase, mapped.map((t) => t.id));
       await mergePlans(mergeTeachersWithDisciplines(mapped, discMap));
       setLoadingTeachers(false);

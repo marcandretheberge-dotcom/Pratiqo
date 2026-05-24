@@ -27,7 +27,7 @@ import {
   teacherMatchesExploreCategory,
   teacherMatchesExploreSearch,
 } from "../lib/teacherDisciplines";
-import { teacherRowToTeacher, type TeacherRow } from "../lib/teacherMapper";
+import { isLaunchEligibleTeacherRow, teacherRowToTeacher, type TeacherRow } from "../lib/teacherMapper";
 import { publicFirstNameWithInitial } from "@/lib/identity/displayName";
 import { haversineDistance } from "../lib/geo";
 import { spotsRemaining, type GroupSessionRow } from "../lib/groupSessions";
@@ -37,6 +37,7 @@ import { useRouter } from "next/navigation";
 import { VerificationBadge } from "./VerificationBadge";
 import { VerifiedBadge } from "./VerifiedBadge";
 import { useLocale } from "@/lib/locale-context";
+import { applyTeacherListingMetadata } from "@/lib/teacherListingMetadata";
 import { TEACHERS_LIST_SELECT, TEACHERS_PUBLIC_TABLE } from "@/lib/supabase/queries";
 import { TeacherAvatar } from "@/components/TeacherAvatar";
 import { teacherPrefCompareStudents, type StudentLocationPrefs } from "@/lib/studentLocationSearch";
@@ -190,9 +191,9 @@ export function Explore({
         }
         try {
           const pr = await fetch(`/api/teachers/plans?ids=${encodeURIComponent(ids)}`);
-          const body = (await pr.json()) as { plans?: Record<string, string> };
-          const plans = body.plans ?? {};
-          setTeachers(list.map((t) => ({ ...t, profilePlan: plans[t.id] ?? "free" })));
+          if (!pr.ok) throw new Error("Teacher public metadata lookup failed");
+          const body = (await pr.json()) as Parameters<typeof applyTeacherListingMetadata>[1];
+          setTeachers(applyTeacherListingMetadata(list, body));
         } catch {
           setTeachers(list.map((t) => ({ ...t, profilePlan: "free" })));
         }
@@ -212,7 +213,9 @@ export function Explore({
         setLoading(false);
         return;
       }
-      const mapped = data.map((r) => teacherRowToTeacher(r as TeacherRow));
+      const mapped = data
+        .filter((r) => isLaunchEligibleTeacherRow(r as TeacherRow))
+        .map((r) => teacherRowToTeacher(r as TeacherRow));
       const discMap = await fetchTeacherDisciplinesMap(
         supabase,
         mapped.map((t) => t.id),

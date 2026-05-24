@@ -10,7 +10,7 @@ import { useLocale } from "../../../../lib/locale-context";
 import { cn } from "../../../../lib/utils";
 import { getSupabaseClient } from "../../../../lib/supabase";
 import { fetchTeacherDisciplinesMap, mergeTeachersWithDisciplines } from "../../../../lib/teacherDisciplines";
-import { teacherRowToTeacher, type TeacherRow } from "../../../../lib/teacherMapper";
+import { isLaunchEligibleTeacherRow, teacherRowToTeacher, type TeacherRow } from "../../../../lib/teacherMapper";
 import { TEACHERS_LIST_SELECT, TEACHERS_PUBLIC_TABLE } from "../../../../lib/supabase/queries";
 import { TeacherAvatar } from "../../../../components/TeacherAvatar";
 import { publicFirstNameWithInitial } from "@/lib/identity/displayName";
@@ -22,6 +22,7 @@ import { applyRadiusFilter, buildTeacherSearchRows, filterTeacherPool, sortRows 
 import { TeacherSearchAdvancedPanel, type AdvancedFilterValues } from "../../../../components/TeacherSearchAdvancedPanel";
 import type { TeacherSearchFormat } from "../../../../lib/teacherSearchCriteria";
 import { logSearchEvent } from "../../../../lib/searchAnalytics";
+import { applyTeacherListingMetadata } from "@/lib/teacherListingMetadata";
 import { LandingSearchHero } from "@/components/marketing/LandingSearchHero";
 import type { LandingFormatFilter } from "@/lib/landingTeacherFilter";
 import { PriceDisplay } from "@/components/PriceDisplay";
@@ -144,9 +145,9 @@ export default function StudentSearchPage() {
         }
         try {
           const pr = await fetch(`/api/teachers/plans?ids=${encodeURIComponent(ids)}`);
-          const body = (await pr.json()) as { plans?: Record<string, string> };
-          const plans = body.plans ?? {};
-          setTeachers(list.map((x) => ({ ...x, profilePlan: plans[x.id] ?? "free" })));
+          if (!pr.ok) throw new Error("Teacher public metadata lookup failed");
+          const body = (await pr.json()) as Parameters<typeof applyTeacherListingMetadata>[1];
+          setTeachers(applyTeacherListingMetadata(list, body));
         } catch {
           setTeachers(list.map((x) => ({ ...x, profilePlan: "free" })));
         }
@@ -170,7 +171,9 @@ export default function StudentSearchPage() {
         return;
       }
 
-      const mapped = data.map((r) => teacherRowToTeacher(r as TeacherRow));
+      const mapped = data
+        .filter((r) => isLaunchEligibleTeacherRow(r as TeacherRow))
+        .map((r) => teacherRowToTeacher(r as TeacherRow));
       const discMap = await fetchTeacherDisciplinesMap(
         supabase,
         mapped.map((x) => x.id),
