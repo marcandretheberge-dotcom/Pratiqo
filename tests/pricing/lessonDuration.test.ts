@@ -41,6 +41,7 @@ test("normalizeLessonDurationMinutes defaults invalid values to 60", () => {
 
 test("migration 072: existing teachers default to 60 minutes", () => {
   const sql = readFileSync("supabase/migrations/072_teacher_default_lesson_duration.sql", "utf8");
+
   assert.match(sql, /default_lesson_duration_minutes integer NOT NULL DEFAULT 60/i);
   assert.match(sql, /default_lesson_duration_minutes >= 30/);
   assert.match(sql, /default_lesson_duration_minutes <= 180/);
@@ -49,12 +50,22 @@ test("migration 072: existing teachers default to 60 minutes", () => {
 
 test("computeBookingChargeCents returns 0 for invalid regular lesson duration", () => {
   const teacher = { price_per_lesson: 60 };
+
   assert.equal(
-    computeBookingChargeCents(teacher, { lesson_type: "regular", teaching_mode: "person", duration_minutes: 50 }),
+    computeBookingChargeCents(teacher, {
+      lesson_type: "regular",
+      teaching_mode: "person",
+      duration_minutes: 50,
+    }),
     0,
   );
+
   assert.equal(
-    computeBookingChargeCents(teacher, { lesson_type: "regular", teaching_mode: "person", duration_minutes: 200 }),
+    computeBookingChargeCents(teacher, {
+      lesson_type: "regular",
+      teaching_mode: "person",
+      duration_minutes: 200,
+    }),
     0,
   );
 });
@@ -63,7 +74,11 @@ test("computeBookingChargeCents applies duration multiplier for standard studio 
   assert.equal(
     computeBookingChargeCents(
       { price_per_lesson: 40 },
-      { lesson_type: "regular", teaching_mode: "online", duration_minutes: 120 },
+      {
+        lesson_type: "regular",
+        teaching_mode: "online",
+        duration_minutes: 120,
+      },
     ),
     8000,
   );
@@ -71,6 +86,7 @@ test("computeBookingChargeCents applies duration multiplier for standard studio 
 
 test("checkout route rejects invalid duration_minutes before charging", () => {
   const src = readFileSync("app/api/stripe/checkout/route.ts", "utf8");
+
   assert.match(src, /isValidLessonDurationMinutes/);
   assert.match(src, /Durée de cours invalide/);
   assert.match(src, /computeBookingChargeCents\(/);
@@ -98,8 +114,16 @@ test("teacherMapper defaults missing default_lesson_duration_minutes to 60", () 
     languages: [],
     levels: [],
   };
-  const withNull = teacherRowToTeacher({ ...baseRow, default_lesson_duration_minutes: null });
-  const withMissing = teacherRowToTeacher({ ...baseRow });
+
+  const withNull = teacherRowToTeacher({
+    ...baseRow,
+    default_lesson_duration_minutes: null,
+  });
+
+  const withMissing = teacherRowToTeacher({
+    ...baseRow,
+  });
+
   assert.equal(withNull.defaultLessonDurationMinutes, 60);
   assert.equal(withMissing.defaultLessonDurationMinutes, 60);
 });
@@ -107,6 +131,7 @@ test("teacherMapper defaults missing default_lesson_duration_minutes to 60", () 
 test("i18n: duration keys exist in fr / en / es", () => {
   for (const path of ["lib/i18n/locales/fr.json", "lib/i18n/locales/en.json", "lib/i18n/locales/es.json"]) {
     const dict = JSON.parse(readFileSync(path, "utf8")) as Record<string, string>;
+
     for (const key of [
       "lessonDurationTitle",
       "lessonDurationDescription",
