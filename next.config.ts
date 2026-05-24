@@ -68,6 +68,15 @@ const nextConfig: NextConfig = {
     forceSwcTransforms: true,
     optimizePackageImports: ["lucide-react"],
   },
+  async redirects() {
+    return [
+      {
+        source: "/devenir-tuteur",
+        destination: "/devenir-professeur?vertical=academique",
+        permanent: false,
+      },
+    ];
+  },
   async headers() {
     // Permissions-Policy: Pratiqo does not currently request camera, microphone,
     // geolocation, payment, USB, or other privileged surfaces from the browser
