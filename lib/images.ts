@@ -17,6 +17,12 @@ export function getTeacherImageUrl(url: string | null | undefined, options: Teac
 
     const objectPath = parsed.pathname.slice(index + marker.length);
     if (!objectPath) return raw;
+    // Avatars bucket: keep the stable object/public URL. Supabase render/image
+    // requires optional image transformations and 404s on many projects — search
+    // cards were falling back to initials while raw <img> on profile preview worked.
+    if (objectPath.startsWith("avatars/")) {
+      return raw;
+    }
     parsed.pathname = `${parsed.pathname.slice(0, index)}/storage/v1/render/image/public/${objectPath}`;
     if (options.width) parsed.searchParams.set("width", String(options.width));
     if (options.height) parsed.searchParams.set("height", String(options.height));

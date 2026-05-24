@@ -1,5 +1,5 @@
 import type { Teacher } from "../types";
-import { resolveTeacherPublicPhoto } from "@/lib/teacherPhoto";
+import { resolveTeacherPublicPhoto, readTeacherPhotoFromRecord } from "@/lib/teacherPhoto";
 
 /** One row from `teacher_disciplines` (same teacher_id may appear in ordered list). */
 export type TeacherDisciplineRow = {
@@ -89,7 +89,10 @@ export function teacherRowToTeacher(row: TeacherRow): Teacher {
     pricePerLesson: Number(row.price_per_lesson),
     monthlySubscription: row.monthly_subscription != null ? Number(row.monthly_subscription) : undefined,
     bio: row.bio,
-    imageUrl: resolveTeacherPublicPhoto(row.profile_photo_url, row.image_url),
+    imageUrl: resolveTeacherPublicPhoto(
+      row.profile_photo_url,
+      readTeacherPhotoFromRecord(row as unknown as Record<string, unknown>) || row.image_url,
+    ),
     availability: Array.isArray(row.availability) ? (row.availability as string[]) : [],
     location: {
       lat: Number(latCandidate ?? 0),
