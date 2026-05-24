@@ -1,4 +1,5 @@
 import type { Teacher } from "../types";
+import { resolveTeacherPublicPhoto } from "@/lib/teacherPhoto";
 
 /** One row from `teacher_disciplines` (same teacher_id may appear in ordered list). */
 export type TeacherDisciplineRow = {
@@ -19,6 +20,7 @@ export type TeacherRow = {
   monthly_subscription: number | null;
   bio: string;
   image_url: string | null;
+  profile_photo_url?: string | null;
   availability: unknown;
   location: unknown;
   is_verified: boolean;
@@ -54,6 +56,12 @@ export type TeacherRow = {
   cv_verification_status?: string | null;
 };
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function isLaunchEligibleTeacherRow(row: Pick<TeacherRow, "id" | "user_id">): boolean {
+  return UUID_RE.test(row.id) && typeof row.user_id === "string" && UUID_RE.test(row.user_id);
+}
+
 export function teacherRowToTeacher(row: TeacherRow): Teacher {
   const loc = typeof row.location === "object" && row.location !== null ? (row.location as Record<string, unknown>) : {};
   const publicLoc = typeof loc.public === "object" && loc.public !== null ? (loc.public as Record<string, unknown>) : null;
@@ -81,7 +89,7 @@ export function teacherRowToTeacher(row: TeacherRow): Teacher {
     pricePerLesson: Number(row.price_per_lesson),
     monthlySubscription: row.monthly_subscription != null ? Number(row.monthly_subscription) : undefined,
     bio: row.bio,
-    imageUrl: row.image_url ?? "",
+    imageUrl: resolveTeacherPublicPhoto(row.profile_photo_url, row.image_url),
     availability: Array.isArray(row.availability) ? (row.availability as string[]) : [],
     location: {
       lat: Number(latCandidate ?? 0),

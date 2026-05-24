@@ -17,6 +17,7 @@ import {
   getSchemaEntityType,
 } from "@/lib/constants/vocabulary";
 import { usdToUyu } from "@/lib/geoLocale";
+import { resolveTeacherPublicPhoto } from "@/lib/teacherPhoto";
 import { sanitizePublicTeacherBio } from "@/lib/teacherProfile/sanitizePublicBio";
 import { publicFirstNameWithInitial } from "@/lib/identity/displayName";
 import TeacherProfileClient from "./TeacherProfileClient";
@@ -75,16 +76,44 @@ async function selectPublicTeacherRow(
   return null;
 }
 
+async function withSafeProfilePhoto(row: TeacherRow): Promise<TeacherRow | null> {
+  if (!row.user_id) return null;
+  const { data } = await getSupabaseAdmin()
+    .from("profiles")
+    .select("photo_url, is_active, deactivated_at, deleted_at, anonymized_at")
+    .eq("id", row.user_id)
+    .maybeSingle();
+  const profile = data as {
+    photo_url?: string | null;
+    is_active?: boolean | null;
+    deactivated_at?: string | null;
+    deleted_at?: string | null;
+    anonymized_at?: string | null;
+  } | null;
+  if (
+    !profile ||
+    profile.is_active === false ||
+    profile.deactivated_at ||
+    profile.deleted_at ||
+    profile.anonymized_at
+  ) {
+    return null;
+  }
+  const photoUrl = typeof profile.photo_url === "string" && profile.photo_url.trim() ? profile.photo_url.trim() : null;
+  return { ...row, image_url: resolveTeacherPublicPhoto(photoUrl, row.image_url) };
+}
+
 /** Lookup by teachers.id, then teachers.user_id when route param is a UUID. */
 const lookupPublicTeacherRowByRouteId = cache(async (routeId: string): Promise<TeacherRow | null> => {
   const trimmed = routeId.trim();
   if (!trimmed) return null;
 
   const byId = await selectPublicTeacherRow("id", trimmed);
-  if (byId) return byId;
+  if (byId) return withSafeProfilePhoto(byId);
 
   if (isUuidString(trimmed)) {
-    return await selectPublicTeacherRow("user_id", trimmed);
+    const byUserId = await selectPublicTeacherRow("user_id", trimmed);
+    return byUserId ? withSafeProfilePhoto(byUserId) : null;
   }
   return null;
 });
