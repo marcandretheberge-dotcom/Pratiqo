@@ -2113,5 +2113,9 @@
   "lessonDurationOneHour": "1 h",
   "lessonDurationHours": "{hours} h",
   "lessonDurationHoursMinutes": "{hours} h {minutes}",
-  "lessonDurationMinutesShort": "{minutes} min"
+  "lessonDurationMinutesShort": "{minutes} min",
+  "lessonDurationSaving": "Saving…",
+  "lessonDurationSaved": "Saved",
+  "lessonDurationSaveError": "Could not save duration. Try again.",
+  "lessonDurationAutosaveHelp": "This setting determines the duration offered to students when they book a standard lesson."
 }

@@ -143,6 +143,10 @@ test("i18n: duration keys exist in fr / en / es", () => {
       "lessonDurationHours",
       "lessonDurationHoursMinutes",
       "lessonDurationMinutesShort",
+      "lessonDurationSaving",
+      "lessonDurationSaved",
+      "lessonDurationSaveError",
+      "lessonDurationAutosaveHelp",
     ]) {
       assert.ok(dict[key]?.trim(), `${path} missing ${key}`);
     }

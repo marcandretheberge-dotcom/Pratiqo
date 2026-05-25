@@ -115,6 +115,8 @@ function TeacherScheduleInner() {
   const [bufferBefore, setBufferBefore] = useState<number>(0);
   const [bufferAfter, setBufferAfter] = useState<number>(0);
   const [defaultLessonDuration, setDefaultLessonDuration] = useState<number>(DEFAULT_LESSON_DURATION_MINUTES);
+  const [savedLessonDuration, setSavedLessonDuration] = useState<number>(DEFAULT_LESSON_DURATION_MINUTES);
+  const [durationSaveState, setDurationSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [weekAnchor, setWeekAnchor] = useState(() => startOfWeekMonday(new Date()));
   const [selectedDayIndex, setSelectedDayIndex] = useState(() => {
     const w = startOfWeekMonday(new Date());
@@ -184,11 +186,11 @@ function TeacherScheduleInner() {
     setTeachingMode(String((trow as { teaching_mode?: string })?.teaching_mode || "both"));
     setBufferBefore(clampBufferMinutes((trow as { booking_buffer_before_minutes?: number | null })?.booking_buffer_before_minutes));
     setBufferAfter(clampBufferMinutes((trow as { booking_buffer_after_minutes?: number | null })?.booking_buffer_after_minutes));
-    setDefaultLessonDuration(
-      normalizeLessonDurationMinutes(
-        (trow as { default_lesson_duration_minutes?: number | null })?.default_lesson_duration_minutes,
-      ),
+    const loadedDuration = normalizeLessonDurationMinutes(
+      (trow as { default_lesson_duration_minutes?: number | null })?.default_lesson_duration_minutes,
     );
+    setDefaultLessonDuration(loadedDuration);
+    setSavedLessonDuration(loadedDuration);
     if (!tid) {
       setBookings([]);
       setLoading(false);
@@ -281,6 +283,49 @@ function TeacherScheduleInner() {
     });
   };
 
+  const saveLessonDuration = useCallback(
+    async (nextRaw: number) => {
+      const next = normalizeLessonDurationMinutes(nextRaw);
+      if (next === savedLessonDuration) return;
+
+      const previous = savedLessonDuration;
+      setDefaultLessonDuration(next);
+      setDurationSaveState("saving");
+
+      try {
+        const supabase = getSupabaseClient();
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        const token = session?.access_token;
+        if (!token) throw new Error(t("lessonDurationSaveError"));
+
+        const res = await fetch("/api/teacher/lesson-duration", {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ defaultLessonDurationMinutes: next }),
+        });
+        const body = (await res.json().catch(() => ({}))) as {
+          defaultLessonDurationMinutes?: number;
+          error?: string;
+        };
+        if (!res.ok) throw new Error(body.error || t("lessonDurationSaveError"));
+
+        const saved = normalizeLessonDurationMinutes(body.defaultLessonDurationMinutes ?? next);
+        setSavedLessonDuration(saved);
+        setDefaultLessonDuration(saved);
+        setDurationSaveState("saved");
+      } catch {
+        setDefaultLessonDuration(previous);
+        setDurationSaveState("error");
+      }
+    },
+    [savedLessonDuration, t],
+  );
+
   const saveAll = async () => {
     if (!userId) return;
     setSaving(true);
@@ -292,7 +337,6 @@ function TeacherScheduleInner() {
         .update({
           availability,
           teaching_mode: teachingMode,
-          default_lesson_duration_minutes: normalizeLessonDurationMinutes(defaultLessonDuration),
           booking_buffer_before_minutes: clampBufferMinutes(bufferBefore),
           booking_buffer_after_minutes: clampBufferMinutes(bufferAfter),
         })
@@ -533,6 +577,7 @@ function TeacherScheduleInner() {
             <div>
               <p className="text-sm font-bold text-[#2C2C2A]">{t("lessonDurationTitle")}</p>
               <p className="mt-1 text-xs leading-5 text-slate-600">{t("lessonDurationDescription")}</p>
+              <p className="mt-1 text-xs leading-5 text-slate-500">{t("lessonDurationAutosaveHelp")}</p>
             </div>
             <label className="block max-w-xs">
               <span className="text-xs font-bold uppercase tracking-widest text-slate-600">
@@ -540,8 +585,9 @@ function TeacherScheduleInner() {
               </span>
               <select
                 value={defaultLessonDuration}
-                onChange={(e) => setDefaultLessonDuration(Number(e.target.value))}
-                className="mt-2 h-11 w-full rounded-xl border border-slate-200 px-3 text-sm font-semibold text-[#2C2C2A]"
+                onChange={(e) => void saveLessonDuration(Number(e.target.value))}
+                disabled={durationSaveState === "saving"}
+                className="mt-2 h-11 w-full rounded-xl border border-slate-200 px-3 text-sm font-semibold text-[#2C2C2A] disabled:opacity-60"
                 data-testid="teacher-schedule-lesson-duration-select"
               >
                 {LESSON_DURATION_OPTIONS.map((minutes) => (
@@ -551,6 +597,30 @@ function TeacherScheduleInner() {
                 ))}
               </select>
             </label>
+            {durationSaveState === "saving" ? (
+              <p
+                className="text-xs font-medium text-slate-600"
+                data-testid="teacher-schedule-lesson-duration-saving"
+              >
+                {t("lessonDurationSaving")}
+              </p>
+            ) : null}
+            {durationSaveState === "saved" ? (
+              <p
+                className="text-xs font-medium text-teal-700"
+                data-testid="teacher-schedule-lesson-duration-saved"
+              >
+                {t("lessonDurationSaved")}
+              </p>
+            ) : null}
+            {durationSaveState === "error" ? (
+              <p
+                className="text-xs font-medium text-red-700"
+                data-testid="teacher-schedule-lesson-duration-error"
+              >
+                {t("lessonDurationSaveError")}
+              </p>
+            ) : null}
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
             <div className="space-y-3">
