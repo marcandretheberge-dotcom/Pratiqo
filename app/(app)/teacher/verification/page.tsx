@@ -443,6 +443,13 @@ export default function TeacherProfileManagementPage() {
       .sort((a, b) => a.minSort - b.minSort);
   }, [discRows]);
 
+  const availabilityDescription = useMemo(() => {
+    const durationMinutes = normalizeLessonDurationMinutes(
+      teacherRow?.default_lesson_duration_minutes,
+    );
+    return `${t("teacherProfileMgmtAvailabilityDesc")} ${lessonDurationSummaryText(durationMinutes, t)}`;
+  }, [teacherRow?.default_lesson_duration_minutes, t]);
+
   const openAddDiscipline = () => {
     const enabled = getEnabledDisciplines();
     setDiscEditorMode("add");
@@ -785,11 +792,6 @@ export default function TeacherProfileManagementPage() {
 
   const availabilityState: VerificationStepState =
     (teacherRow.availability?.length ?? 0) > 0 ? { kind: "verified" } : { kind: "not_started" };
-
-  const availabilityDescription = useMemo(() => {
-    const durationMinutes = normalizeLessonDurationMinutes(teacherRow.default_lesson_duration_minutes);
-    return `${t("teacherProfileMgmtAvailabilityDesc")} ${lessonDurationSummaryText(durationMinutes, t)}`;
-  }, [teacherRow.default_lesson_duration_minutes, t]);
 
   const toggleCard = (key: string) => {
     setExpandedCard((prev) => (prev === key ? null : key));
