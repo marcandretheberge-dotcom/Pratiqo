@@ -2113,5 +2113,9 @@
   "lessonDurationOneHour": "1 h",
   "lessonDurationHours": "{hours} h",
   "lessonDurationHoursMinutes": "{hours} h {minutes}",
-  "lessonDurationMinutesShort": "{minutes} min"
+  "lessonDurationMinutesShort": "{minutes} min",
+  "lessonDurationSaving": "Enregistrement…",
+  "lessonDurationSaved": "Enregistré",
+  "lessonDurationSaveError": "Impossible d'enregistrer la durée. Réessaie.",
+  "lessonDurationAutosaveHelp": "Ce réglage détermine la durée proposée aux élèves lorsqu'ils réservent un cours standard."
 }
