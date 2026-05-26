@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import type { Teacher } from "../../../../types";
 import type { BookingInitialLessonKind } from "../../../../components/BookingModal";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Star, Users, Video } from "lucide-react";
+import { MapPin, Star, Users, Video } from "lucide-react";
 import { useLocale } from "../../../../lib/locale-context";
 import { cn } from "../../../../lib/utils";
 import { getSupabaseClient } from "../../../../lib/supabase";
@@ -18,6 +18,13 @@ import type { City } from "../../../../lib/cities";
 import type { MapBounds } from "../../../../components/SearchMapView";
 import { useAuth } from "../../../../components/AuthProvider";
 import type { StudentLocationPrefs } from "../../../../lib/studentLocationSearch";
+import {
+  formatApproxDistanceKm,
+  parseStoredStudentLocation,
+  studentLocationHasCoordinates,
+  studentLocationSummary,
+  type StudentSavedLocation,
+} from "@/lib/studentLocation";
 import { applyRadiusFilter, buildTeacherSearchRows, filterTeacherPool, sortRows } from "../../../../lib/teacherSearchEngine";
 import { TeacherSearchAdvancedPanel, type AdvancedFilterValues } from "../../../../components/TeacherSearchAdvancedPanel";
 import type { TeacherSearchFormat } from "../../../../lib/teacherSearchCriteria";
@@ -75,6 +82,11 @@ export default function StudentSearchPage() {
   const searchParams = useSearchParams();
   const { user } = useAuth();
   const [studentPrefs, setStudentPrefs] = useState<StudentLocationPrefs | null>(null);
+  const [studentLocation, setStudentLocation] = useState<StudentSavedLocation | null>(null);
+  const [locationEditing, setLocationEditing] = useState(false);
+  const [locationDraft, setLocationDraft] = useState("");
+  const [locationBusy, setLocationBusy] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [adv, setAdv] = useState<AdvancedFilterValues>({
     minRating: "",
@@ -100,13 +112,23 @@ export default function StudentSearchPage() {
         setStudentPrefs(null);
         return;
       }
-      const { data } = await supabase
-        .from("profiles")
-        .select("country_code, timezone, currency, city, region, preferred_learning_format")
-        .eq("id", user.id)
-        .maybeSingle();
+      // Saved location is sourced from the owner-only student_private_locations
+      // table (migration 073), never from profiles, so teacher-peer RLS can't
+      // reach it. Profile prefs stay on profiles where they're owner-readable.
+      const [{ data: prefsRow }, { data: locRow }] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("country_code, timezone, currency, city, region, preferred_learning_format")
+          .eq("id", user.id)
+          .maybeSingle(),
+        supabase
+          .from("student_private_locations")
+          .select("location")
+          .eq("user_id", user.id)
+          .maybeSingle(),
+      ]);
       if (!cancelled) {
-        const row = data as {
+        const row = prefsRow as {
           country_code?: string | null;
           timezone?: string | null;
           currency?: string | null;
@@ -114,6 +136,15 @@ export default function StudentSearchPage() {
           region?: string | null;
           preferred_learning_format?: string | null;
         } | null;
+        const parsedLocation = parseStoredStudentLocation(
+          (locRow as { location?: unknown } | null)?.location,
+        );
+        setStudentLocation(parsedLocation);
+        setLocationDraft(studentLocationSummary(parsedLocation));
+        if (studentLocationHasCoordinates(parsedLocation)) {
+          setGeo((current) => current ?? { lat: parsedLocation.lat, lng: parsedLocation.lng });
+          setSortMode((current) => (current === "relevance" ? "nearest" : current));
+        }
         setStudentPrefs(
           row
             ? {
@@ -123,6 +154,7 @@ export default function StudentSearchPage() {
                 city: row.city ?? null,
                 region: row.region ?? null,
                 preferred_learning_format: row.preferred_learning_format ?? null,
+                student_location: parsedLocation,
               }
             : null,
         );
@@ -195,6 +227,70 @@ export default function StudentSearchPage() {
       },
       () => {
         setGeoLoading(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
+    );
+  };
+
+  const saveStudentLocation = async (location: Partial<StudentSavedLocation> | null) => {
+    if (!user?.id) {
+      router.push(`/login?next=${encodeURIComponent("/student/search")}`);
+      return;
+    }
+    setLocationBusy(true);
+    setLocationError(null);
+    try {
+      const supabase = getSupabaseClient();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) throw new Error(t("bookingSessionExpired"));
+
+      const res = await fetch("/api/student/location", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(location ? { location } : { clear: true }),
+      });
+      const body = (await res.json().catch(() => ({}))) as {
+        location?: unknown;
+        error?: string;
+      };
+      if (!res.ok) throw new Error(body.error || t("studentLocationSaveError"));
+
+      const parsed = parseStoredStudentLocation(body.location ?? null);
+      setStudentLocation(parsed);
+      setLocationDraft(studentLocationSummary(parsed));
+      setStudentPrefs((current) => (current ? { ...current, student_location: parsed } : current));
+      if (studentLocationHasCoordinates(parsed)) {
+        setGeo({ lat: parsed.lat, lng: parsed.lng });
+        setSortMode("nearest");
+      }
+      setLocationEditing(false);
+    } catch (error) {
+      setLocationError(error instanceof Error ? error.message : t("studentLocationSaveError"));
+    } finally {
+      setLocationBusy(false);
+    }
+  };
+
+  const saveCurrentBrowserLocation = () => {
+    if (!("geolocation" in navigator)) return;
+    setLocationBusy(true);
+    setLocationError(null);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        setGeo(coords);
+        setSortMode("nearest");
+        void saveStudentLocation(coords);
+      },
+      () => {
+        setLocationBusy(false);
+        setLocationError(t("studentLocationSaveError"));
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
     );
@@ -337,6 +433,90 @@ export default function StudentSearchPage() {
 
         <div id="student-search-results" className="bg-[#F3FAF6] px-4 pb-20 pt-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-[1280px]">
+            <div className="mb-4 rounded-3xl border border-[#DCEAE3] bg-white p-4 shadow-[0_16px_40px_rgba(29,158,117,0.08)]">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <div className="flex gap-3">
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-teal-50 text-teal-700">
+                    <MapPin size={20} aria-hidden />
+                  </span>
+                  <div>
+                    <p className="text-sm font-bold text-[#2C2C2A]">{t("studentLocationSearchTitle")}</p>
+                    {studentLocation ? (
+                      <p className="mt-1 text-xs leading-relaxed text-[#6B6A65]">
+                        {t("studentLocationSearchAround").replace(
+                          "{location}",
+                          studentLocationSummary(studentLocation) || t("nearMe"),
+                        )}
+                      </p>
+                    ) : (
+                      <p className="mt-1 text-xs leading-relaxed text-[#6B6A65]">
+                        {t("studentLocationSearchDescription")}
+                      </p>
+                    )}
+                    <p className="mt-1 text-[11px] leading-relaxed text-[#6B6A65]">{t("studentLocationPrivateNotice")}</p>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                  {locationEditing ? (
+                    <label className="sr-only" htmlFor="student-location-address">
+                      {t("studentLocationAddAddress")}
+                    </label>
+                  ) : null}
+                  {locationEditing ? (
+                    <input
+                      id="student-location-address"
+                      value={locationDraft}
+                      onChange={(e) => setLocationDraft(e.target.value)}
+                      placeholder={t("bookingAddressPlaceholder")}
+                      className="h-11 min-w-0 rounded-2xl border border-[#DCEAE3] bg-white px-3 text-sm outline-none focus:border-teal-500 sm:w-72"
+                    />
+                  ) : null}
+                  {locationEditing ? (
+                    <button
+                      type="button"
+                      disabled={locationBusy || !locationDraft.trim()}
+                      onClick={() => void saveStudentLocation({ address: locationDraft.trim() })}
+                      className="h-11 rounded-2xl bg-teal-700 px-4 text-sm font-bold text-white disabled:opacity-50"
+                    >
+                      {locationBusy ? t("avatarUploading") : t("save")}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setLocationEditing(true)}
+                      className="h-11 rounded-2xl border border-[#DCEAE3] bg-white px-4 text-sm font-bold text-[#2C2C2A] hover:bg-[#FAFCFB]"
+                    >
+                      {studentLocation ? t("studentLocationEdit") : t("studentLocationAddAddress")}
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    disabled={locationBusy}
+                    onClick={saveCurrentBrowserLocation}
+                    className="h-11 rounded-2xl border border-[#DCEAE3] bg-[#F3FAF6] px-4 text-sm font-bold text-teal-800 hover:bg-teal-50 disabled:opacity-50"
+                  >
+                    {t("studentLocationUseCurrentLocation")}
+                  </button>
+                  {studentLocation ? (
+                    <button
+                      type="button"
+                      disabled={locationBusy}
+                      onClick={() => void saveStudentLocation(null)}
+                      className="h-11 rounded-2xl px-3 text-sm font-semibold text-[#6B6A65] hover:bg-[#F3FAF6] disabled:opacity-50"
+                    >
+                      {t("studentLocationClear")}
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+              {locationError ? (
+                <p role="alert" className="mt-3 text-xs font-semibold text-red-700">
+                  {locationError}
+                </p>
+              ) : null}
+            </div>
+
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm font-semibold text-[#2C2C2A]">
                 {results.length} {t("searchResults")}
@@ -569,7 +749,11 @@ function TeacherCard({
           {teacher.teachingMode === "online" ? <Video size={12} /> : <Users size={12} />}
           {teacher.teachingMode === "online" ? t("bookingOnline") : t("inPerson")}
           {distanceKm != null ? <span className="text-[#D3D1C7]">·</span> : null}
-          {distanceKm != null ? <span>{Math.round(distanceKm)}km</span> : null}
+          {distanceKm != null ? (
+            <span>
+              {t("studentApproxDistanceFromYou").replace("{distance}", formatApproxDistanceKm(distanceKm))}
+            </span>
+          ) : null}
         </span>
         <span className="font-bold text-teal-700">
           <PriceDisplay
