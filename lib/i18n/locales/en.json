@@ -824,6 +824,8 @@
   "studentLocationSaveError": "We could not save this address right now.",
   "studentLocationClear": "Remove",
   "studentApproxDistanceFromYou": "About {distance} from you",
+  "studentLocationSelectFromSuggestions": "Select an address from the suggestions to calculate distances.",
+  "mapRecenterOnMe": "Recenter on me",
   "studentLocationPrivateNotice": "Your address is never shown to teachers before a confirmed home lesson booking.",
   "newConversation": "New conversation",
   "next": "Next",

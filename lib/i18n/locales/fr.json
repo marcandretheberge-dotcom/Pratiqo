@@ -824,6 +824,8 @@
   "studentLocationSaveError": "Impossible d'enregistrer cette adresse pour le moment.",
   "studentLocationClear": "Retirer",
   "studentApproxDistanceFromYou": "À environ {distance} de toi",
+  "studentLocationSelectFromSuggestions": "Sélectionne une adresse dans les suggestions pour calculer les distances.",
+  "mapRecenterOnMe": "Recentrer sur moi",
   "studentLocationPrivateNotice": "Ton adresse n'est jamais affichée aux professeurs avant une réservation à domicile confirmée.",
   "newConversation": "Nouvelle conversation",
   "next": "Suivant",

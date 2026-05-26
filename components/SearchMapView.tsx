@@ -423,6 +423,29 @@ export function SearchMapView({
         </div>
       ) : null}
 
+      {/* "Recentrer sur moi" — visible only when the user has saved/provided a location */}
+      {mapsReady && userLat && userLng ? (
+        <div className="pointer-events-none absolute bottom-3 right-3 z-10">
+          <button
+            type="button"
+            className={cn(
+              "pointer-events-auto",
+              "flex items-center gap-1.5 rounded-full border border-teal-500",
+              "bg-white px-3 py-1.5 text-xs font-bold text-teal-700",
+              "shadow-[0_4px_16px_rgba(44,44,42,0.14)] hover:bg-[#FAFCFB]",
+              "transition-all duration-150 active:scale-95",
+            )}
+            onClick={() => {
+              const map = mapInstanceRef.current;
+              if (!map || !userLat || !userLng) return;
+              map.panTo({ lat: userLat, lng: userLng });
+            }}
+          >
+            📍 {t("mapRecenterOnMe")}
+          </button>
+        </div>
+      ) : null}
+
       {/* Teacher mini-card overlay — completely decoupled from map state */}
       {selectedTeacher ? (
         <div

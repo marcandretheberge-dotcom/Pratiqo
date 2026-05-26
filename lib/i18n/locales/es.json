@@ -824,6 +824,8 @@
   "studentLocationSaveError": "No pudimos guardar esta dirección por el momento.",
   "studentLocationClear": "Quitar",
   "studentApproxDistanceFromYou": "A unos {distance} de ti",
+  "studentLocationSelectFromSuggestions": "Selecciona una dirección de las sugerencias para calcular las distancias.",
+  "mapRecenterOnMe": "Recentrar en mí",
   "studentLocationPrivateNotice": "Tu dirección no se muestra a profesores antes de una reserva a domicilio confirmada.",
   "newConversation": "Nueva conversación",
   "next": "Siguiente",

@@ -214,6 +214,7 @@ test("forbidden files: branch does not touch Stripe/payments/security/migrations
   const approvedMigrationExceptions = new Set([
     "supabase/migrations/071_student_search_visibility_photo.sql",
     "supabase/migrations/072_teacher_default_lesson_duration.sql",
+    "supabase/migrations/073_student_saved_location.sql",
   ]);
 
   const approvedStripeCheckoutExceptions = new Set(["app/api/stripe/checkout/route.ts"]);

@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
+import { importLibrary, setOptions } from "@googlemaps/js-api-loader";
 import type { Teacher } from "../../../../types";
 import type { BookingInitialLessonKind } from "../../../../components/BookingModal";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -26,6 +27,7 @@ import {
   type StudentSavedLocation,
 } from "@/lib/studentLocation";
 import { applyRadiusFilter, buildTeacherSearchRows, filterTeacherPool, sortRows } from "../../../../lib/teacherSearchEngine";
+import { parseGooglePlace } from "../../../../lib/googleAddressParser";
 import { TeacherSearchAdvancedPanel, type AdvancedFilterValues } from "../../../../components/TeacherSearchAdvancedPanel";
 import type { TeacherSearchFormat } from "../../../../lib/teacherSearchCriteria";
 import { logSearchEvent } from "../../../../lib/searchAnalytics";
@@ -87,6 +89,12 @@ export default function StudentSearchPage() {
   const [locationDraft, setLocationDraft] = useState("");
   const [locationBusy, setLocationBusy] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
+  const [googleReady, setGoogleReady] = useState(
+    () => typeof window !== "undefined" && Boolean(window.google?.maps?.places),
+  );
+  const [selectedProfileDistanceKm, setSelectedProfileDistanceKm] = useState<number | null>(null);
+  const studentAddressRef = useRef<HTMLInputElement | null>(null);
+  const placeConfirmedRef = useRef(false);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [adv, setAdv] = useState<AdvancedFilterValues>({
     minRating: "",
@@ -103,6 +111,61 @@ export default function StudentSearchPage() {
     const q = searchParams.get("q");
     if (q) setSearchQuery(q);
   }, [searchParams]);
+
+  // Load Google Places library once so autocomplete is available for the student address input.
+  // Uses the same @googlemaps/js-api-loader already used by SearchMapView — no second script tag.
+  useEffect(() => {
+    const key = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+    if (!key) return;
+    if (typeof window !== "undefined" && window.google?.maps?.places) {
+      setGoogleReady(true);
+      return;
+    }
+    let cancelled = false;
+    const run = async () => {
+      try {
+        setOptions({ key, v: "weekly" });
+        await importLibrary("places");
+        if (!cancelled) setGoogleReady(true);
+      } catch {
+        // Autocomplete degrades gracefully to plain text input
+      }
+    };
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Wire up Google Places Autocomplete when the address input is open and the API is ready.
+  useEffect(() => {
+    if (!googleReady || !locationEditing) return;
+    const el = studentAddressRef.current;
+    if (!el || !("google" in window)) return;
+    placeConfirmedRef.current = false;
+    const ac = new google.maps.places.Autocomplete(el, {
+      fields: ["address_components", "formatted_address", "geometry", "place_id"],
+      types: ["address"],
+    });
+    ac.addListener("place_changed", () => {
+      const place = ac.getPlace();
+      const parsed = parseGooglePlace(place);
+      if (!parsed.formattedAddress && parsed.latitude == null) return;
+      placeConfirmedRef.current = true;
+      if (parsed.formattedAddress) setLocationDraft(parsed.formattedAddress);
+      void saveStudentLocation({
+        address: parsed.formattedAddress,
+        city: parsed.city,
+        region: parsed.region,
+        country: parsed.countryCode,
+        lat: parsed.latitude,
+        lng: parsed.longitude,
+        place_id: typeof place?.place_id === "string" ? place.place_id : null,
+      });
+    });
+    // Autocomplete binds to the DOM element; it cleans itself up when the element unmounts.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [googleReady, locationEditing]);
 
   useEffect(() => {
     const supabase = getSupabaseClient();
@@ -339,6 +402,13 @@ export default function StudentSearchPage() {
     return rows;
   }, [teachers, activeCat, searchQuery, geo, radius, sortMode, mapBounds, studentPrefs]);
 
+  // Open a teacher profile and carry the current distanceKm from the results list.
+  const openTeacherProfile = useCallback((teacher: Teacher) => {
+    const row = results.find((r) => r.teacher.id === teacher.id);
+    setSelectedProfileDistanceKm(row?.distanceKm ?? null);
+    setSelectedTeacherProfile(teacher);
+  }, [results]);
+
   return (
     <>
       <div className="min-h-[100vh] bg-[#F3FAF6]">
@@ -347,7 +417,7 @@ export default function StudentSearchPage() {
           onQueryChange={setSearchQuery}
           teachers={teachers}
           geo={geo}
-          onSelectTeacher={(teacher) => setSelectedTeacherProfile(teacher)}
+          onSelectTeacher={(teacher) => openTeacherProfile(teacher)}
           onSelectDiscipline={(label) => {
             setSearchQuery(label);
           }}
@@ -464,13 +534,25 @@ export default function StudentSearchPage() {
                     </label>
                   ) : null}
                   {locationEditing ? (
-                    <input
-                      id="student-location-address"
-                      value={locationDraft}
-                      onChange={(e) => setLocationDraft(e.target.value)}
-                      placeholder={t("bookingAddressPlaceholder")}
-                      className="h-11 min-w-0 rounded-2xl border border-[#DCEAE3] bg-white px-3 text-sm outline-none focus:border-teal-500 sm:w-72"
-                    />
+                    <div className="flex flex-col gap-1">
+                      <input
+                        id="student-location-address"
+                        ref={studentAddressRef}
+                        value={locationDraft}
+                        onChange={(e) => {
+                          setLocationDraft(e.target.value);
+                          placeConfirmedRef.current = false;
+                        }}
+                        placeholder="Entre ton adresse ou ton secteur"
+                        autoComplete="off"
+                        className="h-11 min-w-0 rounded-2xl border border-[#DCEAE3] bg-white px-3 text-sm outline-none focus:border-teal-500 sm:w-72"
+                      />
+                      {googleReady ? (
+                        <p className="text-[10px] leading-snug text-[#6B6A65]">
+                          {t("studentLocationSelectFromSuggestions")}
+                        </p>
+                      ) : null}
+                    </div>
                   ) : null}
                   {locationEditing ? (
                     <button
@@ -582,7 +664,7 @@ export default function StudentSearchPage() {
                         teacher={teacher}
                         distanceKm={distanceKm}
                         t={t}
-                        onOpen={() => setSelectedTeacherProfile(teacher)}
+                        onOpen={() => openTeacherProfile(teacher)}
                       />
                     ))}
               </div>
@@ -603,7 +685,7 @@ export default function StudentSearchPage() {
                         selectedTeacher={selectedMapTeacher}
                         onTeacherSelect={(teacher) => setSelectedMapTeacher(teacher)}
                         onCloseSelected={() => setSelectedMapTeacher(null)}
-                        onViewProfile={(teacher) => setSelectedTeacherProfile(teacher)}
+                        onViewProfile={(teacher) => openTeacherProfile(teacher)}
                         onBoundsSearch={(bounds) => setMapBounds(bounds)}
                       />
                     )}
@@ -618,6 +700,7 @@ export default function StudentSearchPage() {
       {selectedTeacherProfile && (
         <TeacherProfile
           teacher={selectedTeacherProfile}
+          distanceKm={selectedProfileDistanceKm}
           onClose={() => setSelectedTeacherProfile(null)}
           onBook={(kind) => {
             if (!user) {
