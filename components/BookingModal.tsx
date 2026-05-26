@@ -45,6 +45,11 @@ import {
 import { getAcademicSystemConfig, getAcademicProgramHelperKey, getProgramTrackLabelKey } from "@/lib/academicSystems";
 import type { TranslationKey } from "@/lib/translations";
 import { isUuidString } from "@/lib/uuid";
+import {
+  parseStoredStudentLocation,
+  studentLocationToBookingAddress,
+  type StudentSavedLocation,
+} from "@/lib/studentLocation";
 
 export type BookingInitialLessonKind = "standard" | "home";
 
@@ -165,6 +170,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
     defaultTeachingMode(teacher, initialLessonKind),
   );
   const [studentAddress, setStudentAddress] = useState("");
+  const [savedStudentLocation, setSavedStudentLocation] = useState<StudentSavedLocation | null>(null);
   const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
@@ -420,11 +426,26 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
     if (!user?.id) {
       setLearnerProfiles([]);
       setSelectedLearnerId("");
+      setSavedStudentLocation(null);
       return;
     }
     let cancelled = false;
     const supabase = getSupabaseClient();
     setLoadingLearners(true);
+    // Read the saved address from the owner-only student_private_locations
+    // table (migration 073). It is never exposed via teacher-facing reads.
+    void supabase
+      .from("student_private_locations")
+      .select("location")
+      .eq("user_id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (cancelled) return;
+        const parsed = parseStoredStudentLocation((data as { location?: unknown } | null)?.location);
+        setSavedStudentLocation(parsed);
+        const address = studentLocationToBookingAddress(parsed);
+        if (address) setStudentAddress((current) => current.trim() ? current : address);
+      });
     void supabase
       .from("learner_profiles")
       .select("id, display_name, context_type, school_level, grade_level, academic_program, academic_program_label, academic_program_unsure, target_language, current_level, instrument, practice_frequency, exam_date, learning_goals, subject_struggles, explanation_preference, notes_for_teacher, is_default")
@@ -1089,7 +1110,11 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                   {homeAvailable && showHome ? (
                     <button
                       type="button"
-                      onClick={() => setTeachingMode("domicile")}
+                      onClick={() => {
+                        setTeachingMode("domicile");
+                        const savedAddress = studentLocationToBookingAddress(savedStudentLocation);
+                        if (savedAddress) setStudentAddress((current) => current.trim() ? current : savedAddress);
+                      }}
                       className={cn(
                         "flex-1 min-w-[100px] py-2.5 px-2 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5",
                         teachingMode === "domicile"

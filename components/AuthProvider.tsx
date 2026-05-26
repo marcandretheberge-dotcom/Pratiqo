@@ -5,6 +5,7 @@ import type { User } from "@supabase/supabase-js";
 import { getSupabaseClient } from "../lib/supabase";
 import { seedStudentProgress } from "../lib/seed";
 import { authAvatarUrl, authDisplayName } from "../lib/authDisplay";
+import type { StudentSavedLocation } from "@/lib/studentLocation";
 
 interface AuthContextType {
   user: User | null;
@@ -28,6 +29,7 @@ type AuthProfile = Record<string, unknown> & {
   city?: string | null;
   region?: string | null;
   preferred_learning_format?: string | null;
+  student_location?: StudentSavedLocation | null;
 };
 
 const AuthContext = createContext<AuthContextType>({
@@ -90,6 +92,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             : {};
         const ext = existing as Record<string, unknown>;
         const stringOrNull = (value: unknown) => (typeof value === "string" ? value : null);
+
+        // Saved location lives in a dedicated owner-only table (migration 073);
+        // teacher-peer RLS on profiles cannot reach it. A failed read here is
+        // non-fatal — the feature is optional.
+        const { data: locRow } = await supabase
+          .from("student_private_locations")
+          .select("location")
+          .eq("user_id", u.id)
+          .maybeSingle();
+        const savedLocation =
+          locRow?.location && typeof locRow.location === "object"
+            ? (locRow.location as StudentSavedLocation)
+            : null;
+
         setProfile({
           id: existing.id,
           name: existing.name,
@@ -105,6 +121,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           city: stringOrNull(ext.city),
           region: stringOrNull(ext.region),
           preferred_learning_format: stringOrNull(ext.preferred_learning_format),
+          student_location: savedLocation,
         });
       } else {
         const dash = defaultDashboard();

@@ -1,4 +1,5 @@
 import type { Teacher } from "@/types";
+import type { StudentSavedLocation } from "@/lib/studentLocation";
 
 /** Profile row fragments used for prioritizing marketplace results (students). */
 export type StudentLocationPrefs = {
@@ -8,6 +9,7 @@ export type StudentLocationPrefs = {
   city: string | null;
   region: string | null;
   preferred_learning_format: string | null;
+  student_location?: StudentSavedLocation | null;
 };
 
 export type TeacherLocationMatchFields = {
