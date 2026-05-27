@@ -19,7 +19,7 @@ import type { YoFeature, YoFeatureIcon } from "@/lib/yo/types";
 
 export interface YoUnlockCardProps {
   features: YoFeature[];
-  /** Pre-formatted price label, e.g. "$14,99 CAD" (Quebec French). */
+  /** Pre-formatted price label, e.g. "$24,99 CAD" (Quebec French). */
   priceLabel: string;
   /** Optional override; defaults to the locked MVP copy. */
   subPriceCopy?: string;

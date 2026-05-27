@@ -7,7 +7,7 @@
  * powered by the database. No Supabase imports here on purpose.
  *
  * Locked product decisions baked into this file:
- *   - price_cents = 1499  ($14.99 CAD)
+ *   - price_cents = 2499  ($24.99 CAD)
  *   - currency    = "CAD"
  *   - cefr_level  = "A1"  (kid/family-friendly content only)
  *   - product_line = "voyage"
@@ -223,7 +223,7 @@ const module_: YoModule = {
   destinationCountry: "DO",
   destinationLabelFr: "République dominicaine",
   cefrLevel: "A1",
-  priceCents: 1499,
+  priceCents: 2499,
   currency: "CAD",
   freeLessonsCount: 1,
   productLabel: "Yo Pratiqo Voyage",
@@ -248,6 +248,6 @@ export const dominicanRepublicA1: YoIntroPageData = {
 
 /**
  * Formatted price string used directly in UI. Hardcoded to the locked
- * MVP price decision: $14,99 CAD (Quebec French formatting — comma decimal).
+ * MVP price decision: $24,99 CAD (Quebec French formatting — comma decimal).
  */
-export const dominicanRepublicA1PriceLabel = "$14,99 CAD";
+export const dominicanRepublicA1PriceLabel = "$24,99 CAD";

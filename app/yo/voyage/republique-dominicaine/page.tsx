@@ -27,14 +27,14 @@ export const metadata: Metadata = {
   title:
     "Yo Pratiqo Voyage — Espagnol pratique pour la République dominicaine",
   description:
-    "Apprends à vraiment parler sur place avec culture, expressions locales et missions réelles. Niveau A1 débutant, $14,99 CAD, accès à vie.",
+    "Apprends à vraiment parler sur place avec culture, expressions locales et missions réelles. Niveau A1 débutant, $24,99 CAD, accès à vie.",
   alternates: {
     canonical: `${SITE_URL}/yo/voyage/republique-dominicaine`,
   },
   openGraph: {
     title: "Yo Pratiqo Voyage — République dominicaine A1",
     description:
-      "Espagnol pratique, culture dominicaine et expressions locales. $14,99 CAD, accès à vie.",
+      "Espagnol pratique, culture dominicaine et expressions locales. $24,99 CAD, accès à vie.",
     type: "website",
     url: `${SITE_URL}/yo/voyage/republique-dominicaine`,
     locale: "fr_CA",

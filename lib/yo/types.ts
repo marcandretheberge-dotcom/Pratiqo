@@ -141,7 +141,7 @@ export interface YoLessonPathStep {
  * Top-level Yo Pratiqo Voyage product. Future row:
  *   public.yo_modules.
  *
- * NOTE on pricing — the MVP price is $14.99 CAD = 1499 cents. The product
+ * NOTE on pricing — the MVP price is $24.99 CAD = 2499 cents. The product
  * decision is locked in here so a future migration writing the DB row reads
  * the same number from this type's defaults.
  */
