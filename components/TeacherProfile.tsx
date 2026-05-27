@@ -24,6 +24,7 @@ import { useAuth } from "./AuthProvider";
 import { getSupabaseClient } from "../lib/supabase";
 import { useRouter } from "next/navigation";
 import { haversineDistance } from "../lib/geo";
+import { formatApproxDistanceKm } from "@/lib/studentLocation";
 import { TeacherMap } from "./TeacherMap";
 import { getAllDisciplines, getDisciplineById } from "../lib/disciplines";
 import { useLocale } from "../lib/locale-context";
@@ -551,7 +552,7 @@ export function TeacherProfile({
                     </div>
                     <p className="text-xs text-slate-600 flex items-center gap-1.5 mt-1.5">
                       <MapPin size={11} className="text-teal-700 shrink-0" />
-                      {displayDistanceKm !== null ? `${displayDistanceKm.toFixed(1)} km · ` : ""}
+                      {displayDistanceKm !== null ? `${t("studentApproxDistanceFromYou").replace("{distance}", formatApproxDistanceKm(displayDistanceKm))} · ` : ""}
                       {["both", "all"].includes(teacher.teachingMode)
                         ? t("modeHybrid")
                         : teacher.teachingMode === "online"
