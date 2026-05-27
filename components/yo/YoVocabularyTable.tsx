@@ -1,22 +1,30 @@
 /**
- * YoVocabularyTable — bilingual vocabulary list (Spanish / French).
+ * YoVocabularyTable — bilingual vocabulary list (Spanish → learner UI lang).
  *
  * Pure presentational component (no client state). Renders an accessible
- * description list where each row pairs the target term (lang="es") with
- * its French translation. Used by `YoIntroSectionPanel` for the closing
- * vocab box of each section, and for "phrases pratiques" inline blocks.
+ * description list where each row pairs the target Spanish term
+ * (`lang="es"`) with its translation in the learner's UI language.
+ *
+ * Used by `YoIntroSectionPanel` for the closing vocab box of each
+ * section and for "phrases pratiques" inline blocks.
  */
 
-import type { YoVocabularyItem } from "@/lib/yo/types";
+import type {
+  YoLocale,
+  YoLocalizedString,
+  YoVocabularyItem,
+} from "@/lib/yo/types";
+import { t } from "@/lib/yo/localize";
 
 export interface YoVocabularyTableProps {
   items: YoVocabularyItem[];
-  /** Optional heading rendered above the list (e.g. "Vocabulaire"). */
-  heading?: string;
+  /** Optional localized heading rendered above the list. */
+  heading?: YoLocalizedString;
   /** Visual variant. `cream` is the default; `plain` removes the bg/border. */
   variant?: "cream" | "plain";
   /** Optional id forwarded for aria-labelledby relationships. */
   id?: string;
+  locale: YoLocale;
 }
 
 export function YoVocabularyTable({
@@ -24,6 +32,7 @@ export function YoVocabularyTable({
   heading,
   variant = "cream",
   id,
+  locale,
 }: YoVocabularyTableProps) {
   if (items.length === 0) {
     return null;
@@ -41,26 +50,29 @@ export function YoVocabularyTable({
           id={headingId}
           className="ds-label mb-2 text-teal-700/90"
         >
-          {heading}
+          {t(heading, locale)}
         </p>
       ) : null}
       <dl className="grid gap-x-4 gap-y-1.5 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        {items.map((item) => (
-          <div
-            key={`${item.target}-${item.translation}`}
-            className="flex flex-col gap-0 sm:contents"
-          >
-            <dt
-              className="text-[0.95rem] font-medium text-[#1a3a32]"
-              lang="es"
+        {items.map((item) => {
+          const translation = t(item.translation, locale);
+          return (
+            <div
+              key={`${item.target}-${translation}`}
+              className="flex flex-col gap-0 sm:contents"
             >
-              {item.target}
-            </dt>
-            <dd className="text-sm text-[var(--color-text-secondary)] sm:text-[0.95rem]">
-              {item.translation}
-            </dd>
-          </div>
-        ))}
+              <dt
+                className="text-[0.95rem] font-medium text-[#1a3a32]"
+                lang="es"
+              >
+                {item.target}
+              </dt>
+              <dd className="text-sm text-[var(--color-text-secondary)] sm:text-[0.95rem]">
+                {translation}
+              </dd>
+            </div>
+          );
+        })}
       </dl>
     </div>
   );

@@ -16,12 +16,20 @@ import {
   Sparkles,
   type LucideIcon,
 } from "lucide-react";
-import type { YoFeature, YoFeatureIcon } from "@/lib/yo/types";
+import type {
+  YoFeature,
+  YoFeatureIcon,
+  YoLocale,
+  YoLocalizedString,
+} from "@/lib/yo/types";
+import { t } from "@/lib/yo/localize";
+import { YO_COPY } from "@/lib/yo/copy";
 
 export interface YoFeatureStripProps {
   features: YoFeature[];
-  /** Optional small title rendered above the strip. */
-  title?: string;
+  locale: YoLocale;
+  /** Optional localized title rendered above the strip. */
+  title?: YoLocalizedString;
 }
 
 const ICONS: Record<YoFeatureIcon, LucideIcon> = {
@@ -36,19 +44,22 @@ const ICONS: Record<YoFeatureIcon, LucideIcon> = {
 
 export function YoFeatureStrip({
   features,
-  title = "Ce que Yo Pratiqo Voyage te donne",
+  locale,
+  title,
 }: YoFeatureStripProps) {
+  const resolvedTitle = t(title ?? YO_COPY.features.defaultTitle, locale);
+
   return (
     <section
       aria-labelledby="yo-feature-title"
       className="mx-auto w-full max-w-5xl px-5 pt-10 sm:px-8 sm:pt-14"
     >
-      {title ? (
+      {resolvedTitle ? (
         <h2
           id="yo-feature-title"
           className="mb-5 text-xl font-medium tracking-tight text-[#1a3a32] sm:text-2xl"
         >
-          {title}
+          {resolvedTitle}
         </h2>
       ) : null}
 
@@ -72,7 +83,7 @@ export function YoFeatureStrip({
                 <Icon className="size-4" />
               </span>
               <span className="text-sm font-medium text-[#1a3a32] sm:text-[0.95rem]">
-                {feature.label}
+                {t(feature.label, locale)}
               </span>
             </li>
           );

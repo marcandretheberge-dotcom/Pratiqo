@@ -3,24 +3,32 @@
 /**
  * YoQuizPreview — multi-question quiz flow.
  *
- * Client component. Phase 1: NO server persistence, NO i18n hookup yet.
- * Each `YoQuizQuestion` shape is identical to the future
- * public.yo_quiz_questions row, so once Supabase is wired in Phase 2 this
- * component does not need a prop change — only the data source moves.
+ * Client component. Phase 1: NO server persistence, NO i18n library hookup
+ * (just `t()` + the bilingual `YoQuizQuestion` shape). Each question is
+ * identical to the future `public.yo_quiz_questions` row, so once Supabase
+ * is wired in Phase 2 this component does not need a prop change — only
+ * the data source moves.
  *
  * Flow:
  *   1. Show question N / total.
  *   2. User picks an option → reveal correct answer + explanation.
- *   3. "Question suivante" advances; at the end show score + Recommencer.
+ *   3. "Next question" advances; at the end show score + Restart.
  */
 
 import { useCallback, useState } from "react";
 import { CheckCircle2, XCircle } from "lucide-react";
-import type { YoQuizOption, YoQuizQuestion } from "@/lib/yo/types";
+import type {
+  YoLocale,
+  YoQuizOption,
+  YoQuizQuestion,
+} from "@/lib/yo/types";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/yo/localize";
+import { YO_COPY } from "@/lib/yo/copy";
 
 export interface YoQuizPreviewProps {
   questions: YoQuizQuestion[];
+  locale: YoLocale;
 }
 
 type AnswerLog = {
@@ -33,7 +41,7 @@ type QuizState =
   | { mode: "question"; pickedOptionId: string | null; isCorrect: boolean | null }
   | { mode: "complete" };
 
-export function YoQuizPreview({ questions }: YoQuizPreviewProps) {
+export function YoQuizPreview({ questions, locale }: YoQuizPreviewProps) {
   const total = questions.length;
   const [index, setIndex] = useState(0);
   const [state, setState] = useState<QuizState>({
@@ -95,6 +103,10 @@ export function YoQuizPreview({ questions }: YoQuizPreviewProps) {
   }
 
   const correctCount = history.filter((entry) => entry.isCorrect).length;
+  const progressLabel =
+    state.mode === "complete"
+      ? `${t(YO_COPY.quiz.scorePrefix, locale)} ${correctCount} / ${total}`
+      : `${t(YO_COPY.quiz.progressPrefix, locale)} ${index + 1} / ${total}`;
 
   return (
     <section
@@ -106,15 +118,13 @@ export function YoQuizPreview({ questions }: YoQuizPreviewProps) {
           id="yo-quiz-title"
           className="text-xl font-medium tracking-tight text-[#1a3a32] sm:text-2xl"
         >
-          Quiz éclair
+          {t(YO_COPY.quiz.title, locale)}
         </h2>
         <p
           className="text-xs font-medium uppercase tracking-[0.14em] text-teal-700/80"
           aria-live="polite"
         >
-          {state.mode === "complete"
-            ? `Score · ${correctCount} / ${total}`
-            : `Question ${index + 1} / ${total}`}
+          {progressLabel}
         </p>
       </div>
 
@@ -123,6 +133,7 @@ export function YoQuizPreview({ questions }: YoQuizPreviewProps) {
           correct={correctCount}
           total={total}
           onRestart={handleRestart}
+          locale={locale}
         />
       ) : (
         <QuestionCard
@@ -132,6 +143,7 @@ export function YoQuizPreview({ questions }: YoQuizPreviewProps) {
           state={state}
           onPick={handlePick}
           onNext={handleNext}
+          locale={locale}
         />
       )}
     </section>
@@ -145,6 +157,7 @@ interface QuestionCardProps {
   state: Extract<QuizState, { mode: "question" }>;
   onPick: (option: YoQuizOption) => void;
   onNext: () => void;
+  locale: YoLocale;
 }
 
 function QuestionCard({
@@ -154,16 +167,25 @@ function QuestionCard({
   state,
   onPick,
   onNext,
+  locale,
 }: QuestionCardProps) {
   const isAnswered = state.pickedOptionId !== null;
   const isLast = index === total - 1;
+  const explanation = question.explanation
+    ? t(question.explanation, locale)
+    : null;
+  const correctCopy = t(YO_COPY.quiz.correct, locale);
+  const incorrectCopy = t(YO_COPY.quiz.incorrect, locale);
+  const nextCopy = isLast
+    ? t(YO_COPY.quiz.seeScore, locale)
+    : t(YO_COPY.quiz.next, locale);
 
   return (
     <div className="ds-card flex flex-col gap-5 p-5 shadow-[0_1px_2px_rgba(15,58,52,0.04)] sm:p-7">
-      <ProgressBar current={index + 1} total={total} />
+      <ProgressBar current={index + 1} total={total} locale={locale} />
 
       <p className="text-lg font-medium leading-snug text-[#1a3a32] sm:text-xl">
-        {question.prompt}
+        {t(question.prompt, locale)}
       </p>
 
       <ul role="list" className="grid gap-2 sm:gap-3">
@@ -211,7 +233,7 @@ function QuestionCard({
                   >
                     {option.id.toUpperCase()}
                   </span>
-                  <span>{option.label}</span>
+                  <span>{t(option.label, locale)}</span>
                 </span>
 
                 {showAsCorrect ? (
@@ -237,21 +259,17 @@ function QuestionCard({
           )}
         >
           <p className="font-medium">
-            {state.isCorrect
-              ? "Exact !"
-              : "Pas tout à fait, mais l’erreur est instructive."}
+            {state.isCorrect ? correctCopy : incorrectCopy}
           </p>
-          {question.explanation ? (
-            <p className="text-[0.85rem] leading-relaxed">
-              {question.explanation}
-            </p>
+          {explanation ? (
+            <p className="text-[0.85rem] leading-relaxed">{explanation}</p>
           ) : null}
           <button
             type="button"
             onClick={onNext}
             className="mt-1 inline-flex w-fit items-center gap-1.5 rounded-full bg-teal-700 px-4 py-1.5 text-xs font-medium text-white transition hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 sm:text-sm"
           >
-            {isLast ? "Voir mon score" : "Question suivante"}
+            {nextCopy}
             <span aria-hidden>→</span>
           </button>
         </div>
@@ -263,10 +281,12 @@ function QuestionCard({
 interface ProgressBarProps {
   current: number;
   total: number;
+  locale: YoLocale;
 }
 
-function ProgressBar({ current, total }: ProgressBarProps) {
+function ProgressBar({ current, total, locale }: ProgressBarProps) {
   const pct = Math.round((current / total) * 100);
+  const ariaLabel = `${t(YO_COPY.quiz.progressAria, locale)} : ${current} / ${total}`;
   return (
     <div
       className="h-1.5 w-full overflow-hidden rounded-full bg-teal-50 ring-1 ring-teal-100"
@@ -274,7 +294,7 @@ function ProgressBar({ current, total }: ProgressBarProps) {
       aria-valuenow={current}
       aria-valuemin={0}
       aria-valuemax={total}
-      aria-label={`Progression quiz : ${current} sur ${total}`}
+      aria-label={ariaLabel}
     >
       <div
         className="h-full rounded-full bg-teal-500 transition-[width] duration-300"
@@ -288,9 +308,15 @@ interface CompletionPanelProps {
   correct: number;
   total: number;
   onRestart: () => void;
+  locale: YoLocale;
 }
 
-function CompletionPanel({ correct, total, onRestart }: CompletionPanelProps) {
+function CompletionPanel({
+  correct,
+  total,
+  onRestart,
+  locale,
+}: CompletionPanelProps) {
   const pct = Math.round((correct / total) * 100);
   return (
     <div
@@ -300,29 +326,29 @@ function CompletionPanel({ correct, total, onRestart }: CompletionPanelProps) {
     >
       <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-xs font-medium text-teal-800 ring-1 ring-teal-100">
         <CheckCircle2 aria-hidden className="size-4 text-teal-700" />
-        Quiz terminé
+        {t(YO_COPY.quiz.completionChip, locale)}
       </span>
       <div className="flex flex-col gap-1">
         <p className="text-3xl font-semibold tracking-tight text-[#1a3a32] sm:text-4xl">
           {correct} <span className="text-[#1a3a32]/40">/ {total}</span>
         </p>
         <p className="text-sm text-[var(--color-text-secondary)]">
-          {pct}% de bonnes réponses
+          {pct}
+          {t(YO_COPY.quiz.scoreSuffix, locale)}
         </p>
       </div>
       <p className="max-w-xl text-base font-medium text-[#1a3a32]">
-        Tu es prêt pour la prochaine étape.
+        {t(YO_COPY.quiz.readyMessage, locale)}
       </p>
       <p className="max-w-xl text-sm leading-relaxed text-[var(--color-text-secondary)]">
-        Le programme complet contient des quiz beaucoup plus longs, par
-        lesson, avec rappel des questions où tu as buté.
+        {t(YO_COPY.quiz.completionBody, locale)}
       </p>
       <button
         type="button"
         onClick={onRestart}
         className="ds-btn-primary inline-flex items-center justify-center gap-2 text-center text-sm sm:text-base"
       >
-        Recommencer le quiz
+        {t(YO_COPY.quiz.restart, locale)}
         <span aria-hidden>↺</span>
       </button>
     </div>

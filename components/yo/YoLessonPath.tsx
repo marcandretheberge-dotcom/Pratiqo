@@ -3,15 +3,18 @@
  *
  * Server component. Renders the 5 steps in display order, only the first
  * "free_preview" or "available" step gets a real CTA; the rest are visual
- * "verrouillé" placeholders (Phase 1: no real access control).
+ * "verrouillé" / "locked" placeholders (Phase 1: no real access control).
  */
 
 import { Lock, PlayCircle } from "lucide-react";
-import type { YoLessonPathStep } from "@/lib/yo/types";
+import type { YoLessonPathStep, YoLocale } from "@/lib/yo/types";
+import { t } from "@/lib/yo/localize";
+import { YO_COPY } from "@/lib/yo/copy";
 import { cn } from "@/lib/utils";
 
 export interface YoLessonPathProps {
   steps: YoLessonPathStep[];
+  locale: YoLocale;
   /**
    * Optional href passed to the active CTA. Defaults to "#" because Phase 1
    * has no real lesson destination yet.
@@ -21,6 +24,7 @@ export interface YoLessonPathProps {
 
 export function YoLessonPath({
   steps,
+  locale,
   activeHref = "#",
 }: YoLessonPathProps) {
   return (
@@ -33,10 +37,10 @@ export function YoLessonPath({
           id="yo-path-title"
           className="text-xl font-medium tracking-tight text-[#1a3a32] sm:text-2xl"
         >
-          Ton parcours
+          {t(YO_COPY.path.title, locale)}
         </h2>
         <p className="text-xs text-[var(--color-text-secondary)] sm:text-sm">
-          Commence par l’Intro · déblocage des autres étapes en payant une fois
+          {t(YO_COPY.path.intro, locale)}
         </p>
       </div>
 
@@ -53,6 +57,7 @@ export function YoLessonPath({
                 step={step}
                 isUnlocked={isUnlocked}
                 href={isUnlocked ? activeHref : undefined}
+                locale={locale}
               />
             </li>
           );
@@ -66,9 +71,15 @@ interface PathStepCardProps {
   step: YoLessonPathStep;
   isUnlocked: boolean;
   href: string | undefined;
+  locale: YoLocale;
 }
 
-function PathStepCard({ step, isUnlocked, href }: PathStepCardProps) {
+function PathStepCard({ step, isUnlocked, href, locale }: PathStepCardProps) {
+  const title = t(step.title, locale);
+  const ctaLabel = t(step.ctaLabel, locale);
+  const lessonAria = t(YO_COPY.path.lessonAria, locale);
+  const ariaLabel = `${lessonAria} ${step.position} — ${title}, ${ctaLabel}`;
+
   const base =
     "flex h-full flex-col justify-between gap-3 rounded-2xl border p-4 transition";
   const unlockedClasses =
@@ -103,7 +114,7 @@ function PathStepCard({ step, isUnlocked, href }: PathStepCardProps) {
             isUnlocked ? "text-[#1a3a32]" : "text-[var(--color-text-secondary)]",
           )}
         >
-          {step.title}
+          {title}
         </p>
       </div>
 
@@ -114,7 +125,7 @@ function PathStepCard({ step, isUnlocked, href }: PathStepCardProps) {
             isUnlocked ? "text-teal-700" : "text-teal-700/60",
           )}
         >
-          {step.ctaLabel}
+          {ctaLabel}
           {isUnlocked ? <span aria-hidden> →</span> : null}
         </span>
       </div>
@@ -125,7 +136,7 @@ function PathStepCard({ step, isUnlocked, href }: PathStepCardProps) {
     return (
       <a
         href={href}
-        aria-label={`Lesson ${step.position} — ${step.title}, ${step.ctaLabel}`}
+        aria-label={ariaLabel}
         className={cn(base, unlockedClasses)}
       >
         {inner}
@@ -136,7 +147,7 @@ function PathStepCard({ step, isUnlocked, href }: PathStepCardProps) {
   return (
     <div
       aria-disabled
-      aria-label={`Lesson ${step.position} — ${step.title}, ${step.ctaLabel}`}
+      aria-label={ariaLabel}
       className={cn(base, lockedClasses)}
     >
       {inner}

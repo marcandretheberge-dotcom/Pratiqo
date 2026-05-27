@@ -28,12 +28,17 @@ import {
   Utensils,
   type LucideIcon,
 } from "lucide-react";
-import type { YoLessonCard as YoLessonCardData } from "@/lib/yo/types";
+import type {
+  YoLessonCard as YoLessonCardData,
+  YoLocale,
+} from "@/lib/yo/types";
 import { YoCardVisual } from "@/components/yo/YoVisuals";
+import { t } from "@/lib/yo/localize";
 import { cn } from "@/lib/utils";
 
 export interface YoLessonCardProps {
   card: YoLessonCardData;
+  locale: YoLocale;
   /**
    * When provided, the bottom CTA becomes an interactive button that
    * triggers progressive disclosure of a detailed section panel. The
@@ -66,6 +71,7 @@ const ICONS: Record<
 
 export function YoLessonCard({
   card,
+  locale,
   onSelect,
   isSelected = false,
   panelId,
@@ -73,6 +79,10 @@ export function YoLessonCard({
   const Icon: LucideIcon = card.iconHint ? ICONS[card.iconHint] : Compass;
   const hasVisual = Boolean(card.visualHint) && !card.imagePath;
   const isInteractive = Boolean(onSelect);
+
+  const title = t(card.title, locale);
+  const description = card.description ? t(card.description, locale) : null;
+  const ctaLabel = card.ctaLabel ? t(card.ctaLabel, locale) : null;
 
   return (
     <article
@@ -86,7 +96,7 @@ export function YoLessonCard({
     >
       {hasVisual && card.visualHint ? (
         <div className="relative border-b border-teal-100/70">
-          <YoCardVisual hint={card.visualHint} />
+          <YoCardVisual hint={card.visualHint} locale={locale} />
         </div>
       ) : null}
 
@@ -107,13 +117,13 @@ export function YoLessonCard({
             id={`yo-card-${card.id}-title`}
             className="text-base font-medium leading-tight text-[#1a3a32] sm:text-lg"
           >
-            {card.title}
+            {title}
           </h3>
         </div>
 
-        {card.description ? (
+        {description ? (
           <p className="text-sm leading-relaxed text-[var(--color-text-secondary)] sm:text-[0.95rem]">
-            {card.description}
+            {description}
           </p>
         ) : null}
 
@@ -134,14 +144,14 @@ export function YoLessonCard({
                   {row.target}
                 </span>
                 <span className="text-sm text-[var(--color-text-secondary)]">
-                  {row.translation}
+                  {t(row.translation, locale)}
                 </span>
               </li>
             ))}
           </ul>
         ) : null}
 
-        {card.ctaLabel ? (
+        {ctaLabel ? (
           <div className="mt-auto pt-1">
             {isInteractive ? (
               <button
@@ -156,7 +166,7 @@ export function YoLessonCard({
                     : "bg-teal-50 text-teal-800 ring-1 ring-teal-100 hover:bg-teal-100",
                 )}
               >
-                {card.ctaLabel}
+                {ctaLabel}
                 <span aria-hidden>{isSelected ? "↑" : "→"}</span>
               </button>
             ) : (
@@ -164,7 +174,7 @@ export function YoLessonCard({
                 href={card.ctaHref ?? "#"}
                 className="inline-flex items-center gap-1 text-sm font-medium text-teal-700 transition hover:text-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2"
               >
-                {card.ctaLabel}
+                {ctaLabel}
                 <span aria-hidden>→</span>
               </a>
             )}

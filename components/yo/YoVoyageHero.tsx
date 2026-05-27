@@ -6,16 +6,26 @@
  * (`YoHeroTropicalArt`). Phase 2 will swap the placeholder for a real
  * image at `module.heroImagePath` once one exists at
  * `/public/images/yo/voyage/do/hero-dominican-republic.webp`.
+ *
+ * Bilingual: all localized strings on `module` are resolved with `t()`
+ * against the incoming `locale`. The level badge mixes the CEFR code
+ * (locale-independent, e.g. "A1") with a locale-specific suffix.
  */
 
-import type { YoModule } from "@/lib/yo/types";
+import type { YoLocale, YoModule } from "@/lib/yo/types";
 import { YoHeroTropicalArt } from "@/components/yo/YoVisuals";
+import { t } from "@/lib/yo/localize";
+import { YO_COPY } from "@/lib/yo/copy";
 
 export interface YoVoyageHeroProps {
   module: YoModule;
+  locale: YoLocale;
 }
 
-export function YoVoyageHero({ module }: YoVoyageHeroProps) {
+export function YoVoyageHero({ module, locale }: YoVoyageHeroProps) {
+  const beginnerSuffix = locale === "fr" ? "Débutant" : "Beginner";
+  const levelPrefix = locale === "fr" ? "Niveau" : "Level";
+
   return (
     <section
       aria-labelledby="yo-hero-title"
@@ -25,13 +35,13 @@ export function YoVoyageHero({ module }: YoVoyageHeroProps) {
         <div className="flex flex-col gap-6 lg:gap-8">
           <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-teal-700">
             <span className="ds-label text-teal-700/90">
-              {module.productLabel}
+              {t(module.productLabel, locale)}
             </span>
             <span aria-hidden className="text-teal-300">
               ·
             </span>
             <span className="ds-label text-teal-700/80">
-              {module.destinationLabelFr}
+              {t(module.destinationLabel, locale)}
             </span>
           </div>
 
@@ -40,30 +50,30 @@ export function YoVoyageHero({ module }: YoVoyageHeroProps) {
               id="yo-hero-title"
               className="max-w-3xl text-3xl font-medium tracking-tight text-[#1a3a32] sm:text-4xl lg:text-[2.75rem] lg:leading-[1.1]"
             >
-              {module.heroTitle}
+              {t(module.heroTitle, locale)}
             </h1>
             <p className="max-w-2xl text-base leading-relaxed text-[var(--color-text-secondary)] sm:text-lg">
-              {module.heroSubtitle}
+              {t(module.heroSubtitle, locale)}
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
             <span className="badge-teal">
-              Niveau {module.cefrLevel} · Débutant
+              {levelPrefix} {module.cefrLevel} · {beginnerSuffix}
             </span>
             <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-xs font-medium text-teal-800 ring-1 ring-teal-100">
               <span
                 aria-hidden
                 className="size-1.5 rounded-full bg-teal-500"
               />
-              Travel-ready en 1h
+              {t(YO_COPY.hero.travelReady, locale)}
             </span>
             <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-xs font-medium text-teal-800 ring-1 ring-teal-100">
               <span
                 aria-hidden
                 className="size-1.5 rounded-full bg-[var(--color-accent-500)]"
               />
-              Audio natif
+              {t(YO_COPY.hero.nativeAudio, locale)}
             </span>
           </div>
         </div>

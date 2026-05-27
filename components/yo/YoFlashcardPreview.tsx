@@ -11,17 +11,25 @@
  * Flow:
  *   1. Show card N / total.
  *   2. User flips → reveal back + hint.
- *   3. User rates Difficile / Correct / Facile → feedback.
- *   4. "Carte suivante" advances; at the end show completion + Recommencer.
+ *   3. User rates Hard / Good / Easy → feedback.
+ *   4. "Next card" advances; at the end show completion + Restart.
  *
- * Each card individually carries `visualHint` / `isLocalExpression` so its
- * background motif and badge stay aligned with the card content.
+ * Localized: every learner-language string on a card is resolved with
+ * `t()`; every UI chrome string comes from `YO_COPY.flash` so FR/EN swap
+ * automatically with the `locale` prop. Spanish fronts stay plain with
+ * `lang="es"`.
  */
 
 import { useCallback, useState } from "react";
 import { CheckCircle2, RotateCw, Sparkles } from "lucide-react";
-import type { YoFlashcard, YoFlashcardQuality } from "@/lib/yo/types";
+import type {
+  YoFlashcard,
+  YoFlashcardQuality,
+  YoLocale,
+} from "@/lib/yo/types";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/yo/localize";
+import { YO_COPY } from "@/lib/yo/copy";
 import {
   YoExpressionLocaleBadge,
   YoFlashcardTropicalBg,
@@ -29,13 +37,8 @@ import {
 
 export interface YoFlashcardPreviewProps {
   cards: YoFlashcard[];
+  locale: YoLocale;
 }
-
-const FEEDBACK: Record<YoFlashcardQuality, string> = {
-  0: "Cette carte reviendra bientôt.",
-  3: "Bon effort.",
-  5: "Maîtrisé pour aujourd’hui.",
-};
 
 const TONE: Record<YoFlashcardQuality, string> = {
   0: "bg-[#fdecec] text-[#a23a3a] ring-[#f6c8c8]",
@@ -47,7 +50,10 @@ type DeckState =
   | { mode: "card"; isFlipped: boolean; lastRating: YoFlashcardQuality | null }
   | { mode: "complete" };
 
-export function YoFlashcardPreview({ cards }: YoFlashcardPreviewProps) {
+export function YoFlashcardPreview({
+  cards,
+  locale,
+}: YoFlashcardPreviewProps) {
   const total = cards.length;
   const [index, setIndex] = useState(0);
   const [state, setState] = useState<DeckState>({
@@ -104,15 +110,19 @@ export function YoFlashcardPreview({ cards }: YoFlashcardPreviewProps) {
           id="yo-flash-title"
           className="text-xl font-medium tracking-tight text-[#1a3a32] sm:text-2xl"
         >
-          Flashcards intelligentes
+          {t(YO_COPY.flash.title, locale)}
         </h2>
         <p className="hidden text-sm text-[var(--color-text-secondary)] sm:block">
-          Démo · révision SM-2 dans le programme complet
+          {t(YO_COPY.flash.subtitle, locale)}
         </p>
       </div>
 
       {state.mode === "complete" ? (
-        <CompletionPanel total={total} onRestart={handleRestart} />
+        <CompletionPanel
+          total={total}
+          onRestart={handleRestart}
+          locale={locale}
+        />
       ) : (
         <DeckCard
           card={cards[index]!}
@@ -123,6 +133,7 @@ export function YoFlashcardPreview({ cards }: YoFlashcardPreviewProps) {
           onRate={handleRate}
           onNext={handleNext}
           onResetCurrent={handleResetCurrent}
+          locale={locale}
         />
       )}
     </section>
@@ -138,6 +149,7 @@ interface DeckCardProps {
   onRate: (quality: YoFlashcardQuality) => void;
   onNext: () => void;
   onResetCurrent: () => void;
+  locale: YoLocale;
 }
 
 function DeckCard({
@@ -149,10 +161,41 @@ function DeckCard({
   onRate,
   onNext,
   onResetCurrent,
+  locale,
 }: DeckCardProps) {
   const isLast = index === total - 1;
   const hasTropicalBg =
     card.visualHint === "tropical-flashcard" && !card.imagePath;
+
+  const progressLabel = t(YO_COPY.flash.progressLabel, locale);
+  const faceLabel = state.isFlipped
+    ? t(YO_COPY.flash.cardFaceBack, locale)
+    : t(YO_COPY.flash.cardFaceFront, locale);
+  const tag = card.tag ? t(card.tag, locale) : null;
+  const flipHint = t(YO_COPY.flash.flipHint, locale);
+  const flipCta = t(YO_COPY.flash.flipCta, locale);
+  const back = t(card.back, locale);
+  const hint = card.hint ? t(card.hint, locale) : null;
+  const flipAria = state.isFlipped
+    ? `${t(YO_COPY.flash.flipPressedAriaToFront, locale)} ${card.front}`
+    : `${t(YO_COPY.flash.flipPressedAriaToBack, locale)} ${card.front}`;
+
+  const ratingPrompt = t(YO_COPY.flash.ratingPrompt, locale);
+  const ratingLabels: Record<YoFlashcardQuality, string> = {
+    0: t(YO_COPY.flash.ratingHard, locale),
+    3: t(YO_COPY.flash.ratingGood, locale),
+    5: t(YO_COPY.flash.ratingEasy, locale),
+  };
+  const feedbackCopy: Record<YoFlashcardQuality, string> = {
+    0: t(YO_COPY.flash.feedbackHard, locale),
+    3: t(YO_COPY.flash.feedbackGood, locale),
+    5: t(YO_COPY.flash.feedbackEasy, locale),
+  };
+  const idleHint = t(YO_COPY.flash.idleHint, locale);
+  const nextLabel = isLast
+    ? t(YO_COPY.flash.finish, locale)
+    : t(YO_COPY.flash.next, locale);
+  const retryLabel = t(YO_COPY.flash.retryCard, locale);
 
   return (
     <div className="grid gap-4 sm:gap-6 lg:grid-cols-[1fr_280px]">
@@ -162,20 +205,16 @@ function DeckCard({
             className="text-xs font-medium uppercase tracking-[0.14em] text-teal-700/80"
             aria-live="polite"
           >
-            Carte {index + 1} / {total}
+            {progressLabel} {index + 1} / {total}
           </p>
-          <ProgressBar current={index + 1} total={total} />
+          <ProgressBar current={index + 1} total={total} locale={locale} />
         </div>
 
         <button
           type="button"
           onClick={onFlip}
           aria-pressed={state.isFlipped}
-          aria-label={
-            state.isFlipped
-              ? `Cacher la traduction de ${card.front}`
-              : `Voir la traduction de ${card.front}`
-          }
+          aria-label={flipAria}
           className="group relative flex min-h-[200px] flex-col justify-between overflow-hidden rounded-3xl border border-teal-100 bg-white p-6 text-left shadow-[0_1px_2px_rgba(15,58,52,0.04)] transition hover:shadow-[0_8px_24px_rgba(15,58,52,0.10)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 sm:min-h-[240px] sm:p-8"
         >
           {hasTropicalBg ? <YoFlashcardTropicalBg /> : null}
@@ -183,14 +222,16 @@ function DeckCard({
           <div className="relative z-10 flex items-start justify-between gap-3">
             <div className="flex flex-wrap items-center gap-2">
               <span className="ds-label text-teal-700/80">
-                {state.isFlipped ? "Traduction" : "Carte"}
-                {card.tag ? ` · ${card.tag}` : ""}
+                {faceLabel}
+                {tag ? ` · ${tag}` : ""}
               </span>
-              {card.isLocalExpression ? <YoExpressionLocaleBadge /> : null}
+              {card.isLocalExpression ? (
+                <YoExpressionLocaleBadge locale={locale} />
+              ) : null}
             </div>
             <span className="inline-flex items-center gap-1 text-xs text-teal-700/70 opacity-0 transition group-hover:opacity-100">
               <RotateCw className="size-3.5" aria-hidden />
-              Retourner
+              {flipHint}
             </span>
           </div>
 
@@ -198,11 +239,11 @@ function DeckCard({
             {state.isFlipped ? (
               <>
                 <p className="text-3xl font-medium leading-tight tracking-tight text-[#1a3a32] sm:text-4xl">
-                  {card.back}
+                  {back}
                 </p>
-                {card.hint ? (
+                {hint ? (
                   <p className="text-sm text-[var(--color-text-secondary)]">
-                    {card.hint}
+                    {hint}
                   </p>
                 ) : null}
               </>
@@ -215,7 +256,7 @@ function DeckCard({
                   {card.front}
                 </p>
                 <p className="text-sm text-[var(--color-text-secondary)]">
-                  Touche la carte pour voir la traduction.
+                  {flipCta}
                 </p>
               </>
             )}
@@ -224,24 +265,24 @@ function DeckCard({
       </div>
 
       <div className="flex flex-col gap-2 rounded-3xl border border-teal-100 bg-[var(--color-base-cream)] p-4 sm:p-5">
-        <p className="ds-label text-teal-700/90">Comment c’était ?</p>
+        <p className="ds-label text-teal-700/90">{ratingPrompt}</p>
 
         <div className="grid grid-cols-3 gap-2 lg:grid-cols-1">
           <RatingButton
             quality={0}
-            label="Difficile"
+            label={ratingLabels[0]}
             onRate={onRate}
             selected={state.lastRating === 0}
           />
           <RatingButton
             quality={3}
-            label="Correct"
+            label={ratingLabels[3]}
             onRate={onRate}
             selected={state.lastRating === 3}
           />
           <RatingButton
             quality={5}
-            label="Facile"
+            label={ratingLabels[5]}
             onRate={onRate}
             selected={state.lastRating === 5}
           />
@@ -257,12 +298,11 @@ function DeckCard({
             )}
           >
             <Sparkles aria-hidden className="size-3.5" />
-            {FEEDBACK[state.lastRating]}
+            {feedbackCopy[state.lastRating]}
           </p>
         ) : (
           <p className="mt-1 text-xs leading-snug text-[var(--color-text-secondary)]">
-            Pas de pression : retourne la carte d’abord si tu as besoin de
-            voir la réponse.
+            {idleHint}
           </p>
         )}
 
@@ -276,7 +316,7 @@ function DeckCard({
               state.lastRating === null && "cursor-not-allowed opacity-50",
             )}
           >
-            {isLast ? "Terminer" : "Carte suivante"}
+            {nextLabel}
             <span aria-hidden>→</span>
           </button>
           {state.lastRating !== null ? (
@@ -285,7 +325,7 @@ function DeckCard({
               onClick={onResetCurrent}
               className="self-center text-xs font-medium text-teal-700 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2"
             >
-              Réessayer cette carte
+              {retryLabel}
             </button>
           ) : null}
         </div>
@@ -297,10 +337,12 @@ function DeckCard({
 interface ProgressBarProps {
   current: number;
   total: number;
+  locale: YoLocale;
 }
 
-function ProgressBar({ current, total }: ProgressBarProps) {
+function ProgressBar({ current, total, locale }: ProgressBarProps) {
   const pct = Math.round((current / total) * 100);
+  const ariaLabel = `${t(YO_COPY.flash.progressAria, locale)} : ${current} / ${total}`;
   return (
     <div
       className="h-1.5 w-32 overflow-hidden rounded-full bg-teal-50 ring-1 ring-teal-100 sm:w-44"
@@ -308,7 +350,7 @@ function ProgressBar({ current, total }: ProgressBarProps) {
       aria-valuenow={current}
       aria-valuemin={0}
       aria-valuemax={total}
-      aria-label={`Progression flashcards : ${current} sur ${total}`}
+      aria-label={ariaLabel}
     >
       <div
         className="h-full rounded-full bg-teal-500 transition-[width] duration-300"
@@ -346,9 +388,10 @@ function RatingButton({ quality, label, onRate, selected }: RatingButtonProps) {
 interface CompletionPanelProps {
   total: number;
   onRestart: () => void;
+  locale: YoLocale;
 }
 
-function CompletionPanel({ total, onRestart }: CompletionPanelProps) {
+function CompletionPanel({ total, onRestart, locale }: CompletionPanelProps) {
   return (
     <div
       role="status"
@@ -357,22 +400,20 @@ function CompletionPanel({ total, onRestart }: CompletionPanelProps) {
     >
       <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-xs font-medium text-teal-800 ring-1 ring-teal-100">
         <CheckCircle2 aria-hidden className="size-4 text-teal-700" />
-        {total} cartes vues
+        {total} {t(YO_COPY.flash.completionChip, locale)}
       </span>
       <p className="text-xl font-medium text-[#1a3a32] sm:text-2xl">
-        Tu as terminé cette mini-révision.
+        {t(YO_COPY.flash.completionTitle, locale)}
       </p>
       <p className="max-w-xl text-sm leading-relaxed text-[var(--color-text-secondary)]">
-        Dans le programme complet, l’algorithme SM-2 te ramène les cartes
-        difficiles plus souvent et espace les cartes faciles. Tu peux
-        recommencer cette démo autant de fois que tu veux.
+        {t(YO_COPY.flash.completionBody, locale)}
       </p>
       <button
         type="button"
         onClick={onRestart}
         className="ds-btn-primary inline-flex items-center justify-center gap-2 text-center text-sm sm:text-base"
       >
-        Recommencer
+        {t(YO_COPY.flash.restart, locale)}
         <span aria-hidden>↺</span>
       </button>
     </div>
