@@ -14,6 +14,10 @@ import { useCallback, useState } from "react";
 import { RotateCw, Sparkles } from "lucide-react";
 import type { YoFlashcard, YoFlashcardQuality } from "@/lib/yo/types";
 import { cn } from "@/lib/utils";
+import {
+  YoExpressionLocaleBadge,
+  YoFlashcardTropicalBg,
+} from "@/components/yo/YoVisuals";
 
 export interface YoFlashcardPreviewProps {
   card: YoFlashcard;
@@ -77,20 +81,27 @@ export function YoFlashcardPreview({ card }: YoFlashcardPreviewProps) {
               ? `Cacher la traduction de ${card.front}`
               : `Voir la traduction de ${card.front}`
           }
-          className="group relative flex min-h-[180px] flex-col justify-between overflow-hidden rounded-3xl border border-teal-100 bg-white p-6 text-left shadow-[0_1px_2px_rgba(15,58,52,0.04)] transition hover:shadow-[0_8px_24px_rgba(15,58,52,0.07)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 sm:min-h-[220px] sm:p-8"
+          className="group relative flex min-h-[200px] flex-col justify-between overflow-hidden rounded-3xl border border-teal-100 bg-white p-6 text-left shadow-[0_1px_2px_rgba(15,58,52,0.04)] transition hover:shadow-[0_8px_24px_rgba(15,58,52,0.10)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 sm:min-h-[240px] sm:p-8"
         >
-          <div className="flex items-start justify-between gap-3">
-            <span className="ds-label text-teal-700/80">
-              {isFlipped ? "Traduction" : "Carte"}
-              {card.tag ? ` · ${card.tag}` : ""}
-            </span>
+          {card.visualHint === "tropical-flashcard" && !card.imagePath ? (
+            <YoFlashcardTropicalBg />
+          ) : null}
+
+          <div className="relative z-10 flex items-start justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="ds-label text-teal-700/80">
+                {isFlipped ? "Traduction" : "Carte"}
+                {card.tag ? ` · ${card.tag}` : ""}
+              </span>
+              {card.isLocalExpression ? <YoExpressionLocaleBadge /> : null}
+            </div>
             <span className="inline-flex items-center gap-1 text-xs text-teal-700/70 opacity-0 transition group-hover:opacity-100">
               <RotateCw className="size-3.5" aria-hidden />
               Retourner
             </span>
           </div>
 
-          <div className="flex flex-col gap-3">
+          <div className="relative z-10 flex flex-col gap-3">
             {isFlipped ? (
               <>
                 <p className="text-3xl font-medium leading-tight tracking-tight text-[#1a3a32] sm:text-4xl">

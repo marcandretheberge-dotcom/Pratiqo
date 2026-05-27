@@ -37,6 +37,22 @@ export type YoCurrency = "CAD" | "USD" | "EUR" | "MXN";
 export type YoLessonStatus = "available" | "free_preview" | "locked";
 
 /**
+ * Visual placeholder identifier. Phase 1 maps each hint to a code-based
+ * SVG inside `components/yo/YoVisuals.tsx`. Phase 2 will pair each hint
+ * with a real image at `/public/images/yo/voyage/do/<filename>` and the
+ * `YoLessonCard.imagePath` / `YoFlashcard.imagePath` field will take
+ * precedence over the placeholder.
+ */
+export type YoVisualHint =
+  | "hero-tropical"
+  | "dominican-map"
+  | "history-colonial"
+  | "food-bandera"
+  | "conversation-bubbles"
+  | "tropical-flashcard"
+  | "unlock-stamp";
+
+/**
  * Future Supabase yo_user_progress.lesson_state values. Not used in Phase 1
  * (the UI is read-only) but baked in so component props stay stable.
  */
@@ -95,6 +111,19 @@ export interface YoLessonCard {
     | "message-circle"
     | "compass"
     | "sparkles";
+  /**
+   * Optional code-based visual placeholder identifier. Phase 1 renders an
+   * inline SVG (see components/yo/YoVisuals.tsx); Phase 2 will swap to the
+   * real image at `imagePath` when present.
+   */
+  visualHint?: YoVisualHint;
+  /**
+   * Optional future-Supabase / future-CMS image asset path, e.g.
+   * "/images/yo/voyage/do/map-dominican-republic.svg". When set in Phase 2
+   * the renderer must prefer this over `visualHint`. Phase 1 leaves this
+   * undefined on purpose — no real images exist yet.
+   */
+  imagePath?: string | null;
 }
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -162,6 +191,15 @@ export interface YoModule {
   heroSubtitle: string;
   /** Small label that sits above the hero (e.g. "Yo Pratiqo Voyage"). */
   productLabel: string;
+  /**
+   * Optional code-based hero visual identifier. Defaults to
+   * "hero-tropical" in Phase 1; in Phase 2 a real photo at
+   * `/images/yo/voyage/do/hero-dominican-republic.webp` will take over via
+   * `heroImagePath`.
+   */
+  heroVisualHint?: YoVisualHint;
+  /** Optional future hero image path. Phase 1: null. */
+  heroImagePath?: string | null;
   /** Lessons in display order. */
   lessons: YoLesson[];
 }
@@ -186,6 +224,23 @@ export interface YoFlashcard {
   hint?: string;
   /** Optional category tag, e.g. "salutations", "table". */
   tag?: string;
+  /**
+   * When true, the flashcard preview shows an "Expression locale" badge
+   * (i.e. a Dominican Republic-specific expression). Marketing accent
+   * only — no UX behaviour depends on it.
+   */
+  isLocalExpression?: boolean;
+  /**
+   * Optional code-based visual placeholder identifier — drives the
+   * background motif rendered behind the flashcard front. Same Phase 1 /
+   * Phase 2 swap contract as `YoLessonCard.visualHint`.
+   */
+  visualHint?: YoVisualHint;
+  /**
+   * Optional future image asset path
+   * (e.g. "/images/yo/voyage/do/flashcard-tropical-bg.webp"). Phase 1: null.
+   */
+  imagePath?: string | null;
 }
 
 /**

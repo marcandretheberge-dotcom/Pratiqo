@@ -16,6 +16,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import type { YoFeature, YoFeatureIcon } from "@/lib/yo/types";
+import { YoUnlockTravelStamp } from "@/components/yo/YoVisuals";
 
 export interface YoUnlockCardProps {
   features: YoFeature[];
@@ -90,12 +91,21 @@ export function YoUnlockCard({
             </ul>
           </div>
 
-          <div className="flex flex-col gap-4 rounded-2xl bg-[var(--color-base-cream)] p-5 sm:p-6">
-            <div>
-              <p className="text-[var(--color-text-secondary)] text-xs uppercase tracking-[0.12em]">
+          <div
+            className="relative flex flex-col gap-4 overflow-hidden rounded-2xl p-5 ring-1 ring-teal-100 sm:p-6"
+            style={{
+              background:
+                "linear-gradient(165deg, #fffaf0 0%, #fff4e2 55%, #f3e8d0 100%)",
+            }}
+          >
+            <YoUnlockTravelStamp />
+
+            <div className="relative">
+              <p className="inline-flex items-center gap-1.5 rounded-full bg-white/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-teal-800 ring-1 ring-teal-100">
+                <Sparkles aria-hidden className="size-3" />
                 Prix de lancement
               </p>
-              <p className="mt-1 text-3xl font-semibold tracking-tight text-[#1a3a32] sm:text-4xl">
+              <p className="mt-2 text-4xl font-semibold tracking-tight text-[#1a3a32] sm:text-[2.75rem]">
                 {priceLabel}
               </p>
               <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
@@ -105,7 +115,7 @@ export function YoUnlockCard({
 
             <a
               href={ctaHref}
-              className="ds-btn-primary inline-flex items-center justify-center gap-2 text-center text-sm sm:text-base"
+              className="ds-btn-primary inline-flex items-center justify-center gap-2 text-center text-sm shadow-[0_6px_18px_rgba(15,118,110,0.28)] sm:text-base"
             >
               {ctaLabel}
               <span aria-hidden>→</span>

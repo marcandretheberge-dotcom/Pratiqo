@@ -42,15 +42,23 @@ const introCards: YoLessonCard[] = [
     ctaLabel: "Explorer la carte",
     ctaHref: "#geography",
     iconHint: "map",
+    visualHint: "dominican-map",
+    // Phase 2 swap: imagePath = "/images/yo/voyage/do/map-dominican-republic.svg"
+    imagePath: null,
   },
   {
     id: "intro_card_history",
     kind: "text",
     title: "Petite histoire en 3 minutes",
     description: "Un peu d’histoire, de culture et de fierté dominicaine.",
-    ctaLabel: "Écouter",
+    // Audio is intentionally absent — the visual placeholder shows
+    // "Audio bientôt disponible" until a real recording is uploaded.
+    ctaLabel: "Lire l’aperçu",
     ctaHref: "#history",
     iconHint: "book",
+    visualHint: "history-colonial",
+    // Phase 2 swap: imagePath = "/images/yo/voyage/do/history-zona-colonial.webp"
+    imagePath: null,
   },
   {
     id: "intro_card_food",
@@ -60,12 +68,18 @@ const introCards: YoLessonCard[] = [
     ctaLabel: "Voir et apprendre",
     ctaHref: "#food",
     iconHint: "utensils",
+    visualHint: "food-bandera",
+    // Phase 2 swap: imagePath = "/images/yo/voyage/do/food-bandera-dominicana.webp"
+    imagePath: null,
   },
   {
     id: "intro_card_first_phrases",
     kind: "phrases",
     title: "Tes premières phrases utiles",
     iconHint: "message-circle",
+    visualHint: "conversation-bubbles",
+    // Phase 2 swap: imagePath = "/images/yo/voyage/do/conversation-hotel-checkin.webp"
+    imagePath: null,
     phrases: [
       { target: "Buenos días", translation: "Bonjour" },
       { target: "Buenas tardes", translation: "Bon après-midi" },
@@ -153,6 +167,10 @@ const flashcardSample: YoFlashcard = {
   hint:
     "Salutation typique en République dominicaine, entre amis ou en famille.",
   tag: "salutations",
+  isLocalExpression: true,
+  visualHint: "tropical-flashcard",
+  // Phase 2 swap: imagePath = "/images/yo/voyage/do/flashcard-tropical-bg.webp"
+  imagePath: null,
 };
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -230,6 +248,9 @@ const module_: YoModule = {
   heroTitle: "Espagnol pratique — République dominicaine",
   heroSubtitle:
     "Apprends à vraiment parler sur place, avec culture, expressions locales et missions réelles.",
+  heroVisualHint: "hero-tropical",
+  // Phase 2 swap: heroImagePath = "/images/yo/voyage/do/hero-dominican-republic.webp"
+  heroImagePath: null,
   lessons,
 };
 
