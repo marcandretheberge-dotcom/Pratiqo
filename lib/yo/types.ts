@@ -37,6 +37,22 @@ export type YoCurrency = "CAD" | "USD" | "EUR" | "MXN";
 export type YoLessonStatus = "available" | "free_preview" | "locked";
 
 /**
+ * Visual placeholder identifier. Phase 1 maps each hint to a code-based
+ * SVG inside `components/yo/YoVisuals.tsx`. Phase 2 will pair each hint
+ * with a real image at `/public/images/yo/voyage/do/<filename>` and the
+ * `YoLessonCard.imagePath` / `YoFlashcard.imagePath` field will take
+ * precedence over the placeholder.
+ */
+export type YoVisualHint =
+  | "hero-tropical"
+  | "dominican-map"
+  | "history-colonial"
+  | "food-bandera"
+  | "conversation-bubbles"
+  | "tropical-flashcard"
+  | "unlock-stamp";
+
+/**
  * Future Supabase yo_user_progress.lesson_state values. Not used in Phase 1
  * (the UI is read-only) but baked in so component props stay stable.
  */
@@ -95,6 +111,19 @@ export interface YoLessonCard {
     | "message-circle"
     | "compass"
     | "sparkles";
+  /**
+   * Optional code-based visual placeholder identifier. Phase 1 renders an
+   * inline SVG (see components/yo/YoVisuals.tsx); Phase 2 will swap to the
+   * real image at `imagePath` when present.
+   */
+  visualHint?: YoVisualHint;
+  /**
+   * Optional future-Supabase / future-CMS image asset path, e.g.
+   * "/images/yo/voyage/do/map-dominican-republic.svg". When set in Phase 2
+   * the renderer must prefer this over `visualHint`. Phase 1 leaves this
+   * undefined on purpose — no real images exist yet.
+   */
+  imagePath?: string | null;
 }
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -162,6 +191,15 @@ export interface YoModule {
   heroSubtitle: string;
   /** Small label that sits above the hero (e.g. "Yo Pratiqo Voyage"). */
   productLabel: string;
+  /**
+   * Optional code-based hero visual identifier. Defaults to
+   * "hero-tropical" in Phase 1; in Phase 2 a real photo at
+   * `/images/yo/voyage/do/hero-dominican-republic.webp` will take over via
+   * `heroImagePath`.
+   */
+  heroVisualHint?: YoVisualHint;
+  /** Optional future hero image path. Phase 1: null. */
+  heroImagePath?: string | null;
   /** Lessons in display order. */
   lessons: YoLesson[];
 }
@@ -186,6 +224,23 @@ export interface YoFlashcard {
   hint?: string;
   /** Optional category tag, e.g. "salutations", "table". */
   tag?: string;
+  /**
+   * When true, the flashcard preview shows an "Expression locale" badge
+   * (i.e. a Dominican Republic-specific expression). Marketing accent
+   * only — no UX behaviour depends on it.
+   */
+  isLocalExpression?: boolean;
+  /**
+   * Optional code-based visual placeholder identifier — drives the
+   * background motif rendered behind the flashcard front. Same Phase 1 /
+   * Phase 2 swap contract as `YoLessonCard.visualHint`.
+   */
+  visualHint?: YoVisualHint;
+  /**
+   * Optional future image asset path
+   * (e.g. "/images/yo/voyage/do/flashcard-tropical-bg.webp"). Phase 1: null.
+   */
+  imagePath?: string | null;
 }
 
 /**
@@ -241,6 +296,142 @@ export interface YoFeature {
 }
 
 // ─────────────────────────────────────────────────────────────────────────
+// Detailed Intro sections (real learning content, revealed by the
+// progressive-disclosure orchestrator `YoIntroExperience`).
+// ─────────────────────────────────────────────────────────────────────────
+
+/**
+ * A single bilingual vocabulary / phrase row. Future Supabase row:
+ *   public.yo_lesson_vocabulary (target, translation, audio_url, …).
+ */
+export interface YoVocabularyItem {
+  /** Spanish (taught language). */
+  target: string;
+  /** French (learner UI language for the Quebec MVP). */
+  translation: string;
+  /** Future audio source. Phase 1: null. */
+  audioUrl?: string | null;
+}
+
+/** A named bullet list — e.g. "Assiette typique", "Boissons". */
+export interface YoBulletGroup {
+  heading?: string;
+  items: YoVocabularyItem[];
+}
+
+/** Timeline entry used by the history mini-lesson. */
+export interface YoTimelineEntry {
+  /** Free-form year label ("1492", "Aujourd'hui", …). */
+  year: string;
+  description: string;
+}
+
+/** A label-only bullet (the geography card's three zones, for instance). */
+export interface YoSimpleBullet {
+  label: string;
+  description?: string;
+}
+
+/**
+ * One line in a learner-facing dialogue scenario.
+ * `speakerKind` drives the visual treatment (host vs. self bubble).
+ */
+export interface YoDialogueLine {
+  speakerLabel: string;
+  speakerKind: "host" | "self";
+  /** Spanish line spoken by the speaker. */
+  target: string;
+  /** Optional French gloss; Phase 1 leaves this empty for natural immersion. */
+  translation?: string;
+}
+
+export interface YoDialogueScenarioData {
+  title: string;
+  lines: YoDialogueLine[];
+}
+
+/** Mini-mission: pick-one practice prompt, no scoring. */
+export interface YoMiniMission {
+  title?: string;
+  intro: string;
+  options: string[];
+}
+
+/**
+ * A single Dominican Republic expression in the pocket dictionary.
+ * A1 rule: NO vulgar / mature / ambiguous slang. B1+ may later add
+ * "à reconnaître mais ne pas utiliser" entries; the Phase 1 list is
+ * intentionally kept kid/family-friendly.
+ */
+export interface YoDominicanExpression {
+  id: string;
+  target: string;
+  translation: string;
+  /** Optional small tag e.g. "table", "salutations". */
+  category?: string;
+}
+
+/**
+ * Detailed content for one of the four Intro cards. Each card's `id`
+ * matches a section here, and the orchestrator opens the matching panel
+ * when the card's CTA is pressed. Future Supabase row:
+ *   public.yo_lesson_sections (lesson_id, position, content jsonb).
+ */
+export interface YoIntroDetailedSection {
+  /** Matches the parent YoLessonCard.id (e.g. "intro_card_geography"). */
+  id: string;
+  /** Optional emoji rendered alongside the panel title. */
+  emoji?: string;
+  title: string;
+  /** Lead paragraph rendered at the top of the panel. */
+  intro?: string;
+  /** Optional intro line shown right before `bullets`. */
+  sectionLeadIn?: string;
+  /** Three-zones-style bullets (label + optional description). */
+  bullets?: YoSimpleBullet[];
+  /** Optional highlight callout (e.g. "La Bandera Dominicana"). */
+  highlightTitle?: string;
+  highlightBody?: string;
+  /** Multi-group bullet lists (typical plate, drinks, …). */
+  bulletGroups?: YoBulletGroup[];
+  /** Intro line for `practicalPhrases`. */
+  practicalPhrasesIntro?: string;
+  /** Inline-callout phrases (e.g. "Soy de Quebec."). */
+  practicalPhrases?: YoVocabularyItem[];
+  /** Closing vocabulary table for the section. */
+  vocabulary?: YoVocabularyItem[];
+  /** History-style timeline entries. */
+  timeline?: YoTimelineEntry[];
+  /** Short pedagogical note shown after the timeline. */
+  learningNote?: string;
+  /** Optional mini practice mission. */
+  miniMission?: YoMiniMission;
+  /** Optional learner dialogue scenario. */
+  dialogue?: YoDialogueScenarioData;
+  /** Reuse the section's hero placeholder visual at the top of the panel. */
+  visualHint?: YoVisualHint;
+  /**
+   * When set, render an "Audio bientôt disponible"-style chip. Phase 1
+   * never pretends real audio exists.
+   */
+  audioComingSoonLabel?: string | null;
+}
+
+/** Single chip in the intro-progress strip. */
+export interface YoIntroProgressStat {
+  id: string;
+  value: number | string;
+  label: string;
+}
+
+/** Compact value-prop strip rendered above the four intro cards. */
+export interface YoIntroProgressStats {
+  title: string;
+  description: string;
+  stats: YoIntroProgressStat[];
+}
+
+// ─────────────────────────────────────────────────────────────────────────
 // Aggregate type returned by lib/yo/dominicanRepublicA1.ts
 // ─────────────────────────────────────────────────────────────────────────
 
@@ -254,12 +445,26 @@ export interface YoIntroPageData {
   module: YoModule;
   /** Numbered path rendered above the Intro cards. */
   lessonPath: YoLessonPathStep[];
-  /** Curated marquee flashcard for the preview component. */
-  flashcardSample: YoFlashcard;
-  /** Curated marquee question for the quiz preview component. */
-  quizSample: YoQuizQuestion;
+  /** Detailed lesson content, keyed by intro-card id. */
+  detailedSections: YoIntroDetailedSection[];
+  /** A1-safe Dominican expressions pocket dictionary. */
+  dominicanDictionary: YoDominicanExpression[];
+  /** Flashcard deck used by YoFlashcardPreview (12+ cards). */
+  flashcardDeck: YoFlashcard[];
+  /** Full quiz used by YoQuizPreview (5 questions). */
+  quizQuestions: YoQuizQuestion[];
+  /** Compact value-prop strip shown above the cards. */
+  introProgress: YoIntroProgressStats;
   /** Cards rendered on the unlock CTA (5+ items). */
   unlockFeatures: YoFeature[];
   /** Smaller marketing strip at the bottom (4 items). */
   bottomFeatures: YoFeature[];
+
+  /**
+   * Legacy aliases — kept so any external consumer that imported a single
+   * sample card or question keeps working. They always point to the first
+   * element of `flashcardDeck` / `quizQuestions`.
+   */
+  flashcardSample: YoFlashcard;
+  quizSample: YoQuizQuestion;
 }
