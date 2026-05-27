@@ -1,17 +1,25 @@
 "use client";
 
 /**
- * YoFlashcardPreview — interactive flashcard demo.
+ * YoFlashcardPreview — interactive flashcard deck.
  *
- * Client component (rates the card → updates a small UI feedback).
- * Phase 1: NO real spaced-repetition state, NO Supabase writes, NO timers.
- * The three buttons map to YoFlashcardQuality values (0/3/5) so the same
- * handler shape can later persist to public.yo_flashcard_reviews under
- * simplified SM-2 in Phase 2.
+ * Client component. Phase 1: NO real spaced-repetition state, NO Supabase
+ * writes, NO timers. The three rating buttons map to YoFlashcardQuality
+ * values (0/3/5) so the same handler shape can later persist to
+ * public.yo_flashcard_reviews under simplified SM-2 in Phase 2.
+ *
+ * Flow:
+ *   1. Show card N / total.
+ *   2. User flips → reveal back + hint.
+ *   3. User rates Difficile / Correct / Facile → feedback.
+ *   4. "Carte suivante" advances; at the end show completion + Recommencer.
+ *
+ * Each card individually carries `visualHint` / `isLocalExpression` so its
+ * background motif and badge stay aligned with the card content.
  */
 
 import { useCallback, useState } from "react";
-import { RotateCw, Sparkles } from "lucide-react";
+import { CheckCircle2, RotateCw, Sparkles } from "lucide-react";
 import type { YoFlashcard, YoFlashcardQuality } from "@/lib/yo/types";
 import { cn } from "@/lib/utils";
 import {
@@ -20,7 +28,7 @@ import {
 } from "@/components/yo/YoVisuals";
 
 export interface YoFlashcardPreviewProps {
-  card: YoFlashcard;
+  cards: YoFlashcard[];
 }
 
 const FEEDBACK: Record<YoFlashcardQuality, string> = {
@@ -35,24 +43,56 @@ const TONE: Record<YoFlashcardQuality, string> = {
   5: "bg-[#e6f4ec] text-[#1f6a45] ring-[#bfe1cd]",
 };
 
-export function YoFlashcardPreview({ card }: YoFlashcardPreviewProps) {
-  const [isFlipped, setIsFlipped] = useState(false);
-  const [lastRating, setLastRating] = useState<YoFlashcardQuality | null>(null);
+type DeckState =
+  | { mode: "card"; isFlipped: boolean; lastRating: YoFlashcardQuality | null }
+  | { mode: "complete" };
+
+export function YoFlashcardPreview({ cards }: YoFlashcardPreviewProps) {
+  const total = cards.length;
+  const [index, setIndex] = useState(0);
+  const [state, setState] = useState<DeckState>({
+    mode: "card",
+    isFlipped: false,
+    lastRating: null,
+  });
 
   const handleFlip = useCallback(() => {
-    setIsFlipped((value) => !value);
+    setState((prev) => {
+      if (prev.mode !== "card") return prev;
+      return { ...prev, isFlipped: !prev.isFlipped };
+    });
   }, []);
 
   const handleRate = useCallback((quality: YoFlashcardQuality) => {
-    setLastRating(quality);
-    // Reveal the back so the learner sees what they just rated.
-    setIsFlipped(true);
+    setState((prev) => {
+      if (prev.mode !== "card") return prev;
+      return { mode: "card", isFlipped: true, lastRating: quality };
+    });
   }, []);
 
-  const handleReset = useCallback(() => {
-    setIsFlipped(false);
-    setLastRating(null);
+  const handleNext = useCallback(() => {
+    setIndex((i) => {
+      if (i >= total - 1) {
+        setState({ mode: "complete" });
+        return i;
+      }
+      setState({ mode: "card", isFlipped: false, lastRating: null });
+      return i + 1;
+    });
+  }, [total]);
+
+  const handleResetCurrent = useCallback(() => {
+    setState({ mode: "card", isFlipped: false, lastRating: null });
   }, []);
+
+  const handleRestart = useCallback(() => {
+    setIndex(0);
+    setState({ mode: "card", isFlipped: false, lastRating: null });
+  }, []);
+
+  if (total === 0) {
+    return null;
+  }
 
   return (
     <section
@@ -71,26 +111,79 @@ export function YoFlashcardPreview({ card }: YoFlashcardPreviewProps) {
         </p>
       </div>
 
-      <div className="grid gap-4 sm:gap-6 lg:grid-cols-[1fr_280px]">
+      {state.mode === "complete" ? (
+        <CompletionPanel total={total} onRestart={handleRestart} />
+      ) : (
+        <DeckCard
+          card={cards[index]!}
+          index={index}
+          total={total}
+          state={state}
+          onFlip={handleFlip}
+          onRate={handleRate}
+          onNext={handleNext}
+          onResetCurrent={handleResetCurrent}
+        />
+      )}
+    </section>
+  );
+}
+
+interface DeckCardProps {
+  card: YoFlashcard;
+  index: number;
+  total: number;
+  state: Extract<DeckState, { mode: "card" }>;
+  onFlip: () => void;
+  onRate: (quality: YoFlashcardQuality) => void;
+  onNext: () => void;
+  onResetCurrent: () => void;
+}
+
+function DeckCard({
+  card,
+  index,
+  total,
+  state,
+  onFlip,
+  onRate,
+  onNext,
+  onResetCurrent,
+}: DeckCardProps) {
+  const isLast = index === total - 1;
+  const hasTropicalBg =
+    card.visualHint === "tropical-flashcard" && !card.imagePath;
+
+  return (
+    <div className="grid gap-4 sm:gap-6 lg:grid-cols-[1fr_280px]">
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center justify-between gap-4">
+          <p
+            className="text-xs font-medium uppercase tracking-[0.14em] text-teal-700/80"
+            aria-live="polite"
+          >
+            Carte {index + 1} / {total}
+          </p>
+          <ProgressBar current={index + 1} total={total} />
+        </div>
+
         <button
           type="button"
-          onClick={handleFlip}
-          aria-pressed={isFlipped}
+          onClick={onFlip}
+          aria-pressed={state.isFlipped}
           aria-label={
-            isFlipped
+            state.isFlipped
               ? `Cacher la traduction de ${card.front}`
               : `Voir la traduction de ${card.front}`
           }
           className="group relative flex min-h-[200px] flex-col justify-between overflow-hidden rounded-3xl border border-teal-100 bg-white p-6 text-left shadow-[0_1px_2px_rgba(15,58,52,0.04)] transition hover:shadow-[0_8px_24px_rgba(15,58,52,0.10)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 sm:min-h-[240px] sm:p-8"
         >
-          {card.visualHint === "tropical-flashcard" && !card.imagePath ? (
-            <YoFlashcardTropicalBg />
-          ) : null}
+          {hasTropicalBg ? <YoFlashcardTropicalBg /> : null}
 
           <div className="relative z-10 flex items-start justify-between gap-3">
             <div className="flex flex-wrap items-center gap-2">
               <span className="ds-label text-teal-700/80">
-                {isFlipped ? "Traduction" : "Carte"}
+                {state.isFlipped ? "Traduction" : "Carte"}
                 {card.tag ? ` · ${card.tag}` : ""}
               </span>
               {card.isLocalExpression ? <YoExpressionLocaleBadge /> : null}
@@ -102,7 +195,7 @@ export function YoFlashcardPreview({ card }: YoFlashcardPreviewProps) {
           </div>
 
           <div className="relative z-10 flex flex-col gap-3">
-            {isFlipped ? (
+            {state.isFlipped ? (
               <>
                 <p className="text-3xl font-medium leading-tight tracking-tight text-[#1a3a32] sm:text-4xl">
                   {card.back}
@@ -128,62 +221,100 @@ export function YoFlashcardPreview({ card }: YoFlashcardPreviewProps) {
             )}
           </div>
         </button>
+      </div>
 
-        <div className="flex flex-col gap-2 rounded-3xl border border-teal-100 bg-[var(--color-base-cream)] p-4 sm:p-5">
-          <p className="ds-label text-teal-700/90">Comment c’était ?</p>
+      <div className="flex flex-col gap-2 rounded-3xl border border-teal-100 bg-[var(--color-base-cream)] p-4 sm:p-5">
+        <p className="ds-label text-teal-700/90">Comment c’était ?</p>
 
-          <div className="grid grid-cols-3 gap-2 lg:grid-cols-1">
-            <RatingButton
-              quality={0}
-              label="Difficile"
-              onRate={handleRate}
-              selected={lastRating === 0}
-            />
-            <RatingButton
-              quality={3}
-              label="Correct"
-              onRate={handleRate}
-              selected={lastRating === 3}
-            />
-            <RatingButton
-              quality={5}
-              label="Facile"
-              onRate={handleRate}
-              selected={lastRating === 5}
-            />
-          </div>
+        <div className="grid grid-cols-3 gap-2 lg:grid-cols-1">
+          <RatingButton
+            quality={0}
+            label="Difficile"
+            onRate={onRate}
+            selected={state.lastRating === 0}
+          />
+          <RatingButton
+            quality={3}
+            label="Correct"
+            onRate={onRate}
+            selected={state.lastRating === 3}
+          />
+          <RatingButton
+            quality={5}
+            label="Facile"
+            onRate={onRate}
+            selected={state.lastRating === 5}
+          />
+        </div>
 
-          {lastRating !== null ? (
-            <p
-              role="status"
-              aria-live="polite"
-              className={cn(
-                "mt-1 flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-medium ring-1",
-                TONE[lastRating],
-              )}
-            >
-              <Sparkles aria-hidden className="size-3.5" />
-              {FEEDBACK[lastRating]}
-            </p>
-          ) : (
-            <p className="mt-1 text-xs leading-snug text-[var(--color-text-secondary)]">
-              Pas de pression : retourne la carte d’abord si tu as besoin de
-              voir la réponse.
-            </p>
-          )}
+        {state.lastRating !== null ? (
+          <p
+            role="status"
+            aria-live="polite"
+            className={cn(
+              "mt-1 flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-medium ring-1",
+              TONE[state.lastRating],
+            )}
+          >
+            <Sparkles aria-hidden className="size-3.5" />
+            {FEEDBACK[state.lastRating]}
+          </p>
+        ) : (
+          <p className="mt-1 text-xs leading-snug text-[var(--color-text-secondary)]">
+            Pas de pression : retourne la carte d’abord si tu as besoin de
+            voir la réponse.
+          </p>
+        )}
 
-          {lastRating !== null ? (
+        <div className="mt-2 flex flex-col gap-1.5">
+          <button
+            type="button"
+            onClick={onNext}
+            disabled={state.lastRating === null}
+            className={cn(
+              "ds-btn-primary inline-flex w-full items-center justify-center gap-2 text-center text-sm transition sm:text-base",
+              state.lastRating === null && "cursor-not-allowed opacity-50",
+            )}
+          >
+            {isLast ? "Terminer" : "Carte suivante"}
+            <span aria-hidden>→</span>
+          </button>
+          {state.lastRating !== null ? (
             <button
               type="button"
-              onClick={handleReset}
-              className="mt-2 self-start text-xs font-medium text-teal-700 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2"
+              onClick={onResetCurrent}
+              className="self-center text-xs font-medium text-teal-700 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2"
             >
-              Réessayer
+              Réessayer cette carte
             </button>
           ) : null}
         </div>
       </div>
-    </section>
+    </div>
+  );
+}
+
+interface ProgressBarProps {
+  current: number;
+  total: number;
+}
+
+function ProgressBar({ current, total }: ProgressBarProps) {
+  const pct = Math.round((current / total) * 100);
+  return (
+    <div
+      className="h-1.5 w-32 overflow-hidden rounded-full bg-teal-50 ring-1 ring-teal-100 sm:w-44"
+      role="progressbar"
+      aria-valuenow={current}
+      aria-valuemin={0}
+      aria-valuemax={total}
+      aria-label={`Progression flashcards : ${current} sur ${total}`}
+    >
+      <div
+        className="h-full rounded-full bg-teal-500 transition-[width] duration-300"
+        style={{ width: `${pct}%` }}
+      />
+    </div>
   );
 }
 
@@ -209,5 +340,41 @@ function RatingButton({ quality, label, onRate, selected }: RatingButtonProps) {
     >
       {label}
     </button>
+  );
+}
+
+interface CompletionPanelProps {
+  total: number;
+  onRestart: () => void;
+}
+
+function CompletionPanel({ total, onRestart }: CompletionPanelProps) {
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      className="flex flex-col items-start gap-4 rounded-3xl border border-teal-100 bg-gradient-to-br from-[#e6f4ec] via-white to-[var(--color-base-cream)] p-6 shadow-[0_1px_2px_rgba(15,58,52,0.04)] sm:p-8"
+    >
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-xs font-medium text-teal-800 ring-1 ring-teal-100">
+        <CheckCircle2 aria-hidden className="size-4 text-teal-700" />
+        {total} cartes vues
+      </span>
+      <p className="text-xl font-medium text-[#1a3a32] sm:text-2xl">
+        Tu as terminé cette mini-révision.
+      </p>
+      <p className="max-w-xl text-sm leading-relaxed text-[var(--color-text-secondary)]">
+        Dans le programme complet, l’algorithme SM-2 te ramène les cartes
+        difficiles plus souvent et espace les cartes faciles. Tu peux
+        recommencer cette démo autant de fois que tu veux.
+      </p>
+      <button
+        type="button"
+        onClick={onRestart}
+        className="ds-btn-primary inline-flex items-center justify-center gap-2 text-center text-sm sm:text-base"
+      >
+        Recommencer
+        <span aria-hidden>↺</span>
+      </button>
+    </div>
   );
 }
