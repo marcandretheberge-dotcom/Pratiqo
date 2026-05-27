@@ -825,6 +825,7 @@
   "studentLocationClear": "Retirer",
   "studentApproxDistanceFromYou": "À environ {distance} de toi",
   "studentLocationSelectFromSuggestions": "Sélectionne une adresse dans les suggestions pour calculer les distances.",
+  "studentLocationPlacesUnavailable": "La recherche d'adresse n'est pas disponible pour le moment.",
   "mapRecenterOnMe": "Recentrer sur moi",
   "studentLocationPrivateNotice": "Ton adresse n'est jamais affichée aux professeurs avant une réservation à domicile confirmée.",
   "newConversation": "Nouvelle conversation",

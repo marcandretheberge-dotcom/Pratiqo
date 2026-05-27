@@ -98,7 +98,13 @@ test("student location route writes only to the owner-only private table", () =>
 test("/student/search reads the saved location from the owner-only table, not profiles", () => {
   assert.match(searchSrc, /\.from\("student_private_locations"\)/);
   assert.match(searchSrc, /parseStoredStudentLocation/);
-  assert.match(searchSrc, /setGeo\(\(current\) => current \?\?/);
+  // On load with saved coordinates the page seeds `geo` so teacher cards and
+  // the map can render distance immediately, without waiting for a browser
+  // geolocation prompt.
+  assert.match(
+    searchSrc,
+    /studentLocationHasCoordinates\(parsedLocation\)[\s\S]{0,400}setGeo\(\{\s*lat:\s*parsedLocation\.lat/,
+  );
   assert.match(searchSrc, /studentApproxDistanceFromYou/);
   // The prefs select on profiles must NOT pull the private location column,
   // because that column no longer exists and would otherwise hint that the
@@ -202,18 +208,55 @@ test("SearchMapView receives saved student location as initial center via userLa
 
 test("map does not default to Montréal when saved student coordinates are available", () => {
   // The page sets geo from saved location before passing to SearchMapView
-  assert.match(searchSrc, /setGeo\(\(current\) => current \?\?.*lat.*parsedLocation/s);
+  assert.match(
+    searchSrc,
+    /studentLocationHasCoordinates\(parsedLocation\)[\s\S]{0,400}setGeo\(\{\s*lat:\s*parsedLocation\.lat/,
+  );
   // userLat and userLng are sourced from geo state
   assert.match(searchSrc, /userLat=\{geo\?\.lat \?\? null\}/);
   assert.match(searchSrc, /userLng=\{geo\?\.lng \?\? null\}/);
   // FALLBACK_CENTER must stay as a last-resort only (present but conditioned on absence of coords)
   assert.match(searchMapViewSrc, /FALLBACK_CENTER/);
+  // When the parent passes user coordinates at init time the map must use
+  // them as the initial centre instead of falling back to Montréal.
+  assert.match(
+    searchMapViewSrc,
+    /if \(userLatRef\.current && userLngRef\.current\)[\s\S]{0,200}centeredOnUserRef\.current = true/,
+  );
+});
+
+test("map recenters when the saved learner origin actually changes (not on every render)", () => {
+  // The recenter effect must compare against the last-applied tuple so manual
+  // panning between updates is preserved, but a fresh saved address pans once.
+  assert.match(searchMapViewSrc, /lastAppliedUserLatLng/);
+  assert.match(
+    searchMapViewSrc,
+    /const changed = !last \|\| last\.lat !== userLat \|\| last\.lng !== userLng/,
+  );
+  assert.match(
+    searchMapViewSrc,
+    /if \(changed\) \{[\s\S]{0,200}map\.panTo\(\{ lat: userLat, lng: userLng \}\)/,
+  );
 });
 
 test("teacher profile opened from search page receives distanceKm from search results", () => {
   // A helper must look up distanceKm from results before opening the profile
   assert.match(searchSrc, /openTeacherProfile/);
   assert.match(searchSrc, /distanceKm=\{selectedProfileDistanceKm\}/);
+});
+
+test("text-only address (no coords) does not claim distance on cards", () => {
+  // The card's distance label is gated on distanceKm != null, so a stored
+  // address without lat/lng produces no fake distance.
+  const cardSrc = searchSrc.slice(searchSrc.indexOf("function TeacherCard"));
+  assert.match(cardSrc, /distanceKm != null \? \(/);
+  // The card must read distanceKm from the row, not recompute from address.
+  assert.doesNotMatch(cardSrc, /haversineDistance/);
+});
+
+test("Places-unavailable hint is shown when the script cannot load", () => {
+  assert.match(searchSrc, /placesUnavailable/);
+  assert.match(searchSrc, /studentLocationPlacesUnavailable/);
 });
 
 console.log("[studentLocation] tests passed");

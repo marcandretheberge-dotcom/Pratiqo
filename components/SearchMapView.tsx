@@ -130,6 +130,10 @@ export function SearchMapView({
 
   // Whether the map's initial view has been centred on the user's real coords.
   const centeredOnUserRef = useRef(false);
+  // Last user coordinate we auto-panned to. When the parent passes a *new*
+  // saved learner origin we recenter once; when the same value is rebroadcast
+  // we leave the map alone so manual panning between updates is respected.
+  const lastAppliedUserLatLng = useRef<{ lat: number; lng: number } | null>(null);
 
   // Current visible bounds — updated by the idle listener, read on button click.
   const boundsRef = useRef<MapBounds | null>(null);
@@ -164,6 +168,7 @@ export function SearchMapView({
         if (userLatRef.current && userLngRef.current) {
           center = { lat: userLatRef.current, lng: userLngRef.current };
           centeredOnUserRef.current = true;
+          lastAppliedUserLatLng.current = { lat: center.lat, lng: center.lng };
         } else {
           center = await new Promise<{ lat: number; lng: number }>((resolve) => {
             if (!("geolocation" in navigator)) {
@@ -245,6 +250,7 @@ export function SearchMapView({
       markersRef.current = [];
       mapInstanceRef.current = null;
       centeredOnUserRef.current = false;
+      lastAppliedUserLatLng.current = null;
       boundsRef.current = null;
       if (mapRef.current) mapRef.current.innerHTML = "";
       setMapsReady(false);
@@ -253,7 +259,15 @@ export function SearchMapView({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [apiKey]); // ← only apiKey: the map must NOT reinitialise on any other change
 
-  // ── Effect 2: "You are here" marker — no map re-creation ─────────────────
+  // ── Effect 2: "You are here" marker + recenter on origin change ──────────
+  //
+  // Recentering policy:
+  //   • First time we see real user coords (initial mount or first prop set)
+  //     → pan to them.
+  //   • A new tuple from the parent (e.g. the student just saved a different
+  //     address) → pan once to the new origin.
+  //   • Same tuple replayed (re-render with unchanged props) → do NOT pan,
+  //     so the user's manual map drags are preserved between updates.
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map || !mapsReady) return;
@@ -261,10 +275,13 @@ export function SearchMapView({
     userMarkerRef.current?.setMap(null);
     userMarkerRef.current = null;
 
-    if (userLat && userLng) {
-      if (!centeredOnUserRef.current) {
+    if (userLat != null && userLng != null) {
+      const last = lastAppliedUserLatLng.current;
+      const changed = !last || last.lat !== userLat || last.lng !== userLng;
+      if (changed) {
         map.panTo({ lat: userLat, lng: userLng });
         centeredOnUserRef.current = true;
+        lastAppliedUserLatLng.current = { lat: userLat, lng: userLng };
       }
       userMarkerRef.current = new google.maps.Marker({
         position: { lat: userLat, lng: userLng },
@@ -279,6 +296,8 @@ export function SearchMapView({
         },
         title: t("youAreHere"),
       });
+    } else {
+      lastAppliedUserLatLng.current = null;
     }
   }, [mapsReady, userLat, userLng, t]);
 

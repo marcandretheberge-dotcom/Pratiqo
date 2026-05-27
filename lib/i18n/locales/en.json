@@ -825,6 +825,7 @@
   "studentLocationClear": "Remove",
   "studentApproxDistanceFromYou": "About {distance} from you",
   "studentLocationSelectFromSuggestions": "Select an address from the suggestions to calculate distances.",
+  "studentLocationPlacesUnavailable": "Address search is unavailable right now.",
   "mapRecenterOnMe": "Recenter on me",
   "studentLocationPrivateNotice": "Your address is never shown to teachers before a confirmed home lesson booking.",
   "newConversation": "New conversation",

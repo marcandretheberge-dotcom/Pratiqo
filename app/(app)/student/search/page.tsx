@@ -92,6 +92,10 @@ export default function StudentSearchPage() {
   const [googleReady, setGoogleReady] = useState(
     () => typeof window !== "undefined" && Boolean(window.google?.maps?.places),
   );
+  // Tracks when the Places library failed to load (missing API key, network
+  // error, etc.). We surface this inline so the student knows autocomplete
+  // is unavailable rather than silently typing into a dead input.
+  const [placesUnavailable, setPlacesUnavailable] = useState(false);
   const [selectedProfileDistanceKm, setSelectedProfileDistanceKm] = useState<number | null>(null);
   const studentAddressRef = useRef<HTMLInputElement | null>(null);
   const placeConfirmedRef = useRef(false);
@@ -116,7 +120,10 @@ export default function StudentSearchPage() {
   // Uses the same @googlemaps/js-api-loader already used by SearchMapView — no second script tag.
   useEffect(() => {
     const key = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-    if (!key) return;
+    if (!key) {
+      setPlacesUnavailable(true);
+      return;
+    }
     if (typeof window !== "undefined" && window.google?.maps?.places) {
       setGoogleReady(true);
       return;
@@ -126,9 +133,14 @@ export default function StudentSearchPage() {
       try {
         setOptions({ key, v: "weekly" });
         await importLibrary("places");
-        if (!cancelled) setGoogleReady(true);
+        if (cancelled) return;
+        if (typeof window !== "undefined" && window.google?.maps?.places) {
+          setGoogleReady(true);
+        } else {
+          setPlacesUnavailable(true);
+        }
       } catch {
-        // Autocomplete degrades gracefully to plain text input
+        if (!cancelled) setPlacesUnavailable(true);
       }
     };
     void run();
@@ -204,8 +216,12 @@ export default function StudentSearchPage() {
         );
         setStudentLocation(parsedLocation);
         setLocationDraft(studentLocationSummary(parsedLocation));
+        // Saved location is the authoritative learner origin when it has
+        // coordinates: always seed `geo` from it on load so the map opens
+        // near the student's saved address and teacher cards immediately
+        // show distance, instead of waiting for a browser-geo prompt.
         if (studentLocationHasCoordinates(parsedLocation)) {
-          setGeo((current) => current ?? { lat: parsedLocation.lat, lng: parsedLocation.lng });
+          setGeo({ lat: parsedLocation.lat, lng: parsedLocation.lng });
           setSortMode((current) => (current === "relevance" ? "nearest" : current));
         }
         setStudentPrefs(
@@ -543,13 +559,22 @@ export default function StudentSearchPage() {
                           setLocationDraft(e.target.value);
                           placeConfirmedRef.current = false;
                         }}
-                        placeholder="Entre ton adresse ou ton secteur"
+                        placeholder={t("bookingAddressPlaceholder")}
                         autoComplete="off"
+                        data-testid="student-location-address-input"
                         className="h-11 min-w-0 rounded-2xl border border-[#DCEAE3] bg-white px-3 text-sm outline-none focus:border-teal-500 sm:w-72"
                       />
                       {googleReady ? (
                         <p className="text-[10px] leading-snug text-[#6B6A65]">
                           {t("studentLocationSelectFromSuggestions")}
+                        </p>
+                      ) : placesUnavailable ? (
+                        <p
+                          role="status"
+                          className="text-[10px] leading-snug font-semibold text-amber-700"
+                          data-testid="student-location-places-unavailable"
+                        >
+                          {t("studentLocationPlacesUnavailable")}
                         </p>
                       ) : null}
                     </div>
