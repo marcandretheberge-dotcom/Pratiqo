@@ -163,6 +163,34 @@ Los pagos se acreditan a los profesores dentro de los **7 días hábiles** poste
 
 ---
 
+## 6a. YoPratiqo — Cursos autónomos (pago único)
+
+YoPratiqo agrupa los **cursos autónomos de pago único** de Pratiqo (idiomas, viaje, etc.). Estos cursos son distintos del marketplace de clases individuales cubierto en el §6 anterior: una compra YoPratiqo es un pago único que otorga **acceso inmediato** al contenido adquirido, con **acceso de por vida** según se define a continuación y una **garantía de satisfacción de 30 días**.
+
+Las condiciones completas — acceso de por vida, garantía de 30 días, derecho de desistimiento UE y reglas aplicables a personas menores — están consolidadas en la **[política YoPratiqo dedicada](/legal/yo-remboursement)**. Las subsecciones siguientes son un resumen contractual.
+
+### 6a.1 Estado jurídico
+
+La compra de un módulo YoPratiqo otorga una **licencia personal e intransferible** de acceso al contenido, **vinculada a la cuenta Pratiqo** del comprador. Pratiqo inc. conserva todos los derechos de propiedad intelectual sobre el módulo. *Ver [política YoPratiqo §1](/legal/yo-remboursement).*
+
+### 6a.2 Acceso de por vida
+
+«Acceso de por vida» significa un acceso activo mientras Pratiqo opere el servicio YoPratiqo. En caso de discontinuación, Pratiqo da un **aviso mínimo de 90 días** por correo electrónico y ofrece un **reembolso prorrateado** a los compradores que pagaron en los últimos 12 meses. *Ver [política YoPratiqo §2](/legal/yo-remboursement).*
+
+### 6a.3 Garantía de satisfacción de 30 días
+
+Una garantía de reembolso se aplica durante **30 días civiles** desde la fecha de compra, siempre que se haya completado el **25 % o menos** de las clases del módulo. Los reembolsos se emiten via Stripe al método de pago original, impuestos incluidos, en la moneda original de la compra. *Ver [política YoPratiqo §3](/legal/yo-remboursement).*
+
+### 6a.4 Compradores de la Unión Europea
+
+Los compradores residentes en la Unión Europea disponen de un **derecho de desistimiento de 14 días** (Directiva 2011/83/UE y Directiva (UE) 2019/770). Para los contenidos digitales entregados de inmediato, ese derecho solo puede levantarse mediante **consentimiento expreso** en el momento del pago. Sin esa renuncia, el derecho de 14 días se preserva íntegramente. *Ver [política YoPratiqo §4](/legal/yo-remboursement).*
+
+### 6a.5 Personas menores de edad
+
+En Quebec, una persona menor de 14 años no puede celebrar sola un contrato de consumo (Código Civil de Québec art. 157) — la compra de un módulo YoPratiqo requiere **autorización parental**. Un padre, madre o tutor/a puede pedir la rescisión de una compra no autorizada (art. 163), con reembolso completo fuera de las condiciones del §6a.3. *Ver [política YoPratiqo §5](/legal/yo-remboursement).*
+
+---
+
 ## 7. Clases a domicilio
 
 Pratiqo actúa únicamente como intermediario. La seguridad durante las clases a domicilio es responsabilidad exclusiva del profesor y el estudiante.
