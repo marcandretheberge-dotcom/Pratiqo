@@ -70,12 +70,20 @@ const HUB_COPY = {
     en: "Short, visual, practical paths to learn before travelling, speaking, or practicing in real life.",
   },
   heroPrimary: {
-    fr: "Commencer avec Yo Voyage",
-    en: "Start with Yo Voyage",
+    fr: "Choisir une langue",
+    en: "Choose a language",
   },
   heroSecondary: {
     fr: "Explorer le produit",
     en: "Explore the product",
+  },
+  navCtaLangues: {
+    fr: "Voir les langues",
+    en: "Browse languages",
+  },
+  featuredCta: {
+    fr: "Voir le parcours",
+    en: "View the course",
   },
   featuredEyebrow: {
     fr: "Premier parcours disponible",
@@ -156,28 +164,31 @@ const pillars = [
 
 const productLines = [
   {
-    status: "available",
+    status: "available" as const,
+    title: { fr: "Yo Langues", en: "Yo Languages" },
+    body: {
+      fr: "Des parcours de langue immersifs, organisés par langue puis par pays.",
+      en: "Immersive language paths, organized by language then by country.",
+    },
+    href: "/yo/langues",
+  },
+  {
+    status: "available" as const,
     title: { fr: "Yo Voyage", en: "Yo Travel" },
     body: {
       fr: "Se préparer à parler sur place avec culture et expressions locales.",
       en: "Prepare to speak on-site with culture and local expressions.",
     },
+    href: "/yo/langues/espagnol",
   },
   {
-    status: "planned",
-    title: { fr: "Yo Langues", en: "Yo Languages" },
-    body: {
-      fr: "Des parcours de langue plus profonds, reliés aux professeurs Pratiqo.",
-      en: "Deeper language paths connected to Pratiqo teachers.",
-    },
-  },
-  {
-    status: "planned",
+    status: "planned" as const,
     title: { fr: "Yo Musique", en: "Yo Music" },
     body: {
       fr: "Théorie, rythme, écoute et pratique entre les cours.",
       en: "Theory, rhythm, listening, and practice between lessons.",
     },
+    href: null,
   },
 ];
 
@@ -185,8 +196,12 @@ export default async function YoHubPage({ searchParams }: PageProps) {
   const resolvedSearchParams = await searchParams;
   const locale = getYoLocale(resolvedSearchParams.lang);
   const yoModule = dominicanRepublicA1.module;
-  const courseHref =
-    locale === "en" ? "/yo/voyage/republique-dominicaine?lang=en" : "/yo/voyage/republique-dominicaine";
+  const langSuffix = locale === "en" ? "?lang=en" : "";
+  // Primary path: nudge users into the new IA tree.
+  const languesHref = `/yo/langues${langSuffix}`;
+  // Featured shortcut: keep the existing RD destination one click away,
+  // but route it through the canonical IA path so breadcrumbs work.
+  const courseHref = `/yo/langues/espagnol/pays/republique-dominicaine${langSuffix}`;
   const toggleHref = buildYoLocaleHref("/yo", locale === "fr" ? "en" : "fr");
 
   return (
@@ -204,10 +219,10 @@ export default async function YoHubPage({ searchParams }: PageProps) {
               {t(HUB_COPY.languageToggle, locale)}
             </Link>
             <Link
-              href={courseHref}
+              href={languesHref}
               className="inline-flex items-center rounded-full border border-[#F4B400]/55 bg-[#FFF4D6] px-4 py-2 text-sm font-bold text-[#0F6E56] shadow-[0_1px_0_rgba(244,180,0,0.18)] transition hover:bg-[#ffefbd]"
             >
-              {t(HUB_COPY.navCta, locale)}
+              {t(HUB_COPY.navCtaLangues, locale)}
             </Link>
           </nav>
         </div>
@@ -233,7 +248,7 @@ export default async function YoHubPage({ searchParams }: PageProps) {
               </div>
               <div className="flex flex-col gap-3 sm:flex-row">
                 <Link
-                  href={courseHref}
+                  href={languesHref}
                   className="inline-flex items-center justify-center gap-2 rounded-full bg-[#0F6E56] px-5 py-3 text-sm font-bold text-white shadow-[0_14px_34px_rgba(15,110,86,0.22)] transition hover:bg-[#0b5b47]"
                 >
                   {t(HUB_COPY.heroPrimary, locale)}
@@ -284,6 +299,13 @@ export default async function YoHubPage({ searchParams }: PageProps) {
                   <p className="mt-4 text-sm leading-relaxed text-[#0F6E56]/74">
                     {t(HUB_COPY.featuredBody, locale)}
                   </p>
+                  <Link
+                    href={courseHref}
+                    className="mt-4 inline-flex items-center justify-center gap-1.5 rounded-full bg-[#0F6E56] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#0b5b47]"
+                  >
+                    {t(HUB_COPY.featuredCta, locale)}
+                    <span aria-hidden>→</span>
+                  </Link>
                 </div>
               </div>
             </div>
@@ -332,16 +354,17 @@ export default async function YoHubPage({ searchParams }: PageProps) {
             <div className="grid gap-4 lg:grid-cols-3">
               {productLines.map((line) => {
                 const isAvailable = line.status === "available";
-                return (
-                  <article
-                    key={line.title.fr}
-                    className={cn(
-                      "rounded-3xl border p-5 shadow-[0_8px_26px_rgba(15,110,86,0.08)]",
-                      isAvailable
-                        ? "border-[#F4B400]/45 bg-[#FFF4D6]"
-                        : "border-white/80 bg-white/82",
-                    )}
-                  >
+                const href = line.href
+                  ? `${line.href}${langSuffix}`
+                  : null;
+                const articleClass = cn(
+                  "flex h-full flex-col rounded-3xl border p-5 shadow-[0_8px_26px_rgba(15,110,86,0.08)] transition",
+                  isAvailable
+                    ? "border-[#F4B400]/45 bg-[#FFF4D6] hover:bg-[#ffefbd]"
+                    : "border-white/80 bg-white/82",
+                );
+                const inner = (
+                  <>
                     <div className="mb-5 flex items-center justify-between gap-3">
                       <div className={cn("flex size-11 items-center justify-center rounded-2xl", isAvailable ? "bg-[#F4B400]/25 text-[#0F6E56]" : "bg-[#DDF4F1] text-[#0F6E56]/70")}>
                         {isAvailable ? <CheckCircle2 className="size-5" aria-hidden /> : <Lock className="size-5" aria-hidden />}
@@ -352,6 +375,20 @@ export default async function YoHubPage({ searchParams }: PageProps) {
                     </div>
                     <h3 className="text-lg font-bold text-[#0F6E56]">{t(line.title, locale)}</h3>
                     <p className="mt-2 text-sm leading-relaxed text-[#0F6E56]/72">{t(line.body, locale)}</p>
+                    {href ? (
+                      <span className="mt-auto inline-flex items-center gap-1.5 pt-3 text-sm font-bold text-[#0F6E56]">
+                        {locale === "fr" ? "Ouvrir" : "Open"} <span aria-hidden>→</span>
+                      </span>
+                    ) : null}
+                  </>
+                );
+                return href ? (
+                  <Link key={line.title.fr} href={href} className={articleClass}>
+                    {inner}
+                  </Link>
+                ) : (
+                  <article key={line.title.fr} className={articleClass} aria-disabled="true">
+                    {inner}
                   </article>
                 );
               })}
