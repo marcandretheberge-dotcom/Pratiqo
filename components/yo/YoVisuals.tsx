@@ -1,5 +1,5 @@
 /**
- * YoVisuals — Phase 1 code-based visual placeholders for the Yo Pratiqo
+ * YoVisuals — Phase 1 code-based visual placeholders for the YoPratiqo
  * Voyage MVP page. Pure server components (no client state, no Supabase,
  * no Stripe, no image files). Every visual here is intentionally light-
  * weight inline SVG + CSS gradients so the page does not depend on any
@@ -769,7 +769,7 @@ export function YoUnlockTravelStamp({ locale }: { locale: YoLocale }) {
             fill="#fbbf24"
             opacity="0.85"
           >
-            YO PRATIQO
+            YOPRATIQO
           </text>
         </g>
 

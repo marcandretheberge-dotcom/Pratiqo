@@ -1,6 +1,6 @@
 /**
  * YoFeatureStrip — small marketing strip rendered near the bottom of the
- * Yo Pratiqo Voyage prototype page.
+ * YoPratiqo Voyage-section prototype page.
  *
  * Server component. Identical icon mapping to YoUnlockCard so a future
  * design tweak to one block can be mirrored to the other.

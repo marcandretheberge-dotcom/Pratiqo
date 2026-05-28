@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * YoIntroExperience — client orchestrator for the Yo Pratiqo Voyage Intro.
+ * YoIntroExperience — client orchestrator for the YoPratiqo Voyage-section Intro.
  *
  * Owns the "which detailed section is open" state and renders:
  *   1. The intro progress / value-prop strip.

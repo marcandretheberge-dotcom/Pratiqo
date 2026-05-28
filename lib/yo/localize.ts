@@ -1,5 +1,5 @@
 /**
- * Yo Pratiqo — tiny, dependency-free localization helpers.
+ * YoPratiqo — tiny, dependency-free localization helpers.
  *
  * Used by every Yo component that renders user-facing copy. Two design
  * decisions to keep this lightweight:

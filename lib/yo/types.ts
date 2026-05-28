@@ -1,7 +1,7 @@
 /**
- * Yo Pratiqo — shared TypeScript types.
+ * YoPratiqo — shared TypeScript types.
  *
- * These types describe the data shape for the Yo Pratiqo Voyage MVP UI
+ * These types describe the data shape for the YoPratiqo Voyage-section MVP UI
  * (Phase 1). They are intentionally close to the future Supabase model so
  * the same component props can later be powered by real database rows
  * (yo_modules, yo_lessons, yo_quiz_questions, yo_flashcards, …) without
@@ -200,7 +200,7 @@ export interface YoLessonPathStep {
 // ─────────────────────────────────────────────────────────────────────────
 
 /**
- * Top-level Yo Pratiqo Voyage product. Future row:
+ * Top-level YoPratiqo Voyage-section module. Future row:
  *   public.yo_modules.
  *
  * NOTE on pricing — the MVP price is 2499 cents formatted as
@@ -228,7 +228,7 @@ export interface YoModule {
   /**
    * Small label that sits above the hero. Localized so the brand can read
    * the same in both languages but stay typed consistently — e.g.
-   * "Yo Pratiqo Voyage" in both fr and en for the MVP brand.
+   * "YoPratiqo · Voyage" (FR) / "YoPratiqo · Travel" (EN) for the MVP brand.
    */
   productLabel: YoLocalizedString;
   /**
@@ -483,6 +483,92 @@ export interface YoIntroDetailedSection {
    */
   audioComingSoonLabel?: YoLocalizedString | null;
 }
+
+// ─────────────────────────────────────────────────────────────────────────
+// Guided reading (short text + vocabulary helper + comprehension quiz)
+// ─────────────────────────────────────────────────────────────────────────
+
+/**
+ * A single Spanish vocabulary row that powers the reading helper box.
+ *
+ * `target` is the Spanish term/phrase (rendered with `lang="es"`).
+ * `translation` is the learner-language gloss in both FR and EN — for the
+ * helper box we render BOTH languages side-by-side so a learner reading
+ * the page in either UI can still see the cross-language anchor.
+ */
+export interface YoReadingVocabularyItem {
+  target: string;
+  translation: YoLocalizedString;
+}
+
+/**
+ * One guided-reading section. The Spanish `body` is a short A1-safe text
+ * (70–100 words). `bodyLines` is the same text split into paragraphs so
+ * the renderer can keep the visual rhythm without parsing the string.
+ *
+ * `speechLang` lets a reading attached to a specific country (e.g. RD)
+ * prefer a regional voice ("es-DO") while keeping a sensible global
+ * default ("es-ES").
+ *
+ * Future Supabase row: public.yo_reading_sections (body jsonb, locale,
+ *                                                  speech_lang, …).
+ */
+export interface YoReadingSection {
+  id: string;
+  /** Eyebrow chip (e.g. "Lecture guidée"). */
+  eyebrow: YoLocalizedString;
+  /** Localized title (e.g. "Mi primer texto en español"). */
+  title: YoLocalizedString;
+  /** Optional one-line subtitle / pedagogical hint. */
+  subtitle?: YoLocalizedString;
+  /** Spanish paragraphs of the reading text. Each rendered with `lang="es"`. */
+  bodyLines: string[];
+  /** Vocabulary helper box rows. */
+  vocabulary: YoReadingVocabularyItem[];
+  /** Comprehension questions (multiple choice, with feedback). */
+  questions: YoQuizQuestion[];
+  /**
+   * BCP-47 tag used by SpeechSynthesis. Defaults to "es-ES" if undefined.
+   * Country modules can pick "es-DO", "es-MX", "es-CO", …
+   */
+  speechLang?: string;
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// YoPratiqo Coach (deterministic recommendation MVP)
+// ─────────────────────────────────────────────────────────────────────────
+
+/**
+ * Identifier for a self-reported difficulty axis. Kept as a closed union
+ * so the deterministic recommendation table (`YoCoachOption.recommendation`)
+ * stays type-safe.
+ */
+export type YoCoachDifficulty =
+  | "pronunciation"
+  | "vocabulary"
+  | "comprehension"
+  | "culture"
+  | "unsure";
+
+/**
+ * One option in the YoPratiqo Coach question. Each option carries its own
+ * deterministic recommendation so the runtime stays a pure lookup — no
+ * conditional logic, no network call.
+ *
+ * Phase 2: a server route will be able to replace `recommendation` with
+ * an AI-generated string given a small prompt + the learner's signals.
+ * The shape stays identical so the swap is invisible to the UI.
+ */
+export interface YoCoachOption {
+  id: YoCoachDifficulty;
+  label: YoLocalizedString;
+  /** What YoPratiqo Coach suggests once this option is picked. */
+  recommendation: YoLocalizedString;
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Intro progress strip
+// ─────────────────────────────────────────────────────────────────────────
 
 /** Single chip in the intro-progress strip. */
 export interface YoIntroProgressStat {

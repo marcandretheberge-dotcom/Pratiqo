@@ -1,5 +1,5 @@
 /**
- * Yo Pratiqo — Espagnol · Intro globale A1
+ * YoPratiqo — Espagnol · Intro globale A1
  *
  * Universal Spanish primer that sits *above* the country modules in
  * the new IA: YoPratiqo → Langues → Espagnol → Intro globale.
@@ -37,20 +37,23 @@ import { SITE_URL } from "@/lib/seo/site";
 import { buildYoLocaleHref, getYoLocale, lstr, t } from "@/lib/yo/localize";
 import { spanishIntroA1 } from "@/lib/yo/spanishIntroA1";
 import { YoBreadcrumb } from "@/components/yo/YoBreadcrumb";
+import { YoCoachPanel } from "@/components/yo/YoCoachPanel";
 import { YoFlashcardPreview } from "@/components/yo/YoFlashcardPreview";
+import { YoPronunciationButton } from "@/components/yo/YoPronunciationButton";
 import { YoQuizPreview } from "@/components/yo/YoQuizPreview";
+import { YoReadingPreview } from "@/components/yo/YoReadingPreview";
 
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Yo Pratiqo — Espagnol · Intro globale A1",
+  title: "YoPratiqo — Espagnol · Intro globale A1",
   description:
     "Avant de choisir un pays, découvre l’espagnol comme langue mondiale : origine, pays, variations et premiers mots utiles.",
   alternates: {
     canonical: `${SITE_URL}/yo/langues/espagnol/intro`,
   },
   openGraph: {
-    title: "Yo Pratiqo — Intro globale à l’espagnol",
+    title: "YoPratiqo — Intro globale à l’espagnol",
     description:
       "L’espagnol dans le monde : origine, pays, variations, premiers mots, quiz et flashcards.",
     type: "website",
@@ -155,8 +158,11 @@ export default async function YoEspagnolIntroPage({ searchParams }: PageProps) {
     universalWords,
     quizQuestions,
     flashcards,
+    readingSection,
+    coachOptions,
     destinations,
   } = spanishIntroA1;
+  const teacherBridgeHref = `/trouver-un-prof${langSuffix}`;
 
   return (
     <div className="min-h-[100dvh] bg-[#FAFCFB] text-[#0F6E56]">
@@ -200,7 +206,7 @@ export default async function YoEspagnolIntroPage({ searchParams }: PageProps) {
               </Link>
             </div>
             <p className="text-sm font-black uppercase tracking-[0.22em] text-[#1D9E75]">
-              Yo Pratiqo · {locale === "fr" ? "Espagnol" : "Spanish"}
+              YoPratiqo · {locale === "fr" ? "Espagnol" : "Spanish"}
             </p>
             <h1
               id="yo-spanish-intro-title"
@@ -378,9 +384,17 @@ export default async function YoEspagnolIntroPage({ searchParams }: PageProps) {
                 key={word.target}
                 className="rounded-2xl border border-teal-100 bg-white p-4 shadow-[0_1px_2px_rgba(15,58,52,0.04)]"
               >
-                <p className="text-lg font-semibold text-[#0F6E56]" lang="es">
-                  {word.target}
-                </p>
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-lg font-semibold text-[#0F6E56]" lang="es">
+                    {word.target}
+                  </p>
+                  <YoPronunciationButton
+                    text={word.target}
+                    locale={locale}
+                    speechLang="es-ES"
+                    size="xs"
+                  />
+                </div>
                 <p className="mt-1 text-sm text-[#0F6E56]/80">
                   {t(word.translation, locale)}
                 </p>
@@ -394,11 +408,25 @@ export default async function YoEspagnolIntroPage({ searchParams }: PageProps) {
           </ul>
         </section>
 
+        {/* 5b) Guided reading — short A1 Spanish text + reading quiz */}
+        <YoReadingPreview section={readingSection} locale={locale} />
+
         {/* 6) Quiz — reuses YoQuizPreview */}
         <YoQuizPreview questions={quizQuestions} locale={locale} />
 
-        {/* 7) Flashcards — reuses YoFlashcardPreview */}
-        <YoFlashcardPreview cards={flashcards} locale={locale} />
+        {/* 7) Flashcards — reuses YoFlashcardPreview (autoplay + audio) */}
+        <YoFlashcardPreview
+          cards={flashcards}
+          locale={locale}
+          speechLang="es-ES"
+        />
+
+        {/* 7b) YoPratiqo Coach — deterministic next-step recommendation */}
+        <YoCoachPanel
+          options={coachOptions}
+          locale={locale}
+          teacherHref={teacherBridgeHref}
+        />
 
         {/* 8) Choose your destination */}
         <section

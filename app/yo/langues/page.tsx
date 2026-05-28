@@ -1,5 +1,5 @@
 /**
- * Yo Pratiqo — Langues hub
+ * YoPratiqo — Langues hub
  *
  * Top of the language sub-tree in the new YoPratiqo IA:
  *
@@ -26,14 +26,14 @@ import { YoBreadcrumb } from "@/components/yo/YoBreadcrumb";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Yo Pratiqo — Langues",
+  title: "YoPratiqo — Langues",
   description:
-    "Apprends une langue avec des parcours immersifs, culturels et pratiques.",
+    "Apprends une langue à ton rythme avec des parcours immersifs, culturels et pratiques.",
   alternates: {
     canonical: `${SITE_URL}/yo/langues`,
   },
   openGraph: {
-    title: "Yo Pratiqo — Langues",
+    title: "YoPratiqo — Langues",
     description:
       "Espagnol disponible · français, anglais et japonais à venir.",
     type: "website",
@@ -153,7 +153,7 @@ export default async function YoLanguesPage({ searchParams }: PageProps) {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <span className="inline-flex items-center gap-2 rounded-full border border-[#F4B400]/45 bg-white/80 px-3 py-1.5 text-xs font-black uppercase tracking-[0.14em] text-[#0F6E56]">
                 <Sparkles className="size-3.5 text-[#F4B400]" aria-hidden />
-                Yo Pratiqo
+                YoPratiqo
               </span>
               <Link
                 href={toggleHref}

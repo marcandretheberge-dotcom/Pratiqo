@@ -1,5 +1,5 @@
 /**
- * YoLessonCard — single card inside a Yo Pratiqo Voyage lesson.
+ * YoLessonCard — single card inside a YoPratiqo Voyage-section lesson.
  *
  * Server component. Handles three card kinds:
  *   - "text"    text + CTA  (intro cards 1-3)

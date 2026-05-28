@@ -1,5 +1,5 @@
 /**
- * Yo Pratiqo — Espagnol · Pays · République dominicaine A1
+ * YoPratiqo — Espagnol · Pays · République dominicaine A1
  *
  * Canonical position of the RD A1 module inside the new YoPratiqo
  * information architecture:
@@ -29,16 +29,16 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title:
-    "Yo Pratiqo — Espagnol République dominicaine A1",
+    "YoPratiqo — Espagnol République dominicaine A1",
   description:
-    "Apprends l’espagnol dominicain avec culture, expressions locales et missions réelles. Niveau A1 débutant, $24,99 CAD, accès à vie.",
+    "Apprends à vraiment parler sur place avec culture, expressions locales et missions réelles. Parcours République dominicaine A1, $24,99 CAD.",
   alternates: {
     canonical: `${SITE_URL}/yo/langues/espagnol/pays/republique-dominicaine`,
   },
   openGraph: {
-    title: "Yo Pratiqo — République dominicaine A1",
+    title: "YoPratiqo — République dominicaine A1",
     description:
-      "Espagnol pratique, culture dominicaine et expressions locales. $24,99 CAD, accès à vie.",
+      "Espagnol pratique, culture dominicaine et expressions locales. $24,99 CAD.",
     type: "website",
     url: `${SITE_URL}/yo/langues/espagnol/pays/republique-dominicaine`,
     locale: "fr_CA",

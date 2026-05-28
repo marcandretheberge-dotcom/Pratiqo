@@ -1,5 +1,5 @@
 /**
- * YoUnlockCard — pre-purchase promo block for the Yo Pratiqo Voyage module.
+ * YoUnlockCard — pre-purchase promo block for a YoPratiqo Voyage-section module.
  *
  * Server component. Phase 1 only — the CTA is a visual placeholder
  * (`href="#"` by default). Stripe checkout is wired in Phase 2.
