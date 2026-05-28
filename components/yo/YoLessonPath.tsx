@@ -1,5 +1,5 @@
 /**
- * YoLessonPath — numbered lesson roadmap for a Yo Pratiqo Voyage module.
+ * YoLessonPath — numbered lesson roadmap for a YoPratiqo Voyage-section module.
  *
  * Server component. Renders the 5 steps in display order, only the first
  * "free_preview" or "available" step gets a real CTA; the rest are visual

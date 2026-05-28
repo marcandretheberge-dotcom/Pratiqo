@@ -1,5 +1,5 @@
 /**
- * Yo Pratiqo Voyage — Espagnol République dominicaine A1 (legacy route)
+ * YoPratiqo — Espagnol République dominicaine A1 (legacy Voyage-section route)
  *
  * Original product URL for the RD module. Kept alive on purpose so any
  * earlier shared link, marketing draft or external mention continues to
@@ -25,14 +25,14 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title:
-    "Yo Pratiqo Voyage — Espagnol pratique pour la République dominicaine",
+    "YoPratiqo — Espagnol République dominicaine A1",
   description:
     "Apprends à vraiment parler sur place avec culture, expressions locales et missions réelles. Niveau A1 débutant, $24,99 CAD.",
   alternates: {
     canonical: `${SITE_URL}/yo/voyage/republique-dominicaine`,
   },
   openGraph: {
-    title: "Yo Pratiqo Voyage — République dominicaine A1",
+    title: "YoPratiqo — République dominicaine A1",
     description:
       "Espagnol pratique, culture dominicaine et expressions locales. $24,99 CAD.",
     type: "website",

@@ -1,5 +1,5 @@
 /**
- * Yo Pratiqo — Espagnol (Spanish hub)
+ * YoPratiqo — Espagnol (Spanish hub)
  *
  * Sits one level below /yo/langues in the IA:
  *
@@ -40,16 +40,16 @@ import { YoBreadcrumb } from "@/components/yo/YoBreadcrumb";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Yo Pratiqo — Espagnol · parcours immersifs A1",
+  title: "YoPratiqo — Espagnol · parcours immersifs A1",
   description:
     "Comprends l’espagnol comme langue mondiale, puis explore les pays où elle se parle.",
   alternates: {
     canonical: `${SITE_URL}/yo/langues/espagnol`,
   },
   openGraph: {
-    title: "Yo Pratiqo — Espagnol",
+    title: "YoPratiqo — Espagnol",
     description:
-      "L’espagnol comme langue mondiale + parcours par pays + pont vers un vrai professeur.",
+      "L’espagnol comme langue mondiale + parcours par pays + pont vers un vrai professeur Pratiqo.",
     type: "website",
     url: `${SITE_URL}/yo/langues/espagnol`,
     locale: "fr_CA",
@@ -164,7 +164,7 @@ export default async function YoLanguesEspagnolPage({ searchParams }: PageProps)
               </Link>
             </div>
             <p className="text-sm font-black uppercase tracking-[0.22em] text-[#1D9E75]">
-              Yo Pratiqo · {locale === "fr" ? "Langues" : "Languages"}
+              YoPratiqo · {locale === "fr" ? "Langues" : "Languages"}
             </p>
             <h1
               id="yo-spanish-hub-title"

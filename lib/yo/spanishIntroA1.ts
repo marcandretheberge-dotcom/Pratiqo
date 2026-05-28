@@ -1,5 +1,5 @@
 /**
- * Yo Pratiqo — Espagnol · Intro globale A1
+ * YoPratiqo — Espagnol · Intro globale A1
  *
  * Hardcoded content for `/yo/langues/espagnol/intro`. Designed to sit
  * above the country modules in the new YoPratiqo information
@@ -21,9 +21,11 @@
 
 import { lstr } from "@/lib/yo/localize";
 import type {
+  YoCoachOption,
   YoFlashcard,
   YoLocalizedString,
   YoQuizQuestion,
+  YoReadingSection,
 } from "@/lib/yo/types";
 
 // ─────────────────────────────────────────────────────────────────────
@@ -176,8 +178,8 @@ const regions: SpanishRegion[] = [
       "Cuba, Dominican Republic, Puerto Rico",
     ),
     note: lstr(
-      "Rythme rapide, voyelles musicales et beaucoup d’expressions locales — c’est la zone de Yo Pratiqo Voyage.",
-      "Fast rhythm, musical vowels, and many local expressions — this is Yo Pratiqo Voyage's home zone.",
+      "Rythme rapide, voyelles musicales et beaucoup d’expressions locales — c’est la zone de départ de la section Voyage de YoPratiqo.",
+      "Fast rhythm, musical vowels, and many local expressions — this is the starting zone for YoPratiqo's Travel section.",
     ),
   },
   {
@@ -492,6 +494,202 @@ const flashcards: YoFlashcard[] = [
 ];
 
 // ─────────────────────────────────────────────────────────────────────
+// 7b) Guided reading — "Mi primer texto en español"
+//
+// Pedagogical contract:
+//   - Spanish body is intentionally simple A1 (Hola / me llamo / vivo /
+//     quiero / no entiendo). Roughly 80 words split into two short
+//     paragraphs so it reads well on mobile.
+//   - Vocabulary helper carries BOTH French and English so the box looks
+//     useful regardless of which UI locale the learner picked.
+//   - Comprehension questions are localized in the UI language; correct
+//     answers stay in Spanish-target form so the learner re-anchors on
+//     the words from the reading.
+// ─────────────────────────────────────────────────────────────────────
+
+const readingSection: YoReadingSection = {
+  id: "spanish_reading_first_text",
+  eyebrow: lstr("Lecture guidée", "Guided reading"),
+  title: lstr(
+    "Mi primer texto en español",
+    "Mi primer texto en español",
+  ),
+  subtitle: lstr(
+    "Un court texte A1 pour entendre l’espagnol couler dans ta tête.",
+    "A short A1 text so you can feel Spanish flow in your head.",
+  ),
+  bodyLines: [
+    "Hola. Me llamo Ana. Hablo español. Vivo en Canadá, pero quiero viajar a la República Dominicana.",
+    "Quiero aprender palabras útiles para el hotel, el restaurante y la playa. Me gusta practicar con frases simples. No hablo perfecto, pero puedo decir: hola, gracias, por favor y no entiendo. Para viajar, quiero hablar un poco más cada día.",
+  ],
+  vocabulary: [
+    {
+      target: "me llamo",
+      translation: lstr("je m’appelle", "my name is"),
+    },
+    {
+      target: "vivo",
+      translation: lstr("j’habite", "I live"),
+    },
+    {
+      target: "quiero",
+      translation: lstr("je veux", "I want"),
+    },
+    {
+      target: "viajar",
+      translation: lstr("voyager", "to travel"),
+    },
+    {
+      target: "palabras útiles",
+      translation: lstr("mots utiles", "useful words"),
+    },
+    {
+      target: "no entiendo",
+      translation: lstr("je ne comprends pas", "I don’t understand"),
+    },
+  ],
+  questions: [
+    {
+      id: "reading_q_name",
+      prompt: lstr(
+        "Comment s’appelle la personne dans le texte ?",
+        "What is the name of the person in the text?",
+      ),
+      options: [
+        { id: "a", label: lstr("Ana", "Ana") },
+        { id: "b", label: lstr("María", "María") },
+        { id: "c", label: lstr("Carmen", "Carmen") },
+      ],
+      correctOptionId: "a",
+      explanation: lstr(
+        "« Me llamo Ana » veut dire « Je m’appelle Ana ».",
+        "“Me llamo Ana” means “My name is Ana.”",
+      ),
+    },
+    {
+      id: "reading_q_where_lives",
+      prompt: lstr(
+        "Où vit Ana ?",
+        "Where does Ana live?",
+      ),
+      options: [
+        { id: "a", label: lstr("En République dominicaine", "In the Dominican Republic") },
+        { id: "b", label: lstr("Au Canada", "In Canada") },
+        { id: "c", label: lstr("En Espagne", "In Spain") },
+      ],
+      correctOptionId: "b",
+      explanation: lstr(
+        "Le texte dit « Vivo en Canadá », ce qui veut dire « J’habite au Canada ». Ana vit au Canada mais veut voyager.",
+        "The text says “Vivo en Canadá,” which means “I live in Canada.” Ana lives in Canada but wants to travel.",
+      ),
+    },
+    {
+      id: "reading_q_what_wants",
+      prompt: lstr(
+        "Pourquoi Ana veut-elle apprendre des mots utiles ?",
+        "Why does Ana want to learn useful words?",
+      ),
+      options: [
+        {
+          id: "a",
+          label: lstr(
+            "Pour l’hôtel, le restaurant et la plage",
+            "For the hotel, the restaurant, and the beach",
+          ),
+        },
+        {
+          id: "b",
+          label: lstr(
+            "Pour passer un examen à l’école",
+            "To pass a school exam",
+          ),
+        },
+        {
+          id: "c",
+          label: lstr(
+            "Pour écrire un livre",
+            "To write a book",
+          ),
+        },
+      ],
+      correctOptionId: "a",
+      explanation: lstr(
+        "Le texte dit : « para el hotel, el restaurante y la playa ». C’est du vocabulaire de voyage.",
+        "The text says: “para el hotel, el restaurante y la playa.” That’s travel vocabulary.",
+      ),
+    },
+    {
+      id: "reading_q_phrase",
+      prompt: lstr(
+        "Quelle phrase Ana sait-elle déjà dire ?",
+        "Which phrase does Ana already know how to say?",
+      ),
+      options: [
+        { id: "a", label: lstr("Hola", "Hola") },
+        { id: "b", label: lstr("Hasta mañana", "Hasta mañana") },
+        { id: "c", label: lstr("Buenas guaguas", "Buenas guaguas") },
+      ],
+      correctOptionId: "a",
+      explanation: lstr(
+        "Ana mentionne « hola, gracias, por favor y no entiendo ». « Hola » est dans cette liste.",
+        "Ana mentions “hola, gracias, por favor y no entiendo.” “Hola” is in that list.",
+      ),
+    },
+  ],
+};
+
+// ─────────────────────────────────────────────────────────────────────
+// 7c) YoPratiqo Coach options (deterministic next-step recommendations)
+//
+// A1 rule applies here too: each recommendation must point at something
+// the learner can actually do on this page right now — pronunciation
+// button, reading text, flashcards, or culture sections.
+// ─────────────────────────────────────────────────────────────────────
+
+const coachOptions: YoCoachOption[] = [
+  {
+    id: "pronunciation",
+    label: lstr("Prononciation", "Pronunciation"),
+    recommendation: lstr(
+      "Pratique 5 mots avec le bouton audio, puis lis le texte de la lecture guidée à voix haute. Ralentis sur les voyelles « a, e, i, o, u ».",
+      "Practice 5 words with the audio button, then read the guided-reading text out loud. Slow down on the vowels “a, e, i, o, u.”",
+    ),
+  },
+  {
+    id: "vocabulary",
+    label: lstr("Vocabulaire", "Vocabulary"),
+    recommendation: lstr(
+      "Refais les flashcards en mode lecture auto. Concentre-toi sur les cartes que tu as classées « Difficile » : elles reviennent en premier.",
+      "Run the flashcards again in autoplay mode. Focus on the ones you rated “Hard” — those come back first.",
+    ),
+  },
+  {
+    id: "comprehension",
+    label: lstr("Compréhension", "Understanding"),
+    recommendation: lstr(
+      "Relis la lecture guidée une deuxième fois, sans regarder les mots utiles. Puis refais le quiz de lecture : si tu fais 3 bonnes réponses, tu es prêt.",
+      "Read the guided text a second time without peeking at the helper box. Then redo the reading quiz — if you get 3 right, you’re ready.",
+    ),
+  },
+  {
+    id: "culture",
+    label: lstr("Culture", "Culture"),
+    recommendation: lstr(
+      "Plonge dans la section « Pourquoi l’espagnol change selon le pays ». Choisis ensuite un pays dans « Choisis ta destination » et explore son module.",
+      "Dive into the “Why Spanish changes by country” section. Then pick a country in “Choose your destination” and explore its module.",
+    ),
+  },
+  {
+    id: "unsure",
+    label: lstr("Je ne sais pas encore", "I’m not sure yet"),
+    recommendation: lstr(
+      "Commence simple : écoute 3 mots avec le bouton audio, relis le texte une fois, puis fais le quiz éclair. Tu sauras ensuite quoi cibler.",
+      "Start small: listen to 3 words with the audio button, reread the text once, then take the quick quiz. You’ll know what to target after that.",
+    ),
+  },
+];
+
+// ─────────────────────────────────────────────────────────────────────
 // 8) Destinations (cards on the "Choose your destination" section)
 // ─────────────────────────────────────────────────────────────────────
 
@@ -553,6 +751,8 @@ export const spanishIntroA1 = {
   universalWords,
   quizQuestions,
   flashcards,
+  readingSection,
+  coachOptions,
   destinations,
 };
 

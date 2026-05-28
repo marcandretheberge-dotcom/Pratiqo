@@ -15,6 +15,7 @@ import type {
   YoVocabularyItem,
 } from "@/lib/yo/types";
 import { t } from "@/lib/yo/localize";
+import { YoPronunciationButton } from "@/components/yo/YoPronunciationButton";
 
 export interface YoVocabularyTableProps {
   items: YoVocabularyItem[];
@@ -25,6 +26,18 @@ export interface YoVocabularyTableProps {
   /** Optional id forwarded for aria-labelledby relationships. */
   id?: string;
   locale: YoLocale;
+  /**
+   * Opt-in browser-native pronunciation buttons. Off by default so this
+   * component stays a pure server-rendered list everywhere it is used
+   * today; callers that want audio (Spanish intro vocab, reading helper,
+   * dictionary) flip this on explicitly.
+   */
+  enableAudio?: boolean;
+  /**
+   * BCP-47 tag forwarded to SpeechSynthesis when `enableAudio` is true.
+   * Defaults to "es-ES" — country modules can prefer "es-DO", "es-MX", …
+   */
+  speechLang?: string;
 }
 
 export function YoVocabularyTable({
@@ -33,6 +46,8 @@ export function YoVocabularyTable({
   variant = "cream",
   id,
   locale,
+  enableAudio = false,
+  speechLang = "es-ES",
 }: YoVocabularyTableProps) {
   if (items.length === 0) {
     return null;
@@ -62,10 +77,18 @@ export function YoVocabularyTable({
               className="flex flex-col gap-0 sm:contents"
             >
               <dt
-                className="text-[0.95rem] font-medium text-[#1a3a32]"
+                className="flex items-center gap-2 text-[0.95rem] font-medium text-[#1a3a32]"
                 lang="es"
               >
-                {item.target}
+                <span>{item.target}</span>
+                {enableAudio ? (
+                  <YoPronunciationButton
+                    text={item.target}
+                    locale={locale}
+                    speechLang={speechLang}
+                    size="xs"
+                  />
+                ) : null}
               </dt>
               <dd className="text-sm text-[var(--color-text-secondary)] sm:text-[0.95rem]">
                 {translation}

@@ -1,5 +1,5 @@
 /**
- * Yo Pratiqo — bilingual UI chrome strings.
+ * YoPratiqo — bilingual UI chrome strings.
  *
  * Anything that is rendered by the Yo components themselves (button
  * labels, status copy, completion messages, accessibility text, …) and
@@ -175,8 +175,8 @@ export const YO_COPY = {
     ),
     priceEyebrow: lstr("Prix de lancement", "Launch price"),
     subPrice: lstr(
-      "Paiement unique · Accès à vie",
-      "One-time payment · Lifetime access",
+      "Paiement unique",
+      "One-time payment",
     ),
     cta: lstr("Continuer", "Continue"),
     trustNote: lstr(
@@ -188,8 +188,8 @@ export const YO_COPY = {
   // ── Feature strip (bottom of page) ────────────────────────────────────
   features: {
     defaultTitle: lstr(
-      "Ce que Yo Pratiqo Voyage te donne",
-      "What Yo Pratiqo Voyage gives you",
+      "Ce que YoPratiqo te donne dans la section Voyage",
+      "What YoPratiqo gives you in the Travel section",
     ),
   },
 
@@ -228,5 +228,104 @@ export const YO_COPY = {
   visuals: {
     audioComingSoon: lstr("Audio bientôt disponible", "Audio coming soon"),
     visaReady: lstr("Visa-ready", "Visa-ready"),
+  },
+
+  // ── Pronunciation (browser SpeechSynthesis MVP) ──────────────────────
+  pronunciation: {
+    listenLabel: lstr(
+      "Écouter la prononciation",
+      "Listen to pronunciation",
+    ),
+    stopLabel: lstr("Arrêter la lecture", "Stop playback"),
+    unsupportedLabel: lstr(
+      "Audio non supporté par ce navigateur",
+      "Audio not supported by this browser",
+    ),
+  },
+
+  // ── Flashcard autoplay controls ───────────────────────────────────────
+  flashAutoplay: {
+    play: lstr("Lecture auto", "Autoplay"),
+    pause: lstr("Mettre en pause", "Pause"),
+    playAria: lstr(
+      "Démarrer la lecture automatique des cartes",
+      "Start autoplay of the cards",
+    ),
+    pauseAria: lstr(
+      "Mettre en pause la lecture automatique",
+      "Pause autoplay",
+    ),
+    previous: lstr("Carte précédente", "Previous card"),
+    nextNeutral: lstr("Carte suivante", "Next card"),
+    reducedMotionNote: lstr(
+      "Lecture auto désactivée (mouvement réduit détecté).",
+      "Autoplay off (reduced motion detected).",
+    ),
+  },
+
+  // ── Guided reading ────────────────────────────────────────────────────
+  reading: {
+    eyebrow: lstr("Lecture guidée", "Guided reading"),
+    bodyHint: lstr(
+      "Lis lentement. Chaque mot souligné est expliqué juste en dessous.",
+      "Read slowly. Each highlighted word is explained right below.",
+    ),
+    vocabHeading: lstr("Mots utiles", "Useful words"),
+    quizHeading: lstr("Quiz de compréhension", "Reading quiz"),
+    quizIntro: lstr(
+      "Trois petites questions pour vérifier ce que tu viens de lire.",
+      "Three short questions to check what you just read.",
+    ),
+    correctChip: lstr("Bonne réponse", "Correct"),
+    incorrectChip: lstr("Pas tout à fait", "Not quite"),
+    quizProgressAria: lstr(
+      "Progression du quiz de lecture",
+      "Reading quiz progress",
+    ),
+    nextQuestion: lstr("Question suivante", "Next question"),
+    finishQuiz: lstr("Terminer le quiz", "Finish the quiz"),
+    restartQuiz: lstr("Recommencer le quiz", "Restart the quiz"),
+    completionTitle: lstr(
+      "Tu as terminé la lecture guidée.",
+      "You finished the guided reading.",
+    ),
+    completionBody: lstr(
+      "Tu peux relire le texte à voix haute, ou écouter chaque mot avec le bouton audio.",
+      "Read the text out loud again, or replay any word using the audio button.",
+    ),
+  },
+
+  // ── YoPratiqo Coach (deterministic next-step recommendation MVP) ─────
+  coach: {
+    eyebrow: lstr("YoPratiqo Coach", "YoPratiqo Coach"),
+    title: lstr(
+      "YoPratiqo Coach — ton prochain pas",
+      "YoPratiqo Coach — your next step",
+    ),
+    body: lstr(
+      "Réponds à une courte question et YoPratiqo Coach te suggère quoi pratiquer ensuite.",
+      "Answer a short question and YoPratiqo Coach will suggest what to practice next.",
+    ),
+    question: lstr(
+      "Quelle partie était la plus difficile pour toi ?",
+      "Which part felt hardest for you?",
+    ),
+    recommendationHeading: lstr(
+      "YoPratiqo Coach te suggère",
+      "YoPratiqo Coach suggests",
+    ),
+    changeAnswer: lstr("Changer ma réponse", "Change my answer"),
+    bridgeText: lstr(
+      "YoPratiqo Coach t’aide à pratiquer à ton rythme. Un vrai professeur Pratiqo t’aide à parler pour vrai.",
+      "YoPratiqo Coach helps you practice at your own pace. A real Pratiqo teacher helps you truly speak.",
+    ),
+    bridgeCta: lstr(
+      "Trouver un professeur",
+      "Find a teacher",
+    ),
+    disclaimer: lstr(
+      "Recommandations locales, sans envoi de données.",
+      "Local recommendations, no data sent anywhere.",
+    ),
   },
 } as const satisfies Record<string, Record<string, YoLocalizedString>>;

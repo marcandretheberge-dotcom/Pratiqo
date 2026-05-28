@@ -1,27 +1,46 @@
 "use client";
 
 /**
- * YoFlashcardPreview — interactive flashcard deck.
+ * YoFlashcardPreview — interactive flashcard deck with autoplay.
  *
  * Client component. Phase 1: NO real spaced-repetition state, NO Supabase
- * writes, NO timers. The three rating buttons map to YoFlashcardQuality
- * values (0/3/5) so the same handler shape can later persist to
+ * writes. The three rating buttons map to YoFlashcardQuality values
+ * (0/3/5) so the same handler shape can later persist to
  * public.yo_flashcard_reviews under simplified SM-2 in Phase 2.
  *
- * Flow:
- *   1. Show card N / total.
- *   2. User flips → reveal back + hint.
- *   3. User rates Hard / Good / Easy → feedback.
- *   4. "Next card" advances; at the end show completion + Restart.
+ * What this version adds vs the original demo:
+ *   - Autoplay (≈5 s per state) that walks front → back → next card.
+ *   - Play / Pause control + Previous / Next manual controls.
+ *   - Progress indicator "N / total" stays visible at all times.
+ *   - Inline browser-native pronunciation button on the Spanish face.
+ *   - Reduced-motion friendly: autoplay starts OFF when
+ *     `prefers-reduced-motion: reduce` is set.
+ *   - Any manual interaction (flip, rate, prev, next, audio) pauses
+ *     autoplay so the learner can dwell on a card.
  *
- * Localized: every learner-language string on a card is resolved with
- * `t()`; every UI chrome string comes from `YO_COPY.flash` so FR/EN swap
- * automatically with the `locale` prop. Spanish fronts stay plain with
- * `lang="es"`.
+ * Accessibility:
+ *   - The card surface is a `<div role="button">` instead of `<button>`
+ *     so we can nest the pronunciation `<button>` legally.
+ *   - Keyboard: Enter or Space on the card flips it, just like a real
+ *     button.
+ *   - `aria-live="polite"` on the progress + feedback so screen readers
+ *     get gentle updates as the deck advances.
+ *
+ * Pedagogical localization:
+ *   - Every learner-language string is resolved through `t()`.
+ *   - Spanish fronts stay plain with `lang="es"`.
  */
 
-import { useCallback, useState } from "react";
-import { CheckCircle2, RotateCw, Sparkles } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  Pause,
+  Play,
+  RotateCw,
+  Sparkles,
+} from "lucide-react";
 import type {
   YoFlashcard,
   YoFlashcardQuality,
@@ -32,10 +51,16 @@ import { t } from "@/lib/yo/localize";
 import { YO_COPY } from "@/lib/yo/copy";
 import { YoImageVisual } from "@/components/yo/YoImageVisual";
 import { YoExpressionLocaleBadge } from "@/components/yo/YoVisuals";
+import { YoPronunciationButton } from "@/components/yo/YoPronunciationButton";
 
 export interface YoFlashcardPreviewProps {
   cards: YoFlashcard[];
   locale: YoLocale;
+  /**
+   * BCP-47 tag forwarded to SpeechSynthesis for the on-card audio button.
+   * Defaults to "es-ES"; the RD module passes "es-DO".
+   */
+  speechLang?: string;
 }
 
 const TONE: Record<YoFlashcardQuality, string> = {
@@ -44,6 +69,9 @@ const TONE: Record<YoFlashcardQuality, string> = {
   5: "bg-[#e6f4ec] text-[#1f6a45] ring-[#bfe1cd]",
 };
 
+/** Autoplay dwell time per face (front then back). 5 s feels comfortable. */
+const AUTOPLAY_INTERVAL_MS = 5000;
+
 type DeckState =
   | { mode: "card"; isFlipped: boolean; lastRating: YoFlashcardQuality | null }
   | { mode: "complete" };
@@ -51,6 +79,7 @@ type DeckState =
 export function YoFlashcardPreview({
   cards,
   locale,
+  speechLang = "es-ES",
 }: YoFlashcardPreviewProps) {
   const total = cards.length;
   const [index, setIndex] = useState(0);
@@ -59,22 +88,62 @@ export function YoFlashcardPreview({
     isFlipped: false,
     lastRating: null,
   });
+  // Default OFF. We enable on mount if reduced motion is NOT requested.
+  const [isAutoplay, setIsAutoplay] = useState(false);
+  const [isReducedMotion, setIsReducedMotion] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setIsReducedMotion(media.matches);
+    if (!media.matches) {
+      setIsAutoplay(true);
+    }
+    const onChange = (event: MediaQueryListEvent) => {
+      setIsReducedMotion(event.matches);
+      if (event.matches) {
+        setIsAutoplay(false);
+      }
+    };
+    media.addEventListener?.("change", onChange);
+    return () => media.removeEventListener?.("change", onChange);
+  }, []);
+
+  const pauseAutoplay = useCallback(() => {
+    setIsAutoplay(false);
+  }, []);
 
   const handleFlip = useCallback(() => {
+    pauseAutoplay();
     setState((prev) => {
       if (prev.mode !== "card") return prev;
       return { ...prev, isFlipped: !prev.isFlipped };
     });
-  }, []);
+  }, [pauseAutoplay]);
 
-  const handleRate = useCallback((quality: YoFlashcardQuality) => {
-    setState((prev) => {
-      if (prev.mode !== "card") return prev;
-      return { mode: "card", isFlipped: true, lastRating: quality };
-    });
-  }, []);
+  const handleCardKey = useCallback(
+    (event: React.KeyboardEvent<HTMLDivElement>) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        handleFlip();
+      }
+    },
+    [handleFlip],
+  );
+
+  const handleRate = useCallback(
+    (quality: YoFlashcardQuality) => {
+      pauseAutoplay();
+      setState((prev) => {
+        if (prev.mode !== "card") return prev;
+        return { mode: "card", isFlipped: true, lastRating: quality };
+      });
+    },
+    [pauseAutoplay],
+  );
 
   const handleNext = useCallback(() => {
+    pauseAutoplay();
     setIndex((i) => {
       if (i >= total - 1) {
         setState({ mode: "complete" });
@@ -83,16 +152,71 @@ export function YoFlashcardPreview({
       setState({ mode: "card", isFlipped: false, lastRating: null });
       return i + 1;
     });
-  }, [total]);
+  }, [pauseAutoplay, total]);
+
+  const handlePrev = useCallback(() => {
+    pauseAutoplay();
+    setIndex((i) => {
+      if (i <= 0) return i;
+      setState({ mode: "card", isFlipped: false, lastRating: null });
+      return i - 1;
+    });
+  }, [pauseAutoplay]);
 
   const handleResetCurrent = useCallback(() => {
+    pauseAutoplay();
     setState({ mode: "card", isFlipped: false, lastRating: null });
-  }, []);
+  }, [pauseAutoplay]);
 
   const handleRestart = useCallback(() => {
+    pauseAutoplay();
     setIndex(0);
     setState({ mode: "card", isFlipped: false, lastRating: null });
+  }, [pauseAutoplay]);
+
+  const toggleAutoplay = useCallback(() => {
+    setIsAutoplay((prev) => !prev);
   }, []);
+
+  // Autoplay tick: front (5s) → flip to back (5s) → next card. Stops at
+  // the last card (no auto-loop). Manual interaction always pauses.
+  const autoTickRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (autoTickRef.current) {
+      clearTimeout(autoTickRef.current);
+      autoTickRef.current = null;
+    }
+    if (!isAutoplay) return;
+    if (state.mode !== "card") return;
+
+    autoTickRef.current = setTimeout(() => {
+      if (!state.isFlipped) {
+        setState((prev) =>
+          prev.mode === "card" && !prev.isFlipped
+            ? { ...prev, isFlipped: true }
+            : prev,
+        );
+        return;
+      }
+      // Already flipped → advance, but stop autoplay when we reach the end.
+      setIndex((i) => {
+        if (i >= total - 1) {
+          setState({ mode: "complete" });
+          setIsAutoplay(false);
+          return i;
+        }
+        setState({ mode: "card", isFlipped: false, lastRating: null });
+        return i + 1;
+      });
+    }, AUTOPLAY_INTERVAL_MS);
+
+    return () => {
+      if (autoTickRef.current) {
+        clearTimeout(autoTickRef.current);
+        autoTickRef.current = null;
+      }
+    };
+  }, [isAutoplay, state, total]);
 
   if (total === 0) {
     return null;
@@ -127,11 +251,17 @@ export function YoFlashcardPreview({
           index={index}
           total={total}
           state={state}
+          isAutoplay={isAutoplay}
+          isReducedMotion={isReducedMotion}
           onFlip={handleFlip}
+          onCardKey={handleCardKey}
           onRate={handleRate}
           onNext={handleNext}
+          onPrev={handlePrev}
           onResetCurrent={handleResetCurrent}
+          onToggleAutoplay={toggleAutoplay}
           locale={locale}
+          speechLang={speechLang}
         />
       )}
     </section>
@@ -143,11 +273,17 @@ interface DeckCardProps {
   index: number;
   total: number;
   state: Extract<DeckState, { mode: "card" }>;
+  isAutoplay: boolean;
+  isReducedMotion: boolean;
   onFlip: () => void;
+  onCardKey: (event: React.KeyboardEvent<HTMLDivElement>) => void;
   onRate: (quality: YoFlashcardQuality) => void;
   onNext: () => void;
+  onPrev: () => void;
   onResetCurrent: () => void;
+  onToggleAutoplay: () => void;
   locale: YoLocale;
+  speechLang: string;
 }
 
 function DeckCard({
@@ -155,13 +291,20 @@ function DeckCard({
   index,
   total,
   state,
+  isAutoplay,
+  isReducedMotion,
   onFlip,
+  onCardKey,
   onRate,
   onNext,
+  onPrev,
   onResetCurrent,
+  onToggleAutoplay,
   locale,
+  speechLang,
 }: DeckCardProps) {
   const isLast = index === total - 1;
+  const isFirst = index === 0;
   const progressLabel = t(YO_COPY.flash.progressLabel, locale);
   const faceLabel = state.isFlipped
     ? t(YO_COPY.flash.cardFaceBack, locale)
@@ -176,26 +319,38 @@ function DeckCard({
     : `${t(YO_COPY.flash.flipPressedAriaToBack, locale)} ${card.front}`;
 
   const ratingPrompt = t(YO_COPY.flash.ratingPrompt, locale);
-  const ratingLabels: Record<YoFlashcardQuality, string> = {
-    0: t(YO_COPY.flash.ratingHard, locale),
-    3: t(YO_COPY.flash.ratingGood, locale),
-    5: t(YO_COPY.flash.ratingEasy, locale),
-  };
-  const feedbackCopy: Record<YoFlashcardQuality, string> = {
-    0: t(YO_COPY.flash.feedbackHard, locale),
-    3: t(YO_COPY.flash.feedbackGood, locale),
-    5: t(YO_COPY.flash.feedbackEasy, locale),
-  };
+  const ratingLabels: Record<YoFlashcardQuality, string> = useMemo(
+    () => ({
+      0: t(YO_COPY.flash.ratingHard, locale),
+      3: t(YO_COPY.flash.ratingGood, locale),
+      5: t(YO_COPY.flash.ratingEasy, locale),
+    }),
+    [locale],
+  );
+  const feedbackCopy: Record<YoFlashcardQuality, string> = useMemo(
+    () => ({
+      0: t(YO_COPY.flash.feedbackHard, locale),
+      3: t(YO_COPY.flash.feedbackGood, locale),
+      5: t(YO_COPY.flash.feedbackEasy, locale),
+    }),
+    [locale],
+  );
   const idleHint = t(YO_COPY.flash.idleHint, locale);
   const nextLabel = isLast
     ? t(YO_COPY.flash.finish, locale)
     : t(YO_COPY.flash.next, locale);
   const retryLabel = t(YO_COPY.flash.retryCard, locale);
+  const previousLabel = t(YO_COPY.flashAutoplay.previous, locale);
+  const playLabel = t(YO_COPY.flashAutoplay.play, locale);
+  const pauseLabel = t(YO_COPY.flashAutoplay.pause, locale);
+  const playAria = t(YO_COPY.flashAutoplay.playAria, locale);
+  const pauseAria = t(YO_COPY.flashAutoplay.pauseAria, locale);
+  const reducedMotionNote = t(YO_COPY.flashAutoplay.reducedMotionNote, locale);
 
   return (
     <div className="grid gap-4 sm:gap-6 lg:grid-cols-[1fr_280px]">
       <div className="flex flex-col gap-3">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <p
             className="text-xs font-medium uppercase tracking-[0.14em] text-teal-700/80"
             aria-live="polite"
@@ -205,12 +360,16 @@ function DeckCard({
           <ProgressBar current={index + 1} total={total} locale={locale} />
         </div>
 
-        <button
-          type="button"
+        {/* Card surface — a div with role=button so we can nest the
+            pronunciation button without invalid <button> nesting. */}
+        <div
+          role="button"
+          tabIndex={0}
           onClick={onFlip}
+          onKeyDown={onCardKey}
           aria-pressed={state.isFlipped}
           aria-label={flipAria}
-          className="group relative flex min-h-[280px] flex-col justify-between overflow-hidden rounded-3xl border border-teal-100 bg-white p-6 text-left shadow-[0_1px_2px_rgba(15,58,52,0.04)] transition hover:shadow-[0_8px_24px_rgba(15,58,52,0.10)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 sm:min-h-[340px] sm:p-8"
+          className="group relative flex min-h-[280px] cursor-pointer flex-col justify-between overflow-hidden rounded-3xl border border-teal-100 bg-white p-6 text-left shadow-[0_1px_2px_rgba(15,58,52,0.04)] transition hover:shadow-[0_8px_24px_rgba(15,58,52,0.10)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 sm:min-h-[340px] sm:p-8"
         >
           <YoImageVisual
             imagePath={card.imagePath}
@@ -255,19 +414,84 @@ function DeckCard({
               </>
             ) : (
               <>
-                <p
-                  className="text-3xl font-medium leading-tight tracking-tight text-[#1a3a32] sm:text-4xl"
-                  lang="es"
-                >
-                  {card.front}
-                </p>
+                <div className="flex items-start gap-3">
+                  <p
+                    className="text-3xl font-medium leading-tight tracking-tight text-[#1a3a32] sm:text-4xl"
+                    lang="es"
+                  >
+                    {card.front}
+                  </p>
+                  <YoPronunciationButton
+                    text={card.front}
+                    locale={locale}
+                    speechLang={speechLang}
+                    size="sm"
+                    className="mt-1"
+                  />
+                </div>
                 <p className="text-sm text-[var(--color-text-secondary)]">
                   {flipCta}
                 </p>
               </>
             )}
           </div>
-        </button>
+        </div>
+
+        {/* Carousel controls — Prev / Play-Pause / Next */}
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-teal-100 bg-white/85 px-3 py-2 sm:px-4">
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={onPrev}
+              disabled={isFirst}
+              aria-label={previousLabel}
+              className={cn(
+                "inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 sm:text-sm",
+                isFirst
+                  ? "cursor-not-allowed bg-white text-teal-700/40 ring-1 ring-teal-100"
+                  : "bg-white text-teal-800 ring-1 ring-teal-100 hover:bg-teal-50",
+              )}
+            >
+              <ChevronLeft className="size-3.5" aria-hidden />
+              <span className="hidden sm:inline">{previousLabel}</span>
+            </button>
+            <button
+              type="button"
+              onClick={onToggleAutoplay}
+              aria-pressed={isAutoplay}
+              aria-label={isAutoplay ? pauseAria : playAria}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 sm:text-sm",
+                isAutoplay
+                  ? "bg-[#0F6E56] text-white hover:bg-[#0b5b47]"
+                  : "bg-white text-teal-800 ring-1 ring-teal-100 hover:bg-teal-50",
+              )}
+            >
+              {isAutoplay ? (
+                <Pause className="size-3.5" aria-hidden />
+              ) : (
+                <Play className="size-3.5" aria-hidden />
+              )}
+              <span>{isAutoplay ? pauseLabel : playLabel}</span>
+            </button>
+          </div>
+          <button
+            type="button"
+            onClick={onNext}
+            aria-label={t(YO_COPY.flashAutoplay.nextNeutral, locale)}
+            className="inline-flex items-center gap-1 rounded-full bg-white px-3 py-1.5 text-xs font-medium text-teal-800 ring-1 ring-teal-100 transition hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 sm:text-sm"
+          >
+            <span className="hidden sm:inline">
+              {t(YO_COPY.flashAutoplay.nextNeutral, locale)}
+            </span>
+            <ChevronRight className="size-3.5" aria-hidden />
+          </button>
+        </div>
+        {isReducedMotion ? (
+          <p className="text-xs text-[var(--color-text-secondary)]">
+            {reducedMotionNote}
+          </p>
+        ) : null}
       </div>
 
       <div className="flex flex-col gap-2 rounded-3xl border border-teal-100 bg-[var(--color-base-cream)] p-4 sm:p-5">

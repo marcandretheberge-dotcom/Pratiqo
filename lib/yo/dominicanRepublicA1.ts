@@ -1,5 +1,5 @@
 /**
- * Yo Pratiqo Voyage — Spanish Dominican Republic A1
+ * YoPratiqo — Travel section — Spanish Dominican Republic A1
  *
  * Hardcoded MVP content for Phase 1. Shaped exactly like the future Supabase
  * rows in yo_modules / yo_lessons / yo_lesson_sections / yo_quiz_questions /
@@ -1176,8 +1176,8 @@ const unlockFeatures: YoFeature[] = [
     icon: "shield-check",
   },
   {
-    id: "unlock_lifetime",
-    label: lstr("Accès à vie", "Lifetime access"),
+    id: "unlock_one_time",
+    label: lstr("Paiement unique", "One-time payment"),
     icon: "infinity",
   },
 ];
@@ -1222,7 +1222,7 @@ const module_: YoModule = {
   priceCents: 2499,
   currency: "CAD",
   freeLessonsCount: 1,
-  productLabel: lstr("Yo Pratiqo Voyage", "Yo Pratiqo Voyage"),
+  productLabel: lstr("YoPratiqo · Voyage", "YoPratiqo · Travel"),
   heroTitle: lstr(
     "Espagnol pratique — République dominicaine",
     "Practical Spanish — Dominican Republic",

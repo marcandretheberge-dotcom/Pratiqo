@@ -24,7 +24,7 @@ type YoNavButtonVariant = "desktop" | "mobile";
  *     viewport
  *   - focus-visible ring matches Pratiqo's gold accent
  *
- * The link always points to `/yo` (the Yo Pratiqo hub). It must NOT
+ * The link always points to `/yo` (the YoPratiqo hub). It must NOT
  * link directly to a module route such as
  * `/yo/voyage/republique-dominicaine` — the hub drives navigation.
  *

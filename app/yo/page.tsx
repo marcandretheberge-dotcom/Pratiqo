@@ -1,9 +1,10 @@
 /**
- * Yo Pratiqo hub.
+ * YoPratiqo hub.
  *
- * Public, self-contained product entry point for the Yo Pratiqo learning
- * pillar. The nav intentionally links here instead of deep-linking to a
- * single Voyage module so Yo can grow into a serious product surface.
+ * Public, self-contained product entry point for the YoPratiqo learning
+ * pillar inside Pratiqo Inc. The nav intentionally links here instead of
+ * deep-linking to a single section (Voyage / Langues / Musique / …) so
+ * YoPratiqo can grow into a serious product surface.
  */
 
 import type { Metadata } from "next";
@@ -29,15 +30,16 @@ import { cn } from "@/lib/utils";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Yo Pratiqo | Parcours immersifs, quiz et flashcards",
+  title: "YoPratiqo | Apprends à ton rythme — langues, musique, voyage",
   description:
-    "Explore Yo Pratiqo, la nouvelle gamme de parcours immersifs Pratiqo pour apprendre avec des quiz, flashcards, missions et contexte culturel.",
+    "Explore YoPratiqo, la gamme Pratiqo qui te permet d’apprendre à ton rythme les mêmes disciplines que tu peux pratiquer avec un vrai professeur Pratiqo.",
   alternates: {
     canonical: `${SITE_URL}/yo`,
   },
   openGraph: {
-    title: "Yo Pratiqo",
-    description: "Parcours immersifs, quiz, flashcards et apprentissage utile dans la vraie vie.",
+    title: "YoPratiqo",
+    description:
+      "Apprends à ton rythme : langues, musique, soutien scolaire, francisation et voyage — la même qualité Pratiqo, version autonome.",
     type: "website",
     url: `${SITE_URL}/yo`,
     locale: "fr_CA",
@@ -62,12 +64,12 @@ const HUB_COPY = {
     en: "Voir en français",
   },
   title: {
-    fr: "Yo Pratiqo transforme l'apprentissage en expérience immersive.",
-    en: "Yo Pratiqo turns learning into an immersive experience.",
+    fr: "YoPratiqo te permet d’apprendre à ton rythme.",
+    en: "YoPratiqo lets you learn at your own pace.",
   },
   subtitle: {
-    fr: "Des parcours courts, visuels et pratiques pour apprendre avant de voyager, parler ou pratiquer dans la vraie vie.",
-    en: "Short, visual, practical paths to learn before travelling, speaking, or practicing in real life.",
+    fr: "YoPratiqo te permet d’apprendre à ton rythme les mêmes disciplines que tu peux aussi pratiquer avec un vrai professeur Pratiqo. La section Voyage t’aide à te préparer pour des situations réelles avant de partir.",
+    en: "YoPratiqo helps you learn at your own pace in the same disciplines you can also practice with a real Pratiqo teacher. The Travel section helps you prepare for real situations before you go.",
   },
   heroPrimary: {
     fr: "Choisir une langue",
@@ -98,28 +100,28 @@ const HUB_COPY = {
     en: "A free intro with culture, useful phrases, quiz, and flashcards. The full path stays simple, concrete, and made to use on-site.",
   },
   priceLabel: {
-    fr: "Accès à vie",
-    en: "Lifetime access",
+    fr: "Paiement unique",
+    en: "One-time payment",
   },
   productTitle: {
-    fr: "Une sous-marque d'apprentissage, pas une petite fonctionnalité.",
-    en: "A learning sub-brand, not a small feature.",
+    fr: "Une famille de parcours en autonomie, pas une petite fonctionnalité.",
+    en: "A family of self-paced courses, not a small feature.",
   },
   productBody: {
-    fr: "Yo Pratiqo garde le sérieux de Pratiqo, mais ajoute une couche plus immersive: visuels, contexte, répétition active et missions concrètes.",
-    en: "Yo Pratiqo keeps Pratiqo's seriousness, then adds a more immersive layer: visuals, context, active recall, and concrete missions.",
+    fr: "YoPratiqo garde le sérieux de Pratiqo et ajoute une couche plus immersive : visuels, contexte, répétition active et missions concrètes. Les mêmes disciplines, mais en autonomie.",
+    en: "YoPratiqo keeps Pratiqo’s seriousness and adds a more immersive layer: visuals, context, active recall, and concrete missions. The same disciplines, on your own.",
   },
   sectionsTitle: {
-    fr: "Ce que Yo apporte",
-    en: "What Yo adds",
+    fr: "Ce que YoPratiqo apporte",
+    en: "What YoPratiqo brings",
   },
   finalTitle: {
-    fr: "Commence par une destination. La méthode peut ensuite grandir.",
-    en: "Start with one destination. The method can grow from there.",
+    fr: "Commence par une section. La méthode YoPratiqo grandit avec toi.",
+    en: "Start with one section. The YoPratiqo method grows with you.",
   },
   finalBody: {
-    fr: "Voyage aujourd'hui, puis langues, musique et apprentissages spécialisés demain.",
-    en: "Travel today, then languages, music, and specialized learning paths tomorrow.",
+    fr: "La section Voyage est ouverte aujourd’hui. Les sections Langues, Musique, Soutien scolaire et Francisation suivent.",
+    en: "The Travel section is open today. The Languages, Music, Academic support, and Francisation sections come next.",
   },
   finalCta: {
     fr: "Découvrir le parcours",
@@ -165,7 +167,7 @@ const pillars = [
 const productLines = [
   {
     status: "available" as const,
-    title: { fr: "Yo Langues", en: "Yo Languages" },
+    title: { fr: "Langues", en: "Languages" },
     body: {
       fr: "Des parcours de langue immersifs, organisés par langue puis par pays.",
       en: "Immersive language paths, organized by language then by country.",
@@ -174,19 +176,37 @@ const productLines = [
   },
   {
     status: "available" as const,
-    title: { fr: "Yo Voyage", en: "Yo Travel" },
+    title: { fr: "Voyage", en: "Travel" },
     body: {
-      fr: "Se préparer à parler sur place avec culture et expressions locales.",
-      en: "Prepare to speak on-site with culture and local expressions.",
+      fr: "Section de YoPratiqo pour te préparer à parler sur place, avec culture et expressions locales.",
+      en: "The YoPratiqo section that helps you prepare to speak on-site, with culture and local expressions.",
     },
     href: "/yo/langues/espagnol",
   },
   {
     status: "planned" as const,
-    title: { fr: "Yo Musique", en: "Yo Music" },
+    title: { fr: "Musique", en: "Music" },
     body: {
       fr: "Théorie, rythme, écoute et pratique entre les cours.",
       en: "Theory, rhythm, listening, and practice between lessons.",
+    },
+    href: null,
+  },
+  {
+    status: "planned" as const,
+    title: { fr: "Soutien scolaire", en: "Academic support" },
+    body: {
+      fr: "Révisions courtes et exercices ciblés entre les séances avec un prof.",
+      en: "Short reviews and targeted exercises between sessions with a teacher.",
+    },
+    href: null,
+  },
+  {
+    status: "planned" as const,
+    title: { fr: "Francisation", en: "Francisation" },
+    body: {
+      fr: "Apprendre le français au Québec, à ton rythme, avant et entre les cours.",
+      en: "Learn French in Quebec at your own pace, before and between lessons.",
     },
     href: null,
   },
@@ -211,7 +231,7 @@ export default async function YoHubPage({ searchParams }: PageProps) {
           <Link href="/" aria-label="Pratiqo" className="shrink-0">
             <PratiqoLogo variant="full" size="sm" priority={false} fetchPriority="low" loading="lazy" />
           </Link>
-          <nav aria-label="Yo Pratiqo" className="flex items-center gap-2">
+          <nav aria-label="YoPratiqo" className="flex items-center gap-2">
             <Link
               href={toggleHref}
               className="hidden rounded-full border border-[#DDF4F1] bg-white/70 px-3 py-1.5 text-xs font-bold text-[#0F6E56] transition hover:bg-white sm:inline-flex"
@@ -238,7 +258,7 @@ export default async function YoHubPage({ searchParams }: PageProps) {
                 {t(HUB_COPY.badge, locale)}
               </div>
               <div className="space-y-4">
-                <p className="text-sm font-black uppercase tracking-[0.22em] text-[#1D9E75]">Yo Pratiqo</p>
+                <p className="text-sm font-black uppercase tracking-[0.22em] text-[#1D9E75]">YoPratiqo</p>
                 <h1 className="max-w-3xl text-4xl font-semibold leading-[1.04] tracking-tight text-[#0F6E56] sm:text-5xl lg:text-6xl">
                   {t(HUB_COPY.title, locale)}
                 </h1>
@@ -348,7 +368,7 @@ export default async function YoHubPage({ searchParams }: PageProps) {
                 {t(HUB_COPY.sectionsTitle, locale)}
               </h2>
               <span className="rounded-full border border-[#F4B400]/50 bg-[#FFF4D6] px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-[#0F6E56]">
-                Yo Pratiqo
+                YoPratiqo
               </span>
             </div>
             <div className="grid gap-4 lg:grid-cols-3">
@@ -401,7 +421,9 @@ export default async function YoHubPage({ searchParams }: PageProps) {
             <div>
               <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-[#FFF4D6]">
                 <Globe2 className="size-3.5" aria-hidden />
-                Yo Pratiqo Voyage
+                {locale === "fr"
+                  ? "YoPratiqo · section Voyage"
+                  : "YoPratiqo · Travel section"}
               </div>
               <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
                 {t(HUB_COPY.finalTitle, locale)}

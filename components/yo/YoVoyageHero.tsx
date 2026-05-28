@@ -1,5 +1,5 @@
 /**
- * YoVoyageHero — top-of-page hero for a Yo Pratiqo Voyage module.
+ * YoVoyageHero — top-of-page hero for a YoPratiqo Voyage-section module.
  *
  * Server component. Renders the small product label, hero title, subtitle,
  * the CEFR level badge AND an image-led destination visual. The visual

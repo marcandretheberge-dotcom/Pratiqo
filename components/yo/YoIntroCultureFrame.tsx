@@ -1,5 +1,5 @@
 /**
- * Rich, static learning frame for the Yo Voyage intro.
+ * Rich, static learning frame for the YoPratiqo Voyage-section intro.
  *
  * These blocks are intentionally visual-only and local-data-only for now:
  * no Supabase, no Stripe, no teacher dashboard integration. They make the
@@ -195,8 +195,8 @@ export function YoCulturePanorama({
               </h2>
               <p className="mt-2 text-sm leading-relaxed text-[var(--color-text-secondary)] sm:text-[0.95rem]">
                 {locale === "fr"
-                  ? "Yo Pratiqo enseigne la langue à l’intérieur de la culture: le rythme, les lieux, les gestes et les situations qui donnent du sens aux mots."
-                  : "Yo Pratiqo teaches language inside culture: rhythm, places, gestures, and situations that give words meaning."}
+                  ? "YoPratiqo enseigne la langue à l’intérieur de la culture : le rythme, les lieux, les gestes et les situations qui donnent du sens aux mots."
+                  : "YoPratiqo teaches language inside culture: rhythm, places, gestures, and situations that give words meaning."}
               </p>
             </div>
 
@@ -241,8 +241,8 @@ export function YoTeacherSignalPreview({ locale }: { locale: YoLocale }) {
             </h2>
             <p className="mt-2 text-sm leading-relaxed text-[#1a3a32]/78 sm:text-[0.95rem]">
               {locale === "fr"
-                ? "Yo Pratiqo ne sert pas seulement à apprendre seul. Il aide aussi ton professeur à savoir quoi pratiquer avec toi."
-                : "Yo Pratiqo is not only for self-study. It also helps your teacher know what to practice with you."}
+                ? "YoPratiqo ne sert pas seulement à apprendre en autonomie. Il aide aussi ton professeur Pratiqo à savoir quoi pratiquer avec toi."
+                : "YoPratiqo is not only for self-paced study. It also helps your Pratiqo teacher know what to practice with you."}
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
