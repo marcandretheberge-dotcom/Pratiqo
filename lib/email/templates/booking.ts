@@ -30,7 +30,7 @@ export function buildLessonPaymentReceiptEmail(opts: LessonPaymentReceiptEmailIn
   const taxInclusive = opts.taxBehavior === "stripe_tax_inclusive";
 
   const rows: [string, string][] = [
-    [copy.labels.business, "Pratiqo inc."],
+    [copy.labels.business, "Cours Pratiqo Inc."],
     [copy.labels.receiptNumber, opts.receiptNumber],
     [copy.labels.paymentDate, opts.paymentDate],
     [copy.labels.lesson, opts.lessonDescription],

@@ -104,7 +104,7 @@ Tenés derecho a:
 - **Retirar tu consentimiento** en cualquier momento
 - **Presentar una queja** ante la Comisión d'accès à l'information (CAI) de Quebec
 
-Para ejercer estos derechos, contactanos en: [privacy@pratiqo.com](mailto:privacy@pratiqo.com)
+Para ejercer estos derechos, contactanos en: [marc-andre.theberge@pratiqo.ca](mailto:marc-andre.theberge@pratiqo.ca)
 
 Respondemos en un plazo de **30 días**.
 
@@ -139,5 +139,5 @@ Te notificaremos de cualquier modificación sustancial por correo electrónico c
 
 **Responsable de Protección de Datos**  
 Cours Pratiqo Inc.  
-[privacy@pratiqo.com](mailto:privacy@pratiqo.com)  
+[marc-andre.theberge@pratiqo.ca](mailto:marc-andre.theberge@pratiqo.ca)  
 [pratiqo.com/privacidad](https://pratiqo.com/privacidad)

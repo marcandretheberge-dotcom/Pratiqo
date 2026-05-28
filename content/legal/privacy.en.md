@@ -104,7 +104,7 @@ You have the right to:
 - **Withdraw your consent** at any time
 - **File a complaint** with the Commission d'accès à l'information (CAI) of Quebec
 
-To exercise these rights, contact us at: [privacy@pratiqo.com](mailto:privacy@pratiqo.com)
+To exercise these rights, contact us at: [marc-andre.theberge@pratiqo.ca](mailto:marc-andre.theberge@pratiqo.ca)
 
 We will respond within **30 days**.
 
@@ -139,5 +139,5 @@ We will notify you of any substantial modification by email with **30 days** not
 
 **Data Protection Officer (DPO)**  
 Cours Pratiqo Inc.  
-[privacy@pratiqo.com](mailto:privacy@pratiqo.com)  
+[marc-andre.theberge@pratiqo.ca](mailto:marc-andre.theberge@pratiqo.ca)  
 [pratiqo.com/privacy](https://pratiqo.com/privacy)

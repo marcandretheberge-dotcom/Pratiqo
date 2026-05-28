@@ -160,7 +160,7 @@ export function buildEmail(opts: TemplateOpts): string {
             </p>
             <p style="margin:8px 0 0;">
               <span style="color:#409A8E;font-weight:600;">${footer.tagline}</span>
-              &nbsp;·&nbsp;Pratiqo inc. © 2026
+              &nbsp;·&nbsp;Cours Pratiqo Inc. © 2026
               &nbsp;·&nbsp;<a href="${base}" style="color:#409A8E;text-decoration:none;">pratiqo.ca</a>
             </p>
           </td>

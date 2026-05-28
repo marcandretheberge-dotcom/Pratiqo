@@ -1128,7 +1128,7 @@
   "studentPaymentsTitle": "Mes paiements",
   "studentPaymentsAndReceiptsLabel": "Mes paiements et reçus",
   "studentPaymentsValueProp": "En payant sur Pratiqo, vous conservez un historique clair de vos cours, vos reçus de paiement et l’état de vos demandes en un seul endroit.",
-  "studentPaymentsServiceProvidedBy": "Service fourni par {teacher}, paiement traité par Pratiqo inc.",
+  "studentPaymentsServiceProvidedBy": "Service fourni par {teacher}, paiement traité par Cours Pratiqo Inc.",
   "studentPaymentsViewReceiptFallback": "Voir mes paiements et reçus",
   "guaranteeFirstLessonTitle": "Garantie satisfaction du premier cours",
   "guaranteeFirstLessonBody": "Votre premier cours est couvert par notre garantie satisfaction. Si l’expérience ne correspond pas à vos attentes, contactez-nous dans les 24 h suivant le cours.",
