@@ -8,7 +8,7 @@
 
 ## 1. Introduction
 
-Pratiqo inc. (« Pratiqo », « nous ») s'engage à protéger la vie privée de ses utilisateurs. La présente politique explique quelles données nous collectons, comment nous les utilisons et quels sont vos droits.
+Cours Pratiqo Inc. (« Pratiqo », « nous ») s'engage à protéger la vie privée de ses utilisateurs. La présente politique explique quelles données nous collectons, comment nous les utilisons et quels sont vos droits.
 
 Cette politique est conforme à la **Loi sur la protection des renseignements personnels et les documents électroniques (LPRPDE)** et à la **Loi 25** du Québec (Loi modernisant des dispositions législatives en matière de protection des renseignements personnels).
 
@@ -138,6 +138,6 @@ Nous vous informerons de toute modification substantielle par courriel avec un p
 ## 12. Contact
 
 **Responsable de la protection des données (RPD)**  
-Pratiqo inc.  
+Cours Pratiqo Inc.  
 [marc-andre.theberge@pratiqo.ca](mailto:marc-andre.theberge@pratiqo.ca)  
 [pratiqo.com/confidentialite](https://pratiqo.com/confidentialite)

@@ -8,7 +8,7 @@
 
 ## 1. Introduction
 
-Pratiqo inc. ("Pratiqo", "we") is committed to protecting the privacy of its users. This policy explains what data we collect, how we use it, and what your rights are.
+Cours Pratiqo Inc. (“Pratiqo”, “we”) is committed to protecting the privacy of its users. This policy explains what data we collect, how we use it, and what your rights are.
 
 This policy complies with the **Personal Information Protection and Electronic Documents Act (PIPEDA)** and **Quebec Law 25** (An Act to modernize legislative provisions as regards the protection of personal information).
 
@@ -104,7 +104,7 @@ You have the right to:
 - **Withdraw your consent** at any time
 - **File a complaint** with the Commission d'accès à l'information (CAI) of Quebec
 
-To exercise these rights, contact us at: [privacy@pratiqo.com](mailto:privacy@pratiqo.com)
+To exercise these rights, contact us at: [marc-andre.theberge@pratiqo.ca](mailto:marc-andre.theberge@pratiqo.ca)
 
 We will respond within **30 days**.
 
@@ -138,6 +138,6 @@ We will notify you of any substantial modification by email with **30 days** not
 ## 12. Contact
 
 **Data Protection Officer (DPO)**  
-Pratiqo inc.  
-[privacy@pratiqo.com](mailto:privacy@pratiqo.com)  
+Cours Pratiqo Inc.  
+[marc-andre.theberge@pratiqo.ca](mailto:marc-andre.theberge@pratiqo.ca)  
 [pratiqo.com/privacy](https://pratiqo.com/privacy)

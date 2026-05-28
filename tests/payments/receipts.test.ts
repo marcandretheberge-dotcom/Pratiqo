@@ -357,15 +357,15 @@ test("receipt email footer includes localized 'service provided by' marketplace 
 
   assert.match(
     buildLessonPaymentReceiptEmail({ ...base, locale: "fr" }).html,
-    /Service fourni par Ada Lovelace, paiement traité par Pratiqo inc\./,
+    /Service fourni par Ada Lovelace, paiement traité par Cours Pratiqo Inc\./,
   );
   assert.match(
     buildLessonPaymentReceiptEmail({ ...base, locale: "en" }).html,
-    /Service provided by Ada Lovelace, payment processed by Pratiqo inc\./,
+    /Service provided by Ada Lovelace, payment processed by Cours Pratiqo Inc\./,
   );
   assert.match(
     buildLessonPaymentReceiptEmail({ ...base, locale: "es" }).html,
-    /Servicio prestado por Ada Lovelace, pago procesado por Pratiqo inc\./,
+    /Servicio prestado por Ada Lovelace, pago procesado por Cours Pratiqo Inc\./,
   );
 });
 

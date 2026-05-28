@@ -180,7 +180,7 @@ type LessonPaymentReceiptCopy = {
   viewReceiptFallbackCta: string;
   /**
    * Footer line clarifying marketplace framing: the service is delivered
-   * by the teacher and the payment is processed by Pratiqo inc.
+   * by the teacher and the payment is processed by Cours Pratiqo Inc.
    * Intentionally neutral — no tax/deductibility/legal claims.
    */
   serviceProvidedBy: (teacherName: string) => string;
@@ -322,8 +322,8 @@ const BOOKING_EMAIL_COPY: Record<EmailLocale, BookingEmailCopy> = {
       cta: "Ouvrir le reçu Stripe",
       viewReceiptFallbackCta: "Voir mes paiements et reçus",
       serviceProvidedBy: (teacherName) =>
-        `Service fourni par ${teacherName}, paiement traité par Pratiqo inc.`,
-      thanks: "Merci de faire confiance à Pratiqo inc.",
+        `Service fourni par ${teacherName}, paiement traité par Cours Pratiqo Inc.`,
+      thanks: "Merci de faire confiance à Cours Pratiqo Inc.",
     },
     declinedStudent: {
       subject: (teacherName) => `Réservation refusée — ${teacherName}`,
@@ -492,8 +492,8 @@ const BOOKING_EMAIL_COPY: Record<EmailLocale, BookingEmailCopy> = {
       cta: "Open Stripe receipt",
       viewReceiptFallbackCta: "View my payments and receipts",
       serviceProvidedBy: (teacherName) =>
-        `Service provided by ${teacherName}, payment processed by Pratiqo inc.`,
-      thanks: "Thank you for trusting Pratiqo inc.",
+        `Service provided by ${teacherName}, payment processed by Cours Pratiqo Inc.`,
+      thanks: "Thank you for trusting Cours Pratiqo Inc.",
     },
     declinedStudent: {
       subject: (teacherName) => `Booking declined — ${teacherName}`,
@@ -662,8 +662,8 @@ const BOOKING_EMAIL_COPY: Record<EmailLocale, BookingEmailCopy> = {
       cta: "Abrir recibo de Stripe",
       viewReceiptFallbackCta: "Ver mis pagos y recibos",
       serviceProvidedBy: (teacherName) =>
-        `Servicio prestado por ${teacherName}, pago procesado por Pratiqo inc.`,
-      thanks: "Gracias por confiar en Pratiqo inc.",
+        `Servicio prestado por ${teacherName}, pago procesado por Cours Pratiqo Inc.`,
+      thanks: "Gracias por confiar en Cours Pratiqo Inc.",
     },
     declinedStudent: {
       subject: (teacherName) => `Reserva rechazada — ${teacherName}`,

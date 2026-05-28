@@ -450,7 +450,7 @@ export default async function DisciplineCityPage({
             <span className="text-[#D3D1C7]">·</span>
             <Link href="/" className="font-semibold text-teal-700 hover:underline">Pratiqo</Link>
             <span className="text-[#D3D1C7]">·</span>
-            <span>© 2026 Pratiqo inc.</span>
+            <span>© 2026 Cours Pratiqo Inc.</span>
           </div>
         </footer>
 

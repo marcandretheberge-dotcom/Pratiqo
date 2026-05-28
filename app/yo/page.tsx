@@ -2,7 +2,7 @@
  * YoPratiqo hub.
  *
  * Public, self-contained product entry point for the YoPratiqo learning
- * pillar inside Pratiqo Inc. The nav intentionally links here instead of
+ * pillar inside Cours Pratiqo Inc. The nav intentionally links here instead of
  * deep-linking to a single section (Voyage / Langues / Musique / …) so
  * YoPratiqo can grow into a serious product surface.
  */

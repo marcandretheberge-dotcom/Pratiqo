@@ -15,7 +15,7 @@ export function LandingFooter() {
           {t("navResources")}
         </Link>
         <span className="text-[#D3D1C7]">·</span>
-        <span>© 2026 Pratiqo inc.</span>
+        <span>© 2026 Cours Pratiqo Inc.</span>
         <span className="text-[#D3D1C7]">·</span>
         <a href="mailto:info@pratiqo.ca" className="text-teal-700 hover:underline">
           info@pratiqo.ca
