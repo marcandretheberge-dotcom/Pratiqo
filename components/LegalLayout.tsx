@@ -17,7 +17,11 @@ export function LegalLayout({
   title: string;
   lastUpdated: string;
   toc: LegalTocItem[];
-  currentPath: "/legal/cgu" | "/legal/confidentialite" | "/legal/annulation";
+  currentPath:
+    | "/legal/cgu"
+    | "/legal/confidentialite"
+    | "/legal/annulation"
+    | "/legal/code-de-conduite";
   children: React.ReactNode;
 }) {
   const { t } = useLocale();
@@ -26,6 +30,7 @@ export function LegalLayout({
     { href: "/legal/cgu", label: t("footerTerms") },
     { href: "/legal/confidentialite", label: t("footerPrivacy") },
     { href: "/legal/annulation", label: t("footerCancellation") },
+    { href: "/legal/code-de-conduite", label: t("footerCodeOfConduct") },
   ] as const;
 
   return (

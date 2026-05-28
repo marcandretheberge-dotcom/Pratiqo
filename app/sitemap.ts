@@ -67,20 +67,29 @@ const STATIC_ROUTES: MetadataRoute.Sitemap = [
     changeFrequency: "yearly",
     priority: 0.6,
   },
+  // Canonical legal routes only — legacy /cgu, /confidentialite, /annulation,
+  // and /code-de-conduite are 308-redirected in next.config.ts and intentionally
+  // excluded from the sitemap so search engines index the canonical URLs.
   {
-    url: `${BASE_URL}/cgu`,
+    url: `${BASE_URL}/legal/cgu`,
     lastModified: new Date(),
     changeFrequency: "yearly",
     priority: 0.4,
   },
   {
-    url: `${BASE_URL}/confidentialite`,
+    url: `${BASE_URL}/legal/confidentialite`,
     lastModified: new Date(),
     changeFrequency: "yearly",
     priority: 0.4,
   },
   {
-    url: `${BASE_URL}/annulation`,
+    url: `${BASE_URL}/legal/annulation`,
+    lastModified: new Date(),
+    changeFrequency: "yearly",
+    priority: 0.4,
+  },
+  {
+    url: `${BASE_URL}/legal/code-de-conduite`,
     lastModified: new Date(),
     changeFrequency: "yearly",
     priority: 0.4,

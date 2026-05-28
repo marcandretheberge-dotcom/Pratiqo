@@ -75,6 +75,31 @@ const nextConfig: NextConfig = {
         destination: "/devenir-professeur?vertical=academique",
         permanent: false,
       },
+      // Legal route canonicalization. Legacy top-level paths used to host
+      // their own legal pages with content that diverged over time from the
+      // canonical /legal/* pages. The legacy page files have been removed
+      // and these 308 redirects keep external/inbound links working while
+      // telling search engines the move is permanent.
+      {
+        source: "/cgu",
+        destination: "/legal/cgu",
+        permanent: true,
+      },
+      {
+        source: "/confidentialite",
+        destination: "/legal/confidentialite",
+        permanent: true,
+      },
+      {
+        source: "/annulation",
+        destination: "/legal/annulation",
+        permanent: true,
+      },
+      {
+        source: "/code-de-conduite",
+        destination: "/legal/code-de-conduite",
+        permanent: true,
+      },
     ];
   },
   async headers() {
