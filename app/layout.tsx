@@ -63,7 +63,7 @@ export const metadata: Metadata = {
     apple: [{ url: '/apple-touch-icon.png', sizes: '180x180' }],
   },
   other: {
-    copyright: "© 2026 Pratiqo inc.",
+    copyright: "© 2026 Cours Pratiqo Inc.",
   },
 };
 

@@ -2,13 +2,13 @@
 
 **Version:** 1.0 · **Last updated:** April 2026
 
-> ⚠️ **Important**: This document is a preliminary template for informational purposes only. It does not constitute legal advice. Pratiqo inc. recommends having it reviewed by a qualified lawyer before commercial launch.
+> ⚠️ **Important**: This document is a preliminary template for informational purposes only. It does not constitute legal advice. Cours Pratiqo Inc. recommends having it reviewed by a qualified lawyer before commercial launch.
 
 ---
 
 ## 1. About Pratiqo
 
-Pratiqo is a marketplace connecting independent teachers with students in music, dance, martial arts, languages, and other learning disciplines. The platform is operated by **Pratiqo inc.**, a company incorporated under the laws of Quebec, Canada.
+Pratiqo is a marketplace connecting independent teachers with students in music, dance, martial arts, languages, and other learning disciplines. The platform is operated by **Cours Pratiqo Inc.** (“Pratiqo”), a company incorporated under the laws of Quebec, Canada.
 
 By accessing the Pratiqo platform (website and mobile application), you agree to be bound by these Terms of Service ("Terms").
 
@@ -171,7 +171,7 @@ The complete terms — lifetime access, 30-day guarantee, EU right of withdrawal
 
 ### 6a.1 Legal status
 
-A YoPratiqo purchase grants a **personal, non-transferable licence** to access the content, **bound to the buyer's Pratiqo account**. Pratiqo inc. retains all intellectual property rights in the module. *See [YoPratiqo policy §1](/legal/yo-remboursement).*
+A YoPratiqo purchase grants a **personal, non-transferable licence** to access the content, **bound to the buyer's Pratiqo account**. Cours Pratiqo Inc. retains all intellectual property rights in the module. *See [YoPratiqo policy §1](/legal/yo-remboursement).*
 
 ### 6a.2 Lifetime access
 
@@ -207,7 +207,7 @@ It is strictly prohibited to solicit students to make payments outside the platf
 
 ## 9. Intellectual Property
 
-All platform elements are the exclusive property of Pratiqo inc. and are protected by copyright law.
+All platform elements are the exclusive property of Cours Pratiqo Inc. and are protected by copyright law.
 
 ---
 
@@ -239,6 +239,6 @@ Pratiqo reserves the right to modify these Terms at any time. Users will be noti
 
 ## 14. Contact
 
-**Pratiqo inc.** — Montreal, Quebec, Canada  
+**Cours Pratiqo Inc.** — Montreal, Quebec, Canada  
 email: [legal@pratiqo.com](mailto:legal@pratiqo.com)  
 website: [pratiqo.com](https://pratiqo.com)

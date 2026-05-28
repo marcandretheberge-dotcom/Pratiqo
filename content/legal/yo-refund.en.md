@@ -11,14 +11,14 @@
 A YoPratiqo purchase grants you a **personal, non-transferable licence** to access the content of the purchased module. It is **not a sale of the content itself**.
 
 - Access is **bound to your Pratiqo account**. Account sharing, resale, and content redistribution are prohibited.
-- **Pratiqo inc.** retains all intellectual property rights in the content, visuals, audio, code, and pedagogy of the module.
+- **Cours Pratiqo Inc.** retains all intellectual property rights in the content, visuals, audio, code, and pedagogy of the module.
 - No permanent download of the content is guaranteed — playback is delivered through the YoPratiqo platform.
 
 ---
 
 ## 2. "Lifetime access" — defined
 
-**"Lifetime access"** means that your access to the purchased module remains active **for as long as Pratiqo inc. operates the YoPratiqo service**.
+**"Lifetime access"** means that your access to the purchased module remains active **for as long as Cours Pratiqo Inc. operates the YoPratiqo service**.
 
 ### 2.1 Continued operation
 
@@ -106,7 +106,7 @@ If any provision of this policy conflicts with a mandatory statutory warranty ap
 
 ## 8. Contact
 
-**Pratiqo inc.** — Montréal, Québec, Canada
+**Cours Pratiqo Inc.** — Montréal, Québec, Canada
 email: [`support@pratiqo.ca`](mailto:support@pratiqo.ca)
 website: [pratiqo.com](https://pratiqo.com)
 

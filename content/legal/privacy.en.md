@@ -8,7 +8,7 @@
 
 ## 1. Introduction
 
-Pratiqo inc. ("Pratiqo", "we") is committed to protecting the privacy of its users. This policy explains what data we collect, how we use it, and what your rights are.
+Cours Pratiqo Inc. (“Pratiqo”, “we”) is committed to protecting the privacy of its users. This policy explains what data we collect, how we use it, and what your rights are.
 
 This policy complies with the **Personal Information Protection and Electronic Documents Act (PIPEDA)** and **Quebec Law 25** (An Act to modernize legislative provisions as regards the protection of personal information).
 
@@ -138,6 +138,6 @@ We will notify you of any substantial modification by email with **30 days** not
 ## 12. Contact
 
 **Data Protection Officer (DPO)**  
-Pratiqo inc.  
+Cours Pratiqo Inc.  
 [privacy@pratiqo.com](mailto:privacy@pratiqo.com)  
 [pratiqo.com/privacy](https://pratiqo.com/privacy)

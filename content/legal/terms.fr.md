@@ -2,13 +2,13 @@
 
 **Version :** 1.0 · **Dernière mise à jour :** avril 2026
 
-> ⚠️ **Important** : Ce document est un modèle préliminaire préparé à titre informatif. Il ne constitue pas un avis juridique. Pratiqo inc. recommande de le faire réviser par un avocat qualifié au Québec avant tout lancement commercial.
+> ⚠️ **Important** : Ce document est un modèle préliminaire préparé à titre informatif. Il ne constitue pas un avis juridique. Cours Pratiqo Inc. recommande de le faire réviser par un avocat qualifié au Québec avant tout lancement commercial.
 
 ---
 
 ## 1. Présentation de Pratiqo
 
-Pratiqo est une plateforme de mise en relation entre professeurs indépendants et élèves dans les domaines de la musique, de la danse, des arts martiaux, des langues secondes et d'autres disciplines d'apprentissage. La plateforme est exploitée par **Pratiqo inc.**, société constituée selon les lois du Québec, Canada.
+Pratiqo est une plateforme de mise en relation entre professeurs indépendants et élèves dans les domaines de la musique, de la danse, des arts martiaux, des langues secondes et d'autres disciplines d'apprentissage. La plateforme est exploitée par **Cours Pratiqo Inc.** (« Pratiqo »), société constituée selon les lois du Québec, Canada.
 
 En accédant à la plateforme Pratiqo (site web et application mobile), vous acceptez d'être lié par les présentes Conditions Générales d'Utilisation (ci-après « CGU »).
 
@@ -190,7 +190,7 @@ Toutes les modalités complètes — accès à vie, garantie 30 jours, droit de 
 
 ### 6bis.1 Statut juridique
 
-L'achat d'un module YoPratiqo donne une **licence personnelle non transférable** d'accès au contenu, **liée au compte Pratiqo** de l'acheteur. Pratiqo inc. conserve l'intégralité des droits de propriété intellectuelle sur le module. *Voir [politique YoPratiqo §1](/legal/yo-remboursement).*
+L'achat d'un module YoPratiqo donne une **licence personnelle non transférable** d'accès au contenu, **liée au compte Pratiqo** de l'acheteur. Cours Pratiqo Inc. conserve l'intégralité des droits de propriété intellectuelle sur le module. *Voir [politique YoPratiqo §1](/legal/yo-remboursement).*
 
 ### 6bis.2 Accès à vie
 
@@ -226,7 +226,7 @@ Il est strictement interdit d'inciter les élèves à effectuer des paiements en
 
 ## 9. Propriété intellectuelle
 
-Tous les éléments de la plateforme sont la propriété exclusive de Pratiqo inc. et sont protégés par les lois sur le droit d'auteur.
+Tous les éléments de la plateforme sont la propriété exclusive de Cours Pratiqo Inc. et sont protégés par les lois sur le droit d'auteur.
 
 ---
 
@@ -258,7 +258,7 @@ Pratiqo se réserve le droit de modifier les présentes CGU à tout moment. Les 
 
 ## 14. Contact
 
-**Pratiqo inc.** — Montréal, Québec, Canada  
+**Cours Pratiqo Inc.** — Montréal, Québec, Canada  
 courriel : [marc-andre.theberge@pratiqo.ca](mailto:marc-andre.theberge@pratiqo.ca)  
 site web : [pratiqo.com](https://pratiqo.com)
 

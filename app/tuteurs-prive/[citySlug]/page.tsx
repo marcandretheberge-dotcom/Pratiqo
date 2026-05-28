@@ -496,7 +496,7 @@ export default async function CityTutorsPage({
               Pratiqo
             </Link>
             <span className="text-[#D3D1C7]">·</span>
-            <span>© 2026 Pratiqo inc.</span>
+            <span>© 2026 Cours Pratiqo Inc.</span>
           </div>
         </footer>
 

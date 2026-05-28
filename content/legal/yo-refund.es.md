@@ -11,14 +11,14 @@
 La compra de un módulo YoPratiqo te otorga una **licencia personal e intransferible** de acceso al contenido del módulo elegido. **No es una venta del contenido** en sí.
 
 - El acceso está **vinculado a tu cuenta** Pratiqo. Compartir cuenta, revender o redistribuir el contenido están prohibidos.
-- **Pratiqo inc.** conserva la totalidad de los derechos de propiedad intelectual sobre el contenido, los visuales, el audio, el código y la pedagogía del módulo.
+- **Cours Pratiqo Inc.** conserva la totalidad de los derechos de propiedad intelectual sobre el contenido, los visuales, el audio, el código y la pedagogía del módulo.
 - No se garantiza ninguna descarga permanente del contenido — la reproducción se realiza a través de la plataforma YoPratiqo.
 
 ---
 
 ## 2. «Acceso de por vida» — definición
 
-La expresión **«acceso de por vida»** significa que tu acceso al módulo comprado permanece activo **mientras Pratiqo inc. opere el servicio YoPratiqo**.
+La expresión **«acceso de por vida»** significa que tu acceso al módulo comprado permanece activo **mientras Cours Pratiqo Inc. opere el servicio YoPratiqo**.
 
 ### 2.1 Operación continuada
 
@@ -106,7 +106,7 @@ Si alguna disposición de esta política entra en conflicto con una garantía le
 
 ## 8. Contacto
 
-**Pratiqo inc.** — Montréal, Québec, Canadá
+**Cours Pratiqo Inc.** — Montréal, Québec, Canadá
 correo: [`support@pratiqo.ca`](mailto:support@pratiqo.ca)
 sitio web: [pratiqo.com](https://pratiqo.com)
 

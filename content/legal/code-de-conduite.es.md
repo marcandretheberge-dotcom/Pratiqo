@@ -73,7 +73,7 @@ Cualquier incumplimiento de este código puede reportarse a Pratiqo.
 
 ## 7. Contacto
 
-**Pratiqo inc.** — Saint-Georges, Québec, Canadá
+**Cours Pratiqo Inc.** — Saint-Georges, Québec, Canadá
 soporte: [`support@pratiqo.ca`](mailto:support@pratiqo.ca)
 general: [`info@pratiqo.ca`](mailto:info@pratiqo.ca)
 dirección: [`marc-andre.theberge@pratiqo.ca`](mailto:marc-andre.theberge@pratiqo.ca)
