@@ -26,6 +26,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import {
   BookOpen,
+  CheckCircle2,
   Compass,
   Globe2,
   GraduationCap,
@@ -139,6 +140,15 @@ const TEACHER_CTA = lstr(
   "Trouver un prof d’espagnol",
   "Find a Spanish teacher",
 );
+
+// HUB_COPY-style trust labels for the YoPratiqo lifetime + money-back promise.
+// Localized via t(...) so no FR/EN string is hardcoded inline in JSX.
+const lifetimeAccessLabel = lstr("Accès à vie", "Lifetime access");
+const moneyBackLabel = lstr(
+  "30 jours satisfait ou remboursé",
+  "30-day money-back",
+);
+const legalLinkLabel = lstr("Voir les conditions", "See the terms");
 
 export default async function YoEspagnolIntroPage({ searchParams }: PageProps) {
   const resolvedSearchParams = await searchParams;
@@ -446,6 +456,28 @@ export default async function YoEspagnolIntroPage({ searchParams }: PageProps) {
           <p className="mt-3 max-w-2xl text-sm leading-relaxed text-[#0F6E56]/78">
             {t(SECTION_LABELS.destinationsBody, locale)}
           </p>
+          {/* Trust strip: surface the YoPratiqo lifetime + 30-day money-back
+              promise at the moment buyers transition from the free intro to
+              a paid country module — the closest analogue to a buy block on
+              this otherwise-free page. */}
+          <div className="mt-5 flex flex-col gap-2 rounded-2xl border border-[#DDF4F1] bg-white/80 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+            <div className="flex flex-wrap gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#DDF4F1]/70 px-3 py-1 text-xs font-semibold text-[#0F6E56]">
+                <CheckCircle2 className="size-3.5" aria-hidden />
+                {t(lifetimeAccessLabel, locale)}
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#DDF4F1]/70 px-3 py-1 text-xs font-semibold text-[#0F6E56]">
+                <CheckCircle2 className="size-3.5" aria-hidden />
+                {t(moneyBackLabel, locale)}
+              </span>
+            </div>
+            <Link
+              href="/legal/yo-remboursement"
+              className="text-xs font-medium text-[#0F6E56]/75 underline-offset-2 hover:underline"
+            >
+              {t(legalLinkLabel, locale)}
+            </Link>
+          </div>
           <ul role="list" className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {destinations.map((dest) => {
               const isAvailable = dest.status === "available";
