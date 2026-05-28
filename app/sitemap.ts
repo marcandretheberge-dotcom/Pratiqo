@@ -95,6 +95,12 @@ const STATIC_ROUTES: MetadataRoute.Sitemap = [
     changeFrequency: "yearly",
     priority: 0.4,
   },
+  {
+    url: `${BASE_URL}/legal/conditions-professeurs`,
+    lastModified: new Date(),
+    changeFrequency: "yearly",
+    priority: 0.4,
+  },
 ];
 
 // ── Dynamic tutor profile routes ──────────────────────────────────────────────

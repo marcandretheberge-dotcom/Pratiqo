@@ -13,7 +13,14 @@ import Link from "next/link";
 import { useLocale } from "@/lib/locale-context";
 
 export function LegalFooterLinks() {
-  const { t } = useLocale();
+  const { locale, t } = useLocale();
+  const teacherTermsLabel =
+    locale === "en"
+      ? "Teacher Terms"
+      : locale === "es"
+        ? "Condiciones profesores"
+        : "Conditions professeurs";
+
   return (
     <>
       <Link href="/legal/cgu" className="hover:text-[#2C2C2A] hover:underline">
@@ -27,6 +34,9 @@ export function LegalFooterLinks() {
       </Link>
       <Link href="/legal/code-de-conduite" className="hover:text-[#2C2C2A] hover:underline">
         {t("footerCodeOfConduct")}
+      </Link>
+      <Link href="/legal/conditions-professeurs" className="hover:text-[#2C2C2A] hover:underline">
+        {teacherTermsLabel}
       </Link>
       <Link href="/contact" className="hover:text-[#2C2C2A] hover:underline">
         {t("footerContact")}
