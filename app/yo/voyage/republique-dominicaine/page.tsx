@@ -116,6 +116,8 @@ export default async function YoVoyageRepubliqueDominicainePage({
           locale={locale}
           priceCents={module.priceCents}
           currency={module.currency}
+          imagePath={module.cultureImagePath}
+          imageAlt={module.cultureImageAlt}
         />
 
         <YoFeatureStrip features={bottomFeatures} locale={locale} />

@@ -2,10 +2,9 @@
  * YoVoyageHero — top-of-page hero for a Yo Pratiqo Voyage module.
  *
  * Server component. Renders the small product label, hero title, subtitle,
- * the CEFR level badge AND a code-based tropical visual placeholder
- * (`YoHeroTropicalArt`). Phase 2 will swap the placeholder for a real
- * image at `module.heroImagePath` once one exists at
- * `/public/images/yo/voyage/do/hero-dominican-republic.webp`.
+ * the CEFR level badge AND an image-led destination visual. The visual
+ * prefers `module.heroImagePath` and falls back to tropical art until the
+ * licensed image file exists in `/public/images/yo/voyage/do/`.
  *
  * Bilingual: all localized strings on `module` are resolved with `t()`
  * against the incoming `locale`. The level badge mixes the CEFR code
@@ -13,7 +12,7 @@
  */
 
 import type { YoLocale, YoModule } from "@/lib/yo/types";
-import { YoHeroTropicalArt } from "@/components/yo/YoVisuals";
+import { YoImageVisual } from "@/components/yo/YoImageVisual";
 import { t } from "@/lib/yo/localize";
 import { YO_COPY } from "@/lib/yo/copy";
 
@@ -31,7 +30,18 @@ export function YoVoyageHero({ module, locale }: YoVoyageHeroProps) {
       aria-labelledby="yo-hero-title"
       className="relative overflow-hidden border-b border-teal-100/70 bg-gradient-to-b from-[var(--color-base-cream)] via-white to-white"
     >
-      <div className="mx-auto grid w-full max-w-5xl gap-8 px-5 pb-12 pt-10 sm:px-8 sm:pb-16 sm:pt-14 lg:grid-cols-[1.2fr_1fr] lg:items-center lg:gap-10 lg:pt-20">
+      <div className="mx-auto grid w-full max-w-6xl gap-8 px-5 pb-12 pt-8 sm:px-8 sm:pb-16 sm:pt-12 lg:grid-cols-[0.92fr_1.18fr] lg:items-center lg:gap-12 lg:pt-20">
+        <div className="relative order-first lg:order-last">
+          <YoImageVisual
+            imagePath={module.heroImagePath}
+            alt={module.heroImageAlt ?? module.destinationLabel}
+            locale={locale}
+            fallbackKind={module.heroVisualHint ?? "hero-tropical"}
+            variant="hero"
+            priority
+          />
+        </div>
+
         <div className="flex flex-col gap-6 lg:gap-8">
           <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-teal-700">
             <span className="ds-label text-teal-700/90">
@@ -78,11 +88,6 @@ export function YoVoyageHero({ module, locale }: YoVoyageHeroProps) {
           </div>
         </div>
 
-        {/* Tropical visual — code-based placeholder. Replaced in Phase 2 by
-            a real photo at module.heroImagePath when one exists. */}
-        <div className="relative lg:h-full">
-          <YoHeroTropicalArt />
-        </div>
       </div>
 
       {/* Decorative gradient blob — purely visual, never reaches screen readers. */}

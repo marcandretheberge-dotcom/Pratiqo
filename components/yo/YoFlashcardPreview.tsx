@@ -30,10 +30,8 @@ import type {
 import { cn } from "@/lib/utils";
 import { t } from "@/lib/yo/localize";
 import { YO_COPY } from "@/lib/yo/copy";
-import {
-  YoExpressionLocaleBadge,
-  YoFlashcardTropicalBg,
-} from "@/components/yo/YoVisuals";
+import { YoImageVisual } from "@/components/yo/YoImageVisual";
+import { YoExpressionLocaleBadge } from "@/components/yo/YoVisuals";
 
 export interface YoFlashcardPreviewProps {
   cards: YoFlashcard[];
@@ -164,9 +162,6 @@ function DeckCard({
   locale,
 }: DeckCardProps) {
   const isLast = index === total - 1;
-  const hasTropicalBg =
-    card.visualHint === "tropical-flashcard" && !card.imagePath;
-
   const progressLabel = t(YO_COPY.flash.progressLabel, locale);
   const faceLabel = state.isFlipped
     ? t(YO_COPY.flash.cardFaceBack, locale)
@@ -215,9 +210,20 @@ function DeckCard({
           onClick={onFlip}
           aria-pressed={state.isFlipped}
           aria-label={flipAria}
-          className="group relative flex min-h-[200px] flex-col justify-between overflow-hidden rounded-3xl border border-teal-100 bg-white p-6 text-left shadow-[0_1px_2px_rgba(15,58,52,0.04)] transition hover:shadow-[0_8px_24px_rgba(15,58,52,0.10)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 sm:min-h-[240px] sm:p-8"
+          className="group relative flex min-h-[280px] flex-col justify-between overflow-hidden rounded-3xl border border-teal-100 bg-white p-6 text-left shadow-[0_1px_2px_rgba(15,58,52,0.04)] transition hover:shadow-[0_8px_24px_rgba(15,58,52,0.10)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 sm:min-h-[340px] sm:p-8"
         >
-          {hasTropicalBg ? <YoFlashcardTropicalBg /> : null}
+          <YoImageVisual
+            imagePath={card.imagePath}
+            alt={card.imageAlt ?? card.back}
+            locale={locale}
+            fallbackKind={card.visualHint ?? "tropical-flashcard"}
+            variant="flashcard"
+            className="rounded-none border-0 shadow-none"
+          />
+          <div
+            aria-hidden
+            className="absolute inset-0 z-10 bg-[linear-gradient(180deg,rgba(255,255,255,0.64)_0%,rgba(255,255,255,0.78)_48%,rgba(255,255,255,0.9)_100%)]"
+          />
 
           <div className="relative z-10 flex items-start justify-between gap-3">
             <div className="flex flex-wrap items-center gap-2">

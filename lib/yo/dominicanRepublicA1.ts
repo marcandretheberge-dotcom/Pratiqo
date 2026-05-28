@@ -43,6 +43,47 @@ import type {
 // Intro lesson — cards (the surface trigger for each detailed section)
 // ─────────────────────────────────────────────────────────────────────────
 
+const YO_DO_IMAGES = {
+  hero: "/images/yo/voyage/do/hero-dominican-republic.webp",
+  map: "/images/yo/voyage/do/map-dominican-republic.webp",
+  food: "/images/yo/voyage/do/food-bandera-dominicana.webp",
+  history: "/images/yo/voyage/do/history-zona-colonial.webp",
+  conversation: "/images/yo/voyage/do/conversation-hotel-checkin.webp",
+  flashcard: "/images/yo/voyage/do/flashcard-tropical-bg.webp",
+  culture: "/images/yo/voyage/do/dominican-culture-music.webp",
+} as const;
+
+const YO_DO_IMAGE_ALT = {
+  hero: lstr(
+    "Plage tropicale et ambiance caribéenne en République dominicaine",
+    "Tropical beach and Caribbean atmosphere in the Dominican Republic",
+  ),
+  map: lstr(
+    "Carte de voyage illustrant les régions clés de la République dominicaine",
+    "Travel map showing key regions of the Dominican Republic",
+  ),
+  history: lstr(
+    "Rues coloniales colorées de la Zona Colonial à Saint-Domingue",
+    "Colorful colonial streets in Santo Domingo's Zona Colonial",
+  ),
+  food: lstr(
+    "Assiette dominicaine traditionnelle avec riz, haricots et plantain",
+    "Traditional Dominican plate with rice, beans, and plantain",
+  ),
+  conversation: lstr(
+    "Accueil à la réception d'un hôtel en République dominicaine",
+    "Hotel reception check-in in the Dominican Republic",
+  ),
+  flashcard: lstr(
+    "Fond tropical dominicain pour pratiquer le vocabulaire espagnol",
+    "Dominican tropical background for practicing Spanish vocabulary",
+  ),
+  culture: lstr(
+    "Musique, culture et voyage en République dominicaine",
+    "Music, culture, and travel in the Dominican Republic",
+  ),
+} as const;
+
 const introCards: YoLessonCard[] = [
   {
     id: "intro_card_geography",
@@ -56,8 +97,8 @@ const introCards: YoLessonCard[] = [
     ctaHref: "#geography",
     iconHint: "map",
     visualHint: "dominican-map",
-    // Phase 2 swap: imagePath = "/images/yo/voyage/do/map-dominican-republic.svg"
-    imagePath: null,
+    imagePath: YO_DO_IMAGES.map,
+    imageAlt: YO_DO_IMAGE_ALT.map,
   },
   {
     id: "intro_card_history",
@@ -77,8 +118,8 @@ const introCards: YoLessonCard[] = [
     ctaHref: "#history",
     iconHint: "book",
     visualHint: "history-colonial",
-    // Phase 2 swap: imagePath = "/images/yo/voyage/do/history-zona-colonial.webp"
-    imagePath: null,
+    imagePath: YO_DO_IMAGES.history,
+    imageAlt: YO_DO_IMAGE_ALT.history,
   },
   {
     id: "intro_card_food",
@@ -92,8 +133,8 @@ const introCards: YoLessonCard[] = [
     ctaHref: "#food",
     iconHint: "utensils",
     visualHint: "food-bandera",
-    // Phase 2 swap: imagePath = "/images/yo/voyage/do/food-bandera-dominicana.webp"
-    imagePath: null,
+    imagePath: YO_DO_IMAGES.food,
+    imageAlt: YO_DO_IMAGE_ALT.food,
   },
   {
     id: "intro_card_first_phrases",
@@ -110,8 +151,8 @@ const introCards: YoLessonCard[] = [
     ctaHref: "#first-phrases",
     iconHint: "message-circle",
     visualHint: "conversation-bubbles",
-    // Phase 2 swap: imagePath = "/images/yo/voyage/do/conversation-hotel-checkin.webp"
-    imagePath: null,
+    imagePath: YO_DO_IMAGES.conversation,
+    imageAlt: YO_DO_IMAGE_ALT.conversation,
     phrases: [
       { target: "Buenos días", translation: lstr("Bonjour", "Good morning") },
       {
@@ -196,6 +237,8 @@ const geographySection: YoIntroDetailedSection = {
     { target: "la ciudad", translation: lstr("la ville", "the city") },
   ],
   visualHint: "dominican-map",
+  imagePath: YO_DO_IMAGES.map,
+  imageAlt: YO_DO_IMAGE_ALT.map,
 };
 
 const historySection: YoIntroDetailedSection = {
@@ -250,6 +293,8 @@ const historySection: YoIntroDetailedSection = {
     { target: "el país", translation: lstr("le pays", "the country") },
   ],
   visualHint: "history-colonial",
+  imagePath: YO_DO_IMAGES.history,
+  imageAlt: YO_DO_IMAGE_ALT.history,
   audioComingSoonLabel: lstr(
     "Audio bientôt disponible",
     "Audio coming soon",
@@ -387,6 +432,8 @@ const foodSection: YoIntroDetailedSection = {
     ],
   },
   visualHint: "food-bandera",
+  imagePath: YO_DO_IMAGES.food,
+  imageAlt: YO_DO_IMAGE_ALT.food,
 };
 
 const hotelCheckinDialogue: YoDialogueScenarioData = {
@@ -530,6 +577,8 @@ const firstPhrasesSection: YoIntroDetailedSection = {
   ],
   dialogue: hotelCheckinDialogue,
   visualHint: "conversation-bubbles",
+  imagePath: YO_DO_IMAGES.conversation,
+  imageAlt: YO_DO_IMAGE_ALT.conversation,
 };
 
 const detailedSections: YoIntroDetailedSection[] = [
@@ -709,7 +758,7 @@ const lessonPath: YoLessonPathStep[] = lessons.map((lesson) => ({
 // Flashcard deck (12 cards). A1 = friendly Dominican expressions only.
 // ─────────────────────────────────────────────────────────────────────────
 
-const flashcardDeck: YoFlashcard[] = [
+const flashcardDeck: YoFlashcard[] = ([
   {
     id: "deck_que_lo_que",
     front: "¿Qué lo qué?",
@@ -721,7 +770,7 @@ const flashcardDeck: YoFlashcard[] = [
     tag: lstr("salutations", "greetings"),
     isLocalExpression: true,
     visualHint: "tropical-flashcard",
-    imagePath: null,
+    imagePath: YO_DO_IMAGES.flashcard,
   },
   {
     id: "deck_tato",
@@ -734,7 +783,7 @@ const flashcardDeck: YoFlashcard[] = [
     tag: lstr("expressions", "expressions"),
     isLocalExpression: true,
     visualHint: "tropical-flashcard",
-    imagePath: null,
+    imagePath: YO_DO_IMAGES.flashcard,
   },
   {
     id: "deck_buenos_dias",
@@ -746,7 +795,7 @@ const flashcardDeck: YoFlashcard[] = [
     ),
     tag: lstr("salutations", "greetings"),
     visualHint: "tropical-flashcard",
-    imagePath: null,
+    imagePath: YO_DO_IMAGES.flashcard,
   },
   {
     id: "deck_buenas_tardes",
@@ -758,7 +807,7 @@ const flashcardDeck: YoFlashcard[] = [
     ),
     tag: lstr("salutations", "greetings"),
     visualHint: "tropical-flashcard",
-    imagePath: null,
+    imagePath: YO_DO_IMAGES.flashcard,
   },
   {
     id: "deck_buenas_noches",
@@ -773,7 +822,7 @@ const flashcardDeck: YoFlashcard[] = [
     ),
     tag: lstr("salutations", "greetings"),
     visualHint: "tropical-flashcard",
-    imagePath: null,
+    imagePath: YO_DO_IMAGES.flashcard,
   },
   {
     id: "deck_mucho_gusto",
@@ -785,7 +834,7 @@ const flashcardDeck: YoFlashcard[] = [
     ),
     tag: lstr("présentation", "introductions"),
     visualHint: "tropical-flashcard",
-    imagePath: null,
+    imagePath: YO_DO_IMAGES.flashcard,
   },
   {
     id: "deck_hasta_luego",
@@ -797,7 +846,7 @@ const flashcardDeck: YoFlashcard[] = [
     ),
     tag: lstr("au revoir", "goodbyes"),
     visualHint: "tropical-flashcard",
-    imagePath: null,
+    imagePath: YO_DO_IMAGES.flashcard,
   },
   {
     id: "deck_el_pais",
@@ -805,7 +854,7 @@ const flashcardDeck: YoFlashcard[] = [
     back: lstr("le pays", "the country"),
     tag: lstr("vocabulaire", "vocabulary"),
     visualHint: "tropical-flashcard",
-    imagePath: null,
+    imagePath: YO_DO_IMAGES.flashcard,
   },
   {
     id: "deck_la_playa",
@@ -813,7 +862,7 @@ const flashcardDeck: YoFlashcard[] = [
     back: lstr("la plage", "the beach"),
     tag: lstr("vocabulaire", "vocabulary"),
     visualHint: "tropical-flashcard",
-    imagePath: null,
+    imagePath: YO_DO_IMAGES.flashcard,
   },
   {
     id: "deck_el_arroz",
@@ -821,7 +870,7 @@ const flashcardDeck: YoFlashcard[] = [
     back: lstr("le riz", "rice"),
     tag: lstr("table", "table"),
     visualHint: "tropical-flashcard",
-    imagePath: null,
+    imagePath: YO_DO_IMAGES.flashcard,
   },
   {
     id: "deck_el_pollo",
@@ -829,7 +878,7 @@ const flashcardDeck: YoFlashcard[] = [
     back: lstr("le poulet", "chicken"),
     tag: lstr("table", "table"),
     visualHint: "tropical-flashcard",
-    imagePath: null,
+    imagePath: YO_DO_IMAGES.flashcard,
   },
   {
     id: "deck_la_cuenta",
@@ -844,9 +893,13 @@ const flashcardDeck: YoFlashcard[] = [
     ),
     tag: lstr("table", "table"),
     visualHint: "tropical-flashcard",
-    imagePath: null,
+    imagePath: YO_DO_IMAGES.flashcard,
   },
-];
+] satisfies YoFlashcard[]).map((card) => ({
+  ...card,
+  imagePath: YO_DO_IMAGES.flashcard,
+  imageAlt: YO_DO_IMAGE_ALT.flashcard,
+}));
 
 // ─────────────────────────────────────────────────────────────────────────
 // Quiz questions (5 questions, single-answer multiple choice).
@@ -1091,8 +1144,10 @@ const module_: YoModule = {
     "Learn how to actually speak on-site, with culture, local expressions, and real-life missions.",
   ),
   heroVisualHint: "hero-tropical",
-  // Phase 2 swap: heroImagePath = "/images/yo/voyage/do/hero-dominican-republic.webp"
-  heroImagePath: null,
+  heroImagePath: YO_DO_IMAGES.hero,
+  heroImageAlt: YO_DO_IMAGE_ALT.hero,
+  cultureImagePath: YO_DO_IMAGES.culture,
+  cultureImageAlt: YO_DO_IMAGE_ALT.culture,
   lessons,
 };
 

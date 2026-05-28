@@ -155,6 +155,8 @@ export interface YoLessonCard {
    * undefined on purpose — no real images exist yet. Not localized.
    */
   imagePath?: string | null;
+  /** Localized alt text for the image slot when `imagePath` is populated. */
+  imageAlt?: YoLocalizedString;
 }
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -238,6 +240,12 @@ export interface YoModule {
   heroVisualHint?: YoVisualHint;
   /** Optional future hero image path. Phase 1: null. */
   heroImagePath?: string | null;
+  /** Localized alt text for the hero image slot. */
+  heroImageAlt?: YoLocalizedString;
+  /** Optional culture image used by the purchase/unlock travel card. */
+  cultureImagePath?: string | null;
+  /** Localized alt text for the culture image slot. */
+  cultureImageAlt?: YoLocalizedString;
   /** Lessons in display order. */
   lessons: YoLesson[];
 }
@@ -282,6 +290,8 @@ export interface YoFlashcard {
    * (e.g. "/images/yo/voyage/do/flashcard-tropical-bg.webp"). Phase 1: null.
    */
   imagePath?: string | null;
+  /** Localized alt text for the image slot when `imagePath` is populated. */
+  imageAlt?: YoLocalizedString;
 }
 
 /**
@@ -463,6 +473,10 @@ export interface YoIntroDetailedSection {
   dialogue?: YoDialogueScenarioData;
   /** Reuse the section's hero placeholder visual at the top of the panel. */
   visualHint?: YoVisualHint;
+  /** Optional real image path for the section's visual header. */
+  imagePath?: string | null;
+  /** Localized alt text for the section image slot. */
+  imageAlt?: YoLocalizedString;
   /**
    * When set, render an "Audio bientôt disponible" / "Audio coming soon"
    * chip. Phase 1 never pretends real audio exists.

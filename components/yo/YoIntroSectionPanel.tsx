@@ -20,7 +20,7 @@ import type {
   YoIntroDetailedSection,
   YoLocale,
 } from "@/lib/yo/types";
-import { YoCardVisual } from "@/components/yo/YoVisuals";
+import { YoImageVisual } from "@/components/yo/YoImageVisual";
 import { YoVocabularyTable } from "@/components/yo/YoVocabularyTable";
 import { YoDialogueScenario } from "@/components/yo/YoDialogueScenario";
 import { t } from "@/lib/yo/localize";
@@ -57,10 +57,17 @@ export function YoIntroSectionPanel({
       aria-labelledby={titleId}
       className="overflow-hidden rounded-3xl border border-teal-100 bg-white shadow-[0_8px_24px_rgba(15,58,52,0.07)]"
     >
-      {/* Visual header — reuses the same code-based placeholder as the card */}
-      {section.visualHint ? (
-        <div className="relative border-b border-teal-100/70">
-          <YoCardVisual hint={section.visualHint} locale={locale} />
+      {/* Visual header: real image slot first, polished fallback while assets are pending. */}
+      {section.visualHint || section.imagePath ? (
+        <div className="relative border-b border-teal-100/70 p-3 pb-0 sm:p-4 sm:pb-0">
+          <YoImageVisual
+            imagePath={section.imagePath}
+            alt={section.imageAlt ?? section.title}
+            locale={locale}
+            fallbackKind={section.visualHint}
+            variant="panel"
+            className="rounded-2xl shadow-none"
+          />
         </div>
       ) : null}
 
