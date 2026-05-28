@@ -74,6 +74,7 @@ Any breach of this code may be reported to Pratiqo.
 ## 7. Contact
 
 **Cours Pratiqo Inc.** — Saint-Georges, Québec, Canada
+
 support: [`support@pratiqo.ca`](mailto:support@pratiqo.ca)
 general: [`info@pratiqo.ca`](mailto:info@pratiqo.ca)
 management: [`marc-andre.theberge@pratiqo.ca`](mailto:marc-andre.theberge@pratiqo.ca)
