@@ -13,6 +13,7 @@ import PratiqoLogo from "./PratiqoLogo";
 import { useLocale } from "../lib/locale-context";
 import { LocaleSwitcher } from "./LocaleSwitcher";
 import { TeacherTopNav } from "./TeacherTopNav";
+import { YoNavButton } from "@/components/yo/YoNavButton";
 
 type Role = "student" | "teacher" | string;
 
@@ -107,7 +108,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <Link href={logoHref} className="flex items-center gap-2 min-w-0" aria-label={t("ariaHome")}>
             <PratiqoLogo variant="full" size="md" />
           </Link>
-          <div className="shrink-0 origin-right scale-[0.98]">
+          <div className="flex shrink-0 items-center gap-3 origin-right scale-[0.98]">
+            <YoNavButton className="hidden sm:inline-flex" />
+            <YoNavButton variant="mobile" className="sm:hidden" />
             <LocaleSwitcher variant="light" />
           </div>
         </header>
@@ -135,6 +138,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <PratiqoLogo variant="full" size="md" />
               </Link>
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <YoNavButton />
                 <Link
                   href="/messages"
                   className={cn(
@@ -207,6 +211,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <Link href="/student/search" className="shrink-0" aria-label={t("ariaHome")}>
               <PratiqoLogo variant="icon" size="sm" />
             </Link>
+            <YoNavButton variant="mobile" className="mx-2 flex-1" />
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <Link
                 href="/messages"
