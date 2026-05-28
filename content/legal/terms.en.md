@@ -163,6 +163,34 @@ Payments are disbursed to teachers within **7 business days** after lesson compl
 
 ---
 
+## 6a. YoPratiqo — Self-paced courses (one-time purchase)
+
+YoPratiqo groups Pratiqo's **self-paced, one-time-purchase courses** (languages, travel, etc.). These courses are distinct from the marketplace of individual lessons covered in §6 above: a YoPratiqo purchase is a one-time buy that grants **immediate access** to the purchased content, with **lifetime access** as defined below and a **30-day satisfaction guarantee**.
+
+The complete terms — lifetime access, 30-day guarantee, EU right of withdrawal, and rules for minors — are consolidated in the **[dedicated YoPratiqo policy](/legal/yo-remboursement)**. The subsections below are a contractual summary.
+
+### 6a.1 Legal status
+
+A YoPratiqo purchase grants a **personal, non-transferable licence** to access the content, **bound to the buyer's Pratiqo account**. Pratiqo inc. retains all intellectual property rights in the module. *See [YoPratiqo policy §1](/legal/yo-remboursement).*
+
+### 6a.2 Lifetime access
+
+"Lifetime access" means access remains active for as long as Pratiqo operates the YoPratiqo service. If a module or the YoPratiqo product line is discontinued, Pratiqo gives **at least 90 days' notice** by email and offers a **pro-rata refund** to buyers who paid within the last 12 months. *See [YoPratiqo policy §2](/legal/yo-remboursement).*
+
+### 6a.3 30-day satisfaction guarantee
+
+A money-back guarantee applies for **30 calendar days** from the purchase date, provided the buyer has completed **25% or fewer** of the lessons in the module. Refunds are issued via Stripe to the original payment method, taxes included, in the original purchase currency. *See [YoPratiqo policy §3](/legal/yo-remboursement).*
+
+### 6a.4 EU buyers
+
+Buyers residing in the European Union have a **14-day right of withdrawal** (Directive 2011/83/EU and Directive (EU) 2019/770). For digital content delivered immediately, this right can only be waived by **express consent** at checkout. Without that waiver, the full 14-day right is preserved. *See [YoPratiqo policy §4](/legal/yo-remboursement).*
+
+### 6a.5 Minors
+
+In Quebec, a minor under 14 cannot enter into a consumer contract alone (Civil Code of Québec art. 157) — a YoPratiqo purchase requires **parental authorization**. A parent may request rescission of an unauthorized purchase (art. 163), with a full refund outside the conditions of §6a.3. *See [YoPratiqo policy §5](/legal/yo-remboursement).*
+
+---
+
 ## 7. At-Home Lessons
 
 Pratiqo acts solely as an intermediary. Safety during at-home lessons is the exclusive responsibility of the teacher and student.

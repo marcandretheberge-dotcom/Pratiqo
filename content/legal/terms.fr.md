@@ -182,6 +182,34 @@ Les paiements sont versés aux professeurs dans les **7 jours ouvrables** suivan
 
 ---
 
+## 6bis. YoPratiqo — Cours autonomes (paiement unique)
+
+YoPratiqo regroupe les **cours autonomes en paiement unique** de Pratiqo (langues, voyage, etc.). Ces cours sont distincts du marketplace de cours individuels couvert au §6 ci-dessus : il s'agit d'un achat ponctuel donnant un **accès immédiat** au contenu acheté, avec **accès à vie** tel que défini ci-dessous et **garantie satisfaction de 30 jours**.
+
+Toutes les modalités complètes — accès à vie, garantie 30 jours, droit de rétractation UE et règles applicables aux mineurs — sont consolidées dans la **[politique YoPratiqo dédiée](/legal/yo-remboursement)**. Les sous-sections suivantes en sont un résumé contractuel.
+
+### 6bis.1 Statut juridique
+
+L'achat d'un module YoPratiqo donne une **licence personnelle non transférable** d'accès au contenu, **liée au compte Pratiqo** de l'acheteur. Pratiqo inc. conserve l'intégralité des droits de propriété intellectuelle sur le module. *Voir [politique YoPratiqo §1](/legal/yo-remboursement).*
+
+### 6bis.2 Accès à vie
+
+L'« accès à vie » signifie un accès actif aussi longtemps que Pratiqo exploite le service YoPratiqo. En cas de discontinuation, **un préavis de 90 jours** est donné par courriel et un **remboursement au prorata** est offert aux acheteurs ayant payé dans les 12 derniers mois. *Voir [politique YoPratiqo §2](/legal/yo-remboursement).*
+
+### 6bis.3 Garantie satisfaction 30 jours
+
+Une garantie de remboursement s'applique pendant **30 jours civils** à compter de la date d'achat, à condition d'avoir complété **25 % ou moins** des leçons du module. Le remboursement est émis via Stripe sur le moyen de paiement original, taxes incluses, dans la devise originale de l'achat. *Voir [politique YoPratiqo §3](/legal/yo-remboursement).*
+
+### 6bis.4 Acheteurs de l'Union européenne
+
+Les acheteurs résidant dans l'Union européenne disposent d'un **droit de rétractation de 14 jours** (Directive 2011/83/UE et Directive (UE) 2019/770). Pour les contenus numériques livrés immédiatement, ce droit ne peut être levé que par un **consentement exprès** au moment de l'achat. À défaut, le droit de rétractation de 14 jours est intégralement préservé. *Voir [politique YoPratiqo §4](/legal/yo-remboursement).*
+
+### 6bis.5 Mineurs
+
+Au Québec, un mineur de moins de 14 ans ne peut pas conclure seul un contrat de consommation (Code civil du Québec art. 157) — l'achat d'un module YoPratiqo requiert une **autorisation parentale**. Un parent peut demander la rescision d'un achat non autorisé (art. 163), avec remboursement complet hors des conditions du §6bis.3. *Voir [politique YoPratiqo §5](/legal/yo-remboursement).*
+
+---
+
 ## 7. Cours à domicile
 
 Pratiqo agit uniquement comme intermédiaire pour la mise en relation. La sécurité lors des cours à domicile relève de la responsabilité exclusive du professeur et de l'élève.

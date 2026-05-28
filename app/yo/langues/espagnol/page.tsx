@@ -21,6 +21,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import {
+  CheckCircle2,
   Compass,
   GraduationCap,
   MessageCircle,
@@ -105,6 +106,15 @@ const TEACHER_CTA = lstr(
   "Trouver un prof d’espagnol",
   "Find a Spanish teacher",
 );
+
+// HUB_COPY-style trust labels — keep the literal FR/EN strings here only,
+// never inline in JSX, so the trust strip stays fully localized via t(...).
+const lifetimeAccessLabel = lstr("Accès à vie", "Lifetime access");
+const moneyBackLabel = lstr(
+  "30 jours satisfait ou remboursé",
+  "30-day money-back",
+);
+const legalLinkLabel = lstr("Voir les conditions", "See the terms");
 
 const COMING_SOON_COUNTRIES: { id: string; label: { fr: string; en: string } }[] = [
   { id: "mx", label: { fr: "Mexique", en: "Mexico" } },
@@ -314,6 +324,28 @@ export default async function YoLanguesEspagnolPage({ searchParams }: PageProps)
                 </li>
               ))}
             </ul>
+          </div>
+
+          {/* Trust strip: lifetime access + 30-day money-back guarantee.
+              Sits right under the available-countries grid (closest to the
+              priced RD card) so the buyer sees the promise next to the buy. */}
+          <div className="mt-5 flex flex-col gap-2 rounded-2xl border border-[#DDF4F1] bg-white/80 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+            <div className="flex flex-wrap gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#DDF4F1]/70 px-3 py-1 text-xs font-semibold text-[#0F6E56]">
+                <CheckCircle2 className="size-3.5" aria-hidden />
+                {t(lifetimeAccessLabel, locale)}
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#DDF4F1]/70 px-3 py-1 text-xs font-semibold text-[#0F6E56]">
+                <CheckCircle2 className="size-3.5" aria-hidden />
+                {t(moneyBackLabel, locale)}
+              </span>
+            </div>
+            <Link
+              href="/legal/yo-remboursement"
+              className="text-xs font-medium text-[#0F6E56]/75 underline-offset-2 hover:underline"
+            >
+              {t(legalLinkLabel, locale)}
+            </Link>
           </div>
         </section>
 
