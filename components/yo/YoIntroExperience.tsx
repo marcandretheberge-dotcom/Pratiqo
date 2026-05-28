@@ -35,6 +35,11 @@ import { YoIntroSectionPanel } from "@/components/yo/YoIntroSectionPanel";
 import { YoDominicanDictionary } from "@/components/yo/YoDominicanDictionary";
 import { YoFlashcardPreview } from "@/components/yo/YoFlashcardPreview";
 import { YoQuizPreview } from "@/components/yo/YoQuizPreview";
+import {
+  YoCulturePanorama,
+  YoIntroLearningFrame,
+  YoTeacherSignalPreview,
+} from "@/components/yo/YoIntroCultureFrame";
 import { t } from "@/lib/yo/localize";
 import { YO_COPY } from "@/lib/yo/copy";
 
@@ -48,6 +53,8 @@ export interface YoIntroExperienceProps {
   locale: YoLocale;
   /** Optional human label e.g. "République dominicaine" rendered above the strip. */
   destinationLabel?: YoLocalizedString;
+  cultureImagePath?: string | null;
+  cultureImageAlt?: YoLocalizedString;
 }
 
 export function YoIntroExperience({
@@ -59,6 +66,8 @@ export function YoIntroExperience({
   introProgress,
   locale,
   destinationLabel,
+  cultureImagePath,
+  cultureImageAlt,
 }: YoIntroExperienceProps) {
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
@@ -109,6 +118,8 @@ export function YoIntroExperience({
         destinationCopy={destinationCopy}
         locale={locale}
       />
+
+      <YoIntroLearningFrame locale={locale} />
 
       <section
         aria-labelledby="yo-intro-title"
@@ -161,6 +172,12 @@ export function YoIntroExperience({
         </div>
       )}
 
+      <YoCulturePanorama
+        locale={locale}
+        imagePath={cultureImagePath}
+        imageAlt={cultureImageAlt}
+      />
+
       <YoDominicanDictionary
         expressions={dominicanDictionary}
         locale={locale}
@@ -169,6 +186,8 @@ export function YoIntroExperience({
       <YoFlashcardPreview cards={flashcardDeck} locale={locale} />
 
       <YoQuizPreview questions={quizQuestions} locale={locale} />
+
+      <YoTeacherSignalPreview locale={locale} />
     </>
   );
 }
