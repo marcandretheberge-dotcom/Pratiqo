@@ -238,9 +238,9 @@ export default function TrouverUnProfPage() {
         {/* ── FOOTER ─────────────────────────────────────────────────────── */}
         <footer className="bg-white border-t border-[#E8E6DF]">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 py-5 flex flex-wrap items-center justify-center gap-4 text-xs text-[#6B6760]">
-            <Link href="/cgu" className="hover:underline">CGU</Link>
+            <Link href="/legal/cgu" className="hover:underline">CGU</Link>
             <span className="text-[#D3D1C7]">·</span>
-            <Link href="/confidentialite" className="hover:underline">Confidentialité</Link>
+            <Link href="/legal/confidentialite" className="hover:underline">Confidentialité</Link>
             <span className="text-[#D3D1C7]">·</span>
             <Link href="/" className="font-semibold text-teal-700 hover:underline">Pratiqo</Link>
             <span className="text-[#D3D1C7]">·</span>
