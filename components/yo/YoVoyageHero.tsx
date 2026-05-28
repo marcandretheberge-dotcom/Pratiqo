@@ -11,9 +11,10 @@
  * (locale-independent, e.g. "A1") with a locale-specific suffix.
  */
 
+import Link from "next/link";
 import type { YoLocale, YoModule } from "@/lib/yo/types";
 import { YoImageVisual } from "@/components/yo/YoImageVisual";
-import { t } from "@/lib/yo/localize";
+import { buildYoLocaleHref, t } from "@/lib/yo/localize";
 import { YO_COPY } from "@/lib/yo/copy";
 
 export interface YoVoyageHeroProps {
@@ -24,6 +25,7 @@ export interface YoVoyageHeroProps {
 export function YoVoyageHero({ module, locale }: YoVoyageHeroProps) {
   const beginnerSuffix = locale === "fr" ? "Débutant" : "Beginner";
   const levelPrefix = locale === "fr" ? "Niveau" : "Level";
+  const coursePath = "/yo/voyage/republique-dominicaine";
 
   return (
     <section
@@ -43,7 +45,8 @@ export function YoVoyageHero({ module, locale }: YoVoyageHeroProps) {
         </div>
 
         <div className="flex flex-col gap-6 lg:gap-8">
-          <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-teal-700">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-teal-700">
             <span className="ds-label text-teal-700/90">
               {t(module.productLabel, locale)}
             </span>
@@ -53,6 +56,30 @@ export function YoVoyageHero({ module, locale }: YoVoyageHeroProps) {
             <span className="ds-label text-teal-700/80">
               {t(module.destinationLabel, locale)}
             </span>
+            </div>
+
+            <div
+              aria-label={locale === "fr" ? "Langue du parcours" : "Course language"}
+              className="inline-flex w-fit rounded-full border border-[#F4B400]/45 bg-[#FFF4D6]/90 p-1 shadow-[0_1px_0_rgba(244,180,0,0.18)]"
+            >
+              {(["fr", "en"] as const).map((option) => {
+                const active = locale === option;
+                return (
+                  <Link
+                    key={option}
+                    href={buildYoLocaleHref(coursePath, option)}
+                    aria-current={active ? "page" : undefined}
+                    className={
+                      active
+                        ? "rounded-full bg-[#0F6E56] px-3 py-1.5 text-xs font-black uppercase tracking-[0.12em] text-white"
+                        : "rounded-full px-3 py-1.5 text-xs font-black uppercase tracking-[0.12em] text-[#0F6E56]/70 transition hover:bg-white/70 hover:text-[#0F6E56]"
+                    }
+                  >
+                    {option.toUpperCase()}
+                  </Link>
+                );
+              })}
+            </div>
           </div>
 
           <div className="flex flex-col gap-4">

@@ -88,10 +88,10 @@ const introCards: YoLessonCard[] = [
   {
     id: "intro_card_geography",
     kind: "text",
-    title: lstr("Où on s’en va ?", "Where are we going?"),
+    title: lstr("Panorama du pays", "Country panorama"),
     description: lstr(
-      "Découvre la République dominicaine : ses régions, ses villes et ses trésors.",
-      "Discover the Dominican Republic — its regions, its cities, and its hidden gems.",
+      "Capitale, île, langue, zones touristiques et vie quotidienne au-delà du resort.",
+      "Capital, island, language, tourist zones, and daily life beyond the resort.",
     ),
     ctaLabel: lstr("Explorer la carte", "Explore the map"),
     ctaHref: "#geography",
@@ -104,12 +104,12 @@ const introCards: YoLessonCard[] = [
     id: "intro_card_history",
     kind: "text",
     title: lstr(
-      "Petite histoire en 3 minutes",
-      "A 3-minute history snapshot",
+      "Panorama historique",
+      "Historical panorama",
     ),
     description: lstr(
-      "Un peu d’histoire, de culture et de fierté dominicaine.",
-      "A short dose of history, culture, and Dominican pride.",
+      "Taïnos, Santo Domingo, indépendance et culture moderne, sans mémoriser une liste de dates.",
+      "Taíno presence, Santo Domingo, independence, and modern culture without memorizing a date list.",
     ),
     // Audio is intentionally absent — the visual placeholder shows
     // "Audio bientôt disponible" / "Audio coming soon" until a real
@@ -183,16 +183,49 @@ const introCards: YoLessonCard[] = [
 const geographySection: YoIntroDetailedSection = {
   id: "intro_card_geography",
   emoji: "📍",
-  title: lstr("Où on s’en va ?", "Where are we going?"),
+  title: lstr("Panorama du pays", "Country panorama"),
   intro: lstr(
-    "La République dominicaine se trouve dans les Caraïbes, sur l’île d’Hispaniola, qu’elle partage avec Haïti.",
-    "The Dominican Republic sits in the Caribbean, on the island of Hispaniola, which it shares with Haiti.",
+    "La République dominicaine n’est pas seulement une destination de plage. C’est un pays caribéen d’environ 11 millions d’habitants, avec une capitale historique, une vie musicale très forte et un espagnol qui a son propre rythme.",
+    "The Dominican Republic is not just a beach destination. It is a Caribbean country of around 11 million people, with a historic capital, a strong musical life, and Spanish with its own rhythm.",
+  ),
+  highlightTitle: lstr("Plus qu’un resort", "More than a resort"),
+  highlightBody: lstr(
+    "Dans un resort, tu peux survivre avec quelques phrases. Dans la vraie vie dominicaine, tu comprends mieux les gens quand tu connais aussi le pays, les habitudes et le ton.",
+    "At a resort, you can survive with a few phrases. In real Dominican life, you understand people better when you also know the country, habits, and tone.",
   ),
   sectionLeadIn: lstr(
-    "Trois zones utiles à connaître :",
-    "Three useful zones to know:",
+    "Repères essentiels :",
+    "Essential landmarks:",
   ),
   bullets: [
+    {
+      label: lstr("Capitale : Santo Domingo", "Capital: Santo Domingo"),
+      description: lstr(
+        "cœur politique, culturel et historique du pays.",
+        "the country's political, cultural, and historical center.",
+      ),
+    },
+    {
+      label: lstr("Langue officielle : espagnol", "Official language: Spanish"),
+      description: lstr(
+        "mais l’espagnol dominicain sonne plus rapide, plus musical et plus local que l’espagnol de manuel.",
+        "but Dominican Spanish can sound faster, more musical, and more local than textbook Spanish.",
+      ),
+    },
+    {
+      label: lstr("Île : Hispaniola", "Island: Hispaniola"),
+      description: lstr(
+        "la République dominicaine partage l’île avec Haïti.",
+        "the Dominican Republic shares the island with Haiti.",
+      ),
+    },
+    {
+      label: lstr("Religion et traditions", "Religion and traditions"),
+      description: lstr(
+        "le christianisme est très présent, avec des traditions catholiques et évangéliques importantes dans la vie sociale.",
+        "Christianity is very present, with Catholic and evangelical traditions playing an important role in social life.",
+      ),
+    },
     {
       label: lstr("Punta Cana / Bávaro", "Punta Cana / Bávaro"),
       description: lstr(
@@ -216,8 +249,8 @@ const geographySection: YoIntroDetailedSection = {
     },
   ],
   practicalPhrasesIntro: lstr(
-    "Si quelqu’un te demande d’où tu viens, tu peux répondre :",
-    "If someone asks where you're from, you can answer:",
+    "Première passerelle entre carte et conversation :",
+    "First bridge between map and conversation:",
   ),
   practicalPhrases: [
     {
@@ -228,6 +261,10 @@ const geographySection: YoIntroDetailedSection = {
       target: "Soy de Canadá.",
       translation: lstr("Je viens du Canada.", "I’m from Canada."),
     },
+    {
+      target: "Quiero conocer el país.",
+      translation: lstr("Je veux connaître le pays.", "I want to get to know the country."),
+    },
   ],
   vocabulary: [
     { target: "el país", translation: lstr("le pays", "the country") },
@@ -235,6 +272,8 @@ const geographySection: YoIntroDetailedSection = {
     { target: "la playa", translation: lstr("la plage", "the beach") },
     { target: "la capital", translation: lstr("la capitale", "the capital") },
     { target: "la ciudad", translation: lstr("la ville", "the city") },
+    { target: "el resort", translation: lstr("le resort", "the resort") },
+    { target: "la vida diaria", translation: lstr("la vie quotidienne", "daily life") },
   ],
   visualHint: "dominican-map",
   imagePath: YO_DO_IMAGES.map,
@@ -245,42 +284,72 @@ const historySection: YoIntroDetailedSection = {
   id: "intro_card_history",
   emoji: "⏳",
   title: lstr(
-    "Petite histoire en 3 minutes",
-    "A 3-minute history snapshot",
+    "Panorama historique",
+    "Historical panorama",
+  ),
+  intro: lstr(
+    "L’histoire de la République dominicaine aide à comprendre pourquoi Santo Domingo compte autant dans les Amériques, et pourquoi la fierté culturelle est si présente aujourd’hui.",
+    "The history of the Dominican Republic helps explain why Santo Domingo matters so much in the Americas, and why cultural pride is so present today.",
+  ),
+  highlightTitle: lstr("Pourquoi ça compte", "Why it matters"),
+  highlightBody: lstr(
+    "Tu n’as pas besoin de mémoriser toutes les dates. L’objectif est de comprendre les grandes couches: peuples autochtones, colonisation espagnole, capitale historique, indépendance et culture moderne.",
+    "You do not need to memorize every date. The goal is to understand the big layers: Indigenous peoples, Spanish colonization, historic capital, independence, and modern culture.",
   ),
   timeline: [
     {
+      year: lstr("Avant l’Europe", "Before Europe"),
+      description: lstr(
+        "Des peuples taïnos vivent sur l’île d’Hispaniola. Pour parler du pays avec respect, on se rappelle que son histoire ne commence pas avec les Européens.",
+        "Taíno peoples live on the island of Hispaniola. To speak about the country with respect, we remember that its history does not begin with Europeans.",
+      ),
+    },
+    {
       year: lstr("1492", "1492"),
       description: lstr(
-        "Christophe Colomb arrive sur l’île.",
-        "Christopher Columbus reaches the island.",
+        "Christophe Colomb arrive sur Hispaniola. L’île devient un lieu central du premier contact durable entre l’Espagne et les Amériques.",
+        "Christopher Columbus reaches Hispaniola. The island becomes central to early sustained contact between Spain and the Americas.",
       ),
     },
     {
       year: lstr("1496", "1496"),
       description: lstr(
-        "Santo Domingo est fondée.",
-        "Santo Domingo is founded.",
+        "Nueva Isabela est fondée, puis l’histoire de la ville se poursuit sous le nom de Santo Domingo, capitale de la première colonie espagnole du Nouveau Monde.",
+        "Nueva Isabela is founded, and the city's story continues under the name Santo Domingo, capital of the first Spanish colony in the New World.",
+      ),
+    },
+    {
+      year: lstr("1502", "1502"),
+      description: lstr(
+        "Après un ouragan, la ville est reconstruite sur la rive ouest de l’Ozama. Cette nouvelle implantation devient la Zona Colonial que l’on visite encore aujourd’hui.",
+        "After a hurricane, the city is rebuilt on the west bank of the Ozama River. This new site becomes the Zona Colonial people still visit today.",
       ),
     },
     {
       year: lstr("1844", "1844"),
       description: lstr(
-        "Indépendance dominicaine.",
-        "Dominican independence.",
+        "La République dominicaine proclame son indépendance. C’est une date-clé pour comprendre la fierté nationale.",
+        "The Dominican Republic declares independence. This is a key date for understanding national pride.",
+      ),
+    },
+    {
+      year: lstr("20e siècle", "20th century"),
+      description: lstr(
+        "Le pays traverse une période de dictature et de mémoire difficile. Dans cette intro A1, on retient surtout que l’histoire moderne influence encore la culture et la société.",
+        "The country goes through a period of dictatorship and difficult memory. In this A1 intro, we mainly remember that modern history still influences culture and society.",
       ),
     },
     {
       year: lstr("Aujourd’hui", "Today"),
       description: lstr(
-        "tourisme, musique, baseball, cacao, rhum et cigares font partie de l’identité du pays.",
-        "tourism, music, baseball, cocoa, rum, and cigars are all part of the country's identity.",
+        "Tourisme, musique, baseball, cacao, rhum, cigares et diaspora font partie de l’identité du pays et de sa présence dans le monde.",
+        "Tourism, music, baseball, cocoa, rum, cigars, and the diaspora are part of the country's identity and its presence in the world.",
       ),
     },
   ],
   learningNote: lstr(
-    "L’objectif n’est pas de mémoriser des dates. L’objectif est de comprendre pourquoi le pays est fier de son histoire.",
-    "The goal isn't to memorize dates. The goal is to understand why the country is proud of its history.",
+    "Quand tu connais cette histoire, tu ne visites plus seulement un décor. Tu comprends pourquoi une ville, une chanson, un plat ou une expression peut porter beaucoup de fierté.",
+    "When you know this history, you are not just visiting scenery. You understand why a city, a song, a dish, or an expression can carry a lot of pride.",
   ),
   vocabulary: [
     { target: "la historia", translation: lstr("l’histoire", "history") },
@@ -291,6 +360,8 @@ const historySection: YoIntroDetailedSection = {
     { target: "la ciudad", translation: lstr("la ville", "the city") },
     { target: "hoy", translation: lstr("aujourd’hui", "today") },
     { target: "el país", translation: lstr("le pays", "the country") },
+    { target: "la capital", translation: lstr("la capitale", "the capital") },
+    { target: "la independencia", translation: lstr("l’indépendance", "independence") },
   ],
   visualHint: "history-colonial",
   imagePath: YO_DO_IMAGES.history,
@@ -857,10 +928,14 @@ const flashcardDeck: YoFlashcard[] = ([
     imagePath: YO_DO_IMAGES.flashcard,
   },
   {
-    id: "deck_la_playa",
-    front: "la playa",
-    back: lstr("la plage", "the beach"),
-    tag: lstr("vocabulaire", "vocabulary"),
+    id: "deck_santo_domingo",
+    front: "Santo Domingo",
+    back: lstr("la capitale historique", "the historic capital"),
+    hint: lstr(
+      "Ville essentielle pour comprendre l’histoire des Amériques et la Zona Colonial.",
+      "An essential city for understanding the history of the Americas and the Zona Colonial.",
+    ),
+    tag: lstr("pays", "country facts"),
     visualHint: "tropical-flashcard",
     imagePath: YO_DO_IMAGES.flashcard,
   },
@@ -873,10 +948,17 @@ const flashcardDeck: YoFlashcard[] = ([
     imagePath: YO_DO_IMAGES.flashcard,
   },
   {
-    id: "deck_el_pollo",
-    front: "el pollo",
-    back: lstr("le poulet", "chicken"),
-    tag: lstr("table", "table"),
+    id: "deck_teacher_bridge_conversation",
+    front: "Quiero practicar la conversación.",
+    back: lstr(
+      "Je veux pratiquer la conversation.",
+      "I want to practice conversation.",
+    ),
+    hint: lstr(
+      "Phrase passerelle à dire à ton professeur pour transformer tes flashcards en pratique orale.",
+      "A bridge phrase to tell your teacher so your flashcards become speaking practice.",
+    ),
+    tag: lstr("professeur", "teacher practice"),
     visualHint: "tropical-flashcard",
     imagePath: YO_DO_IMAGES.flashcard,
   },
@@ -912,35 +994,41 @@ const quizQuestions: YoQuizQuestion[] = [
   {
     id: "quiz_capital",
     prompt: lstr(
-      "La capitale de la République dominicaine s’appelle…",
-      "The capital of the Dominican Republic is…",
+      "Pourquoi Santo Domingo est-elle importante dans l’histoire des Amériques ?",
+      "Why is Santo Domingo important in the history of the Americas?",
     ),
     options: [
-      { id: "a", label: lstr("Santiago", "Santiago") },
-      { id: "b", label: lstr("Punta Cana", "Punta Cana") },
-      { id: "c", label: lstr("Saint-Domingue", "Santo Domingo") },
+      {
+        id: "a",
+        label: lstr(
+          "Parce que c’est une capitale historique liée aux premières colonies espagnoles du Nouveau Monde",
+          "Because it is a historic capital linked to the first Spanish colonies in the New World",
+        ),
+      },
+      { id: "b", label: lstr("Parce que c’est la plus grande plage du pays", "Because it is the country's biggest beach") },
+      { id: "c", label: lstr("Parce que tout le monde y parle français", "Because everyone there speaks French") },
     ],
-    correctOptionId: "c",
+    correctOptionId: "a",
     explanation: lstr(
-      "La capitale est Saint-Domingue (Santo Domingo). Santiago est la 2e ville et Punta Cana est une zone touristique de l’Est.",
-      "The capital is Santo Domingo. Santiago is the second-largest city and Punta Cana is a tourist area on the east coast.",
+      "Santo Domingo est liée aux débuts de la présence espagnole dans les Amériques. La Zona Colonial permet encore de voir une partie de cette histoire.",
+      "Santo Domingo is linked to the early Spanish presence in the Americas. The Zona Colonial still lets you see part of that history.",
     ),
   },
   {
     id: "quiz_morning_greeting",
     prompt: lstr(
-      "Pour saluer quelqu’un le matin, on dit…",
-      "To greet someone in the morning, you say…",
+      "Quel est le meilleur début de réponse si quelqu’un te dit : « Buenas tardes, ¿cómo está? »",
+      "What is the best way to start answering if someone says: “Buenas tardes, ¿cómo está?”",
     ),
     options: [
-      { id: "a", label: lstr("Buenas noches", "Buenas noches") },
-      { id: "b", label: lstr("Buenos días", "Buenos días") },
-      { id: "c", label: lstr("Hasta luego", "Hasta luego") },
+      { id: "a", label: lstr("Buenas tardes. Muy bien, gracias.", "Buenas tardes. Muy bien, gracias.") },
+      { id: "b", label: lstr("La cuenta, por favor.", "La cuenta, por favor.") },
+      { id: "c", label: lstr("Hasta mañana.", "Hasta mañana.") },
     ],
-    correctOptionId: "b",
+    correctOptionId: "a",
     explanation: lstr(
-      "« Buenos días » se dit le matin. « Buenas noches » = bonsoir/bonne nuit. « Hasta luego » = à plus tard.",
-      "“Buenos días” is for the morning. “Buenas noches” = good evening/good night. “Hasta luego” = see you later.",
+      "Tu reprends la salutation de l’autre personne, puis tu réponds simplement : « Muy bien, gracias. »",
+      "You echo the other person's greeting, then answer simply: “Muy bien, gracias.”",
     ),
   },
   {
@@ -995,21 +1083,21 @@ const quizQuestions: YoQuizQuestion[] = [
   {
     id: "quiz_que_lo_que",
     prompt: lstr(
-      "« ¿Qué lo qué? » est une expression dominicaine qui veut dire…",
-      "“¿Qué lo qué?” is a Dominican expression that means…",
+      "Pourquoi « ¿Qué lo qué? » n’est-il pas exactement comme l’espagnol de manuel ?",
+      "Why is “¿Qué lo qué?” not exactly like textbook Spanish?",
     ),
     options: [
       {
         id: "a",
-        label: lstr("Combien ça coûte ?", "How much does it cost?"),
+        label: lstr("Parce que c’est une salutation locale dominicaine, surtout informelle", "Because it is a local Dominican greeting, mostly informal"),
       },
-      { id: "b", label: lstr("Quoi de neuf ?", "What’s up?") },
-      { id: "c", label: lstr("Où est la plage ?", "Where is the beach?") },
+      { id: "b", label: lstr("Parce que c’est une phrase écrite seulement dans les hôtels", "Because it is only a written phrase in hotels") },
+      { id: "c", label: lstr("Parce que cela veut dire « merci beaucoup »", "Because it means “thank you very much”") },
     ],
-    correctOptionId: "b",
+    correctOptionId: "a",
     explanation: lstr(
-      "Salutation informelle typique en République dominicaine, à utiliser entre amis ou en famille.",
-      "Informal greeting that's typical in the Dominican Republic — use it with friends or family.",
+      "C’est une expression dominicaine familière. Tu peux la reconnaître, mais dans une première rencontre formelle, reste avec « Buenos días » ou « Buenas tardes ».",
+      "It is a familiar Dominican expression. You can recognize it, but in a first formal meeting, stay with “Buenos días” or “Buenas tardes.”",
     ),
   },
 ];

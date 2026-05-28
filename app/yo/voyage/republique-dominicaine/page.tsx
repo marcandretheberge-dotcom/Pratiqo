@@ -109,6 +109,8 @@ export default async function YoVoyageRepubliqueDominicainePage({
           introProgress={introProgress}
           locale={locale}
           destinationLabel={module.destinationLabel}
+          cultureImagePath={module.cultureImagePath}
+          cultureImageAlt={module.cultureImageAlt}
         />
 
         <YoUnlockCard
