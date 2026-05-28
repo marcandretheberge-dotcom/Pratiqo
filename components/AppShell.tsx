@@ -211,7 +211,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <Link href="/student/search" className="shrink-0" aria-label={t("ariaHome")}>
               <PratiqoLogo variant="icon" size="sm" />
             </Link>
-            <YoNavButton variant="mobile" className="mx-2 flex-1" />
+            <YoNavButton variant="mobile" className="mx-2" />
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <Link
                 href="/messages"
