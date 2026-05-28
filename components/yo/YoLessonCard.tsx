@@ -32,7 +32,7 @@ import type {
   YoLessonCard as YoLessonCardData,
   YoLocale,
 } from "@/lib/yo/types";
-import { YoCardVisual } from "@/components/yo/YoVisuals";
+import { YoImageVisual } from "@/components/yo/YoImageVisual";
 import { t } from "@/lib/yo/localize";
 import { cn } from "@/lib/utils";
 
@@ -77,7 +77,7 @@ export function YoLessonCard({
   panelId,
 }: YoLessonCardProps) {
   const Icon: LucideIcon = card.iconHint ? ICONS[card.iconHint] : Compass;
-  const hasVisual = Boolean(card.visualHint) && !card.imagePath;
+  const hasVisual = Boolean(card.visualHint || card.imagePath);
   const isInteractive = Boolean(onSelect);
 
   const title = t(card.title, locale);
@@ -94,9 +94,16 @@ export function YoLessonCard({
       )}
       aria-labelledby={`yo-card-${card.id}-title`}
     >
-      {hasVisual && card.visualHint ? (
-        <div className="relative border-b border-teal-100/70">
-          <YoCardVisual hint={card.visualHint} locale={locale} />
+      {hasVisual ? (
+        <div className="relative border-b border-teal-100/70 p-3 pb-0">
+          <YoImageVisual
+            imagePath={card.imagePath}
+            alt={card.imageAlt ?? card.title}
+            locale={locale}
+            fallbackKind={card.visualHint}
+            variant="card"
+            className="rounded-2xl shadow-none"
+          />
         </div>
       ) : null}
 

@@ -26,7 +26,7 @@ import type {
   YoLocale,
   YoLocalizedString,
 } from "@/lib/yo/types";
-import { YoUnlockTravelStamp } from "@/components/yo/YoVisuals";
+import { YoImageVisual } from "@/components/yo/YoImageVisual";
 import { formatYoPrice, t } from "@/lib/yo/localize";
 import { YO_COPY } from "@/lib/yo/copy";
 
@@ -49,6 +49,10 @@ export interface YoUnlockCardProps {
   ctaHref?: string;
   /** Optional override for the small trust note under the CTA. */
   trustNote?: YoLocalizedString;
+  /** Optional travel image slot for the purchase panel. */
+  imagePath?: string | null;
+  /** Localized alt text for the travel image slot. */
+  imageAlt?: YoLocalizedString;
 }
 
 const FEATURE_ICONS: Record<YoFeatureIcon, LucideIcon> = {
@@ -70,6 +74,8 @@ export function YoUnlockCard({
   ctaLabel,
   ctaHref = "#",
   trustNote,
+  imagePath,
+  imageAlt,
 }: YoUnlockCardProps) {
   const priceLabel = formatYoPrice(priceCents, locale, currency);
   const eyebrow = t(YO_COPY.unlock.eyebrow, locale);
@@ -92,7 +98,7 @@ export function YoUnlockCard({
           className="pointer-events-none absolute -right-20 -top-20 size-56 rounded-full bg-teal-100/50 blur-3xl"
         />
 
-        <div className="relative grid gap-8 lg:grid-cols-[1.2fr_1fr] lg:items-center">
+        <div className="relative grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
           <div>
             <span className="ds-label text-teal-700/90">{eyebrow}</span>
             <h2
@@ -119,15 +125,22 @@ export function YoUnlockCard({
           </div>
 
           <div
-            className="relative flex flex-col gap-4 overflow-hidden rounded-2xl p-5 ring-1 ring-teal-100 sm:p-6"
+            className="relative flex flex-col gap-4 overflow-hidden rounded-[1.75rem] p-3 ring-1 ring-teal-100 sm:p-4"
             style={{
               background:
                 "linear-gradient(165deg, #fffaf0 0%, #fff4e2 55%, #f3e8d0 100%)",
             }}
           >
-            <YoUnlockTravelStamp locale={locale} />
+            <YoImageVisual
+              imagePath={imagePath}
+              alt={imageAlt ?? YO_COPY.unlock.title}
+              locale={locale}
+              fallbackKind="unlock-stamp"
+              variant="unlock"
+              className="rounded-2xl shadow-none"
+            />
 
-            <div className="relative">
+            <div className="relative px-2 pb-1 sm:px-3">
               <p className="inline-flex items-center gap-1.5 rounded-full bg-white/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-teal-800 ring-1 ring-teal-100">
                 <Sparkles aria-hidden className="size-3" />
                 {priceEyebrow}
@@ -142,13 +155,13 @@ export function YoUnlockCard({
 
             <a
               href={ctaHref}
-              className="ds-btn-primary inline-flex items-center justify-center gap-2 text-center text-sm shadow-[0_6px_18px_rgba(15,118,110,0.28)] sm:text-base"
+              className="ds-btn-primary inline-flex w-full items-center justify-center gap-2 text-center text-sm shadow-[0_6px_18px_rgba(15,118,110,0.28)] sm:text-base"
             >
               {cta}
               <span aria-hidden>→</span>
             </a>
 
-            <p className="flex items-center gap-1.5 text-xs text-[var(--color-text-secondary)]">
+            <p className="flex items-center gap-1.5 px-2 pb-2 text-xs text-[var(--color-text-secondary)] sm:px-3">
               <ShieldCheck aria-hidden className="size-3.5 text-teal-700" />
               {trust}
             </p>
