@@ -4,6 +4,7 @@ import Link from "next/link";
 import PratiqoLogo from "@/components/PratiqoLogo";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 import { useLocale } from "@/lib/locale-context";
+import { YoNavButton } from "@/components/yo/YoNavButton";
 
 export function LandingHeader() {
   const { t } = useLocale();
@@ -18,6 +19,8 @@ export function LandingHeader() {
         </span>
       </Link>
       <div className="flex items-center gap-3">
+        <YoNavButton variant="mobile" className="sm:hidden" />
+        <YoNavButton className="hidden sm:inline-flex" />
         <LocaleSwitcher variant="light" />
         <Link
           href="/tarifs"
