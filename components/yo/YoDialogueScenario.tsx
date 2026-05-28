@@ -3,31 +3,39 @@
  *
  * Pure presentational component (no client state). Renders each line
  * with speaker-aligned bubbles:
- *   - "host" (réceptionniste, vendeur, …) → cream bubble, left-aligned
- *   - "self" (toi)                         → teal bubble, right-aligned
+ *   - "host" (réceptionniste / receptionist, vendeur / cashier, …) →
+ *     cream bubble, left-aligned
+ *   - "self" (toi / you) → teal bubble, right-aligned
  *
- * Spanish lines carry `lang="es"`. An optional French translation can be
- * shown under each bubble — currently unused in Phase 1 to encourage
- * immersion, but supported in the type so the data layer can add it later.
+ * Spanish lines carry `lang="es"`. Speaker labels and the optional gloss
+ * are localized via `t()`. The HTML id used for `aria-labelledby` slugs
+ * the FR title so it stays stable across language switches (no anchor
+ * drift, no hydration flips).
  */
 
-import type { YoDialogueScenarioData } from "@/lib/yo/types";
+import type { YoDialogueScenarioData, YoLocale } from "@/lib/yo/types";
+import { t } from "@/lib/yo/localize";
 
 export interface YoDialogueScenarioProps {
   scenario: YoDialogueScenarioData;
+  locale: YoLocale;
 }
 
-export function YoDialogueScenario({ scenario }: YoDialogueScenarioProps) {
+export function YoDialogueScenario({
+  scenario,
+  locale,
+}: YoDialogueScenarioProps) {
+  const titleId = `yo-dialogue-${slug(scenario.title.fr)}-title`;
   return (
     <section
-      aria-labelledby={`yo-dialogue-${slug(scenario.title)}-title`}
+      aria-labelledby={titleId}
       className="rounded-2xl border border-teal-100 bg-white p-4 shadow-[0_1px_2px_rgba(15,58,52,0.04)] sm:p-5"
     >
       <h4
-        id={`yo-dialogue-${slug(scenario.title)}-title`}
+        id={titleId}
         className="mb-3 text-[0.95rem] font-medium text-[#1a3a32] sm:text-base"
       >
-        {scenario.title}
+        {t(scenario.title, locale)}
       </h4>
 
       <ol role="list" className="flex flex-col gap-2.5">
@@ -41,7 +49,7 @@ export function YoDialogueScenario({ scenario }: YoDialogueScenarioProps) {
               <span
                 className={`text-[10px] font-semibold uppercase tracking-[0.12em] ${isSelf ? "text-teal-800" : "text-[#8a5a17]"}`}
               >
-                {line.speakerLabel}
+                {t(line.speakerLabel, locale)}
               </span>
               <div
                 className={`max-w-[88%] rounded-2xl px-3.5 py-2.5 text-sm leading-snug shadow-[0_1px_2px_rgba(15,58,52,0.05)] ring-1 sm:text-[0.95rem] ${
@@ -57,7 +65,7 @@ export function YoDialogueScenario({ scenario }: YoDialogueScenarioProps) {
                   <p
                     className={`mt-1 text-xs ${isSelf ? "text-white/85" : "text-[#7a4f1d]/85"}`}
                   >
-                    {line.translation}
+                    {t(line.translation, locale)}
                   </p>
                 ) : null}
               </div>

@@ -22,7 +22,9 @@
  */
 
 import { MapPin, Sparkles, VolumeX } from "lucide-react";
-import type { YoVisualHint } from "@/lib/yo/types";
+import type { YoLocale, YoVisualHint } from "@/lib/yo/types";
+import { t } from "@/lib/yo/localize";
+import { YO_COPY } from "@/lib/yo/copy";
 
 /* ─────────────────────────────────────────────────────────────────────
  * Shared accent: subtle Dominican Republic flag pin
@@ -187,14 +189,15 @@ export function YoHeroTropicalArt() {
 
 export interface YoCardVisualProps {
   hint: YoVisualHint;
+  locale: YoLocale;
 }
 
-export function YoCardVisual({ hint }: YoCardVisualProps) {
+export function YoCardVisual({ hint, locale }: YoCardVisualProps) {
   switch (hint) {
     case "dominican-map":
       return <DominicanMapVisual />;
     case "history-colonial":
-      return <HistoryColonialVisual />;
+      return <HistoryColonialVisual locale={locale} />;
     case "food-bandera":
       return <FoodBanderaVisual />;
     case "conversation-bubbles":
@@ -344,7 +347,7 @@ function CityPin({
  * yet and we never want to imply there is.
  * ──────────────────────────────────────────────────────────────────── */
 
-function HistoryColonialVisual() {
+function HistoryColonialVisual({ locale }: { locale: YoLocale }) {
   return (
     <div
       aria-hidden
@@ -437,7 +440,7 @@ function HistoryColonialVisual() {
       {/* Audio status badge — clearly says NOT YET available. */}
       <div className="absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-white/85 px-2 py-1 text-[10px] font-medium text-[#1a3a32] shadow-sm ring-1 ring-white/60 backdrop-blur-sm">
         <VolumeX aria-hidden className="size-3 text-[#a23a3a]" />
-        <span>Audio bientôt disponible</span>
+        <span>{t(YO_COPY.visuals.audioComingSoon, locale)}</span>
       </div>
     </div>
   );
@@ -690,15 +693,15 @@ export function YoFlashcardTropicalBg() {
 }
 
 /**
- * Small "Expression locale" badge rendered on top of the flashcard front.
- * Visually paired with `YoFlashcardTropicalBg` and is a tiny premium
- * accent — it never overlaps the card's main text.
+ * Small "Expression locale" / "Local expression" badge rendered on top of
+ * the flashcard front. Visually paired with `YoFlashcardTropicalBg` and is
+ * a tiny premium accent — it never overlaps the card's main text.
  */
-export function YoExpressionLocaleBadge() {
+export function YoExpressionLocaleBadge({ locale }: { locale: YoLocale }) {
   return (
     <span className="inline-flex items-center gap-1 rounded-full bg-[#fff4e2] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#8a5a17] ring-1 ring-[#f3dcb4]">
       <Sparkles aria-hidden className="size-3" />
-      Expression locale
+      {locale === "fr" ? "Expression locale" : "Local expression"}
     </span>
   );
 }
@@ -708,7 +711,7 @@ export function YoExpressionLocaleBadge() {
  * Phase 2 swap → optional /public/images/yo/voyage/do/unlock-travel-stamp.webp
  * ──────────────────────────────────────────────────────────────────── */
 
-export function YoUnlockTravelStamp() {
+export function YoUnlockTravelStamp({ locale }: { locale: YoLocale }) {
   return (
     <div
       aria-hidden
@@ -841,7 +844,7 @@ export function YoUnlockTravelStamp() {
       {/* Small flag pin chip */}
       <div className="absolute -bottom-1 right-2 inline-flex items-center gap-1 rounded-full bg-white/90 px-1.5 py-0.5 text-[9px] font-medium text-[#1a3a32] shadow-sm ring-1 ring-teal-100">
         <DominicanFlagPin className="h-[8px] w-[12px]" />
-        <span>Visa-ready</span>
+        <span>{t(YO_COPY.visuals.visaReady, locale)}</span>
       </div>
     </div>
   );

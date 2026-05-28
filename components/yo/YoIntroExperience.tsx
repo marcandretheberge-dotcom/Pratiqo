@@ -12,6 +12,9 @@
  *   5. The flashcard deck preview (12 cards).
  *   6. The quiz preview (5 questions).
  *
+ * Bilingual: receives `locale` from the server page (resolved from
+ * `?lang=`) and forwards it to every child. Spanish content stays plain.
+ *
  * No Supabase, no Stripe, no payment math, no migrations, no real audio.
  */
 
@@ -23,6 +26,8 @@ import type {
   YoIntroDetailedSection,
   YoIntroProgressStats,
   YoLessonCard as YoLessonCardData,
+  YoLocale,
+  YoLocalizedString,
   YoQuizQuestion,
 } from "@/lib/yo/types";
 import { YoLessonCard } from "@/components/yo/YoLessonCard";
@@ -30,6 +35,8 @@ import { YoIntroSectionPanel } from "@/components/yo/YoIntroSectionPanel";
 import { YoDominicanDictionary } from "@/components/yo/YoDominicanDictionary";
 import { YoFlashcardPreview } from "@/components/yo/YoFlashcardPreview";
 import { YoQuizPreview } from "@/components/yo/YoQuizPreview";
+import { t } from "@/lib/yo/localize";
+import { YO_COPY } from "@/lib/yo/copy";
 
 export interface YoIntroExperienceProps {
   introCards: YoLessonCardData[];
@@ -38,8 +45,9 @@ export interface YoIntroExperienceProps {
   flashcardDeck: YoFlashcard[];
   quizQuestions: YoQuizQuestion[];
   introProgress: YoIntroProgressStats;
+  locale: YoLocale;
   /** Optional human label e.g. "République dominicaine" rendered above the strip. */
-  destinationLabel?: string;
+  destinationLabel?: YoLocalizedString;
 }
 
 export function YoIntroExperience({
@@ -49,6 +57,7 @@ export function YoIntroExperience({
   flashcardDeck,
   quizQuestions,
   introProgress,
+  locale,
   destinationLabel,
 }: YoIntroExperienceProps) {
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
@@ -85,11 +94,20 @@ export function YoIntroExperience({
     }
   }, [selectedSection]);
 
+  const destinationCopy = destinationLabel ? t(destinationLabel, locale) : null;
+  const introHeading =
+    locale === "fr"
+      ? `Intro · ${destinationCopy ?? "Espagnol A1"}`
+      : `Intro · ${destinationCopy ?? "Spanish A1"}`;
+  const introMeta = t(YO_COPY.intro.metaLine, locale);
+  const introNudge = t(YO_COPY.intro.nudge, locale);
+
   return (
     <>
       <IntroProgressStrip
         progress={introProgress}
-        destinationLabel={destinationLabel}
+        destinationCopy={destinationCopy}
+        locale={locale}
       />
 
       <section
@@ -101,10 +119,10 @@ export function YoIntroExperience({
             id="yo-intro-title"
             className="text-xl font-medium tracking-tight text-[#1a3a32] sm:text-2xl"
           >
-            Intro · {destinationLabel ?? "Espagnol A1"}
+            {introHeading}
           </h2>
           <p className="hidden text-sm text-[var(--color-text-secondary)] sm:block">
-            4 mini-modules · ~12 min
+            {introMeta}
           </p>
         </div>
 
@@ -113,6 +131,7 @@ export function YoIntroExperience({
             <YoLessonCard
               key={card.id}
               card={card}
+              locale={locale}
               onSelect={handleSelect}
               isSelected={selectedCardId === card.id}
               panelId={panelIdFor(card.id)}
@@ -128,6 +147,7 @@ export function YoIntroExperience({
         >
           <YoIntroSectionPanel
             section={selectedSection}
+            locale={locale}
             panelId={panelIdFor(selectedSection.id)}
             onClose={handleClose}
           />
@@ -135,20 +155,20 @@ export function YoIntroExperience({
       ) : (
         <div className="mx-auto mt-6 hidden w-full max-w-5xl px-5 sm:block sm:px-8">
           <p className="flex items-center justify-center gap-2 rounded-2xl border border-dashed border-teal-200 bg-white/60 px-4 py-3 text-sm text-[var(--color-text-secondary)]">
-            <ChevronDown
-              aria-hidden
-              className="size-4 text-teal-700"
-            />
-            Choisis une section au-dessus pour explorer la leçon.
+            <ChevronDown aria-hidden className="size-4 text-teal-700" />
+            {introNudge}
           </p>
         </div>
       )}
 
-      <YoDominicanDictionary expressions={dominicanDictionary} />
+      <YoDominicanDictionary
+        expressions={dominicanDictionary}
+        locale={locale}
+      />
 
-      <YoFlashcardPreview cards={flashcardDeck} />
+      <YoFlashcardPreview cards={flashcardDeck} locale={locale} />
 
-      <YoQuizPreview questions={quizQuestions} />
+      <YoQuizPreview questions={quizQuestions} locale={locale} />
     </>
   );
 }
@@ -159,13 +179,19 @@ function panelIdFor(cardId: string) {
 
 interface IntroProgressStripProps {
   progress: YoIntroProgressStats;
-  destinationLabel?: string;
+  destinationCopy: string | null;
+  locale: YoLocale;
 }
 
 function IntroProgressStrip({
   progress,
-  destinationLabel,
+  destinationCopy,
+  locale,
 }: IntroProgressStripProps) {
+  const eyebrowBase = t(YO_COPY.progress.badge, locale);
+  const eyebrow = destinationCopy
+    ? `${eyebrowBase} · ${destinationCopy}`
+    : eyebrowBase;
   return (
     <section
       aria-labelledby="yo-progress-title"
@@ -185,18 +211,15 @@ function IntroProgressStrip({
 
         <div className="relative grid gap-5 lg:grid-cols-[1.4fr_1fr] lg:items-center lg:gap-8">
           <div>
-            <span className="ds-label text-teal-700/90">
-              Intro gratuite
-              {destinationLabel ? ` · ${destinationLabel}` : ""}
-            </span>
+            <span className="ds-label text-teal-700/90">{eyebrow}</span>
             <h2
               id="yo-progress-title"
               className="mt-2 text-2xl font-medium tracking-tight text-[#1a3a32] sm:text-[1.6rem]"
             >
-              {progress.title}
+              {t(progress.title, locale)}
             </h2>
             <p className="mt-2 max-w-xl text-sm leading-relaxed text-[var(--color-text-secondary)] sm:text-[0.95rem]">
-              {progress.description}
+              {t(progress.description, locale)}
             </p>
           </div>
 
@@ -210,7 +233,7 @@ function IntroProgressStrip({
                   {stat.value}
                 </span>
                 <span className="text-xs leading-snug text-[var(--color-text-secondary)] sm:text-sm">
-                  {stat.label}
+                  {t(stat.label, locale)}
                 </span>
               </li>
             ))}

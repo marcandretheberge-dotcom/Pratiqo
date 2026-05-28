@@ -7,8 +7,38 @@
  * (yo_modules, yo_lessons, yo_quiz_questions, yo_flashcards, …) without
  * having to redesign the component API.
  *
+ * Bilingual support: every user-facing copy field carries both French
+ * ("fr", default for Quebec launch) AND English ("en", for English-
+ * speaking Canada). Spanish phrases — the language being TAUGHT — stay
+ * as plain strings on purpose: they are not translated, only rendered
+ * with `lang="es"` for accessibility and proper text-to-speech behaviour.
+ *
  * No runtime values, no Supabase imports. Pure types only.
  */
+
+// ─────────────────────────────────────────────────────────────────────────
+// Localization primitives
+// ─────────────────────────────────────────────────────────────────────────
+
+/** Locales currently shipped on the Yo surface. */
+export type YoLocale = "fr" | "en";
+
+/**
+ * A user-facing string available in both FR and EN. Future locales
+ * (e.g. "es-CA") will widen this type; renderers should always fall
+ * back to FR if a locale key is missing.
+ */
+export interface YoLocalizedString {
+  fr: string;
+  en: string;
+}
+
+/**
+ * Alias for longer/markdown-like body fields. Same shape as
+ * `YoLocalizedString` — kept separate so the data file reads more clearly
+ * when distinguishing a label ("Vocabulary") from a paragraph.
+ */
+export type YoLocalizedText = YoLocalizedString;
 
 // ─────────────────────────────────────────────────────────────────────────
 // Enums (string unions kept narrow so the data file is self-validating)
@@ -23,7 +53,7 @@ export type YoTargetLanguage = "es" | "en" | "fr" | "pt";
  * ISO 3166-1 alpha-2 destination country code.
  *
  * Kept open so future modules (Mexique = MX, Colombie = CO, …) can be added
- * without changing the union. DO = République dominicaine.
+ * without changing the union. DO = République dominicaine / Dominican Republic.
  */
 export type YoDestinationCountry = string;
 
@@ -69,12 +99,13 @@ export type YoLessonProgressState =
 /**
  * Bilingual phrase row used on the "Tes premières phrases utiles" card.
  *
- * `target` is in the language being taught (e.g. "Buenos días" in Spanish),
- * `translation` is in the learner's UI language (French for the Quebec MVP).
+ * `target` is in the language being taught (Spanish — stays as a plain
+ * string for `lang="es"`). `translation` is in the learner's UI language
+ * and is therefore localized (FR/EN).
  */
 export interface YoPhraseRow {
   target: string;
-  translation: string;
+  translation: YoLocalizedString;
   audioUrl?: string | null;
 }
 
@@ -95,10 +126,10 @@ export type YoLessonCardKind = "text" | "phrases" | "media";
 export interface YoLessonCard {
   id: string;
   kind: YoLessonCardKind;
-  title: string;
-  description?: string;
-  ctaLabel?: string;
-  /** Optional anchor or path; "#" is acceptable in Phase 1. */
+  title: YoLocalizedString;
+  description?: YoLocalizedString;
+  ctaLabel?: YoLocalizedString;
+  /** Optional anchor or path; "#" is acceptable in Phase 1. Not localized. */
   ctaHref?: string;
   phrases?: YoPhraseRow[];
   /** Optional icon hint (lucide-react icon name). Renderer maps to an icon. */
@@ -121,7 +152,7 @@ export interface YoLessonCard {
    * Optional future-Supabase / future-CMS image asset path, e.g.
    * "/images/yo/voyage/do/map-dominican-republic.svg". When set in Phase 2
    * the renderer must prefer this over `visualHint`. Phase 1 leaves this
-   * undefined on purpose — no real images exist yet.
+   * undefined on purpose — no real images exist yet. Not localized.
    */
   imagePath?: string | null;
 }
@@ -131,17 +162,17 @@ export interface YoLessonCard {
 // ─────────────────────────────────────────────────────────────────────────
 
 /**
- * A single lesson in a module (Intro, Arrivée et hôtel, …). Future row:
- *   public.yo_lessons.
+ * A single lesson in a module (Intro, Arrivée et hôtel / Arrival and hotel,
+ * …). Future row: public.yo_lessons.
  */
 export interface YoLesson {
   id: string;
   /** 1-based position inside its module. */
   position: number;
   /** Display title in the learner's UI language. */
-  title: string;
+  title: YoLocalizedString;
   /** Short subtitle / one-line hook. */
-  subtitle?: string;
+  subtitle?: YoLocalizedString;
   status: YoLessonStatus;
   /** Estimated minutes for completion (Phase 1: optional). */
   estimatedMinutes?: number;
@@ -157,8 +188,8 @@ export interface YoLesson {
 export interface YoLessonPathStep {
   id: string;
   position: number;
-  title: string;
-  ctaLabel: string;
+  title: YoLocalizedString;
+  ctaLabel: YoLocalizedString;
   status: YoLessonStatus;
 }
 
@@ -170,9 +201,11 @@ export interface YoLessonPathStep {
  * Top-level Yo Pratiqo Voyage product. Future row:
  *   public.yo_modules.
  *
- * NOTE on pricing — the MVP price is $24.99 CAD = 2499 cents. The product
- * decision is locked in here so a future migration writing the DB row reads
- * the same number from this type's defaults.
+ * NOTE on pricing — the MVP price is 2499 cents formatted as
+ * "$24,99 CAD" (FR) / "$24.99 CAD" (EN). The number is locked here so a
+ * future migration writing the DB row reads the same source of truth.
+ * Use `formatYoPrice(priceCents, locale)` from `lib/yo/localize.ts` to
+ * render the price in either UI language.
  */
 export interface YoModule {
   /** Stable slug, e.g. "voyage_es_do". */
@@ -180,17 +213,22 @@ export interface YoModule {
   productLine: YoProductLine;
   targetLanguage: YoTargetLanguage;
   destinationCountry: YoDestinationCountry;
-  destinationLabelFr: string;
+  /** Localized destination label, e.g. {fr:"République dominicaine", en:"Dominican Republic"}. */
+  destinationLabel: YoLocalizedString;
   cefrLevel: YoCefrLevel;
   priceCents: number;
   currency: YoCurrency;
   freeLessonsCount: number;
   /** Marketing title rendered in the hero. */
-  heroTitle: string;
+  heroTitle: YoLocalizedString;
   /** Marketing one-liner under the hero title. */
-  heroSubtitle: string;
-  /** Small label that sits above the hero (e.g. "Yo Pratiqo Voyage"). */
-  productLabel: string;
+  heroSubtitle: YoLocalizedString;
+  /**
+   * Small label that sits above the hero. Localized so the brand can read
+   * the same in both languages but stay typed consistently — e.g.
+   * "Yo Pratiqo Voyage" in both fr and en for the MVP brand.
+   */
+  productLabel: YoLocalizedString;
   /**
    * Optional code-based hero visual identifier. Defaults to
    * "hero-tropical" in Phase 1; in Phase 2 a real photo at
@@ -213,17 +251,20 @@ export interface YoModule {
  * persist `intervalDays`, `easeFactor`, `repetitions`, `nextReviewAt`
  * server-side (Phase 2). Phase 1 renders only `front`/`back`/`hint`.
  *
+ * `front` is Spanish — stays as a plain string; `back` and `hint` are
+ * learner-language and therefore localized.
+ *
  * Future row: public.yo_flashcards (front, back, hint, …) plus
  *             public.yo_flashcard_reviews per user.
  */
 export interface YoFlashcard {
   id: string;
   front: string;
-  back: string;
+  back: YoLocalizedString;
   /** Optional UI hint shown when the card is flipped. */
-  hint?: string;
-  /** Optional category tag, e.g. "salutations", "table". */
-  tag?: string;
+  hint?: YoLocalizedString;
+  /** Optional category tag, e.g. "salutations" / "greetings". */
+  tag?: YoLocalizedString;
   /**
    * When true, the flashcard preview shows an "Expression locale" badge
    * (i.e. a Dominican Republic-specific expression). Marketing accent
@@ -246,7 +287,7 @@ export interface YoFlashcard {
 /**
  * Simplified SM-2 quality buckets. Only used in Phase 2; declared here so
  * the YoFlashcardPreview component can already type its button handlers.
- *   0 = Difficile, 3 = Correct, 5 = Facile.
+ *   0 = Difficile / Hard, 3 = Correct / Good, 5 = Facile / Easy.
  */
 export type YoFlashcardQuality = 0 | 3 | 5;
 
@@ -257,7 +298,7 @@ export type YoFlashcardQuality = 0 | 3 | 5;
 /** Single multiple-choice option. */
 export interface YoQuizOption {
   id: string;
-  label: string;
+  label: YoLocalizedString;
 }
 
 /**
@@ -267,12 +308,12 @@ export interface YoQuizOption {
  */
 export interface YoQuizQuestion {
   id: string;
-  prompt: string;
+  prompt: YoLocalizedString;
   options: YoQuizOption[];
   /** Must match one of `options[i].id`. */
   correctOptionId: string;
   /** Gentle-correction copy used when the learner picks the wrong option. */
-  explanation?: string;
+  explanation?: YoLocalizedString;
 }
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -291,7 +332,7 @@ export type YoFeatureIcon =
 
 export interface YoFeature {
   id: string;
-  label: string;
+  label: YoLocalizedString;
   icon?: YoFeatureIcon;
 }
 
@@ -303,57 +344,68 @@ export interface YoFeature {
 /**
  * A single bilingual vocabulary / phrase row. Future Supabase row:
  *   public.yo_lesson_vocabulary (target, translation, audio_url, …).
+ *
+ * `target` is Spanish — stays as plain string; `translation` is the
+ * learner-language gloss and therefore localized.
  */
 export interface YoVocabularyItem {
-  /** Spanish (taught language). */
+  /** Spanish (taught language). Not localized. */
   target: string;
-  /** French (learner UI language for the Quebec MVP). */
-  translation: string;
-  /** Future audio source. Phase 1: null. */
+  /** Learner-language gloss (FR/EN). */
+  translation: YoLocalizedString;
+  /** Future audio source. Phase 1: null. Not localized. */
   audioUrl?: string | null;
 }
 
-/** A named bullet list — e.g. "Assiette typique", "Boissons". */
+/** A named bullet list — e.g. "Assiette typique" / "Typical plate". */
 export interface YoBulletGroup {
-  heading?: string;
+  heading?: YoLocalizedString;
   items: YoVocabularyItem[];
 }
 
 /** Timeline entry used by the history mini-lesson. */
 export interface YoTimelineEntry {
-  /** Free-form year label ("1492", "Aujourd'hui", …). */
-  year: string;
-  description: string;
+  /**
+   * Free-form year label. Localized because labels like "Aujourd'hui" /
+   * "Today" differ between languages; numeric years simply hold the same
+   * value in both keys.
+   */
+  year: YoLocalizedString;
+  description: YoLocalizedString;
 }
 
 /** A label-only bullet (the geography card's three zones, for instance). */
 export interface YoSimpleBullet {
-  label: string;
-  description?: string;
+  label: YoLocalizedString;
+  description?: YoLocalizedString;
 }
 
 /**
  * One line in a learner-facing dialogue scenario.
  * `speakerKind` drives the visual treatment (host vs. self bubble).
+ *
+ * `target` (the spoken Spanish) stays plain; `speakerLabel` and the
+ * optional `translation` gloss are learner-language.
  */
 export interface YoDialogueLine {
-  speakerLabel: string;
+  speakerLabel: YoLocalizedString;
   speakerKind: "host" | "self";
-  /** Spanish line spoken by the speaker. */
+  /** Spanish line spoken by the speaker. Not localized. */
   target: string;
-  /** Optional French gloss; Phase 1 leaves this empty for natural immersion. */
-  translation?: string;
+  /** Optional gloss; Phase 1 omits this for natural immersion. */
+  translation?: YoLocalizedString;
 }
 
 export interface YoDialogueScenarioData {
-  title: string;
+  title: YoLocalizedString;
   lines: YoDialogueLine[];
 }
 
 /** Mini-mission: pick-one practice prompt, no scoring. */
 export interface YoMiniMission {
-  title?: string;
-  intro: string;
+  title?: YoLocalizedString;
+  intro: YoLocalizedString;
+  /** Options are Spanish phrases the learner picks from — not localized. */
   options: string[];
 }
 
@@ -365,10 +417,11 @@ export interface YoMiniMission {
  */
 export interface YoDominicanExpression {
   id: string;
+  /** Spanish — not localized. */
   target: string;
-  translation: string;
-  /** Optional small tag e.g. "table", "salutations". */
-  category?: string;
+  translation: YoLocalizedString;
+  /** Optional small tag e.g. "table" / "table", "salutations" / "greetings". */
+  category?: YoLocalizedString;
 }
 
 /**
@@ -380,22 +433,22 @@ export interface YoDominicanExpression {
 export interface YoIntroDetailedSection {
   /** Matches the parent YoLessonCard.id (e.g. "intro_card_geography"). */
   id: string;
-  /** Optional emoji rendered alongside the panel title. */
+  /** Optional emoji rendered alongside the panel title. Not translated. */
   emoji?: string;
-  title: string;
+  title: YoLocalizedString;
   /** Lead paragraph rendered at the top of the panel. */
-  intro?: string;
+  intro?: YoLocalizedString;
   /** Optional intro line shown right before `bullets`. */
-  sectionLeadIn?: string;
+  sectionLeadIn?: YoLocalizedString;
   /** Three-zones-style bullets (label + optional description). */
   bullets?: YoSimpleBullet[];
   /** Optional highlight callout (e.g. "La Bandera Dominicana"). */
-  highlightTitle?: string;
-  highlightBody?: string;
+  highlightTitle?: YoLocalizedString;
+  highlightBody?: YoLocalizedString;
   /** Multi-group bullet lists (typical plate, drinks, …). */
   bulletGroups?: YoBulletGroup[];
   /** Intro line for `practicalPhrases`. */
-  practicalPhrasesIntro?: string;
+  practicalPhrasesIntro?: YoLocalizedString;
   /** Inline-callout phrases (e.g. "Soy de Quebec."). */
   practicalPhrases?: YoVocabularyItem[];
   /** Closing vocabulary table for the section. */
@@ -403,7 +456,7 @@ export interface YoIntroDetailedSection {
   /** History-style timeline entries. */
   timeline?: YoTimelineEntry[];
   /** Short pedagogical note shown after the timeline. */
-  learningNote?: string;
+  learningNote?: YoLocalizedString;
   /** Optional mini practice mission. */
   miniMission?: YoMiniMission;
   /** Optional learner dialogue scenario. */
@@ -411,23 +464,24 @@ export interface YoIntroDetailedSection {
   /** Reuse the section's hero placeholder visual at the top of the panel. */
   visualHint?: YoVisualHint;
   /**
-   * When set, render an "Audio bientôt disponible"-style chip. Phase 1
-   * never pretends real audio exists.
+   * When set, render an "Audio bientôt disponible" / "Audio coming soon"
+   * chip. Phase 1 never pretends real audio exists.
    */
-  audioComingSoonLabel?: string | null;
+  audioComingSoonLabel?: YoLocalizedString | null;
 }
 
 /** Single chip in the intro-progress strip. */
 export interface YoIntroProgressStat {
   id: string;
+  /** Numeric or short token — not localized (numbers are universal). */
   value: number | string;
-  label: string;
+  label: YoLocalizedString;
 }
 
 /** Compact value-prop strip rendered above the four intro cards. */
 export interface YoIntroProgressStats {
-  title: string;
-  description: string;
+  title: YoLocalizedString;
+  description: YoLocalizedString;
   stats: YoIntroProgressStat[];
 }
 
