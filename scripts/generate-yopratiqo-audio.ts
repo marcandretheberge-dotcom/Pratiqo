@@ -53,7 +53,20 @@
  *      during a non-dry run)
  */
 
-import "dotenv/config";
+// Load env BEFORE any `process.env.*` read.
+//
+// We prefer `@next/env`'s `loadEnvConfig` over a plain `dotenv` call so
+// the script sees the same variables `next dev` / `next build` would —
+// i.e. it loads `.env`, `.env.local`, `.env.<NODE_ENV>`, and
+// `.env.<NODE_ENV>.local` with Next.js's documented precedence (later
+// files win). Without this, `npm run generate:yopratiqo-audio` could
+// skip `.env.local` and fail with "NEXT_PUBLIC_SUPABASE_URL is required"
+// on a developer machine that only has `.env.local`.
+//
+// `@next/env` is already part of the dependency tree via `next` itself,
+// so this does not add a new top-level dep.
+import { loadEnvConfig } from "@next/env";
+loadEnvConfig(process.cwd(), process.env.NODE_ENV !== "production");
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
