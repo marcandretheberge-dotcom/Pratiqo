@@ -146,6 +146,242 @@ test("formatPlaceLabel returns 'City, PROV' format", () => {
   assert.equal(formatPlaceLabel(moncton), "Moncton, NB");
 });
 
+// ── Quebec completeness ────────────────────────────────────────────────
+// Pratiqo product rule: "Quebec must feel complete and local". Verify
+// every anchor the product owner explicitly listed is in the dataset.
+test("Quebec completeness baseline covers product-owner anchors", () => {
+  const qc = new Set(
+    CANADIAN_PLACES.filter((p) => p.provinceCode === "QC").map((p) => p.name),
+  );
+  for (const expected of [
+    "Montréal",
+    "Québec",
+    "Saint-Georges",
+    "Sainte-Marie",
+    "Beauceville",
+    "Saint-Joseph-de-Beauce",
+    "Thetford Mines",
+    "Lac-Mégantic",
+    "Montmagny",
+    "Lévis",
+    "Rivière-du-Loup",
+    "Rimouski",
+    "Rouyn-Noranda",
+    "Val-d'Or",
+    "Sept-Îles",
+    "Baie-Comeau",
+  ]) {
+    assert.ok(qc.has(expected), `Quebec dataset must include ${expected}`);
+  }
+});
+
+test("Beauce strategic coverage — every product-owner-listed municipality is present", () => {
+  // The Beauce MRCs (Beauce-Sartigan, La Nouvelle-Beauce, Robert-Cliche,
+  // Les Etchemins) are key Pratiqo geographies. Every entry the product
+  // owner flagged must be present *and* tagged isStrategicLocal so the
+  // ranker keeps them visible against bigger flagship cities.
+  const strategicNames = [
+    "Saint-Georges",
+    "Sainte-Marie",
+    "Beauceville",
+    "Saint-Joseph-de-Beauce",
+    "Saint-Prosper",
+    "Saint-Côme-Linière",
+    "Saint-Éphrem-de-Beauce",
+    "La Guadeloupe",
+    "Saint-Benoît-Labre",
+    "Vallée-Jonction",
+    "Scott",
+    "Saint-Elzéar",
+    "Frampton",
+    "Tring-Jonction",
+    "Saint-Odilon-de-Cranbourne",
+    "Saint-Victor",
+    "Saint-Évariste-de-Forsyth",
+    "Saint-Honoré-de-Shenley",
+    "Saint-Martin",
+    "Saint-Gédéon-de-Beauce",
+    "Saint-Théophile",
+    "Saint-Zacharie",
+  ];
+  for (const name of strategicNames) {
+    const place = CANADIAN_PLACES.find(
+      (p) => p.name === name && p.provinceCode === "QC",
+    );
+    assert.ok(place, `Beauce strategic municipality missing: ${name}`);
+    assert.ok(
+      place!.isStrategicLocal === true,
+      `${name} must be flagged isStrategicLocal so the ranker preserves it`,
+    );
+  }
+});
+
+test("Beauce searches return the right place for common French spellings", () => {
+  const georges = searchCanadianPlaces("saint georges", { limit: 5 });
+  assert.ok(
+    georges.some((p) => p.name === "Saint-Georges" && p.provinceCode === "QC"),
+    "'saint georges' must surface Saint-Georges, QC",
+  );
+
+  const stGeorges = searchCanadianPlaces("st georges", { limit: 5 });
+  assert.ok(
+    stGeorges.some((p) => p.name === "Saint-Georges" && p.provinceCode === "QC"),
+    "'st georges' must surface Saint-Georges, QC",
+  );
+
+  const steMarie = searchCanadianPlaces("ste marie", { limit: 5 });
+  assert.ok(
+    steMarie.some((p) => p.name === "Sainte-Marie" && p.provinceCode === "QC"),
+    "'ste marie' must surface Sainte-Marie, QC",
+  );
+
+  const sainteMarie = searchCanadianPlaces("sainte marie", { limit: 5 });
+  assert.ok(
+    sainteMarie.some((p) => p.name === "Sainte-Marie" && p.provinceCode === "QC"),
+    "'sainte marie' must surface Sainte-Marie, QC",
+  );
+
+  // "beauce" alone should bring up Beauce-flavoured municipalities.
+  const beauce = searchCanadianPlaces("beauce", { limit: 10 });
+  const beauceNames = beauce.map((p) => p.name);
+  assert.ok(
+    beauceNames.includes("Beauceville") || beauceNames.includes("Saint-Joseph-de-Beauce"),
+    "'beauce' must include at least Beauceville or Saint-Joseph-de-Beauce",
+  );
+
+  // Multi-token: "st joseph beauce" must hit Saint-Joseph-de-Beauce
+  // even though "joseph beauce" is not a contiguous substring of the name.
+  const stJoseph = searchCanadianPlaces("st joseph beauce", { limit: 5 });
+  assert.ok(
+    stJoseph.some((p) => p.name === "Saint-Joseph-de-Beauce"),
+    "'st joseph beauce' must surface Saint-Joseph-de-Beauce, QC",
+  );
+
+  // Other common Beauce-region searches.
+  const thetford = searchCanadianPlaces("thetford", { limit: 5 });
+  assert.ok(
+    thetford.some((p) => p.name === "Thetford Mines"),
+    "'thetford' must surface Thetford Mines, QC",
+  );
+
+  const lacMegantic = searchCanadianPlaces("lac megantic", { limit: 5 });
+  assert.ok(
+    lacMegantic.some((p) => p.name === "Lac-Mégantic"),
+    "'lac megantic' must surface Lac-Mégantic, QC",
+  );
+});
+
+test("Canada outside Quebec threshold coverage (>= 5,000)", () => {
+  const byKey = new Map(
+    CANADIAN_PLACES.map((p) => [`${p.name}|${p.provinceCode}`, p]),
+  );
+  const required: Array<[string, string]> = [
+    ["Calgary", "AB"],
+    ["Toronto", "ON"],
+    ["Vancouver", "BC"],
+    ["Halifax", "NS"],
+    ["Moncton", "NB"],
+    ["Winnipeg", "MB"],
+    ["Saskatoon", "SK"],
+    ["St. John's", "NL"],
+    ["Charlottetown", "PE"],
+    ["Whitehorse", "YT"],
+    ["Yellowknife", "NT"],
+    ["Iqaluit", "NU"],
+  ];
+  for (const [name, prov] of required) {
+    const place = byKey.get(`${name}|${prov}`);
+    assert.ok(place, `${name}, ${prov} must be in CANADIAN_PLACES`);
+  }
+});
+
+test("Quebec coverage is meaningfully beyond a flagship-only seed", () => {
+  // Soft floor: the previous MVP shipped with ~33 Quebec entries. The new
+  // dataset must add genuine breadth (regional centres, Beauce strategic
+  // municipalities, Couronne nord, Capitale-Nationale), so we expect a
+  // generous lower bound — not 33 anymore.
+  const quebecCount = CANADIAN_PLACES.filter((p) => p.provinceCode === "QC").length;
+  assert.ok(
+    quebecCount >= 200,
+    `Quebec dataset must hold >= 200 places (got ${quebecCount})`,
+  );
+});
+
+test("Canada outside Quebec coverage holds the >= 5,000 baseline", () => {
+  // Soft floor: with the StatCan 5k threshold non-QC should comfortably
+  // pass 150 entries; we're conservative to avoid flakiness if a future
+  // edit adds or trims a handful.
+  const otherCount = CANADIAN_PLACES.filter((p) => p.provinceCode !== "QC").length;
+  assert.ok(
+    otherCount >= 150,
+    `Non-Quebec dataset must hold >= 150 places (got ${otherCount})`,
+  );
+});
+
+test("Place ranking — broad 'mont' prefix still returns Montréal", () => {
+  // When the query is generic, population helps: "mont" should keep
+  // Montréal near the top while still leaving room for Quebec
+  // municipalities that share the prefix.
+  const matches = searchCanadianPlaces("mont", { limit: 10 });
+  const top = matches.slice(0, 3).map((p) => p.name);
+  assert.ok(top.includes("Montréal"), `Montréal must appear in top 3 for 'mont' (got ${top.join(", ")})`);
+});
+
+test("Place ranking — 'saint' returns multiple Quebec Saint-* municipalities", () => {
+  // Generic Saint query: results must surface multiple Quebec Saint-*
+  // entries rather than only St. John's, NL or St. Albert, AB. This
+  // protects the Beauce/Quebec product rule.
+  const matches = searchCanadianPlaces("saint", { limit: 15 });
+  const quebecSaints = matches.filter(
+    (p) => p.provinceCode === "QC" && /^Saint/.test(p.name),
+  );
+  assert.ok(
+    quebecSaints.length >= 3,
+    `'saint' must include >= 3 Quebec Saint-* matches (got ${quebecSaints.length})`,
+  );
+});
+
+test("Place ranking — population alone never hides a name-exact small place", () => {
+  // Saint-Georges (~33k) is dwarfed by Toronto (~2.8M), but typing
+  // "Saint-Georges" must still rank Saint-Georges first.
+  const matches = searchCanadianPlaces("Saint-Georges", { limit: 5 });
+  assert.equal(
+    matches[0]!.name,
+    "Saint-Georges",
+    "Exact-name query must rank Saint-Georges first",
+  );
+
+  // Tiny strategic-local hit: Frampton is ~1.4k, and the only Canadian
+  // place named Frampton — typing it must surface it as the top match.
+  const frampton = searchCanadianPlaces("frampton", { limit: 5 });
+  assert.equal(
+    frampton[0]!.name,
+    "Frampton",
+    "Strategic local Frampton must surface despite tiny population",
+  );
+});
+
+test("Programmatic alias generation covers Saint↔St / Sainte↔Ste / accents", () => {
+  // Saint-Joseph-de-Beauce should be findable via "st joseph beauce"
+  // (Saint→St swap + suffix-strip + accent-strip).
+  const stJoseph = searchCanadianPlaces("St-Joseph", { limit: 5 });
+  assert.ok(
+    stJoseph.some((p) => p.name === "Saint-Joseph-de-Beauce"),
+    "'St-Joseph' must surface Saint-Joseph-de-Beauce",
+  );
+
+  // Saint-Côme-Linière → "st come liniere" (accent strip + Saint→St).
+  const stCome = searchCanadianPlaces("st come", { limit: 5 });
+  assert.ok(
+    stCome.some((p) => p.name === "Saint-Côme-Linière"),
+    "'st come' must surface Saint-Côme-Linière",
+  );
+
+  // Trois-Rivières → "trois rivieres" already covered above; sanity here.
+  const trois = searchCanadianPlaces("Trois Rivieres", { limit: 5 });
+  assert.equal(trois[0]!.name, "Trois-Rivières");
+});
+
 // ── Subject buckets dataset ─────────────────────────────────────────────
 test("Subject buckets cover all four categories", () => {
   const categories = new Set(SUBJECT_BUCKETS.map((b) => b.category));
