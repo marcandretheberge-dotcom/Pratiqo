@@ -5,8 +5,9 @@
  * Renders: Terms · Privacy · Cancellation · Code of Conduct · Contact.
  *
  * Hrefs point to the canonical /legal/* routes. Legacy top-level paths
- * (/cgu, /confidentialite, /annulation, /code-de-conduite) still resolve
- * via 308 redirects in next.config.ts but should not be linked from the UI.
+ * (/cgu, /confidentialite, /annulation, /code-de-conduite) and the previous
+ * product slug /legal/teacher-pro still resolve via 308 redirects in
+ * next.config.ts but should not be linked from the UI.
  */
 
 import Link from "next/link";
@@ -28,6 +29,13 @@ export function LegalFooterLinks() {
         ? "Pagos y reembolsos"
         : "Paiements et remboursements";
 
+  const proMemberLabel =
+    locale === "en"
+      ? "Pro Member"
+      : locale === "es"
+        ? "Miembro Pro"
+        : "Membre Pro";
+
   return (
     <>
       <Link href="/legal/cgu" className="hover:text-[#2C2C2A] hover:underline">
@@ -45,8 +53,8 @@ export function LegalFooterLinks() {
       <Link href="/legal/conditions-professeurs" className="hover:text-[#2C2C2A] hover:underline">
         {teacherTermsLabel}
       </Link>
-      <Link href="/legal/teacher-pro" className="hover:text-[#2C2C2A] hover:underline">
-        Teacher Pro
+      <Link href="/legal/membre-pro" className="hover:text-[#2C2C2A] hover:underline">
+        {proMemberLabel}
       </Link>
       <Link href="/legal/paiements-remboursements" className="hover:text-[#2C2C2A] hover:underline">
         {paymentsLabel}

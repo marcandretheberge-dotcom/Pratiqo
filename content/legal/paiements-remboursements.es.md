@@ -52,12 +52,12 @@ Los profesores son **prestadores de servicios independientes**. Pratiqo actúa c
 
 ## 5. Tarifas de plataforma y comisiones
 
-Según el servicio utilizado, Pratiqo puede cobrar una **tarifa de plataforma, una tarifa de servicio, una comisión, una tarifa de transacción o una tarifa de suscripción** (por ejemplo, Teacher Pro).
+Según el servicio utilizado, Pratiqo puede cobrar una **tarifa de plataforma, una tarifa de servicio, una comisión, una tarifa de transacción o una tarifa de suscripción** (por ejemplo, la membresía Miembro Pro).
 
 - Las tarifas y comisiones aplicables pueden **divulgarse** en el panel del profesor, en el checkout del estudiante, en los documentos contractuales, en la página de suscripción o en otra área de la plataforma antes de que se confirme una transacción.
 - Las estructuras de tarifas **pueden evolucionar**. Sujeto a la ley imperativa, los cambios materiales se aplican **prospectivamente** y se comunicarán por los medios coherentes con la ley aplicable cuando sea necesario.
 - Las **tarifas del procesador de pagos** (por ejemplo, las tarifas de adquirencia de Stripe) pueden añadirse o deducirse de los montos correspondientes según las reglas aplicables. Las tarifas del emisor de la tarjeta o las tarifas de cambio aplicadas por el banco del estudiante quedan a cargo del estudiante.
-- Las tarifas de la suscripción Teacher Pro se rigen por las **[Condiciones de Teacher Pro](/legal/teacher-pro)** y son distintas de los pagos y transferencias de clases.
+- Las tarifas de la membresía Miembro Pro se rigen por las **[Condiciones de Miembro Pro](/legal/membre-pro)** y son distintas de los pagos y transferencias de clases. Cuando una **comisión reducida** o un **reintegro** estén vinculados al estatus Miembro Pro, sus condiciones se describen en las Condiciones de Miembro Pro y se muestran en la plataforma.
 
 ---
 
@@ -166,13 +166,14 @@ El tratamiento fiscal de las clases de la marketplace depende de la jurisdicció
 
 ---
 
-## 13. Teacher Pro y suscripciones
+## 13. Miembro Pro y suscripciones
 
-La suscripción **Teacher Pro** es un servicio distinto de los pagos y transferencias de clases de la marketplace.
+La **membresía Miembro Pro** es un servicio distinto de los pagos y transferencias de clases de la marketplace.
 
-- Las tarifas de la suscripción Teacher Pro se rigen por las **[Condiciones de Teacher Pro](/legal/teacher-pro)**.
-- Las **reglas de cancelación y reembolso** de Teacher Pro pueden **diferir** de las que se aplican a una clase de la marketplace; cancelar una suscripción no genera automáticamente un reembolso de clase, y viceversa.
-- Las tarifas de Teacher Pro **no pueden compensarse** contra las transferencias de clases, salvo que Pratiqo ofrezca expresamente esa función o lo exija la ley aplicable.
+- Las tarifas de la membresía Miembro Pro se rigen por las **[Condiciones de Miembro Pro](/legal/membre-pro)**.
+- Las **reglas de cancelación y reembolso** de Miembro Pro pueden **diferir** de las que se aplican a una clase de la marketplace; cancelar una membresía no genera automáticamente un reembolso de clase, y viceversa.
+- Las tarifas de Miembro Pro **no pueden compensarse** contra las transferencias de clases, salvo que Pratiqo ofrezca expresamente esa función o lo exija la ley aplicable.
+- Cuando el estatus Miembro Pro esté vinculado a una **comisión reducida** o a un **reintegro** sobre las clases de la marketplace, el método de cálculo, los topes y las eventuales condiciones de recuperación se describen en las **[Condiciones de Miembro Pro](/legal/membre-pro)** y se muestran en la plataforma, en el panel, en el checkout, en la página de suscripción o en los términos del plan aplicable.
 
 ---
 
@@ -205,7 +206,7 @@ Esta política **complementa** y debe leerse junto con los siguientes documentos
 - los **[Términos de Servicio](/legal/cgu)** («CGU»);
 - las **[Condiciones aplicables a los profesores](/legal/conditions-professeurs)**;
 - la **[Política de cancelación](/legal/annulation)**;
-- las **[Condiciones de Teacher Pro](/legal/teacher-pro)**;
+- las **[Condiciones de Miembro Pro](/legal/membre-pro)**;
 - la **[Política de reembolso de YoPratiqo](/legal/yo-remboursement)**;
 - el **[Código de conducta](/legal/code-de-conduite)**;
 - la **[Política de privacidad](/legal/confidentialite)**.

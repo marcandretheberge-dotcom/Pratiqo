@@ -16,7 +16,7 @@ By accessing the Pratiqo platform (website and mobile application), you agree to
 
 ## 2. Definitions
 
-- **Platform**: the website pratiqo.com and the Pratiqo mobile application
+- **Platform**: the website pratiqo.ca and the Pratiqo mobile application
 - **User**: any person who accesses the platform
 - **Student**: a user who searches for and books lessons
 - **Teacher**: a user who offers lessons via the platform
@@ -91,75 +91,29 @@ Income depends solely on the teacher's activity, profile quality, student satisf
 
 ---
 
-## 5. Fees and Commissions
+## 5. Fees, Commissions, and Memberships
 
-### 5.1 For Students
+Pratiqo may charge fees depending on the service used. The **nature and amount** of each fee — whether a service fee for students, a commission on transactions, a transaction fee, a subscription fee, or another fee — are **clearly disclosed before confirming a booking, subscription, or payment**, and can be reviewed on the platform, in the dashboard, at checkout, on the subscription page, or in the applicable plan details.
 
-Access to the Pratiqo platform is **free** for students. A service fee of **10%** of the lesson amount is added at checkout and clearly displayed before booking confirmation.
+- Access to the platform is generally **free for students**. A **service fee** may be added to the lesson price and is displayed before payment.
+- Pratiqo may charge a **commission** on marketplace lesson transactions, at the rate displayed on the platform and applicable to the relevant account.
+- Pratiqo may offer a **paid membership** (e.g., **Pro Member**) giving access, where offered, to economic advantages such as a **reduced commission** or a **rebate, reward, or cashback structure**. The full terms — eligibility, rates, caps, clawback conditions, billing, renewal, and cancellation — are set out in the **[Pro Member Terms](/legal/membre-pro)**.
+- Pratiqo may offer a **loyalty, credit, or reward program** for students, teachers, or both. The conditions, caps, validity periods, and calculation methods are disclosed by the platform and **may evolve prospectively**.
+- Pratiqo may **adjust its fees and commissions prospectively**, by notifying affected users in a manner consistent with applicable law.
 
-### 5.2 For Teachers — Free Plan
-
-- Free access up to 5 active students simultaneously
-- Commission of **10%** per transaction
-- Basic features included
-
-### 5.3 For Teachers — Pro Plan ($29.99/month)
-
-- Unlimited students
-- Reduced commission of **5%** per transaction
-- Advanced features (analytics, search priority, Pro badge)
-- Monthly billing via Stripe
-
-### 5.4 Sliding Commission Program
-
-The commission adjusts automatically based on the teacher's cumulative annual volume:
-
-| Tier | Annual Volume | Free Plan | Pro Plan |
-|------|--------------|-----------|---------|
-| 🥉 Bronze | $0 – $5,000 | 10% | 5% |
-| 🥈 Silver | $5,000 – $15,000 | 9% | 4.5% |
-| 🥇 Gold | $15,000 – $30,000 | 8% | 4% + 0.5% rebate |
-| 💎 Platinum | $30,000+ | 7% | 3.5% + 1% rebate |
-
-**Important:** No recurring cashback for teachers. The loyalty program reduces the commission, and the annual rebate is the only form of financial redistribution.
+Nothing in these Terms limits mandatory consumer rights under Quebec's **Consumer Protection Act** or any other applicable mandatory law.
 
 ---
 
-## 5a. Student Credits Program
+## 6. Payments, Refunds, and Payouts
 
-Students can earn Pratiqo credits via:
+All payments are processed by a **payment provider** (e.g., Stripe). Pratiqo **does not store** full credit-card information.
 
-- **Companion evolution**: $5 / $10 / $15 / $25 at milestones 5 / 15 / 30 / 50 lessons
-- **Rating a teacher**: +$1 per rated lesson (once per teacher)
-- **Referring a friend**: +$1 per validated referral, capped at $20/year
+The **detailed rules** governing payments, teacher payouts, refunds, holds, payout delays, disputes, and chargebacks are set out in the **[Payments, Refunds, and Payouts Policy](/legal/paiements-remboursements)** and, for lesson cancellations, in the **[Cancellation Policy](/legal/annulation)**. The applicable **terms, frequencies, holds, and timelines** for payouts are disclosed on the platform or in the corresponding documentation, and may evolve prospectively, subject to applicable law.
 
-Credits are usable **on Pratiqo only**, are **NOT convertible** to cash, expire after 12 months of inactivity, and are capped at 50% of a lesson price.
+For the **Pro Member membership**, billing, renewal, refunds, and any clawbacks are governed by the **[Pro Member Terms](/legal/membre-pro)**.
 
----
-
-## 5b. Annual Rebate for Pro Teachers
-
-Pratiqo annually redistributes to eligible Pro teachers **5% of its net profits** (after all operating, marketing, payroll, and infrastructure expenses).
-
-**Eligibility conditions:**
-- Subscribed to the Pro plan during the relevant year
-- Maintained active status for at least 6 months
-- No penalties or warnings
-
-The annual pool is calculated as: MIN(net profits × 5%, CAD $150,000). The rebate is only activated if at least 10 teachers meet all conditions.
-
----
-
-## 6. Payments and Refunds
-
-All payments are processed securely via **Stripe**. Pratiqo does not store any credit card information.
-
-Payments are disbursed to teachers within **7 business days** after lesson completion, minus the applicable commission.
-
-**Cancellation policy:**
-- Cancellation **more than 24 hours** before the lesson: full refund
-- Cancellation **less than 24 hours**: no refund, except in exceptional circumstances
-- Cancellation by the teacher: full refund to the student
+For **YoPratiqo** purchases (self-paced, one-time-purchase courses), refund conditions and "lifetime access" are described in the **[YoPratiqo Policy](/legal/yo-remboursement)**.
 
 ---
 
@@ -191,9 +145,11 @@ In Quebec, a minor under 14 cannot enter into a consumer contract alone (Civil C
 
 ---
 
-## 7. At-Home Lessons
+## 7. At-Home and In-Person Lessons
 
-Pratiqo acts solely as an intermediary. Safety during at-home lessons is the exclusive responsibility of the teacher and student.
+Pratiqo acts as a **technology intermediary** connecting students, parents, and teachers. **Safety** during in-person lessons — at the student's home, at a location designated by the teacher, or in a public place — rests primarily with the participants.
+
+The **applicable rules** (safe locations, presence or reachability of a parent or guardian when a lesson involves a minor, a teacher's right to refuse an unsafe location, prompt reporting of incidents, on-platform communications where reasonably possible) are described in the **[Teacher Terms](/legal/conditions-professeurs)** and the **[Code of Conduct](/legal/code-de-conduite)**.
 
 ---
 
@@ -239,6 +195,8 @@ Pratiqo reserves the right to modify these Terms at any time. Users will be noti
 
 ## 14. Contact
 
-**Cours Pratiqo Inc.** — Montreal, Quebec, Canada  
-email: [legal@pratiqo.com](mailto:legal@pratiqo.com)  
-website: [pratiqo.com](https://pratiqo.com)
+**Cours Pratiqo Inc.** — Saint-Georges, Québec, Canada  
+support: [`support@pratiqo.ca`](mailto:support@pratiqo.ca)  
+general: [`info@pratiqo.ca`](mailto:info@pratiqo.ca)  
+formal notices: [`marc-andre.theberge@pratiqo.ca`](mailto:marc-andre.theberge@pratiqo.ca)  
+website: [pratiqo.ca](https://pratiqo.ca)

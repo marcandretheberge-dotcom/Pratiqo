@@ -100,6 +100,17 @@ const nextConfig: NextConfig = {
         destination: "/legal/code-de-conduite",
         permanent: true,
       },
+      // Pre-launch rename: the public/legal product was renamed from
+      // "Teacher Pro" (an unclear "studio/tooling" framing) to
+      // "Membre Pro" / "Pro Member" / "Miembro Pro" (a membership status
+      // with economic advantages: reduced commission, ristourne/rewards).
+      // /legal/teacher-pro is kept as a 308 redirect so any external/inbound
+      // links keep working while the canonical route is /legal/membre-pro.
+      {
+        source: "/legal/teacher-pro",
+        destination: "/legal/membre-pro",
+        permanent: true,
+      },
     ];
   },
   async headers() {

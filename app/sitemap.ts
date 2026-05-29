@@ -102,7 +102,7 @@ const STATIC_ROUTES: MetadataRoute.Sitemap = [
     priority: 0.4,
   },
   {
-    url: `${BASE_URL}/legal/teacher-pro`,
+    url: `${BASE_URL}/legal/membre-pro`,
     lastModified: new Date(),
     changeFrequency: "yearly",
     priority: 0.4,

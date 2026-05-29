@@ -13,7 +13,9 @@ export default function UpgradePage() {
 
   const startUpgrade = async () => {
     if (!legalAccepted) {
-      alert("Tu dois accepter les CGU et la politique de confidentialité.");
+      alert(
+        "Tu dois accepter les CGU, les Conditions Membre Pro et la politique de confidentialité.",
+      );
       return;
     }
     if (!user) {
@@ -57,27 +59,27 @@ export default function UpgradePage() {
         <div className="flex items-start justify-between gap-6">
           <div>
             <p className="ds-label text-[var(--p-text-subtle)]">Monétisation</p>
-            <h1 className="text-[32px] sm:text-[40px] leading-[1.1] text-[var(--p-text)]">Passez à Pro</h1>
+            <h1 className="text-[32px] sm:text-[40px] leading-[1.1] text-[var(--p-text)]">Devenir Membre Pro</h1>
             <p className="mt-2 text-[14px] text-[var(--p-text-muted)]">
-              Pro: étudiants illimités, 5% de commission, 29$/mois.
+              Membre Pro : élèves illimités, 5 % de commission, 29 $/mois.
             </p>
           </div>
           <span className="inline-flex items-center gap-2 px-4 py-2 rounded-[16px] bg-teal-500/15 text-teal-700 font-medium">
-            <Star size={16} /> Pro
+            <Star size={16} /> Membre Pro
           </span>
         </div>
 
         <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
           <PlanCard
             title="Gratuit"
-            price="0$"
-            items={["Jusqu’à 5 élèves actifs", "10% de commission"]}
+            price="0 $"
+            items={["Jusqu’à 5 élèves actifs", "10 % de commission"]}
             accent="bg-slate-100 text-slate-700"
           />
           <PlanCard
-            title="Pro"
-            price="29$/mois"
-            items={["Élèves illimités", "5% de commission", "Support prioritaire (bientôt)"]}
+            title="Membre Pro"
+            price="29 $/mois"
+            items={["Élèves illimités", "5 % de commission", "Support prioritaire (bientôt)"]}
             accent="bg-teal-500/15 text-teal-700"
           />
         </div>
@@ -85,7 +87,26 @@ export default function UpgradePage() {
           Plan Entreprise et cours de groupe — bientôt disponibles.
         </p>
 
-        <label className="mt-8 flex items-start gap-3 text-[13px] text-[var(--p-text-muted)] cursor-pointer max-w-xl">
+        <p className="mt-6 max-w-xl text-[12px] leading-relaxed text-[var(--p-text-muted)]">
+          Les taxes applicables peuvent s&apos;ajouter au moment du paiement. L&apos;abonnement
+          Membre Pro est facturé selon le cycle indiqué et se{" "}
+          <strong>renouvelle automatiquement</strong> jusqu&apos;à l&apos;annulation. Tu peux annuler
+          en tout temps depuis ton tableau de bord. Les modalités complètes — facturation,
+          renouvellement, annulation, remboursements et avantages — figurent dans les{" "}
+          <Link href="/legal/membre-pro" className="text-teal-700 underline font-medium">
+            Conditions Membre Pro
+          </Link>{" "}
+          et dans la{" "}
+          <Link
+            href="/legal/paiements-remboursements"
+            className="text-teal-700 underline font-medium"
+          >
+            Politique des paiements
+          </Link>
+          .
+        </p>
+
+        <label className="mt-6 flex items-start gap-3 text-[13px] text-[var(--p-text-muted)] cursor-pointer max-w-xl">
           <input
             type="checkbox"
             checked={legalAccepted}
@@ -96,6 +117,14 @@ export default function UpgradePage() {
             J&apos;accepte les{" "}
             <Link href="/legal/cgu" className="text-teal-700 underline font-medium">
               CGU
+            </Link>
+            , les{" "}
+            <Link href="/legal/membre-pro" className="text-teal-700 underline font-medium">
+              Conditions Membre Pro
+            </Link>
+            , la{" "}
+            <Link href="/legal/annulation" className="text-teal-700 underline font-medium">
+              politique d&apos;annulation
             </Link>{" "}
             et la{" "}
             <Link href="/legal/confidentialite" className="text-teal-700 underline font-medium">
@@ -111,7 +140,7 @@ export default function UpgradePage() {
             disabled={loading || !legalAccepted}
             className="h-11 px-6 rounded-[22px] text-sm font-medium bg-teal-600 text-white hover:brightness-[0.98] disabled:opacity-60"
           >
-            {loading ? "Redirection…" : "Passer à Pro"}
+            {loading ? "Redirection…" : "Devenir Membre Pro"}
           </button>
           <button
             onClick={signOut}

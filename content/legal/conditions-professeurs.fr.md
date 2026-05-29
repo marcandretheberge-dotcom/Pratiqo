@@ -73,7 +73,7 @@ Les signaux affichés sur Pratiqo ont des significations distinctes :
 - **Diplôme vérifié** : un diplôme ou justificatif précis a été examiné selon le processus applicable.
 - **Expérience autodéclarée** : le professeur a fourni l'information, mais elle n'est pas nécessairement vérifiée.
 - **Profil complet** : certaines informations de profil sont remplies.
-- **Plan payant ou Teacher Pro** : il s'agit d'un statut produit ou commercial, non d'une certification de qualité.
+- **Plan payant ou Membre Pro** : il s'agit d'un statut produit ou commercial (par exemple, l'adhésion Membre Pro), non d'une certification de qualité.
 
 Ces signaux ne garantissent pas la qualité pédagogique, les résultats d'apprentissage, la sécurité absolue, la disponibilité future du professeur ni l'absence de plainte.
 
@@ -210,11 +210,11 @@ Pratiqo peut enquêter sur les signalements et demander la coopération du profe
 
 ---
 
-## 17. Relation avec Teacher Pro
+## 17. Relation avec Membre Pro
 
-Teacher Pro, s'il est offert, est une option payante ou commerciale distincte qui peut être soumise à des conditions d'abonnement ou à des modalités additionnelles.
+**Membre Pro**, s'il est offert, est une **adhésion payante optionnelle** distincte qui peut être soumise à des conditions d'abonnement ou à des modalités additionnelles. Le statut Membre Pro peut donner accès à des avantages économiques tels qu'une **commission réduite** ou une **structure de ristourne**, lorsque Pratiqo les offre.
 
-Teacher Pro ne garantit pas un revenu, des élèves, des réservations, un classement, des vues de profil ou un résultat commercial. Les modalités détaillées de Teacher Pro seront régies par les conditions ou pages applicables à Teacher Pro.
+Membre Pro ne garantit pas un revenu, des élèves, des réservations, un classement, des vues de profil ou un résultat commercial. Les modalités détaillées de Membre Pro sont régies par les **[Conditions Membre Pro](/legal/membre-pro)**.
 
 ---
 

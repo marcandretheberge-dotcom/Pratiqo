@@ -106,9 +106,9 @@ If any provision of this policy conflicts with a mandatory statutory warranty ap
 
 ## 8. Contact
 
-**Cours Pratiqo Inc.** — Montréal, Québec, Canada
+**Cours Pratiqo Inc.** — Saint-Georges, Québec, Canada
 email: [`support@pratiqo.ca`](mailto:support@pratiqo.ca)
-website: [pratiqo.com](https://pratiqo.com)
+website: [pratiqo.ca](https://pratiqo.ca)
 
 ---
 

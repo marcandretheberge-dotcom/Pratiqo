@@ -333,7 +333,7 @@ Las versiones anteriores pueden conservarse como archivo interno.
 - la **[Política de cancelación](/legal/annulation)**;
 - el **[Código de conducta](/legal/code-de-conduite)**;
 - la **[Política de pagos, reembolsos y transferencias](/legal/paiements-remboursements)**;
-- las **[Condiciones de Teacher Pro](/legal/teacher-pro)**;
+- las **[Condiciones de Miembro Pro](/legal/membre-pro)**;
 - la **[Política de reembolso de YoPratiqo](/legal/yo-remboursement)**.
 
 En caso de conflicto entre esta Política y otro documento de Pratiqo sobre una cuestión administrativa, contractual o financiera, prevalece el documento **específico de esa cuestión**, sujeto a la ley imperativa aplicable. Nada en esta Política limita los derechos que no pueden válidamente renunciarse por contrato (incluidos los derivados de la **Ley 25**, **PIPEDA** y la **Ley de Protección al Consumidor** de Quebec).

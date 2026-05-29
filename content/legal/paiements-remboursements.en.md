@@ -52,12 +52,12 @@ Teachers are **independent service providers**. Pratiqo acts as a technology int
 
 ## 5. Platform fees and commissions
 
-Depending on the service used, Pratiqo may charge a **platform fee, service fee, commission, transaction fee, or subscription fee** (e.g., Teacher Pro).
+Depending on the service used, Pratiqo may charge a **platform fee, service fee, commission, transaction fee, or subscription fee** (e.g., the Pro Member membership).
 
 - Applicable fees and commissions may be **disclosed** in the teacher dashboard, at student checkout, in the contractual documents, on the subscription page, or elsewhere on the platform before a transaction is confirmed.
 - Fee structures **may evolve**. Subject to mandatory law, material changes apply **prospectively** and will be communicated by means consistent with applicable law where required.
 - **Payment-processor fees** (e.g., Stripe acquiring fees) may be added to or deducted from the relevant amounts under applicable rules. Card-issuer fees or foreign-exchange fees applied by the student's bank remain the student's responsibility.
-- Teacher Pro subscription fees are governed by the **[Teacher Pro Terms](/legal/teacher-pro)** and are distinct from lesson payments and lesson payouts.
+- Pro Member membership fees are governed by the **[Pro Member Terms](/legal/membre-pro)** and are distinct from lesson payments and lesson payouts. Where a **reduced commission** or a **rebate** is tied to Pro Member status, its terms are described in the Pro Member Terms and disclosed on the platform.
 
 ---
 
@@ -166,13 +166,14 @@ The tax treatment of marketplace lessons depends on the student's jurisdiction, 
 
 ---
 
-## 13. Teacher Pro and subscriptions
+## 13. Pro Member and subscriptions
 
-The **Teacher Pro** subscription is a service distinct from marketplace lesson payments and payouts.
+The **Pro Member membership** is a service distinct from marketplace lesson payments and payouts.
 
-- Teacher Pro subscription fees are governed by the **[Teacher Pro Terms](/legal/teacher-pro)**.
-- Teacher Pro **cancellation and refund rules** may **differ** from rules that apply to a marketplace lesson; cancelling a subscription does not automatically generate a lesson refund, and vice-versa.
-- Teacher Pro fees **cannot be offset** against lesson payouts, unless Pratiqo expressly offers that feature or applicable law requires it.
+- Pro Member membership fees are governed by the **[Pro Member Terms](/legal/membre-pro)**.
+- Pro Member **cancellation and refund rules** may **differ** from rules that apply to a marketplace lesson; cancelling a membership does not automatically generate a lesson refund, and vice-versa.
+- Pro Member fees **cannot be offset** against lesson payouts, unless Pratiqo expressly offers that feature or applicable law requires it.
+- Where Pro Member status is tied to a **reduced commission** or a **rebate** on marketplace lessons, the calculation method, caps, and any clawback conditions are described in the **[Pro Member Terms](/legal/membre-pro)** and disclosed on the platform, in the dashboard, at checkout, on the subscription page, or in the applicable plan details.
 
 ---
 
@@ -205,7 +206,7 @@ This Policy **supplements** and must be read together with the following documen
 - the **[Terms of Service](/legal/cgu)** ("Terms");
 - the **[Teacher Terms](/legal/conditions-professeurs)**;
 - the **[Cancellation Policy](/legal/annulation)**;
-- the **[Teacher Pro Terms](/legal/teacher-pro)**;
+- the **[Pro Member Terms](/legal/membre-pro)**;
 - the **[YoPratiqo Refund Policy](/legal/yo-remboursement)**;
 - the **[Code of Conduct](/legal/code-de-conduite)**;
 - the **[Privacy Policy](/legal/confidentialite)**.
