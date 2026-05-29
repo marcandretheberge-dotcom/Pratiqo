@@ -440,9 +440,13 @@ export default function StudentSearchPage() {
           locationQuery={landingLocQuery}
           onLocationQueryChange={setLandingLocQuery}
           onSelectCity={(city: City) => {
+            // Subject/place independence (search PR #63): never touch
+            // the subject query here. We also no longer clear the Lieu
+            // input — the LandingLocationSearch component echoes the
+            // formatted "City, PROV" label back so the student can see
+            // which place is currently selected.
             setGeo({ lat: city.lat, lng: city.lng });
             setSortMode("nearest");
-            setLandingLocQuery("");
           }}
           formatValue={formatValue}
           onFormatChange={setFormatValue}

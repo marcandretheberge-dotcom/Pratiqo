@@ -269,6 +269,39 @@ test("LandingLocationSearch uses the Canada-wide dataset and 'City, PROV' format
   );
 });
 
+test("LandingLocationSearch echoes the selected 'City, PROV' label back into the input", () => {
+  // After PR #63 the Lieu input was left empty after a selection, which
+  // confused users (their selected place was invisible). Confirm
+  // selectPlace now writes the formatted label and that the parent
+  // surfaces no longer overwrite it back to the empty string.
+  assert.ok(
+    /onChange\(\s*formatPlaceLabel\(/.test(landingLocationSrc),
+    "selectPlace must echo formatPlaceLabel(...) into onChange",
+  );
+  assert.ok(
+    !/setLocationSearch\(\s*""\s*\)/.test(landingClientSrc),
+    "LandingPageClient.selectCityForSearch must not clear locationSearch — the child owns the echoed label",
+  );
+  const studentSearchSrc = readFileSync(
+    join(root, "app", "(app)", "student", "search", "page.tsx"),
+    "utf8",
+  );
+  assert.ok(
+    !/setLandingLocQuery\(\s*""\s*\)/.test(studentSearchSrc),
+    "student/search onSelectCity must not clear landingLocQuery — the child owns the echoed label",
+  );
+});
+
+test("LandingLocationSearch supports select-all on focus", () => {
+  // Standard marketplace pattern: when the input already holds a
+  // selected label, focusing the field highlights the text so a fresh
+  // keystroke replaces it instead of appending.
+  assert.ok(
+    /e\.currentTarget\.select\(\)/.test(landingLocationSrc),
+    "Lieu input must call e.currentTarget.select() on focus",
+  );
+});
+
 test("LandingLocationSearch input has a visible caret style", () => {
   // `caret-teal-700` is the Tailwind utility we apply to make the blinking
   // caret visible against the white field; a regression that drops it would

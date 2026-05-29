@@ -320,8 +320,12 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
   // root cause of the segmented-search bug where typing "piano" in Quoi
   // and then picking a city in Lieu silently replaced "piano" with the
   // city name. Subject and place are now fully independent.
+  //
+  // We also no longer clear `locationSearch` here — the dedicated Lieu
+  // input echoes the formatted "City, PROV" label back into its own
+  // value so the user can see which place is currently selected. If the
+  // parent reset it to "" the user would lose that visual confirmation.
   const selectCityForSearch = useCallback((city: City) => {
-    setLocationSearch("");
     setGeo({ lat: city.lat, lng: city.lng });
     setSortMode("nearest");
   }, []);
