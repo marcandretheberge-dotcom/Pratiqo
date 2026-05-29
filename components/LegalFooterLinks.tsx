@@ -38,6 +38,9 @@ export function LegalFooterLinks() {
       <Link href="/legal/conditions-professeurs" className="hover:text-[#2C2C2A] hover:underline">
         {teacherTermsLabel}
       </Link>
+      <Link href="/legal/teacher-pro" className="hover:text-[#2C2C2A] hover:underline">
+        Teacher Pro
+      </Link>
       <Link href="/contact" className="hover:text-[#2C2C2A] hover:underline">
         {t("footerContact")}
       </Link>

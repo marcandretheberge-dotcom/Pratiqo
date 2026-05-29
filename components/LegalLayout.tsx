@@ -22,7 +22,8 @@ export function LegalLayout({
     | "/legal/confidentialite"
     | "/legal/annulation"
     | "/legal/code-de-conduite"
-    | "/legal/conditions-professeurs";
+    | "/legal/conditions-professeurs"
+    | "/legal/teacher-pro";
   children: React.ReactNode;
 }) {
   const { locale, t } = useLocale();
@@ -40,6 +41,7 @@ export function LegalLayout({
     { href: "/legal/annulation", label: t("footerCancellation") },
     { href: "/legal/code-de-conduite", label: t("footerCodeOfConduct") },
     { href: "/legal/conditions-professeurs", label: teacherTermsLabel },
+    { href: "/legal/teacher-pro", label: "Teacher Pro" },
   ] as const;
 
   return (
