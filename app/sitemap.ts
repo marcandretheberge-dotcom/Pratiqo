@@ -62,12 +62,11 @@ const STATIC_ROUTES: MetadataRoute.Sitemap = [
     changeFrequency: "monthly",
     priority: 0.85,
   },
-  {
-    url: `${BASE_URL}/login`,
-    lastModified: new Date(),
-    changeFrequency: "yearly",
-    priority: 0.6,
-  },
+  // /login is intentionally excluded from the sitemap — it is a sign-in
+  // surface, not a public SEO landing, and shipping it as a discovery URL
+  // would split clicks away from the marketing pages and confuse Search
+  // Console (the page is also kept out of `STATIC_ROUTES` to avoid emitting
+  // a canonical → homepage signal).
   // Canonical legal routes only — legacy /cgu, /confidentialite, /annulation,
   // and /code-de-conduite are 308-redirected in next.config.ts and intentionally
   // excluded from the sitemap so search engines index the canonical URLs.

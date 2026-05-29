@@ -4,6 +4,9 @@ import { LegalLayout, LegalSection } from "../../../../components/LegalLayout";
 export const metadata: Metadata = {
   title: "Politique d'annulation | Pratiqo",
   description: "Politique d'annulation et de remboursement Pratiqo.",
+  alternates: {
+    canonical: "/legal/annulation",
+  },
 };
 
 const TOC = [

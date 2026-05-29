@@ -10,6 +10,9 @@ export const metadata: Metadata = {
   title: "Conditions applicables aux professeurs | Teacher Terms | Pratiqo",
   description:
     "Conditions applicables aux professeurs Pratiqo — independent teacher status, profile accuracy, conduct, payouts, safety, and marketplace rules.",
+  alternates: {
+    canonical: "/legal/conditions-professeurs",
+  },
 };
 
 const TOC: Record<"fr" | "en" | "es", { id: string; label: string }[]> = {
