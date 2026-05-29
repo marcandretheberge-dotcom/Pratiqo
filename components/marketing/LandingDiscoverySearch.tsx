@@ -68,7 +68,11 @@ export function LandingDiscoverySearch({
                 onSelectDiscipline(label);
                 onSearchQueryChange("");
               }}
-              onSelectCity={onSelectCity}
+              // The Quoi segment is subject-only. Cities live in the
+              // dedicated Lieu segment so place suggestions can never
+              // overwrite the subject text. (See LandingLocationSearch
+              // below for the dedicated place autocomplete.)
+              disableCitySuggestions
               inputPlaceholderKey={searchInputPlaceholderKey}
               className=""
             />

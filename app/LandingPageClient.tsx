@@ -315,11 +315,15 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
     });
   }, [activeCat, searchQuery, formatFilter, adv]);
 
+  // Selecting a place from the Lieu autocomplete must update *only* the
+  // location/geo state. Writing the city name into `searchQuery` was the
+  // root cause of the segmented-search bug where typing "piano" in Quoi
+  // and then picking a city in Lieu silently replaced "piano" with the
+  // city name. Subject and place are now fully independent.
   const selectCityForSearch = useCallback((city: City) => {
     setLocationSearch("");
     setGeo({ lat: city.lat, lng: city.lng });
     setSortMode("nearest");
-    setSearchQuery(city.name);
   }, []);
 
   return (

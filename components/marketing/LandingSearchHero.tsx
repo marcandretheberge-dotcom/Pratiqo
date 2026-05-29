@@ -169,7 +169,10 @@ export function LandingSearchHero({
                       geo={geo}
                       onSelectTeacher={onSelectTeacher}
                       onSelectDiscipline={onSelectDiscipline}
-                      onSelectCity={(city) => onSelectCity(city)}
+                      // The Quoi segment is subject-only. Place autocomplete
+                      // is wired to the dedicated Lieu field below, so a city
+                      // selection can never silently overwrite the subject.
+                      disableCitySuggestions
                       inputPlaceholderKey="landingSearchDisciplinePlaceholder"
                       className="w-full"
                       shellClassName="h-16 min-h-[56px] border-slate-200 py-0 shadow-none [&_svg]:h-5 [&_svg]:w-5 [&_svg]:text-teal-700"
