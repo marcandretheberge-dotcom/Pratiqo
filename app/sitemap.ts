@@ -107,6 +107,12 @@ const STATIC_ROUTES: MetadataRoute.Sitemap = [
     changeFrequency: "yearly",
     priority: 0.4,
   },
+  {
+    url: `${BASE_URL}/legal/paiements-remboursements`,
+    lastModified: new Date(),
+    changeFrequency: "yearly",
+    priority: 0.4,
+  },
 ];
 
 // ── Dynamic tutor profile routes ──────────────────────────────────────────────

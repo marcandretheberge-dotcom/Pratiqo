@@ -24,7 +24,8 @@ export function LegalLayout({
     | "/legal/annulation"
     | "/legal/code-de-conduite"
     | "/legal/conditions-professeurs"
-    | "/legal/teacher-pro";
+    | "/legal/teacher-pro"
+    | "/legal/paiements-remboursements";
   children: React.ReactNode;
 }) {
   const { locale, t } = useLocale();
@@ -36,6 +37,13 @@ export function LegalLayout({
         ? "Condiciones profesores"
         : "Conditions professeurs";
 
+  const paymentsLabel =
+    locale === "en"
+      ? "Payments & Refunds"
+      : locale === "es"
+        ? "Pagos y reembolsos"
+        : "Paiements et remboursements";
+
   const LEGAL_LINKS = [
     { href: "/legal/cgu", label: t("footerTerms") },
     { href: "/legal/confidentialite", label: t("footerPrivacy") },
@@ -43,6 +51,7 @@ export function LegalLayout({
     { href: "/legal/code-de-conduite", label: t("footerCodeOfConduct") },
     { href: "/legal/conditions-professeurs", label: teacherTermsLabel },
     { href: "/legal/teacher-pro", label: "Teacher Pro" },
+    { href: "/legal/paiements-remboursements", label: paymentsLabel },
   ] as const;
 
   const content = React.Children.map(children, (child) => {

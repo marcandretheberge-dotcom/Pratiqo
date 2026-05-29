@@ -21,6 +21,13 @@ export function LegalFooterLinks() {
         ? "Condiciones profesores"
         : "Conditions professeurs";
 
+  const paymentsLabel =
+    locale === "en"
+      ? "Payments & Refunds"
+      : locale === "es"
+        ? "Pagos y reembolsos"
+        : "Paiements et remboursements";
+
   return (
     <>
       <Link href="/legal/cgu" className="hover:text-[#2C2C2A] hover:underline">
@@ -40,6 +47,9 @@ export function LegalFooterLinks() {
       </Link>
       <Link href="/legal/teacher-pro" className="hover:text-[#2C2C2A] hover:underline">
         Teacher Pro
+      </Link>
+      <Link href="/legal/paiements-remboursements" className="hover:text-[#2C2C2A] hover:underline">
+        {paymentsLabel}
       </Link>
       <Link href="/contact" className="hover:text-[#2C2C2A] hover:underline">
         {t("footerContact")}
