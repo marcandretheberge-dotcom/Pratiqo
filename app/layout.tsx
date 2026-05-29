@@ -42,18 +42,17 @@ export const metadata: Metadata = {
     type: "website",
     images: [{ url: "/og-image.png", width: 1200, height: 630 }],
   },
-  // Same URL for every locale today (cookie/client locale). Do not treat these as
-  // distinct hreflang targets until real localized routes exist (see lib/seo/site.ts).
-  alternates: {
-    canonical: SITE_URL,
-    languages: {
-      fr: SITE_URL,
-      en: SITE_URL,
-      es: SITE_URL,
-      "es-UY": SITE_URL,
-      "x-default": SITE_URL,
-    },
-  },
+  // No `alternates` at the root layout. Pratiqo currently serves the same URL
+  // for every locale (cookie-driven), and Next.js shallow-merges `alternates`
+  // across layouts/pages. Setting either `canonical` or `languages` here would
+  // either (a) silently canonicalize every child page that forgets its own
+  // canonical to the homepage, or (b) emit hreflang alternates that all point
+  // to the homepage on every public page. Each public page is responsible for
+  // its own `alternates.canonical` (see app/page.tsx, app/tarifs/layout.tsx,
+  // app/(app)/legal/**, app/cours/.../page.tsx, app/tuteurs-prive/.../page.tsx,
+  // and lib/seo/yopratiqoSpanishSeoPages.ts). Locale-specific URLs only exist
+  // for the YoPratiqo Spanish acquisition pages under /fr/* and /en/*, which
+  // declare reciprocal hreflang via `buildYoSpanishSeoMetadata`.
   icons: {
     icon: [
       { url: '/favicon.ico' },

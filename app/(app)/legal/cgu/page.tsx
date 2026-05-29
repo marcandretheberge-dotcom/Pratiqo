@@ -10,6 +10,9 @@ import { normalizeLocale } from "../../../../lib/i18n/types";
 export const metadata: Metadata = {
   title: "Conditions Générales d'Utilisation | Terms of Service | Pratiqo",
   description: "Conditions générales d'utilisation de Pratiqo — Terms of Service.",
+  alternates: {
+    canonical: "/legal/cgu",
+  },
 };
 
 // ── Per-locale TOC labels ─────────────────────────────────────────────────────
