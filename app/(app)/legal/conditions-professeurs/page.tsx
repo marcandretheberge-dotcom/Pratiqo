@@ -30,7 +30,7 @@ const TOC: Record<"fr" | "en" | "es", { id: string; label: string }[]> = {
     { id: "confidentialite", label: "14. Confidentialité" },
     { id: "classement", label: "15. Avis, badges et classement" },
     { id: "application", label: "16. Suspension et application" },
-    { id: "teacher-pro", label: "17. Relation avec Teacher Pro" },
+    { id: "membre-pro", label: "17. Relation avec Membre Pro" },
     { id: "contact", label: "18. Contact" },
   ],
   en: [
@@ -50,7 +50,7 @@ const TOC: Record<"fr" | "en" | "es", { id: string; label: string }[]> = {
     { id: "privacy", label: "14. Confidentiality and privacy" },
     { id: "ranking", label: "15. Reviews, badges, and ranking" },
     { id: "enforcement", label: "16. Suspension and enforcement" },
-    { id: "teacher-pro", label: "17. Relationship with Teacher Pro" },
+    { id: "membre-pro", label: "17. Relationship with Pro Member" },
     { id: "contact", label: "18. Contact" },
   ],
   es: [
@@ -70,7 +70,7 @@ const TOC: Record<"fr" | "en" | "es", { id: string; label: string }[]> = {
     { id: "privacidad", label: "14. Confidencialidad y privacidad" },
     { id: "clasificacion", label: "15. Reseñas, insignias y clasificación" },
     { id: "aplicacion", label: "16. Suspensión y aplicación" },
-    { id: "teacher-pro", label: "17. Relación con Teacher Pro" },
+    { id: "membre-pro", label: "17. Relación con Miembro Pro" },
     { id: "contacto", label: "18. Contacto" },
   ],
 };

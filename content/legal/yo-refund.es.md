@@ -106,9 +106,9 @@ Si alguna disposición de esta política entra en conflicto con una garantía le
 
 ## 8. Contacto
 
-**Cours Pratiqo Inc.** — Montréal, Québec, Canadá
+**Cours Pratiqo Inc.** — Saint-Georges, Québec, Canadá
 correo: [`support@pratiqo.ca`](mailto:support@pratiqo.ca)
-sitio web: [pratiqo.com](https://pratiqo.com)
+sitio web: [pratiqo.ca](https://pratiqo.ca)
 
 ---
 

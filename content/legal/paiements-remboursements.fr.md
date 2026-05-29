@@ -52,12 +52,12 @@ Les professeurs sont des **prestataires indépendants**. Pratiqo agit comme inte
 
 ## 5. Frais de plateforme et commissions
 
-Pratiqo peut prélever, selon le service utilisé, **un frais de plateforme, un frais de service, une commission, un frais de transaction ou un frais d'abonnement** (par exemple Teacher Pro).
+Pratiqo peut prélever, selon le service utilisé, **un frais de plateforme, un frais de service, une commission, un frais de transaction ou un frais d'abonnement** (par exemple l'adhésion Membre Pro).
 
 - Les frais et commissions applicables peuvent être **affichés** dans le tableau de bord du professeur, dans la caisse de l'élève, dans les documents contractuels, dans la page d'abonnement ou dans une autre zone de la plateforme avant qu'une transaction ne soit confirmée.
 - Les structures de frais peuvent **évoluer**. Sauf disposition contraire d'une loi d'ordre public, les modifications matérielles s'appliquent **prospectivement** et seront communiquées par les moyens prévus par la loi applicable, le cas échéant.
 - Les **frais du prestataire de paiement** (par exemple les frais d'acquisition Stripe) peuvent s'ajouter ou être déduits des montants concernés selon les règles applicables. Les frais d'émetteur de carte ou frais de change appliqués par la banque de l'élève demeurent à la charge de l'élève.
-- Les frais d'abonnement Teacher Pro sont régis par les **[Conditions Teacher Pro](/legal/teacher-pro)** et sont distincts des paiements de cours et des versements de cours.
+- Les frais d'adhésion Membre Pro sont régis par les **[Conditions Membre Pro](/legal/membre-pro)** et sont distincts des paiements de cours et des versements de cours. Lorsqu'une **commission réduite** ou une **ristourne** est rattachée au statut Membre Pro, ses modalités sont décrites dans les Conditions Membre Pro et affichées dans la plateforme.
 
 ---
 
@@ -166,13 +166,14 @@ Le traitement fiscal des cours marketplace dépend de la juridiction de l'élèv
 
 ---
 
-## 13. Teacher Pro et abonnements
+## 13. Membre Pro et abonnements
 
-L'abonnement **Teacher Pro** est un service distinct des paiements et versements de cours marketplace.
+L'**adhésion Membre Pro** est un service distinct des paiements et versements de cours marketplace.
 
-- Les frais d'abonnement Teacher Pro sont régis par les **[Conditions Teacher Pro](/legal/teacher-pro)**.
-- Les **règles d'annulation et de remboursement** d'un abonnement Teacher Pro peuvent **différer** des règles applicables à un cours marketplace; la cessation d'un abonnement n'entraîne pas automatiquement de remboursement de cours, et inversement.
-- Les frais Teacher Pro **ne peuvent pas être compensés** sur les versements de cours, sauf si Pratiqo l'offre expressément ou si la loi applicable l'exige.
+- Les frais d'adhésion Membre Pro sont régis par les **[Conditions Membre Pro](/legal/membre-pro)**.
+- Les **règles d'annulation et de remboursement** d'une adhésion Membre Pro peuvent **différer** des règles applicables à un cours marketplace; la cessation d'une adhésion n'entraîne pas automatiquement de remboursement de cours, et inversement.
+- Les frais Membre Pro **ne peuvent pas être compensés** sur les versements de cours, sauf si Pratiqo l'offre expressément ou si la loi applicable l'exige.
+- Lorsque le statut Membre Pro est lié à une **commission réduite** ou à une **ristourne** sur les cours marketplace, les modalités de calcul, de plafond et de reprise éventuelle sont décrites dans les **[Conditions Membre Pro](/legal/membre-pro)** et affichées dans la plateforme, le tableau de bord, la caisse, la page d'abonnement ou les modalités du forfait applicable.
 
 ---
 
@@ -205,7 +206,7 @@ La présente politique **complète** et doit être lue conjointement avec les do
 - les **[Conditions Générales d'Utilisation](/legal/cgu)** (« CGU »);
 - les **[Conditions applicables aux professeurs](/legal/conditions-professeurs)**;
 - la **[Politique d'annulation](/legal/annulation)**;
-- les **[Conditions Teacher Pro](/legal/teacher-pro)**;
+- les **[Conditions Membre Pro](/legal/membre-pro)**;
 - la **[Politique de remboursement YoPratiqo](/legal/yo-remboursement)**;
 - le **[Code de conduite](/legal/code-de-conduite)**;
 - la **[Politique de confidentialité](/legal/confidentialite)**.

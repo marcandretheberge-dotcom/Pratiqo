@@ -16,7 +16,7 @@ Al acceder a la plataforma Pratiqo (sitio web y aplicación móvil), aceptás qu
 
 ## 2. Definiciones
 
-- **Plataforma**: el sitio web pratiqo.com y la aplicación móvil Pratiqo
+- **Plataforma**: el sitio web pratiqo.ca y la aplicación móvil Pratiqo
 - **Usuario**: cualquier persona que accede a la plataforma
 - **Estudiante**: usuario que busca y reserva clases
 - **Profesor**: usuario que ofrece clases a través de la plataforma
@@ -91,75 +91,29 @@ Los ingresos dependen exclusivamente de la actividad del profesor, la calidad de
 
 ---
 
-## 5. Tarifas y comisiones
+## 5. Tarifas, comisiones y membresías
 
-### 5.1 Para estudiantes
+Pratiqo puede cobrar tarifas según el servicio utilizado. La **naturaleza y el monto** de cada tarifa — ya sea un cargo de servicio para estudiantes, una comisión sobre las transacciones, una tarifa de transacción, una tarifa de suscripción u otra tarifa — se **muestran claramente antes de confirmar una reserva, suscripción o pago**, y pueden consultarse en la plataforma, en el panel, en el checkout, en la página de suscripción o en los términos del plan aplicable.
 
-El acceso a Pratiqo es **gratuito** para estudiantes. Se agrega un cargo de servicio del **10%** del monto de la clase al momento del pago, claramente mostrado antes de confirmar la reserva.
+- El acceso a la plataforma es generalmente **gratuito para los estudiantes**. Puede agregarse un **cargo de servicio** al precio de la clase y se muestra antes del pago.
+- Pratiqo puede cobrar una **comisión** sobre las transacciones de clases del marketplace, según la tasa mostrada en la plataforma y aplicable a la cuenta correspondiente.
+- Pratiqo puede ofrecer una **membresía paga** (por ejemplo, **Miembro Pro**) que da acceso, cuando se ofrece, a ventajas económicas como una **comisión reducida** o una **estructura de reintegro, recompensa o cashback**. Las condiciones completas — elegibilidad, tasas, topes, condiciones de recuperación, facturación, renovación y cancelación — figuran en las **[Condiciones de Miembro Pro](/legal/membre-pro)**.
+- Pratiqo puede ofrecer un **programa de fidelidad, créditos o recompensas** para estudiantes, profesores o ambos. Las condiciones, topes, plazos de validez y métodos de cálculo se muestran en la plataforma y **pueden evolucionar prospectivamente**.
+- Pratiqo puede **ajustar sus tarifas y comisiones prospectivamente**, notificando a los usuarios afectados de manera coherente con la ley aplicable.
 
-### 5.2 Para profesores — Plan Gratis
-
-- Acceso gratuito hasta 5 estudiantes activos simultáneamente
-- Comisión del **10%** por transacción
-- Funcionalidades básicas incluidas
-
-### 5.3 Para profesores — Plan Pro ($29,99/mes)
-
-- Estudiantes ilimitados
-- Comisión reducida al **5%** por transacción
-- Funcionalidades avanzadas (analíticas, prioridad en búsqueda, badge Pro)
-- Facturación mensual via Stripe
-
-### 5.4 Comisión decreciente
-
-La comisión se ajusta automáticamente según el volumen acumulado anual del profesor:
-
-| Nivel | Volumen anual | Plan Gratis | Plan Pro |
-|-------|--------------|-------------|---------|
-| 🥉 Bronce | $0 – $5.000 | 10% | 5% |
-| 🥈 Plata | $5.000 – $15.000 | 9% | 4,5% |
-| 🥇 Oro | $15.000 – $30.000 | 8% | 4% + 0,5% bono |
-| 💎 Platino | $30.000+ | 7% | 3,5% + 1% bono |
-
-**Importante:** No hay cashback recurrente para profesores. El programa de fidelidad reduce la comisión, y el bono anual es la única forma de redistribución financiera.
+Nada en estos Términos limita los derechos imperativos de los consumidores en virtud de la **Ley de Protección al Consumidor** de Quebec o de cualquier otra ley imperativa aplicable.
 
 ---
 
-## 5a. Programa de créditos para estudiantes
+## 6. Pagos, reembolsos y transferencias
 
-Los estudiantes pueden ganar créditos Pratiqo via:
+Todos los pagos se procesan a través de un **proveedor de pagos** (por ejemplo, Stripe). Pratiqo **no almacena** los datos completos de las tarjetas de pago.
 
-- **Evolución del compañero**: $5 / $10 / $15 / $25 en los hitos 5 / 15 / 30 / 50 clases
-- **Evaluación de un profesor**: +$1 por clase evaluada (una vez por profesor)
-- **Referido de un amigo**: +$1 por referido validado, tope de $20/año
+Las **reglas detalladas** aplicables a los pagos, transferencias a profesores, reembolsos, retenciones, retrasos en las transferencias, disputas y contracargos se rigen por la **[Política de pagos, reembolsos y transferencias](/legal/paiements-remboursements)** y, para las cancelaciones de clases, por la **[Política de cancelación](/legal/annulation)**. Los **plazos, frecuencias, retenciones y condiciones** aplicables a las transferencias se muestran en la plataforma o en la documentación correspondiente, y pueden evolucionar prospectivamente, sujeto a la ley aplicable.
 
-Los créditos son válidos **solo en Pratiqo**, **NO se convierten** en dinero, vencen después de 12 meses de inactividad y tienen un tope del 50% del precio de una clase.
+Para la **membresía Miembro Pro**, la facturación, renovación, reembolsos y eventuales recuperaciones se rigen por las **[Condiciones de Miembro Pro](/legal/membre-pro)**.
 
----
-
-## 5b. Bono anual para profesores Pro
-
-Pratiqo redistribuye anualmente a sus profesores Pro elegibles el **5% de sus ganancias netas** (después de todos los gastos operativos, marketing, sueldos e infraestructura).
-
-**Condiciones de elegibilidad:**
-- Estar suscripto al plan Pro durante el año correspondiente
-- Haber mantenido estado activo mínimo de 6 meses
-- No tener penalizaciones ni advertencias
-
-El fondo anual se calcula como: MIN(ganancias netas × 5%, CAD $150.000). El bono solo se activa si al menos 10 profesores cumplen todas las condiciones.
-
----
-
-## 6. Pagos y reembolsos
-
-Todos los pagos se procesan de forma segura via **Stripe**. Pratiqo no almacena ningún dato de tarjeta de crédito.
-
-Los pagos se acreditan a los profesores dentro de los **7 días hábiles** posteriores a la clase, descontada la comisión correspondiente.
-
-**Política de cancelación:**
-- Cancelación **más de 24 horas** antes de la clase: reembolso completo
-- Cancelación **menos de 24 horas**: sin reembolso, salvo circunstancias excepcionales
-- Cancelación por el profesor: reembolso completo al estudiante
+Para las compras **YoPratiqo** (cursos autónomos de pago único), las condiciones de reembolso y el «acceso de por vida» se describen en la **[Política de YoPratiqo](/legal/yo-remboursement)**.
 
 ---
 
@@ -191,9 +145,11 @@ En Quebec, una persona menor de 14 años no puede celebrar sola un contrato de c
 
 ---
 
-## 7. Clases a domicilio
+## 7. Clases a domicilio y presenciales
 
-Pratiqo actúa únicamente como intermediario. La seguridad durante las clases a domicilio es responsabilidad exclusiva del profesor y el estudiante.
+Pratiqo actúa como **intermediario tecnológico** que conecta a estudiantes, padres y profesores. La **seguridad** durante las clases presenciales — en el domicilio del estudiante, en un lugar designado por el profesor o en un lugar público — recae principalmente en los participantes.
+
+Las **reglas aplicables** (lugares seguros, presencia o disponibilidad de un padre o tutor cuando una clase involucra a una persona menor, derecho del profesor a rechazar un lugar inseguro, reporte oportuno de incidentes, comunicaciones en la plataforma cuando sea razonablemente posible) se describen en las **[Condiciones aplicables a los profesores](/legal/conditions-professeurs)** y en el **[Código de conducta](/legal/code-de-conduite)**.
 
 ---
 
@@ -239,6 +195,8 @@ Pratiqo se reserva el derecho de modificar estos Términos en cualquier momento.
 
 ## 14. Contacto
 
-**Cours Pratiqo Inc.** — Montreal, Quebec, Canadá  
-email: [legal@pratiqo.com](mailto:legal@pratiqo.com)  
-sitio web: [pratiqo.com](https://pratiqo.com)
+**Cours Pratiqo Inc.** — Saint-Georges, Québec, Canadá  
+soporte: [`support@pratiqo.ca`](mailto:support@pratiqo.ca)  
+general: [`info@pratiqo.ca`](mailto:info@pratiqo.ca)  
+avisos formales: [`marc-andre.theberge@pratiqo.ca`](mailto:marc-andre.theberge@pratiqo.ca)  
+sitio web: [pratiqo.ca](https://pratiqo.ca)

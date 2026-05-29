@@ -333,7 +333,7 @@ Earlier versions may be retained as an internal archive.
 - the **[Cancellation Policy](/legal/annulation)**;
 - the **[Code of Conduct](/legal/code-de-conduite)**;
 - the **[Payments, Refunds and Payouts Policy](/legal/paiements-remboursements)**;
-- the **[Teacher Pro Terms](/legal/teacher-pro)**;
+- the **[Pro Member Terms](/legal/membre-pro)**;
 - the **[YoPratiqo Refund Policy](/legal/yo-remboursement)**.
 
 If there is a conflict between this Policy and another Pratiqo document on an administrative, contractual, or financial matter, the document **specific to that matter** governs, subject to mandatory applicable law. Nothing in this Policy limits rights that cannot be validly waived by contract (including those under **Law 25**, **PIPEDA**, and Quebec's **Consumer Protection Act**).

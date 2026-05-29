@@ -73,7 +73,7 @@ Signals displayed on Pratiqo have distinct meanings:
 - **Diploma verified**: a specific diploma or credential has been reviewed under the applicable process.
 - **Self-declared experience**: the teacher provided the information, but it is not necessarily verified.
 - **Profile completeness**: certain profile information has been completed.
-- **Paid plan or Teacher Pro**: this is a product or commercial status, not a teaching-quality certification.
+- **Paid plan or Pro Member**: this is a product or commercial status (e.g., the Pro Member membership), not a teaching-quality certification.
 
 These signals do not guarantee teaching quality, learning outcomes, absolute safety, future teacher availability, or the absence of complaints.
 
@@ -210,11 +210,11 @@ Pratiqo may investigate reports and request the teacher's cooperation.
 
 ---
 
-## 17. Relationship with Teacher Pro
+## 17. Relationship with Pro Member
 
-Teacher Pro, if offered, is a separate paid or commercial option that may be subject to subscription terms or additional terms.
+**Pro Member**, if offered, is a separate **optional paid membership** that may be subject to subscription terms or additional terms. The Pro Member status may give access to economic advantages such as a **reduced commission** or a **rebate structure**, where Pratiqo offers them.
 
-Teacher Pro does not guarantee income, students, bookings, ranking, profile views, or business results. Detailed Teacher Pro terms will be governed by the applicable Teacher Pro terms or page.
+Pro Member does not guarantee income, students, bookings, ranking, profile views, or business results. The detailed Pro Member terms are governed by the **[Pro Member Terms](/legal/membre-pro)**.
 
 ---
 

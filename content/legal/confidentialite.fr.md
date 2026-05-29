@@ -333,7 +333,7 @@ Les versions antérieures peuvent être conservées à titre d'archive interne.
 - la **[Politique d'annulation](/legal/annulation)**;
 - le **[Code de conduite](/legal/code-de-conduite)**;
 - la **[Politique des paiements, remboursements et versements](/legal/paiements-remboursements)**;
-- les **[Conditions Teacher Pro](/legal/teacher-pro)**;
+- les **[Conditions Membre Pro](/legal/membre-pro)**;
 - la **[Politique de remboursement YoPratiqo](/legal/yo-remboursement)**.
 
 En cas de divergence entre la présente Politique et un autre document Pratiqo sur une question administrative, contractuelle ou financière, le document **spécifique à cette question** s'applique, sous réserve du droit applicable d'ordre public. Aucune disposition des présentes ne limite les droits qui ne peuvent pas être valablement écartés par contrat (notamment ceux de la **Loi 25**, de la **LPRPDE** et de la **Loi sur la protection du consommateur** du Québec).

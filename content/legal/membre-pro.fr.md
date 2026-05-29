@@ -131,6 +131,8 @@ Pratiqo peut **ajouter, retirer, tester, renommer, modifier ou cesser** des avan
 
 ## 11. Visibilité, classement, badges et recherche
 
+> **Le statut Membre Pro peut améliorer certains signaux de visibilité, mais ne garantit ni positionnement, ni réservations, ni revenus.**
+
 Lorsqu'elle est offerte par la plateforme, l'**appartenance au statut Membre Pro** peut figurer parmi les facteurs utilisés dans certaines fonctionnalités de classement, de recherche, de mise en avant ou d'affichage.
 
 - Le classement et la recherche sur Pratiqo peuvent dépendre de plusieurs facteurs, notamment : la pertinence par rapport à la requête, la localisation, la discipline, les disponibilités, le prix, la qualité du profil, les évaluations, la réactivité, les signaux de sécurité et de confiance, et d'autres critères qui peuvent évoluer.

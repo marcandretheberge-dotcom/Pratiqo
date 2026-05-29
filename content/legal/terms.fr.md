@@ -16,7 +16,7 @@ En accédant à la plateforme Pratiqo (site web et application mobile), vous acc
 
 ## 2. Définitions
 
-- **Plateforme** : le site web pratiqo.com et l'application mobile Pratiqo
+- **Plateforme** : le site web pratiqo.ca et l'application mobile Pratiqo
 - **Utilisateur** : toute personne qui accède à la plateforme
 - **Élève** : utilisateur qui recherche et réserve des cours
 - **Professeur** : utilisateur qui offre des cours via la plateforme
@@ -106,79 +106,31 @@ En s'inscrivant sur Pratiqo, le professeur s'engage à :
 
 ---
 
-## 5. Frais et commissions
+## 5. Frais, commissions et adhésions
 
-### 5.1 Pour les élèves
+Pratiqo peut percevoir des frais selon le service utilisé. La **nature et le montant** de chaque frais — qu'il s'agisse d'un frais de service pour les élèves, d'une commission sur les transactions, d'un frais de transaction, d'un frais d'abonnement, ou d'un autre frais — sont **clairement indiqués avant la confirmation d'une réservation, d'une souscription ou d'un paiement**, et peuvent être consultés dans la plateforme, le tableau de bord, la caisse, la page d'abonnement ou les modalités du forfait applicable.
 
-L'accès à la plateforme Pratiqo est **gratuit** pour les élèves. Des frais de service de **10 %** du montant du cours sont ajoutés au moment du paiement et clairement affichés avant la confirmation de la réservation.
+- L'accès à la plateforme est généralement **gratuit pour les élèves**. Un **frais de service** peut s'ajouter au prix du cours et est affiché avant le paiement.
+- Pratiqo peut prélever une **commission** sur les transactions de cours marketplace, au taux affiché dans la plateforme et applicable au compte concerné.
+- Pratiqo peut offrir une **adhésion payante** (par exemple **Membre Pro**) donnant accès, lorsqu'elle est offerte, à des avantages économiques tels qu'une **commission réduite** ou une **structure de ristourne, de récompense ou de cashback**. Les modalités complètes — admissibilité, taux, plafonds, conditions de reprise, facturation, renouvellement et annulation — figurent dans les **[Conditions Membre Pro](/legal/membre-pro)**.
+- Pratiqo peut offrir un **programme de fidélité, de crédits ou de récompenses** pour les élèves, les professeurs ou les deux. Les conditions, plafonds, durées de validité et modalités de calcul sont indiqués par la plateforme et **peuvent évoluer prospectivement**.
+- Pratiqo peut **modifier ses tarifs et commissions prospectivement**, en informant les utilisateurs concernés conformément à la loi applicable.
 
-### 5.2 Pour les professeurs — Plan Gratuit
-
-- Accès gratuit jusqu'à 5 élèves actifs simultanément
-- Commission de **10 %** prélevée sur chaque transaction
-- Fonctionnalités de base incluses
-
-### 5.3 Pour les professeurs — Plan Pro (29,99 $/mois)
-
-- Élèves illimités
-- Commission réduite à **5 %** par transaction
-- Fonctionnalités avancées (analytics, priorité dans la recherche, badge Pro)
-- Facturation mensuelle via Stripe
-
-### 5.4bis Programme fidélité — Commission dégressive
-
-La commission s'ajuste automatiquement en temps réel selon le volume cumulé annuel du professeur :
-
-| Palier | Volume annuel | Plan Gratuit | Plan Pro |
-|--------|--------------|-------------|---------|
-| 🥉 Bronze | 0 – 5 000 $ | 10 % | 5 % |
-| 🥈 Argent | 5 000 – 15 000 $ | 9 % | 4,5 % |
-| 🥇 Or | 15 000 – 30 000 $ | 8 % | 4 % + 0,5 % ristourne |
-| 💎 Platine | 30 000 $ + | 7 % | 3,5 % + 1 % ristourne |
-
-**Important :** Aucun cashback récurrent pour les professeurs. Le programme fidélité réduit la commission, et la ristourne annuelle est la seule forme de redistribution financière.
-
-### 5.5 Modifications tarifaires
-
-Pratiqo se réserve le droit de modifier ses tarifs et commissions avec un préavis de **30 jours** par courriel aux utilisateurs concernés.
+Aucune disposition des présentes ne limite les droits impératifs des consommateurs en vertu de la **Loi sur la protection du consommateur** du Québec ou d'une autre loi d'ordre public.
 
 ---
 
-## 5bis. Programme de crédits élève
-
-Les élèves peuvent gagner des crédits Pratiqo via :
-
-- **Évolution du compagnon** : 5 $ / 10 $ / 15 $ / 25 $ aux paliers 5 / 15 / 30 / 50 cours
-- **Évaluation d'un professeur** : +1 $ par cours évalué (une fois par professeur)
-- **Parrainage d'un ami** : +1 $ par parrainage validé, plafonné à 20 $/an
-
-Les crédits sont utilisables **uniquement sur Pratiqo**, ne sont **PAS convertibles** en argent, expirent après 12 mois d'inactivité et sont plafonnés à 50 % du prix d'un cours.
-
 ---
 
-## 5ter. Ristourne annuelle aux professeurs Pro
+## 6. Paiements, remboursements et versements
 
-Pratiqo redistribue annuellement à ses professeurs Pro éligibles **5 % de ses profits nets** (après toutes les dépenses d'opération, marketing, salaires et infrastructure).
+Tous les paiements sont traités par un **prestataire de paiement** (par exemple Stripe). Pratiqo **ne stocke pas** les informations complètes de carte de paiement.
 
-**Conditions d'éligibilité :**
-- Être abonné au plan Pro durant l'année concernée
-- Avoir maintenu un statut actif minimum de 6 mois
-- Ne pas avoir de pénalités ou avertissements
+Les **règles détaillées** applicables aux paiements, aux versements aux professeurs, aux remboursements, aux retenues, aux retards de versement, aux contestations et aux rétrofacturations sont régies par la **[Politique des paiements, remboursements et versements](/legal/paiements-remboursements)** et, pour les annulations de cours, par la **[Politique d'annulation](/legal/annulation)**. Les **modalités, fréquences, retenues éventuelles et délais** de versement applicables sont indiqués dans la plateforme ou dans la documentation correspondante, et peuvent évoluer prospectivement sous réserve de la loi applicable.
 
-Le pool annuel est calculé comme suit : MIN(profits nets × 5 %, 150 000 $ CAD). La ristourne n'est activée que si au moins 10 professeurs remplissent toutes les conditions.
+Pour l'**adhésion Membre Pro**, la facturation, le renouvellement, les remboursements et les éventuelles retenues sont régis par les **[Conditions Membre Pro](/legal/membre-pro)**.
 
----
-
-## 6. Paiements et remboursements
-
-Tous les paiements sont traités de façon sécurisée via **Stripe**. Pratiqo ne stocke aucune information de carte de crédit.
-
-Les paiements sont versés aux professeurs dans les **7 jours ouvrables** suivant la complétion du cours, déduction faite de la commission applicable.
-
-**Politique d'annulation :**
-- Annulation **plus de 24 heures** avant le cours : remboursement complet
-- Annulation **moins de 24 heures** : aucun remboursement, sauf circonstances exceptionnelles
-- Annulation par le professeur : remboursement complet à l'élève
+Pour les achats **YoPratiqo** (cours autonomes en paiement unique), les conditions de remboursement et l'« accès à vie » sont décrits dans la **[Politique YoPratiqo](/legal/yo-remboursement)**.
 
 ---
 
@@ -210,9 +162,11 @@ Au Québec, un mineur de moins de 14 ans ne peut pas conclure seul un contrat de
 
 ---
 
-## 7. Cours à domicile
+## 7. Cours à domicile et en personne
 
-Pratiqo agit uniquement comme intermédiaire pour la mise en relation. La sécurité lors des cours à domicile relève de la responsabilité exclusive du professeur et de l'élève.
+Pratiqo agit comme **intermédiaire technologique** mettant en relation élèves, parents et professeurs. La **sécurité** des cours dispensés en personne — au domicile de l'élève, dans un lieu désigné par le professeur, ou dans un lieu public — relève en premier lieu des participants.
+
+Les **règles applicables** (lieux sécuritaires, présence ou disponibilité d'un parent ou tuteur lors d'un cours impliquant un mineur, droit du professeur de refuser un lieu non sécuritaire, signalement des incidents, communications sur la plateforme lorsque cela est raisonnablement possible) sont décrites dans les **[Conditions applicables aux professeurs](/legal/conditions-professeurs)** et dans le **[Code de conduite](/legal/code-de-conduite)**.
 
 ---
 
@@ -258,9 +212,11 @@ Pratiqo se réserve le droit de modifier les présentes CGU à tout moment. Les 
 
 ## 14. Contact
 
-**Cours Pratiqo Inc.** — Montréal, Québec, Canada  
-courriel : [marc-andre.theberge@pratiqo.ca](mailto:marc-andre.theberge@pratiqo.ca)  
-site web : [pratiqo.com](https://pratiqo.com)
+**Cours Pratiqo Inc.** — Saint-Georges, Québec, Canada  
+soutien : [`support@pratiqo.ca`](mailto:support@pratiqo.ca)  
+général : [`info@pratiqo.ca`](mailto:info@pratiqo.ca)  
+avis formels : [`marc-andre.theberge@pratiqo.ca`](mailto:marc-andre.theberge@pratiqo.ca)  
+site web : [pratiqo.ca](https://pratiqo.ca)
 
 ---
 
