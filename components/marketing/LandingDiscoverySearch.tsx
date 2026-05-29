@@ -23,6 +23,7 @@ export function LandingDiscoverySearch({
   onSearchSubmit,
   searchInputPlaceholderKey,
   teachersForSearch,
+  onLieuIntentChange,
 }: {
   teachersForSearch: Teacher[];
   searchQuery: string;
@@ -37,6 +38,8 @@ export function LandingDiscoverySearch({
   onFormatFilterChange: (v: LandingFormatFilter) => void;
   onSearchSubmit: () => void;
   searchInputPlaceholderKey: TranslationKey;
+  /** Forwarded to LandingLocationSearch to flip results mode while typing. */
+  onLieuIntentChange?: (hasIntent: boolean) => void;
 }) {
   const { t } = useLocale();
 
@@ -88,6 +91,7 @@ export function LandingDiscoverySearch({
             onChange={onLocationSearchChange}
             geo={geo}
             onSelectCity={onSelectCity}
+            onIntentChange={onLieuIntentChange}
             placeholderKey="landingSearchLocationPlaceholder"
             className="w-full [&_>_div]:rounded-2xl"
           />
