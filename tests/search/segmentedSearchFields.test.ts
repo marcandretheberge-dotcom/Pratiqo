@@ -715,6 +715,145 @@ test("Results-mode marketing blocks (LandingNeighborhoodSignals) are gated", () 
   );
 });
 
+// ── Lieu typing intent: results mode must engage WHILE typing ──────────
+//
+// Bug: results mode only flipped on after the user *selected* a city in
+// Lieu — typing "mont" / "saint" / "calg…" left the quiz CTA + trust
+// strip between the filters and the results, recreating the giant
+// vertical gap we already fixed for the Quoi side.
+
+test("LandingLocationSearch exposes an onIntentChange prop", () => {
+  // The Lieu input must accept an intent callback so its parent can
+  // flip into results mode without waiting for a city selection.
+  assert.ok(
+    /onIntentChange\?\s*:\s*\(hasIntent:\s*boolean\)\s*=>\s*void/.test(
+      landingLocationSrc,
+    ),
+    "LandingLocationSearch must declare onIntentChange?: (hasIntent: boolean) => void",
+  );
+});
+
+test("LandingLocationSearch fires onIntentChange from the input change handler", () => {
+  // Scope the regex to the input's onChange body so we don't trip on
+  // an unrelated handler. The handler must fire onIntentChange with a
+  // boolean derived from the raw value's trimmed length.
+  const onChangeMatch = landingLocationSrc.match(
+    /onChange=\{\(e\)\s*=>\s*\{[\s\S]*?onIntentChange\?\.\([\s\S]*?next\.trim\(\)\.length\s*>\s*0[\s\S]*?\)/,
+  );
+  assert.ok(
+    onChangeMatch,
+    "Lieu input onChange must call onIntentChange?.(value.trim().length > 0)",
+  );
+});
+
+test("LandingLocationSearch fires onIntentChange(true) on city selection", () => {
+  // Defense in depth: even on surfaces where the parent isn't watching
+  // the raw input value, picking a suggestion must keep results mode
+  // active.
+  const selectMatch = landingLocationSrc.match(
+    /const\s+selectPlace\s*=\s*useCallback\([\s\S]*?\}\s*,\s*\[/,
+  );
+  assert.ok(selectMatch, "selectPlace must exist with a useCallback wrapper");
+  assert.ok(
+    /onIntentChange\?\.\(true\)/.test(selectMatch![0]),
+    "selectPlace must call onIntentChange?.(true) when a place is picked",
+  );
+});
+
+test("LandingLocationSearch clears intent when the field is cleared", () => {
+  // The clear (×) button must release this field's intent. The parent
+  // is still free to keep results mode active when other signals are
+  // present (selected geo, format, category, advanced filters, Quoi).
+  const clearMatch = landingLocationSrc.match(
+    /aria-label=\{t\("clearInput"\)\}[\s\S]*?onClick=\{\(\)\s*=>\s*\{[\s\S]*?\}\s*\}/,
+  );
+  assert.ok(clearMatch, "clear button must exist with an onClick handler");
+  assert.ok(
+    /onIntentChange\?\.\(false\)/.test(clearMatch![0]),
+    "clear button must call onIntentChange?.(false)",
+  );
+});
+
+test("LandingDiscoverySearch forwards onLieuIntentChange to LandingLocationSearch", () => {
+  assert.ok(
+    /onLieuIntentChange\?\s*:\s*\(hasIntent:\s*boolean\)\s*=>\s*void/.test(
+      landingDiscoverySrc,
+    ),
+    "LandingDiscoverySearch must declare onLieuIntentChange",
+  );
+  assert.ok(
+    /<LandingLocationSearch[\s\S]*?onIntentChange=\{onLieuIntentChange\}/.test(
+      landingDiscoverySrc,
+    ),
+    "LandingDiscoverySearch must pipe onLieuIntentChange through to LandingLocationSearch",
+  );
+});
+
+test("LandingPageClient tracks hasLieuTypingIntent and folds it into hasSearchIntent", () => {
+  assert.ok(
+    /const\s+\[hasLieuTypingIntent\s*,\s*setHasLieuTypingIntent\]\s*=\s*useState\(false\)/.test(
+      landingClientSrc,
+    ),
+    "LandingPageClient must own a hasLieuTypingIntent useState",
+  );
+  // The hasSearchIntent useMemo body must consult the new flag.
+  const intentMemo = landingClientSrc.match(
+    /const\s+hasSearchIntent\s*=\s*useMemo\(\(\)\s*=>\s*\{[\s\S]*?\},\s*\[[\s\S]*?\]\s*\);/,
+  );
+  assert.ok(intentMemo, "hasSearchIntent useMemo must exist");
+  assert.ok(
+    /hasLieuTypingIntent/.test(intentMemo![0]),
+    "hasSearchIntent must factor in hasLieuTypingIntent",
+  );
+  // …and feed it into the Lieu input via LandingDiscoverySearch.
+  assert.ok(
+    /<LandingDiscoverySearch[\s\S]*?onLieuIntentChange=\{setHasLieuTypingIntent\}/.test(
+      landingClientSrc,
+    ),
+    "LandingPageClient must pass setHasLieuTypingIntent to LandingDiscoverySearch.onLieuIntentChange",
+  );
+});
+
+test("Lieu typing intent does not write to or clear Quoi", () => {
+  // Strict separation guard: the intent plumbing must never touch the
+  // subject query state. We assert this against both the location
+  // component and the parent surface.
+  const onChangeBody = landingLocationSrc.match(
+    /onChange=\{\(e\)\s*=>\s*\{[\s\S]*?\}\s*\}/,
+  );
+  assert.ok(onChangeBody);
+  assert.ok(
+    !/setSearchQuery\(/.test(onChangeBody![0]),
+    "Lieu onChange must not call setSearchQuery",
+  );
+  // The new state setter must not appear inside the Quoi handler.
+  const onSearchQueryUsage = landingClientSrc.match(
+    /onSearchQueryChange=\{setSearchQuery\}/,
+  );
+  assert.ok(
+    onSearchQueryUsage,
+    "Quoi must remain wired to setSearchQuery directly (independent state)",
+  );
+});
+
+test("LandingSearchHero forwards onLocationIntentChange (defense in depth for /student/search)", () => {
+  // /student/search reuses LandingSearchHero. Even though that surface
+  // doesn't currently switch into compact results mode, the prop must
+  // exist so future intent gates in that page work without churn.
+  assert.ok(
+    /onLocationIntentChange\?\s*:\s*\(hasIntent:\s*boolean\)\s*=>\s*void/.test(
+      landingHeroSrc,
+    ),
+    "LandingSearchHero must declare onLocationIntentChange",
+  );
+  assert.ok(
+    /<LandingLocationSearch[\s\S]*?onIntentChange=\{onLocationIntentChange\}/.test(
+      landingHeroSrc,
+    ),
+    "LandingSearchHero must forward onLocationIntentChange to LandingLocationSearch",
+  );
+});
+
 // ── Run ─────────────────────────────────────────────────────────────────
 async function run() {
   for (const { name, fn } of tests) {

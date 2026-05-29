@@ -47,6 +47,14 @@ export type LandingSearchHeroProps = {
   showOtherDisciplinesNote?: boolean;
   /** Optional slot under the advanced filters trigger. */
   extraUnderAdvanced?: React.ReactNode;
+  /**
+   * Forwarded to LandingLocationSearch so the parent surface can flip
+   * into results mode the moment a user starts typing in the Lieu
+   * field — not only after they pick a city. Optional: surfaces that
+   * already track intent through other means (e.g. /student/search)
+   * can ignore it.
+   */
+  onLocationIntentChange?: (hasIntent: boolean) => void;
 };
 
 function intentButton(active: boolean) {
@@ -89,6 +97,7 @@ export function LandingSearchHero({
   showQuizCta = true,
   showOtherDisciplinesNote = true,
   extraUnderAdvanced,
+  onLocationIntentChange,
 }: LandingSearchHeroProps) {
   const { t } = useLocale();
   const [mode, setMode] = useState<"student" | "teacher">("student");
@@ -187,6 +196,7 @@ export function LandingSearchHero({
                       onChange={onLocationQueryChange}
                       geo={geo}
                       onSelectCity={onSelectCity}
+                      onIntentChange={onLocationIntentChange}
                       placeholderKey="landingSearchLocationPlaceholder"
                       className="w-full"
                       shellClassName="h-16 min-h-[56px] border-slate-200 py-0 shadow-none [&_svg]:text-teal-700"

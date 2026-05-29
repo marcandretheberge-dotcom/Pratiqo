@@ -25,6 +25,19 @@ type Props = {
   shellClassName?: string;
   /** Optional class overrides for the text input element. */
   inputClassName?: string;
+  /**
+   * Notify the parent when the user signals search intent in this Lieu
+   * field. Fired with `true` as soon as a non-empty value is typed (or
+   * a place is selected) and with `false` when the input is cleared.
+   *
+   * The parent uses this to flip the landing page from "marketing
+   * discovery mode" to "results mode" *as the user types*, instead of
+   * waiting until they pick a city. Without this hook the page would
+   * keep rendering the quiz CTA + trust strip between the filters and
+   * the results, recreating the giant vertical gap that was already
+   * fixed for the Quoi side.
+   */
+  onIntentChange?: (hasIntent: boolean) => void;
 };
 
 /**
@@ -52,6 +65,7 @@ export function LandingLocationSearch({
   placeholderKey = "marketplaceLocationPlaceholder",
   shellClassName,
   inputClassName,
+  onIntentChange,
 }: Props) {
   const { t } = useLocale();
   const uid = useId();
@@ -104,12 +118,16 @@ export function LandingLocationSearch({
       // focus below. We never write to the parent's subject query: that
       // field is fully independent.
       onChange(formatPlaceLabel(entry.place));
+      // A confirmed selection is unambiguous search intent — keep results
+      // mode active even on surfaces where the parent doesn't watch the
+      // raw input value.
+      onIntentChange?.(true);
       onSelectCity(entry.city);
       setOpen(false);
       setActiveIndex(-1);
       inputRef.current?.blur();
     },
-    [onChange, onSelectCity],
+    [onChange, onIntentChange, onSelectCity],
   );
 
   const isOpen = open && places.length > 0 && debounced.length >= 1;
@@ -144,7 +162,14 @@ export function LandingLocationSearch({
           aria-controls={listId}
           aria-activedescendant={activeIndex >= 0 ? `${uid}-loc-option-${activeIndex}` : undefined}
           onChange={(e) => {
-            onChange(e.target.value);
+            const next = e.target.value;
+            onChange(next);
+            // Critical: signal intent on every keystroke (not only on
+            // city selection). The landing page uses this to switch
+            // into the compact results layout the moment "mont",
+            // "saint", "calg"… appears in Lieu, instead of waiting
+            // for the user to pick a suggestion.
+            onIntentChange?.(next.trim().length > 0);
             setOpen(true);
           }}
           onFocus={(e) => {
@@ -203,6 +228,11 @@ export function LandingLocationSearch({
             aria-label={t("clearInput")}
             onClick={() => {
               onChange("");
+              // Clearing the field releases this field's intent. The
+              // parent still keeps results mode active when other
+              // signals are present (selected geo, format filter,
+              // active category, advanced filters, Quoi text).
+              onIntentChange?.(false);
               setOpen(false);
               setActiveIndex(-1);
             }}

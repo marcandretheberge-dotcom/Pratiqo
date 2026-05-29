@@ -135,6 +135,13 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
 
   // Teachers + search state
   const [locationSearch, setLocationSearch] = useState("");
+  // Lieu typing intent — flipped to true the moment the user types any
+  // non-empty text in the Lieu autocomplete (or selects a city). This
+  // is what lets the page enter compact results mode while the user is
+  // still typing "mont" / "saint" / "calg…" instead of waiting until
+  // they pick a suggestion. The Lieu input owns this signal via its
+  // onIntentChange callback; clearing the field flips it back to false.
+  const [hasLieuTypingIntent, setHasLieuTypingIntent] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCat, setActiveCat] = useState<string>("All");
   const [teachers, setTeachers] = useState<Teacher[]>([]);
@@ -355,8 +362,14 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
     if (geo) return true;
     if (formatFilter && formatFilter !== "all") return true;
     if (mapBounds) return true;
+    // Lieu typing intent: results mode must engage *while* the user is
+    // typing in Lieu, not only after they pick a suggestion. Without
+    // this signal "mont"/"saint"/"calg…" would still leave the quiz
+    // CTA + trust strip between the filters and the cards, recreating
+    // the giant vertical gap we just fixed for the Quoi side.
+    if (hasLieuTypingIntent) return true;
     return hasAdvancedFilter;
-  }, [searchQuery, activeCat, geo, formatFilter, mapBounds, hasAdvancedFilter]);
+  }, [searchQuery, activeCat, geo, formatFilter, mapBounds, hasLieuTypingIntent, hasAdvancedFilter]);
 
   // Display the selected place label only when it's been *committed* via the
   // Lieu autocomplete (formatted as "City, PROV"). Mid-typing strings are
@@ -409,6 +422,7 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
                         setSearchQuery("");
                       }}
                       onSelectCity={selectCityForSearch}
+                      onLieuIntentChange={setHasLieuTypingIntent}
                       formatFilter={formatFilter}
                       onFormatFilterChange={setFormatFilter}
                       onSearchSubmit={scrollToTeacherResults}
