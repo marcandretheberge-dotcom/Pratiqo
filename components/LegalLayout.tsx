@@ -21,16 +21,27 @@ export function LegalLayout({
     | "/legal/cgu"
     | "/legal/confidentialite"
     | "/legal/annulation"
-    | "/legal/code-de-conduite";
+    | "/legal/code-de-conduite"
+    | "/legal/conditions-professeurs"
+    | "/legal/teacher-pro";
   children: React.ReactNode;
 }) {
-  const { t } = useLocale();
+  const { locale, t } = useLocale();
+
+  const teacherTermsLabel =
+    locale === "en"
+      ? "Teacher Terms"
+      : locale === "es"
+        ? "Condiciones profesores"
+        : "Conditions professeurs";
 
   const LEGAL_LINKS = [
     { href: "/legal/cgu", label: t("footerTerms") },
     { href: "/legal/confidentialite", label: t("footerPrivacy") },
     { href: "/legal/annulation", label: t("footerCancellation") },
     { href: "/legal/code-de-conduite", label: t("footerCodeOfConduct") },
+    { href: "/legal/conditions-professeurs", label: teacherTermsLabel },
+    { href: "/legal/teacher-pro", label: "Teacher Pro" },
   ] as const;
 
   return (

@@ -4,6 +4,7 @@ import { TEACHERS_PUBLIC_TABLE } from "../lib/supabase/queries";
 import { QC_CITIES, MV_BARRIOS } from "../lib/constants/cities";
 import { DISCIPLINE_CITY_PAIRS } from "../lib/seo/disciplines";
 import { SITE_URL } from "../lib/seo/site";
+import { YO_SPANISH_SEO_PATHS } from "../lib/seo/yopratiqoSpanishSeoPages";
 
 const BASE_URL = SITE_URL;
 
@@ -90,6 +91,18 @@ const STATIC_ROUTES: MetadataRoute.Sitemap = [
   },
   {
     url: `${BASE_URL}/legal/code-de-conduite`,
+    lastModified: new Date(),
+    changeFrequency: "yearly",
+    priority: 0.4,
+  },
+  {
+    url: `${BASE_URL}/legal/conditions-professeurs`,
+    lastModified: new Date(),
+    changeFrequency: "yearly",
+    priority: 0.4,
+  },
+  {
+    url: `${BASE_URL}/legal/teacher-pro`,
     lastModified: new Date(),
     changeFrequency: "yearly",
     priority: 0.4,
@@ -187,6 +200,19 @@ const DISCIPLINE_CITY_ROUTES: MetadataRoute.Sitemap = DISCIPLINE_CITY_PAIRS.map(
   priority: 0.75,
 }));
 
+// ── YoPratiqo Spanish SEO acquisition pages ──────────────────────────────────
+//
+// Phase 1 acquisition pages under /fr/* and /en/* that route into the YoPratiqo
+// product (/yo) and the teacher search (/trouver-un-prof). FR/EN counterparts
+// already declare reciprocal hreflang alternates in their per-page metadata,
+// so we only need to advertise each unique URL here.
+const YO_SPANISH_SEO_ROUTES: MetadataRoute.Sitemap = YO_SPANISH_SEO_PATHS.map((path) => ({
+  url: `${BASE_URL}${path}`,
+  lastModified: new Date(),
+  changeFrequency: "monthly" as const,
+  priority: 0.7,
+}));
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [teacherEntries, blogEntries] = await Promise.all([
     fetchTeacherEntries(),
@@ -203,6 +229,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [
     ...STATIC_ROUTES,
+    ...YO_SPANISH_SEO_ROUTES,
     ...blogHubRoute,
     ...blogEntries,
     ...CITY_ROUTES,
