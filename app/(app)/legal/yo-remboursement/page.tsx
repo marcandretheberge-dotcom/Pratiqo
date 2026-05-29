@@ -11,10 +11,8 @@
  * in the footer or hide the YoPratiqo policy entirely. Inlining the small
  * layout keeps this page self-contained without modifying any unrelated file.
  *
- * Anchor IDs declared in TOC mirror what cgu/page.tsx does today: they are
- * declared but NOT injected into the rendered markdown headings, because the
- * shared LegalMarkdownBody does not (yet) inject heading slugs. This matches
- * the existing CGU/Privacy behavior. See note in final report.
+ * Anchor IDs declared in TOC are passed into LegalMarkdownBody so links and
+ * rendered heading ids remain stable across locales.
  */
 
 import type { Metadata } from "next";
@@ -188,7 +186,7 @@ export default async function YoRemboursementPage() {
       )}
 
       <article className="space-y-10 text-[15px] leading-relaxed text-[var(--p-text)]">
-        <LegalMarkdownBody content={mdContent} />
+        <LegalMarkdownBody content={mdContent} headingIds={SECTION_IDS} />
       </article>
 
       <footer className="mt-14 pt-8 border-t border-[var(--p-border-light)]">
@@ -208,8 +206,7 @@ export default async function YoRemboursementPage() {
         </div>
       </footer>
 
-      {/* SECTION_IDS is exported as a stable anchor list so future edits to
-          LegalMarkdownBody (e.g. adding rehype-slug) can target a known set. */}
+      {/* SECTION_IDS is retained as a stable anchor list for this standalone layout. */}
       <div hidden aria-hidden data-section-ids={SECTION_IDS.join(",")} />
     </div>
   );
