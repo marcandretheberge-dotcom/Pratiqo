@@ -56,8 +56,8 @@ export const VERIFICATION_LEVELS: Record<VerificationLevel, VerificationInfo> = 
     badge: "⭐",
     color: "#FFFFFF",
     bgColor: "#1F5A54",
-    description: "Plan Pro actif",
-    perks: ["Badge Pro visible", "Commission réduite", "Outils avancés"],
+    description: "Adhésion Membre Pro active",
+    perks: ["Badge Membre Pro visible", "Commission réduite", "Outils avancés"],
   },
 };
 

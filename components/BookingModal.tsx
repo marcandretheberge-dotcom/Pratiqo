@@ -22,6 +22,7 @@ import type { Teacher } from "../types";
 import { cn } from "../lib/utils";
 import { useAuth } from "./AuthProvider";
 import { getSupabaseClient } from "../lib/supabase";
+import { LEGAL_ROUTES } from "@/lib/config/membrePro";
 import { haversineDistance } from "../lib/geo";
 import { isBookingAtLeast24hAhead } from "@/lib/bookingCancellation";
 import { calculateIntroSessionPriceCents } from "@/lib/introSession";
@@ -1519,6 +1520,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                 <Info size={15} className="mt-0.5 shrink-0 text-teal-700" aria-hidden />
                 <span>{t("bookingPaymentNote")} {paymentProcessedInCurrency}</span>
               </div>
+              <BookingLegalAcceptanceLine />
               <div className="flex gap-2">
                 <button
                   type="button"
@@ -1701,5 +1703,59 @@ function LearnerBookingContextPanel({
         />
       </label>
     </div>
+  );
+}
+
+/**
+ * Pre-payment legal acknowledgement: surfaces the canonical /legal/cgu,
+ * /legal/annulation and /legal/paiements-remboursements links right above the
+ * Confirm-and-Pay button so the student can review them before committing.
+ *
+ * The sentence template is locale-keyed via `bookingLegalAccept` and uses
+ * three placeholders ({terms}, {cancellation}, {payments}) which are split
+ * out and rendered as <Link> elements; the visible link labels come from
+ * dedicated locale keys so translators can adapt grammar around the link.
+ */
+function BookingLegalAcceptanceLine() {
+  const { t } = useLocale();
+  const template = t("bookingLegalAccept");
+  const segments = template.split(/(\{terms\}|\{cancellation\}|\{payments\})/g);
+  const linkClass = "text-teal-700 underline decoration-dotted hover:decoration-solid";
+
+  return (
+    <p className="text-[11px] leading-relaxed text-slate-500" role="note">
+      {segments.map((segment, idx) => {
+        if (segment === "{terms}") {
+          return (
+            <Link key={`terms-${idx}`} href={LEGAL_ROUTES.cgu} className={linkClass}>
+              {t("bookingLegalAcceptTermsLabel")}
+            </Link>
+          );
+        }
+        if (segment === "{cancellation}") {
+          return (
+            <Link
+              key={`cancellation-${idx}`}
+              href={LEGAL_ROUTES.annulation}
+              className={linkClass}
+            >
+              {t("bookingLegalAcceptCancellationLabel")}
+            </Link>
+          );
+        }
+        if (segment === "{payments}") {
+          return (
+            <Link
+              key={`payments-${idx}`}
+              href={LEGAL_ROUTES.paiements}
+              className={linkClass}
+            >
+              {t("bookingLegalAcceptPaymentsLabel")}
+            </Link>
+          );
+        }
+        return <React.Fragment key={`text-${idx}`}>{segment}</React.Fragment>;
+      })}
+    </p>
   );
 }

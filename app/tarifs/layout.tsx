@@ -5,14 +5,14 @@ import { SITE_URL } from "@/lib/seo/site";
 export const metadata: Metadata = {
   title: "Tarifs Pratiqo | Prix simples pour élèves et professeurs",
   description:
-    "Découvrez les tarifs Pratiqo : aucun abonnement obligatoire pour les élèves, plan gratuit pour les professeurs, Plan Pro à 29,99 $ CAD/mois et commission dégressive.",
+    "Découvrez les tarifs Pratiqo : aucun abonnement obligatoire pour les élèves, plan gratuit pour les professeurs et Membre Pro optionnel — commission affichée au moment du paiement.",
   alternates: {
     canonical: `${SITE_URL}/tarifs`,
   },
   openGraph: {
     title: "Tarifs Pratiqo | Prix pour élèves et professeurs",
     description:
-      "Transparent : pas d’abonnement élève obligatoire, plan gratuit profs, Plan Pro optionnel — commissions expliquées.",
+      "Transparent : pas d’abonnement élève obligatoire, plan gratuit profs, Membre Pro optionnel — commissions expliquées.",
     url: `${SITE_URL}/tarifs`,
     siteName: "Pratiqo",
     locale: "fr_CA",
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Tarifs Pratiqo",
     description:
-      "Tarifs clairs pour élèves et professeurs — commission et Plan Pro expliqués sur une seule page.",
+      "Tarifs clairs pour élèves et professeurs — commission et adhésion Membre Pro expliquées sur une seule page.",
     images: ["/og-image.png"],
   },
 };
