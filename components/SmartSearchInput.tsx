@@ -35,7 +35,13 @@ interface SmartSearchInputProps {
   geo: { lat: number; lng: number } | null;
   onSelectTeacher: (teacher: Teacher) => void;
   onSelectDiscipline: (label: string) => void;
-  onSelectCity: (city: City) => void;
+  /**
+   * Optional. When omitted, city suggestions are suppressed entirely — useful
+   * in segmented "Quoi" inputs where places live in a separate field. The
+   * legacy single-bar surface still passes a handler so cities remain
+   * suggestable there.
+   */
+  onSelectCity?: (city: City) => void;
   /** Defaults to `searchInputPlaceholder`. */
   inputPlaceholderKey?: TranslationKey;
   className?: string;
@@ -43,6 +49,12 @@ interface SmartSearchInputProps {
   shellClassName?: string;
   /** Optional class overrides for the text input element. */
   inputClassName?: string;
+  /**
+   * Force-hide city suggestions even if `onSelectCity` is provided. Set this
+   * when the input is the "Quoi" segment of a segmented search bar so place
+   * matches never surface alongside subjects/teachers.
+   */
+  disableCitySuggestions?: boolean;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -88,7 +100,9 @@ export function SmartSearchInput({
   className,
   shellClassName,
   inputClassName,
+  disableCitySuggestions,
 }: SmartSearchInputProps) {
+  const citySuggestionsEnabled = !disableCitySuggestions && Boolean(onSelectCity);
   const { t, locale } = useLocale();
   const ph = t(inputPlaceholderKey);
   const uid = useId();
@@ -153,27 +167,31 @@ export function SmartSearchInput({
       .slice(0, 2)
       .map((tt) => ({ kind: "teacher", teacher: tt }));
 
-    // 3. Cities — match name; sort by distance when geo available
-    const cityItems: CitySuggestion[] = CITIES
-      .filter((c) => c.name.toLowerCase().includes(q))
-      .map((c) => ({
-        kind: "city" as const,
-        city: c,
-        distanceKm: geo
-          ? Math.round(haversineDistance(geo.lat, geo.lng, c.lat, c.lng))
-          : null,
-      }))
-      .sort((a, b) =>
-        a.distanceKm != null && b.distanceKm != null ? a.distanceKm - b.distanceKm : 0,
-      )
-      .slice(0, 3);
+    // 3. Cities — match name; sort by distance when geo available.
+    //    Suppressed entirely in segmented mode (Quoi-only) so place matches
+    //    never bleed into the subject autocomplete.
+    const cityItems: CitySuggestion[] = citySuggestionsEnabled
+      ? CITIES
+          .filter((c) => c.name.toLowerCase().includes(q))
+          .map((c) => ({
+            kind: "city" as const,
+            city: c,
+            distanceKm: geo
+              ? Math.round(haversineDistance(geo.lat, geo.lng, c.lat, c.lng))
+              : null,
+          }))
+          .sort((a, b) =>
+            a.distanceKm != null && b.distanceKm != null ? a.distanceKm - b.distanceKm : 0,
+          )
+          .slice(0, 3)
+      : [];
 
     const result: Section[] = [];
     if (disciplineItems.length) result.push({ key: "disciplines", labelKey: "searchSectionDisciplines", items: disciplineItems });
     if (teacherItems.length)    result.push({ key: "teachers",    labelKey: "searchSectionTeachers",    items: teacherItems });
     if (cityItems.length)       result.push({ key: "cities",      labelKey: "searchSectionNearby",      items: cityItems });
     return result;
-  }, [debouncedQuery, enabledDisciplines, teachers, geo, disciplineLabel]);
+  }, [debouncedQuery, enabledDisciplines, teachers, geo, disciplineLabel, citySuggestionsEnabled]);
 
   // Flat list for keyboard nav
   const flatItems = useMemo<Suggestion[]>(
@@ -193,12 +211,12 @@ export function SmartSearchInput({
       } else if (item.kind === "teacher") {
         onChange(item.teacher.name);
         onSelectTeacher(item.teacher);
-      } else {
+      } else if (citySuggestionsEnabled && onSelectCity) {
         onChange(item.city.name);
         onSelectCity(item.city);
       }
     },
-    [onChange, onSelectDiscipline, onSelectTeacher, onSelectCity],
+    [onChange, onSelectDiscipline, onSelectTeacher, onSelectCity, citySuggestionsEnabled],
   );
 
   // ── Keyboard ─────────────────────────────────────────────────────────────
@@ -234,7 +252,13 @@ export function SmartSearchInput({
       {/* Input */}
       <div
         className={cn(
-          "flex items-center gap-2 rounded-2xl bg-white px-4 py-3 text-[#2C2C2A] shadow-sm",
+          // The focus-within ring + visible border keeps the active segment
+          // unmistakably highlighted on the segmented hero (premium look,
+          // accessible). `caret-teal-700` ensures a strong blinking caret
+          // even on white backgrounds (the prior dark-on-light caret was
+          // barely visible on some browsers).
+          "flex items-center gap-2 rounded-2xl border border-[#E0DED5] bg-white px-4 py-3 text-[#2C2C2A] shadow-sm transition-colors",
+          "focus-within:border-teal-600 focus-within:ring-2 focus-within:ring-teal-500/30",
           shellClassName,
         )}
       >
@@ -251,7 +275,7 @@ export function SmartSearchInput({
           onKeyDown={handleKeyDown}
           placeholder={ph}
           className={cn(
-            "min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-slate-600",
+            "min-w-0 flex-1 bg-transparent text-sm text-[#1F2A24] caret-teal-700 outline-none placeholder:text-slate-500",
             inputClassName,
           )}
           autoComplete="off"
