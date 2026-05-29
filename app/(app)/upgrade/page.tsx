@@ -79,6 +79,10 @@ export default function UpgradePage() {
             title={copy.freePlanTitle}
             price={copy.freePlanPrice}
             items={[copy.freePlanActiveStudentLimit, copy.freePlanCommission]}
+            // The "tiers may reduce commission based on eligible volume"
+            // sentence sits under the commission bullet so /upgrade no
+            // longer implies a flat 10 %.
+            secondary={copy.freePlanCommissionBody}
             accent="bg-slate-100 text-slate-700"
           />
           <PlanCard
@@ -89,11 +93,25 @@ export default function UpgradePage() {
               copy.proPlanCommission,
               copy.proPlanPrioritySupport,
             ]}
+            secondary={copy.proPlanCommissionBody}
+            seeTiersLabel={copy.seeTiersLinkLabel}
             accent="bg-teal-500/15 text-teal-700"
           />
         </div>
         <p className="mt-5 text-center text-[12px]" style={{ color: "#6B6A65" }}>
           {copy.comingSoonNote}
+        </p>
+
+        {/* Legal-safe declining-commission disclaimer. Mirrors the
+            disclaimer used on /tarifs so both surfaces stay aligned and
+            students/teachers receive the same caveats about tiers,
+            ranking, and income. Source of truth: lib/config/membrePro
+            (`commissionDisclaimer`). */}
+        <p
+          className="mt-6 max-w-xl text-[12px] leading-relaxed"
+          style={{ color: "#6B6A65" }}
+        >
+          {copy.commissionDisclaimer}
         </p>
 
         <p className="mt-6 max-w-xl text-[12px] leading-relaxed text-[var(--p-text-muted)]">
@@ -182,11 +200,17 @@ function PlanCard({
   price,
   items,
   accent,
+  secondary,
+  seeTiersLabel,
 }: {
   title: string;
   price: string;
   items: string[];
   accent: string;
+  /** Optional cautious note under the bullet list (declining-commission body). */
+  secondary?: string;
+  /** Optional "view tiers on /tarifs" link label. */
+  seeTiersLabel?: string;
 }) {
   return (
     <div className="bg-white border border-slate-200 rounded-3xl p-6">
@@ -202,6 +226,19 @@ function PlanCard({
           </div>
         ))}
       </div>
+      {secondary ? (
+        <p className="mt-3 text-[12px] leading-relaxed text-[var(--p-text-muted)]">
+          {secondary}
+        </p>
+      ) : null}
+      {seeTiersLabel ? (
+        <Link
+          href="/tarifs"
+          className="mt-2 inline-block text-[12px] font-semibold text-teal-700 underline"
+        >
+          {seeTiersLabel}
+        </Link>
+      ) : null}
     </div>
   );
 }

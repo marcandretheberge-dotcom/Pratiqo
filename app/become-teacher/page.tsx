@@ -43,7 +43,9 @@ function formatCad(amount: number): string {
   }).format(Math.max(0, amount));
 }
 
-const PRO_ANNUAL = 29.99 * 12; // 359.88
+const PRO_ANNUAL = 29 * 12; // $348/year — display math only, mirrors the
+// canonical Membre Pro monthly price ($29 CAD) shown on /upgrade and /tarifs.
+// Stripe remains the authoritative source at checkout.
 
 export default function BecomeTeacherPage() {
   const { t } = useLocale();
@@ -529,9 +531,10 @@ export default function BecomeTeacherPage() {
             {/* Illustrative testimonials aligned with active Pratiqo
                 launch disciplines (musique, langues, tutorat académique).
                 Guarded by tests/marketing/testimonialsLaunchScope.test.ts
-                against unsupported metrics, disciplines not yet on the
-                platform, and legacy commission claims that contradict
-                the current Membre Pro flat 5 % offer. */}
+                against unsupported metrics and disciplines not yet on
+                the platform. Membre Pro uses a declining commission
+                (5 % → 3.5 % range) — see lib/config/membrePro for the
+                canonical figures and /tarifs for the tier breakdown. */}
             <Testimonial name="Sophie M." meta="Piano · Montréal" quote="Créer mon profil a été simple, et je peux présenter clairement mes cours de piano." />
             <Testimonial name="Karim L." meta="Mathématiques · Québec" quote="Les demandes de cours sont centralisées, ce qui m'évite de gérer mes échanges partout à la fois." />
             <Testimonial name="Elena R." meta="Espagnol · Laval" quote="J'aime pouvoir indiquer mes disponibilités, mon format de cours et mes préférences dès le départ." />

@@ -20,10 +20,11 @@
  *  3. Risky / unverified business claims in public testimonials —
  *     fabricated growth metrics ("doublé mes élèves en 3 mois"),
  *     guaranteed visibility ("la visibilité est incroyable"), and
- *     outdated commission structures ("commission dégressive") that
- *     contradict the current launch offer (flat 5 % Membre Pro / 10 %
- *     free). These would expose Pratiqo to consumer-protection /
- *     misleading-marketing risk before launch.
+ *     guaranteed-income / guaranteed-ranking wording. The declining
+ *     commission model (régressive / decreciente / declining) is now
+ *     canonical — see lib/config/membrePro `MEMBRE_PRO_COMMISSION_MODEL`
+ *     and tests/marketing/membreProCommissionModel.test.ts — so those
+ *     terms are intentionally no longer flagged here.
  *
  *  4. Fabricated growth metrics in the hero strip ("2 400+ profs"):
  *     Pratiqo is pre-launch and cannot ship that number publicly.
@@ -172,20 +173,25 @@ test("/become-teacher testimonials avoid disciplines Pratiqo does not yet offer"
 });
 
 // ── Public teacher recruitment pages: claim-safety guard ───────────────
+//
+// We only flag claims that would be misleading regardless of plan
+// (fabricated growth, guaranteed income/visibility/ranking). Declining
+// commission language is canonical (see membreProCommissionModel.test.ts)
+// and is intentionally not in this list.
 const RISKY_CLAIMS = [
   /doubl(é|ed)\s+(mes\s+élèves|my\s+students)/i,
   /dupliqu(é|ed)\s+mis\s+alumnos/i,
   /visibilit(é|y)\s+(est\s+)?incroyable/i,
   /visibilidad\s+(es\s+)?incre[ií]ble/i,
   /incredible\s+visibility/i,
-  /commission\s+d[ée]gressive/i,
-  /sliding\s+commission/i,
-  /comisi[oó]n\s+decreciente/i,
-  /declining\s+commission/i,
   /revenus\s+garantis/i,
   /guaranteed\s+income/i,
   /visibilit[éy]?\s+garantie/i,
   /guaranteed\s+visibility/i,
+  /ingresos\s+garantizados/i,
+  /guaranteed\s+(ranking|bookings)/i,
+  /posicionamiento\s+garantizado/i,
+  /positionnement\s+garanti/i,
 ];
 
 test("/devenir-enseignant testimonials carry no unsupported business claims", () => {
@@ -216,22 +222,36 @@ test("/devenir-enseignant hero strip drops the fabricated '2 400+' profs metric"
   );
 });
 
-// ── Plans summary card: no contradiction with the actual launch offer ──
-test("/devenir-enseignant plans-summary no longer teases a sliding commission", () => {
-  // Pratiqo's launch offer is flat (5 % Membre Pro / 10 % free) — no
-  // sliding/declining tier. The marketing card was teasing the legacy
-  // commission model and contradicting /upgrade.
+// ── Plans summary card: no contradiction with the canonical model ─────
+test("/devenir-enseignant plans-summary does not advertise commission as flat/fixed/permanent", () => {
+  // Pratiqo's canonical commission is *régressive / declining* — see
+  // lib/config/membrePro `MEMBRE_PRO_COMMISSION_MODEL`. Marketing copy
+  // must not contradict that with "flat", "fixed", "permanent" or
+  // "guaranteed" wording.
+  for (const re of [
+    /flat\s+(commission|5\s*%|10\s*%)/i,
+    /fixed\s+commission/i,
+    /commission\s+fixe/i,
+    /comisi[oó]n\s+fija/i,
+    /permanent\s+(5\s*%|10\s*%|reduction)/i,
+    /guaranteed\s+commission/i,
+    /pour\s+toujours/i,
+    /\bforever\s+(5\s*%|10\s*%)/i,
+  ]) {
+    assert.ok(
+      !re.test(devenirEnseignantSrc),
+      `Plans summary must not include ${re}`,
+    );
+  }
+});
+
+test("/devenir-enseignant plans-summary uses canonical $29 monthly price (not stale 29.99)", () => {
+  // Stripe charges the canonical price exposed by lib/config/membrePro
+  // (`proMonthlyPriceCad`). Marketing summary cards must not display
+  // the legacy 29.99 figure that contradicts /upgrade.
   assert.ok(
-    !/Sliding\s+commission/i.test(devenirEnseignantSrc),
-    "Plans summary must not say 'Sliding commission'",
-  );
-  assert.ok(
-    !/Comisi[oó]n\s+decreciente/i.test(devenirEnseignantSrc),
-    "Plans summary must not say 'Comisión decreciente'",
-  );
-  assert.ok(
-    !/Commission\s+d[ée]gressive/i.test(devenirEnseignantSrc),
-    "Plans summary must not say 'Commission dégressive'",
+    !/29[,.]99/.test(devenirEnseignantSrc),
+    "Plans summary must not display the stale 29.99 / 29,99 monthly price",
   );
 });
 
