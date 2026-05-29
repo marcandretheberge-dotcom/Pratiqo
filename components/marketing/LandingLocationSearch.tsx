@@ -5,6 +5,7 @@ import { MapPin } from "lucide-react";
 import { CITIES, type City } from "@/lib/cities";
 import {
   CANADIAN_PLACES,
+  formatPlaceLabel,
   searchCanadianPlaces,
   type CanadianPlace,
 } from "@/lib/search/canadianPlaces";
@@ -97,10 +98,12 @@ export function LandingLocationSearch({
 
   const selectPlace = useCallback(
     (entry: { place: CanadianPlace; city: City }) => {
-      // Clear our local input — the parent owns the selected-place state and
-      // can render a pill or update the geo. We never write to the parent's
-      // subject query: that field is fully independent.
-      onChange("");
+      // Echo the selected "City, PROV" label back into the input so the user
+      // can see which place is currently active (Airbnb/Google pattern).
+      // Re-focusing the input + typing replaces the value via select-all on
+      // focus below. We never write to the parent's subject query: that
+      // field is fully independent.
+      onChange(formatPlaceLabel(entry.place));
       onSelectCity(entry.city);
       setOpen(false);
       setActiveIndex(-1);
@@ -144,7 +147,12 @@ export function LandingLocationSearch({
             onChange(e.target.value);
             setOpen(true);
           }}
-          onFocus={() => {
+          onFocus={(e) => {
+            // When the input already holds a previously selected label
+            // (e.g. "Montréal, QC"), select-all so a fresh keystroke
+            // replaces it instead of appending — matches the standard
+            // marketplace autocomplete pattern.
+            e.currentTarget.select();
             if (debounced.length >= 1 && places.length) setOpen(true);
           }}
           onKeyDown={(e) => {
