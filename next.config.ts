@@ -70,6 +70,37 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      // ── Canonical host: apex → www ────────────────────────────────────
+      // Pratiqo's canonical production origin is `https://www.pratiqo.ca`
+      // (see `lib/seo/site.ts` — used by metadataBase, every page's
+      // `alternates.canonical`, the sitemap, robots.txt, and JSON-LD).
+      //
+      // We add an in-app 308 redirect from the apex (`pratiqo.ca`) to the
+      // www subdomain so the URL Google crawls always matches the URL we
+      // canonicalise to. The `has: [{ type: "host", value: "pratiqo.ca" }]`
+      // condition fires only when the request `Host` header is the apex,
+      // so this never loops on `www.pratiqo.ca`.
+      //
+      // Important non-goals:
+      //   - Do NOT redirect the apex (or www) to `/fr`, `/en`, or `/es`.
+      //     Pratiqo serves the same URL for every locale (cookie-driven),
+      //     so forcing a locale path would split indexation and split
+      //     PageRank between two URLs that render identical content.
+      //   - Do NOT redirect on Accept-Language or geo IP — Googlebot must
+      //     always reach the canonical homepage on a fresh request.
+      //
+      // Defence-in-depth note: this is a *fallback* — the primary apex→www
+      // redirect should be configured at the hosting/DNS edge (Vercel
+      // Domains: "Redirect to www.pratiqo.ca", or equivalent in Netlify).
+      // If the edge rewrite already strips the apex before the request
+      // reaches Next.js, this rule is simply inert. See the
+      // `scripts/check_seo_edge_redirects.ts` live checker.
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "pratiqo.ca" }],
+        destination: "https://www.pratiqo.ca/:path*",
+        permanent: true,
+      },
       {
         source: "/devenir-tuteur",
         destination: "/devenir-professeur?vertical=academique",
