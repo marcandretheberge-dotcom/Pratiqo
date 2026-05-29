@@ -330,6 +330,43 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
     setSortMode("nearest");
   }, []);
 
+  // ── Results-mode detection ──────────────────────────────────────────────
+  // Once the user signals search intent (typed a subject, picked a category,
+  // selected a place / format / advanced filter, or panned the map), the
+  // landing page switches from "marketing discovery" to "results mode":
+  // hero/quiz/trust blocks that sit between the search bar and the cards
+  // are hidden so the results land directly under the filters. Pre-search
+  // the page keeps its full premium discovery feel.
+  const hasAdvancedFilter = useMemo(() => {
+    return Boolean(
+      adv.minRating.trim() ||
+        adv.maxPrice.trim() ||
+        adv.verifiedOnly ||
+        adv.language.trim() ||
+        adv.level.trim() ||
+        adv.availability.trim() ||
+        adv.teacherPreference ||
+        adv.formatExtra,
+    );
+  }, [adv]);
+  const hasSearchIntent = useMemo(() => {
+    if (searchQuery.trim()) return true;
+    if (activeCat && activeCat !== "All") return true;
+    if (geo) return true;
+    if (formatFilter && formatFilter !== "all") return true;
+    if (mapBounds) return true;
+    return hasAdvancedFilter;
+  }, [searchQuery, activeCat, geo, formatFilter, mapBounds, hasAdvancedFilter]);
+
+  // Display the selected place label only when it's been *committed* via the
+  // Lieu autocomplete (formatted as "City, PROV"). Mid-typing strings are
+  // ignored so the summary row stays accurate while the user types.
+  const committedPlaceLabel = useMemo(() => {
+    const trimmed = locationSearch.trim();
+    return /,\s+[A-Z]{2}$/.test(trimmed) ? trimmed : null;
+  }, [locationSearch]);
+  const subjectLabel = searchQuery.trim();
+
   return (
     <>
       {/* ── HERO (student / teacher toggle; motion deferred — no motion/react in this module) ── */}
@@ -337,7 +374,15 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
           {mode === "student" ? (
             <div key="student" className="bg-[#FAFCFB] text-[#2C2C2A]">
               <div className="relative border-b border-[#E8E6DF]/80 bg-[#FAFCFB] lg:bg-gradient-to-b lg:from-[#EFF8F4] lg:via-[#FAFCFB] lg:to-[#FAFCFB]">
-                <div className="relative mx-auto max-w-[1440px] px-4 pb-8 pt-6 sm:px-6 lg:pb-10 lg:pt-8">
+                <div
+                  className={cn(
+                    "relative mx-auto max-w-[1440px] px-4 pt-6 sm:px-6 lg:pt-8",
+                    // Results mode: shrink the hero's bottom padding so the
+                    // results section sits directly under the filters with
+                    // a deliberate, tight visual rhythm.
+                    hasSearchIntent ? "pb-3 sm:pb-4" : "pb-8 lg:pb-10",
+                  )}
+                >
                   <div className="mb-6 flex justify-center">
                     <div className="flex flex-wrap justify-center gap-1 rounded-2xl border border-[#E8E6DF] bg-white p-1 shadow-sm">
                       <ToggleSegment active onClick={() => setMode("student")}>
@@ -428,26 +473,53 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
                     </div>
                   </div>
 
-                  <div className="mx-auto mt-10 w-full max-w-lg px-2 text-center">
-                    <button
-                      type="button"
-                      onClick={() => setQuizOpen(true)}
-                      className="inline-flex min-h-[52px] w-full max-w-md items-center justify-center gap-2.5 rounded-2xl border-2 border-[#C5E7DB] bg-white px-6 py-3.5 text-sm font-bold text-teal-700 shadow-md transition-all hover:border-teal-700/40 hover:bg-[#FAFFFC] hover:shadow-lg lg:shadow-[0_10px_36px_rgba(15,110,86,0.08)] lg:hover:shadow-[0_14px_40px_rgba(15,110,86,0.12)] motion-safe:active:scale-[0.99]"
-                    >
-                      <Sparkles size={20} className="shrink-0 text-[#F4B400]" strokeWidth={2.25} aria-hidden />
-                      {t("marketplaceQuizCta")}
-                    </button>
-                    <p className="mx-auto mt-3 max-w-md text-[13px] leading-relaxed text-neutral-700">{t("landingQuizHelper")}</p>
-                    <LandingHeroTrustStrip className="mt-8" />
-                  </div>
+                  {/* Quiz CTA + hero trust strip live here only when the
+                      user has not signalled search intent. In results mode
+                      they would push the cards far below the fold and break
+                      the search → results visual rhythm. */}
+                  {hasSearchIntent ? null : (
+                    <div className="mx-auto mt-10 w-full max-w-lg px-2 text-center">
+                      <button
+                        type="button"
+                        onClick={() => setQuizOpen(true)}
+                        className="inline-flex min-h-[52px] w-full max-w-md items-center justify-center gap-2.5 rounded-2xl border-2 border-[#C5E7DB] bg-white px-6 py-3.5 text-sm font-bold text-teal-700 shadow-md transition-all hover:border-teal-700/40 hover:bg-[#FAFFFC] hover:shadow-lg lg:shadow-[0_10px_36px_rgba(15,110,86,0.08)] lg:hover:shadow-[0_14px_40px_rgba(15,110,86,0.12)] motion-safe:active:scale-[0.99]"
+                      >
+                        <Sparkles size={20} className="shrink-0 text-[#F4B400]" strokeWidth={2.25} aria-hidden />
+                        {t("marketplaceQuizCta")}
+                      </button>
+                      <p className="mx-auto mt-3 max-w-md text-[13px] leading-relaxed text-neutral-700">{t("landingQuizHelper")}</p>
+                      <LandingHeroTrustStrip className="mt-8" />
+                    </div>
+                  )}
                 </div>
               </div>
 
-              <div ref={teacherResultsRef} id="teacher-results" className="scroll-mt-24 bg-[#F3FAF6]">
-                <div className="mx-auto max-w-[1440px] px-4 py-8 sm:px-6 sm:py-10">
-                  <LandingNeighborhoodSignals className="mb-4" />
+              <div
+                ref={teacherResultsRef}
+                id="teacher-results"
+                className="scroll-mt-24 bg-[#F3FAF6]"
+              >
+                <div
+                  className={cn(
+                    "mx-auto max-w-[1440px] px-4 sm:px-6",
+                    // Results mode: trim top padding so the cards begin
+                    // within ~24-32 px of the filters above, preserving a
+                    // generous bottom for breathing room.
+                    hasSearchIntent
+                      ? "pt-4 pb-10 sm:pt-5 sm:pb-12"
+                      : "py-8 sm:py-10",
+                  )}
+                >
+                  {hasSearchIntent ? null : (
+                    <LandingNeighborhoodSignals className="mb-4" />
+                  )}
 
-                  <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div
+                    className={cn(
+                      "flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between",
+                      hasSearchIntent ? "mb-4" : "mb-6",
+                    )}
+                  >
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
                       <p className="text-[11px] font-bold uppercase tracking-widest text-neutral-700">
                         {loadingTeachers
@@ -455,7 +527,13 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
                           : `${filtered.length} ${filtered.length !== 1 ? t("profilesPlural") : t("profileSingular")}`}
                       </p>
                       <span aria-hidden className="hidden h-3 w-px shrink-0 bg-[#D3D1C7] sm:inline-block" />
-                      <span className="text-sm font-semibold text-[#2C2C2A]">{t("teacherGridNearYou")}</span>
+                      <span className="text-sm font-semibold text-[#2C2C2A]">
+                        <LandingResultsHeading
+                          hasSearchIntent={hasSearchIntent}
+                          subject={subjectLabel}
+                          place={committedPlaceLabel}
+                        />
+                      </span>
                       <button
                         type="button"
                         onClick={requestGeo}
@@ -507,7 +585,11 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
                         <div className="h-9 w-9 animate-spin rounded-full border-2 border-teal-500 border-t-transparent" />
                       </div>
                     ) : filtered.length === 0 ? (
-                      <p className="py-14 text-center text-sm text-neutral-700">{t("noTeacherSearch")}</p>
+                      <LandingResultsEmptyState
+                        hasSearchIntent={hasSearchIntent}
+                        subject={subjectLabel}
+                        place={committedPlaceLabel}
+                      />
                     ) : (
                       <>
                         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
@@ -703,6 +785,87 @@ function StatCard({ label, value }: { label: string; value: string }) {
     <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-center">
       <p className="text-[10px] font-bold uppercase tracking-widest text-white/75">{label}</p>
       <p className="mt-2 text-xl font-bold text-[#7FE0C3]">{value}</p>
+    </div>
+  );
+}
+
+/**
+ * Renders the contextual heading shown in the results filter row.
+ *
+ * Pre-search: keeps the neutral "Teachers near you" framing, so the
+ * landing still feels like discovery.
+ *
+ * In results mode: composes a sentence from the committed subject /
+ * place state. The locale templates use {subject} and {place} tokens
+ * which are substituted with the same string interpolation pattern the
+ * rest of the codebase uses (see `t("distanceFromYouKm").replace(...)`).
+ */
+function LandingResultsHeading({
+  hasSearchIntent,
+  subject,
+  place,
+}: {
+  hasSearchIntent: boolean;
+  subject: string;
+  place: string | null;
+}) {
+  const { t } = useLocale();
+  if (!hasSearchIntent) {
+    return <>{t("landingResultsHeadingDefault")}</>;
+  }
+  if (subject && place) {
+    return (
+      <>
+        {t("landingResultsHeadingForNear")
+          .replace("{subject}", subject)
+          .replace("{place}", place)}
+      </>
+    );
+  }
+  if (subject) {
+    return <>{t("landingResultsHeadingFor").replace("{subject}", subject)}</>;
+  }
+  if (place) {
+    return <>{t("landingResultsHeadingNear").replace("{place}", place)}</>;
+  }
+  return <>{t("landingResultsHeadingFiltered")}</>;
+}
+
+/**
+ * Empty-results panel shown when the filter pipeline returns nothing.
+ * Mirrors the heading templates so the message stays specific to what
+ * the student searched for, plus a generic "widen filters" hint.
+ */
+function LandingResultsEmptyState({
+  hasSearchIntent,
+  subject,
+  place,
+}: {
+  hasSearchIntent: boolean;
+  subject: string;
+  place: string | null;
+}) {
+  const { t } = useLocale();
+  let message = t("landingResultsEmptyDefault");
+  if (hasSearchIntent) {
+    if (subject && place) {
+      message = t("landingResultsEmptyForNear")
+        .replace("{subject}", subject)
+        .replace("{place}", place);
+    } else if (subject) {
+      message = t("landingResultsEmptyFor").replace("{subject}", subject);
+    } else if (place) {
+      message = t("landingResultsEmptyNear").replace("{place}", place);
+    }
+  }
+  return (
+    <div className="py-12 text-center">
+      <p className="text-sm font-semibold text-[#2C2C2A]">{message}</p>
+      {hasSearchIntent ? (
+        <p className="mx-auto mt-2 max-w-md text-xs leading-relaxed text-neutral-700">
+          {t("landingResultsEmptyHint")}
+        </p>
+      ) : null}
     </div>
   );
 }

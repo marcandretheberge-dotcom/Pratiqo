@@ -327,6 +327,158 @@ test("Segmented hero focus ring is applied via focus-within", () => {
   );
 });
 
+// ── Layout rhythm: search-to-results visual proximity ──────────────────
+//
+// Before this PR the landing page rendered a quiz CTA + hero trust strip
+// between the search controls and the teacher results, so the cards were
+// pushed below the fold even when the user had already entered a query.
+// The fix introduces a `hasSearchIntent` flag and conditionally hides
+// marketing blocks plus tightens the hero/results section padding.
+
+test("LandingPageClient defines a hasSearchIntent flag", () => {
+  assert.ok(
+    /const\s+hasSearchIntent\s*=\s*useMemo\(/.test(landingClientSrc),
+    "LandingPageClient must expose a hasSearchIntent useMemo",
+  );
+  // The flag must consider the canonical search-state inputs.
+  for (const dep of ["searchQuery", "activeCat", "geo", "formatFilter", "mapBounds"]) {
+    assert.ok(
+      new RegExp(`${dep}`).test(
+        landingClientSrc.split("hasSearchIntent")[1] ?? "",
+      ),
+      `hasSearchIntent must factor in ${dep}`,
+    );
+  }
+});
+
+test("Quiz CTA + hero trust strip are hidden when search intent exists", () => {
+  // The quiz CTA + LandingHeroTrustStrip live between the filters and
+  // the results section. When a query is active they must not render
+  // — that is the root cause of the reported "huge vertical gap".
+  assert.ok(
+    /hasSearchIntent\s*\?\s*null\s*:\s*\(\s*<div[\s\S]*?marketplaceQuizCta[\s\S]*?LandingHeroTrustStrip/.test(
+      landingClientSrc,
+    ),
+    "Quiz CTA + LandingHeroTrustStrip block must be gated behind !hasSearchIntent",
+  );
+});
+
+test("Hero bottom padding shrinks in results mode", () => {
+  // The hero wrapper switches its bottom padding from pb-8/pb-10 to
+  // pb-3/pb-4 once search intent exists, so the results section sits
+  // tightly under the filters.
+  assert.ok(
+    /hasSearchIntent\s*\?\s*"pb-3 sm:pb-4"\s*:\s*"pb-8 lg:pb-10"/.test(
+      landingClientSrc,
+    ),
+    "Hero wrapper must tighten its bottom padding in results mode",
+  );
+});
+
+test("Results section uses tight top padding in results mode", () => {
+  // Results section: pt-4/pt-5 in results mode vs py-8/py-10 pre-search
+  // — keeps a deliberate 24-32 px rhythm between filters and the cards.
+  assert.ok(
+    /hasSearchIntent[\s\S]*?"pt-4 pb-10 sm:pt-5 sm:pb-12"[\s\S]*?:\s*"py-8 sm:py-10"/.test(
+      landingClientSrc,
+    ),
+    "Results section must use tight top padding when search intent exists",
+  );
+});
+
+test("LandingResultsHeading renders contextual subject/place summary", () => {
+  // The summary heading replaces the static teacherGridNearYou label
+  // and uses {subject}/{place} interpolation against the locale keys.
+  assert.ok(
+    /function LandingResultsHeading\(/.test(landingClientSrc),
+    "LandingResultsHeading helper must exist in LandingPageClient",
+  );
+  assert.ok(
+    /landingResultsHeadingForNear/.test(landingClientSrc),
+    "LandingResultsHeading must reference the subject+place locale key",
+  );
+  assert.ok(
+    /landingResultsHeadingFor"\)\s*\.replace\("\{subject\}"/.test(landingClientSrc),
+    "LandingResultsHeading must substitute {subject} via the project's standard interpolation",
+  );
+});
+
+test("Empty results state is contextual and hints at relaxing filters", () => {
+  assert.ok(
+    /function LandingResultsEmptyState\(/.test(landingClientSrc),
+    "LandingResultsEmptyState helper must exist",
+  );
+  assert.ok(
+    /landingResultsEmptyHint/.test(landingClientSrc),
+    "Empty state must surface the 'widen filters' hint",
+  );
+});
+
+test("New results-summary i18n keys exist in fr/en/es", () => {
+  const requiredKeys = [
+    "landingResultsHeadingDefault",
+    "landingResultsHeadingFor",
+    "landingResultsHeadingForNear",
+    "landingResultsHeadingNear",
+    "landingResultsHeadingFiltered",
+    "landingResultsEmptyFor",
+    "landingResultsEmptyForNear",
+    "landingResultsEmptyNear",
+    "landingResultsEmptyDefault",
+    "landingResultsEmptyHint",
+  ];
+  const placeholderKeys = new Set([
+    "landingResultsHeadingFor",
+    "landingResultsHeadingForNear",
+    "landingResultsHeadingNear",
+    "landingResultsEmptyFor",
+    "landingResultsEmptyForNear",
+    "landingResultsEmptyNear",
+  ]);
+  for (const locale of ["fr", "en", "es"] as const) {
+    const dict = JSON.parse(
+      readFileSync(join(root, "lib", "i18n", "locales", `${locale}.json`), "utf8"),
+    ) as Record<string, string>;
+    for (const key of requiredKeys) {
+      assert.ok(
+        typeof dict[key] === "string" && dict[key].length > 0,
+        `${locale}.${key} must exist`,
+      );
+    }
+    for (const key of placeholderKeys) {
+      const value = dict[key]!;
+      if (key.endsWith("ForNear")) {
+        assert.ok(
+          value.includes("{subject}") && value.includes("{place}"),
+          `${locale}.${key} must contain {subject} and {place} placeholders`,
+        );
+      } else if (key.endsWith("For")) {
+        assert.ok(
+          value.includes("{subject}"),
+          `${locale}.${key} must contain a {subject} placeholder`,
+        );
+      } else if (key.endsWith("Near")) {
+        assert.ok(
+          value.includes("{place}"),
+          `${locale}.${key} must contain a {place} placeholder`,
+        );
+      }
+    }
+  }
+});
+
+test("Results-mode marketing blocks (LandingNeighborhoodSignals) are gated", () => {
+  // The neighborhood signals block is decorative pre-search marketing;
+  // in results mode the cards should appear immediately under the
+  // filter row instead of after another marketing module.
+  assert.ok(
+    /hasSearchIntent\s*\?\s*null\s*:\s*\(\s*<LandingNeighborhoodSignals/.test(
+      landingClientSrc,
+    ),
+    "LandingNeighborhoodSignals must only render when !hasSearchIntent",
+  );
+});
+
 // ── Run ─────────────────────────────────────────────────────────────────
 async function run() {
   for (const { name, fn } of tests) {
