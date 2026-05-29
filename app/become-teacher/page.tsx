@@ -526,9 +526,15 @@ export default function BecomeTeacherPage() {
         <div className="mx-auto max-w-6xl px-4 sm:px-6 py-14 sm:py-18">
           <h2 className="text-2xl sm:text-3xl font-bold">{t("btTestimonialsTitle")}</h2>
           <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Testimonial name="Sophie M." meta="Piano" quote="J'ai doublé mes élèves en 3 mois. La visibilité est incroyable." />
-            <Testimonial name="Karim L." meta="Judo" quote="Les paiements automatiques m'ont sauvé des heures de gestion." />
-            <Testimonial name="Elena R." meta="Danse" quote="La commission dégressive m'a vraiment motivée à développer ma clientèle." />
+            {/* Illustrative testimonials aligned with active Pratiqo
+                launch disciplines (musique, langues, tutorat académique).
+                Guarded by tests/marketing/testimonialsLaunchScope.test.ts
+                against unsupported metrics, disciplines not yet on the
+                platform, and legacy commission claims that contradict
+                the current Membre Pro flat 5 % offer. */}
+            <Testimonial name="Sophie M." meta="Piano · Montréal" quote="Créer mon profil a été simple, et je peux présenter clairement mes cours de piano." />
+            <Testimonial name="Karim L." meta="Mathématiques · Québec" quote="Les demandes de cours sont centralisées, ce qui m'évite de gérer mes échanges partout à la fois." />
+            <Testimonial name="Elena R." meta="Espagnol · Laval" quote="J'aime pouvoir indiquer mes disponibilités, mon format de cours et mes préférences dès le départ." />
           </div>
         </div>
       </section>

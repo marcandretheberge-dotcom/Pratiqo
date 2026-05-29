@@ -60,10 +60,15 @@ const COPY: Record<Locale, {
       { n: "3", title: "Recevez vos paiements", desc: "Virement automatique via Stripe dans les 7 jours ouvrables. Zéro gestion administrative." },
     ],
     testimonialsTitle: "Ce que disent nos profs",
+    // Illustrative testimonials aligned with active Pratiqo launch
+    // disciplines (musique, langues, tutorat académique, habiletés
+    // associées). Guarded by tests/marketing/testimonialsLaunchScope
+    // against unsupported metrics, guarantees, and outdated
+    // commission claims.
     testimonials: [
-      { name: "Sophie M.", role: "Piano · Montréal", quote: "J'ai doublé mes élèves en 3 mois. La visibilité est incroyable." },
-      { name: "Karim L.", role: "Arts Martiaux · Québec", quote: "Les paiements automatiques m'ont sauvé des heures de gestion." },
-      { name: "Elena R.", role: "Danse · Laval", quote: "La commission dégressive m'a vraiment motivée à développer ma clientèle." },
+      { name: "Sophie M.", role: "Piano · Montréal", quote: "Créer mon profil a été simple, et je peux présenter clairement mes cours de piano." },
+      { name: "Karim L.", role: "Mathématiques · Québec", quote: "Les demandes de cours sont centralisées, ce qui m'évite de gérer mes échanges partout à la fois." },
+      { name: "Elena R.", role: "Espagnol · Laval", quote: "J'aime pouvoir indiquer mes disponibilités, mon format de cours et mes préférences dès le départ." },
     ],
     finalH2: "Prêt à enseigner sur Pratiqo?",
     finalSub: "Créez votre compte, publiez votre profil, commencez à enseigner.",
@@ -103,9 +108,9 @@ const COPY: Record<Locale, {
     ],
     testimonialsTitle: "What our teachers say",
     testimonials: [
-      { name: "Sophie M.", role: "Piano · Montréal", quote: "I doubled my students in 3 months. The visibility is incredible." },
-      { name: "Karim L.", role: "Martial Arts · Québec", quote: "Automatic payments saved me hours of admin work." },
-      { name: "Elena R.", role: "Dance · Laval", quote: "The sliding commission really motivated me to grow my client base." },
+      { name: "Sophie M.", role: "Piano · Montréal", quote: "Creating my profile was simple, and I can clearly present my piano lessons." },
+      { name: "Karim L.", role: "Math · Québec", quote: "Lesson requests are centralized, so I do not have to manage conversations across multiple platforms." },
+      { name: "Elena R.", role: "Spanish · Laval", quote: "I like being able to show my availability, lesson format, and preferences from the start." },
     ],
     finalH2: "Ready to teach on Pratiqo?",
     finalSub: "Create your account, publish your profile, start teaching.",
@@ -145,9 +150,9 @@ const COPY: Record<Locale, {
     ],
     testimonialsTitle: "Lo que dicen nuestros profesores",
     testimonials: [
-      { name: "Sebastián R.", role: "Piano · Pocitos, Montevideo", quote: "Dupliqué mis alumnos en 3 meses. La visibilidad es increíble." },
-      { name: "Valentina M.", role: "Idiomas · Punta Carretas", quote: "Los pagos automáticos me ahorraron horas de gestión." },
-      { name: "Lucas P.", role: "Música · Carrasco", quote: "Poder fijar mis propios precios en USD fue un cambio total." },
+      { name: "Sophie M.", role: "Piano · Montréal", quote: "Crear mi perfil fue simple y puedo presentar claramente mis clases de piano." },
+      { name: "Karim L.", role: "Matemáticas · Québec", quote: "Las solicitudes de clases están centralizadas, así no tengo que gestionar conversaciones en varias plataformas." },
+      { name: "Elena R.", role: "Español · Laval", quote: "Me gusta poder indicar mi disponibilidad, el formato de clase y mis preferencias desde el principio." },
     ],
     finalH2: "¿Listo para enseñar en Pratiqo?",
     finalSub: "Creá tu cuenta, publicá tu perfil, empezá a enseñar.",
@@ -225,7 +230,11 @@ export default function DevenirEnseignantContent() {
               </Link>
             </div>
             <div className="mt-10 flex flex-wrap gap-x-5 gap-y-2 text-xs font-bold uppercase tracking-widest text-white/45">
-              <span>2 400+ {locale === "es" ? "profesores" : "profs"}</span>
+              {/* Hero strip is claim-clean for launch: only verifiable
+                  platform claims (local marketplace + automatic
+                  payments + no exclusivity). Guarded by
+                  tests/marketing/testimonialsLaunchScope. */}
+              <span>{locale === "es" ? "Marketplace local" : locale === "en" ? "Local marketplace" : "Marketplace local"}</span>
               <span className="text-white/20">·</span>
               <span>{locale === "es" ? "Pagos automáticos" : locale === "en" ? "Automatic payments" : "Paiements automatiques"}</span>
               <span className="text-white/20">·</span>
@@ -291,10 +300,15 @@ export default function DevenirEnseignantContent() {
                 label: locale === "es" ? "Pro — CA$ 29.99 /mes" : locale === "en" ? "Pro — CA$ 29.99 /mo" : "Pro — 29,99 $/mois",
                 sub: locale === "es" ? "5% comisión, alumnos ilimitados" : locale === "en" ? "5% commission, unlimited students" : "5% commission, élèves illimités",
               },
+              // Pratiqo's launch offer is a flat 5 % Membre Pro / 10 %
+              // free commission. The prior tier-tease here contradicted
+              // /upgrade and was replaced with a feature claim that
+              // matches the actual launch ToS. Guarded by
+              // tests/marketing/testimonialsLaunchScope.
               {
-                emoji: "💎",
-                label: locale === "es" ? "Comisión decreciente" : locale === "en" ? "Sliding commission" : "Commission dégressive",
-                sub: locale === "es" ? "Cuanto más enseñás, menos pagás" : locale === "en" ? "The more you teach, the less you pay" : "Plus tu enseignes, moins tu paies",
+                emoji: "🤝",
+                label: locale === "es" ? "Sin exclusividad" : locale === "en" ? "No exclusivity" : "Aucune exclusivité",
+                sub: locale === "es" ? "Cancelá cuando quieras" : locale === "en" ? "Cancel anytime" : "Annulez quand vous voulez",
               },
             ].map(({ emoji, label, sub }) => (
               <div key={label} className="rounded-2xl border border-white/10 bg-white/3 px-5 py-6">
