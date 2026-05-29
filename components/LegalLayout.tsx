@@ -24,7 +24,7 @@ export function LegalLayout({
     | "/legal/annulation"
     | "/legal/code-de-conduite"
     | "/legal/conditions-professeurs"
-    | "/legal/teacher-pro"
+    | "/legal/membre-pro"
     | "/legal/paiements-remboursements";
   children: React.ReactNode;
 }) {
@@ -44,13 +44,20 @@ export function LegalLayout({
         ? "Pagos y reembolsos"
         : "Paiements et remboursements";
 
+  const proMemberLabel =
+    locale === "en"
+      ? "Pro Member"
+      : locale === "es"
+        ? "Miembro Pro"
+        : "Membre Pro";
+
   const LEGAL_LINKS = [
     { href: "/legal/cgu", label: t("footerTerms") },
     { href: "/legal/confidentialite", label: t("footerPrivacy") },
     { href: "/legal/annulation", label: t("footerCancellation") },
     { href: "/legal/code-de-conduite", label: t("footerCodeOfConduct") },
     { href: "/legal/conditions-professeurs", label: teacherTermsLabel },
-    { href: "/legal/teacher-pro", label: "Teacher Pro" },
+    { href: "/legal/membre-pro", label: proMemberLabel },
     { href: "/legal/paiements-remboursements", label: paymentsLabel },
   ] as const;
 
