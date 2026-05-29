@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { cn } from "../lib/utils";
 import { useLocale } from "@/lib/locale-context";
+import { LegalMarkdownBody } from "./LegalMarkdownBody";
 
 export type LegalTocItem = { id: string; label: string };
 
@@ -43,6 +44,16 @@ export function LegalLayout({
     { href: "/legal/conditions-professeurs", label: teacherTermsLabel },
     { href: "/legal/teacher-pro", label: "Teacher Pro" },
   ] as const;
+
+  const content = React.Children.map(children, (child) => {
+    if (React.isValidElement(child) && child.type === LegalMarkdownBody) {
+      const markdownChild = child as React.ReactElement<React.ComponentProps<typeof LegalMarkdownBody>>;
+      return React.cloneElement(markdownChild, {
+        headingIds: toc.map((item) => item.id),
+      });
+    }
+    return child;
+  });
 
   return (
     <div className="max-w-[720px] mx-auto pb-16">
@@ -84,7 +95,7 @@ export function LegalLayout({
         </nav>
       )}
 
-      <article className="space-y-10 text-[15px] leading-relaxed text-[var(--p-text)]">{children}</article>
+      <article className="space-y-10 text-[15px] leading-relaxed text-[var(--p-text)]">{content}</article>
 
       <footer className="mt-14 pt-8 border-t border-[var(--p-border-light)]">
         <p className="text-[12px] text-[var(--p-text-muted)] mb-2">{t("footerOtherDocs")}</p>
