@@ -440,6 +440,13 @@ export default function TarifsPage() {
             ))}
           </div>
           <p className="mx-auto mt-8 max-w-2xl text-center text-xs leading-relaxed text-[#6B6B6B]">{t("pricingPageCommissionFootnote")}</p>
+          {/* Legal-safe disclaimer mirrored from lib/config/membrePro
+              (`commissionDisclaimer`). Same wording is rendered on
+              /upgrade so the two surfaces never contradict each other
+              about ranking, bookings, or income guarantees. */}
+          <p className="mx-auto mt-3 max-w-2xl text-center text-xs leading-relaxed text-[#6B6B6B]">
+            {t("pricingPageCommissionDisclaimer")}
+          </p>
         </section>
 
         {/* Break-even */}

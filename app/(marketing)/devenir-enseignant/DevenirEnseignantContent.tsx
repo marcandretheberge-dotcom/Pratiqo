@@ -293,18 +293,18 @@ export default function DevenirEnseignantContent() {
               {
                 emoji: "🎯",
                 label: locale === "es" ? "Gratis hasta 5 alumnos" : locale === "en" ? "Free up to 5 students" : "Gratuit jusqu'à 5 élèves",
-                sub: locale === "es" ? "10% de comisión" : locale === "en" ? "10% commission" : "10% commission",
+                sub: locale === "es" ? "Comisión desde 10%" : locale === "en" ? "Commission starting at 10%" : "Commission à partir de 10 %",
               },
               {
                 emoji: "🚀",
-                label: locale === "es" ? "Pro — CA$ 29.99 /mes" : locale === "en" ? "Pro — CA$ 29.99 /mo" : "Pro — 29,99 $/mois",
-                sub: locale === "es" ? "5% comisión, alumnos ilimitados" : locale === "en" ? "5% commission, unlimited students" : "5% commission, élèves illimités",
+                label: locale === "es" ? "Pro — CA$ 29 /mes" : locale === "en" ? "Pro — CA$ 29 /mo" : "Pro — 29 $/mois",
+                sub: locale === "es" ? "Comisión reducida desde 5%, alumnos ilimitados" : locale === "en" ? "Reduced commission starting at 5%, unlimited students" : "Commission réduite à partir de 5 %, élèves illimités",
               },
-              // Pratiqo's launch offer is a flat 5 % Membre Pro / 10 %
-              // free commission. The prior tier-tease here contradicted
-              // /upgrade and was replaced with a feature claim that
-              // matches the actual launch ToS. Guarded by
-              // tests/marketing/testimonialsLaunchScope.
+              // Pratiqo's commission is *régressive / declining*: free
+              // 10 % → 7 %, Pro 5 % → 3.5 %. The cards above use cautious
+              // "starting at" wording so they don't imply a flat rate.
+              // Tier breakpoints and conditions are detailed on /tarifs;
+              // canonical figures live in lib/config/membrePro.ts.
               {
                 emoji: "🤝",
                 label: locale === "es" ? "Sin exclusividad" : locale === "en" ? "No exclusivity" : "Aucune exclusivité",

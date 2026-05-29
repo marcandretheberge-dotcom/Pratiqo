@@ -35,20 +35,52 @@ export type LegalRouteKey = keyof typeof LEGAL_ROUTES;
 /**
  * Plan economic figures rendered in the upgrade UI.
  *
- * The MVP launch offer is a single Membre Pro tier with reduced commission.
- * Stripe still authoritatively quotes the price at checkout; the values below
- * are only used for the at-a-glance comparison cards and the marketing
- * one-liner above them.
+ * Pratiqo's canonical commission model is *régressive / declining*:
+ *   - Free plan: 10 % at the entry tier, decreasing toward 7 %.
+ *   - Membre Pro: 5 % at the entry tier, decreasing toward 3.5 %.
+ *
+ * Stripe still authoritatively quotes the subscription price at checkout;
+ * the figures below are only used for the at-a-glance comparison cards
+ * and the marketing one-liner above them. The actual tier breakpoints,
+ * eligibility rules, and applicable conditions are documented on /tarifs
+ * and in the /legal/membre-pro terms.
+ *
+ * `freeCommissionPercent` / `proCommissionPercent` are kept for backward
+ * compatibility — they correspond to the *entry* (start) percentage and
+ * are equivalent to `*CommissionRange.startPercent` below.
  */
 export const MEMBRE_PRO_PLAN = {
-  /** Free plan: % commission Pratiqo retains on each transaction. */
+  /** Free plan entry-tier commission (= startPercent of freeCommissionRange). */
   freeCommissionPercent: 10,
   /** Free plan: max active concurrent students before requiring Membre Pro. */
   freeActiveStudentLimit: 5,
-  /** Membre Pro: % commission Pratiqo retains on each transaction. */
+  /** Membre Pro entry-tier commission (= startPercent of proCommissionRange). */
   proCommissionPercent: 5,
   /** Membre Pro: monthly subscription price in CAD displayed at checkout. */
   proMonthlyPriceCad: 29,
+} as const;
+
+/**
+ * Canonical declining-commission model for the marketplace.
+ *
+ * Single source of truth consumed by `/upgrade`, `/tarifs` and any test
+ * that asserts the two surfaces stay aligned. We intentionally keep
+ * tier breakpoints out of this constant — they live in the i18n
+ * dictionary so marketing can iterate without code changes — but the
+ * start/best percent pair is fixed here so tests can assert it.
+ */
+export const MEMBRE_PRO_COMMISSION_MODEL = {
+  /** Free plan commission range (entry → best tier). */
+  freeCommissionRange: { startPercent: 10, bestPercent: 7 },
+  /** Membre Pro commission range (entry → best tier). */
+  proCommissionRange: { startPercent: 5, bestPercent: 3.5 },
+  /**
+   * Whether the marketplace exposes a tiered (declining) commission
+   * model on /tarifs. When true, `/upgrade` must use cautious "starting
+   * at X %, with tiers that may reduce the commission" wording rather
+   * than implying a flat percentage. Tests guard against regressions.
+   */
+  hasTieredCommission: true,
 } as const;
 
 type UpgradePageCopy = {
@@ -70,12 +102,27 @@ type UpgradePageCopy = {
   proPlanPrice: string;
   /** Free plan feature bullet about active student cap. */
   freePlanActiveStudentLimit: string;
-  /** Free plan feature bullet about the commission. */
+  /** Free plan feature bullet about the commission (cautious, range-aware). */
   freePlanCommission: string;
+  /**
+   * Free plan secondary line under the commission bullet — explains that
+   * tiers can lower the percentage based on eligible volume. Cautious
+   * wording: "may", "starting at", "based on eligible volume".
+   */
+  freePlanCommissionBody: string;
   /** Membre Pro feature bullet: unlimited students. */
   proPlanUnlimitedStudents: string;
-  /** Membre Pro feature bullet: reduced commission. */
+  /** Membre Pro feature bullet: reduced commission (cautious, range-aware). */
   proPlanCommission: string;
+  /**
+   * Membre Pro secondary line under the commission bullet — explains
+   * that tiers can lower the percentage based on eligible volume.
+   */
+  proPlanCommissionBody: string;
+  /** Compact label "Voir les paliers sur /tarifs" link visible on the cards. */
+  seeTiersLinkLabel: string;
+  /** Pre-CTA legal-safe disclaimer paragraph (commission/ranking caveats). */
+  commissionDisclaimer: string;
   /** Membre Pro feature bullet: priority support (note: shown as "soon"). */
   proPlanPrioritySupport: string;
   /** Footnote under the comparison cards. */
@@ -134,16 +181,23 @@ export const UPGRADE_PAGE_COPY: Record<Locale, UpgradePageCopy> = {
   fr: {
     eyebrow: "Monétisation",
     heading: "Devenir Membre Pro",
-    summary: `Membre Pro : élèves illimités, ${MEMBRE_PRO_PLAN.proCommissionPercent} % de commission, ${MEMBRE_PRO_PLAN.proMonthlyPriceCad} $/mois.`,
+    summary: `Membre Pro : élèves illimités, commission à partir de ${MEMBRE_PRO_COMMISSION_MODEL.proCommissionRange.startPercent} % avec paliers, ${MEMBRE_PRO_PLAN.proMonthlyPriceCad} $/mois.`,
     badge: "Membre Pro",
     freePlanTitle: "Gratuit",
     proPlanTitle: "Membre Pro",
     freePlanPrice: "0 $",
     proPlanPrice: `${MEMBRE_PRO_PLAN.proMonthlyPriceCad} $/mois`,
     freePlanActiveStudentLimit: `Jusqu’à ${MEMBRE_PRO_PLAN.freeActiveStudentLimit} élèves actifs`,
-    freePlanCommission: `${MEMBRE_PRO_PLAN.freeCommissionPercent} % de commission`,
+    freePlanCommission: `Commission standard à partir de ${MEMBRE_PRO_COMMISSION_MODEL.freeCommissionRange.startPercent} %`,
+    freePlanCommissionBody:
+      "Avec paliers pouvant réduire la commission selon le volume admissible.",
     proPlanUnlimitedStudents: "Élèves illimités",
-    proPlanCommission: `${MEMBRE_PRO_PLAN.proCommissionPercent} % de commission`,
+    proPlanCommission: `Commission réduite à partir de ${MEMBRE_PRO_COMMISSION_MODEL.proCommissionRange.startPercent} %`,
+    proPlanCommissionBody:
+      "Avec paliers pouvant aller plus bas selon le volume admissible. Les paliers et conditions applicables sont indiqués sur la plateforme.",
+    seeTiersLinkLabel: "Voir les paliers sur /tarifs",
+    commissionDisclaimer:
+      "Les commissions, paliers et avantages affichés peuvent varier selon le plan applicable, les promotions, le volume admissible et les conditions indiquées sur la plateforme. Le statut Membre Pro peut améliorer certains signaux de visibilité, mais ne garantit ni positionnement, ni réservations, ni revenus.",
     proPlanPrioritySupport: "Support prioritaire (bientôt)",
     comingSoonNote: "Plan Entreprise et cours de groupe — bientôt disponibles.",
     disclosureLead:
@@ -175,16 +229,23 @@ export const UPGRADE_PAGE_COPY: Record<Locale, UpgradePageCopy> = {
   en: {
     eyebrow: "Monetization",
     heading: "Become a Pro Member",
-    summary: `Pro Member: unlimited students, ${MEMBRE_PRO_PLAN.proCommissionPercent}% commission, $${MEMBRE_PRO_PLAN.proMonthlyPriceCad}/month.`,
+    summary: `Pro Member: unlimited students, commission starting at ${MEMBRE_PRO_COMMISSION_MODEL.proCommissionRange.startPercent}% with tiers, $${MEMBRE_PRO_PLAN.proMonthlyPriceCad}/month.`,
     badge: "Pro Member",
     freePlanTitle: "Free",
     proPlanTitle: "Pro Member",
     freePlanPrice: "$0",
     proPlanPrice: `$${MEMBRE_PRO_PLAN.proMonthlyPriceCad}/month`,
     freePlanActiveStudentLimit: `Up to ${MEMBRE_PRO_PLAN.freeActiveStudentLimit} active students`,
-    freePlanCommission: `${MEMBRE_PRO_PLAN.freeCommissionPercent}% commission`,
+    freePlanCommission: `Standard commission starting at ${MEMBRE_PRO_COMMISSION_MODEL.freeCommissionRange.startPercent}%`,
+    freePlanCommissionBody:
+      "With tiers that may reduce the commission based on eligible volume.",
     proPlanUnlimitedStudents: "Unlimited students",
-    proPlanCommission: `${MEMBRE_PRO_PLAN.proCommissionPercent}% commission`,
+    proPlanCommission: `Reduced commission starting at ${MEMBRE_PRO_COMMISSION_MODEL.proCommissionRange.startPercent}%`,
+    proPlanCommissionBody:
+      "With tiers that may go lower based on eligible volume. Applicable tiers and conditions are displayed on the platform.",
+    seeTiersLinkLabel: "View tiers on /tarifs",
+    commissionDisclaimer:
+      "Displayed commissions, tiers, and benefits may vary depending on the applicable plan, promotions, eligible volume, and conditions shown on the platform. Pro Member status may improve certain visibility signals, but does not guarantee ranking, bookings, or income.",
     proPlanPrioritySupport: "Priority support (coming soon)",
     comingSoonNote: "Enterprise plan and group lessons — coming soon.",
     disclosureLead:
@@ -216,16 +277,23 @@ export const UPGRADE_PAGE_COPY: Record<Locale, UpgradePageCopy> = {
   es: {
     eyebrow: "Monetización",
     heading: "Hacerse Miembro Pro",
-    summary: `Miembro Pro: estudiantes ilimitados, ${MEMBRE_PRO_PLAN.proCommissionPercent}% de comisión, $${MEMBRE_PRO_PLAN.proMonthlyPriceCad}/mes.`,
+    summary: `Miembro Pro: estudiantes ilimitados, comisión desde ${MEMBRE_PRO_COMMISSION_MODEL.proCommissionRange.startPercent}% con niveles, $${MEMBRE_PRO_PLAN.proMonthlyPriceCad}/mes.`,
     badge: "Miembro Pro",
     freePlanTitle: "Gratis",
     proPlanTitle: "Miembro Pro",
     freePlanPrice: "$0",
     proPlanPrice: `$${MEMBRE_PRO_PLAN.proMonthlyPriceCad}/mes`,
     freePlanActiveStudentLimit: `Hasta ${MEMBRE_PRO_PLAN.freeActiveStudentLimit} estudiantes activos`,
-    freePlanCommission: `${MEMBRE_PRO_PLAN.freeCommissionPercent}% de comisión`,
+    freePlanCommission: `Comisión estándar desde el ${MEMBRE_PRO_COMMISSION_MODEL.freeCommissionRange.startPercent}%`,
+    freePlanCommissionBody:
+      "Con niveles que pueden reducir la comisión según el volumen admisible.",
     proPlanUnlimitedStudents: "Estudiantes ilimitados",
-    proPlanCommission: `${MEMBRE_PRO_PLAN.proCommissionPercent}% de comisión`,
+    proPlanCommission: `Comisión reducida desde el ${MEMBRE_PRO_COMMISSION_MODEL.proCommissionRange.startPercent}%`,
+    proPlanCommissionBody:
+      "Con niveles que pueden bajar según el volumen admisible. Los niveles y condiciones aplicables se muestran en la plataforma.",
+    seeTiersLinkLabel: "Ver niveles en /tarifs",
+    commissionDisclaimer:
+      "Las comisiones, niveles y beneficios mostrados pueden variar según el plan aplicable, las promociones, el volumen admisible y las condiciones indicadas en la plataforma. El estado Miembro Pro puede mejorar ciertas señales de visibilidad, pero no garantiza posicionamiento, reservas ni ingresos.",
     proPlanPrioritySupport: "Soporte prioritario (pronto)",
     comingSoonNote: "Plan Empresa y clases grupales — próximamente.",
     disclosureLead:
