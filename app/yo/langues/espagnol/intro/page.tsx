@@ -40,9 +40,11 @@ import { spanishIntroA1 } from "@/lib/yo/spanishIntroA1";
 import { YoBreadcrumb } from "@/components/yo/YoBreadcrumb";
 import { YoCoachPanel } from "@/components/yo/YoCoachPanel";
 import { YoFlashcardPreview } from "@/components/yo/YoFlashcardPreview";
+import { YoAudioPlayer } from "@/components/yo/YoAudioPlayer";
 import { YoPronunciationButton } from "@/components/yo/YoPronunciationButton";
 import { YoQuizPreview } from "@/components/yo/YoQuizPreview";
 import { YoReadingPreview } from "@/components/yo/YoReadingPreview";
+import { findAudioItemByText } from "@/lib/yo/audio/audioManifest";
 
 export const dynamic = "force-dynamic";
 
@@ -389,32 +391,47 @@ export default async function YoEspagnolIntroPage({ searchParams }: PageProps) {
             {t(SECTION_LABELS.wordsBody, locale)}
           </p>
           <ul role="list" className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {universalWords.map((word) => (
-              <li
-                key={word.target}
-                className="rounded-2xl border border-teal-100 bg-white p-4 shadow-[0_1px_2px_rgba(15,58,52,0.04)]"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <p className="text-lg font-semibold text-[#0F6E56]" lang="es">
-                    {word.target}
+            {universalWords.map((word) => {
+              // Prefer the pre-generated MP3 from Supabase Storage when
+              // the manifest covers this word; otherwise keep the existing
+              // browser-native Web Speech button so learners always have
+              // *some* pronunciation cue. See `lib/yo/audio/audioManifest.ts`.
+              const audioItem = findAudioItemByText(word.target);
+              return (
+                <li
+                  key={word.target}
+                  className="rounded-2xl border border-teal-100 bg-white p-4 shadow-[0_1px_2px_rgba(15,58,52,0.04)]"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-lg font-semibold text-[#0F6E56]" lang="es">
+                      {word.target}
+                    </p>
+                    {audioItem ? (
+                      <YoAudioPlayer
+                        storagePath={audioItem.storagePath}
+                        label={audioItem.text}
+                        size="xs"
+                      />
+                    ) : (
+                      <YoPronunciationButton
+                        text={word.target}
+                        locale={locale}
+                        speechLang="es-ES"
+                        size="xs"
+                      />
+                    )}
+                  </div>
+                  <p className="mt-1 text-sm text-[#0F6E56]/80">
+                    {t(word.translation, locale)}
                   </p>
-                  <YoPronunciationButton
-                    text={word.target}
-                    locale={locale}
-                    speechLang="es-ES"
-                    size="xs"
-                  />
-                </div>
-                <p className="mt-1 text-sm text-[#0F6E56]/80">
-                  {t(word.translation, locale)}
-                </p>
-                {word.hint ? (
-                  <p className="mt-2 text-xs leading-relaxed text-[#0F6E56]/60">
-                    {t(word.hint, locale)}
-                  </p>
-                ) : null}
-              </li>
-            ))}
+                  {word.hint ? (
+                    <p className="mt-2 text-xs leading-relaxed text-[#0F6E56]/60">
+                      {t(word.hint, locale)}
+                    </p>
+                  ) : null}
+                </li>
+              );
+            })}
           </ul>
         </section>
 
