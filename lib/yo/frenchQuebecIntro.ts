@@ -22,10 +22,16 @@
  *   - Quebec-French target words/phrases are plain strings so they
  *     keep `lang="fr-CA"` for accessibility and TTS.
  *
- * Audio metadata: every vocabulary item carries `audioUrl: null`,
- * matching the existing `YoVocabularyItem` shape, so a future PR
- * that wires a `quebec_french` accent profile into the audio
- * pipeline can populate it without changing this file's structure.
+ * Audio:
+ *   - The single source of truth for pronunciation audio is
+ *     `lib/yo/audio/frenchQuebecIntroAudio.ts`. Each `target` here
+ *     resolves to a manifest entry with
+ *     `accentProfile: "quebec_french"`. The page wires
+ *     `<YoFrenchAudioButton>` next to each Quebec-French phrase, which
+ *     plays the manifest MP3 from Supabase Storage and falls back to
+ *     on-device Web Speech (BCP-47 fr-CA) only when an item is
+ *     missing. No per-row `audioUrl` field is needed — adding a new
+ *     audio item is a one-file change in the manifest.
  *
  * No Supabase, no Stripe, no payment math, no migrations. This
  * file is the single source of truth consumed by the intro page.
@@ -36,7 +42,6 @@ import type {
   YoFlashcard,
   YoLocalizedString,
   YoQuizQuestion,
-  YoVocabularyItem,
 } from "@/lib/yo/types";
 
 // ─────────────────────────────────────────────────────────────────────
@@ -154,13 +159,15 @@ const qcVsFrTable: QcVsFrRow[] = [
 // 3) First survival words
 // ─────────────────────────────────────────────────────────────────────
 
-interface SurvivalWord extends YoVocabularyItem {
-  /** Optional usage hint shown below the gloss. */
-  hint?: YoLocalizedString;
-  /** BCP-47 voice hint for the pronunciation button. */
-  speechLang?: string;
+interface SurvivalWord {
   /** Stable id for keying. */
   id: string;
+  /** Quebec-French target word or phrase (rendered with `lang="fr-CA"`). */
+  target: string;
+  /** Learner-language gloss (FR/EN). */
+  translation: YoLocalizedString;
+  /** Optional usage hint shown below the gloss. */
+  hint?: YoLocalizedString;
 }
 
 const survivalWords: SurvivalWord[] = [
@@ -172,8 +179,6 @@ const survivalWords: SurvivalWord[] = [
       "Toujours masculin. « Au Québec » pour la province, « à Québec » pour la ville.",
       "Always masculine. “Au Québec” = the province, “à Québec” = Quebec City.",
     ),
-    audioUrl: null,
-    speechLang: "fr-CA",
   },
   {
     id: "sw_francophone",
@@ -183,8 +188,6 @@ const survivalWords: SurvivalWord[] = [
       "Quelqu’un dont la première langue est le français.",
       "Someone whose first language is French.",
     ),
-    audioUrl: null,
-    speechLang: "fr-CA",
   },
   {
     id: "sw_bienvenue",
@@ -194,8 +197,6 @@ const survivalWords: SurvivalWord[] = [
       "Au Québec, « Bienvenue » répond aussi à un « Merci ».",
       "In Quebec, “Bienvenue” also replies to “Thank you.”",
     ),
-    audioUrl: null,
-    speechLang: "fr-CA",
   },
   {
     id: "sw_salut",
@@ -205,8 +206,6 @@ const survivalWords: SurvivalWord[] = [
       "Sert à dire bonjour ET au revoir, en contexte décontracté.",
       "Used for both hello AND goodbye, in casual settings.",
     ),
-    audioUrl: null,
-    speechLang: "fr-CA",
   },
   {
     id: "sw_cavatu",
@@ -219,8 +218,6 @@ const survivalWords: SurvivalWord[] = [
       "Le « -tu » est une particule interrogative typique du parler québécois — pas un « tu ».",
       "The “-tu” is a Quebec interrogative particle — it's not the pronoun “you.”",
     ),
-    audioUrl: null,
-    speechLang: "fr-CA",
   },
   {
     id: "sw_paspire",
@@ -230,22 +227,16 @@ const survivalWords: SurvivalWord[] = [
       "Réponse classique à « Ça va-tu ? ».",
       "Classic reply to “Ça va-tu?”",
     ),
-    audioUrl: null,
-    speechLang: "fr-CA",
   },
   {
     id: "sw_unchar",
     target: "un char",
     translation: lstr("une voiture (informel)", "a car (informal)"),
-    audioUrl: null,
-    speechLang: "fr-CA",
   },
   {
     id: "sw_lajob",
     target: "la job",
     translation: lstr("le travail (informel)", "the job (informal)"),
-    audioUrl: null,
-    speechLang: "fr-CA",
   },
   {
     id: "sw_frette",
@@ -254,36 +245,26 @@ const survivalWords: SurvivalWord[] = [
       "très froid (registre familier)",
       "very cold (familiar register)",
     ),
-    audioUrl: null,
-    speechLang: "fr-CA",
   },
   {
     id: "sw_findesemaine",
     target: "la fin de semaine",
     translation: lstr("le week-end", "the weekend"),
-    audioUrl: null,
-    speechLang: "fr-CA",
   },
   {
     id: "sw_dejeuner",
     target: "le déjeuner",
     translation: lstr("le petit-déjeuner", "breakfast"),
-    audioUrl: null,
-    speechLang: "fr-CA",
   },
   {
     id: "sw_diner",
     target: "le dîner",
     translation: lstr("le repas du midi", "midday meal (lunch)"),
-    audioUrl: null,
-    speechLang: "fr-CA",
   },
   {
     id: "sw_souper",
     target: "le souper",
     translation: lstr("le repas du soir", "evening meal (dinner)"),
-    audioUrl: null,
-    speechLang: "fr-CA",
   },
   {
     id: "sw_chum",
@@ -293,15 +274,11 @@ const survivalWords: SurvivalWord[] = [
       "Selon le contexte : partenaire amoureux OU bon ami.",
       "Depending on context: romantic partner OR close friend.",
     ),
-    audioUrl: null,
-    speechLang: "fr-CA",
   },
   {
     id: "sw_blonde",
     target: "ma blonde",
     translation: lstr("ma copine", "my girlfriend"),
-    audioUrl: null,
-    speechLang: "fr-CA",
   },
   {
     id: "sw_tuque",
@@ -310,8 +287,6 @@ const survivalWords: SurvivalWord[] = [
       "le bonnet d’hiver (en laine ou tricoté)",
       "winter knit hat",
     ),
-    audioUrl: null,
-    speechLang: "fr-CA",
   },
   {
     id: "sw_mitaines",
@@ -320,8 +295,6 @@ const survivalWords: SurvivalWord[] = [
       "les moufles (mais sans pouce séparé pour les autres doigts)",
       "mittens (warmer than gloves)",
     ),
-    audioUrl: null,
-    speechLang: "fr-CA",
   },
   {
     id: "sw_ramq",
@@ -334,8 +307,6 @@ const survivalWords: SurvivalWord[] = [
       "L’organisme public qui gère l’assurance maladie québécoise.",
       "The public agency that runs Quebec health insurance.",
     ),
-    audioUrl: null,
-    speechLang: "fr-CA",
   },
   {
     id: "sw_cartesoleil",
@@ -348,8 +319,6 @@ const survivalWords: SurvivalWord[] = [
       "Surnommée « carte soleil » à cause du soleil stylisé sur la carte.",
       "Nicknamed the “sun card” after the stylised sun on it.",
     ),
-    audioUrl: null,
-    speechLang: "fr-CA",
   },
 ];
 

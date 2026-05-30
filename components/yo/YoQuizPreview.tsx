@@ -189,11 +189,20 @@ function QuestionCard({
       </p>
 
       <ul role="list" className="grid gap-2 sm:gap-3">
-        {question.options.map((option) => {
+        {question.options.map((option, optionIndex) => {
           const isPicked = isAnswered && state.pickedOptionId === option.id;
           const isCorrectOption = option.id === question.correctOptionId;
           const showAsCorrect = isAnswered && isCorrectOption;
           const showAsWrong = isAnswered && isPicked && !isCorrectOption;
+          // Render an index-based letter (A, B, C, D, …) inside the
+          // small badge — never the internal option id. The data
+          // layer's option.id (e.g. "q_dejeuner_a") is a stable
+          // logical key for the picker / scoring loop and must not
+          // leak into learner-facing UI; rendering it produced the
+          // overflowing "Q_DEJEUNER_A" / "Q_DEJEUNER_B" badge bug.
+          const optionLetter = String.fromCharCode(
+            "A".charCodeAt(0) + optionIndex,
+          );
 
           return (
             <li key={option.id} className="list-none">
@@ -216,11 +225,11 @@ function QuestionCard({
                     "border-teal-100/70 bg-white text-[#1a3a32]/70",
                 )}
               >
-                <span className="flex items-center gap-3">
+                <span className="flex flex-1 items-center gap-3">
                   <span
                     aria-hidden
                     className={cn(
-                      "flex size-7 items-center justify-center rounded-full text-xs font-semibold",
+                      "flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
                       !isAnswered &&
                         "bg-teal-50 text-teal-700 group-hover:bg-teal-100",
                       showAsCorrect && "bg-[#bfe1cd] text-[#1f6a45]",
@@ -231,15 +240,15 @@ function QuestionCard({
                         "bg-teal-50 text-teal-700/70",
                     )}
                   >
-                    {option.id.toUpperCase()}
+                    {optionLetter}
                   </span>
-                  <span>{t(option.label, locale)}</span>
+                  <span className="leading-snug">{t(option.label, locale)}</span>
                 </span>
 
                 {showAsCorrect ? (
-                  <CheckCircle2 aria-hidden className="size-5" />
+                  <CheckCircle2 aria-hidden className="size-5 shrink-0" />
                 ) : showAsWrong ? (
-                  <XCircle aria-hidden className="size-5" />
+                  <XCircle aria-hidden className="size-5 shrink-0" />
                 ) : null}
               </button>
             </li>

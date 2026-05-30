@@ -25,11 +25,13 @@
  *   - All Quebec-French target words render with `lang="fr-CA"`.
  *
  * Audio:
- *   - Each French target carries `audioUrl: null`. Pronunciation is
- *     served via `YoPronunciationButton` with `speechLang="fr-CA"`,
- *     so learners hear an on-device Quebec / French Canadian voice
- *     when one is installed (Chrome / Safari / Edge ship one). No
- *     OpenAI calls; no MP3 fetches; safe even offline.
+ *   - Pronunciation is served via `YoFrenchAudioButton`, which prefers
+ *     a pre-generated MP3 from the Supabase Storage `yopratiqo-audio`
+ *     bucket (resolved through the manifest with
+ *     `accentProfile="quebec_french"`) and falls back to on-device
+ *     Web Speech with BCP-47 `fr-CA` only when an item is missing.
+ *     No OpenAI calls from the browser; no per-row API keys; the
+ *     bucket URL is the public `NEXT_PUBLIC_SUPABASE_URL`.
  *
  * No Stripe, no Supabase, no payment math, no checkout, no migration,
  * no RLS policy, no marketplace logic.
@@ -63,7 +65,7 @@ import { frenchQuebecIntro } from "@/lib/yo/frenchQuebecIntro";
 import { YoBreadcrumb } from "@/components/yo/YoBreadcrumb";
 import { YoFlashcardPreview } from "@/components/yo/YoFlashcardPreview";
 import { YoQuizPreview } from "@/components/yo/YoQuizPreview";
-import { YoPronunciationButton } from "@/components/yo/YoPronunciationButton";
+import { YoFrenchAudioButton } from "@/components/yo/YoFrenchAudioButton";
 
 export const dynamic = "force-dynamic";
 
@@ -396,8 +398,8 @@ export default async function YoFrancaisQuebecIntroPage({
           </h2>
           <p className="mt-3 max-w-3xl text-sm leading-relaxed text-[#0F6E56]/78">
             {locale === "fr"
-              ? "Appuie sur l’icône audio pour entendre la prononciation québécoise (selon les voix installées sur ton appareil)."
-              : "Tap the audio icon to hear the Quebec pronunciation (depends on the voices installed on your device)."}
+              ? "Appuie sur l’icône audio pour entendre la prononciation québécoise."
+              : "Tap the audio icon to hear the Quebec pronunciation."}
           </p>
           <ul role="list" className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {survivalWords.map((word) => (
@@ -412,10 +414,13 @@ export default async function YoFrancaisQuebecIntroPage({
                   >
                     {word.target}
                   </p>
-                  <YoPronunciationButton
+                  <YoFrenchAudioButton
                     text={word.target}
                     locale={locale}
-                    speechLang={word.speechLang ?? "fr-CA"}
+                    moduleId="francais-quebec-intro"
+                    lessonId="pre-arrival-intro"
+                    accentProfile="quebec_french"
+                    speechLang="fr-CA"
                     size="xs"
                   />
                 </div>
@@ -662,7 +667,12 @@ export default async function YoFrancaisQuebecIntroPage({
               cards={flashcards}
               locale={locale}
               speechLang="fr-CA"
-              audioContext={{ speechLang: "fr-CA" }}
+              audioContext={{
+                moduleId: "francais-quebec-intro",
+                lessonId: "pre-arrival-intro",
+                accentProfile: "quebec_french",
+                speechLang: "fr-CA",
+              }}
             />
           </div>
         </section>

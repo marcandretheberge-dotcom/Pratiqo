@@ -20,11 +20,12 @@
  *  4. Tone — banned phrases ("second-class citizen", vitamin-D
  *     pseudo-advice, etc.) never ship. Bill 96 is not turned into
  *     fear language. An "official sources" disclaimer is shipped.
- *  5. Audio metadata — every survival word carries a structured
- *     `audioUrl: null` slot (so a future PR can wire MP3s without
- *     changing the data shape) AND the page wires
- *     `YoPronunciationButton` with `speechLang="fr-CA"` so the
- *     Web-Speech fallback uses a Quebec/French-Canadian voice.
+ *  5. Audio integration — every survival word resolves through the
+ *     pre-generated audio manifest (`accentProfile: "quebec_french"`).
+ *     The page wires `<YoFrenchAudioButton>` with the
+ *     `francais-quebec-intro` / `pre-arrival-intro` context so the
+ *     manifest lookup hits, with on-device Web-Speech (`fr-CA`) as
+ *     a graceful fallback when an item is missing.
  *  6. Out-of-scope guards — the intro never imports Stripe,
  *     Supabase, payment math, RLS migrations, booking or search
  *     code. Audio integration stays read-only (no OpenAI calls
@@ -315,38 +316,45 @@ test("immigration disclaimer points learners to official sources", () => {
   );
 });
 
-// ─── 5. Audio metadata ─────────────────────────────────────────────
-test("every survival word carries an audioUrl: null hook for future MP3s", () => {
-  // Count the literal `target:` rows under survivalWords and assert
-  // every one of them sits next to an `audioUrl: null` slot. Cheap
-  // structural sniff: all `target:` declarations + all
-  // `audioUrl: null` declarations should match the same N.
+// ─── 5. Audio integration ─────────────────────────────────────────
+test("each survival word has a real `target:` row (manifest now owns audio)", () => {
+  // We no longer ship per-row `audioUrl: null` placeholders — the
+  // pre-generated audio manifest is the single source of truth.
+  // What MUST stay true is that the data file declares ≥ 19 target
+  // rows so the page renders all the documented survival vocabulary.
   const targetCount = (dataSrc.match(/\btarget:\s*"/g) ?? []).length;
-  const audioSlotCount = (dataSrc.match(/\baudioUrl:\s*null\b/g) ?? []).length;
-  // survivalWords + flashcards both declare `target:` (flashcards
-  // call the field `front` in YoFlashcard, so they don't double-
-  // count). We only need ≥ the number of survivalWords audio slots.
-  assert.ok(
-    audioSlotCount >= 19,
-    `expected ≥ 19 audio slots (one per survival word), got ${audioSlotCount}`,
-  );
   assert.ok(
     targetCount >= 19,
     `expected ≥ 19 vocabulary targets (one per survival word), got ${targetCount}`,
   );
+  assert.ok(
+    !/\baudioUrl:\s*null\b/.test(dataSrc),
+    "data file must no longer ship per-row audioUrl: null placeholders (manifest replaces them)",
+  );
 });
 
-test("page wires Web-Speech fallback with a Quebec/Canadian French voice tag", () => {
-  // The page must forward `speechLang="fr-CA"` to the Web Speech
-  // pronunciation button so the on-device voice resolves to a
-  // Quebec/Canadian French voice when one is installed.
+test("page wires the pre-generated audio manifest via YoFrenchAudioButton", () => {
+  // The page renders the new wrapper, which prefers a manifest MP3
+  // and falls back to Web Speech only when an item is missing.
+  assert.match(
+    pageSrc,
+    /from\s+["']@\/components\/yo\/YoFrenchAudioButton["']/,
+    "page must import the YoFrenchAudioButton wrapper",
+  );
+  assert.match(
+    pageSrc,
+    /<YoFrenchAudioButton[\s\S]*?accentProfile="quebec_french"/,
+    "page must pass accentProfile=\"quebec_french\" to the wrapper",
+  );
+  // Web-Speech fallback must still declare `fr-CA` so the on-device
+  // voice resolves correctly when a manifest item is missing.
   assert.match(
     pageSrc,
     /speechLang\s*=\s*["']fr-CA["']/,
-    "page must pass speechLang=\"fr-CA\" to YoPronunciationButton",
+    "page must pass speechLang=\"fr-CA\" to the audio button",
   );
-  // And the flashcard deck must also declare fr-CA as its speech
-  // tag so flashcard pronunciation does not default to es-ES.
+  // Flashcard deck must forward the Quebec French context, including
+  // fr-CA, so card pronunciation never defaults to es-ES.
   assert.match(
     pageSrc,
     /speechLang:\s*["']fr-CA["']/,
