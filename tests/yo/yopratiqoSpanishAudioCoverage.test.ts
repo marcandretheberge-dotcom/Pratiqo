@@ -539,6 +539,52 @@ test("Spanish lesson surfaces use YoSpanishAudioButton (not raw YoPronunciationB
   }
 });
 
+test("YoReadingPreview no longer ships a section-level / full-text pronunciation button", () => {
+  // UX fix: the global speaker that sat at the top-right of "Lecture
+  // guidée / Mi primer texto en español" concatenated every body
+  // line into one Web-Speech utterance. That pathway was slow, often
+  // cut off mid-paragraph, and offered no value over the per-paragraph
+  // buttons (which resolve to a fast pre-generated MP3 each). It must
+  // not come back.
+  assert.ok(
+    !/\bfullText\b/.test(readingSrc),
+    "YoReadingPreview must not derive a `fullText` join — that powered the removed section-level button",
+  );
+  assert.ok(
+    !/section\.bodyLines\.join\s*\(/.test(readingSrc),
+    "YoReadingPreview must not concatenate bodyLines for a global utterance",
+  );
+  // The audio button now appears only inside the body-line loop and
+  // inside the vocabulary loop. There must be no third occurrence
+  // outside a `.map(` call.
+  const buttonOccurrences = (
+    readingSrc.match(/<YoSpanishAudioButton\b/g) ?? []
+  ).length;
+  assert.equal(
+    buttonOccurrences,
+    2,
+    `YoReadingPreview should render exactly two YoSpanishAudioButton callsites (per-paragraph + per-vocab); got ${buttonOccurrences}`,
+  );
+});
+
+test("YoReadingPreview keeps contextual audio for body lines and vocabulary items", () => {
+  // Per-paragraph: the audio button is bound to `text={line}` inside
+  // the bodyLines map. The component must keep that pathway because
+  // the manifest's reading sentences resolve from it.
+  assert.match(
+    readingSrc,
+    /text=\{line\}[\s\S]*?lessonId="reading-first-text"[\s\S]*?type="sentence"/,
+    "YoReadingPreview must keep the per-paragraph audio button (text={line})",
+  );
+  // Per-vocabulary: the audio button is bound to `text={item.target}`
+  // inside the vocabulary map.
+  assert.match(
+    readingSrc,
+    /text=\{item\.target\}[\s\S]*?lessonId="reading-first-text"[\s\S]*?type="word"/,
+    "YoReadingPreview must keep the per-vocabulary audio button (text={item.target})",
+  );
+});
+
 // ─────────────────────────────────────────────────────────────────────
 // 6. Security boundary — no secrets in any of the wrappers
 // ─────────────────────────────────────────────────────────────────────
