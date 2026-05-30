@@ -22,9 +22,11 @@
  *     variants. Forbidden tokens (`Paris`, `Africa`, `Afrique`, etc.)
  *     are absent in both FR and EN copy.
  *
- *  3. Launch scope — only Spanish exposes an `href` to a real
- *     parcours. French / English / Japanese stay `coming_soon` with
- *     `href: null` so the cards are non-clickable.
+ *  3. Launch scope — Spanish and the new Quebec-French pre-arrival
+ *     intro expose an `href` to a real parcours. English / Japanese
+ *     stay `coming_soon` with `href: null` so the cards are
+ *     non-clickable. The Quebec French route also exists on disk so
+ *     the open `href` is never broken on production.
  */
 
 import assert from "node:assert/strict";
@@ -333,7 +335,7 @@ test("French card copy mentions francisation and Québec / Canada", () => {
 });
 
 // ─── 3. Launch scope ───────────────────────────────────────────────
-test("Spanish remains the only available parcours; others stay coming_soon", () => {
+test("Spanish and Quebec French are available; English / Japanese stay coming_soon", () => {
   // Status flags are declared inline next to each card in the data
   // file. We extract the relative ordering (Spanish first, then
   // French / English / Japanese) and assert the status mapping.
@@ -341,7 +343,11 @@ test("Spanish remains the only available parcours; others stay coming_soon", () 
     pageSrc,
     /id:\s*"spanish"[\s\S]*?status:\s*"available"[\s\S]*?href:\s*"\/yo\/langues\/espagnol"/,
   );
-  for (const id of ["french", "english", "japanese"]) {
+  assert.match(
+    pageSrc,
+    /id:\s*"french"[\s\S]*?status:\s*"available"[\s\S]*?href:\s*"\/yo\/langues\/francais-quebec\/intro"/,
+  );
+  for (const id of ["english", "japanese"]) {
     const re = new RegExp(
       `id:\\s*"${id}"[\\s\\S]*?status:\\s*"coming_soon"[\\s\\S]*?href:\\s*null`,
     );
@@ -349,11 +355,12 @@ test("Spanish remains the only available parcours; others stay coming_soon", () 
   }
 });
 
-test("only one card carries an open href to a real /yo/langues route", () => {
-  // Every language card must declare an `href:` field — three null,
-  // exactly one pointing at the Spanish hub. This guards against a
-  // contributor flipping a `coming_soon` card into a clickable link
-  // before the parcours actually ships.
+test("the two open language hrefs point at routes that actually exist on disk", () => {
+  // Every language card must declare an `href:` field — two null,
+  // exactly two pointing at real /yo/langues routes. We verify the
+  // routes also exist on disk so a contributor cannot flip a
+  // `coming_soon` card into a clickable link before the parcours
+  // actually ships (a broken-link guard).
   const hrefMatches = [...pageSrc.matchAll(/href:\s*("[^"]+"|null)/g)];
   // The page also wires a hero language toggle (`buildYoLocaleHref`),
   // so the data-only `href:` count is exactly the four cards.
@@ -361,10 +368,25 @@ test("only one card carries an open href to a real /yo/langues route", () => {
     .map((m) => m[1])
     .filter((value) => value === "null" || value.startsWith('"/yo/langues'));
   assert.equal(cardHrefs.length, 4);
-  assert.equal(cardHrefs.filter((v) => v === "null").length, 3);
+  assert.equal(cardHrefs.filter((v) => v === "null").length, 2);
   assert.equal(
     cardHrefs.filter((v) => v === '"/yo/langues/espagnol"').length,
     1,
+  );
+  assert.equal(
+    cardHrefs.filter(
+      (v) => v === '"/yo/langues/francais-quebec/intro"',
+    ).length,
+    1,
+  );
+  // Both open routes must resolve to a real `page.tsx` on disk.
+  assert.ok(
+    exists("app/yo/langues/espagnol/page.tsx"),
+    "Spanish hub page must exist",
+  );
+  assert.ok(
+    exists("app/yo/langues/francais-quebec/intro/page.tsx"),
+    "Quebec French pre-arrival intro page must exist",
   );
 });
 

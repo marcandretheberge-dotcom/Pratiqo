@@ -5,12 +5,17 @@
  *
  *   YoPratiqo → Langues
  *
- * Renders four language cards. Only Spanish is available today; the
- * others sit as visible "Coming soon" cards so the product roadmap is
- * legible without forcing fake routes to exist.
+ * Renders four language cards. Two are open today:
+ *   - Spanish → /yo/langues/espagnol (Latin-American flavoured intro)
+ *   - Français du Québec → /yo/langues/francais-quebec/intro
+ *     (English-first pre-arrival orientation for international
+ *     learners moving to Quebec).
+ * English and Japanese still sit as visible "Coming soon" cards so
+ * the product roadmap is legible without forcing fake routes to
+ * exist.
  *
  * Locale behaviour: French default, English via `?lang=en`. The
- * Spanish card carries the locale through to the next route.
+ * available cards carry the locale through to the next route.
  *
  * No Supabase, no Stripe, no payment math, no checkout, no marketplace.
  */
@@ -64,8 +69,8 @@ const SECTION_TITLE = lstr(
 );
 
 const SECTION_BODY = lstr(
-  "On commence par l’espagnol. Les autres langues arrivent quand elles sont prêtes à enseigner sérieusement.",
-  "We start with Spanish. The other languages will arrive when they're ready to teach seriously.",
+  "L’espagnol et le français du Québec sont disponibles. Les autres langues arrivent quand elles sont prêtes à enseigner sérieusement.",
+  "Spanish and Quebec French are available. The other languages will arrive when they're ready to teach seriously.",
 );
 
 interface LanguageCard {
@@ -99,16 +104,17 @@ const LANGUAGES: LanguageCard[] = [
     id: "french",
     // Launch scope is intentionally narrow: francisation + Québec /
     // Canadian French. We are not yet supporting Parisian, African,
-    // or other global French variants — the badge palette is the
-    // Canadian flag (red/white/red) to match.
-    name: lstr("Français", "French"),
+    // or other global French variants — the badge is the Quebec
+    // fleurdelisé to match. The first open module is a free
+    // English-first pre-arrival intro for international learners.
+    name: lstr("Français du Québec", "Quebec French"),
     badge: "fr-ca",
     blurb: lstr(
-      "Francisation et français du Québec pour vivre, étudier ou travailler au Canada. À venir.",
-      "Francization and Québec/Canadian French for living, studying, or working in Canada. Coming soon.",
+      "Francisation et français du Québec pour vivre, étudier ou travailler au Canada. Intro gratuite disponible.",
+      "Francization and Quebec French for living, studying, or working in Canada. Free intro available.",
     ),
-    status: "coming_soon",
-    href: null,
+    status: "available",
+    href: "/yo/langues/francais-quebec/intro",
   },
   {
     id: "english",
