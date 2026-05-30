@@ -22,6 +22,10 @@ import { SITE_URL } from "@/lib/seo/site";
 import { buildYoLocaleHref, getYoLocale, lstr, t } from "@/lib/yo/localize";
 import type { YoLocalizedString } from "@/lib/yo/types";
 import { YoBreadcrumb } from "@/components/yo/YoBreadcrumb";
+import {
+  YoLanguageBadge,
+  type YoLanguageBadgeId,
+} from "@/components/yo/YoLanguageBadge";
 
 export const dynamic = "force-dynamic";
 
@@ -67,7 +71,13 @@ const SECTION_BODY = lstr(
 interface LanguageCard {
   id: string;
   name: YoLocalizedString;
-  flag: string;
+  /**
+   * Visual badge id. We render a CSS-painted swatch via
+   * `<YoLanguageBadge>` rather than a Unicode regional-indicator
+   * emoji, because Windows desktop ships no color flag glyphs and
+   * would degrade to a bare two-letter code (looks broken).
+   */
+  badge: YoLanguageBadgeId;
   blurb: YoLocalizedString;
   status: "available" | "coming_soon";
   href: string | null;
@@ -77,7 +87,7 @@ const LANGUAGES: LanguageCard[] = [
   {
     id: "spanish",
     name: lstr("Espagnol", "Spanish"),
-    flag: "🇪🇸",
+    badge: "es",
     blurb: lstr(
       "Une langue, plusieurs musiques. Comprends l’espagnol mondial, puis choisis un pays.",
       "One language, many musics. Understand world Spanish, then pick a country.",
@@ -87,11 +97,15 @@ const LANGUAGES: LanguageCard[] = [
   },
   {
     id: "french",
+    // Launch scope is intentionally narrow: francisation + Québec /
+    // Canadian French. We are not yet supporting Parisian, African,
+    // or other global French variants — the badge palette is the
+    // Canadian flag (red/white/red) to match.
     name: lstr("Français", "French"),
-    flag: "🇫🇷",
+    badge: "fr-ca",
     blurb: lstr(
-      "Du français de Paris au français québécois, en passant par l’Afrique. À venir.",
-      "From Parisian French to Quebec French and across Africa. Coming soon.",
+      "Francisation et français du Québec pour vivre, étudier ou travailler au Canada. À venir.",
+      "Francization and Québec/Canadian French for living, studying, or working in Canada. Coming soon.",
     ),
     status: "coming_soon",
     href: null,
@@ -99,7 +113,7 @@ const LANGUAGES: LanguageCard[] = [
   {
     id: "english",
     name: lstr("Anglais", "English"),
-    flag: "🇬🇧",
+    badge: "en",
     blurb: lstr(
       "Un anglais clair, utile et culturellement situé. À venir.",
       "Clear, useful, culturally situated English. Coming soon.",
@@ -110,7 +124,7 @@ const LANGUAGES: LanguageCard[] = [
   {
     id: "japanese",
     name: lstr("Japonais", "Japanese"),
-    flag: "🇯🇵",
+    badge: "ja",
     blurb: lstr(
       "Hiragana, mots du quotidien et culture, doucement. À venir.",
       "Hiragana, everyday words, and culture, taken gently. Coming soon.",
@@ -210,12 +224,10 @@ export default async function YoLanguesPage({ searchParams }: PageProps) {
                 <>
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
-                      <span
-                        aria-hidden
-                        className="text-2xl leading-none"
-                      >
-                        {language.flag}
-                      </span>
+                      <YoLanguageBadge
+                        language={language.badge}
+                        ariaLabel={t(language.name, locale)}
+                      />
                       <h3 className="text-lg font-semibold text-[#0F6E56] sm:text-xl">
                         {t(language.name, locale)}
                       </h3>
