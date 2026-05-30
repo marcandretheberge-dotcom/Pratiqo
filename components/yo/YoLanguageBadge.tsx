@@ -2,15 +2,15 @@
  * YoLanguageBadge - inline SVG flag swatch for the YoPratiqo language hub.
  *
  * Flag SVG artwork adapted from Wikimedia Commons public-domain / CC0 flag
- * files: Flag of Spain.svg, Flag of Quebec.svg, Flag of the United Kingdom (3-5).svg,
- * Flag of Japan.svg. Inlined to avoid production asset-path
- * failures.
+ * files, including Flag of Italy.svg, Flag of Spain.svg, Flag of Quebec.svg,
+ * Flag of the United Kingdom (3-5).svg, and Flag of Japan.svg. Inlined to
+ * avoid production asset-path failures.
  */
 
 import type { ReactElement } from "react";
 import { cn } from "@/lib/utils";
 
-export type YoLanguageBadgeId = "es" | "fr-ca" | "en" | "ja";
+export type YoLanguageBadgeId = "es" | "fr-ca" | "en" | "ja" | "it";
 
 export interface YoLanguageBadgeProps {
   language: YoLanguageBadgeId;
@@ -34,6 +34,12 @@ const SOURCE_SVG = {
   quebec: "<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" width=\"900\" height=\"600\" viewBox=\"0 0 9600 6400\"><path fill=\"#fff\" d=\"M0 0h9600v6400H0z\"/><g id=\"b\"><path fill=\"#003da5\" d=\"M4000 0v2400H0V0zM2309 1622v-129h-115c0-66 32-130 66-150 20-17 65-25 104-5 51 29 54 113 28 151 243-45 219-280 136-365-67-69-140-79-196-58-128 46-214 199-218 427h-67c0-207 36-273 130-534 48-123 19-275-65-415-31-50-69-95-112-144-43 49-81 94-112 144-84 140-113 292-65 415 94 261 130 327 130 534h-67c-4-228-90-381-218-427-56-21-129-11-196 58-83 85-107 320 136 365-26-38-23-122 28-151 39-20 84-12 104 5 34 20 66 84 66 150h-115v129h239c-3 67-39 119-106 148 8 28 49 85 105 81 11 60 21 94 71 149 50-55 60-89 71-149 56 4 97-53 105-81-67-29-103-81-106-148z\" id=\"a\"/><use xlink:href=\"#a\" x=\"5600\"/></g><use xlink:href=\"#b\" y=\"4000\"/></svg>",
   unitedKingdom: "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 50 30\" width=\"1000\" height=\"600\">\n\t<clipPath id=\"t\">\n\t\t<path d=\"M25,15h25v15zv15h-25zh-25v-15zv-15h25z\"/>\n\t</clipPath>\n\t<path d=\"M0,0v30h50v-30z\" fill=\"#012169\"/>\n\t<path d=\"M0,0 50,30M50,0 0,30\" stroke=\"#fff\" stroke-width=\"6\"/>\n\t<path d=\"M0,0 50,30M50,0 0,30\" clip-path=\"url(#t)\" stroke=\"#C8102E\" stroke-width=\"4\"/>\n\t<path d=\"M-1 11h22v-12h8v12h22v8h-22v12h-8v-12h-22z\" fill=\"#C8102E\" stroke=\"#FFF\" stroke-width=\"2\"/>\n</svg>",
   japan: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"900\" height=\"600\">\n<rect fill=\"#fff\" height=\"600\" width=\"900\"/>\n<circle fill=\"#bc002d\" cx=\"450\" cy=\"300\" r=\"180\"/>\n</svg>",
+  // Adapted from Wikimedia Commons "Flag of Italy.svg" — public-domain
+  // vertical green-white-red tricolour. Heraldic fills:
+  //   green #009246, white #ffffff, red #ce2b37.
+  // We deliberately do NOT add any coat of arms — the standard
+  // Italian national flag has none.
+  italy: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1500\" height=\"1000\" viewBox=\"0 0 3 2\">\n<path fill=\"#009246\" d=\"M0 0h1v2H0z\"/>\n<path fill=\"#ffffff\" d=\"M1 0h1v2H1z\"/>\n<path fill=\"#ce2b37\" d=\"M2 0h1v2H2z\"/>\n</svg>",
 } as const;
 
 function toInlineSvgDataUri(svg: string): string {
@@ -45,6 +51,7 @@ const FLAG_DATA_URI = {
   quebec: toInlineSvgDataUri(SOURCE_SVG.quebec),
   unitedKingdom: toInlineSvgDataUri(SOURCE_SVG.unitedKingdom),
   japan: toInlineSvgDataUri(SOURCE_SVG.japan),
+  italy: toInlineSvgDataUri(SOURCE_SVG.italy),
 } as const;
 
 function FlagSpain(): ReactElement {
@@ -79,11 +86,20 @@ function FlagJapan(): ReactElement {
   );
 }
 
+function FlagItaly(): ReactElement {
+  return (
+    <svg {...FLAG_SVG_PROPS} viewBox="0 0 3 2">
+      <image href={FLAG_DATA_URI.italy} width="3" height="2" />
+    </svg>
+  );
+}
+
 const LANGUAGE_FLAGS: Record<YoLanguageBadgeId, () => ReactElement> = {
   es: FlagSpain,
   "fr-ca": FlagQuebec,
   en: FlagUnitedKingdom,
   ja: FlagJapan,
+  it: FlagItaly,
 };
 
 const SIZE_STYLES = {

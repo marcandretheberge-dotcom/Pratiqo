@@ -105,8 +105,8 @@ test("page no longer carries raw Unicode regional-indicator emoji on the languag
   );
 });
 
-test("page declares badge ids for the four launch languages", () => {
-  for (const id of ['"es"', '"fr-ca"', '"en"', '"ja"']) {
+test("page declares badge ids for the five launch languages", () => {
+  for (const id of ['"es"', '"fr-ca"', '"en"', '"ja"', '"it"']) {
     assert.ok(
       pageSrc.includes(`badge: ${id}`),
       `language card data must declare badge: ${id}`,
@@ -121,8 +121,11 @@ test("YoLanguageBadge component renders accessible swatches without emoji", () =
   // The component must surface an aria-label for SR users.
   assert.match(badgeSrc, /aria-label\s*=\s*\{?\s*ariaLabel\s*\}?/);
   // It must declare a typed YoLanguageBadgeId union covering the
-  // four launch languages so the page's `badge:` field is type-safe.
-  assert.match(badgeSrc, /YoLanguageBadgeId\s*=\s*"es"\s*\|\s*"fr-ca"\s*\|\s*"en"\s*\|\s*"ja"/);
+  // five launch languages so the page's `badge:` field is type-safe.
+  assert.match(
+    badgeSrc,
+    /YoLanguageBadgeId\s*=\s*"es"\s*\|\s*"fr-ca"\s*\|\s*"en"\s*\|\s*"ja"\s*\|\s*"it"/,
+  );
 });
 
 test("YoLanguageBadge renders flags as inline <svg>, not <img>", () => {
@@ -161,7 +164,7 @@ test("YoLanguageBadge does not reference external /images/yo/flags asset paths",
 test("YoLanguageBadge declares an inline-SVG renderer for every language id", () => {
   // Each badge id must appear as a key in the inline renderer map
   // so the type system rules out a missing flag at compile time.
-  for (const id of ["es:", '"fr-ca":', "en:", "ja:"]) {
+  for (const id of ["es:", '"fr-ca":', "en:", "ja:", "it:"]) {
     assert.ok(
       badgeSrc.includes(id),
       `YoLanguageBadge must declare an entry for ${id}`,
@@ -178,6 +181,8 @@ test("YoLanguageBadge declares an inline-SVG renderer for every language id", ()
     "#012169", // UK navy
     "#C8102E", // UK red
     "#BC002D", // Japan red
+    "#009246", // Italy green from Wikimedia "Flag of Italy.svg"
+    "#CE2B37", // Italy red  from Wikimedia "Flag of Italy.svg"
   ];
   for (const fill of expectedFlagFills) {
     assert.ok(
@@ -238,6 +243,50 @@ test("Quebec renderer embeds the Wikimedia fleur-de-lis source, not old placehol
     badgeSrcCode,
     /xlink:href=\\"#a\\"/,
     "Quebec source must reuse the original fleur-de-lis path through the source-local use reference",
+  );
+});
+
+test("Italy renderer embeds the Wikimedia source tricolour, no coat of arms", () => {
+  // The standard Italian national flag is a vertical green-white-red
+  // tricolour with NO coat of arms. We test:
+  //   - the source note names "Flag of Italy.svg"
+  //   - the heraldic fills are the Wikimedia source colours
+  //   - the renderer keeps the simple 3:2 viewBox shape
+  //   - we never sneak a coat of arms onto the standard flag
+  assert.match(
+    badgeSrc,
+    /Flag of Italy\.svg/,
+    "source note must name the Wikimedia Italy file",
+  );
+  assert.match(
+    badgeSrcCode,
+    /viewBox="0 0 3 2"/,
+    "Italy renderer must keep the 3:2 viewBox",
+  );
+  // The three fills from the Wikimedia source.
+  assert.ok(
+    badgeSrc.toUpperCase().includes("#009246"),
+    "Italy green must come from the Wikimedia source",
+  );
+  assert.ok(
+    badgeSrc.toUpperCase().includes("#CE2B37"),
+    "Italy red must come from the Wikimedia source",
+  );
+  // Belt-and-suspenders: nothing in the Italy SOURCE_SVG entry can
+  // mention coats of arms — the standard national flag has none.
+  // We capture only the italy entry so we don't accidentally
+  // restrict any future Italy-specific civil/state flag stored
+  // elsewhere in the file.
+  const italyEntryMatch = badgeSrc.match(/italy:\s*"[^"]*"/);
+  assert.ok(italyEntryMatch, "italy SOURCE_SVG entry must exist");
+  const italyEntry = italyEntryMatch![0];
+  assert.ok(
+    !/coat\s+of\s+arms/i.test(italyEntry),
+    "Italy SOURCE_SVG must not embed a coat of arms",
+  );
+  assert.ok(
+    !/escudo/i.test(italyEntry),
+    "Italy SOURCE_SVG must not embed an escudo",
   );
 });
 
@@ -343,10 +392,10 @@ test("French card copy mentions francisation and Québec / Canada", () => {
 });
 
 // ─── 3. Launch scope ───────────────────────────────────────────────
-test("Spanish and Quebec French are available; English / Japanese stay coming_soon", () => {
+test("Spanish, Quebec French, and Italian are available; English / Japanese stay coming_soon", () => {
   // Status flags are declared inline next to each card in the data
-  // file. We extract the relative ordering (Spanish first, then
-  // French / English / Japanese) and assert the status mapping.
+  // file. We extract the relative ordering and assert the status
+  // mapping for each card.
   assert.match(
     pageSrc,
     /id:\s*"spanish"[\s\S]*?status:\s*"available"[\s\S]*?href:\s*"\/yo\/langues\/espagnol"/,
@@ -354,6 +403,10 @@ test("Spanish and Quebec French are available; English / Japanese stay coming_so
   assert.match(
     pageSrc,
     /id:\s*"french"[\s\S]*?status:\s*"available"[\s\S]*?href:\s*"\/yo\/langues\/francais-quebec\/intro"/,
+  );
+  assert.match(
+    pageSrc,
+    /id:\s*"italian"[\s\S]*?status:\s*"available"[\s\S]*?href:\s*"\/yo\/langues\/italien\/intro"/,
   );
   for (const id of ["english", "japanese"]) {
     const re = new RegExp(
@@ -363,19 +416,40 @@ test("Spanish and Quebec French are available; English / Japanese stay coming_so
   }
 });
 
-test("the two open language hrefs point at routes that actually exist on disk", () => {
+test("Italian card carries the documented launch copy and badge", () => {
+  // Italian is the third available language. The card must use the
+  // "it" badge and the brief's exact French/English copy so the
+  // hub page stays in sync with the marketing text.
+  assert.match(
+    pageSrc,
+    /id:\s*"italian"[\s\S]*?badge:\s*"it"/,
+    "Italian card must use badge: \"it\"",
+  );
+  assert.match(
+    pageSrc,
+    /Italien pour voyager, comprendre la culture et parler avec confiance dès les premières situations\. Nouveau\./,
+    "Italian FR copy must match the brief verbatim",
+  );
+  assert.match(
+    pageSrc,
+    /Italian for travel, culture, and confident first conversations\. New\./,
+    "Italian EN copy must match the brief verbatim",
+  );
+});
+
+test("the three open language hrefs point at routes that actually exist on disk", () => {
   // Every language card must declare an `href:` field — two null,
-  // exactly two pointing at real /yo/langues routes. We verify the
+  // exactly three pointing at real /yo/langues routes. We verify the
   // routes also exist on disk so a contributor cannot flip a
   // `coming_soon` card into a clickable link before the parcours
   // actually ships (a broken-link guard).
   const hrefMatches = [...pageSrc.matchAll(/href:\s*("[^"]+"|null)/g)];
   // The page also wires a hero language toggle (`buildYoLocaleHref`),
-  // so the data-only `href:` count is exactly the four cards.
+  // so the data-only `href:` count is exactly the five cards.
   const cardHrefs = hrefMatches
     .map((m) => m[1])
     .filter((value) => value === "null" || value.startsWith('"/yo/langues'));
-  assert.equal(cardHrefs.length, 4);
+  assert.equal(cardHrefs.length, 5);
   assert.equal(cardHrefs.filter((v) => v === "null").length, 2);
   assert.equal(
     cardHrefs.filter((v) => v === '"/yo/langues/espagnol"').length,
@@ -387,7 +461,11 @@ test("the two open language hrefs point at routes that actually exist on disk", 
     ).length,
     1,
   );
-  // Both open routes must resolve to a real `page.tsx` on disk.
+  assert.equal(
+    cardHrefs.filter((v) => v === '"/yo/langues/italien/intro"').length,
+    1,
+  );
+  // All three open routes must resolve to a real `page.tsx` on disk.
   assert.ok(
     exists("app/yo/langues/espagnol/page.tsx"),
     "Spanish hub page must exist",
@@ -395,6 +473,10 @@ test("the two open language hrefs point at routes that actually exist on disk", 
   assert.ok(
     exists("app/yo/langues/francais-quebec/intro/page.tsx"),
     "Quebec French pre-arrival intro page must exist",
+  );
+  assert.ok(
+    exists("app/yo/langues/italien/intro/page.tsx"),
+    "Italian intro page must exist",
   );
 });
 

@@ -47,7 +47,7 @@ export type YoLocalizedText = YoLocalizedString;
 export type YoProductLine = "voyage" | "musique" | "academique";
 
 /** ISO 639-1 language code of the language being taught. */
-export type YoTargetLanguage = "es" | "en" | "fr" | "pt";
+export type YoTargetLanguage = "es" | "en" | "fr" | "pt" | "it";
 
 /**
  * ISO 3166-1 alpha-2 destination country code.

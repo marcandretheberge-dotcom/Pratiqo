@@ -30,6 +30,11 @@
  *     (`francais-quebec-intro`). Adding more French variants (Parisian,
  *     African, etc.) is OUT OF SCOPE for the launch and must not be
  *     added here speculatively.
+ *   - `italian_standard` covers the Italian intro module
+ *     (`italian-intro`). Regional Italian variants (Tuscan, Sicilian,
+ *     Roman, etc.) are OUT OF SCOPE for the launch — the manifest
+ *     ships ONE profile per language until each regional course is
+ *     designed and validated by a native speaker.
  *
  * No client component imports this file directly today; it is consumed
  * by:
@@ -52,7 +57,8 @@ export type YoAudioAccentProfileId =
   | "puerto_rico"
   | "rioplatense_uruguay"
   | "spain_neutral"
-  | "quebec_french";
+  | "quebec_french"
+  | "italian_standard";
 
 export interface YoAudioAccentProfile {
   id: YoAudioAccentProfileId;
@@ -152,6 +158,15 @@ const PROFILES: Record<YoAudioAccentProfileId, YoAudioAccentProfile> = {
       "Speak in clear, friendly Quebec French for beginner learners. Use a natural but slightly slower pace. Keep pronunciation understandable for newcomers. Do not exaggerate slang or caricature the accent.",
     defaultVoice: "alloy",
     bcp47Hint: "fr-CA",
+  },
+  italian_standard: {
+    id: "italian_standard",
+    pathSlug: "italian-standard",
+    label: "Standard Italian",
+    ttsInstructions:
+      "Speak in clear, friendly standard Italian for beginner learners. Use a natural but slightly slower pace. Keep pronunciation understandable for newcomers. Do not exaggerate regional features.",
+    defaultVoice: "alloy",
+    bcp47Hint: "it-IT",
   },
 };
 

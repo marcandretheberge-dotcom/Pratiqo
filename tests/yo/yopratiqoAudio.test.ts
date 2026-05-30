@@ -92,10 +92,11 @@ const PUBLIC_FACING_FILES: Array<{ label: string; src: string }> = [
 // ── 1. Manifest hygiene ──────────────────────────────────────────────
 test("manifest is non-empty and exposes the expected primitive shape", () => {
   assert.ok(YOPRATIQO_AUDIO_MANIFEST.length >= 5, "manifest should ship at least 5 items");
-  // Manifest is now multi-language (Spanish + Quebec French). Keep the
-  // shape check tight — the targetLanguage union is `es | en | fr | pt`
-  // — but allow any lang the type system already permits.
-  const allowedLanguages = new Set<string>(["es", "fr", "en", "pt"]);
+  // Manifest is now multi-language (Spanish + Quebec French + Italian).
+  // Keep the shape check tight — the targetLanguage union is
+  // `es | en | fr | pt | it` — but allow any lang the type system
+  // already permits.
+  const allowedLanguages = new Set<string>(["es", "fr", "en", "pt", "it"]);
   for (const item of YOPRATIQO_AUDIO_MANIFEST) {
     assert.equal(typeof item.id, "string");
     assert.equal(typeof item.text, "string");

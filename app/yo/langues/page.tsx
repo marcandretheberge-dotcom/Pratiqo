@@ -5,11 +5,13 @@
  *
  *   YoPratiqo → Langues
  *
- * Renders four language cards. Two are open today:
+ * Renders five language cards. Three are open today:
  *   - Spanish → /yo/langues/espagnol (Latin-American flavoured intro)
  *   - Français du Québec → /yo/langues/francais-quebec/intro
  *     (English-first pre-arrival orientation for international
  *     learners moving to Quebec).
+ *   - Italian → /yo/langues/italien/intro (premium FR-default
+ *     orientation: standard Italian, regions, first words, audio).
  * English and Japanese still sit as visible "Coming soon" cards so
  * the product roadmap is legible without forcing fake routes to
  * exist.
@@ -44,7 +46,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "YoPratiqo — Langues",
     description:
-      "Espagnol disponible · français, anglais et japonais à venir.",
+      "Espagnol, français du Québec et italien disponibles · anglais et japonais à venir.",
     type: "website",
     url: `${SITE_URL}/yo/langues`,
     locale: "fr_CA",
@@ -69,8 +71,8 @@ const SECTION_TITLE = lstr(
 );
 
 const SECTION_BODY = lstr(
-  "L’espagnol et le français du Québec sont disponibles. Les autres langues arrivent quand elles sont prêtes à enseigner sérieusement.",
-  "Spanish and Quebec French are available. The other languages will arrive when they're ready to teach seriously.",
+  "L’espagnol, le français du Québec et l’italien sont disponibles. Les autres langues arrivent quand elles sont prêtes à enseigner sérieusement.",
+  "Spanish, Quebec French, and Italian are available. The other languages will arrive when they're ready to teach seriously.",
 );
 
 interface LanguageCard {
@@ -115,6 +117,25 @@ const LANGUAGES: LanguageCard[] = [
     ),
     status: "available",
     href: "/yo/langues/francais-quebec/intro",
+  },
+  {
+    id: "italian",
+    // Launch scope: standard Italian for travel, culture, and
+    // confident first conversations. Regional variants (Tuscan,
+    // Sicilian, Roman, Neapolitan, …) are intentionally OUT OF
+    // SCOPE — the audio manifest ships ONE accent profile per
+    // language until each regional course is designed and
+    // validated by a native speaker. The badge is the Italian
+    // tricolour. Italian (`it`) was the third open language at
+    // launch.
+    name: lstr("Italien", "Italian"),
+    badge: "it",
+    blurb: lstr(
+      "Italien pour voyager, comprendre la culture et parler avec confiance dès les premières situations. Nouveau.",
+      "Italian for travel, culture, and confident first conversations. New.",
+    ),
+    status: "available",
+    href: "/yo/langues/italien/intro",
   },
   {
     id: "english",
