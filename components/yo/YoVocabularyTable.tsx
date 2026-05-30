@@ -15,7 +15,10 @@ import type {
   YoVocabularyItem,
 } from "@/lib/yo/types";
 import { t } from "@/lib/yo/localize";
-import { YoPronunciationButton } from "@/components/yo/YoPronunciationButton";
+import {
+  YoSpanishAudioButton,
+  type YoSpanishAudioContext,
+} from "@/components/yo/YoSpanishAudioButton";
 
 export interface YoVocabularyTableProps {
   items: YoVocabularyItem[];
@@ -27,17 +30,27 @@ export interface YoVocabularyTableProps {
   id?: string;
   locale: YoLocale;
   /**
-   * Opt-in browser-native pronunciation buttons. Off by default so this
-   * component stays a pure server-rendered list everywhere it is used
-   * today; callers that want audio (Spanish intro vocab, reading helper,
-   * dictionary) flip this on explicitly.
+   * Opt-in audio buttons. Off by default so this component stays a pure
+   * server-rendered list everywhere it is used today; callers that want
+   * audio (Spanish intro vocab, reading helper, dictionary) flip this
+   * on explicitly. When on, the component prefers a pre-generated MP3
+   * via `YoSpanishAudioButton` (with `audioContext` to pick the right
+   * accent variant) and falls back to Web Speech otherwise.
    */
   enableAudio?: boolean;
   /**
-   * BCP-47 tag forwarded to SpeechSynthesis when `enableAudio` is true.
-   * Defaults to "es-ES" — country modules can prefer "es-DO", "es-MX", …
+   * BCP-47 tag forwarded to the Web Speech fallback when `enableAudio`
+   * is true. Defaults to "es-ES" — country modules can prefer "es-DO",
+   * "es-MX", … Mirrored on `audioContext.speechLang` if both are set.
    */
   speechLang?: string;
+  /**
+   * Optional lesson context forwarded to `YoSpanishAudioButton` so the
+   * pre-generated lookup picks the correct accent variant for this
+   * module. Without it, the wrapper still works (text-only lookup),
+   * but module-specific accent matching is skipped.
+   */
+  audioContext?: YoSpanishAudioContext;
 }
 
 export function YoVocabularyTable({
@@ -48,6 +61,7 @@ export function YoVocabularyTable({
   locale,
   enableAudio = false,
   speechLang = "es-ES",
+  audioContext,
 }: YoVocabularyTableProps) {
   if (items.length === 0) {
     return null;
@@ -82,10 +96,14 @@ export function YoVocabularyTable({
               >
                 <span>{item.target}</span>
                 {enableAudio ? (
-                  <YoPronunciationButton
+                  <YoSpanishAudioButton
                     text={item.target}
                     locale={locale}
-                    speechLang={speechLang}
+                    moduleId={audioContext?.moduleId}
+                    lessonId={audioContext?.lessonId}
+                    type={audioContext?.type}
+                    accentProfile={audioContext?.accentProfile}
+                    speechLang={audioContext?.speechLang ?? speechLang}
                     size="xs"
                   />
                 ) : null}

@@ -51,16 +51,29 @@ import { t } from "@/lib/yo/localize";
 import { YO_COPY } from "@/lib/yo/copy";
 import { YoImageVisual } from "@/components/yo/YoImageVisual";
 import { YoExpressionLocaleBadge } from "@/components/yo/YoVisuals";
-import { YoPronunciationButton } from "@/components/yo/YoPronunciationButton";
+import {
+  YoSpanishAudioButton,
+  type YoSpanishAudioContext,
+} from "@/components/yo/YoSpanishAudioButton";
 
 export interface YoFlashcardPreviewProps {
   cards: YoFlashcard[];
   locale: YoLocale;
   /**
-   * BCP-47 tag forwarded to SpeechSynthesis for the on-card audio button.
-   * Defaults to "es-ES"; the RD module passes "es-DO".
+   * BCP-47 tag forwarded to the Web Speech fallback when a card's
+   * Spanish front has no pre-generated MP3. Defaults to "es-ES";
+   * the RD module passes "es-DO".
    */
   speechLang?: string;
+  /**
+   * Optional lesson context. When set, every card prefers a
+   * pre-generated MP3 via `YoSpanishAudioButton` resolved against this
+   * context (so the RD deck can pick `dominican_republic` audio while
+   * the intro deck picks `latin_american_neutral`). When omitted the
+   * wrapper falls back to a text-only manifest lookup before Web
+   * Speech.
+   */
+  audioContext?: YoSpanishAudioContext;
 }
 
 const TONE: Record<YoFlashcardQuality, string> = {
@@ -80,6 +93,7 @@ export function YoFlashcardPreview({
   cards,
   locale,
   speechLang = "es-ES",
+  audioContext,
 }: YoFlashcardPreviewProps) {
   const total = cards.length;
   const [index, setIndex] = useState(0);
@@ -262,6 +276,7 @@ export function YoFlashcardPreview({
           onToggleAutoplay={toggleAutoplay}
           locale={locale}
           speechLang={speechLang}
+          audioContext={audioContext}
         />
       )}
     </section>
@@ -284,6 +299,7 @@ interface DeckCardProps {
   onToggleAutoplay: () => void;
   locale: YoLocale;
   speechLang: string;
+  audioContext?: YoSpanishAudioContext;
 }
 
 function DeckCard({
@@ -302,6 +318,7 @@ function DeckCard({
   onToggleAutoplay,
   locale,
   speechLang,
+  audioContext,
 }: DeckCardProps) {
   const isLast = index === total - 1;
   const isFirst = index === 0;
@@ -421,10 +438,14 @@ function DeckCard({
                   >
                     {card.front}
                   </p>
-                  <YoPronunciationButton
+                  <YoSpanishAudioButton
                     text={card.front}
                     locale={locale}
-                    speechLang={speechLang}
+                    moduleId={audioContext?.moduleId}
+                    lessonId={audioContext?.lessonId}
+                    type={audioContext?.type}
+                    accentProfile={audioContext?.accentProfile}
+                    speechLang={audioContext?.speechLang ?? speechLang}
                     size="sm"
                     className="mt-1"
                   />

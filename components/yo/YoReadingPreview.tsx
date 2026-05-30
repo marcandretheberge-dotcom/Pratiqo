@@ -30,7 +30,7 @@ import type {
 import { cn } from "@/lib/utils";
 import { t } from "@/lib/yo/localize";
 import { YO_COPY } from "@/lib/yo/copy";
-import { YoPronunciationButton } from "@/components/yo/YoPronunciationButton";
+import { YoSpanishAudioButton } from "@/components/yo/YoSpanishAudioButton";
 
 export interface YoReadingPreviewProps {
   section: YoReadingSection;
@@ -106,9 +106,13 @@ export function YoReadingPreview({ section, locale }: YoReadingPreviewProps) {
         <span className="ds-label text-[#1D9E75]">
           {t(section.eyebrow, locale)}
         </span>
-        <YoPronunciationButton
+        <YoSpanishAudioButton
           text={fullText}
           locale={locale}
+          moduleId="intro-a1"
+          lessonId="reading-first-text"
+          type="sentence"
+          accentProfile="latin_american_neutral"
           speechLang={speechLang}
           size="sm"
         />
@@ -140,9 +144,13 @@ export function YoReadingPreview({ section, locale }: YoReadingPreviewProps) {
             <p className="flex-1 text-base leading-relaxed text-[#1a3a32] sm:text-lg">
               {line}
             </p>
-            <YoPronunciationButton
+            <YoSpanishAudioButton
               text={line}
               locale={locale}
+              moduleId="intro-a1"
+              lessonId="reading-first-text"
+              type="sentence"
+              accentProfile="latin_american_neutral"
               speechLang={speechLang}
               size="xs"
               className="mt-1"
@@ -172,9 +180,13 @@ export function YoReadingPreview({ section, locale }: YoReadingPreviewProps) {
               <span className="font-semibold text-[#0F6E56]" lang="es">
                 {item.target}
               </span>
-              <YoPronunciationButton
+              <YoSpanishAudioButton
                 text={item.target}
                 locale={locale}
+                moduleId="intro-a1"
+                lessonId="reading-first-text"
+                type="word"
+                accentProfile="latin_american_neutral"
                 speechLang={speechLang}
                 size="xs"
               />

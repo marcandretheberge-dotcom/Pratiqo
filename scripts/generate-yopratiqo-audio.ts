@@ -75,6 +75,7 @@ import {
   YOPRATIQO_AUDIO_MANIFEST,
   type YoAudioItem,
 } from "../lib/yo/audio/audioManifest";
+import { getYoAudioAccentProfile } from "../lib/yo/audio/accentProfiles";
 
 // ─────────────────────────────────────────────────────────────────────
 // Constants — keep TTS model + voice in one place so a future tweak is
@@ -256,6 +257,49 @@ async function uploadMp3(
 }
 
 // ─────────────────────────────────────────────────────────────────────
+// Per-item plan resolution — pull voice + instructions out of the
+// accent profile so the data layer stays the source of truth and the
+// generator just executes.
+// ─────────────────────────────────────────────────────────────────────
+
+interface ItemPlan {
+  /** Final OpenAI voice id used for this request. */
+  voice: string;
+  /**
+   * `instructions` payload for OpenAI's `/v1/audio/speech`. When the
+   * model does not support steering (older `tts-1` / `tts-1-hd`), the
+   * field is silently ignored by the API — keeping it omitted on those
+   * models avoids 400s from strict gateways, which is why we let the
+   * env-overridable model decide whether instructions are sent.
+   */
+  instructions: string | null;
+}
+
+/**
+ * `instructions` is documented for the steerable speech models
+ * (`gpt-4o-mini-tts` and the newer `gpt-4o-tts-*` family). Older
+ * `tts-1` / `tts-1-hd` models accept the field but ignore it; we still
+ * skip it on those to keep the request body minimal.
+ */
+function modelSupportsInstructions(model: string): boolean {
+  return /(?:^|-)(?:gpt-4o[-\w]*-tts|gpt-5[-\w]*-tts)$/i.test(model)
+    || /^gpt-4o-mini-tts$/i.test(model);
+}
+
+function resolveItemPlan(cfg: ResolvedConfig, item: YoAudioItem): ItemPlan {
+  const profile = getYoAudioAccentProfile(item.accentProfile);
+  // Env override always wins so a contributor can A/B voices without
+  // touching the manifest. When env is unset we fall back to the
+  // profile's documented default voice.
+  const voice =
+    process.env.YOPRATIQO_TTS_VOICE?.trim() || profile.defaultVoice || cfg.voice;
+  const instructions = modelSupportsInstructions(cfg.model)
+    ? item.ttsInstructions ?? profile.ttsInstructions
+    : null;
+  return { voice, instructions };
+}
+
+// ─────────────────────────────────────────────────────────────────────
 // OpenAI TTS call — direct fetch against the documented REST endpoint.
 // We avoid pulling the openai SDK as a dep because nothing else in the
 // repo needs it and the API surface here is just one POST.
@@ -264,19 +308,24 @@ async function uploadMp3(
 async function generateMp3(
   cfg: ResolvedConfig,
   item: YoAudioItem,
+  plan: ItemPlan,
 ): Promise<ArrayBuffer> {
+  const body: Record<string, unknown> = {
+    model: cfg.model,
+    input: item.text,
+    voice: plan.voice,
+    response_format: RESPONSE_FORMAT,
+  };
+  if (plan.instructions) {
+    body.instructions = plan.instructions;
+  }
   const res = await fetch(OPENAI_TTS_ENDPOINT, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${cfg.openAiApiKey}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      model: cfg.model,
-      input: item.text,
-      voice: cfg.voice,
-      response_format: RESPONSE_FORMAT,
-    }),
+    body: JSON.stringify(body),
   });
   if (!res.ok) {
     const detail = await safeReadError(res);
@@ -319,6 +368,7 @@ async function main(): Promise<void> {
   let failed = 0;
 
   for (const item of YOPRATIQO_AUDIO_MANIFEST) {
+    const plan = resolveItemPlan(cfg, item);
     let exists = false;
     try {
       exists = await objectExists(supabase, cfg.bucket, item.storagePath);
@@ -341,17 +391,22 @@ async function main(): Promise<void> {
     }
 
     if (opts.dryRun) {
+      const instructionsTag = plan.instructions
+        ? "instructions=present"
+        : "instructions=absent";
       log.info(
-        `would generate ${item.id} (${item.type}, "${item.text}") → ${item.storagePath}`,
+        `would generate ${item.id} (${item.type}, "${item.text}") accent=${item.accentProfile} voice=${plan.voice} ${instructionsTag} → ${item.storagePath}`,
       );
       generated += 1;
       continue;
     }
 
     try {
-      const mp3 = await generateMp3(cfg, item);
+      const mp3 = await generateMp3(cfg, item, plan);
       await uploadMp3(supabase, cfg.bucket, item.storagePath, mp3);
-      log.ok(`generated ${item.id} → ${item.storagePath} (${mp3.byteLength} bytes)`);
+      log.ok(
+        `generated ${item.id} accent=${item.accentProfile} voice=${plan.voice} → ${item.storagePath} (${mp3.byteLength} bytes)`,
+      );
       generated += 1;
     } catch (err) {
       log.error(`${item.id} :: ${(err as Error).message}`);

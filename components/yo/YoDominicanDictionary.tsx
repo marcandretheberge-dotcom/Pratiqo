@@ -2,7 +2,14 @@
  * YoDominicanDictionary — pocket dictionary of Dominican Republic
  * expressions, filtered for A1.
  *
- * Pure presentational server component (no client state, no Supabase).
+ * Composed of:
+ *   - A server-rendered grid (this file)
+ *   - Optional inline audio buttons via `YoSpanishAudioButton`. Those
+ *     are CLIENT components, so the moment we render them this file
+ *     becomes a partial client island. We keep the wrapper opt-in via
+ *     the `audioContext` prop so callers without audio (e.g. legacy
+ *     marketing pages) keep their server-only behaviour.
+ *
  * The data layer (lib/yo/dominicanRepublicA1.ts) is responsible for
  * keeping the list A1-safe: no vulgar/mature/ambiguous slang. Future
  * B1+ entries will live in a separate dataset.
@@ -15,6 +22,10 @@ import type {
   YoLocalizedString,
 } from "@/lib/yo/types";
 import { DominicanFlagPin } from "@/components/yo/YoVisuals";
+import {
+  YoSpanishAudioButton,
+  type YoSpanishAudioContext,
+} from "@/components/yo/YoSpanishAudioButton";
 import { t } from "@/lib/yo/localize";
 import { YO_COPY } from "@/lib/yo/copy";
 
@@ -25,6 +36,13 @@ export interface YoDominicanDictionaryProps {
   title?: YoLocalizedString;
   /** Optional override for the subtitle. */
   subtitle?: YoLocalizedString;
+  /**
+   * Optional audio context. When set, every expression gets a
+   * `YoSpanishAudioButton` so learners can hear the Dominican
+   * pronunciation. When omitted, the dictionary stays a pure
+   * presentational list (Phase 1 behaviour).
+   */
+  audioContext?: YoSpanishAudioContext;
 }
 
 export function YoDominicanDictionary({
@@ -32,6 +50,7 @@ export function YoDominicanDictionary({
   locale,
   title,
   subtitle,
+  audioContext,
 }: YoDominicanDictionaryProps) {
   const resolvedTitle = t(title ?? YO_COPY.dictionary.title, locale);
   const resolvedSubtitle = t(
@@ -82,12 +101,26 @@ export function YoDominicanDictionary({
                 className="ds-card flex h-full flex-col gap-1 p-4 shadow-[0_1px_2px_rgba(15,58,52,0.04)] transition hover:border-teal-200 hover:shadow-[0_8px_24px_rgba(15,58,52,0.06)]"
                 aria-label={`${entry.target} ${ariaConnector} ${translation}`}
               >
-                <p
-                  lang="es"
-                  className="text-base font-semibold leading-tight tracking-tight text-[#1a3a32] sm:text-[1.05rem]"
-                >
-                  {entry.target}
-                </p>
+                <div className="flex items-start justify-between gap-2">
+                  <p
+                    lang="es"
+                    className="text-base font-semibold leading-tight tracking-tight text-[#1a3a32] sm:text-[1.05rem]"
+                  >
+                    {entry.target}
+                  </p>
+                  {audioContext ? (
+                    <YoSpanishAudioButton
+                      text={entry.target}
+                      locale={locale}
+                      moduleId={audioContext.moduleId}
+                      lessonId={audioContext.lessonId}
+                      type={audioContext.type ?? "phrase"}
+                      accentProfile={audioContext.accentProfile}
+                      speechLang={audioContext.speechLang}
+                      size="xs"
+                    />
+                  ) : null}
+                </div>
                 <p className="text-sm text-[var(--color-text-secondary)]">
                   {translation}
                 </p>

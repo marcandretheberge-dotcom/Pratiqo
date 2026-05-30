@@ -23,6 +23,10 @@ import type {
 import { YoImageVisual } from "@/components/yo/YoImageVisual";
 import { YoVocabularyTable } from "@/components/yo/YoVocabularyTable";
 import { YoDialogueScenario } from "@/components/yo/YoDialogueScenario";
+import {
+  YoSpanishAudioButton,
+  type YoSpanishAudioContext,
+} from "@/components/yo/YoSpanishAudioButton";
 import { t } from "@/lib/yo/localize";
 import { YO_COPY } from "@/lib/yo/copy";
 
@@ -33,6 +37,13 @@ export interface YoIntroSectionPanelProps {
   panelId: string;
   /** Close handler — Phase 1 always wires this to clear the selection. */
   onClose: () => void;
+  /**
+   * Optional audio context propagated to vocab/dialogue/practical
+   * phrase rows. Pass it from the orchestrator (e.g.
+   * `YoIntroExperience` for the Dominican Republic Voyage module) so
+   * pre-generated MP3s win over Web Speech.
+   */
+  audioContext?: YoSpanishAudioContext;
 }
 
 export function YoIntroSectionPanel({
@@ -40,6 +51,7 @@ export function YoIntroSectionPanel({
   locale,
   panelId,
   onClose,
+  audioContext,
 }: YoIntroSectionPanelProps) {
   const titleId = `${panelId}-title`;
   const sectionLabel = t(YO_COPY.panel.sectionLabel, locale);
@@ -176,6 +188,12 @@ export function YoIntroSectionPanel({
                 heading={group.heading}
                 id={`${panelId}-group-${index}`}
                 locale={locale}
+                enableAudio={Boolean(audioContext)}
+                audioContext={
+                  audioContext
+                    ? { ...audioContext, type: "phrase" }
+                    : undefined
+                }
               />
             ))}
           </div>
@@ -199,9 +217,21 @@ export function YoIntroSectionPanel({
                   >
                     <span
                       lang="es"
-                      className="text-[1.05rem] font-semibold tracking-tight text-[#1a3a32]"
+                      className="flex items-center gap-2 text-[1.05rem] font-semibold tracking-tight text-[#1a3a32]"
                     >
                       {phrase.target}
+                      {audioContext ? (
+                        <YoSpanishAudioButton
+                          text={phrase.target}
+                          locale={locale}
+                          moduleId={audioContext.moduleId}
+                          lessonId={audioContext.lessonId}
+                          type="phrase"
+                          accentProfile={audioContext.accentProfile}
+                          speechLang={audioContext.speechLang}
+                          size="xs"
+                        />
+                      ) : null}
                     </span>
                     <span className="text-sm text-teal-800/90">
                       {translation}
@@ -258,6 +288,10 @@ export function YoIntroSectionPanel({
             heading={vocabHeading}
             id={`${panelId}-vocab`}
             locale={locale}
+            enableAudio={Boolean(audioContext)}
+            audioContext={
+              audioContext ? { ...audioContext, type: "word" } : undefined
+            }
           />
         ) : null}
 
@@ -290,7 +324,11 @@ export function YoIntroSectionPanel({
 
         {/* Dialogue scenario */}
         {section.dialogue ? (
-          <YoDialogueScenario scenario={section.dialogue} locale={locale} />
+          <YoDialogueScenario
+            scenario={section.dialogue}
+            locale={locale}
+            audioContext={audioContext}
+          />
         ) : null}
       </div>
     </section>
