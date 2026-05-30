@@ -185,6 +185,85 @@ test("YoLanguageBadge declares an inline-SVG renderer for every language id", ()
   }
 });
 
+test("Spain inline SVG ships a recognisable coat of arms", () => {
+  // The simplified earlier iteration drew Spain as just three
+  // horizontal stripes. The production-quality iteration must
+  // render the official escudo on top of the yellow band.
+  // Cheap, robust structural sniff: a `data-yoflag-coa="es"`
+  // marker tags the COA group, plus the heraldic palette
+  // (gold pillar fill #C8A030 + Bourbon blue #0034AB) must
+  // be present somewhere in the inline markup.
+  assert.match(
+    badgeSrcCode,
+    /data-yoflag-coa\s*=\s*["']es["']/,
+    "Spain inline SVG must mark up a coat-of-arms group (data-yoflag-coa=\"es\")",
+  );
+  for (const colour of [
+    "#C8A030", // gold pillars / shield border
+    "#0034AB", // Bourbon inescutcheon blue
+  ]) {
+    assert.ok(
+      badgeSrcCode.toUpperCase().includes(colour.toUpperCase()),
+      `Spain coat of arms must use the ${colour} heraldic colour`,
+    );
+  }
+});
+
+test("Québec inline SVG ships real heraldic fleurs-de-lis (not placeholder dots)", () => {
+  // Each of the four quadrants must declare a fleur-de-lis
+  // marker, and the path data must contain the curve commands
+  // that produce a real heraldic shape (centre petal + outer
+  // curling petals). A plain placeholder (e.g. `<circle>`) on
+  // its own would not satisfy this check.
+  for (const id of ["qc-tl", "qc-tr", "qc-bl", "qc-br"]) {
+    assert.match(
+      badgeSrcCode,
+      new RegExp(`data-yoflag-fleur\\s*=\\s*["']${id}["']`),
+      `Québec inline SVG must mark up a fleur-de-lis at quadrant ${id}`,
+    );
+  }
+  // Fleur-de-lis path must contain curve segments (`C` cubic
+  // bézier commands), not just straight lines or circles. Real
+  // heraldic fleurs require curved petals.
+  const fleurPathRe =
+    /M0\s+-10[\s\S]*?C[^"]*?C[^"]*?C[^"]*?Z[\s\S]*?L0\s+11/;
+  assert.match(
+    badgeSrcCode,
+    fleurPathRe,
+    "Québec fleur-de-lis path must include the heraldic petal curves and bottom point",
+  );
+});
+
+test("United Kingdom inline SVG counter-changes the St Patrick saltire", () => {
+  // The simplified iteration drew the red saltire centred on
+  // the white. The production-quality iteration must offset
+  // the two red diagonals perpendicular to each other so the
+  // result reads as the heraldic counter-change. We sniff for
+  // the two characteristic offset coordinates the implementation
+  // computed (≈ 1.3 / 2 unit perpendicular displacement on a
+  // 60×40 viewBox).
+  assert.match(
+    badgeSrcCode,
+    /M-?1\.3\s+2\s+L\s*58\.7\s+42/,
+    "UK inline SVG must offset the TL-BR red saltire (red below white)",
+  );
+  assert.match(
+    badgeSrcCode,
+    /M\s*58\.7\s+-2\s+L-?1\.3\s+38/,
+    "UK inline SVG must offset the TR-BL red saltire (red above white)",
+  );
+});
+
+test("language flags never embed <text> labels inside the flag", () => {
+  // No two-letter codes (ES / FR / EN / JP) hidden as <text>
+  // children of any flag <svg>. The wrapper's aria-label is
+  // what a SR user hears.
+  assert.ok(
+    !/<text\b/.test(badgeSrcCode),
+    "YoLanguageBadge must not render <text> inside any flag",
+  );
+});
+
 test("YoLanguageBadge no longer paints flags via CSS gradients", () => {
   // The earlier "fake flag" iteration stacked linear/radial
   // gradients. Inline real SVG ships now, so the component must
