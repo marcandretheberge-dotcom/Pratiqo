@@ -395,7 +395,7 @@ async function main(): Promise<void> {
         ? "instructions=present"
         : "instructions=absent";
       log.info(
-        `would generate ${item.id} (${item.type}, "${item.text}") accent=${item.accentProfile} voice=${plan.voice} ${instructionsTag} → ${item.storagePath}`,
+        `would generate ${item.id} (${item.type}, "${item.text}") lang=${item.targetLanguage} accent=${item.accentProfile} voice=${plan.voice} ${instructionsTag} → ${item.storagePath}`,
       );
       generated += 1;
       continue;
@@ -405,7 +405,7 @@ async function main(): Promise<void> {
       const mp3 = await generateMp3(cfg, item, plan);
       await uploadMp3(supabase, cfg.bucket, item.storagePath, mp3);
       log.ok(
-        `generated ${item.id} accent=${item.accentProfile} voice=${plan.voice} → ${item.storagePath} (${mp3.byteLength} bytes)`,
+        `generated ${item.id} lang=${item.targetLanguage} accent=${item.accentProfile} voice=${plan.voice} → ${item.storagePath} (${mp3.byteLength} bytes)`,
       );
       generated += 1;
     } catch (err) {

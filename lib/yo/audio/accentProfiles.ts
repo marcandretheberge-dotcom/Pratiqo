@@ -1,12 +1,13 @@
 /**
- * YoPratiqo — Spanish accent profiles for pre-generated audio.
+ * YoPratiqo — accent profiles for pre-generated audio.
  *
  * Why this file:
  *
  * Phase 1 generated audio with a single global voice/instruction. As we
- * add more Spanish lesson content (Dominican Republic dictionary +
- * dialogue, future Puerto Rico / Uruguay modules), learners benefit
- * when the recording sounds like the country they're studying.
+ * add more lesson content (Dominican Republic dictionary + dialogue,
+ * Quebec French pre-arrival intro, future Puerto Rico / Uruguay
+ * modules), learners benefit when the recording sounds like the
+ * country they're studying.
  *
  * Important caveats — codified here so the docs and the generator
  * carry the same disclaimer:
@@ -21,6 +22,14 @@
  *      Pan-Hispanic vocabulary (e.g. "Buenos días", "Gracias") falls
  *      back to the latin_american_neutral profile — the same MP3 is
  *      reused across modules to keep the bucket lean.
+ *
+ * Profile scope:
+ *   - Spanish profiles cover the existing `intro-a1` and `voyage / RD`
+ *     modules.
+ *   - `quebec_french` covers the Quebec / francisation module
+ *     (`francais-quebec-intro`). Adding more French variants (Parisian,
+ *     African, etc.) is OUT OF SCOPE for the launch and must not be
+ *     added here speculatively.
  *
  * No client component imports this file directly today; it is consumed
  * by:
@@ -42,7 +51,8 @@ export type YoAudioAccentProfileId =
   | "dominican_republic"
   | "puerto_rico"
   | "rioplatense_uruguay"
-  | "spain_neutral";
+  | "spain_neutral"
+  | "quebec_french";
 
 export interface YoAudioAccentProfile {
   id: YoAudioAccentProfileId;
@@ -133,6 +143,15 @@ const PROFILES: Record<YoAudioAccentProfileId, YoAudioAccentProfile> = {
       "Speak in clear European Spanish from Spain, beginner-friendly and natural. Keep distincion (z and soft c as a th-like sound) but stay easy to follow.",
     defaultVoice: "alloy",
     bcp47Hint: "es-ES",
+  },
+  quebec_french: {
+    id: "quebec_french",
+    pathSlug: "quebec-french",
+    label: "Quebec French",
+    ttsInstructions:
+      "Speak in clear, friendly Quebec French for beginner learners. Use a natural but slightly slower pace. Keep pronunciation understandable for newcomers. Do not exaggerate slang or caricature the accent.",
+    defaultVoice: "alloy",
+    bcp47Hint: "fr-CA",
   },
 };
 
