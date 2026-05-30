@@ -161,6 +161,12 @@ export function YoIntroExperience({
             locale={locale}
             panelId={panelIdFor(selectedSection.id)}
             onClose={handleClose}
+            audioContext={{
+              moduleId: "voyage",
+              lessonId: "republique-dominicaine-a1-lesson-01",
+              accentProfile: "dominican_republic",
+              speechLang: "es-DO",
+            }}
           />
         </div>
       ) : (
@@ -181,9 +187,25 @@ export function YoIntroExperience({
       <YoDominicanDictionary
         expressions={dominicanDictionary}
         locale={locale}
+        audioContext={{
+          moduleId: "voyage",
+          lessonId: "republique-dominicaine-a1-lesson-01",
+          accentProfile: "dominican_republic",
+          speechLang: "es-DO",
+        }}
       />
 
-      <YoFlashcardPreview cards={flashcardDeck} locale={locale} />
+      <YoFlashcardPreview
+        cards={flashcardDeck}
+        locale={locale}
+        speechLang="es-DO"
+        audioContext={{
+          moduleId: "voyage",
+          lessonId: "republique-dominicaine-a1-lesson-01",
+          accentProfile: "dominican_republic",
+          speechLang: "es-DO",
+        }}
+      />
 
       <YoQuizPreview questions={quizQuestions} locale={locale} />
 

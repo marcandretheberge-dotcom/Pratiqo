@@ -40,11 +40,9 @@ import { spanishIntroA1 } from "@/lib/yo/spanishIntroA1";
 import { YoBreadcrumb } from "@/components/yo/YoBreadcrumb";
 import { YoCoachPanel } from "@/components/yo/YoCoachPanel";
 import { YoFlashcardPreview } from "@/components/yo/YoFlashcardPreview";
-import { YoAudioPlayer } from "@/components/yo/YoAudioPlayer";
-import { YoPronunciationButton } from "@/components/yo/YoPronunciationButton";
 import { YoQuizPreview } from "@/components/yo/YoQuizPreview";
 import { YoReadingPreview } from "@/components/yo/YoReadingPreview";
-import { findAudioItemByText } from "@/lib/yo/audio/audioManifest";
+import { YoSpanishAudioButton } from "@/components/yo/YoSpanishAudioButton";
 
 export const dynamic = "force-dynamic";
 
@@ -392,11 +390,6 @@ export default async function YoEspagnolIntroPage({ searchParams }: PageProps) {
           </p>
           <ul role="list" className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {universalWords.map((word) => {
-              // Prefer the pre-generated MP3 from Supabase Storage when
-              // the manifest covers this word; otherwise keep the existing
-              // browser-native Web Speech button so learners always have
-              // *some* pronunciation cue. See `lib/yo/audio/audioManifest.ts`.
-              const audioItem = findAudioItemByText(word.target);
               return (
                 <li
                   key={word.target}
@@ -406,20 +399,15 @@ export default async function YoEspagnolIntroPage({ searchParams }: PageProps) {
                     <p className="text-lg font-semibold text-[#0F6E56]" lang="es">
                       {word.target}
                     </p>
-                    {audioItem ? (
-                      <YoAudioPlayer
-                        storagePath={audioItem.storagePath}
-                        label={audioItem.text}
-                        size="xs"
-                      />
-                    ) : (
-                      <YoPronunciationButton
-                        text={word.target}
-                        locale={locale}
-                        speechLang="es-ES"
-                        size="xs"
-                      />
-                    )}
+                    <YoSpanishAudioButton
+                      text={word.target}
+                      locale={locale}
+                      moduleId="intro-a1"
+                      lessonId="universal-words"
+                      accentProfile="latin_american_neutral"
+                      speechLang="es-ES"
+                      size="xs"
+                    />
                   </div>
                   <p className="mt-1 text-sm text-[#0F6E56]/80">
                     {t(word.translation, locale)}
@@ -446,6 +434,12 @@ export default async function YoEspagnolIntroPage({ searchParams }: PageProps) {
           cards={flashcards}
           locale={locale}
           speechLang="es-ES"
+          audioContext={{
+            moduleId: "intro-a1",
+            lessonId: "universal-words",
+            accentProfile: "latin_american_neutral",
+            speechLang: "es-ES",
+          }}
         />
 
         {/* 7b) YoPratiqo Coach — deterministic next-step recommendation */}

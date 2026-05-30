@@ -15,15 +15,27 @@
 
 import type { YoDialogueScenarioData, YoLocale } from "@/lib/yo/types";
 import { t } from "@/lib/yo/localize";
+import {
+  YoSpanishAudioButton,
+  type YoSpanishAudioContext,
+} from "@/components/yo/YoSpanishAudioButton";
 
 export interface YoDialogueScenarioProps {
   scenario: YoDialogueScenarioData;
   locale: YoLocale;
+  /**
+   * Optional audio context. When provided, each dialogue line gets a
+   * `YoSpanishAudioButton` so learners can hear the receptionist /
+   * learner turns. The wrapper picks the correct accent variant for
+   * the lesson (e.g. dominican_republic for the RD hotel dialogue).
+   */
+  audioContext?: YoSpanishAudioContext;
 }
 
 export function YoDialogueScenario({
   scenario,
   locale,
+  audioContext,
 }: YoDialogueScenarioProps) {
   const titleId = `yo-dialogue-${slug(scenario.title.fr)}-title`;
   return (
@@ -52,21 +64,36 @@ export function YoDialogueScenario({
                 {t(line.speakerLabel, locale)}
               </span>
               <div
-                className={`max-w-[88%] rounded-2xl px-3.5 py-2.5 text-sm leading-snug shadow-[0_1px_2px_rgba(15,58,52,0.05)] ring-1 sm:text-[0.95rem] ${
+                className={`flex max-w-[88%] items-start gap-2 rounded-2xl px-3.5 py-2.5 text-sm leading-snug shadow-[0_1px_2px_rgba(15,58,52,0.05)] ring-1 sm:text-[0.95rem] ${
                   isSelf
                     ? "rounded-br-md bg-teal-600 text-white ring-teal-700/20"
                     : "rounded-bl-md bg-[#fff4e2] text-[#7a4f1d] ring-[#f3dcb4]"
                 }`}
               >
-                <p lang="es" className="font-medium">
-                  {line.target}
-                </p>
-                {line.translation ? (
-                  <p
-                    className={`mt-1 text-xs ${isSelf ? "text-white/85" : "text-[#7a4f1d]/85"}`}
-                  >
-                    {t(line.translation, locale)}
+                <div className="flex flex-1 flex-col">
+                  <p lang="es" className="font-medium">
+                    {line.target}
                   </p>
+                  {line.translation ? (
+                    <p
+                      className={`mt-1 text-xs ${isSelf ? "text-white/85" : "text-[#7a4f1d]/85"}`}
+                    >
+                      {t(line.translation, locale)}
+                    </p>
+                  ) : null}
+                </div>
+                {audioContext ? (
+                  <YoSpanishAudioButton
+                    text={line.target}
+                    locale={locale}
+                    moduleId={audioContext.moduleId}
+                    lessonId={audioContext.lessonId}
+                    type={audioContext.type ?? "dialogue"}
+                    accentProfile={audioContext.accentProfile}
+                    speechLang={audioContext.speechLang}
+                    size="xs"
+                    className="mt-0.5 shrink-0"
+                  />
                 ) : null}
               </div>
             </li>

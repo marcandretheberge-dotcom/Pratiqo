@@ -26,8 +26,14 @@ app/yo/.../page.tsx                  one-line wiring, with fallback
 
 ## Storage path convention
 
-Every MP3 lives at the deterministic path encoded by
-`buildStoragePath()` in `lib/yo/audio/audioManifest.ts`:
+The manifest supports two layouts. Both are deterministic and tested
+in `tests/yo/yopratiqoAudio.test.ts`.
+
+### Phase 1 (legacy) — no accent segment
+
+Used by the eight Phase 1 entries that are already uploaded. Kept
+indefinitely so previously-generated MP3s are never orphaned. Built
+by `buildLegacyStoragePath()`.
 
 ```
 yo/<targetLanguage>/<moduleId>/<lessonId>/<type>/<slug>.mp3
@@ -41,6 +47,23 @@ yo/es/intro-a1/universal-words/phrase/me-llamo.mp3
 yo/es/voyage/republique-dominicaine-a1-lesson-01/dialogue/que-lo-que.mp3
 ```
 
+### Phase 2 (accent-aware) — every NEW lesson
+
+Used by every entry added in Phase 2. The accent segment groups MP3s
+inside Supabase Storage so a contributor can spot regional clusters
+at a glance. Built by `buildStoragePath()`.
+
+```
+yo/<targetLanguage>/<moduleId>/<lessonId>/<accentSlug>/<type>/<slug>.mp3
+```
+
+Examples:
+
+```
+yo/es/intro-a1/reading-first-text/latin-american-neutral/word/vivo.mp3
+yo/es/voyage/republique-dominicaine-a1-lesson-01/dominican-republic/phrase/tato.mp3
+```
+
 Path safety rules (enforced by `tests/yo/yopratiqoAudio.test.ts`):
 
 - ASCII-only — accents are stripped at slug time.
@@ -48,6 +71,26 @@ Path safety rules (enforced by `tests/yo/yopratiqoAudio.test.ts`):
 - No spaces — non-`[a-z0-9]` runs collapse to a single `-`.
 - Always ends in `.mp3`.
 - Globally unique storage paths (no two manifest items share one).
+
+## Accent profiles
+
+Spanish lesson audio is tagged with a typed accent profile defined in
+`lib/yo/audio/accentProfiles.ts`:
+
+| Profile id              | Path slug                | Used by                                       |
+| ----------------------- | ------------------------ | --------------------------------------------- |
+| `latin_american_neutral`| `latin-american-neutral` | Intro module · pan-Hispanic vocabulary        |
+| `dominican_republic`    | `dominican-republic`     | República Dominicana dictionary + dialogue + Dominican dishes |
+| `puerto_rico`           | `puerto-rico`            | Reserved (no Puerto Rico module yet)          |
+| `rioplatense_uruguay`   | `rioplatense-uruguay`    | Reserved (no Uruguay module yet)              |
+| `spain_neutral`         | `spain-neutral`          | Reserved (future European Spanish content)    |
+
+Each profile carries a beginner-friendly TTS instruction string the
+generator passes to OpenAI's `instructions` field on steerable models
+(`gpt-4o-mini-tts`). **OpenAI TTS accent steering is best-effort.**
+Do not promise "native [country] speaker" anywhere in marketing copy
+— the generator clings to that boundary in
+`tests/yo/yopratiqoSpanishAudioCoverage.test.ts`.
 
 ## One-time Supabase Storage setup (manual)
 
@@ -114,20 +157,35 @@ Behaviour:
 
 ## Frontend usage
 
+Use the `YoSpanishAudioButton` wrapper at every Spanish lesson
+surface. It centralises the contextual manifest lookup and falls
+back to the on-device `YoPronunciationButton` (Web Speech) when no
+MP3 matches.
+
 ```tsx
-import { YoAudioPlayer } from "@/components/yo/YoAudioPlayer";
-import { findAudioItemByText } from "@/lib/yo/audio/audioManifest";
+import { YoSpanishAudioButton } from "@/components/yo/YoSpanishAudioButton";
 
-const item = findAudioItemByText("Hola");
-
-return item ? (
-  <YoAudioPlayer storagePath={item.storagePath} label={item.text} />
-) : (
-  // Fallback to the existing browser-native pronunciation button when
-  // no pre-generated audio has been authored for this text yet.
-  <YoPronunciationButton text="Hola" locale={locale} speechLang="es-ES" />
-);
+<YoSpanishAudioButton
+  text={word.target}
+  locale={locale}
+  moduleId="voyage"
+  lessonId="republique-dominicaine-a1-lesson-01"
+  accentProfile="dominican_republic"
+  speechLang="es-DO"
+/>
 ```
+
+Lookup precedence (defined in `audioManifest.ts →
+findAudioItemForContext`):
+
+1. Exact match on (moduleId, lessonId, type, normalised text,
+   accent profile).
+2. Match on (moduleId, normalised text, accent profile).
+3. Match on (normalised text, accent profile).
+4. Match on (normalised text, `latin_american_neutral`) — graceful
+   degrade so a Caribbean module never breaks just because a
+   pan-Hispanic word was only recorded once.
+5. Plain text match (any accent).
 
 The player handles three failure modes without breaking the page:
 
@@ -138,13 +196,15 @@ The player handles three failure modes without breaking the page:
    button switches to a disabled "audio unavailable" state.
 3. Browser cannot decode the asset → same disabled state.
 
-## Out of scope (Phase 1)
+## Out of scope
 
 - **Live OpenAI TTS for learner-typed text.** Not wired into the UI.
   If we add it later, it MUST go through a server route — never
   ship `OPENAI_API_KEY` to the browser.
-- **Slow / fast playback variants.** Manifest carries `voiceHint` so
-  we can split into `<region>/normal` / `<region>/slow` paths later
-  without renaming items.
-- **Per-region voice routing.** Phase 1 uses one global voice; the
-  `voiceHint` field is recorded but not branched on yet.
+- **Per-card slow / fast playback variants.** Manifest carries
+  `voiceHint` so we can split into `<region>/normal` /
+  `<region>/slow` paths later without renaming items.
+- **Global accent selector UI.** Each module currently picks the
+  correct accent (intro = neutral; RD = Dominican). A future global
+  selector can read the profile id from a context provider without
+  changing the manifest shape.

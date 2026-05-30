@@ -61,8 +61,17 @@ function test(name: string, fn: TestFn): void {
 
 // ── Sources we audit statically ──────────────────────────────────────
 const audioManifestSrc = read("lib/yo/audio/audioManifest.ts");
+const audioManifestTypesSrc = read(
+  "lib/yo/audio/audioManifest.types-internal.ts",
+);
+const accentProfilesSrc = read("lib/yo/audio/accentProfiles.ts");
+const spanishIntroAudioSrc = read("lib/yo/audio/spanishIntroAudio.ts");
+const spanishVoyageDominicanAudioSrc = read(
+  "lib/yo/audio/spanishVoyageDominicanAudio.ts",
+);
 const audioUrlSrc = read("lib/yo/audio/audioUrl.ts");
 const playerSrc = read("components/yo/YoAudioPlayer.tsx");
+const wrapperSrc = read("components/yo/YoSpanishAudioButton.tsx");
 const scriptSrc = read("scripts/generate-yopratiqo-audio.ts");
 const introPageSrc = read("app/yo/langues/espagnol/intro/page.tsx");
 const envExampleSrc = read(".env.example");
@@ -70,8 +79,13 @@ const packageJsonSrc = read("package.json");
 
 const PUBLIC_FACING_FILES: Array<{ label: string; src: string }> = [
   { label: "lib/yo/audio/audioManifest.ts", src: audioManifestSrc },
+  { label: "lib/yo/audio/audioManifest.types-internal.ts", src: audioManifestTypesSrc },
+  { label: "lib/yo/audio/accentProfiles.ts", src: accentProfilesSrc },
+  { label: "lib/yo/audio/spanishIntroAudio.ts", src: spanishIntroAudioSrc },
+  { label: "lib/yo/audio/spanishVoyageDominicanAudio.ts", src: spanishVoyageDominicanAudioSrc },
   { label: "lib/yo/audio/audioUrl.ts", src: audioUrlSrc },
   { label: "components/yo/YoAudioPlayer.tsx", src: playerSrc },
+  { label: "components/yo/YoSpanishAudioButton.tsx", src: wrapperSrc },
   { label: "app/yo/langues/espagnol/intro/page.tsx", src: introPageSrc },
 ];
 
@@ -83,7 +97,9 @@ test("manifest is non-empty and exposes the expected primitive shape", () => {
     assert.equal(typeof item.text, "string");
     assert.equal(typeof item.storagePath, "string");
     assert.equal(item.targetLanguage, "es");
-    assert.ok(["word", "phrase", "dialogue", "instruction"].includes(item.type));
+    assert.ok(
+      ["word", "phrase", "dialogue", "instruction", "sentence"].includes(item.type),
+    );
   }
 });
 
@@ -142,15 +158,48 @@ test("buildAudioSlug strips accents, spaces, punctuation and lowercases", () => 
   assert.equal(buildAudioSlug("Mucho   gusto!!!"), "mucho-gusto");
 });
 
-test("buildStoragePath yields the same shape used by manifest items", () => {
+test("buildStoragePath yields the accent-aware shape used by Phase-2 manifest items", () => {
   const path = buildStoragePath({
     targetLanguage: "es",
     moduleId: "intro-a1",
-    lessonId: "universal-words",
+    lessonId: "reading-first-text",
     type: "word",
-    slug: "hola",
+    slug: "vivo",
+    accentSegment: "latin-american-neutral",
   });
-  assert.equal(path, "yo/es/intro-a1/universal-words/word/hola.mp3");
+  assert.equal(
+    path,
+    "yo/es/intro-a1/reading-first-text/latin-american-neutral/word/vivo.mp3",
+  );
+});
+
+test("Phase 1 legacy storage paths are still present in the manifest (backward compat)", () => {
+  const expected = [
+    "yo/es/intro-a1/universal-words/word/hola.mp3",
+    "yo/es/intro-a1/universal-words/word/gracias.mp3",
+    "yo/es/intro-a1/universal-words/word/por-favor.mp3",
+    "yo/es/intro-a1/universal-words/word/buenos-dias.mp3",
+    "yo/es/intro-a1/universal-words/word/mucho-gusto.mp3",
+    "yo/es/intro-a1/universal-words/phrase/como-estas.mp3",
+    "yo/es/intro-a1/universal-words/phrase/me-llamo.mp3",
+    "yo/es/voyage/republique-dominicaine-a1-lesson-01/dialogue/que-lo-que.mp3",
+  ];
+  const allPaths = new Set(YOPRATIQO_AUDIO_MANIFEST.map((i) => i.storagePath));
+  for (const path of expected) {
+    assert.ok(
+      allPaths.has(path),
+      `Phase 1 storage path "${path}" must remain in the manifest (do NOT migrate already-uploaded MP3s)`,
+    );
+  }
+});
+
+test("every manifest item carries an accent profile", () => {
+  for (const item of YOPRATIQO_AUDIO_MANIFEST) {
+    assert.ok(
+      typeof item.accentProfile === "string" && item.accentProfile.length > 0,
+      `manifest item ${item.id} must declare an accentProfile`,
+    );
+  }
 });
 
 // ── 2. Lookup invariants ─────────────────────────────────────────────
@@ -351,19 +400,29 @@ test("default bucket name is yopratiqo-audio", () => {
 });
 
 // ── 8. Lesson page integration (graceful fallback) ───────────────────
-test("intro page imports YoAudioPlayer and falls back to YoPronunciationButton", () => {
+test("intro page uses the YoSpanishAudioButton wrapper for Spanish audio surfaces", () => {
   assert.match(
     introPageSrc,
+    /import\s+\{\s*YoSpanishAudioButton\s*\}\s+from\s+["']@\/components\/yo\/YoSpanishAudioButton["']/,
+  );
+  assert.match(introPageSrc, /<YoSpanishAudioButton/);
+});
+
+test("YoSpanishAudioButton wrapper renders both YoAudioPlayer and the Web Speech fallback", () => {
+  // The wrapper imports BOTH inner components and decides at render
+  // time which one to mount. Static-source check keeps the contract
+  // honest even if the manifest grows or shrinks.
+  assert.match(
+    wrapperSrc,
     /import\s+\{\s*YoAudioPlayer\s*\}\s+from\s+["']@\/components\/yo\/YoAudioPlayer["']/,
   );
   assert.match(
-    introPageSrc,
-    /import\s+\{\s*findAudioItemByText\s*\}\s+from\s+["']@\/lib\/yo\/audio\/audioManifest["']/,
+    wrapperSrc,
+    /import\s+\{\s*YoPronunciationButton\s*\}\s+from\s+["']@\/components\/yo\/YoPronunciationButton["']/,
   );
-  // The fallback path must remain — words without a manifest entry
-  // still get the existing browser-native pronunciation button.
-  assert.match(introPageSrc, /<YoPronunciationButton/);
-  assert.match(introPageSrc, /<YoAudioPlayer/);
+  assert.match(wrapperSrc, /<YoAudioPlayer/);
+  assert.match(wrapperSrc, /<YoPronunciationButton/);
+  assert.match(wrapperSrc, /findAudioItemForContext/);
 });
 
 // ── Run ──────────────────────────────────────────────────────────────
