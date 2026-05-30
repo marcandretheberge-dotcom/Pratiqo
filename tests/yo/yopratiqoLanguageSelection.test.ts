@@ -8,11 +8,13 @@
  *
  * What we guard:
  *
- *  1. Visual badge fix — the `/yo/langues` page renders the new
- *     `<YoLanguageBadge>` component (CSS-painted, OS-emoji-independent)
- *     and no longer relies on Unicode regional-indicator emoji that
- *     would degrade to "ES" / "FR" / "GB" / "JP" on Windows desktop.
- *     The four expected language ids are wired up.
+ *  1. Visual badge fix — the `/yo/langues` page renders the
+ *     `<YoLanguageBadge>` component which now ships **real** local
+ *     SVG flag assets (no Unicode regional-indicator emoji that
+ *     would degrade to "ES" / "FR" / "GB" / "JP" on Windows desktop,
+ *     and no CSS-painted "fake" gradient flags either). The four
+ *     expected language ids are wired up to assets that exist on
+ *     disk under `public/images/yo/flags/`.
  *
  *  2. Francisation scope — the French card copy is intentionally
  *     scoped to francisation / Québec / Canada, NOT all global French
@@ -25,12 +27,15 @@
  */
 
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 const REPO_ROOT = process.cwd();
 function read(relativePath: string): string {
   return readFileSync(join(REPO_ROOT, relativePath), "utf8").replace(/\r\n/g, "\n");
+}
+function exists(relativePath: string): boolean {
+  return existsSync(join(REPO_ROOT, relativePath));
 }
 
 type TestFn = () => void | Promise<void>;
@@ -93,7 +98,7 @@ test("page declares badge ids for the four launch languages", () => {
 });
 
 test("YoLanguageBadge component renders accessible swatches without emoji", () => {
-  // Pure CSS / SVG-free swatch — no regional-indicator emoji here either.
+  // No regional-indicator emoji codepoints in the component source.
   const regionalIndicator = /[\uD83C][\uDDE6-\uDDFF]/;
   assert.ok(!regionalIndicator.test(badgeSrc));
   // The component must surface an aria-label for SR users.
@@ -101,17 +106,63 @@ test("YoLanguageBadge component renders accessible swatches without emoji", () =
   // It must declare a typed YoLanguageBadgeId union covering the
   // four launch languages so the page's `badge:` field is type-safe.
   assert.match(badgeSrc, /YoLanguageBadgeId\s*=\s*"es"\s*\|\s*"fr-ca"\s*\|\s*"en"\s*\|\s*"ja"/);
+  // Decorative `<img>` keeps `alt=""` so the wrapper's aria-label
+  // (the localized language name) is what SR users actually hear.
+  assert.match(badgeSrc, /alt\s*=\s*["']{2}/);
 });
 
-test("YoLanguageBadge defines a flag-themed background per language", () => {
-  // Cheap structural check: each id has a background entry.
-  for (const id of ["es:", '"fr-ca":', "en:", "ja:"]) {
+test("YoLanguageBadge maps every language id to a local SVG flag asset", () => {
+  // Each badge id must declare a /images/yo/flags/<slug>.svg src.
+  // Quebec ships under `fr-qc.svg` even though the badge id stays
+  // `fr-ca`, because the data contract on /yo/langues is `fr-ca`.
+  const expectedAssetPaths: Record<string, string> = {
+    es: "/images/yo/flags/es.svg",
+    "fr-ca": "/images/yo/flags/fr-qc.svg",
+    en: "/images/yo/flags/en.svg",
+    ja: "/images/yo/flags/ja.svg",
+  };
+  for (const [, src] of Object.entries(expectedAssetPaths)) {
     assert.ok(
-      badgeSrc.includes(id),
-      `YoLanguageBadge must declare a style entry for ${id}`,
+      badgeSrc.includes(src),
+      `YoLanguageBadge must reference ${src}`,
     );
   }
-  assert.match(badgeSrc, /background\s*:\s*["']linear-gradient/);
+});
+
+test("YoLanguageBadge no longer paints flags via CSS gradients", () => {
+  // The previous iteration drew flags with stacked linear/radial
+  // gradients. Real SVG assets ship now, so neither the runtime
+  // <span> nor the asset map should rely on `linear-gradient` /
+  // `radial-gradient` to fake the flag visual.
+  assert.ok(
+    !/\blinear-gradient\s*\(/i.test(badgeSrc),
+    "YoLanguageBadge must not paint flags via linear-gradient anymore",
+  );
+  assert.ok(
+    !/\bradial-gradient\s*\(/i.test(badgeSrc),
+    "YoLanguageBadge must not paint flags via radial-gradient anymore",
+  );
+});
+
+test("each language flag SVG asset exists on disk under public/images/yo/flags/", () => {
+  const expectedFiles = [
+    "public/images/yo/flags/es.svg",
+    "public/images/yo/flags/fr-qc.svg",
+    "public/images/yo/flags/en.svg",
+    "public/images/yo/flags/ja.svg",
+  ];
+  for (const filePath of expectedFiles) {
+    assert.ok(exists(filePath), `Missing asset: ${filePath}`);
+    const src = read(filePath);
+    // Each asset must actually be an SVG, not a placeholder.
+    assert.match(src, /<svg[\s>]/, `${filePath} is not a valid <svg> document`);
+    assert.match(src, /<\/svg>\s*$/, `${filePath} does not close its <svg>`);
+    // No regional-indicator emoji smuggled into the asset itself.
+    assert.ok(
+      !/[\uD83C][\uDDE6-\uDDFF]/.test(src),
+      `${filePath} must not embed regional-indicator emoji`,
+    );
+  }
 });
 
 // ─── 2. Francisation scope ────────────────────────────────────────

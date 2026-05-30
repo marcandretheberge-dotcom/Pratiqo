@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 40" preserveAspectRatio="xMidYMid meet" role="img" aria-hidden="true" focusable="false">
+  <title>Union Jack</title>
+  <!--
+    Simplified Union Jack at a non-canonical 3:2 ratio so the
+    badge sits flush with the other YoPratiqo language flags
+    (Spain / Quebec / Japan are natively 3:2). The St Patrick
+    counter-change is intentionally rendered centred rather
+    than offset  at badge size (h-10 H 40 CSS px) the offset
+    looks like a glitch, while the centred version reads
+    cleanly. This is a UI asset, not a heraldic reference.
+  -->
+  <clipPath id="yoflag-en-clip"><rect width="60" height="40"/></clipPath>
+  <g clip-path="url(#yoflag-en-clip)">
+    <rect width="60" height="40" fill="#012169"/>
+    <path d="M0 0 L60 40 M60 0 L0 40" stroke="#FFFFFF" stroke-width="8"/>
+    <path d="M0 0 L60 40 M60 0 L0 40" stroke="#C8102E" stroke-width="2.6"/>
+    <path d="M30 0 V40 M0 20 H60" stroke="#FFFFFF" stroke-width="10"/>
+    <path d="M30 0 V40 M0 20 H60" stroke="#C8102E" stroke-width="6"/>
+  </g>
+</svg>
