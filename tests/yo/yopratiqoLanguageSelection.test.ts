@@ -9,12 +9,13 @@
  * What we guard:
  *
  *  1. Visual badge fix — the `/yo/langues` page renders the
- *     `<YoLanguageBadge>` component which now ships **real** local
- *     SVG flag assets (no Unicode regional-indicator emoji that
- *     would degrade to "ES" / "FR" / "GB" / "JP" on Windows desktop,
- *     and no CSS-painted "fake" gradient flags either). The four
- *     expected language ids are wired up to assets that exist on
- *     disk under `public/images/yo/flags/`.
+ *     `<YoLanguageBadge>` component which now ships **inline** SVG
+ *     flag markup directly inside the component (no <img>, no
+ *     external `/images/yo/flags/*.svg` assets that can break in
+ *     production, no Unicode regional-indicator emoji that would
+ *     degrade to "ES" / "FR" / "GB" / "JP" on Windows desktop, and
+ *     no CSS-painted "fake" gradient flags). The four expected
+ *     language ids each map to an inline <svg> renderer.
  *
  *  2. Francisation scope — the French card copy is intentionally
  *     scoped to francisation / Québec / Canada, NOT all global French
@@ -46,6 +47,20 @@ function test(name: string, fn: TestFn): void {
 
 const pageSrc = read("app/yo/langues/page.tsx");
 const badgeSrc = read("components/yo/YoLanguageBadge.tsx");
+
+/**
+ * Strip JS line + block comments — used so structural assertions
+ * (e.g. "no <img> tag") only run against shipped JSX, not against
+ * historical explanations in JSDoc / comments that legitimately
+ * reference the approaches we explicitly moved away from.
+ */
+function stripJsComments(src: string): string {
+  return src
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/(^|[^:"'`])\/\/.*$/gm, "$1");
+}
+
+const badgeSrcCode = stripJsComments(badgeSrc);
 
 /**
  * Strip JS line + block comments so forbidden-token assertions only
@@ -106,34 +121,75 @@ test("YoLanguageBadge component renders accessible swatches without emoji", () =
   // It must declare a typed YoLanguageBadgeId union covering the
   // four launch languages so the page's `badge:` field is type-safe.
   assert.match(badgeSrc, /YoLanguageBadgeId\s*=\s*"es"\s*\|\s*"fr-ca"\s*\|\s*"en"\s*\|\s*"ja"/);
-  // Decorative `<img>` keeps `alt=""` so the wrapper's aria-label
-  // (the localized language name) is what SR users actually hear.
-  assert.match(badgeSrc, /alt\s*=\s*["']{2}/);
 });
 
-test("YoLanguageBadge maps every language id to a local SVG flag asset", () => {
-  // Each badge id must declare a /images/yo/flags/<slug>.svg src.
-  // Quebec ships under `fr-qc.svg` even though the badge id stays
-  // `fr-ca`, because the data contract on /yo/langues is `fr-ca`.
-  const expectedAssetPaths: Record<string, string> = {
-    es: "/images/yo/flags/es.svg",
-    "fr-ca": "/images/yo/flags/fr-qc.svg",
-    en: "/images/yo/flags/en.svg",
-    ja: "/images/yo/flags/ja.svg",
-  };
-  for (const [, src] of Object.entries(expectedAssetPaths)) {
+test("YoLanguageBadge renders flags as inline <svg>, not <img>", () => {
+  // The previous iteration shipped <img src="/images/yo/flags/*.svg">
+  // and those external asset paths failed in production. The
+  // current iteration must render inline SVG markup directly in
+  // the component so there is no asset path to break.
+  // We assert against `badgeSrcCode` (comments stripped) so the
+  // historical mention in JSDoc doesn't fail the check.
+  assert.ok(
+    !/<img\b/i.test(badgeSrcCode),
+    "YoLanguageBadge must not render <img>; flags must be inline SVG",
+  );
+  assert.match(
+    badgeSrcCode,
+    /<svg\b/,
+    "YoLanguageBadge must render inline <svg> markup",
+  );
+});
+
+test("YoLanguageBadge does not reference external /images/yo/flags asset paths", () => {
+  // Belt-and-suspenders for the production-broken-paths root cause.
+  // No `src=` strings, no string literals pointing at the public
+  // assets folder, no <Image> import either. Compare against the
+  // comment-stripped source so the JSDoc rationale block is OK.
+  assert.ok(
+    !/\/images\/yo\/flags/.test(badgeSrcCode),
+    "YoLanguageBadge must not reference any /images/yo/flags asset",
+  );
+  assert.ok(
+    !/from\s+["']next\/image["']/.test(badgeSrcCode),
+    "YoLanguageBadge must not import next/image — flags are inline SVG",
+  );
+});
+
+test("YoLanguageBadge declares an inline-SVG renderer for every language id", () => {
+  // Each badge id must appear as a key in the inline renderer map
+  // so the type system rules out a missing flag at compile time.
+  for (const id of ["es:", '"fr-ca":', "en:", "ja:"]) {
     assert.ok(
-      badgeSrc.includes(src),
-      `YoLanguageBadge must reference ${src}`,
+      badgeSrc.includes(id),
+      `YoLanguageBadge must declare an entry for ${id}`,
+    );
+  }
+  // Each flag must paint with the documented brand colour so the
+  // visual stays recognisable across desktop and mobile rendering.
+  // Cheap structural sniff: check that the canonical heraldic
+  // hex codes are present somewhere in the inline SVG markup.
+  const expectedFlagFills = [
+    "#AA151B", // Spain red
+    "#F1BF00", // Spain yellow
+    "#003DA5", // Quebec blue
+    "#012169", // UK navy
+    "#C8102E", // UK red
+    "#BC002D", // Japan red
+  ];
+  for (const fill of expectedFlagFills) {
+    assert.ok(
+      badgeSrc.toUpperCase().includes(fill.toUpperCase()),
+      `YoLanguageBadge inline SVG must include the ${fill} brand colour`,
     );
   }
 });
 
 test("YoLanguageBadge no longer paints flags via CSS gradients", () => {
-  // The previous iteration drew flags with stacked linear/radial
-  // gradients. Real SVG assets ship now, so neither the runtime
-  // <span> nor the asset map should rely on `linear-gradient` /
-  // `radial-gradient` to fake the flag visual.
+  // The earlier "fake flag" iteration stacked linear/radial
+  // gradients. Inline real SVG ships now, so the component must
+  // not rely on `linear-gradient` / `radial-gradient` to fake
+  // the flag visual.
   assert.ok(
     !/\blinear-gradient\s*\(/i.test(badgeSrc),
     "YoLanguageBadge must not paint flags via linear-gradient anymore",
@@ -144,23 +200,21 @@ test("YoLanguageBadge no longer paints flags via CSS gradients", () => {
   );
 });
 
-test("each language flag SVG asset exists on disk under public/images/yo/flags/", () => {
-  const expectedFiles = [
+test("legacy /public/images/yo/flags/*.svg assets are no longer shipped", () => {
+  // The inline-SVG migration removed the four external assets so
+  // we do not keep dead bytes in the bundle. Make sure a future
+  // contributor cannot accidentally re-introduce them and tempt
+  // the page back into broken-image-icon territory.
+  const removedAssets = [
     "public/images/yo/flags/es.svg",
     "public/images/yo/flags/fr-qc.svg",
     "public/images/yo/flags/en.svg",
     "public/images/yo/flags/ja.svg",
   ];
-  for (const filePath of expectedFiles) {
-    assert.ok(exists(filePath), `Missing asset: ${filePath}`);
-    const src = read(filePath);
-    // Each asset must actually be an SVG, not a placeholder.
-    assert.match(src, /<svg[\s>]/, `${filePath} is not a valid <svg> document`);
-    assert.match(src, /<\/svg>\s*$/, `${filePath} does not close its <svg>`);
-    // No regional-indicator emoji smuggled into the asset itself.
+  for (const filePath of removedAssets) {
     assert.ok(
-      !/[\uD83C][\uDDE6-\uDDFF]/.test(src),
-      `${filePath} must not embed regional-indicator emoji`,
+      !exists(filePath),
+      `${filePath} should be removed (flags are inline SVG now)`,
     );
   }
 });
