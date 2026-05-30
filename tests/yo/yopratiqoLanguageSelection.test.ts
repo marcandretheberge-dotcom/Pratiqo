@@ -172,9 +172,9 @@ test("YoLanguageBadge declares an inline-SVG renderer for every language id", ()
   // Cheap structural sniff: check that the canonical heraldic
   // hex codes are present somewhere in the inline SVG markup.
   const expectedFlagFills = [
-    "#AA151B", // Spain red
-    "#F1BF00", // Spain yellow
-    "#003DA5", // Quebec blue
+    "#ad1519", // Spain red from Wikimedia source
+    "#fabd00", // Spain yellow from Wikimedia source
+    "#003da5", // Quebec blue from Wikimedia source
     "#012169", // UK navy
     "#C8102E", // UK red
     "#BC002D", // Japan red
@@ -187,72 +187,80 @@ test("YoLanguageBadge declares an inline-SVG renderer for every language id", ()
   }
 });
 
-test("Spain inline SVG ships a recognisable coat of arms", () => {
-  // The simplified earlier iteration drew Spain as just three
-  // horizontal stripes. The production-quality iteration must
-  // render the official escudo on top of the yellow band.
-  // Cheap, robust structural sniff: a `data-yoflag-coa="es"`
-  // marker tags the COA group, plus the heraldic palette
-  // (gold pillar fill #C8A030 + Bourbon blue #0034AB) must
-  // be present somewhere in the inline markup.
-  assert.match(
-    badgeSrcCode,
-    /data-yoflag-coa\s*=\s*["']es["']/,
-    "Spain inline SVG must mark up a coat-of-arms group (data-yoflag-coa=\"es\")",
+test("Spain renderer embeds the Wikimedia source coat of arms, not the old hand-drawn placeholder", () => {
+  assert.ok(
+    !/data-yoflag-coa\s*=/.test(badgeSrcCode),
+    "Spain renderer must not rely on the old hand-drawn placeholder marker",
   );
-  for (const colour of [
-    "#C8A030", // gold pillars / shield border
-    "#0034AB", // Bourbon inescutcheon blue
-  ]) {
-    assert.ok(
-      badgeSrcCode.toUpperCase().includes(colour.toUpperCase()),
-      `Spain coat of arms must use the ${colour} heraldic colour`,
-    );
-  }
-});
-
-test("Québec inline SVG ships real heraldic fleurs-de-lis (not placeholder dots)", () => {
-  // Each of the four quadrants must declare a fleur-de-lis
-  // marker, and the path data must contain the curve commands
-  // that produce a real heraldic shape (centre petal + outer
-  // curling petals). A plain placeholder (e.g. `<circle>`) on
-  // its own would not satisfy this check.
-  for (const id of ["qc-tl", "qc-tr", "qc-bl", "qc-br"]) {
-    assert.match(
-      badgeSrcCode,
-      new RegExp(`data-yoflag-fleur\\s*=\\s*["']${id}["']`),
-      `Québec inline SVG must mark up a fleur-de-lis at quadrant ${id}`,
-    );
-  }
-  // Fleur-de-lis path must contain curve segments (`C` cubic
-  // bézier commands), not just straight lines or circles. Real
-  // heraldic fleurs require curved petals.
-  const fleurPathRe =
-    /M0\s+-10[\s\S]*?C[^"]*?C[^"]*?C[^"]*?Z[\s\S]*?L0\s+11/;
+  assert.match(
+    badgeSrc,
+    /Flag of Spain\.svg/,
+    "source note must name the Wikimedia Spain file",
+  );
   assert.match(
     badgeSrcCode,
-    fleurPathRe,
-    "Québec fleur-de-lis path must include the heraldic petal curves and bottom point",
+    /viewBox="0 0 750 500"/,
+    "Spain renderer must keep the Wikimedia source proportions",
+  );
+  assert.match(
+    badgeSrcCode,
+    /matrix\(\.2091873 0 0 \.22203612 154\.81963 148\.88973\)/,
+    "Spain source must include the escudo transform from Flag of Spain.svg",
+  );
+  assert.match(
+    badgeSrcCode,
+    /m451\.967 134\.945c31\.61 0 59\.737 4\.68 78\.06 11\.942/,
+    "Spain source must include detailed coat-of-arms path data",
   );
 });
 
-test("United Kingdom inline SVG counter-changes the St Patrick saltire", () => {
-  // The simplified iteration drew the red saltire centred on
-  // the white. The production-quality iteration must offset
-  // the two red diagonals perpendicular to each other so the
-  // result reads as the heraldic counter-change. We sniff for
-  // the two characteristic offset coordinates the implementation
-  // computed (≈ 1.3 / 2 unit perpendicular displacement on a
-  // 60×40 viewBox).
+test("Quebec renderer embeds the Wikimedia fleur-de-lis source, not old placeholder markers", () => {
+  assert.ok(
+    !/data-yoflag-fleur\s*=/.test(badgeSrcCode),
+    "Quebec renderer must not rely on the old hand-drawn placeholder markers",
+  );
   assert.match(
-    badgeSrcCode,
-    /M-?1\.3\s+2\s+L\s*58\.7\s+42/,
-    "UK inline SVG must offset the TL-BR red saltire (red below white)",
+    badgeSrc,
+    /Flag of Quebec\.svg/,
+    "source note must name the Wikimedia Quebec file",
   );
   assert.match(
     badgeSrcCode,
-    /M\s*58\.7\s+-2\s+L-?1\.3\s+38/,
-    "UK inline SVG must offset the TR-BL red saltire (red above white)",
+    /viewBox="0 0 9600 6400"/,
+    "Quebec renderer must keep the Wikimedia source viewBox",
+  );
+  assert.match(
+    badgeSrcCode,
+    /M2309 1622v-129h-115c0-66 32-130 66-150/,
+    "Quebec source must include the real source fleur-de-lis path data",
+  );
+  assert.match(
+    badgeSrcCode,
+    /xlink:href=\\"#a\\"/,
+    "Quebec source must reuse the original fleur-de-lis path through the source-local use reference",
+  );
+});
+
+test("United Kingdom renderer embeds the Wikimedia 3-5 source structure", () => {
+  assert.match(
+    badgeSrc,
+    /Flag of the United Kingdom\s*\(3-5\)\.svg/,
+    "source note must name the Wikimedia UK 3-5 file",
+  );
+  assert.match(
+    badgeSrcCode,
+    /viewBox="0 0 50 30"/,
+    "UK renderer must keep the Wikimedia 3-5 source viewBox",
+  );
+  assert.match(
+    badgeSrcCode,
+    /<clipPath id=\\"t\\">/,
+    "UK source must include the original source clipPath",
+  );
+  assert.match(
+    badgeSrcCode,
+    /clip-path=\\"url\(#t\)\\"/,
+    "UK source must reference the original source clipPath",
   );
 });
 
