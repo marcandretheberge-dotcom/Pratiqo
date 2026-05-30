@@ -5,11 +5,22 @@
  *
  * Renders three sub-blocks:
  *   1. A short A1-safe Spanish text (split into paragraphs) with an
- *      audio button next to each paragraph so the learner can hear the
- *      whole text — or replay it line by line.
+ *      audio button next to each paragraph so the learner can replay
+ *      the text line by line. Each paragraph maps 1:1 to a manifest
+ *      MP3, so playback is fast and never cuts off mid-sentence.
  *   2. A bilingual vocabulary helper box (Spanish target → FR + EN gloss
  *      side-by-side, plus a per-row pronunciation button).
  *   3. A small comprehension quiz with feedback after each answer.
+ *
+ * Audio policy (UX decision):
+ *   - NO section-level / full-text pronunciation button. Concatenating
+ *     every body line into one Web-Speech utterance was slow to start,
+ *     blocked the page, and frequently cut off mid-paragraph. The
+ *     fast, reliable surface is the per-paragraph YoSpanishAudioButton
+ *     which resolves to a pre-generated MP3.
+ *   - Per-paragraph + per-vocabulary buttons stay. They prefer the
+ *     manifest MP3 and only fall back to Web Speech for items that
+ *     are not yet covered (which today is none for the intro reading).
  *
  * This component is intentionally a single client island so:
  *   - the audio buttons can use `window.speechSynthesis` safely,
@@ -19,7 +30,7 @@
  * No persistence, no Supabase, no API calls. A1-safe / kid-friendly.
  */
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 import { BookOpenCheck, CheckCircle2, Languages, XCircle } from "lucide-react";
 import type {
   YoLocale,
@@ -92,31 +103,14 @@ export function YoReadingPreview({ section, locale }: YoReadingPreviewProps) {
     setState({ mode: "question", pickedOptionId: null, isCorrect: null });
   }, []);
 
-  const fullText = useMemo(
-    () => section.bodyLines.join(" "),
-    [section.bodyLines],
-  );
-
   return (
     <section
       aria-labelledby={`yo-reading-${section.id}-title`}
       className="mx-auto w-full max-w-5xl px-5 pt-10 sm:px-8 sm:pt-14"
     >
-      <div className="flex flex-wrap items-baseline justify-between gap-3">
-        <span className="ds-label text-[#1D9E75]">
-          {t(section.eyebrow, locale)}
-        </span>
-        <YoSpanishAudioButton
-          text={fullText}
-          locale={locale}
-          moduleId="intro-a1"
-          lessonId="reading-first-text"
-          type="sentence"
-          accentProfile="latin_american_neutral"
-          speechLang={speechLang}
-          size="sm"
-        />
-      </div>
+      <span className="ds-label text-[#1D9E75]">
+        {t(section.eyebrow, locale)}
+      </span>
       <h2
         id={`yo-reading-${section.id}-title`}
         className="mt-2 flex items-center gap-2 text-2xl font-medium tracking-tight text-[#0F6E56] sm:text-[1.75rem]"
