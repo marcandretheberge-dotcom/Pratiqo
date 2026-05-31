@@ -56,6 +56,7 @@ import { YoBreadcrumb } from "@/components/yo/YoBreadcrumb";
 import { YoFlashcardPreview } from "@/components/yo/YoFlashcardPreview";
 import { YoQuizPreview } from "@/components/yo/YoQuizPreview";
 import { YoJapaneseAudioButton } from "@/components/yo/YoJapaneseAudioButton";
+import type { YoLocale } from "@/lib/yo/types";
 
 export const dynamic = "force-dynamic";
 
@@ -137,6 +138,100 @@ const SECTION_TITLES = {
     "Practice with a real Japanese teacher",
   ),
 } as const;
+
+type JapaneseAudioTargetType = "word" | "phrase" | "sentence";
+
+interface JapaneseAudioTarget {
+  text: string;
+  romaji: string;
+  type: JapaneseAudioTargetType;
+}
+
+const CORE_VOCAB_AUDIO_TARGETS: readonly JapaneseAudioTarget[] = [
+  { text: "世界", romaji: "sekai", type: "word" },
+  { text: "言語", romaji: "gengo", type: "word" },
+  { text: "話す", romaji: "hanasu", type: "word" },
+  { text: "国", romaji: "kuni", type: "word" },
+  { text: "日本", romaji: "nihon", type: "word" },
+];
+
+const ORIGIN_READING_AUDIO_TARGETS: readonly JapaneseAudioTarget[] = [
+  { text: "歴史", romaji: "rekishi", type: "word" },
+  { text: "言葉", romaji: "kotoba", type: "word" },
+  { text: "書く", romaji: "kaku", type: "word" },
+  { text: "読む", romaji: "yomu", type: "word" },
+];
+
+const WRITING_EXTRA_AUDIO_TARGETS: readonly JapaneseAudioTarget[] = [
+  { text: "文字", romaji: "moji", type: "word" },
+];
+
+const GRAMMAR_AUDIO_TARGETS: readonly JapaneseAudioTarget[] = [
+  { text: "文法", romaji: "bunpo", type: "word" },
+  { text: "動詞", romaji: "doshi", type: "word" },
+  { text: "名詞", romaji: "meishi", type: "word" },
+];
+
+const POLITENESS_WORD_TARGETS = new Set([
+  "ようこそ",
+  "こんにちは",
+  "こんばんは",
+  "すみません",
+  "はい",
+  "いいえ",
+  "おめでとう",
+]);
+
+function getJapaneseAudioType(text: string): JapaneseAudioTargetType {
+  if (text === "私は寿司を食べます。") return "sentence";
+  if (POLITENESS_WORD_TARGETS.has(text)) return "word";
+  return "phrase";
+}
+
+function JapaneseAudioChip({
+  target,
+  locale,
+}: {
+  target: JapaneseAudioTarget;
+  locale: YoLocale;
+}) {
+  return (
+    <li className="flex items-center justify-between gap-3 rounded-2xl border border-teal-100 bg-white px-4 py-3 shadow-[0_1px_2px_rgba(15,58,52,0.04)]">
+      <div className="min-w-0">
+        <p className="text-base font-semibold text-[#0F6E56]" lang="ja">
+          {target.text}
+        </p>
+        <p className="mt-0.5 text-xs text-[#0F6E56]/60">{target.romaji}</p>
+      </div>
+      <YoJapaneseAudioButton
+        text={target.text}
+        locale={locale}
+        moduleId="japanese-intro"
+        lessonId="intro"
+        type={target.type}
+        accentProfile="japanese_standard"
+        speechLang="ja-JP"
+        size="xs"
+      />
+    </li>
+  );
+}
+
+function JapaneseAudioChipList({
+  items,
+  locale,
+}: {
+  items: readonly JapaneseAudioTarget[];
+  locale: YoLocale;
+}) {
+  return (
+    <ul role="list" className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      {items.map((target) => (
+        <JapaneseAudioChip key={target.text} target={target} locale={locale} />
+      ))}
+    </ul>
+  );
+}
 
 export default async function YoJapaneseIntroPage({ searchParams }: PageProps) {
   const resolvedSearchParams = await searchParams;
@@ -264,6 +359,10 @@ export default async function YoJapaneseIntroPage({ searchParams }: PageProps) {
           <p className="mt-3 max-w-3xl text-sm leading-relaxed text-[#0F6E56]/75">
             {t(numbersLeadIn, locale)}
           </p>
+          <JapaneseAudioChipList
+            items={CORE_VOCAB_AUDIO_TARGETS}
+            locale={locale}
+          />
           <ul role="list" className="mt-6 grid gap-4 sm:grid-cols-3">
             {japaneseStats.map((stat) => (
               <li
@@ -305,6 +404,10 @@ export default async function YoJapaneseIntroPage({ searchParams }: PageProps) {
           <p className="mt-3 max-w-3xl text-base leading-relaxed text-[#0F6E56]/85">
             {t(originIntro, locale)}
           </p>
+          <JapaneseAudioChipList
+            items={ORIGIN_READING_AUDIO_TARGETS}
+            locale={locale}
+          />
           <ul role="list" className="mt-6 grid gap-4 sm:grid-cols-3">
             {originPoints.map((point) => (
               <li
@@ -385,6 +488,10 @@ export default async function YoJapaneseIntroPage({ searchParams }: PageProps) {
             ))}
           </ul>
           <div className="mt-6 max-w-3xl space-y-4">
+            <JapaneseAudioChipList
+              items={WRITING_EXTRA_AUDIO_TARGETS}
+              locale={locale}
+            />
             <p className="rounded-2xl border border-[#F4B400]/40 bg-[#FFF4D6] p-4 text-sm leading-relaxed text-[#0F6E56]">
               {t(romajiNote, locale)}
             </p>
@@ -412,6 +519,10 @@ export default async function YoJapaneseIntroPage({ searchParams }: PageProps) {
           <p className="mt-3 max-w-3xl text-base leading-relaxed text-[#0F6E56]/85">
             {t(soundIntro, locale)}
           </p>
+          <JapaneseAudioChipList
+            items={GRAMMAR_AUDIO_TARGETS}
+            locale={locale}
+          />
           <ul role="list" className="mt-6 grid gap-4 sm:grid-cols-2">
             {soundPoints.map((point) => (
               <li
@@ -505,6 +616,7 @@ export default async function YoJapaneseIntroPage({ searchParams }: PageProps) {
                             locale={locale}
                             moduleId="japanese-intro"
                             lessonId="intro"
+                            type={getJapaneseAudioType(phrase.target)}
                             accentProfile="japanese_standard"
                             speechLang="ja-JP"
                             size="xs"
