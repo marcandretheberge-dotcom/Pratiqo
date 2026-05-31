@@ -22,11 +22,11 @@
  *     variants. Forbidden tokens (`Paris`, `Africa`, `Afrique`, etc.)
  *     are absent in both FR and EN copy.
  *
- *  3. Launch scope — Spanish and the new Quebec-French pre-arrival
- *     intro expose an `href` to a real parcours. English / Japanese
- *     stay `coming_soon` with `href: null` so the cards are
- *     non-clickable. The Quebec French route also exists on disk so
- *     the open `href` is never broken on production.
+ *  3. Launch scope — Spanish, Quebec French, Italian, English, AND
+ *     Japanese all expose an `href` to a real parcours. No card
+ *     stays `coming_soon` at the moment — every open route also
+ *     exists on disk so the hub page never ships a broken link in
+ *     production.
  */
 
 import assert from "node:assert/strict";
@@ -386,16 +386,19 @@ test("French card copy mentions francisation and Québec / Canada", () => {
   assert.match(pageSrc, /Canada/);
   // EN equivalent must also be scoped.
   assert.match(pageSrc, /Francization/);
-  // Both copies should still flag this as not yet shipped.
-  assert.match(pageSrc, /À\s+venir/);
-  assert.match(pageSrc, /[Cc]oming\s+soon/);
+  // (The earlier "À venir / Coming soon" assertions were retired
+  // when Japanese moved out of `coming_soon`. The francisation FR
+  // card now opens to a real route with a `"Nouveau."` marker
+  // matching the rest of the launch lineup; broken-link guarding
+  // happens in the disk-route test below.)
 });
 
 // ─── 3. Launch scope ───────────────────────────────────────────────
-test("Spanish, Quebec French, Italian, and English are available; Japanese stays coming_soon", () => {
+test("Spanish, Quebec French, Italian, English, and Japanese are all available", () => {
   // Status flags are declared inline next to each card in the data
   // file. We extract the relative ordering and assert the status
-  // mapping for each card.
+  // mapping for each card. No card is allowed to ship as
+  // `coming_soon` — the hub now lights up its full launch lineup.
   assert.match(
     pageSrc,
     /id:\s*"spanish"[\s\S]*?status:\s*"available"[\s\S]*?href:\s*"\/yo\/langues\/espagnol"/,
@@ -412,12 +415,17 @@ test("Spanish, Quebec French, Italian, and English are available; Japanese stays
     pageSrc,
     /id:\s*"english"[\s\S]*?status:\s*"available"[\s\S]*?href:\s*"\/yo\/langues\/anglais\/intro"/,
   );
-  for (const id of ["japanese"]) {
-    const re = new RegExp(
-      `id:\\s*"${id}"[\\s\\S]*?status:\\s*"coming_soon"[\\s\\S]*?href:\\s*null`,
-    );
-    assert.match(pageSrc, re);
-  }
+  assert.match(
+    pageSrc,
+    /id:\s*"japanese"[\s\S]*?status:\s*"available"[\s\S]*?href:\s*"\/yo\/langues\/japonais\/intro"/,
+  );
+  // Defensive: NO `coming_soon` status string should appear in the
+  // shipped data anymore (the literal can still appear in JSDoc /
+  // comments — strip those before checking).
+  assert.ok(
+    !/status:\s*"coming_soon"/.test(pageCopySrc),
+    "no language card should ship as coming_soon now (Japanese launched)",
+  );
 });
 
 test("English card carries the documented launch copy and badge", () => {
@@ -462,12 +470,12 @@ test("Italian card carries the documented launch copy and badge", () => {
   );
 });
 
-test("the four open language hrefs point at routes that actually exist on disk", () => {
-  // Every language card must declare an `href:` field — one null,
-  // exactly four pointing at real /yo/langues routes. We verify the
-  // routes also exist on disk so a contributor cannot flip a
-  // `coming_soon` card into a clickable link before the parcours
-  // actually ships (a broken-link guard).
+test("the five open language hrefs point at routes that actually exist on disk", () => {
+  // Every language card must declare an `href:` field — none null
+  // anymore: every card now points at a real /yo/langues route.
+  // We verify each route also exists on disk so a contributor cannot
+  // flip a card into a clickable link before the parcours actually
+  // ships (a broken-link guard).
   const hrefMatches = [...pageSrc.matchAll(/href:\s*("[^"]+"|null)/g)];
   // The page also wires a hero language toggle (`buildYoLocaleHref`),
   // so the data-only `href:` count is exactly the five cards.
@@ -475,7 +483,11 @@ test("the four open language hrefs point at routes that actually exist on disk",
     .map((m) => m[1])
     .filter((value) => value === "null" || value.startsWith('"/yo/langues'));
   assert.equal(cardHrefs.length, 5);
-  assert.equal(cardHrefs.filter((v) => v === "null").length, 1);
+  assert.equal(
+    cardHrefs.filter((v) => v === "null").length,
+    0,
+    "no card should declare href: null now (Japanese launched)",
+  );
   assert.equal(
     cardHrefs.filter((v) => v === '"/yo/langues/espagnol"').length,
     1,
@@ -494,7 +506,11 @@ test("the four open language hrefs point at routes that actually exist on disk",
     cardHrefs.filter((v) => v === '"/yo/langues/anglais/intro"').length,
     1,
   );
-  // All four open routes must resolve to a real `page.tsx` on disk.
+  assert.equal(
+    cardHrefs.filter((v) => v === '"/yo/langues/japonais/intro"').length,
+    1,
+  );
+  // All five open routes must resolve to a real `page.tsx` on disk.
   assert.ok(
     exists("app/yo/langues/espagnol/page.tsx"),
     "Spanish hub page must exist",
@@ -510,6 +526,31 @@ test("the four open language hrefs point at routes that actually exist on disk",
   assert.ok(
     exists("app/yo/langues/anglais/intro/page.tsx"),
     "English intro page must exist",
+  );
+  assert.ok(
+    exists("app/yo/langues/japonais/intro/page.tsx"),
+    "Japanese intro page must exist",
+  );
+});
+
+test("Japanese card carries the documented launch copy and badge", () => {
+  // Japanese is the fifth available language. The card must use the
+  // "ja" badge and the brief's exact French/English copy so the hub
+  // page stays in sync with the marketing text.
+  assert.match(
+    pageSrc,
+    /id:\s*"japanese"[\s\S]*?badge:\s*"ja"/,
+    'Japanese card must use badge: "ja"',
+  );
+  assert.match(
+    pageSrc,
+    /Japonais pour voyager, comprendre la culture et découvrir les bases de l['’]écriture sans paniquer\. Nouveau\./,
+    "Japanese FR copy must match the brief verbatim",
+  );
+  assert.match(
+    pageSrc,
+    /Japanese for travel, culture, and understanding the writing system without panic\. New\./,
+    "Japanese EN copy must match the brief verbatim",
   );
 });
 

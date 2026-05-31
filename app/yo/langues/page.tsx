@@ -5,7 +5,7 @@
  *
  *   YoPratiqo → Langues
  *
- * Renders five language cards. Four are open today:
+ * Renders five language cards. All five are now open:
  *   - Spanish → /yo/langues/espagnol (Latin-American flavoured intro)
  *   - Français du Québec → /yo/langues/francais-quebec/intro
  *     (English-first pre-arrival orientation for international
@@ -16,9 +16,9 @@
  *     confidence-building module for Quebec francophone false
  *     beginners — those who studied English at school but freeze
  *     when they need to speak).
- * Japanese still sits as a visible "Coming soon" card so the
- * product roadmap is legible without forcing a fake route to
- * exist.
+ *   - Japanese → /yo/langues/japonais/intro (FR-default cultural
+ *     orientation: writing systems, sound, politeness, cultural
+ *     codes, audio). Pratiqo's first non-Latin-script module.
  *
  * Locale behaviour: French default, English via `?lang=en`. The
  * available cards carry the locale through to the next route.
@@ -50,7 +50,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "YoPratiqo — Langues",
     description:
-      "Espagnol, français du Québec, italien et anglais disponibles · japonais à venir.",
+      "Espagnol, français du Québec, italien, anglais et japonais : cinq parcours d'introduction gratuits.",
     type: "website",
     url: `${SITE_URL}/yo/langues`,
     locale: "fr_CA",
@@ -75,8 +75,8 @@ const SECTION_TITLE = lstr(
 );
 
 const SECTION_BODY = lstr(
-  "L’espagnol, le français du Québec, l’italien et l’anglais sont disponibles. Les autres langues arrivent quand elles sont prêtes à enseigner sérieusement.",
-  "Spanish, Quebec French, Italian, and English are available. The other languages will arrive when they're ready to teach seriously.",
+  "Cinq parcours d’introduction gratuits sont disponibles : espagnol, français du Québec, italien, anglais et japonais. Chaque langue commence par une intro premium ; la suite arrive quand chaque parcours est prêt à enseigner sérieusement.",
+  "Five free intro modules are now available: Spanish, Quebec French, Italian, English, and Japanese. Every language starts with a premium intro; the rest arrives when each course is ready to teach seriously.",
 );
 
 interface LanguageCard {
@@ -167,14 +167,22 @@ const LANGUAGES: LanguageCard[] = [
   },
   {
     id: "japanese",
+    // Launch scope: an FR-default cultural orientation built around
+    // the three writing systems (hiragana / katakana / kanji), SOV
+    // grammar, polite-form basics, and the cultural codes that
+    // surprise newcomers (shoes, no tipping, quiet trains, two-hand
+    // exchange, indirect "no"). The audio manifest ships ONE TTS
+    // accent profile (`japanese_standard`) — regional variants
+    // (Kansai-ben, etc.) are intentionally OUT OF SCOPE until each
+    // is designed and validated by a native speaker.
     name: lstr("Japonais", "Japanese"),
     badge: "ja",
     blurb: lstr(
-      "Hiragana, mots du quotidien et culture, doucement. À venir.",
-      "Hiragana, everyday words, and culture, taken gently. Coming soon.",
+      "Japonais pour voyager, comprendre la culture et découvrir les bases de l’écriture sans paniquer. Nouveau.",
+      "Japanese for travel, culture, and understanding the writing system without panic. New.",
     ),
-    status: "coming_soon",
-    href: null,
+    status: "available",
+    href: "/yo/langues/japonais/intro",
   },
 ];
 
