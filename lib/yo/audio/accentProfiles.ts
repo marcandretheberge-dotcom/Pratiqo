@@ -43,6 +43,13 @@
  *     Quebec audience day-to-day. The module DISCUSSES the
  *     differences between American / British / Canadian English in
  *     content, but only ships a single TTS accent profile.
+ *   - `japanese_standard` covers the Japanese intro module
+ *     (`japanese-intro`). Regional variants (Kansai-ben, Hakata,
+ *     Hiroshima, Tōhoku, etc.) and stylised registers (anime
+ *     voice-acting, "rolling" yakuza speech) are OUT OF SCOPE — the
+ *     manifest ships ONE clear, beginner-friendly Tokyo-standard
+ *     profile. Native review can swap voice/instructions later
+ *     without breaking storage paths.
  *
  * No client component imports this file directly today; it is consumed
  * by:
@@ -67,7 +74,8 @@ export type YoAudioAccentProfileId =
   | "spain_neutral"
   | "quebec_french"
   | "italian_standard"
-  | "canadian_english";
+  | "canadian_english"
+  | "japanese_standard";
 
 export interface YoAudioAccentProfile {
   id: YoAudioAccentProfileId;
@@ -185,6 +193,15 @@ const PROFILES: Record<YoAudioAccentProfileId, YoAudioAccentProfile> = {
       "Speak in clear, friendly Canadian English for French-speaking beginner/intermediate learners. Use a natural but slightly slower pace. Keep pronunciation understandable and confidence-building. Do not exaggerate the accent.",
     defaultVoice: "alloy",
     bcp47Hint: "en-CA",
+  },
+  japanese_standard: {
+    id: "japanese_standard",
+    pathSlug: "japanese-standard",
+    label: "Standard Japanese",
+    ttsInstructions:
+      "Speak in clear, friendly standard Japanese for beginner learners. Use a natural but slightly slower pace. Keep pronunciation understandable. Do not exaggerate anime-style intonation or regional dialect.",
+    defaultVoice: "alloy",
+    bcp47Hint: "ja-JP",
   },
 };
 
