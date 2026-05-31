@@ -115,9 +115,14 @@ const LANGUAGES: LanguageCard[] = [
     // English-first pre-arrival intro for international learners.
     name: lstr("Français du Québec", "Quebec French"),
     badge: "fr-ca",
+    // Copy harmonised on the merge with main: every newly-opened
+    // launch card ends with "Nouveau." / "New." for consistency.
+    // Tests still guard the francisation-only scope (no "Paris",
+    // no "Afrique", no "world French") and the FR/EN equivalents
+    // still mention francisation, Québec, and Canada.
     blurb: lstr(
-      "Francisation et français du Québec pour vivre, étudier ou travailler au Canada. Intro gratuite disponible.",
-      "Francization and Quebec French for living, studying, or working in Canada. Free intro available.",
+      "Francisation et français du Québec pour vivre, étudier ou travailler au Canada. Nouveau.",
+      "Francization and Québec/Canadian French for living, studying, or working in Canada. New.",
     ),
     status: "available",
     href: "/yo/langues/francais-quebec/intro",
