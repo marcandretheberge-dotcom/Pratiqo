@@ -74,6 +74,7 @@ import { spanishIntroAudio } from "@/lib/yo/audio/spanishIntroAudio";
 import { spanishVoyageDominicanAudio } from "@/lib/yo/audio/spanishVoyageDominicanAudio";
 import { frenchQuebecIntroAudio } from "@/lib/yo/audio/frenchQuebecIntroAudio";
 import { italianIntroAudio } from "@/lib/yo/audio/italianIntroAudio";
+import { englishIntroAudio } from "@/lib/yo/audio/englishIntroAudio";
 
 // Re-export the public surface so existing callers
 // (`@/lib/yo/audio/audioManifest`) keep working unchanged.
@@ -102,6 +103,7 @@ export const YOPRATIQO_AUDIO_MANIFEST: readonly YoAudioItem[] = [
   ...spanishVoyageDominicanAudio,
   ...frenchQuebecIntroAudio,
   ...italianIntroAudio,
+  ...englishIntroAudio,
 ] as const;
 
 // ─────────────────────────────────────────────────────────────────────
