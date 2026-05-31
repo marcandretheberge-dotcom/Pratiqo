@@ -158,10 +158,11 @@ test("every required Japanese target has a manifest entry", () => {
   }
 });
 
-test("Japanese audio module ships at least 35 items", () => {
-  assert.ok(
-    japaneseIntroAudio.length >= 35,
-    `expected ≥ 35 japanese_standard items, got ${japaneseIntroAudio.length}`,
+test("Japanese audio module ships the documented 36-item manifest", () => {
+  assert.equal(
+    japaneseIntroAudio.length,
+    36,
+    `expected exactly 36 japanese_standard items, got ${japaneseIntroAudio.length}`,
   );
 });
 
@@ -399,6 +400,67 @@ test("page wires the Japanese audio context (moduleId, lessonId, accentProfile) 
     pageSrc,
     /audioContext=\{\s*\{[\s\S]*?moduleId:\s*"japanese-intro"[\s\S]*?accentProfile:\s*"japanese_standard"[\s\S]*?\}\s*\}/,
     "flashcard deck must forward an audioContext with the Japanese triple",
+  );
+});
+
+test("main Japanese intro sections expose audio buttons beyond the flashcard deck", () => {
+  const sectionLists = [
+    "CORE_VOCAB_AUDIO_TARGETS",
+    "ORIGIN_READING_AUDIO_TARGETS",
+    "WRITING_EXTRA_AUDIO_TARGETS",
+    "GRAMMAR_AUDIO_TARGETS",
+  ];
+
+  for (const listName of sectionLists) {
+    assert.match(
+      pageSrc,
+      new RegExp(`items=\\{${listName}\\}`),
+      `${listName} must be rendered through JapaneseAudioChipList`,
+    );
+  }
+
+  const firstMainAudioList = pageSrc.indexOf("items={CORE_VOCAB_AUDIO_TARGETS}");
+  const flashcardDeck = pageSrc.indexOf("<YoFlashcardPreview");
+  assert.ok(
+    firstMainAudioList > -1 && flashcardDeck > -1 && firstMainAudioList < flashcardDeck,
+    "main-section audio lists must render before the flashcard-only audio deck",
+  );
+
+  assert.match(
+    pageSrc,
+    /function JapaneseAudioChip[\s\S]*?<YoJapaneseAudioButton[\s\S]*?moduleId="japanese-intro"[\s\S]*?lessonId="intro"[\s\S]*?type=\{target\.type\}[\s\S]*?accentProfile="japanese_standard"/,
+    "main-section chips must use contextual YoJapaneseAudioButton lookup",
+  );
+});
+
+test("main-section audio target lists cover the requested vocabulary families", () => {
+  for (const target of [
+    "世界",
+    "言語",
+    "話す",
+    "国",
+    "日本",
+    "歴史",
+    "言葉",
+    "書く",
+    "読む",
+    "文字",
+    "文法",
+    "動詞",
+    "名詞",
+  ]) {
+    assert.ok(
+      pageSrc.includes(`text: "${target}"`),
+      `page-level audio target lists must include "${target}"`,
+    );
+  }
+});
+
+test("politeness rows still render per-phrase audio with contextual lookup", () => {
+  assert.match(
+    pageSrc,
+    /text=\{phrase\.target\}[\s\S]*?moduleId="japanese-intro"[\s\S]*?lessonId="intro"[\s\S]*?type=\{getJapaneseAudioType\(phrase\.target\)\}[\s\S]*?accentProfile="japanese_standard"/,
+    "politeness rows must keep one contextual audio button per Japanese phrase",
   );
 });
 
