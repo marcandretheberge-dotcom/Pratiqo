@@ -5,15 +5,19 @@
  *
  *   YoPratiqo → Langues
  *
- * Renders five language cards. Three are open today:
+ * Renders five language cards. Four are open today:
  *   - Spanish → /yo/langues/espagnol (Latin-American flavoured intro)
  *   - Français du Québec → /yo/langues/francais-quebec/intro
  *     (English-first pre-arrival orientation for international
  *     learners moving to Quebec).
  *   - Italian → /yo/langues/italien/intro (premium FR-default
  *     orientation: standard Italian, regions, first words, audio).
- * English and Japanese still sit as visible "Coming soon" cards so
- * the product roadmap is legible without forcing fake routes to
+ *   - English → /yo/langues/anglais/intro (FR-default
+ *     confidence-building module for Quebec francophone false
+ *     beginners — those who studied English at school but freeze
+ *     when they need to speak).
+ * Japanese still sits as a visible "Coming soon" card so the
+ * product roadmap is legible without forcing a fake route to
  * exist.
  *
  * Locale behaviour: French default, English via `?lang=en`. The
@@ -46,7 +50,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "YoPratiqo — Langues",
     description:
-      "Espagnol, français du Québec et italien disponibles · anglais et japonais à venir.",
+      "Espagnol, français du Québec, italien et anglais disponibles · japonais à venir.",
     type: "website",
     url: `${SITE_URL}/yo/langues`,
     locale: "fr_CA",
@@ -71,8 +75,8 @@ const SECTION_TITLE = lstr(
 );
 
 const SECTION_BODY = lstr(
-  "L’espagnol, le français du Québec et l’italien sont disponibles. Les autres langues arrivent quand elles sont prêtes à enseigner sérieusement.",
-  "Spanish, Quebec French, and Italian are available. The other languages will arrive when they're ready to teach seriously.",
+  "L’espagnol, le français du Québec, l’italien et l’anglais sont disponibles. Les autres langues arrivent quand elles sont prêtes à enseigner sérieusement.",
+  "Spanish, Quebec French, Italian, and English are available. The other languages will arrive when they're ready to teach seriously.",
 );
 
 interface LanguageCard {
@@ -111,9 +115,14 @@ const LANGUAGES: LanguageCard[] = [
     // English-first pre-arrival intro for international learners.
     name: lstr("Français du Québec", "Quebec French"),
     badge: "fr-ca",
+    // Copy harmonised on the merge with main: every newly-opened
+    // launch card ends with "Nouveau." / "New." for consistency.
+    // Tests still guard the francisation-only scope (no "Paris",
+    // no "Afrique", no "world French") and the FR/EN equivalents
+    // still mention francisation, Québec, and Canada.
     blurb: lstr(
-      "Francisation et français du Québec pour vivre, étudier ou travailler au Canada. Intro gratuite disponible.",
-      "Francization and Quebec French for living, studying, or working in Canada. Free intro available.",
+      "Francisation et français du Québec pour vivre, étudier ou travailler au Canada. Nouveau.",
+      "Francization and Québec/Canadian French for living, studying, or working in Canada. New.",
     ),
     status: "available",
     href: "/yo/langues/francais-quebec/intro",
@@ -139,14 +148,22 @@ const LANGUAGES: LanguageCard[] = [
   },
   {
     id: "english",
+    // Launch scope: a confidence-building module for Quebec
+    // francophone false beginners. The flag stays the standard
+    // English-language UK badge — Canadian English is covered
+    // INSIDE the module content. Other English variants
+    // (American, British, Australian, Indian, etc.) are
+    // discussed in the lesson but the audio ships ONE accent
+    // profile (canadian_english) until each regional variant is
+    // designed and validated separately.
     name: lstr("Anglais", "English"),
     badge: "en",
     blurb: lstr(
-      "Un anglais clair, utile et culturellement situé. À venir.",
-      "Clear, useful, culturally situated English. Coming soon.",
+      "Anglais pour débloquer ta confiance, voyager, travailler et parler avec moins de stress. Nouveau.",
+      "English to unlock confidence for travel, work, and real conversations. New.",
     ),
-    status: "coming_soon",
-    href: null,
+    status: "available",
+    href: "/yo/langues/anglais/intro",
   },
   {
     id: "japanese",

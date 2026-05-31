@@ -392,7 +392,7 @@ test("French card copy mentions francisation and Québec / Canada", () => {
 });
 
 // ─── 3. Launch scope ───────────────────────────────────────────────
-test("Spanish, Quebec French, and Italian are available; English / Japanese stay coming_soon", () => {
+test("Spanish, Quebec French, Italian, and English are available; Japanese stays coming_soon", () => {
   // Status flags are declared inline next to each card in the data
   // file. We extract the relative ordering and assert the status
   // mapping for each card.
@@ -408,12 +408,37 @@ test("Spanish, Quebec French, and Italian are available; English / Japanese stay
     pageSrc,
     /id:\s*"italian"[\s\S]*?status:\s*"available"[\s\S]*?href:\s*"\/yo\/langues\/italien\/intro"/,
   );
-  for (const id of ["english", "japanese"]) {
+  assert.match(
+    pageSrc,
+    /id:\s*"english"[\s\S]*?status:\s*"available"[\s\S]*?href:\s*"\/yo\/langues\/anglais\/intro"/,
+  );
+  for (const id of ["japanese"]) {
     const re = new RegExp(
       `id:\\s*"${id}"[\\s\\S]*?status:\\s*"coming_soon"[\\s\\S]*?href:\\s*null`,
     );
     assert.match(pageSrc, re);
   }
+});
+
+test("English card carries the documented launch copy and badge", () => {
+  // English is the fourth available language. The card must use the
+  // "en" badge and the brief's exact French/English copy so the hub
+  // page stays in sync with the marketing text.
+  assert.match(
+    pageSrc,
+    /id:\s*"english"[\s\S]*?badge:\s*"en"/,
+    'English card must use badge: "en"',
+  );
+  assert.match(
+    pageSrc,
+    /Anglais pour débloquer ta confiance, voyager, travailler et parler avec moins de stress\. Nouveau\./,
+    "English FR copy must match the brief verbatim",
+  );
+  assert.match(
+    pageSrc,
+    /English to unlock confidence for travel, work, and real conversations\. New\./,
+    "English EN copy must match the brief verbatim",
+  );
 });
 
 test("Italian card carries the documented launch copy and badge", () => {
@@ -437,9 +462,9 @@ test("Italian card carries the documented launch copy and badge", () => {
   );
 });
 
-test("the three open language hrefs point at routes that actually exist on disk", () => {
-  // Every language card must declare an `href:` field — two null,
-  // exactly three pointing at real /yo/langues routes. We verify the
+test("the four open language hrefs point at routes that actually exist on disk", () => {
+  // Every language card must declare an `href:` field — one null,
+  // exactly four pointing at real /yo/langues routes. We verify the
   // routes also exist on disk so a contributor cannot flip a
   // `coming_soon` card into a clickable link before the parcours
   // actually ships (a broken-link guard).
@@ -450,7 +475,7 @@ test("the three open language hrefs point at routes that actually exist on disk"
     .map((m) => m[1])
     .filter((value) => value === "null" || value.startsWith('"/yo/langues'));
   assert.equal(cardHrefs.length, 5);
-  assert.equal(cardHrefs.filter((v) => v === "null").length, 2);
+  assert.equal(cardHrefs.filter((v) => v === "null").length, 1);
   assert.equal(
     cardHrefs.filter((v) => v === '"/yo/langues/espagnol"').length,
     1,
@@ -465,7 +490,11 @@ test("the three open language hrefs point at routes that actually exist on disk"
     cardHrefs.filter((v) => v === '"/yo/langues/italien/intro"').length,
     1,
   );
-  // All three open routes must resolve to a real `page.tsx` on disk.
+  assert.equal(
+    cardHrefs.filter((v) => v === '"/yo/langues/anglais/intro"').length,
+    1,
+  );
+  // All four open routes must resolve to a real `page.tsx` on disk.
   assert.ok(
     exists("app/yo/langues/espagnol/page.tsx"),
     "Spanish hub page must exist",
@@ -477,6 +506,10 @@ test("the three open language hrefs point at routes that actually exist on disk"
   assert.ok(
     exists("app/yo/langues/italien/intro/page.tsx"),
     "Italian intro page must exist",
+  );
+  assert.ok(
+    exists("app/yo/langues/anglais/intro/page.tsx"),
+    "English intro page must exist",
   );
 });
 

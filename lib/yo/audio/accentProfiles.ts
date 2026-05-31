@@ -35,6 +35,14 @@
  *     Roman, etc.) are OUT OF SCOPE for the launch — the manifest
  *     ships ONE profile per language until each regional course is
  *     designed and validated by a native speaker.
+ *   - `canadian_english` covers the English intro module
+ *     (`english-intro`), which targets Quebec francophone false
+ *     beginners. Other English variants (American, British, AAVE,
+ *     Indian, Australian, etc.) are OUT OF SCOPE for the launch — we
+ *     pick Canadian English because it is the most relevant to a
+ *     Quebec audience day-to-day. The module DISCUSSES the
+ *     differences between American / British / Canadian English in
+ *     content, but only ships a single TTS accent profile.
  *
  * No client component imports this file directly today; it is consumed
  * by:
@@ -58,7 +66,8 @@ export type YoAudioAccentProfileId =
   | "rioplatense_uruguay"
   | "spain_neutral"
   | "quebec_french"
-  | "italian_standard";
+  | "italian_standard"
+  | "canadian_english";
 
 export interface YoAudioAccentProfile {
   id: YoAudioAccentProfileId;
@@ -167,6 +176,15 @@ const PROFILES: Record<YoAudioAccentProfileId, YoAudioAccentProfile> = {
       "Speak in clear, friendly standard Italian for beginner learners. Use a natural but slightly slower pace. Keep pronunciation understandable for newcomers. Do not exaggerate regional features.",
     defaultVoice: "alloy",
     bcp47Hint: "it-IT",
+  },
+  canadian_english: {
+    id: "canadian_english",
+    pathSlug: "canadian-english",
+    label: "Canadian English",
+    ttsInstructions:
+      "Speak in clear, friendly Canadian English for French-speaking beginner/intermediate learners. Use a natural but slightly slower pace. Keep pronunciation understandable and confidence-building. Do not exaggerate the accent.",
+    defaultVoice: "alloy",
+    bcp47Hint: "en-CA",
   },
 };
 
