@@ -5,6 +5,10 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { resolveEmailLocaleForUser } from "@/lib/email/locale";
 import { minimumLessonPriceErrorMessage } from "@/lib/pricing/messages";
 import { validateTeacherLessonOffers, type TeacherLessonOfferInput } from "@/lib/pricing/lessonOffer";
+import {
+  isTeacherMarketSupported,
+  marketNotSupportedPayload,
+} from "@/lib/config/markets";
 
 export const runtime = "nodejs";
 
@@ -56,7 +60,7 @@ async function getAuthenticatedTeacher(req: Request) {
   const admin = getSupabaseAdmin();
   const { data: teacher, error: teacherErr } = await admin
     .from("teachers")
-    .select("id")
+    .select("id,country_code")
     .eq("user_id", user.id)
     .maybeSingle();
 
@@ -64,7 +68,12 @@ async function getAuthenticatedTeacher(req: Request) {
     return { error: NextResponse.json({ error: "Teacher profile not found." }, { status: 404 }) };
   }
 
-  return { user, teacherId: teacher.id as string, admin };
+  return {
+    user,
+    teacherId: teacher.id as string,
+    teacherCountryCode: (teacher as { country_code?: string | null }).country_code ?? "",
+    admin,
+  };
 }
 
 function pricingValidationError(locale: Awaited<ReturnType<typeof resolveEmailLocaleForUser>>) {
@@ -102,11 +111,16 @@ export async function PATCH(req: Request) {
   const auth = await getAuthenticatedTeacher(req);
   if ("error" in auth && auth.error) return auth.error;
 
-  const { user, teacherId, admin } = auth as {
+  const { user, teacherId, teacherCountryCode, admin } = auth as {
     user: { id: string };
     teacherId: string;
+    teacherCountryCode: string;
     admin: ReturnType<typeof getSupabaseAdmin>;
   };
+
+  if (!isTeacherMarketSupported(teacherCountryCode)) {
+    return NextResponse.json(marketNotSupportedPayload(teacherCountryCode), { status: 403 });
+  }
 
   let body: unknown;
   try {

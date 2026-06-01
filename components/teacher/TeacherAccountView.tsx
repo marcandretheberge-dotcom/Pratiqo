@@ -20,6 +20,12 @@ import { MIN_LESSON_PRICE_DOLLARS } from "@/lib/pricing/constants";
 import { validateTeacherLessonOffers } from "@/lib/pricing/lessonOffer";
 import { AvatarUpload } from "@/components/profile/AvatarUpload";
 import { ProfileAiAssistant } from "@/components/teacher/ProfileAiAssistant";
+import { MarketWaitlistCard } from "@/components/MarketWaitlistCard";
+import {
+  isMembreProMarketSupported,
+  isPayoutMarketSupported,
+  isTeacherMarketSupported,
+} from "@/lib/config/markets";
 
 /**
  * Public listing card fallback used by the onboarding routes
@@ -103,6 +109,7 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
   const [introEnabled, setIntroEnabled] = useState(false);
   const [introCustomPrice, setIntroCustomPrice] = useState("");
   const [city, setCity] = useState("");
+  const [teacherCountryCode, setTeacherCountryCode] = useState("");
   const [locationJson, setLocationJson] = useState<Record<string, unknown>>({});
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   // Last-known value of teachers.image_url (the *public* listing photo).
@@ -150,13 +157,16 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
       }
       const { data: prof } = await supabase
         .from("profiles")
-        .select("email, name, photo_url, plan, subscription_status, stripe_customer_id, stripe_subscription_id, pro_current_period_end, pro_cancel_at_period_end, loyalty_tier, loyalty_annual_volume, dashboard, tax_status_acknowledged, tax_status_acknowledged_at")
+        .select("email, name, photo_url, country_code, plan, subscription_status, stripe_customer_id, stripe_subscription_id, pro_current_period_end, pro_cancel_at_period_end, loyalty_tier, loyalty_annual_volume, dashboard, tax_status_acknowledged, tax_status_acknowledged_at")
         .eq("id", user.id)
         .maybeSingle();
       if (cancelled) return;
       setEmail(String((prof as { email?: string })?.email || user.email || ""));
       setDisplayName(String((prof as { name?: string })?.name || ""));
       setPhotoUrl(((prof as { photo_url?: string | null })?.photo_url as string | null) ?? null);
+      const profileCountryCode = String(
+        (prof as { country_code?: string | null } | null)?.country_code ?? "",
+      ).trim().toUpperCase();
       setPlan(String((prof as { plan?: string | null })?.plan || "free"));
       setSubscriptionStatus((prof as { subscription_status?: string | null } | null)?.subscription_status ?? null);
       setStripeCustomerId((prof as { stripe_customer_id?: string | null } | null)?.stripe_customer_id?.trim() || null);
@@ -188,6 +198,7 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
         deleted_at?: string | null;
         intro_session_enabled?: boolean | null;
         intro_session_price_cents?: number | null;
+        country_code?: string | null;
       };
       setTeacherId(row.id);
       setTeacherIsPublic(row.is_public !== false && !row.deactivated_at && !row.deleted_at);
@@ -200,6 +211,7 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
       const introCents = typeof row.intro_session_price_cents === "number" ? row.intro_session_price_cents : null;
       setIntroCustomPrice(introCents != null && Number.isFinite(introCents) && introCents > 0 ? String(Math.round(introCents) / 100) : "");
       setTeachingMode(row.teaching_mode || "both");
+      setTeacherCountryCode(String(row.country_code ?? profileCountryCode).trim().toUpperCase());
       setStripeAccountId(row.stripe_account_id?.trim() || null);
       setVideoUrl(row.video_url ?? "");
       const loc = (row.location || {}) as Record<string, unknown>;
@@ -459,6 +471,10 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
   };
 
   const openStripeDashboard = async () => {
+    if (!isPayoutMarketSupported(teacherCountryCode)) {
+      setMessage(t("marketPayoutUnavailableMessage"));
+      return;
+    }
     const supabase = getSupabaseClient();
     const { data: s } = await supabase.auth.getSession();
     const token = s.session?.access_token;
@@ -481,18 +497,31 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
   const toggleProfileVisibility = async () => {
     if (!teacherId) return;
     const nextPublic = !teacherIsPublic;
+    if (nextPublic && !isTeacherMarketSupported(teacherCountryCode)) {
+      setMessage(t("marketTeacherUnavailableMessage"));
+      return;
+    }
     setVisibilitySaving(true);
     setMessage(null);
     const supabase = getSupabaseClient();
-    const { error } = await supabase
-      .from("teachers")
-      .update({
-        is_public: nextPublic,
-        deactivated_at: nextPublic ? null : new Date().toISOString(),
-      })
-      .eq("id", teacherId);
-    if (error) {
-      setMessage(error.message);
+    const { data: s } = await supabase.auth.getSession();
+    const token = s.session?.access_token;
+    if (!token) {
+      setMessage(t("sessionExpiredShort"));
+      setVisibilitySaving(false);
+      return;
+    }
+    const res = await fetch("/api/teacher/profile/visibility", {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ is_public: nextPublic }),
+    });
+    const body = (await res.json().catch(() => ({}))) as { error?: string };
+    if (!res.ok) {
+      setMessage(body.error || t("anErrorOccurred"));
     } else {
       setTeacherIsPublic(nextPublic);
       setMessage(nextPublic ? t("profileReactivatedSuccess") : t("profileHiddenSuccess"));
@@ -501,6 +530,10 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
   };
 
   const startProCheckout = async () => {
+    if (!isMembreProMarketSupported(teacherCountryCode)) {
+      setProMessage(t("marketMembreProUnavailableMessage"));
+      return;
+    }
     const supabase = getSupabaseClient();
     const { data: s } = await supabase.auth.getSession();
     const token = s.session?.access_token;
@@ -997,9 +1030,21 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
             {teacherIsPublic ? t("profileVisibleStatus") : t("profileHiddenStatus")}
           </span>
         </div>
+        {!teacherIsPublic && !isTeacherMarketSupported(teacherCountryCode) ? (
+          <div>
+            <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-800">
+              {t("marketTeacherUnavailableMessage")}
+            </p>
+            <MarketWaitlistCard
+              defaultEmail={user?.email}
+              defaultCountryCode={teacherCountryCode}
+              defaultRole="teacher"
+            />
+          </div>
+        ) : null}
         <button
           type="button"
-          disabled={visibilitySaving}
+          disabled={visibilitySaving || (!teacherIsPublic && !isTeacherMarketSupported(teacherCountryCode))}
           onClick={() => void toggleProfileVisibility()}
           className="inline-flex h-10 items-center justify-center gap-2 rounded-full border-2 border-[#2C2C2A]/15 bg-white px-5 text-sm font-semibold text-[#2C2C2A] disabled:opacity-60"
         >
@@ -1018,11 +1063,24 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
         </p>
         <button
           type="button"
+          disabled={!isPayoutMarketSupported(teacherCountryCode)}
           onClick={() => void openStripeDashboard()}
-          className="h-10 px-5 rounded-full border-2 border-[#2C2C2A]/15 bg-white text-sm font-semibold text-[#2C2C2A]"
+          className="h-10 px-5 rounded-full border-2 border-[#2C2C2A]/15 bg-white text-sm font-semibold text-[#2C2C2A] disabled:opacity-60"
         >
           {t("manageStripe")}
         </button>
+        {!isPayoutMarketSupported(teacherCountryCode) ? (
+          <div>
+            <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-800">
+              {t("marketPayoutUnavailableMessage")}
+            </p>
+            <MarketWaitlistCard
+              defaultEmail={user?.email}
+              defaultCountryCode={teacherCountryCode}
+              defaultRole="teacher"
+            />
+          </div>
+        ) : null}
         <p className="text-sm text-slate-600">
           {t("currentPlanPrefix")} <span className="font-bold text-[#00694c]">{plan === "pro" ? t("planProLabel") : t("planFreeLabel")}</span>
         </p>
@@ -1054,7 +1112,7 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
         ) : (
           <button
             type="button"
-            disabled={proBusy}
+            disabled={proBusy || !isMembreProMarketSupported(teacherCountryCode)}
             onClick={() => void startProCheckout()}
             className="inline-flex h-10 px-5 rounded-full bg-[#00694c] hover:bg-[#008560] text-white text-sm font-semibold items-center justify-center gap-2 shadow-sm hover:shadow transition-all disabled:opacity-60"
           >
@@ -1062,6 +1120,18 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
             {proBusy ? t("stripePortalOpening") : t("upgradeToPro")}
           </button>
         )}
+        {!isMembreProMarketSupported(teacherCountryCode) ? (
+          <div>
+            <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-800">
+              {t("marketMembreProUnavailableMessage")}
+            </p>
+            <MarketWaitlistCard
+              defaultEmail={user?.email}
+              defaultCountryCode={teacherCountryCode}
+              defaultRole="teacher"
+            />
+          </div>
+        ) : null}
         {proMessage ? (
           <p role="alert" className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700">
             {proMessage}

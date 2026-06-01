@@ -13,6 +13,7 @@ import { parseGooglePlace } from "@/lib/googleAddressParser";
 import { blurCoordinates } from "@/lib/maps";
 import { TeacherPayoutPreview } from "@/components/teacher/TeacherPayoutPreview";
 import { ProfileAiAssistant } from "@/components/teacher/ProfileAiAssistant";
+import { MarketWaitlistCard } from "@/components/MarketWaitlistCard";
 import { MIN_LESSON_PRICE_DOLLARS } from "@/lib/pricing/constants";
 import { validateTeacherLessonOffers } from "@/lib/pricing/lessonOffer";
 import {
@@ -21,6 +22,7 @@ import {
   formatLessonDurationLabel,
   normalizeLessonDurationMinutes,
 } from "@/lib/pricing/lessonDuration";
+import { isTeacherMarketSupported } from "@/lib/config/markets";
 
 /**
  * Teacher Launch Center
@@ -490,6 +492,10 @@ export default function TeacherOnboardingPage() {
       const publicCity = city.trim();
       const publicRegion = region.trim();
       const publicCountry = countryCode.trim().toUpperCase();
+      if (!isTeacherMarketSupported(publicCountry)) {
+        setError(t("marketTeacherUnavailableMessage"));
+        return;
+      }
 
       // Backwards compatibility: keep flat keys used by existing UI.
       nextLocation.neighborhood = publicCity;
@@ -732,6 +738,13 @@ export default function TeacherOnboardingPage() {
                     </select>
                   </label>
                 </div>
+                {!isTeacherMarketSupported(countryCode) ? (
+                  <MarketWaitlistCard
+                    defaultEmail={user?.email}
+                    defaultCountryCode={countryCode}
+                    defaultRole="teacher"
+                  />
+                ) : null}
 
                 <label className="block">
                   <span className="block text-xs font-bold uppercase tracking-widest text-[var(--p-text-subtle)]">
@@ -897,6 +910,11 @@ export default function TeacherOnboardingPage() {
                       className="mt-2 w-full h-12 rounded-2xl border border-[var(--p-border-light)] px-4 text-sm"
                       placeholder="CA"
                     />
+                    {!isTeacherMarketSupported(countryCode) ? (
+                      <p className="mt-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-800">
+                        {t("marketTeacherUnavailableMessage")}
+                      </p>
+                    ) : null}
                   </label>
                   <label className="block sm:col-span-2">
                     <span className="block text-xs font-bold uppercase tracking-widest text-[var(--p-text-subtle)]">
