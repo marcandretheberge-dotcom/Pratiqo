@@ -57,6 +57,7 @@ import type { YoLocale, YoLocalizedString } from "@/lib/yo/types";
 import { YoBreadcrumb } from "@/components/yo/YoBreadcrumb";
 import { YoLegalDisclaimer } from "@/components/yo/YoLegalDisclaimer";
 import { YoFrenchAudioButton } from "@/components/yo/YoFrenchAudioButton";
+import { YoLocaleSwitcher } from "@/components/yo/YoLocaleSwitcher";
 import type {
   FrQuebecLessonOneContent,
   FrQuebecModuleLesson,
@@ -1003,6 +1004,18 @@ export function YoPremiumModuleShell(props: YoPremiumModuleShellProps) {
             className="absolute inset-0 bg-[radial-gradient(circle_at_18%_15%,rgba(15,110,86,0.18),transparent_30%),radial-gradient(circle_at_86%_18%,rgba(244,180,0,0.18),transparent_32%),linear-gradient(180deg,#fbfdff_0%,#dde9f4_45%,#ddf4f1_100%)]"
           />
           <div className="relative mx-auto flex max-w-5xl flex-col gap-4 px-5 pt-10 pb-10 sm:px-8 sm:pt-12 sm:pb-14">
+            {/* Visible FR / EN / ES language switcher. Rendered at the
+                top of the hero block so a learner who landed in the
+                "wrong" locale can pivot before reading the title or
+                lesson preview. The base path is hardcoded because
+                this shell is the Quebec French module shell
+                specifically; threading a prop would add coupling
+                without adding flexibility. */}
+            <YoLocaleSwitcher
+              currentLocale={locale}
+              basePath="/yo/langues/francais-quebec/module-1"
+              className="self-start"
+            />
             <div className="flex flex-wrap items-center gap-2">
               <span className="inline-flex items-center gap-2 rounded-full border border-[#0F6E56]/30 bg-white/80 px-3 py-1.5 text-xs font-black uppercase tracking-[0.14em] text-[#0F6E56]">
                 <Sparkles className="size-3.5 text-[#F4B400]" aria-hidden />

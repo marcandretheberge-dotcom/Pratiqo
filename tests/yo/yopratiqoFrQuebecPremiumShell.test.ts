@@ -1467,6 +1467,237 @@ test("Honest-promise ES strings still surface the educational-only disclaimer sc
   assert.ok(/francizaci[óo]n/.test(es), "ES honest promise must disclaim official francisation");
 });
 
+// ─── YoLocaleSwitcher (visible FR / EN / ES language selector) ──────
+//
+// The premium module shell already supports FR / EN / ES content via
+// `?lang=…`, but there is now a VISIBLE selector inside the hero so a
+// learner who lands in the wrong locale can pivot. The tests below
+// pin every safety + UX invariant of that selector so a regression
+// breaks the launch gate.
+
+const SWITCHER_FILE = "components/yo/YoLocaleSwitcher.tsx";
+
+test("YoLocaleSwitcher source file exists and exports the YoLocaleSwitcher component", () => {
+  const src = read(SWITCHER_FILE);
+  assert.ok(
+    src.length > 0,
+    `${SWITCHER_FILE} must exist and not be empty`,
+  );
+  assert.ok(
+    /export\s+function\s+YoLocaleSwitcher\s*\(/.test(src),
+    `${SWITCHER_FILE} must export the YoLocaleSwitcher function`,
+  );
+});
+
+test("Shell imports YoLocaleSwitcher from the new component file", () => {
+  const src = read(PREMIUM_SHELL_FILE);
+  assert.ok(
+    /import\s*\{\s*YoLocaleSwitcher\s*\}\s*from\s*"@\/components\/yo\/YoLocaleSwitcher"/.test(
+      src,
+    ),
+    "shell must import YoLocaleSwitcher",
+  );
+});
+
+test("Shell renders <YoLocaleSwitcher /> with the spec-mandated props", () => {
+  const src = read(PREMIUM_SHELL_FILE);
+  assert.ok(
+    /<YoLocaleSwitcher\b/.test(src),
+    "shell must render <YoLocaleSwitcher /> somewhere in its JSX",
+  );
+  // The current locale must be threaded through; the spec also
+  // requires the Quebec French module-1 path. We accept both a
+  // hardcoded literal and (for future-proofing) a templated prop —
+  // the property name `basePath` is what matters here.
+  assert.ok(
+    /currentLocale=\{locale\}/.test(src),
+    "shell must pass currentLocale={locale} to the switcher",
+  );
+  assert.ok(
+    /basePath\s*=\s*("\/yo\/langues\/francais-quebec\/module-1"|\{[^}]+\})/.test(
+      src,
+    ),
+    "shell must pass a basePath prop to the switcher (literal Quebec-French route or template)",
+  );
+});
+
+test("YoLocaleSwitcher is a Server Component (no 'use client', no client-only hooks)", () => {
+  const src = read(SWITCHER_FILE);
+  const stripped = stripComments(src);
+  assert.ok(
+    !/["']use client["']/.test(stripped),
+    `${SWITCHER_FILE} must NOT include a "use client" directive`,
+  );
+  const clientHookPatterns: ReadonlyArray<[RegExp, string]> = [
+    [/\buseState\b/, "useState"],
+    [/\buseReducer\b/, "useReducer"],
+    [/\buseEffect\b/, "useEffect"],
+    [/\buseLayoutEffect\b/, "useLayoutEffect"],
+    [/\buseRouter\b/, "useRouter"],
+    [/\busePathname\b/, "usePathname"],
+    [/\buseSearchParams\b/, "useSearchParams"],
+  ];
+  for (const [re, label] of clientHookPatterns) {
+    assert.ok(
+      !re.test(stripped),
+      `${SWITCHER_FILE} must not use the client-only hook "${label}" (matched ${re})`,
+    );
+  }
+});
+
+test("YoLocaleSwitcher renders all three visible labels in their own language (Français / English / Español)", () => {
+  const src = read(SWITCHER_FILE);
+  // A language switcher is the one place where labels are NEVER
+  // localized to the current UI language — each label always reads
+  // in its own language so a learner who landed in the wrong locale
+  // still recognises the option for their own.
+  assert.ok(
+    src.includes("Français"),
+    `${SWITCHER_FILE} must include the visible label "Français"`,
+  );
+  assert.ok(
+    src.includes("English"),
+    `${SWITCHER_FILE} must include the visible label "English"`,
+  );
+  assert.ok(
+    src.includes("Español"),
+    `${SWITCHER_FILE} must include the visible label "Español"`,
+  );
+});
+
+test("YoLocaleSwitcher builds explicit ?lang=fr | ?lang=en | ?lang=es hrefs", () => {
+  const stripped = stripComments(read(SWITCHER_FILE));
+  // The spec mandates that the trio always reads as a complete,
+  // symmetrical segmented control — even FR (the default locale)
+  // must carry an explicit `?lang=fr`. We accept any source form
+  // that ultimately yields those three literal query fragments:
+  //   - a literal hardcoded shell like
+  //     `/yo/langues/francais-quebec/module-1?lang=fr`,
+  //   - a templated form like `${basePath}?lang=fr`, or
+  //   - a string constant `"?lang=fr"` that is then concatenated
+  //     with the base path at render time.
+  const hrefShapes: ReadonlyArray<[RegExp, string]> = [
+    [/\?lang=fr\b/, "?lang=fr"],
+    [/\?lang=en\b/, "?lang=en"],
+    [/\?lang=es\b/, "?lang=es"],
+  ];
+  for (const [re, label] of hrefShapes) {
+    assert.ok(
+      re.test(stripped),
+      `${SWITCHER_FILE} must produce an href ending in "${label}" (matched ${re})`,
+    );
+  }
+  // Belt-and-suspenders: confirm the shell-mounted base path is in
+  // scope. The component either gets the path as a `basePath` prop
+  // (preferred, current implementation) or hardcodes it inline; in
+  // either case, the Quebec French module-1 route must be reachable
+  // through the rendered href.
+  const shellSrc = read(PREMIUM_SHELL_FILE);
+  assert.ok(
+    /\/yo\/langues\/francais-quebec\/module-1/.test(shellSrc),
+    "shell must wire the Quebec-French module-1 base path through to the switcher",
+  );
+});
+
+test("YoLocaleSwitcher marks the active locale with aria-current=\"page\"", () => {
+  const stripped = stripComments(read(SWITCHER_FILE));
+  assert.ok(
+    /aria-current\s*=\s*(?:\{[^}]*"page"[^}]*\}|"page")/.test(stripped),
+    `${SWITCHER_FILE} must set aria-current="page" on the active locale link`,
+  );
+});
+
+test("YoLocaleSwitcher never imports payments / Supabase / Stripe / RLS / booking / Membre Pro / commission / audio-gen", () => {
+  // Mirror the forbidden import set already used for the shell so the
+  // new component cannot quietly grow a coupling to checkout, paid
+  // access, supabase, RLS, booking, Membre Pro, commission math,
+  // YoPratiqo audio-manifest generation, or any other out-of-scope
+  // system.
+  const forbidden: Array<[RegExp, string]> = [
+    [/\bstripe\b/i, "Stripe"],
+    [/@\/lib\/payments/, "payments lib"],
+    [/getSupabaseClient|getSupabaseAdmin|@\/lib\/supabase/, "Supabase"],
+    [/supabase\/migrations/, "Supabase migrations"],
+    [/\bRLS\b/, "RLS reference"],
+    [/@\/components\/BookingModal|@\/lib\/booking/, "Booking modal/lib"],
+    [/\bmembrePro\b|\bMembrePro\b|\bmembre_pro\b/, "Membre Pro config"],
+    [/\bcommission\b/i, "commission math"],
+    [/yopratiqoAudio|YOPRATIQO_AUDIO_MANIFEST/, "YoPratiqo audio manifest"],
+    [/\bcheckout\b/i, "checkout"],
+    [/\bpaywall\b/i, "paywall"],
+    [/\bpaid_module\b/i, "paid_module identifier"],
+  ];
+  const stripped = stripComments(read(SWITCHER_FILE));
+  for (const [re, label] of forbidden) {
+    assert.ok(
+      !re.test(stripped),
+      `${SWITCHER_FILE} must not reference ${label} (${re}) — out of scope`,
+    );
+  }
+});
+
+test("Premium module route stays noindex for FR / EN / ES even with the language selector wired in", () => {
+  for (const lang of ["fr", "en", "es"] as const) {
+    const metadata = buildYoPratiqoMetadata(SEO_ROUTE_ID, lang);
+    assert.deepEqual(
+      metadata.robots,
+      { index: false, follow: false },
+      `Adding the YoLocaleSwitcher must not flip robots metadata for lang="${lang}"`,
+    );
+  }
+});
+
+test("Premium module route still excluded from the sitemap after wiring the language selector", async () => {
+  const entries = await sitemap();
+  const matching = entries.filter((e) => e.url.endsWith(PREMIUM_ROUTE));
+  assert.equal(
+    matching.length,
+    0,
+    `sitemap must remain free of ${PREMIUM_ROUTE} after adding the YoLocaleSwitcher`,
+  );
+});
+
+test("Adding the YoLocaleSwitcher did not regress the legal disclaimer, audio buttons, or required CTA copy in the shell", () => {
+  const src = read(PREMIUM_SHELL_FILE);
+  // Legal disclaimer import + render survives.
+  assert.ok(
+    /import\s*\{\s*YoLegalDisclaimer\s*\}\s*from\s*"@\/components\/yo\/YoLegalDisclaimer"/.test(
+      src,
+    ),
+    "shell must still import YoLegalDisclaimer",
+  );
+  assert.ok(
+    /<YoLegalDisclaimer\s+locale=\{locale\}\s*\/>/.test(src),
+    "shell must still render <YoLegalDisclaimer locale={locale} />",
+  );
+  // Audio button import + at least one render reference.
+  assert.ok(
+    /import\s*\{\s*YoFrenchAudioButton\s*\}\s*from\s*"@\/components\/yo\/YoFrenchAudioButton"/.test(
+      src,
+    ),
+    "shell must still import YoFrenchAudioButton",
+  );
+  assert.ok(
+    /<YoFrenchAudioButton\b/.test(src),
+    "shell must still render YoFrenchAudioButton (audio buttons in the free preview)",
+  );
+  // Spec-mandated CTA copy across FR / EN / ES survives the change.
+  const requiredCta: readonly string[] = [
+    "Retour à l’intro gratuite",
+    "Trouver un professeur sur Pratiqo",
+    "Back to the free intro",
+    "Find a teacher on Pratiqo",
+    "Volver a la intro gratuita",
+    "Encontrar un profesor en Pratiqo",
+  ];
+  for (const phrase of requiredCta) {
+    assert.ok(
+      src.includes(phrase),
+      `shell must still include the CTA copy "${phrase}" after the switcher change`,
+    );
+  }
+});
+
 (async () => {
   let passed = 0;
   for (const entry of tests) {
