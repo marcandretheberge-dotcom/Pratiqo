@@ -66,6 +66,7 @@ import { YoBreadcrumb } from "@/components/yo/YoBreadcrumb";
 import { YoFlashcardPreview } from "@/components/yo/YoFlashcardPreview";
 import { YoQuizPreview } from "@/components/yo/YoQuizPreview";
 import { YoFrenchAudioButton } from "@/components/yo/YoFrenchAudioButton";
+import { YoUpcomingModuleCard } from "@/components/yo/YoUpcomingModuleCard";
 
 export const dynamic = "force-dynamic";
 
@@ -196,6 +197,17 @@ export default async function YoFrancaisQuebecIntroPage({
     "/yo/langues/francais-quebec/intro",
     locale === "en" ? "fr" : "en",
   );
+
+  // Locale-aware destination for the upcoming Quebec French workplace
+  // module shell (still noindex, no checkout, no Course schema). The
+  // intro page is bilingual FR/EN, so only those two query-string
+  // forms are reachable at runtime here — the ES form is owned by the
+  // hub page above so the combined entry-point surface still covers
+  // all three locales (`?lang=fr`, `?lang=en`, `?lang=es`).
+  const upcomingModuleHref =
+    locale === "fr"
+      ? "/yo/langues/francais-quebec/module-1?lang=fr"
+      : "/yo/langues/francais-quebec/module-1?lang=en";
 
   const {
     welcomeIntro,
@@ -724,6 +736,33 @@ export default async function YoFrancaisQuebecIntroPage({
               </div>
             </div>
           </div>
+        </section>
+
+        {/*
+         * 10) Upcoming-module entry-point.
+         *
+         * Placed at the very end of the intro content (the global site
+         * footer / legal disclaimer is rendered by the layout below). The
+         * card itself is a Server-Component "coming soon / preview" pitch
+         * with no checkout, no price, no Stripe, no Course schema, and no
+         * audio coupling — it only links forward to the module shell at
+         * /yo/langues/francais-quebec/module-1 with the matching locale.
+         * The teacher search link is intentionally omitted here because
+         * section 9 above already routes learners to /trouver-un-prof.
+         */}
+        <section
+          aria-labelledby="yo-fr-qc-upcoming-title"
+          className="mx-auto w-full max-w-5xl px-5 pt-10 sm:px-8 sm:pt-14"
+        >
+          <h2 id="yo-fr-qc-upcoming-title" className="sr-only">
+            {locale === "fr"
+              ? "Continuer avec le module à venir"
+              : "Continue with the upcoming module"}
+          </h2>
+          <YoUpcomingModuleCard
+            locale={locale}
+            href={upcomingModuleHref}
+          />
         </section>
       </main>
     </div>
