@@ -56,10 +56,27 @@ import { lstr, t } from "@/lib/yo/localize";
 import type { YoLocale, YoLocalizedString } from "@/lib/yo/types";
 import { YoBreadcrumb } from "@/components/yo/YoBreadcrumb";
 import { YoLegalDisclaimer } from "@/components/yo/YoLegalDisclaimer";
+import { YoFrenchAudioButton } from "@/components/yo/YoFrenchAudioButton";
 import type {
   FrQuebecLessonOneContent,
   FrQuebecModuleLesson,
 } from "@/lib/yo/frQuebecWorkplaceSurvivalModule";
+
+/**
+ * Lesson 1 audio context — passed to every `YoFrenchAudioButton`
+ * rendered inside this shell. Centralised so the manifest lookup
+ * (moduleId / lessonId / accent profile) stays consistent across
+ * the core-phrase list and the mini-dialogue lines, and so a future
+ * Lesson 2 / 3 / … only needs its own context object — not new
+ * audio plumbing in the renderer.
+ *
+ * The triple matches the manifest entries declared in
+ * `lib/yo/audio/frQuebecPremiumLessonOneAudio.ts`.
+ */
+const LESSON_ONE_AUDIO_MODULE_ID = "fr-quebec-workplace-survival-1" as const;
+const LESSON_ONE_AUDIO_LESSON_ID = "arriver-saluer" as const;
+const LESSON_ONE_AUDIO_ACCENT_PROFILE = "quebec_french" as const;
+const LESSON_ONE_AUDIO_SPEECH_LANG = "fr-CA" as const;
 
 export interface YoPremiumModuleShellProps {
   locale: YoLocale;
@@ -529,12 +546,23 @@ function LessonOnePreview({
                 className="rounded-2xl border border-teal-100 bg-white p-4 shadow-[0_1px_2px_rgba(15,58,52,0.04)]"
               >
                 <div className="flex flex-wrap items-start justify-between gap-2">
-                  <p
-                    className="text-base font-semibold leading-snug text-[#0F6E56]"
-                    lang="fr-CA"
-                  >
-                    {phrase.frQuebec}
-                  </p>
+                  <div className="flex flex-1 items-start gap-2">
+                    <p
+                      className="text-base font-semibold leading-snug text-[#0F6E56]"
+                      lang="fr-CA"
+                    >
+                      {phrase.frQuebec}
+                    </p>
+                    <YoFrenchAudioButton
+                      text={phrase.frQuebec}
+                      locale={locale}
+                      moduleId={LESSON_ONE_AUDIO_MODULE_ID}
+                      lessonId={LESSON_ONE_AUDIO_LESSON_ID}
+                      accentProfile={LESSON_ONE_AUDIO_ACCENT_PROFILE}
+                      speechLang={LESSON_ONE_AUDIO_SPEECH_LANG}
+                      size="xs"
+                    />
+                  </div>
                   <span className="inline-flex shrink-0 items-center rounded-full bg-[#DDF4F1]/70 px-2 py-0.5 text-[0.65rem] font-black uppercase tracking-[0.14em] text-[#0F6E56]">
                     {t(REGISTER_LABELS[phrase.register], locale)}
                   </span>
@@ -647,12 +675,23 @@ function LessonOnePreview({
                           line.speakerEs,
                         )}
                       </p>
-                      <p
-                        className="mt-1 font-medium text-[#0F6E56]"
-                        lang="fr-CA"
-                      >
-                        {line.frQuebec}
-                      </p>
+                      <div className="mt-1 flex flex-wrap items-start gap-2">
+                        <p
+                          className="font-medium text-[#0F6E56]"
+                          lang="fr-CA"
+                        >
+                          {line.frQuebec}
+                        </p>
+                        <YoFrenchAudioButton
+                          text={line.frQuebec}
+                          locale={locale}
+                          moduleId={LESSON_ONE_AUDIO_MODULE_ID}
+                          lessonId={LESSON_ONE_AUDIO_LESSON_ID}
+                          accentProfile={LESSON_ONE_AUDIO_ACCENT_PROFILE}
+                          speechLang={LESSON_ONE_AUDIO_SPEECH_LANG}
+                          size="xs"
+                        />
+                      </div>
                       <p
                         className="mt-1 text-xs text-[#0F6E56]/70"
                         lang={locale === "es" ? "es" : "en"}
