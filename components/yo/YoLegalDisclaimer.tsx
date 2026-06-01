@@ -3,11 +3,12 @@ import { AlertCircle } from "lucide-react";
 import { lstr, t } from "@/lib/yo/localize";
 import type { YoLocale } from "@/lib/yo/types";
 
-const TITLE = lstr("À garder en tête", "Good to know");
+const TITLE = lstr("À garder en tête", "Good to know", "Para tener en cuenta");
 
 const BODY = lstr(
   "YoPratiqo est une préparation éducative autonome. Il n’y a pas de garantie de maîtrise d’une langue, de réussite à un examen, de résultat d’immigration ou d’emploi. Les contenus ne sont pas des conseils juridiques ou d’immigration, et les réservations avec professeurs restent séparées sur la marketplace Pratiqo.",
   "YoPratiqo is self-paced educational preparation. There is no guarantee of language fluency, exam success, immigration outcomes, or employment. Content is not legal or immigration advice, and teacher marketplace bookings remain separate on Pratiqo.",
+  "YoPratiqo es una preparación educativa autónoma. No se garantiza el dominio de un idioma, la aprobación de un examen, ningún resultado de inmigración ni de empleo. El contenido no constituye asesoramiento legal ni de inmigración, y las reservas con profesores se gestionan por separado en el marketplace Pratiqo.",
 );
 
 export function YoLegalDisclaimer({ locale }: { locale: YoLocale }) {

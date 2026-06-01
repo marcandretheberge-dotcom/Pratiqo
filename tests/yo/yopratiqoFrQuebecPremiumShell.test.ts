@@ -119,10 +119,14 @@ test("SEO entry is wired for the module route", () => {
 
 // ── 2. Module page is noindex ──────────────────────────────────────
 
-test("module page robots metadata is { index: false, follow: false }", () => {
-  for (const lang of ["fr", "en"] as const) {
+test("module page robots metadata is { index: false, follow: false } across FR / EN / ES", () => {
+  for (const lang of ["fr", "en", "es"] as const) {
     const metadata = buildYoPratiqoMetadata(SEO_ROUTE_ID, lang);
-    assert.deepEqual(metadata.robots, { index: false, follow: false });
+    assert.deepEqual(
+      metadata.robots,
+      { index: false, follow: false },
+      `metadata.robots must be noindex for lang="${lang}"`,
+    );
   }
 });
 
@@ -373,20 +377,30 @@ test("data file declares exactly the 7 expected lesson titles in order", () => {
   }
 });
 
-test("each lesson carries id, English title, scenario, 3 goals, samples, quiz, and bridge prompts", () => {
+test("each lesson carries id, FR / EN / ES title + scenario + goals, samples, quiz, and bridge prompts", () => {
   for (const lesson of frQuebecWorkplaceSurvivalModule.lessons) {
     assert.ok(lesson.id.length > 0, `lesson ${lesson.titleFr} needs an id`);
     assert.ok(
+      lesson.titleFr.length > 0,
+      `lesson ${lesson.id} needs a French title`,
+    );
+    assert.ok(
       lesson.titleEn.length > 0,
       `lesson ${lesson.id} needs an English title`,
+    );
+    assert.ok(
+      lesson.titleEs.length > 0,
+      `lesson ${lesson.id} needs a Spanish title`,
     );
     assert.ok(
       lesson.estimatedMinutes >= 8 && lesson.estimatedMinutes <= 15,
       `lesson ${lesson.id} estimatedMinutes must be 8..15`,
     );
     assert.ok(
-      lesson.scenarioFr.length > 0 && lesson.scenarioEn.length > 0,
-      `lesson ${lesson.id} needs FR + EN scenarios`,
+      lesson.scenarioFr.length > 0 &&
+        lesson.scenarioEn.length > 0 &&
+        lesson.scenarioEs.length > 0,
+      `lesson ${lesson.id} needs FR + EN + ES scenarios`,
     );
     assert.equal(
       lesson.learningGoalsFr.length,
@@ -398,6 +412,11 @@ test("each lesson carries id, English title, scenario, 3 goals, samples, quiz, a
       3,
       `lesson ${lesson.id} needs exactly 3 EN learning goals`,
     );
+    assert.equal(
+      lesson.learningGoalsEs.length,
+      3,
+      `lesson ${lesson.id} needs exactly 3 ES learning goals`,
+    );
     assert.ok(
       lesson.samplePhrases.length >= 3 && lesson.samplePhrases.length <= 5,
       `lesson ${lesson.id} needs between 3 and 5 sample phrases (got ${lesson.samplePhrases.length})`,
@@ -405,16 +424,28 @@ test("each lesson carries id, English title, scenario, 3 goals, samples, quiz, a
     for (const phrase of lesson.samplePhrases) {
       assert.ok(phrase.frQuebec.length > 0, "phrase needs a Quebec form");
       assert.ok(phrase.english.length > 0, "phrase needs an English gloss");
+      assert.ok(
+        typeof phrase.spanish === "string" && phrase.spanish.length > 0,
+        `phrase "${phrase.frQuebec}" in lesson ${lesson.id} needs a Spanish gloss`,
+      );
     }
     assert.ok(
       lesson.quizPreview.promptFr.length > 0 &&
-        lesson.quizPreview.promptEn.length > 0,
-      `lesson ${lesson.id} quiz preview needs both FR + EN prompts`,
+        lesson.quizPreview.promptEn.length > 0 &&
+        lesson.quizPreview.promptEs.length > 0,
+      `lesson ${lesson.id} quiz preview needs FR + EN + ES prompts`,
+    );
+    assert.ok(
+      lesson.quizPreview.hintFr.length > 0 &&
+        lesson.quizPreview.hintEn.length > 0 &&
+        lesson.quizPreview.hintEs.length > 0,
+      `lesson ${lesson.id} quiz preview needs FR + EN + ES hints`,
     );
     assert.ok(
       lesson.teacherBridgePromptFr.length > 0 &&
-        lesson.teacherBridgePromptEn.length > 0,
-      `lesson ${lesson.id} teacher bridge prompts must be present`,
+        lesson.teacherBridgePromptEn.length > 0 &&
+        lesson.teacherBridgePromptEs.length > 0,
+      `lesson ${lesson.id} teacher bridge prompts must be present in FR + EN + ES`,
     );
   }
 });
@@ -552,6 +583,888 @@ test("data file only frames guarantees as DISCLAIMERS, never as positive promise
 test("module shell id matches the future-premium product config id", () => {
   assert.equal(frQuebecWorkplaceSurvivalModule.id, PREMIUM_MODULE_ID);
   assert.equal(frQuebecWorkplaceSurvivalModule.status, "planned");
+});
+
+// ─── LESSON 1 — full content suite ────────────────────────────────
+//
+// Lesson 1 ("Arriver au travail et saluer naturellement") is the
+// first lesson with a populated free-preview body. The tests below
+// pin every documented section AND every safety invariant so a
+// regression breaks the launch gate. The other six lessons stay
+// outline-only on purpose; we only assert their lifecycle flags here.
+
+const LESSON_ONE_ID = "arriver-saluer";
+
+function getLessonOne() {
+  const lesson = frQuebecWorkplaceSurvivalModule.lessons[0];
+  assert.equal(lesson.id, LESSON_ONE_ID, "Lesson 1 must be the first entry");
+  return lesson;
+}
+
+test("Lesson 1 has the documented metadata (id, title, minutes, status, accessStatus)", () => {
+  const lesson = getLessonOne();
+  assert.equal(lesson.id, LESSON_ONE_ID);
+  assert.equal(lesson.titleFr, "Arriver au travail et saluer naturellement");
+  assert.equal(lesson.titleEn, "Arriving at work and greeting naturally");
+  assert.equal(lesson.estimatedMinutes, 10);
+  assert.equal(lesson.status, "preview");
+  assert.equal(lesson.accessStatus, "coming_soon");
+  assert.ok(lesson.content, "Lesson 1 must carry a populated content block");
+});
+
+test("every lesson reports accessStatus 'coming_soon' (no live paid surface)", () => {
+  for (const lesson of frQuebecWorkplaceSurvivalModule.lessons) {
+    assert.equal(
+      lesson.accessStatus,
+      "coming_soon",
+      `lesson ${lesson.id} accessStatus must remain coming_soon`,
+    );
+  }
+});
+
+test("lessons 2-7 stay outline-only ('planned', no content body)", () => {
+  for (let i = 1; i < frQuebecWorkplaceSurvivalModule.lessons.length; i += 1) {
+    const lesson = frQuebecWorkplaceSurvivalModule.lessons[i]!;
+    assert.equal(
+      lesson.status,
+      "planned",
+      `lesson ${lesson.id} (#${i + 1}) status must remain planned`,
+    );
+    assert.equal(
+      lesson.content,
+      undefined,
+      `lesson ${lesson.id} (#${i + 1}) must not carry a rich content body yet`,
+    );
+  }
+});
+
+test("Lesson 1 declares a clear bilingual learning objective", () => {
+  const content = getLessonOne().content!;
+  assert.ok(content.objectiveFr.length > 60);
+  assert.ok(content.objectiveEn.length > 60);
+  assert.ok(
+    /tu\/vous|« tu » ou « vous »|« tu »|« vous »/i.test(content.objectiveFr) ||
+      /tutoyer|vouvoyer/i.test(content.objectiveFr),
+    "FR objective must mention the tu/vous decision",
+  );
+  assert.ok(
+    /tu\b|vous\b/i.test(content.objectiveEn),
+    "EN objective must mention the tu/vous decision",
+  );
+});
+
+test("Lesson 1 carries a longer bilingual scenario than the outline card", () => {
+  const lesson = getLessonOne();
+  const content = lesson.content!;
+  assert.ok(
+    content.scenarioFr.length > lesson.scenarioFr.length,
+    "Lesson 1 content scenario must be richer than the outline scenario",
+  );
+  assert.ok(
+    content.scenarioEn.length > lesson.scenarioEn.length,
+    "Lesson 1 content scenario (EN) must be richer than the outline",
+  );
+});
+
+test("Lesson 1 cultural note is warm + nuanced (mentions tu/vous + 'follow' rule + workplace variability)", () => {
+  const content = getLessonOne().content!;
+  // FR side
+  assert.ok(/tu/i.test(content.culturalNoteFr));
+  assert.ok(/vous/i.test(content.culturalNoteFr));
+  assert.ok(
+    /suiv|mir/i.test(content.culturalNoteFr),
+    "FR cultural note should advise following / mirroring the other person",
+  );
+  assert.ok(
+    /toutes les [ée]quipes ne|pas pareil|diff[ée]rent/i.test(
+      content.culturalNoteFr,
+    ),
+    "FR cultural note should acknowledge that workplaces differ",
+  );
+  // EN side
+  assert.ok(/tu/i.test(content.culturalNoteEn));
+  assert.ok(/vous/i.test(content.culturalNoteEn));
+  assert.ok(
+    /follow|mirror/i.test(content.culturalNoteEn),
+    "EN cultural note should advise following / mirroring",
+  );
+  assert.ok(
+    /don't all|differ|reserved/i.test(content.culturalNoteEn),
+    "EN cultural note should acknowledge that workplaces differ",
+  );
+});
+
+test("Lesson 1 ships 12 to 16 core phrases with register + bilingual usage notes", () => {
+  const content = getLessonOne().content!;
+  assert.ok(
+    content.corePhrases.length >= 12 && content.corePhrases.length <= 16,
+    `expected 12–16 core phrases, got ${content.corePhrases.length}`,
+  );
+  const ids = new Set<string>();
+  for (const phrase of content.corePhrases) {
+    assert.ok(phrase.id.length > 0, "phrase needs a stable id");
+    assert.ok(!ids.has(phrase.id), `phrase id ${phrase.id} must be unique`);
+    ids.add(phrase.id);
+    assert.ok(phrase.frQuebec.length > 0, "phrase needs a Quebec form");
+    assert.ok(phrase.english.length > 0, "phrase needs an English gloss");
+    assert.ok(
+      ["informal", "neutral", "formal"].includes(phrase.register),
+      `phrase ${phrase.id} register must be informal | neutral | formal`,
+    );
+    assert.ok(phrase.usageFr.length > 0, "phrase needs FR usage note");
+    assert.ok(phrase.usageEn.length > 0, "phrase needs EN usage note");
+  }
+});
+
+test("Lesson 1 covers the documented core phrase landmarks", () => {
+  const content = getLessonOne().content!;
+  const fr = content.corePhrases.map((p) => p.frQuebec).join(" || ");
+  const expectedFragments = [
+    "Salut",
+    "Bonjour",
+    "nouveau",
+    "Je commence aujourd",
+    "Tu peux me tutoyer",
+    "vous tutoyer",
+    "Je vais m’installer",
+    "salle de réunion",
+    "habitué",
+    "Peux-tu me montrer",
+    "remercie",
+    "apprécié",
+    "À tantôt",
+    "Bonne journée",
+  ];
+  for (const fragment of expectedFragments) {
+    assert.ok(
+      fr.includes(fragment),
+      `core phrases must include a phrase containing "${fragment}"`,
+    );
+  }
+});
+
+test("Lesson 1 has exactly 3 mini-dialogues (reception / colleague / team lead)", () => {
+  const content = getLessonOne().content!;
+  assert.equal(content.miniDialogues.length, 3);
+  const ids = content.miniDialogues.map((d) => d.id);
+  assert.equal(new Set(ids).size, 3, "dialogue ids must be unique");
+  for (const dialogue of content.miniDialogues) {
+    assert.ok(dialogue.titleFr.length > 0);
+    assert.ok(dialogue.titleEn.length > 0);
+    assert.ok(dialogue.contextFr.length > 0);
+    assert.ok(dialogue.contextEn.length > 0);
+    assert.ok(
+      dialogue.lines.length >= 2,
+      `dialogue ${dialogue.id} must have at least 2 lines`,
+    );
+    for (const line of dialogue.lines) {
+      assert.ok(line.frQuebec.length > 0);
+      assert.ok(line.english.length > 0);
+      assert.ok(line.speakerFr.length > 0);
+      assert.ok(line.speakerEn.length > 0);
+    }
+  }
+  // Spot-check the documented archetypes.
+  const titlesFr = content.miniDialogues.map((d) => d.titleFr).join(" || ");
+  assert.ok(/accueil/i.test(titlesFr), "first dialogue should be reception");
+  assert.ok(/coll[èe]gue/i.test(titlesFr), "second dialogue should be a colleague");
+  assert.ok(/responsable/i.test(titlesFr), "third dialogue should be the team lead");
+});
+
+test("Lesson 1 has exactly 5 tu/vous practice situations with deterministic safest choices", () => {
+  const content = getLessonOne().content!;
+  assert.equal(content.tuVousPractice.length, 5);
+  const ids = content.tuVousPractice.map((s) => s.id);
+  assert.equal(new Set(ids).size, 5, "tu/vous situation ids must be unique");
+  for (const situation of content.tuVousPractice) {
+    assert.ok(situation.situationFr.length > 0);
+    assert.ok(situation.situationEn.length > 0);
+    assert.ok(
+      ["tu", "vous", "follow"].includes(situation.safestChoice),
+      `situation ${situation.id} safestChoice must be tu | vous | follow`,
+    );
+    assert.ok(situation.explanationFr.length > 0);
+    assert.ok(situation.explanationEn.length > 0);
+  }
+  // The expected mapping locks the user-spec scenarios in place.
+  const choices = content.tuVousPractice.map((s) => s.safestChoice);
+  assert.deepEqual(choices, ["vous", "tu", "follow", "vous", "tu"]);
+});
+
+test("Lesson 1 ships exactly 5 quiz questions with valid options + correct ids", () => {
+  const content = getLessonOne().content!;
+  assert.equal(content.quizQuestions.length, 5);
+  const qIds = new Set<string>();
+  for (const question of content.quizQuestions) {
+    assert.ok(question.id.length > 0);
+    assert.ok(!qIds.has(question.id), "quiz question ids must be unique");
+    qIds.add(question.id);
+    assert.ok(question.promptFr.length > 0);
+    assert.ok(question.promptEn.length > 0);
+    assert.ok(
+      question.options.length >= 3 && question.options.length <= 4,
+      `question ${question.id} should expose 3–4 options`,
+    );
+    const optionIds = new Set(question.options.map((o) => o.id));
+    assert.equal(
+      optionIds.size,
+      question.options.length,
+      `question ${question.id} option ids must be unique`,
+    );
+    assert.ok(
+      optionIds.has(question.correctOptionId),
+      `question ${question.id} correctOptionId must point at one of its options`,
+    );
+    assert.ok(question.explanationFr.length > 0);
+    assert.ok(question.explanationEn.length > 0);
+    for (const opt of question.options) {
+      assert.ok(opt.labelFr.length > 0);
+      assert.ok(opt.labelEn.length > 0);
+    }
+  }
+});
+
+test("Lesson 1 carries a bilingual reflection prompt", () => {
+  const content = getLessonOne().content!;
+  assert.ok(content.reflectionPromptFr.length > 30);
+  assert.ok(content.reflectionPromptEn.length > 30);
+  assert.ok(
+    /\?\s*$/.test(content.reflectionPromptFr.trim()),
+    "FR reflection prompt should end with a question mark",
+  );
+  assert.ok(
+    /\?\s*$/.test(content.reflectionPromptEn.trim()),
+    "EN reflection prompt should end with a question mark",
+  );
+});
+
+test("Lesson 1 teacher-bridge prompt is consent-safe (no auto-routing, no data sharing, no recording)", () => {
+  const content = getLessonOne().content!;
+  const fr = content.teacherBridgePromptFr;
+  const en = content.teacherBridgePromptEn;
+  assert.ok(fr.length > 0, "FR teacher-bridge prompt required");
+  assert.ok(en.length > 0, "EN teacher-bridge prompt required");
+  // It must invite practice with a teacher, but only when the
+  // learner is ready — the consent signal.
+  assert.ok(
+    /pr[êe]t/i.test(fr),
+    "FR teacher-bridge prompt must include the 'when you are ready' consent cue",
+  );
+  assert.ok(
+    /ready/i.test(en),
+    "EN teacher-bridge prompt must include the 'when you are ready' consent cue",
+  );
+  // The forbidden phrasings below match anything that would imply
+  // automatic teacher routing, voice recording, or learner-data
+  // forwarding — none of those features exist in this PR.
+  const banned: ReadonlyArray<[RegExp, string]> = [
+    [/voice\s+recording/i, "voice recording (EN)"],
+    [/enregistrement\s+vocal/i, "enregistrement vocal (FR)"],
+    [/automatic(?:\s+\w+){0,3}\s+(?:teacher|routing)/i, "automatic teacher routing (EN)"],
+    [/jumelage\s+automatique/i, "jumelage automatique (FR)"],
+    [/forward(?:s|ing)?\s+(?:your|the)\s+(?:logs?|data|results|quiz)/i, "forwarding logs/data/results (EN)"],
+    [/transmettre\s+(?:vos|tes)\s+(?:r[ée]sultats|donn[ée]es|logs)/i, "transmettre résultats/données (FR)"],
+  ];
+  for (const [re, label] of banned) {
+    assert.ok(
+      !re.test(fr) && !re.test(en),
+      `Lesson 1 teacher-bridge prompt must not include "${label}"`,
+    );
+  }
+});
+
+test("Lesson 1 content never mentions voice recording, automatic teacher routing, or data forwarding", () => {
+  const content = getLessonOne().content!;
+  // We serialize the WHOLE Lesson 1 content tree (every string in
+  // every nested section) and scan it once. This is stricter than
+  // testing individual fields and gets future contributors for free.
+  const serialized = JSON.stringify(content);
+  const banned: ReadonlyArray<[RegExp, string]> = [
+    [/voice\s+recording/i, "voice recording (EN)"],
+    [/voice\s+capture/i, "voice capture (EN)"],
+    [/record(?:ing)?\s+your\s+voice/i, "recording your voice (EN)"],
+    [/enregistrement\s+vocal/i, "enregistrement vocal (FR)"],
+    [/microphone/i, "microphone reference"],
+    [/automatic(?:\s+\w+){0,3}\s+(?:teacher|routing|matching)/i, "automatic teacher routing (EN)"],
+    [/auto[-\s]?match\w*\s+(?:teacher|prof)/i, "auto-match teacher (EN)"],
+    [/jumelage\s+automatique/i, "jumelage automatique (FR)"],
+    [/(?:forward|share|send)\s+(?:your|the)\s+(?:quiz|results?|logs?|data|answers?)/i, "data sharing with teacher (EN)"],
+    [/(?:partager|transmettre|envoyer)\s+(?:vos|tes)\s+(?:r[ée]ponses|r[ée]sultats|donn[ée]es|logs)/i, "data sharing with teacher (FR)"],
+  ];
+  for (const [re, label] of banned) {
+    assert.ok(
+      !re.test(serialized),
+      `Lesson 1 content must not mention "${label}"`,
+    );
+  }
+});
+
+test("Lesson 1 content never mentions checkout, payment, Stripe, price, discount, countdown, certification, or guarantees", () => {
+  const content = getLessonOne().content!;
+  const serialized = JSON.stringify(content);
+  const banned: ReadonlyArray<[RegExp, string]> = [
+    [/\bcheckout\b/i, "checkout"],
+    [/\bpaywall\b/i, "paywall"],
+    [/\bstripe\b/i, "Stripe"],
+    [/\bpaiement\b/i, "paiement"],
+    [/\bpayment\b/i, "payment"],
+    [/\$\s?\d/i, "literal price"],
+    [/\d+\s*(?:CAD|USD|\$)\b/i, "currency amount"],
+    [/\d+\s*%\s*(?:off|de\s+rabais|de\s+r[ée]duction)/i, "percentage discount"],
+    [/\bdiscount\b/i, "discount"],
+    [/\brabais\b/i, "rabais"],
+    [/\bcountdown\b/i, "countdown"],
+    [/compte\s+[àa]\s+rebours/i, "compte à rebours"],
+    [/limited[-\s]time/i, "limited-time urgency"],
+    [/dur[ée]e\s+limit[ée]e/i, "durée limitée"],
+    [/\bcertification\b/i, "certification"],
+    [/\bdiplome\b|\bdipl[ôo]me\b/i, "diplôme"],
+    [/\bguaranteed\b/i, "guaranteed"],
+    [/\bgarantie\b/i, "garantie"],
+    [/(?:r[ée]sultat|outcome).{0,40}immigration/i, "immigration outcome"],
+    [/\bTEFAQ\b/i, "TEFAQ"],
+    [/\bTEF\b/i, "TEF"],
+    [/employment\s+(?:guarantee|outcome|guaranteed)/i, "employment guarantee"],
+    [/garantie\s+d['’]emploi/i, "garantie d’emploi"],
+  ];
+  for (const [re, label] of banned) {
+    assert.ok(
+      !re.test(serialized),
+      `Lesson 1 content must not mention "${label}"`,
+    );
+  }
+});
+
+test("Lesson 1 page UI renders all 9 documented sections (objective, scenario, culture, phrases, dialogues, tu/vous, quiz, reflection, bridge)", () => {
+  const src = read(PREMIUM_SHELL_FILE);
+  const labels: Array<[RegExp, string]> = [
+    [/PREVIEW_OBJECTIVE_LABEL/, "objective label"],
+    [/PREVIEW_SCENARIO_LABEL/, "scenario label"],
+    [/PREVIEW_CULTURE_LABEL/, "culture label"],
+    [/PREVIEW_PHRASES_LABEL/, "core phrases label"],
+    [/PREVIEW_DIALOGUES_LABEL/, "dialogues label"],
+    [/PREVIEW_TUVOUS_LABEL/, "tu/vous label"],
+    [/PREVIEW_QUIZ_LABEL/, "quiz label"],
+    [/PREVIEW_REFLECTION_LABEL/, "reflection label"],
+    [/PREVIEW_BRIDGE_LABEL/, "bridge label"],
+  ];
+  for (const [re, label] of labels) {
+    assert.ok(re.test(src), `shell must wire the ${label}`);
+  }
+  // Each lesson section field must be threaded through the renderer.
+  for (const field of [
+    "content.objectiveFr",
+    "content.objectiveEn",
+    "content.scenarioFr",
+    "content.scenarioEn",
+    "content.culturalNoteFr",
+    "content.culturalNoteEn",
+    "content.corePhrases",
+    "content.miniDialogues",
+    "content.tuVousPractice",
+    "content.quizQuestions",
+    "content.reflectionPromptFr",
+    "content.reflectionPromptEn",
+    "content.teacherBridgePromptFr",
+    "content.teacherBridgePromptEn",
+  ]) {
+    assert.ok(
+      src.includes(field),
+      `shell must consume ${field} in the rich preview renderer`,
+    );
+  }
+});
+
+test("Lesson 1 UI never wires forms, voice recording, or progress tracking", () => {
+  const src = stripComments(read(PREMIUM_SHELL_FILE));
+  const banned: ReadonlyArray<[RegExp, string]> = [
+    [/<form\b/i, "<form> tag"],
+    [/<input\b/i, "<input> tag"],
+    [/<textarea\b/i, "<textarea> tag"],
+    [/<button\b/i, "<button> tag"],
+    [/onChange|onSubmit|onClick/, "interactive event handler"],
+    [/useState|useReducer|useEffect/, "client React hook"],
+    [/MediaRecorder|getUserMedia|navigator\.mediaDevices/, "voice recording API"],
+    [/audio\s*=|new\s+Audio\b/i, "audio playback"],
+    [/progressTracking|trackProgress|recordProgress/i, "progress tracking"],
+    [/"use client"/, "client boundary"],
+  ];
+  for (const [re, label] of banned) {
+    assert.ok(!re.test(src), `shell must not include "${label}" (matched ${re})`);
+  }
+});
+
+test("Lesson 1 still respects the route-level safety contract (noindex + no sitemap + no Course schema) in FR / EN / ES", async () => {
+  // These already exist as standalone tests above, but we re-assert
+  // them inside the Lesson 1 context so a Lesson 1-specific
+  // regression report is unambiguous.
+  for (const lang of ["fr", "en", "es"] as const) {
+    const metadata = buildYoPratiqoMetadata(SEO_ROUTE_ID, lang);
+    assert.deepEqual(metadata.robots, { index: false, follow: false });
+  }
+  const entries = await sitemap();
+  assert.equal(
+    entries.filter((e) => e.url.endsWith(PREMIUM_ROUTE)).length,
+    0,
+    "premium module route must remain absent from the sitemap",
+  );
+  assert.equal(
+    shouldPublishYoCourseSchema("francais-quebec", "future_premium"),
+    false,
+    "Course schema must remain disabled for the future-premium page type",
+  );
+  assert.equal(yopratiqoProductConfig.premiumModulesEnabled, false);
+  const moduleEntry = getYoFuturePremiumModuleById(PREMIUM_MODULE_ID)!;
+  assert.equal(moduleEntry.checkoutEnabled, false);
+  assert.equal(moduleEntry.publicLaunchEnabled, false);
+});
+
+// ─── SPANISH (ES) — i18n + pedagogy + UI + CTA + disclaimer ─────────
+//
+// The premium module shell + Lesson 1 must address Spanish-speaking
+// learners (many newcomers to Quebec arrive from Latin America).
+// Spanish must NOT be a fallback to FR or an afterthought — every
+// learner-facing field must carry an authored ES value, the UI must
+// render ES copy when locale === "es", CTAs must be localized, the
+// teacher CTA URL must include `&lang=es`, the legal-safe disclaimer
+// must speak ES, and pedagogical Spanish notes must explain the
+// Quebec-specific cultural cues that matter most to Spanish speakers.
+
+test("Module-level shell fields are populated for FR + EN + ES", () => {
+  const m = frQuebecWorkplaceSurvivalModule;
+  for (const [field, value] of Object.entries({
+    titleFr: m.titleFr,
+    titleEn: m.titleEn,
+    titleEs: m.titleEs,
+    taglineFr: m.taglineFr,
+    taglineEn: m.taglineEn,
+    taglineEs: m.taglineEs,
+    audienceFr: m.audienceFr,
+    audienceEn: m.audienceEn,
+    audienceEs: m.audienceEs,
+    honestPromiseFr: m.honestPromiseFr,
+    honestPromiseEn: m.honestPromiseEn,
+    honestPromiseEs: m.honestPromiseEs,
+    teacherBridgeTitleFr: m.teacherBridgeTitleFr,
+    teacherBridgeTitleEn: m.teacherBridgeTitleEn,
+    teacherBridgeTitleEs: m.teacherBridgeTitleEs,
+    teacherBridgeBodyFr: m.teacherBridgeBodyFr,
+    teacherBridgeBodyEn: m.teacherBridgeBodyEn,
+    teacherBridgeBodyEs: m.teacherBridgeBodyEs,
+    comingSoonBodyFr: m.comingSoonBodyFr,
+    comingSoonBodyEn: m.comingSoonBodyEn,
+    comingSoonBodyEs: m.comingSoonBodyEs,
+  })) {
+    assert.ok(
+      typeof value === "string" && value.length > 0,
+      `module field "${field}" must be a non-empty string`,
+    );
+  }
+  // Belt-and-suspenders: ES strings must NOT just duplicate FR. If
+  // any ES field exactly equals its FR counterpart, the author has
+  // shipped French as a fallback instead of authoring real Spanish.
+  for (const [esField, frField] of [
+    ["titleEs", "titleFr"],
+    ["taglineEs", "taglineFr"],
+    ["audienceEs", "audienceFr"],
+    ["honestPromiseEs", "honestPromiseFr"],
+    ["teacherBridgeTitleEs", "teacherBridgeTitleFr"],
+    ["teacherBridgeBodyEs", "teacherBridgeBodyFr"],
+    ["comingSoonBodyEs", "comingSoonBodyFr"],
+  ] as const) {
+    assert.notEqual(
+      m[esField],
+      m[frField],
+      `module field "${esField}" must not be a verbatim copy of "${frField}" (write real Spanish, not a fallback)`,
+    );
+  }
+  // The "coming soon" pill is a localized triple in the data — make
+  // sure ES is wired and not just a fallback to FR.
+  const comingSoon = m.comingSoonLabel as { fr: string; en: string; es?: string };
+  assert.equal(comingSoon.es, "Próximamente");
+});
+
+test("ES module-level title + tagline reads as Spanish (Quebec / francés / próximamente cues)", () => {
+  const m = frQuebecWorkplaceSurvivalModule;
+  // "Quebec" or "Francés de Quebec" should appear somewhere in the
+  // ES title; the canonical phrasing in the data file is "Francés de
+  // Quebec".
+  assert.ok(
+    /francés\s+de\s+Quebec/i.test(m.titleEs),
+    "ES title should localize Quebec French as « Francés de Quebec »",
+  );
+  // Coming-soon pill is "Próximamente" in the spec.
+  assert.equal(
+    (m.comingSoonLabel as { es?: string }).es,
+    "Próximamente",
+    "comingSoonLabel.es must be exactly « Próximamente »",
+  );
+});
+
+test("Each lesson exposes a Spanish title that is not a verbatim FR copy", () => {
+  for (const lesson of frQuebecWorkplaceSurvivalModule.lessons) {
+    assert.ok(
+      lesson.titleEs.length > 0,
+      `lesson ${lesson.id} must declare a Spanish title`,
+    );
+    assert.notEqual(
+      lesson.titleEs,
+      lesson.titleFr,
+      `lesson ${lesson.id} ES title should not be a verbatim FR copy`,
+    );
+  }
+});
+
+test("Every Lesson 1 learner-facing field is authored in Spanish", () => {
+  const content = getLessonOne().content!;
+  const requiredEs: ReadonlyArray<[string, string]> = [
+    ["objectiveEs", content.objectiveEs],
+    ["scenarioEs", content.scenarioEs],
+    ["culturalNoteEs", content.culturalNoteEs],
+    ["reflectionPromptEs", content.reflectionPromptEs],
+    ["teacherBridgePromptEs", content.teacherBridgePromptEs],
+  ];
+  for (const [field, value] of requiredEs) {
+    assert.ok(
+      typeof value === "string" && value.length > 30,
+      `Lesson 1 content.${field} must be a substantial Spanish string`,
+    );
+  }
+  // FR / ES must differ — ES must be authored, not duplicated.
+  assert.notEqual(content.objectiveEs, content.objectiveFr);
+  assert.notEqual(content.scenarioEs, content.scenarioFr);
+  assert.notEqual(content.culturalNoteEs, content.culturalNoteFr);
+  assert.notEqual(content.reflectionPromptEs, content.reflectionPromptFr);
+  assert.notEqual(content.teacherBridgePromptEs, content.teacherBridgePromptFr);
+});
+
+test("Lesson 1 cultural note (ES) is pedagogically explicit about tu/vous, follow-rule, no stereotypes", () => {
+  const content = getLessonOne().content!;
+  const es = content.culturalNoteEs;
+  // "tu" warm professional tone — not automatically disrespectful.
+  assert.ok(
+    /tu\b/i.test(es) && /vous\b/i.test(es),
+    "ES cultural note must reference both « tu » and « vous »",
+  );
+  // The user spec asks for explicit cues: warm tone, "vous safe when
+  // unsure", follow-the-other-person rule, and an avoidance of
+  // stereotypes.
+  assert.ok(
+    /(profesional\s+cercan|trato\s+profesional)/i.test(es),
+    "ES cultural note should describe the « tu » in Quebec workplaces as a warm/close professional tone",
+  );
+  assert.ok(
+    /(?:no\s+es\s+(?:una\s+)?falta\s+de\s+respeto|sin\s+ser\s+(?:una\s+)?falta\s+de\s+respeto|no\s+es\s+irrespetuoso|sin\s+ser\s+irrespetuoso)/i.test(
+      es,
+    ),
+    "ES cultural note should reassure that « tu » is NOT automatically disrespectful",
+  );
+  assert.ok(
+    /vous\b[^.]{0,80}seguro/i.test(es) ||
+      /opci[óo]n\s+segura/i.test(es) ||
+      /sigue\s+siendo\s+(?:una\s+)?opci[óo]n\s+segura/i.test(es),
+    "ES cultural note should keep « vous » as a safe option when unsure",
+  );
+  assert.ok(
+    /(imite|imita|siga|sigue|imitar|seguir)/i.test(es),
+    "ES cultural note should advise mirroring the other person",
+  );
+  assert.ok(
+    /estereotip/i.test(es),
+    "ES cultural note should explicitly warn against stereotypes",
+  );
+});
+
+test("Core phrases include Spanish gloss + ES usage notes, with key Quebec landmarks explained", () => {
+  const content = getLessonOne().content!;
+  for (const phrase of content.corePhrases) {
+    assert.ok(
+      typeof phrase.spanish === "string" && phrase.spanish.length > 0,
+      `phrase ${phrase.id} must include a Spanish gloss`,
+    );
+    assert.ok(
+      typeof phrase.usageEs === "string" && phrase.usageEs.length > 0,
+      `phrase ${phrase.id} must include a Spanish usage note`,
+    );
+    // When a noteFr is present, a noteEs must be present too — we
+    // never silently drop the cultural note for Spanish learners.
+    if (phrase.noteFr && phrase.noteFr.length > 0) {
+      assert.ok(
+        typeof phrase.noteEs === "string" && phrase.noteEs.length > 0,
+        `phrase ${phrase.id} has a French note but is missing a Spanish note`,
+      );
+    }
+  }
+  // The « À tantôt » phrase MUST teach the Quebec meaning explicitly
+  // to Spanish speakers, since the literal translation in many
+  // dictionaries is « hasta pronto » which is wrong here.
+  const aTantot = content.corePhrases.find((p) => /À\s*tantôt/i.test(p.frQuebec));
+  assert.ok(aTantot, "core phrases should include « À tantôt »");
+  assert.ok(
+    /m[áa]s\s+tarde/i.test(aTantot!.noteEs ?? ""),
+    "« À tantôt » Spanish note should clarify it means « hasta más tarde » (today)",
+  );
+  assert.ok(
+    /no\s+(?:significa|es)?\s*«?\s*(?:pronto|hasta\s+pronto)/i.test(
+      aTantot!.noteEs ?? "",
+    ),
+    "« À tantôt » Spanish note should warn it does NOT mean « hasta pronto » in general",
+  );
+  // The « Tu peux me tutoyer » phrase MUST reassure the Spanish
+  // learner that Quebec « tu » is a warm professional tone.
+  const tutoyer = content.corePhrases.find((p) =>
+    /Tu peux me tutoyer/i.test(p.frQuebec),
+  );
+  assert.ok(tutoyer, "core phrases should include « Tu peux me tutoyer »");
+  assert.ok(
+    /no\s+es\s+una\s+falta\s+de\s+respeto|profesional\s+cercan/i.test(
+      tutoyer!.noteEs ?? "",
+    ),
+    "« Tu peux me tutoyer » ES note should reassure it's not disrespectful (warm professional tone)",
+  );
+});
+
+test("All 3 mini-dialogues carry Spanish title, context, speakers, and per-line ES translations", () => {
+  const content = getLessonOne().content!;
+  for (const dialogue of content.miniDialogues) {
+    assert.ok(dialogue.titleEs.length > 0, "dialogue must have a Spanish title");
+    assert.ok(
+      dialogue.contextEs.length > 0,
+      "dialogue must have a Spanish context",
+    );
+    for (const line of dialogue.lines) {
+      assert.ok(
+        line.speakerEs.length > 0,
+        `line in dialogue ${dialogue.id} must have a Spanish speaker label`,
+      );
+      assert.ok(
+        line.spanish.length > 0,
+        `line in dialogue ${dialogue.id} must have a Spanish translation`,
+      );
+      // When a French note is authored, an ES note is required too.
+      if (line.noteFr && line.noteFr.length > 0) {
+        assert.ok(
+          typeof line.noteEs === "string" && line.noteEs.length > 0,
+          `line in dialogue ${dialogue.id} has a FR note but is missing a Spanish note`,
+        );
+      }
+    }
+  }
+});
+
+test("All 5 tu/vous practice situations carry Spanish situation + explanation strings", () => {
+  const content = getLessonOne().content!;
+  for (const situation of content.tuVousPractice) {
+    assert.ok(
+      situation.situationEs.length > 0,
+      `situation ${situation.id} must include a Spanish description`,
+    );
+    assert.ok(
+      situation.explanationEs.length > 0,
+      `situation ${situation.id} must include a Spanish explanation`,
+    );
+    assert.notEqual(
+      situation.situationEs,
+      situation.situationFr,
+      `situation ${situation.id} ES situation must not be a verbatim FR copy`,
+    );
+  }
+});
+
+test("All 5 quiz questions ship FR / EN / ES prompts, options, and explanations", () => {
+  const content = getLessonOne().content!;
+  for (const q of content.quizQuestions) {
+    assert.ok(q.promptFr.length > 0);
+    assert.ok(q.promptEn.length > 0);
+    assert.ok(
+      q.promptEs.length > 0,
+      `quiz ${q.id} must declare a Spanish prompt`,
+    );
+    assert.ok(
+      q.explanationEs.length > 0,
+      `quiz ${q.id} must declare a Spanish explanation`,
+    );
+    for (const option of q.options) {
+      assert.ok(option.labelFr.length > 0);
+      assert.ok(option.labelEn.length > 0);
+      assert.ok(
+        option.labelEs.length > 0,
+        `quiz ${q.id} option ${option.id} must declare a Spanish label`,
+      );
+    }
+  }
+  // « À tantôt » quiz explanation MUST clarify it means "later
+  // today", not "hasta pronto" in general (q5 in the data).
+  const q5 = content.quizQuestions.find((q) => /tantôt/i.test(q.promptFr));
+  assert.ok(q5, "quiz must include the « À tantôt » comprehension question");
+  assert.ok(
+    /m[áa]s\s+tarde/i.test(q5!.explanationEs),
+    "« À tantôt » ES explanation should anchor on « hasta más tarde »",
+  );
+  assert.ok(
+    /no\s+«?\s*hasta\s+pronto|en\s+general/i.test(q5!.explanationEs),
+    "« À tantôt » ES explanation should contrast with « hasta pronto »",
+  );
+});
+
+test("Lesson 1 reflection + teacher-bridge prompts are authored in Spanish", () => {
+  const content = getLessonOne().content!;
+  assert.ok(/\?\s*$/.test(content.reflectionPromptEs.trim()));
+  assert.ok(content.reflectionPromptEs.length > 30);
+  assert.ok(content.teacherBridgePromptEs.length > 30);
+  // Consent-safe phrasing in Spanish — must not imply auto-routing,
+  // recording or data forwarding (we re-check the global safety
+  // sweep below, but the ES prompts get an explicit consent cue).
+  assert.ok(
+    /(listo|preparad)/i.test(content.teacherBridgePromptEs),
+    "ES teacher-bridge prompt must include the « cuando se sienta listo » consent cue",
+  );
+});
+
+test("Page wires ES lesson props + ES teacher CTA URL exactly as the spec demands", () => {
+  const src = read(PREMIUM_PAGE_FILE);
+  // ES module + lesson props are threaded through.
+  for (const propName of [
+    "titleEs",
+    "taglineEs",
+    "audienceEs",
+    "honestPromiseEs",
+    "teacherBridgeTitleEs",
+    "teacherBridgeBodyEs",
+    "comingSoonBodyEs",
+    "languageBreadcrumbEs",
+    "futureCrumbEs",
+  ]) {
+    assert.ok(
+      src.includes(propName),
+      `page must wire the ${propName} prop to the shell`,
+    );
+  }
+  // Teacher CTA URLs — exact spec strings.
+  assert.ok(
+    src.includes("/trouver-un-prof?q=francais&lang=es"),
+    "page must build the ES teacher CTA URL `/trouver-un-prof?q=francais&lang=es`",
+  );
+  assert.ok(
+    src.includes("/trouver-un-prof?q=francais&lang=en"),
+    "page must build the EN teacher CTA URL `/trouver-un-prof?q=francais&lang=en`",
+  );
+});
+
+test("Shell ships the spec-mandated FR / EN / ES CTA copy", () => {
+  const src = read(PREMIUM_SHELL_FILE);
+  // Required strings per the user spec — full triple set.
+  const requiredCta: readonly string[] = [
+    // FR
+    "Retour à l’intro gratuite",
+    "Trouver un professeur sur Pratiqo",
+    "Bientôt disponible",
+    // EN
+    "Back to the free intro",
+    "Find a teacher on Pratiqo",
+    "Coming soon",
+    // ES
+    "Volver a la intro gratuita",
+    "Encontrar un profesor en Pratiqo",
+    "Próximamente",
+  ];
+  for (const phrase of requiredCta) {
+    assert.ok(
+      src.includes(phrase),
+      `shell must include the CTA copy "${phrase}"`,
+    );
+  }
+});
+
+test("Shell legal disclaimer is authored in FR + EN + ES", () => {
+  const disclaimerSrc = read("components/yo/YoLegalDisclaimer.tsx");
+  // Honest-disclaimer concepts — ES versions of the FR/EN copy.
+  assert.ok(
+    /Para\s+tener\s+en\s+cuenta/i.test(disclaimerSrc),
+    "YoLegalDisclaimer must include the ES title « Para tener en cuenta »",
+  );
+  assert.ok(
+    /preparaci[óo]n\s+educativa\s+aut[óo]noma/i.test(disclaimerSrc),
+    "YoLegalDisclaimer ES body must describe « preparación educativa autónoma »",
+  );
+  assert.ok(
+    /no\s+constituye\s+asesoramiento\s+legal/i.test(disclaimerSrc),
+    "YoLegalDisclaimer ES body must disclaim legal/immigration advice",
+  );
+  assert.ok(
+    /marketplace\s+Pratiqo/i.test(disclaimerSrc),
+    "YoLegalDisclaimer ES body must keep the marketplace separation note",
+  );
+});
+
+test("Shell never hardcodes French-only or English-only copy in user-facing branches (no orphan FR/EN ternaries)", () => {
+  const src = stripComments(read(PREMIUM_SHELL_FILE));
+  // The shell uses `t(label, locale)` and `pickLocaleField` for all
+  // localized rendering. Any leftover binary FR/EN ternary like
+  // `locale === "fr" ? "X" : "Y"` would silently fall back to EN
+  // when locale === "es" (or to FR if reversed). We allow the
+  // helper-only ternary inside `formatMinutes` because its output is
+  // language-neutral.
+  const orphanTernary =
+    /locale\s*===\s*"(?:fr|en)"\s*\?\s*"[^"]+"\s*:\s*"[^"]+"/g;
+  const matches = src.match(orphanTernary) ?? [];
+  // formatMinutes intentionally returns a numeric/locale-neutral
+  // string; everything else MUST go through `t()` or
+  // `pickLocaleField`.
+  assert.ok(
+    matches.length === 0,
+    `shell must not use orphan FR/EN ternaries with hardcoded user-facing strings (matched: ${matches.join(
+      " | ",
+    )})`,
+  );
+});
+
+test("Shell renders ES lesson 1 content via locale-aware accessors", () => {
+  const src = read(PREMIUM_SHELL_FILE);
+  // The renderer reads ES siblings through pickLocaleField.
+  for (const field of [
+    "content.objectiveEs",
+    "content.scenarioEs",
+    "content.culturalNoteEs",
+    "content.reflectionPromptEs",
+    "content.teacherBridgePromptEs",
+  ]) {
+    assert.ok(
+      src.includes(field),
+      `shell must consume ${field} when rendering Spanish locale`,
+    );
+  }
+  // Per-line / per-option ES paths.
+  for (const accessor of [
+    "phrase.spanish",
+    "phrase.usageEs",
+    "line.spanish",
+    "line.speakerEs",
+    "dialogue.titleEs",
+    "dialogue.contextEs",
+    "situation.situationEs",
+    "situation.explanationEs",
+    "question.promptEs",
+    "question.explanationEs",
+    "option.labelEs",
+  ]) {
+    assert.ok(
+      src.includes(accessor),
+      `shell must reference ${accessor} for ES rendering`,
+    );
+  }
+});
+
+test("Honest-promise ES strings still surface the educational-only disclaimer scope (no fluency / employment / immigration / TEF / francización promises)", () => {
+  const m = frQuebecWorkplaceSurvivalModule;
+  const es = m.honestPromiseEs.toLowerCase();
+  // The ES version must enumerate the same four "no guarantee"
+  // categories as the FR/EN versions.
+  assert.ok(/sin\s+promesa\s+de\s+fluidez/.test(es), "ES honest promise must disclaim fluency");
+  assert.ok(/empleo/.test(es), "ES honest promise must disclaim employment");
+  assert.ok(/migrator/.test(es), "ES honest promise must disclaim immigration outcomes");
+  assert.ok(/tef|tefaq/i.test(m.honestPromiseEs), "ES honest promise must disclaim TEF/TEFAQ");
+  assert.ok(/francizaci[óo]n/.test(es), "ES honest promise must disclaim official francisation");
 });
 
 (async () => {

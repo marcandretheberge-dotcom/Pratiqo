@@ -38,7 +38,13 @@ export function YoBreadcrumb({ items, locale, className }: YoBreadcrumbProps) {
   }
   return (
     <nav
-      aria-label={locale === "fr" ? "Fil d’Ariane" : "Breadcrumb"}
+      aria-label={
+        locale === "fr"
+          ? "Fil d’Ariane"
+          : locale === "es"
+            ? "Ruta de navegación"
+            : "Breadcrumb"
+      }
       className={
         className ??
         "mx-auto w-full max-w-5xl px-5 pt-6 text-xs text-[#0F6E56]/72 sm:px-8 sm:text-sm"

@@ -20,17 +20,38 @@
 // Localization primitives
 // ─────────────────────────────────────────────────────────────────────────
 
-/** Locales currently shipped on the Yo surface. */
-export type YoLocale = "fr" | "en";
+/**
+ * Locales currently shipped on the Yo surface.
+ *
+ * - "fr" — the original Quebec-first surface, default for all Yo data
+ *          authored before locale widening.
+ * - "en" — Canadian English UI for newcomers / Anglo-Canadian learners.
+ * - "es" — added when Yo content needs to address Spanish-speaking
+ *          learners (e.g. the Quebec French / Francisation module
+ *          where many learners arrive from Latin America). Components
+ *          that haven't been authored with `es` strings will fall
+ *          back to FR via the `t()` helper, so widening the union is
+ *          backward-compatible: existing FR/EN data keeps working.
+ */
+export type YoLocale = "fr" | "en" | "es";
 
 /**
- * A user-facing string available in both FR and EN. Future locales
- * (e.g. "es-CA") will widen this type; renderers should always fall
- * back to FR if a locale key is missing.
+ * A user-facing string available in FR / EN / ES.
+ *
+ * `es` is intentionally optional so the type stays backward-compatible
+ * with every Yo data file authored before Spanish was a Yo locale.
+ * The `t()` helper handles the fallback chain (`value[locale] ??
+ * value.fr`), so a component that asks for the ES form on a non-ES
+ * record gets the FR form back — never `undefined`.
+ *
+ * NOTE: only widen `YoLocale` when the *UI* gains a new locale.
+ * Spanish phrases that are simply being TAUGHT (e.g. inside Spanish
+ * intro modules) keep using plain strings rendered with `lang="es"`.
  */
 export interface YoLocalizedString {
   fr: string;
   en: string;
+  es?: string;
 }
 
 /**
