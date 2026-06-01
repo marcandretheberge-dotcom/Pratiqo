@@ -5,6 +5,11 @@ import { QC_CITIES, MV_BARRIOS } from "../lib/constants/cities";
 import { DISCIPLINE_CITY_PAIRS } from "../lib/seo/disciplines";
 import { SITE_URL } from "../lib/seo/site";
 import { YO_SPANISH_SEO_PATHS } from "../lib/seo/yopratiqoSpanishSeoPages";
+import {
+  isYoHubIndexable,
+  isYoLandingPageIndexable,
+  yopratiqoProductConfig,
+} from "../lib/yo/yopratiqoProductConfig";
 
 const BASE_URL = SITE_URL;
 
@@ -218,6 +223,38 @@ const YO_SPANISH_SEO_ROUTES: MetadataRoute.Sitemap = YO_SPANISH_SEO_PATHS.map((p
   priority: 0.7,
 }));
 
+// ── YoPratiqo language hub + landing pages ───────────────────────────────────
+//
+// Controlled SEO exposure for the YoPratiqo discovery layer:
+//   - the language hub at /yo/langues
+//   - the five language landing pages at /yo/langues/{language}
+//
+// Intro lesson pages (/yo/langues/{language}/intro) are deliberately
+// EXCLUDED from the sitemap and remain noindex per
+// `yopratiqoProductConfig.introPageIndexingEnabled`. Each URL is gated
+// by the product config helpers so a future flag flip removes it from
+// the sitemap automatically (no second source of truth).
+const YO_LANGUAGE_HUB_ROUTES: MetadataRoute.Sitemap = isYoHubIndexable()
+  ? [
+      {
+        url: `${BASE_URL}/yo/langues`,
+        lastModified: new Date(),
+        changeFrequency: "weekly" as const,
+        priority: 0.85,
+      },
+    ]
+  : [];
+
+const YO_LANGUAGE_LANDING_ROUTES: MetadataRoute.Sitemap = yopratiqoProductConfig
+  .currentFreeIntroModules
+  .filter((moduleConfig) => isYoLandingPageIndexable(moduleConfig.slug))
+  .map((moduleConfig) => ({
+    url: `${BASE_URL}${moduleConfig.landingRoute}`,
+    lastModified: new Date(),
+    changeFrequency: "weekly" as const,
+    priority: 0.8,
+  }));
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [teacherEntries, blogEntries] = await Promise.all([
     fetchTeacherEntries(),
@@ -234,6 +271,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [
     ...STATIC_ROUTES,
+    ...YO_LANGUAGE_HUB_ROUTES,
+    ...YO_LANGUAGE_LANDING_ROUTES,
     ...YO_SPANISH_SEO_ROUTES,
     ...blogHubRoute,
     ...blogEntries,

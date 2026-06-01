@@ -94,8 +94,14 @@ test("product config keeps exactly the five current YoPratiqo languages active",
 test("YoPratiqo remains free-intro only with teacher bridge enabled", () => {
   assert.equal(yopratiqoProductConfig.futurePremiumEnabled, false);
   assert.equal(yopratiqoProductConfig.teacherBridgeEnabled, true);
+  // Controlled SEO exposure: hub + landing layer is indexable, intro
+  // lesson pages remain noindex. `moduleIndexingEnabled` is kept as a
+  // backwards-compatible alias of the intro flag.
+  assert.equal(yopratiqoProductConfig.hubIndexingEnabled, true);
+  assert.equal(yopratiqoProductConfig.landingPageIndexingEnabled, true);
+  assert.equal(yopratiqoProductConfig.introPageIndexingEnabled, false);
   assert.equal(yopratiqoProductConfig.moduleIndexingEnabled, false);
-  assert.equal(yopratiqoProductConfig.courseSchemaEnabled, false);
+  assert.equal(yopratiqoProductConfig.courseSchemaEnabled, true);
   assert.equal(yopratiqoProductConfig.landingPagesEnabled, true);
   assert.deepEqual([...yopratiqoProductConfig.supportedProductTypes], ["free_intro"]);
 
@@ -103,6 +109,10 @@ test("YoPratiqo remains free-intro only with teacher bridge enabled", () => {
     assert.equal(moduleConfig.productType, "free_intro");
     assert.equal(moduleConfig.isAccessibleForFree, true);
     assert.equal(moduleConfig.status, "free_intro");
+    // Per-module `indexable` flag is the second gate for intro pages
+    // — even after `introPageIndexingEnabled` is flipped on later, an
+    // individual module can still be held back. Keep it false until
+    // the lesson surface is ready for public ranking.
     assert.equal(moduleConfig.indexable, false);
     assert.equal(moduleConfig.courseSchemaEligible, true);
     assert.ok(moduleConfig.landingRoute.startsWith("/yo/langues/"));

@@ -1,8 +1,15 @@
 /**
  * YoPratiqo Course schema integration guard.
  *
- * The helper exists, but JSON-LD publication is intentionally gated by
- * product config until YoPratiqo modules are indexable.
+ * Phase 1 (controlled SEO exposure): the JSON-LD Course schema is
+ * published ONLY on the five language landing pages
+ * (/yo/langues/{language}). The hub (/yo/langues) and the intro
+ * lesson pages (/yo/langues/{language}/intro) must NOT advertise a
+ * Course — the hub is a discovery URL that links to many courses
+ * (one schema per landing), and intro pages stay noindex while the
+ * lesson surface is still pre-launch quality. This test pins both
+ * sides of that contract so an accidental flag flip cannot widen the
+ * publication scope without an explicit code change.
  */
 
 import assert from "node:assert/strict";
@@ -13,6 +20,7 @@ import { SITE_URL } from "@/lib/seo/site";
 import { buildYopratiqoCourseSchema } from "@/lib/seo/yopratiqoCourseSchema";
 import {
   canInjectYoPratiqoCourseSchema,
+  shouldPublishYoCourseSchema,
   yopratiqoProductConfig,
 } from "@/lib/yo/yopratiqoProductConfig";
 
@@ -29,13 +37,48 @@ function test(name: string, fn: TestFn): void {
   tests.push({ name, fn });
 }
 
-test("Course schema publication is disabled while indexing/schema flags are false", () => {
-  assert.equal(yopratiqoProductConfig.moduleIndexingEnabled, false);
-  assert.equal(yopratiqoProductConfig.courseSchemaEnabled, false);
+test("Course schema is published on landing pages once landing indexing + courseSchemaEnabled are on", () => {
+  assert.equal(yopratiqoProductConfig.landingPageIndexingEnabled, true);
+  assert.equal(yopratiqoProductConfig.courseSchemaEnabled, true);
 
   for (const moduleConfig of yopratiqoProductConfig.currentFreeIntroModules) {
-    assert.equal(canInjectYoPratiqoCourseSchema(moduleConfig), false);
+    assert.equal(
+      canInjectYoPratiqoCourseSchema(moduleConfig),
+      true,
+      `${moduleConfig.slug} landing must publish Course JSON-LD`,
+    );
+    assert.equal(
+      shouldPublishYoCourseSchema(moduleConfig.slug, "landing"),
+      true,
+      `${moduleConfig.slug} landing must publish Course JSON-LD via shouldPublishYoCourseSchema`,
+    );
   }
+});
+
+test("Course schema is NOT published on the hub or on intro lesson pages", () => {
+  for (const moduleConfig of yopratiqoProductConfig.currentFreeIntroModules) {
+    // Hub never advertises a single Course — it is a discovery URL.
+    assert.equal(
+      shouldPublishYoCourseSchema(moduleConfig.slug, "hub"),
+      false,
+      `hub must never publish a Course schema (would mislead crawlers)`,
+    );
+    // Intro lesson pages stay out of Course publication while
+    // `introPageIndexingEnabled` is false — and the contract holds even
+    // when the per-module slug is otherwise eligible.
+    assert.equal(
+      shouldPublishYoCourseSchema(moduleConfig.slug, "intro"),
+      false,
+      `${moduleConfig.slug} intro must not publish Course JSON-LD`,
+    );
+  }
+});
+
+test("Course schema gate fails closed for unknown slugs", () => {
+  // Defensive: a typo in a future call site must never accidentally
+  // publish a schema for a non-existent module.
+  assert.equal(shouldPublishYoCourseSchema("totallyMadeUp", "landing"), false);
+  assert.equal(shouldPublishYoCourseSchema("", "landing"), false);
 });
 
 test("landing component guards JSON-LD injection through the central config helper", () => {

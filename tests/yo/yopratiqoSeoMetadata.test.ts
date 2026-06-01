@@ -14,6 +14,7 @@ import { SITE_URL } from "@/lib/seo/site";
 import { buildYopratiqoCourseSchema } from "@/lib/seo/yopratiqoCourseSchema";
 import {
   buildYoPratiqoMetadata,
+  isYoPratiqoRouteIndexable,
   yopratiqoSeoEntries,
   type YoPratiqoSeoRouteId,
 } from "@/lib/yo/yopratiqoSeo";
@@ -134,7 +135,11 @@ test("YoPratiqo SEO config contains French and English metadata for every route"
   }
 });
 
-test("metadata helper emits canonical, OpenGraph, Twitter, and robots fields", () => {
+test("metadata helper emits canonical, OpenGraph, Twitter, and route-aware robots fields", () => {
+  // Page-type taxonomy: hub + landing pages are indexable in phase 1,
+  // intro lesson pages remain noindex. The assertion picks the
+  // expected robots posture from the YoPratiqoSeoEntry's pageType so
+  // a future routing addition automatically inherits the right gate.
   for (const route of ROUTES) {
     const metadata = buildYoPratiqoMetadata(route.id, "en");
     const canonical = `${SITE_URL}${route.route}`;
@@ -151,17 +156,33 @@ test("metadata helper emits canonical, OpenGraph, Twitter, and robots fields", (
       `${route.id} must include Twitter description`,
     );
     assert.ok(metadata.twitter?.images, `${route.id} must include Twitter image`);
-    assert.deepEqual(metadata.robots, {
-      index: yopratiqoProductConfig.moduleIndexingEnabled,
-      follow: yopratiqoProductConfig.moduleIndexingEnabled,
-    });
+
+    const pageType = yopratiqoSeoEntries[route.id].pageType;
+    const expectedIndex = isYoPratiqoRouteIndexable(route.id);
+    assert.deepEqual(
+      metadata.robots,
+      { index: expectedIndex, follow: expectedIndex },
+      `${route.id} (${pageType}) robots posture must match the route-aware gate`,
+    );
   }
 });
 
-test("robots follows moduleIndexingEnabled and stays noindex while disabled", () => {
-  assert.equal(yopratiqoProductConfig.moduleIndexingEnabled, false);
-  const metadata = buildYoPratiqoMetadata("spanishIntro", "fr");
-  assert.deepEqual(metadata.robots, { index: false, follow: false });
+test("intro pages stay noindex while introPageIndexingEnabled is off", () => {
+  assert.equal(yopratiqoProductConfig.introPageIndexingEnabled, false);
+  for (const introId of [
+    "spanishIntro",
+    "frenchQuebecIntro",
+    "italianIntro",
+    "englishIntro",
+    "japaneseIntro",
+  ] as const) {
+    const metadata = buildYoPratiqoMetadata(introId, "fr");
+    assert.deepEqual(
+      metadata.robots,
+      { index: false, follow: false },
+      `${introId} must remain noindex/nofollow`,
+    );
+  }
 });
 
 test("canonical URLs use www.pratiqo.ca and never pratiqo.com", () => {
