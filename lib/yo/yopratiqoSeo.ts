@@ -1,7 +1,13 @@
 import type { Metadata } from "next";
 
 import { SITE_URL } from "@/lib/seo/site";
-import { yopratiqoProductConfig } from "@/lib/yo/yopratiqoProductConfig";
+import {
+  isYoHubIndexable,
+  isYoIntroPageIndexable,
+  isYoLandingPageIndexable,
+  type YoPratiqoModuleSlug,
+  type YoPratiqoPageType,
+} from "@/lib/yo/yopratiqoProductConfig";
 
 export type YoPratiqoSeoLocale = "fr" | "en";
 
@@ -27,6 +33,19 @@ export type YoPratiqoSeoEntry = {
   route: string;
   defaultLocale: YoPratiqoSeoLocale;
   copy: Record<YoPratiqoSeoLocale, YoPratiqoSeoCopy>;
+  /**
+   * Page taxonomy used by `buildYoPratiqoMetadata` to decide robots
+   * `index/follow` (and by Course schema gating). Hub + landing pages
+   * are indexable today; intro pages stay noindex until the lesson
+   * surface is ready for public ranking.
+   */
+  pageType: YoPratiqoPageType;
+  /**
+   * Slug of the language module this entry belongs to. Required for
+   * landing/intro entries, omitted for the hub. Drives both indexing
+   * and Course schema decisions per-module.
+   */
+  slug?: YoPratiqoModuleSlug;
   image?: string;
 };
 
@@ -36,6 +55,7 @@ export const yopratiqoSeoEntries = {
   languageHub: {
     route: "/yo/langues",
     defaultLocale: "fr",
+    pageType: "hub",
     copy: {
       fr: {
         title:
@@ -53,6 +73,8 @@ export const yopratiqoSeoEntries = {
   englishLanding: {
     route: "/yo/langues/anglais",
     defaultLocale: "fr",
+    pageType: "landing",
+    slug: "anglais",
     copy: {
       fr: {
         title: "Anglais avec YoPratiqo — confiance à l’oral et pratique réelle",
@@ -69,6 +91,8 @@ export const yopratiqoSeoEntries = {
   frenchQuebecLanding: {
     route: "/yo/langues/francais-quebec",
     defaultLocale: "fr",
+    pageType: "landing",
+    slug: "francais-quebec",
     copy: {
       fr: {
         title: "Français québécois avec YoPratiqo — francisation, culture et pratique",
@@ -85,6 +109,8 @@ export const yopratiqoSeoEntries = {
   spanishLanding: {
     route: "/yo/langues/espagnol",
     defaultLocale: "fr",
+    pageType: "landing",
+    slug: "espagnol",
     copy: {
       fr: {
         title: "Espagnol avec YoPratiqo — voyage, culture et premières conversations",
@@ -101,6 +127,8 @@ export const yopratiqoSeoEntries = {
   japaneseLanding: {
     route: "/yo/langues/japonais",
     defaultLocale: "fr",
+    pageType: "landing",
+    slug: "japonais",
     copy: {
       fr: {
         title: "Japonais avec YoPratiqo — hiragana, culture et premiers mots",
@@ -117,6 +145,8 @@ export const yopratiqoSeoEntries = {
   italianLanding: {
     route: "/yo/langues/italien",
     defaultLocale: "fr",
+    pageType: "landing",
+    slug: "italien",
     copy: {
       fr: {
         title: "Italien avec YoPratiqo — voyage, culture et premières phrases",
@@ -133,6 +163,8 @@ export const yopratiqoSeoEntries = {
   spanishIntro: {
     route: "/yo/langues/espagnol/intro",
     defaultLocale: "fr",
+    pageType: "intro",
+    slug: "espagnol",
     copy: {
       fr: {
         title: "Intro espagnol — Premiers mots, culture et voyage | YoPratiqo",
@@ -149,6 +181,8 @@ export const yopratiqoSeoEntries = {
   frenchQuebecIntro: {
     route: "/yo/langues/francais-quebec/intro",
     defaultLocale: "en",
+    pageType: "intro",
+    slug: "francais-quebec",
     copy: {
       fr: {
         title: "Francisation Québec — Intro au français québécois | YoPratiqo",
@@ -165,6 +199,8 @@ export const yopratiqoSeoEntries = {
   italianIntro: {
     route: "/yo/langues/italien/intro",
     defaultLocale: "fr",
+    pageType: "intro",
+    slug: "italien",
     copy: {
       fr: {
         title: "Intro italien — Culture, voyage et premiers mots | YoPratiqo",
@@ -181,6 +217,8 @@ export const yopratiqoSeoEntries = {
   englishIntro: {
     route: "/yo/langues/anglais/intro",
     defaultLocale: "fr",
+    pageType: "intro",
+    slug: "anglais",
     copy: {
       fr: {
         title: "Intro anglais — Débloquer ta confiance à l’oral | YoPratiqo",
@@ -197,6 +235,8 @@ export const yopratiqoSeoEntries = {
   japaneseIntro: {
     route: "/yo/langues/japonais/intro",
     defaultLocale: "fr",
+    pageType: "intro",
+    slug: "japonais",
     copy: {
       fr: {
         title: "Intro japonais — Hiragana, culture et premiers mots | YoPratiqo",
@@ -221,6 +261,30 @@ export function resolveYoPratiqoSeoLocale(
   return normalized === "en" || normalized === "fr" ? normalized : fallback;
 }
 
+/**
+ * Centralised gate for "is this route currently indexable?".
+ *
+ * Hub + landing pages are governed by the new route-aware product
+ * config flags (`hubIndexingEnabled`, `landingPageIndexingEnabled`).
+ * Intro pages stay noindex until both `introPageIndexingEnabled` AND
+ * the per-module `indexable` flag are flipped on.
+ */
+export function isYoPratiqoRouteIndexable(
+  routeId: YoPratiqoSeoRouteId,
+): boolean {
+  const entry: YoPratiqoSeoEntry = yopratiqoSeoEntries[routeId];
+  switch (entry.pageType) {
+    case "hub":
+      return isYoHubIndexable();
+    case "landing":
+      return entry.slug ? isYoLandingPageIndexable(entry.slug) : false;
+    case "intro":
+      return entry.slug ? isYoIntroPageIndexable(entry.slug) : false;
+    default:
+      return false;
+  }
+}
+
 export function buildYoPratiqoMetadata(
   routeId: YoPratiqoSeoRouteId,
   lang?: string | string[],
@@ -230,7 +294,7 @@ export function buildYoPratiqoMetadata(
   const copy = entry.copy[locale];
   const canonical = `${SITE_URL}${entry.route}`;
   const image = entry.image ?? DEFAULT_OG_IMAGE;
-  const indexable = yopratiqoProductConfig.moduleIndexingEnabled;
+  const indexable = isYoPratiqoRouteIndexable(routeId);
 
   return {
     title: copy.title,

@@ -124,7 +124,7 @@ test("landing pages have a clear primary intro CTA and secondary teacher CTA", (
   assert.match(teacherBridge, /border border-\[#0F6E56\]/);
 });
 
-test("landing metadata canonicals use www.pratiqo.ca and obey noindex config", () => {
+test("landing metadata canonicals use www.pratiqo.ca and are indexable in phase 1", () => {
   for (const route of LANDING_ROUTES) {
     const moduleConfig = getYoPratiqoModuleBySlug(route.slug);
     const metadata = buildYoPratiqoMetadata(route.seoId, "fr");
@@ -135,11 +135,14 @@ test("landing metadata canonicals use www.pratiqo.ca and obey noindex config", (
     );
     assert.ok(JSON.stringify(metadata).includes("https://www.pratiqo.ca"));
     assert.ok(!JSON.stringify(metadata).includes("pratiqo.com"));
+    // Phase 1 SEO exposure: language landing pages are indexable. The
+    // assertion is keyed off the central config flag so it stays in
+    // sync if landing indexing is ever paused later.
     assert.deepEqual(metadata.robots, {
-      index: yopratiqoProductConfig.moduleIndexingEnabled,
-      follow: yopratiqoProductConfig.moduleIndexingEnabled,
+      index: yopratiqoProductConfig.landingPageIndexingEnabled,
+      follow: yopratiqoProductConfig.landingPageIndexingEnabled,
     });
-    assert.equal(metadata.robots?.index, false);
+    assert.equal(metadata.robots?.index, true);
   }
 });
 
@@ -178,9 +181,22 @@ test("landing copy avoids unsafe guarantees, fake social proof, and fake pricing
   }
 });
 
-test("indexing and Course schema stay disabled until explicitly enabled", () => {
-  assert.equal(yopratiqoProductConfig.moduleIndexingEnabled, false);
-  assert.equal(yopratiqoProductConfig.courseSchemaEnabled, false);
+test("phase 1 indexing model: hub + landing on, intro pages remain noindex", () => {
+  // Hub + landing layer is publicly discoverable.
+  assert.equal(yopratiqoProductConfig.hubIndexingEnabled, true);
+  assert.equal(yopratiqoProductConfig.landingPageIndexingEnabled, true);
+  // Intro lesson surface stays noindex until ready for public ranking.
+  assert.equal(yopratiqoProductConfig.introPageIndexingEnabled, false);
+  // Backwards-compat alias must NEVER drift away from the intro flag.
+  assert.equal(
+    yopratiqoProductConfig.moduleIndexingEnabled,
+    yopratiqoProductConfig.introPageIndexingEnabled,
+    "moduleIndexingEnabled must remain an alias of introPageIndexingEnabled",
+  );
+  // Course schema becomes available the moment landing pages are
+  // indexable; the per-page gate (`shouldPublishYoCourseSchema`)
+  // restricts publication to landing pages only.
+  assert.equal(yopratiqoProductConfig.courseSchemaEnabled, true);
 });
 
 test("lawyer-review document exists and covers required topics", () => {
