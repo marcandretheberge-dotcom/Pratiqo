@@ -5,6 +5,7 @@ import type { YoPratiqoModuleSlug } from "@/lib/yo/yopratiqoProductConfig";
 export type YoPratiqoLandingContent = {
   heroTitle: YoLocalizedString;
   heroSubtitle: YoLocalizedString;
+  audience: YoLocalizedString;
   learnBullets: readonly YoLocalizedString[];
   whyBullets: readonly YoLocalizedString[];
   introCardTitle: YoLocalizedString;
@@ -20,15 +21,19 @@ export type YoPratiqoLandingContent = {
 export const yopratiqoLandingContent = {
   anglais: {
     heroTitle: lstr(
-      "Anglais pratique pour débloquer ta confiance.",
-      "Practical English to unlock your confidence.",
+      "Anglais pratique pour parler avec plus d’aisance.",
+      "Practical English for more ease when speaking.",
     ),
     heroSubtitle: lstr(
-      "Une intro pensée pour les francophones du Québec et les apprenants canadiens qui veulent mieux parler au travail, en voyage et dans la vraie vie.",
-      "An intro for Quebec francophones and Canadian learners who want more confidence at work, while travelling, and in real conversations.",
+      "Une intro claire pour les francophones du Québec et les apprenants canadiens qui veulent mieux se débrouiller au travail et dans les vraies conversations.",
+      "A clear intro for Quebec francophones and Canadian learners who want more confidence at work and in real conversations.",
+    ),
+    audience: lstr(
+      "Pour les faux débutants qui comprennent déjà un peu l’anglais, mais bloquent quand vient le temps de parler.",
+      "For false beginners who understand some English already, but freeze when it is time to speak.",
     ),
     learnBullets: [
-      lstr("reprendre confiance dans des phrases simples", "regain confidence with simple phrases"),
+      lstr("reprendre confiance avec des phrases simples", "regain confidence with simple phrases"),
       lstr("repérer les faux amis utiles", "spot useful false friends"),
       lstr("comprendre quelques nuances d’anglais canadien", "understand a few Canadian English nuances"),
       lstr("préparer une pratique orale avec un professeur", "prepare for speaking practice with a teacher"),
@@ -40,8 +45,8 @@ export const yopratiqoLandingContent = {
     ],
     introCardTitle: lstr("Commencer l’intro gratuite", "Start the free intro"),
     introCardBody: lstr(
-      "Travaille les premiers repères, les phrases utiles et la confiance avant une vraie conversation.",
-      "Work on first landmarks, useful phrases, and confidence before a real conversation.",
+      "Travaille les premiers repères, des phrases utiles et une façon plus calme d’entrer dans une conversation.",
+      "Work on first landmarks, useful phrases, and a calmer way to enter a conversation.",
     ),
     teacherCardTitle: lstr("Pratiquer avec un professeur d’anglais", "Practice with an English teacher"),
     teacherCardBody: lstr(
@@ -55,12 +60,16 @@ export const yopratiqoLandingContent = {
   },
   "francais-quebec": {
     heroTitle: lstr(
-      "Français québécois et francisation, sans promesses irréalistes.",
-      "Quebec French and francization basics, without unrealistic promises.",
+      "Français québécois et repères de francisation.",
+      "Quebec French and francization landmarks.",
     ),
     heroSubtitle: lstr(
-      "Comprends les mots du quotidien, les repères culturels, le français local et les bases utiles avant de pratiquer avec un professeur.",
-      "Understand daily words, cultural landmarks, local French, and useful basics before practicing with a teacher.",
+      "Comprends les mots du quotidien, la culture locale, le français du travail et les bases utiles avant de pratiquer avec un professeur.",
+      "Understand daily words, local culture, workplace French, and useful basics before practicing with a teacher.",
+    ),
+    audience: lstr(
+      "Pour les nouveaux arrivants, étudiants et travailleurs qui veulent comprendre le français tel qu’il se parle au Québec.",
+      "For newcomers, students, and workers who want to understand French as it is used in Quebec.",
     ),
     learnBullets: [
       lstr("situer le français québécois dans la vie quotidienne", "place Quebec French in daily life"),
@@ -75,8 +84,8 @@ export const yopratiqoLandingContent = {
     ],
     introCardTitle: lstr("Découvrir l’intro gratuite", "Open the free intro"),
     introCardBody: lstr(
-      "Explore les mots essentiels, la culture locale et les premiers repères de francisation.",
-      "Explore essential words, local culture, and first francization landmarks.",
+      "Explore les mots essentiels, la culture locale et des repères de francisation utiles pour mieux te situer.",
+      "Explore essential words, local culture, and francization landmarks that help you find your footing.",
     ),
     teacherCardTitle: lstr("Trouver un professeur de français", "Find a French teacher"),
     teacherCardBody: lstr(
@@ -90,12 +99,16 @@ export const yopratiqoLandingContent = {
   },
   espagnol: {
     heroTitle: lstr(
-      "Espagnol pour voyager, comprendre la culture et oser parler.",
+      "Espagnol pour voyager, comprendre et oser parler.",
       "Spanish for travel, culture, and first real conversations.",
     ),
     heroSubtitle: lstr(
-      "Commence par les mots utiles, les sons, les gestes culturels et les situations qui reviennent vraiment en voyage.",
+      "Commence par les mots utiles, les sons, les gestes culturels et les situations qui reviennent vraiment quand on voyage.",
       "Start with useful words, sounds, cultural cues, and situations that actually come up while travelling.",
+    ),
+    audience: lstr(
+      "Pour les voyageurs et débutants qui veulent comprendre plus qu’une liste de mots avant leur première conversation.",
+      "For travellers and beginners who want more than a word list before their first conversation.",
     ),
     learnBullets: [
       lstr("saluer et te présenter simplement", "greet people and introduce yourself simply"),
@@ -110,8 +123,8 @@ export const yopratiqoLandingContent = {
     ],
     introCardTitle: lstr("Commencer l’intro espagnol", "Start the Spanish intro"),
     introCardBody: lstr(
-      "Apprends les premiers mots, les sons, les différences régionales et les phrases essentielles.",
-      "Learn first words, sounds, regional differences, and essential phrases.",
+      "Apprends les premiers mots, les sons, les nuances régionales et les phrases qui ouvrent une conversation.",
+      "Learn first words, sounds, regional nuance, and phrases that open a conversation.",
     ),
     teacherCardTitle: lstr("Trouver un professeur d’espagnol", "Find a Spanish teacher"),
     teacherCardBody: lstr(
@@ -125,12 +138,16 @@ export const yopratiqoLandingContent = {
   },
   japonais: {
     heroTitle: lstr(
-      "Japonais sans panique : sons, écritures, politesse et culture.",
-      "Japanese without panic: sounds, scripts, politeness, and culture.",
+      "Japonais sans panique : écritures, politesse et culture.",
+      "Japanese without panic: scripts, politeness, and culture.",
     ),
     heroSubtitle: lstr(
-      "Une intro rassurante pour découvrir hiragana, katakana, kanji, les salutations et les codes culturels de base.",
-      "A reassuring intro to hiragana, katakana, kanji, greetings, and essential cultural codes.",
+      "Une intro rassurante pour découvrir hiragana, katakana, kanji, les salutations et les codes culturels qui changent tout.",
+      "A reassuring intro to hiragana, katakana, kanji, greetings, and the cultural codes that change everything.",
+    ),
+    audience: lstr(
+      "Pour les débutants curieux qui veulent entrer dans le japonais avec des repères solides avant de mémoriser.",
+      "For curious beginners who want solid landmarks before memorizing Japanese.",
     ),
     learnBullets: [
       lstr("distinguer hiragana, katakana et kanji", "tell hiragana, katakana, and kanji apart"),
@@ -145,8 +162,8 @@ export const yopratiqoLandingContent = {
     ],
     introCardTitle: lstr("Entrer dans l’intro japonais", "Enter the Japanese intro"),
     introCardBody: lstr(
-      "Découvre les écritures, les salutations, la politesse et les premières phrases utiles.",
-      "Discover scripts, greetings, politeness, and first useful phrases.",
+      "Découvre les systèmes d’écriture, les salutations, la politesse et les premières phrases utiles.",
+      "Discover writing systems, greetings, politeness, and first useful phrases.",
     ),
     teacherCardTitle: lstr("Trouver un professeur de japonais", "Find a Japanese teacher"),
     teacherCardBody: lstr(
@@ -160,12 +177,16 @@ export const yopratiqoLandingContent = {
   },
   italien: {
     heroTitle: lstr(
-      "Italien pour voyager, comprendre les régions et parler avec confiance.",
+      "Italien pour voyager, comprendre les régions et parler avec aisance.",
       "Italian for travel, regions, and confident first phrases.",
     ),
     heroSubtitle: lstr(
-      "Découvre les premiers mots, la culture, les régions, les gestes utiles et les phrases qui ouvrent une conversation.",
-      "Discover first words, culture, regions, useful cues, and phrases that open a conversation.",
+      "Découvre les premiers mots, la culture, les régions, les gestes utiles et les phrases qui rendent un échange plus naturel.",
+      "Discover first words, culture, regions, useful cues, and phrases that make an exchange feel more natural.",
+    ),
+    audience: lstr(
+      "Pour les voyageurs et débutants qui veulent une base culturelle avant de pratiquer l’oral.",
+      "For travellers and beginners who want cultural grounding before speaking practice.",
     ),
     learnBullets: [
       lstr("saluer et commander simplement", "greet people and order simply"),
@@ -180,8 +201,8 @@ export const yopratiqoLandingContent = {
     ],
     introCardTitle: lstr("Commencer l’intro italien", "Start the Italian intro"),
     introCardBody: lstr(
-      "Travaille les premiers mots, les situations de voyage et les repères culturels.",
-      "Work on first words, travel situations, and cultural landmarks.",
+      "Travaille les premiers mots, les situations de voyage et les repères culturels qui donnent du contexte.",
+      "Work on first words, travel situations, and cultural landmarks that give context.",
     ),
     teacherCardTitle: lstr("Trouver un professeur d’italien", "Find an Italian teacher"),
     teacherCardBody: lstr(
