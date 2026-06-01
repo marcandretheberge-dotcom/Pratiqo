@@ -2,9 +2,22 @@
  * YoPratiqo hub.
  *
  * Public, self-contained product entry point for the YoPratiqo learning
- * pillar inside Cours Pratiqo Inc. The nav intentionally links here instead of
- * deep-linking to a single section (Voyage / Langues / Musique / …) so
- * YoPratiqo can grow into a serious product surface.
+ * pillar inside Cours Pratiqo Inc. The nav links here instead of
+ * deep-linking to a single discipline so YoPratiqo can grow into a
+ * serious product surface.
+ *
+ * Information architecture (canonical):
+ *   YoPratiqo
+ *     → Langues          (live)
+ *     → Musique          (planned, placeholder only)
+ *     → Soutien scolaire (planned, placeholder only)
+ *
+ * Francisation is NOT a fourth top-level discipline. It lives as a
+ * sub-program under Langues → Français québécois / Francisation, and is
+ * surfaced on this page as a small "Programme en vedette" shortcut
+ * (subordinate to the three families above) so newcomers landing on the
+ * YoPratiqo home can jump straight to the existing Quebec French
+ * landing page.
  */
 
 import type { Metadata } from "next";
@@ -30,7 +43,7 @@ import { cn } from "@/lib/utils";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "YoPratiqo | Apprends à ton rythme — langues, musique, voyage",
+  title: "YoPratiqo | Apprends à ton rythme — langues, musique, soutien scolaire",
   description:
     "Explore YoPratiqo, la gamme Pratiqo qui te permet d’apprendre à ton rythme les mêmes disciplines que tu peux pratiquer avec un vrai professeur Pratiqo.",
   alternates: {
@@ -39,7 +52,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "YoPratiqo",
     description:
-      "Apprends à ton rythme : langues, musique, soutien scolaire, francisation et voyage — la même qualité Pratiqo, version autonome.",
+      "Apprends à ton rythme : langues, musique et soutien scolaire — la même qualité Pratiqo, version autonome.",
     type: "website",
     url: `${SITE_URL}/yo`,
     locale: "fr_CA",
@@ -68,8 +81,8 @@ const HUB_COPY = {
     en: "YoPratiqo lets you learn at your own pace.",
   },
   subtitle: {
-    fr: "YoPratiqo te permet d’apprendre à ton rythme les mêmes disciplines que tu peux aussi pratiquer avec un vrai professeur Pratiqo. La section Voyage t’aide à te préparer pour des situations réelles avant de partir.",
-    en: "YoPratiqo helps you learn at your own pace in the same disciplines you can also practice with a real Pratiqo teacher. The Travel section helps you prepare for real situations before you go.",
+    fr: "YoPratiqo te permet d’apprendre à ton rythme les mêmes disciplines que tu peux aussi pratiquer avec un vrai professeur Pratiqo : langues, musique et soutien scolaire.",
+    en: "YoPratiqo helps you learn at your own pace in the same disciplines you can also practice with a real Pratiqo teacher: languages, music, and academic support.",
   },
   heroPrimary: {
     fr: "Choisir une langue",
@@ -116,16 +129,38 @@ const HUB_COPY = {
     en: "What YoPratiqo brings",
   },
   finalTitle: {
-    fr: "Commence par une section. La méthode YoPratiqo grandit avec toi.",
-    en: "Start with one section. The YoPratiqo method grows with you.",
+    fr: "Commence par une discipline. La méthode YoPratiqo grandit avec toi.",
+    en: "Start with one discipline. The YoPratiqo method grows with you.",
   },
   finalBody: {
-    fr: "La section Voyage est ouverte aujourd’hui. Les sections Langues, Musique, Soutien scolaire et Francisation suivent.",
-    en: "The Travel section is open today. The Languages, Music, Academic support, and Francisation sections come next.",
+    fr: "Langues est ouvert aujourd’hui (cinq parcours d’introduction). Musique et Soutien scolaire suivent quand chaque programme est prêt à enseigner sérieusement.",
+    en: "Languages is open today (five intro paths). Music and Academic support come next, when each program is ready to teach seriously.",
   },
   finalCta: {
-    fr: "Découvrir le parcours",
-    en: "Discover the course",
+    fr: "Découvrir les langues",
+    en: "Discover the languages",
+  },
+  // ── Featured-program shortcut (Francisation) ─────────────────────────
+  // Francisation is intentionally NOT a fourth top-level discipline. It
+  // lives under Langues → Français québécois / Francisation. This pill
+  // surfaces it as a smaller, subordinate shortcut so newcomers can
+  // jump straight to the existing landing page without us inventing a
+  // competing IA branch.
+  featuredProgramEyebrow: {
+    fr: "Programme en vedette",
+    en: "Featured program",
+  },
+  featuredProgramTitle: {
+    fr: "Français québécois / Francisation",
+    en: "Quebec French / Francization",
+  },
+  featuredProgramBody: {
+    fr: "Sous Langues : repères de francisation, intro gratuite, et un module premium en préparation pour le travail au Québec.",
+    en: "Under Languages: francization landmarks, free intro, and a premium workplace-French module in preparation.",
+  },
+  featuredProgramCta: {
+    fr: "Voir Français québécois",
+    en: "See Quebec French",
   },
   lifetimeAccessLabel: {
     fr: "Accès à vie",
@@ -176,31 +211,33 @@ const pillars = [
   },
 ];
 
+/**
+ * YoPratiqo top-level disciplines.
+ *
+ * Canonical IA: Langues, Musique, Soutien scolaire. Francisation is
+ * NOT a fourth family — it lives under Langues → Français québécois /
+ * Francisation and is rendered as a separate "Featured program"
+ * shortcut, not as a peer to these three families.
+ *
+ * Musique and Soutien scolaire are placeholders. They render with no
+ * `href` (no fake routes) until each program is built.
+ */
 const productLines = [
   {
     status: "available" as const,
     title: { fr: "Langues", en: "Languages" },
     body: {
-      fr: "Des parcours de langue immersifs, organisés par langue puis par pays.",
-      en: "Immersive language paths, organized by language then by country.",
+      fr: "Cinq parcours d’introduction immersifs : espagnol, français québécois, italien, anglais et japonais.",
+      en: "Five immersive intro paths: Spanish, Quebec French, Italian, English, and Japanese.",
     },
     href: "/yo/langues",
-  },
-  {
-    status: "available" as const,
-    title: { fr: "Voyage", en: "Travel" },
-    body: {
-      fr: "Section de YoPratiqo pour te préparer à parler sur place, avec culture et expressions locales.",
-      en: "The YoPratiqo section that helps you prepare to speak on-site, with culture and local expressions.",
-    },
-    href: "/yo/langues/espagnol",
   },
   {
     status: "planned" as const,
     title: { fr: "Musique", en: "Music" },
     body: {
-      fr: "Théorie, rythme, écoute et pratique entre les cours.",
-      en: "Theory, rhythm, listening, and practice between lessons.",
+      fr: "Théorie, rythme, écoute et pratique entre les cours. Bientôt disponible.",
+      en: "Theory, rhythm, listening, and practice between lessons. Coming soon.",
     },
     href: null,
   },
@@ -208,17 +245,8 @@ const productLines = [
     status: "planned" as const,
     title: { fr: "Soutien scolaire", en: "Academic support" },
     body: {
-      fr: "Révisions courtes et exercices ciblés entre les séances avec un prof.",
-      en: "Short reviews and targeted exercises between sessions with a teacher.",
-    },
-    href: null,
-  },
-  {
-    status: "planned" as const,
-    title: { fr: "Francisation", en: "Francisation" },
-    body: {
-      fr: "Apprendre le français au Québec, à ton rythme, avant et entre les cours.",
-      en: "Learn French in Quebec at your own pace, before and between lessons.",
+      fr: "Révisions courtes et exercices ciblés entre les séances avec un prof. Bientôt disponible.",
+      en: "Short reviews and targeted exercises between sessions with a teacher. Coming soon.",
     },
     href: null,
   },
@@ -234,6 +262,10 @@ export default async function YoHubPage({ searchParams }: PageProps) {
   // Featured shortcut: keep the existing RD destination one click away,
   // but route it through the canonical IA path so breadcrumbs work.
   const courseHref = `/yo/langues/espagnol/pays/republique-dominicaine${langSuffix}`;
+  // Featured PROGRAM shortcut (Francisation). Subordinate to the three
+  // top-level families — Francisation is a sub-program of Langues, not
+  // a fourth IA branch.
+  const francisationHref = `/yo/langues/francais-quebec${langSuffix}`;
   const toggleHref = buildYoLocaleHref("/yo", locale === "fr" ? "en" : "fr");
 
   return (
@@ -446,6 +478,33 @@ export default async function YoHubPage({ searchParams }: PageProps) {
                 );
               })}
             </div>
+
+            {/* Featured PROGRAM shortcut (Francisation).
+                Sub-callout, intentionally smaller than the three
+                top-level family cards above. Francisation is NOT a
+                fourth top-level discipline — it's a sub-program under
+                Langues → Français québécois / Francisation. */}
+            <Link
+              href={francisationHref}
+              className="mt-6 flex flex-col gap-1.5 rounded-2xl border border-[#0F6E56]/15 bg-white/80 px-4 py-3 text-sm shadow-[0_2px_8px_rgba(15,110,86,0.06)] transition hover:bg-white sm:flex-row sm:items-center sm:justify-between sm:gap-4"
+            >
+              <div className="flex items-center gap-3">
+                <span className="rounded-full bg-[#F4B400]/25 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.14em] text-[#8a5a17]">
+                  {t(HUB_COPY.featuredProgramEyebrow, locale)}
+                </span>
+                <div>
+                  <p className="text-sm font-bold text-[#0F6E56]">
+                    {t(HUB_COPY.featuredProgramTitle, locale)}
+                  </p>
+                  <p className="mt-0.5 text-xs leading-snug text-[#0F6E56]/72">
+                    {t(HUB_COPY.featuredProgramBody, locale)}
+                  </p>
+                </div>
+              </div>
+              <span className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0F6E56]">
+                {t(HUB_COPY.featuredProgramCta, locale)} <span aria-hidden>→</span>
+              </span>
+            </Link>
           </div>
         </section>
 
@@ -455,8 +514,8 @@ export default async function YoHubPage({ searchParams }: PageProps) {
               <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-[#FFF4D6]">
                 <Globe2 className="size-3.5" aria-hidden />
                 {locale === "fr"
-                  ? "YoPratiqo · section Voyage"
-                  : "YoPratiqo · Travel section"}
+                  ? "YoPratiqo · Langues"
+                  : "YoPratiqo · Languages"}
               </div>
               <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
                 {t(HUB_COPY.finalTitle, locale)}
@@ -467,14 +526,22 @@ export default async function YoHubPage({ searchParams }: PageProps) {
             </div>
             <div className="flex flex-col gap-3 lg:items-end">
               <Link
-                href={courseHref}
+                href={languesHref}
                 className="inline-flex items-center justify-center gap-2 rounded-full bg-[#FFF4D6] px-5 py-3 text-sm font-black text-[#0F6E56] transition hover:bg-[#ffefbd]"
               >
                 <BookOpenCheck className="size-4" aria-hidden />
                 {t(HUB_COPY.finalCta, locale)}
               </Link>
-              <p className="text-sm font-bold text-[#FFF4D6]">
-                {formatYoPrice(yoModule.priceCents, locale, yoModule.currency)}
+              {/* The featured Spanish RD course already exposes its
+                  price up top. The bottom CTA points to the Langues
+                  hub so it reads as a discipline-level entry point,
+                  not a single-course upsell. `courseHref` and
+                  `yoModule` stay imported so the hero featured-course
+                  card keeps working. */}
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#FFF4D6]/72">
+                {locale === "fr"
+                  ? "Cinq parcours d’introduction"
+                  : "Five intro paths"}
               </p>
             </div>
           </div>

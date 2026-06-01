@@ -104,7 +104,17 @@ const LANGUAGES: LanguageCard[] = [
     // or other global French variants — the badge is the Quebec
     // fleurdelisé to match. The first open module is a free
     // English-first pre-arrival intro for international learners.
-    name: lstr("Français du Québec", "Quebec French"),
+    //
+    // Canonical card label triple — keeps the IA story consistent:
+    // Francisation lives UNDER Langues → Français québécois /
+    // Francisation, never as a peer top-level discipline. The same
+    // canonical FR/EN/ES strings are pinned by the IA test suite so
+    // a future contributor can't quietly reframe the program.
+    name: lstr(
+      "Français québécois / Francisation",
+      "Quebec French / Francization",
+      "Francés quebequense / Francización",
+    ),
     badge: "fr-ca",
     // Copy harmonised on the merge with main: every newly-opened
     // launch card ends with "Nouveau." / "New." for consistency.
