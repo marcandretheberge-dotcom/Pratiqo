@@ -3,6 +3,10 @@ import { createClient } from "@supabase/supabase-js";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { blurCoordinates } from "@/lib/maps";
 import { resolveLocationVerificationWrite } from "@/lib/teacherLocationVerification";
+import {
+  isTeacherMarketSupported,
+  marketNotSupportedPayload,
+} from "@/lib/config/markets";
 
 export const runtime = "nodejs";
 
@@ -104,6 +108,9 @@ export async function POST(req: Request) {
       { error: "Le code pays doit comporter 2 lettres (ex : CA, FR, UY)." },
       { status: 400 },
     );
+  }
+  if (!isTeacherMarketSupported(countryCode)) {
+    return NextResponse.json(marketNotSupportedPayload(countryCode), { status: 403 });
   }
 
   // ── Resolve teacher — never trust a client-supplied teacher ID ─────────────

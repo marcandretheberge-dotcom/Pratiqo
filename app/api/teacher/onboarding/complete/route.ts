@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import {
+  isTeacherMarketSupported,
+  marketNotSupportedPayload,
+} from "@/lib/config/markets";
 
 export const runtime = "nodejs";
 
@@ -50,7 +54,7 @@ export async function POST(req: Request) {
 
   const { data: teacher, error: teacherErr } = await admin
     .from("teachers")
-    .select("id")
+    .select("id,country_code")
     .eq("user_id", user.id)
     .maybeSingle();
 
@@ -63,7 +67,7 @@ export async function POST(req: Request) {
 
   const { data: profile, error: profileErr } = await admin
     .from("profiles")
-    .select("role,dashboard")
+    .select("role,dashboard,country_code")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -72,6 +76,14 @@ export async function POST(req: Request) {
   }
   if (profile?.role === "admin") {
     return NextResponse.json({ error: "Admin profiles cannot complete teacher onboarding here." }, { status: 403 });
+  }
+
+  const teacherCountryCode =
+    (teacher as { country_code?: string | null } | null)?.country_code ??
+    (profile as { country_code?: string | null } | null)?.country_code ??
+    "";
+  if (!isTeacherMarketSupported(teacherCountryCode)) {
+    return NextResponse.json(marketNotSupportedPayload(teacherCountryCode), { status: 403 });
   }
 
   const now = new Date().toISOString();

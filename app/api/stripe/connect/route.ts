@@ -10,6 +10,10 @@ import {
   syncTeacherConnectStatus,
 } from "@/lib/payments/connect";
 import { SITE_URL } from "@/lib/seo/site";
+import {
+  isPayoutMarketSupported,
+  marketNotSupportedPayload,
+} from "@/lib/config/markets";
 
 export const runtime = "nodejs";
 
@@ -57,13 +61,28 @@ export async function GET(req: Request) {
     const { data: teacher, error: teacherErr } = await admin
       .from("teachers")
       .select(
-        "id, stripe_account_id, stripe_connect_onboarding_complete, stripe_connect_charges_enabled, stripe_connect_payouts_enabled, stripe_connect_requirements_due, stripe_connect_disabled_reason, stripe_connect_last_synced_at",
+        "id, country_code, stripe_account_id, stripe_connect_onboarding_complete, stripe_connect_charges_enabled, stripe_connect_payouts_enabled, stripe_connect_requirements_due, stripe_connect_disabled_reason, stripe_connect_last_synced_at",
       )
       .eq("user_id", user.id)
       .maybeSingle();
 
     if (teacherErr || !teacher) {
       return NextResponse.json({ error: "Teacher profile not found." }, { status: 404 });
+    }
+
+    const teacherCountryCode = (teacher as { country_code?: string | null }).country_code ?? "";
+    if (!isPayoutMarketSupported(teacherCountryCode)) {
+      return NextResponse.json({
+        ...marketNotSupportedPayload(teacherCountryCode),
+        stripe_account_id: null,
+        canReceivePayments: false,
+        stripe_connect_onboarding_complete: false,
+        stripe_connect_charges_enabled: false,
+        stripe_connect_payouts_enabled: false,
+        stripe_connect_requirements_due: [],
+        stripe_connect_disabled_reason: "market_not_supported",
+        stripe_connect_last_synced_at: null,
+      });
     }
 
     const accountId = (teacher as { stripe_account_id?: string | null }).stripe_account_id?.trim();
@@ -103,11 +122,22 @@ export async function POST(req: Request) {
     const admin = getSupabaseAdmin();
 
     // Ensure teacher row exists (id is text; we use user.id as stable string id)
-    const { data: existingTeacher } = await admin
+    const [{ data: existingTeacher }, { data: profile }] = await Promise.all([
+      admin
       .from("teachers")
-      .select("id, stripe_account_id, name, user_id")
+      .select("id, stripe_account_id, name, user_id, country_code")
       .eq("user_id", user.id)
-      .maybeSingle();
+        .maybeSingle(),
+      admin.from("profiles").select("country_code").eq("id", user.id).maybeSingle(),
+    ]);
+
+    const teacherCountryCode =
+      (existingTeacher as { country_code?: string | null } | null)?.country_code ??
+      (profile as { country_code?: string | null } | null)?.country_code ??
+      "";
+    if (!isPayoutMarketSupported(teacherCountryCode)) {
+      return NextResponse.json(marketNotSupportedPayload(teacherCountryCode), { status: 403 });
+    }
 
     const teacherId = (existingTeacher as { id?: string } | null)?.id ?? user.id;
     const teacherName = (existingTeacher as { name?: string } | null)?.name ?? (user.user_metadata?.full_name as string) ?? "Professeur";

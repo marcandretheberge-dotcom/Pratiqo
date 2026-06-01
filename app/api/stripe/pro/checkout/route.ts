@@ -4,6 +4,10 @@ import Stripe from "stripe";
 import { stripe } from "@/lib/stripe";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { SITE_URL } from "@/lib/seo/site";
+import {
+  isMembreProMarketSupported,
+  marketNotSupportedPayload,
+} from "@/lib/config/markets";
 
 export const runtime = "nodejs";
 
@@ -54,15 +58,23 @@ export async function POST(req: Request) {
     const [{ data: profile }, { data: teacher }] = await Promise.all([
       admin
         .from("profiles")
-        .select("id, email, name, role, stripe_customer_id, stripe_subscription_id, subscription_status")
+        .select("id, email, name, role, country_code, stripe_customer_id, stripe_subscription_id, subscription_status")
         .eq("id", user.id)
         .maybeSingle(),
-      admin.from("teachers").select("id").eq("user_id", user.id).maybeSingle(),
+      admin.from("teachers").select("id,country_code").eq("user_id", user.id).maybeSingle(),
     ]);
 
     const role = String((profile as { role?: string | null } | null)?.role ?? "");
     if (role !== "teacher" || !teacher?.id) {
       return NextResponse.json({ error: "Only teacher accounts can start a Pro subscription." }, { status: 403 });
+    }
+
+    const teacherCountryCode =
+      (teacher as { country_code?: string | null } | null)?.country_code ??
+      (profile as { country_code?: string | null } | null)?.country_code ??
+      "";
+    if (!isMembreProMarketSupported(teacherCountryCode)) {
+      return NextResponse.json(marketNotSupportedPayload(teacherCountryCode), { status: 403 });
     }
 
     let customerId = (profile as { stripe_customer_id?: string | null } | null)?.stripe_customer_id?.trim() ?? "";
