@@ -118,15 +118,27 @@ export default function FrancisationPage() {
             <p className="mt-4 text-lg text-white/80 max-w-xl mx-auto">
               Des professeurs de français expérimentés, adaptés aux nouveaux arrivants au Québec. Cours en ligne ou en présentiel, selon votre horaire.
             </p>
-            <div className="mt-8">
+            {/* Marketing bridge: this page is a SEO/marketing surface,
+                NOT a competing YoPratiqo IA branch. The two CTAs below
+                lead to the canonical destinations:
+                  · /trouver-un-prof?q=francais — booking a real teacher
+                  · /yo/langues/francais-quebec — the self-paced
+                    YoPratiqo program (under Langues, not at the IA root) */}
+            <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
               <Link
-                href="/login"
+                href="/trouver-un-prof?q=francais"
                 className="inline-flex h-13 items-center gap-2 rounded-2xl bg-white px-8 py-3 text-base font-bold text-teal-700 hover:brightness-95 shadow-lg"
               >
                 Trouver un professeur de français <ArrowRight size={18} />
               </Link>
-              <p className="mt-3 text-xs text-white/55">Inscription gratuite · Aucun engagement</p>
+              <Link
+                href="/yo/langues/francais-quebec"
+                className="inline-flex h-13 items-center gap-2 rounded-2xl border border-white/40 bg-white/10 px-7 py-3 text-base font-semibold text-white hover:bg-white/15"
+              >
+                Apprendre en autonomie sur YoPratiqo
+              </Link>
             </div>
+            <p className="mt-3 text-xs text-white/55">Inscription gratuite · Aucun engagement</p>
           </div>
         </section>
 
@@ -227,12 +239,20 @@ export default function FrancisationPage() {
             <p className="text-white/75 text-sm mb-6">
               Votre premier cours est à quelques clics. Inscription gratuite, aucun engagement.
             </p>
-            <Link
-              href="/login"
-              className="inline-flex h-11 items-center gap-2 rounded-2xl bg-white px-7 text-sm font-bold text-teal-700 hover:brightness-95 shadow"
-            >
-              Trouver un professeur de français <ArrowRight size={16} />
-            </Link>
+            <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+              <Link
+                href="/trouver-un-prof?q=francais"
+                className="inline-flex h-11 items-center gap-2 rounded-2xl bg-white px-7 text-sm font-bold text-teal-700 hover:brightness-95 shadow"
+              >
+                Trouver un professeur de français <ArrowRight size={16} />
+              </Link>
+              <Link
+                href="/yo/langues/francais-quebec"
+                className="inline-flex h-11 items-center gap-2 rounded-2xl border border-white/40 bg-white/10 px-6 text-sm font-semibold text-white hover:bg-white/15"
+              >
+                Découvrir YoPratiqo · Français québécois
+              </Link>
+            </div>
             <p className="mt-4 text-xs text-white/55">
               Pour les programmes gouvernementaux gratuits, consultez le{" "}
               <span className="underline">MIFI (mifi.gouv.qc.ca)</span>.

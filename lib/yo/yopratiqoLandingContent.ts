@@ -215,3 +215,57 @@ export const yopratiqoLandingContent = {
     about: ["Italian learning", "Italian culture"],
   },
 } as const satisfies Record<YoPratiqoModuleSlug, YoPratiqoLandingContent>;
+
+/**
+ * YoPratiqo top-level product families (canonical IA).
+ *
+ * The YoPratiqo home page renders these three disciplines as the
+ * top-level taxonomy. Francisation is intentionally NOT a fourth
+ * top-level discipline — it lives UNDER Langues → Français québécois /
+ * Francisation and is surfaced as a featured-program shortcut, not as
+ * a peer family.
+ *
+ * Rules:
+ *   - Order is meaningful (Langues first; live first, planned after).
+ *   - "available" families MUST have an `href` to a real route.
+ *   - "planned" families MUST have `href: null` (no fake routes).
+ *   - Adding a fourth family requires explicit IA review.
+ *
+ * The `id` keys mirror the YoProductLine taxonomy used internally
+ * (`voyage` is intentionally absent here — that historical token is
+ * an internal config key for legacy data, not a top-level family).
+ *
+ * Tests in `tests/yo/yopratiqoInformationArchitecture.test.ts` import
+ * this constant to assert the IA stays exactly three families.
+ */
+export type YoProductFamilyId = "langues" | "musique" | "soutien-scolaire";
+
+export type YoProductFamilyStatus = "available" | "planned";
+
+export interface YoProductFamily {
+  readonly id: YoProductFamilyId;
+  readonly status: YoProductFamilyStatus;
+  readonly title: YoLocalizedString;
+  readonly href: string | null;
+}
+
+export const YO_PRODUCT_FAMILIES: readonly YoProductFamily[] = [
+  {
+    id: "langues",
+    status: "available",
+    title: lstr("Langues", "Languages"),
+    href: "/yo/langues",
+  },
+  {
+    id: "musique",
+    status: "planned",
+    title: lstr("Musique", "Music"),
+    href: null,
+  },
+  {
+    id: "soutien-scolaire",
+    status: "planned",
+    title: lstr("Soutien scolaire", "Academic support"),
+    href: null,
+  },
+] as const;
