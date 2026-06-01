@@ -63,41 +63,50 @@ import type {
 
 export interface YoPremiumModuleShellProps {
   locale: YoLocale;
-  /** Display title in both languages. */
+  /** Display title in FR / EN / ES. */
   titleFr: string;
   titleEn: string;
-  /** One-line tagline rendered under the hero title. */
+  titleEs: string;
+  /** One-line tagline rendered under the hero title (FR / EN / ES). */
   taglineFr: string;
   taglineEn: string;
-  /** Audience description (newcomers / Canadian learners / workers). */
+  taglineEs: string;
+  /** Audience description (FR / EN / ES). */
   audienceFr: string;
   audienceEn: string;
-  /** Honest disclaimer surfaced directly below the audience block. */
+  audienceEs: string;
+  /** Honest disclaimer surfaced directly below the audience block (FR / EN / ES). */
   honestPromiseFr: string;
   honestPromiseEn: string;
+  honestPromiseEs: string;
   /** Lessons rendered as locked/preview cards. Expected length: 7. */
   lessons: readonly FrQuebecModuleLesson[];
-  /** Teacher-bridge title + body (rendered above the /trouver-un-prof CTA). */
+  /** Teacher-bridge title + body (FR / EN / ES, above /trouver-un-prof). */
   teacherBridgeTitleFr: string;
   teacherBridgeTitleEn: string;
+  teacherBridgeTitleEs: string;
   teacherBridgeBodyFr: string;
   teacherBridgeBodyEn: string;
-  /** Coming-soon notice copy rendered near the bottom of the page. */
+  teacherBridgeBodyEs: string;
+  /** Coming-soon notice copy rendered near the bottom of the page (FR / EN / ES). */
   comingSoonBodyFr: string;
   comingSoonBodyEn: string;
-  /** Breadcrumb labels for the language hub crumb (e.g. "Français québécois"). */
+  comingSoonBodyEs: string;
+  /** Breadcrumb labels for the language hub crumb (FR / EN / ES). */
   languageBreadcrumbFr: string;
   languageBreadcrumbEn: string;
-  /** Localized "future module" leaf crumb. */
+  languageBreadcrumbEs: string;
+  /** Localized "future module" leaf crumb (FR / EN / ES). */
   futureCrumbFr: string;
   futureCrumbEn: string;
+  futureCrumbEs: string;
   /**
    * Path back to the free intro for the same language. Rendered as a
    * primary visible CTA in the hero; the shell never links to a paid
    * destination because no paid surface exists yet.
    */
   introHref: string;
-  /** Path to the teacher-search bridge (always `/trouver-un-prof?q=…`). */
+  /** Path to the teacher-search bridge (locale-aware /trouver-un-prof?q=…). */
   teacherBridgeHref: string;
   /**
    * Optional path to the YoPratiqo language hub for the breadcrumb.
@@ -106,122 +115,262 @@ export interface YoPremiumModuleShellProps {
   hubHref?: string;
 }
 
-const HERO_LABEL = lstr("Module futur YoPratiqo", "Future YoPratiqo module");
-const COMING_SOON_PILL = lstr("Bientôt disponible", "Coming soon");
-const AUDIENCE_LABEL = lstr("Pour qui", "Who it is for");
+const HERO_LABEL = lstr(
+  "Module futur YoPratiqo",
+  "Future YoPratiqo module",
+  "Módulo futuro de YoPratiqo",
+);
+const COMING_SOON_PILL = lstr(
+  "Bientôt disponible",
+  "Coming soon",
+  "Próximamente",
+);
+const AUDIENCE_LABEL = lstr("Pour qui", "Who it is for", "Para quién");
 const HONEST_PROMISE_LABEL = lstr(
   "Notre engagement honnête",
   "Our honest commitment",
+  "Nuestro compromiso honesto",
 );
 const LESSON_OUTLINE_LABEL = lstr(
   "Plan complet du module",
   "Full module outline",
+  "Plan completo del módulo",
 );
 const LESSON_OUTLINE_TITLE = lstr(
   "Sept courtes leçons, sept situations concrètes",
   "Seven short lessons, seven concrete situations",
+  "Siete lecciones breves, siete situaciones concretas",
 );
 const LESSON_OUTLINE_BODY = lstr(
   "Chaque leçon est une mini-mise en situation : un contexte, trois objectifs et quelques phrases utiles. La leçon 1 est ouverte en aperçu gratuit ; les six autres restent à venir.",
   "Each lesson is a small role-play: a context, three goals, and a few useful phrases. Lesson 1 is open as a free preview; the other six are still upcoming.",
+  "Cada lección es una mini-situación: un contexto, tres objetivos y algunas frases útiles. La lección 1 está abierta como vista previa gratuita; las otras seis siguen pendientes.",
 );
-const LESSON_LOCKED_LABEL = lstr("Verrouillé · futur", "Locked · upcoming");
-const LESSON_PREVIEW_LABEL = lstr("Aperçu disponible", "Preview available");
-const LESSON_GOALS_LABEL = lstr("Objectifs", "Learning goals");
-const LESSON_BRIDGE_LABEL = lstr("Avec un professeur", "With a teacher");
+const LESSON_LOCKED_LABEL = lstr(
+  "Verrouillé · futur",
+  "Locked · upcoming",
+  "Bloqueada · próximamente",
+);
+const LESSON_PREVIEW_LABEL = lstr(
+  "Aperçu disponible",
+  "Preview available",
+  "Vista previa disponible",
+);
+const LESSON_GOALS_LABEL = lstr(
+  "Objectifs",
+  "Learning goals",
+  "Objetivos",
+);
+const LESSON_BRIDGE_LABEL = lstr(
+  "Avec un professeur",
+  "With a teacher",
+  "Con un profesor",
+);
 
 const PREVIEW_EYEBROW = lstr(
   "Aperçu gratuit · Leçon 1",
   "Free preview · Lesson 1",
+  "Vista previa gratuita · Lección 1",
 );
-const PREVIEW_OBJECTIVE_LABEL = lstr("Objectif", "Objective");
-const PREVIEW_SCENARIO_LABEL = lstr("Mise en situation", "Scenario");
-const PREVIEW_CULTURE_LABEL = lstr("Note culturelle", "Cultural note");
-const PREVIEW_PHRASES_LABEL = lstr("Phrases-clés", "Core phrases");
-const PREVIEW_DIALOGUES_LABEL = lstr("Mini-dialogues", "Mini-dialogues");
-const PREVIEW_TUVOUS_LABEL = lstr("Tu ou vous ?", "Tu or vous?");
-const PREVIEW_QUIZ_LABEL = lstr("Petit quiz", "Quick quiz");
-const PREVIEW_REFLECTION_LABEL = lstr("Réflexion", "Reflection");
+const PREVIEW_OBJECTIVE_LABEL = lstr("Objectif", "Objective", "Objetivo");
+const PREVIEW_SCENARIO_LABEL = lstr(
+  "Mise en situation",
+  "Scenario",
+  "Situación",
+);
+const PREVIEW_CULTURE_LABEL = lstr(
+  "Note culturelle",
+  "Cultural note",
+  "Nota cultural",
+);
+const PREVIEW_PHRASES_LABEL = lstr(
+  "Phrases-clés",
+  "Core phrases",
+  "Frases clave",
+);
+const PREVIEW_DIALOGUES_LABEL = lstr(
+  "Mini-dialogues",
+  "Mini-dialogues",
+  "Mini-diálogos",
+);
+const PREVIEW_TUVOUS_LABEL = lstr(
+  "Tu ou vous ?",
+  "Tu or vous?",
+  "¿« Tu » o « vous »?",
+);
+const PREVIEW_QUIZ_LABEL = lstr(
+  "Petit quiz",
+  "Quick quiz",
+  "Mini-cuestionario",
+);
+const PREVIEW_REFLECTION_LABEL = lstr(
+  "Réflexion",
+  "Reflection",
+  "Reflexión",
+);
 const PREVIEW_BRIDGE_LABEL = lstr(
   "Avec un professeur",
   "With a teacher",
+  "Con un profesor",
 );
 
 const REGISTER_LABELS: Record<
   "informal" | "neutral" | "formal",
   YoLocalizedString
 > = {
-  informal: lstr("Familier", "Informal"),
-  neutral: lstr("Neutre", "Neutral"),
-  formal: lstr("Soutenu", "Formal"),
+  informal: lstr("Familier", "Informal", "Informal"),
+  neutral: lstr("Neutre", "Neutral", "Neutro"),
+  formal: lstr("Soutenu", "Formal", "Formal"),
 };
 
 const TUVOUS_BADGE_LABELS: Record<
   "tu" | "vous" | "follow",
   YoLocalizedString
 > = {
-  tu: lstr("Choix sûr · « tu »", "Safest · « tu »"),
-  vous: lstr("Choix sûr · « vous »", "Safest · « vous »"),
+  tu: lstr(
+    "Choix sûr · « tu »",
+    "Safest · « tu »",
+    "Más seguro · « tu »",
+  ),
+  vous: lstr(
+    "Choix sûr · « vous »",
+    "Safest · « vous »",
+    "Más seguro · « vous »",
+  ),
   follow: lstr(
     "Choix sûr · suivez la personne",
     "Safest · follow the other person",
+    "Más seguro · imite el trato de la otra persona",
   ),
 };
 
-const QUIZ_ANSWER_LABEL = lstr("Réponse", "Answer");
-const QUIZ_EXPLANATION_LABEL = lstr("Pourquoi", "Why");
+const QUIZ_ANSWER_LABEL = lstr("Réponse", "Answer", "Respuesta");
+const QUIZ_EXPLANATION_LABEL = lstr("Pourquoi", "Why", "Por qué");
 
 const REFLECTION_HELP = lstr(
   "Cette question est uniquement pour vous — rien n’est transmis ni partagé.",
   "This question is just for you — nothing is sent or shared.",
+  "Esta pregunta es solo para usted — no se transmite ni se comparte nada.",
 );
 
 const PREVIEW_TEACHER_NOTE = lstr(
   "Pratiquez ce scénario à voix haute avec un professeur Pratiqo lorsque vous serez prêt — vous choisissez quand et avec qui.",
   "Practice this scenario out loud with a Pratiqo teacher when you’re ready — you decide when and with whom.",
+  "Practique este escenario en voz alta con un profesor de Pratiqo cuando se sienta listo — usted elige cuándo y con quién.",
 );
 
 const TEACHER_BRIDGE_LABEL = lstr(
   "Pont vers un professeur",
   "Teacher bridge",
+  "Puente hacia un profesor",
 );
 const TEACHER_BRIDGE_CTA = lstr(
   "Trouver un professeur sur Pratiqo",
   "Find a teacher on Pratiqo",
+  "Encontrar un profesor en Pratiqo",
 );
 
 const RETURN_INTRO_CTA = lstr(
   "Retour à l’intro gratuite",
   "Back to the free intro",
+  "Volver a la intro gratuita",
 );
 const FIND_TEACHER_CTA = lstr(
   "Trouver un professeur",
   "Find a teacher",
+  "Encontrar un profesor",
 );
 
 const COMING_SOON_LABEL = lstr(
   "À propos de ce module",
   "About this module",
+  "Acerca de este módulo",
 );
 const COMING_SOON_TITLE = lstr(
   "Aperçu d’un futur module YoPratiqo",
   "Preview of a future YoPratiqo module",
+  "Vista previa de un futuro módulo de YoPratiqo",
 );
 const NO_CHECKOUT_PILL = lstr(
   "Achat indisponible pour le moment",
   "Purchase not available yet",
+  "Compra todavía no disponible",
 );
 const NO_PAID_ACCESS_PILL = lstr(
   "Accès payant non activé",
   "Paid access not active",
+  "Acceso de pago no activo",
 );
 const NO_PRICE_PILL = lstr(
   "Aucun prix en vigueur",
   "No live pricing in effect",
+  "Sin precio vigente",
+);
+
+/**
+ * Audience section eyebrow title rendered above the audience body.
+ * Trilingual so the ES learner doesn't see an English fallback when
+ * they switched their UI to ES.
+ */
+const AUDIENCE_TITLE = lstr(
+  "Pensé pour les apprenants déjà au Québec ou en route",
+  "Built for learners already in Quebec — or on their way",
+  "Pensado para personas que ya están en Quebec — o en camino",
+);
+
+const LESSON_NUMBER_LABEL = lstr("Leçon", "Lesson", "Lección");
+const SITUATION_NUMBER_LABEL = lstr(
+  "Situation",
+  "Situation",
+  "Situación",
+);
+const QUESTION_NUMBER_LABEL = lstr(
+  "Question",
+  "Question",
+  "Pregunta",
+);
+const QUIZ_TAGLINE = lstr(
+  "Cinq questions courtes — pas de note, pas de chronomètre. Pour vous, à votre rythme.",
+  "Five short questions — no score, no timer. For you, at your own pace.",
+  "Cinco preguntas breves — sin puntuación ni cronómetro. Para usted, a su ritmo.",
+);
+const PREVIEW_BROWSE_TEACHERS_CTA = lstr(
+  "Voir les professeurs Pratiqo",
+  "Browse Pratiqo teachers",
+  "Ver los profesores de Pratiqo",
+);
+const STANDARD_FRENCH_LABEL = lstr(
+  "Standard : ",
+  "Standard French: ",
+  "Francés estándar: ",
+);
+const PHRASE_WHEN_LABEL = lstr("Quand : ", "When: ", "Cuándo: ");
+const LEGAL_NOTICE_ARIA = lstr(
+  "Avis légal éducatif",
+  "Educational legal notice",
+  "Aviso legal educativo",
 );
 
 function formatMinutes(minutes: number, locale: YoLocale): string {
+  if (locale === "es") return `≈ ${minutes} min`;
   return locale === "fr" ? `≈ ${minutes} min` : `≈ ${minutes} min`;
+}
+
+/**
+ * Pick the right field by locale, falling back to FR when the
+ * requested locale's value is empty/undefined. Mirrors the contract
+ * of `t()` but for parallel sibling fields (e.g. `titleFr` /
+ * `titleEn` / `titleEs`) instead of a single `YoLocalizedString`.
+ */
+function pickLocaleField(
+  locale: YoLocale,
+  fr: string,
+  en: string,
+  es?: string,
+): string {
+  if (locale === "es") return es && es.length > 0 ? es : fr;
+  if (locale === "en") return en && en.length > 0 ? en : fr;
+  return fr;
 }
 
 /**
@@ -252,21 +401,42 @@ function LessonOnePreview({
   const content: FrQuebecLessonOneContent | undefined = lesson.content;
   if (!content) return null;
 
-  const lessonTitle = locale === "fr" ? lesson.titleFr : lesson.titleEn;
-  const objective =
-    locale === "fr" ? content.objectiveFr : content.objectiveEn;
-  const scenario =
-    locale === "fr" ? content.scenarioFr : content.scenarioEn;
-  const cultural =
-    locale === "fr" ? content.culturalNoteFr : content.culturalNoteEn;
-  const reflection =
-    locale === "fr"
-      ? content.reflectionPromptFr
-      : content.reflectionPromptEn;
-  const bridgePrompt =
-    locale === "fr"
-      ? content.teacherBridgePromptFr
-      : content.teacherBridgePromptEn;
+  const lessonTitle = pickLocaleField(
+    locale,
+    lesson.titleFr,
+    lesson.titleEn,
+    lesson.titleEs,
+  );
+  const objective = pickLocaleField(
+    locale,
+    content.objectiveFr,
+    content.objectiveEn,
+    content.objectiveEs,
+  );
+  const scenario = pickLocaleField(
+    locale,
+    content.scenarioFr,
+    content.scenarioEn,
+    content.scenarioEs,
+  );
+  const cultural = pickLocaleField(
+    locale,
+    content.culturalNoteFr,
+    content.culturalNoteEn,
+    content.culturalNoteEs,
+  );
+  const reflection = pickLocaleField(
+    locale,
+    content.reflectionPromptFr,
+    content.reflectionPromptEn,
+    content.reflectionPromptEs,
+  );
+  const bridgePrompt = pickLocaleField(
+    locale,
+    content.teacherBridgePromptFr,
+    content.teacherBridgePromptEn,
+    content.teacherBridgePromptEs,
+  );
 
   return (
     <section
@@ -318,7 +488,9 @@ function LessonOnePreview({
           </p>
           <p
             className="mt-2 text-sm leading-relaxed text-[#0F6E56]/85"
-            lang={locale === "fr" ? undefined : "en"}
+            lang={
+              locale === "es" ? "es" : locale === "en" ? "en" : undefined
+            }
           >
             {scenario}
           </p>
@@ -372,22 +544,54 @@ function LessonOnePreview({
                     className="mt-1 text-xs italic text-[#0F6E56]/65"
                     lang="fr"
                   >
-                    {locale === "fr" ? "Standard : " : "Standard French: "}
+                    {t(STANDARD_FRENCH_LABEL, locale)}
                     {phrase.standardFrench}
                   </p>
                 ) : null}
-                <p className="mt-2 text-sm leading-relaxed text-[#0F6E56]/85">
-                  {phrase.english}
+                <p
+                  className={
+                    locale === "es"
+                      ? "mt-2 text-sm leading-relaxed text-[#0F6E56]/85"
+                      : "mt-2 text-sm leading-relaxed text-[#0F6E56]/85"
+                  }
+                  lang={locale === "es" ? "es" : "en"}
+                >
+                  {locale === "es" && phrase.spanish
+                    ? phrase.spanish
+                    : phrase.english}
                 </p>
+                {locale === "es" && phrase.spanish ? (
+                  <p
+                    className="mt-1 text-xs italic text-[#0F6E56]/55"
+                    lang="en"
+                  >
+                    {phrase.english}
+                  </p>
+                ) : null}
                 <p className="mt-2 text-xs leading-relaxed text-[#0F6E56]/70">
                   <span className="font-semibold text-[#0F6E56]/75">
-                    {locale === "fr" ? "Quand : " : "When: "}
+                    {t(PHRASE_WHEN_LABEL, locale)}
                   </span>
-                  {locale === "fr" ? phrase.usageFr : phrase.usageEn}
+                  {pickLocaleField(
+                    locale,
+                    phrase.usageFr,
+                    phrase.usageEn,
+                    phrase.usageEs,
+                  )}
                 </p>
-                {(locale === "fr" ? phrase.noteFr : phrase.noteEn) ? (
+                {pickLocaleField(
+                  locale,
+                  phrase.noteFr ?? "",
+                  phrase.noteEn ?? "",
+                  phrase.noteEs,
+                ) ? (
                   <p className="mt-2 rounded-lg bg-[#FFF4D6]/60 px-3 py-2 text-xs leading-relaxed text-[#5a3f0f]">
-                    {locale === "fr" ? phrase.noteFr : phrase.noteEn}
+                    {pickLocaleField(
+                      locale,
+                      phrase.noteFr ?? "",
+                      phrase.noteEn ?? "",
+                      phrase.noteEs,
+                    )}
                   </p>
                 ) : null}
               </li>
@@ -411,10 +615,20 @@ function LessonOnePreview({
                 className="rounded-2xl border border-teal-100 bg-white p-4 shadow-[0_1px_2px_rgba(15,58,52,0.04)]"
               >
                 <h3 className="text-sm font-bold tracking-tight text-[#0F6E56]">
-                  {locale === "fr" ? dialogue.titleFr : dialogue.titleEn}
+                  {pickLocaleField(
+                    locale,
+                    dialogue.titleFr,
+                    dialogue.titleEn,
+                    dialogue.titleEs,
+                  )}
                 </h3>
                 <p className="mt-1 text-xs leading-relaxed text-[#0F6E56]/65">
-                  {locale === "fr" ? dialogue.contextFr : dialogue.contextEn}
+                  {pickLocaleField(
+                    locale,
+                    dialogue.contextFr,
+                    dialogue.contextEn,
+                    dialogue.contextEs,
+                  )}
                 </p>
                 <ol
                   role="list"
@@ -426,9 +640,12 @@ function LessonOnePreview({
                       className="rounded-xl bg-[#F4FBF9] px-3 py-2"
                     >
                       <p className="text-[0.7rem] font-black uppercase tracking-[0.14em] text-[#1D9E75]">
-                        {locale === "fr"
-                          ? line.speakerFr
-                          : line.speakerEn}
+                        {pickLocaleField(
+                          locale,
+                          line.speakerFr,
+                          line.speakerEn,
+                          line.speakerEs,
+                        )}
                       </p>
                       <p
                         className="mt-1 font-medium text-[#0F6E56]"
@@ -436,12 +653,27 @@ function LessonOnePreview({
                       >
                         {line.frQuebec}
                       </p>
-                      <p className="mt-1 text-xs text-[#0F6E56]/70">
-                        {line.english}
+                      <p
+                        className="mt-1 text-xs text-[#0F6E56]/70"
+                        lang={locale === "es" ? "es" : "en"}
+                      >
+                        {locale === "es" && line.spanish
+                          ? line.spanish
+                          : line.english}
                       </p>
-                      {(locale === "fr" ? line.noteFr : line.noteEn) ? (
+                      {pickLocaleField(
+                        locale,
+                        line.noteFr ?? "",
+                        line.noteEn ?? "",
+                        line.noteEs,
+                      ) ? (
                         <p className="mt-2 text-[0.7rem] leading-relaxed text-[#0F6E56]/55">
-                          {locale === "fr" ? line.noteFr : line.noteEn}
+                          {pickLocaleField(
+                            locale,
+                            line.noteFr ?? "",
+                            line.noteEn ?? "",
+                            line.noteEs,
+                          )}
                         </p>
                       ) : null}
                     </li>
@@ -468,23 +700,27 @@ function LessonOnePreview({
                 className="rounded-2xl border border-teal-100 bg-white p-4 shadow-[0_1px_2px_rgba(15,58,52,0.04)]"
               >
                 <p className="text-[0.65rem] font-black uppercase tracking-[0.14em] text-[#0F6E56]/55">
-                  {locale === "fr"
-                    ? `Situation ${situationIndex + 1}`
-                    : `Situation ${situationIndex + 1}`}
+                  {`${t(SITUATION_NUMBER_LABEL, locale)} ${situationIndex + 1}`}
                 </p>
                 <p className="mt-1 text-sm leading-relaxed text-[#0F6E56]/85">
-                  {locale === "fr"
-                    ? situation.situationFr
-                    : situation.situationEn}
+                  {pickLocaleField(
+                    locale,
+                    situation.situationFr,
+                    situation.situationEn,
+                    situation.situationEs,
+                  )}
                 </p>
                 <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-[#DDF4F1]/70 px-3 py-1 text-xs font-bold text-[#0F6E56]">
                   <CheckCircle2 className="size-3.5" aria-hidden />
                   {t(TUVOUS_BADGE_LABELS[situation.safestChoice], locale)}
                 </p>
                 <p className="mt-2 text-xs leading-relaxed text-[#0F6E56]/70">
-                  {locale === "fr"
-                    ? situation.explanationFr
-                    : situation.explanationEn}
+                  {pickLocaleField(
+                    locale,
+                    situation.explanationFr,
+                    situation.explanationEn,
+                    situation.explanationEs,
+                  )}
                 </p>
               </li>
             ))}
@@ -501,9 +737,7 @@ function LessonOnePreview({
             {t(PREVIEW_QUIZ_LABEL, locale)}
           </p>
           <p className="mt-1 text-xs leading-relaxed text-[#0F6E56]/60">
-            {locale === "fr"
-              ? "Cinq questions courtes — pas de note, pas de chronomètre. Pour vous, à votre rythme."
-              : "Five short questions — no score, no timer. For you, at your own pace."}
+            {t(QUIZ_TAGLINE, locale)}
           </p>
           <ol role="list" className="mt-3 space-y-3">
             {content.quizQuestions.map((question, questionIndex) => {
@@ -516,14 +750,15 @@ function LessonOnePreview({
                   className="rounded-2xl border border-teal-100 bg-white p-4 shadow-[0_1px_2px_rgba(15,58,52,0.04)]"
                 >
                   <p className="text-[0.65rem] font-black uppercase tracking-[0.14em] text-[#0F6E56]/55">
-                    {locale === "fr"
-                      ? `Question ${questionIndex + 1}`
-                      : `Question ${questionIndex + 1}`}
+                    {`${t(QUESTION_NUMBER_LABEL, locale)} ${questionIndex + 1}`}
                   </p>
                   <p className="mt-1 text-sm font-semibold text-[#0F6E56]">
-                    {locale === "fr"
-                      ? question.promptFr
-                      : question.promptEn}
+                    {pickLocaleField(
+                      locale,
+                      question.promptFr,
+                      question.promptEn,
+                      question.promptEs,
+                    )}
                   </p>
                   <ul role="list" className="mt-2 space-y-1.5 text-sm">
                     {question.options.map((option) => (
@@ -535,7 +770,12 @@ function LessonOnePreview({
                           aria-hidden
                           className="mt-1 inline-block size-1.5 shrink-0 rounded-full bg-[#1D9E75]"
                         />
-                        {locale === "fr" ? option.labelFr : option.labelEn}
+                        {pickLocaleField(
+                          locale,
+                          option.labelFr,
+                          option.labelEn,
+                          option.labelEs,
+                        )}
                       </li>
                     ))}
                   </ul>
@@ -546,18 +786,24 @@ function LessonOnePreview({
                       </summary>
                       <p className="mt-2">
                         <span className="font-semibold text-[#0F6E56]">
-                          {locale === "fr"
-                            ? correct.labelFr
-                            : correct.labelEn}
+                          {pickLocaleField(
+                            locale,
+                            correct.labelFr,
+                            correct.labelEn,
+                            correct.labelEs,
+                          )}
                         </span>
                       </p>
                       <p className="mt-2">
                         <span className="font-semibold text-[#0F6E56]">
                           {t(QUIZ_EXPLANATION_LABEL, locale)} :{" "}
                         </span>
-                        {locale === "fr"
-                          ? question.explanationFr
-                          : question.explanationEn}
+                        {pickLocaleField(
+                          locale,
+                          question.explanationFr,
+                          question.explanationEn,
+                          question.explanationEs,
+                        )}
                       </p>
                     </details>
                   ) : null}
@@ -604,9 +850,7 @@ function LessonOnePreview({
             className="mt-4 inline-flex items-center justify-center gap-2 rounded-full bg-[#0F6E56] px-5 py-2.5 text-sm font-bold text-white shadow-[0_10px_24px_rgba(15,110,86,0.18)] transition hover:bg-[#0b5b47]"
           >
             <MessageCircle className="size-4" aria-hidden />
-            {locale === "fr"
-              ? "Voir les professeurs Pratiqo"
-              : "Browse Pratiqo teachers"}
+            {t(PREVIEW_BROWSE_TEACHERS_CTA, locale)}
           </Link>
         </section>
       </div>
@@ -619,52 +863,74 @@ export function YoPremiumModuleShell(props: YoPremiumModuleShellProps) {
     locale,
     titleFr,
     titleEn,
+    titleEs,
     taglineFr,
     taglineEn,
+    taglineEs,
     audienceFr,
     audienceEn,
+    audienceEs,
     honestPromiseFr,
     honestPromiseEn,
+    honestPromiseEs,
     lessons,
     teacherBridgeTitleFr,
     teacherBridgeTitleEn,
+    teacherBridgeTitleEs,
     teacherBridgeBodyFr,
     teacherBridgeBodyEn,
+    teacherBridgeBodyEs,
     comingSoonBodyFr,
     comingSoonBodyEn,
+    comingSoonBodyEs,
     languageBreadcrumbFr,
     languageBreadcrumbEn,
+    languageBreadcrumbEs,
     futureCrumbFr,
     futureCrumbEn,
+    futureCrumbEs,
     introHref,
     teacherBridgeHref,
     hubHref = "/yo/langues",
   } = props;
 
-  const title: YoLocalizedString = lstr(titleFr, titleEn);
-  const tagline: YoLocalizedString = lstr(taglineFr, taglineEn);
-  const audience: YoLocalizedString = lstr(audienceFr, audienceEn);
+  const title: YoLocalizedString = lstr(titleFr, titleEn, titleEs);
+  const tagline: YoLocalizedString = lstr(taglineFr, taglineEn, taglineEs);
+  const audience: YoLocalizedString = lstr(
+    audienceFr,
+    audienceEn,
+    audienceEs,
+  );
   const honestPromise: YoLocalizedString = lstr(
     honestPromiseFr,
     honestPromiseEn,
+    honestPromiseEs,
   );
   const teacherBridgeTitle: YoLocalizedString = lstr(
     teacherBridgeTitleFr,
     teacherBridgeTitleEn,
+    teacherBridgeTitleEs,
   );
   const teacherBridgeBody: YoLocalizedString = lstr(
     teacherBridgeBodyFr,
     teacherBridgeBodyEn,
+    teacherBridgeBodyEs,
   );
   const comingSoonBody: YoLocalizedString = lstr(
     comingSoonBodyFr,
     comingSoonBodyEn,
+    comingSoonBodyEs,
   );
   const languageCrumb: YoLocalizedString = lstr(
     languageBreadcrumbFr,
     languageBreadcrumbEn,
+    languageBreadcrumbEs,
   );
-  const futureCrumb: YoLocalizedString = lstr(futureCrumbFr, futureCrumbEn);
+  const futureCrumb: YoLocalizedString = lstr(
+    futureCrumbFr,
+    futureCrumbEn,
+    futureCrumbEs,
+  );
 
   // Pick the first lesson tagged "preview" to render the rich free
   // preview body. Today only Lesson 1 carries a populated `content`
@@ -748,9 +1014,7 @@ export function YoPremiumModuleShell(props: YoPremiumModuleShellProps) {
             id="yo-fr-qc-mod1-audience-title"
             className="mt-2 text-2xl font-medium tracking-tight text-[#0F6E56] sm:text-[1.65rem]"
           >
-            {locale === "fr"
-              ? "Pensé pour les apprenants déjà au Québec ou en route"
-              : "Built for learners already in Quebec — or on their way"}
+            {t(AUDIENCE_TITLE, locale)}
           </h2>
           <p className="mt-3 max-w-3xl text-sm leading-relaxed text-[#0F6E56]/78 sm:text-[0.95rem]">
             {t(audience, locale)}
@@ -811,9 +1075,7 @@ export function YoPremiumModuleShell(props: YoPremiumModuleShellProps) {
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-xs font-black uppercase tracking-[0.14em] text-[#0F6E56]/55">
-                      {locale === "fr"
-                        ? `Leçon ${index + 1}`
-                        : `Lesson ${index + 1}`}
+                      {`${t(LESSON_NUMBER_LABEL, locale)} ${index + 1}`}
                     </p>
                     <h3 className="mt-1 text-base font-semibold leading-snug text-[#0F6E56]">
                       {isPreview ? (
@@ -821,12 +1083,20 @@ export function YoPremiumModuleShell(props: YoPremiumModuleShellProps) {
                           href="#lecon-1"
                           className="underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F4B400]"
                         >
-                          {locale === "fr" ? lesson.titleFr : lesson.titleEn}
+                          {pickLocaleField(
+                            locale,
+                            lesson.titleFr,
+                            lesson.titleEn,
+                            lesson.titleEs,
+                          )}
                         </Link>
-                      ) : locale === "fr" ? (
-                        lesson.titleFr
                       ) : (
-                        lesson.titleEn
+                        pickLocaleField(
+                          locale,
+                          lesson.titleFr,
+                          lesson.titleEn,
+                          lesson.titleEs,
+                        )
                       )}
                     </h3>
                   </div>
@@ -851,7 +1121,12 @@ export function YoPremiumModuleShell(props: YoPremiumModuleShellProps) {
                   {formatMinutes(lesson.estimatedMinutes, locale)}
                 </p>
                 <p className="text-sm leading-relaxed text-[#0F6E56]/80">
-                  {locale === "fr" ? lesson.scenarioFr : lesson.scenarioEn}
+                  {pickLocaleField(
+                    locale,
+                    lesson.scenarioFr,
+                    lesson.scenarioEn,
+                    lesson.scenarioEs,
+                  )}
                 </p>
                 <div>
                   <p className="text-[0.7rem] font-black uppercase tracking-[0.14em] text-[#0F6E56]/55">
@@ -861,9 +1136,11 @@ export function YoPremiumModuleShell(props: YoPremiumModuleShellProps) {
                     role="list"
                     className="mt-1 space-y-1 text-sm leading-relaxed text-[#0F6E56]/76"
                   >
-                    {(locale === "fr"
-                      ? lesson.learningGoalsFr
-                      : lesson.learningGoalsEn
+                    {(locale === "es"
+                      ? lesson.learningGoalsEs
+                      : locale === "en"
+                        ? lesson.learningGoalsEn
+                        : lesson.learningGoalsFr
                     ).map((goal, goalIndex) => (
                       <li
                         key={`${lesson.id}-goal-${goalIndex}`}
@@ -882,9 +1159,12 @@ export function YoPremiumModuleShell(props: YoPremiumModuleShellProps) {
                   <span className="font-black uppercase tracking-[0.12em] text-[#1D9E75]">
                     {t(LESSON_BRIDGE_LABEL, locale)}.
                   </span>{" "}
-                  {locale === "fr"
-                    ? lesson.teacherBridgePromptFr
-                    : lesson.teacherBridgePromptEn}
+                  {pickLocaleField(
+                    locale,
+                    lesson.teacherBridgePromptFr,
+                    lesson.teacherBridgePromptEn,
+                    lesson.teacherBridgePromptEs,
+                  )}
                 </p>
               </li>
               );
@@ -973,11 +1253,7 @@ export function YoPremiumModuleShell(props: YoPremiumModuleShellProps) {
 
         {/* Legal-safe disclaimer */}
         <section
-          aria-label={
-            locale === "fr"
-              ? "Avis légal éducatif"
-              : "Educational legal notice"
-          }
+          aria-label={t(LEGAL_NOTICE_ARIA, locale)}
           className="mx-auto w-full max-w-5xl px-5 pt-10 sm:px-8 sm:pt-14"
         >
           <YoLegalDisclaimer locale={locale} />

@@ -16,10 +16,18 @@ import type { YoLocale, YoLocalizedString, YoCurrency } from "@/lib/yo/types";
 export const YO_DEFAULT_LOCALE: YoLocale = "fr";
 
 /**
- * Resolve a free-form `?lang=` value to a known `YoLocale`. Everything
- * other than "en" (case-insensitive) collapses back to the default "fr"
- * so the Quebec audience keeps working even if a typo or unknown locale
- * is passed.
+ * Set of locale codes the Yo surface currently understands. Kept as a
+ * runtime tuple so `getYoLocale` doesn't need to be edited every time
+ * `YoLocale` widens — add the new code here and the parser picks it
+ * up automatically.
+ */
+const YO_LOCALES = ["fr", "en", "es"] as const satisfies readonly YoLocale[];
+
+/**
+ * Resolve a free-form `?lang=` value to a known `YoLocale`. Anything
+ * outside the known set collapses back to the default "fr" so the
+ * Quebec audience keeps working even if a typo or unknown locale is
+ * passed.
  */
 export function getYoLocale(input?: string | string[] | null): YoLocale {
   if (Array.isArray(input)) {
@@ -29,26 +37,39 @@ export function getYoLocale(input?: string | string[] | null): YoLocale {
     return YO_DEFAULT_LOCALE;
   }
   const normalized = input.trim().toLowerCase();
-  return normalized === "en" ? "en" : YO_DEFAULT_LOCALE;
+  return (YO_LOCALES as readonly string[]).includes(normalized)
+    ? (normalized as YoLocale)
+    : YO_DEFAULT_LOCALE;
 }
 
 /**
- * Pluck a localized value. Falls back to FR when EN is missing — the FR
- * field is the source of truth for Phase 1 because every Yo data record
- * was authored in French first.
+ * Pluck a localized value. Falls back to FR when the requested locale
+ * is missing — FR is the source of truth because every Yo data record
+ * was authored in French first. ES support was added later, so
+ * `value.es` may legitimately be `undefined` on older records.
  */
 export function t(value: YoLocalizedString, locale: YoLocale): string {
-  return value[locale] ?? value.fr;
+  const raw = value[locale];
+  return typeof raw === "string" && raw.length > 0 ? raw : value.fr;
 }
 
 /**
- * Compact builder used in the data file. `lstr("Bonjour", "Hello")` reads
- * better than `{ fr: "Bonjour", en: "Hello" }`. When the EN value is
- * omitted (brand names, Spanish-shaped wording that doesn't translate)
- * both locales receive the same string.
+ * Compact builder used in the data file. `lstr("Bonjour", "Hello",
+ * "Hola")` reads better than `{ fr: "Bonjour", en: "Hello", es:
+ * "Hola" }`. When `en` is omitted both `en` and `es` receive the FR
+ * value; when `es` alone is omitted, the `t()` helper falls back to
+ * the FR string at render time.
  */
-export function lstr(fr: string, en?: string): YoLocalizedString {
-  return { fr, en: en ?? fr };
+export function lstr(
+  fr: string,
+  en?: string,
+  es?: string,
+): YoLocalizedString {
+  return {
+    fr,
+    en: en ?? fr,
+    ...(typeof es === "string" ? { es } : {}),
+  };
 }
 
 /**
@@ -85,4 +106,22 @@ export function buildYoLocaleHref(
     return basePathname;
   }
   return `${basePathname}?lang=${targetLocale}`;
+}
+
+/**
+ * BCP-47 `<html lang>` attribute matching a YoLocale. Used by Yo
+ * Server Components that want to scope ES rendering for screen
+ * readers and browser language hints (e.g. inside the premium
+ * module shell when locale === "es").
+ */
+export function htmlLangFor(locale: YoLocale): string {
+  switch (locale) {
+    case "en":
+      return "en";
+    case "es":
+      return "es";
+    case "fr":
+    default:
+      return "fr-CA";
+  }
 }

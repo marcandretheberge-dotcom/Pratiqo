@@ -57,23 +57,31 @@ export default async function YoFrancaisQuebecModuleOnePage({
   const resolvedSearchParams = await searchParams;
   const locale = getYoLocale(resolvedSearchParams.lang);
 
-  const langSuffix = locale === "fr" ? "" : "?lang=en";
+  const langSuffix =
+    locale === "fr" ? "" : locale === "es" ? "?lang=es" : "?lang=en";
   const introHref = `/yo/langues/francais-quebec/intro${langSuffix}`;
-  const teacherBridgeHref = `/trouver-un-prof?q=francais${
-    locale === "fr" ? "" : "&lang=en"
-  }`;
+  const teacherBridgeHref =
+    locale === "fr"
+      ? "/trouver-un-prof?q=francais"
+      : locale === "es"
+        ? "/trouver-un-prof?q=francais&lang=es"
+        : "/trouver-un-prof?q=francais&lang=en";
 
   return (
     <YoPremiumModuleShell
       locale={locale}
       titleFr={frQuebecWorkplaceSurvivalModule.titleFr}
       titleEn={frQuebecWorkplaceSurvivalModule.titleEn}
+      titleEs={frQuebecWorkplaceSurvivalModule.titleEs}
       taglineFr={frQuebecWorkplaceSurvivalModule.taglineFr}
       taglineEn={frQuebecWorkplaceSurvivalModule.taglineEn}
+      taglineEs={frQuebecWorkplaceSurvivalModule.taglineEs}
       audienceFr={frQuebecWorkplaceSurvivalModule.audienceFr}
       audienceEn={frQuebecWorkplaceSurvivalModule.audienceEn}
+      audienceEs={frQuebecWorkplaceSurvivalModule.audienceEs}
       honestPromiseFr={frQuebecWorkplaceSurvivalModule.honestPromiseFr}
       honestPromiseEn={frQuebecWorkplaceSurvivalModule.honestPromiseEn}
+      honestPromiseEs={frQuebecWorkplaceSurvivalModule.honestPromiseEs}
       lessons={frQuebecWorkplaceSurvivalModule.lessons}
       teacherBridgeTitleFr={
         frQuebecWorkplaceSurvivalModule.teacherBridgeTitleFr
@@ -81,14 +89,21 @@ export default async function YoFrancaisQuebecModuleOnePage({
       teacherBridgeTitleEn={
         frQuebecWorkplaceSurvivalModule.teacherBridgeTitleEn
       }
+      teacherBridgeTitleEs={
+        frQuebecWorkplaceSurvivalModule.teacherBridgeTitleEs
+      }
       teacherBridgeBodyFr={frQuebecWorkplaceSurvivalModule.teacherBridgeBodyFr}
       teacherBridgeBodyEn={frQuebecWorkplaceSurvivalModule.teacherBridgeBodyEn}
+      teacherBridgeBodyEs={frQuebecWorkplaceSurvivalModule.teacherBridgeBodyEs}
       comingSoonBodyFr={frQuebecWorkplaceSurvivalModule.comingSoonBodyFr}
       comingSoonBodyEn={frQuebecWorkplaceSurvivalModule.comingSoonBodyEn}
+      comingSoonBodyEs={frQuebecWorkplaceSurvivalModule.comingSoonBodyEs}
       languageBreadcrumbFr="Français québécois"
       languageBreadcrumbEn="Quebec French"
+      languageBreadcrumbEs="Francés de Quebec"
       futureCrumbFr="Module futur"
       futureCrumbEn="Future module"
+      futureCrumbEs="Módulo futuro"
       introHref={introHref}
       teacherBridgeHref={teacherBridgeHref}
     />
