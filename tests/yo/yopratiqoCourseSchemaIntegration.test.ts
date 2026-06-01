@@ -113,13 +113,24 @@ test("Course schema helper produces safe provider and no fake commercial signals
 });
 
 test("Course schema and landing config avoid forbidden product imports", () => {
+  // Strip comments first (doc-comments may legitimately name the
+  // concept negatively) and use word-boundary regexes so flags whose
+  // identifier contains a banned substring (e.g. `checkoutEnabled`,
+  // `publicLaunchEnabled`) do not falsely trigger.
+  const stripComments = (src: string): string =>
+    src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
+  const FORBIDDEN =
+    /\bstripe\b|\bcheckout\b|\bsupabase\b|\brls\b|\bmigration\b|\bmembre\s+pro\b|\bcommission\b/i;
   for (const file of [
     "lib/seo/yopratiqoCourseSchema.ts",
     "lib/yo/yopratiqoProductConfig.ts",
     "components/yo/YoLanguageLandingPage.tsx",
   ]) {
-    const src = read(file);
-    assert.ok(!/stripe|checkout|supabase|rls|\bmigration\b|membre pro|commission/i.test(src));
+    const src = stripComments(read(file));
+    assert.ok(
+      !FORBIDDEN.test(src),
+      `${file} must not import forbidden product areas`,
+    );
   }
 });
 

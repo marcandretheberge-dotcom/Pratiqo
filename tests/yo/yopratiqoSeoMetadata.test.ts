@@ -92,6 +92,11 @@ const ROUTES: Array<{ id: YoPratiqoSeoRouteId; file: string; route: string }> = 
 ];
 
 test("YoPratiqo SEO config covers the language hub and all five intro routes", () => {
+  // The set also includes the future-premium module shell entry
+  // (`frenchQuebecModuleOne`). The shell is intentionally noindex
+  // and is excluded from the per-route ROUTES iteration above; it is
+  // covered by its own dedicated suite at
+  // tests/yo/yopratiqoFrQuebecPremiumShell.test.ts.
   assert.deepEqual(
     Object.keys(yopratiqoSeoEntries).sort(),
     [
@@ -99,6 +104,7 @@ test("YoPratiqo SEO config covers the language hub and all five intro routes", (
       "englishLanding",
       "frenchQuebecIntro",
       "frenchQuebecLanding",
+      "frenchQuebecModuleOne",
       "italianIntro",
       "italianLanding",
       "japaneseIntro",
@@ -231,13 +237,29 @@ test("Course schema helper names Pratiqo / Cours Pratiqo Inc. without fake comme
 });
 
 test("Yo SEO files do not import forbidden product areas", () => {
+  // Two layers of defence:
+  //   1. Strip JS comments so doc-comments that name the concept
+  //      negatively (e.g. "this surface intentionally has no
+  //      checkout / payments / Supabase coupling") never falsely
+  //      match.
+  //   2. Use word-boundary regexes so harmless config flags whose
+  //      identifier happens to contain a banned substring (for
+  //      example `checkoutEnabled: false`, `publicLaunchEnabled:
+  //      false`) do not accidentally trigger. We still want the test
+  //      to catch real imports / runtime references like
+  //      `import stripe`, `from "@/lib/payments"`, `BookingModal`,
+  //      etc.
+  const stripComments = (src: string): string =>
+    src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
+  const FORBIDDEN =
+    /\bstripe\b|\bcheckout\b|\bpayment\b|\bsupabase\b|\brls\b|\bmigration\b|\bbooking\b/i;
   for (const file of [
     "lib/yo/yopratiqoSeo.ts",
     "lib/yo/yopratiqoProductConfig.ts",
     "lib/seo/yopratiqoCourseSchema.ts",
   ]) {
-    const src = read(file);
-    assert.ok(!/stripe|checkout|payment|supabase|rls|migration|booking/i.test(src));
+    const src = stripComments(read(file));
+    assert.ok(!FORBIDDEN.test(src), `${file} must not import forbidden product areas`);
   }
 });
 
