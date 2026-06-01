@@ -20,6 +20,7 @@
     "test:yo-japanese": "tsx tests/yo/yopratiqoJapaneseIntro.test.ts && tsx tests/yo/yopratiqoJapaneseAudio.test.ts",
     "test:yo-quiz-ui": "tsx tests/yo/yopratiqoQuizUi.test.ts",
     "test:yo-languages": "tsx tests/yo/yopratiqoLanguageSelection.test.ts",
+    "test:yo-foundation": "tsx tests/yo/yopratiqoProductFoundation.test.ts",
     "test:yo-french-quebec": "tsx tests/yo/yopratiqoFrenchQuebecIntro.test.ts",
     "test:auth": "tsx tests/auth/adminAuthorization.test.ts && tsx tests/auth/serverRouteGuards.test.ts",
     "test:security": "tsx tests/security/rlsPolicyShape.test.ts && tsx tests/security/productionAccessAudit.test.ts && tsx tests/security/teacherPublicReadIsolation.test.ts && tsx tests/security/rlsCoverage.test.ts && tsx tests/security/securityAdvisorFindings.test.ts",
