@@ -49,8 +49,8 @@ import {
   Sprout,
   Volume2,
 } from "lucide-react";
-import { SITE_URL } from "@/lib/seo/site";
 import { buildYoLocaleHref, getYoLocale, lstr, t } from "@/lib/yo/localize";
+import { buildYoPratiqoMetadata } from "@/lib/yo/yopratiqoSeo";
 import { japaneseIntro } from "@/lib/yo/japaneseIntro";
 import { YoBreadcrumb } from "@/components/yo/YoBreadcrumb";
 import { YoFlashcardPreview } from "@/components/yo/YoFlashcardPreview";
@@ -60,23 +60,14 @@ import type { YoLocale } from "@/lib/yo/types";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "YoPratiqo — Intro au japonais · Gratuit",
-  description:
-    "La langue de Tokyo, des temples, et du Japon que tu rêves de découvrir. Une intro premium gratuite pour comprendre les bases sans paniquer sur les kanji.",
-  alternates: {
-    canonical: `${SITE_URL}/yo/langues/japonais/intro`,
-  },
-  openGraph: {
-    title: "YoPratiqo — Intro au japonais",
-    description:
-      "Première leçon gratuite : chiffres, écriture, grammaire, politesse, codes culturels, quiz et flashcards.",
-    type: "website",
-    url: `${SITE_URL}/yo/langues/japonais/intro`,
-    locale: "fr_CA",
-  },
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ lang?: string | string[] }>;
+}): Promise<Metadata> {
+  const params = await searchParams;
+  return buildYoPratiqoMetadata("japaneseIntro", params.lang);
+}
 
 interface PageProps {
   searchParams: Promise<{ lang?: string | string[] }>;

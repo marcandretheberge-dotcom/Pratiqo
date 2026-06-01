@@ -47,8 +47,8 @@ import {
   MessageCircle,
   Sparkles,
 } from "lucide-react";
-import { SITE_URL } from "@/lib/seo/site";
 import { buildYoLocaleHref, getYoLocale, lstr, t } from "@/lib/yo/localize";
+import { buildYoPratiqoMetadata } from "@/lib/yo/yopratiqoSeo";
 import type { YoLocale } from "@/lib/yo/types";
 import { italianIntro } from "@/lib/yo/italianIntro";
 import { YoBreadcrumb } from "@/components/yo/YoBreadcrumb";
@@ -58,23 +58,14 @@ import { YoItalianAudioButton } from "@/components/yo/YoItalianAudioButton";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "YoPratiqo — Intro à l’italien · Gratuit",
-  description:
-    "La langue de Dante, de la cuisine et de mille collines. Une intro premium et gratuite pour comprendre l’italien standard, ses régions, et apprendre tes premiers mots avec audio.",
-  alternates: {
-    canonical: `${SITE_URL}/yo/langues/italien/intro`,
-  },
-  openGraph: {
-    title: "YoPratiqo — Intro à l’italien",
-    description:
-      "Première leçon gratuite : standard italien, régions, premiers mots avec audio, quiz, flashcards.",
-    type: "website",
-    url: `${SITE_URL}/yo/langues/italien/intro`,
-    locale: "fr_CA",
-  },
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ lang?: string | string[] }>;
+}): Promise<Metadata> {
+  const params = await searchParams;
+  return buildYoPratiqoMetadata("italianIntro", params.lang);
+}
 
 interface PageProps {
   searchParams: Promise<{ lang?: string | string[] }>;

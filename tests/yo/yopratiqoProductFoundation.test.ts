@@ -13,6 +13,10 @@ import { join } from "node:path";
 import { SITE_URL } from "@/lib/seo/site";
 import { buildYopratiqoCourseSchema } from "@/lib/seo/yopratiqoCourseSchema";
 import { yopratiqoProductConfig } from "@/lib/yo/yopratiqoProductConfig";
+import {
+  buildYoPratiqoMetadata,
+  type YoPratiqoSeoRouteId,
+} from "@/lib/yo/yopratiqoSeo";
 
 const REPO_ROOT = process.cwd();
 
@@ -34,30 +38,40 @@ function test(name: string, fn: TestFn): void {
 const INTRO_PAGES = [
   {
     id: "english",
+    seoId: "englishIntro",
     path: "/yo/langues/anglais/intro",
     file: "app/yo/langues/anglais/intro/page.tsx",
   },
   {
     id: "francais-quebec",
+    seoId: "frenchQuebecIntro",
     path: "/yo/langues/francais-quebec/intro",
     file: "app/yo/langues/francais-quebec/intro/page.tsx",
   },
   {
     id: "spanish",
+    seoId: "spanishIntro",
     path: "/yo/langues/espagnol/intro",
     file: "app/yo/langues/espagnol/intro/page.tsx",
   },
   {
     id: "japanese",
+    seoId: "japaneseIntro",
     path: "/yo/langues/japonais/intro",
     file: "app/yo/langues/japonais/intro/page.tsx",
   },
   {
     id: "italian",
+    seoId: "italianIntro",
     path: "/yo/langues/italien/intro",
     file: "app/yo/langues/italien/intro/page.tsx",
   },
-] as const;
+] as const satisfies readonly Array<{
+  id: string;
+  seoId: YoPratiqoSeoRouteId;
+  path: string;
+  file: string;
+}>;
 
 test("product config keeps exactly the five current YoPratiqo languages active", () => {
   assert.deepEqual([...yopratiqoProductConfig.currentLanguages], [
@@ -106,27 +120,27 @@ test("intro pages have unique metadata, canonical URLs, and intentional noindex 
 
   for (const page of INTRO_PAGES) {
     const src = read(page.file);
-    const titleMatch = src.match(/title:\s*"([^"]+)"/);
-    const descriptionMatch = src.match(/description:\s*\n\s*"([^"]+)"/);
-
-    assert.ok(titleMatch, `${page.file} must declare metadata.title`);
-    assert.ok(descriptionMatch, `${page.file} must declare metadata.description`);
-    assert.ok(!titles.has(titleMatch[1]), `${page.file} title must be unique`);
+    const metadata = buildYoPratiqoMetadata(page.seoId, "fr");
+    assert.equal(typeof metadata.title, "string", `${page.file} title`);
+    assert.equal(
+      typeof metadata.description,
+      "string",
+      `${page.file} description`,
+    );
+    assert.ok(!titles.has(metadata.title), `${page.file} title must be unique`);
     assert.ok(
-      !descriptions.has(descriptionMatch[1]),
+      !descriptions.has(metadata.description),
       `${page.file} description must be unique`,
     );
-    titles.add(titleMatch[1]);
-    descriptions.add(descriptionMatch[1]);
+    titles.add(metadata.title);
+    descriptions.add(metadata.description);
 
+    assert.equal(metadata.alternates?.canonical, `${SITE_URL}${page.path}`);
+    assert.deepEqual(metadata.robots, { index: false, follow: false });
+    assert.match(src, /generateMetadata/);
     assert.ok(
-      src.includes(`canonical: \`${"${SITE_URL}"}${page.path}\``),
-      `${page.file} must own its canonical path`,
-    );
-    assert.match(
-      src,
-      /robots:\s*\{\s*index:\s*false,\s*follow:\s*false\s*\}/,
-      `${page.file} must remain intentionally noindex until approved`,
+      src.includes(`buildYoPratiqoMetadata("${page.seoId}", params.lang)`),
+      `${page.file} must use the central YoPratiqo metadata helper`,
     );
   }
 });

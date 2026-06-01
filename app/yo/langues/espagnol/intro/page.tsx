@@ -34,8 +34,8 @@ import {
   Music2,
   Sparkles,
 } from "lucide-react";
-import { SITE_URL } from "@/lib/seo/site";
 import { buildYoLocaleHref, getYoLocale, lstr, t } from "@/lib/yo/localize";
+import { buildYoPratiqoMetadata } from "@/lib/yo/yopratiqoSeo";
 import { spanishIntroA1 } from "@/lib/yo/spanishIntroA1";
 import { YoBreadcrumb } from "@/components/yo/YoBreadcrumb";
 import { YoCoachPanel } from "@/components/yo/YoCoachPanel";
@@ -46,23 +46,14 @@ import { YoSpanishAudioButton } from "@/components/yo/YoSpanishAudioButton";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "YoPratiqo — Espagnol · Intro globale A1",
-  description:
-    "Avant de choisir un pays, découvre l’espagnol comme langue mondiale : origine, pays, variations et premiers mots utiles.",
-  alternates: {
-    canonical: `${SITE_URL}/yo/langues/espagnol/intro`,
-  },
-  openGraph: {
-    title: "YoPratiqo — Intro globale à l’espagnol",
-    description:
-      "L’espagnol dans le monde : origine, pays, variations, premiers mots, quiz et flashcards.",
-    type: "website",
-    url: `${SITE_URL}/yo/langues/espagnol/intro`,
-    locale: "fr_CA",
-  },
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ lang?: string | string[] }>;
+}): Promise<Metadata> {
+  const params = await searchParams;
+  return buildYoPratiqoMetadata("spanishIntro", params.lang);
+}
 
 interface PageProps {
   searchParams: Promise<{ lang?: string | string[] }>;
