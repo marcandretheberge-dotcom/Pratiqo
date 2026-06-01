@@ -8,6 +8,7 @@
     "start": "next start",
     "payment:safety": "tsx scripts/check_payment_reliability.ts",
     "check:seo-edge": "tsx scripts/check_seo_edge_redirects.ts",
+    "verify:yopratiqo-seo-deploy": "tsx scripts/verify_yopratiqo_seo_deploy.ts",
     "generate:yopratiqo-audio": "tsx scripts/generate-yopratiqo-audio.ts",
     "test:yo-audio": "tsx tests/yo/yopratiqoAudio.test.ts && tsx tests/yo/yopratiqoSpanishAudioCoverage.test.ts && tsx tests/yo/yopratiqoFrenchQuebecAudio.test.ts && tsx tests/yo/yopratiqoItalianAudio.test.ts && tsx tests/yo/yopratiqoEnglishAudio.test.ts && tsx tests/yo/yopratiqoJapaneseAudio.test.ts",
     "test:yo-spanish-coverage": "tsx tests/yo/yopratiqoSpanishAudioCoverage.test.ts",
