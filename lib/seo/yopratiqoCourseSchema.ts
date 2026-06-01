@@ -18,9 +18,10 @@ export type YopratiqoCourseSchema = {
   description: string;
   provider: {
     "@type": "Organization";
-    name: "Pratiqo";
-    legalName: "Cours Pratiqo Inc.";
+    name: "Cours Pratiqo Inc.";
+    alternateName: "Pratiqo";
     url: typeof SITE_URL;
+    sameAs: typeof SITE_URL;
   };
   url: string;
   inLanguage: string;
@@ -46,9 +47,10 @@ export function buildYopratiqoCourseSchema(
     description: input.description,
     provider: {
       "@type": "Organization",
-      name: "Pratiqo",
-      legalName: "Cours Pratiqo Inc.",
+      name: "Cours Pratiqo Inc.",
+      alternateName: "Pratiqo",
       url: SITE_URL,
+      sameAs: SITE_URL,
     },
     url: absoluteUrl(input.url),
     inLanguage: input.inLanguage,

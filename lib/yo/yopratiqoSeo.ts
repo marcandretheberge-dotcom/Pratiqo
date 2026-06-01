@@ -7,6 +7,11 @@ export type YoPratiqoSeoLocale = "fr" | "en";
 
 export type YoPratiqoSeoRouteId =
   | "languageHub"
+  | "englishLanding"
+  | "frenchQuebecLanding"
+  | "spanishLanding"
+  | "japaneseLanding"
+  | "italianLanding"
   | "spanishIntro"
   | "frenchQuebecIntro"
   | "italianIntro"
@@ -42,6 +47,86 @@ export const yopratiqoSeoEntries = {
         title: "YoPratiqo — Learn with interactive modules and real teachers",
         description:
           "Explore free YoPratiqo intros in Spanish, English, Quebec French, Italian, and Japanese, then practice with a real teacher on Pratiqo.",
+      },
+    },
+  },
+  englishLanding: {
+    route: "/yo/langues/anglais",
+    defaultLocale: "fr",
+    copy: {
+      fr: {
+        title: "Anglais avec YoPratiqo — confiance à l’oral et pratique réelle",
+        description:
+          "Découvrez une intro d’anglais pour francophones du Québec et du Canada : phrases utiles, confiance à l’oral et pont vers un vrai professeur.",
+      },
+      en: {
+        title: "English with YoPratiqo — speaking confidence and real practice",
+        description:
+          "Explore an English intro for Quebec francophones and Canadian learners: useful phrases, speaking confidence, and a bridge to a real teacher.",
+      },
+    },
+  },
+  frenchQuebecLanding: {
+    route: "/yo/langues/francais-quebec",
+    defaultLocale: "fr",
+    copy: {
+      fr: {
+        title: "Français québécois avec YoPratiqo — francisation, culture et pratique",
+        description:
+          "Préparez votre français québécois avec une intro culturelle : mots du quotidien, repères de francisation, contexte local et pratique avec un professeur.",
+      },
+      en: {
+        title: "Quebec French with YoPratiqo — francization, culture and practice",
+        description:
+          "Prepare for Quebec French with a cultural intro: daily words, francization landmarks, local context, and practice with a real teacher.",
+      },
+    },
+  },
+  spanishLanding: {
+    route: "/yo/langues/espagnol",
+    defaultLocale: "fr",
+    copy: {
+      fr: {
+        title: "Espagnol avec YoPratiqo — voyage, culture et premières conversations",
+        description:
+          "Commencez l’espagnol avec une intro immersive : premiers mots, culture, phrases de voyage, audio et pont vers un vrai professeur.",
+      },
+      en: {
+        title: "Spanish with YoPratiqo — travel, culture and first conversations",
+        description:
+          "Start Spanish with an immersive intro: first words, culture, travel phrases, audio, and a bridge to real teacher practice.",
+      },
+    },
+  },
+  japaneseLanding: {
+    route: "/yo/langues/japonais",
+    defaultLocale: "fr",
+    copy: {
+      fr: {
+        title: "Japonais avec YoPratiqo — hiragana, culture et premiers mots",
+        description:
+          "Découvrez le japonais avec une intro rassurante : hiragana, katakana, kanji, politesse, culture, audio et premières phrases utiles.",
+      },
+      en: {
+        title: "Japanese with YoPratiqo — hiragana, culture and first words",
+        description:
+          "Discover Japanese with a reassuring intro: hiragana, katakana, kanji, politeness, culture, audio, and first useful phrases.",
+      },
+    },
+  },
+  italianLanding: {
+    route: "/yo/langues/italien",
+    defaultLocale: "fr",
+    copy: {
+      fr: {
+        title: "Italien avec YoPratiqo — voyage, culture et premières phrases",
+        description:
+          "Découvrez l’italien avec une intro culturelle : premiers mots, régions, phrases utiles, audio et pratique guidée avec un professeur.",
+      },
+      en: {
+        title: "Italian with YoPratiqo — travel, culture and first phrases",
+        description:
+          "Discover Italian with a cultural intro: first words, regions, useful phrases, audio, and guided practice with a teacher.",
       },
     },
   },

@@ -95,11 +95,18 @@ test("YoPratiqo remains free-intro only with teacher bridge enabled", () => {
   assert.equal(yopratiqoProductConfig.futurePremiumEnabled, false);
   assert.equal(yopratiqoProductConfig.teacherBridgeEnabled, true);
   assert.equal(yopratiqoProductConfig.moduleIndexingEnabled, false);
+  assert.equal(yopratiqoProductConfig.courseSchemaEnabled, false);
+  assert.equal(yopratiqoProductConfig.landingPagesEnabled, true);
   assert.deepEqual([...yopratiqoProductConfig.supportedProductTypes], ["free_intro"]);
 
   for (const moduleConfig of yopratiqoProductConfig.currentFreeIntroModules) {
     assert.equal(moduleConfig.productType, "free_intro");
     assert.equal(moduleConfig.isAccessibleForFree, true);
+    assert.equal(moduleConfig.status, "free_intro");
+    assert.equal(moduleConfig.indexable, false);
+    assert.equal(moduleConfig.courseSchemaEligible, true);
+    assert.ok(moduleConfig.landingRoute.startsWith("/yo/langues/"));
+    assert.ok(moduleConfig.teacherSearchUrl.startsWith("/trouver-un-prof?q="));
   }
 });
 
@@ -159,9 +166,10 @@ test("Course schema helper emits a valid future-ready JSON-LD Course shape", () 
 
   assert.equal(schema["@context"], "https://schema.org");
   assert.equal(schema["@type"], "Course");
-  assert.equal(schema.provider.name, "Pratiqo");
-  assert.equal(schema.provider.legalName, "Cours Pratiqo Inc.");
+  assert.equal(schema.provider.name, "Cours Pratiqo Inc.");
+  assert.equal(schema.provider.alternateName, "Pratiqo");
   assert.equal(schema.provider.url, SITE_URL);
+  assert.equal(schema.provider.sameAs, SITE_URL);
   assert.equal(schema.url, `${SITE_URL}/yo/voyage/republique-dominicaine`);
   assert.equal(schema.inLanguage, "es");
   assert.equal(schema.educationalLevel, "A1");
