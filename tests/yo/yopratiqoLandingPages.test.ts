@@ -111,6 +111,19 @@ test("landing config links every page to its intro route and teacher CTA", () =>
   assert.match(teacherBridge, /moduleConfig\.teacherSearchUrl/);
 });
 
+test("landing pages have a clear primary intro CTA and secondary teacher CTA", () => {
+  const landingComponent = read("components/yo/YoLanguageLandingPage.tsx");
+  const teacherBridge = read("components/yo/YoTeacherBridgeCard.tsx");
+
+  assert.match(landingComponent, /Start the free intro/);
+  assert.match(landingComponent, /Commencer l.intro gratuite/);
+  assert.match(landingComponent, /Find a teacher on Pratiqo/);
+  assert.match(landingComponent, /Trouver un professeur sur Pratiqo/);
+  assert.match(landingComponent, /bg-\[#0F6E56\]/);
+  assert.match(teacherBridge, /Find a teacher on Pratiqo/);
+  assert.match(teacherBridge, /border border-\[#0F6E56\]/);
+});
+
 test("landing metadata canonicals use www.pratiqo.ca and obey noindex config", () => {
   for (const route of LANDING_ROUTES) {
     const moduleConfig = getYoPratiqoModuleBySlug(route.slug);
@@ -132,11 +145,42 @@ test("landing metadata canonicals use www.pratiqo.ca and obey noindex config", (
 
 test("landing pages include legal-safe educational disclaimer copy", () => {
   const disclaimer = read("components/yo/YoLegalDisclaimer.tsx");
-  assert.match(disclaimer, /ne garantit pas la maîtrise d’une langue/);
-  assert.match(disclaimer, /does not guarantee language fluency/);
+  assert.match(disclaimer, /garantie de maîtrise d’une langue/);
+  assert.match(disclaimer, /no guarantee of language fluency/);
   assert.match(disclaimer, /exam success/);
   assert.match(disclaimer, /immigration outcomes/);
-  assert.match(disclaimer, /not legal, administrative, or immigration advice/);
+  assert.match(disclaimer, /not legal or immigration advice/);
+  assert.match(disclaimer, /teacher marketplace bookings remain separate/);
+});
+
+test("landing copy avoids unsafe guarantees, fake social proof, and fake pricing", () => {
+  const sources = [
+    read("lib/yo/yopratiqoLandingContent.ts"),
+    read("components/yo/YoLegalDisclaimer.tsx"),
+    read("components/yo/YoLanguageLandingPage.tsx"),
+    read("components/yo/YoTeacherBridgeCard.tsx"),
+  ].join("\n");
+
+  for (const banned of [
+    /guaranteed fluency/i,
+    /guaranteed exam success/i,
+    /guaranteed immigration result/i,
+    /government accredited/i,
+    /accrédité par le gouvernement/i,
+    /fake reviews/i,
+    /fake ratings/i,
+    /\b4\.9\b/,
+    /\b5-star\b/i,
+    /\$\d/,
+    /€\d/,
+  ]) {
+    assert.ok(!banned.test(sources), `unsafe copy matched ${banned}`);
+  }
+});
+
+test("indexing and Course schema stay disabled until explicitly enabled", () => {
+  assert.equal(yopratiqoProductConfig.moduleIndexingEnabled, false);
+  assert.equal(yopratiqoProductConfig.courseSchemaEnabled, false);
 });
 
 test("lawyer-review document exists and covers required topics", () => {
