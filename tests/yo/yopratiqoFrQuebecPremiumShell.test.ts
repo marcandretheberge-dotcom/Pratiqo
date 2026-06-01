@@ -554,6 +554,440 @@ test("module shell id matches the future-premium product config id", () => {
   assert.equal(frQuebecWorkplaceSurvivalModule.status, "planned");
 });
 
+// ─── LESSON 1 — full content suite ────────────────────────────────
+//
+// Lesson 1 ("Arriver au travail et saluer naturellement") is the
+// first lesson with a populated free-preview body. The tests below
+// pin every documented section AND every safety invariant so a
+// regression breaks the launch gate. The other six lessons stay
+// outline-only on purpose; we only assert their lifecycle flags here.
+
+const LESSON_ONE_ID = "arriver-saluer";
+
+function getLessonOne() {
+  const lesson = frQuebecWorkplaceSurvivalModule.lessons[0];
+  assert.equal(lesson.id, LESSON_ONE_ID, "Lesson 1 must be the first entry");
+  return lesson;
+}
+
+test("Lesson 1 has the documented metadata (id, title, minutes, status, accessStatus)", () => {
+  const lesson = getLessonOne();
+  assert.equal(lesson.id, LESSON_ONE_ID);
+  assert.equal(lesson.titleFr, "Arriver au travail et saluer naturellement");
+  assert.equal(lesson.titleEn, "Arriving at work and greeting naturally");
+  assert.equal(lesson.estimatedMinutes, 10);
+  assert.equal(lesson.status, "preview");
+  assert.equal(lesson.accessStatus, "coming_soon");
+  assert.ok(lesson.content, "Lesson 1 must carry a populated content block");
+});
+
+test("every lesson reports accessStatus 'coming_soon' (no live paid surface)", () => {
+  for (const lesson of frQuebecWorkplaceSurvivalModule.lessons) {
+    assert.equal(
+      lesson.accessStatus,
+      "coming_soon",
+      `lesson ${lesson.id} accessStatus must remain coming_soon`,
+    );
+  }
+});
+
+test("lessons 2-7 stay outline-only ('planned', no content body)", () => {
+  for (let i = 1; i < frQuebecWorkplaceSurvivalModule.lessons.length; i += 1) {
+    const lesson = frQuebecWorkplaceSurvivalModule.lessons[i]!;
+    assert.equal(
+      lesson.status,
+      "planned",
+      `lesson ${lesson.id} (#${i + 1}) status must remain planned`,
+    );
+    assert.equal(
+      lesson.content,
+      undefined,
+      `lesson ${lesson.id} (#${i + 1}) must not carry a rich content body yet`,
+    );
+  }
+});
+
+test("Lesson 1 declares a clear bilingual learning objective", () => {
+  const content = getLessonOne().content!;
+  assert.ok(content.objectiveFr.length > 60);
+  assert.ok(content.objectiveEn.length > 60);
+  assert.ok(
+    /tu\/vous|« tu » ou « vous »|« tu »|« vous »/i.test(content.objectiveFr) ||
+      /tutoyer|vouvoyer/i.test(content.objectiveFr),
+    "FR objective must mention the tu/vous decision",
+  );
+  assert.ok(
+    /tu\b|vous\b/i.test(content.objectiveEn),
+    "EN objective must mention the tu/vous decision",
+  );
+});
+
+test("Lesson 1 carries a longer bilingual scenario than the outline card", () => {
+  const lesson = getLessonOne();
+  const content = lesson.content!;
+  assert.ok(
+    content.scenarioFr.length > lesson.scenarioFr.length,
+    "Lesson 1 content scenario must be richer than the outline scenario",
+  );
+  assert.ok(
+    content.scenarioEn.length > lesson.scenarioEn.length,
+    "Lesson 1 content scenario (EN) must be richer than the outline",
+  );
+});
+
+test("Lesson 1 cultural note is warm + nuanced (mentions tu/vous + 'follow' rule + workplace variability)", () => {
+  const content = getLessonOne().content!;
+  // FR side
+  assert.ok(/tu/i.test(content.culturalNoteFr));
+  assert.ok(/vous/i.test(content.culturalNoteFr));
+  assert.ok(
+    /suiv|mir/i.test(content.culturalNoteFr),
+    "FR cultural note should advise following / mirroring the other person",
+  );
+  assert.ok(
+    /toutes les [ée]quipes ne|pas pareil|diff[ée]rent/i.test(
+      content.culturalNoteFr,
+    ),
+    "FR cultural note should acknowledge that workplaces differ",
+  );
+  // EN side
+  assert.ok(/tu/i.test(content.culturalNoteEn));
+  assert.ok(/vous/i.test(content.culturalNoteEn));
+  assert.ok(
+    /follow|mirror/i.test(content.culturalNoteEn),
+    "EN cultural note should advise following / mirroring",
+  );
+  assert.ok(
+    /don't all|differ|reserved/i.test(content.culturalNoteEn),
+    "EN cultural note should acknowledge that workplaces differ",
+  );
+});
+
+test("Lesson 1 ships 12 to 16 core phrases with register + bilingual usage notes", () => {
+  const content = getLessonOne().content!;
+  assert.ok(
+    content.corePhrases.length >= 12 && content.corePhrases.length <= 16,
+    `expected 12–16 core phrases, got ${content.corePhrases.length}`,
+  );
+  const ids = new Set<string>();
+  for (const phrase of content.corePhrases) {
+    assert.ok(phrase.id.length > 0, "phrase needs a stable id");
+    assert.ok(!ids.has(phrase.id), `phrase id ${phrase.id} must be unique`);
+    ids.add(phrase.id);
+    assert.ok(phrase.frQuebec.length > 0, "phrase needs a Quebec form");
+    assert.ok(phrase.english.length > 0, "phrase needs an English gloss");
+    assert.ok(
+      ["informal", "neutral", "formal"].includes(phrase.register),
+      `phrase ${phrase.id} register must be informal | neutral | formal`,
+    );
+    assert.ok(phrase.usageFr.length > 0, "phrase needs FR usage note");
+    assert.ok(phrase.usageEn.length > 0, "phrase needs EN usage note");
+  }
+});
+
+test("Lesson 1 covers the documented core phrase landmarks", () => {
+  const content = getLessonOne().content!;
+  const fr = content.corePhrases.map((p) => p.frQuebec).join(" || ");
+  const expectedFragments = [
+    "Salut",
+    "Bonjour",
+    "nouveau",
+    "Je commence aujourd",
+    "Tu peux me tutoyer",
+    "vous tutoyer",
+    "Je vais m’installer",
+    "salle de réunion",
+    "habitué",
+    "Peux-tu me montrer",
+    "remercie",
+    "apprécié",
+    "À tantôt",
+    "Bonne journée",
+  ];
+  for (const fragment of expectedFragments) {
+    assert.ok(
+      fr.includes(fragment),
+      `core phrases must include a phrase containing "${fragment}"`,
+    );
+  }
+});
+
+test("Lesson 1 has exactly 3 mini-dialogues (reception / colleague / team lead)", () => {
+  const content = getLessonOne().content!;
+  assert.equal(content.miniDialogues.length, 3);
+  const ids = content.miniDialogues.map((d) => d.id);
+  assert.equal(new Set(ids).size, 3, "dialogue ids must be unique");
+  for (const dialogue of content.miniDialogues) {
+    assert.ok(dialogue.titleFr.length > 0);
+    assert.ok(dialogue.titleEn.length > 0);
+    assert.ok(dialogue.contextFr.length > 0);
+    assert.ok(dialogue.contextEn.length > 0);
+    assert.ok(
+      dialogue.lines.length >= 2,
+      `dialogue ${dialogue.id} must have at least 2 lines`,
+    );
+    for (const line of dialogue.lines) {
+      assert.ok(line.frQuebec.length > 0);
+      assert.ok(line.english.length > 0);
+      assert.ok(line.speakerFr.length > 0);
+      assert.ok(line.speakerEn.length > 0);
+    }
+  }
+  // Spot-check the documented archetypes.
+  const titlesFr = content.miniDialogues.map((d) => d.titleFr).join(" || ");
+  assert.ok(/accueil/i.test(titlesFr), "first dialogue should be reception");
+  assert.ok(/coll[èe]gue/i.test(titlesFr), "second dialogue should be a colleague");
+  assert.ok(/responsable/i.test(titlesFr), "third dialogue should be the team lead");
+});
+
+test("Lesson 1 has exactly 5 tu/vous practice situations with deterministic safest choices", () => {
+  const content = getLessonOne().content!;
+  assert.equal(content.tuVousPractice.length, 5);
+  const ids = content.tuVousPractice.map((s) => s.id);
+  assert.equal(new Set(ids).size, 5, "tu/vous situation ids must be unique");
+  for (const situation of content.tuVousPractice) {
+    assert.ok(situation.situationFr.length > 0);
+    assert.ok(situation.situationEn.length > 0);
+    assert.ok(
+      ["tu", "vous", "follow"].includes(situation.safestChoice),
+      `situation ${situation.id} safestChoice must be tu | vous | follow`,
+    );
+    assert.ok(situation.explanationFr.length > 0);
+    assert.ok(situation.explanationEn.length > 0);
+  }
+  // The expected mapping locks the user-spec scenarios in place.
+  const choices = content.tuVousPractice.map((s) => s.safestChoice);
+  assert.deepEqual(choices, ["vous", "tu", "follow", "vous", "tu"]);
+});
+
+test("Lesson 1 ships exactly 5 quiz questions with valid options + correct ids", () => {
+  const content = getLessonOne().content!;
+  assert.equal(content.quizQuestions.length, 5);
+  const qIds = new Set<string>();
+  for (const question of content.quizQuestions) {
+    assert.ok(question.id.length > 0);
+    assert.ok(!qIds.has(question.id), "quiz question ids must be unique");
+    qIds.add(question.id);
+    assert.ok(question.promptFr.length > 0);
+    assert.ok(question.promptEn.length > 0);
+    assert.ok(
+      question.options.length >= 3 && question.options.length <= 4,
+      `question ${question.id} should expose 3–4 options`,
+    );
+    const optionIds = new Set(question.options.map((o) => o.id));
+    assert.equal(
+      optionIds.size,
+      question.options.length,
+      `question ${question.id} option ids must be unique`,
+    );
+    assert.ok(
+      optionIds.has(question.correctOptionId),
+      `question ${question.id} correctOptionId must point at one of its options`,
+    );
+    assert.ok(question.explanationFr.length > 0);
+    assert.ok(question.explanationEn.length > 0);
+    for (const opt of question.options) {
+      assert.ok(opt.labelFr.length > 0);
+      assert.ok(opt.labelEn.length > 0);
+    }
+  }
+});
+
+test("Lesson 1 carries a bilingual reflection prompt", () => {
+  const content = getLessonOne().content!;
+  assert.ok(content.reflectionPromptFr.length > 30);
+  assert.ok(content.reflectionPromptEn.length > 30);
+  assert.ok(
+    /\?\s*$/.test(content.reflectionPromptFr.trim()),
+    "FR reflection prompt should end with a question mark",
+  );
+  assert.ok(
+    /\?\s*$/.test(content.reflectionPromptEn.trim()),
+    "EN reflection prompt should end with a question mark",
+  );
+});
+
+test("Lesson 1 teacher-bridge prompt is consent-safe (no auto-routing, no data sharing, no recording)", () => {
+  const content = getLessonOne().content!;
+  const fr = content.teacherBridgePromptFr;
+  const en = content.teacherBridgePromptEn;
+  assert.ok(fr.length > 0, "FR teacher-bridge prompt required");
+  assert.ok(en.length > 0, "EN teacher-bridge prompt required");
+  // It must invite practice with a teacher, but only when the
+  // learner is ready — the consent signal.
+  assert.ok(
+    /pr[êe]t/i.test(fr),
+    "FR teacher-bridge prompt must include the 'when you are ready' consent cue",
+  );
+  assert.ok(
+    /ready/i.test(en),
+    "EN teacher-bridge prompt must include the 'when you are ready' consent cue",
+  );
+  // The forbidden phrasings below match anything that would imply
+  // automatic teacher routing, voice recording, or learner-data
+  // forwarding — none of those features exist in this PR.
+  const banned: ReadonlyArray<[RegExp, string]> = [
+    [/voice\s+recording/i, "voice recording (EN)"],
+    [/enregistrement\s+vocal/i, "enregistrement vocal (FR)"],
+    [/automatic(?:\s+\w+){0,3}\s+(?:teacher|routing)/i, "automatic teacher routing (EN)"],
+    [/jumelage\s+automatique/i, "jumelage automatique (FR)"],
+    [/forward(?:s|ing)?\s+(?:your|the)\s+(?:logs?|data|results|quiz)/i, "forwarding logs/data/results (EN)"],
+    [/transmettre\s+(?:vos|tes)\s+(?:r[ée]sultats|donn[ée]es|logs)/i, "transmettre résultats/données (FR)"],
+  ];
+  for (const [re, label] of banned) {
+    assert.ok(
+      !re.test(fr) && !re.test(en),
+      `Lesson 1 teacher-bridge prompt must not include "${label}"`,
+    );
+  }
+});
+
+test("Lesson 1 content never mentions voice recording, automatic teacher routing, or data forwarding", () => {
+  const content = getLessonOne().content!;
+  // We serialize the WHOLE Lesson 1 content tree (every string in
+  // every nested section) and scan it once. This is stricter than
+  // testing individual fields and gets future contributors for free.
+  const serialized = JSON.stringify(content);
+  const banned: ReadonlyArray<[RegExp, string]> = [
+    [/voice\s+recording/i, "voice recording (EN)"],
+    [/voice\s+capture/i, "voice capture (EN)"],
+    [/record(?:ing)?\s+your\s+voice/i, "recording your voice (EN)"],
+    [/enregistrement\s+vocal/i, "enregistrement vocal (FR)"],
+    [/microphone/i, "microphone reference"],
+    [/automatic(?:\s+\w+){0,3}\s+(?:teacher|routing|matching)/i, "automatic teacher routing (EN)"],
+    [/auto[-\s]?match\w*\s+(?:teacher|prof)/i, "auto-match teacher (EN)"],
+    [/jumelage\s+automatique/i, "jumelage automatique (FR)"],
+    [/(?:forward|share|send)\s+(?:your|the)\s+(?:quiz|results?|logs?|data|answers?)/i, "data sharing with teacher (EN)"],
+    [/(?:partager|transmettre|envoyer)\s+(?:vos|tes)\s+(?:r[ée]ponses|r[ée]sultats|donn[ée]es|logs)/i, "data sharing with teacher (FR)"],
+  ];
+  for (const [re, label] of banned) {
+    assert.ok(
+      !re.test(serialized),
+      `Lesson 1 content must not mention "${label}"`,
+    );
+  }
+});
+
+test("Lesson 1 content never mentions checkout, payment, Stripe, price, discount, countdown, certification, or guarantees", () => {
+  const content = getLessonOne().content!;
+  const serialized = JSON.stringify(content);
+  const banned: ReadonlyArray<[RegExp, string]> = [
+    [/\bcheckout\b/i, "checkout"],
+    [/\bpaywall\b/i, "paywall"],
+    [/\bstripe\b/i, "Stripe"],
+    [/\bpaiement\b/i, "paiement"],
+    [/\bpayment\b/i, "payment"],
+    [/\$\s?\d/i, "literal price"],
+    [/\d+\s*(?:CAD|USD|\$)\b/i, "currency amount"],
+    [/\d+\s*%\s*(?:off|de\s+rabais|de\s+r[ée]duction)/i, "percentage discount"],
+    [/\bdiscount\b/i, "discount"],
+    [/\brabais\b/i, "rabais"],
+    [/\bcountdown\b/i, "countdown"],
+    [/compte\s+[àa]\s+rebours/i, "compte à rebours"],
+    [/limited[-\s]time/i, "limited-time urgency"],
+    [/dur[ée]e\s+limit[ée]e/i, "durée limitée"],
+    [/\bcertification\b/i, "certification"],
+    [/\bdiplome\b|\bdipl[ôo]me\b/i, "diplôme"],
+    [/\bguaranteed\b/i, "guaranteed"],
+    [/\bgarantie\b/i, "garantie"],
+    [/(?:r[ée]sultat|outcome).{0,40}immigration/i, "immigration outcome"],
+    [/\bTEFAQ\b/i, "TEFAQ"],
+    [/\bTEF\b/i, "TEF"],
+    [/employment\s+(?:guarantee|outcome|guaranteed)/i, "employment guarantee"],
+    [/garantie\s+d['’]emploi/i, "garantie d’emploi"],
+  ];
+  for (const [re, label] of banned) {
+    assert.ok(
+      !re.test(serialized),
+      `Lesson 1 content must not mention "${label}"`,
+    );
+  }
+});
+
+test("Lesson 1 page UI renders all 9 documented sections (objective, scenario, culture, phrases, dialogues, tu/vous, quiz, reflection, bridge)", () => {
+  const src = read(PREMIUM_SHELL_FILE);
+  const labels: Array<[RegExp, string]> = [
+    [/PREVIEW_OBJECTIVE_LABEL/, "objective label"],
+    [/PREVIEW_SCENARIO_LABEL/, "scenario label"],
+    [/PREVIEW_CULTURE_LABEL/, "culture label"],
+    [/PREVIEW_PHRASES_LABEL/, "core phrases label"],
+    [/PREVIEW_DIALOGUES_LABEL/, "dialogues label"],
+    [/PREVIEW_TUVOUS_LABEL/, "tu/vous label"],
+    [/PREVIEW_QUIZ_LABEL/, "quiz label"],
+    [/PREVIEW_REFLECTION_LABEL/, "reflection label"],
+    [/PREVIEW_BRIDGE_LABEL/, "bridge label"],
+  ];
+  for (const [re, label] of labels) {
+    assert.ok(re.test(src), `shell must wire the ${label}`);
+  }
+  // Each lesson section field must be threaded through the renderer.
+  for (const field of [
+    "content.objectiveFr",
+    "content.objectiveEn",
+    "content.scenarioFr",
+    "content.scenarioEn",
+    "content.culturalNoteFr",
+    "content.culturalNoteEn",
+    "content.corePhrases",
+    "content.miniDialogues",
+    "content.tuVousPractice",
+    "content.quizQuestions",
+    "content.reflectionPromptFr",
+    "content.reflectionPromptEn",
+    "content.teacherBridgePromptFr",
+    "content.teacherBridgePromptEn",
+  ]) {
+    assert.ok(
+      src.includes(field),
+      `shell must consume ${field} in the rich preview renderer`,
+    );
+  }
+});
+
+test("Lesson 1 UI never wires forms, voice recording, or progress tracking", () => {
+  const src = stripComments(read(PREMIUM_SHELL_FILE));
+  const banned: ReadonlyArray<[RegExp, string]> = [
+    [/<form\b/i, "<form> tag"],
+    [/<input\b/i, "<input> tag"],
+    [/<textarea\b/i, "<textarea> tag"],
+    [/<button\b/i, "<button> tag"],
+    [/onChange|onSubmit|onClick/, "interactive event handler"],
+    [/useState|useReducer|useEffect/, "client React hook"],
+    [/MediaRecorder|getUserMedia|navigator\.mediaDevices/, "voice recording API"],
+    [/audio\s*=|new\s+Audio\b/i, "audio playback"],
+    [/progressTracking|trackProgress|recordProgress/i, "progress tracking"],
+    [/"use client"/, "client boundary"],
+  ];
+  for (const [re, label] of banned) {
+    assert.ok(!re.test(src), `shell must not include "${label}" (matched ${re})`);
+  }
+});
+
+test("Lesson 1 still respects the route-level safety contract (noindex + no sitemap + no Course schema)", async () => {
+  // These already exist as standalone tests above, but we re-assert
+  // them inside the Lesson 1 context so a Lesson 1-specific
+  // regression report is unambiguous.
+  for (const lang of ["fr", "en"] as const) {
+    const metadata = buildYoPratiqoMetadata(SEO_ROUTE_ID, lang);
+    assert.deepEqual(metadata.robots, { index: false, follow: false });
+  }
+  const entries = await sitemap();
+  assert.equal(
+    entries.filter((e) => e.url.endsWith(PREMIUM_ROUTE)).length,
+    0,
+    "premium module route must remain absent from the sitemap",
+  );
+  assert.equal(
+    shouldPublishYoCourseSchema("francais-quebec", "future_premium"),
+    false,
+    "Course schema must remain disabled for the future-premium page type",
+  );
+  assert.equal(yopratiqoProductConfig.premiumModulesEnabled, false);
+  const moduleEntry = getYoFuturePremiumModuleById(PREMIUM_MODULE_ID)!;
+  assert.equal(moduleEntry.checkoutEnabled, false);
+  assert.equal(moduleEntry.publicLaunchEnabled, false);
+});
+
 (async () => {
   let passed = 0;
   for (const entry of tests) {

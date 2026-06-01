@@ -38,19 +38,28 @@
 
 import Link from "next/link";
 import {
+  BookOpen,
+  CheckCircle2,
   Clock,
   Compass,
   GraduationCap,
+  Lightbulb,
   Lock,
+  MapPin,
   MessageCircle,
   Sparkles,
+  Target,
+  Users,
 } from "lucide-react";
 
 import { lstr, t } from "@/lib/yo/localize";
 import type { YoLocale, YoLocalizedString } from "@/lib/yo/types";
 import { YoBreadcrumb } from "@/components/yo/YoBreadcrumb";
 import { YoLegalDisclaimer } from "@/components/yo/YoLegalDisclaimer";
-import type { FrQuebecModuleLesson } from "@/lib/yo/frQuebecWorkplaceSurvivalModule";
+import type {
+  FrQuebecLessonOneContent,
+  FrQuebecModuleLesson,
+} from "@/lib/yo/frQuebecWorkplaceSurvivalModule";
 
 export interface YoPremiumModuleShellProps {
   locale: YoLocale;
@@ -105,20 +114,72 @@ const HONEST_PROMISE_LABEL = lstr(
   "Our honest commitment",
 );
 const LESSON_OUTLINE_LABEL = lstr(
-  "Aperçu des 7 leçons",
-  "Preview of the 7 lessons",
+  "Plan complet du module",
+  "Full module outline",
 );
 const LESSON_OUTLINE_TITLE = lstr(
   "Sept courtes leçons, sept situations concrètes",
   "Seven short lessons, seven concrete situations",
 );
 const LESSON_OUTLINE_BODY = lstr(
-  "Chaque leçon est une mini-mise en situation : un contexte, trois objectifs et quelques phrases utiles. Le but est toujours de mieux préparer la prochaine séance avec un vrai professeur.",
-  "Each lesson is a small role-play: a context, three goals, and a few useful phrases. The aim is always to better prepare the next session with a real teacher.",
+  "Chaque leçon est une mini-mise en situation : un contexte, trois objectifs et quelques phrases utiles. La leçon 1 est ouverte en aperçu gratuit ; les six autres restent à venir.",
+  "Each lesson is a small role-play: a context, three goals, and a few useful phrases. Lesson 1 is open as a free preview; the other six are still upcoming.",
 );
 const LESSON_LOCKED_LABEL = lstr("Verrouillé · futur", "Locked · upcoming");
+const LESSON_PREVIEW_LABEL = lstr("Aperçu disponible", "Preview available");
 const LESSON_GOALS_LABEL = lstr("Objectifs", "Learning goals");
 const LESSON_BRIDGE_LABEL = lstr("Avec un professeur", "With a teacher");
+
+const PREVIEW_EYEBROW = lstr(
+  "Aperçu gratuit · Leçon 1",
+  "Free preview · Lesson 1",
+);
+const PREVIEW_OBJECTIVE_LABEL = lstr("Objectif", "Objective");
+const PREVIEW_SCENARIO_LABEL = lstr("Mise en situation", "Scenario");
+const PREVIEW_CULTURE_LABEL = lstr("Note culturelle", "Cultural note");
+const PREVIEW_PHRASES_LABEL = lstr("Phrases-clés", "Core phrases");
+const PREVIEW_DIALOGUES_LABEL = lstr("Mini-dialogues", "Mini-dialogues");
+const PREVIEW_TUVOUS_LABEL = lstr("Tu ou vous ?", "Tu or vous?");
+const PREVIEW_QUIZ_LABEL = lstr("Petit quiz", "Quick quiz");
+const PREVIEW_REFLECTION_LABEL = lstr("Réflexion", "Reflection");
+const PREVIEW_BRIDGE_LABEL = lstr(
+  "Avec un professeur",
+  "With a teacher",
+);
+
+const REGISTER_LABELS: Record<
+  "informal" | "neutral" | "formal",
+  YoLocalizedString
+> = {
+  informal: lstr("Familier", "Informal"),
+  neutral: lstr("Neutre", "Neutral"),
+  formal: lstr("Soutenu", "Formal"),
+};
+
+const TUVOUS_BADGE_LABELS: Record<
+  "tu" | "vous" | "follow",
+  YoLocalizedString
+> = {
+  tu: lstr("Choix sûr · « tu »", "Safest · « tu »"),
+  vous: lstr("Choix sûr · « vous »", "Safest · « vous »"),
+  follow: lstr(
+    "Choix sûr · suivez la personne",
+    "Safest · follow the other person",
+  ),
+};
+
+const QUIZ_ANSWER_LABEL = lstr("Réponse", "Answer");
+const QUIZ_EXPLANATION_LABEL = lstr("Pourquoi", "Why");
+
+const REFLECTION_HELP = lstr(
+  "Cette question est uniquement pour vous — rien n’est transmis ni partagé.",
+  "This question is just for you — nothing is sent or shared.",
+);
+
+const PREVIEW_TEACHER_NOTE = lstr(
+  "Pratiquez ce scénario à voix haute avec un professeur Pratiqo lorsque vous serez prêt — vous choisissez quand et avec qui.",
+  "Practice this scenario out loud with a Pratiqo teacher when you’re ready — you decide when and with whom.",
+);
 
 const TEACHER_BRIDGE_LABEL = lstr(
   "Pont vers un professeur",
@@ -161,6 +222,396 @@ const NO_PRICE_PILL = lstr(
 
 function formatMinutes(minutes: number, locale: YoLocale): string {
   return locale === "fr" ? `≈ ${minutes} min` : `≈ ${minutes} min`;
+}
+
+/**
+ * Rich free-preview body for the first lesson tagged
+ * `status: "preview"`. Renders the 9 documented sections (objective,
+ * scenario, cultural note, core phrases, mini-dialogues, tu/vous
+ * practice, quick quiz, reflection prompt, teacher-bridge prompt).
+ *
+ * Important UI invariants:
+ *   - No `"use client"`. Everything is server-rendered.
+ *   - No form, no input, no audio, no recording UI. The reflection
+ *     prompt is shown as plain prose only.
+ *   - The quiz answer + explanation are rendered statically inside
+ *     a `<details>` so the learner can self-check without JS — no
+ *     scoring, no progress tracking, no submission.
+ *   - The teacher-bridge prompt links to /trouver-un-prof and never
+ *     mentions automatic teacher routing or data sharing.
+ */
+function LessonOnePreview({
+  locale,
+  lesson,
+  teacherBridgeHref,
+}: {
+  locale: YoLocale;
+  lesson: FrQuebecModuleLesson;
+  teacherBridgeHref: string;
+}) {
+  const content: FrQuebecLessonOneContent | undefined = lesson.content;
+  if (!content) return null;
+
+  const lessonTitle = locale === "fr" ? lesson.titleFr : lesson.titleEn;
+  const objective =
+    locale === "fr" ? content.objectiveFr : content.objectiveEn;
+  const scenario =
+    locale === "fr" ? content.scenarioFr : content.scenarioEn;
+  const cultural =
+    locale === "fr" ? content.culturalNoteFr : content.culturalNoteEn;
+  const reflection =
+    locale === "fr"
+      ? content.reflectionPromptFr
+      : content.reflectionPromptEn;
+  const bridgePrompt =
+    locale === "fr"
+      ? content.teacherBridgePromptFr
+      : content.teacherBridgePromptEn;
+
+  return (
+    <section
+      aria-labelledby="yo-fr-qc-mod1-lesson1-title"
+      id="lecon-1"
+      className="mx-auto w-full max-w-5xl px-5 pt-10 sm:px-8 sm:pt-14"
+    >
+      <div className="rounded-3xl border border-[#0F6E56]/15 bg-white p-5 shadow-[0_8px_24px_rgba(15,58,52,0.05)] sm:p-7">
+        {/* Lesson eyebrow + title */}
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-[#1D9E75]/35 bg-[#DDF4F1]/60 px-3 py-1 text-[0.7rem] font-black uppercase tracking-[0.14em] text-[#0F6E56]">
+            <Sparkles className="size-3.5 text-[#1D9E75]" aria-hidden />
+            {t(PREVIEW_EYEBROW, locale)}
+          </span>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#0F6E56]/8 px-3 py-1 text-[0.7rem] font-bold text-[#0F6E56]/80">
+            <Clock className="size-3.5" aria-hidden />
+            {formatMinutes(lesson.estimatedMinutes, locale)}
+          </span>
+        </div>
+        <h2
+          id="yo-fr-qc-mod1-lesson1-title"
+          className="mt-3 text-2xl font-semibold leading-tight tracking-tight text-[#0F6E56] sm:text-[1.85rem]"
+        >
+          {lessonTitle}
+        </h2>
+
+        {/* 1. Objective */}
+        <section
+          aria-label={t(PREVIEW_OBJECTIVE_LABEL, locale)}
+          className="mt-6 rounded-2xl border border-[#DDF4F1] bg-[#F4FBF9] p-4 sm:p-5"
+        >
+          <p className="flex items-center gap-2 text-[0.75rem] font-black uppercase tracking-[0.14em] text-[#0F6E56]/70">
+            <Target className="size-4 text-[#1D9E75]" aria-hidden />
+            {t(PREVIEW_OBJECTIVE_LABEL, locale)}
+          </p>
+          <p className="mt-2 text-sm leading-relaxed text-[#0F6E56]/85 sm:text-[0.95rem]">
+            {objective}
+          </p>
+        </section>
+
+        {/* 2. Scenario */}
+        <section
+          aria-label={t(PREVIEW_SCENARIO_LABEL, locale)}
+          className="mt-5 rounded-2xl border border-teal-100 bg-white p-4 sm:p-5"
+        >
+          <p className="flex items-center gap-2 text-[0.75rem] font-black uppercase tracking-[0.14em] text-[#0F6E56]/70">
+            <MapPin className="size-4 text-[#1D9E75]" aria-hidden />
+            {t(PREVIEW_SCENARIO_LABEL, locale)}
+          </p>
+          <p
+            className="mt-2 text-sm leading-relaxed text-[#0F6E56]/85"
+            lang={locale === "fr" ? undefined : "en"}
+          >
+            {scenario}
+          </p>
+        </section>
+
+        {/* 3. Cultural note */}
+        <section
+          aria-label={t(PREVIEW_CULTURE_LABEL, locale)}
+          className="mt-5 rounded-2xl border border-[#F4B400]/30 bg-[#FFF8E1]/80 p-4 sm:p-5"
+        >
+          <p className="flex items-center gap-2 text-[0.75rem] font-black uppercase tracking-[0.14em] text-[#8a5a17]">
+            <Lightbulb className="size-4 text-[#8a5a17]" aria-hidden />
+            {t(PREVIEW_CULTURE_LABEL, locale)}
+          </p>
+          <p className="mt-2 text-sm leading-relaxed text-[#5a3f0f]">
+            {cultural}
+          </p>
+        </section>
+
+        {/* 4. Core phrases */}
+        <section
+          aria-label={t(PREVIEW_PHRASES_LABEL, locale)}
+          className="mt-7"
+        >
+          <p className="flex items-center gap-2 text-[0.75rem] font-black uppercase tracking-[0.14em] text-[#0F6E56]/70">
+            <BookOpen className="size-4 text-[#1D9E75]" aria-hidden />
+            {t(PREVIEW_PHRASES_LABEL, locale)}
+          </p>
+          <ul
+            role="list"
+            className="mt-3 grid gap-3 sm:grid-cols-2"
+          >
+            {content.corePhrases.map((phrase) => (
+              <li
+                key={phrase.id}
+                className="rounded-2xl border border-teal-100 bg-white p-4 shadow-[0_1px_2px_rgba(15,58,52,0.04)]"
+              >
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <p
+                    className="text-base font-semibold leading-snug text-[#0F6E56]"
+                    lang="fr-CA"
+                  >
+                    {phrase.frQuebec}
+                  </p>
+                  <span className="inline-flex shrink-0 items-center rounded-full bg-[#DDF4F1]/70 px-2 py-0.5 text-[0.65rem] font-black uppercase tracking-[0.14em] text-[#0F6E56]">
+                    {t(REGISTER_LABELS[phrase.register], locale)}
+                  </span>
+                </div>
+                {phrase.standardFrench ? (
+                  <p
+                    className="mt-1 text-xs italic text-[#0F6E56]/65"
+                    lang="fr"
+                  >
+                    {locale === "fr" ? "Standard : " : "Standard French: "}
+                    {phrase.standardFrench}
+                  </p>
+                ) : null}
+                <p className="mt-2 text-sm leading-relaxed text-[#0F6E56]/85">
+                  {phrase.english}
+                </p>
+                <p className="mt-2 text-xs leading-relaxed text-[#0F6E56]/70">
+                  <span className="font-semibold text-[#0F6E56]/75">
+                    {locale === "fr" ? "Quand : " : "When: "}
+                  </span>
+                  {locale === "fr" ? phrase.usageFr : phrase.usageEn}
+                </p>
+                {(locale === "fr" ? phrase.noteFr : phrase.noteEn) ? (
+                  <p className="mt-2 rounded-lg bg-[#FFF4D6]/60 px-3 py-2 text-xs leading-relaxed text-[#5a3f0f]">
+                    {locale === "fr" ? phrase.noteFr : phrase.noteEn}
+                  </p>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        {/* 5. Mini-dialogues */}
+        <section
+          aria-label={t(PREVIEW_DIALOGUES_LABEL, locale)}
+          className="mt-7"
+        >
+          <p className="flex items-center gap-2 text-[0.75rem] font-black uppercase tracking-[0.14em] text-[#0F6E56]/70">
+            <Users className="size-4 text-[#1D9E75]" aria-hidden />
+            {t(PREVIEW_DIALOGUES_LABEL, locale)}
+          </p>
+          <div className="mt-3 grid gap-4 lg:grid-cols-3">
+            {content.miniDialogues.map((dialogue) => (
+              <article
+                key={dialogue.id}
+                className="rounded-2xl border border-teal-100 bg-white p-4 shadow-[0_1px_2px_rgba(15,58,52,0.04)]"
+              >
+                <h3 className="text-sm font-bold tracking-tight text-[#0F6E56]">
+                  {locale === "fr" ? dialogue.titleFr : dialogue.titleEn}
+                </h3>
+                <p className="mt-1 text-xs leading-relaxed text-[#0F6E56]/65">
+                  {locale === "fr" ? dialogue.contextFr : dialogue.contextEn}
+                </p>
+                <ol
+                  role="list"
+                  className="mt-3 space-y-2 text-sm leading-relaxed"
+                >
+                  {dialogue.lines.map((line, lineIndex) => (
+                    <li
+                      key={`${dialogue.id}-${lineIndex}`}
+                      className="rounded-xl bg-[#F4FBF9] px-3 py-2"
+                    >
+                      <p className="text-[0.7rem] font-black uppercase tracking-[0.14em] text-[#1D9E75]">
+                        {locale === "fr"
+                          ? line.speakerFr
+                          : line.speakerEn}
+                      </p>
+                      <p
+                        className="mt-1 font-medium text-[#0F6E56]"
+                        lang="fr-CA"
+                      >
+                        {line.frQuebec}
+                      </p>
+                      <p className="mt-1 text-xs text-[#0F6E56]/70">
+                        {line.english}
+                      </p>
+                      {(locale === "fr" ? line.noteFr : line.noteEn) ? (
+                        <p className="mt-2 text-[0.7rem] leading-relaxed text-[#0F6E56]/55">
+                          {locale === "fr" ? line.noteFr : line.noteEn}
+                        </p>
+                      ) : null}
+                    </li>
+                  ))}
+                </ol>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        {/* 6. Tu vs vous practice */}
+        <section
+          aria-label={t(PREVIEW_TUVOUS_LABEL, locale)}
+          className="mt-7"
+        >
+          <p className="flex items-center gap-2 text-[0.75rem] font-black uppercase tracking-[0.14em] text-[#0F6E56]/70">
+            <Users className="size-4 text-[#1D9E75]" aria-hidden />
+            {t(PREVIEW_TUVOUS_LABEL, locale)}
+          </p>
+          <ol role="list" className="mt-3 grid gap-3 sm:grid-cols-2">
+            {content.tuVousPractice.map((situation, situationIndex) => (
+              <li
+                key={situation.id}
+                className="rounded-2xl border border-teal-100 bg-white p-4 shadow-[0_1px_2px_rgba(15,58,52,0.04)]"
+              >
+                <p className="text-[0.65rem] font-black uppercase tracking-[0.14em] text-[#0F6E56]/55">
+                  {locale === "fr"
+                    ? `Situation ${situationIndex + 1}`
+                    : `Situation ${situationIndex + 1}`}
+                </p>
+                <p className="mt-1 text-sm leading-relaxed text-[#0F6E56]/85">
+                  {locale === "fr"
+                    ? situation.situationFr
+                    : situation.situationEn}
+                </p>
+                <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-[#DDF4F1]/70 px-3 py-1 text-xs font-bold text-[#0F6E56]">
+                  <CheckCircle2 className="size-3.5" aria-hidden />
+                  {t(TUVOUS_BADGE_LABELS[situation.safestChoice], locale)}
+                </p>
+                <p className="mt-2 text-xs leading-relaxed text-[#0F6E56]/70">
+                  {locale === "fr"
+                    ? situation.explanationFr
+                    : situation.explanationEn}
+                </p>
+              </li>
+            ))}
+          </ol>
+        </section>
+
+        {/* 7. Quick quiz */}
+        <section
+          aria-label={t(PREVIEW_QUIZ_LABEL, locale)}
+          className="mt-7"
+        >
+          <p className="flex items-center gap-2 text-[0.75rem] font-black uppercase tracking-[0.14em] text-[#0F6E56]/70">
+            <Sparkles className="size-4 text-[#1D9E75]" aria-hidden />
+            {t(PREVIEW_QUIZ_LABEL, locale)}
+          </p>
+          <p className="mt-1 text-xs leading-relaxed text-[#0F6E56]/60">
+            {locale === "fr"
+              ? "Cinq questions courtes — pas de note, pas de chronomètre. Pour vous, à votre rythme."
+              : "Five short questions — no score, no timer. For you, at your own pace."}
+          </p>
+          <ol role="list" className="mt-3 space-y-3">
+            {content.quizQuestions.map((question, questionIndex) => {
+              const correct = question.options.find(
+                (opt) => opt.id === question.correctOptionId,
+              );
+              return (
+                <li
+                  key={question.id}
+                  className="rounded-2xl border border-teal-100 bg-white p-4 shadow-[0_1px_2px_rgba(15,58,52,0.04)]"
+                >
+                  <p className="text-[0.65rem] font-black uppercase tracking-[0.14em] text-[#0F6E56]/55">
+                    {locale === "fr"
+                      ? `Question ${questionIndex + 1}`
+                      : `Question ${questionIndex + 1}`}
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-[#0F6E56]">
+                    {locale === "fr"
+                      ? question.promptFr
+                      : question.promptEn}
+                  </p>
+                  <ul role="list" className="mt-2 space-y-1.5 text-sm">
+                    {question.options.map((option) => (
+                      <li
+                        key={option.id}
+                        className="flex items-start gap-2 rounded-xl bg-[#F4FBF9]/70 px-3 py-2 text-[#0F6E56]/85"
+                      >
+                        <span
+                          aria-hidden
+                          className="mt-1 inline-block size-1.5 shrink-0 rounded-full bg-[#1D9E75]"
+                        />
+                        {locale === "fr" ? option.labelFr : option.labelEn}
+                      </li>
+                    ))}
+                  </ul>
+                  {correct ? (
+                    <details className="mt-3 rounded-xl bg-[#DDF4F1]/40 px-3 py-2 text-xs leading-relaxed text-[#0F6E56]/80">
+                      <summary className="cursor-pointer font-bold text-[#0F6E56]">
+                        {t(QUIZ_ANSWER_LABEL, locale)}
+                      </summary>
+                      <p className="mt-2">
+                        <span className="font-semibold text-[#0F6E56]">
+                          {locale === "fr"
+                            ? correct.labelFr
+                            : correct.labelEn}
+                        </span>
+                      </p>
+                      <p className="mt-2">
+                        <span className="font-semibold text-[#0F6E56]">
+                          {t(QUIZ_EXPLANATION_LABEL, locale)} :{" "}
+                        </span>
+                        {locale === "fr"
+                          ? question.explanationFr
+                          : question.explanationEn}
+                      </p>
+                    </details>
+                  ) : null}
+                </li>
+              );
+            })}
+          </ol>
+        </section>
+
+        {/* 8. Reflection prompt */}
+        <section
+          aria-label={t(PREVIEW_REFLECTION_LABEL, locale)}
+          className="mt-7 rounded-2xl border border-[#0F6E56]/12 bg-[#0F6E56]/5 p-4 sm:p-5"
+        >
+          <p className="flex items-center gap-2 text-[0.75rem] font-black uppercase tracking-[0.14em] text-[#0F6E56]/70">
+            <Lightbulb className="size-4 text-[#1D9E75]" aria-hidden />
+            {t(PREVIEW_REFLECTION_LABEL, locale)}
+          </p>
+          <p className="mt-2 text-sm leading-relaxed text-[#0F6E56]/85 sm:text-[0.95rem]">
+            {reflection}
+          </p>
+          <p className="mt-2 text-[0.7rem] leading-relaxed text-[#0F6E56]/55">
+            {t(REFLECTION_HELP, locale)}
+          </p>
+        </section>
+
+        {/* 9. Teacher bridge prompt (consent-safe) */}
+        <section
+          aria-label={t(PREVIEW_BRIDGE_LABEL, locale)}
+          className="mt-7 rounded-2xl border border-[#F4B400]/40 bg-[#FFF4D6]/70 p-4 sm:p-5"
+        >
+          <p className="flex items-center gap-2 text-[0.75rem] font-black uppercase tracking-[0.14em] text-[#8a5a17]">
+            <GraduationCap className="size-4 text-[#0F6E56]" aria-hidden />
+            {t(PREVIEW_BRIDGE_LABEL, locale)}
+          </p>
+          <p className="mt-2 text-sm leading-relaxed text-[#5a3f0f]">
+            {bridgePrompt}
+          </p>
+          <p className="mt-2 text-xs leading-relaxed text-[#5a3f0f]/80">
+            {t(PREVIEW_TEACHER_NOTE, locale)}
+          </p>
+          <Link
+            href={teacherBridgeHref}
+            className="mt-4 inline-flex items-center justify-center gap-2 rounded-full bg-[#0F6E56] px-5 py-2.5 text-sm font-bold text-white shadow-[0_10px_24px_rgba(15,110,86,0.18)] transition hover:bg-[#0b5b47]"
+          >
+            <MessageCircle className="size-4" aria-hidden />
+            {locale === "fr"
+              ? "Voir les professeurs Pratiqo"
+              : "Browse Pratiqo teachers"}
+          </Link>
+        </section>
+      </div>
+    </section>
+  );
 }
 
 export function YoPremiumModuleShell(props: YoPremiumModuleShellProps) {
@@ -214,6 +665,15 @@ export function YoPremiumModuleShell(props: YoPremiumModuleShellProps) {
     languageBreadcrumbEn,
   );
   const futureCrumb: YoLocalizedString = lstr(futureCrumbFr, futureCrumbEn);
+
+  // Pick the first lesson tagged "preview" to render the rich free
+  // preview body. Today only Lesson 1 carries a populated `content`
+  // block; future lessons can opt in by setting `status: "preview"`
+  // and providing their own content block. If none qualify, the
+  // preview section is simply not rendered.
+  const previewLesson = lessons.find(
+    (lesson) => lesson.status === "preview" && lesson.content,
+  );
 
   return (
     <div className="min-h-[100dvh] bg-[#FAFCFB] text-[#0F6E56]">
@@ -306,6 +766,16 @@ export function YoPremiumModuleShell(props: YoPremiumModuleShellProps) {
           </div>
         </section>
 
+        {/* Lesson 1 — free preview (rendered only when a lesson is
+            tagged status: "preview" with a populated `content` body) */}
+        {previewLesson ? (
+          <LessonOnePreview
+            locale={locale}
+            lesson={previewLesson}
+            teacherBridgeHref={teacherBridgeHref}
+          />
+        ) : null}
+
         {/* Lesson outline — 7 cards (locked / future status) */}
         <section
           aria-labelledby="yo-fr-qc-mod1-outline-title"
@@ -327,7 +797,13 @@ export function YoPremiumModuleShell(props: YoPremiumModuleShellProps) {
             role="list"
             className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
           >
-            {lessons.map((lesson, index) => (
+            {lessons.map((lesson, index) => {
+              const isPreview =
+                lesson.status === "preview" && lesson.content !== undefined;
+              const badgeLabel = isPreview
+                ? LESSON_PREVIEW_LABEL
+                : LESSON_LOCKED_LABEL;
+              return (
               <li
                 key={lesson.id}
                 className="flex flex-col gap-3 rounded-2xl border border-teal-100 bg-white p-4 shadow-[0_1px_2px_rgba(15,58,52,0.04)] sm:p-5"
@@ -340,15 +816,34 @@ export function YoPremiumModuleShell(props: YoPremiumModuleShellProps) {
                         : `Lesson ${index + 1}`}
                     </p>
                     <h3 className="mt-1 text-base font-semibold leading-snug text-[#0F6E56]">
-                      {locale === "fr" ? lesson.titleFr : lesson.titleEn}
+                      {isPreview ? (
+                        <Link
+                          href="#lecon-1"
+                          className="underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F4B400]"
+                        >
+                          {locale === "fr" ? lesson.titleFr : lesson.titleEn}
+                        </Link>
+                      ) : locale === "fr" ? (
+                        lesson.titleFr
+                      ) : (
+                        lesson.titleEn
+                      )}
                     </h3>
                   </div>
                   <span
-                    aria-label={t(LESSON_LOCKED_LABEL, locale)}
-                    className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#FFF4D6] px-2 py-1 text-[0.65rem] font-black uppercase tracking-[0.14em] text-[#8a5a17]"
+                    aria-label={t(badgeLabel, locale)}
+                    className={
+                      isPreview
+                        ? "inline-flex shrink-0 items-center gap-1 rounded-full bg-[#DDF4F1] px-2 py-1 text-[0.65rem] font-black uppercase tracking-[0.14em] text-[#0F6E56]"
+                        : "inline-flex shrink-0 items-center gap-1 rounded-full bg-[#FFF4D6] px-2 py-1 text-[0.65rem] font-black uppercase tracking-[0.14em] text-[#8a5a17]"
+                    }
                   >
-                    <Lock className="size-3" aria-hidden />
-                    {t(LESSON_LOCKED_LABEL, locale)}
+                    {isPreview ? (
+                      <Sparkles className="size-3" aria-hidden />
+                    ) : (
+                      <Lock className="size-3" aria-hidden />
+                    )}
+                    {t(badgeLabel, locale)}
                   </span>
                 </div>
                 <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#0F6E56]/60">
@@ -392,7 +887,8 @@ export function YoPremiumModuleShell(props: YoPremiumModuleShellProps) {
                     : lesson.teacherBridgePromptEn}
                 </p>
               </li>
-            ))}
+              );
+            })}
           </ol>
         </section>
 
