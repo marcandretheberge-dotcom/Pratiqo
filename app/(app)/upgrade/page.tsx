@@ -10,17 +10,25 @@ import {
   LEGAL_ROUTES,
   getUpgradeCopy,
 } from "@/lib/config/membrePro";
+import { isMembreProMarketSupported } from "@/lib/config/markets";
+import { MarketWaitlistCard } from "@/components/MarketWaitlistCard";
 
 export default function UpgradePage() {
-  const { user } = useAuth();
-  const { locale } = useLocale();
+  const { user, profile } = useAuth();
+  const { locale, t } = useLocale();
   const copy = getUpgradeCopy(locale);
   const [loading, setLoading] = useState(false);
   const [legalAccepted, setLegalAccepted] = useState(false);
+  const teacherCountryCode = String(profile?.country_code ?? "").trim().toUpperCase();
+  const isMarketBlocked = Boolean(user) && !isMembreProMarketSupported(teacherCountryCode);
 
   const startUpgrade = async () => {
     if (!legalAccepted) {
       alert(copy.alertMustAcceptLegal);
+      return;
+    }
+    if (isMarketBlocked) {
+      alert(t("marketMembreProUnavailableMessage"));
       return;
     }
     if (!user) {
@@ -101,6 +109,18 @@ export default function UpgradePage() {
         <p className="mt-5 text-center text-[12px]" style={{ color: "#6B6A65" }}>
           {copy.comingSoonNote}
         </p>
+        {isMarketBlocked ? (
+          <div className="mt-5">
+            <p className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-[13px] leading-relaxed text-amber-800">
+              {t("marketMembreProUnavailableMessage")}
+            </p>
+            <MarketWaitlistCard
+              defaultEmail={user?.email}
+              defaultCountryCode={teacherCountryCode}
+              defaultRole="teacher"
+            />
+          </div>
+        ) : null}
 
         {/* Legal-safe declining-commission disclaimer. Mirrors the
             disclaimer used on /tarifs so both surfaces stay aligned and
@@ -178,7 +198,7 @@ export default function UpgradePage() {
         <div className="mt-4 flex flex-col sm:flex-row gap-3">
           <button
             onClick={startUpgrade}
-            disabled={loading || !legalAccepted}
+            disabled={loading || !legalAccepted || isMarketBlocked}
             className="h-11 px-6 rounded-[22px] text-sm font-medium bg-teal-600 text-white hover:brightness-[0.98] disabled:opacity-60"
           >
             {loading ? copy.primaryCtaLoading : copy.primaryCta}
