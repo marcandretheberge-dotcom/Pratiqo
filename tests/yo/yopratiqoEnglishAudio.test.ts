@@ -271,14 +271,17 @@ test("Spanish manifest items count stays at the documented 79 (English is purely
   );
 });
 
-test("Quebec French manifest items count stays at the documented 20 (English is purely additive)", () => {
+test("Quebec French manifest items count stays at the documented 45 (English is purely additive)", () => {
+  // 20 FR Quebec intro items + 25 FR Quebec premium Module 1 ·
+  // Lesson 1 items (14 core phrases + 11 unique dialogue lines).
+  // The English additions must not touch any of them.
   const frItems = YOPRATIQO_AUDIO_MANIFEST.filter(
     (i) => i.targetLanguage === "fr" && i.accentProfile === "quebec_french",
   );
   assert.equal(
     frItems.length,
-    20,
-    `Quebec French item total must remain 20; got ${frItems.length}. English additions must not touch Quebec French data.`,
+    45,
+    `Quebec French item total must remain 45; got ${frItems.length}. English additions must not touch Quebec French data.`,
   );
 });
 
