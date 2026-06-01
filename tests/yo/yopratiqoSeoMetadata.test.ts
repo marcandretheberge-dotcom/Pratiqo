@@ -39,6 +39,31 @@ const ROUTES: Array<{ id: YoPratiqoSeoRouteId; file: string; route: string }> = 
     route: "/yo/langues",
   },
   {
+    id: "englishLanding",
+    file: "app/yo/langues/anglais/page.tsx",
+    route: "/yo/langues/anglais",
+  },
+  {
+    id: "frenchQuebecLanding",
+    file: "app/yo/langues/francais-quebec/page.tsx",
+    route: "/yo/langues/francais-quebec",
+  },
+  {
+    id: "spanishLanding",
+    file: "app/yo/langues/espagnol/page.tsx",
+    route: "/yo/langues/espagnol",
+  },
+  {
+    id: "japaneseLanding",
+    file: "app/yo/langues/japonais/page.tsx",
+    route: "/yo/langues/japonais",
+  },
+  {
+    id: "italianLanding",
+    file: "app/yo/langues/italien/page.tsx",
+    route: "/yo/langues/italien",
+  },
+  {
     id: "spanishIntro",
     file: "app/yo/langues/espagnol/intro/page.tsx",
     route: "/yo/langues/espagnol/intro",
@@ -70,11 +95,16 @@ test("YoPratiqo SEO config covers the language hub and all five intro routes", (
     Object.keys(yopratiqoSeoEntries).sort(),
     [
       "englishIntro",
+      "englishLanding",
       "frenchQuebecIntro",
+      "frenchQuebecLanding",
       "italianIntro",
+      "italianLanding",
       "japaneseIntro",
+      "japaneseLanding",
       "languageHub",
       "spanishIntro",
+      "spanishLanding",
     ],
   );
 
@@ -172,8 +202,9 @@ test("Course schema helper names Pratiqo / Cours Pratiqo Inc. without fake comme
   const serialized = JSON.stringify(schema);
 
   assert.equal(schema["@type"], "Course");
-  assert.equal(schema.provider.name, "Pratiqo");
-  assert.equal(schema.provider.legalName, "Cours Pratiqo Inc.");
+  assert.equal(schema.provider.name, "Cours Pratiqo Inc.");
+  assert.equal(schema.provider.alternateName, "Pratiqo");
+  assert.equal(schema.provider.sameAs, SITE_URL);
   assert.equal(schema.url, `${SITE_URL}/yo/langues/espagnol/intro`);
   assert.ok(!/aggregateRating|review|offers|price|hasCourseInstance/i.test(serialized));
 });
