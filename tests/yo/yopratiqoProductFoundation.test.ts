@@ -232,14 +232,32 @@ test("product strategy doc states YoPratiqo is self-paced and separate from mark
 });
 
 test("foundation files do not import payment, booking, Supabase, or RLS logic", () => {
+  // Two layers of defence:
+  //   1. Strip JS comments so doc-comments that name the concept
+  //      negatively (e.g. "this surface intentionally has no
+  //      checkout / payments / Supabase coupling") never falsely
+  //      match.
+  //   2. Use word-boundary regexes so harmless config flags whose
+  //      identifier happens to contain a banned substring (for
+  //      example `checkoutEnabled: false`) do not trigger. Real
+  //      imports / runtime references like `import stripe`,
+  //      `from "@/lib/payments"`, or `BookingModal` are still
+  //      caught.
+  const stripComments = (src: string): string =>
+    src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
+  const FORBIDDEN =
+    /\bstripe\b|\bcheckout\b|\bpayment\b|\bbooking\b|\bsupabase\b|\brls\b|\bmigration\b/i;
   const scopedFiles = [
     "lib/yo/yopratiqoProductConfig.ts",
     "lib/seo/yopratiqoCourseSchema.ts",
   ];
 
   for (const file of scopedFiles) {
-    const src = read(file);
-    assert.ok(!/stripe|checkout|payment|booking|supabase|rls|migration/i.test(src));
+    const src = stripComments(read(file));
+    assert.ok(
+      !FORBIDDEN.test(src),
+      `${file} must not import payment / booking / Supabase / RLS logic`,
+    );
   }
 });
 

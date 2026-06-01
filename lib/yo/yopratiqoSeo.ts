@@ -5,6 +5,7 @@ import {
   isYoHubIndexable,
   isYoIntroPageIndexable,
   isYoLandingPageIndexable,
+  isYoPremiumModuleIndexable,
   type YoPratiqoModuleSlug,
   type YoPratiqoPageType,
 } from "@/lib/yo/yopratiqoProductConfig";
@@ -22,7 +23,8 @@ export type YoPratiqoSeoRouteId =
   | "frenchQuebecIntro"
   | "italianIntro"
   | "englishIntro"
-  | "japaneseIntro";
+  | "japaneseIntro"
+  | "frenchQuebecModuleOne";
 
 export type YoPratiqoSeoCopy = {
   title: string;
@@ -37,7 +39,8 @@ export type YoPratiqoSeoEntry = {
    * Page taxonomy used by `buildYoPratiqoMetadata` to decide robots
    * `index/follow` (and by Course schema gating). Hub + landing pages
    * are indexable today; intro pages stay noindex until the lesson
-   * surface is ready for public ranking.
+   * surface is ready for public ranking; future premium shells stay
+   * noindex until the entire premium surface is launch-ready.
    */
   pageType: YoPratiqoPageType;
   /**
@@ -46,6 +49,12 @@ export type YoPratiqoSeoEntry = {
    * and Course schema decisions per-module.
    */
   slug?: YoPratiqoModuleSlug;
+  /**
+   * Stable id of the future premium module this entry represents.
+   * Required for `pageType: "future_premium"` entries; ignored
+   * everywhere else.
+   */
+  premiumModuleId?: string;
   image?: string;
 };
 
@@ -246,7 +255,36 @@ export const yopratiqoSeoEntries = {
       en: {
         title: "Japanese Intro — Hiragana, culture and first words | YoPratiqo",
         description:
-          "Start Japanese with a reassuring intro to hiragana, katakana, kanji, politeness, culture, audio, and essential first words.",
+          "Start Japanese with a reassuring intro to hiragana, katakana, kanji, politesse, culture, audio, and essential first words.",
+      },
+    },
+  },
+  // ── Future premium module shell (Quebec French, workplace survival)
+  //
+  // Internal/future-ready content surface. Stays noindex until the
+  // entire premium product surface is launch-ready (gated through the
+  // central `premiumModulesEnabled` + per-module `publicLaunchEnabled`
+  // flags). The module shell intentionally exposes NO Course JSON-LD
+  // and NO sitemap entry — see `app/sitemap.ts` and the gate inside
+  // `lib/yo/yopratiqoProductConfig.ts`.
+  frenchQuebecModuleOne: {
+    route: "/yo/langues/francais-quebec/module-1",
+    defaultLocale: "fr",
+    pageType: "future_premium",
+    slug: "francais-quebec",
+    premiumModuleId: "fr-quebec-workplace-survival-1",
+    copy: {
+      fr: {
+        title:
+          "Français québécois au travail — Survie quotidienne (bientôt disponible) | YoPratiqo",
+        description:
+          "Aperçu du futur module YoPratiqo pour mieux comprendre le français québécois au travail. Préparation éducative — pas de garantie de fluidité, d’examen ou d’immigration.",
+      },
+      en: {
+        title:
+          "Quebec French at Work — Daily-Life Survival (coming soon) | YoPratiqo",
+        description:
+          "Preview of an upcoming YoPratiqo module focused on understanding everyday Quebec French at work. Educational preparation — no fluency, exam, or immigration guarantee.",
       },
     },
   },
@@ -267,7 +305,10 @@ export function resolveYoPratiqoSeoLocale(
  * Hub + landing pages are governed by the new route-aware product
  * config flags (`hubIndexingEnabled`, `landingPageIndexingEnabled`).
  * Intro pages stay noindex until both `introPageIndexingEnabled` AND
- * the per-module `indexable` flag are flipped on.
+ * the per-module `indexable` flag are flipped on. Future premium
+ * module shells stay noindex until the entire premium surface is
+ * launch-ready (`premiumModulesEnabled` + per-module
+ * `publicLaunchEnabled` + `indexable`).
  */
 export function isYoPratiqoRouteIndexable(
   routeId: YoPratiqoSeoRouteId,
@@ -280,6 +321,10 @@ export function isYoPratiqoRouteIndexable(
       return entry.slug ? isYoLandingPageIndexable(entry.slug) : false;
     case "intro":
       return entry.slug ? isYoIntroPageIndexable(entry.slug) : false;
+    case "future_premium":
+      return entry.premiumModuleId
+        ? isYoPremiumModuleIndexable(entry.premiumModuleId)
+        : false;
     default:
       return false;
   }

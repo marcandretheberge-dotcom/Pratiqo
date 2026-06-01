@@ -294,14 +294,19 @@ test("futurePremiumEnabled stays false and no paid checkout is wired", () => {
   }
 
   // Defensive source scan: no checkout / paid module imports landed in
-  // the indexation-touching files.
+  // the indexation-touching files. Comments are stripped first so a
+  // doc-comment that explicitly names the concept (e.g. "this surface
+  // intentionally has no checkout") does not falsely trigger the
+  // regex — only real code is evaluated.
+  const stripComments = (src: string): string =>
+    src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
   for (const file of [
     "lib/yo/yopratiqoProductConfig.ts",
     "lib/yo/yopratiqoSeo.ts",
     "lib/seo/yopratiqoCourseSchema.ts",
     "app/sitemap.ts",
   ]) {
-    const src = read(file);
+    const src = stripComments(read(file));
     assert.ok(
       !/\bcheckout\b|\bpaywall\b|\bpaid_module\b/i.test(src),
       `${file} must not introduce a paid checkout/paywall path`,
