@@ -29,8 +29,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { CheckCircle2, Globe2, Lock, Sparkles } from "lucide-react";
-import { SITE_URL } from "@/lib/seo/site";
 import { buildYoLocaleHref, getYoLocale, lstr, t } from "@/lib/yo/localize";
+import { buildYoPratiqoMetadata } from "@/lib/yo/yopratiqoSeo";
 import type { YoLocalizedString } from "@/lib/yo/types";
 import { YoBreadcrumb } from "@/components/yo/YoBreadcrumb";
 import {
@@ -40,23 +40,14 @@ import {
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "YoPratiqo — Langues",
-  description:
-    "Apprends une langue à ton rythme avec des parcours immersifs, culturels et pratiques.",
-  alternates: {
-    canonical: `${SITE_URL}/yo/langues`,
-  },
-  openGraph: {
-    title: "YoPratiqo — Langues",
-    description:
-      "Espagnol, français du Québec, italien, anglais et japonais : cinq parcours d'introduction gratuits.",
-    type: "website",
-    url: `${SITE_URL}/yo/langues`,
-    locale: "fr_CA",
-  },
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ lang?: string | string[] }>;
+}): Promise<Metadata> {
+  const params = await searchParams;
+  return buildYoPratiqoMetadata("languageHub", params.lang);
+}
 
 interface PageProps {
   searchParams: Promise<{ lang?: string | string[] }>;

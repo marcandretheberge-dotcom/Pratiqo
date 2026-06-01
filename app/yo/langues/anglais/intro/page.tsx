@@ -49,8 +49,8 @@ import {
   MessageCircle,
   Sparkles,
 } from "lucide-react";
-import { SITE_URL } from "@/lib/seo/site";
 import { buildYoLocaleHref, getYoLocale, lstr, t } from "@/lib/yo/localize";
+import { buildYoPratiqoMetadata } from "@/lib/yo/yopratiqoSeo";
 import { englishIntro } from "@/lib/yo/englishIntro";
 import { YoBreadcrumb } from "@/components/yo/YoBreadcrumb";
 import { YoFlashcardPreview } from "@/components/yo/YoFlashcardPreview";
@@ -59,23 +59,14 @@ import { YoEnglishAudioButton } from "@/components/yo/YoEnglishAudioButton";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "YoPratiqo — Intro à l'anglais · Gratuit",
-  description:
-    "Tu sais déjà plus d'anglais que tu penses. Une intro premium gratuite pour reprendre confiance, comprendre les variantes et apprendre des phrases qui débloquent une conversation.",
-  alternates: {
-    canonical: `${SITE_URL}/yo/langues/anglais/intro`,
-  },
-  openGraph: {
-    title: "YoPratiqo — Intro à l'anglais",
-    description:
-      "Première leçon gratuite pour faux débutants : variantes, vocabulaire dormant, phrases de survie, quiz et flashcards.",
-    type: "website",
-    url: `${SITE_URL}/yo/langues/anglais/intro`,
-    locale: "fr_CA",
-  },
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ lang?: string | string[] }>;
+}): Promise<Metadata> {
+  const params = await searchParams;
+  return buildYoPratiqoMetadata("englishIntro", params.lang);
+}
 
 interface PageProps {
   searchParams: Promise<{ lang?: string | string[] }>;

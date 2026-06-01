@@ -58,8 +58,8 @@ import {
   Utensils,
   Wallet,
 } from "lucide-react";
-import { SITE_URL } from "@/lib/seo/site";
 import { buildYoLocaleHref, lstr, t } from "@/lib/yo/localize";
+import { buildYoPratiqoMetadata } from "@/lib/yo/yopratiqoSeo";
 import type { YoLocale } from "@/lib/yo/types";
 import { frenchQuebecIntro } from "@/lib/yo/frenchQuebecIntro";
 import { YoBreadcrumb } from "@/components/yo/YoBreadcrumb";
@@ -69,23 +69,14 @@ import { YoFrenchAudioButton } from "@/components/yo/YoFrenchAudioButton";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "YoPratiqo — Moving to Quebec · Free pre-arrival French intro",
-  description:
-    "An English-first introduction to Quebec French for people thinking about moving to Quebec. Survival words, culture, language scales, mini quiz, and flashcards.",
-  alternates: {
-    canonical: `${SITE_URL}/yo/langues/francais-quebec/intro`,
-  },
-  openGraph: {
-    title: "YoPratiqo — Moving to Quebec · Pre-arrival French intro",
-    description:
-      "Quebec French essentials for people considering a move to Quebec — survival vocabulary, culture, and language levels, English-first.",
-    type: "website",
-    url: `${SITE_URL}/yo/langues/francais-quebec/intro`,
-    locale: "en_CA",
-  },
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ lang?: string | string[] }>;
+}): Promise<Metadata> {
+  const params = await searchParams;
+  return buildYoPratiqoMetadata("frenchQuebecIntro", params.lang);
+}
 
 interface PageProps {
   searchParams: Promise<{ lang?: string | string[] }>;
