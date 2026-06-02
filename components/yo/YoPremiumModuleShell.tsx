@@ -801,51 +801,89 @@ function LessonOnePreview({
                     )}
                   </p>
                   <ul role="list" className="mt-2 space-y-1.5 text-sm">
-                    {question.options.map((option) => (
-                      <li
-                        key={option.id}
-                        className="flex items-start gap-2 rounded-xl bg-[#F4FBF9]/70 px-3 py-2 text-[#0F6E56]/85"
-                      >
-                        <span
-                          aria-hidden
-                          className="mt-1 inline-block size-1.5 shrink-0 rounded-full bg-[#1D9E75]"
-                        />
-                        {pickLocaleField(
-                          locale,
-                          option.labelFr,
-                          option.labelEn,
-                          option.labelEs,
-                        )}
-                      </li>
-                    ))}
+                    {question.options.map((option) => {
+                      // Trilingual contract: the Quebec French target
+                      // phrase ALWAYS renders prominently. The EN/ES
+                      // gloss is a small helper line shown only when
+                      // the active locale matches and a gloss exists
+                      // — it's a translation/explanation, never a
+                      // replacement for the French target.
+                      const optionGloss =
+                        locale === "en"
+                          ? option.glossEn
+                          : locale === "es"
+                            ? option.glossEs
+                            : undefined;
+                      return (
+                        <li
+                          key={option.id}
+                          className="flex items-start gap-2 rounded-xl bg-[#F4FBF9]/70 px-3 py-2"
+                        >
+                          <span
+                            aria-hidden
+                            className="mt-1 inline-block size-1.5 shrink-0 rounded-full bg-[#1D9E75]"
+                          />
+                          <div className="flex-1">
+                            <p
+                              className="font-medium text-[#0F6E56]"
+                              lang="fr-CA"
+                            >
+                              {option.targetFr}
+                            </p>
+                            {optionGloss && optionGloss.length > 0 ? (
+                              <p
+                                className="mt-1 text-xs text-[#0F6E56]/65"
+                                lang={locale === "es" ? "es" : "en"}
+                              >
+                                {optionGloss}
+                              </p>
+                            ) : null}
+                          </div>
+                        </li>
+                      );
+                    })}
                   </ul>
                   {correct ? (
-                    <details className="mt-3 rounded-xl bg-[#DDF4F1]/40 px-3 py-2 text-xs leading-relaxed text-[#0F6E56]/80">
-                      <summary className="cursor-pointer font-bold text-[#0F6E56]">
-                        {t(QUIZ_ANSWER_LABEL, locale)}
-                      </summary>
-                      <p className="mt-2">
-                        <span className="font-semibold text-[#0F6E56]">
-                          {pickLocaleField(
-                            locale,
-                            correct.labelFr,
-                            correct.labelEn,
-                            correct.labelEs,
-                          )}
-                        </span>
-                      </p>
-                      <p className="mt-2">
-                        <span className="font-semibold text-[#0F6E56]">
-                          {t(QUIZ_EXPLANATION_LABEL, locale)} :{" "}
-                        </span>
-                        {pickLocaleField(
-                          locale,
-                          question.explanationFr,
-                          question.explanationEn,
-                          question.explanationEs,
-                        )}
-                      </p>
-                    </details>
+                    (() => {
+                      const correctGloss =
+                        locale === "en"
+                          ? correct.glossEn
+                          : locale === "es"
+                            ? correct.glossEs
+                            : undefined;
+                      return (
+                        <details className="mt-3 rounded-xl bg-[#DDF4F1]/40 px-3 py-2 text-xs leading-relaxed text-[#0F6E56]/80">
+                          <summary className="cursor-pointer font-bold text-[#0F6E56]">
+                            {t(QUIZ_ANSWER_LABEL, locale)}
+                          </summary>
+                          <p
+                            className="mt-2 font-medium text-[#0F6E56]"
+                            lang="fr-CA"
+                          >
+                            {correct.targetFr}
+                          </p>
+                          {correctGloss && correctGloss.length > 0 ? (
+                            <p
+                              className="mt-1 text-xs text-[#0F6E56]/65"
+                              lang={locale === "es" ? "es" : "en"}
+                            >
+                              {correctGloss}
+                            </p>
+                          ) : null}
+                          <p className="mt-2">
+                            <span className="font-semibold text-[#0F6E56]">
+                              {t(QUIZ_EXPLANATION_LABEL, locale)} :{" "}
+                            </span>
+                            {pickLocaleField(
+                              locale,
+                              question.explanationFr,
+                              question.explanationEn,
+                              question.explanationEs,
+                            )}
+                          </p>
+                        </details>
+                      );
+                    })()
                   ) : null}
                 </li>
               );

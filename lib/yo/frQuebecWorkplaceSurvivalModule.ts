@@ -169,12 +169,31 @@ export interface FrQuebecLessonOneTuVousSituation {
   explanationEs: string;
 }
 
-/** A single multiple-choice option for the Lesson 1 quiz. */
+/**
+ * A single multiple-choice option for the Lesson 1 quiz.
+ *
+ * Trilingual contract:
+ *   - UI text (eyebrows, headings, scenarios, prompts, explanations,
+ *     cultural notes, reflection prompts, teacher-bridge prompts,
+ *     CTAs, register labels) is localized FR / EN / ES.
+ *   - The French TARGET phrases the learner is practicing remain in
+ *     Quebec French in every locale: corePhrases[*].frQuebec,
+ *     miniDialogues[*].lines[*].frQuebec, and quizQuestions[*].options[*].targetFr.
+ *     EN/ES glosses (option.glossEn / option.glossEs) are HELPERS only
+ *     — they never replace the French target.
+ *
+ * That's why a quiz option carries `targetFr` (always rendered) plus
+ * optional `glossEn` / `glossEs` (rendered only as a small helper line
+ * underneath, when the active locale matches).
+ */
 export interface FrQuebecLessonOneQuizOption {
   id: string;
-  labelFr: string;
-  labelEn: string;
-  labelEs: string;
+  /** The Quebec French phrase being evaluated. Always rendered prominently in every locale. */
+  targetFr: string;
+  /** Optional EN gloss shown as a small helper line below targetFr when locale === "en". */
+  glossEn?: string;
+  /** Optional ES gloss shown as a small helper line below targetFr when locale === "es". */
+  glossEs?: string;
 }
 
 /** A single Lesson 1 quiz question. */
@@ -1025,33 +1044,30 @@ export const frQuebecWorkplaceSurvivalModule: FrQuebecWorkplaceSurvivalModuleShe
               options: [
                 {
                   id: "q1a",
-                  labelFr: "Salut, ça roule ?",
-                  labelEn: "Hi, how’s it rolling?",
-                  labelEs: "Hola, ¿cómo va la cosa?",
+                  targetFr: "Salut, ça roule ?",
+                  glossEn: "Very informal: « Hi, how’s it rolling? »",
+                  glossEs: "Muy informal: « Hola, ¿cómo va? »",
                 },
                 {
                   id: "q1b",
-                  labelFr:
-                    "Bonjour. Je commence aujourd’hui, c’est mon premier jour.",
-                  labelEn:
-                    "Hello. I’m starting today, it’s my first day.",
-                  labelEs:
-                    "Hola. Empiezo hoy, es mi primer día.",
+                  targetFr:
+                    "Bonjour. Je commence aujourd’hui, c’est ma première journée.",
+                  glossEn:
+                    "Polite and direct: « Hello. I’m starting today, it’s my first day. »",
+                  glossEs:
+                    "Cortés y directo: « Hola. Empiezo hoy, es mi primer día. »",
                 },
                 {
                   id: "q1c",
-                  labelFr:
-                    "Vous êtes bien aimable de m’adresser la parole.",
-                  labelEn:
-                    "How very kind of you to address me.",
-                  labelEs:
-                    "Es usted muy amable al dirigirme la palabra.",
+                  targetFr: "Comme vous êtes aimable de vous adresser à moi.",
+                  glossEn: "Stilted / over-formal.",
+                  glossEs: "Forzado / demasiado formal.",
                 },
                 {
                   id: "q1d",
-                  labelFr: "Au revoir.",
-                  labelEn: "Goodbye.",
-                  labelEs: "Adiós.",
+                  targetFr: "Au revoir.",
+                  glossEn: "Goodbye — wrong moment.",
+                  glossEs: "Adiós — momento equivocado.",
                 },
               ],
               correctOptionId: "q1b",
@@ -1073,36 +1089,33 @@ export const frQuebecWorkplaceSurvivalModule: FrQuebecWorkplaceSurvivalModuleShe
               options: [
                 {
                   id: "q2a",
-                  labelFr: "Passer immédiatement au « tu » sans vérifier.",
-                  labelEn: "Switch to « tu » immediately without checking.",
-                  labelEs: "Pasar enseguida al « tu » sin comprobarlo.",
+                  targetFr: "Je passe tout de suite au « tu » sans vérifier.",
+                  glossEn: "Switch to « tu » immediately without checking.",
+                  glossEs: "Pasar enseguida al « tu » sin comprobarlo.",
                 },
                 {
                   id: "q2b",
-                  labelFr:
-                    "Rester sur « vous » jusqu’à ce qu’elle propose le « tu », ou suivre son ton.",
-                  labelEn:
+                  targetFr:
+                    "Je reste au « vous » jusqu’à ce qu’on me propose le « tu », ou je suis le ton de l’autre personne.",
+                  glossEn:
                     "Stay on « vous » until they suggest « tu », or follow their tone.",
-                  labelEs:
+                  glossEs:
                     "Mantener el « vous » hasta que ella proponga el « tu », o imitar su tono.",
                 },
                 {
                   id: "q2c",
-                  labelFr:
-                    "Insister pour utiliser « Madame » ou « Monsieur » toute la journée.",
-                  labelEn:
-                    "Insist on using « Madame » or « Monsieur » all day.",
-                  labelEs:
-                    "Insistir en usar « Madame » o « Monsieur » todo el día.",
+                  targetFr:
+                    "J’insiste pour dire « Madame » ou « Monsieur » toute la journée.",
+                  glossEn: "Insist on « Madame » / « Monsieur » all day.",
+                  glossEs:
+                    "Insistir en « Madame » / « Monsieur » todo el día.",
                 },
                 {
                   id: "q2d",
-                  labelFr:
-                    "Éviter de lui parler tant que vous n’êtes pas certain.",
-                  labelEn:
-                    "Avoid speaking to them until you’re absolutely sure.",
-                  labelEs:
-                    "Evitar hablarle hasta tener total certeza del trato.",
+                  targetFr:
+                    "J’évite de parler jusqu’à être absolument certain.",
+                  glossEn: "Avoid speaking until you’re absolutely sure.",
+                  glossEs: "Evitar hablar hasta tener total certeza.",
                 },
               ],
               correctOptionId: "q2b",
@@ -1124,33 +1137,28 @@ export const frQuebecWorkplaceSurvivalModule: FrQuebecWorkplaceSurvivalModuleShe
               options: [
                 {
                   id: "q3a",
-                  labelFr:
-                    "Vous ferez bien de m’indiquer la salle de réunion.",
-                  labelEn:
-                    "You shall kindly indicate the meeting room.",
-                  labelEs:
-                    "Tendrá la amabilidad de indicarme la sala de reuniones.",
+                  targetFr: "Vous voudrez bien m’indiquer la salle de réunion.",
+                  glossEn: "Stilted / over-formal.",
+                  glossEs: "Forzado / demasiado formal.",
                 },
                 {
                   id: "q3b",
-                  labelFr:
+                  targetFr:
                     "Je cherche la salle de réunion, peux-tu me montrer rapidement ?",
-                  labelEn:
-                    "I’m looking for the meeting room, can you show me quickly?",
-                  labelEs:
-                    "Estoy buscando la sala de reuniones, ¿puedes mostrármela rápido?",
+                  glossEn: "Natural, already in « tu ».",
+                  glossEs: "Natural, ya en « tu ».",
                 },
                 {
                   id: "q3c",
-                  labelFr: "Salle réunion où ?",
-                  labelEn: "Meeting room where?",
-                  labelEs: "Sala reuniones, ¿dónde?",
+                  targetFr: "Salle réunion où ?",
+                  glossEn: "Too telegraphic.",
+                  glossEs: "Demasiado telegráfico.",
                 },
                 {
                   id: "q3d",
-                  labelFr: "Je suis perdu, je vais quitter.",
-                  labelEn: "I’m lost, I’m going to leave.",
-                  labelEs: "Estoy perdido, me voy a marchar.",
+                  targetFr: "Je suis perdu, je vais partir.",
+                  glossEn: "Avoidant — wrong reaction.",
+                  glossEs: "Evasivo — reacción equivocada.",
                 },
               ],
               correctOptionId: "q3b",
@@ -1172,30 +1180,29 @@ export const frQuebecWorkplaceSurvivalModule: FrQuebecWorkplaceSurvivalModuleShe
               options: [
                 {
                   id: "q4a",
-                  labelFr: "Il vous demande de l’appeler au téléphone.",
-                  labelEn: "They’re asking you to call them on the phone.",
-                  labelEs: "Le pide que le llame por teléfono.",
+                  targetFr: "Ça veut dire : « Appelle-moi au téléphone. »",
+                  glossEn: "Means: « Call me on the phone. »",
+                  glossEs: "Significa: « Llámame por teléfono. »",
                 },
                 {
                   id: "q4b",
-                  labelFr:
-                    "Il vous invite à utiliser « tu » avec lui.",
-                  labelEn:
-                    "They’re inviting you to use « tu » with them.",
-                  labelEs:
-                    "Le invita a usar « tu » con él/ella en francés.",
+                  targetFr:
+                    "Ça veut dire : « Tu peux utiliser tu avec moi. »",
+                  glossEn: "Means: « You can use tu with me. »",
+                  glossEs:
+                    "Significa: « Puedes usar tu conmigo en francés. »",
                 },
                 {
                   id: "q4c",
-                  labelFr: "Il vous demande de parler moins fort.",
-                  labelEn: "They’re asking you to speak more softly.",
-                  labelEs: "Le pide que hable más bajo.",
+                  targetFr: "Ça veut dire : « Parle plus doucement. »",
+                  glossEn: "Means: « Speak more softly. »",
+                  glossEs: "Significa: « Habla más bajo. »",
                 },
                 {
                   id: "q4d",
-                  labelFr: "Il est contrarié.",
-                  labelEn: "They’re upset.",
-                  labelEs: "Está molesto/a.",
+                  targetFr: "Ça veut dire : « Je suis fâché. »",
+                  glossEn: "Means: « I’m upset. »",
+                  glossEs: "Significa: « Estoy molesto. »",
                 },
               ],
               correctOptionId: "q4b",
@@ -1217,27 +1224,28 @@ export const frQuebecWorkplaceSurvivalModule: FrQuebecWorkplaceSurvivalModuleShe
               options: [
                 {
                   id: "q5a",
-                  labelFr: "Elle vous reverra demain.",
-                  labelEn: "They’ll see you tomorrow.",
-                  labelEs: "Le verá mañana.",
+                  targetFr: "On se voit demain.",
+                  glossEn: "We’ll see each other tomorrow.",
+                  glossEs: "Nos vemos mañana.",
                 },
                 {
                   id: "q5b",
-                  labelFr: "Elle vous reverra plus tard dans la journée.",
-                  labelEn: "They’ll see you again later today.",
-                  labelEs: "Le verá de nuevo más tarde, en el mismo día.",
+                  targetFr: "On se revoit plus tard aujourd’hui.",
+                  glossEn: "We’ll see each other again later today.",
+                  glossEs:
+                    "Nos volvemos a ver más tarde, hoy mismo.",
                 },
                 {
                   id: "q5c",
-                  labelFr: "Elle quitte l’entreprise pour de bon.",
-                  labelEn: "They’re leaving the company for good.",
-                  labelEs: "Se marcha de la empresa para siempre.",
+                  targetFr: "Je quitte l’entreprise pour de bon.",
+                  glossEn: "I’m leaving the company for good.",
+                  glossEs: "Me marcho de la empresa para siempre.",
                 },
                 {
                   id: "q5d",
-                  labelFr: "Elle veut que vous la suiviez immédiatement.",
-                  labelEn: "They want you to follow them immediately.",
-                  labelEs: "Quiere que la siga de inmediato.",
+                  targetFr: "Suis-moi immédiatement.",
+                  glossEn: "Follow me immediately.",
+                  glossEs: "Sígueme de inmediato.",
                 },
               ],
               correctOptionId: "q5b",
