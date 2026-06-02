@@ -818,8 +818,25 @@ test("Lesson 1 ships exactly 5 quiz questions with valid options + correct ids",
     assert.ok(question.explanationFr.length > 0);
     assert.ok(question.explanationEn.length > 0);
     for (const opt of question.options) {
-      assert.ok(opt.labelFr.length > 0);
-      assert.ok(opt.labelEn.length > 0);
+      // Trilingual contract: the Quebec French target ALWAYS exists;
+      // EN/ES glosses are optional helpers — but when present, they
+      // must be non-empty.
+      assert.ok(
+        opt.targetFr.length > 0,
+        `question ${question.id} option ${opt.id} must declare a Quebec French target phrase`,
+      );
+      if (typeof opt.glossEn !== "undefined") {
+        assert.ok(
+          opt.glossEn.length > 0,
+          `question ${question.id} option ${opt.id} glossEn must be non-empty when present`,
+        );
+      }
+      if (typeof opt.glossEs !== "undefined") {
+        assert.ok(
+          opt.glossEs.length > 0,
+          `question ${question.id} option ${opt.id} glossEs must be non-empty when present`,
+        );
+      }
     }
   }
 });
@@ -1285,11 +1302,21 @@ test("All 5 quiz questions ship FR / EN / ES prompts, options, and explanations"
       `quiz ${q.id} must declare a Spanish explanation`,
     );
     for (const option of q.options) {
-      assert.ok(option.labelFr.length > 0);
-      assert.ok(option.labelEn.length > 0);
+      // Trilingual contract: the Quebec French target stays in
+      // French in every locale; the EN + ES glosses are small helper
+      // lines underneath. The migrated data set ships BOTH glosses
+      // on every option — pin that contract here.
       assert.ok(
-        option.labelEs.length > 0,
-        `quiz ${q.id} option ${option.id} must declare a Spanish label`,
+        option.targetFr.length > 0,
+        `quiz ${q.id} option ${option.id} must declare a Quebec French target`,
+      );
+      assert.ok(
+        typeof option.glossEn === "string" && option.glossEn.length > 0,
+        `quiz ${q.id} option ${option.id} must declare a non-empty English gloss`,
+      );
+      assert.ok(
+        typeof option.glossEs === "string" && option.glossEs.length > 0,
+        `quiz ${q.id} option ${option.id} must declare a non-empty Spanish gloss`,
       );
     }
   }
@@ -1434,7 +1461,9 @@ test("Shell renders ES lesson 1 content via locale-aware accessors", () => {
       `shell must consume ${field} when rendering Spanish locale`,
     );
   }
-  // Per-line / per-option ES paths.
+  // Per-line / per-option ES paths. The quiz-option locale gloss is
+  // exposed as `option.glossEs` (with `option.targetFr` always staying
+  // in Quebec French as the prominent line in every locale).
   for (const accessor of [
     "phrase.spanish",
     "phrase.usageEs",
@@ -1446,7 +1475,7 @@ test("Shell renders ES lesson 1 content via locale-aware accessors", () => {
     "situation.explanationEs",
     "question.promptEs",
     "question.explanationEs",
-    "option.labelEs",
+    "option.glossEs",
   ]) {
     assert.ok(
       src.includes(accessor),
@@ -1695,6 +1724,149 @@ test("Adding the YoLocaleSwitcher did not regress the legal disclaimer, audio bu
       src.includes(phrase),
       `shell must still include the CTA copy "${phrase}" after the switcher change`,
     );
+  }
+});
+
+// ─── Trilingual target-language contract for quiz answer choices ───
+//
+// A French-comprehension quiz must show French answer choices in EVERY
+// UI locale. Translating the option text to EN/ES would defeat the
+// pedagogical goal — the learner is supposed to recognise / pick / rule
+// out a French phrase, not a translated equivalent.
+//
+// The migrated option shape is:
+//   { id; targetFr; glossEn?; glossEs? }
+//
+// targetFr is the Quebec French phrase being evaluated; glossEn /
+// glossEs are small helper lines rendered underneath when the active
+// locale matches (and never replace targetFr).
+
+const QUIZ_OPTION_TARGET_FR_VERBATIM: ReadonlyArray<[string, string]> = [
+  // [questionId, targetFr expected for the correct option]
+  ["q1", "Bonjour. Je commence aujourd’hui, c’est ma première journée."],
+  [
+    "q2",
+    "Je reste au « vous » jusqu’à ce qu’on me propose le « tu », ou je suis le ton de l’autre personne.",
+  ],
+  ["q3", "Je cherche la salle de réunion, peux-tu me montrer rapidement ?"],
+  ["q4", "Ça veut dire : « Tu peux utiliser tu avec moi. »"],
+  ["q5", "On se revoit plus tard aujourd’hui."],
+];
+
+test("Quiz option targetFr strings stay in Quebec French (correct-answer phrases appear verbatim)", () => {
+  const content = getLessonOne().content!;
+  for (const [questionId, expectedTarget] of QUIZ_OPTION_TARGET_FR_VERBATIM) {
+    const question = content.quizQuestions.find((q) => q.id === questionId);
+    assert.ok(question, `quiz question ${questionId} must exist`);
+    const correct = question!.options.find(
+      (opt) => opt.id === question!.correctOptionId,
+    );
+    assert.ok(
+      correct,
+      `quiz question ${questionId} must declare its correct option`,
+    );
+    assert.equal(
+      correct!.targetFr,
+      expectedTarget,
+      `quiz question ${questionId} correct option must keep the Quebec French target verbatim`,
+    );
+  }
+});
+
+test("Quiz option targetFr is the SAME string regardless of UI locale (data-level invariant)", () => {
+  // The data structure has a single `targetFr` field per option; the
+  // renderer must read it directly without any FR/EN/ES branching.
+  // This test asserts that no helper has accidentally introduced a
+  // localized `targetFr*` sibling that would re-translate the target.
+  const content = getLessonOne().content!;
+  for (const question of content.quizQuestions) {
+    for (const opt of question.options) {
+      const optionRecord = opt as Record<string, unknown>;
+      // Only `targetFr` is allowed as the target field; no localized
+      // targetEn / targetEs sibling that would silently overwrite it.
+      assert.equal(
+        optionRecord["targetEn"],
+        undefined,
+        `quiz ${question.id} option ${opt.id} must not declare a localized targetEn`,
+      );
+      assert.equal(
+        optionRecord["targetEs"],
+        undefined,
+        `quiz ${question.id} option ${opt.id} must not declare a localized targetEs`,
+      );
+    }
+  }
+});
+
+test("Shell renderer reads option.targetFr, option.glossEn, and option.glossEs", () => {
+  const src = read(PREMIUM_SHELL_FILE);
+  for (const accessor of [
+    "option.targetFr",
+    "option.glossEn",
+    "option.glossEs",
+  ]) {
+    assert.ok(
+      src.includes(accessor),
+      `shell must read ${accessor} when rendering quiz options`,
+    );
+  }
+  // The correct-answer rendering inside <details> reads through a
+  // local alias `correct.targetFr` / `correct.glossEn` / `correct.glossEs`.
+  for (const accessor of [
+    "correct.targetFr",
+    "correct.glossEn",
+    "correct.glossEs",
+  ]) {
+    assert.ok(
+      src.includes(accessor),
+      `shell must read ${accessor} for the correct-answer block`,
+    );
+  }
+});
+
+test("Shell renderer no longer reads option.labelFr / option.labelEn / option.labelEs", () => {
+  const src = stripComments(read(PREMIUM_SHELL_FILE));
+  const banned: ReadonlyArray<[RegExp, string]> = [
+    [/\boption\.labelFr\b/, "option.labelFr"],
+    [/\boption\.labelEn\b/, "option.labelEn"],
+    [/\boption\.labelEs\b/, "option.labelEs"],
+    [/\bcorrect\.labelFr\b/, "correct.labelFr"],
+    [/\bcorrect\.labelEn\b/, "correct.labelEn"],
+    [/\bcorrect\.labelEs\b/, "correct.labelEs"],
+  ];
+  for (const [re, label] of banned) {
+    assert.ok(
+      !re.test(src),
+      `shell must not read ${label} after migration to targetFr / glossEn / glossEs`,
+    );
+  }
+});
+
+test("Quiz options never replace the Quebec French target with the EN/ES gloss", () => {
+  // For each correct-answer option, targetFr (the French phrase the
+  // learner is meant to recognise) must NOT equal its glossEn or
+  // glossEs. The gloss is a translation/explanation helper — not a
+  // duplicate of the target.
+  const content = getLessonOne().content!;
+  for (const question of content.quizQuestions) {
+    const correct = question.options.find(
+      (opt) => opt.id === question.correctOptionId,
+    );
+    assert.ok(correct, `question ${question.id} must declare a correct option`);
+    if (typeof correct!.glossEn === "string") {
+      assert.notEqual(
+        correct!.targetFr,
+        correct!.glossEn,
+        `question ${question.id} option ${correct!.id} glossEn must not duplicate targetFr`,
+      );
+    }
+    if (typeof correct!.glossEs === "string") {
+      assert.notEqual(
+        correct!.targetFr,
+        correct!.glossEs,
+        `question ${question.id} option ${correct!.id} glossEs must not duplicate targetFr`,
+      );
+    }
   }
 });
 
