@@ -38,18 +38,24 @@
 
 import Link from "next/link";
 import {
+  ArrowRightCircle,
   BookOpen,
   CheckCircle2,
   Clock,
   Compass,
+  FilePen,
   GraduationCap,
+  Layers,
   Lightbulb,
   Lock,
   MapPin,
+  Megaphone,
   MessageCircle,
+  Quote,
   Sparkles,
   Target,
   Users,
+  Wrench,
 } from "lucide-react";
 
 import { lstr, t } from "@/lib/yo/localize";
@@ -58,10 +64,7 @@ import { YoBreadcrumb } from "@/components/yo/YoBreadcrumb";
 import { YoLegalDisclaimer } from "@/components/yo/YoLegalDisclaimer";
 import { YoFrenchAudioButton } from "@/components/yo/YoFrenchAudioButton";
 import { YoLocaleSwitcher } from "@/components/yo/YoLocaleSwitcher";
-import type {
-  FrQuebecLessonOneContent,
-  FrQuebecModuleLesson,
-} from "@/lib/yo/frQuebecWorkplaceSurvivalModule";
+import type { FrQuebecModuleLesson } from "@/lib/yo/frQuebecWorkplaceSurvivalModule";
 
 /**
  * Lesson 1 audio context — passed to every `YoFrenchAudioButton`
@@ -160,9 +163,9 @@ const LESSON_OUTLINE_TITLE = lstr(
   "Siete lecciones breves, siete situaciones concretas",
 );
 const LESSON_OUTLINE_BODY = lstr(
-  "Chaque leçon est une mini-mise en situation : un contexte, trois objectifs et quelques phrases utiles. La leçon 1 est ouverte en aperçu gratuit ; les six autres restent à venir.",
-  "Each lesson is a small role-play: a context, three goals, and a few useful phrases. Lesson 1 is open as a free preview; the other six are still upcoming.",
-  "Cada lección es una mini-situación: un contexto, tres objetivos y algunas frases útiles. La lección 1 está abierta como vista previa gratuita; las otras seis siguen pendientes.",
+  "Chaque leçon est une mini-mise en situation : un contexte, trois objectifs et quelques phrases utiles. Les leçons 1 et 2 sont ouvertes en aperçu gratuit ; les cinq autres restent à venir.",
+  "Each lesson is a small role-play: a context, three goals, and a few useful phrases. Lessons 1 and 2 are open as free previews; the other five are still upcoming.",
+  "Cada lección es una mini-situación: un contexto, tres objetivos y algunas frases útiles. Las lecciones 1 y 2 están abiertas como vistas previas gratuitas; las otras cinco siguen pendientes.",
 );
 const LESSON_LOCKED_LABEL = lstr(
   "Verrouillé · futur",
@@ -230,6 +233,89 @@ const PREVIEW_BRIDGE_LABEL = lstr(
   "Avec un professeur",
   "With a teacher",
   "Con un profesor",
+);
+
+// ─── Lesson 2 — section labels (eyebrows + headings) ─────────────────
+//
+// Mirror the Lesson 1 eyebrow/heading constants so the renderer can
+// keep its localized-by-default contract: every label flows through
+// `t(label, locale)`, never a bare FR or EN literal. Adding a Lesson 3
+// later just requires another set of constants beside this block.
+const PREVIEW_LESSON2_EYEBROW = lstr(
+  "Aperçu gratuit · Leçon 2",
+  "Free preview · Lesson 2",
+  "Vista previa gratuita · Lección 2",
+);
+const PREVIEW_BEFORE_LABEL = lstr(
+  "Avant de commencer",
+  "Before you start",
+  "Antes de comenzar",
+);
+const PREVIEW_MICROSKILLS_LABEL = lstr(
+  "Trois micro-compétences",
+  "Three micro-skills",
+  "Tres micro-competencias",
+);
+const PREVIEW_VERBS_LABEL = lstr(
+  "Verbes-clés du travail",
+  "Key workplace verbs",
+  "Verbos clave del trabajo",
+);
+const PREVIEW_VERBS_PHYSICAL_LABEL = lstr(
+  "Actions physiques",
+  "Physical actions",
+  "Acciones físicas",
+);
+const PREVIEW_VERBS_ADMIN_LABEL = lstr(
+  "Actions administratives",
+  "Administrative actions",
+  "Acciones administrativas",
+);
+const PREVIEW_MARKERS_LABEL = lstr(
+  "Marqueurs oraux du Québec",
+  "Quebec oral markers",
+  "Marcadores orales de Quebec",
+);
+const PREVIEW_CONFIRM_LABEL = lstr(
+  "Formules de confirmation",
+  "Confirmation formulas",
+  "Fórmulas de confirmación",
+);
+const PREVIEW_REFORMULATE_LABEL = lstr(
+  "Formules de reformulation",
+  "Reformulation formulas",
+  "Fórmulas de reformulación",
+);
+const PREVIEW_SCENARIO_FULL_LABEL = lstr(
+  "Mini-scénario complet",
+  "Complete mini-scenario",
+  "Mini-escenario completo",
+);
+const PREVIEW_FLASHCARDS_LABEL = lstr(
+  "Fiches mémo",
+  "Flashcards",
+  "Tarjetas de memoria",
+);
+const PREVIEW_TEACHER_CTA_LABEL = lstr(
+  "Pratiquer avec un professeur",
+  "Practice with a teacher",
+  "Practicar con un profesor",
+);
+const PREVIEW_NEXT_LESSON_LABEL = lstr(
+  "Suite du module",
+  "Coming next",
+  "Próxima lección",
+);
+const VERB_EXAMPLE_HINT_LABEL = lstr(
+  "Exemple : ",
+  "Example: ",
+  "Ejemplo: ",
+);
+const FLASHCARD_HINT_LABEL = lstr("Astuce : ", "Hint: ", "Pista: ");
+const FORMULA_REGISTER_HINT_PREFIX = lstr(
+  "Registre : ",
+  "Register: ",
+  "Registro: ",
 );
 
 const REGISTER_LABELS: Record<
@@ -416,8 +502,11 @@ function LessonOnePreview({
   lesson: FrQuebecModuleLesson;
   teacherBridgeHref: string;
 }) {
-  const content: FrQuebecLessonOneContent | undefined = lesson.content;
-  if (!content) return null;
+  // Narrow on `content.kind` so this renderer only runs against
+  // Lesson 1's content shape. The shell-level dispatch already picks
+  // the right preview component, so this guard is belt-and-suspenders.
+  const content = lesson.content;
+  if (!content || content.kind !== "lesson1") return null;
 
   const lessonTitle = pickLocaleField(
     locale,
@@ -936,6 +1025,704 @@ function LessonOnePreview({
   );
 }
 
+/**
+ * Rich free-preview body for the second lesson tagged
+ * `status: "preview"`. Renders the 11 documented sections of Lesson 2
+ * ("Comprendre les consignes simples") — before-you-start framing,
+ * three micro-skills, twelve key verbs (split physical /
+ * administrative), four Quebec oral markers, five confirmation
+ * formulas, five reformulation formulas, one mini-scenario, five
+ * quiz questions, eight-to-twelve flashcards, the consent-safe
+ * teacher CTA, and the next-lesson teaser.
+ *
+ * Important invariants (mirrors LessonOnePreview):
+ *   - No `"use client"`. Pure server render.
+ *   - No form / input / audio playback / recording. The flashcards
+ *     show front + back side-by-side because we don't have client JS
+ *     to "flip" the card; learners self-check by reading.
+ *   - The teacher CTA links to /trouver-un-prof (the real, free way
+ *     to reach a Pratiqo teacher) and never mentions automatic
+ *     teacher routing or data sharing.
+ *   - NO YoFrenchAudioButton is rendered next to Lesson 2 strings:
+ *     the audio manifest is keyed off Lesson 1 phrases only, and the
+ *     Lesson 1 contract is "only ship the button when manifest
+ *     coverage exists". Adding the button next to Lesson 2 strings
+ *     would either no-op (ugly) or silently fall back to a Web-Speech
+ *     pronunciation that doesn't match our Quebec-French audio
+ *     contract.
+ */
+function LessonTwoPreview({
+  locale,
+  lesson,
+  teacherBridgeHref,
+}: {
+  locale: YoLocale;
+  lesson: FrQuebecModuleLesson;
+  teacherBridgeHref: string;
+}) {
+  const content = lesson.content;
+  if (!content || content.kind !== "lesson2") return null;
+
+  const lessonTitle = pickLocaleField(
+    locale,
+    lesson.titleFr,
+    lesson.titleEn,
+    lesson.titleEs,
+  );
+  const beforeYouStart = pickLocaleField(
+    locale,
+    content.beforeYouStartFr,
+    content.beforeYouStartEn,
+    content.beforeYouStartEs,
+  );
+  const teacherCta = pickLocaleField(
+    locale,
+    content.teacherCta.promptFr,
+    content.teacherCta.promptEn,
+    content.teacherCta.promptEs,
+  );
+  const nextTeaser = pickLocaleField(
+    locale,
+    content.nextLessonTeaser.teaserFr,
+    content.nextLessonTeaser.teaserEn,
+    content.nextLessonTeaser.teaserEs,
+  );
+
+  const physicalVerbs = content.keyVerbs.filter(
+    (v) => v.category === "physical",
+  );
+  const administrativeVerbs = content.keyVerbs.filter(
+    (v) => v.category === "administrative",
+  );
+
+  return (
+    <section
+      aria-labelledby="yo-fr-qc-mod1-lesson2-title"
+      id="lecon-2"
+      className="mx-auto w-full max-w-5xl px-5 pt-10 sm:px-8 sm:pt-14"
+    >
+      <div className="rounded-3xl border border-[#0F6E56]/15 bg-white p-5 shadow-[0_8px_24px_rgba(15,58,52,0.05)] sm:p-7">
+        {/* Lesson eyebrow + title */}
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-[#1D9E75]/35 bg-[#DDF4F1]/60 px-3 py-1 text-[0.7rem] font-black uppercase tracking-[0.14em] text-[#0F6E56]">
+            <Sparkles className="size-3.5 text-[#1D9E75]" aria-hidden />
+            {t(PREVIEW_LESSON2_EYEBROW, locale)}
+          </span>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#0F6E56]/8 px-3 py-1 text-[0.7rem] font-bold text-[#0F6E56]/80">
+            <Clock className="size-3.5" aria-hidden />
+            {formatMinutes(lesson.estimatedMinutes, locale)}
+          </span>
+        </div>
+        <h2
+          id="yo-fr-qc-mod1-lesson2-title"
+          className="mt-3 text-2xl font-semibold leading-tight tracking-tight text-[#0F6E56] sm:text-[1.85rem]"
+        >
+          {lessonTitle}
+        </h2>
+
+        {/* 1. Before-you-start framing */}
+        <section
+          aria-label={t(PREVIEW_BEFORE_LABEL, locale)}
+          className="mt-6 rounded-2xl border border-[#DDF4F1] bg-[#F4FBF9] p-4 sm:p-5"
+        >
+          <p className="flex items-center gap-2 text-[0.75rem] font-black uppercase tracking-[0.14em] text-[#0F6E56]/70">
+            <Lightbulb className="size-4 text-[#1D9E75]" aria-hidden />
+            {t(PREVIEW_BEFORE_LABEL, locale)}
+          </p>
+          <p className="mt-2 text-sm leading-relaxed text-[#0F6E56]/85 sm:text-[0.95rem]">
+            {beforeYouStart}
+          </p>
+        </section>
+
+        {/* 2. Three micro-skills */}
+        <section
+          aria-label={t(PREVIEW_MICROSKILLS_LABEL, locale)}
+          className="mt-7"
+        >
+          <p className="flex items-center gap-2 text-[0.75rem] font-black uppercase tracking-[0.14em] text-[#0F6E56]/70">
+            <Target className="size-4 text-[#1D9E75]" aria-hidden />
+            {t(PREVIEW_MICROSKILLS_LABEL, locale)}
+          </p>
+          <ul
+            role="list"
+            className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
+          >
+            {content.microSkills.map((skill) => (
+              <li
+                key={skill.id}
+                className="rounded-2xl border border-teal-100 bg-white p-4 shadow-[0_1px_2px_rgba(15,58,52,0.04)]"
+              >
+                <p className="text-sm font-semibold text-[#0F6E56]">
+                  {pickLocaleField(
+                    locale,
+                    skill.labelFr,
+                    skill.labelEn,
+                    skill.labelEs,
+                  )}
+                </p>
+                <p className="mt-2 text-xs leading-relaxed text-[#0F6E56]/70">
+                  {pickLocaleField(
+                    locale,
+                    skill.hintFr,
+                    skill.hintEn,
+                    skill.hintEs,
+                  )}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        {/* 3. Key verbs — physical + administrative subsections */}
+        <section
+          aria-label={t(PREVIEW_VERBS_LABEL, locale)}
+          className="mt-7"
+        >
+          <p className="flex items-center gap-2 text-[0.75rem] font-black uppercase tracking-[0.14em] text-[#0F6E56]/70">
+            <BookOpen className="size-4 text-[#1D9E75]" aria-hidden />
+            {t(PREVIEW_VERBS_LABEL, locale)}
+          </p>
+          <div className="mt-3 grid gap-4 lg:grid-cols-2">
+            {(
+              [
+                {
+                  label: PREVIEW_VERBS_PHYSICAL_LABEL,
+                  icon: Wrench,
+                  list: physicalVerbs,
+                },
+                {
+                  label: PREVIEW_VERBS_ADMIN_LABEL,
+                  icon: FilePen,
+                  list: administrativeVerbs,
+                },
+              ] as const
+            ).map((group) => {
+              const Icon = group.icon;
+              return (
+                <div
+                  key={group.label.fr}
+                  className="rounded-2xl border border-teal-100 bg-[#F4FBF9]/50 p-4"
+                >
+                  <p className="flex items-center gap-2 text-[0.7rem] font-black uppercase tracking-[0.14em] text-[#1D9E75]">
+                    <Icon className="size-3.5" aria-hidden />
+                    {t(group.label, locale)}
+                  </p>
+                  <ul
+                    role="list"
+                    className="mt-3 space-y-2.5"
+                  >
+                    {group.list.map((verb) => {
+                      const gloss =
+                        locale === "es" ? verb.glossEs : verb.glossEn;
+                      const exampleGloss =
+                        locale === "es"
+                          ? verb.exampleGlossEs
+                          : verb.exampleGlossEn;
+                      return (
+                        <li
+                          key={verb.id}
+                          className="rounded-xl bg-white px-3 py-2.5 shadow-[0_1px_2px_rgba(15,58,52,0.04)]"
+                        >
+                          <div className="flex flex-wrap items-baseline gap-x-2">
+                            <p
+                              className="text-base font-semibold text-[#0F6E56]"
+                              lang="fr-CA"
+                            >
+                              {verb.infinitive}
+                            </p>
+                            {locale !== "fr" ? (
+                              <p
+                                className="text-xs italic text-[#0F6E56]/60"
+                                lang={locale === "es" ? "es" : "en"}
+                              >
+                                — {gloss}
+                              </p>
+                            ) : null}
+                          </div>
+                          <p
+                            className="mt-1 text-sm text-[#0F6E56]/85"
+                            lang="fr-CA"
+                          >
+                            <span className="font-semibold text-[#0F6E56]/60">
+                              {t(VERB_EXAMPLE_HINT_LABEL, locale)}
+                            </span>
+                            {verb.exampleFr}
+                          </p>
+                          {locale !== "fr" ? (
+                            <p
+                              className="mt-0.5 text-xs italic text-[#0F6E56]/55"
+                              lang={locale === "es" ? "es" : "en"}
+                            >
+                              {exampleGloss}
+                            </p>
+                          ) : null}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* 4. Quebec oral markers */}
+        <section
+          aria-label={t(PREVIEW_MARKERS_LABEL, locale)}
+          className="mt-7"
+        >
+          <p className="flex items-center gap-2 text-[0.75rem] font-black uppercase tracking-[0.14em] text-[#0F6E56]/70">
+            <Megaphone className="size-4 text-[#1D9E75]" aria-hidden />
+            {t(PREVIEW_MARKERS_LABEL, locale)}
+          </p>
+          <ul
+            role="list"
+            className="mt-3 grid gap-3 sm:grid-cols-2"
+          >
+            {content.oralMarkers.map((marker) => (
+              <li
+                key={marker.id}
+                className="rounded-2xl border border-teal-100 bg-white p-4 shadow-[0_1px_2px_rgba(15,58,52,0.04)]"
+              >
+                <p
+                  className="text-base font-semibold text-[#0F6E56]"
+                  lang="fr-CA"
+                >
+                  {marker.marker}
+                </p>
+                <p className="mt-2 text-sm leading-relaxed text-[#0F6E56]/80">
+                  {pickLocaleField(
+                    locale,
+                    marker.meaningFr,
+                    marker.meaningEn,
+                    marker.meaningEs,
+                  )}
+                </p>
+                <p
+                  className="mt-2 rounded-xl bg-[#F4FBF9]/70 px-3 py-2 text-sm leading-relaxed text-[#0F6E56]"
+                  lang="fr-CA"
+                >
+                  {marker.exampleFr}
+                </p>
+                {locale !== "fr" ? (
+                  <p
+                    className="mt-1 text-xs italic text-[#0F6E56]/60"
+                    lang={locale === "es" ? "es" : "en"}
+                  >
+                    {locale === "es"
+                      ? marker.exampleGlossEs
+                      : marker.exampleGlossEn}
+                  </p>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        {/* 5. Confirmation formulas */}
+        <section
+          aria-label={t(PREVIEW_CONFIRM_LABEL, locale)}
+          className="mt-7"
+        >
+          <p className="flex items-center gap-2 text-[0.75rem] font-black uppercase tracking-[0.14em] text-[#0F6E56]/70">
+            <CheckCircle2 className="size-4 text-[#1D9E75]" aria-hidden />
+            {t(PREVIEW_CONFIRM_LABEL, locale)}
+          </p>
+          <ul
+            role="list"
+            className="mt-3 grid gap-3 sm:grid-cols-2"
+          >
+            {content.confirmationFormulas.map((formula) => {
+              const register = pickLocaleField(
+                locale,
+                formula.registerFr,
+                formula.registerEn,
+                formula.registerEs,
+              );
+              const gloss =
+                locale === "es"
+                  ? formula.glossEs
+                  : locale === "en"
+                    ? formula.glossEn
+                    : undefined;
+              return (
+                <li
+                  key={formula.id}
+                  className="rounded-2xl border border-teal-100 bg-white p-4 shadow-[0_1px_2px_rgba(15,58,52,0.04)]"
+                >
+                  <p
+                    className="text-base font-semibold text-[#0F6E56]"
+                    lang="fr-CA"
+                  >
+                    {formula.targetFr}
+                  </p>
+                  {gloss ? (
+                    <p
+                      className="mt-1 text-xs italic text-[#0F6E56]/60"
+                      lang={locale === "es" ? "es" : "en"}
+                    >
+                      {gloss}
+                    </p>
+                  ) : null}
+                  <p className="mt-2 text-[0.7rem] font-bold uppercase tracking-[0.12em] text-[#1D9E75]">
+                    {t(FORMULA_REGISTER_HINT_PREFIX, locale)}
+                    {register}
+                  </p>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+
+        {/* 6. Reformulation formulas */}
+        <section
+          aria-label={t(PREVIEW_REFORMULATE_LABEL, locale)}
+          className="mt-7"
+        >
+          <p className="flex items-center gap-2 text-[0.75rem] font-black uppercase tracking-[0.14em] text-[#0F6E56]/70">
+            <Quote className="size-4 text-[#1D9E75]" aria-hidden />
+            {t(PREVIEW_REFORMULATE_LABEL, locale)}
+          </p>
+          <ul
+            role="list"
+            className="mt-3 grid gap-3 sm:grid-cols-2"
+          >
+            {content.reformulationFormulas.map((formula) => {
+              const register = pickLocaleField(
+                locale,
+                formula.registerFr,
+                formula.registerEn,
+                formula.registerEs,
+              );
+              const gloss =
+                locale === "es"
+                  ? formula.glossEs
+                  : locale === "en"
+                    ? formula.glossEn
+                    : undefined;
+              return (
+                <li
+                  key={formula.id}
+                  className="rounded-2xl border border-teal-100 bg-white p-4 shadow-[0_1px_2px_rgba(15,58,52,0.04)]"
+                >
+                  <p
+                    className="text-base font-semibold text-[#0F6E56]"
+                    lang="fr-CA"
+                  >
+                    {formula.targetFr}
+                  </p>
+                  {gloss ? (
+                    <p
+                      className="mt-1 text-xs italic text-[#0F6E56]/60"
+                      lang={locale === "es" ? "es" : "en"}
+                    >
+                      {gloss}
+                    </p>
+                  ) : null}
+                  <p className="mt-2 text-[0.7rem] font-bold uppercase tracking-[0.12em] text-[#1D9E75]">
+                    {t(FORMULA_REGISTER_HINT_PREFIX, locale)}
+                    {register}
+                  </p>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+
+        {/* 7. Mini-scenario */}
+        <section
+          aria-label={t(PREVIEW_SCENARIO_FULL_LABEL, locale)}
+          className="mt-7"
+        >
+          <p className="flex items-center gap-2 text-[0.75rem] font-black uppercase tracking-[0.14em] text-[#0F6E56]/70">
+            <Users className="size-4 text-[#1D9E75]" aria-hidden />
+            {t(PREVIEW_SCENARIO_FULL_LABEL, locale)}
+          </p>
+          <article className="mt-3 rounded-2xl border border-teal-100 bg-white p-4 shadow-[0_1px_2px_rgba(15,58,52,0.04)] sm:p-5">
+            <h3 className="text-sm font-bold tracking-tight text-[#0F6E56]">
+              {pickLocaleField(
+                locale,
+                content.miniScenario.titleFr,
+                content.miniScenario.titleEn,
+                content.miniScenario.titleEs,
+              )}
+            </h3>
+            <p className="mt-1 text-xs leading-relaxed text-[#0F6E56]/65">
+              {pickLocaleField(
+                locale,
+                content.miniScenario.contextFr,
+                content.miniScenario.contextEn,
+                content.miniScenario.contextEs,
+              )}
+            </p>
+            <ol
+              role="list"
+              className="mt-3 space-y-2 text-sm leading-relaxed"
+            >
+              {content.miniScenario.lines.map((line, lineIndex) => (
+                <li
+                  key={`l2-scenario-line-${lineIndex}`}
+                  className="rounded-xl bg-[#F4FBF9] px-3 py-2"
+                >
+                  <p className="text-[0.7rem] font-black uppercase tracking-[0.14em] text-[#1D9E75]">
+                    {pickLocaleField(
+                      locale,
+                      line.speakerFr,
+                      line.speakerEn,
+                      line.speakerEs,
+                    )}
+                  </p>
+                  <p
+                    className="mt-1 font-medium text-[#0F6E56]"
+                    lang="fr-CA"
+                  >
+                    {line.frQuebec}
+                  </p>
+                  <p
+                    className="mt-1 text-xs text-[#0F6E56]/70"
+                    lang={locale === "es" ? "es" : "en"}
+                  >
+                    {locale === "es" && line.spanish
+                      ? line.spanish
+                      : line.english}
+                  </p>
+                  {pickLocaleField(
+                    locale,
+                    line.noteFr ?? "",
+                    line.noteEn ?? "",
+                    line.noteEs,
+                  ) ? (
+                    <p className="mt-2 text-[0.7rem] leading-relaxed text-[#0F6E56]/55">
+                      {pickLocaleField(
+                        locale,
+                        line.noteFr ?? "",
+                        line.noteEn ?? "",
+                        line.noteEs,
+                      )}
+                    </p>
+                  ) : null}
+                </li>
+              ))}
+            </ol>
+          </article>
+        </section>
+
+        {/* 8. Quick quiz */}
+        <section
+          aria-label={t(PREVIEW_QUIZ_LABEL, locale)}
+          className="mt-7"
+        >
+          <p className="flex items-center gap-2 text-[0.75rem] font-black uppercase tracking-[0.14em] text-[#0F6E56]/70">
+            <Sparkles className="size-4 text-[#1D9E75]" aria-hidden />
+            {t(PREVIEW_QUIZ_LABEL, locale)}
+          </p>
+          <p className="mt-1 text-xs leading-relaxed text-[#0F6E56]/60">
+            {t(QUIZ_TAGLINE, locale)}
+          </p>
+          <ol role="list" className="mt-3 space-y-3">
+            {content.quizQuestions.map((question, questionIndex) => {
+              const correct = question.options.find(
+                (opt) => opt.id === question.correctOptionId,
+              );
+              return (
+                <li
+                  key={question.id}
+                  className="rounded-2xl border border-teal-100 bg-white p-4 shadow-[0_1px_2px_rgba(15,58,52,0.04)]"
+                >
+                  <p className="text-[0.65rem] font-black uppercase tracking-[0.14em] text-[#0F6E56]/55">
+                    {`${t(QUESTION_NUMBER_LABEL, locale)} ${questionIndex + 1}`}
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-[#0F6E56]">
+                    {pickLocaleField(
+                      locale,
+                      question.promptFr,
+                      question.promptEn,
+                      question.promptEs,
+                    )}
+                  </p>
+                  <ul role="list" className="mt-2 space-y-1.5 text-sm">
+                    {question.options.map((option) => {
+                      const optionGloss =
+                        locale === "en"
+                          ? option.glossEn
+                          : locale === "es"
+                            ? option.glossEs
+                            : undefined;
+                      return (
+                        <li
+                          key={option.id}
+                          className="flex items-start gap-2 rounded-xl bg-[#F4FBF9]/70 px-3 py-2"
+                        >
+                          <span
+                            aria-hidden
+                            className="mt-1 inline-block size-1.5 shrink-0 rounded-full bg-[#1D9E75]"
+                          />
+                          <div className="flex-1">
+                            <p
+                              className="font-medium text-[#0F6E56]"
+                              lang="fr-CA"
+                            >
+                              {option.targetFr}
+                            </p>
+                            {optionGloss && optionGloss.length > 0 ? (
+                              <p
+                                className="mt-1 text-xs text-[#0F6E56]/65"
+                                lang={locale === "es" ? "es" : "en"}
+                              >
+                                {optionGloss}
+                              </p>
+                            ) : null}
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                  {correct ? (
+                    (() => {
+                      const correctGloss =
+                        locale === "en"
+                          ? correct.glossEn
+                          : locale === "es"
+                            ? correct.glossEs
+                            : undefined;
+                      return (
+                        <details className="mt-3 rounded-xl bg-[#DDF4F1]/40 px-3 py-2 text-xs leading-relaxed text-[#0F6E56]/80">
+                          <summary className="cursor-pointer font-bold text-[#0F6E56]">
+                            {t(QUIZ_ANSWER_LABEL, locale)}
+                          </summary>
+                          <p
+                            className="mt-2 font-medium text-[#0F6E56]"
+                            lang="fr-CA"
+                          >
+                            {correct.targetFr}
+                          </p>
+                          {correctGloss && correctGloss.length > 0 ? (
+                            <p
+                              className="mt-1 text-xs text-[#0F6E56]/65"
+                              lang={locale === "es" ? "es" : "en"}
+                            >
+                              {correctGloss}
+                            </p>
+                          ) : null}
+                          <p className="mt-2">
+                            <span className="font-semibold text-[#0F6E56]">
+                              {t(QUIZ_EXPLANATION_LABEL, locale)} :{" "}
+                            </span>
+                            {pickLocaleField(
+                              locale,
+                              question.explanationFr,
+                              question.explanationEn,
+                              question.explanationEs,
+                            )}
+                          </p>
+                        </details>
+                      );
+                    })()
+                  ) : null}
+                </li>
+              );
+            })}
+          </ol>
+        </section>
+
+        {/* 9. Flashcards */}
+        <section
+          aria-label={t(PREVIEW_FLASHCARDS_LABEL, locale)}
+          className="mt-7"
+        >
+          <p className="flex items-center gap-2 text-[0.75rem] font-black uppercase tracking-[0.14em] text-[#0F6E56]/70">
+            <Layers className="size-4 text-[#1D9E75]" aria-hidden />
+            {t(PREVIEW_FLASHCARDS_LABEL, locale)}
+          </p>
+          <ul
+            role="list"
+            className="mt-3 grid gap-3 sm:grid-cols-2"
+          >
+            {content.flashcards.map((card) => (
+              <li
+                key={card.id}
+                className="rounded-2xl border border-teal-100 bg-white p-4 shadow-[0_1px_2px_rgba(15,58,52,0.04)]"
+              >
+                <p
+                  className="text-base font-semibold leading-snug text-[#0F6E56]"
+                  lang="fr-CA"
+                >
+                  {card.frontFr}
+                </p>
+                <p
+                  className="mt-2 text-sm leading-relaxed text-[#0F6E56]/80"
+                  lang={locale === "es" ? "es" : "en"}
+                >
+                  {locale === "es" ? card.backEs : card.backEn}
+                </p>
+                {pickLocaleField(
+                  locale,
+                  card.hintFr ?? "",
+                  card.hintEn ?? "",
+                  card.hintEs,
+                ) ? (
+                  <p className="mt-2 rounded-lg bg-[#FFF4D6]/60 px-3 py-2 text-xs leading-relaxed text-[#5a3f0f]">
+                    <span className="font-semibold text-[#5a3f0f]">
+                      {t(FLASHCARD_HINT_LABEL, locale)}
+                    </span>
+                    {pickLocaleField(
+                      locale,
+                      card.hintFr ?? "",
+                      card.hintEn ?? "",
+                      card.hintEs,
+                    )}
+                  </p>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        {/* 10. Teacher CTA (consent-safe) */}
+        <section
+          aria-label={t(PREVIEW_TEACHER_CTA_LABEL, locale)}
+          className="mt-7 rounded-2xl border border-[#F4B400]/40 bg-[#FFF4D6]/70 p-4 sm:p-5"
+        >
+          <p className="flex items-center gap-2 text-[0.75rem] font-black uppercase tracking-[0.14em] text-[#8a5a17]">
+            <GraduationCap className="size-4 text-[#0F6E56]" aria-hidden />
+            {t(PREVIEW_TEACHER_CTA_LABEL, locale)}
+          </p>
+          <p className="mt-2 text-sm leading-relaxed text-[#5a3f0f]">
+            {teacherCta}
+          </p>
+          <p className="mt-2 text-xs leading-relaxed text-[#5a3f0f]/80">
+            {t(PREVIEW_TEACHER_NOTE, locale)}
+          </p>
+          <Link
+            href={teacherBridgeHref}
+            className="mt-4 inline-flex items-center justify-center gap-2 rounded-full bg-[#0F6E56] px-5 py-2.5 text-sm font-bold text-white shadow-[0_10px_24px_rgba(15,110,86,0.18)] transition hover:bg-[#0b5b47]"
+          >
+            <MessageCircle className="size-4" aria-hidden />
+            {t(PREVIEW_BROWSE_TEACHERS_CTA, locale)}
+          </Link>
+        </section>
+
+        {/* 11. Next-lesson teaser */}
+        <section
+          aria-label={t(PREVIEW_NEXT_LESSON_LABEL, locale)}
+          className="mt-7 rounded-2xl border border-[#0F6E56]/12 bg-[#0F6E56]/5 p-4 sm:p-5"
+        >
+          <p className="flex items-center gap-2 text-[0.75rem] font-black uppercase tracking-[0.14em] text-[#0F6E56]/70">
+            <ArrowRightCircle
+              className="size-4 text-[#1D9E75]"
+              aria-hidden
+            />
+            {t(PREVIEW_NEXT_LESSON_LABEL, locale)}
+          </p>
+          <p className="mt-2 text-sm leading-relaxed text-[#0F6E56]/85 sm:text-[0.95rem]">
+            {nextTeaser}
+          </p>
+        </section>
+      </div>
+    </section>
+  );
+}
+
 export function YoPremiumModuleShell(props: YoPremiumModuleShellProps) {
   const {
     locale,
@@ -1010,12 +1797,13 @@ export function YoPremiumModuleShell(props: YoPremiumModuleShellProps) {
     futureCrumbEs,
   );
 
-  // Pick the first lesson tagged "preview" to render the rich free
-  // preview body. Today only Lesson 1 carries a populated `content`
-  // block; future lessons can opt in by setting `status: "preview"`
-  // and providing their own content block. If none qualify, the
-  // preview section is simply not rendered.
-  const previewLesson = lessons.find(
+  // Collect every lesson tagged "preview" with a populated `content`
+  // body. We render one preview block per lesson, dispatching on the
+  // `content.kind` discriminator: `lesson1` → `LessonOnePreview`,
+  // `lesson2` → `LessonTwoPreview`. Future lessons (3+) opt in by
+  // setting `status: "preview"`, providing a `content` block with
+  // their own `kind`, and registering a renderer here.
+  const previewLessons = lessons.filter(
     (lesson) => lesson.status === "preview" && lesson.content,
   );
 
@@ -1120,15 +1908,34 @@ export function YoPremiumModuleShell(props: YoPremiumModuleShellProps) {
           </div>
         </section>
 
-        {/* Lesson 1 — free preview (rendered only when a lesson is
-            tagged status: "preview" with a populated `content` body) */}
-        {previewLesson ? (
-          <LessonOnePreview
-            locale={locale}
-            lesson={previewLesson}
-            teacherBridgeHref={teacherBridgeHref}
-          />
-        ) : null}
+        {/* Rich free previews — one block per lesson tagged
+            `status: "preview"`. Dispatch on `content.kind` so Lesson 1
+            and Lesson 2 each get their dedicated renderer. */}
+        {previewLessons.map((previewLesson) => {
+          const content = previewLesson.content;
+          if (!content) return null;
+          if (content.kind === "lesson1") {
+            return (
+              <LessonOnePreview
+                key={previewLesson.id}
+                locale={locale}
+                lesson={previewLesson}
+                teacherBridgeHref={teacherBridgeHref}
+              />
+            );
+          }
+          if (content.kind === "lesson2") {
+            return (
+              <LessonTwoPreview
+                key={previewLesson.id}
+                locale={locale}
+                lesson={previewLesson}
+                teacherBridgeHref={teacherBridgeHref}
+              />
+            );
+          }
+          return null;
+        })}
 
         {/* Lesson outline — 7 cards (locked / future status) */}
         <section
@@ -1157,6 +1964,11 @@ export function YoPremiumModuleShell(props: YoPremiumModuleShellProps) {
               const badgeLabel = isPreview
                 ? LESSON_PREVIEW_LABEL
                 : LESSON_LOCKED_LABEL;
+              // The in-page anchor matches the `id="lecon-N"` that
+              // LessonOnePreview / LessonTwoPreview set on their
+              // section element — keep them positional so Lesson 3+
+              // will Just Work the day they ship a preview body.
+              const previewAnchor = `#lecon-${index + 1}`;
               return (
               <li
                 key={lesson.id}
@@ -1170,7 +1982,7 @@ export function YoPremiumModuleShell(props: YoPremiumModuleShellProps) {
                     <h3 className="mt-1 text-base font-semibold leading-snug text-[#0F6E56]">
                       {isPreview ? (
                         <Link
-                          href="#lecon-1"
+                          href={previewAnchor}
                           className="underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F4B400]"
                         >
                           {pickLocaleField(

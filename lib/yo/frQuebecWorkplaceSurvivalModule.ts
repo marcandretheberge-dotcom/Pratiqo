@@ -214,12 +214,19 @@ export interface FrQuebecLessonOneQuizQuestion {
 
 /**
  * Rich free-preview body for a lesson tagged `status: "preview"`.
- * Lesson 1 is the first (and currently only) lesson with a populated
- * `content` block. The shape is intentionally serialisable JSON —
- * no React, no client hooks, no audio URLs, no upload paths. A
- * future migration can persist it 1-for-1 to `yo_lessons.content`.
+ * Lesson 1 was the first lesson with a populated `content` block;
+ * Lesson 2 followed with its own structure (see
+ * `FrQuebecLessonTwoContent` below). Both shapes share a `kind`
+ * discriminator so the renderer can dispatch cleanly without
+ * accidentally rendering one lesson's UI with another lesson's data.
+ *
+ * The shape is intentionally serialisable JSON — no React, no
+ * client hooks, no audio URLs, no upload paths. A future migration
+ * can persist it 1-for-1 to `yo_lessons.content`.
  */
 export interface FrQuebecLessonOneContent {
+  /** Discriminator — pins the renderer dispatch to LessonOnePreview. */
+  kind: "lesson1";
   /** Localized learning objective rendered at the top of the preview. */
   objectiveFr: string;
   objectiveEn: string;
@@ -271,6 +278,229 @@ export interface FrQuebecLessonOneContent {
   teacherBridgePromptEs: string;
 }
 
+// ─────────────────────────────────────────────────────────────────────
+// Lesson 2 — "Comprendre les consignes simples"
+//
+// Lesson 2 ships its own preview body because the pedagogical surface
+// it teaches (instruction comprehension, confirmation, reformulation)
+// is structurally different from Lesson 1's greetings + tu/vous
+// register practice. Sharing the Lesson 1 shape would force every
+// section into the wrong slot.
+//
+// Trilingual contract — read carefully before editing copy:
+//   - UI text (eyebrows, headings, prompts, explanations, scenarios,
+//     micro-skill labels, register hints, notes, helper text, CTAs)
+//     is localized FR / EN / ES.
+//   - Target Quebec French phrases (verbs, oral markers,
+//     confirmation / reformulation formulas, scenario lines, quiz
+//     options, flashcard fronts) stay French in EVERY locale. The
+//     EN / ES glosses are HELPER lines underneath — never
+//     replacements for the French target.
+// ─────────────────────────────────────────────────────────────────────
+
+/**
+ * One of the three micro-skills the learner takes away from
+ * Lesson 2. Rendered as a compact 3-card grid above the verb table.
+ */
+export interface FrQuebecLessonTwoMicroSkill {
+  id: string;
+  labelFr: string;
+  labelEn: string;
+  labelEs: string;
+  hintFr: string;
+  hintEn: string;
+  hintEs: string;
+}
+
+/**
+ * A workplace verb the learner is expected to recognise inside an
+ * instruction. Split between `physical` (move / place / open / …)
+ * and `administrative` (sign / fill / send / …). The `exampleFr`
+ * is a short Quebec-French workplace sentence rendered with
+ * `lang="fr-CA"` so screen readers + browser pronunciation hints
+ * stay correct; `exampleGlossEn` / `exampleGlossEs` are small
+ * helper lines.
+ */
+export interface FrQuebecLessonTwoKeyVerb {
+  id: string;
+  /** Bare French infinitive, lowercase (e.g. "mettre"). */
+  infinitive: string;
+  category: "physical" | "administrative";
+  glossEn: string;
+  glossEs: string;
+  /** Short workplace example sentence in Quebec French. */
+  exampleFr: string;
+  exampleGlossEn: string;
+  exampleGlossEs: string;
+}
+
+/**
+ * A Quebec oral marker (pis, tiens / tenez, là, tantôt). The
+ * `meaning*` fields explain what the marker DOES inside a workplace
+ * sentence (calque, register, rhythm); the `example*` fields show
+ * the marker in context.
+ *
+ * The « tantôt » entry's `meaningEn` MUST anchor on "later today"
+ * and `meaningEs` MUST anchor on "más tarde hoy" — never "soon" /
+ * "hasta pronto" as the primary meaning. This mirrors the Lesson 1
+ * pedagogical pattern (see `corePhrases[*].noteEs` for "À tantôt").
+ */
+export interface FrQuebecLessonTwoOralMarker {
+  id: string;
+  /** Marker as the learner hears it (e.g. "pis", "tantôt"). */
+  marker: string;
+  meaningFr: string;
+  meaningEn: string;
+  meaningEs: string;
+  exampleFr: string;
+  exampleGlossEn: string;
+  exampleGlossEs: string;
+}
+
+/**
+ * A short confirmation or reformulation formula. `targetFr` stays
+ * in Quebec French in every locale; `register*` is a tiny localized
+ * hint (e.g. "neutre" / "neutral" / "neutro"); `gloss*` is a
+ * helper translation line.
+ */
+export interface FrQuebecLessonTwoFormula {
+  id: string;
+  /** The Quebec French phrase the learner practices. */
+  targetFr: string;
+  registerFr: string;
+  registerEn: string;
+  registerEs: string;
+  glossEn: string;
+  glossEs: string;
+}
+
+/**
+ * The single complete mini-scenario for Lesson 2. The supervisor
+ * gives a 3-action instruction, the learner asks ONE precise
+ * clarification using a reformulation formula, then confirms by
+ * restating the concrete elements.
+ *
+ * Line shape reuses `FrQuebecLessonOneDialogueLine` because the
+ * fields (speaker labels, frQuebec, english, spanish, optional
+ * notes) are identical between Lesson 1 and Lesson 2.
+ */
+export interface FrQuebecLessonTwoMiniScenario {
+  titleFr: string;
+  titleEn: string;
+  titleEs: string;
+  contextFr: string;
+  contextEn: string;
+  contextEs: string;
+  lines: readonly FrQuebecLessonOneDialogueLine[];
+}
+
+/**
+ * One flashcard for the learner's self-review. The front is a
+ * Quebec French phrase or single verb; the back is a short
+ * translation / gloss in EN + ES. An optional `hint*` is a tiny
+ * localized memory tip.
+ */
+export interface FrQuebecLessonTwoFlashcard {
+  id: string;
+  /** Front of the card — Quebec French, always rendered with `lang="fr-CA"`. */
+  frontFr: string;
+  backEn: string;
+  backEs: string;
+  hintFr?: string;
+  hintEn?: string;
+  hintEs?: string;
+}
+
+/**
+ * Rich free-preview body for Lesson 2 ("Comprendre les consignes
+ * simples"). The 11 sections shipped are documented in the task
+ * spec; the renderer dispatches on `kind === "lesson2"` to keep
+ * Lesson 1's renderer untouched.
+ */
+export interface FrQuebecLessonTwoContent {
+  /** Discriminator — pins the renderer dispatch to LessonTwoPreview. */
+  kind: "lesson2";
+  /** "Avant de commencer" framing block — one short paragraph per locale. */
+  beforeYouStartFr: string;
+  beforeYouStartEn: string;
+  beforeYouStartEs: string;
+  /** Exactly 3 micro-skills (verbs / confirm / reformulate). */
+  microSkills: readonly [
+    FrQuebecLessonTwoMicroSkill,
+    FrQuebecLessonTwoMicroSkill,
+    FrQuebecLessonTwoMicroSkill,
+  ];
+  /** Exactly 12 key verbs: 6 physical + 6 administrative. */
+  keyVerbs: readonly FrQuebecLessonTwoKeyVerb[];
+  /** Exactly 4 Quebec oral markers (pis / tiens-tenez / là / tantôt). */
+  oralMarkers: readonly [
+    FrQuebecLessonTwoOralMarker,
+    FrQuebecLessonTwoOralMarker,
+    FrQuebecLessonTwoOralMarker,
+    FrQuebecLessonTwoOralMarker,
+  ];
+  /** Exactly 5 confirmation formulas. */
+  confirmationFormulas: readonly [
+    FrQuebecLessonTwoFormula,
+    FrQuebecLessonTwoFormula,
+    FrQuebecLessonTwoFormula,
+    FrQuebecLessonTwoFormula,
+    FrQuebecLessonTwoFormula,
+  ];
+  /** Exactly 5 reformulation formulas (questions / clarifications). */
+  reformulationFormulas: readonly [
+    FrQuebecLessonTwoFormula,
+    FrQuebecLessonTwoFormula,
+    FrQuebecLessonTwoFormula,
+    FrQuebecLessonTwoFormula,
+    FrQuebecLessonTwoFormula,
+  ];
+  /** Single 5-to-7-line scenario: 3-action instruction → clarify → confirm. */
+  miniScenario: FrQuebecLessonTwoMiniScenario;
+  /**
+   * Exactly 5 quick quiz questions. Reuses
+   * `FrQuebecLessonOneQuizQuestion` because the option shape
+   * (`{ id, targetFr, glossEn?, glossEs? }`) and question shape are
+   * identical — the Quebec French target stays prominent in every
+   * locale, EN / ES are helper glosses.
+   */
+  quizQuestions: readonly [
+    FrQuebecLessonOneQuizQuestion,
+    FrQuebecLessonOneQuizQuestion,
+    FrQuebecLessonOneQuizQuestion,
+    FrQuebecLessonOneQuizQuestion,
+    FrQuebecLessonOneQuizQuestion,
+  ];
+  /** 8 to 12 flashcards sourced from this lesson's verbs / formulas / markers. */
+  flashcards: readonly FrQuebecLessonTwoFlashcard[];
+  /**
+   * Consent-safe teacher-practice CTA — must include a
+   * "ready / prêt / listo" cue per locale and must NEVER mention
+   * automatic teacher routing, voice recording, or learner-data
+   * forwarding.
+   */
+  teacherCta: {
+    promptFr: string;
+    promptEn: string;
+    promptEs: string;
+  };
+  /** Next-lesson teaser pointing at Leçon 3 (still upcoming). */
+  nextLessonTeaser: {
+    teaserFr: string;
+    teaserEn: string;
+    teaserEs: string;
+  };
+}
+
+/**
+ * Discriminated union of every preview-body shape known to the
+ * Quebec French module. The renderer narrows on `content.kind` to
+ * dispatch between `LessonOnePreview` and `LessonTwoPreview`.
+ */
+export type FrQuebecModuleLessonContent =
+  | FrQuebecLessonOneContent
+  | FrQuebecLessonTwoContent;
+
 /** A single lesson card inside the future Quebec French module. */
 export interface FrQuebecModuleLesson {
   /** Stable id, used as React key + future Supabase column. */
@@ -300,9 +530,10 @@ export interface FrQuebecModuleLesson {
   /**
    * Rich free-preview body. Populated only when `status === "preview"`.
    * Other lessons stay outline-only (`undefined`) until they land in
-   * a future PR.
+   * a future PR. The union is discriminated by `content.kind` so the
+   * renderer can dispatch to the correct preview component.
    */
-  content?: FrQuebecLessonOneContent;
+  content?: FrQuebecModuleLessonContent;
 }
 
 /** Top-level module shell. */
@@ -490,6 +721,7 @@ export const frQuebecWorkplaceSurvivalModule: FrQuebecWorkplaceSurvivalModuleShe
         teacherBridgePromptEs:
           "Pídale a un profesor de Pratiqo que le ayude a variar sus saludos según el contexto.",
         content: {
+          kind: "lesson1",
           objectiveFr:
             "Apprendre à saluer naturellement au travail au Québec, comprendre quand utiliser « tu » ou « vous », et répondre simplement aux premières questions d’une journée de travail.",
           objectiveEn:
@@ -1272,12 +1504,12 @@ export const frQuebecWorkplaceSurvivalModule: FrQuebecWorkplaceSurvivalModuleShe
         },
       },
       {
-        id: "fr-qc-mod1-l2",
-        status: "planned",
+        id: "comprendre-consignes-simples",
+        status: "preview",
         accessStatus: "coming_soon",
         titleFr: "Comprendre les consignes simples",
         titleEn: "Understanding simple instructions",
-        titleEs: "Entender instrucciones sencillas",
+        titleEs: "Comprender instrucciones simples",
         estimatedMinutes: 12,
         scenarioFr:
           "On vous donne quelques consignes rapides : où ranger une boîte, à quelle heure prendre votre pause, quel formulaire signer. Vous voulez confirmer sans bloquer la chaîne de conversation.",
@@ -1358,6 +1590,751 @@ export const frQuebecWorkplaceSurvivalModule: FrQuebecWorkplaceSurvivalModuleShe
           "Practise with a teacher: ask for five short instructions to restate back.",
         teacherBridgePromptEs:
           "Practique con un profesor: pídale cinco mini-instrucciones para reformular.",
+        content: {
+          kind: "lesson2",
+          beforeYouStartFr:
+            "Mal comprendre une consigne au travail, c’est normal — surtout les premiers temps. Au Québec, on s’attend à ce que vous confirmiez en une phrase courte, ou que vous demandiez poliment de redire si quelque chose n’est pas clair. Faire semblant d’avoir compris coûte beaucoup plus cher qu’une petite question.",
+          beforeYouStartEn:
+            "Misunderstanding an instruction at work is completely normal — especially in the early weeks. In Quebec, the expectation is that you confirm in one short sentence, or politely ask for a rephrasing if something isn’t clear. Pretending to understand costs a lot more than asking a small question.",
+          beforeYouStartEs:
+            "No entender una instrucción en el trabajo es totalmente normal — sobre todo al principio. En Quebec se espera que confirme con una frase corta, o que pida educadamente que se lo repitan si algo no queda claro. Hacer como si hubiera entendido sale mucho más caro que una pequeña pregunta.",
+          microSkills: [
+            {
+              id: "ms-verbs",
+              labelFr: "Repérer les verbes-clés d’une consigne",
+              labelEn: "Spot the key verbs in an instruction",
+              labelEs: "Identificar los verbos clave de una instrucción",
+              hintFr:
+                "Le verbe vous dit l’ACTION attendue : mettre, signer, appeler. Tout le reste est du contexte.",
+              hintEn:
+                "The verb tells you the ACTION expected: put, sign, call. Everything else is context.",
+              hintEs:
+                "El verbo le dice la ACCIÓN esperada: poner, firmar, llamar. Todo lo demás es contexto.",
+            },
+            {
+              id: "ms-confirm",
+              labelFr: "Confirmer une tâche en une phrase courte",
+              labelEn: "Confirm a task in one short sentence",
+              labelEs: "Confirmar una tarea con una frase corta",
+              hintFr:
+                "« Pas de problème, je m’en occupe. » suffit dans la plupart des cas — clair, court, sans drame.",
+              hintEn:
+                "« Pas de problème, je m’en occupe. » is enough in most cases — short, clear, no drama.",
+              hintEs:
+                "« Pas de problème, je m’en occupe. » suele bastar — corto, claro, sin drama.",
+            },
+            {
+              id: "ms-reformulate",
+              labelFr: "Demander une reformulation sans embarras",
+              labelEn: "Ask for a rephrasing without embarrassment",
+              labelEs: "Pedir una reformulación sin sentir vergüenza",
+              hintFr:
+                "Une question polie est toujours mieux qu’une consigne mal exécutée. Commencez par « Excuse-moi » ou « Pardon ».",
+              hintEn:
+                "A polite question always beats a botched task. Start with « Excuse-moi » or « Pardon ».",
+              hintEs:
+                "Una pregunta cortés siempre vale más que una tarea mal hecha. Empiece por « Excuse-moi » o « Pardon ».",
+            },
+          ],
+          keyVerbs: [
+            {
+              id: "v-mettre",
+              infinitive: "mettre",
+              category: "physical",
+              glossEn: "to put / to place",
+              glossEs: "poner / colocar",
+              exampleFr: "Mets la boîte sur l’étagère.",
+              exampleGlossEn: "Put the box on the shelf.",
+              exampleGlossEs: "Pon la caja en el estante.",
+            },
+            {
+              id: "v-prendre",
+              infinitive: "prendre",
+              category: "physical",
+              glossEn: "to take / to pick up",
+              glossEs: "tomar / coger",
+              exampleFr: "Prends ton casque avant d’entrer.",
+              exampleGlossEn: "Take your helmet before going in.",
+              exampleGlossEs: "Toma tu casco antes de entrar.",
+            },
+            {
+              id: "v-apporter",
+              infinitive: "apporter",
+              category: "physical",
+              glossEn: "to bring",
+              glossEs: "traer",
+              exampleFr: "Apporte le formulaire à Marie, s’il te plaît.",
+              exampleGlossEn: "Bring the form to Marie, please.",
+              exampleGlossEs: "Trae el formulario a Marie, por favor.",
+            },
+            {
+              id: "v-ranger",
+              infinitive: "ranger",
+              category: "physical",
+              glossEn: "to put away / to tidy",
+              glossEs: "guardar / ordenar",
+              exampleFr: "Range les outils dans l’armoire à la fin du quart.",
+              exampleGlossEn: "Put the tools away in the cabinet at the end of the shift.",
+              exampleGlossEs: "Guarda las herramientas en el armario al final del turno.",
+            },
+            {
+              id: "v-ouvrir",
+              infinitive: "ouvrir",
+              category: "physical",
+              glossEn: "to open",
+              glossEs: "abrir",
+              exampleFr: "Ouvre la porte arrière du camion.",
+              exampleGlossEn: "Open the back door of the truck.",
+              exampleGlossEs: "Abre la puerta trasera del camión.",
+            },
+            {
+              id: "v-fermer",
+              infinitive: "fermer",
+              category: "physical",
+              glossEn: "to close / to shut down",
+              glossEs: "cerrar / apagar",
+              exampleFr: "Ferme l’ordinateur avant de partir.",
+              exampleGlossEn: "Shut down the computer before leaving.",
+              exampleGlossEs: "Apaga el ordenador antes de salir.",
+            },
+            {
+              id: "v-signer",
+              infinitive: "signer",
+              category: "administrative",
+              glossEn: "to sign",
+              glossEs: "firmar",
+              exampleFr: "Signe la feuille de présence à l’arrivée.",
+              exampleGlossEn: "Sign the attendance sheet when you arrive.",
+              exampleGlossEs: "Firma la hoja de asistencia al llegar.",
+            },
+            {
+              id: "v-remplir",
+              infinitive: "remplir",
+              category: "administrative",
+              glossEn: "to fill out",
+              glossEs: "rellenar / completar",
+              exampleFr: "Remplis le bon de commande en majuscules.",
+              exampleGlossEn: "Fill out the order form in uppercase letters.",
+              exampleGlossEs: "Rellena el formulario de pedido en mayúsculas.",
+            },
+            {
+              id: "v-verifier",
+              infinitive: "vérifier",
+              category: "administrative",
+              glossEn: "to check / to verify",
+              glossEs: "verificar / comprobar",
+              exampleFr: "Vérifie la quantité avant l’envoi.",
+              exampleGlossEn: "Check the quantity before shipping.",
+              exampleGlossEs: "Verifica la cantidad antes del envío.",
+            },
+            {
+              id: "v-envoyer",
+              infinitive: "envoyer",
+              category: "administrative",
+              glossEn: "to send",
+              glossEs: "enviar",
+              exampleFr: "Envoie le courriel à l’équipe avant midi.",
+              exampleGlossEn: "Send the email to the team before noon.",
+              exampleGlossEs: "Envía el correo al equipo antes del mediodía.",
+            },
+            {
+              id: "v-imprimer",
+              infinitive: "imprimer",
+              category: "administrative",
+              glossEn: "to print",
+              glossEs: "imprimir",
+              exampleFr: "Imprime le rapport en deux copies.",
+              exampleGlossEn: "Print the report in two copies.",
+              exampleGlossEs: "Imprime el informe en dos copias.",
+            },
+            {
+              id: "v-appeler",
+              infinitive: "appeler",
+              category: "administrative",
+              glossEn: "to call (on the phone)",
+              glossEs: "llamar (por teléfono)",
+              exampleFr: "Appelle Mathieu pour la livraison.",
+              exampleGlossEn: "Call Mathieu about the delivery.",
+              exampleGlossEs: "Llama a Mathieu por la entrega.",
+            },
+          ],
+          oralMarkers: [
+            {
+              id: "om-pis",
+              marker: "pis",
+              meaningFr:
+                "Calque oral de « puis ». Sert à enchaîner rapidement une consigne ou un ajout dans la même phrase.",
+              meaningEn:
+                "Spoken short form of « puis » (« and then »). Used to add a quick follow-up or extra step in the same sentence.",
+              meaningEs:
+                "Forma oral de « puis » (« y luego »). Se usa para añadir rápidamente una continuación o un paso extra en la misma frase.",
+              exampleFr:
+                "Mets la boîte sur l’étagère, pis n’oublie pas la signature.",
+              exampleGlossEn:
+                "Put the box on the shelf, and don’t forget the signature.",
+              exampleGlossEs:
+                "Pon la caja en el estante, y no olvides la firma.",
+            },
+            {
+              id: "om-tiens-tenez",
+              marker: "tiens / tenez",
+              meaningFr:
+                "Sert à tendre un objet ou un document. « Tiens » au tutoiement, « tenez » au vouvoiement.",
+              meaningEn:
+                "Used when handing someone an object or a document. « Tiens » with « tu », « tenez » with « vous ».",
+              meaningEs:
+                "Se usa al pasarle un objeto o un documento a alguien. « Tiens » con « tu », « tenez » con « vous ».",
+              exampleFr: "Tenez, voici le formulaire à signer.",
+              exampleGlossEn: "Here you go, this is the form to sign.",
+              exampleGlossEs: "Tenga, este es el formulario a firmar.",
+            },
+            {
+              id: "om-la",
+              marker: "là",
+              meaningFr:
+                "Petit marqueur d’insistance ou de localisation dans le temps : « en ce moment », « dans ce cas ». Adoucit aussi une consigne.",
+              meaningEn:
+                "A small emphasis / situating marker: « right now », « in this case ». Also softens an instruction.",
+              meaningEs:
+                "Un pequeño marcador de énfasis o de situación temporal: « ahora mismo », « en este caso ». También suaviza una instrucción.",
+              exampleFr: "Ça, là, c’est pour le client de demain.",
+              exampleGlossEn: "That one, right there, is for tomorrow’s client.",
+              exampleGlossEs: "Eso, justo ahí, es para el cliente de mañana.",
+            },
+            {
+              id: "om-tantot",
+              marker: "tantôt",
+              meaningFr:
+                "Au Québec, « tantôt » veut dire « plus tard aujourd’hui » — pas « bientôt » au sens général. Marqueur de temps très courant à l’oral.",
+              meaningEn:
+                "In Quebec, « tantôt » means « later today » — not « soon » in general. A very common spoken time marker.",
+              meaningEs:
+                "En Quebec, « tantôt » significa « más tarde hoy » — no es un sinónimo general de un futuro lejano. Un marcador temporal muy habitual en el habla.",
+              exampleFr: "Je m’en occupe tantôt, après ma pause.",
+              exampleGlossEn:
+                "I’ll take care of it later today, after my break.",
+              exampleGlossEs:
+                "Me encargo más tarde hoy, después de mi pausa.",
+            },
+          ],
+          confirmationFormulas: [
+            {
+              id: "cf-parfait",
+              targetFr: "Parfait.",
+              registerFr: "neutre",
+              registerEn: "neutral",
+              registerEs: "neutro",
+              glossEn: "« Perfect. » — a short, warm acknowledgement.",
+              glossEs: "« Perfecto. » — un asentimiento corto y cálido.",
+            },
+            {
+              id: "cf-okbon",
+              targetFr: "OK, c’est bon.",
+              registerFr: "informel",
+              registerEn: "informal",
+              registerEs: "informal",
+              glossEn: "« OK, that works. » — light and conversational.",
+              glossEs: "« OK, está bien. » — informal y conversacional.",
+            },
+            {
+              id: "cf-daccord",
+              targetFr: "D’accord, je m’en occupe.",
+              registerFr: "neutre",
+              registerEn: "neutral",
+              registerEs: "neutro",
+              glossEn: "« All right, I’ll take care of it. »",
+              glossEs: "« De acuerdo, yo me encargo. »",
+            },
+            {
+              id: "cf-pasdeprobleme",
+              targetFr: "Pas de problème.",
+              registerFr: "informel",
+              registerEn: "informal",
+              registerEs: "informal",
+              glossEn: "« No problem. » — friendly and reassuring.",
+              glossEs: "« Sin problema. » — amable y tranquilizador.",
+            },
+            {
+              id: "cf-compris",
+              targetFr: "Compris.",
+              registerFr: "neutre",
+              registerEn: "neutral",
+              registerEs: "neutro",
+              glossEn: "« Got it. » — short and efficient.",
+              glossEs: "« Entendido. » — breve y eficiente.",
+            },
+          ],
+          reformulationFormulas: [
+            {
+              id: "rf-excusemoi",
+              targetFr: "Excuse-moi, t’as dit quoi pour [X] ?",
+              registerFr: "informel",
+              registerEn: "informal",
+              registerEs: "informal",
+              glossEn:
+                "« Sorry, what did you say about [X]? » — friendly check-back between coworkers.",
+              glossEs:
+                "« Perdona, ¿qué dijiste sobre [X]? » — comprobación amable entre compañeros.",
+            },
+            {
+              id: "rf-pardonredire",
+              targetFr: "Pardon, peux-tu redire la dernière partie ?",
+              registerFr: "neutre",
+              registerEn: "neutral",
+              registerEs: "neutro",
+              glossEn:
+                "« Sorry, could you say the last part again? » — polite and precise.",
+              glossEs:
+                "« Perdón, ¿puedes repetir la última parte? » — cortés y preciso.",
+            },
+            {
+              id: "rf-attendsetagere",
+              targetFr: "Attends — la boîte sur l’étagère, c’est ça ?",
+              registerFr: "informel",
+              registerEn: "informal",
+              registerEs: "informal",
+              glossEn:
+                "« Hold on — the box on the shelf, right? » — short clarification on one concrete detail.",
+              glossEs:
+                "« Espera — la caja en el estante, ¿es eso? » — aclaración corta sobre un detalle concreto.",
+            },
+            {
+              id: "rf-massurer",
+              targetFr:
+                "Je veux juste m’assurer — c’est avant ou après la pause ?",
+              registerFr: "neutre",
+              registerEn: "neutral",
+              registerEs: "neutro",
+              glossEn:
+                "« I just want to make sure — is it before or after the break? »",
+              glossEs:
+                "« Solo quiero asegurarme — ¿es antes o después de la pausa? »",
+            },
+            {
+              id: "rf-depuisledebut",
+              targetFr:
+                "Désolé, je veux être sûr de bien faire — peux-tu reprendre depuis le début ?",
+              registerFr: "neutre",
+              registerEn: "neutral",
+              registerEs: "neutro",
+              glossEn:
+                "« Sorry, I want to be sure I do it right — could you start over from the beginning? »",
+              glossEs:
+                "« Perdona, quiero asegurarme de hacerlo bien — ¿puedes empezar desde el principio? »",
+            },
+          ],
+          miniScenario: {
+            titleFr: "Trois consignes en cinq minutes",
+            titleEn: "Three instructions in five minutes",
+            titleEs: "Tres instrucciones en cinco minutos",
+            contextFr:
+              "Le superviseur passe à votre poste avec trois consignes rapides. L’objectif : confirmer en une phrase claire après avoir vérifié un point que vous n’aviez pas saisi du premier coup.",
+            contextEn:
+              "Your supervisor stops by your desk with three quick instructions. The goal: confirm in one clear sentence after checking a point you didn’t catch on the first pass.",
+            contextEs:
+              "Su responsable pasa por su puesto con tres instrucciones rápidas. El objetivo: confirmar con una frase clara tras comprobar un detalle que no captó a la primera.",
+            lines: [
+              {
+                speakerFr: "Superviseur",
+                speakerEn: "Supervisor",
+                speakerEs: "Responsable",
+                frQuebec:
+                  "Mets la boîte sur l’étagère, ensuite signe le formulaire, pis appelle Mathieu pour la livraison.",
+                english:
+                  "Put the box on the shelf, then sign the form, and call Mathieu about the delivery.",
+                spanish:
+                  "Pon la caja en el estante, luego firma el formulario, y llama a Mathieu por la entrega.",
+                noteFr:
+                  "Trois actions enchaînées : mets, signe, appelle. Le « pis » marque le dernier ajout.",
+                noteEn:
+                  "Three chained actions: put, sign, call. « Pis » marks the final add-on.",
+                noteEs:
+                  "Tres acciones encadenadas: pon, firma, llama. « Pis » marca el último añadido.",
+              },
+              {
+                speakerFr: "Vous",
+                speakerEn: "You",
+                speakerEs: "Usted",
+                frQuebec: "Attends — la boîte sur l’étagère, c’est ça ?",
+                english: "Hold on — the box on the shelf, right?",
+                spanish: "Espera — la caja en el estante, ¿es eso?",
+                noteFr:
+                  "Clarification ciblée sur un seul détail. Polie, brève, et utile.",
+                noteEn:
+                  "Targeted clarification on a single detail. Polite, brief, useful.",
+                noteEs:
+                  "Aclaración dirigida a un solo detalle. Cortés, breve y útil.",
+              },
+              {
+                speakerFr: "Superviseur",
+                speakerEn: "Supervisor",
+                speakerEs: "Responsable",
+                frQuebec:
+                  "Oui, l’étagère du fond, à droite. Pis tu peux signer après.",
+                english:
+                  "Yes, the back shelf, on the right. And you can sign after that.",
+                spanish:
+                  "Sí, el estante del fondo, a la derecha. Y puedes firmar después.",
+              },
+              {
+                speakerFr: "Vous",
+                speakerEn: "You",
+                speakerEs: "Usted",
+                frQuebec:
+                  "Donc je mets la boîte, je signe le formulaire, puis j’appelle Mathieu — c’est ça ?",
+                english:
+                  "So I put the box, I sign the form, then I call Mathieu — is that right?",
+                spanish:
+                  "Entonces pongo la caja, firmo el formulario y luego llamo a Mathieu — ¿es así?",
+                noteFr:
+                  "Reformulation complète des éléments concrets. Très bien vu au Québec.",
+                noteEn:
+                  "Full restatement of the concrete elements. Very well received in Quebec.",
+                noteEs:
+                  "Reformulación completa de los elementos concretos. Muy bien visto en Quebec.",
+              },
+              {
+                speakerFr: "Superviseur",
+                speakerEn: "Supervisor",
+                speakerEs: "Responsable",
+                frQuebec: "Exactement. Merci.",
+                english: "Exactly. Thanks.",
+                spanish: "Exactamente. Gracias.",
+              },
+            ],
+          },
+          quizQuestions: [
+            {
+              id: "l2-q1",
+              promptFr:
+                "Le superviseur vient de vous donner trois actions : mettre la boîte, signer le formulaire, appeler Mathieu. Quelle réplique confirme l’ensemble en une seule phrase ?",
+              promptEn:
+                "Your supervisor just gave you three actions: put the box, sign the form, call Mathieu. Which line confirms all three in a single sentence?",
+              promptEs:
+                "Su responsable acaba de darle tres acciones: poner la caja, firmar el formulario, llamar a Mathieu. ¿Qué frase confirma las tres en una sola intervención?",
+              options: [
+                {
+                  id: "l2-q1-a",
+                  targetFr: "OK.",
+                  glossEn: "Too short — doesn’t restate the three actions.",
+                  glossEs: "Demasiado corto — no reformula las tres acciones.",
+                },
+                {
+                  id: "l2-q1-b",
+                  targetFr:
+                    "Donc je mets la boîte, je signe le formulaire, puis j’appelle Mathieu — c’est ça ?",
+                  glossEn:
+                    "Full restatement of all three concrete actions in order.",
+                  glossEs:
+                    "Reformulación completa de las tres acciones concretas en orden.",
+                },
+                {
+                  id: "l2-q1-c",
+                  targetFr: "Mets la boîte.",
+                  glossEn:
+                    "Repeats only the first action — drops the other two.",
+                  glossEs:
+                    "Repite solo la primera acción — omite las otras dos.",
+                },
+                {
+                  id: "l2-q1-d",
+                  targetFr: "À tantôt.",
+                  glossEn: "« See you later today » — wrong moment, doesn’t confirm.",
+                  glossEs:
+                    "« Hasta más tarde hoy » — momento equivocado, no confirma nada.",
+                },
+              ],
+              correctOptionId: "l2-q1-b",
+              explanationFr:
+                "Reprendre les trois actions concrètes (la boîte, le formulaire, Mathieu) montre clairement que vous avez tout saisi — c’est exactement la reformulation attendue.",
+              explanationEn:
+                "Restating all three concrete actions (the box, the form, Mathieu) clearly shows you caught the whole instruction — exactly the kind of restatement expected.",
+              explanationEs:
+                "Reformular las tres acciones concretas (la caja, el formulario, Mathieu) demuestra claramente que captó toda la instrucción — es justo el tipo de reformulación esperada.",
+            },
+            {
+              id: "l2-q2",
+              promptFr:
+                "Vous avez manqué seulement la dernière étape. Quelle reformulation est la plus polie et la plus précise ?",
+              promptEn:
+                "You only missed the last step. Which rephrasing is the most polite and precise?",
+              promptEs:
+                "Solo se le pasó el último paso. ¿Qué reformulación es la más cortés y precisa?",
+              options: [
+                {
+                  id: "l2-q2-a",
+                  targetFr: "Quoi ?",
+                  glossEn: "Too blunt — feels impatient.",
+                  glossEs: "Demasiado seco — suena impaciente.",
+                },
+                {
+                  id: "l2-q2-b",
+                  targetFr: "Pardon, peux-tu redire la dernière partie ?",
+                  glossEn:
+                    "Polite, targeted, and explicit about which part you missed.",
+                  glossEs:
+                    "Cortés, dirigido y explícito sobre la parte que se perdió.",
+                },
+                {
+                  id: "l2-q2-c",
+                  targetFr: "Je n’ai rien compris.",
+                  glossEn:
+                    "Overstates the issue — asks for everything to be repeated.",
+                  glossEs:
+                    "Exagera el problema — pide que repitan todo.",
+                },
+                {
+                  id: "l2-q2-d",
+                  targetFr: "Laisse, c’est bon.",
+                  glossEn:
+                    "Avoidant — pretends to understand instead of asking.",
+                  glossEs:
+                    "Evasivo — finge entender en lugar de preguntar.",
+                },
+              ],
+              correctOptionId: "l2-q2-b",
+              explanationFr:
+                "« Pardon » + une demande ciblée sur « la dernière partie » montre que vous avez suivi presque tout, et que vous voulez juste vérifier le dernier point.",
+              explanationEn:
+                "« Pardon » + a request focused on « the last part » signals you followed almost everything and just want to check the final point.",
+              explanationEs:
+                "« Pardon » + una petición centrada en « la última parte » muestra que siguió casi todo y solo quiere comprobar el último punto.",
+            },
+            {
+              id: "l2-q3",
+              promptFr:
+                "Un collègue vous dit : « Je le fais tantôt. » Que veut-il dire ?",
+              promptEn:
+                "A coworker tells you: « Je le fais tantôt. » What do they mean?",
+              promptEs:
+                "Un compañero le dice: « Je le fais tantôt. » ¿Qué quiere decir?",
+              options: [
+                {
+                  id: "l2-q3-a",
+                  targetFr: "Je le fais demain.",
+                  glossEn: "« I’ll do it tomorrow. » — wrong day.",
+                  glossEs: "« Lo hago mañana. » — día equivocado.",
+                },
+                {
+                  id: "l2-q3-b",
+                  targetFr: "Je le fais immédiatement.",
+                  glossEn: "« I’m doing it right now. » — too immediate.",
+                  glossEs: "« Lo hago ahora mismo. » — demasiado inmediato.",
+                },
+                {
+                  id: "l2-q3-c",
+                  targetFr: "Je le fais plus tard aujourd’hui.",
+                  glossEn: "« I’ll do it later today. » — the Quebec meaning of « tantôt ».",
+                  glossEs:
+                    "« Lo hago más tarde hoy. » — el sentido quebequense de « tantôt ».",
+                },
+                {
+                  id: "l2-q3-d",
+                  targetFr: "Je le fais la semaine prochaine.",
+                  glossEn: "« I’ll do it next week. » — wrong horizon.",
+                  glossEs:
+                    "« Lo hago la semana que viene. » — horizonte equivocado.",
+                },
+              ],
+              correctOptionId: "l2-q3-c",
+              explanationFr:
+                "Au Québec, « tantôt » veut dire « plus tard aujourd’hui ». Le collègue s’engage à faire la tâche dans la journée — pas « bientôt » au sens général, pas demain.",
+              explanationEn:
+                "In Quebec, « tantôt » means « later today ». The coworker is committing to do the task within the day — not « soon » in general, not tomorrow.",
+              explanationEs:
+                "En Quebec, « tantôt » significa « más tarde hoy ». El compañero se compromete a hacer la tarea durante el mismo día — no es un futuro lejano ni mañana.",
+            },
+            {
+              id: "l2-q4",
+              promptFr:
+                "Quel verbe complète correctement la phrase : « ___ le formulaire avant midi. » ?",
+              promptEn:
+                "Which verb correctly fills in: « ___ le formulaire avant midi. »?",
+              promptEs:
+                "¿Qué verbo completa correctamente la frase: « ___ le formulaire avant midi. »?",
+              options: [
+                {
+                  id: "l2-q4-a",
+                  targetFr: "Ouvre",
+                  glossEn: "« Open » — opens it but doesn’t finish the task.",
+                  glossEs: "« Abre » — lo abre pero no termina la tarea.",
+                },
+                {
+                  id: "l2-q4-b",
+                  targetFr: "Range",
+                  glossEn:
+                    "« Put away » — odd before signing it.",
+                  glossEs:
+                    "« Guarda » — extraño antes de firmarlo.",
+                },
+                {
+                  id: "l2-q4-c",
+                  targetFr: "Signe",
+                  glossEn:
+                    "« Sign » — the natural action requested before noon.",
+                  glossEs:
+                    "« Firma » — la acción natural pedida antes del mediodía.",
+                },
+                {
+                  id: "l2-q4-d",
+                  targetFr: "Ferme",
+                  glossEn: "« Close » — wrong verb for a form.",
+                  glossEs: "« Cierra » — verbo incorrecto para un formulario.",
+                },
+              ],
+              correctOptionId: "l2-q4-c",
+              explanationFr:
+                "« Signer le formulaire » est l’action administrative la plus naturelle avec un délai. Les autres verbes sont possibles, mais hors contexte ici.",
+              explanationEn:
+                "« Signer le formulaire » is the most natural administrative action paired with a deadline. The other verbs are syntactically possible but contextually off.",
+              explanationEs:
+                "« Signer le formulaire » es la acción administrativa más natural con un plazo. Los demás verbos son sintácticamente posibles, pero fuera de contexto.",
+            },
+            {
+              id: "l2-q5",
+              promptFr:
+                "Quel marqueur oral québécois introduit un ajout rapide comme « ___ n’oublie pas la signature » ?",
+              promptEn:
+                "Which Quebec oral marker introduces a quick add-on like « ___ n’oublie pas la signature »?",
+              promptEs:
+                "¿Qué marcador oral quebequense introduce un añadido rápido como « ___ n’oublie pas la signature »?",
+              options: [
+                {
+                  id: "l2-q5-a",
+                  targetFr: "tantôt",
+                  glossEn: "« later today » — a time marker, not a connector.",
+                  glossEs: "« más tarde hoy » — marcador temporal, no conector.",
+                },
+                {
+                  id: "l2-q5-b",
+                  targetFr: "pis",
+                  glossEn:
+                    "« and (then) » — a soft Quebec connector for a quick add-on.",
+                  glossEs:
+                    "« y (luego) » — conector quebequense suave para un añadido rápido.",
+                },
+                {
+                  id: "l2-q5-c",
+                  targetFr: "là",
+                  glossEn:
+                    "Emphasis / situating marker — not a connector for an add-on.",
+                  glossEs:
+                    "Marcador de énfasis o de situación — no conecta un añadido.",
+                },
+                {
+                  id: "l2-q5-d",
+                  targetFr: "tiens",
+                  glossEn:
+                    "Used when handing someone an object — wrong function here.",
+                  glossEs:
+                    "Se usa al pasar un objeto a alguien — función equivocada aquí.",
+                },
+              ],
+              correctOptionId: "l2-q5-b",
+              explanationFr:
+                "« Pis » est la forme orale de « puis » au Québec. Il sert exactement à enchaîner un ajout rapide à la consigne précédente.",
+              explanationEn:
+                "« Pis » is the Quebec spoken form of « puis » (« and then »). It’s exactly the connector you use to add a quick follow-up to the previous instruction.",
+              explanationEs:
+                "« Pis » es la forma oral de « puis » (« y luego ») en Quebec. Sirve justo para encadenar un añadido rápido a la instrucción anterior.",
+            },
+          ],
+          flashcards: [
+            {
+              id: "fc-mettre",
+              frontFr: "mettre — Mets la boîte sur l’étagère.",
+              backEn: "to put / to place. Put the box on the shelf.",
+              backEs: "poner / colocar. Pon la caja en el estante.",
+              hintFr: "Action de poser quelque chose à un endroit précis.",
+              hintEn: "Placing something at a specific spot.",
+              hintEs: "Colocar algo en un lugar concreto.",
+            },
+            {
+              id: "fc-signer",
+              frontFr: "signer — Signe la feuille de présence.",
+              backEn: "to sign. Sign the attendance sheet.",
+              backEs: "firmar. Firma la hoja de asistencia.",
+            },
+            {
+              id: "fc-verifier",
+              frontFr: "vérifier — Vérifie la quantité avant l’envoi.",
+              backEn: "to check / to verify. Check the quantity before shipping.",
+              backEs:
+                "verificar / comprobar. Verifica la cantidad antes del envío.",
+            },
+            {
+              id: "fc-appeler",
+              frontFr: "appeler — Appelle Mathieu pour la livraison.",
+              backEn: "to call (phone). Call Mathieu about the delivery.",
+              backEs: "llamar (por teléfono). Llama a Mathieu por la entrega.",
+            },
+            {
+              id: "fc-parfait",
+              frontFr: "Parfait.",
+              backEn: "« Perfect. » — short, warm confirmation.",
+              backEs: "« Perfecto. » — confirmación breve y cálida.",
+              hintFr: "Confirme sans en faire trop.",
+              hintEn: "Confirms without overdoing it.",
+              hintEs: "Confirma sin pasarse.",
+            },
+            {
+              id: "fc-daccord",
+              frontFr: "D’accord, je m’en occupe.",
+              backEn: "« All right, I’ll take care of it. »",
+              backEs: "« De acuerdo, yo me encargo. »",
+            },
+            {
+              id: "fc-excusemoi",
+              frontFr: "Excuse-moi, t’as dit quoi pour [X] ?",
+              backEn: "« Sorry, what did you say about [X]? »",
+              backEs: "« Perdona, ¿qué dijiste sobre [X]? »",
+              hintFr: "Reformulation amicale entre collègues.",
+              hintEn: "Friendly check-back between coworkers.",
+              hintEs: "Comprobación amable entre compañeros.",
+            },
+            {
+              id: "fc-pardonredire",
+              frontFr: "Pardon, peux-tu redire la dernière partie ?",
+              backEn: "« Sorry, could you say the last part again? »",
+              backEs: "« Perdón, ¿puedes repetir la última parte? »",
+            },
+            {
+              id: "fc-pis",
+              frontFr: "pis",
+              backEn: "spoken « puis » — « and (then) ». Adds a quick step.",
+              backEs:
+                "forma oral de « puis » — « y (luego) ». Añade un paso rápido.",
+              hintFr: "« Mets la boîte, pis n’oublie pas la signature. »",
+              hintEn: "« Put the box, and don’t forget the signature. »",
+              hintEs: "« Pon la caja, y no olvides la firma. »",
+            },
+            {
+              id: "fc-tantot",
+              frontFr: "tantôt",
+              backEn: "« later today » — NOT « soon » in general.",
+              backEs: "« más tarde hoy » — NO « hasta pronto » en general.",
+              hintFr: "Réfère toujours à la même journée au Québec.",
+              hintEn: "Always refers to the same day in Quebec usage.",
+              hintEs: "Siempre se refiere al mismo día en el uso quebequense.",
+            },
+          ],
+          teacherCta: {
+            promptFr:
+              "Quand vous serez prêt, prenez ce scénario à voix haute avec un professeur Pratiqo — vous choisissez quand et avec qui, à votre rythme. Le professeur peut vous donner d’autres mini-consignes à reformuler, sans pression.",
+            promptEn:
+              "When you are ready, take this scenario out loud with a Pratiqo teacher — you decide when and with whom, at your own pace. The teacher can give you other short instructions to restate, without any pressure.",
+            promptEs:
+              "Cuando se sienta listo, lleve este escenario a voz alta con un profesor de Pratiqo — usted decide cuándo y con quién, a su propio ritmo. El profesor puede darle otras instrucciones breves para reformular, sin ninguna presión.",
+          },
+          nextLessonTeaser: {
+            teaserFr:
+              "À venir : Leçon 3 — Poser une question sans bloquer. On y exercera l’art d’ouvrir une question sans casser le rythme de la conversation. (Encore en préparation — restez à l’affût.)",
+            teaserEn:
+              "Coming next: Lesson 3 — Poser une question sans bloquer. We’ll practise opening a question without breaking the rhythm of the conversation. (Still in preparation — stay tuned.)",
+            teaserEs:
+              "Próximamente: Lección 3 — Poser une question sans bloquer. Practicaremos cómo abrir una pregunta sin romper el ritmo de la conversación. (Aún en preparación — permanezca atento.)",
+          },
+        },
       },
       {
         id: "fr-qc-mod1-l3",
