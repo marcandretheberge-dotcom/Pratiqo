@@ -4,18 +4,19 @@
  * The product owner's directive (see fix branch
  * `fix/membre-pro-declining-commission-canonical`):
  *   Pratiqo's commission model is *régressive / declining* — Free
- *   10 % → 7 %, Pro 5 % → 3.5 % — and `/upgrade`, `/tarifs`, and
+ *   15 % → 12 %, Pro 5 % → 3.5 % plus higher-tier annual
+ *   ristourne/profit-sharing eligibility — and `/upgrade`, `/tarifs`, and
  *   `lib/config/membrePro.ts` must agree on that single canonical model.
  *
  * What we guard against, and why:
  *
- *  1. /upgrade silently re-implies a flat 5 % / 10 % commission. The
+ *  1. /upgrade silently re-implies a flat 5 % / 15 % commission. The
  *     copy must use cautious "starting at" / "à partir de" / "desde"
  *     wording in FR/EN/ES, with a secondary line that mentions tiers
  *     based on eligible volume.
  *
  *  2. The two surfaces drift out of sync. /tarifs's tier figures must
- *     start / end at the canonical range (10 % / 7 % free, 5 % / 3.5 %
+ *     start / end at the canonical range (15 % / 12 % free, 5 % / 3.5 %
  *     pro). /upgrade derives its summary from the same constants.
  *
  *  3. Stale subscription price (29.99) leaks back into a user-facing
@@ -83,11 +84,17 @@ const membreProConfigSrc = readFileSync(
 );
 
 // ── Canonical commission model ────────────────────────────────────────
-test("MEMBRE_PRO_COMMISSION_MODEL exposes the canonical 10 → 7 / 5 → 3.5 ranges", () => {
-  assert.equal(MEMBRE_PRO_COMMISSION_MODEL.freeCommissionRange.startPercent, 10);
-  assert.equal(MEMBRE_PRO_COMMISSION_MODEL.freeCommissionRange.bestPercent, 7);
+test("MEMBRE_PRO_COMMISSION_MODEL exposes the canonical 15 → 12 / 5 → 3.5 ranges", () => {
+  assert.equal(MEMBRE_PRO_COMMISSION_MODEL.freeCommissionRange.startPercent, 15);
+  assert.equal(MEMBRE_PRO_COMMISSION_MODEL.freeCommissionRange.bestPercent, 12);
   assert.equal(MEMBRE_PRO_COMMISSION_MODEL.proCommissionRange.startPercent, 5);
   assert.equal(MEMBRE_PRO_COMMISSION_MODEL.proCommissionRange.bestPercent, 3.5);
+  assert.equal(MEMBRE_PRO_COMMISSION_MODEL.proRistourneRange.goldPercent, 0.5);
+  assert.equal(MEMBRE_PRO_COMMISSION_MODEL.proRistourneRange.platinumPercent, 1);
+  assert.equal(MEMBRE_PRO_COMMISSION_MODEL.annualProfitSharingPoolPercent, 5);
+  assert.equal(MEMBRE_PRO_COMMISSION_MODEL.annualProfitSharingPoolCapCad, 150_000);
+  assert.equal(MEMBRE_PRO_COMMISSION_MODEL.annualProfitSharingMinimumEligibleTeachers, 10);
+  assert.equal(MEMBRE_PRO_COMMISSION_MODEL.annualProfitSharingMaxPerTeacherCad, 10_000);
   assert.equal(MEMBRE_PRO_COMMISSION_MODEL.hasTieredCommission, true);
 });
 
@@ -105,9 +112,9 @@ test("MEMBRE_PRO_PLAN entry-tier values match the canonical range start", () => 
 
 // ── /upgrade copy: cautious wording, all locales ──────────────────────
 const FLAT_COMMISSION_PATTERNS: Record<string, RegExp[]> = {
-  fr: [/commission\s+fixe/i, /5\s*%\s*fixe/i, /10\s*%\s*fixe/i, /commission\s+permanente/i, /\bpour\s+toujours\b/i],
-  en: [/flat\s+commission/i, /fixed\s+commission/i, /flat\s+5\s*%/i, /flat\s+10\s*%/i, /\bforever\b/i, /\bpermanent\s+5\s*%/i],
-  es: [/comisi[oó]n\s+fija/i, /\b5\s*%\s+fija/i, /\b10\s*%\s+fija/i, /comisi[oó]n\s+permanente/i, /\bpara\s+siempre\b/i],
+  fr: [/commission\s+fixe/i, /5\s*%\s*fixe/i, /15\s*%\s*fixe/i, /commission\s+permanente/i, /\bpour\s+toujours\b/i],
+  en: [/flat\s+commission/i, /fixed\s+commission/i, /flat\s+5\s*%/i, /flat\s+15\s*%/i, /\bforever\b/i, /\bpermanent\s+5\s*%/i],
+  es: [/comisi[oó]n\s+fija/i, /\b5\s*%\s+fija/i, /\b15\s*%\s+fija/i, /comisi[oó]n\s+permanente/i, /\bpara\s+siempre\b/i],
 };
 
 const CAUTIOUS_WORDS_BY_LOCALE: Record<string, RegExp> = {
@@ -148,7 +155,7 @@ for (const locale of ["fr", "en", "es"] as const) {
     );
   });
 
-  test(`/upgrade copy (${locale}) free plan derives the entry 10 % from the canonical range`, () => {
+  test(`/upgrade copy (${locale}) free plan derives the entry 15 % from the canonical range`, () => {
     const copy = UPGRADE_PAGE_COPY[locale];
     const start = MEMBRE_PRO_COMMISSION_MODEL.freeCommissionRange.startPercent;
     assert.ok(
@@ -209,10 +216,14 @@ test("/upgrade disclaimer in ES mentions ranking / bookings / income safety", ()
 test("/tarifs commission tier i18n keys span the canonical range in all locales", () => {
   // Bronze entry must equal the start percent; Platinum must equal best.
   for (const dict of [fr, en, es]) {
-    assert.match(dict.pricingPagePctFreeBronze!, /\b10\s*%/);
-    assert.match(dict.pricingPagePctFreePlatinum!, /\b7\s*%/);
+    assert.match(dict.pricingPagePctFreeBronze!, /\b15\s*%/);
+    assert.match(dict.pricingPagePctFreeSilver!, /\b14\s*%/);
+    assert.match(dict.pricingPagePctFreeGold!, /\b13\s*%/);
+    assert.match(dict.pricingPagePctFreePlatinum!, /\b12\s*%/);
     assert.match(dict.pricingPagePctProBronze!, /\b5\s*%/);
+    assert.match(dict.pricingPagePctProGold!, /\b4\s*%.*(ristourne|profit-sharing|redistribuci)/i);
     assert.match(dict.pricingPagePctProPlatinum!, /\b3[.,]5\s*%/);
+    assert.match(dict.pricingPagePctProPlatinum!, /\b1\s*%.*(ristourne|profit-sharing|redistribuci)/i);
   }
 });
 

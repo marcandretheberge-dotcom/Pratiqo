@@ -245,7 +245,7 @@ export default function AnnulationPage() {
         <ul className="list-disc pl-5 space-y-2">
           <li>Les remboursements sont traités dans les <strong>5 à 10 jours ouvrables</strong></li>
           <li>Le remboursement apparaît sur le relevé de la carte de crédit originale</li>
-          <li>Les frais de service Pratiqo (10%) sont également remboursés en cas d&apos;annulation éligible</li>
+          <li>Les frais de service ou commissions Pratiqo applicables sont également remboursés en cas d&apos;annulation éligible</li>
         </ul>
       </LegalSection>
 

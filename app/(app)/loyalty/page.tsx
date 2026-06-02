@@ -29,10 +29,10 @@ const TIER_I18N: Record<TierId, TranslationKey> = {
 };
 
 const TIERS: TierDef[] = [
-  { id: "bronze", min: 0, max: 5000, circle: "#CD7F32", freeCommissionPct: 10, proCommissionPct: 5 },
-  { id: "argent", min: 5000, max: 15000, circle: "#C0C0C0", freeCommissionPct: 9, proCommissionPct: 4.5 },
-  { id: "or", min: 15000, max: 30000, circle: "#FFD700", freeCommissionPct: 8, proCommissionPct: 4 },
-  { id: "platine", min: 30000, max: Infinity, circle: "var(--palette-teal-500)", freeCommissionPct: 7, proCommissionPct: 3.5 },
+  { id: "bronze", min: 0, max: 5000, circle: "#CD7F32", freeCommissionPct: 15, proCommissionPct: 5 },
+  { id: "argent", min: 5000, max: 15000, circle: "#C0C0C0", freeCommissionPct: 14, proCommissionPct: 4.5 },
+  { id: "or", min: 15000, max: 30000, circle: "#FFD700", freeCommissionPct: 13, proCommissionPct: 4 },
+  { id: "platine", min: 30000, max: Infinity, circle: "var(--palette-teal-500)", freeCommissionPct: 12, proCommissionPct: 3.5 },
 ];
 
 function tierFromVolume(volume: number): TierDef {

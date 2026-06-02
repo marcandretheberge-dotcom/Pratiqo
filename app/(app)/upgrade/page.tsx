@@ -89,7 +89,7 @@ export default function UpgradePage() {
             items={[copy.freePlanActiveStudentLimit, copy.freePlanCommission]}
             // The "tiers may reduce commission based on eligible volume"
             // sentence sits under the commission bullet so /upgrade no
-            // longer implies a flat 10 %.
+            // longer implies a flat standard commission.
             secondary={copy.freePlanCommissionBody}
             accent="bg-slate-100 text-slate-700"
           />

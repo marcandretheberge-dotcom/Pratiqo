@@ -237,7 +237,7 @@ async function verifyAndConfirm(sessionId: string, locale: Locale): Promise<Veri
 
     if (updatedRows?.length) {
       let teacherEmail: string | null = null;
-      let commissionRate = 0.1;
+      let commissionRate = getPlatformFeeRate("free", "individual");
       if (teacherData.data?.user_id) {
         const { data: teacherProf } = await admin
           .from("profiles")

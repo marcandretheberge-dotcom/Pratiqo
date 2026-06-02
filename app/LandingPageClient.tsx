@@ -674,7 +674,7 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
 
                 {/* 3-stat row */}
                 <div className="mx-auto mt-10 grid max-w-3xl gap-3 grid-cols-3">
-                  <StatCard label={t("homeStatCommFree")} value="7-10%" />
+                  <StatCard label={t("homeStatCommFree")} value="12-15%" />
                   <StatCard label={t("homeStatCommPro")} value="3.5-5%" />
                   <StatCard label={t("homeStatRistourne")} value="5% profits" />
                 </div>
