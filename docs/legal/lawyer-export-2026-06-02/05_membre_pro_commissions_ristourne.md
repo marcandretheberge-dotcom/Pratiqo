@@ -24,7 +24,7 @@
 
 La ristourne annuelle affichée est conditionnelle :
 
-- 5% des profits nets de Pratiqo ;
+- 5 % des profits nets admissibles de la marketplace Pratiqo, à l'exclusion des profits générés par YoPratiqo et tout autre produit autonome distinct ;
 - versement annuel en janvier ;
 - bassin plafonné à 150 000 $CA ;
 - activation seulement si au moins 10 professeurs Pro sont éligibles ;

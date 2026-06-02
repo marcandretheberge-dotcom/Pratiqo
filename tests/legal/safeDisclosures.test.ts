@@ -324,6 +324,74 @@ test("annual ristourne pool is scoped to Pratiqo marketplace and excludes YoPrat
   }
 });
 
+test("welcome email scopes the 5% ristourne to the Pratiqo marketplace and excludes YoPratiqo in all locales", () => {
+  // Static-source read of lib/email/messages/welcome.ts — we deliberately
+  // mirror the pattern used above for content/legal/*.md so the welcome email
+  // can't silently drift back to the broad "5% of Pratiqo net profits"
+  // framing in a future edit. The non-negotiables: every locale's ristourne
+  // sentence in WELCOME_TEACHER_COPY must include BOTH "marketplace" AND
+  // "YoPratiqo" in proximity to the 5% claim.
+  const welcomeSource = read("lib/email/messages/welcome.ts");
+
+  const teacherIdx = welcomeSource.indexOf("WELCOME_TEACHER_COPY");
+  assert.notStrictEqual(
+    teacherIdx,
+    -1,
+    "could not locate WELCOME_TEACHER_COPY in lib/email/messages/welcome.ts",
+  );
+  const teacherSource = welcomeSource.slice(teacherIdx);
+
+  const frIdx = teacherSource.indexOf("fr: {");
+  const enIdx = teacherSource.indexOf("en: {");
+  const esIdx = teacherSource.indexOf("es: {");
+  const endIdx = teacherSource.indexOf("\n};", esIdx);
+  assert.ok(
+    frIdx !== -1 && enIdx !== -1 && esIdx !== -1 && endIdx !== -1,
+    "could not locate fr/en/es blocks inside WELCOME_TEACHER_COPY",
+  );
+
+  const localeBlocks: Record<(typeof locales)[number], string> = {
+    fr: teacherSource.slice(frIdx, enIdx),
+    en: teacherSource.slice(enIdx, esIdx),
+    es: teacherSource.slice(esIdx, endIdx),
+  };
+
+  for (const locale of locales) {
+    const block = localeBlocks[locale];
+    // Split into rough sentences so we can isolate the 5% ristourne claim
+    // from the surrounding commission-tier rows (which also pair % with the
+    // word "ristourne" / "profit-sharing" inside the tier table, e.g.
+    // "🥇 Or (15 000–30 000 $CA) → 13 % / 4 % + 0,5 % ristourne").
+    const sentences = block.split(/(?<=[.!?])\s+|\n+/);
+    // Identify any sentence that asserts the broad "5% of net profits" claim
+    // in prose form. We require the sentence to combine a 5% mention with a
+    // "net profits / profits nets / ganancias netas" phrase — that excludes
+    // the tier-table rows which only carry "X % ristourne" tokens.
+    const ristourneSentences = sentences.filter(
+      (sentence) =>
+        /5\s*%/.test(sentence) &&
+        /(net\s+profits|profits\s+nets?|ganancias\s+netas?)/i.test(sentence),
+    );
+    assert.ok(
+      ristourneSentences.length > 0,
+      `[${locale}] could not locate a 5% / net-profits ristourne sentence in WELCOME_TEACHER_COPY`,
+    );
+
+    for (const sentence of ristourneSentences) {
+      assert.match(
+        sentence,
+        /marketplace/i,
+        `[${locale}] welcome-email ristourne sentence must mention "marketplace" to scope the pool: ${sentence.trim()}`,
+      );
+      assert.match(
+        sentence,
+        /YoPratiqo/,
+        `[${locale}] welcome-email ristourne sentence must name "YoPratiqo" to make the exclusion explicit: ${sentence.trim()}`,
+      );
+    }
+  }
+});
+
 test("forbidden legal shortcuts were not introduced", () => {
   const text = changedDisclosureText();
 

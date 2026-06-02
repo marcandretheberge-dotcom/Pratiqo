@@ -51,7 +51,7 @@ Commission dégressive : plus le professeur enseigne, moins la commission est é
 
 La ristourne annuelle est décrite comme conditionnelle :
 
-- 5% des profits nets de Pratiqo ;
+- 5 % des profits nets admissibles de la marketplace Pratiqo, à l'exclusion des profits générés par YoPratiqo et tout autre produit autonome distinct ;
 - versée en janvier ;
 - bassin plafonné à 150 000 $CA ;
 - activée seulement si au moins 10 professeurs Pro sont éligibles ;

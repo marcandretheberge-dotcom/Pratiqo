@@ -39,9 +39,9 @@ test("welcome teacher subject and body differ by locale", () => {
   assert.match(en.subject("Sam"), /Welcome, teacher/);
   assert.match(es.subject("Sam"), /Bienvenido, profe/);
 
-  assert.match(fr.bodyHtml("Sam"), /ristourne Pratiqo/);
+  assert.match(fr.bodyHtml("Sam"), /ristourne annuelle/);
   assert.match(en.bodyHtml("Sam"), /annual profit-sharing pool/);
-  assert.match(es.bodyHtml("Sam"), /redistribución Pratiqo/);
+  assert.match(es.bodyHtml("Sam"), /redistribución anual/);
   assert.match(fr.bodyHtml("Sam"), /15 % \/ 5 %/);
   assert.match(en.bodyHtml("Sam"), /15% \/ 5%/);
   assert.match(es.bodyHtml("Sam"), /15 % \/ 5 %/);
