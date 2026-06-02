@@ -751,11 +751,24 @@ test("YoPremiumModuleShell consumes every Lesson 2 content field in its LessonTw
     /function\s+LessonTwoPreview\s*\(/.test(src),
     "shell must define a LessonTwoPreview server component",
   );
-  // Lesson 2 surfaces must NOT wire a YoFrenchAudioButton bound to a
-  // Lesson 2 string. The audio manifest covers Lesson 1 only.
+  // Lesson 2 surfaces NOW wire YoFrenchAudioButton: the Lesson 2
+  // audio manifest landed in
+  // `lib/yo/audio/frQuebecPremiumLessonTwoAudio.ts` and the shell
+  // mirrors the Lesson 1 pattern (button next to every Quebec French
+  // target string in the preview body, EN/ES glosses untouched).
+  // This assertion is the inverse of the previous placeholder: a
+  // regression that strips the audio wiring from LessonTwoPreview
+  // fails this suite first.
+  const lessonTwoPreviewBlock = src.match(
+    /function\s+LessonTwoPreview\s*\([\s\S]*?\n\}\n/,
+  );
   assert.ok(
-    !/LessonTwoPreview[\s\S]*?<YoFrenchAudioButton/.test(src),
-    "LessonTwoPreview must NOT render YoFrenchAudioButton — manifest coverage doesn't exist yet",
+    lessonTwoPreviewBlock,
+    "shell must expose a LessonTwoPreview function for the audio-wiring check",
+  );
+  assert.ok(
+    /<YoFrenchAudioButton/.test(lessonTwoPreviewBlock![0]!),
+    "LessonTwoPreview must render YoFrenchAudioButton next to Quebec French target strings (manifest coverage now exists)",
   );
 });
 

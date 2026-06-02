@@ -74,6 +74,7 @@ import { spanishIntroAudio } from "@/lib/yo/audio/spanishIntroAudio";
 import { spanishVoyageDominicanAudio } from "@/lib/yo/audio/spanishVoyageDominicanAudio";
 import { frenchQuebecIntroAudio } from "@/lib/yo/audio/frenchQuebecIntroAudio";
 import { frQuebecPremiumLessonOneAudio } from "@/lib/yo/audio/frQuebecPremiumLessonOneAudio";
+import { frQuebecPremiumLessonTwoAudio } from "@/lib/yo/audio/frQuebecPremiumLessonTwoAudio";
 import { italianIntroAudio } from "@/lib/yo/audio/italianIntroAudio";
 import { englishIntroAudio } from "@/lib/yo/audio/englishIntroAudio";
 import { japaneseIntroAudio } from "@/lib/yo/audio/japaneseIntroAudio";
@@ -105,6 +106,7 @@ export const YOPRATIQO_AUDIO_MANIFEST: readonly YoAudioItem[] = [
   ...spanishVoyageDominicanAudio,
   ...frenchQuebecIntroAudio,
   ...frQuebecPremiumLessonOneAudio,
+  ...frQuebecPremiumLessonTwoAudio,
   ...italianIntroAudio,
   ...englishIntroAudio,
   ...japaneseIntroAudio,
