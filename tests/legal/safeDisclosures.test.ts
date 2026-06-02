@@ -168,6 +168,162 @@ test("annual ristourne wording is conditional and complete in all locales", () =
   }
 });
 
+test("annual ristourne pool is scoped to Pratiqo marketplace and excludes YoPratiqo in all locales", () => {
+  const dictionaries = locales.map((locale) => readJson(`lib/i18n/locales/${locale}.json`));
+
+  // (1)(2)(3) — every locale legal page co-locates "marketplace" and "YoPratiqo"
+  // within the ristourne paragraph itself (single paragraph) so the scope is unambiguous.
+  for (const locale of locales) {
+    const legal = read(`content/legal/membre-pro.${locale}.md`);
+    const paragraphs = legal.split(/\n{2,}/);
+    const ristourneParagraphIndex = paragraphs.findIndex(
+      (paragraph) => /5\s*%/.test(paragraph) && /(ristourne|profit-sharing|rebate|redistribuci.n|reintegro)/i.test(paragraph),
+    );
+    assert.notStrictEqual(
+      ristourneParagraphIndex,
+      -1,
+      `[${locale}] could not locate the ristourne paragraph in content/legal/membre-pro.${locale}.md`,
+    );
+
+    // ≤ 2 paragraph proximity window (the paragraph itself plus the next two).
+    const proximityWindow = paragraphs
+      .slice(ristourneParagraphIndex, ristourneParagraphIndex + 3)
+      .join("\n\n");
+
+    assert.match(
+      proximityWindow,
+      /marketplace/i,
+      `[${locale}] ristourne paragraph must mention "marketplace" to scope the pool`,
+    );
+    assert.match(
+      proximityWindow,
+      /YoPratiqo/,
+      `[${locale}] ristourne paragraph must name "YoPratiqo" to make the exclusion explicit`,
+    );
+  }
+
+  // Same expectation for the i18n dictionaries: any ristourne disclosure key must
+  // already include "marketplace" + "YoPratiqo" within its own value (no proximity window
+  // available across siblings in a flat JSON dict).
+  const broadPatterns: Record<(typeof locales)[number], RegExp> = {
+    fr: /5\s*%\s*des\s+profits\s+nets?\s+de\s+Pratiqo/i,
+    en: /5\s*%\s*of\s+Pratiqo['’]?s?\s+net\s+profits/i,
+    es: /5\s*%\s*de\s+las\s+ganancias\s+netas?\s+de\s+Pratiqo/i,
+  };
+
+  for (const locale of locales) {
+    const dict = readJson(`lib/i18n/locales/${locale}.json`);
+    const candidateKeys = [
+      "btFaq3A",
+      "btRistourneTitle",
+      "btRistourneBody",
+      "loyaltyRistourneCguMid",
+      "pricingPageCommissionFootnote",
+    ];
+
+    for (const key of candidateKeys) {
+      const value = dict[key];
+      if (typeof value !== "string") continue;
+      const mentionsRistourne =
+        /5\s*%/.test(value) &&
+        /(ristourne|profit-sharing|rebate|redistribuci.n|reintegro|ganancias\s+netas|net\s+profits|profits\s+nets)/i.test(value);
+      if (!mentionsRistourne) continue;
+
+      assert.match(
+        value,
+        /marketplace/i,
+        `[${locale}] dictionary key "${key}" must mention "marketplace" to scope the ristourne pool`,
+      );
+      assert.match(
+        value,
+        /YoPratiqo/,
+        `[${locale}] dictionary key "${key}" must name "YoPratiqo" to make the exclusion explicit`,
+      );
+    }
+  }
+
+  // (4) — no live legal-page copy or shipped i18n value may carry the broad
+  // "5% of Pratiqo net profits" framing without "marketplace" + "YoPratiqo" in the
+  // same paragraph / value.
+  const liveLegalFiles: Record<(typeof locales)[number], string> = {
+    fr: "content/legal/membre-pro.fr.md",
+    en: "content/legal/membre-pro.en.md",
+    es: "content/legal/membre-pro.es.md",
+  };
+
+  for (const locale of locales) {
+    const broad = broadPatterns[locale];
+    const legal = read(liveLegalFiles[locale]);
+
+    for (const paragraph of legal.split(/\n{2,}/)) {
+      if (broad.test(paragraph)) {
+        assert.match(
+          paragraph,
+          /marketplace/i,
+          `[${locale}] broad "5% of Pratiqo net profits" wording must include "marketplace" in the same paragraph (in ${liveLegalFiles[locale]})`,
+        );
+        assert.match(
+          paragraph,
+          /YoPratiqo/,
+          `[${locale}] broad "5% of Pratiqo net profits" wording must include the YoPratiqo exclusion in the same paragraph (in ${liveLegalFiles[locale]})`,
+        );
+      }
+    }
+  }
+
+  for (const locale of locales) {
+    const dict = dictionaries[locales.indexOf(locale)];
+    const broad = broadPatterns[locale];
+    for (const [key, value] of Object.entries(dict)) {
+      if (typeof value !== "string") continue;
+      if (!broad.test(value)) continue;
+      assert.match(
+        value,
+        /marketplace/i,
+        `[${locale}] dictionary key "${key}" carries broad "5% of Pratiqo net profits" wording without scoping it to "marketplace"`,
+      );
+      assert.match(
+        value,
+        /YoPratiqo/,
+        `[${locale}] dictionary key "${key}" carries broad "5% of Pratiqo net profits" wording without the YoPratiqo exclusion`,
+      );
+    }
+  }
+
+  // (5) — YoPratiqo-scoped legal copy / landing content / config must never
+  // imply that YoPratiqo profits fund the teacher ristourne. We scan every
+  // YoPratiqo-scoped file for sentences that co-mention "YoPratiqo" and a
+  // ristourne / profit-sharing / redistribución term, allowing only negated
+  // (positive-claim-free) co-occurrences.
+  const yoScopedFiles = [
+    ...["fr", "en", "es"].flatMap((locale) => [
+      `content/legal/yo-refund.${locale}.md`,
+      `content/legal/yopratiqo.${locale}.md`,
+      `content/legal/yopratiqo-terms.${locale}.md`,
+    ]),
+    "lib/yo/yopratiqoLandingContent.ts",
+  ].filter((file) => existsSync(join(root, file)));
+
+  const ristourneTermRe = /(ristourne|profit[-\s]?sharing|rebate|redistribuci.n|reintegro|pool)/i;
+  const negationCues = /\b(?:not|never|no\b|n['’]?:?\s|jamais|n['’]est\s+pas|ne\s+(?:fait|fond|finance|funde|funden|funda)|do\s+not|does\s+not|don['’]?t|excluding|excluant|excluyendo|exclusion|exclusi.n|hors\b|fuera\s+de|sans\b|aucun|aucune|no\s+(?:est|son|finan|alimenta|aliment))/i;
+
+  for (const file of yoScopedFiles) {
+    const content = read(file);
+    const sentences = content.split(/(?<=[.!?])\s+|\n+/);
+    for (const sentence of sentences) {
+      if (!/YoPratiqo/i.test(sentence)) continue;
+      if (!ristourneTermRe.test(sentence)) continue;
+      // Allow co-occurrence only if the sentence carries an explicit negation cue
+      // (e.g. "YoPratiqo profits do NOT fund the ristourne").
+      assert.match(
+        sentence,
+        negationCues,
+        `${file}: YoPratiqo and ristourne/profit-sharing terms co-occur in a positive-claim sentence: ${sentence.trim()}`,
+      );
+    }
+  }
+});
+
 test("forbidden legal shortcuts were not introduced", () => {
   const text = changedDisclosureText();
 
