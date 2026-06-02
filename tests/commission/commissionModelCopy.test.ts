@@ -48,6 +48,26 @@ function trackedSourceFiles(): string[] {
     .filter((file) => file !== "tests/commission/commissionModelCopy.test.ts");
 }
 
+function changedFilesAgainstMain(): string[] | null {
+  try {
+    const mergeBase = execFileSync("git", ["merge-base", "HEAD", "origin/main"], {
+      cwd: root,
+      encoding: "utf8",
+    }).trim();
+    const output = execFileSync("git", ["diff", "--name-only", mergeBase, "HEAD"], {
+      cwd: root,
+      encoding: "utf8",
+    });
+    return output
+      .split(/\r?\n/)
+      .map((file) => file.trim())
+      .filter(Boolean);
+  } catch {
+    console.warn("# skipped commission branch boundary scan — could not diff against origin/main");
+    return null;
+  }
+}
+
 const staleOldModelPatterns: Array<{ label: string; re: RegExp }> = [
   { label: "old 10% to 7% range", re: /10\s*%\s*(?:->|to|a|à|-|–|→)\s*7\s*%/i },
   { label: "old 10 percent to 7 percent range", re: /10\s+percent\s+(?:to|a|à)\s+7\s+percent/i },
@@ -165,6 +185,55 @@ test("tracked source has no stale old commission model claims", () => {
     }
   }
   assert.deepEqual(offenders, []);
+});
+
+test("commission model branch may update canonical commission files but not restricted systems", () => {
+  const changed = changedFilesAgainstMain();
+  if (!changed) return;
+
+  const allowedCommissionFiles = new Set([
+    "lib/config/membrePro.ts",
+    "lib/payments/commission.ts",
+    "tests/commission/commissionModelCopy.test.ts",
+    "tests/marketing/membreProCommissionModel.test.ts",
+    "tests/payments/commissionSubtotal.test.ts",
+    "tests/payments/stripeTaxInclusive.test.ts",
+    "tests/email/welcome.test.ts",
+  ]);
+
+  for (const file of allowedCommissionFiles) {
+    if (changed.includes(file)) {
+      assert.ok(true, `${file} is an approved commission-model update surface`);
+    }
+  }
+
+  const restrictedRules: Array<{ label: string; re: RegExp }> = [
+    { label: "Stripe routes", re: /^app\/api\/stripe\// },
+    { label: "checkout routes", re: /^app\/api\/.*checkout/i },
+    { label: "webhook routes", re: /^app\/api\/.*webhook/i },
+    { label: "payment routes", re: /^app\/api\/(payments|payouts|refunds)\// },
+    { label: "tax logic", re: /^lib\/payments\/.*tax/i },
+    { label: "payment infrastructure outside canonical commission math", re: /^lib\/payments\/(?!commission\.ts$)/ },
+    { label: "Supabase migrations", re: /^supabase\/migrations\// },
+    { label: "RLS/security helpers", re: /^lib\/(rls|security)\// },
+    { label: "booking flow outside commission disclosure success page", re: /^app\/\(app\)\/booking\/(?!success\/page\.tsx$)/ },
+    { label: "cron jobs", re: /^app\/api\/cron\/|^\.github\/workflows\/.*cron/i },
+  ];
+
+  const violations: string[] = [];
+  for (const file of changed) {
+    for (const rule of restrictedRules) {
+      if (rule.re.test(file)) {
+        violations.push(`${file} (${rule.label})`);
+      }
+    }
+  }
+
+  assert.deepEqual(
+    violations,
+    [],
+    `commission-model branch touched restricted systems:\n  ${violations.join("\n  ")}`,
+  );
 });
 
 async function run() {
