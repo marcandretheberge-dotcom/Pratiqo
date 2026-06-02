@@ -214,7 +214,7 @@ Pratiqo may investigate reports and request the teacher's cooperation.
 
 **Pro Member**, if offered, is a separate **optional paid membership** that may be subject to subscription terms or additional terms. The Pro Member status may give access to economic advantages such as a **reduced commission** or a **rebate structure**, where Pratiqo offers them.
 
-At launch, Pro Member is displayed at **CAD $29 per month**, plus applicable taxes, billed monthly in advance, renews automatically, and can be cancelled any time from the dashboard or by writing to [`support@pratiqo.ca`](mailto:support@pratiqo.ca). Unless applicable law requires otherwise, cancellation takes effect at the end of the current paid period.
+At launch, Pro Member is displayed at **$29.99 CAD per month**, plus applicable taxes, billed monthly in advance, renews automatically, and can be cancelled any time from the dashboard or by writing to [`support@pratiqo.ca`](mailto:support@pratiqo.ca). Unless applicable law requires otherwise, cancellation takes effect at the end of the current paid period.
 
 Pratiqo may modify commissions, subscription prices, or plan conditions **prospectively**, with prior notice compliant with applicable law. Where required by law, affected users may cancel before the change takes effect.
 

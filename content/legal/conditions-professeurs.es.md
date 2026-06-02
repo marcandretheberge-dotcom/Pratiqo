@@ -214,7 +214,7 @@ Pratiqo puede investigar reportes y solicitar la cooperación del profesor.
 
 **Miembro Pro**, si se ofrece, es una **membresía paga opcional** separada que puede estar sujeta a condiciones de suscripción o términos adicionales. El estatus Miembro Pro puede dar acceso a ventajas económicas como una **comisión reducida** o una **estructura de reintegros**, cuando Pratiqo las ofrezca.
 
-En el lanzamiento, Miembro Pro se muestra a **29 $CA por mes**, más los impuestos aplicables, se factura mensualmente por adelantado, se renueva automáticamente y puede cancelarse en cualquier momento desde el panel o escribiendo a [`support@pratiqo.ca`](mailto:support@pratiqo.ca). Salvo exigencia contraria de la ley aplicable, la cancelación entra en vigor al final del período pagado en curso.
+En el lanzamiento, Miembro Pro se muestra a **29,99 $CA por mes**, más los impuestos aplicables, se factura mensualmente por adelantado, se renueva automáticamente y puede cancelarse en cualquier momento desde el panel o escribiendo a [`support@pratiqo.ca`](mailto:support@pratiqo.ca). Salvo exigencia contraria de la ley aplicable, la cancelación entra en vigor al final del período pagado en curso.
 
 Pratiqo puede modificar comisiones, precios de suscripción o condiciones del plan **prospectivamente**, con aviso previo conforme a la ley aplicable. Cuando la ley lo exija, los usuarios afectados pueden cancelar antes de que el cambio entre en vigor.
 

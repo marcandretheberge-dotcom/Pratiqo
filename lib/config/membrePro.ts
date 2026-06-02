@@ -57,8 +57,29 @@ export const MEMBRE_PRO_PLAN = {
   freeActiveStudentLimit: 5,
   /** Membre Pro entry-tier commission (= startPercent of proCommissionRange). */
   proCommissionPercent: 5,
-  /** Membre Pro: monthly subscription price in CAD displayed at checkout. */
-  proMonthlyPriceCad: 29,
+  /**
+   * Membre Pro: monthly subscription price in CAD displayed at checkout.
+   *
+   * This is the *numeric* value used for math (annualization, break-even
+   * formula). The authoritative cents amount lives in the Stripe Dashboard
+   * on the Price referenced by `STRIPE_PRO_MONTHLY_PRICE_ID`
+   * (`unit_amount = 2999`); this constant must match it.
+   *
+   * For locale-aware *display* (FR/ES use a comma decimal mark while EN
+   * uses a dot), use `proMonthlyPriceCadDisplay` below — never interpolate
+   * `proMonthlyPriceCad` directly into FR/ES user-facing copy.
+   */
+  proMonthlyPriceCad: 29.99,
+  /**
+   * Locale-aware display string for the monthly price (digits only, no
+   * currency mark). Keeps FR/ES "29,99" and EN "29.99" consistent across
+   * every user-facing surface.
+   */
+  proMonthlyPriceCadDisplay: {
+    fr: "29,99",
+    en: "29.99",
+    es: "29,99",
+  },
 } as const;
 
 /**
@@ -196,12 +217,12 @@ export const UPGRADE_PAGE_COPY: Record<Locale, UpgradePageCopy> = {
   fr: {
     eyebrow: "Monétisation",
     heading: "Devenir Membre Pro",
-    summary: `Membre Pro : élèves illimités, commission à partir de ${MEMBRE_PRO_COMMISSION_MODEL.proCommissionRange.startPercent} % avec paliers, ${MEMBRE_PRO_PLAN.proMonthlyPriceCad} $CA/mois + taxes applicables.`,
+    summary: `Membre Pro : élèves illimités, commission à partir de ${MEMBRE_PRO_COMMISSION_MODEL.proCommissionRange.startPercent} % avec paliers, ${MEMBRE_PRO_PLAN.proMonthlyPriceCadDisplay.fr} $CA / mois + taxes applicables.`,
     badge: "Membre Pro",
     freePlanTitle: "Gratuit",
     proPlanTitle: "Membre Pro",
     freePlanPrice: "0 $",
-    proPlanPrice: `${MEMBRE_PRO_PLAN.proMonthlyPriceCad} $CA/mois + taxes`,
+    proPlanPrice: `${MEMBRE_PRO_PLAN.proMonthlyPriceCadDisplay.fr} $CA / mois + taxes applicables`,
     freePlanActiveStudentLimit: `Jusqu’à ${MEMBRE_PRO_PLAN.freeActiveStudentLimit} élèves actifs`,
     freePlanCommission: `Commission standard à partir de ${MEMBRE_PRO_COMMISSION_MODEL.freeCommissionRange.startPercent} %`,
     freePlanCommissionBody:
@@ -216,7 +237,7 @@ export const UPGRADE_PAGE_COPY: Record<Locale, UpgradePageCopy> = {
     proPlanPrioritySupport: "Support prioritaire (bientôt)",
     comingSoonNote: "Plan Entreprise et cours de groupe — bientôt disponibles.",
     disclosureLead:
-      `L’abonnement Membre Pro coûte ${MEMBRE_PRO_PLAN.proMonthlyPriceCad} $CA par mois, taxes applicables en sus, et est facturé mensuellement à l’avance. Il se `,
+      `L’abonnement Membre Pro coûte ${MEMBRE_PRO_PLAN.proMonthlyPriceCadDisplay.fr} $CA par mois, taxes applicables en sus, et est facturé mensuellement à l’avance. Il se `,
     disclosureRenewBold: "renouvelle automatiquement",
     disclosureRenewTail:
       " jusqu’à l’annulation. Tu peux annuler en tout temps depuis ton tableau de bord ou en écrivant à support@pratiqo.ca; l’annulation prend effet à la fin de la période payée en cours. ",
@@ -244,12 +265,12 @@ export const UPGRADE_PAGE_COPY: Record<Locale, UpgradePageCopy> = {
   en: {
     eyebrow: "Monetization",
     heading: "Become a Pro Member",
-    summary: `Pro Member: unlimited students, commission starting at ${MEMBRE_PRO_COMMISSION_MODEL.proCommissionRange.startPercent}% with tiers, CAD $${MEMBRE_PRO_PLAN.proMonthlyPriceCad}/month + applicable taxes.`,
+    summary: `Pro Member: unlimited students, commission starting at ${MEMBRE_PRO_COMMISSION_MODEL.proCommissionRange.startPercent}% with tiers, $${MEMBRE_PRO_PLAN.proMonthlyPriceCadDisplay.en} CAD / month + applicable taxes.`,
     badge: "Pro Member",
     freePlanTitle: "Free",
     proPlanTitle: "Pro Member",
     freePlanPrice: "$0",
-    proPlanPrice: `CAD $${MEMBRE_PRO_PLAN.proMonthlyPriceCad}/month + tax`,
+    proPlanPrice: `$${MEMBRE_PRO_PLAN.proMonthlyPriceCadDisplay.en} CAD / month + applicable taxes`,
     freePlanActiveStudentLimit: `Up to ${MEMBRE_PRO_PLAN.freeActiveStudentLimit} active students`,
     freePlanCommission: `Standard commission starting at ${MEMBRE_PRO_COMMISSION_MODEL.freeCommissionRange.startPercent}%`,
     freePlanCommissionBody:
@@ -264,7 +285,7 @@ export const UPGRADE_PAGE_COPY: Record<Locale, UpgradePageCopy> = {
     proPlanPrioritySupport: "Priority support (coming soon)",
     comingSoonNote: "Enterprise plan and group lessons — coming soon.",
     disclosureLead:
-      `The Pro Member subscription costs CAD $${MEMBRE_PRO_PLAN.proMonthlyPriceCad} per month, plus applicable taxes, and is billed monthly in advance. It `,
+      `The Pro Member subscription costs $${MEMBRE_PRO_PLAN.proMonthlyPriceCadDisplay.en} CAD per month, plus applicable taxes, and is billed monthly in advance. It `,
     disclosureRenewBold: "renews automatically",
     disclosureRenewTail:
       " until cancelled. You can cancel any time from your dashboard or by writing to support@pratiqo.ca; cancellation takes effect at the end of the current paid billing period. ",
@@ -292,12 +313,12 @@ export const UPGRADE_PAGE_COPY: Record<Locale, UpgradePageCopy> = {
   es: {
     eyebrow: "Monetización",
     heading: "Hacerse Miembro Pro",
-    summary: `Miembro Pro: estudiantes ilimitados, comisión desde ${MEMBRE_PRO_COMMISSION_MODEL.proCommissionRange.startPercent}% con niveles, ${MEMBRE_PRO_PLAN.proMonthlyPriceCad} $CA/mes + impuestos aplicables.`,
+    summary: `Miembro Pro: estudiantes ilimitados, comisión desde ${MEMBRE_PRO_COMMISSION_MODEL.proCommissionRange.startPercent}% con niveles, ${MEMBRE_PRO_PLAN.proMonthlyPriceCadDisplay.es} $CA / mes + impuestos aplicables.`,
     badge: "Miembro Pro",
     freePlanTitle: "Gratis",
     proPlanTitle: "Miembro Pro",
     freePlanPrice: "$0",
-    proPlanPrice: `${MEMBRE_PRO_PLAN.proMonthlyPriceCad} $CA/mes + impuestos`,
+    proPlanPrice: `${MEMBRE_PRO_PLAN.proMonthlyPriceCadDisplay.es} $CA / mes + impuestos aplicables`,
     freePlanActiveStudentLimit: `Hasta ${MEMBRE_PRO_PLAN.freeActiveStudentLimit} estudiantes activos`,
     freePlanCommission: `Comisión estándar desde el ${MEMBRE_PRO_COMMISSION_MODEL.freeCommissionRange.startPercent}%`,
     freePlanCommissionBody:
@@ -312,7 +333,7 @@ export const UPGRADE_PAGE_COPY: Record<Locale, UpgradePageCopy> = {
     proPlanPrioritySupport: "Soporte prioritario (pronto)",
     comingSoonNote: "Plan Empresa y clases grupales — próximamente.",
     disclosureLead:
-      `La membresía Miembro Pro cuesta ${MEMBRE_PRO_PLAN.proMonthlyPriceCad} $CA al mes, más los impuestos aplicables, y se factura mensualmente por adelantado. Se `,
+      `La membresía Miembro Pro cuesta ${MEMBRE_PRO_PLAN.proMonthlyPriceCadDisplay.es} $CA al mes, más los impuestos aplicables, y se factura mensualmente por adelantado. Se `,
     disclosureRenewBold: "renueva automáticamente",
     disclosureRenewTail:
       " hasta su cancelación. Puedes cancelarla en cualquier momento desde tu panel o escribiendo a support@pratiqo.ca; la cancelación entra en vigor al final del período pagado en curso. ",

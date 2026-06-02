@@ -245,13 +245,19 @@ test("/devenir-enseignant plans-summary does not advertise commission as flat/fi
   }
 });
 
-test("/devenir-enseignant plans-summary uses canonical $29 monthly price (not stale 29.99)", () => {
-  // Stripe charges the canonical price exposed by lib/config/membrePro
-  // (`proMonthlyPriceCad`). Marketing summary cards must not display
-  // the legacy 29.99 figure that contradicts /upgrade.
+test("/devenir-enseignant plans-summary uses canonical $29.99 monthly price (not stale bare $29)", () => {
+  // Stripe Price `STRIPE_PRO_MONTHLY_PRICE_ID` has unit_amount = 2999
+  // (= $29.99 CAD); this is the value exposed by lib/config/membrePro
+  // (`proMonthlyPriceCad` + `proMonthlyPriceCadDisplay`). The
+  // /devenir-enseignant plans-summary card must echo the canonical
+  // amount in every locale, never the stale bare "$29" / "29 $".
   assert.ok(
-    !/29[,.]99/.test(devenirEnseignantSrc),
-    "Plans summary must not display the stale 29.99 / 29,99 monthly price",
+    /29[,.]99/.test(devenirEnseignantSrc),
+    "Plans summary must display the canonical 29.99 / 29,99 monthly price",
+  );
+  assert.ok(
+    !/(?<![0-9.,])29(?![0-9.,])\s*\$|\$\s*29(?![0-9.,])/.test(devenirEnseignantSrc),
+    "Plans summary must not display the stale bare $29 / 29 $ monthly price",
   );
 });
 

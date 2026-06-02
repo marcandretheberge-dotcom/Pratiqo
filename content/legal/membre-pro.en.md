@@ -48,7 +48,7 @@ Pro Member is **not** a tooling suite or a teacher studio: it is a member status
 
 ## 4. Subscription billing cycle
 
-At launch, Pro Member is displayed at **CAD $29 per month**, **plus applicable taxes**, and is **billed monthly in advance**. If Pratiqo later offers an annual period or another cycle, that cycle and its price will be displayed before subscription.
+At launch, Pro Member is displayed at **$29.99 CAD per month**, **plus applicable taxes**, and is **billed monthly in advance**. If Pratiqo later offers an annual period or another cycle, that cycle and its price will be displayed before subscription.
 
 - The billing cycle and next renewal date are displayed before subscription, and may be reviewed in the account's subscription page where offered.
 - The **price applicable is the one displayed at subscription time**, plus any applicable taxes.

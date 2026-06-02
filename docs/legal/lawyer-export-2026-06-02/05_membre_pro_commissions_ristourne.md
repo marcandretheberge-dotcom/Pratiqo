@@ -16,7 +16,7 @@
 ## 2. Source de configuration actuelle
 
 - `lib/payments/commission.ts` calcule les frais de plateforme : Gratuit/Standard 1500, 1400, 1300, 1200 bps ; Membre Pro 500, 450, 400, 350 bps.
-- `lib/config/membrePro.ts` expose le prix mensuel affiché : **29 $CA / mois**.
+- `lib/config/membrePro.ts` expose le prix mensuel affiché : **29,99 $CA / mois** (taxes applicables en sus), aligné sur la source de vérité Stripe `STRIPE_PRO_MONTHLY_PRICE_ID` (`unit_amount = 2999`).
 - `lib/config/membrePro.ts` expose la plage Gratuit 15 % → 12 %, Membre Pro 5 % → 3,5 %, et les règles de ristourne.
 - Stripe demeure la source autoritative du prix au paiement ; cette section décrit le modèle affiché et contractuel à valider.
 

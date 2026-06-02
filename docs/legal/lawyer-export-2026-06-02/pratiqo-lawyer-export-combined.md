@@ -104,7 +104,7 @@ Les politiques YoPratiqo incluent déjà une politique de remboursement et d'acc
 
 Membre Pro est une option payante pour professeurs. Elle ne doit pas être présentée comme une vérification de qualité ni comme une garantie de visibilité, réservation, classement ou revenu.
 
-Le prix affiché actuellement est **29 $CA / mois + taxes**.
+Le prix affiché actuellement est **29,99 $CA / mois + taxes applicables** (source de vérité : Stripe `STRIPE_PRO_MONTHLY_PRICE_ID`, `unit_amount = 2999`).
 
 ## 5. Nouveau modèle de commission
 
@@ -1107,7 +1107,7 @@ Pour les avis formels : [`marc-andre.theberge@pratiqo.ca`](mailto:marc-andre.the
 ## 2. Source de configuration actuelle
 
 - `lib/payments/commission.ts` calcule les frais de plateforme : Gratuit/Standard 1500, 1400, 1300, 1200 bps ; Membre Pro 500, 450, 400, 350 bps.
-- `lib/config/membrePro.ts` expose le prix mensuel affiché : **29 $CA / mois**.
+- `lib/config/membrePro.ts` expose le prix mensuel affiché : **29,99 $CA / mois** (taxes applicables en sus), aligné sur la source de vérité Stripe `STRIPE_PRO_MONTHLY_PRICE_ID` (`unit_amount = 2999`).
 - `lib/config/membrePro.ts` expose la plage Gratuit 15 % → 12 %, Membre Pro 5 % → 3,5 %, et les règles de ristourne.
 - Stripe demeure la source autoritative du prix au paiement ; cette section décrit le modèle affiché et contractuel à valider.
 
@@ -2191,7 +2191,7 @@ Counsel should review whether explicit consent, notice wording, retention langua
 | Source | Claim / copie | Catégorie de risque | Question avocat |
 |---|---|---|---|
 | `app/tarifs`, `app/(app)/upgrade`, `lib/i18n/locales/*.json` | Commission dégressive : Gratuit / Standard de `15%` à `12%`; Membre Pro de `5%` à `3.5%`; paliers Bronze, Argent, Or, Platine. | Transparence commerciale; information précontractuelle professeur; exactitude des frais. | Le tableau doit-il être repris dans les Conditions professeurs, la page Membre Pro et le checkout d’abonnement avec la même granularité? |
-| `lib/config/membrePro.ts`, `content/legal/membre-pro.fr.md`, pages de tarification | Membre Pro : `29 $CA/mois`, commission réduite, outils et avantages. | Abonnement; renouvellement; divulgation claire du prix; absence de promesse de résultat. | Faut-il ajouter une case d’acceptation spécifique pour l’abonnement Membre Pro avant paiement? |
+| `lib/config/membrePro.ts`, `content/legal/membre-pro.fr.md`, pages de tarification | Membre Pro : `29,99 $CA/mois` (taxes applicables en sus), commission réduite, outils et avantages. | Abonnement; renouvellement; divulgation claire du prix; absence de promesse de résultat. | Faut-il ajouter une case d’acceptation spécifique pour l’abonnement Membre Pro avant paiement? |
 | `content/legal/membre-pro.fr.md`, `05_membre_pro_commissions_ristourne.md` | Ristourne annuelle : `5%` des profits nets, pool plafonné à `150 000 $CA`, activé avec au moins `10` professeurs Pro éligibles, maximum `10 000 $CA` par professeur. | Risque d’interprétation comme revenu promis, avantage financier conditionnel ou communication assimilable à investissement. | La notion de « profits nets » doit-elle être définie contractuellement plus précisément? |
 | Pages marketing Membre Pro | Économie de commission : écart de `10` points entre Standard Bronze et Pro Bronze. | Calcul commercial; risque de confusion si présenté comme gain net certain. | Peut-on présenter l’économie sous forme d’exemple uniquement, avec hypothèses visibles? |
 | `lib/email/messages/welcome.ts`, tests email | Email d’accueil professeur mentionnant la commission et les avantages Pro. | Communication post-inscription; cohérence avec les conditions. | L’email doit-il renvoyer explicitement vers `/legal/membre-pro` et `/legal/conditions-professeurs`? |
@@ -2270,7 +2270,7 @@ Counsel should review whether explicit consent, notice wording, retention langua
 
 6. Le modèle de commission `15%` à `12%` pour Gratuit / Standard doit-il être présenté avant chaque réservation, ou une page conditions + résumé checkout suffit-elle?
 7. Le modèle Membre Pro `5%` à `3.5%` doit-il être encadré dans des conditions d’abonnement séparées ou la page Membre Pro actuelle suffit-elle temporairement?
-8. La mention `29 $CA/mois` doit-elle inclure des détails sur renouvellement automatique, annulation, taxes et date de facturation avant tout paiement?
+8. La mention `29,99 $CA/mois` (prix Stripe canonique, `unit_amount = 2999`) doit-elle inclure des détails sur renouvellement automatique, annulation, taxes et date de facturation avant tout paiement?
 9. La ristourne annuelle de `5%` des profits nets peut-elle être présentée comme « ristourne » au Québec sans risque de confusion avec une promesse de revenu, un placement financier ou une participation aux profits?
 10. Faut-il définir « profits nets de Pratiqo » dans les conditions pour éviter une interprétation trop large?
 11. Le pool plafonné à `150 000 $CA`, l’activation avec au moins `10` professeurs Pro éligibles et le maximum `10 000 $CA` par professeur doivent-ils figurer dans les CGU, Conditions professeurs et Membre Pro?
@@ -2384,7 +2384,7 @@ Le modèle de commission canonique a été modifié.
 
 Points associés :
 
-- Membre Pro demeure à **29 $CA/mois** selon la configuration actuelle.
+- Membre Pro est à **29,99 $CA/mois** (taxes applicables en sus) — source de vérité : Stripe `STRIPE_PRO_MONTHLY_PRICE_ID` (`unit_amount = 2999`); les libellés produit FR/EN/ES, les pages `/upgrade` et `/tarifs`, les conditions légales et la formule de seuil de rentabilité ont été réalignés sur cette valeur (voir branche `fix/membre-pro-price-source-of-truth`). Une révision antérieure avait indiqué `29 $CA/mois` à tort.
 - Le modèle est présenté comme **commission dégressive** : plus le volume annuel cumulé est élevé, plus le taux baisse.
 - Le calcul canonique est dans `lib/payments/commission.ts` et la configuration produit Membre Pro dans `lib/config/membrePro.ts`.
 - Les textes doivent éviter toute promesse de revenu.

@@ -16,7 +16,7 @@
 
 6. Le modèle de commission `15%` à `12%` pour Gratuit / Standard doit-il être présenté avant chaque réservation, ou une page conditions + résumé checkout suffit-elle?
 7. Le modèle Membre Pro `5%` à `3.5%` doit-il être encadré dans des conditions d’abonnement séparées ou la page Membre Pro actuelle suffit-elle temporairement?
-8. La mention `29 $CA/mois` doit-elle inclure des détails sur renouvellement automatique, annulation, taxes et date de facturation avant tout paiement?
+8. La mention `29,99 $CA/mois` (prix Stripe canonique, `unit_amount = 2999`) doit-elle inclure des détails sur renouvellement automatique, annulation, taxes et date de facturation avant tout paiement?
 9. La ristourne annuelle de `5%` des profits nets peut-elle être présentée comme « ristourne » au Québec sans risque de confusion avec une promesse de revenu, un placement financier ou une participation aux profits?
 10. Faut-il définir « profits nets de Pratiqo » dans les conditions pour éviter une interprétation trop large?
 11. Le pool plafonné à `150 000 $CA`, l’activation avec au moins `10` professeurs Pro éligibles et le maximum `10 000 $CA` par professeur doivent-ils figurer dans les CGU, Conditions professeurs et Membre Pro?

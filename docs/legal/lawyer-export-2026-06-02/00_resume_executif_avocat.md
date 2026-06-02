@@ -34,7 +34,7 @@ Les politiques YoPratiqo incluent déjà une politique de remboursement et d'acc
 
 Membre Pro est une option payante pour professeurs. Elle ne doit pas être présentée comme une vérification de qualité ni comme une garantie de visibilité, réservation, classement ou revenu.
 
-Le prix affiché actuellement est **29 $CA / mois + taxes**.
+Le prix affiché actuellement est **29,99 $CA / mois + taxes applicables** (source de vérité : Stripe `STRIPE_PRO_MONTHLY_PRICE_ID`, `unit_amount = 2999`).
 
 ## 5. Nouveau modèle de commission
 
