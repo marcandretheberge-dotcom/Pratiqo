@@ -192,12 +192,12 @@ export const UPGRADE_PAGE_COPY: Record<Locale, UpgradePageCopy> = {
   fr: {
     eyebrow: "Monétisation",
     heading: "Devenir Membre Pro",
-    summary: `Membre Pro : élèves illimités, commission à partir de ${MEMBRE_PRO_COMMISSION_MODEL.proCommissionRange.startPercent} % avec paliers, ${MEMBRE_PRO_PLAN.proMonthlyPriceCad} $/mois.`,
+    summary: `Membre Pro : élèves illimités, commission à partir de ${MEMBRE_PRO_COMMISSION_MODEL.proCommissionRange.startPercent} % avec paliers, ${MEMBRE_PRO_PLAN.proMonthlyPriceCad} $CA/mois + taxes applicables.`,
     badge: "Membre Pro",
     freePlanTitle: "Gratuit",
     proPlanTitle: "Membre Pro",
     freePlanPrice: "0 $",
-    proPlanPrice: `${MEMBRE_PRO_PLAN.proMonthlyPriceCad} $/mois`,
+    proPlanPrice: `${MEMBRE_PRO_PLAN.proMonthlyPriceCad} $CA/mois + taxes`,
     freePlanActiveStudentLimit: `Jusqu’à ${MEMBRE_PRO_PLAN.freeActiveStudentLimit} élèves actifs`,
     freePlanCommission: `Commission standard à partir de ${MEMBRE_PRO_COMMISSION_MODEL.freeCommissionRange.startPercent} %`,
     freePlanCommissionBody:
@@ -208,14 +208,14 @@ export const UPGRADE_PAGE_COPY: Record<Locale, UpgradePageCopy> = {
       "Avec paliers pouvant aller plus bas selon le volume admissible. Les paliers et conditions applicables sont indiqués sur la plateforme.",
     seeTiersLinkLabel: "Voir les paliers sur /tarifs",
     commissionDisclaimer:
-      "Les commissions, paliers et avantages affichés peuvent varier selon le plan applicable, les promotions, le volume admissible et les conditions indiquées sur la plateforme. Le statut Membre Pro peut améliorer certains signaux de visibilité, mais ne garantit ni positionnement, ni réservations, ni revenus.",
+      "Les commissions, paliers et avantages affichés peuvent varier selon le plan applicable, les promotions, le volume admissible et les conditions indiquées sur la plateforme. Le statut Membre Pro peut améliorer certains signaux de visibilité, mais ne garantit ni positionnement, ni visibilité, ni réservations, ni élèves, ni revenus. Les professeurs demeurent des travailleurs autonomes.",
     proPlanPrioritySupport: "Support prioritaire (bientôt)",
     comingSoonNote: "Plan Entreprise et cours de groupe — bientôt disponibles.",
     disclosureLead:
-      "Les taxes applicables peuvent s’ajouter au moment du paiement. L’abonnement Membre Pro est facturé selon le cycle indiqué et se ",
+      `L’abonnement Membre Pro coûte ${MEMBRE_PRO_PLAN.proMonthlyPriceCad} $CA par mois, taxes applicables en sus, et est facturé mensuellement à l’avance. Il se `,
     disclosureRenewBold: "renouvelle automatiquement",
     disclosureRenewTail:
-      " jusqu’à l’annulation. Tu peux annuler en tout temps depuis ton tableau de bord. ",
+      " jusqu’à l’annulation. Tu peux annuler en tout temps depuis ton tableau de bord ou en écrivant à support@pratiqo.ca; l’annulation prend effet à la fin de la période payée en cours. ",
     disclosureLinksLead:
       "Les modalités complètes — facturation, renouvellement, annulation, remboursements et avantages — figurent dans les ",
     disclosureMembreProLinkLabel: "Conditions Membre Pro",
@@ -240,12 +240,12 @@ export const UPGRADE_PAGE_COPY: Record<Locale, UpgradePageCopy> = {
   en: {
     eyebrow: "Monetization",
     heading: "Become a Pro Member",
-    summary: `Pro Member: unlimited students, commission starting at ${MEMBRE_PRO_COMMISSION_MODEL.proCommissionRange.startPercent}% with tiers, $${MEMBRE_PRO_PLAN.proMonthlyPriceCad}/month.`,
+    summary: `Pro Member: unlimited students, commission starting at ${MEMBRE_PRO_COMMISSION_MODEL.proCommissionRange.startPercent}% with tiers, CAD $${MEMBRE_PRO_PLAN.proMonthlyPriceCad}/month + applicable taxes.`,
     badge: "Pro Member",
     freePlanTitle: "Free",
     proPlanTitle: "Pro Member",
     freePlanPrice: "$0",
-    proPlanPrice: `$${MEMBRE_PRO_PLAN.proMonthlyPriceCad}/month`,
+    proPlanPrice: `CAD $${MEMBRE_PRO_PLAN.proMonthlyPriceCad}/month + tax`,
     freePlanActiveStudentLimit: `Up to ${MEMBRE_PRO_PLAN.freeActiveStudentLimit} active students`,
     freePlanCommission: `Standard commission starting at ${MEMBRE_PRO_COMMISSION_MODEL.freeCommissionRange.startPercent}%`,
     freePlanCommissionBody:
@@ -256,14 +256,14 @@ export const UPGRADE_PAGE_COPY: Record<Locale, UpgradePageCopy> = {
       "With tiers that may go lower based on eligible volume. Applicable tiers and conditions are displayed on the platform.",
     seeTiersLinkLabel: "View tiers on /tarifs",
     commissionDisclaimer:
-      "Displayed commissions, tiers, and benefits may vary depending on the applicable plan, promotions, eligible volume, and conditions shown on the platform. Pro Member status may improve certain visibility signals, but does not guarantee ranking, bookings, or income.",
+      "Displayed commissions, tiers, and benefits may vary depending on the applicable plan, promotions, eligible volume, and conditions shown on the platform. Pro Member status may improve certain visibility signals, but does not guarantee ranking, visibility, bookings, students, or income. Teachers remain independent contractors.",
     proPlanPrioritySupport: "Priority support (coming soon)",
     comingSoonNote: "Enterprise plan and group lessons — coming soon.",
     disclosureLead:
-      "Applicable taxes may be added at checkout. The Pro Member subscription is billed on the displayed cycle and ",
+      `The Pro Member subscription costs CAD $${MEMBRE_PRO_PLAN.proMonthlyPriceCad} per month, plus applicable taxes, and is billed monthly in advance. It `,
     disclosureRenewBold: "renews automatically",
     disclosureRenewTail:
-      " until cancelled. You can cancel any time from your dashboard. ",
+      " until cancelled. You can cancel any time from your dashboard or by writing to support@pratiqo.ca; cancellation takes effect at the end of the current paid billing period. ",
     disclosureLinksLead:
       "Full terms — billing, renewal, cancellation, refunds and benefits — are set out in the ",
     disclosureMembreProLinkLabel: "Pro Member Terms",
@@ -288,12 +288,12 @@ export const UPGRADE_PAGE_COPY: Record<Locale, UpgradePageCopy> = {
   es: {
     eyebrow: "Monetización",
     heading: "Hacerse Miembro Pro",
-    summary: `Miembro Pro: estudiantes ilimitados, comisión desde ${MEMBRE_PRO_COMMISSION_MODEL.proCommissionRange.startPercent}% con niveles, $${MEMBRE_PRO_PLAN.proMonthlyPriceCad}/mes.`,
+    summary: `Miembro Pro: estudiantes ilimitados, comisión desde ${MEMBRE_PRO_COMMISSION_MODEL.proCommissionRange.startPercent}% con niveles, ${MEMBRE_PRO_PLAN.proMonthlyPriceCad} $CA/mes + impuestos aplicables.`,
     badge: "Miembro Pro",
     freePlanTitle: "Gratis",
     proPlanTitle: "Miembro Pro",
     freePlanPrice: "$0",
-    proPlanPrice: `$${MEMBRE_PRO_PLAN.proMonthlyPriceCad}/mes`,
+    proPlanPrice: `${MEMBRE_PRO_PLAN.proMonthlyPriceCad} $CA/mes + impuestos`,
     freePlanActiveStudentLimit: `Hasta ${MEMBRE_PRO_PLAN.freeActiveStudentLimit} estudiantes activos`,
     freePlanCommission: `Comisión estándar desde el ${MEMBRE_PRO_COMMISSION_MODEL.freeCommissionRange.startPercent}%`,
     freePlanCommissionBody:
@@ -304,14 +304,14 @@ export const UPGRADE_PAGE_COPY: Record<Locale, UpgradePageCopy> = {
       "Con niveles que pueden bajar según el volumen admisible. Los niveles y condiciones aplicables se muestran en la plataforma.",
     seeTiersLinkLabel: "Ver niveles en /tarifs",
     commissionDisclaimer:
-      "Las comisiones, niveles y beneficios mostrados pueden variar según el plan aplicable, las promociones, el volumen admisible y las condiciones indicadas en la plataforma. El estado Miembro Pro puede mejorar ciertas señales de visibilidad, pero no garantiza posicionamiento, reservas ni ingresos.",
+      "Las comisiones, niveles y beneficios mostrados pueden variar según el plan aplicable, las promociones, el volumen admisible y las condiciones indicadas en la plataforma. El estado Miembro Pro puede mejorar ciertas señales de visibilidad, pero no garantiza posicionamiento, visibilidad, reservas, estudiantes ni ingresos. Los profesores siguen siendo trabajadores independientes.",
     proPlanPrioritySupport: "Soporte prioritario (pronto)",
     comingSoonNote: "Plan Empresa y clases grupales — próximamente.",
     disclosureLead:
-      "Los impuestos aplicables pueden agregarse al momento del pago. La membresía Miembro Pro se factura según el ciclo indicado y se ",
+      `La membresía Miembro Pro cuesta ${MEMBRE_PRO_PLAN.proMonthlyPriceCad} $CA al mes, más los impuestos aplicables, y se factura mensualmente por adelantado. Se `,
     disclosureRenewBold: "renueva automáticamente",
     disclosureRenewTail:
-      " hasta su cancelación. Puedes cancelarla en cualquier momento desde tu panel. ",
+      " hasta su cancelación. Puedes cancelarla en cualquier momento desde tu panel o escribiendo a support@pratiqo.ca; la cancelación entra en vigor al final del período pagado en curso. ",
     disclosureLinksLead:
       "Los términos completos — facturación, renovación, cancelación, reembolsos y beneficios — figuran en las ",
     disclosureMembreProLinkLabel: "Condiciones de Miembro Pro",

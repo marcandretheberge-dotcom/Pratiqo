@@ -25,7 +25,8 @@ export function LegalLayout({
     | "/legal/code-de-conduite"
     | "/legal/conditions-professeurs"
     | "/legal/membre-pro"
-    | "/legal/paiements-remboursements";
+    | "/legal/paiements-remboursements"
+    | "/legal/accessibilite";
   children: React.ReactNode;
 }) {
   const { locale, t } = useLocale();
@@ -51,6 +52,13 @@ export function LegalLayout({
         ? "Miembro Pro"
         : "Membre Pro";
 
+  const accessibilityLabel =
+    locale === "en"
+      ? "Accessibility"
+      : locale === "es"
+        ? "Accesibilidad"
+        : "Accessibilité";
+
   const LEGAL_LINKS = [
     { href: "/legal/cgu", label: t("footerTerms") },
     { href: "/legal/confidentialite", label: t("footerPrivacy") },
@@ -59,6 +67,7 @@ export function LegalLayout({
     { href: "/legal/conditions-professeurs", label: teacherTermsLabel },
     { href: "/legal/membre-pro", label: proMemberLabel },
     { href: "/legal/paiements-remboursements", label: paymentsLabel },
+    { href: "/legal/accessibilite", label: accessibilityLabel },
   ] as const;
 
   const content = React.Children.map(children, (child) => {

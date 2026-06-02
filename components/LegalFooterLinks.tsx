@@ -36,6 +36,13 @@ export function LegalFooterLinks() {
         ? "Miembro Pro"
         : "Membre Pro";
 
+  const accessibilityLabel =
+    locale === "en"
+      ? "Accessibility"
+      : locale === "es"
+        ? "Accesibilidad"
+        : "Accessibilité";
+
   return (
     <>
       <Link href="/legal/cgu" className="hover:text-[#2C2C2A] hover:underline">
@@ -58,6 +65,9 @@ export function LegalFooterLinks() {
       </Link>
       <Link href="/legal/paiements-remboursements" className="hover:text-[#2C2C2A] hover:underline">
         {paymentsLabel}
+      </Link>
+      <Link href="/legal/accessibilite" className="hover:text-[#2C2C2A] hover:underline">
+        {accessibilityLabel}
       </Link>
       <Link href="/contact" className="hover:text-[#2C2C2A] hover:underline">
         {t("footerContact")}

@@ -48,7 +48,7 @@ Membre Pro **n'est pas** une suite d'outils ni un studio de production : c'est u
 
 ## 4. Cycle de facturation
 
-Membre Pro peut être facturé selon une période **mensuelle ou annuelle**, ou selon un autre cycle proposé par Pratiqo lors de la souscription.
+Au lancement, Membre Pro est affiché à **29 $CA par mois**, **taxes applicables en sus**, et est **facturé mensuellement à l'avance**. Si Pratiqo propose ultérieurement une période annuelle ou un autre cycle, ce cycle et son prix seront affichés avant la souscription.
 
 - La période de facturation et la date du prochain renouvellement sont affichées avant la souscription, et peuvent être consultées dans la page d'abonnement du compte lorsque cette page est offerte.
 - Le **prix applicable est celui affiché au moment de la souscription**, en plus des taxes applicables le cas échéant.
@@ -60,7 +60,7 @@ Membre Pro peut être facturé selon une période **mensuelle ou annuelle**, ou 
 
 ## 5. Renouvellement automatique
 
-Sauf annulation, l'adhésion Membre Pro **se renouvelle automatiquement** pour une nouvelle période identique au cycle choisi.
+Sauf annulation, l'adhésion Membre Pro **se renouvelle automatiquement chaque mois** pour une nouvelle période mensuelle, ou pour la période indiquée si un autre cycle est offert.
 
 - Les modalités de renouvellement (période, prix, date) sont divulguées avant l'achat.
 - Le professeur est responsable d'**annuler avant la date de renouvellement** s'il ne souhaite pas poursuivre l'adhésion.
@@ -76,7 +76,7 @@ Le professeur peut annuler Membre Pro :
 - depuis les paramètres d'abonnement du compte lorsque cette fonctionnalité est offerte; ou
 - en écrivant à [`support@pratiqo.ca`](mailto:support@pratiqo.ca).
 
-Sauf mention contraire affichée lors de l'annulation ou exigence d'une loi d'ordre public, **l'annulation prend effet à la fin de la période payée en cours**. Les avantages Membre Pro peuvent demeurer accessibles jusqu'à cette date, puis cesser.
+Sauf mention contraire affichée lors de l'annulation ou exigence d'une loi d'ordre public, **l'annulation prend effet à la fin de la période payée en cours**. Les avantages Membre Pro peuvent demeurer accessibles jusqu'à cette date, puis cesser. Le professeur peut annuler en tout temps depuis son tableau de bord lorsque cette fonctionnalité est disponible, ou en écrivant à l'adresse de soutien ci-dessus.
 
 L'annulation de Membre Pro :
 
@@ -120,9 +120,10 @@ Les taxes (TPS, TVQ, TVH, taxes provinciales, taxes étrangères) **peuvent s'aj
 
 ## 10. Modifications des avantages
 
-Pratiqo peut **ajouter, retirer, tester, renommer, modifier ou cesser** des avantages Membre Pro, y compris la **commission réduite**, la **structure de ristourne** et tout autre avantage rattaché au statut.
+Pratiqo peut **ajouter, retirer, tester, renommer, modifier ou cesser** des avantages Membre Pro, y compris la **commission réduite**, la **structure de ristourne**, le prix d'abonnement ou les conditions du forfait.
 
-- Les changements importants seront communiqués par les moyens prévus par la loi applicable, le cas échéant.
+- Les changements importants seront communiqués avec un **préavis conforme à la loi applicable**, le cas échéant.
+- Les modifications de commission, de prix d'abonnement ou de conditions du forfait s'appliquent **prospectivement**. Lorsque la loi l'exige, les utilisateurs touchés peuvent annuler avant l'entrée en vigueur de la modification.
 - Une modification d'avantage ne donne pas automatiquement droit à un remboursement, sauf disposition contraire d'une loi d'ordre public.
 - Les avantages **bêta, expérimentaux ou en accès anticipé** peuvent être modifiés, restreints ou retirés sans préavis et ne sont pas garantis.
 - Les **modifications de taux** (par exemple un ajustement de la commission réduite ou de la ristourne) s'appliquent **prospectivement**, à compter de la date d'entrée en vigueur indiquée par Pratiqo, sous réserve de la loi applicable.
@@ -197,6 +198,8 @@ Pratiqo peut **refuser, suspendre ou résilier** Membre Pro en cas notamment de 
 ## 15. Relation avec les versements, les commissions et la ristourne
 
 Les **frais d'adhésion Membre Pro** (le montant que Pratiqo facture pour le **statut de membre**) sont **distincts** des **commissions de marketplace** (le pourcentage que Pratiqo retient sur chaque cours), des frais de service et des autres frais de marketplace.
+
+La **ristourne annuelle Membre Pro**, lorsqu'elle est offerte, est **conditionnelle**. Elle correspond à **5 % des profits nets de Pratiqo**, est prévue en **janvier**, est plafonnée par un bassin maximal de **150 000 $CA**, s'active seulement si au moins **10 professeurs Pro admissibles** sont éligibles, et chaque professeur peut recevoir un maximum de **10 000 $CA** selon son **volume annuel relatif**. Pratiqo ne garantit aucun revenu minimum ni aucun montant de ristourne.
 
 - Le paiement de Membre Pro **ne dispense pas** le professeur des règles de la marketplace, des commissions, des règles d'annulation, des règles de remboursement ou des obligations en matière de rétrofacturations.
 - Lorsqu'une **commission réduite** est rattachée au statut Membre Pro, son taux, ses conditions, sa date d'entrée en vigueur et son champ d'application sont indiqués dans la plateforme, le tableau de bord, la caisse, la page d'abonnement ou les modalités du forfait applicable. Pratiqo peut ajuster ce taux **prospectivement**, sous réserve de la loi applicable.

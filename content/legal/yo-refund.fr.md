@@ -14,6 +14,8 @@ L'achat d'un module YoPratiqo te donne une **licence personnelle non transférab
 - **Cours Pratiqo Inc.** conserve l'intégralité des droits de propriété intellectuelle sur le contenu, les visuels, l'audio, le code et la pédagogie du module.
 - Aucun téléchargement permanent du contenu n'est garanti — la lecture se fait via la plateforme YoPratiqo.
 
+YoPratiqo est un produit de **préparation éducative**. Les modules peuvent aider à pratiquer, découvrir une langue ou préparer une conversation avec un professeur, mais Pratiqo ne garantit pas la fluidité, la réussite à un examen, un résultat d'immigration, un résultat d'emploi, ni une réservation avec un professeur. La politique de remboursement applicable aux modules numériques payants demeure sujette à révision juridique avant tout élargissement payant.
+
 ---
 
 ## 2. « Accès à vie » — définition

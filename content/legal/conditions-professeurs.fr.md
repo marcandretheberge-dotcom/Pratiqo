@@ -214,7 +214,11 @@ Pratiqo peut enquêter sur les signalements et demander la coopération du profe
 
 **Membre Pro**, s'il est offert, est une **adhésion payante optionnelle** distincte qui peut être soumise à des conditions d'abonnement ou à des modalités additionnelles. Le statut Membre Pro peut donner accès à des avantages économiques tels qu'une **commission réduite** ou une **structure de ristourne**, lorsque Pratiqo les offre.
 
-Membre Pro ne garantit pas un revenu, des élèves, des réservations, un classement, des vues de profil ou un résultat commercial. Les modalités détaillées de Membre Pro sont régies par les **[Conditions Membre Pro](/legal/membre-pro)**.
+Au lancement, l'adhésion Membre Pro est affichée à **29 $CA par mois**, taxes applicables en sus, facturée mensuellement à l'avance, renouvelée automatiquement et annulable en tout temps depuis le tableau de bord ou en écrivant à [`support@pratiqo.ca`](mailto:support@pratiqo.ca). Sauf exigence contraire de la loi applicable, l'annulation prend effet à la fin de la période payée en cours.
+
+Pratiqo peut modifier les commissions, prix d'abonnement ou conditions de forfait **prospectivement**, avec un préavis conforme à la loi applicable. Lorsque la loi l'exige, les utilisateurs touchés peuvent annuler avant l'entrée en vigueur du changement.
+
+Membre Pro ne garantit pas un revenu, des élèves, des réservations, un classement, une visibilité, des vues de profil ou un résultat commercial. Le professeur demeure un travailleur autonome. Les modalités détaillées de Membre Pro sont régies par les **[Conditions Membre Pro](/legal/membre-pro)**.
 
 ---
 

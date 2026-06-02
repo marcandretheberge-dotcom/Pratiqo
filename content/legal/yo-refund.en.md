@@ -14,6 +14,8 @@ A YoPratiqo purchase grants you a **personal, non-transferable licence** to acce
 - **Cours Pratiqo Inc.** retains all intellectual property rights in the content, visuals, audio, code, and pedagogy of the module.
 - No permanent download of the content is guaranteed — playback is delivered through the YoPratiqo platform.
 
+YoPratiqo is an **educational preparation** product. Modules may help you practise, discover a language, or prepare for a conversation with a teacher, but Pratiqo does not guarantee fluency, exam success, an immigration result, an employment result, or a booking with a teacher. The refund policy applicable to paid digital modules remains subject to legal review before any broader paid rollout.
+
 ---
 
 ## 2. "Lifetime access" — defined

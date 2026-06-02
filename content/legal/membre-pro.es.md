@@ -48,7 +48,7 @@ Miembro Pro **no es** un conjunto de herramientas ni un estudio de profesor: es 
 
 ## 4. Ciclo de facturación
 
-Miembro Pro puede facturarse según un ciclo **mensual o anual**, u otro ciclo que Pratiqo ofrezca al momento de la suscripción.
+En el lanzamiento, Miembro Pro se muestra a **29 $CA por mes**, **más los impuestos aplicables**, y se **factura mensualmente por adelantado**. Si Pratiqo ofrece posteriormente un período anual u otro ciclo, ese ciclo y su precio se mostrarán antes de la suscripción.
 
 - El ciclo de facturación y la fecha de la próxima renovación se muestran antes de la suscripción y pueden consultarse en la página de suscripción de la cuenta cuando esté disponible.
 - El **precio aplicable es el que se muestra en el momento de la suscripción**, más los impuestos aplicables si los hubiere.
@@ -60,7 +60,7 @@ Miembro Pro puede facturarse según un ciclo **mensual o anual**, u otro ciclo q
 
 ## 5. Renovación automática
 
-Salvo cancelación, la membresía Miembro Pro **se renueva automáticamente** por un nuevo período igual al ciclo elegido.
+Salvo cancelación, la membresía Miembro Pro **se renueva automáticamente cada mes** por un nuevo período mensual, o por el período indicado si se ofrece otro ciclo.
 
 - Las modalidades de renovación (período, precio, fecha) se divulgan antes de la compra.
 - El profesor es responsable de **cancelar antes de la fecha de renovación** si no desea continuar la membresía.
@@ -77,6 +77,8 @@ El profesor puede cancelar Miembro Pro:
 - escribiendo a [`support@pratiqo.ca`](mailto:support@pratiqo.ca).
 
 Salvo indicación en contrario al momento de la cancelación o exigencia de la ley imperativa, **la cancelación entra en vigor al final del período pagado en curso**. Las ventajas de Miembro Pro pueden permanecer accesibles hasta esa fecha y luego cesar.
+
+El profesor puede cancelar en cualquier momento desde su panel cuando esta funcionalidad esté disponible, o escribiendo a la dirección de soporte indicada arriba.
 
 Cancelar Miembro Pro:
 
@@ -120,9 +122,10 @@ Los impuestos (GST, QST, HST, impuestos provinciales, impuestos extranjeros) **p
 
 ## 10. Modificaciones de las ventajas
 
-Pratiqo puede **agregar, retirar, probar, renombrar, modificar o discontinuar** ventajas de Miembro Pro, incluida la **comisión reducida**, la **estructura de reintegro** y cualquier otra ventaja vinculada al estatus.
+Pratiqo puede **agregar, retirar, probar, renombrar, modificar o discontinuar** ventajas de Miembro Pro, incluida la **comisión reducida**, la **estructura de reintegro**, el precio de la suscripción o las condiciones del plan.
 
-- Los cambios materiales se comunicarán por los medios coherentes con la ley aplicable cuando sea necesario.
+- Los cambios materiales se comunicarán con **aviso previo conforme a la ley aplicable** cuando sea necesario.
+- Las modificaciones de comisiones, precios de suscripción o condiciones del plan se aplican **prospectivamente**. Cuando la ley lo exija, los usuarios afectados pueden cancelar antes de que el cambio entre en vigor.
 - Una modificación de una ventaja no da derecho automáticamente a un reembolso, salvo disposición imperativa en contrario.
 - Las ventajas **beta, experimentales o de acceso anticipado** pueden ser modificadas, restringidas o retiradas sin previo aviso y no están garantizadas.
 - Los **cambios de tasa** (por ejemplo, ajuste de la comisión reducida o del reintegro) se aplican **prospectivamente** desde la fecha de entrada en vigor indicada por Pratiqo, sujeto a la ley aplicable.
@@ -197,6 +200,8 @@ Pratiqo puede **rechazar, suspender o cancelar** Miembro Pro, en particular, en 
 ## 15. Relación con las transferencias, las comisiones y los reintegros
 
 Las **tarifas de la suscripción Miembro Pro** (lo que Pratiqo cobra por el **estatus de miembro**) son **distintas** de las **comisiones de la marketplace** (el porcentaje que Pratiqo retiene en cada clase), las tarifas de servicio y las demás tarifas de la marketplace.
+
+La **redistribución / reintegro anual de Miembro Pro**, cuando se ofrece, es **condicional**. Corresponde al **5% de las ganancias netas de Pratiqo**, está prevista para **enero**, está limitada por un fondo máximo de **150 000 $CA**, se activa solo si al menos **10 profesores Pro elegibles** califican, y cada profesor puede recibir un máximo de **10 000 $CA** según su **volumen anual relativo**. Pratiqo no garantiza ningún ingreso mínimo ni ningún monto de redistribución.
 
 - Pagar Miembro Pro **no exime** al profesor de las reglas de la marketplace, las comisiones, las reglas de cancelación, las reglas de reembolso ni las obligaciones relativas a contracargos.
 - Cuando una **comisión reducida** está vinculada al estatus Miembro Pro, su tasa, condiciones, fecha de entrada en vigor y alcance se indican en la plataforma, en el panel, en el checkout, en la página de suscripción o en los términos del plan aplicable. Pratiqo puede ajustar esta tasa **prospectivamente**, sujeto a la ley aplicable.
