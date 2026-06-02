@@ -144,16 +144,16 @@ const WELCOME_TEACHER_COPY: Record<EmailLocale, WelcomeTeacherCopy> = {
         </h2>
         ${tealBox(`
           <strong>Programme de fidélité Pratiqo</strong><br><br>
-          🥉 Bronze (0–5 000 $) → commission <strong>10 % / 5 %</strong> (gratuit / pro)<br>
-          🥈 Argent (5–15 000 $) → <strong>9 % / 4,5 %</strong><br>
-          🥇 Or (15–30 000 $) → <strong>8 % / 4 %</strong><br>
-          🏆 Platine (30 000 $+) → <strong>7 % / 3,5 %</strong>
+          🥉 Bronze (0–5 000 $CA) → commission <strong>15 % / 5 %</strong> (gratuit / pro)<br>
+          🥈 Argent (5 000–15 000 $CA) → <strong>14 % / 4,5 %</strong><br>
+          🥇 Or (15 000–30 000 $CA) → <strong>13 % / 4 % + 0,5 % ristourne</strong><br>
+          🏆 Platine (30 000 $CA+) → <strong>12 % / 3,5 % + 1 % ristourne</strong>
         `)}
 
         <h2 style="font-size:17px;font-weight:700;margin:28px 0 12px;color:#2C2C2A;">
           📊 Ristourne annuelle
         </h2>
-        <p>Chaque année, on redistribue une partie de nos profits nets aux professeurs éligibles — proportionnellement à leur volume. C'est la <strong>ristourne Pratiqo</strong> : de l'argent qui revient dans ta poche, pas dans celle d'actionnaires.</p>
+        <p>Chaque année, la ristourne Pratiqo redistribue 5 % de nos profits nets aux professeurs Pro éligibles, selon les conditions applicables et leur volume relatif. Ce n'est pas un revenu garanti : tes gains dépendent de ton activité, de tes disponibilités, de tes tarifs et de la demande.</p>
 
         <h2 style="font-size:17px;font-weight:700;margin:28px 0 12px;color:#2C2C2A;">
           🇨🇦 D'ici, pour ici
@@ -182,16 +182,16 @@ const WELCOME_TEACHER_COPY: Record<EmailLocale, WelcomeTeacherCopy> = {
         </h2>
         ${tealBox(`
           <strong>Pratiqo loyalty program</strong><br><br>
-          🥉 Bronze ($0–$5,000) → <strong>10% / 5%</strong> fee (free / pro plan)<br>
-          🥈 Silver ($5–$15,000) → <strong>9% / 4.5%</strong><br>
-          🥇 Gold ($15–$30,000) → <strong>8% / 4%</strong><br>
-          🏆 Platinum ($30,000+) → <strong>7% / 3.5%</strong>
+          🥉 Bronze (CAD $0–CAD $5,000) → <strong>15% / 5%</strong> fee (Free / Pro Member)<br>
+          🥈 Silver (CAD $5,000–CAD $15,000) → <strong>14% / 4.5%</strong><br>
+          🥇 Gold (CAD $15,000–CAD $30,000) → <strong>13% / 4% + 0.5% profit-sharing</strong><br>
+          🏆 Platinum (CAD $30,000+) → <strong>12% / 3.5% + 1% profit-sharing</strong>
         `)}
 
         <h2 style="font-size:17px;font-weight:700;margin:28px 0 12px;color:#2C2C2A;">
           📊 Annual profit sharing
         </h2>
-        <p>Each year we share a portion of net profits with eligible teachers — proportional to your volume on the platform. That's the <strong>Pratiqo rebate</strong>: money back in your pocket, not shareholders' pockets.</p>
+        <p>Each year, Pratiqo's annual profit-sharing pool redistributes 5% of net profits to eligible Pro Member teachers, subject to applicable conditions and relative volume. It is not guaranteed income: your earnings depend on your activity, availability, pricing, and demand.</p>
 
         <h2 style="font-size:17px;font-weight:700;margin:28px 0 12px;color:#2C2C2A;">
           🌱 Local, for locals
@@ -220,16 +220,16 @@ const WELCOME_TEACHER_COPY: Record<EmailLocale, WelcomeTeacherCopy> = {
         </h2>
         ${tealBox(`
           <strong>Programa de fidelidad Pratiqo</strong><br><br>
-          🥉 Bronce (0–5 000 $) → comisión <strong>10 % / 5 %</strong> (gratis / pro)<br>
-          🥈 Plata (5–15 000 $) → <strong>9 % / 4,5 %</strong><br>
-          🥇 Oro (15–30 000 $) → <strong>8 % / 4 %</strong><br>
-          🏆 Platino (30 000 $+) → <strong>7 % / 3,5 %</strong>
+          🥉 Bronce (0–5 000 $CA) → comisión <strong>15 % / 5 %</strong> (gratis / Miembro Pro)<br>
+          🥈 Plata (5 000–15 000 $CA) → <strong>14 % / 4,5 %</strong><br>
+          🥇 Oro (15 000–30 000 $CA) → <strong>13 % / 4 % + 0,5 % redistribución</strong><br>
+          🏆 Platino (30 000 $CA+) → <strong>12 % / 3,5 % + 1 % redistribución</strong>
         `)}
 
         <h2 style="font-size:17px;font-weight:700;margin:28px 0 12px;color:#2C2C2A;">
           📊 Redistribución anual
         </h2>
-        <p>Cada año compartimos parte de las ganancias netas con profes elegibles — según tu volumen en la plataforma. Es la <strong>redistribución Pratiqo</strong>: plata que vuelve a tu bolsillo, no a accionistas.</p>
+        <p>Cada año, la redistribución Pratiqo reparte el 5 % de las ganancias netas entre profesores Miembro Pro elegibles, según las condiciones aplicables y el volumen relativo. No es un ingreso garantizado: tus ingresos dependen de tu actividad, disponibilidad, precios y demanda.</p>
 
         <h2 style="font-size:17px;font-weight:700;margin:28px 0 12px;color:#2C2C2A;">
           🌱 De aquí, para aquí

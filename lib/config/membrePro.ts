@@ -36,8 +36,9 @@ export type LegalRouteKey = keyof typeof LEGAL_ROUTES;
  * Plan economic figures rendered in the upgrade UI.
  *
  * Pratiqo's canonical commission model is *régressive / declining*:
- *   - Free plan: 10 % at the entry tier, decreasing toward 7 %.
- *   - Membre Pro: 5 % at the entry tier, decreasing toward 3.5 %.
+ *   - Free plan: 15 % at the entry tier, decreasing toward 12 %.
+ *   - Membre Pro: 5 % at the entry tier, decreasing toward 3.5 %,
+ *     with annual ristourne/profit-sharing eligibility on higher tiers.
  *
  * Stripe still authoritatively quotes the subscription price at checkout;
  * the figures below are only used for the at-a-glance comparison cards
@@ -51,7 +52,7 @@ export type LegalRouteKey = keyof typeof LEGAL_ROUTES;
  */
 export const MEMBRE_PRO_PLAN = {
   /** Free plan entry-tier commission (= startPercent of freeCommissionRange). */
-  freeCommissionPercent: 10,
+  freeCommissionPercent: 15,
   /** Free plan: max active concurrent students before requiring Membre Pro. */
   freeActiveStudentLimit: 5,
   /** Membre Pro entry-tier commission (= startPercent of proCommissionRange). */
@@ -71,9 +72,19 @@ export const MEMBRE_PRO_PLAN = {
  */
 export const MEMBRE_PRO_COMMISSION_MODEL = {
   /** Free plan commission range (entry → best tier). */
-  freeCommissionRange: { startPercent: 10, bestPercent: 7 },
+  freeCommissionRange: { startPercent: 15, bestPercent: 12 },
   /** Membre Pro commission range (entry → best tier). */
   proCommissionRange: { startPercent: 5, bestPercent: 3.5 },
+  /** Annual Pro Member ristourne / profit-sharing bonus by marketplace tier. */
+  proRistourneRange: { goldPercent: 0.5, platinumPercent: 1 },
+  /** Annual profit-sharing pool percentage of Pratiqo net profits. */
+  annualProfitSharingPoolPercent: 5,
+  /** Annual profit-sharing pool cap in CAD. */
+  annualProfitSharingPoolCapCad: 150_000,
+  /** Minimum eligible Pro teachers required to activate the annual pool. */
+  annualProfitSharingMinimumEligibleTeachers: 10,
+  /** Maximum annual profit-sharing amount per eligible teacher in CAD. */
+  annualProfitSharingMaxPerTeacherCad: 10_000,
   /**
    * Whether the marketplace exposes a tiered (declining) commission
    * model on /tarifs. When true, `/upgrade` must use cautious "starting

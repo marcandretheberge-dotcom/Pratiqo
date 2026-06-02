@@ -42,7 +42,7 @@ test("flag off: checkout tax params disabled and legacy amounts unchanged", () =
   const amounts = calculateBookingAmounts({ subtotalCents: 2500, taxTotalCents: 0, teacherPlan: "free" });
   assert.equal(amounts.amountCents, 2500);
   assert.equal(amounts.subtotalCents, 2500);
-  assert.equal(amounts.platformFeeCents, 250);
+  assert.equal(amounts.platformFeeCents, 375);
 });
 
 test("flag on: checkout params include automatic_tax and inclusive tax behavior", () => {
@@ -83,8 +83,8 @@ test("credits reduce final amount before Stripe Tax (commission uses pre-tax sub
     taxTotalCents: breakdown.taxTotalCents,
     teacherPlan: "free",
   });
-  assert.equal(amounts.platformFeeCents, 174);
-  assert.notEqual(amounts.platformFeeCents, Math.floor((2000 * 1000) / 10000));
+  assert.equal(amounts.platformFeeCents, 261);
+  assert.notEqual(amounts.platformFeeCents, Math.floor((2000 * 1500) / 10000));
 });
 
 test("webhook stores totals from Checkout Session and platform fee uses subtotal", () => {
@@ -112,8 +112,8 @@ test("webhook stores totals from Checkout Session and platform fee uses subtotal
   assert.equal(ledger.amountCents, 2300);
   assert.equal(ledger.subtotalCents, 2000);
   assert.equal(ledger.taxTotalCents, 300);
-  assert.equal(ledger.platformFeeCents, 200);
-  assert.equal(ledger.teacherNetCents, 1800);
+  assert.equal(ledger.platformFeeCents, 300);
+  assert.equal(ledger.teacherNetCents, 1700);
   assert.equal(ledger.taxStatus, "calculated");
 });
 

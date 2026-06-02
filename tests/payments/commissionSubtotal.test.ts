@@ -20,8 +20,8 @@ test("commission is calculated on subtotal_cents, not tax-inclusive amount_cents
   assert.equal(amounts.amountCents, 2300);
   assert.equal(amounts.subtotalCents, 2000);
   assert.equal(amounts.taxTotalCents, 300);
-  assert.equal(amounts.platformFeeCents, 200);
-  assert.equal(amounts.teacherNetCents, 1800);
+  assert.equal(amounts.platformFeeCents, 300);
+  assert.equal(amounts.teacherNetCents, 1700);
 });
 
 test("phase 1 with zero tax keeps amount_cents equal to subtotal_cents", () => {

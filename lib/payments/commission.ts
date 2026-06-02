@@ -38,10 +38,10 @@ const TIER_THRESHOLDS_CENTS: Array<{ tier: LoyaltyTier; minCents: number; maxCen
 ];
 
 const FREE_PLAN_BPS: Record<LoyaltyTier, number> = {
-  bronze: 1000,
-  argent: 900,
-  or: 800,
-  platine: 700,
+  bronze: 1500,
+  argent: 1400,
+  or: 1300,
+  platine: 1200,
 };
 
 const PRO_PLAN_BPS: Record<LoyaltyTier, number> = {

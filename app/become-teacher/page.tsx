@@ -25,10 +25,10 @@ type Tier = {
 };
 
 const TIERS: Tier[] = [
-  { id: "bronze", label: "Bronze",  emoji: "🥉", min: 0,     max: 5000,    freeCommission: 10, proCommission: 5,   ristourneBonus: 0,   accent: "#CD7F32" },
-  { id: "argent", label: "Argent",  emoji: "🥈", min: 5000,  max: 15000,   freeCommission: 9,  proCommission: 4.5, ristourneBonus: 0,   accent: "#B0B0B0" },
-  { id: "or",     label: "Or",      emoji: "🥇", min: 15000, max: 30000,   freeCommission: 8,  proCommission: 4,   ristourneBonus: 0.5, accent: "#FFD700" },
-  { id: "platine",label: "Platine", emoji: "💎", min: 30000, max: Infinity, freeCommission: 7,  proCommission: 3.5, ristourneBonus: 1,   accent: "#50BEB2" },
+  { id: "bronze", label: "Bronze",  emoji: "🥉", min: 0,     max: 5000,    freeCommission: 15, proCommission: 5,   ristourneBonus: 0,   accent: "#CD7F32" },
+  { id: "argent", label: "Argent",  emoji: "🥈", min: 5000,  max: 15000,   freeCommission: 14, proCommission: 4.5, ristourneBonus: 0,   accent: "#B0B0B0" },
+  { id: "or",     label: "Or",      emoji: "🥇", min: 15000, max: 30000,   freeCommission: 13, proCommission: 4,   ristourneBonus: 0.5, accent: "#FFD700" },
+  { id: "platine",label: "Platine", emoji: "💎", min: 30000, max: Infinity, freeCommission: 12, proCommission: 3.5, ristourneBonus: 1,   accent: "#50BEB2" },
 ];
 
 function tierFromAnnualVolume(volume: number): Tier {
@@ -44,7 +44,7 @@ function formatCad(amount: number): string {
 }
 
 const PRO_ANNUAL = 29 * 12; // $348/year — display math only, mirrors the
-// canonical Membre Pro monthly price ($29 CAD) shown on /upgrade and /tarifs.
+// canonical Membre Pro / Pro Member monthly price ($29 CAD) shown on /upgrade and /tarifs.
 // Stripe remains the authoritative source at checkout.
 
 export default function BecomeTeacherPage() {
@@ -532,8 +532,9 @@ export default function BecomeTeacherPage() {
                 launch disciplines (musique, langues, tutorat académique).
                 Guarded by tests/marketing/testimonialsLaunchScope.test.ts
                 against unsupported metrics and disciplines not yet on
-                the platform. Membre Pro uses a declining commission
-                (5 % → 3.5 % range) — see lib/config/membrePro for the
+                the platform. Pro Member uses a declining commission
+                (5 % → 3.5 % range, with annual ristourne eligibility on
+                higher tiers) — see lib/config/membrePro for the
                 canonical figures and /tarifs for the tier breakdown. */}
             <Testimonial name="Sophie M." meta="Piano · Montréal" quote="Créer mon profil a été simple, et je peux présenter clairement mes cours de piano." />
             <Testimonial name="Karim L." meta="Mathématiques · Québec" quote="Les demandes de cours sont centralisées, ce qui m'évite de gérer mes échanges partout à la fois." />

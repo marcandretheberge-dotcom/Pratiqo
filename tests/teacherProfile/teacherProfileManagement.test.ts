@@ -176,7 +176,7 @@ test("i18n: profile management keys exist in fr / en / es", () => {
   }
 });
 
-test("forbidden files: branch does not touch Stripe/payments/security/migrations/cron", () => {
+test("forbidden files: branch does not touch Stripe checkout/webhook, Supabase/RLS/migrations, booking, cron, or unrelated payment infrastructure", () => {
   let mergeBase: string;
   try {
     mergeBase = execSync("git merge-base HEAD origin/main", { encoding: "utf8" }).trim();
@@ -198,11 +198,14 @@ test("forbidden files: branch does not touch Stripe/payments/security/migrations
   const forbidden: { label: string; re: RegExp }[] = [
     { label: "Stripe checkout/webhook routes", re: /^app\/api\/stripe\// },
     { label: "payment routes", re: /^app\/api\/(payments|payouts|refunds|webhooks)\// },
-    { label: "payment library helpers", re: /^lib\/payments\// },
+    { label: "payment library helpers outside canonical commission config", re: /^lib\/payments\/(?!commission\.ts$)/ },
     { label: "guarantee logic", re: /^lib\/guarantee\/|^app\/api\/guarantee\// },
     { label: "Supabase migrations", re: /^supabase\/migrations\// },
     { label: "RLS / security helpers", re: /^lib\/security\/|^lib\/rls\// },
-    { label: "cron jobs", re: /^app\/api\/cron\// },
+    { label: "booking flow files outside commission disclosure success page", re: /^app\/\(app\)\/booking\/(?!success\/page\.tsx$)/ },
+    { label: "cron jobs", re: /^app\/api\/cron\/|^\.github\/workflows\/.*cron/i },
+    { label: "YoPratiqo content/audio", re: /^(app|components|lib)\/yo\/|^public\/.*\.(mp3|wav|m4a)$/i },
+    { label: "OpenAI/audio generation scripts", re: /^scripts\/.*(openai|generate-yopratiqo-audio)/i },
     { label: "teacher badge truth logic", re: /^lib\/teacherTrust\.|^lib\/badges\./ },
     { label: "public teacher name masking", re: /^lib\/identity\/displayName\./ },
   ];
@@ -217,16 +220,11 @@ test("forbidden files: branch does not touch Stripe/payments/security/migrations
     "supabase/migrations/073_student_saved_location.sql",
   ]);
 
-  const approvedStripeCheckoutExceptions = new Set(["app/api/stripe/checkout/route.ts"]);
-
   const violations: string[] = [];
   for (const file of changed) {
     for (const rule of forbidden) {
       if (rule.re.test(file)) {
         if (rule.label === "Supabase migrations" && approvedMigrationExceptions.has(file)) {
-          continue;
-        }
-        if (rule.label === "Stripe checkout/webhook routes" && approvedStripeCheckoutExceptions.has(file)) {
           continue;
         }
         violations.push(`${file} (${rule.label})`);

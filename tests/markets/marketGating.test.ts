@@ -71,11 +71,13 @@ test("unknown countries are unsupported by default", () => {
   assert.equal(isPayoutMarketSupported("UY"), false);
 });
 
-test("Canada commission and Membre Pro price remain unchanged", () => {
-  assert.equal(MEMBRE_PRO_COMMISSION_MODEL.freeCommissionRange.startPercent, 10);
-  assert.equal(MEMBRE_PRO_COMMISSION_MODEL.freeCommissionRange.bestPercent, 7);
+test("Canada commission and Membre Pro price use the canonical launch model", () => {
+  assert.equal(MEMBRE_PRO_COMMISSION_MODEL.freeCommissionRange.startPercent, 15);
+  assert.equal(MEMBRE_PRO_COMMISSION_MODEL.freeCommissionRange.bestPercent, 12);
   assert.equal(MEMBRE_PRO_COMMISSION_MODEL.proCommissionRange.startPercent, 5);
   assert.equal(MEMBRE_PRO_COMMISSION_MODEL.proCommissionRange.bestPercent, 3.5);
+  assert.equal(MEMBRE_PRO_COMMISSION_MODEL.proRistourneRange.goldPercent, 0.5);
+  assert.equal(MEMBRE_PRO_COMMISSION_MODEL.proRistourneRange.platinumPercent, 1);
   assert.equal(MEMBRE_PRO_PLAN.proMonthlyPriceCad, 29);
   assert.strictEqual(PRATIQO_MARKETS.CA.commissionModel, MEMBRE_PRO_COMMISSION_MODEL);
 });
