@@ -590,8 +590,10 @@ test("module shell id matches the future-premium product config id", () => {
 // Lesson 1 ("Arriver au travail et saluer naturellement") is the
 // first lesson with a populated free-preview body. The tests below
 // pin every documented section AND every safety invariant so a
-// regression breaks the launch gate. The other six lessons stay
-// outline-only on purpose; we only assert their lifecycle flags here.
+// regression breaks the launch gate. Lesson 2 has its own dedicated
+// suite (`tests/yo/yopratiqoFrQuebecLesson2.test.ts`); lessons 3-7
+// stay outline-only on purpose, and we only assert their lifecycle
+// flags here.
 
 const LESSON_ONE_ID = "arriver-saluer";
 
@@ -622,8 +624,36 @@ test("every lesson reports accessStatus 'coming_soon' (no live paid surface)", (
   }
 });
 
-test("lessons 2-7 stay outline-only ('planned', no content body)", () => {
-  for (let i = 1; i < frQuebecWorkplaceSurvivalModule.lessons.length; i += 1) {
+test("lesson 2 ships as a free preview with a populated content body", () => {
+  // Lesson 2 ("Comprendre les consignes simples") graduated from
+  // outline-only to a populated preview. The full Lesson 2 content
+  // contract lives in `tests/yo/yopratiqoFrQuebecLesson2.test.ts`;
+  // here we just guard the lifecycle invariants that matter to the
+  // shell-level suite.
+  const lesson2 = frQuebecWorkplaceSurvivalModule.lessons[1]!;
+  assert.equal(
+    lesson2.status,
+    "preview",
+    "lesson 2 status must be 'preview' (Quebec French module lesson 2 is now an open preview)",
+  );
+  assert.equal(
+    lesson2.accessStatus,
+    "coming_soon",
+    "lesson 2 accessStatus must remain coming_soon (no paid surface)",
+  );
+  assert.ok(
+    lesson2.content,
+    "lesson 2 must carry a populated content body",
+  );
+  assert.equal(
+    lesson2.content!.kind,
+    "lesson2",
+    "lesson 2 content.kind must be the 'lesson2' discriminator",
+  );
+});
+
+test("lessons 3-7 stay outline-only ('planned', no content body)", () => {
+  for (let i = 2; i < frQuebecWorkplaceSurvivalModule.lessons.length; i += 1) {
     const lesson = frQuebecWorkplaceSurvivalModule.lessons[i]!;
     assert.equal(
       lesson.status,
