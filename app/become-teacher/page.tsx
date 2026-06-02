@@ -43,9 +43,13 @@ function formatCad(amount: number): string {
   }).format(Math.max(0, amount));
 }
 
-const PRO_ANNUAL = 29 * 12; // $348/year — display math only, mirrors the
-// canonical Membre Pro / Pro Member monthly price ($29 CAD) shown on /upgrade and /tarifs.
-// Stripe remains the authoritative source at checkout.
+// Display math only, mirrors the canonical Membre Pro / Pro Member monthly
+// price ($29.99 CAD) shown on /upgrade and /tarifs (see
+// MEMBRE_PRO_PLAN.proMonthlyPriceCad in lib/config/membrePro.ts). Stripe
+// remains the authoritative source at checkout (STRIPE_PRO_MONTHLY_PRICE_ID
+// → unit_amount = 2999). 29.99 * 12 = 359.88; formatCad rounds to whole
+// dollars for the annual subscription line in the calculator card.
+const PRO_ANNUAL = 29.99 * 12;
 
 export default function BecomeTeacherPage() {
   const { t } = useLocale();

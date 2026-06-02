@@ -297,7 +297,7 @@ export default function DevenirEnseignantContent() {
               },
               {
                 emoji: "🚀",
-                label: locale === "es" ? "Pro — CA$ 29 /mes" : locale === "en" ? "Pro — CA$ 29 /mo" : "Pro — 29 $/mois",
+                label: locale === "es" ? "Pro — 29,99 $CA / mes" : locale === "en" ? "Pro — $29.99 CAD / mo" : "Pro — 29,99 $CA / mois",
                 sub: locale === "es" ? "Comisión reducida desde 5%, alumnos ilimitados" : locale === "en" ? "Reduced commission starting at 5%, unlimited students" : "Commission réduite à partir de 5 %, élèves illimités",
               },
               // Pratiqo's commission is *régressive / declining*: free

@@ -48,7 +48,7 @@ Miembro Pro **no es** un conjunto de herramientas ni un estudio de profesor: es 
 
 ## 4. Ciclo de facturación
 
-En el lanzamiento, Miembro Pro se muestra a **29 $CA por mes**, **más los impuestos aplicables**, y se **factura mensualmente por adelantado**. Si Pratiqo ofrece posteriormente un período anual u otro ciclo, ese ciclo y su precio se mostrarán antes de la suscripción.
+En el lanzamiento, Miembro Pro se muestra a **29,99 $CA por mes**, **más los impuestos aplicables**, y se **factura mensualmente por adelantado**. Si Pratiqo ofrece posteriormente un período anual u otro ciclo, ese ciclo y su precio se mostrarán antes de la suscripción.
 
 - El ciclo de facturación y la fecha de la próxima renovación se muestran antes de la suscripción y pueden consultarse en la página de suscripción de la cuenta cuando esté disponible.
 - El **precio aplicable es el que se muestra en el momento de la suscripción**, más los impuestos aplicables si los hubiere.

@@ -45,7 +45,7 @@ Le modèle de commission canonique a été modifié.
 
 Points associés :
 
-- Membre Pro demeure à **29 $CA/mois** selon la configuration actuelle.
+- Membre Pro est à **29,99 $CA/mois** (taxes applicables en sus) — source de vérité : Stripe `STRIPE_PRO_MONTHLY_PRICE_ID` (`unit_amount = 2999`); les libellés produit FR/EN/ES, les pages `/upgrade` et `/tarifs`, les conditions légales et la formule de seuil de rentabilité ont été réalignés sur cette valeur (voir branche `fix/membre-pro-price-source-of-truth`). Une révision antérieure avait indiqué `29 $CA/mois` à tort.
 - Le modèle est présenté comme **commission dégressive** : plus le volume annuel cumulé est élevé, plus le taux baisse.
 - Le calcul canonique est dans `lib/payments/commission.ts` et la configuration produit Membre Pro dans `lib/config/membrePro.ts`.
 - Les textes doivent éviter toute promesse de revenu.

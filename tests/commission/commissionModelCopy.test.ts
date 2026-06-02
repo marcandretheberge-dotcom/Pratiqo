@@ -117,7 +117,15 @@ test("canonical payment calculator uses the new Free and Pro tier rates", () => 
 });
 
 test("Membre Pro config exposes the canonical price, ranges, and annual ristourne rules", () => {
-  assert.equal(MEMBRE_PRO_PLAN.proMonthlyPriceCad, 29);
+  // Source of truth: Stripe Price referenced by STRIPE_PRO_MONTHLY_PRICE_ID
+  // has unit_amount = 2999 (= $29.99 CAD). The numeric constant exposed by
+  // lib/config/membrePro must stay in lockstep with that dashboard value.
+  assert.equal(MEMBRE_PRO_PLAN.proMonthlyPriceCad, 29.99);
+  // Locale-aware display strings keep FR/ES "29,99" and EN "29.99" consistent
+  // across every user-facing surface that quotes the monthly price.
+  assert.equal(MEMBRE_PRO_PLAN.proMonthlyPriceCadDisplay.fr, "29,99");
+  assert.equal(MEMBRE_PRO_PLAN.proMonthlyPriceCadDisplay.en, "29.99");
+  assert.equal(MEMBRE_PRO_PLAN.proMonthlyPriceCadDisplay.es, "29,99");
   assert.equal(MEMBRE_PRO_PLAN.freeCommissionPercent, 15);
   assert.equal(MEMBRE_PRO_PLAN.proCommissionPercent, 5);
   assert.deepEqual(MEMBRE_PRO_COMMISSION_MODEL.freeCommissionRange, {

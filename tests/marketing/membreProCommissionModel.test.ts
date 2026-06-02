@@ -19,9 +19,13 @@
  *     start / end at the canonical range (15 % / 12 % free, 5 % / 3.5 %
  *     pro). /upgrade derives its summary from the same constants.
  *
- *  3. Stale subscription price (29.99) leaks back into a user-facing
- *     surface, since Stripe charges the canonical $29 and /upgrade
- *     displays $29 from `MEMBRE_PRO_PLAN.proMonthlyPriceCad`.
+ *  3. Stale "$29" subscription price (a prior normalization mistake)
+ *     leaks back into a user-facing surface. The canonical Stripe
+ *     Price referenced by `STRIPE_PRO_MONTHLY_PRICE_ID` has
+ *     `unit_amount = 2999` (= $29.99 CAD), and /upgrade, /tarifs and
+ *     the legal copy must all display $29.99 / 29,99 sourced from
+ *     `MEMBRE_PRO_PLAN.proMonthlyPriceCad` and
+ *     `MEMBRE_PRO_PLAN.proMonthlyPriceCadDisplay`.
  *
  *  4. Brand naming regresses. "Plan Pro" / "Teacher Pro" must not
  *     appear in user-facing pages — the canonical brand is Membre Pro
@@ -107,7 +111,49 @@ test("MEMBRE_PRO_PLAN entry-tier values match the canonical range start", () => 
     MEMBRE_PRO_PLAN.proCommissionPercent,
     MEMBRE_PRO_COMMISSION_MODEL.proCommissionRange.startPercent,
   );
-  assert.equal(MEMBRE_PRO_PLAN.proMonthlyPriceCad, 29);
+  // Stripe Price `STRIPE_PRO_MONTHLY_PRICE_ID` has unit_amount = 2999
+  // (= $29.99 CAD). This numeric constant MUST stay aligned with that
+  // dashboard value — any divergence creates a public/checkout mismatch.
+  assert.equal(MEMBRE_PRO_PLAN.proMonthlyPriceCad, 29.99);
+});
+
+test("MEMBRE_PRO_PLAN exposes locale-aware display strings for the monthly price", () => {
+  // FR/ES use a comma decimal mark; EN uses a dot. Any user-facing
+  // copy that needs the printable number must consume this map rather
+  // than re-interpolate the numeric constant, which would render
+  // "29.99 $CA" on FR/ES surfaces.
+  assert.equal(MEMBRE_PRO_PLAN.proMonthlyPriceCadDisplay.fr, "29,99");
+  assert.equal(MEMBRE_PRO_PLAN.proMonthlyPriceCadDisplay.en, "29.99");
+  assert.equal(MEMBRE_PRO_PLAN.proMonthlyPriceCadDisplay.es, "29,99");
+});
+
+test("Stripe Pro checkout route still uses the STRIPE_PRO_MONTHLY_PRICE_ID env var", () => {
+  // Guards against payment-logic drift: this fix branch must not
+  // rename, replace or hard-code the Price ID env var, and must not
+  // alter the checkout call shape.
+  const checkoutSrc = readFileSync(
+    join(root, "app", "api", "stripe", "pro", "checkout", "route.ts"),
+    "utf8",
+  );
+  assert.match(
+    checkoutSrc,
+    /process\.env\.STRIPE_PRO_MONTHLY_PRICE_ID/,
+    "Stripe Pro checkout must keep reading STRIPE_PRO_MONTHLY_PRICE_ID",
+  );
+  assert.match(
+    checkoutSrc,
+    /line_items:\s*\[\s*\{\s*price:\s*priceId,\s*quantity:\s*1\s*\}\s*\]/,
+    "Stripe Pro checkout must keep passing the env-resolved priceId verbatim to Stripe",
+  );
+  // No hard-coded Stripe product/price ids may sneak into this route.
+  assert.ok(
+    !/\bprice_[A-Za-z0-9]{8,}/.test(checkoutSrc),
+    "Stripe checkout must not hard-code a Stripe price_… identifier",
+  );
+  assert.ok(
+    !/\bprod_[A-Za-z0-9]{8,}/.test(checkoutSrc),
+    "Stripe checkout must not hard-code a Stripe prod_… identifier",
+  );
 });
 
 // ── /upgrade copy: cautious wording, all locales ──────────────────────
@@ -227,15 +273,163 @@ test("/tarifs commission tier i18n keys span the canonical range in all locales"
   }
 });
 
-test("/tarifs displays the canonical $29 monthly price (no stale 29.99) in FR/EN/ES", () => {
+test("/tarifs displays the canonical 29.99 / 29,99 monthly price (no stale bare $29) in FR/EN/ES", () => {
+  // The canonical Stripe price (STRIPE_PRO_MONTHLY_PRICE_ID,
+  // unit_amount = 2999) is $29.99 CAD. The matching locale-aware
+  // display strings live in MEMBRE_PRO_PLAN.proMonthlyPriceCadDisplay
+  // and must surface verbatim on /tarifs.
+  const expectedDisplay: Record<"fr" | "en" | "es", string> = {
+    fr: MEMBRE_PRO_PLAN.proMonthlyPriceCadDisplay.fr,
+    en: MEMBRE_PRO_PLAN.proMonthlyPriceCadDisplay.en,
+    es: MEMBRE_PRO_PLAN.proMonthlyPriceCadDisplay.es,
+  };
   for (const [locale, dict] of [["fr", fr], ["en", en], ["es", es]] as const) {
+    const value = dict.pricingPagePlanProPrice ?? "";
     assert.ok(
-      !/29[,.]99/.test(dict.pricingPagePlanProPrice ?? ""),
-      `${locale} pricingPagePlanProPrice must not display 29.99 / 29,99`,
+      value.includes(expectedDisplay[locale]),
+      `${locale} pricingPagePlanProPrice must display ${expectedDisplay[locale]} (got "${value}")`,
     );
     assert.ok(
-      /\b29\b/.test(dict.pricingPagePlanProPrice ?? ""),
-      `${locale} pricingPagePlanProPrice must display the canonical 29`,
+      !/(?<![0-9.,])29(?![0-9.,])/.test(value),
+      `${locale} pricingPagePlanProPrice must not display the stale bare "29" amount (got "${value}")`,
+    );
+  }
+});
+
+test("Live FR/EN/ES public copy never surfaces the stale bare $29 monthly price", () => {
+  // Catches any future regression that sneaks a "29 $", "$29",
+  // "CAD $29" or "29 $CA" reference back into the live i18n
+  // dictionaries. Tolerated lookalikes (29.99, 29,99, 290, 2999) are
+  // explicitly allowed by the lookarounds.
+  const stalePricePattern = /(?<![0-9.,])29(?![0-9.,])\s*\$|\$\s*29(?![0-9.,])/;
+  const PRICE_BEARING_KEYS = [
+    "btPlanProPrice",
+    "loyaltyProPrice",
+    "pricingPagePlanProPrice",
+    "pricingPageBreakevenFormula",
+    "pricingPageFaq5A",
+    "pricingPageFaq6A",
+  ] as const;
+  for (const [locale, dict] of [["fr", fr], ["en", en], ["es", es]] as const) {
+    for (const key of PRICE_BEARING_KEYS) {
+      const value = dict[key] ?? "";
+      assert.ok(
+        !stalePricePattern.test(value),
+        `${locale}.${key} must not contain the stale bare "$29" / "29 $" price (got "${value}")`,
+      );
+    }
+  }
+});
+
+test("Live FR/EN/ES public copy displays the canonical 29.99 / 29,99 on every price-bearing surface", () => {
+  // The canonical value is 29.99 (EN) / 29,99 (FR & ES) and lives in
+  // MEMBRE_PRO_PLAN.proMonthlyPriceCadDisplay. Each price-bearing
+  // i18n key must echo the matching locale display string.
+  const expectedDisplay: Record<"fr" | "en" | "es", string> = {
+    fr: MEMBRE_PRO_PLAN.proMonthlyPriceCadDisplay.fr,
+    en: MEMBRE_PRO_PLAN.proMonthlyPriceCadDisplay.en,
+    es: MEMBRE_PRO_PLAN.proMonthlyPriceCadDisplay.es,
+  };
+  const PRICE_BEARING_KEYS = [
+    "btPlanProPrice",
+    "loyaltyProPrice",
+    "pricingPagePlanProPrice",
+    "pricingPageBreakevenFormula",
+    "pricingPageFaq6A",
+  ] as const;
+  for (const [locale, dict] of [["fr", fr], ["en", en], ["es", es]] as const) {
+    for (const key of PRICE_BEARING_KEYS) {
+      const value = dict[key] ?? "";
+      assert.ok(
+        value.includes(expectedDisplay[locale]),
+        `${locale}.${key} must contain the canonical ${expectedDisplay[locale]} (got "${value}")`,
+      );
+    }
+  }
+});
+
+test("/tarifs breakeven math reflects $29.99 ÷ 10pp ≈ $300 in FR/EN/ES", () => {
+  // At the Bronze tier the Standard plan charges 15% commission and
+  // Pro charges 5%, a 10pp delta. With Pro at $29.99/month the volume
+  // that offsets the subscription is 29.99 / 0.10 ≈ $300 of paid
+  // bookings — never $290 (which would correspond to the stale $29).
+  for (const dict of [fr, en, es]) {
+    assert.match(
+      dict.pricingPageBreakevenLead ?? "",
+      /\b300\b/,
+      `pricingPageBreakevenLead must mention ~300 (not the stale 290)`,
+    );
+    assert.match(
+      dict.pricingPageBreakevenFormula ?? "",
+      /\b300\b/,
+      `pricingPageBreakevenFormula must mention ~300 (not the stale 290)`,
+    );
+    assert.ok(
+      !/\b290\b/.test(dict.pricingPageBreakevenLead ?? ""),
+      `pricingPageBreakevenLead must not display the stale 290 figure`,
+    );
+    assert.ok(
+      !/\b290\b/.test(dict.pricingPageBreakevenFormula ?? ""),
+      `pricingPageBreakevenFormula must not display the stale 290 figure`,
+    );
+  }
+});
+
+test("FR/EN/ES all agree on the canonical $29.99 monthly price (no mixed prices in live copy)", () => {
+  // Every live FR/EN/ES surface must agree on the same canonical
+  // amount. We assert here on the proPlanPrice copy block surfaced by
+  // /upgrade as well as the i18n keys consumed by /tarifs.
+  const surfaces: Array<[string, string]> = [
+    ["UPGRADE_PAGE_COPY.fr.proPlanPrice", UPGRADE_PAGE_COPY.fr.proPlanPrice],
+    ["UPGRADE_PAGE_COPY.en.proPlanPrice", UPGRADE_PAGE_COPY.en.proPlanPrice],
+    ["UPGRADE_PAGE_COPY.es.proPlanPrice", UPGRADE_PAGE_COPY.es.proPlanPrice],
+    ["UPGRADE_PAGE_COPY.fr.summary", UPGRADE_PAGE_COPY.fr.summary],
+    ["UPGRADE_PAGE_COPY.en.summary", UPGRADE_PAGE_COPY.en.summary],
+    ["UPGRADE_PAGE_COPY.es.summary", UPGRADE_PAGE_COPY.es.summary],
+    ["UPGRADE_PAGE_COPY.fr.disclosureLead", UPGRADE_PAGE_COPY.fr.disclosureLead],
+    ["UPGRADE_PAGE_COPY.en.disclosureLead", UPGRADE_PAGE_COPY.en.disclosureLead],
+    ["UPGRADE_PAGE_COPY.es.disclosureLead", UPGRADE_PAGE_COPY.es.disclosureLead],
+    ["fr.pricingPagePlanProPrice", fr.pricingPagePlanProPrice ?? ""],
+    ["en.pricingPagePlanProPrice", en.pricingPagePlanProPrice ?? ""],
+    ["es.pricingPagePlanProPrice", es.pricingPagePlanProPrice ?? ""],
+    ["fr.loyaltyProPrice", fr.loyaltyProPrice ?? ""],
+    ["en.loyaltyProPrice", en.loyaltyProPrice ?? ""],
+    ["es.loyaltyProPrice", es.loyaltyProPrice ?? ""],
+  ];
+  for (const [label, value] of surfaces) {
+    assert.ok(
+      /29[.,]99/.test(value),
+      `${label} must surface the canonical 29.99 / 29,99 (got "${value}")`,
+    );
+    assert.ok(
+      !/(?<![0-9.,])29(?![0-9.,])\s*\$|\$\s*29(?![0-9.,])/.test(value),
+      `${label} must not surface the stale bare "$29" / "29 $" (got "${value}")`,
+    );
+  }
+});
+
+test("Legal markdown for FR/EN/ES displays the canonical $29.99 monthly price", () => {
+  // Membre Pro Terms + Conditions Professeurs both quote the launch
+  // price. Both files in each locale must match the Stripe Price
+  // canonical amount ($29.99 CAD); a stale "$29" here would create a
+  // contractual mismatch with what Stripe actually charges.
+  const legalFiles: Array<[string, "fr" | "en" | "es", RegExp, RegExp]> = [
+    ["content/legal/membre-pro.fr.md", "fr", /29,99\s*\$CA\s*par\s*mois/i, /(?<![0-9.,])29(?![0-9.,])\s*\$CA/],
+    ["content/legal/membre-pro.en.md", "en", /\$29\.99\s*CAD\s*per\s*month/i, /\$\s*29(?![0-9.,])\s*CAD/],
+    ["content/legal/membre-pro.es.md", "es", /29,99\s*\$CA\s*por\s*mes/i, /(?<![0-9.,])29(?![0-9.,])\s*\$CA/],
+    ["content/legal/conditions-professeurs.fr.md", "fr", /29,99\s*\$CA\s*par\s*mois/i, /(?<![0-9.,])29(?![0-9.,])\s*\$CA/],
+    ["content/legal/conditions-professeurs.en.md", "en", /\$29\.99\s*CAD\s*per\s*month/i, /\$\s*29(?![0-9.,])\s*CAD/],
+    ["content/legal/conditions-professeurs.es.md", "es", /29,99\s*\$CA\s*por\s*mes/i, /(?<![0-9.,])29(?![0-9.,])\s*\$CA/],
+  ];
+  for (const [relPath, locale, expectedCanonical, stalePattern] of legalFiles) {
+    const src = readFileSync(join(root, relPath), "utf8");
+    assert.ok(
+      expectedCanonical.test(src),
+      `${relPath} (${locale}) must contain the canonical 29.99 / 29,99 launch price (looked for ${expectedCanonical})`,
+    );
+    assert.ok(
+      !stalePattern.test(src),
+      `${relPath} (${locale}) must not contain a stale bare $29 amount`,
     );
   }
 });

@@ -48,7 +48,7 @@ Membre Pro **n'est pas** une suite d'outils ni un studio de production : c'est u
 
 ## 4. Cycle de facturation
 
-Au lancement, Membre Pro est affiché à **29 $CA par mois**, **taxes applicables en sus**, et est **facturé mensuellement à l'avance**. Si Pratiqo propose ultérieurement une période annuelle ou un autre cycle, ce cycle et son prix seront affichés avant la souscription.
+Au lancement, Membre Pro est affiché à **29,99 $CA par mois**, **taxes applicables en sus**, et est **facturé mensuellement à l'avance**. Si Pratiqo propose ultérieurement une période annuelle ou un autre cycle, ce cycle et son prix seront affichés avant la souscription.
 
 - La période de facturation et la date du prochain renouvellement sont affichées avant la souscription, et peuvent être consultées dans la page d'abonnement du compte lorsque cette page est offerte.
 - Le **prix applicable est celui affiché au moment de la souscription**, en plus des taxes applicables le cas échéant.
