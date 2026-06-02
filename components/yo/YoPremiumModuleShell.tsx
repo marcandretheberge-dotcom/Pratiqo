@@ -82,6 +82,50 @@ const LESSON_ONE_AUDIO_LESSON_ID = "arriver-saluer" as const;
 const LESSON_ONE_AUDIO_ACCENT_PROFILE = "quebec_french" as const;
 const LESSON_ONE_AUDIO_SPEECH_LANG = "fr-CA" as const;
 
+/**
+ * Lesson 2 audio context — passed to every `YoFrenchAudioButton`
+ * rendered inside `LessonTwoPreview`. The triple matches the
+ * manifest entries declared in
+ * `lib/yo/audio/frQuebecPremiumLessonTwoAudio.ts`. Adding a new
+ * Quebec French target string in the lesson body + appending the
+ * corresponding manifest entry is enough to power its audio button
+ * — no UI change required.
+ */
+const LESSON_TWO_AUDIO_MODULE_ID = "fr-quebec-workplace-survival-1" as const;
+const LESSON_TWO_AUDIO_LESSON_ID = "comprendre-consignes-simples" as const;
+const LESSON_TWO_AUDIO_ACCENT_PROFILE = "quebec_french" as const;
+const LESSON_TWO_AUDIO_SPEECH_LANG = "fr-CA" as const;
+
+/**
+ * Lookup: infinitive → tu/vous imperative forms used by the key-verbs
+ * grid in `LessonTwoPreview`. The lesson content carries only the
+ * infinitive (e.g. `mettre`), but the audio catalogue records each
+ * imperative as a separate item (`Mets.` / `Mettez.`) so the learner
+ * hears the form they actually need to recognise at work.
+ *
+ * Keeping this map in the shell (rather than denormalising onto
+ * `FrQuebecLessonTwoKeyVerb`) avoids touching the lesson content
+ * schema — the audio manifest is a parallel catalogue, not a
+ * dependency of the lesson data structure.
+ */
+const LESSON_TWO_VERB_IMPERATIVES: Record<
+  string,
+  { tu: string; vous: string }
+> = {
+  mettre: { tu: "Mets.", vous: "Mettez." },
+  prendre: { tu: "Prends.", vous: "Prenez." },
+  apporter: { tu: "Apporte.", vous: "Apportez." },
+  ranger: { tu: "Range.", vous: "Rangez." },
+  ouvrir: { tu: "Ouvre.", vous: "Ouvrez." },
+  fermer: { tu: "Ferme.", vous: "Fermez." },
+  signer: { tu: "Signe.", vous: "Signez." },
+  remplir: { tu: "Remplis.", vous: "Remplissez." },
+  vérifier: { tu: "Vérifie.", vous: "Vérifiez." },
+  envoyer: { tu: "Envoie.", vous: "Envoyez." },
+  imprimer: { tu: "Imprime.", vous: "Imprimez." },
+  appeler: { tu: "Appelle.", vous: "Appelez." },
+};
+
 export interface YoPremiumModuleShellProps {
   locale: YoLocale;
   /** Display title in FR / EN / ES. */
@@ -1043,13 +1087,15 @@ function LessonOnePreview({
  *   - The teacher CTA links to /trouver-un-prof (the real, free way
  *     to reach a Pratiqo teacher) and never mentions automatic
  *     teacher routing or data sharing.
- *   - NO YoFrenchAudioButton is rendered next to Lesson 2 strings:
- *     the audio manifest is keyed off Lesson 1 phrases only, and the
- *     Lesson 1 contract is "only ship the button when manifest
- *     coverage exists". Adding the button next to Lesson 2 strings
- *     would either no-op (ugly) or silently fall back to a Web-Speech
- *     pronunciation that doesn't match our Quebec-French audio
- *     contract.
+ *   - `YoFrenchAudioButton` IS rendered next to Lesson 2 Quebec
+ *     French target strings (oral markers, imperative verb forms,
+ *     per-verb examples, confirmation formulas, reformulation
+ *     formulas, mini-scenario lines). Bindings only touch the
+ *     French side of each row — never the EN / ES gloss. When a
+ *     manifest entry exists, the inner `YoAudioPlayer` resolves it
+ *     to the pre-generated MP3; otherwise the button falls through
+ *     to the Web-Speech fallback so the lesson never breaks while
+ *     the audio catalogue grows.
  */
 function LessonTwoPreview({
   locale,
@@ -1218,6 +1264,8 @@ function LessonTwoPreview({
                         locale === "es"
                           ? verb.exampleGlossEs
                           : verb.exampleGlossEn;
+                      const imperatives =
+                        LESSON_TWO_VERB_IMPERATIVES[verb.infinitive];
                       return (
                         <li
                           key={verb.id}
@@ -1230,6 +1278,32 @@ function LessonTwoPreview({
                             >
                               {verb.infinitive}
                             </p>
+                            {imperatives ? (
+                              <span className="inline-flex items-center gap-1">
+                                <YoFrenchAudioButton
+                                  text={imperatives.tu}
+                                  locale={locale}
+                                  moduleId={LESSON_TWO_AUDIO_MODULE_ID}
+                                  lessonId={LESSON_TWO_AUDIO_LESSON_ID}
+                                  accentProfile={
+                                    LESSON_TWO_AUDIO_ACCENT_PROFILE
+                                  }
+                                  speechLang={LESSON_TWO_AUDIO_SPEECH_LANG}
+                                  size="xs"
+                                />
+                                <YoFrenchAudioButton
+                                  text={imperatives.vous}
+                                  locale={locale}
+                                  moduleId={LESSON_TWO_AUDIO_MODULE_ID}
+                                  lessonId={LESSON_TWO_AUDIO_LESSON_ID}
+                                  accentProfile={
+                                    LESSON_TWO_AUDIO_ACCENT_PROFILE
+                                  }
+                                  speechLang={LESSON_TWO_AUDIO_SPEECH_LANG}
+                                  size="xs"
+                                />
+                              </span>
+                            ) : null}
                             {locale !== "fr" ? (
                               <p
                                 className="text-xs italic text-[#0F6E56]/60"
@@ -1239,15 +1313,26 @@ function LessonTwoPreview({
                               </p>
                             ) : null}
                           </div>
-                          <p
-                            className="mt-1 text-sm text-[#0F6E56]/85"
-                            lang="fr-CA"
-                          >
-                            <span className="font-semibold text-[#0F6E56]/60">
-                              {t(VERB_EXAMPLE_HINT_LABEL, locale)}
-                            </span>
-                            {verb.exampleFr}
-                          </p>
+                          <div className="mt-1 flex flex-wrap items-start gap-2">
+                            <p
+                              className="text-sm text-[#0F6E56]/85"
+                              lang="fr-CA"
+                            >
+                              <span className="font-semibold text-[#0F6E56]/60">
+                                {t(VERB_EXAMPLE_HINT_LABEL, locale)}
+                              </span>
+                              {verb.exampleFr}
+                            </p>
+                            <YoFrenchAudioButton
+                              text={verb.exampleFr}
+                              locale={locale}
+                              moduleId={LESSON_TWO_AUDIO_MODULE_ID}
+                              lessonId={LESSON_TWO_AUDIO_LESSON_ID}
+                              accentProfile={LESSON_TWO_AUDIO_ACCENT_PROFILE}
+                              speechLang={LESSON_TWO_AUDIO_SPEECH_LANG}
+                              size="xs"
+                            />
+                          </div>
                           {locale !== "fr" ? (
                             <p
                               className="mt-0.5 text-xs italic text-[#0F6E56]/55"
@@ -1284,12 +1369,23 @@ function LessonTwoPreview({
                 key={marker.id}
                 className="rounded-2xl border border-teal-100 bg-white p-4 shadow-[0_1px_2px_rgba(15,58,52,0.04)]"
               >
-                <p
-                  className="text-base font-semibold text-[#0F6E56]"
-                  lang="fr-CA"
-                >
-                  {marker.marker}
-                </p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <p
+                    className="text-base font-semibold text-[#0F6E56]"
+                    lang="fr-CA"
+                  >
+                    {marker.marker}
+                  </p>
+                  <YoFrenchAudioButton
+                    text={marker.marker}
+                    locale={locale}
+                    moduleId={LESSON_TWO_AUDIO_MODULE_ID}
+                    lessonId={LESSON_TWO_AUDIO_LESSON_ID}
+                    accentProfile={LESSON_TWO_AUDIO_ACCENT_PROFILE}
+                    speechLang={LESSON_TWO_AUDIO_SPEECH_LANG}
+                    size="xs"
+                  />
+                </div>
                 <p className="mt-2 text-sm leading-relaxed text-[#0F6E56]/80">
                   {pickLocaleField(
                     locale,
@@ -1350,12 +1446,23 @@ function LessonTwoPreview({
                   key={formula.id}
                   className="rounded-2xl border border-teal-100 bg-white p-4 shadow-[0_1px_2px_rgba(15,58,52,0.04)]"
                 >
-                  <p
-                    className="text-base font-semibold text-[#0F6E56]"
-                    lang="fr-CA"
-                  >
-                    {formula.targetFr}
-                  </p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p
+                      className="text-base font-semibold text-[#0F6E56]"
+                      lang="fr-CA"
+                    >
+                      {formula.targetFr}
+                    </p>
+                    <YoFrenchAudioButton
+                      text={formula.targetFr}
+                      locale={locale}
+                      moduleId={LESSON_TWO_AUDIO_MODULE_ID}
+                      lessonId={LESSON_TWO_AUDIO_LESSON_ID}
+                      accentProfile={LESSON_TWO_AUDIO_ACCENT_PROFILE}
+                      speechLang={LESSON_TWO_AUDIO_SPEECH_LANG}
+                      size="xs"
+                    />
+                  </div>
                   {gloss ? (
                     <p
                       className="mt-1 text-xs italic text-[#0F6E56]/60"
@@ -1405,12 +1512,23 @@ function LessonTwoPreview({
                   key={formula.id}
                   className="rounded-2xl border border-teal-100 bg-white p-4 shadow-[0_1px_2px_rgba(15,58,52,0.04)]"
                 >
-                  <p
-                    className="text-base font-semibold text-[#0F6E56]"
-                    lang="fr-CA"
-                  >
-                    {formula.targetFr}
-                  </p>
+                  <div className="flex flex-wrap items-start gap-2">
+                    <p
+                      className="text-base font-semibold text-[#0F6E56]"
+                      lang="fr-CA"
+                    >
+                      {formula.targetFr}
+                    </p>
+                    <YoFrenchAudioButton
+                      text={formula.targetFr}
+                      locale={locale}
+                      moduleId={LESSON_TWO_AUDIO_MODULE_ID}
+                      lessonId={LESSON_TWO_AUDIO_LESSON_ID}
+                      accentProfile={LESSON_TWO_AUDIO_ACCENT_PROFILE}
+                      speechLang={LESSON_TWO_AUDIO_SPEECH_LANG}
+                      size="xs"
+                    />
+                  </div>
                   {gloss ? (
                     <p
                       className="mt-1 text-xs italic text-[#0F6E56]/60"
@@ -1472,12 +1590,23 @@ function LessonTwoPreview({
                       line.speakerEs,
                     )}
                   </p>
-                  <p
-                    className="mt-1 font-medium text-[#0F6E56]"
-                    lang="fr-CA"
-                  >
-                    {line.frQuebec}
-                  </p>
+                  <div className="mt-1 flex flex-wrap items-start gap-2">
+                    <p
+                      className="font-medium text-[#0F6E56]"
+                      lang="fr-CA"
+                    >
+                      {line.frQuebec}
+                    </p>
+                    <YoFrenchAudioButton
+                      text={line.frQuebec}
+                      locale={locale}
+                      moduleId={LESSON_TWO_AUDIO_MODULE_ID}
+                      lessonId={LESSON_TWO_AUDIO_LESSON_ID}
+                      accentProfile={LESSON_TWO_AUDIO_ACCENT_PROFILE}
+                      speechLang={LESSON_TWO_AUDIO_SPEECH_LANG}
+                      size="xs"
+                    />
+                  </div>
                   <p
                     className="mt-1 text-xs text-[#0F6E56]/70"
                     lang={locale === "es" ? "es" : "en"}

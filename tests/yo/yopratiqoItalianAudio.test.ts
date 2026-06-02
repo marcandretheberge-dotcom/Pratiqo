@@ -255,17 +255,20 @@ test("Spanish manifest items count stays at the documented 79 (Italian is purely
   );
 });
 
-test("Quebec French manifest items count stays at the documented 45 (Italian is purely additive)", () => {
+test("Quebec French manifest items count stays at the documented 95 (Italian is purely additive)", () => {
   // 20 FR Quebec intro items + 25 FR Quebec premium Module 1 ·
-  // Lesson 1 items (14 core phrases + 11 unique dialogue lines).
-  // The Italian additions must not touch any of them.
+  // Lesson 1 items (14 core phrases + 11 unique dialogue lines) +
+  // 50 FR Quebec premium Module 1 · Lesson 2 items (5 oral markers
+  // + 24 imperatives + 3 workplace examples + 8 confirmations +
+  // 5 reformulations + 5 mini-scenario lines). The Italian
+  // additions must not touch any of them.
   const frItems = YOPRATIQO_AUDIO_MANIFEST.filter(
     (i) => i.targetLanguage === "fr" && i.accentProfile === "quebec_french",
   );
   assert.equal(
     frItems.length,
-    45,
-    `Quebec French item total must remain 45; got ${frItems.length}. Italian additions must not touch Quebec French data.`,
+    95,
+    `Quebec French item total must remain 95; got ${frItems.length}. Italian additions must not touch Quebec French data.`,
   );
 });
 
