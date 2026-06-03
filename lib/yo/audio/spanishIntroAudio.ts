@@ -30,6 +30,8 @@ import {
 import { getYoAudioAccentProfile } from "@/lib/yo/audio/accentProfiles";
 
 const ACCENT = getYoAudioAccentProfile("latin_american_neutral");
+const NEUTRAL_SPANISH_PRONUNCIATION_HINT =
+  "Read in natural Latin American Spanish. Do not use English pronunciation. Spanish words that look like English must be pronounced as Spanish.";
 
 // ─────────────────────────────────────────────────────────────────────
 // Helpers — encapsulate id and path conventions for this module so the
@@ -64,6 +66,8 @@ function readingItem(input: {
   type: Extract<YoAudioItemType, "word" | "sentence">;
   text: string;
   slug: string;
+  spokenText?: string;
+  pronunciationHint?: string;
   notes?: string;
 }): YoAudioItem {
   return {
@@ -73,6 +77,8 @@ function readingItem(input: {
     lessonId: "reading-first-text",
     type: input.type,
     text: input.text,
+    spokenText: input.spokenText,
+    pronunciationHint: input.pronunciationHint,
     storagePath: buildStoragePath({
       targetLanguage: "es",
       moduleId: "intro-a1",
@@ -175,6 +181,7 @@ export const spanishIntroAudio: readonly YoAudioItem[] = [
     type: "sentence",
     text: "Quiero aprender palabras útiles para el hotel, el restaurante y la playa. Me gusta practicar con frases simples. No hablo perfecto, pero puedo decir: hola, gracias, por favor y no entiendo. Para viajar, quiero hablar un poco más cada día.",
     slug: "second-paragraph",
+    pronunciationHint: NEUTRAL_SPANISH_PRONUNCIATION_HINT,
     notes: "Reading paragraph 2 · longer, still A1",
   }),
 ] as const;

@@ -8,8 +8,8 @@
  * Canadian French rendering rather than a Parisian one.
  *
  * Coverage (Lesson 2 "Comprendre les consignes simples"):
- *   - Group A — 5 Quebec oral markers (Pis / Tiens. / Tenez. / Là.
- *     / Tantôt.)
+ *   - Group A — 6 Quebec oral marker audio targets (Pis / Tiens. /
+ *     Tenez. / Tiens / Tenez / Là. / Tantôt.)
  *   - Group B — 24 imperative forms (tu + vous for each of the 12
  *     key verbs: mets/mettez, prends/prenez, …)
  *   - Group C — 3 real workplace examples (multi-clause sentences
@@ -18,8 +18,8 @@
  *   - Group D — 8 confirmation formulas (the 5 lesson formulas +
  *     3 "Oui, …"-prefixed variants commonly heard at work)
  *   - Group E — 5 reformulation formulas (mirror the 5 lesson
- *     reformulation prompts, with `[X]` materialised as `la boîte`
- *     for the audio variant)
+ *     reformulation prompts; placeholders use `spokenText` so they
+ *     are not pronounced literally)
  *   - Group F — 5 mini-scenario lines (a separate end-to-end
  *     workplace scenario distinct from the lesson-content scenario)
  *
@@ -71,6 +71,13 @@ const LESSON_ID = "comprendre-consignes-simples" as const;
 const TARGET_LANGUAGE = "fr" as const;
 const ID_PREFIX = "fr-fqp-m1l2" as const;
 
+const QUEBEC_FRENCH_PRONUNCIATION_HINT =
+  "Prononcer en français québécois naturel. Ne pas utiliser une prononciation anglaise. Les mots français qui ressemblent à l’anglais doivent être prononcés comme du français.";
+const QUEBEC_FRENCH_SLASH_VARIANTS_HINT =
+  "Lire comme deux variantes françaises distinctes. Ne pas prononcer le symbole “/”. Ne pas lire comme une fraction.";
+const QUEBEC_FRENCH_PLACEHOLDER_HINT =
+  "Ne pas prononcer le placeholder. Lire la phrase naturellement en français québécois.";
+
 type FrQuebecPremiumItemType = Extract<
   YoAudioItemType,
   "phrase" | "sentence"
@@ -85,6 +92,9 @@ interface FrQuebecPremiumItemInput {
    * short and deterministic even when the text spans multiple clauses.
    */
   slug?: string;
+  spokenText?: string;
+  pronunciationHint?: string;
+  ttsInstructions?: string;
   notes?: string;
 }
 
@@ -97,6 +107,8 @@ function frQcPremiumItem(input: FrQuebecPremiumItemInput): YoAudioItem {
     lessonId: LESSON_ID,
     type: input.type,
     text: input.text,
+    spokenText: input.spokenText,
+    pronunciationHint: input.pronunciationHint,
     storagePath: buildStoragePath({
       targetLanguage: TARGET_LANGUAGE,
       moduleId: MODULE_ID,
@@ -106,13 +118,14 @@ function frQcPremiumItem(input: FrQuebecPremiumItemInput): YoAudioItem {
       accentSegment: ACCENT.pathSlug,
     }),
     accentProfile: ACCENT.id,
+    ttsInstructions: input.ttsInstructions,
     voiceHint: ACCENT.bcp47Hint,
     notes: input.notes,
   };
 }
 
 // ─────────────────────────────────────────────────────────────────────
-// Group A — Quebec oral markers (5 items)
+// Group A — Quebec oral markers (6 audio targets)
 //
 // Capitalised + terminal-period variants because that's how the audio
 // performs (a teacher modelling "Pis" pauses briefly, like a sentence
@@ -120,23 +133,43 @@ function frQcPremiumItem(input: FrQuebecPremiumItemInput): YoAudioItem {
 // `marker.marker` rendered in the UI — `findAudioItemForContext`'s
 // normaliser handles the case + punctuation difference for the
 // straightforward markers (pis / là / tantôt). The combined
-// "tiens / tenez" marker has no exact normalised counterpart on
-// purpose; the button falls back to Web Speech for that single row.
+// "tiens / tenez" marker now has its own MP3-backed manifest entry;
+// `spokenText` reads the two variants separately instead of
+// pronouncing the slash.
 // ─────────────────────────────────────────────────────────────────────
 
 const oralMarkers: readonly YoAudioItem[] = [
   frQcPremiumItem({ type: "phrase", text: "Pis" }),
-  frQcPremiumItem({ type: "phrase", text: "Tiens." }),
-  frQcPremiumItem({ type: "phrase", text: "Tenez." }),
+  frQcPremiumItem({
+    type: "phrase",
+    text: "Tiens.",
+    pronunciationHint: QUEBEC_FRENCH_PRONUNCIATION_HINT,
+  }),
+  frQcPremiumItem({
+    type: "phrase",
+    text: "Tenez.",
+    pronunciationHint: QUEBEC_FRENCH_PRONUNCIATION_HINT,
+  }),
+  frQcPremiumItem({
+    type: "phrase",
+    text: "Tiens / Tenez",
+    slug: "tiens-tenez",
+    spokenText: "Tiens. Tenez.",
+    pronunciationHint: QUEBEC_FRENCH_SLASH_VARIANTS_HINT,
+    notes:
+      "Visible slash variant; generated audio reads the two forms separately.",
+  }),
   frQcPremiumItem({
     type: "phrase",
     text: "Là.",
     slug: "la",
+    pronunciationHint: QUEBEC_FRENCH_PRONUNCIATION_HINT,
   }),
   frQcPremiumItem({
     type: "phrase",
     text: "Tantôt.",
     slug: "tantot",
+    pronunciationHint: QUEBEC_FRENCH_PRONUNCIATION_HINT,
     notes:
       "Quebec idiom — means « later today », not « soon » in general.",
   }),
@@ -154,25 +187,62 @@ const oralMarkers: readonly YoAudioItem[] = [
 
 const keyVerbImperatives: readonly YoAudioItem[] = [
   // mettre
-  frQcPremiumItem({ type: "phrase", text: "Mets.", slug: "mets" }),
+  frQcPremiumItem({
+    type: "phrase",
+    text: "Mets.",
+    slug: "mets",
+    spokenText: "Mets la boîte.",
+    pronunciationHint: QUEBEC_FRENCH_PRONUNCIATION_HINT,
+  }),
   frQcPremiumItem({ type: "phrase", text: "Mettez.", slug: "mettez" }),
   // prendre
-  frQcPremiumItem({ type: "phrase", text: "Prends.", slug: "prends" }),
+  frQcPremiumItem({
+    type: "phrase",
+    text: "Prends.",
+    slug: "prends",
+    spokenText: "Prends ton casque.",
+    pronunciationHint: QUEBEC_FRENCH_PRONUNCIATION_HINT,
+  }),
   frQcPremiumItem({ type: "phrase", text: "Prenez.", slug: "prenez" }),
   // apporter
   frQcPremiumItem({ type: "phrase", text: "Apporte.", slug: "apporte" }),
   frQcPremiumItem({ type: "phrase", text: "Apportez.", slug: "apportez" }),
   // ranger
-  frQcPremiumItem({ type: "phrase", text: "Range.", slug: "range" }),
+  frQcPremiumItem({
+    type: "phrase",
+    text: "Range.",
+    slug: "range",
+    spokenText: "Range tes affaires.",
+    pronunciationHint:
+      "Prononcer en français québécois. “Range” est le verbe français “ranger”, prononcé /ʁɑ̃ʒ/, pas le mot anglais “range”.",
+  }),
   frQcPremiumItem({ type: "phrase", text: "Rangez.", slug: "rangez" }),
   // ouvrir
-  frQcPremiumItem({ type: "phrase", text: "Ouvre.", slug: "ouvre" }),
+  frQcPremiumItem({
+    type: "phrase",
+    text: "Ouvre.",
+    slug: "ouvre",
+    spokenText: "Ouvre la porte.",
+    pronunciationHint: QUEBEC_FRENCH_PRONUNCIATION_HINT,
+  }),
   frQcPremiumItem({ type: "phrase", text: "Ouvrez.", slug: "ouvrez" }),
   // fermer
-  frQcPremiumItem({ type: "phrase", text: "Ferme.", slug: "ferme" }),
+  frQcPremiumItem({
+    type: "phrase",
+    text: "Ferme.",
+    slug: "ferme",
+    spokenText: "Ferme la porte.",
+    pronunciationHint: QUEBEC_FRENCH_PRONUNCIATION_HINT,
+  }),
   frQcPremiumItem({ type: "phrase", text: "Fermez.", slug: "fermez" }),
   // signer
-  frQcPremiumItem({ type: "phrase", text: "Signe.", slug: "signe" }),
+  frQcPremiumItem({
+    type: "phrase",
+    text: "Signe.",
+    slug: "signe",
+    spokenText: "Signe le formulaire.",
+    pronunciationHint: QUEBEC_FRENCH_PRONUNCIATION_HINT,
+  }),
   frQcPremiumItem({ type: "phrase", text: "Signez.", slug: "signez" }),
   // remplir
   frQcPremiumItem({ type: "phrase", text: "Remplis.", slug: "remplis" }),
@@ -182,16 +252,34 @@ const keyVerbImperatives: readonly YoAudioItem[] = [
     slug: "remplissez",
   }),
   // vérifier
-  frQcPremiumItem({ type: "phrase", text: "Vérifie.", slug: "verifie" }),
+  frQcPremiumItem({
+    type: "phrase",
+    text: "Vérifie.",
+    slug: "verifie",
+    spokenText: "Vérifie la quantité.",
+    pronunciationHint: QUEBEC_FRENCH_PRONUNCIATION_HINT,
+  }),
   frQcPremiumItem({ type: "phrase", text: "Vérifiez.", slug: "verifiez" }),
   // envoyer
-  frQcPremiumItem({ type: "phrase", text: "Envoie.", slug: "envoie" }),
+  frQcPremiumItem({
+    type: "phrase",
+    text: "Envoie.",
+    slug: "envoie",
+    spokenText: "Envoie le courriel.",
+    pronunciationHint: QUEBEC_FRENCH_PRONUNCIATION_HINT,
+  }),
   frQcPremiumItem({ type: "phrase", text: "Envoyez.", slug: "envoyez" }),
   // imprimer
   frQcPremiumItem({ type: "phrase", text: "Imprime.", slug: "imprime" }),
   frQcPremiumItem({ type: "phrase", text: "Imprimez.", slug: "imprimez" }),
   // appeler
-  frQcPremiumItem({ type: "phrase", text: "Appelle.", slug: "appelle" }),
+  frQcPremiumItem({
+    type: "phrase",
+    text: "Appelle.",
+    slug: "appelle",
+    spokenText: "Appelle Mathieu.",
+    pronunciationHint: QUEBEC_FRENCH_PRONUNCIATION_HINT,
+  }),
   frQcPremiumItem({ type: "phrase", text: "Appelez.", slug: "appelez" }),
 ];
 
@@ -239,7 +327,11 @@ const workplaceExamples: readonly YoAudioItem[] = [
 // ─────────────────────────────────────────────────────────────────────
 
 const confirmationFormulas: readonly YoAudioItem[] = [
-  frQcPremiumItem({ type: "phrase", text: "Parfait." }),
+  frQcPremiumItem({
+    type: "phrase",
+    text: "Parfait.",
+    pronunciationHint: QUEBEC_FRENCH_PRONUNCIATION_HINT,
+  }),
   frQcPremiumItem({
     type: "phrase",
     text: "OK, c’est bon.",
@@ -255,7 +347,11 @@ const confirmationFormulas: readonly YoAudioItem[] = [
     text: "Pas de problème.",
     slug: "pas-de-probleme",
   }),
-  frQcPremiumItem({ type: "phrase", text: "Compris." }),
+  frQcPremiumItem({
+    type: "phrase",
+    text: "Compris.",
+    pronunciationHint: QUEBEC_FRENCH_PRONUNCIATION_HINT,
+  }),
   frQcPremiumItem({
     type: "phrase",
     text: "Oui, parfait.",
@@ -276,18 +372,19 @@ const confirmationFormulas: readonly YoAudioItem[] = [
 // ─────────────────────────────────────────────────────────────────────
 // Group E — Reformulation formulas (5 items)
 //
-// Mirror the lesson 2 `reformulationFormulas`. The first entry
-// materialises the `[X]` placeholder as `la boîte` so the audio is a
-// natural-sounding spoken phrase — the lesson UI still shows the
-// templated form, so its button binding falls back to Web Speech;
-// the other four resolve directly through the contextual lookup.
+// Mirror the lesson 2 `reformulationFormulas`. The first entry keeps
+// the visible `[X]` placeholder so contextual lookup resolves the UI
+// string, while `spokenText` removes the placeholder for natural TTS.
 // ─────────────────────────────────────────────────────────────────────
 
 const reformulationFormulas: readonly YoAudioItem[] = [
   frQcPremiumItem({
     type: "sentence",
-    text: "Excuse-moi, t’as dit quoi pour la boîte ?",
+    text: "Excuse-moi, t’as dit quoi pour [X] ?",
     slug: "rf-excuse-moi-tas-dit-quoi-pour-la-boite",
+    spokenText: "Excuse-moi, t’as dit quoi ?",
+    pronunciationHint:
+      QUEBEC_FRENCH_PLACEHOLDER_HINT + " Ne pas prononcer “[X]”.",
   }),
   frQcPremiumItem({
     type: "sentence",

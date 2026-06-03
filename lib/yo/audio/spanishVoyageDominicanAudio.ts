@@ -45,6 +45,11 @@ const NEUTRAL_ACCENT = getYoAudioAccentProfile("latin_american_neutral");
 const MODULE_ID = "voyage";
 const LESSON_ID = "republique-dominicaine-a1-lesson-01";
 
+const RD_SPANISH_PRONUNCIATION_HINT =
+  "Read in natural Latin American Spanish with a Dominican/Caribbean-friendly accent. Do not use English pronunciation. Spanish words that look like English must be pronounced as Spanish. If a Dominican-specific accent is unavailable, use neutral Latin American Spanish, never English.";
+const NEUTRAL_SPANISH_PRONUNCIATION_HINT =
+  "Read in natural Latin American Spanish. Do not use English pronunciation. Spanish words that look like English must be pronounced as Spanish.";
+
 // ─────────────────────────────────────────────────────────────────────
 // Helpers — keep the data table below compact and consistent.
 // ─────────────────────────────────────────────────────────────────────
@@ -52,6 +57,8 @@ const LESSON_ID = "republique-dominicaine-a1-lesson-01";
 function dictionaryItem(input: {
   text: string;
   slug: string;
+  spokenText?: string;
+  pronunciationHint?: string;
   notes?: string;
 }): YoAudioItem {
   return {
@@ -61,6 +68,8 @@ function dictionaryItem(input: {
     lessonId: LESSON_ID,
     type: "phrase",
     text: input.text,
+    spokenText: input.spokenText,
+    pronunciationHint: input.pronunciationHint ?? RD_SPANISH_PRONUNCIATION_HINT,
     storagePath: buildStoragePath({
       targetLanguage: "es",
       moduleId: MODULE_ID,
@@ -87,6 +96,8 @@ function rdNeutralItem(input: {
   type: Extract<YoAudioItemType, "word" | "phrase" | "sentence">;
   text: string;
   slug: string;
+  spokenText?: string;
+  pronunciationHint?: string;
   notes?: string;
 }): YoAudioItem {
   return {
@@ -96,6 +107,8 @@ function rdNeutralItem(input: {
     lessonId: LESSON_ID,
     type: input.type,
     text: input.text,
+    spokenText: input.spokenText,
+    pronunciationHint: input.pronunciationHint,
     storagePath: buildStoragePath({
       targetLanguage: "es",
       moduleId: MODULE_ID,
@@ -119,6 +132,8 @@ function rdNeutralItem(input: {
 function dominicanFoodItem(input: {
   text: string;
   slug: string;
+  spokenText?: string;
+  pronunciationHint?: string;
   notes?: string;
 }): YoAudioItem {
   return {
@@ -128,6 +143,8 @@ function dominicanFoodItem(input: {
     lessonId: LESSON_ID,
     type: "word",
     text: input.text,
+    spokenText: input.spokenText,
+    pronunciationHint: input.pronunciationHint ?? RD_SPANISH_PRONUNCIATION_HINT,
     storagePath: buildStoragePath({
       targetLanguage: "es",
       moduleId: MODULE_ID,
@@ -145,6 +162,8 @@ function dominicanFoodItem(input: {
 function dialogueItem(input: {
   text: string;
   slug: string;
+  spokenText?: string;
+  pronunciationHint?: string;
   notes?: string;
 }): YoAudioItem {
   return {
@@ -154,6 +173,8 @@ function dialogueItem(input: {
     lessonId: LESSON_ID,
     type: "dialogue",
     text: input.text,
+    spokenText: input.spokenText,
+    pronunciationHint: input.pronunciationHint ?? RD_SPANISH_PRONUNCIATION_HINT,
     storagePath: buildStoragePath({
       targetLanguage: "es",
       moduleId: MODULE_ID,
@@ -183,6 +204,7 @@ const queLoQueLegacy: YoAudioItem = {
   lessonId: LESSON_ID,
   type: "dialogue",
   text: "¿Qué lo qué?",
+  pronunciationHint: RD_SPANISH_PRONUNCIATION_HINT,
   storagePath: buildLegacyStoragePath({
     targetLanguage: "es",
     moduleId: MODULE_ID,
@@ -258,7 +280,12 @@ export const spanishVoyageDominicanAudio: readonly YoAudioItem[] = [
   rdNeutralItem({ type: "word", text: "la playa", slug: "la-playa" }),
   rdNeutralItem({ type: "word", text: "la capital", slug: "la-capital" }),
   rdNeutralItem({ type: "word", text: "la ciudad", slug: "la-ciudad" }),
-  rdNeutralItem({ type: "word", text: "el resort", slug: "el-resort" }),
+  rdNeutralItem({
+    type: "word",
+    text: "el resort",
+    slug: "el-resort",
+    pronunciationHint: NEUTRAL_SPANISH_PRONUNCIATION_HINT,
+  }),
   rdNeutralItem({
     type: "word",
     text: "la vida diaria",

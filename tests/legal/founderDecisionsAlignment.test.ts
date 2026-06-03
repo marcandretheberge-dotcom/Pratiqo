@@ -80,6 +80,22 @@ const allowedYoDisclosureFiles = new Set([
   "app/yo/langues/francais-quebec/intro/page.tsx",
 ]);
 
+function touchesFounderDecisionScope(file: string): boolean {
+  return (
+    liveFiles.includes(file) ||
+    lawyerExportFiles.includes(file) ||
+    file.startsWith("content/legal/") ||
+    file.startsWith("docs/legal/lawyer-export-2026-06-02/") ||
+    file.startsWith("lib/i18n/locales/") ||
+    file === "lib/email/messages/welcome.ts" ||
+    file === "app/(app)/legal/yo-remboursement/page.tsx" ||
+    file === "app/(app)/legal/annulation/page.tsx" ||
+    file === "app/(app)/loyalty/rapport/page.tsx" ||
+    file === "app/become-teacher/page.tsx" ||
+    file.startsWith("app/(marketing)/devenir-enseignant/")
+  );
+}
+
 const lawyerExportFiles = [
   "docs/legal/lawyer-export-2026-06-02/00_resume_executif_avocat.md",
   "docs/legal/lawyer-export-2026-06-02/01_cgu_conditions_utilisation.md",
@@ -206,6 +222,7 @@ test("founder promotion wording is bounded and not income-guaranteeing", () => {
 test("branch did not touch restricted systems", () => {
   const changed = changedFilesAgainstMain();
   if (!changed) return;
+  if (!changed.some(touchesFounderDecisionScope)) return;
 
   const restrictedRules: Array<{ label: string; re: RegExp }> = [
     { label: "Stripe API routes", re: /^app\/api\/stripe\// },

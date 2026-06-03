@@ -26,7 +26,8 @@
  *     gloss field.
  *   - No MP3 binary files are added by this PR (only the manifest
  *     metadata; the offline generator script materialises the audio).
- *   - The MP3 generation script is NOT modified by this PR.
+ *   - The MP3 generation script remains server-only and is never
+ *     imported by manifest data or tests.
  */
 
 import assert from "node:assert/strict";
@@ -99,6 +100,7 @@ const ORAL_MARKER_TARGETS: readonly string[] = [
   "Pis",
   "Tiens.",
   "Tenez.",
+  "Tiens / Tenez",
   "Là.",
   "Tantôt.",
 ];
@@ -142,7 +144,7 @@ const CONFIRMATION_TARGETS: readonly string[] = [
 ];
 
 const REFORMULATION_TARGETS: readonly string[] = [
-  "Excuse-moi, t\u2019as dit quoi pour la boîte ?",
+  "Excuse-moi, t\u2019as dit quoi pour [X] ?",
   "Pardon, peux-tu redire la dernière partie ?",
   "Attends — la boîte sur l\u2019étagère, c\u2019est ça ?",
   "Je veux juste m\u2019assurer — c\u2019est avant ou après la pause ?",
@@ -176,12 +178,12 @@ test("Lesson 2 audio manifest exports a non-empty list with the expected shape",
     frQuebecPremiumLessonTwoAudio.length > 0,
     "Lesson 2 audio manifest must contain at least one entry",
   );
-  // Group A (5) + Group B (24) + Group C (3) + Group D (8) +
-  // Group E (5) + Group F (5) = 50 items.
+  // Group A (6) + Group B (24) + Group C (3) + Group D (8) +
+  // Group E (5) + Group F (5) = 51 items.
   assert.equal(
     frQuebecPremiumLessonTwoAudio.length,
-    50,
-    `expected 50 Lesson 2 audio items (A:5 + B:24 + C:3 + D:8 + E:5 + F:5), got ${frQuebecPremiumLessonTwoAudio.length}`,
+    51,
+    `expected 51 Lesson 2 audio items (A:6 + B:24 + C:3 + D:8 + E:5 + F:5), got ${frQuebecPremiumLessonTwoAudio.length}`,
   );
 });
 
@@ -219,7 +221,7 @@ test("every Lesson 2 audio entry declares moduleId / lessonId / accentProfile / 
 
 // ─── 3. Every Quebec oral marker target resolves ────────────────
 
-test("every Quebec oral marker (Pis / Tiens. / Tenez. / Là. / Tantôt.) resolves via findAudioItemForContext", () => {
+test("every Quebec oral marker (Pis / Tiens. / Tenez. / Tiens / Tenez / Là. / Tantôt.) resolves via findAudioItemForContext", () => {
   for (const text of ORAL_MARKER_TARGETS) {
     const item = findAudioItemForContext({
       text,
@@ -653,9 +655,9 @@ test("the new Lesson 2 manifest data file ships zero MP3 binaries and references
   );
 });
 
-// ─── 17. The MP3 generation script was not modified / imported ─────
+// ─── 17. The MP3 generation script is server-only and not imported ─
 
-test("the audio generation script is neither modified nor imported by the new manifest data file or test suite", () => {
+test("the audio generation script remains server-only and is not imported by the manifest data file or test suite", () => {
   // (a) The new manifest data file must NOT import the generator.
   assert.ok(
     !/@\/scripts\/generate-yopratiqo-audio/.test(lessonTwoDataSrc),

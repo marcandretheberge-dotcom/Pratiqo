@@ -47,6 +47,11 @@
  *     # Re-generate even when the object exists (force overwrite):
  *     tsx scripts/generate-yopratiqo-audio.ts --force
  *
+ *     # IMPORTANT: pronunciation metadata is generation-only.
+ *     # `spokenText` changes the TTS input without changing visible
+ *     # lesson text, ids, or storage paths; `pronunciationHint` is
+ *     # appended to steerable model instructions when supported.
+ *
  * EXIT CODES:
  *   0  success (or dry-run finished cleanly)
  *   1  fatal config error (missing env, bad bucket, network failure
@@ -286,6 +291,20 @@ function modelSupportsInstructions(model: string): boolean {
     || /^gpt-4o-mini-tts$/i.test(model);
 }
 
+function resolveSpokenText(item: YoAudioItem): string {
+  const spoken = item.spokenText?.trim();
+  return spoken && spoken.length > 0 ? spoken : item.text;
+}
+
+function appendPronunciationHint(
+  instructions: string,
+  hint: string | undefined,
+): string {
+  const trimmedHint = hint?.trim();
+  if (!trimmedHint) return instructions;
+  return instructions + "\n\nPronunciation note for this exact item: " + trimmedHint;
+}
+
 function resolveItemPlan(cfg: ResolvedConfig, item: YoAudioItem): ItemPlan {
   const profile = getYoAudioAccentProfile(item.accentProfile);
   // Env override always wins so a contributor can A/B voices without
@@ -293,8 +312,9 @@ function resolveItemPlan(cfg: ResolvedConfig, item: YoAudioItem): ItemPlan {
   // profile's documented default voice.
   const voice =
     process.env.YOPRATIQO_TTS_VOICE?.trim() || profile.defaultVoice || cfg.voice;
+  const baseInstructions = item.ttsInstructions ?? profile.ttsInstructions;
   const instructions = modelSupportsInstructions(cfg.model)
-    ? item.ttsInstructions ?? profile.ttsInstructions
+    ? appendPronunciationHint(baseInstructions, item.pronunciationHint)
     : null;
   return { voice, instructions };
 }
@@ -312,7 +332,7 @@ async function generateMp3(
 ): Promise<ArrayBuffer> {
   const body: Record<string, unknown> = {
     model: cfg.model,
-    input: item.text,
+    input: resolveSpokenText(item),
     voice: plan.voice,
     response_format: RESPONSE_FORMAT,
   };
