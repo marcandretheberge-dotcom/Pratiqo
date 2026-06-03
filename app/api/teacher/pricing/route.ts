@@ -12,11 +12,42 @@ import {
 
 export const runtime = "nodejs";
 
+// Bounds mirror the existing onboarding clamp (see app/api/onboarding/complete
+// /route.ts) and the canonical zod schema in lib/validation/schemas.ts. They
+// are kept here so the dedicated home-lessons UI in /teacher/verification can
+// PATCH the radius without rejoining the address-verification path.
+const HOME_LESSON_RADIUS_MIN_KM = 5;
+const HOME_LESSON_RADIUS_MAX_KM = 50;
+const HOME_LESSON_HOURLY_RATE_MIN_CAD = 20;
+const HOME_LESSON_HOURLY_RATE_MAX_CAD = 500;
+
 const teacherPricingPatchSchema = z
   .object({
     price_per_lesson: z.coerce.number().finite().optional(),
-    home_lesson_price: z.union([z.coerce.number().finite(), z.null()]).optional(),
+    // Hourly rate charged when the lesson takes place at the student's home.
+    // It REPLACES `price_per_lesson` at checkout (see lib/pricing/bookingCharge
+    // `computeBookingChargeCents` and components/BookingModal `hourlyRate`).
+    // Allowed range matches the canonical validation schema; `null` clears it.
+    home_lesson_price: z
+      .union([
+        z.coerce
+          .number()
+          .finite()
+          .min(HOME_LESSON_HOURLY_RATE_MIN_CAD)
+          .max(HOME_LESSON_HOURLY_RATE_MAX_CAD),
+        z.null(),
+      ])
+      .optional(),
     home_lesson_enabled: z.coerce.boolean().optional(),
+    // Max travel radius in km. Kept in lockstep with the address-verify route
+    // (app/api/teacher/location/verify) so both paths converge on the same
+    // column and clamp range.
+    home_lesson_radius_km: z.coerce
+      .number()
+      .int()
+      .min(HOME_LESSON_RADIUS_MIN_KM)
+      .max(HOME_LESSON_RADIUS_MAX_KM)
+      .optional(),
     intro_session_enabled: z.coerce.boolean().optional(),
     intro_session_price_cents: z.union([z.coerce.number().int(), z.null()]).optional(),
     intro_session_duration_minutes: z.coerce.number().int().positive().optional(),
@@ -165,6 +196,9 @@ export async function PATCH(req: Request) {
   }
   if (data.home_lesson_enabled !== undefined) {
     updates.home_lesson_enabled = data.home_lesson_enabled;
+  }
+  if (data.home_lesson_radius_km !== undefined) {
+    updates.home_lesson_radius_km = data.home_lesson_radius_km;
   }
   if (data.intro_session_enabled !== undefined) {
     updates.intro_session_enabled = data.intro_session_enabled;

@@ -24,6 +24,7 @@ import {
   CircleDashed,
   CreditCard,
   GraduationCap,
+  Home,
   Loader2,
   MapPin,
   ShieldCheck,
@@ -78,6 +79,7 @@ type TeacherVerifyRow = {
   region?: string | null;
   country_code?: string | null;
   home_lesson_radius_km?: number | null;
+  home_lesson_price?: number | string | null;
   location?: unknown;
   home_lesson_enabled?: boolean | null;
   stripe_connect_onboarding_complete?: boolean | null;
@@ -167,6 +169,17 @@ export default function TeacherProfileManagementPage() {
   const [editIntroEnabled, setEditIntroEnabled] = useState(false);
   const [editIntroPrice, setEditIntroPrice] = useState("");
 
+  // Home lessons (cours à domicile)
+  // - editHomeEnabled  → teachers.home_lesson_enabled
+  // - editHomeRadius   → teachers.home_lesson_radius_km (km)
+  // - editHomeHourlyRate → teachers.home_lesson_price (CAD/hour — alternate
+  //   hourly rate that REPLACES price_per_lesson when teaching_mode is
+  //   "domicile" at checkout; see lib/pricing/bookingCharge.ts).
+  const [editHomeEnabled, setEditHomeEnabled] = useState(false);
+  const [editHomeRadius, setEditHomeRadius] = useState("");
+  const [editHomeHourlyRate, setEditHomeHourlyRate] = useState("");
+  const [editHomeError, setEditHomeError] = useState<string | null>(null);
+
   // Zone form state
   const [zoneShowManual, setZoneShowManual] = useState(false);
   const [zoneSingleLine, setZoneSingleLine] = useState("");
@@ -206,7 +219,7 @@ export default function TeacherProfileManagementPage() {
       supabase
         .from("teachers")
         .select(
-          "id, name, discipline, bio, image_url, video_url, price_per_lesson, teaching_mode, intro_session_enabled, intro_session_price_cents, availability, default_lesson_duration_minutes, verification_level, identity_verified, identity_status, stripe_identity_status, stripe_identity_failed_reason, diploma_verified, diploma_url, phone_verified, is_verified, location_verification_status, cv_summary, cv_verification_status, city, region, country_code, home_lesson_radius_km, home_lesson_enabled, location, stripe_account_id, stripe_connect_onboarding_complete, stripe_connect_charges_enabled, stripe_connect_payouts_enabled",
+          "id, name, discipline, bio, image_url, video_url, price_per_lesson, teaching_mode, intro_session_enabled, intro_session_price_cents, availability, default_lesson_duration_minutes, verification_level, identity_verified, identity_status, stripe_identity_status, stripe_identity_failed_reason, diploma_verified, diploma_url, phone_verified, is_verified, location_verification_status, cv_summary, cv_verification_status, city, region, country_code, home_lesson_radius_km, home_lesson_price, home_lesson_enabled, location, stripe_account_id, stripe_connect_onboarding_complete, stripe_connect_charges_enabled, stripe_connect_payouts_enabled",
         )
         .eq("user_id", user.id)
         .maybeSingle(),
@@ -255,6 +268,20 @@ export default function TeacherProfileManagementPage() {
     setZoneRadiusKm(
       teacherRow.home_lesson_radius_km != null ? String(teacherRow.home_lesson_radius_km) : "",
     );
+    setEditHomeEnabled(teacherRow.home_lesson_enabled === true);
+    setEditHomeRadius(
+      teacherRow.home_lesson_radius_km != null ? String(teacherRow.home_lesson_radius_km) : "",
+    );
+    const hourlyHomeRaw =
+      teacherRow.home_lesson_price != null && teacherRow.home_lesson_price !== ""
+        ? Number(teacherRow.home_lesson_price)
+        : null;
+    setEditHomeHourlyRate(
+      hourlyHomeRaw != null && Number.isFinite(hourlyHomeRaw) && hourlyHomeRaw > 0
+        ? String(hourlyHomeRaw)
+        : "",
+    );
+    setEditHomeError(null);
     const loc =
       typeof teacherRow.location === "object" && teacherRow.location !== null
         ? (teacherRow.location as Record<string, unknown>)
@@ -576,6 +603,88 @@ export default function TeacherProfileManagementPage() {
     }
   };
 
+  // ── Home lessons save ───────────────────────────────────────────────────────
+  // Bounds mirror the dedicated validation in app/api/teacher/pricing/route.ts
+  // (and lib/validation/schemas.ts). They are kept here for client-side UX
+  // feedback; the server is the authoritative validator.
+  const HOME_RADIUS_MIN_KM = 5;
+  const HOME_RADIUS_MAX_KM = 50;
+  const HOME_HOURLY_RATE_MIN_CAD = 20;
+  const HOME_HOURLY_RATE_MAX_CAD = 500;
+
+  const saveHomeLessons = async () => {
+    if (!user?.id) return;
+    setEditHomeError(null);
+
+    // When the teacher disables the option, we clear the hourly rate but keep
+    // the radius (it's also used by the address-verify path). When enabled we
+    // require a rate in range and a radius in range — same gates the booking
+    // flow already enforces (BookingModal / computeBookingChargeCents).
+    const radiusRaw = editHomeRadius.trim();
+    const rateRaw = editHomeHourlyRate.trim();
+
+    let radiusKm: number | undefined;
+    if (radiusRaw !== "") {
+      const r = Number(radiusRaw);
+      if (!Number.isFinite(r) || r < HOME_RADIUS_MIN_KM || r > HOME_RADIUS_MAX_KM) {
+        setEditHomeError(t("homeLessonsRadiusError"));
+        return;
+      }
+      radiusKm = Math.round(r);
+    } else if (editHomeEnabled) {
+      // Enabling requires a radius so the booking gate knows how far to allow.
+      setEditHomeError(t("homeLessonsRadiusError"));
+      return;
+    }
+
+    let hourlyRate: number | null | undefined;
+    if (rateRaw !== "") {
+      const p = Number(rateRaw);
+      if (!Number.isFinite(p) || p < HOME_HOURLY_RATE_MIN_CAD || p > HOME_HOURLY_RATE_MAX_CAD) {
+        setEditHomeError(t("homeLessonsRateError"));
+        return;
+      }
+      hourlyRate = Math.round(p * 100) / 100;
+    } else if (editHomeEnabled) {
+      // Enabling without a rate would let bookings start but checkout would
+      // return 0 (see computeBookingChargeCents). Block here for clarity.
+      setEditHomeError(t("homeLessonsRateRequiredWhenEnabled"));
+      return;
+    } else {
+      // Disabling clears the rate so a future re-enable starts from a known
+      // empty state rather than a stale value.
+      hourlyRate = null;
+    }
+
+    setBusy("homeLessons");
+    setMessage(null);
+    try {
+      const { data: sess } = await getSupabaseClient().auth.getSession();
+      const token = sess.session?.access_token;
+      if (!token) throw new Error(t("verificationSessionExpired"));
+      const body: Record<string, unknown> = {
+        home_lesson_enabled: editHomeEnabled,
+      };
+      if (hourlyRate !== undefined) body.home_lesson_price = hourlyRate;
+      if (radiusKm !== undefined) body.home_lesson_radius_km = radiusKm;
+
+      const res = await fetch("/api/teacher/pricing", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify(body),
+      });
+      const j = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string };
+      if (!res.ok) throw new Error(j.error || t("anErrorOccurred"));
+      showMsg(t("savedOk"), "ok");
+      setExpandedCard(null);
+      await load();
+    } catch (e) {
+      showMsg(e instanceof Error ? e.message : t("anErrorOccurred"), "error");
+    } finally {
+      setBusy(null);
+    }
+  };
+
   // ── Zone save ────────────────────────────────────────────────────────────────
   const submitZone = async () => {
     if (!user) return;
@@ -780,6 +889,20 @@ export default function TeacherProfileManagementPage() {
 
   const pricingState: VerificationStepState =
     (teacherRow.price_per_lesson ?? 0) > 0 ? { kind: "verified" } : { kind: "not_started" };
+
+  // Home-lessons section is considered "verified" when the toggle is on AND
+  // a positive hourly home rate is set — same gate as the booking flow's
+  // `homeConfigured` check (components/BookingModal.tsx, TeacherProfile.tsx).
+  const homeLessonsState: VerificationStepState = (() => {
+    const enabled = teacherRow.home_lesson_enabled === true;
+    const rate =
+      teacherRow.home_lesson_price != null && teacherRow.home_lesson_price !== ""
+        ? Number(teacherRow.home_lesson_price)
+        : 0;
+    return enabled && Number.isFinite(rate) && rate > 0
+      ? { kind: "verified" }
+      : { kind: "not_started" };
+  })();
 
   const trustState: VerificationStepState =
     vState.identity.kind === "verified" || vState.diploma.kind === "verified"
@@ -1213,6 +1336,108 @@ export default function TeacherProfileManagementPage() {
               onSubmit={() => void submitZone()}
               t={t}
             />
+          </div>
+        </LaunchCard>
+      </section>
+
+      <section data-testid="teacher-profile-mgmt-section-home-lessons" className="space-y-3">
+        <h2 className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
+          {t("teacherProfileMgmtSectionHomeLessons")}
+        </h2>
+        <LaunchCard
+          cardKey="homeLessons"
+          icon={<Home size={18} aria-hidden />}
+          title={t("teacherProfileMgmtSectionHomeLessons")}
+          description={t("teacherProfileMgmtHomeLessonsDesc")}
+          state={homeLessonsState}
+          expandedCard={expandedCard}
+          onToggle={() => toggleCard("homeLessons")}
+          t={t}
+          data-testid="teacher-profile-mgmt-card-home-lessons"
+        >
+          <div className="space-y-4 pt-3" data-testid="teacher-profile-mgmt-home-lessons-editor">
+            <label className="flex items-start gap-3 rounded-xl border border-[#E8E6DF] bg-white p-4">
+              <input
+                type="checkbox"
+                checked={editHomeEnabled}
+                onChange={(e) => setEditHomeEnabled(e.target.checked)}
+                className="mt-0.5 h-4 w-4 rounded border-slate-300 text-teal-700"
+                data-testid="teacher-profile-mgmt-home-lessons-enabled"
+              />
+              <span className="flex-1">
+                <span className="block text-sm font-bold text-[#2C2C2A]">
+                  {t("homeLessonsEnableLabel")}
+                </span>
+                <span className="mt-1 block text-xs text-[#6B6A65]">
+                  {t("homeLessonsEnableHelper")}
+                </span>
+              </span>
+            </label>
+
+            <label className="block">
+              <span className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
+                {t("homeLessonsRadiusLabel")}
+              </span>
+              <div className="mt-2 flex items-center gap-2">
+                <input
+                  value={editHomeRadius}
+                  onChange={(e) => setEditHomeRadius(e.target.value)}
+                  type="number"
+                  min={HOME_RADIUS_MIN_KM}
+                  max={HOME_RADIUS_MAX_KM}
+                  step="1"
+                  inputMode="numeric"
+                  className="h-11 w-32 rounded-xl border border-[#E8E6DF] px-3 text-sm outline-none focus:border-teal-500"
+                  data-testid="teacher-profile-mgmt-home-lessons-radius"
+                />
+                <span className="text-sm text-[#6B6A65]">{t("homeLessonsRadiusUnit")}</span>
+              </div>
+              <p className="mt-1 text-xs text-[#6B6A65]">{t("homeLessonsRadiusHelper")}</p>
+            </label>
+
+            <label className="block">
+              <span className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
+                {t("homeLessonsHourlyRateLabel")}
+              </span>
+              <div className="mt-2 flex items-center gap-2">
+                <input
+                  value={editHomeHourlyRate}
+                  onChange={(e) => setEditHomeHourlyRate(e.target.value)}
+                  type="number"
+                  min={HOME_HOURLY_RATE_MIN_CAD}
+                  max={HOME_HOURLY_RATE_MAX_CAD}
+                  step="0.5"
+                  inputMode="decimal"
+                  className="h-11 w-32 rounded-xl border border-[#E8E6DF] px-3 text-sm outline-none focus:border-teal-500"
+                  data-testid="teacher-profile-mgmt-home-lessons-hourly-rate"
+                />
+                <span className="text-sm text-[#6B6A65]">{t("homeLessonsHourlyRateUnit")}</span>
+              </div>
+              <p className="mt-1 text-xs text-[#6B6A65]">{t("homeLessonsHourlyRateHelper")}</p>
+            </label>
+
+            <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-3">
+              <p className="text-xs text-amber-900">{t("homeLessonsMinorSafetyNote")}</p>
+            </div>
+
+            <p className="text-xs text-[#6B6A65]">{t("homeLessonsPrivacyNote")}</p>
+
+            {editHomeError ? (
+              <p className="text-xs text-red-600" data-testid="teacher-profile-mgmt-home-lessons-error">
+                {editHomeError}
+              </p>
+            ) : null}
+
+            <button
+              type="button"
+              onClick={() => void saveHomeLessons()}
+              disabled={busy === "homeLessons"}
+              className="h-11 rounded-xl bg-teal-700 px-5 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-50 inline-flex items-center gap-2"
+              data-testid="teacher-profile-mgmt-home-lessons-save"
+            >
+              {busy === "homeLessons" ? <Loader2 size={16} className="animate-spin" /> : null}
+              {t("teacherProfileMgmtHomeLessonsSaveBtn")}
+            </button>
           </div>
         </LaunchCard>
       </section>
