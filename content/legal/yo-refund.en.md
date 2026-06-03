@@ -1,4 +1,4 @@
-# YoPratiqo — Refund Policy and Lifetime Access
+# YoPratiqo — Refund Policy and 12-Month Access
 
 **Version:** 1.0 · **Last updated:** May 2026
 
@@ -18,22 +18,17 @@ YoPratiqo is an **educational preparation** product. Modules may help you practi
 
 ---
 
-## 2. "Lifetime access" — defined
+## 2. 12-month access — defined
 
-**"Lifetime access"** means that your access to the purchased module remains active **for as long as Cours Pratiqo Inc. operates the YoPratiqo service**.
+The purchase of a YoPratiqo module provides **personal, non-transferable access** to the content for a fixed period of **twelve (12) months** from the purchase date, subject to mandatory legal rights.
 
-### 2.1 Continued operation
+### 2.1 Scope of access
 
-While YoPratiqo is operated by Pratiqo, you keep access to any module you have paid for, with no recurring fees.
+During that 12-month period, you may access the purchased module through your Pratiqo account, without recurring fees for that specific module.
 
-### 2.2 Discontinuation of a module or of the service
+### 2.2 Technical availability and mandatory rights
 
-If Pratiqo decides to discontinue a specific module, or the YoPratiqo product line as a whole:
-
-- Pratiqo will notify affected buyers by email **at least 90 calendar days before** the effective shutdown date.
-- Buyers who paid for the affected module **within the 12 months preceding the announcement** are entitled to a **pro-rata refund** of the unused period, calculated linearly over 12 months.
-- Beyond 12 months from the purchase, no refund is owed, but during the notice window you can **export your progress data** (completed lessons, scores, flashcards reviewed).
-- Pro-rata refunds are issued in the original purchase currency, to the original payment method.
+Pratiqo may need to adapt, correct, temporarily interrupt, or remove certain features for technical, legal, safety, or compliance reasons. If a material interruption affects paid access during the applicable period, Pratiqo will handle the situation according to mandatory statutory rights and this policy.
 
 ---
 

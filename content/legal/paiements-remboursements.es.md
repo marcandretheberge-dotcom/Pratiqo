@@ -2,7 +2,7 @@
 
 **Versión:** 1.0 · **Última actualización:** mayo 2026
 
-> ⚠️ **Importante**: Este documento explica el funcionamiento de los pagos de la marketplace de Pratiqo: precios, tarifas, reembolsos, transferencias a profesores, retenciones, contracargos e impuestos. Complementa los demás documentos legales aplicables y no constituye asesoramiento legal, fiscal, contable ni financiero. Pratiqo no es un banco, ni un servicio de custodia, ni una institución financiera, ni un asesor fiscal. Si una norma legal de orden público entra en conflicto con cualquier disposición a continuación, prevalece la ley.
+> ⚠️ **Importante**: Este documento explica el funcionamiento de los pagos de la marketplace de Pratiqo: precios, tarifas, reembolsos, transferencias a profesores, retenciones, contracargos e impuestos. Complementa los demás documentos legales aplicables y no constituye asesoramiento legal, fiscal, contable ni financiero. Pratiqo no es un banco, ni una institución financiera, ni un asesor fiscal. Si una norma legal de orden público entra en conflicto con cualquier disposición a continuación, prevalece la ley.
 
 ---
 
@@ -45,6 +45,7 @@ Los profesores son **prestadores de servicios independientes**. Pratiqo actúa c
 
 - Pratiqo puede **cobrar** los pagos de los estudiantes y **transferir al profesor** el monto elegible, **previa deducción** de las tarifas de plataforma, comisiones, impuestos aplicables, reembolsos, disputas, contracargos, tarifas del procesador de pagos y cualquier otro ajuste aplicable.
 - El **momento de una transferencia** puede depender de varios factores: confirmación de la entrega de la clase, reglas de la plataforma, calendario del proveedor de pagos (por ejemplo, Stripe), demoras bancarias, revisión antifraude o de riesgo, verificación de cuenta o identidad, cumplimiento fiscal y ley aplicable.
+- El objetivo operativo de Pratiqo es un **plazo técnico de procesamiento / validación de 48 horas después de la finalización de la clase** antes de la transferencia, sujeto a restricciones de Stripe, bancarias, de cumplimiento, seguridad y ley aplicable.
 - Pratiqo **no garantiza** una transferencia inmediata. Los profesores deben prever demoras razonables y mantener su perfil y sus datos de pago al día.
 - El profesor reconoce que Pratiqo no es su empleador, agente, mandatario o banco, y que toda transferencia recibida puede estar sujeta a **ajustes posteriores** en los casos previstos en este u otros documentos aplicables.
 
@@ -57,7 +58,7 @@ Según el servicio utilizado, Pratiqo puede cobrar una **tarifa de plataforma, u
 - Las tarifas y comisiones aplicables pueden **divulgarse** en el panel del profesor, en el checkout del estudiante, en los documentos contractuales, en la página de suscripción o en otra área de la plataforma antes de que se confirme una transacción.
 - Las estructuras de tarifas **pueden evolucionar**. Sujeto a la ley imperativa, los cambios materiales se aplican **prospectivamente** y se comunicarán por los medios coherentes con la ley aplicable cuando sea necesario.
 - Las **tarifas del procesador de pagos** (por ejemplo, las tarifas de adquirencia de Stripe) pueden añadirse o deducirse de los montos correspondientes según las reglas aplicables. Las tarifas del emisor de la tarjeta o las tarifas de cambio aplicadas por el banco del estudiante quedan a cargo del estudiante.
-- Las tarifas de la membresía Miembro Pro se rigen por las **[Condiciones de Miembro Pro](/legal/membre-pro)** y son distintas de los pagos y transferencias de clases. Cuando una **comisión reducida** o un **reintegro** estén vinculados al estatus Miembro Pro, sus condiciones se describen en las Condiciones de Miembro Pro y se muestran en la plataforma.
+- Las tarifas de la membresía Miembro Pro se rigen por las **[Condiciones de Miembro Pro](/legal/membre-pro)** y son distintas de los pagos y transferencias de clases. Cuando una **comisión reducida** o un **reembolso comercial retroactivo condicional sobre volumen** estén vinculados al estatus Miembro Pro, sus condiciones se describen en las Condiciones de Miembro Pro y se muestran en la plataforma.
 
 ---
 

@@ -2,7 +2,7 @@
 
 **Version:** 1.0 · **Last updated:** May 2026
 
-> ⚠️ **Important**: This document explains how marketplace payments work on Pratiqo: prices, fees, refunds, teacher payouts, holds, chargebacks, and taxes. It supplements the other applicable legal documents and is not legal, tax, accounting, or financial advice. Pratiqo is not a bank, an escrow service, a financial institution, or a tax advisor. Where mandatory law conflicts with anything below, the law prevails.
+> ⚠️ **Important**: This document explains how marketplace payments work on Pratiqo: prices, fees, refunds, teacher payouts, holds, chargebacks, and taxes. It supplements the other applicable legal documents and is not legal, tax, accounting, or financial advice. Pratiqo is not a bank, a financial institution, or a tax advisor. Where mandatory law conflicts with anything below, the law prevails.
 
 ---
 
@@ -45,6 +45,7 @@ Teachers are **independent service providers**. Pratiqo acts as a technology int
 
 - Pratiqo may **collect** student payments and **remit to the teacher** the eligible amount, **after deduction** of platform fees, commissions, applicable taxes, refunds, disputes, chargebacks, payment-processor fees, and any other applicable adjustments.
 - The **timing of a payout** may depend on several factors: confirmation of lesson delivery, platform rules, the payment provider's schedule (e.g., Stripe), bank delays, fraud or risk review, account or identity verification, tax compliance, and applicable law.
+- Pratiqo's operational target is a **48-hour payment processing / validation delay after lesson completion** before payout, subject to Stripe, banking, compliance, safety, and applicable-law constraints.
 - Pratiqo **does not guarantee** an immediate payout. Teachers should plan for reasonable delays and keep their profile and payout details up to date.
 - The teacher acknowledges that Pratiqo is not the teacher's employer, agent, mandatary, or bank, and that any payout received may be subject to **subsequent adjustments** in the cases set out in these or other applicable documents.
 
@@ -57,7 +58,7 @@ Depending on the service used, Pratiqo may charge a **platform fee, service fee,
 - Applicable fees and commissions may be **disclosed** in the teacher dashboard, at student checkout, in the contractual documents, on the subscription page, or elsewhere on the platform before a transaction is confirmed.
 - Fee structures **may evolve**. Subject to mandatory law, material changes apply **prospectively** and will be communicated by means consistent with applicable law where required.
 - **Payment-processor fees** (e.g., Stripe acquiring fees) may be added to or deducted from the relevant amounts under applicable rules. Card-issuer fees or foreign-exchange fees applied by the student's bank remain the student's responsibility.
-- Pro Member membership fees are governed by the **[Pro Member Terms](/legal/membre-pro)** and are distinct from lesson payments and lesson payouts. Where a **reduced commission** or a **rebate** is tied to Pro Member status, its terms are described in the Pro Member Terms and disclosed on the platform.
+- Pro Member membership fees are governed by the **[Pro Member Terms](/legal/membre-pro)** and are distinct from lesson payments and lesson payouts. Where a **reduced commission** or a **conditional retroactive commercial volume rebate** is tied to Pro Member status, its terms are described in the Pro Member Terms and disclosed on the platform.
 
 ---
 

@@ -169,7 +169,7 @@ const TEACHER_CTA = lstr(
   "Find a French teacher",
 );
 
-const lifetimeAccessLabel = lstr("Accès à vie", "Lifetime access");
+const twelveMonthAccessLabel = lstr("Accès 12 mois", "12-month access");
 const moneyBackLabel = lstr(
   "30 jours satisfait ou remboursé",
   "30-day money-back",
@@ -711,7 +711,7 @@ export default async function YoFrancaisQuebecIntroPage({
                 <div className="mt-4 flex flex-wrap gap-2">
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-white/70 px-3 py-1 text-xs font-semibold text-[#0F6E56]">
                     <CheckCircle2 className="size-3.5" aria-hidden />
-                    {t(lifetimeAccessLabel, locale)}
+                    {t(twelveMonthAccessLabel, locale)}
                   </span>
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-white/70 px-3 py-1 text-xs font-semibold text-[#0F6E56]">
                     <CheckCircle2 className="size-3.5" aria-hidden />

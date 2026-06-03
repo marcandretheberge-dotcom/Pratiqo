@@ -1,4 +1,4 @@
-# YoPratiqo — Politique de remboursement et accès à vie
+# YoPratiqo — Politique de remboursement et accès 12 mois
 
 **Version :** 1.0 · **Dernière mise à jour :** mai 2026
 
@@ -18,22 +18,17 @@ YoPratiqo est un produit de **préparation éducative**. Les modules peuvent aid
 
 ---
 
-## 2. « Accès à vie » — définition
+## 2. Accès 12 mois — définition
 
-L'expression **« accès à vie »** signifie que ton accès au module acheté reste actif aussi longtemps que **Cours Pratiqo Inc. exploite le service YoPratiqo**.
+L'achat d'un module YoPratiqo donne droit à un **accès personnel non transférable** au contenu pour une durée ferme de **douze (12) mois** à compter de la date d'achat, sous réserve des droits impératifs applicables.
 
-### 2.1 Exploitation continue
+### 2.1 Portée de l'accès
 
-Tant que YoPratiqo est exploité par Pratiqo, tu conserves l'accès à tout module que tu as payé, sans frais récurrents.
+Pendant cette période de 12 mois, tu peux consulter le module acheté dans ton compte Pratiqo, sans frais récurrents pour ce module précis.
 
-### 2.2 Discontinuation d'un module ou du service
+### 2.2 Disponibilité technique et droits obligatoires
 
-Si Pratiqo décidait de cesser l'exploitation d'un module précis, ou de la gamme YoPratiqo dans son ensemble :
-
-- Pratiqo informera les acheteurs concernés par courriel **au moins 90 jours civils avant** la date d'arrêt effective.
-- Les acheteurs ayant payé le module concerné **dans les 12 mois précédant l'annonce** ont droit à un **remboursement au prorata** de la période non utilisée, calculé linéairement sur 12 mois.
-- Au-delà de 12 mois après l'achat, aucun remboursement n'est dû, mais durant la fenêtre de préavis tu peux **exporter tes données de progression** (cours complétés, scores, flashcards travaillées).
-- Les remboursements au prorata sont émis dans la devise originale de l'achat, sur le moyen de paiement initial.
+Pratiqo peut devoir adapter, corriger, interrompre temporairement ou retirer certaines fonctionnalités pour des raisons techniques, juridiques, de sécurité ou de conformité. Si une interruption importante affecte l'accès payé pendant la période applicable, Pratiqo traitera la situation conformément aux garanties légales obligatoires et à la présente politique.
 
 ---
 

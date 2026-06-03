@@ -401,7 +401,7 @@ export default function BecomeTeacherPage() {
                   </p>
                   <p className="mt-1 text-xs text-white/50">
                     Commission {calc.commissionRate}%
-                    {calc.tier.ristourneBonus > 0 && calcPlan === "pro" ? ` · +${calc.tier.ristourneBonus}% ristourne bonus` : ""}
+                    {calc.tier.ristourneBonus > 0 && calcPlan === "pro" ? ` · +${calc.tier.ristourneBonus}% rabais conditionnel` : ""}
                   </p>
                 </div>
                 <div className="text-right shrink-0">
@@ -467,7 +467,7 @@ export default function BecomeTeacherPage() {
                 <span className="text-center font-semibold" style={{ color: tier.accent }}>
                   {tier.proCommission}%
                   {tier.ristourneBonus > 0 ? (
-                    <span className="ml-1 text-[10px] text-[#7FE0C3]">+{tier.ristourneBonus}% rist.</span>
+                    <span className="ml-1 text-[10px] text-[#7FE0C3]">+{tier.ristourneBonus}% rabais</span>
                   ) : null}
                 </span>
               </div>

@@ -1,5 +1,5 @@
 /**
- * /legal/yo-remboursement — YoPratiqo refund + lifetime + EU 14d + minors policy.
+ * /legal/yo-remboursement — YoPratiqo refund + 12-month access + EU 14d + minors policy.
  *
  * Mirrors the structure of /legal/cgu/page.tsx (cookie-based locale, fs.readFileSync,
  * markdown body via LegalMarkdownBody), with the layout JSX inlined locally.
@@ -27,14 +27,14 @@ export const metadata: Metadata = {
   title:
     "YoPratiqo — Politique de remboursement | Refund Policy | Pratiqo",
   description:
-    "YoPratiqo — accès à vie, garantie satisfaction 30 jours, droit de rétractation UE et règles applicables aux mineurs.",
+    "YoPratiqo — accès 12 mois, garantie satisfaction 30 jours, droit de rétractation UE et règles applicables aux mineurs.",
 };
 
 // Same id list across locales — the shared anchor scheme matches cgu/page.tsx
 // (id is the link target; LegalMarkdownBody does not auto-slug headings).
 const SECTION_IDS = [
   "what-you-buy",
-  "lifetime",
+  "access",
   "guarantee",
   "eu-withdrawal",
   "minors",
@@ -46,7 +46,7 @@ const SECTION_IDS = [
 const TOC: Record<Locale, { id: string; label: string }[]> = {
   fr: [
     { id: "what-you-buy",   label: "1. Ce que tu achètes" },
-    { id: "lifetime",       label: "2. Accès à vie — défini" },
+    { id: "access",         label: "2. Accès 12 mois — défini" },
     { id: "guarantee",      label: "3. Garantie satisfaction 30 jours" },
     { id: "eu-withdrawal",  label: "4. Droit de rétractation (UE, 14 jours)" },
     { id: "minors",         label: "5. Mineurs" },
@@ -56,7 +56,7 @@ const TOC: Record<Locale, { id: string; label: string }[]> = {
   ],
   en: [
     { id: "what-you-buy",   label: "1. What you are buying" },
-    { id: "lifetime",       label: "2. Lifetime access — defined" },
+    { id: "access",         label: "2. 12-month access — defined" },
     { id: "guarantee",      label: "3. 30-day satisfaction guarantee" },
     { id: "eu-withdrawal",  label: "4. EU right of withdrawal (14 days)" },
     { id: "minors",         label: "5. Minors" },
@@ -66,7 +66,7 @@ const TOC: Record<Locale, { id: string; label: string }[]> = {
   ],
   es: [
     { id: "what-you-buy",   label: "1. Qué estás comprando" },
-    { id: "lifetime",       label: "2. Acceso de por vida — definición" },
+    { id: "access",         label: "2. Acceso de 12 meses — definición" },
     { id: "guarantee",      label: "3. Garantía de satisfacción de 30 días" },
     { id: "eu-withdrawal",  label: "4. Derecho de desistimiento UE (14 días)" },
     { id: "minors",         label: "5. Personas menores de edad" },
@@ -77,9 +77,9 @@ const TOC: Record<Locale, { id: string; label: string }[]> = {
 };
 
 const TITLES: Record<Locale, string> = {
-  fr: "YoPratiqo — Remboursement et accès à vie",
-  en: "YoPratiqo — Refund and Lifetime Access",
-  es: "YoPratiqo — Reembolso y acceso de por vida",
+  fr: "YoPratiqo — Remboursement et accès 12 mois",
+  en: "YoPratiqo — Refund and 12-Month Access",
+  es: "YoPratiqo — Reembolso y acceso de 12 meses",
 };
 
 const LAST_UPDATED_LABEL: Record<Locale, string> = {

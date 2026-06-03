@@ -113,23 +113,23 @@ Las **reglas detalladas** aplicables a los pagos, transferencias a profesores, r
 
 Para la **membresía Miembro Pro**, la facturación, renovación, reembolsos y eventuales recuperaciones se rigen por las **[Condiciones de Miembro Pro](/legal/membre-pro)**.
 
-Para las compras **YoPratiqo** (cursos autónomos de pago único), las condiciones de reembolso y el «acceso de por vida» se describen en la **[Política de YoPratiqo](/legal/yo-remboursement)**.
+Para las compras **YoPratiqo** (cursos autónomos de pago único), las condiciones de reembolso y el acceso de 12 meses se describen en la **[Política de YoPratiqo](/legal/yo-remboursement)**.
 
 ---
 
 ## 6a. YoPratiqo — Cursos autónomos (pago único)
 
-YoPratiqo agrupa los **cursos autónomos de pago único** de Pratiqo (idiomas, viaje, etc.). Estos cursos son distintos del marketplace de clases individuales cubierto en el §6 anterior: una compra YoPratiqo es un pago único que otorga **acceso inmediato** al contenido adquirido, con **acceso de por vida** según se define a continuación y una **garantía de satisfacción de 30 días**.
+YoPratiqo agrupa los **cursos autónomos de pago único** de Pratiqo (idiomas, viaje, etc.). Estos cursos son distintos del marketplace de clases individuales cubierto en el §6 anterior: una compra YoPratiqo es un pago único que otorga **acceso inmediato** al contenido adquirido, con **acceso de 12 meses** según se define a continuación y una **garantía de satisfacción de 30 días**, sujeto a los derechos legales obligatorios.
 
-Las condiciones completas — acceso de por vida, garantía de 30 días, derecho de desistimiento UE y reglas aplicables a personas menores — están consolidadas en la **[política YoPratiqo dedicada](/legal/yo-remboursement)**. Las subsecciones siguientes son un resumen contractual.
+Las condiciones completas — acceso de 12 meses, garantía de 30 días, derecho de desistimiento UE y reglas aplicables a personas menores — están consolidadas en la **[política YoPratiqo dedicada](/legal/yo-remboursement)**. Las subsecciones siguientes son un resumen contractual.
 
 ### 6a.1 Estado jurídico
 
 La compra de un módulo YoPratiqo otorga una **licencia personal e intransferible** de acceso al contenido, **vinculada a la cuenta Pratiqo** del comprador. Cours Pratiqo Inc. conserva todos los derechos de propiedad intelectual sobre el módulo. *Ver [política YoPratiqo §1](/legal/yo-remboursement).*
 
-### 6a.2 Acceso de por vida
+### 6a.2 Acceso de 12 meses
 
-«Acceso de por vida» significa un acceso activo mientras Pratiqo opere el servicio YoPratiqo. En caso de discontinuación, Pratiqo da un **aviso mínimo de 90 días** por correo electrónico y ofrece un **reembolso prorrateado** a los compradores que pagaron en los últimos 12 meses. *Ver [política YoPratiqo §2](/legal/yo-remboursement).*
+La compra de un módulo YoPratiqo otorga acceso personal e intransferible al contenido por un período fijo de **doce (12) meses** desde la fecha de compra, sujeto a los derechos legales obligatorios. *Ver [política YoPratiqo §2](/legal/yo-remboursement).*
 
 ### 6a.3 Garantía de satisfacción de 30 días
 
@@ -171,7 +171,9 @@ Todos los elementos de la plataforma son propiedad exclusiva de Cours Pratiqo In
 
 Pratiqo no es responsable de la calidad de las clases, incidentes durante las clases, pérdida de datos ni daños indirectos.
 
-La responsabilidad de Pratiqo está limitada al monto de las comisiones cobradas en los últimos 3 meses.
+La responsabilidad total de Cours Pratiqo Inc., cuando la ley permita tal limitación, no podrá exceder las tarifas de servicio efectivamente cobradas por Cours Pratiqo Inc. al usuario afectado durante los doce (12) meses anteriores al evento.
+
+Nada limita la responsabilidad en los casos en que tal limitación esté prohibida por la ley aplicable.
 
 ---
 

@@ -6,7 +6,6 @@ import {
   RISTOURNE_PER_PROF_MAX,
   RISTOURNE_PER_PROF_MIN,
   RISTOURNE_POOL_MAX,
-  RISTOURNE_RATE,
   formatCadWhole,
 } from "../../../../lib/loyalty";
 
@@ -24,7 +23,7 @@ export default function LoyaltyRapportPage() {
         </Link>
         <h1 className="mt-4 text-3xl font-bold text-[var(--p-text)] tracking-tight">Rapport — programme de ristourne</h1>
         <p className="mt-3 text-sm text-[var(--p-text-muted)]">
-          Synthèse des règles applicables au pool annuel et aux versements aux professeurs éligibles.
+          Synthèse des règles applicables au rabais commercial rétroactif conditionnel sur volume.
         </p>
       </div>
 
@@ -34,9 +33,8 @@ export default function LoyaltyRapportPage() {
         </h2>
         <ul className="text-sm text-[var(--p-text-muted)] space-y-3 list-disc pl-5">
           <li>
-            <strong className="text-[var(--p-text)]">Pool maximum :</strong> {formatCadWhole(RISTOURNE_POOL_MAX)} par
-            année civile (plafond du montant redistribué), calculé comme MIN(profits nets × {RISTOURNE_RATE * 100} %,{" "}
-            {formatCadWhole(RISTOURNE_POOL_MAX)}).
+            <strong className="text-[var(--p-text)]">Plafond global :</strong> {formatCadWhole(RISTOURNE_POOL_MAX)} par
+            année civile pour le rabais commercial rétroactif conditionnel sur volume, selon les conditions applicables.
           </li>
           <li>
             <strong className="text-[var(--p-text)]">Plafond par prof :</strong> {formatCadWhole(RISTOURNE_PER_PROF_MAX)}{" "}
@@ -49,17 +47,18 @@ export default function LoyaltyRapportPage() {
           </li>
           <li>
             <strong className="text-[var(--p-text)]">Report possible :</strong> si les conditions ne sont pas remplies
-            (moins de 10 profs éligibles, etc.), le pool est conservé par Pratiqo et reporté à l&apos;année suivante, avec
-            un plafond cumulatif de {formatCadWhole(RISTOURNE_CUMULATIVE_POOL_MAX)} (pool reporté + pool courant, voir
-            CGU section 5bis.6).
+            (moins de 10 profs éligibles, etc.), le montant non appliqué peut être reporté selon les conditions
+            applicables, avec un plafond cumulatif de {formatCadWhole(RISTOURNE_CUMULATIVE_POOL_MAX)} (voir CGU
+            section 5bis.6).
           </li>
         </ul>
       </section>
 
       <section className="rounded-2xl border border-slate-100 bg-slate-50/80 p-6 text-sm text-[var(--p-text-muted)] space-y-3">
         <p>
-          Les montants et pourcentages sont donnés à titre indicatif. Les conditions définitives de versement figurent
-          dans les{" "}
+          Les montants et pourcentages sont donnés à titre indicatif. Ce rabais ne constitue pas une participation aux
+          profits, un rendement financier, un placement ni un revenu garanti. Les conditions définitives figurent dans
+          les{" "}
           <Link href="/legal/cgu#ristourne-5bis-6" className="text-teal-700 font-semibold hover:underline">
             CGU (section 5bis.6)
           </Link>

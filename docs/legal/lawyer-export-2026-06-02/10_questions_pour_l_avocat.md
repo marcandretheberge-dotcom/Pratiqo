@@ -9,16 +9,16 @@
 1. Les Conditions professeurs définissent-elles suffisamment le statut de travailleur autonome et l’absence de relation d’emploi, agence, franchise, partenariat ou coentreprise?
 2. La plateforme peut-elle présenter Pratiqo comme intermédiaire/marketplace tout en traitant les paiements via Stripe et en imposant des règles de conduite?
 3. Les clauses de suspension, retrait de profil, enquête et demande de documents sont-elles assez larges sans être abusives?
-4. Les obligations des professeurs envers les mineurs, parents et lieux de cours à domicile sont-elles suffisantes pour le Québec?
+4. Les obligations des professeurs envers les mineurs, parents et lieux de cours à domicile sont-elles suffisantes pour le Québec, incluant l'exigence fondatrice d'une vérification d'antécédents ou dossiers criminels pour les professeurs qui veulent offrir des cours à domicile avec des mineurs?
 5. Les clauses de confidentialité des informations élèves/parents couvrent-elles les messages, captures d’écran, enregistrements, documents et coordonnées?
 
 ## B. Commission, Membre Pro et ristourne
 
 6. Le modèle de commission `15%` à `12%` pour Gratuit / Standard doit-il être présenté avant chaque réservation, ou une page conditions + résumé checkout suffit-elle?
 7. Le modèle Membre Pro `5%` à `3.5%` doit-il être encadré dans des conditions d’abonnement séparées ou la page Membre Pro actuelle suffit-elle temporairement?
-8. La mention `29,99 $CA/mois` (prix Stripe canonique, `unit_amount = 2999`) doit-elle inclure des détails sur renouvellement automatique, annulation, taxes et date de facturation avant tout paiement?
-9. La ristourne annuelle de `5%` des profits nets peut-elle être présentée comme « ristourne » au Québec sans risque de confusion avec une promesse de revenu, un placement financier ou une participation aux profits?
-10. Faut-il définir « profits nets de Pratiqo » dans les conditions pour éviter une interprétation trop large?
+8. La mention `29,99 $CA / mois + taxes applicables` (prix Stripe canonique, `unit_amount = 2999`) doit-elle inclure des détails sur renouvellement automatique, annulation, taxes et date de facturation avant tout paiement?
+9. La ristourne annuelle peut-elle être présentée comme « rabais commercial rétroactif conditionnel sur volume » au Québec sans risque de confusion avec une promesse de revenu, un placement financier ou une participation aux profits?
+10. Les conditions doivent-elles préciser plus finement le volume annuel admissible, les exclusions, les plafonds, les reprises et les modalités de versement du rabais?
 11. Le pool plafonné à `150 000 $CA`, l’activation avec au moins `10` professeurs Pro éligibles et le maximum `10 000 $CA` par professeur doivent-ils figurer dans les CGU, Conditions professeurs et Membre Pro?
 12. La formule « selon le volume relatif » doit-elle être détaillée davantage pour être opposable?
 13. Les promotions fondateurs (`0%` commission pendant `6` mois, `100%` des revenus jusqu’à `5` élèves actifs) doivent-elles avoir des conditions promotionnelles distinctes?
@@ -38,8 +38,8 @@
 21. La future vente de modules numériques YoPratiqo requiert-elle des conditions séparées des CGU générales?
 22. Quelle politique de remboursement doit s’appliquer à un module numérique lorsque l’utilisateur a commencé le contenu?
 23. Le seuil de `25%` de leçons complétées pour la garantie commerciale YoPratiqo est-il raisonnable et opposable?
-24. L’accès à vie défini « tant que Pratiqo exploite le service YoPratiqo » doit-il être formulé autrement?
-25. Le préavis minimal de `90` jours avant discontinuation de YoPratiqo et le remboursement pro-rata pour achats de moins de `12` mois sont-ils suffisants?
+24. L’accès personnel non transférable de douze (12) mois pour les modules YoPratiqo payants est-il formulé clairement et compatible avec les droits impératifs applicables?
+25. La politique doit-elle prévoir un mécanisme spécifique si un module YoPratiqo devient indisponible pendant la période de 12 mois?
 26. La case de consentement UE à la livraison immédiate et à la renonciation au droit de rétractation de `14` jours doit-elle être obligatoire avant toute vente à un acheteur UE?
 27. Les règles sur mineurs au Québec, notamment moins de `14` ans, doivent-elles être affichées directement dans le checkout YoPratiqo?
 
@@ -72,7 +72,7 @@
 43. Valider la page Conditions professeurs.
 44. Valider la page Membre Pro et la communication de la ristourne.
 45. Valider la page Annulation / remboursements.
-46. Valider la politique YoPratiqo remboursement / accès à vie / droit UE / mineurs avant tout checkout numérique.
+46. Valider la politique YoPratiqo remboursement / accès 12 mois / droit UE / mineurs avant tout checkout numérique.
 47. Valider les disclaimers francisation, examens et absence de garanties.
 48. Valider les obligations de Loi 25 pour données d’apprentissage et partage éventuel avec professeurs.
 49. Valider les promotions fondateurs et leur compatibilité avec le modèle de commission général.

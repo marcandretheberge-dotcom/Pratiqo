@@ -1,16 +1,9 @@
-# 06 — Code de conduite, sécurité, obligations et signalements
+# 06 — Code de conduite et sécurité
 
-> **Source route** : /legal/code-de-conduite, /standards-communaute, /charte-de-confiance
-> **Source file(s)** : content/legal/code-de-conduite.fr.md, app/(app)/legal/code-de-conduite/page.tsx, app/standards-communaute/page.tsx, app/charte-de-confiance/page.tsx
-> **Note d'export** : Export du code de conduite français courant, avec rappel des surfaces adjacentes de confiance/sécurité.
+> **Source route** : /legal/code-de-conduite
+> **Source file(s)** : content/legal/code-de-conduite.fr.md, app/(app)/legal/code-de-conduite/page.tsx
+> **Note d'export** : Export du markdown français courant. Les exigences relatives aux cours à domicile avec mineurs et aux vérifications d'antécédents demeurent à valider par l'avocat et à opérationnaliser avant déploiement.
 
-## 1. Surfaces adjacentes à valider
-
-- `/standards-communaute` redirige ou coexiste avec le code de conduite selon la configuration actuelle.
-- `/charte-de-confiance` contient des affirmations de confiance, confidentialité, sécurité et Loi 25 à valider séparément si elle est conservée comme page publique.
-- Les badges publics distinguent actuellement identité vérifiée, diplôme vérifié, Membre Pro, Prof fondateur et Nouveau sur Pratiqo.
-
-## 2. Code de conduite actuel — export intégral
 # Code de conduite — Pratiqo
 
 **Version :** 2.0 · **Dernière mise à jour :** mai 2026
@@ -152,7 +145,7 @@ Pour les questions générales : [`info@pratiqo.ca`](mailto:info@pratiqo.ca). Po
 
 Lorsqu'un manquement est constaté, Pratiqo peut, selon la gravité, l'historique, le risque, la récurrence et les obligations légales applicables, prendre une ou plusieurs des mesures suivantes :
 
-- avertissement écrit;
+- notification de non-conformité aux standards de la marketplace;
 - retrait de contenu (avis, profil, message, photo, document);
 - annulation d'une réservation;
 - restriction temporaire de fonctionnalités;

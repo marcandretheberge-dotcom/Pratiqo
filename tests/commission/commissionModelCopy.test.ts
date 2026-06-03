@@ -164,13 +164,16 @@ test("FR, EN, and ES pricing dictionaries expose the new commission table", () =
     assert.match(dict.pricingPagePctProPlatinum ?? "", /\b1\s*%/);
     assert.match(
       dict.pricingPageCommissionFootnote ?? "",
-      /not guaranteed|non garantie|n['’]est pas garantie|no est[aá] garantizada/i,
+      /not.{0,240}guaranteed income|ni un revenu garanti|ni un ingreso garantizado|non garantie|n['’]est pas garantie|no est[aá] garantizada/i,
     );
   }
 
-  assert.match(fr.btRistourneBody ?? "", /150 000 \$CA/);
-  assert.match(en.btRistourneBody ?? "", /CAD \$150,000/);
-  assert.match(es.btRistourneBody ?? "", /150 000 \$CA/);
+  assert.match(fr.btRistourneBody ?? "", /rabais commercial r.troactif conditionnel sur volume/i);
+  assert.match(en.btRistourneBody ?? "", /conditional retroactive commercial volume rebate/i);
+  assert.match(es.btRistourneBody ?? "", /reembolso comercial retroactivo condicional sobre volumen/i);
+  assert.match(fr.btRistourneBody ?? "", /YoPratiqo/);
+  assert.match(en.btRistourneBody ?? "", /YoPratiqo/);
+  assert.match(es.btRistourneBody ?? "", /YoPratiqo/);
 });
 
 test("teacher welcome email no longer advertises the old 10% to 7% model", () => {
@@ -178,8 +181,8 @@ test("teacher welcome email no longer advertises the old 10% to 7% model", () =>
   assert.match(welcome, /15 % \/ 5 %/);
   assert.match(welcome, /15% \/ 5%/);
   assert.match(welcome, /13 % \/ 4 % \+ 0,5 % ristourne/);
-  assert.match(welcome, /13% \/ 4% \+ 0\.5% profit-sharing/);
-  assert.match(welcome, /12 % \/ 3,5 % \+ 1 % redistribuci/);
+  assert.match(welcome, /13% \/ 4% \+ 0\.5% rebate/);
+  assert.match(welcome, /12 % \/ 3,5 % \+ 1 % reembolso/);
 });
 
 test("tracked source has no stale old commission model claims", () => {

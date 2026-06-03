@@ -32,7 +32,7 @@ En cas d'urgence médicale ou de force majeure (maladie grave, décès familial,
 | Situation | Conséquence pour le professeur |
 |---|---|
 | Annulation plus de 24 h avant | Aucune pénalité |
-| Annulation moins de 24 h avant | Avertissement — 3 avertissements = suspension |
+| Annulation moins de 24 h avant | Notification de non-conformité aux standards de la marketplace; suspension possible selon la gravité |
 | No-show sans annulation | Suspension immédiate possible |
 
 Si le professeur annule, l'élève reçoit un remboursement complet ou un crédit Pratiqo complet.
@@ -60,7 +60,7 @@ Pour les urgences ou cas de force majeure, contacter support@pratiqo.ca, peu imp
 
 Les mêmes règles s'appliquent avec une condition supplémentaire :
 
-- Si le professeur refuse le déplacement après avoir accepté la demande : remboursement complet à l'élève et avertissement au professeur.
+- Si le professeur refuse le déplacement après avoir accepté la demande : remboursement complet à l'élève et notification de non-conformité aux standards de la marketplace.
 - Si l'élève fournit une adresse incorrecte ou inaccessible : aucun remboursement.
 
 ## 5. Garantie satisfaction du premier cours

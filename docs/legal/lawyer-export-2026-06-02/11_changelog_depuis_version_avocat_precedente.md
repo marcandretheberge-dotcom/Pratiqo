@@ -45,24 +45,22 @@ Le modèle de commission canonique a été modifié.
 
 Points associés :
 
-- Membre Pro est à **29,99 $CA/mois** (taxes applicables en sus) — source de vérité : Stripe `STRIPE_PRO_MONTHLY_PRICE_ID` (`unit_amount = 2999`); les libellés produit FR/EN/ES, les pages `/upgrade` et `/tarifs`, les conditions légales et la formule de seuil de rentabilité ont été réalignés sur cette valeur (voir branche `fix/membre-pro-price-source-of-truth`). Une révision antérieure avait indiqué `29 $CA/mois` à tort.
+- Membre Pro est à **29,99 $CA / mois + taxes applicables** — source de vérité : Stripe `STRIPE_PRO_MONTHLY_PRICE_ID` (`unit_amount = 2999`); les libellés produit FR/EN/ES, les pages `/upgrade` et `/tarifs`, les conditions légales et la formule de seuil de rentabilité ont été réalignés sur cette valeur. Une révision antérieure avait indiqué `29 $CA/mois` à tort.
 - Le modèle est présenté comme **commission dégressive** : plus le volume annuel cumulé est élevé, plus le taux baisse.
 - Le calcul canonique est dans `lib/payments/commission.ts` et la configuration produit Membre Pro dans `lib/config/membrePro.ts`.
 - Les textes doivent éviter toute promesse de revenu.
 
 ## 5. Ristourne annuelle Membre Pro
 
-La ristourne annuelle est maintenant décrite ainsi :
+La ristourne annuelle doit maintenant être décrite ainsi :
 
-- `5%` des profits nets de Pratiqo;
-- versement prévu en janvier;
-- bassin plafonné à `150 000 $CA`;
-- activation seulement si au moins `10` professeurs Pro sont éligibles;
-- maximum `10 000 $CA` par professeur;
-- répartition selon le volume relatif;
-- avantage conditionnel, non garanti.
+- rabais commercial rétroactif conditionnel sur volume;
+- calcul selon le volume annuel admissible généré par le professeur sur la marketplace Pratiqo;
+- exclusion de YoPratiqo et des autres produits autonomes distincts;
+- ne constitue pas une participation aux profits, un rendement financier, un placement ni un revenu garanti;
+- seuils, plafonds, périodes de calcul, conditions d'éligibilité, modalités de versement et reprises à valider par l'avocat.
 
-**À valider par l’avocat** : la définition exacte des profits nets, l’expression « ristourne », les conditions d’éligibilité et les risques d’interprétation comme promesse financière.
+**À valider par l’avocat** : l’expression « ristourne », les conditions d’éligibilité, les exclusions et les risques d’interprétation comme promesse financière.
 
 ## 6. Promotions professeurs fondateurs
 
@@ -87,13 +85,12 @@ YoPratiqo est maintenant traité comme un produit autonome à l’intérieur de 
 
 Un document dédié existe : `docs/legal/yopratiqo-lawyer-review.md`.
 
-## 8. Politique YoPratiqo remboursement et accès à vie
+## 8. Politique YoPratiqo remboursement et accès 12 mois
 
 Une politique dédiée existe pour `/legal/yo-remboursement` et couvre :
 
 - licence personnelle non transférable;
-- accès à vie défini comme accès tant que Pratiqo exploite le service YoPratiqo;
-- préavis minimal de `90` jours en cas de discontinuation;
+- accès personnel non transférable de douze (12) mois à compter de l'achat, sous réserve des droits impératifs applicables;
 - garantie satisfaction commerciale de `30` jours;
 - seuil de progression de `25%` des leçons;
 - droit UE de rétractation de `14` jours;
@@ -147,7 +144,7 @@ Un système de market gating a été ajouté :
 2. Membre Pro, commission et ristourne.
 3. Promotions fondateurs.
 4. Annulation / remboursements / garantie premier cours.
-5. YoPratiqo : droit UE, mineurs, accès à vie et politique de remboursement.
+5. YoPratiqo : droit UE, mineurs, accès 12 mois et politique de remboursement.
 6. Loi 25 : données d’apprentissage, messages, avis, profils et partage professeur.
 7. Claims francisation, examens, emploi, immigration.
 8. Expansion hors Canada.

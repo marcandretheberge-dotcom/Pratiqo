@@ -139,7 +139,7 @@ Pour les questions générales : [`info@pratiqo.ca`](mailto:info@pratiqo.ca). Po
 
 Lorsqu'un manquement est constaté, Pratiqo peut, selon la gravité, l'historique, le risque, la récurrence et les obligations légales applicables, prendre une ou plusieurs des mesures suivantes :
 
-- avertissement écrit;
+- notification de non-conformité aux standards de la marketplace;
 - retrait de contenu (avis, profil, message, photo, document);
 - annulation d'une réservation;
 - restriction temporaire de fonctionnalités;

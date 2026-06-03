@@ -1,14 +1,4 @@
-# Export avocat combiné — Cours Pratiqo Inc. / Pratiqo
-
-**Date** : 2026-06-02  
-**Objet** : export interne complet pour révision avocat.  
-**Statut** : document de travail, non publié, non approuvé juridiquement.
-
-Ce fichier combine les sections séparées du dossier `docs/legal/lawyer-export-2026-06-02/` afin de faciliter l’envoi à un avocat ou la génération d’un PDF de révision.
-
----
-
-# Fichier : README.md
+<!-- SOURCE: README.md -->
 
 # Export avocat — Pratiqo / Cours Pratiqo Inc.
 
@@ -63,10 +53,9 @@ Ce dossier est un **export interne pour revue avocat**. Il ne constitue pas un a
 
 Les anciennes routes légales courtes redirigent vers `/legal/*` et ne sont pas exportées comme textes juridiques distincts.
 
-
 ---
 
-# Fichier : 00_resume_executif_avocat.md
+<!-- SOURCE: 00_resume_executif_avocat.md -->
 
 # Résumé exécutif pour avocat
 
@@ -98,7 +87,7 @@ YoPratiqo est présenté comme un produit d'apprentissage autonome à l'intérie
 - pont vers des professeurs réels ;
 - absence de garantie de fluidité, examen, immigration, emploi ou résultat pédagogique.
 
-Les politiques YoPratiqo incluent déjà une politique de remboursement et d'accès à vie pour les modules autonomes, mais l'ensemble demeure à valider avant toute vente payante à grande échelle.
+Les politiques YoPratiqo incluent maintenant une politique de remboursement et un **accès personnel non transférable de douze (12) mois** pour les modules autonomes payants, sous réserve des droits impératifs applicables. L'ensemble demeure à valider avant toute vente payante à grande échelle.
 
 ## 4. Membre Pro
 
@@ -119,14 +108,12 @@ Commission dégressive : plus le professeur enseigne, moins la commission est é
 
 ## 6. Ristourne annuelle
 
-La ristourne annuelle est décrite comme conditionnelle :
+La ristourne annuelle doit être décrite comme un **rabais commercial rétroactif conditionnel sur volume** :
 
-- 5 % des profits nets admissibles de la marketplace Pratiqo, à l'exclusion des profits générés par YoPratiqo et tout autre produit autonome distinct ;
-- versée en janvier ;
-- bassin plafonné à 150 000 $CA ;
-- activée seulement si au moins 10 professeurs Pro sont éligibles ;
-- maximum 10 000 $CA par professeur ;
-- calcul selon le volume relatif ;
+- calculé selon le volume annuel admissible généré par le professeur sur la marketplace Pratiqo ;
+- distinct de toute participation aux profits de Cours Pratiqo Inc., rendement financier, placement ou revenu garanti ;
+- YoPratiqo et les autres produits autonomes distincts sont exclus ;
+- versé ou appliqué selon les modalités, seuils, plafonds, périodes de calcul et conditions d'éligibilité à valider par l'avocat ;
 - aucune garantie de revenu minimum.
 
 ## 7. Points juridiques prioritaires
@@ -144,16 +131,16 @@ La ristourne annuelle est décrite comme conditionnelle :
 - Protection des mineurs et cours à domicile.
 - Expansion hors Canada, notamment Uruguay : conformité, paiements, fiscalité, marché non ouvert.
 
-
 ---
 
-# Fichier : 01_cgu_conditions_utilisation.md
+<!-- SOURCE: 01_cgu_conditions_utilisation.md -->
 
 # 01 — CGU / Conditions générales d'utilisation
 
 > **Source route** : /legal/cgu
 > **Source file(s)** : content/legal/terms.fr.md, app/(app)/legal/cgu/page.tsx
-> **Note d'export** : Export du markdown français courant.
+> **Note d'export** : Export du markdown français courant après alignement avec les décisions fondateur V5/V7.
+
 # Conditions Générales d'Utilisation — Pratiqo
 
 **Version :** 1.0 · **Dernière mise à jour :** avril 2026
@@ -286,23 +273,23 @@ Les **règles détaillées** applicables aux paiements, aux versements aux profe
 
 Pour l'**adhésion Membre Pro**, la facturation, le renouvellement, les remboursements et les éventuelles retenues sont régis par les **[Conditions Membre Pro](/legal/membre-pro)**.
 
-Pour les achats **YoPratiqo** (cours autonomes en paiement unique), les conditions de remboursement et l'« accès à vie » sont décrits dans la **[Politique YoPratiqo](/legal/yo-remboursement)**.
+Pour les achats **YoPratiqo** (cours autonomes en paiement unique), les conditions de remboursement et l'accès de 12 mois sont décrits dans la **[Politique YoPratiqo](/legal/yo-remboursement)**.
 
 ---
 
 ## 6bis. YoPratiqo — Cours autonomes (paiement unique)
 
-YoPratiqo regroupe les **cours autonomes en paiement unique** de Pratiqo (langues, voyage, etc.). Ces cours sont distincts du marketplace de cours individuels couvert au §6 ci-dessus : il s'agit d'un achat ponctuel donnant un **accès immédiat** au contenu acheté, avec **accès à vie** tel que défini ci-dessous et **garantie satisfaction de 30 jours**.
+YoPratiqo regroupe les **cours autonomes en paiement unique** de Pratiqo (langues, voyage, etc.). Ces cours sont distincts du marketplace de cours individuels couvert au §6 ci-dessus : il s'agit d'un achat ponctuel donnant un **accès immédiat** au contenu acheté, avec **accès de 12 mois** tel que défini ci-dessous et **garantie satisfaction de 30 jours**, sous réserve des droits impératifs applicables.
 
-Toutes les modalités complètes — accès à vie, garantie 30 jours, droit de rétractation UE et règles applicables aux mineurs — sont consolidées dans la **[politique YoPratiqo dédiée](/legal/yo-remboursement)**. Les sous-sections suivantes en sont un résumé contractuel.
+Toutes les modalités complètes — accès de 12 mois, garantie 30 jours, droit de rétractation UE et règles applicables aux mineurs — sont consolidées dans la **[politique YoPratiqo dédiée](/legal/yo-remboursement)**. Les sous-sections suivantes en sont un résumé contractuel.
 
 ### 6bis.1 Statut juridique
 
 L'achat d'un module YoPratiqo donne une **licence personnelle non transférable** d'accès au contenu, **liée au compte Pratiqo** de l'acheteur. Cours Pratiqo Inc. conserve l'intégralité des droits de propriété intellectuelle sur le module. *Voir [politique YoPratiqo §1](/legal/yo-remboursement).*
 
-### 6bis.2 Accès à vie
+### 6bis.2 Accès de 12 mois
 
-L'« accès à vie » signifie un accès actif aussi longtemps que Pratiqo exploite le service YoPratiqo. En cas de discontinuation, **un préavis de 90 jours** est donné par courriel et un **remboursement au prorata** est offert aux acheteurs ayant payé dans les 12 derniers mois. *Voir [politique YoPratiqo §2](/legal/yo-remboursement).*
+L'achat d'un module YoPratiqo donne droit à un accès personnel non transférable au contenu pour une durée ferme de **douze (12) mois** à compter de la date d'achat, sous réserve des droits impératifs applicables. *Voir [politique YoPratiqo §2](/legal/yo-remboursement).*
 
 ### 6bis.3 Garantie satisfaction 30 jours
 
@@ -344,7 +331,9 @@ Tous les éléments de la plateforme sont la propriété exclusive de Cours Prat
 
 Pratiqo ne peut être tenu responsable de la qualité des cours, des incidents survenant lors des cours, des pertes de données ou des dommages indirects.
 
-La responsabilité de Pratiqo est limitée au montant des frais de service perçus au cours des 3 derniers mois.
+La responsabilité totale de Cours Pratiqo Inc., lorsque la loi permet une telle limitation, ne pourra excéder les frais de service effectivement perçus par Cours Pratiqo Inc. auprès de l'utilisateur concerné au cours des douze (12) mois précédant l'événement.
+
+Aucune disposition ne limite la responsabilité dans les cas où une telle limitation est interdite par la loi applicable.
 
 ---
 
@@ -378,10 +367,9 @@ site web : [pratiqo.ca](https://pratiqo.ca)
 
 *Ce document a été rédigé en français conformément à la Charte de la langue française du Québec.*
 
-
 ---
 
-# Fichier : 02_politique_confidentialite.md
+<!-- SOURCE: 02_politique_confidentialite.md -->
 
 # 02 — Politique de confidentialité
 
@@ -732,10 +720,9 @@ En cas de divergence entre la présente Politique et un autre document Pratiqo s
 
 *Ce document a été rédigé en français conformément à la Charte de la langue française du Québec. Une version anglaise et une version espagnole sont disponibles à titre de traduction de courtoisie.*
 
-
 ---
 
-# Fichier : 03_annulation_remboursements.md
+<!-- SOURCE: 03_annulation_remboursements.md -->
 
 # 03 — Annulation, remboursements et garantie premier cours
 
@@ -771,7 +758,7 @@ En cas d'urgence médicale ou de force majeure (maladie grave, décès familial,
 | Situation | Conséquence pour le professeur |
 |---|---|
 | Annulation plus de 24 h avant | Aucune pénalité |
-| Annulation moins de 24 h avant | Avertissement — 3 avertissements = suspension |
+| Annulation moins de 24 h avant | Notification de non-conformité aux standards de la marketplace; suspension possible selon la gravité |
 | No-show sans annulation | Suspension immédiate possible |
 
 Si le professeur annule, l'élève reçoit un remboursement complet ou un crédit Pratiqo complet.
@@ -799,7 +786,7 @@ Pour les urgences ou cas de force majeure, contacter support@pratiqo.ca, peu imp
 
 Les mêmes règles s'appliquent avec une condition supplémentaire :
 
-- Si le professeur refuse le déplacement après avoir accepté la demande : remboursement complet à l'élève et avertissement au professeur.
+- Si le professeur refuse le déplacement après avoir accepté la demande : remboursement complet à l'élève et notification de non-conformité aux standards de la marketplace.
 - Si l'élève fournit une adresse incorrecte ou inaccessible : aucun remboursement.
 
 ## 5. Garantie satisfaction du premier cours
@@ -842,16 +829,16 @@ La page actuelle indique : « Pratiqo agit comme arbitre de bonne foi et sa déc
 - support@pratiqo.ca
 - https://www.pratiqo.ca/contact
 
-
 ---
 
-# Fichier : 04_conditions_professeurs.md
+<!-- SOURCE: 04_conditions_professeurs.md -->
 
 # 04 — Conditions applicables aux professeurs
 
 > **Source route** : /legal/conditions-professeurs
 > **Source file(s)** : content/legal/conditions-professeurs.fr.md, app/(app)/legal/conditions-professeurs/page.tsx
-> **Note d'export** : Export du markdown français courant.
+> **Note d'export** : Export du markdown français courant après alignement avec les décisions fondateur V5/V7.
+
 # Conditions applicables aux professeurs — Pratiqo
 
 **Version :** 1.0 · **Dernière mise à jour :** mai 2026
@@ -919,7 +906,7 @@ Les diplômes, certifications et titres professionnels affichés doivent être r
 
 ---
 
-## 6. Identifiants, vérifications et avertissement sur les signaux de confiance
+## 6. Identifiants, vérifications et précisions sur les signaux de confiance
 
 Les signaux affichés sur Pratiqo ont des significations distinctes :
 
@@ -953,9 +940,12 @@ Le professeur s'engage à :
 Les professeurs doivent faire preuve d'une vigilance accrue lorsque l'élève est mineur.
 
 - La participation ou l'autorisation d'un parent ou tuteur légal peut être requise.
+- Lorsque des renseignements personnels sont collectés auprès d'un utilisateur ou d'un élève de moins de 14 ans, l'autorisation d'un parent ou tuteur légal est requise selon les modalités déployées par la plateforme, sous réserve du droit applicable.
 - Pour les mineurs, un parent ou tuteur devrait être présent ou joignable pendant le cours, selon l'âge, le contexte et le lieu.
 - Les communications privées inutiles, ambiguës ou inappropriées avec des mineurs sont interdites.
 - Les cours doivent se dérouler dans des lieux sûrs, appropriés et conformes à la loi.
+- Les cours à domicile avec des mineurs exigent des mesures de protection supplémentaires. La décision fondatrice à valider par l'avocat est d'exiger une vérification des antécédents ou dossiers criminels pour les professeurs qui souhaitent offrir des cours à domicile avec des mineurs, selon les modalités déployées par la plateforme.
+- Si cette vérification n'est pas opérationnelle, l'offre de cours à domicile avec des mineurs devrait ne pas être offerte ou être limitée jusqu'à ce que le processus applicable soit déployé.
 - Le professeur peut refuser un lieu ou une situation qu'il juge dangereux, inapproprié ou non conforme.
 - Tout incident ou préoccupation concernant la sécurité d'un élève doit être signalé rapidement à [`support@pratiqo.ca`](mailto:support@pratiqo.ca). En cas d'urgence, contactez d'abord les services d'urgence.
 
@@ -1050,7 +1040,7 @@ Le classement et la visibilité peuvent dépendre de facteurs comme la pertinenc
 
 Pratiqo peut, selon la gravité de la situation :
 
-- envoyer un avertissement;
+- envoyer une notification de non-conformité aux standards de la marketplace;
 - restreindre certaines fonctionnalités;
 - masquer ou retirer un profil public;
 - suspendre ou fermer un compte;
@@ -1066,9 +1056,13 @@ Pratiqo peut enquêter sur les signalements et demander la coopération du profe
 
 ## 17. Relation avec Membre Pro
 
-**Membre Pro**, s'il est offert, est une **adhésion payante optionnelle** distincte qui peut être soumise à des conditions d'abonnement ou à des modalités additionnelles. Le statut Membre Pro peut donner accès à des avantages économiques tels qu'une **commission réduite** ou une **structure de ristourne**, lorsque Pratiqo les offre.
+**Membre Pro**, s'il est offert, est une **adhésion payante optionnelle** distincte qui peut être soumise à des conditions d'abonnement ou à des modalités additionnelles. Le statut Membre Pro peut donner accès à des avantages économiques tels qu'une **commission réduite** ou un **rabais commercial rétroactif conditionnel sur volume**, lorsque Pratiqo les offre. Ce rabais est calculé selon le volume annuel admissible généré par le professeur sur la marketplace Pratiqo; il ne constitue pas une participation aux profits de Cours Pratiqo Inc., un rendement financier, un placement, ni un revenu garanti. YoPratiqo et les autres produits autonomes distincts sont exclus.
 
-Membre Pro ne garantit pas un revenu, des élèves, des réservations, un classement, des vues de profil ou un résultat commercial. Les modalités détaillées de Membre Pro sont régies par les **[Conditions Membre Pro](/legal/membre-pro)**.
+Au lancement, l'adhésion Membre Pro est affichée à **29,99 $CA / mois + taxes applicables**, facturée mensuellement à l'avance, renouvelée automatiquement et annulable en tout temps depuis le tableau de bord ou en écrivant à [`support@pratiqo.ca`](mailto:support@pratiqo.ca). Sauf exigence contraire de la loi applicable, l'annulation prend effet à la fin de la période payée en cours.
+
+Pratiqo peut modifier les commissions, prix d'abonnement ou conditions de forfait **prospectivement**, avec un préavis conforme à la loi applicable. Lorsque la loi l'exige, les utilisateurs touchés peuvent annuler avant l'entrée en vigueur du changement.
+
+Membre Pro ne garantit pas un revenu, des élèves, des réservations, un classement, une visibilité, des vues de profil ou un résultat commercial. Le professeur demeure un travailleur autonome. Les modalités détaillées de Membre Pro sont régies par les **[Conditions Membre Pro](/legal/membre-pro)**.
 
 ---
 
@@ -1084,16 +1078,15 @@ Pour les avis formels : [`marc-andre.theberge@pratiqo.ca`](mailto:marc-andre.the
 
 *Ce document a été rédigé en français conformément à la Charte de la langue française du Québec. Une version anglaise et une version espagnole sont disponibles à titre de traduction de courtoisie.*
 
-
 ---
 
-# Fichier : 05_membre_pro_commissions_ristourne.md
+<!-- SOURCE: 05_membre_pro_commissions_ristourne.md -->
 
 # 05 — Membre Pro, commissions et ristourne
 
 > **Source route** : /legal/membre-pro, /tarifs, /upgrade, /become-teacher, /devenir-enseignant
 > **Source file(s)** : content/legal/membre-pro.fr.md, lib/config/membrePro.ts, lib/payments/commission.ts, lib/i18n/locales/fr.json, app/tarifs/page.tsx, app/(app)/upgrade/page.tsx, app/become-teacher/page.tsx
-> **Note d'export** : Section dédiée créée pour revue avocat après mise à jour du modèle de commission.
+> **Note d'export** : Section dédiée créée pour revue avocat après mise à jour du modèle de commission et alignement avec les décisions fondateur V5/V7.
 
 ## 1. Modèle de commission canonique
 
@@ -1107,38 +1100,32 @@ Pour les avis formels : [`marc-andre.theberge@pratiqo.ca`](mailto:marc-andre.the
 ## 2. Source de configuration actuelle
 
 - `lib/payments/commission.ts` calcule les frais de plateforme : Gratuit/Standard 1500, 1400, 1300, 1200 bps ; Membre Pro 500, 450, 400, 350 bps.
-- `lib/config/membrePro.ts` expose le prix mensuel affiché : **29,99 $CA / mois** (taxes applicables en sus), aligné sur la source de vérité Stripe `STRIPE_PRO_MONTHLY_PRICE_ID` (`unit_amount = 2999`).
-- `lib/config/membrePro.ts` expose la plage Gratuit 15 % → 12 %, Membre Pro 5 % → 3,5 %, et les règles de ristourne.
+- `lib/config/membrePro.ts` expose le prix mensuel affiché : **29,99 $CA / mois + taxes applicables**, aligné sur la source de vérité Stripe `STRIPE_PRO_MONTHLY_PRICE_ID` (`unit_amount = 2999`).
+- `lib/config/membrePro.ts` expose la plage Gratuit 15 % → 12 %, Membre Pro 5 % → 3,5 %, et les taux de ristourne par palier.
 - Stripe demeure la source autoritative du prix au paiement ; cette section décrit le modèle affiché et contractuel à valider.
 
-## 3. Ristourne annuelle
+## 3. Ristourne annuelle — décision fondateur à refléter
 
-La ristourne annuelle affichée est conditionnelle :
+La ristourne annuelle Membre Pro, lorsqu'elle est offerte, doit être présentée comme un **rabais commercial rétroactif conditionnel sur volume**, calculé selon le volume annuel admissible généré par le professeur sur la marketplace Pratiqo.
 
-- 5 % des profits nets admissibles de la marketplace Pratiqo, à l'exclusion des profits générés par YoPratiqo et tout autre produit autonome distinct ;
-- versement annuel en janvier ;
-- bassin plafonné à 150 000 $CA ;
-- activation seulement si au moins 10 professeurs Pro sont éligibles ;
-- maximum 10 000 $CA par professeur ;
-- répartition selon le volume relatif ;
-- aucune garantie de revenu minimum.
+Elle **ne constitue pas** une participation aux profits de Cours Pratiqo Inc., un rendement financier, un placement, ni un revenu garanti. **YoPratiqo et les autres produits autonomes distincts sont exclus**. Les taux, seuils, plafonds, périodes de calcul, conditions d'éligibilité, modalités de versement et mécanismes de reprise sont à valider par l'avocat.
 
-Formulation juridique actuellement utilisée ou souhaitée : Pratiqo ne garantit aucun revenu minimum. Les professeurs agissent comme travailleurs autonomes. Leurs revenus dépendent notamment de leur activité, de leur disponibilité, de leur tarification, de la demande et du volume de réservations.
+Formulation juridique à conserver : Pratiqo ne garantit aucun revenu minimum. Les professeurs agissent comme travailleurs autonomes. Leurs revenus dépendent notamment de leur activité, de leur disponibilité, de leur tarification, de la demande et du volume de réservations.
 
 ## 4. Questions juridiques spécifiques
 
 À valider par l'avocat :
 
 - Le modèle de commission dégressive doit-il être décrit dans les CGU, les Conditions professeurs, les Conditions Membre Pro et la page Paiements ?
-- La différence entre commission transactionnelle et ristourne annuelle est-elle suffisamment claire ?
+- La différence entre commission transactionnelle et rabais commercial rétroactif conditionnel sur volume est-elle suffisamment claire ?
 - Le terme « ristourne » est-il approprié ou faut-il employer un autre terme contractuel ?
-- La ristourne conditionnelle risque-t-elle d'être perçue comme promesse de revenu, programme de placement, participation bénéficiaire, bonus garanti ou avantage assimilable à un titre financier ?
-- Le seuil de 10 professeurs Pro éligibles et le plafond de 150 000 $CA doivent-ils figurer dans les conditions contractuelles ou seulement dans la page prix ?
-- Le maximum de 10 000 $CA par professeur doit-il être accompagné d'exemples, d'exclusions ou de règles d'arrondissement ?
+- Les taux de 0,5 % et 1 % aux paliers Or/Platine risquent-ils d'être perçus comme promesse de revenu, rendement financier, placement ou avantage assimilable à un titre financier ?
+- Quels plafonds, seuils, règles d'arrondissement, exclusions, reprises et conditions d'éligibilité doivent figurer dans les conditions contractuelles ?
 - Comment traiter les remboursements, rétrofacturations, cours annulés, taxes et litiges dans le volume annuel admissible ?
 - La page `/become-teacher` contient un calculateur indicatif : faut-il ajouter une mention plus forte que les estimations ne sont pas contractuelles ?
 
 ## 5. Conditions Membre Pro actuelles — export intégral
+
 # Conditions Membre Pro — Pratiqo
 
 **Version :** 1.0 · **Dernière mise à jour :** mai 2026
@@ -1189,7 +1176,7 @@ Membre Pro **n'est pas** une suite d'outils ni un studio de production : c'est u
 
 ## 4. Cycle de facturation
 
-Membre Pro peut être facturé selon une période **mensuelle ou annuelle**, ou selon un autre cycle proposé par Pratiqo lors de la souscription.
+Au lancement, Membre Pro est affiché à **29,99 $CA / mois + taxes applicables**, et est **facturé mensuellement à l'avance**. Si Pratiqo propose ultérieurement une période annuelle ou un autre cycle, ce cycle et son prix seront affichés avant la souscription.
 
 - La période de facturation et la date du prochain renouvellement sont affichées avant la souscription, et peuvent être consultées dans la page d'abonnement du compte lorsque cette page est offerte.
 - Le **prix applicable est celui affiché au moment de la souscription**, en plus des taxes applicables le cas échéant.
@@ -1201,7 +1188,7 @@ Membre Pro peut être facturé selon une période **mensuelle ou annuelle**, ou 
 
 ## 5. Renouvellement automatique
 
-Sauf annulation, l'adhésion Membre Pro **se renouvelle automatiquement** pour une nouvelle période identique au cycle choisi.
+Sauf annulation, l'adhésion Membre Pro **se renouvelle automatiquement chaque mois** pour une nouvelle période mensuelle, ou pour la période indiquée si un autre cycle est offert.
 
 - Les modalités de renouvellement (période, prix, date) sont divulguées avant l'achat.
 - Le professeur est responsable d'**annuler avant la date de renouvellement** s'il ne souhaite pas poursuivre l'adhésion.
@@ -1217,7 +1204,7 @@ Le professeur peut annuler Membre Pro :
 - depuis les paramètres d'abonnement du compte lorsque cette fonctionnalité est offerte; ou
 - en écrivant à [`support@pratiqo.ca`](mailto:support@pratiqo.ca).
 
-Sauf mention contraire affichée lors de l'annulation ou exigence d'une loi d'ordre public, **l'annulation prend effet à la fin de la période payée en cours**. Les avantages Membre Pro peuvent demeurer accessibles jusqu'à cette date, puis cesser.
+Sauf mention contraire affichée lors de l'annulation ou exigence d'une loi d'ordre public, **l'annulation prend effet à la fin de la période payée en cours**. Les avantages Membre Pro peuvent demeurer accessibles jusqu'à cette date, puis cesser. Le professeur peut annuler en tout temps depuis son tableau de bord lorsque cette fonctionnalité est disponible, ou en écrivant à l'adresse de soutien ci-dessus.
 
 L'annulation de Membre Pro :
 
@@ -1261,9 +1248,10 @@ Les taxes (TPS, TVQ, TVH, taxes provinciales, taxes étrangères) **peuvent s'aj
 
 ## 10. Modifications des avantages
 
-Pratiqo peut **ajouter, retirer, tester, renommer, modifier ou cesser** des avantages Membre Pro, y compris la **commission réduite**, la **structure de ristourne** et tout autre avantage rattaché au statut.
+Pratiqo peut **ajouter, retirer, tester, renommer, modifier ou cesser** des avantages Membre Pro, y compris la **commission réduite**, la **structure de ristourne**, le prix d'abonnement ou les conditions du forfait.
 
-- Les changements importants seront communiqués par les moyens prévus par la loi applicable, le cas échéant.
+- Les changements importants seront communiqués avec un **préavis conforme à la loi applicable**, le cas échéant.
+- Les modifications de commission, de prix d'abonnement ou de conditions du forfait s'appliquent **prospectivement**. Lorsque la loi l'exige, les utilisateurs touchés peuvent annuler avant l'entrée en vigueur de la modification.
 - Une modification d'avantage ne donne pas automatiquement droit à un remboursement, sauf disposition contraire d'une loi d'ordre public.
 - Les avantages **bêta, expérimentaux ou en accès anticipé** peuvent être modifiés, restreints ou retirés sans préavis et ne sont pas garantis.
 - Les **modifications de taux** (par exemple un ajustement de la commission réduite ou de la ristourne) s'appliquent **prospectivement**, à compter de la date d'entrée en vigueur indiquée par Pratiqo, sous réserve de la loi applicable.
@@ -1304,9 +1292,11 @@ Aucun avantage Membre Pro — y compris la **commission réduite** ou la **risto
 Pratiqo peut proposer des offres **promotionnelles, bêta, « fondateurs », à prix réduit ou en essai gratuit** liées à Membre Pro.
 
 - Ces offres peuvent être temporaires.
-- L'admissibilité peut être limitée à certains segments, marchés ou périodes.
+- L'admissibilité peut être limitée à certains segments, marchés, périodes, volumes, profils ou conditions affichées.
 - Pratiqo peut **mettre fin ou modifier** ces offres conformément à leurs conditions affichées et à la loi applicable.
 - Les conditions promotionnelles **ne deviennent pas permanentes** sauf si Pratiqo l'indique expressément par écrit.
+- Elles ne garantissent aucun revenu, volume de réservations, classement, visibilité, élève ou résultat commercial.
+- Leur compatibilité avec Membre Pro, les commissions réduites ou toute ristourne doit être précisée dans les conditions applicables de l'offre concernée.
 
 ---
 
@@ -1338,6 +1328,8 @@ Pratiqo peut **refuser, suspendre ou résilier** Membre Pro en cas notamment de 
 ## 15. Relation avec les versements, les commissions et la ristourne
 
 Les **frais d'adhésion Membre Pro** (le montant que Pratiqo facture pour le **statut de membre**) sont **distincts** des **commissions de marketplace** (le pourcentage que Pratiqo retient sur chaque cours), des frais de service et des autres frais de marketplace.
+
+La **ristourne annuelle Membre Pro**, lorsqu'elle est offerte, est un **rabais commercial rétroactif conditionnel sur volume**, calculé selon le **volume annuel admissible généré par le professeur sur la marketplace Pratiqo**. Ce rabais ne constitue pas une participation aux profits de Cours Pratiqo Inc., un rendement financier, un placement, ni un revenu garanti. **YoPratiqo et les autres produits autonomes distincts sont exclus**. Les taux, seuils, plafonds, périodes de calcul, conditions d'éligibilité, modalités de versement et mécanismes de reprise sont affichés dans la plateforme ou les conditions applicables et demeurent à valider par l'avocat.
 
 - Le paiement de Membre Pro **ne dispense pas** le professeur des règles de la marketplace, des commissions, des règles d'annulation, des règles de remboursement ou des obligations en matière de rétrofacturations.
 - Lorsqu'une **commission réduite** est rattachée au statut Membre Pro, son taux, ses conditions, sa date d'entrée en vigueur et son champ d'application sont indiqués dans la plateforme, le tableau de bord, la caisse, la page d'abonnement ou les modalités du forfait applicable. Pratiqo peut ajuster ce taux **prospectivement**, sous réserve de la loi applicable.
@@ -1411,24 +1403,16 @@ Si une clause des présentes est jugée invalide ou inapplicable, les autres cla
 
 *Ce document a été rédigé en français conformément à la Charte de la langue française du Québec. Une version anglaise et une version espagnole sont disponibles à titre de traduction de courtoisie.*
 
-
 ---
 
-# Fichier : 06_code_conduite_securite.md
+<!-- SOURCE: 06_code_conduite_securite.md -->
 
-# 06 — Code de conduite, sécurité, obligations et signalements
+# 06 — Code de conduite et sécurité
 
-> **Source route** : /legal/code-de-conduite, /standards-communaute, /charte-de-confiance
-> **Source file(s)** : content/legal/code-de-conduite.fr.md, app/(app)/legal/code-de-conduite/page.tsx, app/standards-communaute/page.tsx, app/charte-de-confiance/page.tsx
-> **Note d'export** : Export du code de conduite français courant, avec rappel des surfaces adjacentes de confiance/sécurité.
+> **Source route** : /legal/code-de-conduite
+> **Source file(s)** : content/legal/code-de-conduite.fr.md, app/(app)/legal/code-de-conduite/page.tsx
+> **Note d'export** : Export du markdown français courant. Les exigences relatives aux cours à domicile avec mineurs et aux vérifications d'antécédents demeurent à valider par l'avocat et à opérationnaliser avant déploiement.
 
-## 1. Surfaces adjacentes à valider
-
-- `/standards-communaute` redirige ou coexiste avec le code de conduite selon la configuration actuelle.
-- `/charte-de-confiance` contient des affirmations de confiance, confidentialité, sécurité et Loi 25 à valider séparément si elle est conservée comme page publique.
-- Les badges publics distinguent actuellement identité vérifiée, diplôme vérifié, Membre Pro, Prof fondateur et Nouveau sur Pratiqo.
-
-## 2. Code de conduite actuel — export intégral
 # Code de conduite — Pratiqo
 
 **Version :** 2.0 · **Dernière mise à jour :** mai 2026
@@ -1570,7 +1554,7 @@ Pour les questions générales : [`info@pratiqo.ca`](mailto:info@pratiqo.ca). Po
 
 Lorsqu'un manquement est constaté, Pratiqo peut, selon la gravité, l'historique, le risque, la récurrence et les obligations légales applicables, prendre une ou plusieurs des mesures suivantes :
 
-- avertissement écrit;
+- notification de non-conformité aux standards de la marketplace;
 - retrait de contenu (avis, profil, message, photo, document);
 - annulation d'une réservation;
 - restriction temporaire de fonctionnalités;
@@ -1617,38 +1601,21 @@ direction : [`marc-andre.theberge@pratiqo.ca`](mailto:marc-andre.theberge@pratiq
 
 *Ce document a été rédigé en français conformément à la Charte de la langue française du Québec. Une version anglaise et une version espagnole sont disponibles à titre de traduction de courtoisie.*
 
-
 ---
 
-# Fichier : 07_paiements_stripe_taxes.md
+<!-- SOURCE: 07_paiements_stripe_taxes.md -->
 
-# 07 — Paiements, Stripe, taxes, remboursements et versements
+# 07 — Paiements, Stripe, taxes et versements
 
-> **Source route** : /legal/paiements-remboursements, /booking/success, /teacher/revenue, /teacher/settings
-> **Source file(s)** : content/legal/paiements-remboursements.fr.md, app/(app)/legal/paiements-remboursements/page.tsx, app/(app)/booking/success/page.tsx, lib/i18n/locales/fr.json
-> **Note d'export** : Export du markdown paiement français courant et synthèse des surfaces adjacentes. Aucun secret ou identifiant Stripe n'est inclus.
+> **Source route** : /legal/paiements-remboursements
+> **Source file(s)** : content/legal/paiements-remboursements.fr.md, app/(app)/legal/paiements-remboursements/page.tsx
+> **Note d'export** : Export du markdown français courant. Aucun secret, identifiant Stripe ou variable d'environnement n'est inclus.
 
-## 1. Surfaces de paiement adjacentes repérées
-
-- `/booking/success` vérifie la session Stripe, finalise ou diffère certains états selon la taxe Stripe, et affiche des messages de confirmation ou d'erreur.
-- Les libellés français indiquent : paiement sécurisé par Stripe, versement au professeur après cours terminé, reçus automatiques, gestion Stripe pour les paiements.
-- `/teacher/revenue` et l'historique professeur affichent les montants en devise comptable réelle, actuellement CAD.
-- `/teacher/settings` contient des actions Stripe Connect / portail Stripe selon le statut du compte.
-
-## 2. Points à valider
-
-- La responsabilité respective de Cours Pratiqo Inc., Stripe, Stripe Connect, élèves et professeurs est-elle suffisamment claire ?
-- Les délais de remboursement et de versement sont-ils formulés comme délais indicatifs plutôt que garanties absolues ?
-- Les taxes TPS/TVQ et la nature des reçus sont-elles suffisamment claires ?
-- Les retenues, ajustements, inversions, litiges et rétrofacturations sont-ils suffisamment couverts côté professeur ?
-- Les paiements hors plateforme et la sollicitation directe sont-ils couverts dans les conditions et dans le code de conduite ?
-
-## 3. Politique paiements / remboursements / versements actuelle — export intégral
 # Paiements, remboursements et versements — Pratiqo
 
 **Version :** 1.0 · **Dernière mise à jour :** mai 2026
 
-> ⚠️ **Important** : Le présent document explique le fonctionnement des paiements de la marketplace Pratiqo : prix, frais, remboursements, versements aux professeurs, retenues, rétrofacturations et taxes. Il complète les autres documents juridiques applicables et ne constitue pas un avis juridique, fiscal, comptable ou financier. Pratiqo n'est ni une banque, ni un service de séquestre, ni une institution financière, ni un conseiller fiscal. En cas de divergence avec une loi d'ordre public, c'est la loi qui prévaut.
+> ⚠️ **Important** : Le présent document explique le fonctionnement des paiements de la marketplace Pratiqo : prix, frais, remboursements, versements aux professeurs, retenues, rétrofacturations et taxes. Il complète les autres documents juridiques applicables et ne constitue pas un avis juridique, fiscal, comptable ou financier. Pratiqo n'est ni une banque, ni une institution financière, ni un conseiller fiscal. En cas de divergence avec une loi d'ordre public, c'est la loi qui prévaut.
 
 ---
 
@@ -1691,6 +1658,7 @@ Les professeurs sont des **prestataires indépendants**. Pratiqo agit comme inte
 
 - Pratiqo peut **encaisser** les paiements de l'élève et **verser au professeur** le montant admissible, **après déduction** des frais de plateforme, commissions, taxes applicables, remboursements, contestations, rétrofacturations, frais du prestataire de paiement et autres ajustements applicables.
 - Le **moment d'un versement** peut dépendre de plusieurs facteurs : confirmation de la livraison du cours, règles de la plateforme, calendrier du prestataire de paiement (par exemple Stripe), délais bancaires, examen anti-fraude ou de risque, vérification du compte ou de l'identité, conformité fiscale, et droit applicable.
+- L'objectif opérationnel de Pratiqo est un **délai technique de traitement / validation de 48 heures après la fin du cours** avant le versement, sous réserve des contraintes Stripe, bancaires, de conformité, de sécurité et de la loi applicable.
 - Pratiqo **ne garantit pas** un versement immédiat. Les professeurs doivent prévoir des délais raisonnables et tenir leur profil et leurs renseignements de versement à jour.
 - Le professeur reconnaît que Pratiqo n'est pas l'employeur, l'agent, le mandataire ou la banque du professeur, et que le versement reçu peut faire l'objet d'**ajustements ultérieurs** dans les cas prévus par les présentes ou les autres documents applicables.
 
@@ -1703,7 +1671,7 @@ Pratiqo peut prélever, selon le service utilisé, **un frais de plateforme, un 
 - Les frais et commissions applicables peuvent être **affichés** dans le tableau de bord du professeur, dans la caisse de l'élève, dans les documents contractuels, dans la page d'abonnement ou dans une autre zone de la plateforme avant qu'une transaction ne soit confirmée.
 - Les structures de frais peuvent **évoluer**. Sauf disposition contraire d'une loi d'ordre public, les modifications matérielles s'appliquent **prospectivement** et seront communiquées par les moyens prévus par la loi applicable, le cas échéant.
 - Les **frais du prestataire de paiement** (par exemple les frais d'acquisition Stripe) peuvent s'ajouter ou être déduits des montants concernés selon les règles applicables. Les frais d'émetteur de carte ou frais de change appliqués par la banque de l'élève demeurent à la charge de l'élève.
-- Les frais d'adhésion Membre Pro sont régis par les **[Conditions Membre Pro](/legal/membre-pro)** et sont distincts des paiements de cours et des versements de cours. Lorsqu'une **commission réduite** ou une **ristourne** est rattachée au statut Membre Pro, ses modalités sont décrites dans les Conditions Membre Pro et affichées dans la plateforme.
+- Les frais d'adhésion Membre Pro sont régis par les **[Conditions Membre Pro](/legal/membre-pro)** et sont distincts des paiements de cours et des versements de cours. Lorsqu'une **commission réduite** ou un **rabais commercial rétroactif conditionnel sur volume** est rattaché au statut Membre Pro, ses modalités sont décrites dans les Conditions Membre Pro et affichées dans la plateforme.
 
 ---
 
@@ -1870,10 +1838,9 @@ direction : [`marc-andre.theberge@pratiqo.ca`](mailto:marc-andre.theberge@pratiq
 
 *Ce document a été rédigé en français conformément à la Charte de la langue française du Québec. Une version anglaise et une version espagnole sont disponibles à titre de traduction de courtoisie.*
 
-
 ---
 
-# Fichier : 08_yopratiqo_modules_numeriques.md
+<!-- SOURCE: 08_yopratiqo_modules_numeriques.md -->
 
 # 08 — YoPratiqo et modules numériques
 
@@ -1888,15 +1855,16 @@ YoPratiqo est un produit autonome d'apprentissage à l'intérieur de Pratiqo. Il
 ## 2. Points essentiels à valider
 
 - Politique de remboursement des contenus numériques.
-- Accès à vie tel que défini : tant que Pratiqo exploite le service YoPratiqo, avec préavis minimal si interruption.
-- Droit de rétractation UE de 14 jours et consentement à livraison immédiate.
+- Accès personnel non transférable de douze (12) mois à compter de l'achat, sous réserve des droits impératifs applicables.
+- Droit de rétractation UE de 14 jours et consentement à livraison immédiate, à valider avant tout checkout numérique.
 - Mineurs au Québec et autorisation parentale.
 - Absence de garantie de fluidité, examen, immigration, emploi, résultat pédagogique ou réservation avec professeur.
 - Divulgation éventuelle de voix/audio générés ou traités avec IA.
 - Données de progression, quiz, flashcards, interactions audio et consentement avant partage avec un professeur.
 
 ## 3. Politique YoPratiqo actuelle — export intégral
-# YoPratiqo — Politique de remboursement et accès à vie
+
+# YoPratiqo — Politique de remboursement et accès 12 mois
 
 **Version :** 1.0 · **Dernière mise à jour :** mai 2026
 
@@ -1912,24 +1880,21 @@ L'achat d'un module YoPratiqo te donne une **licence personnelle non transférab
 - **Cours Pratiqo Inc.** conserve l'intégralité des droits de propriété intellectuelle sur le contenu, les visuels, l'audio, le code et la pédagogie du module.
 - Aucun téléchargement permanent du contenu n'est garanti — la lecture se fait via la plateforme YoPratiqo.
 
+YoPratiqo est un produit de **préparation éducative**. Les modules peuvent aider à pratiquer, découvrir une langue ou préparer une conversation avec un professeur, mais Pratiqo ne garantit pas la fluidité, la réussite à un examen, un résultat d'immigration, un résultat d'emploi, ni une réservation avec un professeur. La politique de remboursement applicable aux modules numériques payants demeure sujette à révision juridique avant tout élargissement payant.
+
 ---
 
-## 2. « Accès à vie » — définition
+## 2. Accès 12 mois — définition
 
-L'expression **« accès à vie »** signifie que ton accès au module acheté reste actif aussi longtemps que **Cours Pratiqo Inc. exploite le service YoPratiqo**.
+L'achat d'un module YoPratiqo donne droit à un **accès personnel non transférable** au contenu pour une durée ferme de **douze (12) mois** à compter de la date d'achat, sous réserve des droits impératifs applicables.
 
-### 2.1 Exploitation continue
+### 2.1 Portée de l'accès
 
-Tant que YoPratiqo est exploité par Pratiqo, tu conserves l'accès à tout module que tu as payé, sans frais récurrents.
+Pendant cette période de 12 mois, tu peux consulter le module acheté dans ton compte Pratiqo, sans frais récurrents pour ce module précis.
 
-### 2.2 Discontinuation d'un module ou du service
+### 2.2 Disponibilité technique et droits obligatoires
 
-Si Pratiqo décidait de cesser l'exploitation d'un module précis, ou de la gamme YoPratiqo dans son ensemble :
-
-- Pratiqo informera les acheteurs concernés par courriel **au moins 90 jours civils avant** la date d'arrêt effective.
-- Les acheteurs ayant payé le module concerné **dans les 12 mois précédant l'annonce** ont droit à un **remboursement au prorata** de la période non utilisée, calculé linéairement sur 12 mois.
-- Au-delà de 12 mois après l'achat, aucun remboursement n'est dû, mais durant la fenêtre de préavis tu peux **exporter tes données de progression** (cours complétés, scores, flashcards travaillées).
-- Les remboursements au prorata sont émis dans la devise originale de l'achat, sur le moyen de paiement initial.
+Pratiqo peut devoir adapter, corriger, interrompre temporairement ou retirer certaines fonctionnalités pour des raisons techniques, juridiques, de sécurité ou de conformité. Si une interruption importante affecte l'accès payé pendant la période applicable, Pratiqo traitera la situation conformément aux garanties légales obligatoires et à la présente politique.
 
 ---
 
@@ -2012,173 +1977,9 @@ site web : [pratiqo.ca](https://pratiqo.ca)
 
 *Ce document a été rédigé en français conformément à la Charte de la langue française du Québec. Une version anglaise et une version espagnole sont disponibles à titre de traduction de courtoisie.*
 
-
 ---
 
-## 4. Inventaire légal YoPratiqo existant
-
-# YoPratiqo Legal and Privacy Inventory
-
-This is an internal launch-readiness inventory. It is not a legal policy and should be reviewed by counsel before paid YoPratiqo modules are sold.
-
-## Self-Paced Digital Modules
-
-YoPratiqo should be treated as a self-paced digital learning product distinct from live Pratiqo Marketplace bookings. Legal copy should explain what the buyer receives, what remains owned by Cours Pratiqo Inc., and how access differs from live lessons with teachers.
-
-## Refund and Cancellation Policy
-
-Paid YoPratiqo modules need a clear refund and cancellation policy before checkout is enabled. Topics for lawyer review:
-
-- purchase date and refund request window;
-- module completion thresholds;
-- how digital delivery affects refund rights;
-- tax-inclusive refunds;
-- currency of refund versus display currency;
-- interaction with European Union withdrawal rights;
-- minors and parental authorization.
-
-Do not implement or promise a strict no-refund policy without legal review.
-
-## No Guarantees
-
-Legal copy should state that YoPratiqo does not guarantee:
-
-- fluency;
-- exam success;
-- immigration, school, or employment outcomes;
-- acceptance into any program;
-- a specific level result;
-- successful live teacher booking.
-
-## No Immigration or Legal Advice
-
-Francisation and language modules may discuss practical language and cultural context. They must not be presented as immigration, legal, tax, or administrative advice.
-
-## AI and Audio Disclosure
-
-Some YoPratiqo audio may be generated or processed with AI tools such as OpenAI. Review whether disclosures should cover:
-
-- generated voice audio;
-- pronunciation models and accent profiles;
-- limitations of synthetic audio;
-- human review, if applicable;
-- accessibility alternatives.
-
-## Learning Progress and Privacy
-
-YoPratiqo may process learning data. Privacy policy updates should disclose:
-
-- module progress;
-- lesson completion;
-- quiz answers;
-- flashcard progress;
-- audio interactions;
-- module purchases;
-- teacher CTA clicks;
-- learning difficulty signals.
-
-No new tracking is added by this inventory.
-
-## Tax Display and Checkout Disclosure
-
-Before paid modules launch, checkout copy should explain:
-
-- purchase currency;
-- taxes shown and charged;
-- receipt contents;
-- refund treatment for taxes;
-- whether prices are one-time purchases or subscriptions.
-
-## Separation From Marketplace Bookings
-
-YoPratiqo legal copy should clearly separate:
-
-- self-paced digital modules;
-- live teacher bookings;
-- marketplace cancellation policy;
-- teacher conduct and lesson delivery;
-- payments, receipts, and refunds for live bookings.
-
-The teacher bridge is a product CTA, not a guarantee that a teacher will be available or that a learner will achieve a specific result.
-
-
----
-
-## 5. Document de revue avocat YoPratiqo existant
-
-# YoPratiqo legal review inventory
-
-**DRAFT — FOR LAWYER REVIEW ONLY.**
-
-This document is an internal launch-readiness checklist for counsel. It is not live legal policy and should not be published as customer-facing terms without lawyer approval.
-
-## 1. Product description
-
-YoPratiqo is Pratiqo's self-paced learning product. It currently offers free introductory modules for English, Quebec French / Francisation, Spanish, Japanese, and Italian.
-
-The intended product model is:
-
-- free intro modules now;
-- future premium modules later;
-- a bridge from self-paced learning to the Pratiqo teacher marketplace;
-- teacher marketplace bookings remain a separate live-service product governed by the marketplace terms.
-
-## 2. Legal questions for counsel
-
-Please review the following before paid YoPratiqo modules are enabled:
-
-- digital module refund and cancellation policy;
-- Quebec Consumer Protection Act requirements for digital educational content;
-- treatment of started vs. not-started digital content;
-- streamed audio, video, flashcard, quiz, and interactive content;
-- future premium access model and whether it should be one-time purchase or subscription;
-- relationship between YoPratiqo self-paced modules and Pratiqo teacher marketplace bookings;
-- tax display and digital sales disclosures at checkout;
-- privacy and Law 25 disclosures for learning analytics;
-- whether AI-generated audio needs a public disclosure;
-- no fluency guarantee, exam, immigration, legal, employment, and outcome disclaimers.
-
-## 3. Draft disclaimer concepts for review
-
-**DRAFT — FOR LAWYER REVIEW ONLY.**
-
-Potential concepts to validate:
-
-- YoPratiqo is educational preparation only.
-- YoPratiqo does not guarantee fluency.
-- YoPratiqo does not guarantee exam success.
-- YoPratiqo does not provide immigration, legal, or administrative advice.
-- YoPratiqo does not guarantee employment or professional outcomes.
-- Pratiqo teacher marketplace bookings remain governed by separate marketplace terms.
-- Module progress, quiz answers, flashcard activity, audio interactions, teacher CTA clicks, and learning difficulty signals may be processed to provide and improve the service.
-
-## 4. Privacy inventory
-
-YoPratiqo may process:
-
-- module progress;
-- quiz answers;
-- flashcard progress;
-- audio interactions;
-- module purchases if paid modules are enabled later;
-- teacher CTA clicks;
-- learning difficulty signals.
-
-Counsel should review whether explicit consent, notice wording, retention language, or teacher-sharing controls are required before any learning signals are shared with a teacher.
-
-## 5. Open decisions
-
-- Final refund policy for future paid digital modules.
-- Whether premium modules are one-time purchases, subscriptions, bundles, or a mixed model.
-- Whether premium modules require separate YoPratiqo terms.
-- Whether module progress can be shared with a teacher only after explicit consent.
-- Whether AI audio disclosure belongs in public UI, privacy policy, terms, checkout copy, or all of those places.
-- Whether course schema and public SEO claims need additional legal review before indexing is enabled.
-
-
----
-
-# Fichier : 09_marketing_claims_a_risque.md
+<!-- SOURCE: 09_marketing_claims_a_risque.md -->
 
 # 09 — Affirmations marketing et commerciales à risque
 
@@ -2192,7 +1993,7 @@ Counsel should review whether explicit consent, notice wording, retention langua
 |---|---|---|---|
 | `app/tarifs`, `app/(app)/upgrade`, `lib/i18n/locales/*.json` | Commission dégressive : Gratuit / Standard de `15%` à `12%`; Membre Pro de `5%` à `3.5%`; paliers Bronze, Argent, Or, Platine. | Transparence commerciale; information précontractuelle professeur; exactitude des frais. | Le tableau doit-il être repris dans les Conditions professeurs, la page Membre Pro et le checkout d’abonnement avec la même granularité? |
 | `lib/config/membrePro.ts`, `content/legal/membre-pro.fr.md`, pages de tarification | Membre Pro : `29,99 $CA/mois` (taxes applicables en sus), commission réduite, outils et avantages. | Abonnement; renouvellement; divulgation claire du prix; absence de promesse de résultat. | Faut-il ajouter une case d’acceptation spécifique pour l’abonnement Membre Pro avant paiement? |
-| `content/legal/membre-pro.fr.md`, `05_membre_pro_commissions_ristourne.md` | Ristourne annuelle : `5%` des profits nets, pool plafonné à `150 000 $CA`, activé avec au moins `10` professeurs Pro éligibles, maximum `10 000 $CA` par professeur. | Risque d’interprétation comme revenu promis, avantage financier conditionnel ou communication assimilable à investissement. | La notion de « profits nets » doit-elle être définie contractuellement plus précisément? |
+| `content/legal/membre-pro.fr.md`, `05_membre_pro_commissions_ristourne.md` | Ristourne annuelle : rabais commercial rétroactif conditionnel sur volume, calculé selon le volume annuel admissible généré sur la marketplace Pratiqo; YoPratiqo et les produits autonomes sont exclus. | Risque d’interprétation comme revenu promis, avantage financier conditionnel ou communication assimilable à investissement si la formulation dérive. | Les seuils, plafonds, modalités de versement, reprises et exclusions doivent-ils être davantage détaillés dans les conditions? |
 | Pages marketing Membre Pro | Économie de commission : écart de `10` points entre Standard Bronze et Pro Bronze. | Calcul commercial; risque de confusion si présenté comme gain net certain. | Peut-on présenter l’économie sous forme d’exemple uniquement, avec hypothèses visibles? |
 | `lib/email/messages/welcome.ts`, tests email | Email d’accueil professeur mentionnant la commission et les avantages Pro. | Communication post-inscription; cohérence avec les conditions. | L’email doit-il renvoyer explicitement vers `/legal/membre-pro` et `/legal/conditions-professeurs`? |
 
@@ -2247,10 +2048,9 @@ Counsel should review whether explicit consent, notice wording, retention langua
 - Ajouter une clause plus précise sur les délais Stripe/paiements si nécessaire.
 - Déterminer si certaines affirmations doivent être déplacées vers une page de conditions promotionnelles distincte.
 
-
 ---
 
-# Fichier : 10_questions_pour_l_avocat.md
+<!-- SOURCE: 10_questions_pour_l_avocat.md -->
 
 # 10 — Questions pour l’avocat
 
@@ -2263,16 +2063,16 @@ Counsel should review whether explicit consent, notice wording, retention langua
 1. Les Conditions professeurs définissent-elles suffisamment le statut de travailleur autonome et l’absence de relation d’emploi, agence, franchise, partenariat ou coentreprise?
 2. La plateforme peut-elle présenter Pratiqo comme intermédiaire/marketplace tout en traitant les paiements via Stripe et en imposant des règles de conduite?
 3. Les clauses de suspension, retrait de profil, enquête et demande de documents sont-elles assez larges sans être abusives?
-4. Les obligations des professeurs envers les mineurs, parents et lieux de cours à domicile sont-elles suffisantes pour le Québec?
+4. Les obligations des professeurs envers les mineurs, parents et lieux de cours à domicile sont-elles suffisantes pour le Québec, incluant l'exigence fondatrice d'une vérification d'antécédents ou dossiers criminels pour les professeurs qui veulent offrir des cours à domicile avec des mineurs?
 5. Les clauses de confidentialité des informations élèves/parents couvrent-elles les messages, captures d’écran, enregistrements, documents et coordonnées?
 
 ## B. Commission, Membre Pro et ristourne
 
 6. Le modèle de commission `15%` à `12%` pour Gratuit / Standard doit-il être présenté avant chaque réservation, ou une page conditions + résumé checkout suffit-elle?
 7. Le modèle Membre Pro `5%` à `3.5%` doit-il être encadré dans des conditions d’abonnement séparées ou la page Membre Pro actuelle suffit-elle temporairement?
-8. La mention `29,99 $CA/mois` (prix Stripe canonique, `unit_amount = 2999`) doit-elle inclure des détails sur renouvellement automatique, annulation, taxes et date de facturation avant tout paiement?
-9. La ristourne annuelle de `5%` des profits nets peut-elle être présentée comme « ristourne » au Québec sans risque de confusion avec une promesse de revenu, un placement financier ou une participation aux profits?
-10. Faut-il définir « profits nets de Pratiqo » dans les conditions pour éviter une interprétation trop large?
+8. La mention `29,99 $CA / mois + taxes applicables` (prix Stripe canonique, `unit_amount = 2999`) doit-elle inclure des détails sur renouvellement automatique, annulation, taxes et date de facturation avant tout paiement?
+9. La ristourne annuelle peut-elle être présentée comme « rabais commercial rétroactif conditionnel sur volume » au Québec sans risque de confusion avec une promesse de revenu, un placement financier ou une participation aux profits?
+10. Les conditions doivent-elles préciser plus finement le volume annuel admissible, les exclusions, les plafonds, les reprises et les modalités de versement du rabais?
 11. Le pool plafonné à `150 000 $CA`, l’activation avec au moins `10` professeurs Pro éligibles et le maximum `10 000 $CA` par professeur doivent-ils figurer dans les CGU, Conditions professeurs et Membre Pro?
 12. La formule « selon le volume relatif » doit-elle être détaillée davantage pour être opposable?
 13. Les promotions fondateurs (`0%` commission pendant `6` mois, `100%` des revenus jusqu’à `5` élèves actifs) doivent-elles avoir des conditions promotionnelles distinctes?
@@ -2292,8 +2092,8 @@ Counsel should review whether explicit consent, notice wording, retention langua
 21. La future vente de modules numériques YoPratiqo requiert-elle des conditions séparées des CGU générales?
 22. Quelle politique de remboursement doit s’appliquer à un module numérique lorsque l’utilisateur a commencé le contenu?
 23. Le seuil de `25%` de leçons complétées pour la garantie commerciale YoPratiqo est-il raisonnable et opposable?
-24. L’accès à vie défini « tant que Pratiqo exploite le service YoPratiqo » doit-il être formulé autrement?
-25. Le préavis minimal de `90` jours avant discontinuation de YoPratiqo et le remboursement pro-rata pour achats de moins de `12` mois sont-ils suffisants?
+24. L’accès personnel non transférable de douze (12) mois pour les modules YoPratiqo payants est-il formulé clairement et compatible avec les droits impératifs applicables?
+25. La politique doit-elle prévoir un mécanisme spécifique si un module YoPratiqo devient indisponible pendant la période de 12 mois?
 26. La case de consentement UE à la livraison immédiate et à la renonciation au droit de rétractation de `14` jours doit-elle être obligatoire avant toute vente à un acheteur UE?
 27. Les règles sur mineurs au Québec, notamment moins de `14` ans, doivent-elles être affichées directement dans le checkout YoPratiqo?
 
@@ -2326,16 +2126,15 @@ Counsel should review whether explicit consent, notice wording, retention langua
 43. Valider la page Conditions professeurs.
 44. Valider la page Membre Pro et la communication de la ristourne.
 45. Valider la page Annulation / remboursements.
-46. Valider la politique YoPratiqo remboursement / accès à vie / droit UE / mineurs avant tout checkout numérique.
+46. Valider la politique YoPratiqo remboursement / accès 12 mois / droit UE / mineurs avant tout checkout numérique.
 47. Valider les disclaimers francisation, examens et absence de garanties.
 48. Valider les obligations de Loi 25 pour données d’apprentissage et partage éventuel avec professeurs.
 49. Valider les promotions fondateurs et leur compatibilité avec le modèle de commission général.
 50. Valider les mécanismes de suspension, retenue de paiement et récupération de montants en cas de litige.
 
-
 ---
 
-# Fichier : 11_changelog_depuis_version_avocat_precedente.md
+<!-- SOURCE: 11_changelog_depuis_version_avocat_precedente.md -->
 
 # 11 — Changelog depuis la version avocat précédente
 
@@ -2384,24 +2183,22 @@ Le modèle de commission canonique a été modifié.
 
 Points associés :
 
-- Membre Pro est à **29,99 $CA/mois** (taxes applicables en sus) — source de vérité : Stripe `STRIPE_PRO_MONTHLY_PRICE_ID` (`unit_amount = 2999`); les libellés produit FR/EN/ES, les pages `/upgrade` et `/tarifs`, les conditions légales et la formule de seuil de rentabilité ont été réalignés sur cette valeur (voir branche `fix/membre-pro-price-source-of-truth`). Une révision antérieure avait indiqué `29 $CA/mois` à tort.
+- Membre Pro est à **29,99 $CA / mois + taxes applicables** — source de vérité : Stripe `STRIPE_PRO_MONTHLY_PRICE_ID` (`unit_amount = 2999`); les libellés produit FR/EN/ES, les pages `/upgrade` et `/tarifs`, les conditions légales et la formule de seuil de rentabilité ont été réalignés sur cette valeur. Une révision antérieure avait indiqué `29 $CA/mois` à tort.
 - Le modèle est présenté comme **commission dégressive** : plus le volume annuel cumulé est élevé, plus le taux baisse.
 - Le calcul canonique est dans `lib/payments/commission.ts` et la configuration produit Membre Pro dans `lib/config/membrePro.ts`.
 - Les textes doivent éviter toute promesse de revenu.
 
 ## 5. Ristourne annuelle Membre Pro
 
-La ristourne annuelle est maintenant décrite ainsi :
+La ristourne annuelle doit maintenant être décrite ainsi :
 
-- `5%` des profits nets de Pratiqo;
-- versement prévu en janvier;
-- bassin plafonné à `150 000 $CA`;
-- activation seulement si au moins `10` professeurs Pro sont éligibles;
-- maximum `10 000 $CA` par professeur;
-- répartition selon le volume relatif;
-- avantage conditionnel, non garanti.
+- rabais commercial rétroactif conditionnel sur volume;
+- calcul selon le volume annuel admissible généré par le professeur sur la marketplace Pratiqo;
+- exclusion de YoPratiqo et des autres produits autonomes distincts;
+- ne constitue pas une participation aux profits, un rendement financier, un placement ni un revenu garanti;
+- seuils, plafonds, périodes de calcul, conditions d'éligibilité, modalités de versement et reprises à valider par l'avocat.
 
-**À valider par l’avocat** : la définition exacte des profits nets, l’expression « ristourne », les conditions d’éligibilité et les risques d’interprétation comme promesse financière.
+**À valider par l’avocat** : l’expression « ristourne », les conditions d’éligibilité, les exclusions et les risques d’interprétation comme promesse financière.
 
 ## 6. Promotions professeurs fondateurs
 
@@ -2426,13 +2223,12 @@ YoPratiqo est maintenant traité comme un produit autonome à l’intérieur de 
 
 Un document dédié existe : `docs/legal/yopratiqo-lawyer-review.md`.
 
-## 8. Politique YoPratiqo remboursement et accès à vie
+## 8. Politique YoPratiqo remboursement et accès 12 mois
 
 Une politique dédiée existe pour `/legal/yo-remboursement` et couvre :
 
 - licence personnelle non transférable;
-- accès à vie défini comme accès tant que Pratiqo exploite le service YoPratiqo;
-- préavis minimal de `90` jours en cas de discontinuation;
+- accès personnel non transférable de douze (12) mois à compter de l'achat, sous réserve des droits impératifs applicables;
 - garantie satisfaction commerciale de `30` jours;
 - seuil de progression de `25%` des leçons;
 - droit UE de rétractation de `14` jours;
@@ -2486,7 +2282,7 @@ Un système de market gating a été ajouté :
 2. Membre Pro, commission et ristourne.
 3. Promotions fondateurs.
 4. Annulation / remboursements / garantie premier cours.
-5. YoPratiqo : droit UE, mineurs, accès à vie et politique de remboursement.
+5. YoPratiqo : droit UE, mineurs, accès 12 mois et politique de remboursement.
 6. Loi 25 : données d’apprentissage, messages, avis, profils et partage professeur.
 7. Claims francisation, examens, emploi, immigration.
 8. Expansion hors Canada.

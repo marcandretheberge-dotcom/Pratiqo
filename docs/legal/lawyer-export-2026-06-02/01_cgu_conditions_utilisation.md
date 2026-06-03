@@ -2,7 +2,8 @@
 
 > **Source route** : /legal/cgu
 > **Source file(s)** : content/legal/terms.fr.md, app/(app)/legal/cgu/page.tsx
-> **Note d'export** : Export du markdown français courant.
+> **Note d'export** : Export du markdown français courant après alignement avec les décisions fondateur V5/V7.
+
 # Conditions Générales d'Utilisation — Pratiqo
 
 **Version :** 1.0 · **Dernière mise à jour :** avril 2026
@@ -135,23 +136,23 @@ Les **règles détaillées** applicables aux paiements, aux versements aux profe
 
 Pour l'**adhésion Membre Pro**, la facturation, le renouvellement, les remboursements et les éventuelles retenues sont régis par les **[Conditions Membre Pro](/legal/membre-pro)**.
 
-Pour les achats **YoPratiqo** (cours autonomes en paiement unique), les conditions de remboursement et l'« accès à vie » sont décrits dans la **[Politique YoPratiqo](/legal/yo-remboursement)**.
+Pour les achats **YoPratiqo** (cours autonomes en paiement unique), les conditions de remboursement et l'accès de 12 mois sont décrits dans la **[Politique YoPratiqo](/legal/yo-remboursement)**.
 
 ---
 
 ## 6bis. YoPratiqo — Cours autonomes (paiement unique)
 
-YoPratiqo regroupe les **cours autonomes en paiement unique** de Pratiqo (langues, voyage, etc.). Ces cours sont distincts du marketplace de cours individuels couvert au §6 ci-dessus : il s'agit d'un achat ponctuel donnant un **accès immédiat** au contenu acheté, avec **accès à vie** tel que défini ci-dessous et **garantie satisfaction de 30 jours**.
+YoPratiqo regroupe les **cours autonomes en paiement unique** de Pratiqo (langues, voyage, etc.). Ces cours sont distincts du marketplace de cours individuels couvert au §6 ci-dessus : il s'agit d'un achat ponctuel donnant un **accès immédiat** au contenu acheté, avec **accès de 12 mois** tel que défini ci-dessous et **garantie satisfaction de 30 jours**, sous réserve des droits impératifs applicables.
 
-Toutes les modalités complètes — accès à vie, garantie 30 jours, droit de rétractation UE et règles applicables aux mineurs — sont consolidées dans la **[politique YoPratiqo dédiée](/legal/yo-remboursement)**. Les sous-sections suivantes en sont un résumé contractuel.
+Toutes les modalités complètes — accès de 12 mois, garantie 30 jours, droit de rétractation UE et règles applicables aux mineurs — sont consolidées dans la **[politique YoPratiqo dédiée](/legal/yo-remboursement)**. Les sous-sections suivantes en sont un résumé contractuel.
 
 ### 6bis.1 Statut juridique
 
 L'achat d'un module YoPratiqo donne une **licence personnelle non transférable** d'accès au contenu, **liée au compte Pratiqo** de l'acheteur. Cours Pratiqo Inc. conserve l'intégralité des droits de propriété intellectuelle sur le module. *Voir [politique YoPratiqo §1](/legal/yo-remboursement).*
 
-### 6bis.2 Accès à vie
+### 6bis.2 Accès de 12 mois
 
-L'« accès à vie » signifie un accès actif aussi longtemps que Pratiqo exploite le service YoPratiqo. En cas de discontinuation, **un préavis de 90 jours** est donné par courriel et un **remboursement au prorata** est offert aux acheteurs ayant payé dans les 12 derniers mois. *Voir [politique YoPratiqo §2](/legal/yo-remboursement).*
+L'achat d'un module YoPratiqo donne droit à un accès personnel non transférable au contenu pour une durée ferme de **douze (12) mois** à compter de la date d'achat, sous réserve des droits impératifs applicables. *Voir [politique YoPratiqo §2](/legal/yo-remboursement).*
 
 ### 6bis.3 Garantie satisfaction 30 jours
 
@@ -193,7 +194,9 @@ Tous les éléments de la plateforme sont la propriété exclusive de Cours Prat
 
 Pratiqo ne peut être tenu responsable de la qualité des cours, des incidents survenant lors des cours, des pertes de données ou des dommages indirects.
 
-La responsabilité de Pratiqo est limitée au montant des frais de service perçus au cours des 3 derniers mois.
+La responsabilité totale de Cours Pratiqo Inc., lorsque la loi permet une telle limitation, ne pourra excéder les frais de service effectivement perçus par Cours Pratiqo Inc. auprès de l'utilisateur concerné au cours des douze (12) mois précédant l'événement.
+
+Aucune disposition ne limite la responsabilité dans les cas où une telle limitation est interdite par la loi applicable.
 
 ---
 

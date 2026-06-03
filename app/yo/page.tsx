@@ -162,9 +162,9 @@ const HUB_COPY = {
     fr: "Voir Français québécois",
     en: "See Quebec French",
   },
-  lifetimeAccessLabel: {
-    fr: "Accès à vie",
-    en: "Lifetime access",
+  twelveMonthAccessLabel: {
+    fr: "Accès 12 mois",
+    en: "12-month access",
   },
   moneyBackLabel: {
     fr: "30 jours satisfait ou remboursé",
@@ -370,14 +370,14 @@ export default async function YoHubPage({ searchParams }: PageProps) {
                     {t(HUB_COPY.featuredCta, locale)}
                     <span aria-hidden>→</span>
                   </Link>
-                  {/* Trust strip: lifetime access + 30-day money-back guarantee.
+                  {/* Trust strip: 12-month access + 30-day money-back guarantee.
                       Both labels and the link text come from HUB_COPY so no
                       locale-specific copy is hardcoded in JSX. */}
                   <div className="mt-4 flex flex-col gap-2 rounded-2xl border border-[#DDF4F1] bg-white/80 px-3 py-2.5">
                     <div className="flex flex-wrap gap-2">
                       <span className="inline-flex items-center gap-1.5 rounded-full bg-[#DDF4F1]/70 px-3 py-1 text-xs font-semibold text-[#0F6E56]">
                         <CheckCircle2 className="size-3.5" aria-hidden />
-                        {t(HUB_COPY.lifetimeAccessLabel, locale)}
+                        {t(HUB_COPY.twelveMonthAccessLabel, locale)}
                       </span>
                       <span className="inline-flex items-center gap-1.5 rounded-full bg-[#DDF4F1]/70 px-3 py-1 text-xs font-semibold text-[#0F6E56]">
                         <CheckCircle2 className="size-3.5" aria-hidden />

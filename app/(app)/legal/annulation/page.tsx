@@ -101,7 +101,9 @@ export default function AnnulationPage() {
               </tr>
               <tr className="hover:bg-teal-500/10">
                 <td className="px-4 py-3 text-slate-700">Annulation moins de 24h avant</td>
-                <td className="px-4 py-3 text-slate-700">Avertissement — 3 avertissements = suspension</td>
+                <td className="px-4 py-3 text-slate-700">
+                  Notification de non-conformité aux standards de la marketplace; suspension possible selon la gravité
+                </td>
               </tr>
               <tr className="hover:bg-teal-500/10">
                 <td className="px-4 py-3 text-slate-700">No-show sans annulation</td>
@@ -177,7 +179,7 @@ export default function AnnulationPage() {
         <ul className="list-disc pl-5 space-y-2 mt-2">
           <li>
             Si le professeur refuse le déplacement après avoir accepté la demande : remboursement complet à
-            l&apos;élève + avertissement au professeur
+            l&apos;élève + notification de non-conformité aux standards de la marketplace
           </li>
           <li>Si l&apos;élève fournit une adresse incorrecte ou inaccessible : aucun remboursement</li>
         </ul>

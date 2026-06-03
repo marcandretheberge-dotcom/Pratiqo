@@ -48,7 +48,7 @@ Membre Pro **n'est pas** une suite d'outils ni un studio de production : c'est u
 
 ## 4. Cycle de facturation
 
-Au lancement, Membre Pro est affiché à **29,99 $CA par mois**, **taxes applicables en sus**, et est **facturé mensuellement à l'avance**. Si Pratiqo propose ultérieurement une période annuelle ou un autre cycle, ce cycle et son prix seront affichés avant la souscription.
+Au lancement, Membre Pro est affiché à **29,99 $CA / mois + taxes applicables**, et est **facturé mensuellement à l'avance**. Si Pratiqo propose ultérieurement une période annuelle ou un autre cycle, ce cycle et son prix seront affichés avant la souscription.
 
 - La période de facturation et la date du prochain renouvellement sont affichées avant la souscription, et peuvent être consultées dans la page d'abonnement du compte lorsque cette page est offerte.
 - Le **prix applicable est celui affiché au moment de la souscription**, en plus des taxes applicables le cas échéant.
@@ -164,9 +164,11 @@ Aucun avantage Membre Pro — y compris la **commission réduite** ou la **risto
 Pratiqo peut proposer des offres **promotionnelles, bêta, « fondateurs », à prix réduit ou en essai gratuit** liées à Membre Pro.
 
 - Ces offres peuvent être temporaires.
-- L'admissibilité peut être limitée à certains segments, marchés ou périodes.
+- L'admissibilité peut être limitée à certains segments, marchés, périodes, volumes, profils ou conditions affichées.
 - Pratiqo peut **mettre fin ou modifier** ces offres conformément à leurs conditions affichées et à la loi applicable.
 - Les conditions promotionnelles **ne deviennent pas permanentes** sauf si Pratiqo l'indique expressément par écrit.
+- Elles ne garantissent aucun revenu, volume de réservations, classement, visibilité, élève ou résultat commercial.
+- Leur compatibilité avec Membre Pro, les commissions réduites ou toute ristourne doit être précisée dans les conditions applicables de l'offre concernée.
 
 ---
 
@@ -199,7 +201,7 @@ Pratiqo peut **refuser, suspendre ou résilier** Membre Pro en cas notamment de 
 
 Les **frais d'adhésion Membre Pro** (le montant que Pratiqo facture pour le **statut de membre**) sont **distincts** des **commissions de marketplace** (le pourcentage que Pratiqo retient sur chaque cours), des frais de service et des autres frais de marketplace.
 
-La **ristourne annuelle Membre Pro**, lorsqu'elle est offerte, est **conditionnelle**. Elle correspond à **5 % des profits nets admissibles de la marketplace Pratiqo, à l'exclusion des profits générés par YoPratiqo et tout autre produit autonome distinct**, est prévue en **janvier**, est plafonnée par un bassin maximal de **150 000 $CA**, s'active seulement si au moins **10 professeurs Pro admissibles** sont éligibles, et chaque professeur peut recevoir un maximum de **10 000 $CA** selon son **volume annuel relatif**. Pratiqo ne garantit aucun revenu minimum ni aucun montant de ristourne.
+La **ristourne annuelle Membre Pro**, lorsqu'elle est offerte, est un **rabais commercial rétroactif conditionnel sur volume**, calculé selon le **volume annuel admissible généré par le professeur sur la marketplace Pratiqo**. Ce rabais ne constitue pas une participation aux profits de Cours Pratiqo Inc., un rendement financier, un placement, ni un revenu garanti. **YoPratiqo et les autres produits autonomes distincts sont exclus**. Les taux, seuils, plafonds, périodes de calcul, conditions d'éligibilité, modalités de versement et mécanismes de reprise sont affichés dans la plateforme ou les conditions applicables et demeurent à valider par l'avocat.
 
 - Le paiement de Membre Pro **ne dispense pas** le professeur des règles de la marketplace, des commissions, des règles d'annulation, des règles de remboursement ou des obligations en matière de rétrofacturations.
 - Lorsqu'une **commission réduite** est rattachée au statut Membre Pro, son taux, ses conditions, sa date d'entrée en vigueur et son champ d'application sont indiqués dans la plateforme, le tableau de bord, la caisse, la page d'abonnement ou les modalités du forfait applicable. Pratiqo peut ajuster ce taux **prospectivement**, sous réserve de la loi applicable.
