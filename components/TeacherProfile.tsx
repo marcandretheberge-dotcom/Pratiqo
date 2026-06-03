@@ -630,6 +630,29 @@ export function TeacherProfile({
                         </div>
                       ))}
                     </div>
+                    {/* Home-lesson public summary — only when the teacher has
+                        actually enabled the option AND set a valid hourly home
+                        rate (gated by `homeConfigured`, same gate as booking).
+                        We deliberately never expose the exact address: only the
+                        max travel radius (already public on teachers_public)
+                        and the hourly rate that students would be charged. */}
+                    {homeConfigured ? (
+                      <div
+                        className="mt-1 space-y-0.5 text-[11px] text-slate-600"
+                        data-testid="teacher-profile-home-lessons-summary"
+                      >
+                        <p className="font-semibold text-slate-700">{t("homeLessonsPublicHeader")}</p>
+                        <p>
+                          {t("homeLessonsPublicRadiusSummary").replace("{km}", String(radiusKm))}
+                        </p>
+                        <p>
+                          {t("homeLessonsPublicHourlyRateSummary").replace(
+                            "{price}",
+                            String(Number(teacher.homeLessonPrice ?? 0)),
+                          )}
+                        </p>
+                      </div>
+                    ) : null}
                   </div>
                 ) : null}
 
