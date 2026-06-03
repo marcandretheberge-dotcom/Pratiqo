@@ -1,7 +1,7 @@
 /** Plafond du pool annuel de ristourne (CAD). */
 export const RISTOURNE_POOL_MAX = 150_000;
 
-/** Part des profits nets allouée au pool (avant plafond pool). */
+/** Taux interne historique utilisé par le simulateur avant plafond global. */
 export const RISTOURNE_RATE = 0.05;
 
 /** Plafond par professeur éligible (CAD). */

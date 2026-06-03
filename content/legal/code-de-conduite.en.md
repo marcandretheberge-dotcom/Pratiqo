@@ -139,7 +139,7 @@ For general inquiries: [`info@pratiqo.ca`](mailto:info@pratiqo.ca). For formal n
 
 When a breach is established, Pratiqo may, depending on the seriousness, evidence, history, risk, recurrence, and applicable legal obligations, take one or more of the following measures:
 
-- written warning;
+- notice of non-compliance with marketplace standards;
 - content removal (review, profile, message, photo, document);
 - booking cancellation;
 - temporary feature restriction;

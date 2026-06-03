@@ -113,23 +113,23 @@ The **detailed rules** governing payments, teacher payouts, refunds, holds, payo
 
 For the **Pro Member membership**, billing, renewal, refunds, and any clawbacks are governed by the **[Pro Member Terms](/legal/membre-pro)**.
 
-For **YoPratiqo** purchases (self-paced, one-time-purchase courses), refund conditions and "lifetime access" are described in the **[YoPratiqo Policy](/legal/yo-remboursement)**.
+For **YoPratiqo** purchases (self-paced, one-time-purchase courses), refund conditions and 12-month access are described in the **[YoPratiqo Policy](/legal/yo-remboursement)**.
 
 ---
 
 ## 6a. YoPratiqo — Self-paced courses (one-time purchase)
 
-YoPratiqo groups Pratiqo's **self-paced, one-time-purchase courses** (languages, travel, etc.). These courses are distinct from the marketplace of individual lessons covered in §6 above: a YoPratiqo purchase is a one-time buy that grants **immediate access** to the purchased content, with **lifetime access** as defined below and a **30-day satisfaction guarantee**.
+YoPratiqo groups Pratiqo's **self-paced, one-time-purchase courses** (languages, travel, etc.). These courses are distinct from the marketplace of individual lessons covered in §6 above: a YoPratiqo purchase is a one-time buy that grants **immediate access** to the purchased content, with **12-month access** as defined below and a **30-day satisfaction guarantee**, subject to mandatory legal rights.
 
-The complete terms — lifetime access, 30-day guarantee, EU right of withdrawal, and rules for minors — are consolidated in the **[dedicated YoPratiqo policy](/legal/yo-remboursement)**. The subsections below are a contractual summary.
+The complete terms — 12-month access, 30-day guarantee, EU right of withdrawal, and rules for minors — are consolidated in the **[dedicated YoPratiqo policy](/legal/yo-remboursement)**. The subsections below are a contractual summary.
 
 ### 6a.1 Legal status
 
 A YoPratiqo purchase grants a **personal, non-transferable licence** to access the content, **bound to the buyer's Pratiqo account**. Cours Pratiqo Inc. retains all intellectual property rights in the module. *See [YoPratiqo policy §1](/legal/yo-remboursement).*
 
-### 6a.2 Lifetime access
+### 6a.2 12-month access
 
-"Lifetime access" means access remains active for as long as Pratiqo operates the YoPratiqo service. If a module or the YoPratiqo product line is discontinued, Pratiqo gives **at least 90 days' notice** by email and offers a **pro-rata refund** to buyers who paid within the last 12 months. *See [YoPratiqo policy §2](/legal/yo-remboursement).*
+The purchase of a YoPratiqo module provides personal, non-transferable access to the content for a fixed period of **twelve (12) months** from the purchase date, subject to mandatory legal rights. *See [YoPratiqo policy §2](/legal/yo-remboursement).*
 
 ### 6a.3 30-day satisfaction guarantee
 
@@ -171,7 +171,9 @@ All platform elements are the exclusive property of Cours Pratiqo Inc. and are p
 
 Pratiqo shall not be liable for lesson quality, incidents during lessons, data loss, or indirect damages.
 
-Pratiqo's liability is limited to the service fees collected over the past 3 months.
+Cours Pratiqo Inc.'s total liability, where the law permits such a limitation, will not exceed the service fees actually collected by Cours Pratiqo Inc. from the affected user during the twelve (12) months preceding the event.
+
+Nothing limits liability where such a limitation is prohibited by applicable law.
 
 ---
 

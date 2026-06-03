@@ -28,7 +28,7 @@ YoPratiqo est présenté comme un produit d'apprentissage autonome à l'intérie
 - pont vers des professeurs réels ;
 - absence de garantie de fluidité, examen, immigration, emploi ou résultat pédagogique.
 
-Les politiques YoPratiqo incluent déjà une politique de remboursement et d'accès à vie pour les modules autonomes, mais l'ensemble demeure à valider avant toute vente payante à grande échelle.
+Les politiques YoPratiqo incluent maintenant une politique de remboursement et un **accès personnel non transférable de douze (12) mois** pour les modules autonomes payants, sous réserve des droits impératifs applicables. L'ensemble demeure à valider avant toute vente payante à grande échelle.
 
 ## 4. Membre Pro
 
@@ -49,14 +49,12 @@ Commission dégressive : plus le professeur enseigne, moins la commission est é
 
 ## 6. Ristourne annuelle
 
-La ristourne annuelle est décrite comme conditionnelle :
+La ristourne annuelle doit être décrite comme un **rabais commercial rétroactif conditionnel sur volume** :
 
-- 5 % des profits nets admissibles de la marketplace Pratiqo, à l'exclusion des profits générés par YoPratiqo et tout autre produit autonome distinct ;
-- versée en janvier ;
-- bassin plafonné à 150 000 $CA ;
-- activée seulement si au moins 10 professeurs Pro sont éligibles ;
-- maximum 10 000 $CA par professeur ;
-- calcul selon le volume relatif ;
+- calculé selon le volume annuel admissible généré par le professeur sur la marketplace Pratiqo ;
+- distinct de toute participation aux profits de Cours Pratiqo Inc., rendement financier, placement ou revenu garanti ;
+- YoPratiqo et les autres produits autonomes distincts sont exclus ;
+- versé ou appliqué selon les modalités, seuils, plafonds, périodes de calcul et conditions d'éligibilité à valider par l'avocat ;
 - aucune garantie de revenu minimum.
 
 ## 7. Points juridiques prioritaires

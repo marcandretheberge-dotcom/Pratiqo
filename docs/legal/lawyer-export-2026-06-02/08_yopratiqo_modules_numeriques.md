@@ -11,15 +11,16 @@ YoPratiqo est un produit autonome d'apprentissage à l'intérieur de Pratiqo. Il
 ## 2. Points essentiels à valider
 
 - Politique de remboursement des contenus numériques.
-- Accès à vie tel que défini : tant que Pratiqo exploite le service YoPratiqo, avec préavis minimal si interruption.
-- Droit de rétractation UE de 14 jours et consentement à livraison immédiate.
+- Accès personnel non transférable de douze (12) mois à compter de l'achat, sous réserve des droits impératifs applicables.
+- Droit de rétractation UE de 14 jours et consentement à livraison immédiate, à valider avant tout checkout numérique.
 - Mineurs au Québec et autorisation parentale.
 - Absence de garantie de fluidité, examen, immigration, emploi, résultat pédagogique ou réservation avec professeur.
 - Divulgation éventuelle de voix/audio générés ou traités avec IA.
 - Données de progression, quiz, flashcards, interactions audio et consentement avant partage avec un professeur.
 
 ## 3. Politique YoPratiqo actuelle — export intégral
-# YoPratiqo — Politique de remboursement et accès à vie
+
+# YoPratiqo — Politique de remboursement et accès 12 mois
 
 **Version :** 1.0 · **Dernière mise à jour :** mai 2026
 
@@ -35,24 +36,21 @@ L'achat d'un module YoPratiqo te donne une **licence personnelle non transférab
 - **Cours Pratiqo Inc.** conserve l'intégralité des droits de propriété intellectuelle sur le contenu, les visuels, l'audio, le code et la pédagogie du module.
 - Aucun téléchargement permanent du contenu n'est garanti — la lecture se fait via la plateforme YoPratiqo.
 
+YoPratiqo est un produit de **préparation éducative**. Les modules peuvent aider à pratiquer, découvrir une langue ou préparer une conversation avec un professeur, mais Pratiqo ne garantit pas la fluidité, la réussite à un examen, un résultat d'immigration, un résultat d'emploi, ni une réservation avec un professeur. La politique de remboursement applicable aux modules numériques payants demeure sujette à révision juridique avant tout élargissement payant.
+
 ---
 
-## 2. « Accès à vie » — définition
+## 2. Accès 12 mois — définition
 
-L'expression **« accès à vie »** signifie que ton accès au module acheté reste actif aussi longtemps que **Cours Pratiqo Inc. exploite le service YoPratiqo**.
+L'achat d'un module YoPratiqo donne droit à un **accès personnel non transférable** au contenu pour une durée ferme de **douze (12) mois** à compter de la date d'achat, sous réserve des droits impératifs applicables.
 
-### 2.1 Exploitation continue
+### 2.1 Portée de l'accès
 
-Tant que YoPratiqo est exploité par Pratiqo, tu conserves l'accès à tout module que tu as payé, sans frais récurrents.
+Pendant cette période de 12 mois, tu peux consulter le module acheté dans ton compte Pratiqo, sans frais récurrents pour ce module précis.
 
-### 2.2 Discontinuation d'un module ou du service
+### 2.2 Disponibilité technique et droits obligatoires
 
-Si Pratiqo décidait de cesser l'exploitation d'un module précis, ou de la gamme YoPratiqo dans son ensemble :
-
-- Pratiqo informera les acheteurs concernés par courriel **au moins 90 jours civils avant** la date d'arrêt effective.
-- Les acheteurs ayant payé le module concerné **dans les 12 mois précédant l'annonce** ont droit à un **remboursement au prorata** de la période non utilisée, calculé linéairement sur 12 mois.
-- Au-delà de 12 mois après l'achat, aucun remboursement n'est dû, mais durant la fenêtre de préavis tu peux **exporter tes données de progression** (cours complétés, scores, flashcards travaillées).
-- Les remboursements au prorata sont émis dans la devise originale de l'achat, sur le moyen de paiement initial.
+Pratiqo peut devoir adapter, corriger, interrompre temporairement ou retirer certaines fonctionnalités pour des raisons techniques, juridiques, de sécurité ou de conformité. Si une interruption importante affecte l'accès payé pendant la période applicable, Pratiqo traitera la situation conformément aux garanties légales obligatoires et à la présente politique.
 
 ---
 
@@ -134,166 +132,3 @@ site web : [pratiqo.ca](https://pratiqo.ca)
 ---
 
 *Ce document a été rédigé en français conformément à la Charte de la langue française du Québec. Une version anglaise et une version espagnole sont disponibles à titre de traduction de courtoisie.*
-
-
----
-
-## 4. Inventaire légal YoPratiqo existant
-
-# YoPratiqo Legal and Privacy Inventory
-
-This is an internal launch-readiness inventory. It is not a legal policy and should be reviewed by counsel before paid YoPratiqo modules are sold.
-
-## Self-Paced Digital Modules
-
-YoPratiqo should be treated as a self-paced digital learning product distinct from live Pratiqo Marketplace bookings. Legal copy should explain what the buyer receives, what remains owned by Cours Pratiqo Inc., and how access differs from live lessons with teachers.
-
-## Refund and Cancellation Policy
-
-Paid YoPratiqo modules need a clear refund and cancellation policy before checkout is enabled. Topics for lawyer review:
-
-- purchase date and refund request window;
-- module completion thresholds;
-- how digital delivery affects refund rights;
-- tax-inclusive refunds;
-- currency of refund versus display currency;
-- interaction with European Union withdrawal rights;
-- minors and parental authorization.
-
-Do not implement or promise a strict no-refund policy without legal review.
-
-## No Guarantees
-
-Legal copy should state that YoPratiqo does not guarantee:
-
-- fluency;
-- exam success;
-- immigration, school, or employment outcomes;
-- acceptance into any program;
-- a specific level result;
-- successful live teacher booking.
-
-## No Immigration or Legal Advice
-
-Francisation and language modules may discuss practical language and cultural context. They must not be presented as immigration, legal, tax, or administrative advice.
-
-## AI and Audio Disclosure
-
-Some YoPratiqo audio may be generated or processed with AI tools such as OpenAI. Review whether disclosures should cover:
-
-- generated voice audio;
-- pronunciation models and accent profiles;
-- limitations of synthetic audio;
-- human review, if applicable;
-- accessibility alternatives.
-
-## Learning Progress and Privacy
-
-YoPratiqo may process learning data. Privacy policy updates should disclose:
-
-- module progress;
-- lesson completion;
-- quiz answers;
-- flashcard progress;
-- audio interactions;
-- module purchases;
-- teacher CTA clicks;
-- learning difficulty signals.
-
-No new tracking is added by this inventory.
-
-## Tax Display and Checkout Disclosure
-
-Before paid modules launch, checkout copy should explain:
-
-- purchase currency;
-- taxes shown and charged;
-- receipt contents;
-- refund treatment for taxes;
-- whether prices are one-time purchases or subscriptions.
-
-## Separation From Marketplace Bookings
-
-YoPratiqo legal copy should clearly separate:
-
-- self-paced digital modules;
-- live teacher bookings;
-- marketplace cancellation policy;
-- teacher conduct and lesson delivery;
-- payments, receipts, and refunds for live bookings.
-
-The teacher bridge is a product CTA, not a guarantee that a teacher will be available or that a learner will achieve a specific result.
-
-
----
-
-## 5. Document de revue avocat YoPratiqo existant
-
-# YoPratiqo legal review inventory
-
-**DRAFT — FOR LAWYER REVIEW ONLY.**
-
-This document is an internal launch-readiness checklist for counsel. It is not live legal policy and should not be published as customer-facing terms without lawyer approval.
-
-## 1. Product description
-
-YoPratiqo is Pratiqo's self-paced learning product. It currently offers free introductory modules for English, Quebec French / Francisation, Spanish, Japanese, and Italian.
-
-The intended product model is:
-
-- free intro modules now;
-- future premium modules later;
-- a bridge from self-paced learning to the Pratiqo teacher marketplace;
-- teacher marketplace bookings remain a separate live-service product governed by the marketplace terms.
-
-## 2. Legal questions for counsel
-
-Please review the following before paid YoPratiqo modules are enabled:
-
-- digital module refund and cancellation policy;
-- Quebec Consumer Protection Act requirements for digital educational content;
-- treatment of started vs. not-started digital content;
-- streamed audio, video, flashcard, quiz, and interactive content;
-- future premium access model and whether it should be one-time purchase or subscription;
-- relationship between YoPratiqo self-paced modules and Pratiqo teacher marketplace bookings;
-- tax display and digital sales disclosures at checkout;
-- privacy and Law 25 disclosures for learning analytics;
-- whether AI-generated audio needs a public disclosure;
-- no fluency guarantee, exam, immigration, legal, employment, and outcome disclaimers.
-
-## 3. Draft disclaimer concepts for review
-
-**DRAFT — FOR LAWYER REVIEW ONLY.**
-
-Potential concepts to validate:
-
-- YoPratiqo is educational preparation only.
-- YoPratiqo does not guarantee fluency.
-- YoPratiqo does not guarantee exam success.
-- YoPratiqo does not provide immigration, legal, or administrative advice.
-- YoPratiqo does not guarantee employment or professional outcomes.
-- Pratiqo teacher marketplace bookings remain governed by separate marketplace terms.
-- Module progress, quiz answers, flashcard activity, audio interactions, teacher CTA clicks, and learning difficulty signals may be processed to provide and improve the service.
-
-## 4. Privacy inventory
-
-YoPratiqo may process:
-
-- module progress;
-- quiz answers;
-- flashcard progress;
-- audio interactions;
-- module purchases if paid modules are enabled later;
-- teacher CTA clicks;
-- learning difficulty signals.
-
-Counsel should review whether explicit consent, notice wording, retention language, or teacher-sharing controls are required before any learning signals are shared with a teacher.
-
-## 5. Open decisions
-
-- Final refund policy for future paid digital modules.
-- Whether premium modules are one-time purchases, subscriptions, bundles, or a mixed model.
-- Whether premium modules require separate YoPratiqo terms.
-- Whether module progress can be shared with a teacher only after explicit consent.
-- Whether AI audio disclosure belongs in public UI, privacy policy, terms, checkout copy, or all of those places.
-- Whether course schema and public SEO claims need additional legal review before indexing is enabled.

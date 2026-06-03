@@ -132,9 +132,9 @@ const TEACHER_CTA = lstr(
   "Find a Spanish teacher",
 );
 
-// HUB_COPY-style trust labels for the YoPratiqo lifetime + money-back promise.
+// HUB_COPY-style trust labels for the YoPratiqo 12-month access + money-back promise.
 // Localized via t(...) so no FR/EN string is hardcoded inline in JSX.
-const lifetimeAccessLabel = lstr("Accès à vie", "Lifetime access");
+const twelveMonthAccessLabel = lstr("Accès 12 mois", "12-month access");
 const moneyBackLabel = lstr(
   "30 jours satisfait ou remboursé",
   "30-day money-back",
@@ -458,7 +458,7 @@ export default async function YoEspagnolIntroPage({ searchParams }: PageProps) {
           <p className="mt-3 max-w-2xl text-sm leading-relaxed text-[#0F6E56]/78">
             {t(SECTION_LABELS.destinationsBody, locale)}
           </p>
-          {/* Trust strip: surface the YoPratiqo lifetime + 30-day money-back
+          {/* Trust strip: surface the YoPratiqo 12-month access + 30-day money-back
               promise at the moment buyers transition from the free intro to
               a paid country module — the closest analogue to a buy block on
               this otherwise-free page. */}
@@ -466,7 +466,7 @@ export default async function YoEspagnolIntroPage({ searchParams }: PageProps) {
             <div className="flex flex-wrap gap-2">
               <span className="inline-flex items-center gap-1.5 rounded-full bg-[#DDF4F1]/70 px-3 py-1 text-xs font-semibold text-[#0F6E56]">
                 <CheckCircle2 className="size-3.5" aria-hidden />
-                {t(lifetimeAccessLabel, locale)}
+                {t(twelveMonthAccessLabel, locale)}
               </span>
               <span className="inline-flex items-center gap-1.5 rounded-full bg-[#DDF4F1]/70 px-3 py-1 text-xs font-semibold text-[#0F6E56]">
                 <CheckCircle2 className="size-3.5" aria-hidden />

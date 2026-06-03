@@ -139,7 +139,7 @@ Para consultas generales: [`info@pratiqo.ca`](mailto:info@pratiqo.ca). Para avis
 
 Cuando se constate un incumplimiento, Pratiqo puede, según la gravedad, las pruebas, el historial, el riesgo, la reincidencia y las obligaciones legales aplicables, adoptar una o varias de las siguientes medidas:
 
-- advertencia escrita;
+- notificación de incumplimiento de los estándares de la marketplace;
 - retiro de contenido (reseña, perfil, mensaje, foto, documento);
 - cancelación de una reserva;
 - restricción temporal de funcionalidades;

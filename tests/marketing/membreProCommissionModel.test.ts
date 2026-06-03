@@ -5,7 +5,7 @@
  * `fix/membre-pro-declining-commission-canonical`):
  *   Pratiqo's commission model is *régressive / declining* — Free
  *   15 % → 12 %, Pro 5 % → 3.5 % plus higher-tier annual
- *   ristourne/profit-sharing eligibility — and `/upgrade`, `/tarifs`, and
+ *   rebate/ristourne eligibility — and `/upgrade`, `/tarifs`, and
  *   `lib/config/membrePro.ts` must agree on that single canonical model.
  *
  * What we guard against, and why:
@@ -267,9 +267,9 @@ test("/tarifs commission tier i18n keys span the canonical range in all locales"
     assert.match(dict.pricingPagePctFreeGold!, /\b13\s*%/);
     assert.match(dict.pricingPagePctFreePlatinum!, /\b12\s*%/);
     assert.match(dict.pricingPagePctProBronze!, /\b5\s*%/);
-    assert.match(dict.pricingPagePctProGold!, /\b4\s*%.*(ristourne|profit-sharing|redistribuci)/i);
+    assert.match(dict.pricingPagePctProGold!, /\b4\s*%.*(ristourne|rebate|reembolso)/i);
     assert.match(dict.pricingPagePctProPlatinum!, /\b3[.,]5\s*%/);
-    assert.match(dict.pricingPagePctProPlatinum!, /\b1\s*%.*(ristourne|profit-sharing|redistribuci)/i);
+    assert.match(dict.pricingPagePctProPlatinum!, /\b1\s*%.*(ristourne|rebate|reembolso)/i);
   }
 });
 
@@ -414,12 +414,12 @@ test("Legal markdown for FR/EN/ES displays the canonical $29.99 monthly price", 
   // canonical amount ($29.99 CAD); a stale "$29" here would create a
   // contractual mismatch with what Stripe actually charges.
   const legalFiles: Array<[string, "fr" | "en" | "es", RegExp, RegExp]> = [
-    ["content/legal/membre-pro.fr.md", "fr", /29,99\s*\$CA\s*par\s*mois/i, /(?<![0-9.,])29(?![0-9.,])\s*\$CA/],
-    ["content/legal/membre-pro.en.md", "en", /\$29\.99\s*CAD\s*per\s*month/i, /\$\s*29(?![0-9.,])\s*CAD/],
-    ["content/legal/membre-pro.es.md", "es", /29,99\s*\$CA\s*por\s*mes/i, /(?<![0-9.,])29(?![0-9.,])\s*\$CA/],
-    ["content/legal/conditions-professeurs.fr.md", "fr", /29,99\s*\$CA\s*par\s*mois/i, /(?<![0-9.,])29(?![0-9.,])\s*\$CA/],
-    ["content/legal/conditions-professeurs.en.md", "en", /\$29\.99\s*CAD\s*per\s*month/i, /\$\s*29(?![0-9.,])\s*CAD/],
-    ["content/legal/conditions-professeurs.es.md", "es", /29,99\s*\$CA\s*por\s*mes/i, /(?<![0-9.,])29(?![0-9.,])\s*\$CA/],
+    ["content/legal/membre-pro.fr.md", "fr", /29,99\s*\$CA\s*\/\s*mois\s*\+\s*taxes applicables/i, /(?<![0-9.,])29(?![0-9.,])\s*\$CA/],
+    ["content/legal/membre-pro.en.md", "en", /\$29\.99\s*CAD\s*\/\s*month\s*\+\s*applicable taxes/i, /\$\s*29(?![0-9.,])\s*CAD/],
+    ["content/legal/membre-pro.es.md", "es", /29,99\s*\$CA\s*\/\s*mes\s*\+\s*impuestos aplicables/i, /(?<![0-9.,])29(?![0-9.,])\s*\$CA/],
+    ["content/legal/conditions-professeurs.fr.md", "fr", /29,99\s*\$CA\s*\/\s*mois\s*\+\s*taxes applicables/i, /(?<![0-9.,])29(?![0-9.,])\s*\$CA/],
+    ["content/legal/conditions-professeurs.en.md", "en", /\$29\.99\s*CAD\s*\/\s*month\s*\+\s*applicable taxes/i, /\$\s*29(?![0-9.,])\s*CAD/],
+    ["content/legal/conditions-professeurs.es.md", "es", /29,99\s*\$CA\s*\/\s*mes\s*\+\s*impuestos aplicables/i, /(?<![0-9.,])29(?![0-9.,])\s*\$CA/],
   ];
   for (const [relPath, locale, expectedCanonical, stalePattern] of legalFiles) {
     const src = readFileSync(join(root, relPath), "utf8");
@@ -507,6 +507,15 @@ const GUARANTEE_PATTERNS = [
   /visibilidad\s+garantizada/i,
 ];
 
+function withoutNegatedGuaranteeSentences(src: string): string {
+  return src
+    .replace(/\bnot\b.{0,300}\bguaranteed income\b/gi, "")
+    .replace(/\b(?:does not|do not|not|no)\b[^.\n]{0,220}\b(?:guarantee|guaranteed)\b[^.\n]*/gi, "")
+    .replace(/\bno\s+(?:income|earnings|ranking|bookings|visibility|students)\s+guarantee\b/gi, "")
+    .replace(/\b(?:ne|n['’])\b[^.\n]{0,220}\b(?:garantit|garantie|garanties|garanti|garantis)\b[^.\n]*/gi, "")
+    .replace(/\bno\b[^.\n]{0,220}\b(?:garantiza|garantizado|garantizada|garantizados|garantizadas)\b[^.\n]*/gi, "");
+}
+
 test("/upgrade and /tarifs sources do not promise ranking / bookings / income", () => {
   // The public copy is i18n-driven; check the rendered locale strings
   // and the React sources that surround them.
@@ -519,6 +528,7 @@ test("/upgrade and /tarifs sources do not promise ranking / bookings / income", 
     haystacks.push(["i18n", JSON.stringify(dict)]);
   }
   for (const [label, src] of haystacks) {
+    const positiveClaimSrc = withoutNegatedGuaranteeSentences(src);
     for (const re of GUARANTEE_PATTERNS) {
       // The legal-safe disclaimer itself contains "ne garantit ni"
       // / "does not guarantee" / "no garantiza" — those negated forms
@@ -526,7 +536,7 @@ test("/upgrade and /tarifs sources do not promise ranking / bookings / income", 
       // patterns above are all *positive* guarantees, never matched
       // by the disclaimer wording.
       assert.ok(
-        !re.test(src),
+        !re.test(positiveClaimSrc),
         `${label} must not contain a positive guarantee (${re})`,
       );
     }

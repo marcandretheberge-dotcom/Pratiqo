@@ -99,9 +99,12 @@ El profesor se compromete a:
 Los profesores deben tener especial cuidado cuando el estudiante es menor de edad.
 
 - Puede requerirse la participación o autorización de un padre, madre o tutor legal.
+- Cuando se recopila información personal de un usuario o estudiante menor de 14 años, se requiere autorización de un padre, madre o tutor legal según las modalidades desplegadas por la plataforma, sujeto a la ley aplicable.
 - Para estudiantes menores, un padre, madre o tutor debería estar presente o localizable durante la clase, según la edad, el contexto y el lugar.
 - Están prohibidas las comunicaciones privadas innecesarias, ambiguas o inapropiadas con personas menores.
 - Las clases deben realizarse en entornos seguros, apropiados y legales.
+- Las clases a domicilio con personas menores requieren medidas de protección adicionales. La decisión fundadora, a validar por abogado, es exigir una verificación de antecedentes o registros penales para los profesores que quieran ofrecer clases a domicilio con personas menores, según las modalidades desplegadas por la plataforma.
+- Si esa verificación no está operativa, las clases a domicilio con personas menores no deberían ofrecerse o deberían limitarse hasta que el proceso aplicable esté desplegado.
 - El profesor puede rechazar un lugar o situación que considere insegura, inapropiada o no conforme.
 - Todo incidente o preocupación relacionada con la seguridad de un estudiante debe reportarse rápidamente a [`support@pratiqo.ca`](mailto:support@pratiqo.ca). En caso de emergencia, contactá primero a los servicios de emergencia.
 
@@ -196,7 +199,7 @@ La clasificación y visibilidad pueden depender de factores como relevancia, dis
 
 Según la gravedad de la situación, Pratiqo puede:
 
-- emitir una advertencia;
+- emitir una notificación de incumplimiento de los estándares de la marketplace;
 - restringir ciertas funciones;
 - ocultar o retirar un perfil público;
 - suspender o cerrar una cuenta;
@@ -212,9 +215,9 @@ Pratiqo puede investigar reportes y solicitar la cooperación del profesor.
 
 ## 17. Relación con Miembro Pro
 
-**Miembro Pro**, si se ofrece, es una **membresía paga opcional** separada que puede estar sujeta a condiciones de suscripción o términos adicionales. El estatus Miembro Pro puede dar acceso a ventajas económicas como una **comisión reducida** o una **estructura de reintegros**, cuando Pratiqo las ofrezca.
+**Miembro Pro**, si se ofrece, es una **membresía paga opcional** separada que puede estar sujeta a condiciones de suscripción o términos adicionales. El estatus Miembro Pro puede dar acceso a ventajas económicas como una **comisión reducida** o un **reembolso comercial retroactivo condicional sobre volumen**, cuando Pratiqo los ofrezca. Este reembolso se calcula según el volumen anual elegible generado por el profesor en la marketplace Pratiqo; no constituye una participación en las ganancias de Cours Pratiqo Inc., un rendimiento financiero, una inversión ni un ingreso garantizado. YoPratiqo y otros productos autónomos separados están excluidos.
 
-En el lanzamiento, Miembro Pro se muestra a **29,99 $CA por mes**, más los impuestos aplicables, se factura mensualmente por adelantado, se renueva automáticamente y puede cancelarse en cualquier momento desde el panel o escribiendo a [`support@pratiqo.ca`](mailto:support@pratiqo.ca). Salvo exigencia contraria de la ley aplicable, la cancelación entra en vigor al final del período pagado en curso.
+En el lanzamiento, Miembro Pro se muestra a **29,99 $CA / mes + impuestos aplicables**, se factura mensualmente por adelantado, se renueva automáticamente y puede cancelarse en cualquier momento desde el panel o escribiendo a [`support@pratiqo.ca`](mailto:support@pratiqo.ca). Salvo exigencia contraria de la ley aplicable, la cancelación entra en vigor al final del período pagado en curso.
 
 Pratiqo puede modificar comisiones, precios de suscripción o condiciones del plan **prospectivamente**, con aviso previo conforme a la ley aplicable. Cuando la ley lo exija, los usuarios afectados pueden cancelar antes de que el cambio entre en vigor.
 

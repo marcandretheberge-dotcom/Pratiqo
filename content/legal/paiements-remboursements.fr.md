@@ -2,7 +2,7 @@
 
 **Version :** 1.0 · **Dernière mise à jour :** mai 2026
 
-> ⚠️ **Important** : Le présent document explique le fonctionnement des paiements de la marketplace Pratiqo : prix, frais, remboursements, versements aux professeurs, retenues, rétrofacturations et taxes. Il complète les autres documents juridiques applicables et ne constitue pas un avis juridique, fiscal, comptable ou financier. Pratiqo n'est ni une banque, ni un service de séquestre, ni une institution financière, ni un conseiller fiscal. En cas de divergence avec une loi d'ordre public, c'est la loi qui prévaut.
+> ⚠️ **Important** : Le présent document explique le fonctionnement des paiements de la marketplace Pratiqo : prix, frais, remboursements, versements aux professeurs, retenues, rétrofacturations et taxes. Il complète les autres documents juridiques applicables et ne constitue pas un avis juridique, fiscal, comptable ou financier. Pratiqo n'est ni une banque, ni une institution financière, ni un conseiller fiscal. En cas de divergence avec une loi d'ordre public, c'est la loi qui prévaut.
 
 ---
 
@@ -45,6 +45,7 @@ Les professeurs sont des **prestataires indépendants**. Pratiqo agit comme inte
 
 - Pratiqo peut **encaisser** les paiements de l'élève et **verser au professeur** le montant admissible, **après déduction** des frais de plateforme, commissions, taxes applicables, remboursements, contestations, rétrofacturations, frais du prestataire de paiement et autres ajustements applicables.
 - Le **moment d'un versement** peut dépendre de plusieurs facteurs : confirmation de la livraison du cours, règles de la plateforme, calendrier du prestataire de paiement (par exemple Stripe), délais bancaires, examen anti-fraude ou de risque, vérification du compte ou de l'identité, conformité fiscale, et droit applicable.
+- L'objectif opérationnel de Pratiqo est un **délai technique de traitement / validation de 48 heures après la fin du cours** avant le versement, sous réserve des contraintes Stripe, bancaires, de conformité, de sécurité et de la loi applicable.
 - Pratiqo **ne garantit pas** un versement immédiat. Les professeurs doivent prévoir des délais raisonnables et tenir leur profil et leurs renseignements de versement à jour.
 - Le professeur reconnaît que Pratiqo n'est pas l'employeur, l'agent, le mandataire ou la banque du professeur, et que le versement reçu peut faire l'objet d'**ajustements ultérieurs** dans les cas prévus par les présentes ou les autres documents applicables.
 
@@ -57,7 +58,7 @@ Pratiqo peut prélever, selon le service utilisé, **un frais de plateforme, un 
 - Les frais et commissions applicables peuvent être **affichés** dans le tableau de bord du professeur, dans la caisse de l'élève, dans les documents contractuels, dans la page d'abonnement ou dans une autre zone de la plateforme avant qu'une transaction ne soit confirmée.
 - Les structures de frais peuvent **évoluer**. Sauf disposition contraire d'une loi d'ordre public, les modifications matérielles s'appliquent **prospectivement** et seront communiquées par les moyens prévus par la loi applicable, le cas échéant.
 - Les **frais du prestataire de paiement** (par exemple les frais d'acquisition Stripe) peuvent s'ajouter ou être déduits des montants concernés selon les règles applicables. Les frais d'émetteur de carte ou frais de change appliqués par la banque de l'élève demeurent à la charge de l'élève.
-- Les frais d'adhésion Membre Pro sont régis par les **[Conditions Membre Pro](/legal/membre-pro)** et sont distincts des paiements de cours et des versements de cours. Lorsqu'une **commission réduite** ou une **ristourne** est rattachée au statut Membre Pro, ses modalités sont décrites dans les Conditions Membre Pro et affichées dans la plateforme.
+- Les frais d'adhésion Membre Pro sont régis par les **[Conditions Membre Pro](/legal/membre-pro)** et sont distincts des paiements de cours et des versements de cours. Lorsqu'une **commission réduite** ou un **rabais commercial rétroactif conditionnel sur volume** est rattaché au statut Membre Pro, ses modalités sont décrites dans les Conditions Membre Pro et affichées dans la plateforme.
 
 ---
 

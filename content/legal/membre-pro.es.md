@@ -48,7 +48,7 @@ Miembro Pro **no es** un conjunto de herramientas ni un estudio de profesor: es 
 
 ## 4. Ciclo de facturación
 
-En el lanzamiento, Miembro Pro se muestra a **29,99 $CA por mes**, **más los impuestos aplicables**, y se **factura mensualmente por adelantado**. Si Pratiqo ofrece posteriormente un período anual u otro ciclo, ese ciclo y su precio se mostrarán antes de la suscripción.
+En el lanzamiento, Miembro Pro se muestra a **29,99 $CA / mes + impuestos aplicables**, y se **factura mensualmente por adelantado**. Si Pratiqo ofrece posteriormente un período anual u otro ciclo, ese ciclo y su precio se mostrarán antes de la suscripción.
 
 - El ciclo de facturación y la fecha de la próxima renovación se muestran antes de la suscripción y pueden consultarse en la página de suscripción de la cuenta cuando esté disponible.
 - El **precio aplicable es el que se muestra en el momento de la suscripción**, más los impuestos aplicables si los hubiere.
@@ -166,9 +166,11 @@ Ninguna ventaja de Miembro Pro — incluida la **comisión reducida** o el **rei
 Pratiqo puede ofrecer planes **promocionales, beta, de «fundadores», con descuento o de prueba gratuita** vinculados a Miembro Pro.
 
 - Estas ofertas pueden ser temporales.
-- La elegibilidad puede limitarse a ciertos segmentos, mercados o períodos.
+- La elegibilidad puede limitarse a ciertos segmentos, mercados, períodos, volúmenes, perfiles o condiciones mostradas.
 - Pratiqo puede **finalizar o modificar** estas ofertas conforme a sus términos mostrados y a la ley aplicable.
 - Los términos promocionales **no se vuelven permanentes** salvo que Pratiqo lo indique expresamente por escrito.
+- No garantizan ingresos, volumen de reservas, posicionamiento, visibilidad, estudiantes ni resultados comerciales.
+- Su compatibilidad con Miembro Pro, comisiones reducidas o cualquier reembolso debe especificarse en las condiciones aplicables de la oferta correspondiente.
 
 ---
 
@@ -201,7 +203,7 @@ Pratiqo puede **rechazar, suspender o cancelar** Miembro Pro, en particular, en 
 
 Las **tarifas de la suscripción Miembro Pro** (lo que Pratiqo cobra por el **estatus de miembro**) son **distintas** de las **comisiones de la marketplace** (el porcentaje que Pratiqo retiene en cada clase), las tarifas de servicio y las demás tarifas de la marketplace.
 
-La **redistribución / reintegro anual de Miembro Pro**, cuando se ofrece, es **condicional**. Corresponde al **5% de las ganancias netas elegibles de la marketplace Pratiqo, excluyendo las ganancias generadas por YoPratiqo y cualquier otro producto autónomo separado**, está prevista para **enero**, está limitada por un fondo máximo de **150 000 $CA**, se activa solo si al menos **10 profesores Pro elegibles** califican, y cada profesor puede recibir un máximo de **10 000 $CA** según su **volumen anual relativo**. Pratiqo no garantiza ningún ingreso mínimo ni ningún monto de redistribución.
+El **reembolso anual de Miembro Pro**, cuando se ofrece, es un **reembolso comercial retroactivo condicional sobre volumen**, calculado según el **volumen anual elegible generado por el profesor en la marketplace Pratiqo**. Este reembolso no constituye una participación en las ganancias de Cours Pratiqo Inc., un rendimiento financiero, una inversión ni un ingreso garantizado. **YoPratiqo y otros productos autónomos separados están excluidos**. Las tasas, umbrales, topes, períodos de cálculo, condiciones de elegibilidad, modalidades de pago y mecanismos de recuperación se muestran en la plataforma o en las condiciones aplicables y siguen sujetos a validación por abogado.
 
 - Pagar Miembro Pro **no exime** al profesor de las reglas de la marketplace, las comisiones, las reglas de cancelación, las reglas de reembolso ni las obligaciones relativas a contracargos.
 - Cuando una **comisión reducida** está vinculada al estatus Miembro Pro, su tasa, condiciones, fecha de entrada en vigor y alcance se indican en la plataforma, en el panel, en el checkout, en la página de suscripción o en los términos del plan aplicable. Pratiqo puede ajustar esta tasa **prospectivamente**, sujeto a la ley aplicable.
