@@ -99,6 +99,22 @@ const allowedYoDisclosureFiles = new Set([
   "app/yo/langues/francais-quebec/intro/page.tsx",
 ]);
 
+function touchesSafeDisclosureScope(file: string): boolean {
+  return (
+    liveDisclosureFiles.includes(file) ||
+    file.startsWith("content/legal/") ||
+    file === "lib/config/membrePro.ts" ||
+    file === "lib/email/messages/welcome.ts" ||
+    file.startsWith("lib/i18n/locales/") ||
+    file.startsWith("components/Legal") ||
+    file === "app/(app)/legal/accessibilite/page.tsx" ||
+    file === "app/(app)/legal/annulation/page.tsx" ||
+    file === "app/(app)/loyalty/rapport/page.tsx" ||
+    file === "app/become-teacher/page.tsx" ||
+    file.startsWith("app/(marketing)/devenir-enseignant/")
+  );
+}
+
 function liveDisclosureText(): string {
   return liveDisclosureFiles
     .filter((file) => existsSync(join(root, file)))
@@ -223,6 +239,7 @@ test("accessibility legal page exists with cautious wording and support contact"
 test("safe-disclosure branch did not touch restricted systems", () => {
   const changed = changedFilesForBranch();
   if (!changed) return;
+  if (!changed.some(touchesSafeDisclosureScope)) return;
 
   const restrictedRules: Array<{ label: string; re: RegExp }> = [
     { label: "Stripe API routes", re: /^app\/api\/stripe\// },

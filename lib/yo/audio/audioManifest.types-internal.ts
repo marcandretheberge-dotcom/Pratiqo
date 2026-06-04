@@ -47,7 +47,22 @@ export interface YoAudioItem {
   moduleId: string;
   lessonId: string;
   type: YoAudioItemType;
+  /**
+   * Text shown in the lesson UI and used for contextual lookup.
+   * Keep this byte-for-byte aligned with visible lesson content.
+   */
   text: string;
+  /**
+   * Optional TTS-only input. Use when visible text contains slash
+   * variants, placeholders, or short homographs that need extra
+   * spoken context. Never changes visible lesson copy or storagePath.
+   */
+  spokenText?: string;
+  /**
+   * Per-item direction appended to the accent profile instructions
+   * during offline generation. Useful for words that look English.
+   */
+  pronunciationHint?: string;
   storagePath: string;
   accentProfile: YoAudioAccentProfileId;
   ttsInstructions?: string;

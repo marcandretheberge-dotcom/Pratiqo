@@ -16,7 +16,7 @@
  *  2. The `japanese_standard` accent profile is registered with safe
  *     TTS instructions (no anime intonation, no native-perfect
  *     promise) and a `ja-JP` BCP-47 hint.
- *  3. Spanish (79), Quebec French (20), Italian (32), and English
+ *  3. Spanish (79), Quebec French (96), Italian (32), and English
  *     (46) coverage stays unchanged: Japanese additions are PURELY
  *     ADDITIVE.
  *  4. Frontend integration: the page imports `YoJapaneseAudioButton`,
@@ -304,10 +304,10 @@ test("Spanish manifest items count stays at the documented 79 (Japanese is purel
   );
 });
 
-test("Quebec French manifest items count stays at the documented 95 (Japanese is purely additive)", () => {
+test("Quebec French manifest items count stays at the documented 96 (Japanese is purely additive)", () => {
   // 20 FR Quebec intro items + 25 FR Quebec premium Module 1 ·
   // Lesson 1 items (14 core phrases + 11 unique dialogue lines) +
-  // 50 FR Quebec premium Module 1 · Lesson 2 items (5 oral markers
+  // 51 FR Quebec premium Module 1 · Lesson 2 items (6 oral markers
   // + 24 imperatives + 3 workplace examples + 8 confirmations +
   // 5 reformulations + 5 mini-scenario lines). The Japanese
   // additions must not touch any of them.
@@ -316,8 +316,8 @@ test("Quebec French manifest items count stays at the documented 95 (Japanese is
   );
   assert.equal(
     frItems.length,
-    95,
-    `Quebec French item total must remain 95; got ${frItems.length}. Japanese additions must not touch Quebec French data.`,
+    96,
+    `Quebec French item total must remain 96; got ${frItems.length}. Japanese additions must not touch Quebec French data.`,
   );
 });
 

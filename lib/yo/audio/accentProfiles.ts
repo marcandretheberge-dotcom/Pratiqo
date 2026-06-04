@@ -127,7 +127,7 @@ const PROFILES: Record<YoAudioAccentProfileId, YoAudioAccentProfile> = {
     pathSlug: "latin-american-neutral",
     label: "Latin American (neutral)",
     ttsInstructions:
-      "Speak in clear, friendly Latin American Spanish for beginner learners. Use a natural pace, neutral pronunciation, and warm tone. Do not exaggerate any specific country accent.",
+      "Speak in clear, friendly Latin American Spanish for beginner learners. Use a natural pace, neutral pronunciation, and warm tone. Do not exaggerate any specific country accent. Do not use English pronunciation; Spanish words that look like English must be pronounced as Spanish.",
     defaultVoice: "alloy",
     bcp47Hint: "es-419",
   },
@@ -136,7 +136,7 @@ const PROFILES: Record<YoAudioAccentProfileId, YoAudioAccentProfile> = {
     pathSlug: "dominican-republic",
     label: "Dominican Republic",
     ttsInstructions:
-      "Speak in clear Dominican Republic Spanish with a light Caribbean rhythm. Keep pronunciation understandable for beginner learners. Do not exaggerate slang, do not drop syllables, do not speed up.",
+      "Speak in clear Dominican Republic Spanish with a light Caribbean rhythm. Keep pronunciation understandable for beginner learners. Do not exaggerate slang, do not drop syllables, do not speed up. Do not use English pronunciation; Spanish words that look like English must be pronounced as Spanish.",
     defaultVoice: "alloy",
     bcp47Hint: "es-DO",
   },
@@ -172,7 +172,7 @@ const PROFILES: Record<YoAudioAccentProfileId, YoAudioAccentProfile> = {
     pathSlug: "quebec-french",
     label: "Quebec French",
     ttsInstructions:
-      "Speak in clear, friendly Quebec French for beginner learners. Use a natural but slightly slower pace. Keep pronunciation understandable for newcomers. Do not exaggerate slang or caricature the accent.",
+      "Speak in clear, friendly Quebec French for beginner learners. Use a natural but slightly slower pace. Keep pronunciation understandable for newcomers. Do not exaggerate slang or caricature the accent. Do not use English pronunciation; French words that look like English must be pronounced as French.",
     defaultVoice: "alloy",
     bcp47Hint: "fr-CA",
   },
