@@ -9,7 +9,7 @@ import { useAuth } from "../../components/AuthProvider";
 import { getSupabaseClient } from "../../lib/supabase";
 import { getEnabledDisciplines } from "../../lib/disciplines";
 import { useLocale } from "../../lib/locale-context";
-import { TeacherPayoutPreview } from "../../components/teacher/TeacherPayoutPreview";
+import { TeacherHourlyRatePreview } from "../../components/teacher/TeacherHourlyRatePreview";
 import { validateMinimumLessonPriceDollars } from "@/lib/pricing/validateMinimumLessonPrice";
 
 type Step = 1 | 2 | 3 | 4 | "done";
@@ -518,7 +518,11 @@ function OnboardingInner() {
                   onChange={(e) => setHourlyRate(Number(e.target.value))}
                   className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm"
                 />
-                <TeacherPayoutPreview grossAmount={hourlyRate} currency="CAD" />
+                <TeacherHourlyRatePreview
+                  hourlyRate={hourlyRate}
+                  defaultDurationMinutes={null}
+                  currency="CAD"
+                />
               </Field>
 
               <Field label="Photo de profil (optionnel)">

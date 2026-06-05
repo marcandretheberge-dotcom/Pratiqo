@@ -44,7 +44,7 @@ import { DiplomaStep } from "./components/DiplomaStep";
 import { ZoneStep } from "./components/ZoneStep";
 import { ProfileAiAssistant } from "../../../../components/teacher/ProfileAiAssistant";
 import { AvatarUpload } from "../../../../components/profile/AvatarUpload";
-import { TeacherPayoutPreview } from "../../../../components/teacher/TeacherPayoutPreview";
+import { TeacherHourlyRatePreview } from "../../../../components/teacher/TeacherHourlyRatePreview";
 import { isValidVideoUrl } from "../../../../lib/videoEmbed";
 import { parseGooglePlace } from "../../../../lib/googleAddressParser";
 import { MIN_LESSON_PRICE_DOLLARS } from "../../../../lib/pricing/constants";
@@ -1219,9 +1219,16 @@ export default function TeacherProfileManagementPage() {
                 min={MIN_LESSON_PRICE_DOLLARS}
                 step="0.5"
                 className="mt-2 w-full h-11 rounded-xl border border-[#E8E6DF] px-3 text-sm outline-none focus:border-teal-500"
+                data-testid="teacher-profile-mgmt-base-hourly-rate"
               />
+              <p className="mt-1 text-xs text-[#6B6A65]">{t("profileBaseRateHelper")}</p>
               <p className="mt-1 text-xs text-[#6B6A65]">{t("pricingMinLessonPrice")}</p>
-              <TeacherPayoutPreview grossAmount={editPrice} currency="CAD" teacherPlan={plan} />
+              <TeacherHourlyRatePreview
+                hourlyRate={editPrice}
+                defaultDurationMinutes={teacherRow.default_lesson_duration_minutes ?? null}
+                teacherPlan={plan}
+                currency="CAD"
+              />
             </label>
             <div className="rounded-xl border border-[#E8E6DF] bg-teal-50/40 p-4 space-y-3">
               <div className="flex items-start justify-between gap-3">
@@ -1414,6 +1421,16 @@ export default function TeacherProfileManagementPage() {
                 <span className="text-sm text-[#6B6A65]">{t("homeLessonsHourlyRateUnit")}</span>
               </div>
               <p className="mt-1 text-xs text-[#6B6A65]">{t("homeLessonsHourlyRateHelper")}</p>
+              {editHomeEnabled ? (
+                <TeacherHourlyRatePreview
+                  hourlyRate={editHomeHourlyRate}
+                  defaultDurationMinutes={teacherRow.default_lesson_duration_minutes ?? null}
+                  teacherPlan={plan}
+                  currency="CAD"
+                  hourlyRateLineKey="bookingPriceBreakdownHomeHourlyRate"
+                  testIdPrefix="teacher-hourly-rate-preview-home"
+                />
+              ) : null}
             </label>
 
             <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-3">

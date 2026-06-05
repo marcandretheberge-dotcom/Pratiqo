@@ -611,7 +611,7 @@ export function TeacherProfile({
                   <QuickStat
                     icon={<CreditCard className="text-teal-500" size={15} />}
                     label={t("rateLabel")}
-                    value={standardOriginalPrice}
+                    value={t("publicTeacherCardFromPerHour").replace("{price}", standardOriginalPrice)}
                   />
                 </div>
 
@@ -775,7 +775,13 @@ export function TeacherProfile({
                         />
                       </p>
                       <p className="text-xs text-slate-600 mt-0.5">{standardLabel}</p>
-                      <p className="mt-2 text-[11px] font-semibold text-teal-700">
+                      <p
+                        className="mt-2 text-[11px] text-slate-600"
+                        data-testid="teacher-profile-final-price-depends-on-duration"
+                      >
+                        {t("publicTeacherProfileFinalPriceDependsOnDuration")}
+                      </p>
+                      <p className="mt-1 text-[11px] font-semibold text-teal-700">
                         {t("bookingNoHiddenFees").replace("{price}", standardOriginalPrice)}
                       </p>
                     </div>

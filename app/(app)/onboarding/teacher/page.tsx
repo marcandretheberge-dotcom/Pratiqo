@@ -11,7 +11,7 @@ import { useLocale } from "@/lib/locale-context";
 import { getTeacherOnboardingMissingFields, isTeacherProfileComplete } from "@/lib/teacherOnboarding";
 import { parseGooglePlace } from "@/lib/googleAddressParser";
 import { blurCoordinates } from "@/lib/maps";
-import { TeacherPayoutPreview } from "@/components/teacher/TeacherPayoutPreview";
+import { TeacherHourlyRatePreview } from "@/components/teacher/TeacherHourlyRatePreview";
 import { ProfileAiAssistant } from "@/components/teacher/ProfileAiAssistant";
 import { MarketWaitlistCard } from "@/components/MarketWaitlistCard";
 import { MIN_LESSON_PRICE_DOLLARS } from "@/lib/pricing/constants";
@@ -966,13 +966,15 @@ export default function TeacherOnboardingPage() {
                       className="mt-2 w-full h-12 rounded-2xl border border-[var(--p-border-light)] px-4 text-sm"
                       placeholder="50"
                     />
-                    <p className="mt-2 text-xs leading-relaxed text-[var(--p-text-subtle)]">{t("pricingMinLessonPrice")}</p>
-                    <TeacherPayoutPreview
-                      grossAmount={pricePerLesson}
-                      currency={currency}
+                    <p className="mt-2 text-xs leading-relaxed text-[var(--p-text-subtle)]">{t("profileBaseRateHelper")}</p>
+                    <p className="mt-1 text-xs leading-relaxed text-[var(--p-text-subtle)]">{t("pricingMinLessonPrice")}</p>
+                    <TeacherHourlyRatePreview
+                      hourlyRate={pricePerLesson}
+                      defaultDurationMinutes={null}
                       teacherPlan={teacherPlan}
                       annualVolumeCents={annualVolumeCents}
                       loyaltyTier={loyaltyTier}
+                      currency={currency}
                     />
                   </label>
 
