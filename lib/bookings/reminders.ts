@@ -8,7 +8,11 @@ import {
   sendPostClassReviewRequest,
 } from "@/lib/email";
 import { formatEmailLessonScheduleLabels } from "@/lib/email/formatSchedule";
-import { resolveEmailLocaleForUser, type EmailLocale } from "@/lib/email/locale";
+import {
+  resolveEmailLocaleForStudent,
+  resolveEmailLocaleForTeacher,
+  type EmailLocale,
+} from "@/lib/email/locale";
 import { getDictionary } from "@/lib/i18n/server";
 
 export const REMINDER_24H_MIN_MS = 23 * 60 * 60 * 1000;
@@ -143,7 +147,10 @@ async function resolveStudentEmail(
   const email = profileEmail || authEmail || null;
   const name =
     typeof student?.name === "string" && student.name.trim() ? student.name.trim() : "élève";
-  const locale = await resolveEmailLocaleForUser(admin, studentId);
+  // Each recipient must be resolved from their OWN profile / metadata.
+  // resolveEmailLocaleForStudent is a student-scoped alias and intentionally
+  // never consults the teacher row.
+  const locale = await resolveEmailLocaleForStudent(admin, studentId);
   return { email, name, locale };
 }
 
@@ -157,15 +164,21 @@ async function resolveTeacherEmail(
     .eq("id", teacherUserId)
     .maybeSingle();
 
+  // resolveEmailLocaleForTeacher also consults the `teachers` row, which
+  // carries the canonical province/country (populated by
+  // /api/teacher/location/verify) and is the most reliable source for the
+  // teacher's locale today.
+  const teacherLocale = await resolveEmailLocaleForTeacher(admin, teacherUserId);
+
   const profileEmail = typeof teacherProf?.email === "string" ? teacherProf.email.trim() : "";
   if (profileEmail) {
-    return { email: profileEmail, locale: await resolveEmailLocaleForUser(admin, teacherUserId) };
+    return { email: profileEmail, locale: teacherLocale };
   }
 
   const { data: authTeacher } = await admin.auth.admin.getUserById(teacherUserId);
   return {
     email: authTeacher?.user?.email?.trim() ?? null,
-    locale: await resolveEmailLocaleForUser(admin, teacherUserId),
+    locale: teacherLocale,
   };
 }
 
