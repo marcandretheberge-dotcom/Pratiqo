@@ -919,9 +919,42 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                     {areaLabel}
                   </span>
                 </div>
-                <p className="mt-3 text-[11px] font-semibold text-teal-700">
-                  {t("bookingNoHiddenFees").replace("{price}", displayPrice)}
-                </p>
+                {/* Three-line breakdown — the duration is always known
+                    inside the booking modal so we can display the
+                    contracted (price / duration / hourly rate) tuple
+                    instead of the ambiguous "Prix affiché : X" line. */}
+                {lessonType === "intro" ? (
+                  <p className="mt-3 text-[11px] font-semibold text-teal-700">
+                    {t("bookingNoHiddenFees").replace("{price}", displayPrice)}
+                  </p>
+                ) : (
+                  <div
+                    className="mt-3 space-y-0.5 text-[11px] text-slate-700"
+                    data-testid="booking-price-breakdown-hero"
+                  >
+                    <p
+                      className="font-bold text-teal-700"
+                      data-testid="booking-price-breakdown-hero-lesson-price"
+                    >
+                      {(teachingMode === "domicile"
+                        ? t("bookingPriceBreakdownHomeLessonPrice")
+                        : t("bookingPriceBreakdownLessonPrice")
+                      ).replace("{price}", displayPrice)}
+                    </p>
+                    <p data-testid="booking-price-breakdown-hero-duration">
+                      {t("bookingPriceBreakdownDuration").replace(
+                        "{minutes}",
+                        String(lessonMinutes),
+                      )}
+                    </p>
+                    <p data-testid="booking-price-breakdown-hero-hourly">
+                      {(teachingMode === "domicile"
+                        ? t("bookingPriceBreakdownHomeHourlyRate")
+                        : t("bookingPriceBreakdownHourlyRate")
+                      ).replace("{rate}", displayedHourlyPrice)}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -1161,15 +1194,49 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                       {addressError}
                     </p>
                   ) : null}
-                  <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-                    <span className="font-semibold text-slate-700">
-                      {lessonType === "intro"
-                        ? `${introDurationMinutes} min`
-                        : `${displayedHourlyPrice} / h × ${lessonHours === 1 ? t("bookingOneHour") : `${lessonHours} ${t("bookingHours")}`}`}
-                    </span>
-                    <span className="font-bold text-teal-700">
-                      {t("bookingTotalLine")} : {displayPrice}
-                    </span>
+                  {/* Three-line price breakdown — required by the
+                      "hourly rates and duration-based lesson prices" launch
+                      contract. Each line uses an i18n key so the FR/EN/ES
+                      copies cannot drift. The booking math itself is NOT
+                      touched here; we only relabel the existing numbers. */}
+                  <div
+                    className="space-y-1 rounded-xl border border-teal-200/70 bg-white/70 px-3 py-2 text-xs text-slate-700"
+                    data-testid="booking-price-breakdown-home"
+                  >
+                    {lessonType === "intro" ? (
+                      <>
+                        <p className="font-semibold text-slate-900">
+                          {t("bookingPriceBreakdownHomeLessonPrice").replace("{price}", displayPrice)}
+                        </p>
+                        <p>
+                          {t("bookingPriceBreakdownDuration").replace(
+                            "{minutes}",
+                            String(introDurationMinutes),
+                          )}
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <p
+                          className="font-semibold text-slate-900"
+                          data-testid="booking-price-breakdown-home-lesson-price"
+                        >
+                          {t("bookingPriceBreakdownHomeLessonPrice").replace("{price}", displayPrice)}
+                        </p>
+                        <p data-testid="booking-price-breakdown-home-duration">
+                          {t("bookingPriceBreakdownDuration").replace(
+                            "{minutes}",
+                            String(lessonMinutes),
+                          )}
+                        </p>
+                        <p data-testid="booking-price-breakdown-home-hourly">
+                          {t("bookingPriceBreakdownHomeHourlyRate").replace(
+                            "{rate}",
+                            displayedHourlyPrice,
+                          )}
+                        </p>
+                      </>
+                    )}
                   </div>
                   {teacher.homeLessonRequiresConfirmation ? (
                     <p className="text-[11px] text-amber-800 bg-amber-50 border border-amber-100 rounded-lg px-2 py-1.5">
@@ -1187,17 +1254,49 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                   ) : null}
                 </div>
               ) : (
-                <p className="text-xs text-slate-500">
-                  {t("bookingRateHint")} :{" "}
-                  <PriceDisplay
-                    amount={teacher.pricePerLesson}
-                    sourceCurrency={chargeCurrency}
-                    primaryClassName="font-bold text-slate-800"
-                    secondaryClassName="block text-[10px] font-semibold text-slate-500"
-                  />{" "}
-                  /
-                  {t("bookingPerHourWord")}
-                </p>
+                /* Three-line price breakdown for studio/online lessons.
+                   Mirrors the at-home version above so each booking format
+                   communicates the (lesson price / duration / hourly rate)
+                   tuple required by the hourly-rate launch contract. */
+                <div
+                  className="space-y-1 rounded-xl border border-teal-200/70 bg-white/70 px-3 py-2 text-xs text-slate-700"
+                  data-testid="booking-price-breakdown-standard"
+                >
+                  {lessonType === "intro" ? (
+                    <>
+                      <p className="font-semibold text-slate-900">
+                        {t("bookingPriceBreakdownLessonPrice").replace("{price}", displayPrice)}
+                      </p>
+                      <p>
+                        {t("bookingPriceBreakdownDuration").replace(
+                          "{minutes}",
+                          String(introDurationMinutes),
+                        )}
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p
+                        className="font-semibold text-slate-900"
+                        data-testid="booking-price-breakdown-standard-lesson-price"
+                      >
+                        {t("bookingPriceBreakdownLessonPrice").replace("{price}", displayPrice)}
+                      </p>
+                      <p data-testid="booking-price-breakdown-standard-duration">
+                        {t("bookingPriceBreakdownDuration").replace(
+                          "{minutes}",
+                          String(lessonMinutes),
+                        )}
+                      </p>
+                      <p data-testid="booking-price-breakdown-standard-hourly">
+                        {t("bookingPriceBreakdownHourlyRate").replace(
+                          "{rate}",
+                          displayedHourlyPrice,
+                        )}
+                      </p>
+                    </>
+                  )}
+                </div>
               )}
 
               <div className="flex gap-2">

@@ -123,7 +123,12 @@ test("page: offer & pricing card uses new copy and intro offer fields", () => {
   assert.match(verificationSrc, /teacherProfileMgmtSectionOfferPricing/);
   assert.match(verificationSrc, /teacherProfileMgmtOfferPricingDesc/);
   assert.match(verificationSrc, /intro_session_enabled/);
-  assert.match(verificationSrc, /TeacherPayoutPreview/);
+  // The teacher pricing card now uses the hourly-rate-aware preview that
+  // prorates the typed CAD/h figure by the actual lesson duration before
+  // showing the commission/net breakdown. The old TeacherPayoutPreview is
+  // still exported for legacy callers, but the pricing card no longer
+  // misuses it as if the hourly rate were a flat session price.
+  assert.match(verificationSrc, /TeacherHourlyRatePreview/);
   assert.match(verificationSrc, /data-testid="teacher-profile-mgmt-card-offer-pricing"/);
 });
 

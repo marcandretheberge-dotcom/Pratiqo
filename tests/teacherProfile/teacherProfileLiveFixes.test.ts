@@ -100,9 +100,13 @@ test("disciplines: teaching formats still saved via teaching_mode update", () =>
   assert.match(VERIFICATION_PAGE, /saveDisciplinesFormats/);
 });
 
-test("profile management: pricing section uses base-rate label and payout preview", () => {
+test("profile management: pricing section uses base-rate label and hourly-rate preview", () => {
   assert.match(VERIFICATION_PAGE, /profileBaseRateLabel/);
-  assert.match(VERIFICATION_PAGE, /TeacherPayoutPreview/);
+  // The pricing card was migrated from `TeacherPayoutPreview` (which
+  // accepts a flat session subtotal) to `TeacherHourlyRatePreview`, the
+  // duration-aware preview built on top of the same commission helper.
+  // See the launch contract: "lesson price = hourly rate * duration / 60".
+  assert.match(VERIFICATION_PAGE, /TeacherHourlyRatePreview/);
 });
 
 test("AI assistant: bearer token auth uses getUser(token) on server route", () => {

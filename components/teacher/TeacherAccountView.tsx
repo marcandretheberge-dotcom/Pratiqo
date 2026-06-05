@@ -13,7 +13,7 @@ import { getDisciplineById, getEnabledDisciplines } from "@/lib/disciplines";
 import { syncTeacherPrimaryFromDisciplines } from "@/lib/teacherDisciplines";
 import type { TeacherRow } from "@/lib/teacherMapper";
 import { isValidVideoUrl } from "@/lib/videoEmbed";
-import { TeacherPayoutPreview } from "@/components/teacher/TeacherPayoutPreview";
+import { TeacherHourlyRatePreview } from "@/components/teacher/TeacherHourlyRatePreview";
 import { AccountDeletionSection } from "@/components/account/AccountDeletionSection";
 import { TeacherDisciplinesEditor, type DisciplineCardDraft } from "@/components/teacher/TeacherDisciplinesEditor";
 import { MIN_LESSON_PRICE_DOLLARS } from "@/lib/pricing/constants";
@@ -714,12 +714,14 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
               className="w-full h-11 rounded-xl border border-slate-200 pl-14 pr-3 text-sm text-[#00694c] font-semibold"
             />
           </div>
+          <p className="text-[11px] leading-relaxed text-slate-500">{t("profileBaseRateHelper")}</p>
           <p className="text-[11px] leading-relaxed text-slate-500">{t("pricingMinLessonPrice")}</p>
           <p className="text-[11px] font-semibold leading-relaxed text-teal-700">
             {t("teacherPriceChargedInCurrency").replace("{currency}", "CAD")}
           </p>
-          <TeacherPayoutPreview
-            grossAmount={hourly}
+          <TeacherHourlyRatePreview
+            hourlyRate={hourly}
+            defaultDurationMinutes={null}
             currency="CAD"
             teacherPlan={plan}
             annualVolumeCents={annualVolumeCents}
