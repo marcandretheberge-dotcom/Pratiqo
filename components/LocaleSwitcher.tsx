@@ -4,8 +4,35 @@ import { useState, useEffect } from "react";
 import { useLocale } from "../lib/locale-context";
 import type { Locale } from "../lib/i18n/types";
 import type { Currency } from "../lib/geoLocale";
+import { getSupabaseClient } from "../lib/supabase";
 import { cn } from "../lib/utils";
 import { Check, Globe } from "lucide-react";
+
+/**
+ * Best-effort persist the chosen UI locale to `auth.users.user_metadata`
+ * so server-side senders (booking reminders, welcome emails, etc.) pick it
+ * up. Silent on failure: the cookie + localStorage write already happened
+ * in `LocaleProvider.setLocale`, so the UI stays consistent even if the
+ * user is logged out or the network fails.
+ */
+async function persistLocaleToServer(locale: Locale) {
+  try {
+    const supabase = getSupabaseClient();
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token;
+    if (!token) return;
+    await fetch("/api/user/locale", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ locale }),
+    });
+  } catch {
+    /* best effort — don't surface to the user */
+  }
+}
 
 type FlagCountry = "CA" | "US" | "ES";
 
@@ -178,6 +205,7 @@ export function LocaleSwitcher({
                 aria-checked={locale === option.locale}
                 onClick={() => {
                   setLocale(option.locale);
+                  void persistLocaleToServer(option.locale);
                   setIsOpen(false);
                 }}
                 className={cn(
