@@ -5,6 +5,7 @@ import { CheckCircle2, Printer, Trophy } from "lucide-react";
 import { t } from "@/lib/yo/localize";
 import type { YoLocale, YoLocalizedString } from "@/lib/yo/types";
 import type { Dom3GameRound } from "@/lib/yo/dominicanRepublicFoodCulture";
+import { YoSpeechButton } from "@/components/yo/YoSpeechButton";
 import { useMemo, useState } from "react";
 
 interface PrintSheetsButtonProps {
@@ -214,9 +215,12 @@ export function DominicanRepublicCultureChallenge({
                     <p className="mt-1 text-[0.68rem] font-black uppercase tracking-[0.12em] text-[#F4B400]">
                       {localLabel(locale, LABEL_CORRECT_ANSWER)}
                     </p>
-                    <p className="mt-1 text-base font-black text-white" lang="es">
-                      {correctOption.target}
-                    </p>
+                    <div className="mt-1 flex flex-wrap items-center gap-3">
+                      <p className="text-base font-black text-white" lang="es">
+                        {correctOption.target}
+                      </p>
+                      <YoSpeechButton text={correctOption.target} locale={locale} compact />
+                    </div>
                     <p className="mt-1 text-xs font-semibold text-white/78">
                       {t(correctOption.translation, locale)}
                     </p>

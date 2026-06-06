@@ -16,7 +16,6 @@ import {
   Receipt,
   Sparkles,
   Utensils,
-  VolumeX,
 } from "lucide-react";
 import type { ReactNode } from "react";
 
@@ -30,6 +29,7 @@ import {
   YoBreadcrumb,
   type YoBreadcrumbItem,
 } from "@/components/yo/YoBreadcrumb";
+import { YoSpeechButton } from "@/components/yo/YoSpeechButton";
 import {
   DominicanRepublicCultureChallenge,
   DominicanRepublicModule3PrintButton,
@@ -114,9 +114,14 @@ const LABELS = {
     es: "Estas hojas están pensadas para imprimir: frases cortas, roleplay y listas.",
   },
   noAudioPlayback: {
-    fr: "Aucun lecteur audio n'est active dans ce module pour l'instant.",
-    en: "No audio player is active in this module yet.",
-    es: "No hay reproductor de audio activo en este módulo por ahora.",
+    fr: "Audio de pratique intégré au navigateur. La voix peut varier selon l'appareil.",
+    en: "Practice audio uses your browser voice. Voice quality may vary by device.",
+    es: "El audio de práctica usa la voz del navegador. La calidad puede variar según el dispositivo.",
+  },
+  browserAudio: {
+    fr: "Audio de pratique",
+    en: "Practice audio",
+    es: "Audio de práctica",
   },
   teacherBridge: {
     fr: "Apres le module, apporte ces phrases a ton professeur Pratiqo pour les pratiquer a voix haute.",
@@ -204,12 +209,11 @@ function HeroSection({ locale }: { locale: YoLocale }) {
               {label(locale, LABELS.module)} · {label(locale, LABELS.a1)}
             </span>
             <span
-              aria-disabled
-              data-yo-audio-state="coming-soon"
+              data-yo-audio-state="browser-speech"
               className="inline-flex items-center gap-1.5 rounded-full border border-[#0F6E56]/15 bg-white/70 px-3 py-1 text-[0.7rem] font-semibold text-[#0F6E56]/80"
             >
-              <VolumeX className="size-3.5" aria-hidden />
-              {t(data.audioComingSoonLabel, locale)}
+              <Headphones className="size-3.5" aria-hidden />
+              {label(locale, LABELS.browserAudio)}
             </span>
           </div>
 
@@ -397,9 +401,12 @@ function FoodCardsSection({ locale }: { locale: YoLocale }) {
                 <p className="text-[0.68rem] font-black uppercase tracking-[0.12em] text-[#F4B400]/85">
                   {label(locale, LABELS.orderPhrase)}
                 </p>
-                <p className="mt-1 text-base font-black" lang="es">
-                  {food.orderPhrase}
-                </p>
+                <div className="mt-1 flex flex-wrap items-center gap-3">
+                  <p className="text-base font-black" lang="es">
+                    {food.orderPhrase}
+                  </p>
+                  <YoSpeechButton text={food.orderPhrase} locale={locale} compact />
+                </div>
               </div>
             </div>
           </article>
@@ -451,9 +458,14 @@ function CultureCardsSection({ locale }: { locale: YoLocale }) {
             <p className="mt-2 text-xs leading-relaxed text-[#0F6E56]/68">
               {t(card.description, locale)}
             </p>
-            <p className="mt-3 rounded-xl border border-[#1D9E75]/10 bg-[#DDF4F1]/70 px-3 py-2 text-sm font-black text-[#0F6E56]" lang="es">
-              {card.phrase}
-            </p>
+            <div className="mt-3 rounded-xl border border-[#1D9E75]/10 bg-[#DDF4F1]/70 px-3 py-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-sm font-black text-[#0F6E56]" lang="es">
+                  {card.phrase}
+                </p>
+                <YoSpeechButton text={card.phrase} locale={locale} compact />
+              </div>
+            </div>
           </article>
         ))}
       </div>
@@ -490,9 +502,12 @@ function PhraseBankSection({ locale }: { locale: YoLocale }) {
                 {t(phrase.situation, locale)}
               </p>
             </div>
-            <p className="mt-2 text-lg font-black text-[#0F6E56]" lang="es">
-              {phrase.target}
-            </p>
+            <div className="mt-2 flex flex-wrap items-start justify-between gap-3">
+              <p className="text-lg font-black text-[#0F6E56]" lang="es">
+                {phrase.target}
+              </p>
+              <YoSpeechButton text={phrase.target} locale={locale} compact />
+            </div>
             <p className="mt-1 text-sm text-[#0F6E56]/70">
               {t(phrase.translation, locale)}
             </p>
@@ -546,9 +561,12 @@ function DialogueSection({
               <p className="text-[0.65rem] font-black uppercase tracking-[0.12em] opacity-70">
                 {t(line.speaker, locale)}
               </p>
-              <p className="mt-1 text-base font-black" lang="es">
-                {line.target}
-              </p>
+              <div className="mt-1 flex flex-wrap items-start justify-between gap-3">
+                <p className="text-base font-black" lang="es">
+                  {line.target}
+                </p>
+                <YoSpeechButton text={line.target} locale={locale} compact />
+              </div>
               <p className="mt-1 text-xs leading-relaxed opacity-75">
                 {t(line.translation, locale)}
               </p>
@@ -621,9 +639,14 @@ function EarsAndGrammarSection({ locale }: { locale: YoLocale }) {
               <p className="mt-1 text-xs leading-relaxed text-[#0F6E56]/68">
                 {t(card.description, locale)}
               </p>
-              <p className="mt-2 rounded-xl bg-[#DDF4F1]/70 px-3 py-2 text-sm font-black text-[#0F6E56]" lang="es">
-                {card.practicePhrase}
-              </p>
+              <div className="mt-2 rounded-xl bg-[#DDF4F1]/70 px-3 py-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-sm font-black text-[#0F6E56]" lang="es">
+                    {card.practicePhrase}
+                  </p>
+                  <YoSpeechButton text={card.practicePhrase} locale={locale} compact />
+                </div>
+              </div>
             </article>
           ))}
         </div>
@@ -699,9 +722,12 @@ function FlashcardsSection({ locale }: { locale: YoLocale }) {
                 <span className="mb-2 inline-flex rounded-full bg-[#DDF4F1]/70 px-2 py-0.5 text-[0.6rem] font-black uppercase tracking-[0.12em] text-[#0F6E56]">
                   {t(card.category, locale)}
                 </span>
-                <p className="text-lg font-black text-[#0F6E56]" lang="es">
-                  {card.front}
-                </p>
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <p className="text-lg font-black text-[#0F6E56]" lang="es">
+                    {card.front}
+                  </p>
+                  <YoSpeechButton text={card.front} locale={locale} compact />
+                </div>
                 <p className="mt-2 text-xs font-bold text-[#1D9E75]">
                   {label(locale, LABELS.answer)} →
                 </p>
@@ -778,9 +804,12 @@ function QuizSection({ locale }: { locale: YoLocale }) {
                   <summary className="cursor-pointer text-sm font-black text-[#8a5a17]">
                     {label(locale, LABELS.answer)}
                   </summary>
-                  <p className="mt-2 text-base font-black text-[#0F6E56]" lang="es">
-                    {correct.target}
-                  </p>
+                  <div className="mt-2 flex flex-wrap items-center gap-3">
+                    <p className="text-base font-black text-[#0F6E56]" lang="es">
+                      {correct.target}
+                    </p>
+                    <YoSpeechButton text={correct.target} locale={locale} compact />
+                  </div>
                   <p className="mt-1 text-sm font-semibold text-[#5a3f0f]">
                     {t(correct.translation, locale)}
                   </p>
@@ -865,15 +894,14 @@ function AudioNoticeSection({ locale }: { locale: YoLocale }) {
   return (
     <section className="mx-auto w-full max-w-5xl px-5 pt-8 sm:px-8">
       <div
-        aria-disabled
-        data-yo-module3-audio-state="coming-soon"
-        className="rounded-2xl border border-dashed border-[#1D9E75]/35 bg-[#DDF4F1]/55 p-4 text-[#0F6E56]"
+        data-yo-browser-audio-note
+        className="rounded-2xl border border-[#1D9E75]/25 bg-white/75 p-4 text-[#0F6E56] shadow-[0_10px_26px_rgba(15,58,52,0.05)]"
       >
         <div className="flex items-start gap-3">
-          <VolumeX className="mt-0.5 size-5 shrink-0" aria-hidden />
+          <Headphones className="mt-0.5 size-5 shrink-0" aria-hidden />
           <div>
             <p className="font-black">
-              {t(dominicanRepublicFoodCulture.audioComingSoonLabel, locale)}
+              {label(locale, LABELS.browserAudio)}
             </p>
             <p className="mt-1 text-sm leading-relaxed text-[#0F6E56]/70">
               {label(locale, LABELS.noAudioPlayback)}
