@@ -827,9 +827,7 @@ function FlashcardsSection({ locale }: { locale: YoLocale }) {
       }
       headingId="yo-do-m4-flashcards-title"
       sectionClassName="mx-auto w-full max-w-5xl px-5 pt-10 sm:px-8 sm:pt-14"
-      audioRenderer={(card) => (
-        <YoSpeechButton text={card.front} locale={locale} compact />
-      )}
+      audioMode="browser-speech"
     />
   );
 }

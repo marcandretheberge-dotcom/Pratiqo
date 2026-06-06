@@ -113,20 +113,28 @@ test("browser audio note is rendered exactly once", () => {
 
 test("YoSpeechButton wires audio to phrases, dialogues, places, grammar, readings", () => {
   const src = read(CONTENT_FILE);
-  // YoSpeechButton imported and called multiple times.
+  // YoSpeechButton imported and called multiple times directly inside
+  // the server component (places, phrase bank, dialogues, Dominican
+  // ears, grammar examples, readings — 6 surfaces today). Flashcard
+  // speech is delegated to YoFlashcardPreview via the serializable
+  // `audioMode="browser-speech"` prop, so it does NOT count toward
+  // these inline JSX call sites anymore.
   const occurrences = src.match(/<YoSpeechButton/g) ?? [];
-  // 7 distinct call sites today: place cards, phrase bank, dialogue lines,
-  // Dominican ears, grammar examples, readings, and flashcards (via the
-  // audioRenderer prop). Keep the bar at >= 7 so the guard catches a
-  // regression that drops one of the audio surfaces.
   assert.ok(
-    occurrences.length >= 7,
-    `YoSpeechButton expected at >= 7 audio sites, found ${occurrences.length}`,
+    occurrences.length >= 6,
+    `YoSpeechButton expected at >= 6 inline audio sites, found ${occurrences.length}`,
   );
-  // Flashcards must inject a YoSpeechButton via audioRenderer.
+  // Flashcards must keep their browser-speech audio, but via the
+  // serializable string prop (RSC-safe), NOT a function literal.
   assert.match(
     src,
-    /audioRenderer=\{\(card\)\s*=>\s*\(\s*<YoSpeechButton/,
+    /<YoFlashcardPreview[\s\S]*?audioMode\s*=\s*["']browser-speech["']/,
+    "Module 4 flashcards must wire browser speech via audioMode (RSC-safe)",
+  );
+  // The legacy non-serializable function prop must never come back.
+  assert.ok(
+    !/audioRenderer\s*=\s*\{/.test(src),
+    "Module 4 must not pass an audioRenderer function across the RSC boundary",
   );
 });
 

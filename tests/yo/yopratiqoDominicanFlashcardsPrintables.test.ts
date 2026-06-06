@@ -31,6 +31,17 @@ function exists(relativePath: string): boolean {
   return existsSync(join(REPO_ROOT, relativePath));
 }
 
+/**
+ * Strip TS/JS comments before structural regex checks so historical
+ * notes (e.g. "Replaces the previous `audioRenderer` prop") don't
+ * trip the guard against the legacy non-serializable prop.
+ */
+function stripComments(src: string): string {
+  return src
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/(^|[^:])\/\/[^\n]*/g, "$1");
+}
+
 function changedFiles(): string[] {
   const commands = [
     "git diff --name-only main...HEAD",
@@ -77,7 +88,7 @@ test("shared printable component and data files exist", () => {
 
 // ─── 2. Flashcard system is unified ─────────────────────────────────────
 
-test("YoFlashcardPreview accepts an audioRenderer override (RD intro untouched)", () => {
+test("YoFlashcardPreview exposes a serializable audioMode override (RD intro untouched)", () => {
   const src = read(FLASHCARD_PREVIEW);
   // Backward-compatible: default still uses YoSpanishAudioButton.
   assert.match(
@@ -85,16 +96,34 @@ test("YoFlashcardPreview accepts an audioRenderer override (RD intro untouched)"
     /<YoSpanishAudioButton/,
     "default flashcard audio button must still be YoSpanishAudioButton",
   );
-  // New optional slot exists.
+  // The override slot MUST be a serializable string discriminator —
+  // never a function — because YoFlashcardPreview is "use client" and
+  // is mounted from server components like the RD module surfaces.
+  // Passing a function across the RSC boundary throws at runtime:
+  //   "Functions cannot be passed directly to Client Components..."
   assert.match(
     src,
-    /audioRenderer\?:/,
-    "YoFlashcardPreview must expose an optional audioRenderer prop",
+    /audioMode\?:\s*"spanish-default"\s*\|\s*"browser-speech"/,
+    "YoFlashcardPreview must expose audioMode as a string-literal union",
+  );
+  // The legacy non-serializable function prop MUST NOT come back as
+  // real code. Deprecation notes inside JSDoc comments are allowed.
+  const code = stripComments(src);
+  assert.ok(
+    !/audioRenderer\?:/.test(code) && !/audioRenderer\s*\(card\)/.test(code),
+    "audioRenderer function prop must not reappear (RSC boundary breaks it)",
+  );
+  // The component must actually consume audioMode internally to
+  // render YoSpeechButton in the "browser-speech" branch.
+  assert.match(
+    src,
+    /audioMode\s*===\s*"browser-speech"/,
+    "audioMode must drive the conditional render inside the client component",
   );
   assert.match(
     src,
-    /audioRenderer\(card\)/,
-    "audioRenderer must receive the YoFlashcard (not just the text)",
+    /<YoSpeechButton\s+text=\{card\.front\}/,
+    "browser-speech branch must render YoSpeechButton from inside the client component",
   );
 });
 
@@ -110,11 +139,16 @@ test("Module 2 mounts the canonical YoFlashcardPreview carousel", () => {
     /<YoFlashcardPreview\b/,
     "Module 2 flashcard surface must mount YoFlashcardPreview",
   );
-  // Pedagogical: Spanish target text still surfaced via the existing
-  // YoSpeechButton pipeline (no MP3, no manifest, no OpenAI).
-  assert.ok(
-    src.includes("<YoSpeechButton text={card.front}"),
-    "Module 2 must keep browser-only speech audio for flashcards",
+  // Pedagogical: Spanish flashcard audio still uses the browser
+  // speech pipeline (no MP3, no manifest, no OpenAI). It is now wired
+  // through the serializable `audioMode="browser-speech"` prop instead
+  // of a function literal — the function form crashed at request time
+  // because YoFlashcardPreview is a client component mounted from
+  // this server component.
+  assert.match(
+    src,
+    /audioMode\s*=\s*["']browser-speech["']/,
+    "Module 2 must select browser-speech audio for flashcards via audioMode",
   );
   // Spanish-first speech locale.
   assert.match(src, /speechLang\s*=\s*["']es-DO["']/);
@@ -128,7 +162,11 @@ test("Module 3 mounts the canonical YoFlashcardPreview carousel", () => {
     "Module 3 must import YoFlashcardPreview",
   );
   assert.match(src, /<YoFlashcardPreview\b/);
-  assert.ok(src.includes("<YoSpeechButton text={card.front}"));
+  assert.match(
+    src,
+    /audioMode\s*=\s*["']browser-speech["']/,
+    "Module 3 must select browser-speech audio for flashcards via audioMode",
+  );
   assert.match(src, /speechLang\s*=\s*["']es-DO["']/);
 });
 

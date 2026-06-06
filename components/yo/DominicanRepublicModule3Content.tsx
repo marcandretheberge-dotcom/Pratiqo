@@ -746,10 +746,11 @@ function FlashcardsSection({ locale }: { locale: YoLocale }) {
         }
         sectionClassName="pt-3 sm:pt-4"
         // Browser-only audio button shared with every other Module 3
-        // surface (no MP3, no manifest, no OpenAI dependency).
-        audioRenderer={(card) => (
-          <YoSpeechButton text={card.front} locale={locale} compact />
-        )}
+        // surface (no MP3, no manifest, no OpenAI dependency). Uses a
+        // serializable string discriminator because YoFlashcardPreview
+        // is a client component mounted from this server component
+        // (RSC boundary forbids function props).
+        audioMode="browser-speech"
       />
     </div>
   );
