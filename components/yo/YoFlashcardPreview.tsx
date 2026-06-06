@@ -31,7 +31,14 @@
  *   - Spanish fronts stay plain with `lang="es"`.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   CheckCircle2,
   ChevronLeft,
@@ -74,6 +81,46 @@ export interface YoFlashcardPreviewProps {
    * Speech.
    */
   audioContext?: YoSpanishAudioContext;
+  /**
+   * Optional audio button slot. When provided, replaces the default
+   * `YoSpanishAudioButton` for every card front. Used by the
+   * Dominican Republic premium modules (Module 2 / Module 3) so they
+   * can keep their existing `YoSpeechButton` browser-only audio
+   * implementation (no manifest, no MP3, no OpenAI) while still
+   * getting the canonical RD-intro carousel layout.
+   *
+   * Receives the full `YoFlashcard` (not just the text) so call sites
+   * can wire their own audio component directly against the card
+   * shape without losing access to optional metadata (lang tags,
+   * audio context, etc.).
+   */
+  audioRenderer?: (card: YoFlashcard) => ReactNode;
+  /**
+   * Optional override for the section heading. Defaults to
+   * `YO_COPY.flash.title`. Used by the Dominican Republic modules so
+   * each module surface keeps its own framing ("15 essential words",
+   * "32 quick cards…") while the body uses the same canonical
+   * carousel layout.
+   */
+  title?: string;
+  /**
+   * Optional override for the small caption shown next to the
+   * heading. Defaults to `YO_COPY.flash.subtitle`.
+   */
+  subtitle?: string;
+  /**
+   * Optional element id for the section heading. Defaults to
+   * `yo-flash-title`. Set per module so multiple `YoFlashcardPreview`
+   * mounts on the same page (RD intro vs. modules) keep unique
+   * `aria-labelledby` anchors.
+   */
+  headingId?: string;
+  /**
+   * Optional class name forwarded to the outermost `<section>`.
+   * Used by callers that need to tag the section with a
+   * `data-yo-module*-flashcard-*` attribute via a wrapping `<div>`.
+   */
+  sectionClassName?: string;
 }
 
 const TONE: Record<YoFlashcardQuality, string> = {
@@ -94,6 +141,11 @@ export function YoFlashcardPreview({
   locale,
   speechLang = "es-ES",
   audioContext,
+  audioRenderer,
+  title,
+  subtitle,
+  headingId = "yo-flash-title",
+  sectionClassName,
 }: YoFlashcardPreviewProps) {
   const total = cards.length;
   const [index, setIndex] = useState(0);
@@ -236,20 +288,26 @@ export function YoFlashcardPreview({
     return null;
   }
 
+  const resolvedTitle = title ?? t(YO_COPY.flash.title, locale);
+  const resolvedSubtitle = subtitle ?? t(YO_COPY.flash.subtitle, locale);
+  const sectionClasses = [
+    "mx-auto w-full max-w-5xl px-5 pt-10 sm:px-8 sm:pt-14",
+    sectionClassName,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
-    <section
-      aria-labelledby="yo-flash-title"
-      className="mx-auto w-full max-w-5xl px-5 pt-10 sm:px-8 sm:pt-14"
-    >
+    <section aria-labelledby={headingId} className={sectionClasses}>
       <div className="mb-5 flex items-baseline justify-between gap-4">
         <h2
-          id="yo-flash-title"
+          id={headingId}
           className="text-xl font-medium tracking-tight text-[#1a3a32] sm:text-2xl"
         >
-          {t(YO_COPY.flash.title, locale)}
+          {resolvedTitle}
         </h2>
         <p className="hidden text-sm text-[var(--color-text-secondary)] sm:block">
-          {t(YO_COPY.flash.subtitle, locale)}
+          {resolvedSubtitle}
         </p>
       </div>
 
@@ -277,6 +335,7 @@ export function YoFlashcardPreview({
           locale={locale}
           speechLang={speechLang}
           audioContext={audioContext}
+          audioRenderer={audioRenderer}
         />
       )}
     </section>
@@ -300,6 +359,7 @@ interface DeckCardProps {
   locale: YoLocale;
   speechLang: string;
   audioContext?: YoSpanishAudioContext;
+  audioRenderer?: (card: YoFlashcard) => ReactNode;
 }
 
 function DeckCard({
@@ -319,6 +379,7 @@ function DeckCard({
   locale,
   speechLang,
   audioContext,
+  audioRenderer,
 }: DeckCardProps) {
   const isLast = index === total - 1;
   const isFirst = index === 0;
@@ -438,17 +499,21 @@ function DeckCard({
                   >
                     {card.front}
                   </p>
-                  <YoSpanishAudioButton
-                    text={card.front}
-                    locale={locale}
-                    moduleId={audioContext?.moduleId}
-                    lessonId={audioContext?.lessonId}
-                    type={audioContext?.type}
-                    accentProfile={audioContext?.accentProfile}
-                    speechLang={audioContext?.speechLang ?? speechLang}
-                    size="sm"
-                    className="mt-1"
-                  />
+                  {audioRenderer ? (
+                    <span className="mt-1 inline-flex">{audioRenderer(card)}</span>
+                  ) : (
+                    <YoSpanishAudioButton
+                      text={card.front}
+                      locale={locale}
+                      moduleId={audioContext?.moduleId}
+                      lessonId={audioContext?.lessonId}
+                      type={audioContext?.type}
+                      accentProfile={audioContext?.accentProfile}
+                      speechLang={audioContext?.speechLang ?? speechLang}
+                      size="sm"
+                      className="mt-1"
+                    />
+                  )}
                 </div>
                 <p className="text-sm text-[var(--color-text-secondary)]">
                   {flipCta}

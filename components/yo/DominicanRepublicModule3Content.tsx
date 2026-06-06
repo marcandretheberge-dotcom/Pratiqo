@@ -34,6 +34,10 @@ import {
   DominicanRepublicCultureChallenge,
   DominicanRepublicModule3PrintButton,
 } from "@/components/yo/DominicanRepublicModule3Interactive";
+import { YoFlashcardPreview } from "@/components/yo/YoFlashcardPreview";
+import { DominicanModulePrintables } from "@/components/yo/DominicanModulePrintables";
+import { module3FlashcardsToYo } from "@/lib/yo/dominicanRepublicFlashcardAdapters";
+import { module3PrintablePack } from "@/lib/yo/dominicanRepublicPrintables";
 
 const SECTION_LABELS = {
   passport: {
@@ -698,11 +702,26 @@ function EarsAndGrammarSection({ locale }: { locale: YoLocale }) {
 
 function FlashcardsSection({ locale }: { locale: YoLocale }) {
   const data = dominicanRepublicFoodCulture;
+  const yoCards = module3FlashcardsToYo(data.flashcards);
   return (
-    <section className="mx-auto w-full max-w-5xl px-5 pt-10 sm:px-8 sm:pt-14">
-      <SectionHeader
-        icon={<Coffee className="size-4 text-[#1D9E75]" aria-hidden />}
-        labelText={label(locale, SECTION_LABELS.flashcards)}
+    <div
+      data-yo-module3-flashcard-count={yoCards.length}
+      className="mx-auto w-full max-w-5xl"
+    >
+      {/* Eyebrow + module-specific framing kept here; the body below
+          is the canonical RD-intro YoFlashcardPreview carousel — same
+          autoplay, prev/next, progress, rating, and completion panel. */}
+      <div className="px-5 pt-10 sm:px-8 sm:pt-14">
+        <p className="flex items-center gap-2 text-[0.75rem] font-black uppercase tracking-[0.14em] text-[#0F6E56]/70">
+          <Coffee className="size-4 text-[#1D9E75]" aria-hidden />
+          {label(locale, SECTION_LABELS.flashcards)}
+        </p>
+      </div>
+      <YoFlashcardPreview
+        cards={yoCards}
+        locale={locale}
+        speechLang="es-DO"
+        headingId="yo-do-m3-flashcards-title"
         title={
           locale === "en"
             ? "32 quick cards for food, drinks, payment, places, and music"
@@ -710,38 +729,14 @@ function FlashcardsSection({ locale }: { locale: YoLocale }) {
               ? "32 tarjetas para comida, bebidas, pago, lugares y música"
               : "32 cartes rapides: plats, boissons, paiement, lieux et musique"
         }
+        sectionClassName="pt-3 sm:pt-4"
+        // Browser-only audio button shared with every other Module 3
+        // surface (no MP3, no manifest, no OpenAI dependency).
+        audioRenderer={(card) => (
+          <YoSpeechButton text={card.front} locale={locale} compact />
+        )}
       />
-      <ul
-        className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
-        data-yo-module3-flashcard-count={data.flashcards.length}
-      >
-        {data.flashcards.map((card) => (
-          <li key={card.id}>
-            <details className="group rounded-2xl border border-teal-100 bg-white shadow-[0_1px_2px_rgba(15,58,52,0.04)]">
-              <summary className="cursor-pointer list-none rounded-2xl p-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1D9E75] focus-visible:ring-offset-2">
-                <span className="mb-2 inline-flex rounded-full bg-[#DDF4F1]/70 px-2 py-0.5 text-[0.6rem] font-black uppercase tracking-[0.12em] text-[#0F6E56]">
-                  {t(card.category, locale)}
-                </span>
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <p className="text-lg font-black text-[#0F6E56]" lang="es">
-                    {card.front}
-                  </p>
-                  <YoSpeechButton text={card.front} locale={locale} compact />
-                </div>
-                <p className="mt-2 text-xs font-bold text-[#1D9E75]">
-                  {label(locale, LABELS.answer)} →
-                </p>
-              </summary>
-              <div className="border-t border-teal-100 px-4 pb-4 pt-3">
-                <p className="text-sm font-semibold text-[#0F6E56]/85">
-                  {t(card.back, locale)}
-                </p>
-              </div>
-            </details>
-          </li>
-        ))}
-      </ul>
-    </section>
+    </div>
   );
 }
 
@@ -981,6 +976,12 @@ export function DominicanRepublicModule3Content({
           locale={locale}
         />
         <PrintablesSection locale={locale} />
+        {/* Real reinforcement worksheets (vocabulary match,
+            fill-in-the-blank, scenario multiple choice, simple
+            yo/usted verb practice, production prompts) live here
+            beside the legacy printable sheets. Same premium
+            visual language, real exercises, with answer keys. */}
+        <DominicanModulePrintables pack={module3PrintablePack} locale={locale} />
         <ClosingBridge locale={locale} />
       </main>
     </div>

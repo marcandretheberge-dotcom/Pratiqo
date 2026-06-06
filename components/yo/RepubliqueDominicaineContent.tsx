@@ -29,6 +29,8 @@ import {
   YoBreadcrumb,
   type YoBreadcrumbItem,
 } from "@/components/yo/YoBreadcrumb";
+import { DominicanModulePrintables } from "@/components/yo/DominicanModulePrintables";
+import { module1PrintablePack } from "@/lib/yo/dominicanRepublicPrintables";
 
 export interface RepubliqueDominicaineContentProps {
   locale: YoLocale;
@@ -109,6 +111,13 @@ export function RepubliqueDominicaineContent({
         />
 
         <YoFeatureStrip features={bottomFeatures} locale={locale} />
+
+        {/* Printable practice worksheets — vocabulary match,
+            fill-in-the-blank dialogues, and a short production
+            prompt that lets the learner actively practise the
+            first Dominican words. Self-contained: every exercise
+            ships with a collapsible answer key. */}
+        <DominicanModulePrintables pack={module1PrintablePack} locale={locale} />
 
         <section
           aria-labelledby="yo-final-cta-title"

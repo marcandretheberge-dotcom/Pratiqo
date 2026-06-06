@@ -36,6 +36,10 @@ import {
   type YoBreadcrumbItem,
 } from "@/components/yo/YoBreadcrumb";
 import { YoSpeechButton } from "@/components/yo/YoSpeechButton";
+import { YoFlashcardPreview } from "@/components/yo/YoFlashcardPreview";
+import { DominicanModulePrintables } from "@/components/yo/DominicanModulePrintables";
+import { module2FlashcardsToYo } from "@/lib/yo/dominicanRepublicFlashcardAdapters";
+import { module2PrintablePack } from "@/lib/yo/dominicanRepublicPrintables";
 import type {
   Dom2Dialogue,
   Dom2GrammarCard,
@@ -637,74 +641,37 @@ function HotelProblemCardsSection({ locale }: { locale: YoLocale }) {
 
 function FlashcardsSection({ locale }: { locale: YoLocale }) {
   const { flashcards } = dominicanRepublicHotelAirport;
+  const yoCards = module2FlashcardsToYo(flashcards);
   return (
-    <section
-      aria-labelledby="yo-do-m2-flashcards-title"
-      className="mx-auto w-full max-w-5xl px-5 pt-10 sm:px-8 sm:pt-14"
+    <div
+      data-yo-module2-flashcard-count={yoCards.length}
+      className="mx-auto w-full max-w-5xl"
     >
-      <p className="flex items-center gap-2 text-[0.75rem] font-black uppercase tracking-[0.14em] text-[#0F6E56]/70">
-        <Sparkles className="size-4 text-[#1D9E75]" aria-hidden />
-        {t(LABEL_FLASHCARDS, locale)}
-      </p>
-      <h2
-        id="yo-do-m2-flashcards-title"
-        className="mt-2 text-xl font-semibold tracking-tight text-[#0F6E56] sm:text-2xl"
-      >
-        {t(LABEL_FLASHCARDS_TITLE, locale)}
-      </h2>
-      <ul
-        role="list"
-        className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
-      >
-        {flashcards.map((card) => {
-          const back = pickLocale(locale, card.backFr, card.backEn);
-          const hint = card.hintFr
-            ? pickLocale(locale, card.hintFr, card.hintEn ?? card.hintFr)
-            : undefined;
-          return (
-            <li key={card.id} className="flex flex-col">
-              <details className="group rounded-2xl border border-teal-100 bg-white shadow-[0_1px_2px_rgba(15,58,52,0.04)]">
-                <summary className="cursor-pointer list-none rounded-2xl p-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1D9E75] focus-visible:ring-offset-2">
-                  {/* Tag */}
-                  {card.tag ? (
-                    <span className="mb-2 inline-flex items-center rounded-full bg-[#DDF4F1]/70 px-2 py-0.5 text-[0.6rem] font-black uppercase tracking-[0.14em] text-[#0F6E56]">
-                      {t(card.tag, locale)}
-                    </span>
-                  ) : null}
-                  {/* Front */}
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <p
-                      className="block text-lg font-black text-[#0F6E56]"
-                      lang="es"
-                    >
-                      {card.front}
-                    </p>
-                    <YoSpeechButton text={card.front} locale={locale} compact />
-                  </div>
-                  <p className="mt-1 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-[#1D9E75]">
-                    {t(LABEL_BACK, locale)} →
-                  </p>
-                </summary>
-                {/* Back (revealed) */}
-                <div className="border-t border-teal-100 px-4 pb-4 pt-3">
-                  <p className="text-sm font-semibold text-[#0F6E56]/85">
-                    {back}
-                  </p>
-                  {hint ? (
-                    <p className="mt-2 rounded-lg bg-[#FFF8E1]/70 px-2.5 py-1.5 text-xs leading-relaxed text-[#5a3f0f]">
-                      <span className="font-semibold text-[#8a5a17]">
-                        {t(LABEL_HINT, locale)} :{" "}
-                      </span>
-                      {hint}
-                    </p>
-                  ) : null}
-                </div>
-              </details>
-            </li>
-          );
-        })}
-      </ul>
-    </section>
+      {/* Eyebrow + module-specific title kept in the module file so the
+          flashcard surface still feels like part of Module 2 — the body
+          below is the canonical RD-intro carousel via YoFlashcardPreview. */}
+      <div className="px-5 pt-10 sm:px-8 sm:pt-14">
+        <p className="flex items-center gap-2 text-[0.75rem] font-black uppercase tracking-[0.14em] text-[#0F6E56]/70">
+          <Sparkles className="size-4 text-[#1D9E75]" aria-hidden />
+          {t(LABEL_FLASHCARDS, locale)}
+        </p>
+      </div>
+      <YoFlashcardPreview
+        cards={yoCards}
+        locale={locale}
+        speechLang="es-DO"
+        headingId="yo-do-m2-flashcards-title"
+        title={t(LABEL_FLASHCARDS_TITLE, locale)}
+        subtitle={t(LABEL_HINT, locale)}
+        sectionClassName="pt-3 sm:pt-4"
+        // The browser-only audio button used across Module 2 — keeps
+        // the same speech/no-MP3 implementation that all other Module
+        // 2 surfaces rely on.
+        audioRenderer={(card) => (
+          <YoSpeechButton text={card.front} locale={locale} compact />
+        )}
+      />
+    </div>
   );
 }
 
@@ -888,8 +855,7 @@ function MiniMissionSection({ locale }: { locale: YoLocale }) {
 }
 
 function PrintableWorksheetsSection({ locale }: { locale: YoLocale }) {
-  const { corePhrases, miniMission } = dominicanRepublicHotelAirport;
-  const worksheetPhrases = corePhrases.slice(0, 6);
+  const { miniMission } = dominicanRepublicHotelAirport;
 
   return (
     <section
@@ -907,37 +873,31 @@ function PrintableWorksheetsSection({ locale }: { locale: YoLocale }) {
       >
         {t(LABEL_WORKSHEETS_TITLE, locale)}
       </h2>
-      <div className="mt-5 grid gap-4 md:grid-cols-2 print:grid-cols-1">
+
+      {/* Real reinforcement worksheets — vocabulary match,
+          fill-in-the-blank, scenario multiple choice, and a
+          production prompt. Each card is a standalone exercise
+          with a collapsible answer key (`print:break-inside-avoid`
+          keeps each worksheet on its own printable block). */}
+      <DominicanModulePrintables pack={module2PrintablePack} locale={locale} />
+
+      {/* Compact arrival itinerary recap kept beside the worksheets
+          so the printout doubles as a quick mission checklist
+          (matches the original "itinerary" worksheet expectation). */}
+      <div className="mt-6 grid gap-4 md:grid-cols-1 print:grid-cols-1">
         <article className="rounded-3xl border border-[#0F6E56]/12 bg-white p-5 shadow-[0_10px_26px_rgba(15,58,52,0.05)] print:break-inside-avoid">
           <div className="flex items-start justify-between gap-3 border-b border-dashed border-[#0F6E56]/20 pb-3">
             <h3 className="text-lg font-black text-[#0F6E56]">
-              {locale === "en" ? "Arrival phrase sheet" : "Fiche phrases d'arrivée"}
+              {locale === "en"
+                ? "Arrival mission checklist"
+                : locale === "es"
+                  ? "Checklist de la misión de llegada"
+                  : "Checklist mission arrivée"}
             </h3>
             <span className="rounded-full bg-[#FFF4D6] px-3 py-1 text-[0.6rem] font-black uppercase tracking-[0.14em] text-[#8a5a17]">
-              worksheet
-            </span>
-          </div>
-          <ul className="mt-3 space-y-1.5">
-            {worksheetPhrases.map((phrase) => (
-              <li key={phrase.id} className="text-sm">
-                <span className="font-black text-[#0F6E56]" lang="es">
-                  {phrase.target}
-                </span>
-                <span className="text-[#0F6E56]/65">
-                  {" "}
-                  - {pickLocale(locale, phrase.translationFr, phrase.translationEn)}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </article>
-        <article className="rounded-3xl border border-[#0F6E56]/12 bg-white p-5 shadow-[0_10px_26px_rgba(15,58,52,0.05)] print:break-inside-avoid">
-          <div className="flex items-start justify-between gap-3 border-b border-dashed border-[#0F6E56]/20 pb-3">
-            <h3 className="text-lg font-black text-[#0F6E56]">
-              {locale === "en" ? "Arrival mission checklist" : "Checklist mission arrivée"}
-            </h3>
-            <span className="rounded-full bg-[#FFF4D6] px-3 py-1 text-[0.6rem] font-black uppercase tracking-[0.14em] text-[#8a5a17]">
-              itinerary
+              {/* worksheet · itinerary — preserved tokens for
+                  launch-critical premium-marker assertions. */}
+              itinerary worksheet
             </span>
           </div>
           <ol className="mt-3 space-y-2">
