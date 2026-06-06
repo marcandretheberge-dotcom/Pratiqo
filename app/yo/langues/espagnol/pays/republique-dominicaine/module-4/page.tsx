@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   title:
     "YoPratiqo — Module 4 — Se déplacer et explorer en République dominicaine",
   description:
-    "Module 4 — Demander son chemin, prendre la guagua ou un taxi, comprendre les directions, raconter une excursion. Lectures espagnoles courtes et chunks utiles au passé.",
+    "Module 4 — Demander son chemin, prendre la guagua ou un taxi, comprendre les directions, raconter une excursion. Lectures espagnoles courtes et phrases utiles au passé.",
   alternates: {
     canonical: `${SITE_URL}/yo/langues/espagnol/pays/republique-dominicaine/module-4`,
   },

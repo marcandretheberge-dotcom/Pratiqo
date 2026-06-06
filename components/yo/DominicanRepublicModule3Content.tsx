@@ -153,9 +153,9 @@ const LABELS = {
     es: "Abrir el módulo 4",
   },
   module4Body: {
-    fr: "Continue avec « Se déplacer et explorer » : transports, directions et premiers chunks au passé.",
-    en: "Keep going with \"Getting around and exploring\": transport, directions, and the first past-tense chunks.",
-    es: "Sigue con «Moverse y explorar»: transporte, direcciones y los primeros chunks de pasado.",
+    fr: "Continue avec « Se déplacer et explorer » : transports, directions et premières phrases au passé.",
+    en: "Keep going with \"Getting around and exploring\": transport, directions, and your first past-tense phrases.",
+    es: "Sigue con «Moverse y explorar»: transporte, direcciones y las primeras frases en pasado.",
   },
 };
 

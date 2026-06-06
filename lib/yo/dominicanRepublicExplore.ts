@@ -284,9 +284,9 @@ const missionStops: Dom4MissionStop[] = [
       "Contar lo que hiciste",
     ),
     description: lstr(
-      "Quelques chunks pratiques au passé : fui, visité, tomé, caminé, compré, saqué, me gustó, fue.",
-      "A few useful past-tense chunks: fui, visité, tomé, caminé, compré, saqué, me gustó, fue.",
-      "Unos cuantos chunks útiles en pasado: fui, visité, tomé, caminé, compré, saqué, me gustó, fue.",
+      "Quelques formes pratiques au passé : fui, visité, tomé, caminé, compré, saqué, me gustó, fue.",
+      "A few useful past-tense forms: fui, visité, tomé, caminé, compré, saqué, me gustó, fue.",
+      "Algunas formas útiles en pasado: fui, visité, tomé, caminé, compré, saqué, me gustó, fue.",
     ),
   },
   {
@@ -878,9 +878,9 @@ const phraseBank: Dom4Phrase[] = [
     category: CAT_PAST,
     translation: lstr("Aujourd'hui je suis allé(e) à...", "Today I went to...", "Hoy fui a..."),
     usage: lstr(
-      "« Fui » est un chunk pratique du passé. À mémoriser tel quel.",
-      "\"Fui\" is a useful past-tense chunk. Memorize it as is.",
-      "\"Fui\" es un chunk práctico del pasado. Apréndelo así.",
+      "« Fui » est une forme pratique du passé. À mémoriser telle quelle.",
+      "\"Fui\" is a useful past-tense form. Memorize it as is.",
+      "\"Fui\" es una forma práctica del pasado. Apréndela así.",
     ),
   },
   {
@@ -981,9 +981,9 @@ const phraseBank: Dom4Phrase[] = [
     category: CAT_REACT,
     translation: lstr("C'était très joli.", "It was very nice.", "Fue muy bonito."),
     usage: lstr(
-      "« Fue » est un autre chunk pratique du passé.",
-      "\"Fue\" is another useful past-tense chunk.",
-      "\"Fue\" es otro chunk práctico del pasado.",
+      "« Fue » est une autre forme pratique du passé.",
+      "\"Fue\" is another useful past-tense form.",
+      "\"Fue\" es otra forma práctica del pasado.",
     ),
   },
   {
@@ -1463,9 +1463,9 @@ const grammarCards: Dom4GrammarCard[] = [
     id: "g-me-perdi",
     pattern: "Me perdí.",
     meaning: lstr(
-      "Annoncer qu'on est perdu (chunk passé · 1re personne).",
-      "Say you're lost (1st-person past chunk).",
-      "Decir que te perdiste (chunk de pasado · 1ª persona).",
+      "Annoncer qu'on est perdu (passé).",
+      "Say you're lost (past tense).",
+      "Decir que te perdiste (en pasado).",
     ),
     examples: [
       {
@@ -1491,9 +1491,9 @@ const grammarCards: Dom4GrammarCard[] = [
     id: "g-hoy-fui",
     pattern: "Hoy fui a + [lugar]",
     meaning: lstr(
-      "Raconter une sortie d'aujourd'hui (chunk passé).",
-      "Talk about today's outing (past chunk).",
-      "Contar una salida de hoy (chunk de pasado).",
+      "Raconter une sortie d'aujourd'hui (au passé).",
+      "Talk about today's outing (past tense).",
+      "Contar una salida de hoy (en pasado).",
     ),
     examples: [
       {
@@ -1523,9 +1523,9 @@ const grammarCards: Dom4GrammarCard[] = [
     id: "g-ayer-fui",
     pattern: "Ayer fui a + [lugar]",
     meaning: lstr(
-      "Raconter une sortie d'hier (chunk passé).",
-      "Talk about yesterday's outing (past chunk).",
-      "Contar una salida de ayer (chunk de pasado).",
+      "Raconter une sortie d'hier (au passé).",
+      "Talk about yesterday's outing (past tense).",
+      "Contar una salida de ayer (en pasado).",
     ),
     examples: [
       {
@@ -1555,9 +1555,9 @@ const grammarCards: Dom4GrammarCard[] = [
     id: "g-action-chunks",
     pattern: "Tomé / visité / caminé / compré / saqué",
     meaning: lstr(
-      "Cinq chunks d'action utiles au passé (1re personne du singulier).",
-      "Five useful past-tense action chunks (1st-person singular).",
-      "Cinco chunks útiles en pasado (1ª persona del singular).",
+      "Cinq petites phrases au passé pour raconter une sortie.",
+      "Five useful past-tense phrases for describing an outing.",
+      "Cinco frases útiles en pasado para contar una salida.",
     ),
     examples: [
       {
@@ -1586,9 +1586,9 @@ const grammarCards: Dom4GrammarCard[] = [
       },
     ],
     prompt: lstr(
-      "Combine deux chunks pour raconter ta journée.",
-      "Combine two chunks to tell your day.",
-      "Combina dos chunks para contar tu día.",
+      "Combine deux phrases au passé pour raconter ta journée.",
+      "Combine two past-tense phrases to tell your day.",
+      "Combina dos frases en pasado para contar tu día.",
     ),
   },
   {
@@ -1955,7 +1955,11 @@ const readingTexts: Dom4ReadingText[] = [
 const FC_TRANSPORT = lstr("Transport", "Transport", "Transporte");
 const FC_DIRECTIONS = lstr("Directions", "Directions", "Direcciones");
 const FC_PLACES = lstr("Lieux", "Places", "Lugares");
-const FC_PAST = lstr("Passé · chunks", "Past · chunks", "Pasado · chunks");
+const FC_PAST = lstr(
+  "Passé · phrases utiles",
+  "Past · useful phrases",
+  "Pasado · frases útiles",
+);
 const FC_VERBS = lstr("Verbes utiles", "Useful verbs", "Verbos útiles");
 const FC_EXPLORE = lstr("Exploration", "Exploration", "Exploración");
 
@@ -2007,7 +2011,11 @@ const flashcards: Dom4Flashcard[] = [
 const QT_PHRASE = lstr("Choisir la phrase", "Choose the phrase", "Elegir la frase");
 const QT_DIRECTIONS = lstr("Directions", "Directions", "Direcciones");
 const QT_TRANSPORT = lstr("Transport", "Transport", "Transporte");
-const QT_PAST = lstr("Passé · chunk", "Past · chunk", "Pasado · chunk");
+const QT_PAST = lstr(
+  "Passé · phrase utile",
+  "Past · useful phrase",
+  "Pasado · frase útil",
+);
 const QT_READING = lstr("Lecture", "Reading", "Lectura");
 const QT_PLACE = lstr("Lieu culturel", "Cultural place", "Lugar cultural");
 
@@ -2107,9 +2115,9 @@ const quizQuestions: Dom4QuizQuestion[] = [
     ],
     correctOptionId: "b",
     explanation: lstr(
-      "« Ayer fui a... » combine « ayer » (hier) et le chunk passé « fui ».",
-      "\"Ayer fui a...\" combines \"ayer\" (yesterday) and the past chunk \"fui\".",
-      "\"Ayer fui a...\" combina \"ayer\" y el chunk de pasado \"fui\".",
+      "« Ayer fui a... » combine « ayer » (hier) et la forme passée « fui ».",
+      "\"Ayer fui a...\" combines \"ayer\" (yesterday) and the past-tense form \"fui\".",
+      "\"Ayer fui a...\" combina \"ayer\" y la forma de pasado \"fui\".",
     ),
   },
   {
@@ -2127,9 +2135,9 @@ const quizQuestions: Dom4QuizQuestion[] = [
     ],
     correctOptionId: "c",
     explanation: lstr(
-      "« Tomé » est le chunk passé pour « j'ai pris ».",
-      "\"Tomé\" is the past-tense chunk for \"I took\".",
-      "\"Tomé\" es el chunk de pasado para \"I took\".",
+      "« Tomé » est la forme passée pour « j'ai pris ».",
+      "\"Tomé\" is the past-tense form for \"I took\".",
+      "\"Tomé\" es la forma en pasado para \"yo tomé\".",
     ),
   },
   {
@@ -2412,9 +2420,9 @@ const finalGameRounds: Dom4GameRound[] = [
     ],
     correctOptionId: "b",
     feedback: lstr(
-      "« Visité » est le chunk passé pour « j'ai visité ».",
-      "\"Visité\" is the past chunk for \"I visited\".",
-      "\"Visité\" es el chunk de pasado para \"I visited\".",
+      "« Visité » est la forme passée pour « j'ai visité ».",
+      "\"Visité\" is the past-tense form for \"I visited\".",
+      "\"Visité\" es la forma en pasado para \"yo visité\".",
     ),
   },
   {
@@ -2432,9 +2440,9 @@ const finalGameRounds: Dom4GameRound[] = [
     ],
     correctOptionId: "b",
     feedback: lstr(
-      "« Tomé » est ton chunk passé pour parler du transport.",
-      "\"Tomé\" is your past-tense chunk for transport.",
-      "\"Tomé\" es tu chunk de pasado para el transporte.",
+      "« Tomé » est ta forme passée pour parler du transport.",
+      "\"Tomé\" is your past-tense form for transport.",
+      "\"Tomé\" es tu forma en pasado para hablar del transporte.",
     ),
   },
   {
@@ -2536,24 +2544,24 @@ const printableSheets: Dom4PrintableSheet[] = [
     id: "ws-verb-chunks",
     kind: "verb_chunks",
     title: lstr(
-      "Feuille 3 · Mini passé — chunks au singulier",
-      "Sheet 3 · Mini past tense — singular chunks",
-      "Hoja 3 · Mini pasado — chunks en singular",
+      "Feuille 3 · Formes utiles au passé",
+      "Worksheet 3 · Useful past-tense travel phrases",
+      "Hoja 3 · Formas útiles en pasado",
     ),
     instructions: lstr(
-      "Choisis le bon chunk au passé (1re personne du singulier) parmi : fui, visité, tomé, caminé, compré, saqué, me gustó, fue.",
-      "Pick the right past-tense chunk (1st-person singular) among: fui, visité, tomé, caminé, compré, saqué, me gustó, fue.",
-      "Elige el chunk correcto en pasado (1ª persona del singular) entre: fui, visité, tomé, caminé, compré, saqué, me gustó, fue.",
+      "Complète les phrases avec la bonne forme au passé : fui, visité, tomé, caminé, compré, saqué, me gustó, fue.",
+      "Complete the sentences with the correct past-tense form: fui, visité, tomé, caminé, compré, saqué, me gustó, fue.",
+      "Completa las frases con la forma correcta en pasado: fui, visité, tomé, caminé, compré, saqué, me gustó, fue.",
     ),
     items: [
-      { id: "v1", target: "Ayer ____ a Samaná.", prompt: lstr("Aller — passé.", "To go — past.", "Ir — pasado."), answer: lstr("fui", "fui", "fui") },
-      { id: "v2", target: "____ el museo.", prompt: lstr("Visiter — passé.", "To visit — past.", "Visitar — pasado."), answer: lstr("Visité", "Visité", "Visité") },
-      { id: "v3", target: "____ una guagua.", prompt: lstr("Prendre — passé.", "To take — past.", "Tomar — pasado."), answer: lstr("Tomé", "Tomé", "Tomé") },
-      { id: "v4", target: "____ por la Zona Colonial.", prompt: lstr("Marcher — passé.", "To walk — past.", "Caminar — pasado."), answer: lstr("Caminé", "Caminé", "Caminé") },
-      { id: "v5", target: "____ un recuerdo.", prompt: lstr("Acheter — passé.", "To buy — past.", "Comprar — pasado."), answer: lstr("Compré", "Compré", "Compré") },
-      { id: "v6", target: "____ fotos.", prompt: lstr("Prendre des photos — RD.", "To take photos — DR style.", "Sacar fotos — RD."), answer: lstr("Saqué", "Saqué", "Saqué") },
-      { id: "v7", target: "____ mucho.", prompt: lstr("« ça m'a plu ».", "\"I liked it.\"", "\"me gustó\"."), answer: lstr("Me gustó", "Me gustó", "Me gustó") },
-      { id: "v8", target: "____ muy bonito.", prompt: lstr("« c'était ».", "\"it was.\"", "\"fue\"."), answer: lstr("Fue", "Fue", "Fue") },
+      { id: "v1", target: "Ayer ____ a Samaná.", prompt: lstr("Pour dire : je suis allé(e).", "To say: \"I went\".", "Para decir: \"yo fui\"."), answer: lstr("fui", "fui", "fui") },
+      { id: "v2", target: "____ el museo.", prompt: lstr("Pour dire : j'ai visité.", "To say: \"I visited\".", "Para decir: \"yo visité\"."), answer: lstr("Visité", "Visité", "Visité") },
+      { id: "v3", target: "____ una guagua.", prompt: lstr("Pour dire : j'ai pris.", "To say: \"I took\".", "Para decir: \"yo tomé\"."), answer: lstr("Tomé", "Tomé", "Tomé") },
+      { id: "v4", target: "____ por la Zona Colonial.", prompt: lstr("Pour dire : j'ai marché.", "To say: \"I walked\".", "Para decir: \"yo caminé\"."), answer: lstr("Caminé", "Caminé", "Caminé") },
+      { id: "v5", target: "____ un recuerdo.", prompt: lstr("Pour dire : j'ai acheté.", "To say: \"I bought\".", "Para decir: \"yo compré\"."), answer: lstr("Compré", "Compré", "Compré") },
+      { id: "v6", target: "____ fotos.", prompt: lstr("Pour dire : j'ai pris des photos.", "To say: \"I took photos\" (DR style).", "Para decir: \"saqué fotos\" (estilo RD)."), answer: lstr("Saqué", "Saqué", "Saqué") },
+      { id: "v7", target: "____ mucho.", prompt: lstr("Pour dire : ça m'a beaucoup plu.", "To say: \"I really liked it\".", "Para decir: \"me gustó mucho\"."), answer: lstr("Me gustó", "Me gustó", "Me gustó") },
+      { id: "v8", target: "____ muy bonito.", prompt: lstr("Pour dire : c'était très beau.", "To say: \"it was very nice\".", "Para decir: \"fue muy bonito\"."), answer: lstr("Fue", "Fue", "Fue") },
       { id: "v9", target: "Transforme : « Hoy voy a la playa » → « Ayer ____ a la playa ».", prompt: lstr("Aujourd'hui → hier.", "Today → yesterday.", "Hoy → ayer."), answer: lstr("fui", "fui", "fui") },
       { id: "v10", target: "Transforme : « Compro un recuerdo » → « ____ un recuerdo ».", prompt: lstr("Présent → passé.", "Present → past.", "Presente → pasado."), answer: lstr("Compré", "Compré", "Compré") },
     ],
@@ -2597,7 +2605,7 @@ const printableSheets: Dom4PrintableSheet[] = [
       { id: "p2", prompt: lstr("2) Indique le transport choisi.", "2) State the transport you'll use.", "2) Indica el transporte que vas a usar."), answer: lstr("Exemple : « Tomo una guagua / un taxi. »", "Example: \"Tomo una guagua / un taxi.\"", "Ejemplo: «Tomo una guagua / un taxi».") },
       { id: "p3", prompt: lstr("3) Écris une question pour demander ton chemin.", "3) Write a question to ask for directions.", "3) Escribe una pregunta para pedir el camino."), answer: lstr("Exemple : « ¿Cómo llego al museo? »", "Example: \"¿Cómo llego al museo?\"", "Ejemplo: «¿Cómo llego al museo?»") },
       { id: "p4", prompt: lstr("4) Décris ce que tu fais sur place (au présent).", "4) Describe what you do there (present tense).", "4) Describe lo que haces ahí (presente)."), answer: lstr("Exemple : « Camino por la playa y saco fotos. »", "Example: \"Camino por la playa y saco fotos.\"", "Ejemplo: «Camino por la playa y saco fotos».") },
-      { id: "p5", prompt: lstr("5) Le soir, raconte ta journée au passé en utilisant 3 chunks.", "5) In the evening, tell your day in the past using 3 chunks.", "5) Por la noche, cuenta tu día en pasado con 3 chunks."), answer: lstr("Exemple : « Hoy fui a la playa, tomé una guagua y saqué fotos. Me gustó mucho. »", "Example: \"Hoy fui a la playa, tomé una guagua y saqué fotos. Me gustó mucho.\"", "Ejemplo: «Hoy fui a la playa, tomé una guagua y saqué fotos. Me gustó mucho».") },
+      { id: "p5", prompt: lstr("5) Le soir, raconte ta journée au passé en utilisant 3 formes au passé.", "5) In the evening, tell your day in the past using 3 past-tense forms.", "5) Por la noche, cuenta tu día en pasado con 3 formas en pasado."), answer: lstr("Exemple : « Hoy fui a la playa, tomé una guagua y saqué fotos. Me gustó mucho. »", "Example: \"Hoy fui a la playa, tomé una guagua y saqué fotos. Me gustó mucho.\"", "Ejemplo: «Hoy fui a la playa, tomé una guagua y saqué fotos. Me gustó mucho».") },
     ],
   },
 ];

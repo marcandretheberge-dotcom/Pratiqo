@@ -94,9 +94,9 @@ const LABELS = {
   examples: { fr: "Exemples", en: "Examples", es: "Ejemplos" },
   practice: { fr: "À toi", en: "Your turn", es: "Tu turno" },
   pastTenseTitle: {
-    fr: "Passé pratique · chunks utiles",
-    en: "Practical past tense · useful chunks",
-    es: "Pasado práctico · chunks útiles",
+    fr: "Passé pratique · phrases utiles",
+    en: "Practical past tense · useful phrases",
+    es: "Pasado práctico · frases útiles",
   },
   vocabulary: {
     fr: "Vocabulaire à repérer",
@@ -110,12 +110,12 @@ const LABELS = {
     es: "Respuestas guiadas",
   },
   printHint: {
-    fr: "Exercices conçus pour l'impression : appariement, complétion, pratique des chunks au passé, compréhension et journal de voyage.",
-    en: "Worksheets designed for print: matching, fill-in-the-blanks, past-tense chunks, reading comprehension, and a travel journal.",
-    es: "Hojas pensadas para imprimir: emparejamiento, completar frases, chunks de pasado, comprensión y diario de viaje.",
+    fr: "Exercices conçus pour l'impression : appariement, complétion, pratique des formes au passé, compréhension et journal de voyage.",
+    en: "Worksheets designed for print: matching, fill-in-the-blanks, past-tense phrases, reading comprehension, and a travel journal.",
+    es: "Hojas pensadas para imprimir: emparejamiento, completar frases, formas en pasado, comprensión y diario de viaje.",
   },
   answerKey: {
-    fr: "Voir la corrigé",
+    fr: "Voir le corrigé",
     en: "Show answer key",
     es: "Ver clave de respuestas",
   },
@@ -631,10 +631,10 @@ function GrammarSection({ locale }: { locale: YoLocale }) {
         labelText={label(locale, SECTION_LABELS.grammar)}
         title={
           locale === "en"
-            ? "Micro-grammar: directions and travel chunks"
+            ? "Micro-grammar: directions and travel phrases"
             : locale === "es"
-              ? "Microgramática: direcciones y chunks de viaje"
-              : "Micro-grammaire : directions et chunks de voyage"
+              ? "Microgramática: direcciones y frases de viaje"
+              : "Micro-grammaire : directions et phrases de voyage"
         }
       />
 
@@ -813,10 +813,10 @@ function FlashcardsSection({ locale }: { locale: YoLocale }) {
       locale={locale}
       title={
         locale === "en"
-          ? "Flashcards · transport, directions, places, past chunks"
+          ? "Flashcards · transport, directions, places, past-tense phrases"
           : locale === "es"
-            ? "Tarjetas · transporte, direcciones, lugares, chunks de pasado"
-            : "Flashcards · transport, directions, lieux, chunks au passé"
+            ? "Tarjetas · transporte, direcciones, lugares, frases en pasado"
+            : "Flashcards · transport, directions, lieux, phrases au passé"
       }
       subtitle={
         locale === "en"
@@ -845,9 +845,9 @@ const PRINT_KIND_LABELS: Record<
     es: "Completar frases",
   },
   verb_chunks: {
-    fr: "Chunks au passé",
-    en: "Past-tense chunks",
-    es: "Chunks de pasado",
+    fr: "Petites phrases au passé pour raconter une sortie",
+    en: "Useful past-tense phrases for describing an outing",
+    es: "Frases útiles en pasado para contar una salida",
   },
   reading: { fr: "Compréhension", en: "Reading", es: "Comprensión" },
   roleplay: { fr: "Journal de voyage", en: "Travel journal", es: "Diario de viaje" },
