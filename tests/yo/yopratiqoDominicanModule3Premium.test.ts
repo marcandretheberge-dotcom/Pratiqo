@@ -50,7 +50,16 @@ const DATA_FILE = "lib/yo/dominicanRepublicFoodCulture.ts";
 test("premium visual concepts are present in source", () => {
   const src = read(COMPONENT_FILE);
   for (const token of [
-    "Food passport",
+    "data-yo-module3-premium-hero",
+    "Culture passport visual",
+    "data-yo-module3-passport-visual",
+    "data-yo-module3-culture-passport",
+    "data-yo-module3-menu-card",
+    "data-yo-module3-culture-stamp-card",
+    "data-yo-module3-quiz-shell",
+    "data-yo-module3-quiz-options-no-pretranslation",
+    "data-yo-module3-quiz-reveal-translations",
+    "data-yo-module3-printable-worksheet",
     "data-yo-module3-food-cards-count",
     "data-yo-module3-culture-cards-count",
     "data-yo-module3-phrase-count",
@@ -62,6 +71,36 @@ test("premium visual concepts are present in source", () => {
   ]) {
     assert.ok(src.includes(token), `Missing premium source token: ${token}`);
   }
+  assert.ok(!src.includes("bg-gradient-to-br from-[#0F6E56] via-[#0d604d] to-[#082f2a]"));
+});
+
+test("quiz answer choices do not reveal translations before answer reveal", () => {
+  const src = read(COMPONENT_FILE);
+  const choiceStart = src.indexOf("data-yo-module3-quiz-options-no-pretranslation");
+  const revealStart = src.indexOf("data-yo-module3-quiz-reveal-translations");
+  assert.notEqual(choiceStart, -1);
+  assert.notEqual(revealStart, -1);
+  const choiceBlock = src.slice(choiceStart, revealStart);
+
+  assert.ok(choiceBlock.includes("{option.target}"));
+  assert.ok(!choiceBlock.includes("option.translation"));
+  assert.ok(src.slice(revealStart).includes("t(correct.translation, locale)"));
+  assert.ok(src.slice(revealStart).includes("t(q.explanation, locale)"));
+});
+
+test("final game choices stay untranslated until feedback is shown", () => {
+  const interactive = read(INTERACTIVE_FILE);
+  const choiceStart = interactive.indexOf("currentRound.options.map");
+  const feedbackStart = interactive.indexOf("data-yo-module3-game-feedback");
+  assert.notEqual(choiceStart, -1);
+  assert.notEqual(feedbackStart, -1);
+  const choiceBlock = interactive.slice(choiceStart, feedbackStart);
+
+  assert.ok(choiceBlock.includes("data-yo-module3-game-choice-label"));
+  assert.ok(choiceBlock.includes("{option.target}"));
+  assert.ok(!choiceBlock.includes("option.translation"));
+  assert.ok(interactive.slice(feedbackStart).includes("t(correctOption.translation, locale)"));
+  assert.ok(interactive.slice(feedbackStart).includes("t(currentRound.feedback, locale)"));
 });
 
 test("audio is clearly coming soon and no fake playback is rendered", () => {

@@ -60,6 +60,18 @@ const LABEL_RESTART = {
   es: "Reiniciar",
 };
 
+const LABEL_CORRECT_ANSWER = {
+  fr: "Reponse utile",
+  en: "Useful answer",
+  es: "Respuesta util",
+};
+
+const LABEL_YOUR_ANSWER = {
+  fr: "Ton choix",
+  en: "Your choice",
+  es: "Tu eleccion",
+};
+
 function localLabel(
   locale: YoLocale,
   values: Record<YoLocale, string>,
@@ -82,6 +94,12 @@ export function DominicanRepublicCultureChallenge({
   const isCorrect = currentRound
     ? selected === currentRound.correctOptionId
     : false;
+  const selectedOption = currentRound?.options.find(
+    (option) => option.id === selected,
+  );
+  const correctOption = currentRound?.options.find(
+    (option) => option.id === currentRound.correctOptionId,
+  );
 
   const score = useMemo(
     () =>
@@ -106,7 +124,7 @@ export function DominicanRepublicCultureChallenge({
       className="mx-auto w-full max-w-5xl px-5 pt-10 sm:px-8 sm:pt-14"
       data-yo-module3-final-game
     >
-      <div className="relative overflow-hidden rounded-3xl border border-[#F4B400]/40 bg-gradient-to-br from-[#0F6E56] via-[#0d604d] to-[#082f2a] p-5 text-white shadow-[0_18px_44px_rgba(15,58,52,0.2)] sm:p-7">
+      <div className="relative overflow-hidden rounded-3xl border border-[#F4B400]/40 bg-[linear-gradient(135deg,#0B3040_0%,#123D4E_45%,#0F6E56_100%)] p-5 text-white shadow-[0_18px_44px_rgba(15,58,52,0.2)] sm:p-7">
         <div
           aria-hidden
           className="pointer-events-none absolute -right-16 -top-16 size-56 rounded-full bg-[#F4B400]/20 blur-3xl"
@@ -161,19 +179,23 @@ export function DominicanRepublicCultureChallenge({
                         : "border-white/15 bg-white/10 hover:bg-white/15",
                     ].join(" ")}
                   >
-                    <span className="block text-base font-black" lang="es">
+                    <span
+                      className="block text-base font-black"
+                      lang="es"
+                      data-yo-module3-game-choice-label
+                    >
                       {option.target}
-                    </span>
-                    <span className="mt-1 block text-xs text-white/75">
-                      {t(option.translation, locale)}
                     </span>
                   </button>
                 );
               })}
             </div>
 
-            {selected ? (
-              <div className="mt-4 rounded-2xl bg-white/10 p-3 text-sm leading-relaxed text-white/85">
+            {selected && correctOption ? (
+              <div
+                className="mt-4 rounded-2xl border border-white/15 bg-white/10 p-3 text-sm leading-relaxed text-white/85"
+                data-yo-module3-game-feedback
+              >
                 <div className="flex items-start gap-2">
                   <CheckCircle2
                     className={[
@@ -182,7 +204,24 @@ export function DominicanRepublicCultureChallenge({
                     ].join(" ")}
                     aria-hidden
                   />
-                  <p>{t(currentRound.feedback, locale)}</p>
+                  <div>
+                    {selectedOption && !isCorrect ? (
+                      <p className="text-xs font-black uppercase tracking-[0.12em] text-white/60">
+                        {localLabel(locale, LABEL_YOUR_ANSWER)}:{" "}
+                        <span lang="es">{selectedOption.target}</span>
+                      </p>
+                    ) : null}
+                    <p className="mt-1 text-[0.68rem] font-black uppercase tracking-[0.12em] text-[#F4B400]">
+                      {localLabel(locale, LABEL_CORRECT_ANSWER)}
+                    </p>
+                    <p className="mt-1 text-base font-black text-white" lang="es">
+                      {correctOption.target}
+                    </p>
+                    <p className="mt-1 text-xs font-semibold text-white/78">
+                      {t(correctOption.translation, locale)}
+                    </p>
+                    <p className="mt-2">{t(currentRound.feedback, locale)}</p>
+                  </div>
                 </div>
               </div>
             ) : null}
