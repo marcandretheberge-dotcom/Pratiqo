@@ -32,7 +32,6 @@
  */
 
 import {
-  type ReactNode,
   useCallback,
   useEffect,
   useMemo,
@@ -62,6 +61,7 @@ import {
   YoSpanishAudioButton,
   type YoSpanishAudioContext,
 } from "@/components/yo/YoSpanishAudioButton";
+import { YoSpeechButton } from "@/components/yo/YoSpeechButton";
 
 export interface YoFlashcardPreviewProps {
   cards: YoFlashcard[];
@@ -82,19 +82,34 @@ export interface YoFlashcardPreviewProps {
    */
   audioContext?: YoSpanishAudioContext;
   /**
-   * Optional audio button slot. When provided, replaces the default
-   * `YoSpanishAudioButton` for every card front. Used by the
-   * Dominican Republic premium modules (Module 2 / Module 3) so they
-   * can keep their existing `YoSpeechButton` browser-only audio
-   * implementation (no manifest, no MP3, no OpenAI) while still
-   * getting the canonical RD-intro carousel layout.
+   * Audio component selector for each card's Spanish front.
    *
-   * Receives the full `YoFlashcard` (not just the text) so call sites
-   * can wire their own audio component directly against the card
-   * shape without losing access to optional metadata (lang tags,
-   * audio context, etc.).
+   * Why a string and not a render function: this component is marked
+   * `"use client"`, but it is mounted from server components like
+   * `DominicanRepublicModule{2,3,4}Content`. React Server Components
+   * forbid passing non-serializable values (e.g. functions / JSX) from
+   * a Server Component to a Client Component:
+   *
+   *   "Functions cannot be passed directly to Client Components unless
+   *    you explicitly expose it by marking it with 'use server'."
+   *
+   * A serializable string discriminator stays inside the RSC payload
+   * and lets the client component decide which already-client audio
+   * widget to render.
+   *
+   *   - "spanish-default" (default): the canonical YoSpanishAudioButton
+   *     wrapper, which prefers a pre-generated MP3 from the audio
+   *     manifest and falls back to Web Speech.
+   *   - "browser-speech": the browser-only YoSpeechButton — no MP3
+   *     manifest lookup, no OpenAI dependency. This is what the
+   *     Dominican Republic premium modules want today (they ship no
+   *     MP3 assets for their Spanish content).
+   *
+   * Replaces the previous `audioRenderer?: (card) => ReactNode` prop,
+   * which crashed Module 2 / Module 3 / Module 4 at request time
+   * because the function travelled across the RSC boundary.
    */
-  audioRenderer?: (card: YoFlashcard) => ReactNode;
+  audioMode?: "spanish-default" | "browser-speech";
   /**
    * Optional override for the section heading. Defaults to
    * `YO_COPY.flash.title`. Used by the Dominican Republic modules so
@@ -141,7 +156,7 @@ export function YoFlashcardPreview({
   locale,
   speechLang = "es-ES",
   audioContext,
-  audioRenderer,
+  audioMode = "spanish-default",
   title,
   subtitle,
   headingId = "yo-flash-title",
@@ -335,7 +350,7 @@ export function YoFlashcardPreview({
           locale={locale}
           speechLang={speechLang}
           audioContext={audioContext}
-          audioRenderer={audioRenderer}
+          audioMode={audioMode}
         />
       )}
     </section>
@@ -359,7 +374,7 @@ interface DeckCardProps {
   locale: YoLocale;
   speechLang: string;
   audioContext?: YoSpanishAudioContext;
-  audioRenderer?: (card: YoFlashcard) => ReactNode;
+  audioMode: "spanish-default" | "browser-speech";
 }
 
 function DeckCard({
@@ -379,7 +394,7 @@ function DeckCard({
   locale,
   speechLang,
   audioContext,
-  audioRenderer,
+  audioMode,
 }: DeckCardProps) {
   const isLast = index === total - 1;
   const isFirst = index === 0;
@@ -499,8 +514,14 @@ function DeckCard({
                   >
                     {card.front}
                   </p>
-                  {audioRenderer ? (
-                    <span className="mt-1 inline-flex">{audioRenderer(card)}</span>
+                  {audioMode === "browser-speech" ? (
+                    <span className="mt-1 inline-flex">
+                      <YoSpeechButton
+                        text={card.front}
+                        locale={locale}
+                        compact
+                      />
+                    </span>
                   ) : (
                     <YoSpanishAudioButton
                       text={card.front}
