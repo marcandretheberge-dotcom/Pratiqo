@@ -9,7 +9,6 @@ import {
   BookOpen,
   CheckCircle2,
   Coffee,
-  CreditCard,
   FileText,
   Headphones,
   MapPinned,
@@ -178,31 +177,36 @@ function HeroSection({ locale }: { locale: YoLocale }) {
   return (
     <section
       aria-labelledby="yo-do-m3-hero-title"
-      className="relative overflow-hidden bg-[#082f2a]"
+      className="relative overflow-hidden bg-[#F8EBCB]"
+      data-yo-module3-premium-hero
     >
       <div
         aria-hidden
-        className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(244,180,0,0.25),transparent_34%),linear-gradient(135deg,#0F6E56_0%,#0b4f43_48%,#082f2a_100%)]"
+        className="absolute inset-0 bg-[radial-gradient(circle_at_18%_20%,rgba(244,180,0,0.34),transparent_32%),radial-gradient(circle_at_84%_12%,rgba(221,244,241,0.78),transparent_28%),linear-gradient(135deg,#FFF8E7_0%,#F8EBCB_44%,#DDF4F1_100%)]"
       />
       <div
         aria-hidden
-        className="absolute bottom-0 right-0 h-64 w-64 translate-x-16 translate-y-10 rounded-full bg-[#F26B5E]/15 blur-3xl"
+        className="absolute left-0 top-8 h-px w-full bg-[linear-gradient(90deg,transparent,rgba(15,110,86,0.22),transparent)]"
+      />
+      <div
+        aria-hidden
+        className="absolute bottom-0 right-0 h-64 w-64 translate-x-16 translate-y-10 rounded-full bg-[#F26B5E]/18 blur-3xl"
       />
 
       <div className="relative mx-auto grid w-full max-w-6xl gap-8 px-5 py-12 sm:px-8 lg:grid-cols-[1.25fr_0.9fr] lg:items-center lg:py-16">
         <div>
           <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-[0.7rem] font-black uppercase tracking-[0.14em] text-white/90">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-[#F4B400]/45 bg-white/80 px-3 py-1 text-[0.7rem] font-black uppercase tracking-[0.14em] text-[#0B3040] shadow-sm">
               <Sparkles className="size-3.5" aria-hidden />
               {t(data.productLabel, locale)}
             </span>
-            <span className="inline-flex rounded-full bg-[#F4B400]/25 px-3 py-1 text-[0.7rem] font-black uppercase tracking-[0.14em] text-[#FFF4D6]">
+            <span className="inline-flex rounded-full border border-[#0F6E56]/15 bg-[#0B3040] px-3 py-1 text-[0.7rem] font-black uppercase tracking-[0.14em] text-[#FFF4D6]">
               {label(locale, LABELS.module)} · {label(locale, LABELS.a1)}
             </span>
             <span
               aria-disabled
               data-yo-audio-state="coming-soon"
-              className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-[0.7rem] font-semibold text-white/75"
+              className="inline-flex items-center gap-1.5 rounded-full border border-[#0F6E56]/15 bg-white/70 px-3 py-1 text-[0.7rem] font-semibold text-[#0F6E56]/80"
             >
               <VolumeX className="size-3.5" aria-hidden />
               {t(data.audioComingSoonLabel, locale)}
@@ -211,11 +215,11 @@ function HeroSection({ locale }: { locale: YoLocale }) {
 
           <h1
             id="yo-do-m3-hero-title"
-            className="mt-5 max-w-3xl text-3xl font-semibold leading-tight tracking-tight text-white sm:text-4xl lg:text-5xl"
+            className="mt-5 max-w-3xl text-3xl font-semibold leading-tight tracking-tight text-[#0B3040] sm:text-4xl lg:text-5xl"
           >
             {t(data.heroTitle, locale)}
           </h1>
-          <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/82 sm:text-lg">
+          <p className="mt-4 max-w-2xl text-base leading-relaxed text-[#0B3040]/74 sm:text-lg">
             {t(data.heroSubtitle, locale)}
           </p>
 
@@ -228,7 +232,7 @@ function HeroSection({ locale }: { locale: YoLocale }) {
             ].map((phrase) => (
               <span
                 key={phrase}
-                className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3 text-sm font-black text-white"
+                className="rounded-2xl border border-[#0F6E56]/12 bg-white/75 px-4 py-3 text-sm font-black text-[#0B3040] shadow-[0_10px_28px_rgba(15,58,52,0.08)]"
                 lang="es"
               >
                 {phrase}
@@ -237,12 +241,21 @@ function HeroSection({ locale }: { locale: YoLocale }) {
           </div>
         </div>
 
-        <div className="rounded-[2rem] border border-white/15 bg-white/10 p-4 shadow-[0_20px_60px_rgba(0,0,0,0.16)] backdrop-blur">
-          <div className="rounded-[1.5rem] bg-[#FFF4D6] p-5 text-[#0F6E56]">
+        <div
+          className="relative rounded-[2rem] border border-[#0B3040]/10 bg-white/55 p-4 shadow-[0_24px_70px_rgba(15,58,52,0.15)] backdrop-blur"
+          data-yo-module3-passport-visual
+        >
+          <div
+            aria-hidden
+            className="absolute -right-5 top-8 rotate-12 rounded-full border-2 border-dashed border-[#F26B5E]/55 px-5 py-3 text-[0.62rem] font-black uppercase tracking-[0.18em] text-[#F26B5E]/80"
+          >
+            RD stamp
+          </div>
+          <div className="rounded-[1.5rem] border border-[#F4B400]/35 bg-[#FFF4D6] p-5 text-[#0F6E56]">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-xs font-black uppercase tracking-[0.14em] text-[#8a5a17]">
-                  Food passport
+                  Culture passport visual
                 </p>
                 <p className="mt-1 text-2xl font-black">RD A1</p>
               </div>
@@ -254,7 +267,7 @@ function HeroSection({ locale }: { locale: YoLocale }) {
               {data.missionStops.slice(0, 4).map((stop) => (
                 <div
                   key={stop.id}
-                  className="flex items-center gap-3 rounded-2xl bg-white/75 p-3"
+                  className="flex items-center gap-3 rounded-2xl border border-[#0F6E56]/10 bg-white/78 p-3"
                 >
                   <span className="grid size-8 shrink-0 place-items-center rounded-full bg-[#F4B400] text-sm font-black text-[#0F6E56]">
                     {stop.position}
@@ -278,7 +291,10 @@ function HeroSection({ locale }: { locale: YoLocale }) {
 function PassportSection({ locale }: { locale: YoLocale }) {
   const data = dominicanRepublicFoodCulture;
   return (
-    <section className="mx-auto w-full max-w-5xl px-5 pt-10 sm:px-8 sm:pt-14">
+    <section
+      className="mx-auto w-full max-w-5xl px-5 pt-10 sm:px-8 sm:pt-14"
+      data-yo-module3-culture-passport
+    >
       <SectionHeader
         icon={<MapPinned className="size-4 text-[#1D9E75]" aria-hidden />}
         labelText={label(locale, SECTION_LABELS.passport)}
@@ -294,10 +310,16 @@ function PassportSection({ locale }: { locale: YoLocale }) {
         {data.missionStops.map((stop) => (
           <li
             key={stop.id}
-            className="rounded-2xl border border-teal-100 bg-white p-4 shadow-[0_1px_4px_rgba(15,58,52,0.06)]"
+            className="relative overflow-hidden rounded-3xl border border-[#F4B400]/25 bg-white/85 p-4 shadow-[0_12px_32px_rgba(15,58,52,0.07)]"
           >
+            <span
+              aria-hidden
+              className="absolute right-4 top-4 rounded-full border border-dashed border-[#F26B5E]/45 px-2.5 py-1 text-[0.55rem] font-black uppercase tracking-[0.14em] text-[#F26B5E]/70"
+            >
+              stamp
+            </span>
             <div className="flex items-center gap-3">
-              <span className="grid size-9 shrink-0 place-items-center rounded-full bg-[#0F6E56] text-sm font-black text-white">
+              <span className="grid size-9 shrink-0 place-items-center rounded-full bg-[#0B3040] text-sm font-black text-[#F4B400]">
                 {stop.position}
               </span>
               <p className="text-sm font-black text-[#0F6E56]">
@@ -345,9 +367,17 @@ function FoodCardsSection({ locale }: { locale: YoLocale }) {
         {data.foodCards.map((food) => (
           <article
             key={food.id}
-            className="overflow-hidden rounded-3xl border border-[#F4B400]/35 bg-[#FFF4D6] shadow-[0_8px_26px_rgba(15,58,52,0.08)]"
+            className="overflow-hidden rounded-3xl border border-[#F4B400]/40 bg-[#FFF4D6] shadow-[0_18px_42px_rgba(15,58,52,0.09)]"
+            data-yo-module3-menu-card
           >
-            <div className="h-3 bg-gradient-to-r from-[#0F6E56] via-[#F4B400] to-[#F26B5E]" />
+            <div className="flex items-center justify-between border-b border-[#F4B400]/25 bg-white/58 px-5 py-3">
+              <span className="text-[0.62rem] font-black uppercase tracking-[0.18em] text-[#8a5a17]">
+                menu card
+              </span>
+              <span className="rounded-full border border-dashed border-[#F26B5E]/45 px-3 py-1 text-[0.58rem] font-black uppercase tracking-[0.16em] text-[#F26B5E]/75">
+                sabor RD
+              </span>
+            </div>
             <div className="p-5">
               <h3 className="text-lg font-black text-[#0F6E56]" lang="es">
                 {food.name}
@@ -363,8 +393,8 @@ function FoodCardsSection({ locale }: { locale: YoLocale }) {
                   {t(food.culturalNote, locale)}
                 </p>
               </div>
-              <div className="mt-4 rounded-2xl bg-[#0F6E56] p-3 text-white">
-                <p className="text-[0.68rem] font-black uppercase tracking-[0.12em] text-white/65">
+              <div className="mt-4 rounded-2xl border border-[#0B3040]/10 bg-[#0B3040] p-3 text-white shadow-inner">
+                <p className="text-[0.68rem] font-black uppercase tracking-[0.12em] text-[#F4B400]/85">
                   {label(locale, LABELS.orderPhrase)}
                 </p>
                 <p className="mt-1 text-base font-black" lang="es">
@@ -403,8 +433,15 @@ function CultureCardsSection({ locale }: { locale: YoLocale }) {
         {data.cultureCards.map((card) => (
           <article
             key={card.id}
-            className="rounded-2xl border border-teal-100 bg-white p-4 shadow-[0_1px_4px_rgba(15,58,52,0.06)]"
+            className="relative overflow-hidden rounded-3xl border border-[#0F6E56]/10 bg-white/88 p-4 shadow-[0_12px_28px_rgba(15,58,52,0.06)]"
+            data-yo-module3-culture-stamp-card
           >
+            <span
+              aria-hidden
+              className="absolute right-3 top-3 rounded-full bg-[#FFF4D6] px-2.5 py-1 text-[0.55rem] font-black uppercase tracking-[0.14em] text-[#8a5a17]"
+            >
+              stamp
+            </span>
             <p className="text-[0.65rem] font-black uppercase tracking-[0.12em] text-[#1D9E75]">
               {t(card.category, locale)}
             </p>
@@ -414,7 +451,7 @@ function CultureCardsSection({ locale }: { locale: YoLocale }) {
             <p className="mt-2 text-xs leading-relaxed text-[#0F6E56]/68">
               {t(card.description, locale)}
             </p>
-            <p className="mt-3 rounded-xl bg-[#DDF4F1]/70 px-3 py-2 text-sm font-black text-[#0F6E56]" lang="es">
+            <p className="mt-3 rounded-xl border border-[#1D9E75]/10 bg-[#DDF4F1]/70 px-3 py-2 text-sm font-black text-[#0F6E56]" lang="es">
               {card.phrase}
             </p>
           </article>
@@ -685,7 +722,10 @@ function FlashcardsSection({ locale }: { locale: YoLocale }) {
 function QuizSection({ locale }: { locale: YoLocale }) {
   const data = dominicanRepublicFoodCulture;
   return (
-    <section className="mx-auto w-full max-w-5xl px-5 pt-10 sm:px-8 sm:pt-14">
+    <section
+      className="mx-auto w-full max-w-5xl px-5 pt-10 sm:px-8 sm:pt-14"
+      data-yo-module3-quiz-shell
+    >
       <SectionHeader
         icon={<CheckCircle2 className="size-4 text-[#1D9E75]" aria-hidden />}
         labelText={label(locale, SECTION_LABELS.quiz)}
@@ -701,34 +741,50 @@ function QuizSection({ locale }: { locale: YoLocale }) {
         {data.quizQuestions.map((q, index) => {
           const correct = q.options.find((option) => option.id === q.correctOptionId);
           return (
-            <li key={q.id} className="rounded-3xl border border-teal-100 bg-white p-4 sm:p-5">
+            <li
+              key={q.id}
+              className="rounded-3xl border border-[#F4B400]/25 bg-white/88 p-4 shadow-[0_12px_32px_rgba(15,58,52,0.06)] sm:p-5"
+            >
               <p className="text-xs font-black uppercase tracking-[0.12em] text-[#1D9E75]">
                 {index + 1}. {t(q.type, locale)}
               </p>
               <p className="mt-2 text-base font-black text-[#0F6E56]">
                 {t(q.prompt, locale)}
               </p>
-              <div className="mt-3 grid gap-2">
+              <div
+                className="mt-3 grid gap-2"
+                data-yo-module3-quiz-options-no-pretranslation
+              >
                 {q.options.map((option) => (
-                  <div key={option.id} className="rounded-2xl bg-[#F4FBF9] p-3">
-                    <p className="text-sm font-black text-[#0F6E56]" lang="es">
+                  <div
+                    key={option.id}
+                    className="rounded-2xl border border-[#0F6E56]/10 bg-[#F7FBF8] p-3"
+                  >
+                    <p
+                      className="text-sm font-black text-[#0F6E56]"
+                      lang="es"
+                      data-yo-module3-quiz-choice-label
+                    >
                       {option.target}
-                    </p>
-                    <p className="mt-1 text-xs text-[#0F6E56]/65">
-                      {t(option.translation, locale)}
                     </p>
                   </div>
                 ))}
               </div>
               {correct ? (
-                <details className="mt-3 rounded-2xl bg-[#FFF4D6] p-3">
+                <details
+                  className="mt-3 rounded-2xl border border-[#F4B400]/35 bg-[#FFF4D6] p-3"
+                  data-yo-module3-quiz-reveal-translations
+                >
                   <summary className="cursor-pointer text-sm font-black text-[#8a5a17]">
                     {label(locale, LABELS.answer)}
                   </summary>
                   <p className="mt-2 text-base font-black text-[#0F6E56]" lang="es">
                     {correct.target}
                   </p>
-                  <p className="mt-1 text-xs leading-relaxed text-[#5a3f0f]">
+                  <p className="mt-1 text-sm font-semibold text-[#5a3f0f]">
+                    {t(correct.translation, locale)}
+                  </p>
+                  <p className="mt-1 text-xs leading-relaxed text-[#5a3f0f]/82">
                     {t(q.explanation, locale)}
                   </p>
                 </details>
@@ -773,11 +829,17 @@ function PrintablesSection({ locale }: { locale: YoLocale }) {
         {data.printableSheets.map((sheet) => (
           <article
             key={sheet.id}
-            className="rounded-3xl border border-teal-100 bg-white p-5 print:break-inside-avoid"
+            className="rounded-3xl border border-[#0F6E56]/12 bg-white p-5 shadow-[0_10px_26px_rgba(15,58,52,0.05)] print:break-inside-avoid"
+            data-yo-module3-printable-worksheet
           >
-            <h3 className="text-lg font-black text-[#0F6E56]">
-              {t(sheet.title, locale)}
-            </h3>
+            <div className="flex items-start justify-between gap-3 border-b border-dashed border-[#0F6E56]/20 pb-3">
+              <h3 className="text-lg font-black text-[#0F6E56]">
+                {t(sheet.title, locale)}
+              </h3>
+              <span className="rounded-full bg-[#FFF4D6] px-3 py-1 text-[0.6rem] font-black uppercase tracking-[0.14em] text-[#8a5a17]">
+                worksheet
+              </span>
+            </div>
             <ul className="mt-3 space-y-1.5">
               {sheet.keyPhrases.map((phrase) => (
                 <li key={phrase} className="flex items-start gap-2 text-sm">
@@ -826,7 +888,13 @@ function AudioNoticeSection({ locale }: { locale: YoLocale }) {
 function ClosingBridge({ locale }: { locale: YoLocale }) {
   return (
     <section className="mx-auto w-full max-w-5xl px-5 pt-10 sm:px-8 sm:pt-14">
-      <div className="rounded-3xl border border-[#F4B400]/35 bg-[#FFF4D6] p-5 sm:p-7">
+      <div className="relative overflow-hidden rounded-3xl border border-[#F4B400]/35 bg-[#FFF4D6] p-5 shadow-[0_18px_44px_rgba(15,58,52,0.08)] sm:p-7">
+        <div
+          aria-hidden
+          className="absolute right-5 top-5 rounded-full border border-dashed border-[#F26B5E]/45 px-3 py-1 text-[0.58rem] font-black uppercase tracking-[0.16em] text-[#F26B5E]/75"
+        >
+          next stamp
+        </div>
         <p className="text-sm font-semibold leading-relaxed text-[#5a3f0f]">
           {label(locale, LABELS.teacherBridge)}
         </p>
@@ -861,7 +929,7 @@ export function DominicanRepublicModule3Content({
   const data = dominicanRepublicFoodCulture;
 
   return (
-    <div className="bg-[#FAFCFB]">
+    <div className="bg-[linear-gradient(180deg,#FFF8E7_0%,#F7FBF8_34%,#F8EBCB_100%)]">
       <main id="main-content" className="flex flex-col pb-20">
         {breadcrumb && breadcrumb.length > 0 ? (
           <YoBreadcrumb items={breadcrumb} locale={locale} />
