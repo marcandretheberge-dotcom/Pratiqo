@@ -142,6 +142,21 @@ const LABELS = {
     en: "Back to module 2",
     es: "Volver al módulo 2",
   },
+  nextModuleEyebrow: {
+    fr: "Prochain module",
+    en: "Next module",
+    es: "Siguiente módulo",
+  },
+  module4: {
+    fr: "Ouvrir le module 4",
+    en: "Open Module 4",
+    es: "Abrir el módulo 4",
+  },
+  module4Body: {
+    fr: "Continue avec « Se déplacer et explorer » : transports, directions et premiers chunks au passé.",
+    en: "Keep going with \"Getting around and exploring\": transport, directions, and the first past-tense chunks.",
+    es: "Sigue con «Moverse y explorar»: transporte, direcciones y los primeros chunks de pasado.",
+  },
 };
 
 function label(locale: YoLocale, values: Record<YoLocale, string>): string {
@@ -918,13 +933,26 @@ function ClosingBridge({ locale }: { locale: YoLocale }) {
         >
           next stamp
         </div>
-        <p className="text-sm font-semibold leading-relaxed text-[#5a3f0f]">
+        <p className="text-[0.7rem] font-black uppercase tracking-[0.14em] text-[#0F6E56]">
+          {label(locale, LABELS.nextModuleEyebrow)}
+        </p>
+        <p className="mt-2 text-sm font-semibold leading-relaxed text-[#5a3f0f]">
+          {label(locale, LABELS.module4Body)}
+        </p>
+        <p className="mt-3 text-sm leading-relaxed text-[#5a3f0f]/80">
           {label(locale, LABELS.teacherBridge)}
         </p>
         <div className="mt-4 flex flex-wrap gap-3">
           <a
-            href="/trouver-un-prof?q=espagnol"
+            href="/yo/langues/espagnol/pays/republique-dominicaine/module-4"
+            data-yo-module3-next-module="module-4"
             className="inline-flex items-center justify-center gap-2 rounded-full bg-[#0F6E56] px-5 py-2.5 text-sm font-black text-white transition hover:bg-[#0b5b47] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0F6E56] focus-visible:ring-offset-2"
+          >
+            {label(locale, LABELS.module4)}
+          </a>
+          <a
+            href="/trouver-un-prof?q=espagnol"
+            className="inline-flex items-center justify-center gap-2 rounded-full border border-[#0F6E56]/25 bg-white px-5 py-2.5 text-sm font-bold text-[#0F6E56] transition hover:bg-[#F4FBF9] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0F6E56] focus-visible:ring-offset-2"
           >
             {label(locale, LABELS.teacherCta)}
           </a>

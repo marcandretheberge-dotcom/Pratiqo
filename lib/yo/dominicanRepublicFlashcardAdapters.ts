@@ -26,6 +26,7 @@ import { lstr } from "@/lib/yo/localize";
 import type { YoFlashcard, YoLocalizedString } from "@/lib/yo/types";
 import type { Dom2Flashcard } from "@/lib/yo/dominicanRepublicHotelAirport";
 import type { Dom3Flashcard } from "@/lib/yo/dominicanRepublicFoodCulture";
+import type { Dom4Flashcard } from "@/lib/yo/dominicanRepublicExplore";
 
 /** Visual treatment shared with the RD-intro flashcards. */
 const RD_FLASHCARD_VISUAL_HINT = "tropical-flashcard" as const;
@@ -74,6 +75,27 @@ export function module3FlashcardsToYo(
 ): YoFlashcard[] {
   return cards.map((card) => ({
     id: `m3-${card.id}`,
+    front: card.front,
+    back: card.back,
+    tag: card.category,
+    visualHint: RD_FLASHCARD_VISUAL_HINT,
+    imagePath: null,
+  }));
+}
+
+/**
+ * Module 4 flashcards → canonical `YoFlashcard[]`.
+ *
+ * Dom4Flashcard mirrors Dom3Flashcard's shape (id / category / front /
+ * back), so we forward `back` verbatim and reuse `category` as the
+ * carousel eyebrow tag. Same `tropical-flashcard` visual hint as the
+ * RD intro, so Module 4 inherits the same premium look.
+ */
+export function module4FlashcardsToYo(
+  cards: readonly Dom4Flashcard[],
+): YoFlashcard[] {
+  return cards.map((card) => ({
+    id: `m4-${card.id}`,
     front: card.front,
     back: card.back,
     tag: card.category,

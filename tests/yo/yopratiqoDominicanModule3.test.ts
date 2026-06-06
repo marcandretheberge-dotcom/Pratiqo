@@ -248,7 +248,10 @@ test("quiz contains required food/payment/culture questions", () => {
   }
 });
 
-test("Module 3 is live in the Dominican path while Modules 4-5 stay inert", () => {
+test("Modules 2, 3, and 4 are live in the Dominican path while Module 5 stays inert", () => {
+  // Module 4 went live in feat/yo-dominican-module-4-explore-a2-bridge.
+  // This Module 3 regression test now expects that addition while
+  // continuing to ensure Module 5 has no fake working route.
   const steps = dominicanRepublicA1.lessonPath;
   const module2 = steps.find((step) => step.position === 2);
   const module3 = steps.find((step) => step.position === 3);
@@ -258,8 +261,8 @@ test("Module 3 is live in the Dominican path while Modules 4-5 stay inert", () =
   assert.equal(module2?.href, "/yo/langues/espagnol/pays/republique-dominicaine/module-2");
   assert.equal(module3?.status, "available");
   assert.equal(module3?.href, "/yo/langues/espagnol/pays/republique-dominicaine/module-3");
-  assert.equal(module4?.status, "locked");
-  assert.equal(module4?.href, undefined);
+  assert.equal(module4?.status, "available");
+  assert.equal(module4?.href, "/yo/langues/espagnol/pays/republique-dominicaine/module-4");
   assert.equal(module5?.status, "locked");
   assert.equal(module5?.href, undefined);
 });
