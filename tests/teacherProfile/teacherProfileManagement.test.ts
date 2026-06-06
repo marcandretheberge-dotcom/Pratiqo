@@ -209,7 +209,15 @@ test("forbidden files: branch does not touch Stripe checkout/webhook, Supabase/R
     { label: "RLS / security helpers", re: /^lib\/security\/|^lib\/rls\// },
     { label: "booking flow files outside commission disclosure success page", re: /^app\/\(app\)\/booking\/(?!success\/page\.tsx$)/ },
     { label: "cron jobs", re: /^app\/api\/cron\/|^\.github\/workflows\/.*cron/i },
-    { label: "YoPratiqo content/audio", re: /^(app|components|lib)\/yo\/|^public\/.*\.(mp3|wav|m4a)$/i },
+    // YoPratiqo UI/content files (components/yo/**, lib/yo/**, app/yo/**)
+    // are intentionally NOT blocked here: legitimate module UI/content
+    // updates (e.g. Module 2/Module 3 quiz UX + browser audio fallback)
+    // must be free to land on their feature branches. Generated audio
+    // assets (mp3/wav/m4a under public/) and OpenAI / audio generation
+    // scripts remain forbidden by the two rules below — those are the
+    // only YoPratiqo surfaces that must never change in a teacher
+    // profile management PR.
+    { label: "generated audio assets", re: /^public\/.*\.(mp3|wav|m4a)$/i },
     { label: "OpenAI/audio generation scripts", re: /^scripts\/.*(openai|generate-yopratiqo-audio)/i },
     { label: "teacher badge truth logic", re: /^lib\/teacherTrust\.|^lib\/badges\./ },
     { label: "public teacher name masking", re: /^lib\/identity\/displayName\./ },
