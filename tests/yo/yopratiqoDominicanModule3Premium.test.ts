@@ -103,15 +103,19 @@ test("final game choices stay untranslated until feedback is shown", () => {
   assert.ok(interactive.slice(feedbackStart).includes("t(currentRound.feedback, locale)"));
 });
 
-test("audio is clearly coming soon and no fake playback is rendered", () => {
+test("browser speech audio is wired without MP3 or fake playback", () => {
   const src = read(COMPONENT_FILE);
-  assert.ok(src.includes('data-yo-module3-audio-state="coming-soon"'));
-  assert.equal(dominicanRepublicFoodCulture.audioComingSoonLabel.fr, "Audio bientôt disponible");
-  assert.equal(dominicanRepublicFoodCulture.audioComingSoonLabel.en, "Audio coming soon");
-  assert.equal(dominicanRepublicFoodCulture.audioComingSoonLabel.es, "Audio próximamente");
+  const interactive = read(INTERACTIVE_FILE);
+  assert.ok(src.includes('data-yo-audio-state="browser-speech"'));
+  assert.ok(src.includes("data-yo-browser-audio-note"));
+  assert.ok(src.includes("YoSpeechButton"));
+  assert.ok(interactive.includes("YoSpeechButton"));
   assert.ok(!src.includes("<audio"));
+  assert.ok(!interactive.includes("<audio"));
   assert.ok(!src.includes("YoAudioPlayer"));
-  assert.ok(!src.includes("play()"));
+  assert.ok(!interactive.includes("YoAudioPlayer"));
+  assert.ok(!src.includes(".mp3"));
+  assert.ok(!interactive.includes(".mp3"));
 });
 
 test("print button exists and uses window.print in isolated client helper", () => {

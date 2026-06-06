@@ -19,7 +19,8 @@
  *   5. New i18n keys exist in fr / en / es.
  *   6. The PR does NOT touch Stripe checkout/webhook, unrelated payment
  *      infrastructure, guarantee, RLS/security migrations, public teacher
- *      name masking, teacher badge truth logic, cron, or YoPratiqo audio/content.
+ *      name masking, teacher badge truth logic, cron, generated audio assets,
+ *      or audio generation scripts.
  */
 
 import { readFileSync, readdirSync, statSync } from "node:fs";
@@ -345,7 +346,7 @@ test("forbidden files: PR does not touch Stripe checkout/webhook, Supabase/RLS/m
     { label: "RLS / security helpers", re: /^lib\/security\/|^lib\/rls\// },
     { label: "booking flow files outside commission disclosure success page", re: /^app\/\(app\)\/booking\/(?!success\/page\.tsx$)/ },
     { label: "cron jobs", re: /^app\/api\/cron\/|^\.github\/workflows\/.*cron/i },
-    { label: "YoPratiqo content/audio", re: /^(app|components|lib)\/yo\/|^public\/.*\.(mp3|wav|m4a)$/i },
+    { label: "generated audio assets", re: /^public\/.*\.(mp3|wav|m4a)$/i },
     { label: "OpenAI/audio generation scripts", re: /^scripts\/.*(openai|generate-yopratiqo-audio)/i },
     { label: "teacher badge truth logic", re: /^lib\/teacherTrust\.|^lib\/badges\./ },
     { label: "public teacher name masking", re: /^lib\/identity\/displayName\./ },

@@ -60,6 +60,7 @@ test("main quiz reveal shows answer translation and explanation after reveal", (
   assert.ok(revealArea.includes("{correct.target}"));
   assert.ok(revealArea.includes("t(correct.translation, locale)"));
   assert.ok(revealArea.includes("t(q.explanation, locale)"));
+  assert.ok(revealArea.includes("<YoSpeechButton text={correct.target}"));
 });
 
 test("final game choices render Spanish only before selection feedback", () => {
@@ -83,6 +84,17 @@ test("final game feedback shows useful answer translation after selection", () =
   assert.ok(feedbackArea.includes("{correctOption.target}"));
   assert.ok(feedbackArea.includes("t(correctOption.translation, locale)"));
   assert.ok(feedbackArea.includes("t(currentRound.feedback, locale)"));
+  assert.ok(feedbackArea.includes("<YoSpeechButton text={correctOption.target}"));
+});
+
+test("audio buttons exist for Module 3 phrase, food, dialogue, ears, and flashcard surfaces", () => {
+  const src = read(CONTENT_FILE);
+  assert.ok(src.includes("<YoSpeechButton text={food.orderPhrase}"));
+  assert.ok(src.includes("<YoSpeechButton text={card.phrase}"));
+  assert.ok(src.includes("<YoSpeechButton text={phrase.target}"));
+  assert.ok(src.includes("<YoSpeechButton text={line.target}"));
+  assert.ok(src.includes("<YoSpeechButton text={card.practicePhrase}"));
+  assert.ok(src.includes("<YoSpeechButton text={card.front}"));
 });
 
 test("all quiz and final-game options still carry translations in data for reveal states", () => {
@@ -108,6 +120,7 @@ test("no fake audio or generated MP3 metadata was introduced", () => {
   assert.ok(!combined.includes("storagePath"));
   assert.ok(!combined.includes("audioUrl"));
   assert.ok(!combined.includes("openai"));
+  assert.ok(!combined.includes(".mp3"));
 });
 
 let passed = 0;
