@@ -100,6 +100,11 @@ const LABEL_MISSION_CONFIRM = lstr("Confirmation", "Confirmation");
 const LABEL_COMPLETION = lstr("Mission accomplie", "Mission complete");
 const LABEL_CAN_DO_TITLE = lstr("Tu sais maintenant...", "You can now...");
 const LABEL_NEXT_MODULE = lstr("Prochain module", "Next module");
+const LABEL_OPEN_MODULE_3 = lstr(
+  "Ouvrir le module 3",
+  "Open Module 3",
+  "Abrir el módulo 3",
+);
 const LABEL_TEACHER_BRIDGE = lstr(
   "Envie de pratiquer avec un vrai professeur ?",
   "Want to practice with a real teacher?",
@@ -713,6 +718,7 @@ function MiniMissionSection({ locale }: { locale: YoLocale }) {
 
 function CompletionSection({ locale }: { locale: YoLocale }) {
   const { completion } = dominicanRepublicHotelAirport;
+  const langSuffix = locale === "fr" ? "" : `?lang=${locale}`;
   return (
     <section
       aria-labelledby="yo-do-m2-completion-title"
@@ -766,6 +772,13 @@ function CompletionSection({ locale }: { locale: YoLocale }) {
         <p className="mt-1 text-sm leading-relaxed text-[#5a3f0f]/80">
           {t(completion.nextModuleTeaser, locale)}
         </p>
+        <a
+          href={`/yo/langues/espagnol/pays/republique-dominicaine/module-3${langSuffix}`}
+          className="mt-4 inline-flex items-center justify-center rounded-full bg-[#0F6E56] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#0b5b47] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0F6E56] focus-visible:ring-offset-2"
+        >
+          {t(LABEL_OPEN_MODULE_3, locale)}
+          <span aria-hidden className="ml-2">→</span>
+        </a>
       </div>
 
       {/* Teacher bridge */}

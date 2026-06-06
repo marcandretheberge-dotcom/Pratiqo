@@ -741,7 +741,8 @@ const dominicanDictionary: YoDominicanExpression[] = [
 ];
 
 // ─────────────────────────────────────────────────────────────────────────
-// Lessons (only the Intro is "free_preview"; the rest are locked teasers)
+// Lessons. Intro is free_preview, Modules 2-3 are live premium previews,
+// and Modules 4-5 remain coming-soon placeholders with no fake route.
 // ─────────────────────────────────────────────────────────────────────────
 
 const lessons: YoLesson[] = [
@@ -765,7 +766,7 @@ const lessons: YoLesson[] = [
       "Passer la douane, prendre un taxi, parler à la réception.",
       "Going through customs, catching a taxi, speaking with reception.",
     ),
-    status: "locked",
+    status: "available",
     estimatedMinutes: 18,
     cards: [],
   },
@@ -777,7 +778,7 @@ const lessons: YoLesson[] = [
       "Lire un menu, commander, payer, demander l’addition.",
       "Reading a menu, ordering, paying, asking for the bill.",
     ),
-    status: "locked",
+    status: "available",
     estimatedMinutes: 20,
     cards: [],
   },
@@ -820,9 +821,17 @@ const lessonPath: YoLessonPathStep[] = lessons.map((lesson) => ({
   title: lesson.title,
   ctaLabel:
     lesson.status === "free_preview"
-      ? lstr("Commencer", "Start")
-      : lstr("Verrouillé", "Locked"),
+      ? lstr("Commencer", "Start", "Empezar")
+      : lesson.status === "available"
+        ? lstr("Ouvrir", "Open", "Abrir")
+        : lstr("Bientôt", "Coming soon", "Próximamente"),
   status: lesson.status,
+  href:
+    lesson.id === "voyage_es_do_arrival"
+      ? "/yo/langues/espagnol/pays/republique-dominicaine/module-2"
+      : lesson.id === "voyage_es_do_food"
+        ? "/yo/langues/espagnol/pays/republique-dominicaine/module-3"
+        : undefined,
 }));
 
 // ─────────────────────────────────────────────────────────────────────────

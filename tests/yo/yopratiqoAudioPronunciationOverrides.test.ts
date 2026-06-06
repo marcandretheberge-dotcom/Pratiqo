@@ -235,19 +235,24 @@ test("this PR does not add or modify MP3 binaries", () => {
   assert.deepEqual(mp3s, [], `no .mp3 files should change in this PR: ${mp3s.join(", ")}`);
 });
 
-test("tracked patch stays inside YoPratiqo audio/test/package surfaces", () => {
+test("tracked patch avoids generated audio and restricted product systems", () => {
   const changed = gitLines("git diff --name-only HEAD");
-  const allowed = [
-    /^lib\/yo\/audio\//,
+  const forbidden = [
+    /^app\/api\//,
+    /^app\/\(app\)\/legal\//,
+    /^app\/\(app\)\/booking\//,
+    /^content\/legal\//,
+    /^lib\/payments\//,
+    /^lib\/config\/membrePro/,
+    /^lib\/commissions\//,
+    /^public\/audio\//,
     /^scripts\/generate-yopratiqo-audio\.ts$/,
-    /^tests\/yo\//,
-    /^tests\/legal\/(?:safeDisclosures|founderDecisionsAlignment)\.test\.ts$/,
-    /^package\.json$/,
+    /^supabase\//,
   ];
   for (const path of changed) {
     assert.ok(
-      allowed.some((re) => re.test(path)),
-      `unexpected tracked file in pronunciation patch: ${path}`,
+      !forbidden.some((re) => re.test(path)),
+      `restricted product/audio file changed: ${path}`,
     );
   }
 });

@@ -220,6 +220,8 @@ export interface YoLessonPathStep {
   title: YoLocalizedString;
   ctaLabel: YoLocalizedString;
   status: YoLessonStatus;
+  /** Optional real route for available lessons. Locked lessons must omit this. */
+  href?: string;
 }
 
 // ─────────────────────────────────────────────────────────────────────────
