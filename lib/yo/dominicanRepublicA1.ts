@@ -786,15 +786,15 @@ const lessons: YoLesson[] = [
     id: "voyage_es_do_navigation",
     position: 4,
     title: lstr(
-      "Bouger et demander de l’aide",
-      "Getting around and asking for help",
+      "Se déplacer et explorer",
+      "Getting around and exploring",
     ),
     subtitle: lstr(
-      "Demander son chemin, prendre le bus, gérer un imprévu.",
-      "Asking for directions, taking the bus, handling a snag.",
+      "Demander son chemin, prendre la guagua ou un taxi, raconter une petite aventure.",
+      "Asking for directions, taking the guagua or a taxi, telling a small adventure.",
     ),
-    status: "locked",
-    estimatedMinutes: 18,
+    status: "available",
+    estimatedMinutes: 22,
     cards: [],
   },
   {
@@ -831,7 +831,9 @@ const lessonPath: YoLessonPathStep[] = lessons.map((lesson) => ({
       ? "/yo/langues/espagnol/pays/republique-dominicaine/module-2"
       : lesson.id === "voyage_es_do_food"
         ? "/yo/langues/espagnol/pays/republique-dominicaine/module-3"
-        : undefined,
+        : lesson.id === "voyage_es_do_navigation"
+          ? "/yo/langues/espagnol/pays/republique-dominicaine/module-4"
+          : undefined,
 }));
 
 // ─────────────────────────────────────────────────────────────────────────
