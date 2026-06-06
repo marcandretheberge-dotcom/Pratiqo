@@ -51,12 +51,13 @@ export function YoLessonPath({
         {steps.map((step) => {
           const isUnlocked =
             step.status === "free_preview" || step.status === "available";
+          const href = step.href ?? activeHref;
           return (
             <li key={step.id} className="list-none">
               <PathStepCard
                 step={step}
                 isUnlocked={isUnlocked}
-                href={isUnlocked ? activeHref : undefined}
+                href={isUnlocked ? href : undefined}
                 locale={locale}
               />
             </li>

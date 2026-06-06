@@ -55,6 +55,15 @@ export function RepubliqueDominicaineContent({
 
   const introLesson = module.lessons.find((lesson) => lesson.position === 1);
   const introCards = introLesson?.cards ?? [];
+  const langSuffix = locale === "fr" ? "" : `?lang=${locale}`;
+  const localizedLessonPath = lessonPath.map((step) =>
+    step.href
+      ? {
+          ...step,
+          href: `${step.href}${langSuffix}`,
+        }
+      : step,
+  );
 
   const finalCtaEyebrow = t(YO_COPY.finalCta.eyebrow, locale);
   const finalCtaTitle = t(YO_COPY.finalCta.title, locale);
@@ -72,7 +81,7 @@ export function RepubliqueDominicaineContent({
         <YoVoyageHero module={module} locale={locale} />
 
         <YoLessonPath
-          steps={lessonPath}
+          steps={localizedLessonPath}
           locale={locale}
           activeHref="#yo-progress-title"
         />
