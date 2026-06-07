@@ -43,14 +43,13 @@ async function getAuthenticatedUser(req: Request) {
 }
 
 /**
- * Read the JSON body if present and extract the V9 R02 consent flags.
+ * Read the JSON body and extract the required V9 R02 consent flags.
  *
- * The body is *optional* for backward compatibility (legacy callers /
- * automated checks may POST without a JSON body), but when present the
- * `renewalAccepted` flag is treated as authoritative — a request that
- * sends `{ renewalAccepted: false }` is rejected even if the client UI
- * also has its own gating. We never start a Pro subscription on behalf
- * of a teacher who explicitly declined the auto-renewal disclosure.
+ * Missing, malformed, non-JSON, or non-boolean values return null so
+ * the POST handler can fail closed before any Stripe call. Both consent
+ * flags must be true. We never start a Pro subscription
+ * unless the automatic-renewal disclosure and legal acceptance were
+ * explicitly accepted in the request body.
  */
 async function readConsentBody(
   req: Request,
@@ -77,20 +76,13 @@ async function readConsentBody(
 
 export const RENEWAL_CONSENT_REQUIRED_ERROR_CODE =
   "renewal_consent_required" as const;
+export const LEGAL_ACCEPTANCE_REQUIRED_ERROR_CODE =
+  "legal_acceptance_required" as const;
 
 export async function POST(req: Request) {
   try {
-    const priceId = process.env.STRIPE_PRO_MONTHLY_PRICE_ID?.trim();
-    if (!priceId) {
-      return NextResponse.json({ error: "STRIPE_PRO_MONTHLY_PRICE_ID is not configured." }, { status: 500 });
-    }
-
-    // V9 R02 — explicit auto-renewal consent gate.
-    // We accept legacy callers (no body) for backward compatibility, but
-    // a body that explicitly says `renewalAccepted: false` is rejected
-    // before any Stripe call.
     const { renewalAccepted, legalAccepted } = await readConsentBody(req);
-    if (renewalAccepted === false || legalAccepted === false) {
+    if (renewalAccepted !== true) {
       return NextResponse.json(
         {
           error:
@@ -99,6 +91,21 @@ export async function POST(req: Request) {
         },
         { status: 400 },
       );
+    }
+    if (legalAccepted !== true) {
+      return NextResponse.json(
+        {
+          error:
+            "Membre Pro legal acceptance is required before checkout can start.",
+          code: LEGAL_ACCEPTANCE_REQUIRED_ERROR_CODE,
+        },
+        { status: 400 },
+      );
+    }
+
+    const priceId = process.env.STRIPE_PRO_MONTHLY_PRICE_ID?.trim();
+    if (!priceId) {
+      return NextResponse.json({ error: "STRIPE_PRO_MONTHLY_PRICE_ID is not configured." }, { status: 500 });
     }
 
     const { user, error: authError } = await getAuthenticatedUser(req);

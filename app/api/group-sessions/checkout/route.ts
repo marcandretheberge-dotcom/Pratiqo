@@ -19,8 +19,25 @@ const GROUP_COMMISSION = 0.05;
 
 type Body = { group_session_id?: string };
 
+function isGroupSessionsCheckoutEnabled(): boolean {
+  const normalized = String(process.env.GROUP_SESSIONS_CHECKOUT_ENABLED ?? "")
+    .trim()
+    .toLowerCase();
+  return normalized === "1" || normalized === "true" || normalized === "yes";
+}
+
 export async function POST(req: Request) {
   try {
+    if (!isGroupSessionsCheckoutEnabled()) {
+      return NextResponse.json(
+        {
+          error: "Group-session checkout is not available for launch.",
+          code: "group_sessions_checkout_disabled",
+        },
+        { status: 403 },
+      );
+    }
+
     if (!process.env.STRIPE_SECRET_KEY?.trim()) {
       return NextResponse.json({ error: "STRIPE_SECRET_KEY missing." }, { status: 500 });
     }
