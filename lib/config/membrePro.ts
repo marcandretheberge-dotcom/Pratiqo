@@ -210,6 +210,14 @@ type UpgradePageCopy = {
   alertSessionExpired: string;
   /** Generic alert when the Stripe checkout fetch fails. */
   alertStripeError: string;
+  /**
+   * Dedicated automatic-renewal disclosure label rendered next to the
+   * V9-mandated checkbox. This is the literal wording the teacher must
+   * tick before the Stripe Pro checkout can be started.
+   */
+  renewalAcceptanceLabel: string;
+  /** Alert shown when the renewal-acceptance checkbox is not ticked. */
+  alertMustAcceptRenewal: string;
 };
 
 const COMMON_PRO_BADGE = "Membre Pro";
@@ -263,6 +271,9 @@ export const UPGRADE_PAGE_COPY: Record<Locale, UpgradePageCopy> = {
     alertSignInRequired: "Veuillez vous connecter.",
     alertSessionExpired: "Session expirée. Reconnecte-toi.",
     alertStripeError: "Erreur",
+    renewalAcceptanceLabel: `Membre Pro est un abonnement mensuel renouvelé automatiquement au prix de ${MEMBRE_PRO_PLAN.proMonthlyPriceCadDisplay.fr} $CA / mois + taxes applicables, jusqu’à annulation. Vous pouvez annuler le renouvellement futur à partir de votre compte, sous réserve des conditions applicables.`,
+    alertMustAcceptRenewal:
+      "Tu dois accepter le renouvellement automatique mensuel pour continuer.",
   },
   en: {
     eyebrow: "Monetization",
@@ -311,6 +322,9 @@ export const UPGRADE_PAGE_COPY: Record<Locale, UpgradePageCopy> = {
     alertSignInRequired: "Please sign in.",
     alertSessionExpired: "Session expired. Please sign in again.",
     alertStripeError: "Error",
+    renewalAcceptanceLabel: `Pro Member is a monthly subscription that renews automatically at $${MEMBRE_PRO_PLAN.proMonthlyPriceCadDisplay.en} CAD / month + applicable taxes until cancelled. You can cancel future renewal from your account, subject to applicable terms.`,
+    alertMustAcceptRenewal:
+      "You must accept the monthly automatic renewal to continue.",
   },
   es: {
     eyebrow: "Monetización",
@@ -359,6 +373,9 @@ export const UPGRADE_PAGE_COPY: Record<Locale, UpgradePageCopy> = {
     alertSignInRequired: "Por favor, inicia sesión.",
     alertSessionExpired: "Sesión expirada. Vuelve a iniciar sesión.",
     alertStripeError: "Error",
+    renewalAcceptanceLabel: `Miembro Pro es una suscripción mensual que se renueva automáticamente a ${MEMBRE_PRO_PLAN.proMonthlyPriceCadDisplay.es} $CA / mes + impuestos aplicables hasta su cancelación. Puedes cancelar la renovación futura desde tu cuenta, sujeto a las condiciones aplicables.`,
+    alertMustAcceptRenewal:
+      "Debes aceptar la renovación automática mensual para continuar.",
   },
 };
 

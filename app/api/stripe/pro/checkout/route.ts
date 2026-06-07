@@ -42,11 +42,63 @@ async function getAuthenticatedUser(req: Request) {
   return { user, error: null };
 }
 
+/**
+ * Read the JSON body if present and extract the V9 R02 consent flags.
+ *
+ * The body is *optional* for backward compatibility (legacy callers /
+ * automated checks may POST without a JSON body), but when present the
+ * `renewalAccepted` flag is treated as authoritative — a request that
+ * sends `{ renewalAccepted: false }` is rejected even if the client UI
+ * also has its own gating. We never start a Pro subscription on behalf
+ * of a teacher who explicitly declined the auto-renewal disclosure.
+ */
+async function readConsentBody(
+  req: Request,
+): Promise<{ renewalAccepted: boolean | null; legalAccepted: boolean | null }> {
+  const contentType = req.headers.get("content-type") || "";
+  if (!contentType.toLowerCase().includes("application/json")) {
+    return { renewalAccepted: null, legalAccepted: null };
+  }
+  try {
+    const raw = (await req.json()) as Record<string, unknown> | null;
+    if (!raw || typeof raw !== "object") {
+      return { renewalAccepted: null, legalAccepted: null };
+    }
+    return {
+      renewalAccepted:
+        typeof raw.renewalAccepted === "boolean" ? raw.renewalAccepted : null,
+      legalAccepted:
+        typeof raw.legalAccepted === "boolean" ? raw.legalAccepted : null,
+    };
+  } catch {
+    return { renewalAccepted: null, legalAccepted: null };
+  }
+}
+
+export const RENEWAL_CONSENT_REQUIRED_ERROR_CODE =
+  "renewal_consent_required" as const;
+
 export async function POST(req: Request) {
   try {
     const priceId = process.env.STRIPE_PRO_MONTHLY_PRICE_ID?.trim();
     if (!priceId) {
       return NextResponse.json({ error: "STRIPE_PRO_MONTHLY_PRICE_ID is not configured." }, { status: 500 });
+    }
+
+    // V9 R02 — explicit auto-renewal consent gate.
+    // We accept legacy callers (no body) for backward compatibility, but
+    // a body that explicitly says `renewalAccepted: false` is rejected
+    // before any Stripe call.
+    const { renewalAccepted, legalAccepted } = await readConsentBody(req);
+    if (renewalAccepted === false || legalAccepted === false) {
+      return NextResponse.json(
+        {
+          error:
+            "Membre Pro automatic-renewal consent is required before checkout can start.",
+          code: RENEWAL_CONSENT_REQUIRED_ERROR_CODE,
+        },
+        { status: 400 },
+      );
     }
 
     const { user, error: authError } = await getAuthenticatedUser(req);

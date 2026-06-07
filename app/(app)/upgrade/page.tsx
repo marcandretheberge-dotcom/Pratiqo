@@ -19,10 +19,15 @@ export default function UpgradePage() {
   const copy = getUpgradeCopy(locale);
   const [loading, setLoading] = useState(false);
   const [legalAccepted, setLegalAccepted] = useState(false);
+  const [renewalAccepted, setRenewalAccepted] = useState(false);
   const teacherCountryCode = String(profile?.country_code ?? "").trim().toUpperCase();
   const isMarketBlocked = Boolean(user) && !isMembreProMarketSupported(teacherCountryCode);
 
   const startUpgrade = async () => {
+    if (!renewalAccepted) {
+      alert(copy.alertMustAcceptRenewal);
+      return;
+    }
     if (!legalAccepted) {
       alert(copy.alertMustAcceptLegal);
       return;
@@ -48,7 +53,14 @@ export default function UpgradePage() {
     try {
       const res = await fetch("/api/stripe/pro/checkout", {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          renewalAccepted: true,
+          legalAccepted: true,
+        }),
       });
       const json = (await res.json()) as { url?: string; error?: string };
       if (!res.ok || !json.url) throw new Error(json.error || "Stripe error");
@@ -155,12 +167,39 @@ export default function UpgradePage() {
           .
         </p>
 
-        <label className="mt-6 flex items-start gap-3 text-[13px] text-[var(--p-text-muted)] cursor-pointer max-w-xl">
+        {/*
+          V9 R02 — dedicated automatic-renewal consent checkbox.
+          This sits BEFORE the legal-link acceptance checkbox so the
+          teacher's eye reads the renewal disclosure separately from
+          the broader Terms acknowledgement. The CTA is only enabled
+          once BOTH boxes are ticked, and the server route at
+          /api/stripe/pro/checkout independently rejects the request
+          when `renewalAccepted` is missing or false.
+        */}
+        <label
+          className="mt-6 flex items-start gap-3 text-[13px] text-[var(--p-text-muted)] cursor-pointer max-w-xl rounded-2xl border border-teal-200/70 bg-teal-50/40 p-4"
+          data-testid="upgrade-renewal-acceptance"
+        >
+          <input
+            type="checkbox"
+            checked={renewalAccepted}
+            onChange={(e) => setRenewalAccepted(e.target.checked)}
+            className="mt-1 h-4 w-4 rounded border-slate-300 text-teal-700 focus:ring-teal-500"
+            data-testid="upgrade-renewal-checkbox"
+          />
+          <span>{copy.renewalAcceptanceLabel}</span>
+        </label>
+
+        <label
+          className="mt-4 flex items-start gap-3 text-[13px] text-[var(--p-text-muted)] cursor-pointer max-w-xl"
+          data-testid="upgrade-legal-acceptance"
+        >
           <input
             type="checkbox"
             checked={legalAccepted}
             onChange={(e) => setLegalAccepted(e.target.checked)}
             className="mt-1 h-4 w-4 rounded border-slate-300 text-teal-700 focus:ring-teal-500"
+            data-testid="upgrade-legal-checkbox"
           />
           <span>
             {copy.acceptPrefix}
@@ -198,8 +237,11 @@ export default function UpgradePage() {
         <div className="mt-4 flex flex-col sm:flex-row gap-3">
           <button
             onClick={startUpgrade}
-            disabled={loading || !legalAccepted || isMarketBlocked}
+            disabled={
+              loading || !renewalAccepted || !legalAccepted || isMarketBlocked
+            }
             className="h-11 px-6 rounded-[22px] text-sm font-medium bg-teal-600 text-white hover:brightness-[0.98] disabled:opacity-60"
+            data-testid="upgrade-primary-cta"
           >
             {loading ? copy.primaryCtaLoading : copy.primaryCta}
           </button>

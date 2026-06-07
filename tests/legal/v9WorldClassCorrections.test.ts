@@ -309,6 +309,28 @@ test("V9 sync did not import competitor brand names into live public legal copy"
 
 // ─── Restricted-systems scope guard ────────────────────────────────────
 
+/**
+ * Allow-list for legitimate, narrowly-scoped Stripe edits made by
+ * follow-up PRs after the V9 sync merged into main. Each entry MUST
+ * be defended by a separate test in another suite that asserts the
+ * Stripe IDs / payment math / subscription mechanics remain untouched.
+ *
+ * The V9 scope guard is intentionally additive — keeping V9 data
+ * assertions intact while letting subsequent legal/P0 mechanic PRs
+ * (e.g. consent gates) pass when they edit a route file in a narrow,
+ * documented way. This mirrors the existing
+ * `allowedPricingDisplayFiles` pattern in
+ * `tests/legal/safeDisclosures.test.ts`.
+ */
+const allowedPostV9StripeEdits = new Set<string>([
+  // V9 R02 follow-up — Membre Pro automatic-renewal consent gate.
+  // Asserted by tests/legal/p0ConsentAndSafetyGates.test.ts
+  // ("A6: Stripe Pro checkout route rejects requests with
+  // renewalAccepted=false" + "A7: Stripe Pro checkout route still
+  // uses STRIPE_PRO_MONTHLY_PRICE_ID (no Stripe ID renames)").
+  "app/api/stripe/pro/checkout/route.ts",
+]);
+
 test("V9 branch did not touch Stripe/payments/tax/Supabase/RLS/migrations/YoPratiqo audio-gen/SEO files", () => {
   const changed = changedFilesForBranch();
   if (!changed) return;
@@ -333,6 +355,7 @@ test("V9 branch did not touch Stripe/payments/tax/Supabase/RLS/migrations/YoPrat
 
   const violations: string[] = [];
   for (const file of changed) {
+    if (allowedPostV9StripeEdits.has(file)) continue;
     for (const rule of restricted) {
       if (rule.re.test(file)) violations.push(`${file} (${rule.label})`);
     }

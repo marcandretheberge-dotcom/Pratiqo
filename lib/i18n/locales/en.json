@@ -242,6 +242,8 @@
   "bookingLocationTitle": "Lesson location",
   "bookingLoginAlert": "Please log in to book.",
   "bookingManualConfirmHome": "This teacher will manually confirm your at-home request after payment.",
+  "bookingHomeMinorSafetyTitle": "At-home lessons with minors",
+  "bookingHomeMinorSafetyBody": "For at-home lessons involving minors, additional safety or verification requirements may apply. Some options may be limited or disabled until the required checks are fully implemented.",
   "bookingMissingCheckoutUrl": "Missing checkout URL (invalid Stripe response).",
   "bookingOneHour": "1 h",
   "bookingOnline": "Online",

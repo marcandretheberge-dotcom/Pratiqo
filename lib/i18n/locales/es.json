@@ -242,6 +242,8 @@
   "bookingLocationTitle": "Lugar de la clase",
   "bookingLoginAlert": "Inicia sesión para reservar.",
   "bookingManualConfirmHome": "El profesor confirmará manualmente tu solicitud a domicilio tras el pago.",
+  "bookingHomeMinorSafetyTitle": "Clases a domicilio con menores",
+  "bookingHomeMinorSafetyBody": "Para clases a domicilio con estudiantes menores, pueden aplicarse requisitos adicionales de seguridad o verificación. Algunas opciones pueden limitarse o desactivarse hasta que las verificaciones requeridas estén completamente implementadas.",
   "bookingMissingCheckoutUrl": "Falta la URL de pago (respuesta Stripe inválida).",
   "bookingOneHour": "1 h",
   "bookingOnline": "En línea",

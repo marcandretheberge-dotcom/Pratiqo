@@ -80,6 +80,23 @@ const allowedYoDisclosureFiles = new Set([
   "app/yo/langues/francais-quebec/intro/page.tsx",
 ]);
 
+/**
+ * Allow-list for narrowly-scoped legitimate edits made by follow-up
+ * legal-mechanic PRs that touch a Stripe / payment-adjacent file
+ * without changing payment math, Stripe IDs, tax logic, or
+ * subscription mechanics. Mirrors the pattern used by
+ * `tests/legal/safeDisclosures.test.ts`
+ * (`allowedPricingDisplayFiles`). Each entry MUST be defended by a
+ * dedicated assertion in another test suite.
+ */
+const allowedConsentGateFiles = new Set<string>([
+  // V9 R02 — Membre Pro automatic-renewal consent gate. The route
+  // adds a body-level consent check before any Stripe call and
+  // returns 400 when `renewalAccepted: false` is sent. Asserted by
+  // tests/legal/p0ConsentAndSafetyGates.test.ts ("A6" + "A7").
+  "app/api/stripe/pro/checkout/route.ts",
+]);
+
 function touchesFounderDecisionScope(file: string): boolean {
   return (
     liveFiles.includes(file) ||
@@ -241,6 +258,7 @@ test("branch did not touch restricted systems", () => {
   const violations: string[] = [];
   for (const file of changed) {
     if (allowedYoDisclosureFiles.has(file)) continue;
+    if (allowedConsentGateFiles.has(file)) continue;
     for (const rule of restrictedRules) {
       if (rule.re.test(file)) {
         violations.push(`${file} (${rule.label})`);

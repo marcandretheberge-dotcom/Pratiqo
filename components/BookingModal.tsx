@@ -1243,6 +1243,27 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                       {t("bookingManualConfirmHome")}
                     </p>
                   ) : null}
+                  {/*
+                    V9 R04 — minor safety disclosure for at-home lessons.
+                    Pratiqo cannot operationally identify whether the
+                    student is a minor at booking time today, so we
+                    surface a cautious bilingual notice on every at-home
+                    booking. The copy explicitly says certain options
+                    "may be limited or disabled" rather than claiming
+                    that any background check has been completed.
+                  */}
+                  <div
+                    className="text-[11px] text-amber-900 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2"
+                    role="note"
+                    data-testid="booking-home-minor-safety-disclosure"
+                  >
+                    <p className="font-semibold">
+                      {t("bookingHomeMinorSafetyTitle")}
+                    </p>
+                    <p className="mt-1 leading-relaxed">
+                      {t("bookingHomeMinorSafetyBody")}
+                    </p>
+                  </div>
                   {!geo ? (
                     <button
                       type="button"

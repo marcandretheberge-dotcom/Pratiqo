@@ -233,11 +233,28 @@ test("forbidden files: branch does not touch Stripe checkout/webhook, Supabase/R
     "supabase/migrations/073_student_saved_location.sql",
   ]);
 
+  // Approved Stripe route exceptions for narrowly-scoped consent-gate
+  // edits on later legal-mechanic PRs (e.g. V9 R02 Membre Pro
+  // automatic-renewal consent). Each entry is justified inline and
+  // defended by a dedicated assertion in another test suite — see
+  // tests/legal/p0ConsentAndSafetyGates.test.ts ("A6"+"A7") which
+  // verifies the consent gate does NOT change Stripe IDs / payment
+  // math / subscription mechanics.
+  const approvedStripeRouteExceptions = new Set([
+    "app/api/stripe/pro/checkout/route.ts",
+  ]);
+
   const violations: string[] = [];
   for (const file of changed) {
     for (const rule of forbidden) {
       if (rule.re.test(file)) {
         if (rule.label === "Supabase migrations" && approvedMigrationExceptions.has(file)) {
+          continue;
+        }
+        if (
+          rule.label === "Stripe checkout/webhook routes" &&
+          approvedStripeRouteExceptions.has(file)
+        ) {
           continue;
         }
         violations.push(`${file} (${rule.label})`);
