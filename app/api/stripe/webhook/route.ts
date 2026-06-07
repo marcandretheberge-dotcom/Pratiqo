@@ -560,6 +560,21 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid signature." }, { status: 400 });
   }
 
+  console.info("[stripe/webhook] verified event", {
+    eventId: event.id,
+    type: event.type,
+    livemode: event.livemode,
+  });
+  if (process.env.NODE_ENV === "production" && event.livemode === false) {
+    // TODO(stripe-live): decide whether production should reject test-mode
+    // webhook events once live/test webhook delivery is fully separated.
+    console.warn("[stripe/webhook] test-mode event reached production endpoint", {
+      eventId: event.id,
+      type: event.type,
+      livemode: event.livemode,
+    });
+  }
+
   try {
     if (event.type === "payment_intent.succeeded") {
       const pi = event.data.object as Stripe.PaymentIntent;
