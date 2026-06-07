@@ -60,11 +60,13 @@ Au lancement, Membre Pro est affiché à **29,99 $CA / mois + taxes applicables*
 
 ## 5. Renouvellement automatique
 
-Sauf annulation, l'adhésion Membre Pro **se renouvelle automatiquement chaque mois** pour une nouvelle période mensuelle, ou pour la période indiquée si un autre cycle est offert.
+> **Renouvellement automatique — divulgation importante :** En souscrivant à Membre Pro, vous **acceptez expressément** que l'adhésion se **renouvelle automatiquement** pour une période identique au cycle choisi (mensuel ou autre cycle proposé), au prix en vigueur, jusqu'à annulation.
 
-- Les modalités de renouvellement (période, prix, date) sont divulguées avant l'achat.
+- Avant la souscription, une **case à cocher dédiée** confirme votre acceptation du renouvellement automatique et de la tarification applicable. Cette acceptation est consignée au moment du paiement et peut être consultée dans la page d'abonnement du compte lorsque cette page est offerte.
+- La **date du prochain renouvellement** et le **montant à facturer** sont affichés dans votre page d'abonnement.
+- Pratiqo peut envoyer un **avis de renouvellement** par courriel au moins **7 jours avant** la date de facturation lorsque la loi ou les paramètres de la plateforme le prévoient.
 - Le professeur est responsable d'**annuler avant la date de renouvellement** s'il ne souhaite pas poursuivre l'adhésion.
-- Pratiqo peut transmettre des avis de renouvellement, de paiement ou d'expiration de carte lorsque la loi l'exige ou lorsque la plateforme est configurée pour le faire.
+- **Effet de l'annulation et remboursement :** sauf disposition contraire de la loi applicable (notamment la **Loi sur la protection du consommateur** du Québec pour les professeurs qui auraient la qualité de consommateur au sens de cette loi), l'annulation prend effet à la **fin de la période payée en cours**. Si la loi applicable exige un remboursement au prorata de la période non utilisée, Pratiqo le traite **conformément à la loi**. En cas de doute sur vos droits, écrivez à [`support@pratiqo.ca`](mailto:support@pratiqo.ca).
 - Aucune disposition des présentes ne limite les droits impératifs prévus par la loi applicable, notamment au Québec en matière de protection du consommateur.
 
 ---

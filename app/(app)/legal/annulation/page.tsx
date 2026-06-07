@@ -16,7 +16,7 @@ const TOC = [
   { id: "domicile", label: "4. Cours à domicile" },
   { id: "garantie-premier-cours", label: "5. Garantie satisfaction du premier cours" },
   { id: "delais", label: "6. Délais de remboursement" },
-  { id: "litiges", label: "7. Litiges" },
+  { id: "litiges", label: "7. Litiges et révision des décisions" },
   { id: "contact", label: "8. Contact" },
 ] as const;
 
@@ -24,7 +24,7 @@ export default function AnnulationPage() {
   return (
     <LegalLayout
       title="Politique d'annulation et de remboursement — Pratiqo"
-      lastUpdated="avril 2026"
+      lastUpdated="juin 2026"
       toc={[...TOC]}
       currentPath="/legal/annulation"
     >
@@ -53,7 +53,8 @@ export default function AnnulationPage() {
               <tr className="hover:bg-teal-500/10">
                 <td className="px-4 py-3 text-slate-700">No-show (absent sans annulation)</td>
                 <td className="px-4 py-3 text-slate-700">
-                  Aucun remboursement, sauf force majeure ou décision du support
+                  Aucun remboursement en règle générale, sous réserve des circonstances exceptionnelles
+                  définies au §1.2 et des droits légaux impératifs
                 </td>
               </tr>
             </tbody>
@@ -62,6 +63,8 @@ export default function AnnulationPage() {
 
         <p className="mt-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-[13px] text-slate-700">
           Cette politique s&apos;applique sous réserve des lois applicables en matière de protection du consommateur.
+          Les droits impératifs du consommateur prévus par la <strong>Loi sur la protection du consommateur</strong>
+          {" "}du Québec ne sont pas écartés par les présentes.
         </p>
 
         <h3 className="text-base font-semibold text-[var(--p-text)] mt-6 mb-2">1.1 Comment annuler</h3>
@@ -76,10 +79,41 @@ export default function AnnulationPage() {
           </li>
         </ul>
 
-        <h3 className="text-base font-semibold text-[var(--p-text)] mt-6 mb-2">1.2 Circonstances exceptionnelles</h3>
+        <h3 className="text-base font-semibold text-[var(--p-text)] mt-6 mb-2">
+          1.2 Circonstances exceptionnelles et force majeure
+        </h3>
         <p>
-          En cas d&apos;urgence médicale ou de force majeure (maladie grave, décès familial, catastrophe naturelle),
-          Pratiqo peut accorder un remboursement à sa discrétion. Une preuve peut être demandée.
+          Pratiqo peut accorder un remboursement ou un crédit dans les circonstances suivantes, sur
+          présentation d&apos;une preuve raisonnable dans un délai de <strong>48 heures ouvrables</strong>{" "}
+          suivant l&apos;événement&nbsp;:
+        </p>
+        <ul className="list-disc pl-5 space-y-2 mt-2">
+          <li>
+            <strong>Urgence médicale grave</strong>&nbsp;: hospitalisation ou blessure empêchant
+            physiquement l&apos;élève ou le professeur de participer (preuve&nbsp;: attestation médicale
+            ou document hospitalier).
+          </li>
+          <li>
+            <strong>Décès d&apos;un proche immédiat</strong>&nbsp;: conjoint, enfant, parent, frère ou
+            sœur (preuve&nbsp;: avis de décès ou attestation funéraire).
+          </li>
+          <li>
+            <strong>Catastrophe naturelle ou sinistre</strong>&nbsp;: inondation, incendie,
+            tremblement de terre affectant directement le lieu de cours ou le domicile.
+          </li>
+          <li>
+            <strong>Événement gouvernemental ou légal</strong>&nbsp;: ordre de confinement officiel,
+            mise en quarantaine obligatoire imposée par une autorité compétente.
+          </li>
+          <li>
+            <strong>Panne technique de la plateforme</strong>&nbsp;: indisponibilité de Pratiqo
+            imputable à Cours Pratiqo Inc. et non à l&apos;utilisateur.
+          </li>
+        </ul>
+        <p className="mt-3">
+          Pratiqo examine chaque demande individuellement selon les faits présentés. Une pièce
+          justificative peut être demandée. La liste ci-dessus est <strong>indicative et non
+          exhaustive</strong>.
         </p>
       </LegalSection>
 
@@ -253,23 +287,79 @@ export default function AnnulationPage() {
 
       <hr className="my-8 border-slate-200" />
 
-      <LegalSection id="litiges" title="7. Litiges">
-        <p>Tout litige concernant un remboursement doit être signalé dans les <strong>7 jours</strong> suivant le cours via :</p>
+      <LegalSection id="litiges" title="7. Litiges et révision des décisions">
+        <p>
+          Tout litige concernant un remboursement doit être signalé dans les <strong>7 jours</strong>{" "}
+          suivant le cours via&nbsp;:
+        </p>
         <ul className="list-disc pl-5 space-y-2 mt-2">
           <li>
-            Email :{" "}
+            Email&nbsp;:{" "}
             <a href="mailto:support@pratiqo.ca" className="text-teal-700 underline font-medium">
               support@pratiqo.ca
             </a>
           </li>
           <li>
-            Formulaire :{" "}
-            <a href="https://www.pratiqo.ca/contact" className="text-teal-700 underline font-medium" rel="noopener noreferrer">
+            Formulaire&nbsp;:{" "}
+            <a
+              href="https://www.pratiqo.ca/contact"
+              className="text-teal-700 underline font-medium"
+              rel="noopener noreferrer"
+            >
               pratiqo.ca/contact
             </a>
           </li>
         </ul>
-        <p className="mt-4">Pratiqo agit comme arbitre de bonne foi et sa décision est finale.</p>
+        <p className="mt-3 text-[13px] text-slate-600">
+          Ce délai est procédural et n&apos;écarte <strong>pas</strong> les droits impératifs du
+          consommateur prévus par la loi applicable.
+        </p>
+
+        <p className="mt-5">
+          Pratiqo examine les demandes de remboursement et de résolution <strong>de bonne foi</strong>,
+          en tenant compte des faits, des communications échangées sur la plateforme et de toute pièce
+          justificative pertinente.
+        </p>
+
+        <h3 className="text-base font-semibold text-[var(--p-text)] mt-6 mb-2">
+          7.1 Droit de révision
+        </h3>
+        <p>
+          Si vous n&apos;êtes pas satisfait de la décision administrative de Pratiqo, vous pouvez{" "}
+          <strong>demander une révision</strong> en écrivant à{" "}
+          <a href="mailto:support@pratiqo.ca" className="text-teal-700 underline font-medium">
+            support@pratiqo.ca
+          </a>{" "}
+          en fournissant&nbsp;:
+        </p>
+        <ul className="list-disc pl-5 space-y-2 mt-2">
+          <li>votre numéro de réservation;</li>
+          <li>un résumé factuel de la situation;</li>
+          <li>les pièces justificatives nouvelles ou complémentaires.</li>
+        </ul>
+        <p className="mt-3">
+          Pratiqo s&apos;engage à répondre dans un <strong>délai raisonnable</strong>.
+        </p>
+
+        <h3 className="text-base font-semibold text-[var(--p-text)] mt-6 mb-2">
+          7.2 Recours légaux préservés
+        </h3>
+        <p>
+          La décision administrative de Pratiqo <strong>ne limite pas</strong> les droits légaux de
+          l&apos;utilisateur, notamment&nbsp;:
+        </p>
+        <ul className="list-disc pl-5 space-y-2 mt-2">
+          <li>
+            le recours à l&apos;<strong>Office de la protection du consommateur</strong> du Québec;
+          </li>
+          <li>
+            les recours devant les <strong>tribunaux compétents</strong> selon la loi applicable;
+          </li>
+          <li>
+            la possibilité de <strong>contester un paiement</strong> auprès de l&apos;émetteur de sa
+            carte.
+          </li>
+        </ul>
       </LegalSection>
 
       <hr className="my-8 border-slate-200" />

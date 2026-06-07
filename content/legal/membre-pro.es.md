@@ -60,11 +60,13 @@ En el lanzamiento, Miembro Pro se muestra a **29,99 $CA / mes + impuestos aplica
 
 ## 5. Renovación automática
 
-Salvo cancelación, la membresía Miembro Pro **se renueva automáticamente cada mes** por un nuevo período mensual, o por el período indicado si se ofrece otro ciclo.
+> **Renovación automática — divulgación importante:** Al suscribirte a Miembro Pro, **aceptas expresamente** que la membresía se **renueva automáticamente** por un período idéntico al ciclo elegido (mensual u otro ciclo ofrecido), al precio vigente, hasta su cancelación.
 
-- Las modalidades de renovación (período, precio, fecha) se divulgan antes de la compra.
+- Antes de la suscripción, una **casilla dedicada** confirma tu aceptación de la renovación automática y de la tarifa aplicable. Esta aceptación queda registrada al momento del pago y puede consultarse en la página de suscripción de la cuenta cuando esta página esté disponible.
+- La **fecha de la próxima renovación** y el **monto a facturar** se muestran en tu página de suscripción.
+- Pratiqo puede enviar un **aviso de renovación** por correo electrónico al menos **7 días antes** de la fecha de facturación cuando la ley o la configuración de la plataforma lo prevean.
 - El profesor es responsable de **cancelar antes de la fecha de renovación** si no desea continuar la membresía.
-- Pratiqo puede enviar avisos de renovación, de pago o de vencimiento de tarjeta cuando la ley lo exija o cuando la plataforma esté configurada para hacerlo.
+- **Efecto de la cancelación y reembolso:** salvo disposición en contrario de la ley aplicable (en particular la **Ley sobre la Protección del Consumidor** de Quebec para los profesores que tendrían la calidad de consumidor en virtud de esa ley), la cancelación surte efecto al **final del período pagado en curso**. Si la ley aplicable exige un reembolso prorrateado del período no utilizado, Pratiqo lo procesa **conforme a la ley**. En caso de duda sobre tus derechos, escribe a [`support@pratiqo.ca`](mailto:support@pratiqo.ca).
 - Nada en este documento limita los derechos imperativos previstos por la ley aplicable, en particular en materia de protección al consumidor en Quebec.
 
 ---

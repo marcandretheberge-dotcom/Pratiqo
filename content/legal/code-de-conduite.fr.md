@@ -52,12 +52,25 @@ La relation entre un professeur et un élève doit demeurer **strictement profes
 
 Pratiqo accorde une **vigilance accrue** aux situations impliquant des personnes mineures ou vulnérables.
 
+### 4.1 Règles générales
+
 - Pour tout élève mineur, **un parent ou un tuteur légal** doit autoriser la prestation et est encouragé à être présent ou facilement joignable durant le cours.
 - Les cours impliquant des mineurs doivent se dérouler dans des **lieux appropriés, observables et sécuritaires** : espace ouvert ou facilement accessible (salon, salle d'étude, bibliothèque, studio professionnel), jamais une chambre fermée ou un espace isolé sans supervision possible.
 - Aucune **communication secrète** avec un mineur (canal privé non visible par le parent, application chiffrée non liée au cours, demande de cacher un échange).
 - Aucune **relation privée** avec un mineur en dehors de l'objectif pédagogique.
-- Toute préoccupation concernant la sécurité, la santé, l'intégrité ou le bien-être d'un mineur doit être signalée **rapidement** à [`support@pratiqo.ca`](mailto:support@pratiqo.ca). En situation d'urgence, communiquer d'abord avec les services d'urgence (911 au Canada).
+- Toute préoccupation concernant la sécurité, la santé, l'intégrité ou le bien-être d'un mineur doit être signalée **rapidement** à [`support@pratiqo.ca`](mailto:support@pratiqo.ca). En situation d'urgence, communiquer d'abord avec les services d'urgence (**911 au Canada**).
 - Pratiqo peut, dans la mesure permise par la loi, retirer un compte qui présente un risque pour des personnes mineures, même en l'absence de plainte formelle.
+
+### 4.2 Cours à domicile avec des mineurs — exigences supplémentaires
+
+Pour les cours **à domicile** impliquant des **élèves mineurs**, des exigences supplémentaires peuvent s'appliquer aux professeurs :
+
+- **Vérification d'antécédents :** Pratiqo **peut exiger** qu'un professeur souhaitant offrir des cours à domicile avec des mineurs soumette une **vérification de casier judiciaire** (y compris le volet « vulnérabilité » lorsque cette option est disponible) via un prestataire agréé ou une autorité policière compétente au Canada. Le détail du processus, les documents requis et les délais sont indiqués dans le tableau de bord du professeur **lorsque la fonctionnalité est activée** sur le compte. Pratiqo **ne représente pas** qu'une vérification a été complétée tant que le statut correspondant n'est pas explicitement affiché sur le profil ou dans le tableau de bord du professeur concerné.
+- **Présence parentale :** Un parent ou tuteur légal doit être **physiquement présent dans la résidence** ou facilement accessible dans un autre espace de la même résidence pendant la durée du cours.
+- **Lieu visible :** Le cours doit se dérouler dans un **espace de vie commun** (salon, cuisine, salle à manger, bibliothèque) ou dans un espace clairement visible. Les portes fermées sans fenêtre visible sont **interdites**.
+- **Communication pré-cours :** Le professeur doit utiliser la **messagerie Pratiqo** pour confirmer l'adresse et les arrangements avec le parent ou tuteur **avant** de se déplacer.
+
+> **Note :** L'exigence de vérification d'antécédents **s'applique lorsque la fonctionnalité « cours à domicile avec mineurs » est activée** dans les paramètres du compte. Pratiqo peut activer ou désactiver cette fonctionnalité selon les résultats de la vérification ou en l'absence de vérification complétée. Aucune affirmation publique selon laquelle Pratiqo aurait vérifié les antécédents d'un professeur n'est faite tant que ce statut n'est pas explicitement et individuellement affiché par la plateforme.
 
 ---
 

@@ -16,6 +16,26 @@ La compra de un módulo YoPratiqo te otorga una **licencia personal e intransfer
 
 YoPratiqo es un producto de **preparación educativa**. Los módulos pueden ayudarte a practicar, descubrir una lengua o preparar una conversación con un profesor, pero Pratiqo no garantiza fluidez, éxito en un examen, un resultado migratorio, un resultado laboral ni una reserva con un profesor. La política de reembolso aplicable a módulos digitales pagos sigue sujeta a revisión legal antes de cualquier ampliación paga.
 
+### 1.1 Divulgación — Contenido generado por inteligencia artificial
+
+> **Voz y audio sintéticos:** Algunos elementos de audio de los módulos YoPratiqo (narraciones, ejemplos de pronunciación, diálogos) son generados por **herramientas de inteligencia artificial con voz sintética** (por ejemplo, servicios de síntesis de voz *text-to-speech*). Este contenido se produjo con fines educativos y puede no reproducir fielmente todos los acentos, registros, entonaciones o matices de una persona hablante nativa. Pratiqo no representa que el contenido de audio sintético equivalga a la instrucción humana en vivo.
+
+> **Contenido asistido por IA:** Algunas porciones del contenido pedagógico (textos, preguntas de quiz, fichas de vocabulario) pueden haber sido preparadas o revisadas con la asistencia de herramientas de inteligencia artificial, y luego validadas por el equipo de Pratiqo. Pratiqo sigue siendo responsable del contenido final publicado.
+
+> **Sin garantía de precisión lingüística:** Los módulos YoPratiqo buscan introducir competencias básicas. **No garantizan** la precisión dialectal, la ausencia de errores ni el cumplimiento de un estándar lingüístico oficial. Para objetivos avanzados, Pratiqo recomienda complementar los módulos con un profesor humano a través de la marketplace Pratiqo.
+
+### 1.2 Servicio educativo independiente — Sin afiliación gubernamental
+
+YoPratiqo **no garantiza**:
+
+- la fluidez, el dominio o un nivel lingüístico específico;
+- el éxito en un examen, prueba o evaluación oficial (TEF, TCF, DELE, etc.);
+- un resultado de **inmigración**, de admisión a un programa o de **empleo**;
+- el reconocimiento por parte de un programa oficial de **francización** o de cualquier autoridad gubernamental;
+- un resultado de una clase con un profesor de Pratiqo.
+
+> **Servicio educativo independiente:** YoPratiqo es una herramienta de aprendizaje autónomo. **No está afiliado** al Ministerio de Inmigración, Francización e Integración (**MIFI**) de Quebec, al Ministerio de Educación (**MEQ**), ni a ningún programa oficial subvencionado de francización. **No reemplaza** a un programa gubernamental reconocido, no garantiza ningún resultado de examen o evaluación lingüística oficial, y **no** constituye un consejo de inmigración, legal ni administrativo.
+
 ---
 
 ## 2. Acceso de 12 meses — definición
@@ -58,10 +78,29 @@ Pratiqo puede tener que adaptar, corregir, interrumpir temporalmente o retirar c
 
 Esta sección se aplica a los compradores residentes en la **Unión Europea**, independientemente de la jurisdicción de establecimiento de Pratiqo.
 
-- El contenido YoPratiqo es un **contenido digital no suministrado en un soporte material**, entregado de inmediato tras el pago.
-- En el momento del pago, el comprador de la UE debe **consentir expresamente** a la entrega inmediata **y reconocer** que ese consentimiento implica la **renuncia al derecho de desistimiento de 14 días** previsto por la **Directiva 2011/83/UE (art. 16, m)** y la **Directiva (UE) 2019/770 (art. 16)**.
-- **Sin esa renuncia expresa**, el comprador de la UE conserva la **totalidad del derecho de desistimiento de 14 días** y obtiene un **reembolso completo** a simple solicitud dentro de esa ventana, **aun si se ha completado más del 25 % de las clases**.
-- La garantía comercial de 30 días descrita en la **sección 3** se aplica **en paralelo** para los compradores de la UE que renunciaron a su derecho de desistimiento.
+El contenido YoPratiqo es un **contenido digital no suministrado en un soporte material**, entregado de inmediato tras el pago.
+
+### 4.1 Consentimiento expreso requerido en el checkout — Compradores UE
+
+Conforme a la **Directiva 2011/83/UE (art. 16, m)** y a la **Directiva (UE) 2019/770 (art. 16)**, el derecho de desistimiento de 14 días para un contenido digital entregado de inmediato solo puede levantarse si el comprador:
+
+1. **marca expresamente la siguiente casilla en el momento del pago**:
+
+> *«Solicito la entrega inmediata del contenido digital y reconozco perder mi derecho de desistimiento de 14 días a partir de esa fecha.»*
+
+2. y **confirma haber sido informado** de esta renuncia antes de finalizar la compra.
+
+**Sin esa casilla marcada, el comprador UE conserva la totalidad del derecho de desistimiento de 14 días** y obtiene un reembolso completo a simple solicitud dentro de esa ventana, **aun si se ha completado más del 25 % de las clases**.
+
+> **Nota de implementación (a validar por la abogada antes de cualquier venta UE):** La interfaz de checkout dedicada a la **casilla UE** queda pendiente de implementación antes de cualquier comercialización pública de YoPratiqo en la Unión Europea. Mientras esa casilla no esté implementada y activa, **no se considera recogida ninguna renuncia al derecho de desistimiento UE**, y el derecho de desistimiento de 14 días se aplica íntegramente a toda compra realizada desde la UE.
+
+### 4.2 Cómo ejercer el derecho de desistimiento (sin casilla marcada)
+
+Un comprador UE que no haya marcado la casilla de renuncia puede ejercer su derecho de desistimiento escribiendo a [`support@pratiqo.ca`](mailto:support@pratiqo.ca) **dentro de los 14 días posteriores a la compra** con el encabezado «Ejercicio del derecho de desistimiento — pedido n.° [número]». No se requiere justificación dentro de esa ventana.
+
+### 4.3 Acumulación con la garantía comercial de 30 días
+
+La garantía comercial de 30 días descrita en la **sección 3** se aplica **en paralelo** para los compradores de la UE que renunciaron a su derecho de desistimiento.
 
 ---
 
