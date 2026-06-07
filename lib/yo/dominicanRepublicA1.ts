@@ -800,13 +800,16 @@ const lessons: YoLesson[] = [
   {
     id: "voyage_es_do_conversation",
     position: 5,
-    title: lstr("Conversations naturelles", "Natural conversations"),
-    subtitle: lstr(
-      "Petits échanges du quotidien, politesse et accent dominicain.",
-      "Everyday small talk, politeness, and the Dominican accent.",
+    title: lstr(
+      "Imprévus et mission finale A2",
+      "Unexpected situations and final A2 mission",
     ),
-    status: "locked",
-    estimatedMinutes: 22,
+    subtitle: lstr(
+      "Capstone A2 voyage : résoudre les imprévus, comprendre l'espagnol rapide et terminer ton voyage.",
+      "A2 travel capstone: handle unexpected situations, understand fast Spanish, and complete your trip.",
+    ),
+    status: "available",
+    estimatedMinutes: 28,
     cards: [],
   },
 ];
@@ -833,7 +836,9 @@ const lessonPath: YoLessonPathStep[] = lessons.map((lesson) => ({
         ? "/yo/langues/espagnol/pays/republique-dominicaine/module-3"
         : lesson.id === "voyage_es_do_navigation"
           ? "/yo/langues/espagnol/pays/republique-dominicaine/module-4"
-          : undefined,
+          : lesson.id === "voyage_es_do_conversation"
+            ? "/yo/langues/espagnol/pays/republique-dominicaine/module-5"
+            : undefined,
 }));
 
 // ─────────────────────────────────────────────────────────────────────────

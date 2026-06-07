@@ -248,10 +248,10 @@ test("quiz contains required food/payment/culture questions", () => {
   }
 });
 
-test("Modules 2, 3, and 4 are live in the Dominican path while Module 5 stays inert", () => {
-  // Module 4 went live in feat/yo-dominican-module-4-explore-a2-bridge.
-  // This Module 3 regression test now expects that addition while
-  // continuing to ensure Module 5 has no fake working route.
+test("Modules 2, 3, 4, and 5 are all live in the Dominican path (capstone reached)", () => {
+  // Module 5 (A2 capstone) went live in feat/yo-dominican-module-5-a2-capstone.
+  // The full Dominican RD series is now reachable end-to-end. There is no
+  // Module 6 in the lesson path, so the lesson-path length must remain 5.
   const steps = dominicanRepublicA1.lessonPath;
   const module2 = steps.find((step) => step.position === 2);
   const module3 = steps.find((step) => step.position === 3);
@@ -263,8 +263,9 @@ test("Modules 2, 3, and 4 are live in the Dominican path while Module 5 stays in
   assert.equal(module3?.href, "/yo/langues/espagnol/pays/republique-dominicaine/module-3");
   assert.equal(module4?.status, "available");
   assert.equal(module4?.href, "/yo/langues/espagnol/pays/republique-dominicaine/module-4");
-  assert.equal(module5?.status, "locked");
-  assert.equal(module5?.href, undefined);
+  assert.equal(module5?.status, "available");
+  assert.equal(module5?.href, "/yo/langues/espagnol/pays/republique-dominicaine/module-5");
+  assert.equal(steps.length, 5, "Dominican path must have exactly 5 lessons (no fake Module 6).");
 });
 
 test("Spanish target phrases are rendered with lang markers", () => {

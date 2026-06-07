@@ -27,6 +27,7 @@ import type { YoFlashcard, YoLocalizedString } from "@/lib/yo/types";
 import type { Dom2Flashcard } from "@/lib/yo/dominicanRepublicHotelAirport";
 import type { Dom3Flashcard } from "@/lib/yo/dominicanRepublicFoodCulture";
 import type { Dom4Flashcard } from "@/lib/yo/dominicanRepublicExplore";
+import type { Dom5Flashcard } from "@/lib/yo/dominicanRepublicA2Capstone";
 
 /** Visual treatment shared with the RD-intro flashcards. */
 const RD_FLASHCARD_VISUAL_HINT = "tropical-flashcard" as const;
@@ -96,6 +97,26 @@ export function module4FlashcardsToYo(
 ): YoFlashcard[] {
   return cards.map((card) => ({
     id: `m4-${card.id}`,
+    front: card.front,
+    back: card.back,
+    tag: card.category,
+    visualHint: RD_FLASHCARD_VISUAL_HINT,
+    imagePath: null,
+  }));
+}
+
+/**
+ * Module 5 (A2 capstone) flashcards → canonical `YoFlashcard[]`.
+ *
+ * Same shape contract as Modules 3 and 4 (id / category / front / back).
+ * Reuses the `tropical-flashcard` visual hint so the capstone deck
+ * inherits the same premium RD-intro look.
+ */
+export function module5FlashcardsToYo(
+  cards: readonly Dom5Flashcard[],
+): YoFlashcard[] {
+  return cards.map((card) => ({
+    id: `m5-${card.id}`,
     front: card.front,
     back: card.back,
     tag: card.category,

@@ -2,11 +2,12 @@
  * YoPratiqo Dominican Republic navigation regression.
  *
  * Ensures the Dominican module path stays coherent as new modules go
- * live. Specifically:
+ * live. With the A2 capstone (Module 5) now shipped:
  *   - Module 2 still hands off to Module 3.
- *   - Module 3 now hands off to Module 4 (which is live in this PR).
- *   - Module 4 route file exists and is reachable from the country path.
- *   - Module 5 remains "coming soon" with no fake working route.
+ *   - Module 3 still hands off to Module 4.
+ *   - Module 4 now hands off to Module 5 (the A2 capstone).
+ *   - Module 5 route file exists and is reachable from the country path.
+ *   - There is NO fake Module 6 link anywhere; lessonPath has 5 lessons.
  *   - The country page preserves locale on every module link.
  */
 
@@ -36,18 +37,22 @@ const COUNTRY_CONTENT_FILE = "components/yo/RepubliqueDominicaineContent.tsx";
 const LESSON_PATH_FILE = "components/yo/YoLessonPath.tsx";
 const MODULE_2_CONTENT_FILE = "components/yo/DominicanRepublicModule2Content.tsx";
 const MODULE_3_CONTENT_FILE = "components/yo/DominicanRepublicModule3Content.tsx";
+const MODULE_4_CONTENT_FILE = "components/yo/DominicanRepublicModule4Content.tsx";
 const MODULE_2_PAGE_FILE =
   "app/yo/langues/espagnol/pays/republique-dominicaine/module-2/page.tsx";
 const MODULE_3_PAGE_FILE =
   "app/yo/langues/espagnol/pays/republique-dominicaine/module-3/page.tsx";
 const MODULE_4_PAGE_FILE =
   "app/yo/langues/espagnol/pays/republique-dominicaine/module-4/page.tsx";
+const MODULE_5_PAGE_FILE =
+  "app/yo/langues/espagnol/pays/republique-dominicaine/module-5/page.tsx";
 const TYPES_FILE = "lib/yo/types.ts";
 
-test("Module 2, 3 and 4 route files all exist", () => {
+test("Module 2, 3, 4, and 5 route files all exist", () => {
   assert.ok(exists(MODULE_2_PAGE_FILE), "Module 2 route missing");
   assert.ok(exists(MODULE_3_PAGE_FILE), "Module 3 route missing");
   assert.ok(exists(MODULE_4_PAGE_FILE), "Module 4 route missing");
+  assert.ok(exists(MODULE_5_PAGE_FILE), "Module 5 route missing");
 });
 
 test("Module 2 teaser still links to Module 3", () => {
@@ -58,12 +63,23 @@ test("Module 2 teaser still links to Module 3", () => {
   assert.ok(src.includes("Abrir el módulo 3"));
 });
 
-test("Module 3 teaser now links to Module 4", () => {
+test("Module 3 teaser still links to Module 4", () => {
   const src = read(MODULE_3_CONTENT_FILE);
   assert.ok(src.includes("/yo/langues/espagnol/pays/republique-dominicaine/module-4"));
   assert.ok(src.includes("Ouvrir le module 4"));
   assert.ok(src.includes("Open Module 4"));
   assert.ok(src.includes("Abrir el módulo 4"));
+});
+
+test("Module 4 teaser now links forward to Module 5 (A2 capstone)", () => {
+  const src = read(MODULE_4_CONTENT_FILE);
+  assert.ok(
+    src.includes("/yo/langues/espagnol/pays/republique-dominicaine/module-5"),
+    "Module 4 must link to Module 5",
+  );
+  assert.ok(src.includes("Ouvrir le module 5"));
+  assert.ok(src.includes("Open Module 5"));
+  assert.ok(src.includes("Abrir el módulo 5"));
 });
 
 test("Module 3 does not link to a non-existent Module 5", () => {
@@ -84,12 +100,12 @@ test("country page preserves locale on every module link", () => {
   assert.ok(src.includes("`?lang=${locale}`"));
 });
 
-test("Dominican path exposes Modules 2, 3 and 4 as live premium routes", () => {
+test("Dominican path exposes Modules 2, 3, 4, and 5 as live premium routes", () => {
   const steps = dominicanRepublicA1.lessonPath;
   const liveSteps = steps.filter((step) => step.status === "available");
   assert.deepEqual(
     liveSteps.map((step) => step.position),
-    [2, 3, 4],
+    [2, 3, 4, 5],
   );
   assert.equal(
     liveSteps[0]?.href,
@@ -103,20 +119,39 @@ test("Dominican path exposes Modules 2, 3 and 4 as live premium routes", () => {
     liveSteps[2]?.href,
     "/yo/langues/espagnol/pays/republique-dominicaine/module-4",
   );
+  assert.equal(
+    liveSteps[3]?.href,
+    "/yo/langues/espagnol/pays/republique-dominicaine/module-5",
+  );
 });
 
-test("Module 5 remains coming soon without a fake link", () => {
+test("Module 5 is live with a real working route (A2 capstone)", () => {
   const module5 = dominicanRepublicA1.lessonPath.find((step) => step.position === 5);
-  assert.equal(module5?.status, "locked");
-  assert.equal(module5?.href, undefined);
-  assert.match(module5?.ctaLabel.fr ?? "", /Bientôt/);
-  assert.match(module5?.ctaLabel.en ?? "", /Coming soon/);
-  assert.match(module5?.ctaLabel.es ?? "", /Próximamente/);
+  assert.equal(module5?.status, "available");
+  assert.equal(
+    module5?.href,
+    "/yo/langues/espagnol/pays/republique-dominicaine/module-5",
+  );
+  assert.match(module5?.ctaLabel.fr ?? "", /Ouvrir/);
+  assert.match(module5?.ctaLabel.en ?? "", /Open/);
+  assert.match(module5?.ctaLabel.es ?? "", /Abrir/);
 });
 
-test("Module 4 itself does not link to a non-existent Module 5", () => {
-  const m4 = read("components/yo/DominicanRepublicModule4Content.tsx");
-  assert.ok(!m4.includes("/module-5"), "Module 4 must not create a Module 5 link");
+test("No fake Module 6 link exists (lesson path stops at 5)", () => {
+  const steps = dominicanRepublicA1.lessonPath;
+  assert.equal(steps.length, 5, "Dominican lesson path must have exactly 5 lessons");
+  const filesToCheck = [
+    MODULE_2_CONTENT_FILE,
+    MODULE_3_CONTENT_FILE,
+    MODULE_4_CONTENT_FILE,
+    "components/yo/DominicanRepublicModule5Content.tsx",
+    COUNTRY_CONTENT_FILE,
+  ];
+  for (const file of filesToCheck) {
+    if (!exists(file)) continue;
+    const src = read(file);
+    assert.ok(!src.includes("/module-6"), `Fake Module 6 link found in ${file}`);
+  }
 });
 
 let passed = 0;
@@ -124,7 +159,7 @@ let failed = 0;
 
 (async () => {
   console.log(
-    `\nRunning ${tests.length} tests - YoPratiqo Dominican Module 2/3/4 navigation\n`,
+    `\nRunning ${tests.length} tests - YoPratiqo Dominican Module 2/3/4/5 navigation\n`,
   );
 
   for (const { name, fn } of tests) {
