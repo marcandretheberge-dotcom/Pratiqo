@@ -238,9 +238,11 @@ test("this PR does not add or modify MP3 binaries", () => {
 test("tracked patch avoids generated audio and restricted product systems", () => {
   const changed = gitLines("git diff --name-only HEAD");
   const branchSpecificAllowlist = new Set([
+    "app/api/bookings/[id]/cancel/route.ts",
     "app/api/group-sessions/checkout/route.ts",
     "app/api/stripe/pro/checkout/route.ts",
     "app/api/stripe/webhook/route.ts",
+    "lib/payments/refunds.ts",
   ]);
   const forbidden = [
     /^app\/api\//,

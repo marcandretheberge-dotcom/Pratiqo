@@ -31,6 +31,13 @@ const REASON_LABEL_KEY: Record<AnyReason, TranslationKey> = {
 export type ConfirmCancelPayload = {
   reason: string;
   message: string;
+  /**
+   * True when the late-cancellation warning was shown AND the user opted
+   * into requesting an exceptional review. The server uses this flag to
+   * open a `support_cases` row with `category=late_cancellation`. Setting
+   * this to true does NOT promise a refund.
+   */
+  exceptionalReview?: boolean;
 };
 
 export function ConfirmCancelBookingDialog({
@@ -59,11 +66,14 @@ export function ConfirmCancelBookingDialog({
   const descId = useId();
   const reasonId = useId();
   const messageId = useId();
+  const reviewId = useId();
   const [reason, setReason] = useState<AnyReason | "">("");
   const [message, setMessage] = useState("");
+  const [exceptionalReview, setExceptionalReview] = useState(false);
   const [mounted, setMounted] = useState(false);
   const effectiveRole: CancellerRole = role ?? "student";
   const reasonRequired = effectiveRole === "teacher";
+  const showExceptionalReview = effectiveRole === "student" && Boolean(isLate);
 
   const reasonOptions = useMemo<readonly AnyReason[]>(
     () => (effectiveRole === "teacher" ? TEACHER_CANCEL_REASONS : STUDENT_CANCEL_REASONS),
@@ -78,6 +88,7 @@ export function ConfirmCancelBookingDialog({
     if (!open) {
       setReason("");
       setMessage("");
+      setExceptionalReview(false);
     }
   }, [open]);
 
@@ -138,6 +149,32 @@ export function ConfirmCancelBookingDialog({
           </div>
         ) : null}
 
+        {showExceptionalReview ? (
+          <label
+            htmlFor={reviewId}
+            data-testid="cancel-exceptional-review-checkbox-label"
+            className="mt-3 flex items-start gap-2 rounded-2xl border border-[var(--p-border-light)] bg-[#fafaf8] px-3 py-2 text-[13px] text-slate-800"
+          >
+            <input
+              id={reviewId}
+              data-testid="cancel-exceptional-review-checkbox"
+              type="checkbox"
+              checked={exceptionalReview}
+              disabled={busy}
+              onChange={(e) => setExceptionalReview(e.target.checked)}
+              className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-teal-600 focus:ring-teal-500"
+            />
+            <span className="leading-relaxed">
+              <span className="block font-semibold text-slate-900">
+                {t("lateCancellationRequestReviewLabel")}
+              </span>
+              <span className="mt-1 block text-slate-600">
+                {t("lateCancellationRequestReviewHelp")}
+              </span>
+            </span>
+          </label>
+        ) : null}
+
         <label htmlFor={reasonId} className="mt-4 block">
           <span className="text-xs font-semibold text-slate-700">
             {reasonRequired ? t("cancellationReasonRequired") : t("cancellationReasonOptional")}
@@ -192,7 +229,11 @@ export function ConfirmCancelBookingDialog({
             type="button"
             disabled={confirmDisabled}
             onClick={async () => {
-              await onConfirm({ reason: reason || "", message: message.trim() });
+              await onConfirm({
+                reason: reason || "",
+                message: message.trim(),
+                exceptionalReview: showExceptionalReview ? exceptionalReview : false,
+              });
             }}
             className="inline-flex min-h-[44px] flex-1 sm:flex-none items-center justify-center gap-2 rounded-2xl border-2 border-rose-600 bg-white px-4 text-sm font-bold text-rose-600 hover:bg-rose-50 disabled:opacity-50 disabled:cursor-not-allowed"
           >

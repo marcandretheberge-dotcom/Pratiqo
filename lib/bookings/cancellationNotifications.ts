@@ -155,11 +155,19 @@ export async function notifyBookingDeclined(
  *   - teacher cancels → notify the student (a "lesson cancelled — {teacher}" email)
  *   - student cancels → notify the teacher (a "lesson cancelled — {student}" email)
  *
- * Wording deliberately avoids promising a refund — the cancel route stamps
- * a refund plan into `bookings.refund_status / refund_amount` but does NOT
- * execute Stripe refunds today (see the TODO in cancel/route.ts). The
- * neutral "If a payment is involved, you can follow its status…" copy is
- * truthful regardless of which path the support team eventually runs.
+ * Wording deliberately avoids promising a refund — the cancel route now
+ * executes Stripe refunds for eligible cases via `attemptStripeBookingRefund`,
+ * but the email helper still uses neutral cancellation copy. The current
+ * copy stays truthful for every outcome (refund_executed, manual_review,
+ * late_no_refund, no_payment): it confirms cancellation and points the
+ * recipient at the dashboard for refund status, without claiming a refund
+ * happened or didn't.
+ *
+ * TODO(emails): pipe the new outcome discriminator + supportCaseId +
+ * stripeRefundId through to a follow-up "refund initiated"/"manual review"
+ * email once the dashboard surface has bedded in. That follow-up should
+ * NOT touch this helper's signature without versioning all existing
+ * `notifyBookingCancelled` callers (decline route, cancel route).
  */
 export async function notifyBookingCancelled(
   admin: SupabaseClient,
