@@ -231,8 +231,20 @@ test("commission model branch may update canonical commission files but not rest
     { label: "cron jobs", re: /^app\/api\/cron\/|^\.github\/workflows\/.*cron/i },
   ];
 
+  // Approved Stripe route exceptions for narrowly-scoped consent-gate
+  // edits on later legal-mechanic PRs (e.g. V9 R02 Membre Pro
+  // automatic-renewal consent). Each entry is justified inline and
+  // defended by a dedicated assertion in another test suite — see
+  // tests/legal/p0ConsentAndSafetyGates.test.ts ("A6"+"A7") which
+  // verifies the consent gate does NOT change Stripe IDs / payment
+  // math / subscription mechanics.
+  const approvedStripeRouteExceptions = new Set<string>([
+    "app/api/stripe/pro/checkout/route.ts",
+  ]);
+
   const violations: string[] = [];
   for (const file of changed) {
+    if (approvedStripeRouteExceptions.has(file)) continue;
     for (const rule of restrictedRules) {
       if (rule.re.test(file)) {
         violations.push(`${file} (${rule.label})`);

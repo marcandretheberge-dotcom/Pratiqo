@@ -125,6 +125,17 @@ const allowedPricingDisplayFiles = new Set<string>([
   // tests/pricing/hourlyRateDurationDisplay.test.ts ("routes commission
   // math through lib/payments/commission" + "no bps table re-listed").
   "lib/pricing/hourlyRatePreview.ts",
+  // V9 R02 — Membre Pro automatic-renewal consent gate (legal P0).
+  // The route here ONLY adds an early-rejection guard that reads a
+  // boolean `renewalAccepted` flag from the request body before the
+  // Stripe call. It does NOT change Stripe product IDs, price IDs,
+  // payment math, tax logic, subscription mechanics, or any tax/RLS
+  // path. The narrow scope is enforced by
+  // tests/legal/p0ConsentAndSafetyGates.test.ts (the test there
+  // verifies the file still references `STRIPE_PRO_MONTHLY_PRICE_ID`
+  // unchanged, and that the new code reads `renewalAccepted` and
+  // returns 400 when it is explicitly false).
+  "app/api/stripe/pro/checkout/route.ts",
 ]);
 
 function touchesSafeDisclosureScope(file: string): boolean {
