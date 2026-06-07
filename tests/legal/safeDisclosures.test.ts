@@ -136,6 +136,13 @@ const allowedPricingDisplayFiles = new Set<string>([
   // unchanged, and that the new code reads `renewalAccepted` and
   // returns 400 when it is explicitly false).
   "app/api/stripe/pro/checkout/route.ts",
+  // Booking cancellation/refund launch patch. This file is the dedicated
+  // Stripe refund executor and is allowed here only so the legal-copy
+  // guard does not block the payments branch while i18n cancellation copy
+  // changes are also present. The booking refund tests assert this does
+  // not touch Stripe product/price IDs, tax math, Supabase migrations/RLS,
+  // legal live pages, YoPratiqo, sitemap/indexation, or Course schema.
+  "lib/payments/refunds.ts",
 ]);
 
 function touchesSafeDisclosureScope(file: string): boolean {

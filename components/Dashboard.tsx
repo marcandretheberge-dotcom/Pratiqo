@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import { formatLocalISODate, slotStartMinutes } from "../lib/slots";
 import { cn } from "../lib/utils";
 import { useLocale } from "../lib/locale-context";
+import type { TranslationKey } from "@/lib/translations";
 import { localeToBcp47 } from "@/lib/i18n/types";
 import { TeacherDashboardStats } from "@/components/dashboard/teacher/TeacherDashboardStats";
 import { TeacherProfileCompletenessCard } from "@/components/dashboard/teacher/TeacherProfileCompletenessCard";
@@ -285,9 +286,11 @@ export function Dashboard() {
   const runConfirmedCancelFromDialog = async ({
     reason,
     message,
+    exceptionalReview,
   }: {
     reason: string;
     message: string;
+    exceptionalReview?: boolean;
   }) => {
     if (!cancelBooking) return;
     setCancelBusy(true);
@@ -302,6 +305,7 @@ export function Dashboard() {
         accessToken: token,
         reason: reason || undefined,
         message: message || undefined,
+        exceptionalReview: exceptionalReview === true,
       });
       if ("error" in res) throw new Error(res.error);
       if (cancelBooking.side === "student") {
@@ -310,7 +314,13 @@ export function Dashboard() {
         setTeacherBookings((prev) => prev.filter((x) => String(x.id) !== cancelBooking.id));
       }
       setCancelBooking(null);
-      showFlash("ok", t("classCancelled"));
+      // The API returns `copy_key` so the flash shows the honest outcome
+      // ("manual review", "refund", "no automatic refund", …) instead of a
+      // generic "Class cancelled." We fall back to the legacy key when an
+      // older API revision does not yet return a discriminator.
+      const flashKey: TranslationKey =
+        res.copy_key ? (`${res.copy_key}Title` as TranslationKey) : "classCancelled";
+      showFlash("ok", t(flashKey));
     } catch (e) {
       showFlash("err", e instanceof Error ? e.message : t("anErrorOccurred"));
     } finally {

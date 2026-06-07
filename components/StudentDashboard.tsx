@@ -303,7 +303,11 @@ export function StudentDashboard() {
     return isLateCancellation({ slot_date: b.date, date: b.date, time_slot: b.time, time: b.time });
   }, [cancelBookingId, upcoming]);
 
-  const executeStudentCancel = async (payload: { reason: string; message: string }) => {
+  const executeStudentCancel = async (payload: {
+    reason: string;
+    message: string;
+    exceptionalReview?: boolean;
+  }) => {
     if (!cancelBookingId || !user?.id) return;
     setCancelBusy(true);
     try {
@@ -317,12 +321,19 @@ export function StudentDashboard() {
         accessToken: token,
         reason: payload.reason || undefined,
         message: payload.message || undefined,
+        exceptionalReview: payload.exceptionalReview === true,
       });
       if ("error" in res) throw new Error(res.error);
       setCancelBookingId(null);
-      setLocalFlash(t("classCancelled"));
+      // Surface an honest outcome flash so the user never sees "Cours annulé."
+      // alone when they were told elsewhere a refund would happen. The API
+      // returns `copy_key` (e.g. cancelOutcomeRefundExecuted) and the client
+      // dictionary holds the matching <key>Title strings.
+      const flashKey: TranslationKey =
+        res.copy_key ? (`${res.copy_key}Title` as TranslationKey) : "classCancelled";
+      setLocalFlash(t(flashKey));
       setReloadKey((k) => k + 1);
-      window.setTimeout(() => setLocalFlash(null), 4000);
+      window.setTimeout(() => setLocalFlash(null), 5000);
     } catch {
       setLocalFlash(t("anErrorOccurred"));
       window.setTimeout(() => setLocalFlash(null), 4000);
