@@ -52,12 +52,25 @@ The relationship between a teacher and a student must remain **strictly professi
 
 Pratiqo applies **heightened vigilance** to situations involving minors or vulnerable users.
 
+### 4.1 General rules
+
 - For any student who is a minor, **a parent or legal guardian** must authorize the lesson and is encouraged to be present or readily reachable during the lesson.
 - Lessons involving minors must take place in **appropriate, observable, and safe environments**: an open or readily accessible area (living room, study room, library, professional studio), never a closed bedroom or an isolated space without possible supervision.
 - No **secret communications** with a minor (private channel hidden from the parent, encrypted application unrelated to the lesson, requests to hide messages).
 - No **private relationship** with a minor outside the educational purpose.
-- Any concern about the safety, health, integrity, or well-being of a minor must be reported **promptly** to [`support@pratiqo.ca`](mailto:support@pratiqo.ca). In an emergency, contact emergency services first (911 in Canada).
+- Any concern about the safety, health, integrity, or well-being of a minor must be reported **promptly** to [`support@pratiqo.ca`](mailto:support@pratiqo.ca). In an emergency, contact emergency services first (**911 in Canada**).
 - Pratiqo may, to the extent permitted by law, remove an account that presents a risk to minors, even in the absence of a formal complaint.
+
+### 4.2 Home lessons with minors — additional requirements
+
+For **home lessons** involving **minor students**, additional requirements may apply to teachers:
+
+- **Background check:** Pratiqo **may require** a teacher who wishes to offer home lessons with minors to submit a **criminal-record check** (including the "vulnerable sector" component when that option is available) through an approved provider or a competent Canadian police authority. The detail of the process, the required documents, and the timelines are shown in the teacher dashboard **when the feature is enabled** on the account. Pratiqo **does not represent** that a check has been completed unless the corresponding status is explicitly displayed on the relevant teacher's profile or dashboard.
+- **Parental presence:** A parent or legal guardian must be **physically present in the residence** or readily reachable from another area of the same residence for the duration of the lesson.
+- **Visible space:** The lesson must take place in a **shared living area** (living room, kitchen, dining room, library) or in a clearly visible space. Closed doors without a visible window are **prohibited**.
+- **Pre-lesson communication:** The teacher must use the **Pratiqo messaging platform** to confirm the address and arrangements with the parent or guardian **before** travelling.
+
+> **Note:** The background-check requirement **applies when the "home lessons with minors" feature is enabled** in the account settings. Pratiqo may enable or disable this feature based on the results of the check or in the absence of a completed check. No public claim that Pratiqo has verified a teacher's background is made unless that status is explicitly and individually displayed by the platform.
 
 ---
 

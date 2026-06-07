@@ -52,12 +52,25 @@ La relación entre un profesor y un estudiante debe ser **estrictamente profesio
 
 Pratiqo aplica una **vigilancia reforzada** a las situaciones que involucran a personas menores o vulnerables.
 
+### 4.1 Reglas generales
+
 - Para todo estudiante que sea menor de edad, **un padre, una madre o un/una tutor/a legal** debe autorizar la clase y se recomienda que esté presente o disponible durante la clase.
 - Las clases con personas menores deben realizarse en **entornos apropiados, observables y seguros**: un espacio abierto o de fácil acceso (sala, estudio, biblioteca, estudio profesional), nunca en una habitación cerrada ni en un espacio aislado sin posibilidad de supervisión.
 - No se permiten **comunicaciones secretas** con una persona menor (canales privados ocultos al padre o madre, aplicaciones cifradas no relacionadas con la clase, pedidos de ocultar conversaciones).
 - No se permite ninguna **relación privada** con una persona menor fuera del objetivo educativo.
-- Cualquier preocupación sobre la seguridad, la salud, la integridad o el bienestar de una persona menor debe reportarse **rápidamente** a [`support@pratiqo.ca`](mailto:support@pratiqo.ca). En caso de emergencia, comunicarse primero con los servicios de emergencia (911 en Canadá).
+- Cualquier preocupación sobre la seguridad, la salud, la integridad o el bienestar de una persona menor debe reportarse **rápidamente** a [`support@pratiqo.ca`](mailto:support@pratiqo.ca). En caso de emergencia, comunicarse primero con los servicios de emergencia (**911 en Canadá**).
 - Pratiqo puede, en la medida permitida por la ley, retirar una cuenta que represente un riesgo para personas menores, incluso sin denuncia formal.
+
+### 4.2 Clases a domicilio con personas menores — exigencias adicionales
+
+Para las clases **a domicilio** con **estudiantes menores de edad**, pueden aplicarse exigencias adicionales a los profesores:
+
+- **Verificación de antecedentes:** Pratiqo **puede exigir** que un profesor que desee ofrecer clases a domicilio con personas menores presente una **verificación de antecedentes penales** (incluyendo el componente «sector vulnerable» cuando esa opción esté disponible) a través de un proveedor aprobado o de una autoridad policial competente en Canadá. El detalle del proceso, los documentos requeridos y los plazos se indican en el panel de control del profesor **cuando la funcionalidad esté activada** en la cuenta. Pratiqo **no afirma** que una verificación se haya completado salvo que el estado correspondiente se muestre de manera explícita en el perfil o panel del profesor en cuestión.
+- **Presencia parental:** Un padre, madre o tutor/a legal debe estar **físicamente presente en la residencia** o fácilmente accesible desde otro espacio de la misma residencia durante toda la clase.
+- **Lugar visible:** La clase debe realizarse en un **espacio común** (sala, cocina, comedor, biblioteca) o en un espacio claramente visible. Las puertas cerradas sin ventana visible están **prohibidas**.
+- **Comunicación previa a la clase:** El profesor debe utilizar la **mensajería de Pratiqo** para confirmar la dirección y los acuerdos con el padre, madre o tutor/a **antes** de desplazarse.
+
+> **Nota:** La exigencia de verificación de antecedentes **se aplica cuando la funcionalidad «clases a domicilio con personas menores» está activada** en la configuración de la cuenta. Pratiqo puede activar o desactivar esa funcionalidad según los resultados de la verificación o en ausencia de una verificación completada. No se hace ninguna afirmación pública de que Pratiqo haya verificado los antecedentes de un profesor salvo que ese estado se muestre de manera explícita e individual por la plataforma.
 
 ---
 
