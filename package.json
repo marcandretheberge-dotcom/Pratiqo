@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "payment:safety": "tsx scripts/check_payment_reliability.ts",
+    "check:launch-runbook": "tsx scripts/check_launch_runbook.ts",
     "check:seo-edge": "tsx scripts/check_seo_edge_redirects.ts",
     "verify:yopratiqo-seo-deploy": "tsx scripts/verify_yopratiqo_seo_deploy.ts",
     "generate:yopratiqo-audio": "tsx scripts/generate-yopratiqo-audio.ts",
