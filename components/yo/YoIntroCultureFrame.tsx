@@ -86,10 +86,10 @@ export function YoIntroLearningFrame({ locale }: { locale: YoLocale }) {
   return (
     <section
       aria-labelledby="yo-essential-title"
-      className="mx-auto w-full max-w-5xl px-5 pt-8 sm:px-8 sm:pt-10"
+      className="mx-auto w-full max-w-5xl overflow-hidden px-5 pt-8 sm:px-8 sm:pt-10"
     >
-      <div className="grid gap-4 lg:grid-cols-[1.08fr_0.92fr]">
-        <div className="rounded-3xl border border-[#DDF4F1] bg-white p-5 shadow-[0_1px_2px_rgba(15,58,52,0.04)] sm:p-6">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)]">
+        <div className="min-w-0 rounded-3xl border border-[#DDF4F1] bg-white p-5 shadow-[0_1px_2px_rgba(15,58,52,0.04)] sm:p-6">
           <span className="ds-label text-teal-700/90">
             {locale === "fr" ? "Questions essentielles" : "Essential questions"}
           </span>
@@ -103,11 +103,11 @@ export function YoIntroLearningFrame({ locale }: { locale: YoLocale }) {
           </h2>
           <ol className="mt-5 grid gap-3" role="list">
             {ESSENTIAL_QUESTIONS.map((question, index) => (
-              <li key={question.fr} className="flex gap-3 rounded-2xl bg-[#DDF4F1]/55 p-3 ring-1 ring-teal-100/70">
+              <li key={question.fr} className="flex min-w-0 gap-3 rounded-2xl bg-[#DDF4F1]/55 p-3 ring-1 ring-teal-100/70">
                 <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[#0F6E56] text-sm font-bold text-white">
                   {index + 1}
                 </span>
-                <span className="text-sm font-medium leading-relaxed text-[#1a3a32] sm:text-[0.95rem]">
+                <span className="min-w-0 break-words text-sm font-medium leading-relaxed text-[#1a3a32] sm:text-[0.95rem]">
                   {t(question, locale)}
                 </span>
               </li>
@@ -115,7 +115,7 @@ export function YoIntroLearningFrame({ locale }: { locale: YoLocale }) {
           </ol>
         </div>
 
-        <div className="flex flex-col gap-4">
+        <div className="flex min-w-0 flex-col gap-4">
           <div className="rounded-3xl border border-[#F4B400]/35 bg-[#FFF4D6] p-5 shadow-[0_1px_2px_rgba(15,58,52,0.04)] sm:p-6">
             <span className="ds-label text-[#8a5a17]">
               {locale === "fr" ? "À la fin de cette intro" : "By the end of this intro"}
@@ -164,11 +164,11 @@ export function YoCulturePanorama({
   return (
     <section
       aria-labelledby="yo-culture-title"
-      className="mx-auto w-full max-w-5xl px-5 pt-10 sm:px-8 sm:pt-14"
+      className="mx-auto w-full max-w-5xl overflow-hidden px-5 pt-10 sm:px-8 sm:pt-14"
     >
       <div className="overflow-hidden rounded-3xl border border-teal-100 bg-white shadow-[0_8px_24px_rgba(15,58,52,0.07)]">
-        <div className="grid gap-0 lg:grid-cols-[0.95fr_1.05fr] lg:items-stretch">
-          <div className="p-3 pb-0 lg:p-4 lg:pr-0">
+        <div className="grid gap-0 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] lg:items-stretch">
+          <div className="min-w-0 p-3 pb-0 lg:p-4 lg:pr-0">
             <YoImageVisual
               imagePath={imagePath}
               alt={
@@ -180,34 +180,35 @@ export function YoCulturePanorama({
               locale={locale}
               fallbackKind="hero-tropical"
               variant="panel"
-              className="h-full rounded-2xl shadow-none"
+              imagePosition="center center"
+              className="h-full min-h-[260px] rounded-2xl shadow-none sm:min-h-[320px] lg:min-h-full"
             />
           </div>
-          <div className="flex flex-col gap-5 p-5 sm:p-8">
-            <div>
+          <div className="flex min-w-0 flex-col gap-5 p-5 sm:p-8">
+            <div className="min-w-0">
               <span className="ds-label text-teal-700/90">
                 {locale === "fr" ? "Panorama culturel" : "Cultural panorama"}
               </span>
-              <h2 id="yo-culture-title" className="mt-2 text-2xl font-medium tracking-tight text-[#1a3a32] sm:text-[1.75rem]">
+              <h2 id="yo-culture-title" className="mt-2 max-w-2xl break-words text-2xl font-medium tracking-tight text-[#1a3a32] sm:text-[1.75rem]">
                 {locale === "fr"
                   ? "Ce qui rend la République dominicaine unique"
                   : "What makes the Dominican Republic unique"}
               </h2>
-              <p className="mt-2 text-sm leading-relaxed text-[var(--color-text-secondary)] sm:text-[0.95rem]">
+              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[var(--color-text-secondary)] sm:text-[0.95rem]">
                 {locale === "fr"
                   ? "YoPratiqo enseigne la langue à l’intérieur de la culture : le rythme, les lieux, les gestes et les situations qui donnent du sens aux mots."
                   : "YoPratiqo teaches language inside culture: rhythm, places, gestures, and situations that give words meaning."}
               </p>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid min-w-0 gap-3 md:grid-cols-2">
               {CULTURE_POINTS.map((point, index) => {
                 const Icon = index === 0 ? Music2 : index === 1 ? Sparkles : index === 2 ? Compass : Users;
                 return (
-                  <article key={point.title.fr} className="rounded-2xl bg-[#FAFCFB] p-4 ring-1 ring-teal-100">
+                  <article key={point.title.fr} className="min-w-0 rounded-2xl bg-[#FAFCFB] p-4 ring-1 ring-teal-100">
                     <Icon className="mb-3 size-5 text-[#1D9E75]" aria-hidden />
-                    <h3 className="text-sm font-semibold text-[#1a3a32]">{t(point.title, locale)}</h3>
-                    <p className="mt-1 text-xs leading-relaxed text-[var(--color-text-secondary)]">
+                    <h3 className="break-words text-sm font-semibold text-[#1a3a32]">{t(point.title, locale)}</h3>
+                    <p className="mt-1 break-words text-xs leading-relaxed text-[var(--color-text-secondary)]">
                       {t(point.body, locale)}
                     </p>
                   </article>
@@ -225,7 +226,7 @@ export function YoTeacherSignalPreview({ locale }: { locale: YoLocale }) {
   return (
     <section
       aria-labelledby="yo-teacher-signal-title"
-      className="mx-auto w-full max-w-5xl px-5 pt-10 sm:px-8 sm:pt-14"
+      className="mx-auto w-full max-w-5xl overflow-hidden px-5 pt-10 sm:px-8 sm:pt-14"
     >
       <div className="relative overflow-hidden rounded-3xl border border-[#F4B400]/35 bg-gradient-to-br from-[#FFF4D6] via-white to-[#DDF4F1] p-5 shadow-[0_8px_24px_rgba(15,58,52,0.07)] sm:p-8">
         <div aria-hidden className="absolute -right-16 -top-16 size-52 rounded-full bg-[#F4B400]/20 blur-3xl" />

@@ -61,13 +61,14 @@ export function YoIntroSectionPanel({
   const vocabHeading = YO_COPY.panel.vocabularyHeading;
   const miniMissionFallbackTitle = YO_COPY.panel.miniMissionFallbackTitle;
   const miniMissionFootnote = t(YO_COPY.panel.miniMissionFootnote, locale);
+  const shouldContainImage = section.visualHint === "dominican-map";
 
   return (
     <section
       id={panelId}
       role="region"
       aria-labelledby={titleId}
-      className="overflow-hidden rounded-3xl border border-teal-100 bg-white shadow-[0_8px_24px_rgba(15,58,52,0.07)]"
+      className="min-w-0 overflow-hidden rounded-3xl border border-teal-100 bg-white shadow-[0_8px_24px_rgba(15,58,52,0.07)]"
     >
       {/* Visual header: real image slot first, polished fallback while assets are pending. */}
       {section.visualHint || section.imagePath ? (
@@ -78,19 +79,21 @@ export function YoIntroSectionPanel({
             locale={locale}
             fallbackKind={section.visualHint}
             variant="panel"
+            imageFit={shouldContainImage ? "contain" : "cover"}
+            imagePosition={section.visualHint === "conversation-bubbles" ? "center center" : "center"}
             className="rounded-2xl shadow-none"
           />
         </div>
       ) : null}
 
-      <div className="flex flex-col gap-6 p-5 sm:gap-7 sm:p-8 lg:p-10">
+      <div className="flex min-w-0 flex-col gap-6 p-5 sm:gap-7 sm:p-8 lg:p-10">
         {/* Title row + close button */}
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex flex-col gap-2">
+        <div className="flex min-w-0 items-start justify-between gap-3">
+          <div className="flex min-w-0 flex-col gap-2">
             <span className="ds-label text-teal-700/80">{sectionLabel}</span>
             <h3
               id={titleId}
-              className="text-2xl font-medium tracking-tight text-[#1a3a32] sm:text-[1.75rem]"
+              className="min-w-0 break-words text-2xl font-medium tracking-tight text-[#1a3a32] sm:text-[1.75rem]"
             >
               {t(section.title, locale)}
               {section.emoji ? (
@@ -119,20 +122,20 @@ export function YoIntroSectionPanel({
 
         {/* Lead paragraph */}
         {section.intro ? (
-          <p className="text-base leading-relaxed text-[#1a3a32]/90 sm:text-[1.05rem]">
+          <p className="break-words text-base leading-relaxed text-[#1a3a32]/90 sm:text-[1.05rem]">
             {t(section.intro, locale)}
           </p>
         ) : null}
 
         {/* Highlight callout (e.g. "La Bandera Dominicana") */}
         {section.highlightTitle ? (
-          <div className="rounded-2xl bg-gradient-to-br from-[#fff4e2] to-[#f3e8d0] p-4 ring-1 ring-[#e6d3aa] sm:p-5">
+          <div className="min-w-0 rounded-2xl bg-gradient-to-br from-[#fff4e2] to-[#f3e8d0] p-4 ring-1 ring-[#e6d3aa] sm:p-5">
             <p className="ds-label text-[#8a5a17]">{highlightLabel}</p>
-            <p className="mt-1 text-lg font-medium tracking-tight text-[#1a3a32] sm:text-xl">
+            <p className="mt-1 break-words text-lg font-medium tracking-tight text-[#1a3a32] sm:text-xl">
               {t(section.highlightTitle, locale)}
             </p>
             {section.highlightBody ? (
-              <p className="mt-1 text-sm leading-relaxed text-[var(--color-text-secondary)] sm:text-[0.95rem]">
+              <p className="mt-1 break-words text-sm leading-relaxed text-[var(--color-text-secondary)] sm:text-[0.95rem]">
                 {t(section.highlightBody, locale)}
               </p>
             ) : null}
@@ -160,12 +163,12 @@ export function YoIntroSectionPanel({
                         aria-hidden
                         className="mt-1.5 size-2 shrink-0 rounded-full bg-teal-500"
                       />
-                      <div className="flex flex-col gap-0.5">
-                        <span className="font-medium text-[#1a3a32]">
+                      <div className="flex min-w-0 flex-col gap-0.5">
+                        <span className="break-words font-medium text-[#1a3a32]">
                           {label}
                         </span>
                         {bullet.description ? (
-                          <span className="text-sm leading-relaxed text-[var(--color-text-secondary)]">
+                          <span className="break-words text-sm leading-relaxed text-[var(--color-text-secondary)]">
                             {t(bullet.description, locale)}
                           </span>
                         ) : null}
@@ -180,7 +183,7 @@ export function YoIntroSectionPanel({
 
         {/* Bullet groups (typical plate / drinks / greetings / …) */}
         {section.bulletGroups && section.bulletGroups.length > 0 ? (
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid min-w-0 gap-4 md:grid-cols-2">
             {section.bulletGroups.map((group, index) => (
               <YoVocabularyTable
                 key={`${group.heading ? t(group.heading, locale) : "group"}-${index}`}
@@ -213,11 +216,11 @@ export function YoIntroSectionPanel({
                 return (
                   <li
                     key={`${phrase.target}-${translation}`}
-                    className="flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4"
+                    className="flex min-w-0 flex-col gap-0.5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4"
                   >
                     <span
                       lang="es"
-                      className="flex items-center gap-2 text-[1.05rem] font-semibold tracking-tight text-[#1a3a32]"
+                      className="flex min-w-0 flex-wrap items-center gap-2 break-words text-[1.05rem] font-semibold tracking-tight text-[#1a3a32]"
                     >
                       {phrase.target}
                       {audioContext ? (
@@ -233,7 +236,7 @@ export function YoIntroSectionPanel({
                         />
                       ) : null}
                     </span>
-                    <span className="text-sm text-teal-800/90">
+                    <span className="min-w-0 break-words text-sm text-teal-800/90">
                       {translation}
                     </span>
                   </li>
@@ -252,7 +255,7 @@ export function YoIntroSectionPanel({
             {section.timeline.map((entry, idx) => {
               const year = t(entry.year, locale);
               return (
-                <li key={`${entry.year.fr}-${idx}`} className="relative">
+                <li key={`${entry.year.fr}-${idx}`} className="relative min-w-0">
                   <span
                     aria-hidden
                     className="absolute -left-[27px] top-1.5 flex size-3 items-center justify-center"
@@ -262,7 +265,7 @@ export function YoIntroSectionPanel({
                   <p className="text-sm font-semibold text-teal-800 sm:text-[0.95rem]">
                     {year}
                   </p>
-                  <p className="text-sm leading-relaxed text-[#1a3a32]/90 sm:text-[0.95rem]">
+                  <p className="break-words text-sm leading-relaxed text-[#1a3a32]/90 sm:text-[0.95rem]">
                     {t(entry.description, locale)}
                   </p>
                 </li>

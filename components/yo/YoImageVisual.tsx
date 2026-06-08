@@ -13,6 +13,7 @@ import {
 } from "@/components/yo/YoVisuals";
 
 type YoImageVisualVariant = "hero" | "card" | "panel" | "flashcard" | "unlock";
+type YoImageObjectFit = "cover" | "contain";
 
 export interface YoImageVisualProps {
   imagePath?: string | null;
@@ -20,14 +21,16 @@ export interface YoImageVisualProps {
   locale: YoLocale;
   fallbackKind?: YoVisualHint;
   variant?: YoImageVisualVariant;
+  imageFit?: YoImageObjectFit;
+  imagePosition?: string;
   priority?: boolean;
   className?: string;
 }
 
 const VARIANT_CLASSES: Record<YoImageVisualVariant, string> = {
-  hero: "aspect-[4/3] min-h-[300px] sm:aspect-[16/11] sm:min-h-[380px] lg:min-h-[480px]",
+  hero: "aspect-[16/11] min-h-[260px] max-h-[560px] sm:aspect-[16/10] sm:min-h-[340px] lg:min-h-[420px] xl:min-h-[440px]",
   card: "aspect-[16/10] min-h-[190px]",
-  panel: "aspect-[16/8] min-h-[230px] sm:min-h-[300px]",
+  panel: "aspect-[16/9] min-h-[220px] sm:min-h-[280px]",
   flashcard: "absolute inset-0 min-h-full",
   unlock: "aspect-[4/3] min-h-[250px] lg:min-h-[330px]",
 };
@@ -46,6 +49,8 @@ export function YoImageVisual({
   locale,
   fallbackKind,
   variant = "card",
+  imageFit = "cover",
+  imagePosition = "center",
   priority = false,
   className,
 }: YoImageVisualProps) {
@@ -72,7 +77,11 @@ export function YoImageVisual({
           fill
           preload={priority}
           sizes={IMAGE_SIZES[variant]}
-          className="z-10 object-cover"
+          className={cn(
+            "z-10",
+            imageFit === "contain" ? "object-contain" : "object-cover",
+          )}
+          style={{ objectPosition: imagePosition }}
           onError={() => setImageFailed(true)}
         />
       ) : null}

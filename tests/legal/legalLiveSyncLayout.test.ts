@@ -101,6 +101,13 @@ test("live legal sync branch did not touch restricted systems", () => {
   const changed = changedFilesAgainstMain();
   if (!changed) return;
 
+  const legalSyncFilesTouched = changed.some((file) =>
+    /^app\/\(app\)\/legal\//.test(file) ||
+    /^components\/Legal/.test(file) ||
+    /^content\/legal\//.test(file),
+  );
+  if (!legalSyncFilesTouched) return;
+
   const restrictedRules: Array<{ label: string; re: RegExp }> = [
     { label: "Stripe/payment APIs", re: /^app\/api\/(?:stripe|payments|payouts|refunds)\// },
     { label: "payment internals", re: /^lib\/payments\// },

@@ -83,11 +83,12 @@ export function YoLessonCard({
   const title = t(card.title, locale);
   const description = card.description ? t(card.description, locale) : null;
   const ctaLabel = card.ctaLabel ? t(card.ctaLabel, locale) : null;
+  const shouldContainImage = card.visualHint === "dominican-map";
 
   return (
     <article
       className={cn(
-        "ds-card group flex h-full flex-col overflow-hidden shadow-[0_1px_2px_rgba(15,58,52,0.04)] transition",
+        "ds-card group flex h-full min-w-0 flex-col overflow-hidden shadow-[0_1px_2px_rgba(15,58,52,0.04)] transition",
         isSelected
           ? "border-teal-300 shadow-[0_8px_24px_rgba(15,58,52,0.10)]"
           : "hover:shadow-[0_8px_24px_rgba(15,58,52,0.07)]",
@@ -102,13 +103,15 @@ export function YoLessonCard({
             locale={locale}
             fallbackKind={card.visualHint}
             variant="card"
+            imageFit={shouldContainImage ? "contain" : "cover"}
+            imagePosition={card.visualHint === "conversation-bubbles" ? "center center" : "center"}
             className="rounded-2xl shadow-none"
           />
         </div>
       ) : null}
 
-      <div className="flex flex-1 flex-col gap-4 p-5 sm:p-6">
-        <div className="flex items-center gap-3">
+      <div className="flex min-w-0 flex-1 flex-col gap-4 p-5 sm:p-6">
+        <div className="flex min-w-0 items-center gap-3">
           <span
             aria-hidden
             className={cn(
@@ -122,14 +125,14 @@ export function YoLessonCard({
           </span>
           <h3
             id={`yo-card-${card.id}-title`}
-            className="text-base font-medium leading-tight text-[#1a3a32] sm:text-lg"
+            className="min-w-0 break-words text-base font-medium leading-tight text-[#1a3a32] sm:text-lg"
           >
             {title}
           </h3>
         </div>
 
         {description ? (
-          <p className="text-sm leading-relaxed text-[var(--color-text-secondary)] sm:text-[0.95rem]">
+          <p className="break-words text-sm leading-relaxed text-[var(--color-text-secondary)] sm:text-[0.95rem]">
             {description}
           </p>
         ) : null}
@@ -142,15 +145,15 @@ export function YoLessonCard({
             {card.phrases.map((row) => (
               <li
                 key={`${card.id}-${row.target}`}
-                className="flex flex-col gap-0.5 px-3 py-2.5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4"
+                className="flex min-w-0 flex-col gap-0.5 px-3 py-2.5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4"
               >
                 <span
-                  className="text-[0.95rem] font-medium text-[#1a3a32]"
+                  className="min-w-0 break-words text-[0.95rem] font-medium text-[#1a3a32]"
                   lang="es"
                 >
                   {row.target}
                 </span>
-                <span className="text-sm text-[var(--color-text-secondary)]">
+                <span className="min-w-0 break-words text-sm text-[var(--color-text-secondary)]">
                   {t(row.translation, locale)}
                 </span>
               </li>
