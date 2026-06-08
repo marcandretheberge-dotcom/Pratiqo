@@ -471,7 +471,16 @@ export function TeacherProfile({
   }, [onClose]);
 
   return (
-    <div className="fixed inset-0 z-[210] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="teacher-profile-modal-title">
+    <div
+      className="fixed inset-0 z-[210] flex items-center justify-center p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="teacher-profile-modal-title"
+      style={{
+        paddingTop: "max(1rem, env(safe-area-inset-top))",
+        paddingBottom: "max(1rem, env(safe-area-inset-bottom))",
+      }}
+    >
       {/* Backdrop */}
       <motion.div
         initial={{ opacity: 0 }}
@@ -486,7 +495,7 @@ export function TeacherProfile({
         initial={{ scale: 0.9, opacity: 0, y: 40 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.9, opacity: 0, y: 40 }}
-        className="relative bg-white w-full max-w-4xl max-h-[90vh] rounded-[32px] overflow-hidden shadow-2xl z-10 border border-slate-200 flex flex-col"
+        className="relative bg-white w-full max-w-4xl max-h-[min(90dvh,calc(100dvh-2rem))] rounded-[32px] overflow-hidden shadow-2xl z-10 border border-slate-200 flex flex-col"
       >
         {/* Close */}
         <button

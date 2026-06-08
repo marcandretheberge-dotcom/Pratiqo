@@ -75,6 +75,12 @@ export default function RootLayout({
     <html lang="fr" className={`${inter.variable} h-full antialiased`}>
       <head>
         {/* next/font/local already loads Inter; avoid duplicate font preload competing with LCP. */}
+        <meta name="theme-color" content="#1D9E75" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-title" content="Pratiqo" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <link rel="manifest" href="/manifest.json" />
+        <link rel="apple-touch-icon" href="/icons/icon-192.png" />
         {/* Preconnect to Supabase to cut TTFB on first API call */}
         <link rel="preconnect" href="https://jwlbwmxoradmbuvqfkhe.supabase.co" />
         <link rel="dns-prefetch" href="https://jwlbwmxoradmbuvqfkhe.supabase.co" />

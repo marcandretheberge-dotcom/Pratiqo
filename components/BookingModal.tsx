@@ -818,7 +818,16 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
   };
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="booking-modal-title">
+    <div
+      className="fixed inset-0 z-[200] flex items-center justify-center p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="booking-modal-title"
+      style={{
+        paddingTop: "max(1rem, env(safe-area-inset-top))",
+        paddingBottom: "max(1rem, env(safe-area-inset-bottom))",
+      }}
+    >
       <div
         className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
         onClick={requestClose}
@@ -827,7 +836,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="relative bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-slate-200 overflow-hidden max-h-[90vh] overflow-y-auto"
+        className="relative bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-slate-200 overflow-hidden max-h-[min(92dvh,calc(100dvh-2rem))] overflow-y-auto"
       >
         {isSubmitting ? (
           <div

@@ -653,7 +653,7 @@ export function Dashboard() {
 
   if (!user || authLoading) {
     return (
-      <div className="h-[calc(100vh-200px)] flex flex-col items-center justify-center p-12 text-center">
+      <div className="min-h-[calc(100dvh-200px)] flex flex-col items-center justify-center p-12 text-center">
         <Loader2 size={48} className="text-brand-primary animate-spin mb-4" />
         <h2 className="text-xl font-bold text-slate-800">{t("loadingAccount")}</h2>
       </div>
@@ -671,7 +671,7 @@ export function Dashboard() {
 
   if (loading) {
     return (
-      <div className="h-[calc(100vh-200px)] flex flex-col items-center justify-center p-12 text-center">
+      <div className="min-h-[calc(100dvh-200px)] flex flex-col items-center justify-center p-12 text-center">
         <Loader2 size={48} className="text-brand-primary animate-spin mb-4" />
         <h2 className="text-xl font-bold text-slate-800">{t("dashboardInitializing")}</h2>
       </div>
