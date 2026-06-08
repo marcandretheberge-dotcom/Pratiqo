@@ -181,9 +181,18 @@ Conservamos tu información personal **únicamente durante el tiempo razonableme
 - apoyar la **seguridad**, prevenir el **fraude** y aplicar nuestras políticas;
 - mantener **copias de seguridad** y la continuidad del servicio.
 
-Los **plazos de conservación** varían según la naturaleza de la información (por ejemplo, datos de cuenta, registros técnicos, datos de transacciones, comunicaciones de soporte). Cuando la conservación deja de ser necesaria, la información se **destruye, elimina, anonimiza o despersonaliza**, sujeto a restricciones legales o técnicas (por ejemplo, copias de seguridad sujetas a una rotación ordenada).
+Los **plazos de conservación** varían según la naturaleza de la información. A título indicativo, las principales categorías son:
 
-Evitamos indicar **plazos exactos** en esta Política, salvo cuando estén fijados por la ley o por una fuente interna de referencia.
+| Categoría | Plazo de conservación indicativo | Fundamento |
+|---|---:|---|
+| Datos de cuenta activa | Duración de la relación + 3 años | Plazos legales y administración de la cuenta |
+| Datos de transacción | 7 años | Obligaciones fiscales y contables |
+| Comunicaciones de mensajería | Duración de la reserva + 2 años | Posibles disputas y seguridad |
+| Registros técnicos y de seguridad | 90 a 180 días | Detección de fraude y depuración |
+| Datos de verificación de identidad | Duración de la cuenta + 1 año para el estado; documentos eliminados después de la verificación cuando sea posible | Cumplimiento y seguridad |
+| Datos de progreso YoPratiqo | Duración del acceso + 1 año | Prestación y mejora del servicio; derechos del usuario |
+
+Estos plazos pueden variar según obligaciones legales aplicables, disputas, copias de seguridad y restricciones técnicas. Cuando la conservación deja de ser necesaria, la información se **destruye, elimina, anonimiza o despersonaliza**.
 
 ---
 
@@ -263,6 +272,16 @@ Algunos de nuestros **proveedores** pueden **almacenar o procesar** información
 - Pratiqo no promete que todos los datos permanezcan permanentemente en Quebec o Canadá.
 
 Para detalles sobre la **ubicación** de las principales categorías de tratamiento, puedes escribir a la persona responsable.
+
+A título indicativo, los principales proveedores o categorías de proveedores pueden incluir:
+
+| Proveedor | Categoría | Jurisdicción principal |
+|---|---|---|
+| Stripe | Pagos, transferencias, verificación de identidad | Estados Unidos |
+| Supabase | Base de datos, almacenamiento, autenticación | Estados Unidos |
+| OpenAI o proveedores equivalentes | Generación o procesamiento de contenido de audio YoPratiqo | Estados Unidos |
+
+Las evaluaciones de impacto sobre la privacidad se realizan o están en curso cuando la ley aplicable las exige para estos proveedores o tratamientos.
 
 ---
 

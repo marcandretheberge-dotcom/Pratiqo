@@ -128,7 +128,17 @@ The 30-day satisfaction guarantee is **not granted** in the following cases:
 
 ---
 
-## 7. Statutory warranties preserved
+## 7. Progress data and privacy
+
+YoPratiqo may process the following data: module progress, lesson completion, quiz scores, flashcard activity, audio interactions, purchases, clicks on teacher calls to action, and learning-difficulty signals.
+
+This data is processed to provide, secure, and improve the service. It is not shared with a Pratiqo teacher without your prior explicit consent, to the extent that this sharing is offered by the platform.
+
+For more details, see the **[Privacy Policy](/legal/confidentialite)**.
+
+---
+
+## 8. Statutory warranties preserved
 
 The commercial guarantee in **section 3** is **in addition to**, and **never a substitute for**, mandatory statutory warranties, including:
 
@@ -140,7 +150,7 @@ If any provision of this policy conflicts with a mandatory statutory warranty ap
 
 ---
 
-## 8. Contact
+## 9. Contact
 
 **Cours Pratiqo Inc.** — Saint-Georges, Québec, Canada
 email: [`support@pratiqo.ca`](mailto:support@pratiqo.ca)

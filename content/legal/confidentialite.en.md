@@ -181,9 +181,18 @@ We retain your personal information **only as long as reasonably necessary** for
 - support **security**, prevent **fraud**, and enforce our policies;
 - maintain **backups** and service continuity.
 
-**Retention periods** vary by the nature of the information (e.g., account data, technical logs, transaction data, support communications). When retention is no longer necessary, information is **destroyed, deleted, anonymized, or de-identified**, subject to legal or technical constraints (e.g., backups subject to orderly rotation).
+**Retention periods** vary by the nature of the information. For reference, the main categories are:
 
-We avoid stating **exact periods** in this Policy except where they are fixed by law or by an internal source of truth.
+| Category | Indicative retention period | Basis |
+|---|---:|---|
+| Active account data | Relationship duration + 3 years | Legal limitation periods and account administration |
+| Transaction data | 7 years | Tax and accounting obligations |
+| Messaging communications | Reservation duration + 2 years | Potential disputes and safety |
+| Technical and security logs | 90 to 180 days | Fraud detection and debugging |
+| Identity verification data | Account duration + 1 year for status; documents deleted after verification where possible | Compliance and safety |
+| YoPratiqo progress data | Access duration + 1 year | Service delivery and improvement; user rights |
+
+These periods may vary depending on applicable legal obligations, disputes, backups, and technical constraints. When retention is no longer necessary, information is **destroyed, deleted, anonymized, or de-identified**.
 
 ---
 
@@ -263,6 +272,16 @@ Some of our **providers** may **store or process** personal information **outsid
 - Pratiqo does not promise that all data permanently remains in Quebec or Canada.
 
 For details about the **location** of major processing categories, you may write to the privacy officer.
+
+For reference, the main providers or provider categories may include:
+
+| Provider | Category | Main jurisdiction |
+|---|---|---|
+| Stripe | Payments, payouts, identity verification | United States |
+| Supabase | Database, storage, authentication | United States |
+| OpenAI or equivalent providers | Generation or processing of YoPratiqo audio content | United States |
+
+Privacy impact assessments are completed or in progress where applicable law requires them for these providers or processing activities.
 
 ---
 

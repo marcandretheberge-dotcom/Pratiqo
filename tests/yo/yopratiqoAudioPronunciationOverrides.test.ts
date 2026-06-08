@@ -238,6 +238,15 @@ test("this PR does not add or modify MP3 binaries", () => {
 test("tracked patch avoids generated audio and restricted product systems", () => {
   const changed = gitLines("git diff --name-only HEAD");
   const branchSpecificAllowlist = new Set([
+    // Legal live-sync branches may update YoPratiqo legal disclosures without
+    // touching lesson content, audio manifests, generated MP3s, or generators.
+    "app/(app)/legal/yo-remboursement/page.tsx",
+    "content/legal/confidentialite.en.md",
+    "content/legal/confidentialite.es.md",
+    "content/legal/confidentialite.fr.md",
+    "content/legal/yo-refund.en.md",
+    "content/legal/yo-refund.es.md",
+    "content/legal/yo-refund.fr.md",
     "app/api/bookings/[id]/cancel/route.ts",
     "app/api/group-sessions/checkout/route.ts",
     "app/api/stripe/pro/checkout/route.ts",

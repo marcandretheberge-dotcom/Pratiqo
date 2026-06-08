@@ -1,8 +1,7 @@
 "use client";
 
 /**
- * LegalFooterLinks — locale-aware legal nav used in page footers.
- * Renders: Terms · Privacy · Cancellation · Code of Conduct · Contact.
+ * LegalFooterLinks - locale-aware legal nav used in page footers.
  *
  * Hrefs point to the canonical /legal/* routes. Legacy top-level paths
  * (/cgu, /confidentialite, /annulation, /code-de-conduite) and the previous
@@ -36,6 +35,13 @@ export function LegalFooterLinks() {
         ? "Miembro Pro"
         : "Membre Pro";
 
+  const yoRefundLabel =
+    locale === "en"
+      ? "YoPratiqo Refunds"
+      : locale === "es"
+        ? "Reembolsos YoPratiqo"
+        : "Remboursement YoPratiqo";
+
   const accessibilityLabel =
     locale === "en"
       ? "Accessibility"
@@ -65,6 +71,9 @@ export function LegalFooterLinks() {
       </Link>
       <Link href="/legal/paiements-remboursements" className="hover:text-[#2C2C2A] hover:underline">
         {paymentsLabel}
+      </Link>
+      <Link href="/legal/yo-remboursement" className="hover:text-[#2C2C2A] hover:underline">
+        {yoRefundLabel}
       </Link>
       <Link href="/legal/accessibilite" className="hover:text-[#2C2C2A] hover:underline">
         {accessibilityLabel}

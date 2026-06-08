@@ -181,9 +181,18 @@ Nous conservons vos renseignements personnels **uniquement aussi longtemps que r
 - assurer la **sécurité**, prévenir la **fraude** et appliquer nos politiques;
 - maintenir des **sauvegardes** et la continuité du service.
 
-Les **durées de conservation** varient selon la nature des renseignements (par exemple, données de compte, journaux techniques, données de transaction, communications de soutien). Lorsque la conservation n'est plus nécessaire, les renseignements sont **détruits, supprimés, anonymisés ou dépersonnalisés**, sous réserve de contraintes légales ou techniques (par exemple, sauvegardes faisant l'objet d'une rotation ordonnée).
+Les **durées de conservation** varient selon la nature des renseignements. À titre indicatif, les principales catégories sont les suivantes :
 
-Nous évitons d'inscrire des **durées exactes** dans la présente Politique sauf lorsqu'elles sont fixées par la loi ou par une source de référence interne.
+| Catégorie | Durée de conservation indicative | Fondement |
+|---|---:|---|
+| Données de compte actif | Durée de la relation + 3 ans | Limitation légale et gestion du compte |
+| Données de transaction | 7 ans | Obligations fiscales et comptables |
+| Communications de messagerie | Durée de la réservation + 2 ans | Litiges potentiels et sécurité |
+| Journaux techniques et sécurité | 90 à 180 jours | Détection de fraude et débogage |
+| Données de vérification d'identité | Durée du compte + 1 an pour le statut; documents supprimés après vérification lorsque possible | Conformité et sécurité |
+| Données de progression YoPratiqo | Durée de l'accès + 1 an | Fourniture et amélioration du service; droits de l'utilisateur |
+
+Ces durées peuvent varier selon les obligations légales applicables, les litiges, les sauvegardes et les contraintes techniques. Lorsque la conservation n'est plus nécessaire, les renseignements sont **détruits, supprimés, anonymisés ou dépersonnalisés**.
 
 ---
 
@@ -263,6 +272,16 @@ Certains de nos **prestataires** peuvent **stocker ou traiter** des renseignemen
 - Pratiqo ne promet pas que toutes les données restent en permanence au Québec ou au Canada.
 
 Pour des précisions sur la **localisation** des principales catégories de traitement, vous pouvez écrire à la personne responsable.
+
+À titre indicatif, les principaux prestataires ou catégories de prestataires peuvent inclure :
+
+| Prestataire | Catégorie | Juridiction principale |
+|---|---|---|
+| Stripe | Paiements, versements, vérification d'identité | États-Unis |
+| Supabase | Base de données, stockage, authentification | États-Unis |
+| OpenAI ou prestataires équivalents | Génération ou traitement de contenu audio YoPratiqo | États-Unis |
+
+Des évaluations des facteurs relatifs à la vie privée sont réalisées ou en cours lorsque la loi applicable l'exige pour ces prestataires ou traitements.
 
 ---
 
