@@ -128,7 +128,17 @@ La garantía de satisfacción de 30 días **no se concede** en los siguientes ca
 
 ---
 
-## 7. Garantías legales preservadas
+## 7. Datos de progreso y privacidad
+
+YoPratiqo puede tratar los siguientes datos: progreso en los módulos, finalización de lecciones, puntuaciones de cuestionarios, actividad de flashcards, interacciones de audio, compras, clics en llamadas a la acción hacia profesores y señales de dificultad de aprendizaje.
+
+Estos datos se tratan para prestar, proteger y mejorar el servicio. No se comparten con un profesor de Pratiqo sin tu consentimiento explícito previo, en la medida en que la plataforma ofrezca ese intercambio.
+
+Para más detalles, consulta la **[Política de privacidad](/legal/confidentialite)**.
+
+---
+
+## 8. Garantías legales preservadas
 
 La garantía comercial descrita en la **sección 3** **se suma a** — y **nunca reemplaza** — las garantías legales de orden público, entre ellas:
 
@@ -140,7 +150,7 @@ Si alguna disposición de esta política entra en conflicto con una garantía le
 
 ---
 
-## 8. Contacto
+## 9. Contacto
 
 **Cours Pratiqo Inc.** — Saint-Georges, Québec, Canadá
 correo: [`support@pratiqo.ca`](mailto:support@pratiqo.ca)
