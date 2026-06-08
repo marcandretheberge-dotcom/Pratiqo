@@ -427,7 +427,7 @@ export default function StudentSearchPage() {
 
   return (
     <>
-      <div className="min-h-[100vh] bg-[#F3FAF6]">
+      <div className="min-h-[100dvh] bg-[#F3FAF6]">
         <LandingSearchHero
           query={searchQuery}
           onQueryChange={setSearchQuery}
