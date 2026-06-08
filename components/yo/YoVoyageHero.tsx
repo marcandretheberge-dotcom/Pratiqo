@@ -33,20 +33,21 @@ export function YoVoyageHero({ module, locale }: YoVoyageHeroProps) {
       className="relative overflow-hidden border-b border-teal-100/70 bg-gradient-to-b from-[var(--color-base-cream)] via-white to-white"
     >
       <div className="mx-auto grid w-full max-w-6xl gap-8 px-5 pb-12 pt-8 sm:px-8 sm:pb-16 sm:pt-12 lg:grid-cols-[0.92fr_1.18fr] lg:items-center lg:gap-12 lg:pt-20">
-        <div className="relative order-first lg:order-last">
+        <div className="relative order-first min-w-0 lg:order-last">
           <YoImageVisual
             imagePath={module.heroImagePath}
             alt={module.heroImageAlt ?? module.destinationLabel}
             locale={locale}
             fallbackKind={module.heroVisualHint ?? "hero-tropical"}
             variant="hero"
+            imagePosition="center center"
             priority
           />
         </div>
 
-        <div className="flex flex-col gap-6 lg:gap-8">
+        <div className="flex min-w-0 flex-col gap-6 lg:gap-8">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-teal-700">
+            <div className="flex min-w-0 flex-wrap items-center gap-2 text-xs font-medium text-teal-700">
             <span className="ds-label text-teal-700/90">
               {t(module.productLabel, locale)}
             </span>

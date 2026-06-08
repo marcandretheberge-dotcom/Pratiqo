@@ -123,21 +123,21 @@ export function YoIntroExperience({
 
       <section
         aria-labelledby="yo-intro-title"
-        className="mx-auto w-full max-w-5xl px-5 pt-8 sm:px-8 sm:pt-10"
+        className="mx-auto w-full max-w-5xl overflow-hidden px-5 pt-8 sm:px-8 sm:pt-10"
       >
-        <div className="mb-5 flex items-baseline justify-between gap-4">
+        <div className="mb-5 flex min-w-0 flex-col gap-2 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">
           <h2
             id="yo-intro-title"
-            className="text-xl font-medium tracking-tight text-[#1a3a32] sm:text-2xl"
+            className="min-w-0 break-words text-xl font-medium tracking-tight text-[#1a3a32] sm:text-2xl"
           >
             {introHeading}
           </h2>
-          <p className="hidden text-sm text-[var(--color-text-secondary)] sm:block">
+          <p className="hidden shrink-0 text-sm text-[var(--color-text-secondary)] sm:block">
             {introMeta}
           </p>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 sm:gap-5 lg:gap-6">
+        <div className="grid min-w-0 gap-4 sm:grid-cols-2 sm:gap-5 lg:gap-6">
           {introCards.map((card) => (
             <YoLessonCard
               key={card.id}
@@ -154,7 +154,7 @@ export function YoIntroExperience({
       {selectedSection ? (
         <div
           ref={panelRef}
-          className="mx-auto w-full max-w-5xl px-5 pt-6 sm:px-8 sm:pt-8"
+          className="mx-auto w-full max-w-5xl overflow-hidden px-5 pt-6 sm:px-8 sm:pt-8"
         >
           <YoIntroSectionPanel
             section={selectedSection}
@@ -250,30 +250,30 @@ function IntroProgressStrip({
           className="pointer-events-none absolute -right-20 -top-20 size-56 rounded-full bg-teal-100/50 blur-3xl"
         />
 
-        <div className="relative grid gap-5 lg:grid-cols-[1.4fr_1fr] lg:items-center lg:gap-8">
-          <div>
+        <div className="relative grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:items-center lg:gap-8">
+          <div className="min-w-0">
             <span className="ds-label text-teal-700/90">{eyebrow}</span>
             <h2
               id="yo-progress-title"
-              className="mt-2 text-2xl font-medium tracking-tight text-[#1a3a32] sm:text-[1.6rem]"
+              className="mt-2 break-words text-2xl font-medium tracking-tight text-[#1a3a32] sm:text-[1.6rem]"
             >
               {t(progress.title, locale)}
             </h2>
-            <p className="mt-2 max-w-xl text-sm leading-relaxed text-[var(--color-text-secondary)] sm:text-[0.95rem]">
+            <p className="mt-2 max-w-xl break-words text-sm leading-relaxed text-[var(--color-text-secondary)] sm:text-[0.95rem]">
               {t(progress.description, locale)}
             </p>
           </div>
 
-          <ul role="list" className="grid grid-cols-2 gap-3 sm:gap-4">
+          <ul role="list" className="grid min-w-0 grid-cols-2 gap-3 sm:gap-4">
             {progress.stats.map((stat) => (
               <li
                 key={stat.id}
-                className="flex flex-col gap-0.5 rounded-2xl bg-white px-4 py-3 ring-1 ring-teal-100"
+                className="flex min-w-0 flex-col gap-0.5 rounded-2xl bg-white px-4 py-3 ring-1 ring-teal-100"
               >
                 <span className="text-2xl font-semibold tracking-tight text-[#1a3a32] sm:text-3xl">
                   {stat.value}
                 </span>
-                <span className="text-xs leading-snug text-[var(--color-text-secondary)] sm:text-sm">
+                <span className="break-words text-xs leading-snug text-[var(--color-text-secondary)] sm:text-sm">
                   {t(stat.label, locale)}
                 </span>
               </li>

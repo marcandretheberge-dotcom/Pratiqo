@@ -74,8 +74,8 @@ export function RepubliqueDominicaineContent({
   const finalCtaFootnote = t(YO_COPY.finalCta.footnote, locale);
 
   return (
-    <div className="bg-[#FAFCFB]">
-      <main id="main-content" className="flex flex-col pb-20">
+    <div className="overflow-x-hidden bg-[#FAFCFB]">
+      <main id="main-content" className="flex min-w-0 flex-col pb-20">
         {breadcrumb && breadcrumb.length > 0 ? (
           <YoBreadcrumb items={breadcrumb} locale={locale} />
         ) : null}
