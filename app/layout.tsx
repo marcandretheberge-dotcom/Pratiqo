@@ -53,13 +53,14 @@ export const metadata: Metadata = {
   // and lib/seo/yopratiqoSpanishSeoPages.ts). Locale-specific URLs only exist
   // for the YoPratiqo Spanish acquisition pages under /fr/* and /en/*, which
   // declare reciprocal hreflang via `buildYoSpanishSeoMetadata`.
+  manifest: "/manifest.json",
   icons: {
     icon: [
-      { url: '/favicon.ico' },
-      { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
-      { url: '/icon-512.png', sizes: '512x512', type: 'image/png' },
+      { url: "/favicon.ico" },
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
     ],
-    apple: [{ url: '/apple-touch-icon.png', sizes: '180x180' }],
+    apple: [{ url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" }],
   },
   other: {
     copyright: "© 2026 Cours Pratiqo Inc.",

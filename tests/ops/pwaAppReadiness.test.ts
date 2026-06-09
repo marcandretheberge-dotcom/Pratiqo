@@ -96,6 +96,8 @@ const allowedPrefixes = [
   "public/icons/icon-512.png",
   "public/icons/icon-512-maskable.png",
   "tests/ops/pwaAppReadiness.test.ts",
+  "tests/ops/pwaInstallabilityVerification.test.ts",
+  "tests/teacherProfile/homeLessonsMinorLaunchGate.test.ts",
 ];
 
 const restrictedPatterns = [
