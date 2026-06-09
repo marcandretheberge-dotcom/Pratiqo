@@ -60,6 +60,7 @@ export default function UpgradePage() {
         body: JSON.stringify({
           renewalAccepted: true,
           legalAccepted: true,
+          locale,
         }),
       });
       const json = (await res.json()) as { url?: string; error?: string };
@@ -145,6 +146,33 @@ export default function UpgradePage() {
         >
           {copy.commissionDisclaimer}
         </p>
+
+        <div
+          className="mt-6 rounded-2xl border border-[#F4B400]/40 bg-[#FFF4D6]/70 p-4"
+          data-testid="upgrade-checkout-summary"
+        >
+          <h2 className="text-sm font-extrabold text-[#0F6E56]">
+            {copy.checkoutSummaryTitle}
+          </h2>
+          <div className="mt-3 grid grid-cols-1 gap-2 text-[13px] text-[var(--p-text-muted)] sm:grid-cols-2">
+            <SummaryRow label={copy.checkoutSummaryPlanLabel} value={copy.proPlanTitle} />
+            <SummaryRow label={copy.checkoutSummaryPriceLabel} value={copy.proPlanPrice} />
+            <SummaryRow label={copy.checkoutSummaryCycleLabel} value={copy.checkoutSummaryCycleMonthly} />
+            <SummaryRow label={copy.checkoutSummaryRenewalLabel} value={copy.checkoutSummaryRenewalValue} />
+          </div>
+          <p className="mt-3 text-[12px] leading-relaxed text-[var(--p-text-muted)]">
+            <span className="font-semibold text-[#0F6E56]">
+              {copy.checkoutSummaryManageLabel}:{" "}
+            </span>
+            {copy.checkoutSummaryManageValue}{" "}
+            <Link
+              href={LEGAL_ROUTES.membrePro}
+              className="font-semibold text-teal-700 underline"
+            >
+              {copy.disclosureMembreProLinkLabel}
+            </Link>
+          </p>
+        </div>
 
         <p className="mt-6 max-w-xl text-[12px] leading-relaxed text-[var(--p-text-muted)]">
           {copy.disclosureLead}
@@ -253,6 +281,17 @@ export default function UpgradePage() {
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+function SummaryRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-white/80 bg-white/70 px-3 py-2">
+      <p className="text-[10px] font-bold uppercase tracking-widest text-[#0F6E56]/80">
+        {label}
+      </p>
+      <p className="mt-1 font-semibold text-[#2C2C2A]">{value}</p>
     </div>
   );
 }

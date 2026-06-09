@@ -22,6 +22,18 @@ type ProUpgradeCopy = {
   footerExtra: string;
 };
 
+type ProCancellationCopy = {
+  subject: string;
+  heroTitle: (name: string) => string;
+  heroSubtitle: string;
+  intro: string;
+  effectiveDateLabel: string;
+  noDate: string;
+  benefitsRemain: string;
+  ctaText: string;
+  footerExtra: string;
+};
+
 type IdentityVerifiedCopy = {
   subject: string;
   heroTitle: string;
@@ -58,6 +70,7 @@ type ReviewPublishedCopy = {
 type NotificationEmailCopy = {
   companionEvolution: CompanionEvolutionCopy;
   proUpgrade: ProUpgradeCopy;
+  proCancellation: ProCancellationCopy;
   identityVerified: IdentityVerifiedCopy;
   identityFailed: IdentityFailedCopy;
   reviewPublishedTeacher: ReviewPublishedCopy;
@@ -76,22 +89,35 @@ const COPY: Record<EmailLocale, NotificationEmailCopy> = {
       ctaText: "Voir ma progression",
     },
     proUpgrade: {
-      subject: "Votre profil Pratiqo Pro est actif",
-      heroTitle: (name) => `${name}, votre profil Pratiqo Pro est actif`,
-      heroSubtitle: "Vous pouvez maintenant gérer votre profil enseignant avec vos options Pro.",
+      subject: "Votre abonnement Membre Pro est actif",
+      heroTitle: (name) => `${name}, votre abonnement Membre Pro est actif`,
+      heroSubtitle: "Votre abonnement mensuel est activé et se renouvelle automatiquement jusqu’à annulation.",
       intro:
-        "Merci de faire partie de Pratiqo. Votre espace Pro est prêt pour vous aider à présenter un profil clair, complet et à jour.",
-      checklistTitle: "À garder à jour",
+        "Merci de faire partie de Pratiqo. Membre Pro coûte 29,99 $CA / mois + taxes applicables, facturé mensuellement à l’avance.",
+      checklistTitle: "À retenir",
       checklist: [
-        "Vos disponibilités",
-        "Votre photo et votre biographie",
-        "Vos prix et formats de cours",
-        "Vos informations de vérification",
+        "Le renouvellement est automatique jusqu’à annulation.",
+        "Vous pouvez gérer ou annuler l’abonnement dans votre espace enseignant, via le portail sécurisé Stripe.",
+        "L’annulation prend effet à la fin de la période payée en cours.",
+        "Membre Pro ne garantit pas de réservations, d’élèves, de classement, de visibilité ni de revenu.",
       ],
       note:
-        "Les options Pro soutiennent votre visibilité sur la plateforme, sans promesse de résultat.",
-      ctaText: "Voir mon profil",
-      footerExtra: "Pratiqo Pro · Vous pouvez gérer votre abonnement depuis votre espace enseignant.",
+        "Les professeurs demeurent des travailleurs autonomes. Les résultats dépendent notamment de leur activité, disponibilité, tarification, demande et volume de réservations.",
+      ctaText: "Gérer mon abonnement",
+      footerExtra: "Membre Pro · Abonnement mensuel géré depuis le portail sécurisé Stripe.",
+    },
+    proCancellation: {
+      subject: "Votre abonnement Membre Pro a été annulé",
+      heroTitle: (name) => `${name}, votre abonnement Membre Pro est annulé`,
+      heroSubtitle: "La modification a été enregistrée dans Stripe.",
+      intro:
+        "Votre abonnement Membre Pro est annulé ou son annulation est programmée.",
+      effectiveDateLabel: "Date d’effet",
+      noDate: "Voir les détails dans le portail Stripe.",
+      benefitsRemain:
+        "Si une période payée est encore en cours, vos avantages Membre Pro restent actifs jusqu’à la fin de cette période.",
+      ctaText: "Gérer mon abonnement",
+      footerExtra: "Membre Pro · Vous pouvez consulter les détails dans votre espace enseignant.",
     },
     identityVerified: {
       subject: "Votre identité a été vérifiée",
@@ -138,21 +164,35 @@ const COPY: Record<EmailLocale, NotificationEmailCopy> = {
       ctaText: "View my progress",
     },
     proUpgrade: {
-      subject: "Your Pratiqo Pro profile is active",
-      heroTitle: (name) => `${name}, your Pratiqo Pro profile is active`,
-      heroSubtitle: "You can now manage your teacher profile with your Pro options.",
+      subject: "Your Pro Member subscription is active",
+      heroTitle: (name) => `${name}, your Pro Member subscription is active`,
+      heroSubtitle: "Your monthly subscription is active and renews automatically until cancelled.",
       intro:
-        "Thanks for being part of Pratiqo. Your Pro space is ready to help you keep your teacher profile clear, complete, and up to date.",
-      checklistTitle: "Keep these up to date",
+        "Thanks for being part of Pratiqo. Pro Member costs $29.99 CAD / month + applicable taxes, billed monthly in advance.",
+      checklistTitle: "Keep in mind",
       checklist: [
-        "Your availability",
-        "Your photo and bio",
-        "Your prices and lesson formats",
-        "Your verification information",
+        "Renewal is automatic until cancelled.",
+        "You can manage or cancel the subscription from your teacher space through the secure Stripe portal.",
+        "Cancellation takes effect at the end of the current paid billing period.",
+        "Pro Member does not guarantee bookings, students, ranking, visibility, or income.",
       ],
-      note: "Pro options support your visibility on the platform, without promising outcomes.",
-      ctaText: "View my profile",
-      footerExtra: "Pratiqo Pro · You can manage your subscription from your teacher space.",
+      note:
+        "Teachers remain independent contractors. Results depend on factors such as activity, availability, pricing, demand, and booking volume.",
+      ctaText: "Manage my subscription",
+      footerExtra: "Pro Member · Monthly subscription managed through the secure Stripe portal.",
+    },
+    proCancellation: {
+      subject: "Your Pro Member subscription was cancelled",
+      heroTitle: (name) => `${name}, your Pro Member subscription is cancelled`,
+      heroSubtitle: "The change was recorded in Stripe.",
+      intro:
+        "Your Pro Member subscription is cancelled or scheduled for cancellation.",
+      effectiveDateLabel: "Effective date",
+      noDate: "See details in the Stripe portal.",
+      benefitsRemain:
+        "If a paid period is still in progress, your Pro Member benefits remain active until the end of that period.",
+      ctaText: "Manage my subscription",
+      footerExtra: "Pro Member · You can review details from your teacher space.",
     },
     identityVerified: {
       subject: "Your identity has been verified",
@@ -198,22 +238,35 @@ const COPY: Record<EmailLocale, NotificationEmailCopy> = {
       ctaText: "Ver mi progreso",
     },
     proUpgrade: {
-      subject: "Tu perfil Pratiqo Pro está activo",
-      heroTitle: (name) => `${name}, tu perfil Pratiqo Pro está activo`,
-      heroSubtitle: "Ya puedes gestionar tu perfil docente con tus opciones Pro.",
+      subject: "Tu suscripción Miembro Pro está activa",
+      heroTitle: (name) => `${name}, tu suscripción Miembro Pro está activa`,
+      heroSubtitle: "Tu suscripción mensual está activa y se renueva automáticamente hasta su cancelación.",
       intro:
-        "Gracias por formar parte de Pratiqo. Tu espacio Pro está listo para ayudarte a mantener tu perfil claro, completo y actualizado.",
-      checklistTitle: "Mantén esto actualizado",
+        "Gracias por formar parte de Pratiqo. Miembro Pro cuesta 29,99 $CA / mes + impuestos aplicables, facturado mensualmente por adelantado.",
+      checklistTitle: "Ten en cuenta",
       checklist: [
-        "Tu disponibilidad",
-        "Tu foto y biografía",
-        "Tus precios y formatos de clase",
-        "Tu información de verificación",
+        "La renovación es automática hasta su cancelación.",
+        "Puedes gestionar o cancelar la suscripción desde tu espacio docente mediante el portal seguro de Stripe.",
+        "La cancelación entra en vigor al final del período pagado en curso.",
+        "Miembro Pro no garantiza reservas, estudiantes, posicionamiento, visibilidad ni ingresos.",
       ],
       note:
-        "Las opciones Pro apoyan tu visibilidad en la plataforma, sin prometer resultados.",
-      ctaText: "Ver mi perfil",
-      footerExtra: "Pratiqo Pro · Puedes gestionar tu suscripción desde tu espacio docente.",
+        "Los profesores siguen siendo trabajadores independientes. Los resultados dependen, entre otros factores, de la actividad, disponibilidad, precios, demanda y volumen de reservas.",
+      ctaText: "Gestionar mi suscripción",
+      footerExtra: "Miembro Pro · Suscripción mensual gestionada mediante el portal seguro de Stripe.",
+    },
+    proCancellation: {
+      subject: "Tu suscripción Miembro Pro fue cancelada",
+      heroTitle: (name) => `${name}, tu suscripción Miembro Pro está cancelada`,
+      heroSubtitle: "El cambio fue registrado en Stripe.",
+      intro:
+        "Tu suscripción Miembro Pro está cancelada o programada para cancelarse.",
+      effectiveDateLabel: "Fecha de efecto",
+      noDate: "Consulta los detalles en el portal de Stripe.",
+      benefitsRemain:
+        "Si todavía hay un período pagado en curso, tus beneficios Miembro Pro siguen activos hasta el final de ese período.",
+      ctaText: "Gestionar mi suscripción",
+      footerExtra: "Miembro Pro · Puedes revisar los detalles desde tu espacio docente.",
     },
     identityVerified: {
       subject: "Tu identidad fue verificada",

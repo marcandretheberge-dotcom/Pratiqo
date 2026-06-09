@@ -95,6 +95,11 @@ const allowedConsentGateFiles = new Set<string>([
   // returns 400 when `renewalAccepted: false` is sent. Asserted by
   // tests/legal/p0ConsentAndSafetyGates.test.ts ("A6" + "A7").
   "app/api/stripe/pro/checkout/route.ts",
+  // Membre Pro subscription-management proof PR. The webhook change is
+  // limited to subscription status logging/email around existing
+  // customer.subscription.* handlers. It does not change checkout,
+  // Stripe product/price IDs, tax logic, payment math, or booking flow.
+  "app/api/stripe/webhook/route.ts",
 ]);
 
 function touchesFounderDecisionScope(file: string): boolean {

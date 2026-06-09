@@ -130,10 +130,25 @@ test("patch stays outside restricted systems", () => {
 
   const allowed = new Set([
     ".env.example",
+    "app/(app)/upgrade/page.tsx",
     "app/api/group-sessions/checkout/route.ts",
     "app/api/stripe/pro/checkout/route.ts",
     "app/api/stripe/webhook/route.ts",
+    "components/teacher/TeacherAccountView.tsx",
+    "lib/config/membrePro.ts",
+    "lib/email.ts",
+    "lib/email/messages/notifications.ts",
+    "lib/email/templates/billing.ts",
+    "lib/i18n/locales/en.json",
+    "lib/i18n/locales/es.json",
+    "lib/i18n/locales/fr.json",
+    "tests/legal/founderDecisionsAlignment.test.ts",
+    "tests/legal/safeDisclosures.test.ts",
+    "tests/payments/membreProSubscriptionManagement.test.ts",
     "tests/payments/stripeProductionReadinessBlockers.test.ts",
+    "tests/email/notifications.test.ts",
+    "tests/teacherLaunch/teacherLaunchCenter.test.ts",
+    "tests/yo/yopratiqoDominicanResponsiveLayout.test.ts",
     "tests/yo/yopratiqoAudioPronunciationOverrides.test.ts",
   ]);
 

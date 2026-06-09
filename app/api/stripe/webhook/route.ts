@@ -6,6 +6,7 @@ import { deductCredits } from "@/lib/credits";
 import {
   sendBookingConfirmedStudent,
   sendBookingConfirmedTeacher,
+  sendProCancellation,
   sendProUpgrade,
   sendIdentityVerified,
   sendIdentityFailed,
@@ -463,7 +464,17 @@ async function resolveSubscriptionUserId(subscription: Stripe.Subscription): Pro
   return (data as { id?: string } | null)?.id ?? null;
 }
 
-async function setUserPlanFromSubscription(subscription: Stripe.Subscription, fallback?: { userId?: string | null; customerId?: string | null }) {
+type SubscriptionSyncContext = {
+  eventId?: string | null;
+  eventType?: string | null;
+  source?: "stripe_webhook" | "stripe_invoice_sync";
+};
+
+async function setUserPlanFromSubscription(
+  subscription: Stripe.Subscription,
+  fallback?: { userId?: string | null; customerId?: string | null },
+  context: SubscriptionSyncContext = {},
+) {
   const userId = fallback?.userId ?? (await resolveSubscriptionUserId(subscription));
   if (!userId) {
     console.warn("[stripe/webhook] subscription missing user id", subscription.id);
@@ -479,7 +490,7 @@ async function setUserPlanFromSubscription(subscription: Stripe.Subscription, fa
 
   const { data: previous } = await admin
     .from("profiles")
-    .select("plan, pro_started_at")
+    .select("plan, pro_started_at, subscription_status, pro_cancel_at_period_end, name, email")
     .eq("id", userId)
     .maybeSingle();
 
@@ -499,7 +510,29 @@ async function setUserPlanFromSubscription(subscription: Stripe.Subscription, fa
   const { error } = await admin.from("profiles").update(patch).eq("id", userId);
   if (error) console.error("[stripe/webhook] plan update failed", error);
 
-  const wasPro = String((previous as { plan?: string | null } | null)?.plan ?? "free").toLowerCase() === "pro";
+  const previousProfile = previous as {
+    plan?: string | null;
+    pro_started_at?: string | null;
+    subscription_status?: string | null;
+    pro_cancel_at_period_end?: boolean | null;
+    name?: string | null;
+    email?: string | null;
+  } | null;
+  console.info("[stripe/webhook] membre pro subscription synced", {
+    userId,
+    stripeSubscriptionId: subscription.id,
+    previousStatus: previousProfile?.subscription_status ?? null,
+    newStatus: status,
+    previousPlan: previousProfile?.plan ?? null,
+    newPlan: plan,
+    cancelAtPeriodEnd: Boolean(subscription.cancel_at_period_end),
+    currentPeriodEnd: periodEnd,
+    eventId: context.eventId ?? null,
+    eventType: context.eventType ?? null,
+    source: context.source ?? "stripe_webhook",
+  });
+
+  const wasPro = String(previousProfile?.plan ?? "free").toLowerCase() === "pro";
   if (!wasPro && plan === "pro") {
     try {
       const { data: prof } = await admin
@@ -517,6 +550,26 @@ async function setUserPlanFromSubscription(subscription: Stripe.Subscription, fa
       console.error("[stripe/webhook] pro upgrade email failed", e);
     }
   }
+
+  const cancellationScheduled =
+    Boolean(subscription.cancel_at_period_end) &&
+    previousProfile?.pro_cancel_at_period_end !== true;
+  const cancellationCompleted = wasPro && plan !== "pro";
+  if (cancellationScheduled || cancellationCompleted) {
+    try {
+      const profName = previousProfile?.name ?? "Professeur";
+      const profEmail = previousProfile?.email ?? null;
+      if (profEmail) {
+        const locale = await resolveEmailLocaleForUser(admin, userId);
+        await sendProCancellation(profEmail, profName, {
+          effectiveDate: periodEnd,
+          locale,
+        });
+      }
+    } catch (e) {
+      console.error("[stripe/webhook] pro cancellation email failed", e);
+    }
+  }
 }
 
 async function syncSubscriptionFromInvoice(invoice: Stripe.Invoice) {
@@ -527,7 +580,9 @@ async function syncSubscriptionFromInvoice(invoice: Stripe.Invoice) {
   const subscriptionId = stripeId(parent);
   if (!subscriptionId) return;
   const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-  await setUserPlanFromSubscription(subscription);
+  await setUserPlanFromSubscription(subscription, undefined, {
+    source: "stripe_invoice_sync",
+  });
 }
 
 async function handleConnectAccountUpdated(account: Stripe.Account) {
@@ -639,6 +694,10 @@ export async function POST(req: Request) {
           await setUserPlanFromSubscription(sub, {
             userId: sess.metadata?.user_id ?? sess.client_reference_id ?? null,
             customerId: stripeId(sess.customer),
+          }, {
+            eventId: event.id,
+            eventType: event.type,
+            source: "stripe_webhook",
           });
         }
       }
@@ -650,7 +709,11 @@ export async function POST(req: Request) {
       event.type === "customer.subscription.deleted"
     ) {
       const sub = event.data.object as Stripe.Subscription;
-      await setUserPlanFromSubscription(sub);
+      await setUserPlanFromSubscription(sub, undefined, {
+        eventId: event.id,
+        eventType: event.type,
+        source: "stripe_webhook",
+      });
     }
 
     if (event.type === "invoice.payment_succeeded" || event.type === "invoice.payment_failed") {

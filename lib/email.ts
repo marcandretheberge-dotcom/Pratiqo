@@ -33,7 +33,10 @@ export {
   sendBookingCancelledTeacherEmail,
 } from "@/lib/email/templates/booking";
 
-export { sendProUpgrade } from "@/lib/email/templates/billing";
+export {
+  sendProCancellation,
+  sendProUpgrade,
+} from "@/lib/email/templates/billing";
 
 export {
   sendIdentityVerified,

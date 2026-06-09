@@ -19,9 +19,9 @@ const EXPECTED_SUBJECTS = {
     es: "Tu compañero evolucionó 🎉",
   },
   pro: {
-    fr: "Votre profil Pratiqo Pro est actif",
-    en: "Your Pratiqo Pro profile is active",
-    es: "Tu perfil Pratiqo Pro está activo",
+    fr: "Votre abonnement Membre Pro est actif",
+    en: "Your Pro Member subscription is active",
+    es: "Tu suscripción Miembro Pro está activa",
   },
   identityVerified: {
     fr: "Votre identité a été vérifiée",
@@ -67,12 +67,12 @@ for (const locale of LOCALES) {
 
   const pro = buildProUpgradeEmail({ name: "Marc", locale });
   assert.equal(pro.subject, EXPECTED_SUBJECTS.pro[locale]);
-  assertInternalCta(pro.ctaUrl, "/teacher/my-profile");
+  assertInternalCta(pro.ctaUrl, "/teacher/settings");
   assertNoRawKeys(pro.html);
-  assert.doesNotMatch(
-    pro.html,
-    /guarantee|guaranteed|ranking|revenue|students guaranteed|garanti|garantie|classement|revenu|ingresos|garantizado/i,
-  );
+  assert.match(pro.html, /29[,.]99/);
+  assert.match(pro.html, /renouvelle automatiquement|renews automatically|renueva autom/i);
+  assert.match(pro.html, /ne garantit pas|does not guarantee|no garantiza/i);
+  assert.doesNotMatch(pro.html, /guaranteed bookings|guaranteed income|revenu garanti|ingreso garantizado/i);
 
   const verified = buildIdentityVerifiedEmail({ name: "Ariane", locale });
   assert.equal(verified.subject, EXPECTED_SUBJECTS.identityVerified[locale]);

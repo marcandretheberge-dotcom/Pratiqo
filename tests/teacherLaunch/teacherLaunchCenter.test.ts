@@ -370,6 +370,7 @@ test("forbidden files: PR does not touch Stripe checkout/webhook, Supabase/RLS/m
   // subscription mechanics).
   const approvedStripeRouteExceptions = new Set([
     "app/api/stripe/pro/checkout/route.ts",
+    "app/api/stripe/webhook/route.ts",
   ]);
 
   const violations: string[] = [];

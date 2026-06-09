@@ -83,6 +83,9 @@ export const MEMBRE_PRO_PLAN = {
   },
 } as const;
 
+export const MEMBRE_PRO_BILLING_CYCLE = "monthly" as const;
+export const MEMBRE_PRO_CONSENT_VERSION = "membre-pro-renewal-v1-2026-06" as const;
+
 /**
  * Canonical declining-commission model for the marketplace.
  *
@@ -167,6 +170,24 @@ type UpgradePageCopy = {
   comingSoonNote: string;
   /** Pre-checkbox disclosure paragraph (taxes, renewal, cancel anytime). */
   disclosureLead: string;
+  /** Visible checkout summary title immediately before consent and CTA. */
+  checkoutSummaryTitle: string;
+  /** Label for the summary plan row. */
+  checkoutSummaryPlanLabel: string;
+  /** Label for the summary price row. */
+  checkoutSummaryPriceLabel: string;
+  /** Label for the summary billing cycle row. */
+  checkoutSummaryCycleLabel: string;
+  /** Value for the summary billing cycle row. */
+  checkoutSummaryCycleMonthly: string;
+  /** Label for the automatic-renewal row. */
+  checkoutSummaryRenewalLabel: string;
+  /** Short automatic-renewal summary. */
+  checkoutSummaryRenewalValue: string;
+  /** Label for the management/cancellation row. */
+  checkoutSummaryManageLabel: string;
+  /** Short management/cancellation summary. */
+  checkoutSummaryManageValue: string;
   /**
    * Bold word inside the disclosure that should be visually emphasized
    * ("renouvelle automatiquement" / "renews automatically" / …).
@@ -248,6 +269,16 @@ export const UPGRADE_PAGE_COPY: Record<Locale, UpgradePageCopy> = {
     comingSoonNote: "Plan Entreprise et cours de groupe — bientôt disponibles.",
     disclosureLead:
       `L’abonnement Membre Pro coûte ${MEMBRE_PRO_PLAN.proMonthlyPriceCadDisplay.fr} $CA / mois + taxes applicables, et est facturé mensuellement à l’avance. Il se `,
+    checkoutSummaryTitle: "Résumé avant le paiement",
+    checkoutSummaryPlanLabel: "Plan",
+    checkoutSummaryPriceLabel: "Prix",
+    checkoutSummaryCycleLabel: "Cycle",
+    checkoutSummaryCycleMonthly: "Mensuel",
+    checkoutSummaryRenewalLabel: "Renouvellement",
+    checkoutSummaryRenewalValue: "Renouvellement automatique jusqu’à annulation.",
+    checkoutSummaryManageLabel: "Gestion",
+    checkoutSummaryManageValue:
+      "Abonnement géré depuis votre compte ou le portail de facturation sécurisé Stripe.",
     disclosureRenewBold: "renouvelle automatiquement",
     disclosureRenewTail:
       " jusqu’à l’annulation. Tu peux annuler en tout temps depuis ton tableau de bord ou en écrivant à support@pratiqo.ca; l’annulation prend effet à la fin de la période payée en cours. ",
@@ -299,6 +330,16 @@ export const UPGRADE_PAGE_COPY: Record<Locale, UpgradePageCopy> = {
     comingSoonNote: "Enterprise plan and group lessons — coming soon.",
     disclosureLead:
       `The Pro Member subscription costs $${MEMBRE_PRO_PLAN.proMonthlyPriceCadDisplay.en} CAD per month, plus applicable taxes, and is billed monthly in advance. It `,
+    checkoutSummaryTitle: "Summary before payment",
+    checkoutSummaryPlanLabel: "Plan",
+    checkoutSummaryPriceLabel: "Price",
+    checkoutSummaryCycleLabel: "Cycle",
+    checkoutSummaryCycleMonthly: "Monthly",
+    checkoutSummaryRenewalLabel: "Renewal",
+    checkoutSummaryRenewalValue: "Renews automatically until cancelled.",
+    checkoutSummaryManageLabel: "Management",
+    checkoutSummaryManageValue:
+      "Subscription managed from your account or the secure Stripe billing portal.",
     disclosureRenewBold: "renews automatically",
     disclosureRenewTail:
       " until cancelled. You can cancel any time from your dashboard or by writing to support@pratiqo.ca; cancellation takes effect at the end of the current paid billing period. ",
@@ -350,6 +391,16 @@ export const UPGRADE_PAGE_COPY: Record<Locale, UpgradePageCopy> = {
     comingSoonNote: "Plan Empresa y clases grupales — próximamente.",
     disclosureLead:
       `La membresía Miembro Pro cuesta ${MEMBRE_PRO_PLAN.proMonthlyPriceCadDisplay.es} $CA al mes, más los impuestos aplicables, y se factura mensualmente por adelantado. Se `,
+    checkoutSummaryTitle: "Resumen antes del pago",
+    checkoutSummaryPlanLabel: "Plan",
+    checkoutSummaryPriceLabel: "Precio",
+    checkoutSummaryCycleLabel: "Ciclo",
+    checkoutSummaryCycleMonthly: "Mensual",
+    checkoutSummaryRenewalLabel: "Renovación",
+    checkoutSummaryRenewalValue: "Se renueva automáticamente hasta su cancelación.",
+    checkoutSummaryManageLabel: "Gestión",
+    checkoutSummaryManageValue:
+      "Suscripción gestionada desde tu cuenta o el portal de facturación seguro de Stripe.",
     disclosureRenewBold: "renueva automáticamente",
     disclosureRenewTail:
       " hasta su cancelación. Puedes cancelarla en cualquier momento desde tu panel o escribiendo a support@pratiqo.ca; la cancelación entra en vigor al final del período pagado en curso. ",
@@ -382,6 +433,10 @@ export const UPGRADE_PAGE_COPY: Record<Locale, UpgradePageCopy> = {
 /** Convenience: resolve the upgrade-page copy for a given locale. */
 export function getUpgradeCopy(locale: Locale): UpgradePageCopy {
   return UPGRADE_PAGE_COPY[locale] ?? UPGRADE_PAGE_COPY.fr;
+}
+
+export function getMembreProRenewalConsentText(locale: Locale): string {
+  return getUpgradeCopy(locale).renewalAcceptanceLabel;
 }
 
 /**

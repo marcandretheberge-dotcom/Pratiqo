@@ -14,11 +14,28 @@ export async function sendProUpgrade(email: string, name: string, locale?: Email
   });
 }
 
+export async function sendProCancellation(
+  email: string,
+  name: string,
+  opts?: { effectiveDate?: string | null; locale?: EmailLocale },
+) {
+  const message = buildProCancellationEmail({
+    name,
+    effectiveDate: opts?.effectiveDate,
+    locale: opts?.locale,
+  });
+  await send({
+    to: email,
+    subject: message.subject,
+    html: message.html,
+  });
+}
+
 export function buildProUpgradeEmail(opts: { name: string; locale?: EmailLocale }) {
   const resolved = resolveEmailLocaleFromOptional(opts.locale);
   const copy = getNotificationEmailCopy(resolved).proUpgrade;
   const base = appBaseUrl();
-  const ctaUrl = `${base}/teacher/my-profile`;
+  const ctaUrl = `${base}/teacher/settings`;
   const checklist = copy.checklist.map((item) => `<li>${escapeHtml(item)}</li>`).join("");
 
   return {
@@ -38,6 +55,39 @@ export function buildProUpgradeEmail(opts: { name: string; locale?: EmailLocale 
           ${checklist}
         </ol>
         ${tealBox(escapeHtml(copy.note))}
+      `,
+      ctaText: copy.ctaText,
+      ctaUrl,
+      footerExtra: copy.footerExtra,
+    }),
+  };
+}
+
+export function buildProCancellationEmail(opts: {
+  name: string;
+  effectiveDate?: string | null;
+  locale?: EmailLocale;
+}) {
+  const resolved = resolveEmailLocaleFromOptional(opts.locale);
+  const copy = getNotificationEmailCopy(resolved).proCancellation;
+  const base = appBaseUrl();
+  const ctaUrl = `${base}/teacher/settings`;
+  const effectiveDate = opts.effectiveDate?.trim() || copy.noDate;
+
+  return {
+    subject: copy.subject,
+    ctaUrl,
+    html: buildEmail({
+      locale: resolved,
+      heroEmoji: "✓",
+      heroTitle: copy.heroTitle(opts.name),
+      heroSubtitle: copy.heroSubtitle,
+      bodyHtml: `
+        <p>${escapeHtml(copy.intro)}</p>
+        ${tealBox(
+          `<strong>${escapeHtml(copy.effectiveDateLabel)}:</strong> ${escapeHtml(effectiveDate)}`,
+        )}
+        <p>${escapeHtml(copy.benefitsRemain)}</p>
       `,
       ctaText: copy.ctaText,
       ctaUrl,
