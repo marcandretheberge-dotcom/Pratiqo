@@ -1437,6 +1437,41 @@ export default function TeacherProfileManagementPage() {
               <p className="text-xs text-amber-900">{t("homeLessonsMinorSafetyNote")}</p>
             </div>
 
+            <div
+              className="rounded-xl border border-[#DCEAE3] bg-[#F3FAF6] p-4"
+              data-testid="teacher-profile-mgmt-home-minor-gate"
+            >
+              <div className="flex items-start gap-3">
+                <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-teal-700">
+                  <ShieldCheck size={16} aria-hidden />
+                </span>
+                <div className="min-w-0 flex-1 space-y-2">
+                  <div>
+                    <p className="text-sm font-bold text-[#2C2C2A]">{t("homeLessonsMinorGateTitle")}</p>
+                    <p className="mt-1 text-xs leading-relaxed text-[#5F6F68]">
+                      {t("homeLessonsMinorGateDescription")}
+                    </p>
+                  </div>
+                  <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-900">
+                    {t("homeLessonsMinorGateGeneralSeparate")}
+                  </p>
+                  <div className="rounded-lg border border-white/80 bg-white px-3 py-2">
+                    <p className="text-xs font-bold text-[#2C2C2A]">{t("homeLessonsMinorGateRequestTitle")}</p>
+                    <p className="mt-1 text-xs leading-relaxed text-[#5F6F68]">
+                      {t("homeLessonsMinorGateRequestBody")}
+                    </p>
+                    <a
+                      href={`mailto:support@pratiqo.ca?subject=${encodeURIComponent(t("homeLessonsMinorRequestEmailSubject"))}&body=${encodeURIComponent(t("homeLessonsMinorRequestEmailBody"))}`}
+                      className="mt-3 inline-flex min-h-10 items-center justify-center rounded-xl bg-teal-700 px-4 text-xs font-bold text-white transition hover:bg-teal-800"
+                      data-testid="teacher-profile-mgmt-home-minor-request-cta"
+                    >
+                      {t("homeLessonsMinorGateRequestCta")}
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <p className="text-xs text-[#6B6A65]">{t("homeLessonsPrivacyNote")}</p>
 
             {editHomeError ? (
