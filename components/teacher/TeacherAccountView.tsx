@@ -26,6 +26,7 @@ import {
   isPayoutMarketSupported,
   isTeacherMarketSupported,
 } from "@/lib/config/markets";
+import { MEMBRE_PRO_PLAN } from "@/lib/config/membrePro";
 
 /**
  * Public listing card fallback used by the onboarding routes
@@ -529,42 +530,6 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
     setVisibilitySaving(false);
   };
 
-  const startProCheckout = async () => {
-    if (!isMembreProMarketSupported(teacherCountryCode)) {
-      setProMessage(t("marketMembreProUnavailableMessage"));
-      return;
-    }
-    const supabase = getSupabaseClient();
-    const { data: s } = await supabase.auth.getSession();
-    const token = s.session?.access_token;
-    if (!token) {
-      setMessage(t("sessionExpiredShort"));
-      return;
-    }
-    setProBusy(true);
-    setMessage(null);
-    setProMessage(null);
-    try {
-      const res = await fetch("/api/stripe/pro/checkout", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-      const body = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
-      if (!res.ok || !body.url) {
-        setProMessage(body.error || t("proCheckoutFailed"));
-        return;
-      }
-      window.location.href = body.url;
-    } catch {
-      setProMessage(t("proCheckoutFailed"));
-    } finally {
-      setProBusy(false);
-    }
-  };
-
   const openBillingPortal = async () => {
     const supabase = getSupabaseClient();
     const { data: s } = await supabase.auth.getSession();
@@ -609,6 +574,19 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
 
   const hasProSubscription = Boolean(stripeCustomerId || subscriptionStatus);
   const normalizedSubStatus = String(subscriptionStatus || "").toLowerCase();
+  const formattedProPeriodEnd = proCurrentPeriodEnd
+    ? new Date(proCurrentPeriodEnd).toLocaleDateString(localeToBcp47(locale), {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })
+    : null;
+  const proPlanPriceLabel =
+    locale === "en"
+      ? `$${MEMBRE_PRO_PLAN.proMonthlyPriceCadDisplay.en} CAD / month + applicable taxes`
+      : locale === "es"
+        ? `${MEMBRE_PRO_PLAN.proMonthlyPriceCadDisplay.es} $CA / mes + impuestos aplicables`
+        : `${MEMBRE_PRO_PLAN.proMonthlyPriceCadDisplay.fr} $CA / mois + taxes applicables`;
   const proStatusLabel =
     proCancelAtPeriodEnd ? t("proCancelAtPeriodEnd") :
     normalizedSubStatus === "active" || normalizedSubStatus === "trialing" ? t("proSubscriptionActive") :
@@ -1083,23 +1061,53 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
             />
           </div>
         ) : null}
-        <p className="text-sm text-slate-600">
-          {t("currentPlanPrefix")} <span className="font-bold text-[#00694c]">{plan === "pro" ? t("planProLabel") : t("planFreeLabel")}</span>
-        </p>
-        <div className="rounded-2xl border border-[#DCEAE3] bg-[#F3FAF6] px-4 py-3 text-sm text-slate-700 space-y-1">
-          <p>
-            <span className="font-semibold text-slate-900">Pro:</span>{" "}
-            <span className="font-bold text-[#00694c]">{proStatusLabel}</span>
-          </p>
-          {proCurrentPeriodEnd ? (
-            <p className="text-xs text-slate-600">
-              {new Date(proCurrentPeriodEnd).toLocaleDateString(localeToBcp47(locale), {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })}
+        <div
+          className="rounded-2xl border border-[#DCEAE3] bg-[#F3FAF6] px-4 py-4 text-sm text-slate-700 space-y-3"
+          data-testid="teacher-pro-subscription-card"
+        >
+          <div>
+            <h3 className="text-base font-extrabold text-[#2C2C2A]">
+              {t("proSubscriptionSectionTitle")}
+            </h3>
+            <p className="mt-1 text-xs leading-relaxed text-slate-600">
+              {t("proSubscriptionSectionLead")}
             </p>
-          ) : null}
+          </div>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <div className="rounded-xl border border-white/80 bg-white px-3 py-2">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                {t("currentPlanPrefix")}
+              </p>
+              <p className="mt-1 font-bold text-[#00694c]">
+                {plan === "pro" ? t("planProLabel") : t("planFreeLabel")}
+              </p>
+            </div>
+            <div className="rounded-xl border border-white/80 bg-white px-3 py-2">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                {t("proSubscriptionStatusLabel")}
+              </p>
+              <p className="mt-1 font-bold text-[#00694c]">{proStatusLabel}</p>
+            </div>
+            <div className="rounded-xl border border-white/80 bg-white px-3 py-2">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                {t("proSubscriptionPriceLabel")}
+              </p>
+              <p className="mt-1 font-semibold text-slate-800">{proPlanPriceLabel}</p>
+            </div>
+            <div className="rounded-xl border border-white/80 bg-white px-3 py-2">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                {proCancelAtPeriodEnd
+                  ? t("proBenefitsUntilLabel")
+                  : t("proNextRenewalLabel")}
+              </p>
+              <p className="mt-1 font-semibold text-slate-800">
+                {formattedProPeriodEnd ?? t("proRenewalManagedInStripe")}
+              </p>
+            </div>
+          </div>
+          <p className="text-xs leading-relaxed text-slate-600">
+            {t("proSubscriptionPortalHelp")}
+          </p>
         </div>
         {plan === "pro" || hasProSubscription ? (
           <button
@@ -1112,15 +1120,22 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
             {proBusy ? t("stripePortalOpening") : t("manageProSubscription")}
           </button>
         ) : (
-          <button
-            type="button"
-            disabled={proBusy || !isMembreProMarketSupported(teacherCountryCode)}
-            onClick={() => void startProCheckout()}
-            className="inline-flex h-10 px-5 rounded-full bg-[#00694c] hover:bg-[#008560] text-white text-sm font-semibold items-center justify-center gap-2 shadow-sm hover:shadow transition-all disabled:opacity-60"
-          >
-            {proBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-            {proBusy ? t("stripePortalOpening") : t("upgradeToPro")}
-          </button>
+          isMembreProMarketSupported(teacherCountryCode) ? (
+            <Link
+              href="/upgrade"
+              className="inline-flex h-10 px-5 rounded-full bg-[#00694c] hover:bg-[#008560] text-white text-sm font-semibold items-center justify-center gap-2 shadow-sm hover:shadow transition-all"
+            >
+              {t("upgradeToPro")}
+            </Link>
+          ) : (
+            <button
+              type="button"
+              disabled
+              className="inline-flex h-10 px-5 rounded-full bg-[#00694c] text-white text-sm font-semibold items-center justify-center gap-2 opacity-60"
+            >
+              {t("upgradeToPro")}
+            </button>
+          )
         )}
         {!isMembreProMarketSupported(teacherCountryCode) ? (
           <div>

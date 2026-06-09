@@ -8,6 +8,13 @@ import {
   isMembreProMarketSupported,
   marketNotSupportedPayload,
 } from "@/lib/config/markets";
+import {
+  MEMBRE_PRO_BILLING_CYCLE,
+  MEMBRE_PRO_CONSENT_VERSION,
+  MEMBRE_PRO_PLAN,
+  getMembreProRenewalConsentText,
+} from "@/lib/config/membrePro";
+import type { Locale } from "@/lib/i18n/types";
 
 export const runtime = "nodejs";
 
@@ -53,24 +60,30 @@ async function getAuthenticatedUser(req: Request) {
  */
 async function readConsentBody(
   req: Request,
-): Promise<{ renewalAccepted: boolean | null; legalAccepted: boolean | null }> {
+): Promise<{
+  renewalAccepted: boolean | null;
+  legalAccepted: boolean | null;
+  locale: Locale;
+}> {
   const contentType = req.headers.get("content-type") || "";
   if (!contentType.toLowerCase().includes("application/json")) {
-    return { renewalAccepted: null, legalAccepted: null };
+    return { renewalAccepted: null, legalAccepted: null, locale: "fr" };
   }
   try {
     const raw = (await req.json()) as Record<string, unknown> | null;
     if (!raw || typeof raw !== "object") {
-      return { renewalAccepted: null, legalAccepted: null };
+      return { renewalAccepted: null, legalAccepted: null, locale: "fr" };
     }
+    const requestedLocale = raw.locale === "en" || raw.locale === "es" ? raw.locale : "fr";
     return {
       renewalAccepted:
         typeof raw.renewalAccepted === "boolean" ? raw.renewalAccepted : null,
       legalAccepted:
         typeof raw.legalAccepted === "boolean" ? raw.legalAccepted : null,
+      locale: requestedLocale,
     };
   } catch {
-    return { renewalAccepted: null, legalAccepted: null };
+    return { renewalAccepted: null, legalAccepted: null, locale: "fr" };
   }
 }
 
@@ -81,7 +94,7 @@ export const LEGAL_ACCEPTANCE_REQUIRED_ERROR_CODE =
 
 export async function POST(req: Request) {
   try {
-    const { renewalAccepted, legalAccepted } = await readConsentBody(req);
+    const { renewalAccepted, legalAccepted, locale } = await readConsentBody(req);
     if (renewalAccepted !== true) {
       return NextResponse.json(
         {
@@ -152,27 +165,69 @@ export async function POST(req: Request) {
     }
 
     const base = publicBase();
+    const consentAcceptedAt = new Date().toISOString();
+    const renewalConsentText = getMembreProRenewalConsentText(locale);
+    const userAgent = req.headers.get("user-agent")?.slice(0, 240) ?? "";
+    const requestIp =
+      req.headers.get("cf-connecting-ip") ||
+      req.headers.get("x-real-ip") ||
+      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      "";
+    const priceCents = String(Math.round(MEMBRE_PRO_PLAN.proMonthlyPriceCad * 100));
+    const consentMetadata = {
+      user_id: user.id,
+      teacher_id: teacher.id as string,
+      plan: "membre_pro",
+      checkout_kind: "pratiqo_pro",
+      price_cents: priceCents,
+      currency: "CAD",
+      billing_cycle: MEMBRE_PRO_BILLING_CYCLE,
+      renewal_consent_version: MEMBRE_PRO_CONSENT_VERSION,
+      renewal_consent_text: renewalConsentText,
+      renewal_accepted: "true",
+      legal_accepted: "true",
+      consent_accepted_at: consentAcceptedAt,
+      consent_locale: locale,
+      user_agent: userAgent,
+      request_ip: requestIp.slice(0, 80),
+    } satisfies Record<string, string>;
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       customer: customerId,
       success_url: `${base}/teacher/settings?pro=success`,
       cancel_url: `${base}/teacher/settings?pro=cancelled`,
       client_reference_id: user.id,
-      metadata: {
-        user_id: user.id,
-        teacher_id: teacher.id as string,
-        plan: "pro",
-        checkout_kind: "pratiqo_pro",
-      },
+      metadata: consentMetadata,
       subscription_data: {
         metadata: {
           user_id: user.id,
           teacher_id: teacher.id as string,
-          plan: "pro",
+          plan: "membre_pro",
           product: "pratiqo_pro",
+          renewal_consent_version: MEMBRE_PRO_CONSENT_VERSION,
+          renewal_accepted: "true",
+          legal_accepted: "true",
+          consent_accepted_at: consentAcceptedAt,
         },
       },
       line_items: [{ price: priceId, quantity: 1 }],
+    });
+
+    console.info("[stripe/pro/checkout] membre pro consent proof recorded", {
+      userId: user.id,
+      teacherId: teacher.id,
+      checkoutSessionId: session.id,
+      plan: "membre_pro",
+      priceCents,
+      currency: "CAD",
+      billingCycle: MEMBRE_PRO_BILLING_CYCLE,
+      renewalConsentVersion: MEMBRE_PRO_CONSENT_VERSION,
+      renewalAccepted: true,
+      legalAccepted: true,
+      consentAcceptedAt,
+      locale,
+      hasUserAgent: Boolean(userAgent),
+      hasRequestIp: Boolean(requestIp),
     });
 
     if (!session.url) {

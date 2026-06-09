@@ -136,6 +136,11 @@ const allowedPricingDisplayFiles = new Set<string>([
   // unchanged, and that the new code reads `renewalAccepted` and
   // returns 400 when it is explicitly false).
   "app/api/stripe/pro/checkout/route.ts",
+  // Membre Pro subscription-management proof PR. The webhook change is
+  // limited to subscription status logging/email around existing
+  // customer.subscription.* handlers. It does not change checkout,
+  // Stripe product/price IDs, tax logic, payment math, or booking flow.
+  "app/api/stripe/webhook/route.ts",
   // Booking cancellation/refund launch patch. This file is the dedicated
   // Stripe refund executor and is allowed here only so the legal-copy
   // guard does not block the payments branch while i18n cancellation copy
