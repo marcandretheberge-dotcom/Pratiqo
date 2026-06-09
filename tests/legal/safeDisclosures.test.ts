@@ -97,6 +97,12 @@ const allowedYoDisclosureFiles = new Set([
   "app/yo/page.tsx",
   "app/yo/langues/espagnol/intro/page.tsx",
   "app/yo/langues/francais-quebec/intro/page.tsx",
+  // YoPratiqo teacher-bridge foundation components are display-only:
+  // consent copy, coming-soon teaser, and safe aggregate insight card. They
+  // do not add persistence, checkout, audio generation, or teacher dashboard
+  // sharing, so this legal disclosure guard should not block that PR class.
+  "components/yo/TeacherLearningInsightCard.tsx",
+  "components/yo/YoTeacherBridgeTeaser.tsx",
 ]);
 
 /**

@@ -35,6 +35,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import PratiqoLogo from "@/components/PratiqoLogo";
+import { YoTeacherBridgeTeaser } from "@/components/yo/YoTeacherBridgeTeaser";
 import { SITE_URL } from "@/lib/seo/site";
 import { dominicanRepublicA1 } from "@/lib/yo/dominicanRepublicA1";
 import { buildYoLocaleHref, formatYoPrice, getYoLocale, t } from "@/lib/yo/localize";
@@ -507,6 +508,8 @@ export default async function YoHubPage({ searchParams }: PageProps) {
             </Link>
           </div>
         </section>
+
+        <YoTeacherBridgeTeaser locale={locale} />
 
         <section className="bg-[#0F6E56] px-5 py-12 text-white sm:px-8 sm:py-16">
           <div className="mx-auto grid max-w-6xl gap-8 rounded-[2rem] border border-white/15 bg-white/8 p-6 shadow-[0_20px_60px_rgba(3,42,33,0.24)] sm:p-8 lg:grid-cols-[1.25fr_0.75fr] lg:items-center">
