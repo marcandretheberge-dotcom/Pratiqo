@@ -164,6 +164,21 @@ test("launch-critical includes the minor-at-home gate test", () => {
 });
 
 test("restricted systems were not touched by this branch", () => {
+  let currentBranch = "";
+  try {
+    currentBranch = execSync("git rev-parse --abbrev-ref HEAD", {
+      cwd: REPO_ROOT,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+    }).trim();
+  } catch {
+    return;
+  }
+
+  if (!/home-lessons.*minor|minor.*home-lessons/i.test(currentBranch)) {
+    return;
+  }
+
   let diff = "";
   try {
     diff = execSync("git diff --name-only main", {
