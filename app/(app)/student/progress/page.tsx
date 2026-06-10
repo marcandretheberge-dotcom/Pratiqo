@@ -8,6 +8,7 @@ import type { CompanionType } from "@/lib/companions";
 import { useAuth } from "@/components/AuthProvider";
 import { CreditsWidget, type CreditsTeacherOption } from "@/components/CreditsWidget";
 import { CompanionCard } from "@/components/companion/CompanionCard";
+import { YoStudentCompanionCard } from "@/components/yo/YoStudentCompanionCard";
 import { cn } from "@/lib/utils";
 import { COMPLETED_LESSON_FOR_COMPANION_FILTER } from "@/lib/companion/rewards";
 
@@ -19,8 +20,10 @@ type HomeworkItem = {
 };
 
 export default function StudentProgressPage() {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const { user } = useAuth();
+  const yoLocale: "fr" | "en" | "es" =
+    locale === "en" || locale === "es" ? locale : "fr";
 
   const [companionType, setCompanionType] = useState<CompanionType | null>(null);
   const [companionChosen, setCompanionChosen] = useState<boolean>(false);
@@ -142,7 +145,7 @@ export default function StudentProgressPage() {
         <div className="h-40 animate-pulse rounded-2xl bg-white/60" />
       )}
 
-      {/* Companion — compact */}
+      {/* Companion — compact (legacy Pratiqo companion). Untouched. */}
       <section className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm sm:p-5">
         <h2 className="text-sm font-semibold text-slate-900">{t("progressionYourCompanion")}</h2>
         <p className="mt-0.5 text-xs text-slate-600">{t("companionSubtitle")}</p>
@@ -154,6 +157,10 @@ export default function StudentProgressPage() {
           variant="progress"
         />
       </section>
+
+      {/* YoPratiqo companion — separate card driven by YoPratiqo progress
+          snapshots. Does NOT replace the legacy companion above. */}
+      <YoStudentCompanionCard locale={yoLocale} />
 
       <section className="space-y-3">
         <div className="flex flex-wrap items-end justify-between gap-2">
