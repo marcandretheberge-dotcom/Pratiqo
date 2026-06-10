@@ -228,6 +228,17 @@ const allowed = new Set([
   teacherSummaryDocPath,
   "tests/yo/yopratiqoTeacherBridgeFoundation.test.ts",
   testPath,
+  // Visible bridge consent card PR — UI foundation extension of the
+  // same learning-event/teacher-bridge architecture. No runtime
+  // persistence, no checkout, no Stripe, no RLS, no audio generation.
+  // The mount is on the YoPratiqo hub in coming-soon mode only.
+  "lib/yopratiqo/teacherBridgeCopy.ts",
+  "lib/yopratiqo/teacherBridgeSummary.ts",
+  "components/yo/YoTeacherBridgeConsentCard.tsx",
+  "components/yo/YoTeacherBridgeConsentSection.tsx",
+  "components/yo/TeacherLearningInsightCard.tsx",
+  "app/yo/page.tsx",
+  "tests/yo/yopratiqoTeacherBridgeConsentCard.test.ts",
 ]);
 
 const restrictedPatterns = [

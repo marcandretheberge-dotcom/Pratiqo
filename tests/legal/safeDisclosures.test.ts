@@ -103,6 +103,15 @@ const allowedYoDisclosureFiles = new Set([
   // sharing, so this legal disclosure guard should not block that PR class.
   "components/yo/TeacherLearningInsightCard.tsx",
   "components/yo/YoTeacherBridgeTeaser.tsx",
+  // Visible teacher-bridge consent card (follow-on to the bridge teaser).
+  // Same display-only profile: an interactive checkbox + a coming-soon
+  // mount section that wires controlled React state to the card. No
+  // persistence, no checkout, no Stripe, no Supabase write, no audio
+  // generation, no teacher dashboard share. Justified by
+  // tests/yo/yopratiqoTeacherBridgeConsentCard.test.ts and the foundation
+  // test's own restricted-pattern guard.
+  "components/yo/YoTeacherBridgeConsentCard.tsx",
+  "components/yo/YoTeacherBridgeConsentSection.tsx",
 ]);
 
 /**

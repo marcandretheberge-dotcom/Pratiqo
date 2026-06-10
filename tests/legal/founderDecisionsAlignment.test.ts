@@ -78,6 +78,17 @@ const allowedYoDisclosureFiles = new Set([
   "app/yo/page.tsx",
   "app/yo/langues/espagnol/intro/page.tsx",
   "app/yo/langues/francais-quebec/intro/page.tsx",
+  // YoPratiqo teacher-bridge UI components — display-only consent surface
+  // and aggregate insight card with a locked/empty state. They do not
+  // change Stripe IDs, payment math, tax logic, subscription mechanics,
+  // payout flow, or any audio/MP3 generation. Same allow-class as the
+  // matching entry in tests/legal/safeDisclosures.test.ts; the consent
+  // card's privacy contract is asserted by
+  // tests/yo/yopratiqoTeacherBridgeConsentCard.test.ts.
+  "components/yo/TeacherLearningInsightCard.tsx",
+  "components/yo/YoTeacherBridgeTeaser.tsx",
+  "components/yo/YoTeacherBridgeConsentCard.tsx",
+  "components/yo/YoTeacherBridgeConsentSection.tsx",
 ]);
 
 /**
