@@ -112,6 +112,16 @@ const allowedYoDisclosureFiles = new Set([
   // test's own restricted-pattern guard.
   "components/yo/YoTeacherBridgeConsentCard.tsx",
   "components/yo/YoTeacherBridgeConsentSection.tsx",
+  // Public-bridge UX fix replacement card. Display-only: renders the
+  // travel companion via the manifest, an explainer body, an explicit
+  // privacy disclaimer, and three Link CTAs (sign-in / progress /
+  // RD module / find-a-teacher). No persistence, no checkout, no
+  // Stripe, no Supabase write, no audio generation, no teacher dashboard
+  // share. Replaces the legacy bridge teaser + consent-section pair
+  // on /yo. Defended end-to-end by
+  // tests/yo/yopratiqoPublicBridgeUx.test.ts (13 assertions including
+  // the same restricted-pattern guard this file enforces).
+  "components/yo/YoPublicCompanionOnboardingCard.tsx",
 ]);
 
 /**
