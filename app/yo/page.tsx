@@ -34,7 +34,7 @@ import {
   Lock,
   Sparkles,
 } from "lucide-react";
-import PratiqoLogo from "@/components/PratiqoLogo";
+import { YoPratiqoLogo } from "@/components/yo/YoPratiqoLogo";
 import { YoPublicCompanionOnboardingCard } from "@/components/yo/YoPublicCompanionOnboardingCard";
 import { SITE_URL } from "@/lib/seo/site";
 import { dominicanRepublicA1 } from "@/lib/yo/dominicanRepublicA1";
@@ -273,8 +273,17 @@ export default async function YoHubPage({ searchParams }: PageProps) {
     <div className="min-h-[100dvh] bg-[#fffbf0] text-[#0F6E56]">
       <header className="sticky top-0 z-50 border-b border-[#F4B400]/25 bg-[#fffbf0]/90 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-5 sm:px-8">
-          <Link href="/" aria-label="Pratiqo" className="shrink-0">
-            <PratiqoLogo variant="full" size="sm" priority={false} fetchPriority="low" loading="lazy" />
+          {/*
+            * YoPratiqo-branded header mark. We intentionally swap the
+            * global PratiqoLogo for the YoPratiqo brand on /yo and its
+            * sub-pages so the user feels they are inside the
+            * self-paced product, not on the marketplace. The link
+            * still goes back to the YoPratiqo hub so it works as a
+            * reliable "home" anchor inside the product. The global
+            * Pratiqo mark continues to render everywhere else.
+            */}
+          <Link href="/yo" aria-label="YoPratiqo" className="shrink-0">
+            <YoPratiqoLogo size="sm" priority={false} />
           </Link>
           <nav aria-label="YoPratiqo" className="flex items-center gap-2">
             <Link

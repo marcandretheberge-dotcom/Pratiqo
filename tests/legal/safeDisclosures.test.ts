@@ -122,6 +122,15 @@ const allowedYoDisclosureFiles = new Set([
   // tests/yo/yopratiqoPublicBridgeUx.test.ts (13 assertions including
   // the same restricted-pattern guard this file enforces).
   "components/yo/YoPublicCompanionOnboardingCard.tsx",
+  // YoPratiqo brand mark. Pure display-only `next/image` wrapper that
+  // renders `public/brand/yopratiqo-logo.png` at one of three preset
+  // CSS widths. No persistence, no checkout, no Stripe, no Supabase
+  // write, no audio generation, no teacher dashboard share, no quiz
+  // data. Mounted only on YoPratiqo-specific surfaces (currently the
+  // /yo hub header). Defended end-to-end by
+  // tests/yo/yopratiqoLogoIntegration.test.ts (14 assertions including
+  // the same restricted-pattern guard this file enforces).
+  "components/yo/YoPratiqoLogo.tsx",
 ]);
 
 /**
