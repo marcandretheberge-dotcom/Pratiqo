@@ -179,10 +179,19 @@ export function companionVisualFilename(
  * pointing the UI at a non-existent file.
  */
 const SHIPPED_ASSETS: ReadonlySet<string> = new Set<string>([
-  // No production exports yet — the design team needs to deliver the 8
-  // PNGs first (do not crop from poster; see
-  // docs/COMPANION_BRIDGE_ASSET_PLAN.md). Add the filename here once it
-  // lands in public/companion/<visualId>/.
+  // Launch baseline: 500×500 transparent RGBA PNGs of the YoPratiqo
+  // travel companion. Per the asset plan the future re-export target
+  // is 1024×1024; the renderer downscales to the actual display sizes
+  // (40–128 px) so the launch baseline is visually indistinguishable.
+  // See docs/COMPANION_BRIDGE_ASSET_PLAN.md.
+  "companion-travel-idle.png",
+  "companion-travel-map.png",
+  "companion-travel-confused.png",
+  "companion-travel-celebrating.png",
+  "companion-travel-teacher-ready.png",
+  "companion-travel-level-up.png",
+  "companion-travel-inactive.png",
+  "companion-travel-badge-unlocked.png",
 ]);
 
 function assetSrc(
@@ -194,20 +203,31 @@ function assetSrc(
   return `/companion/${visualId}/${filename}`;
 }
 
+/**
+ * Source canvas dimensions for the currently shipped launch assets.
+ * remove.bg's free tier downsizes images to 500×500, which is what the
+ * launch deliverable ships. Future re-exports should target 1024×1024
+ * (see `FUTURE_TARGET_DIMENSION` and `docs/COMPANION_BRIDGE_ASSET_PLAN.md`).
+ * The renderer never relies on these values — they are metadata only.
+ */
+const LAUNCH_ASSET_DIMENSION = 500;
+const FUTURE_TARGET_DIMENSION = 1024;
+
 function buildAsset(
   visualId: CompanionVisualId,
   state: CompanionVisualState,
 ): CompanionVisualAsset {
   const fallback = FALLBACK_TABLE[state];
   const src = assetSrc(visualId, state);
+  const dimension = src != null ? LAUNCH_ASSET_DIMENSION : FUTURE_TARGET_DIMENSION;
   return {
     id: `${visualId}-${state}`,
     visualId,
     state,
     src,
     alt: fallback.alt,
-    width: 1024,
-    height: 1024,
+    width: dimension,
+    height: dimension,
     format: "png",
     transparentBackground: true,
     reactNativeReady: src != null,

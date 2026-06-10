@@ -52,11 +52,28 @@ Each PNG must be exported with all of the following characteristics:
 
 - **One character per image** — no duo, no group, no shadow of a second pose.
 - **Transparent background** — no scene, no halo, no gradient backdrop.
-- **Square canvas, 1024 × 1024** — the manifest assumes this. Downstream the app derives 512, 256, 128.
+- **Square canvas** — target is 1024 × 1024 (future-proofs Rive/Lottie source, React Native @3x screens, marketing reuse). The current launch baseline is 500 × 500, which is the maximum size remove.bg's free tier returns when the source PNG was generated in ChatGPT and post-processed for transparency. The renderer always downscales to the actual avatar display size (40–128 px), so the launch baseline is visually indistinguishable from the future 1024 target. Re-exports at 1024 should drop in without code changes.
 - **No text baked into the bitmap** — no captions, no speech bubbles.
 - **No logo, no badge, no UI chrome baked in** — UI chrome is composed by the renderer.
 - **Same scale, lighting, and style across all eight states** — the avatar must feel like the same character changing pose, not eight different sketches.
 - **No private student information** in the artwork or in the filename.
+
+## Launch Baseline (shipped)
+
+The first production set lives at `public/companion/travel/companion-travel-<state>.png`. All eight states are registered in the `SHIPPED_ASSETS` allow-list inside `lib/companion/companionVisuals.ts`.
+
+| State | Status | Notes |
+| --- | --- | --- |
+| `idle` | shipped | 500 × 500 RGBA |
+| `map` | shipped | 500 × 500 RGBA |
+| `confused` | shipped | 500 × 500 RGBA |
+| `celebrating` | shipped | 500 × 500 RGBA |
+| `teacher_ready` | shipped | 500 × 500 RGBA, default in `CompanionBridgeCard` |
+| `level_up` | shipped | 500 × 500 RGBA |
+| `inactive` | shipped | 500 × 500 RGBA, slightly different render style — flag for future consistency pass |
+| `badge_unlocked` | shipped | 500 × 500 RGBA |
+
+When a re-export at the 1024 target lands, swap the PNG in place (same filename) and bump `LAUNCH_ASSET_DIMENSION` in the manifest. No other code change is required.
 
 ## Accessibility
 
