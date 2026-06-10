@@ -78,6 +78,7 @@ ALTER TABLE IF EXISTS public.teacher_credentials       ENABLE ROW LEVEL SECURITY
 ALTER TABLE IF EXISTS public.teacher_disciplines       ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS public.teachers                  ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS public.waitlist                  ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.yopratiqo_progress_snapshots ENABLE ROW LEVEL SECURITY;
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Step 2 — Drift catcher: enable RLS on any *ordinary* public table that is

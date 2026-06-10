@@ -103,6 +103,11 @@ test("responsive layout patch does not touch restricted systems", () => {
     "app/api/bookings/[id]/yopratiqo-bridge/route.ts",
     "supabase/migrations/077_booking_yopratiqo_learning_summaries.sql",
     "supabase/migrations/074_enable_rls_security_hardening.sql",
+    // feat/yopratiqo-progress-snapshots PR — minimal per-user YoPratiqo
+    // module progress persistence (owner-only RLS, no teacher path).
+    // Defended by tests/yo/yopratiqoProgressSnapshots.test.ts.
+    "app/api/yo/progress/route.ts",
+    "supabase/migrations/078_yopratiqo_progress_snapshots.sql",
   ]);
   const forbidden = [
     /^app\/api\//,
