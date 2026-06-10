@@ -51,6 +51,8 @@ import {
   studentLocationToBookingAddress,
   type StudentSavedLocation,
 } from "@/lib/studentLocation";
+import { YoBookingTeacherBridgeConsent } from "@/components/yo/YoBookingTeacherBridgeConsent";
+import type { YoLocale } from "@/lib/yo/types";
 
 export type BookingInitialLessonKind = "standard" | "home";
 
@@ -183,6 +185,12 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
   const [creditBalance, setCreditBalance] = useState(0);
   const [applyCredits, setApplyCredits] = useState(false);
   const [loadingCredits, setLoadingCredits] = useState(false);
+  // YoPratiqo → teacher bridge consent for THIS booking only. Unchecked by
+  // default. Toggling the box does NOT share anything; persistence runs
+  // server-side after the booking row exists. Real YoPratiqo per-user
+  // progress is not yet persisted in this release, so the bridge wrapper
+  // renders the soft empty state until that lands.
+  const [yoBridgeConsent, setYoBridgeConsent] = useState(false);
   const [learnerProfiles, setLearnerProfiles] = useState<BookingLearnerProfile[]>([]);
   const [selectedLearnerId, setSelectedLearnerId] = useState<string>("");
   const [loadingLearners, setLoadingLearners] = useState(false);
@@ -762,6 +770,32 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
       const accessToken = session?.access_token;
       if (!accessToken) {
         throw new Error(t("bookingSessionExpired"));
+      }
+
+      // Persist the YoPratiqo → teacher bridge consent for THIS booking.
+      // Fire-and-forget: a transient failure here must NOT block checkout
+      // (consent can be re-emitted later from a booking detail surface).
+      // The server-side endpoint validates auth + ownership and sanitizes
+      // the (currently empty) summary before writing.
+      try {
+        await fetch(`/api/bookings/${bookingId}/yopratiqo-bridge`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({
+            consent_granted: yoBridgeConsent,
+            // No client-provided summary: real YoPratiqo progress
+            // persistence does not exist yet, so we store the consent flag
+            // only. The server will reject any client-supplied raw quiz
+            // fields anyway via parseClientConsentPayload.
+            summary: null,
+            summary_version: null,
+          }),
+        });
+      } catch {
+        // Swallow: bridge consent is not on the critical-path of payment.
       }
 
       const res = await fetch("/api/stripe/checkout", {
@@ -1649,6 +1683,13 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                 <Info size={15} className="mt-0.5 shrink-0 text-teal-700" aria-hidden />
                 <span>{t("bookingPaymentNote")} {paymentProcessedInCurrency}</span>
               </div>
+              <YoBookingTeacherBridgeConsent
+                locale={locale as YoLocale}
+                checked={yoBridgeConsent}
+                onCheckedChange={setYoBridgeConsent}
+                disabled={isSubmitting}
+                hasYoPratiqoProgress={false}
+              />
               <BookingLegalAcceptanceLine />
               <div className="flex gap-2">
                 <button

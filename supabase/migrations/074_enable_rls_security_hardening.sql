@@ -56,6 +56,7 @@ ALTER TABLE IF EXISTS public.assignments               ENABLE ROW LEVEL SECURITY
 ALTER TABLE IF EXISTS public.blocked_slots             ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS public.blog_posts                ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS public.booking_payments          ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.booking_yopratiqo_learning_summaries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS public.bookings                  ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS public.chats                     ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS public.courses                   ENABLE ROW LEVEL SECURITY;
