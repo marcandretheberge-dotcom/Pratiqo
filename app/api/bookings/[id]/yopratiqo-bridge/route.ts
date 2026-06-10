@@ -4,7 +4,12 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import {
   BOOKING_BRIDGE_SUMMARY_VERSION,
   parseClientConsentPayload,
+  type BookingBridgeSummaryJson,
 } from "@/lib/yopratiqo/teacherBridgeBookingPersistence";
+import {
+  type ProgressSnapshotRow,
+  summarizeSnapshotsForBridge,
+} from "@/lib/yopratiqo/progressSnapshotPersistence";
 
 export const runtime = "nodejs";
 
@@ -115,11 +120,33 @@ export async function POST(
   }
 
   // Build the row payload. `consent_granted_at` is set when the flag is
-  // true; otherwise we clear it. `summary` is the sanitized output of the
-  // payload parser (or null).
+  // true; otherwise we clear it.
+  //
+  // Summary source policy (PART E of feat/yopratiqo-progress-snapshots):
+  //   • If the client supplied a sanitized summary, we keep it (legacy
+  //     path — currently the BookingModal sends `summary: null`).
+  //   • If consent is granted AND the client did NOT supply a summary,
+  //     we OPPORTUNISTICALLY read the authenticated student's own
+  //     `yopratiqo_progress_snapshots` rows via service-role, project
+  //     them into a safe `BookingBridgeSummaryJson` server-side, and
+  //     persist that snapshot. We NEVER read another user's snapshots
+  //     (the WHERE clause is `user_id = user.id`).
+  //   • If the student has no snapshots, the summary stays `null` and
+  //     the teacher card stays locked — no fake progress is fabricated.
   const now = new Date().toISOString();
   const consentGrantedAt = parsed.value.consentGranted ? now : null;
-  const summary = parsed.value.summary;
+  let summary: BookingBridgeSummaryJson | null = parsed.value.summary;
+  if (parsed.value.consentGranted && summary == null) {
+    const { data: snapshotRows, error: snapshotErr } = await admin
+      .from("yopratiqo_progress_snapshots")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("last_activity_at", { ascending: false })
+      .limit(64);
+    if (!snapshotErr && Array.isArray(snapshotRows) && snapshotRows.length > 0) {
+      summary = summarizeSnapshotsForBridge(snapshotRows as ProgressSnapshotRow[]);
+    }
+  }
   const summaryVersion = summary ? (parsed.value.summaryVersion ?? BOOKING_BRIDGE_SUMMARY_VERSION) : null;
 
   const { error: upsertErr } = await admin

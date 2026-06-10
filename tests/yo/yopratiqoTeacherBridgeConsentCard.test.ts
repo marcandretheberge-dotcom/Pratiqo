@@ -284,6 +284,10 @@ const restrictedPathPatterns = [
 const supabaseAllowedForBridge = new Set<string>([
   "supabase/migrations/077_booking_yopratiqo_learning_summaries.sql",
   "supabase/migrations/074_enable_rls_security_hardening.sql",
+  // feat/yopratiqo-progress-snapshots PR — see the dedicated test
+  // tests/yo/yopratiqoProgressSnapshots.test.ts (the RLS shape on the
+  // new table is locked there + by tests/security/rlsCoverage.test.ts).
+  "supabase/migrations/078_yopratiqo_progress_snapshots.sql",
 ]);
 const SUPABASE_DENY_SOURCE = "^supabase\\/";
 

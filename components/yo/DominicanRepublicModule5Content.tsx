@@ -61,6 +61,7 @@ import {
   DominicanRepublicModule5RoleplayReveal,
   DominicanRepublicModule5WritingReveal,
 } from "@/components/yo/DominicanRepublicModule5Interactive";
+import { YoMarkModuleCompletedButton } from "@/components/yo/YoMarkModuleCompletedButton";
 
 const SECTION_LABELS = {
   passport: { fr: "Carte de mission A2", en: "A2 mission map", es: "Mapa de misión A2" },
@@ -1319,6 +1320,26 @@ function SeriesCompletionSection({ locale }: { locale: YoLocale }) {
                 ? "Volver a la página de República Dominicana"
                 : "Retour à la page République dominicaine"}
           </a>
+        </div>
+        <div className="mt-5 border-t border-[#F4B400]/25 pt-4">
+          <YoMarkModuleCompletedButton
+            locale={locale}
+            payload={{
+              course_id: "yopratiqo:es:republique-dominicaine",
+              module_id: "module-5",
+              module_title:
+                locale === "en"
+                  ? "Module 5 — A2 capstone"
+                  : locale === "es"
+                    ? "Módulo 5 — Capstone A2"
+                    : "Module 5 — Capstone A2",
+              discipline: "Languages",
+              level_label: "A2",
+              skill_tags: ["vocabulary", "listening", "conversation", "culture"],
+              difficulty_tags: ["needs_listening_repetition", "needs_pronunciation_support"],
+              score_band: "developing",
+            }}
+          />
         </div>
       </div>
     </section>

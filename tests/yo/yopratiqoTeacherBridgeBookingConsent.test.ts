@@ -369,6 +369,12 @@ ok("13) paid YoPratiqo checkout remains disabled and the bridge introduces no St
 const allowedBridgeSupabaseFiles = new Set<string>([
   "supabase/migrations/077_booking_yopratiqo_learning_summaries.sql",
   "supabase/migrations/074_enable_rls_security_hardening.sql",
+  // feat/yopratiqo-progress-snapshots PR — adds first-party per-user
+  // YoPratiqo module progress persistence. The bridge route reads ONLY
+  // the authenticated student's own snapshots and only when consent is
+  // granted; RLS shape on the new table is locked by
+  // tests/yo/yopratiqoProgressSnapshots.test.ts.
+  "supabase/migrations/078_yopratiqo_progress_snapshots.sql",
 ]);
 
 const restrictedPathPatterns: Array<{ re: RegExp; allow?: Set<string> }> = [

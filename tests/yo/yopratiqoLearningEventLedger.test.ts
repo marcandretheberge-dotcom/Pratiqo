@@ -257,6 +257,16 @@ const allowed = new Set([
   "tests/security/bookingYopratiqoSummariesRls.test.ts",
   "tests/yo/yopratiqoAudioPronunciationOverrides.test.ts",
   "tests/yo/yopratiqoDominicanResponsiveLayout.test.ts",
+  // feat/yopratiqo-progress-snapshots PR — minimal first-party per-user
+  // YoPratiqo module progress persistence. Owner-only RLS, teachers
+  // cannot read this table directly. Defended by
+  // tests/yo/yopratiqoProgressSnapshots.test.ts.
+  "lib/yopratiqo/progressSnapshotPersistence.ts",
+  "app/api/yo/progress/route.ts",
+  "components/yo/YoMarkModuleCompletedButton.tsx",
+  "components/yo/DominicanRepublicModule5Content.tsx",
+  "supabase/migrations/078_yopratiqo_progress_snapshots.sql",
+  "tests/yo/yopratiqoProgressSnapshots.test.ts",
 ]);
 
 const restrictedPatterns = [
@@ -283,6 +293,8 @@ const restrictedPatterns = [
 const supabaseAllowedForBridge = new Set<string>([
   "supabase/migrations/077_booking_yopratiqo_learning_summaries.sql",
   "supabase/migrations/074_enable_rls_security_hardening.sql",
+  // feat/yopratiqo-progress-snapshots PR.
+  "supabase/migrations/078_yopratiqo_progress_snapshots.sql",
 ]);
 const SUPABASE_DENY_SOURCE = "^supabase\\/";
 
