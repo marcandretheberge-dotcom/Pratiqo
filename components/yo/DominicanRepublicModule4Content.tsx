@@ -54,6 +54,8 @@ import {
   DominicanRepublicModule4Quiz,
   DominicanRepublicModule4ReadingQuestions,
 } from "@/components/yo/DominicanRepublicModule4Interactive";
+import { dominicanRdModuleProgressPayload } from "@/lib/yo/dominicanRepublicProgressPayloads";
+import { YoMarkModuleCompletedButton } from "@/components/yo/YoMarkModuleCompletedButton";
 
 const SECTION_LABELS = {
   passport: { fr: "Passeport exploration", en: "Exploration passport", es: "Pasaporte de exploración" },
@@ -1018,6 +1020,15 @@ function ClosingBridge({ locale }: { locale: YoLocale }) {
           >
             {label(locale, LABELS.module3)}
           </a>
+        </div>
+        <div
+          className="mt-5 border-t border-[#F4B400]/25 pt-4"
+          data-yo-module4-progress-complete
+        >
+          <YoMarkModuleCompletedButton
+            locale={locale}
+            payload={dominicanRdModuleProgressPayload("module-4", locale)}
+          />
         </div>
       </div>
     </section>

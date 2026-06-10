@@ -38,6 +38,8 @@ import { YoFlashcardPreview } from "@/components/yo/YoFlashcardPreview";
 import { DominicanModulePrintables } from "@/components/yo/DominicanModulePrintables";
 import { module3FlashcardsToYo } from "@/lib/yo/dominicanRepublicFlashcardAdapters";
 import { module3PrintablePack } from "@/lib/yo/dominicanRepublicPrintables";
+import { dominicanRdModuleProgressPayload } from "@/lib/yo/dominicanRepublicProgressPayloads";
+import { YoMarkModuleCompletedButton } from "@/components/yo/YoMarkModuleCompletedButton";
 
 const SECTION_LABELS = {
   passport: {
@@ -963,6 +965,15 @@ function ClosingBridge({ locale }: { locale: YoLocale }) {
           >
             {label(locale, LABELS.module2)}
           </a>
+        </div>
+        <div
+          className="mt-5 border-t border-[#F4B400]/25 pt-4"
+          data-yo-module3-progress-complete
+        >
+          <YoMarkModuleCompletedButton
+            locale={locale}
+            payload={dominicanRdModuleProgressPayload("module-3", locale)}
+          />
         </div>
       </div>
     </section>

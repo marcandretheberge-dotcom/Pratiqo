@@ -267,6 +267,12 @@ const allowed = new Set([
   "components/yo/DominicanRepublicModule5Content.tsx",
   "supabase/migrations/078_yopratiqo_progress_snapshots.sql",
   "tests/yo/yopratiqoProgressSnapshots.test.ts",
+  // feat/yopratiqo-rd-module-progress-completion PR.
+  "lib/yo/dominicanRepublicProgressPayloads.ts",
+  "components/yo/DominicanRepublicModule2Content.tsx",
+  "components/yo/DominicanRepublicModule3Content.tsx",
+  "components/yo/DominicanRepublicModule4Content.tsx",
+  "tests/yo/yopratiqoRdModuleProgressCompletion.test.ts",
 ]);
 
 const restrictedPatterns = [

@@ -44,6 +44,8 @@ import type {
   Dom2Dialogue,
   Dom2GrammarCard,
 } from "@/lib/yo/dominicanRepublicHotelAirport";
+import { dominicanRdModuleProgressPayload } from "@/lib/yo/dominicanRepublicProgressPayloads";
+import { YoMarkModuleCompletedButton } from "@/components/yo/YoMarkModuleCompletedButton";
 
 // ─── Section labels ────────────────────────────────────────────────────────
 
@@ -1008,6 +1010,15 @@ function CompletionSection({ locale }: { locale: YoLocale }) {
           >
             {t(LABEL_BACK_INTRO, locale)}
           </a>
+        </div>
+        <div
+          className="mt-5 border-t border-[#0F6E56]/10 pt-4"
+          data-yo-module2-progress-complete
+        >
+          <YoMarkModuleCompletedButton
+            locale={locale}
+            payload={dominicanRdModuleProgressPayload("module-2", locale)}
+          />
         </div>
       </div>
     </section>
