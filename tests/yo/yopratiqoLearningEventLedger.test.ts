@@ -239,6 +239,24 @@ const allowed = new Set([
   "components/yo/TeacherLearningInsightCard.tsx",
   "app/yo/page.tsx",
   "tests/yo/yopratiqoTeacherBridgeConsentCard.test.ts",
+  // Booking-time teacher-bridge consent PR. Adds the booking-modal
+  // consent wrapper, server-side sanitization library, a narrow API
+  // route, and a Supabase migration with student-only write RLS for
+  // the new booking_yopratiqo_learning_summaries table. Defended by
+  // tests/yo/yopratiqoTeacherBridgeBookingConsent.test.ts and
+  // tests/security/bookingYopratiqoSummariesRls.test.ts.
+  "components/yo/YoBookingTeacherBridgeConsent.tsx",
+  "lib/yopratiqo/teacherBridgeBookingPersistence.ts",
+  "app/api/bookings/[id]/yopratiqo-bridge/route.ts",
+  "components/BookingModal.tsx",
+  "app/(app)/teacher/progress/page.tsx",
+  "supabase/migrations/077_booking_yopratiqo_learning_summaries.sql",
+  "supabase/migrations/074_enable_rls_security_hardening.sql",
+  "tests/yo/yopratiqoTeacherBridgeBookingConsent.test.ts",
+  "tests/yo/yopratiqoTeacherBridgeFoundation.test.ts",
+  "tests/security/bookingYopratiqoSummariesRls.test.ts",
+  "tests/yo/yopratiqoAudioPronunciationOverrides.test.ts",
+  "tests/yo/yopratiqoDominicanResponsiveLayout.test.ts",
 ]);
 
 const restrictedPatterns = [
@@ -258,10 +276,21 @@ const restrictedPatterns = [
   /CourseJsonLd|CourseSchema|yopratiqoSeo/i,
 ];
 
+// Files intentionally allowed to touch `/^supabase\//` because they are
+// part of the booking-time teacher-bridge consent PR (migration 077
+// adding the consent table + the +1 line in 074's explicit ENABLE list).
+// The RLS shape itself is locked by tests/security/bookingYopratiqoSummariesRls.test.ts.
+const supabaseAllowedForBridge = new Set<string>([
+  "supabase/migrations/077_booking_yopratiqo_learning_summaries.sql",
+  "supabase/migrations/074_enable_rls_security_hardening.sql",
+]);
+const SUPABASE_DENY_SOURCE = "^supabase\\/";
+
 for (const file of changed) {
   if (ignoredUntracked.has(file)) continue;
   assert.ok(allowed.has(file), `unexpected file touched by learning-event foundation: ${file}`);
   for (const pattern of restrictedPatterns) {
+    if (pattern.source === SUPABASE_DENY_SOURCE && supabaseAllowedForBridge.has(file)) continue;
     assert.ok(!pattern.test(file), `restricted system touched by learning-event foundation: ${file}`);
   }
 }

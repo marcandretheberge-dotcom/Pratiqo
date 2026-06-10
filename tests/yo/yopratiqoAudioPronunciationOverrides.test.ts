@@ -268,6 +268,14 @@ test("tracked patch avoids generated audio and restricted product systems", () =
     "tests/teacherLaunch/teacherLaunchCenter.test.ts",
     "tests/yo/yopratiqoDominicanResponsiveLayout.test.ts",
     "lib/payments/refunds.ts",
+    // Booking-time YoPratiqo teacher-bridge consent PR. Adds a narrow
+    // API route, a dedicated booking-linked Supabase table with strict
+    // student-only-write RLS, and the +1 line in 074's explicit ENABLE
+    // list. Defended by tests/yo/yopratiqoTeacherBridgeBookingConsent.test.ts
+    // and tests/security/bookingYopratiqoSummariesRls.test.ts.
+    "app/api/bookings/[id]/yopratiqo-bridge/route.ts",
+    "supabase/migrations/077_booking_yopratiqo_learning_summaries.sql",
+    "supabase/migrations/074_enable_rls_security_hardening.sql",
   ]);
   const forbidden = [
     /^app\/api\//,

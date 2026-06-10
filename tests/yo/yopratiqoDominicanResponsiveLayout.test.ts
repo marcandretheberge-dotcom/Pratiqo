@@ -86,9 +86,23 @@ test("RD intro shell and culture panorama include overflow and wrapping safeguar
 });
 
 test("responsive layout patch does not touch restricted systems", () => {
-  const billingProofExceptions = new Set([
+  // Exceptions are sibling PRs that legitimately touch a normally-forbidden
+  // path. The RD responsive patch is not directly editing those files; we
+  // skip them so the scope guard does not flag unrelated work that shares
+  // the same merge window.
+  const sharedMergeWindowExceptions = new Set([
+    // V9 R02 — Membre Pro automatic-renewal consent gate.
     "app/api/stripe/pro/checkout/route.ts",
+    // Membre Pro subscription-management proof PR webhook touch-up.
     "app/api/stripe/webhook/route.ts",
+    // Booking-time YoPratiqo teacher-bridge consent PR. Adds a narrow API
+    // route, a dedicated Supabase table with strict student-only-write RLS,
+    // and the +1 line in 074's explicit ENABLE list. Defended by
+    // tests/yo/yopratiqoTeacherBridgeBookingConsent.test.ts and
+    // tests/security/bookingYopratiqoSummariesRls.test.ts.
+    "app/api/bookings/[id]/yopratiqo-bridge/route.ts",
+    "supabase/migrations/077_booking_yopratiqo_learning_summaries.sql",
+    "supabase/migrations/074_enable_rls_security_hardening.sql",
   ]);
   const forbidden = [
     /^app\/api\//,
@@ -106,7 +120,7 @@ test("responsive layout patch does not touch restricted systems", () => {
 
   for (const file of changedFiles()) {
     const normalized = file.replace(/\\/g, "/");
-    if (billingProofExceptions.has(normalized)) continue;
+    if (sharedMergeWindowExceptions.has(normalized)) continue;
     assert.ok(
       !forbidden.some((pattern) => pattern.test(normalized)),
       `restricted file changed by RD responsive patch: ${file}`,

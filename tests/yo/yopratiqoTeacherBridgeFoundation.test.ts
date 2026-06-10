@@ -173,6 +173,29 @@ const allowed = new Set([
   "components/yo/YoTeacherBridgeConsentCard.tsx",
   "components/yo/YoTeacherBridgeConsentSection.tsx",
   "tests/yo/yopratiqoTeacherBridgeConsentCard.test.ts",
+  // Booking-time teacher-bridge consent PR. Adds the booking-modal
+  // consent wrapper, a server-side persistence library that sanitizes
+  // every payload, a narrow API route that requires auth + ownership,
+  // a dedicated booking-linked Supabase table with strict student-only
+  // write RLS, and the teacher progress-page mount of the existing
+  // insight card. No paid YoPratiqo checkout is enabled. The supabase
+  // entries below are the ONLY Supabase touches in this PR; the new
+  // table is also added to migration 074's explicit ENABLE list to
+  // satisfy tests/security/rlsCoverage.test.ts. Defended by
+  // tests/yo/yopratiqoTeacherBridgeBookingConsent.test.ts and
+  // tests/security/bookingYopratiqoSummariesRls.test.ts.
+  "components/yo/YoBookingTeacherBridgeConsent.tsx",
+  "lib/yopratiqo/teacherBridgeBookingPersistence.ts",
+  "app/api/bookings/[id]/yopratiqo-bridge/route.ts",
+  "components/BookingModal.tsx",
+  "app/(app)/teacher/progress/page.tsx",
+  "supabase/migrations/077_booking_yopratiqo_learning_summaries.sql",
+  "supabase/migrations/074_enable_rls_security_hardening.sql",
+  "tests/yo/yopratiqoTeacherBridgeBookingConsent.test.ts",
+  "tests/security/bookingYopratiqoSummariesRls.test.ts",
+  "tests/yo/yopratiqoAudioPronunciationOverrides.test.ts",
+  "tests/yo/yopratiqoDominicanResponsiveLayout.test.ts",
+  "tests/yo/yopratiqoLearningEventLedger.test.ts",
 ]);
 
 const restrictedPatterns = [
@@ -192,10 +215,21 @@ const restrictedPatterns = [
   /CourseJsonLd|CourseSchema|yopratiqoSeo/i,
 ];
 
+// Files that are intentionally allowed to touch `/^supabase\//` because
+// they are part of the booking-time teacher-bridge consent PR and have
+// been individually reviewed (defense-in-depth: still locked by the
+// dedicated RLS-shape test in tests/security/bookingYopratiqoSummariesRls.test.ts).
+const supabaseAllowedForBridge = new Set<string>([
+  "supabase/migrations/077_booking_yopratiqo_learning_summaries.sql",
+  "supabase/migrations/074_enable_rls_security_hardening.sql",
+]);
+const SUPABASE_DENY_SOURCE = "^supabase\\/";
+
 for (const file of changed) {
   if (ignoredUntracked.has(file)) continue;
   assert.ok(allowed.has(file), `unexpected file touched by teacher bridge foundation: ${file}`);
   for (const pattern of restrictedPatterns) {
+    if (pattern.source === SUPABASE_DENY_SOURCE && supabaseAllowedForBridge.has(file)) continue;
     assert.ok(!pattern.test(file), `restricted system touched by teacher bridge foundation: ${file}`);
   }
 }

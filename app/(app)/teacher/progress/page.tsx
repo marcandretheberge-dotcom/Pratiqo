@@ -8,6 +8,10 @@ import { useLocale } from "../../../../lib/locale-context";
 import type { TranslationKey } from "../../../../lib/translations";
 import type { CompanionType } from "../../../../lib/companions";
 import { getCompanionStage, getLessonsToNextStage, getProgressPercent } from "../../../../lib/companions";
+import { TeacherLearningInsightCard } from "@/components/yo/TeacherLearningInsightCard";
+import type { YoLocale } from "@/lib/yo/types";
+import type { TeacherLearningInsight } from "@/lib/yopratiqo/teacherBridge";
+import type { BookingTeacherBridgeRow } from "@/lib/yopratiqo/teacherBridgeBookingPersistence";
 
 type BookingRow = {
   id: string;
@@ -50,12 +54,19 @@ function homeworkStatusLabel(status: HomeworkStatus, t: (key: TranslationKey) =>
 
 export default function TeacherProgressPage() {
   const { user } = useAuth();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const [loading, setLoading] = useState(true);
   const [students, setStudents] = useState<StudentAgg[]>([]);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [notesByStudent, setNotesByStudent] = useState<Record<string, string>>({});
   const [homeworkByStudent, setHomeworkByStudent] = useState<Record<string, HomeworkSummary[]>>({});
+  // Per-student latest YoPratiqo bridge row for this teacher. Loaded only
+  // when the student row is expanded so we never bulk-fetch consent rows
+  // the teacher will not view. RLS narrows reads to rows where the teacher
+  // owns the booking; the locked state renders for rows without consent.
+  const [bridgeInsightByStudent, setBridgeInsightByStudent] = useState<
+    Record<string, TeacherLearningInsight | null>
+  >({});
   useEffect(() => {
     if (!user?.id) return;
     const supabase = getSupabaseClient();
@@ -171,6 +182,85 @@ export default function TeacherProgressPage() {
     };
   }, [user?.id, t]);
 
+  // Lazy-load the YoPratiqo bridge insight for an expanded student row.
+  // Teacher reads through RLS — only rows linked to bookings this teacher
+  // owns are returned. We render the locked variant whenever consent is
+  // missing or the (currently empty in this release) summary is null.
+  useEffect(() => {
+    if (!user?.id || !expanded) return;
+    if (Object.prototype.hasOwnProperty.call(bridgeInsightByStudent, expanded)) return;
+    const studentId = expanded;
+    const supabase = getSupabaseClient();
+    let cancelled = false;
+
+    const loadBridge = async () => {
+      const { data: teacherRow } = await supabase
+        .from("teachers")
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      const teacherId = (teacherRow?.id as string | undefined) ?? null;
+      if (!teacherId) {
+        if (!cancelled) {
+          setBridgeInsightByStudent((prev) => ({ ...prev, [studentId]: null }));
+        }
+        return;
+      }
+
+      const { data: row } = await supabase
+        .from("booking_yopratiqo_learning_summaries")
+        .select(
+          "id, booking_id, student_id, teacher_id, consent_granted, consent_granted_at, summary_version, summary, created_at, updated_at",
+        )
+        .eq("teacher_id", teacherId)
+        .eq("student_id", studentId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (cancelled) return;
+      if (!row) {
+        setBridgeInsightByStudent((prev) => ({ ...prev, [studentId]: null }));
+        return;
+      }
+      const typedRow = row as BookingTeacherBridgeRow;
+      const insight: TeacherLearningInsight = {
+        id: typedRow.id,
+        progressSummary: {
+          product: "YoPratiqo",
+          discipline: typedRow.summary?.discipline ?? "Languages",
+          courseTitle: typedRow.summary?.courseTitle ?? "YoPratiqo course",
+          completedModules: typedRow.summary?.completedModules ?? [],
+          currentLevel: typedRow.summary?.currentLevel ?? "A1",
+          strengths: typedRow.summary?.strengths ?? [],
+          difficultyTags: typedRow.summary?.difficultyTags ?? [],
+          suggestedTeacherFocus: typedRow.summary?.suggestedTeacherFocus ?? [],
+          lastActivityDate: typedRow.summary?.lastActivityDate ?? null,
+          companion: typedRow.summary?.companion ?? null,
+          consentState: {
+            status: typedRow.consent_granted ? "granted" : "revoked",
+            grantedAt: typedRow.consent_granted_at,
+            scope: "summary_only",
+            teacherId,
+            bookingId: typedRow.booking_id,
+          },
+        },
+        // Locked unless the student explicitly consented AND a sanitized
+        // summary actually exists. In this release no summary is stored
+        // (real per-user persistence is not wired), so this is always false
+        // until the next iteration lands the summary writer.
+        sharedByStudentConsent: typedRow.consent_granted && typedRow.summary != null,
+        generatedAt: typedRow.updated_at,
+      };
+      setBridgeInsightByStudent((prev) => ({ ...prev, [studentId]: insight }));
+    };
+
+    void loadBridge();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id, expanded, bridgeInsightByStudent]);
+
   const sorted = useMemo(() => [...students].sort((a, b) => a.name.localeCompare(b.name)), [students]);
 
   if (!user) return null;
@@ -245,6 +335,20 @@ export default function TeacherProgressPage() {
                 </button>
                 {open ? (
                   <div className="border-t border-slate-100 px-4 py-4 space-y-4 bg-slate-50/50">
+                    {/*
+                      YoPratiqo → teacher bridge insight. Renders the locked
+                      variant when the student has not consented for any of
+                      this teacher's bookings, or when no sanitized summary
+                      has been written yet. Real progress summaries land
+                      with the next iteration; until then this surface
+                      honestly shows "not shared / no summary".
+                    */}
+                    {bridgeInsightByStudent[s.studentId] ? (
+                      <TeacherLearningInsightCard
+                        insight={bridgeInsightByStudent[s.studentId]!}
+                        locale={locale as YoLocale}
+                      />
+                    ) : null}
                     <div>
                       <p className="text-[10px] font-bold uppercase tracking-widest text-slate-600 mb-1">Notes de progression</p>
                       <p className="text-sm text-[#2C2C2A] whitespace-pre-wrap">{notesByStudent[s.studentId] || "—"}</p>
