@@ -35,8 +35,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import PratiqoLogo from "@/components/PratiqoLogo";
-import { YoTeacherBridgeTeaser } from "@/components/yo/YoTeacherBridgeTeaser";
-import { YoTeacherBridgeConsentSection } from "@/components/yo/YoTeacherBridgeConsentSection";
+import { YoPublicCompanionOnboardingCard } from "@/components/yo/YoPublicCompanionOnboardingCard";
 import { SITE_URL } from "@/lib/seo/site";
 import { dominicanRepublicA1 } from "@/lib/yo/dominicanRepublicA1";
 import { buildYoLocaleHref, formatYoPrice, getYoLocale, t } from "@/lib/yo/localize";
@@ -510,14 +509,17 @@ export default async function YoHubPage({ searchParams }: PageProps) {
           </div>
         </section>
 
-        <YoTeacherBridgeTeaser locale={locale} />
-
         {/*
-         * Interactive consent-card preview. Mounted in coming-soon mode so
-         * the student can preview the UX without creating a real share —
-         * the bridge persistence layer is built in a follow-up PR.
+         * Public bridge explainer. Replaces the legacy pair of
+         * teaser + consent-section components which together rendered
+         * a misleading "Bientôt" consent checkbox with fake demo
+         * data and no companion image. Real consent now lives
+         * exclusively in BookingModal via the booking-time consent
+         * surface, and real student-side companion state lives on
+         * /student/progress. This card is honest about that split
+         * and surfaces auth-aware CTAs to bridge to both.
          */}
-        <YoTeacherBridgeConsentSection locale={locale} />
+        <YoPublicCompanionOnboardingCard locale={locale} />
 
         <section className="bg-[#0F6E56] px-5 py-12 text-white sm:px-8 sm:py-16">
           <div className="mx-auto grid max-w-6xl gap-8 rounded-[2rem] border border-white/15 bg-white/8 p-6 shadow-[0_20px_60px_rgba(3,42,33,0.24)] sm:p-8 lg:grid-cols-[1.25fr_0.75fr] lg:items-center">
