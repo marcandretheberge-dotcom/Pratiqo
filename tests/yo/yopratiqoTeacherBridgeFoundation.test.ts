@@ -163,6 +163,16 @@ const allowed = new Set([
   "tests/legal/safeDisclosures.test.ts",
   "tests/yo/yopratiqoLearningEventLedger.test.ts",
   "tests/yo/yopratiqoTeacherBridgeFoundation.test.ts",
+  // Visible bridge consent card PR. Adds the student-facing consent UI,
+  // teacher-facing locked/empty insight state, and a deterministic safe
+  // summary builder. No runtime persistence, no checkout, no Stripe, no
+  // RLS, no audio generation. The card is mounted on the YoPratiqo hub
+  // in coming-soon mode only.
+  "lib/yopratiqo/teacherBridgeCopy.ts",
+  "lib/yopratiqo/teacherBridgeSummary.ts",
+  "components/yo/YoTeacherBridgeConsentCard.tsx",
+  "components/yo/YoTeacherBridgeConsentSection.tsx",
+  "tests/yo/yopratiqoTeacherBridgeConsentCard.test.ts",
 ]);
 
 const restrictedPatterns = [
