@@ -131,6 +131,29 @@ const allowedYoDisclosureFiles = new Set([
   // tests/yo/yopratiqoLogoIntegration.test.ts (14 assertions including
   // the same restricted-pattern guard this file enforces).
   "components/yo/YoPratiqoLogo.tsx",
+  // App-like landing primitives that replace the wide two-column
+  // marketing hero on /yo with a premium mobile-app onboarding
+  // surface. All three are pure server components that render
+  // `next/image` PNGs and localized copy — no persistence, no
+  // checkout, no Stripe, no Supabase write, no audio generation,
+  // no teacher dashboard share, no quiz data, no AI summary. They
+  // only deep-link to routes that already exist elsewhere on /yo
+  // (the audited DR module path and the audited /login route).
+  // Defended end-to-end by tests/yo/yopratiqoAppLikeLanding.test.ts
+  // (15 assertions including the same restricted-pattern guard
+  // this file enforces).
+  "components/yo/YoAppLandingShell.tsx",
+  "components/yo/YoAppHeroCard.tsx",
+  "components/yo/YoAppValueStrip.tsx",
+  // Pure typography helper for the app-like landing primitives. It
+  // calls `next/font/google` to self-host two display fonts
+  // (Newsreader serif + Caveat script) and exports their `className`
+  // / `variable` so the three primitives above can opt-in. No
+  // persistence, no checkout, no payment library, no Supabase
+  // write, no audio generation, no teacher dashboard share, no
+  // quiz data. Defended end-to-end by
+  // tests/yo/yopratiqoAppLikeLanding.test.ts.
+  "lib/yo/appLandingFonts.ts",
 ]);
 
 /**

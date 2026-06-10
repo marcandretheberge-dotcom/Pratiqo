@@ -32,8 +32,10 @@ import {
   Headphones,
   Layers,
   Lock,
-  Sparkles,
 } from "lucide-react";
+import { YoAppHeroCard } from "@/components/yo/YoAppHeroCard";
+import { YoAppLandingShell } from "@/components/yo/YoAppLandingShell";
+import { YoAppValueStrip } from "@/components/yo/YoAppValueStrip";
 import { YoPratiqoLogo } from "@/components/yo/YoPratiqoLogo";
 import { YoPublicCompanionOnboardingCard } from "@/components/yo/YoPublicCompanionOnboardingCard";
 import { SITE_URL } from "@/lib/seo/site";
@@ -270,31 +272,30 @@ export default async function YoHubPage({ searchParams }: PageProps) {
   const toggleHref = buildYoLocaleHref("/yo", locale === "fr" ? "en" : "fr");
 
   return (
-    <div className="min-h-[100dvh] bg-[#fffbf0] text-[#0F6E56]">
-      <header className="sticky top-0 z-50 border-b border-[#F4B400]/25 bg-[#fffbf0]/90 backdrop-blur-md">
+    <div className="min-h-[100dvh] bg-[#F4EFE6] text-[#172642]">
+      {/*
+        * Sticky header keeps the existing left-aligned YoPratiqo
+        * brand mark + language toggle + "Voir les langues" CTA so
+        * the global navigation stays where signed-in students
+        * expect it. The palette is refreshed to the warm cream
+        * the new app-like shell uses, so the boundary between
+        * header and onboarding screen feels continuous.
+        */}
+      <header className="sticky top-0 z-50 border-b border-[#E7DFCF] bg-[#F4EFE6]/90 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-5 sm:px-8">
-          {/*
-            * YoPratiqo-branded header mark. We intentionally swap the
-            * global PratiqoLogo for the YoPratiqo brand on /yo and its
-            * sub-pages so the user feels they are inside the
-            * self-paced product, not on the marketplace. The link
-            * still goes back to the YoPratiqo hub so it works as a
-            * reliable "home" anchor inside the product. The global
-            * Pratiqo mark continues to render everywhere else.
-            */}
           <Link href="/yo" aria-label="YoPratiqo" className="shrink-0">
             <YoPratiqoLogo size="sm" priority={false} />
           </Link>
           <nav aria-label="YoPratiqo" className="flex items-center gap-2">
             <Link
               href={toggleHref}
-              className="hidden rounded-full border border-[#DDF4F1] bg-white/70 px-3 py-1.5 text-xs font-bold text-[#0F6E56] transition hover:bg-white sm:inline-flex"
+              className="hidden rounded-full border border-[#E7DFCF] bg-white/70 px-3 py-1.5 text-xs font-bold text-[#172642] transition hover:bg-white sm:inline-flex"
             >
               {t(HUB_COPY.languageToggle, locale)}
             </Link>
             <Link
               href={languesHref}
-              className="inline-flex items-center rounded-full border border-[#F4B400]/55 bg-[#FFF4D6] px-4 py-2 text-sm font-bold text-[#0F6E56] shadow-[0_1px_0_rgba(244,180,0,0.18)] transition hover:bg-[#ffefbd]"
+              className="inline-flex items-center rounded-full border border-[#13A085]/30 bg-[#E3F1EB] px-4 py-2 text-sm font-bold text-[#172642] shadow-[0_1px_0_rgba(19,160,133,0.18)] transition hover:bg-[#d8ecdf]"
             >
               {t(HUB_COPY.navCtaLangues, locale)}
             </Link>
@@ -303,100 +304,89 @@ export default async function YoHubPage({ searchParams }: PageProps) {
       </header>
 
       <main>
-        <section className="relative overflow-hidden">
-          <div aria-hidden className="absolute inset-0 bg-[radial-gradient(circle_at_18%_15%,rgba(244,180,0,0.22),transparent_30%),radial-gradient(circle_at_86%_18%,rgba(221,244,241,0.95),transparent_32%),linear-gradient(180deg,#fffbf0_0%,#fff4d6_52%,#ddf4f1_100%)]" />
-          <div className="relative mx-auto grid max-w-6xl gap-9 px-5 py-12 sm:px-8 sm:py-16 lg:grid-cols-[0.95fr_1.05fr] lg:items-center lg:py-20">
-            <div className="flex flex-col gap-6">
-              <div className="inline-flex w-fit items-center gap-2 rounded-full border border-[#F4B400]/45 bg-white/70 px-3 py-1.5 text-xs font-black uppercase tracking-[0.14em] text-[#0F6E56]">
-                <Sparkles className="size-3.5 text-[#F4B400]" aria-hidden />
-                {t(HUB_COPY.badge, locale)}
-              </div>
-              <div className="space-y-4">
-                <p className="text-sm font-black uppercase tracking-[0.22em] text-[#1D9E75]">YoPratiqo</p>
-                <h1 className="max-w-3xl text-4xl font-semibold leading-[1.04] tracking-tight text-[#0F6E56] sm:text-5xl lg:text-6xl">
-                  {t(HUB_COPY.title, locale)}
-                </h1>
-                <p className="max-w-2xl text-base leading-relaxed text-[#0F6E56]/78 sm:text-lg">
-                  {t(HUB_COPY.subtitle, locale)}
-                </p>
-              </div>
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <Link
-                  href={languesHref}
-                  className="inline-flex items-center justify-center gap-2 rounded-full bg-[#0F6E56] px-5 py-3 text-sm font-bold text-white shadow-[0_14px_34px_rgba(15,110,86,0.22)] transition hover:bg-[#0b5b47]"
-                >
-                  {t(HUB_COPY.heroPrimary, locale)}
-                  <span aria-hidden>→</span>
-                </Link>
-                <a
-                  href="#yo-product"
-                  className="inline-flex items-center justify-center rounded-full border border-[#0F6E56]/20 bg-white/70 px-5 py-3 text-sm font-bold text-[#0F6E56] transition hover:bg-white"
-                >
-                  {t(HUB_COPY.heroSecondary, locale)}
-                </a>
-              </div>
-            </div>
+        {/*
+         * App-like onboarding screen. Mobile-first, narrow column,
+         * warm cream background, premium serif headline + teal
+         * script accent + navy brush quote — see YoAppHeroCard
+         * for the full composition. The existing marketing
+         * sections below remain unchanged in structure (course
+         * card, pillars, disciplines, companion onboarding, final
+         * CTA) and are now read as the "browse further" surface
+         * beneath the onboarding hero.
+         */}
+        <YoAppLandingShell>
+          <YoAppHeroCard locale={locale} />
+          <YoAppValueStrip locale={locale} />
+        </YoAppLandingShell>
 
+        {/*
+         * Featured RD course card — relocated unchanged from the
+         * previous two-column hero so the launch course remains
+         * visible without crowding the onboarding hero. Single
+         * full-width card on mobile, capped at max-w-2xl so the
+         * desktop layout keeps the phone-screen rhythm of the
+         * shell above.
+         */}
+        <section className="bg-[#F4EFE6] pb-12 pt-2 sm:pt-4" id="yo-featured-course">
+          <div className="mx-auto w-full max-w-2xl px-5 sm:px-8">
             <div className="relative">
-              <div className="absolute -inset-3 rounded-[2rem] bg-[#F4B400]/20 blur-2xl" aria-hidden />
-              <div className="relative overflow-hidden rounded-[2rem] border border-white/70 bg-white shadow-[0_24px_65px_rgba(15,110,86,0.18)]">
+              <div className="absolute -inset-3 rounded-[2rem] bg-[#13A085]/12 blur-2xl" aria-hidden />
+              <div className="relative overflow-hidden rounded-[2rem] border border-[#E7DFCF] bg-white shadow-[0_18px_46px_rgba(23,38,66,0.08)]">
                 {yoModule.heroImagePath ? (
                   <Image
                     src={yoModule.heroImagePath}
                     alt={t(yoModule.heroImageAlt ?? yoModule.destinationLabel, locale)}
                     width={1500}
                     height={900}
-                    priority
-                    sizes="(min-width: 1024px) 48vw, 100vw"
+                    priority={false}
+                    sizes="(min-width: 768px) 640px, 100vw"
                     className="aspect-[16/10] w-full object-cover"
                   />
                 ) : null}
-                <div className="border-t border-[#DDF4F1] bg-white/95 p-5 sm:p-6">
+                <div className="border-t border-[#E7DFCF] bg-white p-5 sm:p-6">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                      <p className="text-xs font-black uppercase tracking-[0.16em] text-[#1D9E75]">
+                      <p className="text-xs font-black uppercase tracking-[0.16em] text-[#13A085]">
                         {t(HUB_COPY.featuredEyebrow, locale)}
                       </p>
-                      <h2 className="mt-1 text-xl font-semibold tracking-tight text-[#0F6E56]">
+                      <h2 className="mt-1 text-xl font-semibold tracking-tight text-[#172642]">
                         {t(HUB_COPY.featuredTitle, locale)}
                       </h2>
                     </div>
-                    <div className="rounded-2xl border border-[#F4B400]/40 bg-[#FFF4D6] px-4 py-2 text-right">
-                      <p className="text-[10px] font-black uppercase tracking-[0.14em] text-[#0F6E56]/62">
+                    <div className="rounded-2xl border border-[#E7DFCF] bg-[#FBF7EE] px-4 py-2 text-right">
+                      <p className="text-[10px] font-black uppercase tracking-[0.14em] text-[#566073]">
                         {t(HUB_COPY.priceLabel, locale)}
                       </p>
-                      <p className="text-lg font-black text-[#0F6E56]">
+                      <p className="text-lg font-black text-[#172642]">
                         {formatYoPrice(yoModule.priceCents, locale, yoModule.currency)}
                       </p>
                     </div>
                   </div>
-                  <p className="mt-4 text-sm leading-relaxed text-[#0F6E56]/74">
+                  <p className="mt-4 text-sm leading-relaxed text-[#566073]">
                     {t(HUB_COPY.featuredBody, locale)}
                   </p>
                   <Link
                     href={courseHref}
-                    className="mt-4 inline-flex items-center justify-center gap-1.5 rounded-full bg-[#0F6E56] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#0b5b47]"
+                    className="mt-4 inline-flex items-center justify-center gap-1.5 rounded-full bg-[#13A085] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#16B597]"
                   >
                     {t(HUB_COPY.featuredCta, locale)}
                     <span aria-hidden>→</span>
                   </Link>
-                  {/* Trust strip: 12-month access + 30-day money-back guarantee.
-                      Both labels and the link text come from HUB_COPY so no
-                      locale-specific copy is hardcoded in JSX. */}
-                  <div className="mt-4 flex flex-col gap-2 rounded-2xl border border-[#DDF4F1] bg-white/80 px-3 py-2.5">
+                  {/* Trust strip: 12-month access + 30-day money-back guarantee. */}
+                  <div className="mt-4 flex flex-col gap-2 rounded-2xl border border-[#E7DFCF] bg-[#FBF7EE] px-3 py-2.5">
                     <div className="flex flex-wrap gap-2">
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-[#DDF4F1]/70 px-3 py-1 text-xs font-semibold text-[#0F6E56]">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-[#E3F1EB] px-3 py-1 text-xs font-semibold text-[#172642]">
                         <CheckCircle2 className="size-3.5" aria-hidden />
                         {t(HUB_COPY.twelveMonthAccessLabel, locale)}
                       </span>
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-[#DDF4F1]/70 px-3 py-1 text-xs font-semibold text-[#0F6E56]">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-[#E3F1EB] px-3 py-1 text-xs font-semibold text-[#172642]">
                         <CheckCircle2 className="size-3.5" aria-hidden />
                         {t(HUB_COPY.moneyBackLabel, locale)}
                       </span>
                     </div>
                     <Link
                       href="/legal/yo-remboursement"
-                      className="text-[11px] font-medium text-[#0F6E56]/75 underline-offset-2 hover:underline"
+                      className="text-[11px] font-medium text-[#566073] underline-offset-2 hover:underline"
                     >
                       {t(HUB_COPY.legalLinkLabel, locale)}
                     </Link>
