@@ -151,7 +151,17 @@ const allowed = new Set([
   yoHubPath,
   assetPlanPath,
   architecturePath,
+  // Follow-up architecture foundation: typed event ledger, final challenge
+  // contracts, deterministic companion growth, and docs only. No runtime
+  // sharing, persistence, checkout, audio generation, or teacher dashboard
+  // workflow is enabled by these files.
+  "lib/yopratiqo/learningEvents.ts",
+  "lib/yopratiqo/moduleChallenge.ts",
+  "lib/companion/companionGrowth.ts",
+  "docs/PRATIQO_CREDITS_ARCHITECTURE.md",
+  "docs/TEACHER_LEARNING_SUMMARY_EFFECTIVENESS.md",
   "tests/legal/safeDisclosures.test.ts",
+  "tests/yo/yopratiqoLearningEventLedger.test.ts",
   "tests/yo/yopratiqoTeacherBridgeFoundation.test.ts",
 ]);
 
