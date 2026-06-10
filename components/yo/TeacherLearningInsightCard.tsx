@@ -12,6 +12,7 @@ import {
   TEACHER_INSIGHT_TITLE_LOCALIZED,
   getInsightCardCopy,
 } from "@/lib/yopratiqo/teacherBridgeCopy";
+import { CompanionBridgeCard } from "@/components/companion/CompanionBridgeCard";
 
 const COPY = {
   // The shared title now reads from the canonical bridge copy file so the
@@ -148,7 +149,7 @@ export function TeacherLearningInsightCard({
       </div>
 
       {summary.companion ? (
-        <footer className="border-t border-[#DDF4F1] bg-[#FFF4D6]/55 p-5">
+        <footer className="space-y-3 border-t border-[#DDF4F1] bg-[#FFF4D6]/55 p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-xs font-black uppercase tracking-[0.14em] text-[#8a5a17]">
@@ -162,7 +163,14 @@ export function TeacherLearningInsightCard({
               {summary.companion.progressPercent}%
             </p>
           </div>
-          <p className="mt-3 text-xs leading-relaxed text-[#0F6E56]/68">
+          <CompanionBridgeCard
+            locale={locale}
+            companionName={summary.companion.companionName}
+            stageName={summary.companion.stageName}
+            state="teacher_ready"
+            compact
+          />
+          <p className="text-xs leading-relaxed text-[#0F6E56]/68">
             {t(TEACHER_BRIDGE_SAFE_SUMMARY_NOTICE, locale)}
           </p>
         </footer>

@@ -30,6 +30,7 @@ import { Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { YoLocale } from "@/lib/yo/types";
 import { YoTeacherBridgeConsentCard } from "@/components/yo/YoTeacherBridgeConsentCard";
+import { CompanionBridgeCard } from "@/components/companion/CompanionBridgeCard";
 
 const EMPTY_STATE_COPY: Record<YoLocale, { title: string; body: string; status: string }> = {
   fr: {
@@ -137,6 +138,12 @@ export function YoBookingTeacherBridgeConsent(
       data-yo-teacher-bridge="booking-wrapper"
       className={cn("space-y-3", props.className)}
     >
+      <CompanionBridgeCard
+        locale={locale}
+        companionName={props.companionName ?? null}
+        state="teacher_ready"
+        compact
+      />
       <YoTeacherBridgeConsentCard
         locale={locale}
         checked={props.checked}
