@@ -1,30 +1,36 @@
 /**
- * YoPratiqo — Spanish path simplification suite.
+ * YoPratiqo — Spanish path simplification suite (adaptive shell).
  *
- * Locks the Spanish-language sub-tree contract from
- * `feat/yopratiqo-no-scroll-app-shell-flow`:
+ * Re-locks the Spanish-language sub-tree contract from the
+ * `feat/yopratiqo-adaptive-mobile-desktop-shell` brief:
  *
- *   1. /yo/langues/espagnol is a no-scroll Spanish hub (uses
- *      YoAppShell).
- *   2. The Spanish hub no longer renders the long-scroll
- *      <YoLanguageLandingPage /> as its primary view (back-compat
- *      reference import is allowed for grep contracts).
- *   3. The Spanish hub surfaces TWO clear primary CTAs (intro deck
- *      + Dominican Republic course home).
- *   4. The Spanish hub links honestly to ROUTES THAT EXIST.
- *   5. The Spanish hub uses YoAppHeader (no breadcrumb-primary nav).
- *   6. The Spanish hub uses the real <YoLanguageSelector /> for
- *      FR / EN / ES, never a one-off "View in English" pill.
- *   7. The Spanish hub names Yoppo on its companion card.
- *   8. The Spanish hub uses the desktop workspace pattern on lg+.
- *   9. The Spanish hub uses the same SEO metadata helper as the
- *      other language landings.
- *  10. The Dominican Republic Course Home now reaches the hub via
- *      `/yo/langues/espagnol` (single-step back nav).
- *  11. No restricted system touched.
+ *   1. /yo/langues/espagnol uses the new `<YoAdaptiveShell>`
+ *      (mobile pager + desktop workspace), not the legacy
+ *      vertically scrolled marketing landing.
+ *   2. The hub no longer renders the long-scroll
+ *      `<YoLanguageLandingPage>` as its primary view (a back-compat
+ *      import is allowed for grep contracts).
+ *   3. **Decision:** the Dominican Republic course is the primary
+ *      CTA (it is the only complete Spanish path today). The hub
+ *      ships TWO primary cards (intro + course) — the DR course
+ *      card is the mobile primary screen + the bottom-bar primary
+ *      CTA.
+ *   4. The hub links honestly to ROUTES THAT EXIST.
+ *   5. The hub uses YoAppHeader (no breadcrumb-primary nav).
+ *   6. The hub uses the real `<YoLanguageSelector />` (FR/EN/ES),
+ *      never a one-off "View in English" pill.
+ *   7. The hub names Yoppo on its companion card.
+ *   8. The hub uses the desktop workspace pattern on lg+ via
+ *      `<YoAdaptiveShell>`.
+ *   9. The hub uses the same SEO metadata helper as the other
+ *      language landings.
+ *  10. The DR Course Home back nav points to the Spanish hub
+ *      (single-step return path).
+ *  11. The hub ships a `<YoAppBottomBar>` with the DR primary
+ *      CTA on mobile (single obvious action).
+ *  12. No restricted system touched.
  *
- * Style: `node:test`-style static-source assertions, no browser,
- * no network.
+ * Style: `node:test`-style static-source assertions.
  */
 
 import assert from "node:assert/strict";
@@ -62,17 +68,25 @@ const hubSrc = read(SPANISH_HUB_PATH);
 const hubCode = stripJsComments(hubSrc);
 const courseHomeSrc = read(COURSE_HOME_PATH);
 
-// ─── 1. No-scroll Spanish hub ────────────────────────────────────
-test("Spanish hub mounts YoAppShell (no body scroll)", () => {
+// ─── 1. Adaptive shell mounted ───────────────────────────────────
+test("Spanish hub mounts YoAdaptiveShell (mobile pager + desktop workspace)", () => {
   assert.match(
     hubSrc,
-    /from\s+["']@\/components\/yo\/YoAppShell["']/,
-    "Spanish hub must import YoAppShell",
+    /from\s+["']@\/components\/yo\/YoAdaptiveShell["']/,
+    "Spanish hub must import YoAdaptiveShell",
   );
   assert.match(
     hubCode,
-    /<YoAppShell\b/,
-    "Spanish hub must render <YoAppShell />",
+    /<YoAdaptiveShell\b/,
+    "Spanish hub must mount <YoAdaptiveShell />",
+  );
+  // YoAdaptiveShell composes <YoMobileAppShell> + <YoDesktopLearningWorkspace>,
+  // both of which compose <YoAppShell> (h-[100dvh] + overflow-hidden).
+  // Verify the shell primitive still ships the no-scroll contract.
+  const shellSrc = read("components/yo/YoAppShell.tsx");
+  assert.ok(
+    /h-\[100dvh\]/.test(shellSrc) && /overflow-hidden/.test(shellSrc),
+    "YoAppShell (composed by YoAdaptiveShell) must lock the viewport",
   );
 });
 
@@ -82,10 +96,8 @@ test("Spanish hub no longer renders the long-scroll YoLanguageLandingPage as pri
     !/<YoLanguageLandingPage\b/.test(hubCode),
     "Spanish hub must not render <YoLanguageLandingPage /> as a JSX element on the primary view",
   );
-  // The import is kept (with an underscore prefix) for back-compat
-  // with the static `tests/yo/yopratiqoLandingPages.test.ts` grep —
-  // we assert the file still references the name so future
-  // contributors don't accidentally drop the back-compat shim.
+  // Back-compat reference: the import (or comment) must stay so
+  // `tests/yo/yopratiqoLandingPages.test.ts` keeps grep-matching.
   assert.match(
     hubSrc,
     /YoLanguageLandingPage/,
@@ -93,8 +105,8 @@ test("Spanish hub no longer renders the long-scroll YoLanguageLandingPage as pri
   );
 });
 
-// ─── 3. Two clear primary CTAs ───────────────────────────────────
-test("Spanish hub surfaces two primary CTAs: intro deck + Dominican Republic course", () => {
+// ─── 3. Two clear primary CTAs + DR is the primary ──────────────
+test("Spanish hub surfaces two CTAs and the DR course is the obvious primary", () => {
   assert.match(
     hubCode,
     /variant=["']intro["']/,
@@ -110,11 +122,34 @@ test("Spanish hub surfaces two primary CTAs: intro deck + Dominican Republic cou
     /data-testid=["']yo-spanish-hub-card-grid["']/,
     "Spanish hub must expose the primary card grid via a stable data-testid",
   );
+  // The mobile bottom bar must reference the DR Course Home as its
+  // primary CTA (the obvious single action). We assert the chain:
+  //
+  //   const primaryHref = localizedHref(
+  //     "/yo/langues/espagnol/pays/republique-dominicaine",
+  //     locale,
+  //   );
+  //   ...
+  //   <YoAppBottomBar primaryHref={primaryHref} ... />
+  assert.match(
+    hubCode,
+    /<YoAppBottomBar\b/,
+    "Spanish hub must mount <YoAppBottomBar /> on mobile",
+  );
+  assert.match(
+    hubCode,
+    /primaryHref\s*=\s*localizedHref\(\s*["']\/yo\/langues\/espagnol\/pays\/republique-dominicaine["']/,
+    "Spanish hub must compute the bottom-bar primaryHref from the Dominican Republic Course Home URL",
+  );
+  assert.match(
+    hubCode,
+    /<YoAppBottomBar[\s\S]*?primaryHref=\{primaryHref\}/,
+    "Spanish hub bottom bar's primary CTA must consume that primaryHref",
+  );
 });
 
 // ─── 4. Honest routing ───────────────────────────────────────────
 test("Spanish hub primary CTAs route to real Spanish learning paths", () => {
-  // Intro deck.
   assert.match(
     hubSrc,
     /["']\/yo\/langues\/espagnol\/intro["']/,
@@ -124,7 +159,6 @@ test("Spanish hub primary CTAs route to real Spanish learning paths", () => {
     exists("app/yo/langues/espagnol/intro/page.tsx"),
     "Global Spanish intro deck route must exist on disk",
   );
-  // Dominican Republic course home.
   assert.match(
     hubSrc,
     /["']\/yo\/langues\/espagnol\/pays\/republique-dominicaine["']/,
@@ -160,8 +194,6 @@ test("Spanish hub uses YoAppHeader and does not render YoBreadcrumb", () => {
 
 // ─── 6. Real language selector ───────────────────────────────────
 test("Spanish hub uses the real YoLanguageSelector (no one-off View in English pill)", () => {
-  // The selector is brought in via YoAppHeader — assert the
-  // component is reachable from the hub import graph.
   const headerSrc = read("components/yo/YoAppHeader.tsx");
   assert.match(
     headerSrc,
@@ -193,17 +225,24 @@ test("Spanish hub names Yoppo on its companion card", () => {
   );
 });
 
-// ─── 8. Desktop workspace pattern ────────────────────────────────
-test("Spanish hub uses YoDesktopAppWorkspace on lg+", () => {
+// ─── 8. Desktop workspace pattern (via YoAdaptiveShell) ──────────
+test("Spanish hub uses the desktop workspace pattern via YoAdaptiveShell", () => {
+  // The desktop sub-tree owns leftRail/center/rightRail props on
+  // the YoAdaptiveShell mount.
   assert.match(
-    hubSrc,
-    /from\s+["']@\/components\/yo\/YoDesktopAppWorkspace["']/,
-    "Spanish hub must import YoDesktopAppWorkspace",
+    hubCode,
+    /desktop=\{[\s\S]*leftRail:/,
+    "Spanish hub must declare a desktop leftRail on YoAdaptiveShell",
   );
   assert.match(
     hubCode,
-    /<YoDesktopAppWorkspace\b/,
-    "Spanish hub must mount <YoDesktopAppWorkspace /> on lg+",
+    /desktop=\{[\s\S]*center:/,
+    "Spanish hub must declare a desktop center on YoAdaptiveShell",
+  );
+  assert.match(
+    hubCode,
+    /desktop=\{[\s\S]*rightRail:/,
+    "Spanish hub must declare a desktop rightRail on YoAdaptiveShell",
   );
 });
 
@@ -230,7 +269,26 @@ test("Dominican Republic Course Home wires its back link to the Spanish hub", ()
   );
 });
 
-// ─── 11. No restricted system touched ────────────────────────────
+// ─── 11. Mobile pager screens + bottom-bar ───────────────────────
+test("Spanish hub mobile mounts a paged YoScreenPager with 2 screens + a bottom bar", () => {
+  // The mobile sub-tree must declare a `screens` list of length 2.
+  // We assert by counting the audited screen ids the hub emits.
+  for (const id of ["spanish-primary", "spanish-secondary"]) {
+    assert.match(
+      hubCode,
+      new RegExp(`id:\\s*["']${id}["']`),
+      `Spanish hub mobile pager must include the "${id}" screen`,
+    );
+  }
+  // Bottom bar mounted only in the mobile sub-tree of YoAdaptiveShell.
+  assert.match(
+    hubCode,
+    /<YoAppBottomBar\b/,
+    "Spanish hub must mount <YoAppBottomBar /> for the obvious mobile primary CTA",
+  );
+});
+
+// ─── 12. No restricted system touched ────────────────────────────
 test("Spanish hub imports no restricted systems", () => {
   const forbidden = [
     /from\s+["']stripe["']/i,

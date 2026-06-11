@@ -63,6 +63,46 @@ const appHeaderSrc = read(APP_HEADER_PATH);
 const deckHeaderSrc = read(DECK_HEADER_PATH);
 const courseHeaderSrc = read(COURSE_HEADER_PATH);
 
+// ─── 0. Adaptive variants — pill-bar (mobile) + desktop-dropdown ──
+test("<YoLanguageSelector /> ships both the pill-bar and desktop-dropdown variants", () => {
+  assert.match(
+    selectorCode,
+    /variant\?\s*:\s*["']pill-bar["']\s*\|\s*["']desktop-dropdown["']/,
+    "YoLanguageSelector must declare both pill-bar and desktop-dropdown variants",
+  );
+  assert.match(
+    selectorCode,
+    /data-yo-language-selector-variant=["']pill-bar["']/,
+    "the pill-bar variant must emit a stable data attribute",
+  );
+  assert.match(
+    selectorCode,
+    /data-yo-language-selector-variant=["']desktop-dropdown["']/,
+    "the desktop-dropdown variant must emit a stable data attribute",
+  );
+});
+
+// ─── 0b. YoAppHeader carries an adaptive `appearance` API ─────────
+test("<YoAppHeader /> exposes a mobile / desktop / auto appearance API and mounts the matching variant", () => {
+  assert.match(
+    appHeaderSrc,
+    /appearance\?\s*:\s*["']mobile["']\s*\|\s*["']desktop["']\s*\|\s*["']auto["']/,
+    "YoAppHeader must expose appearance: mobile | desktop | auto",
+  );
+  const stripped = stripJsComments(appHeaderSrc);
+  for (const re of [
+    /data-yo-app-header-appearance=["']mobile["']/,
+    /data-yo-app-header-appearance=["']desktop["']/,
+    /variant=["']desktop-dropdown["']/,
+  ]) {
+    assert.match(
+      stripped,
+      re,
+      `YoAppHeader must emit ${re.source}`,
+    );
+  }
+});
+
 // ─── 1. Selector exists with three-locale pill bar ───────────────
 test("<YoLanguageSelector /> exists and exposes the three-locale pill bar (fr/en/es)", () => {
   assert.ok(exists(SELECTOR_PATH), `${SELECTOR_PATH} must exist on disk`);

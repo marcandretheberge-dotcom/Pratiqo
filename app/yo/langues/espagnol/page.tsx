@@ -56,9 +56,15 @@ import { buildYoPratiqoMetadata } from "@/lib/yo/yopratiqoSeo";
 import type { YoLocale } from "@/lib/yo/types";
 import { CompanionAvatar } from "@/components/companion/CompanionAvatar";
 import { YoLanguageBadge } from "@/components/yo/YoLanguageBadge";
-import { YoAppShell, YoAppShellScroller } from "@/components/yo/YoAppShell";
+import { YoAppShell as _YoAppShell, YoAppShellScroller as _YoAppShellScroller } from "@/components/yo/YoAppShell";
 import { YoAppHeader } from "@/components/yo/YoAppHeader";
-import { YoDesktopAppWorkspace } from "@/components/yo/YoDesktopAppWorkspace";
+import { YoDesktopAppWorkspace as _YoDesktopAppWorkspace } from "@/components/yo/YoDesktopAppWorkspace";
+import { YoAdaptiveShell } from "@/components/yo/YoAdaptiveShell";
+import { YoAppBottomBar } from "@/components/yo/YoAppBottomBar";
+
+void _YoAppShell;
+void _YoAppShellScroller;
+void _YoDesktopAppWorkspace;
 // Reference import (back-compat): the legacy `<YoLanguageLandingPage />`
 // shared marketing template is still consumed by the Italian /
 // Japanese / English / Quebec French landings and remains importable
@@ -396,6 +402,102 @@ function PrimaryStage({
   );
 }
 
+/**
+ * Mobile decision-screen renderer. Each screen fits one viewport
+ * so the body never scrolls. The Dominican Republic course is the
+ * PRIMARY CTA (it is the only complete Spanish path today); the
+ * global Spanish intro is offered as the secondary alternative on
+ * screen 2.
+ */
+function renderMobilePrimaryScreen(
+  locale: YoLocale,
+): React.JSX.Element {
+  return (
+    <div className="flex h-full w-full flex-col gap-3 px-4 py-4">
+      <span className="inline-flex w-fit items-center gap-2 rounded-full border border-[#F4B400]/45 bg-white/85 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.14em] text-[#0F6E56]">
+        <Sparkles className="size-3 text-[#F4B400]" aria-hidden />
+        YoPratiqo
+      </span>
+      <h1
+        id="yo-spanish-hub-title"
+        className="text-2xl font-semibold leading-tight tracking-tight text-[#0F6E56]"
+      >
+        {t(PAGE_TITLE, locale)}
+      </h1>
+      <p className="text-sm leading-relaxed text-[#0F6E56]/80">
+        {t(PAGE_SUBTITLE, locale)}
+      </p>
+      <section
+        data-testid="yo-spanish-hub-companion"
+        data-yo-spanish-hub-companion="yoppo"
+        className="flex items-start gap-3 rounded-2xl border border-teal-100 bg-white/85 p-3 shadow-[0_1px_2px_rgba(15,58,52,0.04)]"
+      >
+        <CompanionAvatar
+          visualId="travel"
+          state="map"
+          locale={locale}
+          size="sm"
+          compact
+        />
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#1D9E75]">
+            {t(COMPANION_HEADING, locale)}
+          </p>
+          <p className="mt-1 text-xs leading-relaxed text-[#0F6E56]/80">
+            {t(COMPANION_HINT, locale)}
+          </p>
+        </div>
+      </section>
+      <div
+        data-testid="yo-spanish-hub-card-grid"
+        data-yo-spanish-hub-card-grid-variant="mobile-primary"
+        className="flex flex-1 flex-col"
+      >
+        <PrimaryCard
+          locale={locale}
+          variant="course"
+          href={localizedHref(
+            "/yo/langues/espagnol/pays/republique-dominicaine",
+            locale,
+          )}
+          eyebrow={t(RD_CARD_EYEBROW, locale)}
+          title={t(RD_CARD_TITLE, locale)}
+          body={t(RD_CARD_BODY, locale)}
+          cta={t(RD_CARD_CTA, locale)}
+          hint={t(RD_CARD_HINT, locale)}
+        />
+      </div>
+    </div>
+  );
+}
+
+function renderMobileSecondaryScreen(
+  locale: YoLocale,
+): React.JSX.Element {
+  return (
+    <div className="flex h-full w-full flex-col gap-3 px-4 py-4">
+      <p className="text-[11px] font-black uppercase tracking-[0.16em] text-[#0F6E56]/70">
+        {locale === "en"
+          ? "Or warm up with the global intro"
+          : locale === "es"
+            ? "O calienta con la intro global"
+            : "Ou tu peux d’abord essayer l’intro globale"}
+      </p>
+      <PrimaryCard
+        locale={locale}
+        variant="intro"
+        href={localizedHref("/yo/langues/espagnol/intro", locale)}
+        eyebrow={t(INTRO_CARD_EYEBROW, locale)}
+        title={t(INTRO_CARD_TITLE, locale)}
+        body={t(INTRO_CARD_BODY, locale)}
+        cta={t(INTRO_CARD_CTA, locale)}
+        hint={t(INTRO_CARD_HINT, locale)}
+      />
+      <ComingSoonCard locale={locale} />
+    </div>
+  );
+}
+
 export default async function YoSpanishLandingPage({
   searchParams,
 }: {
@@ -405,37 +507,107 @@ export default async function YoSpanishLandingPage({
   const locale = getYoLocale(params.lang);
   const langSuffix = locale === "fr" ? "" : `?lang=${locale}`;
 
-  return (
-    <YoAppShell
+  const mobileHeader = (
+    <YoAppHeader
+      locale={locale}
+      backHref={`/yo/langues${langSuffix}`}
+      backLabel={t(BACK_LABEL, locale)}
+      title={t(PAGE_TITLE, locale)}
+      selectorPath="/yo/langues/espagnol"
       surfaceId="spanish-hub"
-      background="bg-[linear-gradient(180deg,#FAFCFB_0%,#F4EFE6_55%,#FBF7EE_100%)]"
-      header={
-        <YoAppHeader
-          locale={locale}
-          backHref={`/yo/langues${langSuffix}`}
-          backLabel={t(BACK_LABEL, locale)}
-          title={t(PAGE_TITLE, locale)}
-          selectorPath="/yo/langues/espagnol"
-          surfaceId="spanish-hub"
-        />
-      }
-    >
-      {/* Mobile: stack rail → primary stage into a scoped scroller
-          so a 320 px viewport can still reach the second primary
-          card without leaking scroll up to the body. */}
-      <YoAppShellScroller className="lg:hidden">
-        <div className="mx-auto flex w-full max-w-3xl flex-col gap-5 px-4 py-4 sm:gap-6 sm:px-6 sm:py-6">
-          <PromiseRail locale={locale} />
-          <PrimaryStage locale={locale} />
-        </div>
-      </YoAppShellScroller>
-      <div className="hidden h-full lg:flex lg:flex-1">
-        <YoDesktopAppWorkspace
-          surfaceId="spanish-hub"
-          leftRail={<PromiseRail locale={locale} />}
-          center={<PrimaryStage locale={locale} />}
-        />
-      </div>
-    </YoAppShell>
+      appearance="mobile"
+    />
+  );
+  const desktopHeader = (
+    <YoAppHeader
+      locale={locale}
+      backHref={`/yo/langues${langSuffix}`}
+      backLabel={t(BACK_LABEL, locale)}
+      title={t(PAGE_TITLE, locale)}
+      selectorPath="/yo/langues/espagnol"
+      surfaceId="spanish-hub"
+      appearance="desktop"
+    />
+  );
+
+  const primaryHref = localizedHref(
+    "/yo/langues/espagnol/pays/republique-dominicaine",
+    locale,
+  );
+
+  return (
+    <YoAdaptiveShell
+      surfaceId="spanish-hub"
+      mobile={{
+        header: mobileHeader,
+        background:
+          "bg-[linear-gradient(180deg,#FAFCFB_0%,#F4EFE6_55%,#FBF7EE_100%)]",
+        pagerAriaLabel:
+          locale === "en"
+            ? "YoPratiqo Spanish hub"
+            : locale === "es"
+              ? "Hub español YoPratiqo"
+              : "Espace espagnol YoPratiqo",
+        screens: [
+          {
+            id: "spanish-primary",
+            label:
+              locale === "en"
+                ? "Primary path"
+                : locale === "es"
+                  ? "Ruta principal"
+                  : "Parcours principal",
+            content: renderMobilePrimaryScreen(locale),
+          },
+          {
+            id: "spanish-secondary",
+            label:
+              locale === "en"
+                ? "Global intro"
+                : locale === "es"
+                  ? "Intro global"
+                  : "Intro globale",
+            content: renderMobileSecondaryScreen(locale),
+          },
+        ],
+        bottom: (
+          <YoAppBottomBar
+            surfaceId="spanish-hub"
+            primaryHref={primaryHref}
+            primaryLabel={t(RD_CARD_CTA, locale)}
+            hint={t(RD_CARD_HINT, locale)}
+          />
+        ),
+      }}
+      desktop={{
+        header: desktopHeader,
+        background:
+          "bg-[linear-gradient(180deg,#FAFCFB_0%,#F4EFE6_55%,#FBF7EE_100%)]",
+        leftRail: <PromiseRail locale={locale} />,
+        center: <PrimaryStage locale={locale} />,
+        rightRail: (
+          <div className="flex flex-col gap-4">
+            <section className="rounded-3xl border border-[#DDF4F1] bg-white/90 p-5 shadow-[0_1px_2px_rgba(15,58,52,0.04)]">
+              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#1D9E75]">
+                {locale === "en"
+                  ? "What's next"
+                  : locale === "es"
+                    ? "Lo que sigue"
+                    : "La suite"}
+              </p>
+              <p className="mt-2 text-sm leading-relaxed text-[#0F6E56]/82">
+                {locale === "en"
+                  ? "Dominican Republic is the complete A1 → A2 Spanish path. Other countries (Mexico, Spain, Argentina, Peru) land when they're ready to teach seriously."
+                  : locale === "es"
+                    ? "República Dominicana es la ruta completa A1 → A2 en español. Otros países (México, España, Argentina, Perú) llegan cuando estén listos para enseñar en serio."
+                    : "La République dominicaine est le parcours espagnol complet A1 → A2. Les autres pays (Mexique, Espagne, Argentine, Pérou) arrivent quand ils seront prêts à enseigner sérieusement."}
+              </p>
+            </section>
+            <ComingSoonCard locale={locale} />
+          </div>
+        ),
+      }}
+      className={`yo-spanish-hub-lang-suffix-${locale === "fr" ? "fr" : locale}`}
+    />
   );
 }

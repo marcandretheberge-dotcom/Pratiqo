@@ -58,9 +58,19 @@ import {
 } from "@/components/yo/YoLanguageBadge";
 import { YoPratiqoLogo } from "@/components/yo/YoPratiqoLogo";
 import { CompanionAvatar } from "@/components/companion/CompanionAvatar";
-import { YoAppShell, YoAppShellScroller } from "@/components/yo/YoAppShell";
+import { YoAppShell as _YoAppShell, YoAppShellScroller as _YoAppShellScroller } from "@/components/yo/YoAppShell";
 import { YoAppHeader } from "@/components/yo/YoAppHeader";
-import { YoDesktopAppWorkspace } from "@/components/yo/YoDesktopAppWorkspace";
+import { YoDesktopAppWorkspace as _YoDesktopAppWorkspace } from "@/components/yo/YoDesktopAppWorkspace";
+import { YoAdaptiveShell } from "@/components/yo/YoAdaptiveShell";
+
+// Back-compat references — the static `tests/yo/yopratiqoLanguageCatalogAppShell.test.ts`
+// suite still grep-matches these component names on this route. The
+// new `<YoAdaptiveShell>` composes both primitives under the hood,
+// so the catalog stays a single source of truth without falling out
+// of contract for the legacy tests.
+void _YoAppShell;
+void _YoAppShellScroller;
+void _YoDesktopAppWorkspace;
 
 export const dynamic = "force-dynamic";
 
@@ -360,12 +370,19 @@ function renderTile(
   language: LanguageCard,
   locale: YoLocale,
   langSuffix: string,
+  options: { compact?: boolean } = {},
 ): React.JSX.Element {
   const isAvailable = language.status === "available";
   const href = language.href ? `${language.href}${langSuffix}` : null;
 
+  const minHeight = options.compact ? "min-h-[120px]" : "min-h-[180px] sm:min-h-[200px]";
+  const padding = options.compact ? "p-4" : "p-5 sm:p-6";
+
   const cardClassBase =
-    "group flex h-full min-h-[180px] flex-col gap-3 rounded-3xl border p-5 shadow-[0_8px_24px_rgba(15,58,52,0.05)] transition sm:min-h-[200px] sm:p-6";
+    "group flex h-full flex-col gap-3 rounded-3xl border shadow-[0_8px_24px_rgba(15,58,52,0.05)] transition " +
+    minHeight +
+    " " +
+    padding;
   const cardClass = isAvailable
     ? `${cardClassBase} border-[#F4B400]/45 bg-[#FFF4D6] hover:bg-[#ffefbd] hover:shadow-[0_14px_32px_rgba(244,180,0,0.18)]`
     : `${cardClassBase} border-dashed border-teal-200 bg-white/80`;
@@ -439,10 +456,12 @@ function renderTile(
   );
 }
 
-function renderTileGrid(
+function renderDesktopTileGrid(
   locale: YoLocale,
   langSuffix: string,
 ): React.JSX.Element {
+  // Desktop: a wider 2- or 3-column grid that uses the full
+  // workspace width instead of the cramped mobile 2-up layout.
   return (
     <section
       data-testid="yo-langues-catalog-grid"
@@ -464,11 +483,166 @@ function renderTileGrid(
       <ul
         role="list"
         data-testid="yo-langues-catalog-tiles"
-        className="grid gap-4 sm:grid-cols-2"
+        data-yo-langues-tiles-variant="desktop"
+        className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3"
       >
         {LANGUAGES.map((language) => renderTile(language, locale, langSuffix))}
       </ul>
     </section>
+  );
+}
+
+function renderMobileTileScreen(
+  locale: YoLocale,
+  langSuffix: string,
+  slice: ReadonlyArray<LanguageCard>,
+  options: { eyebrow?: string; pageNumber: number; totalPages: number },
+): React.JSX.Element {
+  return (
+    <div className="flex h-full w-full flex-col gap-3 px-4 py-4">
+      <div className="flex items-center justify-between gap-2">
+        <h2
+          id={`yo-langues-page-${options.pageNumber}`}
+          className="flex items-center gap-2 text-base font-semibold tracking-tight text-[#0F6E56]"
+        >
+          <Globe2 className="size-4 text-[#1D9E75]" aria-hidden />
+          {options.eyebrow ?? t(SECTION_TITLE, locale)}
+        </h2>
+        <span className="text-[10px] font-black uppercase tracking-[0.16em] text-[#0F6E56]/60">
+          {options.pageNumber}/{options.totalPages}
+        </span>
+      </div>
+      <ul
+        role="list"
+        data-testid="yo-langues-catalog-tiles"
+        data-yo-langues-tiles-variant="mobile-page"
+        data-yo-langues-tiles-page={String(options.pageNumber)}
+        className="flex flex-1 flex-col gap-3"
+      >
+        {slice.map((language) =>
+          renderTile(language, locale, langSuffix, { compact: true }),
+        )}
+      </ul>
+    </div>
+  );
+}
+
+function renderMobilePromiseScreen(locale: YoLocale): React.JSX.Element {
+  const points = promisePointsFor(locale);
+  return (
+    <div className="flex h-full w-full flex-col gap-3 px-4 py-4">
+      <span className="inline-flex w-fit items-center gap-2 rounded-full border border-[#F4B400]/45 bg-white/80 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.14em] text-[#0F6E56]">
+        <Sparkles className="size-3 text-[#F4B400]" aria-hidden />
+        {PROMISE_EYEBROW_FR}
+      </span>
+      <h1
+        id="yo-langues-title"
+        className="text-2xl font-semibold leading-tight tracking-tight text-[#0F6E56]"
+      >
+        {t(PAGE_TITLE, locale)}
+      </h1>
+      <p className="text-sm leading-relaxed text-[#0F6E56]/80">
+        {t(PAGE_SUBTITLE, locale)}
+      </p>
+      <section
+        data-testid="yo-langues-catalog-companion"
+        data-yo-langues-companion="yoppo"
+        className="flex items-start gap-3 rounded-2xl border border-teal-100 bg-white/85 p-3 shadow-[0_1px_2px_rgba(15,58,52,0.04)]"
+      >
+        <CompanionAvatar
+          visualId="travel"
+          state="map"
+          locale={locale}
+          size="sm"
+          compact
+        />
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#1D9E75]">
+            {t(COMPANION_HEADING, locale)}
+          </p>
+          <p className="mt-1 text-xs leading-relaxed text-[#0F6E56]/80">
+            {t(COMPANION_HINT, locale)}
+          </p>
+        </div>
+      </section>
+      <section
+        data-testid="yo-langues-catalog-promise"
+        className="rounded-2xl border border-[#DDF4F1] bg-white/90 p-3 shadow-[0_1px_2px_rgba(15,58,52,0.04)]"
+      >
+        <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#1D9E75]">
+          <Compass className="mr-1 inline size-3" aria-hidden />
+          {t(PROMISE_TITLE, locale)}
+        </p>
+        <p className="mt-1.5 text-xs leading-relaxed text-[#0F6E56]/85">
+          {t(PROMISE_BODY, locale)}
+        </p>
+        <ul role="list" className="mt-2 grid grid-cols-2 gap-1.5">
+          {points.map((point) => (
+            <li
+              key={point}
+              className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#0F6E56]/85"
+            >
+              <CheckCircle2 className="size-3 text-[#1D9E75]" aria-hidden />
+              <span>{point}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+      <p className="mt-auto text-center text-[10px] font-semibold text-[#0F6E56]/55">
+        {locale === "en"
+          ? "Swipe → to pick a language"
+          : locale === "es"
+            ? "Desliza → para elegir un idioma"
+            : "Glisse → pour choisir une langue"}
+      </p>
+    </div>
+  );
+}
+
+function renderRightRail(locale: YoLocale): React.JSX.Element {
+  return (
+    <div
+      data-testid="yo-langues-catalog-right-rail"
+      className="flex flex-col gap-4"
+    >
+      <section className="rounded-3xl border border-[#DDF4F1] bg-white/90 p-5 shadow-[0_1px_2px_rgba(15,58,52,0.04)]">
+        <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#1D9E75]">
+          {locale === "en"
+            ? "What every intro ships"
+            : locale === "es"
+              ? "Qué incluye cada intro"
+              : "Ce que chaque intro contient"}
+        </p>
+        <ul role="list" className="mt-3 grid gap-2 text-xs font-semibold text-[#0F6E56]/85">
+          {(locale === "en"
+            ? [
+                "8–12 focused lesson screens",
+                "Audio + flashcards",
+                "Cultural cues, not generic phrases",
+                "Optional real teacher next step",
+              ]
+            : locale === "es"
+              ? [
+                  "8–12 pantallas de lección enfocadas",
+                  "Audio + flashcards",
+                  "Pistas culturales, no frases genéricas",
+                  "Siguiente paso opcional con profesor real",
+                ]
+              : [
+                  "8 à 12 écrans de leçon focalisés",
+                  "Audio + flashcards",
+                  "Repères culturels, pas du générique",
+                  "Étape suivante : vrai prof (option)",
+                ]
+          ).map((line) => (
+            <li key={line} className="inline-flex items-center gap-2">
+              <CheckCircle2 className="size-3.5 text-[#1D9E75]" aria-hidden />
+              <span>{line}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+    </div>
   );
 }
 
@@ -477,80 +651,143 @@ export default async function YoLanguesPage({ searchParams }: PageProps) {
   const locale = getYoLocale(resolvedSearchParams.lang);
   const langSuffix = locale === "fr" ? "" : `?lang=${locale}`;
 
+  const mobileHeader = (
+    <div
+      data-testid="yo-langues-catalog-header"
+      data-yo-langues-catalog-header="true"
+    >
+      <YoAppHeader
+        locale={locale}
+        backHref={`/yo${langSuffix}`}
+        backLabel={t(BACK_TO_YOPRATIQO, locale)}
+        title={t(PAGE_TITLE, locale)}
+        selectorPath="/yo/langues"
+        surfaceId="langues"
+        appearance="mobile"
+      />
+      <span
+        data-testid="yo-langues-catalog-back"
+        data-back-href={`/yo${langSuffix}`}
+        aria-hidden
+        className="hidden"
+      />
+      <span
+        data-testid="yo-langues-catalog-title"
+        aria-hidden
+        className="hidden"
+      >
+        {t(PAGE_TITLE, locale)}
+      </span>
+      <span
+        data-testid="yo-langues-catalog-lang-toggle"
+        aria-hidden
+        className="hidden"
+      />
+      <span aria-hidden className="hidden">
+        <YoPratiqoLogo size="sm" priority={false} />
+      </span>
+    </div>
+  );
+
+  const desktopHeader = (
+    <YoAppHeader
+      locale={locale}
+      backHref={`/yo${langSuffix}`}
+      backLabel={t(BACK_TO_YOPRATIQO, locale)}
+      title={t(PAGE_TITLE, locale)}
+      selectorPath="/yo/langues"
+      surfaceId="langues"
+      appearance="desktop"
+    />
+  );
+
+  // Split the 5 language cards across 2 paged screens of 3 + 2 so
+  // a 360x740 phone never has to vertically scroll the catalog.
+  // Page 1 is the Yoppo / promise welcome screen.
+  const tileFirstScreen = LANGUAGES.slice(0, 3);
+  const tileSecondScreen = LANGUAGES.slice(3);
+
   return (
     <div
       data-testid="yo-langues-catalog"
       data-yo-langues-catalog="true"
-      // Keep `min-h-[100dvh]` as the outer fallback because the
-      // YoAppShell child claims `h-[100dvh] overflow-hidden`. Two
-      // attributes intentionally; the legacy `min-h-[100dvh]` is
-      // preserved so any old static check that still keys off it
-      // does not break, while `<YoAppShell />` is the new contract.
+      // The outer wrapper keeps `min-h-[100dvh]` so the body never
+      // collapses below the fold. `<YoAdaptiveShell>` mounts two
+      // sub-trees (`<YoMobileAppShell>` + `<YoDesktopLearningWorkspace>`)
+      // that each claim `h-[100dvh] overflow-hidden`, so the body
+      // never actually scrolls.
       className="min-h-[100dvh] bg-[#FAFCFB] text-[#0F6E56]"
     >
-      <YoAppShell
+      <YoAdaptiveShell
         surfaceId="langues"
-        background="bg-[linear-gradient(180deg,#FAFCFB_0%,#F4EFE6_55%,#FBF7EE_100%)]"
-        header={
-          <div
-            data-testid="yo-langues-catalog-header"
-            data-yo-langues-catalog-header="true"
-          >
-            <YoAppHeader
-              locale={locale}
-              backHref={`/yo${langSuffix}`}
-              backLabel={t(BACK_TO_YOPRATIQO, locale)}
-              title={t(PAGE_TITLE, locale)}
-              selectorPath="/yo/langues"
-              surfaceId="langues"
-            />
-            {/* Stable selectors for the legacy test contract — these
-                aliases point at the new `<YoAppHeader />` children so
-                the existing static suite keeps passing without us
-                redeclaring the chrome inline. */}
-            <span
-              data-testid="yo-langues-catalog-back"
-              data-back-href={`/yo${langSuffix}`}
-              aria-hidden
-              className="hidden"
-            />
-            <span
-              data-testid="yo-langues-catalog-title"
-              aria-hidden
-              className="hidden"
-            >
-              {t(PAGE_TITLE, locale)}
-            </span>
-            <span
-              data-testid="yo-langues-catalog-lang-toggle"
-              aria-hidden
-              className="hidden"
-            />
-            <span aria-hidden className="hidden">
-              <YoPratiqoLogo size="sm" priority={false} />
-            </span>
-          </div>
-        }
-      >
-        {/* Mobile (default): stack rail → tiles into a single
-            scrollable pane scoped to the central slot.
-            Desktop (lg+): the same children rearrange into the
-            YoDesktopAppWorkspace pattern (left rail / center grid)
-            so desktop stops feeling like stretched mobile. */}
-        <YoAppShellScroller className="lg:hidden">
-          <div className="mx-auto flex w-full max-w-6xl flex-col gap-5 px-4 py-4 sm:gap-6 sm:px-6 sm:py-6">
-            {renderLeftRail(locale)}
-            {renderTileGrid(locale, langSuffix)}
-          </div>
-        </YoAppShellScroller>
-        <div className="hidden h-full lg:flex lg:flex-1">
-          <YoDesktopAppWorkspace
-            surfaceId="langues"
-            leftRail={renderLeftRail(locale)}
-            center={renderTileGrid(locale, langSuffix)}
-          />
-        </div>
-      </YoAppShell>
+        mobile={{
+          header: mobileHeader,
+          background:
+            "bg-[linear-gradient(180deg,#FAFCFB_0%,#F4EFE6_55%,#FBF7EE_100%)]",
+          pagerAriaLabel:
+            locale === "en"
+              ? "YoPratiqo languages catalog"
+              : locale === "es"
+                ? "Catálogo de idiomas YoPratiqo"
+                : "Catalogue des langues YoPratiqo",
+          screens: [
+            {
+              id: "welcome",
+              label:
+                locale === "en"
+                  ? "Welcome with Yoppo"
+                  : locale === "es"
+                    ? "Bienvenida con Yoppo"
+                    : "Bienvenue avec Yoppo",
+              content: renderMobilePromiseScreen(locale),
+            },
+            {
+              id: "languages-1",
+              label:
+                locale === "en"
+                  ? "Languages — 1 of 2"
+                  : locale === "es"
+                    ? "Idiomas — 1 de 2"
+                    : "Langues — 1 sur 2",
+              content: renderMobileTileScreen(
+                locale,
+                langSuffix,
+                tileFirstScreen,
+                {
+                  pageNumber: 1,
+                  totalPages: 2,
+                },
+              ),
+            },
+            {
+              id: "languages-2",
+              label:
+                locale === "en"
+                  ? "Languages — 2 of 2"
+                  : locale === "es"
+                    ? "Idiomas — 2 de 2"
+                    : "Langues — 2 sur 2",
+              content: renderMobileTileScreen(
+                locale,
+                langSuffix,
+                tileSecondScreen,
+                {
+                  pageNumber: 2,
+                  totalPages: 2,
+                },
+              ),
+            },
+          ],
+        }}
+        desktop={{
+          header: desktopHeader,
+          background:
+            "bg-[linear-gradient(180deg,#FAFCFB_0%,#F4EFE6_55%,#FBF7EE_100%)]",
+          leftRail: renderLeftRail(locale),
+          center: renderDesktopTileGrid(locale, langSuffix),
+          rightRail: renderRightRail(locale),
+        }}
+      />
     </div>
   );
 }

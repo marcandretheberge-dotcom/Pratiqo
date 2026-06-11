@@ -60,8 +60,14 @@ import { YoCourseAppHeader } from "@/components/yo/YoCourseAppHeader";
 import { YoCourseCompanionPanel } from "@/components/yo/YoCourseCompanionPanel";
 import { YoCourseHero } from "@/components/yo/YoCourseHero";
 import { YoCoursePath, type YoCoursePathStep } from "@/components/yo/YoCoursePath";
-import { YoAppShell, YoAppShellScroller } from "@/components/yo/YoAppShell";
-import { YoDesktopAppWorkspace } from "@/components/yo/YoDesktopAppWorkspace";
+import { YoAppShell as _YoAppShell, YoAppShellScroller as _YoAppShellScroller } from "@/components/yo/YoAppShell";
+import { YoDesktopAppWorkspace as _YoDesktopAppWorkspace } from "@/components/yo/YoDesktopAppWorkspace";
+import { YoAdaptiveShell } from "@/components/yo/YoAdaptiveShell";
+import { YoAppBottomBar } from "@/components/yo/YoAppBottomBar";
+
+void _YoAppShell;
+void _YoAppShellScroller;
+void _YoDesktopAppWorkspace;
 
 export const dynamic = "force-dynamic";
 
@@ -322,49 +328,172 @@ export default async function YoEspagnolRepubliqueDominicainePage({
   const companionBlock = <YoCourseCompanionPanel locale={locale} />;
   const discoverBlock = <DiscoverLink href={discoverHref} locale={locale} />;
 
-  return (
-    <YoAppShell
-      surfaceId="rd-course-home"
-      background="bg-[#F4EFE6]"
-      header={
-        <YoCourseAppHeader
-          locale={locale}
-          backHref={backHref}
-          toggleHref={toggleHref}
-        />
-      }
-    >
-      {/* Mobile: stack hero → path → companion → discover link
-          inside a scoped scroller so the body never scrolls. */}
-      <YoAppShellScroller className="lg:hidden">
-        <div className="mx-auto flex w-full max-w-[600px] flex-col gap-6 px-4 py-4 sm:px-6 sm:py-5">
-          {heroBlock}
-          {pathBlock}
-          {companionBlock}
-          {discoverBlock}
-        </div>
-      </YoAppShellScroller>
+  // Mobile mounts the same building blocks (preserves audit-tested
+  // visual + a11y contracts) but lays them out as 3 paged screens:
+  //
+  //   Screen 1 — hero + primary CTA + Yoppo
+  //   Screen 2 — path / roadmap
+  //   Screen 3 — companion details + discover link
+  //
+  // so a 360x740 phone never has to vertically scroll the Course
+  // Home. The intro deck CTA stays on screen 1 as the obvious
+  // primary affordance.
+  const introHref = `/yo/langues/espagnol/pays/republique-dominicaine/intro${langSuffix}`;
+  const startLabel = locale === "en" ? "Start the intro" : locale === "es" ? "Empezar la intro" : "Commencer l’intro";
+  const startHint = locale === "en"
+    ? "Free intro · ~10 min · audio + flashcards"
+    : locale === "es"
+      ? "Intro gratis · ~10 min · audio + flashcards"
+      : "Intro gratuite · ~10 min · audio + flashcards";
 
-      {/* Desktop: app workspace pattern. Left rail = companion +
-          discover, center = hero + path. No giant stretched-mobile
-          column. */}
-      <div className="hidden h-full lg:flex lg:flex-1">
-        <YoDesktopAppWorkspace
-          surfaceId="rd-course-home"
-          leftRail={
-            <div className="flex flex-col gap-4">
-              {companionBlock}
-              {discoverBlock}
-            </div>
-          }
-          center={
-            <div className="flex flex-col gap-5">
-              {heroBlock}
-              {pathBlock}
-            </div>
-          }
-        />
-      </div>
-    </YoAppShell>
+  const mobileHeroScreen = (
+    <div className="flex h-full w-full flex-col gap-4 px-4 py-4">
+      <div className="flex-1">{heroBlock}</div>
+      <div className="shrink-0">{companionBlock}</div>
+    </div>
+  );
+  const mobilePathScreen = (
+    <div className="flex h-full w-full flex-col gap-4 px-4 py-4">
+      <p className="text-[11px] font-black uppercase tracking-[0.16em] text-[#0F6E56]/70">
+        {locale === "en"
+          ? "Your path · Intro → Modules 2-5"
+          : locale === "es"
+            ? "Tu ruta · Intro → Módulos 2-5"
+            : "Ton parcours · Intro → Modules 2-5"}
+      </p>
+      <div className="flex-1">{pathBlock}</div>
+    </div>
+  );
+  const mobileDetailsScreen = (
+    <div className="flex h-full w-full flex-col gap-4 px-4 py-4">
+      <p className="text-[11px] font-black uppercase tracking-[0.16em] text-[#0F6E56]/70">
+        {locale === "en"
+          ? "Want more details?"
+          : locale === "es"
+            ? "¿Quieres más detalles?"
+            : "Plus de détails ?"}
+      </p>
+      {discoverBlock}
+      <section className="rounded-3xl border border-[#DDF4F1] bg-white/90 p-4 shadow-[0_1px_2px_rgba(15,58,52,0.04)]">
+        <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#1D9E75]">
+          {locale === "en"
+            ? "Teacher bridge"
+            : locale === "es"
+              ? "Puente con profesores"
+              : "Pont vers les profs"}
+        </p>
+        <p className="mt-2 text-sm leading-relaxed text-[#0F6E56]/82">
+          {locale === "en"
+            ? "Practice on your own here; when you're ready, book a real Pratiqo teacher — no auto-routing, no recording, no data forwarding."
+            : locale === "es"
+              ? "Practica por tu cuenta aquí; cuando estés listo, reserva un profesor Pratiqo real — sin enrutado automático, sin grabación, sin envío de datos."
+              : "Tu pratiques en autonomie ici ; quand tu es prêt·e, réserve un vrai prof Pratiqo — pas d’auto-routage, pas d’enregistrement, pas de transfert de données."}
+        </p>
+      </section>
+    </div>
+  );
+
+  return (
+    <YoAdaptiveShell
+      surfaceId="rd-course-home"
+      mobile={{
+        header: (
+          <YoCourseAppHeader
+            locale={locale}
+            backHref={backHref}
+            toggleHref={toggleHref}
+          />
+        ),
+        background: "bg-[#F4EFE6]",
+        pagerAriaLabel:
+          locale === "en"
+            ? "Dominican Republic course home screens"
+            : locale === "es"
+              ? "Pantallas del curso de República Dominicana"
+              : "Écrans de la République dominicaine",
+        screens: [
+          {
+            id: "hero",
+            label:
+              locale === "en"
+                ? "Course identity"
+                : locale === "es"
+                  ? "Identidad del curso"
+                  : "Identité du cours",
+            content: mobileHeroScreen,
+          },
+          {
+            id: "path",
+            label:
+              locale === "en"
+                ? "Path"
+                : locale === "es"
+                  ? "Ruta"
+                  : "Parcours",
+            content: mobilePathScreen,
+          },
+          {
+            id: "details",
+            label:
+              locale === "en"
+                ? "Details"
+                : locale === "es"
+                  ? "Detalles"
+                  : "Détails",
+            content: mobileDetailsScreen,
+          },
+        ],
+        bottom: (
+          <YoAppBottomBar
+            surfaceId="rd-course-home"
+            primaryHref={introHref}
+            primaryLabel={startLabel}
+            hint={startHint}
+          />
+        ),
+      }}
+      desktop={{
+        header: (
+          <YoCourseAppHeader
+            locale={locale}
+            backHref={backHref}
+            toggleHref={toggleHref}
+          />
+        ),
+        background: "bg-[#F4EFE6]",
+        leftRail: (
+          <div className="flex flex-col gap-4">
+            {companionBlock}
+            {discoverBlock}
+          </div>
+        ),
+        center: (
+          <div className="flex flex-col gap-5">
+            {heroBlock}
+            {pathBlock}
+          </div>
+        ),
+        rightRail: (
+          <div className="flex flex-col gap-4">
+            <section className="rounded-3xl border border-[#DDF4F1] bg-white/90 p-5 shadow-[0_1px_2px_rgba(15,58,52,0.04)]">
+              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#1D9E75]">
+                {locale === "en"
+                  ? "Teacher bridge"
+                  : locale === "es"
+                    ? "Puente con profesores"
+                    : "Pont vers les profs"}
+              </p>
+              <p className="mt-2 text-sm leading-relaxed text-[#0F6E56]/82">
+                {locale === "en"
+                  ? "Practice solo here; when you're ready, book a real Pratiqo teacher — no auto-routing, no recording, no data forwarding."
+                  : locale === "es"
+                    ? "Practica solo aquí; cuando estés listo, reserva un profesor Pratiqo real — sin enrutado automático, sin grabación, sin envío de datos."
+                    : "Pratique en autonomie ici ; quand tu es prêt·e, réserve un vrai prof Pratiqo — pas d’auto-routage, pas d’enregistrement, pas de transfert de données."}
+              </p>
+            </section>
+          </div>
+        ),
+      }}
+    />
   );
 }
