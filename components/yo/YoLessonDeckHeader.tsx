@@ -35,6 +35,11 @@ import {
   YO_LESSON_DECK_CHROME,
   type YoLessonDeckChromeLabels,
 } from "@/lib/yo/lessonDeckTypes";
+import {
+  DECK_CONTENT_MAX_WIDTH_CLASS,
+  DECK_HEADER_CLASSES,
+  DECK_HEADER_ROW_CLASSES,
+} from "@/lib/yo/lessonDeckVisualContract";
 import type { YoLocale } from "@/lib/yo/types";
 
 export type YoLessonDeckHeaderProps = {
@@ -62,12 +67,9 @@ export function YoLessonDeckHeader({
       data-yo-lesson-deck-header="true"
       data-no-deck-swipe="true"
       data-no-deck-tap="true"
-      className={cn(
-        "relative z-40 shrink-0 border-b border-[#E7DFCF] bg-[#F4EFE6]/92 backdrop-blur-md",
-        className,
-      )}
+      className={cn(DECK_HEADER_CLASSES, className)}
     >
-      <div className="mx-auto flex h-14 max-w-3xl items-center justify-between gap-3 px-3 sm:h-16 sm:px-6">
+      <div className={cn(DECK_HEADER_ROW_CLASSES, DECK_CONTENT_MAX_WIDTH_CLASS)}>
         <Link
           data-testid="yo-lesson-deck-header-back"
           href={backHref}

@@ -1234,10 +1234,17 @@ const DECK_HELPER_COMPLETION = lstr(
   "Marca el módulo 4 como completado y luego pasa al puente con tu profesor de Pratiqo.",
 );
 
+// Visible compact chrome label. Aligned with the rest of the
+// Dominican Republic learning path (Intro · RD A1, Module 2 · RD
+// A1, Module 3 · RD A1, Module 5 · RD A2) so the deck header
+// rhythm is consistent across all five surfaces. The accurate
+// CEFR bridge level (A1+ → A2) stays expressed in the underlying
+// educational data file (`lib/yo/dominicanRepublicExplore.ts`)
+// — the chrome label is intentionally calm.
 const DECK_MODULE_LABEL = lstr(
-  "Module 4 · RD A1+→A2",
-  "Module 4 · DR A1+→A2",
-  "Módulo 4 · RD A1+→A2",
+  "Module 4 · RD A1",
+  "Module 4 · DR A1",
+  "Módulo 4 · RD A1",
 );
 
 // ─── Deck composer (Module 4) ───────────────────────────────────────────
