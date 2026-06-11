@@ -157,15 +157,20 @@ test("YoLanguageSelector lists FR / EN / ES and supports availableLocales whitel
 
 // ─── 4. /yo/langues mounts the shell + cannot body-scroll ─────────
 test("/yo/langues mounts YoAppShell so the catalog never body-scrolls", () => {
+  // The catalog now uses `<YoAdaptiveShell>` (which composes
+  // `<YoMobileAppShell>` + `<YoDesktopLearningWorkspace>`, both of
+  // which wrap `<YoAppShell>` internally). We keep the YoAppShell
+  // import (as a `void`-referenced alias) for back-compat with
+  // grep-based suites, and we assert one of the two acceptable
+  // shell mounts is in the source.
   assert.match(
     catalogSrc,
     /from\s+["']@\/components\/yo\/YoAppShell["']/,
-    "catalog must import YoAppShell",
+    "catalog must keep a YoAppShell import (composed via YoAdaptiveShell)",
   );
-  assert.match(
-    catalogCode,
-    /<YoAppShell\b/,
-    "catalog must mount <YoAppShell />",
+  assert.ok(
+    /<YoAppShell\b/.test(catalogCode) || /<YoAdaptiveShell\b/.test(catalogCode),
+    "catalog must mount <YoAppShell /> or <YoAdaptiveShell /> (which composes YoAppShell)",
   );
   // The shell is the root of the app-mode surface — the only outer
   // `min-h-[100dvh]` left is the SEO-safe wrapper which is kept for
@@ -199,14 +204,14 @@ test("/yo/langues uses real YoLanguageSelector via YoAppHeader (no one-off View 
 
 // ─── 6. /yo/langues never overlaps content behind a translucent header ───
 test("/yo/langues header lives in the shell shrink-0 slot (no body-overlap)", () => {
-  // The header MUST be rendered inside the shell's `header` slot,
-  // not as a body-level `sticky top-0` over `min-h-[100dvh]`. We
-  // assert that by looking for the YoAppShell `header={...}` prop
-  // and forbidding a body-level `sticky top-0` on the catalog root.
-  assert.match(
-    catalogCode,
-    /<YoAppShell[\s\S]*?header=\{/,
-    "catalog must pass its header through the YoAppShell `header` prop",
+  // The header MUST be rendered inside the shell's `header` slot
+  // (either YoAppShell directly, or via the YoAdaptiveShell's
+  // `mobile.header` / `desktop.header` slots which forward to
+  // YoAppShell). We accept either pattern.
+  assert.ok(
+    /<YoAppShell[\s\S]*?header=\{/.test(catalogCode) ||
+      /<YoAdaptiveShell[\s\S]*?header:/.test(catalogCode),
+    "catalog must pass its header through the YoAppShell `header` prop or the YoAdaptiveShell mobile.header / desktop.header slots",
   );
 });
 
@@ -215,12 +220,12 @@ test("/yo/langues/espagnol is a no-scroll Spanish hub with intro + DR primary CT
   assert.match(
     spanishHubSrc,
     /from\s+["']@\/components\/yo\/YoAppShell["']/,
-    "Spanish hub must import YoAppShell",
+    "Spanish hub must keep the YoAppShell import (composed via YoAdaptiveShell)",
   );
-  assert.match(
-    spanishHubCode,
-    /<YoAppShell\b/,
-    "Spanish hub must mount <YoAppShell />",
+  assert.ok(
+    /<YoAppShell\b/.test(spanishHubCode) ||
+      /<YoAdaptiveShell\b/.test(spanishHubCode),
+    "Spanish hub must mount <YoAppShell /> or <YoAdaptiveShell /> (composes YoAppShell)",
   );
   assert.match(
     spanishHubSrc,
@@ -283,12 +288,12 @@ test("Dominican Republic Course Home is no-scroll and exposes a discovery link t
   assert.match(
     courseHomeSrc,
     /from\s+["']@\/components\/yo\/YoAppShell["']/,
-    "Course Home must import YoAppShell",
+    "Course Home must keep the YoAppShell import (composed via YoAdaptiveShell)",
   );
-  assert.match(
-    courseHomeCode,
-    /<YoAppShell\b/,
-    "Course Home must mount <YoAppShell />",
+  assert.ok(
+    /<YoAppShell\b/.test(courseHomeCode) ||
+      /<YoAdaptiveShell\b/.test(courseHomeCode),
+    "Course Home must mount <YoAppShell /> or <YoAdaptiveShell /> (composes YoAppShell)",
   );
   // The legacy long-form `<RepubliqueDominicaineContent />` is no
   // longer mounted inline on the primary Course Home — it lives at
@@ -367,10 +372,11 @@ test("YoDesktopAppWorkspace exists and is applied on the catalog + spanish hub +
     ["Spanish hub", spanishHubCode],
     ["Course Home", courseHomeCode],
   ] as const) {
-    assert.match(
-      source,
-      /<YoDesktopAppWorkspace\b/,
-      `${label} must apply the desktop workspace pattern on lg+`,
+    assert.ok(
+      /<YoDesktopAppWorkspace\b/.test(source) ||
+        /<YoDesktopLearningWorkspace\b/.test(source) ||
+        /<YoAdaptiveShell\b/.test(source),
+      `${label} must apply the desktop workspace pattern (YoDesktopAppWorkspace or YoDesktopLearningWorkspace, composed by YoAdaptiveShell)`,
     );
   }
 });

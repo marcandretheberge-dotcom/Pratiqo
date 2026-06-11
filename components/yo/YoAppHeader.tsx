@@ -65,11 +65,134 @@ export type YoAppHeaderProps = {
   availableLocales?: ReadonlyArray<YoLocale>;
   /** Hide the logo cluster on very narrow viewports — defaults to false. */
   hideLogoOnMobile?: boolean;
+  /**
+   * Appearance profile:
+   *   - "mobile"   : compact app-style top bar. Use inside
+   *                  `<YoMobileAppShell>`.
+   *   - "desktop"  : taller product-software top bar with the
+   *                  page title on the left and a desktop-friendly
+   *                  language control on the right. Use inside
+   *                  `<YoDesktopLearningWorkspace>`.
+   *   - "auto"     : (default) renders both profiles with
+   *                  `lg:hidden` / `hidden lg:flex` so legacy
+   *                  call sites keep working.
+   */
+  appearance?: "mobile" | "desktop" | "auto";
   /** Extra wrapper class — never replaces the chrome. */
   className?: string;
   /** Stable per-screen id for tests. */
   surfaceId?: string;
 };
+
+function MobileBar({
+  locale,
+  backHref,
+  backLabel,
+  title,
+  compactTitle,
+  selectorPath,
+  availableLocales,
+  hideLogoOnMobile,
+}: Required<Pick<YoAppHeaderProps, "locale" | "backHref" | "title">> & {
+  backLabel?: string;
+  compactTitle?: string;
+  selectorPath?: string;
+  availableLocales?: ReadonlyArray<YoLocale>;
+  hideLogoOnMobile?: boolean;
+}): React.JSX.Element {
+  const ariaBack = BACK_ARIA[locale] ?? BACK_ARIA.fr;
+  const visibleTitle = compactTitle ?? title;
+  return (
+    <div
+      data-testid="yo-app-header-mobile-bar"
+      data-yo-app-header-appearance="mobile"
+      className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between gap-2 px-3"
+    >
+      <Link
+        data-testid="yo-app-header-back"
+        href={backHref}
+        aria-label={backLabel ?? ariaBack}
+        className="inline-flex items-center gap-2 rounded-full border border-[#E7DFCF] bg-white/70 px-2.5 py-1.5 text-sm font-semibold text-[#172642] transition hover:bg-white"
+      >
+        <ArrowLeft className="size-4" aria-hidden />
+      </Link>
+
+      <div className="flex min-w-0 items-center justify-center gap-2">
+        <span
+          className={cn(
+            "inline-flex",
+            hideLogoOnMobile ? "hidden" : "",
+          )}
+        >
+          <YoPratiqoLogo size="sm" priority={false} />
+        </span>
+        <span
+          data-testid="yo-app-header-title"
+          className="truncate text-sm font-semibold text-[#172642]"
+        >
+          {visibleTitle}
+        </span>
+      </div>
+
+      <YoLanguageSelector
+        locale={locale}
+        pathname={selectorPath}
+        availableLocales={availableLocales}
+        size="sm"
+      />
+    </div>
+  );
+}
+
+function DesktopBar({
+  locale,
+  backHref,
+  backLabel,
+  title,
+  selectorPath,
+  availableLocales,
+}: Required<Pick<YoAppHeaderProps, "locale" | "backHref" | "title">> & {
+  backLabel?: string;
+  selectorPath?: string;
+  availableLocales?: ReadonlyArray<YoLocale>;
+}): React.JSX.Element {
+  const ariaBack = BACK_ARIA[locale] ?? BACK_ARIA.fr;
+  return (
+    <div
+      data-testid="yo-app-header-desktop-bar"
+      data-yo-app-header-appearance="desktop"
+      className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-4 px-6"
+    >
+      <div className="flex items-center gap-4">
+        <Link
+          data-testid="yo-app-header-back"
+          href={backHref}
+          aria-label={backLabel ?? ariaBack}
+          className="inline-flex items-center gap-2 rounded-full border border-[#E7DFCF] bg-white/70 px-3 py-1.5 text-sm font-semibold text-[#172642] transition hover:bg-white"
+        >
+          <ArrowLeft className="size-4" aria-hidden />
+          {backLabel ? <span>{backLabel}</span> : null}
+        </Link>
+        <span className="h-6 w-px bg-[#E7DFCF]" aria-hidden />
+        <YoPratiqoLogo size="sm" priority={false} />
+        <span
+          data-testid="yo-app-header-title"
+          className="text-base font-semibold text-[#172642]"
+        >
+          {title}
+        </span>
+      </div>
+
+      <YoLanguageSelector
+        locale={locale}
+        pathname={selectorPath}
+        availableLocales={availableLocales}
+        size="sm"
+        variant="desktop-dropdown"
+      />
+    </div>
+  );
+}
 
 export function YoAppHeader({
   locale,
@@ -80,59 +203,67 @@ export function YoAppHeader({
   selectorPath,
   availableLocales,
   hideLogoOnMobile,
+  appearance = "auto",
   className,
   surfaceId,
 }: YoAppHeaderProps): React.JSX.Element {
-  const ariaBack = BACK_ARIA[locale] ?? BACK_ARIA.fr;
-  const visibleTitle = compactTitle ?? title;
   return (
     <header
       data-testid="yo-app-header"
       data-yo-app-header="true"
       data-yo-app-header-surface={surfaceId}
+      data-yo-app-header-appearance={appearance}
       className={cn(
         "relative z-40 border-b border-[#E7DFCF] bg-[#F4EFE6]/95 backdrop-blur-md",
         className,
       )}
     >
-      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-2 px-3 sm:h-16 sm:px-6">
-        <Link
-          data-testid="yo-app-header-back"
-          href={backHref}
-          aria-label={backLabel ?? ariaBack}
-          className="inline-flex items-center gap-2 rounded-full border border-[#E7DFCF] bg-white/70 px-2.5 py-1.5 text-sm font-semibold text-[#172642] transition hover:bg-white sm:px-3"
-        >
-          <ArrowLeft className="size-4" aria-hidden />
-          {backLabel ? (
-            <span className="hidden sm:inline">{backLabel}</span>
-          ) : null}
-        </Link>
-
-        <div className="flex min-w-0 items-center justify-center gap-2">
-          <span
-            className={cn(
-              "inline-flex",
-              hideLogoOnMobile ? "hidden sm:inline-flex" : "",
-            )}
-          >
-            <YoPratiqoLogo size="sm" priority={false} />
-          </span>
-          <span
-            data-testid="yo-app-header-title"
-            className="truncate text-sm font-semibold text-[#172642] sm:text-[15px]"
-          >
-            <span className="hidden sm:inline">{title}</span>
-            <span className="sm:hidden">{visibleTitle}</span>
-          </span>
-        </div>
-
-        <YoLanguageSelector
+      {appearance === "mobile" ? (
+        <MobileBar
           locale={locale}
-          pathname={selectorPath}
+          backHref={backHref}
+          backLabel={backLabel}
+          title={title}
+          compactTitle={compactTitle}
+          selectorPath={selectorPath}
           availableLocales={availableLocales}
-          size="sm"
+          hideLogoOnMobile={hideLogoOnMobile}
         />
-      </div>
+      ) : appearance === "desktop" ? (
+        <DesktopBar
+          locale={locale}
+          backHref={backHref}
+          backLabel={backLabel}
+          title={title}
+          selectorPath={selectorPath}
+          availableLocales={availableLocales}
+        />
+      ) : (
+        <>
+          <div className="lg:hidden">
+            <MobileBar
+              locale={locale}
+              backHref={backHref}
+              backLabel={backLabel}
+              title={title}
+              compactTitle={compactTitle}
+              selectorPath={selectorPath}
+              availableLocales={availableLocales}
+              hideLogoOnMobile={hideLogoOnMobile}
+            />
+          </div>
+          <div className="hidden lg:block">
+            <DesktopBar
+              locale={locale}
+              backHref={backHref}
+              backLabel={backLabel}
+              title={title}
+              selectorPath={selectorPath}
+              availableLocales={availableLocales}
+            />
+          </div>
+        </>
+      )}
     </header>
   );
 }

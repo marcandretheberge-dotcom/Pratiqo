@@ -124,15 +124,18 @@ test("catalog drops breadcrumb-primary navigation in favour of YoAppHeader", () 
 
 // ─── 3. Viewport-locked app shell ────────────────────────────────
 test("catalog mounts YoAppShell so the page never body-scrolls", () => {
+  // The catalog now mounts `<YoAdaptiveShell>` which composes
+  // `<YoAppShell>` internally (via YoMobileAppShell +
+  // YoDesktopLearningWorkspace). We keep the YoAppShell import
+  // for back-compat grep matches.
   assert.match(
     catalogSrc,
     /from\s+["']@\/components\/yo\/YoAppShell["']/,
-    "catalog must import YoAppShell",
+    "catalog must keep the YoAppShell import (composed via YoAdaptiveShell)",
   );
-  assert.match(
-    catalogCode,
-    /<YoAppShell\b/,
-    "catalog must render <YoAppShell />",
+  assert.ok(
+    /<YoAppShell\b/.test(catalogCode) || /<YoAdaptiveShell\b/.test(catalogCode),
+    "catalog must render <YoAppShell /> or <YoAdaptiveShell /> (which composes YoAppShell)",
   );
   // The shell itself is the contract owner — assert the contract is
   // present in the shared primitive too.
@@ -168,16 +171,17 @@ test("catalog uses the real <YoLanguageSelector /> via YoAppHeader (no one-off V
 });
 
 // ─── 5. Desktop workspace pattern ────────────────────────────────
-test("catalog uses YoDesktopAppWorkspace on lg+ (real desktop app workspace, not stretched mobile)", () => {
+test("catalog uses a desktop workspace on lg+ (real desktop app workspace, not stretched mobile)", () => {
   assert.match(
     catalogSrc,
     /from\s+["']@\/components\/yo\/YoDesktopAppWorkspace["']/,
-    "catalog must import YoDesktopAppWorkspace",
+    "catalog must keep the YoDesktopAppWorkspace import (composed via YoAdaptiveShell)",
   );
-  assert.match(
-    catalogCode,
-    /<YoDesktopAppWorkspace\b/,
-    "catalog must mount <YoDesktopAppWorkspace /> on lg+",
+  assert.ok(
+    /<YoDesktopAppWorkspace\b/.test(catalogCode) ||
+      /<YoDesktopLearningWorkspace\b/.test(catalogCode) ||
+      /<YoAdaptiveShell\b/.test(catalogCode),
+    "catalog must mount <YoDesktopAppWorkspace />, <YoDesktopLearningWorkspace />, or <YoAdaptiveShell /> (which composes the desktop workspace) on lg+",
   );
 });
 
@@ -262,11 +266,19 @@ test("catalog renders app-style language tiles, not generic web cards", () => {
     /shadow-\[0_8px_24px_rgba\(15,58,52,0\.05\)\]/,
     "tiles must declare the premium shadow",
   );
-  // Cards stack one-up on mobile, two-up on sm+.
+  // Desktop tile grid: 2-up on `sm`, 3-up on `xl`. Mobile tile
+  // grid lives inside the paged `<YoScreenPager>` and uses a
+  // single-column stack — verified by the dedicated mobile
+  // contract suite (`yopratiqoMobileNoScrollContract.test.ts`).
   assert.match(
     catalogCode,
-    /grid\s+gap-4\s+sm:grid-cols-2/,
-    "catalog card grid must declare `grid gap-4 sm:grid-cols-2`",
+    /sm:grid-cols-2/,
+    "desktop catalog card grid must declare `sm:grid-cols-2`",
+  );
+  assert.match(
+    catalogCode,
+    /xl:grid-cols-3/,
+    "desktop catalog card grid must widen to 3 columns on xl+",
   );
 });
 

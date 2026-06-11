@@ -84,6 +84,18 @@ export type YoLanguageSelectorProps = {
   availableLocales?: ReadonlyArray<YoLocale>;
   /** Visual size — `sm` for in-header use, `md` for stand-alone use. */
   size?: "sm" | "md";
+  /**
+   * Visual variant:
+   *   - "pill-bar"           : the canonical compact three-pill
+   *                            segmented bar used by mobile + most
+   *                            headers (default).
+   *   - "desktop-dropdown"   : a desktop-friendly compact dropdown
+   *                            rendered as a single labelled control.
+   *                            Used by `<YoAppHeader appearance="desktop">`
+   *                            so the desktop top bar doesn't feel
+   *                            like a mobile-app chrome.
+   */
+  variant?: "pill-bar" | "desktop-dropdown";
   /** Extra wrapper class — never replaces the base styling. */
   className?: string;
 };
@@ -93,12 +105,82 @@ export function YoLanguageSelector({
   pathname,
   availableLocales,
   size = "sm",
+  variant = "pill-bar",
   className,
 }: YoLanguageSelectorProps): React.JSX.Element {
   const fallbackPath = usePathname();
   const basePath = pathname ?? fallbackPath ?? "/yo/langues";
   const available = availableLocales ?? YO_LANGUAGE_SELECTOR_LOCALES;
   const groupAria = GROUP_ARIA_LABEL[locale] ?? GROUP_ARIA_LABEL.fr;
+
+  if (variant === "desktop-dropdown") {
+    const activeCopy = COPY[locale];
+    return (
+      <div
+        data-testid="yo-language-selector"
+        data-yo-language-selector="true"
+        data-yo-language-selector-active={locale}
+        data-yo-language-selector-variant="desktop-dropdown"
+        role="group"
+        aria-label={groupAria}
+        className={cn(
+          "relative inline-flex items-center gap-2 rounded-md border border-[#E7DFCF] bg-white/90 px-2 py-1 text-sm font-semibold text-[#172642] shadow-[0_1px_2px_rgba(23,38,66,0.05)]",
+          className,
+        )}
+      >
+        <span
+          data-testid="yo-language-selector-active-pill"
+          data-yo-language-selector-locale={locale}
+          aria-current="page"
+          aria-label={activeCopy.ariaLabel}
+          className="inline-flex items-center gap-1 pr-1 text-xs font-bold uppercase tracking-[0.14em] text-[#0F6E56]"
+        >
+          {activeCopy.short}
+          <span className="text-[#172642]/55" aria-hidden>
+            ·
+          </span>
+          <span className="text-xs font-semibold normal-case tracking-normal text-[#172642]/80">
+            {activeCopy.long}
+          </span>
+        </span>
+        <span className="inline-flex items-center gap-1 border-l border-[#E7DFCF] pl-2">
+          {YO_LANGUAGE_SELECTOR_LOCALES.filter((target) => target !== locale).map(
+            (target) => {
+              const copy = COPY[target];
+              const isAvailable = available.includes(target);
+              const href = buildYoLocaleHref(basePath, target);
+              if (!isAvailable) {
+                return (
+                  <span
+                    key={target}
+                    data-testid="yo-language-selector-disabled-pill"
+                    data-yo-language-selector-locale={target}
+                    aria-disabled="true"
+                    aria-label={`${copy.ariaLabel} (indisponible)`}
+                    className="inline-flex cursor-not-allowed items-center rounded px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-[0.14em] text-[#172642]/30"
+                  >
+                    {copy.short}
+                  </span>
+                );
+              }
+              return (
+                <Link
+                  key={target}
+                  href={href}
+                  data-testid="yo-language-selector-pill"
+                  data-yo-language-selector-locale={target}
+                  aria-label={copy.ariaLabel}
+                  className="inline-flex items-center rounded px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-[0.14em] text-[#172642]/70 transition hover:bg-[#F4EFE6] hover:text-[#0F6E56]"
+                >
+                  {copy.short}
+                </Link>
+              );
+            },
+          )}
+        </span>
+      </div>
+    );
+  }
 
   const pillBase = cn(
     "inline-flex items-center justify-center rounded-full font-bold uppercase tracking-[0.14em] transition",
@@ -110,6 +192,7 @@ export function YoLanguageSelector({
       data-testid="yo-language-selector"
       data-yo-language-selector="true"
       data-yo-language-selector-active={locale}
+      data-yo-language-selector-variant="pill-bar"
       role="group"
       aria-label={groupAria}
       className={cn(
