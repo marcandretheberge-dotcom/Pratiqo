@@ -1,27 +1,29 @@
 /**
  * YoPratiqo — language catalog (`/yo/langues`) app-shell suite.
  *
- * Locks the catalog half of the
- * `feat/yopratiqo-all-language-intros-app-shell` brief:
+ * Locks the new `feat/yopratiqo-no-scroll-app-shell-flow` contract
+ * for the catalog screen (replaces the previous version that asserted
+ * the legacy `min-h-[100dvh]` body-scroll + sticky-rail pattern):
  *
  *  1. /yo/langues uses YoPratiqo branding/logo.
- *  2. /yo/langues does not rely on a breadcrumb as primary product
- *     navigation.
- *  3. /yo/langues links to the correct intro/course route for
- *     Spanish.
- *  4. /yo/langues links to the correct intro route for Quebec French.
- *  5. /yo/langues links to the correct intro route for Italian.
- *  6. /yo/langues links to the correct intro route for Japanese.
- *  7. /yo/langues handles English honestly based on route
- *     availability.
- *  8. /yo/langues has responsive mobile/desktop layout classes.
- *  9. /yo/langues uses app-like language cards/tiles.
- * 10. No fake paid claims.
- * 11. Paid YoPratiqo checkout remains disabled.
- * 12. No restricted systems touched.
+ *  2. /yo/langues drops breadcrumb-primary navigation in favour of
+ *     the shared `<YoAppHeader />`.
+ *  3. /yo/langues mounts the shared `<YoAppShell />` (viewport-locked
+ *     `h-[100dvh]` + `overflow-hidden`).
+ *  4. /yo/langues uses the real `<YoLanguageSelector />` (FR/EN/ES)
+ *     instead of a one-off "View in English" pill.
+ *  5. /yo/langues uses the desktop workspace pattern on lg+.
+ *  6. The Spanish, Quebec French, Italian, Japanese, and English
+ *     cards point at the correct intro / hub routes.
+ *  7. /yo/langues uses app-like premium tiles (rounded-3xl + soft
+ *     shadow + per-card data attribute).
+ *  8. Companion presence — Yoppo is named on the catalog rail.
+ *  9. No fake paid claims; the free-intro framing is preserved.
+ * 10. Paid YoPratiqo checkout remains disabled.
+ * 11. No restricted system touched.
  *
- * Style: `node:test`-style static-source assertions, no browser,
- * no network. Mirrors the existing `tests/yo/*` suites.
+ * Style: `node:test`-style static-source assertions. No browser,
+ * no network.
  */
 
 import assert from "node:assert/strict";
@@ -67,20 +69,20 @@ test("catalog mounts the YoPratiqo logo", () => {
     /<YoPratiqoLogo\b/,
     "catalog must render <YoPratiqoLogo />",
   );
-  // No "Yo" alone anywhere in shipped catalog copy.
+  // No standalone "Yo" — must always be "YoPratiqo" or "Yoppo".
   const standalone = catalogCode.match(
     /(?<![A-Za-z0-9_-])Yo(?![A-Za-z])(?!\s*Pratiqo)/g,
   );
   assert.ok(
     standalone === null,
-    `catalog must always say 'YoPratiqo', never 'Yo' alone (offending matches: ${
+    `catalog must always say 'YoPratiqo' (or 'Yoppo'), never 'Yo' alone: ${
       standalone?.slice(0, 3).join(", ") ?? ""
-    })`,
+    }`,
   );
 });
 
 // ─── 2. No breadcrumb-primary navigation ─────────────────────────
-test("catalog drops breadcrumb-primary navigation in favour of an app header", () => {
+test("catalog drops breadcrumb-primary navigation in favour of YoAppHeader", () => {
   assert.ok(
     !/<YoBreadcrumb\b/.test(catalogCode),
     "catalog must not render <YoBreadcrumb />",
@@ -89,93 +91,148 @@ test("catalog drops breadcrumb-primary navigation in favour of an app header", (
     !/from\s+["']@\/components\/yo\/YoBreadcrumb["']/.test(catalogCode),
     "catalog must not import YoBreadcrumb",
   );
-  // App-style header markers from the new implementation.
+  assert.match(
+    catalogSrc,
+    /from\s+["']@\/components\/yo\/YoAppHeader["']/,
+    "catalog must import the shared YoAppHeader",
+  );
+  assert.match(
+    catalogCode,
+    /<YoAppHeader\b/,
+    "catalog must mount <YoAppHeader />",
+  );
+  // The catalog still ships its legacy data-testids so older static
+  // checks (and the legal-guard suite) continue to recognise the
+  // screen.
   assert.match(
     catalogCode,
     /data-testid="yo-langues-catalog-header"/,
-    "catalog must render the new app-style header",
+    "catalog must continue to expose the catalog-header data-testid",
   );
   assert.match(
     catalogCode,
     /data-testid="yo-langues-catalog-back"/,
-    "catalog must render the back-to-YoPratiqo arrow",
+    "catalog must continue to expose the catalog-back data-testid",
   );
-  // The header must wire the back arrow to /yo (with optional lang
-  // suffix) — never a stale legacy route.
+  // The back arrow must wire to /yo with the lang suffix.
   assert.match(
     catalogCode,
-    /href=\{`\/yo\$\{langSuffix\}`\}/,
-    "back arrow must target /yo with the lang suffix",
+    /\/yo\$\{langSuffix\}/,
+    "catalog back arrow must target /yo with the lang suffix",
   );
 });
 
-// ─── 3. Spanish link points to the Spanish hub ───────────────────
-test("catalog links Spanish to /yo/langues/espagnol (RD path preserved downstream)", () => {
+// ─── 3. Viewport-locked app shell ────────────────────────────────
+test("catalog mounts YoAppShell so the page never body-scrolls", () => {
   assert.match(
     catalogSrc,
-    /id:\s*"spanish"[\s\S]*?status:\s*"available"[\s\S]*?href:\s*"\/yo\/langues\/espagnol"/,
-    'Spanish card must keep href: "/yo/langues/espagnol"',
+    /from\s+["']@\/components\/yo\/YoAppShell["']/,
+    "catalog must import YoAppShell",
   );
-  // The Spanish hub itself still exists — sanity check so the link
-  // never goes stale.
-  assert.ok(
-    exists("app/yo/langues/espagnol/page.tsx"),
-    "Spanish hub page must exist on disk",
+  assert.match(
+    catalogCode,
+    /<YoAppShell\b/,
+    "catalog must render <YoAppShell />",
+  );
+  // The shell itself is the contract owner — assert the contract is
+  // present in the shared primitive too.
+  const shellSrc = read("components/yo/YoAppShell.tsx");
+  assert.match(
+    shellSrc,
+    /h-\[100dvh\]/,
+    "YoAppShell must lock the viewport with h-[100dvh]",
+  );
+  assert.match(
+    shellSrc,
+    /overflow-hidden/,
+    "YoAppShell must declare overflow-hidden so the body never scrolls",
   );
 });
 
-// ─── 4. Quebec French links to the intro deck ────────────────────
-test("catalog links Quebec French to /yo/langues/francais-quebec/intro", () => {
+// ─── 4. Real language selector ────────────────────────────────────
+test("catalog uses the real <YoLanguageSelector /> via YoAppHeader (no one-off View in English)", () => {
+  // The selector is brought in via YoAppHeader — assert the
+  // component is reachable from the catalog import graph.
+  const headerSrc = read("components/yo/YoAppHeader.tsx");
+  assert.match(
+    headerSrc,
+    /<YoLanguageSelector\b/,
+    "YoAppHeader (used by the catalog) must mount <YoLanguageSelector />",
+  );
+  // The catalog must not ship the literal "View in English" pill
+  // anymore — comments stripped so legacy doc-mentions don't count.
+  assert.ok(
+    !/"View in English"/.test(catalogCode),
+    "catalog must not render the legacy 'View in English' pill",
+  );
+});
+
+// ─── 5. Desktop workspace pattern ────────────────────────────────
+test("catalog uses YoDesktopAppWorkspace on lg+ (real desktop app workspace, not stretched mobile)", () => {
+  assert.match(
+    catalogSrc,
+    /from\s+["']@\/components\/yo\/YoDesktopAppWorkspace["']/,
+    "catalog must import YoDesktopAppWorkspace",
+  );
+  assert.match(
+    catalogCode,
+    /<YoDesktopAppWorkspace\b/,
+    "catalog must mount <YoDesktopAppWorkspace /> on lg+",
+  );
+});
+
+// ─── 6. Honest language routing ──────────────────────────────────
+test("catalog routes each language card to the correct intro / hub", () => {
+  // Spanish → /yo/langues/espagnol (the Spanish hub)
+  assert.match(
+    catalogSrc,
+    /id:\s*"spanish"[\s\S]*?href:\s*"\/yo\/langues\/espagnol"/,
+    'Spanish card must point at the Spanish hub',
+  );
+  assert.ok(
+    exists("app/yo/langues/espagnol/page.tsx"),
+    "Spanish hub must exist on disk",
+  );
+  // Quebec French → /yo/langues/francais-quebec/intro
   assert.match(
     catalogSrc,
     /id:\s*"french"[\s\S]*?href:\s*"\/yo\/langues\/francais-quebec\/intro"/,
-    'Quebec French card must keep href: "/yo/langues/francais-quebec/intro"',
+    'Quebec French card must point at the intro deck',
   );
   assert.ok(
     exists("app/yo/langues/francais-quebec/intro/page.tsx"),
-    "Quebec French intro page must exist on disk",
+    "Quebec French intro must exist on disk",
   );
-});
-
-// ─── 5. Italian links to the intro deck ──────────────────────────
-test("catalog links Italian to /yo/langues/italien/intro", () => {
+  // Italian / Japanese
   assert.match(
     catalogSrc,
     /id:\s*"italian"[\s\S]*?href:\s*"\/yo\/langues\/italien\/intro"/,
-    'Italian card must keep href: "/yo/langues/italien/intro"',
+    "Italian card must point at the intro deck",
+  );
+  assert.match(
+    catalogSrc,
+    /id:\s*"japanese"[\s\S]*?href:\s*"\/yo\/langues\/japonais\/intro"/,
+    "Japanese card must point at the intro deck",
   );
   assert.ok(
     exists("app/yo/langues/italien/intro/page.tsx"),
     "Italian intro page must exist on disk",
   );
-});
-
-// ─── 6. Japanese links to the intro deck ─────────────────────────
-test("catalog links Japanese to /yo/langues/japonais/intro", () => {
-  assert.match(
-    catalogSrc,
-    /id:\s*"japanese"[\s\S]*?href:\s*"\/yo\/langues\/japonais\/intro"/,
-    'Japanese card must keep href: "/yo/langues/japonais/intro"',
-  );
   assert.ok(
     exists("app/yo/langues/japonais/intro/page.tsx"),
     "Japanese intro page must exist on disk",
   );
-});
-
-// ─── 7. English handled honestly ─────────────────────────────────
-test("catalog only claims English is available when the deck route exists", () => {
-  const englishAvailable = /id:\s*"english"[\s\S]*?status:\s*"available"[\s\S]*?href:\s*"\/yo\/langues\/anglais\/intro"/.test(
-    catalogSrc,
-  );
+  // English: if claimed available, the deck route must exist.
+  const englishAvailable =
+    /id:\s*"english"[\s\S]*?status:\s*"available"[\s\S]*?href:\s*"\/yo\/langues\/anglais\/intro"/.test(
+      catalogSrc,
+    );
   if (englishAvailable) {
     assert.ok(
       exists("app/yo/langues/anglais/intro/page.tsx"),
       "catalog claims English intro available — page.tsx must exist on disk",
     );
   } else {
-    // If we ever flip English back to coming_soon, it must declare
-    // either `href: null` OR no href, and must NOT claim available.
     assert.ok(
       !/id:\s*"english"[\s\S]*?status:\s*"available"/.test(catalogSrc),
       "English card must not claim status: available when the deck route is missing",
@@ -183,39 +240,8 @@ test("catalog only claims English is available when the deck route exists", () =
   }
 });
 
-// ─── 8. Responsive mobile / desktop layout classes ───────────────
-test("catalog uses responsive layout classes (mobile stack, desktop two-pane)", () => {
-  // Desktop two-pane: aside + grid split via lg:grid-cols.
-  assert.match(
-    catalogCode,
-    /lg:grid-cols-\[1fr,1\.6fr\]/,
-    "catalog must split into a sticky rail + grid on lg viewports",
-  );
-  // Mobile-friendly card grid (sm: two columns max so cards stay
-  // readable).
-  assert.match(
-    catalogCode,
-    /grid\s+gap-4\s+sm:grid-cols-2/,
-    "catalog card grid must declare `grid gap-4 sm:grid-cols-2`",
-  );
-  // Sticky rail anchor for desktop.
-  assert.match(
-    catalogCode,
-    /lg:sticky\s+lg:top-24/,
-    "left rail must stick on lg viewports so it never stretches",
-  );
-  // Catalog body must opt into a real min-height viewport surface
-  // so it never collapses into a thin band on tall screens.
-  assert.match(
-    catalogCode,
-    /min-h-\[100dvh\]/,
-    "catalog root must claim full dvh height",
-  );
-});
-
-// ─── 9. App-like cards / tiles ───────────────────────────────────
+// ─── 7. App-like premium tiles ───────────────────────────────────
 test("catalog renders app-style language tiles, not generic web cards", () => {
-  // Each card declares a stable data attribute we can grep against.
   assert.match(
     catalogCode,
     /data-testid="yo-langues-catalog-tiles"/,
@@ -226,8 +252,6 @@ test("catalog renders app-style language tiles, not generic web cards", () => {
     /data-yo-langues-card-id=\{language\.id\}/,
     "each language tile must carry a data-yo-langues-card-id attribute",
   );
-  // Tiles must use the premium rounded-3xl + shadow + hover lift
-  // contract introduced by the app-shell upgrade.
   assert.match(
     catalogCode,
     /rounded-3xl/,
@@ -238,24 +262,35 @@ test("catalog renders app-style language tiles, not generic web cards", () => {
     /shadow-\[0_8px_24px_rgba\(15,58,52,0\.05\)\]/,
     "tiles must declare the premium shadow",
   );
-  // Companion presence on the left rail — every catalog screen must
-  // expose the companion so YoPratiqo feels like one consistent
-  // product.
+  // Cards stack one-up on mobile, two-up on sm+.
   assert.match(
     catalogCode,
-    /from\s+["']@\/components\/companion\/CompanionAvatar["']/,
-    "catalog must import CompanionAvatar",
+    /grid\s+gap-4\s+sm:grid-cols-2/,
+    "catalog card grid must declare `grid gap-4 sm:grid-cols-2`",
+  );
+});
+
+// ─── 8. Yoppo named on the catalog rail ──────────────────────────
+test("catalog left rail names Yoppo, the YoPratiqo companion", () => {
+  assert.match(
+    catalogSrc,
+    /Yoppo/,
+    "catalog must name the companion Yoppo on the rail",
   );
   assert.match(
     catalogCode,
     /<CompanionAvatar\b/,
-    "catalog must render <CompanionAvatar />",
+    "catalog must mount the real CompanionAvatar (no fake mascot)",
+  );
+  assert.match(
+    catalogCode,
+    /from\s+["']@\/components\/companion\/CompanionAvatar["']/,
+    "catalog must import CompanionAvatar via the manifest",
   );
 });
 
-// ─── 10. No fake paid claims ─────────────────────────────────────
+// ─── 9. No fake paid claims ──────────────────────────────────────
 test("catalog ships no fake paid claims (only free intro language)", () => {
-  // Forbidden marketing language that would imply a paid funnel.
   const forbidden = [
     /\bcheckout\b/i,
     /\bachète(?:r|z)?\b/i,
@@ -272,7 +307,6 @@ test("catalog ships no fake paid claims (only free intro language)", () => {
       `catalog must not ship copy matching ${re.source}`,
     );
   }
-  // Positive framing must talk about the free intro.
   assert.match(
     catalogCode,
     /Intro gratuite/,
@@ -285,7 +319,7 @@ test("catalog ships no fake paid claims (only free intro language)", () => {
   );
 });
 
-// ─── 11. Paid YoPratiqo checkout remains disabled ────────────────
+// ─── 10. Paid YoPratiqo checkout remains disabled ────────────────
 test("paid YoPratiqo checkout remains disabled in yopratiqoProductConfig.ts", () => {
   const configSrc = read("lib/yo/yopratiqoProductConfig.ts");
   assert.match(
@@ -295,7 +329,7 @@ test("paid YoPratiqo checkout remains disabled in yopratiqoProductConfig.ts", ()
   );
 });
 
-// ─── 12. No restricted systems touched ───────────────────────────
+// ─── 11. No restricted systems touched ───────────────────────────
 test("catalog imports no restricted systems", () => {
   const forbidden = [
     /from\s+["']stripe["']/i,

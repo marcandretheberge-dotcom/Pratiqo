@@ -30,11 +30,12 @@ import { ArrowLeft } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { YoPratiqoLogo } from "@/components/yo/YoPratiqoLogo";
+import { YoLanguageSelector } from "@/components/yo/YoLanguageSelector";
+import { extractBasePathFromToggleHref } from "@/components/yo/YoLessonDeckHeader";
 import type { YoLocale } from "@/lib/yo/types";
 
 type Copy = {
   backLabel: string;
-  toggleLabel: string;
   /** Visible course label, e.g. "République dominicaine". */
   courseLabel: string;
   /** Screen-reader-only annotation for the back link. */
@@ -44,19 +45,16 @@ type Copy = {
 const COPY: Record<YoLocale, Copy> = {
   fr: {
     backLabel: "Langues",
-    toggleLabel: "View in English",
     courseLabel: "République dominicaine",
     backAria: "Retour à Langues",
   },
   en: {
     backLabel: "Languages",
-    toggleLabel: "Voir en français",
     courseLabel: "Dominican Republic",
     backAria: "Back to Languages",
   },
   es: {
     backLabel: "Idiomas",
-    toggleLabel: "Voir en français",
     courseLabel: "República Dominicana",
     backAria: "Volver a Idiomas",
   },
@@ -71,8 +69,17 @@ export type YoCourseAppHeaderProps = {
   locale: YoLocale;
   /** Where the back arrow / back link points. */
   backHref: string;
-  /** Where the FR/EN toggle points (with `?lang=` flipped). */
+  /**
+   * Legacy FR/EN toggle href — preserved for back-compat. The
+   * `<YoLanguageSelector />` rebuilds the locale flips on its own,
+   * but we reuse the pathname stem so callers don't need to refactor.
+   */
   toggleHref: string;
+  /**
+   * Optional whitelist of locales the screen ships copy for.
+   * Defaults to all three.
+   */
+  availableLocales?: ReadonlyArray<YoLocale>;
   className?: string;
 };
 
@@ -80,10 +87,12 @@ export function YoCourseAppHeader({
   locale,
   backHref,
   toggleHref,
+  availableLocales,
   className,
 }: YoCourseAppHeaderProps): React.JSX.Element {
   const l = safeLocale(locale);
   const copy = COPY[l];
+  const selectorPath = extractBasePathFromToggleHref(toggleHref);
   return (
     <header
       data-testid="yo-course-app-header"
@@ -122,15 +131,17 @@ export function YoCourseAppHeader({
           </span>
         </div>
 
-        {/* Right: lang toggle. Kept compact so it doesn't push the
-            center label off-screen on mobile. */}
-        <Link
-          data-testid="yo-course-app-header-lang-toggle"
-          href={toggleHref}
-          className="inline-flex items-center rounded-full border border-[#E7DFCF] bg-white/70 px-2.5 py-1.5 text-xs font-bold text-[#172642] transition hover:bg-white sm:px-3"
-        >
-          {copy.toggleLabel}
-        </Link>
+        {/* Right: real FR/EN/ES language selector. Replaces the
+            one-off "View in English" pill so the user can hop to any
+            supported locale without leaving the screen. */}
+        <div data-testid="yo-course-app-header-lang-toggle">
+          <YoLanguageSelector
+            locale={l}
+            pathname={selectorPath}
+            availableLocales={availableLocales}
+            size="sm"
+          />
+        </div>
       </div>
     </header>
   );

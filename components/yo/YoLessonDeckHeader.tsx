@@ -31,6 +31,7 @@ import { ArrowLeft } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { YoPratiqoLogo } from "@/components/yo/YoPratiqoLogo";
+import { YoLanguageSelector } from "@/components/yo/YoLanguageSelector";
 import {
   YO_LESSON_DECK_CHROME,
   type YoLessonDeckChromeLabels,
@@ -46,21 +47,54 @@ export type YoLessonDeckHeaderProps = {
   locale: YoLocale;
   /** Where the back arrow points — typically the country course home. */
   backHref: string;
-  /** Where the FR/EN toggle points. */
+  /**
+   * Legacy FR/EN toggle href. Preserved as a fallback path used by the
+   * `<YoLanguageSelector />` (the selector falls back to
+   * `usePathname()` when a route has client navigation enabled, but
+   * deck pages are server components so we pass the explicit base
+   * pathname derived from `toggleHref` to keep ES / FR / EN flips
+   * predictable on static surfaces).
+   */
   toggleHref: string;
   /** Visible compact label, e.g. "Module 2 · RD A1". */
   moduleLabel: string;
+  /**
+   * Optional whitelist of locales the current deck route ships copy
+   * for. Defaults to all three — pass explicitly to dim ES when a
+   * route only has FR/EN strings.
+   */
+  availableLocales?: ReadonlyArray<YoLocale>;
+  /**
+   * Explicit base pathname for the language selector. When omitted,
+   * the selector uses `usePathname()`. Pass when the deck lives at a
+   * sub-route but the language flip should anchor a different base.
+   */
+  selectorPath?: string;
   className?: string;
 };
+
+/**
+ * Strip the trailing `?lang=...` query (if any) from the legacy
+ * `toggleHref` so we can reuse it as the canonical pathname for the
+ * `<YoLanguageSelector />`. Pure helper — exported only for tests.
+ */
+export function extractBasePathFromToggleHref(toggleHref: string): string {
+  const queryIndex = toggleHref.indexOf("?");
+  return queryIndex >= 0 ? toggleHref.slice(0, queryIndex) : toggleHref;
+}
 
 export function YoLessonDeckHeader({
   locale,
   backHref,
   toggleHref,
   moduleLabel,
+  availableLocales,
+  selectorPath,
   className,
 }: YoLessonDeckHeaderProps): React.JSX.Element {
   const labels: YoLessonDeckChromeLabels = YO_LESSON_DECK_CHROME[locale];
+  const baseSelectorPath =
+    selectorPath ?? extractBasePathFromToggleHref(toggleHref);
   return (
     <header
       data-testid="yo-lesson-deck-header"
@@ -92,13 +126,14 @@ export function YoLessonDeckHeader({
           </span>
         </div>
 
-        <Link
-          data-testid="yo-lesson-deck-header-lang-toggle"
-          href={toggleHref}
-          className="inline-flex items-center rounded-full border border-[#E7DFCF] bg-white/70 px-2.5 py-1.5 text-xs font-bold text-[#172642] transition hover:bg-white sm:px-3"
-        >
-          {labels.toggleLanguage}
-        </Link>
+        <div data-testid="yo-lesson-deck-header-lang-toggle">
+          <YoLanguageSelector
+            locale={locale}
+            pathname={baseSelectorPath}
+            availableLocales={availableLocales}
+            size="sm"
+          />
+        </div>
       </div>
     </header>
   );

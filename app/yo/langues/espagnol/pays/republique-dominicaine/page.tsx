@@ -1,75 +1,67 @@
 /**
  * YoPratiqo — Espagnol · Pays · République dominicaine A1 (Course Home)
  *
- * Canonical position of the RD A1 course inside the new YoPratiqo
- * information architecture:
+ * Canonical position of the RD A1 course inside the YoPratiqo IA:
  *
  *   YoPratiqo → Langues → Espagnol → République dominicaine
  *
- * Replaces the original deep 4-level breadcrumb landing with an
- * app-like "Course Home" surface:
+ * No-scroll app-style Course Home. Replaces the previous Course Home
+ * that mounted the full long-form `<RepubliqueDominicaineContent />`
+ * below the app primitives (which made the page a long vertical
+ * scroll). The primary view now fits one viewport on every common
+ * device size and surfaces five focused affordances:
  *
- *   1. <YoCourseAppHeader />       sticky app top bar — back to
- *                                  /yo/langues/espagnol, compact
- *                                  YoPratiqo brand mark, FR/EN
- *                                  toggle. No breadcrumb trail.
- *   2. <YoCourseHero />            rounded country photo, badge
- *                                  chips, editorial serif title,
- *                                  one primary CTA pill to the
- *                                  in-page intro anchor + a small
- *                                  "skip to module 2" secondary
- *                                  link.
- *   3. <YoCoursePath />            5-step roadmap (Intro → Mods 2,
- *                                  3, 4, 5 → A2 mission) using the
- *                                  real module routes that already
- *                                  exist in the repo.
- *   4. <YoCourseCompanionPanel />  travel companion + auth-aware
- *                                  CTA wired to `/login` or
- *                                  `/student/progress`.
- *   5. <RepubliqueDominicaineContent omitHero omitLessonPath />
- *                                  the existing rich educational
- *                                  content — intro experience,
- *                                  detailed sections, dictionary,
- *                                  flashcards, quiz, unlock card,
- *                                  feature strip, printables, and
- *                                  the legacy final CTA — mounted
- *                                  BELOW the Course Home so no
- *                                  lesson content is lost. The
- *                                  duplicate hero + lesson-path
- *                                  inside that component are
- *                                  suppressed via opt-outs so
- *                                  there is exactly one hero and
- *                                  exactly one roadmap on the
- *                                  page.
- *   6. <YoStickyCourseCta />       mobile-only sticky bottom pill
- *                                  so the primary action is always
- *                                  one tap away while the learner
- *                                  reads the long-form intro.
+ *   1. `<YoCourseAppHeader />`       app top bar — single back link
+ *                                    to /yo/langues/espagnol, compact
+ *                                    YoPratiqo brand mark, real
+ *                                    FR/EN/ES language selector.
+ *   2. `<YoCourseHero />`            rounded country hero, primary
+ *                                    CTA into the Intro deck +
+ *                                    secondary "skip to Module 2".
+ *   3. `<YoCoursePath />`            5-step roadmap pointing at the
+ *                                    real module routes.
+ *   4. `<YoCourseCompanionPanel />`  Yoppo, the YoPratiqo companion,
+ *                                    with auth-aware progress CTA.
+ *   5. "Discover this course" link   secondary entry-point to the
+ *                                    long-form discovery sub-route
+ *                                    at `/decouvrir` so the legacy
+ *                                    educational content (free intro
+ *                                    experience, dictionary,
+ *                                    flashcards, quiz, unlock card,
+ *                                    feature strip, printables) is
+ *                                    still one tap away — just no
+ *                                    longer in the primary scrolled
+ *                                    body.
  *
- * Locale behaviour:
- *   ?lang=en → English
- *   anything else (or absent) → French (Quebec default)
+ * Desktop additionally uses a `<YoDesktopAppWorkspace />` pattern
+ * (left rail = Yoppo + path overview, center = hero + roadmap +
+ * companion) so the surface no longer feels like a stretched phone
+ * on lg+ viewports.
  *
- * Privacy / restricted-systems envelope:
- *   No Supabase write, no Stripe, no payment math, no checkout,
- *   no marketplace, no audio generation, no Supabase RLS edits,
- *   no migrations, no AI summary, no raw quiz exposure. The
- *   booking-time consent surface (`<YoBookingTeacherBridgeConsent
- *   />`) and the student-progress companion card
- *   (`<YoStudentCompanionCard />`) are NOT touched.
+ * Locale: ?lang=en → English, ?lang=es → Spanish, default → French.
+ *
+ * Privacy / safety profile
+ * ------------------------
+ *   • Server component. No Supabase write, no Stripe, no payment
+ *     math, no checkout, no marketplace, no audio generation, no
+ *     RLS edits, no migrations, no AI summary, no raw quiz
+ *     exposure. The booking-time consent surface and the
+ *     `<YoStudentCompanionCard />` are NOT touched.
  */
 
 import type { Metadata } from "next";
+import Link from "next/link";
+import { BookOpenCheck, ChevronRight } from "lucide-react";
+
 import { SITE_URL } from "@/lib/seo/site";
 import { dominicanRepublicA1 } from "@/lib/yo/dominicanRepublicA1";
 import { buildYoLocaleHref, getYoLocale, t } from "@/lib/yo/localize";
-import { RepubliqueDominicaineContent } from "@/components/yo/RepubliqueDominicaineContent";
 import { YoCourseAppHeader } from "@/components/yo/YoCourseAppHeader";
 import { YoCourseCompanionPanel } from "@/components/yo/YoCourseCompanionPanel";
 import { YoCourseHero } from "@/components/yo/YoCourseHero";
 import { YoCoursePath, type YoCoursePathStep } from "@/components/yo/YoCoursePath";
-import { YoCourseHomeShell } from "@/components/yo/YoCourseHomeShell";
-import { YoStickyCourseCta } from "@/components/yo/YoStickyCourseCta";
+import { YoAppShell, YoAppShellScroller } from "@/components/yo/YoAppShell";
+import { YoDesktopAppWorkspace } from "@/components/yo/YoDesktopAppWorkspace";
 
 export const dynamic = "force-dynamic";
 
@@ -97,12 +89,10 @@ interface PageProps {
 }
 
 /**
- * Static per-locale copy for the Course Home roadmap. We mirror
- * the source data in `lib/yo/dominicanRepublicA1.ts` (where the
- * 5 module routes + titles + statuses live) but render shorter,
- * app-style outcomes specifically tuned for the roadmap cards.
- * The legacy lesson-path data is still consumed unchanged by
- * `<YoLessonPath />` on the legacy `/yo/voyage/...` route.
+ * Static per-locale copy for the Course Home roadmap. Mirrors the
+ * source data in `lib/yo/dominicanRepublicA1.ts` (where the 5 module
+ * routes + titles + statuses live) but renders shorter, app-style
+ * outcomes specifically tuned for the roadmap cards.
  */
 const ROADMAP_BASE: ReadonlyArray<
   Omit<YoCoursePathStep, "ctaLabel" | "title" | "outcome">
@@ -229,10 +219,19 @@ const ROADMAP_COPY = {
   },
 } as const;
 
-const COURSE_HOME_COPY = {
-  fr: { stickyCta: "Commencer gratuitement" },
-  en: { stickyCta: "Start for free" },
-  es: { stickyCta: "Empezar gratis" },
+const DISCOVER_COPY = {
+  fr: {
+    label: "Découvrir le cours",
+    hint: "Contenu détaillé : intro libre, dictionnaire, flashcards, quiz, imprimables.",
+  },
+  en: {
+    label: "Discover this course",
+    hint: "Long-form details: free intro, dictionary, flashcards, quiz, printables.",
+  },
+  es: {
+    label: "Descubrir el curso",
+    hint: "Contenido detallado: intro libre, diccionario, flashcards, cuestionarios, imprimibles.",
+  },
 } as const;
 
 function buildRoadmap(locale: "fr" | "en" | "es"): YoCoursePathStep[] {
@@ -260,30 +259,73 @@ function buildRoadmap(locale: "fr" | "en" | "es"): YoCoursePathStep[] {
   });
 }
 
+function DiscoverLink({
+  href,
+  locale,
+}: {
+  href: string;
+  locale: "fr" | "en" | "es";
+}): React.JSX.Element {
+  const copy = DISCOVER_COPY[locale];
+  return (
+    <Link
+      data-testid="yo-course-home-discover-link"
+      data-yo-course-discover="true"
+      href={href}
+      className="group flex items-center justify-between gap-3 rounded-2xl border border-[#E7DFCF] bg-white/85 p-4 shadow-[0_1px_2px_rgba(23,38,66,0.04)] transition hover:bg-white"
+    >
+      <div className="flex items-start gap-3">
+        <BookOpenCheck className="mt-0.5 size-5 shrink-0 text-[#13A085]" aria-hidden />
+        <div className="min-w-0">
+          <p className="text-sm font-bold text-[#172642]">{copy.label}</p>
+          <p className="mt-0.5 text-xs leading-relaxed text-[#566073]">{copy.hint}</p>
+        </div>
+      </div>
+      <ChevronRight
+        className="size-4 shrink-0 text-[#172642]/55 transition group-hover:translate-x-0.5"
+        aria-hidden
+      />
+    </Link>
+  );
+}
+
 export default async function YoEspagnolRepubliqueDominicainePage({
   searchParams,
 }: PageProps) {
   const resolvedSearchParams = await searchParams;
   const locale = getYoLocale(resolvedSearchParams.lang);
-  const langSuffix = locale === "en" ? "?lang=en" : "";
+  const langSuffix = locale === "fr" ? "" : `?lang=${locale}`;
 
   const { module } = dominicanRepublicA1;
   const heroImageAlt = t(module.heroImageAlt ?? module.destinationLabel, locale);
 
   // Back nav points one step up the canonical IA — to the
-  // Spanish-language hub, not the YoPratiqo home — so the user
-  // can fan back out to other Spanish countries quickly.
+  // Spanish-language hub — so the user can fan back out to other
+  // Spanish countries / the global Spanish intro quickly.
   const backHref = `/yo/langues/espagnol${langSuffix}`;
   const toggleHref = buildYoLocaleHref(
     "/yo/langues/espagnol/pays/republique-dominicaine",
     locale === "fr" ? "en" : "fr",
   );
+  const discoverHref = `/yo/langues/espagnol/pays/republique-dominicaine/decouvrir${langSuffix}`;
 
   const roadmap = buildRoadmap(locale);
-  const stickyCopy = COURSE_HOME_COPY[locale];
+
+  const heroBlock = (
+    <YoCourseHero
+      locale={locale}
+      heroImagePath={module.heroImagePath ?? "/images/yo/app/hero.png"}
+      heroImageAlt={heroImageAlt}
+    />
+  );
+  const pathBlock = <YoCoursePath locale={locale} steps={roadmap} />;
+  const companionBlock = <YoCourseCompanionPanel locale={locale} />;
+  const discoverBlock = <DiscoverLink href={discoverHref} locale={locale} />;
 
   return (
-    <YoCourseHomeShell
+    <YoAppShell
+      surfaceId="rd-course-home"
+      background="bg-[#F4EFE6]"
       header={
         <YoCourseAppHeader
           locale={locale}
@@ -292,41 +334,37 @@ export default async function YoEspagnolRepubliqueDominicainePage({
         />
       }
     >
-      <YoCourseHero
-        locale={locale}
-        heroImagePath={module.heroImagePath ?? "/images/yo/app/hero.png"}
-        heroImageAlt={heroImageAlt}
-      />
+      {/* Mobile: stack hero → path → companion → discover link
+          inside a scoped scroller so the body never scrolls. */}
+      <YoAppShellScroller className="lg:hidden">
+        <div className="mx-auto flex w-full max-w-[600px] flex-col gap-6 px-4 py-4 sm:px-6 sm:py-5">
+          {heroBlock}
+          {pathBlock}
+          {companionBlock}
+          {discoverBlock}
+        </div>
+      </YoAppShellScroller>
 
-      <YoCoursePath locale={locale} steps={roadmap} />
-
-      <YoCourseCompanionPanel locale={locale} />
-
-      {/* Long-form educational content kept intact and moved below
-          the app-style Course Home. The duplicate marketing hero
-          and legacy lesson-path inside this component are opted
-          out so the page has exactly one hero (above) and exactly
-          one roadmap (above). The free intro experience,
-          dictionary, flashcards, quiz, unlock card, feature strip,
-          printables, and existing final CTA all render unchanged
-          here so any deep link to `#yo-intro-experience` keeps
-          working AND so any learner who scrolls past the deck
-          CTAs can still access the long-form content. The
-          PRIMARY learning flow now goes through the
-          `/intro` deck route — the legacy anchor is preserved
-          for backward compatibility only. */}
-      <div id="yo-intro-experience" className="scroll-mt-20">
-        <RepubliqueDominicaineContent
-          locale={locale}
-          omitHero
-          omitLessonPath
+      {/* Desktop: app workspace pattern. Left rail = companion +
+          discover, center = hero + path. No giant stretched-mobile
+          column. */}
+      <div className="hidden h-full lg:flex lg:flex-1">
+        <YoDesktopAppWorkspace
+          surfaceId="rd-course-home"
+          leftRail={
+            <div className="flex flex-col gap-4">
+              {companionBlock}
+              {discoverBlock}
+            </div>
+          }
+          center={
+            <div className="flex flex-col gap-5">
+              {heroBlock}
+              {pathBlock}
+            </div>
+          }
         />
       </div>
-
-      <YoStickyCourseCta
-        href="/yo/langues/espagnol/pays/republique-dominicaine/intro"
-        label={stickyCopy.stickyCta}
-      />
-    </YoCourseHomeShell>
+    </YoAppShell>
   );
 }
