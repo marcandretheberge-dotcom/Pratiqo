@@ -21,7 +21,13 @@
  *   8. Primary CTA pill — `Start for free / Commencer gratuitement /
  *      Empezar gratis` → `/yo/langues/espagnol/pays/republique-dominicaine`.
  *   9. Free-introduction note (small, navy-soft).
- *  10. Login link — `/login?next=/student/progress`.
+ *  10. Login link — `/login?next=/student/yopratiqo`. After OAuth the
+ *      user lands directly on their authenticated YoPratiqo hub
+ *      (`/student/yopratiqo`) rather than the generic Pratiqo dashboard
+ *      — keeping the YoPratiqo product narrative continuous on both
+ *      sides of login. The full Pratiqo progression page
+ *      (`/student/progress`) remains reachable from the YoPratiqo hub
+ *      and from the AppShell student nav.
  *
  * Privacy / safety profile
  * ------------------------
@@ -100,7 +106,7 @@ function safeLocale(locale: YoLocale | undefined): YoLocale {
  */
 const HREFS = {
   startFree: "/yo/langues/espagnol/pays/republique-dominicaine",
-  login: "/login?next=/student/progress",
+  login: "/login?next=/student/yopratiqo",
 } as const;
 
 export type YoAppHeroCardProps = {

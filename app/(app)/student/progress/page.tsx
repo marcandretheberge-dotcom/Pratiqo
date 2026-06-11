@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Check } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, Check } from "lucide-react";
 import { useLocale } from "@/lib/locale-context";
 import { getSupabaseClient } from "@/lib/supabase";
 import type { CompanionType } from "@/lib/companions";
@@ -11,6 +12,35 @@ import { CompanionCard } from "@/components/companion/CompanionCard";
 import { YoStudentCompanionCard } from "@/components/yo/YoStudentCompanionCard";
 import { cn } from "@/lib/utils";
 import { COMPLETED_LESSON_FOR_COMPANION_FILTER } from "@/lib/companion/rewards";
+
+/**
+ * Localized copy for the YoPratiqo bridge section on /student/progress.
+ * Kept inline so /student/progress does not import anything from the
+ * YoPratiqo product config — it just renders a small heading + CTA
+ * back to the YoPratiqo hub at `/student/yopratiqo`.
+ *
+ * The YoStudentCompanionCard itself remains unchanged; this wrapper
+ * only adds visible "this is the YoPratiqo zone" framing so a learner
+ * who arrived from a YoPratiqo deck immediately recognizes their
+ * companion + can jump back into the YoPratiqo hub in one click.
+ */
+const YOPRATIQO_SECTION_COPY = {
+  fr: {
+    heading: "Mon compagnon YoPratiqo",
+    body: "Ce compagnon suit ton parcours YoPratiqo. Pour voir l’ensemble du parcours YoPratiqo (Intro → Module 5), ouvre ton YoPratiqo.",
+    cta: "Ouvrir YoPratiqo",
+  },
+  en: {
+    heading: "My YoPratiqo companion",
+    body: "This companion tracks your YoPratiqo path. To see the full YoPratiqo route (Intro → Module 5), open your YoPratiqo.",
+    cta: "Open YoPratiqo",
+  },
+  es: {
+    heading: "Mi compañero YoPratiqo",
+    body: "Este compañero sigue tu recorrido YoPratiqo. Para ver todo el recorrido (Intro → Módulo 5), abre tu YoPratiqo.",
+    cta: "Abrir YoPratiqo",
+  },
+} as const;
 
 type HomeworkItem = {
   id: string;
@@ -145,6 +175,47 @@ export default function StudentProgressPage() {
         <div className="h-40 animate-pulse rounded-2xl bg-white/60" />
       )}
 
+      {/*
+       * YoPratiqo bridge section.
+       *
+       * Promoted ABOVE the legacy Pratiqo companion so a learner who
+       * came in through the YoPratiqo product immediately sees their
+       * companion + has a one-click path back to the dedicated
+       * YoPratiqo hub (`/student/yopratiqo`). The legacy Pratiqo
+       * companion card stays mounted right below — both are visible
+       * on the same page so the cross-product story
+       * (Pratiqo progress ↔ YoPratiqo path) is unambiguous.
+       *
+       * No new persistence, no AI surface, no raw quiz fields. This
+       * is purely a visual + navigational reshape.
+       */}
+      <section
+        data-testid="yo-progress-bridge-section"
+        data-yo-progress-bridge="section"
+        className="space-y-3"
+      >
+        <div className="flex flex-wrap items-end justify-between gap-2">
+          <h2
+            data-testid="yo-progress-bridge-heading"
+            className="text-[11px] font-bold uppercase tracking-widest text-[#0F6E56]"
+          >
+            {YOPRATIQO_SECTION_COPY[yoLocale].heading}
+          </h2>
+          <Link
+            data-testid="yo-progress-bridge-cta"
+            href="/student/yopratiqo"
+            className="inline-flex items-center gap-1.5 rounded-full border border-[#0F6E56]/20 bg-white px-3 py-1.5 text-xs font-bold text-[#0F6E56] transition hover:bg-[#FFF4D6]"
+          >
+            {YOPRATIQO_SECTION_COPY[yoLocale].cta}
+            <ArrowRight className="size-3.5" aria-hidden />
+          </Link>
+        </div>
+        <p className="text-xs leading-relaxed text-[#0F6E56]/75">
+          {YOPRATIQO_SECTION_COPY[yoLocale].body}
+        </p>
+        <YoStudentCompanionCard locale={yoLocale} />
+      </section>
+
       {/* Companion — compact (legacy Pratiqo companion). Untouched. */}
       <section className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm sm:p-5">
         <h2 className="text-sm font-semibold text-slate-900">{t("progressionYourCompanion")}</h2>
@@ -157,10 +228,6 @@ export default function StudentProgressPage() {
           variant="progress"
         />
       </section>
-
-      {/* YoPratiqo companion — separate card driven by YoPratiqo progress
-          snapshots. Does NOT replace the legacy companion above. */}
-      <YoStudentCompanionCard locale={yoLocale} />
 
       <section className="space-y-3">
         <div className="flex flex-wrap items-end justify-between gap-2">

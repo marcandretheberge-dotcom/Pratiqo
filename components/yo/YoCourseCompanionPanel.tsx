@@ -18,9 +18,14 @@
  *     the learner's progress and that progress sharing happens
  *     at booking time inside the booking modal, not here.
  *   • Surfaces an auth-aware CTA:
- *       signed in  → "Voir mon compagnon" → /student/progress
+ *       signed in  → "Voir mon compagnon" → /student/yopratiqo
+ *                    (the authenticated YoPratiqo hub)
  *       signed out → "Connecte-toi pour sauvegarder tes progrès"
- *                     → /login?next=/student/progress
+ *                     → /login?next=/student/yopratiqo
+ *   • Surfaces a small secondary "Voir toute ma progression Pratiqo"
+ *     link to /student/progress so the YoPratiqo ↔ Pratiqo bridge is
+ *     always reachable in both directions (YoPratiqo is the self-paced
+ *     product *inside* Pratiqo, not a replacement for it).
  *
  * What this panel does NOT do
  * ---------------------------
@@ -49,6 +54,7 @@ type Copy = {
   privacy: string;
   ctaSignIn: string;
   ctaProgress: string;
+  fullPratiqoProgress: string;
 };
 
 const COPY: Record<YoLocale, Copy> = {
@@ -60,6 +66,7 @@ const COPY: Record<YoLocale, Copy> = {
       "Les professeurs voient seulement un résumé utile lorsque tu choisis de le partager. Les réponses brutes aux quiz ne sont pas partagées.",
     ctaSignIn: "Connecte-toi pour sauvegarder tes progrès",
     ctaProgress: "Voir mon compagnon",
+    fullPratiqoProgress: "Voir toute ma progression Pratiqo",
   },
   en: {
     eyebrow: "YoPratiqo companion",
@@ -69,6 +76,7 @@ const COPY: Record<YoLocale, Copy> = {
       "Teachers see only a useful summary when you choose to share it. Raw quiz answers are not shared.",
     ctaSignIn: "Sign in to save your progress",
     ctaProgress: "See my companion",
+    fullPratiqoProgress: "View my full Pratiqo progress",
   },
   es: {
     eyebrow: "Compañero YoPratiqo",
@@ -78,6 +86,7 @@ const COPY: Record<YoLocale, Copy> = {
       "Los profesores ven solo un resumen útil cuando eliges compartirlo. Las respuestas brutas de los cuestionarios no se comparten.",
     ctaSignIn: "Inicia sesión para guardar tu progreso",
     ctaProgress: "Ver mi compañero",
+    fullPratiqoProgress: "Ver todo mi progreso Pratiqo",
   },
 };
 
@@ -91,10 +100,18 @@ function safeLocale(locale: YoLocale | undefined): YoLocale {
  * `/login` accepts a `next=` param the login page sanitizes via
  * `sanitizeRelativeRedirectPath`, so deep-linking the post-OAuth
  * destination is safe.
+ *
+ * The primary CTA targets `/student/yopratiqo` (the authenticated
+ * YoPratiqo hub) so a learner coming from the Course Home lands in
+ * the YoPratiqo product context after login, not on a generic
+ * dashboard. The full Pratiqo progression page (`/student/progress`)
+ * stays one click away through the secondary "View my full Pratiqo
+ * progress" link below.
  */
 const HREFS = {
-  signIn: "/login?next=/student/progress",
-  progress: "/student/progress",
+  signIn: "/login?next=/student/yopratiqo",
+  yopratiqoHub: "/student/yopratiqo",
+  fullPratiqoProgress: "/student/progress",
 } as const;
 
 export type YoCourseCompanionPanelProps = {
@@ -114,7 +131,7 @@ export function YoCourseCompanionPanel({
   const isAuthenticated = !loading && Boolean(user);
 
   const primary = isAuthenticated
-    ? { label: copy.ctaProgress, href: HREFS.progress, Icon: ArrowRight }
+    ? { label: copy.ctaProgress, href: HREFS.yopratiqoHub, Icon: ArrowRight }
     : { label: copy.ctaSignIn, href: HREFS.signIn, Icon: LogIn };
 
   return (
@@ -167,6 +184,20 @@ export function YoCourseCompanionPanel({
         >
           <primary.Icon className="size-4" aria-hidden />
           {primary.label}
+        </Link>
+
+        {/* Secondary bridge to the full Pratiqo progression. Renders
+            as a quiet text link beneath the primary CTA so the
+            YoPratiqo → Pratiqo direction of the cross-product bridge
+            stays reachable in one click without competing with the
+            primary "see my companion" action above. */}
+        <Link
+          data-testid="yo-course-companion-panel-full-progress-link"
+          href={HREFS.fullPratiqoProgress}
+          className="inline-flex items-center gap-1.5 self-start text-xs font-bold text-[#172642]/82 underline-offset-2 hover:underline"
+        >
+          <ArrowRight className="size-3.5" aria-hidden />
+          {copy.fullPratiqoProgress}
         </Link>
 
         <p

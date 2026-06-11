@@ -25,12 +25,14 @@
  *     booking time inside the booking modal — not here.
  *   • Surfaces honest auth-aware CTAs:
  *       - signed out → "Sign in to save my progress" (deep-links to
- *         `/login?next=/student/progress` so the user lands on their
- *         own companion right after OAuth);
+ *         `/login?next=/student/yopratiqo` so the user lands on their
+ *         own YoPratiqo hub right after OAuth);
  *       - signed in  → "See my YoPratiqo companion" (deep-links to
- *         `/student/progress`).
+ *         `/student/yopratiqo`).
  *   • Always shows secondary "Start Dominican Republic" + tertiary
- *     "Find a teacher" CTAs.
+ *     "Find a teacher" CTAs, plus a footer link to the full Pratiqo
+ *     progression at `/student/progress` so the cross-product bridge
+ *     stays visible in both directions (YoPratiqo ↔ Pratiqo).
  *
  * What this card does NOT do
  * --------------------------
@@ -63,6 +65,7 @@ type Copy = {
   ctaProgress: string;
   ctaDominicanRepublic: string;
   ctaFindTeacher: string;
+  fullPratiqoProgress: string;
 };
 
 const COPY: Record<YoLocale, Copy> = {
@@ -76,6 +79,7 @@ const COPY: Record<YoLocale, Copy> = {
     ctaProgress: "Voir mon compagnon YoPratiqo",
     ctaDominicanRepublic: "Commencer République dominicaine",
     ctaFindTeacher: "Trouver un professeur",
+    fullPratiqoProgress: "Voir toute ma progression Pratiqo",
   },
   en: {
     eyebrow: "YoPratiqo companion",
@@ -87,6 +91,7 @@ const COPY: Record<YoLocale, Copy> = {
     ctaProgress: "See my YoPratiqo companion",
     ctaDominicanRepublic: "Start Dominican Republic",
     ctaFindTeacher: "Find a teacher",
+    fullPratiqoProgress: "View my full Pratiqo progress",
   },
   es: {
     eyebrow: "Compañero YoPratiqo",
@@ -98,6 +103,7 @@ const COPY: Record<YoLocale, Copy> = {
     ctaProgress: "Ver mi compañero YoPratiqo",
     ctaDominicanRepublic: "Empezar República Dominicana",
     ctaFindTeacher: "Encontrar un profesor",
+    fullPratiqoProgress: "Ver todo mi progreso Pratiqo",
   },
 };
 
@@ -110,9 +116,18 @@ function safeLocale(locale: YoLocale | undefined): YoLocale {
 // `/login` accepts a `next=` param that the login page sanitizes via
 // `sanitizeRelativeRedirectPath`, so deep-linking the post-OAuth
 // destination is safe.
+//
+// Sign-in deep-links to `/student/yopratiqo` so a learner who entered
+// through YoPratiqo lands back on the YoPratiqo hub (with their
+// companion + course path) right after OAuth, instead of being dumped
+// on the generic Pratiqo dashboard. The full Pratiqo progression at
+// `/student/progress` stays linked in the secondary "View my full
+// Pratiqo progress" affordance so the YoPratiqo ↔ Pratiqo bridge is
+// always one click away in both directions.
 const HREFS = {
-  signIn: "/login?next=/student/progress",
-  progress: "/student/progress",
+  signIn: "/login?next=/student/yopratiqo",
+  yopratiqoHub: "/student/yopratiqo",
+  fullPratiqoProgress: "/student/progress",
   dominicanRepublic: "/yo/langues/espagnol/pays/republique-dominicaine",
   findTeacher: "/trouver-un-prof",
 } as const;
@@ -135,7 +150,7 @@ export function YoPublicCompanionOnboardingCard({
   const isAuthenticated = !loading && Boolean(user);
 
   const primary = isAuthenticated
-    ? { label: copy.ctaProgress, href: HREFS.progress, Icon: ArrowRight }
+    ? { label: copy.ctaProgress, href: HREFS.yopratiqoHub, Icon: ArrowRight }
     : { label: copy.ctaSignIn, href: HREFS.signIn, Icon: LogIn };
 
   return (
@@ -223,6 +238,20 @@ export function YoPublicCompanionOnboardingCard({
               <ShieldCheck className="mt-0.5 size-3.5 shrink-0 text-[#1D9E75]" aria-hidden />
               <span>{copy.privacy}</span>
             </p>
+
+            {/* Bridge back to the full Pratiqo platform. YoPratiqo is
+                the self-paced product inside Pratiqo, not a replacement
+                for it — this small link keeps `/student/progress`
+                reachable in one click so the cross-product navigation
+                story stays symmetric. */}
+            <Link
+              data-testid="yo-public-companion-onboarding-card-full-progress-link"
+              href={HREFS.fullPratiqoProgress}
+              className="inline-flex items-center gap-1.5 self-start text-xs font-bold text-[#0F6E56]/82 underline-offset-2 hover:underline"
+            >
+              <ArrowRight className="size-3.5" aria-hidden />
+              {copy.fullPratiqoProgress}
+            </Link>
           </div>
         </div>
       </div>
