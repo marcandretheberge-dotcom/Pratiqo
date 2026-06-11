@@ -290,9 +290,15 @@ assert.ok(cardSrc.includes(FR_PRIVACY), "FR privacy copy must match the brief ve
 assert.ok(cardSrc.includes(EN_PRIVACY), "EN privacy copy must match the brief verbatim");
 assert.ok(cardSrc.includes(ES_PRIVACY), "ES privacy copy must match the brief verbatim");
 
-const FR_EMPTY = "Commence un module YoPratiqo pour faire voyager ton compagnon.";
-const EN_EMPTY = "Start a YoPratiqo module to wake up your travel companion.";
-const ES_EMPTY = "Comienza un módulo de YoPratiqo para despertar a tu compañero de viaje.";
+// Empty-state copy now names the YoPratiqo companion explicitly as
+// "Yoppo" — the official student-facing mascot label — while keeping
+// the canonical "Yoppo, ton compagnon YoPratiqo" phrasing.
+const FR_EMPTY =
+  "Commence un module YoPratiqo pour faire voyager Yoppo, ton compagnon YoPratiqo.";
+const EN_EMPTY =
+  "Start a YoPratiqo module to wake up Yoppo, your YoPratiqo companion.";
+const ES_EMPTY =
+  "Comienza un módulo de YoPratiqo para despertar a Yoppo, tu compañero YoPratiqo.";
 assert.ok(cardSrc.includes(FR_EMPTY), "FR empty-state copy must match the brief verbatim");
 assert.ok(cardSrc.includes(EN_EMPTY), "EN empty-state copy must match the brief verbatim");
 assert.ok(cardSrc.includes(ES_EMPTY), "ES empty-state copy must match the brief verbatim");

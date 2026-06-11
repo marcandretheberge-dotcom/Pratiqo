@@ -47,20 +47,20 @@ const COPY: Record<
 > = {
   fr: {
     eyebrow: "Compagnon d'apprentissage",
-    title: "Ton compagnon YoPratiqo",
-    body: "Ton compagnon apprend avec toi. Il aide à résumer tes progrès pour préparer un meilleur cours, seulement si tu consens au partage.",
+    title: "Yoppo, ton compagnon YoPratiqo",
+    body: "Yoppo apprend avec toi. Il aide à résumer tes progrès pour préparer un meilleur cours, seulement si tu consens au partage.",
     stageLabel: "Étape",
   },
   en: {
     eyebrow: "Learning companion",
-    title: "Your YoPratiqo companion",
-    body: "Your companion learns with you. It helps summarize your progress for a better lesson, only when you agree to share it.",
+    title: "Yoppo, your YoPratiqo companion",
+    body: "Yoppo learns with you. It helps summarize your progress for a better lesson, only when you agree to share it.",
     stageLabel: "Stage",
   },
   es: {
     eyebrow: "Compañero de aprendizaje",
-    title: "Tu compañero YoPratiqo",
-    body: "Tu compañero aprende contigo. Ayuda a resumir tu progreso para preparar una mejor clase, solo si aceptas compartirlo.",
+    title: "Yoppo, tu compañero YoPratiqo",
+    body: "Yoppo aprende contigo. Ayuda a resumir tu progreso para preparar una mejor clase, solo si aceptas compartirlo.",
     stageLabel: "Etapa",
   },
 };

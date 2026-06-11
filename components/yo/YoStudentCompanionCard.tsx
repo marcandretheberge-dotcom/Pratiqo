@@ -65,9 +65,11 @@ const COPY: Record<
   }
 > = {
   fr: {
-    title: "Compagnon YoPratiqo",
-    subtitle: "Suit ta progression YoPratiqo, en plus de ton compagnon Pratiqo.",
-    emptyBody: "Commence un module YoPratiqo pour faire voyager ton compagnon.",
+    title: "Yoppo, ton compagnon YoPratiqo",
+    subtitle:
+      "Yoppo suit ta progression YoPratiqo, en plus de ton compagnon Pratiqo classique.",
+    emptyBody:
+      "Commence un module YoPratiqo pour faire voyager Yoppo, ton compagnon YoPratiqo.",
     moduleCountLabel: "Modules complétés",
     levelLabel: "Niveau",
     courseLabel: "Parcours",
@@ -76,9 +78,11 @@ const COPY: Record<
     activityLabel: "Dernière activité",
   },
   en: {
-    title: "YoPratiqo Companion",
-    subtitle: "Tracks your YoPratiqo progress, alongside your Pratiqo companion.",
-    emptyBody: "Start a YoPratiqo module to wake up your travel companion.",
+    title: "Yoppo, your YoPratiqo companion",
+    subtitle:
+      "Yoppo tracks your YoPratiqo progress, alongside your classic Pratiqo companion.",
+    emptyBody:
+      "Start a YoPratiqo module to wake up Yoppo, your YoPratiqo companion.",
     moduleCountLabel: "Completed modules",
     levelLabel: "Level",
     courseLabel: "Track",
@@ -87,10 +91,11 @@ const COPY: Record<
     activityLabel: "Last activity",
   },
   es: {
-    title: "Compañero YoPratiqo",
-    subtitle: "Sigue tu progreso de YoPratiqo, además de tu compañero de Pratiqo.",
+    title: "Yoppo, tu compañero YoPratiqo",
+    subtitle:
+      "Yoppo sigue tu progreso de YoPratiqo, además de tu compañero clásico de Pratiqo.",
     emptyBody:
-      "Comienza un módulo de YoPratiqo para despertar a tu compañero de viaje.",
+      "Comienza un módulo de YoPratiqo para despertar a Yoppo, tu compañero YoPratiqo.",
     moduleCountLabel: "Módulos completados",
     levelLabel: "Nivel",
     courseLabel: "Recorrido",

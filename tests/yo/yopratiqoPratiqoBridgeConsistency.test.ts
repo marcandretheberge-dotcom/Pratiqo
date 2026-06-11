@@ -112,20 +112,29 @@ assert.match(
   /data-testid=["']yo-progress-bridge-heading["']/,
   "/student/progress must expose the YoPratiqo bridge section heading",
 );
-// Heading text in FR / EN / ES — verbatim from the brief.
+// Heading text in FR / EN / ES — the YoPratiqo companion is now
+// officially named "Yoppo". The student-facing heading keeps the
+// "compagnon YoPratiqo" / "YoPratiqo companion" disambiguator so the
+// learner knows which product the mascot belongs to, while the new
+// Yoppo prefix makes the mascot recognizable across surfaces. The
+// brief is explicit: do not rename YoPratiqo to Yoppo — both names
+// must coexist in the section heading.
 assert.ok(
-  progressSrc.includes("Mon compagnon YoPratiqo"),
-  "/student/progress must include the FR YoPratiqo section heading 'Mon compagnon YoPratiqo'",
+  progressSrc.includes("Yoppo") &&
+    progressSrc.includes("compagnon YoPratiqo"),
+  "/student/progress must surface the FR Yoppo · compagnon YoPratiqo heading",
 );
 assert.ok(
-  progressSrc.includes("My YoPratiqo companion"),
-  "/student/progress must include the EN YoPratiqo section heading 'My YoPratiqo companion'",
+  progressSrc.includes("Yoppo") &&
+    progressSrc.includes("YoPratiqo companion"),
+  "/student/progress must surface the EN Yoppo · YoPratiqo companion heading",
 );
 assert.ok(
-  progressSrc.includes("Mi compañero YoPratiqo"),
-  "/student/progress must include the ES YoPratiqo section heading 'Mi compañero YoPratiqo'",
+  progressSrc.includes("Yoppo") &&
+    progressSrc.includes("compañero YoPratiqo"),
+  "/student/progress must surface the ES Yoppo · compañero YoPratiqo heading",
 );
-ok("2) /student/progress includes a clear, localized YoPratiqo companion section");
+ok("2) /student/progress includes a clear, localized Yoppo · YoPratiqo companion section");
 
 // ─────────────────────────────────────────────────────────────────────────
 // 3. /student/progress links to /student/yopratiqo

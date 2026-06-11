@@ -59,33 +59,33 @@ type Copy = {
 
 const COPY: Record<YoLocale, Copy> = {
   fr: {
-    eyebrow: "Compagnon YoPratiqo",
-    title: "Ton compagnon suit ton parcours",
-    body: "Ton compagnon YoPratiqo suit ton parcours. Quand tu réserves un professeur, tu peux partager un résumé utile de tes progrès.",
+    eyebrow: "Yoppo · compagnon YoPratiqo",
+    title: "Yoppo, ton compagnon YoPratiqo, suit ton parcours",
+    body: "Yoppo, ton compagnon YoPratiqo, suit ton parcours. Quand tu réserves un professeur, tu peux partager un résumé utile de tes progrès.",
     privacy:
       "Les professeurs voient seulement un résumé utile lorsque tu choisis de le partager. Les réponses brutes aux quiz ne sont pas partagées.",
     ctaSignIn: "Connecte-toi pour sauvegarder tes progrès",
-    ctaProgress: "Voir mon compagnon",
+    ctaProgress: "Voir Yoppo",
     fullPratiqoProgress: "Voir toute ma progression Pratiqo",
   },
   en: {
-    eyebrow: "YoPratiqo companion",
-    title: "Your companion follows your path",
-    body: "Your YoPratiqo companion follows your path. When you book a teacher, you can share a useful summary of your progress.",
+    eyebrow: "Yoppo · YoPratiqo companion",
+    title: "Yoppo, your YoPratiqo companion, follows your path",
+    body: "Yoppo, your YoPratiqo companion, follows your path. When you book a teacher, you can share a useful summary of your progress.",
     privacy:
       "Teachers see only a useful summary when you choose to share it. Raw quiz answers are not shared.",
     ctaSignIn: "Sign in to save your progress",
-    ctaProgress: "See my companion",
+    ctaProgress: "See Yoppo",
     fullPratiqoProgress: "View my full Pratiqo progress",
   },
   es: {
-    eyebrow: "Compañero YoPratiqo",
-    title: "Tu compañero sigue tu ruta",
-    body: "Tu compañero YoPratiqo sigue tu ruta. Cuando reservas un profesor, puedes compartir un resumen útil de tu progreso.",
+    eyebrow: "Yoppo · compañero YoPratiqo",
+    title: "Yoppo, tu compañero YoPratiqo, sigue tu ruta",
+    body: "Yoppo, tu compañero YoPratiqo, sigue tu ruta. Cuando reservas un profesor, puedes compartir un resumen útil de tu progreso.",
     privacy:
       "Los profesores ven solo un resumen útil cuando eliges compartirlo. Las respuestas brutas de los cuestionarios no se comparten.",
     ctaSignIn: "Inicia sesión para guardar tu progreso",
-    ctaProgress: "Ver mi compañero",
+    ctaProgress: "Ver a Yoppo",
     fullPratiqoProgress: "Ver todo mi progreso Pratiqo",
   },
 };

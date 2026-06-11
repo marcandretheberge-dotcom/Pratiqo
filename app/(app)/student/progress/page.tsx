@@ -26,18 +26,18 @@ import { COMPLETED_LESSON_FOR_COMPANION_FILTER } from "@/lib/companion/rewards";
  */
 const YOPRATIQO_SECTION_COPY = {
   fr: {
-    heading: "Mon compagnon YoPratiqo",
-    body: "Ce compagnon suit ton parcours YoPratiqo. Pour voir l’ensemble du parcours YoPratiqo (Intro → Module 5), ouvre ton YoPratiqo.",
+    heading: "Yoppo · mon compagnon YoPratiqo",
+    body: "Yoppo, ton compagnon YoPratiqo, suit ton parcours. Pour voir l’ensemble du parcours YoPratiqo (Intro → Module 5), ouvre ton YoPratiqo.",
     cta: "Ouvrir YoPratiqo",
   },
   en: {
-    heading: "My YoPratiqo companion",
-    body: "This companion tracks your YoPratiqo path. To see the full YoPratiqo route (Intro → Module 5), open your YoPratiqo.",
+    heading: "Yoppo · my YoPratiqo companion",
+    body: "Yoppo, your YoPratiqo companion, tracks your path. To see the full YoPratiqo route (Intro → Module 5), open your YoPratiqo.",
     cta: "Open YoPratiqo",
   },
   es: {
-    heading: "Mi compañero YoPratiqo",
-    body: "Este compañero sigue tu recorrido YoPratiqo. Para ver todo el recorrido (Intro → Módulo 5), abre tu YoPratiqo.",
+    heading: "Yoppo · mi compañero YoPratiqo",
+    body: "Yoppo, tu compañero YoPratiqo, sigue tu recorrido. Para ver todo el recorrido (Intro → Módulo 5), abre tu YoPratiqo.",
     cta: "Abrir YoPratiqo",
   },
 } as const;
