@@ -1,27 +1,45 @@
 import Link from "next/link";
-import { BookOpen, CheckCircle2, Compass, Sparkles } from "lucide-react";
+import { ArrowLeft, BookOpen, CheckCircle2, Compass, Sparkles } from "lucide-react";
 
 import { SITE_URL } from "@/lib/seo/site";
 import { buildYopratiqoCourseSchema } from "@/lib/seo/yopratiqoCourseSchema";
-import { buildYoLocaleHref, lstr, t } from "@/lib/yo/localize";
+import { lstr, t } from "@/lib/yo/localize";
 import type { YoLocale } from "@/lib/yo/types";
 import type { YoPratiqoLandingContent } from "@/lib/yo/yopratiqoLandingContent";
 import {
   canInjectYoPratiqoCourseSchema,
   type YoPratiqoModuleConfig,
 } from "@/lib/yo/yopratiqoProductConfig";
-import { YoBreadcrumb } from "@/components/yo/YoBreadcrumb";
+import { YoLanguageSelector } from "@/components/yo/YoLanguageSelector";
 import { YoLegalDisclaimer } from "@/components/yo/YoLegalDisclaimer";
+import { YoPratiqoLogo } from "@/components/yo/YoPratiqoLogo";
 import { YoTeacherBridgeCard } from "@/components/yo/YoTeacherBridgeCard";
 
-const HERO_BADGE = lstr("Intro gratuite", "Free intro");
-const INTRO_CTA = lstr("Commencer l’intro gratuite", "Start the free intro");
-const TEACHER_CTA = lstr("Trouver un professeur sur Pratiqo", "Find a teacher on Pratiqo");
-const LEARN_TITLE = lstr("Ce que tu vas travailler", "What you will practice");
-const WHY_TITLE = lstr("Pourquoi YoPratiqo", "Why YoPratiqo");
-const INTRO_LABEL = lstr("Parcours autonome", "Self-paced path");
-const BRIDGE_LABEL = lstr("Pont vers un professeur", "Teacher bridge");
-const AUDIENCE_LABEL = lstr("Pour qui", "Who it is for");
+const HERO_BADGE = lstr("Intro gratuite", "Free intro", "Intro gratis");
+const INTRO_CTA = lstr(
+  "Commencer l’intro gratuite",
+  "Start the free intro",
+  "Empezar la intro gratis",
+);
+const TEACHER_CTA = lstr(
+  "Trouver un professeur sur Pratiqo",
+  "Find a teacher on Pratiqo",
+  "Buscar un profesor en Pratiqo",
+);
+const LEARN_TITLE = lstr(
+  "Ce que tu vas travailler",
+  "What you will practice",
+  "Lo que vas a trabajar",
+);
+const WHY_TITLE = lstr("Pourquoi YoPratiqo", "Why YoPratiqo", "Por qué YoPratiqo");
+const INTRO_LABEL = lstr("Parcours autonome", "Self-paced path", "Ruta autónoma");
+const BRIDGE_LABEL = lstr(
+  "Pont vers un professeur",
+  "Teacher bridge",
+  "Puente hacia un profesor",
+);
+const AUDIENCE_LABEL = lstr("Pour qui", "Who it is for", "Para quién");
+const BACK_TO_LANGUES = lstr("Langues", "Languages", "Idiomas");
 
 export function YoLanguageLandingPage({
   locale,
@@ -32,13 +50,13 @@ export function YoLanguageLandingPage({
   moduleConfig: YoPratiqoModuleConfig;
   content: YoPratiqoLandingContent;
 }) {
-  const langSuffix = locale === "en" ? "?lang=en" : "";
-  const localizedLandingRoute = `${moduleConfig.landingRoute}${langSuffix}`;
-  const localizedIntroRoute = `${moduleConfig.introRoute}${langSuffix}`;
-  const toggleHref = buildYoLocaleHref(
-    moduleConfig.landingRoute,
-    locale === "fr" ? "en" : "fr",
-  );
+  const langSuffix = locale === "fr" ? "" : `?lang=${locale}`;
+  void langSuffix;
+  const localizedIntroRoute =
+    locale === "fr"
+      ? moduleConfig.introRoute
+      : `${moduleConfig.introRoute}?lang=${locale}`;
+  const backToLanguesHref = locale === "fr" ? "/yo/langues" : `/yo/langues?lang=${locale}`;
   const shouldInjectCourseSchema = canInjectYoPratiqoCourseSchema(moduleConfig);
   const courseSchema = shouldInjectCourseSchema
     ? buildYopratiqoCourseSchema({
@@ -62,22 +80,41 @@ export function YoLanguageLandingPage({
         />
       ) : null}
 
-      <main id="main-content" className="flex flex-col pb-20">
-        <YoBreadcrumb
-          items={[
-            { label: lstr("YoPratiqo", "YoPratiqo"), href: `/yo${langSuffix}` },
-            {
-              label: lstr("Langues", "Languages"),
-              href: `/yo/langues${langSuffix}`,
-            },
-            {
-              label: lstr(moduleConfig.languageLabelFr, moduleConfig.languageLabelEn),
-              href: localizedLandingRoute,
-            },
-          ]}
-          locale={locale}
-        />
+      {/* App-style header replaces the legacy three-level breadcrumb +
+          one-off "View in English" pill so this landing inherits the
+          same chrome rhythm as `/yo/langues` and the deck routes. */}
+      <header
+        data-testid="yo-language-landing-app-header"
+        data-yo-language-landing-header="true"
+        className="sticky top-0 z-40 border-b border-[#E7DFCF] bg-[#FAFCFB]/95 backdrop-blur"
+      >
+        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 px-3 sm:h-16 sm:px-6">
+          <Link
+            data-testid="yo-language-landing-back"
+            href={backToLanguesHref}
+            aria-label={t(BACK_TO_LANGUES, locale)}
+            className="inline-flex items-center gap-2 rounded-full border border-[#E7DFCF] bg-white/70 px-2.5 py-1.5 text-sm font-semibold text-[#172642] transition hover:bg-white sm:px-3"
+          >
+            <ArrowLeft className="size-4" aria-hidden />
+            <span className="hidden sm:inline">{t(BACK_TO_LANGUES, locale)}</span>
+          </Link>
+          <div className="flex min-w-0 items-center justify-center gap-2">
+            <span className="hidden sm:inline-flex">
+              <YoPratiqoLogo size="sm" priority={false} />
+            </span>
+            <span className="truncate text-sm font-semibold text-[#172642] sm:text-[15px]">
+              {t(lstr(moduleConfig.languageLabelFr, moduleConfig.languageLabelEn), locale)}
+            </span>
+          </div>
+          <YoLanguageSelector
+            locale={locale}
+            pathname={moduleConfig.landingRoute}
+            size="sm"
+          />
+        </div>
+      </header>
 
+      <main id="main-content" className="flex flex-col pb-20">
         <section
           aria-labelledby="yo-language-landing-title"
           className="relative overflow-hidden"
@@ -93,12 +130,6 @@ export function YoLanguageLandingPage({
                   <Sparkles className="size-3.5 text-[#F4B400]" aria-hidden />
                   {t(HERO_BADGE, locale)}
                 </span>
-                <Link
-                  href={toggleHref}
-                  className="rounded-full border border-[#0F6E56]/15 bg-white/80 px-3 py-1.5 text-xs font-bold text-[#0F6E56] transition hover:bg-white"
-                >
-                  {locale === "fr" ? "View in English" : "Voir en français"}
-                </Link>
               </div>
               <p className="text-sm font-black uppercase tracking-[0.22em] text-[#1D9E75]">
                 YoPratiqo · {t(lstr(moduleConfig.languageLabelFr, moduleConfig.languageLabelEn), locale)}
