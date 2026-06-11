@@ -174,6 +174,38 @@ const allowedYoDisclosureFiles = new Set([
   "components/yo/YoCoursePath.tsx",
   "components/yo/YoCourseCompanionPanel.tsx",
   "components/yo/YoStickyCourseCta.tsx",
+  // App-like lesson-deck primitives that turn YoPratiqo Dominican
+  // Republic Module 2 from a long-scroll page into a one-screen-
+  // at-a-time, mobile-app-style learning surface (sticky back-arrow
+  // header, sticky Back/Next bar, progress dots, focused screen
+  // cards, inline companion coach). The six pieces are
+  // display-only: five server components and one client component
+  // (`<YoLessonDeck />`) that only manages an in-memory
+  // `currentIndex` integer plus `ArrowLeft`/`ArrowRight` keyboard
+  // navigation. None call any API, none persist anything, none
+  // introduce checkout, payment library, Supabase write, audio
+  // generation, teacher-dashboard share, AI summary, or quiz
+  // storage. The companion mark-completed button mounted at the
+  // end of the deck is the existing audited
+  // `<YoMarkModuleCompletedButton />` (untouched), and the deck
+  // never inspects or duplicates its payload. Defended end-to-end
+  // by tests/yo/yopratiqoModuleLessonDeck.test.ts (15 assertions
+  // including the same restricted-pattern guard this file
+  // enforces).
+  "components/yo/YoLessonDeck.tsx",
+  "components/yo/YoLessonDeckHeader.tsx",
+  "components/yo/YoLessonDeckNav.tsx",
+  "components/yo/YoLessonDeckScreen.tsx",
+  "components/yo/YoLessonCompanionCoach.tsx",
+  // Pure typed model for the lesson-deck system above. It exports
+  // discriminated-union types for screen kinds and companion
+  // states (the existing eight states from the companion-visual
+  // manifest are re-exported, no new state is invented) plus a
+  // localized chrome-labels record. No persistence, no API, no
+  // payment library, no Supabase write, no audio, no quiz data.
+  // Defended end-to-end by
+  // tests/yo/yopratiqoModuleLessonDeck.test.ts.
+  "lib/yo/lessonDeckTypes.ts",
 ]);
 
 /**

@@ -46,6 +46,8 @@ import type {
 } from "@/lib/yo/dominicanRepublicHotelAirport";
 import { dominicanRdModuleProgressPayload } from "@/lib/yo/dominicanRepublicProgressPayloads";
 import { YoMarkModuleCompletedButton } from "@/components/yo/YoMarkModuleCompletedButton";
+import { YoLessonDeck } from "@/components/yo/YoLessonDeck";
+import type { YoLessonDeckScreen } from "@/lib/yo/lessonDeckTypes";
 
 // ─── Section labels ────────────────────────────────────────────────────────
 
@@ -1025,17 +1027,340 @@ function CompletionSection({ locale }: { locale: YoLocale }) {
   );
 }
 
+// ─── App-like deck composition ─────────────────────────────────────────────
+//
+// `mode="deck"` reuses every section sub-component above to build a 9-screen
+// app-like lesson flow. Each screen reuses the same JSX surfaces — so all
+// `data-yo-module2-*` markers, audio buttons, flashcards, printables and the
+// completion button are preserved exactly as in the long-scroll mode. The
+// deck client component (`<YoLessonDeck />`) only toggles which screen is
+// visible; no educational text is rewritten and no quiz state is stored.
+
+const DECK_LABEL_MISSION = lstr(
+  "Mission · Hôtel & aéroport",
+  "Mission · Hotel & airport",
+  "Misión · Hotel y aeropuerto",
+);
+const DECK_LABEL_PHRASES = lstr(
+  "Phrases · Survie",
+  "Phrases · Survival",
+  "Frases · Supervivencia",
+);
+const DECK_LABEL_AIRPORT = lstr(
+  "Dialogue · Aéroport",
+  "Dialogue · Airport",
+  "Diálogo · Aeropuerto",
+);
+const DECK_LABEL_HOTEL = lstr(
+  "Dialogue · Hôtel",
+  "Dialogue · Hotel",
+  "Diálogo · Hotel",
+);
+const DECK_LABEL_PROBLEMS = lstr(
+  "Imprévus · Hôtel",
+  "Issues · Hotel",
+  "Imprevistos · Hotel",
+);
+const DECK_LABEL_CULTURE = lstr(
+  "Note culturelle",
+  "Cultural note",
+  "Nota cultural",
+);
+const DECK_LABEL_FLASHCARDS = lstr(
+  "Pratique · Vocabulaire",
+  "Practice · Vocabulary",
+  "Práctica · Vocabulario",
+);
+const DECK_LABEL_QUIZ = lstr(
+  "Pratique · Quiz & roleplay",
+  "Practice · Quiz & roleplay",
+  "Práctica · Quiz y roleplay",
+);
+const DECK_LABEL_COMPLETION = lstr(
+  "Mission accomplie",
+  "Mission complete",
+  "Misión cumplida",
+);
+
+const DECK_TITLE_MISSION = lstr(
+  "Ta mission · Hôtel & aéroport",
+  "Your mission · Hotel & airport",
+  "Tu misión · Hotel y aeropuerto",
+);
+const DECK_TITLE_PHRASES = lstr(
+  "15 phrases qui te sauvent à l'arrivée",
+  "15 phrases that save you on arrival",
+  "15 frases que te salvan al llegar",
+);
+const DECK_TITLE_AIRPORT = lstr(
+  "Tu viens d'atterrir à Punta Cana",
+  "You just landed in Punta Cana",
+  "Acabas de aterrizar en Punta Cana",
+);
+const DECK_TITLE_HOTEL = lstr(
+  "Le check-in à l'hôtel",
+  "The hotel check-in",
+  "El check-in del hotel",
+);
+const DECK_TITLE_PROBLEMS = lstr(
+  "Petits soucis · Grandes phrases",
+  "Small issues · Big phrases",
+  "Pequeños problemas · Grandes frases",
+);
+const DECK_TITLE_CULTURE = lstr(
+  "Le ton dominicain",
+  "The Dominican vibe",
+  "El estilo dominicano",
+);
+const DECK_TITLE_FLASHCARDS = lstr(
+  "Mémorise et révise",
+  "Memorize and review",
+  "Memoriza y repasa",
+);
+const DECK_TITLE_QUIZ = lstr(
+  "Teste tes réflexes",
+  "Test your reflexes",
+  "Prueba tus reflejos",
+);
+const DECK_TITLE_COMPLETION = lstr(
+  "Tu es prêt(e) à voyager",
+  "You're ready to travel",
+  "Estás listo(a) para viajar",
+);
+
+const DECK_HELPER_MISSION = lstr(
+  "Petite carte du module : 6 étapes, 1 mini-mission. Avance à ton rythme.",
+  "Quick map of the module: 6 steps, 1 mini-mission. Go at your own pace.",
+  "Mapa del módulo: 6 pasos, 1 misión. Ve a tu ritmo.",
+);
+const DECK_HELPER_PHRASES = lstr(
+  "Tu n'as pas à tout retenir maintenant — survole et reviens-y.",
+  "You don't need to memorize everything now — skim and come back.",
+  "No tienes que memorizar todo ahora — léelas y vuelve.",
+);
+const DECK_HELPER_AIRPORT = lstr(
+  "Lis le dialogue, écoute la voix, respire — tu y arrives.",
+  "Read the dialogue, listen to the voice, breathe — you've got this.",
+  "Lee el diálogo, escucha la voz, respira — lo logras.",
+);
+const DECK_HELPER_HOTEL = lstr(
+  "Annonce ta réservation calmement — c'est le moment clé.",
+  "Announce your booking calmly — this is the key moment.",
+  "Anuncia tu reserva con calma — es el momento clave.",
+);
+const DECK_HELPER_PROBLEMS = lstr(
+  "Une phrase juste avant que le petit souci grossisse.",
+  "One useful phrase before the small issue gets bigger.",
+  "Una frase útil antes de que el pequeño problema crezca.",
+);
+const DECK_HELPER_CULTURE = lstr(
+  "Comprendre la culture, c'est éviter le quiproquo.",
+  "Reading the culture saves you from misreads.",
+  "Entender la cultura evita malentendidos.",
+);
+const DECK_HELPER_FLASHCARDS = lstr(
+  "Vocabulaire et patrons : ta boîte à outils.",
+  "Vocabulary and patterns: your toolbox.",
+  "Vocabulario y patrones: tu caja de herramientas.",
+);
+const DECK_HELPER_QUIZ = lstr(
+  "Cinq questions et une roleplay — pas de note. Pour toi.",
+  "Five questions and a roleplay — no score. For you.",
+  "Cinco preguntas y un roleplay — sin nota. Para ti.",
+);
+const DECK_HELPER_COMPLETION = lstr(
+  "Imprime tes fiches, sauvegarde ta progression, ouvre la suite.",
+  "Print your sheets, save your progress, open what's next.",
+  "Imprime tus hojas, guarda tu progreso, abre lo que sigue.",
+);
+
+const DECK_MODULE_LABEL = lstr(
+  "Module 2 · RD A1",
+  "Module 2 · DR A1",
+  "Módulo 2 · RD A1",
+);
+
+function buildModule2DeckScreens(locale: YoLocale): YoLessonDeckScreen[] {
+  return [
+    {
+      id: "mission",
+      kind: "mission",
+      eyebrow: t(DECK_LABEL_MISSION, locale),
+      title: t(DECK_TITLE_MISSION, locale),
+      helperText: t(DECK_HELPER_MISSION, locale),
+      companionState: "map",
+      content: (
+        <div data-yo-module2-deck-screen="mission">
+          <HeroSection locale={locale} />
+          <MissionMapSection locale={locale} />
+        </div>
+      ),
+    },
+    {
+      id: "phrases",
+      kind: "phrase",
+      eyebrow: t(DECK_LABEL_PHRASES, locale),
+      title: t(DECK_TITLE_PHRASES, locale),
+      helperText: t(DECK_HELPER_PHRASES, locale),
+      companionState: "map",
+      content: (
+        <div data-yo-module2-deck-screen="phrases">
+          <CorePhrasesSection locale={locale} />
+        </div>
+      ),
+    },
+    {
+      id: "airport",
+      kind: "dialogue",
+      eyebrow: t(DECK_LABEL_AIRPORT, locale),
+      title: t(DECK_TITLE_AIRPORT, locale),
+      helperText: t(DECK_HELPER_AIRPORT, locale),
+      companionState: "confused",
+      content: (
+        <div data-yo-module2-deck-screen="airport">
+          <DialogueSection
+            dialogue={dominicanRepublicHotelAirport.airportDialogue}
+            locale={locale}
+            eyebrowLabel={LABEL_DIALOGUE_AIRPORT_EYEBROW}
+            sectionId="airport"
+          />
+        </div>
+      ),
+    },
+    {
+      id: "hotel",
+      kind: "dialogue",
+      eyebrow: t(DECK_LABEL_HOTEL, locale),
+      title: t(DECK_TITLE_HOTEL, locale),
+      helperText: t(DECK_HELPER_HOTEL, locale),
+      companionState: "confused",
+      content: (
+        <div data-yo-module2-deck-screen="hotel">
+          <DialogueSection
+            dialogue={dominicanRepublicHotelAirport.hotelDialogue}
+            locale={locale}
+            eyebrowLabel={LABEL_DIALOGUE_HOTEL_EYEBROW}
+            sectionId="hotel"
+          />
+        </div>
+      ),
+    },
+    {
+      id: "problems",
+      kind: "practice",
+      eyebrow: t(DECK_LABEL_PROBLEMS, locale),
+      title: t(DECK_TITLE_PROBLEMS, locale),
+      helperText: t(DECK_HELPER_PROBLEMS, locale),
+      companionState: "confused",
+      content: (
+        <div data-yo-module2-deck-screen="problems">
+          <HotelProblemCardsSection locale={locale} />
+        </div>
+      ),
+    },
+    {
+      id: "culture",
+      kind: "culture",
+      eyebrow: t(DECK_LABEL_CULTURE, locale),
+      title: t(DECK_TITLE_CULTURE, locale),
+      helperText: t(DECK_HELPER_CULTURE, locale),
+      companionState: "map",
+      content: (
+        <div data-yo-module2-deck-screen="culture">
+          <DominicanNoteSection locale={locale} />
+          <AudioPracticeNote locale={locale} />
+        </div>
+      ),
+    },
+    {
+      id: "flashcards",
+      kind: "practice",
+      eyebrow: t(DECK_LABEL_FLASHCARDS, locale),
+      title: t(DECK_TITLE_FLASHCARDS, locale),
+      helperText: t(DECK_HELPER_FLASHCARDS, locale),
+      companionState: "map",
+      content: (
+        <div data-yo-module2-deck-screen="flashcards">
+          <GrammarSection locale={locale} />
+          <FlashcardsSection locale={locale} />
+        </div>
+      ),
+    },
+    {
+      id: "quiz",
+      kind: "quiz",
+      eyebrow: t(DECK_LABEL_QUIZ, locale),
+      title: t(DECK_TITLE_QUIZ, locale),
+      helperText: t(DECK_HELPER_QUIZ, locale),
+      companionState: "confused",
+      content: (
+        <div data-yo-module2-deck-screen="quiz">
+          <PracticeSection locale={locale} />
+          <MiniMissionSection locale={locale} />
+        </div>
+      ),
+    },
+    {
+      id: "completion",
+      kind: "completion",
+      eyebrow: t(DECK_LABEL_COMPLETION, locale),
+      title: t(DECK_TITLE_COMPLETION, locale),
+      helperText: t(DECK_HELPER_COMPLETION, locale),
+      companionState: "celebrating",
+      content: (
+        <div data-yo-module2-deck-screen="completion">
+          <PrintableWorksheetsSection locale={locale} />
+          <CompletionSection locale={locale} />
+        </div>
+      ),
+    },
+  ];
+}
+
+function Module2DeckRenderer({ locale }: { locale: YoLocale }) {
+  const screens = buildModule2DeckScreens(locale);
+  const langSuffix = locale === "fr" ? "" : `?lang=${locale}`;
+  const backHref = `/yo/langues/espagnol/pays/republique-dominicaine${langSuffix}`;
+  const toggleHref =
+    locale === "fr"
+      ? "/yo/langues/espagnol/pays/republique-dominicaine/module-2?lang=en"
+      : "/yo/langues/espagnol/pays/republique-dominicaine/module-2";
+  return (
+    <YoLessonDeck
+      locale={locale}
+      moduleLabel={t(DECK_MODULE_LABEL, locale)}
+      backHref={backHref}
+      toggleHref={toggleHref}
+      screens={screens}
+    />
+  );
+}
+
 // ─── Main export ───────────────────────────────────────────────────────────
+
+export type DominicanRepublicModule2ContentMode = "long-scroll" | "deck";
 
 export interface DominicanRepublicModule2ContentProps {
   locale: YoLocale;
   breadcrumb?: YoBreadcrumbItem[];
+  /**
+   * Render mode. Defaults to `"long-scroll"` so any consumer that
+   * does not opt in keeps the legacy behaviour byte-for-byte.
+   * `"deck"` switches to the app-like one-screen-at-a-time flow
+   * via `<YoLessonDeck />`.
+   */
+  mode?: DominicanRepublicModule2ContentMode;
 }
 
 export function DominicanRepublicModule2Content({
   locale,
   breadcrumb,
+  mode = "long-scroll",
 }: DominicanRepublicModule2ContentProps) {
+  if (mode === "deck") {
+    return <Module2DeckRenderer locale={locale} />;
+  }
+
   return (
     <div className="bg-[linear-gradient(180deg,#FFF8E7_0%,#F7FBF8_34%,#F8EBCB_100%)]">
       <main id="main-content" className="flex flex-col pb-20">
