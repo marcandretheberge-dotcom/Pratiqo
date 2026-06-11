@@ -494,13 +494,17 @@ const restrictedPathPatterns: RegExp[] = [
   /^app\/sitemap\.ts$/,
   /^app\/robots\.ts$/,
   /^lib\/seo\//,
-  // Module 5 remains out of scope for this PR. Module 4 was
-  // promoted to the deck pattern in a follow-on PR
-  // (`feat/yopratiqo-module4-lesson-deck`); its dedicated deck
-  // test (`tests/yo/yopratiqoModule4LessonDeck.test.ts`) now
-  // owns the contract for Module 4.
-  /^app\/yo\/langues\/espagnol\/pays\/republique-dominicaine\/module-5\//,
-  /^components\/yo\/DominicanRepublicModule5Content\.tsx$/,
+  // Modules 4 and 5 + the Intro deck route were promoted to the
+  // deck pattern in follow-on PRs
+  // (`feat/yopratiqo-module4-lesson-deck` and
+  // `feat/yopratiqo-module5-and-intro-decks`); their dedicated
+  // deck tests
+  // (`tests/yo/yopratiqoModule4LessonDeck.test.ts`,
+  // `tests/yo/yopratiqoModule5LessonDeck.test.ts`,
+  // `tests/yo/yopratiqoIntroLessonDeck.test.ts`,
+  // `tests/yo/yopratiqoFullDominicanPathDeck.test.ts`) now own
+  // the contracts for those surfaces. None of them count as a
+  // restricted-system touch from the Module 3 test's perspective.
 ];
 const status = execSync("git status --porcelain -uall", {
   cwd: root,
@@ -529,6 +533,6 @@ for (const file of changedFiles) {
     }
   }
 }
-ok("15) no restricted system touched (Stripe / payments / tax / RLS / migrations / legal / Membre Pro / audio / SEO / Module 5)");
+ok("15) no restricted system touched (Stripe / payments / tax / RLS / migrations / legal / Membre Pro / audio / SEO)");
 
 console.log(`\n${pass} Module 3 lesson-deck assertions passed`);

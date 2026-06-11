@@ -27,11 +27,13 @@
  *      the existing locale keys).
  *   6. Secondary "Skip to module 2" link.
  *
- * The intro lives ON THIS PAGE (free preview), so the primary
- * CTA scrolls to the in-page anchor `#yo-intro-experience`
- * instead of leaving the page. The secondary link points to the
- * first paid-but-currently-free module (module 2). Both routes
- * already exist in the repo; no fake routes are invented.
+ * The Intro is now its own no-scroll swipe lesson deck route
+ * (`/yo/langues/espagnol/pays/republique-dominicaine/intro`).
+ * The primary CTA launches that deck so the entry into the
+ * learning path feels app-like — not "scroll into the middle
+ * of a long page". The secondary link points to the first
+ * paid-but-currently-free module (module 2). Both routes already
+ * exist in the repo; no fake routes are invented.
  *
  * Privacy / safety profile
  * ------------------------
@@ -90,9 +92,11 @@ function safeLocale(locale: YoLocale | undefined): YoLocale {
  * tests/yo/yopratiqoCountryCourseAppHome.test.ts.
  */
 const HREFS = {
-  /** In-page anchor — the intro experience renders below the
-   *  Course Home hero on the same route. */
-  introAnchor: "#yo-intro-experience",
+  /** Real Intro deck route — replaces the legacy
+   *  `#yo-intro-experience` in-page scroll anchor so the entry
+   *  into the learning path feels app-like (lesson deck) rather
+   *  than "scroll into a long page". */
+  intro: "/yo/langues/espagnol/pays/republique-dominicaine/intro",
   module2: "/yo/langues/espagnol/pays/republique-dominicaine/module-2",
 } as const;
 
@@ -165,7 +169,7 @@ export function YoCourseHero({
       {/* 5. Primary CTA pill */}
       <Link
         data-testid="yo-course-hero-primary-cta"
-        href={HREFS.introAnchor}
+        href={HREFS.intro}
         className="group inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#13A085] px-6 py-4 text-base font-bold text-white shadow-[0_14px_30px_rgba(19,160,133,0.26)] transition hover:bg-[#16B597]"
       >
         {copy.ctaPrimary}

@@ -12,9 +12,8 @@
 import type { Metadata } from "next";
 
 import { SITE_URL } from "@/lib/seo/site";
-import { getYoLocale, lstr } from "@/lib/yo/localize";
+import { getYoLocale } from "@/lib/yo/localize";
 import { DominicanRepublicModule5Content } from "@/components/yo/DominicanRepublicModule5Content";
-import type { YoBreadcrumbItem } from "@/components/yo/YoBreadcrumb";
 
 export const dynamic = "force-dynamic";
 
@@ -42,41 +41,11 @@ interface PageProps {
   searchParams: Promise<{ lang?: string | string[] }>;
 }
 
-function suffixFor(locale: "fr" | "en" | "es"): string {
-  return locale === "fr" ? "" : `?lang=${locale}`;
-}
-
 export default async function YoEspagnolRepubliqueDominicaineModule5Page({
   searchParams,
 }: PageProps) {
   const resolvedSearchParams = await searchParams;
   const locale = getYoLocale(resolvedSearchParams.lang);
-  const langSuffix = suffixFor(locale);
 
-  const breadcrumb: YoBreadcrumbItem[] = [
-    { label: lstr("YoPratiqo", "YoPratiqo", "YoPratiqo"), href: `/yo${langSuffix}` },
-    {
-      label: lstr("Langues", "Languages", "Idiomas"),
-      href: `/yo/langues${langSuffix}`,
-    },
-    {
-      label: lstr("Espagnol", "Spanish", "Español"),
-      href: `/yo/langues/espagnol${langSuffix}`,
-    },
-    {
-      label: lstr(
-        "République dominicaine",
-        "Dominican Republic",
-        "República Dominicana",
-      ),
-      href: `/yo/langues/espagnol/pays/republique-dominicaine${langSuffix}`,
-    },
-    {
-      label: lstr("Module 5", "Module 5", "Módulo 5"),
-    },
-  ];
-
-  return (
-    <DominicanRepublicModule5Content locale={locale} breadcrumb={breadcrumb} />
-  );
+  return <DominicanRepublicModule5Content locale={locale} mode="deck" />;
 }

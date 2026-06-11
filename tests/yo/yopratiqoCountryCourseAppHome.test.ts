@@ -167,24 +167,31 @@ assert.ok(
 ok("4) hero has the title copy 'Espagnol pour ton voyage…' / 'Spanish for your Dominican Republic trip'");
 
 // ─────────────────────────────────────────────────────────────────────────
-// 5. Primary CTA points to a real YoPratiqo module/intro route
+// 5. Primary CTA launches the real Intro deck route
 // ─────────────────────────────────────────────────────────────────────────
 
-// The primary CTA on the hero points to the in-page intro
-// anchor (`#yo-intro-experience`) so the free intro lesson
-// rendered by <RepubliqueDominicaineContent /> further down
-// the page is one tap away. The corresponding anchor target
-// must exist somewhere on the rendered page, so the scroll
-// destination is real.
-assert.match(
-  heroSrc,
-  /["']#yo-intro-experience["']/,
-  "YoCourseHero primary CTA must reach a real in-page anchor",
+// The primary CTA on the hero used to scroll to an in-page
+// anchor (`#yo-intro-experience`). In the
+// `feat/yopratiqo-module5-and-intro-decks` PR, the Intro
+// experience was promoted to its own no-scroll swipe lesson
+// deck route so the entry into the learning path feels
+// app-like. The primary CTA must now point to that real route.
+const INTRO_DECK_PATH = "/yo/langues/espagnol/pays/republique-dominicaine/intro";
+assert.ok(
+  heroSrc.includes(INTRO_DECK_PATH),
+  "YoCourseHero primary CTA must reach the real Intro deck route",
 );
-assert.match(
-  countrySrc,
-  /id=["']yo-intro-experience["']/,
-  "country page must render the matching `#yo-intro-experience` anchor target",
+assert.doesNotMatch(
+  heroSrc,
+  /href=\{?\s*["']#yo-intro-experience["']/,
+  "YoCourseHero primary CTA must NOT use the legacy `#yo-intro-experience` in-page anchor",
+);
+// The actual Intro deck page file must exist (no fake route).
+assert.ok(
+  existsSync(
+    path.join(root, "app/yo/langues/espagnol/pays/republique-dominicaine/intro/page.tsx"),
+  ),
+  "Intro deck page must exist at /yo/langues/espagnol/pays/republique-dominicaine/intro (no fake routes)",
 );
 // And the secondary "Skip to module 2" CTA must reach the real
 // module-2 route.
@@ -198,7 +205,19 @@ assert.ok(
   existsSync(path.join(root, "app/yo/langues/espagnol/pays/republique-dominicaine/module-2/page.tsx")),
   "module-2 page must exist (no fake routes)",
 );
-ok("5) primary CTA points to a real intro anchor + secondary CTA reaches the real module-2 route");
+// The Course Home page must wire its roadmap step 01 and its
+// mobile sticky CTA to the same Intro deck route, NOT to the
+// legacy in-page anchor.
+assert.ok(
+  countrySrc.includes(INTRO_DECK_PATH),
+  "country page must reference the real Intro deck route for the primary learning flow",
+);
+assert.doesNotMatch(
+  countrySrc,
+  /<YoStickyCourseCta[^>]*href=\{?\s*["']#yo-intro-experience["']/,
+  "Course Home sticky CTA must not point at the legacy `#yo-intro-experience` anchor anymore",
+);
+ok("5) primary CTA + roadmap step 01 + sticky CTA all launch the real Intro deck route + secondary CTA reaches Module 2");
 
 // ─────────────────────────────────────────────────────────────────────────
 // 6. Page renders course path / roadmap
