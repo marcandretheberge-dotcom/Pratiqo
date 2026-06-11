@@ -3,17 +3,24 @@
  * Route: /yo/langues/espagnol/pays/republique-dominicaine/module-4
  *
  * Premium "Getting around and exploring" module (A1+ → early A2 bridge).
- * Server-rendered. No checkout, no Stripe, no Supabase, no audio files,
- * no Course schema/indexation change. Indexation is opted out via
- * `robots: { index: false, follow: false }` like Modules 2 and 3.
+ *
+ * Server-rendered shell that opts the learner into the no-scroll swipe
+ * lesson deck (same pattern as Modules 2 and 3). The deck owns the
+ * primary navigation surface, so this route does NOT render the legacy
+ * top breadcrumb chain — the deck header has its own back arrow that
+ * points to the country course home.
+ *
+ * Safety profile (unchanged from the long-scroll version):
+ *   - No checkout, no Stripe, no Supabase write, no audio files,
+ *     no Course schema / indexation change.
+ *   - Indexation stays opted out via `robots: { index: false, follow: false }`.
  */
 
 import type { Metadata } from "next";
 
 import { SITE_URL } from "@/lib/seo/site";
-import { getYoLocale, lstr } from "@/lib/yo/localize";
+import { getYoLocale } from "@/lib/yo/localize";
 import { DominicanRepublicModule4Content } from "@/components/yo/DominicanRepublicModule4Content";
-import type { YoBreadcrumbItem } from "@/components/yo/YoBreadcrumb";
 
 export const dynamic = "force-dynamic";
 
@@ -40,41 +47,11 @@ interface PageProps {
   searchParams: Promise<{ lang?: string | string[] }>;
 }
 
-function suffixFor(locale: "fr" | "en" | "es"): string {
-  return locale === "fr" ? "" : `?lang=${locale}`;
-}
-
 export default async function YoEspagnolRepubliqueDominicaineModule4Page({
   searchParams,
 }: PageProps) {
   const resolvedSearchParams = await searchParams;
   const locale = getYoLocale(resolvedSearchParams.lang);
-  const langSuffix = suffixFor(locale);
 
-  const breadcrumb: YoBreadcrumbItem[] = [
-    { label: lstr("YoPratiqo", "YoPratiqo", "YoPratiqo"), href: `/yo${langSuffix}` },
-    {
-      label: lstr("Langues", "Languages", "Idiomas"),
-      href: `/yo/langues${langSuffix}`,
-    },
-    {
-      label: lstr("Espagnol", "Spanish", "Español"),
-      href: `/yo/langues/espagnol${langSuffix}`,
-    },
-    {
-      label: lstr(
-        "République dominicaine",
-        "Dominican Republic",
-        "República Dominicana",
-      ),
-      href: `/yo/langues/espagnol/pays/republique-dominicaine${langSuffix}`,
-    },
-    {
-      label: lstr("Module 4", "Module 4", "Módulo 4"),
-    },
-  ];
-
-  return (
-    <DominicanRepublicModule4Content locale={locale} breadcrumb={breadcrumb} />
-  );
+  return <DominicanRepublicModule4Content locale={locale} mode="deck" />;
 }

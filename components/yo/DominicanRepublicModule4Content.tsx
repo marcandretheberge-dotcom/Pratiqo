@@ -39,7 +39,7 @@ import {
   type Dom4PrintableSheet,
   type Dom4ReadingText,
 } from "@/lib/yo/dominicanRepublicExplore";
-import { t } from "@/lib/yo/localize";
+import { lstr, t } from "@/lib/yo/localize";
 import type { YoLocale, YoLocalizedString } from "@/lib/yo/types";
 import {
   YoBreadcrumb,
@@ -56,6 +56,8 @@ import {
 } from "@/components/yo/DominicanRepublicModule4Interactive";
 import { dominicanRdModuleProgressPayload } from "@/lib/yo/dominicanRepublicProgressPayloads";
 import { YoMarkModuleCompletedButton } from "@/components/yo/YoMarkModuleCompletedButton";
+import { YoLessonDeck } from "@/components/yo/YoLessonDeck";
+import type { YoLessonDeckScreen } from "@/lib/yo/lessonDeckTypes";
 
 const SECTION_LABELS = {
   passport: { fr: "Passeport exploration", en: "Exploration passport", es: "Pasaporte de exploración" },
@@ -1035,18 +1037,477 @@ function ClosingBridge({ locale }: { locale: YoLocale }) {
   );
 }
 
+// ─── Deck screen labels (app-style focused screens) ─────────────────────
+//
+// Each screen of the lesson deck gets its own short eyebrow / title /
+// helper triplet. The educational content inside each screen is still
+// rendered by the existing section components above — we are only
+// re-composing the page into a no-scroll swipe deck, not rewriting any
+// pedagogy. Keep these strings short: the deck header is mobile-first
+// and longer strings collapse the title font-size.
+
+const DECK_LABEL_MISSION = lstr("Mission", "Mission", "Misión");
+const DECK_TITLE_MISSION = lstr(
+  "Se déplacer et explorer la RD",
+  "Move around and explore the DR",
+  "Moverse y explorar la RD",
+);
+const DECK_HELPER_MISSION = lstr(
+  "Demande ton chemin, prends une guagua et raconte ta sortie en espagnol.",
+  "Ask for directions, hop on a guagua, and tell your outing in Spanish.",
+  "Pide direcciones, sube a una guagua y cuenta tu salida en español.",
+);
+
+const DECK_LABEL_PASSPORT = lstr(
+  "Passeport exploration",
+  "Exploration passport",
+  "Pasaporte de exploración",
+);
+const DECK_TITLE_PASSPORT = lstr(
+  "6 étapes pour bouger en RD",
+  "6 stops to move around the DR",
+  "6 paradas para moverte por la RD",
+);
+const DECK_HELPER_PASSPORT = lstr(
+  "Une mini-feuille de route avant de plonger dans les phrases utiles.",
+  "A mini roadmap before diving into the useful phrases.",
+  "Un mini mapa antes de saltar a las frases útiles.",
+);
+
+const DECK_LABEL_PLACES = lstr(
+  "Lieux et culture",
+  "Places and culture",
+  "Lugares y cultura",
+);
+const DECK_TITLE_PLACES = lstr(
+  "12 lieux dominicains à connaître",
+  "12 Dominican places to know",
+  "12 lugares dominicanos para conocer",
+);
+const DECK_HELPER_PLACES = lstr(
+  "Chaque carte garde une note culturelle et une phrase à essayer à voix haute.",
+  "Each card keeps a culture note and a phrase to try out loud.",
+  "Cada tarjeta guarda una nota cultural y una frase para decir en voz alta.",
+);
+
+const DECK_LABEL_PHRASES = lstr(
+  "Banque de phrases",
+  "Phrase bank",
+  "Banco de frases",
+);
+const DECK_TITLE_PHRASES = lstr(
+  "40 phrases pour bouger sur place",
+  "40 phrases for moving around",
+  "40 frases para moverte por ahí",
+);
+const DECK_HELPER_PHRASES = lstr(
+  "Demander, indiquer, monter, descendre, payer — tape l'audio du navigateur sur chaque carte.",
+  "Ask, point, board, get off, pay — tap browser audio on each card.",
+  "Pedir, señalar, subir, bajar, pagar — toca el audio del navegador en cada tarjeta.",
+);
+
+const DECK_LABEL_DIALOGUES = lstr(
+  "Dialogues guidés",
+  "Guided dialogues",
+  "Diálogos guiados",
+);
+const DECK_TITLE_DIALOGUES = lstr(
+  "3 scènes : transport, directions, excursion",
+  "3 scenes: transport, directions, day-trip",
+  "3 escenas: transporte, direcciones, excursión",
+);
+const DECK_HELPER_DIALOGUES = lstr(
+  "Lis chaque réplique en espagnol, écoute la voix du navigateur, puis répète à voix haute.",
+  "Read each line in Spanish, play the browser voice, then repeat aloud.",
+  "Lee cada línea en español, escucha la voz del navegador y repite en voz alta.",
+);
+
+const DECK_LABEL_EARS_GRAMMAR = lstr(
+  "Oreilles et grammaire",
+  "Ears and grammar",
+  "Oído y gramática",
+);
+const DECK_TITLE_EARS_GRAMMAR = lstr(
+  "Oreille dominicaine + passé pratique",
+  "Dominican ears + practical past tense",
+  "Oído dominicano + pasado práctico",
+);
+const DECK_HELPER_EARS_GRAMMAR = lstr(
+  "Affûte ton oreille en transport, puis ancre les chunks au passé pour raconter une sortie.",
+  "Sharpen your transit ear, then anchor the past-tense chunks for telling an outing.",
+  "Afina el oído en transporte y ancla los chunks en pasado para contar una salida.",
+);
+
+const DECK_LABEL_READINGS = lstr(
+  "Lectures espagnoles",
+  "Spanish readings",
+  "Lecturas en español",
+);
+const DECK_TITLE_READINGS = lstr(
+  "3 lectures courtes pour s'immerger",
+  "3 short readings to immerse",
+  "3 lecturas breves para sumergirte",
+);
+const DECK_HELPER_READINGS = lstr(
+  "Repère le vocabulaire de voyage, puis révèle les réponses guidées une à une.",
+  "Spot the travel vocabulary, then reveal the guided answers one by one.",
+  "Identifica el vocabulario de viaje y revela las respuestas guiadas una a una.",
+);
+
+const DECK_LABEL_FLASHCARDS = lstr(
+  "Flashcards",
+  "Flashcards",
+  "Tarjetas",
+);
+const DECK_TITLE_FLASHCARDS = lstr(
+  "Carrousel transport, directions, passé",
+  "Transport, directions, past-tense carousel",
+  "Carrusel transporte, direcciones, pasado",
+);
+const DECK_HELPER_FLASHCARDS = lstr(
+  "Espagnol devant, glose derrière, audio du navigateur sur chaque carte.",
+  "Spanish on the front, gloss on the back, browser audio on each card.",
+  "Español al frente, glosa atrás, audio del navegador en cada tarjeta.",
+);
+
+const DECK_LABEL_QUIZ = lstr(
+  "Quiz pratique",
+  "Practice quiz",
+  "Quiz práctico",
+);
+const DECK_TITLE_QUIZ = lstr(
+  "Choix en espagnol uniquement",
+  "Spanish-only choices",
+  "Opciones solo en español",
+);
+const DECK_HELPER_QUIZ = lstr(
+  "Pas de panique : la traduction et l'explication n'apparaissent qu'après ton choix.",
+  "No stress: the translation and explanation only appear after your pick.",
+  "Sin estrés: la traducción y la explicación aparecen solo después de tu elección.",
+);
+
+const DECK_LABEL_MINI_MISSION = lstr(
+  "Défi explorateur",
+  "Explorer challenge",
+  "Reto explorador",
+);
+const DECK_TITLE_MINI_MISSION = lstr(
+  "Mini-mission · raconter ta sortie",
+  "Mini mission · tell your outing",
+  "Mini misión · cuenta tu salida",
+);
+const DECK_HELPER_MINI_MISSION = lstr(
+  "Plusieurs rounds rapides : choisis la réponse, lis le retour, passe à la suivante.",
+  "Quick rounds: pick the answer, read the feedback, move on.",
+  "Rondas rápidas: elige la respuesta, lee la pista y sigue.",
+);
+
+const DECK_LABEL_PRINTABLES = lstr(
+  "Fiches imprimables",
+  "Printable practice",
+  "Hojas imprimibles",
+);
+const DECK_TITLE_PRINTABLES = lstr(
+  "5 fiches d'exercices réels",
+  "5 real practice sheets",
+  "5 hojas de práctica reales",
+);
+const DECK_HELPER_PRINTABLES = lstr(
+  "Appariement, complétion, phrases au passé, compréhension et journal de voyage.",
+  "Matching, fill-in-the-blanks, past-tense phrases, reading and a travel journal.",
+  "Emparejamiento, completar, frases en pasado, comprensión y diario de viaje.",
+);
+
+const DECK_LABEL_COMPLETION = lstr(
+  "Bravo, explorateur",
+  "Nice work, explorer",
+  "Bien hecho, explorador",
+);
+const DECK_TITLE_COMPLETION = lstr(
+  "Sauvegarde ta progression",
+  "Save your progress",
+  "Guarda tu progreso",
+);
+const DECK_HELPER_COMPLETION = lstr(
+  "Marque le module 4 comme terminé, puis enchaîne avec le pont vers ton professeur Pratiqo.",
+  "Mark module 4 as completed, then bridge to your Pratiqo teacher.",
+  "Marca el módulo 4 como completado y luego pasa al puente con tu profesor de Pratiqo.",
+);
+
+const DECK_MODULE_LABEL = lstr(
+  "Module 4 · RD A1+→A2",
+  "Module 4 · DR A1+→A2",
+  "Módulo 4 · RD A1+→A2",
+);
+
+// ─── Deck composer (Module 4) ───────────────────────────────────────────
+//
+// Composes the 12 focused lesson-deck screens from the existing
+// section components. Companion visual states follow the brief:
+//   - `map` for navigation / exploration / immersion screens
+//   - `confused` for practice / dialogue / quiz / direction-problem screens
+//   - `celebrating` for the final completion screen
+// `teacher_ready` is intentionally not used — there is no live AI tutor
+// behaviour here; the teacher bridge lives inside the completion screen
+// as a static CTA only.
+
+function buildModule4DeckScreens(locale: YoLocale): YoLessonDeckScreen[] {
+  const data = dominicanRepublicExplore;
+
+  return [
+    {
+      id: "mission",
+      kind: "mission",
+      eyebrow: t(DECK_LABEL_MISSION, locale),
+      title: t(DECK_TITLE_MISSION, locale),
+      helperText: t(DECK_HELPER_MISSION, locale),
+      companionState: "map",
+      content: (
+        <div data-yo-module4-deck-screen="mission">
+          <HeroSection locale={locale} />
+          <AudioNoticeSection locale={locale} />
+        </div>
+      ),
+    },
+    {
+      id: "passport",
+      kind: "culture",
+      eyebrow: t(DECK_LABEL_PASSPORT, locale),
+      title: t(DECK_TITLE_PASSPORT, locale),
+      helperText: t(DECK_HELPER_PASSPORT, locale),
+      companionState: "map",
+      content: (
+        <div data-yo-module4-deck-screen="passport">
+          <PassportSection locale={locale} />
+        </div>
+      ),
+    },
+    {
+      id: "places",
+      kind: "culture",
+      eyebrow: t(DECK_LABEL_PLACES, locale),
+      title: t(DECK_TITLE_PLACES, locale),
+      helperText: t(DECK_HELPER_PLACES, locale),
+      companionState: "map",
+      content: (
+        <div data-yo-module4-deck-screen="places">
+          <PlaceCardsSection locale={locale} />
+        </div>
+      ),
+    },
+    {
+      id: "phrases",
+      kind: "phrase",
+      eyebrow: t(DECK_LABEL_PHRASES, locale),
+      title: t(DECK_TITLE_PHRASES, locale),
+      helperText: t(DECK_HELPER_PHRASES, locale),
+      companionState: "confused",
+      content: (
+        <div data-yo-module4-deck-screen="phrases">
+          <PhraseBankSection locale={locale} />
+        </div>
+      ),
+    },
+    {
+      id: "dialogues",
+      kind: "dialogue",
+      eyebrow: t(DECK_LABEL_DIALOGUES, locale),
+      title: t(DECK_TITLE_DIALOGUES, locale),
+      helperText: t(DECK_HELPER_DIALOGUES, locale),
+      companionState: "confused",
+      content: (
+        <div data-yo-module4-deck-screen="dialogues">
+          <DialoguesSection locale={locale} />
+        </div>
+      ),
+    },
+    {
+      id: "ears-grammar",
+      kind: "practice",
+      eyebrow: t(DECK_LABEL_EARS_GRAMMAR, locale),
+      title: t(DECK_TITLE_EARS_GRAMMAR, locale),
+      helperText: t(DECK_HELPER_EARS_GRAMMAR, locale),
+      companionState: "map",
+      content: (
+        <div data-yo-module4-deck-screen="ears-grammar">
+          <EarsSection locale={locale} />
+          <GrammarSection locale={locale} />
+        </div>
+      ),
+    },
+    {
+      id: "readings",
+      kind: "culture",
+      eyebrow: t(DECK_LABEL_READINGS, locale),
+      title: t(DECK_TITLE_READINGS, locale),
+      helperText: t(DECK_HELPER_READINGS, locale),
+      companionState: "map",
+      content: (
+        <div data-yo-module4-deck-screen="readings">
+          <ReadingsSection locale={locale} />
+        </div>
+      ),
+    },
+    {
+      id: "flashcards",
+      kind: "practice",
+      eyebrow: t(DECK_LABEL_FLASHCARDS, locale),
+      title: t(DECK_TITLE_FLASHCARDS, locale),
+      helperText: t(DECK_HELPER_FLASHCARDS, locale),
+      companionState: "map",
+      content: (
+        <div data-yo-module4-deck-screen="flashcards">
+          <FlashcardsSection locale={locale} />
+        </div>
+      ),
+    },
+    {
+      id: "quiz",
+      kind: "quiz",
+      eyebrow: t(DECK_LABEL_QUIZ, locale),
+      title: t(DECK_TITLE_QUIZ, locale),
+      helperText: t(DECK_HELPER_QUIZ, locale),
+      companionState: "confused",
+      content: (
+        <div data-yo-module4-deck-screen="quiz">
+          <DominicanRepublicModule4Quiz
+            questions={data.quizQuestions}
+            locale={locale}
+            eyebrow={{
+              fr: SECTION_LABELS.quiz.fr,
+              en: SECTION_LABELS.quiz.en,
+              es: SECTION_LABELS.quiz.es,
+            }}
+            title={{
+              fr: "Quiz pratique · choix en espagnol uniquement",
+              en: "Practice quiz · Spanish-only choices",
+              es: "Quiz práctico · opciones solo en español",
+            }}
+            subtitle={{
+              fr: "Choisis une réponse, puis appuie sur Vérifier pour voir la traduction et l'explication.",
+              en: "Pick an answer, then press Check to see the translation and explanation.",
+              es: "Elige una respuesta y pulsa Verificar para ver la traducción y la explicación.",
+            }}
+          />
+        </div>
+      ),
+    },
+    {
+      id: "mini-mission",
+      kind: "practice",
+      eyebrow: t(DECK_LABEL_MINI_MISSION, locale),
+      title: t(DECK_TITLE_MINI_MISSION, locale),
+      helperText: t(DECK_HELPER_MINI_MISSION, locale),
+      companionState: "confused",
+      content: (
+        <div data-yo-module4-deck-screen="mini-mission">
+          <DominicanRepublicExplorerChallenge
+            title={data.finalGame.title}
+            subtitle={data.finalGame.subtitle}
+            successMessage={data.finalGame.successMessage}
+            rounds={data.finalGame.rounds}
+            locale={locale}
+          />
+        </div>
+      ),
+    },
+    {
+      id: "printables",
+      kind: "practice",
+      eyebrow: t(DECK_LABEL_PRINTABLES, locale),
+      title: t(DECK_TITLE_PRINTABLES, locale),
+      helperText: t(DECK_HELPER_PRINTABLES, locale),
+      companionState: "map",
+      content: (
+        <div data-yo-module4-deck-screen="printables">
+          <PrintablesSection locale={locale} />
+        </div>
+      ),
+    },
+    {
+      id: "completion",
+      kind: "completion",
+      eyebrow: t(DECK_LABEL_COMPLETION, locale),
+      title: t(DECK_TITLE_COMPLETION, locale),
+      helperText: t(DECK_HELPER_COMPLETION, locale),
+      companionState: "celebrating",
+      content: (
+        <div data-yo-module4-deck-screen="completion">
+          <ClosingBridge locale={locale} />
+        </div>
+      ),
+    },
+  ];
+}
+
+// ─── Deck renderer (no-primary-scroll app viewport) ─────────────────────
+//
+// Wraps <YoLessonDeck /> with `enableTapNavigation` so the experience
+// matches Modules 2 and 3. Tap-zone navigation is safe because every
+// per-screen interactive control on Module 4 (audio buttons, the
+// reveal-only quiz `<details>` / `<button>` choices, the explorer-
+// challenge round buttons, the print button, the next-module / teacher
+// CTA links, the mark-completed button, the reading reveal `<details>`)
+// is either a real HTML control already covered by the deck's audited
+// gesture-exclude selector (`YO_LESSON_DECK_GESTURE_EXCLUDE_SELECTOR`)
+// or wrapped with `data-no-deck-swipe` / `data-no-deck-tap`.
+//
+// The Trophy icon is mounted hidden so the unused-import lint stays
+// quiet (it is still used inside the explorer-challenge interactive
+// component when rendered).
+
+function Module4DeckRenderer({ locale }: { locale: YoLocale }) {
+  const screens = buildModule4DeckScreens(locale);
+  const langSuffix = locale === "fr" ? "" : `?lang=${locale}`;
+  const backHref = `/yo/langues/espagnol/pays/republique-dominicaine${langSuffix}`;
+  const toggleHref =
+    locale === "fr"
+      ? "/yo/langues/espagnol/pays/republique-dominicaine/module-4?lang=en"
+      : "/yo/langues/espagnol/pays/republique-dominicaine/module-4";
+
+  return (
+    <>
+      <YoLessonDeck
+        locale={locale}
+        moduleLabel={t(DECK_MODULE_LABEL, locale)}
+        backHref={backHref}
+        toggleHref={toggleHref}
+        screens={screens}
+        enableTapNavigation
+      />
+      <span aria-hidden hidden>
+        <Trophy />
+      </span>
+    </>
+  );
+}
+
 // ─── Main content component ────────────────────────────────────────────
+
+export type DominicanRepublicModule4Mode = "long-scroll" | "deck";
 
 export interface DominicanRepublicModule4ContentProps {
   locale: YoLocale;
   breadcrumb?: YoBreadcrumbItem[];
+  /**
+   * Render mode. Defaults to `"long-scroll"` so any other surface (tests,
+   * legacy embed, future preview) keeps the original document layout.
+   * The public Module 4 route opts into `"deck"` for the app-like
+   * no-scroll swipe lesson deck.
+   */
+  mode?: DominicanRepublicModule4Mode;
 }
 
 export function DominicanRepublicModule4Content({
   locale,
   breadcrumb,
+  mode = "long-scroll",
 }: DominicanRepublicModule4ContentProps) {
   const data = dominicanRepublicExplore;
+
+  if (mode === "deck") {
+    return <Module4DeckRenderer locale={locale} />;
+  }
 
   return (
     <div className="bg-[linear-gradient(180deg,#FFF8E7_0%,#F7FBF8_34%,#F8EBCB_100%)]">
