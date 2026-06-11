@@ -86,8 +86,8 @@ const COPY: Record<HubLocale, Copy> = {
     eyebrow: "YoPratiqo",
     title: "Mon YoPratiqo",
     intro:
-      "Ton compagnon suit tes progrès YoPratiqo. Quand tu réserves un professeur, tu peux choisir de partager un résumé utile de ton parcours.",
-    companionHeading: "Mon compagnon YoPratiqo",
+      "Yoppo, ton compagnon YoPratiqo, suit tes progrès. Quand tu réserves un professeur, tu peux choisir de partager un résumé utile de ton parcours.",
+    companionHeading: "Yoppo · mon compagnon YoPratiqo",
     courseHeading: "Mon parcours en cours",
     courseTitle: "Espagnol République dominicaine — A1",
     courseSubtitle: "Voyage, culture et conversations utiles.",
@@ -114,8 +114,8 @@ const COPY: Record<HubLocale, Copy> = {
     eyebrow: "YoPratiqo",
     title: "My YoPratiqo",
     intro:
-      "Your companion follows your YoPratiqo progress. When you book a teacher, you can choose to share a useful summary of your path.",
-    companionHeading: "My YoPratiqo companion",
+      "Yoppo, your YoPratiqo companion, follows your progress. When you book a teacher, you can choose to share a useful summary of your path.",
+    companionHeading: "Yoppo · my YoPratiqo companion",
     courseHeading: "My current course",
     courseTitle: "Dominican Republic Spanish — A1",
     courseSubtitle: "Travel, culture, and useful conversations.",
@@ -142,8 +142,8 @@ const COPY: Record<HubLocale, Copy> = {
     eyebrow: "YoPratiqo",
     title: "Mi YoPratiqo",
     intro:
-      "Tu compañero sigue tu progreso YoPratiqo. Cuando reservas un profesor, puedes elegir compartir un resumen útil de tu recorrido.",
-    companionHeading: "Mi compañero YoPratiqo",
+      "Yoppo, tu compañero YoPratiqo, sigue tu progreso. Cuando reservas un profesor, puedes elegir compartir un resumen útil de tu recorrido.",
+    companionHeading: "Yoppo · mi compañero YoPratiqo",
     courseHeading: "Mi curso actual",
     courseTitle: "Español República Dominicana — A1",
     courseSubtitle: "Viaje, cultura y conversaciones útiles.",

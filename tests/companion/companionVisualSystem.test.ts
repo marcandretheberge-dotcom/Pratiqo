@@ -191,16 +191,21 @@ ok("5) CompanionBridgeCard exists and is mounted in at least one bridge surface"
 // 6. bridge copy exists in FR / EN / ES
 // ─────────────────────────────────────────────────────────────────────────
 
+// The YoPratiqo companion is now officially named "Yoppo" on every
+// student-facing surface. The bridge card body keeps the original
+// "learns with you / summarize / only when you agree to share" story
+// but names the companion explicitly as Yoppo so the consent surface
+// stays consistent with the rest of the YoPratiqo product UX.
 const BRIDGE_COPY_FR =
-  "Ton compagnon apprend avec toi. Il aide à résumer tes progrès pour préparer un meilleur cours, seulement si tu consens au partage.";
+  "Yoppo apprend avec toi. Il aide à résumer tes progrès pour préparer un meilleur cours, seulement si tu consens au partage.";
 const BRIDGE_COPY_EN =
-  "Your companion learns with you. It helps summarize your progress for a better lesson, only when you agree to share it.";
+  "Yoppo learns with you. It helps summarize your progress for a better lesson, only when you agree to share it.";
 const BRIDGE_COPY_ES =
-  "Tu compañero aprende contigo. Ayuda a resumir tu progreso para preparar una mejor clase, solo si aceptas compartirlo.";
+  "Yoppo aprende contigo. Ayuda a resumir tu progreso para preparar una mejor clase, solo si aceptas compartirlo.";
 assert.ok(bridgeCardSrc.includes(BRIDGE_COPY_FR), "FR bridge copy must match the brief verbatim");
 assert.ok(bridgeCardSrc.includes(BRIDGE_COPY_EN), "EN bridge copy must match the brief verbatim");
 assert.ok(bridgeCardSrc.includes(BRIDGE_COPY_ES), "ES bridge copy must match the brief verbatim");
-ok("6) FR / EN / ES bridge copy matches the brief verbatim");
+ok("6) FR / EN / ES bridge copy matches the brief verbatim (with Yoppo naming)");
 
 // ─────────────────────────────────────────────────────────────────────────
 // 7. asset plan says not to crop from poster
