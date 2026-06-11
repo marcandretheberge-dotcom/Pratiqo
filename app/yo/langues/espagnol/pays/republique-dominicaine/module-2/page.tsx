@@ -4,19 +4,24 @@
  *
  * Route: /yo/langues/espagnol/pays/republique-dominicaine/module-2
  *
- * Premium interactive module — the quality template for all subsequent
- * paid YoPratiqo modules. No checkout, no Stripe, no Supabase, no audio.
+ * Premium app-like lesson deck — the polished reference for all
+ * subsequent paid YoPratiqo modules. No checkout, no payment
+ * library, no Supabase write from this page, no MP3s. The
+ * surface is now a one-screen-at-a-time deck powered by
+ * `<YoLessonDeck />`. The legacy long-scroll renderer remains
+ * available via `mode="long-scroll"` for any consumer that still
+ * needs it.
  *
  * Locale behaviour:
  *   ?lang=en → English
+ *   ?lang=es → Spanish
  *   anything else (or absent) → French (Quebec default)
  */
 
 import type { Metadata } from "next";
 import { SITE_URL } from "@/lib/seo/site";
-import { getYoLocale, lstr } from "@/lib/yo/localize";
+import { getYoLocale } from "@/lib/yo/localize";
 import { DominicanRepublicModule2Content } from "@/components/yo/DominicanRepublicModule2Content";
-import type { YoBreadcrumbItem } from "@/components/yo/YoBreadcrumb";
 
 export const dynamic = "force-dynamic";
 
@@ -48,29 +53,10 @@ export default async function YoEspagnolRepubliqueDominicaineModule2Page({
   const resolvedSearchParams = await searchParams;
   const locale = getYoLocale(resolvedSearchParams.lang);
 
-  const langSuffix = locale === "en" ? "?lang=en" : "";
-
-  const breadcrumb: YoBreadcrumbItem[] = [
-    { label: lstr("YoPratiqo", "YoPratiqo"), href: `/yo${langSuffix}` },
-    {
-      label: lstr("Langues", "Languages"),
-      href: `/yo/langues${langSuffix}`,
-    },
-    {
-      label: lstr("Espagnol", "Spanish"),
-      href: `/yo/langues/espagnol${langSuffix}`,
-    },
-    {
-      label: lstr("République dominicaine", "Dominican Republic"),
-      href: `/yo/langues/espagnol/pays/republique-dominicaine${langSuffix}`,
-    },
-    {
-      label: lstr("Module 2", "Module 2"),
-      // Current page — no href.
-    },
-  ];
-
-  return (
-    <DominicanRepublicModule2Content locale={locale} breadcrumb={breadcrumb} />
-  );
+  // The deck renders its own app-style top bar (one back arrow
+  // back to the country course home + FR/EN toggle), so we no
+  // longer pass a 5-level breadcrumb here. The legacy long-
+  // scroll mode keeps working when other surfaces opt in via
+  // `mode="long-scroll"` and pass a breadcrumb of their own.
+  return <DominicanRepublicModule2Content locale={locale} mode="deck" />;
 }
