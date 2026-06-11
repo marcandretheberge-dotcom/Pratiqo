@@ -465,9 +465,15 @@ const restrictedPathPatterns: RegExp[] = [
   /^app\/sitemap\.ts$/,
   /^app\/robots\.ts$/,
   /^lib\/seo\//,
-  // Module 3 / 4 / 5 are explicitly out of scope for this PR.
-  /^app\/yo\/langues\/espagnol\/pays\/republique-dominicaine\/module-[345]\//,
-  /^components\/yo\/DominicanRepublicModule[345]Content\.tsx$/,
+  // Modules 4 / 5 remain explicitly out of scope for the no-
+  // scroll-swipe shared-deck rollout. Module 3 was originally
+  // listed here too but was promoted to the deck pattern in a
+  // follow-on PR (`feat/yopratiqo-module3-lesson-deck`); the
+  // dedicated Module 3 deck test
+  // (`tests/yo/yopratiqoModule3LessonDeck.test.ts`) now owns
+  // the contract for Module 3.
+  /^app\/yo\/langues\/espagnol\/pays\/republique-dominicaine\/module-[45]\//,
+  /^components\/yo\/DominicanRepublicModule[45]Content\.tsx$/,
 ];
 const status = execSync("git status --porcelain -uall", {
   cwd: root,
