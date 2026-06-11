@@ -71,6 +71,13 @@ import {
   YO_LESSON_DECK_CHROME,
   type YoLessonDeckScreen as YoLessonDeckScreenModel,
 } from "@/lib/yo/lessonDeckTypes";
+import {
+  DECK_CONTENT_MAX_WIDTH_CLASS,
+  DECK_PROGRESS_STRIP_CLASSES,
+  DECK_ROOT_CLASSES,
+  DECK_SCREEN_HOST_CLASSES,
+  DECK_STAGE_CLASSES,
+} from "@/lib/yo/lessonDeckVisualContract";
 import type { YoLocale } from "@/lib/yo/types";
 
 export type YoLessonDeckProps = {
@@ -334,14 +341,14 @@ export function YoLessonDeck({
       data-yo-lesson-deck="true"
       data-yo-lesson-deck-total={total}
       data-yo-lesson-deck-tap-navigation={enableTapNavigation ? "on" : "off"}
-      className={cn(
-        // Viewport-locked: h-[100dvh] with a flex column so the
-        // header / progress / stage / nav share the viewport
-        // exactly. `overflow-hidden` on the root makes sure no
-        // accidental child can grow the document body.
-        "relative flex h-[100dvh] flex-col overflow-hidden bg-[linear-gradient(180deg,#F4EFE6_0%,#FBF7EE_55%,#F4EFE6_100%)] overscroll-contain",
-        className,
-      )}
+      // Viewport-locked: h-[100dvh] with a flex column so the
+      // header / progress / stage / nav share the viewport
+      // exactly. `overflow-hidden` on the root makes sure no
+      // accidental child can grow the document body. Class
+      // string is the canonical `DECK_ROOT_CLASSES` from the
+      // shared visual contract so every deck route inherits the
+      // same warm-cream gradient and viewport behaviour.
+      className={cn(DECK_ROOT_CLASSES, className)}
     >
       <YoLessonDeckHeader
         locale={locale}
@@ -352,14 +359,19 @@ export function YoLessonDeck({
 
       {/* Progress strip — compact "3 / 11" + dot row. Sits
           between the header and the stage so it is always
-          visible without any document scroll. */}
+          visible without any document scroll. Width is locked
+          to the shared deck content column so the strip lines
+          up with the stage and the nav below. */}
       <div
         data-testid="yo-lesson-deck-progress"
         data-no-deck-swipe="true"
         data-no-deck-tap="true"
         aria-live="polite"
         aria-atomic="true"
-        className="mx-auto flex w-full max-w-[640px] shrink-0 items-center gap-3 px-4 pt-3 sm:px-6"
+        className={cn(
+          DECK_PROGRESS_STRIP_CLASSES,
+          DECK_CONTENT_MAX_WIDTH_CLASS,
+        )}
       >
         <span className="text-xs font-bold uppercase tracking-[0.16em] text-[#13A085]">
           {labels.progressAnnouncement(currentIndex + 1, total)}
@@ -392,12 +404,13 @@ export function YoLessonDeck({
           fallback per-card scroll is enabled with
           `overflow-y-auto overscroll-contain` so a single
           unusually long screen stays usable without leaking
-          scroll up to the document. */}
+          scroll up to the document. Width is locked to the
+          shared deck content column. */}
       <div
         ref={stageRef}
         data-testid="yo-lesson-deck-stage"
         data-yo-lesson-deck-stage="true"
-        className="relative mx-auto flex w-full max-w-[640px] min-h-0 flex-1 px-4 pt-3 sm:px-6"
+        className={cn(DECK_STAGE_CLASSES, DECK_CONTENT_MAX_WIDTH_CLASS)}
         onPointerDown={onPointerDown}
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerCancel}
@@ -414,7 +427,7 @@ export function YoLessonDeck({
               data-yo-lesson-deck-screen-host-active={isActive}
               aria-hidden={!isActive}
               className={cn(
-                "absolute inset-0 px-1 pb-3 overflow-y-auto overscroll-contain",
+                DECK_SCREEN_HOST_CLASSES,
                 isActive ? "block" : "hidden",
               )}
             >

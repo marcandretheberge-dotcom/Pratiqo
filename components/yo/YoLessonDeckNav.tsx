@@ -42,6 +42,14 @@ import {
   YO_LESSON_DECK_CHROME,
   type YoLessonDeckChromeLabels,
 } from "@/lib/yo/lessonDeckTypes";
+import {
+  DECK_CONTENT_MAX_WIDTH_CLASS,
+  DECK_NAV_CLASSES,
+  DECK_NAV_NEXT_BUTTON_CLASSES,
+  DECK_NAV_PREV_BUTTON_CLASSES,
+  DECK_NAV_ROW_CLASSES,
+  DECK_NAV_TOP_FADE_CLASSES,
+} from "@/lib/yo/lessonDeckVisualContract";
 import type { YoLocale } from "@/lib/yo/types";
 
 export type YoLessonDeckNavProps = {
@@ -74,16 +82,10 @@ export function YoLessonDeckNav({
       data-no-deck-swipe="true"
       data-no-deck-tap="true"
       aria-label={labels.progressAnnouncement(currentIndex + 1, total)}
-      className={cn(
-        "relative z-30 shrink-0 border-t border-[#E7DFCF] bg-[#F4EFE6]/96 px-4 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-3 backdrop-blur-md",
-        className,
-      )}
+      className={cn(DECK_NAV_CLASSES, className)}
     >
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 -top-6 h-6 bg-gradient-to-t from-[#F4EFE6] to-transparent"
-      />
-      <div className="mx-auto flex max-w-md items-center justify-between gap-3">
+      <div aria-hidden className={DECK_NAV_TOP_FADE_CLASSES} />
+      <div className={cn(DECK_NAV_ROW_CLASSES, DECK_CONTENT_MAX_WIDTH_CLASS)}>
         <button
           type="button"
           data-testid="yo-lesson-deck-nav-prev"
@@ -91,7 +93,7 @@ export function YoLessonDeckNav({
           disabled={atFirst}
           aria-disabled={atFirst}
           className={cn(
-            "inline-flex items-center justify-center gap-2 rounded-full border border-[#E7DFCF] bg-white px-5 py-3 text-sm font-bold text-[#172642] shadow-[0_10px_24px_rgba(23,38,66,0.06)] transition",
+            DECK_NAV_PREV_BUTTON_CLASSES,
             atFirst
               ? "cursor-not-allowed opacity-40"
               : "hover:bg-[#FBF7EE]",
@@ -108,7 +110,7 @@ export function YoLessonDeckNav({
           disabled={atLast}
           aria-disabled={atLast}
           className={cn(
-            "inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-[#13A085] px-5 py-3 text-sm font-bold text-white shadow-[0_14px_30px_rgba(19,160,133,0.28)] transition",
+            DECK_NAV_NEXT_BUTTON_CLASSES,
             atLast ? "cursor-not-allowed opacity-60" : "hover:bg-[#16B597]",
           )}
         >

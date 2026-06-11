@@ -57,6 +57,7 @@ const DECK_PATH = "components/yo/YoLessonDeck.tsx";
 const HEADER_PATH = "components/yo/YoLessonDeckHeader.tsx";
 const NAV_PATH = "components/yo/YoLessonDeckNav.tsx";
 const SCREEN_PATH = "components/yo/YoLessonDeckScreen.tsx";
+const VISUAL_CONTRACT_PATH = "lib/yo/lessonDeckVisualContract.ts";
 const MODULE2_CONTENT_PATH = "components/yo/DominicanRepublicModule2Content.tsx";
 const PRODUCT_CONFIG_PATH = "lib/yo/yopratiqoProductConfig.ts";
 
@@ -64,32 +65,60 @@ const deckSrc = read(DECK_PATH);
 const headerSrc = read(HEADER_PATH);
 const navSrc = read(NAV_PATH);
 const screenSrc = read(SCREEN_PATH);
+const visualContractSrc = read(VISUAL_CONTRACT_PATH);
 const module2Src = read(MODULE2_CONTENT_PATH);
+
+// The deck's chrome visual classes (root, header, stage, nav,
+// per-screen card, companion bubble) were extracted into
+// `lib/yo/lessonDeckVisualContract.ts` in the
+// `feat/yopratiqo-deck-visual-consistency-pass` PR so every
+// deck route inherits the same tokens. Visual-class assertions
+// therefore match against the union of the shell file + the
+// shared contract — behaviour assertions (useCallback,
+// onPointerDown, ArrowLeft, etc.) still target the deck shell
+// directly. The contract file itself is asserted to declare
+// the canonical class strings (see "1)" and "2)" below).
+const deckShellSrc = `${deckSrc}\n${visualContractSrc}`;
 
 // ─────────────────────────────────────────────────────────────────────────
 // 1. Deck supports no-primary-scroll app viewport behavior
 // ─────────────────────────────────────────────────────────────────────────
 
 assert.match(
-  deckSrc,
+  deckShellSrc,
   /\bflex\s+h-\[100dvh\]\s+flex-col\b/,
-  "deck root must be a viewport-locked flex column (flex h-[100dvh] flex-col)",
+  "deck root must be a viewport-locked flex column (flex h-[100dvh] flex-col) — declared in the shared visual contract and consumed by YoLessonDeck",
 );
 assert.match(
-  deckSrc,
+  deckShellSrc,
   /\boverflow-hidden\b/,
   "deck root must clip overflow so accidental child growth never reaches the document body",
 );
+// The deck shell must import the canonical visual contract,
+// otherwise the contract above would be declared but never
+// applied.
+assert.match(
+  deckSrc,
+  /from\s+["']@\/lib\/yo\/lessonDeckVisualContract["']/,
+  "YoLessonDeck must import its visual classes from the shared lessonDeckVisualContract",
+);
+assert.match(
+  deckSrc,
+  /DECK_ROOT_CLASSES\b/,
+  "YoLessonDeck must consume the shared DECK_ROOT_CLASSES token",
+);
 // The header + nav must be shrink-0 flex items so they always
 // fit inside the dvh column without competing for the stage's
-// flex-1 space.
+// flex-1 space. The `shrink-0` declarations live in
+// `DECK_HEADER_CLASSES` / `DECK_NAV_CLASSES` inside the shared
+// visual contract; the header / nav files import + apply them.
 assert.match(
-  headerSrc,
+  `${headerSrc}\n${visualContractSrc}`,
   /\bshrink-0\b/,
   "deck header must be a shrink-0 flex item",
 );
 assert.match(
-  navSrc,
+  `${navSrc}\n${visualContractSrc}`,
   /\bshrink-0\b/,
   "deck nav must be a shrink-0 flex item",
 );
@@ -100,12 +129,16 @@ ok("1) deck root locks the viewport (h-[100dvh] flex column, overflow-hidden, sh
 // ─────────────────────────────────────────────────────────────────────────
 
 assert.match(
-  deckSrc,
+  deckShellSrc,
   /h-\[100dvh\]/,
   "deck must use h-[100dvh] (dynamic viewport height — falls back gracefully on browsers that do not support dvh)",
 );
+// The safe-area-inset-bottom padding lives in `DECK_NAV_CLASSES`
+// in the shared contract; the nav file imports it. Asserting on
+// the union of `navSrc + visualContractSrc` so both the
+// canonical declaration and the consumption are protected.
 assert.match(
-  navSrc,
+  `${navSrc}\n${visualContractSrc}`,
   /env\(safe-area-inset-bottom\)/,
   "deck nav must respect the iOS bottom safe-area so the home indicator does not eat the Next button",
 );
@@ -121,7 +154,7 @@ ok("2) deck uses h-[100dvh] + iOS safe-area-inset-bottom padding on the nav");
 // viewport is small — without it, the flex-1 stage would grow
 // the parent and re-introduce page scroll.
 assert.match(
-  deckSrc,
+  deckShellSrc,
   /\bflex-1\b[\s\S]{0,200}\bmin-h-0\b|\bmin-h-0\b[\s\S]{0,200}\bflex-1\b/,
   "deck stage must be `flex-1 min-h-0` so it fills remaining space without breaking the dvh lock",
 );
@@ -132,7 +165,7 @@ ok("3) deck stage uses the flex-1 + min-h-0 viewport pattern");
 // ─────────────────────────────────────────────────────────────────────────
 
 assert.match(
-  deckSrc,
+  deckShellSrc,
   /\boverflow-y-auto\s+overscroll-contain\b/,
   "deck must allow `overflow-y-auto overscroll-contain` on the active screen card as a fallback — never on the document body",
 );
@@ -409,17 +442,26 @@ assert.match(
   productConfigSrc,
   /supportedProductTypes:\s*\[\s*"free_intro"\s*\]/,
 );
+/**
+ * Strip JS / TS comments so doctring privacy disclaimers like
+ * "no Stripe / OpenAI / Supabase / etc." (which are
+ * intentional reassurances, NOT actual imports) do not trip
+ * the literal-string guards below.
+ */
+const stripJsComments = (src: string) =>
+  src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/[^\n]*/g, "$1");
 const STRIPE_PATTERN = /\bstripe\b|\bprice_id\b|STRIPE_/i;
 for (const [label, src] of [
   ["YoLessonDeck", deckSrc],
   ["YoLessonDeckHeader", headerSrc],
   ["YoLessonDeckNav", navSrc],
   ["YoLessonDeckScreen", screenSrc],
+  ["lessonDeckVisualContract", visualContractSrc],
 ] as const) {
   assert.doesNotMatch(
-    src,
+    stripJsComments(src),
     STRIPE_PATTERN,
-    `${label} must not introduce Stripe / price_id references`,
+    `${label} must not introduce Stripe / price_id references (in code, not docstrings)`,
   );
 }
 ok("14) paid YoPratiqo checkout remains disabled and no Stripe references added on the deck surface");
@@ -435,6 +477,7 @@ for (const [label, src] of [
   ["YoLessonDeckHeader", headerSrc],
   ["YoLessonDeckNav", navSrc],
   ["YoLessonDeckScreen", screenSrc],
+  ["lessonDeckVisualContract", visualContractSrc],
 ] as const) {
   assert.doesNotMatch(
     src,

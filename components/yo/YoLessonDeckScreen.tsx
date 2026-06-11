@@ -29,6 +29,12 @@
 import { cn } from "@/lib/utils";
 import { YoLessonCompanionCoach } from "@/components/yo/YoLessonCompanionCoach";
 import type { YoLessonDeckScreen as YoLessonDeckScreenModel } from "@/lib/yo/lessonDeckTypes";
+import {
+  DECK_SCREEN_BODY_CLASSES,
+  DECK_SCREEN_CARD_CLASSES,
+  DECK_SCREEN_EYEBROW_CLASSES,
+  DECK_SCREEN_TITLE_CLASSES,
+} from "@/lib/yo/lessonDeckVisualContract";
 import type { YoLocale } from "@/lib/yo/types";
 
 export type YoLessonDeckScreenProps = {
@@ -47,25 +53,16 @@ export function YoLessonDeckScreen({
       data-testid="yo-lesson-deck-screen"
       data-yo-lesson-deck-screen-id={screen.id}
       data-yo-lesson-deck-screen-kind={screen.kind}
-      className={cn(
-        "flex w-full flex-col gap-4 rounded-[2rem] border border-[#E7DFCF] bg-white p-5 shadow-[0_18px_46px_rgba(23,38,66,0.07)] sm:p-6",
-        className,
-      )}
+      className={cn(DECK_SCREEN_CARD_CLASSES, className)}
     >
       <header className="flex items-start gap-3">
         <div className="flex flex-1 flex-col gap-1">
           {screen.eyebrow ? (
-            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#13A085]">
-              {screen.eyebrow}
-            </p>
+            <p className={DECK_SCREEN_EYEBROW_CLASSES}>{screen.eyebrow}</p>
           ) : null}
-          <h2 className="font-[var(--yo-app-display)] text-[22px] font-semibold leading-tight tracking-tight text-[#172642] sm:text-2xl">
-            {screen.title}
-          </h2>
+          <h2 className={DECK_SCREEN_TITLE_CLASSES}>{screen.title}</h2>
           {screen.body ? (
-            <p className="text-sm leading-relaxed text-[#566073]">
-              {screen.body}
-            </p>
+            <p className={DECK_SCREEN_BODY_CLASSES}>{screen.body}</p>
           ) : null}
         </div>
         {/* Companion sits to the right on sm+ so the screen reads

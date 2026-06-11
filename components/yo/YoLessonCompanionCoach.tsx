@@ -29,6 +29,7 @@
 import { cn } from "@/lib/utils";
 import { CompanionAvatar } from "@/components/companion/CompanionAvatar";
 import type { CompanionVisualState } from "@/lib/companion/companionVisuals";
+import { DECK_COMPANION_BUBBLE_CLASSES } from "@/lib/yo/lessonDeckVisualContract";
 import type { YoLocale } from "@/lib/yo/types";
 
 export type YoLessonCompanionCoachSize = "sm" | "md";
@@ -67,9 +68,7 @@ export function YoLessonCompanionCoach({
         compact
       />
       {helperText ? (
-        <p className="flex-1 rounded-2xl border border-[#E7DFCF] bg-[#FBF7EE] px-3 py-2 text-xs leading-relaxed text-[#566073] sm:text-sm">
-          {helperText}
-        </p>
+        <p className={DECK_COMPANION_BUBBLE_CLASSES}>{helperText}</p>
       ) : null}
     </div>
   );

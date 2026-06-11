@@ -86,6 +86,13 @@ const introContentCode = stripJsComments(introContentSrc);
 const countrySrc = read(COUNTRY_PAGE_PATH);
 const heroSrc = read(HERO_PATH);
 const deckSrc = read(DECK_PATH);
+// Visual classes (root, header, stage, nav, screen card) were
+// extracted into `lib/yo/lessonDeckVisualContract.ts` in the
+// `feat/yopratiqo-deck-visual-consistency-pass` PR. Visual-class
+// assertions match against the union of the shell file + the
+// shared contract; behaviour assertions stay on `deckSrc`.
+const visualContractSrc = read("lib/yo/lessonDeckVisualContract.ts");
+const deckShellSrc = `${deckSrc}\n${visualContractSrc}`;
 
 // ─────────────────────────────────────────────────────────────────────────
 // 1. Intro route exists
@@ -157,9 +164,9 @@ ok(`3) Intro deck has ${INTRO_SCREEN_IDS.length} focused lesson screens (welcome
 // ─────────────────────────────────────────────────────────────────────────
 
 assert.match(
-  deckSrc,
+  deckShellSrc,
   /h-\[100dvh\]/,
-  "Shared deck must lock the viewport with h-[100dvh]",
+  "Shared deck must lock the viewport with h-[100dvh] (declared in the shared visual contract)",
 );
 assert.match(
   deckSrc,

@@ -429,14 +429,19 @@ assert.doesNotMatch(
 // sits at the top of the viewport by layout, not by sticky
 // positioning. We instead assert the header is a `shrink-0`
 // flex item with high `z-40` so it cannot be covered by
-// in-stage content.
+// in-stage content. Both classes live in `DECK_HEADER_CLASSES`
+// inside the shared visual contract since the
+// `feat/yopratiqo-deck-visual-consistency-pass` PR; the header
+// file imports + applies that token.
+const visualContractSrc = read("lib/yo/lessonDeckVisualContract.ts");
+const headerShellSrc = `${headerSrc}\n${visualContractSrc}`;
 assert.match(
-  headerSrc,
+  headerShellSrc,
   /\bshrink-0\b/,
   "the deck header must be a shrink-0 flex item inside the viewport-locked deck column",
 );
 assert.match(
-  headerSrc,
+  headerShellSrc,
   /\bz-40\b/,
   "the deck header must stay above stage content (z-40)",
 );

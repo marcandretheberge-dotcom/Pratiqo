@@ -198,17 +198,26 @@ ok(`4) Module 4 deck has ${module4ScreenIds.size} distinct focused lesson screen
 // ─────────────────────────────────────────────────────────────────────────
 
 const deckSrc = read(DECK_PATH);
+// Visual classes (root, header, stage, nav, screen card) were
+// extracted into `lib/yo/lessonDeckVisualContract.ts` in the
+// `feat/yopratiqo-deck-visual-consistency-pass` PR so every
+// deck route inherits the same tokens. Visual-class assertions
+// match against the union of the shell file + the shared
+// contract; behaviour assertions (onPointerDown, etc.) still
+// target the deck shell directly.
+const visualContractSrc = read("lib/yo/lessonDeckVisualContract.ts");
+const deckShellSrc = `${deckSrc}\n${visualContractSrc}`;
 // The shared deck owns the viewport-lock + swipe contract.
 // Asserting those invariants here gives a Module-4-specific
 // guard so any future deck regression that breaks the no-
 // scroll-swipe interaction will fail this test too.
 assert.match(
-  deckSrc,
+  deckShellSrc,
   /\bflex\s+h-\[100dvh\]\s+flex-col\b/,
-  "shared deck must keep the viewport-locked flex column layout",
+  "shared deck must keep the viewport-locked flex column layout (declared in the shared visual contract)",
 );
 assert.match(
-  deckSrc,
+  deckShellSrc,
   /\boverflow-hidden\b/,
   "shared deck must keep root `overflow-hidden` so accidental child growth never reaches the document body",
 );

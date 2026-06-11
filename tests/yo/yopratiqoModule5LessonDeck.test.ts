@@ -90,6 +90,13 @@ const module4Src = read(MODULE4_CONTENT_PATH);
 const module3Src = read(MODULE3_CONTENT_PATH);
 const module2Src = read(MODULE2_CONTENT_PATH);
 const deckSrc = read(DECK_PATH);
+// Visual classes (root, header, stage, nav, screen card) were
+// extracted into `lib/yo/lessonDeckVisualContract.ts` in the
+// `feat/yopratiqo-deck-visual-consistency-pass` PR. Visual-class
+// assertions match against the union of the shell file + the
+// shared contract; behaviour assertions stay on `deckSrc`.
+const visualContractSrc = read("lib/yo/lessonDeckVisualContract.ts");
+const deckShellSrc = `${deckSrc}\n${visualContractSrc}`;
 
 // ─────────────────────────────────────────────────────────────────────────
 // 1. Module 5 route uses deck mode + dropped its 5-level breadcrumb
@@ -219,9 +226,9 @@ ok(`4) Module 5 deck has ${MODULE5_SCREEN_IDS.length} distinct focused final-mis
 // ─────────────────────────────────────────────────────────────────────────
 
 assert.match(
-  deckSrc,
+  deckShellSrc,
   /h-\[100dvh\]/,
-  "Shared deck must lock the viewport with h-[100dvh]",
+  "Shared deck must lock the viewport with h-[100dvh] (declared in the shared visual contract)",
 );
 assert.match(
   deckSrc,
