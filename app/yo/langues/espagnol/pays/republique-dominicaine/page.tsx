@@ -108,7 +108,13 @@ const ROADMAP_BASE: ReadonlyArray<
   Omit<YoCoursePathStep, "ctaLabel" | "title" | "outcome">
   & { id: "intro" | "module-2" | "module-3" | "module-4" | "module-5" }
 > = [
-  { id: "intro", position: 1, level: "A1", status: "next", href: "#yo-intro-experience" },
+  {
+    id: "intro",
+    position: 1,
+    level: "A1",
+    status: "next",
+    href: "/yo/langues/espagnol/pays/republique-dominicaine/intro",
+  },
   {
     id: "module-2",
     position: 2,
@@ -300,9 +306,15 @@ export default async function YoEspagnolRepubliqueDominicainePage({
           the app-style Course Home. The duplicate marketing hero
           and legacy lesson-path inside this component are opted
           out so the page has exactly one hero (above) and exactly
-          one roadmap (above). The free intro experience, dictionary,
-          flashcards, quiz, unlock card, feature strip, printables,
-          and existing final CTA all render unchanged. */}
+          one roadmap (above). The free intro experience,
+          dictionary, flashcards, quiz, unlock card, feature strip,
+          printables, and existing final CTA all render unchanged
+          here so any deep link to `#yo-intro-experience` keeps
+          working AND so any learner who scrolls past the deck
+          CTAs can still access the long-form content. The
+          PRIMARY learning flow now goes through the
+          `/intro` deck route — the legacy anchor is preserved
+          for backward compatibility only. */}
       <div id="yo-intro-experience" className="scroll-mt-20">
         <RepubliqueDominicaineContent
           locale={locale}
@@ -311,7 +323,10 @@ export default async function YoEspagnolRepubliqueDominicainePage({
         />
       </div>
 
-      <YoStickyCourseCta href="#yo-intro-experience" label={stickyCopy.stickyCta} />
+      <YoStickyCourseCta
+        href="/yo/langues/espagnol/pays/republique-dominicaine/intro"
+        label={stickyCopy.stickyCta}
+      />
     </YoCourseHomeShell>
   );
 }

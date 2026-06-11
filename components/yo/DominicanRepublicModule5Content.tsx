@@ -45,7 +45,7 @@ import {
   type Dom5ReadingText,
 } from "@/lib/yo/dominicanRepublicA2Capstone";
 import { module5FlashcardsToYo } from "@/lib/yo/dominicanRepublicFlashcardAdapters";
-import { t } from "@/lib/yo/localize";
+import { lstr, t } from "@/lib/yo/localize";
 import type { YoLocale, YoLocalizedString } from "@/lib/yo/types";
 import {
   YoBreadcrumb,
@@ -63,6 +63,8 @@ import {
 } from "@/components/yo/DominicanRepublicModule5Interactive";
 import { YoMarkModuleCompletedButton } from "@/components/yo/YoMarkModuleCompletedButton";
 import { dominicanRdModuleProgressPayload } from "@/lib/yo/dominicanRepublicProgressPayloads";
+import { YoLessonDeck } from "@/components/yo/YoLessonDeck";
+import type { YoLessonDeckScreen } from "@/lib/yo/lessonDeckTypes";
 
 const SECTION_LABELS = {
   passport: { fr: "Carte de mission A2", en: "A2 mission map", es: "Mapa de misión A2" },
@@ -1336,18 +1338,482 @@ function SeriesCompletionSection({ locale }: { locale: YoLocale }) {
   );
 }
 
+// ─── Localized deck-screen labels (eyebrow / title / helperText) ────────
+//
+// Same pattern as Modules 2 / 3 / 4. Every visible string flows through
+// `lstr` / `t` so future CMS swaps stay safe.
+
+const DECK_LABEL_MISSION = lstr(
+  "Briefing final",
+  "Final briefing",
+  "Briefing final",
+);
+const DECK_TITLE_MISSION = lstr(
+  "Ta mission finale A2 commence",
+  "Your A2 final mission begins",
+  "Comienza tu misión final A2",
+);
+const DECK_HELPER_MISSION = lstr(
+  "Capstone voyage : gérer les imprévus et clore ton parcours dominicain.",
+  "Travel capstone: handle the unexpected and close out your Dominican journey.",
+  "Capstone de viaje: resolver imprevistos y cerrar tu trayecto dominicano.",
+);
+
+const DECK_LABEL_SKILLS = lstr(
+  "Compétences A2",
+  "A2 skills",
+  "Competencias A2",
+);
+const DECK_TITLE_SKILLS = lstr(
+  "Quatre piliers du niveau A2",
+  "Four A2 pillars",
+  "Cuatro pilares del A2",
+);
+const DECK_HELPER_SKILLS = lstr(
+  "Aligné CECRL/DELE A2 : lecture, écoute, écriture, interaction orale.",
+  "Aligned with CEFR/DELE A2: reading, listening, writing, oral interaction.",
+  "Alineado con CECR/DELE A2: comprensión escrita, oral, escritura, interacción oral.",
+);
+
+const DECK_LABEL_PHRASES = lstr(
+  "Banque de phrases",
+  "Phrase bank",
+  "Banco de frases",
+);
+const DECK_TITLE_PHRASES = lstr(
+  "60 phrases A2 pour toute situation",
+  "60 A2 phrases for any situation",
+  "60 frases A2 para cualquier situación",
+);
+const DECK_HELPER_PHRASES = lstr(
+  "Phrases utiles, classées par scène. Tape l'audio pour entendre la voix locale.",
+  "Useful phrases, grouped by scene. Tap the audio to hear the local voice.",
+  "Frases útiles agrupadas por escena. Toca el audio para escuchar la voz local.",
+);
+
+const DECK_LABEL_FAST_SPEECH = lstr(
+  "Espagnol rapide",
+  "Fast speech",
+  "Español rápido",
+);
+const DECK_TITLE_FAST_SPEECH = lstr(
+  "Survis quand ça va vite",
+  "Survive when they speak fast",
+  "Sobrevive cuando hablan rápido",
+);
+const DECK_HELPER_FAST_SPEECH = lstr(
+  "Quelques règles d'oreille dominicaine + paires de pratique entendu → réponse.",
+  "A few Dominican listening rules + heard → reply practice pairs.",
+  "Algunas reglas del oído dominicano + pares de práctica oído → respuesta.",
+);
+
+const DECK_LABEL_DIALOGUES = lstr(
+  "Dialogues d'imprévus",
+  "Problem dialogues",
+  "Diálogos de imprevistos",
+);
+const DECK_TITLE_DIALOGUES = lstr(
+  "5 imprévus tirés de vrais voyages",
+  "5 problems from real travel days",
+  "5 imprevistos de viajes reales",
+);
+const DECK_HELPER_DIALOGUES = lstr(
+  "Lis chaque ligne, écoute, et joue le rôle du voyageur.",
+  "Read each line, listen, then play the traveller's part.",
+  "Lee cada línea, escucha y juega el papel del viajero.",
+);
+
+const DECK_LABEL_READINGS = lstr(
+  "Lectures A2",
+  "A2 readings",
+  "Lecturas A2",
+);
+const DECK_TITLE_READINGS = lstr(
+  "Cinq lectures · 130–180 mots",
+  "Five readings · 130–180 words",
+  "Cinco lecturas · 130–180 palabras",
+);
+const DECK_HELPER_READINGS = lstr(
+  "Compréhension écrite A2 avec vocabulaire à repérer et questions guidées.",
+  "A2 reading comprehension with vocabulary spots and guided questions.",
+  "Comprensión escrita A2 con vocabulario clave y preguntas guiadas.",
+);
+
+const DECK_LABEL_WRITING_ORAL = lstr(
+  "Écriture & oral",
+  "Writing & speaking",
+  "Escritura y oral",
+);
+const DECK_TITLE_WRITING_ORAL = lstr(
+  "Compose et joue tes scènes A2",
+  "Compose and act your A2 scenes",
+  "Compone y actúa tus escenas A2",
+);
+const DECK_HELPER_WRITING_ORAL = lstr(
+  "Quatre tâches d'écriture guidée + quatre roleplays d'interaction orale.",
+  "Four guided writing tasks + four oral interaction roleplays.",
+  "Cuatro tareas de escritura guiada + cuatro roleplays de interacción oral.",
+);
+
+const DECK_LABEL_GRAMMAR = lstr(
+  "Boîte à outils A2",
+  "A2 toolbox",
+  "Caja de herramientas A2",
+);
+const DECK_TITLE_GRAMMAR = lstr(
+  "12 schémas A2 utiles",
+  "12 useful A2 patterns",
+  "12 patrones A2 útiles",
+);
+const DECK_HELPER_GRAMMAR = lstr(
+  "Passé pratique, demandes polies, projets et connecteurs — pas de tableau de conjugaison.",
+  "Past tense in chunks, polite asks, plans, and connectors — no conjugation tables.",
+  "Pasado en bloques, peticiones amables, planes y conectores — sin tablas de conjugación.",
+);
+
+const DECK_LABEL_FLASHCARDS = lstr(
+  "Flashcards",
+  "Flashcards",
+  "Tarjetas",
+);
+const DECK_TITLE_FLASHCARDS = lstr(
+  "Mémorise le vocabulaire A2",
+  "Memorize the A2 vocabulary",
+  "Memoriza el vocabulario A2",
+);
+const DECK_HELPER_FLASHCARDS = lstr(
+  "Même carrousel que l'intro RD — espagnol devant, glose derrière, audio du navigateur.",
+  "Same carousel as the RD intro — Spanish on the front, gloss on the back, browser audio.",
+  "El mismo carrusel del intro RD — español al frente, glosa atrás, audio del navegador.",
+);
+
+const DECK_LABEL_QUIZ = lstr(
+  "Quiz pratique A2",
+  "A2 practice quiz",
+  "Quiz práctico A2",
+);
+const DECK_TITLE_QUIZ = lstr(
+  "Vérifie tes acquis A2",
+  "Check your A2 mastery",
+  "Verifica tu dominio A2",
+);
+const DECK_HELPER_QUIZ = lstr(
+  "Choix en espagnol uniquement. Traduction et explication après ton choix.",
+  "Spanish-only choices. Translation and explanation appear after your pick.",
+  "Opciones solo en español. Traducción y explicación tras tu elección.",
+);
+
+const DECK_LABEL_FINAL_MISSION = lstr(
+  "Mission finale",
+  "Final mission",
+  "Misión final",
+);
+const DECK_TITLE_FINAL_MISSION = lstr(
+  "Capstone A2 · simulation voyage",
+  "A2 capstone · travel simulation",
+  "Capstone A2 · simulación de viaje",
+);
+const DECK_HELPER_FINAL_MISSION = lstr(
+  "Joue la mission finale en cinq tours, puis coche ce que tu sais déjà faire.",
+  "Play the final mission in five rounds, then tick what you can already do.",
+  "Juega la misión final en cinco rondas, luego marca lo que ya sabes hacer.",
+);
+
+const DECK_LABEL_COMPLETION = lstr(
+  "Badge débloqué",
+  "Badge unlocked",
+  "Insignia desbloqueada",
+);
+const DECK_TITLE_COMPLETION = lstr(
+  "Tu termines ton parcours RD",
+  "You finish your DR journey",
+  "Terminas tu trayecto RD",
+);
+const DECK_HELPER_COMPLETION = lstr(
+  "Imprime ton cahier final, marque ta progression, et continue avec un prof YoPratiqo si tu vises le B1.",
+  "Print your final workbook, save your progress, and continue with a YoPratiqo teacher to aim for B1.",
+  "Imprime tu cuaderno final, guarda tu progreso y continúa con un profe YoPratiqo si apuntas al B1.",
+);
+
+const DECK_MODULE_LABEL = lstr(
+  "Module 5 · RD A2",
+  "Module 5 · DR A2",
+  "Módulo 5 · RD A2",
+);
+
+// ─── Deck composer (12 focused final-mission screens) ───────────────────
+//
+// Companion visual states follow the brief:
+//   - `map` for navigation / context / immersion / culture screens
+//   - `confused` for practice / quiz / dialogue / writing screens
+//   - `teacher_ready` for the final-mission screen (the audited
+//     dominicanRdModuleProgressPayload("module-5", ...) ships
+//     `companion_stage: "teacher-ready"` and the Series Completion
+//     card has a real `/trouver-un-prof?q=espagnol` teacher bridge
+//     CTA — this is a real teacher-bridge handoff, not faked AI
+//     tutor behaviour)
+//   - `badge_unlocked` for the completion screen (the final RD
+//     series capstone — the badge moment)
+
+function buildModule5DeckScreens(locale: YoLocale): YoLessonDeckScreen[] {
+  const data = dominicanRepublicA2Capstone;
+
+  return [
+    {
+      id: "mission",
+      kind: "mission",
+      eyebrow: t(DECK_LABEL_MISSION, locale),
+      title: t(DECK_TITLE_MISSION, locale),
+      helperText: t(DECK_HELPER_MISSION, locale),
+      companionState: "map",
+      content: (
+        <div data-yo-module5-deck-screen="mission">
+          <HeroSection locale={locale} />
+          <AudioNoticeSection locale={locale} />
+          <PassportSection locale={locale} />
+        </div>
+      ),
+    },
+    {
+      id: "skills",
+      kind: "culture",
+      eyebrow: t(DECK_LABEL_SKILLS, locale),
+      title: t(DECK_TITLE_SKILLS, locale),
+      helperText: t(DECK_HELPER_SKILLS, locale),
+      companionState: "map",
+      content: (
+        <div data-yo-module5-deck-screen="skills">
+          <SkillDashboardSection locale={locale} />
+        </div>
+      ),
+    },
+    {
+      id: "phrases",
+      kind: "phrase",
+      eyebrow: t(DECK_LABEL_PHRASES, locale),
+      title: t(DECK_TITLE_PHRASES, locale),
+      helperText: t(DECK_HELPER_PHRASES, locale),
+      companionState: "map",
+      content: (
+        <div data-yo-module5-deck-screen="phrases">
+          <PhraseBankSection locale={locale} />
+        </div>
+      ),
+    },
+    {
+      id: "fast-speech",
+      kind: "practice",
+      eyebrow: t(DECK_LABEL_FAST_SPEECH, locale),
+      title: t(DECK_TITLE_FAST_SPEECH, locale),
+      helperText: t(DECK_HELPER_FAST_SPEECH, locale),
+      companionState: "confused",
+      content: (
+        <div data-yo-module5-deck-screen="fast-speech">
+          <FastSpeechSection locale={locale} />
+        </div>
+      ),
+    },
+    {
+      id: "dialogues",
+      kind: "dialogue",
+      eyebrow: t(DECK_LABEL_DIALOGUES, locale),
+      title: t(DECK_TITLE_DIALOGUES, locale),
+      helperText: t(DECK_HELPER_DIALOGUES, locale),
+      companionState: "confused",
+      content: (
+        <div data-yo-module5-deck-screen="dialogues">
+          <DialoguesSection locale={locale} />
+        </div>
+      ),
+    },
+    {
+      id: "readings",
+      kind: "culture",
+      eyebrow: t(DECK_LABEL_READINGS, locale),
+      title: t(DECK_TITLE_READINGS, locale),
+      helperText: t(DECK_HELPER_READINGS, locale),
+      companionState: "map",
+      content: (
+        <div data-yo-module5-deck-screen="readings">
+          <ReadingsSection locale={locale} />
+        </div>
+      ),
+    },
+    {
+      id: "writing-oral",
+      kind: "practice",
+      eyebrow: t(DECK_LABEL_WRITING_ORAL, locale),
+      title: t(DECK_TITLE_WRITING_ORAL, locale),
+      helperText: t(DECK_HELPER_WRITING_ORAL, locale),
+      companionState: "confused",
+      content: (
+        <div data-yo-module5-deck-screen="writing-oral">
+          <WritingTasksSection locale={locale} />
+          <RoleplaysSection locale={locale} />
+        </div>
+      ),
+    },
+    {
+      id: "grammar",
+      kind: "practice",
+      eyebrow: t(DECK_LABEL_GRAMMAR, locale),
+      title: t(DECK_TITLE_GRAMMAR, locale),
+      helperText: t(DECK_HELPER_GRAMMAR, locale),
+      companionState: "map",
+      content: (
+        <div data-yo-module5-deck-screen="grammar">
+          <GrammarSection locale={locale} />
+        </div>
+      ),
+    },
+    {
+      id: "flashcards",
+      kind: "practice",
+      eyebrow: t(DECK_LABEL_FLASHCARDS, locale),
+      title: t(DECK_TITLE_FLASHCARDS, locale),
+      helperText: t(DECK_HELPER_FLASHCARDS, locale),
+      companionState: "map",
+      content: (
+        <div data-yo-module5-deck-screen="flashcards">
+          <FlashcardsSection locale={locale} />
+        </div>
+      ),
+    },
+    {
+      id: "quiz",
+      kind: "quiz",
+      eyebrow: t(DECK_LABEL_QUIZ, locale),
+      title: t(DECK_TITLE_QUIZ, locale),
+      helperText: t(DECK_HELPER_QUIZ, locale),
+      companionState: "confused",
+      content: (
+        <div data-yo-module5-deck-screen="quiz">
+          <DominicanRepublicModule5Quiz
+            questions={data.quizQuestions}
+            locale={locale}
+            eyebrow={{
+              fr: SECTION_LABELS.quiz.fr,
+              en: SECTION_LABELS.quiz.en,
+              es: SECTION_LABELS.quiz.es,
+            }}
+            title={{
+              fr: "Quiz pratique A2 · choix en espagnol uniquement",
+              en: "A2 practice quiz · Spanish-only choices",
+              es: "Quiz práctico A2 · opciones solo en español",
+            }}
+            subtitle={{
+              fr: "Choisis une réponse, puis appuie sur Vérifier pour voir la traduction et l'explication.",
+              en: "Pick an answer, then press Check to see the translation and explanation.",
+              es: "Elige una respuesta y pulsa Verificar para ver la traducción y la explicación.",
+            }}
+          />
+        </div>
+      ),
+    },
+    {
+      id: "final-mission",
+      kind: "practice",
+      eyebrow: t(DECK_LABEL_FINAL_MISSION, locale),
+      title: t(DECK_TITLE_FINAL_MISSION, locale),
+      helperText: t(DECK_HELPER_FINAL_MISSION, locale),
+      companionState: "teacher_ready",
+      content: (
+        <div data-yo-module5-deck-screen="final-mission">
+          <DominicanRepublicCapstoneGame
+            title={data.finalGame.title}
+            subtitle={data.finalGame.subtitle}
+            successMessage={data.finalGame.successMessage}
+            rounds={data.finalGame.rounds}
+            locale={locale}
+          />
+          <SelfAssessmentSection locale={locale} />
+        </div>
+      ),
+    },
+    {
+      id: "completion",
+      kind: "completion",
+      eyebrow: t(DECK_LABEL_COMPLETION, locale),
+      title: t(DECK_TITLE_COMPLETION, locale),
+      helperText: t(DECK_HELPER_COMPLETION, locale),
+      companionState: "badge_unlocked",
+      content: (
+        <div data-yo-module5-deck-screen="completion">
+          <PrintablesSection locale={locale} />
+          <SeriesCompletionSection locale={locale} />
+        </div>
+      ),
+    },
+  ];
+}
+
+// ─── Deck renderer (no-primary-scroll app viewport) ─────────────────────
+//
+// Wraps <YoLessonDeck /> with `enableTapNavigation` to match Modules 2,
+// 3, and 4. Tap-zone navigation is safe because every per-screen
+// interactive control on Module 5 (audio buttons, the reveal-only quiz
+// `<details>` / `<button>` choices, the capstone game rounds, the
+// reading-question reveal, the writing reveal, the roleplay reveal, the
+// print button, the teacher/back CTA links, and the mark-completed
+// button) is either a real HTML control already covered by the deck's
+// audited gesture-exclude selector (`YO_LESSON_DECK_GESTURE_EXCLUDE_SELECTOR`)
+// or wrapped with `data-no-deck-swipe` / `data-no-deck-tap`.
+
+function Module5DeckRenderer({ locale }: { locale: YoLocale }) {
+  const screens = buildModule5DeckScreens(locale);
+  const langSuffix = locale === "fr" ? "" : `?lang=${locale}`;
+  const backHref = `/yo/langues/espagnol/pays/republique-dominicaine${langSuffix}`;
+  const toggleHref =
+    locale === "fr"
+      ? "/yo/langues/espagnol/pays/republique-dominicaine/module-5?lang=en"
+      : "/yo/langues/espagnol/pays/republique-dominicaine/module-5";
+
+  return (
+    <>
+      <YoLessonDeck
+        locale={locale}
+        moduleLabel={t(DECK_MODULE_LABEL, locale)}
+        backHref={backHref}
+        toggleHref={toggleHref}
+        screens={screens}
+        enableTapNavigation
+      />
+      {/* Keep the MapIcon import alive — the long-scroll mode below
+          mounts it as a hidden marker; in deck mode the icon is used
+          inside the SkillDashboard section card iconography. */}
+      <span aria-hidden hidden>
+        <MapIcon />
+      </span>
+    </>
+  );
+}
+
 // ─── Main content component ─────────────────────────────────────────────
+
+export type DominicanRepublicModule5Mode = "long-scroll" | "deck";
 
 export interface DominicanRepublicModule5ContentProps {
   locale: YoLocale;
   breadcrumb?: YoBreadcrumbItem[];
+  /**
+   * Render mode. Defaults to `"long-scroll"` so any other surface
+   * (tests, legacy embed, future preview) keeps the original
+   * document layout. The public Module 5 route opts into `"deck"`
+   * for the app-like no-scroll swipe lesson deck.
+   */
+  mode?: DominicanRepublicModule5Mode;
 }
 
 export function DominicanRepublicModule5Content({
   locale,
   breadcrumb,
+  mode = "long-scroll",
 }: DominicanRepublicModule5ContentProps) {
   const data = dominicanRepublicA2Capstone;
+
+  if (mode === "deck") {
+    return <Module5DeckRenderer locale={locale} />;
+  }
 
   return (
     <div className="bg-[linear-gradient(180deg,#FFF8E7_0%,#F7FBF8_30%,#FCEEDC_70%,#FFF4D6_100%)]">

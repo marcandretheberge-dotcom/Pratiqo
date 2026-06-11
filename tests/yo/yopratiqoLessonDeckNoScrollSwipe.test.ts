@@ -465,16 +465,21 @@ const restrictedPathPatterns: RegExp[] = [
   /^app\/sitemap\.ts$/,
   /^app\/robots\.ts$/,
   /^lib\/seo\//,
-  // Module 5 remains explicitly out of scope for the no-scroll-
-  // swipe shared-deck rollout. Modules 3 and 4 were originally
-  // listed here too but were promoted to the deck pattern in
-  // dedicated follow-on PRs (`feat/yopratiqo-module3-lesson-deck`
-  // then `feat/yopratiqo-module4-lesson-deck`); their dedicated
-  // deck tests (`tests/yo/yopratiqoModule3LessonDeck.test.ts` and
-  // `tests/yo/yopratiqoModule4LessonDeck.test.ts`) now own the
-  // contracts for Modules 3 and 4.
-  /^app\/yo\/langues\/espagnol\/pays\/republique-dominicaine\/module-5\//,
-  /^components\/yo\/DominicanRepublicModule5Content\.tsx$/,
+  // Modules 3, 4, 5, the Intro deck route, and the Intro composer
+  // were originally listed here as out-of-scope. They were each
+  // promoted to the no-scroll swipe deck pattern in dedicated
+  // follow-on PRs
+  // (`feat/yopratiqo-module3-lesson-deck`,
+  // `feat/yopratiqo-module4-lesson-deck`,
+  // `feat/yopratiqo-module5-and-intro-decks`); their dedicated
+  // deck tests
+  // (`tests/yo/yopratiqoModule3LessonDeck.test.ts`,
+  // `tests/yo/yopratiqoModule4LessonDeck.test.ts`,
+  // `tests/yo/yopratiqoModule5LessonDeck.test.ts`,
+  // `tests/yo/yopratiqoIntroLessonDeck.test.ts`,
+  // `tests/yo/yopratiqoFullDominicanPathDeck.test.ts`) now own
+  // those contracts. None of them count as a restricted-system
+  // touch from this shared-deck behaviour test's perspective.
 ];
 const status = execSync("git status --porcelain -uall", {
   cwd: root,
@@ -505,6 +510,6 @@ for (const file of changedFiles) {
     }
   }
 }
-ok("16) no restricted system touched (Stripe / payments / tax / RLS / migrations / legal / Membre Pro / audio / SEO / Module 5)");
+ok("16) no restricted system touched (Stripe / payments / tax / RLS / migrations / legal / Membre Pro / audio / SEO)");
 
 console.log(`\n${pass} no-scroll-swipe deck assertions passed`);
