@@ -102,6 +102,10 @@ Future path:
 - keep the PNG fallback for low-power mobile devices and React Native compatibility
 - animation files must reuse the exact state ids from the asset plan so the renderer and the manifest can swap formats without UI changes
 
+### Animation source material (not shipped)
+
+Reference source material for three states (`badge_unlocked`, `level_up`, `inactive`) is checked in under `public/companion/travel/animations/`. These MP4s are **not registered in `SHIPPED_ASSETS`** and the renderer never reads them — they exist only so the design + React Native team has a stable, version-controlled reference when authoring the future Lottie / Rive variants. See `public/companion/travel/animations/README.md` for the per-file mapping, the conversion plan, and the "do not ship raw MP4" rationale. The contract is locked by `tests/companion/companionAnimationSources.test.ts`.
+
 ## React Native Compatibility
 
 Assets must work in a future standalone React Native YoPratiqo app:
