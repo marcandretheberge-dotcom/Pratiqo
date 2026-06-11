@@ -23,7 +23,7 @@ import {
   dominicanRepublicFoodCulture,
   type Dom3Dialogue,
 } from "@/lib/yo/dominicanRepublicFoodCulture";
-import { t } from "@/lib/yo/localize";
+import { lstr, t } from "@/lib/yo/localize";
 import type { YoLocale, YoLocalizedString } from "@/lib/yo/types";
 import {
   YoBreadcrumb,
@@ -40,6 +40,8 @@ import { module3FlashcardsToYo } from "@/lib/yo/dominicanRepublicFlashcardAdapte
 import { module3PrintablePack } from "@/lib/yo/dominicanRepublicPrintables";
 import { dominicanRdModuleProgressPayload } from "@/lib/yo/dominicanRepublicProgressPayloads";
 import { YoMarkModuleCompletedButton } from "@/components/yo/YoMarkModuleCompletedButton";
+import { YoLessonDeck } from "@/components/yo/YoLessonDeck";
+import type { YoLessonDeckScreen } from "@/lib/yo/lessonDeckTypes";
 
 const SECTION_LABELS = {
   passport: {
@@ -980,15 +982,440 @@ function ClosingBridge({ locale }: { locale: YoLocale }) {
   );
 }
 
+// ─── Lesson-deck composer ─────────────────────────────────────────────────
+//
+// Mirrors the pattern locked in for Module 2 (PRs #157 / #159): the
+// legacy long-scroll renderer stays available via `mode="long-scroll"`
+// for any consumer that still needs it (the existing Module 3 sibling
+// tests, future surfaces that embed Module 3 inline, etc.), while the
+// `mode="deck"` path wraps the same Server Component sub-sections in
+// a `<YoLessonDeck />` so the learner sees one focused screen at a
+// time, with viewport-locked layout, swipe navigation, opt-in tap
+// zones, and the per-screen companion coach.
+//
+// IMPORTANT — content is *not* rewritten. Each deck screen mounts the
+// exact same sub-section (`<HeroSection>`, `<FoodCardsSection>`,
+// `<CultureCardsSection>`, …) so every `data-yo-module3-*` source
+// marker the existing curriculum / premium / quiz-UX tests look for
+// stays in the rendered tree.
+
+const DECK_LABEL_MISSION = lstr(
+  "Mission · Manger et payer comme un local",
+  "Mission · Eat and pay like a local",
+  "Misión · Comer y pagar como un local",
+);
+const DECK_LABEL_PASSPORT = lstr(
+  "Passeport culture · 6 étapes",
+  "Culture passport · 6 stops",
+  "Pasaporte cultural · 6 paradas",
+);
+const DECK_LABEL_FOOD = lstr(
+  "Cartes des plats",
+  "Food identity cards",
+  "Tarjetas de identidad gastronómica",
+);
+const DECK_LABEL_CULTURE = lstr(
+  "Culture dominicaine",
+  "Dominican culture",
+  "Cultura dominicana",
+);
+const DECK_LABEL_PHRASES = lstr(
+  "Banque de phrases",
+  "Phrase bank",
+  "Banco de frases",
+);
+const DECK_LABEL_DIALOGUES = lstr(
+  "Dialogues guidés",
+  "Guided dialogues",
+  "Diálogos guiados",
+);
+const DECK_LABEL_EARS_GRAMMAR = lstr(
+  "Oreilles & micro-grammaire",
+  "Ears & micro-grammar",
+  "Oído y microgramática",
+);
+const DECK_LABEL_FLASHCARDS = lstr(
+  "Pratique · Flashcards",
+  "Practice · Flashcards",
+  "Práctica · Tarjetas",
+);
+const DECK_LABEL_QUIZ = lstr(
+  "Pratique · Quiz",
+  "Practice · Quiz",
+  "Práctica · Quiz",
+);
+const DECK_LABEL_MINI_MISSION = lstr(
+  "Défi · Culture dominicaine",
+  "Challenge · Dominican culture",
+  "Reto · Cultura dominicana",
+);
+const DECK_LABEL_PRINTABLES = lstr(
+  "Fiches imprimables",
+  "Printable sheets",
+  "Hojas imprimibles",
+);
+const DECK_LABEL_COMPLETION = lstr(
+  "Mission accomplie",
+  "Mission complete",
+  "Misión cumplida",
+);
+
+const DECK_TITLE_MISSION = lstr(
+  "Bienvenue au comedor dominicain",
+  "Welcome to the Dominican comedor",
+  "Bienvenido al comedor dominicano",
+);
+const DECK_TITLE_PASSPORT = lstr(
+  "6 étapes avant de commander avec confiance",
+  "6 stops before you order like a confident traveler",
+  "6 paradas antes de pedir con confianza",
+);
+const DECK_TITLE_FOOD = lstr(
+  "Des plats qui portent la culture",
+  "Dishes that carry the culture",
+  "Platos que llevan cultura",
+);
+const DECK_TITLE_CULTURE = lstr(
+  "Ce qui rend la R.D. vivante",
+  "What makes the DR feel alive",
+  "Lo que hace viva a la R.D.",
+);
+const DECK_TITLE_PHRASES = lstr(
+  "35 phrases pour menu, boisson et paiement",
+  "35 phrases for menu, drinks, and payment",
+  "35 frases para menú, bebidas y pago",
+);
+const DECK_TITLE_DIALOGUES = lstr(
+  "Trois scènes utiles : comedor, kiosque, paiement",
+  "Three real-world scenes: comedor, kiosk, payment",
+  "Tres escenas reales: comedor, kiosco y pago",
+);
+const DECK_TITLE_EARS_GRAMMAR = lstr(
+  "Quand l'espagnol dominicain sonne vite",
+  "When Dominican Spanish sounds fast",
+  "Cuando el español dominicano suena rápido",
+);
+const DECK_TITLE_FLASHCARDS = lstr(
+  "Mémorise et révise",
+  "Memorize and review",
+  "Memoriza y repasa",
+);
+const DECK_TITLE_QUIZ = lstr(
+  "Teste tes réflexes",
+  "Test your reflexes",
+  "Prueba tus reflejos",
+);
+const DECK_TITLE_MINI_MISSION = lstr(
+  "Joue le défi culture",
+  "Play the culture challenge",
+  "Juega el reto cultural",
+);
+const DECK_TITLE_PRINTABLES = lstr(
+  "Imprime les fiches de pratique",
+  "Print the practice sheets",
+  "Imprime las hojas de práctica",
+);
+const DECK_TITLE_COMPLETION = lstr(
+  "Tu es prêt(e) à goûter la R.D.",
+  "You're ready to taste the DR",
+  "Estás listo(a) para saborear la R.D.",
+);
+
+const DECK_HELPER_MISSION = lstr(
+  "Ce module t'emmène du comedor au colmado. On y va.",
+  "This module takes you from the comedor to the colmado. Let's go.",
+  "Este módulo te lleva del comedor al colmado. Vamos.",
+);
+const DECK_HELPER_PASSPORT = lstr(
+  "Six escales pour comprendre la table dominicaine.",
+  "Six stops to understand the Dominican table.",
+  "Seis paradas para entender la mesa dominicana.",
+);
+const DECK_HELPER_FOOD = lstr(
+  "Chaque carte : nom, note culturelle, phrase utilisable.",
+  "Each card: name, cultural cue, phrase you can use.",
+  "Cada tarjeta: nombre, clave cultural, frase útil.",
+);
+const DECK_HELPER_CULTURE = lstr(
+  "Musique, lieux, artisanat — les repères qui rassurent.",
+  "Music, places, crafts — the cues that reassure you.",
+  "Música, lugares, artesanía — las claves que tranquilizan.",
+);
+const DECK_HELPER_PHRASES = lstr(
+  "Banque à recycler partout : menu, boissons, paiement, rattrapage.",
+  "A bank to reuse everywhere: menu, drinks, payment, recovery.",
+  "Un banco para reusar en todo: menú, bebidas, pago, rescate.",
+);
+const DECK_HELPER_DIALOGUES = lstr(
+  "Trois scènes complètes : entends, lis, prononce.",
+  "Three complete scenes: hear, read, pronounce.",
+  "Tres escenas completas: escucha, lee, pronuncia.",
+);
+const DECK_HELPER_EARS_GRAMMAR = lstr(
+  "Cinq habitudes d'oreille et neuf petites formules à recycler.",
+  "Five listening habits and nine tiny patterns to recycle.",
+  "Cinco hábitos de oído y nueve patrones pequeños.",
+);
+const DECK_HELPER_FLASHCARDS = lstr(
+  "Plats, boissons, paiement, lieux et musique — ta boîte à outils.",
+  "Food, drinks, payment, places and music — your toolbox.",
+  "Comida, bebidas, pago, lugares y música — tu caja de herramientas.",
+);
+const DECK_HELPER_QUIZ = lstr(
+  "Douze questions — pas de note. Pour toi.",
+  "Twelve questions — no score. For you.",
+  "Doce preguntas — sin nota. Para ti.",
+);
+const DECK_HELPER_MINI_MISSION = lstr(
+  "Huit escales du défi culture. Voix haute conseillée.",
+  "Eight stops of the culture challenge. Reading out loud helps.",
+  "Ocho paradas del reto cultural. Léelo en voz alta.",
+);
+const DECK_HELPER_PRINTABLES = lstr(
+  "Imprime, glisse dans le sac, sors avec.",
+  "Print it, drop it in your bag, take it with you.",
+  "Imprímelo, métlo en la mochila, llévalo contigo.",
+);
+const DECK_HELPER_COMPLETION = lstr(
+  "Sauvegarde ta progression et ouvre le module suivant.",
+  "Save your progress and open the next module.",
+  "Guarda tu progreso y abre el siguiente módulo.",
+);
+
+const DECK_MODULE_LABEL = lstr(
+  "Module 3 · RD A1",
+  "Module 3 · DR A1",
+  "Módulo 3 · RD A1",
+);
+
+function buildModule3DeckScreens(locale: YoLocale): YoLessonDeckScreen[] {
+  const data = dominicanRepublicFoodCulture;
+  return [
+    {
+      id: "mission",
+      kind: "mission",
+      eyebrow: t(DECK_LABEL_MISSION, locale),
+      title: t(DECK_TITLE_MISSION, locale),
+      helperText: t(DECK_HELPER_MISSION, locale),
+      companionState: "map",
+      content: (
+        <div data-yo-module3-deck-screen="mission">
+          <HeroSection locale={locale} />
+          <AudioNoticeSection locale={locale} />
+        </div>
+      ),
+    },
+    {
+      id: "passport",
+      kind: "culture",
+      eyebrow: t(DECK_LABEL_PASSPORT, locale),
+      title: t(DECK_TITLE_PASSPORT, locale),
+      helperText: t(DECK_HELPER_PASSPORT, locale),
+      companionState: "map",
+      content: (
+        <div data-yo-module3-deck-screen="passport">
+          <PassportSection locale={locale} />
+        </div>
+      ),
+    },
+    {
+      id: "food",
+      kind: "culture",
+      eyebrow: t(DECK_LABEL_FOOD, locale),
+      title: t(DECK_TITLE_FOOD, locale),
+      helperText: t(DECK_HELPER_FOOD, locale),
+      companionState: "map",
+      content: (
+        <div data-yo-module3-deck-screen="food">
+          <FoodCardsSection locale={locale} />
+        </div>
+      ),
+    },
+    {
+      id: "culture",
+      kind: "culture",
+      eyebrow: t(DECK_LABEL_CULTURE, locale),
+      title: t(DECK_TITLE_CULTURE, locale),
+      helperText: t(DECK_HELPER_CULTURE, locale),
+      companionState: "map",
+      content: (
+        <div data-yo-module3-deck-screen="culture">
+          <CultureCardsSection locale={locale} />
+        </div>
+      ),
+    },
+    {
+      id: "phrases",
+      kind: "phrase",
+      eyebrow: t(DECK_LABEL_PHRASES, locale),
+      title: t(DECK_TITLE_PHRASES, locale),
+      helperText: t(DECK_HELPER_PHRASES, locale),
+      companionState: "confused",
+      content: (
+        <div data-yo-module3-deck-screen="phrases">
+          <PhraseBankSection locale={locale} />
+        </div>
+      ),
+    },
+    {
+      id: "dialogues",
+      kind: "dialogue",
+      eyebrow: t(DECK_LABEL_DIALOGUES, locale),
+      title: t(DECK_TITLE_DIALOGUES, locale),
+      helperText: t(DECK_HELPER_DIALOGUES, locale),
+      companionState: "confused",
+      content: (
+        <div data-yo-module3-deck-screen="dialogues">
+          <DialoguesSection locale={locale} />
+        </div>
+      ),
+    },
+    {
+      id: "ears-grammar",
+      kind: "practice",
+      eyebrow: t(DECK_LABEL_EARS_GRAMMAR, locale),
+      title: t(DECK_TITLE_EARS_GRAMMAR, locale),
+      helperText: t(DECK_HELPER_EARS_GRAMMAR, locale),
+      companionState: "map",
+      content: (
+        <div data-yo-module3-deck-screen="ears-grammar">
+          <EarsAndGrammarSection locale={locale} />
+        </div>
+      ),
+    },
+    {
+      id: "flashcards",
+      kind: "practice",
+      eyebrow: t(DECK_LABEL_FLASHCARDS, locale),
+      title: t(DECK_TITLE_FLASHCARDS, locale),
+      helperText: t(DECK_HELPER_FLASHCARDS, locale),
+      companionState: "map",
+      content: (
+        <div data-yo-module3-deck-screen="flashcards">
+          <FlashcardsSection locale={locale} />
+        </div>
+      ),
+    },
+    {
+      id: "quiz",
+      kind: "quiz",
+      eyebrow: t(DECK_LABEL_QUIZ, locale),
+      title: t(DECK_TITLE_QUIZ, locale),
+      helperText: t(DECK_HELPER_QUIZ, locale),
+      companionState: "confused",
+      content: (
+        <div data-yo-module3-deck-screen="quiz">
+          <QuizSection locale={locale} />
+        </div>
+      ),
+    },
+    {
+      id: "mini-mission",
+      kind: "practice",
+      eyebrow: t(DECK_LABEL_MINI_MISSION, locale),
+      title: t(DECK_TITLE_MINI_MISSION, locale),
+      helperText: t(DECK_HELPER_MINI_MISSION, locale),
+      companionState: "confused",
+      content: (
+        <div data-yo-module3-deck-screen="mini-mission">
+          <DominicanRepublicCultureChallenge
+            title={data.finalGame.title}
+            subtitle={data.finalGame.subtitle}
+            successMessage={data.finalGame.successMessage}
+            rounds={data.finalGame.rounds}
+            locale={locale}
+          />
+        </div>
+      ),
+    },
+    {
+      id: "printables",
+      kind: "practice",
+      eyebrow: t(DECK_LABEL_PRINTABLES, locale),
+      title: t(DECK_TITLE_PRINTABLES, locale),
+      helperText: t(DECK_HELPER_PRINTABLES, locale),
+      companionState: "map",
+      content: (
+        <div data-yo-module3-deck-screen="printables">
+          <PrintablesSection locale={locale} />
+          <DominicanModulePrintables
+            pack={module3PrintablePack}
+            locale={locale}
+          />
+        </div>
+      ),
+    },
+    {
+      id: "completion",
+      kind: "completion",
+      eyebrow: t(DECK_LABEL_COMPLETION, locale),
+      title: t(DECK_TITLE_COMPLETION, locale),
+      helperText: t(DECK_HELPER_COMPLETION, locale),
+      companionState: "celebrating",
+      content: (
+        <div data-yo-module3-deck-screen="completion">
+          <ClosingBridge locale={locale} />
+        </div>
+      ),
+    },
+  ];
+}
+
+function Module3DeckRenderer({ locale }: { locale: YoLocale }) {
+  const screens = buildModule3DeckScreens(locale);
+  const langSuffix = locale === "fr" ? "" : `?lang=${locale}`;
+  const backHref = `/yo/langues/espagnol/pays/republique-dominicaine${langSuffix}`;
+  const toggleHref =
+    locale === "fr"
+      ? "/yo/langues/espagnol/pays/republique-dominicaine/module-3?lang=en"
+      : "/yo/langues/espagnol/pays/republique-dominicaine/module-3";
+  // Tap-zone navigation is enabled for Module 3 because every
+  // per-screen interactive control (audio buttons, quiz
+  // `<details>` reveals, flashcard carousel buttons, the
+  // culture-challenge `<button>` choices, the print button,
+  // the next-module / teacher CTA links, the mark-completed
+  // button) is either a real HTML control (button / a[href] /
+  // details / summary) and therefore already covered by the
+  // deck's audited gesture-exclude selector
+  // (`YO_LESSON_DECK_GESTURE_EXCLUDE_SELECTOR`).
+  return (
+    <YoLessonDeck
+      locale={locale}
+      moduleLabel={t(DECK_MODULE_LABEL, locale)}
+      backHref={backHref}
+      toggleHref={toggleHref}
+      screens={screens}
+      enableTapNavigation
+    />
+  );
+}
+
+// ─── Main export ───────────────────────────────────────────────────────────
+
+export type DominicanRepublicModule3ContentMode = "long-scroll" | "deck";
+
 export interface DominicanRepublicModule3ContentProps {
   locale: YoLocale;
   breadcrumb?: YoBreadcrumbItem[];
+  /**
+   * Render mode. Defaults to `"long-scroll"` so any consumer that
+   * does not opt in keeps the legacy behaviour byte-for-byte (the
+   * existing Module 3 curriculum / premium / quiz-UX tests still
+   * exercise the long-scroll render). `"deck"` switches to the
+   * app-like one-screen-at-a-time flow via `<YoLessonDeck />`.
+   */
+  mode?: DominicanRepublicModule3ContentMode;
 }
 
 export function DominicanRepublicModule3Content({
   locale,
   breadcrumb,
+  mode = "long-scroll",
 }: DominicanRepublicModule3ContentProps) {
+  if (mode === "deck") {
+    return <Module3DeckRenderer locale={locale} />;
+  }
+
   const data = dominicanRepublicFoodCulture;
 
   return (
