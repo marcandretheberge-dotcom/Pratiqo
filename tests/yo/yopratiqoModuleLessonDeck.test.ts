@@ -262,8 +262,10 @@ const SCREEN_IDS_REQUIRED = [
   "hotel",
   "problems",
   "culture",
+  "grammar",
   "flashcards",
   "quiz",
+  "mini-mission",
   "completion",
 ];
 for (const screenId of SCREEN_IDS_REQUIRED) {
@@ -279,13 +281,15 @@ for (const screenId of SCREEN_IDS_REQUIRED) {
   );
 }
 const distinctScreenIds = new Set(
-  Array.from(module2Src.matchAll(/id:\s*["'](mission|phrases|airport|hotel|problems|culture|flashcards|quiz|completion)["']/g)).map(
-    (m) => m[1],
-  ),
+  Array.from(
+    module2Src.matchAll(
+      /id:\s*["'](mission|phrases|airport|hotel|problems|culture|grammar|flashcards|quiz|mini-mission|completion)["']/g,
+    ),
+  ).map((m) => m[1]),
 );
 assert.ok(
-  distinctScreenIds.size >= 5,
-  `Module 2 deck must have at least 5 distinct focused lesson screens (got ${distinctScreenIds.size})`,
+  distinctScreenIds.size >= 9,
+  `Module 2 deck must have at least 9 distinct focused lesson screens (got ${distinctScreenIds.size})`,
 );
 ok(`7) Module 2 deck has ${distinctScreenIds.size} distinct focused lesson screens (mission → completion)`);
 
@@ -420,12 +424,23 @@ assert.doesNotMatch(
   /breadcrumb\s*=\s*\{breadcrumb\}/,
   "Module 2 page must not pass a breadcrumb prop in deck mode",
 );
+// The header is no longer page-`sticky` — the deck now wraps
+// everything inside a `h-[100dvh]` flex column so the header
+// sits at the top of the viewport by layout, not by sticky
+// positioning. We instead assert the header is a `shrink-0`
+// flex item with high `z-40` so it cannot be covered by
+// in-stage content.
 assert.match(
   headerSrc,
-  /sticky\s+top-0/,
-  "the deck header must be sticky so the back-arrow replaces the breadcrumb chain",
+  /\bshrink-0\b/,
+  "the deck header must be a shrink-0 flex item inside the viewport-locked deck column",
 );
-ok("11) Module 2 dropped breadcrumb-style primary navigation in favour of the sticky deck header");
+assert.match(
+  headerSrc,
+  /\bz-40\b/,
+  "the deck header must stay above stage content (z-40)",
+);
+ok("11) Module 2 dropped breadcrumb-style primary navigation in favour of the viewport-locked deck header");
 
 // ─────────────────────────────────────────────────────────────────────────
 // 12. Modules 3–5 remain routed and not broken

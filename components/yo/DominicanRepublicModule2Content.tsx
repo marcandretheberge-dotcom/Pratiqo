@@ -1066,15 +1066,25 @@ const DECK_LABEL_CULTURE = lstr(
   "Cultural note",
   "Nota cultural",
 );
+const DECK_LABEL_GRAMMAR = lstr(
+  "Grammaire express",
+  "Quick grammar",
+  "Gramática rápida",
+);
 const DECK_LABEL_FLASHCARDS = lstr(
   "Pratique · Vocabulaire",
   "Practice · Vocabulary",
   "Práctica · Vocabulario",
 );
 const DECK_LABEL_QUIZ = lstr(
-  "Pratique · Quiz & roleplay",
-  "Practice · Quiz & roleplay",
-  "Práctica · Quiz y roleplay",
+  "Pratique · Quiz",
+  "Practice · Quiz",
+  "Práctica · Quiz",
+);
+const DECK_LABEL_MINI_MISSION = lstr(
+  "Mini-mission finale",
+  "Final mini-mission",
+  "Misión final",
 );
 const DECK_LABEL_COMPLETION = lstr(
   "Mission accomplie",
@@ -1112,6 +1122,11 @@ const DECK_TITLE_CULTURE = lstr(
   "The Dominican vibe",
   "El estilo dominicano",
 );
+const DECK_TITLE_GRAMMAR = lstr(
+  "5 formules qui couvrent presque tout",
+  "5 formulas that cover almost everything",
+  "5 fórmulas que cubren casi todo",
+);
 const DECK_TITLE_FLASHCARDS = lstr(
   "Mémorise et révise",
   "Memorize and review",
@@ -1121,6 +1136,11 @@ const DECK_TITLE_QUIZ = lstr(
   "Teste tes réflexes",
   "Test your reflexes",
   "Prueba tus reflejos",
+);
+const DECK_TITLE_MINI_MISSION = lstr(
+  "Joue la scène d'arrivée",
+  "Play out the arrival scene",
+  "Actúa la escena de llegada",
 );
 const DECK_TITLE_COMPLETION = lstr(
   "Tu es prêt(e) à voyager",
@@ -1158,15 +1178,25 @@ const DECK_HELPER_CULTURE = lstr(
   "Reading the culture saves you from misreads.",
   "Entender la cultura evita malentendidos.",
 );
+const DECK_HELPER_GRAMMAR = lstr(
+  "Quelques patrons à recycler partout. Pas par cœur, par usage.",
+  "A few patterns to recycle everywhere. Not by heart — by use.",
+  "Algunos patrones para reciclar en todas partes.",
+);
 const DECK_HELPER_FLASHCARDS = lstr(
-  "Vocabulaire et patrons : ta boîte à outils.",
-  "Vocabulary and patterns: your toolbox.",
-  "Vocabulario y patrones: tu caja de herramientas.",
+  "Vocabulaire essentiel : ta boîte à outils.",
+  "Essential vocabulary: your toolbox.",
+  "Vocabulario esencial: tu caja de herramientas.",
 );
 const DECK_HELPER_QUIZ = lstr(
-  "Cinq questions et une roleplay — pas de note. Pour toi.",
-  "Five questions and a roleplay — no score. For you.",
-  "Cinco preguntas y un roleplay — sin nota. Para ti.",
+  "Cinq questions — pas de note. Pour toi.",
+  "Five questions — no score. For you.",
+  "Cinco preguntas — sin nota. Para ti.",
+);
+const DECK_HELPER_MINI_MISSION = lstr(
+  "Une vraie scène, étape par étape. Voix haute conseillée.",
+  "A real scene, step by step. Reading out loud helps.",
+  "Una escena real, paso a paso. Léelo en voz alta.",
 );
 const DECK_HELPER_COMPLETION = lstr(
   "Imprime tes fiches, sauvegarde ta progression, ouvre la suite.",
@@ -1273,6 +1303,19 @@ function buildModule2DeckScreens(locale: YoLocale): YoLessonDeckScreen[] {
       ),
     },
     {
+      id: "grammar",
+      kind: "practice",
+      eyebrow: t(DECK_LABEL_GRAMMAR, locale),
+      title: t(DECK_TITLE_GRAMMAR, locale),
+      helperText: t(DECK_HELPER_GRAMMAR, locale),
+      companionState: "map",
+      content: (
+        <div data-yo-module2-deck-screen="grammar">
+          <GrammarSection locale={locale} />
+        </div>
+      ),
+    },
+    {
       id: "flashcards",
       kind: "practice",
       eyebrow: t(DECK_LABEL_FLASHCARDS, locale),
@@ -1281,7 +1324,6 @@ function buildModule2DeckScreens(locale: YoLocale): YoLessonDeckScreen[] {
       companionState: "map",
       content: (
         <div data-yo-module2-deck-screen="flashcards">
-          <GrammarSection locale={locale} />
           <FlashcardsSection locale={locale} />
         </div>
       ),
@@ -1296,6 +1338,18 @@ function buildModule2DeckScreens(locale: YoLocale): YoLessonDeckScreen[] {
       content: (
         <div data-yo-module2-deck-screen="quiz">
           <PracticeSection locale={locale} />
+        </div>
+      ),
+    },
+    {
+      id: "mini-mission",
+      kind: "practice",
+      eyebrow: t(DECK_LABEL_MINI_MISSION, locale),
+      title: t(DECK_TITLE_MINI_MISSION, locale),
+      helperText: t(DECK_HELPER_MINI_MISSION, locale),
+      companionState: "confused",
+      content: (
+        <div data-yo-module2-deck-screen="mini-mission">
           <MiniMissionSection locale={locale} />
         </div>
       ),
@@ -1325,6 +1379,13 @@ function Module2DeckRenderer({ locale }: { locale: YoLocale }) {
     locale === "fr"
       ? "/yo/langues/espagnol/pays/republique-dominicaine/module-2?lang=en"
       : "/yo/langues/espagnol/pays/republique-dominicaine/module-2";
+  // Tap-zone navigation is enabled for Module 2 because every
+  // per-screen interactive control (audio buttons, quiz
+  // `<details>` reveals, flashcard carousel buttons, the
+  // mark-completed button, printable links) is either a real
+  // HTML control or already marked with the deck's audited
+  // gesture-exclude selector, so the tap-zone code path never
+  // hijacks them.
   return (
     <YoLessonDeck
       locale={locale}
@@ -1332,6 +1393,7 @@ function Module2DeckRenderer({ locale }: { locale: YoLocale }) {
       backHref={backHref}
       toggleHref={toggleHref}
       screens={screens}
+      enableTapNavigation
     />
   );
 }

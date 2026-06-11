@@ -1,9 +1,12 @@
 /**
  * YoLessonDeckHeader
  *
- * Sticky app-style top bar for the lesson deck. Replaces the
- * legacy 5-level breadcrumb (`YoPratiqo › Langues › Espagnol ›
- * R.D. › Module 2`) with three focused affordances:
+ * App-style top bar for the lesson deck. Sits at the top of the
+ * deck's `h-[100dvh]` flex column (no longer page-`sticky` — the
+ * parent owns the viewport-lock, so sticky positioning is moot)
+ * and replaces the legacy 5-level breadcrumb (`YoPratiqo ›
+ * Langues › Espagnol › R.D. › Module 2`) with three focused
+ * affordances:
  *
  *   - one back arrow / "Course Home" link that points back to
  *     the country course home (one level up — never all the way
@@ -57,8 +60,10 @@ export function YoLessonDeckHeader({
     <header
       data-testid="yo-lesson-deck-header"
       data-yo-lesson-deck-header="true"
+      data-no-deck-swipe="true"
+      data-no-deck-tap="true"
       className={cn(
-        "sticky top-0 z-40 border-b border-[#E7DFCF] bg-[#F4EFE6]/92 backdrop-blur-md",
+        "relative z-40 shrink-0 border-b border-[#E7DFCF] bg-[#F4EFE6]/92 backdrop-blur-md",
         className,
       )}
     >

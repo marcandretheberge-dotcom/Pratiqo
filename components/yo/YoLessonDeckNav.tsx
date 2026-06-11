@@ -3,8 +3,9 @@
 /**
  * YoLessonDeckNav
  *
- * Sticky bottom Back / Next bar for the lesson deck. Mounted by
- * `<YoLessonDeck />`; not normally imported directly by per-
+ * Bottom Back / Next bar for the lesson deck. Mounted by
+ * `<YoLessonDeck />` as the last flex item of the viewport-
+ * locked deck column; not normally imported directly by per-
  * module deck composers.
  *
  * Behavior
@@ -19,7 +20,13 @@
  *     own its own actions (e.g. the
  *     `<YoMarkModuleCompletedButton />`) without the deck
  *     pretending to be a "submit" affordance.
- *   • iOS safe-area aware (`env(safe-area-inset-bottom)`).
+ *   • iOS safe-area aware (`env(safe-area-inset-bottom)`) — the
+ *     bottom inset padding is applied directly on the nav so it
+ *     stays pinned just above the home indicator on iPhone X+.
+ *   • Sits at the bottom of the deck's `h-[100dvh]` flex column
+ *     (no longer `position: fixed` — the parent owns the
+ *     viewport-lock) so the deck never produces page-level
+ *     scroll.
  *
  * Privacy / safety profile
  * ------------------------
@@ -64,17 +71,19 @@ export function YoLessonDeckNav({
     <nav
       data-testid="yo-lesson-deck-nav"
       data-yo-lesson-deck-nav="true"
+      data-no-deck-swipe="true"
+      data-no-deck-tap="true"
       aria-label={labels.progressAnnouncement(currentIndex + 1, total)}
       className={cn(
-        "pointer-events-none fixed inset-x-0 bottom-0 z-30 px-4 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-3",
+        "relative z-30 shrink-0 border-t border-[#E7DFCF] bg-[#F4EFE6]/96 px-4 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-3 backdrop-blur-md",
         className,
       )}
     >
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 -top-8 h-12 bg-gradient-to-t from-[#F4EFE6] to-transparent"
+        className="pointer-events-none absolute inset-x-0 -top-6 h-6 bg-gradient-to-t from-[#F4EFE6] to-transparent"
       />
-      <div className="pointer-events-auto mx-auto flex max-w-md items-center justify-between gap-3">
+      <div className="mx-auto flex max-w-md items-center justify-between gap-3">
         <button
           type="button"
           data-testid="yo-lesson-deck-nav-prev"
