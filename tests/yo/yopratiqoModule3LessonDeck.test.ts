@@ -494,9 +494,13 @@ const restrictedPathPatterns: RegExp[] = [
   /^app\/sitemap\.ts$/,
   /^app\/robots\.ts$/,
   /^lib\/seo\//,
-  // Modules 4 / 5 remain out of scope for this PR.
-  /^app\/yo\/langues\/espagnol\/pays\/republique-dominicaine\/module-[45]\//,
-  /^components\/yo\/DominicanRepublicModule[45]Content\.tsx$/,
+  // Module 5 remains out of scope for this PR. Module 4 was
+  // promoted to the deck pattern in a follow-on PR
+  // (`feat/yopratiqo-module4-lesson-deck`); its dedicated deck
+  // test (`tests/yo/yopratiqoModule4LessonDeck.test.ts`) now
+  // owns the contract for Module 4.
+  /^app\/yo\/langues\/espagnol\/pays\/republique-dominicaine\/module-5\//,
+  /^components\/yo\/DominicanRepublicModule5Content\.tsx$/,
 ];
 const status = execSync("git status --porcelain -uall", {
   cwd: root,
@@ -525,6 +529,6 @@ for (const file of changedFiles) {
     }
   }
 }
-ok("15) no restricted system touched (Stripe / payments / tax / RLS / migrations / legal / Membre Pro / audio / SEO / Modules 4–5)");
+ok("15) no restricted system touched (Stripe / payments / tax / RLS / migrations / legal / Membre Pro / audio / SEO / Module 5)");
 
 console.log(`\n${pass} Module 3 lesson-deck assertions passed`);
