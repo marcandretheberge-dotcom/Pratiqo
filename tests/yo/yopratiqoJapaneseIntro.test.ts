@@ -112,27 +112,30 @@ test("Japanese intro data file exposes the documented sections", () => {
   }
 });
 
-test("page renders the ten intro sections in order", () => {
-  const expectedAriaIds = [
-    "yo-ja-hero-title",
-    "yo-ja-welcome-title",
-    "yo-ja-numbers-title",
-    "yo-ja-origin-title",
-    "yo-ja-writing-title",
-    "yo-ja-sound-title",
-    "yo-ja-politeness-title",
-    "yo-ja-culture-title",
-    "yo-ja-quiz-title",
-    "yo-ja-flashcards-title",
-    "yo-ja-teacher-title",
+test("page renders the ten intro sections in order (deck-screen markers)", () => {
+  // The app-shell deck refactor replaced per-section aria ids with
+  // stable per-screen markers. Each screen still carries the same
+  // pedagogical step it had on the old long-scroll page; we walk
+  // them in order to catch accidental reorders.
+  const expectedScreenMarkers = [
+    'data-yo-japanese-intro-deck-screen="welcome"',
+    'data-yo-japanese-intro-deck-screen="numbers"',
+    'data-yo-japanese-intro-deck-screen="origin"',
+    'data-yo-japanese-intro-deck-screen="writing"',
+    'data-yo-japanese-intro-deck-screen="sound"',
+    'data-yo-japanese-intro-deck-screen="politeness"',
+    'data-yo-japanese-intro-deck-screen="culture"',
+    'data-yo-japanese-intro-deck-screen="quiz"',
+    'data-yo-japanese-intro-deck-screen="flashcards"',
+    'data-yo-japanese-intro-deck-screen="teacher"',
   ];
   let cursor = 0;
-  for (const id of expectedAriaIds) {
-    const found = pageSrc.indexOf(id, cursor);
+  for (const marker of expectedScreenMarkers) {
+    const found = pageSrc.indexOf(marker, cursor);
     assert.notEqual(
       found,
       -1,
-      `page must declare aria id ${id} after the previous one`,
+      `page must declare deck-screen marker ${marker} after the previous one`,
     );
     cursor = found;
   }
@@ -490,8 +493,19 @@ test("Japanese intro route exists on disk", () => {
   );
 });
 
-test("page wires the breadcrumb and the teacher CTA", () => {
-  assert.match(pageCode, /<YoBreadcrumb\b/, "page must render YoBreadcrumb");
+test("page mounts the app-shell deck and wires the teacher CTA", () => {
+  // The all-language-intros app-shell brief removed breadcrumb-primary
+  // navigation from intro routes. The shared <YoLessonDeck /> now owns
+  // the top navigation (back arrow + YoPratiqo logo + language toggle).
+  assert.match(
+    pageCode,
+    /<YoLessonDeck\b/,
+    "page must mount the YoLessonDeck shell",
+  );
+  assert.ok(
+    !/<YoBreadcrumb\b/.test(pageCode),
+    "intro page must not use YoBreadcrumb as primary navigation",
+  );
   assert.match(
     pageCode,
     /\/trouver-un-prof/,

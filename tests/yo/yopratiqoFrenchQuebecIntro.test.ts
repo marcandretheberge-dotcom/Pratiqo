@@ -137,17 +137,20 @@ test("page imports the data file and reuses YoQuizPreview + YoFlashcardPreview",
   );
 });
 
-test("page renders the nine documented sections", () => {
+test("page renders the nine documented sections (deck-screen markers)", () => {
+  // The app-shell deck refactor replaced per-section aria ids with
+  // stable per-screen markers. Each screen still carries the same
+  // pedagogical step it had on the legacy long-scroll page.
   const sectionAnchors = [
-    "yo-fr-qc-welcome-title",
-    "yo-fr-qc-comparison-title",
-    "yo-fr-qc-survival-title",
-    "yo-fr-qc-quebec-title",
-    "yo-fr-qc-levels-title",
-    "yo-fr-qc-kit-title",
-    "yo-fr-qc-quiz-title",
-    "yo-fr-qc-flashcards-title",
-    "yo-fr-qc-teacher-title",
+    'data-yo-fr-qc-intro-deck-screen="welcome"',
+    'data-yo-fr-qc-intro-deck-screen="comparison"',
+    'data-yo-fr-qc-intro-deck-screen="survival"',
+    'data-yo-fr-qc-intro-deck-screen="quebec"',
+    'data-yo-fr-qc-intro-deck-screen="levels"',
+    'data-yo-fr-qc-intro-deck-screen="kit"',
+    'data-yo-fr-qc-intro-deck-screen="quiz"',
+    'data-yo-fr-qc-intro-deck-screen="flashcards"',
+    'data-yo-fr-qc-intro-deck-screen="teacher"',
   ];
   for (const anchor of sectionAnchors) {
     assert.ok(
