@@ -136,13 +136,21 @@ ok("4) /yo public bridge card uses CompanionAvatar with the travel visual system
 
 // The login route must still exist where we deep-link to.
 read(LOGIN_PAGE_PATH);
-// Accept either an inline href= literal or a centralized hrefs constant
-// (the card uses a HREFS object so the same string can be greppable
-// from a single place).
+// The product-shell consistency PR moved the sign-in deep-link from
+// `/student/progress` to `/student/yopratiqo` so a learner who entered
+// through YoPratiqo lands back on the YoPratiqo hub (with their
+// companion + course path) immediately after OAuth — instead of the
+// generic Pratiqo dashboard. `/student/progress` stays reachable as
+// the secondary "full Pratiqo progress" link further down in the
+// card, and that link is asserted by assertion 7 below.
+//
+// `/login` accepts `next=` and the login page sanitizes it via
+// `sanitizeRelativeRedirectPath`, so deep-linking the post-OAuth
+// destination is safe.
 assert.match(
   cardSrc,
-  /["']\/login\?next=\/student\/progress["']/,
-  "card must deep-link sign-in CTA to /login with a sanitized next= back to /student/progress",
+  /["']\/login\?next=\/student\/yopratiqo["']/,
+  "card must deep-link sign-in CTA to /login?next=/student/yopratiqo (the authenticated YoPratiqo hub)",
 );
 assert.match(
   cardSrc,
@@ -159,7 +167,7 @@ assert.match(
   /Inicia sesión para guardar mi progreso/,
   "ES sign-in CTA copy must be present",
 );
-ok("5) /yo has an audited sign-in CTA wired to /login?next=/student/progress");
+ok("5) /yo has an audited sign-in CTA wired to /login?next=/student/yopratiqo (YoPratiqo hub)");
 
 // ─────────────────────────────────────────────────────────────────────────
 // 6. /yo links to the Dominican Republic module path
@@ -183,10 +191,19 @@ ok("6) /yo card links to the Dominican Republic Spanish course path");
 // 7. /yo links to /student/progress for authenticated follow-up
 // ─────────────────────────────────────────────────────────────────────────
 
+// Post product-shell PR the primary authenticated CTA targets the
+// dedicated YoPratiqo hub at `/student/yopratiqo`, but `/student/progress`
+// stays reachable through the secondary "View my full Pratiqo progress"
+// link so the YoPratiqo ↔ Pratiqo bridge is symmetric in both directions.
+assert.match(
+  cardSrc,
+  /["']\/student\/yopratiqo["']/,
+  "card must deep-link authenticated users to the YoPratiqo hub at /student/yopratiqo",
+);
 assert.match(
   cardSrc,
   /["']\/student\/progress["']/,
-  "card must deep-link authenticated users to /student/progress",
+  "card must still keep /student/progress reachable as the full-Pratiqo-progress bridge",
 );
 assert.match(
   cardSrc,
@@ -196,7 +213,7 @@ assert.match(
 assert.match(
   cardSrc,
   /useAuth/,
-  "card must consult useAuth to switch the primary CTA between sign-in and progress",
+  "card must consult useAuth to switch the primary CTA between sign-in and YoPratiqo hub",
 );
 // Also verify the find-a-teacher CTA still uses the audited route.
 read(FIND_TEACHER_PAGE_PATH);
@@ -205,7 +222,7 @@ assert.match(
   /["']\/trouver-un-prof["']/,
   "card must keep the audited /trouver-un-prof link as the tertiary CTA",
 );
-ok("7) /yo card links to /student/progress for authenticated users (auth-aware via useAuth)");
+ok("7) /yo card links to /student/yopratiqo for authenticated users and keeps /student/progress bridge");
 
 // ─────────────────────────────────────────────────────────────────────────
 // 8. BookingModal still mounts YoBookingTeacherBridgeConsent

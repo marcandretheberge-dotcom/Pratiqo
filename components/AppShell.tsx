@@ -75,19 +75,32 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const studentDisplayName = (profile?.name as string | undefined) || (user ? authDisplayName(user) : "");
   const studentInitials = initialsFromDisplay(studentDisplayName, user?.email || undefined);
 
-  const STUDENT_NAV: {
-    href: string;
-    labelKey:
-      | "studentTabFind"
-      | "studentTabLessons"
-      | "studentTabProgress"
-      | "studentTabLearners"
-      | "resolutionCenterTitle"
-      | "studentTabProfile";
-  }[] = [
+  // Student nav uses a discriminated `label | labelKey` union so we
+  // can mix translated labels with the YoPratiqo brand name (which is
+  // intentionally untranslated — it is the official product label, in
+  // every locale, in every viewport). Adding YoPratiqo here is what
+  // gives logged-in students a persistent nav entry into the
+  // authenticated YoPratiqo hub from any /student/* page.
+  const STUDENT_NAV: Array<
+    | {
+        href: string;
+        labelKey:
+          | "studentTabFind"
+          | "studentTabLessons"
+          | "studentTabProgress"
+          | "studentTabLearners"
+          | "resolutionCenterTitle"
+          | "studentTabProfile";
+      }
+    | { href: string; label: string }
+  > = [
     { href: "/student/search", labelKey: "studentTabFind" },
     { href: "/dashboard", labelKey: "studentTabLessons" },
     { href: "/student/progress", labelKey: "studentTabProgress" },
+    // Brand entry — always the full word "YoPratiqo" (never "Yo"
+    // alone). Sits next to /student/progress so the YoPratiqo ↔
+    // Pratiqo bridge is one click away in either direction.
+    { href: "/student/yopratiqo", label: "YoPratiqo" },
     { href: "/student/learners", labelKey: "studentTabLearners" },
     { href: "/resolution", labelKey: "resolutionCenterTitle" },
     { href: "/profile", labelKey: "studentTabProfile" },
@@ -177,22 +190,29 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             >
               {STUDENT_NAV.map((tab) => {
                 const active = isStudentNavActive(pathname, tab.href);
+                const text = "labelKey" in tab ? t(tab.labelKey) : tab.label;
+                const isYopratiqoEntry = tab.href === "/student/yopratiqo";
                 return (
                   <Link
                     key={tab.href}
                     href={tab.href}
+                    data-testid={isYopratiqoEntry ? "student-nav-yopratiqo" : undefined}
                     style={{
                       padding: "10px 16px",
                       fontSize: 13,
-                      fontWeight: active ? 500 : 400,
-                      color: active ? "var(--palette-teal-700)" : "#4B5563",
+                      fontWeight: active || isYopratiqoEntry ? 500 : 400,
+                      color: isYopratiqoEntry
+                        ? "#F4B400"
+                        : active
+                          ? "var(--palette-teal-700)"
+                          : "#4B5563",
                       borderBottom: active ? "2px solid var(--palette-teal-500)" : "2px solid transparent",
                       textDecoration: "none",
                       whiteSpace: "nowrap",
                       transition: "all 0.15s",
                     }}
                   >
-                    {t(tab.labelKey)}
+                    {text}
                   </Link>
                 );
               })}
@@ -289,19 +309,29 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             borderTop: "0.5px solid #D3D1C7",
           }}
         >
-          {[
-            { href: "/student/search", icon: "🔍", labelKey: "studentTabFind" as const },
-            { href: "/dashboard", icon: "📅", labelKey: "studentTabLessons" as const },
-            { href: "/student/progress", icon: "🌱", labelKey: "studentTabProgress" as const },
-            { href: "/student/learners", icon: "🎓", labelKey: "studentTabLearners" as const },
-            { href: "/profile", icon: "👤", labelKey: "studentTabProfile" as const },
-            { href: "/resolution", icon: "!", labelKey: "resolutionCenterTitle" as const },
-          ].map((tab) => {
+          {(
+            [
+              { href: "/student/search", icon: "🔍", labelKey: "studentTabFind" as const },
+              { href: "/dashboard", icon: "📅", labelKey: "studentTabLessons" as const },
+              { href: "/student/progress", icon: "🌱", labelKey: "studentTabProgress" as const },
+              // YoPratiqo brand entry on the bottom tab bar so the
+              // authenticated YoPratiqo hub is reachable from any
+              // /student/* page without scrolling. Label stays the
+              // full word "YoPratiqo" — never "Yo" alone.
+              { href: "/student/yopratiqo", icon: "🧭", label: "YoPratiqo" } as const,
+              { href: "/student/learners", icon: "🎓", labelKey: "studentTabLearners" as const },
+              { href: "/profile", icon: "👤", labelKey: "studentTabProfile" as const },
+              { href: "/resolution", icon: "!", labelKey: "resolutionCenterTitle" as const },
+            ] as const
+          ).map((tab) => {
             const active = isStudentNavActive(pathname, tab.href);
+            const text = "labelKey" in tab ? t(tab.labelKey) : tab.label;
+            const isYopratiqoEntry = tab.href === "/student/yopratiqo";
             return (
               <Link
                 key={tab.href}
                 href={tab.href}
+                data-testid={isYopratiqoEntry ? "student-bottom-nav-yopratiqo" : undefined}
                 style={{
                   flex: 1,
                   textAlign: "center",
@@ -313,12 +343,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <div
                   style={{
                     fontSize: 10,
-                    color: active ? "var(--palette-teal-700)" : "#4B5563",
-                    fontWeight: active ? 500 : 400,
+                    color: isYopratiqoEntry
+                      ? "#F4B400"
+                      : active
+                        ? "var(--palette-teal-700)"
+                        : "#4B5563",
+                    fontWeight: active || isYopratiqoEntry ? 500 : 400,
                     marginTop: 2,
                   }}
                 >
-                  {t(tab.labelKey)}
+                  {text}
                 </div>
               </Link>
             );
