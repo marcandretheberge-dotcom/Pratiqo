@@ -5,36 +5,43 @@
  * considering moving to Quebec. Unlike the Spanish intro (FR-default
  * for the Quebec audience), this page defaults to English because
  * the audience is pre-arrival, international, and English is their
- * lingua franca.
+ * lingua franca. `?lang=fr` flips to French.
  *
- * Composed of nine sections, server-rendered from
- * `lib/yo/frenchQuebecIntro.ts`:
- *   1. Welcome to Quebec French
- *   2. Quebec French vs France French
- *   3. First survival words (with audio)
- *   4. Quebec in 3 minutes
- *   5. Language levels: CEFR · CLB/NCLC · Échelle québécoise
- *   6. Culture survival kit
- *   7. Mini quiz (reuses YoQuizPreview)
- *   8. Flashcards (grouped + reuses YoFlashcardPreview)
- *   9. Teacher CTA
+ * The legacy long-scroll page with a 3-level breadcrumb is replaced
+ * by the shared `<YoLessonDeck />` app-shell so the experience is
+ * one focused screen at a time with companion presence everywhere.
  *
- * Locale behaviour:
- *   - Default: EN (audience is international).
- *   - `?lang=fr` flips to French.
- *   - All Quebec-French target words render with `lang="fr-CA"`.
+ * What is PRESERVED verbatim:
+ *   - `frenchQuebecIntro` data file (no field renamed, no row
+ *     deleted).
+ *   - `YoFrenchAudioButton` integration with
+ *     `accentProfile="quebec_french"` + `speechLang="fr-CA"`.
+ *   - The Quebec-vs-France comparison table, survival vocabulary,
+ *     Quebec quick-stats + culture cards, CEFR / CLB-NCLC /
+ *     Échelle québécoise scales side-by-side, culture survival
+ *     kit with iconography.
+ *   - `YoFlashcardPreview` autoplay + the `fr-CA` audio context.
+ *   - `YoQuizPreview` reveal-only contract.
+ *   - Every Quebec-French target string still renders with
+ *     `lang="fr-CA"`.
+ *   - Official-sources disclaimer (Canada.ca / Québec.ca / IRCC /
+ *     MIFI mention) verbatim.
+ *   - The upcoming workplace-module bridge card at the end —
+ *     mounted on the deck's teacher screen so learners can still
+ *     opt into the preview.
+ *   - Teacher CTA → `/trouver-un-prof?q=francais`.
  *
- * Audio:
- *   - Pronunciation is served via `YoFrenchAudioButton`, which prefers
- *     a pre-generated MP3 from the Supabase Storage `yopratiqo-audio`
- *     bucket (resolved through the manifest with
- *     `accentProfile="quebec_french"`) and falls back to on-device
- *     Web Speech with BCP-47 `fr-CA` only when an item is missing.
- *     No OpenAI calls from the browser; no per-row API keys; the
- *     bucket URL is the public `NEXT_PUBLIC_SUPABASE_URL`.
+ * What is NEW:
+ *   - Mounts inside `<YoLessonDeck />` (viewport-locked, swipe /
+ *     tap / keyboard navigation, app header with Back-to-Languages
+ *     arrow + YoPratiqo logo).
+ *   - Companion coach on every screen: `map` for context / vocab /
+ *     culture, `confused` for the practice quiz, `celebrating`
+ *     for the final teacher CTA.
  *
- * No Stripe, no Supabase, no payment math, no checkout, no migration,
- * no RLS policy, no marketplace logic.
+ * No Stripe, no Supabase, no payment math, no checkout, no
+ * migration, no RLS, no Membre Pro / commission code, no raw
+ * quiz answers, no AI summary, no audio-gen scripts.
  */
 
 import type { Metadata } from "next";
@@ -44,29 +51,29 @@ import {
   BookOpen,
   Calendar,
   CheckCircle2,
-  Compass,
   GraduationCap,
   HandHeart,
   Heart,
   Info,
   Languages,
-  MapPin,
   MessageCircle,
   Snowflake,
-  Sparkles,
   Train,
   Utensils,
   Wallet,
 } from "lucide-react";
+
 import { buildYoLocaleHref, lstr, t } from "@/lib/yo/localize";
 import { buildYoPratiqoMetadata } from "@/lib/yo/yopratiqoSeo";
 import type { YoLocale } from "@/lib/yo/types";
 import { frenchQuebecIntro } from "@/lib/yo/frenchQuebecIntro";
-import { YoBreadcrumb } from "@/components/yo/YoBreadcrumb";
 import { YoFlashcardPreview } from "@/components/yo/YoFlashcardPreview";
 import { YoQuizPreview } from "@/components/yo/YoQuizPreview";
 import { YoFrenchAudioButton } from "@/components/yo/YoFrenchAudioButton";
 import { YoUpcomingModuleCard } from "@/components/yo/YoUpcomingModuleCard";
+import { YoLessonDeck } from "@/components/yo/YoLessonDeck";
+import type { YoLessonDeckScreen } from "@/lib/yo/lessonDeckTypes";
+import { getYoLanguageIntroDeckMeta } from "@/lib/yo/languageIntroDecks";
 
 export const dynamic = "force-dynamic";
 
@@ -98,11 +105,6 @@ function resolveIntroLocale(input?: string | string[] | null): YoLocale {
   return normalized === "fr" ? "fr" : "en";
 }
 
-const PAGE_LABEL = lstr(
-  "Pré-arrivée gratuite",
-  "Free pre-arrival",
-);
-
 const PAGE_TITLE = lstr(
   "Bienvenue. Tu déménages au Québec ?",
   "Bienvenue. Are you moving to Quebec?",
@@ -113,51 +115,87 @@ const PAGE_SUBTITLE = lstr(
   "A first lesson, around 6–8 minutes, to understand Quebec French and arrive better prepared.",
 );
 
-const SECTION_LABELS = {
-  welcome: lstr("Bienvenue", "Welcome"),
-  comparison: lstr(
-    "Québécois vs Français de France",
-    "Quebec French vs France French",
-  ),
-  survival: lstr("Premiers mots de survie", "First survival words"),
-  quebec: lstr("Le Québec en 3 minutes", "Quebec in 3 minutes"),
-  levels: lstr("Niveaux de langue", "Language levels"),
-  kit: lstr("Trousse de survie culturelle", "Culture survival kit"),
-  quiz: lstr("Mini quiz", "Mini quiz"),
-  flashcards: lstr("Flashcards", "Flashcards"),
-  teacher: lstr("Pratique avec un prof", "Practice with a teacher"),
-} as const;
+// ─── Deck-screen labels ─────────────────────────────────────────────────
+const DECK_LABEL_WELCOME = lstr("Bienvenue", "Welcome");
+const DECK_TITLE_WELCOME = lstr(
+  "Pas le « français de Paris ». Le français du Québec.",
+  "Not “French from Paris.” Quebec French.",
+);
+const DECK_HELPER_WELCOME = lstr(
+  "Un écran à la fois — balayage, tape ou flèches Back / Next.",
+  "One screen at a time — swipe, tap, or arrow keys.",
+);
 
-const SECTION_TITLES = {
-  welcome: lstr(
-    "Pas le « français de Paris ». Le français du Québec.",
-    "Not “French from Paris.” Quebec French.",
-  ),
-  comparison: lstr(
-    "Une langue, deux variantes nord-américaine et européenne",
-    "One language, North-American and European varieties",
-  ),
-  survival: lstr(
-    "Les premiers mots qui ouvrent les portes",
-    "First words that open doors",
-  ),
-  quebec: lstr(
-    "Une province nord-américaine francophone",
-    "A French-speaking North-American province",
-  ),
-  levels: lstr(
-    "CECR, NCLC/CLB, Échelle québécoise",
-    "CEFR, CLB/NCLC, Échelle québécoise",
-  ),
-  kit: lstr(
-    "Petits réflexes pour les premiers jours",
-    "Small reflexes for your first days",
-  ),
-  teacher: lstr(
-    "Pratique avec un vrai prof de français du Québec",
-    "Practice with a real Quebec French teacher",
-  ),
-} as const;
+const DECK_LABEL_COMPARISON = lstr(
+  "Québécois vs Français de France",
+  "Quebec French vs France French",
+);
+const DECK_TITLE_COMPARISON = lstr(
+  "Une langue, deux variantes nord-américaine et européenne",
+  "One language, North-American and European varieties",
+);
+
+const DECK_LABEL_SURVIVAL = lstr(
+  "Premiers mots de survie",
+  "First survival words",
+);
+const DECK_TITLE_SURVIVAL = lstr(
+  "Les premiers mots qui ouvrent les portes",
+  "First words that open doors",
+);
+const DECK_HELPER_SURVIVAL = lstr(
+  "Tape l’audio pour entendre la prononciation québécoise.",
+  "Tap the audio to hear the Quebec pronunciation.",
+);
+
+const DECK_LABEL_QUEBEC = lstr(
+  "Le Québec en 3 minutes",
+  "Quebec in 3 minutes",
+);
+const DECK_TITLE_QUEBEC = lstr(
+  "Une province nord-américaine francophone",
+  "A French-speaking North-American province",
+);
+
+const DECK_LABEL_LEVELS = lstr("Niveaux de langue", "Language levels");
+const DECK_TITLE_LEVELS = lstr(
+  "CECR, NCLC/CLB, Échelle québécoise",
+  "CEFR, CLB/NCLC, Échelle québécoise",
+);
+
+const DECK_LABEL_KIT = lstr(
+  "Trousse de survie culturelle",
+  "Culture survival kit",
+);
+const DECK_TITLE_KIT = lstr(
+  "Petits réflexes pour les premiers jours",
+  "Small reflexes for your first days",
+);
+
+const DECK_LABEL_QUIZ = lstr("Mini quiz", "Mini quiz");
+const DECK_TITLE_QUIZ = lstr(
+  "Vois si les mots ont déjà accroché",
+  "See if the words have stuck",
+);
+const DECK_HELPER_QUIZ = lstr(
+  "Six questions rapides, pas de jugement.",
+  "Six quick questions, no judgment.",
+);
+
+const DECK_LABEL_FLASH = lstr("Flashcards", "Flashcards");
+const DECK_TITLE_FLASH = lstr(
+  "Six paquets, vingt mots à mémoriser",
+  "Six decks, twenty words to memorise",
+);
+
+const DECK_LABEL_TEACHER = lstr(
+  "Pratique avec un prof",
+  "Practice with a teacher",
+);
+const DECK_TITLE_TEACHER = lstr(
+  "Pratique avec un vrai prof de français du Québec",
+  "Practice with a real Quebec French teacher",
+);
 
 const TEACHER_BODY = lstr(
   "Une fois que tu connais ces mots, parler avec une vraie personne accélère tout. Les profs Pratiqo de français te corrigent, t’expliquent les nuances québécoises et t’aident à arriver en confiance.",
@@ -198,12 +236,21 @@ export default async function YoFrancaisQuebecIntroPage({
     locale === "en" ? "fr" : "en",
   );
 
-  // Locale-aware destination for the upcoming Quebec French workplace
-  // module shell (still noindex, no checkout, no Course schema). The
-  // intro page is bilingual FR/EN, so only those two query-string
-  // forms are reachable at runtime here — the ES form is owned by the
-  // hub page above so the combined entry-point surface still covers
-  // all three locales (`?lang=fr`, `?lang=en`, `?lang=es`).
+  const meta = getYoLanguageIntroDeckMeta("francais-quebec");
+  // The hub default locale is FR; pre-arrival back link respects
+  // whichever language the learner picked on the intro deck.
+  const backHref =
+    locale === "en"
+      ? `${meta.backRoute}?lang=en`
+      : `${meta.backRoute}?lang=fr`;
+  const teacherHref = `/trouver-un-prof?q=${meta.teacherSearchQuery}${
+    locale === "en" ? "&lang=en" : ""
+  }`;
+
+  // Locale-aware destination for the upcoming Quebec French
+  // workplace module shell — preserved verbatim from the old
+  // long-scroll page and surfaced on the deck teacher screen so
+  // learners can still opt into the preview.
   const upcomingModuleHref =
     locale === "fr"
       ? "/yo/langues/francais-quebec/module-1?lang=fr"
@@ -227,81 +274,32 @@ export default async function YoFrancaisQuebecIntroPage({
     flashcards,
   } = frenchQuebecIntro;
 
-  const teacherBridgeHref = `/trouver-un-prof${langSuffix}`;
-
-  return (
-    <div className="min-h-[100dvh] bg-[#FAFCFB] text-[#0F6E56]">
-      <main id="main-content" className="flex flex-col pb-20">
-        <YoBreadcrumb
-          items={[
-            { label: lstr("YoPratiqo", "YoPratiqo"), href: `/yo${langSuffix}` },
-            {
-              label: lstr("Langues", "Languages"),
-              href: `/yo/langues${langSuffix}`,
-            },
-            {
-              label: lstr("Français du Québec", "Quebec French"),
-            },
-          ]}
-          locale={locale}
-        />
-
-        {/* Hero */}
+  const screens: YoLessonDeckScreen[] = [
+    {
+      id: "welcome",
+      kind: "mission",
+      eyebrow: t(DECK_LABEL_WELCOME, locale),
+      title: t(DECK_TITLE_WELCOME, locale),
+      helperText: t(DECK_HELPER_WELCOME, locale),
+      companionState: "map",
+      content: (
         <section
-          aria-labelledby="yo-fr-qc-intro-title"
-          className="relative overflow-hidden"
+          data-yo-fr-qc-intro-deck-screen="welcome"
+          className="mx-auto w-full max-w-3xl px-5 py-6 sm:px-8"
         >
-          <div
-            aria-hidden
-            className="absolute inset-0 bg-[radial-gradient(circle_at_18%_15%,rgba(15,110,86,0.18),transparent_30%),radial-gradient(circle_at_86%_18%,rgba(244,180,0,0.18),transparent_32%),linear-gradient(180deg,#fbfdff_0%,#dde9f4_45%,#ddf4f1_100%)]"
-          />
-          <div className="relative mx-auto flex max-w-5xl flex-col gap-4 px-5 pt-10 pb-10 sm:px-8 sm:pt-12 sm:pb-14">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <span className="inline-flex items-center gap-2 rounded-full border border-[#0F6E56]/30 bg-white/80 px-3 py-1.5 text-xs font-black uppercase tracking-[0.14em] text-[#0F6E56]">
-                <Sparkles className="size-3.5 text-[#F4B400]" aria-hidden />
-                {t(PAGE_LABEL, locale)}
-              </span>
-              <Link
-                href={toggleHref}
-                className="rounded-full border border-[#0F6E56]/15 bg-white/80 px-3 py-1.5 text-xs font-bold text-[#0F6E56] transition hover:bg-white"
-              >
-                {locale === "en" ? "Voir en français" : "View in English"}
-              </Link>
-            </div>
-            <p className="text-sm font-black uppercase tracking-[0.22em] text-[#1D9E75]">
-              YoPratiqo · {locale === "fr" ? "Français du Québec" : "Quebec French"}
-            </p>
-            <h1
-              id="yo-fr-qc-intro-title"
-              className="max-w-3xl text-3xl font-semibold leading-tight tracking-tight text-[#0F6E56] sm:text-4xl lg:text-[2.75rem]"
-            >
-              {t(PAGE_TITLE, locale)}
-            </h1>
-            <p className="max-w-2xl text-base leading-relaxed text-[#0F6E56]/78 sm:text-lg">
-              {t(PAGE_SUBTITLE, locale)}
-            </p>
-          </div>
-        </section>
-
-        {/* 1) Welcome */}
-        <section
-          aria-labelledby="yo-fr-qc-welcome-title"
-          className="mx-auto w-full max-w-5xl px-5 pt-10 sm:px-8 sm:pt-14"
-        >
-          <span className="ds-label text-[#1D9E75]">
-            {t(SECTION_LABELS.welcome, locale)}
-          </span>
-          <h2
-            id="yo-fr-qc-welcome-title"
-            className="mt-2 flex items-center gap-2 text-2xl font-medium tracking-tight text-[#0F6E56] sm:text-[1.75rem]"
+          <h1
+            id="yo-fr-qc-intro-title"
+            className="text-2xl font-semibold leading-tight tracking-tight text-[#0F6E56] sm:text-3xl"
           >
-            <Compass className="size-5 text-[#1D9E75]" aria-hidden />
-            {t(SECTION_TITLES.welcome, locale)}
-          </h2>
-          <p className="mt-4 max-w-3xl text-sm leading-relaxed text-[#0F6E56]/78 sm:text-[0.95rem]">
+            {t(PAGE_TITLE, locale)}
+          </h1>
+          <p className="mt-2 text-sm leading-relaxed text-[#0F6E56]/78 sm:text-base">
+            {t(PAGE_SUBTITLE, locale)}
+          </p>
+          <p className="mt-5 text-sm leading-relaxed text-[#0F6E56]/85 sm:text-base">
             {t(welcomeIntro, locale)}
           </p>
-          <p className="mt-3 max-w-3xl text-sm leading-relaxed text-[#0F6E56]/78 sm:text-[0.95rem]">
+          <p className="mt-3 text-sm leading-relaxed text-[#0F6E56]/85 sm:text-base">
             {t(welcomePromise, locale)}
           </p>
           <div className="mt-5 rounded-2xl border border-[#DDF4F1] bg-white px-4 py-4 shadow-[0_1px_2px_rgba(15,58,52,0.04)] sm:px-5 sm:py-5">
@@ -316,29 +314,26 @@ export default async function YoFrancaisQuebecIntroPage({
             </p>
           </div>
         </section>
-
-        {/* 2) Quebec vs France comparison */}
+      ),
+    },
+    {
+      id: "comparison",
+      kind: "culture",
+      eyebrow: t(DECK_LABEL_COMPARISON, locale),
+      title: t(DECK_TITLE_COMPARISON, locale),
+      companionState: "map",
+      content: (
         <section
-          aria-labelledby="yo-fr-qc-comparison-title"
-          className="mx-auto w-full max-w-5xl px-5 pt-10 sm:px-8 sm:pt-14"
+          data-yo-fr-qc-intro-deck-screen="comparison"
+          className="mx-auto w-full max-w-3xl px-5 py-6 sm:px-8"
         >
-          <span className="ds-label text-[#1D9E75]">
-            {t(SECTION_LABELS.comparison, locale)}
-          </span>
-          <h2
-            id="yo-fr-qc-comparison-title"
-            className="mt-2 flex items-center gap-2 text-2xl font-medium tracking-tight text-[#0F6E56] sm:text-[1.75rem]"
-          >
-            <BookOpen className="size-5 text-[#1D9E75]" aria-hidden />
-            {t(SECTION_TITLES.comparison, locale)}
-          </h2>
-          <p className="mt-3 max-w-3xl text-sm leading-relaxed text-[#0F6E56]/78">
+          <p className="text-sm leading-relaxed text-[#0F6E56]/78">
             {t(qcVsFrIntro, locale)}
           </p>
-          <div className="mt-6 overflow-hidden rounded-2xl border border-teal-100 bg-white shadow-[0_1px_2px_rgba(15,58,52,0.04)]">
+          <div className="mt-5 overflow-hidden rounded-2xl border border-teal-100 bg-white shadow-[0_1px_2px_rgba(15,58,52,0.04)]">
             <table className="min-w-full text-left text-sm">
               <caption className="sr-only">
-                {t(SECTION_TITLES.comparison, locale)}
+                {t(DECK_TITLE_COMPARISON, locale)}
               </caption>
               <thead className="bg-[#DDF4F1]/60 text-xs font-black uppercase tracking-[0.14em] text-[#0F6E56]">
                 <tr>
@@ -363,7 +358,10 @@ export default async function YoFrancaisQuebecIntroPage({
                       {t(row.concept, locale)}
                     </th>
                     <td className="px-3 py-3 sm:px-4">
-                      <p className="font-semibold text-[#0F6E56]" lang="fr-CA">
+                      <p
+                        className="font-semibold text-[#0F6E56]"
+                        lang="fr-CA"
+                      >
                         {row.quebec}
                       </p>
                       {row.note ? (
@@ -383,28 +381,26 @@ export default async function YoFrancaisQuebecIntroPage({
             </table>
           </div>
         </section>
-
-        {/* 3) First survival words */}
+      ),
+    },
+    {
+      id: "survival",
+      kind: "phrase",
+      eyebrow: t(DECK_LABEL_SURVIVAL, locale),
+      title: t(DECK_TITLE_SURVIVAL, locale),
+      helperText: t(DECK_HELPER_SURVIVAL, locale),
+      companionState: "map",
+      content: (
         <section
-          aria-labelledby="yo-fr-qc-survival-title"
-          className="mx-auto w-full max-w-5xl px-5 pt-10 sm:px-8 sm:pt-14"
+          data-yo-fr-qc-intro-deck-screen="survival"
+          className="mx-auto w-full max-w-3xl px-5 py-6 sm:px-8"
         >
-          <span className="ds-label text-[#1D9E75]">
-            {t(SECTION_LABELS.survival, locale)}
-          </span>
-          <h2
-            id="yo-fr-qc-survival-title"
-            className="mt-2 flex items-center gap-2 text-2xl font-medium tracking-tight text-[#0F6E56] sm:text-[1.75rem]"
-          >
-            <MessageCircle className="size-5 text-[#1D9E75]" aria-hidden />
-            {t(SECTION_TITLES.survival, locale)}
-          </h2>
-          <p className="mt-3 max-w-3xl text-sm leading-relaxed text-[#0F6E56]/78">
+          <p className="text-sm leading-relaxed text-[#0F6E56]/78">
             {locale === "fr"
               ? "Appuie sur l’icône audio pour entendre la prononciation québécoise."
               : "Tap the audio icon to hear the Quebec pronunciation."}
           </p>
-          <ul role="list" className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <ul role="list" className="mt-5 grid gap-3 sm:grid-cols-2">
             {survivalWords.map((word) => (
               <li
                 key={word.id}
@@ -439,45 +435,39 @@ export default async function YoFrancaisQuebecIntroPage({
             ))}
           </ul>
         </section>
-
-        {/* 4) Quebec in 3 minutes */}
+      ),
+    },
+    {
+      id: "quebec",
+      kind: "culture",
+      eyebrow: t(DECK_LABEL_QUEBEC, locale),
+      title: t(DECK_TITLE_QUEBEC, locale),
+      companionState: "map",
+      content: (
         <section
-          aria-labelledby="yo-fr-qc-quebec-title"
-          className="mx-auto w-full max-w-5xl px-5 pt-10 sm:px-8 sm:pt-14"
+          data-yo-fr-qc-intro-deck-screen="quebec"
+          className="mx-auto w-full max-w-3xl px-5 py-6 sm:px-8"
         >
-          <span className="ds-label text-[#1D9E75]">
-            {t(SECTION_LABELS.quebec, locale)}
-          </span>
-          <h2
-            id="yo-fr-qc-quebec-title"
-            className="mt-2 flex items-center gap-2 text-2xl font-medium tracking-tight text-[#0F6E56] sm:text-[1.75rem]"
-          >
-            <MapPin className="size-5 text-[#1D9E75]" aria-hidden />
-            {t(SECTION_TITLES.quebec, locale)}
-          </h2>
-          <ul
-            role="list"
-            className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
-          >
+          <ul role="list" className="grid gap-3 sm:grid-cols-2">
             {quebecQuickStats.map((stat) => (
               <li
                 key={stat.id}
                 className="flex flex-col gap-1 rounded-2xl border border-teal-100 bg-white px-4 py-3 shadow-[0_1px_2px_rgba(15,58,52,0.04)]"
               >
-                <span className="text-2xl font-semibold tracking-tight text-[#0F6E56] sm:text-3xl">
+                <span className="text-xl font-semibold tracking-tight text-[#0F6E56] sm:text-2xl">
                   {t(stat.value, locale)}
                 </span>
-                <span className="text-xs leading-snug text-[#0F6E56]/70 sm:text-sm">
+                <span className="text-xs leading-snug text-[#0F6E56]/70">
                   {t(stat.label, locale)}
                 </span>
               </li>
             ))}
           </ul>
-          <div className="mt-6 grid gap-3 sm:grid-cols-3">
+          <div className="mt-5 grid gap-3 sm:grid-cols-3">
             {quebecFacts.map((fact) => (
               <article
                 key={fact.id}
-                className="rounded-2xl border border-teal-100 bg-white p-4 shadow-[0_1px_2px_rgba(15,58,52,0.04)] sm:p-5"
+                className="rounded-2xl border border-teal-100 bg-white p-4 shadow-[0_1px_2px_rgba(15,58,52,0.04)]"
               >
                 <h3 className="text-base font-semibold text-[#0F6E56]">
                   {t(fact.title, locale)}
@@ -489,35 +479,32 @@ export default async function YoFrancaisQuebecIntroPage({
             ))}
           </div>
         </section>
-
-        {/* 5) Language levels */}
+      ),
+    },
+    {
+      id: "levels",
+      kind: "culture",
+      eyebrow: t(DECK_LABEL_LEVELS, locale),
+      title: t(DECK_TITLE_LEVELS, locale),
+      companionState: "map",
+      content: (
         <section
-          aria-labelledby="yo-fr-qc-levels-title"
-          className="mx-auto w-full max-w-5xl px-5 pt-10 sm:px-8 sm:pt-14"
+          data-yo-fr-qc-intro-deck-screen="levels"
+          className="mx-auto w-full max-w-3xl px-5 py-6 sm:px-8"
         >
-          <span className="ds-label text-[#1D9E75]">
-            {t(SECTION_LABELS.levels, locale)}
-          </span>
-          <h2
-            id="yo-fr-qc-levels-title"
-            className="mt-2 flex items-center gap-2 text-2xl font-medium tracking-tight text-[#0F6E56] sm:text-[1.75rem]"
-          >
-            <GraduationCap className="size-5 text-[#1D9E75]" aria-hidden />
-            {t(SECTION_TITLES.levels, locale)}
-          </h2>
-          <p className="mt-3 max-w-3xl text-sm leading-relaxed text-[#0F6E56]/78">
+          <p className="text-sm leading-relaxed text-[#0F6E56]/78">
             {t(languageLevelsLeadIn, locale)}
           </p>
-          <div className="mt-6 grid gap-3 sm:grid-cols-3">
+          <div className="mt-5 grid gap-3 sm:grid-cols-3">
             {languageScales.map((scale) => (
               <article
                 key={scale.id}
-                className="rounded-2xl border border-teal-100 bg-white p-4 shadow-[0_1px_2px_rgba(15,58,52,0.04)] sm:p-5"
+                className="rounded-2xl border border-teal-100 bg-white p-4 shadow-[0_1px_2px_rgba(15,58,52,0.04)]"
               >
                 <p className="text-xs font-black uppercase tracking-[0.14em] text-[#0F6E56]/55">
                   {t(scale.scope, locale)}
                 </p>
-                <h3 className="mt-1 text-lg font-semibold text-[#0F6E56]">
+                <h3 className="mt-1 text-base font-semibold text-[#0F6E56]">
                   {t(scale.scaleName, locale)}
                 </h3>
                 <p className="mt-2 text-sm leading-relaxed text-[#0F6E56]/80">
@@ -545,29 +532,26 @@ export default async function YoFrancaisQuebecIntroPage({
             </p>
           </div>
         </section>
-
-        {/* 6) Culture survival kit */}
+      ),
+    },
+    {
+      id: "kit",
+      kind: "culture",
+      eyebrow: t(DECK_LABEL_KIT, locale),
+      title: t(DECK_TITLE_KIT, locale),
+      companionState: "map",
+      content: (
         <section
-          aria-labelledby="yo-fr-qc-kit-title"
-          className="mx-auto w-full max-w-5xl px-5 pt-10 sm:px-8 sm:pt-14"
+          data-yo-fr-qc-intro-deck-screen="kit"
+          className="mx-auto w-full max-w-3xl px-5 py-6 sm:px-8"
         >
-          <span className="ds-label text-[#1D9E75]">
-            {t(SECTION_LABELS.kit, locale)}
-          </span>
-          <h2
-            id="yo-fr-qc-kit-title"
-            className="mt-2 flex items-center gap-2 text-2xl font-medium tracking-tight text-[#0F6E56] sm:text-[1.75rem]"
-          >
-            <HandHeart className="size-5 text-[#1D9E75]" aria-hidden />
-            {t(SECTION_TITLES.kit, locale)}
-          </h2>
-          <ul role="list" className="mt-6 grid gap-3 sm:grid-cols-2">
+          <ul role="list" className="grid gap-3 sm:grid-cols-2">
             {survivalKit.map((tip) => {
               const Icon = KIT_ICONS[tip.iconHint];
               return (
                 <li
                   key={tip.id}
-                  className="flex gap-3 rounded-2xl border border-teal-100 bg-white p-4 shadow-[0_1px_2px_rgba(15,58,52,0.04)] sm:p-5"
+                  className="flex gap-3 rounded-2xl border border-teal-100 bg-white p-4 shadow-[0_1px_2px_rgba(15,58,52,0.04)]"
                 >
                   <span
                     aria-hidden
@@ -576,7 +560,7 @@ export default async function YoFrancaisQuebecIntroPage({
                     <Icon className="size-4" />
                   </span>
                   <div>
-                    <h3 className="text-sm font-semibold text-[#0F6E56] sm:text-base">
+                    <h3 className="text-sm font-semibold text-[#0F6E56]">
                       {t(tip.title, locale)}
                     </h3>
                     <p className="mt-1 text-sm leading-relaxed text-[#0F6E56]/72">
@@ -588,62 +572,45 @@ export default async function YoFrancaisQuebecIntroPage({
             })}
           </ul>
         </section>
-
-        {/* 7) Mini quiz */}
-        <section
-          aria-labelledby="yo-fr-qc-quiz-title"
-          className="mx-auto w-full max-w-5xl px-5 pt-10 sm:px-8 sm:pt-14"
+      ),
+    },
+    {
+      id: "quiz",
+      kind: "quiz",
+      eyebrow: t(DECK_LABEL_QUIZ, locale),
+      title: t(DECK_TITLE_QUIZ, locale),
+      helperText: t(DECK_HELPER_QUIZ, locale),
+      companionState: "confused",
+      content: (
+        <div
+          data-yo-fr-qc-intro-deck-screen="quiz"
+          className="mx-auto w-full max-w-3xl"
         >
-          <span className="ds-label text-[#1D9E75]">
-            {t(SECTION_LABELS.quiz, locale)}
-          </span>
-          <h2
-            id="yo-fr-qc-quiz-title"
-            className="mt-2 text-2xl font-medium tracking-tight text-[#0F6E56] sm:text-[1.75rem]"
-          >
-            {locale === "fr"
-              ? "Vois si les mots ont déjà accroché"
-              : "See if the words have stuck"}
-          </h2>
-          <p className="mt-3 max-w-2xl text-sm leading-relaxed text-[#0F6E56]/78">
-            {locale === "fr"
-              ? "Six questions rapides, pas de jugement. C’est de l’orientation, pas un examen d’immigration."
-              : "Six quick questions, no judgment. This is orientation, not an immigration exam."}
-          </p>
-          <div className="mt-6">
-            <YoQuizPreview questions={quizQuestions} locale={locale} />
-          </div>
-        </section>
-
-        {/* 8) Flashcards: grouped intro + interactive deck */}
+          <YoQuizPreview questions={quizQuestions} locale={locale} />
+        </div>
+      ),
+    },
+    {
+      id: "flashcards",
+      kind: "practice",
+      eyebrow: t(DECK_LABEL_FLASH, locale),
+      title: t(DECK_TITLE_FLASH, locale),
+      companionState: "map",
+      content: (
         <section
-          aria-labelledby="yo-fr-qc-flashcards-title"
-          className="mx-auto w-full max-w-5xl px-5 pt-10 sm:px-8 sm:pt-14"
+          data-yo-fr-qc-intro-deck-screen="flashcards"
+          className="mx-auto w-full max-w-3xl px-5 py-6 sm:px-8"
         >
-          <span className="ds-label text-[#1D9E75]">
-            {t(SECTION_LABELS.flashcards, locale)}
-          </span>
-          <h2
-            id="yo-fr-qc-flashcards-title"
-            className="mt-2 text-2xl font-medium tracking-tight text-[#0F6E56] sm:text-[1.75rem]"
-          >
-            {locale === "fr"
-              ? "Six paquets, vingt mots à mémoriser"
-              : "Six decks, twenty words to memorise"}
-          </h2>
-          <p className="mt-3 max-w-2xl text-sm leading-relaxed text-[#0F6E56]/78">
+          <p className="text-sm leading-relaxed text-[#0F6E56]/78">
             {locale === "fr"
               ? "Survole d’abord les groupes pour avoir une carte mentale, puis active la lecture autoplay du paquet complet juste en dessous."
               : "Browse the groups first for a mental map, then start the full-deck autoplay player just below."}
           </p>
-          <ul
-            role="list"
-            className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
-          >
+          <ul role="list" className="mt-5 grid gap-3 sm:grid-cols-2">
             {flashcardGroups.map((group) => (
               <article
                 key={group.id}
-                className="rounded-2xl border border-teal-100 bg-white p-4 shadow-[0_1px_2px_rgba(15,58,52,0.04)] sm:p-5"
+                className="rounded-2xl border border-teal-100 bg-white p-4 shadow-[0_1px_2px_rgba(15,58,52,0.04)]"
               >
                 <h3 className="text-base font-semibold text-[#0F6E56]">
                   {t(group.title, locale)}
@@ -679,92 +646,84 @@ export default async function YoFrancaisQuebecIntroPage({
             />
           </div>
         </section>
-
-        {/* 9) Teacher CTA */}
+      ),
+    },
+    {
+      id: "teacher",
+      kind: "completion",
+      eyebrow: t(DECK_LABEL_TEACHER, locale),
+      title: t(DECK_TITLE_TEACHER, locale),
+      companionState: "celebrating",
+      content: (
         <section
-          aria-labelledby="yo-fr-qc-teacher-title"
-          className="mx-auto w-full max-w-5xl px-5 pt-10 sm:px-8 sm:pt-14"
+          data-yo-fr-qc-intro-deck-screen="teacher"
+          className="mx-auto w-full max-w-3xl px-5 py-6 sm:px-8"
         >
-          <div className="relative overflow-hidden rounded-3xl border border-[#F4B400]/35 bg-gradient-to-br from-[#FFF4D6] via-white to-[#DDF4F1] p-6 shadow-[0_8px_24px_rgba(15,58,52,0.07)] sm:p-8">
-            <div
-              aria-hidden
-              className="absolute -right-16 -top-16 size-52 rounded-full bg-[#F4B400]/20 blur-3xl"
-            />
-            <div className="relative grid gap-5 lg:grid-cols-[1.4fr_1fr] lg:items-center">
-              <div>
-                <span className="ds-label text-[#8a5a17]">
-                  {t(SECTION_LABELS.teacher, locale)}
-                </span>
-                <h2
-                  id="yo-fr-qc-teacher-title"
-                  className="mt-2 flex items-center gap-2 text-2xl font-medium tracking-tight text-[#1a3a32] sm:text-[1.65rem]"
-                >
-                  <GraduationCap
-                    className="size-5 text-[#0F6E56]"
-                    aria-hidden
-                  />
-                  {t(SECTION_TITLES.teacher, locale)}
-                </h2>
-                <p className="mt-3 max-w-xl text-sm leading-relaxed text-[#1a3a32]/78 sm:text-[0.95rem]">
-                  {t(TEACHER_BODY, locale)}
-                </p>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/70 px-3 py-1 text-xs font-semibold text-[#0F6E56]">
-                    <CheckCircle2 className="size-3.5" aria-hidden />
-                    {t(twelveMonthAccessLabel, locale)}
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/70 px-3 py-1 text-xs font-semibold text-[#0F6E56]">
-                    <CheckCircle2 className="size-3.5" aria-hidden />
-                    {t(moneyBackLabel, locale)}
-                  </span>
-                  <Link
-                    href="/legal/yo-remboursement"
-                    className="text-xs font-medium text-[#0F6E56]/75 underline-offset-2 hover:underline"
-                  >
-                    {t(legalLinkLabel, locale)}
-                  </Link>
-                </div>
-              </div>
-              <div className="flex flex-col gap-3 lg:items-end">
-                <Link
-                  href={teacherBridgeHref}
-                  className="inline-flex items-center justify-center gap-2 rounded-full bg-[#0F6E56] px-5 py-3 text-sm font-bold text-white shadow-[0_14px_34px_rgba(15,110,86,0.22)] transition hover:bg-[#0b5b47]"
-                >
-                  <MessageCircle className="size-4" aria-hidden />
-                  {t(TEACHER_CTA, locale)}
-                </Link>
-              </div>
+          <div className="relative overflow-hidden rounded-3xl border border-[#F4B400]/35 bg-gradient-to-br from-[#FFF4D6] via-white to-[#DDF4F1] p-6 shadow-[0_18px_44px_rgba(15,58,52,0.08)] sm:p-8">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-[#0F6E56] ring-1 ring-[#F4B400]/45">
+              <GraduationCap className="size-3.5 text-[#F4B400]" aria-hidden />
+              {t(DECK_LABEL_TEACHER, locale)}
+            </span>
+            <p className="mt-4 max-w-xl text-sm leading-relaxed text-[#1a3a32]/85 sm:text-base">
+              {t(TEACHER_BODY, locale)}
+            </p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/70 px-3 py-1 text-xs font-semibold text-[#0F6E56]">
+                <CheckCircle2 className="size-3.5" aria-hidden />
+                {t(twelveMonthAccessLabel, locale)}
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/70 px-3 py-1 text-xs font-semibold text-[#0F6E56]">
+                <CheckCircle2 className="size-3.5" aria-hidden />
+                {t(moneyBackLabel, locale)}
+              </span>
+              <Link
+                href="/legal/yo-remboursement"
+                className="text-xs font-medium text-[#0F6E56]/75 underline-offset-2 hover:underline"
+              >
+                {t(legalLinkLabel, locale)}
+              </Link>
+            </div>
+            <div className="mt-5 flex flex-wrap gap-3">
+              <Link
+                href={teacherHref}
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-[#0F6E56] px-5 py-3 text-sm font-bold text-white shadow-[0_14px_34px_rgba(15,110,86,0.22)] transition hover:bg-[#0b5b47]"
+              >
+                <MessageCircle className="size-4" aria-hidden />
+                {t(TEACHER_CTA, locale)}
+              </Link>
+              <Link
+                href={`/yo/langues${langSuffix}`}
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-[#0F6E56]/25 bg-white px-5 py-3 text-sm font-bold text-[#0F6E56] transition hover:bg-[#F4FBF9]"
+              >
+                <BookOpen className="size-4" aria-hidden />
+                {locale === "fr"
+                  ? "Choisir une autre langue"
+                  : "Choose another language"}
+              </Link>
             </div>
           </div>
+          {/*
+           * Upcoming-module bridge — preserved verbatim from the
+           * legacy long-scroll page so learners can still opt into
+           * the workplace module preview. No checkout, no Stripe,
+           * no Course schema.
+           */}
+          <div className="mt-6">
+            <YoUpcomingModuleCard locale={locale} href={upcomingModuleHref} />
+          </div>
         </section>
+      ),
+    },
+  ];
 
-        {/*
-         * 10) Upcoming-module entry-point.
-         *
-         * Placed at the very end of the intro content (the global site
-         * footer / legal disclaimer is rendered by the layout below). The
-         * card itself is a Server-Component "coming soon / preview" pitch
-         * with no checkout, no price, no Stripe, no Course schema, and no
-         * audio coupling — it only links forward to the module shell at
-         * /yo/langues/francais-quebec/module-1 with the matching locale.
-         * The teacher search link is intentionally omitted here because
-         * section 9 above already routes learners to /trouver-un-prof.
-         */}
-        <section
-          aria-labelledby="yo-fr-qc-upcoming-title"
-          className="mx-auto w-full max-w-5xl px-5 pt-10 sm:px-8 sm:pt-14"
-        >
-          <h2 id="yo-fr-qc-upcoming-title" className="sr-only">
-            {locale === "fr"
-              ? "Continuer avec le module à venir"
-              : "Continue with the upcoming module"}
-          </h2>
-          <YoUpcomingModuleCard
-            locale={locale}
-            href={upcomingModuleHref}
-          />
-        </section>
-      </main>
-    </div>
+  return (
+    <YoLessonDeck
+      locale={locale}
+      moduleLabel={t(meta.moduleLabel, locale)}
+      backHref={backHref}
+      toggleHref={toggleHref}
+      screens={screens}
+      enableTapNavigation
+    />
   );
 }

@@ -89,6 +89,23 @@ const allowedYoDisclosureFiles = new Set([
   "components/yo/YoTeacherBridgeTeaser.tsx",
   "components/yo/YoTeacherBridgeConsentCard.tsx",
   "components/yo/YoTeacherBridgeConsentSection.tsx",
+  // All-language-intros app-shell brief. The three intro routes
+  // below (English, Italian, Japanese) and the catalog page were
+  // converted from long-scroll pages into the same viewport-locked
+  // <YoLessonDeck /> experience as the Dominican Republic path, and
+  // the catalog page was upgraded into a premium app-tile layout
+  // with a sticky product-promise rail. None of them change Stripe
+  // IDs, payment math, tax logic, subscription mechanics, payout
+  // flow, or any audio/MP3 generation. Same allow-class as the
+  // matching entry in tests/legal/safeDisclosures.test.ts; the
+  // privacy contract is asserted by
+  // tests/yo/yopratiqoAllLanguageIntrosConsistency.test.ts and
+  // tests/yo/yopratiqoLanguageCatalogAppShell.test.ts.
+  "app/yo/langues/page.tsx",
+  "app/yo/langues/anglais/intro/page.tsx",
+  "app/yo/langues/italien/intro/page.tsx",
+  "app/yo/langues/japonais/intro/page.tsx",
+  "lib/yo/languageIntroDecks.ts",
 ]);
 
 /**

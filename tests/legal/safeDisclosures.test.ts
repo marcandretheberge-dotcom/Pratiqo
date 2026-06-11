@@ -206,6 +206,33 @@ const allowedYoDisclosureFiles = new Set([
   // Defended end-to-end by
   // tests/yo/yopratiqoModuleLessonDeck.test.ts.
   "lib/yo/lessonDeckTypes.ts",
+  // All-language-intros app-shell brief. The three intro routes
+  // below (English, Italian, Japanese) and the catalog page were
+  // converted from long-scroll pages into the same viewport-locked
+  // <YoLessonDeck /> experience as the Dominican Republic path, and
+  // the catalog page was upgraded into a premium app-tile layout
+  // with a sticky product-promise rail. None of them add
+  // persistence, checkout, Stripe wiring, Supabase writes, audio
+  // generation, teacher dashboard sharing, AI summaries, or raw
+  // quiz fields. They only re-arrange existing content into
+  // YoLessonDeckScreen slots and re-render existing tile data via
+  // <YoLanguageBadge /> + <CompanionAvatar />. Defended end-to-end
+  // by tests/yo/yopratiqoAllLanguageIntrosConsistency.test.ts (15
+  // assertions) and tests/yo/yopratiqoLanguageCatalogAppShell.test.ts
+  // (12 assertions), each of which carries the same restricted-
+  // pattern guard this file enforces.
+  "app/yo/langues/page.tsx",
+  "app/yo/langues/anglais/intro/page.tsx",
+  "app/yo/langues/italien/intro/page.tsx",
+  "app/yo/langues/japonais/intro/page.tsx",
+  // Shared metadata for the language-intro deck system. Pure typed
+  // readonly array (route, module label, audio profile, BCP-47
+  // speech tag, teacher search query) consumed by the intro pages
+  // above so each route does not redeclare its own deck chrome
+  // strings. No persistence, no API, no payment library, no
+  // Supabase write, no audio generation, no quiz data. Defended by
+  // tests/yo/yopratiqoAllLanguageIntrosConsistency.test.ts.
+  "lib/yo/languageIntroDecks.ts",
 ]);
 
 /**
