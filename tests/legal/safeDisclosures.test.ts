@@ -154,6 +154,26 @@ const allowedYoDisclosureFiles = new Set([
   // quiz data. Defended end-to-end by
   // tests/yo/yopratiqoAppLikeLanding.test.ts.
   "lib/yo/appLandingFonts.ts",
+  // Country-level Course Home primitives that replace the 4-level
+  // breadcrumb landing on the RD A1 page with an app-like surface
+  // (sticky back-arrow header, rounded hero card, 5-step roadmap,
+  // travel-companion panel, mobile-only sticky CTA, shared shell).
+  // All six are pure display components — five server, the
+  // companion panel client-only for `useAuth`. None call any API,
+  // none persist, none introduce checkout, payment library,
+  // Supabase write, audio generation, teacher-dashboard share,
+  // or quiz data. They only deep-link to routes that already
+  // exist in the repo (the four module-N routes, the in-page
+  // intro anchor, the audited /login route, and /student/progress).
+  // Defended end-to-end by
+  // tests/yo/yopratiqoCountryCourseAppHome.test.ts (15 assertions
+  // including the same restricted-pattern guard this file enforces).
+  "components/yo/YoCourseHomeShell.tsx",
+  "components/yo/YoCourseAppHeader.tsx",
+  "components/yo/YoCourseHero.tsx",
+  "components/yo/YoCoursePath.tsx",
+  "components/yo/YoCourseCompanionPanel.tsx",
+  "components/yo/YoStickyCourseCta.tsx",
 ]);
 
 /**

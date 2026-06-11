@@ -37,11 +37,28 @@ export interface RepubliqueDominicaineContentProps {
   /** Optional breadcrumb trail above the hero. When omitted (legacy
    *  /yo/voyage/republique-dominicaine route), no breadcrumb is shown. */
   breadcrumb?: YoBreadcrumbItem[];
+  /**
+   * Suppress the wide `<YoVoyageHero />` marketing hero. Used by
+   * the new app-like Course Home on the canonical
+   * `/yo/langues/espagnol/pays/republique-dominicaine` route,
+   * which mounts its own focused `<YoCourseHero />` above this
+   * component. The legacy `/yo/voyage/...` route omits this prop
+   * (defaults `false`) so its existing layout is preserved.
+   */
+  omitHero?: boolean;
+  /**
+   * Suppress the legacy `<YoLessonPath />` block. Same rationale
+   * as `omitHero` — the Course Home renders its own
+   * `<YoCoursePath />` higher on the page.
+   */
+  omitLessonPath?: boolean;
 }
 
 export function RepubliqueDominicaineContent({
   locale,
   breadcrumb,
+  omitHero = false,
+  omitLessonPath = false,
 }: RepubliqueDominicaineContentProps) {
   const {
     module,
@@ -80,13 +97,15 @@ export function RepubliqueDominicaineContent({
           <YoBreadcrumb items={breadcrumb} locale={locale} />
         ) : null}
 
-        <YoVoyageHero module={module} locale={locale} />
+        {omitHero ? null : <YoVoyageHero module={module} locale={locale} />}
 
-        <YoLessonPath
-          steps={localizedLessonPath}
-          locale={locale}
-          activeHref="#yo-progress-title"
-        />
+        {omitLessonPath ? null : (
+          <YoLessonPath
+            steps={localizedLessonPath}
+            locale={locale}
+            activeHref="#yo-progress-title"
+          />
+        )}
 
         <YoIntroExperience
           introCards={introCards}
