@@ -61,12 +61,13 @@ import { CompanionAvatar } from "@/components/companion/CompanionAvatar";
 import { YoAppShell as _YoAppShell, YoAppShellScroller as _YoAppShellScroller } from "@/components/yo/YoAppShell";
 import { YoAppHeader } from "@/components/yo/YoAppHeader";
 import { YoDesktopAppWorkspace as _YoDesktopAppWorkspace } from "@/components/yo/YoDesktopAppWorkspace";
-import { YoAdaptiveShell } from "@/components/yo/YoAdaptiveShell";
+import { YoAdaptiveStepShell } from "@/components/yo/YoAdaptiveStepShell";
 
 // Back-compat references — the static `tests/yo/yopratiqoLanguageCatalogAppShell.test.ts`
 // suite still grep-matches these component names on this route. The
-// new `<YoAdaptiveShell>` composes both primitives under the hood,
-// so the catalog stays a single source of truth without falling out
+// new `<YoAdaptiveStepShell>` composes both primitives under the
+// hood (via YoMobileAppStepShell + YoDesktopLearningWorkspace), so
+// the catalog stays a single source of truth without falling out
 // of contract for the legacy tests.
 void _YoAppShell;
 void _YoAppShellScroller;
@@ -576,7 +577,7 @@ function renderMobilePromiseScreen(locale: YoLocale): React.JSX.Element {
         <p className="mt-1.5 text-xs leading-relaxed text-[#0F6E56]/85">
           {t(PROMISE_BODY, locale)}
         </p>
-        <ul role="list" className="mt-2 grid grid-cols-2 gap-1.5">
+        <ul role="list" className="mt-2 grid grid-cols-1 gap-1.5 sm:grid-cols-2">
           {points.map((point) => (
             <li
               key={point}
@@ -590,10 +591,10 @@ function renderMobilePromiseScreen(locale: YoLocale): React.JSX.Element {
       </section>
       <p className="mt-auto text-center text-[10px] font-semibold text-[#0F6E56]/55">
         {locale === "en"
-          ? "Swipe → to pick a language"
+          ? "Tap Next to pick a language"
           : locale === "es"
-            ? "Desliza → para elegir un idioma"
-            : "Glisse → pour choisir une langue"}
+            ? "Toca Siguiente para elegir un idioma"
+            : "Touche Suivant pour choisir une langue"}
       </p>
     </div>
   );
@@ -718,19 +719,22 @@ export default async function YoLanguesPage({ searchParams }: PageProps) {
       // never actually scrolls.
       className="min-h-[100dvh] bg-[#FAFCFB] text-[#0F6E56]"
     >
-      <YoAdaptiveShell
+      <YoAdaptiveStepShell
         surfaceId="langues"
         mobile={{
           header: mobileHeader,
+          locale,
           background:
             "bg-[linear-gradient(180deg,#FAFCFB_0%,#F4EFE6_55%,#FBF7EE_100%)]",
-          pagerAriaLabel:
+          stepsAriaLabel:
             locale === "en"
               ? "YoPratiqo languages catalog"
               : locale === "es"
                 ? "Catálogo de idiomas YoPratiqo"
                 : "Catalogue des langues YoPratiqo",
-          screens: [
+          rootBackHref: `/yo${langSuffix}`,
+          rootBackLabel: t(BACK_TO_YOPRATIQO, locale),
+          steps: [
             {
               id: "welcome",
               label:
@@ -786,6 +790,10 @@ export default async function YoLanguesPage({ searchParams }: PageProps) {
           leftRail: renderLeftRail(locale),
           center: renderDesktopTileGrid(locale, langSuffix),
           rightRail: renderRightRail(locale),
+          // Catalog tile grid uses `xl:grid-cols-3`; capping the
+          // centre at `max-w-2xl` would squeeze the third column
+          // off-screen, so the catalog opts into a wider cap.
+          centerMaxWidth: "4xl",
         }}
       />
     </div>

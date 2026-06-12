@@ -71,7 +71,16 @@ export function YoAdaptiveShell({
       data-testid="yo-adaptive-shell"
       data-yo-adaptive-shell="true"
       data-yo-adaptive-shell-surface={surfaceId}
-      className={cn("h-[100dvh] min-h-[100vh]", className)}
+      // Use `100dvh` only — combining `min-h-[100vh]` resolves to
+      // `100vh` on iOS Safari (where vh is taller than dvh while the
+      // bottom toolbar is visible), which pushed the pinned bottom CTA
+      // under the toolbar. Adding `overflow-x-hidden` clips any leak
+      // from a sticky/fixed child that might escape its `overflow-hidden`
+      // ancestor (a known Safari stacking-context bug).
+      className={cn(
+        "h-[100dvh] overflow-x-hidden",
+        className,
+      )}
     >
       <YoMobileAppShell
         surfaceId={surfaceId}

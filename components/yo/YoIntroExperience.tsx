@@ -264,7 +264,7 @@ function IntroProgressStrip({
             </p>
           </div>
 
-          <ul role="list" className="grid min-w-0 grid-cols-2 gap-3 sm:gap-4">
+          <ul role="list" className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
             {progress.stats.map((stat) => (
               <li
                 key={stat.id}

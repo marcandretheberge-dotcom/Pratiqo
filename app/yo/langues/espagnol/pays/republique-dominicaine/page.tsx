@@ -62,7 +62,7 @@ import { YoCourseHero } from "@/components/yo/YoCourseHero";
 import { YoCoursePath, type YoCoursePathStep } from "@/components/yo/YoCoursePath";
 import { YoAppShell as _YoAppShell, YoAppShellScroller as _YoAppShellScroller } from "@/components/yo/YoAppShell";
 import { YoDesktopAppWorkspace as _YoDesktopAppWorkspace } from "@/components/yo/YoDesktopAppWorkspace";
-import { YoAdaptiveShell } from "@/components/yo/YoAdaptiveShell";
+import { YoAdaptiveStepShell } from "@/components/yo/YoAdaptiveStepShell";
 import { YoAppBottomBar } from "@/components/yo/YoAppBottomBar";
 
 void _YoAppShell;
@@ -346,14 +346,20 @@ export default async function YoEspagnolRepubliqueDominicainePage({
       ? "Intro gratis · ~10 min · audio + flashcards"
       : "Intro gratuite · ~10 min · audio + flashcards";
 
+  // Each mobile screen is `flex flex-col gap-4` (no `flex-1` on the
+  // inner blocks). Previously `flex h-full w-full flex-col gap-4` plus
+  // `flex-1` on a short hero pushed the companion block to the screen
+  // bottom and left ~400 px of empty whitespace in between, which read
+  // as "text cramped on half the card." Without `flex-1` each block
+  // sits its natural height and the screen wraps tightly.
   const mobileHeroScreen = (
-    <div className="flex h-full w-full flex-col gap-4 px-4 py-4">
-      <div className="flex-1">{heroBlock}</div>
-      <div className="shrink-0">{companionBlock}</div>
+    <div className="flex w-full flex-col gap-4 px-4 py-4">
+      {heroBlock}
+      {companionBlock}
     </div>
   );
   const mobilePathScreen = (
-    <div className="flex h-full w-full flex-col gap-4 px-4 py-4">
+    <div className="flex w-full flex-col gap-4 px-4 py-4">
       <p className="text-[11px] font-black uppercase tracking-[0.16em] text-[#0F6E56]/70">
         {locale === "en"
           ? "Your path · Intro → Modules 2-5"
@@ -361,11 +367,11 @@ export default async function YoEspagnolRepubliqueDominicainePage({
             ? "Tu ruta · Intro → Módulos 2-5"
             : "Ton parcours · Intro → Modules 2-5"}
       </p>
-      <div className="flex-1">{pathBlock}</div>
+      {pathBlock}
     </div>
   );
   const mobileDetailsScreen = (
-    <div className="flex h-full w-full flex-col gap-4 px-4 py-4">
+    <div className="flex w-full flex-col gap-4 px-4 py-4">
       <p className="text-[11px] font-black uppercase tracking-[0.16em] text-[#0F6E56]/70">
         {locale === "en"
           ? "Want more details?"
@@ -394,7 +400,7 @@ export default async function YoEspagnolRepubliqueDominicainePage({
   );
 
   return (
-    <YoAdaptiveShell
+    <YoAdaptiveStepShell
       surfaceId="rd-course-home"
       mobile={{
         header: (
@@ -404,14 +410,20 @@ export default async function YoEspagnolRepubliqueDominicainePage({
             toggleHref={toggleHref}
           />
         ),
+        locale,
         background: "bg-[#F4EFE6]",
-        pagerAriaLabel:
+        stepsAriaLabel:
           locale === "en"
-            ? "Dominican Republic course home screens"
+            ? "Dominican Republic course home steps"
             : locale === "es"
-              ? "Pantallas del curso de República Dominicana"
-              : "Écrans de la République dominicaine",
-        screens: [
+              ? "Pasos del curso de República Dominicana"
+              : "Étapes du cours de République dominicaine",
+        rootBackHref: backHref,
+        // The "Done" CTA on the last step IS the primary affordance
+        // out of the Course Home: start the free intro deck.
+        lastStepNextHref: introHref,
+        lastStepNextLabel: startLabel,
+        steps: [
           {
             id: "hero",
             label:
@@ -443,6 +455,10 @@ export default async function YoEspagnolRepubliqueDominicainePage({
             content: mobileDetailsScreen,
           },
         ],
+        // Back-compat: the static mobile-no-scroll contract still
+        // asserts a `<YoAppBottomBar>` Intro CTA on the Course Home.
+        // Phase 4 will rewrite that test against the new
+        // `lastStepNextHref` contract and let us drop this slot.
         bottom: (
           <YoAppBottomBar
             surfaceId="rd-course-home"

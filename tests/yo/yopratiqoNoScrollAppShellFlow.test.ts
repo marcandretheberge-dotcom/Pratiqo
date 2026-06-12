@@ -169,8 +169,10 @@ test("/yo/langues mounts YoAppShell so the catalog never body-scrolls", () => {
     "catalog must keep a YoAppShell import (composed via YoAdaptiveShell)",
   );
   assert.ok(
-    /<YoAppShell\b/.test(catalogCode) || /<YoAdaptiveShell\b/.test(catalogCode),
-    "catalog must mount <YoAppShell /> or <YoAdaptiveShell /> (which composes YoAppShell)",
+    /<YoAppShell\b/.test(catalogCode) ||
+      /<YoAdaptiveShell\b/.test(catalogCode) ||
+      /<YoAdaptiveStepShell\b/.test(catalogCode),
+    "catalog must mount <YoAppShell />, <YoAdaptiveShell />, or <YoAdaptiveStepShell /> (which all compose YoAppShell)",
   );
   // The shell is the root of the app-mode surface — the only outer
   // `min-h-[100dvh]` left is the SEO-safe wrapper which is kept for
@@ -210,8 +212,9 @@ test("/yo/langues header lives in the shell shrink-0 slot (no body-overlap)", ()
   // YoAppShell). We accept either pattern.
   assert.ok(
     /<YoAppShell[\s\S]*?header=\{/.test(catalogCode) ||
-      /<YoAdaptiveShell[\s\S]*?header:/.test(catalogCode),
-    "catalog must pass its header through the YoAppShell `header` prop or the YoAdaptiveShell mobile.header / desktop.header slots",
+      /<YoAdaptiveShell[\s\S]*?header:/.test(catalogCode) ||
+      /<YoAdaptiveStepShell[\s\S]*?header:/.test(catalogCode),
+    "catalog must pass its header through the YoAppShell `header` prop or the adaptive shell mobile.header / desktop.header slots",
   );
 });
 
@@ -224,8 +227,9 @@ test("/yo/langues/espagnol is a no-scroll Spanish hub with intro + DR primary CT
   );
   assert.ok(
     /<YoAppShell\b/.test(spanishHubCode) ||
-      /<YoAdaptiveShell\b/.test(spanishHubCode),
-    "Spanish hub must mount <YoAppShell /> or <YoAdaptiveShell /> (composes YoAppShell)",
+      /<YoAdaptiveShell\b/.test(spanishHubCode) ||
+      /<YoAdaptiveStepShell\b/.test(spanishHubCode),
+    "Spanish hub must mount <YoAppShell />, <YoAdaptiveShell />, or <YoAdaptiveStepShell /> (which all compose YoAppShell)",
   );
   assert.match(
     spanishHubSrc,
@@ -292,8 +296,9 @@ test("Dominican Republic Course Home is no-scroll and exposes a discovery link t
   );
   assert.ok(
     /<YoAppShell\b/.test(courseHomeCode) ||
-      /<YoAdaptiveShell\b/.test(courseHomeCode),
-    "Course Home must mount <YoAppShell /> or <YoAdaptiveShell /> (composes YoAppShell)",
+      /<YoAdaptiveShell\b/.test(courseHomeCode) ||
+      /<YoAdaptiveStepShell\b/.test(courseHomeCode),
+    "Course Home must mount <YoAppShell />, <YoAdaptiveShell />, or <YoAdaptiveStepShell /> (which all compose YoAppShell)",
   );
   // The legacy long-form `<RepubliqueDominicaineContent />` is no
   // longer mounted inline on the primary Course Home — it lives at
@@ -375,8 +380,9 @@ test("YoDesktopAppWorkspace exists and is applied on the catalog + spanish hub +
     assert.ok(
       /<YoDesktopAppWorkspace\b/.test(source) ||
         /<YoDesktopLearningWorkspace\b/.test(source) ||
-        /<YoAdaptiveShell\b/.test(source),
-      `${label} must apply the desktop workspace pattern (YoDesktopAppWorkspace or YoDesktopLearningWorkspace, composed by YoAdaptiveShell)`,
+        /<YoAdaptiveShell\b/.test(source) ||
+        /<YoAdaptiveStepShell\b/.test(source),
+      `${label} must apply the desktop workspace pattern (YoDesktopAppWorkspace or YoDesktopLearningWorkspace, composed by an adaptive shell)`,
     );
   }
 });

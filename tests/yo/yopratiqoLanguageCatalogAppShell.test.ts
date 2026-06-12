@@ -134,8 +134,10 @@ test("catalog mounts YoAppShell so the page never body-scrolls", () => {
     "catalog must keep the YoAppShell import (composed via YoAdaptiveShell)",
   );
   assert.ok(
-    /<YoAppShell\b/.test(catalogCode) || /<YoAdaptiveShell\b/.test(catalogCode),
-    "catalog must render <YoAppShell /> or <YoAdaptiveShell /> (which composes YoAppShell)",
+    /<YoAppShell\b/.test(catalogCode) ||
+      /<YoAdaptiveShell\b/.test(catalogCode) ||
+      /<YoAdaptiveStepShell\b/.test(catalogCode),
+    "catalog must render <YoAppShell />, <YoAdaptiveShell />, or <YoAdaptiveStepShell /> (which all compose YoAppShell)",
   );
   // The shell itself is the contract owner — assert the contract is
   // present in the shared primitive too.
@@ -180,8 +182,9 @@ test("catalog uses a desktop workspace on lg+ (real desktop app workspace, not s
   assert.ok(
     /<YoDesktopAppWorkspace\b/.test(catalogCode) ||
       /<YoDesktopLearningWorkspace\b/.test(catalogCode) ||
-      /<YoAdaptiveShell\b/.test(catalogCode),
-    "catalog must mount <YoDesktopAppWorkspace />, <YoDesktopLearningWorkspace />, or <YoAdaptiveShell /> (which composes the desktop workspace) on lg+",
+      /<YoAdaptiveShell\b/.test(catalogCode) ||
+      /<YoAdaptiveStepShell\b/.test(catalogCode),
+    "catalog must mount <YoDesktopAppWorkspace />, <YoDesktopLearningWorkspace />, <YoAdaptiveShell />, or <YoAdaptiveStepShell /> (which all compose the desktop workspace) on lg+",
   );
 });
 

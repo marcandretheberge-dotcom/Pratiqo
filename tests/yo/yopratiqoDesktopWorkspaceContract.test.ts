@@ -43,8 +43,22 @@ import YoSpanishLandingPage from "@/app/yo/langues/espagnol/page";
 import YoEspagnolRepubliqueDominicainePage from "@/app/yo/langues/espagnol/pays/republique-dominicaine/page";
 
 import { YoAdaptiveShell } from "@/components/yo/YoAdaptiveShell";
+import { YoAdaptiveStepShell } from "@/components/yo/YoAdaptiveStepShell";
 import { YoDesktopLearningWorkspace } from "@/components/yo/YoDesktopLearningWorkspace";
 import { YoAppHeader } from "@/components/yo/YoAppHeader";
+
+/**
+ * Routes are migrating from the legacy `<YoAdaptiveShell>` to the
+ * new `<YoAdaptiveStepShell>` (button-driven step navigator).
+ * Accept either shell when locating the desktop sub-tree.
+ */
+function findAdaptiveShellElement(
+  tree: ReactNode,
+): ReactElement | undefined {
+  return (
+    findByType(tree, YoAdaptiveStepShell) ?? findByType(tree, YoAdaptiveShell)
+  );
+}
 
 const REPO_ROOT = process.cwd();
 function read(rel: string): string {
@@ -97,7 +111,7 @@ async function renderPage<T>(
 }
 
 // ─── 1. All three audited surfaces declare a desktop sub-tree ────
-test("catalog + Spanish hub + Course Home each declare a desktop sub-tree on <YoAdaptiveShell>", async () => {
+test("catalog + Spanish hub + Course Home each declare a desktop sub-tree on the adaptive shell", async () => {
   const surfaces: Array<{
     label: string;
     tree: ReactElement;
@@ -110,7 +124,7 @@ test("catalog + Spanish hub + Course Home each declare a desktop sub-tree on <Yo
     },
   ];
   for (const { label, tree } of surfaces) {
-    const adaptive = findByType(tree, YoAdaptiveShell);
+    const adaptive = findAdaptiveShellElement(tree);
     assert.ok(adaptive, `${label} must mount <YoAdaptiveShell>`);
     const desktop = (adaptive!.props as { desktop?: unknown }).desktop;
     assert.ok(
@@ -130,7 +144,7 @@ test("each desktop sub-tree mounts <YoAppHeader appearance=\"desktop\">", async 
       (await renderPage(YoEspagnolRepubliqueDominicainePage)) as ReactElement,
     ],
   ] as const) {
-    const adaptive = findByType(tree, YoAdaptiveShell);
+    const adaptive = findAdaptiveShellElement(tree);
     const desktopProps = (adaptive!.props as { desktop?: { header?: ReactNode } })
       .desktop;
     const header = desktopProps?.header
@@ -169,7 +183,7 @@ test("desktop sub-trees declare leftRail + center + rightRail (full workspace pa
       (await renderPage(YoEspagnolRepubliqueDominicainePage)) as ReactElement,
     ],
   ] as const) {
-    const adaptive = findByType(tree, YoAdaptiveShell);
+    const adaptive = findAdaptiveShellElement(tree);
     const desktop = (adaptive!.props as {
       desktop: { center?: unknown; leftRail?: unknown; rightRail?: unknown };
     }).desktop;
@@ -216,7 +230,7 @@ test("mobile and desktop headers on each audited surface are different element i
       (await renderPage(YoEspagnolRepubliqueDominicainePage)) as ReactElement,
     ],
   ] as const) {
-    const adaptive = findByType(tree, YoAdaptiveShell);
+    const adaptive = findAdaptiveShellElement(tree);
     const { mobile, desktop } = adaptive!.props as {
       mobile: { header?: ReactNode };
       desktop: { header?: ReactNode };
@@ -268,7 +282,81 @@ test("YoDesktopLearningWorkspace composes <YoAppShell> + grid + hidden lg:block"
   void YoDesktopLearningWorkspace;
 });
 
-// ─── 8. Paid checkout disabled + no restricted system ────────────
+// ─── 8. CSS grid-template-columns comma regression guard ─────────
+test("no audited file declares lg:grid-cols-[…] with a top-level comma (browser-killing track list)", () => {
+  // The smoking-gun bug Phase 0 fixed: writing
+  // `lg:grid-cols-[280px,minmax(0,1fr),300px]` produces an
+  // invalid CSS `grid-template-columns` declaration (commas are
+  // only allowed inside `minmax(…)` / `repeat(…)` / `var(…)`).
+  // Every browser silently drops the whole rule and the workspace
+  // collapses to `grid-cols-1`. This guard parses every
+  // `grid-cols-[…]` arbitrary value across the YoPratiqo source
+  // tree and refuses any track list with a top-level comma.
+  function extractGridColsArbitrary(source: string): string[] {
+    const out: string[] = [];
+    const needle = "grid-cols-[";
+    let i = 0;
+    while (i < source.length) {
+      const idx = source.indexOf(needle, i);
+      if (idx === -1) break;
+      const start = idx + needle.length;
+      let depth = 1;
+      let j = start;
+      while (j < source.length && depth > 0) {
+        const ch = source[j];
+        if (ch === "[") depth++;
+        else if (ch === "]") depth--;
+        j++;
+      }
+      if (depth === 0) {
+        out.push(source.slice(start, j - 1));
+      }
+      i = j;
+    }
+    return out;
+  }
+  function hasTopLevelComma(trackList: string): boolean {
+    let depth = 0;
+    for (let k = 0; k < trackList.length; k++) {
+      const ch = trackList[k];
+      if (ch === "(") depth++;
+      else if (ch === ")") depth--;
+      else if (ch === "," && depth === 0) return true;
+    }
+    return false;
+  }
+  // Static scan: every Tailwind `grid-cols-[…]` arbitrary value
+  // shipped by the YoPratiqo surface (components + routes) must
+  // be a valid CSS track list.
+  const sourcesToScan: string[] = [
+    "components/yo/YoDesktopAppWorkspace.tsx",
+    "components/yo/YoDesktopLearningWorkspace.tsx",
+    "components/yo/YoAppShell.tsx",
+    "components/yo/YoAdaptiveStepShell.tsx",
+    "components/yo/YoMobileAppStepShell.tsx",
+    "components/yo/YoStepNavigator.tsx",
+    "components/yo/YoLanguageLandingPage.tsx",
+    "components/yo/YoStudentHubContent.tsx",
+    "app/yo/langues/page.tsx",
+    "app/yo/langues/espagnol/page.tsx",
+    "app/yo/langues/espagnol/pays/republique-dominicaine/page.tsx",
+    "app/yo/langues/espagnol/pays/republique-dominicaine/decouvrir/page.tsx",
+    "app/(app)/student/yopratiqo/page.tsx",
+    "app/(app)/student/progress/page.tsx",
+  ];
+  for (const rel of sourcesToScan) {
+    const src = read(rel);
+    const tracks = extractGridColsArbitrary(src);
+    for (const t of tracks) {
+      assert.ok(
+        !hasTopLevelComma(t),
+        `${rel} declares grid-cols-[${t}] with a top-level comma (CSS grid-template-columns is space-separated; commas only inside minmax/repeat/var)`,
+      );
+    }
+  }
+});
+
+// ─── 9. Paid checkout disabled + no restricted system ────────────
 test("paid YoPratiqo checkout remains disabled and no restricted system is touched on the desktop primitives", () => {
   const configSrc = read("lib/yo/yopratiqoProductConfig.ts");
   assert.match(

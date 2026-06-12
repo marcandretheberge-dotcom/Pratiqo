@@ -69,24 +69,29 @@ const hubCode = stripJsComments(hubSrc);
 const courseHomeSrc = read(COURSE_HOME_PATH);
 
 // ─── 1. Adaptive shell mounted ───────────────────────────────────
-test("Spanish hub mounts YoAdaptiveShell (mobile pager + desktop workspace)", () => {
-  assert.match(
-    hubSrc,
-    /from\s+["']@\/components\/yo\/YoAdaptiveShell["']/,
-    "Spanish hub must import YoAdaptiveShell",
+test("Spanish hub mounts an adaptive shell (mobile step navigator + desktop workspace)", () => {
+  // The hub may import either the legacy `<YoAdaptiveShell>`
+  // (swipe-only pager) or the new `<YoAdaptiveStepShell>`
+  // (explicit Back/Next chrome). Both compose
+  // `<YoMobileAppStepShell>` (or `<YoMobileAppShell>`) + the
+  // desktop workspace, so the body never scrolls.
+  assert.ok(
+    /from\s+["']@\/components\/yo\/YoAdaptiveShell["']/.test(hubSrc) ||
+      /from\s+["']@\/components\/yo\/YoAdaptiveStepShell["']/.test(hubSrc),
+    "Spanish hub must import YoAdaptiveShell or YoAdaptiveStepShell",
   );
-  assert.match(
-    hubCode,
-    /<YoAdaptiveShell\b/,
-    "Spanish hub must mount <YoAdaptiveShell />",
+  assert.ok(
+    /<YoAdaptiveShell\b/.test(hubCode) ||
+      /<YoAdaptiveStepShell\b/.test(hubCode),
+    "Spanish hub must mount <YoAdaptiveShell /> or <YoAdaptiveStepShell />",
   );
-  // YoAdaptiveShell composes <YoMobileAppShell> + <YoDesktopLearningWorkspace>,
-  // both of which compose <YoAppShell> (h-[100dvh] + overflow-hidden).
-  // Verify the shell primitive still ships the no-scroll contract.
+  // Both adaptive shells compose <YoAppShell> (h-[100dvh] +
+  // overflow-hidden) underneath. Verify the shell primitive
+  // still ships the no-scroll contract.
   const shellSrc = read("components/yo/YoAppShell.tsx");
   assert.ok(
     /h-\[100dvh\]/.test(shellSrc) && /overflow-hidden/.test(shellSrc),
-    "YoAppShell (composed by YoAdaptiveShell) must lock the viewport",
+    "YoAppShell (composed by the adaptive shell) must lock the viewport",
   );
 });
 
@@ -225,24 +230,25 @@ test("Spanish hub names Yoppo on its companion card", () => {
   );
 });
 
-// ─── 8. Desktop workspace pattern (via YoAdaptiveShell) ──────────
-test("Spanish hub uses the desktop workspace pattern via YoAdaptiveShell", () => {
+// ─── 8. Desktop workspace pattern (via adaptive shell) ───────────
+test("Spanish hub uses the desktop workspace pattern via the adaptive shell", () => {
   // The desktop sub-tree owns leftRail/center/rightRail props on
-  // the YoAdaptiveShell mount.
+  // the adaptive shell mount (legacy YoAdaptiveShell or new
+  // YoAdaptiveStepShell).
   assert.match(
     hubCode,
     /desktop=\{[\s\S]*leftRail:/,
-    "Spanish hub must declare a desktop leftRail on YoAdaptiveShell",
+    "Spanish hub must declare a desktop leftRail on the adaptive shell",
   );
   assert.match(
     hubCode,
     /desktop=\{[\s\S]*center:/,
-    "Spanish hub must declare a desktop center on YoAdaptiveShell",
+    "Spanish hub must declare a desktop center on the adaptive shell",
   );
   assert.match(
     hubCode,
     /desktop=\{[\s\S]*rightRail:/,
-    "Spanish hub must declare a desktop rightRail on YoAdaptiveShell",
+    "Spanish hub must declare a desktop rightRail on the adaptive shell",
   );
 });
 
@@ -269,22 +275,27 @@ test("Dominican Republic Course Home wires its back link to the Spanish hub", ()
   );
 });
 
-// ─── 11. Mobile pager screens + bottom-bar ───────────────────────
-test("Spanish hub mobile mounts a paged YoScreenPager with 2 screens + a bottom bar", () => {
-  // The mobile sub-tree must declare a `screens` list of length 2.
-  // We assert by counting the audited screen ids the hub emits.
+// ─── 11. Mobile pager / step navigator screens + primary CTA ─────
+test("Spanish hub mobile mounts a paged surface with 2 screens + an obvious primary CTA", () => {
+  // The mobile sub-tree must declare a screens/steps list of
+  // length 2. We assert by counting the audited screen ids the
+  // hub emits (the ids are stable across the legacy pager and
+  // the new step navigator).
   for (const id of ["spanish-primary", "spanish-secondary"]) {
     assert.match(
       hubCode,
       new RegExp(`id:\\s*["']${id}["']`),
-      `Spanish hub mobile pager must include the "${id}" screen`,
+      `Spanish hub mobile sub-tree must include the "${id}" screen`,
     );
   }
-  // Bottom bar mounted only in the mobile sub-tree of YoAdaptiveShell.
-  assert.match(
-    hubCode,
-    /<YoAppBottomBar\b/,
-    "Spanish hub must mount <YoAppBottomBar /> for the obvious mobile primary CTA",
+  // The primary CTA out of the hub points at the DR Course Home.
+  // It may be surfaced via the legacy `<YoAppBottomBar>` in the
+  // mobile bottom slot, OR the new `lastStepNextHref` on the
+  // step shell. Either is acceptable.
+  assert.ok(
+    /<YoAppBottomBar\b/.test(hubCode) ||
+      /lastStepNextHref:/.test(hubCode),
+    "Spanish hub must surface an obvious mobile primary CTA via <YoAppBottomBar /> or lastStepNextHref",
   );
 });
 

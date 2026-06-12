@@ -37,7 +37,10 @@
 
 import { cn } from "@/lib/utils";
 import { YoAppShell } from "@/components/yo/YoAppShell";
-import { YoDesktopAppWorkspace } from "@/components/yo/YoDesktopAppWorkspace";
+import {
+  YoDesktopAppWorkspace,
+  type YoWorkspaceCenterMaxWidth,
+} from "@/components/yo/YoDesktopAppWorkspace";
 
 export type YoDesktopLearningWorkspaceProps = {
   /** Desktop header. Typically a `<YoAppHeader>` with `appearance="desktop"`. */
@@ -57,6 +60,12 @@ export type YoDesktopLearningWorkspaceProps = {
   background?: string;
   /** Stable per-surface slug for tests + analytics. */
   surfaceId: string;
+  /**
+   * Maximum width for the centre pane content. Defaults to `"2xl"`
+   * (Phase 3 polish target). Grid-heavy surfaces should pass
+   * `"4xl"` or `"none"`.
+   */
+  centerMaxWidth?: YoWorkspaceCenterMaxWidth;
   /** Extra wrapper class — never replaces the workspace contract. */
   className?: string;
 };
@@ -69,6 +78,7 @@ export function YoDesktopLearningWorkspace({
   bottom,
   background,
   surfaceId,
+  centerMaxWidth,
   className,
 }: YoDesktopLearningWorkspaceProps): React.JSX.Element {
   return (
@@ -93,6 +103,7 @@ export function YoDesktopLearningWorkspace({
           leftRail={leftRail}
           center={center}
           rightRail={rightRail}
+          centerMaxWidth={centerMaxWidth}
         />
       </YoAppShell>
     </div>

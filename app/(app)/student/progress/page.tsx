@@ -10,6 +10,7 @@ import { useAuth } from "@/components/AuthProvider";
 import { CreditsWidget, type CreditsTeacherOption } from "@/components/CreditsWidget";
 import { CompanionCard } from "@/components/companion/CompanionCard";
 import { YoStudentCompanionCard } from "@/components/yo/YoStudentCompanionCard";
+import { YoStepNavigator } from "@/components/yo/YoStepNavigator";
 import { cn } from "@/lib/utils";
 import { COMPLETED_LESSON_FOR_COMPANION_FILTER } from "@/lib/companion/rewards";
 
@@ -157,133 +158,224 @@ export default function StudentProgressPage() {
     };
   }, [user]);
 
+  // ─── Section blocks ─────────────────────────────────────────
+  // Each block is rendered exactly once and reused across the
+  // mobile step list (button-driven step navigator) and the
+  // desktop single-column layout, so a learner switching
+  // viewports sees the same content. Auth state + Supabase data
+  // flow are unchanged — this is purely a layout reshape.
+
+  const creditsBlock =
+    !loading && user ? (
+      <CreditsWidget
+        layout="progress"
+        teachers={creditTeachers}
+        lessonCount={completedLessonCount}
+        companionType={companionType}
+      />
+    ) : (
+      <div className="h-40 animate-pulse rounded-2xl bg-white/60" />
+    );
+
+  /*
+   * YoPratiqo bridge section.
+   *
+   * Promoted ABOVE the legacy Pratiqo companion so a learner who
+   * came in through the YoPratiqo product immediately sees their
+   * companion + has a one-click path back to the dedicated
+   * YoPratiqo hub (`/student/yopratiqo`). The legacy Pratiqo
+   * companion card stays mounted right below — both are visible
+   * on the same page so the cross-product story
+   * (Pratiqo progress ↔ YoPratiqo path) is unambiguous.
+   *
+   * No new persistence, no AI surface, no raw quiz fields. This
+   * is purely a visual + navigational reshape.
+   */
+  const yoBridgeBlock = (
+    <section
+      data-testid="yo-progress-bridge-section"
+      data-yo-progress-bridge="section"
+      className="space-y-3"
+    >
+      <div className="flex flex-wrap items-end justify-between gap-2">
+        <h2
+          data-testid="yo-progress-bridge-heading"
+          className="text-[11px] font-bold uppercase tracking-widest text-[#0F6E56]"
+        >
+          {YOPRATIQO_SECTION_COPY[yoLocale].heading}
+        </h2>
+        <Link
+          data-testid="yo-progress-bridge-cta"
+          href="/student/yopratiqo"
+          className="inline-flex items-center gap-1.5 rounded-full border border-[#0F6E56]/20 bg-white px-3 py-1.5 text-xs font-bold text-[#0F6E56] transition hover:bg-[#FFF4D6]"
+        >
+          {YOPRATIQO_SECTION_COPY[yoLocale].cta}
+          <ArrowRight className="size-3.5" aria-hidden />
+        </Link>
+      </div>
+      <p className="text-xs leading-relaxed text-[#0F6E56]/75">
+        {YOPRATIQO_SECTION_COPY[yoLocale].body}
+      </p>
+      <YoStudentCompanionCard locale={yoLocale} />
+    </section>
+  );
+
+  // Legacy Pratiqo companion. Untouched.
+  const legacyCompanionBlock = (
+    <section className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm sm:p-5">
+      <h2 className="text-sm font-semibold text-slate-900">
+        {t("progressionYourCompanion")}
+      </h2>
+      <p className="mt-0.5 text-xs text-slate-600">{t("companionSubtitle")}</p>
+      <CompanionCard
+        companionType={companionType}
+        companionChosen={companionChosen}
+        lessonCount={completedLessonCount}
+        loading={loading}
+        variant="progress"
+      />
+    </section>
+  );
+
+  const homeworkBlock = (
+    <section className="space-y-3">
+      <div className="flex flex-wrap items-end justify-between gap-2">
+        <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-600">
+          {t("progressHomeworkActiveTitle")}
+        </h2>
+        {completedHomeworkCount > 0 ? (
+          <p className="text-[11px] font-semibold text-slate-500">
+            {t("progressHomeworkCompletedCount").replace(
+              "{count}",
+              String(completedHomeworkCount),
+            )}
+          </p>
+        ) : null}
+      </div>
+      {loading ? (
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-6 text-sm text-slate-600">
+          …
+        </div>
+      ) : homework.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-slate-200/90 bg-white p-6 text-sm text-slate-700 shadow-sm">
+          {t("progressNoHomework")}
+        </div>
+      ) : (
+        <ul className="space-y-2">
+          {homework.map((h) => (
+            <HomeworkRow
+              key={h.id}
+              item={h}
+              onToggle={async (next) => {
+                const previousStatus = h.status;
+                const nextStatus = next ? "submitted" : "pending";
+                setHomework((prev) =>
+                  prev.map((x) =>
+                    x.id === h.id ? { ...x, status: nextStatus } : x,
+                  ),
+                );
+                const res = await fetch("/api/homework", {
+                  method: "PATCH",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ id: h.id, completed: next }),
+                });
+                if (!res.ok) {
+                  setHomework((prev) =>
+                    prev.map((x) =>
+                      x.id === h.id ? { ...x, status: previousStatus } : x,
+                    ),
+                  );
+                }
+              }}
+            />
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+
+  const watchPointsBlock = (
+    <section className="space-y-3">
+      <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-600">
+        {t("watchPoints")}
+      </h2>
+      {watchPoints.length > 0 ? (
+        <ul className="space-y-2">
+          {watchPoints.map((w, i) => (
+            <li
+              key={`${w}-${i}`}
+              className="rounded-2xl border border-slate-100 bg-white px-4 py-3 text-sm font-medium text-slate-800 shadow-sm"
+            >
+              {w}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="rounded-2xl border border-dashed border-slate-200/90 bg-white px-4 py-3 text-xs italic text-slate-500">
+          —
+        </p>
+      )}
+    </section>
+  );
+
   return (
     <div className="mx-auto w-full max-w-[1280px] space-y-6 bg-[#F3FAF6] pb-16 px-4 sm:px-6 lg:rounded-3xl lg:p-8 lg:shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]">
       <header className="space-y-1">
-        <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">{t("progressionTitle")}</h1>
+        <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
+          {t("progressionTitle")}
+        </h1>
         <p className="text-sm text-slate-600">{t("progressionSubtitle")}</p>
       </header>
 
-      {!loading && user ? (
-        <CreditsWidget
-          layout="progress"
-          teachers={creditTeachers}
-          lessonCount={completedLessonCount}
-          companionType={companionType}
+      {/* Mobile (<lg): 3 focused steps the learner advances with
+          explicit Back / Next chrome. Embedded variant so the
+          chrome flows inline above the global (app) AppShell's
+          bottom tab bar instead of competing for the same
+          pinned-bottom real estate. */}
+      <div className="lg:hidden">
+        <YoStepNavigator
+          surfaceId="student-progress"
+          locale={yoLocale}
+          variant="embedded"
+          stepsAriaLabel={t("progressionTitle")}
+          steps={[
+            {
+              id: "credits-and-yo",
+              label: t("progressionTitle"),
+              content: (
+                <div className="space-y-6">
+                  {creditsBlock}
+                  {yoBridgeBlock}
+                  {legacyCompanionBlock}
+                </div>
+              ),
+            },
+            {
+              id: "homework",
+              label: t("progressHomeworkActiveTitle"),
+              content: homeworkBlock,
+            },
+            {
+              id: "watch-points",
+              label: t("watchPoints"),
+              content: watchPointsBlock,
+            },
+          ]}
         />
-      ) : (
-        <div className="h-40 animate-pulse rounded-2xl bg-white/60" />
-      )}
+      </div>
 
-      {/*
-       * YoPratiqo bridge section.
-       *
-       * Promoted ABOVE the legacy Pratiqo companion so a learner who
-       * came in through the YoPratiqo product immediately sees their
-       * companion + has a one-click path back to the dedicated
-       * YoPratiqo hub (`/student/yopratiqo`). The legacy Pratiqo
-       * companion card stays mounted right below — both are visible
-       * on the same page so the cross-product story
-       * (Pratiqo progress ↔ YoPratiqo path) is unambiguous.
-       *
-       * No new persistence, no AI surface, no raw quiz fields. This
-       * is purely a visual + navigational reshape.
-       */}
-      <section
-        data-testid="yo-progress-bridge-section"
-        data-yo-progress-bridge="section"
-        className="space-y-3"
-      >
-        <div className="flex flex-wrap items-end justify-between gap-2">
-          <h2
-            data-testid="yo-progress-bridge-heading"
-            className="text-[11px] font-bold uppercase tracking-widest text-[#0F6E56]"
-          >
-            {YOPRATIQO_SECTION_COPY[yoLocale].heading}
-          </h2>
-          <Link
-            data-testid="yo-progress-bridge-cta"
-            href="/student/yopratiqo"
-            className="inline-flex items-center gap-1.5 rounded-full border border-[#0F6E56]/20 bg-white px-3 py-1.5 text-xs font-bold text-[#0F6E56] transition hover:bg-[#FFF4D6]"
-          >
-            {YOPRATIQO_SECTION_COPY[yoLocale].cta}
-            <ArrowRight className="size-3.5" aria-hidden />
-          </Link>
-        </div>
-        <p className="text-xs leading-relaxed text-[#0F6E56]/75">
-          {YOPRATIQO_SECTION_COPY[yoLocale].body}
-        </p>
-        <YoStudentCompanionCard locale={yoLocale} />
-      </section>
-
-      {/* Companion — compact (legacy Pratiqo companion). Untouched. */}
-      <section className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm sm:p-5">
-        <h2 className="text-sm font-semibold text-slate-900">{t("progressionYourCompanion")}</h2>
-        <p className="mt-0.5 text-xs text-slate-600">{t("companionSubtitle")}</p>
-        <CompanionCard
-          companionType={companionType}
-          companionChosen={companionChosen}
-          lessonCount={completedLessonCount}
-          loading={loading}
-          variant="progress"
-        />
-      </section>
-
-      <section className="space-y-3">
-        <div className="flex flex-wrap items-end justify-between gap-2">
-          <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-600">{t("progressHomeworkActiveTitle")}</h2>
-          {completedHomeworkCount > 0 ? (
-            <p className="text-[11px] font-semibold text-slate-500">
-              {t("progressHomeworkCompletedCount").replace("{count}", String(completedHomeworkCount))}
-            </p>
-          ) : null}
-        </div>
-        {loading ? (
-          <div className="rounded-2xl border border-slate-200/80 bg-white p-6 text-sm text-slate-600">…</div>
-        ) : homework.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-slate-200/90 bg-white p-6 text-sm text-slate-700 shadow-sm">
-            {t("progressNoHomework")}
-          </div>
-        ) : (
-          <ul className="space-y-2">
-            {homework.map((h) => (
-              <HomeworkRow
-                key={h.id}
-                item={h}
-                onToggle={async (next) => {
-                  const previousStatus = h.status;
-                  const nextStatus = next ? "submitted" : "pending";
-                  setHomework((prev) => prev.map((x) => (x.id === h.id ? { ...x, status: nextStatus } : x)));
-                  const res = await fetch("/api/homework", {
-                    method: "PATCH",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ id: h.id, completed: next }),
-                  });
-                  if (!res.ok) {
-                    setHomework((prev) => prev.map((x) => (x.id === h.id ? { ...x, status: previousStatus } : x)));
-                  }
-                }}
-              />
-            ))}
-          </ul>
-        )}
-      </section>
-
-      {watchPoints.length > 0 ? (
-        <section className="space-y-3">
-          <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-600">{t("watchPoints")}</h2>
-          <ul className="space-y-2">
-            {watchPoints.map((w, i) => (
-              <li
-                key={`${w}-${i}`}
-                className="rounded-2xl border border-slate-100 bg-white px-4 py-3 text-sm font-medium text-slate-800 shadow-sm"
-              >
-                {w}
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
+      {/* Desktop (lg+): single column inside the (app) AppShell
+          — the (app) shell is the workspace, so no nested
+          workspace grid here. Layout is unchanged from the
+          previous version of this page so existing desktop
+          users see the same vertical stack. */}
+      <div className="hidden space-y-6 lg:block">
+        {creditsBlock}
+        {yoBridgeBlock}
+        {legacyCompanionBlock}
+        {homeworkBlock}
+        {watchPoints.length > 0 ? watchPointsBlock : null}
+      </div>
     </div>
   );
 }

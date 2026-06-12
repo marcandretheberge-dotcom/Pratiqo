@@ -130,6 +130,13 @@ export function YoScreenPager({
               // collapses on a narrower track. `snap-start` aligns
               // the screen edge to the track edge.
               "relative flex min-w-full shrink-0 snap-start flex-col",
+              // Clip any wide child (a long URL, a tracked uppercase
+              // chip in FR copy, a non-shrinkable image) so it cannot
+              // create a second horizontal scroll INSIDE the paged
+              // screen while the track is also paging horizontally.
+              // `min-w-0` lets a flex child shrink below its content
+              // width so nested overflow honours the screen width.
+              "min-w-0 overflow-x-hidden",
               // Last-resort vertical safety net for very short
               // landscape viewports (~600px tall).
               "overflow-y-auto overscroll-contain",

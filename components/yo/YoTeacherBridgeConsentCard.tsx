@@ -135,7 +135,7 @@ export function YoTeacherBridgeConsentCard(props: YoTeacherBridgeConsentCardProp
       (typeof currentLevelLabel === "string" && currentLevelLabel.trim()) ? (
         <dl
           data-testid="yo-teacher-bridge-consent-stats"
-          className="mt-4 grid grid-cols-2 gap-3 rounded-2xl border border-[#DDF4F1] bg-white/85 p-3"
+          className="mt-4 grid grid-cols-1 gap-3 rounded-2xl border border-[#DDF4F1] bg-white/85 p-3 sm:grid-cols-2"
         >
           {typeof completedModulesCount === "number" && completedModulesCount >= 0 ? (
             <div>
