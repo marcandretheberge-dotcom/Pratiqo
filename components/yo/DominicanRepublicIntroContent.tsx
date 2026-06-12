@@ -50,7 +50,10 @@
 import Link from "next/link";
 import { ArrowRight, MapPin } from "lucide-react";
 
-import { dominicanRepublicA1 } from "@/lib/yo/dominicanRepublicA1";
+import {
+  dominicanRepublicA1,
+  dominicanRepublicA1ListeningDemo,
+} from "@/lib/yo/dominicanRepublicA1";
 import { lstr, t } from "@/lib/yo/localize";
 import type { YoLocale } from "@/lib/yo/types";
 import { YoLessonDeck } from "@/components/yo/YoLessonDeck";
@@ -63,6 +66,9 @@ import {
 import { YoDominicanDictionary } from "@/components/yo/YoDominicanDictionary";
 import { YoFlashcardPreview } from "@/components/yo/YoFlashcardPreview";
 import { YoQuizPreview } from "@/components/yo/YoQuizPreview";
+import { YoAudioFeedbackProvider } from "@/components/yo/YoAudioFeedbackProvider";
+import { YoListeningExercisePreview } from "@/components/yo/YoListeningExercisePreview";
+import { YoYoppoReward } from "@/components/yo/YoYoppoReward";
 
 // ─── Localized deck-screen labels (eyebrow / title / helperText) ─────────
 //
@@ -129,6 +135,22 @@ const DECK_HELPER_CULTURE = lstr(
   "Quelques piliers culturels qui donnent du sens à ce que tu vas dire.",
   "A few cultural pillars that give meaning to what you're about to say.",
   "Algunos pilares culturales que dan sentido a lo que vas a decir.",
+);
+
+const DECK_LABEL_LISTENING = lstr(
+  "Ecoute",
+  "Listening",
+  "Escucha",
+);
+const DECK_TITLE_LISTENING = lstr(
+  "Valide le format audio",
+  "Validate the audio format",
+  "Valida el formato audio",
+);
+const DECK_HELPER_LISTENING = lstr(
+  "Demo technique seulement : le vrai contenu dominicain sera redige ensuite.",
+  "Technical demo only: the real Dominican content will be written next.",
+  "Demo tecnica solamente: el contenido dominicano real se redactara despues.",
 );
 
 const DECK_LABEL_DICTIONARY = lstr(
@@ -364,6 +386,22 @@ function buildIntroDeckScreens(locale: YoLocale): YoLessonDeckScreen[] {
       ),
     },
     {
+      id: "listening-demo",
+      kind: "practice",
+      eyebrow: t(DECK_LABEL_LISTENING, locale),
+      title: t(DECK_TITLE_LISTENING, locale),
+      helperText: t(DECK_HELPER_LISTENING, locale),
+      companionState: "confused",
+      content: (
+        <div data-yo-intro-deck-screen="listening-demo">
+          <YoListeningExercisePreview
+            data={dominicanRepublicA1ListeningDemo}
+            locale={locale}
+          />
+        </div>
+      ),
+    },
+    {
       id: "dictionary",
       kind: "culture",
       eyebrow: t(DECK_LABEL_DICTIONARY, locale),
@@ -398,6 +436,8 @@ function buildIntroDeckScreens(locale: YoLocale): YoLessonDeckScreen[] {
             cards={data.flashcardDeck}
             locale={locale}
             speechLang="es-DO"
+            enableAudioFeedback
+            compactDeck
             audioContext={{
               moduleId: "voyage",
               lessonId: "republique-dominicaine-a1-lesson-01",
@@ -417,7 +457,12 @@ function buildIntroDeckScreens(locale: YoLocale): YoLessonDeckScreen[] {
       companionState: "confused",
       content: (
         <div data-yo-intro-deck-screen="quiz">
-          <YoQuizPreview questions={data.quizQuestions} locale={locale} />
+          <YoQuizPreview
+            questions={data.quizQuestions}
+            locale={locale}
+            enableAudioFeedback
+            compactDeck
+          />
         </div>
       ),
     },
@@ -433,6 +478,7 @@ function buildIntroDeckScreens(locale: YoLocale): YoLessonDeckScreen[] {
           data-yo-intro-deck-screen="ready"
           className="mx-auto w-full max-w-3xl px-5 py-6 sm:px-8"
         >
+          <YoYoppoReward show locale={locale} variant="intro-complete" />
           <div className="relative overflow-hidden rounded-3xl border border-[#F4B400]/35 bg-[#FFF4D6] p-5 shadow-[0_18px_44px_rgba(15,58,52,0.08)] sm:p-7">
             <p className="text-[0.7rem] font-black uppercase tracking-[0.16em] text-[#8a5a17]">
               {t(DECK_LABEL_READY, locale)}
@@ -484,13 +530,15 @@ export function DominicanRepublicIntroContent({
       : "/yo/langues/espagnol/pays/republique-dominicaine/intro";
 
   return (
-    <YoLessonDeck
-      locale={locale}
-      moduleLabel={t(DECK_MODULE_LABEL, locale)}
-      backHref={backHref}
-      toggleHref={toggleHref}
-      screens={screens}
-      enableTapNavigation
-    />
+    <YoAudioFeedbackProvider locale={locale}>
+      <YoLessonDeck
+        locale={locale}
+        moduleLabel={t(DECK_MODULE_LABEL, locale)}
+        backHref={backHref}
+        toggleHref={toggleHref}
+        screens={screens}
+        enableTapNavigation
+      />
+    </YoAudioFeedbackProvider>
   );
 }

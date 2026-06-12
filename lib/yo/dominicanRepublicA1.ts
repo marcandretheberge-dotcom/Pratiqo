@@ -1122,6 +1122,50 @@ const quizQuestions: YoQuizQuestion[] = [
 // Intro progress strip
 // ─────────────────────────────────────────────────────────────────────────
 
+export const dominicanRepublicA1ListeningDemo = {
+  id: "rd-intro-listening-demo",
+  title: lstr("Exercice d'ecoute demo", "Listening exercise demo", "Demo de escucha"),
+  subtitle: lstr(
+    "Structure technique seulement. Le vrai contenu dominicain sera redige et valide ensuite.",
+    "Technical structure only. Real Dominican content will be written and reviewed next.",
+    "Solo estructura tecnica. El contenido dominicano real se redactara y validara despues.",
+  ),
+  items: [
+    {
+      id: "rd-intro-listening-demo-1",
+      audioText: "Audio demo uno.",
+      prompt: lstr(
+        "Ecoute, puis choisis la reponse demo.",
+        "Listen, then choose the demo answer.",
+        "Escucha y elige la respuesta demo.",
+      ),
+      options: [
+        {
+          id: "a",
+          label: lstr("Reponse demo A", "Demo answer A", "Respuesta demo A"),
+        },
+        {
+          id: "b",
+          label: lstr("Reponse demo B", "Demo answer B", "Respuesta demo B"),
+        },
+      ],
+      correctOptionId: "a",
+      explanation: lstr(
+        "Feedback demo. A remplacer par le contenu revise.",
+        "Demo feedback. Replace with reviewed content.",
+        "Feedback demo. Reemplazar por contenido revisado.",
+      ),
+      audioContext: {
+        moduleId: "voyage",
+        lessonId: "republique-dominicaine-a1-lesson-01",
+        type: "sentence" as const,
+        accentProfile: "dominican_republic" as const,
+        speechLang: "es-DO",
+      },
+    },
+  ],
+};
+
 const introProgress: YoIntroProgressStats = {
   title: lstr(
     "Commence ton intro gratuite",

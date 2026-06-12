@@ -62,6 +62,8 @@ import {
   type YoSpanishAudioContext,
 } from "@/components/yo/YoSpanishAudioButton";
 import { YoSpeechButton } from "@/components/yo/YoSpeechButton";
+import { useYoAudioFeedback } from "@/components/yo/YoAudioFeedbackProvider";
+import { YoYoppoReward } from "@/components/yo/YoYoppoReward";
 
 export interface YoFlashcardPreviewProps {
   cards: YoFlashcard[];
@@ -136,6 +138,8 @@ export interface YoFlashcardPreviewProps {
    * `data-yo-module*-flashcard-*` attribute via a wrapping `<div>`.
    */
   sectionClassName?: string;
+  enableAudioFeedback?: boolean;
+  compactDeck?: boolean;
 }
 
 const TONE: Record<YoFlashcardQuality, string> = {
@@ -161,8 +165,11 @@ export function YoFlashcardPreview({
   subtitle,
   headingId = "yo-flash-title",
   sectionClassName,
+  enableAudioFeedback = false,
+  compactDeck = false,
 }: YoFlashcardPreviewProps) {
   const total = cards.length;
+  const { playFeedback } = useYoAudioFeedback();
   const [index, setIndex] = useState(0);
   const [state, setState] = useState<DeckState>({
     mode: "card",
@@ -215,12 +222,15 @@ export function YoFlashcardPreview({
   const handleRate = useCallback(
     (quality: YoFlashcardQuality) => {
       pauseAutoplay();
+      if (enableAudioFeedback) {
+        void playFeedback(quality === 0 ? "incorrect" : "correct");
+      }
       setState((prev) => {
         if (prev.mode !== "card") return prev;
         return { mode: "card", isFlipped: true, lastRating: quality };
       });
     },
-    [pauseAutoplay],
+    [enableAudioFeedback, pauseAutoplay, playFeedback],
   );
 
   const handleNext = useCallback(() => {
@@ -228,12 +238,15 @@ export function YoFlashcardPreview({
     setIndex((i) => {
       if (i >= total - 1) {
         setState({ mode: "complete" });
+        if (enableAudioFeedback) {
+          void playFeedback("step-complete");
+        }
         return i;
       }
       setState({ mode: "card", isFlipped: false, lastRating: null });
       return i + 1;
     });
-  }, [pauseAutoplay, total]);
+  }, [enableAudioFeedback, pauseAutoplay, playFeedback, total]);
 
   const handlePrev = useCallback(() => {
     pauseAutoplay();
@@ -307,6 +320,7 @@ export function YoFlashcardPreview({
   const resolvedSubtitle = subtitle ?? t(YO_COPY.flash.subtitle, locale);
   const sectionClasses = [
     "mx-auto w-full max-w-5xl px-5 pt-10 sm:px-8 sm:pt-14",
+    compactDeck && "max-w-2xl px-2 pt-0 sm:px-3 sm:pt-0",
     sectionClassName,
   ]
     .filter(Boolean)
@@ -331,6 +345,8 @@ export function YoFlashcardPreview({
           total={total}
           onRestart={handleRestart}
           locale={locale}
+          enableAudioFeedback={enableAudioFeedback}
+          compactDeck={compactDeck}
         />
       ) : (
         <DeckCard
@@ -351,6 +367,7 @@ export function YoFlashcardPreview({
           speechLang={speechLang}
           audioContext={audioContext}
           audioMode={audioMode}
+          compactDeck={compactDeck}
         />
       )}
     </section>
@@ -375,6 +392,7 @@ interface DeckCardProps {
   speechLang: string;
   audioContext?: YoSpanishAudioContext;
   audioMode: "spanish-default" | "browser-speech";
+  compactDeck: boolean;
 }
 
 function DeckCard({
@@ -395,6 +413,7 @@ function DeckCard({
   speechLang,
   audioContext,
   audioMode,
+  compactDeck,
 }: DeckCardProps) {
   const isLast = index === total - 1;
   const isFirst = index === 0;
@@ -441,7 +460,12 @@ function DeckCard({
   const reducedMotionNote = t(YO_COPY.flashAutoplay.reducedMotionNote, locale);
 
   return (
-    <div className="grid gap-4 sm:gap-6 lg:grid-cols-[1fr_280px]">
+    <div
+      className={cn(
+        "grid gap-4 sm:gap-6 lg:grid-cols-[1fr_280px]",
+        compactDeck && "gap-3 lg:grid-cols-1",
+      )}
+    >
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p
@@ -462,7 +486,10 @@ function DeckCard({
           onKeyDown={onCardKey}
           aria-pressed={state.isFlipped}
           aria-label={flipAria}
-          className="group relative flex min-h-[280px] cursor-pointer flex-col justify-between overflow-hidden rounded-3xl border border-teal-100 bg-white p-6 text-left shadow-[0_1px_2px_rgba(15,58,52,0.04)] transition hover:shadow-[0_8px_24px_rgba(15,58,52,0.10)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 sm:min-h-[340px] sm:p-8"
+          className={cn(
+            "group relative flex min-h-[280px] cursor-pointer flex-col justify-between overflow-hidden rounded-3xl border border-teal-100 bg-white p-6 text-left shadow-[0_1px_2px_rgba(15,58,52,0.04)] transition hover:shadow-[0_8px_24px_rgba(15,58,52,0.10)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 sm:min-h-[340px] sm:p-8",
+            compactDeck && "min-h-[220px] p-5 sm:min-h-[250px] sm:p-6",
+          )}
         >
           <YoImageVisual
             imagePath={card.imagePath}
@@ -733,15 +760,31 @@ interface CompletionPanelProps {
   total: number;
   onRestart: () => void;
   locale: YoLocale;
+  enableAudioFeedback: boolean;
+  compactDeck: boolean;
 }
 
-function CompletionPanel({ total, onRestart, locale }: CompletionPanelProps) {
+function CompletionPanel({
+  total,
+  onRestart,
+  locale,
+  enableAudioFeedback,
+  compactDeck,
+}: CompletionPanelProps) {
   return (
     <div
       role="status"
       aria-live="polite"
-      className="flex flex-col items-start gap-4 rounded-3xl border border-teal-100 bg-gradient-to-br from-[#e6f4ec] via-white to-[var(--color-base-cream)] p-6 shadow-[0_1px_2px_rgba(15,58,52,0.04)] sm:p-8"
+      className={cn(
+        "flex flex-col items-start gap-4 rounded-3xl border border-teal-100 bg-gradient-to-br from-[#e6f4ec] via-white to-[var(--color-base-cream)] p-6 shadow-[0_1px_2px_rgba(15,58,52,0.04)] sm:p-8",
+        compactDeck && "gap-3 p-5 sm:p-6",
+      )}
     >
+      <YoYoppoReward
+        show={enableAudioFeedback}
+        locale={locale}
+        variant="step"
+      />
       <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-xs font-medium text-teal-800 ring-1 ring-teal-100">
         <CheckCircle2 aria-hidden className="size-4 text-teal-700" />
         {total} {t(YO_COPY.flash.completionChip, locale)}
