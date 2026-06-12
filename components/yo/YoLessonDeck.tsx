@@ -106,6 +106,11 @@ export type YoLessonDeckProps = {
    * interactive controls are well-protected.
    */
   enableTapNavigation?: boolean;
+  /**
+   * Defaults to true for existing lessons. Set to false only for decks
+   * that have been explicitly split into viewport-sized pages.
+   */
+  allowScreenScroll?: boolean;
   className?: string;
 };
 
@@ -156,6 +161,7 @@ export function YoLessonDeck({
   screens,
   initialIndex = 0,
   enableTapNavigation = false,
+  allowScreenScroll = true,
   className,
 }: YoLessonDeckProps): React.JSX.Element {
   const total = screens.length;
@@ -427,11 +433,17 @@ export function YoLessonDeck({
               data-yo-lesson-deck-screen-host-active={isActive}
               aria-hidden={!isActive}
               className={cn(
-                DECK_SCREEN_HOST_CLASSES,
+                allowScreenScroll
+                  ? DECK_SCREEN_HOST_CLASSES
+                  : "absolute inset-0 overflow-hidden px-1 pb-3 overscroll-none",
                 isActive ? "block" : "hidden",
               )}
             >
-              <YoLessonDeckScreen screen={screen} locale={locale} />
+              <YoLessonDeckScreen
+                screen={screen}
+                locale={locale}
+                viewportLocked={!allowScreenScroll}
+              />
             </div>
           );
         })}

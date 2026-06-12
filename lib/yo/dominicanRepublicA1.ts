@@ -1122,6 +1122,99 @@ const quizQuestions: YoQuizQuestion[] = [
 // Intro progress strip
 // ─────────────────────────────────────────────────────────────────────────
 
+export const dominicanRepublicA1PanoramaMiniQuizzes = {
+  geography: [
+    {
+      id: "rd_intro_geography_demo_quiz",
+      prompt: lstr(
+        "Question demo sur le panorama du pays.",
+        "Demo question about the country panorama.",
+      ),
+      options: [
+        { id: "a", label: lstr("Reponse demo A", "Demo answer A") },
+        { id: "b", label: lstr("Reponse demo B", "Demo answer B") },
+      ],
+      correctOptionId: "a",
+      explanation: lstr(
+        "Feedback demo a remplacer par le vrai contenu revise.",
+        "Demo feedback to replace with reviewed content.",
+      ),
+    },
+  ],
+  history: [
+    {
+      id: "rd_intro_history_demo_quiz",
+      prompt: lstr(
+        "Question demo sur le panorama historique.",
+        "Demo question about the historical panorama.",
+      ),
+      options: [
+        { id: "a", label: lstr("Reponse demo A", "Demo answer A") },
+        { id: "b", label: lstr("Reponse demo B", "Demo answer B") },
+      ],
+      correctOptionId: "a",
+      explanation: lstr(
+        "Feedback demo a remplacer par le vrai contenu revise.",
+        "Demo feedback to replace with reviewed content.",
+      ),
+    },
+  ],
+  food: [
+    {
+      id: "rd_intro_food_demo_quiz",
+      prompt: lstr(
+        "Question demo sur le panorama gastronomique.",
+        "Demo question about the food panorama.",
+      ),
+      options: [
+        { id: "a", label: lstr("Reponse demo A", "Demo answer A") },
+        { id: "b", label: lstr("Reponse demo B", "Demo answer B") },
+      ],
+      correctOptionId: "a",
+      explanation: lstr(
+        "Feedback demo a remplacer par le vrai contenu revise.",
+        "Demo feedback to replace with reviewed content.",
+      ),
+    },
+  ],
+  phrases: [
+    {
+      id: "rd_intro_phrases_demo_quiz",
+      prompt: lstr(
+        "Question demo sur les premieres phrases.",
+        "Demo question about the first phrases.",
+      ),
+      options: [
+        { id: "a", label: lstr("Reponse demo A", "Demo answer A") },
+        { id: "b", label: lstr("Reponse demo B", "Demo answer B") },
+      ],
+      correctOptionId: "a",
+      explanation: lstr(
+        "Feedback demo a remplacer par le vrai contenu revise.",
+        "Demo feedback to replace with reviewed content.",
+      ),
+    },
+  ],
+  culture: [
+    {
+      id: "rd_intro_culture_demo_quiz",
+      prompt: lstr(
+        "Question demo sur le panorama culturel.",
+        "Demo question about the cultural panorama.",
+      ),
+      options: [
+        { id: "a", label: lstr("Reponse demo A", "Demo answer A") },
+        { id: "b", label: lstr("Reponse demo B", "Demo answer B") },
+      ],
+      correctOptionId: "a",
+      explanation: lstr(
+        "Feedback demo a remplacer par le vrai contenu revise.",
+        "Demo feedback to replace with reviewed content.",
+      ),
+    },
+  ],
+} satisfies Record<string, YoQuizQuestion[]>;
+
 export const dominicanRepublicA1ListeningDemo = {
   id: "rd-intro-listening-demo",
   title: lstr("Exercice d'ecoute demo", "Listening exercise demo", "Demo de escucha"),
