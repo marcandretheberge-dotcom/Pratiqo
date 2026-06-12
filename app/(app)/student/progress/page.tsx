@@ -337,7 +337,7 @@ export default function StudentProgressPage() {
           surfaceId="student-progress"
           locale={yoLocale}
           variant="embedded"
-          stepsAriaLabel={t("progressionTitle")}
+          ariaLabel={t("progressionTitle")}
           steps={[
             {
               id: "credits-and-yo",

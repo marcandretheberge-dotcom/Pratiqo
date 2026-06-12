@@ -410,7 +410,7 @@ export function YoStudentHubContent(): React.JSX.Element {
           surfaceId="student-yopratiqo"
           locale={l}
           variant="embedded"
-          stepsAriaLabel={copy.title}
+          ariaLabel={copy.title}
           steps={[
             {
               id: "companion",
