@@ -9,24 +9,31 @@
  *
  * Layout strategy
  * ---------------
- *   • Mobile: single stacked column. Mirrors the "phone app" rhythm
- *     used by the YoPratiqo decks and `/yo` onboarding so a learner
- *     coming back from a Module deck doesn't feel a layout jump.
- *   • Desktop (≥ lg): two-column grid — companion + course on the
- *     left, lesson path + bridges on the right. The desktop layout
- *     is NOT just the mobile layout stretched: the two columns share
- *     the same `max-w-6xl` shell but the lesson path uses the right
- *     column so the companion stays above-the-fold while the path
- *     reads as a "what to do next" rail.
+ *   • Mobile (`<lg`): button-driven step navigator. Branded
+ *     header at the top, then four focused steps the learner
+ *     advances with explicit Back / Next chrome:
+ *       1. Companion (Yoppo · current state).
+ *       2. Current course (DR A1 + Continue + Course Home).
+ *       3. Learning path (Intro → Modules 2-5).
+ *       4. Pratiqo bridges (full progress + find a teacher).
+ *     The step navigator uses the `embedded` variant because
+ *     the parent `(app)` AppShell already owns its own bottom
+ *     student tab bar — stacking a second pinned bottom chrome
+ *     would clash with the global nav.
+ *   • Desktop (`lg:`): same two-column grid as before (companion
+ *     + current course on the left; lesson path + bridges on
+ *     the right). The desktop sub-tree is intentionally distinct
+ *     from the mobile step navigator so each viewport gets the
+ *     affordances best suited to it.
  *
  * Why a separate client file
  * --------------------------
  * `YoStudentCompanionCard` is a "use client" component that reads the
- * Supabase session on mount. Embedding it inside a server page would
- * still work, but co-locating the locale read (`useLocale`) and the
- * companion card in one client file keeps the data flow legible and
- * lets the locale switcher in the AppShell header react instantly
- * without a full page round-trip.
+ * auth-backend session on mount. Embedding it inside a server page
+ * would still work, but co-locating the locale read (`useLocale`)
+ * and the companion card in one client file keeps the data flow
+ * legible and lets the locale switcher in the AppShell header react
+ * instantly without a full page round-trip.
  */
 
 import Link from "next/link";
@@ -44,6 +51,7 @@ import { cn } from "@/lib/utils";
 import { useLocale } from "@/lib/locale-context";
 import { YoPratiqoLogo } from "@/components/yo/YoPratiqoLogo";
 import { YoStudentCompanionCard } from "@/components/yo/YoStudentCompanionCard";
+import { YoStepNavigator } from "@/components/yo/YoStepNavigator";
 import type { StudentCompanionLocale } from "@/lib/yopratiqo/studentCompanionState";
 
 // ---------------------------------------------------------------------------
@@ -79,6 +87,10 @@ type Copy = {
   courseHome: string;
   findTeacher: string;
   privacy: string;
+  stepCompanionLabel: string;
+  stepCourseLabel: string;
+  stepPathLabel: string;
+  stepBridgesLabel: string;
 };
 
 const COPY: Record<HubLocale, Copy> = {
@@ -109,6 +121,10 @@ const COPY: Record<HubLocale, Copy> = {
     findTeacher: "Trouver un professeur",
     privacy:
       "Les professeurs voient seulement un résumé utile lorsque tu choisis de le partager lors d’une réservation. Les réponses brutes aux quiz ne sont pas partagées.",
+    stepCompanionLabel: "Mon compagnon",
+    stepCourseLabel: "Mon parcours",
+    stepPathLabel: "Mes étapes",
+    stepBridgesLabel: "Pratiqo",
   },
   en: {
     eyebrow: "YoPratiqo",
@@ -137,6 +153,10 @@ const COPY: Record<HubLocale, Copy> = {
     findTeacher: "Find a teacher",
     privacy:
       "Teachers only see a useful summary when you choose to share it during a booking. Raw quiz answers are not shared.",
+    stepCompanionLabel: "Companion",
+    stepCourseLabel: "Course",
+    stepPathLabel: "Path",
+    stepBridgesLabel: "Pratiqo",
   },
   es: {
     eyebrow: "YoPratiqo",
@@ -165,6 +185,10 @@ const COPY: Record<HubLocale, Copy> = {
     findTeacher: "Encontrar un profesor",
     privacy:
       "Los profesores solo ven un resumen útil cuando eliges compartirlo durante una reserva. Las respuestas brutas de los cuestionarios no se comparten.",
+    stepCompanionLabel: "Compañero",
+    stepCourseLabel: "Curso",
+    stepPathLabel: "Ruta",
+    stepBridgesLabel: "Pratiqo",
   },
 };
 
@@ -200,182 +224,229 @@ export function YoStudentHubContent(): React.JSX.Element {
     { href: HREFS.module5, label: copy.stepModule5 },
   ] as const;
 
+  // ─── Reusable section blocks ─────────────────────────────────
+  // Each block is rendered exactly once and reused across the
+  // mobile step list and the desktop two-column layout, so the
+  // visual contract stays identical on both viewports.
+
+  const brandedHeaderBlock = (
+    <header className="space-y-3 rounded-3xl border border-[#E7DFCF] bg-white p-5 shadow-[0_12px_30px_rgba(15,58,52,0.06)] sm:p-6">
+      <YoPratiqoLogo size="md" priority={false} />
+      <div>
+        <p
+          data-testid="yo-student-hub-eyebrow"
+          className="text-[10px] font-black uppercase tracking-[0.18em] text-[#0F6E56]/70"
+        >
+          {copy.eyebrow}
+        </p>
+        <h1
+          data-testid="yo-student-hub-title"
+          className="mt-1 text-2xl font-bold tracking-tight text-[#0F6E56] sm:text-3xl"
+        >
+          {copy.title}
+        </h1>
+        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[#0F6E56]/75 sm:text-base">
+          {copy.intro}
+        </p>
+      </div>
+    </header>
+  );
+
+  const companionBlock = (
+    <section className="space-y-2">
+      <h2
+        data-testid="yo-student-hub-companion-heading"
+        className="text-sm font-bold uppercase tracking-[0.14em] text-[#0F6E56]/70"
+      >
+        {copy.companionHeading}
+      </h2>
+      <YoStudentCompanionCard locale={companionLocale} />
+    </section>
+  );
+
+  const currentCourseBlock = (
+    <section
+      data-testid="yo-student-hub-course-card"
+      className="rounded-3xl border border-[#E7DFCF] bg-white p-5 shadow-[0_10px_28px_rgba(23,38,66,0.06)] sm:p-6"
+    >
+      <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#13A085]">
+        {copy.courseHeading}
+      </p>
+      <h3 className="mt-1 text-xl font-semibold tracking-tight text-[#172642]">
+        {copy.courseTitle}
+      </h3>
+      <p className="mt-1 text-sm leading-relaxed text-[#566073]">
+        {copy.courseSubtitle}
+      </p>
+      <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+        <Link
+          data-testid="yo-student-hub-continue-cta"
+          href={HREFS.intro}
+          className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-[#13A085] px-5 py-3 text-sm font-bold text-white shadow-[0_12px_28px_rgba(19,160,133,0.24)] transition hover:bg-[#16B597]"
+        >
+          <Compass className="size-4" aria-hidden />
+          {copy.continueLabel}
+        </Link>
+        <Link
+          data-testid="yo-student-hub-course-home-link"
+          href={HREFS.courseHome}
+          className="inline-flex flex-1 items-center justify-center gap-2 rounded-full border border-[#0F6E56]/20 bg-white px-5 py-3 text-sm font-bold text-[#0F6E56] transition hover:bg-[#FFF4D6]"
+        >
+          <MapPin className="size-4 text-[#1D9E75]" aria-hidden />
+          {copy.courseHome}
+        </Link>
+      </div>
+      <p className="mt-4 flex items-start gap-2 text-xs leading-relaxed text-[#0F6E56]/72">
+        <ShieldCheck
+          className="mt-0.5 size-3.5 shrink-0 text-[#1D9E75]"
+          aria-hidden
+        />
+        <span>{copy.privacy}</span>
+      </p>
+    </section>
+  );
+
+  const pathBlock = (
+    <section
+      data-testid="yo-student-hub-path"
+      className="rounded-3xl border border-[#E7DFCF] bg-white p-5 shadow-[0_10px_28px_rgba(23,38,66,0.06)] sm:p-6"
+    >
+      <header className="flex items-center justify-between gap-3">
+        <h2 className="text-sm font-bold uppercase tracking-[0.14em] text-[#0F6E56]/70">
+          {copy.pathHeading}
+        </h2>
+        <span className="inline-flex items-center gap-1 rounded-full bg-[#FFF4D6] px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-[#8a5a17]">
+          <Sparkles className="size-3" aria-hidden />
+          {copy.eyebrow}
+        </span>
+      </header>
+      <p className="mt-2 text-xs leading-relaxed text-[#0F6E56]/72">
+        {copy.pathHelp}
+      </p>
+      <ol className="mt-4 space-y-2">
+        {pathSteps.map((step, idx) => (
+          <li key={step.href}>
+            <Link
+              href={step.href}
+              data-testid={`yo-student-hub-path-step-${idx + 1}`}
+              className={cn(
+                "group flex items-center gap-3 rounded-2xl border border-[#DDF4F1] bg-[#FAFCFB] px-3 py-3 transition hover:border-[#1D9E75]/40 hover:bg-white",
+              )}
+            >
+              <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-[#DDF4F1] text-xs font-bold text-[#0F6E56]">
+                {String(idx + 1).padStart(2, "0")}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-bold text-[#0F6E56]">
+                  {step.label}
+                </span>
+                {"help" in step && step.help ? (
+                  <span className="mt-0.5 block text-[11px] leading-snug text-[#0F6E56]/70">
+                    {step.help}
+                  </span>
+                ) : null}
+              </span>
+              <ArrowRight
+                className="size-4 text-[#0F6E56]/55 transition-transform group-hover:translate-x-0.5"
+                aria-hidden
+              />
+            </Link>
+          </li>
+        ))}
+      </ol>
+    </section>
+  );
+
+  const bridgeBlock = (
+    <section
+      data-testid="yo-student-hub-bridge"
+      className="rounded-3xl border border-[#E7DFCF] bg-gradient-to-br from-[#FAFCFB] via-white to-[#FFF4D6] p-5 shadow-[0_10px_28px_rgba(23,38,66,0.06)] sm:p-6"
+    >
+      <h2 className="text-sm font-bold uppercase tracking-[0.14em] text-[#0F6E56]/70">
+        {copy.bridgeHeading}
+      </h2>
+      <p className="mt-2 text-xs leading-relaxed text-[#0F6E56]/72">
+        {copy.fullProgressHelp}
+      </p>
+      <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+        <Link
+          data-testid="yo-student-hub-full-progress-link"
+          href={HREFS.fullPratiqoProgress}
+          className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-[#172642] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#0f1c33]"
+        >
+          <BookOpenCheck className="size-4" aria-hidden />
+          {copy.fullProgress}
+        </Link>
+        <Link
+          data-testid="yo-student-hub-find-teacher-link"
+          href={HREFS.findTeacher}
+          className="inline-flex flex-1 items-center justify-center gap-2 rounded-full border border-[#172642]/15 bg-white px-5 py-3 text-sm font-bold text-[#172642] transition hover:bg-[#FFF4D6]"
+        >
+          <GraduationCap className="size-4 text-[#13A085]" aria-hidden />
+          {copy.findTeacher}
+        </Link>
+      </div>
+    </section>
+  );
+
   return (
     <div
       data-testid="yo-student-hub"
       data-yo-student-hub-locale={l}
-      className="mx-auto w-full max-w-6xl space-y-6 px-1 pb-12 sm:px-2"
+      // No explicit horizontal padding — the parent (app) AppShell
+      // already pads `px-4 sm:px-6`, so the inner cards' `p-5`
+      // edges sit at the natural gutter without competing.
+      className="mx-auto w-full max-w-6xl space-y-6 pb-12"
     >
-      {/* Top branded header — YoPratiqo logo + localized title +
-          one-paragraph intro that explains how the companion + teacher
-          bridge cooperate. */}
-      <header className="space-y-3 rounded-3xl border border-[#E7DFCF] bg-white p-5 shadow-[0_12px_30px_rgba(15,58,52,0.06)] sm:p-6">
-        <YoPratiqoLogo size="md" priority={false} />
-        <div>
-          <p
-            data-testid="yo-student-hub-eyebrow"
-            className="text-[10px] font-black uppercase tracking-[0.18em] text-[#0F6E56]/70"
-          >
-            {copy.eyebrow}
-          </p>
-          <h1
-            data-testid="yo-student-hub-title"
-            className="mt-1 text-2xl font-bold tracking-tight text-[#0F6E56] sm:text-3xl"
-          >
-            {copy.title}
-          </h1>
-          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[#0F6E56]/75 sm:text-base">
-            {copy.intro}
-          </p>
-        </div>
-      </header>
+      {brandedHeaderBlock}
 
-      {/* Two-column grid on desktop. Companion + current course sit on
-          the left so the most personal surfaces are above the fold;
-          the lesson path + cross-product bridges sit on the right. */}
-      <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr] lg:items-start">
-        {/* ─── Left column ──────────────────────────────────────── */}
+      {/* Mobile (<lg): button-driven step navigator. The branded
+          header above stays visible so the user always knows
+          which surface they're on; the navigator then walks them
+          through Companion → Course → Path → Bridges with
+          explicit Back / Next. */}
+      <div className="lg:hidden">
+        <YoStepNavigator
+          surfaceId="student-yopratiqo"
+          locale={l}
+          variant="embedded"
+          ariaLabel={copy.title}
+          steps={[
+            {
+              id: "companion",
+              label: copy.stepCompanionLabel,
+              content: companionBlock,
+            },
+            {
+              id: "course",
+              label: copy.stepCourseLabel,
+              content: currentCourseBlock,
+            },
+            {
+              id: "path",
+              label: copy.stepPathLabel,
+              content: pathBlock,
+            },
+            {
+              id: "bridges",
+              label: copy.stepBridgesLabel,
+              content: bridgeBlock,
+            },
+          ]}
+        />
+      </div>
+
+      {/* Desktop (lg+): same two-column grid as before so the
+          companion + course stay above the fold while the path
+          and bridges read as a "what to do next" rail. */}
+      <div className="hidden gap-6 lg:grid lg:grid-cols-[1.05fr_0.95fr] lg:items-start">
         <div className="space-y-6">
-          {/* Companion card. Reuses the exact same component that
-              lives on /student/progress so both surfaces share one
-              source of truth for the companion's visual state. */}
-          <section className="space-y-2">
-            <h2
-              data-testid="yo-student-hub-companion-heading"
-              className="text-sm font-bold uppercase tracking-[0.14em] text-[#0F6E56]/70"
-            >
-              {copy.companionHeading}
-            </h2>
-            <YoStudentCompanionCard locale={companionLocale} />
-          </section>
-
-          {/* Current course card. Single, focused — no fake catalog
-              of locked future courses. */}
-          <section
-            data-testid="yo-student-hub-course-card"
-            className="rounded-3xl border border-[#E7DFCF] bg-white p-5 shadow-[0_10px_28px_rgba(23,38,66,0.06)] sm:p-6"
-          >
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#13A085]">
-              {copy.courseHeading}
-            </p>
-            <h3 className="mt-1 text-xl font-semibold tracking-tight text-[#172642]">
-              {copy.courseTitle}
-            </h3>
-            <p className="mt-1 text-sm leading-relaxed text-[#566073]">
-              {copy.courseSubtitle}
-            </p>
-            <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-              <Link
-                data-testid="yo-student-hub-continue-cta"
-                href={HREFS.intro}
-                className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-[#13A085] px-5 py-3 text-sm font-bold text-white shadow-[0_12px_28px_rgba(19,160,133,0.24)] transition hover:bg-[#16B597]"
-              >
-                <Compass className="size-4" aria-hidden />
-                {copy.continueLabel}
-              </Link>
-              <Link
-                data-testid="yo-student-hub-course-home-link"
-                href={HREFS.courseHome}
-                className="inline-flex flex-1 items-center justify-center gap-2 rounded-full border border-[#0F6E56]/20 bg-white px-5 py-3 text-sm font-bold text-[#0F6E56] transition hover:bg-[#FFF4D6]"
-              >
-                <MapPin className="size-4 text-[#1D9E75]" aria-hidden />
-                {copy.courseHome}
-              </Link>
-            </div>
-            <p className="mt-4 flex items-start gap-2 text-xs leading-relaxed text-[#0F6E56]/72">
-              <ShieldCheck className="mt-0.5 size-3.5 shrink-0 text-[#1D9E75]" aria-hidden />
-              <span>{copy.privacy}</span>
-            </p>
-          </section>
+          {companionBlock}
+          {currentCourseBlock}
         </div>
-
-        {/* ─── Right column ─────────────────────────────────────── */}
         <div className="space-y-6">
-          {/* Lesson path. Five visible steps mirror the Course Home
-              roadmap so a learner can pick up at any module without
-              digging through the course tree. */}
-          <section
-            data-testid="yo-student-hub-path"
-            className="rounded-3xl border border-[#E7DFCF] bg-white p-5 shadow-[0_10px_28px_rgba(23,38,66,0.06)] sm:p-6"
-          >
-            <header className="flex items-center justify-between gap-3">
-              <h2 className="text-sm font-bold uppercase tracking-[0.14em] text-[#0F6E56]/70">
-                {copy.pathHeading}
-              </h2>
-              <span className="inline-flex items-center gap-1 rounded-full bg-[#FFF4D6] px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-[#8a5a17]">
-                <Sparkles className="size-3" aria-hidden />
-                {copy.eyebrow}
-              </span>
-            </header>
-            <p className="mt-2 text-xs leading-relaxed text-[#0F6E56]/72">
-              {copy.pathHelp}
-            </p>
-            <ol className="mt-4 space-y-2">
-              {pathSteps.map((step, idx) => (
-                <li key={step.href}>
-                  <Link
-                    href={step.href}
-                    data-testid={`yo-student-hub-path-step-${idx + 1}`}
-                    className={cn(
-                      "group flex items-center gap-3 rounded-2xl border border-[#DDF4F1] bg-[#FAFCFB] px-3 py-3 transition hover:border-[#1D9E75]/40 hover:bg-white",
-                    )}
-                  >
-                    <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-[#DDF4F1] text-xs font-bold text-[#0F6E56]">
-                      {String(idx + 1).padStart(2, "0")}
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-sm font-bold text-[#0F6E56]">
-                        {step.label}
-                      </span>
-                      {"help" in step && step.help ? (
-                        <span className="mt-0.5 block text-[11px] leading-snug text-[#0F6E56]/70">
-                          {step.help}
-                        </span>
-                      ) : null}
-                    </span>
-                    <ArrowRight
-                      className="size-4 text-[#0F6E56]/55 transition-transform group-hover:translate-x-0.5"
-                      aria-hidden
-                    />
-                  </Link>
-                </li>
-              ))}
-            </ol>
-          </section>
-
-          {/* Cross-product bridge — sends the learner back to the
-              full Pratiqo platform (progress / teachers) without
-              hiding YoPratiqo. This is the explicit
-              YoPratiqo → Pratiqo direction of the bridge. */}
-          <section
-            data-testid="yo-student-hub-bridge"
-            className="rounded-3xl border border-[#E7DFCF] bg-gradient-to-br from-[#FAFCFB] via-white to-[#FFF4D6] p-5 shadow-[0_10px_28px_rgba(23,38,66,0.06)] sm:p-6"
-          >
-            <h2 className="text-sm font-bold uppercase tracking-[0.14em] text-[#0F6E56]/70">
-              {copy.bridgeHeading}
-            </h2>
-            <p className="mt-2 text-xs leading-relaxed text-[#0F6E56]/72">
-              {copy.fullProgressHelp}
-            </p>
-            <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-              <Link
-                data-testid="yo-student-hub-full-progress-link"
-                href={HREFS.fullPratiqoProgress}
-                className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-[#172642] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#0f1c33]"
-              >
-                <BookOpenCheck className="size-4" aria-hidden />
-                {copy.fullProgress}
-              </Link>
-              <Link
-                data-testid="yo-student-hub-find-teacher-link"
-                href={HREFS.findTeacher}
-                className="inline-flex flex-1 items-center justify-center gap-2 rounded-full border border-[#172642]/15 bg-white px-5 py-3 text-sm font-bold text-[#172642] transition hover:bg-[#FFF4D6]"
-              >
-                <GraduationCap className="size-4 text-[#13A085]" aria-hidden />
-                {copy.findTeacher}
-              </Link>
-            </div>
-          </section>
+          {pathBlock}
+          {bridgeBlock}
         </div>
       </div>
     </div>

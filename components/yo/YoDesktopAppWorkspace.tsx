@@ -25,6 +25,29 @@
 
 import { cn } from "@/lib/utils";
 
+/**
+ * Center-pane max-width tokens.
+ *
+ * `"2xl"` (default) caps the center pane at `max-w-2xl` (672px),
+ * which is the Phase 3 polish target for reading comfort on
+ * 1440px/1920px monitors. Past ~700px of unbroken prose readers
+ * have to swing their eyes too far between the start and end of
+ * each line, so even a 1920px-wide laptop benefits from a hard
+ * cap on the centre column.
+ *
+ * Tile-grid layouts (e.g. the /yo/langues catalog) need more
+ * width to breathe in their `xl:grid-cols-3` configuration, so
+ * they can opt out via `"4xl"` or `"none"`.
+ */
+export type YoWorkspaceCenterMaxWidth = "2xl" | "3xl" | "4xl" | "none";
+
+const CENTER_MAX_WIDTH_CLASS: Record<YoWorkspaceCenterMaxWidth, string> = {
+  "2xl": "max-w-2xl",
+  "3xl": "max-w-3xl",
+  "4xl": "max-w-4xl",
+  none: "",
+};
+
 export type YoDesktopAppWorkspaceProps = {
   /** Left rail — context / Yoppo / promise card. Optional. */
   leftRail?: React.ReactNode;
@@ -34,6 +57,13 @@ export type YoDesktopAppWorkspaceProps = {
   rightRail?: React.ReactNode;
   /** Stable per-route slug for tests. */
   surfaceId?: string;
+  /**
+   * Maximum width for the centre pane content. Defaults to `"2xl"`
+   * for prose-style learning content (the Phase 3 polish target).
+   * Grid-heavy surfaces (catalog tiles, deck grids) should pass
+   * `"4xl"` or `"none"`.
+   */
+  centerMaxWidth?: YoWorkspaceCenterMaxWidth;
   className?: string;
 };
 
@@ -42,18 +72,26 @@ export function YoDesktopAppWorkspace({
   center,
   rightRail,
   surfaceId,
+  centerMaxWidth = "2xl",
   className,
 }: YoDesktopAppWorkspaceProps): React.JSX.Element {
   const hasLeft = Boolean(leftRail);
   const hasRight = Boolean(rightRail);
+  const centerCapClass = CENTER_MAX_WIDTH_CLASS[centerMaxWidth];
 
+  // CSS `grid-template-columns` track lists are space-separated. Commas
+  // are only valid inside `minmax(...)`. The previous `_,_` form silently
+  // produced an invalid declaration that every browser dropped, so the
+  // workspace fell back to `grid-cols-1` (a stretched mobile column).
+  // Using underscores (Tailwind's escape for the space character inside
+  // arbitrary values) restores the intended 3-pane workspace.
   const gridCols =
     hasLeft && hasRight
-      ? "lg:grid-cols-[280px,minmax(0,1fr),300px]"
+      ? "lg:grid-cols-[280px_minmax(0,1fr)_300px]"
       : hasLeft
-        ? "lg:grid-cols-[300px,minmax(0,1fr)]"
+        ? "lg:grid-cols-[300px_minmax(0,1fr)]"
         : hasRight
-          ? "lg:grid-cols-[minmax(0,1fr),320px]"
+          ? "lg:grid-cols-[minmax(0,1fr)_320px]"
           : "lg:grid-cols-1";
 
   return (
@@ -82,9 +120,18 @@ export function YoDesktopAppWorkspace({
       <section
         data-testid="yo-desktop-workspace-center"
         data-yo-desktop-workspace-pane="center"
+        data-yo-desktop-workspace-center-max-w={centerMaxWidth}
         className="flex min-h-0 flex-col gap-4 overflow-y-auto pr-1 lg:gap-5"
       >
-        {center}
+        <div
+          data-yo-desktop-workspace-center-inner="true"
+          className={cn(
+            "mx-auto flex w-full flex-col gap-4 lg:gap-5",
+            centerCapClass,
+          )}
+        >
+          {center}
+        </div>
       </section>
 
       {hasRight ? (

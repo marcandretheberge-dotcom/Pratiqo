@@ -98,11 +98,23 @@ export function YoCourseAppHeader({
       data-testid="yo-course-app-header"
       data-yo-course-header="true"
       className={cn(
-        "sticky top-0 z-40 border-b border-[#E7DFCF] bg-[#F4EFE6]/92 backdrop-blur-md",
+        // `sticky top-0` is a no-op inside the `YoAppShell` parent
+        // (its root is `overflow-hidden`), AND in some Safari
+        // versions promotes the header to a new stacking context
+        // that escapes the clip — leaking horizontal scroll onto
+        // the document. Drop it; the parent flex column already
+        // pins this header at the top of the viewport.
+        "z-40 border-b border-[#E7DFCF] bg-[#F4EFE6]/92 backdrop-blur-md",
         className,
       )}
     >
-      <div className="mx-auto flex h-14 max-w-3xl items-center justify-between gap-3 px-3 sm:h-16 sm:px-6">
+      {/*
+       * Header row matches the body's `max-w-6xl` so the back arrow
+       * lines up with the YoScreenPager / desktop workspace grid on
+       * tablet (768-1023 px). Previously `max-w-3xl` centered the
+       * arrow under a much wider body, which read as "off-axis".
+       */}
+      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 px-3 sm:h-16 sm:px-6">
         {/* Left: back arrow + label. Icon-only on mobile so the
             course title can stay readable in the center; full
             "← Langues" link on sm+. */}

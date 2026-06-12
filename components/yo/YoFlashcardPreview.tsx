@@ -604,7 +604,14 @@ function DeckCard({
       <div className="flex flex-col gap-2 rounded-3xl border border-teal-100 bg-[var(--color-base-cream)] p-4 sm:p-5">
         <p className="ds-label text-teal-700/90">{ratingPrompt}</p>
 
-        <div className="grid grid-cols-3 gap-2 lg:grid-cols-1">
+        {/*
+         * Mobile: stack the 3 SRS rating buttons vertically so each
+         * long FR label ("Difficile" / "À revoir" / "Maîtrisé")
+         * gets full card width. Previously this grid was inverted
+         * (`grid-cols-3 lg:grid-cols-1`) which made labels wrap
+         * inside ~100 px cells on a 360 px phone.
+         */}
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
           <RatingButton
             quality={0}
             label={ratingLabels[0]}

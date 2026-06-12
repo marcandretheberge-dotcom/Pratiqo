@@ -7,22 +7,34 @@
  * inside `<YoAppShellScroller>` (`overflow-y-auto`), which lets
  * content vertically scroll inside the stage on mobile.
  *
+ * Phase 4 update — explicit-step contract
+ * ---------------------------------------
+ * Every learner-facing route must now mount the new
+ * `<YoAdaptiveStepShell>` + `<YoStepNavigator>` pair (explicit
+ * Back / Next chrome). The legacy `<YoScreenPager>` swipe-only
+ * pager is no longer accepted on these routes — surfacing the
+ * "advance" affordance behind a swipe gesture was the root cause
+ * of learners still reading the experience as "scroll".
+ *
  * This suite is RUNTIME: it imports the audited page modules,
  * actually executes their server-component default export with a
  * resolved `searchParams`, and walks the returned React element
  * tree to assert:
  *
- *   1. The catalog page renders `<YoAdaptiveShell>` (not the bare
- *      `<YoAppShell>` + scroller pattern).
- *   2. The Spanish hub renders `<YoAdaptiveShell>`.
+ *   1. The catalog page renders `<YoAdaptiveStepShell>` (not the
+ *      bare `<YoAppShell>` + scroller pattern).
+ *   2. The Spanish hub renders `<YoAdaptiveStepShell>`.
  *   3. The Dominican Republic Course Home renders
- *      `<YoAdaptiveShell>`.
+ *      `<YoAdaptiveStepShell>`.
  *   4. Each audited page declares a mobile sub-tree (via the
- *      `mobile` prop on YoAdaptiveShell) that contains a
- *      `<YoScreenPager>` track of N screens.
+ *      `mobile` prop on YoAdaptiveStepShell) that contains a
+ *      `<YoStepNavigator>` with N steps, and that the navigator
+ *      mounts a `data-yo-step-navigator-step` host element per
+ *      step.
  *   5. The mobile sub-tree of each audited page contains NO
  *      `<YoAppShellScroller>` (the old vertically-scrolling
- *      central pane).
+ *      central pane) and NO `<YoScreenPager>` (the legacy
+ *      swipe-only pager).
  *   6. The desktop sub-tree of each audited page (`desktop` prop)
  *      declares at minimum a `center` slot, and for the Spanish
  *      hub + Course Home, a `leftRail` + `rightRail` so desktop is
@@ -49,12 +61,112 @@ import YoSpanishLandingPage from "@/app/yo/langues/espagnol/page";
 import YoEspagnolRepubliqueDominicainePage from "@/app/yo/langues/espagnol/pays/republique-dominicaine/page";
 
 // And the primitives we'll match against during tree walks.
+// Routes are progressively migrating from the legacy
+// `<YoAdaptiveShell>` + `<YoScreenPager>` (swipe-only) pair to
+// the new `<YoAdaptiveStepShell>` + `<YoStepNavigator>` pair
+// (explicit Back/Next chrome). Each `findAdaptive*` helper
+// accepts EITHER pair so the suite stays green during the
+// migration and serves as the canonical contract afterwards.
 import { YoAdaptiveShell } from "@/components/yo/YoAdaptiveShell";
+import { YoAdaptiveStepShell } from "@/components/yo/YoAdaptiveStepShell";
 import { YoMobileAppShell } from "@/components/yo/YoMobileAppShell";
+import { YoMobileAppStepShell } from "@/components/yo/YoMobileAppStepShell";
 import { YoDesktopLearningWorkspace } from "@/components/yo/YoDesktopLearningWorkspace";
 import { YoScreenPager } from "@/components/yo/YoScreenPager";
+import { YoStepNavigator } from "@/components/yo/YoStepNavigator";
 import { YoAppShell, YoAppShellScroller } from "@/components/yo/YoAppShell";
 import { YoAppBottomBar } from "@/components/yo/YoAppBottomBar";
+
+type AdaptiveShellHit =
+  | { kind: "legacy"; element: ReactElement }
+  | { kind: "step"; element: ReactElement };
+
+function findAdaptiveShell(tree: ReactNode): AdaptiveShellHit | undefined {
+  const stepShell = findByType(tree, YoAdaptiveStepShell);
+  if (stepShell) return { kind: "step", element: stepShell };
+  const legacy = findByType(tree, YoAdaptiveShell);
+  if (legacy) return { kind: "legacy", element: legacy };
+  return undefined;
+}
+
+type MobileShellHit =
+  | { kind: "legacy"; element: ReactElement }
+  | { kind: "step"; element: ReactElement };
+
+function findMobileShell(tree: ReactNode): MobileShellHit | undefined {
+  const stepShell = findByType(tree, YoMobileAppStepShell);
+  if (stepShell) return { kind: "step", element: stepShell };
+  const legacy = findByType(tree, YoMobileAppShell);
+  if (legacy) return { kind: "legacy", element: legacy };
+  return undefined;
+}
+
+function expandMobileShell(
+  hit: MobileShellHit,
+): ReactElement {
+  if (hit.kind === "step") {
+    return (YoMobileAppStepShell(
+      hit.element.props as Parameters<typeof YoMobileAppStepShell>[0],
+    ) as unknown) as ReactElement;
+  }
+  return (YoMobileAppShell(
+    hit.element.props as Parameters<typeof YoMobileAppShell>[0],
+  ) as unknown) as ReactElement;
+}
+
+function expandAdaptiveShell(hit: AdaptiveShellHit): ReactElement {
+  if (hit.kind === "step") {
+    return (YoAdaptiveStepShell(
+      hit.element.props as Parameters<typeof YoAdaptiveStepShell>[0],
+    ) as unknown) as ReactElement;
+  }
+  return (YoAdaptiveShell(
+    hit.element.props as Parameters<typeof YoAdaptiveShell>[0],
+  ) as unknown) as ReactElement;
+}
+
+function adaptiveMobileProps(hit: AdaptiveShellHit): {
+  header?: ReactNode;
+  bottom?: ReactNode;
+  steps?: ReadonlyArray<{ id: string }>;
+  screens?: ReadonlyArray<{ id: string }>;
+} {
+  const props = hit.element.props as {
+    mobile?: {
+      header?: ReactNode;
+      bottom?: ReactNode;
+      steps?: ReadonlyArray<{ id: string }>;
+      screens?: ReadonlyArray<{ id: string }>;
+    };
+  };
+  return props.mobile ?? {};
+}
+
+function adaptiveDesktopProps(hit: AdaptiveShellHit): {
+  header?: ReactNode;
+  center?: ReactNode;
+  leftRail?: ReactNode;
+  rightRail?: ReactNode;
+} {
+  const props = hit.element.props as {
+    desktop?: {
+      header?: ReactNode;
+      center?: ReactNode;
+      leftRail?: ReactNode;
+      rightRail?: ReactNode;
+    };
+  };
+  return props.desktop ?? {};
+}
+
+/** Returns the mobile screen/step list regardless of shell flavour. */
+function adaptiveMobileSteps(
+  hit: AdaptiveShellHit,
+): ReadonlyArray<{ id: string }> {
+  const mobile = adaptiveMobileProps(hit);
+  if (hit.kind === "step") return mobile.steps ?? [];
+  return mobile.screens ?? [];
+}
 
 type TestFn = () => void | Promise<void>;
 const tests: Array<{ name: string; fn: TestFn }> = [];
@@ -153,91 +265,110 @@ async function renderCourseHome(): Promise<ReactElement> {
   return tree as ReactElement;
 }
 
-// ─── 1. Catalog renders YoAdaptiveShell ──────────────────────────
-test("/yo/langues runtime tree mounts <YoAdaptiveShell>", async () => {
+// ─── 1. Catalog renders the adaptive step shell ──────────────────
+test("/yo/langues runtime tree mounts <YoAdaptiveStepShell>", async () => {
   const tree = await renderCatalog();
-  const shell = findByType(tree, YoAdaptiveShell);
-  assert.ok(shell, "catalog must mount a runtime <YoAdaptiveShell>");
+  const hit = findAdaptiveShell(tree);
+  assert.ok(hit, "catalog must mount a runtime adaptive shell");
+  assert.strictEqual(
+    hit.kind,
+    "step",
+    "catalog must use <YoAdaptiveStepShell> (no legacy <YoAdaptiveShell>)",
+  );
 });
 
-// ─── 2. Spanish hub renders YoAdaptiveShell ──────────────────────
-test("/yo/langues/espagnol runtime tree mounts <YoAdaptiveShell>", async () => {
+// ─── 2. Spanish hub renders the adaptive step shell ──────────────
+test("/yo/langues/espagnol runtime tree mounts <YoAdaptiveStepShell>", async () => {
   const tree = await renderSpanishHub();
-  const shell = findByType(tree, YoAdaptiveShell);
-  assert.ok(shell, "Spanish hub must mount a runtime <YoAdaptiveShell>");
+  const hit = findAdaptiveShell(tree);
+  assert.ok(hit, "Spanish hub must mount a runtime adaptive shell");
+  assert.strictEqual(
+    hit.kind,
+    "step",
+    "Spanish hub must use <YoAdaptiveStepShell> (no legacy <YoAdaptiveShell>)",
+  );
 });
 
-// ─── 3. Course Home renders YoAdaptiveShell ──────────────────────
-test("Dominican Republic Course Home runtime tree mounts <YoAdaptiveShell>", async () => {
+// ─── 3. Course Home renders the adaptive step shell ──────────────
+test("Dominican Republic Course Home runtime tree mounts <YoAdaptiveStepShell>", async () => {
   const tree = await renderCourseHome();
-  const shell = findByType(tree, YoAdaptiveShell);
-  assert.ok(shell, "Course Home must mount a runtime <YoAdaptiveShell>");
+  const hit = findAdaptiveShell(tree);
+  assert.ok(hit, "Course Home must mount a runtime adaptive shell");
+  assert.strictEqual(
+    hit.kind,
+    "step",
+    "Course Home must use <YoAdaptiveStepShell> (no legacy <YoAdaptiveShell>)",
+  );
 });
 
-// ─── 4. Each audited page declares a mobile pager with N screens ──
-test("every audited page declares a mobile YoScreenPager with at least 2 screens", async () => {
+// ─── 4. Each audited page declares a mobile step navigator ───────
+test("every audited page declares at least 2 mobile steps and mounts <YoStepNavigator>", async () => {
   for (const [label, trees] of [
     ["catalog", await renderCatalog()],
     ["Spanish hub", await renderSpanishHub()],
     ["Course Home", await renderCourseHome()],
   ] as const) {
-    const adaptive = findByType(trees, YoAdaptiveShell);
-    assert.ok(adaptive, `${label} must mount <YoAdaptiveShell>`);
-    const mobile = (adaptive!.props as {
-      mobile?: { screens?: ReadonlyArray<{ id: string }> };
-    }).mobile;
-    assert.ok(mobile, `${label} must declare a mobile sub-tree`);
-    assert.ok(
-      Array.isArray(mobile.screens) && mobile.screens.length >= 2,
-      `${label} mobile pager must declare at least 2 paged screens; got ${
-        mobile.screens?.length ?? "<missing>"
-      }`,
+    const hit = findAdaptiveShell(trees);
+    assert.ok(hit, `${label} must mount an adaptive shell`);
+    assert.strictEqual(
+      hit.kind,
+      "step",
+      `${label} must use the new step shell`,
     );
-    // The screens array becomes a real <YoScreenPager> inside
-    // YoMobileAppShell — render the mobile sub-tree from
-    // YoAdaptiveShell and confirm the pager actually mounts.
-    const mobileNode = findByType(trees, YoMobileAppShell);
-    if (mobileNode) {
-      // The pager is composed inside YoMobileAppShell — when
-      // YoAdaptiveShell is rendered we'll see it then. The
-      // contract is satisfied as long as the screens prop is set
-      // and YoMobileAppShell renders.
-      // (When the YoAdaptiveShell mounts YoMobileAppShell, the
-      // returned tree wraps the pager — we expand and look.)
-      const expanded = (YoMobileAppShell(
-        mobileNode.props as Parameters<typeof YoMobileAppShell>[0],
-      ) as unknown) as ReactElement;
-      const pager = findByType(expanded, YoScreenPager);
-      assert.ok(
-        pager,
-        `${label} mobile sub-tree must mount <YoScreenPager>`,
-      );
-      const pagerScreens = (pager!.props as {
-        screens?: ReadonlyArray<unknown>;
-      }).screens;
-      assert.ok(
-        Array.isArray(pagerScreens) && pagerScreens.length === mobile.screens.length,
-        `${label} pager must receive every screen (${mobile.screens.length} expected)`,
-      );
-    }
+    const steps = adaptiveMobileSteps(hit);
+    assert.ok(
+      steps.length >= 2,
+      `${label} mobile sub-tree must declare at least 2 steps; got ${steps.length}`,
+    );
+    // Expand the adaptive step shell so we can see the mobile +
+    // desktop sub-trees it composes.
+    const adaptiveExpanded = expandAdaptiveShell(hit);
+    const mobileHit = findMobileShell(adaptiveExpanded);
+    assert.ok(mobileHit, `${label} must mount a mobile shell`);
+    assert.strictEqual(
+      mobileHit.kind,
+      "step",
+      `${label} mobile shell must be <YoMobileAppStepShell>`,
+    );
+    const expanded = expandMobileShell(mobileHit);
+    const navigator = findByType(expanded, YoStepNavigator);
+    assert.ok(
+      navigator,
+      `${label} mobile sub-tree must mount <YoStepNavigator>`,
+    );
+    const navSteps = (navigator!.props as {
+      steps?: ReadonlyArray<unknown>;
+    }).steps;
+    assert.ok(
+      Array.isArray(navSteps) && navSteps.length === steps.length,
+      `${label} navigator must receive every step (${steps.length} expected)`,
+    );
   }
 });
 
-// ─── 5. Mobile sub-trees contain NO YoAppShellScroller ───────────
-test("no audited page's mobile sub-tree mounts the legacy YoAppShellScroller", async () => {
+// ─── 5. Mobile sub-trees contain NO legacy scroller and NO pager ─
+test("no audited page's mobile sub-tree mounts the legacy YoAppShellScroller or YoScreenPager", async () => {
   for (const [label, trees] of [
     ["catalog", await renderCatalog()],
     ["Spanish hub", await renderSpanishHub()],
     ["Course Home", await renderCourseHome()],
   ] as const) {
     // We walk the full render tree of each page module. The
-    // legacy `<YoAppShellScroller>` (overflow-y-auto stage scroller)
-    // must NOT appear anywhere — it's the smoking-gun pattern that
-    // let the previous PR's body-scroll bug survive.
+    // legacy `<YoAppShellScroller>` (overflow-y-auto stage
+    // scroller) must NOT appear anywhere — it's the smoking-gun
+    // pattern that let the previous PR's body-scroll bug survive.
     const scroller = findByType(trees, YoAppShellScroller);
     assert.ok(
       !scroller,
       `${label} must not mount <YoAppShellScroller> (the legacy overflow-y-auto stage)`,
+    );
+    // The legacy `<YoScreenPager>` (passive swipe-only horizontal
+    // pager) is also banned. The whole point of Phase 1 was to
+    // replace it with explicit Back / Next chrome.
+    const pager = findByType(trees, YoScreenPager);
+    assert.ok(
+      !pager,
+      `${label} must not mount <YoScreenPager> (replaced by <YoStepNavigator>)`,
     );
   }
 });
@@ -265,12 +396,9 @@ test("each audited page declares a desktop sub-tree with a centre pane (workspac
     },
   ];
   for (const { label, tree, requireRightRail } of cases) {
-    const adaptive = findByType(tree, YoAdaptiveShell);
-    assert.ok(adaptive, `${label} must mount <YoAdaptiveShell>`);
-    const desktop = (adaptive!.props as {
-      desktop?: { center?: unknown; leftRail?: unknown; rightRail?: unknown };
-    }).desktop;
-    assert.ok(desktop, `${label} must declare a desktop sub-tree`);
+    const hit = findAdaptiveShell(tree);
+    assert.ok(hit, `${label} must mount an adaptive shell`);
+    const desktop = adaptiveDesktopProps(hit);
     assert.ok(
       desktop.center !== undefined && desktop.center !== null,
       `${label} desktop sub-tree must declare a center pane`,
@@ -295,22 +423,19 @@ test("mobile and desktop sub-trees of each audited page are structurally distinc
     ["Spanish hub", await renderSpanishHub()],
     ["Course Home", await renderCourseHome()],
   ] as const) {
-    const adaptive = findByType(tree, YoAdaptiveShell);
-    assert.ok(adaptive, `${label} must mount <YoAdaptiveShell>`);
-    const { mobile, desktop } = adaptive!.props as {
-      mobile: { header?: unknown; screens: ReadonlyArray<unknown>; bottom?: unknown };
-      desktop: { header?: unknown; center?: unknown; leftRail?: unknown; rightRail?: unknown };
-    };
-    // The mobile branch should be screen-paged (has `screens`).
-    // The desktop branch should be workspace-shaped (no `screens`,
-    // has `center` + `leftRail`).
+    const hit = findAdaptiveShell(tree);
+    assert.ok(hit, `${label} must mount an adaptive shell`);
+    const mobile = adaptiveMobileProps(hit);
+    const desktop = adaptiveDesktopProps(hit);
+    const mobileSteps = adaptiveMobileSteps(hit);
     assert.ok(
-      Array.isArray(mobile.screens),
-      `${label} mobile sub-tree must declare a paged screens list`,
+      mobileSteps.length > 0,
+      `${label} mobile sub-tree must declare a paged screens/steps list`,
     );
     assert.ok(
-      !("screens" in (desktop as Record<string, unknown>)),
-      `${label} desktop sub-tree must NOT declare a screens list (it must use the workspace pattern)`,
+      !("screens" in (desktop as Record<string, unknown>)) &&
+        !("steps" in (desktop as Record<string, unknown>)),
+      `${label} desktop sub-tree must NOT declare a screens/steps list (it must use the workspace pattern)`,
     );
     // The mobile header element and the desktop header element
     // must be distinct objects — otherwise desktop is just
@@ -325,55 +450,64 @@ test("mobile and desktop sub-trees of each audited page are structurally distinc
   }
 });
 
-// ─── 8. Spanish hub primary CTA is a bottom-bar pointing at DR ───
-test("Spanish hub mobile sub-tree mounts a YoAppBottomBar primary CTA pointing at the Dominican Republic Course Home", async () => {
+// ─── 8. Spanish hub primary CTA still points at the DR Course Home ─
+test("Spanish hub mobile sub-tree surfaces a Dominican Republic primary CTA", async () => {
+  // The Spanish hub may surface the primary CTA via either the
+  // legacy `<YoAppBottomBar>` in the mobile `bottom` slot OR the
+  // new `lastStepNextHref` on the step navigator. Either path
+  // is acceptable; what matters is that the learner has a clearly
+  // labeled affordance pointing at the DR Course Home.
   const tree = await renderSpanishHub();
-  const adaptive = findByType(tree, YoAdaptiveShell);
-  assert.ok(adaptive, "Spanish hub must mount <YoAdaptiveShell>");
-  const mobile = (adaptive!.props as {
-    mobile: { bottom?: ReactNode };
-  }).mobile;
-  const bottomBar = mobile.bottom
-    ? findByType(mobile.bottom, YoAppBottomBar)
+  const hit = findAdaptiveShell(tree);
+  assert.ok(hit, "Spanish hub must mount an adaptive shell");
+  const mobile = hit.element.props as {
+    mobile: {
+      bottom?: ReactNode;
+      lastStepNextHref?: string;
+    };
+  };
+  const bottomBar = mobile.mobile.bottom
+    ? findByType(mobile.mobile.bottom, YoAppBottomBar)
     : undefined;
+  const bottomBarHref = bottomBar
+    ? (bottomBar.props as { primaryHref?: string }).primaryHref
+    : undefined;
+  const lastStepNextHref = mobile.mobile.lastStepNextHref;
+  const candidate = bottomBarHref ?? lastStepNextHref;
   assert.ok(
-    bottomBar,
-    "Spanish hub mobile sub-tree must mount <YoAppBottomBar /> in its `bottom` slot",
-  );
-  const primaryHref = (bottomBar!.props as { primaryHref?: string })
-    .primaryHref;
-  assert.ok(
-    typeof primaryHref === "string" &&
-      primaryHref.startsWith(
+    typeof candidate === "string" &&
+      candidate.startsWith(
         "/yo/langues/espagnol/pays/republique-dominicaine",
       ),
-    `Spanish hub mobile primary CTA must target the Dominican Republic Course Home — got ${primaryHref}`,
+    `Spanish hub mobile primary CTA must target the Dominican Republic Course Home — got bottom=${bottomBarHref ?? "<none>"} lastStep=${lastStepNextHref ?? "<none>"}`,
   );
 });
 
-// ─── 9. Course Home mobile sub-tree mounts a YoAppBottomBar ──────
-test("Course Home mobile sub-tree mounts a YoAppBottomBar pointing at the Intro deck", async () => {
+// ─── 9. Course Home mobile primary CTA points at the Intro deck ──
+test("Course Home mobile sub-tree surfaces an Intro deck primary CTA", async () => {
   const tree = await renderCourseHome();
-  const adaptive = findByType(tree, YoAdaptiveShell);
-  assert.ok(adaptive, "Course Home must mount <YoAdaptiveShell>");
-  const mobile = (adaptive!.props as {
-    mobile: { bottom?: ReactNode };
-  }).mobile;
-  const bottomBar = mobile.bottom
-    ? findByType(mobile.bottom, YoAppBottomBar)
+  const hit = findAdaptiveShell(tree);
+  assert.ok(hit, "Course Home must mount an adaptive shell");
+  const mobile = hit.element.props as {
+    mobile: {
+      bottom?: ReactNode;
+      lastStepNextHref?: string;
+    };
+  };
+  const bottomBar = mobile.mobile.bottom
+    ? findByType(mobile.mobile.bottom, YoAppBottomBar)
     : undefined;
+  const bottomBarHref = bottomBar
+    ? (bottomBar.props as { primaryHref?: string }).primaryHref
+    : undefined;
+  const lastStepNextHref = mobile.mobile.lastStepNextHref;
+  const candidate = bottomBarHref ?? lastStepNextHref;
   assert.ok(
-    bottomBar,
-    "Course Home mobile sub-tree must mount <YoAppBottomBar /> in its `bottom` slot",
-  );
-  const primaryHref = (bottomBar!.props as { primaryHref?: string })
-    .primaryHref;
-  assert.ok(
-    typeof primaryHref === "string" &&
-      primaryHref.includes(
+    typeof candidate === "string" &&
+      candidate.includes(
         "/yo/langues/espagnol/pays/republique-dominicaine/intro",
       ),
-    `Course Home mobile primary CTA must target the Intro deck route — got ${primaryHref}`,
+    `Course Home mobile primary CTA must target the Intro deck route — got bottom=${bottomBarHref ?? "<none>"} lastStep=${lastStepNextHref ?? "<none>"}`,
   );
 });
 
@@ -387,21 +521,15 @@ test("every audited page still inherits the viewport-lock from YoAppShell undern
     ["Spanish hub", await renderSpanishHub()],
     ["Course Home", await renderCourseHome()],
   ] as const) {
-    const adaptive = findByType(tree, YoAdaptiveShell);
-    assert.ok(adaptive, `${label} must mount <YoAdaptiveShell>`);
-    const adaptiveExpanded = (YoAdaptiveShell(
-      adaptive!.props as Parameters<typeof YoAdaptiveShell>[0],
-    ) as unknown) as ReactElement;
-    // YoMobileAppShell + YoDesktopLearningWorkspace each compose
-    // YoAppShell underneath. Expand one of them and assert.
-    const mobileNode = findByType(adaptiveExpanded, YoMobileAppShell);
+    const hit = findAdaptiveShell(tree);
+    assert.ok(hit, `${label} must mount an adaptive shell`);
+    const adaptiveExpanded = expandAdaptiveShell(hit);
+    const mobileHit = findMobileShell(adaptiveExpanded);
     assert.ok(
-      mobileNode,
-      `${label} must compose <YoMobileAppShell> inside <YoAdaptiveShell>`,
+      mobileHit,
+      `${label} must compose a mobile shell inside the adaptive shell`,
     );
-    const mobileExpanded = (YoMobileAppShell(
-      mobileNode!.props as Parameters<typeof YoMobileAppShell>[0],
-    ) as unknown) as ReactElement;
+    const mobileExpanded = expandMobileShell(mobileHit);
     const shellInMobile = findByType(mobileExpanded, YoAppShell);
     assert.ok(
       shellInMobile,
@@ -411,7 +539,7 @@ test("every audited page still inherits the viewport-lock from YoAppShell undern
     const desktopNode = findByType(adaptiveExpanded, YoDesktopLearningWorkspace);
     assert.ok(
       desktopNode,
-      `${label} must compose <YoDesktopLearningWorkspace> inside <YoAdaptiveShell>`,
+      `${label} must compose <YoDesktopLearningWorkspace> inside the adaptive shell`,
     );
     const desktopExpanded = (YoDesktopLearningWorkspace(
       desktopNode!.props as Parameters<typeof YoDesktopLearningWorkspace>[0],

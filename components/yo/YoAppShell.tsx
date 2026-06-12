@@ -65,7 +65,10 @@ export function YoAppShell({
       data-yo-app-shell="true"
       data-yo-app-shell-surface={surfaceId}
       className={cn(
-        "relative flex h-[100dvh] min-h-[100vh] flex-col overflow-hidden overscroll-contain text-[#172642]",
+        // `h-[100dvh]` only — combining `min-h-[100vh]` resolves to
+        // `100vh` on iOS Safari while the bottom toolbar is visible,
+        // pushing the pinned bottom CTA under the toolbar.
+        "relative flex h-[100dvh] flex-col overflow-hidden overscroll-contain text-[#172642]",
         background ?? DEFAULT_BACKGROUND,
         className,
       )}

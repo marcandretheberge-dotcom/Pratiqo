@@ -237,7 +237,7 @@ export function YoStudentCompanionCard({
       ) : derived.hasAnyProgress ? (
         <dl
           data-testid="yo-student-companion-card-stats"
-          className="mt-4 grid grid-cols-2 gap-3 rounded-2xl border border-[#DDF4F1] bg-white/85 p-3"
+          className="mt-4 grid grid-cols-1 gap-3 rounded-2xl border border-[#DDF4F1] bg-white/85 p-3 sm:grid-cols-2"
         >
           <div>
             <dt className="text-[10px] font-black uppercase tracking-[0.14em] text-[#0F6E56]/65">

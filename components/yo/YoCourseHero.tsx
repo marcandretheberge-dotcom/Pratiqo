@@ -127,16 +127,25 @@ export function YoCourseHero({
         className,
       )}
     >
-      {/* 1. Rounded country hero image */}
-      <div className="relative overflow-hidden rounded-[1.5rem] border border-[#E7DFCF] bg-[#EFE7D6]">
+      {/*
+       * 1. Rounded country hero image.
+       *
+       * Uses `object-contain` so non-16:10 images (e.g. the
+       * `/images/yo/app/hero.png` portrait fallback at 388x742)
+       * are letterboxed against the warm cream `bg-[#EFE7D6]`
+       * instead of having their top/bottom subject area cropped
+       * away by `object-cover`. The wrapper still enforces an
+       * `aspect-[16/10]` so the layout stays predictable when
+       * the image has not yet loaded.
+       */}
+      <div className="relative aspect-[16/10] w-full overflow-hidden rounded-[1.5rem] border border-[#E7DFCF] bg-[#EFE7D6]">
         <Image
           src={heroImagePath}
           alt={heroImageAlt}
-          width={1500}
-          height={900}
+          fill
           sizes="(min-width: 1024px) 560px, (min-width: 640px) 540px, 100vw"
           priority
-          className="aspect-[16/10] w-full object-cover"
+          className="object-contain"
         />
       </div>
 

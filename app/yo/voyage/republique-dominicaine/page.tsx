@@ -1,43 +1,59 @@
 /**
- * YoPratiqo — Espagnol République dominicaine A1 (legacy Voyage-section route)
+ * YoPratiqo — legacy Voyage route for the Dominican Republic course.
  *
- * Original product URL for the RD module. Kept alive on purpose so any
- * earlier shared link, marketing draft or external mention continues to
- * resolve. The shared composition lives in
- * `components/yo/RepubliqueDominicaineContent.tsx` and is reused by the
- * new information architecture at
- * `/yo/langues/espagnol/pays/republique-dominicaine`.
+ * The canonical URL for the Dominican Republic A1 course is now
+ * `/yo/langues/espagnol/pays/republique-dominicaine` (the new
+ * YoPratiqo information architecture: YoPratiqo → Langues →
+ * Espagnol → République dominicaine). The original
+ * `/yo/voyage/republique-dominicaine` URL is preserved for back-
+ * compat with older shared links / marketing references, but
+ * permanently forwards the learner to the canonical Course Home.
  *
- * Locale behaviour:
- *   /yo/voyage/republique-dominicaine            → French (default)
- *   /yo/voyage/republique-dominicaine?lang=en    → English
- *   /yo/voyage/republique-dominicaine?lang=fr    → French (explicit)
+ * The long-form cultural discovery copy that used to live on
+ * this route is now mounted as a sub-route at
+ * `/yo/langues/espagnol/pays/republique-dominicaine/decouvrir`
+ * (linked from the Course Home's "Details" step) — that's where
+ * `RepubliqueDominicaineContent` is rendered today.
  *
- * No Supabase, no Stripe, no payment math, no checkout, no marketplace.
+ * Why a redirect instead of a stretched-mobile page
+ * -------------------------------------------------
+ * The old long-scroll route was the last remaining
+ * `min-h-[100dvh]` body-scroll surface in the `/yo` IA. By
+ * redirecting it we cut a stretched-mobile experience entirely
+ * and route every learner into the new step-shell Course Home
+ * (button-driven Back/Next chrome on phones, three-pane
+ * product workspace on desktop).
+ *
+ * Locale propagation
+ * ------------------
+ * The `?lang=` query string is preserved so the canonical
+ * Course Home renders the same language the learner originally
+ * requested.
+ *
+ * Privacy / safety profile
+ * ------------------------
+ *   • Server component. No Supabase, no Stripe, no payment
+ *     math, no checkout, no marketplace. No fake claims.
  */
 
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
+
 import { SITE_URL } from "@/lib/seo/site";
 import { getYoLocale } from "@/lib/yo/localize";
-import { RepubliqueDominicaineContent } from "@/components/yo/RepubliqueDominicaineContent";
 
 export const dynamic = "force-dynamic";
 
+// Keep the canonical URL pointing at the new IA so crawlers
+// pick up the move. `robots.index: false` is preserved as a
+// belt-and-suspenders signal — the redirect itself is the
+// primary instruction to search engines.
 export const metadata: Metadata = {
-  title:
-    "YoPratiqo — Espagnol République dominicaine A1",
+  title: "YoPratiqo — Espagnol République dominicaine A1",
   description:
-    "Apprends à vraiment parler sur place avec culture, expressions locales et missions réelles. Niveau A1 débutant, $24,99 CAD.",
+    "Ce parcours a déménagé. Tu seras redirigé·e vers l’espace République dominicaine de YoPratiqo.",
   alternates: {
-    canonical: `${SITE_URL}/yo/voyage/republique-dominicaine`,
-  },
-  openGraph: {
-    title: "YoPratiqo — République dominicaine A1",
-    description:
-      "Espagnol pratique, culture dominicaine et expressions locales. $24,99 CAD.",
-    type: "website",
-    url: `${SITE_URL}/yo/voyage/republique-dominicaine`,
-    locale: "fr_CA",
+    canonical: `${SITE_URL}/yo/langues/espagnol/pays/republique-dominicaine`,
   },
   robots: { index: false, follow: false },
 };
@@ -49,10 +65,16 @@ interface PageProps {
 export default async function YoVoyageRepubliqueDominicainePage({
   searchParams,
 }: PageProps) {
-  const resolvedSearchParams = await searchParams;
-  const locale = getYoLocale(resolvedSearchParams.lang);
-
-  // Legacy route: no breadcrumb (this URL pre-dates the
-  // YoPratiqo → Langues → Espagnol → République dominicaine IA).
-  return <RepubliqueDominicaineContent locale={locale} />;
+  const resolved = await searchParams;
+  const locale = getYoLocale(resolved.lang);
+  // Preserve the user-facing locale so the destination Course
+  // Home renders in the same language they originally requested.
+  // `redirect()` from `next/navigation` ships a 307 by default;
+  // explicitly use a permanent redirect so crawlers update their
+  // canonical references.
+  const target =
+    locale === "fr"
+      ? "/yo/langues/espagnol/pays/republique-dominicaine"
+      : `/yo/langues/espagnol/pays/republique-dominicaine?lang=${locale}`;
+  redirect(target);
 }

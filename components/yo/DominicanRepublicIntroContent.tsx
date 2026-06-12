@@ -293,7 +293,7 @@ function buildIntroDeckScreens(locale: YoLocale): YoLessonDeckScreen[] {
             </p>
             <ul
               role="list"
-              className="mt-4 grid grid-cols-2 gap-2 sm:gap-3"
+              className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3"
             >
               {data.introProgress.stats.map((stat) => (
                 <li

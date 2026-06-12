@@ -59,7 +59,7 @@ import { YoLanguageBadge } from "@/components/yo/YoLanguageBadge";
 import { YoAppShell as _YoAppShell, YoAppShellScroller as _YoAppShellScroller } from "@/components/yo/YoAppShell";
 import { YoAppHeader } from "@/components/yo/YoAppHeader";
 import { YoDesktopAppWorkspace as _YoDesktopAppWorkspace } from "@/components/yo/YoDesktopAppWorkspace";
-import { YoAdaptiveShell } from "@/components/yo/YoAdaptiveShell";
+import { YoAdaptiveStepShell } from "@/components/yo/YoAdaptiveStepShell";
 import { YoAppBottomBar } from "@/components/yo/YoAppBottomBar";
 
 void _YoAppShell;
@@ -221,7 +221,7 @@ function PrimaryCard({
           <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#0F6E56]">
             {eyebrow}
           </p>
-          <h2 className="truncate text-base font-semibold text-[#0F6E56] sm:text-lg">
+          <h2 className="text-base font-semibold leading-snug text-[#0F6E56] break-words sm:text-lg">
             {title}
           </h2>
         </div>
@@ -448,10 +448,18 @@ function renderMobilePrimaryScreen(
           </p>
         </div>
       </section>
+      {/*
+       * Wrapper is `flex flex-col` (no `flex-1`) so the card sizes
+       * to its content. Previously `flex flex-1 flex-col` stretched
+       * the wrapper to the full viewport height (~600 px) while the
+       * card itself had ~120 px of real content, producing 480 px
+       * of empty whitespace between the title and the CTA that
+       * read as "text crammed on half the card."
+       */}
       <div
         data-testid="yo-spanish-hub-card-grid"
         data-yo-spanish-hub-card-grid-variant="mobile-primary"
-        className="flex flex-1 flex-col"
+        className="flex flex-col"
       >
         <PrimaryCard
           locale={locale}
@@ -536,19 +544,26 @@ export default async function YoSpanishLandingPage({
   );
 
   return (
-    <YoAdaptiveShell
+    <YoAdaptiveStepShell
       surfaceId="spanish-hub"
       mobile={{
         header: mobileHeader,
+        locale,
         background:
           "bg-[linear-gradient(180deg,#FAFCFB_0%,#F4EFE6_55%,#FBF7EE_100%)]",
-        pagerAriaLabel:
+        stepsAriaLabel:
           locale === "en"
             ? "YoPratiqo Spanish hub"
             : locale === "es"
               ? "Hub español YoPratiqo"
               : "Espace espagnol YoPratiqo",
-        screens: [
+        rootBackHref: `/yo/langues${langSuffix}`,
+        rootBackLabel: t(BACK_LABEL, locale),
+        // The "Done" CTA on the last step is the canonical primary
+        // CTA out of the hub (Dominican Republic Course Home).
+        lastStepNextHref: primaryHref,
+        lastStepNextLabel: t(RD_CARD_CTA, locale),
+        steps: [
           {
             id: "spanish-primary",
             label:
@@ -570,6 +585,11 @@ export default async function YoSpanishLandingPage({
             content: renderMobileSecondaryScreen(locale),
           },
         ],
+        // The static contract test still asserts a `<YoAppBottomBar>`
+        // primary CTA in the Spanish hub's mobile sub-tree. We keep
+        // it as the secondary bottom slot for back-compat; Phase 4
+        // will rewrite that test against the new
+        // `lastStepNextHref` contract and let us drop this slot.
         bottom: (
           <YoAppBottomBar
             surfaceId="spanish-hub"
