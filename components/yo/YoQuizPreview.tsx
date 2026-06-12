@@ -25,10 +25,14 @@ import type {
 import { cn } from "@/lib/utils";
 import { t } from "@/lib/yo/localize";
 import { YO_COPY } from "@/lib/yo/copy";
+import { useYoAudioFeedback } from "@/components/yo/YoAudioFeedbackProvider";
+import { YoYoppoReward } from "@/components/yo/YoYoppoReward";
 
 export interface YoQuizPreviewProps {
   questions: YoQuizQuestion[];
   locale: YoLocale;
+  enableAudioFeedback?: boolean;
+  compactDeck?: boolean;
 }
 
 type AnswerLog = {
@@ -41,8 +45,14 @@ type QuizState =
   | { mode: "question"; pickedOptionId: string | null; isCorrect: boolean | null }
   | { mode: "complete" };
 
-export function YoQuizPreview({ questions, locale }: YoQuizPreviewProps) {
+export function YoQuizPreview({
+  questions,
+  locale,
+  enableAudioFeedback = false,
+  compactDeck = false,
+}: YoQuizPreviewProps) {
   const total = questions.length;
+  const { playFeedback } = useYoAudioFeedback();
   const [index, setIndex] = useState(0);
   const [state, setState] = useState<QuizState>({
     mode: "question",
@@ -53,12 +63,15 @@ export function YoQuizPreview({ questions, locale }: YoQuizPreviewProps) {
 
   const handlePick = useCallback(
     (option: YoQuizOption) => {
+      const question = questions[index];
+      if (!question) return;
+      const isCorrect = option.id === question.correctOptionId;
+      if (enableAudioFeedback) {
+        void playFeedback(isCorrect ? "correct" : "incorrect");
+      }
       setState((prev) => {
         if (prev.mode !== "question") return prev;
         if (prev.pickedOptionId !== null) return prev;
-        const question = questions[index];
-        if (!question) return prev;
-        const isCorrect = option.id === question.correctOptionId;
         setHistory((h) => [
           ...h,
           {
@@ -74,13 +87,16 @@ export function YoQuizPreview({ questions, locale }: YoQuizPreviewProps) {
         };
       });
     },
-    [index, questions],
+    [enableAudioFeedback, index, playFeedback, questions],
   );
 
   const handleNext = useCallback(() => {
     setIndex((i) => {
       if (i >= total - 1) {
         setState({ mode: "complete" });
+        if (enableAudioFeedback) {
+          void playFeedback("step-complete");
+        }
         return i;
       }
       setState({
@@ -90,7 +106,7 @@ export function YoQuizPreview({ questions, locale }: YoQuizPreviewProps) {
       });
       return i + 1;
     });
-  }, [total]);
+  }, [enableAudioFeedback, playFeedback, total]);
 
   const handleRestart = useCallback(() => {
     setIndex(0);
@@ -111,7 +127,10 @@ export function YoQuizPreview({ questions, locale }: YoQuizPreviewProps) {
   return (
     <section
       aria-labelledby="yo-quiz-title"
-      className="mx-auto w-full max-w-5xl px-5 pt-10 sm:px-8 sm:pt-14"
+      className={cn(
+        "mx-auto w-full max-w-5xl px-5 pt-10 sm:px-8 sm:pt-14",
+        compactDeck && "max-w-2xl px-2 pt-0 sm:px-3 sm:pt-0",
+      )}
     >
       <div className="mb-5 flex items-baseline justify-between gap-4">
         <h2
@@ -134,6 +153,8 @@ export function YoQuizPreview({ questions, locale }: YoQuizPreviewProps) {
           total={total}
           onRestart={handleRestart}
           locale={locale}
+          enableAudioFeedback={enableAudioFeedback}
+          compactDeck={compactDeck}
         />
       ) : (
         <QuestionCard
@@ -144,6 +165,7 @@ export function YoQuizPreview({ questions, locale }: YoQuizPreviewProps) {
           onPick={handlePick}
           onNext={handleNext}
           locale={locale}
+          compactDeck={compactDeck}
         />
       )}
     </section>
@@ -158,6 +180,7 @@ interface QuestionCardProps {
   onPick: (option: YoQuizOption) => void;
   onNext: () => void;
   locale: YoLocale;
+  compactDeck: boolean;
 }
 
 function QuestionCard({
@@ -168,6 +191,7 @@ function QuestionCard({
   onPick,
   onNext,
   locale,
+  compactDeck,
 }: QuestionCardProps) {
   const isAnswered = state.pickedOptionId !== null;
   const isLast = index === total - 1;
@@ -181,7 +205,12 @@ function QuestionCard({
     : t(YO_COPY.quiz.next, locale);
 
   return (
-    <div className="ds-card flex flex-col gap-5 p-5 shadow-[0_1px_2px_rgba(15,58,52,0.04)] sm:p-7">
+    <div
+      className={cn(
+        "ds-card flex flex-col gap-5 p-5 shadow-[0_1px_2px_rgba(15,58,52,0.04)] sm:p-7",
+        compactDeck && "gap-3 p-4 sm:p-5",
+      )}
+    >
       <ProgressBar current={index + 1} total={total} locale={locale} />
 
       <p className="text-lg font-medium leading-snug text-[#1a3a32] sm:text-xl">
@@ -318,6 +347,8 @@ interface CompletionPanelProps {
   total: number;
   onRestart: () => void;
   locale: YoLocale;
+  enableAudioFeedback: boolean;
+  compactDeck: boolean;
 }
 
 function CompletionPanel({
@@ -325,14 +356,24 @@ function CompletionPanel({
   total,
   onRestart,
   locale,
+  enableAudioFeedback,
+  compactDeck,
 }: CompletionPanelProps) {
   const pct = Math.round((correct / total) * 100);
   return (
     <div
       role="status"
       aria-live="polite"
-      className="flex flex-col items-start gap-4 rounded-3xl border border-teal-100 bg-gradient-to-br from-[#e6f4ec] via-white to-[var(--color-base-cream)] p-6 shadow-[0_1px_2px_rgba(15,58,52,0.04)] sm:p-8"
+      className={cn(
+        "flex flex-col items-start gap-4 rounded-3xl border border-teal-100 bg-gradient-to-br from-[#e6f4ec] via-white to-[var(--color-base-cream)] p-6 shadow-[0_1px_2px_rgba(15,58,52,0.04)] sm:p-8",
+        compactDeck && "gap-3 p-5 sm:p-6",
+      )}
     >
+      <YoYoppoReward
+        show={enableAudioFeedback}
+        locale={locale}
+        variant="step"
+      />
       <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-xs font-medium text-teal-800 ring-1 ring-teal-100">
         <CheckCircle2 aria-hidden className="size-4 text-teal-700" />
         {t(YO_COPY.quiz.completionChip, locale)}

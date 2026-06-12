@@ -42,10 +42,13 @@ import { cn } from "@/lib/utils";
 import { t } from "@/lib/yo/localize";
 import { YO_COPY } from "@/lib/yo/copy";
 import { YoSpanishAudioButton } from "@/components/yo/YoSpanishAudioButton";
+import { useYoAudioFeedback } from "@/components/yo/YoAudioFeedbackProvider";
+import { YoYoppoReward } from "@/components/yo/YoYoppoReward";
 
 export interface YoReadingPreviewProps {
   section: YoReadingSection;
   locale: YoLocale;
+  enableAudioFeedback?: boolean;
 }
 
 type ReadingQuizState =
@@ -56,9 +59,14 @@ type ReadingQuizState =
     }
   | { mode: "complete"; correctCount: number };
 
-export function YoReadingPreview({ section, locale }: YoReadingPreviewProps) {
+export function YoReadingPreview({
+  section,
+  locale,
+  enableAudioFeedback = false,
+}: YoReadingPreviewProps) {
   const speechLang = section.speechLang ?? "es-ES";
   const total = section.questions.length;
+  const { playFeedback } = useYoAudioFeedback();
   const [index, setIndex] = useState(0);
   const [state, setState] = useState<ReadingQuizState>({
     mode: "question",
@@ -69,12 +77,15 @@ export function YoReadingPreview({ section, locale }: YoReadingPreviewProps) {
 
   const handlePick = useCallback(
     (option: YoQuizOption) => {
+      const question = section.questions[index];
+      if (!question) return;
+      const isCorrect = option.id === question.correctOptionId;
+      if (enableAudioFeedback) {
+        void playFeedback(isCorrect ? "correct" : "incorrect");
+      }
       setState((prev) => {
         if (prev.mode !== "question") return prev;
         if (prev.pickedOptionId !== null) return prev;
-        const question = section.questions[index];
-        if (!question) return prev;
-        const isCorrect = option.id === question.correctOptionId;
         if (isCorrect) {
           setCorrectCount((c) => c + 1);
         }
@@ -85,17 +96,20 @@ export function YoReadingPreview({ section, locale }: YoReadingPreviewProps) {
         };
       });
     },
-    [index, section.questions],
+    [enableAudioFeedback, index, playFeedback, section.questions],
   );
 
   const handleNext = useCallback(() => {
     if (index >= total - 1) {
       setState({ mode: "complete", correctCount });
+      if (enableAudioFeedback) {
+        void playFeedback("step-complete");
+      }
       return;
     }
     setIndex((i) => i + 1);
     setState({ mode: "question", pickedOptionId: null, isCorrect: null });
-  }, [correctCount, index, total]);
+  }, [correctCount, enableAudioFeedback, index, playFeedback, total]);
 
   const handleRestart = useCallback(() => {
     setIndex(0);
@@ -208,6 +222,7 @@ export function YoReadingPreview({ section, locale }: YoReadingPreviewProps) {
         onNext={handleNext}
         onRestart={handleRestart}
         locale={locale}
+        enableAudioFeedback={enableAudioFeedback}
       />
     </section>
   );
@@ -221,6 +236,7 @@ interface ReadingQuizProps {
   onNext: () => void;
   onRestart: () => void;
   locale: YoLocale;
+  enableAudioFeedback: boolean;
 }
 
 function ReadingQuiz({
@@ -231,6 +247,7 @@ function ReadingQuiz({
   onNext,
   onRestart,
   locale,
+  enableAudioFeedback,
 }: ReadingQuizProps) {
   const total = section.questions.length;
   if (state.mode === "complete") {
@@ -241,6 +258,11 @@ function ReadingQuiz({
         aria-live="polite"
         className="mt-5 flex flex-col gap-3 rounded-3xl border border-teal-100 bg-gradient-to-br from-[#e6f4ec] via-white to-[#DDF4F1] p-5 shadow-[0_1px_2px_rgba(15,58,52,0.04)] sm:p-6"
       >
+        <YoYoppoReward
+          show={enableAudioFeedback}
+          locale={locale}
+          variant="step"
+        />
         <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-white px-3 py-1 text-xs font-medium text-teal-800 ring-1 ring-teal-100">
           <CheckCircle2 className="size-4 text-teal-700" aria-hidden />
           {state.correctCount} / {total} · {pct}%
