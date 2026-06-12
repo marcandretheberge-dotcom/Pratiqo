@@ -40,12 +40,14 @@ import type { YoLocale } from "@/lib/yo/types";
 export type YoLessonDeckScreenProps = {
   screen: YoLessonDeckScreenModel;
   locale: YoLocale;
+  viewportLocked?: boolean;
   className?: string;
 };
 
 export function YoLessonDeckScreen({
   screen,
   locale,
+  viewportLocked = false,
   className,
 }: YoLessonDeckScreenProps): React.JSX.Element {
   return (
@@ -53,7 +55,11 @@ export function YoLessonDeckScreen({
       data-testid="yo-lesson-deck-screen"
       data-yo-lesson-deck-screen-id={screen.id}
       data-yo-lesson-deck-screen-kind={screen.kind}
-      className={cn(DECK_SCREEN_CARD_CLASSES, className)}
+      className={cn(
+        DECK_SCREEN_CARD_CLASSES,
+        viewportLocked && "h-full min-h-0 gap-2 overflow-hidden p-3 sm:p-4",
+        className,
+      )}
     >
       <header className="flex items-start gap-3">
         <div className="flex flex-1 flex-col gap-1">
@@ -88,7 +94,10 @@ export function YoLessonDeckScreen({
         />
       ) : null}
 
-      <div data-yo-lesson-deck-screen-content="true" className="min-w-0">
+      <div
+        data-yo-lesson-deck-screen-content="true"
+        className={cn("min-w-0", viewportLocked && "min-h-0 flex-1 overflow-hidden")}
+      >
         {screen.content}
       </div>
     </article>

@@ -33,6 +33,7 @@ export interface YoQuizPreviewProps {
   locale: YoLocale;
   enableAudioFeedback?: boolean;
   compactDeck?: boolean;
+  viewportDeck?: boolean;
 }
 
 type AnswerLog = {
@@ -50,6 +51,7 @@ export function YoQuizPreview({
   locale,
   enableAudioFeedback = false,
   compactDeck = false,
+  viewportDeck = false,
 }: YoQuizPreviewProps) {
   const total = questions.length;
   const { playFeedback } = useYoAudioFeedback();
@@ -130,9 +132,10 @@ export function YoQuizPreview({
       className={cn(
         "mx-auto w-full max-w-5xl px-5 pt-10 sm:px-8 sm:pt-14",
         compactDeck && "max-w-2xl px-2 pt-0 sm:px-3 sm:pt-0",
+        viewportDeck && "flex h-full min-h-0 flex-col overflow-hidden px-0",
       )}
     >
-      <div className="mb-5 flex items-baseline justify-between gap-4">
+      <div className={cn("mb-5 flex items-baseline justify-between gap-4", viewportDeck && "mb-2 shrink-0")}>
         <h2
           id="yo-quiz-title"
           className="text-xl font-medium tracking-tight text-[#1a3a32] sm:text-2xl"
@@ -155,6 +158,7 @@ export function YoQuizPreview({
           locale={locale}
           enableAudioFeedback={enableAudioFeedback}
           compactDeck={compactDeck}
+          viewportDeck={viewportDeck}
         />
       ) : (
         <QuestionCard
@@ -166,6 +170,7 @@ export function YoQuizPreview({
           onNext={handleNext}
           locale={locale}
           compactDeck={compactDeck}
+          viewportDeck={viewportDeck}
         />
       )}
     </section>
@@ -181,6 +186,7 @@ interface QuestionCardProps {
   onNext: () => void;
   locale: YoLocale;
   compactDeck: boolean;
+  viewportDeck: boolean;
 }
 
 function QuestionCard({
@@ -192,6 +198,7 @@ function QuestionCard({
   onNext,
   locale,
   compactDeck,
+  viewportDeck,
 }: QuestionCardProps) {
   const isAnswered = state.pickedOptionId !== null;
   const isLast = index === total - 1;
@@ -209,15 +216,16 @@ function QuestionCard({
       className={cn(
         "ds-card flex flex-col gap-5 p-5 shadow-[0_1px_2px_rgba(15,58,52,0.04)] sm:p-7",
         compactDeck && "gap-3 p-4 sm:p-5",
+        viewportDeck && "min-h-0 flex-1 gap-2 overflow-hidden p-3 sm:p-4",
       )}
     >
       <ProgressBar current={index + 1} total={total} locale={locale} />
 
-      <p className="text-lg font-medium leading-snug text-[#1a3a32] sm:text-xl">
+      <p className={cn("text-lg font-medium leading-snug text-[#1a3a32] sm:text-xl", viewportDeck && "text-base sm:text-lg")}>
         {t(question.prompt, locale)}
       </p>
 
-      <ul role="list" className="grid gap-2 sm:gap-3">
+      <ul role="list" className={cn("grid gap-2 sm:gap-3", viewportDeck && "gap-1.5 sm:gap-2")}>
         {question.options.map((option, optionIndex) => {
           const isPicked = isAnswered && state.pickedOptionId === option.id;
           const isCorrectOption = option.id === question.correctOptionId;
@@ -242,6 +250,7 @@ function QuestionCard({
                 aria-pressed={isPicked}
                 className={cn(
                   "group flex w-full items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-left text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 sm:text-base",
+                  viewportDeck && "px-3 py-2 text-xs sm:text-sm",
                   !isAnswered &&
                     "border-teal-100 bg-white text-[#1a3a32] hover:border-teal-300 hover:bg-teal-50/50",
                   showAsCorrect &&
@@ -300,7 +309,7 @@ function QuestionCard({
             {state.isCorrect ? correctCopy : incorrectCopy}
           </p>
           {explanation ? (
-            <p className="text-[0.85rem] leading-relaxed">{explanation}</p>
+            <p className={cn("text-[0.85rem] leading-relaxed", viewportDeck && "text-xs leading-snug")}>{explanation}</p>
           ) : null}
           <button
             type="button"
@@ -349,6 +358,7 @@ interface CompletionPanelProps {
   locale: YoLocale;
   enableAudioFeedback: boolean;
   compactDeck: boolean;
+  viewportDeck: boolean;
 }
 
 function CompletionPanel({
@@ -358,6 +368,7 @@ function CompletionPanel({
   locale,
   enableAudioFeedback,
   compactDeck,
+  viewportDeck,
 }: CompletionPanelProps) {
   const pct = Math.round((correct / total) * 100);
   return (
@@ -367,6 +378,7 @@ function CompletionPanel({
       className={cn(
         "flex flex-col items-start gap-4 rounded-3xl border border-teal-100 bg-gradient-to-br from-[#e6f4ec] via-white to-[var(--color-base-cream)] p-6 shadow-[0_1px_2px_rgba(15,58,52,0.04)] sm:p-8",
         compactDeck && "gap-3 p-5 sm:p-6",
+        viewportDeck && "min-h-0 flex-1 justify-center overflow-hidden p-4 sm:p-5",
       )}
     >
       <YoYoppoReward

@@ -140,6 +140,7 @@ export interface YoFlashcardPreviewProps {
   sectionClassName?: string;
   enableAudioFeedback?: boolean;
   compactDeck?: boolean;
+  viewportDeck?: boolean;
 }
 
 const TONE: Record<YoFlashcardQuality, string> = {
@@ -167,6 +168,7 @@ export function YoFlashcardPreview({
   sectionClassName,
   enableAudioFeedback = false,
   compactDeck = false,
+  viewportDeck = false,
 }: YoFlashcardPreviewProps) {
   const total = cards.length;
   const { playFeedback } = useYoAudioFeedback();
@@ -321,6 +323,7 @@ export function YoFlashcardPreview({
   const sectionClasses = [
     "mx-auto w-full max-w-5xl px-5 pt-10 sm:px-8 sm:pt-14",
     compactDeck && "max-w-2xl px-2 pt-0 sm:px-3 sm:pt-0",
+    viewportDeck && "flex h-full min-h-0 flex-col overflow-hidden px-0",
     sectionClassName,
   ]
     .filter(Boolean)
@@ -328,7 +331,7 @@ export function YoFlashcardPreview({
 
   return (
     <section aria-labelledby={headingId} className={sectionClasses}>
-      <div className="mb-5 flex items-baseline justify-between gap-4">
+      <div className={cn("mb-5 flex items-baseline justify-between gap-4", viewportDeck && "mb-2 shrink-0")}>
         <h2
           id={headingId}
           className="text-xl font-medium tracking-tight text-[#1a3a32] sm:text-2xl"
@@ -347,6 +350,7 @@ export function YoFlashcardPreview({
           locale={locale}
           enableAudioFeedback={enableAudioFeedback}
           compactDeck={compactDeck}
+          viewportDeck={viewportDeck}
         />
       ) : (
         <DeckCard
@@ -368,6 +372,7 @@ export function YoFlashcardPreview({
           audioContext={audioContext}
           audioMode={audioMode}
           compactDeck={compactDeck}
+          viewportDeck={viewportDeck}
         />
       )}
     </section>
@@ -393,6 +398,7 @@ interface DeckCardProps {
   audioContext?: YoSpanishAudioContext;
   audioMode: "spanish-default" | "browser-speech";
   compactDeck: boolean;
+  viewportDeck: boolean;
 }
 
 function DeckCard({
@@ -414,6 +420,7 @@ function DeckCard({
   audioContext,
   audioMode,
   compactDeck,
+  viewportDeck,
 }: DeckCardProps) {
   const isLast = index === total - 1;
   const isFirst = index === 0;
@@ -464,9 +471,10 @@ function DeckCard({
       className={cn(
         "grid gap-4 sm:gap-6 lg:grid-cols-[1fr_280px]",
         compactDeck && "gap-3 lg:grid-cols-1",
+        viewportDeck && "flex min-h-0 flex-1 flex-col gap-2 overflow-hidden",
       )}
     >
-      <div className="flex flex-col gap-3">
+      <div className={cn("flex flex-col gap-3", viewportDeck && "min-h-0 flex-1 gap-2 overflow-hidden")}>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p
             className="text-xs font-medium uppercase tracking-[0.14em] text-teal-700/80"
@@ -489,6 +497,7 @@ function DeckCard({
           className={cn(
             "group relative flex min-h-[280px] cursor-pointer flex-col justify-between overflow-hidden rounded-3xl border border-teal-100 bg-white p-6 text-left shadow-[0_1px_2px_rgba(15,58,52,0.04)] transition hover:shadow-[0_8px_24px_rgba(15,58,52,0.10)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 sm:min-h-[340px] sm:p-8",
             compactDeck && "min-h-[220px] p-5 sm:min-h-[250px] sm:p-6",
+            viewportDeck && "min-h-0 flex-1 p-4 sm:min-h-0 sm:p-5",
           )}
         >
           <YoImageVisual
@@ -523,11 +532,11 @@ function DeckCard({
           <div className="relative z-10 flex flex-col gap-3">
             {state.isFlipped ? (
               <>
-                <p className="text-3xl font-medium leading-tight tracking-tight text-[#1a3a32] sm:text-4xl">
+                <p className={cn("text-3xl font-medium leading-tight tracking-tight text-[#1a3a32] sm:text-4xl", viewportDeck && "text-2xl sm:text-3xl")}>
                   {back}
                 </p>
                 {hint ? (
-                  <p className="text-sm text-[var(--color-text-secondary)]">
+                  <p className={cn("text-sm text-[var(--color-text-secondary)]", viewportDeck && "text-xs leading-snug")}>
                     {hint}
                   </p>
                 ) : null}
@@ -536,7 +545,7 @@ function DeckCard({
               <>
                 <div className="flex items-start gap-3">
                   <p
-                    className="text-3xl font-medium leading-tight tracking-tight text-[#1a3a32] sm:text-4xl"
+                    className={cn("text-3xl font-medium leading-tight tracking-tight text-[#1a3a32] sm:text-4xl", viewportDeck && "text-2xl sm:text-3xl")}
                     lang="es"
                   >
                     {card.front}
@@ -572,7 +581,7 @@ function DeckCard({
         </div>
 
         {/* Carousel controls — Prev / Play-Pause / Next */}
-        <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-teal-100 bg-white/85 px-3 py-2 sm:px-4">
+        <div className={cn("flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-teal-100 bg-white/85 px-3 py-2 sm:px-4", viewportDeck && "shrink-0 px-2 py-1.5")}>
           <div className="flex items-center gap-1.5">
             <button
               type="button"
@@ -628,8 +637,8 @@ function DeckCard({
         ) : null}
       </div>
 
-      <div className="flex flex-col gap-2 rounded-3xl border border-teal-100 bg-[var(--color-base-cream)] p-4 sm:p-5">
-        <p className="ds-label text-teal-700/90">{ratingPrompt}</p>
+      <div className={cn("flex flex-col gap-2 rounded-3xl border border-teal-100 bg-[var(--color-base-cream)] p-4 sm:p-5", viewportDeck && "shrink-0 gap-1.5 rounded-2xl p-3 sm:p-3")}>
+        <p className={cn("ds-label text-teal-700/90", viewportDeck && "text-[10px]")}>{ratingPrompt}</p>
 
         {/*
          * Mobile: stack the 3 SRS rating buttons vertically so each
@@ -672,7 +681,7 @@ function DeckCard({
             {feedbackCopy[state.lastRating]}
           </p>
         ) : (
-          <p className="mt-1 text-xs leading-snug text-[var(--color-text-secondary)]">
+          <p className={cn("mt-1 text-xs leading-snug text-[var(--color-text-secondary)]", viewportDeck && "hidden sm:block")}>
             {idleHint}
           </p>
         )}
@@ -762,6 +771,7 @@ interface CompletionPanelProps {
   locale: YoLocale;
   enableAudioFeedback: boolean;
   compactDeck: boolean;
+  viewportDeck: boolean;
 }
 
 function CompletionPanel({
@@ -770,6 +780,7 @@ function CompletionPanel({
   locale,
   enableAudioFeedback,
   compactDeck,
+  viewportDeck,
 }: CompletionPanelProps) {
   return (
     <div
@@ -778,6 +789,7 @@ function CompletionPanel({
       className={cn(
         "flex flex-col items-start gap-4 rounded-3xl border border-teal-100 bg-gradient-to-br from-[#e6f4ec] via-white to-[var(--color-base-cream)] p-6 shadow-[0_1px_2px_rgba(15,58,52,0.04)] sm:p-8",
         compactDeck && "gap-3 p-5 sm:p-6",
+        viewportDeck && "min-h-0 flex-1 justify-center overflow-hidden p-4 sm:p-5",
       )}
     >
       <YoYoppoReward
