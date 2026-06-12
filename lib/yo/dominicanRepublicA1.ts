@@ -1127,16 +1127,16 @@ export const dominicanRepublicA1PanoramaMiniQuizzes = {
     {
       id: "rd_intro_geography_demo_quiz",
       prompt: lstr(
-        "Question demo sur le panorama du pays.",
+        "Question démo sur le panorama du pays.",
         "Demo question about the country panorama.",
       ),
       options: [
-        { id: "a", label: lstr("Reponse demo A", "Demo answer A") },
-        { id: "b", label: lstr("Reponse demo B", "Demo answer B") },
+        { id: "a", label: lstr("Réponse démo A", "Demo answer A") },
+        { id: "b", label: lstr("Réponse démo B", "Demo answer B") },
       ],
       correctOptionId: "a",
       explanation: lstr(
-        "Feedback demo a remplacer par le vrai contenu revise.",
+        "Feedback démo à remplacer par le vrai contenu révisé.",
         "Demo feedback to replace with reviewed content.",
       ),
     },
@@ -1145,16 +1145,16 @@ export const dominicanRepublicA1PanoramaMiniQuizzes = {
     {
       id: "rd_intro_history_demo_quiz",
       prompt: lstr(
-        "Question demo sur le panorama historique.",
+        "Question démo sur le panorama historique.",
         "Demo question about the historical panorama.",
       ),
       options: [
-        { id: "a", label: lstr("Reponse demo A", "Demo answer A") },
-        { id: "b", label: lstr("Reponse demo B", "Demo answer B") },
+        { id: "a", label: lstr("Réponse démo A", "Demo answer A") },
+        { id: "b", label: lstr("Réponse démo B", "Demo answer B") },
       ],
       correctOptionId: "a",
       explanation: lstr(
-        "Feedback demo a remplacer par le vrai contenu revise.",
+        "Feedback démo à remplacer par le vrai contenu révisé.",
         "Demo feedback to replace with reviewed content.",
       ),
     },
@@ -1163,16 +1163,16 @@ export const dominicanRepublicA1PanoramaMiniQuizzes = {
     {
       id: "rd_intro_food_demo_quiz",
       prompt: lstr(
-        "Question demo sur le panorama gastronomique.",
+        "Question démo sur le panorama gastronomique.",
         "Demo question about the food panorama.",
       ),
       options: [
-        { id: "a", label: lstr("Reponse demo A", "Demo answer A") },
-        { id: "b", label: lstr("Reponse demo B", "Demo answer B") },
+        { id: "a", label: lstr("Réponse démo A", "Demo answer A") },
+        { id: "b", label: lstr("Réponse démo B", "Demo answer B") },
       ],
       correctOptionId: "a",
       explanation: lstr(
-        "Feedback demo a remplacer par le vrai contenu revise.",
+        "Feedback démo à remplacer par le vrai contenu révisé.",
         "Demo feedback to replace with reviewed content.",
       ),
     },
@@ -1181,16 +1181,16 @@ export const dominicanRepublicA1PanoramaMiniQuizzes = {
     {
       id: "rd_intro_phrases_demo_quiz",
       prompt: lstr(
-        "Question demo sur les premieres phrases.",
+        "Question démo sur les premières phrases.",
         "Demo question about the first phrases.",
       ),
       options: [
-        { id: "a", label: lstr("Reponse demo A", "Demo answer A") },
-        { id: "b", label: lstr("Reponse demo B", "Demo answer B") },
+        { id: "a", label: lstr("Réponse démo A", "Demo answer A") },
+        { id: "b", label: lstr("Réponse démo B", "Demo answer B") },
       ],
       correctOptionId: "a",
       explanation: lstr(
-        "Feedback demo a remplacer par le vrai contenu revise.",
+        "Feedback démo à remplacer par le vrai contenu révisé.",
         "Demo feedback to replace with reviewed content.",
       ),
     },
@@ -1199,16 +1199,16 @@ export const dominicanRepublicA1PanoramaMiniQuizzes = {
     {
       id: "rd_intro_culture_demo_quiz",
       prompt: lstr(
-        "Question demo sur le panorama culturel.",
+        "Question démo sur le panorama culturel.",
         "Demo question about the cultural panorama.",
       ),
       options: [
-        { id: "a", label: lstr("Reponse demo A", "Demo answer A") },
-        { id: "b", label: lstr("Reponse demo B", "Demo answer B") },
+        { id: "a", label: lstr("Réponse démo A", "Demo answer A") },
+        { id: "b", label: lstr("Réponse démo B", "Demo answer B") },
       ],
       correctOptionId: "a",
       explanation: lstr(
-        "Feedback demo a remplacer par le vrai contenu revise.",
+        "Feedback démo à remplacer par le vrai contenu révisé.",
         "Demo feedback to replace with reviewed content.",
       ),
     },
@@ -1217,34 +1217,34 @@ export const dominicanRepublicA1PanoramaMiniQuizzes = {
 
 export const dominicanRepublicA1ListeningDemo = {
   id: "rd-intro-listening-demo",
-  title: lstr("Exercice d'ecoute demo", "Listening exercise demo", "Demo de escucha"),
+  title: lstr("Exercice d'écoute démo", "Listening exercise demo", "Demo de escucha"),
   subtitle: lstr(
-    "Structure technique seulement. Le vrai contenu dominicain sera redige et valide ensuite.",
+    "Structure technique seulement. Le vrai contenu dominicain sera rédigé et validé ensuite.",
     "Technical structure only. Real Dominican content will be written and reviewed next.",
-    "Solo estructura tecnica. El contenido dominicano real se redactara y validara despues.",
+    "Solo estructura técnica. El contenido dominicano real se redactará y validará después.",
   ),
   items: [
     {
       id: "rd-intro-listening-demo-1",
       audioText: "Audio demo uno.",
       prompt: lstr(
-        "Ecoute, puis choisis la reponse demo.",
+        "Écoute, puis choisis la réponse démo.",
         "Listen, then choose the demo answer.",
         "Escucha y elige la respuesta demo.",
       ),
       options: [
         {
           id: "a",
-          label: lstr("Reponse demo A", "Demo answer A", "Respuesta demo A"),
+          label: lstr("Réponse démo A", "Demo answer A", "Respuesta demo A"),
         },
         {
           id: "b",
-          label: lstr("Reponse demo B", "Demo answer B", "Respuesta demo B"),
+          label: lstr("Réponse démo B", "Demo answer B", "Respuesta demo B"),
         },
       ],
       correctOptionId: "a",
       explanation: lstr(
-        "Feedback demo. A remplacer par le contenu revise.",
+        "Feedback démo. À remplacer par le contenu révisé.",
         "Demo feedback. Replace with reviewed content.",
         "Feedback demo. Reemplazar por contenido revisado.",
       ),
