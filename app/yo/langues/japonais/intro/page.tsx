@@ -684,10 +684,6 @@ export default async function YoJapaneseIntroPage({ searchParams }: PageProps) {
                 <p className="mt-2 text-xs leading-relaxed text-[#0F6E56]/70">
                   {t(group.description, locale)}
                 </p>
-                <p className="mt-3 text-[10px] font-black uppercase tracking-[0.18em] text-[#1D9E75]">
-                  {group.cards.length}{" "}
-                  {locale === "fr" ? "cartes" : "cards"}
-                </p>
               </li>
             ))}
           </ul>
