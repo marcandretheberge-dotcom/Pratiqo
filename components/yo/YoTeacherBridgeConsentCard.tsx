@@ -56,9 +56,9 @@ export type YoTeacherBridgeConsentCardProps = {
 };
 
 const STATUS_BADGE_COPY: Record<YoLocale, { eyebrow: string; comingSoon: string }> = {
-  fr: { eyebrow: "Pont YoPratiqo", comingSoon: "Bientôt" },
-  en: { eyebrow: "YoPratiqo bridge", comingSoon: "Coming soon" },
-  es: { eyebrow: "Puente YoPratiqo", comingSoon: "Próximamente" },
+  fr: { eyebrow: "Pont professeur", comingSoon: "Bientôt" },
+  en: { eyebrow: "Teacher bridge", comingSoon: "Coming soon" },
+  es: { eyebrow: "Puente con profesor", comingSoon: "Próximamente" },
 };
 
 const STATS_COPY: Record<YoLocale, { modules: string; level: string }> = {

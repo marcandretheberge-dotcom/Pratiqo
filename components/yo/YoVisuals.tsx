@@ -769,7 +769,7 @@ export function YoUnlockTravelStamp({ locale }: { locale: YoLocale }) {
             fill="#fbbf24"
             opacity="0.85"
           >
-            YOPRATIQO
+            A1
           </text>
         </g>
 

@@ -85,7 +85,7 @@ const LEARN_TITLE = lstr(
   "What you will practice",
   "Lo que vas a trabajar",
 );
-const WHY_TITLE = lstr("Pourquoi YoPratiqo", "Why YoPratiqo", "Por qué YoPratiqo");
+const WHY_TITLE = lstr("Pourquoi cette méthode", "Why this method", "Por qué este método");
 const INTRO_LABEL = lstr("Parcours autonome", "Self-paced path", "Ruta autónoma");
 const BRIDGE_LABEL = lstr(
   "Pont vers un professeur",
@@ -145,7 +145,7 @@ export function YoLanguageLandingPage({
         {t(HERO_BADGE, locale)}
       </span>
       <p className="text-xs font-black uppercase tracking-[0.22em] text-[#1D9E75]">
-        YoPratiqo · {languageLabel}
+        {languageLabel}
       </p>
       <h1
         id="yo-language-landing-title"

@@ -433,7 +433,7 @@ export default async function YoHubPage({ searchParams }: PageProps) {
                 {t(HUB_COPY.sectionsTitle, locale)}
               </h2>
               <span className="rounded-full border border-[#F4B400]/50 bg-[#FFF4D6] px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-[#0F6E56]">
-                YoPratiqo
+                {locale === "fr" ? "Méthode" : "Method"}
               </span>
             </div>
             <div className="grid gap-4 lg:grid-cols-3">
@@ -525,9 +525,7 @@ export default async function YoHubPage({ searchParams }: PageProps) {
             <div>
               <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-[#FFF4D6]">
                 <Globe2 className="size-3.5" aria-hidden />
-                {locale === "fr"
-                  ? "YoPratiqo · Langues"
-                  : "YoPratiqo · Languages"}
+                {locale === "fr" ? "Langues" : "Languages"}
               </div>
               <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
                 {t(HUB_COPY.finalTitle, locale)}

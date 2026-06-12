@@ -65,11 +65,11 @@ const COPY: Record<
   }
 > = {
   fr: {
-    title: "Yoppo, ton compagnon YoPratiqo",
+    title: "Yoppo, ton compagnon",
     subtitle:
-      "Yoppo suit ta progression YoPratiqo, en plus de ton compagnon Pratiqo classique.",
+      "Yoppo suit ta progression dans les modules, en plus de ton compagnon Pratiqo classique.",
     emptyBody:
-      "Commence un module YoPratiqo pour faire voyager Yoppo, ton compagnon YoPratiqo.",
+      "Commence un module YoPratiqo pour faire voyager Yoppo.",
     moduleCountLabel: "Modules complétés",
     levelLabel: "Niveau",
     courseLabel: "Parcours",
@@ -78,11 +78,11 @@ const COPY: Record<
     activityLabel: "Dernière activité",
   },
   en: {
-    title: "Yoppo, your YoPratiqo companion",
+    title: "Yoppo, your companion",
     subtitle:
-      "Yoppo tracks your YoPratiqo progress, alongside your classic Pratiqo companion.",
+      "Yoppo tracks your module progress, alongside your classic Pratiqo companion.",
     emptyBody:
-      "Start a YoPratiqo module to wake up Yoppo, your YoPratiqo companion.",
+      "Start a YoPratiqo module to wake up Yoppo.",
     moduleCountLabel: "Completed modules",
     levelLabel: "Level",
     courseLabel: "Track",
@@ -91,11 +91,11 @@ const COPY: Record<
     activityLabel: "Last activity",
   },
   es: {
-    title: "Yoppo, tu compañero YoPratiqo",
+    title: "Yoppo, tu compañero",
     subtitle:
-      "Yoppo sigue tu progreso de YoPratiqo, además de tu compañero clásico de Pratiqo.",
+      "Yoppo sigue tu progreso en los módulos, además de tu compañero clásico de Pratiqo.",
     emptyBody:
-      "Comienza un módulo de YoPratiqo para despertar a Yoppo, tu compañero YoPratiqo.",
+      "Comienza un módulo de YoPratiqo para despertar a Yoppo.",
     moduleCountLabel: "Módulos completados",
     levelLabel: "Nivel",
     courseLabel: "Recorrido",
@@ -214,7 +214,7 @@ export function YoStudentCompanionCard({
         />
         <div className="min-w-0 flex-1">
           <p className="text-[10px] font-black uppercase tracking-[0.14em] text-[#0F6E56]/70">
-            YoPratiqo
+            Yoppo
           </p>
           <h2
             data-testid="yo-student-companion-card-title"

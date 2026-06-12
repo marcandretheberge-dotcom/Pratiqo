@@ -49,7 +49,6 @@ import {
 
 import { cn } from "@/lib/utils";
 import { useLocale } from "@/lib/locale-context";
-import { YoPratiqoLogo } from "@/components/yo/YoPratiqoLogo";
 import { YoStudentCompanionCard } from "@/components/yo/YoStudentCompanionCard";
 import { YoStepNavigator } from "@/components/yo/YoStepNavigator";
 import type { StudentCompanionLocale } from "@/lib/yopratiqo/studentCompanionState";
@@ -95,11 +94,11 @@ type Copy = {
 
 const COPY: Record<HubLocale, Copy> = {
   fr: {
-    eyebrow: "YoPratiqo",
-    title: "Mon YoPratiqo",
+    eyebrow: "Espace d’apprentissage",
+    title: "Mon espace d’apprentissage",
     intro:
-      "Yoppo, ton compagnon YoPratiqo, suit tes progrès. Quand tu réserves un professeur, tu peux choisir de partager un résumé utile de ton parcours.",
-    companionHeading: "Yoppo · mon compagnon YoPratiqo",
+      "Yoppo suit tes progrès. Quand tu réserves un professeur, tu peux choisir de partager un résumé utile de ton parcours.",
+    companionHeading: "Yoppo · mon compagnon",
     courseHeading: "Mon parcours en cours",
     courseTitle: "Espagnol République dominicaine — A1",
     courseSubtitle: "Voyage, culture et conversations utiles.",
@@ -127,11 +126,11 @@ const COPY: Record<HubLocale, Copy> = {
     stepBridgesLabel: "Pratiqo",
   },
   en: {
-    eyebrow: "YoPratiqo",
-    title: "My YoPratiqo",
+    eyebrow: "Learning space",
+    title: "My learning space",
     intro:
-      "Yoppo, your YoPratiqo companion, follows your progress. When you book a teacher, you can choose to share a useful summary of your path.",
-    companionHeading: "Yoppo · my YoPratiqo companion",
+      "Yoppo follows your progress. When you book a teacher, you can choose to share a useful summary of your path.",
+    companionHeading: "Yoppo · my companion",
     courseHeading: "My current course",
     courseTitle: "Dominican Republic Spanish — A1",
     courseSubtitle: "Travel, culture, and useful conversations.",
@@ -159,11 +158,11 @@ const COPY: Record<HubLocale, Copy> = {
     stepBridgesLabel: "Pratiqo",
   },
   es: {
-    eyebrow: "YoPratiqo",
-    title: "Mi YoPratiqo",
+    eyebrow: "Espacio de aprendizaje",
+    title: "Mi espacio de aprendizaje",
     intro:
-      "Yoppo, tu compañero YoPratiqo, sigue tu progreso. Cuando reservas un profesor, puedes elegir compartir un resumen útil de tu recorrido.",
-    companionHeading: "Yoppo · mi compañero YoPratiqo",
+      "Yoppo sigue tu progreso. Cuando reservas un profesor, puedes elegir compartir un resumen útil de tu recorrido.",
+    companionHeading: "Yoppo · mi compañero",
     courseHeading: "Mi curso actual",
     courseTitle: "Español República Dominicana — A1",
     courseSubtitle: "Viaje, cultura y conversaciones útiles.",
@@ -231,7 +230,6 @@ export function YoStudentHubContent(): React.JSX.Element {
 
   const brandedHeaderBlock = (
     <header className="space-y-3 rounded-3xl border border-[#E7DFCF] bg-white p-5 shadow-[0_12px_30px_rgba(15,58,52,0.06)] sm:p-6">
-      <YoPratiqoLogo size="md" priority={false} />
       <div>
         <p
           data-testid="yo-student-hub-eyebrow"

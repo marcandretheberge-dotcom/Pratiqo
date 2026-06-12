@@ -142,24 +142,24 @@ const PROMISE_POINTS_ES = [
 ];
 
 const COMPANION_HEADING = lstr(
-  "Yoppo · ton compagnon YoPratiqo",
-  "Yoppo · your YoPratiqo companion",
-  "Yoppo · tu compañero YoPratiqo",
+  "Yoppo · ton compagnon",
+  "Yoppo · your companion",
+  "Yoppo · tu compañero",
 );
 
 const COMPANION_HINT = lstr(
-  "Yoppo, ton compagnon YoPratiqo, voyage avec toi dans chaque intro.",
-  "Yoppo, your YoPratiqo companion, travels with you through every intro.",
-  "Yoppo, tu compañero YoPratiqo, viaja contigo en cada intro.",
+  "Yoppo voyage avec toi dans chaque intro.",
+  "Yoppo travels with you through every intro.",
+  "Yoppo viaja contigo en cada intro.",
 );
 
-const BACK_TO_YOPRATIQO = lstr(
-  "Retour à YoPratiqo",
-  "Back to YoPratiqo",
-  "Volver a YoPratiqo",
+const BACK_TO_HUB = lstr(
+  "Retour à l’accueil",
+  "Back to hub",
+  "Volver al inicio",
 );
 
-const PROMISE_EYEBROW_FR = "YoPratiqo";
+const PROMISE_EYEBROW_FR = "Apprentissage autonome";
 
 interface LanguageCard {
   id: string;
@@ -660,7 +660,7 @@ export default async function YoLanguesPage({ searchParams }: PageProps) {
       <YoAppHeader
         locale={locale}
         backHref={`/yo${langSuffix}`}
-        backLabel={t(BACK_TO_YOPRATIQO, locale)}
+        backLabel={t(BACK_TO_HUB, locale)}
         title={t(PAGE_TITLE, locale)}
         selectorPath="/yo/langues"
         surfaceId="langues"
@@ -694,7 +694,7 @@ export default async function YoLanguesPage({ searchParams }: PageProps) {
     <YoAppHeader
       locale={locale}
       backHref={`/yo${langSuffix}`}
-      backLabel={t(BACK_TO_YOPRATIQO, locale)}
+      backLabel={t(BACK_TO_HUB, locale)}
       title={t(PAGE_TITLE, locale)}
       selectorPath="/yo/langues"
       surfaceId="langues"
@@ -733,7 +733,7 @@ export default async function YoLanguesPage({ searchParams }: PageProps) {
                 ? "Catálogo de idiomas YoPratiqo"
                 : "Catalogue des langues YoPratiqo",
           rootBackHref: `/yo${langSuffix}`,
-          rootBackLabel: t(BACK_TO_YOPRATIQO, locale),
+          rootBackLabel: t(BACK_TO_HUB, locale),
           steps: [
             {
               id: "welcome",

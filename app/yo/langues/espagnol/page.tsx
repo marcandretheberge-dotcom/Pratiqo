@@ -155,9 +155,9 @@ const COMING_SOON_BODY = lstr(
 );
 
 const PROMISE_EYEBROW = lstr(
-  "Promesse YoPratiqo",
-  "YoPratiqo promise",
-  "Promesa YoPratiqo",
+  "Promesse d’apprentissage",
+  "Learning promise",
+  "Promesa de aprendizaje",
 );
 const PROMISE_BODY = lstr(
   "Tu apprends en autonomie, puis tu pratiques avec un vrai prof Pratiqo quand tu es prêt·e.",
@@ -166,14 +166,14 @@ const PROMISE_BODY = lstr(
 );
 
 const COMPANION_HEADING = lstr(
-  "Yoppo · ton compagnon YoPratiqo",
-  "Yoppo · your YoPratiqo companion",
-  "Yoppo · tu compañero YoPratiqo",
+  "Yoppo · ton compagnon",
+  "Yoppo · your companion",
+  "Yoppo · tu compañero",
 );
 const COMPANION_HINT = lstr(
-  "Yoppo, ton compagnon YoPratiqo, suit ton voyage à travers les pays hispanophones.",
-  "Yoppo, your YoPratiqo companion, follows your trip through Spanish-speaking countries.",
-  "Yoppo, tu compañero YoPratiqo, sigue tu viaje por los países hispanohablantes.",
+  "Yoppo suit ton voyage à travers les pays hispanophones.",
+  "Yoppo follows your trip through Spanish-speaking countries.",
+  "Yoppo sigue tu viaje por los países hispanohablantes.",
 );
 
 function localizedHref(base: string, locale: YoLocale): string {

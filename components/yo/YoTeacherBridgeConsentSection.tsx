@@ -21,9 +21,9 @@ import { YoTeacherBridgeConsentCard } from "@/components/yo/YoTeacherBridgeConse
 import { buildDominicanA1FoundationDemoSummary } from "@/lib/yopratiqo/teacherBridgeSummary";
 
 const SECTION_ARIA_LABEL: Record<YoLocale, string> = {
-  fr: "Aperçu du consentement YoPratiqo",
-  en: "YoPratiqo consent preview",
-  es: "Vista previa del consentimiento YoPratiqo",
+  fr: "Aperçu du consentement de partage",
+  en: "Sharing consent preview",
+  es: "Vista previa del consentimiento para compartir",
 };
 
 export function YoTeacherBridgeConsentSection({ locale }: { locale: YoLocale }): React.JSX.Element {
