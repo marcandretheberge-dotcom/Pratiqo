@@ -57,12 +57,12 @@ export function YoLessonDeckScreen({
       data-yo-lesson-deck-screen-kind={screen.kind}
       className={cn(
         DECK_SCREEN_CARD_CLASSES,
-        viewportLocked && "h-full min-h-0 gap-2 overflow-hidden p-3 sm:p-4",
+        viewportLocked && "h-full min-h-0 gap-1.5 overflow-hidden p-2.5 sm:gap-2 sm:p-4",
         className,
       )}
     >
-      <header className="flex items-start gap-3">
-        <div className="flex flex-1 flex-col gap-1">
+      <header className="flex items-start gap-2">
+        <div className="flex flex-1 flex-col gap-0.5">
           {screen.eyebrow ? (
             <p className={DECK_SCREEN_EYEBROW_CLASSES}>{screen.eyebrow}</p>
           ) : null}

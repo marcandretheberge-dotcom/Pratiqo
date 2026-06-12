@@ -39,24 +39,24 @@ import { YoSpanishAudioButton } from "@/components/yo/YoSpanishAudioButton";
 
 const DECK_MODULE_LABEL = lstr("Intro · RD A1", "Intro · DR A1", "Intro · RD A1");
 const WELCOME_TAGLINE = lstr(
-  "Intro · Republique dominicaine · A1",
+  "Intro · République dominicaine · A1",
   "Intro · Dominican Republic · A1",
-  "Intro · Republica Dominicana · A1",
+  "Intro · República Dominicana · A1",
 );
 
 const READY_NEXT_HEADLINE = lstr(
-  "Module 2 - Hotel et aeroport",
+  "Module 2 - Hôtel et aéroport",
   "Module 2 - Hotel & airport",
-  "Modulo 2 - Hotel y aeropuerto",
+  "Módulo 2 - Hotel y aeropuerto",
 );
 const READY_NEXT_BLURB = lstr(
-  "Tu enchaines avec les phrases concretes pour passer la douane, prendre un taxi et faire ton check-in.",
+  "Tu enchaînes avec les phrases concrètes pour passer la douane, prendre un taxi et faire ton check-in.",
   "Next up: the real phrases for clearing customs, grabbing a taxi, and checking into your hotel.",
   "Sigue con las frases reales para pasar la aduana, tomar un taxi y hacer tu check-in.",
 );
-const READY_NEXT_CTA = lstr("Ouvrir le Module 2", "Open Module 2", "Abrir el Modulo 2");
+const READY_NEXT_CTA = lstr("Ouvrir le Module 2", "Open Module 2", "Abrir el Módulo 2");
 const READY_BACK_TO_COURSE_HOME = lstr(
-  "Retour a l'accueil du parcours",
+  "Retour à l'accueil du parcours",
   "Back to course home",
   "Volver al inicio del curso",
 );
@@ -75,28 +75,28 @@ const CULTURE_POINTS: Array<{
   {
     title: lstr("Merengue et bachata", "Merengue and bachata"),
     body: lstr(
-      "La musique fait partie des fetes, de la rue, des familles et de la memoire du pays.",
+      "La musique fait partie des fêtes, de la rue, des familles et de la mémoire du pays.",
       "Music is part of celebrations, streets, families, and the country's memory.",
     ),
   },
   {
     title: lstr("Baseball partout", "Baseball everywhere"),
     body: lstr(
-      "Le baseball est un langage social: on en parle au colmado, a la maison et avec fierte.",
+      "Le baseball est un langage social: on en parle au colmado, à la maison et avec fierté.",
       "Baseball is a social language: people talk about it at the colmado, at home, and with pride.",
     ),
   },
   {
     title: lstr("Colmados et guaguas", "Colmados and guaguas"),
     body: lstr(
-      "Les petits commerces et transports partages montrent la vie quotidienne au-dela des zones touristiques.",
+      "Les petits commerces et transports partagés montrent la vie quotidienne au-delà des zones touristiques.",
       "Small shops and shared transport show everyday life beyond tourist zones.",
     ),
   },
   {
     title: lstr("Famille et hospitalite", "Family and hospitality"),
     body: lstr(
-      "Les repas, les reunions et l'accueil chaleureux donnent du sens aux mots que tu apprends.",
+      "Les repas, les réunions et l'accueil chaleureux donnent du sens aux mots que tu apprends.",
       "Meals, gatherings, and warm hospitality give meaning to the words you learn.",
     ),
   },
@@ -113,7 +113,7 @@ function buildIntroDeckScreens(locale: YoLocale): YoLessonDeckScreen[] {
   const courseHomeHref = `/yo/langues/espagnol/pays/republique-dominicaine${langSuffix}`;
 
   const screens: YoLessonDeckScreen[] = [
-    screen("welcome", "mission", "Mission", "Bienvenue dans le voyage", "Un parcours plein ecran, une action a la fois.", "map", (
+    screen("welcome", "mission", "Mission", "Bienvenue dans le voyage", "map", (
       <HeroPage
         locale={locale}
         tagline={WELCOME_TAGLINE}
@@ -121,34 +121,34 @@ function buildIntroDeckScreens(locale: YoLocale): YoLessonDeckScreen[] {
         subtitle={data.module.heroSubtitle}
       />
     )),
-    screen("objectives", "mission", "Objectif", "Ce que tu vas valider", "Le compteur augmente parce que chaque page tient dans le viewport.", "map", (
+    screen("objectives", "mission", "Objectif", "Ce que tu vas valider", "map", (
       <StatsPage locale={locale} />
     )),
-    screen("essential-questions", "mission", "Questions", "Avant de memoriser", "On comprend le contexte avant les mots.", "map", (
+    screen("essential-questions", "mission", "Questions", "Avant de mémoriser", "map", (
       <ChecklistPage
         locale={locale}
         items={[
-          lstr("Qu'est-ce qui rend la RD differente d'un simple resort ?", "What makes the DR more than just a resort?"),
-          lstr("Pourquoi Santo Domingo compte dans l'histoire des Ameriques ?", "Why does Santo Domingo matter in the Americas?"),
+          lstr("Qu'est-ce qui rend la RD différente d'un simple resort ?", "What makes the DR more than just a resort?"),
+          lstr("Pourquoi Santo Domingo compte dans l'histoire des Amériques ?", "Why does Santo Domingo matter in the Americas?"),
           lstr("Que faut-il comprendre pour parler avec respect ?", "What should you understand to speak with respect?"),
         ]}
       />
     )),
-    screen("can-do", "mission", "Je peux", "A la fin de cette intro", "Des objectifs simples et observables.", "map", (
+    screen("can-do", "mission", "Je peux", "À la fin de cette intro", "map", (
       <ChecklistPage
         locale={locale}
         items={[
-          lstr("situer la Republique dominicaine", "locate the Dominican Republic"),
-          lstr("reconnaitre quelques elements culturels", "recognize key cultural elements"),
-          lstr("saluer et me presenter simplement", "greet and introduce myself simply"),
-          lstr("expliquer a mon professeur quoi pratiquer", "tell my teacher what I want to practice"),
+          lstr("situer la République dominicaine", "locate the Dominican Republic"),
+          lstr("reconnaître quelques éléments culturels", "recognize key cultural elements"),
+          lstr("saluer et me présenter simplement", "greet and introduce myself simply"),
+          lstr("expliquer à mon professeur quoi pratiquer", "tell my teacher what I want to practice"),
         ]}
       />
     )),
-    screen("first-mission", "mission", "Mission", "Premier scenario", "Une phrase passerelle, sans exercice note.", "map", (
+    screen("first-mission", "mission", "Mission", "Premier scénario", "map", (
       <PhraseFocusPage
         locale={locale}
-        label={lstr("Premiere mission", "First mission")}
+        label={lstr("Première mission", "First mission")}
         phrase="Buenas tardes. Me llamo Marc. Quiero practicar la conversación."
         translation={lstr(
           "Tu salues, tu te presentes et tu dis quoi pratiquer.",
@@ -166,8 +166,15 @@ function buildIntroDeckScreens(locale: YoLocale): YoLessonDeckScreen[] {
     title: "Panorama du pays",
     imageFit: "contain",
     chunks: [
-      <BulletPage key="geo-1" locale={locale} section={geography} bullets={geography.bullets?.slice(0, 4) ?? []} />,
-      <BulletPage key="geo-2" locale={locale} section={geography} bullets={geography.bullets?.slice(4) ?? []} phrases />,
+      ...chunkEven(geography.bullets ?? [], 3).map((bullets, index) => (
+        <BulletPage key={`geo-${index + 1}`} locale={locale} bullets={bullets} />
+      )),
+      <PhraseListPage
+        key="geo-phrases"
+        locale={locale}
+        intro={geography.practicalPhrasesIntro}
+        phrases={geography.practicalPhrases}
+      />,
     ],
   });
 
@@ -178,8 +185,10 @@ function buildIntroDeckScreens(locale: YoLocale): YoLessonDeckScreen[] {
     label: "Histoire",
     title: "Panorama historique",
     chunks: [
-      <TimelinePage key="history-1" locale={locale} entries={history.timeline?.slice(0, 4) ?? []} />,
-      <TimelinePage key="history-2" locale={locale} entries={history.timeline?.slice(4) ?? []} note={history.learningNote} />,
+      ...chunkEven(history.timeline ?? [], 3).map((entries, index) => (
+        <TimelinePage key={`history-${index + 1}`} locale={locale} entries={entries} />
+      )),
+      <NotePage key="history-note" locale={locale} note={history.learningNote} />,
     ],
   });
 
@@ -190,14 +199,14 @@ function buildIntroDeckScreens(locale: YoLocale): YoLessonDeckScreen[] {
     label: "Gastro",
     title: "Panorama gastronomie",
     chunks: [
-      <GroupsPage key="food-1" locale={locale} groups={food.bulletGroups?.slice(0, 1) ?? []} icon="food" />,
-      <GroupsPage
-        key="food-2"
+      ...splitBulletGroups(food.bulletGroups ?? [], 4).map((groups, index) => (
+        <GroupsPage key={`food-${index + 1}`} locale={locale} groups={groups} icon="food" />
+      )),
+      <PhraseListPage
+        key="food-phrases"
         locale={locale}
-        groups={food.bulletGroups?.slice(1) ?? []}
+        intro={food.practicalPhrasesIntro}
         phrases={food.practicalPhrases}
-        phraseIntro={food.practicalPhrasesIntro}
-        icon="food"
       />,
     ],
   });
@@ -207,16 +216,23 @@ function buildIntroDeckScreens(locale: YoLocale): YoLessonDeckScreen[] {
     quiz: dominicanRepublicA1PanoramaMiniQuizzes.phrases,
     baseId: "phrases",
     label: "Phrases",
-    title: "Premieres phrases",
+    title: "Premières phrases",
     chunks: [
-      <GroupsPage key="phrases-1" locale={locale} groups={phrases.bulletGroups?.slice(0, 2) ?? []} icon="phrase" />,
-      <GroupsPage key="phrases-2" locale={locale} groups={phrases.bulletGroups?.slice(2) ?? []} icon="phrase" />,
-      <DialoguePage key="phrases-3" locale={locale} dialogue={phrases.dialogue} />,
+      ...splitBulletGroups(phrases.bulletGroups ?? [], 4).map((groups, index) => (
+        <GroupsPage key={`phrases-${index + 1}`} locale={locale} groups={groups} icon="phrase" />
+      )),
+      ...chunkEven(phrases.dialogue?.lines ?? [], 3).map((lines, index) => (
+        <DialoguePage
+          key={`phrases-dialogue-${index + 1}`}
+          locale={locale}
+          dialogue={phrases.dialogue ? { ...phrases.dialogue, lines } : undefined}
+        />
+      )),
     ],
   });
 
   screens.push(
-    screen("culture-image", "culture", "Culture", "Panorama culturel", "Une image, une idee centrale.", "map", (
+    screen("culture-image", "culture", "Culture", "Panorama culturel", "map", (
       <ImageIntroPage
         locale={locale}
         imagePath={data.module.cultureImagePath}
@@ -232,20 +248,20 @@ function buildIntroDeckScreens(locale: YoLocale): YoLessonDeckScreen[] {
         )}
       />
     )),
-    screen("culture-points-1", "culture", "Culture", "Musique et sport", "Deux reperes, puis on verifie.", "map", (
+    screen("culture-points-1", "culture", "Culture", "Musique et sport", "map", (
       <CulturePointPage locale={locale} points={CULTURE_POINTS.slice(0, 2)} />
     )),
-    screen("culture-points-2", "culture", "Culture", "Vie quotidienne", "Deux reperes, puis mini-quiz.", "map", (
+    screen("culture-points-2", "culture", "Culture", "Vie quotidienne", "map", (
       <CulturePointPage locale={locale} points={CULTURE_POINTS.slice(2)} />
     )),
     quizScreen("culture-quiz", "Culture", "Mini-quiz culture", dominicanRepublicA1PanoramaMiniQuizzes.culture, locale),
-    screen("listening-demo", "practice", "Ecoute", "Valide le format audio", "Demo technique seulement: le vrai contenu sera redige ensuite.", "confused", (
+    screen("listening-demo", "practice", "Écoute", "Valide le format audio", "confused", (
       <div className="h-full min-h-0 overflow-hidden">
         <YoListeningExercisePreview data={dominicanRepublicA1ListeningDemo} locale={locale} />
       </div>
     )),
     ...dictionaryScreens(data.dominicanDictionary, locale),
-    screen("flashcards", "practice", "Flashcards", "Memorise les essentiels", "Carte, note SM-2 et navigation interne tiennent dans l'ecran.", "map", (
+    screen("flashcards", "practice", "Flashcards", "Mémorise les essentiels", "map", (
       <YoFlashcardPreview
         cards={data.flashcardDeck}
         locale={locale}
@@ -256,10 +272,10 @@ function buildIntroDeckScreens(locale: YoLocale): YoLessonDeckScreen[] {
         audioContext={AUDIO_CONTEXT}
       />
     )),
-    screen("quiz", "quiz", "Quiz final", "Verifie ton intro", "Cinq questions courtes. Feedback immediat.", "confused", (
+    screen("quiz", "quiz", "Quiz final", "Vérifie ton intro", "confused", (
       <YoQuizPreview questions={data.quizQuestions} locale={locale} enableAudioFeedback compactDeck viewportDeck />
     )),
-    screen("ready", "completion", "Pret", "Direction le Module 2", "Ton compagnon t'attend dans la suite.", "celebrating", (
+    screen("ready", "completion", "Prêt", "Direction le Module 2", "celebrating", (
       <ReadyPage
         locale={locale}
         module2Href={module2Href}
@@ -282,16 +298,17 @@ function screen(
   kind: YoLessonDeckScreen["kind"],
   eyebrowFr: string,
   titleFr: string,
-  helperFr: string,
   companionState: YoLessonDeckScreen["companionState"],
   content: React.ReactNode,
+  hint?: string,
 ): YoLessonDeckScreen {
+  const safeHint = hint?.trim();
   return {
     id,
     kind,
     eyebrow: eyebrowFr,
     title: titleFr,
-    helperText: helperFr,
+    helperText: safeHint ? safeHint : undefined,
     companionState,
     content,
   };
@@ -304,7 +321,7 @@ function quizScreen(
   questions: YoQuizQuestion[],
   locale: YoLocale,
 ): YoLessonDeckScreen {
-  return screen(id, "quiz", eyebrow, title, "Questions bidon a remplacer par le contenu revise.", "confused", (
+  return screen(id, "quiz", eyebrow, title, "confused", (
     <YoQuizPreview questions={questions} locale={locale} enableAudioFeedback compactDeck viewportDeck />
   ));
 }
@@ -322,8 +339,8 @@ function appendSectionScreens(
     imageFit?: "cover" | "contain";
   },
 ) {
-  screens.push(
-    screen(`${config.baseId}-image`, "culture", config.label, config.title, "Image et idee principale deja ouvertes.", "map", (
+  const sectionScreens: YoLessonDeckScreen[] = [
+    screen(`${config.baseId}-image`, "culture", config.label, config.title, "map", (
       <ImageIntroPage
         locale={locale}
         imagePath={config.section.imagePath}
@@ -332,23 +349,40 @@ function appendSectionScreens(
         imageFit={config.imageFit}
         title={config.section.title}
         body={config.section.intro}
-        highlightTitle={config.section.highlightTitle}
-        highlightBody={config.section.highlightBody}
       />
     )),
+  ];
+
+  if (config.section.highlightTitle) {
+    sectionScreens.push(screen(
+      `${config.baseId}-highlight`,
+      "culture",
+      config.label,
+      "À retenir",
+      "map",
+      <HighlightPage
+        locale={locale}
+        title={config.section.highlightTitle}
+        body={config.section.highlightBody}
+      />,
+    ));
+  }
+
+  sectionScreens.push(
     ...config.chunks.map((content, index) =>
       screen(
         `${config.baseId}-content-${index + 1}`,
         "culture",
         config.label,
-        index === 0 ? "A retenir" : "Suite",
-        "Une page courte, sans scroll.",
+        index === 0 ? "À retenir" : "Suite",
         "map",
         content,
       ),
     ),
     quizScreen(`${config.baseId}-quiz`, config.label, `Mini-quiz ${config.label.toLowerCase()}`, config.quiz, locale),
   );
+
+  screens.push(...sectionScreens);
 }
 
 function HeroPage({
@@ -442,7 +476,7 @@ function ImageIntroPage({
 }) {
   return (
     <FitPage>
-      <div className="grid h-full min-h-0 grid-rows-[minmax(0,1fr)_auto] gap-3">
+      <div className="grid h-full min-h-0 grid-rows-[minmax(120px,0.9fr)_auto] gap-2">
         <YoImageVisual
           imagePath={imagePath}
           alt={imageAlt}
@@ -450,11 +484,11 @@ function ImageIntroPage({
           fallbackKind={visualHint}
           variant="panel"
           imageFit={imageFit}
-          className="min-h-0 rounded-2xl shadow-none"
+          className="!min-h-0 h-full max-h-[34dvh] rounded-2xl shadow-none"
         />
-        <div className="min-h-0 rounded-2xl bg-white/90 p-3 ring-1 ring-teal-100">
-          <h3 className="text-base font-semibold text-[#1a3a32] sm:text-lg">{t(title, locale)}</h3>
-          {body ? <p className="mt-1 text-xs leading-relaxed text-[#566073] sm:text-sm">{t(body, locale)}</p> : null}
+        <div className="min-h-0 rounded-2xl bg-white/90 p-2.5 ring-1 ring-teal-100">
+          <h3 className="text-sm font-semibold text-[#1a3a32] sm:text-base">{t(title, locale)}</h3>
+          {body ? <p className="mt-1 text-xs leading-relaxed text-[#566073]">{t(body, locale)}</p> : null}
           {highlightTitle ? (
             <p className="mt-2 rounded-xl bg-[#FFF4D6] px-3 py-2 text-xs leading-relaxed text-[#5a3f0f] ring-1 ring-[#F4B400]/30">
               <span className="font-semibold">{t(highlightTitle, locale)}</span>
@@ -469,14 +503,10 @@ function ImageIntroPage({
 
 function BulletPage({
   locale,
-  section,
   bullets,
-  phrases = false,
 }: {
   locale: YoLocale;
-  section: YoIntroDetailedSection;
   bullets: NonNullable<YoIntroDetailedSection["bullets"]>;
-  phrases?: boolean;
 }) {
   return (
     <FitPage>
@@ -484,9 +514,42 @@ function BulletPage({
         {bullets.map((bullet) => (
           <InfoRow key={t(bullet.label, locale)} title={bullet.label} body={bullet.description} locale={locale} />
         ))}
-        {phrases && section.practicalPhrases ? (
-          <PhraseList locale={locale} intro={section.practicalPhrasesIntro} phrases={section.practicalPhrases} />
-        ) : null}
+      </div>
+    </FitPage>
+  );
+}
+
+function HighlightPage({
+  locale,
+  title,
+  body,
+}: {
+  locale: YoLocale;
+  title: YoLocalizedString;
+  body?: YoLocalizedString;
+}) {
+  return (
+    <FitPage>
+      <div className="flex h-full flex-col justify-center rounded-3xl bg-[#FFF4D6] p-5 text-[#5a3f0f] ring-1 ring-[#F4B400]/30">
+        <p className="text-xs font-black uppercase tracking-[0.14em] text-[#8a5a17]">
+          {locale === "fr" ? "Repère clé" : "Key idea"}
+        </p>
+        <h3 className="mt-2 text-xl font-semibold leading-tight">{t(title, locale)}</h3>
+        {body ? <p className="mt-3 text-sm leading-relaxed">{t(body, locale)}</p> : null}
+      </div>
+    </FitPage>
+  );
+}
+
+function NotePage({ locale, note }: { locale: YoLocale; note?: YoLocalizedString }) {
+  if (!note) return null;
+  return (
+    <FitPage>
+      <div className="flex h-full flex-col justify-center rounded-3xl bg-[#FFF4D6] p-5 text-[#5a3f0f] ring-1 ring-[#F4B400]/30">
+        <p className="text-xs font-black uppercase tracking-[0.14em] text-[#8a5a17]">
+          {locale === "fr" ? "Pourquoi ça compte" : "Why it matters"}
+        </p>
+        <p className="mt-2 text-sm leading-relaxed sm:text-base">{t(note, locale)}</p>
       </div>
     </FitPage>
   );
@@ -613,13 +676,12 @@ function CulturePointPage({
 }
 
 function dictionaryScreens(expressions: YoDominicanExpression[], locale: YoLocale): YoLessonDeckScreen[] {
-  return chunk(expressions, 4).map((items, index) =>
+  return chunkEven(expressions, 4).map((items, index) =>
     screen(
       `dictionary-${index + 1}`,
       "culture",
       "Dictionnaire",
       `Expressions ${index + 1}`,
-      "Reference compacte, sans scroll.",
       "map",
       <DictionaryPage locale={locale} items={items} />,
     ),
@@ -670,6 +732,25 @@ function PhraseFocusPage({
         <p className="text-xs font-black uppercase tracking-[0.14em] text-teal-700">{t(label, locale)}</p>
         <p className="text-2xl font-semibold leading-tight text-[#1a3a32]" lang="es">{phrase}</p>
         <p className="text-sm leading-relaxed text-[#566073]">{t(translation, locale)}</p>
+      </div>
+    </FitPage>
+  );
+}
+
+function PhraseListPage({
+  locale,
+  intro,
+  phrases,
+}: {
+  locale: YoLocale;
+  intro?: YoLocalizedString;
+  phrases?: YoVocabularyItem[];
+}) {
+  if (!phrases?.length) return null;
+  return (
+    <FitPage>
+      <div className="grid h-full content-center gap-3">
+        <PhraseList locale={locale} intro={intro} phrases={phrases} />
       </div>
     </FitPage>
   );
@@ -775,12 +856,32 @@ function FitPage({ children }: { children: React.ReactNode }) {
   );
 }
 
-function chunk<T>(items: T[], size: number): T[][] {
+function chunkEven<T>(items: T[], maxSize: number): T[][] {
+  if (items.length === 0) return [];
+  const pageCount = Math.ceil(items.length / maxSize);
+  const baseSize = Math.floor(items.length / pageCount);
+  const extraItems = items.length % pageCount;
   const chunks: T[][] = [];
-  for (let i = 0; i < items.length; i += size) {
-    chunks.push(items.slice(i, i + size));
+  let cursor = 0;
+
+  for (let index = 0; index < pageCount; index += 1) {
+    const size = baseSize + (index < extraItems ? 1 : 0);
+    chunks.push(items.slice(cursor, cursor + size));
+    cursor += size;
   }
+
   return chunks;
+}
+
+function splitBulletGroups(groups: YoBulletGroup[], maxItemsPerPage: number): YoBulletGroup[][] {
+  return groups.flatMap((group) =>
+    chunkEven(group.items, maxItemsPerPage).map((items) => [
+      {
+        ...group,
+        items,
+      },
+    ]),
+  );
 }
 
 export interface DominicanRepublicIntroContentProps {
