@@ -182,6 +182,19 @@ test("Stripe ids, payment math, tax logic, RLS, migrations, legal pages, YoPrati
     "tests/teacherLaunch/teacherLaunchCenter.test.ts",
     "tests/yo/yopratiqoAudioPronunciationOverrides.test.ts",
     "tests/yo/yopratiqoDominicanResponsiveLayout.test.ts",
+    // feat/membre-pro-public-checkout-link — scaffolds the
+    // operator-minted hosted Stripe Checkout payment link for
+    // public, UNauthenticated Membre Pro Pratiqo marketing
+    // surfaces (sibling to, NOT replacement of, the canonical
+    // authenticated /upgrade → /api/stripe/pro/checkout flow).
+    // The CTA renders null while
+    // isMembreProPublicCheckoutLinkEnabled() is false (today's
+    // default), so this PR adds zero user-visible behaviour.
+    // Verified by
+    // tests/membrePro/membreProPublicCheckoutLinkScaffold.test.ts.
+    "lib/config/membreProPublicCheckoutLink.ts",
+    "components/membrePro/MembreProPublicUpgradeCTA.tsx",
+    "tests/membrePro/membreProPublicCheckoutLinkScaffold.test.ts",
   ]);
 
   const forbidden: Array<{ label: string; re: RegExp }> = [
