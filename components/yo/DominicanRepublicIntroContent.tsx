@@ -110,6 +110,7 @@ const INTRO_COMPANION_AUDIT = [
   { id: "phrases", companionState: "confused" },
   { id: "practice", companionState: "confused" },
   { id: "review", companionState: "map" },
+  { id: "flashcards", companionState: "map" },
   { id: "ready", companionState: "celebrating" },
 ] as const satisfies ReadonlyArray<{
   id: string;
@@ -191,10 +192,15 @@ function buildIntroDeckScreens(locale: YoLocale): YoLessonDeckScreen[] {
     screen("practice", "quiz", t(lstr("À toi", "Your turn", "Tu turno"), locale), t(lstr("Vérifie ton intro", "Check your intro", "Verifica tu intro"), locale), companionStateFor("practice"), (
       <YoQuizPreview questions={data.quizQuestions} locale={locale} enableAudioFeedback compactDeck />
     )),
-    screen("review", "practice", t(lstr("Révision", "Review", "Repaso"), locale), t(lstr("Flashcards et expressions", "Flashcards and expressions", "Flashcards y expresiones"), locale), companionStateFor("review"), (
+    screen("review", "practice", t(lstr("Révision", "Review", "Repaso"), locale), t(lstr("Expressions dominicaines", "Dominican expressions", "Expresiones dominicanas"), locale), companionStateFor("review"), (
       <ReviewPage
         locale={locale}
         expressions={data.dominicanDictionary}
+      />
+    )),
+    screen("flashcards", "practice", t(lstr("Révision", "Review", "Repaso"), locale), t(lstr("Flashcards essentielles", "Essential flashcards", "Flashcards esenciales"), locale), companionStateFor("flashcards"), (
+      <FlashcardsStepPage
+        locale={locale}
         cards={data.flashcardDeck}
       />
     )),
@@ -413,24 +419,37 @@ function PhrasesPracticePage({
 function ReviewPage({
   locale,
   expressions,
-  cards,
 }: {
   locale: YoLocale;
   expressions: YoDominicanExpression[];
-  cards: YoFlashcard[];
 }) {
   return (
     <LessonStack>
       <DictionaryPage locale={locale} items={expressions} />
+    </LessonStack>
+  );
+}
+
+function FlashcardsStepPage({
+  locale,
+  cards,
+}: {
+  locale: YoLocale;
+  cards: YoFlashcard[];
+}) {
+  return (
+    <section className="pb-2">
       <YoFlashcardPreview
         cards={cards}
         locale={locale}
         speechLang="es-DO"
         enableAudioFeedback
         compactDeck
+        mode="graded"
+        showHeader={false}
         audioContext={AUDIO_CONTEXT}
       />
-    </LessonStack>
+    </section>
   );
 }
 

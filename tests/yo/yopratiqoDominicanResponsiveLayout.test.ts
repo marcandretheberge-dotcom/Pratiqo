@@ -85,6 +85,43 @@ test("RD intro shell and culture panorama include overflow and wrapping safeguar
   assert.match(hero, /order-first min-w-0/);
 });
 
+test("RD intro is the only surface opting flashcards into graded footer gating", () => {
+  const flashcard = read("components/yo/YoFlashcardPreview.tsx");
+  const deck = read("components/yo/YoLessonDeck.tsx");
+  const intro = read("components/yo/DominicanRepublicIntroContent.tsx");
+  const oldAutoplaySurfaces = [
+    "components/yo/DominicanRepublicModule2Content.tsx",
+    "components/yo/DominicanRepublicModule3Content.tsx",
+    "components/yo/DominicanRepublicModule4Content.tsx",
+    "components/yo/DominicanRepublicModule5Content.tsx",
+    "app/yo/langues/espagnol/intro/page.tsx",
+    "app/yo/langues/anglais/intro/page.tsx",
+    "app/yo/langues/francais-quebec/intro/page.tsx",
+    "app/yo/langues/italien/intro/page.tsx",
+    "app/yo/langues/japonais/intro/page.tsx",
+    "components/yo/YoIntroExperience.tsx",
+  ];
+
+  assert.match(flashcard, /export type YoFlashcardPreviewMode = "autoplay" \| "graded"/);
+  assert.match(flashcard, /mode = "autoplay"/);
+  assert.match(flashcard, /mode === "autoplay"[\s\S]{0,120}setIsAutoplay\(true\)/);
+  assert.match(flashcard, /!isGradedMode \? \([\s\S]{0,240}Carousel controls/);
+  assert.match(flashcard, /onCurrentCardRatedChange\?: \(rated: boolean\) => void/);
+  assert.match(flashcard, /onCompleteChange\?: \(complete: boolean\) => void/);
+  assert.match(flashcard, /onGradedStateChange\?: \(state: YoFlashcardGradedState\) => void/);
+
+  assert.match(deck, /YoLessonDeckStepGateContext/);
+  assert.match(deck, /variant === "reference" && referenceStepGate\.enabled && !referenceStepGate\.canAdvance/);
+  assert.match(deck, /disabled=\{isLast \|\| isReferenceNextDisabled\}/);
+
+  assert.match(intro, /id:\s*"flashcards"/);
+  assert.match(intro, /<YoFlashcardPreview[\s\S]*?mode="graded"[\s\S]*?showHeader=\{false\}/);
+
+  for (const file of oldAutoplaySurfaces) {
+    assert.doesNotMatch(read(file), /mode="graded"/, `${file} must stay on the default autoplay mode`);
+  }
+});
+
 test("responsive layout patch does not touch restricted systems", () => {
   // Exceptions are sibling PRs that legitimately touch a normally-forbidden
   // path. The RD responsive patch is not directly editing those files; we
