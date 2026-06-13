@@ -37,17 +37,23 @@
  *
  * Copy rules (per operator brief)
  * -------------------------------
- *   • Always uses "Membre Pro Pratiqo" as the product name.
- *   • Never uses "Teacher Pro".
- *   • Button copy is the literal operator-supplied string —
- *     do not edit without a counsel re-review.
+ *   • Always uses "Membre Pro Pratiqo" / "Pro Member · Pratiqo"
+ *     / "Miembro Pro · Pratiqo" — never "Teacher Pro".
+ *   • Price is the canonical 29,99 $ CAD / $29.99 CAD per month
+ *     + applicable taxes on every locale, matching
+ *     `MEMBRE_PRO_PLAN.proMonthlyPriceCadDisplay` in
+ *     `lib/config/membrePro.ts`. The bare "29 $" / "$29" forms
+ *     are explicitly banned (they were the source of an earlier
+ *     normalization mistake — see the canonical-price guards in
+ *     `tests/marketing/membreProCommissionModel.test.ts`).
  *   • "ristourne" is always qualified with "admissible" or
  *     "selon les conditions applicables" — never overpromised.
- *   • Includes a small tax / billing disclaimer that points at
- *     Stripe as the authoritative source so the CTA itself
- *     cannot misstate the price (a missing tax disclosure on a
- *     CAD subscription CTA would be a QC consumer-protection
- *     regression vs. the canonical `/upgrade` flow).
+ *   • Tax disclosure ("+ taxes applicables / + applicable taxes
+ *     / + impuestos aplicables") is repeated in the fine-print
+ *     line so the CTA cannot misstate the price (a missing tax
+ *     disclosure on a CAD subscription CTA would be a QC
+ *     consumer-protection regression vs. the canonical
+ *     `/upgrade` flow).
  *
  * Privacy / safety profile
  * ------------------------
@@ -85,10 +91,14 @@ type Copy = {
    */
   supporting: string;
   /**
-   * Small print under the button — names Stripe as the
-   * authoritative price + tax source. Prevents the operator-
-   * supplied "29 $/mois" button from silently implying a tax-
-   * inclusive flat price on a Canadian subscription.
+   * Small print under the button — restates the canonical
+   * locale-aware monthly price (29,99 $ CAD / $29.99 CAD)
+   * with the "+ taxes applicables / + applicable taxes /
+   * + impuestos aplicables" disclosure, and names Stripe as
+   * the authoritative final-amount surface. Keeps the CTA
+   * compliant with QC / CA consumer-protection disclosure on
+   * a CAD subscription regardless of how the marketing copy
+   * above the button is phrased.
    */
   finePrint: string;
   /** Aria label for the button (screen readers). */
@@ -100,37 +110,37 @@ const COPY: Record<Locale, Copy> = {
     eyebrow: "Membre Pro Pratiqo",
     title: "Devenir Membre Pro Pratiqo",
     body: "Élèves illimités, commission réduite et accès au programme de ristourne admissible, selon les conditions applicables.",
-    cta: "Devenir Membre Pro — 29 $/mois",
+    cta: "Devenir Membre Pro — 29,99 $/mois",
     supporting:
       "Commission réduite, avantages Pro et accès au programme de ristourne admissible, selon les conditions applicables.",
     finePrint:
-      "Tarif et taxes applicables présentés au moment du paiement sécurisé sur Stripe.",
+      "29,99 $ CAD/mois + taxes applicables. Tarif final présenté au moment du paiement sécurisé sur Stripe.",
     ariaCta:
-      "Devenir Membre Pro Pratiqo à 29 dollars canadiens par mois. Paiement sécurisé sur Stripe.",
+      "Devenir Membre Pro Pratiqo à 29,99 dollars canadiens par mois plus taxes applicables. Paiement sécurisé sur Stripe.",
   },
   en: {
-    eyebrow: "Membre Pro Pratiqo",
-    title: "Become a Membre Pro Pratiqo",
+    eyebrow: "Pro Member · Pratiqo",
+    title: "Become a Pro Member",
     body: "Unlimited students, reduced commission, and access to the eligible commercial volume rebate program, subject to applicable terms.",
-    cta: "Become Membre Pro — $29/month",
+    cta: "Become a Pro Member — $29.99/month",
     supporting:
       "Reduced commission, Pro benefits, and access to the eligible commercial volume rebate program, subject to applicable terms.",
     finePrint:
-      "Price and applicable taxes are shown on the secure Stripe checkout page.",
+      "$29.99 CAD/month + applicable taxes. Final amount shown on the secure Stripe checkout page.",
     ariaCta:
-      "Become a Membre Pro Pratiqo at 29 Canadian dollars per month. Secure payment on Stripe.",
+      "Become a Pro Member at 29.99 Canadian dollars per month plus applicable taxes. Secure payment on Stripe.",
   },
   es: {
-    eyebrow: "Membre Pro Pratiqo",
-    title: "Hacerse Membre Pro Pratiqo",
+    eyebrow: "Miembro Pro · Pratiqo",
+    title: "Hazte Miembro Pro",
     body: "Estudiantes ilimitados, comisión reducida y acceso al programa de reembolso admisible, sujeto a las condiciones aplicables.",
-    cta: "Hacerse Membre Pro — 29 $/mes",
+    cta: "Hazte Miembro Pro — 29,99 $/mes",
     supporting:
       "Comisión reducida, ventajas Pro y acceso al programa de reembolso admisible, sujeto a las condiciones aplicables.",
     finePrint:
-      "El precio y los impuestos aplicables se muestran en la página de pago segura de Stripe.",
+      "29,99 $ CAD/mes + impuestos aplicables. Importe final mostrado en la página de pago segura de Stripe.",
     ariaCta:
-      "Hacerse Membre Pro Pratiqo por 29 dólares canadienses al mes. Pago seguro en Stripe.",
+      "Hazte Miembro Pro a 29,99 dólares canadienses al mes más impuestos aplicables. Pago seguro en Stripe.",
   },
 };
 

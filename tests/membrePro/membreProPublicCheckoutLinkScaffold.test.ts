@@ -222,11 +222,19 @@ assert.ok(
 );
 ok('7) Banned label "Teacher Pro" never appears in the CTA copy');
 
-// ── 8. Operator-dictated FR / EN / ES copy lands verbatim ────────────
+// ── 8. Canonical FR / EN / ES copy lands verbatim ──────────────────
 
 assert.ok(
-  componentSrc.includes("Devenir Membre Pro — 29 $/mois"),
-  "FR button copy must match the operator-supplied string exactly",
+  componentSrc.includes("Devenir Membre Pro — 29,99 $/mois"),
+  "FR button copy must match the canonical string exactly",
+);
+assert.ok(
+  componentSrc.includes("Become a Pro Member — $29.99/month"),
+  "EN button copy must match the canonical string exactly",
+);
+assert.ok(
+  componentSrc.includes("Hazte Miembro Pro — 29,99 $/mes"),
+  "ES button copy must match the canonical string exactly",
 );
 assert.ok(
   componentSrc.includes(
@@ -234,7 +242,7 @@ assert.ok(
   ),
   "FR supporting copy must match the operator-supplied string exactly",
 );
-ok("8) Operator-dictated FR copy lands verbatim");
+ok("8) Canonical FR / EN / ES button copy lands verbatim");
 
 // ── 9. "ristourne" is never overpromised in FR copy ──────────────────
 
