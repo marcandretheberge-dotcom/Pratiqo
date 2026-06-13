@@ -69,15 +69,18 @@
  *      `/upgrade` or `/tarifs`, which have working authenticated
  *      paths).
  *   2. Confirm on the Stripe Dashboard that:
- *        a. The link's Price is configured at the price displayed
- *           on the CTA (today: 29 $ CAD / month — note this
- *           differs from the canonical `MEMBRE_PRO_PLAN
- *           .proMonthlyPriceCad` of 29.99 CAD; the divergence
- *           must be reconciled with the lawyer-reviewed
- *           pricing before launch).
+ *        a. The link's Price object charges the canonical
+ *           29,99 $ CAD / $29.99 CAD / month (matching
+ *           `MEMBRE_PRO_PLAN.proMonthlyPriceCad === 29.99` and
+ *           the Stripe-side `STRIPE_PRO_MONTHLY_PRICE_ID`
+ *           with `unit_amount = 2999`). The CTA copy has been
+ *           aligned on this canonical price across FR / EN / ES
+ *           — bare "29 $" / "$29" forms are banned and guarded
+ *           by `tests/marketing/membreProCommissionModel.test.ts`.
  *        b. Stripe Tax is enabled so the user sees the QC / CA
- *           applicable taxes on the Stripe-hosted page (the CTA
- *           copy itself does not promise tax-included pricing).
+ *           applicable taxes on the Stripe-hosted page; the CTA
+ *           fine-print already restates "+ taxes applicables /
+ *           + applicable taxes / + impuestos aplicables".
  *        c. The Subscription is configured to attach a
  *           `client_reference_id` URL parameter to the success
  *           redirect so the webhook can reconcile the payment.
