@@ -34,6 +34,7 @@
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -64,10 +65,25 @@ import {
 import { YoSpeechButton } from "@/components/yo/YoSpeechButton";
 import { useYoAudioFeedback } from "@/components/yo/YoAudioFeedbackProvider";
 import { YoYoppoReward } from "@/components/yo/YoYoppoReward";
+import { useYoLessonDeckStepGate } from "@/components/yo/YoLessonDeck";
+
+export type YoFlashcardPreviewMode = "autoplay" | "graded";
+
+export type YoFlashcardGradedState = {
+  currentIndex: number;
+  total: number;
+  currentCardRated: boolean;
+  isComplete: boolean;
+};
 
 export interface YoFlashcardPreviewProps {
   cards: YoFlashcard[];
   locale: YoLocale;
+  mode?: YoFlashcardPreviewMode;
+  showHeader?: boolean;
+  onCurrentCardRatedChange?: (rated: boolean) => void;
+  onCompleteChange?: (complete: boolean) => void;
+  onGradedStateChange?: (state: YoFlashcardGradedState) => void;
   /**
    * BCP-47 tag forwarded to the Web Speech fallback when a card's
    * Spanish front has no pre-generated MP3. Defaults to "es-ES";
@@ -169,24 +185,34 @@ export function YoFlashcardPreview({
   enableAudioFeedback = false,
   compactDeck = false,
   viewportDeck = false,
+  mode = "autoplay",
+  showHeader = true,
+  onCurrentCardRatedChange,
+  onCompleteChange,
+  onGradedStateChange,
 }: YoFlashcardPreviewProps) {
   const total = cards.length;
   const { playFeedback } = useYoAudioFeedback();
+  const { setStepGate } = useYoLessonDeckStepGate();
   const [index, setIndex] = useState(0);
   const [state, setState] = useState<DeckState>({
     mode: "card",
     isFlipped: false,
     lastRating: null,
   });
+  const [ratedCardIds, setRatedCardIds] = useState<ReadonlySet<string>>(
+    () => new Set(),
+  );
   // Default OFF. We enable on mount if reduced motion is NOT requested.
   const [isAutoplay, setIsAutoplay] = useState(false);
   const [isReducedMotion, setIsReducedMotion] = useState(false);
+  const isGradedMode = mode === "graded";
 
   useEffect(() => {
     if (typeof window === "undefined" || !window.matchMedia) return;
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
     setIsReducedMotion(media.matches);
-    if (!media.matches) {
+    if (!media.matches && mode === "autoplay") {
       setIsAutoplay(true);
     }
     const onChange = (event: MediaQueryListEvent) => {
@@ -197,7 +223,7 @@ export function YoFlashcardPreview({
     };
     media.addEventListener?.("change", onChange);
     return () => media.removeEventListener?.("change", onChange);
-  }, []);
+  }, [mode]);
 
   const pauseAutoplay = useCallback(() => {
     setIsAutoplay(false);
@@ -227,12 +253,31 @@ export function YoFlashcardPreview({
       if (enableAudioFeedback) {
         void playFeedback(quality === 0 ? "incorrect" : "correct");
       }
+
+      const currentCard = cards[index];
+      if (isGradedMode && currentCard) {
+        setRatedCardIds((previous) => {
+          const next = new Set(previous);
+          next.add(currentCard.id);
+          return next;
+        });
+
+        if (index >= total - 1) {
+          setState({ mode: "card", isFlipped: true, lastRating: quality });
+          return;
+        }
+
+        setIndex(index + 1);
+        setState({ mode: "card", isFlipped: false, lastRating: null });
+        return;
+      }
+
       setState((prev) => {
         if (prev.mode !== "card") return prev;
         return { mode: "card", isFlipped: true, lastRating: quality };
       });
     },
-    [enableAudioFeedback, pauseAutoplay, playFeedback],
+    [cards, enableAudioFeedback, index, isGradedMode, pauseAutoplay, playFeedback, total],
   );
 
   const handleNext = useCallback(() => {
@@ -267,6 +312,7 @@ export function YoFlashcardPreview({
   const handleRestart = useCallback(() => {
     pauseAutoplay();
     setIndex(0);
+    setRatedCardIds(new Set());
     setState({ mode: "card", isFlipped: false, lastRating: null });
   }, [pauseAutoplay]);
 
@@ -282,6 +328,7 @@ export function YoFlashcardPreview({
       clearTimeout(autoTickRef.current);
       autoTickRef.current = null;
     }
+    if (mode !== "autoplay") return;
     if (!isAutoplay) return;
     if (state.mode !== "card") return;
 
@@ -312,7 +359,48 @@ export function YoFlashcardPreview({
         autoTickRef.current = null;
       }
     };
-  }, [isAutoplay, state, total]);
+  }, [isAutoplay, mode, state, total]);
+
+  const currentCard = cards[index];
+  const currentCardRated = Boolean(currentCard && ratedCardIds.has(currentCard.id));
+  const isGradedComplete = isGradedMode && total > 0 && ratedCardIds.size >= total;
+
+  useLayoutEffect(() => {
+    if (!isGradedMode) return;
+    const gradedState: YoFlashcardGradedState = {
+      currentIndex: index,
+      total,
+      currentCardRated,
+      isComplete: isGradedComplete,
+    };
+
+    onCurrentCardRatedChange?.(currentCardRated);
+    onCompleteChange?.(isGradedComplete);
+    onGradedStateChange?.(gradedState);
+    setStepGate({
+      enabled: true,
+      canAdvance: isGradedComplete,
+      isComplete: isGradedComplete,
+    });
+
+    return () => {
+      setStepGate({
+        enabled: false,
+        canAdvance: true,
+        isComplete: false,
+      });
+    };
+  }, [
+    currentCardRated,
+    index,
+    isGradedComplete,
+    isGradedMode,
+    onCompleteChange,
+    onCurrentCardRatedChange,
+    onGradedStateChange,
+    setStepGate,
+    total,
+  ]);
 
   if (total === 0) {
     return null;
@@ -331,17 +419,23 @@ export function YoFlashcardPreview({
 
   return (
     <section aria-labelledby={headingId} className={sectionClasses}>
-      <div className={cn("mb-5 flex items-baseline justify-between gap-4", viewportDeck && "mb-2 shrink-0")}>
-        <h2
-          id={headingId}
-          className="text-xl font-medium tracking-tight text-[#1a3a32] sm:text-2xl"
-        >
+      {showHeader ? (
+        <div className={cn("mb-5 flex items-baseline justify-between gap-4", viewportDeck && "mb-2 shrink-0")}>
+          <h2
+            id={headingId}
+            className="text-xl font-medium tracking-tight text-[#1a3a32] sm:text-2xl"
+          >
+            {resolvedTitle}
+          </h2>
+          <p className="hidden text-sm text-[var(--color-text-secondary)] sm:block">
+            {resolvedSubtitle}
+          </p>
+        </div>
+      ) : (
+        <h2 id={headingId} className="sr-only">
           {resolvedTitle}
         </h2>
-        <p className="hidden text-sm text-[var(--color-text-secondary)] sm:block">
-          {resolvedSubtitle}
-        </p>
-      </div>
+      )}
 
       {state.mode === "complete" ? (
         <CompletionPanel
@@ -360,6 +454,7 @@ export function YoFlashcardPreview({
           state={state}
           isAutoplay={isAutoplay}
           isReducedMotion={isReducedMotion}
+          mode={mode}
           onFlip={handleFlip}
           onCardKey={handleCardKey}
           onRate={handleRate}
@@ -386,6 +481,7 @@ interface DeckCardProps {
   state: Extract<DeckState, { mode: "card" }>;
   isAutoplay: boolean;
   isReducedMotion: boolean;
+  mode: YoFlashcardPreviewMode;
   onFlip: () => void;
   onCardKey: (event: React.KeyboardEvent<HTMLDivElement>) => void;
   onRate: (quality: YoFlashcardQuality) => void;
@@ -408,6 +504,7 @@ function DeckCard({
   state,
   isAutoplay,
   isReducedMotion,
+  mode,
   onFlip,
   onCardKey,
   onRate,
@@ -424,6 +521,7 @@ function DeckCard({
 }: DeckCardProps) {
   const isLast = index === total - 1;
   const isFirst = index === 0;
+  const isGradedMode = mode === "graded";
   const progressLabel = t(YO_COPY.flash.progressLabel, locale);
   const faceLabel = state.isFlipped
     ? t(YO_COPY.flash.cardFaceBack, locale)
@@ -580,64 +678,72 @@ function DeckCard({
           </div>
         </div>
 
-        {/* Carousel controls — Prev / Play-Pause / Next */}
-        <div className={cn("flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-teal-100 bg-white/85 px-3 py-2 sm:px-4", viewportDeck && "shrink-0 px-2 py-1.5")}>
-          <div className="flex items-center gap-1.5">
-            <button
-              type="button"
-              onClick={onPrev}
-              disabled={isFirst}
-              aria-label={previousLabel}
-              className={cn(
-                "inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 sm:text-sm",
-                isFirst
-                  ? "cursor-not-allowed bg-white text-teal-700/40 ring-1 ring-teal-100"
-                  : "bg-white text-teal-800 ring-1 ring-teal-100 hover:bg-teal-50",
-              )}
-            >
-              <ChevronLeft className="size-3.5" aria-hidden />
-              <span className="hidden sm:inline">{previousLabel}</span>
-            </button>
-            <button
-              type="button"
-              onClick={onToggleAutoplay}
-              aria-pressed={isAutoplay}
-              aria-label={isAutoplay ? pauseAria : playAria}
-              className={cn(
-                "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 sm:text-sm",
-                isAutoplay
-                  ? "bg-[#0F6E56] text-white hover:bg-[#0b5b47]"
-                  : "bg-white text-teal-800 ring-1 ring-teal-100 hover:bg-teal-50",
-              )}
-            >
-              {isAutoplay ? (
-                <Pause className="size-3.5" aria-hidden />
-              ) : (
-                <Play className="size-3.5" aria-hidden />
-              )}
-              <span>{isAutoplay ? pauseLabel : playLabel}</span>
-            </button>
-          </div>
-          <button
-            type="button"
-            onClick={onNext}
-            aria-label={t(YO_COPY.flashAutoplay.nextNeutral, locale)}
-            className="inline-flex items-center gap-1 rounded-full bg-white px-3 py-1.5 text-xs font-medium text-teal-800 ring-1 ring-teal-100 transition hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 sm:text-sm"
-          >
-            <span className="hidden sm:inline">
-              {t(YO_COPY.flashAutoplay.nextNeutral, locale)}
-            </span>
-            <ChevronRight className="size-3.5" aria-hidden />
-          </button>
-        </div>
-        {isReducedMotion ? (
-          <p className="text-xs text-[var(--color-text-secondary)]">
-            {reducedMotionNote}
-          </p>
+        {!isGradedMode ? (
+          <>
+            {/* Carousel controls — Prev / Play-Pause / Next */}
+            <div className={cn("flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-teal-100 bg-white/85 px-3 py-2 sm:px-4", viewportDeck && "shrink-0 px-2 py-1.5")}>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={onPrev}
+                  disabled={isFirst}
+                  aria-label={previousLabel}
+                  className={cn(
+                    "inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 sm:text-sm",
+                    isFirst
+                      ? "cursor-not-allowed bg-white text-teal-700/40 ring-1 ring-teal-100"
+                      : "bg-white text-teal-800 ring-1 ring-teal-100 hover:bg-teal-50",
+                  )}
+                >
+                  <ChevronLeft className="size-3.5" aria-hidden />
+                  <span className="hidden sm:inline">{previousLabel}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={onToggleAutoplay}
+                  aria-pressed={isAutoplay}
+                  aria-label={isAutoplay ? pauseAria : playAria}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 sm:text-sm",
+                    isAutoplay
+                      ? "bg-[#0F6E56] text-white hover:bg-[#0b5b47]"
+                      : "bg-white text-teal-800 ring-1 ring-teal-100 hover:bg-teal-50",
+                  )}
+                >
+                  {isAutoplay ? (
+                    <Pause className="size-3.5" aria-hidden />
+                  ) : (
+                    <Play className="size-3.5" aria-hidden />
+                  )}
+                  <span>{isAutoplay ? pauseLabel : playLabel}</span>
+                </button>
+              </div>
+              <button
+                type="button"
+                onClick={onNext}
+                aria-label={t(YO_COPY.flashAutoplay.nextNeutral, locale)}
+                className="inline-flex items-center gap-1 rounded-full bg-white px-3 py-1.5 text-xs font-medium text-teal-800 ring-1 ring-teal-100 transition hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 sm:text-sm"
+              >
+                <span className="hidden sm:inline">
+                  {t(YO_COPY.flashAutoplay.nextNeutral, locale)}
+                </span>
+                <ChevronRight className="size-3.5" aria-hidden />
+              </button>
+            </div>
+            {isReducedMotion ? (
+              <p className="text-xs text-[var(--color-text-secondary)]">
+                {reducedMotionNote}
+              </p>
+            ) : null}
+          </>
         ) : null}
       </div>
 
-      <div className={cn("flex flex-col gap-2 rounded-3xl border border-teal-100 bg-[var(--color-base-cream)] p-4 sm:p-5", viewportDeck && "shrink-0 gap-1.5 rounded-2xl p-3 sm:p-3")}>
+      <div className={cn(
+        "flex flex-col gap-2 rounded-3xl border border-teal-100 bg-[var(--color-base-cream)] p-4 sm:p-5",
+        viewportDeck && "shrink-0 gap-1.5 rounded-2xl p-3 sm:p-3",
+        isGradedMode && !state.isFlipped && "hidden",
+      )}>
         <p className={cn("ds-label text-teal-700/90", viewportDeck && "text-[10px]")}>{ratingPrompt}</p>
 
         {/*
@@ -686,29 +792,31 @@ function DeckCard({
           </p>
         )}
 
-        <div className="mt-2 flex flex-col gap-1.5">
-          <button
-            type="button"
-            onClick={onNext}
-            disabled={state.lastRating === null}
-            className={cn(
-              "ds-btn-primary inline-flex w-full items-center justify-center gap-2 text-center text-sm transition sm:text-base",
-              state.lastRating === null && "cursor-not-allowed opacity-50",
-            )}
-          >
-            {nextLabel}
-            <span aria-hidden>→</span>
-          </button>
-          {state.lastRating !== null ? (
+        {!isGradedMode ? (
+          <div className="mt-2 flex flex-col gap-1.5">
             <button
               type="button"
-              onClick={onResetCurrent}
-              className="self-center text-xs font-medium text-teal-700 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2"
+              onClick={onNext}
+              disabled={state.lastRating === null}
+              className={cn(
+                "ds-btn-primary inline-flex w-full items-center justify-center gap-2 text-center text-sm transition sm:text-base",
+                state.lastRating === null && "cursor-not-allowed opacity-50",
+              )}
             >
-              {retryLabel}
+              {nextLabel}
+              <span aria-hidden>→</span>
             </button>
-          ) : null}
-        </div>
+            {state.lastRating !== null ? (
+              <button
+                type="button"
+                onClick={onResetCurrent}
+                className="self-center text-xs font-medium text-teal-700 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2"
+              >
+                {retryLabel}
+              </button>
+            ) : null}
+          </div>
+        ) : null}
       </div>
     </div>
   );

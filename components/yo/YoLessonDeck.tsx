@@ -55,7 +55,9 @@
  */
 
 import {
+  createContext,
   useCallback,
+  useContext,
   useEffect,
   useMemo,
   useRef,
@@ -156,6 +158,32 @@ export const YO_LESSON_DECK_HORIZONTAL_DOMINANCE_RATIO = 1.5;
 const YO_LESSON_DECK_GESTURE_EXCLUDE_SELECTOR =
   'button, a[href], input, textarea, select, summary, details, [role="button"], [data-no-deck-swipe], [data-no-deck-tap]';
 
+export type YoLessonDeckStepGateState = {
+  enabled: boolean;
+  canAdvance: boolean;
+  isComplete?: boolean;
+};
+
+type YoLessonDeckStepGateContextValue = {
+  activeScreenId: string | null;
+  setStepGate: (state: YoLessonDeckStepGateState) => void;
+};
+
+const DEFAULT_STEP_GATE: YoLessonDeckStepGateState = {
+  enabled: false,
+  canAdvance: true,
+  isComplete: false,
+};
+
+const YoLessonDeckStepGateContext = createContext<YoLessonDeckStepGateContextValue>({
+  activeScreenId: null,
+  setStepGate: () => {},
+});
+
+export function useYoLessonDeckStepGate(): YoLessonDeckStepGateContextValue {
+  return useContext(YoLessonDeckStepGateContext);
+}
+
 const YO_REFERENCE_THEME_STYLE = {
   "--pq-bg": "#F4EFE6",
   "--pq-surface": "#FFFFFF",
@@ -201,6 +229,8 @@ export function YoLessonDeck({
   }, [initialIndex, total]);
 
   const [currentIndex, setCurrentIndex] = useState(safeInitial);
+  const [referenceStepGate, setReferenceStepGate] =
+    useState<YoLessonDeckStepGateState>(DEFAULT_STEP_GATE);
   const stageRef = useRef<HTMLDivElement | null>(null);
   const activeScreenRef = useRef<HTMLDivElement | null>(null);
   const pointerStart = useRef<
@@ -216,8 +246,19 @@ export function YoLessonDeck({
     setCurrentIndex((i) => Math.max(0, i - 1));
   }, []);
   const goNext = useCallback(() => {
+    if (variant === "reference" && referenceStepGate.enabled && !referenceStepGate.canAdvance) {
+      return;
+    }
     setCurrentIndex((i) => Math.min(total - 1, i + 1));
-  }, [total]);
+  }, [referenceStepGate.canAdvance, referenceStepGate.enabled, total, variant]);
+
+  useEffect(() => {
+    setReferenceStepGate(DEFAULT_STEP_GATE);
+  }, [currentIndex]);
+
+  const updateReferenceStepGate = useCallback((state: YoLessonDeckStepGateState) => {
+    setReferenceStepGate(state);
+  }, []);
 
   // Keyboard navigation — preserved verbatim from the previous
   // deck so ArrowLeft / ArrowRight on a desktop browser keeps
@@ -372,6 +413,11 @@ export function YoLessonDeck({
     const isFirst = currentIndex === 0;
     const isLast = currentIndex === total - 1;
     const activeScreen = screens[currentIndex];
+    const isReferenceNextDisabled = referenceStepGate.enabled && !referenceStepGate.canAdvance;
+    const referenceStepGateContext = {
+      activeScreenId: activeScreen.id,
+      setStepGate: updateReferenceStepGate,
+    };
 
     return (
       <div
@@ -426,7 +472,9 @@ export function YoLessonDeck({
             onPointerCancel={onPointerCancel}
             onPointerLeave={onPointerCancel}
           >
-            <ReferenceLessonScreen screen={activeScreen} />
+            <YoLessonDeckStepGateContext.Provider value={referenceStepGateContext}>
+              <ReferenceLessonScreen screen={activeScreen} />
+            </YoLessonDeckStepGateContext.Provider>
           </main>
 
           <footer
@@ -448,7 +496,7 @@ export function YoLessonDeck({
               <button
                 type="button"
                 onClick={goNext}
-                disabled={isLast}
+                disabled={isLast || isReferenceNextDisabled}
                 className="inline-flex min-h-14 flex-1 items-center justify-center gap-2 rounded-full bg-[var(--pq-primary)] px-6 text-base font-extrabold text-[var(--pq-on-primary)] shadow-[0_10px_22px_-10px_var(--pq-primary)] transition hover:bg-[var(--pq-primary-hi)] disabled:cursor-default disabled:bg-[var(--pq-brush)] disabled:text-[var(--pq-on-brush)]"
               >
                 {isLast ? labels.finish : activeScreen.ctaLabel ?? labels.next}
