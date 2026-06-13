@@ -273,6 +273,19 @@ const allowed = new Set([
   "components/yo/DominicanRepublicModule3Content.tsx",
   "components/yo/DominicanRepublicModule4Content.tsx",
   "tests/yo/yopratiqoRdModuleProgressCompletion.test.ts",
+  // feat/yopratiqo-premium-checkout-scaffold PR — scaffolds the
+  // operator-minted hosted Stripe Checkout payment link for the
+  // Dominican Republic Spanish A1 paid-module shell. The CTA
+  // component renders `null` while `premiumModulesEnabled` and
+  // the per-module `checkoutEnabled` / `publicLaunchEnabled`
+  // flags stay false (today's default), so this PR adds zero
+  // user-visible behaviour. Verified by
+  // tests/yo/yopratiqoPremiumCheckoutScaffold.test.ts.
+  "lib/yo/yopratiqoPremiumCheckout.ts",
+  "components/yo/YoPremiumModuleUnlockCTA.tsx",
+  "lib/yo/yopratiqoProductConfig.ts",
+  "app/yo/langues/espagnol/pays/republique-dominicaine/page.tsx",
+  "tests/yo/yopratiqoPremiumCheckoutScaffold.test.ts",
 ]);
 
 const restrictedPatterns = [
