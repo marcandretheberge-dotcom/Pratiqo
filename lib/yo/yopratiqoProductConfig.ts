@@ -250,6 +250,26 @@ export const yopratiqoProductConfig = {
       teacherBridgeEnabled: true,
       priceHypothesisCadCents: 2499,
     },
+    {
+      // Dominican Republic Spanish A1 — second paid-module shell.
+      // The operator-minted hosted checkout URL lives in
+      // `lib/yo/yopratiqoPremiumCheckout.ts` keyed by this id.
+      // Both gates stay false until the entitlement webhook +
+      // auth mapping + lawyer-reviewed disclosures are wired.
+      // Flipping `checkoutEnabled` on without that scaffolding
+      // would take payment without unlocking the module.
+      id: "dr-spanish-a1",
+      languageSlug: "espagnol",
+      route: "/yo/langues/espagnol/pays/republique-dominicaine",
+      status: "planned",
+      productType: "future_premium_module",
+      publicLaunchEnabled: false,
+      checkoutEnabled: false,
+      indexable: false,
+      courseSchemaEligible: false,
+      teacherBridgeEnabled: true,
+      priceHypothesisCadCents: 2499,
+    },
   ] as const satisfies readonly YoPratiqoFuturePremiumModuleConfig[],
   futurePremiumEnabled: false,
   teacherBridgeEnabled: true,

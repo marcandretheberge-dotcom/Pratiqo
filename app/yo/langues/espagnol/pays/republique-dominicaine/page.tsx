@@ -42,11 +42,26 @@
  *
  * Privacy / safety profile
  * ------------------------
- *   • Server component. No Supabase write, no Stripe, no payment
- *     math, no checkout, no marketplace, no audio generation, no
- *     RLS edits, no migrations, no AI summary, no raw quiz
- *     exposure. The booking-time consent surface and the
+ *   • Server component. No Supabase write, no payment math, no
+ *     marketplace, no audio generation, no RLS edits, no
+ *     migrations, no AI summary, no raw quiz exposure. The
+ *     booking-time consent surface and the
  *     `<YoStudentCompanionCard />` are NOT touched.
+ *   • The page mounts a `<YoPremiumModuleUnlockCTA />` component
+ *     twice (after the free intro on the hero screen, and as a
+ *     "locked module" tile next to the path). The component
+ *     consults `getYopratiqoPremiumCheckoutUrl("dr-spanish-a1")`
+ *     which returns `null` while the
+ *     `yopratiqoProductConfig.premiumModulesEnabled` flag and the
+ *     module's per-entry `checkoutEnabled` / `publicLaunchEnabled`
+ *     flags are still `false`. As long as those gates stay false
+ *     no Stripe-related markup or URL is rendered on this page.
+ *     This file imports no Stripe SDK and no payments library
+ *     directly; the URL constant lives in
+ *     `lib/yo/yopratiqoPremiumCheckout.ts`.
+ *   • The free intro CTA remains the primary affordance and is
+ *     never replaced by the paid-module CTA — the paid CTA only
+ *     appears below it when the gate flips on.
  */
 
 import type { Metadata } from "next";
@@ -64,6 +79,7 @@ import { YoAppShell as _YoAppShell, YoAppShellScroller as _YoAppShellScroller } 
 import { YoDesktopAppWorkspace as _YoDesktopAppWorkspace } from "@/components/yo/YoDesktopAppWorkspace";
 import { YoAdaptiveStepShell } from "@/components/yo/YoAdaptiveStepShell";
 import { YoAppBottomBar } from "@/components/yo/YoAppBottomBar";
+import { YoPremiumModuleUnlockCTA } from "@/components/yo/YoPremiumModuleUnlockCTA";
 
 void _YoAppShell;
 void _YoAppShellScroller;
@@ -328,6 +344,41 @@ export default async function YoEspagnolRepubliqueDominicainePage({
   const companionBlock = <YoCourseCompanionPanel locale={locale} />;
   const discoverBlock = <DiscoverLink href={discoverHref} locale={locale} />;
 
+  // Scaffolded YoPratiqo paid-module unlock surfaces. Both render
+  // `null` while `premiumModulesEnabled` (or the per-module
+  // `checkoutEnabled` / `publicLaunchEnabled` flag) is still
+  // `false`, so production behaviour is unchanged. When the
+  // operator flips the launch gate, both surfaces light up:
+  //
+  //   • `unlockInlineBlock` — compact "Débloquer le module"
+  //     button right after the free intro CTA, so users finishing
+  //     the intro see the next paid step.
+  //
+  //   • `unlockLockedCardBlock` — full "locked module" tile next
+  //     to the path, so users browsing the roadmap see what is
+  //     gated and how to unlock it.
+  //
+  // The Stripe hosted-checkout URL itself lives in
+  // `lib/yo/yopratiqoPremiumCheckout.ts` keyed by the
+  // `"dr-spanish-a1"` module id — never inlined here.
+  const PAID_MODULE_ID = "dr-spanish-a1" as const;
+  const unlockInlineBlock = (
+    <YoPremiumModuleUnlockCTA
+      moduleId={PAID_MODULE_ID}
+      locale={locale}
+      variant="inline"
+      surfaceId="rd-course-home-after-intro"
+    />
+  );
+  const unlockLockedCardBlock = (
+    <YoPremiumModuleUnlockCTA
+      moduleId={PAID_MODULE_ID}
+      locale={locale}
+      variant="locked-card"
+      surfaceId="rd-course-home-locked-card"
+    />
+  );
+
   // Mobile mounts the same building blocks (preserves audit-tested
   // visual + a11y contracts) but lays them out as 3 paged screens:
   //
@@ -355,6 +406,8 @@ export default async function YoEspagnolRepubliqueDominicainePage({
   const mobileHeroScreen = (
     <div className="flex w-full flex-col gap-4 px-4 py-4">
       {heroBlock}
+      {/* Gated paid-module CTA — renders null today. */}
+      {unlockInlineBlock}
       {companionBlock}
     </div>
   );
@@ -368,6 +421,8 @@ export default async function YoEspagnolRepubliqueDominicainePage({
             : "Ton parcours · Intro → Modules 2-5"}
       </p>
       {pathBlock}
+      {/* Gated "locked module" tile — renders null today. */}
+      {unlockLockedCardBlock}
     </div>
   );
   const mobileDetailsScreen = (
@@ -486,7 +541,11 @@ export default async function YoEspagnolRepubliqueDominicainePage({
         center: (
           <div className="flex flex-col gap-5">
             {heroBlock}
+            {/* Gated paid-module CTA — renders null today. */}
+            {unlockInlineBlock}
             {pathBlock}
+            {/* Gated "locked module" tile — renders null today. */}
+            {unlockLockedCardBlock}
           </div>
         ),
         rightRail: (
