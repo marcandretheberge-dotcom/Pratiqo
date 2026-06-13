@@ -150,6 +150,15 @@ test("patch stays outside restricted systems", () => {
     "tests/teacherLaunch/teacherLaunchCenter.test.ts",
     "tests/yo/yopratiqoDominicanResponsiveLayout.test.ts",
     "tests/yo/yopratiqoAudioPronunciationOverrides.test.ts",
+    // feat/membre-pro-public-checkout-link — public-link scaffold
+    // (constant + gated component + contract test). The gate
+    // stays closed (`isMembreProPublicCheckoutLinkEnabled()`
+    // returns false) so production behaviour is unchanged. The
+    // canonical authenticated /upgrade → /api/stripe/pro/checkout
+    // flow is verified-untouched by the scaffold contract test.
+    "lib/config/membreProPublicCheckoutLink.ts",
+    "components/membrePro/MembreProPublicUpgradeCTA.tsx",
+    "tests/membrePro/membreProPublicCheckoutLinkScaffold.test.ts",
   ]);
 
   for (const file of diffNameOnly) {
