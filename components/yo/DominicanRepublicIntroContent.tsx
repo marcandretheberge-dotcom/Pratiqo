@@ -12,17 +12,16 @@ import {
 import {
   dominicanRepublicA1,
   dominicanRepublicA1ListeningDemo,
-  dominicanRepublicA1PanoramaMiniQuizzes,
 } from "@/lib/yo/dominicanRepublicA1";
 import { lstr, t } from "@/lib/yo/localize";
 import type {
   YoBulletGroup,
   YoDialogueScenarioData,
   YoDominicanExpression,
+  YoFlashcard,
   YoIntroDetailedSection,
   YoLocale,
   YoLocalizedString,
-  YoQuizQuestion,
   YoTimelineEntry,
   YoVocabularyItem,
   YoVisualHint,
@@ -94,13 +93,32 @@ const CULTURE_POINTS: Array<{
     ),
   },
   {
-    title: lstr("Famille et hospitalite", "Family and hospitality"),
+    title: lstr("Famille et hospitalité", "Family and hospitality"),
     body: lstr(
       "Les repas, les réunions et l'accueil chaleureux donnent du sens aux mots que tu apprends.",
       "Meals, gatherings, and warm hospitality give meaning to the words you learn.",
     ),
   },
 ];
+
+const INTRO_COMPANION_AUDIT = [
+  { id: "scene", companionState: "map" },
+  { id: "mission", companionState: "map" },
+  { id: "country", companionState: "map" },
+  { id: "history", companionState: "map" },
+  { id: "food", companionState: "map" },
+  { id: "phrases", companionState: "confused" },
+  { id: "practice", companionState: "confused" },
+  { id: "review", companionState: "map" },
+  { id: "ready", companionState: "celebrating" },
+] as const satisfies ReadonlyArray<{
+  id: string;
+  companionState: YoLessonDeckScreen["companionState"];
+}>;
+
+function companionStateFor(id: (typeof INTRO_COMPANION_AUDIT)[number]["id"]) {
+  return INTRO_COMPANION_AUDIT.find((screen) => screen.id === id)?.companionState ?? "map";
+}
 
 function buildIntroDeckScreens(locale: YoLocale): YoLessonDeckScreen[] {
   const data = dominicanRepublicA1;
@@ -113,7 +131,7 @@ function buildIntroDeckScreens(locale: YoLocale): YoLessonDeckScreen[] {
   const courseHomeHref = `/yo/langues/espagnol/pays/republique-dominicaine${langSuffix}`;
 
   const screens: YoLessonDeckScreen[] = [
-    screen("welcome", "mission", "Mission", "Bienvenue dans le voyage", "map", (
+    screen("scene", "mission", t(lstr("Scène", "Scene", "Escena"), locale), t(lstr("Bienvenue dans le voyage", "Welcome to the journey", "Bienvenido al viaje"), locale), companionStateFor("scene"), (
       <HeroPage
         locale={locale}
         tagline={WELCOME_TAGLINE}
@@ -121,23 +139,15 @@ function buildIntroDeckScreens(locale: YoLocale): YoLessonDeckScreen[] {
         subtitle={data.module.heroSubtitle}
       />
     )),
-    screen("objectives", "mission", "Objectif", "Ce que tu vas valider", "map", (
-      <StatsPage locale={locale} />
-    )),
-    screen("essential-questions", "mission", "Questions", "Avant de mémoriser", "map", (
-      <ChecklistPage
+    screen("mission", "mission", t(lstr("Mission", "Mission", "Misión"), locale), t(lstr("Ce que tu vas valider", "What you will validate", "Lo que vas a validar"), locale), companionStateFor("mission"), (
+      <MissionOverviewPage
         locale={locale}
-        items={[
+        questions={[
           lstr("Qu'est-ce qui rend la RD différente d'un simple resort ?", "What makes the DR more than just a resort?"),
           lstr("Pourquoi Santo Domingo compte dans l'histoire des Amériques ?", "Why does Santo Domingo matter in the Americas?"),
           lstr("Que faut-il comprendre pour parler avec respect ?", "What should you understand to speak with respect?"),
         ]}
-      />
-    )),
-    screen("can-do", "mission", "Je peux", "À la fin de cette intro", "map", (
-      <ChecklistPage
-        locale={locale}
-        items={[
+        outcomes={[
           lstr("situer la République dominicaine", "locate the Dominican Republic"),
           lstr("reconnaître quelques éléments culturels", "recognize key cultural elements"),
           lstr("saluer et me présenter simplement", "greet and introduce myself simply"),
@@ -145,144 +155,57 @@ function buildIntroDeckScreens(locale: YoLocale): YoLessonDeckScreen[] {
         ]}
       />
     )),
-    screen("first-mission", "mission", "Mission", "Premier scénario", "map", (
-      <PhraseFocusPage
+    screen("country", "culture", t(lstr("Explorer", "Explore", "Explorar"), locale), t(lstr("Panorama du pays", "Country panorama", "Panorama del país"), locale), companionStateFor("country"), (
+      <RichSectionPage
         locale={locale}
-        label={lstr("Première mission", "First mission")}
-        phrase="Buenas tardes. Me llamo Marc. Quiero practicar la conversación."
-        translation={lstr(
-          "Tu salues, tu te presentes et tu dis quoi pratiquer.",
-          "You greet, introduce yourself, and say what you want to practice.",
-        )}
-      />
-    )),
-  ];
-
-  appendSectionScreens(screens, locale, {
-    section: geography,
-    quiz: dominicanRepublicA1PanoramaMiniQuizzes.geography,
-    baseId: "geography",
-    label: "Pays",
-    title: "Panorama du pays",
-    imageFit: "contain",
-    chunks: [
-      ...chunkEven(geography.bullets ?? [], 3).map((bullets, index) => (
-        <BulletPage key={`geo-${index + 1}`} locale={locale} bullets={bullets} />
-      )),
-      <PhraseListPage
-        key="geo-phrases"
-        locale={locale}
-        intro={geography.practicalPhrasesIntro}
+        section={geography}
+        imageFit="contain"
+        bullets={geography.bullets}
+        phraseIntro={geography.practicalPhrasesIntro}
         phrases={geography.practicalPhrases}
-      />,
-    ],
-  });
-
-  appendSectionScreens(screens, locale, {
-    section: history,
-    quiz: dominicanRepublicA1PanoramaMiniQuizzes.history,
-    baseId: "history",
-    label: "Histoire",
-    title: "Panorama historique",
-    chunks: [
-      ...chunkEven(history.timeline ?? [], 3).map((entries, index) => (
-        <TimelinePage key={`history-${index + 1}`} locale={locale} entries={entries} />
-      )),
-      <NotePage key="history-note" locale={locale} note={history.learningNote} />,
-    ],
-  });
-
-  appendSectionScreens(screens, locale, {
-    section: food,
-    quiz: dominicanRepublicA1PanoramaMiniQuizzes.food,
-    baseId: "food",
-    label: "Gastro",
-    title: "Panorama gastronomie",
-    chunks: [
-      ...splitBulletGroups(food.bulletGroups ?? [], 4).map((groups, index) => (
-        <GroupsPage key={`food-${index + 1}`} locale={locale} groups={groups} icon="food" />
-      )),
-      <PhraseListPage
-        key="food-phrases"
+      />
+    )),
+    screen("history", "culture", t(lstr("Explorer", "Explore", "Explorar"), locale), t(lstr("Panorama historique", "Historical panorama", "Panorama histórico"), locale), companionStateFor("history"), (
+      <HistoryPage
         locale={locale}
-        intro={food.practicalPhrasesIntro}
+        section={history}
+        culturePoints={CULTURE_POINTS}
+      />
+    )),
+    screen("food", "culture", t(lstr("Explorer", "Explore", "Explorar"), locale), t(lstr("Gastronomie dominicaine", "Dominican food", "Gastronomía dominicana"), locale), companionStateFor("food"), (
+      <RichSectionPage
+        locale={locale}
+        section={food}
+        groups={food.bulletGroups}
+        phraseIntro={food.practicalPhrasesIntro}
         phrases={food.practicalPhrases}
-      />,
-    ],
-  });
-
-  appendSectionScreens(screens, locale, {
-    section: phrases,
-    quiz: dominicanRepublicA1PanoramaMiniQuizzes.phrases,
-    baseId: "phrases",
-    label: "Phrases",
-    title: "Premières phrases",
-    chunks: [
-      ...splitBulletGroups(phrases.bulletGroups ?? [], 4).map((groups, index) => (
-        <GroupsPage key={`phrases-${index + 1}`} locale={locale} groups={groups} icon="phrase" />
-      )),
-      ...chunkEven(phrases.dialogue?.lines ?? [], 3).map((lines, index) => (
-        <DialoguePage
-          key={`phrases-dialogue-${index + 1}`}
-          locale={locale}
-          dialogue={phrases.dialogue ? { ...phrases.dialogue, lines } : undefined}
-        />
-      )),
-    ],
-  });
-
-  screens.push(
-    screen("culture-image", "culture", "Culture", "Panorama culturel", "map", (
-      <ImageIntroPage
-        locale={locale}
-        imagePath={data.module.cultureImagePath}
-        imageAlt={
-          data.module.cultureImageAlt ??
-          lstr("Musique et culture dominicaine", "Dominican music and culture")
-        }
-        visualHint="hero-tropical"
-        title={lstr("Ce qui rend la RD unique", "What makes the DR unique")}
-        body={lstr(
-          "YoPratiqo enseigne la langue dans la culture: rythme, lieux, gestes et situations.",
-          "YoPratiqo teaches language inside culture: rhythm, places, gestures, and situations.",
-        )}
+        icon="food"
       />
     )),
-    screen("culture-points-1", "culture", "Culture", "Musique et sport", "map", (
-      <CulturePointPage locale={locale} points={CULTURE_POINTS.slice(0, 2)} />
+    screen("phrases", "phrase", t(lstr("Écoute", "Listen", "Escucha"), locale), t(lstr("Premières phrases utiles", "First useful phrases", "Primeras frases útiles"), locale), companionStateFor("phrases"), (
+      <PhrasesPracticePage
+        locale={locale}
+        section={phrases}
+      />
     )),
-    screen("culture-points-2", "culture", "Culture", "Vie quotidienne", "map", (
-      <CulturePointPage locale={locale} points={CULTURE_POINTS.slice(2)} />
+    screen("practice", "quiz", t(lstr("À toi", "Your turn", "Tu turno"), locale), t(lstr("Vérifie ton intro", "Check your intro", "Verifica tu intro"), locale), companionStateFor("practice"), (
+      <YoQuizPreview questions={data.quizQuestions} locale={locale} enableAudioFeedback compactDeck />
     )),
-    quizScreen("culture-quiz", "Culture", "Mini-quiz culture", dominicanRepublicA1PanoramaMiniQuizzes.culture, locale),
-    screen("listening-demo", "practice", "Écoute", "Valide le format audio", "confused", (
-      <div className="h-full min-h-0 overflow-hidden">
-        <YoListeningExercisePreview data={dominicanRepublicA1ListeningDemo} locale={locale} />
-      </div>
-    )),
-    ...dictionaryScreens(data.dominicanDictionary, locale),
-    screen("flashcards", "practice", "Flashcards", "Mémorise les essentiels", "map", (
-      <YoFlashcardPreview
+    screen("review", "practice", t(lstr("Révision", "Review", "Repaso"), locale), t(lstr("Flashcards et expressions", "Flashcards and expressions", "Flashcards y expresiones"), locale), companionStateFor("review"), (
+      <ReviewPage
+        locale={locale}
+        expressions={data.dominicanDictionary}
         cards={data.flashcardDeck}
-        locale={locale}
-        speechLang="es-DO"
-        enableAudioFeedback
-        compactDeck
-        viewportDeck
-        audioContext={AUDIO_CONTEXT}
       />
     )),
-    screen("quiz", "quiz", "Quiz final", "Vérifie ton intro", "confused", (
-      <YoQuizPreview questions={data.quizQuestions} locale={locale} enableAudioFeedback compactDeck viewportDeck />
-    )),
-    screen("ready", "completion", "Prêt", "Direction le Module 2", "celebrating", (
+    screen("ready", "completion", t(lstr("Récompense", "Reward", "Recompensa"), locale), t(lstr("Direction le Module 2", "On to Module 2", "Rumbo al Módulo 2"), locale), companionStateFor("ready"), (
       <ReadyPage
         locale={locale}
         module2Href={module2Href}
         courseHomeHref={courseHomeHref}
       />
     )),
-  );
+  ];
 
   return screens;
 
@@ -296,8 +219,8 @@ function buildIntroDeckScreens(locale: YoLocale): YoLessonDeckScreen[] {
 function screen(
   id: string,
   kind: YoLessonDeckScreen["kind"],
-  eyebrowFr: string,
-  titleFr: string,
+  eyebrow: string,
+  title: string,
   companionState: YoLessonDeckScreen["companionState"],
   content: React.ReactNode,
   hint?: string,
@@ -306,83 +229,12 @@ function screen(
   return {
     id,
     kind,
-    eyebrow: eyebrowFr,
-    title: titleFr,
+    eyebrow,
+    title,
     helperText: safeHint ? safeHint : undefined,
     companionState,
     content,
   };
-}
-
-function quizScreen(
-  id: string,
-  eyebrow: string,
-  title: string,
-  questions: YoQuizQuestion[],
-  locale: YoLocale,
-): YoLessonDeckScreen {
-  return screen(id, "quiz", eyebrow, title, "confused", (
-    <YoQuizPreview questions={questions} locale={locale} enableAudioFeedback compactDeck viewportDeck />
-  ));
-}
-
-function appendSectionScreens(
-  screens: YoLessonDeckScreen[],
-  locale: YoLocale,
-  config: {
-    section: YoIntroDetailedSection;
-    quiz: YoQuizQuestion[];
-    baseId: string;
-    label: string;
-    title: string;
-    chunks: React.ReactNode[];
-    imageFit?: "cover" | "contain";
-  },
-) {
-  const sectionScreens: YoLessonDeckScreen[] = [
-    screen(`${config.baseId}-image`, "culture", config.label, config.title, "map", (
-      <ImageIntroPage
-        locale={locale}
-        imagePath={config.section.imagePath}
-        imageAlt={config.section.imageAlt ?? config.section.title}
-        visualHint={config.section.visualHint}
-        imageFit={config.imageFit}
-        title={config.section.title}
-        body={config.section.intro}
-      />
-    )),
-  ];
-
-  if (config.section.highlightTitle) {
-    sectionScreens.push(screen(
-      `${config.baseId}-highlight`,
-      "culture",
-      config.label,
-      "À retenir",
-      "map",
-      <HighlightPage
-        locale={locale}
-        title={config.section.highlightTitle}
-        body={config.section.highlightBody}
-      />,
-    ));
-  }
-
-  sectionScreens.push(
-    ...config.chunks.map((content, index) =>
-      screen(
-        `${config.baseId}-content-${index + 1}`,
-        "culture",
-        config.label,
-        index === 0 ? "À retenir" : "Suite",
-        "map",
-        content,
-      ),
-    ),
-    quizScreen(`${config.baseId}-quiz`, config.label, `Mini-quiz ${config.label.toLowerCase()}`, config.quiz, locale),
-  );
-
-  screens.push(...sectionScreens);
 }
 
 function HeroPage({
@@ -397,111 +249,239 @@ function HeroPage({
   subtitle: YoLocalizedString;
 }) {
   return (
-    <FitPage>
-      <div className="flex h-full flex-col justify-center gap-4">
-        <p className="inline-flex w-fit items-center gap-1.5 rounded-full border border-teal-300/40 bg-white/80 px-3 py-1 text-[0.66rem] font-black uppercase tracking-[0.14em] text-teal-800">
-          <MapPin className="size-3.5" aria-hidden />
-          {t(tagline, locale)}
-        </p>
-        <h1 className="text-[clamp(1.35rem,5vw,2.35rem)] font-semibold leading-tight tracking-tight text-[#1a3a32]">
-          {t(title, locale)}
-        </h1>
-        <p className="max-w-xl text-sm leading-relaxed text-[#1a3a32]/75 sm:text-base">
-          {t(subtitle, locale)}
-        </p>
+    <LessonStack>
+      <div className="overflow-hidden rounded-[24px] border border-[var(--pq-line)] bg-[var(--pq-surface)] shadow-[0_18px_45px_rgba(23,38,66,0.08)]">
+        <YoImageVisual
+          imagePath={dominicanRepublicA1.module.heroImagePath}
+          alt={dominicanRepublicA1.module.heroImageAlt ?? title}
+          locale={locale}
+          fallbackKind="hero-tropical"
+          variant="panel"
+          className="h-[clamp(220px,42vh,360px)] !min-h-0 rounded-none shadow-none"
+        />
       </div>
-    </FitPage>
+      <p className="inline-flex w-fit items-center gap-2 rounded-full border border-[var(--pq-line)] bg-[var(--pq-surface)] px-3 py-1 text-[12px] font-extrabold uppercase tracking-[0.14em] text-[var(--pq-primary)]">
+        <MapPin className="size-3.5" aria-hidden />
+        {t(tagline, locale)}
+      </p>
+      <p
+        className="text-[clamp(1.32rem,4.6vw,2rem)] font-semibold leading-[1.08] text-[var(--pq-ink)]"
+        style={{ fontFamily: "var(--yo-app-display), Newsreader, Georgia, serif" }}
+      >
+        {t(title, locale)}
+      </p>
+      <p className="max-w-[64ch] text-[clamp(0.98rem,2.3vw,1.08rem)] leading-7 text-[var(--pq-ink-soft)]">
+        {t(subtitle, locale)}
+      </p>
+    </LessonStack>
   );
 }
 
-function StatsPage({ locale }: { locale: YoLocale }) {
+function MissionOverviewPage({
+  locale,
+  questions,
+  outcomes,
+}: {
+  locale: YoLocale;
+  questions: YoLocalizedString[];
+  outcomes: YoLocalizedString[];
+}) {
+  return (
+    <LessonStack>
+      <StatsPanel locale={locale} />
+      <CardBlock
+        label={lstr("Questions essentielles", "Essential questions", "Preguntas esenciales")}
+        locale={locale}
+      >
+        <Checklist locale={locale} items={questions} />
+      </CardBlock>
+      <CardBlock
+        label={lstr("À la fin de l'intro", "By the end of the intro", "Al final de la intro")}
+        locale={locale}
+        tint
+      >
+        <Checklist locale={locale} items={outcomes} />
+      </CardBlock>
+    </LessonStack>
+  );
+}
+
+function RichSectionPage({
+  locale,
+  section,
+  imageFit = "cover",
+  bullets,
+  groups,
+  phraseIntro,
+  phrases,
+  icon = "phrase",
+}: {
+  locale: YoLocale;
+  section: YoIntroDetailedSection;
+  imageFit?: "cover" | "contain";
+  bullets?: NonNullable<YoIntroDetailedSection["bullets"]>;
+  groups?: YoBulletGroup[];
+  phraseIntro?: YoLocalizedString;
+  phrases?: YoVocabularyItem[];
+  icon?: "food" | "phrase";
+}) {
+  return (
+    <LessonStack>
+      <ImageCard
+        locale={locale}
+        imagePath={section.imagePath}
+        imageAlt={section.imageAlt ?? section.title}
+        visualHint={section.visualHint}
+        imageFit={imageFit}
+      />
+      <CardBlock label={section.title} locale={locale}>
+        {section.intro ? <Paragraph>{t(section.intro, locale)}</Paragraph> : null}
+        {section.highlightTitle ? (
+          <Notice title={section.highlightTitle} body={section.highlightBody} locale={locale} />
+        ) : null}
+      </CardBlock>
+      {bullets?.length ? <BulletList locale={locale} bullets={bullets} /> : null}
+      {groups?.length ? <GroupsPage locale={locale} groups={groups} icon={icon} /> : null}
+      {phrases?.length ? <PhraseList locale={locale} intro={phraseIntro} phrases={phrases} /> : null}
+    </LessonStack>
+  );
+}
+
+function HistoryPage({
+  locale,
+  section,
+  culturePoints,
+}: {
+  locale: YoLocale;
+  section: YoIntroDetailedSection;
+  culturePoints: typeof CULTURE_POINTS;
+}) {
+  return (
+    <LessonStack>
+      <ImageCard
+        locale={locale}
+        imagePath={section.imagePath}
+        imageAlt={section.imageAlt ?? section.title}
+        visualHint={section.visualHint}
+      />
+      <CardBlock label={section.title} locale={locale}>
+        {section.intro ? <Paragraph>{t(section.intro, locale)}</Paragraph> : null}
+        {section.highlightTitle ? (
+          <Notice title={section.highlightTitle} body={section.highlightBody} locale={locale} />
+        ) : null}
+      </CardBlock>
+      {section.timeline?.length ? (
+        <TimelinePage locale={locale} entries={section.timeline} note={section.learningNote} />
+      ) : null}
+      <CulturePointPage locale={locale} points={culturePoints} />
+    </LessonStack>
+  );
+}
+
+function PhrasesPracticePage({
+  locale,
+  section,
+}: {
+  locale: YoLocale;
+  section: YoIntroDetailedSection;
+}) {
+  return (
+    <LessonStack>
+      <PhraseFocusPage
+        locale={locale}
+        label={lstr("Première mission", "First mission")}
+        phrase="Buenas tardes. Me llamo Marc. Quiero practicar la conversación."
+        translation={lstr(
+          "Tu salues, tu te présentes et tu dis quoi pratiquer.",
+          "You greet, introduce yourself, and say what you want to practice.",
+        )}
+      />
+      <RichSectionPage
+        locale={locale}
+        section={section}
+        groups={section.bulletGroups}
+        icon="phrase"
+      />
+      {section.dialogue ? <DialoguePage locale={locale} dialogue={section.dialogue} /> : null}
+      <CardBlock label={lstr("Exercice d'écoute", "Listening practice", "Práctica de escucha")} locale={locale}>
+        <YoListeningExercisePreview data={dominicanRepublicA1ListeningDemo} locale={locale} />
+      </CardBlock>
+    </LessonStack>
+  );
+}
+
+function ReviewPage({
+  locale,
+  expressions,
+  cards,
+}: {
+  locale: YoLocale;
+  expressions: YoDominicanExpression[];
+  cards: YoFlashcard[];
+}) {
+  return (
+    <LessonStack>
+      <DictionaryPage locale={locale} items={expressions} />
+      <YoFlashcardPreview
+        cards={cards}
+        locale={locale}
+        speechLang="es-DO"
+        enableAudioFeedback
+        compactDeck
+        audioContext={AUDIO_CONTEXT}
+      />
+    </LessonStack>
+  );
+}
+
+function StatsPanel({ locale }: { locale: YoLocale }) {
   const data = dominicanRepublicA1;
   return (
-    <FitPage>
-      <div className="grid h-full min-h-0 content-center gap-3">
-        <h3 className="text-xl font-semibold tracking-tight text-[#1a3a32]">
-          {t(data.introProgress.title, locale)}
-        </h3>
-        <p className="text-sm leading-relaxed text-[#566073]">
-          {t(data.introProgress.description, locale)}
-        </p>
-        <ul role="list" className="grid grid-cols-2 gap-2">
-          {data.introProgress.stats.map((stat) => (
-            <li key={stat.id} className="rounded-2xl bg-white px-3 py-2 ring-1 ring-teal-100">
-              <span className="block text-xl font-semibold text-[#1a3a32]">{stat.value}</span>
-              <span className="block text-[11px] leading-snug text-[#566073]">{t(stat.label, locale)}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </FitPage>
-  );
-}
-
-function ChecklistPage({ locale, items }: { locale: YoLocale; items: YoLocalizedString[] }) {
-  return (
-    <FitPage>
-      <ul role="list" className="grid h-full content-center gap-2.5">
-        {items.map((item) => (
-          <li key={item.fr} className="flex items-start gap-3 rounded-2xl bg-[#DDF4F1]/55 p-3 ring-1 ring-teal-100/70">
-            <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-[#0F6E56]" aria-hidden />
-            <span className="text-sm font-medium leading-relaxed text-[#1a3a32]">{t(item, locale)}</span>
+    <CardBlock label={data.introProgress.title} locale={locale}>
+      <Paragraph>{t(data.introProgress.description, locale)}</Paragraph>
+      <ul role="list" className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {data.introProgress.stats.map((stat) => (
+          <li key={stat.id} className="rounded-[18px] border border-[var(--pq-line)] bg-[var(--pq-surface2)] px-3 py-3">
+            <span className="block text-[clamp(1.35rem,4vw,1.75rem)] font-bold text-[var(--pq-ink)]">
+              {stat.value}
+            </span>
+            <span className="block text-xs leading-snug text-[var(--pq-ink-soft)]">{t(stat.label, locale)}</span>
           </li>
         ))}
       </ul>
-    </FitPage>
+    </CardBlock>
   );
 }
 
-function ImageIntroPage({
+function ImageCard({
   locale,
   imagePath,
   imageAlt,
   visualHint,
   imageFit = "cover",
-  title,
-  body,
-  highlightTitle,
-  highlightBody,
 }: {
   locale: YoLocale;
   imagePath?: string | null;
   imageAlt: YoLocalizedString;
   visualHint?: YoVisualHint;
   imageFit?: "cover" | "contain";
-  title: YoLocalizedString;
-  body?: YoLocalizedString;
-  highlightTitle?: YoLocalizedString;
-  highlightBody?: YoLocalizedString;
 }) {
   return (
-    <FitPage>
-      <div className="grid h-full min-h-0 grid-rows-[minmax(120px,0.9fr)_auto] gap-2">
-        <YoImageVisual
-          imagePath={imagePath}
-          alt={imageAlt}
-          locale={locale}
-          fallbackKind={visualHint}
-          variant="panel"
-          imageFit={imageFit}
-          className="!min-h-0 h-full max-h-[34dvh] rounded-2xl shadow-none"
-        />
-        <div className="min-h-0 rounded-2xl bg-white/90 p-2.5 ring-1 ring-teal-100">
-          <h3 className="text-sm font-semibold text-[#1a3a32] sm:text-base">{t(title, locale)}</h3>
-          {body ? <p className="mt-1 text-xs leading-relaxed text-[#566073]">{t(body, locale)}</p> : null}
-          {highlightTitle ? (
-            <p className="mt-2 rounded-xl bg-[#FFF4D6] px-3 py-2 text-xs leading-relaxed text-[#5a3f0f] ring-1 ring-[#F4B400]/30">
-              <span className="font-semibold">{t(highlightTitle, locale)}</span>
-              {highlightBody ? ` - ${t(highlightBody, locale)}` : ""}
-            </p>
-          ) : null}
-        </div>
-      </div>
-    </FitPage>
+    <div className="overflow-hidden rounded-[24px] border border-[var(--pq-line)] bg-[var(--pq-surface)] shadow-[0_14px_34px_rgba(23,38,66,0.07)]">
+      <YoImageVisual
+        imagePath={imagePath}
+        alt={imageAlt}
+        locale={locale}
+        fallbackKind={visualHint}
+        variant="panel"
+        imageFit={imageFit}
+        className="h-[clamp(190px,35vh,315px)] !min-h-0 rounded-none shadow-none"
+      />
+    </div>
   );
 }
 
-function BulletPage({
+function BulletList({
   locale,
   bullets,
 }: {
@@ -509,49 +489,11 @@ function BulletPage({
   bullets: NonNullable<YoIntroDetailedSection["bullets"]>;
 }) {
   return (
-    <FitPage>
-      <div className="grid h-full min-h-0 content-center gap-2.5">
-        {bullets.map((bullet) => (
-          <InfoRow key={t(bullet.label, locale)} title={bullet.label} body={bullet.description} locale={locale} />
-        ))}
-      </div>
-    </FitPage>
-  );
-}
-
-function HighlightPage({
-  locale,
-  title,
-  body,
-}: {
-  locale: YoLocale;
-  title: YoLocalizedString;
-  body?: YoLocalizedString;
-}) {
-  return (
-    <FitPage>
-      <div className="flex h-full flex-col justify-center rounded-3xl bg-[#FFF4D6] p-5 text-[#5a3f0f] ring-1 ring-[#F4B400]/30">
-        <p className="text-xs font-black uppercase tracking-[0.14em] text-[#8a5a17]">
-          {locale === "fr" ? "Repère clé" : "Key idea"}
-        </p>
-        <h3 className="mt-2 text-xl font-semibold leading-tight">{t(title, locale)}</h3>
-        {body ? <p className="mt-3 text-sm leading-relaxed">{t(body, locale)}</p> : null}
-      </div>
-    </FitPage>
-  );
-}
-
-function NotePage({ locale, note }: { locale: YoLocale; note?: YoLocalizedString }) {
-  if (!note) return null;
-  return (
-    <FitPage>
-      <div className="flex h-full flex-col justify-center rounded-3xl bg-[#FFF4D6] p-5 text-[#5a3f0f] ring-1 ring-[#F4B400]/30">
-        <p className="text-xs font-black uppercase tracking-[0.14em] text-[#8a5a17]">
-          {locale === "fr" ? "Pourquoi ça compte" : "Why it matters"}
-        </p>
-        <p className="mt-2 text-sm leading-relaxed sm:text-base">{t(note, locale)}</p>
-      </div>
-    </FitPage>
+    <div className="grid gap-3">
+      {bullets.map((bullet) => (
+        <InfoRow key={t(bullet.label, locale)} title={bullet.label} body={bullet.description} locale={locale} />
+      ))}
+    </div>
   );
 }
 
@@ -565,57 +507,47 @@ function TimelinePage({
   note?: YoLocalizedString;
 }) {
   return (
-    <FitPage>
-      <ol role="list" className="grid h-full content-center gap-2">
+    <CardBlock label={lstr("Ligne du temps", "Timeline", "Línea del tiempo")} locale={locale}>
+      <ol role="list" className="grid gap-3">
         {entries.map((entry) => (
-          <li key={`${entry.year.fr}-${entry.description.fr}`} className="rounded-2xl bg-white p-3 ring-1 ring-teal-100">
-            <p className="text-xs font-black uppercase tracking-[0.12em] text-teal-700">{t(entry.year, locale)}</p>
-            <p className="mt-1 text-xs leading-relaxed text-[#1a3a32]/88 sm:text-sm">{t(entry.description, locale)}</p>
+          <li key={`${entry.year.fr}-${entry.description.fr}`} className="rounded-[18px] border border-[var(--pq-line)] bg-[var(--pq-surface2)] p-4">
+            <p className="text-xs font-extrabold uppercase tracking-[0.12em] text-[var(--pq-primary)]">{t(entry.year, locale)}</p>
+            <p className="mt-1 text-sm leading-6 text-[var(--pq-ink)]">{t(entry.description, locale)}</p>
           </li>
         ))}
-        {note ? (
-          <li className="rounded-2xl bg-[#FFF4D6] p-3 text-xs leading-relaxed text-[#5a3f0f] ring-1 ring-[#F4B400]/30 sm:text-sm">
-            {t(note, locale)}
-          </li>
-        ) : null}
       </ol>
-    </FitPage>
+      {note ? <Notice title={lstr("Pourquoi ça compte", "Why it matters")} body={note} locale={locale} /> : null}
+    </CardBlock>
   );
 }
 
 function GroupsPage({
   locale,
   groups,
-  phrases,
-  phraseIntro,
   icon,
 }: {
   locale: YoLocale;
   groups: YoBulletGroup[];
-  phrases?: YoVocabularyItem[];
-  phraseIntro?: YoLocalizedString;
   icon: "food" | "phrase";
 }) {
   const Icon = icon === "food" ? Utensils : MessageCircle;
   return (
-    <FitPage>
-      <div className="grid h-full content-center gap-3">
-        {groups.map((group, index) => (
-          <div key={`${group.heading?.fr ?? "group"}-${index}`} className="rounded-2xl bg-white p-3 ring-1 ring-teal-100">
-            <p className="mb-2 flex items-center gap-2 text-xs font-black uppercase tracking-[0.12em] text-teal-700">
-              <Icon className="size-3.5" aria-hidden />
-              {group.heading ? t(group.heading, locale) : "A retenir"}
-            </p>
-            <div className="grid gap-1.5 sm:grid-cols-2">
-              {group.items.map((item) => (
-                <VocabChip key={`${item.target}-${item.translation.fr}`} item={item} locale={locale} />
-              ))}
-            </div>
+    <div className="grid gap-3">
+      {groups.map((group, index) => (
+        <CardBlock
+          key={`${group.heading?.fr ?? "group"}-${index}`}
+          label={group.heading ?? lstr("À retenir", "Key ideas", "Ideas clave")}
+          locale={locale}
+          icon={<Icon className="size-4" aria-hidden />}
+        >
+          <div className="grid gap-2 sm:grid-cols-2">
+            {group.items.map((item) => (
+              <VocabChip key={`${item.target}-${item.translation.fr}`} item={item} locale={locale} />
+            ))}
           </div>
-        ))}
-        {phrases ? <PhraseList locale={locale} intro={phraseIntro} phrases={phrases} /> : null}
-      </div>
-    </FitPage>
+        </CardBlock>
+      ))}
+    </div>
   );
 }
 
@@ -628,26 +560,25 @@ function DialoguePage({
 }) {
   if (!dialogue) return null;
   return (
-    <FitPage>
-      <div className="grid h-full content-center gap-2">
-        <p className="text-sm font-semibold text-[#1a3a32]">{t(dialogue.title, locale)}</p>
+    <CardBlock label={dialogue.title} locale={locale}>
+      <div className="grid gap-2.5">
         {dialogue.lines.map((line, index) => (
           <div
             key={`${line.target}-${index}`}
-            className={`rounded-2xl px-3 py-2 text-xs leading-snug ring-1 sm:text-sm ${
+            className={`rounded-[18px] px-4 py-3 text-sm leading-6 ${
               line.speakerKind === "self"
-                ? "ml-8 bg-[#DDF4F1] text-[#0F6E56] ring-teal-100"
-                : "mr-8 bg-white text-[#1a3a32] ring-teal-100"
+                ? "ml-7 bg-[var(--pq-tint)] text-[var(--pq-ink)]"
+                : "mr-7 border border-[var(--pq-line)] bg-[var(--pq-surface2)] text-[var(--pq-ink)]"
             }`}
           >
-            <span className="block text-[10px] font-black uppercase tracking-[0.12em] opacity-70">
+            <span className="block text-[10px] font-extrabold uppercase tracking-[0.12em] text-[var(--pq-ink-soft)]">
               {t(line.speakerLabel, locale)}
             </span>
             <span lang="es">{line.target}</span>
           </div>
         ))}
       </div>
-    </FitPage>
+    </CardBlock>
   );
 }
 
@@ -659,44 +590,33 @@ function CulturePointPage({
   points: typeof CULTURE_POINTS;
 }) {
   return (
-    <FitPage>
-      <div className="grid h-full content-center gap-3">
+    <CardBlock
+      label={lstr("Ce qui rend la RD unique", "What makes the DR unique", "Lo que hace única a RD")}
+      locale={locale}
+      icon={<Music2 className="size-4" aria-hidden />}
+      tint
+    >
+      <div className="grid gap-3 sm:grid-cols-2">
         {points.map((point) => (
-          <div key={point.title.fr} className="rounded-2xl bg-white p-4 ring-1 ring-teal-100">
-            <p className="flex items-center gap-2 text-sm font-semibold text-[#1a3a32]">
-              <Music2 className="size-4 text-[#1D9E75]" aria-hidden />
-              {t(point.title, locale)}
-            </p>
-            <p className="mt-1 text-xs leading-relaxed text-[#566073] sm:text-sm">{t(point.body, locale)}</p>
+          <div key={point.title.fr} className="rounded-[18px] border border-[var(--pq-line)] bg-[var(--pq-surface)] p-4">
+            <p className="text-sm font-bold text-[var(--pq-ink)]">{t(point.title, locale)}</p>
+            <p className="mt-1 text-sm leading-6 text-[var(--pq-ink-soft)]">{t(point.body, locale)}</p>
           </div>
         ))}
       </div>
-    </FitPage>
-  );
-}
-
-function dictionaryScreens(expressions: YoDominicanExpression[], locale: YoLocale): YoLessonDeckScreen[] {
-  return chunkEven(expressions, 4).map((items, index) =>
-    screen(
-      `dictionary-${index + 1}`,
-      "culture",
-      "Dictionnaire",
-      `Expressions ${index + 1}`,
-      "map",
-      <DictionaryPage locale={locale} items={items} />,
-    ),
+    </CardBlock>
   );
 }
 
 function DictionaryPage({ locale, items }: { locale: YoLocale; items: YoDominicanExpression[] }) {
   return (
-    <FitPage>
-      <div className="grid h-full content-center gap-2.5">
+    <CardBlock label={lstr("Dictionnaire dominicain", "Dominican dictionary", "Diccionario dominicano")} locale={locale}>
+      <div className="grid gap-2.5 sm:grid-cols-2">
         {items.map((item) => (
-          <div key={item.id} className="flex items-center justify-between gap-3 rounded-2xl bg-white p-3 ring-1 ring-teal-100">
+          <div key={item.id} className="flex items-center justify-between gap-3 rounded-[18px] border border-[var(--pq-line)] bg-[var(--pq-surface2)] p-3">
             <div className="min-w-0">
-              <p className="break-words text-base font-semibold text-[#1a3a32]" lang="es">{item.target}</p>
-              <p className="text-xs text-[#566073] sm:text-sm">{t(item.translation, locale)}</p>
+              <p className="break-words text-base font-bold text-[var(--pq-ink)]" lang="es">{item.target}</p>
+              <p className="text-sm leading-5 text-[var(--pq-ink-soft)]">{t(item.translation, locale)}</p>
             </div>
             <YoSpanishAudioButton
               text={item.target}
@@ -711,7 +631,7 @@ function DictionaryPage({ locale, items }: { locale: YoLocale; items: YoDominica
           </div>
         ))}
       </div>
-    </FitPage>
+    </CardBlock>
   );
 }
 
@@ -727,32 +647,17 @@ function PhraseFocusPage({
   translation: YoLocalizedString;
 }) {
   return (
-    <FitPage>
-      <div className="flex h-full flex-col justify-center gap-4 rounded-3xl bg-[#DDF4F1]/55 p-5 ring-1 ring-teal-100">
-        <p className="text-xs font-black uppercase tracking-[0.14em] text-teal-700">{t(label, locale)}</p>
-        <p className="text-2xl font-semibold leading-tight text-[#1a3a32]" lang="es">{phrase}</p>
-        <p className="text-sm leading-relaxed text-[#566073]">{t(translation, locale)}</p>
-      </div>
-    </FitPage>
-  );
-}
-
-function PhraseListPage({
-  locale,
-  intro,
-  phrases,
-}: {
-  locale: YoLocale;
-  intro?: YoLocalizedString;
-  phrases?: YoVocabularyItem[];
-}) {
-  if (!phrases?.length) return null;
-  return (
-    <FitPage>
-      <div className="grid h-full content-center gap-3">
-        <PhraseList locale={locale} intro={intro} phrases={phrases} />
-      </div>
-    </FitPage>
+    <div className="rounded-[24px] border border-[var(--pq-line)] bg-[var(--pq-tint)] p-5">
+      <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-[var(--pq-primary)]">{t(label, locale)}</p>
+      <p
+        className="mt-3 text-[clamp(1.7rem,6vw,2.45rem)] font-semibold leading-[1.05] text-[var(--pq-ink)]"
+        lang="es"
+        style={{ fontFamily: "var(--yo-app-display), Newsreader, Georgia, serif" }}
+      >
+        {phrase}
+      </p>
+      <p className="mt-3 text-sm leading-6 text-[var(--pq-ink-soft)]">{t(translation, locale)}</p>
+    </div>
   );
 }
 
@@ -766,22 +671,21 @@ function PhraseList({
   phrases: YoVocabularyItem[];
 }) {
   return (
-    <div className="rounded-2xl bg-[#DDF4F1]/55 p-3 ring-1 ring-teal-100">
-      {intro ? <p className="mb-2 text-xs font-semibold text-teal-800">{t(intro, locale)}</p> : null}
-      <div className="grid gap-1.5">
+    <CardBlock label={intro ?? lstr("Phrases utiles", "Useful phrases", "Frases útiles")} locale={locale} tint>
+      <div className="grid gap-2 sm:grid-cols-2">
         {phrases.map((phrase) => (
           <VocabChip key={`${phrase.target}-${phrase.translation.fr}`} item={phrase} locale={locale} />
         ))}
       </div>
-    </div>
+    </CardBlock>
   );
 }
 
 function VocabChip({ item, locale }: { item: YoVocabularyItem; locale: YoLocale }) {
   return (
-    <div className="min-w-0 rounded-xl bg-[#FAFCFB] px-3 py-2 ring-1 ring-teal-100/80">
-      <p className="break-words text-sm font-semibold text-[#1a3a32]" lang="es">{item.target}</p>
-      <p className="break-words text-[11px] leading-snug text-[#566073] sm:text-xs">{t(item.translation, locale)}</p>
+    <div className="min-w-0 rounded-[16px] border border-[var(--pq-line)] bg-[var(--pq-surface)] px-3 py-3">
+      <p className="break-words text-sm font-bold text-[var(--pq-ink)]" lang="es">{item.target}</p>
+      <p className="break-words text-xs leading-5 text-[var(--pq-ink-soft)]">{t(item.translation, locale)}</p>
     </div>
   );
 }
@@ -796,11 +700,77 @@ function InfoRow({
   locale: YoLocale;
 }) {
   return (
-    <div className="rounded-2xl bg-white p-3 ring-1 ring-teal-100">
-      <p className="text-sm font-semibold text-[#1a3a32]">{t(title, locale)}</p>
-      {body ? <p className="mt-0.5 text-xs leading-relaxed text-[#566073] sm:text-sm">{t(body, locale)}</p> : null}
+    <div className="rounded-[18px] border border-[var(--pq-line)] bg-[var(--pq-surface)] p-4">
+      <p className="text-sm font-bold text-[var(--pq-ink)]">{t(title, locale)}</p>
+      {body ? <p className="mt-1 text-sm leading-6 text-[var(--pq-ink-soft)]">{t(body, locale)}</p> : null}
     </div>
   );
+}
+
+function CardBlock({
+  label,
+  locale,
+  children,
+  icon,
+  tint = false,
+}: {
+  label: YoLocalizedString;
+  locale: YoLocale;
+  children: React.ReactNode;
+  icon?: React.ReactNode;
+  tint?: boolean;
+}) {
+  return (
+    <section className={`rounded-[22px] border border-[var(--pq-line)] p-4 ${tint ? "bg-[var(--pq-surface2)]" : "bg-[var(--pq-surface)]"}`}>
+      <p className="mb-3 flex items-center gap-2 text-xs font-extrabold uppercase tracking-[0.13em] text-[var(--pq-primary)]">
+        {icon}
+        {t(label, locale)}
+      </p>
+      {children}
+    </section>
+  );
+}
+
+function Notice({
+  title,
+  body,
+  locale,
+}: {
+  title: YoLocalizedString;
+  body?: YoLocalizedString;
+  locale: YoLocale;
+}) {
+  return (
+    <div className="mt-4 rounded-[18px] border border-[#F4B400]/35 bg-[#FFF4D6] px-4 py-3 text-[#5a3f0f]">
+      <p className="text-sm font-bold">{t(title, locale)}</p>
+      {body ? <p className="mt-1 text-sm leading-6">{t(body, locale)}</p> : null}
+    </div>
+  );
+}
+
+function Checklist({ locale, items }: { locale: YoLocale; items: YoLocalizedString[] }) {
+  return (
+    <ul role="list" className="grid gap-2.5">
+      {items.map((item) => (
+        <li key={item.fr} className="flex items-start gap-3 rounded-[16px] bg-[var(--pq-surface)] px-3 py-3">
+          <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-[var(--pq-primary)]" aria-hidden />
+          <span className="text-sm font-semibold leading-6 text-[var(--pq-ink)]">{t(item, locale)}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function Paragraph({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="text-[clamp(0.98rem,2.3vw,1.06rem)] leading-7 text-[var(--pq-ink-soft)]">
+      {children}
+    </p>
+  );
+}
+
+function LessonStack({ children }: { children: React.ReactNode }) {
+  return <section className="space-y-5 pb-5">{children}</section>;
 }
 
 function ReadyPage({
@@ -813,74 +783,41 @@ function ReadyPage({
   courseHomeHref: string;
 }) {
   return (
-    <FitPage>
-      <div className="flex h-full flex-col justify-center gap-4">
+    <LessonStack>
+      <div className="flex justify-center">
         <YoYoppoReward show locale={locale} variant="intro-complete" />
-        <div className="rounded-3xl border border-[#F4B400]/35 bg-[#FFF4D6] p-5 shadow-[0_18px_44px_rgba(15,58,52,0.08)]">
-          <p className="text-xs font-black uppercase tracking-[0.16em] text-[#8a5a17]">
-            {locale === "fr" ? "Pret" : "Ready"}
-          </p>
-          <h2 className="mt-2 text-2xl font-semibold tracking-tight text-[#5a3f0f]">
-            {t(READY_NEXT_HEADLINE, locale)}
-          </h2>
-          <p className="mt-3 text-sm leading-relaxed text-[#5a3f0f]/85">
-            {t(READY_NEXT_BLURB, locale)}
-          </p>
-          <div className="mt-5 flex flex-wrap gap-3">
-            <Link
-              data-yo-intro-deck-next-module="module-2"
-              href={module2Href}
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-[#0F6E56] px-5 py-3 text-sm font-black text-white transition hover:bg-[#0b5b47]"
-            >
-              {t(READY_NEXT_CTA, locale)}
-              <ArrowRight className="size-4" aria-hidden />
-            </Link>
-            <Link
-              href={courseHomeHref}
-              className="inline-flex items-center justify-center gap-2 rounded-full border border-[#0F6E56]/25 bg-white px-5 py-3 text-sm font-bold text-[#0F6E56] transition hover:bg-[#F4FBF9]"
-            >
-              {t(READY_BACK_TO_COURSE_HOME, locale)}
-            </Link>
-          </div>
+      </div>
+      <div className="rounded-[24px] border border-[#F4B400]/35 bg-[#FFF4D6] p-5 text-[#5a3f0f] shadow-[0_18px_44px_rgba(15,58,52,0.08)]">
+        <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#8a5a17]">
+          {locale === "fr" ? "Prêt" : "Ready"}
+        </p>
+        <h2
+          className="mt-2 text-[clamp(1.65rem,5vw,2.35rem)] font-semibold leading-[1.08]"
+          style={{ fontFamily: "var(--yo-app-display), Newsreader, Georgia, serif" }}
+        >
+          {t(READY_NEXT_HEADLINE, locale)}
+        </h2>
+        <p className="mt-3 text-sm leading-6 text-[#5a3f0f]/85">
+          {t(READY_NEXT_BLURB, locale)}
+        </p>
+        <div className="mt-5 flex flex-wrap gap-3">
+          <Link
+            data-yo-intro-deck-next-module="module-2"
+            href={module2Href}
+            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[var(--pq-primary)] px-5 text-sm font-extrabold text-white transition hover:bg-[var(--pq-primary-hi)]"
+          >
+            {t(READY_NEXT_CTA, locale)}
+            <ArrowRight className="size-4" aria-hidden />
+          </Link>
+          <Link
+            href={courseHomeHref}
+            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-[#0F6E56]/25 bg-white px-5 text-sm font-bold text-[#0F6E56] transition hover:bg-[#F4FBF9]"
+          >
+            {t(READY_BACK_TO_COURSE_HOME, locale)}
+          </Link>
         </div>
       </div>
-    </FitPage>
-  );
-}
-
-function FitPage({ children }: { children: React.ReactNode }) {
-  return (
-    <section className="h-full min-h-0 overflow-hidden px-1 py-1">
-      {children}
-    </section>
-  );
-}
-
-function chunkEven<T>(items: T[], maxSize: number): T[][] {
-  if (items.length === 0) return [];
-  const pageCount = Math.ceil(items.length / maxSize);
-  const baseSize = Math.floor(items.length / pageCount);
-  const extraItems = items.length % pageCount;
-  const chunks: T[][] = [];
-  let cursor = 0;
-
-  for (let index = 0; index < pageCount; index += 1) {
-    const size = baseSize + (index < extraItems ? 1 : 0);
-    chunks.push(items.slice(cursor, cursor + size));
-    cursor += size;
-  }
-
-  return chunks;
-}
-
-function splitBulletGroups(groups: YoBulletGroup[], maxItemsPerPage: number): YoBulletGroup[][] {
-  return groups.flatMap((group) =>
-    chunkEven(group.items, maxItemsPerPage).map((items) => [
-      {
-        ...group,
-        items,
-      },
-    ]),
+    </LessonStack>
   );
 }
 
@@ -908,7 +845,7 @@ export function DominicanRepublicIntroContent({
         toggleHref={toggleHref}
         screens={screens}
         enableTapNavigation
-        allowScreenScroll={false}
+        variant="reference"
       />
     </YoAudioFeedbackProvider>
   );

@@ -60,8 +60,11 @@ import {
   useMemo,
   useRef,
   useState,
+  type CSSProperties,
   type PointerEvent as ReactPointerEvent,
 } from "react";
+import Link from "next/link";
+import { ArrowLeft, ArrowRight, Check, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { YoLessonDeckHeader } from "@/components/yo/YoLessonDeckHeader";
@@ -111,6 +114,11 @@ export type YoLessonDeckProps = {
    * that have been explicitly split into viewport-sized pages.
    */
   allowScreenScroll?: boolean;
+  /**
+   * Opt-in premium lesson-player shell based on the YoPratiqo design
+   * handoff. The standard deck remains unchanged for existing modules.
+   */
+  variant?: "standard" | "reference";
   className?: string;
 };
 
@@ -148,6 +156,24 @@ export const YO_LESSON_DECK_HORIZONTAL_DOMINANCE_RATIO = 1.5;
 const YO_LESSON_DECK_GESTURE_EXCLUDE_SELECTOR =
   'button, a[href], input, textarea, select, summary, details, [role="button"], [data-no-deck-swipe], [data-no-deck-tap]';
 
+const YO_REFERENCE_THEME_STYLE = {
+  "--pq-bg": "#F4EFE6",
+  "--pq-surface": "#FFFFFF",
+  "--pq-surface2": "#FBF7EE",
+  "--pq-ink": "#172642",
+  "--pq-ink-soft": "#566073",
+  "--pq-line": "#E7DFCF",
+  "--pq-primary": "#13A085",
+  "--pq-primary-hi": "#16B597",
+  "--pq-on-primary": "#FFFFFF",
+  "--pq-tint": "#E3F1EB",
+  "--pq-sand": "#EFE7D6",
+  "--pq-script": "#13A085",
+  "--pq-brush": "#172642",
+  "--pq-on-brush": "#F6F1E7",
+  "--pq-error": "#D8553F",
+} as CSSProperties;
+
 function isInsideInteractive(node: EventTarget | null): boolean {
   if (!(node instanceof Element)) return false;
   return Boolean(node.closest(YO_LESSON_DECK_GESTURE_EXCLUDE_SELECTOR));
@@ -162,6 +188,7 @@ export function YoLessonDeck({
   initialIndex = 0,
   enableTapNavigation = false,
   allowScreenScroll = true,
+  variant = "standard",
   className,
 }: YoLessonDeckProps): React.JSX.Element {
   const total = screens.length;
@@ -341,6 +368,99 @@ export function YoLessonDeck({
     );
   }
 
+  if (variant === "reference") {
+    const isFirst = currentIndex === 0;
+    const isLast = currentIndex === total - 1;
+    const activeScreen = screens[currentIndex];
+
+    return (
+      <div
+        data-testid="yo-lesson-deck"
+        data-yo-lesson-deck="true"
+        data-yo-lesson-deck-total={total}
+        data-yo-lesson-deck-variant="reference"
+        data-yo-lesson-deck-tap-navigation={enableTapNavigation ? "on" : "off"}
+        className={cn(
+          "relative flex h-[100dvh] w-full flex-col overflow-hidden bg-[var(--pq-bg)] text-[var(--pq-ink)] antialiased",
+          className,
+        )}
+        style={YO_REFERENCE_THEME_STYLE}
+      >
+        <div className="mx-auto flex h-full w-full max-w-[820px] flex-col overflow-hidden bg-[var(--pq-bg)] font-sans">
+          <div
+            data-no-deck-swipe="true"
+            data-no-deck-tap="true"
+            className="flex shrink-0 items-center gap-3 px-[18px] pb-[10px] pt-[52px]"
+          >
+            <Link
+              href={backHref}
+              aria-label={labels.back}
+              className="grid size-9 shrink-0 place-items-center rounded-full border-[1.5px] border-[var(--pq-line)] bg-[var(--pq-surface)] text-[var(--pq-ink)] shadow-[0_8px_22px_rgba(23,38,66,0.06)] transition hover:border-[var(--pq-primary)] hover:text-[var(--pq-primary)]"
+            >
+              <X className="size-4" aria-hidden />
+            </Link>
+            <div
+              aria-label={labels.progressAnnouncement(currentIndex + 1, total)}
+              className="flex flex-1 items-center gap-1.5"
+            >
+              {screens.map((screen, idx) => (
+                <span
+                  key={screen.id}
+                  aria-hidden
+                  className={cn(
+                    "h-[5px] flex-1 rounded-full transition",
+                    idx <= currentIndex ? "bg-[var(--pq-primary)]" : "bg-[var(--pq-sand)]",
+                  )}
+                />
+              ))}
+            </div>
+          </div>
+
+          <main
+            ref={activeScreenRef}
+            data-testid="yo-lesson-deck-stage"
+            data-yo-lesson-deck-stage="true"
+            className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-[22px] pb-1 pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            onPointerDown={onPointerDown}
+            onPointerUp={onPointerUp}
+            onPointerCancel={onPointerCancel}
+            onPointerLeave={onPointerCancel}
+          >
+            <ReferenceLessonScreen screen={activeScreen} />
+          </main>
+
+          <footer
+            data-no-deck-swipe="true"
+            data-no-deck-tap="true"
+            className="shrink-0 px-[22px] pb-[30px] pt-3"
+          >
+            <div className="flex items-center gap-3">
+              {!isFirst ? (
+                <button
+                  type="button"
+                  onClick={goPrev}
+                  className="grid size-12 shrink-0 place-items-center rounded-full border-[1.5px] border-[var(--pq-line)] bg-[var(--pq-surface)] text-[var(--pq-ink-soft)] transition hover:border-[var(--pq-primary)] hover:text-[var(--pq-primary)]"
+                  aria-label={labels.prev}
+                >
+                  <ArrowLeft className="size-5" aria-hidden />
+                </button>
+              ) : null}
+              <button
+                type="button"
+                onClick={goNext}
+                disabled={isLast}
+                className="inline-flex min-h-14 flex-1 items-center justify-center gap-2 rounded-full bg-[var(--pq-primary)] px-6 text-base font-extrabold text-[var(--pq-on-primary)] shadow-[0_10px_22px_-10px_var(--pq-primary)] transition hover:bg-[var(--pq-primary-hi)] disabled:cursor-default disabled:bg-[var(--pq-brush)] disabled:text-[var(--pq-on-brush)]"
+              >
+                {isLast ? labels.finish : activeScreen.ctaLabel ?? labels.next}
+                {isLast ? <Check className="size-5" aria-hidden /> : <ArrowRight className="size-5" aria-hidden />}
+              </button>
+            </div>
+          </footer>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       data-testid="yo-lesson-deck"
@@ -457,6 +577,45 @@ export function YoLessonDeck({
         onNext={goNext}
       />
     </div>
+  );
+}
+
+function ReferenceLessonScreen({
+  screen,
+}: {
+  screen: YoLessonDeckScreenModel;
+}): React.JSX.Element {
+  return (
+    <section
+      key={screen.id}
+      data-testid="yo-lesson-deck-screen-host"
+      data-yo-lesson-deck-screen-host-id={screen.id}
+      data-yo-lesson-deck-screen-host-active="true"
+      className="min-h-full pb-5"
+    >
+      {screen.eyebrow ? (
+        <p className="mb-3 text-[12px] font-extrabold uppercase tracking-[0.14em] text-[var(--pq-primary)]">
+          {screen.eyebrow}
+        </p>
+      ) : null}
+      <h1
+        className="mb-3 text-[clamp(2rem,5vw,2.75rem)] font-semibold leading-[1.05] tracking-[-0.015em] text-[var(--pq-ink)]"
+        style={{ fontFamily: "var(--yo-app-display), Newsreader, Georgia, serif" }}
+      >
+        {screen.title}
+      </h1>
+      {screen.body ? (
+        <p className="mb-5 max-w-[62ch] text-[clamp(0.98rem,2.4vw,1.08rem)] leading-7 text-[var(--pq-ink-soft)]">
+          {screen.body}
+        </p>
+      ) : null}
+      {screen.helperText ? (
+        <div className="mb-5 rounded-[18px] border border-[var(--pq-line)] bg-[var(--pq-surface)] px-4 py-3 text-sm font-semibold leading-6 text-[var(--pq-ink-soft)]">
+          {screen.helperText}
+        </div>
+      ) : null}
+      <div className="space-y-5">{screen.content}</div>
+    </section>
   );
 }
 
