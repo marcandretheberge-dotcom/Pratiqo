@@ -836,17 +836,41 @@ function TeacherCard({
         "active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/40",
       )}
     >
+      {/*
+        Mobile QA fix (fix/mobile-teacher-card-name-badges):
+        the teacher name MUST stay visible on narrow screens.
+
+        Previously the name and the (up to two) compact trust badges
+        shared the same flex row with the badges marked `shrink-0` —
+        on a 320-360 px phone, after the avatar (44 px), the rating
+        pill, and ~190 px of badges, the truncated name container was
+        squeezed to ~0 px and disappeared. The badges literally hid
+        the teacher's name.
+
+        Fix: split the header into a protected name region and a
+        dedicated badge row beneath the discipline.
+          - Row 1 (this block): avatar + name + discipline + rating
+          - Row 2 (this block): badges in flex-wrap, never competing
+                                with the name for horizontal space.
+        The trust pills above (`availability`, "studio vérifié",
+        teaching-mode icons), the price row, and the booking action
+        are unchanged.
+      */}
       <div className="flex items-start justify-between gap-2">
-        <div className="flex min-w-0 items-center gap-3">
+        <div className="flex min-w-0 flex-1 items-start gap-3">
           <TeacherAvatar name={teacher.name} category={teacher.category} imageUrl={teacher.imageUrl} size={44} />
-          <div className="min-w-0">
-            <div className="flex items-center gap-2 min-w-0">
-              <p className="truncate font-semibold text-[#2C2C2A]">{publicFirstNameWithInitial(teacher.name)}</p>
-              {badges.map((badge) => (
-                <TeacherBadgePill key={badge.id} badge={badge} compact className="shrink-0" />
-              ))}
-            </div>
+          <div className="min-w-0 flex-1">
+            <p className="truncate font-semibold text-[#2C2C2A]">
+              {publicFirstNameWithInitial(teacher.name)}
+            </p>
             <p className="truncate text-xs text-[#6B6A65]">{teacher.discipline}</p>
+            {badges.length > 0 ? (
+              <div className="mt-1.5 flex flex-wrap items-center gap-1">
+                {badges.map((badge) => (
+                  <TeacherBadgePill key={badge.id} badge={badge} compact />
+                ))}
+              </div>
+            ) : null}
           </div>
         </div>
         {Number(teacher.reviews ?? 0) > 0 ? (
