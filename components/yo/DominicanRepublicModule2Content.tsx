@@ -1,9 +1,9 @@
-/**
- * DominicanRepublicModule2Content — premium server-only renderer for
- * the Dominican Republic Spanish Module 2 (À l'hôtel et à l'aéroport).
+﻿/**
+ * DominicanRepublicModule2Content â€” premium server-only renderer for
+ * the Dominican Republic Spanish Module 2 (Ã€ l'hÃ´tel et Ã  l'aÃ©roport).
  *
  * Design contract:
- *   - No "use client". Pure server render — no hooks, no browser APIs.
+ *   - No "use client". Pure server render â€” no hooks, no browser APIs.
  *   - Browser SpeechSynthesis audio only. No MP3s generated or imported.
  *   - No checkout, no payment gating, no Stripe, no Supabase.
  *   - Interactive elements (quiz reveals, mini-mission) use <details>/<summary>
@@ -37,9 +37,9 @@ import {
 } from "@/components/yo/YoBreadcrumb";
 import { YoSpeechButton } from "@/components/yo/YoSpeechButton";
 import { YoFlashcardPreview } from "@/components/yo/YoFlashcardPreview";
-import { DominicanModulePrintables } from "@/components/yo/DominicanModulePrintables";
+import { YoPrintableResourceCard } from "@/components/yo/YoPrintableResourceCard";
 import { module2FlashcardsToYo } from "@/lib/yo/dominicanRepublicFlashcardAdapters";
-import { module2PrintablePack } from "@/lib/yo/dominicanRepublicPrintables";
+import { getPrintableResourceById } from "@/lib/yo/printableResources";
 import type {
   Dom2Dialogue,
   Dom2GrammarCard,
@@ -49,30 +49,30 @@ import { YoMarkModuleCompletedButton } from "@/components/yo/YoMarkModuleComplet
 import { YoLessonDeck } from "@/components/yo/YoLessonDeck";
 import type { YoLessonDeckScreen } from "@/lib/yo/lessonDeckTypes";
 
-// ─── Section labels ────────────────────────────────────────────────────────
+// â”€â”€â”€ Section labels â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const LABEL_MODULE = lstr("Module 2", "Module 2");
 const LABEL_MISSION_MAP = lstr("Carte de la mission", "Mission map");
 const LABEL_MISSION_TITLE = lstr(
-  "6 étapes pour maîtriser l'aéroport et l'hôtel",
+  "6 Ã©tapes pour maÃ®triser l'aÃ©roport et l'hÃ´tel",
   "6 steps to master the airport and hotel",
 );
 const LABEL_PHRASES = lstr("Phrases essentielles", "Essential phrases");
 const LABEL_PHRASES_TITLE = lstr(
-  "15 phrases de survie pour ton séjour",
+  "15 phrases de survie pour ton sÃ©jour",
   "15 survival phrases for your stay",
 );
 const LABEL_USAGE = lstr("Quand l'utiliser", "When to use it");
 const LABEL_NOTE = lstr("Note", "Note");
 const LABEL_DIALOGUE_AIRPORT_EYEBROW = lstr(
-  "Dialogue · Aéroport",
-  "Dialogue · Airport",
+  "Dialogue Â· AÃ©roport",
+  "Dialogue Â· Airport",
 );
 const LABEL_DIALOGUE_HOTEL_EYEBROW = lstr(
-  "Dialogue · Hôtel",
-  "Dialogue · Hotel",
+  "Dialogue Â· HÃ´tel",
+  "Dialogue Â· Hotel",
 );
-const LABEL_DIALOGUE_SCENARIO = lstr("La scène", "The scene");
+const LABEL_DIALOGUE_SCENARIO = lstr("La scÃ¨ne", "The scene");
 const LABEL_SPANISH = lstr("En espagnol", "In Spanish");
 const LABEL_GLOSS = lstr("Traduction", "Translation");
 const LABEL_GRAMMAR = lstr("Grammaire express", "Quick grammar");
@@ -82,29 +82,29 @@ const LABEL_GRAMMAR_TITLE = lstr(
 );
 const LABEL_PATTERN = lstr("La formule", "The formula");
 const LABEL_EXAMPLES = lstr("Exemples", "Examples");
-const LABEL_FLASHCARDS = lstr("Vocabulaire · Fiches mémo", "Vocabulary · Flashcards");
+const LABEL_FLASHCARDS = lstr("Vocabulaire Â· Fiches mÃ©mo", "Vocabulary Â· Flashcards");
 const LABEL_FLASHCARDS_TITLE = lstr(
-  "13 mots indispensables — mémorise-les avant de partir",
-  "13 essential words — memorize them before you go",
+  "13 mots indispensables â€” mÃ©morise-les avant de partir",
+  "13 essential words â€” memorize them before you go",
 );
 const LABEL_FRONT = lstr("Espagnol", "Spanish");
 const LABEL_BACK = lstr("Voir la traduction", "See translation");
 const LABEL_HINT = lstr("Astuce", "Hint");
-const LABEL_PRACTICE = lstr("Pratique · Quiz", "Practice · Quiz");
+const LABEL_PRACTICE = lstr("Pratique Â· Quiz", "Practice Â· Quiz");
 const LABEL_PRACTICE_TITLE = lstr(
-  "5 questions pour tester tes réflexes",
+  "5 questions pour tester tes rÃ©flexes",
   "5 questions to test your reflexes",
 );
 const LABEL_PRACTICE_TAGLINE = lstr(
-  "Cinq questions courtes — pas de note. Pour toi, à ton rythme.",
-  "Five short questions — no score. For you, at your own pace.",
+  "Cinq questions courtes â€” pas de note. Pour toi, Ã  ton rythme.",
+  "Five short questions â€” no score. For you, at your own pace.",
 );
 const LABEL_QUESTION = lstr("Question", "Question");
-const LABEL_ANSWER = lstr("Voir la réponse", "See answer");
+const LABEL_ANSWER = lstr("Voir la rÃ©ponse", "See answer");
 const LABEL_WHY = lstr("Pourquoi", "Why");
 const LABEL_MISSION = lstr("Mini-mission finale", "Final mini-mission");
-const LABEL_MISSION_STEP = lstr("Étape", "Step");
-const LABEL_MISSION_PHRASE = lstr("Voir la phrase à dire", "See the phrase to say");
+const LABEL_MISSION_STEP = lstr("Ã‰tape", "Step");
+const LABEL_MISSION_PHRASE = lstr("Voir la phrase Ã  dire", "See the phrase to say");
 const LABEL_MISSION_CONFIRM = lstr("Confirmation", "Confirmation");
 const LABEL_COMPLETION = lstr("Mission accomplie", "Mission complete");
 const LABEL_CAN_DO_TITLE = lstr("Tu sais maintenant...", "You can now...");
@@ -112,7 +112,7 @@ const LABEL_NEXT_MODULE = lstr("Prochain module", "Next module");
 const LABEL_OPEN_MODULE_3 = lstr(
   "Ouvrir le module 3",
   "Open Module 3",
-  "Abrir el módulo 3",
+  "Abrir el mÃ³dulo 3",
 );
 const LABEL_TEACHER_BRIDGE = lstr(
   "Envie de pratiquer avec un vrai professeur ?",
@@ -120,7 +120,7 @@ const LABEL_TEACHER_BRIDGE = lstr(
 );
 const LABEL_TEACHER_CTA = lstr("Trouver un professeur", "Find a teacher");
 const LABEL_BACK_INTRO = lstr(
-  "Retour à l'intro gratuite",
+  "Retour Ã  l'intro gratuite",
   "Back to the free intro",
 );
 const LABEL_DOMINICA_NOTE_EYEBROW = lstr(
@@ -130,12 +130,12 @@ const LABEL_DOMINICA_NOTE_EYEBROW = lstr(
 const LABEL_AUDIO_COMING = lstr(
   "Audio de pratique",
   "Practice audio",
-  "Audio de práctica",
+  "Audio de prÃ¡ctica",
 );
 const LABEL_AUDIO_NOTE = lstr(
-  "Audio de pratique intégré au navigateur. La voix peut varier selon l'appareil.",
+  "Audio de pratique intÃ©grÃ© au navigateur. La voix peut varier selon l'appareil.",
   "Practice audio uses your browser voice. Voice quality may vary by device.",
-  "El audio de práctica usa la voz del navegador. La calidad puede variar según el dispositivo.",
+  "El audio de prÃ¡ctica usa la voz del navegador. La calidad puede variar segÃºn el dispositivo.",
 );
 const LABEL_WORKSHEETS = lstr(
   "Fiches imprimables",
@@ -143,19 +143,19 @@ const LABEL_WORKSHEETS = lstr(
   "Hojas imprimibles",
 );
 const LABEL_WORKSHEETS_TITLE = lstr(
-  "Imprime ton kit d'arrivée",
+  "Imprime ton kit d'arrivÃ©e",
   "Print your arrival kit",
   "Imprime tu kit de llegada",
 );
 const LABEL_PROBLEMS = lstr(
-  "Imprévus à l'hôtel",
+  "ImprÃ©vus Ã  l'hÃ´tel",
   "Hotel key-card moments",
   "Imprevistos en el hotel",
 );
 const LABEL_PROBLEMS_TITLE = lstr(
-  "Dire la bonne phrase avant que le petit problème devienne gros",
+  "Dire la bonne phrase avant que le petit problÃ¨me devienne gros",
   "Say the useful phrase before the small problem gets big",
-  "Di la frase útil antes de que el problema crezca",
+  "Di la frase Ãºtil antes de que el problema crezca",
 );
 
 function pickLocale(locale: YoLocale, fr: string, en: string): string {
@@ -163,7 +163,7 @@ function pickLocale(locale: YoLocale, fr: string, en: string): string {
   return fr;
 }
 
-// ─── Sub-sections ──────────────────────────────────────────────────────────
+// â”€â”€â”€ Sub-sections â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function HeroSection({ locale }: { locale: YoLocale }) {
   const { heroTitle, heroSubtitle, productLabel } = dominicanRepublicHotelAirport;
@@ -190,7 +190,7 @@ function HeroSection({ locale }: { locale: YoLocale }) {
               {t(productLabel, locale)}
             </span>
             <span className="inline-flex items-center gap-1.5 rounded-full border border-[#0F6E56]/15 bg-[#0B3040] px-3 py-1 text-[0.7rem] font-black uppercase tracking-[0.14em] text-[#FFF4D6]">
-              {t(LABEL_MODULE, locale)} · A1
+              {t(LABEL_MODULE, locale)} Â· A1
             </span>
             <span className="inline-flex items-center gap-1.5 rounded-full border border-[#0F6E56]/15 bg-white/70 px-3 py-1 text-[0.7rem] font-semibold text-[#0F6E56]/80">
               {t(LABEL_AUDIO_COMING, locale)}
@@ -208,13 +208,13 @@ function HeroSection({ locale }: { locale: YoLocale }) {
             {t(heroSubtitle, locale)}
           </p>
 
-          <div className="mt-7 flex flex-wrap gap-2" aria-label={locale === "en" ? "Module outcomes" : "Résultats du module"}>
+          <div className="mt-7 flex flex-wrap gap-2" aria-label={locale === "en" ? "Module outcomes" : "RÃ©sultats du module"}>
             {[
-              lstr("Aéroport", "Airport"),
+              lstr("AÃ©roport", "Airport"),
               lstr("Taxi", "Taxi"),
               lstr("Check-in", "Check-in"),
               lstr("Wifi", "Wi-Fi"),
-              lstr("Problèmes", "Issues"),
+              lstr("ProblÃ¨mes", "Issues"),
             ].map((item) => (
               <span
                 key={item.fr}
@@ -266,10 +266,10 @@ function HeroSection({ locale }: { locale: YoLocale }) {
                 </span>
               </div>
               <p className="mt-3 text-sm font-black text-[#0F6E56]" lang="es">
-                Tengo una reservación.
+                Tengo una reservaciÃ³n.
               </p>
               <p className="mt-1 text-sm font-black text-[#0F6E56]" lang="es">
-                ¿Cuál es la contraseña del wifi?
+                Â¿CuÃ¡l es la contraseÃ±a del wifi?
               </p>
             </div>
           </div>
@@ -652,7 +652,7 @@ function FlashcardsSection({ locale }: { locale: YoLocale }) {
       className="mx-auto w-full max-w-5xl"
     >
       {/* Eyebrow + module-specific title kept in the module file so the
-          flashcard surface still feels like part of Module 2 — the body
+          flashcard surface still feels like part of Module 2 â€” the body
           below is the canonical RD-intro carousel via YoFlashcardPreview. */}
       <div className="px-5 pt-10 sm:px-8 sm:pt-14">
         <p className="flex items-center gap-2 text-[0.75rem] font-black uppercase tracking-[0.14em] text-[#0F6E56]/70">
@@ -668,7 +668,7 @@ function FlashcardsSection({ locale }: { locale: YoLocale }) {
         title={t(LABEL_FLASHCARDS_TITLE, locale)}
         subtitle={t(LABEL_HINT, locale)}
         sectionClassName="pt-3 sm:pt-4"
-        // The browser-only audio button used across Module 2 — keeps
+        // The browser-only audio button used across Module 2 â€” keeps
         // the same speech/no-MP3 implementation that all other Module
         // 2 surfaces rely on. Uses a serializable string discriminator
         // because YoFlashcardPreview is a client component mounted from
@@ -819,7 +819,7 @@ function MiniMissionSection({ locale }: { locale: YoLocale }) {
               <div className="flex-1">
                 <p className="text-sm leading-relaxed text-[#0F6E56]/85">
                   <span className="font-semibold text-[#0F6E56]/60 text-[0.65rem] uppercase tracking-[0.14em] mr-1">
-                    {t(LABEL_MISSION_STEP, locale)} {si + 1} ·
+                    {t(LABEL_MISSION_STEP, locale)} {si + 1} Â·
                   </span>
                   {pickLocale(locale, step.taskFr, step.taskEn)}
                 </p>
@@ -859,7 +859,8 @@ function MiniMissionSection({ locale }: { locale: YoLocale }) {
 }
 
 function PrintableWorksheetsSection({ locale }: { locale: YoLocale }) {
-  const { miniMission } = dominicanRepublicHotelAirport;
+  const resource = getPrintableResourceById("rd-m2-arrival-kit");
+  if (!resource) return null;
 
   return (
     <section
@@ -878,45 +879,8 @@ function PrintableWorksheetsSection({ locale }: { locale: YoLocale }) {
         {t(LABEL_WORKSHEETS_TITLE, locale)}
       </h2>
 
-      {/* Real reinforcement worksheets — vocabulary match,
-          fill-in-the-blank, scenario multiple choice, and a
-          production prompt. Each card is a standalone exercise
-          with a collapsible answer key (`print:break-inside-avoid`
-          keeps each worksheet on its own printable block). */}
-      <DominicanModulePrintables pack={module2PrintablePack} locale={locale} />
-
-      {/* Compact arrival itinerary recap kept beside the worksheets
-          so the printout doubles as a quick mission checklist
-          (matches the original "itinerary" worksheet expectation). */}
-      <div className="mt-6 grid gap-4 md:grid-cols-1 print:grid-cols-1">
-        <article className="rounded-3xl border border-[#0F6E56]/12 bg-white p-5 shadow-[0_10px_26px_rgba(15,58,52,0.05)] print:break-inside-avoid">
-          <div className="flex items-start justify-between gap-3 border-b border-dashed border-[#0F6E56]/20 pb-3">
-            <h3 className="text-lg font-black text-[#0F6E56]">
-              {locale === "en"
-                ? "Arrival mission checklist"
-                : locale === "es"
-                  ? "Checklist de la misión de llegada"
-                  : "Checklist mission arrivée"}
-            </h3>
-            <span className="rounded-full bg-[#FFF4D6] px-3 py-1 text-[0.6rem] font-black uppercase tracking-[0.14em] text-[#8a5a17]">
-              {/* worksheet · itinerary — preserved tokens for
-                  launch-critical premium-marker assertions. */}
-              itinerary worksheet
-            </span>
-          </div>
-          <ol className="mt-3 space-y-2">
-            {miniMission.steps.map((step, index) => (
-              <li key={step.id} className="flex items-start gap-2 text-sm">
-                <span className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-[#0B3040] text-[0.65rem] font-black text-[#F4B400]">
-                  {index + 1}
-                </span>
-                <span className="text-[#0F6E56]/78">
-                  {pickLocale(locale, step.taskFr, step.taskEn)}
-                </span>
-              </li>
-            ))}
-          </ol>
-        </article>
+      <div className="mt-5" data-yo-module2-printable-resource-card>
+        <YoPrintableResourceCard resource={resource} locale={locale} />
       </div>
     </section>
   );
@@ -983,7 +947,7 @@ function CompletionSection({ locale }: { locale: YoLocale }) {
           className="mt-4 inline-flex items-center justify-center rounded-full bg-[#0F6E56] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#0b5b47] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0F6E56] focus-visible:ring-offset-2"
         >
           {t(LABEL_OPEN_MODULE_3, locale)}
-          <span aria-hidden className="ml-2">→</span>
+          <span aria-hidden className="ml-2">â†’</span>
         </a>
       </div>
 
@@ -995,8 +959,8 @@ function CompletionSection({ locale }: { locale: YoLocale }) {
         </p>
         <p className="mt-2 text-sm leading-relaxed text-[#0F6E56]/80">
           {locale === "en"
-            ? "Practice these scenarios out loud with a Pratiqo teacher when you're ready — you choose when and with whom."
-            : "Pratique ces scénarios à voix haute avec un professeur Pratiqo quand tu es prêt — tu choisis quand et avec qui."}
+            ? "Practice these scenarios out loud with a Pratiqo teacher when you're ready â€” you choose when and with whom."
+            : "Pratique ces scÃ©narios Ã  voix haute avec un professeur Pratiqo quand tu es prÃªt â€” tu choisis quand et avec qui."}
         </p>
         <div className="mt-4 flex flex-wrap gap-3">
           <a
@@ -1027,39 +991,39 @@ function CompletionSection({ locale }: { locale: YoLocale }) {
   );
 }
 
-// ─── App-like deck composition ─────────────────────────────────────────────
+// â”€â”€â”€ App-like deck composition â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 //
 // `mode="deck"` reuses every section sub-component above to build a 9-screen
-// app-like lesson flow. Each screen reuses the same JSX surfaces — so all
+// app-like lesson flow. Each screen reuses the same JSX surfaces â€” so all
 // `data-yo-module2-*` markers, audio buttons, flashcards, printables and the
 // completion button are preserved exactly as in the long-scroll mode. The
 // deck client component (`<YoLessonDeck />`) only toggles which screen is
 // visible; no educational text is rewritten and no quiz state is stored.
 
 const DECK_LABEL_MISSION = lstr(
-  "Mission · Hôtel & aéroport",
-  "Mission · Hotel & airport",
-  "Misión · Hotel y aeropuerto",
+  "Mission Â· HÃ´tel & aÃ©roport",
+  "Mission Â· Hotel & airport",
+  "MisiÃ³n Â· Hotel y aeropuerto",
 );
 const DECK_LABEL_PHRASES = lstr(
-  "Phrases · Survie",
-  "Phrases · Survival",
-  "Frases · Supervivencia",
+  "Phrases Â· Survie",
+  "Phrases Â· Survival",
+  "Frases Â· Supervivencia",
 );
 const DECK_LABEL_AIRPORT = lstr(
-  "Dialogue · Aéroport",
-  "Dialogue · Airport",
-  "Diálogo · Aeropuerto",
+  "Dialogue Â· AÃ©roport",
+  "Dialogue Â· Airport",
+  "DiÃ¡logo Â· Aeropuerto",
 );
 const DECK_LABEL_HOTEL = lstr(
-  "Dialogue · Hôtel",
-  "Dialogue · Hotel",
-  "Diálogo · Hotel",
+  "Dialogue Â· HÃ´tel",
+  "Dialogue Â· Hotel",
+  "DiÃ¡logo Â· Hotel",
 );
 const DECK_LABEL_PROBLEMS = lstr(
-  "Imprévus · Hôtel",
-  "Issues · Hotel",
-  "Imprevistos · Hotel",
+  "ImprÃ©vus Â· HÃ´tel",
+  "Issues Â· Hotel",
+  "Imprevistos Â· Hotel",
 );
 const DECK_LABEL_CULTURE = lstr(
   "Note culturelle",
@@ -1069,53 +1033,53 @@ const DECK_LABEL_CULTURE = lstr(
 const DECK_LABEL_GRAMMAR = lstr(
   "Grammaire express",
   "Quick grammar",
-  "Gramática rápida",
+  "GramÃ¡tica rÃ¡pida",
 );
 const DECK_LABEL_FLASHCARDS = lstr(
-  "Pratique · Vocabulaire",
-  "Practice · Vocabulary",
-  "Práctica · Vocabulario",
+  "Pratique Â· Vocabulaire",
+  "Practice Â· Vocabulary",
+  "PrÃ¡ctica Â· Vocabulario",
 );
 const DECK_LABEL_QUIZ = lstr(
-  "Pratique · Quiz",
-  "Practice · Quiz",
-  "Práctica · Quiz",
+  "Pratique Â· Quiz",
+  "Practice Â· Quiz",
+  "PrÃ¡ctica Â· Quiz",
 );
 const DECK_LABEL_MINI_MISSION = lstr(
   "Mini-mission finale",
   "Final mini-mission",
-  "Misión final",
+  "MisiÃ³n final",
 );
 const DECK_LABEL_COMPLETION = lstr(
   "Mission accomplie",
   "Mission complete",
-  "Misión cumplida",
+  "MisiÃ³n cumplida",
 );
 
 const DECK_TITLE_MISSION = lstr(
-  "Ta mission · Hôtel & aéroport",
-  "Your mission · Hotel & airport",
-  "Tu misión · Hotel y aeropuerto",
+  "Ta mission Â· HÃ´tel & aÃ©roport",
+  "Your mission Â· Hotel & airport",
+  "Tu misiÃ³n Â· Hotel y aeropuerto",
 );
 const DECK_TITLE_PHRASES = lstr(
-  "15 phrases qui te sauvent à l'arrivée",
+  "15 phrases qui te sauvent Ã  l'arrivÃ©e",
   "15 phrases that save you on arrival",
   "15 frases que te salvan al llegar",
 );
 const DECK_TITLE_AIRPORT = lstr(
-  "Tu viens d'atterrir à Punta Cana",
+  "Tu viens d'atterrir Ã  Punta Cana",
   "You just landed in Punta Cana",
   "Acabas de aterrizar en Punta Cana",
 );
 const DECK_TITLE_HOTEL = lstr(
-  "Le check-in à l'hôtel",
+  "Le check-in Ã  l'hÃ´tel",
   "The hotel check-in",
   "El check-in del hotel",
 );
 const DECK_TITLE_PROBLEMS = lstr(
-  "Petits soucis · Grandes phrases",
-  "Small issues · Big phrases",
-  "Pequeños problemas · Grandes frases",
+  "Petits soucis Â· Grandes phrases",
+  "Small issues Â· Big phrases",
+  "PequeÃ±os problemas Â· Grandes frases",
 );
 const DECK_TITLE_CULTURE = lstr(
   "Le ton dominicain",
@@ -1125,78 +1089,78 @@ const DECK_TITLE_CULTURE = lstr(
 const DECK_TITLE_GRAMMAR = lstr(
   "5 formules qui couvrent presque tout",
   "5 formulas that cover almost everything",
-  "5 fórmulas que cubren casi todo",
+  "5 fÃ³rmulas que cubren casi todo",
 );
 const DECK_TITLE_FLASHCARDS = lstr(
-  "Mémorise et révise",
+  "MÃ©morise et rÃ©vise",
   "Memorize and review",
   "Memoriza y repasa",
 );
 const DECK_TITLE_QUIZ = lstr(
-  "Teste tes réflexes",
+  "Teste tes rÃ©flexes",
   "Test your reflexes",
   "Prueba tus reflejos",
 );
 const DECK_TITLE_MINI_MISSION = lstr(
-  "Joue la scène d'arrivée",
+  "Joue la scÃ¨ne d'arrivÃ©e",
   "Play out the arrival scene",
-  "Actúa la escena de llegada",
+  "ActÃºa la escena de llegada",
 );
 const DECK_TITLE_COMPLETION = lstr(
-  "Tu es prêt(e) à voyager",
+  "Tu es prÃªt(e) Ã  voyager",
   "You're ready to travel",
-  "Estás listo(a) para viajar",
+  "EstÃ¡s listo(a) para viajar",
 );
 
 const DECK_HELPER_MISSION = lstr(
-  "Petite carte du module : 6 étapes, 1 mini-mission. Avance à ton rythme.",
+  "Petite carte du module : 6 Ã©tapes, 1 mini-mission. Avance Ã  ton rythme.",
   "Quick map of the module: 6 steps, 1 mini-mission. Go at your own pace.",
-  "Mapa del módulo: 6 pasos, 1 misión. Ve a tu ritmo.",
+  "Mapa del mÃ³dulo: 6 pasos, 1 misiÃ³n. Ve a tu ritmo.",
 );
 const DECK_HELPER_PHRASES = lstr(
-  "Tu n'as pas à tout retenir maintenant — survole et reviens-y.",
-  "You don't need to memorize everything now — skim and come back.",
-  "No tienes que memorizar todo ahora — léelas y vuelve.",
+  "Tu n'as pas Ã  tout retenir maintenant â€” survole et reviens-y.",
+  "You don't need to memorize everything now â€” skim and come back.",
+  "No tienes que memorizar todo ahora â€” lÃ©elas y vuelve.",
 );
 const DECK_HELPER_AIRPORT = lstr(
-  "Lis le dialogue, écoute la voix, respire — tu y arrives.",
-  "Read the dialogue, listen to the voice, breathe — you've got this.",
-  "Lee el diálogo, escucha la voz, respira — lo logras.",
+  "Lis le dialogue, Ã©coute la voix, respire â€” tu y arrives.",
+  "Read the dialogue, listen to the voice, breathe â€” you've got this.",
+  "Lee el diÃ¡logo, escucha la voz, respira â€” lo logras.",
 );
 const DECK_HELPER_HOTEL = lstr(
-  "Annonce ta réservation calmement — c'est le moment clé.",
-  "Announce your booking calmly — this is the key moment.",
-  "Anuncia tu reserva con calma — es el momento clave.",
+  "Annonce ta rÃ©servation calmement â€” c'est le moment clÃ©.",
+  "Announce your booking calmly â€” this is the key moment.",
+  "Anuncia tu reserva con calma â€” es el momento clave.",
 );
 const DECK_HELPER_PROBLEMS = lstr(
   "Une phrase juste avant que le petit souci grossisse.",
   "One useful phrase before the small issue gets bigger.",
-  "Una frase útil antes de que el pequeño problema crezca.",
+  "Una frase Ãºtil antes de que el pequeÃ±o problema crezca.",
 );
 const DECK_HELPER_CULTURE = lstr(
-  "Comprendre la culture, c'est éviter le quiproquo.",
+  "Comprendre la culture, c'est Ã©viter le quiproquo.",
   "Reading the culture saves you from misreads.",
   "Entender la cultura evita malentendidos.",
 );
 const DECK_HELPER_GRAMMAR = lstr(
-  "Quelques patrons à recycler partout. Pas par cœur, par usage.",
-  "A few patterns to recycle everywhere. Not by heart — by use.",
+  "Quelques patrons Ã  recycler partout. Pas par cÅ“ur, par usage.",
+  "A few patterns to recycle everywhere. Not by heart â€” by use.",
   "Algunos patrones para reciclar en todas partes.",
 );
 const DECK_HELPER_FLASHCARDS = lstr(
-  "Vocabulaire essentiel : ta boîte à outils.",
+  "Vocabulaire essentiel : ta boÃ®te Ã  outils.",
   "Essential vocabulary: your toolbox.",
   "Vocabulario esencial: tu caja de herramientas.",
 );
 const DECK_HELPER_QUIZ = lstr(
-  "Cinq questions — pas de note. Pour toi.",
-  "Five questions — no score. For you.",
-  "Cinco preguntas — sin nota. Para ti.",
+  "Cinq questions â€” pas de note. Pour toi.",
+  "Five questions â€” no score. For you.",
+  "Cinco preguntas â€” sin nota. Para ti.",
 );
 const DECK_HELPER_MINI_MISSION = lstr(
-  "Une vraie scène, étape par étape. Voix haute conseillée.",
+  "Une vraie scÃ¨ne, Ã©tape par Ã©tape. Voix haute conseillÃ©e.",
   "A real scene, step by step. Reading out loud helps.",
-  "Una escena real, paso a paso. Léelo en voz alta.",
+  "Una escena real, paso a paso. LÃ©elo en voz alta.",
 );
 const DECK_HELPER_COMPLETION = lstr(
   "Imprime tes fiches, sauvegarde ta progression, ouvre la suite.",
@@ -1205,9 +1169,9 @@ const DECK_HELPER_COMPLETION = lstr(
 );
 
 const DECK_MODULE_LABEL = lstr(
-  "Module 2 · RD A1",
-  "Module 2 · DR A1",
-  "Módulo 2 · RD A1",
+  "Module 2 Â· RD A1",
+  "Module 2 Â· DR A1",
+  "MÃ³dulo 2 Â· RD A1",
 );
 
 function buildModule2DeckScreens(locale: YoLocale): YoLessonDeckScreen[] {
@@ -1398,7 +1362,7 @@ function Module2DeckRenderer({ locale }: { locale: YoLocale }) {
   );
 }
 
-// ─── Main export ───────────────────────────────────────────────────────────
+// â”€â”€â”€ Main export â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export type DominicanRepublicModule2ContentMode = "long-scroll" | "deck";
 

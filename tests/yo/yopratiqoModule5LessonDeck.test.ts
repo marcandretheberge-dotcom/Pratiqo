@@ -328,30 +328,30 @@ assert.match(
 ok("8) Module 5 deck preserves the quiz + final-mission capstone + self-assessment behaviour");
 
 // ─────────────────────────────────────────────────────────────────────────
-// 9. Module 5 preserves printables (7 sheets + print button)
+// 9. Module 5 exposes printables as a printable resource
 // ─────────────────────────────────────────────────────────────────────────
 
 assert.match(
   module5Src,
   /<PrintablesSection\b/,
-  "Module 5 deck must mount the PrintablesSection on the completion screen",
+  "Module 5 deck must mount the PrintablesSection resource card on the completion screen",
 );
 assert.match(
+  module5Src,
+  /data-yo-module5-printable-resource-card/,
+  "Module 5 deck must expose the registered printable resource card",
+);
+assert.doesNotMatch(
   module5Src,
   /data-yo-module5-printable-worksheet/,
-  "Module 5 deck must keep the audited data-yo-module5-printable-worksheet marker on each sheet",
+  "Module 5 must not keep long printable worksheet dumps in the main module",
 );
-assert.match(
-  module5Src,
-  /data-yo-module5-printable-count/,
-  "Module 5 deck must keep the audited data-yo-module5-printable-count marker",
-);
-assert.match(
+assert.doesNotMatch(
   module5Src,
   /<DominicanRepublicModule5PrintButton\b/,
-  "Module 5 deck must keep the audited DominicanRepublicModule5PrintButton on the printables surface",
+  "Module 5 print action now lives in the print route shell",
 );
-ok("9) Module 5 deck preserves the printables section + print button");
+ok("9) Module 5 deck exposes one printable workbook resource card");
 
 // ─────────────────────────────────────────────────────────────────────────
 // 10. Module 5 still mounts YoMarkModuleCompletedButton

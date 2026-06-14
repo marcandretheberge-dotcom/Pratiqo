@@ -13,8 +13,8 @@ import {
   YoMiniScenarioCard,
   YoOneQuestionQuiz,
   YoPairMatchGame,
-  YoPrintableResourceCard,
 } from "@/components/yo/YoInteractiveLessonPrimitives";
+import { YoPrintableResourceCard } from "@/components/yo/YoPrintableResourceCard";
 import { lstr, getYoLocale, t } from "@/lib/yo/localize";
 import { getYoPrintableResource } from "@/lib/yo/printableResources";
 import type { YoLocale } from "@/lib/yo/types";
@@ -193,7 +193,6 @@ const quizQuestions = [
 
 function buildSteps(locale: YoLocale) {
   const kitResource = getYoPrintableResource("fr-qc-m1-l3-survival-kit");
-  const kitTitle = kitResource ? t(kitResource.title, locale) : "Kit de survie Pratiqo";
   return [
     {
       id: "situation",
@@ -460,12 +459,13 @@ function buildSteps(locale: YoLocale) {
               <MessageCircle className="size-4" aria-hidden />
               Trouver mon prof de français québécois
             </Link>
-            <YoPrintableResourceCard
-              title={kitTitle}
-              body="Télécharger ou imprimer le Kit de survie Pratiqo. Aucun faux PDF: ce lien ouvre une page imprimable."
-              href={`${KIT_HREF}${langSuffix(locale)}`}
-              cta={t(lstr("Ouvrir le kit imprimable", "Open printable kit", "Abrir kit imprimible"), locale)}
-            />
+            {kitResource ? (
+              <YoPrintableResourceCard
+                resource={{ ...kitResource, href: `${KIT_HREF}${langSuffix(locale)}` }}
+                locale={locale}
+                body={t(lstr("Ouvre le Kit de survie Pratiqo dans une page propre à imprimer.", "Open the Pratiqo survival kit in a clean printable page.", "Abre el kit de supervivencia Pratiqo en una página limpia para imprimir."), locale)}
+              />
+            ) : null}
           </div>
         </LessonCard>
       ),

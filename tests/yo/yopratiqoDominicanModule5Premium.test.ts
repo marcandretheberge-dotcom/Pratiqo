@@ -149,14 +149,11 @@ test("grammar toolbox exposes the 12-card count + per-card marker", () => {
   assert.ok(src.includes("data-yo-module5-grammar-card"));
 });
 
-test("printable workbook ships count + worksheet + kind markers", () => {
+test("printable workbook is exposed as a registered printable resource", () => {
   const src = read(CONTENT_FILE);
-  assert.match(
-    src,
-    /data-yo-module5-printable-count=\{data\.printableSheets\.length\}/,
-  );
-  assert.ok(src.includes("data-yo-module5-printable-worksheet"));
-  assert.ok(src.includes("data-yo-module5-printable-kind"));
+  assert.ok(src.includes("data-yo-module5-printable-resource-card"));
+  assert.ok(src.includes("rd-m5-a2-workbook"));
+  assert.ok(src.includes("YoPrintableResourceCard"));
 });
 
 test("self-assessment section is mounted with item-level markers", () => {
@@ -335,7 +332,7 @@ test("Module 3 keeps its premium markers (no regression)", () => {
   for (const marker of [
     "data-yo-module3-premium-hero",
     "data-yo-module3-culture-passport",
-    "data-yo-module3-printable-worksheet",
+    "data-yo-module3-printable-resource-card",
   ]) {
     assert.ok(src.includes(marker), `Module 3 lost marker ${marker}`);
   }
@@ -345,7 +342,7 @@ test("Module 4 keeps its premium markers (no regression)", () => {
   const src = read(MODULE_4_CONTENT);
   for (const marker of [
     "data-yo-module4-premium-hero",
-    "data-yo-module4-printable-worksheet",
+    "data-yo-module4-printable-resource-card",
   ]) {
     assert.ok(src.includes(marker), `Module 4 lost marker ${marker}`);
   }

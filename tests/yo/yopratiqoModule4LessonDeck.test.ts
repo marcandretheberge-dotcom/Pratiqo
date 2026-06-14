@@ -1,4 +1,4 @@
-/**
+﻿/**
  * tests/yo/yopratiqoModule4LessonDeck.test.ts
  *
  * Static contract test for the no-scroll / swipe lesson-deck
@@ -50,9 +50,9 @@ const ok = (label: string) => {
   console.log(`  ok  ${label}`);
 };
 
-// ─────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Paths under contract
-// ─────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const MODULE4_PAGE_PATH =
   "app/yo/langues/espagnol/pays/republique-dominicaine/module-4/page.tsx";
@@ -70,9 +70,9 @@ const module4Src = read(MODULE4_CONTENT_PATH);
 const module3Src = read(MODULE3_CONTENT_PATH);
 const module2Src = read(MODULE2_CONTENT_PATH);
 
-// ─────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // 1. Module 4 route uses deck mode
-// ─────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 assert.match(
   pageSrc,
@@ -86,7 +86,7 @@ assert.match(
 assert.doesNotMatch(
   pageSrc,
   /YoBreadcrumbItem/,
-  "Module 4 page must not import / construct a YoBreadcrumbItem chain — the deck header replaces it",
+  "Module 4 page must not import / construct a YoBreadcrumbItem chain â€” the deck header replaces it",
 );
 assert.doesNotMatch(
   pageSrc,
@@ -95,9 +95,9 @@ assert.doesNotMatch(
 );
 ok("1) Module 4 route uses deck mode and dropped its 5-level breadcrumb in favour of the deck header");
 
-// ─────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // 2. Module 4 content supports deck mode
-// ─────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 assert.match(
   module4Src,
@@ -121,9 +121,9 @@ assert.match(
 );
 ok("2) Module 4 content supports a mode discriminator with backward-compatible long-scroll default");
 
-// ─────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // 3. Module 4 uses YoLessonDeck
-// ─────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 assert.match(
   module4Src,
@@ -136,7 +136,7 @@ assert.match(
   "Module 4 content must mount <YoLessonDeck /> inside the deck renderer",
 );
 // The same shared client component the Module 2 and 3 decks use
-// — no per-module fork.
+// â€” no per-module fork.
 assert.match(
   module2Src,
   /<YoLessonDeck\b/,
@@ -147,11 +147,11 @@ assert.match(
   /<YoLessonDeck\b/,
   "Module 3 should still use the same shared deck (sanity)",
 );
-ok("3) Module 4 uses the shared <YoLessonDeck /> orchestrator — same component as Modules 2 and 3 (no fork)");
+ok("3) Module 4 uses the shared <YoLessonDeck /> orchestrator â€” same component as Modules 2 and 3 (no fork)");
 
-// ─────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // 4. Module 4 has focused screens
-// ─────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const MODULE4_SCREEN_IDS_REQUIRED = [
   "mission",
@@ -191,11 +191,11 @@ assert.ok(
   module4ScreenIds.size >= 10,
   `Module 4 deck must have at least 10 distinct focused lesson screens for the app-like cadence (got ${module4ScreenIds.size})`,
 );
-ok(`4) Module 4 deck has ${module4ScreenIds.size} distinct focused lesson screens (mission → completion)`);
+ok(`4) Module 4 deck has ${module4ScreenIds.size} distinct focused lesson screens (mission â†’ completion)`);
 
-// ─────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // 5. Module 4 inherits no-scroll / swipe deck behavior from the shared deck
-// ─────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const deckSrc = read(DECK_PATH);
 // Visual classes (root, header, stage, nav, screen card) were
@@ -241,9 +241,9 @@ assert.match(
 );
 ok("5) Module 4 inherits the no-scroll viewport-lock + swipe + tap-zone behaviour from the shared deck");
 
-// ─────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // 6. Module 4 uses companion visual states
-// ─────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 // Sanity: every screen declares a companion state. We assert
 // that all three production states this PR uses (`map`,
@@ -264,7 +264,7 @@ assert.doesNotMatch(
   /companionState:\s*["'](?:thinking|loading|error|sad|happy|angry)["']/,
   "Module 4 deck must not invent companion states outside the audited 8-state manifest",
 );
-// `teacher_ready` would imply a real teacher-bridge message —
+// `teacher_ready` would imply a real teacher-bridge message â€”
 // Module 4 has none today (the teacher CTA inside <ClosingBridge>
 // is a static link, not a live AI tutor), so we explicitly forbid
 // that state here (preventing a future regression that adds a
@@ -276,9 +276,9 @@ assert.doesNotMatch(
 );
 ok("6) Module 4 deck uses audited companion visual states (map / confused / celebrating) and no fake AI-tutor state");
 
-// ─────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // 7. Module 4 preserves flashcards
-// ─────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 assert.match(
   module4Src,
@@ -297,9 +297,9 @@ assert.match(
 );
 ok("7) Module 4 deck preserves the <YoFlashcardPreview> browser-speech flashcards carousel");
 
-// ─────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // 8. Module 4 preserves quiz / practice behavior
-// ─────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 assert.match(
   module4Src,
@@ -307,7 +307,7 @@ assert.match(
   "Module 4 deck must still mount <DominicanRepublicModule4Quiz /> on the quiz screen",
 );
 // The pre-translation guard from the Module 4 premium audit
-// must still hold — `questions={data.quizQuestions}` is the
+// must still hold â€” `questions={data.quizQuestions}` is the
 // only place quiz questions reach the renderer, and the
 // reveal-only contract is owned by the interactive component
 // itself. We just assert the data wiring is intact.
@@ -323,35 +323,35 @@ assert.match(
 );
 ok("8) Module 4 deck preserves the practice quiz + explorer-challenge mini-game on focused screens");
 
-// ─────────────────────────────────────────────────────────────────────────
-// 9. Module 4 preserves printables
-// ─────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// 9. Module 4 exposes printables as a printable resource
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 assert.match(
   module4Src,
   /<PrintablesSection\b/,
-  "Module 4 deck must still mount the <PrintablesSection /> with the 5 printable worksheets + print button",
+  "Module 4 deck must still mount the <PrintablesSection /> resource card",
 );
 assert.match(
+  module4Src,
+  /data-yo-module4-printable-resource-card/,
+  "Module 4 deck must expose the registered printable resource card",
+);
+assert.doesNotMatch(
   module4Src,
   /data-yo-module4-printable-worksheet/,
-  "Module 4 deck must keep the `data-yo-module4-printable-worksheet` source marker",
+  "Module 4 must not keep long printable worksheet dumps in the main module",
 );
-assert.match(
-  module4Src,
-  /data-yo-module4-printable-count/,
-  "Module 4 deck must keep the `data-yo-module4-printable-count` source marker",
-);
-assert.match(
+assert.doesNotMatch(
   module4Src,
   /<DominicanRepublicModule4PrintButton\b/,
-  "Module 4 deck must keep the print button so learners can still print the worksheets",
+  "Module 4 print action now lives in the print route shell",
 );
-ok("9) Module 4 deck preserves the 5-worksheet printables section + print button on the printables screen");
+ok("9) Module 4 deck exposes one printable resource card");
 
-// ─────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // 10. Module 4 still mounts YoMarkModuleCompletedButton
-// ─────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 assert.match(
   module4Src,
@@ -375,30 +375,30 @@ assert.match(
 );
 ok("10) Module 4 still mounts YoMarkModuleCompletedButton with its audited payload + progress-complete marker");
 
-// ─────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // 11. Module 4 does not use breadcrumb-style primary navigation
-// ─────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 // The shared deck header carries the back arrow + module label
-// + FR/EN toggle — that's the only primary navigation in deck
+// + FR/EN toggle â€” that's the only primary navigation in deck
 // mode. We assert the *page* no longer threads a YoBreadcrumb
 // chain (already covered in assertion 1) and also that the
 // renderer never mounts a <YoBreadcrumb /> for deck mode.
 const deckRendererBlock = (() => {
   const start = module4Src.indexOf("function Module4DeckRenderer");
-  const end = module4Src.indexOf("// ─── Main content component", start);
+  const end = module4Src.indexOf("export function", start);
   assert.ok(start >= 0 && end > start, "Module4DeckRenderer block must exist");
   return module4Src.slice(start, end);
 })();
 assert.doesNotMatch(
   deckRendererBlock,
   /<YoBreadcrumb\b/,
-  "Module 4 deck renderer must not mount <YoBreadcrumb /> — the deck header replaces it",
+  "Module 4 deck renderer must not mount <YoBreadcrumb /> â€” the deck header replaces it",
 );
 // Tap-zone navigation also requires the deck-header back arrow
 // to be the single primary navigation affordance; assert the
 // renderer passes a `backHref` that points back to the country
-// course home (one level up — never all the way to /yo).
+// course home (one level up â€” never all the way to /yo).
 assert.match(
   deckRendererBlock,
   /backHref=\{backHref\}/,
@@ -411,11 +411,11 @@ assert.match(
 );
 ok("11) Module 4 dropped breadcrumb-style primary navigation in favour of the viewport-locked deck header");
 
-// ─────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // 12. Modules 2 and 3 decks still pass unchanged
-// ─────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-// Sanity that this PR did not regress Module 2 or Module 3 —
+// Sanity that this PR did not regress Module 2 or Module 3 â€”
 // the same deck composers / renderers / screen contracts must
 // still hold. (Their dedicated tests still run in CI; this is
 // a belt-and-suspenders check inside the Module 4 file.)
@@ -463,9 +463,9 @@ assert.ok(
 );
 ok(`12) Modules 2 (${module2ScreenIds.size} screens) and 3 (${module3ScreenIds.size} screens) still pass unchanged`);
 
-// ─────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // 13. Paid YoPratiqo checkout remains disabled
-// ─────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const productConfigSrc = read(PRODUCT_CONFIG_PATH);
 assert.match(productConfigSrc, /premiumModulesEnabled:\s*false/);
@@ -486,9 +486,9 @@ assert.doesNotMatch(
 );
 ok("13) paid YoPratiqo checkout remains disabled and no Stripe references added on the Module 4 deck surface");
 
-// ─────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // 14. No raw quiz fields introduced
-// ─────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const RAW_QUIZ_PATTERN =
   /\b(?:rawQuiz|raw_quiz|quizAnswers|quiz_answers|selectedOption|selected_option|pickedOption|picked_option|answerLog|answer_log|incorrectAnswers|incorrect_answers|keystrokeHistory|keystroke_history|audioAttempts|audio_attempts)\b/i;
@@ -504,9 +504,9 @@ assert.doesNotMatch(
 );
 ok("14) no raw quiz fields introduced on the Module 4 deck surface");
 
-// ─────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // 15. No restricted system touched
-// ─────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const restrictedPathPatterns: RegExp[] = [
   /^app\/api\/stripe\//,

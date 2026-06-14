@@ -59,7 +59,7 @@ test("premium visual concepts are present in source", () => {
     "data-yo-module3-quiz-shell",
     "data-yo-module3-quiz-options-no-pretranslation",
     "data-yo-module3-quiz-reveal-translations",
-    "data-yo-module3-printable-worksheet",
+    "data-yo-module3-printable-resource-card",
     "data-yo-module3-food-cards-count",
     "data-yo-module3-culture-cards-count",
     "data-yo-module3-phrase-count",
@@ -67,7 +67,6 @@ test("premium visual concepts are present in source", () => {
     "data-yo-module3-grammar-count",
     "data-yo-module3-flashcard-count",
     "data-yo-module3-quiz-count",
-    "data-yo-module3-printable-count",
   ]) {
     assert.ok(src.includes(token), `Missing premium source token: ${token}`);
   }
@@ -118,12 +117,13 @@ test("browser speech audio is wired without MP3 or fake playback", () => {
   assert.ok(!interactive.includes(".mp3"));
 });
 
-test("print button exists and uses window.print in isolated client helper", () => {
+test("printable practice moved to a registered print-route resource", () => {
   const component = read(COMPONENT_FILE);
-  const interactive = read(INTERACTIVE_FILE);
-  assert.ok(component.includes("DominicanRepublicModule3PrintButton"));
-  assert.ok(interactive.startsWith('"use client";'));
-  assert.ok(interactive.includes("window.print()"));
+  const printRoute = read("app/yo/langues/espagnol/pays/republique-dominicaine/module-3/ressources/fiches-pratique/page.tsx");
+  assert.ok(component.includes("YoPrintableResourceCard"));
+  assert.ok(component.includes("rd-m3-practice-sheets"));
+  assert.ok(printRoute.includes("YoPrintPageShell"));
+  assert.ok(printRoute.includes("DominicanModulePrintables"));
   assert.equal(dominicanRepublicFoodCulture.printButtonLabel.fr, "Imprimer les fiches");
   assert.equal(dominicanRepublicFoodCulture.printButtonLabel.en, "Print practice sheets");
   assert.equal(dominicanRepublicFoodCulture.printButtonLabel.es, "Imprimir hojas de práctica");
