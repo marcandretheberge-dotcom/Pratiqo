@@ -1,4 +1,4 @@
-/**
+﻿/**
  * DominicanRepublicModule3Content - premium food/culture module renderer.
  *
  * Server component. The only client behavior is delegated to
@@ -30,14 +30,11 @@ import {
   type YoBreadcrumbItem,
 } from "@/components/yo/YoBreadcrumb";
 import { YoSpeechButton } from "@/components/yo/YoSpeechButton";
-import {
-  DominicanRepublicCultureChallenge,
-  DominicanRepublicModule3PrintButton,
-} from "@/components/yo/DominicanRepublicModule3Interactive";
+import { DominicanRepublicCultureChallenge } from "@/components/yo/DominicanRepublicModule3Interactive";
 import { YoFlashcardPreview } from "@/components/yo/YoFlashcardPreview";
-import { DominicanModulePrintables } from "@/components/yo/DominicanModulePrintables";
+import { YoPrintableResourceCard } from "@/components/yo/YoPrintableResourceCard";
 import { module3FlashcardsToYo } from "@/lib/yo/dominicanRepublicFlashcardAdapters";
-import { module3PrintablePack } from "@/lib/yo/dominicanRepublicPrintables";
+import { getPrintableResourceById } from "@/lib/yo/printableResources";
 import { dominicanRdModuleProgressPayload } from "@/lib/yo/dominicanRepublicProgressPayloads";
 import { YoMarkModuleCompletedButton } from "@/components/yo/YoMarkModuleCompletedButton";
 import { YoLessonDeck } from "@/components/yo/YoLessonDeck";
@@ -52,7 +49,7 @@ const SECTION_LABELS = {
   food: {
     fr: "Cartes identite des plats",
     en: "Food identity cards",
-    es: "Tarjetas de identidad gastronómica",
+    es: "Tarjetas de identidad gastronÃ³mica",
   },
   culture: {
     fr: "Culture dominicaine",
@@ -67,17 +64,17 @@ const SECTION_LABELS = {
   dialogues: {
     fr: "Dialogues guides",
     en: "Guided dialogues",
-    es: "Diálogos guiados",
+    es: "DiÃ¡logos guiados",
   },
   ears: {
     fr: "Oreilles dominicaines",
     en: "Dominican ears",
-    es: "Oído dominicano",
+    es: "OÃ­do dominicano",
   },
   grammar: {
     fr: "Micro-grammaire",
     en: "Micro-grammar",
-    es: "Microgramática",
+    es: "MicrogramÃ¡tica",
   },
   flashcards: {
     fr: "Flashcards",
@@ -87,7 +84,7 @@ const SECTION_LABELS = {
   quiz: {
     fr: "Quiz pratique",
     en: "Practice quiz",
-    es: "Quiz práctico",
+    es: "Quiz prÃ¡ctico",
   },
   printables: {
     fr: "Fiches imprimables",
@@ -97,7 +94,7 @@ const SECTION_LABELS = {
 };
 
 const LABELS = {
-  module: { fr: "Module 3", en: "Module 3", es: "Módulo 3" },
+  module: { fr: "Module 3", en: "Module 3", es: "MÃ³dulo 3" },
   a1: { fr: "A1 voyage", en: "A1 travel", es: "Viaje A1" },
   orderPhrase: {
     fr: "Phrase pour commander",
@@ -109,32 +106,32 @@ const LABELS = {
     en: "Cultural note",
     es: "Nota cultural",
   },
-  situation: { fr: "Situation", en: "Situation", es: "Situación" },
-  translation: { fr: "Traduction", en: "Translation", es: "Traducción" },
+  situation: { fr: "Situation", en: "Situation", es: "SituaciÃ³n" },
+  translation: { fr: "Traduction", en: "Translation", es: "TraducciÃ³n" },
   scene: { fr: "La scene", en: "The scene", es: "La escena" },
-  chunks: { fr: "Pourquoi ca marche", en: "Why it works", es: "Por qué funciona" },
+  chunks: { fr: "Pourquoi ca marche", en: "Why it works", es: "Por quÃ© funciona" },
   examples: { fr: "Exemples", en: "Examples", es: "Ejemplos" },
   practice: { fr: "A toi", en: "Your turn", es: "Tu turno" },
   answer: { fr: "Voir la reponse", en: "See answer", es: "Ver respuesta" },
   printHint: {
     fr: "Ces fiches sont pensees pour l'impression: phrases courtes, roleplay et checklist.",
     en: "These sheets are designed for print: short phrases, roleplay, and checklists.",
-    es: "Estas hojas están pensadas para imprimir: frases cortas, roleplay y listas.",
+    es: "Estas hojas estÃ¡n pensadas para imprimir: frases cortas, roleplay y listas.",
   },
   noAudioPlayback: {
-    fr: "Audio de pratique intégré au navigateur. La voix peut varier selon l'appareil.",
+    fr: "Audio de pratique intÃ©grÃ© au navigateur. La voix peut varier selon l'appareil.",
     en: "Practice audio uses your browser voice. Voice quality may vary by device.",
-    es: "El audio de práctica usa la voz del navegador. La calidad puede variar según el dispositivo.",
+    es: "El audio de prÃ¡ctica usa la voz del navegador. La calidad puede variar segÃºn el dispositivo.",
   },
   browserAudio: {
     fr: "Audio de pratique",
     en: "Practice audio",
-    es: "Audio de práctica",
+    es: "Audio de prÃ¡ctica",
   },
   teacherBridge: {
     fr: "Apres le module, apporte ces phrases a ton professeur Pratiqo pour les pratiquer a voix haute.",
     en: "After the module, bring these phrases to your Pratiqo teacher to practice out loud.",
-    es: "Después del módulo, lleva estas frases a tu profesor de Pratiqo para practicarlas en voz alta.",
+    es: "DespuÃ©s del mÃ³dulo, lleva estas frases a tu profesor de Pratiqo para practicarlas en voz alta.",
   },
   teacherCta: {
     fr: "Trouver un professeur",
@@ -144,22 +141,22 @@ const LABELS = {
   module2: {
     fr: "Retour au module 2",
     en: "Back to module 2",
-    es: "Volver al módulo 2",
+    es: "Volver al mÃ³dulo 2",
   },
   nextModuleEyebrow: {
     fr: "Prochain module",
     en: "Next module",
-    es: "Siguiente módulo",
+    es: "Siguiente mÃ³dulo",
   },
   module4: {
     fr: "Ouvrir le module 4",
     en: "Open Module 4",
-    es: "Abrir el módulo 4",
+    es: "Abrir el mÃ³dulo 4",
   },
   module4Body: {
-    fr: "Continue avec « Se déplacer et explorer » : transports, directions et premières phrases au passé.",
+    fr: "Continue avec Â« Se dÃ©placer et explorer Â» : transports, directions et premiÃ¨res phrases au passÃ©.",
     en: "Keep going with \"Getting around and exploring\": transport, directions, and your first past-tense phrases.",
-    es: "Sigue con «Moverse y explorar»: transporte, direcciones y las primeras frases en pasado.",
+    es: "Sigue con Â«Moverse y explorarÂ»: transporte, direcciones y las primeras frases en pasado.",
   },
 };
 
@@ -229,7 +226,7 @@ function HeroSection({ locale }: { locale: YoLocale }) {
               {t(data.productLabel, locale)}
             </span>
             <span className="inline-flex rounded-full border border-[#0F6E56]/15 bg-[#0B3040] px-3 py-1 text-[0.7rem] font-black uppercase tracking-[0.14em] text-[#FFF4D6]">
-              {label(locale, LABELS.module)} · {label(locale, LABELS.a1)}
+              {label(locale, LABELS.module)} Â· {label(locale, LABELS.a1)}
             </span>
             <span
               data-yo-audio-state="browser-speech"
@@ -252,10 +249,10 @@ function HeroSection({ locale }: { locale: YoLocale }) {
 
           <div className="mt-7 grid gap-2 sm:grid-cols-2">
             {[
-              "¿Qué me recomienda?",
-              "Quiero probar algo típico.",
-              "¿Me trae la cuenta?",
-              "Más despacio, por favor.",
+              "Â¿QuÃ© me recomienda?",
+              "Quiero probar algo tÃ­pico.",
+              "Â¿Me trae la cuenta?",
+              "MÃ¡s despacio, por favor.",
             ].map((phrase) => (
               <span
                 key={phrase}
@@ -450,7 +447,7 @@ function CultureCardsSection({ locale }: { locale: YoLocale }) {
           locale === "en"
             ? "What makes the Dominican Republic feel alive"
             : locale === "es"
-              ? "Lo que hace viva a la República Dominicana"
+              ? "Lo que hace viva a la RepÃºblica Dominicana"
               : "Ce qui rend la Republique dominicaine vivante"
         }
       />
@@ -507,7 +504,7 @@ function PhraseBankSection({ locale }: { locale: YoLocale }) {
           locale === "en"
             ? "35 phrases for menus, drinks, payment, and repair"
             : locale === "es"
-              ? "35 frases para menú, bebidas, pago y reparación"
+              ? "35 frases para menÃº, bebidas, pago y reparaciÃ³n"
               : "35 phrases pour menu, boissons, paiement et rattrapage"
         }
       />
@@ -649,7 +646,7 @@ function EarsAndGrammarSection({ locale }: { locale: YoLocale }) {
             locale === "en"
               ? "When Dominican Spanish sounds fast"
               : locale === "es"
-                ? "Cuando el español dominicano suena rápido"
+                ? "Cuando el espaÃ±ol dominicano suena rÃ¡pido"
                 : "Quand l'espagnol dominicain sonne vite"
           }
         />
@@ -683,7 +680,7 @@ function EarsAndGrammarSection({ locale }: { locale: YoLocale }) {
             locale === "en"
               ? "9 tiny patterns that unlock the meal"
               : locale === "es"
-                ? "9 patrones pequeños para la comida"
+                ? "9 patrones pequeÃ±os para la comida"
                 : "9 petites formules pour debloquer le repas"
           }
         />
@@ -728,7 +725,7 @@ function FlashcardsSection({ locale }: { locale: YoLocale }) {
       className="mx-auto w-full max-w-5xl"
     >
       {/* Eyebrow + module-specific framing kept here; the body below
-          is the canonical RD-intro YoFlashcardPreview carousel — same
+          is the canonical RD-intro YoFlashcardPreview carousel â€” same
           autoplay, prev/next, progress, rating, and completion panel. */}
       <div className="px-5 pt-10 sm:px-8 sm:pt-14">
         <p className="flex items-center gap-2 text-[0.75rem] font-black uppercase tracking-[0.14em] text-[#0F6E56]/70">
@@ -745,7 +742,7 @@ function FlashcardsSection({ locale }: { locale: YoLocale }) {
           locale === "en"
             ? "32 quick cards for food, drinks, payment, places, and music"
             : locale === "es"
-              ? "32 tarjetas para comida, bebidas, pago, lugares y música"
+              ? "32 tarjetas para comida, bebidas, pago, lugares y mÃºsica"
               : "32 cartes rapides: plats, boissons, paiement, lieux et musique"
         }
         sectionClassName="pt-3 sm:pt-4"
@@ -842,7 +839,9 @@ function QuizSection({ locale }: { locale: YoLocale }) {
 }
 
 function PrintablesSection({ locale }: { locale: YoLocale }) {
-  const data = dominicanRepublicFoodCulture;
+  const resource = getPrintableResourceById("rd-m3-practice-sheets");
+  if (!resource) return null;
+
   return (
     <section
       id="yo-do-m3-printables"
@@ -854,57 +853,20 @@ function PrintablesSection({ locale }: { locale: YoLocale }) {
           labelText={label(locale, SECTION_LABELS.printables)}
           title={
             locale === "en"
-              ? "Print the practice sheets"
+              ? "Open the printable practice document"
               : locale === "es"
-                ? "Imprime las hojas de práctica"
-                : "Imprime les fiches de pratique"
+                ? "Abre el documento imprimible de practica"
+                : "Ouvre le document imprimable de pratique"
           }
           body={label(locale, LABELS.printHint)}
         />
-        <DominicanRepublicModule3PrintButton
-          label={data.printButtonLabel}
-          locale={locale}
-        />
       </div>
-      <div
-        className="grid gap-4 md:grid-cols-2 print:grid-cols-1"
-        data-yo-module3-printable-count={data.printableSheets.length}
-      >
-        {data.printableSheets.map((sheet) => (
-          <article
-            key={sheet.id}
-            className="rounded-3xl border border-[#0F6E56]/12 bg-white p-5 shadow-[0_10px_26px_rgba(15,58,52,0.05)] print:break-inside-avoid"
-            data-yo-module3-printable-worksheet
-          >
-            <div className="flex items-start justify-between gap-3 border-b border-dashed border-[#0F6E56]/20 pb-3">
-              <h3 className="text-lg font-black text-[#0F6E56]">
-                {t(sheet.title, locale)}
-              </h3>
-              <span className="rounded-full bg-[#FFF4D6] px-3 py-1 text-[0.6rem] font-black uppercase tracking-[0.14em] text-[#8a5a17]">
-                worksheet
-              </span>
-            </div>
-            <ul className="mt-3 space-y-1.5">
-              {sheet.keyPhrases.map((phrase) => (
-                <li key={phrase} className="flex items-start gap-2 text-sm">
-                  <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-[#1D9E75]" aria-hidden />
-                  <span className="font-black text-[#0F6E56]" lang="es">
-                    {phrase}
-                  </span>
-                </li>
-              ))}
-            </ul>
-            <div className="mt-4 rounded-2xl bg-[#F4FBF9] p-3 text-sm leading-relaxed text-[#0F6E56]/75">
-              <p>{t(sheet.miniExercise, locale)}</p>
-              <p className="mt-2 font-semibold">{t(sheet.roleplayOrChecklist, locale)}</p>
-            </div>
-          </article>
-        ))}
+      <div data-yo-module3-printable-resource-card>
+        <YoPrintableResourceCard resource={resource} locale={locale} />
       </div>
     </section>
   );
 }
-
 function AudioNoticeSection({ locale }: { locale: YoLocale }) {
   return (
     <section className="mx-auto w-full max-w-5xl px-5 pt-8 sm:px-8">
@@ -982,7 +944,7 @@ function ClosingBridge({ locale }: { locale: YoLocale }) {
   );
 }
 
-// ─── Lesson-deck composer ─────────────────────────────────────────────────
+// â”€â”€â”€ Lesson-deck composer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 //
 // Mirrors the pattern locked in for Module 2 (PRs #157 / #159): the
 // legacy long-scroll renderer stays available via `mode="long-scroll"`
@@ -993,26 +955,26 @@ function ClosingBridge({ locale }: { locale: YoLocale }) {
 // time, with viewport-locked layout, swipe navigation, opt-in tap
 // zones, and the per-screen companion coach.
 //
-// IMPORTANT — content is *not* rewritten. Each deck screen mounts the
+// IMPORTANT â€” content is *not* rewritten. Each deck screen mounts the
 // exact same sub-section (`<HeroSection>`, `<FoodCardsSection>`,
-// `<CultureCardsSection>`, …) so every `data-yo-module3-*` source
+// `<CultureCardsSection>`, â€¦) so every `data-yo-module3-*` source
 // marker the existing curriculum / premium / quiz-UX tests look for
 // stays in the rendered tree.
 
 const DECK_LABEL_MISSION = lstr(
-  "Mission · Manger et payer comme un local",
-  "Mission · Eat and pay like a local",
-  "Misión · Comer y pagar como un local",
+  "Mission Â· Manger et payer comme un local",
+  "Mission Â· Eat and pay like a local",
+  "MisiÃ³n Â· Comer y pagar como un local",
 );
 const DECK_LABEL_PASSPORT = lstr(
-  "Passeport culture · 6 étapes",
-  "Culture passport · 6 stops",
-  "Pasaporte cultural · 6 paradas",
+  "Passeport culture Â· 6 Ã©tapes",
+  "Culture passport Â· 6 stops",
+  "Pasaporte cultural Â· 6 paradas",
 );
 const DECK_LABEL_FOOD = lstr(
   "Cartes des plats",
   "Food identity cards",
-  "Tarjetas de identidad gastronómica",
+  "Tarjetas de identidad gastronÃ³mica",
 );
 const DECK_LABEL_CULTURE = lstr(
   "Culture dominicaine",
@@ -1025,29 +987,29 @@ const DECK_LABEL_PHRASES = lstr(
   "Banco de frases",
 );
 const DECK_LABEL_DIALOGUES = lstr(
-  "Dialogues guidés",
+  "Dialogues guidÃ©s",
   "Guided dialogues",
-  "Diálogos guiados",
+  "DiÃ¡logos guiados",
 );
 const DECK_LABEL_EARS_GRAMMAR = lstr(
   "Oreilles & micro-grammaire",
   "Ears & micro-grammar",
-  "Oído y microgramática",
+  "OÃ­do y microgramÃ¡tica",
 );
 const DECK_LABEL_FLASHCARDS = lstr(
-  "Pratique · Flashcards",
-  "Practice · Flashcards",
-  "Práctica · Tarjetas",
+  "Pratique Â· Flashcards",
+  "Practice Â· Flashcards",
+  "PrÃ¡ctica Â· Tarjetas",
 );
 const DECK_LABEL_QUIZ = lstr(
-  "Pratique · Quiz",
-  "Practice · Quiz",
-  "Práctica · Quiz",
+  "Pratique Â· Quiz",
+  "Practice Â· Quiz",
+  "PrÃ¡ctica Â· Quiz",
 );
 const DECK_LABEL_MINI_MISSION = lstr(
-  "Défi · Culture dominicaine",
-  "Challenge · Dominican culture",
-  "Reto · Cultura dominicana",
+  "DÃ©fi Â· Culture dominicaine",
+  "Challenge Â· Dominican culture",
+  "Reto Â· Cultura dominicana",
 );
 const DECK_LABEL_PRINTABLES = lstr(
   "Fiches imprimables",
@@ -1057,7 +1019,7 @@ const DECK_LABEL_PRINTABLES = lstr(
 const DECK_LABEL_COMPLETION = lstr(
   "Mission accomplie",
   "Mission complete",
-  "Misión cumplida",
+  "MisiÃ³n cumplida",
 );
 
 const DECK_TITLE_MISSION = lstr(
@@ -1066,7 +1028,7 @@ const DECK_TITLE_MISSION = lstr(
   "Bienvenido al comedor dominicano",
 );
 const DECK_TITLE_PASSPORT = lstr(
-  "6 étapes avant de commander avec confiance",
+  "6 Ã©tapes avant de commander avec confiance",
   "6 stops before you order like a confident traveler",
   "6 paradas antes de pedir con confianza",
 );
@@ -1083,48 +1045,48 @@ const DECK_TITLE_CULTURE = lstr(
 const DECK_TITLE_PHRASES = lstr(
   "35 phrases pour menu, boisson et paiement",
   "35 phrases for menu, drinks, and payment",
-  "35 frases para menú, bebidas y pago",
+  "35 frases para menÃº, bebidas y pago",
 );
 const DECK_TITLE_DIALOGUES = lstr(
-  "Trois scènes utiles : comedor, kiosque, paiement",
+  "Trois scÃ¨nes utiles : comedor, kiosque, paiement",
   "Three real-world scenes: comedor, kiosk, payment",
   "Tres escenas reales: comedor, kiosco y pago",
 );
 const DECK_TITLE_EARS_GRAMMAR = lstr(
   "Quand l'espagnol dominicain sonne vite",
   "When Dominican Spanish sounds fast",
-  "Cuando el español dominicano suena rápido",
+  "Cuando el espaÃ±ol dominicano suena rÃ¡pido",
 );
 const DECK_TITLE_FLASHCARDS = lstr(
-  "Mémorise et révise",
+  "MÃ©morise et rÃ©vise",
   "Memorize and review",
   "Memoriza y repasa",
 );
 const DECK_TITLE_QUIZ = lstr(
-  "Teste tes réflexes",
+  "Teste tes rÃ©flexes",
   "Test your reflexes",
   "Prueba tus reflejos",
 );
 const DECK_TITLE_MINI_MISSION = lstr(
-  "Joue le défi culture",
+  "Joue le dÃ©fi culture",
   "Play the culture challenge",
   "Juega el reto cultural",
 );
 const DECK_TITLE_PRINTABLES = lstr(
   "Imprime les fiches de pratique",
   "Print the practice sheets",
-  "Imprime las hojas de práctica",
+  "Imprime las hojas de prÃ¡ctica",
 );
 const DECK_TITLE_COMPLETION = lstr(
-  "Tu es prêt(e) à goûter la R.D.",
+  "Tu es prÃªt(e) Ã  goÃ»ter la R.D.",
   "You're ready to taste the DR",
-  "Estás listo(a) para saborear la R.D.",
+  "EstÃ¡s listo(a) para saborear la R.D.",
 );
 
 const DECK_HELPER_MISSION = lstr(
-  "Ce module t'emmène du comedor au colmado. On y va.",
+  "Ce module t'emmÃ¨ne du comedor au colmado. On y va.",
   "This module takes you from the comedor to the colmado. Let's go.",
-  "Este módulo te lleva del comedor al colmado. Vamos.",
+  "Este mÃ³dulo te lleva del comedor al colmado. Vamos.",
 );
 const DECK_HELPER_PASSPORT = lstr(
   "Six escales pour comprendre la table dominicaine.",
@@ -1134,58 +1096,58 @@ const DECK_HELPER_PASSPORT = lstr(
 const DECK_HELPER_FOOD = lstr(
   "Chaque carte : nom, note culturelle, phrase utilisable.",
   "Each card: name, cultural cue, phrase you can use.",
-  "Cada tarjeta: nombre, clave cultural, frase útil.",
+  "Cada tarjeta: nombre, clave cultural, frase Ãºtil.",
 );
 const DECK_HELPER_CULTURE = lstr(
-  "Musique, lieux, artisanat — les repères qui rassurent.",
-  "Music, places, crafts — the cues that reassure you.",
-  "Música, lugares, artesanía — las claves que tranquilizan.",
+  "Musique, lieux, artisanat â€” les repÃ¨res qui rassurent.",
+  "Music, places, crafts â€” the cues that reassure you.",
+  "MÃºsica, lugares, artesanÃ­a â€” las claves que tranquilizan.",
 );
 const DECK_HELPER_PHRASES = lstr(
-  "Banque à recycler partout : menu, boissons, paiement, rattrapage.",
+  "Banque Ã  recycler partout : menu, boissons, paiement, rattrapage.",
   "A bank to reuse everywhere: menu, drinks, payment, recovery.",
-  "Un banco para reusar en todo: menú, bebidas, pago, rescate.",
+  "Un banco para reusar en todo: menÃº, bebidas, pago, rescate.",
 );
 const DECK_HELPER_DIALOGUES = lstr(
-  "Trois scènes complètes : entends, lis, prononce.",
+  "Trois scÃ¨nes complÃ¨tes : entends, lis, prononce.",
   "Three complete scenes: hear, read, pronounce.",
   "Tres escenas completas: escucha, lee, pronuncia.",
 );
 const DECK_HELPER_EARS_GRAMMAR = lstr(
-  "Cinq habitudes d'oreille et neuf petites formules à recycler.",
+  "Cinq habitudes d'oreille et neuf petites formules Ã  recycler.",
   "Five listening habits and nine tiny patterns to recycle.",
-  "Cinco hábitos de oído y nueve patrones pequeños.",
+  "Cinco hÃ¡bitos de oÃ­do y nueve patrones pequeÃ±os.",
 );
 const DECK_HELPER_FLASHCARDS = lstr(
-  "Plats, boissons, paiement, lieux et musique — ta boîte à outils.",
-  "Food, drinks, payment, places and music — your toolbox.",
-  "Comida, bebidas, pago, lugares y música — tu caja de herramientas.",
+  "Plats, boissons, paiement, lieux et musique â€” ta boÃ®te Ã  outils.",
+  "Food, drinks, payment, places and music â€” your toolbox.",
+  "Comida, bebidas, pago, lugares y mÃºsica â€” tu caja de herramientas.",
 );
 const DECK_HELPER_QUIZ = lstr(
-  "Douze questions — pas de note. Pour toi.",
-  "Twelve questions — no score. For you.",
-  "Doce preguntas — sin nota. Para ti.",
+  "Douze questions â€” pas de note. Pour toi.",
+  "Twelve questions â€” no score. For you.",
+  "Doce preguntas â€” sin nota. Para ti.",
 );
 const DECK_HELPER_MINI_MISSION = lstr(
-  "Huit escales du défi culture. Voix haute conseillée.",
+  "Huit escales du dÃ©fi culture. Voix haute conseillÃ©e.",
   "Eight stops of the culture challenge. Reading out loud helps.",
-  "Ocho paradas del reto cultural. Léelo en voz alta.",
+  "Ocho paradas del reto cultural. LÃ©elo en voz alta.",
 );
 const DECK_HELPER_PRINTABLES = lstr(
   "Imprime, glisse dans le sac, sors avec.",
   "Print it, drop it in your bag, take it with you.",
-  "Imprímelo, métlo en la mochila, llévalo contigo.",
+  "ImprÃ­melo, mÃ©tlo en la mochila, llÃ©valo contigo.",
 );
 const DECK_HELPER_COMPLETION = lstr(
   "Sauvegarde ta progression et ouvre le module suivant.",
   "Save your progress and open the next module.",
-  "Guarda tu progreso y abre el siguiente módulo.",
+  "Guarda tu progreso y abre el siguiente mÃ³dulo.",
 );
 
 const DECK_MODULE_LABEL = lstr(
-  "Module 3 · RD A1",
-  "Module 3 · DR A1",
-  "Módulo 3 · RD A1",
+  "Module 3 Â· RD A1",
+  "Module 3 Â· DR A1",
+  "MÃ³dulo 3 Â· RD A1",
 );
 
 function buildModule3DeckScreens(locale: YoLocale): YoLessonDeckScreen[] {
@@ -1338,10 +1300,6 @@ function buildModule3DeckScreens(locale: YoLocale): YoLessonDeckScreen[] {
       content: (
         <div data-yo-module3-deck-screen="printables">
           <PrintablesSection locale={locale} />
-          <DominicanModulePrintables
-            pack={module3PrintablePack}
-            locale={locale}
-          />
         </div>
       ),
     },
@@ -1390,7 +1348,7 @@ function Module3DeckRenderer({ locale }: { locale: YoLocale }) {
   );
 }
 
-// ─── Main export ───────────────────────────────────────────────────────────
+// â”€â”€â”€ Main export â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export type DominicanRepublicModule3ContentMode = "long-scroll" | "deck";
 
@@ -1448,7 +1406,6 @@ export function DominicanRepublicModule3Content({
             yo/usted verb practice, production prompts) live here
             beside the legacy printable sheets. Same premium
             visual language, real exercises, with answer keys. */}
-        <DominicanModulePrintables pack={module3PrintablePack} locale={locale} />
         <ClosingBridge locale={locale} />
       </main>
     </div>

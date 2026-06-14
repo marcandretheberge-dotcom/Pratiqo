@@ -78,9 +78,7 @@ test("phrase bank, dialogues, ears, grammar, readings, quiz, game and printables
     "data-yo-module4-grammar-card",
     "data-yo-module4-readings-count",
     "data-yo-module4-reading",
-    "data-yo-module4-printable-count",
-    "data-yo-module4-printable-worksheet",
-    "data-yo-module4-printable-kind",
+    "data-yo-module4-printable-resource-card",
     "data-yo-module4-past-tense-bridge-note",
   ]) {
     assert.ok(src.includes(marker), `content component missing ${marker}`);
@@ -197,7 +195,7 @@ test("Module 3 keeps its premium hero / passport / printable markers", () => {
   for (const marker of [
     "data-yo-module3-premium-hero",
     "data-yo-module3-culture-passport",
-    "data-yo-module3-printable-worksheet",
+    "data-yo-module3-printable-resource-card",
   ]) {
     assert.ok(src.includes(marker), `Module 3 lost marker ${marker}`);
   }

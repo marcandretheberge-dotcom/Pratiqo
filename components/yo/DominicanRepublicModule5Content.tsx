@@ -41,7 +41,6 @@ import type { ReactNode } from "react";
 import {
   dominicanRepublicA2Capstone,
   type Dom5Dialogue,
-  type Dom5PrintableSheet,
   type Dom5ReadingText,
 } from "@/lib/yo/dominicanRepublicA2Capstone";
 import { module5FlashcardsToYo } from "@/lib/yo/dominicanRepublicFlashcardAdapters";
@@ -53,14 +52,15 @@ import {
 } from "@/components/yo/YoBreadcrumb";
 import { YoSpeechButton } from "@/components/yo/YoSpeechButton";
 import { YoFlashcardPreview } from "@/components/yo/YoFlashcardPreview";
+import { YoPrintableResourceCard } from "@/components/yo/YoPrintableResourceCard";
 import {
   DominicanRepublicCapstoneGame,
-  DominicanRepublicModule5PrintButton,
   DominicanRepublicModule5Quiz,
   DominicanRepublicModule5ReadingQuestions,
   DominicanRepublicModule5RoleplayReveal,
   DominicanRepublicModule5WritingReveal,
 } from "@/components/yo/DominicanRepublicModule5Interactive";
+import { getPrintableResourceById } from "@/lib/yo/printableResources";
 import { YoMarkModuleCompletedButton } from "@/components/yo/YoMarkModuleCompletedButton";
 import { dominicanRdModuleProgressPayload } from "@/lib/yo/dominicanRepublicProgressPayloads";
 import { YoLessonDeck } from "@/components/yo/YoLessonDeck";
@@ -1052,106 +1052,11 @@ function FlashcardsSection({ locale }: { locale: YoLocale }) {
   );
 }
 
-// ─── Printable worksheets ────────────────────────────────────────────────
-
-const PRINT_KIND_LABELS: Record<
-  Dom5PrintableSheet["kind"],
-  Record<YoLocale, string>
-> = {
-  vocabulary: { fr: "Vocabulaire", en: "Vocabulary", es: "Vocabulario" },
-  fill_blank: {
-    fr: "Phrases à compléter",
-    en: "Fill in the blanks",
-    es: "Completar frases",
-  },
-  past_tense: {
-    fr: "Pratique du passé",
-    en: "Past-tense practice",
-    es: "Práctica del pasado",
-  },
-  connectors: {
-    fr: "Connecteurs et séquence",
-    en: "Connectors and sequencing",
-    es: "Conectores y secuencia",
-  },
-  reading: { fr: "Compréhension", en: "Reading", es: "Comprensión" },
-  writing: { fr: "Tâche d'écriture", en: "Writing task", es: "Tarea escrita" },
-  final_workbook: {
-    fr: "Cahier final A2",
-    en: "Final A2 workbook",
-    es: "Cuaderno final A2",
-  },
-};
-
-function PrintableSheet({
-  sheet,
-  locale,
-}: {
-  sheet: Dom5PrintableSheet;
-  locale: YoLocale;
-}) {
-  return (
-    <article
-      className="rounded-3xl border border-[#0F6E56]/12 bg-white p-5 shadow-[0_10px_26px_rgba(15,58,52,0.05)] print:break-inside-avoid"
-      data-yo-module5-printable-worksheet
-      data-yo-module5-printable-kind={sheet.kind}
-    >
-      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-dashed border-[#0F6E56]/20 pb-3">
-        <h3 className="text-lg font-black text-[#0F6E56]">
-          <L value={sheet.title} locale={locale} />
-        </h3>
-        <span className="rounded-full bg-[#FFF4D6] px-3 py-1 text-[0.6rem] font-black uppercase tracking-[0.14em] text-[#8a5a17]">
-          {label(locale, PRINT_KIND_LABELS[sheet.kind])}
-        </span>
-      </div>
-      <p className="mt-3 text-sm leading-relaxed text-[#0F6E56]/80">
-        <L value={sheet.instructions} locale={locale} />
-      </p>
-      <ol className="mt-4 space-y-2.5">
-        {sheet.items.map((item, i) => (
-          <li
-            key={item.id}
-            className="rounded-2xl border border-[#0F6E56]/10 bg-[#F8FBF9] p-3"
-          >
-            <div className="flex flex-wrap items-start gap-2">
-              <span className="grid size-6 shrink-0 place-items-center rounded-full bg-[#0F6E56] text-[0.65rem] font-black text-white">
-                {i + 1}
-              </span>
-              <div className="flex-1 space-y-1">
-                {item.target ? (
-                  <p className="text-sm font-black text-[#0B3040]" lang="es">
-                    {item.target}
-                  </p>
-                ) : null}
-                <p className="text-sm leading-relaxed text-[#0F6E56]/85">
-                  <L value={item.prompt} locale={locale} />
-                </p>
-              </div>
-            </div>
-          </li>
-        ))}
-      </ol>
-      <details className="mt-4 rounded-2xl border border-[#1D9E75]/30 bg-[#DDF4F1] p-3 text-sm leading-relaxed text-[#0F6E56]/85 print:open">
-        <summary className="cursor-pointer text-[0.7rem] font-black uppercase tracking-[0.14em] text-[#0F6E56]">
-          {label(locale, LABELS.answerKey)}
-        </summary>
-        <ol className="mt-2 space-y-1.5">
-          {sheet.items.map((item, i) => (
-            <li key={`ans-${item.id}`}>
-              <span className="font-black text-[#0F6E56]/80">
-                {i + 1}.{" "}
-              </span>
-              <L value={item.answer} locale={locale} />
-            </li>
-          ))}
-        </ol>
-      </details>
-    </article>
-  );
-}
-
+// Printable resource card - full workbook lives in the print route.
 function PrintablesSection({ locale }: { locale: YoLocale }) {
-  const data = dominicanRepublicA2Capstone;
+  const resource = getPrintableResourceById("rd-m5-a2-workbook");
+  if (!resource) return null;
+
   return (
     <section
       id="yo-do-m5-printables"
@@ -1163,31 +1068,20 @@ function PrintablesSection({ locale }: { locale: YoLocale }) {
           labelText={label(locale, SECTION_LABELS.printables)}
           title={
             locale === "en"
-              ? "Print 7 real A2 practice sheets"
+              ? "Open the printable A2 workbook"
               : locale === "es"
-                ? "Imprime 7 hojas de práctica A2 reales"
-                : "Imprime 7 fiches d'exercices A2 réels"
+                ? "Abre el cuaderno A2 imprimible"
+                : "Ouvre le cahier A2 imprimable"
           }
           body={label(locale, LABELS.printHint)}
         />
-        <DominicanRepublicModule5PrintButton
-          label={data.printButtonLabel}
-          locale={locale}
-        />
       </div>
-      <div
-        className="grid gap-4 md:grid-cols-2 print:grid-cols-1"
-        data-yo-module5-printable-count={data.printableSheets.length}
-      >
-        {data.printableSheets.map((sheet) => (
-          <PrintableSheet key={sheet.id} sheet={sheet} locale={locale} />
-        ))}
+      <div data-yo-module5-printable-resource-card>
+        <YoPrintableResourceCard resource={resource} locale={locale} />
       </div>
     </section>
   );
 }
-
-// ─── A2 self-assessment ─────────────────────────────────────────────────
 
 function SelfAssessmentSection({ locale }: { locale: YoLocale }) {
   const data = dominicanRepublicA2Capstone;

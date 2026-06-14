@@ -1,10 +1,12 @@
-"use client";
+﻿"use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
-import { CheckCircle2, Printer, RotateCw, XCircle } from "lucide-react";
+import { CheckCircle2, RotateCw, XCircle } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+
+export { YoPrintButton } from "@/components/yo/YoPrintButton";
+export { YoPrintableResourceCard } from "@/components/yo/YoPrintableResourceCard";
 
 export type YoChoiceOption = {
   id: string;
@@ -166,7 +168,7 @@ export function YoPairMatchGame({
             className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,0.9fr)] items-center gap-2 rounded-2xl border border-[#D8ECE6] bg-[#F8FCFB] px-3 py-3 text-left transition hover:bg-[#EEF8F5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F4B400]"
           >
             <span className="min-w-0 text-sm font-extrabold leading-snug text-[#0F6E56]">{item.left}</span>
-            <span aria-hidden className="text-[#F4B400]">→</span>
+            <span aria-hidden className="text-[#F4B400]">â†’</span>
             <span className="min-w-0 text-xs font-semibold leading-snug text-[#0F6E56]/75">{item.right}</span>
           </button>
         ))}
@@ -331,45 +333,5 @@ export function YoMiniScenarioCard({
       <p className="mt-4 text-sm font-bold text-[#0F6E56]">{prompt}</p>
       {children ? <div className="mt-3">{children}</div> : null}
     </section>
-  );
-}
-
-export function YoPrintableResourceCard({
-  title,
-  body,
-  href,
-  cta,
-}: {
-  title: string;
-  body: string;
-  href: string;
-  cta: string;
-}) {
-  return (
-    <article data-yo-printable-resource-card="true" className="rounded-[28px] border border-[#F4B400]/45 bg-[#FFF4D6] p-4 text-[#5a3f0f] shadow-[0_18px_45px_rgba(15,58,52,0.08)] sm:p-5">
-      <p className="text-lg font-black leading-tight">{title}</p>
-      <p className="mt-2 text-sm font-semibold leading-relaxed text-[#5a3f0f]/80">{body}</p>
-      <Link
-        href={href}
-        className="mt-4 inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-[#0F6E56] px-4 text-sm font-extrabold text-white transition hover:bg-[#0b5b47]"
-      >
-        <Printer className="size-4" aria-hidden />
-        {cta}
-      </Link>
-    </article>
-  );
-}
-
-export function YoPrintButton({ label }: { label: string }) {
-  return (
-    <button
-      data-yo-print-action="true"
-      type="button"
-      onClick={() => window.print()}
-      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-[#0F6E56] px-5 text-sm font-extrabold text-white shadow-[0_12px_28px_rgba(15,110,86,0.18)] print:hidden"
-    >
-      <Printer className="size-4" aria-hidden />
-      {label}
-    </button>
   );
 }

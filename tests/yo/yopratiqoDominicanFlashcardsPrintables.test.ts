@@ -206,25 +206,23 @@ test("RD intro page mounts DominicanModulePrintables with module 1 pack", () => 
 
 // ─── 4. Module 2 surfaces the new structured exercises ──────────────────
 
-test("Module 2 PrintableWorksheetsSection mounts the shared printables", () => {
+test("Module 2 PrintableWorksheetsSection links to the registered print route", () => {
   const src = read(M2_CONTENT);
-  assert.match(src, /import\s*\{\s*DominicanModulePrintables\s*\}/);
-  assert.match(src, /import\s*\{\s*module2PrintablePack\s*\}/);
-  assert.match(src, /<DominicanModulePrintables\s+pack=\{module2PrintablePack\}/);
-  // Existing premium markers are preserved (existing test contract).
+  assert.match(src, /import\s*\{\s*YoPrintableResourceCard\s*\}/);
+  assert.match(src, /rd-m2-arrival-kit/);
   assert.ok(src.includes("data-yo-module2-printable-worksheets"));
-  assert.ok(src.includes("itinerary"));
-  assert.ok(src.includes("worksheet"));
-  assert.ok(src.includes("print:break-inside-avoid"));
+  assert.ok(src.includes("data-yo-module2-printable-resource-card"));
+  assert.doesNotMatch(src, /<DominicanModulePrintables\s+pack=\{module2PrintablePack\}/);
 });
 
 // ─── 5. Module 3 surfaces the new structured exercises ──────────────────
 
-test("Module 3 mounts the shared printables next to its legacy sheets", () => {
+test("Module 3 consolidates printables into one registered print route", () => {
   const src = read(M3_CONTENT);
-  assert.match(src, /import\s*\{\s*DominicanModulePrintables\s*\}/);
-  assert.match(src, /import\s*\{\s*module3PrintablePack\s*\}/);
-  assert.match(src, /<DominicanModulePrintables\s+pack=\{module3PrintablePack\}/);
+  assert.match(src, /import\s*\{\s*YoPrintableResourceCard\s*\}/);
+  assert.match(src, /rd-m3-practice-sheets/);
+  assert.ok(src.includes("data-yo-module3-printable-resource-card"));
+  assert.doesNotMatch(src, /<DominicanModulePrintables\s+pack=\{module3PrintablePack\}/);
 });
 
 // ─── 6. Each module pack carries the required exercise mix ──────────────

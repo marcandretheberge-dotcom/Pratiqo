@@ -299,30 +299,30 @@ test("Modules 2 / 3 / 4 still mount the canonical YoFlashcardPreview carousel", 
   }
 });
 
-test("Modules 2 and 3 still mount the canonical DominicanModulePrintables pack", () => {
+test("Modules 2 and 3 now expose printable resources through resource cards", () => {
   // Module 2.
   const m2 = read(M2_CONTENT);
   assert.match(
     m2,
-    /import\s*\{\s*DominicanModulePrintables\s*\}/,
-    "Module 2 must import DominicanModulePrintables",
+    /import\s*\{\s*YoPrintableResourceCard\s*\}/,
+    "Module 2 must import YoPrintableResourceCard",
   );
   assert.match(
     m2,
-    /<DominicanModulePrintables\s+pack=\{module2PrintablePack\}/,
-    "Module 2 must mount the module-2 printable pack",
+    /data-yo-module2-printable-resource-card/,
+    "Module 2 must mount the printable resource card",
   );
   // Module 3.
   const m3 = read(M3_CONTENT);
   assert.match(
     m3,
-    /import\s*\{\s*DominicanModulePrintables\s*\}/,
-    "Module 3 must import DominicanModulePrintables",
+    /import\s*\{\s*YoPrintableResourceCard\s*\}/,
+    "Module 3 must import YoPrintableResourceCard",
   );
   assert.match(
     m3,
-    /<DominicanModulePrintables\s+pack=\{module3PrintablePack\}/,
-    "Module 3 must mount the module-3 printable pack",
+    /data-yo-module3-printable-resource-card/,
+    "Module 3 must mount the printable resource card",
   );
 });
 
