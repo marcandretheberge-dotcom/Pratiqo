@@ -1413,37 +1413,56 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                 </p>
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {calendarCells.map((cell) => (
-                    <button
-                      key={cell.iso}
-                      type="button"
-                      disabled={cell.disabled}
-                      onClick={() => {
-                        setSelectedDate(cell.iso);
-                        setSelectedSlot(null);
-                        setStep("pickSlot");
-                      }}
-                      className={cn(
-                        "py-2.5 px-2 rounded-xl border text-left text-xs font-semibold transition-colors",
-                        cell.disabled
-                          ? "border-slate-100 bg-slate-50 text-slate-300 cursor-not-allowed opacity-60"
-                          : selectedDate === cell.iso
-                            ? "border-teal-500 bg-teal-50 text-teal-700"
-                            : "border-slate-200 hover:border-teal-500/50",
-                      )}
-                    >
-                      <span className="block capitalize">{cell.label}</span>
-                      {!cell.disabled ? (
-                        <span className="text-[10px] font-bold text-teal-700">
-                          {t("slotsAvailableBadge").replace("{n}", String(cell.count))}
-                        </span>
-                      ) : cell.iso <= todayIso ? (
-                        <span className="text-[10px] text-slate-600">{t("pastLabel")}</span>
-                      ) : (
-                        <span className="text-[10px] text-slate-600">{t("fullLabel")}</span>
-                      )}
-                    </button>
-                  ))}
+                  {calendarCells.map((cell) => {
+                    // Booking-availability tri-state ─ keep the visual
+                    // states clearly distinct (production QA showed the
+                    // available + disabled states reading the same):
+                    //   • disabled  → muted slate, non-interactive
+                    //   • selected  → solid deep teal, white text
+                    //   • available → light teal fill, mid-teal border,
+                    //                 dark teal text → looks clickable
+                    const isSelected = !cell.disabled && selectedDate === cell.iso;
+                    return (
+                      <button
+                        key={cell.iso}
+                        type="button"
+                        disabled={cell.disabled}
+                        aria-pressed={isSelected}
+                        data-availability-state={
+                          cell.disabled ? "unavailable" : isSelected ? "selected" : "available"
+                        }
+                        onClick={() => {
+                          setSelectedDate(cell.iso);
+                          setSelectedSlot(null);
+                          setStep("pickSlot");
+                        }}
+                        className={cn(
+                          "py-2.5 px-2 rounded-xl border text-left text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700/40 focus-visible:ring-offset-2",
+                          cell.disabled
+                            ? "border-slate-200 bg-slate-100 text-slate-400 cursor-not-allowed"
+                            : isSelected
+                              ? "border-teal-700 bg-teal-700 text-white shadow-sm hover:bg-teal-800 cursor-pointer"
+                              : "border-teal-300 bg-teal-50 text-teal-800 hover:bg-teal-100 hover:border-teal-400 cursor-pointer",
+                        )}
+                      >
+                        <span className="block capitalize">{cell.label}</span>
+                        {!cell.disabled ? (
+                          <span
+                            className={cn(
+                              "text-[10px] font-bold",
+                              isSelected ? "text-white/90" : "text-teal-800",
+                            )}
+                          >
+                            {t("slotsAvailableBadge").replace("{n}", String(cell.count))}
+                          </span>
+                        ) : cell.iso <= todayIso ? (
+                          <span className="text-[10px] text-slate-500">{t("pastLabel")}</span>
+                        ) : (
+                          <span className="text-[10px] text-slate-500">{t("fullLabel")}</span>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               )}
               <button
@@ -1482,24 +1501,39 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                         {g.emoji} {g.label}
                       </p>
                       <div className="grid grid-cols-2 gap-2">
-                        {g.items.map((s) => (
-                          <button
-                            key={s}
-                            type="button"
-                            onClick={() => {
-                              setSelectedSlot(s);
-                              setStep("confirm");
-                            }}
-                            className={cn(
-                              "py-2.5 rounded-xl border text-xs font-bold transition-colors",
-                              selectedSlot === s
-                                ? "border-teal-700 bg-teal-700 text-white"
-                                : "border-slate-200 hover:border-teal-500/40",
-                            )}
-                          >
-                            {s} · {durationMinutes} min
-                          </button>
-                        ))}
+                        {g.items.map((s) => {
+                          // Slot-button availability mirrors the date-card
+                          // states above. The slot list is already
+                          // pre-filtered to "available" by the API — no
+                          // disabled state ships today — so we only render
+                          // the available + selected pair here. The disabled
+                          // visual is kept reachable via the `:disabled`
+                          // pseudo-class so a future "past slot today"
+                          // surface can re-use the same button without
+                          // duplicating styling.
+                          const isSelected = selectedSlot === s;
+                          return (
+                            <button
+                              key={s}
+                              type="button"
+                              aria-pressed={isSelected}
+                              data-availability-state={isSelected ? "selected" : "available"}
+                              onClick={() => {
+                                setSelectedSlot(s);
+                                setStep("confirm");
+                              }}
+                              className={cn(
+                                "py-2.5 rounded-xl border text-xs font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700/40 focus-visible:ring-offset-2",
+                                "disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400",
+                                isSelected
+                                  ? "border-teal-700 bg-teal-700 text-white shadow-sm hover:bg-teal-800 cursor-pointer"
+                                  : "border-teal-300 bg-teal-50 text-teal-800 hover:bg-teal-100 hover:border-teal-400 cursor-pointer",
+                              )}
+                            >
+                              {s} · {durationMinutes} min
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
                   ))}
