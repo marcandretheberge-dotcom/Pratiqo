@@ -3,6 +3,7 @@
 import { Loader2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLocale } from "@/lib/locale-context";
+import { canTeacherRejectBooking } from "@/lib/bookingTeacherActions";
 
 type PendingBooking = {
   id: string;
@@ -28,6 +29,7 @@ export function TeacherRequestCard({
   const { t } = useLocale();
   const isDeclining = action === "declining";
   const isBusy = Boolean(action);
+  const canDecline = canTeacherRejectBooking(booking);
 
   return (
     <li className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200/90 bg-white px-4 py-4 shadow-[0_2px_12px_rgba(0,0,0,0.03)]">
@@ -46,22 +48,24 @@ export function TeacherRequestCard({
           </p>
         </div>
       </div>
-      <div className="flex shrink-0 gap-2">
-        <button
-          type="button"
-          disabled={isBusy}
-          onClick={onDecline}
-          className={cn(
-            "inline-flex h-9 items-center gap-1 rounded-full border-2 border-[#ba1a1a] bg-white px-4 text-xs font-bold text-[#ba1a1a] transition-colors",
-            isBusy
-              ? "cursor-not-allowed border-slate-200 text-slate-400"
-              : "hover:bg-[#ffdad6]",
-          )}
-        >
-          {isDeclining ? <Loader2 size={13} className="animate-spin" /> : <X size={13} />}
-          {t("declineButton")}
-        </button>
-      </div>
+      {canDecline ? (
+        <div className="flex shrink-0 gap-2">
+          <button
+            type="button"
+            disabled={isBusy}
+            onClick={onDecline}
+            className={cn(
+              "inline-flex h-9 items-center gap-1 rounded-full border-2 border-[#ba1a1a] bg-white px-4 text-xs font-bold text-[#ba1a1a] transition-colors",
+              isBusy
+                ? "cursor-not-allowed border-slate-200 text-slate-400"
+                : "hover:bg-[#ffdad6]",
+            )}
+          >
+            {isDeclining ? <Loader2 size={13} className="animate-spin" /> : <X size={13} />}
+            {t("declineButton")}
+          </button>
+        </div>
+      ) : null}
     </li>
   );
 }
