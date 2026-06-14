@@ -184,16 +184,35 @@ export function Dashboard() {
       .filter((b) => activeStatuses.includes(b.status) || b.status === "pending_payment")
       .filter((b) => String(b.slot_date || b.date || "") === today)
       .sort((a, b) => bookingSortKey(a).localeCompare(bookingSortKey(b)));
-    const pendingPaymentTtlMs = 60 * 60 * 1000; // 1 h — Stripe checkout sessions expire quickly
-    const nowMs = Date.now();
-    const pendingList = teacherBookings.filter((b) => {
-      if (!["pending", "pending_teacher", "pending_payment"].includes(b.status)) return false;
-      if (b.status === "pending_payment") {
-        const createdAt = b.created_at ? new Date(b.created_at as string).getTime() : 0;
-        return nowMs - createdAt <= pendingPaymentTtlMs;
-      }
-      return true;
-    });
+    // P0.4 — confirmed/paid bookings must never show a "Refuser" CTA.
+    //
+    // Migration `030_cleanup_booked_status.sql` collapsed the legacy
+    // teacher-approval statuses ("pending", "pending_teacher") into
+    // the automated "pending_payment" status and added a CHECK
+    // constraint locking the enum to:
+    //   pending_payment | confirmed | completed | cancelled |
+    //   cancelled_conflict
+    // → there is no genuine manual-request state in the data model
+    // today. A "pending_payment" row means the student is mid-Stripe-
+    // Checkout: the teacher has nothing to approve, and a manual
+    // "Refuser" mid-flow would corrupt the booking while Stripe's
+    // webhook is still in flight. Production QA reported the exact
+    // confusion this was causing: a top-of-dashboard "Refuser" CTA
+    // appearing alongside the bottom-of-dashboard "Annuler ce cours"
+    // CTA on the same student, both pointing at automated/paid
+    // bookings.
+    //
+    // We intentionally KEEP the dead-code "pending"/"pending_teacher"
+    // entries in this filter so that, if a future product change re-
+    // introduces a real manual-approval flow, the dashboard's
+    // pending-requests section will already be wired up. "pending_payment"
+    // is the QA bug — we drop it. The Stripe webhook flips successful
+    // payments to "confirmed", and those rows then surface in the
+    // confirmed-upcoming card below, where the proper cancellation
+    // flow handles them.
+    const pendingList = teacherBookings.filter((b) =>
+      ["pending", "pending_teacher"].includes(b.status as string),
+    );
     const monthStart = new Date();
     monthStart.setDate(1);
     monthStart.setHours(0, 0, 0, 0);

@@ -14,6 +14,24 @@ type PendingBooking = {
   time?: string | null;
 };
 
+/**
+ * Renders a teacher-side "incoming request" card with a hard-red
+ * "Refuser" button.
+ *
+ * IMPORTANT — production guard:
+ * This component must ONLY ever be rendered for bookings that
+ * genuinely require manual teacher approval (a future "pending" or
+ * "pending_teacher" status). It must NEVER be rendered for
+ * "pending_payment" (the student is mid-Stripe-Checkout — the teacher
+ * has nothing to approve and a "Refuser" mid-flow would corrupt the
+ * booking) or for "confirmed"/"completed" rows (those have their own
+ * proper cancellation flow inside `TeacherScheduleCard`).
+ *
+ * The visibility guard lives in `components/Dashboard.tsx`'s
+ * `pendingList` filter — see migration 030_cleanup_booked_status.sql
+ * for the schema rationale and `tests/bookings/teacherConfirmedBookingActionVisibility.test.ts`
+ * for the regression coverage.
+ */
 export function TeacherRequestCard({
   booking,
   disciplineLabel,
