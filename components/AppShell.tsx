@@ -66,7 +66,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         refresh,
       );
     void channel.subscribe();
+    window.addEventListener("pratiqo:messages-read", refresh);
+    window.addEventListener("focus", refresh);
     return () => {
+      window.removeEventListener("pratiqo:messages-read", refresh);
+      window.removeEventListener("focus", refresh);
       void supabase.removeChannel(channel);
     };
   }, [user?.id]);
@@ -90,6 +94,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           | "studentTabProgress"
           | "studentTabLearners"
           | "resolutionCenterTitle"
+          | "messages"
           | "studentTabProfile";
       }
     | { href: string; label: string }
@@ -102,6 +107,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     // Pratiqo bridge is one click away in either direction.
     { href: "/student/yopratiqo", label: "YoPratiqo" },
     { href: "/student/learners", labelKey: "studentTabLearners" },
+    { href: "/messages", labelKey: "messages" },
     { href: "/resolution", labelKey: "resolutionCenterTitle" },
     { href: "/profile", labelKey: "studentTabProfile" },
   ];
@@ -213,6 +219,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     }}
                   >
                     {text}
+                    {tab.href === "/messages" && unreadMessages > 0 ? (
+                      <span className="ml-1 inline-flex h-5 min-w-[1.125rem] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                        {unreadMessages > 99 ? "99+" : unreadMessages}
+                      </span>
+                    ) : null}
                   </Link>
                 );
               })}
@@ -321,6 +332,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               { href: "/student/yopratiqo", icon: "🧭", label: "YoPratiqo" } as const,
               { href: "/student/learners", icon: "🎓", labelKey: "studentTabLearners" as const },
               { href: "/profile", icon: "👤", labelKey: "studentTabProfile" as const },
+              { href: "/messages", icon: "✉", labelKey: "messages" as const },
               { href: "/resolution", icon: "!", labelKey: "resolutionCenterTitle" as const },
             ] as const
           ).map((tab) => {
@@ -334,12 +346,38 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 data-testid={isYopratiqoEntry ? "student-bottom-nav-yopratiqo" : undefined}
                 style={{
                   flex: 1,
+                  position: "relative",
                   textAlign: "center",
                   padding: "8px 4px",
                   textDecoration: "none",
                 }}
               >
                 <div style={{ fontSize: 20 }}>{tab.icon}</div>
+                {tab.href === "/messages" && unreadMessages > 0 ? (
+                  <span
+                    aria-label={`${unreadMessages > 99 ? "99+" : unreadMessages} ${t("unreadCountLabel")}`}
+                    style={{
+                      position: "absolute",
+                      top: 5,
+                      right: "calc(50% - 18px)",
+                      minWidth: 16,
+                      height: 16,
+                      padding: "0 4px",
+                      borderRadius: 999,
+                      background: "#ef4444",
+                      color: "white",
+                      border: "2px solid white",
+                      fontSize: 9,
+                      fontWeight: 800,
+                      lineHeight: "12px",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    {unreadMessages > 99 ? "99+" : unreadMessages}
+                  </span>
+                ) : null}
                 <div
                   style={{
                     fontSize: 10,

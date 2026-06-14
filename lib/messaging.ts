@@ -201,6 +201,9 @@ export async function markAsRead(supabase: SupabaseClient, conversationId: strin
     .eq("read", false);
 
   if (error) throw error;
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("pratiqo:messages-read"));
+  }
 }
 
 export async function fetchUnreadMessageCount(supabase: SupabaseClient, userId: string): Promise<number> {
