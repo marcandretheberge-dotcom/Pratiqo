@@ -6,15 +6,62 @@ import { validateJsonBody } from "@/lib/validation/api";
 import { messageSendPostSchema } from "@/lib/validation/schemas";
 import { hasCompletedLessonBetween } from "@/lib/messaging/contactGate";
 import { sanitizeContactInfo } from "@/lib/messaging/sanitizeContactInfo";
+import { sendNewPratiqoMessageEmail, resolveEmailLocaleForUser } from "@/lib/email";
+import { appBaseUrl } from "@/lib/email/layout";
 import type { Locale } from "@/lib/i18n/types";
 
 export const runtime = "nodejs";
+
+type MessageUserContact = {
+  email: string | null;
+  name: string;
+};
 
 function localeFromAcceptLanguage(header: string | null | undefined): Locale {
   const h = (header ?? "").split(",")[0]?.trim().toLowerCase() ?? "";
   if (h.startsWith("fr")) return "fr";
   if (h.startsWith("es")) return "es";
   return "en";
+}
+
+async function resolveMessageUserContact(
+  admin: ReturnType<typeof getSupabaseAdmin>,
+  userId: string,
+): Promise<MessageUserContact> {
+  const { data: profile } = await admin
+    .from("profiles")
+    .select("email, name")
+    .eq("id", userId)
+    .maybeSingle();
+
+  const profileEmail = typeof profile?.email === "string" ? profile.email.trim() : "";
+  const profileName = typeof profile?.name === "string" ? profile.name.trim() : "";
+
+  let authEmail = "";
+  let authName = "";
+  if (!profileEmail || !profileName) {
+    try {
+      const { data } = await admin.auth.admin.getUserById(userId);
+      const user = data?.user;
+      authEmail = user?.email?.trim() ?? "";
+      const metadata = (user?.user_metadata ?? {}) as Record<string, unknown>;
+      const metadataName =
+        typeof metadata.name === "string"
+          ? metadata.name
+          : typeof metadata.full_name === "string"
+            ? metadata.full_name
+            : "";
+      authName = metadataName.trim();
+    } catch {
+      authEmail = "";
+      authName = "";
+    }
+  }
+
+  const email = profileEmail || authEmail || null;
+  const name = profileName || authName || email?.split("@")[0] || "Pratiqo";
+
+  return { email, name };
 }
 
 export async function POST(req: Request) {
@@ -104,6 +151,29 @@ export async function POST(req: Request) {
 
   if (msgErr) {
     return NextResponse.json({ error: msgErr.message }, { status: 500 });
+  }
+
+  if (receiverId !== user.id) {
+    try {
+      const [recipient, sender, recipientLocale] = await Promise.all([
+        resolveMessageUserContact(admin, receiverId),
+        resolveMessageUserContact(admin, user.id),
+        resolveEmailLocaleForUser(admin, receiverId),
+      ]);
+
+      if (recipient.email) {
+        const conversationUrl = `${appBaseUrl()}/messages?peer=${encodeURIComponent(user.id)}`;
+        await sendNewPratiqoMessageEmail({
+          email: recipient.email,
+          recipientName: recipient.name,
+          senderName: sender.name,
+          conversationUrl,
+          locale: recipientLocale,
+        });
+      }
+    } catch (error) {
+      console.warn("[messages/send] notification email skipped", error);
+    }
   }
 
   return NextResponse.json({

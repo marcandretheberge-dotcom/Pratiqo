@@ -38,6 +38,8 @@ export {
   sendProUpgrade,
 } from "@/lib/email/templates/billing";
 
+export { sendNewPratiqoMessageEmail } from "@/lib/email/templates/messages";
+
 export {
   sendIdentityVerified,
   sendIdentityFailed,

@@ -4,6 +4,7 @@ import {
   buildIdentityFailedEmail,
   buildIdentityVerifiedEmail,
 } from "@/lib/email/templates/identity";
+import { buildNewPratiqoMessageEmail } from "@/lib/email/templates/messages";
 import { buildReviewPublishedTeacherEmail } from "@/lib/email/templates/reviews";
 import { buildCompanionEvolutionEmail } from "@/lib/email/templates/welcome";
 import type { EmailLocale } from "@/lib/email/locale";
@@ -37,6 +38,11 @@ const EXPECTED_SUBJECTS = {
     fr: "Un nouvel avis a été publié sur votre profil",
     en: "A new review was published on your profile",
     es: "Se publicó una nueva reseña en tu perfil",
+  },
+  message: {
+    fr: "Nouveau message sur Pratiqo",
+    en: "New message on Pratiqo",
+    es: "Nuevo mensaje en Pratiqo",
   },
 } satisfies Record<string, Record<EmailLocale, string>>;
 
@@ -101,6 +107,18 @@ for (const locale of LOCALES) {
   assertInternalCta(review.ctaUrl, "/teacher/profile");
   assertNoRawKeys(review.html);
   assert.doesNotMatch(review.html, /\$1|1\s*\$|\b1\s*dollar\b/i);
+
+  const message = buildNewPratiqoMessageEmail({
+    recipientName: "Sofia",
+    senderName: "Marc",
+    conversationUrl: "https://www.pratiqo.ca/messages?peer=teacher-123",
+    locale,
+  });
+  assert.equal(message.subject, EXPECTED_SUBJECTS.message[locale]);
+  assert.equal(message.ctaUrl, "https://www.pratiqo.ca/messages?peer=teacher-123");
+  assert.match(message.html, /Marc/);
+  assert.doesNotMatch(message.html, /message body|contenu du message privÃ©|private lesson details/i);
+  assertNoRawKeys(message.html);
 }
 
 console.log("Email notification localization tests passed");
