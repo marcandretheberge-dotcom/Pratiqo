@@ -1426,15 +1426,15 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                       className={cn(
                         "py-2.5 px-2 rounded-xl border text-left text-xs font-semibold transition-colors",
                         cell.disabled
-                          ? "border-slate-100 bg-slate-50 text-slate-300 cursor-not-allowed opacity-60"
+                          ? "border-slate-200 bg-slate-100 text-slate-400 cursor-not-allowed opacity-70"
                           : selectedDate === cell.iso
-                            ? "border-teal-500 bg-teal-50 text-teal-700"
-                            : "border-slate-200 hover:border-teal-500/50",
+                            ? "border-teal-800 bg-teal-800 text-white shadow-sm"
+                            : "border-teal-500/45 bg-teal-50 text-teal-900 hover:border-teal-700 hover:bg-teal-100",
                       )}
                     >
                       <span className="block capitalize">{cell.label}</span>
                       {!cell.disabled ? (
-                        <span className="text-[10px] font-bold text-teal-700">
+                        <span className={cn("text-[10px] font-bold", selectedDate === cell.iso ? "text-white/90" : "text-teal-700")}>
                           {t("slotsAvailableBadge").replace("{n}", String(cell.count))}
                         </span>
                       ) : cell.iso <= todayIso ? (
@@ -1494,7 +1494,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                               "py-2.5 rounded-xl border text-xs font-bold transition-colors",
                               selectedSlot === s
                                 ? "border-teal-700 bg-teal-700 text-white"
-                                : "border-slate-200 hover:border-teal-500/40",
+                                : "border-teal-500/45 bg-teal-50 text-teal-900 hover:border-teal-700 hover:bg-teal-100",
                             )}
                           >
                             {s} · {durationMinutes} min

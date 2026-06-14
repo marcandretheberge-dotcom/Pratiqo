@@ -67,6 +67,16 @@ type ReviewPublishedCopy = {
   ctaText: string;
 };
 
+type NewPratiqoMessageCopy = {
+  subject: string;
+  heroTitle: string;
+  heroSubtitle: (senderName: string) => string;
+  greeting: (recipientName: string) => string;
+  body: (senderName: string) => string;
+  ctaText: string;
+  footerExtra: string;
+};
+
 type NotificationEmailCopy = {
   companionEvolution: CompanionEvolutionCopy;
   proUpgrade: ProUpgradeCopy;
@@ -74,6 +84,7 @@ type NotificationEmailCopy = {
   identityVerified: IdentityVerifiedCopy;
   identityFailed: IdentityFailedCopy;
   reviewPublishedTeacher: ReviewPublishedCopy;
+  newPratiqoMessage: NewPratiqoMessageCopy;
 };
 
 const COPY: Record<EmailLocale, NotificationEmailCopy> = {
@@ -152,6 +163,16 @@ const COPY: Record<EmailLocale, NotificationEmailCopy> = {
         "Les avis aident les familles et les élèves à choisir un enseignant avec plus de confiance.",
       ctaText: "Voir mon profil",
     },
+    newPratiqoMessage: {
+      subject: "Nouveau message sur Pratiqo",
+      heroTitle: "Nouveau message sur Pratiqo",
+      heroSubtitle: (senderName) => `${senderName} vous a envoyé un message.`,
+      greeting: (recipientName) => `Bonjour ${recipientName},`,
+      body: (senderName) =>
+        `${senderName} vous a envoyé un nouveau message sur Pratiqo. Ouvrez la conversation pour répondre en toute sécurité dans la plateforme.`,
+      ctaText: "Ouvrir la conversation",
+      footerExtra: "Messages Pratiqo · Ne répondez pas directement à ce courriel.",
+    },
   },
   en: {
     companionEvolution: {
@@ -226,6 +247,16 @@ const COPY: Record<EmailLocale, NotificationEmailCopy> = {
         "Reviews help families and students choose a teacher with more confidence.",
       ctaText: "View my profile",
     },
+    newPratiqoMessage: {
+      subject: "New message on Pratiqo",
+      heroTitle: "New message on Pratiqo",
+      heroSubtitle: (senderName) => `${senderName} sent you a message.`,
+      greeting: (recipientName) => `Hi ${recipientName},`,
+      body: (senderName) =>
+        `${senderName} sent you a new message on Pratiqo. Open the conversation to reply safely inside the platform.`,
+      ctaText: "Open the conversation",
+      footerExtra: "Pratiqo Messages · Please do not reply directly to this email.",
+    },
   },
   es: {
     companionEvolution: {
@@ -299,6 +330,16 @@ const COPY: Record<EmailLocale, NotificationEmailCopy> = {
       trustNoteBody:
         "Las reseñas ayudan a familias y estudiantes a elegir un profesor con más confianza.",
       ctaText: "Ver mi perfil",
+    },
+    newPratiqoMessage: {
+      subject: "Nuevo mensaje en Pratiqo",
+      heroTitle: "Nuevo mensaje en Pratiqo",
+      heroSubtitle: (senderName) => `${senderName} te envió un mensaje.`,
+      greeting: (recipientName) => `Hola ${recipientName},`,
+      body: (senderName) =>
+        `${senderName} te envió un nuevo mensaje en Pratiqo. Abre la conversación para responder de forma segura dentro de la plataforma.`,
+      ctaText: "Abrir la conversación",
+      footerExtra: "Mensajes Pratiqo · No respondas directamente a este correo.",
     },
   },
 };

@@ -840,12 +840,14 @@ function TeacherCard({
         <div className="flex min-w-0 items-center gap-3">
           <TeacherAvatar name={teacher.name} category={teacher.category} imageUrl={teacher.imageUrl} size={44} />
           <div className="min-w-0">
-            <div className="flex items-center gap-2 min-w-0">
-              <p className="truncate font-semibold text-[#2C2C2A]">{publicFirstNameWithInitial(teacher.name)}</p>
-              {badges.map((badge) => (
-                <TeacherBadgePill key={badge.id} badge={badge} compact className="shrink-0" />
-              ))}
-            </div>
+            <p className="truncate font-semibold text-[#2C2C2A]">{publicFirstNameWithInitial(teacher.name)}</p>
+            {badges.length > 0 ? (
+              <div className="mt-1 flex max-w-full gap-1.5 overflow-x-auto pb-0.5 sm:flex-wrap sm:overflow-visible">
+                {badges.map((badge) => (
+                  <TeacherBadgePill key={badge.id} badge={badge} compact className="shrink-0" />
+                ))}
+              </div>
+            ) : null}
             <p className="truncate text-xs text-[#6B6A65]">{teacher.discipline}</p>
           </div>
         </div>

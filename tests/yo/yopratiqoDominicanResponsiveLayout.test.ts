@@ -145,6 +145,10 @@ test("responsive layout patch does not touch restricted systems", () => {
     // Defended by tests/yo/yopratiqoProgressSnapshots.test.ts.
     "app/api/yo/progress/route.ts",
     "supabase/migrations/078_yopratiqo_progress_snapshots.sql",
+    // fix/messaging-booking-launch-qa PR - recipient-only message email
+    // notification on the existing server-side message send route.
+    // Defended by tests/messaging/messageBadgeAndEmail.test.ts.
+    "app/api/messages/send/route.ts",
   ]);
   const forbidden = [
     /^app\/api\//,

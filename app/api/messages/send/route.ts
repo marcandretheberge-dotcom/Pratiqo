@@ -7,6 +7,8 @@ import { messageSendPostSchema } from "@/lib/validation/schemas";
 import { hasCompletedLessonBetween } from "@/lib/messaging/contactGate";
 import { sanitizeContactInfo } from "@/lib/messaging/sanitizeContactInfo";
 import type { Locale } from "@/lib/i18n/types";
+import { appBaseUrl } from "@/lib/email/layout";
+import { resolveEmailLocaleForUser, sendNewPratiqoMessageEmail } from "@/lib/email";
 
 export const runtime = "nodejs";
 
@@ -15,6 +17,21 @@ function localeFromAcceptLanguage(header: string | null | undefined): Locale {
   if (h.startsWith("fr")) return "fr";
   if (h.startsWith("es")) return "es";
   return "en";
+}
+
+async function resolveMessageUserContact(admin: ReturnType<typeof getSupabaseAdmin>, userId: string) {
+  const { data: profile } = await admin
+    .from("profiles")
+    .select("name, email")
+    .eq("id", userId)
+    .maybeSingle();
+  const row = profile as { name?: string | null; email?: string | null } | null;
+  const profileEmail = typeof row?.email === "string" ? row.email.trim() : "";
+  const authUser = profileEmail ? null : await admin.auth.admin.getUserById(userId).catch(() => null);
+  const authEmail = authUser?.data?.user?.email?.trim() ?? "";
+  const email = profileEmail || authEmail || null;
+  const name = row?.name?.trim() || email?.split("@")[0] || "Utilisateur";
+  return { email, name };
 }
 
 export async function POST(req: Request) {
@@ -104,6 +121,25 @@ export async function POST(req: Request) {
 
   if (msgErr) {
     return NextResponse.json({ error: msgErr.message }, { status: 500 });
+  }
+
+  try {
+    const [recipient, sender, recipientLocale] = await Promise.all([
+      resolveMessageUserContact(admin, receiverId),
+      resolveMessageUserContact(admin, user.id),
+      resolveEmailLocaleForUser(admin, receiverId),
+    ]);
+    if (recipient.email) {
+      await sendNewPratiqoMessageEmail({
+        email: recipient.email,
+        recipientName: recipient.name,
+        senderName: sender.name,
+        conversationUrl: `${appBaseUrl()}/messages?peer=${encodeURIComponent(user.id)}`,
+        locale: recipientLocale,
+      });
+    }
+  } catch (error) {
+    console.warn("[messages/send] notification email skipped", error);
   }
 
   return NextResponse.json({

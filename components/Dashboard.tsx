@@ -184,14 +184,10 @@ export function Dashboard() {
       .filter((b) => activeStatuses.includes(b.status) || b.status === "pending_payment")
       .filter((b) => String(b.slot_date || b.date || "") === today)
       .sort((a, b) => bookingSortKey(a).localeCompare(bookingSortKey(b)));
-    const pendingPaymentTtlMs = 60 * 60 * 1000; // 1 h — Stripe checkout sessions expire quickly
-    const nowMs = Date.now();
     const pendingList = teacherBookings.filter((b) => {
-      if (!["pending", "pending_teacher", "pending_payment"].includes(b.status)) return false;
-      if (b.status === "pending_payment") {
-        const createdAt = b.created_at ? new Date(b.created_at as string).getTime() : 0;
-        return nowMs - createdAt <= pendingPaymentTtlMs;
-      }
+      // Only show refuse/review actions for genuine teacher-review states.
+      // Checkout/payment-in-progress bookings must not look rejectable.
+      if (!["pending", "pending_teacher"].includes(b.status)) return false;
       return true;
     });
     const monthStart = new Date();

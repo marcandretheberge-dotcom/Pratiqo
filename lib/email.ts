@@ -50,3 +50,8 @@ export {
 } from "@/lib/email/templates/admin";
 
 export { sendReviewPublishedTeacherEmail } from "@/lib/email/templates/reviews";
+
+export {
+  buildNewPratiqoMessageEmail,
+  sendNewPratiqoMessageEmail,
+} from "@/lib/email/templates/messages";
