@@ -3,6 +3,7 @@ import { haversineDistance } from "@/lib/geo";
 import { teacherMatchesExploreCategory, teacherMatchesExploreSearch } from "@/lib/teacherDisciplines";
 import type { TeacherSearchCriteria, TeacherSearchFormat } from "@/lib/teacherSearchCriteria";
 import { teacherStudentPrefScore } from "@/lib/studentLocationSearch";
+import { teacherMatchesAvailabilityWindow } from "@/lib/slots";
 
 function foldAscii(s: string): string {
   return s.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().trim();
@@ -51,12 +52,6 @@ function teacherMatchesLevel(teacher: Teacher, level: string | null | undefined)
   return levels.some((l) => l.includes(lv) || lv.includes(l));
 }
 
-function teacherMatchesAvailabilityKeyword(teacher: Teacher, availability: string | null | undefined): boolean {
-  const av = foldAscii(availability ?? "");
-  if (!av) return true;
-  const blob = foldAscii((teacher.availability ?? []).join(" "));
-  return blob.includes(av);
-}
 
 export type TeacherSearchRow = {
   teacher: Teacher;
@@ -91,7 +86,12 @@ export function filterTeacherPool(teachers: Teacher[], criteria: TeacherSearchCr
     if (q && !teacherMatchesExploreSearch(t, q)) return false;
     if (criteria.language && !teacherMatchesLanguage(t, criteria.language)) return false;
     if (criteria.level && !teacherMatchesLevel(t, criteria.level)) return false;
-    if (criteria.availability && !teacherMatchesAvailabilityKeyword(t, criteria.availability)) return false;
+    if (
+      (criteria.availabilityDay || criteria.availabilityPeriod) &&
+      !teacherMatchesAvailabilityWindow(t.availability, criteria.availabilityDay, criteria.availabilityPeriod)
+    ) {
+      return false;
+    }
     // teacherPreference is intentionally not used for matching until profile fields exist.
     return true;
   });

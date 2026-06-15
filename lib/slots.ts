@@ -10,6 +10,15 @@ export type DayAvailability = { matin: boolean; apresmidi: boolean; soir: boolea
 
 export const JS_DOW_TO_KEY = ["dim", "lun", "mar", "mer", "jeu", "ven", "sam"] as const;
 
+/**
+ * Short day keys used everywhere in the slot/availability code.
+ * Order intentionally matches `JS_DOW_TO_KEY` (Sun-first, matching `Date#getDay()`).
+ */
+export type DayKey = (typeof JS_DOW_TO_KEY)[number];
+
+/** Stable, exhaustive set of valid day keys (used to validate URL/form input). */
+export const DAY_KEYS: readonly DayKey[] = ["lun", "mar", "mer", "jeu", "ven", "sam", "dim"] as const;
+
 /** Short day key (lun…dim) for a calendar YYYY-MM-DD interpreted in local time. */
 export function dayShortKeyForISODate(isoDate: string): string {
   const [y, m, d] = isoDate.split("-").map(Number);
@@ -322,4 +331,58 @@ export function normalizeBlockedPeriodList(blocked: string[]): string[] {
   const b = blocked.map((x) => x.trim().toLowerCase()).filter(Boolean);
   if (b.includes("all")) return ["all"];
   return Array.from(new Set(b));
+}
+
+/**
+ * "Does this teacher have a recurring weekly availability window matching the
+ * student's desired day + time period?"
+ *
+ * Source of truth: `teacher.availability: string[]` (e.g. ["Lun Matin", "Mer
+ * Soir"]) — the same field already parsed by `weeklyAvailabilityFromTeacherRows`.
+ * This intentionally reuses that parser so the search filter and the booking
+ * modal cannot disagree on whether a teacher teaches Tuesday evenings.
+ *
+ * V1 limitation (documented for callers):
+ * This is a **weekly-recurring** match. It answers "could this teacher
+ * theoretically take a Mardi soir lesson?" not "do they have a free slot
+ * next Tuesday at 19:00?" — the second question is the booking modal's job,
+ * which is the final source of truth before checkout. This split is
+ * deliberate: a search-time per-day slot-generation pass would require
+ * loading every teacher's bookings+blocked-periods+buffers, which is too
+ * expensive for the marketplace fan-out today.
+ *
+ * Matching rules (all loose; empty/null inputs widen the match):
+ *   - day + period: true iff the teacher has that exact (day, period) cell set.
+ *   - day only:     true iff the teacher has any period set on that day.
+ *   - period only:  true iff the teacher has that period set on any day.
+ *   - neither:      true (no filter applied).
+ *
+ * The teacher's raw availability list may use accented or unaccented French
+ * labels; the parser already handles both. Past/blocked/booked slots are
+ * intentionally NOT considered here — those are slot-level concerns that
+ * only matter at booking time.
+ */
+export function teacherMatchesAvailabilityWindow(
+  rawAvailability: unknown,
+  day: DayKey | null | undefined,
+  period: PeriodKey | null | undefined,
+): boolean {
+  if (!day && !period) return true;
+  const weekly = weeklyAvailabilityFromTeacherRows(rawAvailability);
+
+  if (day && period) {
+    const cell = weekly[day];
+    return Boolean(cell && cell[period]);
+  }
+  if (day && !period) {
+    const cell = weekly[day];
+    if (!cell) return false;
+    return cell.matin || cell.apresmidi || cell.soir;
+  }
+  // period only: scan every day
+  for (const k of DAY_KEYS) {
+    const cell = weekly[k];
+    if (cell && cell[period!]) return true;
+  }
+  return false;
 }

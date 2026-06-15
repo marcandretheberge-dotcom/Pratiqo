@@ -162,7 +162,8 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
     verifiedOnly: false,
     language: "",
     level: "",
-    availability: "",
+    availabilityDay: "",
+    availabilityPeriod: "",
     teacherPreference: "",
     formatExtra: "",
   });
@@ -276,7 +277,8 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
       verifiedOnly: adv.verifiedOnly ? true : undefined,
       language: adv.language.trim() || undefined,
       level: adv.level.trim() || undefined,
-      availability: adv.availability.trim() || undefined,
+      availabilityDay: adv.availabilityDay || undefined,
+      availabilityPeriod: adv.availabilityPeriod || undefined,
       teacherPreference: adv.teacherPreference || undefined,
     });
     let rows = buildTeacherSearchRows(pool, { geo });
@@ -316,7 +318,8 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
         verifiedOnly: adv.verifiedOnly,
         language: adv.language,
         level: adv.level,
-        availability: adv.availability,
+        availabilityDay: adv.availabilityDay,
+        availabilityPeriod: adv.availabilityPeriod,
         teacherPreference: adv.teacherPreference,
       },
     });
@@ -351,7 +354,8 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
         adv.verifiedOnly ||
         adv.language.trim() ||
         adv.level.trim() ||
-        adv.availability.trim() ||
+        adv.availabilityDay ||
+        adv.availabilityPeriod ||
         adv.teacherPreference ||
         adv.formatExtra,
     );
