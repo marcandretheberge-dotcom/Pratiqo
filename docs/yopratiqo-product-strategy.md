@@ -55,3 +55,7 @@ These should remain candidates only. They should not appear as launched premium 
 - Future premium modules must not share marketplace booking logic by accident.
 - Teacher CTAs should connect learners to Pratiqo Marketplace without implying that self-paced progress guarantees teacher outcomes.
 - SEO should be prepared now, but module indexation should remain disabled until explicitly approved.
+
+## Related Roadmaps
+
+- [`PRATIQO_90_DAY_REVENUE_ROADMAP.md`](./PRATIQO_90_DAY_REVENUE_ROADMAP.md) — sequences the founder's 90-day revenue plan on top of the existing production-readiness gates. It defers to this product strategy doc for the language-pillar order and to `product/yopratiqo-premium-module-mvp-blueprint.md` for premium-module structure.
