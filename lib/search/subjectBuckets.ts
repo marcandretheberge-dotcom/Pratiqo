@@ -83,6 +83,13 @@ export const SUBJECT_BUCKETS: SubjectBucket[] = [
     },
   },
   {
+    canonicalId: "ukulele",
+    category: "music",
+    emoji: "🪕",
+    labels: { fr: "Ukulélé", en: "Ukulele", es: "Ukelele" },
+    aliases: { fr: ["ukulele"], en: ["uke"], es: ["ukulele"] },
+  },
+  {
     canonicalId: "singing",
     category: "music",
     emoji: "🎤",
@@ -97,11 +104,61 @@ export const SUBJECT_BUCKETS: SubjectBucket[] = [
     aliases: { fr: [], en: [], es: ["violin"] },
   },
   {
+    canonicalId: "cello",
+    category: "music",
+    emoji: "🎻",
+    labels: { fr: "Violoncelle", en: "Cello", es: "Violonchelo" },
+    aliases: { fr: [], en: [], es: ["cello", "violoncelo"] },
+  },
+  {
     canonicalId: "drums",
     category: "music",
     emoji: "🥁",
     labels: { fr: "Batterie", en: "Drums", es: "Batería" },
     aliases: { fr: ["percussion"], en: ["drumming", "percussion"], es: ["percusión", "bateria"] },
+  },
+  {
+    canonicalId: "bass",
+    category: "music",
+    emoji: "🎸",
+    labels: { fr: "Basse", en: "Bass", es: "Bajo" },
+    aliases: {
+      fr: ["basse électrique", "guitare basse", "contrebasse"],
+      en: ["bass guitar", "electric bass", "double bass"],
+      es: ["bajo eléctrico", "contrabajo"],
+    },
+  },
+  {
+    canonicalId: "saxophone",
+    category: "music",
+    emoji: "🎷",
+    labels: { fr: "Saxophone", en: "Saxophone", es: "Saxofón" },
+    aliases: { fr: ["sax"], en: ["sax"], es: ["saxofon", "sax"] },
+  },
+  {
+    canonicalId: "flute",
+    category: "music",
+    emoji: "🎶",
+    labels: { fr: "Flûte", en: "Flute", es: "Flauta" },
+    aliases: {
+      fr: ["flute", "flûte traversière", "flute traversiere", "flûte à bec", "flute a bec"],
+      en: ["transverse flute", "recorder"],
+      es: ["flauta travesera", "flauta dulce"],
+    },
+  },
+  {
+    canonicalId: "clarinet",
+    category: "music",
+    emoji: "🎶",
+    labels: { fr: "Clarinette", en: "Clarinet", es: "Clarinete" },
+    aliases: {},
+  },
+  {
+    canonicalId: "accordion",
+    category: "music",
+    emoji: "🪗",
+    labels: { fr: "Accordéon", en: "Accordion", es: "Acordeón" },
+    aliases: { fr: ["accordeon"], en: [], es: ["acordeon"] },
   },
   {
     canonicalId: "music_general",
@@ -116,9 +173,31 @@ export const SUBJECT_BUCKETS: SubjectBucket[] = [
     emoji: "🎼",
     labels: { fr: "Solfège", en: "Music theory", es: "Teoría musical" },
     aliases: {
-      fr: ["theorie musicale"],
+      fr: ["solfege", "theorie musicale", "théorie musicale"],
       en: ["theory", "sight reading"],
       es: ["teoria musical", "solfeo"],
+    },
+  },
+  {
+    canonicalId: "composition",
+    category: "music",
+    emoji: "✒️",
+    labels: { fr: "Composition", en: "Composition", es: "Composición" },
+    aliases: {
+      fr: ["composition musicale", "écriture musicale", "ecriture musicale"],
+      en: ["songwriting", "music composition"],
+      es: ["composicion", "composicion musical"],
+    },
+  },
+  {
+    canonicalId: "music_production",
+    category: "music",
+    emoji: "🎚️",
+    labels: { fr: "Production musicale", en: "Music production", es: "Producción musical" },
+    aliases: {
+      fr: ["beatmaking", "mao", "musique assistée par ordinateur"],
+      en: ["beat making", "audio production", "daw"],
+      es: ["produccion musical", "produccion de audio"],
     },
   },
 
@@ -143,6 +222,21 @@ export const SUBJECT_BUCKETS: SubjectBucket[] = [
     emoji: "🇫🇷",
     labels: { fr: "Français", en: "French", es: "Francés" },
     aliases: { fr: ["francais", "fle"], en: ["french as second language"], es: ["frances"] },
+  },
+  {
+    canonicalId: "francisation",
+    category: "languages",
+    emoji: "🇨🇦",
+    labels: {
+      fr: "Francisation",
+      en: "French integration (Francisation)",
+      es: "Francización",
+    },
+    aliases: {
+      fr: ["francais immigration", "francais quebec", "francais qc"],
+      en: ["francization", "quebec french integration", "francisation"],
+      es: ["francisacion", "francisation"],
+    },
   },
   {
     canonicalId: "japanese",
@@ -173,6 +267,196 @@ export const SUBJECT_BUCKETS: SubjectBucket[] = [
     aliases: {},
   },
   {
+    // "Chinois" and "Mandarin" share one bucket: in 99% of student searches
+    // they refer to Standard Chinese / Mandarin. Aliasing them avoids a
+    // misleading split in the dropdown.
+    canonicalId: "chinese_mandarin",
+    category: "languages",
+    emoji: "🇨🇳",
+    labels: { fr: "Chinois (mandarin)", en: "Chinese (Mandarin)", es: "Chino (mandarín)" },
+    aliases: {
+      fr: ["chinois", "mandarin", "chinois mandarin"],
+      en: ["chinese", "mandarin", "mandarin chinese", "putonghua"],
+      es: ["chino", "mandarin", "chino mandarin"],
+    },
+  },
+  {
+    canonicalId: "korean",
+    category: "languages",
+    emoji: "🇰🇷",
+    labels: { fr: "Coréen", en: "Korean", es: "Coreano" },
+    aliases: { fr: ["coreen"], en: ["hangul"], es: ["coreano"] },
+  },
+  {
+    canonicalId: "arabic",
+    category: "languages",
+    emoji: "🇸🇦",
+    labels: { fr: "Arabe", en: "Arabic", es: "Árabe" },
+    aliases: {
+      fr: ["arabe classique", "arabe littéraire", "arabe litteraire"],
+      en: ["modern standard arabic", "msa"],
+      es: ["arabe"],
+    },
+  },
+  {
+    canonicalId: "russian",
+    category: "languages",
+    emoji: "🇷🇺",
+    labels: { fr: "Russe", en: "Russian", es: "Ruso" },
+    aliases: {},
+  },
+  {
+    canonicalId: "dutch",
+    category: "languages",
+    emoji: "🇳🇱",
+    labels: { fr: "Néerlandais", en: "Dutch", es: "Neerlandés" },
+    aliases: {
+      fr: ["neerlandais", "hollandais"],
+      en: ["nederlands", "flemish"],
+      es: ["neerlandes", "holandés", "holandes"],
+    },
+  },
+  {
+    canonicalId: "greek",
+    category: "languages",
+    emoji: "🇬🇷",
+    labels: { fr: "Grec", en: "Greek", es: "Griego" },
+    aliases: { fr: ["grec moderne"], en: ["modern greek"], es: [] },
+  },
+  {
+    canonicalId: "latin",
+    category: "languages",
+    emoji: "🏛️",
+    labels: { fr: "Latin", en: "Latin", es: "Latín" },
+    aliases: { fr: [], en: [], es: ["latin"] },
+  },
+  {
+    canonicalId: "hindi",
+    category: "languages",
+    emoji: "🇮🇳",
+    labels: { fr: "Hindi", en: "Hindi", es: "Hindi" },
+    aliases: {},
+  },
+  {
+    canonicalId: "turkish",
+    category: "languages",
+    emoji: "🇹🇷",
+    labels: { fr: "Turc", en: "Turkish", es: "Turco" },
+    aliases: {},
+  },
+  {
+    canonicalId: "polish",
+    category: "languages",
+    emoji: "🇵🇱",
+    labels: { fr: "Polonais", en: "Polish", es: "Polaco" },
+    aliases: {},
+  },
+  {
+    canonicalId: "ukrainian",
+    category: "languages",
+    emoji: "🇺🇦",
+    labels: { fr: "Ukrainien", en: "Ukrainian", es: "Ucraniano" },
+    aliases: {},
+  },
+  {
+    canonicalId: "swedish",
+    category: "languages",
+    emoji: "🇸🇪",
+    labels: { fr: "Suédois", en: "Swedish", es: "Sueco" },
+    aliases: { fr: ["suedois"], en: ["svenska"], es: [] },
+  },
+  {
+    canonicalId: "norwegian",
+    category: "languages",
+    emoji: "🇳🇴",
+    labels: { fr: "Norvégien", en: "Norwegian", es: "Noruego" },
+    aliases: { fr: ["norvegien"], en: ["norsk"], es: [] },
+  },
+  {
+    canonicalId: "danish",
+    category: "languages",
+    emoji: "🇩🇰",
+    labels: { fr: "Danois", en: "Danish", es: "Danés" },
+    aliases: { fr: [], en: ["dansk"], es: ["danes"] },
+  },
+  {
+    canonicalId: "finnish",
+    category: "languages",
+    emoji: "🇫🇮",
+    labels: { fr: "Finnois", en: "Finnish", es: "Finés" },
+    aliases: { fr: ["finlandais"], en: ["suomi"], es: ["fines", "finlandes"] },
+  },
+  {
+    canonicalId: "hebrew",
+    category: "languages",
+    emoji: "🇮🇱",
+    labels: { fr: "Hébreu", en: "Hebrew", es: "Hebreo" },
+    aliases: { fr: ["hebreu", "hébreu moderne"], en: ["ivrit", "modern hebrew"], es: [] },
+  },
+  {
+    canonicalId: "vietnamese",
+    category: "languages",
+    emoji: "🇻🇳",
+    labels: { fr: "Vietnamien", en: "Vietnamese", es: "Vietnamita" },
+    aliases: { fr: [], en: ["tieng viet"], es: [] },
+  },
+  {
+    canonicalId: "thai",
+    category: "languages",
+    emoji: "🇹🇭",
+    labels: { fr: "Thaï", en: "Thai", es: "Tailandés" },
+    aliases: { fr: ["thai"], en: [], es: ["tailandes"] },
+  },
+  {
+    canonicalId: "indonesian",
+    category: "languages",
+    emoji: "🇮🇩",
+    labels: { fr: "Indonésien", en: "Indonesian", es: "Indonesio" },
+    aliases: { fr: ["indonesien"], en: ["bahasa indonesia"], es: [] },
+  },
+  {
+    canonicalId: "persian",
+    category: "languages",
+    emoji: "🇮🇷",
+    labels: { fr: "Persan", en: "Persian", es: "Persa" },
+    aliases: { fr: ["farsi"], en: ["farsi"], es: ["farsi"] },
+  },
+  {
+    canonicalId: "haitian_creole",
+    category: "languages",
+    emoji: "🇭🇹",
+    labels: { fr: "Créole haïtien", en: "Haitian Creole", es: "Criollo haitiano" },
+    aliases: {
+      fr: ["creole haitien", "kreyòl ayisyen", "kreyol ayisyen", "créole", "creole"],
+      en: ["kreyol", "kreyòl"],
+      es: ["creole haitiano"],
+    },
+  },
+  {
+    // LSQ is the Quebec sign language; ASL is American Sign Language.
+    // Bundle both into one bucket so a search for "signes" / "sign" surfaces it,
+    // while preserving "LSQ" as the canonical Quebec alias.
+    canonicalId: "sign_language_quebec",
+    category: "languages",
+    emoji: "🤟",
+    labels: {
+      fr: "Langue des signes québécoise (LSQ)",
+      en: "Quebec Sign Language (LSQ)",
+      es: "Lengua de señas quebequense (LSQ)",
+    },
+    aliases: {
+      fr: [
+        "lsq",
+        "langue des signes",
+        "langue signes",
+        "langue des signes quebecoise",
+        "langue des signes québécoise",
+      ],
+      en: ["lsq", "sign language", "quebec sign language"],
+      es: ["lsq", "lengua de signos", "lengua de senas", "lenguaje de signos"],
+    },
+  },
+  {
     canonicalId: "languages_general",
     category: "languages",
     emoji: "🌍",
@@ -188,8 +472,63 @@ export const SUBJECT_BUCKETS: SubjectBucket[] = [
     labels: { fr: "Mathématiques", en: "Math", es: "Matemáticas" },
     aliases: {
       fr: ["maths", "mathematiques", "math"],
-      en: ["mathematics", "maths", "algebra", "calculus", "geometry"],
-      es: ["matematicas", "calculo", "algebra"],
+      en: ["mathematics", "maths"],
+      es: ["matematicas"],
+    },
+  },
+  {
+    canonicalId: "algebra",
+    category: "academic",
+    emoji: "🧮",
+    labels: { fr: "Algèbre", en: "Algebra", es: "Álgebra" },
+    aliases: { fr: ["algebre"], en: [], es: ["algebra"] },
+  },
+  {
+    canonicalId: "geometry",
+    category: "academic",
+    emoji: "📐",
+    labels: { fr: "Géométrie", en: "Geometry", es: "Geometría" },
+    aliases: { fr: ["geometrie"], en: [], es: ["geometria"] },
+  },
+  {
+    canonicalId: "calculus_differential",
+    category: "academic",
+    emoji: "📈",
+    labels: {
+      fr: "Calcul différentiel",
+      en: "Differential calculus",
+      es: "Cálculo diferencial",
+    },
+    aliases: {
+      fr: ["calcul differentiel", "calcul 1", "calcul i"],
+      en: ["calculus i", "calculus 1", "derivatives"],
+      es: ["calculo diferencial"],
+    },
+  },
+  {
+    canonicalId: "calculus_integral",
+    category: "academic",
+    emoji: "📉",
+    labels: {
+      fr: "Calcul intégral",
+      en: "Integral calculus",
+      es: "Cálculo integral",
+    },
+    aliases: {
+      fr: ["calcul integral", "calcul 2", "calcul ii", "integrales", "intégrales"],
+      en: ["calculus ii", "calculus 2", "integrals"],
+      es: ["calculo integral", "integrales"],
+    },
+  },
+  {
+    canonicalId: "statistics",
+    category: "academic",
+    emoji: "📊",
+    labels: { fr: "Statistiques", en: "Statistics", es: "Estadística" },
+    aliases: {
+      fr: ["stats", "statistique"],
+      en: ["stats", "probability and statistics"],
+      es: ["estadistica", "estadisticas"],
     },
   },
   {
@@ -219,6 +558,100 @@ export const SUBJECT_BUCKETS: SubjectBucket[] = [
     emoji: "🧬",
     labels: { fr: "Biologie", en: "Biology", es: "Biología" },
     aliases: { fr: [], en: ["bio"], es: ["biologia"] },
+  },
+  {
+    canonicalId: "history",
+    category: "academic",
+    emoji: "📜",
+    labels: { fr: "Histoire", en: "History", es: "Historia" },
+    aliases: {},
+  },
+  {
+    canonicalId: "geography",
+    category: "academic",
+    emoji: "🗺️",
+    labels: { fr: "Géographie", en: "Geography", es: "Geografía" },
+    aliases: { fr: ["geographie", "geo"], en: ["geo"], es: ["geografia", "geo"] },
+  },
+  {
+    canonicalId: "economics",
+    category: "academic",
+    emoji: "💹",
+    labels: { fr: "Économie", en: "Economics", es: "Economía" },
+    aliases: { fr: ["economie"], en: ["econ"], es: ["economia", "econ"] },
+  },
+  {
+    canonicalId: "philosophy",
+    category: "academic",
+    emoji: "🧠",
+    labels: { fr: "Philosophie", en: "Philosophy", es: "Filosofía" },
+    aliases: { fr: ["philo"], en: ["philo"], es: ["filosofia", "filo"] },
+  },
+  {
+    canonicalId: "coding",
+    category: "academic",
+    emoji: "💻",
+    labels: { fr: "Programmation", en: "Coding", es: "Programación" },
+    aliases: {
+      fr: ["informatique", "code", "developpement"],
+      en: ["programming", "software development"],
+      es: ["programacion", "desarrollo de software"],
+    },
+  },
+  {
+    canonicalId: "computer_skills",
+    category: "academic",
+    emoji: "🖥️",
+    labels: { fr: "Informatique", en: "Computer skills", es: "Informática" },
+    aliases: { fr: [], en: ["computer", "office", "digital skills"], es: ["informatica", "computacion"] },
+  },
+  {
+    canonicalId: "reading",
+    category: "academic",
+    emoji: "📖",
+    labels: { fr: "Lecture", en: "Reading", es: "Lectura" },
+    aliases: {
+      fr: ["compréhension de lecture", "comprehension de lecture"],
+      en: ["reading comprehension", "literacy"],
+      es: ["comprension lectora"],
+    },
+  },
+  {
+    canonicalId: "writing",
+    category: "academic",
+    emoji: "✍️",
+    labels: { fr: "Écriture", en: "Writing", es: "Escritura" },
+    aliases: {
+      fr: ["ecriture", "rédaction", "redaction"],
+      en: ["composition", "essay writing"],
+      es: ["redaccion"],
+    },
+  },
+  {
+    canonicalId: "exam_prep",
+    category: "academic",
+    emoji: "📝",
+    labels: {
+      fr: "Préparation aux examens",
+      en: "Exam preparation",
+      es: "Preparación de exámenes",
+    },
+    aliases: {
+      fr: ["preparation aux examens", "préparation examens", "preparation examens", "prep examens"],
+      en: ["test prep", "exam prep", "sat prep", "act prep"],
+      es: ["preparacion de examenes", "prep examenes"],
+    },
+  },
+  {
+    canonicalId: "study_methodology",
+    category: "academic",
+    emoji: "🗂️",
+    labels: { fr: "Méthodologie", en: "Study methodology", es: "Metodología de estudio" },
+    aliases: {
+      fr: ["methodologie", "méthodes de travail", "methodes de travail", "organisation"],
+      en: ["study skills", "study methods", "organization"],
+      es: ["metodologia", "tecnicas de estudio"],
+    },
   },
   {
     canonicalId: "french_tutoring",
@@ -253,6 +686,24 @@ export const SUBJECT_BUCKETS: SubjectBucket[] = [
       es: ["tareas", "deberes"],
     },
   },
+  {
+    // Broad "Tuteurs académiques" entry — its French label MUST exactly match
+    // the discipline label in `lib/disciplines.ts` so picking it can activate
+    // the existing parent-side category chip (see SmartSearchInput.select).
+    canonicalId: "tutors_general",
+    category: "academic",
+    emoji: "📚",
+    labels: {
+      fr: "Tuteurs académiques",
+      en: "Academic tutors",
+      es: "Tutores académicos",
+    },
+    aliases: {
+      fr: ["tuteurs academiques", "tutorat", "soutien scolaire", "scolaire"],
+      en: ["academic tutor", "academic tutoring", "tutor"],
+      es: ["tutoria academica", "apoyo escolar"],
+    },
+  },
 
   // ── Arts & skills ─────────────────────────────────────────────────────
   {
@@ -275,24 +726,6 @@ export const SUBJECT_BUCKETS: SubjectBucket[] = [
     emoji: "🍳",
     labels: { fr: "Cuisine", en: "Cooking", es: "Cocina" },
     aliases: { fr: [], en: ["culinary"], es: [] },
-  },
-  {
-    canonicalId: "coding",
-    category: "arts_skills",
-    emoji: "💻",
-    labels: { fr: "Programmation", en: "Coding", es: "Programación" },
-    aliases: {
-      fr: ["informatique", "code", "developpement"],
-      en: ["programming", "software development"],
-      es: ["programacion", "desarrollo de software"],
-    },
-  },
-  {
-    canonicalId: "computer_skills",
-    category: "arts_skills",
-    emoji: "🖥️",
-    labels: { fr: "Informatique", en: "Computer skills", es: "Informática" },
-    aliases: { fr: [], en: ["computer", "office", "digital skills"], es: ["informatica", "computacion"] },
   },
 ];
 
@@ -378,6 +811,23 @@ export function searchSubjectBuckets(
   matches.sort((a, b) => b.score - a.score);
   return matches.slice(0, limit);
 }
+
+/**
+ * Buckets whose French label MUST exactly match a discipline label in
+ * `lib/disciplines.ts`. Selecting one of these in the autosuggest should
+ * route through the parent's `onSelectDiscipline` callback so the existing
+ * category-chip filter keeps working, instead of being treated as free-text
+ * subject input.
+ *
+ * Keeping this list narrow and explicit (instead of inferring from a suffix)
+ * means a future renamed canonicalId still surfaces as a regular subject,
+ * which is the safer default for the dropdown.
+ */
+export const GENERAL_DISCIPLINE_BUCKET_IDS = new Set<string>([
+  "music_general",
+  "languages_general",
+  "tutors_general",
+]);
 
 /**
  * Group matches by their category, in the canonical category order. Useful for

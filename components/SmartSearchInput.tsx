@@ -3,8 +3,6 @@
 import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { MapPin, Search, Users } from "lucide-react";
 import type { Teacher } from "@/types";
-import type { Discipline } from "@/lib/disciplines";
-import { getEnabledDisciplines } from "@/lib/disciplines";
 import { haversineDistance } from "@/lib/geo";
 import { useLocale } from "@/lib/locale-context";
 import { cn } from "@/lib/utils";
@@ -12,15 +10,22 @@ import type { City } from "@/lib/cities";
 import { CITIES } from "@/lib/cities";
 import { publicFirstNameWithInitial } from "@/lib/identity/displayName";
 import type { TranslationKey } from "@/lib/translations";
+import {
+  GENERAL_DISCIPLINE_BUCKET_IDS,
+  searchSubjectBuckets,
+  type LocalizedSubjectMatch,
+} from "@/lib/search/subjectBuckets";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type DisciplineSuggestion = { kind: "discipline"; discipline: Discipline; matchedLabel: string };
-type TeacherSuggestion    = { kind: "teacher";    teacher: Teacher };
-type CitySuggestion       = { kind: "city";       city: City; distanceKm: number | null };
-type Suggestion           = DisciplineSuggestion | TeacherSuggestion | CitySuggestion;
+type SubjectSuggestion = { kind: "subject"; match: LocalizedSubjectMatch };
+type TeacherSuggestion = { kind: "teacher"; teacher: Teacher };
+type CitySuggestion    = { kind: "city";    city: City; distanceKm: number | null };
+type Suggestion        = SubjectSuggestion | TeacherSuggestion | CitySuggestion;
 
 type Section = {
+  // "disciplines" is preserved as the section key so existing i18n
+  // (`searchSectionDisciplines`) and dropdown styling remain unchanged.
   key: "disciplines" | "teachers" | "cities";
   labelKey: TranslationKey;
   items: Suggestion[];
@@ -135,29 +140,23 @@ export function SmartSearchInput({
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const disciplineLabel = useCallback(
-    (d: Discipline) => {
-      if (locale === "en") return d.labelEn ?? d.label;
-      if (locale === "es")    return d.labelEs ?? d.label;
-      return d.label;
-    },
-    [locale],
-  );
-
-  const enabledDisciplines = useMemo(() => getEnabledDisciplines(), []);
-
   // ── Compute suggestions ──────────────────────────────────────────────────
   const sections = useMemo<Section[]>(() => {
     const q = debouncedQuery.toLowerCase();
     if (q.length < 2) return [];
 
-    // 1. Disciplines — match any locale label
-    const disciplineItems: DisciplineSuggestion[] = enabledDisciplines
-      .filter((d) =>
-        contains(d.label, q) || contains(d.labelEn, q) || contains(d.labelEs, q),
-      )
-      .slice(0, 3)
-      .map((d) => ({ kind: "discipline", discipline: d, matchedLabel: disciplineLabel(d) }));
+    // 1. Subjects — the rich autosuggest vocabulary (instruments, languages,
+    //    academic subjects, etc.) from `lib/search/subjectBuckets.ts`. The
+    //    matcher is accent-insensitive and alias-aware, so typing "pi" finds
+    //    Piano, "esp" finds Espagnol, "ukulele" finds Ukulélé, "math" finds
+    //    Mathématiques. Broad categories (Langues, Musique, Tuteurs
+    //    académiques) are surfaced through the `*_general` buckets, which
+    //    preserves the original 3-discipline dropdown behavior as a subset.
+    const subjectMatches = searchSubjectBuckets(debouncedQuery, { locale, limit: 6 });
+    const subjectItems: SubjectSuggestion[] = subjectMatches.map((match) => ({
+      kind: "subject",
+      match,
+    }));
 
     // 2. Teachers — match name, discipline or bio
     const teacherItems: TeacherSuggestion[] = teachers
@@ -187,11 +186,13 @@ export function SmartSearchInput({
       : [];
 
     const result: Section[] = [];
-    if (disciplineItems.length) result.push({ key: "disciplines", labelKey: "searchSectionDisciplines", items: disciplineItems });
-    if (teacherItems.length)    result.push({ key: "teachers",    labelKey: "searchSectionTeachers",    items: teacherItems });
-    if (cityItems.length)       result.push({ key: "cities",      labelKey: "searchSectionNearby",      items: cityItems });
+    // The section key stays "disciplines" so the existing i18n header
+    // (`searchSectionDisciplines`) and dropdown styling don't change.
+    if (subjectItems.length) result.push({ key: "disciplines", labelKey: "searchSectionDisciplines", items: subjectItems });
+    if (teacherItems.length) result.push({ key: "teachers",    labelKey: "searchSectionTeachers",    items: teacherItems });
+    if (cityItems.length)    result.push({ key: "cities",      labelKey: "searchSectionNearby",      items: cityItems });
     return result;
-  }, [debouncedQuery, enabledDisciplines, teachers, geo, disciplineLabel, citySuggestionsEnabled]);
+  }, [debouncedQuery, locale, teachers, geo, citySuggestionsEnabled]);
 
   // Flat list for keyboard nav
   const flatItems = useMemo<Suggestion[]>(
@@ -205,9 +206,23 @@ export function SmartSearchInput({
   const select = useCallback(
     (item: Suggestion) => {
       setOpen(false);
-      if (item.kind === "discipline") {
-        onChange("");
-        onSelectDiscipline(item.discipline.label);
+      if (item.kind === "subject") {
+        const { bucket, displayLabel } = item.match;
+        if (GENERAL_DISCIPLINE_BUCKET_IDS.has(bucket.canonicalId)) {
+          // Broad-category buckets keep the legacy behavior: route through
+          // `onSelectDiscipline` so the parent's existing category-chip
+          // filter activates. The French label is intentional — the parent
+          // matches `activeCat` against the canonical French discipline
+          // label from `lib/disciplines.ts` regardless of UI locale.
+          onChange("");
+          onSelectDiscipline(bucket.labels.fr);
+        } else {
+          // Specific subjects: populate the input with the localized label
+          // and let the parent's existing text-driven teacher filter take
+          // over. No new callback contract — typing "Piano" already filters
+          // teachers whose discipline / bio matches.
+          onChange(displayLabel);
+        }
       } else if (item.kind === "teacher") {
         onChange(item.teacher.name);
         onSelectTeacher(item.teacher);
@@ -326,8 +341,8 @@ export function SmartSearchInput({
                 return (
                   <button
                     key={
-                      item.kind === "discipline" ? item.discipline.id
-                      : item.kind === "teacher"  ? item.teacher.id
+                      item.kind === "subject" ? `subject:${item.match.bucket.canonicalId}`
+                      : item.kind === "teacher" ? item.teacher.id
                       : item.city.name
                     }
                     id={`${uid}-search-option-${idx}`}
@@ -342,11 +357,15 @@ export function SmartSearchInput({
                       isActive ? "bg-teal-500/10" : "hover:bg-[#F9F8F5]",
                     )}
                   >
-                    {item.kind === "discipline" && (
+                    {item.kind === "subject" && (
                       <>
-                        <span className="text-lg leading-none shrink-0">{item.discipline.emoji}</span>
+                        {item.match.bucket.emoji ? (
+                          <span className="text-lg leading-none shrink-0">{item.match.bucket.emoji}</span>
+                        ) : (
+                          <span className="w-[18px] shrink-0" aria-hidden />
+                        )}
                         <span className="text-sm font-semibold text-[#2C2C2A]">
-                          <Highlight text={item.matchedLabel} query={debouncedQuery} />
+                          <Highlight text={item.match.displayLabel} query={debouncedQuery} />
                         </span>
                       </>
                     )}
