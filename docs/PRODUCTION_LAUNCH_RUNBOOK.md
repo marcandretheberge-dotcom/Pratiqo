@@ -1,8 +1,10 @@
 # Pratiqo Production Launch Runbook
 
-Last reviewed: 2026-06-07
+Last reviewed: 2026-06-14
 
 This runbook is the operator checklist for activating Stripe production and launching Pratiqo publicly. It contains no secrets and no live keys.
+
+**Prerequisite phase**: before running this runbook, complete the **closed beta** per [`CLOSED_BETA_READINESS.md`](./CLOSED_BETA_READINESS.md) with 2–3 real teachers and 2–3 real students. The closed beta validates the marketplace flow with real users on real devices and is the go/no-go gate for the public launch sequence below.
 
 ## 1. Current Launch-Relevant Operations State
 
