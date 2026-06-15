@@ -184,3 +184,12 @@ npm run test:launch-critical
 # Full launch validation (auth + security + payments + i18n + build):
 npm run validate:launch
 ```
+
+## Next step toward public launch
+
+Once this checklist passes on a clean release commit, run the **closed
+beta** with a tiny real cohort (2–3 teachers + 2–3 students) per
+[`CLOSED_BETA_READINESS.md`](./CLOSED_BETA_READINESS.md). The closed beta
+exercises the same P0 areas but with real users on real devices and is
+the gate before the full public launch described in
+[`PRODUCTION_LAUNCH_RUNBOOK.md`](./PRODUCTION_LAUNCH_RUNBOOK.md).

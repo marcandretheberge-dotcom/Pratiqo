@@ -1,8 +1,10 @@
 ﻿# Mobile QA Checklist - Pratiqo
 
-Last reviewed: 2026-06-07
+Last reviewed: 2026-06-14
 
 This checklist is for launch QA of the Pratiqo web app and installable PWA. It does not add a native wrapper. Record device, browser, OS version, account used, route, result, screenshots, and issue link for each pass.
+
+For the **integrated marketplace journey** (search → profile → booking → messaging) post-P0, also run [`MARKETPLACE_P0_QA.md`](./MARKETPLACE_P0_QA.md). Before opening the public launch, run the **closed beta** per [`CLOSED_BETA_READINESS.md`](./CLOSED_BETA_READINESS.md).
 
 ## Current App Readiness Found
 
