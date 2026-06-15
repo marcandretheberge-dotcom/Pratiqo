@@ -30,6 +30,13 @@ import { capturePostHogEvent } from "@/lib/analytics/posthog";
 // ─── Event names ─────────────────────────────────────────────────────────────
 
 export const ANALYTICS_EVENTS = {
+  // PostHog reserved event — its stock Insights / Funnels / Paths
+  // dashboards key off this exact name. Emitted on every navigation by
+  // `components/analytics/PostHogPageView.tsx`. Sending the string
+  // verbatim ("$pageview") is intentional — PostHog will not match
+  // "pageview" or "page_view".
+  pageView: "$pageview",
+
   // Core marketplace web
   landingViewed: "landing_viewed",
   searchStarted: "search_started",
@@ -183,6 +190,22 @@ export type AdminRoleChangeProps = {
 function track<P extends Record<string, unknown>>(name: AnalyticsEventName, props: P): void {
   capturePostHogEvent(name, props as Record<string, unknown>);
 }
+
+/**
+ * Emit PostHog's reserved `$pageview` event. This is the universal
+ * pageview floor — every Next.js navigation should fire it once so
+ * PostHog's stock dashboards (Insights / Funnels / Path analysis)
+ * actually have data to render. The narrower product events
+ * (`landing_viewed`, `yopratiqo_landing_viewed`, …) are still emitted
+ * alongside it for funnel-quality cohorts.
+ *
+ * The capture path (`lib/analytics/posthog.ts`) automatically attaches
+ * `$current_url`, `$host`, and `$pathname` to every event so the
+ * `path` property here is a typed convenience — PostHog will use the
+ * `$pathname` auto-property for its built-in widgets either way.
+ */
+export const trackPageView = (props: { path: string }) =>
+  track(ANALYTICS_EVENTS.pageView, props);
 
 export const trackLandingViewed = (props: { path: string }) =>
   track(ANALYTICS_EVENTS.landingViewed, props);

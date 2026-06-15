@@ -24,6 +24,7 @@ import {
   trackLandingViewed,
   trackMessageSent,
   trackMessageThreadOpened,
+  trackPageView,
   trackSearchAvailabilityFilterUsed,
   trackSearchFormatSelected,
   trackSearchLocationSelected,
@@ -52,10 +53,30 @@ const test = (name: string, fn: TestFn) => tests.push({ name, fn });
 
 const READ = (rel: string) => readFileSync(join(process.cwd(), rel), "utf8");
 
+/**
+ * Strip JS / TS line + block comments and string literals so source-scan
+ * assertions don't match docs/comments that talk about the very thing
+ * they forbid (e.g. a comment explaining "do not call posthog.init()"
+ * must not trigger a "found posthog.init" assertion).
+ */
+const stripCommentsAndStrings = (src: string): string =>
+  src
+    // Block comments / JSDoc.
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    // Line comments. Avoid eating // inside URLs (https://) by requiring
+    // it to be preceded by whitespace or start-of-line.
+    .replace(/(^|[\s;{}()=,])\/\/[^\n]*/g, "$1")
+    // String literals (double / single / template). Conservative — drops
+    // them entirely. Sufficient for our negative-source-scan needs.
+    .replace(/"(?:\\.|[^"\\\n])*"/g, '""')
+    .replace(/'(?:\\.|[^'\\\n])*'/g, "''")
+    .replace(/`(?:\\.|[^`\\])*`/g, "``");
+
 // ── Event-name taxonomy ─────────────────────────────────────────────────────
 
 test("ANALYTICS_EVENTS contains every event the brief enumerates", () => {
   const required = [
+    "$pageview",
     "landing_viewed",
     "search_started",
     "search_subject_selected",
@@ -96,9 +117,17 @@ test("ANALYTICS_EVENTS has no duplicate event names", () => {
   assert.equal(unique.size, values.length, "duplicate event name detected in ANALYTICS_EVENTS");
 });
 
-test("ANALYTICS_EVENTS values are snake_case (no kebab, no camel, no spaces)", () => {
+test("ANALYTICS_EVENTS values are snake_case OR PostHog-reserved ($pageview, $identify, …)", () => {
   for (const v of Object.values(ANALYTICS_EVENTS) as string[]) {
-    assert.match(v, /^[a-z0-9]+(?:_[a-z0-9]+)*$/, `non-snake_case event name: ${v}`);
+    // Accept either Pratiqo snake_case or PostHog's $-prefixed reserved
+    // event names ($pageview, $identify, $set, $autocapture, etc.).
+    // Every reserved event we emit is intentional and must use the
+    // verbatim PostHog-recognized name.
+    assert.match(
+      v,
+      /^(?:\$[a-z0-9]+(?:_[a-z0-9]+)*|[a-z0-9]+(?:_[a-z0-9]+)*)$/,
+      `non-snake_case / non-reserved event name: ${v}`,
+    );
   }
 });
 
@@ -275,6 +304,7 @@ test("All typed track helpers are safely no-ops without env", () => {
   delete process.env.NEXT_PUBLIC_POSTHOG_KEY;
   try {
     assert.doesNotThrow(() => {
+      trackPageView({ path: "/anywhere" });
       trackLandingViewed({ path: "/" });
       trackSearchStarted({ source: "landing" });
       trackSearchSubjectSelected({ source: "landing", subject_id: "piano", query_length: 5 });
@@ -308,13 +338,138 @@ test("All typed track helpers are safely no-ops without env", () => {
   }
 });
 
-// ── Source-scan: call-site wiring ───────────────────────────────────────────
+// ── Provider wiring contract (fix/posthog-provider-wiring) ──────────────────
 
-test("PostHogPageView is mounted in app/providers.tsx", () => {
+test("posthog-js dependency is intentionally NOT installed (privacy + duplicate-provider guard)", () => {
+  // Adding posthog-js without the disabled-defaults documented in
+  // docs/ANALYTICS_AND_MONITORING.md §8 would create:
+  //   1. a duplicate pageview emitter (autocapture + capture_pageview),
+  //   2. a duplicate provider (posthog-js init alongside our fetch shim),
+  //   3. autocapture leaking message bodies / addresses to PostHog.
+  // This pin keeps that decision loud — a future PR that genuinely
+  // wants posthog-js must update this test AND the docs at the same
+  // time.
+  const pkg = JSON.parse(READ("package.json")) as {
+    dependencies?: Record<string, string>;
+    devDependencies?: Record<string, string>;
+  };
+  for (const bag of [pkg.dependencies ?? {}, pkg.devDependencies ?? {}]) {
+    for (const name of Object.keys(bag)) {
+      assert.ok(
+        !/^(?:posthog-js|@posthog\/)/.test(name),
+        `posthog-js / @posthog/* must not be installed without applying the disabled-defaults documented in docs/ANALYTICS_AND_MONITORING.md §8 — found "${name}"`,
+      );
+    }
+  }
+});
+
+test("PostHogPageView is mounted EXACTLY ONCE in app/providers.tsx", () => {
   const providers = READ("app/providers.tsx");
   assert.match(providers, /from\s+["']@\/components\/analytics\/PostHogPageView["']/);
-  assert.match(providers, /<PostHogPageView\s*\/>/);
+  // Count <PostHogPageView /> JSX tags. If a future refactor accidentally
+  // mounts a second instance (e.g. in a layout AND in providers), every
+  // navigation would double-fire $pageview and skew funnels.
+  const matches = providers.match(/<PostHogPageView\s*\/>/g) ?? [];
+  assert.equal(
+    matches.length,
+    1,
+    `PostHogPageView must be mounted exactly once in app/providers.tsx, found ${matches.length}`,
+  );
+  // Must be inside a `"use client"` boundary — otherwise the `useEffect`
+  // pageview emit silently no-ops at runtime.
+  assert.match(providers, /^["']use client["']\s*;?/m);
 });
+
+test("PostHogPageView emits the universal PostHog $pageview on every route", () => {
+  const src = READ("components/analytics/PostHogPageView.tsx");
+  assert.match(src, /trackPageView\s*\(/, "missing trackPageView call");
+  // The universal pageview must fire BEFORE the path-specific switch —
+  // otherwise an early `return` for /yo, /admin, etc. would skip it.
+  const pageViewIdx = src.indexOf("trackPageView(");
+  const landingViewedIdx = src.indexOf("trackLandingViewed(");
+  assert.ok(pageViewIdx > 0, "trackPageView must be wired");
+  assert.ok(landingViewedIdx > 0, "trackLandingViewed must still be wired");
+  assert.ok(
+    pageViewIdx < landingViewedIdx,
+    "trackPageView must fire BEFORE the path-specific switch (otherwise early-return paths skip $pageview)",
+  );
+});
+
+test("Analytics layer never enables a second pageview / autocapture strategy", () => {
+  // Belt-and-suspenders: ensure no analytics module accidentally calls
+  // posthog.init / posthog.capture / sets capture_pageview:true /
+  // autocapture:true. If posthog-js is ever introduced (see the test
+  // above), it must explicitly disable those — and this assertion will
+  // fail loudly until the upgrade contract is honored. We strip
+  // comments/strings before matching so docs that explain the rules
+  // can mention the forbidden API names without tripping the test.
+  for (const rel of [
+    "lib/analytics/events.ts",
+    "lib/analytics/posthog.ts",
+    "components/analytics/PostHogPageView.tsx",
+    "app/providers.tsx",
+  ]) {
+    const src = stripCommentsAndStrings(READ(rel));
+    for (const forbidden of [
+      /\bposthog\s*\.\s*init\s*\(/,
+      /capture_pageview\s*:\s*true/,
+      /\bautocapture\s*:\s*true/,
+      /<\s*PostHogProvider\b/,
+    ]) {
+      assert.doesNotMatch(
+        src,
+        forbidden,
+        `${rel} must not introduce a second pageview/autocapture strategy (${forbidden})`,
+      );
+    }
+  }
+});
+
+test("capturePostHogEvent has an SSR early-bail (typeof window === 'undefined')", () => {
+  const src = READ("lib/analytics/posthog.ts");
+  // The guard must live INSIDE capturePostHogEvent, before the env
+  // read. Otherwise an RSC accidentally importing the module could
+  // trigger fetch() in environments without a global window/fetch.
+  const captureIdx = src.indexOf("export function capturePostHogEvent");
+  assert.ok(captureIdx > 0, "capturePostHogEvent export must exist");
+  const captureBody = src.slice(captureIdx, captureIdx + 1500);
+  assert.match(
+    captureBody,
+    /typeof\s+window\s*===\s*["']undefined["']/,
+    "capturePostHogEvent must early-bail on SSR (typeof window === 'undefined')",
+  );
+});
+
+test("capturePostHogEvent attaches PostHog auto-properties from window.location when present", () => {
+  const src = READ("lib/analytics/posthog.ts");
+  // We send the public, already-visible-in-the-URL-bar values so PostHog
+  // dashboards can split events by host/path. We must NOT add
+  // user-agent, screen size, referrer, or other autocapture-style
+  // fingerprint properties without an explicit privacy review.
+  for (const must of [/\$current_url/, /\$host/, /\$pathname/, /window\.location/]) {
+    assert.match(src, must, `posthog.ts auto-properties missing: ${must}`);
+  }
+  for (const forbidden of [/\$browser_version/, /\$screen_width/, /\$referrer/, /\$user_agent/, /navigator\.userAgent/]) {
+    assert.doesNotMatch(
+      src,
+      forbidden,
+      `posthog.ts must not add autocapture-style fingerprint property: ${forbidden}`,
+    );
+  }
+});
+
+test("Env var names match across .env.example, code, and docs", () => {
+  const env = READ(".env.example");
+  const code = READ("lib/analytics/posthog.ts");
+  const doc = READ("docs/ANALYTICS_AND_MONITORING.md");
+  for (const name of ["NEXT_PUBLIC_POSTHOG_KEY", "NEXT_PUBLIC_POSTHOG_HOST"]) {
+    assert.ok(env.includes(name), `.env.example missing ${name}`);
+    assert.ok(code.includes(name), `lib/analytics/posthog.ts missing ${name}`);
+    assert.ok(doc.includes(name), `docs/ANALYTICS_AND_MONITORING.md missing ${name}`);
+  }
+});
+
+// ── Source-scan: call-site wiring ───────────────────────────────────────────
 
 test("LandingPageClient wires trackSearchStarted / trackTeacherProfileViewed / trackBookingStarted", () => {
   const src = READ("app/LandingPageClient.tsx");

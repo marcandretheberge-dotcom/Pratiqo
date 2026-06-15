@@ -1,6 +1,6 @@
 # Pratiqo — Analytics & Monitoring
 
-**Last reviewed**: 2026-06-15 — alongside `feat/posthog-sentry-instrumentation`.
+**Last reviewed**: 2026-06-15 — alongside `feat/posthog-sentry-instrumentation` and `fix/posthog-provider-wiring`.
 
 This is the contract for what Pratiqo measures, where it sends the data,
 and — most importantly — what it **must never send**. If you change any
@@ -24,7 +24,18 @@ Two reasons:
 1. **No new dependency churn** the week before launch. `@sentry/nextjs` and `posthog-js` together add ~250 KB to the browser bundle, modify `next.config`, and require source-maps pipelines. None of that is appropriate for a closed-beta unblock PR.
 2. **Privacy by construction.** Both SDKs default to autocapture / autoreplay, which would indiscriminately serialize DOM nodes that may contain message bodies, raw addresses, and partial payment UI. Manual capture is the privacy floor — and the only floor compatible with the brief's "never send message content / private addresses / payment details" requirement.
 
-A documented upgrade path to the official SDKs is at the bottom of this file (§7).
+**The fetch-based provider IS the canonical Pratiqo provider.** It is mounted exactly once via `<PostHogPageView />` inside `app/providers.tsx` (a `"use client"` boundary). Adding `posthog-js` + `<PostHogProvider>` on top of it would create a duplicate provider — that's why `tests/analytics/postHogSentryInstrumentation.test.ts` pins the absence of `posthog-js` from `package.json`. A documented upgrade path to the official SDKs is at the bottom of this file (§8); doing it accidentally is blocked by the regression suite.
+
+### Pageview strategy (the only emitter is `<PostHogPageView />`)
+
+`components/analytics/PostHogPageView.tsx` is the **single** pageview emitter in the app. On every Next.js navigation it fires two layers:
+
+1. **Universal `$pageview`** — PostHog's reserved event name. Required for PostHog's out-of-the-box Insights / Funnels / Path-analysis widgets to render anything for routes we haven't custom-named.
+2. **Path-specific product events** (`landing_viewed`, `yopratiqo_landing_viewed`, `yopratiqo_intro_started`, `admin_users_viewed`) for surfaces we want as named cohorts.
+
+Both layers run through `capturePostHogEvent`, which auto-enriches every event with `$current_url`, `$host`, and `$pathname` — those values come from `window.location` (already public via the URL bar), so they don't widen the privacy surface. A `lastFiredRef` guard makes sure StrictMode double-mount in dev never produces duplicate events.
+
+Because we don't call `posthog.init()`, there is no autocapture / `capture_pageview: true` to compete with — `<PostHogPageView />` has the field to itself. If a future PR ever installs `posthog-js`, it must explicitly pass `{ capture_pageview: false, autocapture: false }` to `posthog.init()` (see §8); the regression test enforces this contract.
 
 ---
 
@@ -51,6 +62,12 @@ All event names live in `lib/analytics/events.ts#ANALYTICS_EVENTS` and each even
 2. A typed helper in the same file.
 3. A row in this table.
 4. A test assertion in `tests/analytics/postHogSentryInstrumentation.test.ts`.
+
+### Universal pageview
+
+| Event | Trigger | Properties |
+|---|---|---|
+| `$pageview` (PostHog reserved) | Every Next.js navigation | `{ path }` plus auto-attached `$current_url`, `$host`, `$pathname`, `$lib` |
 
 ### Core marketplace web
 
@@ -175,10 +192,24 @@ npx tsx tests/analytics/postHogSentryInstrumentation.test.ts
 
 ## 6.1 How to verify in production
 
+- PostHog Live Events: filter by `event = "$pageview"` → events should arrive within seconds of any visit to any route. If `$pageview` is missing, the deploy hasn't picked up the new env vars (or they were set without redeploying).
 - PostHog Live Events: filter by `event = "landing_viewed"` → events should arrive within seconds of any visit to `/`.
 - PostHog Funnels: build `search_started → teacher_profile_viewed → booking_started → booking_checkout_started`. This is the canonical marketplace funnel; it works without any backfill because every step is in this PR.
 - Sentry Issues: trigger a known server error (e.g. POST malformed body to `/api/admin/users`) and verify it appears.
-- Spot-check the `_lib` / `$lib` property: every event from Pratiqo carries `$lib: "pratiqo-fetch"`. If you see events without that, something is bypassing the helpers — investigate.
+- Spot-check the `$lib` property: every event from Pratiqo carries `$lib: "pratiqo-fetch"`. If you see events without that, something is bypassing the helpers — investigate.
+
+## 6.2 Vercel env-var checklist (production)
+
+These are the **only** env vars required to switch analytics on. None of them affect the build — the app runs identically with all four absent (every helper no-ops). Setting them and **redeploying** is the entire activation step.
+
+| Var | Where | Value source |
+|---|---|---|
+| `NEXT_PUBLIC_POSTHOG_KEY` | Vercel → Production (and Preview, if you want preview deploys to capture) | PostHog Project Settings → Project API Key (`phc_…`) |
+| `NEXT_PUBLIC_POSTHOG_HOST` | Same | PostHog cloud region: `https://us.i.posthog.com` (default) or `https://eu.i.posthog.com` |
+| `SENTRY_DSN` | Production server-only | Sentry Project Settings → Client Keys (DSN) |
+| `NEXT_PUBLIC_SENTRY_DSN` | Production browser-safe | Same DSN as `SENTRY_DSN` (Sentry treats the public-key portion as a write-only ingest credential) |
+
+After setting the vars in Vercel, **redeploy** (push or click "Redeploy"). `NEXT_PUBLIC_*` vars are inlined at build time, so a runtime-only env change won't activate analytics until the next build.
 
 ---
 
@@ -203,6 +234,10 @@ When tracing / replays / source-maps / breadcrumbs become necessary:
 3. Replace the fetch shim in `lib/monitoring/sentry.ts` with a re-export of `Sentry.captureException` / `Sentry.captureMessage`. The signature of `captureMonitoringError()` is intentionally compatible so call-sites do NOT change.
 4. Replace the fetch capture in `lib/analytics/posthog.ts` with `posthog.capture()`. Keep the property sanitizer in place — it's the privacy floor regardless of transport.
 5. Add the source-maps upload step to the Vercel build environment.
-6. **Critical**: explicitly disable PostHog autocapture (`autocapture: false`) and Sentry session replay until a privacy review of those features is complete.
+6. **Critical**: configure `posthog.init()` with `{ autocapture: false, capture_pageview: false, disable_session_recording: true }` until a privacy review clears those features. `<PostHogPageView />` already emits the universal `$pageview` event; letting posthog-js fire its own would double-count every navigation.
 
-The contract tested by `tests/analytics/postHogSentryInstrumentation.test.ts` survives that upgrade unchanged.
+The contract tested by `tests/analytics/postHogSentryInstrumentation.test.ts` survives that upgrade unchanged. Critically, the test pins:
+
+- `posthog-js` is **NOT** in `package.json` dependencies — adding it without applying the disabled-defaults above will fail the test.
+- `<PostHogPageView />` is mounted exactly once in `app/providers.tsx`.
+- The `$pageview` event is the only universal pageview emitter.

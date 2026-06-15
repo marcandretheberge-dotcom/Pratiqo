@@ -155,13 +155,47 @@ function getAnonymousDistinctId(): string {
   }
 }
 
+// ─── Auto-properties ────────────────────────────────────────────────────────
+//
+// PostHog's stock dashboards (Insights, Funnels, Path analysis) rely on a
+// small set of meta properties prefixed with `$`. Sending them lets the
+// PostHog UI render hosts/paths/referrers correctly without the dashboard
+// owner having to remap every event by hand. These values come from
+// `window.location` — they are already public (visible in the URL bar),
+// so adding them does NOT widen our privacy surface vs. PR #190.
+//
+// We deliberately do NOT send `$browser`, user agent, or screen size:
+// PostHog's server can derive `$ip`-based geolocation from the request
+// itself, and richer fingerprint properties are autocapture territory
+// (which we still avoid — see file header). This is the minimum needed
+// to make PostHog dashboards usable.
+type AutoProperties = {
+  $current_url?: string;
+  $host?: string;
+  $pathname?: string;
+};
+
+function buildAutoProperties(): AutoProperties {
+  if (typeof window === "undefined") return {};
+  try {
+    const { href, host, pathname } = window.location;
+    return {
+      $current_url: truncate(href),
+      $host: truncate(host),
+      $pathname: truncate(pathname),
+    };
+  } catch {
+    return {};
+  }
+}
+
 // ─── Capture ────────────────────────────────────────────────────────────────
 
 type CaptureBody = {
   api_key: string;
   event: string;
   distinct_id: string;
-  properties: AnalyticsPropertyBag & { $lib: string };
+  properties: AnalyticsPropertyBag & AutoProperties & { $lib: string };
   timestamp: string;
 };
 
@@ -169,17 +203,26 @@ type CaptureBody = {
  * Fire-and-forget PostHog capture. Never throws, never blocks UI.
  *
  * Resolution order:
- *   1. Missing NEXT_PUBLIC_POSTHOG_KEY → no-op (return).
- *   2. Properties sanitized (forbidden keys dropped, strings truncated,
+ *   1. Server-side (no `window`) → no-op (return). Defense in depth — every
+ *      typed helper today calls this from a `"use client"` path or
+ *      useEffect, but an explicit guard keeps the function safe if an
+ *      RSC accidentally imports it later.
+ *   2. Missing NEXT_PUBLIC_POSTHOG_KEY → no-op (return).
+ *   3. Properties sanitized (forbidden keys dropped, strings truncated,
  *      non-primitive values stripped).
- *   3. POST /capture/ with `keepalive` so the event survives navigation.
- *   4. Network errors swallowed — we log a single console.warn in dev
+ *   4. Auto-properties merged ($current_url, $host, $pathname).
+ *   5. POST /capture/ with `keepalive` so the event survives navigation.
+ *   6. Network errors swallowed — we log a single console.warn in dev
  *      so engineers notice broken endpoints; production stays silent.
  */
 export function capturePostHogEvent(
   event: string,
   properties: Record<string, unknown> | null | undefined,
 ): void {
+  // SSR / non-browser early bail. Tests can still exercise the function
+  // because `window` is patched by jsdom or the test runner; in plain
+  // Node (build, scripts, edge runtimes) we simply do nothing.
+  if (typeof window === "undefined") return;
   const config = readPostHogConfig();
   if (!config) return;
   if (!event || typeof event !== "string") return;
@@ -189,7 +232,11 @@ export function capturePostHogEvent(
     api_key: config.apiKey,
     event,
     distinct_id: getAnonymousDistinctId(),
-    properties: { ...sanitized, $lib: "pratiqo-fetch" },
+    properties: {
+      ...sanitized,
+      ...buildAutoProperties(),
+      $lib: "pratiqo-fetch",
+    },
     timestamp: new Date().toISOString(),
   };
 
