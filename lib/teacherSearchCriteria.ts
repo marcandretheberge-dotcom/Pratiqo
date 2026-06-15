@@ -1,4 +1,5 @@
 import type { TranslationKey } from "@/lib/i18n/types";
+import type { DayKey, PeriodKey } from "@/lib/slots";
 
 export type TeacherSearchFormat = "at_home" | "in_person" | "online" | "hybrid" | "no_preference";
 
@@ -27,7 +28,16 @@ export type TeacherSearchCriteria = {
   verifiedOnly?: boolean;
   language?: string;
   level?: string;
-  availability?: string;
+  /**
+   * Structured weekly-availability filter — replaces the previous free-text
+   * `availability` field which couldn't reliably reason about day/time
+   * windows. Either or both may be omitted; matching widens accordingly.
+   * Backed by `lib/slots.ts#teacherMatchesAvailabilityWindow` which reads
+   * the same `teacher.availability` JSON the booking modal already parses,
+   * so search and booking cannot disagree.
+   */
+  availabilityDay?: DayKey;
+  availabilityPeriod?: PeriodKey;
   teacherPreference?: TeacherPreference;
 };
 

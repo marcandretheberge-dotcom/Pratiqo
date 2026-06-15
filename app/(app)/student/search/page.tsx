@@ -106,7 +106,8 @@ export default function StudentSearchPage() {
     verifiedOnly: false,
     language: "",
     level: "",
-    availability: "",
+    availabilityDay: "",
+    availabilityPeriod: "",
     teacherPreference: "",
     formatExtra: "",
   });
@@ -393,7 +394,18 @@ export default function StudentSearchPage() {
   };
 
   const results = useMemo(() => {
-    const pool = filterTeacherPool(teachers, { category: activeCat, searchQuery });
+    // NB: this surface currently only forwards `category` + `searchQuery`
+    // (and now `availabilityDay`/`availabilityPeriod`) to the engine. The
+    // other advanced filters (rating/price/language/level/teacherPreference)
+    // are intentionally NOT plumbed yet — a pre-existing limitation tracked
+    // separately. The availability filter is forwarded here because V1 ships
+    // it as a real, usable feature on every surface that mounts the panel.
+    const pool = filterTeacherPool(teachers, {
+      category: activeCat,
+      searchQuery,
+      availabilityDay: adv.availabilityDay || undefined,
+      availabilityPeriod: adv.availabilityPeriod || undefined,
+    });
     const base = buildTeacherSearchRows(pool, { geo });
     let filtered = applyRadiusFilter(base, geo ? radius : radius === "online" ? "online" : "all");
 
@@ -416,7 +428,18 @@ export default function StudentSearchPage() {
     // Unify sorting across search surfaces. Keep existing modes, but fold in student prefs.
     const rows = sortRows(filtered, { sortMode, studentPrefs });
     return rows;
-  }, [teachers, activeCat, searchQuery, geo, radius, sortMode, mapBounds, studentPrefs]);
+  }, [
+    teachers,
+    activeCat,
+    searchQuery,
+    geo,
+    radius,
+    sortMode,
+    mapBounds,
+    studentPrefs,
+    adv.availabilityDay,
+    adv.availabilityPeriod,
+  ]);
 
   // Open a teacher profile and carry the current distanceKm from the results list.
   const openTeacherProfile = useCallback((teacher: Teacher) => {
