@@ -99,6 +99,18 @@ function emit(level: "INFO" | "WARN" | "ERROR", message: string, meta?: Record<s
 
 export function logError(message: string, meta?: Record<string, unknown>): void {
   emit("ERROR", message, meta);
+  // Best-effort Sentry forward when DSN is configured. The Sentry shim
+  // no-ops silently otherwise. We never throw from here — analytics and
+  // monitoring must never affect product behavior.
+  try {
+    // Lazy import keeps the module dependency-free in environments that
+    // don't load the monitoring layer (tests, scripts, etc.).
+    void import("@/lib/monitoring/sentry").then(({ captureMonitoringError }) => {
+      captureMonitoringError(message, { extra: meta }, "error");
+    }).catch(() => { /* best-effort */ });
+  } catch {
+    /* never throw */
+  }
 }
 
 export function logWarn(message: string, meta?: Record<string, unknown>): void {

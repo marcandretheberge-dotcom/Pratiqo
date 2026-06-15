@@ -17,6 +17,12 @@ import {
 import { useAuth } from "@/components/AuthProvider";
 import { getSupabaseClient } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
+import {
+  trackAdminRoleChangeCompleted,
+  trackAdminRoleChangeFailed,
+  trackAdminRoleChangeStarted,
+  trackAdminUsersViewed,
+} from "@/lib/analytics/events";
 
 type AdminRole = "student" | "teacher" | "admin";
 
@@ -105,6 +111,10 @@ export default function AdminUsersPage() {
         };
         if (!res.ok) throw new Error(data.error ?? "Erreur lors du chargement.");
         setUsers(data.users ?? []);
+        // PostHog: precise cohort emit with the rendered row count. We
+        // do NOT send emails or names — only the count, mirroring the
+        // privacy floor the property sanitizer enforces anyway.
+        trackAdminUsersViewed({ rendered_count: (data.users ?? []).length });
       } catch (e) {
         showFlash("err", e instanceof Error ? e.message : "Erreur lors du chargement.");
       } finally {
@@ -139,6 +149,13 @@ export default function AdminUsersPage() {
 
     setBusyId(target.id);
     setFlash(null);
+    // PostHog: intent emit. Properties carry the role transition only,
+    // never the target email or display name. The role-change endpoint
+    // already records full forensics in `admin_role_change_audit` server-side.
+    trackAdminRoleChangeStarted({
+      previous_role: target.role,
+      new_role: nextRole,
+    });
     try {
       const { data: sess } = await getSupabaseClient().auth.getSession();
       const token = sess.session?.access_token ?? "";
@@ -153,8 +170,28 @@ export default function AdminUsersPage() {
         prev.map((u) => (u.id === target.id ? { ...u, role: nextRole } : u)),
       );
       showFlash("ok", `Rôle mis à jour pour ${target.email ?? target.id}.`);
+      trackAdminRoleChangeCompleted({
+        previous_role: target.role,
+        new_role: nextRole,
+        target_id: target.id,
+      });
     } catch (e) {
       showFlash("err", e instanceof Error ? e.message : "Mise à jour impossible.");
+      // We map exceptions to a small product-shaped reason_code instead
+      // of forwarding raw error messages (which could contain server
+      // diagnostics, db error text, etc.).
+      const message = e instanceof Error ? e.message.toLowerCase() : "";
+      let reasonCode = "unknown_error";
+      if (message.includes("propre rôle") || message.includes("son propre")) reasonCode = "self_mutation";
+      else if (message.includes("rôle invalide") || message.includes("invalid role")) reasonCode = "invalid_role";
+      else if (message.includes("introuvable")) reasonCode = "target_not_found";
+      else if (message.includes("non authentifié") || message.includes("session invalide")) reasonCode = "auth";
+      else if (message.includes("accès refusé") || message.includes("refusé")) reasonCode = "forbidden";
+      trackAdminRoleChangeFailed({
+        previous_role: target.role,
+        new_role: nextRole,
+        reason_code: reasonCode,
+      });
     } finally {
       setBusyId(null);
     }
