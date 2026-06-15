@@ -14,6 +14,11 @@ It deliberately does **not** re-derive the operator runbook, the Stripe live
 checklist, the database backup gate, or the rollback plan — those live in
 `PRODUCTION_LAUNCH_RUNBOOK.md` and apply to the full public launch.
 
+**Pre-flight gate**: before inviting the cohort, the founder runs the
+single-tester [`PRODUCTION_SMOKE_TEST.md`](./PRODUCTION_SMOKE_TEST.md) on
+real devices against the live deployment. If that smoke test fails, do
+**not** invite the cohort.
+
 ## 1. Closed beta goal
 
 Validate the **full Pratiqo marketplace flow** with a tiny group of real
@@ -351,6 +356,9 @@ Date             : <yyyy-mm-dd>
 
 ## See also
 
+- [`PRODUCTION_SMOKE_TEST.md`](./PRODUCTION_SMOKE_TEST.md) — single-tester
+  pre-flight smoke test (run by the founder on real devices **before**
+  inviting the closed beta cohort).
 - [`PRODUCTION_LAUNCH_RUNBOOK.md`](./PRODUCTION_LAUNCH_RUNBOOK.md) — full
   public launch operator runbook (Stripe live, env, smoke test, rollback).
 - [`MARKETPLACE_P0_QA.md`](./MARKETPLACE_P0_QA.md) — integrated marketplace

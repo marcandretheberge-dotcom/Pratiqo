@@ -187,9 +187,14 @@ npm run validate:launch
 
 ## Next step toward public launch
 
-Once this checklist passes on a clean release commit, run the **closed
-beta** with a tiny real cohort (2–3 teachers + 2–3 students) per
-[`CLOSED_BETA_READINESS.md`](./CLOSED_BETA_READINESS.md). The closed beta
-exercises the same P0 areas but with real users on real devices and is
-the gate before the full public launch described in
-[`PRODUCTION_LAUNCH_RUNBOOK.md`](./PRODUCTION_LAUNCH_RUNBOOK.md).
+Once this checklist passes on a clean release commit:
+
+1. Run the single-tester [`PRODUCTION_SMOKE_TEST.md`](./PRODUCTION_SMOKE_TEST.md)
+   on real devices against the live deployment (~20–30 min).
+2. If that smoke test passes, run the **closed beta** with a tiny real
+   cohort (2–3 teachers + 2–3 students) per
+   [`CLOSED_BETA_READINESS.md`](./CLOSED_BETA_READINESS.md). The closed
+   beta exercises the same P0 areas but with real users on real
+   devices.
+3. Only then proceed to the full public launch sequence in
+   [`PRODUCTION_LAUNCH_RUNBOOK.md`](./PRODUCTION_LAUNCH_RUNBOOK.md).

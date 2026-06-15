@@ -4,7 +4,12 @@ Last reviewed: 2026-06-14
 
 This runbook is the operator checklist for activating Stripe production and launching Pratiqo publicly. It contains no secrets and no live keys.
 
-**Prerequisite phase**: before running this runbook, complete the **closed beta** per [`CLOSED_BETA_READINESS.md`](./CLOSED_BETA_READINESS.md) with 2–3 real teachers and 2–3 real students. The closed beta validates the marketplace flow with real users on real devices and is the go/no-go gate for the public launch sequence below.
+**Prerequisite phase**: before running this runbook, complete (in order)
+
+1. the single-tester [`PRODUCTION_SMOKE_TEST.md`](./PRODUCTION_SMOKE_TEST.md) on real devices against the live deployment (~20–30 min), then
+2. the **closed beta** per [`CLOSED_BETA_READINESS.md`](./CLOSED_BETA_READINESS.md) with 2–3 real teachers and 2–3 real students.
+
+The smoke test is the founder's last pre-flight check; the closed beta is the cohort gate. Only proceed to the public launch sequence below if both passed on a clean release commit.
 
 ## 1. Current Launch-Relevant Operations State
 
