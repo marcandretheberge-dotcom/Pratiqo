@@ -36,7 +36,7 @@
     "test:yo-fr-quebec-premium-audio": "tsx tests/yo/yopratiqoFrQuebecPremiumAudio.test.ts",
     "test:yo-fr-quebec-lesson-2": "tsx tests/yo/yopratiqoFrQuebecLesson2.test.ts",
     "test:yo-fr-quebec-lesson-2-audio": "tsx tests/yo/yopratiqoFrQuebecLesson2Audio.test.ts",
-    "test:auth": "tsx tests/auth/adminAuthorization.test.ts && tsx tests/auth/serverRouteGuards.test.ts",
+    "test:auth": "tsx tests/auth/adminAuthorization.test.ts && tsx tests/auth/serverRouteGuards.test.ts && tsx tests/auth/adminUsersRoleManagement.test.ts",
     "test:security": "tsx tests/security/rlsPolicyShape.test.ts && tsx tests/security/productionAccessAudit.test.ts && tsx tests/security/teacherPublicReadIsolation.test.ts && tsx tests/security/rlsCoverage.test.ts && tsx tests/security/securityAdvisorFindings.test.ts",
     "test:currency": "tsx tests/currency/conversion.test.ts",
     "test:commission-model": "tsx tests/commission/commissionModelCopy.test.ts",
