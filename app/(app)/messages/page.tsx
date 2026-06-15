@@ -41,6 +41,19 @@ export default function MessagesPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const bottomRef = useRef<HTMLDivElement>(null);
+  const messagesScrollerRef = useRef<HTMLDivElement>(null);
+  // Tracks whether the user is reading the latest part of the thread.
+  // Initial open + sending always force-scroll to bottom regardless;
+  // realtime arrivals only auto-scroll when this is true so a user
+  // who deliberately scrolled up to read older history isn't yanked
+  // back to the bottom every time a new message lands. Default true
+  // because a freshly loaded thread is rendered scrolled to bottom.
+  const isNearBottomRef = useRef(true);
+  // Marks the conversationId that has had its initial "open at the
+  // latest message" scroll applied. Reset whenever the active
+  // conversation changes so re-entering the same thread re-scrolls
+  // to the latest message after the next load finishes.
+  const hasScrolledForActiveRef = useRef<string | null>(null);
 
   const [conversations, setConversations] = useState<ConversationPreview[]>([]);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
@@ -56,6 +69,30 @@ export default function MessagesPage() {
   const [draftHint, setDraftHint] = useState(false);
   const draftAppliedKeyRef = useRef<string | null>(null);
   const [contactGateNotice, setContactGateNotice] = useState(false);
+
+  // Defer the scroll to the next animation frame so the freshly
+  // appended message has been laid out by the browser before
+  // scrollIntoView measures positions. Without this rAF, calls fired
+  // synchronously inside a state-update effect can resolve against
+  // the pre-update layout and stop one message short on mobile
+  // Safari and slower Android Chrome.
+  const scrollToLatest = useCallback((behavior: ScrollBehavior = "auto") => {
+    if (typeof window === "undefined") return;
+    window.requestAnimationFrame(() => {
+      bottomRef.current?.scrollIntoView({ block: "end", behavior });
+    });
+  }, []);
+
+  const handleMessagesScroll = useCallback(() => {
+    const el = messagesScrollerRef.current;
+    if (!el) return;
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    // ~80px = roughly one to two message bubbles + their timestamps.
+    // Generous enough that incidental nudges still count as "near
+    // the bottom"; strict enough to detect a deliberate scroll up
+    // to read older history.
+    isNearBottomRef.current = distanceFromBottom < 80;
+  }, []);
 
   const supabase = useMemo(() => getSupabaseClient(), []);
 
@@ -79,19 +116,39 @@ export default function MessagesPage() {
       if (!user?.id) return;
       setLoadingThread(true);
       setError(null);
+      let rows: MessageRow[];
       try {
-        const rows = await getMessages(supabase, conversationId);
-        setMessages(rows);
-        await markAsRead(supabase, conversationId, user.id);
-        await refreshConversations();
+        rows = await getMessages(supabase, conversationId);
       } catch (e) {
         console.error(e);
         setError(e instanceof Error ? e.message : t("cannotLoadMessages"));
-      } finally {
         setLoadingThread(false);
+        return;
+      }
+      // Render the messages AND drop the loading flag in the same
+      // commit so the message list (and the bottom sentinel inside
+      // it) becomes the visible layout before the scroll-to-latest
+      // effect runs. The previous order — `setMessages` then two
+      // awaits for markAsRead + refreshConversations, then
+      // `setLoadingThread(false)` in `finally` — meant the scroll
+      // effect fired while the loader was still on screen, so it
+      // resolved against the loader's tiny scrollHeight and the
+      // user opened on the OLDEST message instead of the newest.
+      setMessages(rows);
+      setLoadingThread(false);
+      // markAsRead and refreshConversations are best-effort
+      // side-effects: they update the read-state badge and the
+      // conversation list, but they MUST NOT delay the visible
+      // thread render. Failures are logged but do not surface as
+      // a thread-level error.
+      try {
+        await markAsRead(supabase, conversationId, user.id);
+        await refreshConversations();
+      } catch (e) {
+        console.warn("[messages] post-load read-state refresh failed", e);
       }
     },
-    [supabase, user?.id, refreshConversations],
+    [supabase, user?.id, refreshConversations, t],
   );
 
   useEffect(() => {
@@ -148,9 +205,44 @@ export default function MessagesPage() {
     setContactGateNotice(false);
   }, [activeConversationId, user?.id, loadThread]);
 
+  // Reset the "has-already-scrolled-on-open" marker whenever the
+  // active conversation changes so re-entering the SAME thread
+  // (e.g. mobile back-then-tap-again) still pins the scroll to the
+  // latest message after the next load completes.
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    hasScrolledForActiveRef.current = null;
+    isNearBottomRef.current = true;
+  }, [activeConversationId]);
+
+  // Single source of truth for scroll-to-latest behavior. Runs after
+  // every (conversationId, loadingThread, messages) commit and
+  // distinguishes three cases:
+  //   1. Conversation just finished loading -> instant jump to the
+  //      newest message regardless of how many messages there are.
+  //   2. Current user just sent a message -> smooth scroll to that
+  //      message (the optimistic append is what triggers this).
+  //   3. New realtime message arrived from the peer -> smooth
+  //      scroll only if the user is already near the bottom; if the
+  //      user scrolled up to read older history, do NOT yank them
+  //      back to the bottom.
+  useEffect(() => {
+    if (!activeConversationId) return;
+    if (loadingThread) return;
+
+    if (hasScrolledForActiveRef.current !== activeConversationId) {
+      hasScrolledForActiveRef.current = activeConversationId;
+      isNearBottomRef.current = true;
+      scrollToLatest("auto");
+      return;
+    }
+
+    const last = messages[messages.length - 1];
+    if (!last) return;
+    const sentByMe = last.sender_id === user?.id;
+    if (sentByMe || isNearBottomRef.current) {
+      scrollToLatest("smooth");
+    }
+  }, [activeConversationId, loadingThread, messages, user?.id, scrollToLatest]);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -365,7 +457,11 @@ export default function MessagesPage() {
                 </div>
               </header>
 
-              <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+              <div
+                ref={messagesScrollerRef}
+                onScroll={handleMessagesScroll}
+                className="flex-1 overflow-y-auto px-4 py-4 space-y-4"
+              >
                 {loadingThread ? (
                   <div className="flex justify-center py-16">
                     <Loader2 className="animate-spin text-teal-700" size={28} />
