@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronRight, Loader2, LogOut, ShieldCheck } from "lucide-react";
+import { ChevronRight, Loader2, LogOut, Shield, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { logout } from "@/lib/auth";
 import { useLocale } from "@/lib/locale-context";
@@ -64,6 +64,17 @@ export default function AdminDashboardPage() {
             </button>
           </div>
         </section>
+
+        <Link
+          href="/admin/users"
+          className="flex items-center justify-between gap-3 rounded-2xl border border-[#DCEAE3] bg-white px-5 py-4 text-sm font-semibold text-[#2C2C2A] shadow-sm transition hover:border-teal-500/40 hover:bg-teal-50/30"
+        >
+          <span className="flex items-center gap-2">
+            <Shield size={16} className="text-teal-700" aria-hidden />
+            Utilisateurs &amp; rôles
+          </span>
+          <ChevronRight size={18} className="shrink-0 text-teal-700" />
+        </Link>
 
         <Link
           href="/admin/credentials"
