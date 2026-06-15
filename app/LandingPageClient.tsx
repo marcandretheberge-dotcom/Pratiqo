@@ -28,6 +28,14 @@ import type { LandingFormatFilter } from "../lib/landingTeacherFilter";
 import { filterTeacherPool, buildTeacherSearchRows, sortRows } from "../lib/teacherSearchEngine";
 import { TeacherSearchAdvancedPanel, type AdvancedFilterValues } from "../components/TeacherSearchAdvancedPanel";
 import { logSearchEvent } from "../lib/searchAnalytics";
+import {
+  trackBookingStarted,
+  trackSearchAvailabilityFilterUsed,
+  trackSearchFormatSelected,
+  trackSearchStarted,
+  trackTeacherCardClicked,
+  trackTeacherProfileViewed,
+} from "@/lib/analytics/events";
 import type { City } from "../lib/cities";
 
 const TeacherProfile = dynamic(
@@ -304,6 +312,35 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
     resultCountRef.current = filtered.length;
   }, [filtered.length]);
 
+  // PostHog: emit `teacher_card_clicked` + `teacher_profile_viewed`
+  // whenever the profile modal opens, regardless of which surface
+  // triggered it (search list, map, recommendations). One effect ≪ 4
+  // touch points per render path.
+  useEffect(() => {
+    if (!selectedTeacherProfile?.id) return;
+    trackTeacherCardClicked({
+      source: "landing",
+      teacher_id: selectedTeacherProfile.id,
+      position: null,
+    });
+    trackTeacherProfileViewed({
+      teacher_id: selectedTeacherProfile.id,
+      source: "landing",
+    });
+  }, [selectedTeacherProfile?.id]);
+
+  // PostHog: `booking_started` fires when the BookingModal mounts, which
+  // is the canonical product-intent signal (user has chosen a teacher
+  // and reached the booking surface). The downstream slot/checkout
+  // events come from BookingModal itself.
+  useEffect(() => {
+    if (!bookingTeacher?.id) return;
+    trackBookingStarted({
+      teacher_id: bookingTeacher.id,
+      lesson_type: bookingInitialKind,
+    });
+  }, [bookingTeacher?.id, bookingInitialKind]);
+
   const scrollToTeacherResults = useCallback(() => {
     teacherResultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     logSearchEvent({
@@ -323,6 +360,22 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
         teacherPreference: adv.teacherPreference,
       },
     });
+    // PostHog mirror: search_started + side-effect filter events. We do
+    // NOT pass `searchQuery` itself — the property sanitizer in
+    // lib/analytics/posthog.ts would also drop most freeform strings —
+    // we send the length only so PostHog cohorts can split "typed
+    // something" vs "browsed silently" without the raw query text.
+    trackSearchStarted({ source: "landing" });
+    if (formatFilter !== "all") {
+      trackSearchFormatSelected({ source: "landing", format: formatFilter });
+    }
+    if (adv.availabilityDay || adv.availabilityPeriod) {
+      trackSearchAvailabilityFilterUsed({
+        source: "landing",
+        day: adv.availabilityDay || null,
+        period: adv.availabilityPeriod || null,
+      });
+    }
   }, [activeCat, searchQuery, formatFilter, adv]);
 
   // Selecting a place from the Lieu autocomplete must update *only* the

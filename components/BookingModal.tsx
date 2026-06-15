@@ -33,6 +33,10 @@ import {
 } from "@/lib/pricing/credits";
 import { validateMinimumLessonPriceDollars } from "@/lib/pricing/validateMinimumLessonPrice";
 import { formatLocalISODate, periodForSlot } from "../lib/slots";
+import {
+  trackBookingCheckoutStarted,
+  trackBookingSlotSelected,
+} from "@/lib/analytics/events";
 import { localeToBcp47 } from "../lib/i18n/types";
 import { useLocale } from "../lib/locale-context";
 import { TeacherAvatar } from "./TeacherAvatar";
@@ -798,6 +802,17 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
         // Swallow: bridge consent is not on the critical-path of payment.
       }
 
+      // PostHog: emit product-side checkout-started intent BEFORE the
+      // Stripe fetch. We do NOT pass the address, learner profile, or
+      // credits payload — only the public booking shape. The redirect
+      // to Stripe itself is untouched.
+      trackBookingCheckoutStarted({
+        teacher_id: teacher.id,
+        lesson_type: lessonType,
+        teaching_mode: modeForDb,
+        price_cad: typeof basePrice === "number" ? basePrice : null,
+      });
+
       const res = await fetch("/api/stripe/checkout", {
         method: "POST",
         headers: {
@@ -1521,6 +1536,12 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                               onClick={() => {
                                 setSelectedSlot(s);
                                 setStep("confirm");
+                                trackBookingSlotSelected({
+                                  teacher_id: teacher.id,
+                                  lesson_type: lessonType,
+                                  teaching_mode: teachingMode,
+                                  period: periodForSlot(s),
+                                });
                               }}
                               className={cn(
                                 "py-2.5 rounded-xl border text-xs font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700/40 focus-visible:ring-offset-2",

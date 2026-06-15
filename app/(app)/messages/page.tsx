@@ -19,6 +19,10 @@ import {
 } from "../../../lib/messaging";
 import { cn } from "../../../lib/utils";
 import { useLocale } from "../../../lib/locale-context";
+import {
+  trackMessageSent,
+  trackMessageThreadOpened,
+} from "@/lib/analytics/events";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -154,6 +158,19 @@ export default function MessagesPage() {
   useEffect(() => {
     void refreshConversations();
   }, [refreshConversations]);
+
+  // PostHog: one `message_thread_opened` per real thread switch. We
+  // forward the conversation id ONLY — never the peer email, never the
+  // message body, never the peer's display name. Both URL-deep-link
+  // opens and sidebar-click opens funnel through `activeConversationId`,
+  // so a single side-effect covers every path.
+  const lastTrackedThreadRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!activeConversationId) return;
+    if (lastTrackedThreadRef.current === activeConversationId) return;
+    lastTrackedThreadRef.current = activeConversationId;
+    trackMessageThreadOpened({ thread_id: activeConversationId });
+  }, [activeConversationId]);
 
   const peerFromQuery = searchParams.get("peer");
   const draftFromQuery = searchParams.get("draft");
@@ -319,6 +336,12 @@ export default function MessagesPage() {
     try {
       const result = await sendMessage(supabase, user.id, activePeerId, contentToSend);
       setMessages((prev) => prev.map((m) => (m.id === optimisticId ? result.message : m)));
+      // PostHog: success-only emit. We send ONLY the conversation_id +
+      // peer role (when known). The message body NEVER leaves the
+      // function — it stays in `contentToSend` and `result.message`.
+      trackMessageSent({
+        thread_id: result.message.conversation_id,
+      });
       setPendingPeer(null);
       await refreshConversations();
       setDraftHint(false);
