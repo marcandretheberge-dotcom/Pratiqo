@@ -2,30 +2,47 @@
 
 // PostHog page-view tracker.
 //
-// Why a single client component (not autocapture)
-// -----------------------------------------------
+// Why a single client component (not posthog-js autocapture)
+// ----------------------------------------------------------
 // We do NOT use posthog-js autocapture (see `lib/analytics/posthog.ts`
-// header for the rationale). Instead, this component listens to Next.js
-// pathname changes and emits ONE typed event per top-level surface:
+// header for the rationale). This component is the canonical pageview
+// emitter for Pratiqo and runs in two layers:
 //
-//   - `/`                        → landing_viewed
-//   - `/yo/langues/<lang>...`    → yopratiqo_landing_viewed
-//   - `/admin/users`             → admin_users_viewed
+//   1. Universal `$pageview` — PostHog's reserved event, fired on every
+//      navigation. PostHog's stock Insights / Funnels / Path analysis
+//      widgets key off this exact event name. Without it, those
+//      dashboards stay empty for any route we haven't custom-named.
 //
-// Other routes fire nothing here — pages instrument their own deeper
-// events (search, booking, messaging) explicitly through the typed
-// helpers in `lib/analytics/events.ts`. This keeps the page-view layer
-// tiny and grep-able.
+//   2. Path-specific product events — fired in addition to `$pageview`
+//      for surfaces we want as named cohorts:
+//        - `/`                          → landing_viewed
+//        - `/yo/langues/<lang>`         → yopratiqo_landing_viewed
+//        - `/yo/langues/<lang>/intro`   → yopratiqo_intro_started
+//        - `/admin/users`               → admin_users_viewed
 //
-// Mounting: this component is rendered once inside `app/providers.tsx`
-// so it runs for every route. It uses an effect keyed on pathname so we
-// fire exactly one event per navigation (StrictMode-safe via a ref).
+// Both layers go through `capturePostHogEvent`, which also attaches
+// `$current_url`, `$host`, `$pathname` automatically — so the dashboard
+// can split events by path even if the named event is generic.
+//
+// Duplication contract
+// --------------------
+// Because we never call `posthog.init()` (no posthog-js dep), there is
+// no autocapture / `capture_pageview: true` to compete with. The only
+// pageview emitter in the app is this component. The `lastFiredRef`
+// guard ensures we fire exactly one set of events per real navigation
+// (StrictMode-safe). Adding posthog-js later would require explicitly
+// disabling its `capture_pageview` to preserve this contract — see
+// `docs/ANALYTICS_AND_MONITORING.md` §8.
+//
+// Mounting: rendered once inside `app/providers.tsx` so it runs for
+// every route in the app.
 
 import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import {
   trackAdminUsersViewed,
   trackLandingViewed,
+  trackPageView,
   trackYopratiqoIntroStarted,
   trackYopratiqoLandingViewed,
 } from "@/lib/analytics/events";
@@ -48,6 +65,12 @@ export function PostHogPageView() {
     if (lastFiredRef.current === pathname) return;
     lastFiredRef.current = pathname;
 
+    // Layer 1: universal PostHog `$pageview`. Fires on every route so
+    // PostHog's out-of-the-box widgets see every navigation. The
+    // capture layer auto-enriches with $current_url / $host / $pathname.
+    trackPageView({ path: pathname });
+
+    // Layer 2: path-specific product events for named cohorts.
     if (pathname === "/") {
       trackLandingViewed({ path: pathname });
       return;
