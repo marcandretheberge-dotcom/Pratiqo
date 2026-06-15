@@ -267,6 +267,63 @@ test("Typing 'chan' suggests Chant", () => {
   assert.ok(hasMatch("chan", "singing", "fr"));
 });
 
+// ── LSQ / Langue des signes québécoise — explicit per-query regression ──
+// The `sign_language_quebec` bucket landed in PR #186 with both terms
+// stored in its label and alias set. These narrow assertions pin the
+// specific queries called out by the LSQ-focused brief so a future
+// alias trim cannot silently break LSQ discoverability.
+test("Typing 'lsq' suggests LSQ / Langue des signes québécoise", () => {
+  assert.ok(hasMatch("lsq", "sign_language_quebec", "fr"));
+});
+
+test("Typing 'langue des signes' suggests Langue des signes québécoise", () => {
+  assert.ok(hasMatch("langue des signes", "sign_language_quebec", "fr"));
+});
+
+test("Typing 'signe' (singular) suggests Langue des signes québécoise", () => {
+  // Substring matching: "signe" is contained in "signes" → must surface.
+  assert.ok(hasMatch("signe", "sign_language_quebec", "fr"));
+});
+
+test("Typing 'signes' (plural) suggests Langue des signes québécoise", () => {
+  assert.ok(hasMatch("signes", "sign_language_quebec", "fr"));
+});
+
+test("Accent-insensitive: 'langue des signes quebecoise' (no accents) matches LSQ", () => {
+  // The bucket's alias set includes both the accented and unaccented FR
+  // spellings; verify accent-insensitive matching survives at the
+  // fragment level (relevant for mobile keyboards without easy accents).
+  assert.ok(hasMatch("langue des signes quebecoise", "sign_language_quebec", "fr"));
+});
+
+test("LSQ bucket carries no ASL / LSF / cross-region sign-language drift", () => {
+  // The LSQ-focused brief is explicit: do NOT add ASL or LSF here. Pin
+  // the label so a future "let's bundle ASL into this row" edit is loud.
+  const bucket = SUBJECT_BUCKETS.find((b) => b.canonicalId === "sign_language_quebec");
+  assert.ok(bucket, "sign_language_quebec bucket must exist");
+  assert.ok(
+    bucket!.labels.fr.includes("Langue des signes québécoise"),
+    "FR label must keep the full 'Langue des signes québécoise' phrase",
+  );
+  assert.ok(bucket!.labels.fr.includes("LSQ"), "FR label must keep the LSQ abbreviation");
+  for (const term of ["asl", "american sign language", "lsf", "french sign language", "langue des signes française"]) {
+    const haystack = [
+      bucket!.labels.fr,
+      bucket!.labels.en,
+      bucket!.labels.es,
+      ...(bucket!.aliases.fr ?? []),
+      ...(bucket!.aliases.en ?? []),
+      ...(bucket!.aliases.es ?? []),
+    ]
+      .join(" | ")
+      .toLowerCase();
+    assert.ok(
+      !haystack.includes(term),
+      `LSQ bucket must not contain "${term}" — ASL/LSF are out of scope for this bucket`,
+    );
+  }
+});
+
 test("Typing 'esp' suggests Espagnol (FR locale)", () => {
   assert.ok(hasMatch("esp", "spanish", "fr"));
 });
