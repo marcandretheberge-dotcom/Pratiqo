@@ -66,6 +66,30 @@ const TEACHER_BADGE_PILL_SRC = readFileSync(
   "utf8",
 );
 
+// Two additional teacher-card surfaces audited as part of the same QA
+// sweep that produced PR #178. Neither of them currently exhibits the
+// "badges hide the name" bug, but both are layout-adjacent enough that
+// a future refactor could re-introduce it. We add positive guards
+// here so a regression on any of these surfaces fails CI in the same
+// place reviewers already look when they touch the search card.
+//
+//   * LandingTeacherListingCard renders the name + badges in the
+//     SAME row but uses `flex-wrap`, which is the load-bearing
+//     primitive that lets badges fall to a new line instead of
+//     squeezing the name to zero width.
+//   * SearchMapView's `selectedTeacher` overlay (the map mini-card)
+//     renders no badges at all today; if a future refactor adds
+//     <TeacherBadgePill> there, it must NOT land inside the same
+//     `min-w-0` column as the name without a wrapping row.
+const LANDING_TEACHER_LISTING_CARD_SRC = readFileSync(
+  join(ROOT, "components", "marketing", "LandingTeacherListingCard.tsx"),
+  "utf8",
+);
+const SEARCH_MAP_VIEW_SRC = readFileSync(
+  join(ROOT, "components", "SearchMapView.tsx"),
+  "utf8",
+);
+
 // The inline `TeacherCard` body of the student-search page is the last
 // top-level declaration in `app/(app)/student/search/page.tsx`, so we
 // slice from its `function TeacherCard({` opener to end-of-file. If a
@@ -319,6 +343,115 @@ test("TeacherBadgePill component contract is untouched (max-w-full + truncate la
     TEACHER_BADGE_PILL_SRC,
     /<span className="truncate">\{label\}<\/span>/,
     "TeacherBadgePill must keep its truncating label span",
+  );
+});
+
+// -------- 12. Landing card: name+badges row keeps `flex-wrap` -----------
+
+test("LandingTeacherListingCard keeps flex-wrap on the name+badges row so badges wrap below name on mobile", () => {
+  // The landing card intentionally puts the name and badges in the
+  // SAME row, but adds `flex-wrap` so badges fall onto a second line
+  // when they would otherwise crowd the name on a narrow phone. The
+  // `gap-y-1` is what makes that wrapped second line breathe.
+  //
+  // If a future refactor removes `flex-wrap` from this row, the
+  // landing card regresses to the exact bug PR #178 fixed in the
+  // search card. This guard catches that.
+  const nameRowMatch = LANDING_TEACHER_LISTING_CARD_SRC.match(
+    /<div className="flex flex-wrap items-center gap-x-2 gap-y-1">[\s\S]{0,400}?publicFirstNameWithInitial\(teacher\.name\)[\s\S]{0,400}?<\/div>/,
+  );
+  assert.ok(
+    nameRowMatch,
+    "LandingTeacherListingCard must render the name + badges inside a `flex flex-wrap items-center gap-x-2 gap-y-1` row",
+  );
+  // The row that wraps must actually contain the badge map; otherwise
+  // the wrap utility is decorative and badges live somewhere else.
+  assert.match(
+    nameRowMatch![0],
+    /badges\.map\(\(badge\)/,
+    "LandingTeacherListingCard's flex-wrap row must include the badges.map(...) render",
+  );
+});
+
+test("LandingTeacherListingCard right column uses min-w-0 flex-1 to protect name width", () => {
+  // The landing card's right-of-avatar column also needs `min-w-0
+  // flex-1` for `truncate` on the name to actually take effect. Both
+  // the outer right column AND the inner name column are guarded.
+  const occurrences =
+    LANDING_TEACHER_LISTING_CARD_SRC.match(/className="min-w-0 flex-1"/g) ?? [];
+  assert.ok(
+    occurrences.length >= 2,
+    `LandingTeacherListingCard must have at least 2 \`min-w-0 flex-1\` columns (outer right column + inner name column); found ${occurrences.length}`,
+  );
+  // And the name <p> must keep `truncate` so a pathological 60-char
+  // name still renders as a single ellipsised line on mobile.
+  assert.match(
+    LANDING_TEACHER_LISTING_CARD_SRC,
+    /<p className="truncate text-\[15px\] font-bold leading-tight tracking-tight text-\[#2C2C2A\]">[\s\S]{0,80}?publicFirstNameWithInitial\(teacher\.name\)/,
+    "LandingTeacherListingCard's name <p> must keep `truncate` + the existing typography",
+  );
+});
+
+// -------- 13. Map mini-card: name protected, no badge bug surface --------
+
+test("SearchMapView mini-card renders the teacher name in a min-w-0 column with truncate", () => {
+  // The map's `selectedTeacher` overlay puts the name + discipline
+  // in their own `min-w-0` column with truncating <p>s. This is the
+  // structural primitive that keeps the name visible against a
+  // shrink-0 close button on the right. Guard both invariants.
+  const minColumnIdx = SEARCH_MAP_VIEW_SRC.indexOf(
+    'className="min-w-0"',
+  );
+  assert.ok(
+    minColumnIdx >= 0,
+    "SearchMapView mini-card must render its text column inside `className=\"min-w-0\"`",
+  );
+  // Within the next ~600 chars after the column opens, both the name
+  // and the discipline must render as truncating <p>s.
+  const columnTail = SEARCH_MAP_VIEW_SRC.slice(
+    minColumnIdx,
+    minColumnIdx + 600,
+  );
+  assert.match(
+    columnTail,
+    /<p className="truncate font-semibold text-\[#2C2C2A\]">\{publicFirstNameWithInitial\(selectedTeacher\.name\)\}<\/p>/,
+    "SearchMapView mini-card name <p> must be truncating",
+  );
+  assert.match(
+    columnTail,
+    /<p className="truncate text-xs text-\[#6B6A65\]">\{selectedTeacher\.discipline\}<\/p>/,
+    "SearchMapView mini-card discipline <p> must be truncating",
+  );
+});
+
+test("SearchMapView mini-card does not render <TeacherBadgePill> in the same column as the name", () => {
+  // Today the map mini-card renders no badges at all — that is
+  // intentional because the overlay is small. If a future refactor
+  // wires <TeacherBadgePill> into this card, it must NOT land in the
+  // same flex column as the name without a `flex-wrap` row, or it
+  // will crowd the name to zero width on phones.
+  //
+  // This guard does not forbid badges on the map preview forever; it
+  // forbids the specific shape that causes the QA bug. To opt in,
+  // future edits must add a dedicated `flex flex-wrap` row first
+  // (then remove this assertion in the same PR).
+  const cardOpenerIdx = SEARCH_MAP_VIEW_SRC.indexOf(
+    'className="flex items-start justify-between gap-3"',
+  );
+  assert.ok(
+    cardOpenerIdx >= 0,
+    "SearchMapView mini-card must still open with `flex items-start justify-between gap-3`",
+  );
+  // The mini-card body is < 1200 chars; sanity slice forward and
+  // forbid TeacherBadgePill in that scope.
+  const cardBody = SEARCH_MAP_VIEW_SRC.slice(
+    cardOpenerIdx,
+    cardOpenerIdx + 1200,
+  );
+  assert.doesNotMatch(
+    cardBody,
+    /<TeacherBadgePill\b/,
+    "SearchMapView mini-card must NOT render <TeacherBadgePill> until a dedicated flex-wrap row is added (see PR #178 layout pattern)",
   );
 });
 
