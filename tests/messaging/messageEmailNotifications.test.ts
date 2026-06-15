@@ -40,9 +40,14 @@ assert.match(
   "email failures must be logged without blocking message send",
 );
 
-const okResponseIndex = routeSrc.indexOf("return NextResponse.json({\n    ok: true");
+// Match `return NextResponse.json({` followed by any whitespace/newlines
+// (so this works on both LF and CRLF checkouts) and then `ok: true`.
+// The semantic invariant is "success response comes AFTER the email
+// helper call"; the previous brittle exact-`\n    ok: true` substring
+// match was breaking on Windows checkouts.
+const okResponseMatch = routeSrc.match(/return\s+NextResponse\.json\(\{\s*ok:\s*true/);
 assert.ok(
-  okResponseIndex > emailIndex,
+  okResponseMatch && (okResponseMatch.index ?? -1) > emailIndex,
   "message route must still return the normal success response after notification handling",
 );
 
