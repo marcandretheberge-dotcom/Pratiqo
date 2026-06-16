@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { BadgeCheck, GraduationCap, ShieldCheck, Sparkles, Star } from "lucide-react";
+import { Award, BadgeCheck, GraduationCap, ShieldCheck, Sparkles, Star } from "lucide-react";
 import type { TeacherBadge } from "@/lib/teachers/badges";
 import { useLocale } from "@/lib/locale-context";
 import { cn } from "@/lib/utils";
@@ -12,6 +12,7 @@ const ICONS = {
   sparkles: Sparkles,
   star: Star,
   pro: BadgeCheck,
+  experience: Award,
 } as const;
 
 export function TeacherBadgePill({

@@ -27,6 +27,7 @@ type TeacherSnippet = {
   verification_level: number | null;
   identity_verified?: boolean | null;
   diploma_verified?: boolean | null;
+  verified_experience_active?: boolean | null;
 };
 
 function inferDiscipline(disciplineField: string | null, blogCategory: string): Discipline {
@@ -59,7 +60,7 @@ export function RelatedTeachersWidget({ category }: { category: string }) {
       // First try: match by category
       const { data: exact } = await supabase
         .from(TEACHERS_PUBLIC_TABLE)
-        .select("id, name, discipline, image_url, rating, reviews, price_per_lesson, currency, location, verification_level, identity_verified, diploma_verified")
+        .select("id, name, discipline, image_url, rating, reviews, price_per_lesson, currency, location, verification_level, identity_verified, diploma_verified, verified_experience_active")
         .ilike("category", `%${category}%`)
         .order("rating", { ascending: false })
         .limit(3);
@@ -73,7 +74,7 @@ export function RelatedTeachersWidget({ category }: { category: string }) {
       // Fallback: top verified teachers regardless of category
       const { data: fallback } = await supabase
         .from(TEACHERS_PUBLIC_TABLE)
-        .select("id, name, discipline, image_url, rating, reviews, price_per_lesson, currency, location, verification_level, identity_verified, diploma_verified")
+        .select("id, name, discipline, image_url, rating, reviews, price_per_lesson, currency, location, verification_level, identity_verified, diploma_verified, verified_experience_active")
         .order("verification_level", { ascending: false })
         .order("rating", { ascending: false })
         .limit(3);
@@ -117,6 +118,7 @@ export function RelatedTeachersWidget({ category }: { category: string }) {
             teacherId: teacher.id,
             identityVerified: teacher.identity_verified,
             diplomaVerified: teacher.diploma_verified,
+            verifiedExperience: teacher.verified_experience_active,
             reviewCount: teacher.reviews,
           });
 

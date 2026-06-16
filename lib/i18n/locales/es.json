@@ -3,6 +3,8 @@
   "teacherBioContactHiddenNotice": "Los datos personales de contacto están ocultos antes de la primera clase.",
   "teacherBadgeIdentityVerified": "Identidad verificada",
   "teacherBadgeDiplomaVerified": "Diploma verificado",
+  "teacherBadgeVerifiedExperience": "Experiencia verificada",
+  "teacherBadgeVerifiedExperienceDescription": "La administración revisó evidencia de la experiencia docente de este profesor.",
   "teacherBadgeFounder": "Profesor fundador",
   "teacherBadgeFounderDescription": "Forma parte de los primeros profesores seleccionados en Pratiqo.",
   "teacherBadgeNewTeacher": "Nuevo en Pratiqo",

@@ -31,6 +31,10 @@ import {
   type TeacherOnboardingSnapshot,
 } from "@/components/admin/TeacherOnboardingSupportCard";
 import {
+  TeacherBadgesCard,
+  type TeacherBadgeStatusRow,
+} from "@/components/admin/TeacherBadgesCard";
+import {
   validateTeacherLessonOffers,
   type TeacherLessonOfferInput,
 } from "@/lib/pricing/lessonOffer";
@@ -187,6 +191,9 @@ export default async function AdminUserDetailPage({
     intro_session_price_cents: number | string | null;
     intro_session_duration_minutes: number | string | null;
     intro_session_discount_percent: number | string | null;
+    verified_experience_active: boolean | null;
+    verified_experience_set_at: string | null;
+    verified_experience_set_by: string | null;
   };
 
   let teacherSupport:
@@ -195,18 +202,32 @@ export default async function AdminUserDetailPage({
         diagnosis: TeacherOnboardingDiagnosis;
       }
     | null = null;
+  let teacherBadges: TeacherBadgeStatusRow[] | null = null;
 
   if (isTeacher) {
     const { data: teacherRow } = await admin
       .from("teachers")
       .select(
-        "id, user_id, price_per_lesson, home_lesson_enabled, home_lesson_price, home_lesson_min_duration, default_lesson_duration_minutes, intro_session_enabled, intro_session_price_cents, intro_session_duration_minutes, intro_session_discount_percent",
+        "id, user_id, price_per_lesson, home_lesson_enabled, home_lesson_price, home_lesson_min_duration, default_lesson_duration_minutes, intro_session_enabled, intro_session_price_cents, intro_session_duration_minutes, intro_session_discount_percent, verified_experience_active, verified_experience_set_at, verified_experience_set_by",
       )
       .eq("user_id", profile.id)
       .maybeSingle();
 
     const row = teacherRow as TeacherSupportRow | null;
     if (row) {
+      // Admin-controlled trust badges. Loaded server-side so the admin
+      // never sees the boolean flicker, and so the audit metadata
+      // (set_at / set_by) does NOT travel through the public
+      // teachers_public projection — it comes directly from the
+      // service-role read here.
+      teacherBadges = [
+        {
+          key: "verified_experience",
+          active: Boolean(row.verified_experience_active),
+          setAt: row.verified_experience_set_at ?? null,
+          setBy: row.verified_experience_set_by ?? null,
+        },
+      ];
       const standardHourly = Number(row.price_per_lesson);
       const hasStandard = Number.isFinite(standardHourly) && standardHourly > 0;
       const standardCents = hasStandard ? Math.round(standardHourly * 100) : 0;
@@ -394,6 +415,13 @@ export default async function AdminUserDetailPage({
                 jamais le statut payé Membre Pro.
               </p>
             </section>
+
+            {teacherBadges ? (
+              <TeacherBadgesCard
+                teacherUserId={profile.id}
+                initialBadges={teacherBadges}
+              />
+            ) : null}
 
             {teacherSupport ? (
               <TeacherOnboardingSupportCard

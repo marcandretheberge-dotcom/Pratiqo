@@ -844,6 +844,7 @@ function TeacherCard({
     identityStatus: teacher.identityStatus,
     stripeIdentityStatus: teacher.stripeIdentityStatus,
     diplomaVerified: teacher.diplomaVerified,
+    verifiedExperience: teacher.verifiedExperience,
     profilePlan: teacher.profilePlan,
     reviewCount: teacher.reviews,
   });

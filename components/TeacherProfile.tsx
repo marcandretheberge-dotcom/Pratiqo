@@ -385,6 +385,7 @@ export function TeacherProfile({
       identityStatus: teacher.identityStatus ?? null,
       stripeIdentityStatus: teacher.stripeIdentityStatus ?? null,
       diplomaVerified: teacher.diplomaVerified,
+      verifiedExperience: teacher.verifiedExperience ?? null,
       credentials: publicCredentials,
       profilePlan: displayPlan,
       reviewCount: displayReviewCount,
@@ -398,6 +399,7 @@ export function TeacherProfile({
       teacher.identityStatus,
       teacher.identityVerified,
       teacher.stripeIdentityStatus,
+      teacher.verifiedExperience,
     ],
   );
   const headlineBadges = useMemo(() => getCompactTeacherBadges(badgeInput, 2), [badgeInput]);

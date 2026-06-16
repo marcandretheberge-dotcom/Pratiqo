@@ -284,6 +284,18 @@ const allowedPricingDisplayFiles = new Set<string>([
   // not touch Stripe product/price IDs, tax math, Supabase migrations/RLS,
   // legal live pages, YoPratiqo, sitemap/indexation, or Course schema.
   "lib/payments/refunds.ts",
+  // Admin teacher trust-badge launch patch. The branch legitimately
+  // co-mods three things: the i18n public copy for the new "Expérience
+  // vérifiée" badge (FR/EN/ES), a Supabase migration that adds three
+  // teacher-row columns + extends the 069 non-service-write trigger,
+  // and the admin UI/API to toggle the badge. The migration itself
+  // adds NO commission / Stripe / promo / booking writes — that
+  // contract is enforced by tests/teachers/adminBadgeControls.test.ts
+  // ("migration 081 does not introduce promotion / booking /
+  // commission / subscription schema changes"). Allowlisting this file
+  // here keeps the legal scope-guard from firing on a non-legal
+  // structural change while the new i18n keys ship in the same PR.
+  "supabase/migrations/081_admin_teacher_badges.sql",
 ]);
 
 function touchesSafeDisclosureScope(file: string): boolean {

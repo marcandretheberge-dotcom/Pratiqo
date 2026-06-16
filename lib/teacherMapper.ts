@@ -43,6 +43,7 @@ export type TeacherRow = {
   identity_verified?: boolean | null;
   diploma_verified?: boolean | null;
   phone_verified?: boolean | null;
+  verified_experience_active?: boolean | null;
   verification_notes?: string | null;
   video_url?: string | null;
   country_code?: string | null;
@@ -134,6 +135,7 @@ export function teacherRowToTeacher(row: TeacherRow): Teacher {
     identityVerified: Boolean(row.identity_verified),
     diplomaVerified: Boolean(row.diploma_verified),
     phoneVerified: Boolean(row.phone_verified),
+    verifiedExperience: Boolean(row.verified_experience_active),
     identityStatus: row.identity_status ?? null,
     stripeIdentityStatus: row.stripe_identity_status ?? null,
     diplomaUrl: row.diploma_url ?? null,
