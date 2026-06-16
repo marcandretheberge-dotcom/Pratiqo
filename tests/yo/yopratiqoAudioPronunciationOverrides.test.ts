@@ -309,6 +309,14 @@ test("tracked patch avoids generated audio and restricted product systems", () =
     "lib/pricing/hourlyRatePreview.ts",
     "app/api/stripe/checkout/route.ts",
     "app/(app)/booking/success/page.tsx",
+    // fix/teacher-onboarding-min-rate-blocker PR — same allowlist
+    // entry as the responsive-layout guard. The /api/onboarding/
+    // complete change is a defensive home-rate coalesce that
+    // preserves the 20 $ floor; the new admin route is admin-only
+    // and never writes Stripe/payment/plan state. Defended by
+    // tests/teacherOnboarding/minRateBlockerRecovery.test.ts.
+    "app/api/onboarding/complete/route.ts",
+    "app/api/admin/users/[id]/teacher-onboarding/route.ts",
   ]);
   const forbidden = [
     /^app\/api\//,
