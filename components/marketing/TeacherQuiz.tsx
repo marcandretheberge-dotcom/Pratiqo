@@ -51,6 +51,7 @@ type TeacherMatch = {
   verification_level: number | null;
   identity_verified: boolean | null;
   diploma_verified: boolean | null;
+  verified_experience_active: boolean | null;
   is_verified: boolean | null;
   identity_status?: string | null;
   country_code?: string | null;
@@ -126,6 +127,7 @@ function teacherToMatchRow(t: Teacher): TeacherMatch {
     verification_level: t.verificationLevel ?? null,
     identity_verified: t.identityVerified ?? null,
     diploma_verified: t.diplomaVerified ?? null,
+    verified_experience_active: t.verifiedExperience ?? null,
     is_verified: t.isVerified,
     country_code: t.countryCode ?? null,
     city: t.city ?? null,
@@ -949,6 +951,7 @@ function MatchCard({
     identityVerified: teacher.identity_verified,
     identityStatus: teacher.identity_status,
     diplomaVerified: teacher.diploma_verified,
+    verifiedExperience: teacher.verified_experience_active,
     reviewCount: teacher.reviews,
   });
   const profilePath = `/teacher/profile/${encodeURIComponent(teacher.id)}`;

@@ -2,9 +2,10 @@ import type { TranslationKey } from "@/lib/translations";
 import { isFounderTeacher } from "@/lib/teachers/founderTeachers";
 
 export type TeacherBadgeType = "trust" | "marketplace" | "product";
-export type TeacherBadgeIcon = "shield" | "diploma" | "sparkles" | "star" | "pro";
+export type TeacherBadgeIcon = "shield" | "diploma" | "sparkles" | "star" | "pro" | "experience";
 export type TeacherBadgeId =
   | "identity_verified"
+  | "verified_experience"
   | "diploma_verified"
   | "founder"
   | "new_teacher"
@@ -35,6 +36,14 @@ export type TeacherBadgeInput = {
   profilePlan?: string | null;
   reviewCount?: number | null;
   founder?: boolean | null;
+  /**
+   * Admin-controlled "Expérience vérifiée" badge. Source of truth:
+   * `public.teachers.verified_experience_active` (migration 081). Admin
+   * toggles only — NEVER auto-derived from diploma/CV uploads. Reads
+   * are projected through `list_public_teachers()`; the admin actor /
+   * timestamp stay strictly server-side.
+   */
+  verifiedExperience?: boolean | null;
 };
 
 function normalized(value: string | null | undefined): string {
@@ -81,6 +90,22 @@ export function buildTeacherBadges(input: TeacherBadgeInput): TeacherBadge[] {
       type: "trust",
       icon: "shield",
       priority: 10,
+    });
+  }
+
+  // Admin-controlled "Expérience vérifiée". Slotted at priority 15 so it
+  // appears right after identity (10) and before founder (20) in the
+  // headline slot. Compact (2-badge) cards therefore promote it ahead of
+  // the marketplace founder pill, which is intentional — experience is a
+  // trust signal, founder is a marketing signal.
+  if (input.verifiedExperience === true) {
+    badges.push({
+      id: "verified_experience",
+      labelKey: "teacherBadgeVerifiedExperience",
+      descriptionKey: "teacherBadgeVerifiedExperienceDescription",
+      type: "trust",
+      icon: "experience",
+      priority: 15,
     });
   }
 

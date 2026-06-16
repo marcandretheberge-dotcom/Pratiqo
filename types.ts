@@ -68,6 +68,13 @@ export interface Teacher {
   identityVerified?: boolean;
   diplomaVerified?: boolean;
   phoneVerified?: boolean;
+  /**
+   * Admin-controlled "Expérience vérifiée" badge flag. Source of truth:
+   * `public.teachers.verified_experience_active` (migration 081). The
+   * admin actor and toggle timestamp stay strictly server-side and are
+   * never exposed in the public projection.
+   */
+  verifiedExperience?: boolean;
   identityStatus?: string | null;
   stripeIdentityStatus?: string | null;
   diplomaUrl?: string | null;

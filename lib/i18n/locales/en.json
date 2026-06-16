@@ -3,6 +3,8 @@
   "teacherBioContactHiddenNotice": "Personal contact details are hidden before the first lesson.",
   "teacherBadgeIdentityVerified": "Identity verified",
   "teacherBadgeDiplomaVerified": "Diploma verified",
+  "teacherBadgeVerifiedExperience": "Verified experience",
+  "teacherBadgeVerifiedExperienceDescription": "Admin reviewed evidence of this teacher's teaching experience.",
   "teacherBadgeFounder": "Founding teacher",
   "teacherBadgeFounderDescription": "One of the first teachers selected on Pratiqo.",
   "teacherBadgeNewTeacher": "New on Pratiqo",
