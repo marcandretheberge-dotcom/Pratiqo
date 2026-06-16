@@ -99,6 +99,9 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
   const [teacherId, setTeacherId] = useState<string | null>(null);
   const [teacherIsPublic, setTeacherIsPublic] = useState(true);
   const [visibilitySaving, setVisibilitySaving] = useState(false);
+  const [searchIndexingConsent, setSearchIndexingConsent] = useState(false);
+  const [publicProfileSlug, setPublicProfileSlug] = useState<string | null>(null);
+  const [searchIndexingSaving, setSearchIndexingSaving] = useState(false);
   const [email, setEmail] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");
@@ -200,9 +203,17 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
         intro_session_enabled?: boolean | null;
         intro_session_price_cents?: number | null;
         country_code?: string | null;
+        search_indexing_consent?: boolean | null;
+        public_profile_slug?: string | null;
       };
       setTeacherId(row.id);
       setTeacherIsPublic(row.is_public !== false && !row.deactivated_at && !row.deleted_at);
+      setSearchIndexingConsent(row.search_indexing_consent === true);
+      setPublicProfileSlug(
+        typeof row.public_profile_slug === "string" && row.public_profile_slug.trim()
+          ? row.public_profile_slug.trim()
+          : null,
+      );
       setTeacherImageUrl(
         typeof row.image_url === "string" && row.image_url.trim() ? row.image_url : null,
       );
@@ -528,6 +539,53 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
       setMessage(nextPublic ? t("profileReactivatedSuccess") : t("profileHiddenSuccess"));
     }
     setVisibilitySaving(false);
+  };
+
+  const toggleSearchIndexingConsent = async () => {
+    if (!teacherId) return;
+    const nextConsent = !searchIndexingConsent;
+    if (nextConsent && !isTeacherMarketSupported(teacherCountryCode)) {
+      setMessage(t("marketTeacherUnavailableMessage"));
+      return;
+    }
+    setSearchIndexingSaving(true);
+    setMessage(null);
+    const supabase = getSupabaseClient();
+    const { data: s } = await supabase.auth.getSession();
+    const token = s.session?.access_token;
+    if (!token) {
+      setMessage(t("sessionExpiredShort"));
+      setSearchIndexingSaving(false);
+      return;
+    }
+    const res = await fetch("/api/teacher/profile/search-indexing-consent", {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ search_indexing_consent: nextConsent }),
+    });
+    const body = (await res.json().catch(() => ({}))) as {
+      error?: string;
+      public_profile_slug?: string | null;
+    };
+    if (!res.ok) {
+      setMessage(body.error || t("anErrorOccurred"));
+    } else {
+      setSearchIndexingConsent(nextConsent);
+      setPublicProfileSlug(
+        typeof body.public_profile_slug === "string" && body.public_profile_slug.trim()
+          ? body.public_profile_slug.trim()
+          : nextConsent
+            ? publicProfileSlug
+            : null,
+      );
+      setMessage(
+        nextConsent ? t("teacherSearchIndexingConsentEnabled") : t("teacherSearchIndexingConsentDisabled"),
+      );
+    }
+    setSearchIndexingSaving(false);
   };
 
   const openBillingPortal = async () => {
@@ -1031,6 +1089,40 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
           {visibilitySaving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
           {teacherIsPublic ? t("hideMyProfile") : t("reactivateMyProfile")}
         </button>
+      </section>
+
+      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+        <h2 className="text-lg font-bold text-[#2C2C2A]">{t("teacherSearchIndexingConsentTitle")}</h2>
+        <p className="text-sm leading-relaxed text-slate-600">{t("teacherSearchIndexingConsentDescription")}</p>
+        <label className="flex items-start gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={searchIndexingConsent}
+            disabled={searchIndexingSaving || !teacherIsPublic}
+            onChange={() => void toggleSearchIndexingConsent()}
+            className="mt-0.5 h-5 w-5 shrink-0 rounded border-slate-300 accent-teal-500 disabled:opacity-50"
+            data-testid="teacher-search-indexing-consent-settings"
+          />
+          <span className="text-sm leading-relaxed text-slate-700">{t("teacherSearchIndexingConsentLabel")}</span>
+        </label>
+        {!teacherIsPublic ? (
+          <p className="text-xs text-amber-800 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2">
+            {t("teacherSearchIndexingConsentRequiresVisibleProfile")}
+          </p>
+        ) : null}
+        {searchIndexingConsent && publicProfileSlug ? (
+          <p className="text-sm text-slate-600">
+            <span className="font-semibold text-slate-900">{t("teacherPublicProfileUrlLabel")}:</span>{" "}
+            <Link
+              href={`/professeurs/${encodeURIComponent(publicProfileSlug)}`}
+              className="text-teal-700 underline underline-offset-2"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {`/professeurs/${publicProfileSlug}`}
+            </Link>
+          </p>
+        ) : null}
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">

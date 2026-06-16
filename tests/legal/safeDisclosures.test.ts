@@ -296,6 +296,7 @@ const allowedPricingDisplayFiles = new Set<string>([
   // here keeps the legal scope-guard from firing on a non-legal
   // structural change while the new i18n keys ship in the same PR.
   "supabase/migrations/081_admin_teacher_badges.sql",
+  "supabase/migrations/082_teacher_public_seo_indexing.sql",
 ]);
 
 function touchesSafeDisclosureScope(file: string): boolean {

@@ -143,6 +143,7 @@ export default function TeacherOnboardingPage() {
   const [taxStatusAck, setTaxStatusAck] = useState(false);
   const [noExclusivityAck, setNoExclusivityAck] = useState(false);
   const [noIncomeGuaranteeAck, setNoIncomeGuaranteeAck] = useState(false);
+  const [searchIndexingConsent, setSearchIndexingConsent] = useState(false);
   const legalComplete = taxStatusAck && noExclusivityAck && noIncomeGuaranteeAck;
 
   const progressLabel = useMemo(() => `${step}/4`, [step]);
@@ -647,6 +648,21 @@ export default function TeacherOnboardingPage() {
         throw new Error(completePayload.error || t("anErrorOccurred"));
       }
 
+      if (searchIndexingConsent) {
+        const consentRes = await fetch("/api/teacher/profile/search-indexing-consent", {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({ search_indexing_consent: true }),
+        });
+        const consentPayload = (await consentRes.json().catch(() => ({}))) as { error?: string };
+        if (!consentRes.ok) {
+          throw new Error(consentPayload.error || t("teacherSearchIndexingConsentError"));
+        }
+      }
+
       router.replace("/dashboard");
     } catch (e) {
       setError(e instanceof Error ? e.message : t("anErrorOccurred"));
@@ -1140,6 +1156,30 @@ export default function TeacherOnboardingPage() {
                       </span>
                     </label>
                   ))}
+                </div>
+
+                <div className="rounded-2xl border border-[#DCEAE3] bg-white p-4 sm:p-5 space-y-3">
+                  <h3 className="text-sm font-bold text-[var(--p-text)]">{t("teacherSearchIndexingConsentTitle")}</h3>
+                  <p className="text-xs leading-relaxed text-[var(--p-text-muted)]">
+                    {t("teacherSearchIndexingConsentDescription")}
+                  </p>
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={searchIndexingConsent}
+                      onChange={(e) => setSearchIndexingConsent(e.target.checked)}
+                      className="mt-0.5 h-5 w-5 shrink-0 rounded border-slate-300 accent-teal-500"
+                      data-testid="teacher-search-indexing-consent"
+                    />
+                    <span
+                      className={cn(
+                        "text-sm leading-relaxed",
+                        searchIndexingConsent ? "text-teal-700 font-medium" : "text-[var(--p-text)]",
+                      )}
+                    >
+                      {t("teacherSearchIndexingConsentLabel")}
+                    </span>
+                  </label>
                 </div>
               </motion.div>
             ) : null}

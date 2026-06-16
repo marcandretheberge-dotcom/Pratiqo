@@ -88,6 +88,8 @@ interface TeacherProfileProps {
   showGoogleStudioMap?: boolean;
   /** Reveals exact address on the studio map when true. */
   studioMapHasConfirmedBooking?: boolean;
+  /** SEO public profile page headline (/professeurs/[slug]). */
+  pageHeadline?: string;
 }
 
 export function TeacherProfile({
@@ -99,6 +101,7 @@ export function TeacherProfile({
   embeddedPlan,
   showGoogleStudioMap,
   studioMapHasConfirmedBooking,
+  pageHeadline,
 }: TeacherProfileProps) {
   const { user } = useAuth();
   const { t, formatDisplayPrice, locale } = useLocale();
@@ -516,6 +519,11 @@ export function TeacherProfile({
 
               {/* ── LEFT COLUMN ─────────────────────── */}
               <div className="lg:col-span-3 space-y-6">
+                {pageHeadline ? (
+                  <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 leading-tight pr-12">
+                    {pageHeadline}
+                  </h1>
+                ) : null}
 
                 {/* Compact header */}
                 <div className="flex items-start gap-4 pr-12">

@@ -14,7 +14,6 @@ import {
   buildTeacherSeoTitle,
   buildTeacherSeoDescription,
   buildJobTitle,
-  getSchemaEntityType,
 } from "@/lib/constants/vocabulary";
 import { usdToUyu } from "@/lib/geoLocale";
 import { resolveTeacherPublicPhoto } from "@/lib/teacherPhoto";
@@ -24,6 +23,12 @@ import TeacherProfileClient from "./TeacherProfileClient";
 
 import { SITE_URL } from "@/lib/seo/site";
 import { isUuidString } from "@/lib/uuid";
+import { fetchTeacherPublicSeoRowById } from "@/lib/seo/teacherPublicProfileData";
+import {
+  buildTeacherPublicProfileCanonicalUrl,
+  isTeacherPublicProfileIndexable,
+  teacherPublicProfileRobots,
+} from "@/lib/seo/teacherPublicProfile";
 
 const BASE_URL = SITE_URL;
 
@@ -147,12 +152,19 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { id: routeId } = await params;
   const teacher = await getTeacherForProfilePage(routeId);
-  const canonical = `${BASE_URL}/teacher/profile/${encodeURIComponent(teacher?.id ?? routeId)}`;
+  const seoRow = teacher ? await fetchTeacherPublicSeoRowById(teacher.id) : null;
+  const indexable = seoRow ? isTeacherPublicProfileIndexable(seoRow) : false;
+  const canonicalSlug =
+    indexable && seoRow?.public_profile_slug?.trim()
+      ? buildTeacherPublicProfileCanonicalUrl(seoRow.public_profile_slug.trim())
+      : null;
+  const canonical =
+    canonicalSlug ?? `${BASE_URL}/teacher/profile/${encodeURIComponent(teacher?.id ?? routeId)}`;
 
   if (!teacher) {
     return {
       title: "Professeur | Pratiqo",
-      robots: { index: false, follow: false },
+      robots: teacherPublicProfileRobots(false),
       alternates: { canonical },
     };
   }
@@ -204,6 +216,7 @@ export async function generateMetadata({
     title,
     description,
     alternates: { canonical },
+    robots: teacherPublicProfileRobots(indexable),
     openGraph: {
       title,
       description,
@@ -229,6 +242,11 @@ export default async function TeacherProfilePage({
   const initialTeacher = await getTeacherForProfilePage(routeId);
   if (!initialTeacher) notFound();
 
+  const seoRow = await fetchTeacherPublicSeoRowById(initialTeacher.id);
+  if (seoRow && isTeacherPublicProfileIndexable(seoRow) && seoRow.public_profile_slug?.trim()) {
+    redirect(`/professeurs/${encodeURIComponent(seoRow.public_profile_slug.trim())}`);
+  }
+
   if (routeId !== initialTeacher.id) {
     redirect(`/teacher/profile/${encodeURIComponent(initialTeacher.id)}`);
   }
@@ -239,9 +257,7 @@ export default async function TeacherProfilePage({
     initialTeacher.region ??
     "Québec";
 
-  const entityType = getSchemaEntityType(initialTeacher.category ?? "");
-
-  // JSON-LD must not leak raw contact info either — Google + LLM crawlers
+  // JSON-LD must not leak raw contact info either
   // index this. Use the same sanitizer as meta description and the rendered
   // bio, picking the locale that matches the rest of this page's metadata.
   const sanitizedBioForJsonLd = sanitizePublicTeacherBio(
@@ -264,11 +280,6 @@ export default async function TeacherProfilePage({
         "@type": "City",
         name: locality,
       },
-    },
-    worksFor: {
-      "@type": entityType ?? "EducationalOrganization",
-      name: "Pratiqo",
-      url: BASE_URL,
     },
     ...(sanitizedBioForJsonLd ? { description: sanitizedBioForJsonLd.slice(0, 500) } : {}),
     ...(initialTeacher.imageUrl ? { image: initialTeacher.imageUrl } : {}),

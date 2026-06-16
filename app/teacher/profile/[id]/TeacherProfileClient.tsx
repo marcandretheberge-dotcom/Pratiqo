@@ -48,9 +48,11 @@ async function fetchPublicTeacherById(supabase: ReturnType<typeof getSupabaseCli
 export default function TeacherProfileClient({
   id,
   initialTeacher = null,
+  pageHeadline,
 }: {
   id: string;
   initialTeacher?: Teacher | null;
+  pageHeadline?: string;
 }) {
   const router = useRouter();
   const { user } = useAuth();
@@ -197,6 +199,7 @@ export default function TeacherProfileClient({
           embeddedPlan={embeddedPlan}
           showGoogleStudioMap
           studioMapHasConfirmedBooking={studioMapHasConfirmedBooking}
+          pageHeadline={pageHeadline}
           onClose={() => router.push("/teacher/profile")}
           onBook={(kind) => {
             setBookingInitialKind(kind);
