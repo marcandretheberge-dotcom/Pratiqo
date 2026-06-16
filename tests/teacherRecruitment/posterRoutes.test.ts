@@ -24,9 +24,24 @@ const nextConfig = read("next.config.ts");
 
 test("/devenir-professeur exists with founder teacher campaign copy", () => {
   assert.match(professeurPage, /Deviens professeur fondateur sur Pratiqo/);
-  assert.match(professeurPage, /100 % de tes revenus jusqu’à 5 élèves actifs/);
-  assert.match(professeurPage, /0 % de commission pendant 6 mois/);
+  // Canonical founder offer wording: 5 % commission for 6 months. Replaces
+  // the legacy "0 % de commission pendant 6 mois" / "100 % de tes revenus
+  // jusqu'à 5 élèves actifs" copy that misrepresented the actual model.
+  assert.match(
+    professeurPage,
+    /5\s?% de commission pendant 6 mois pour les professeurs fondateurs/,
+  );
   assert.match(professeurPage, /Professeurs fondateurs recherchés/);
+});
+
+test("/devenir-professeur no longer makes the legacy 0 % / 100 % founder claims", () => {
+  // Hard guardrails so the misleading "0 % commission" / "garde 100 %"
+  // wording can't sneak back in via copy edits or merge mistakes.
+  assert.doesNotMatch(professeurPage, /0\s?% de commission/i);
+  assert.doesNotMatch(professeurPage, /0\s?% commission/i);
+  assert.doesNotMatch(professeurPage, /100\s?% de tes revenus/i);
+  assert.doesNotMatch(professeurPage, /garde 100\s?%/i);
+  assert.doesNotMatch(professeurPage, /gratuit à vie/i);
 });
 
 test("/devenir-professeur supports poster verticals", () => {

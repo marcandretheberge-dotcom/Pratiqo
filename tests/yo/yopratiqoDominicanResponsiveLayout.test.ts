@@ -149,6 +149,17 @@ test("responsive layout patch does not touch restricted systems", () => {
     // email after successful in-app message insert. Defended by
     // tests/messaging/messageEmailNotifications.test.ts.
     "app/api/messages/send/route.ts",
+    // feat/admin-profile-founder-promo PR — admin-only profile detail
+    // and founder-promo commission controls. Adds a deny-by-default
+    // audit table (migration 080), a precedence-aware effective
+    // commission helper that does NOT modify Stripe state, and two
+    // admin-gated API routes. Defended by
+    // tests/admin/founderPromoAdminFlow.test.ts.
+    "supabase/migrations/080_admin_founder_promotions.sql",
+    "lib/payments/commission.ts",
+    "lib/payments/founderPromo.ts",
+    "app/api/admin/users/[id]/route.ts",
+    "app/api/admin/users/[id]/founder-promo/route.ts",
   ]);
   const forbidden = [
     /^app\/api\//,

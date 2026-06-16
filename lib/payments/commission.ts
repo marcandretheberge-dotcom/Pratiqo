@@ -1,3 +1,8 @@
+import {
+  isFounderPromoCurrentlyActive,
+  type FounderPromoSnapshot,
+} from "@/lib/payments/founderPromo";
+
 export type TeacherPaymentPlan = "free" | "pro" | "business" | "enterprise";
 export type BookingPaymentType = "individual" | "group";
 export type LoyaltyTier = "bronze" | "argent" | "or" | "platine";
@@ -7,6 +12,18 @@ export type PlatformFeeRateInput = {
   bookingType?: BookingPaymentType;
   annualVolumeCents?: number | null;
   loyaltyTier?: string | null;
+};
+
+/**
+ * Effective-fee input. Wraps the standard plan/tier inputs with an
+ * optional founder-promotion snapshot. The promotion is ONLY consulted
+ * when the teacher is NOT on a paid Membre Pro plan — paid Pro always
+ * wins, by design (see `getEffectivePlatformFeeBasisPoints`).
+ */
+export type EffectivePlatformFeeRateInput = PlatformFeeRateInput & {
+  founderPromo?: FounderPromoSnapshot;
+  /** Override for tests; defaults to `new Date()`. */
+  now?: Date;
 };
 
 export type BookingAmountInput = PlatformFeeRateInput & {
@@ -89,6 +106,62 @@ export function getPlatformFeeBasisPoints(input: PlatformFeeRateInput): number {
 
 export function getPlatformFeeRate(input: PlatformFeeRateInput): number {
   return getPlatformFeeBasisPoints(input) / 10_000;
+}
+
+/**
+ * Effective platform fee with explicit precedence:
+ *   1. Paid Membre Pro (`teacherPlan === "pro"|"business"|"enterprise"`)
+ *      → existing PRO_PLAN_BPS path. The Stripe-driven subscription
+ *        always wins; admins cannot override it through this layer.
+ *   2. Active founder promotion → `founderPromo.commissionRateBps`.
+ *      The promotion's lifecycle is checked dynamically against `now`,
+ *      so an expired or early-terminated promo is automatically ignored.
+ *   3. Otherwise → existing free-plan path (FREE_PLAN_BPS by tier).
+ *
+ * Existing call-sites that don't know about founder promos continue to
+ * call `getPlatformFeeBasisPoints` directly and get exactly the same
+ * answer they did before this layer was added — that's intentional;
+ * payment-critical paths (Stripe checkout, webhooks, payouts) opt-in
+ * to the founder layer only when they are wired to the snapshot.
+ */
+export function getEffectivePlatformFeeBasisPoints(
+  input: EffectivePlatformFeeRateInput,
+): number {
+  const plan = normalizeTeacherPaymentPlan(input.teacherPlan);
+  if (plan !== "free") {
+    return getPlatformFeeBasisPoints(input);
+  }
+  const promo = input.founderPromo ?? null;
+  if (promo && isFounderPromoCurrentlyActive(promo, input.now ?? new Date())) {
+    const bps = Math.max(0, Math.min(10_000, Math.round(promo.commissionRateBps)));
+    return bps;
+  }
+  return getPlatformFeeBasisPoints(input);
+}
+
+export function getEffectivePlatformFeeRate(
+  input: EffectivePlatformFeeRateInput,
+): number {
+  return getEffectivePlatformFeeBasisPoints(input) / 10_000;
+}
+
+/**
+ * Identifies which precedence branch applied. Useful for admin UI
+ * ("Membre Pro payé" / "Promotion fondateur" / "Taux standard") and
+ * for tests pinning the precedence contract.
+ */
+export type EffectiveCommissionSource = "paid_pro" | "founder_promo" | "standard";
+
+export function resolveEffectiveCommissionSource(
+  input: EffectivePlatformFeeRateInput,
+): EffectiveCommissionSource {
+  const plan = normalizeTeacherPaymentPlan(input.teacherPlan);
+  if (plan !== "free") return "paid_pro";
+  const promo = input.founderPromo ?? null;
+  if (promo && isFounderPromoCurrentlyActive(promo, input.now ?? new Date())) {
+    return "founder_promo";
+  }
+  return "standard";
 }
 
 export function calculateBookingAmounts(input: BookingAmountInput): BookingAmountBreakdown {
