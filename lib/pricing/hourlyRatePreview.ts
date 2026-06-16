@@ -30,6 +30,7 @@ import {
   calculateBookingAmounts,
   type LoyaltyTier,
 } from "@/lib/payments/commission";
+import type { FounderPromoSnapshot } from "@/lib/payments/founderPromo";
 import { normalizeLessonDurationMinutes } from "@/lib/pricing/lessonDuration";
 
 export type HourlyRatePreviewInput = {
@@ -43,6 +44,16 @@ export type HourlyRatePreviewInput = {
   annualVolumeCents?: number | null;
   /** Optional explicit loyalty tier override. */
   loyaltyTier?: string | null;
+  /**
+   * Optional active founder-promotion snapshot. The teacher dashboard is
+   * a client component today and intentionally does NOT fetch this — its
+   * preview is therefore an estimate at the standard plan rate. The actual
+   * commission applied at checkout uses the same precedence (paid Pro >
+   * founder promo > standard) and may be lower while a founder promo is
+   * active. Server-side callers that have already loaded the row may pass
+   * it here to make their preview match checkout exactly.
+   */
+  founderPromo?: FounderPromoSnapshot;
 };
 
 export type HourlyRatePreview = {
@@ -125,6 +136,7 @@ export function getHourlyRatePreview(
     bookingType: "individual",
     annualVolumeCents: input.annualVolumeCents ?? null,
     loyaltyTier: input.loyaltyTier ?? null,
+    founderPromo: input.founderPromo ?? null,
   });
 
   return {

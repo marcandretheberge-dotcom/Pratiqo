@@ -6,6 +6,7 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { isBookingAtLeast24hAhead } from "@/lib/bookingCancellation";
 import { transferGroupForBooking } from "@/lib/payments/amounts";
 import { calculateBookingAmounts } from "@/lib/payments/commission";
+import { loadActiveFounderPromo, rowToSnapshot } from "@/lib/admin/founderPromo";
 import { upsertUnpaidBookingPayment } from "@/lib/payments/ledger";
 import {
   buildStripeTaxCheckoutParams,
@@ -353,6 +354,21 @@ export async function POST(req: Request) {
       annualVolumeCents = Math.round(Math.max(0, Number(profile?.loyalty_annual_volume ?? 0)) * 100);
     }
 
+    // Founder-promotion lookup: a single service-role read on
+    // `admin_founder_promotions`, scoped to the booked teacher. The
+    // precedence is enforced by `calculateBookingAmounts` itself —
+    // paid Pro (`profiles.plan === "pro"`) wins, then an active founder
+    // promo, else the standard tier table. We deliberately freeze the
+    // resulting snapshot into Stripe session metadata further down so
+    // the webhook ledger finalizer continues to read pre-pinned values
+    // (no founder-promo lookup on the webhook side; if the promo
+    // expires while the student is at Stripe, the rate quoted here is
+    // the rate that gets settled).
+    const founderPromoRow = typed.user_id
+      ? await loadActiveFounderPromo(admin, typed.user_id)
+      : null;
+    const founderPromoSnapshot = rowToSnapshot(founderPromoRow);
+
     const taxParams = buildStripeTaxCheckoutParams();
     const taxBehavior = defaultTaxBehaviorForCheckout();
     const taxStatus = defaultTaxStatusForCheckout();
@@ -365,11 +381,14 @@ export async function POST(req: Request) {
       bookingType: "individual",
       annualVolumeCents,
       loyaltyTier,
+      founderPromo: founderPromoSnapshot,
     });
     const checkoutAmountCents = unitAmountCents;
     const ledgerPlatformFeeCents = taxParams.enabled ? 0 : amounts.platformFeeCents;
     const ledgerTeacherNetCents = taxParams.enabled ? 0 : amounts.teacherNetCents;
     const transferGroup = transferGroupForBooking(bookingId);
+    const founderPromoApplied =
+      teacherPlan === "free" && founderPromoSnapshot != null && amounts.feeBasisPoints === founderPromoSnapshot.commissionRateBps;
     console.log(
       "[stripe/checkout] commissionRate:",
       amounts.feeRate,
@@ -379,6 +398,10 @@ export async function POST(req: Request) {
       ledgerPlatformFeeCents,
       "stripeTax:",
       taxParams.enabled,
+      "founderPromoApplied:",
+      founderPromoApplied,
+      "founderPromoId:",
+      founderPromoApplied ? founderPromoRow?.id ?? null : null,
     );
 
     const sessionMetadata: Record<string, string> = {
@@ -397,6 +420,16 @@ export async function POST(req: Request) {
       teacher_net_cents: String(ledgerTeacherNetCents),
       commission_rate: String(amounts.feeRate),
       commission_basis_points: String(amounts.feeBasisPoints),
+      // Forensic trace fields. These let the webhook + audit reviewer
+      // see *which* precedence branch produced the pinned commission
+      // without re-querying the founder-promo table. The webhook does
+      // not consume them; they are pure breadcrumbs.
+      commission_source: founderPromoApplied
+        ? "founder_promo"
+        : teacherPlan === "free"
+          ? "standard"
+          : "paid_pro",
+      founder_promo_id: founderPromoApplied ? founderPromoRow?.id ?? "" : "",
       loyalty_tier: amounts.loyaltyTier,
       tax_behavior: taxBehavior,
       tax_total_cents: String(taxTotalCents),

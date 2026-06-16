@@ -33,6 +33,21 @@ export type BookingAmountInput = PlatformFeeRateInput & {
   taxTotalCents?: number;
   /** @deprecated Use subtotalCents. Treated as subtotal when subtotalCents is omitted. */
   priceCents?: number;
+  /**
+   * Optional founder-promotion snapshot. When present AND the promo is
+   * currently active AND the teacher is NOT on a paid Pro plan, the fee
+   * basis points are sourced from the promo (default 500 bps = 5 %)
+   * instead of the standard free-plan tier table.
+   *
+   * Default `null` keeps every existing call-site behaviorally identical
+   * to before this field existed. Live amount-creating server routes
+   * (`/api/stripe/checkout`, `/booking/success`) opt in by loading the
+   * snapshot through `loadActiveFounderPromo` + `rowToSnapshot` and
+   * passing it here.
+   */
+  founderPromo?: FounderPromoSnapshot;
+  /** Override for tests; defaults to `new Date()`. */
+  now?: Date;
 };
 
 export type BookingAmountBreakdown = {
@@ -172,7 +187,11 @@ export function calculateBookingAmounts(input: BookingAmountInput): BookingAmoun
   const amountCents = subtotalCents + taxTotalCents;
   const teacherPlan = normalizeTeacherPaymentPlan(input.teacherPlan);
   const loyaltyTier = resolveLoyaltyTier(input);
-  const feeBasisPoints = getPlatformFeeBasisPoints(input);
+  // Route through the precedence-aware helper so callers that pass a
+  // `founderPromo` snapshot get the active-promo rate. Callers that don't
+  // pass one (the vast majority — display previews, tests, etc.) fall
+  // straight through to the legacy `getPlatformFeeBasisPoints` path.
+  const feeBasisPoints = getEffectivePlatformFeeBasisPoints(input);
   const platformFeeCents = Math.min(
     subtotalCents,
     Math.floor((subtotalCents * feeBasisPoints + 5_000) / 10_000),

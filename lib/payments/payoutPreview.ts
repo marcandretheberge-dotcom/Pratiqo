@@ -1,4 +1,5 @@
 import { calculateBookingAmounts, type BookingPaymentType, type LoyaltyTier } from "@/lib/payments/commission";
+import type { FounderPromoSnapshot } from "@/lib/payments/founderPromo";
 import { localeToBcp47, type Locale } from "@/lib/i18n/types";
 
 export type TeacherPayoutPreviewInput = {
@@ -9,6 +10,15 @@ export type TeacherPayoutPreviewInput = {
   loyaltyTier?: string | null;
   bookingType?: BookingPaymentType;
   locale?: Locale | string | null;
+  /**
+   * Optional active founder-promotion snapshot. Server-side callers that
+   * have already loaded the row through `loadActiveFounderPromo` may pass
+   * it here so the displayed commission/net mirrors what
+   * `/api/stripe/checkout` will actually quote. Default `null` keeps the
+   * legacy plan-only behavior so existing teacher-facing previews are
+   * estimates aligned with the standard tier.
+   */
+  founderPromo?: FounderPromoSnapshot;
 };
 
 export type TeacherPayoutPreview = {
@@ -54,6 +64,7 @@ export function getTeacherPayoutPreview(input: TeacherPayoutPreviewInput): Teach
     bookingType: input.bookingType ?? "individual",
     annualVolumeCents: input.annualVolumeCents ?? null,
     loyaltyTier: input.loyaltyTier ?? null,
+    founderPromo: input.founderPromo ?? null,
   });
 
   return {

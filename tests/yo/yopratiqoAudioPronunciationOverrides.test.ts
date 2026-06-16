@@ -296,6 +296,19 @@ test("tracked patch avoids generated audio and restricted product systems", () =
     "lib/payments/founderPromo.ts",
     "app/api/admin/users/[id]/route.ts",
     "app/api/admin/users/[id]/founder-promo/route.ts",
+    // fix/wire-founder-promo-commission PR — wires the active founder
+    // promo into the live booking/payout amount calculation. Purely
+    // additive: helpers gain an optional `founderPromo` argument that
+    // defaults to the legacy plan-only behavior, and the two
+    // server-side amount-creating call-sites load the snapshot through
+    // the existing service-role admin client. No Stripe API surface
+    // change. Defended by
+    // tests/payments/founderPromoLiveCommission.test.ts.
+    "lib/payments/amounts.ts",
+    "lib/payments/payoutPreview.ts",
+    "lib/pricing/hourlyRatePreview.ts",
+    "app/api/stripe/checkout/route.ts",
+    "app/(app)/booking/success/page.tsx",
   ]);
   const forbidden = [
     /^app\/api\//,
