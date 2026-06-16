@@ -27,6 +27,7 @@ import { getDictionary, getLocale } from "@/lib/i18n/server";
 import type { Dictionary, Locale } from "@/lib/i18n/types";
 import { localeToBcp47 } from "@/lib/i18n/types";
 import { getPlatformFeeRate } from "@/lib/payments/amounts";
+import { loadActiveFounderPromo, rowToSnapshot } from "@/lib/admin/founderPromo";
 import {
   chargeIdFromPaymentIntent,
   retrievePaymentIntentChargeId,
@@ -239,14 +240,23 @@ async function verifyAndConfirm(sessionId: string, locale: Locale): Promise<Veri
       let teacherEmail: string | null = null;
       let commissionRate = getPlatformFeeRate("free", "individual");
       if (teacherData.data?.user_id) {
+        const teacherUserId = teacherData.data.user_id as string;
         const { data: teacherProf } = await admin
           .from("profiles")
           .select("email, plan")
-          .eq("id", teacherData.data.user_id as string)
+          .eq("id", teacherUserId)
           .maybeSingle();
         teacherEmail = (teacherProf as { email?: string | null } | null)?.email ?? null;
         const plan = (teacherProf as { plan?: string | null } | null)?.plan ?? "free";
-        commissionRate = getPlatformFeeRate(plan, "individual");
+        // Founder-promo lookup: idempotent fallback path only runs when
+        // the webhook hasn't fired. We use the same precedence as the
+        // checkout route so the receipt's commission row is consistent
+        // with what was quoted at checkout. The lookup is a single
+        // service-role read; no N+1 (this fallback runs at most once
+        // per booking).
+        const founderPromoRow = await loadActiveFounderPromo(admin, teacherUserId);
+        const founderPromoSnapshot = rowToSnapshot(founderPromoRow);
+        commissionRate = getPlatformFeeRate(plan, "individual", founderPromoSnapshot);
       }
 
       const bookingTiming = {

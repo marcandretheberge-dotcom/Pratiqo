@@ -1,10 +1,12 @@
 import {
   calculateBookingAmounts,
+  getEffectivePlatformFeeRate,
   getPlatformFeeRate as getPlatformFeeRateFromInput,
   normalizeTeacherPaymentPlan,
   type BookingPaymentType,
   type TeacherPaymentPlan,
 } from "@/lib/payments/commission";
+import type { FounderPromoSnapshot } from "@/lib/payments/founderPromo";
 
 export type TeacherPlanForPayments = TeacherPaymentPlan;
 export type BookingPaymentKind = BookingPaymentType;
@@ -21,6 +23,25 @@ export type BookingPaymentAmounts = {
 export { normalizeTeacherPaymentPlan };
 
 export function getPlatformFeeRate(
+  plan: string | null | undefined,
+  kind: BookingPaymentKind = "individual",
+  founderPromo: FounderPromoSnapshot = null,
+): number {
+  // Effective rate: paid Pro > active founder promo > standard. When
+  // `founderPromo` is null (the historical default), this reduces to the
+  // legacy plan-only rate so existing callers see no change.
+  return getEffectivePlatformFeeRate({
+    teacherPlan: plan,
+    bookingType: kind,
+    founderPromo,
+  });
+}
+
+// Kept for any test that needs the strict "plan + tier only" lookup
+// (no founder-promo precedence). New code should use `getPlatformFeeRate`
+// above — it accepts an optional `founderPromo` and reduces to the same
+// result when one isn't provided.
+export function getPlatformFeeRatePlanOnly(
   plan: string | null | undefined,
   kind: BookingPaymentKind = "individual",
 ): number {
@@ -43,12 +64,14 @@ export function calculateBookingPaymentAmounts(
   plan: string | null | undefined,
   kind: BookingPaymentKind = "individual",
   taxTotalCents = 0,
+  founderPromo: FounderPromoSnapshot = null,
 ): BookingPaymentAmounts {
   const amounts = calculateBookingAmounts({
     subtotalCents,
     taxTotalCents,
     teacherPlan: plan,
     bookingType: kind,
+    founderPromo,
   });
   return {
     subtotalCents: amounts.subtotalCents,
