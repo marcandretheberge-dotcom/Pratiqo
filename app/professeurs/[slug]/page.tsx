@@ -1,0 +1,200 @@
+import type { Metadata } from "next";
+import { cache } from "react";
+import { notFound } from "next/navigation";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import {
+  TEACHERS_LIST_SELECT,
+  TEACHERS_LIST_SELECT_LEGACY_PUBLIC,
+  TEACHERS_PUBLIC_TABLE,
+} from "@/lib/supabase/queries";
+import { fetchTeacherDisciplinesMap, mergeTeachersWithDisciplines } from "@/lib/teacherDisciplines";
+import { teacherRowToTeacher, type TeacherRow } from "@/lib/teacherMapper";
+import TeacherProfileClient from "@/app/teacher/profile/[id]/TeacherProfileClient";
+import {
+  buildTeacherPublicProfileCanonicalUrl,
+  buildTeacherPublicProfileDescription,
+  buildTeacherPublicProfileH1,
+  buildTeacherPublicProfileJsonLd,
+  buildTeacherPublicProfileTitle,
+  isTeacherPublicProfileIndexable,
+  isTeacherPublicProfilePageVisible,
+  publicTeacherFirstName,
+  teacherPublicProfileRobots,
+} from "@/lib/seo/teacherPublicProfile";
+import { fetchTeacherPublicSeoRowBySlug } from "@/lib/seo/teacherPublicProfileData";
+
+function isColumnMismatchError(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const message = "message" in error ? String(error.message ?? "") : "";
+  return /column|does not exist|Could not find/i.test(message);
+}
+
+async function selectPublicTeacherRowById(teacherId: string): Promise<TeacherRow | null> {
+  const supabase = getSupabaseAdmin();
+  const parse = (data: unknown): TeacherRow | null =>
+    data && typeof data === "object" && "id" in data ? (data as TeacherRow) : null;
+
+  const full = await supabase
+    .from(TEACHERS_PUBLIC_TABLE)
+    .select(TEACHERS_LIST_SELECT)
+    .eq("id", teacherId)
+    .maybeSingle();
+  if (!full.error) return parse(full.data);
+  if (!isColumnMismatchError(full.error)) return null;
+
+  const legacy = await supabase
+    .from(TEACHERS_PUBLIC_TABLE)
+    .select(TEACHERS_LIST_SELECT_LEGACY_PUBLIC)
+    .eq("id", teacherId)
+    .maybeSingle();
+  if (!legacy.error) return parse(legacy.data);
+  if (!isColumnMismatchError(legacy.error)) return null;
+
+  const wide = await supabase.from(TEACHERS_PUBLIC_TABLE).select("*").eq("id", teacherId).maybeSingle();
+  if (!wide.error) return parse(wide.data);
+  return null;
+}
+
+async function withSafeProfilePhoto(row: TeacherRow): Promise<TeacherRow | null> {
+  if (!row.user_id) return null;
+  const { data } = await getSupabaseAdmin()
+    .from("profiles")
+    .select("photo_url, is_active, deactivated_at, deleted_at, anonymized_at")
+    .eq("id", row.user_id)
+    .maybeSingle();
+  const profile = data as {
+    photo_url?: string | null;
+    is_active?: boolean | null;
+    deactivated_at?: string | null;
+    deleted_at?: string | null;
+    anonymized_at?: string | null;
+  } | null;
+  if (
+    !profile ||
+    profile.is_active === false ||
+    profile.deactivated_at ||
+    profile.deleted_at ||
+    profile.anonymized_at
+  ) {
+    return null;
+  }
+  const photoUrl =
+    typeof profile.photo_url === "string" && profile.photo_url.trim() ? profile.photo_url.trim() : null;
+  const { resolveTeacherPublicPhoto } = await import("@/lib/teacherPhoto");
+  return { ...row, image_url: resolveTeacherPublicPhoto(photoUrl, row.image_url) };
+}
+
+const getTeacherPublicProfileBundle = cache(async (slug: string) => {
+  const seoRow = await fetchTeacherPublicSeoRowBySlug(slug);
+  if (!seoRow || !isTeacherPublicProfilePageVisible(seoRow)) {
+    return null;
+  }
+
+  const row = await selectPublicTeacherRowById(seoRow.id);
+  if (!row) return null;
+  const withPhoto = await withSafeProfilePhoto(row);
+  if (!withPhoto) return null;
+
+  let teacher = teacherRowToTeacher(withPhoto);
+  try {
+    const discMap = await fetchTeacherDisciplinesMap(getSupabaseAdmin(), [teacher.id]);
+    teacher = mergeTeachersWithDisciplines([teacher], discMap)[0] ?? teacher;
+  } catch {
+    // keep base teacher
+  }
+
+  const subjects = [
+    teacher.discipline,
+    ...(teacher.additionalDisciplines?.map((d) => d.specialite || d.disciplineId) ?? []),
+    teacher.category ?? "",
+  ].filter(Boolean);
+
+  return {
+    seoRow,
+    teacher,
+    subjects: [...new Set(subjects)],
+    indexable: isTeacherPublicProfileIndexable(seoRow),
+    canonical: buildTeacherPublicProfileCanonicalUrl(slug),
+  };
+});
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const bundle = await getTeacherPublicProfileBundle(slug);
+  const canonical = buildTeacherPublicProfileCanonicalUrl(slug);
+
+  if (!bundle) {
+    return {
+      title: "Professeur | Pratiqo",
+      robots: teacherPublicProfileRobots(false),
+      alternates: { canonical },
+    };
+  }
+
+  const city =
+    bundle.teacher.location?.neighborhood ?? bundle.teacher.city ?? bundle.teacher.region ?? "Québec";
+  const subject = bundle.teacher.discipline?.trim() || bundle.subjects[0] || "cours";
+  const firstName = publicTeacherFirstName(bundle.teacher.name);
+  const title = buildTeacherPublicProfileTitle({ subject, firstName, city });
+  const description = buildTeacherPublicProfileDescription({ subject, firstName, city });
+
+  return {
+    title,
+    description,
+    alternates: { canonical },
+    robots: teacherPublicProfileRobots(bundle.indexable),
+    openGraph: {
+      title,
+      description,
+      url: canonical,
+      images: bundle.teacher.imageUrl
+        ? [{ url: bundle.teacher.imageUrl, width: 400, height: 400 }]
+        : [{ url: "/og-image.png", width: 1200, height: 630 }],
+      type: "profile",
+      siteName: "Pratiqo",
+      locale: "fr_CA",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: bundle.teacher.imageUrl ? [bundle.teacher.imageUrl] : ["/og-image.png"],
+    },
+  };
+}
+
+export default async function ProfesseurPublicProfilePage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  const bundle = await getTeacherPublicProfileBundle(slug);
+  if (!bundle) notFound();
+
+  const city =
+    bundle.teacher.location?.neighborhood ?? bundle.teacher.city ?? bundle.teacher.region ?? "Québec";
+  const subject = bundle.teacher.discipline?.trim() || bundle.subjects[0] || "cours";
+  const firstName = publicTeacherFirstName(bundle.teacher.name);
+  const h1 = buildTeacherPublicProfileH1({ subject, firstName, city });
+  const jsonLd = buildTeacherPublicProfileJsonLd({
+    teacher: bundle.teacher,
+    canonicalUrl: bundle.canonical,
+    subjects: bundle.subjects,
+  });
+
+  return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <TeacherProfileClient
+        id={bundle.teacher.id}
+        initialTeacher={bundle.teacher}
+        pageHeadline={h1}
+      />
+    </>
+  );
+}

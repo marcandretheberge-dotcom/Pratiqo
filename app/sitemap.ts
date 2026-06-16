@@ -1,9 +1,10 @@
 import type { MetadataRoute } from "next";
 import { getSupabaseAdmin } from "../lib/supabaseAdmin";
-import { TEACHERS_PUBLIC_TABLE } from "../lib/supabase/queries";
 import { QC_CITIES, MV_BARRIOS } from "../lib/constants/cities";
 import { DISCIPLINE_CITY_PAIRS } from "../lib/seo/disciplines";
 import { SITE_URL } from "../lib/seo/site";
+import { buildTeacherPublicProfileCanonicalUrl } from "../lib/seo/teacherPublicProfile";
+import { fetchIndexableTeacherSitemapRows } from "../lib/seo/teacherPublicProfileData";
 import { YO_SPANISH_SEO_PATHS } from "../lib/seo/yopratiqoSpanishSeoPages";
 import {
   isYoHubIndexable,
@@ -119,29 +120,20 @@ const STATIC_ROUTES: MetadataRoute.Sitemap = [
   },
 ];
 
-// ── Dynamic tutor profile routes ──────────────────────────────────────────────
+// ── Consented public teacher SEO profiles (/professeurs/[slug]) ─────────────
 //
-// Uses TEACHERS_PUBLIC_TABLE (public listing view — excludes deactivated/deleted
-// rows per view definition). Count scales with active teachers; omit from sitemap
-// if build-time queries become too heavy.
+// Only teachers who opted in to public indexing with a valid slug are listed.
+// Legacy /teacher/profile/[id] URLs are not indexed.
 async function fetchTeacherEntries(): Promise<MetadataRoute.Sitemap> {
   try {
-    const supabase = getSupabaseAdmin();
-    const { data, error } = await supabase
-      .from(TEACHERS_PUBLIC_TABLE)
-      .select("id, updated_at")
-      .order("updated_at", { ascending: false });
-
-    if (error || !data) return [];
-
-    return (data as { id: string; updated_at: string | null }[]).map((row) => ({
-      url: `${BASE_URL}/teacher/profile/${encodeURIComponent(row.id)}`,
-      lastModified: row.updated_at ? new Date(row.updated_at) : new Date(),
+    const rows = await fetchIndexableTeacherSitemapRows();
+    return rows.map((row) => ({
+      url: buildTeacherPublicProfileCanonicalUrl(row.slug),
+      lastModified: row.lastModified,
       changeFrequency: "weekly" as const,
       priority: 0.8,
     }));
   } catch {
-    // DB unavailable during static export — return empty; static routes still served.
     return [];
   }
 }
