@@ -52,6 +52,15 @@
 -- partial migration replay without RLS.
 -- ─────────────────────────────────────────────────────────────────────────────
 
+-- Admin audit tables (added retroactively to keep the explicit ENABLE list
+-- in lockstep with reality once migrations 079/080 introduced them; both
+-- already enable RLS in their own files and intentionally ship with NO
+-- policies, so the public is deny-by-default and only the service role
+-- can read/write them. Re-running ENABLE ROW LEVEL SECURITY here is a
+-- no-op when already on — same idempotency contract as every other entry
+-- in this block).
+ALTER TABLE IF EXISTS public.admin_founder_promotions  ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.admin_role_change_audit   ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS public.assignments               ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS public.blocked_slots             ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS public.blog_posts                ENABLE ROW LEVEL SECURITY;
