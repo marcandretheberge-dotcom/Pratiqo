@@ -286,7 +286,24 @@ function OnboardingInner() {
       setMessage(`${t("pricingMinLessonPrice")} ${t("pricingMinLessonPriceSuggestion")}`);
       return;
     }
-    if (homeEnabled && homePrice != null && !validateMinimumLessonPriceDollars(homePrice).ok) {
+    // Same root-cause fix as the modern wizard (`/onboarding/teacher`):
+    // a teacher who enables "Cours à domicile" but leaves the optional
+    // home-rate field blank previously triggered the 20 $ blocker on
+    // the server side because the row was persisted with
+    // home_lesson_enabled=true / home_lesson_price=null. Default the
+    // home rate to the standard hourly rate when missing so the row is
+    // coherent end-to-end (validator AND checkout charger).
+    const effectiveHomePrice =
+      homeEnabled
+        ? homePrice != null
+          ? homePrice
+          : hourlyRate
+        : null;
+    if (
+      homeEnabled &&
+      effectiveHomePrice != null &&
+      !validateMinimumLessonPriceDollars(effectiveHomePrice).ok
+    ) {
       setMessage(`${t("pricingMinLessonPrice")} ${t("pricingMinLessonPriceSuggestion")}`);
       return;
     }
@@ -320,7 +337,7 @@ function OnboardingInner() {
         city,
         home_lesson_enabled: homeEnabled,
         home_lesson_radius_km: homeRadius,
-        home_lesson_price: homePrice,
+        home_lesson_price: effectiveHomePrice,
         tax_status_acknowledged: taxAck1,
         no_exclusivity_acknowledged: taxAck2,
         no_income_guarantee_acknowledged: taxAck3,

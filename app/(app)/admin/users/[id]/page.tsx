@@ -25,6 +25,17 @@ import {
   isFounderPromoCurrentlyActive,
 } from "@/lib/payments/founderPromo";
 import { FounderPromoCard } from "@/components/admin/FounderPromoCard";
+import {
+  TeacherOnboardingSupportCard,
+  type TeacherOnboardingDiagnosis,
+  type TeacherOnboardingSnapshot,
+} from "@/components/admin/TeacherOnboardingSupportCard";
+import {
+  validateTeacherLessonOffers,
+  type TeacherLessonOfferInput,
+} from "@/lib/pricing/lessonOffer";
+import { MIN_LESSON_PRICE_DOLLARS } from "@/lib/pricing/constants";
+import { LESSON_DURATION_OPTIONS } from "@/lib/pricing/lessonDuration";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -158,6 +169,106 @@ export default async function AdminUserDetailPage({
     founderPromo: founderSnapshot,
   });
 
+  // ── Teacher-onboarding support snapshot ────────────────────────────
+  // Loaded server-side so the admin gets the diagnosis on first render
+  // and so we never expose the service-role client to the browser. The
+  // helper logic is the SAME as the API route's diagnose() — duplicated
+  // intentionally to keep the page render dependency-free of the route
+  // module.
+  type TeacherSupportRow = {
+    id: string;
+    user_id: string;
+    price_per_lesson: number | string | null;
+    home_lesson_enabled: boolean | null;
+    home_lesson_price: number | string | null;
+    home_lesson_min_duration: number | null;
+    default_lesson_duration_minutes: number | null;
+    intro_session_enabled: boolean | null;
+    intro_session_price_cents: number | string | null;
+    intro_session_duration_minutes: number | string | null;
+    intro_session_discount_percent: number | string | null;
+  };
+
+  let teacherSupport:
+    | {
+        snapshot: TeacherOnboardingSnapshot;
+        diagnosis: TeacherOnboardingDiagnosis;
+      }
+    | null = null;
+
+  if (isTeacher) {
+    const { data: teacherRow } = await admin
+      .from("teachers")
+      .select(
+        "id, user_id, price_per_lesson, home_lesson_enabled, home_lesson_price, home_lesson_min_duration, default_lesson_duration_minutes, intro_session_enabled, intro_session_price_cents, intro_session_duration_minutes, intro_session_discount_percent",
+      )
+      .eq("user_id", profile.id)
+      .maybeSingle();
+
+    const row = teacherRow as TeacherSupportRow | null;
+    if (row) {
+      const standardHourly = Number(row.price_per_lesson);
+      const hasStandard = Number.isFinite(standardHourly) && standardHourly > 0;
+      const standardCents = hasStandard ? Math.round(standardHourly * 100) : 0;
+      const explicitHome = Number(row.home_lesson_price);
+      const hasExplicitHome = Number.isFinite(explicitHome) && explicitHome > 0;
+      const homeHourly = row.home_lesson_enabled
+        ? hasExplicitHome
+          ? explicitHome
+          : hasStandard
+            ? standardHourly
+            : null
+        : null;
+      const minHomeMinutes = Number(row.home_lesson_min_duration ?? 60);
+      const safeMinutes =
+        Number.isFinite(minHomeMinutes) && minHomeMinutes > 0 ? minHomeMinutes : 60;
+      const homeCents =
+        homeHourly != null ? Math.round(homeHourly * 100 * (safeMinutes / 60)) : 0;
+
+      const offerCheck: TeacherLessonOfferInput = {
+        price_per_lesson: row.price_per_lesson,
+        home_lesson_enabled: row.home_lesson_enabled,
+        home_lesson_price: row.home_lesson_price,
+        home_lesson_min_duration: row.home_lesson_min_duration,
+        intro_session_enabled: row.intro_session_enabled,
+        intro_session_price_cents: row.intro_session_price_cents,
+        intro_session_duration_minutes: row.intro_session_duration_minutes,
+        intro_session_discount_percent: row.intro_session_discount_percent,
+      };
+      const check = validateTeacherLessonOffers(offerCheck);
+
+      const missingFields: string[] = [];
+      if (!hasStandard) missingFields.push("price_per_lesson");
+      if (row.home_lesson_enabled === true && !hasExplicitHome) {
+        missingFields.push("home_lesson_price");
+      }
+      if (!row.default_lesson_duration_minutes) missingFields.push("default_lesson_duration_minutes");
+
+      teacherSupport = {
+        snapshot: {
+          id: row.id,
+          price_per_lesson: row.price_per_lesson,
+          home_lesson_enabled: row.home_lesson_enabled,
+          home_lesson_price: row.home_lesson_price,
+          home_lesson_min_duration: row.home_lesson_min_duration,
+          default_lesson_duration_minutes: row.default_lesson_duration_minutes,
+        },
+        diagnosis: {
+          minimumPassed: check.ok,
+          minimumDollars: MIN_LESSON_PRICE_DOLLARS,
+          effective: {
+            standardHourly: hasStandard ? standardHourly : null,
+            standardCents,
+            homeHourly,
+            homeCents,
+            defaultDurationMinutes: row.default_lesson_duration_minutes ?? 60,
+          },
+          missingFields,
+        },
+      };
+    }
+  }
+
   const { Icon: RoleIcon, label: roleLabel, className: roleClass } = roleStyle(profile.role);
 
   return (
@@ -283,6 +394,25 @@ export default async function AdminUserDetailPage({
                 jamais le statut payé Membre Pro.
               </p>
             </section>
+
+            {teacherSupport ? (
+              <TeacherOnboardingSupportCard
+                teacherUserId={profile.id}
+                initialTeacher={teacherSupport.snapshot}
+                initialDiagnosis={teacherSupport.diagnosis}
+                durationOptions={LESSON_DURATION_OPTIONS as readonly number[]}
+                minimumHourlyRate={MIN_LESSON_PRICE_DOLLARS}
+              />
+            ) : (
+              <section
+                className="rounded-3xl border border-[#DCEAE3] bg-white p-6 text-sm text-slate-600 shadow-sm"
+                data-testid="teacher-onboarding-support-empty"
+              >
+                Aucun profil <em>teachers</em> trouvé pour cet utilisateur — la
+                fiche de support onboarding apparaîtra une fois que le professeur
+                aura commencé son inscription.
+              </section>
+            )}
 
             <FounderPromoCard
               teacherId={profile.id}

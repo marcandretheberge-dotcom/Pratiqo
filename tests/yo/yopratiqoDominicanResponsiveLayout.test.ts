@@ -174,6 +174,16 @@ test("responsive layout patch does not touch restricted systems", () => {
     "lib/pricing/hourlyRatePreview.ts",
     "app/api/stripe/checkout/route.ts",
     "app/(app)/booking/success/page.tsx",
+    // fix/teacher-onboarding-min-rate-blocker PR — unblocks the
+    // teacher onboarding 20 $ minimum-rate trap. Wizard defaults
+    // home_lesson_price to the standard hourly rate when home mode
+    // is enabled; /api/onboarding/complete mirrors the coalesce
+    // server-side; new admin-only support route + UI lets admins
+    // safely repair stuck rows without touching Stripe, plan, role,
+    // or onboarding-complete state. Defended by
+    // tests/teacherOnboarding/minRateBlockerRecovery.test.ts.
+    "app/api/onboarding/complete/route.ts",
+    "app/api/admin/users/[id]/teacher-onboarding/route.ts",
   ]);
   const forbidden = [
     /^app\/api\//,

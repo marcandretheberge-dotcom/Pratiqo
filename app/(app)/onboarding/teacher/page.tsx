@@ -437,13 +437,29 @@ export default function TeacherOnboardingPage() {
     }
     const hourlyNum = Number(pricePerLesson);
     const homeOn = teachingMode === "at_home" || teachingMode === "hybrid";
+    // Root-cause fix for the "20 $ minimum" onboarding blocker:
+    // selecting "À domicile" / "Hybride" in Step 2 implicitly enables
+    // home lessons, but the wizard does NOT collect a separate
+    // `home_lesson_price` input. Without one, the server-side
+    // `validateTeacherLessonOffers` saw home_lesson_enabled=true with
+    // home_lesson_price=null → home session price = 0 ¢ → 20 $ minimum
+    // fail, with no in-wizard way to recover. We safely default the
+    // home rate to the teacher's standard hourly rate (same CAD/hour
+    // unit, same data semantic the `home_lesson_price REPLACES
+    // price_per_lesson` field doc already promises). The teacher can
+    // override this later from their dashboard.
+    const homeHourly = homeOn ? hourlyNum : null;
     const offerCheck = validateTeacherLessonOffers({
       price_per_lesson: hourlyNum,
       home_lesson_enabled: homeOn,
+      home_lesson_price: homeHourly,
       intro_session_enabled: false,
     });
     if (!offerCheck.ok) {
       setError(`${t("pricingMinLessonPrice")} ${t("pricingMinLessonPriceSuggestion")}`);
+      // Surface a route-back affordance: the only step that can lower
+      // the effective hourly rate is Step 3 (price + duration).
+      setStep(3);
       return;
     }
     const missingFields = getTeacherOnboardingMissingFields({
@@ -545,8 +561,17 @@ export default function TeacherOnboardingPage() {
       updates.location = nextLocation;
 
       // Home lessons fields (optional columns exist in types).
+      // When home lessons are enabled we also default `home_lesson_price`
+      // to the standard hourly rate. This keeps the row coherent with the
+      // checkout charger (`computeBookingChargeCents` strictly requires
+      // a positive `home_lesson_price` when `teaching_mode === "domicile"`)
+      // and stops the wizard from leaving teachers in the unrecoverable
+      // "home_lesson_enabled=true, home_lesson_price=null" state.
       updates.home_lesson_enabled = homeOn;
       if (homeOn) {
+        if (Number.isFinite(homeHourly) && (homeHourly ?? 0) > 0) {
+          updates.home_lesson_price = homeHourly;
+        }
         const r = Number(homeRadiusKm);
         if (Number.isFinite(r) && r > 0) updates.home_lesson_radius_km = r;
       }
@@ -581,13 +606,24 @@ export default function TeacherOnboardingPage() {
       if (!accessToken) {
         throw new Error(t("anErrorOccurred"));
       }
+      // Send `home_lesson_price` alongside `price_per_lesson` so the
+      // pricing route's `validateTeacherLessonOffers` sees a coherent
+      // pair (home_lesson_enabled was already written above). Without
+      // this, an existing teacher row with home_lesson_price=null would
+      // re-trigger the legacy 20 $ blocker on the server side even
+      // though the wizard itself accepted the values.
+      const pricingBody: Record<string, unknown> = { price_per_lesson: hourlyNum };
+      if (homeOn) {
+        pricingBody.home_lesson_enabled = true;
+        pricingBody.home_lesson_price = homeHourly;
+      }
       const pricingRes = await fetch("/api/teacher/pricing", {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${accessToken}`,
         },
-        body: JSON.stringify({ price_per_lesson: hourlyNum }),
+        body: JSON.stringify(pricingBody),
       });
       const pricingPayload = (await pricingRes.json().catch(() => ({}))) as { error?: string };
       if (!pricingRes.ok) {

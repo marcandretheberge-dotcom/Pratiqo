@@ -115,10 +115,21 @@ export async function POST(req: Request) {
       const hourlyRate = clamp(Number(body.hourly_rate || 50), 20, 500);
       const locale = await resolveEmailLocaleForUser(admin, user.id);
       const homeLessonEnabled = Boolean(body.home_lesson_enabled);
-      const homeLessonPrice =
+      // Defensive: if a caller enables home lessons but doesn't supply a
+      // separate home rate, default it to the standard hourly rate
+      // (same CAD/hour unit; matches the "home_lesson_price REPLACES
+      // price_per_lesson when set" data semantic) so the validator and
+      // the persisted row stay coherent. Prevents the legacy
+      // home_lesson_enabled=true / home_lesson_price=null trap that
+      // permanently blocked teachers at the 20 $ minimum check.
+      const rawHomePrice =
         body.home_lesson_price != null && Number.isFinite(Number(body.home_lesson_price))
           ? Number(body.home_lesson_price)
           : null;
+      const homeLessonPrice =
+        homeLessonEnabled && (rawHomePrice == null || rawHomePrice <= 0)
+          ? hourlyRate
+          : rawHomePrice;
       const offerCheck = validateTeacherLessonOffers({
         price_per_lesson: hourlyRate,
         home_lesson_enabled: homeLessonEnabled,
