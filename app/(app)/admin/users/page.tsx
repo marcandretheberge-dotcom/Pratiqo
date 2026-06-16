@@ -310,6 +310,7 @@ export default function AdminUsersPage() {
                     <th className="px-4 py-3">Profil enseignant</th>
                     <th className="px-4 py-3">Créé</th>
                     <th className="px-4 py-3">Changer le rôle</th>
+                    <th className="px-4 py-3">Détails</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -398,6 +399,15 @@ export default function AdminUsersPage() {
                               ) : null}
                             </div>
                           )}
+                        </td>
+                        <td className="px-4 py-3">
+                          <Link
+                            href={`/admin/users/${u.id}`}
+                            className="text-xs font-semibold text-teal-700 hover:underline"
+                            data-testid="admin-users-detail-link"
+                          >
+                            Voir le profil
+                          </Link>
                         </td>
                       </tr>
                     );

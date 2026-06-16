@@ -58,18 +58,22 @@ const VERTICAL_COPY: Record<Vertical, VerticalCopy> = {
 };
 
 const BENEFITS = [
-  "100 % de tes revenus jusqu’à 5 élèves actifs",
-  "0 % de commission pendant 6 mois",
+  "5 % de commission pendant 6 mois pour les professeurs fondateurs",
   "Profil mis en avant au lancement",
   "Tu choisis ton tarif, ton horaire et ton format",
   "Cours en ligne, à domicile ou chez l’élève",
+  "Après les 6 mois : taux standard (à partir de 15 %), sauf si tu choisis Membre Pro",
 ];
 
 const HOW_IT_WORKS = [
   ["1", "Crée ton profil", "Ajoute ta discipline, ton tarif, ta photo et une courte présentation."],
   ["2", "Choisis tes disponibilités", "Définis ton horaire, tes formats de cours et ta zone d’enseignement."],
   ["3", "Reçois des demandes d’élèves", "Ton profil devient visible dans la recherche Pratiqo au lancement."],
-  ["4", "Enseigne et garde 100 % au lancement", "Profite de l’avantage fondateur pendant la période de démarrage."],
+  [
+    "4",
+    "Enseigne avec une commission promotionnelle de 5 %",
+    "Profite de l’offre fondateur pendant 6 mois. Le taux standard s’applique ensuite, sauf si tu choisis Membre Pro.",
+  ],
 ] as const;
 
 const TRUST_ITEMS = [
@@ -82,14 +86,14 @@ const TRUST_ITEMS = [
 export const metadata: Metadata = {
   title: "Devenir professeur sur Pratiqo | Professeurs fondateurs recherchés",
   description:
-    "Rejoignez Pratiqo comme professeur fondateur. Donnez des cours privés en soutien scolaire, musique ou langues, choisissez votre horaire et gardez 100 % de vos revenus au lancement.",
+    "Rejoignez Pratiqo comme professeur fondateur. Donnez des cours privés en soutien scolaire, musique ou langues, choisissez votre horaire et profitez de 5 % de commission pendant 6 mois.",
   alternates: {
     canonical: `${SITE_URL}/devenir-professeur`,
   },
   openGraph: {
     title: "Devenir professeur sur Pratiqo | Professeurs fondateurs recherchés",
     description:
-      "Donnez des cours privés en soutien scolaire, musique ou langues. Choisissez votre horaire et gardez 100 % de vos revenus au lancement.",
+      "Donnez des cours privés en soutien scolaire, musique ou langues. 5 % de commission pendant 6 mois pour les professeurs fondateurs.",
     url: `${SITE_URL}/devenir-professeur`,
     siteName: "Pratiqo",
     images: [{ url: "/og-image.png", width: 1200, height: 630 }],
@@ -214,7 +218,7 @@ export default async function DevenirProfesseurPage({
                 ))}
               </div>
               <p className="mt-4 rounded-2xl border border-emerald-900/10 bg-white px-4 py-3 text-xs font-semibold leading-5 text-[#59706A]">
-                Avantage fondateur réservé aux premiers enseignants admissibles. Les détails finaux sont confirmés lors de l’activation du profil.
+                Offre limitée réservée aux premiers professeurs fondateurs admissibles, activée par l’équipe Pratiqo. Après la période promotionnelle de 6 mois, le taux standard s’applique selon les règles de commission en vigueur, sauf si tu choisis Membre Pro.
               </p>
             </div>
           </div>
