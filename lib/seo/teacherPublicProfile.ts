@@ -1,39 +1,32 @@
 import { publicFirstNameWithInitial } from "@/lib/identity/displayName";
 import { SITE_URL } from "@/lib/seo/site";
 import { sanitizePublicTeacherBio } from "@/lib/teacherProfile/sanitizePublicBio";
+import {
+  isTeacherMarketplaceVisibleRow,
+  type TeacherMarketplaceVisibilityRow,
+} from "@/lib/teachers/marketplaceVisibility";
 import type { Teacher } from "@/types";
 
 /** Version string recorded when a teacher grants SEO consent. */
 export const TEACHER_PUBLIC_SEO_CONSENT_VERSION = "teacher-public-seo-v1" as const;
 
 const MIN_PUBLIC_BIO_LENGTH = 40;
-const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-export type TeacherPublicSeoFields = {
-  id: string;
-  user_id?: string | null;
+export type TeacherPublicSeoFields = TeacherMarketplaceVisibilityRow & {
   name?: string | null;
   bio?: string | null;
   discipline?: string | null;
   city?: string | null;
   region?: string | null;
   country_code?: string | null;
-  is_public?: boolean | null;
-  deactivated_at?: string | null;
-  deleted_at?: string | null;
-  is_demo?: boolean | null;
-  identity_status?: string | null;
   public_profile_enabled?: boolean | null;
   search_indexing_consent?: boolean | null;
   public_profile_slug?: string | null;
   teacher_onboarding_complete?: boolean | null;
-  profile_is_active?: boolean | null;
-  profile_deactivated_at?: string | null;
-  profile_deleted_at?: string | null;
-  profile_anonymized_at?: string | null;
   subject_count?: number | null;
 };
+
+export { isTeacherMarketplaceVisibleRow };
 
 function slugifySegment(value: string): string {
   return value
@@ -82,18 +75,6 @@ export function buildTeacherPublicProfilePath(slug: string): string {
 
 export function buildTeacherPublicProfileCanonicalUrl(slug: string): string {
   return `${SITE_URL}${buildTeacherPublicProfilePath(slug)}`;
-}
-
-export function isTeacherMarketplaceVisibleRow(row: TeacherPublicSeoFields): boolean {
-  if (!UUID_RE.test(row.id)) return false;
-  if (!row.user_id || !UUID_RE.test(row.user_id)) return false;
-  if (row.is_demo === true) return false;
-  if (row.is_public === false) return false;
-  if (row.deactivated_at || row.deleted_at) return false;
-  if ((row.identity_status ?? "none") === "failed") return false;
-  if (row.profile_is_active === false) return false;
-  if (row.profile_deactivated_at || row.profile_deleted_at || row.profile_anonymized_at) return false;
-  return true;
 }
 
 export function teacherHasPublicCity(row: Pick<TeacherPublicSeoFields, "city" | "region">): boolean {
