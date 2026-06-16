@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { isTeacherMarketplaceVisibleRow } from "@/lib/teachers/marketplaceVisibility";
 
 export const runtime = "nodejs";
 
@@ -17,6 +18,7 @@ type TeacherMetadataRow = {
   is_demo?: boolean | null;
   deactivated_at?: string | null;
   deleted_at?: string | null;
+  identity_status?: string | null;
 };
 
 type ProfileMetadataRow = {
@@ -44,21 +46,43 @@ export async function GET(req: Request) {
   const admin = getSupabaseAdmin();
   const { data: teachers, error } = await admin
     .from("teachers")
-    .select("id, user_id, is_public, is_demo, deactivated_at, deleted_at")
+    .select("id, user_id, is_public, is_demo, deactivated_at, deleted_at, identity_status")
     .in("id", ids);
-  if (error || !teachers?.length) {
-    return NextResponse.json({
-      plans: Object.fromEntries(ids.map((id) => [id, "free"])),
-      photos: {} as Record<string, string | null>,
-      eligibleTeacherIds: [] as string[],
-    }, { status: error ? 500 : 200 });
+  if (error) {
+    return NextResponse.json(
+      {
+        plans: Object.fromEntries(ids.map((id) => [id, "free"])),
+        photos: {} as Record<string, string | null>,
+        eligibleTeacherIds: [] as string[],
+      },
+      { status: 500 },
+    );
+  }
+  if (!teachers?.length) {
+    // Let listing callers fall back to teachers_public rows without wiping results.
+    return NextResponse.json(
+      {
+        plans: Object.fromEntries(ids.map((id) => [id, "free"])),
+        photos: {} as Record<string, string | null>,
+      },
+      { status: 500 },
+    );
   }
 
   const teacherRows = teachers as TeacherMetadataRow[];
   const userIds = [...new Set(teacherRows.map((t) => t.user_id).filter(Boolean))] as string[];
   const planByUserId: Record<string, string> = {};
   const photoByUserId: Record<string, string | null> = {};
-  const activeProfileIds = new Set<string>();
+
+  const profileStateByUserId = new Map<
+    string,
+    {
+      is_active?: boolean | null;
+      deactivated_at?: string | null;
+      deleted_at?: string | null;
+      anonymized_at?: string | null;
+    }
+  >();
 
   if (userIds.length) {
     const { data: profiles } = await admin
@@ -66,13 +90,13 @@ export async function GET(req: Request) {
       .select("id, plan, photo_url, is_active, deactivated_at, deleted_at, anonymized_at")
       .in("id", userIds);
     for (const row of (profiles ?? []) as ProfileMetadataRow[]) {
+      profileStateByUserId.set(row.id, row);
       const active =
         row.is_active !== false &&
         !row.deactivated_at &&
         !row.deleted_at &&
         !row.anonymized_at;
       if (!active) continue;
-      activeProfileIds.add(row.id);
       planByUserId[row.id] = normalizePlan(row.plan);
       photoByUserId[row.id] = typeof row.photo_url === "string" && row.photo_url.trim() ? row.photo_url.trim() : null;
     }
@@ -88,13 +112,21 @@ export async function GET(req: Request) {
     const uid = row.user_id;
     plans[row.id] = uid ? (planByUserId[uid] ?? "free") : "free";
     photos[row.id] = uid ? (photoByUserId[uid] ?? null) : null;
+    const profile = uid ? profileStateByUserId.get(uid) : undefined;
     if (
-      uid &&
-      activeProfileIds.has(uid) &&
-      row.is_public !== false &&
-      row.is_demo !== true &&
-      !row.deactivated_at &&
-      !row.deleted_at
+      isTeacherMarketplaceVisibleRow({
+        id: row.id,
+        user_id: uid,
+        is_public: row.is_public,
+        is_demo: row.is_demo,
+        deactivated_at: row.deactivated_at,
+        deleted_at: row.deleted_at,
+        identity_status: row.identity_status,
+        profile_is_active: profile?.is_active,
+        profile_deactivated_at: profile?.deactivated_at,
+        profile_deleted_at: profile?.deleted_at,
+        profile_anonymized_at: profile?.anonymized_at,
+      })
     ) {
       eligibleTeacherIds.push(row.id);
     }

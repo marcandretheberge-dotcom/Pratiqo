@@ -4,6 +4,11 @@ import { normalizeTeacherImageUrl, resolveTeacherPublicPhoto } from "@/lib/teach
 export type TeacherPlansApiPayload = {
   plans?: Record<string, string>;
   photos?: Record<string, string | null>;
+  /**
+   * Marketplace-only eligibility from /api/teachers/plans.
+   * When omitted or empty, callers that already read teachers_public must NOT
+   * drop rows — SEO consent is unrelated to marketplace discovery.
+   */
   eligibleTeacherIds?: string[];
 };
 
@@ -16,7 +21,9 @@ export function applyTeacherListingMetadata(
   body: TeacherPlansApiPayload,
 ): Teacher[] {
   const plans = body.plans ?? {};
-  const eligible = body.eligibleTeacherIds ? new Set(body.eligibleTeacherIds) : null;
+  const eligibleIds = body.eligibleTeacherIds;
+  const eligible =
+    Array.isArray(eligibleIds) && eligibleIds.length > 0 ? new Set(eligibleIds) : null;
   const photos = body.photos ?? {};
 
   return teachers

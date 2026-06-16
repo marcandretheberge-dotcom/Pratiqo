@@ -211,7 +211,7 @@ test("migration 071 exposes profile_photo_url and filters is_demo rows in teache
 test("plans API excludes is_demo teachers from eligibleTeacherIds", () => {
   const src = readFileSync("app/api/teachers/plans/route.ts", "utf8");
   assert.match(src, /is_demo/);
-  assert.match(src, /row\.is_demo !== true/);
+  assert.match(src, /isTeacherMarketplaceVisibleRow/);
 });
 
 test("no name-based or avatar-style fake filtering in student search", () => {
