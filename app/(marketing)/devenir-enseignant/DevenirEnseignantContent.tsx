@@ -7,6 +7,9 @@ import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 import { useLocale } from "@/lib/locale-context";
 import { useAuth } from "@/components/AuthProvider";
 import type { Locale } from "@/lib/i18n/types";
+import { buildTeacherSignupLoginHref } from "@/lib/auth/teacherOnboardingIntent";
+
+const TEACHER_SIGNUP_LOGIN_HREF = buildTeacherSignupLoginHref();
 
 // ── Locale-keyed copy ─────────────────────────────────────────────────────────
 
@@ -188,7 +191,7 @@ export default function DevenirEnseignantContent() {
             </Link>
             <LocaleSwitcher variant="dark" compact />
             <Link
-              href="/login?role=teacher"
+              href={TEACHER_SIGNUP_LOGIN_HREF}
               className="rounded-xl border border-teal-500 px-4 py-2 text-sm font-semibold text-[#7FE0C3] hover:bg-teal-600/15 transition-colors"
             >
               {locale === "es" ? "Iniciar sesión" : locale === "en" ? "Sign in" : "Se connecter"}
@@ -215,7 +218,7 @@ export default function DevenirEnseignantContent() {
             </p>
             <div className="mt-8 flex flex-col sm:flex-row gap-3">
               <Link
-                href="/login?role=teacher"
+                href={TEACHER_SIGNUP_LOGIN_HREF}
                 className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-teal-600 px-7 text-sm font-bold text-white hover:brightness-105 transition-all"
               >
                 {c.ctaPrimary}
@@ -416,7 +419,7 @@ export default function DevenirEnseignantContent() {
                   : "Créez votre compte en moins de 2 minutes. Publiez votre profil et recevez votre première réservation."}
               </p>
               <Link
-                href="/login?role=teacher"
+                href={TEACHER_SIGNUP_LOGIN_HREF}
                 className="inline-flex w-full h-12 items-center justify-center gap-2 rounded-2xl bg-teal-600 text-sm font-bold text-white hover:brightness-105 transition-all"
               >
                 {c.ctaPrimary}
@@ -436,7 +439,7 @@ export default function DevenirEnseignantContent() {
             <p className="mt-2 text-white/85 text-sm">{c.finalSub}</p>
           </div>
           <Link
-            href="/login?role=teacher"
+            href={TEACHER_SIGNUP_LOGIN_HREF}
             className="shrink-0 inline-flex h-12 items-center justify-center rounded-2xl bg-white px-8 text-sm font-bold text-teal-700 hover:bg-white/95 transition-colors"
           >
             {c.finalCta}

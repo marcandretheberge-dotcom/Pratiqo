@@ -210,7 +210,7 @@ test("OAuth callback only honours signUpRoleParam='teacher' (never 'admin')", ()
   // it to the resolver.
   const callback = READ("app/auth/callback/route.ts");
   assert.match(callback, /resolveProfileRoleOnAuth\(\{/);
-  assert.match(callback, /signUpRoleParam:\s*role/);
+  assert.match(callback, /signUpRoleParam:\s*resolveSignUpRoleParam\(role,\s*next\)/);
 });
 
 test("/api/onboarding/select-role still rejects admin role from client callers", () => {
@@ -225,8 +225,10 @@ test("/api/onboarding/select-role still rejects admin role from client callers",
 
 test("Login page only treats role=teacher specially (no admin branch)", () => {
   const login = READ("app/login/page.tsx");
-  assert.match(login, /role\s*===\s*"teacher"/);
-  assert.doesNotMatch(login, /role\s*===\s*"admin"/);
+  assert.match(login, /parsePublicSignUpRoleParam/);
+  assert.match(login, /hasTeacherOnboardingIntent/);
+  assert.doesNotMatch(login, /roleParam\s*===\s*"admin"/);
+  assert.doesNotMatch(login, /searchParams\.get\("role"\)\s*===\s*"admin"/);
 });
 
 // ── Audit table migration ───────────────────────────────────────────────────

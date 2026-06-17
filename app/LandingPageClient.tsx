@@ -14,6 +14,7 @@ import { fetchTeacherDisciplinesMap, mergeTeachersWithDisciplines } from "../lib
 import { isLaunchEligibleTeacherRow, teacherRowToTeacher, type TeacherRow } from "../lib/teacherMapper";
 import { TEACHERS_LIST_SELECT, TEACHERS_LIST_SELECT_LEGACY_PUBLIC, TEACHERS_PUBLIC_TABLE } from "../lib/supabase/queries";
 import { applyTeacherListingMetadata } from "@/lib/teacherListingMetadata";
+import { buildTeacherSignupLoginHref } from "@/lib/auth/teacherOnboardingIntent";
 import { useLocale } from "../lib/locale-context";
 import { useAuth } from "../components/AuthProvider";
 import type { BookingInitialLessonKind } from "../components/BookingModal";
@@ -753,7 +754,7 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
                   <Link href="/become-teacher" className="inline-flex h-12 items-center justify-center rounded-2xl bg-teal-700 px-8 text-sm font-bold text-white hover:brightness-105">
                     {t("homeTeacherSeePlans")}
                   </Link>
-                  <Link href="/login?role=teacher" prefetch={false} className="text-sm font-medium text-white/80 underline underline-offset-2 hover:text-white">
+                  <Link href={buildTeacherSignupLoginHref()} prefetch={false} className="text-sm font-medium text-white/80 underline underline-offset-2 hover:text-white">
                     {t("joinFree")}
                   </Link>
                 </div>
