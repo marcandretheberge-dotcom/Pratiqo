@@ -8,30 +8,87 @@ import { cn } from "../../lib/utils";
 import PratiqoLogo from "../../components/PratiqoLogo";
 import { LocaleSwitcher } from "../../components/LocaleSwitcher";
 import { loginWithGoogle } from "../../lib/auth";
-import { sanitizeRelativeRedirectPath } from "../../lib/auth/redirects";
+import { resolvePostAuthRedirect, type ProfileRole } from "../../lib/auth/postAuthRedirect";
+import {
+  hasTeacherOnboardingIntent,
+  parsePublicSignUpRoleParam,
+  resolveLoginOAuthNextPath,
+} from "../../lib/auth/teacherOnboardingIntent";
 import { useAuth } from "../../components/AuthProvider";
 import { useLocale } from "../../lib/locale-context";
-
-const DEFAULT_POST_LOGIN_REDIRECT = "/dashboard";
+import { getSupabaseClient } from "../../lib/supabase";
 
 function LoginForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { user, loading } = useAuth();
-  const role = searchParams.get("role");
-  // Sanitize to reject open-redirect attempts (e.g. //evil.com, https://…)
-  // before the value is forwarded into Google OAuth state OR used to
-  // redirect already-authenticated users on this page.
-  const next =
-    sanitizeRelativeRedirectPath(searchParams.get("next")) ?? DEFAULT_POST_LOGIN_REDIRECT;
+  const roleParam = searchParams.get("role");
+  const nextParam = searchParams.get("next");
   const refCode = searchParams.get("ref") ?? undefined;
-  const isTeacherInvite = role === "teacher";
+  const isTeacherInvite = hasTeacherOnboardingIntent(roleParam, nextParam);
+  const oauthNext = resolveLoginOAuthNextPath(roleParam, nextParam);
 
   useEffect(() => {
-    if (!loading && user) {
-      router.replace(next);
-    }
-  }, [loading, user, router, next, role]);
+    if (loading || !user) return;
+
+    let cancelled = false;
+    void (async () => {
+      const supabase = getSupabaseClient();
+      const { data: profileRow } = await supabase
+        .from("profiles")
+        .select("role, teacher_onboarding_complete, companion_chosen")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (cancelled) return;
+
+      const profile = profileRow as {
+        role?: string | null;
+        teacher_onboarding_complete?: boolean | null;
+        companion_chosen?: boolean | null;
+      } | null;
+
+      let effectiveRole: ProfileRole =
+        profile?.role === "admin" || profile?.role === "teacher" || profile?.role === "student"
+          ? profile.role
+          : "student";
+
+      if (isTeacherInvite && effectiveRole === "student") {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (session?.access_token) {
+          const res = await fetch("/api/onboarding/select-role", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${session.access_token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ role: "teacher" }),
+          });
+          if (res.ok) {
+            effectiveRole = "teacher";
+          }
+        }
+      }
+
+      if (cancelled) return;
+
+      const redirectPath = resolvePostAuthRedirect(
+        effectiveRole,
+        {
+          teacher_onboarding_complete: profile?.teacher_onboarding_complete,
+          companion_chosen: profile?.companion_chosen,
+        },
+        oauthNext,
+      );
+      router.replace(redirectPath);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [loading, user, router, oauthNext, isTeacherInvite]);
 
   const { t } = useLocale();
   const [legalAccepted, setLegalAccepted] = useState(false);
@@ -41,16 +98,11 @@ function LoginForm() {
     if (!legalAccepted || busy) return;
     setBusy(true);
     try {
-      // Forward the sanitized `next` through Google OAuth so users land on the
-      // page they were trying to reach (e.g. /student/progress from a reward
-      // email) instead of being dumped on /dashboard. Without this, mobile
-      // visitors who must complete OAuth lose their intended destination —
-      // desktop users with a live session bypass OAuth via the useEffect
-      // above and so didn't surface the regression.
-      if (role === "teacher") {
-        await loginWithGoogle(next, "teacher", refCode);
+      const signUpRole = parsePublicSignUpRoleParam(roleParam);
+      if (signUpRole === "teacher") {
+        await loginWithGoogle(oauthNext, "teacher", refCode);
       } else {
-        await loginWithGoogle(next, undefined, refCode);
+        await loginWithGoogle(oauthNext, undefined, refCode);
       }
     } catch (e) {
       console.error(e);
@@ -94,7 +146,7 @@ function LoginForm() {
 
         {isTeacherInvite ? (
           <p className="text-center text-sm font-semibold text-teal-700 bg-teal-500/10 rounded-2xl px-4 py-3 mb-6">
-            Bienvenue professeur ! Crée ton compte gratuitement.
+            {t("loginTeacherInviteBanner")}
           </p>
         ) : null}
 

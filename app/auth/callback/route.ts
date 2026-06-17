@@ -10,6 +10,7 @@ import {
   resolvePostAuthRedirect,
   resolveProfileRoleOnAuth,
 } from "@/lib/auth/admin";
+import { resolveSignUpRoleParam } from "@/lib/auth/teacherOnboardingIntent";
 
 async function trySendStudentWelcomeOnce(
   admin: ReturnType<typeof getSupabaseAdmin>,
@@ -94,7 +95,7 @@ export async function GET(request: Request) {
       const adminLoginEmails = parseAdminLoginEmails(process.env.ADMIN_LOGIN_EMAILS);
       const resolvedRole = resolveProfileRoleOnAuth({
         existingRole: (existingProfile as { role?: string } | null)?.role,
-        signUpRoleParam: role,
+        signUpRoleParam: resolveSignUpRoleParam(role, next),
         email: user.email,
         adminLoginEmails,
       });

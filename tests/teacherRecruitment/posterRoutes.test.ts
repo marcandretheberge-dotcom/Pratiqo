@@ -54,8 +54,8 @@ test("/devenir-professeur supports poster verticals", () => {
 });
 
 test("CTA uses the existing teacher login flow and preserves campaign params", () => {
-  assert.match(professeurPage, /login\.set\("role", "teacher"\)/);
-  assert.match(professeurPage, /login\.set\("next", onboardingPath\)/);
+  assert.match(professeurPage, /buildTeacherSignupLoginHref/);
+  assert.match(professeurPage, /onboardingQuery: campaign\.toString\(\)/);
   for (const key of ["vertical", "source", "utm_source", "utm_medium", "utm_campaign"]) {
     assert.match(professeurPage, new RegExp(`"${key}"`));
   }

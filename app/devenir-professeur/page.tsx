@@ -6,6 +6,7 @@ import {
   TeacherRecruitmentCtaLink,
 } from "@/components/marketing/TeacherRecruitmentAnalytics";
 import { SITE_URL } from "@/lib/seo/site";
+import { buildTeacherSignupLoginHref } from "@/lib/auth/teacherOnboardingIntent";
 
 type Search = Record<string, string | string[] | undefined>;
 type Vertical = "academique" | "musique" | "langues" | "general";
@@ -124,14 +125,14 @@ function buildQuery(params: Search, vertical: Vertical): URLSearchParams {
 
 function buildTeacherSignupHref(params: Search, vertical: Vertical): string {
   const campaign = buildQuery(params, vertical);
-  const onboardingPath = `/onboarding/teacher?${campaign.toString()}`;
-  const login = new URLSearchParams();
-  login.set("role", "teacher");
-  login.set("next", onboardingPath);
+  const extraParams: Record<string, string> = {};
   for (const [key, value] of campaign.entries()) {
-    login.set(key, value);
+    extraParams[key] = value;
   }
-  return `/login?${login.toString()}`;
+  return buildTeacherSignupLoginHref({
+    onboardingQuery: campaign.toString(),
+    extraParams,
+  });
 }
 
 export default async function DevenirProfesseurPage({

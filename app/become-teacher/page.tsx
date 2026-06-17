@@ -8,6 +8,9 @@ import PratiqoLogo from "../../components/PratiqoLogo";
 import { LocaleSwitcher } from "../../components/LocaleSwitcher";
 import { useLocale } from "../../lib/locale-context";
 import { useAuth } from "../../components/AuthProvider";
+import { buildTeacherSignupLoginHref } from "@/lib/auth/teacherOnboardingIntent";
+
+const TEACHER_SIGNUP_LOGIN_HREF = buildTeacherSignupLoginHref();
 
 type TierId = "bronze" | "argent" | "or" | "platine";
 type Plan = "free" | "pro";
@@ -129,7 +132,7 @@ export default function BecomeTeacherPage() {
           <div className="flex items-center gap-4">
             <LocaleSwitcher variant="dark" compact />
             <Link
-              href="/login?role=teacher"
+              href={TEACHER_SIGNUP_LOGIN_HREF}
               className="text-sm font-semibold text-white/85 hover:text-white underline underline-offset-4"
             >
               {t("signIn")}
@@ -156,7 +159,7 @@ export default function BecomeTeacherPage() {
             </p>
             <div className="mt-8 flex flex-col sm:flex-row gap-3">
               <Link
-                href="/login?role=teacher"
+                href={TEACHER_SIGNUP_LOGIN_HREF}
                 className="inline-flex h-12 items-center justify-center rounded-2xl bg-teal-600 px-7 text-sm font-bold text-white hover:brightness-105"
               >
                 {t("startFree")}
@@ -212,7 +215,7 @@ export default function BecomeTeacherPage() {
                 ))}
               </ul>
               <Link
-                href="/login?role=teacher"
+                href={TEACHER_SIGNUP_LOGIN_HREF}
                 className="inline-flex h-11 items-center justify-center rounded-2xl border border-white/20 text-sm font-semibold text-white/90 hover:bg-white/5 transition-colors"
               >
                 {t("btPlanFreeBtn")}
@@ -247,7 +250,7 @@ export default function BecomeTeacherPage() {
                 ))}
               </ul>
               <Link
-                href="/login?role=teacher"
+                href={TEACHER_SIGNUP_LOGIN_HREF}
                 className="inline-flex h-11 items-center justify-center rounded-2xl bg-teal-600 text-sm font-bold text-white hover:brightness-105 transition-all"
               >
                 {t("joinFree")}
@@ -423,7 +426,7 @@ export default function BecomeTeacherPage() {
               </div>
 
               <Link
-                href="/login?role=teacher"
+                href={TEACHER_SIGNUP_LOGIN_HREF}
                 className="inline-flex w-full h-12 items-center justify-center rounded-2xl bg-teal-600 text-sm font-bold text-white hover:brightness-105"
               >
                 {t("joinFree")}
@@ -571,7 +574,7 @@ export default function BecomeTeacherPage() {
           </div>
           <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto shrink-0">
             <Link
-              href="/login?role=teacher"
+              href={TEACHER_SIGNUP_LOGIN_HREF}
               className="inline-flex h-12 items-center justify-center rounded-2xl bg-white px-7 text-sm font-bold text-teal-700 hover:bg-white/95"
             >
               {t("btFinalCta")}
