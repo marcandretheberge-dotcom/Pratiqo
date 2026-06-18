@@ -8,6 +8,20 @@ export function isOnboardingRoleConfirmed(dashboard: unknown): boolean {
   return (dashboard as Record<string, unknown>).onboarding_role_confirmed === true;
 }
 
+/** AuthProvider spreads dashboard JSON onto profile; normalize for role-choice checks. */
+export function resolveProfileDashboardFromAuth(
+  profile: Record<string, unknown> | null | undefined,
+): unknown {
+  if (!profile) return {};
+  if (typeof profile.dashboard === "object" && profile.dashboard !== null && !Array.isArray(profile.dashboard)) {
+    return profile.dashboard;
+  }
+  if (profile.onboarding_role_confirmed === true) {
+    return { onboarding_role_confirmed: true };
+  }
+  return {};
+}
+
 export function needsOnboardingRoleChoice(profile: {
   role?: string | null;
   companion_chosen?: boolean | null;
@@ -33,6 +47,11 @@ export function hasTeacherRoleChoiceIntent(
 
 export function buildOnboardingRoleChoicePath(teacherIntent = false): string {
   return teacherIntent ? `${ONBOARDING_ROLE_CHOICE_PATH}?intent=teacher` : ONBOARDING_ROLE_CHOICE_PATH;
+}
+
+export function isOnboardingRoleChoicePath(pathname: string | null | undefined): boolean {
+  if (!pathname) return false;
+  return pathname === ONBOARDING_ROLE_CHOICE_PATH || pathname.startsWith(`${ONBOARDING_ROLE_CHOICE_PATH}/`);
 }
 
 /** Map teacher onboarding/recruitment `next` paths onto the role-choice screen, preserving safe query params. */

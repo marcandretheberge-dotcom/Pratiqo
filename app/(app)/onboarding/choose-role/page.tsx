@@ -15,6 +15,7 @@ import {
 import {
   hasTeacherRoleChoiceIntent,
   needsOnboardingRoleChoice,
+  resolveProfileDashboardFromAuth,
 } from "@/lib/auth/onboardingRoleChoice";
 import { resolvePostAuthRedirect } from "@/lib/auth/postAuthRedirect";
 import PratiqoLogo from "@/components/PratiqoLogo";
@@ -57,7 +58,7 @@ function ChooseRoleInner() {
         role: row.role,
         companion_chosen: row.companion_chosen,
         teacher_onboarding_complete: row.teacher_onboarding_complete,
-        dashboard: row.dashboard,
+        dashboard: resolveProfileDashboardFromAuth(row as Record<string, unknown>),
       })
     ) {
       const redirectPath = resolvePostAuthRedirect(
