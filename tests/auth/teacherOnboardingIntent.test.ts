@@ -115,17 +115,16 @@ test("become-teacher CTAs use shared teacher signup login href builder", () => {
 
 test("login page requires pre-auth intent before Google OAuth", () => {
   const src = read("app/login/page.tsx");
-  assert.match(src, /parsePublicPreAuthIntent/);
+  assert.match(src, /resolvePreAuthIntent/);
   assert.match(src, /loginWithGoogle\(oauthNext, \{/);
   assert.doesNotMatch(src, /body: JSON\.stringify\(\{ role: "teacher" \}\)/);
 });
 
-test("auth callback resolves pre-auth intent and applies profile patch", () => {
+test("auth callback stages intent signups through login before protected onboarding", () => {
   const src = read("app/auth/callback/route.ts");
-  assert.match(src, /resolveAuthCallbackParams/);
+  assert.match(src, /buildLoginHrefAfterOAuth/);
   assert.match(src, /resolveOAuthProfilePatch/);
   assert.match(src, /pendingOnboardingIntentClearCookieHeaders/);
-  assert.match(src, /preAuthIntentConsumed/);
 });
 
 test("resolveAuthCallbackParams falls back to pending teacher cookies when query params are stripped", () => {
@@ -158,10 +157,10 @@ test("buildOAuthCallbackUrl includes intent query param", () => {
   assert.match(url, /next=%2Fonboarding%2Fteacher/);
 });
 
-test("teacher onboarding page sends students to role-choice fallback", () => {
+test("teacher onboarding only sends unconfirmed students to role-choice fallback", () => {
   const src = read("app/(app)/onboarding/teacher/page.tsx");
-  assert.match(src, /buildOnboardingRoleChoicePath/);
-  assert.doesNotMatch(src, /\/api\/onboarding\/select-role/);
+  assert.match(src, /needsOnboardingRoleChoice/);
+  assert.doesNotMatch(src, /if \(profile\?\.role === "student"\) \{\s*router\.replace\(buildOnboardingRoleChoicePath/);
 });
 
 test("unsafe external next paths are rejected", () => {

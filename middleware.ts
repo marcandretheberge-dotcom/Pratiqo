@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { buildConnexionHrefForProtectedReturn } from "@/lib/auth/preAuthOnboardingIntent";
 
 const LOGIN_PATH = "/login";
+const CONNEXION_PATH = "/connexion";
 
 /** Presence-only: do not verify JWT at the edge. */
 function hasSupabaseAuthCookie(req: NextRequest): boolean {
@@ -51,7 +53,7 @@ export function middleware(req: NextRequest) {
     return new NextResponse(null, { status: 404 });
   }
 
-  if (pathname.startsWith(LOGIN_PATH)) {
+  if (pathname.startsWith(LOGIN_PATH) || pathname.startsWith(CONNEXION_PATH)) {
     return NextResponse.next();
   }
 
@@ -64,11 +66,8 @@ export function middleware(req: NextRequest) {
   }
 
   const nextParam = `${pathname}${search ?? ""}`;
-  const loginUrl = req.nextUrl.clone();
-  loginUrl.pathname = LOGIN_PATH;
-  loginUrl.search = "";
-  loginUrl.searchParams.set("next", nextParam);
-  return NextResponse.redirect(loginUrl);
+  const connexionUrl = new URL(buildConnexionHrefForProtectedReturn(nextParam), req.url);
+  return NextResponse.redirect(connexionUrl);
 }
 
 export const config = {
