@@ -497,6 +497,8 @@
   "companionStudioUnlocked": "Unlocked",
   "companionSubtitle": "It will grow with you",
   "companionTitle": "Choose your companion",
+  "companionProfileSyncError": "We couldn't load your profile right now. Please try again in a moment.",
+  "companionProfileSyncRetry": "Try again",
   "completed": "Completed",
   "configuringProfile": "Setting up your profile…",
   "confirm": "Confirm",

@@ -426,10 +426,27 @@ test("AuthenticatedShell never sends unresolved roles to legacy /onboarding", ()
   assert.match(src, /wait-unresolved-role/);
 });
 
-test("AuthenticatedShell keeps learners on choose-companion while role syncs", () => {
+test("AuthenticatedShell renders companion page while student role syncs", () => {
   const src = read("components/AuthenticatedShell.tsx");
-  assert.match(src, /pathname\.startsWith\("\/student"\)/);
-  assert.match(src, /!isResolvedRole\(role\)/);
+  assert.match(src, /wait-unresolved-role/);
+  assert.doesNotMatch(
+    src,
+    /!isResolvedRole\(role\)[\s\S]*pathname\.startsWith\("\/student"\)[\s\S]*Chargement/,
+  );
+});
+
+test("AuthProvider retries profile sync in background after OAuth", () => {
+  const src = read("components/AuthProvider.tsx");
+  assert.match(src, /refreshProfileInBackground/);
+  assert.match(src, /profileSyncError/);
+  assert.match(src, /retryProfileSync/);
+});
+
+test("choose-companion shows retry state instead of infinite loading", () => {
+  const src = read("app/(app)/student/choose-companion/page.tsx");
+  assert.match(src, /profileSyncError/);
+  assert.match(src, /companionProfileSyncRetry/);
+  assert.doesNotMatch(src, /if \(loading \|\| !user\) return null/);
 });
 
 test("AuthenticatedShell sends teachers on student paths to teacher onboarding", () => {

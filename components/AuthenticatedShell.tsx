@@ -140,21 +140,5 @@ export function AuthenticatedShell({ children }: { children: React.ReactNode }) 
     );
   }
 
-  const role = profile?.role as string | undefined;
-  if (
-    !isResolvedRole(role) &&
-    pathname &&
-    (pathname.startsWith("/student") ||
-      isOnboardingRoleChoicePath(pathname) ||
-      pathname.startsWith("/onboarding/teacher"))
-  ) {
-    return (
-      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3 text-[var(--p-text-muted)]">
-        <Loader2 className="h-9 w-9 animate-spin text-teal-700" />
-        <p className="text-sm font-medium">Chargement…</p>
-      </div>
-    );
-  }
-
   return <AppShell>{children}</AppShell>;
 }
