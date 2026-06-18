@@ -9,9 +9,11 @@ import PratiqoLogo from "../../components/PratiqoLogo";
 import { LocaleSwitcher } from "../../components/LocaleSwitcher";
 import { loginWithGoogle } from "../../lib/auth";
 import { resolvePostAuthRedirect, type ProfileRole } from "../../lib/auth/postAuthRedirect";
+import { mergeOnboardingRoleConfirmedDashboard } from "../../lib/auth/onboardingRoleChoice";
 import {
-  parsePublicPreAuthIntent,
+  primaryRoleForPreAuthIntent,
   resolveLoginOAuthNextPath,
+  resolvePreAuthIntent,
   CONNEXION_PATH,
 } from "../../lib/auth/preAuthOnboardingIntent";
 import {
@@ -36,8 +38,8 @@ function LoginForm() {
   const nextParam = searchParams.get("next");
   const refCode = searchParams.get("ref") ?? undefined;
   const authError = searchParams.get("auth_error");
-  const preAuthIntent = parsePublicPreAuthIntent(intentParam, roleParam);
-  const oauthNext = resolveLoginOAuthNextPath(roleParam, nextParam, intentParam);
+  const preAuthIntent = resolvePreAuthIntent(intentParam, roleParam, nextParam);
+  const oauthNext = resolveLoginOAuthNextPath(roleParam, nextParam, preAuthIntent);
 
   useEffect(() => {
     if (loading || user) return;
@@ -80,8 +82,9 @@ function LoginForm() {
         dashboard?: unknown;
       } | null;
 
-      const effectiveRole: ProfileRole =
-        profile?.role === "admin" || profile?.role === "teacher" || profile?.role === "student"
+      const effectiveRole: ProfileRole = preAuthIntent
+        ? primaryRoleForPreAuthIntent(preAuthIntent, profile?.role)
+        : profile?.role === "admin" || profile?.role === "teacher" || profile?.role === "student"
           ? profile.role
           : "student";
 
@@ -92,24 +95,34 @@ function LoginForm() {
         {
           teacher_onboarding_complete: profile?.teacher_onboarding_complete,
           companion_chosen: profile?.companion_chosen,
-          dashboard: profile?.dashboard,
+          dashboard: preAuthIntent
+            ? mergeOnboardingRoleConfirmedDashboard(profile?.dashboard)
+            : profile?.dashboard,
         },
         oauthNext,
         preAuthIntent ? { preAuthIntentConsumed: preAuthIntent } : undefined,
       );
       clearPendingOnboardingIntentCookie();
       clearPendingTeacherOnboardingCookie();
-      router.replace(redirectPath);
+      window.location.assign(redirectPath);
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [loading, user, router, oauthNext]);
+  }, [loading, user, oauthNext, preAuthIntent]);
 
   const { t } = useLocale();
   const [legalAccepted, setLegalAccepted] = useState(false);
   const [busy, setBusy] = useState(false);
+
+  if (user && preAuthIntent) {
+    return (
+      <div className="min-h-[50vh] flex items-center justify-center text-sm text-[var(--p-text-muted)]">
+        Redirection…
+      </div>
+    );
+  }
 
   const handleLogin = async () => {
     if (!legalAccepted || busy || !preAuthIntent) return;

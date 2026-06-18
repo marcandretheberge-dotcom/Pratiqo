@@ -11,6 +11,7 @@ import {
   ONBOARDING_ROLE_CHOICE_PATH,
   resolveProfileDashboardFromAuth,
 } from "@/lib/auth/onboardingRoleChoice";
+import { buildConnexionHrefForProtectedReturn } from "@/lib/auth/preAuthOnboardingIntent";
 
 const LEGAL_PREFIX = "/legal";
 
@@ -87,7 +88,7 @@ export function AuthenticatedShell({ children }: { children: React.ReactNode }) 
   useEffect(() => {
     if (loading || isLegal || user) return;
     const next = pathname && pathname !== "/" ? pathname : "/dashboard";
-    router.replace(`/connexion?next=${encodeURIComponent(next)}`);
+    router.replace(buildConnexionHrefForProtectedReturn(next));
   }, [loading, isLegal, user, pathname, router]);
 
   if (isLegal) {

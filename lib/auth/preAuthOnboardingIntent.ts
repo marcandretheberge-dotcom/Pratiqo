@@ -22,6 +22,48 @@ export function oauthNextPathForPreAuthIntent(intent: PreAuthOnboardingIntent): 
   return intent === "teacher" ? "/onboarding/teacher" : "/student/choose-companion";
 }
 
+/** Infer onboarding intent from a safe internal return path (middleware / login recovery). */
+export function inferPreAuthIntentFromNextPath(
+  nextParam: string | null | undefined,
+): PreAuthOnboardingIntent | null {
+  const safeNext = sanitizeRelativeRedirectPath(nextParam);
+  if (!safeNext) return null;
+  if (safeNext === "/onboarding/teacher" || safeNext.startsWith("/onboarding/teacher?")) {
+    return "teacher";
+  }
+  if (safeNext === "/student/choose-companion" || safeNext.startsWith("/student/choose-companion")) {
+    return "learner";
+  }
+  if (safeNext.startsWith(`${ONBOARDING_ROLE_CHOICE_PATH}?`) && safeNext.includes("intent=teacher")) {
+    return "teacher";
+  }
+  return null;
+}
+
+export function resolvePreAuthIntent(
+  intentParam: string | null | undefined,
+  roleParam?: string | null | undefined,
+  nextParam?: string | null,
+): PreAuthOnboardingIntent | null {
+  return parsePublicPreAuthIntent(intentParam, roleParam) ?? inferPreAuthIntentFromNextPath(nextParam);
+}
+
+export function buildConnexionHrefForProtectedReturn(nextPath: string): string {
+  const safeNext = sanitizeRelativeRedirectPath(nextPath);
+  if (!safeNext) return CONNEXION_PATH;
+  const intent = inferPreAuthIntentFromNextPath(safeNext);
+  const params = new URLSearchParams({ next: safeNext });
+  if (intent) params.set("intent", intent);
+  return `${CONNEXION_PATH}?${params.toString()}`;
+}
+
+export function buildLoginHrefAfterOAuth(intent: PreAuthOnboardingIntent, nextPath?: string | null): string {
+  const params = new URLSearchParams({ intent });
+  const safeNext = sanitizeRelativeRedirectPath(nextPath);
+  if (safeNext) params.set("next", safeNext);
+  return `/login?${params.toString()}`;
+}
+
 export function buildLoginHrefWithPreAuthIntent(intent: PreAuthOnboardingIntent): string {
   return `/login?intent=${intent}`;
 }

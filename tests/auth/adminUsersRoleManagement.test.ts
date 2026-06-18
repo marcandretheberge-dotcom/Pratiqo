@@ -220,7 +220,7 @@ test("/api/onboarding/select-role still rejects admin role from client callers",
 
 test("Login page only accepts public pre-auth intents (no admin branch)", () => {
   const login = READ("app/login/page.tsx");
-  assert.match(login, /parsePublicPreAuthIntent/);
+  assert.match(login, /resolvePreAuthIntent/);
   assert.doesNotMatch(login, /roleParam\s*===\s*"admin"/);
   assert.doesNotMatch(login, /searchParams\.get\("role"\)\s*===\s*"admin"/);
 });

@@ -50,6 +50,7 @@ export function LandingAuthGate({ children }: { children: ReactNode }) {
           dashboard: row?.dashboard,
         },
         pendingTeacher ? oauthNextPathForPreAuthIntent("teacher") : null,
+        pendingTeacher ? { preAuthIntentConsumed: "teacher" as const } : undefined,
       );
 
       if (!redirectPath.startsWith("/onboarding/choose-role") && !redirectPath.startsWith("/connexion")) {

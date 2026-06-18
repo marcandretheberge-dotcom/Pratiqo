@@ -10,13 +10,17 @@ import {
 } from "@/lib/auth/onboardingRoleChoice";
 import {
   buildConnexionHref,
+  buildConnexionHrefForProtectedReturn,
+  buildLoginHrefAfterOAuth,
   buildLoginHrefWithPreAuthIntent,
   CONNEXION_PATH,
+  inferPreAuthIntentFromNextPath,
   oauthNextPathForPreAuthIntent,
   parsePublicPreAuthIntent,
   primaryRoleForPreAuthIntent,
   resolveLoginOAuthNextPath,
   resolveOAuthProfilePatch,
+  resolvePreAuthIntent,
 } from "@/lib/auth/preAuthOnboardingIntent";
 import { resolvePostAuthRedirect } from "@/lib/auth/postAuthRedirect";
 import { sanitizeRelativeRedirectPath } from "@/lib/auth/redirects";
@@ -37,7 +41,7 @@ test("generic Se connecter routes logged-out users to pre-auth connexion", () =>
   const header = read("components/marketing/LandingHeader.tsx");
   assert.match(header, /\/connexion/);
   const shell = read("components/AuthenticatedShell.tsx");
-  assert.match(shell, /\/connexion\?next=/);
+  assert.match(shell, /buildConnexionHrefForProtectedReturn/);
 });
 
 test("Apprenant pre-auth choice builds login with intent=learner", () => {
@@ -193,11 +197,52 @@ test("login page shows intent-specific confirmation copy instead of role cards",
   assert.match(src, /preAuthIntent === "teacher"/);
 });
 
+test("inferPreAuthIntentFromNextPath recovers teacher and learner destinations", () => {
+  assert.equal(inferPreAuthIntentFromNextPath("/onboarding/teacher"), "teacher");
+  assert.equal(inferPreAuthIntentFromNextPath("/onboarding/teacher?vertical=musique"), "teacher");
+  assert.equal(inferPreAuthIntentFromNextPath("/student/choose-companion"), "learner");
+  assert.equal(inferPreAuthIntentFromNextPath("/dashboard"), null);
+  assert.equal(inferPreAuthIntentFromNextPath("https://evil.example.com"), null);
+});
+
+test("resolvePreAuthIntent combines query intent and safe next-path inference", () => {
+  assert.equal(resolvePreAuthIntent(null, null, "/onboarding/teacher"), "teacher");
+  assert.equal(resolvePreAuthIntent("learner", null, "/onboarding/teacher"), "learner");
+});
+
+test("buildConnexionHrefForProtectedReturn preserves teacher intent for onboarding return", () => {
+  assert.equal(
+    buildConnexionHrefForProtectedReturn("/onboarding/teacher"),
+    "/connexion?next=%2Fonboarding%2Fteacher&intent=teacher",
+  );
+});
+
+test("buildLoginHrefAfterOAuth stages post-OAuth session handoff on public login", () => {
+  assert.equal(
+    buildLoginHrefAfterOAuth("teacher", "/onboarding/teacher"),
+    "/login?intent=teacher&next=%2Fonboarding%2Fteacher",
+  );
+});
+
+test("middleware redirects unauthenticated protected routes to connexion with inferred intent", () => {
+  const src = read("middleware.ts");
+  assert.match(src, /buildConnexionHrefForProtectedReturn/);
+  assert.match(src, /CONNEXION_PATH/);
+  assert.doesNotMatch(src, /loginUrl\.searchParams\.set\("next"/);
+});
+
+test("auth callback stages intent signups through login before protected onboarding", () => {
+  const src = read("app/auth/callback/route.ts");
+  assert.match(src, /buildLoginHrefAfterOAuth/);
+  assert.match(src, /resolveOAuthProfilePatch/);
+});
+
 test("login page redirects to connexion when no pre-auth intent", () => {
   const src = read("app/login/page.tsx");
   assert.match(src, /CONNEXION_PATH/);
-  assert.match(src, /parsePublicPreAuthIntent/);
+  assert.match(src, /resolvePreAuthIntent/);
   assert.match(src, /setPendingOnboardingIntentCookie/);
+  assert.match(src, /window\.location\.assign/);
 });
 
 test("auth callback applies pre-auth intent patch and clears pending cookies", () => {
@@ -205,7 +250,7 @@ test("auth callback applies pre-auth intent patch and clears pending cookies", (
   assert.match(src, /resolveOAuthProfilePatch/);
   assert.match(src, /pendingOnboardingIntentClearCookieHeaders/);
   assert.match(src, /resolveAuthCallbackParams/);
-  assert.match(src, /preAuthIntentConsumed/);
+  assert.match(src, /buildLoginHrefAfterOAuth/);
 });
 
 test("login page skips duplicate choose-role when pre-auth intent is present", () => {

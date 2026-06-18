@@ -24,7 +24,7 @@ import {
 } from "@/lib/pricing/lessonDuration";
 import { isTeacherMarketSupported } from "@/lib/config/markets";
 import { buildTeacherSignupLoginHref } from "@/lib/auth/teacherOnboardingIntent";
-import { buildOnboardingRoleChoicePath } from "@/lib/auth/onboardingRoleChoice";
+import { buildOnboardingRoleChoicePath, needsOnboardingRoleChoice, resolveProfileDashboardFromAuth } from "@/lib/auth/onboardingRoleChoice";
 
 /**
  * Teacher Launch Center
@@ -172,10 +172,18 @@ export default function TeacherOnboardingPage() {
       router.replace(buildTeacherSignupLoginHref());
       return;
     }
-    if (profile?.role === "student") {
+    if (
+      profile?.role === "student" &&
+      needsOnboardingRoleChoice({
+        role: profile.role,
+        companion_chosen: profile.companion_chosen,
+        teacher_onboarding_complete: profile.teacher_onboarding_complete,
+        dashboard: resolveProfileDashboardFromAuth(profile as Record<string, unknown>),
+      })
+    ) {
       router.replace(buildOnboardingRoleChoicePath(true));
     }
-  }, [loading, user, profile?.role, router]);
+  }, [loading, user, profile, router]);
 
   // If teacher already complete, bounce back to dashboard.
   useEffect(() => {
