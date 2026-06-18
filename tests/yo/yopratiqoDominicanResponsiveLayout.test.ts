@@ -184,6 +184,10 @@ test("responsive layout patch does not touch restricted systems", () => {
     // tests/teacherOnboarding/minRateBlockerRecovery.test.ts.
     "app/api/onboarding/complete/route.ts",
     "app/api/admin/users/[id]/teacher-onboarding/route.ts",
+    // hotfix/google-onboarding-role-choice-flow — explicit role choice before
+    // onboarding; sets dashboard.onboarding_role_confirmed via select-role.
+    // Defended by tests/auth/onboardingRoleChoice.test.ts.
+    "app/api/onboarding/select-role/route.ts",
   ]);
   const forbidden = [
     /^app\/api\//,

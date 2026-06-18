@@ -98,9 +98,20 @@ test("resolvePostAuthRedirect keeps teachers off companion flow", () => {
   );
 });
 
-test("resolvePostAuthRedirect sends students without companion to chooser", () => {
+test("resolvePostAuthRedirect sends students without companion to role-choice when unconfirmed", () => {
   assert.equal(
-    resolvePostAuthRedirect("student", { companion_chosen: false }, "/dashboard"),
+    resolvePostAuthRedirect("student", { companion_chosen: false, dashboard: {} }, "/dashboard"),
+    "/onboarding/choose-role",
+  );
+});
+
+test("resolvePostAuthRedirect sends confirmed students without companion to chooser", () => {
+  assert.equal(
+    resolvePostAuthRedirect(
+      "student",
+      { companion_chosen: false, dashboard: { onboarding_role_confirmed: true } },
+      "/dashboard",
+    ),
     "/student/choose-companion",
   );
 });
@@ -156,10 +167,10 @@ test("resolvePostAuthRedirect preserves /student/progress for students with comp
   );
 });
 
-test("resolvePostAuthRedirect funnels students without companion to chooser even when next is /student/progress", () => {
+test("resolvePostAuthRedirect funnels unconfirmed students to role-choice even when next is /student/progress", () => {
   assert.equal(
-    resolvePostAuthRedirect("student", { companion_chosen: false }, "/student/progress"),
-    "/student/choose-companion",
+    resolvePostAuthRedirect("student", { companion_chosen: false, dashboard: {} }, "/student/progress"),
+    "/onboarding/choose-role",
   );
 });
 
