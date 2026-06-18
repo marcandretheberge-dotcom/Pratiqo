@@ -205,11 +205,11 @@ test("OAuth callback only honours signUpRoleParam='teacher' (never 'admin')", ()
   const adminLib = READ("lib/auth/admin.ts");
   assert.match(adminLib, /signUpRoleParam\s*===\s*"teacher"/);
   assert.doesNotMatch(adminLib, /signUpRoleParam\s*===\s*"admin"/);
-  // And the callback never inspects ?role for anything other than passing
-  // it to the resolver.
+  // OAuth callback no longer auto-assigns teacher role from URL intent; role
+  // choice happens on /onboarding/choose-role before select-role is called.
   const callback = READ("app/auth/callback/route.ts");
   assert.match(callback, /resolveAuthCallbackParams/);
-  assert.match(callback, /signUpRoleParam:\s*resolveSignUpRoleParam\(role,\s*next\)/);
+  assert.match(callback, /signUpRoleParam:\s*null/);
 });
 
 test("/api/onboarding/select-role still rejects admin role from client callers", () => {

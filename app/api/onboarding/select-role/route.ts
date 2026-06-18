@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { mergeOnboardingRoleConfirmedDashboard } from "@/lib/auth/onboardingRoleChoice";
 
 export const runtime = "nodejs";
 
@@ -44,7 +45,7 @@ export async function POST(req: Request) {
   const admin = getSupabaseAdmin();
   const { data: profile, error: profileErr } = await admin
     .from("profiles")
-    .select("role")
+    .select("role, dashboard")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -56,8 +57,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Admin profiles cannot be changed through role selection." }, { status: 403 });
   }
 
+  const dashboard = mergeOnboardingRoleConfirmedDashboard(
+    (profile as { dashboard?: unknown } | null)?.dashboard,
+  );
+
   if (profile) {
-    const { error: updateErr } = await admin.from("profiles").update({ role }).eq("id", user.id);
+    const { error: updateErr } = await admin
+      .from("profiles")
+      .update({ role, dashboard })
+      .eq("id", user.id);
     if (updateErr) {
       return NextResponse.json({ error: updateErr.message }, { status: 500 });
     }
@@ -66,6 +74,8 @@ export async function POST(req: Request) {
       id: user.id,
       email: user.email ?? "",
       role,
+      dashboard,
+      companion_chosen: false,
     });
     if (insertErr) {
       return NextResponse.json({ error: insertErr.message }, { status: 500 });

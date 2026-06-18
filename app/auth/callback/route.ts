@@ -15,7 +15,7 @@ import {
   pendingTeacherIntentClearCookieHeaders,
   resolveAuthCallbackParams,
 } from "@/lib/auth/pendingTeacherIntent";
-import { hasTeacherOnboardingIntent, resolveSignUpRoleParam } from "@/lib/auth/teacherOnboardingIntent";
+import { hasTeacherOnboardingIntent } from "@/lib/auth/teacherOnboardingIntent";
 
 type AuthCookie = { name: string; value: string; options: Record<string, unknown> };
 
@@ -139,7 +139,7 @@ export async function GET(request: Request) {
   const adminLoginEmails = parseAdminLoginEmails(process.env.ADMIN_LOGIN_EMAILS);
   const resolvedRole = resolveProfileRoleOnAuth({
     existingRole: (existingProfile as { role?: string } | null)?.role,
-    signUpRoleParam: resolveSignUpRoleParam(role, next),
+    signUpRoleParam: null,
     email: user.email,
     adminLoginEmails,
   });
@@ -162,11 +162,11 @@ export async function GET(request: Request) {
     console.error("[auth/callback] profile upsert failed", upsertErr);
   }
 
-  const { data: profile, error: readErr } = await admin
-    .from("profiles")
-    .select("role, teacher_onboarding_complete, companion_chosen")
-    .eq("id", user.id)
-    .single();
+      const { data: profile, error: readErr } = await admin
+        .from("profiles")
+        .select("role, teacher_onboarding_complete, companion_chosen, dashboard")
+        .eq("id", user.id)
+        .single();
 
   if (readErr || !profile) {
     console.error("[auth/callback] profile read failed", readErr);
@@ -225,11 +225,15 @@ export async function GET(request: Request) {
     }
   }
 
-  const redirectPath = resolvePostAuthRedirect(
-    profileRole === "admin" ? "admin" : profileRole === "teacher" ? "teacher" : "student",
-    profile as { teacher_onboarding_complete?: boolean | null; companion_chosen?: boolean | null },
-    next,
-  );
+      const redirectPath = resolvePostAuthRedirect(
+        profileRole === "admin" ? "admin" : profileRole === "teacher" ? "teacher" : "student",
+        profile as {
+          teacher_onboarding_complete?: boolean | null;
+          companion_chosen?: boolean | null;
+          dashboard?: unknown;
+        },
+        next,
+      );
 
   const response = NextResponse.redirect(new URL(redirectPath, requestUrl.origin));
   return applyCookies(response, [...authCookies, ...pendingTeacherIntentClearCookieHeaders()]);

@@ -24,6 +24,7 @@ import {
 } from "@/lib/pricing/lessonDuration";
 import { isTeacherMarketSupported } from "@/lib/config/markets";
 import { buildTeacherSignupLoginHref } from "@/lib/auth/teacherOnboardingIntent";
+import { buildOnboardingRoleChoicePath } from "@/lib/auth/onboardingRoleChoice";
 
 /**
  * Teacher Launch Center
@@ -165,40 +166,16 @@ export default function TeacherOnboardingPage() {
     return getTeacherOnboardingMissingFields(teacherLike);
   }, [displayName, discipline, category, city, region, countryCode, timezone, teachingMode, pricePerLesson, availability]);
 
-  const [roleUpgraded, setRoleUpgraded] = useState(false);
-
-  // Initial defaults / guard
   useEffect(() => {
     if (loading) return;
     if (!user) {
       router.replace(buildTeacherSignupLoginHref());
       return;
     }
-    if (profile?.role === "student" && !roleUpgraded) {
-      let cancelled = false;
-      void (async () => {
-        const supabase = getSupabaseClient();
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-        if (!session?.access_token) return;
-        const res = await fetch("/api/onboarding/select-role", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${session.access_token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ role: "teacher" }),
-        });
-        if (!cancelled && res.ok) {
-          setRoleUpgraded(true);
-        }
-      })();
-      return () => {
-        cancelled = true;
-      };
+    if (profile?.role === "student") {
+      router.replace(buildOnboardingRoleChoicePath(true));
     }
-  }, [loading, user, profile?.role, router, roleUpgraded]);
+  }, [loading, user, profile?.role, router]);
 
   // If teacher already complete, bounce back to dashboard.
   useEffect(() => {

@@ -47,7 +47,7 @@ function LoginForm() {
       const supabase = getSupabaseClient();
       const { data: profileRow } = await supabase
         .from("profiles")
-        .select("role, teacher_onboarding_complete, companion_chosen")
+        .select("role, teacher_onboarding_complete, companion_chosen, dashboard")
         .eq("id", user.id)
         .maybeSingle();
 
@@ -57,31 +57,13 @@ function LoginForm() {
         role?: string | null;
         teacher_onboarding_complete?: boolean | null;
         companion_chosen?: boolean | null;
+        dashboard?: unknown;
       } | null;
 
-      let effectiveRole: ProfileRole =
+      const effectiveRole: ProfileRole =
         profile?.role === "admin" || profile?.role === "teacher" || profile?.role === "student"
           ? profile.role
           : "student";
-
-      if (isTeacherInvite && effectiveRole === "student") {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-        if (session?.access_token) {
-          const res = await fetch("/api/onboarding/select-role", {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${session.access_token}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ role: "teacher" }),
-          });
-          if (res.ok) {
-            effectiveRole = "teacher";
-          }
-        }
-      }
 
       if (cancelled) return;
 
@@ -90,10 +72,13 @@ function LoginForm() {
         {
           teacher_onboarding_complete: profile?.teacher_onboarding_complete,
           companion_chosen: profile?.companion_chosen,
+          dashboard: profile?.dashboard,
         },
         oauthNext,
       );
-      clearPendingTeacherOnboardingCookie();
+      if (!redirectPath.startsWith("/onboarding/choose-role")) {
+        clearPendingTeacherOnboardingCookie();
+      }
       router.replace(redirectPath);
     })();
 

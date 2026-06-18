@@ -19,24 +19,27 @@ function read(rel: string): string {
   return readFileSync(join(process.cwd(), rel), "utf8");
 }
 
-test("buildOAuthCallbackUrl points Google OAuth to /auth/callback with teacher next", () => {
+test("buildOAuthCallbackUrl points Google OAuth to /auth/callback with teacher role-choice next", () => {
   const url = buildOAuthCallbackUrl("https://www.pratiqo.ca", {
     role: "teacher",
-    next: "/onboarding/teacher",
+    next: "/onboarding/choose-role?intent=teacher",
   });
-  assert.equal(url, "https://www.pratiqo.ca/auth/callback?role=teacher&next=%2Fonboarding%2Fteacher");
+  assert.equal(
+    url,
+    "https://www.pratiqo.ca/auth/callback?role=teacher&next=%2Fonboarding%2Fchoose-role%3Fintent%3Dteacher",
+  );
 });
 
 test("resolveAuthCallbackParams falls back to pending teacher cookies when query params are stripped", () => {
   const params = resolveAuthCallbackParams(new URL("https://www.pratiqo.ca/auth/callback?code=abc"), {
     get(name: string) {
       if (name === "pratiqo_pte") return { value: "1" };
-      if (name === "pratiqo_pte_next") return { value: encodeURIComponent("/onboarding/teacher") };
+      if (name === "pratiqo_pte_next") return { value: encodeURIComponent("/onboarding/choose-role?intent=teacher") };
       return undefined;
     },
   });
   assert.equal(params.role, "teacher");
-  assert.equal(params.next, "/onboarding/teacher");
+  assert.equal(params.next, "/onboarding/choose-role?intent=teacher");
 });
 
 test("resolveAuthCallbackParams keeps explicit callback teacher params over cookies", () => {
@@ -45,24 +48,24 @@ test("resolveAuthCallbackParams keeps explicit callback teacher params over cook
     {
       get(name: string) {
         if (name === "pratiqo_pte") return { value: "1" };
-        if (name === "pratiqo_pte_next") return { value: encodeURIComponent("/onboarding/teacher") };
+        if (name === "pratiqo_pte_next") return { value: encodeURIComponent("/onboarding/choose-role?intent=teacher") };
         return undefined;
       },
     },
   );
-  assert.equal(params.next, "/onboarding/teacher?vertical=musique");
+  assert.equal(params.next, "/onboarding/choose-role?intent=teacher&vertical=musique");
 });
 
 test("pending teacher cookies are read server-side without admin role", () => {
   const reader = {
     get(name: string) {
       if (name === "pratiqo_pte") return { value: "1" };
-      if (name === "pratiqo_pte_next") return { value: "%2Fonboarding%2Fteacher" };
+      if (name === "pratiqo_pte_next") return { value: "%2Fonboarding%2Fchoose-role%3Fintent%3Dteacher" };
       return undefined;
     },
   };
   assert.equal(hasPendingTeacherIntentFromCookies(reader), true);
-  assert.equal(readPendingTeacherNextFromCookies(reader), "/onboarding/teacher");
+  assert.equal(readPendingTeacherNextFromCookies(reader), "/onboarding/choose-role?intent=teacher");
 });
 
 test("loginWithGoogle builds callback URL and sets pending teacher cookie", () => {

@@ -39,13 +39,16 @@ test("hasTeacherOnboardingIntent detects role=teacher and safe teacher next path
   assert.equal(hasTeacherOnboardingIntent(null, "//evil.com/onboarding/teacher"), false);
 });
 
-test("resolveLoginOAuthNextPath defaults teacher intent to /onboarding/teacher", () => {
-  assert.equal(resolveLoginOAuthNextPath("teacher", null), "/onboarding/teacher");
-  assert.equal(resolveLoginOAuthNextPath(null, "/onboarding/teacher"), "/onboarding/teacher");
+test("resolveLoginOAuthNextPath defaults teacher intent to role-choice screen", () => {
+  assert.equal(resolveLoginOAuthNextPath("teacher", null), "/onboarding/choose-role?intent=teacher");
+  assert.equal(
+    resolveLoginOAuthNextPath(null, "/onboarding/choose-role?intent=teacher"),
+    "/onboarding/choose-role?intent=teacher",
+  );
   assert.equal(resolveLoginOAuthNextPath(null, null), "/dashboard");
   assert.equal(
-    resolveLoginOAuthNextPath("teacher", "/onboarding/teacher?vertical=langues"),
-    "/onboarding/teacher?vertical=langues",
+    resolveLoginOAuthNextPath("teacher", "/onboarding/choose-role?intent=teacher&vertical=langues"),
+    "/onboarding/choose-role?intent=teacher&vertical=langues",
   );
 });
 
@@ -75,12 +78,12 @@ test("resolvePostAuthRedirect keeps incomplete teachers on teacher onboarding", 
   );
 });
 
-test("buildTeacherSignupLoginHref preserves role=teacher and next=/onboarding/teacher", () => {
+test("buildTeacherSignupLoginHref preserves role=teacher and next role-choice path", () => {
   const href = buildTeacherSignupLoginHref();
   assert.match(href, /^\/login\?/);
   const params = new URLSearchParams(href.slice("/login?".length));
   assert.equal(params.get("role"), "teacher");
-  assert.equal(params.get("next"), "/onboarding/teacher");
+  assert.equal(params.get("next"), "/onboarding/choose-role?intent=teacher");
 });
 
 test("devenir-professeur CTA uses shared teacher signup login href builder", () => {
@@ -99,23 +102,21 @@ test("login page resolves post-auth redirect for teacher intent (not raw /dashbo
   assert.match(src, /resolvePostAuthRedirect/);
   assert.match(src, /hasTeacherOnboardingIntent/);
   assert.match(src, /resolveLoginOAuthNextPath/);
-  assert.match(src, /\/api\/onboarding\/select-role/);
+  assert.doesNotMatch(src, /body: JSON\.stringify\(\{ role: "teacher" \}\)/);
   assert.doesNotMatch(src, /router\.replace\(next\)/);
 });
 
 test("auth callback resolves teacher intent from role, safe teacher next, or pending cookies", () => {
   const src = read("app/auth/callback/route.ts");
   assert.match(src, /resolveAuthCallbackParams/);
-  assert.match(src, /resolveSignUpRoleParam\(role,\s*next\)/);
+  assert.match(src, /hasTeacherOnboardingIntent/);
+  assert.match(src, /signUpRoleParam:\s*null/);
 });
 
-test("teacher onboarding page upgrades student role instead of bouncing to dashboard", () => {
+test("teacher onboarding page sends students to role-choice instead of auto-upgrading", () => {
   const src = read("app/(app)/onboarding/teacher/page.tsx");
-  assert.match(src, /\/api\/onboarding\/select-role/);
-  assert.doesNotMatch(
-    src,
-    /if \(profile\?\.role === "student"\) \{\s*router\.replace\("\/dashboard"\)/,
-  );
+  assert.match(src, /buildOnboardingRoleChoicePath/);
+  assert.doesNotMatch(src, /\/api\/onboarding\/select-role/);
 });
 
 test("unsafe external next paths are rejected", () => {

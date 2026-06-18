@@ -1,4 +1,9 @@
 import { sanitizeRelativeRedirectPath } from "@/lib/auth/redirects";
+import {
+  buildOnboardingRoleChoicePath,
+  coerceTeacherNextToRoleChoicePath,
+  ONBOARDING_ROLE_CHOICE_PATH,
+} from "@/lib/auth/onboardingRoleChoice";
 
 /** Only `teacher` is honored from public URL params; never admin or arbitrary roles. */
 export function parsePublicSignUpRoleParam(
@@ -15,12 +20,15 @@ export function hasTeacherOnboardingIntent(
   if (parsePublicSignUpRoleParam(roleParam)) return true;
   const safeNext = sanitizeRelativeRedirectPath(nextParam);
   if (!safeNext) return false;
+  if (safeNext === ONBOARDING_ROLE_CHOICE_PATH || safeNext.startsWith(`${ONBOARDING_ROLE_CHOICE_PATH}?`)) {
+    return safeNext.includes("intent=teacher") || Boolean(roleParam === "teacher");
+  }
   return safeNext === "/onboarding/teacher" || safeNext.startsWith("/onboarding/teacher?");
 }
 
 /**
  * Resolve the OAuth `next` destination for login flows.
- * Teacher intent defaults to `/onboarding/teacher` instead of `/dashboard`.
+ * Teacher intent routes to the role-choice screen (Professeur emphasized), not directly into teacher onboarding.
  */
 export function resolveLoginOAuthNextPath(
   roleParam: string | null | undefined,
@@ -29,14 +37,16 @@ export function resolveLoginOAuthNextPath(
 ): string {
   const safeNext = sanitizeRelativeRedirectPath(nextParam);
   if (hasTeacherOnboardingIntent(roleParam, nextParam)) {
-    return safeNext ?? "/onboarding/teacher";
+    if (safeNext === ONBOARDING_ROLE_CHOICE_PATH || safeNext?.startsWith(`${ONBOARDING_ROLE_CHOICE_PATH}?`)) {
+      return safeNext;
+    }
+    return coerceTeacherNextToRoleChoicePath(safeNext);
   }
   return safeNext ?? defaultPath;
 }
 
 /**
- * Role param forwarded into OAuth / auth callback.
- * Honors teacher intent from `role=teacher` or safe `next=/onboarding/teacher`.
+ * Teacher intent marker for OAuth callback redirects only — not used to assign profiles.role.
  */
 export function resolveSignUpRoleParam(
   roleParam: string | null | undefined,
@@ -51,12 +61,12 @@ export function buildTeacherSignupLoginHref(options?: {
   onboardingQuery?: string;
   extraParams?: Record<string, string>;
 }): string {
-  const onboardingPath = options?.onboardingQuery
-    ? `/onboarding/teacher?${options.onboardingQuery}`
-    : "/onboarding/teacher";
+  const roleChoicePath = options?.onboardingQuery
+    ? `${ONBOARDING_ROLE_CHOICE_PATH}?intent=teacher&${options.onboardingQuery}`
+    : `${ONBOARDING_ROLE_CHOICE_PATH}?intent=teacher`;
   const login = new URLSearchParams();
   login.set("role", "teacher");
-  login.set("next", onboardingPath);
+  login.set("next", roleChoicePath);
   if (options?.extraParams) {
     for (const [key, value] of Object.entries(options.extraParams)) {
       login.set(key, value);

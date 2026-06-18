@@ -1,4 +1,5 @@
 import { sanitizeRelativeRedirectPath } from "@/lib/auth/redirects";
+import { buildOnboardingRoleChoicePath, ONBOARDING_ROLE_CHOICE_PATH } from "@/lib/auth/onboardingRoleChoice";
 import { hasTeacherOnboardingIntent, resolveLoginOAuthNextPath } from "@/lib/auth/teacherOnboardingIntent";
 
 /** Short-lived marker: user started teacher signup (no PII). */
@@ -16,7 +17,7 @@ function cookieBaseAttributes(): string {
 /** Client: persist teacher intent before Google OAuth (survives stripped callback query params). */
 export function setPendingTeacherOnboardingCookie(nextPath: string): void {
   if (typeof document === "undefined") return;
-  const safeNext = sanitizeRelativeRedirectPath(nextPath) ?? "/onboarding/teacher";
+  const safeNext = sanitizeRelativeRedirectPath(nextPath) ?? "/onboarding/choose-role?intent=teacher";
   document.cookie = `${PENDING_TEACHER_INTENT_COOKIE}=1; ${cookieBaseAttributes()}`;
   document.cookie = `${PENDING_TEACHER_NEXT_COOKIE}=${encodeURIComponent(safeNext)}; ${cookieBaseAttributes()}`;
 }
@@ -49,7 +50,7 @@ export function readPendingTeacherNextClient(): string | null {
 
 export function resolveLoginHrefWithPendingTeacherIntent(defaultHref = "/login"): string {
   if (!hasPendingTeacherIntentClient()) return defaultHref;
-  const next = readPendingTeacherNextClient() ?? "/onboarding/teacher";
+  const next = readPendingTeacherNextClient() ?? buildOnboardingRoleChoicePath(true);
   const params = new URLSearchParams();
   params.set("role", "teacher");
   params.set("next", next);
@@ -89,7 +90,7 @@ export function resolveAuthCallbackParams(
   if (pending || pendingNext) {
     if (!hasTeacherOnboardingIntent(role, next)) {
       role = "teacher";
-      next = pendingNext ?? "/onboarding/teacher";
+      next = pendingNext ?? buildOnboardingRoleChoicePath(true);
     } else if (!next && pendingNext) {
       next = pendingNext;
     }
