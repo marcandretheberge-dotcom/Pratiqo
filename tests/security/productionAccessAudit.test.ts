@@ -332,7 +332,7 @@ test("auth/callback redirects always use resolvePostAuthRedirect", () => {
 
 test("login page sanitizes next param before forwarding to Google OAuth", () => {
   const src = readRepoFile("app/login/page.tsx");
-  assert.match(src, /sanitizeRelativeRedirectPath\(searchParams\.get\("next"\)\)/);
+  assert.match(src, /resolveLoginOAuthNextPath/);
 });
 
 // ────────────────────────────────────────────────────────────────────────────

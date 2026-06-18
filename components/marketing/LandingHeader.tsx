@@ -1,13 +1,21 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import PratiqoLogo from "@/components/PratiqoLogo";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 import { useLocale } from "@/lib/locale-context";
 import { YoNavButton } from "@/components/yo/YoNavButton";
+import { resolveLoginHrefWithPendingTeacherIntent } from "@/lib/auth/pendingTeacherIntent";
 
 export function LandingHeader() {
   const { t } = useLocale();
+  const [loginHref, setLoginHref] = useState("/login");
+
+  useEffect(() => {
+    setLoginHref(resolveLoginHrefWithPendingTeacherIntent("/login"));
+  }, []);
+
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-[#D3D1C7] h-14 flex items-center justify-between px-4 sm:px-6">
       <Link href="/" className="flex items-center gap-2">
@@ -40,7 +48,7 @@ export function LandingHeader() {
         >
           {t("becomeTeacher")}
         </Link>
-        <Link href="/login" prefetch={false} className="text-sm text-teal-700 font-medium hover:underline">
+        <Link href={loginHref} prefetch={false} className="text-sm text-teal-700 font-medium hover:underline">
           {t("signIn")}
         </Link>
       </div>

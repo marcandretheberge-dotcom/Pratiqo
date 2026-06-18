@@ -14,6 +14,10 @@ import {
   parsePublicSignUpRoleParam,
   resolveLoginOAuthNextPath,
 } from "../../lib/auth/teacherOnboardingIntent";
+import {
+  clearPendingTeacherOnboardingCookie,
+  setPendingTeacherOnboardingCookie,
+} from "../../lib/auth/pendingTeacherIntent";
 import { useAuth } from "../../components/AuthProvider";
 import { useLocale } from "../../lib/locale-context";
 import { getSupabaseClient } from "../../lib/supabase";
@@ -25,8 +29,15 @@ function LoginForm() {
   const roleParam = searchParams.get("role");
   const nextParam = searchParams.get("next");
   const refCode = searchParams.get("ref") ?? undefined;
+  const authError = searchParams.get("auth_error");
   const isTeacherInvite = hasTeacherOnboardingIntent(roleParam, nextParam);
   const oauthNext = resolveLoginOAuthNextPath(roleParam, nextParam);
+
+  useEffect(() => {
+    if (isTeacherInvite) {
+      setPendingTeacherOnboardingCookie(oauthNext);
+    }
+  }, [isTeacherInvite, oauthNext]);
 
   useEffect(() => {
     if (loading || !user) return;
@@ -82,6 +93,7 @@ function LoginForm() {
         },
         oauthNext,
       );
+      clearPendingTeacherOnboardingCookie();
       router.replace(redirectPath);
     })();
 
@@ -100,6 +112,7 @@ function LoginForm() {
     try {
       const signUpRole = parsePublicSignUpRoleParam(roleParam);
       if (signUpRole === "teacher") {
+        setPendingTeacherOnboardingCookie(oauthNext);
         await loginWithGoogle(oauthNext, "teacher", refCode);
       } else {
         await loginWithGoogle(oauthNext, undefined, refCode);
@@ -143,6 +156,12 @@ function LoginForm() {
         <div className="flex justify-center mb-8">
           <PratiqoLogo variant="full" size="md" />
         </div>
+
+        {authError ? (
+          <p className="text-center text-sm font-semibold text-red-700 bg-red-500/10 rounded-2xl px-4 py-3 mb-6">
+            {t("loginAuthErrorSession")}
+          </p>
+        ) : null}
 
         {isTeacherInvite ? (
           <p className="text-center text-sm font-semibold text-teal-700 bg-teal-500/10 rounded-2xl px-4 py-3 mb-6">

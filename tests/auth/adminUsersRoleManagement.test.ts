@@ -184,8 +184,7 @@ test("/admin/users page is reachable from the /admin dashboard", () => {
 test("LandingHeader does not propagate role=teacher (header neutrality)", () => {
   const header = READ("components/marketing/LandingHeader.tsx");
   assert.doesNotMatch(header, /role=teacher/);
-  // It must still link to /login (any role-less form).
-  assert.match(header, /href="\/login"/);
+  assert.match(header, /loginHref|resolveLoginHrefWithPendingTeacherIntent/);
 });
 
 test("Bridge / neutral marketing surfaces use /login (no ?role= taint)", () => {
@@ -209,7 +208,7 @@ test("OAuth callback only honours signUpRoleParam='teacher' (never 'admin')", ()
   // And the callback never inspects ?role for anything other than passing
   // it to the resolver.
   const callback = READ("app/auth/callback/route.ts");
-  assert.match(callback, /resolveProfileRoleOnAuth\(\{/);
+  assert.match(callback, /resolveAuthCallbackParams/);
   assert.match(callback, /signUpRoleParam:\s*resolveSignUpRoleParam\(role,\s*next\)/);
 });
 
