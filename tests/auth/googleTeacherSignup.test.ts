@@ -101,7 +101,7 @@ test("landing auth gate resumes teacher login when pending intent exists", () =>
   const src = read("components/marketing/LandingAuthGate.tsx");
   assert.match(src, /hasPendingTeacherIntentClient/);
   assert.match(src, /resolveLoginHrefWithPendingTeacherIntent/);
-  assert.match(src, /clearPendingTeacherOnboardingCookie/);
+  assert.doesNotMatch(src, /resolvePostAuthRedirect/);
 });
 
 async function run() {

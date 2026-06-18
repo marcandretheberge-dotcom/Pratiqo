@@ -8,11 +8,17 @@ import PratiqoLogo from "@/components/PratiqoLogo";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 import { useLocale } from "@/lib/locale-context";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/components/AuthProvider";
 import {
   buildLoginHrefWithPreAuthIntent,
   parsePublicPreAuthIntent,
   type PreAuthOnboardingIntent,
 } from "@/lib/auth/preAuthOnboardingIntent";
+import {
+  needsOnboardingRoleChoice,
+  resolveProfileDashboardFromAuth,
+} from "@/lib/auth/onboardingRoleChoice";
+import { resolvePostAuthRedirect } from "@/lib/auth/postAuthRedirect";
 import { sanitizeRelativeRedirectPath } from "@/lib/auth/redirects";
 
 function buildLoginHrefFromConnexion(
@@ -30,6 +36,7 @@ function ConnexionInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { t } = useLocale();
+  const { user, loading: authLoading, profile } = useAuth();
 
   const highlightIntent = useMemo(() => {
     return parsePublicPreAuthIntent(searchParams.get("intent"), searchParams.get("role"));
@@ -37,6 +44,33 @@ function ConnexionInner() {
 
   const safeNext = useMemo(() => sanitizeRelativeRedirectPath(searchParams.get("next")), [searchParams]);
   const ref = searchParams.get("ref");
+
+  useEffect(() => {
+    if (authLoading || !user || !profile?.role) return;
+    const row = profile as {
+      role?: string | null;
+      companion_chosen?: boolean | null;
+      teacher_onboarding_complete?: boolean | null;
+    };
+    if (
+      !needsOnboardingRoleChoice({
+        role: row.role,
+        companion_chosen: row.companion_chosen,
+        teacher_onboarding_complete: row.teacher_onboarding_complete,
+        dashboard: resolveProfileDashboardFromAuth(profile as Record<string, unknown>),
+      })
+    ) {
+      const role =
+        row.role === "admin" || row.role === "teacher" || row.role === "student" ? row.role : "student";
+      router.replace(
+        resolvePostAuthRedirect(role, {
+          teacher_onboarding_complete: row.teacher_onboarding_complete,
+          companion_chosen: row.companion_chosen,
+          dashboard: resolveProfileDashboardFromAuth(profile as Record<string, unknown>),
+        }, safeNext),
+      );
+    }
+  }, [authLoading, user, profile, router, safeNext]);
 
   useEffect(() => {
     if (!highlightIntent) return;
@@ -47,7 +81,7 @@ function ConnexionInner() {
     router.replace(buildLoginHrefFromConnexion(intent, safeNext, ref));
   };
 
-  if (highlightIntent) {
+  if (highlightIntent || (user && profile?.role)) {
     return (
       <div className="min-h-[50vh] flex items-center justify-center text-sm text-[var(--p-text-muted)]">
         Redirection…
