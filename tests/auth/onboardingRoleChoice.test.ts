@@ -170,6 +170,29 @@ test("connexion page exists outside AuthenticatedShell", () => {
   assert.match(src, /buildLoginHrefWithPreAuthIntent/);
 });
 
+test("connexion skips role chooser when intent is already in the URL", () => {
+  const src = read("app/connexion/page.tsx");
+  assert.match(src, /if \(!highlightIntent\) return/);
+  assert.match(src, /router\.replace\(buildLoginHrefFromConnexion/);
+  assert.match(src, /if \(highlightIntent\)[\s\S]*?Redirection/);
+});
+
+test("login page does not render the full Apprenant/Professeur chooser", () => {
+  const src = read("app/login/page.tsx");
+  assert.doesNotMatch(src, /onboardingRoleChoiceHeading/);
+  assert.doesNotMatch(src, /continueWithIntent\(/);
+  assert.doesNotMatch(src, /chooseRole\(/);
+});
+
+test("login page shows intent-specific confirmation copy instead of role cards", () => {
+  const src = read("app/login/page.tsx");
+  assert.match(src, /loginIntentLearnerTitle/);
+  assert.match(src, /loginIntentTeacherTitle/);
+  assert.match(src, /loginIntentContinueHint/);
+  assert.match(src, /preAuthIntent === "learner"/);
+  assert.match(src, /preAuthIntent === "teacher"/);
+});
+
 test("login page redirects to connexion when no pre-auth intent", () => {
   const src = read("app/login/page.tsx");
   assert.match(src, /CONNEXION_PATH/);

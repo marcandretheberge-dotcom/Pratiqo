@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Suspense, useMemo } from "react";
+import React, { Suspense, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { GraduationCap, Sparkles } from "lucide-react";
@@ -15,6 +15,17 @@ import {
 } from "@/lib/auth/preAuthOnboardingIntent";
 import { sanitizeRelativeRedirectPath } from "@/lib/auth/redirects";
 
+function buildLoginHrefFromConnexion(
+  intent: PreAuthOnboardingIntent,
+  safeNext: string | null,
+  ref: string | null,
+): string {
+  let href = buildLoginHrefWithPreAuthIntent(intent);
+  if (safeNext) href += `&next=${encodeURIComponent(safeNext)}`;
+  if (ref) href += `&ref=${encodeURIComponent(ref)}`;
+  return href;
+}
+
 function ConnexionInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -25,18 +36,24 @@ function ConnexionInner() {
   }, [searchParams]);
 
   const safeNext = useMemo(() => sanitizeRelativeRedirectPath(searchParams.get("next")), [searchParams]);
+  const ref = searchParams.get("ref");
+
+  useEffect(() => {
+    if (!highlightIntent) return;
+    router.replace(buildLoginHrefFromConnexion(highlightIntent, safeNext, ref));
+  }, [highlightIntent, safeNext, ref, router]);
 
   const continueWithIntent = (intent: PreAuthOnboardingIntent) => {
-    let href = buildLoginHrefWithPreAuthIntent(intent);
-    if (safeNext) {
-      href += `&next=${encodeURIComponent(safeNext)}`;
-    }
-    const ref = searchParams.get("ref");
-    if (ref) {
-      href += `&ref=${encodeURIComponent(ref)}`;
-    }
-    router.push(href);
+    router.replace(buildLoginHrefFromConnexion(intent, safeNext, ref));
   };
+
+  if (highlightIntent) {
+    return (
+      <div className="min-h-[50vh] flex items-center justify-center text-sm text-[var(--p-text-muted)]">
+        Redirection…
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-[100dvh] bg-[#FAFCFB]">
