@@ -721,6 +721,7 @@
   "locating": "Localizando…",
   "locationActive": "Ubicación activa",
   "loginAcceptTermsLabel": "Acepto los Términos y la Política de Privacidad",
+  "loginAuthErrorSession": "No se pudo completar el inicio de sesión con Google. Vuelve a intentarlo con el botón de abajo.",
   "loginTeacherInviteBanner": "Convertirte en profesor en Pratiqo — crea tu cuenta gratis.",
   "loginConsentAnd": "y nuestra",
   "loginConsentNote": "Estas declaraciones son obligatorias según las leyes canadienses de trabajo independiente.",

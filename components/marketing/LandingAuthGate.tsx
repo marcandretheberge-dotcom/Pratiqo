@@ -3,6 +3,12 @@
 import { useEffect, type ReactNode } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { getSupabaseClient } from "@/lib/supabase";
+import {
+  clearPendingTeacherOnboardingCookie,
+  hasPendingTeacherIntentClient,
+  resolveLoginHrefWithPendingTeacherIntent,
+} from "@/lib/auth/pendingTeacherIntent";
+import { resolvePostAuthRedirect } from "@/lib/auth/postAuthRedirect";
 
 /**
  * Logged-out-only shell for the marketing landing.
@@ -34,7 +40,15 @@ export function LandingAuthGate({ children }: { children: ReactNode }) {
   const { user, loading: authLoading } = useAuth();
 
   useEffect(() => {
-    if (authLoading || !user) return;
+    if (authLoading) return;
+
+    if (!user) {
+      if (hasPendingTeacherIntentClient()) {
+        window.location.assign(resolveLoginHrefWithPendingTeacherIntent());
+      }
+      return;
+    }
+
     const checkRole = async () => {
       const supabase = getSupabaseClient();
       const { data: profile } = await supabase
@@ -47,13 +61,42 @@ export function LandingAuthGate({ children }: { children: ReactNode }) {
         teacher_onboarding_complete?: boolean | null;
         companion_chosen?: boolean | null;
       } | null;
-      if (row?.role === "teacher") {
-        window.location.assign(row.teacher_onboarding_complete ? "/dashboard" : "/onboarding/teacher");
-      } else if (!row?.companion_chosen) {
-        window.location.assign("/student/choose-companion");
-      } else {
-        window.location.assign("/dashboard");
+
+      const pendingTeacher = hasPendingTeacherIntentClient();
+      let effectiveRole = row?.role ?? "student";
+
+      if (pendingTeacher && effectiveRole === "student") {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (session?.access_token) {
+          const res = await fetch("/api/onboarding/select-role", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${session.access_token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ role: "teacher" }),
+          });
+          if (res.ok) {
+            effectiveRole = "teacher";
+          }
+        }
       }
+
+      const redirectPath = resolvePostAuthRedirect(
+        effectiveRole === "admin" || effectiveRole === "teacher" || effectiveRole === "student"
+          ? effectiveRole
+          : "student",
+        {
+          teacher_onboarding_complete: row?.teacher_onboarding_complete,
+          companion_chosen: row?.companion_chosen,
+        },
+        pendingTeacher ? "/onboarding/teacher" : null,
+      );
+
+      clearPendingTeacherOnboardingCookie();
+      window.location.assign(redirectPath);
     };
     void checkRole();
   }, [user, authLoading]);

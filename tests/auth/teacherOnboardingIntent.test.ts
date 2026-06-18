@@ -103,8 +103,9 @@ test("login page resolves post-auth redirect for teacher intent (not raw /dashbo
   assert.doesNotMatch(src, /router\.replace\(next\)/);
 });
 
-test("auth callback resolves teacher intent from role or safe teacher next", () => {
+test("auth callback resolves teacher intent from role, safe teacher next, or pending cookies", () => {
   const src = read("app/auth/callback/route.ts");
+  assert.match(src, /resolveAuthCallbackParams/);
   assert.match(src, /resolveSignUpRoleParam\(role,\s*next\)/);
 });
 

@@ -1,16 +1,21 @@
 import { getSupabaseClient } from "./supabase";
+import { buildOAuthCallbackUrl, resolveOAuthRedirectOrigin } from "@/lib/auth/oauthCallback";
+import { setPendingTeacherOnboardingCookie } from "@/lib/auth/pendingTeacherIntent";
+import { hasTeacherOnboardingIntent } from "@/lib/auth/teacherOnboardingIntent";
 
 export async function loginWithGoogle(redirectPath = "/dashboard", role?: string, referralCode?: string) {
   const supabase = getSupabaseClient();
-  const params = new URLSearchParams();
-  if (role) params.set("role", role);
-  params.set("next", redirectPath);
-  if (referralCode) params.set("ref", referralCode);
+  const origin = resolveOAuthRedirectOrigin();
+  const redirectTo = buildOAuthCallbackUrl(origin, {
+    role,
+    next: redirectPath,
+    ref: referralCode,
+  });
 
-  const redirectTo =
-    typeof window !== "undefined"
-      ? `${window.location.origin}/auth/callback?${params.toString()}`
-      : undefined;
+  if (hasTeacherOnboardingIntent(role ?? null, redirectPath)) {
+    setPendingTeacherOnboardingCookie(redirectPath);
+  }
+
   const { error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: { redirectTo },
