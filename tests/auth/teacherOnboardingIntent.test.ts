@@ -120,11 +120,10 @@ test("login page requires pre-auth intent before Google OAuth", () => {
   assert.doesNotMatch(src, /body: JSON\.stringify\(\{ role: "teacher" \}\)/);
 });
 
-test("auth callback redirects intent signups directly after profile patch", () => {
+test("auth callback stages intent signups through public login handoff", () => {
   const src = read("app/auth/callback/route.ts");
-  assert.match(src, /preAuthIntentConsumed:\s*intent/);
+  assert.match(src, /buildLoginHrefAfterOAuth/);
   assert.match(src, /resolveOAuthProfilePatch/);
-  assert.match(src, /pendingOnboardingIntentClearCookieHeaders/);
 });
 
 test("resolveAuthCallbackParams falls back to pending teacher cookies when query params are stripped", () => {
