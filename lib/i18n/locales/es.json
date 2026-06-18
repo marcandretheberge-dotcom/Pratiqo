@@ -497,6 +497,8 @@
   "companionStudioUnlocked": "Desbloqueado",
   "companionSubtitle": "Crecerá contigo",
   "companionTitle": "Elige tu compañero",
+  "companionProfileSyncError": "No pudimos cargar tu perfil por ahora. Inténtalo de nuevo en un momento.",
+  "companionProfileSyncRetry": "Reintentar",
   "completed": "Completado",
   "configuringProfile": "Configurando el perfil…",
   "confirm": "Confirmar",

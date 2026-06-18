@@ -20,7 +20,7 @@ function isCompanionType(value: unknown): value is CompanionType {
 }
 
 export default function ChooseCompanionPage() {
-  const { user, loading } = useAuth();
+  const { user, loading, profile, profileSyncError, retryProfileSync } = useAuth();
   const { locale, t } = useLocale();
 
   const [selected, setSelected] = useState<CompanionType>("phoenix");
@@ -123,6 +123,21 @@ export default function ChooseCompanionPage() {
       for (const id of timeouts) window.clearTimeout(id);
     };
   }, [state, stages]);
+
+  if (!loading && user && profileSyncError && !profile?.role) {
+    return (
+      <div className="mx-auto flex min-h-[50vh] max-w-md flex-col items-center justify-center gap-4 px-6 text-center">
+        <p className="text-sm text-[var(--p-text-muted)]">{t("companionProfileSyncError")}</p>
+        <button
+          type="button"
+          onClick={retryProfileSync}
+          className="rounded-xl bg-teal-600 px-5 py-2.5 text-sm font-bold text-white hover:brightness-[0.98]"
+        >
+          {t("companionProfileSyncRetry")}
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div
