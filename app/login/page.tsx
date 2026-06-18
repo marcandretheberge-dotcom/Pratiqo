@@ -173,10 +173,18 @@ function LoginForm() {
             </p>
           ) : null}
 
+          {preAuthIntent === "learner" ? (
+            <div className="mb-6 rounded-2xl border border-teal-600/20 bg-teal-500/10 px-4 py-4 text-center">
+              <p className="text-sm font-bold text-teal-800">{t("loginIntentLearnerTitle")}</p>
+              <p className="mt-2 text-sm text-teal-900/80 leading-relaxed">{t("loginIntentContinueHint")}</p>
+            </div>
+          ) : null}
+
           {preAuthIntent === "teacher" ? (
-            <p className="text-center text-sm font-semibold text-teal-700 bg-teal-500/10 rounded-2xl px-4 py-3 mb-6">
-              {t("loginTeacherInviteBanner")}
-            </p>
+            <div className="mb-6 rounded-2xl border border-teal-600/20 bg-teal-500/10 px-4 py-4 text-center">
+              <p className="text-sm font-bold text-teal-800">{t("loginIntentTeacherTitle")}</p>
+              <p className="mt-2 text-sm text-teal-900/80 leading-relaxed">{t("loginIntentContinueHint")}</p>
+            </div>
           ) : null}
 
           <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 mb-4">
