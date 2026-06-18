@@ -12,8 +12,13 @@ import {
   resolveProfileDashboardFromAuth,
 } from "@/lib/auth/onboardingRoleChoice";
 import { buildConnexionHrefForProtectedReturn } from "@/lib/auth/preAuthOnboardingIntent";
+import { logAuthFlowDecision } from "@/lib/auth/authFlowDiagnostics";
 
 const LEGAL_PREFIX = "/legal";
+
+function isResolvedRole(role: string | undefined): role is "student" | "teacher" | "admin" {
+  return role === "student" || role === "teacher" || role === "admin";
+}
 
 function studentForbiddenPath(pathname: string) {
   if (pathname === "/loyalty" || pathname.startsWith("/loyalty/")) return true;
@@ -42,10 +47,26 @@ export function AuthenticatedShell({ children }: { children: React.ReactNode }) 
 
     const role = profile?.role as string | undefined;
 
-    if (role !== "teacher" && role !== "student" && role !== "admin") {
-      if (!pathname.startsWith("/onboarding")) {
-        router.replace("/onboarding");
+    if (!isResolvedRole(role)) {
+      if (
+        pathname.startsWith("/student") ||
+        isOnboardingRoleChoicePath(pathname) ||
+        pathname.startsWith("/onboarding/teacher")
+      ) {
+        logAuthFlowDecision("authenticated-shell", {
+          guard: "wait-unresolved-role",
+          path: pathname,
+          profileRole: role ?? "null",
+        });
+        return;
       }
+      logAuthFlowDecision("authenticated-shell", {
+        guard: "role-choice-fallback",
+        path: pathname,
+        profileRole: role ?? "null",
+        redirect: ONBOARDING_ROLE_CHOICE_PATH,
+      });
+      router.replace(ONBOARDING_ROLE_CHOICE_PATH);
       return;
     }
 
@@ -80,7 +101,14 @@ export function AuthenticatedShell({ children }: { children: React.ReactNode }) 
 
     if (role === "teacher") {
       if (teacherForbiddenPath(pathname)) {
-        router.replace("/dashboard");
+        const dest = profile?.teacher_onboarding_complete ? "/dashboard" : "/onboarding/teacher";
+        logAuthFlowDecision("authenticated-shell", {
+          guard: "teacher-student-path",
+          path: pathname,
+          profileRole: role,
+          redirect: dest,
+        });
+        router.replace(dest);
       }
     }
   }, [loading, isLegal, user, pathname, router, profile?.role, profile?.companion_chosen, profile?.teacher_onboarding_complete, profile]);
@@ -108,6 +136,22 @@ export function AuthenticatedShell({ children }: { children: React.ReactNode }) 
     return (
       <div className="min-h-[40vh] flex flex-col items-center justify-center gap-2 px-6 text-center text-sm text-[var(--p-text-muted)]">
         <p>Redirection vers la connexion…</p>
+      </div>
+    );
+  }
+
+  const role = profile?.role as string | undefined;
+  if (
+    !isResolvedRole(role) &&
+    pathname &&
+    (pathname.startsWith("/student") ||
+      isOnboardingRoleChoicePath(pathname) ||
+      pathname.startsWith("/onboarding/teacher"))
+  ) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3 text-[var(--p-text-muted)]">
+        <Loader2 className="h-9 w-9 animate-spin text-teal-700" />
+        <p className="text-sm font-medium">Chargement…</p>
       </div>
     );
   }

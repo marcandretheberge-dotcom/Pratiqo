@@ -36,7 +36,7 @@ import {
 
 async function fetchProfileForHandoff(
   userId: string,
-  maxAttempts = 5,
+  maxAttempts = 8,
 ): Promise<{
   role?: string | null;
   teacher_onboarding_complete?: boolean | null;
