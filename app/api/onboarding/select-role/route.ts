@@ -57,6 +57,13 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Admin profiles cannot be changed through role selection." }, { status: 403 });
   }
 
+  if (profile?.role === "teacher" && role === "student") {
+    return NextResponse.json(
+      { error: "Existing teacher accounts cannot switch to learner through this screen." },
+      { status: 403 },
+    );
+  }
+
   const dashboard = mergeOnboardingRoleConfirmedDashboard(
     (profile as { dashboard?: unknown } | null)?.dashboard,
   );

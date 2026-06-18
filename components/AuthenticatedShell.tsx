@@ -87,7 +87,7 @@ export function AuthenticatedShell({ children }: { children: React.ReactNode }) 
   useEffect(() => {
     if (loading || isLegal || user) return;
     const next = pathname && pathname !== "/" ? pathname : "/dashboard";
-    router.replace(`/login?next=${encodeURIComponent(next)}`);
+    router.replace(`/connexion?next=${encodeURIComponent(next)}`);
   }, [loading, isLegal, user, pathname, router]);
 
   if (isLegal) {

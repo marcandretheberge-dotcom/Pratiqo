@@ -3,9 +3,10 @@ import { sanitizeRelativeRedirectPath } from "@/lib/auth/redirects";
 /** Build the Supabase OAuth redirectTo URL (must be allowlisted in Supabase). */
 export function buildOAuthCallbackUrl(
   origin: string,
-  params: { role?: string; next: string; ref?: string },
+  params: { intent?: string; role?: string; next: string; ref?: string },
 ): string {
   const qs = new URLSearchParams();
+  if (params.intent) qs.set("intent", params.intent);
   if (params.role) qs.set("role", params.role);
   qs.set("next", params.next);
   if (params.ref) qs.set("ref", params.ref);
@@ -32,12 +33,16 @@ export function resolveOAuthRedirectOrigin(): string {
 
 export function buildLoginUrlWithAuthError(
   origin: string,
-  options?: { authError?: string; role?: string | null; next?: string | null },
+  options?: { authError?: string; intent?: string | null; role?: string | null; next?: string | null },
 ): URL {
   const url = new URL("/login", origin);
   if (options?.authError) url.searchParams.set("auth_error", options.authError);
   const safeNext = sanitizeRelativeRedirectPath(options?.next ?? null);
-  if (options?.role === "teacher") url.searchParams.set("role", "teacher");
+  if (options?.intent === "learner" || options?.intent === "teacher") {
+    url.searchParams.set("intent", options.intent);
+  } else if (options?.role === "teacher") {
+    url.searchParams.set("intent", "teacher");
+  }
   if (safeNext) url.searchParams.set("next", safeNext);
   return url;
 }

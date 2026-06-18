@@ -5,8 +5,8 @@ import { buildOAuthCallbackUrl } from "@/lib/auth/oauthCallback";
 import {
   hasPendingTeacherIntentFromCookies,
   readPendingTeacherNextFromCookies,
-  resolveAuthCallbackParams,
 } from "@/lib/auth/pendingTeacherIntent";
+import { resolveAuthCallbackParams } from "@/lib/auth/pendingOnboardingIntent";
 
 type TestFn = () => void | Promise<void>;
 const tests: Array<{ name: string; fn: TestFn }> = [];
@@ -19,14 +19,14 @@ function read(rel: string): string {
   return readFileSync(join(process.cwd(), rel), "utf8");
 }
 
-test("buildOAuthCallbackUrl points Google OAuth to /auth/callback with teacher role-choice next", () => {
+test("buildOAuthCallbackUrl points Google OAuth to /auth/callback with teacher intent", () => {
   const url = buildOAuthCallbackUrl("https://www.pratiqo.ca", {
-    role: "teacher",
-    next: "/onboarding/choose-role?intent=teacher",
+    intent: "teacher",
+    next: "/onboarding/teacher",
   });
   assert.equal(
     url,
-    "https://www.pratiqo.ca/auth/callback?role=teacher&next=%2Fonboarding%2Fchoose-role%3Fintent%3Dteacher",
+    "https://www.pratiqo.ca/auth/callback?intent=teacher&next=%2Fonboarding%2Fteacher",
   );
 });
 
@@ -34,43 +34,44 @@ test("resolveAuthCallbackParams falls back to pending teacher cookies when query
   const params = resolveAuthCallbackParams(new URL("https://www.pratiqo.ca/auth/callback?code=abc"), {
     get(name: string) {
       if (name === "pratiqo_pte") return { value: "1" };
-      if (name === "pratiqo_pte_next") return { value: encodeURIComponent("/onboarding/choose-role?intent=teacher") };
+      if (name === "pratiqo_pte_next") return { value: encodeURIComponent("/onboarding/teacher") };
       return undefined;
     },
   });
-  assert.equal(params.role, "teacher");
-  assert.equal(params.next, "/onboarding/choose-role?intent=teacher");
+  assert.equal(params.intent, "teacher");
+  assert.equal(params.next, "/onboarding/teacher");
 });
 
 test("resolveAuthCallbackParams keeps explicit callback teacher params over cookies", () => {
   const params = resolveAuthCallbackParams(
-    new URL("https://www.pratiqo.ca/auth/callback?role=teacher&next=%2Fonboarding%2Fteacher%3Fvertical%3Dmusique"),
+    new URL("https://www.pratiqo.ca/auth/callback?intent=teacher&next=%2Fonboarding%2Fteacher%3Fvertical%3Dmusique"),
     {
       get(name: string) {
         if (name === "pratiqo_pte") return { value: "1" };
-        if (name === "pratiqo_pte_next") return { value: encodeURIComponent("/onboarding/choose-role?intent=teacher") };
+        if (name === "pratiqo_pte_next") return { value: encodeURIComponent("/onboarding/teacher") };
         return undefined;
       },
     },
   );
-  assert.equal(params.next, "/onboarding/choose-role?intent=teacher&vertical=musique");
+  assert.equal(params.next, "/onboarding/teacher?vertical=musique");
 });
 
 test("pending teacher cookies are read server-side without admin role", () => {
   const reader = {
     get(name: string) {
       if (name === "pratiqo_pte") return { value: "1" };
-      if (name === "pratiqo_pte_next") return { value: "%2Fonboarding%2Fchoose-role%3Fintent%3Dteacher" };
+      if (name === "pratiqo_pte_next") return { value: "%2Fonboarding%2Fteacher" };
       return undefined;
     },
   };
   assert.equal(hasPendingTeacherIntentFromCookies(reader), true);
-  assert.equal(readPendingTeacherNextFromCookies(reader), "/onboarding/choose-role?intent=teacher");
+  assert.equal(readPendingTeacherNextFromCookies(reader), "/onboarding/teacher");
 });
 
-test("loginWithGoogle builds callback URL and sets pending teacher cookie", () => {
+test("loginWithGoogle builds callback URL and sets pending onboarding cookie", () => {
   const src = read("lib/auth.ts");
   assert.match(src, /buildOAuthCallbackUrl/);
+  assert.match(src, /setPendingOnboardingIntentCookie/);
   assert.match(src, /setPendingTeacherOnboardingCookie/);
   assert.match(src, /redirectTo/);
 });
@@ -81,7 +82,7 @@ test("auth callback applies session cookies to redirect response", () => {
   assert.match(src, /authCookies/);
   assert.match(src, /response\.cookies\.set/);
   assert.match(src, /resolveAuthCallbackParams/);
-  assert.match(src, /pendingTeacherIntentClearCookieHeaders/);
+  assert.match(src, /pendingOnboardingIntentClearCookieHeaders/);
 });
 
 test("auth callback does not silently succeed when session exchange fails", () => {
@@ -93,6 +94,7 @@ test("auth callback does not silently succeed when session exchange fails", () =
 test("landing header preserves pending teacher intent for generic Se connecter", () => {
   const src = read("components/marketing/LandingHeader.tsx");
   assert.match(src, /resolveLoginHrefWithPendingTeacherIntent/);
+  assert.match(src, /\/connexion/);
 });
 
 test("landing auth gate resumes teacher login when pending intent exists", () => {

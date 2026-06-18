@@ -10,10 +10,14 @@ import { LocaleSwitcher } from "../../components/LocaleSwitcher";
 import { loginWithGoogle } from "../../lib/auth";
 import { resolvePostAuthRedirect, type ProfileRole } from "../../lib/auth/postAuthRedirect";
 import {
-  hasTeacherOnboardingIntent,
-  parsePublicSignUpRoleParam,
+  parsePublicPreAuthIntent,
   resolveLoginOAuthNextPath,
-} from "../../lib/auth/teacherOnboardingIntent";
+  CONNEXION_PATH,
+} from "../../lib/auth/preAuthOnboardingIntent";
+import {
+  clearPendingOnboardingIntentCookie,
+  setPendingOnboardingIntentCookie,
+} from "../../lib/auth/pendingOnboardingIntent";
 import {
   clearPendingTeacherOnboardingCookie,
   setPendingTeacherOnboardingCookie,
@@ -21,23 +25,39 @@ import {
 import { useAuth } from "../../components/AuthProvider";
 import { useLocale } from "../../lib/locale-context";
 import { getSupabaseClient } from "../../lib/supabase";
+import { sanitizeRelativeRedirectPath } from "../../lib/auth/redirects";
 
 function LoginForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { user, loading } = useAuth();
+  const intentParam = searchParams.get("intent");
   const roleParam = searchParams.get("role");
   const nextParam = searchParams.get("next");
   const refCode = searchParams.get("ref") ?? undefined;
   const authError = searchParams.get("auth_error");
-  const isTeacherInvite = hasTeacherOnboardingIntent(roleParam, nextParam);
-  const oauthNext = resolveLoginOAuthNextPath(roleParam, nextParam);
+  const preAuthIntent = parsePublicPreAuthIntent(intentParam, roleParam);
+  const oauthNext = resolveLoginOAuthNextPath(roleParam, nextParam, intentParam);
 
   useEffect(() => {
-    if (isTeacherInvite) {
+    if (loading || user) return;
+    if (!preAuthIntent) {
+      const params = new URLSearchParams();
+      const safeNext = sanitizeRelativeRedirectPath(nextParam);
+      if (safeNext) params.set("next", safeNext);
+      if (refCode) params.set("ref", refCode);
+      const qs = params.toString();
+      router.replace(qs ? `${CONNEXION_PATH}?${qs}` : CONNEXION_PATH);
+    }
+  }, [loading, user, preAuthIntent, nextParam, refCode, router]);
+
+  useEffect(() => {
+    if (!preAuthIntent) return;
+    setPendingOnboardingIntentCookie(preAuthIntent);
+    if (preAuthIntent === "teacher") {
       setPendingTeacherOnboardingCookie(oauthNext);
     }
-  }, [isTeacherInvite, oauthNext]);
+  }, [preAuthIntent, oauthNext]);
 
   useEffect(() => {
     if (loading || !user) return;
@@ -76,32 +96,28 @@ function LoginForm() {
         },
         oauthNext,
       );
-      if (!redirectPath.startsWith("/onboarding/choose-role")) {
-        clearPendingTeacherOnboardingCookie();
-      }
+      clearPendingOnboardingIntentCookie();
+      clearPendingTeacherOnboardingCookie();
       router.replace(redirectPath);
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [loading, user, router, oauthNext, isTeacherInvite]);
+  }, [loading, user, router, oauthNext]);
 
   const { t } = useLocale();
   const [legalAccepted, setLegalAccepted] = useState(false);
   const [busy, setBusy] = useState(false);
 
   const handleLogin = async () => {
-    if (!legalAccepted || busy) return;
+    if (!legalAccepted || busy || !preAuthIntent) return;
     setBusy(true);
     try {
-      const signUpRole = parsePublicSignUpRoleParam(roleParam);
-      if (signUpRole === "teacher") {
-        setPendingTeacherOnboardingCookie(oauthNext);
-        await loginWithGoogle(oauthNext, "teacher", refCode);
-      } else {
-        await loginWithGoogle(oauthNext, undefined, refCode);
-      }
+      await loginWithGoogle(oauthNext, {
+        intent: preAuthIntent,
+        referralCode: refCode,
+      });
     } catch (e) {
       console.error(e);
       alert("Connexion impossible. Réessaie dans un instant.");
@@ -109,6 +125,14 @@ function LoginForm() {
       setBusy(false);
     }
   };
+
+  if (!preAuthIntent && !user) {
+    return (
+      <div className="min-h-[50vh] flex items-center justify-center text-sm text-[var(--p-text-muted)]">
+        Redirection…
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-[100dvh] bg-[#FAFCFB]">
@@ -137,66 +161,72 @@ function LoginForm() {
       </header>
 
       <div className="flex flex-col items-center justify-center px-5 py-12">
-      <div className="w-full max-w-md rounded-3xl border border-[var(--p-border-light)] bg-white p-8 sm:p-10 shadow-[0_24px_80px_rgba(15,110,86,0.08)]">
-        <div className="flex justify-center mb-8">
-          <PratiqoLogo variant="full" size="md" />
+        <div className="w-full max-w-md rounded-3xl border border-[var(--p-border-light)] bg-white p-8 sm:p-10 shadow-[0_24px_80px_rgba(15,110,86,0.08)]">
+          <div className="flex justify-center mb-8">
+            <PratiqoLogo variant="full" size="md" />
+          </div>
+
+          {authError ? (
+            <p className="text-center text-sm font-semibold text-red-700 bg-red-500/10 rounded-2xl px-4 py-3 mb-6">
+              {t("loginAuthErrorSession")}
+            </p>
+          ) : null}
+
+          {preAuthIntent === "teacher" ? (
+            <p className="text-center text-sm font-semibold text-teal-700 bg-teal-500/10 rounded-2xl px-4 py-3 mb-6">
+              {t("loginTeacherInviteBanner")}
+            </p>
+          ) : null}
+
+          <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 mb-4">
+            <input
+              type="checkbox"
+              checked={legalAccepted}
+              onChange={(e) => setLegalAccepted(e.target.checked)}
+              className="mt-1 h-4 w-4 shrink-0 rounded border-slate-300 text-teal-700 focus:ring-2 focus:ring-teal-500"
+            />
+            <span className="text-sm font-semibold text-[var(--p-text)] leading-snug">
+              {t("loginAcceptTermsLabel")}
+            </span>
+          </label>
+
+          <p className="text-xs text-[var(--p-text-muted)] mb-6 text-center leading-relaxed">
+            {t("loginContinueAccept")}{" "}
+            <Link href="/legal/cgu" className="font-semibold text-teal-700 underline underline-offset-2">
+              {t("footerTerms")}
+            </Link>{" "}
+            {t("loginConsentAnd")}{" "}
+            <Link href="/legal/confidentialite" className="font-semibold text-teal-700 underline underline-offset-2">
+              {t("loginPrivacyPolicy")}
+            </Link>
+            .
+          </p>
+
+          <button
+            type="button"
+            disabled={!legalAccepted || busy}
+            onClick={() => void handleLogin()}
+            className={cn(
+              "w-full h-12 rounded-2xl text-sm font-bold text-white flex items-center justify-center gap-2 transition-all",
+              "bg-teal-600 hover:brightness-[0.98] disabled:cursor-not-allowed disabled:opacity-45",
+            )}
+          >
+            <LogIn size={18} />
+            {busy ? "Connexion…" : "Se connecter avec Google"}
+          </button>
+
+          <p className="mt-6 text-center text-sm text-[var(--p-text-muted)]">
+            <Link href={CONNEXION_PATH} className="font-semibold text-teal-700 hover:underline">
+              ← Changer de parcours
+            </Link>
+          </p>
+
+          <p className="mt-4 text-center text-sm text-[var(--p-text-muted)]">
+            <Link href="/" className="font-semibold text-teal-700 hover:underline">
+              ← Retour à l&apos;accueil
+            </Link>
+          </p>
         </div>
-
-        {authError ? (
-          <p className="text-center text-sm font-semibold text-red-700 bg-red-500/10 rounded-2xl px-4 py-3 mb-6">
-            {t("loginAuthErrorSession")}
-          </p>
-        ) : null}
-
-        {isTeacherInvite ? (
-          <p className="text-center text-sm font-semibold text-teal-700 bg-teal-500/10 rounded-2xl px-4 py-3 mb-6">
-            {t("loginTeacherInviteBanner")}
-          </p>
-        ) : null}
-
-        <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 mb-4">
-          <input
-            type="checkbox"
-            checked={legalAccepted}
-            onChange={(e) => setLegalAccepted(e.target.checked)}
-            className="mt-1 h-4 w-4 shrink-0 rounded border-slate-300 text-teal-700 focus:ring-2 focus:ring-teal-500"
-          />
-          <span className="text-sm font-semibold text-[var(--p-text)] leading-snug">
-            {t("loginAcceptTermsLabel")}
-          </span>
-        </label>
-
-        <p className="text-xs text-[var(--p-text-muted)] mb-6 text-center leading-relaxed">
-          {t("loginContinueAccept")}{" "}
-          <Link href="/legal/cgu" className="font-semibold text-teal-700 underline underline-offset-2">
-            {t("footerTerms")}
-          </Link>{" "}
-          {t("loginConsentAnd")}{" "}
-          <Link href="/legal/confidentialite" className="font-semibold text-teal-700 underline underline-offset-2">
-            {t("loginPrivacyPolicy")}
-          </Link>
-          .
-        </p>
-
-        <button
-          type="button"
-          disabled={!legalAccepted || busy}
-          onClick={() => void handleLogin()}
-          className={cn(
-            "w-full h-12 rounded-2xl text-sm font-bold text-white flex items-center justify-center gap-2 transition-all",
-            "bg-teal-600 hover:brightness-[0.98] disabled:cursor-not-allowed disabled:opacity-45",
-          )}
-        >
-          <LogIn size={18} />
-          {busy ? "Connexion…" : "Se connecter avec Google"}
-        </button>
-
-        <p className="mt-8 text-center text-sm text-[var(--p-text-muted)]">
-          <Link href="/" className="font-semibold text-teal-700 hover:underline">
-            ← Retour à l&apos;accueil
-          </Link>
-        </p>
-      </div>
       </div>
     </div>
   );

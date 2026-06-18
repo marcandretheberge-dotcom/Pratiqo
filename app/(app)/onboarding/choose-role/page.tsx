@@ -41,7 +41,7 @@ function ChooseRoleInner() {
   useEffect(() => {
     if (loading) return;
     if (!user) {
-      router.replace("/login");
+      router.replace("/connexion");
       return;
     }
 
@@ -102,13 +102,12 @@ function ChooseRoleInner() {
       }
 
       clearPendingTeacherOnboardingCookie();
-      router.replace(
-        resolvePostAuthRedirect(role, {
-          teacher_onboarding_complete: false,
-          companion_chosen: false,
-          dashboard: { onboarding_role_confirmed: true },
-        }),
-      );
+      const redirectPath = resolvePostAuthRedirect(role, {
+        teacher_onboarding_complete: false,
+        companion_chosen: false,
+        dashboard: { onboarding_role_confirmed: true },
+      });
+      window.location.assign(redirectPath);
     } catch (e) {
       console.error(e);
       setError(t("loginAuthErrorSession"));

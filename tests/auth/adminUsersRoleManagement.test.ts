@@ -198,17 +198,13 @@ test("Bridge / neutral marketing surfaces use /login (no ?role= taint)", () => {
   }
 });
 
-test("OAuth callback only honours signUpRoleParam='teacher' (never 'admin')", () => {
-  // The resolver itself: admin precedence rules first, then teacher param,
-  // then existing role, then student. Nowhere does it match 'admin' from
-  // the URL param.
+test("OAuth callback applies pre-auth intent and never grants admin from URL params", () => {
   const adminLib = READ("lib/auth/admin.ts");
   assert.match(adminLib, /signUpRoleParam\s*===\s*"teacher"/);
   assert.doesNotMatch(adminLib, /signUpRoleParam\s*===\s*"admin"/);
-  // OAuth callback no longer auto-assigns teacher role from URL intent; role
-  // choice happens on /onboarding/choose-role before select-role is called.
   const callback = READ("app/auth/callback/route.ts");
   assert.match(callback, /resolveAuthCallbackParams/);
+  assert.match(callback, /resolveOAuthProfilePatch/);
   assert.match(callback, /signUpRoleParam:\s*null/);
 });
 
@@ -222,10 +218,9 @@ test("/api/onboarding/select-role still rejects admin role from client callers",
   assert.match(route, /status:\s*403/);
 });
 
-test("Login page only treats role=teacher specially (no admin branch)", () => {
+test("Login page only accepts public pre-auth intents (no admin branch)", () => {
   const login = READ("app/login/page.tsx");
-  assert.match(login, /parsePublicSignUpRoleParam/);
-  assert.match(login, /hasTeacherOnboardingIntent/);
+  assert.match(login, /parsePublicPreAuthIntent/);
   assert.doesNotMatch(login, /roleParam\s*===\s*"admin"/);
   assert.doesNotMatch(login, /searchParams\.get\("role"\)\s*===\s*"admin"/);
 });
