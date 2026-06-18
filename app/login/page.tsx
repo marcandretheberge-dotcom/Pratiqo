@@ -28,6 +28,7 @@ import { useAuth } from "../../components/AuthProvider";
 import { useLocale } from "../../lib/locale-context";
 import { getSupabaseClient } from "../../lib/supabase";
 import { sanitizeRelativeRedirectPath } from "../../lib/auth/redirects";
+import { AuthHandoffScreen } from "../../components/marketing/AuthHandoffScreen";
 import { logAuthFlowDecision } from "../../lib/auth/authFlowDiagnostics";
 import {
   readPendingOnboardingIntentClient,
@@ -151,11 +152,7 @@ function LoginForm() {
   const [busy, setBusy] = useState(false);
 
   if (user && preAuthIntent) {
-    return (
-      <div className="min-h-[50vh] flex flex-col items-center justify-center gap-2 text-sm text-[var(--p-text-muted)]">
-        <p>Connexion en cours…</p>
-      </div>
-    );
+    return <AuthHandoffScreen />;
   }
 
   const handleLogin = async () => {

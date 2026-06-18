@@ -1,17 +1,31 @@
 "use client";
 
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useSyncExternalStore, type ReactNode } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { logAuthFlowDecision } from "@/lib/auth/authFlowDiagnostics";
+import { hasActiveOnboardingHandoffClient } from "@/lib/auth/onboardingHandoff";
 import {
   buildLoginHrefAfterOAuth,
   oauthNextPathForPreAuthIntent,
 } from "@/lib/auth/preAuthOnboardingIntent";
+import { readPendingOnboardingIntentClient } from "@/lib/auth/pendingOnboardingIntent";
 import {
   hasPendingTeacherIntentClient,
   resolveLoginHrefWithPendingTeacherIntent,
 } from "@/lib/auth/pendingTeacherIntent";
-import { readPendingOnboardingIntentClient } from "@/lib/auth/pendingOnboardingIntent";
+import { AuthHandoffScreen } from "@/components/marketing/AuthHandoffScreen";
+
+function subscribeToHandoff() {
+  return () => {};
+}
+
+function getHandoffSnapshot() {
+  return hasActiveOnboardingHandoffClient();
+}
+
+function getServerHandoffSnapshot() {
+  return false;
+}
 
 /**
  * Public landing shell. Authenticated users may browse `/` freely unless a
@@ -19,9 +33,10 @@ import { readPendingOnboardingIntentClient } from "@/lib/auth/pendingOnboardingI
  */
 export function LandingAuthGate({ children }: { children: ReactNode }) {
   const { user, loading: authLoading } = useAuth();
+  const handoffActive = useSyncExternalStore(subscribeToHandoff, getHandoffSnapshot, getServerHandoffSnapshot);
 
   useEffect(() => {
-    if (authLoading) return;
+    if (!handoffActive || authLoading) return;
 
     if (user) {
       const pendingIntent = readPendingOnboardingIntentClient();
@@ -48,7 +63,11 @@ export function LandingAuthGate({ children }: { children: ReactNode }) {
       });
       window.location.assign(handoff);
     }
-  }, [user, authLoading]);
+  }, [user, authLoading, handoffActive]);
+
+  if (handoffActive) {
+    return <AuthHandoffScreen />;
+  }
 
   return <>{children}</>;
 }
