@@ -81,7 +81,12 @@ function ConnexionInner() {
     router.replace(buildLoginHrefFromConnexion(intent, safeNext, ref));
   };
 
-  if (highlightIntent) {
+  // Skip the role chooser render when a redirect is already in flight: either an
+  // explicit pre-auth intent is in the URL, or the visitor is already
+  // authenticated with a resolved role (effect above redirects them). This
+  // avoids a chooser flash before the redirect lands. Logged-out users without
+  // an intent still see the chooser.
+  if (highlightIntent || (user && profile?.role)) {
     return (
       <div className="min-h-[50vh] flex items-center justify-center text-sm text-[var(--p-text-muted)]">
         Redirection…

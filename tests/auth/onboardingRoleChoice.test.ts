@@ -419,6 +419,55 @@ test("login handoff refuses root fallback for consumed intent", () => {
   assert.match(src, /AuthHandoffScreen/);
 });
 
+// ── Regression: learner OAuth must never land on the professor-only /onboarding
+// (PR #210 follow-up). The bare top-level `/onboarding` page is teacher-only;
+// learners belong on `/student/choose-companion`.
+
+test("learner OAuth destination is companion onboarding, never the professor-only /onboarding", () => {
+  // Pre-Google next path.
+  assert.equal(oauthNextPathForPreAuthIntent("learner"), "/student/choose-companion");
+  assert.equal(resolveLoginOAuthNextPath(null, null, "learner"), "/student/choose-companion");
+  // Post-OAuth /login handoff (pre-auth intent consumed).
+  const learnerHandoff = resolvePostAuthRedirect(
+    "student",
+    { companion_chosen: false, dashboard: { onboarding_role_confirmed: true } },
+    "/student/choose-companion",
+    { preAuthIntentConsumed: "learner" },
+  );
+  assert.equal(learnerHandoff, "/student/choose-companion");
+  // Must not resolve to the professor-only `/onboarding` (bare or any subpath).
+  assert.notEqual(learnerHandoff, "/onboarding");
+  assert.doesNotMatch(learnerHandoff, /^\/onboarding(\/|\?|$)/);
+});
+
+test("teacher OAuth/handoff destination remains /onboarding/teacher", () => {
+  assert.equal(oauthNextPathForPreAuthIntent("teacher"), "/onboarding/teacher");
+  const teacherHandoff = resolvePostAuthRedirect(
+    "teacher",
+    { teacher_onboarding_complete: false, dashboard: { onboarding_role_confirmed: true } },
+    "/onboarding/teacher",
+    { preAuthIntentConsumed: "teacher" },
+  );
+  assert.equal(teacherHandoff, "/onboarding/teacher");
+});
+
+test("AuthenticatedShell role-less fallback uses the neutral choose-role hub, not professor-only /onboarding", () => {
+  const src = read("components/AuthenticatedShell.tsx");
+  // The role-less branch redirects to the role-choice hub …
+  assert.match(
+    src,
+    /role !== "teacher" && role !== "student" && role !== "admin"[\s\S]*?router\.replace\(ONBOARDING_ROLE_CHOICE_PATH\)/,
+  );
+  // … and never strands users on the top-level professor-only `/onboarding`.
+  assert.doesNotMatch(src, /router\.replace\("\/onboarding"\)/);
+});
+
+test("top-level /onboarding page stays professor-only (learner must not be routed here)", () => {
+  const src = read("app/onboarding/page.tsx");
+  assert.match(src, /réservée aux professeurs/);
+  assert.match(src, /\(profile\?\.role as string\) !== "teacher"/);
+});
+
 async function run() {
   for (const { name, fn } of tests) {
     await fn();
