@@ -331,7 +331,27 @@ test("landing auth gate keeps public homepage accessible when authenticated", ()
   const src = read("components/marketing/LandingAuthGate.tsx");
   assert.doesNotMatch(src, /resolvePostAuthRedirect/);
   assert.doesNotMatch(src, /if \(!authLoading && user\) return null/);
+  assert.match(src, /handoffActive/);
   assert.match(src, /return <>\{children\}<\/>/);
+});
+
+test("landing auth gate shows handoff screen during active pending onboarding intent", () => {
+  const gate = read("components/marketing/LandingAuthGate.tsx");
+  const screen = read("components/marketing/AuthHandoffScreen.tsx");
+  const handoff = read("lib/auth/onboardingHandoff.ts");
+  assert.match(gate, /useSyncExternalStore/);
+  assert.match(gate, /hasActiveOnboardingHandoffClient/);
+  assert.match(gate, /if \(handoffActive\)[\s\S]*AuthHandoffScreen/);
+  assert.match(screen, /authHandoffTitle/);
+  assert.match(screen, /authHandoffSubtitle/);
+  assert.match(handoff, /readPendingOnboardingIntentClient/);
+  assert.match(handoff, /hasPendingTeacherIntentClient/);
+});
+
+test("login handoff uses shared auth handoff screen", () => {
+  const src = read("app/login/page.tsx");
+  assert.match(src, /AuthHandoffScreen/);
+  assert.doesNotMatch(src, /Connexion en cours/);
 });
 
 test("landing auth gate resumes pending onboarding intent for authenticated users", () => {
@@ -396,7 +416,7 @@ test("login handoff refuses root fallback for consumed intent", () => {
   const src = read("app/login/page.tsx");
   assert.match(src, /refusing-root-fallback/);
   assert.match(src, /fetchProfileForHandoff/);
-  assert.match(src, /Connexion en cours/);
+  assert.match(src, /AuthHandoffScreen/);
 });
 
 async function run() {
