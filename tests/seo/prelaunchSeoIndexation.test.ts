@@ -496,19 +496,19 @@ test("next.config.ts redirects legacy top-level legal slugs to /legal/* (308)", 
 
 // ── SSR crawlability of homepage (LandingAuthGate) ───────────────────
 test("LandingAuthGate renders children during SSR / loading state (no empty body)", () => {
-  // The previous implementation returned `null` whenever `authLoading`
-  // was true, which is the SSR initial state. The fix narrows the
-  // null-return to the post-hydration signed-in case so crawlers
-  // always receive the SEO-critical hero / JSON-LD / footer.
+  // The gate must never return null during SSR/auth loading so crawlers
+  // receive the SEO-critical hero / JSON-LD / footer.
   assert.ok(
     !/if\s*\(\s*authLoading\s*\)\s*return\s+null/.test(landingAuthGateSrc),
     "LandingAuthGate must NOT return null while authLoading is true (SSR-empty-body bug)",
   );
-  // Must still hide the marketing surface for hydrated, signed-in users.
+  // Authenticated users may browse the public landing; only logged-out
+  // pending-teacher cookies resume OAuth.
   assert.ok(
-    /if\s*\(\s*!authLoading\s*&&\s*user\s*\)\s*return\s+null/.test(landingAuthGateSrc),
-    "LandingAuthGate must still hide the landing for hydrated, signed-in users",
+    !/if\s*\(\s*!authLoading\s*&&\s*user\s*\)\s*return\s+null/.test(landingAuthGateSrc),
+    "LandingAuthGate must not hide the landing for signed-in users",
   );
+  assert.match(landingAuthGateSrc, /return <>\{children\}<\/>/);
   // Homepage's SEO-critical children must remain inside the gate and
   // therefore reachable on first SSR.
   assert.match(homepageSrc, /<LandingOrgJsonLd\s*\/>/);

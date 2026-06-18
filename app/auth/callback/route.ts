@@ -15,10 +15,7 @@ import {
   pendingOnboardingIntentClearCookieHeaders,
   resolveAuthCallbackParams,
 } from "@/lib/auth/pendingOnboardingIntent";
-import {
-  buildLoginHrefAfterOAuth,
-  resolveOAuthProfilePatch,
-} from "@/lib/auth/preAuthOnboardingIntent";
+import { resolveOAuthProfilePatch } from "@/lib/auth/preAuthOnboardingIntent";
 
 type AuthCookie = { name: string; value: string; options: Record<string, unknown> };
 
@@ -242,17 +239,17 @@ export async function GET(request: Request) {
     }
   }
 
+  const profileForRedirect = profile as {
+    teacher_onboarding_complete?: boolean | null;
+    companion_chosen?: boolean | null;
+    dashboard?: unknown;
+  };
+
   const redirectPath = intent
-    ? buildLoginHrefAfterOAuth(intent, next)
-    : resolvePostAuthRedirect(
-        redirectRole,
-        profile as {
-          teacher_onboarding_complete?: boolean | null;
-          companion_chosen?: boolean | null;
-          dashboard?: unknown;
-        },
-        undefined,
-      );
+    ? resolvePostAuthRedirect(redirectRole, profileForRedirect, next, {
+        preAuthIntentConsumed: intent,
+      })
+    : resolvePostAuthRedirect(redirectRole, profileForRedirect, undefined);
 
   const response = NextResponse.redirect(new URL(redirectPath, requestUrl.origin));
   return applyCookies(response, [...authCookies, ...pendingOnboardingIntentClearCookieHeaders()]);

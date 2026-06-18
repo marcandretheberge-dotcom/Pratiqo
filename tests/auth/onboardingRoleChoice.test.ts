@@ -178,7 +178,7 @@ test("connexion skips role chooser when intent is already in the URL", () => {
   const src = read("app/connexion/page.tsx");
   assert.match(src, /if \(!highlightIntent\) return/);
   assert.match(src, /router\.replace\(buildLoginHrefFromConnexion/);
-  assert.match(src, /if \(highlightIntent\)[\s\S]*?Redirection/);
+  assert.match(src, /highlightIntent \|\| \(user && profile\?\.role\)/);
 });
 
 test("login page does not render the full Apprenant/Professeur chooser", () => {
@@ -231,10 +231,11 @@ test("middleware redirects unauthenticated protected routes to connexion with in
   assert.doesNotMatch(src, /loginUrl\.searchParams\.set\("next"/);
 });
 
-test("auth callback stages intent signups through login before protected onboarding", () => {
+test("auth callback redirects intent signups directly to onboarding destinations", () => {
   const src = read("app/auth/callback/route.ts");
-  assert.match(src, /buildLoginHrefAfterOAuth/);
-  assert.match(src, /resolveOAuthProfilePatch/);
+  assert.match(src, /preAuthIntentConsumed:\s*intent/);
+  assert.match(src, /resolvePostAuthRedirect/);
+  assert.doesNotMatch(src, /buildLoginHrefAfterOAuth/);
 });
 
 test("login page redirects to connexion when no pre-auth intent", () => {
@@ -250,7 +251,7 @@ test("auth callback applies pre-auth intent patch and clears pending cookies", (
   assert.match(src, /resolveOAuthProfilePatch/);
   assert.match(src, /pendingOnboardingIntentClearCookieHeaders/);
   assert.match(src, /resolveAuthCallbackParams/);
-  assert.match(src, /buildLoginHrefAfterOAuth/);
+  assert.match(src, /preAuthIntentConsumed:\s*intent/);
 });
 
 test("login page skips duplicate choose-role when pre-auth intent is present", () => {
@@ -313,8 +314,39 @@ test("needsOnboardingRoleChoice is false after explicit role confirmation", () =
   );
 });
 
+test("AuthProvider does not insert default student profile rows", () => {
+  const src = read("components/AuthProvider.tsx");
+  assert.doesNotMatch(src, /\.from\("profiles"\)\.insert/);
+  assert.match(src, /loadProfileRow/);
+});
+
+test("landing auth gate keeps public homepage accessible when authenticated", () => {
+  const src = read("components/marketing/LandingAuthGate.tsx");
+  assert.doesNotMatch(src, /resolvePostAuthRedirect/);
+  assert.doesNotMatch(src, /if \(!authLoading && user\) return null/);
+  assert.match(src, /return <>\{children\}<\/>/);
+});
+
+test("connexion skips role chooser for authenticated users with confirmed role", () => {
+  const src = read("app/connexion/page.tsx");
+  assert.match(src, /needsOnboardingRoleChoice/);
+  assert.match(src, /resolvePostAuthRedirect/);
+});
+
 test("teacher-intent fallback choose-role path still exists", () => {
   assert.equal(buildOnboardingRoleChoicePath(true), "/onboarding/choose-role?intent=teacher");
+});
+
+test("first teacher OAuth callback resolves directly to teacher onboarding", () => {
+  assert.equal(
+    resolvePostAuthRedirect(
+      "teacher",
+      { teacher_onboarding_complete: false, dashboard: { onboarding_role_confirmed: true } },
+      "/onboarding/teacher",
+      { preAuthIntentConsumed: "teacher" },
+    ),
+    "/onboarding/teacher",
+  );
 });
 
 async function run() {

@@ -42,21 +42,6 @@ export function useAuth() {
   return useContext(AuthContext);
 }
 
-function defaultDashboard() {
-  return {
-    activeSubscriptions: [] as { teacherId: string; startDate: string; remainingLessons: number; price: number }[],
-    progress: {} as Record<string, { date: string; score: number; milestone?: string }[]>,
-    badges: [{ id: "1", icon: "🔥", name: "Première Pratique", date: new Date().toISOString() }],
-    streak: 1,
-    milestones: [
-      { id: "1", title: "Première session", completed: true },
-      { id: "2", title: "5 leçons complétées", completed: false },
-      { id: "3", title: "Maître de discipline", completed: false },
-      { id: "4", title: "Série de 30 jours", completed: false },
-    ],
-  };
-}
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<AuthProfile | null>(null);
@@ -64,6 +49,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const supabase = getSupabaseClient();
+
+    const loadProfileRow = async (userId: string, attempt = 0): Promise<Record<string, unknown> | null> => {
+      const { data: existing, error: readErr } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", userId)
+        .maybeSingle();
+
+      if (readErr) {
+        console.error(readErr);
+        return null;
+      }
+
+      if (existing) return existing as Record<string, unknown>;
+
+      // OAuth callback upserts the profile server-side; a brief retry avoids
+      // treating a just-created row as missing and inserting role=student.
+      if (attempt < 3) {
+        await new Promise((resolve) => setTimeout(resolve, 150 * (attempt + 1)));
+        return loadProfileRow(userId, attempt + 1);
+      }
+
+      return null;
+    };
 
     const syncProfile = async (u: User | null) => {
       if (!u) {
@@ -73,17 +82,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       await seedStudentProgress(u.id);
 
-      const { data: existing, error: readErr } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", u.id)
-        .maybeSingle();
-
-      if (readErr) {
-        console.error(readErr);
-        setProfile(null);
-        return;
-      }
+      const existing = await loadProfileRow(u.id);
 
       if (existing) {
         const dash =
@@ -107,11 +106,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             : null;
 
         setProfile({
-          id: existing.id,
-          name: existing.name,
-          email: existing.email,
-          role: existing.role,
-          photo_url: existing.photo_url,
+          id: existing.id as string,
+          name: existing.name as string | null | undefined,
+          email: existing.email as string | null | undefined,
+          role: existing.role as string | null | undefined,
+          photo_url: existing.photo_url as string | null | undefined,
           ...dash,
           companion_type: stringOrNull(ext.companion_type),
           companion_chosen: typeof ext.companion_chosen === "boolean" ? ext.companion_chosen : false,
@@ -124,22 +123,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           student_location: savedLocation,
         });
       } else {
-        const dash = defaultDashboard();
-        const row = {
+        // Never insert a default student row here — OAuth callback and
+        // /api/onboarding/select-role are the only profile creators.
+        if (process.env.NODE_ENV !== "production") {
+          console.warn("[AuthProvider] profile row missing after OAuth; waiting for server upsert");
+        }
+        setProfile({
           id: u.id,
           name: authDisplayName(u),
           email: u.email || "",
-          role: "student",
+          role: null,
           photo_url: authAvatarUrl(u),
-          companion_type: null,
           companion_chosen: false,
-          dashboard: dash,
-        };
-        const { error: insErr } = await supabase.from("profiles").insert(row);
-        if (insErr) {
-          console.error(insErr);
-        }
-        setProfile({ ...row, ...dash });
+        });
       }
     };
 
