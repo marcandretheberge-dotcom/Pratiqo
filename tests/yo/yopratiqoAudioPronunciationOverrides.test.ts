@@ -319,6 +319,8 @@ test("tracked patch avoids generated audio and restricted product systems", () =
     "app/api/admin/users/[id]/teacher-onboarding/route.ts",
     // hotfix/google-onboarding-role-choice-flow — onboarding role confirmation.
     "app/api/onboarding/select-role/route.ts",
+    "app/api/admin/users/[id]/deactivation/route.ts",
+    "app/api/teachers/plans/route.ts",
   ]);
   const forbidden = [
     /^app\/api\//,

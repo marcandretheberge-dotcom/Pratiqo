@@ -34,6 +34,11 @@ import {
   TeacherBadgesCard,
   type TeacherBadgeStatusRow,
 } from "@/components/admin/TeacherBadgesCard";
+import { ProfileDeactivationCard } from "@/components/admin/ProfileDeactivationCard";
+import {
+  isProfileReactivationAllowed,
+  loadProfileDeactivationSnapshot,
+} from "@/lib/admin/profileDeactivation";
 import {
   validateTeacherLessonOffers,
   type TeacherLessonOfferInput,
@@ -55,6 +60,10 @@ type ProfileDetailRow = {
   teacher_onboarding_complete: boolean | null;
   companion_chosen: boolean | null;
   deletion_requested_at: string | null;
+  is_active: boolean | null;
+  deactivated_at: string | null;
+  deleted_at: string | null;
+  anonymized_at: string | null;
   created_at: string | null;
   updated_at: string | null;
 };
@@ -133,7 +142,7 @@ export default async function AdminUserDetailPage({
   const { data, error } = await admin
     .from("profiles")
     .select(
-      "id, email, name, role, plan, subscription_status, pro_current_period_end, teacher_onboarding_complete, companion_chosen, deletion_requested_at, created_at, updated_at",
+      "id, email, name, role, plan, subscription_status, pro_current_period_end, teacher_onboarding_complete, companion_chosen, deletion_requested_at, is_active, deactivated_at, deleted_at, anonymized_at, created_at, updated_at",
     )
     .eq("id", id)
     .maybeSingle();
@@ -155,6 +164,10 @@ export default async function AdminUserDetailPage({
   const profile = data as ProfileDetailRow;
   const isTeacher = profile.role === "teacher";
   const isPaidPro = profile.plan === "pro";
+  const deactivationSnapshot = await loadProfileDeactivationSnapshot(admin, profile.id);
+  const canReactivate = deactivationSnapshot
+    ? isProfileReactivationAllowed(deactivationSnapshot)
+    : false;
 
   const activePromo: FounderPromoRow | null = isTeacher
     ? await loadActiveFounderPromo(admin, profile.id)
@@ -326,6 +339,11 @@ export default async function AdminUserDetailPage({
                     Suppression demandée
                   </span>
                 ) : null}
+                {profile.is_active === false || profile.deactivated_at ? (
+                  <span className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-100 px-2.5 py-1 text-slate-800">
+                    Désactivé
+                  </span>
+                ) : null}
                 {isPaidPro ? (
                   <span className="rounded-full border border-emerald-300 bg-emerald-50 px-2.5 py-1 text-emerald-900">
                     Membre Pro payé
@@ -392,8 +410,32 @@ export default async function AdminUserDetailPage({
                 </div>
               </>
             ) : null}
+            {profile.deletion_requested_at ? (
+              <div>
+                <dt className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                  Suppression demandée le
+                </dt>
+                <dd className="mt-1 text-slate-800">{formatDateTime(profile.deletion_requested_at)}</dd>
+              </div>
+            ) : null}
+            <div>
+              <dt className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                Compte actif
+              </dt>
+              <dd className="mt-1 text-slate-800">
+                {profile.is_active !== false && !profile.deactivated_at ? "Oui" : "Non"}
+              </dd>
+            </div>
           </dl>
         </section>
+
+        {deactivationSnapshot && profile.role !== "admin" ? (
+          <ProfileDeactivationCard
+            targetUserId={profile.id}
+            initialSnapshot={deactivationSnapshot}
+            initialCanReactivate={canReactivate}
+          />
+        ) : null}
 
         {isTeacher ? (
           <>
