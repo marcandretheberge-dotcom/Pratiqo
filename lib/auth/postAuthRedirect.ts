@@ -8,8 +8,14 @@ import {
   resolveRoleChoiceRedirectPath,
 } from "@/lib/auth/onboardingRoleChoice";
 import { hasTeacherOnboardingIntent } from "@/lib/auth/teacherOnboardingIntent";
+import type { PreAuthOnboardingIntent } from "@/lib/auth/preAuthOnboardingIntent";
 
 export type ProfileRole = "student" | "teacher" | "admin";
+
+export type PostAuthRedirectOptions = {
+  /** When set, pre-auth role was already chosen — never funnel to choose-role again. */
+  preAuthIntentConsumed?: PreAuthOnboardingIntent | null;
+};
 
 export function resolvePostAuthRedirect(
   role: ProfileRole,
@@ -19,11 +25,25 @@ export function resolvePostAuthRedirect(
     dashboard?: unknown;
   },
   nextPath?: string | null,
+  options?: PostAuthRedirectOptions,
 ): string {
   const safeNext = sanitizeRelativeRedirectPath(nextPath);
 
   if (role === "admin") {
     return sanitizeAdminRedirectPath(safeNext) ?? "/admin";
+  }
+
+  if (options?.preAuthIntentConsumed) {
+    if (role === "teacher") {
+      if (!profile.teacher_onboarding_complete) {
+        return safeNext?.startsWith("/onboarding/teacher") ? safeNext : "/onboarding/teacher";
+      }
+      return safeNext ?? "/dashboard";
+    }
+    if (!profile.companion_chosen) {
+      return safeNext === "/student/choose-companion" ? safeNext : "/student/choose-companion";
+    }
+    return safeNext ?? "/dashboard";
   }
 
   if (needsOnboardingRoleChoice({ role, ...profile })) {

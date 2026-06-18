@@ -227,6 +227,9 @@ export async function GET(request: Request) {
   }
 
   const profileRole = (profile as { role?: string }).role;
+  const redirectRole =
+    intentPatch?.role ??
+    (profileRole === "admin" ? "admin" : profileRole === "teacher" ? "teacher" : "student");
   if (profileRole === "student" && user.email) {
     const welcomeSentAt = (existingProfile as { welcome_student_email_sent_at?: string | null } | null)
       ?.welcome_student_email_sent_at;
@@ -237,13 +240,14 @@ export async function GET(request: Request) {
   }
 
   const redirectPath = resolvePostAuthRedirect(
-    profileRole === "admin" ? "admin" : profileRole === "teacher" ? "teacher" : "student",
+    redirectRole,
     profile as {
       teacher_onboarding_complete?: boolean | null;
       companion_chosen?: boolean | null;
       dashboard?: unknown;
     },
     intent ? next : undefined,
+    intent ? { preAuthIntentConsumed: intent } : undefined,
   );
 
   const response = NextResponse.redirect(new URL(redirectPath, requestUrl.origin));

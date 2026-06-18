@@ -82,6 +82,36 @@ test("valid pre-auth intent does not route to choose-role after OAuth", () => {
   assert.doesNotMatch(resolveLoginOAuthNextPath(null, null, "teacher"), /choose-role/);
 });
 
+test("resolvePostAuthRedirect skips choose-role when pre-auth intent was consumed", () => {
+  assert.equal(
+    resolvePostAuthRedirect(
+      "student",
+      { companion_chosen: false, dashboard: {} },
+      "/student/choose-companion",
+      { preAuthIntentConsumed: "learner" },
+    ),
+    "/student/choose-companion",
+  );
+  assert.equal(
+    resolvePostAuthRedirect(
+      "teacher",
+      { teacher_onboarding_complete: false, dashboard: {} },
+      "/onboarding/teacher",
+      { preAuthIntentConsumed: "teacher" },
+    ),
+    "/onboarding/teacher",
+  );
+  assert.doesNotMatch(
+    resolvePostAuthRedirect(
+      "student",
+      { companion_chosen: false, dashboard: {} },
+      "/student/choose-companion",
+      { preAuthIntentConsumed: "learner" },
+    ),
+    /choose-role/,
+  );
+});
+
 test("resolvePostAuthRedirect sends confirmed students without companion to chooser", () => {
   assert.equal(
     resolvePostAuthRedirect("student", {
@@ -152,6 +182,12 @@ test("auth callback applies pre-auth intent patch and clears pending cookies", (
   assert.match(src, /resolveOAuthProfilePatch/);
   assert.match(src, /pendingOnboardingIntentClearCookieHeaders/);
   assert.match(src, /resolveAuthCallbackParams/);
+  assert.match(src, /preAuthIntentConsumed/);
+});
+
+test("login page skips duplicate choose-role when pre-auth intent is present", () => {
+  const src = read("app/login/page.tsx");
+  assert.match(src, /preAuthIntentConsumed:\s*preAuthIntent/);
 });
 
 test("AuthenticatedShell keeps unconfirmed students on role-choice instead of companion", () => {
