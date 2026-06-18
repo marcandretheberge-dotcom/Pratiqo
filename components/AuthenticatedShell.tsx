@@ -5,6 +5,12 @@ import { Loader2 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "./AuthProvider";
 import { AppShell } from "./AppShell";
+import {
+  isOnboardingRoleChoicePath,
+  needsOnboardingRoleChoice,
+  ONBOARDING_ROLE_CHOICE_PATH,
+  resolveProfileDashboardFromAuth,
+} from "@/lib/auth/onboardingRoleChoice";
 
 const LEGAL_PREFIX = "/legal";
 
@@ -43,11 +49,25 @@ export function AuthenticatedShell({ children }: { children: React.ReactNode }) 
     }
 
     if (role === "student") {
+      const needsRoleChoice = needsOnboardingRoleChoice({
+        role,
+        companion_chosen: profile?.companion_chosen,
+        teacher_onboarding_complete: profile?.teacher_onboarding_complete,
+        dashboard: resolveProfileDashboardFromAuth(profile as Record<string, unknown> | null),
+      });
+
+      if (needsRoleChoice) {
+        if (!isOnboardingRoleChoicePath(pathname)) {
+          router.replace(ONBOARDING_ROLE_CHOICE_PATH);
+        }
+        return;
+      }
+
       if (profile?.companion_chosen === false && pathname !== "/student/choose-companion") {
         router.replace("/student/choose-companion");
         return;
       }
-      if (pathname.startsWith("/onboarding")) {
+      if (pathname.startsWith("/onboarding") && !isOnboardingRoleChoicePath(pathname)) {
         router.replace("/dashboard");
         return;
       }
@@ -62,7 +82,7 @@ export function AuthenticatedShell({ children }: { children: React.ReactNode }) 
         router.replace("/dashboard");
       }
     }
-  }, [loading, isLegal, user, pathname, router, profile?.role, profile?.companion_chosen]);
+  }, [loading, isLegal, user, pathname, router, profile?.role, profile?.companion_chosen, profile?.teacher_onboarding_complete, profile]);
 
   useEffect(() => {
     if (loading || isLegal || user) return;
