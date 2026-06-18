@@ -43,8 +43,17 @@ export function AuthenticatedShell({ children }: { children: React.ReactNode }) 
     const role = profile?.role as string | undefined;
 
     if (role !== "teacher" && role !== "student" && role !== "admin") {
+      // Role-less fallback must go to the neutral role-choice hub, never the
+      // top-level `/onboarding` page (that route is professor-only and renders
+      // "réservée aux professeurs" for non-teachers). Sending a transiently
+      // role-less learner there stranded them on the teacher-reserved screen;
+      // teachers were shielded only because their `/onboarding/teacher`
+      // destination already satisfies the `startsWith("/onboarding")` guard.
+      // `/onboarding/choose-role` lets the user pick a role, and once the
+      // profile resolves the student branch below forwards them to
+      // `/student/choose-companion`.
       if (!pathname.startsWith("/onboarding")) {
-        router.replace("/onboarding");
+        router.replace(ONBOARDING_ROLE_CHOICE_PATH);
       }
       return;
     }
