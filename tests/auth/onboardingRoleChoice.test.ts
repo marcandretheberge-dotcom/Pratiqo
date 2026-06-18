@@ -178,7 +178,7 @@ test("connexion skips role chooser when intent is already in the URL", () => {
   const src = read("app/connexion/page.tsx");
   assert.match(src, /if \(!highlightIntent\) return/);
   assert.match(src, /router\.replace\(buildLoginHrefFromConnexion/);
-  assert.match(src, /highlightIntent \|\| \(user && profile\?\.role\)/);
+  assert.match(src, /if \(highlightIntent\)[\s\S]*?Redirection/);
 });
 
 test("login page does not render the full Apprenant/Professeur chooser", () => {
@@ -417,6 +417,43 @@ test("login handoff refuses root fallback for consumed intent", () => {
   assert.match(src, /refusing-root-fallback/);
   assert.match(src, /fetchProfileForHandoff/);
   assert.match(src, /AuthHandoffScreen/);
+});
+
+test("AuthenticatedShell never sends unresolved roles to legacy /onboarding", () => {
+  const src = read("components/AuthenticatedShell.tsx");
+  assert.doesNotMatch(src, /router\.replace\("\/onboarding"\)/);
+  assert.match(src, /ONBOARDING_ROLE_CHOICE_PATH/);
+  assert.match(src, /wait-unresolved-role/);
+});
+
+test("AuthenticatedShell keeps learners on choose-companion while role syncs", () => {
+  const src = read("components/AuthenticatedShell.tsx");
+  assert.match(src, /pathname\.startsWith\("\/student"\)/);
+  assert.match(src, /!isResolvedRole\(role\)/);
+});
+
+test("AuthenticatedShell sends teachers on student paths to teacher onboarding", () => {
+  const src = read("components/AuthenticatedShell.tsx");
+  assert.match(src, /teacher-student-path/);
+  assert.match(src, /\/onboarding\/teacher/);
+});
+
+test("learner pending intent clears stale teacher cookies", () => {
+  const src = read("lib/auth/pendingOnboardingIntent.ts");
+  assert.match(src, /if \(intent === "learner"\)[\s\S]*clearPendingTeacherOnboardingCookie/);
+});
+
+test("existing teacher with learner intent routes to teacher onboarding not companion", () => {
+  assert.equal(primaryRoleForPreAuthIntent("learner", "teacher"), "teacher");
+  assert.equal(
+    resolvePostAuthRedirect(
+      "teacher",
+      { teacher_onboarding_complete: false, dashboard: { onboarding_role_confirmed: true } },
+      "/student/choose-companion",
+      { preAuthIntentConsumed: "learner" },
+    ),
+    "/onboarding/teacher",
+  );
 });
 
 async function run() {

@@ -8,6 +8,7 @@ import {
   PENDING_TEACHER_INTENT_COOKIE,
   PENDING_TEACHER_NEXT_COOKIE,
   readPendingTeacherNextFromCookies,
+  clearPendingTeacherOnboardingCookie,
 } from "@/lib/auth/pendingTeacherIntent";
 import { hasTeacherOnboardingIntent } from "@/lib/auth/teacherOnboardingIntent";
 
@@ -24,6 +25,9 @@ function cookieBaseAttributes(): string {
 export function setPendingOnboardingIntentCookie(intent: PreAuthOnboardingIntent): void {
   if (typeof document === "undefined") return;
   document.cookie = `${PENDING_ONBOARDING_INTENT_COOKIE}=${intent}; ${cookieBaseAttributes()}`;
+  if (intent === "learner") {
+    clearPendingTeacherOnboardingCookie();
+  }
 }
 
 export function clearPendingOnboardingIntentCookie(): void {
