@@ -16,6 +16,7 @@ import type { TranslationKey } from "@/lib/translations";
 import { localeToBcp47 } from "@/lib/i18n/types";
 import { TeacherDashboardStats } from "@/components/dashboard/teacher/TeacherDashboardStats";
 import { TeacherProfileCompletenessCard } from "@/components/dashboard/teacher/TeacherProfileCompletenessCard";
+import { TeacherSearchVisibilityBanner } from "@/components/teacher/TeacherSearchVisibilityBanner";
 import { TeacherRequestCard } from "@/components/dashboard/teacher/TeacherRequestCard";
 import { TeacherScheduleCard } from "@/components/dashboard/teacher/TeacherScheduleCard";
 import { RescheduleModal, type RescheduleModalBooking } from "@/components/RescheduleModal";
@@ -731,6 +732,8 @@ export function Dashboard() {
     const completenessPct = Math.round(
       (completenessChecks.filter(Boolean).length / completenessChecks.length) * 100,
     );
+    const showSearchVisibilityBanner =
+      authProfile?.teacher_onboarding_complete !== true || completenessPct < 100 || !teacherMeta;
 
     const firstConfirmed = confirmedUpcoming[0] as { id?: string; student_id?: string | null } | undefined;
     const firstMessagesHref = messagesHrefForStudentId(firstConfirmed?.student_id ?? null);
@@ -744,6 +747,8 @@ export function Dashboard() {
           </h1>
           <p className="text-sm text-slate-600">{t("dashboardTeacherSubtitle")}</p>
         </header>
+
+        {showSearchVisibilityBanner ? <TeacherSearchVisibilityBanner ctaHref="/teacher/my-profile" /> : null}
 
         <TeacherDashboardStats
           items={[

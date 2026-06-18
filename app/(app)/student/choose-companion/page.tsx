@@ -7,6 +7,7 @@ import { useLocale } from "@/lib/locale-context";
 import type { CompanionType } from "@/lib/companions";
 import { COMPANIONS, getCompanionStage } from "@/lib/companions";
 import { getSupabaseClient } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 function localizedText(locale: string, fr: string, en: string, es: string) {
@@ -20,15 +21,24 @@ function isCompanionType(value: unknown): value is CompanionType {
 }
 
 export default function ChooseCompanionPage() {
-  const { user, loading, profile, profileSyncError, retryProfileSync } = useAuth();
+  const { user, loading, profile, profileHydrated, profileSyncError, retryProfileSync, refreshProfile } = useAuth();
   const { locale, t } = useLocale();
 
   const [selected, setSelected] = useState<CompanionType>("phoenix");
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [state, setState] = useState<"choose" | "animating" | "done">("choose");
   const [showCards, setShowCards] = useState(true);
   const [currentStageIndex, setCurrentStageIndex] = useState(0);
   const [bounce, setBounce] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (loading || !profileHydrated) return;
+    if (profile?.companion_chosen === true) {
+      router.replace("/dashboard");
+    }
+  }, [loading, profileHydrated, profile?.companion_chosen, router]);
 
   useEffect(() => {
     if (loading || !user) return;
@@ -67,6 +77,7 @@ export default function ChooseCompanionPage() {
   const handleStart = async () => {
     if (!user) return;
     setSaving(true);
+    setSaveError(null);
     try {
       const supabase = getSupabaseClient();
       const {
@@ -81,10 +92,16 @@ export default function ChooseCompanionPage() {
         body: JSON.stringify({ companionType: selected }),
       });
       if (!res.ok) {
-        console.error("Failed to save companion", await res.text());
+        const message = await res.text().catch(() => "");
+        setSaveError(message || t("companionSaveError"));
         return;
       }
-      window.location.assign("/dashboard");
+      const synced = await refreshProfile();
+      if (!synced) {
+        setSaveError(t("companionProfileSyncError"));
+        return;
+      }
+      router.replace("/dashboard");
     } finally {
       setSaving(false);
     }
@@ -159,6 +176,11 @@ export default function ChooseCompanionPage() {
         <div className="space-y-2">
           <h1 className="text-2xl font-bold text-[#2C2C2A]">{t("companionTitle")}</h1>
           <p className="text-sm text-[#6B6A65]">{t("companionSubtitle")}</p>
+          {saveError ? (
+            <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800" role="alert">
+              {saveError}
+            </p>
+          ) : null}
         </div>
 
         {/* CHOOSE */}

@@ -19,7 +19,7 @@ export function parsePublicPreAuthIntent(
 }
 
 export function oauthNextPathForPreAuthIntent(intent: PreAuthOnboardingIntent): string {
-  return intent === "teacher" ? "/onboarding/teacher" : "/student/choose-companion";
+  return intent === "teacher" ? "/dashboard" : "/student/choose-companion";
 }
 
 /** Infer onboarding intent from a safe internal return path (middleware / login recovery). */
@@ -116,7 +116,7 @@ export function resolveLoginOAuthNextPath(
     if (safeNext === "/onboarding/teacher" || safeNext?.startsWith("/onboarding/teacher?")) {
       return safeNext;
     }
-    return "/onboarding/teacher";
+    return "/dashboard";
   }
   if (safeNext === ONBOARDING_ROLE_CHOICE_PATH || safeNext?.startsWith(`${ONBOARDING_ROLE_CHOICE_PATH}?`)) {
     return safeNext;

@@ -317,6 +317,9 @@ test("tracked patch avoids generated audio and restricted product systems", () =
     // tests/teacherOnboarding/minRateBlockerRecovery.test.ts.
     "app/api/onboarding/complete/route.ts",
     "app/api/admin/users/[id]/teacher-onboarding/route.ts",
+    // hotfix/onboarding-stability-and-profile-completion — teacher row upsert
+    // on onboarding complete. Defended by tests/auth/onboardingStability.test.ts.
+    "app/api/teacher/onboarding/complete/route.ts",
     // hotfix/google-onboarding-role-choice-flow — onboarding role confirmation.
     "app/api/onboarding/select-role/route.ts",
     "app/api/admin/users/[id]/deactivation/route.ts",

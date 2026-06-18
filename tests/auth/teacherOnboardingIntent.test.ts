@@ -50,8 +50,8 @@ test("hasTeacherOnboardingIntent detects role=teacher and safe teacher next path
   assert.equal(hasTeacherOnboardingIntent(null, "//evil.com/onboarding/teacher"), false);
 });
 
-test("resolveLoginOAuthNextPath routes teacher intent to teacher onboarding", () => {
-  assert.equal(resolveLoginOAuthNextPath(null, null, "teacher"), "/onboarding/teacher");
+test("resolveLoginOAuthNextPath routes teacher intent to dashboard by default", () => {
+  assert.equal(resolveLoginOAuthNextPath(null, null, "teacher"), "/dashboard");
   assert.equal(
     resolveLoginOAuthNextPath(null, "/onboarding/teacher?vertical=langues", "teacher"),
     "/onboarding/teacher?vertical=langues",
@@ -88,10 +88,10 @@ test("resolveOAuthProfilePatch upgrades student to teacher on teacher intent", (
   );
 });
 
-test("resolvePostAuthRedirect keeps incomplete teachers on teacher onboarding", () => {
+test("resolvePostAuthRedirect sends incomplete teachers to dashboard", () => {
   assert.equal(
     resolvePostAuthRedirect("teacher", { teacher_onboarding_complete: false }, "/dashboard"),
-    "/onboarding/teacher",
+    "/dashboard",
   );
 });
 

@@ -61,8 +61,61 @@ export async function POST(req: Request) {
   if (teacherErr) {
     return NextResponse.json({ error: teacherErr.message }, { status: 500 });
   }
-  if (!teacher?.id) {
-    return NextResponse.json({ error: "Teacher profile not found." }, { status: 404 });
+
+  let teacherRow = teacher;
+
+  if (!teacherRow?.id) {
+    const { data: profileForTeacher, error: profileLookupErr } = await admin
+      .from("profiles")
+      .select("name, photo_url, country_code")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (profileLookupErr) {
+      return NextResponse.json({ error: profileLookupErr.message }, { status: 500 });
+    }
+
+    const teacherName =
+      typeof profileForTeacher?.name === "string" && profileForTeacher.name.trim()
+        ? profileForTeacher.name.trim()
+        : "Professeur";
+    const imageUrl =
+      typeof profileForTeacher?.photo_url === "string" && profileForTeacher.photo_url.trim()
+        ? profileForTeacher.photo_url.trim()
+        : "https://picsum.photos/seed/teacher/400/400";
+
+    const { data: createdTeacher, error: createErr } = await admin
+      .from("teachers")
+      .insert({
+        id: user.id,
+        user_id: user.id,
+        name: teacherName,
+        discipline: "—",
+        category: "music",
+        rating: 0,
+        reviews: 0,
+        price_per_lesson: 0,
+        bio: "",
+        image_url: imageUrl,
+        availability: [],
+        location: {},
+        is_verified: false,
+        teaching_mode: "both",
+        languages: [],
+        levels: [],
+        country_code:
+          typeof profileForTeacher?.country_code === "string" ? profileForTeacher.country_code : null,
+      })
+      .select("id, country_code")
+      .single();
+
+    if (createErr || !createdTeacher?.id) {
+      return NextResponse.json(
+        { error: createErr?.message ?? "Unable to create teacher profile." },
+        { status: 500 },
+      );
+    }
+    teacherRow = createdTeacher;
   }
 
   const { data: profile, error: profileErr } = await admin
@@ -79,7 +132,7 @@ export async function POST(req: Request) {
   }
 
   const teacherCountryCode =
-    (teacher as { country_code?: string | null } | null)?.country_code ??
+    (teacherRow as { country_code?: string | null } | null)?.country_code ??
     (profile as { country_code?: string | null } | null)?.country_code ??
     "";
   if (!isTeacherMarketSupported(teacherCountryCode)) {
