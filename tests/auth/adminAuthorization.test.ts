@@ -196,14 +196,14 @@ test("resolvePostAuthRedirect rejects open-redirect next for teachers and falls 
   );
 });
 
-test("resolvePostAuthRedirect keeps teacher onboarding gate ahead of any next", () => {
+test("resolvePostAuthRedirect sends incomplete teachers to dashboard", () => {
   assert.equal(
     resolvePostAuthRedirect(
       "teacher",
       { teacher_onboarding_complete: false, companion_chosen: true },
       "/student/progress",
     ),
-    "/onboarding/teacher",
+    "/dashboard",
   );
 });
 

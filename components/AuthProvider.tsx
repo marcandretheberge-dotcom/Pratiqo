@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useRef, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getSupabaseClient } from "../lib/supabase";
@@ -13,8 +13,11 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   profile: AuthProfile | null;
+  /** True once the profile row was loaded from the database (not a session fallback). */
+  profileHydrated: boolean;
   profileSyncError: boolean;
   retryProfileSync: () => void;
+  refreshProfile: () => Promise<boolean>;
 }
 
 type AuthProfile = Record<string, unknown> & {
@@ -40,8 +43,10 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
   profile: null,
+  profileHydrated: false,
   profileSyncError: false,
   retryProfileSync: () => {},
+  refreshProfile: async () => false,
 });
 
 export function useAuth() {
@@ -108,7 +113,7 @@ function profileFromRow(existing: Record<string, unknown>, savedLocation: Studen
     photo_url: existing.photo_url as string | null | undefined,
     ...dash,
     companion_type: stringOrNull(ext.companion_type),
-    companion_chosen: typeof ext.companion_chosen === "boolean" ? ext.companion_chosen : false,
+    companion_chosen: typeof ext.companion_chosen === "boolean" ? ext.companion_chosen : null,
     country_code: stringOrNull(ext.country_code),
     timezone: stringOrNull(ext.timezone),
     currency: stringOrNull(ext.currency),
@@ -126,16 +131,18 @@ function fallbackProfile(u: User): AuthProfile {
     email: u.email || "",
     role: null,
     photo_url: authAvatarUrl(u),
-    companion_chosen: false,
   };
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<AuthProfile | null>(null);
+  const [profileHydrated, setProfileHydrated] = useState(false);
   const [loading, setLoading] = useState(true);
   const [profileSyncError, setProfileSyncError] = useState(false);
   const backgroundSyncRef = useRef(0);
+  const userRef = useRef<User | null>(null);
+  userRef.current = user;
 
   useEffect(() => {
     const supabase = getSupabaseClient();
@@ -149,6 +156,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (row) {
           const savedLocation = await loadSavedLocation(supabase, u.id);
           setProfile(profileFromRow(row, savedLocation));
+          setProfileHydrated(true);
           setProfileSyncError(false);
           logAuthFlowDecision("auth-provider", {
             guard: "profile-background-sync",
@@ -173,6 +181,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const syncProfile = async (u: User | null) => {
       if (!u) {
         setProfile(null);
+        setProfileHydrated(false);
         setProfileSyncError(false);
         backgroundSyncRef.current += 1;
         return;
@@ -185,6 +194,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (existing) {
         const savedLocation = await loadSavedLocation(supabase, u.id);
         setProfile(profileFromRow(existing, savedLocation));
+        setProfileHydrated(true);
         setProfileSyncError(false);
         backgroundSyncRef.current += 1;
         logAuthFlowDecision("auth-provider", {
@@ -196,6 +206,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       setProfile(fallbackProfile(u));
+      setProfileHydrated(false);
       setProfileSyncError(Boolean(errorCode));
       const syncId = backgroundSyncRef.current + 1;
       backgroundSyncRef.current = syncId;
@@ -243,16 +254,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (row) {
         const savedLocation = await loadSavedLocation(supabase, user.id);
         setProfile(profileFromRow(row, savedLocation));
+        setProfileHydrated(true);
         setProfileSyncError(false);
       } else {
+        setProfileHydrated(false);
         setProfileSyncError(Boolean(errorCode) || true);
       }
       setLoading(false);
     })();
   };
 
+  const refreshProfile = useCallback(async (): Promise<boolean> => {
+    const u = userRef.current;
+    if (!u) return false;
+    const supabase = getSupabaseClient();
+    const { row, errorCode } = await loadProfileRow(supabase, u.id);
+    if (row) {
+      const savedLocation = await loadSavedLocation(supabase, u.id);
+      setProfile(profileFromRow(row, savedLocation));
+      setProfileHydrated(true);
+      setProfileSyncError(false);
+      return true;
+    }
+    setProfileSyncError(Boolean(errorCode) || true);
+    return false;
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ user, loading, profile, profileSyncError, retryProfileSync }}>
+    <AuthContext.Provider
+      value={{ user, loading, profile, profileHydrated, profileSyncError, retryProfileSync, refreshProfile }}
+    >
       {!loading && children}
     </AuthContext.Provider>
   );

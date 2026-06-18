@@ -37,7 +37,7 @@ function teacherForbiddenPath(pathname: string) {
 }
 
 export function AuthenticatedShell({ children }: { children: React.ReactNode }) {
-  const { user, loading, profile } = useAuth();
+  const { user, loading, profile, profileHydrated } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
   const isLegal = pathname?.startsWith(LEGAL_PREFIX) ?? false;
@@ -85,8 +85,12 @@ export function AuthenticatedShell({ children }: { children: React.ReactNode }) 
         return;
       }
 
-      if (profile?.companion_chosen === false && pathname !== "/student/choose-companion") {
+      if (profileHydrated && profile?.companion_chosen === false && pathname !== "/student/choose-companion") {
         router.replace("/student/choose-companion");
+        return;
+      }
+      if (profileHydrated && profile?.companion_chosen === true && pathname === "/student/choose-companion") {
+        router.replace("/dashboard");
         return;
       }
       if (pathname.startsWith("/onboarding") && !isOnboardingRoleChoicePath(pathname)) {
@@ -101,17 +105,16 @@ export function AuthenticatedShell({ children }: { children: React.ReactNode }) 
 
     if (role === "teacher") {
       if (teacherForbiddenPath(pathname)) {
-        const dest = profile?.teacher_onboarding_complete ? "/dashboard" : "/onboarding/teacher";
         logAuthFlowDecision("authenticated-shell", {
           guard: "teacher-student-path",
           path: pathname,
           profileRole: role,
-          redirect: dest,
+          redirect: "/dashboard",
         });
-        router.replace(dest);
+        router.replace("/dashboard");
       }
     }
-  }, [loading, isLegal, user, pathname, router, profile?.role, profile?.companion_chosen, profile?.teacher_onboarding_complete, profile]);
+  }, [loading, isLegal, user, pathname, router, profile?.role, profile?.companion_chosen, profile?.teacher_onboarding_complete, profileHydrated, profile]);
 
   useEffect(() => {
     if (loading || isLegal || user) return;

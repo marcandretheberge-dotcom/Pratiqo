@@ -35,12 +35,11 @@ export function resolvePostAuthRedirect(
 
   if (options?.preAuthIntentConsumed) {
     if (role === "teacher") {
-      if (!profile.teacher_onboarding_complete) {
-        return safeNext?.startsWith("/onboarding/teacher") ? safeNext : "/onboarding/teacher";
-      }
+      if (safeNext?.startsWith("/onboarding/teacher")) return safeNext;
+      if (safeNext?.startsWith("/student")) return "/dashboard";
       return safeNext ?? "/dashboard";
     }
-    if (!profile.companion_chosen) {
+    if (profile.companion_chosen !== true) {
       return safeNext === "/student/choose-companion" ? safeNext : "/student/choose-companion";
     }
     return safeNext ?? "/dashboard";
@@ -55,9 +54,10 @@ export function resolvePostAuthRedirect(
   }
 
   if (role === "teacher") {
-    if (!profile.teacher_onboarding_complete) return "/onboarding/teacher";
+    if (safeNext?.startsWith("/onboarding/teacher")) return safeNext;
+    if (safeNext?.startsWith("/student")) return "/dashboard";
     return safeNext ?? "/dashboard";
   }
-  if (!profile.companion_chosen) return "/student/choose-companion";
+  if (profile.companion_chosen !== true) return "/student/choose-companion";
   return safeNext ?? "/dashboard";
 }

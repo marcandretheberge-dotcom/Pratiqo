@@ -63,8 +63,8 @@ test("resolveLoginOAuthNextPath routes learner intent to companion path", () => 
   assert.equal(resolveLoginOAuthNextPath(null, null, "learner"), "/student/choose-companion");
 });
 
-test("resolveLoginOAuthNextPath routes teacher intent to teacher onboarding", () => {
-  assert.equal(resolveLoginOAuthNextPath(null, null, "teacher"), "/onboarding/teacher");
+test("resolveLoginOAuthNextPath routes teacher intent to teacher dashboard", () => {
+  assert.equal(resolveLoginOAuthNextPath(null, null, "teacher"), "/dashboard");
 });
 
 test("resolveOAuthProfilePatch persists student role + onboarding_role_confirmed for learner intent", () => {
@@ -81,7 +81,7 @@ test("resolveOAuthProfilePatch persists teacher role + onboarding_role_confirmed
 
 test("valid pre-auth intent does not route to choose-role after OAuth", () => {
   assert.equal(oauthNextPathForPreAuthIntent("learner"), "/student/choose-companion");
-  assert.equal(oauthNextPathForPreAuthIntent("teacher"), "/onboarding/teacher");
+  assert.equal(oauthNextPathForPreAuthIntent("teacher"), "/dashboard");
   assert.equal(resolveLoginOAuthNextPath(null, null, "learner"), "/student/choose-companion");
   assert.doesNotMatch(resolveLoginOAuthNextPath(null, null, "teacher"), /choose-role/);
 });
@@ -133,10 +133,10 @@ test("resolvePostAuthRedirect sends unconfirmed students to role-choice fallback
   );
 });
 
-test("resolvePostAuthRedirect still sends incomplete teachers to teacher onboarding", () => {
+test("resolvePostAuthRedirect sends incomplete teachers to dashboard by default", () => {
   assert.equal(
     resolvePostAuthRedirect("teacher", { teacher_onboarding_complete: false }),
-    "/onboarding/teacher",
+    "/dashboard",
   );
 });
 
@@ -276,7 +276,7 @@ test("AuthenticatedShell keeps unconfirmed students on role-choice instead of co
   );
   assert.match(
     src,
-    /if \(profile\?\.companion_chosen === false && pathname !== "\/student\/choose-companion"\)/,
+    /profileHydrated && profile\?\.companion_chosen === false && pathname !== "\/student\/choose-companion"/,
   );
 });
 
@@ -370,7 +370,7 @@ test("teacher-intent fallback choose-role path still exists", () => {
   assert.equal(buildOnboardingRoleChoicePath(true), "/onboarding/choose-role?intent=teacher");
 });
 
-test("first teacher OAuth handoff resolves to teacher onboarding not landing", () => {
+test("first teacher OAuth handoff resolves to dashboard not landing", () => {
   assert.equal(
     resolvePostAuthRedirect(
       "teacher",
@@ -429,9 +429,10 @@ test("AuthenticatedShell never sends unresolved roles to legacy /onboarding", ()
 test("AuthenticatedShell renders companion page while student role syncs", () => {
   const src = read("components/AuthenticatedShell.tsx");
   assert.match(src, /wait-unresolved-role/);
+  assert.match(src, /profileHydrated/);
   assert.doesNotMatch(
     src,
-    /!isResolvedRole\(role\)[\s\S]*pathname\.startsWith\("\/student"\)[\s\S]*Chargement/,
+    /if \(!isResolvedRole\(role\)\)[\s\S]{0,400}return \(\s*<div[\s\S]{0,200}Chargement/,
   );
 });
 
@@ -449,10 +450,10 @@ test("choose-companion shows retry state instead of infinite loading", () => {
   assert.doesNotMatch(src, /if \(loading \|\| !user\) return null/);
 });
 
-test("AuthenticatedShell sends teachers on student paths to teacher onboarding", () => {
+test("AuthenticatedShell sends teachers on student paths to dashboard", () => {
   const src = read("components/AuthenticatedShell.tsx");
   assert.match(src, /teacher-student-path/);
-  assert.match(src, /\/onboarding\/teacher/);
+  assert.match(src, /redirect: "\/dashboard"/);
 });
 
 test("learner pending intent clears stale teacher cookies", () => {
@@ -460,7 +461,7 @@ test("learner pending intent clears stale teacher cookies", () => {
   assert.match(src, /if \(intent === "learner"\)[\s\S]*clearPendingTeacherOnboardingCookie/);
 });
 
-test("existing teacher with learner intent routes to teacher onboarding not companion", () => {
+test("existing teacher with learner intent routes to dashboard not companion", () => {
   assert.equal(primaryRoleForPreAuthIntent("learner", "teacher"), "teacher");
   assert.equal(
     resolvePostAuthRedirect(
@@ -469,7 +470,7 @@ test("existing teacher with learner intent routes to teacher onboarding not comp
       "/student/choose-companion",
       { preAuthIntentConsumed: "learner" },
     ),
-    "/onboarding/teacher",
+    "/dashboard",
   );
 });
 

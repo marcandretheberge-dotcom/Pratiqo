@@ -190,6 +190,10 @@ test("responsive layout patch does not touch restricted systems", () => {
     "app/api/onboarding/select-role/route.ts",
     // feat/admin-profile-deactivation — admin-only profile visibility controls.
     "app/api/admin/users/[id]/deactivation/route.ts",
+    // hotfix/onboarding-stability-and-profile-completion — creates missing
+    // teacher row server-side when onboarding complete is called without a
+    // teachers row. Defended by tests/auth/onboardingStability.test.ts.
+    "app/api/teacher/onboarding/complete/route.ts",
     // security: teachers/plans reads marketplace metadata via teachers_public only.
     "app/api/teachers/plans/route.ts",
   ]);
