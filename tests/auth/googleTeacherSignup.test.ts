@@ -97,10 +97,10 @@ test("landing header preserves pending teacher intent for generic Se connecter",
   assert.match(src, /\/connexion/);
 });
 
-test("landing auth gate resumes teacher login when pending intent exists", () => {
+test("landing auth gate resumes pending onboarding intent for authenticated users", () => {
   const src = read("components/marketing/LandingAuthGate.tsx");
-  assert.match(src, /hasPendingTeacherIntentClient/);
-  assert.match(src, /resolveLoginHrefWithPendingTeacherIntent/);
+  assert.match(src, /readPendingOnboardingIntentClient/);
+  assert.match(src, /buildLoginHrefAfterOAuth/);
   assert.doesNotMatch(src, /resolvePostAuthRedirect/);
 });
 

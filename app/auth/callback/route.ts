@@ -15,7 +15,8 @@ import {
   pendingOnboardingIntentClearCookieHeaders,
   resolveAuthCallbackParams,
 } from "@/lib/auth/pendingOnboardingIntent";
-import { resolveOAuthProfilePatch } from "@/lib/auth/preAuthOnboardingIntent";
+import { resolveOAuthProfilePatch, buildLoginHrefAfterOAuth } from "@/lib/auth/preAuthOnboardingIntent";
+import { logAuthFlowDecision } from "@/lib/auth/authFlowDiagnostics";
 
 type AuthCookie = { name: string; value: string; options: Record<string, unknown> };
 
@@ -245,11 +246,32 @@ export async function GET(request: Request) {
     dashboard?: unknown;
   };
 
-  const redirectPath = intent
-    ? resolvePostAuthRedirect(redirectRole, profileForRedirect, next, {
-        preAuthIntentConsumed: intent,
-      })
-    : resolvePostAuthRedirect(redirectRole, profileForRedirect, undefined);
+  if (intent) {
+    const handoffPath = buildLoginHrefAfterOAuth(intent, next);
+    logAuthFlowDecision("callback", {
+      intent,
+      next,
+      redirect: handoffPath,
+      profileRole: profileRole ?? "null",
+      onboardingRoleConfirmed:
+        typeof profileForRedirect.dashboard === "object" &&
+        profileForRedirect.dashboard !== null &&
+        (profileForRedirect.dashboard as Record<string, unknown>).onboarding_role_confirmed === true,
+      stage: "login-handoff",
+    });
+    const response = NextResponse.redirect(new URL(handoffPath, requestUrl.origin));
+    // Keep pending intent cookies until /login completes the handoff.
+    return applyCookies(response, authCookies);
+  }
+
+  const redirectPath = resolvePostAuthRedirect(redirectRole, profileForRedirect, undefined);
+
+  logAuthFlowDecision("callback", {
+    intent: "none",
+    redirect: redirectPath,
+    profileRole: profileRole ?? "null",
+    stage: "direct",
+  });
 
   const response = NextResponse.redirect(new URL(redirectPath, requestUrl.origin));
   return applyCookies(response, [...authCookies, ...pendingOnboardingIntentClearCookieHeaders()]);

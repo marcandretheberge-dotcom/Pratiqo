@@ -81,7 +81,7 @@ function ConnexionInner() {
     router.replace(buildLoginHrefFromConnexion(intent, safeNext, ref));
   };
 
-  if (highlightIntent || (user && profile?.role)) {
+  if (highlightIntent) {
     return (
       <div className="min-h-[50vh] flex items-center justify-center text-sm text-[var(--p-text-muted)]">
         Redirection…

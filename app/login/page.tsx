@@ -28,6 +28,37 @@ import { useAuth } from "../../components/AuthProvider";
 import { useLocale } from "../../lib/locale-context";
 import { getSupabaseClient } from "../../lib/supabase";
 import { sanitizeRelativeRedirectPath } from "../../lib/auth/redirects";
+import { logAuthFlowDecision } from "../../lib/auth/authFlowDiagnostics";
+import {
+  readPendingOnboardingIntentClient,
+} from "../../lib/auth/pendingOnboardingIntent";
+
+async function fetchProfileForHandoff(
+  userId: string,
+  maxAttempts = 5,
+): Promise<{
+  role?: string | null;
+  teacher_onboarding_complete?: boolean | null;
+  companion_chosen?: boolean | null;
+  dashboard?: unknown;
+} | null> {
+  const supabase = getSupabaseClient();
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const { data: profileRow } = await supabase
+      .from("profiles")
+      .select("role, teacher_onboarding_complete, companion_chosen, dashboard")
+      .eq("id", userId)
+      .maybeSingle();
+    if (profileRow) return profileRow as {
+      role?: string | null;
+      teacher_onboarding_complete?: boolean | null;
+      companion_chosen?: boolean | null;
+      dashboard?: unknown;
+    };
+    await new Promise((resolve) => setTimeout(resolve, 200 * (attempt + 1)));
+  }
+  return null;
+}
 
 function LoginForm() {
   const searchParams = useSearchParams();
@@ -62,46 +93,49 @@ function LoginForm() {
   }, [preAuthIntent, oauthNext]);
 
   useEffect(() => {
-    if (loading || !user) return;
+    if (loading || !user || !preAuthIntent) return;
 
     let cancelled = false;
     void (async () => {
-      const supabase = getSupabaseClient();
-      const { data: profileRow } = await supabase
-        .from("profiles")
-        .select("role, teacher_onboarding_complete, companion_chosen, dashboard")
-        .eq("id", user.id)
-        .maybeSingle();
+      const pendingCookie = readPendingOnboardingIntentClient();
+      logAuthFlowDecision("login-handoff", {
+        path: "/login",
+        sessionPresent: true,
+        userIdPresent: Boolean(user.id),
+        incomingIntent: preAuthIntent,
+        pendingIntentCookie: pendingCookie ?? "none",
+        safeNext: oauthNext,
+      });
+
+      const profile = await fetchProfileForHandoff(user.id);
 
       if (cancelled) return;
 
-      const profile = profileRow as {
-        role?: string | null;
-        teacher_onboarding_complete?: boolean | null;
-        companion_chosen?: boolean | null;
-        dashboard?: unknown;
-      } | null;
-
-      const effectiveRole: ProfileRole = preAuthIntent
-        ? primaryRoleForPreAuthIntent(preAuthIntent, profile?.role)
-        : profile?.role === "admin" || profile?.role === "teacher" || profile?.role === "student"
-          ? profile.role
-          : "student";
-
-      if (cancelled) return;
+      const effectiveRole: ProfileRole = primaryRoleForPreAuthIntent(preAuthIntent, profile?.role);
 
       const redirectPath = resolvePostAuthRedirect(
         effectiveRole,
         {
           teacher_onboarding_complete: profile?.teacher_onboarding_complete,
           companion_chosen: profile?.companion_chosen,
-          dashboard: preAuthIntent
-            ? mergeOnboardingRoleConfirmedDashboard(profile?.dashboard)
-            : profile?.dashboard,
+          dashboard: mergeOnboardingRoleConfirmedDashboard(profile?.dashboard),
         },
         oauthNext,
-        preAuthIntent ? { preAuthIntentConsumed: preAuthIntent } : undefined,
+        { preAuthIntentConsumed: preAuthIntent },
       );
+
+      logAuthFlowDecision("login-handoff", {
+        profileRowPresent: Boolean(profile),
+        profileRole: profile?.role ?? "null",
+        effectiveRole,
+        redirect: redirectPath,
+      });
+
+      if (redirectPath === "/" || redirectPath === "") {
+        logAuthFlowDecision("login-handoff", { error: "refusing-root-fallback" });
+        return;
+      }
+
       clearPendingOnboardingIntentCookie();
       clearPendingTeacherOnboardingCookie();
       window.location.assign(redirectPath);
@@ -118,8 +152,8 @@ function LoginForm() {
 
   if (user && preAuthIntent) {
     return (
-      <div className="min-h-[50vh] flex items-center justify-center text-sm text-[var(--p-text-muted)]">
-        Redirection…
+      <div className="min-h-[50vh] flex flex-col items-center justify-center gap-2 text-sm text-[var(--p-text-muted)]">
+        <p>Connexion en cours…</p>
       </div>
     );
   }

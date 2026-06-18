@@ -231,11 +231,18 @@ test("middleware redirects unauthenticated protected routes to connexion with in
   assert.doesNotMatch(src, /loginUrl\.searchParams\.set\("next"/);
 });
 
-test("auth callback redirects intent signups directly to onboarding destinations", () => {
+test("auth callback stages intent signups through public login handoff", () => {
   const src = read("app/auth/callback/route.ts");
-  assert.match(src, /preAuthIntentConsumed:\s*intent/);
-  assert.match(src, /resolvePostAuthRedirect/);
-  assert.doesNotMatch(src, /buildLoginHrefAfterOAuth/);
+  assert.match(src, /buildLoginHrefAfterOAuth/);
+  assert.match(src, /resolveOAuthProfilePatch/);
+  assert.match(src, /stage:\s*"login-handoff"/);
+  assert.doesNotMatch(src, /preAuthIntentConsumed:\s*intent/);
+});
+
+test("auth callback clears pending cookies only for non-intent direct redirects", () => {
+  const src = read("app/auth/callback/route.ts");
+  assert.match(src, /if \(intent\)[\s\S]*return applyCookies\(response, authCookies\)/);
+  assert.match(src, /pendingOnboardingIntentClearCookieHeaders/);
 });
 
 test("login page redirects to connexion when no pre-auth intent", () => {
@@ -246,12 +253,12 @@ test("login page redirects to connexion when no pre-auth intent", () => {
   assert.match(src, /window\.location\.assign/);
 });
 
-test("auth callback applies pre-auth intent patch and clears pending cookies", () => {
+test("auth callback applies pre-auth intent patch and clears pending cookies on direct redirects", () => {
   const src = read("app/auth/callback/route.ts");
   assert.match(src, /resolveOAuthProfilePatch/);
   assert.match(src, /pendingOnboardingIntentClearCookieHeaders/);
   assert.match(src, /resolveAuthCallbackParams/);
-  assert.match(src, /preAuthIntentConsumed:\s*intent/);
+  assert.match(src, /buildLoginHrefAfterOAuth/);
 });
 
 test("login page skips duplicate choose-role when pre-auth intent is present", () => {
@@ -327,6 +334,12 @@ test("landing auth gate keeps public homepage accessible when authenticated", ()
   assert.match(src, /return <>\{children\}<\/>/);
 });
 
+test("landing auth gate resumes pending onboarding intent for authenticated users", () => {
+  const src = read("components/marketing/LandingAuthGate.tsx");
+  assert.match(src, /readPendingOnboardingIntentClient/);
+  assert.match(src, /buildLoginHrefAfterOAuth/);
+});
+
 test("connexion skips role chooser for authenticated users with confirmed role", () => {
   const src = read("app/connexion/page.tsx");
   assert.match(src, /needsOnboardingRoleChoice/);
@@ -337,7 +350,7 @@ test("teacher-intent fallback choose-role path still exists", () => {
   assert.equal(buildOnboardingRoleChoicePath(true), "/onboarding/choose-role?intent=teacher");
 });
 
-test("first teacher OAuth callback resolves directly to teacher onboarding", () => {
+test("first teacher OAuth handoff resolves to teacher onboarding not landing", () => {
   assert.equal(
     resolvePostAuthRedirect(
       "teacher",
@@ -347,6 +360,43 @@ test("first teacher OAuth callback resolves directly to teacher onboarding", () 
     ),
     "/onboarding/teacher",
   );
+  assert.notEqual(
+    resolvePostAuthRedirect(
+      "teacher",
+      { teacher_onboarding_complete: false, dashboard: { onboarding_role_confirmed: true } },
+      "/onboarding/teacher",
+      { preAuthIntentConsumed: "teacher" },
+    ),
+    "/",
+  );
+});
+
+test("first learner OAuth handoff resolves to companion not landing", () => {
+  assert.equal(
+    resolvePostAuthRedirect(
+      "student",
+      { companion_chosen: false, dashboard: { onboarding_role_confirmed: true } },
+      "/student/choose-companion",
+      { preAuthIntentConsumed: "learner" },
+    ),
+    "/student/choose-companion",
+  );
+  assert.notEqual(
+    resolvePostAuthRedirect(
+      "student",
+      { companion_chosen: false, dashboard: { onboarding_role_confirmed: true } },
+      "/student/choose-companion",
+      { preAuthIntentConsumed: "learner" },
+    ),
+    "/",
+  );
+});
+
+test("login handoff refuses root fallback for consumed intent", () => {
+  const src = read("app/login/page.tsx");
+  assert.match(src, /refusing-root-fallback/);
+  assert.match(src, /fetchProfileForHandoff/);
+  assert.match(src, /Connexion en cours/);
 });
 
 async function run() {
