@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { isTeacherMarketplaceVisibleRow } from "@/lib/teachers/marketplaceVisibility";
+import { TEACHERS_PUBLIC_TABLE } from "@/lib/supabase/queries";
 
 export const runtime = "nodejs";
 
@@ -18,7 +19,6 @@ type TeacherMetadataRow = {
   is_demo?: boolean | null;
   deactivated_at?: string | null;
   deleted_at?: string | null;
-  identity_status?: string | null;
 };
 
 type ProfileMetadataRow = {
@@ -45,8 +45,8 @@ export async function GET(req: Request) {
 
   const admin = getSupabaseAdmin();
   const { data: teachers, error } = await admin
-    .from("teachers")
-    .select("id, user_id, is_public, is_demo, deactivated_at, deleted_at, identity_status")
+    .from(TEACHERS_PUBLIC_TABLE)
+    .select("id, user_id, is_public, is_demo, deactivated_at, deleted_at")
     .in("id", ids);
   if (error) {
     return NextResponse.json(
@@ -121,7 +121,6 @@ export async function GET(req: Request) {
         is_demo: row.is_demo,
         deactivated_at: row.deactivated_at,
         deleted_at: row.deleted_at,
-        identity_status: row.identity_status,
         profile_is_active: profile?.is_active,
         profile_deactivated_at: profile?.deactivated_at,
         profile_deleted_at: profile?.deleted_at,

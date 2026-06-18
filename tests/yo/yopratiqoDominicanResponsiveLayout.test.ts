@@ -188,6 +188,10 @@ test("responsive layout patch does not touch restricted systems", () => {
     // onboarding; sets dashboard.onboarding_role_confirmed via select-role.
     // Defended by tests/auth/onboardingRoleChoice.test.ts.
     "app/api/onboarding/select-role/route.ts",
+    // feat/admin-profile-deactivation — admin-only profile visibility controls.
+    "app/api/admin/users/[id]/deactivation/route.ts",
+    // security: teachers/plans reads marketplace metadata via teachers_public only.
+    "app/api/teachers/plans/route.ts",
   ]);
   const forbidden = [
     /^app\/api\//,
