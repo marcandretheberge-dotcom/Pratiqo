@@ -95,6 +95,7 @@ function LoginForm() {
           dashboard: profile?.dashboard,
         },
         oauthNext,
+        preAuthIntent ? { preAuthIntentConsumed: preAuthIntent } : undefined,
       );
       clearPendingOnboardingIntentCookie();
       clearPendingTeacherOnboardingCookie();

@@ -125,6 +125,7 @@ test("auth callback resolves pre-auth intent and applies profile patch", () => {
   assert.match(src, /resolveAuthCallbackParams/);
   assert.match(src, /resolveOAuthProfilePatch/);
   assert.match(src, /pendingOnboardingIntentClearCookieHeaders/);
+  assert.match(src, /preAuthIntentConsumed/);
 });
 
 test("resolveAuthCallbackParams falls back to pending teacher cookies when query params are stripped", () => {
