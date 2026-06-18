@@ -224,19 +224,16 @@ test("sanitizeRelativeRedirectPath rejects javascript: and data: schemes", () =>
 });
 
 test("login page forwards sanitized `next` (not hard-coded /dashboard) into Google OAuth", () => {
-  // Pins the mobile-email regression: app/login/page.tsx must pass the
-  // parsed `next` into loginWithGoogle() so users completing OAuth land on
-  // the destination from their email link (e.g. /student/progress).
   const source = readFileSync(join(process.cwd(), "app/login/page.tsx"), "utf8");
   assert.match(
     source,
-    /loginWithGoogle\(\s*oauthNext\s*,\s*"teacher"/,
-    "teacher branch must forward `oauthNext` to loginWithGoogle",
+    /loginWithGoogle\(\s*oauthNext,\s*\{/,
+    "login must forward `oauthNext` and pre-auth intent options to loginWithGoogle",
   );
   assert.match(
     source,
-    /loginWithGoogle\(\s*oauthNext\s*,\s*undefined/,
-    "student branch must forward `oauthNext` to loginWithGoogle",
+    /intent:\s*preAuthIntent/,
+    "login must pass pre-auth intent into loginWithGoogle",
   );
   assert.doesNotMatch(
     source,
@@ -246,7 +243,7 @@ test("login page forwards sanitized `next` (not hard-coded /dashboard) into Goog
   assert.match(
     source,
     /resolveLoginOAuthNextPath/,
-    "login page must derive OAuth next from teacher intent",
+    "login page must derive OAuth next from pre-auth intent",
   );
 });
 

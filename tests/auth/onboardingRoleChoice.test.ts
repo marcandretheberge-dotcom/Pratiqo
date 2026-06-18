@@ -8,8 +8,19 @@ import {
   ONBOARDING_ROLE_CHOICE_PATH,
   resolveProfileDashboardFromAuth,
 } from "@/lib/auth/onboardingRoleChoice";
+import {
+  buildConnexionHref,
+  buildLoginHrefWithPreAuthIntent,
+  CONNEXION_PATH,
+  oauthNextPathForPreAuthIntent,
+  parsePublicPreAuthIntent,
+  primaryRoleForPreAuthIntent,
+  resolveLoginOAuthNextPath,
+  resolveOAuthProfilePatch,
+} from "@/lib/auth/preAuthOnboardingIntent";
 import { resolvePostAuthRedirect } from "@/lib/auth/postAuthRedirect";
-import { resolveLoginOAuthNextPath } from "@/lib/auth/teacherOnboardingIntent";
+import { sanitizeRelativeRedirectPath } from "@/lib/auth/redirects";
+import { resolveProfileRoleOnAuth } from "@/lib/auth/admin";
 
 type TestFn = () => void | Promise<void>;
 const tests: Array<{ name: string; fn: TestFn }> = [];
@@ -22,38 +33,53 @@ function read(rel: string): string {
   return readFileSync(join(process.cwd(), rel), "utf8");
 }
 
-test("needsOnboardingRoleChoice is true for new students without confirmed role", () => {
-  assert.equal(
-    needsOnboardingRoleChoice({
-      role: "student",
-      companion_chosen: false,
-      teacher_onboarding_complete: false,
-      dashboard: {},
-    }),
-    true,
-  );
+test("generic Se connecter routes logged-out users to pre-auth connexion", () => {
+  const header = read("components/marketing/LandingHeader.tsx");
+  assert.match(header, /\/connexion/);
+  const shell = read("components/AuthenticatedShell.tsx");
+  assert.match(shell, /\/connexion\?next=/);
 });
 
-test("needsOnboardingRoleChoice is false after explicit role confirmation", () => {
-  assert.equal(
-    needsOnboardingRoleChoice({
-      role: "student",
-      companion_chosen: false,
-      dashboard: { onboarding_role_confirmed: true },
-    }),
-    false,
-  );
+test("Apprenant pre-auth choice builds login with intent=learner", () => {
+  assert.equal(buildLoginHrefWithPreAuthIntent("learner"), "/login?intent=learner");
 });
 
-test("resolveLoginOAuthNextPath routes teacher intent to role-choice screen", () => {
-  assert.equal(resolveLoginOAuthNextPath("teacher", null), "/onboarding/choose-role?intent=teacher");
+test("Professeur pre-auth choice builds login with intent=teacher", () => {
+  assert.equal(buildLoginHrefWithPreAuthIntent("teacher"), "/login?intent=teacher");
 });
 
-test("resolvePostAuthRedirect sends unconfirmed students to role-choice before companion", () => {
-  assert.equal(
-    resolvePostAuthRedirect("student", { companion_chosen: false, dashboard: {} }),
-    ONBOARDING_ROLE_CHOICE_PATH,
-  );
+test("parsePublicPreAuthIntent rejects admin and arbitrary roles", () => {
+  assert.equal(parsePublicPreAuthIntent("admin"), null);
+  assert.equal(parsePublicPreAuthIntent("owner"), null);
+  assert.equal(parsePublicPreAuthIntent("learner"), "learner");
+  assert.equal(parsePublicPreAuthIntent("teacher"), "teacher");
+});
+
+test("resolveLoginOAuthNextPath routes learner intent to companion path", () => {
+  assert.equal(resolveLoginOAuthNextPath(null, null, "learner"), "/student/choose-companion");
+});
+
+test("resolveLoginOAuthNextPath routes teacher intent to teacher onboarding", () => {
+  assert.equal(resolveLoginOAuthNextPath(null, null, "teacher"), "/onboarding/teacher");
+});
+
+test("resolveOAuthProfilePatch persists student role + onboarding_role_confirmed for learner intent", () => {
+  const patch = resolveOAuthProfilePatch({ intent: "learner", existingRole: null, existingDashboard: {} });
+  assert.equal(patch?.role, "student");
+  assert.equal(patch?.dashboard.onboarding_role_confirmed, true);
+});
+
+test("resolveOAuthProfilePatch persists teacher role + onboarding_role_confirmed for teacher intent", () => {
+  const patch = resolveOAuthProfilePatch({ intent: "teacher", existingRole: null, existingDashboard: {} });
+  assert.equal(patch?.role, "teacher");
+  assert.equal(patch?.dashboard.onboarding_role_confirmed, true);
+});
+
+test("valid pre-auth intent does not route to choose-role after OAuth", () => {
+  assert.equal(oauthNextPathForPreAuthIntent("learner"), "/student/choose-companion");
+  assert.equal(oauthNextPathForPreAuthIntent("teacher"), "/onboarding/teacher");
+  assert.equal(resolveLoginOAuthNextPath(null, null, "learner"), "/student/choose-companion");
+  assert.doesNotMatch(resolveLoginOAuthNextPath(null, null, "teacher"), /choose-role/);
 });
 
 test("resolvePostAuthRedirect sends confirmed students without companion to chooser", () => {
@@ -66,6 +92,13 @@ test("resolvePostAuthRedirect sends confirmed students without companion to choo
   );
 });
 
+test("resolvePostAuthRedirect sends unconfirmed students to role-choice fallback", () => {
+  assert.equal(
+    resolvePostAuthRedirect("student", { companion_chosen: false, dashboard: {} }),
+    ONBOARDING_ROLE_CHOICE_PATH,
+  );
+});
+
 test("resolvePostAuthRedirect still sends incomplete teachers to teacher onboarding", () => {
   assert.equal(
     resolvePostAuthRedirect("teacher", { teacher_onboarding_complete: false }),
@@ -73,26 +106,52 @@ test("resolvePostAuthRedirect still sends incomplete teachers to teacher onboard
   );
 });
 
-test("teacher-intent OAuth next resolves to emphasized role-choice path", () => {
-  assert.equal(buildOnboardingRoleChoicePath(true), "/onboarding/choose-role?intent=teacher");
+test("existing admin is not downgraded by pre-auth intent patch", () => {
+  assert.equal(primaryRoleForPreAuthIntent("learner", "admin"), "admin");
+  assert.equal(
+    resolveOAuthProfilePatch({ intent: "learner", existingRole: "admin", existingDashboard: {} })?.role,
+    "admin",
+  );
+  assert.equal(
+    resolveProfileRoleOnAuth({
+      existingRole: "admin",
+      signUpRoleParam: "teacher",
+      email: "admin@example.com",
+      adminLoginEmails: [],
+    }),
+    "admin",
+  );
 });
 
-test("choose-role page exists and calls select-role for both paths", () => {
-  const src = read("app/(app)/onboarding/choose-role/page.tsx");
+test("existing teacher is not downgraded when learner path is chosen", () => {
+  assert.equal(primaryRoleForPreAuthIntent("learner", "teacher"), "teacher");
+});
+
+test("unsafe next URLs are sanitized", () => {
+  assert.equal(sanitizeRelativeRedirectPath("https://evil.example.com"), null);
+  assert.equal(resolveLoginOAuthNextPath(null, "https://evil.example.com", "learner"), "/student/choose-companion");
+});
+
+test("connexion page exists outside AuthenticatedShell", () => {
+  const src = read("app/connexion/page.tsx");
   assert.match(src, /onboardingRoleChoiceHeading/);
-  assert.match(src, /chooseRole\("teacher"\)/);
-  assert.match(src, /chooseRole\("student"\)/);
-  assert.match(src, /\/api\/onboarding\/select-role/);
+  assert.match(src, /continueWithIntent\("learner"\)/);
+  assert.match(src, /continueWithIntent\("teacher"\)/);
+  assert.match(src, /buildLoginHrefWithPreAuthIntent/);
 });
 
-test("auth callback no longer auto-assigns teacher role from OAuth intent", () => {
-  const src = read("app/auth/callback/route.ts");
-  assert.match(src, /signUpRoleParam:\s*null/);
-});
-
-test("login page no longer auto-upgrades student to teacher before role choice", () => {
+test("login page redirects to connexion when no pre-auth intent", () => {
   const src = read("app/login/page.tsx");
-  assert.doesNotMatch(src, /body: JSON\.stringify\(\{ role: "teacher" \}\)/);
+  assert.match(src, /CONNEXION_PATH/);
+  assert.match(src, /parsePublicPreAuthIntent/);
+  assert.match(src, /setPendingOnboardingIntentCookie/);
+});
+
+test("auth callback applies pre-auth intent patch and clears pending cookies", () => {
+  const src = read("app/auth/callback/route.ts");
+  assert.match(src, /resolveOAuthProfilePatch/);
+  assert.match(src, /pendingOnboardingIntentClearCookieHeaders/);
+  assert.match(src, /resolveAuthCallbackParams/);
 });
 
 test("AuthenticatedShell keeps unconfirmed students on role-choice instead of companion", () => {
@@ -109,14 +168,23 @@ test("AuthenticatedShell keeps unconfirmed students on role-choice instead of co
   );
 });
 
+test("choose-role fallback persists choice with hard navigation", () => {
+  const src = read("app/(app)/onboarding/choose-role/page.tsx");
+  assert.match(src, /\/api\/onboarding\/select-role/);
+  assert.match(src, /window\.location\.assign/);
+});
+
 test("choose-role page does not auto-call select-role on mount", () => {
   const src = read("app/(app)/onboarding/choose-role/page.tsx");
   const useEffectBlocks = src.match(/useEffect\(\(\) => \{[\s\S]*?\}, \[[^\]]*\]\);/g) ?? [];
   for (const block of useEffectBlocks) {
     assert.doesNotMatch(block, /\/api\/onboarding\/select-role/);
   }
-  assert.match(src, /chooseRole\("student"\)/);
-  assert.match(src, /chooseRole\("teacher"\)/);
+});
+
+test("buildConnexionHref supports teacher emphasis", () => {
+  assert.equal(buildConnexionHref(), CONNEXION_PATH);
+  assert.equal(buildConnexionHref("teacher"), "/connexion?intent=teacher");
 });
 
 test("resolveProfileDashboardFromAuth reads spread onboarding_role_confirmed", () => {
@@ -128,6 +196,21 @@ test("resolveProfileDashboardFromAuth reads spread onboarding_role_confirmed", (
 test("isOnboardingRoleChoicePath matches choose-role route", () => {
   assert.equal(isOnboardingRoleChoicePath("/onboarding/choose-role"), true);
   assert.equal(isOnboardingRoleChoicePath("/student/choose-companion"), false);
+});
+
+test("needsOnboardingRoleChoice is false after explicit role confirmation", () => {
+  assert.equal(
+    needsOnboardingRoleChoice({
+      role: "student",
+      companion_chosen: false,
+      dashboard: { onboarding_role_confirmed: true },
+    }),
+    false,
+  );
+});
+
+test("teacher-intent fallback choose-role path still exists", () => {
+  assert.equal(buildOnboardingRoleChoicePath(true), "/onboarding/choose-role?intent=teacher");
 });
 
 async function run() {

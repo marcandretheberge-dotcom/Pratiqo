@@ -12,10 +12,10 @@ import {
 } from "@/lib/auth/admin";
 import { buildLoginUrlWithAuthError } from "@/lib/auth/oauthCallback";
 import {
-  pendingTeacherIntentClearCookieHeaders,
+  pendingOnboardingIntentClearCookieHeaders,
   resolveAuthCallbackParams,
-} from "@/lib/auth/pendingTeacherIntent";
-import { hasTeacherOnboardingIntent } from "@/lib/auth/teacherOnboardingIntent";
+} from "@/lib/auth/pendingOnboardingIntent";
+import { resolveOAuthProfilePatch } from "@/lib/auth/preAuthOnboardingIntent";
 
 type AuthCookie = { name: string; value: string; options: Record<string, unknown> };
 
@@ -53,14 +53,13 @@ export async function GET(request: Request) {
   const code = requestUrl.searchParams.get("code");
   const cookieStore = await cookies();
   const callbackState = resolveAuthCallbackParams(requestUrl, cookieStore);
-  const { role, next, ref: refCode } = callbackState;
-  const teacherIntent = hasTeacherOnboardingIntent(role, next);
+  const { next, ref: refCode, intent } = callbackState;
 
   if (!code) {
     const loginUrl = buildLoginUrlWithAuthError(requestUrl.origin, {
       authError: "missing_code",
-      role: teacherIntent ? "teacher" : null,
-      next: teacherIntent ? next : null,
+      intent,
+      next: intent ? next : null,
     });
     return NextResponse.redirect(loginUrl);
   }
@@ -70,8 +69,8 @@ export async function GET(request: Request) {
   if (!url || !anonKey) {
     const loginUrl = buildLoginUrlWithAuthError(requestUrl.origin, {
       authError: "config",
-      role: teacherIntent ? "teacher" : null,
-      next: teacherIntent ? next : null,
+      intent,
+      next: intent ? next : null,
     });
     return NextResponse.redirect(loginUrl);
   }
@@ -95,8 +94,8 @@ export async function GET(request: Request) {
     console.error("[auth/callback] exchangeCodeForSession failed:", exchangeError.message);
     const loginUrl = buildLoginUrlWithAuthError(requestUrl.origin, {
       authError: "session",
-      role: teacherIntent ? "teacher" : null,
-      next: teacherIntent ? next : null,
+      intent,
+      next: intent ? next : null,
     });
     return applyCookies(NextResponse.redirect(loginUrl), authCookies);
   }
@@ -109,8 +108,8 @@ export async function GET(request: Request) {
     console.error("[auth/callback] exchange succeeded but no user session");
     const loginUrl = buildLoginUrlWithAuthError(requestUrl.origin, {
       authError: "session",
-      role: teacherIntent ? "teacher" : null,
-      next: teacherIntent ? next : null,
+      intent,
+      next: intent ? next : null,
     });
     return applyCookies(NextResponse.redirect(loginUrl), authCookies);
   }
@@ -132,17 +131,25 @@ export async function GET(request: Request) {
 
   const { data: existingProfile } = await admin
     .from("profiles")
-    .select("role, teacher_onboarding_complete, companion_chosen, welcome_student_email_sent_at")
+    .select("role, teacher_onboarding_complete, companion_chosen, welcome_student_email_sent_at, dashboard")
     .eq("id", user.id)
     .maybeSingle();
 
   const adminLoginEmails = parseAdminLoginEmails(process.env.ADMIN_LOGIN_EMAILS);
-  const resolvedRole = resolveProfileRoleOnAuth({
+  const intentPatch = resolveOAuthProfilePatch({
+    intent,
     existingRole: (existingProfile as { role?: string } | null)?.role,
-    signUpRoleParam: null,
-    email: user.email,
-    adminLoginEmails,
+    existingDashboard: (existingProfile as { dashboard?: unknown } | null)?.dashboard,
   });
+
+  const resolvedRole = intentPatch
+    ? intentPatch.role
+    : resolveProfileRoleOnAuth({
+        existingRole: (existingProfile as { role?: string } | null)?.role,
+        signUpRoleParam: null,
+        email: user.email,
+        adminLoginEmails,
+      });
 
   const profileUpsert: Record<string, unknown> = {
     id: user.id,
@@ -151,6 +158,10 @@ export async function GET(request: Request) {
     updated_at: new Date().toISOString(),
     role: resolvedRole,
   };
+
+  if (intentPatch) {
+    profileUpsert.dashboard = intentPatch.dashboard;
+  }
 
   if (!existingProfile) {
     profileUpsert.companion_chosen = false;
@@ -162,18 +173,18 @@ export async function GET(request: Request) {
     console.error("[auth/callback] profile upsert failed", upsertErr);
   }
 
-      const { data: profile, error: readErr } = await admin
-        .from("profiles")
-        .select("role, teacher_onboarding_complete, companion_chosen, dashboard")
-        .eq("id", user.id)
-        .single();
+  const { data: profile, error: readErr } = await admin
+    .from("profiles")
+    .select("role, teacher_onboarding_complete, companion_chosen, dashboard")
+    .eq("id", user.id)
+    .single();
 
   if (readErr || !profile) {
     console.error("[auth/callback] profile read failed", readErr);
     const fallbackRedirect =
       resolvedRole === "admin" ? "/admin" : resolvedRole === "teacher" ? "/onboarding/teacher" : "/dashboard";
     const response = NextResponse.redirect(new URL(fallbackRedirect, requestUrl.origin));
-    return applyCookies(response, [...authCookies, ...pendingTeacherIntentClearCookieHeaders()]);
+    return applyCookies(response, [...authCookies, ...pendingOnboardingIntentClearCookieHeaders()]);
   }
 
   if (refCode) {
@@ -225,16 +236,16 @@ export async function GET(request: Request) {
     }
   }
 
-      const redirectPath = resolvePostAuthRedirect(
-        profileRole === "admin" ? "admin" : profileRole === "teacher" ? "teacher" : "student",
-        profile as {
-          teacher_onboarding_complete?: boolean | null;
-          companion_chosen?: boolean | null;
-          dashboard?: unknown;
-        },
-        next,
-      );
+  const redirectPath = resolvePostAuthRedirect(
+    profileRole === "admin" ? "admin" : profileRole === "teacher" ? "teacher" : "student",
+    profile as {
+      teacher_onboarding_complete?: boolean | null;
+      companion_chosen?: boolean | null;
+      dashboard?: unknown;
+    },
+    intent ? next : undefined,
+  );
 
   const response = NextResponse.redirect(new URL(redirectPath, requestUrl.origin));
-  return applyCookies(response, [...authCookies, ...pendingTeacherIntentClearCookieHeaders()]);
+  return applyCookies(response, [...authCookies, ...pendingOnboardingIntentClearCookieHeaders()]);
 }

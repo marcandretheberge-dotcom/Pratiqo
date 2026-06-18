@@ -10,7 +10,7 @@ import { resolveLoginHrefWithPendingTeacherIntent } from "@/lib/auth/pendingTeac
 
 export function LandingHeader() {
   const { t } = useLocale();
-  const [loginHref, setLoginHref] = useState("/login");
+  const [loginHref, setLoginHref] = useState("/connexion");
 
   useEffect(() => {
     setLoginHref(resolveLoginHrefWithPendingTeacherIntent("/login"));

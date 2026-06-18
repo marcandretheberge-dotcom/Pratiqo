@@ -1,9 +1,13 @@
 import { sanitizeRelativeRedirectPath } from "@/lib/auth/redirects";
+import { ONBOARDING_ROLE_CHOICE_PATH } from "@/lib/auth/onboardingRoleChoice";
 import {
-  buildOnboardingRoleChoicePath,
-  coerceTeacherNextToRoleChoicePath,
-  ONBOARDING_ROLE_CHOICE_PATH,
-} from "@/lib/auth/onboardingRoleChoice";
+  buildConnexionHref,
+  buildLoginHrefWithPreAuthIntent,
+  parsePublicPreAuthIntent,
+  resolveLoginOAuthNextPath,
+} from "@/lib/auth/preAuthOnboardingIntent";
+
+export { resolveLoginOAuthNextPath };
 
 /** Only `teacher` is honored from public URL params; never admin or arbitrary roles. */
 export function parsePublicSignUpRoleParam(
@@ -17,7 +21,7 @@ export function hasTeacherOnboardingIntent(
   roleParam: string | null | undefined,
   nextParam: string | null | undefined,
 ): boolean {
-  if (parsePublicSignUpRoleParam(roleParam)) return true;
+  if (parsePublicPreAuthIntent(null, roleParam) === "teacher") return true;
   const safeNext = sanitizeRelativeRedirectPath(nextParam);
   if (!safeNext) return false;
   if (safeNext === ONBOARDING_ROLE_CHOICE_PATH || safeNext.startsWith(`${ONBOARDING_ROLE_CHOICE_PATH}?`)) {
@@ -26,28 +30,6 @@ export function hasTeacherOnboardingIntent(
   return safeNext === "/onboarding/teacher" || safeNext.startsWith("/onboarding/teacher?");
 }
 
-/**
- * Resolve the OAuth `next` destination for login flows.
- * Teacher intent routes to the role-choice screen (Professeur emphasized), not directly into teacher onboarding.
- */
-export function resolveLoginOAuthNextPath(
-  roleParam: string | null | undefined,
-  nextParam: string | null | undefined,
-  defaultPath = "/dashboard",
-): string {
-  const safeNext = sanitizeRelativeRedirectPath(nextParam);
-  if (hasTeacherOnboardingIntent(roleParam, nextParam)) {
-    if (safeNext === ONBOARDING_ROLE_CHOICE_PATH || safeNext?.startsWith(`${ONBOARDING_ROLE_CHOICE_PATH}?`)) {
-      return safeNext;
-    }
-    return coerceTeacherNextToRoleChoicePath(safeNext);
-  }
-  return safeNext ?? defaultPath;
-}
-
-/**
- * Teacher intent marker for OAuth callback redirects only — not used to assign profiles.role.
- */
 export function resolveSignUpRoleParam(
   roleParam: string | null | undefined,
   nextParam: string | null | undefined,
@@ -56,21 +38,29 @@ export function resolveSignUpRoleParam(
   return parsePublicSignUpRoleParam(roleParam);
 }
 
-/** Build login href for teacher recruitment CTAs (preserves campaign query params). */
+/** Teacher recruitment CTAs → pre-auth connexion with Professeur emphasized. */
 export function buildTeacherSignupLoginHref(options?: {
   onboardingQuery?: string;
   extraParams?: Record<string, string>;
 }): string {
-  const roleChoicePath = options?.onboardingQuery
-    ? `${ONBOARDING_ROLE_CHOICE_PATH}?intent=teacher&${options.onboardingQuery}`
-    : `${ONBOARDING_ROLE_CHOICE_PATH}?intent=teacher`;
-  const login = new URLSearchParams();
-  login.set("role", "teacher");
-  login.set("next", roleChoicePath);
-  if (options?.extraParams) {
-    for (const [key, value] of Object.entries(options.extraParams)) {
-      login.set(key, value);
+  const href = buildConnexionHref("teacher");
+  if (!options?.onboardingQuery && !options?.extraParams) return href;
+  const params = new URLSearchParams(href.includes("?") ? href.split("?")[1] : "");
+  if (options.onboardingQuery) {
+    for (const part of options.onboardingQuery.split("&")) {
+      const [key, value] = part.split("=");
+      if (key) params.set(key, value ?? "");
     }
   }
-  return `/login?${login.toString()}`;
+  if (options.extraParams) {
+    for (const [key, value] of Object.entries(options.extraParams)) {
+      params.set(key, value);
+    }
+  }
+  return `${buildConnexionHref("teacher").split("?")[0]}?${params.toString()}`;
+}
+
+/** Direct login href when pre-auth connexion was already completed. */
+export function buildTeacherLoginHref(): string {
+  return buildLoginHrefWithPreAuthIntent("teacher");
 }

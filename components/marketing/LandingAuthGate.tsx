@@ -8,7 +8,7 @@ import {
   hasPendingTeacherIntentClient,
   resolveLoginHrefWithPendingTeacherIntent,
 } from "@/lib/auth/pendingTeacherIntent";
-import { buildOnboardingRoleChoicePath } from "@/lib/auth/onboardingRoleChoice";
+import { oauthNextPathForPreAuthIntent } from "@/lib/auth/preAuthOnboardingIntent";
 import { resolvePostAuthRedirect } from "@/lib/auth/postAuthRedirect";
 
 /**
@@ -49,10 +49,10 @@ export function LandingAuthGate({ children }: { children: ReactNode }) {
           companion_chosen: row?.companion_chosen,
           dashboard: row?.dashboard,
         },
-        pendingTeacher ? buildOnboardingRoleChoicePath(true) : null,
+        pendingTeacher ? oauthNextPathForPreAuthIntent("teacher") : null,
       );
 
-      if (!redirectPath.startsWith("/onboarding/choose-role")) {
+      if (!redirectPath.startsWith("/onboarding/choose-role") && !redirectPath.startsWith("/connexion")) {
         clearPendingTeacherOnboardingCookie();
       }
       window.location.assign(redirectPath);
