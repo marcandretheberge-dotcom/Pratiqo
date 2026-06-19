@@ -5,6 +5,7 @@ import {
   isTeacherMarketSupported,
   marketNotSupportedPayload,
 } from "@/lib/config/markets";
+import { ensureTeacherProfileRow } from "@/lib/teachers/ensureTeacherProfileRow";
 
 export const runtime = "nodejs";
 
@@ -65,57 +66,19 @@ export async function POST(req: Request) {
   let teacherRow = teacher;
 
   if (!teacherRow?.id) {
-    const { data: profileForTeacher, error: profileLookupErr } = await admin
-      .from("profiles")
-      .select("name, photo_url, country_code")
-      .eq("id", user.id)
-      .maybeSingle();
-
-    if (profileLookupErr) {
-      return NextResponse.json({ error: profileLookupErr.message }, { status: 500 });
-    }
-
-    const teacherName =
-      typeof profileForTeacher?.name === "string" && profileForTeacher.name.trim()
-        ? profileForTeacher.name.trim()
-        : "Professeur";
-    const imageUrl =
-      typeof profileForTeacher?.photo_url === "string" && profileForTeacher.photo_url.trim()
-        ? profileForTeacher.photo_url.trim()
-        : "https://picsum.photos/seed/teacher/400/400";
-
-    const { data: createdTeacher, error: createErr } = await admin
-      .from("teachers")
-      .insert({
-        id: user.id,
-        user_id: user.id,
-        name: teacherName,
-        discipline: "—",
-        category: "music",
-        rating: 0,
-        reviews: 0,
-        price_per_lesson: 0,
-        bio: "",
-        image_url: imageUrl,
-        availability: [],
-        location: {},
-        is_verified: false,
-        teaching_mode: "both",
-        languages: [],
-        levels: [],
-        country_code:
-          typeof profileForTeacher?.country_code === "string" ? profileForTeacher.country_code : null,
-      })
-      .select("id, country_code")
-      .single();
-
-    if (createErr || !createdTeacher?.id) {
+    const ensured = await ensureTeacherProfileRow(admin, user.id);
+    if (ensured.error || !ensured.result) {
       return NextResponse.json(
-        { error: createErr?.message ?? "Unable to create teacher profile." },
+        { error: ensured.error ?? "Unable to create teacher profile." },
         { status: 500 },
       );
     }
-    teacherRow = createdTeacher;
+    const { data: refetched } = await admin
+      .from("teachers")
+      .select("id, country_code")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    teacherRow = refetched;
   }
 
   const { data: profile, error: profileErr } = await admin

@@ -18,6 +18,7 @@ interface AuthContextType {
   profileSyncError: boolean;
   retryProfileSync: () => void;
   refreshProfile: () => Promise<boolean>;
+  mergeAuthProfile: (patch: Partial<AuthProfile>) => void;
 }
 
 type AuthProfile = Record<string, unknown> & {
@@ -47,6 +48,7 @@ const AuthContext = createContext<AuthContextType>({
   profileSyncError: false,
   retryProfileSync: () => {},
   refreshProfile: async () => false,
+  mergeAuthProfile: () => {},
 });
 
 export function useAuth() {
@@ -276,13 +278,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setProfileSyncError(false);
       return true;
     }
-    setProfileSyncError(Boolean(errorCode) || true);
+    if (errorCode) {
+      setProfileSyncError(true);
+    }
     return false;
+  }, []);
+
+  const mergeAuthProfile = useCallback((patch: Partial<AuthProfile>) => {
+    setProfile((prev) => {
+      const base = prev ?? { id: userRef.current?.id };
+      return { ...base, ...patch };
+    });
+    setProfileHydrated(true);
+    setProfileSyncError(false);
   }, []);
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, profile, profileHydrated, profileSyncError, retryProfileSync, refreshProfile }}
+      value={{
+        user,
+        loading,
+        profile,
+        profileHydrated,
+        profileSyncError,
+        retryProfileSync,
+        refreshProfile,
+        mergeAuthProfile,
+      }}
     >
       {!loading && children}
     </AuthContext.Provider>

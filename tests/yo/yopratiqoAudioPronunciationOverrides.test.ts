@@ -320,6 +320,13 @@ test("tracked patch avoids generated audio and restricted product systems", () =
     // hotfix/onboarding-stability-and-profile-completion — teacher row upsert
     // on onboarding complete. Defended by tests/auth/onboardingStability.test.ts.
     "app/api/teacher/onboarding/complete/route.ts",
+    // hotfix/profile-state-source-of-truth — idempotent teacher row ensure +
+    // server-side companion profile upsert.
+    "app/api/teacher/profile/ensure/route.ts",
+    "app/api/companion/route.ts",
+    "lib/teachers/ensureTeacherProfileRow.ts",
+    "lib/teachers/ensureTeacherProfileClient.ts",
+    "app/auth/callback/route.ts",
     // hotfix/google-onboarding-role-choice-flow — onboarding role confirmation.
     "app/api/onboarding/select-role/route.ts",
     "app/api/admin/users/[id]/deactivation/route.ts",

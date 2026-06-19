@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import { rateLimitByIp, rateLimitResponse } from "@/lib/rateLimit";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import type { CompanionType } from "@/lib/companions";
 
 export const runtime = "nodejs";
@@ -71,15 +72,56 @@ export async function POST(request: Request) {
     });
   }
 
-  const { error } = await supabase
+  const admin = getSupabaseAdmin();
+  const { data: existing, error: readErr } = await admin
     .from("profiles")
-    .update({ companion_type: companionType, companion_chosen: true })
-    .eq("id", user.id);
+    .select("role, email, name, dashboard")
+    .eq("id", user.id)
+    .maybeSingle();
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  if (readErr) {
+    return NextResponse.json({ error: readErr.message }, { status: 500 });
   }
 
-  return NextResponse.json({ ok: true });
-}
+  const existingRole = (existing as { role?: string | null } | null)?.role;
+  const role =
+    existingRole === "admin" || existingRole === "teacher" ? existingRole : "student";
 
+  const upsertPayload: Record<string, unknown> = {
+    id: user.id,
+    email: user.email ?? (existing as { email?: string | null } | null)?.email ?? null,
+    name:
+      (existing as { name?: string | null } | null)?.name ??
+      (user.user_metadata?.full_name as string | undefined) ??
+      null,
+    role,
+    companion_type: companionType,
+    companion_chosen: true,
+    updated_at: new Date().toISOString(),
+  };
+
+  if (!(existing as { dashboard?: unknown } | null)?.dashboard) {
+    upsertPayload.dashboard = { onboarding_role_confirmed: true };
+  }
+
+  const { data: saved, error: upsertErr } = await admin
+    .from("profiles")
+    .upsert(upsertPayload, { onConflict: "id" })
+    .select("id, role, companion_type, companion_chosen, dashboard")
+    .single();
+
+  if (upsertErr || !saved) {
+    return NextResponse.json({ error: upsertErr?.message ?? "Profile save failed." }, { status: 500 });
+  }
+
+  return NextResponse.json({
+    ok: true,
+    profile: {
+      id: saved.id,
+      role: saved.role,
+      companion_type: saved.companion_type,
+      companion_chosen: saved.companion_chosen,
+      dashboard: saved.dashboard,
+    },
+  });
+}

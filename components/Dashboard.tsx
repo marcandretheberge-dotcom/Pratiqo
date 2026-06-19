@@ -748,7 +748,9 @@ export function Dashboard() {
           <p className="text-sm text-slate-600">{t("dashboardTeacherSubtitle")}</p>
         </header>
 
-        {showSearchVisibilityBanner ? <TeacherSearchVisibilityBanner ctaHref="/teacher/my-profile" /> : null}
+        {showSearchVisibilityBanner ? (
+          <TeacherSearchVisibilityBanner ctaHref="/teacher/verification" />
+        ) : null}
 
         <TeacherDashboardStats
           items={[
@@ -889,7 +891,7 @@ export function Dashboard() {
           </div>
 
           <div className="space-y-6 lg:col-span-1">
-            <TeacherProfileCompletenessCard percent={completenessPct} ctaHref="/teacher/my-profile" />
+            <TeacherProfileCompletenessCard percent={completenessPct} ctaHref="/teacher/verification" />
           </div>
         </div>
       </div>

@@ -36,7 +36,7 @@ function ConnexionInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { t } = useLocale();
-  const { user, loading: authLoading, profile } = useAuth();
+  const { user, loading: authLoading, profile, profileHydrated } = useAuth();
 
   const highlightIntent = useMemo(() => {
     return parsePublicPreAuthIntent(searchParams.get("intent"), searchParams.get("role"));
@@ -46,7 +46,7 @@ function ConnexionInner() {
   const ref = searchParams.get("ref");
 
   useEffect(() => {
-    if (authLoading || !user || !profile?.role) return;
+    if (authLoading || !user || !profileHydrated || !profile?.role) return;
     const row = profile as {
       role?: string | null;
       companion_chosen?: boolean | null;
@@ -70,7 +70,7 @@ function ConnexionInner() {
         }, safeNext),
       );
     }
-  }, [authLoading, user, profile, router, safeNext]);
+  }, [authLoading, user, profileHydrated, profile, router, safeNext]);
 
   useEffect(() => {
     if (!highlightIntent) return;
@@ -80,6 +80,14 @@ function ConnexionInner() {
   const continueWithIntent = (intent: PreAuthOnboardingIntent) => {
     router.replace(buildLoginHrefFromConnexion(intent, safeNext, ref));
   };
+
+  if (user && !profileHydrated && !highlightIntent) {
+    return (
+      <div className="min-h-[50vh] flex items-center justify-center text-sm text-[var(--p-text-muted)]">
+        Chargement…
+      </div>
+    );
+  }
 
   if (highlightIntent) {
     return (

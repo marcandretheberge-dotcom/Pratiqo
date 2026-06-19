@@ -17,6 +17,7 @@ import {
 } from "@/lib/auth/pendingOnboardingIntent";
 import { resolveOAuthProfilePatch, buildLoginHrefAfterOAuth } from "@/lib/auth/preAuthOnboardingIntent";
 import { logAuthFlowDecision } from "@/lib/auth/authFlowDiagnostics";
+import { ensureTeacherProfileRow } from "@/lib/teachers/ensureTeacherProfileRow";
 
 type AuthCookie = { name: string; value: string; options: Record<string, unknown> };
 
@@ -172,6 +173,16 @@ export async function GET(request: Request) {
 
   if (upsertErr) {
     console.error("[auth/callback] profile upsert failed", upsertErr);
+  }
+
+  if (resolvedRole === "teacher") {
+    const ensured = await ensureTeacherProfileRow(admin, user.id, {
+      name: profileUpsert.name as string | null | undefined,
+      photo_url: (user.user_metadata?.avatar_url as string | undefined) ?? null,
+    });
+    if (ensured.error) {
+      console.error("[auth/callback] ensureTeacherProfileRow failed", ensured.error);
+    }
   }
 
   const { data: profile, error: readErr } = await admin
