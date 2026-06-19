@@ -88,6 +88,9 @@ type TeacherVerifyRow = {
   home_lesson_price?: number | string | null;
   location?: unknown;
   home_lesson_enabled?: boolean | null;
+  is_public?: boolean | null;
+  deactivated_at?: string | null;
+  deleted_at?: string | null;
   stripe_connect_onboarding_complete?: boolean | null;
   stripe_connect_charges_enabled?: boolean | null;
   stripe_connect_payouts_enabled?: boolean | null;
@@ -227,7 +230,7 @@ export default function TeacherProfileManagementPage() {
       supabase
         .from("teachers")
         .select(
-          "id, name, discipline, bio, image_url, video_url, price_per_lesson, teaching_mode, intro_session_enabled, intro_session_price_cents, availability, default_lesson_duration_minutes, verification_level, identity_verified, identity_status, stripe_identity_status, stripe_identity_failed_reason, diploma_verified, diploma_url, phone_verified, is_verified, location_verification_status, cv_summary, cv_verification_status, city, region, country_code, home_lesson_radius_km, home_lesson_price, home_lesson_enabled, location, stripe_account_id, stripe_connect_onboarding_complete, stripe_connect_charges_enabled, stripe_connect_payouts_enabled",
+          "id, name, discipline, bio, image_url, video_url, price_per_lesson, teaching_mode, intro_session_enabled, intro_session_price_cents, availability, default_lesson_duration_minutes, verification_level, identity_verified, identity_status, stripe_identity_status, stripe_identity_failed_reason, diploma_verified, diploma_url, phone_verified, is_verified, location_verification_status, cv_summary, cv_verification_status, city, region, country_code, home_lesson_radius_km, home_lesson_price, home_lesson_enabled, is_public, deactivated_at, deleted_at, location, stripe_account_id, stripe_connect_onboarding_complete, stripe_connect_charges_enabled, stripe_connect_payouts_enabled",
         )
         .eq("user_id", user.id)
         .maybeSingle(),
@@ -245,7 +248,7 @@ export default function TeacherProfileManagementPage() {
           const refetch = await supabase
             .from("teachers")
             .select(
-              "id, name, discipline, bio, image_url, video_url, price_per_lesson, teaching_mode, intro_session_enabled, intro_session_price_cents, availability, default_lesson_duration_minutes, verification_level, identity_verified, identity_status, stripe_identity_status, stripe_identity_failed_reason, diploma_verified, diploma_url, phone_verified, is_verified, location_verification_status, cv_summary, cv_verification_status, city, region, country_code, home_lesson_radius_km, home_lesson_price, home_lesson_enabled, location, stripe_account_id, stripe_connect_onboarding_complete, stripe_connect_charges_enabled, stripe_connect_payouts_enabled",
+              "id, name, discipline, bio, image_url, video_url, price_per_lesson, teaching_mode, intro_session_enabled, intro_session_price_cents, availability, default_lesson_duration_minutes, verification_level, identity_verified, identity_status, stripe_identity_status, stripe_identity_failed_reason, diploma_verified, diploma_url, phone_verified, is_verified, location_verification_status, cv_summary, cv_verification_status, city, region, country_code, home_lesson_radius_km, home_lesson_price, home_lesson_enabled, is_public, deactivated_at, deleted_at, location, stripe_account_id, stripe_connect_onboarding_complete, stripe_connect_charges_enabled, stripe_connect_payouts_enabled",
             )
             .eq("user_id", user.id)
             .maybeSingle();
@@ -981,6 +984,8 @@ export default function TeacherProfileManagementPage() {
         : { kind: "not_started" };
 
   const publicProfileHref = `/teacher/profile/${teacherRow.id}`;
+  const canOpenPublicProfile =
+    teacherRow.is_public === true && !teacherRow.deactivated_at && !teacherRow.deleted_at;
 
   const availabilityState: VerificationStepState =
     (teacherRow.availability?.length ?? 0) > 0 ? { kind: "verified" } : { kind: "not_started" };
@@ -1125,15 +1130,17 @@ export default function TeacherProfileManagementPage() {
               >
                 {t("teacherPublicProfileLabel")} →
               </Link>
-              <a
-                href={publicProfileHref}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm font-semibold text-teal-700 hover:underline"
-                data-testid="teacher-profile-mgmt-view-public-link"
-              >
-                {t("teacherPublicProfileViewCta")}
-              </a>
+              {canOpenPublicProfile ? (
+                <a
+                  href={publicProfileHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm font-semibold text-teal-700 hover:underline"
+                  data-testid="teacher-profile-mgmt-view-public-link"
+                >
+                  {t("teacherPublicProfileViewCta")}
+                </a>
+              ) : null}
             </div>
           </div>
         </LaunchCard>

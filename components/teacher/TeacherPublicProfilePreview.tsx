@@ -15,6 +15,7 @@ import { useLocale } from "@/lib/locale-context";
 import { getDisciplineById } from "@/lib/disciplines";
 import { TEACHER_SETUP_PATH } from "@/lib/auth/teacherLoginRouting";
 import { buildTeacherSetupChecklist, teacherSetupProgressPercent } from "@/lib/teachers/teacherSetupProgress";
+import { fetchEnsureTeacherProfile } from "@/lib/teachers/ensureTeacherProfileClient";
 
 type DisciplineRow = {
   discipline_id: string;
@@ -51,7 +52,7 @@ export function TeacherPublicProfilePreview() {
     let cancelled = false;
     const supabase = getSupabaseClient();
     void (async () => {
-      const [{ data: prof }, { data: trow }] = await Promise.all([
+      const [{ data: prof }, teacherRes] = await Promise.all([
         supabase.from("profiles").select("photo_url").eq("id", user.id).maybeSingle(),
         supabase
           .from("teachers")
@@ -59,6 +60,24 @@ export function TeacherPublicProfilePreview() {
           .eq("user_id", user.id)
           .maybeSingle(),
       ]);
+      let trow = teacherRes.data;
+      if (!trow) {
+        const { data: sess } = await supabase.auth.getSession();
+        const token = sess.session?.access_token;
+        if (token) {
+          const ensured = await fetchEnsureTeacherProfile(token);
+          if (!ensured.ok) {
+            console.error("[teacher/my-profile] fetchEnsureTeacherProfile failed", ensured.error);
+          } else {
+            const refetch = await supabase
+              .from("teachers")
+              .select("id, name, bio, discipline, price_per_lesson, image_url, teaching_mode, is_public, deactivated_at, deleted_at, city, region, availability")
+              .eq("user_id", user.id)
+              .maybeSingle();
+            trow = refetch.data;
+          }
+        }
+      }
       if (cancelled) return;
       setPhotoUrl((prof as { photo_url?: string | null } | null)?.photo_url ?? null);
       setTeacher((trow as PreviewTeacher | null) ?? null);
