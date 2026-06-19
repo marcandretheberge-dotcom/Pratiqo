@@ -21,11 +21,13 @@ test("migration 059 allows null draft price_per_lesson but rejects zero", () => 
   assert.match(sql, /price_per_lesson IS NULL OR price_per_lesson >= 20/);
 });
 
-test("draft teacher row insert uses null price_per_lesson not zero", () => {
-  assert.equal(DRAFT_TEACHER_ROW_INSERT.price_per_lesson, null);
+test("draft teacher row insert uses minimum valid price_per_lesson not zero or null", () => {
+  assert.equal(DRAFT_TEACHER_ROW_INSERT.price_per_lesson, 20);
   assert.equal(DRAFT_TEACHER_ROW_INSERT.is_public, false);
   const src = read("lib/teachers/ensureTeacherProfileRow.ts");
   assert.doesNotMatch(src, /price_per_lesson:\s*0/);
+  assert.doesNotMatch(src, /price_per_lesson:\s*null/);
+  assert.match(src, /MIN_LESSON_PRICE_DOLLARS/);
   assert.match(src, /DRAFT_TEACHER_ROW_INSERT/);
 });
 
@@ -44,22 +46,7 @@ test("verification setup page shows friendly ensure error not raw DB message", (
   assert.match(page, /console\.error\("\[teacher\/verification\] fetchEnsureTeacherProfile failed"/);
 });
 
-test("draft teacher row with null price is incomplete and hidden from marketplace", () => {
-  assert.equal(
-    isTeacherProfileComplete({
-      name: "Marie",
-      category: "music",
-      discipline: "piano",
-      city: "Montreal",
-      region: "QC",
-      country_code: "CA",
-      timezone: "America/Toronto",
-      teaching_mode: "both",
-      price_per_lesson: null as unknown as number,
-      availability: [{ day: "monday", slots: ["09h00"] }],
-    }),
-    false,
-  );
+test("draft teacher row with placeholder minimum price stays hidden until public", () => {
   assert.equal(
     isTeacherMarketplaceVisibleRow({
       id: "00000000-0000-4000-8000-000000000001",

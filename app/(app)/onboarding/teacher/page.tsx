@@ -565,7 +565,11 @@ export default function TeacherOnboardingPage() {
       });
       const completePayload = (await completeRes.json().catch(() => ({}))) as { error?: string };
       if (!completeRes.ok) {
-        throw new Error(completePayload.error || t("anErrorOccurred"));
+        const code = completePayload.error;
+        if (code === "teacher_profile_ensure_failed" || code === "teacher_onboarding_update_failed") {
+          throw new Error(t("verificationNoTeacherRowSetup"));
+        }
+        throw new Error(code || t("anErrorOccurred"));
       }
 
       if (searchIndexingConsent) {
