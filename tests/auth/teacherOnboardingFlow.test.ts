@@ -1,0 +1,243 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import {
+  oauthNextPathForPreAuthIntent,
+  resolveLoginOAuthNextPath,
+} from "@/lib/auth/preAuthOnboardingIntent";
+import { resolvePostAuthRedirect } from "@/lib/auth/postAuthRedirect";
+import { primaryRoleForPreAuthIntent } from "@/lib/auth/preAuthOnboardingIntent";
+import { DRAFT_TEACHER_ROW_INSERT } from "@/lib/teachers/ensureTeacherProfileRow";
+import { isTeacherProfileComplete } from "@/lib/teacherOnboarding";
+import { isTeacherMarketplaceVisibleRow } from "@/lib/teachers/marketplaceVisibility";
+import { MIN_LESSON_PRICE_DOLLARS } from "@/lib/pricing/constants";
+
+type TestFn = () => void | Promise<void>;
+const tests: Array<{ name: string; fn: TestFn }> = [];
+
+function test(name: string, fn: TestFn) {
+  tests.push({ name, fn });
+}
+
+function read(rel: string): string {
+  return readFileSync(join(process.cwd(), rel), "utf8");
+}
+
+// ── Routing ────────────────────────────────────────────────────────────────
+
+test("teacher OAuth routes to /onboarding/teacher not /dashboard", () => {
+  assert.equal(oauthNextPathForPreAuthIntent("teacher"), "/onboarding/teacher");
+  assert.equal(resolveLoginOAuthNextPath(null, null, "teacher"), "/onboarding/teacher");
+  assert.notEqual(oauthNextPathForPreAuthIntent("teacher"), "/dashboard");
+});
+
+test("learner OAuth still routes to /student/choose-companion unchanged", () => {
+  assert.equal(oauthNextPathForPreAuthIntent("learner"), "/student/choose-companion");
+  assert.equal(resolveLoginOAuthNextPath(null, null, "learner"), "/student/choose-companion");
+});
+
+test("confirmed incomplete teacher routes to /onboarding/teacher", () => {
+  assert.equal(
+    resolvePostAuthRedirect("teacher", { teacher_onboarding_complete: false }),
+    "/onboarding/teacher",
+  );
+  assert.equal(
+    resolvePostAuthRedirect("teacher", { teacher_onboarding_complete: null }),
+    "/onboarding/teacher",
+  );
+  assert.equal(
+    resolvePostAuthRedirect("teacher", {}),
+    "/onboarding/teacher",
+  );
+});
+
+test("complete teacher routes to /dashboard", () => {
+  assert.equal(
+    resolvePostAuthRedirect("teacher", { teacher_onboarding_complete: true }),
+    "/dashboard",
+  );
+});
+
+test("new teacher first OAuth handoff via preAuthIntentConsumed routes to /onboarding/teacher", () => {
+  assert.equal(
+    resolvePostAuthRedirect(
+      "teacher",
+      { teacher_onboarding_complete: false },
+      "/onboarding/teacher",
+      { preAuthIntentConsumed: "teacher" },
+    ),
+    "/onboarding/teacher",
+  );
+  assert.equal(
+    resolvePostAuthRedirect(
+      "teacher",
+      { teacher_onboarding_complete: false },
+      null,
+      { preAuthIntentConsumed: "teacher" },
+    ),
+    "/onboarding/teacher",
+  );
+});
+
+test("complete teacher with preAuthIntentConsumed routes to /dashboard", () => {
+  assert.equal(
+    resolvePostAuthRedirect(
+      "teacher",
+      { teacher_onboarding_complete: true },
+      null,
+      { preAuthIntentConsumed: "teacher" },
+    ),
+    "/dashboard",
+  );
+});
+
+test("/onboarding/choose-role is not shown for confirmed teachers", () => {
+  // needsOnboardingRoleChoice returns false for role=teacher
+  // Verified by the onboardingRoleChoice tests; confirmed here via code inspection.
+  const roleChoice = read("lib/auth/onboardingRoleChoice.ts");
+  assert.match(roleChoice, /if \(profile\.role === "teacher"\) return false/);
+});
+
+test("teacher with learner intent (existing teacher) routes to dashboard not companion", () => {
+  assert.equal(
+    resolvePostAuthRedirect(
+      "teacher",
+      { teacher_onboarding_complete: false },
+      "/student/choose-companion",
+      { preAuthIntentConsumed: "learner" },
+    ),
+    "/dashboard",
+  );
+});
+
+// ── Server-side upsert ─────────────────────────────────────────────────────
+
+test("complete API uses admin client for teacher row upsert (bypasses RLS)", () => {
+  const route = read("app/api/teacher/onboarding/complete/route.ts");
+  assert.match(route, /getSupabaseAdmin/);
+  assert.match(route, /ensureTeacherProfileRow/);
+  assert.match(route, /from\("teachers"\)[\s\S]*?\.update\(/);
+  // No client-scoped supabase insert — admin only
+  assert.doesNotMatch(route, /supabaseUser\.from\("teachers"\)/);
+});
+
+test("complete API accepts full wizard profile payload", () => {
+  const route = read("app/api/teacher/onboarding/complete/route.ts");
+  assert.match(route, /body\.name/);
+  assert.match(route, /body\.discipline/);
+  assert.match(route, /body\.city/);
+  assert.match(route, /body\.price_per_lesson/);
+  assert.match(route, /body\.availability/);
+  assert.match(route, /body\.teaching_mode/);
+});
+
+test("complete API enforces price minimum on server side", () => {
+  const route = read("app/api/teacher/onboarding/complete/route.ts");
+  assert.match(route, /MIN_LESSON_PRICE_DOLLARS/);
+  assert.match(route, /price < MIN_LESSON_PRICE_DOLLARS/);
+});
+
+test("complete API marks profile onboarding-complete server-side", () => {
+  const route = read("app/api/teacher/onboarding/complete/route.ts");
+  assert.match(route, /teacher_onboarding_complete: true/);
+  assert.match(route, /from\("profiles"\)[\s\S]*?\.update\(/);
+});
+
+test("wizard sends all profile fields to complete API not direct DB", () => {
+  const page = read("app/(app)/onboarding/teacher/page.tsx");
+  // No client-side teachers insert/update
+  assert.doesNotMatch(page, /supabase\.from\("teachers"\)\.insert/);
+  assert.doesNotMatch(page, /supabase\.from\("teachers"\)\.update/);
+  // Posts full payload to complete API
+  assert.match(page, /\/api\/teacher\/onboarding\/complete/);
+  assert.match(page, /price_per_lesson:\s*hourlyNum/);
+  assert.match(page, /city:\s*publicCity/);
+  assert.match(page, /availability,/);
+});
+
+test("wizard no longer calls separate /api/teacher/pricing endpoint", () => {
+  const page = read("app/(app)/onboarding/teacher/page.tsx");
+  assert.doesNotMatch(page, /\/api\/teacher\/pricing/);
+});
+
+// ── Search visibility ──────────────────────────────────────────────────────
+
+test("draft teacher row has is_public false (hidden from search)", () => {
+  assert.equal(DRAFT_TEACHER_ROW_INSERT.is_public, false);
+  assert.equal(DRAFT_TEACHER_ROW_INSERT.price_per_lesson, null);
+});
+
+test("incomplete teacher is not marketplace-visible", () => {
+  assert.equal(
+    isTeacherProfileComplete({
+      name: "Marie",
+      category: "music",
+      discipline: "piano",
+      city: "",
+      region: "QC",
+      country_code: "CA",
+      timezone: "America/Toronto",
+      teaching_mode: "both",
+      price_per_lesson: 50,
+      availability: ["Lun Matin"],
+    }),
+    false,
+  );
+  assert.equal(
+    isTeacherMarketplaceVisibleRow({
+      id: "00000000-0000-4000-8000-000000000001",
+      user_id: "00000000-0000-4000-8000-000000000002",
+      is_public: false,
+      deactivated_at: null,
+      deleted_at: null,
+    }),
+    false,
+  );
+});
+
+test("complete teacher with valid price remains marketplace-eligible", () => {
+  assert.equal(
+    isTeacherProfileComplete({
+      name: "Marie",
+      category: "music",
+      discipline: "piano",
+      city: "Montreal",
+      region: "QC",
+      country_code: "CA",
+      timezone: "America/Toronto",
+      teaching_mode: "both",
+      price_per_lesson: 50,
+      availability: ["Lun Matin"],
+    }),
+    true,
+  );
+});
+
+test("price minimum constraint is 20 CAD", () => {
+  assert.equal(MIN_LESSON_PRICE_DOLLARS, 20);
+});
+
+// ── Admin / role protection ────────────────────────────────────────────────
+
+test("admin is not downgraded by teacher intent", () => {
+  assert.equal(primaryRoleForPreAuthIntent("teacher", "admin"), "admin");
+  assert.equal(primaryRoleForPreAuthIntent("learner", "admin"), "admin");
+});
+
+test("complete API blocks admin profiles from completing teacher onboarding", () => {
+  const route = read("app/api/teacher/onboarding/complete/route.ts");
+  assert.match(route, /role.*===.*"admin"[\s\S]*?403/);
+});
+
+async function run() {
+  for (const { name, fn } of tests) {
+    await fn();
+    console.log(`ok - ${name}`);
+  }
+  console.log(`[auth:teacherOnboardingFlow] ${tests.length} tests passed`);
+}
+
+run().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

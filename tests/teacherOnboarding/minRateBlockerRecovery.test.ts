@@ -168,12 +168,19 @@ test("active wizard passes home_lesson_price into the client-side validator", ()
   assert.match(m[1], /home_lesson_price\s*:\s*homeHourly/);
 });
 
-test("active wizard writes home_lesson_price into the teachers upsert when home is enabled", () => {
-  assert.match(ACTIVE_WIZARD, /updates\.home_lesson_price\s*=\s*homeHourly\s*;/);
+test("active wizard sends home_lesson_price in the complete API body when home is enabled", () => {
+  // All profile data (including home pricing) is now sent to the
+  // /api/teacher/onboarding/complete server-side upsert, not via a
+  // separate client-side update or /api/teacher/pricing call.
+  assert.match(ACTIVE_WIZARD, /home_lesson_price\s*:\s*homeHourly/);
 });
 
-test("active wizard sends home_lesson_price in the /api/teacher/pricing PATCH body", () => {
-  assert.match(ACTIVE_WIZARD, /pricingBody\.home_lesson_price\s*=\s*homeHourly\s*;/);
+test("active wizard no longer calls a separate /api/teacher/pricing endpoint", () => {
+  // The complete API handles teacher row upsert + profile completion in
+  // one admin-client round-trip, eliminating the client-side DB write
+  // that was blocked by RLS for new teachers.
+  assert.doesNotMatch(ACTIVE_WIZARD, /\/api\/teacher\/pricing/);
+  assert.doesNotMatch(ACTIVE_WIZARD, /pricingBody\.home_lesson_price/);
 });
 
 test("active wizard routes the teacher back to Step 3 when the minimum check fails", () => {

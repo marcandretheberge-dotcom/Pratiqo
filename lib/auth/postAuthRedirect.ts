@@ -37,6 +37,7 @@ export function resolvePostAuthRedirect(
     if (role === "teacher") {
       if (safeNext?.startsWith("/onboarding/teacher")) return safeNext;
       if (safeNext?.startsWith("/student")) return "/dashboard";
+      if (!profile.teacher_onboarding_complete) return "/onboarding/teacher";
       return safeNext ?? "/dashboard";
     }
     if (profile.companion_chosen !== true) {
@@ -56,6 +57,7 @@ export function resolvePostAuthRedirect(
   if (role === "teacher") {
     if (safeNext?.startsWith("/onboarding/teacher")) return safeNext;
     if (safeNext?.startsWith("/student")) return "/dashboard";
+    if (!profile.teacher_onboarding_complete) return "/onboarding/teacher";
     return safeNext ?? "/dashboard";
   }
   if (profile.companion_chosen !== true) return "/student/choose-companion";

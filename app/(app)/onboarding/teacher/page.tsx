@@ -52,7 +52,6 @@ type StepId = 1 | 2 | 3 | 4;
 type Category = "music" | "languages" | "academic" | "other";
 type TeachingMode = "online" | "in_person" | "at_home" | "hybrid";
 type JsonRecord = Record<string, unknown>;
-type ExistingTeacherRow = { id?: string; image_url?: string | null; location?: unknown } | null;
 
 const LEVELS = ["beginner", "intermediate", "advanced", "kids", "teens", "adults"] as const;
 const DAYS = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"] as const;
@@ -84,9 +83,6 @@ function initialTimezone(): string {
   }
 }
 
-function isRecord(value: unknown): value is JsonRecord {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
 
 function initialGoogleReady(): boolean {
   return typeof window !== "undefined" && Boolean(window.google?.maps?.places);
@@ -447,17 +443,8 @@ export default function TeacherOnboardingPage() {
     }
     const hourlyNum = Number(pricePerLesson);
     const homeOn = teachingMode === "at_home" || teachingMode === "hybrid";
-    // Root-cause fix for the "20 $ minimum" onboarding blocker:
-    // selecting "À domicile" / "Hybride" in Step 2 implicitly enables
-    // home lessons, but the wizard does NOT collect a separate
-    // `home_lesson_price` input. Without one, the server-side
-    // `validateTeacherLessonOffers` saw home_lesson_enabled=true with
-    // home_lesson_price=null → home session price = 0 ¢ → 20 $ minimum
-    // fail, with no in-wizard way to recover. We safely default the
-    // home rate to the teacher's standard hourly rate (same CAD/hour
-    // unit, same data semantic the `home_lesson_price REPLACES
-    // price_per_lesson` field doc already promises). The teacher can
-    // override this later from their dashboard.
+    // Default home rate to the standard hourly rate so the server-side
+    // validateTeacherLessonOffers check sees a coherent pair.
     const homeHourly = homeOn ? hourlyNum : null;
     const offerCheck = validateTeacherLessonOffers({
       price_per_lesson: hourlyNum,
@@ -467,8 +454,6 @@ export default function TeacherOnboardingPage() {
     });
     if (!offerCheck.ok) {
       setError(`${t("pricingMinLessonPrice")} ${t("pricingMinLessonPriceSuggestion")}`);
-      // Surface a route-back affordance: the only step that can lower
-      // the effective hourly rate is Step 3 (price + duration).
       setStep(3);
       return;
     }
@@ -488,127 +473,50 @@ export default function TeacherOnboardingPage() {
       setError(`${t("teacherOnboardingMissingFields")} ${missingFields.join(", ")}`);
       return;
     }
+
+    // Client-side market fast-fail before network round-trip.
+    const publicCity = city.trim();
+    const publicRegion = region.trim();
+    const publicCountry = countryCode.trim().toUpperCase();
+    if (!isTeacherMarketSupported(publicCountry)) {
+      setError(t("marketTeacherUnavailableMessage"));
+      return;
+    }
+
+    // Build location blob from Google Places data + manual city/region/country.
+    const nextLocation: JsonRecord = {};
+    const privateBlock: Record<string, unknown> = {};
+    if (parsedPlace?.formattedAddress) privateBlock.formatted_address = parsedPlace.formattedAddress;
+    if (parsedPlace?.streetNumber) privateBlock.street_number = parsedPlace.streetNumber;
+    if (parsedPlace?.route) privateBlock.route = parsedPlace.route;
+    if (parsedPlace?.postalCode) privateBlock.postal_code = parsedPlace.postalCode;
+    if (parsedPlace?.latitude != null) privateBlock.latitude = parsedPlace.latitude;
+    if (parsedPlace?.longitude != null) privateBlock.longitude = parsedPlace.longitude;
+
+    nextLocation.neighborhood = publicCity;
+    const publicLocation: JsonRecord = {
+      city: publicCity,
+      region: publicRegion,
+      country_code: publicCountry,
+    };
+    nextLocation.public = publicLocation;
+
+    if (parsedPlace?.latitude != null && parsedPlace?.longitude != null) {
+      const fuzzed = blurCoordinates(parsedPlace.latitude, parsedPlace.longitude);
+      nextLocation.lat = fuzzed.lat;
+      nextLocation.lng = fuzzed.lng;
+      publicLocation.lat = fuzzed.lat;
+      publicLocation.lng = fuzzed.lng;
+    }
+
+    if (Object.keys(privateBlock).length > 0) {
+      nextLocation.private = { ...privateBlock };
+    }
+
     setSaving(true);
     setError(null);
     try {
       const supabase = getSupabaseClient();
-
-      const { data: existing } = await supabase
-        .from("teachers")
-        .select("id, image_url, location")
-        .eq("user_id", user.id)
-        .maybeSingle();
-      const existingTeacher = existing as ExistingTeacherRow;
-
-      const teacherId = existingTeacher?.id ?? user.id;
-
-      const nextLocation: JsonRecord = {
-        ...(isRecord(existingTeacher?.location) ? existingTeacher.location : {}),
-      };
-
-      // Public fields used by search/cards must remain non-exact.
-      const privateBlock: Record<string, unknown> = {};
-      if (parsedPlace?.formattedAddress) privateBlock.formatted_address = parsedPlace.formattedAddress;
-      if (parsedPlace?.streetNumber) privateBlock.street_number = parsedPlace.streetNumber;
-      if (parsedPlace?.route) privateBlock.route = parsedPlace.route;
-      if (parsedPlace?.postalCode) privateBlock.postal_code = parsedPlace.postalCode;
-      if (parsedPlace?.latitude != null) privateBlock.latitude = parsedPlace.latitude;
-      if (parsedPlace?.longitude != null) privateBlock.longitude = parsedPlace.longitude;
-
-      const publicCity = city.trim();
-      const publicRegion = region.trim();
-      const publicCountry = countryCode.trim().toUpperCase();
-      if (!isTeacherMarketSupported(publicCountry)) {
-        setError(t("marketTeacherUnavailableMessage"));
-        return;
-      }
-
-      // Backwards compatibility: keep flat keys used by existing UI.
-      nextLocation.neighborhood = publicCity;
-      const publicLocation: JsonRecord = {
-        city: publicCity,
-        region: publicRegion,
-        country_code: publicCountry,
-      };
-      nextLocation.public = publicLocation;
-
-      // Use fuzzed coords for public lat/lng only.
-      if (parsedPlace?.latitude != null && parsedPlace?.longitude != null) {
-        const fuzzed = blurCoordinates(parsedPlace.latitude, parsedPlace.longitude);
-        nextLocation.lat = fuzzed.lat;
-        nextLocation.lng = fuzzed.lng;
-        publicLocation.lat = fuzzed.lat;
-        publicLocation.lng = fuzzed.lng;
-      }
-
-      if (Object.keys(privateBlock).length > 0) {
-        nextLocation.private = {
-          ...(isRecord(nextLocation.private) ? nextLocation.private : {}),
-          ...privateBlock,
-        };
-      }
-
-      const updates: Record<string, unknown> = {};
-      const nameTrim = displayName.trim();
-      if (nameTrim) updates.name = nameTrim;
-      updates.category = dbCategoryFromWizard(category);
-      const discTrim = discipline.trim();
-      if (discTrim) updates.discipline = discTrim;
-      const bioTrim = bio.trim();
-      if (bioTrim) updates.bio = bioTrim;
-      if (levels.length > 0) updates.levels = levels;
-
-      updates.teaching_mode = encodeTeachingMode(teachingMode);
-      updates.city = publicCity || null;
-      updates.region = publicRegion || null;
-      updates.country_code = publicCountry || null;
-      updates.timezone = timezone.trim() || null;
-      updates.currency = currency.trim() || null;
-
-      updates.price_per_lesson = Number(pricePerLesson) || 0;
-      updates.availability = availability;
-      updates.default_lesson_duration_minutes = normalizeLessonDurationMinutes(defaultLessonDurationMinutes);
-      updates.location = nextLocation;
-
-      // Home lessons fields (optional columns exist in types).
-      // When home lessons are enabled we also default `home_lesson_price`
-      // to the standard hourly rate. This keeps the row coherent with the
-      // checkout charger (`computeBookingChargeCents` strictly requires
-      // a positive `home_lesson_price` when `teaching_mode === "domicile"`)
-      // and stops the wizard from leaving teachers in the unrecoverable
-      // "home_lesson_enabled=true, home_lesson_price=null" state.
-      updates.home_lesson_enabled = homeOn;
-      if (homeOn) {
-        if (Number.isFinite(homeHourly) && (homeHourly ?? 0) > 0) {
-          updates.home_lesson_price = homeHourly;
-        }
-        const r = Number(homeRadiusKm);
-        if (Number.isFinite(r) && r > 0) updates.home_lesson_radius_km = r;
-      }
-
-      // Insert if missing (must satisfy not-null constraints).
-      if (!existingTeacher?.id) {
-        const payload = {
-          id: teacherId,
-          user_id: user.id,
-          rating: 0,
-          reviews: 0,
-          monthly_subscription: null,
-          is_verified: false,
-          languages: [],
-          price_per_lesson: hourlyNum,
-          image_url:
-            existingTeacher?.image_url ??
-            (typeof profile?.photo_url === "string" && profile.photo_url ? profile.photo_url : "https://picsum.photos/seed/teacher/400/400"),
-          ...updates,
-        };
-        const { error: insErr } = await supabase.from("teachers").insert(payload);
-        if (insErr) throw insErr;
-      } else {
-        const { error: upErr } = await supabase.from("teachers").update(updates).eq("id", teacherId);
-        if (upErr) throw upErr;
-      }
-
       const {
         data: { session },
       } = await supabase.auth.getSession();
@@ -616,30 +524,10 @@ export default function TeacherOnboardingPage() {
       if (!accessToken) {
         throw new Error(t("anErrorOccurred"));
       }
-      // Send `home_lesson_price` alongside `price_per_lesson` so the
-      // pricing route's `validateTeacherLessonOffers` sees a coherent
-      // pair (home_lesson_enabled was already written above). Without
-      // this, an existing teacher row with home_lesson_price=null would
-      // re-trigger the legacy 20 $ blocker on the server side even
-      // though the wizard itself accepted the values.
-      const pricingBody: Record<string, unknown> = { price_per_lesson: hourlyNum };
-      if (homeOn) {
-        pricingBody.home_lesson_enabled = true;
-        pricingBody.home_lesson_price = homeHourly;
-      }
-      const pricingRes = await fetch("/api/teacher/pricing", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify(pricingBody),
-      });
-      const pricingPayload = (await pricingRes.json().catch(() => ({}))) as { error?: string };
-      if (!pricingRes.ok) {
-        throw new Error(pricingPayload.error || t("anErrorOccurred"));
-      }
 
+      // Single server-side upsert: the complete API creates/updates the
+      // teachers row using the admin client (bypasses RLS) and marks the
+      // profile as onboarding-complete in one round-trip.
       const completeRes = await fetch("/api/teacher/onboarding/complete", {
         method: "POST",
         headers: {
@@ -647,6 +535,29 @@ export default function TeacherOnboardingPage() {
           Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify({
+          // Profile
+          name: displayName.trim(),
+          discipline: discipline.trim(),
+          category: dbCategoryFromWizard(category),
+          bio: bio.trim(),
+          levels,
+          // Location
+          city: publicCity,
+          region: publicRegion,
+          country_code: publicCountry,
+          timezone: timezone.trim(),
+          currency: currency.trim(),
+          teaching_mode: encodeTeachingMode(teachingMode),
+          location: nextLocation,
+          // Pricing
+          price_per_lesson: hourlyNum,
+          default_lesson_duration_minutes: normalizeLessonDurationMinutes(defaultLessonDurationMinutes),
+          home_lesson_enabled: homeOn,
+          home_lesson_price: homeHourly,
+          home_lesson_radius_km: homeOn ? Number(homeRadiusKm) : null,
+          // Availability
+          availability,
+          // Legal acks
           tax_status_acknowledged: true,
           no_exclusivity_acknowledged: true,
           no_income_guarantee_acknowledged: true,

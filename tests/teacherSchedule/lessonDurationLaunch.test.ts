@@ -46,7 +46,11 @@ test("verification availability card summarizes duration and links to schedule",
 
 test("verification: duration useMemo is before loading guards (Rules of Hooks)", () => {
   const descIdx = verificationSrc.indexOf("const availabilityDescription = useMemo");
-  const guardIdx = verificationSrc.indexOf("if (loading || !user)");
+  // Guard may include teacherRowLoading in addition to the base loading + user checks.
+  const guardIdx = Math.max(
+    verificationSrc.indexOf("if (loading || !user)"),
+    verificationSrc.indexOf("if (loading || !user ||"),
+  );
 
   assert.ok(descIdx >= 0, "availabilityDescription useMemo missing");
   assert.ok(guardIdx >= 0, "loading guard missing");

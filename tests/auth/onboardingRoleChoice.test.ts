@@ -63,8 +63,8 @@ test("resolveLoginOAuthNextPath routes learner intent to companion path", () => 
   assert.equal(resolveLoginOAuthNextPath(null, null, "learner"), "/student/choose-companion");
 });
 
-test("resolveLoginOAuthNextPath routes teacher intent to teacher dashboard", () => {
-  assert.equal(resolveLoginOAuthNextPath(null, null, "teacher"), "/dashboard");
+test("resolveLoginOAuthNextPath routes teacher intent to teacher onboarding wizard", () => {
+  assert.equal(resolveLoginOAuthNextPath(null, null, "teacher"), "/onboarding/teacher");
 });
 
 test("resolveOAuthProfilePatch persists student role + onboarding_role_confirmed for learner intent", () => {
@@ -81,7 +81,7 @@ test("resolveOAuthProfilePatch persists teacher role + onboarding_role_confirmed
 
 test("valid pre-auth intent does not route to choose-role after OAuth", () => {
   assert.equal(oauthNextPathForPreAuthIntent("learner"), "/student/choose-companion");
-  assert.equal(oauthNextPathForPreAuthIntent("teacher"), "/dashboard");
+  assert.equal(oauthNextPathForPreAuthIntent("teacher"), "/onboarding/teacher");
   assert.equal(resolveLoginOAuthNextPath(null, null, "learner"), "/student/choose-companion");
   assert.doesNotMatch(resolveLoginOAuthNextPath(null, null, "teacher"), /choose-role/);
 });
@@ -133,9 +133,17 @@ test("resolvePostAuthRedirect sends unconfirmed students to role-choice fallback
   );
 });
 
-test("resolvePostAuthRedirect sends incomplete teachers to dashboard by default", () => {
+test("resolvePostAuthRedirect sends incomplete teachers to onboarding wizard", () => {
   assert.equal(
     resolvePostAuthRedirect("teacher", { teacher_onboarding_complete: false }),
+    "/onboarding/teacher",
+  );
+  assert.equal(
+    resolvePostAuthRedirect("teacher", { teacher_onboarding_complete: null }),
+    "/onboarding/teacher",
+  );
+  assert.equal(
+    resolvePostAuthRedirect("teacher", { teacher_onboarding_complete: true }),
     "/dashboard",
   );
 });
