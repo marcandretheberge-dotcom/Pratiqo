@@ -194,9 +194,13 @@ export async function GET(request: Request) {
   if (readErr || !profile) {
     console.error("[auth/callback] profile read failed", readErr);
     const fallbackRedirect =
-      resolvedRole === "admin" ? "/admin" : resolvedRole === "teacher" ? "/onboarding/teacher" : "/dashboard";
+      resolvedRole === "admin" ? "/admin" : "/dashboard";
     const response = NextResponse.redirect(new URL(fallbackRedirect, requestUrl.origin));
-    return applyCookies(response, [...authCookies, ...pendingOnboardingIntentClearCookieHeaders()]);
+    const clearIntentCookies = resolvedRole !== "teacher" && intent !== "teacher";
+    return applyCookies(
+      response,
+      clearIntentCookies ? [...authCookies, ...pendingOnboardingIntentClearCookieHeaders()] : authCookies,
+    );
   }
 
   if (refCode) {

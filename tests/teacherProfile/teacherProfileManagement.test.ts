@@ -164,7 +164,8 @@ test("public preview: my-profile is preview-only, not duplicate edit hub", () =>
   assert.doesNotMatch(myProfileSrc, /TeacherAccountView/);
   assert.match(previewSrc, /data-testid="teacher-public-profile-preview"/);
   assert.match(previewSrc, /teacher-public-profile-edit-cta/);
-  assert.match(previewSrc, /href="\/teacher\/verification"/);
+  assert.match(previewSrc, /TEACHER_SETUP_PATH/);
+  assert.match(previewSrc, /router\.replace\(TEACHER_SETUP_PATH\)/);
   assert.doesNotMatch(previewSrc, /<textarea/);
 });
 

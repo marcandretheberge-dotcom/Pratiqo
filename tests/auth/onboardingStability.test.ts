@@ -96,12 +96,14 @@ test("teacher verification ensures missing teacher row instead of support dead-e
   assert.doesNotMatch(page, /verificationNoTeacherRow"\)/);
 });
 
-test("profile completion CTAs route to teacher verification not public preview", () => {
+test("profile completion CTAs route to teacher verification setup mode not public preview", () => {
   const dashboard = read("components/Dashboard.tsx");
-  assert.match(dashboard, /TeacherSearchVisibilityBanner ctaHref="\/teacher\/verification"/);
-  assert.match(dashboard, /TeacherProfileCompletenessCard percent=\{completenessPct\} ctaHref="\/teacher\/verification"/);
+  assert.match(dashboard, /TEACHER_SETUP_PATH/);
+  assert.match(dashboard, /TeacherProfileSetupChecklist/);
+  assert.match(dashboard, /TeacherSearchVisibilityBanner ctaHref=\{TEACHER_SETUP_PATH\}/);
+  assert.match(dashboard, /TeacherProfileCompletenessCard percent=\{completenessPct\} ctaHref=\{TEACHER_SETUP_PATH\}/);
   const banner = read("components/teacher/TeacherSearchVisibilityBanner.tsx");
-  assert.match(banner, /\/teacher\/verification/);
+  assert.match(banner, /\/teacher\/verification\?setup=1/);
 });
 
 test("connexion waits for hydrated profile before showing role choice again", () => {
