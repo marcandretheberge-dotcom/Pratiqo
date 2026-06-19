@@ -55,8 +55,9 @@ export function YoAppLandingShell({
         // marketing sections below sit on their own backgrounds.
         "relative w-full bg-[#F4EFE6] py-8 sm:py-12",
         // Expose the two app-like font families as CSS variables so
-        // descendants can opt-in via Tailwind's `font-[var(...)]`
-        // utility without changing the rest of the page's font stack.
+        // descendants can opt-in via Tailwind arbitrary font utilities
+        // bound to these variables, without changing the rest of the
+        // page's font stack.
         appDisplayFont.variable,
         appScriptFont.variable,
         className,
