@@ -76,6 +76,35 @@ test("loginWithGoogle builds callback URL and sets pending onboarding cookie", (
   assert.match(src, /redirectTo/);
 });
 
+test("loginWithGoogle can force Google account selection without changing the default OAuth flow", () => {
+  const src = read("lib/auth.ts");
+  assert.match(src, /forceAccountSelection\?:\s*boolean/);
+  assert.match(src, /options\?\.forceAccountSelection\s*\?\s*\{\s*queryParams:\s*\{\s*prompt:\s*"select_account"\s*\}\s*\}/);
+  assert.match(src, /options:\s*\{\s*redirectTo,/);
+});
+
+test("login page renders the Google account switch option for teacher and learner intents", () => {
+  const page = read("app/login/page.tsx");
+  assert.match(page, /loginWrongGoogleAccountPrompt/);
+  assert.match(page, /loginChangeGoogleAccount/);
+  assert.match(page, /onClick=\{\(\) => void handleLogin\(\{ forceAccountSelection: true \}\)\}/);
+  assert.match(page, /onClick=\{\(\) => void handleLogin\(\)\}/);
+  assert.match(page, /intent:\s*preAuthIntent/);
+  assert.match(page, /referralCode:\s*refCode/);
+});
+
+test("Google account switch copy is localized in FR, EN, and ES", () => {
+  const fr = read("lib/i18n/locales/fr.json");
+  const en = read("lib/i18n/locales/en.json");
+  const es = read("lib/i18n/locales/es.json");
+  assert.match(fr, /"loginWrongGoogleAccountPrompt":\s*"Tu utilises le mauvais compte Google\?"/);
+  assert.match(fr, /"loginChangeGoogleAccount":\s*"Changer de compte Google"/);
+  assert.match(en, /"loginWrongGoogleAccountPrompt":\s*"Using the wrong Google account\?"/);
+  assert.match(en, /"loginChangeGoogleAccount":\s*"Change Google account"/);
+  assert.match(es, /"loginWrongGoogleAccountPrompt":\s*"¿Estás usando la cuenta de Google incorrecta\?"/);
+  assert.match(es, /"loginChangeGoogleAccount":\s*"Cambiar cuenta de Google"/);
+});
+
 test("auth callback applies session cookies to redirect response", () => {
   const src = read("app/auth/callback/route.ts");
   assert.match(src, /exchangeCodeForSession\(code\)/);

@@ -11,6 +11,7 @@ export async function loginWithGoogle(
     intent?: PreAuthOnboardingIntent;
     role?: string;
     referralCode?: string;
+    forceAccountSelection?: boolean;
   },
 ) {
   const supabase = getSupabaseClient();
@@ -33,7 +34,10 @@ export async function loginWithGoogle(
 
   const { error } = await supabase.auth.signInWithOAuth({
     provider: "google",
-    options: { redirectTo },
+    options: {
+      redirectTo,
+      ...(options?.forceAccountSelection ? { queryParams: { prompt: "select_account" } } : {}),
+    },
   });
   if (error) {
     console.error("Login failed", error);
