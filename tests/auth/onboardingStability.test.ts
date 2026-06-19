@@ -85,7 +85,7 @@ test("shared ensureTeacherProfileRow helper creates minimal teacher rows idempot
   const lib = read("lib/teachers/ensureTeacherProfileRow.ts");
   assert.match(lib, /ensureTeacherProfileRow/);
   assert.match(lib, /is_public: false/);
-  assert.match(lib, /price_per_lesson: null/);
+  assert.match(lib, /price_per_lesson: MIN_LESSON_PRICE_DOLLARS/);
   assert.match(lib, /user_id: userId/);
 });
 

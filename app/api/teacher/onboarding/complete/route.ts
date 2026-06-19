@@ -7,6 +7,7 @@ import {
 } from "@/lib/config/markets";
 import { ensureTeacherProfileRow } from "@/lib/teachers/ensureTeacherProfileRow";
 import { MIN_LESSON_PRICE_DOLLARS } from "@/lib/pricing/constants";
+import { buildTeacherOnboardingUpdate } from "@/lib/teachers/onboardingCompletePayload";
 
 export const runtime = "nodejs";
 
@@ -98,54 +99,15 @@ export async function POST(req: Request) {
     photo_url: null,
   });
   if (ensured.error || !ensured.result) {
-    console.error("[api/teacher/onboarding/complete] ensureTeacherProfileRow failed", ensured.error);
+    console.error("[api/teacher/onboarding/complete] ensureTeacherProfileRow failed", {
+      userIdPresent: Boolean(user.id),
+      message: ensured.error,
+    });
     return NextResponse.json({ error: "teacher_profile_ensure_failed" }, { status: 500 });
   }
   const teacherId = ensured.result.teacherId;
 
-  // Build teacher row update from wizard payload
-  const homeOn = body.teaching_mode === "at_home" || body.teaching_mode === "hybrid";
-  const teacherUpdate: Record<string, unknown> = {};
-
-  if (nameHint) teacherUpdate.name = nameHint;
-  const discipline = trimStr(body.discipline);
-  if (discipline) teacherUpdate.discipline = discipline;
-  const category = trimStr(body.category);
-  if (category) teacherUpdate.category = category;
-  const bio = trimStr(body.bio);
-  if (bio) teacherUpdate.bio = bio;
-  if (Array.isArray(body.levels)) teacherUpdate.levels = body.levels;
-  const teachingMode = trimStr(body.teaching_mode);
-  if (teachingMode) teacherUpdate.teaching_mode = teachingMode;
-  const city = trimStr(body.city);
-  if (city) teacherUpdate.city = city;
-  const region = trimStr(body.region);
-  if (region) teacherUpdate.region = region;
-  if (countryCode) teacherUpdate.country_code = countryCode;
-  const timezone = trimStr(body.timezone);
-  if (timezone) teacherUpdate.timezone = timezone;
-  const currency = trimStr(body.currency);
-  if (currency) teacherUpdate.currency = currency;
-  if (price !== null) teacherUpdate.price_per_lesson = price;
-  if (Array.isArray(body.availability)) teacherUpdate.availability = body.availability;
-  if (typeof body.default_lesson_duration_minutes === "number") {
-    teacherUpdate.default_lesson_duration_minutes = body.default_lesson_duration_minutes;
-  }
-  if (body.location && typeof body.location === "object" && !Array.isArray(body.location)) {
-    teacherUpdate.location = body.location;
-  }
-
-  teacherUpdate.home_lesson_enabled = homeOn;
-  if (homeOn) {
-    const homePrice = body.home_lesson_price != null ? Number(body.home_lesson_price) : price;
-    if (homePrice !== null && Number.isFinite(homePrice) && homePrice > 0) {
-      teacherUpdate.home_lesson_price = homePrice;
-    }
-    const homeRadius = body.home_lesson_radius_km != null ? Number(body.home_lesson_radius_km) : null;
-    if (homeRadius !== null && Number.isFinite(homeRadius) && homeRadius > 0) {
-      teacherUpdate.home_lesson_radius_km = homeRadius;
-    }
-  }
+  const teacherUpdate = buildTeacherOnboardingUpdate(body);
 
   if (Object.keys(teacherUpdate).length > 0) {
     const { error: teacherUpdateErr } = await admin
@@ -153,8 +115,18 @@ export async function POST(req: Request) {
       .update(teacherUpdate)
       .eq("id", teacherId);
     if (teacherUpdateErr) {
-      console.error("[api/teacher/onboarding/complete] teacher row update failed", teacherUpdateErr);
-      return NextResponse.json({ error: "Impossible de mettre à jour votre fiche professeur." }, { status: 500 });
+      console.error("[api/teacher/onboarding/complete] teacher row update failed", {
+        userIdPresent: Boolean(user.id),
+        teacherIdPresent: Boolean(teacherId),
+        code: teacherUpdateErr.code,
+        message: teacherUpdateErr.message,
+        details: teacherUpdateErr.details,
+        hint: teacherUpdateErr.hint,
+        payloadKeys: Object.keys(teacherUpdate),
+        pricePerLesson: teacherUpdate.price_per_lesson ?? null,
+        homeLessonPrice: teacherUpdate.home_lesson_price ?? null,
+      });
+      return NextResponse.json({ error: "teacher_onboarding_update_failed" }, { status: 500 });
     }
   }
 

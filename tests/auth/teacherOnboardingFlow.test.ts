@@ -11,6 +11,10 @@ import { DRAFT_TEACHER_ROW_INSERT } from "@/lib/teachers/ensureTeacherProfileRow
 import { isTeacherProfileComplete } from "@/lib/teacherOnboarding";
 import { isTeacherMarketplaceVisibleRow } from "@/lib/teachers/marketplaceVisibility";
 import { MIN_LESSON_PRICE_DOLLARS } from "@/lib/pricing/constants";
+import {
+  buildTeacherOnboardingUpdate,
+  resolveWizardHomeLessonEnabled,
+} from "@/lib/teachers/onboardingCompletePayload";
 
 type TestFn = () => void | Promise<void>;
 const tests: Array<{ name: string; fn: TestFn }> = [];
@@ -121,14 +125,15 @@ test("complete API uses admin client for teacher row upsert (bypasses RLS)", () 
   assert.doesNotMatch(route, /supabaseUser\.from\("teachers"\)/);
 });
 
-test("complete API accepts full wizard profile payload", () => {
+test("complete API accepts full wizard profile payload via onboarding update builder", () => {
   const route = read("app/api/teacher/onboarding/complete/route.ts");
-  assert.match(route, /body\.name/);
-  assert.match(route, /body\.discipline/);
-  assert.match(route, /body\.city/);
-  assert.match(route, /body\.price_per_lesson/);
-  assert.match(route, /body\.availability/);
-  assert.match(route, /body\.teaching_mode/);
+  assert.match(route, /buildTeacherOnboardingUpdate\(body\)/);
+  const payload = read("lib/teachers/onboardingCompletePayload.ts");
+  assert.match(payload, /input\.discipline/);
+  assert.match(payload, /input\.city/);
+  assert.match(payload, /input\.price_per_lesson/);
+  assert.match(payload, /input\.availability/);
+  assert.match(payload, /input\.teaching_mode/);
 });
 
 test("complete API enforces price minimum on server side", () => {
@@ -164,7 +169,7 @@ test("wizard no longer calls separate /api/teacher/pricing endpoint", () => {
 
 test("draft teacher row has is_public false (hidden from search)", () => {
   assert.equal(DRAFT_TEACHER_ROW_INSERT.is_public, false);
-  assert.equal(DRAFT_TEACHER_ROW_INSERT.price_per_lesson, null);
+  assert.equal(DRAFT_TEACHER_ROW_INSERT.price_per_lesson, MIN_LESSON_PRICE_DOLLARS);
 });
 
 test("incomplete teacher is not marketplace-visible", () => {
@@ -222,6 +227,56 @@ test("price minimum constraint is 20 CAD", () => {
 test("admin is not downgraded by teacher intent", () => {
   assert.equal(primaryRoleForPreAuthIntent("teacher", "admin"), "admin");
   assert.equal(primaryRoleForPreAuthIntent("learner", "admin"), "admin");
+});
+
+test("complete API maps ensure failures to generic client error code", () => {
+  const route = read("app/api/teacher/onboarding/complete/route.ts");
+  assert.match(route, /teacher_profile_ensure_failed/);
+  assert.doesNotMatch(route, /error: ensured\.error/);
+});
+
+test("wizard maps ensure/update failure codes to friendly localized message", () => {
+  const page = read("app/(app)/onboarding/teacher/page.tsx");
+  assert.match(page, /teacher_profile_ensure_failed/);
+  assert.match(page, /teacher_onboarding_update_failed/);
+  assert.match(page, /verificationNoTeacherRowSetup/);
+});
+
+test("onboarding complete payload builder handles encoded hybrid teaching mode", () => {
+  assert.equal(resolveWizardHomeLessonEnabled({ teaching_mode: "all" }), true);
+  assert.equal(resolveWizardHomeLessonEnabled({ teaching_mode: "home" }), true);
+  assert.equal(resolveWizardHomeLessonEnabled({ teaching_mode: "online" }), false);
+  assert.equal(resolveWizardHomeLessonEnabled({ home_lesson_enabled: true, teaching_mode: "online" }), true);
+
+  const update = buildTeacherOnboardingUpdate({
+    name: "Marie",
+    discipline: "Piano",
+    category: "Musique",
+    city: "Montreal",
+    region: "QC",
+    country_code: "CA",
+    timezone: "America/Toronto",
+    currency: "CAD",
+    teaching_mode: "all",
+    price_per_lesson: 50,
+    availability: ["Lun Matin"],
+    default_lesson_duration_minutes: 60,
+    home_lesson_enabled: true,
+    home_lesson_price: 50,
+    home_lesson_radius_km: 25,
+    levels: ["beginner"],
+    location: { public: { city: "Montreal" } },
+  });
+  assert.equal(update.home_lesson_enabled, true);
+  assert.equal(update.home_lesson_price, 50);
+  assert.equal(update.price_per_lesson, 50);
+  assert.equal(update.teaching_mode, "all");
+});
+
+test("draft ensure insert satisfies teachers price NOT NULL and minimum check", () => {
+  assert.ok(DRAFT_TEACHER_ROW_INSERT.price_per_lesson >= MIN_LESSON_PRICE_DOLLARS);
+  const schema = read("supabase/migrations/000_pratiqo_schema.sql");
+  assert.match(schema, /price_per_lesson numeric NOT NULL/);
 });
 
 test("complete API blocks admin profiles from completing teacher onboarding", () => {
