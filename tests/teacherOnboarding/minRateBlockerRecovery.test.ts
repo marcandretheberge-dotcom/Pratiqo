@@ -172,9 +172,9 @@ test("active onboarding does not run lesson-offer pricing validation", () => {
 
 test("active onboarding sends display name plus existing acknowledgement flags only", () => {
   assert.match(ACTIVE_WIZARD, /name,\s*\n/);
-  assert.match(ACTIVE_WIZARD, /tax_status_acknowledged:\s*true/);
-  assert.match(ACTIVE_WIZARD, /no_exclusivity_acknowledged:\s*true/);
-  assert.match(ACTIVE_WIZARD, /no_income_guarantee_acknowledged:\s*true/);
+  assert.match(ACTIVE_WIZARD, /tax_status_acknowledged:\s*independentStatusAccepted\s*&&\s*taxResponsibilityAccepted/);
+  assert.match(ACTIVE_WIZARD, /no_exclusivity_acknowledged:\s*noExclusivityAccepted/);
+  assert.match(ACTIVE_WIZARD, /no_income_guarantee_acknowledged:\s*noIncomeGuaranteeAccepted/);
 });
 
 test("active onboarding no longer calls a separate /api/teacher/pricing endpoint", () => {

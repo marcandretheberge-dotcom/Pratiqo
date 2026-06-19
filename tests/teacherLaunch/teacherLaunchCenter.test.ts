@@ -89,21 +89,48 @@ const accountSrc = read(TEACHER_ACCOUNT_PATH);
 test("onboarding: renders the minimal private draft setup", () => {
   assert.match(onboardingSrc, /data-testid="teacher-minimal-onboarding"/);
   assert.match(onboardingSrc, /data-testid="teacher-minimal-display-name"/);
-  assert.match(onboardingSrc, /data-testid="teacher-minimal-consent"/);
+  assert.match(onboardingSrc, /data-testid="teacher-minimal-consent-section"/);
   assert.match(onboardingSrc, /data-testid="teacher-minimal-submit"/);
   assert.match(onboardingSrc, /teacherMinimalSetupTitle/);
-  assert.match(onboardingSrc, /teacherMinimalSetupConsent/);
+  assert.match(onboardingSrc, /teacherMinimalSetupConsentTitle/);
+  for (const id of [
+    "independent-status",
+    "tax-responsibility",
+    "profile-accuracy",
+    "private-profile",
+    "no-exclusivity",
+    "no-income-guarantee",
+  ]) {
+    assert.match(onboardingSrc, new RegExp(`id: "${id}"`));
+  }
 });
 
 test("onboarding: only posts display name plus existing consent acknowledgements", () => {
   const stripped = stripJsComments(onboardingSrc);
   assert.match(stripped, /name,/);
-  assert.match(stripped, /tax_status_acknowledged:\s*true/);
-  assert.match(stripped, /no_exclusivity_acknowledged:\s*true/);
-  assert.match(stripped, /no_income_guarantee_acknowledged:\s*true/);
+  assert.match(stripped, /tax_status_acknowledged:\s*independentStatusAccepted\s*&&\s*taxResponsibilityAccepted/);
+  assert.match(stripped, /no_exclusivity_acknowledged:\s*noExclusivityAccepted/);
+  assert.match(stripped, /no_income_guarantee_acknowledged:\s*noIncomeGuaranteeAccepted/);
   assert.doesNotMatch(stripped, /discipline:/);
   assert.doesNotMatch(stripped, /price_per_lesson:/);
   assert.doesNotMatch(stripped, /availability:\s/);
+});
+
+test("onboarding: submit is gated by every required acknowledgement", () => {
+  const stripped = stripJsComments(onboardingSrc);
+  assert.match(stripped, /const\s+allConsentsAccepted\s*=\s*useMemo/);
+  for (const stateName of [
+    "independentStatusAccepted",
+    "taxResponsibilityAccepted",
+    "profileAccuracyAccepted",
+    "privateProfileAccepted",
+    "noExclusivityAccepted",
+    "noIncomeGuaranteeAccepted",
+  ]) {
+    assert.match(stripped, new RegExp(stateName));
+  }
+  assert.match(stripped, /displayName\.trim\(\)\.length\s*>=\s*2\s*&&\s*allConsentsAccepted/);
+  assert.match(stripped, /disabled=\{!canSubmit\}/);
 });
 
 test("onboarding: redirects to profile management setup after minimal creation", () => {
@@ -228,6 +255,10 @@ const REQUIRED_KEYS = [
   "teacherMinimalSetupSubtitle",
   "teacherMinimalSetupDisplayName",
   "teacherMinimalSetupConsent",
+  "teacherMinimalSetupConsentTitle",
+  "teacherMinimalSetupTaxResponsibility",
+  "teacherMinimalSetupProfileAccuracy",
+  "teacherMinimalSetupPrivateUntilComplete",
   "teacherMinimalSetupNextStep",
   "teacherMinimalSetupSubmit",
   "teacherMinimalSetupNameRequired",
