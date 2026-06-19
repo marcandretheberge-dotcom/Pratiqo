@@ -27,6 +27,21 @@ function trimStr(v: unknown): string | null {
 }
 
 export async function POST(req: Request) {
+  let stage = "auth";
+  try {
+    return await handlePost(req, (next) => {
+      stage = next;
+    });
+  } catch (err) {
+    console.error("[api/teacher/onboarding/complete] unexpected error", {
+      stage,
+      message: err instanceof Error ? err.message : String(err),
+    });
+    return NextResponse.json({ error: "teacher_onboarding_unexpected_error" }, { status: 500 });
+  }
+}
+
+async function handlePost(req: Request, setStage: (stage: string) => void) {
   const authHeader = req.headers.get("authorization") ?? "";
   const token = authHeader.replace(/^Bearer\s+/i, "").trim();
   if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -70,6 +85,7 @@ export async function POST(req: Request) {
     );
   }
 
+  setStage("load-profile-meta");
   const admin = getSupabaseAdmin();
 
   // Block admin profiles
@@ -80,7 +96,12 @@ export async function POST(req: Request) {
     .maybeSingle();
 
   if (profileMetaErr) {
-    return NextResponse.json({ error: profileMetaErr.message }, { status: 500 });
+    console.error("[api/teacher/onboarding/complete] load-profile-meta failed", {
+      userIdPresent: Boolean(user.id),
+      code: profileMetaErr.code,
+      message: profileMetaErr.message,
+    });
+    return NextResponse.json({ error: "teacher_onboarding_profile_load_failed" }, { status: 500 });
   }
   if ((profileMeta as { role?: string } | null)?.role === "admin") {
     return NextResponse.json({ error: "Admin profiles cannot complete teacher onboarding here." }, { status: 403 });
@@ -93,6 +114,7 @@ export async function POST(req: Request) {
   }
 
   // Ensure teacher draft row exists (idempotent, admin-only)
+  setStage("teacher_profile_ensure_failed");
   const nameHint = trimStr(body.name);
   const ensured = await ensureTeacherProfileRow(admin, user.id, {
     name: nameHint,
@@ -107,6 +129,7 @@ export async function POST(req: Request) {
   }
   const teacherId = ensured.result.teacherId;
 
+  setStage("teacher_onboarding_update_failed");
   const teacherUpdate = buildTeacherOnboardingUpdate(body);
 
   if (Object.keys(teacherUpdate).length > 0) {
@@ -130,7 +153,11 @@ export async function POST(req: Request) {
     }
   }
 
-  // Mark profile as onboarding-complete
+  // Mark profile as onboarding-complete. The teachers row already exists by
+  // this point (ensure + update above), so this failure must use its own
+  // error code rather than the earlier stage's. Retrying is safe — ensure
+  // and the teacher update above are idempotent.
+  setStage("teacher_profile_completion_failed");
   const now = new Date().toISOString();
   const currentDashboard = asObject(profileMeta?.dashboard);
   const nextDashboard = { ...currentDashboard, teacher_onboarding_complete: true };
@@ -150,10 +177,22 @@ export async function POST(req: Request) {
     .select("id");
 
   if (updateErr) {
-    return NextResponse.json({ error: updateErr.message }, { status: 500 });
+    console.error("[api/teacher/onboarding/complete] profile completion update failed", {
+      userIdPresent: Boolean(user.id),
+      teacherIdPresent: Boolean(teacherId),
+      code: updateErr.code,
+      message: updateErr.message,
+      details: updateErr.details,
+      hint: updateErr.hint,
+    });
+    return NextResponse.json({ error: "teacher_profile_completion_failed" }, { status: 500 });
   }
   if (!updatedRows || updatedRows.length === 0) {
-    return NextResponse.json({ error: "Profile not found." }, { status: 404 });
+    console.error("[api/teacher/onboarding/complete] profile completion found no matching row", {
+      userIdPresent: Boolean(user.id),
+      teacherIdPresent: Boolean(teacherId),
+    });
+    return NextResponse.json({ error: "teacher_profile_completion_failed" }, { status: 404 });
   }
 
   return NextResponse.json({ ok: true });
