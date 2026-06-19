@@ -50,6 +50,11 @@ import { parseGooglePlace } from "../../../../lib/googleAddressParser";
 import { MIN_LESSON_PRICE_DOLLARS } from "../../../../lib/pricing/constants";
 import { fetchEnsureTeacherProfile } from "../../../../lib/teachers/ensureTeacherProfileClient";
 import { lessonDurationSummaryText, normalizeLessonDurationMinutes } from "../../../../lib/pricing/lessonDuration";
+import {
+  buildTeacherSetupChecklist,
+  firstIncompleteTeacherSetupSection,
+  type TeacherSetupSectionId,
+} from "../../../../lib/teachers/teacherSetupProgress";
 
 type TeacherVerifyRow = {
   id: string;
@@ -272,6 +277,38 @@ export default function TeacherProfileManagementPage() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  const setupMode = searchParams.get("setup") === "1";
+  const sectionParam = searchParams.get("section");
+
+  useEffect(() => {
+    if (teacherRowLoading || !teacherRow) return;
+    const validSections: TeacherSetupSectionId[] = [
+      "profile",
+      "disciplines",
+      "pricing",
+      "availability",
+      "zone",
+    ];
+    if (sectionParam && validSections.includes(sectionParam as TeacherSetupSectionId)) {
+      setExpandedCard(sectionParam);
+      return;
+    }
+    if (setupMode) {
+      const first = firstIncompleteTeacherSetupSection(
+        buildTeacherSetupChecklist({
+          name: teacherRow.name,
+          bio: teacherRow.bio,
+          disciplineCount: discRows.length,
+          pricePerLesson: teacherRow.price_per_lesson ?? 0,
+          availabilityCount: teacherRow.availability?.length ?? 0,
+          city: teacherRow.city,
+          region: teacherRow.region,
+        }),
+      );
+      if (first) setExpandedCard(first);
+    }
+  }, [teacherRowLoading, teacherRow, sectionParam, setupMode, discRows.length]);
 
   // Pre-populate forms from loaded teacher data
   useEffect(() => {
@@ -965,6 +1002,14 @@ export default function TeacherProfileManagementPage() {
           {t("teacherProfileManagementTitle")}
         </h1>
         <p className="mt-2 text-sm text-[#6B6A65] max-w-xl">{t("teacherProfileManagementSubtitle")}</p>
+        {setupMode ? (
+          <p
+            className="mt-3 rounded-xl border border-teal-200/80 bg-teal-50/80 px-4 py-3 text-sm text-teal-900"
+            data-testid="teacher-setup-mode-banner"
+          >
+            {t("teacherSetupModeBanner")}
+          </p>
+        ) : null}
       </div>
 
       {message ? (

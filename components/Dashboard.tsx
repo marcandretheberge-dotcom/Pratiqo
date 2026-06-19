@@ -17,6 +17,9 @@ import { localeToBcp47 } from "@/lib/i18n/types";
 import { TeacherDashboardStats } from "@/components/dashboard/teacher/TeacherDashboardStats";
 import { TeacherProfileCompletenessCard } from "@/components/dashboard/teacher/TeacherProfileCompletenessCard";
 import { TeacherSearchVisibilityBanner } from "@/components/teacher/TeacherSearchVisibilityBanner";
+import { TeacherProfileSetupChecklist } from "@/components/teacher/TeacherProfileSetupChecklist";
+import { TEACHER_SETUP_PATH } from "@/lib/auth/teacherLoginRouting";
+import { buildTeacherSetupChecklist } from "@/lib/teachers/teacherSetupProgress";
 import { TeacherRequestCard } from "@/components/dashboard/teacher/TeacherRequestCard";
 import { TeacherScheduleCard } from "@/components/dashboard/teacher/TeacherScheduleCard";
 import { RescheduleModal, type RescheduleModalBooking } from "@/components/RescheduleModal";
@@ -118,6 +121,7 @@ export function Dashboard() {
   const [bookings, setBookings] = useState<BookingWithTeacher[]>([]);
   const [teacherBookings, setTeacherBookings] = useState<TeacherBookingRow[]>([]);
   const [teacherMeta, setTeacherMeta] = useState<{
+    name: string;
     discipline: string;
     hourlyRate: number;
     bio: string;
@@ -125,6 +129,9 @@ export function Dashboard() {
     profilePhotoUrl: string | null;
     disciplineCount: number;
     timezone: string | null;
+    city: string;
+    region: string;
+    availabilityCount: number;
   } | null>(null);
   const [loading, setLoading] = useState(true);
   // id → "accepting" | "declining"
@@ -520,7 +527,7 @@ export function Dashboard() {
 
       const { data: t } = await supabase
         .from("teachers")
-        .select("id, discipline, price_per_lesson, bio, image_url, timezone")
+        .select("id, name, discipline, price_per_lesson, bio, image_url, timezone, city, region, availability")
         .eq("user_id", user.id)
         .maybeSingle();
       if (!t?.id) {
@@ -530,17 +537,22 @@ export function Dashboard() {
       }
       const row = t as {
         id: string;
+        name?: string | null;
         discipline?: string;
         price_per_lesson?: number;
         bio?: string | null;
         image_url?: string | null;
         timezone?: string | null;
+        city?: string | null;
+        region?: string | null;
+        availability?: unknown[] | null;
       };
       const { data: drows } = await supabase.from("teacher_disciplines").select("id").eq("teacher_id", row.id);
       const img = row.image_url != null ? String(row.image_url).trim() : "";
       const pPhoto = profilePhotoUrlRaw != null ? String(profilePhotoUrlRaw).trim() : "";
 
       setTeacherMeta({
+        name: String(row.name || authProfile?.name || "").trim(),
         discipline: String(row.discipline || "—"),
         hourlyRate: Number(row.price_per_lesson) || 0,
         bio: String(row.bio || "").trim(),
@@ -548,6 +560,9 @@ export function Dashboard() {
         profilePhotoUrl: pPhoto ? pPhoto : null,
         disciplineCount: drows?.length ?? 0,
         timezone: row.timezone ?? null,
+        city: String(row.city || "").trim(),
+        region: String(row.region || "").trim(),
+        availabilityCount: Array.isArray(row.availability) ? row.availability.length : 0,
       });
       const teacherSlug = row.id;
       const { data: rows, error } = await supabase
@@ -734,6 +749,17 @@ export function Dashboard() {
     );
     const showSearchVisibilityBanner =
       authProfile?.teacher_onboarding_complete !== true || completenessPct < 100 || !teacherMeta;
+    const setupChecklistItems = teacherMeta
+      ? buildTeacherSetupChecklist({
+          name: teacherMeta.name || authProfile?.name,
+          bio: teacherMeta.bio,
+          disciplineCount: teacherMeta.disciplineCount,
+          pricePerLesson: teacherMeta.hourlyRate,
+          availabilityCount: teacherMeta.availabilityCount,
+          city: teacherMeta.city,
+          region: teacherMeta.region,
+        })
+      : buildTeacherSetupChecklist({});
 
     const firstConfirmed = confirmedUpcoming[0] as { id?: string; student_id?: string | null } | undefined;
     const firstMessagesHref = messagesHrefForStudentId(firstConfirmed?.student_id ?? null);
@@ -749,7 +775,10 @@ export function Dashboard() {
         </header>
 
         {showSearchVisibilityBanner ? (
-          <TeacherSearchVisibilityBanner ctaHref="/teacher/verification" />
+          <>
+            <TeacherSearchVisibilityBanner ctaHref={TEACHER_SETUP_PATH} />
+            <TeacherProfileSetupChecklist items={setupChecklistItems} ctaHref={TEACHER_SETUP_PATH} />
+          </>
         ) : null}
 
         <TeacherDashboardStats
@@ -891,7 +920,7 @@ export function Dashboard() {
           </div>
 
           <div className="space-y-6 lg:col-span-1">
-            <TeacherProfileCompletenessCard percent={completenessPct} ctaHref="/teacher/verification" />
+            <TeacherProfileCompletenessCard percent={completenessPct} ctaHref={TEACHER_SETUP_PATH} />
           </div>
         </div>
       </div>

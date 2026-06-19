@@ -5,7 +5,7 @@ import { AlertCircle } from "lucide-react";
 import { useLocale } from "@/lib/locale-context";
 
 export function TeacherSearchVisibilityBanner({
-  ctaHref = "/teacher/verification",
+  ctaHref = "/teacher/verification?setup=1",
 }: {
   ctaHref?: string;
 }) {

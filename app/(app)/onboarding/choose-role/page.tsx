@@ -12,6 +12,7 @@ import {
   clearPendingTeacherOnboardingCookie,
   hasPendingTeacherIntentClient,
 } from "@/lib/auth/pendingTeacherIntent";
+import { readPendingOnboardingIntentClient } from "@/lib/auth/pendingOnboardingIntent";
 import {
   hasTeacherRoleChoiceIntent,
   needsOnboardingRoleChoice,
@@ -51,6 +52,13 @@ function ChooseRoleInner() {
       teacher_onboarding_complete?: boolean | null;
       dashboard?: unknown;
     } | null;
+
+    const pendingTeacherIntent =
+      readPendingOnboardingIntentClient() === "teacher" || hasPendingTeacherIntentClient();
+    if (row?.role === "teacher" || pendingTeacherIntent) {
+      router.replace("/dashboard");
+      return;
+    }
 
     if (
       row &&

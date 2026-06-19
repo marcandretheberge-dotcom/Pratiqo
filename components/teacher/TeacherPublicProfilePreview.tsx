@@ -7,11 +7,14 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ExternalLink, Loader2, Pencil } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { getSupabaseClient } from "@/lib/supabase";
 import { useLocale } from "@/lib/locale-context";
 import { getDisciplineById } from "@/lib/disciplines";
+import { TEACHER_SETUP_PATH } from "@/lib/auth/teacherLoginRouting";
+import { buildTeacherSetupChecklist, teacherSetupProgressPercent } from "@/lib/teachers/teacherSetupProgress";
 
 type DisciplineRow = {
   discipline_id: string;
@@ -29,11 +32,15 @@ type PreviewTeacher = {
   is_public?: boolean | null;
   deactivated_at?: string | null;
   deleted_at?: string | null;
+  city?: string | null;
+  region?: string | null;
+  availability?: unknown[] | null;
 };
 
 export function TeacherPublicProfilePreview() {
-  const { user } = useAuth();
+  const { user, profile: authProfile } = useAuth();
   const { t } = useLocale();
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [teacher, setTeacher] = useState<PreviewTeacher | null>(null);
   const [disciplines, setDisciplines] = useState<DisciplineRow[]>([]);
@@ -48,7 +55,7 @@ export function TeacherPublicProfilePreview() {
         supabase.from("profiles").select("photo_url").eq("id", user.id).maybeSingle(),
         supabase
           .from("teachers")
-          .select("id, name, bio, discipline, price_per_lesson, image_url, teaching_mode, is_public, deactivated_at, deleted_at")
+          .select("id, name, bio, discipline, price_per_lesson, image_url, teaching_mode, is_public, deactivated_at, deleted_at, city, region, availability")
           .eq("user_id", user.id)
           .maybeSingle(),
       ]);
@@ -70,6 +77,25 @@ export function TeacherPublicProfilePreview() {
     };
   }, [user?.id]);
 
+  const setupComplete = useMemo(() => {
+    if (!teacher) return false;
+    const items = buildTeacherSetupChecklist({
+      name: teacher.name || authProfile?.name,
+      bio: teacher.bio,
+      disciplineCount: disciplines.length,
+      pricePerLesson: teacher.price_per_lesson ?? 0,
+      availabilityCount: Array.isArray(teacher.availability) ? teacher.availability.length : 0,
+      city: teacher.city,
+      region: teacher.region,
+    });
+    return teacherSetupProgressPercent(items) === 100;
+  }, [teacher, disciplines.length, authProfile?.name]);
+
+  useEffect(() => {
+    if (loading || setupComplete) return;
+    router.replace(TEACHER_SETUP_PATH);
+  }, [loading, setupComplete, router]);
+
   const disciplineSummary = useMemo(() => {
     if (disciplines.length === 0) return teacher?.discipline?.trim() || "—";
     return disciplines
@@ -85,7 +111,7 @@ export function TeacherPublicProfilePreview() {
   const isPublic =
     teacher?.is_public !== false && !teacher?.deactivated_at && !teacher?.deleted_at;
 
-  if (loading) {
+  if (loading || !setupComplete) {
     return (
       <div className="min-h-[40vh] flex items-center justify-center text-[#6B6A65]">
         <Loader2 className="h-8 w-8 animate-spin text-teal-700" />
@@ -145,7 +171,7 @@ export function TeacherPublicProfilePreview() {
 
       <div className="flex flex-wrap gap-3">
         <Link
-          href="/teacher/verification"
+          href={TEACHER_SETUP_PATH}
           className="inline-flex h-11 items-center gap-2 rounded-full bg-teal-600 px-5 text-sm font-bold text-white hover:bg-teal-700"
           data-testid="teacher-public-profile-edit-cta"
         >

@@ -20,6 +20,9 @@ import {
 } from "@/lib/auth/onboardingRoleChoice";
 import { resolvePostAuthRedirect } from "@/lib/auth/postAuthRedirect";
 import { sanitizeRelativeRedirectPath } from "@/lib/auth/redirects";
+import { readPendingOnboardingIntentClient } from "@/lib/auth/pendingOnboardingIntent";
+import { hasPendingTeacherIntentClient } from "@/lib/auth/pendingTeacherIntent";
+import { shouldBypassTeacherRoleChoice } from "@/lib/auth/teacherLoginRouting";
 
 function buildLoginHrefFromConnexion(
   intent: PreAuthOnboardingIntent,
@@ -46,28 +49,64 @@ function ConnexionInner() {
   const ref = searchParams.get("ref");
 
   useEffect(() => {
-    if (authLoading || !user || !profileHydrated || !profile?.role) return;
+    if (authLoading || !user || !profileHydrated) return;
+
     const row = profile as {
       role?: string | null;
       companion_chosen?: boolean | null;
       teacher_onboarding_complete?: boolean | null;
-    };
+    } | null;
+
+    const pendingIntent =
+      readPendingOnboardingIntentClient() === "teacher" || hasPendingTeacherIntentClient()
+        ? ("teacher" as const)
+        : readPendingOnboardingIntentClient();
+
+    const dashboard = resolveProfileDashboardFromAuth(profile as Record<string, unknown>);
+
+    if (
+      shouldBypassTeacherRoleChoice({
+        profileRole: row?.role,
+        pendingIntent,
+        dashboard,
+      })
+    ) {
+      router.replace(
+        resolvePostAuthRedirect(
+          "teacher",
+          {
+            teacher_onboarding_complete: row?.teacher_onboarding_complete,
+            companion_chosen: row?.companion_chosen,
+            dashboard,
+          },
+          safeNext,
+        ),
+      );
+      return;
+    }
+
+    if (!row?.role) return;
+
     if (
       !needsOnboardingRoleChoice({
         role: row.role,
         companion_chosen: row.companion_chosen,
         teacher_onboarding_complete: row.teacher_onboarding_complete,
-        dashboard: resolveProfileDashboardFromAuth(profile as Record<string, unknown>),
+        dashboard,
       })
     ) {
       const role =
         row.role === "admin" || row.role === "teacher" || row.role === "student" ? row.role : "student";
       router.replace(
-        resolvePostAuthRedirect(role, {
-          teacher_onboarding_complete: row.teacher_onboarding_complete,
-          companion_chosen: row.companion_chosen,
-          dashboard: resolveProfileDashboardFromAuth(profile as Record<string, unknown>),
-        }, safeNext),
+        resolvePostAuthRedirect(
+          role,
+          {
+            teacher_onboarding_complete: row.teacher_onboarding_complete,
+            companion_chosen: row.companion_chosen,
+            dashboard,
+          },
+          safeNext,
+        ),
       );
     }
   }, [authLoading, user, profileHydrated, profile, router, safeNext]);
@@ -81,7 +120,19 @@ function ConnexionInner() {
     router.replace(buildLoginHrefFromConnexion(intent, safeNext, ref));
   };
 
-  if (user && !profileHydrated && !highlightIntent) {
+  const pendingTeacherIntent =
+    readPendingOnboardingIntentClient() === "teacher" || hasPendingTeacherIntentClient();
+
+  if (
+    user &&
+    (!profileHydrated ||
+      shouldBypassTeacherRoleChoice({
+        profileRole: profile?.role as string | undefined,
+        pendingIntent: pendingTeacherIntent ? "teacher" : readPendingOnboardingIntentClient(),
+        dashboard: resolveProfileDashboardFromAuth(profile as Record<string, unknown>),
+      })) &&
+    !highlightIntent
+  ) {
     return (
       <div className="min-h-[50vh] flex items-center justify-center text-sm text-[var(--p-text-muted)]">
         Chargement…
