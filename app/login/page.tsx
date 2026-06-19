@@ -2,12 +2,18 @@
 
 import React, { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { LogIn } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { LogIn, Mail } from "lucide-react";
 import { cn } from "../../lib/utils";
 import PratiqoLogo from "../../components/PratiqoLogo";
 import { LocaleSwitcher } from "../../components/LocaleSwitcher";
-import { loginWithGoogle } from "../../lib/auth";
+import {
+  ensureAuthenticatedProfile,
+  loginWithGoogle,
+  sendPasswordResetEmail,
+  signInWithEmailPassword,
+  signUpWithEmailPassword,
+} from "../../lib/auth";
 import { resolvePostAuthRedirect, type ProfileRole } from "../../lib/auth/postAuthRedirect";
 import { mergeOnboardingRoleConfirmedDashboard } from "../../lib/auth/onboardingRoleChoice";
 import {
@@ -27,22 +33,23 @@ import {
 import { useAuth } from "../../components/AuthProvider";
 import { useLocale } from "../../lib/locale-context";
 import { getSupabaseClient } from "../../lib/supabase";
-import { sanitizeRelativeRedirectPath } from "../../lib/auth/redirects";
 import { AuthHandoffScreen } from "../../components/marketing/AuthHandoffScreen";
 import { logAuthFlowDecision } from "../../lib/auth/authFlowDiagnostics";
 import {
   readPendingOnboardingIntentClient,
 } from "../../lib/auth/pendingOnboardingIntent";
 
-async function fetchProfileForHandoff(
-  userId: string,
-  maxAttempts = 8,
-): Promise<{
+type HandoffProfile = {
   role?: string | null;
   teacher_onboarding_complete?: boolean | null;
   companion_chosen?: boolean | null;
   dashboard?: unknown;
-} | null> {
+};
+
+async function fetchProfileForHandoff(
+  userId: string,
+  maxAttempts = 8,
+): Promise<HandoffProfile | null> {
   const supabase = getSupabaseClient();
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     const { data: profileRow } = await supabase
@@ -50,12 +57,7 @@ async function fetchProfileForHandoff(
       .select("role, teacher_onboarding_complete, companion_chosen, dashboard")
       .eq("id", userId)
       .maybeSingle();
-    if (profileRow) return profileRow as {
-      role?: string | null;
-      teacher_onboarding_complete?: boolean | null;
-      companion_chosen?: boolean | null;
-      dashboard?: unknown;
-    };
+    if (profileRow) return profileRow as HandoffProfile;
     await new Promise((resolve) => setTimeout(resolve, 200 * (attempt + 1)));
   }
   return null;
@@ -63,7 +65,6 @@ async function fetchProfileForHandoff(
 
 function LoginForm() {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const { user, loading } = useAuth();
   const intentParam = searchParams.get("intent");
   const roleParam = searchParams.get("role");
@@ -72,18 +73,6 @@ function LoginForm() {
   const authError = searchParams.get("auth_error");
   const preAuthIntent = resolvePreAuthIntent(intentParam, roleParam, nextParam);
   const oauthNext = resolveLoginOAuthNextPath(roleParam, nextParam, preAuthIntent);
-
-  useEffect(() => {
-    if (loading || user) return;
-    if (!preAuthIntent) {
-      const params = new URLSearchParams();
-      const safeNext = sanitizeRelativeRedirectPath(nextParam);
-      if (safeNext) params.set("next", safeNext);
-      if (refCode) params.set("ref", refCode);
-      const qs = params.toString();
-      router.replace(qs ? `${CONNEXION_PATH}?${qs}` : CONNEXION_PATH);
-    }
-  }, [loading, user, preAuthIntent, nextParam, refCode, router]);
 
   useEffect(() => {
     if (!preAuthIntent) return;
@@ -149,36 +138,135 @@ function LoginForm() {
 
   const { t } = useLocale();
   const [legalAccepted, setLegalAccepted] = useState(false);
+  const [authMode, setAuthMode] = useState<"login" | "signup">("login");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [formMessage, setFormMessage] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
+
+  const redirectAfterEnsuredProfile = (profile: HandoffProfile | null | undefined) => {
+    const currentRole: ProfileRole =
+      profile?.role === "admin" || profile?.role === "teacher" ? profile.role : "student";
+    const effectiveRole: ProfileRole = preAuthIntent
+      ? primaryRoleForPreAuthIntent(preAuthIntent, profile?.role)
+      : currentRole;
+    const redirectPath = resolvePostAuthRedirect(
+      effectiveRole,
+      {
+        teacher_onboarding_complete: profile?.teacher_onboarding_complete,
+        companion_chosen: profile?.companion_chosen,
+        dashboard: mergeOnboardingRoleConfirmedDashboard(profile?.dashboard),
+      },
+      oauthNext,
+      preAuthIntent ? { preAuthIntentConsumed: preAuthIntent } : undefined,
+    );
+
+    if (redirectPath === "/" || redirectPath === "") {
+      logAuthFlowDecision("login-email-handoff", { error: "refusing-root-fallback" });
+      return;
+    }
+
+    clearPendingOnboardingIntentCookie();
+    clearPendingTeacherOnboardingCookie();
+    window.location.assign(redirectPath);
+  };
 
   if (user && preAuthIntent) {
     return <AuthHandoffScreen />;
   }
 
-  const handleLogin = async (options?: { forceAccountSelection?: boolean }) => {
-    if (!legalAccepted || busy || !preAuthIntent) return;
+  const handleGoogleLogin = async (options?: { forceAccountSelection?: boolean }) => {
+    if (!legalAccepted || busy) return;
     setBusy(true);
+    setFormError(null);
     try {
       await loginWithGoogle(oauthNext, {
-        intent: preAuthIntent,
+        intent: preAuthIntent ?? undefined,
         referralCode: refCode,
         forceAccountSelection: options?.forceAccountSelection,
       });
     } catch (e) {
       console.error(e);
-      alert("Connexion impossible. Réessaie dans un instant.");
+      setFormError(t("loginGenericAuthError"));
     } finally {
       setBusy(false);
     }
   };
 
-  if (!preAuthIntent && !user) {
-    return (
-      <div className="min-h-[50vh] flex items-center justify-center text-sm text-[var(--p-text-muted)]">
-        Redirection…
-      </div>
-    );
-  }
+  const handleEmailAuth = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!legalAccepted || busy) return;
+    const normalizedEmail = email.trim().toLowerCase();
+    const displayName = normalizedEmail.split("@")[0] || null;
+
+    setFormError(null);
+    setFormMessage(null);
+
+    if (!normalizedEmail || !password) {
+      setFormError(t("loginEmailPasswordRequired"));
+      return;
+    }
+    if (authMode === "signup" && password.length < 8) {
+      setFormError(t("loginPasswordMinimum"));
+      return;
+    }
+
+    setBusy(true);
+    try {
+      if (authMode === "login") {
+        await signInWithEmailPassword(normalizedEmail, password);
+        const ensured = await ensureAuthenticatedProfile({ intent: preAuthIntent, displayName }) as {
+          profile?: HandoffProfile | null;
+        };
+        setFormMessage(t("loginSuccessRedirecting"));
+        redirectAfterEnsuredProfile(ensured.profile);
+      } else {
+        const result = await signUpWithEmailPassword(normalizedEmail, password, {
+          intent: preAuthIntent,
+          redirectPath: oauthNext,
+          referralCode: refCode,
+          displayName,
+        });
+        if (result.session) {
+          const ensured = await ensureAuthenticatedProfile({ intent: preAuthIntent, displayName }) as {
+            profile?: HandoffProfile | null;
+          };
+          setFormMessage(t("loginSuccessRedirecting"));
+          redirectAfterEnsuredProfile(ensured.profile);
+        } else {
+          setFormMessage(t("loginCheckEmailConfirm"));
+        }
+      }
+    } catch (e) {
+      console.error("[login] email/password auth failed", e);
+      setFormError(t("loginGenericAuthError"));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (busy) return;
+    const normalizedEmail = email.trim().toLowerCase();
+    setFormError(null);
+    setFormMessage(null);
+    if (!normalizedEmail) {
+      setFormError(t("loginEmailRequiredForReset"));
+      return;
+    }
+    setBusy(true);
+    try {
+      await sendPasswordResetEmail(normalizedEmail);
+      setFormMessage(t("loginPasswordResetSent"));
+    } catch (e) {
+      console.error("[login] password reset failed", e);
+      setFormMessage(t("loginPasswordResetSent"));
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
     <div className="min-h-[100dvh] bg-[#FAFCFB]">
@@ -232,6 +320,24 @@ function LoginForm() {
             </div>
           ) : null}
 
+          <div className="mb-5">
+            <h1 className="text-center text-2xl font-black text-[var(--p-text)]">
+              {authMode === "login" ? t("loginEmailTitle") : t("loginCreateAccountTitle")}
+            </h1>
+          </div>
+
+          {formError ? (
+            <p className="text-center text-sm font-semibold text-red-700 bg-red-500/10 rounded-2xl px-4 py-3 mb-4">
+              {formError}
+            </p>
+          ) : null}
+
+          {formMessage ? (
+            <p className="text-center text-sm font-semibold text-teal-800 bg-teal-500/10 rounded-2xl px-4 py-3 mb-4">
+              {formMessage}
+            </p>
+          ) : null}
+
           <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 mb-4">
             <input
               type="checkbox"
@@ -256,17 +362,107 @@ function LoginForm() {
             .
           </p>
 
+          <form className="space-y-4" onSubmit={handleEmailAuth}>
+            <label className="block">
+              <span className="text-sm font-bold text-[var(--p-text)]">{t("loginEmailLabel")}</span>
+              <input
+                type="email"
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-[var(--p-text)] outline-none transition focus:border-teal-600 focus:ring-4 focus:ring-teal-600/10"
+                placeholder="nom@exemple.com"
+                required
+              />
+            </label>
+
+            <label className="block">
+              <span className="text-sm font-bold text-[var(--p-text)]">{t("loginPasswordLabel")}</span>
+              <input
+                type="password"
+                autoComplete={authMode === "login" ? "current-password" : "new-password"}
+                minLength={authMode === "signup" ? 8 : undefined}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-[var(--p-text)] outline-none transition focus:border-teal-600 focus:ring-4 focus:ring-teal-600/10"
+                required
+              />
+            </label>
+
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <label className="inline-flex cursor-pointer items-center gap-2 text-sm font-semibold text-[var(--p-text-muted)]">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="h-4 w-4 rounded border-slate-300 text-teal-700 focus:ring-2 focus:ring-teal-500"
+                />
+                {t("loginRememberMe")}
+              </label>
+              <button
+                type="button"
+                onClick={() => void handleForgotPassword()}
+                className="text-sm font-bold text-teal-700 underline underline-offset-4 transition hover:text-teal-900"
+              >
+                {t("loginForgotPassword")}
+              </button>
+            </div>
+
+            <p className="text-xs text-[var(--p-text-muted)] leading-relaxed">
+              {t("loginRememberMeNote")}
+            </p>
+
+            <button
+              type="submit"
+              disabled={!legalAccepted || busy}
+              className={cn(
+                "w-full h-12 rounded-2xl text-sm font-bold text-white flex items-center justify-center gap-2 transition-all",
+                "bg-teal-600 hover:brightness-[0.98] disabled:cursor-not-allowed disabled:opacity-45",
+              )}
+            >
+              <Mail size={18} />
+              {busy
+                ? t("loginWorking")
+                : authMode === "login"
+                  ? t("loginEmailSubmit")
+                  : t("loginCreateAccountSubmit")}
+            </button>
+          </form>
+
+          <p className="mt-4 text-center text-sm text-[var(--p-text-muted)]">
+            {authMode === "login" ? t("loginNoAccountPrompt") : t("loginAlreadyHaveAccountPrompt")}{" "}
+            <button
+              type="button"
+              onClick={() => {
+                setAuthMode((mode) => (mode === "login" ? "signup" : "login"));
+                setFormError(null);
+                setFormMessage(null);
+              }}
+              className="font-bold text-teal-700 underline underline-offset-4"
+            >
+              {authMode === "login" ? t("loginSwitchToSignup") : t("loginSwitchToLogin")}
+            </button>
+          </p>
+
+          <div className="my-6 flex items-center gap-3">
+            <div className="h-px flex-1 bg-slate-200" />
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--p-text-muted)]">
+              {t("loginOtherWays")}
+            </p>
+            <div className="h-px flex-1 bg-slate-200" />
+          </div>
+
           <button
             type="button"
             disabled={!legalAccepted || busy}
-            onClick={() => void handleLogin()}
+            onClick={() => void handleGoogleLogin()}
             className={cn(
               "w-full h-12 rounded-2xl text-sm font-bold text-white flex items-center justify-center gap-2 transition-all",
               "bg-teal-600 hover:brightness-[0.98] disabled:cursor-not-allowed disabled:opacity-45",
             )}
           >
             <LogIn size={18} />
-            {busy ? "Connexion…" : "Se connecter avec Google"}
+            {busy ? t("loginWorking") : t("loginContinueWithGoogle")}
           </button>
 
           <div className="mt-4 text-center">
@@ -276,7 +472,7 @@ function LoginForm() {
             <button
               type="button"
               disabled={!legalAccepted || busy}
-              onClick={() => void handleLogin({ forceAccountSelection: true })}
+              onClick={() => void handleGoogleLogin({ forceAccountSelection: true })}
               className="mt-1 text-sm font-bold text-teal-700 underline underline-offset-4 transition hover:text-teal-900 disabled:cursor-not-allowed disabled:opacity-45"
             >
               {t("loginChangeGoogleAccount")}

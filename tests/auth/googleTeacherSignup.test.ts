@@ -87,9 +87,9 @@ test("login page renders the Google account switch option for teacher and learne
   const page = read("app/login/page.tsx");
   assert.match(page, /loginWrongGoogleAccountPrompt/);
   assert.match(page, /loginChangeGoogleAccount/);
-  assert.match(page, /onClick=\{\(\) => void handleLogin\(\{ forceAccountSelection: true \}\)\}/);
-  assert.match(page, /onClick=\{\(\) => void handleLogin\(\)\}/);
-  assert.match(page, /intent:\s*preAuthIntent/);
+  assert.match(page, /onClick=\{\(\) => void handleGoogleLogin\(\{ forceAccountSelection: true \}\)\}/);
+  assert.match(page, /onClick=\{\(\) => void handleGoogleLogin\(\)\}/);
+  assert.match(page, /intent:\s*preAuthIntent \?\? undefined/);
   assert.match(page, /referralCode:\s*refCode/);
 });
 

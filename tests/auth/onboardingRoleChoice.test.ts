@@ -253,10 +253,14 @@ test("auth callback clears pending cookies only for non-intent direct redirects"
   assert.match(src, /pendingOnboardingIntentClearCookieHeaders/);
 });
 
-test("login page redirects to connexion when no pre-auth intent", () => {
+test("login page can render standard auth without pre-auth intent", () => {
   const src = read("app/login/page.tsx");
   assert.match(src, /CONNEXION_PATH/);
   assert.match(src, /resolvePreAuthIntent/);
+  assert.match(src, /signInWithEmailPassword/);
+  assert.match(src, /signUpWithEmailPassword/);
+  assert.doesNotMatch(src, /router\.replace\(qs \? `\$\{CONNEXION_PATH\}/);
+  assert.doesNotMatch(src, /if \(!preAuthIntent && !user\)/);
   assert.match(src, /setPendingOnboardingIntentCookie/);
   assert.match(src, /window\.location\.assign/);
 });
