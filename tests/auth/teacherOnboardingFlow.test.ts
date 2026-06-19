@@ -156,12 +156,55 @@ test("minimal onboarding sends only display name and existing consent acknowledg
   // Posts only the minimal draft setup payload to complete API
   assert.match(page, /\/api\/teacher\/onboarding\/complete/);
   assert.match(page, /name,/);
-  assert.match(page, /tax_status_acknowledged:\s*true/);
-  assert.match(page, /no_exclusivity_acknowledged:\s*true/);
-  assert.match(page, /no_income_guarantee_acknowledged:\s*true/);
+  assert.match(page, /tax_status_acknowledged:\s*independentStatusAccepted\s*&&\s*taxResponsibilityAccepted/);
+  assert.match(page, /no_exclusivity_acknowledged:\s*noExclusivityAccepted/);
+  assert.match(page, /no_income_guarantee_acknowledged:\s*noIncomeGuaranteeAccepted/);
   assert.doesNotMatch(page, /price_per_lesson:/);
   assert.doesNotMatch(page, /city:\s*publicCity/);
   assert.doesNotMatch(page, /availability:\s/);
+});
+
+test("minimal onboarding restores all required teacher acknowledgement checkboxes", () => {
+  const page = read("app/(app)/onboarding/teacher/page.tsx");
+  assert.match(page, /data-testid="teacher-minimal-consent-section"/);
+  for (const id of [
+    "independent-status",
+    "tax-responsibility",
+    "profile-accuracy",
+    "private-profile",
+    "no-exclusivity",
+    "no-income-guarantee",
+  ]) {
+    assert.match(page, new RegExp(`teacher-minimal-consent-\\$\\{item\\.id\\}`));
+    assert.match(page, new RegExp(`id: "${id}"`));
+  }
+  for (const key of [
+    "teacherOnboardingLegalSelfEmployed",
+    "teacherMinimalSetupTaxResponsibility",
+    "teacherMinimalSetupProfileAccuracy",
+    "teacherMinimalSetupPrivateUntilComplete",
+    "teacherOnboardingLegalNoExclusivity",
+    "teacherOnboardingLegalNoIncomeGuarantee",
+  ]) {
+    assert.match(page, new RegExp(key));
+  }
+});
+
+test("minimal onboarding submit stays disabled until display name and every acknowledgement are checked", () => {
+  const page = read("app/(app)/onboarding/teacher/page.tsx");
+  assert.match(page, /const\s+allConsentsAccepted\s*=\s*useMemo/);
+  for (const stateName of [
+    "independentStatusAccepted",
+    "taxResponsibilityAccepted",
+    "profileAccuracyAccepted",
+    "privateProfileAccepted",
+    "noExclusivityAccepted",
+    "noIncomeGuaranteeAccepted",
+  ]) {
+    assert.match(page, new RegExp(stateName));
+  }
+  assert.match(page, /displayName\.trim\(\)\.length\s*>=\s*2\s*&&\s*allConsentsAccepted/);
+  assert.match(page, /disabled=\{!canSubmit\}/);
 });
 
 test("wizard no longer calls separate /api/teacher/pricing endpoint", () => {

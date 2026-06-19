@@ -22,7 +22,12 @@ export default function TeacherOnboardingPage() {
   const router = useRouter();
 
   const [displayName, setDisplayName] = useState("");
-  const [consentAccepted, setConsentAccepted] = useState(false);
+  const [independentStatusAccepted, setIndependentStatusAccepted] = useState(false);
+  const [taxResponsibilityAccepted, setTaxResponsibilityAccepted] = useState(false);
+  const [profileAccuracyAccepted, setProfileAccuracyAccepted] = useState(false);
+  const [privateProfileAccepted, setPrivateProfileAccepted] = useState(false);
+  const [noExclusivityAccepted, setNoExclusivityAccepted] = useState(false);
+  const [noIncomeGuaranteeAccepted, setNoIncomeGuaranteeAccepted] = useState(false);
   const [checkingExistingProfile, setCheckingExistingProfile] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -93,9 +98,27 @@ export default function TeacherOnboardingPage() {
     };
   }, [loading, profile?.teacher_onboarding_complete, router, user?.id]);
 
+  const allConsentsAccepted = useMemo(
+    () =>
+      independentStatusAccepted &&
+      taxResponsibilityAccepted &&
+      profileAccuracyAccepted &&
+      privateProfileAccepted &&
+      noExclusivityAccepted &&
+      noIncomeGuaranteeAccepted,
+    [
+      independentStatusAccepted,
+      noExclusivityAccepted,
+      noIncomeGuaranteeAccepted,
+      privateProfileAccepted,
+      profileAccuracyAccepted,
+      taxResponsibilityAccepted,
+    ],
+  );
+
   const canSubmit = useMemo(
-    () => displayName.trim().length >= 2 && consentAccepted && !saving && !checkingExistingProfile,
-    [checkingExistingProfile, consentAccepted, displayName, saving],
+    () => displayName.trim().length >= 2 && allConsentsAccepted && !saving && !checkingExistingProfile,
+    [allConsentsAccepted, checkingExistingProfile, displayName, saving],
   );
 
   const submit = async () => {
@@ -105,7 +128,7 @@ export default function TeacherOnboardingPage() {
       setError(t("teacherMinimalSetupNameRequired"));
       return;
     }
-    if (!consentAccepted) {
+    if (!allConsentsAccepted) {
       setError(t("teacherMinimalSetupConsentRequired"));
       return;
     }
@@ -128,9 +151,9 @@ export default function TeacherOnboardingPage() {
         },
         body: JSON.stringify({
           name,
-          tax_status_acknowledged: true,
-          no_exclusivity_acknowledged: true,
-          no_income_guarantee_acknowledged: true,
+          tax_status_acknowledged: independentStatusAccepted && taxResponsibilityAccepted,
+          no_exclusivity_acknowledged: noExclusivityAccepted,
+          no_income_guarantee_acknowledged: noIncomeGuaranteeAccepted,
         }),
       });
       const completePayload = (await completeRes.json().catch(() => ({}))) as { error?: string };
@@ -211,16 +234,63 @@ export default function TeacherOnboardingPage() {
             />
           </label>
 
-          <label className="flex gap-3 rounded-2xl border border-teal-500/20 bg-teal-50/60 p-4 text-sm leading-relaxed text-teal-950">
-            <input
-              type="checkbox"
-              checked={consentAccepted}
-              onChange={(e) => setConsentAccepted(e.target.checked)}
-              className="mt-1 h-4 w-4 rounded border-teal-500 text-teal-700 focus:ring-teal-500"
-              data-testid="teacher-minimal-consent"
-            />
-            <span>{t("teacherMinimalSetupConsent")}</span>
-          </label>
+          <section
+            className="rounded-2xl border border-teal-500/20 bg-teal-50/60 p-4 text-sm leading-relaxed text-teal-950"
+            data-testid="teacher-minimal-consent-section"
+          >
+            <h2 className="text-sm font-bold text-teal-950">{t("teacherMinimalSetupConsentTitle")}</h2>
+            <div className="mt-4 space-y-3">
+              {[
+                {
+                  id: "independent-status",
+                  checked: independentStatusAccepted,
+                  onChange: setIndependentStatusAccepted,
+                  label: t("teacherOnboardingLegalSelfEmployed"),
+                },
+                {
+                  id: "tax-responsibility",
+                  checked: taxResponsibilityAccepted,
+                  onChange: setTaxResponsibilityAccepted,
+                  label: t("teacherMinimalSetupTaxResponsibility"),
+                },
+                {
+                  id: "profile-accuracy",
+                  checked: profileAccuracyAccepted,
+                  onChange: setProfileAccuracyAccepted,
+                  label: t("teacherMinimalSetupProfileAccuracy"),
+                },
+                {
+                  id: "private-profile",
+                  checked: privateProfileAccepted,
+                  onChange: setPrivateProfileAccepted,
+                  label: t("teacherMinimalSetupPrivateUntilComplete"),
+                },
+                {
+                  id: "no-exclusivity",
+                  checked: noExclusivityAccepted,
+                  onChange: setNoExclusivityAccepted,
+                  label: t("teacherOnboardingLegalNoExclusivity"),
+                },
+                {
+                  id: "no-income-guarantee",
+                  checked: noIncomeGuaranteeAccepted,
+                  onChange: setNoIncomeGuaranteeAccepted,
+                  label: t("teacherOnboardingLegalNoIncomeGuarantee"),
+                },
+              ].map((item) => (
+                <label key={item.id} className="flex gap-3">
+                  <input
+                    type="checkbox"
+                    checked={item.checked}
+                    onChange={(e) => item.onChange(e.target.checked)}
+                    className="mt-1 h-4 w-4 shrink-0 rounded border-teal-500 text-teal-700 focus:ring-teal-500"
+                    data-testid={`teacher-minimal-consent-${item.id}`}
+                  />
+                  <span>{item.label}</span>
+                </label>
+              ))}
+            </div>
+          </section>
 
           <div className="rounded-2xl border border-[#E8E6DF] bg-[#FAF8F3] p-4 text-sm text-[#56534D]">
             <div className="flex items-start gap-3">
