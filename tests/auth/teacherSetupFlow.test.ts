@@ -75,10 +75,35 @@ test("verification page expands first incomplete section in setup mode", () => {
   assert.match(page, /teacher-setup-mode-banner/);
 });
 
+test("verification management page does not expose public profile link for private or inactive teachers", () => {
+  const page = read("app/(app)/teacher/verification/page.tsx");
+  assert.match(page, /is_public, deactivated_at, deleted_at/);
+  assert.match(page, /canOpenPublicProfile/);
+  assert.match(page, /teacherRow\.is_public === true/);
+  assert.match(page, /!teacherRow\.deactivated_at && !teacherRow\.deleted_at/);
+  assert.match(page, /canOpenPublicProfile \? \(/);
+});
+
 test("incomplete teachers on my-profile preview redirect to setup path", () => {
   const preview = read("components/teacher/TeacherPublicProfilePreview.tsx");
   assert.match(preview, /TEACHER_SETUP_PATH/);
   assert.match(preview, /router\.replace\(TEACHER_SETUP_PATH\)/);
+});
+
+test("my-profile preview repairs missing private teacher row and never uses public visibility lookup", () => {
+  const preview = read("components/teacher/TeacherPublicProfilePreview.tsx");
+  assert.match(preview, /fetchEnsureTeacherProfile/);
+  assert.match(preview, /\.from\("teachers"\)/);
+  assert.match(preview, /\.eq\("user_id", user\.id\)/);
+  assert.doesNotMatch(preview, /teachers_public/);
+  assert.doesNotMatch(preview, /TEACHERS_PUBLIC_TABLE/);
+});
+
+test("my-profile public-view CTA only appears after the private row is public", () => {
+  const preview = read("components/teacher/TeacherPublicProfilePreview.tsx");
+  assert.match(preview, /const isPublic\s*=/);
+  assert.match(preview, /publicHref && isPublic/);
+  assert.match(preview, /previewProfileHiddenWarning/);
 });
 
 test("teacher setup checklist tracks core marketplace fields", () => {
