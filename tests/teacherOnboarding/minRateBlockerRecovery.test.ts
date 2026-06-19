@@ -152,45 +152,39 @@ test("home_lesson_enabled=true with home_lesson_price=null still REJECTED by val
 
 const ACTIVE_WIZARD = READ("app/(app)/onboarding/teacher/page.tsx");
 
-test("active wizard computes a fallback home rate from the standard hourly rate", () => {
-  // Match on the raw source — the wizard file has many template literals
-  // that the strip helper destroys, but the specific line we need is
-  // plain JS with no string content.
-  assert.match(
-    ACTIVE_WIZARD,
-    /const\s+homeHourly\s*=\s*homeOn\s*\?\s*hourlyNum\s*:\s*null\s*;/,
-  );
+test("active onboarding is minimal and does not collect pricing fields", () => {
+  for (const forbidden of [
+    "price_per_lesson",
+    "home_lesson_price",
+    "home_lesson_enabled",
+    "default_lesson_duration_minutes",
+    "availability",
+  ]) {
+    assert.doesNotMatch(ACTIVE_WIZARD, new RegExp(`${forbidden}\\s*:`));
+  }
 });
 
-test("active wizard passes home_lesson_price into the client-side validator", () => {
-  const m = ACTIVE_WIZARD.match(/validateTeacherLessonOffers\(\{([\s\S]*?)\}\)/);
-  assert.ok(m, "validateTeacherLessonOffers call not found in active wizard");
-  assert.match(m[1], /home_lesson_price\s*:\s*homeHourly/);
+test("active onboarding does not run lesson-offer pricing validation", () => {
+  assert.doesNotMatch(ACTIVE_WIZARD, /validateTeacherLessonOffers/);
+  assert.doesNotMatch(ACTIVE_WIZARD, /homeLessonSessionPriceCents/);
+  assert.doesNotMatch(ACTIVE_WIZARD, /standardLessonSessionPriceCents/);
 });
 
-test("active wizard sends home_lesson_price in the complete API body when home is enabled", () => {
-  // All profile data (including home pricing) is now sent to the
-  // /api/teacher/onboarding/complete server-side upsert, not via a
-  // separate client-side update or /api/teacher/pricing call.
-  assert.match(ACTIVE_WIZARD, /home_lesson_price\s*:\s*homeHourly/);
+test("active onboarding sends display name plus existing acknowledgement flags only", () => {
+  assert.match(ACTIVE_WIZARD, /name,\s*\n/);
+  assert.match(ACTIVE_WIZARD, /tax_status_acknowledged:\s*true/);
+  assert.match(ACTIVE_WIZARD, /no_exclusivity_acknowledged:\s*true/);
+  assert.match(ACTIVE_WIZARD, /no_income_guarantee_acknowledged:\s*true/);
 });
 
-test("active wizard no longer calls a separate /api/teacher/pricing endpoint", () => {
-  // The complete API handles teacher row upsert + profile completion in
-  // one admin-client round-trip, eliminating the client-side DB write
-  // that was blocked by RLS for new teachers.
+test("active onboarding no longer calls a separate /api/teacher/pricing endpoint", () => {
   assert.doesNotMatch(ACTIVE_WIZARD, /\/api\/teacher\/pricing/);
   assert.doesNotMatch(ACTIVE_WIZARD, /pricingBody\.home_lesson_price/);
 });
 
-test("active wizard routes the teacher back to Step 3 when the minimum check fails", () => {
-  // The minimum-check failure branch must call setStep(3) so the
-  // teacher lands on the pricing/duration step where the issue can be
-  // fixed. We match the sequence within the save() failure handler.
-  assert.match(
-    ACTIVE_WIZARD,
-    /if\s*\(!offerCheck\.ok\)\s*\{[\s\S]{0,400}setStep\(3\)/,
-  );
+test("active onboarding redirects to profile management setup after private draft creation", () => {
+  assert.match(ACTIVE_WIZARD, /const\s+SETUP_DESTINATION\s*=\s*"\/teacher\/verification\?setup=1"/);
+  assert.match(ACTIVE_WIZARD, /router\.replace\(SETUP_DESTINATION\)/);
 });
 
 // ── Legacy wizard source-scan ─────────────────────────────────────────
