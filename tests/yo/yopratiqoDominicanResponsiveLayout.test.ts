@@ -194,6 +194,13 @@ test("responsive layout patch does not touch restricted systems", () => {
     // teacher row server-side when onboarding complete is called without a
     // teachers row. Defended by tests/auth/onboardingStability.test.ts.
     "app/api/teacher/onboarding/complete/route.ts",
+    // hotfix/profile-state-source-of-truth — idempotent teacher row ensure +
+    // server-side companion profile upsert.
+    "app/api/teacher/profile/ensure/route.ts",
+    "app/api/companion/route.ts",
+    "lib/teachers/ensureTeacherProfileRow.ts",
+    "lib/teachers/ensureTeacherProfileClient.ts",
+    "app/auth/callback/route.ts",
     // security: teachers/plans reads marketplace metadata via teachers_public only.
     "app/api/teachers/plans/route.ts",
   ]);

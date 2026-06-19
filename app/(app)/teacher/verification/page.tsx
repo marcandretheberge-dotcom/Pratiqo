@@ -48,6 +48,7 @@ import { TeacherHourlyRatePreview } from "../../../../components/teacher/Teacher
 import { isValidVideoUrl } from "../../../../lib/videoEmbed";
 import { parseGooglePlace } from "../../../../lib/googleAddressParser";
 import { MIN_LESSON_PRICE_DOLLARS } from "../../../../lib/pricing/constants";
+import { fetchEnsureTeacherProfile } from "../../../../lib/teachers/ensureTeacherProfileClient";
 import { lessonDurationSummaryText, normalizeLessonDurationMinutes } from "../../../../lib/pricing/lessonDuration";
 
 type TeacherVerifyRow = {
@@ -136,6 +137,8 @@ export default function TeacherProfileManagementPage() {
   const [message, setMessage] = useState<string | null>(null);
   const [messageKind, setMessageKind] = useState<"ok" | "error">("ok");
   const [teacherRow, setTeacherRow] = useState<TeacherVerifyRow | null>(null);
+  const [teacherRowLoading, setTeacherRowLoading] = useState(true);
+  const [teacherEnsureError, setTeacherEnsureError] = useState<string | null>(null);
   const [plan, setPlan] = useState<string>("free");
 
   // Which card is currently expanded inline
@@ -214,8 +217,10 @@ export default function TeacherProfileManagementPage() {
   // ── Data loading ────────────────────────────────────────────────────────────
   const load = useCallback(async () => {
     if (!user?.id) return;
+    setTeacherRowLoading(true);
+    setTeacherEnsureError(null);
     const supabase = getSupabaseClient();
-    const [{ data: tr }, { data: p }] = await Promise.all([
+    let [{ data: tr }, { data: p }] = await Promise.all([
       supabase
         .from("teachers")
         .select(
@@ -225,6 +230,27 @@ export default function TeacherProfileManagementPage() {
         .maybeSingle(),
       supabase.from("profiles").select("plan, photo_url").eq("id", user.id).maybeSingle(),
     ]);
+
+    if (!tr && profile?.role === "teacher") {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess.session?.access_token;
+      if (token) {
+        const ensured = await fetchEnsureTeacherProfile(token);
+        if (!ensured.ok) {
+          setTeacherEnsureError(ensured.error ?? t("verificationErrorGeneric"));
+        } else {
+          const refetch = await supabase
+            .from("teachers")
+            .select(
+              "id, name, discipline, bio, image_url, video_url, price_per_lesson, teaching_mode, intro_session_enabled, intro_session_price_cents, availability, default_lesson_duration_minutes, verification_level, identity_verified, identity_status, stripe_identity_status, stripe_identity_failed_reason, diploma_verified, diploma_url, phone_verified, is_verified, location_verification_status, cv_summary, cv_verification_status, city, region, country_code, home_lesson_radius_km, home_lesson_price, home_lesson_enabled, location, stripe_account_id, stripe_connect_onboarding_complete, stripe_connect_charges_enabled, stripe_connect_payouts_enabled",
+            )
+            .eq("user_id", user.id)
+            .maybeSingle();
+          tr = refetch.data;
+        }
+      }
+    }
+
     setTeacherRow(tr as TeacherVerifyRow | null);
     setPlan(String((p as { plan?: string } | null)?.plan || "free"));
     setProfilePhotoUrl((p as { photo_url?: string | null } | null)?.photo_url ?? null);
@@ -240,7 +266,8 @@ export default function TeacherProfileManagementPage() {
       setDiscRows([]);
       setDiscLoading(false);
     }
-  }, [user?.id]);
+    setTeacherRowLoading(false);
+  }, [user?.id, profile?.role, t]);
 
   useEffect(() => {
     void load();
@@ -799,7 +826,7 @@ export default function TeacherProfileManagementPage() {
   };
 
   // ── Loading / access guards ──────────────────────────────────────────────────
-  if (loading || !user) {
+  if (loading || !user || teacherRowLoading) {
     return (
       <div className="min-h-[50vh] flex items-center justify-center text-[#6B6A65]">
         <Loader2 className="h-8 w-8 animate-spin text-teal-700" />
@@ -820,8 +847,15 @@ export default function TeacherProfileManagementPage() {
 
   if (!teacherRow) {
     return (
-      <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-sm text-[#633806]">
-        {t("verificationNoTeacherRow")}
+      <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-sm text-[#633806] space-y-3">
+        <p>{teacherEnsureError ?? t("verificationNoTeacherRowSetup")}</p>
+        <button
+          type="button"
+          onClick={() => void load()}
+          className="inline-flex rounded-full bg-amber-800 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-900"
+        >
+          {t("companionProfileSyncRetry")}
+        </button>
       </div>
     );
   }

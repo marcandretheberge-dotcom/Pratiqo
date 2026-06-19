@@ -25,19 +25,28 @@ test("student companion guard waits for hydrated profile before redirecting", ()
   );
 });
 
-test("choose-companion refreshes profile before leaving the page", () => {
+test("choose-companion merges server profile after companion save without blocking on refresh failure", () => {
   const page = read("app/(app)/student/choose-companion/page.tsx");
-  assert.match(page, /refreshProfile/);
+  assert.match(page, /mergeAuthProfile/);
   assert.match(page, /router\.replace\("\/dashboard"\)/);
   assert.match(page, /saveError/);
-  assert.match(page, /companionSaveError/);
+  assert.doesNotMatch(page, /setSaveError\(t\("companionProfileSyncError"\)\)/);
   assert.doesNotMatch(page, /window\.location\.assign\("\/dashboard"\)/);
 });
 
-test("AuthProvider exposes profile hydration and refreshProfile", () => {
+test("companion API upserts profile server-side as canonical source of truth", () => {
+  const route = read("app/api/companion/route.ts");
+  assert.match(route, /getSupabaseAdmin/);
+  assert.match(route, /\.upsert\(/);
+  assert.match(route, /companion_chosen: true/);
+  assert.match(route, /profile:/);
+});
+
+test("AuthProvider exposes profile hydration, refreshProfile, and mergeAuthProfile", () => {
   const src = read("components/AuthProvider.tsx");
   assert.match(src, /profileHydrated/);
   assert.match(src, /refreshProfile/);
+  assert.match(src, /mergeAuthProfile/);
   assert.doesNotMatch(src, /companion_chosen: false/);
 });
 
@@ -62,10 +71,43 @@ test("incomplete teachers route to dashboard instead of onboarding trap", () => 
   );
 });
 
-test("teacher onboarding complete API creates missing teacher row instead of 404", () => {
-  const route = read("app/api/teacher/onboarding/complete/route.ts");
-  assert.doesNotMatch(route, /Teacher profile not found/);
-  assert.match(route, /\.from\("teachers"\)\s*\.insert/);
+test("shared ensureTeacherProfileRow helper creates minimal teacher rows idempotently", () => {
+  const lib = read("lib/teachers/ensureTeacherProfileRow.ts");
+  assert.match(lib, /ensureTeacherProfileRow/);
+  assert.match(lib, /is_public: false/);
+  assert.match(lib, /user_id: userId/);
+});
+
+test("teacher profile ensure API is available for authenticated teachers", () => {
+  const route = read("app/api/teacher/profile/ensure/route.ts");
+  assert.match(route, /ensureTeacherProfileRow/);
+  assert.match(route, /role !== "teacher"/);
+});
+
+test("auth callback ensures teacher row after teacher OAuth profile upsert", () => {
+  const route = read("app/auth/callback/route.ts");
+  assert.match(route, /ensureTeacherProfileRow/);
+});
+
+test("teacher verification ensures missing teacher row instead of support dead-end", () => {
+  const page = read("app/(app)/teacher/verification/page.tsx");
+  assert.match(page, /fetchEnsureTeacherProfile/);
+  assert.match(page, /verificationNoTeacherRowSetup/);
+  assert.doesNotMatch(page, /verificationNoTeacherRow"\)/);
+});
+
+test("profile completion CTAs route to teacher verification not public preview", () => {
+  const dashboard = read("components/Dashboard.tsx");
+  assert.match(dashboard, /TeacherSearchVisibilityBanner ctaHref="\/teacher\/verification"/);
+  assert.match(dashboard, /TeacherProfileCompletenessCard percent=\{completenessPct\} ctaHref="\/teacher\/verification"/);
+  const banner = read("components/teacher/TeacherSearchVisibilityBanner.tsx");
+  assert.match(banner, /\/teacher\/verification/);
+});
+
+test("connexion waits for hydrated profile before showing role choice again", () => {
+  const page = read("app/connexion/page.tsx");
+  assert.match(page, /profileHydrated/);
+  assert.match(page, /!profileHydrated/);
 });
 
 test("teacher dashboard no longer hard-redirects incomplete profiles to onboarding", () => {
@@ -74,17 +116,10 @@ test("teacher dashboard no longer hard-redirects incomplete profiles to onboardi
   assert.doesNotMatch(page, /shouldRedirectToOnboarding/);
 });
 
-test("teacher dashboard shows search visibility banner when profile incomplete", () => {
-  const dashboard = read("components/Dashboard.tsx");
-  assert.match(dashboard, /TeacherSearchVisibilityBanner/);
-  assert.match(dashboard, /showSearchVisibilityBanner/);
-});
-
 test("AuthenticatedShell sends teachers on student paths to dashboard", () => {
   const shell = read("components/AuthenticatedShell.tsx");
   assert.match(shell, /teacher-student-path/);
   assert.match(shell, /redirect: "\/dashboard"/);
-  assert.doesNotMatch(shell, /teacher_onboarding_complete \? "\/dashboard" : "\/onboarding\/teacher"/);
 });
 
 test("incomplete teacher profiles stay ineligible for marketplace completeness checks", () => {

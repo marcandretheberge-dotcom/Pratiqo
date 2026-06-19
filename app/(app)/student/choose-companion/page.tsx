@@ -21,7 +21,7 @@ function isCompanionType(value: unknown): value is CompanionType {
 }
 
 export default function ChooseCompanionPage() {
-  const { user, loading, profile, profileHydrated, profileSyncError, retryProfileSync, refreshProfile } = useAuth();
+  const { user, loading, profile, profileHydrated, profileSyncError, retryProfileSync, refreshProfile, mergeAuthProfile } = useAuth();
   const { locale, t } = useLocale();
 
   const [selected, setSelected] = useState<CompanionType>("phoenix");
@@ -96,10 +96,26 @@ export default function ChooseCompanionPage() {
         setSaveError(message || t("companionSaveError"));
         return;
       }
-      const synced = await refreshProfile();
-      if (!synced) {
-        setSaveError(t("companionProfileSyncError"));
-        return;
+      const payload = (await res.json().catch(() => null)) as {
+        ok?: boolean;
+        profile?: {
+          id?: string;
+          role?: string | null;
+          companion_type?: string | null;
+          companion_chosen?: boolean | null;
+          dashboard?: unknown;
+        };
+      } | null;
+      if (payload?.profile) {
+        mergeAuthProfile({
+          id: payload.profile.id,
+          role: payload.profile.role,
+          companion_type: payload.profile.companion_type,
+          companion_chosen: payload.profile.companion_chosen === true,
+          dashboard: payload.profile.dashboard,
+        });
+      } else {
+        void refreshProfile();
       }
       router.replace("/dashboard");
     } finally {
