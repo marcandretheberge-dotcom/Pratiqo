@@ -19,7 +19,7 @@ export function parsePublicPreAuthIntent(
 }
 
 export function oauthNextPathForPreAuthIntent(intent: PreAuthOnboardingIntent): string {
-  return intent === "teacher" ? "/dashboard" : "/student/choose-companion";
+  return intent === "teacher" ? "/onboarding/teacher" : "/student/choose-companion";
 }
 
 /** Infer onboarding intent from a safe internal return path (middleware / login recovery). */

@@ -6,6 +6,7 @@ import {
   marketNotSupportedPayload,
 } from "@/lib/config/markets";
 import { ensureTeacherProfileRow } from "@/lib/teachers/ensureTeacherProfileRow";
+import { MIN_LESSON_PRICE_DOLLARS } from "@/lib/pricing/constants";
 
 export const runtime = "nodejs";
 
@@ -16,6 +17,12 @@ function requireAck(value: unknown): boolean {
 function asObject(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== "object" || Array.isArray(value)) return {};
   return value as Record<string, unknown>;
+}
+
+function trimStr(v: unknown): string | null {
+  if (typeof v !== "string") return null;
+  const t = v.trim();
+  return t.length > 0 ? t : null;
 }
 
 export async function POST(req: Request) {
@@ -43,6 +50,7 @@ export async function POST(req: Request) {
   }
 
   const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
+
   if (
     !requireAck(body.tax_status_acknowledged) ||
     !requireAck(body.no_exclusivity_acknowledged) ||
@@ -51,57 +59,108 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Missing required teacher acknowledgements." }, { status: 400 });
   }
 
+  // Validate price if provided (null/undefined is allowed for drafts, but if set must be >= minimum)
+  const priceRaw = body.price_per_lesson;
+  const price = priceRaw != null ? Number(priceRaw) : null;
+  if (price !== null && (isNaN(price) || price < MIN_LESSON_PRICE_DOLLARS)) {
+    return NextResponse.json(
+      { error: `Le tarif minimum par leçon est de ${MIN_LESSON_PRICE_DOLLARS} $.` },
+      { status: 400 },
+    );
+  }
+
   const admin = getSupabaseAdmin();
 
-  const { data: teacher, error: teacherErr } = await admin
-    .from("teachers")
-    .select("id,country_code")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  if (teacherErr) {
-    return NextResponse.json({ error: teacherErr.message }, { status: 500 });
-  }
-
-  let teacherRow = teacher;
-
-  if (!teacherRow?.id) {
-    const ensured = await ensureTeacherProfileRow(admin, user.id);
-    if (ensured.error || !ensured.result) {
-      console.error("[api/teacher/onboarding/complete] ensureTeacherProfileRow failed", ensured.error);
-      return NextResponse.json({ error: "teacher_profile_ensure_failed" }, { status: 500 });
-    }
-    const { data: refetched } = await admin
-      .from("teachers")
-      .select("id, country_code")
-      .eq("user_id", user.id)
-      .maybeSingle();
-    teacherRow = refetched;
-  }
-
-  const { data: profile, error: profileErr } = await admin
+  // Block admin profiles
+  const { data: profileMeta, error: profileMetaErr } = await admin
     .from("profiles")
-    .select("role,dashboard,country_code")
+    .select("role, dashboard")
     .eq("id", user.id)
     .maybeSingle();
 
-  if (profileErr) {
-    return NextResponse.json({ error: profileErr.message }, { status: 500 });
+  if (profileMetaErr) {
+    return NextResponse.json({ error: profileMetaErr.message }, { status: 500 });
   }
-  if (profile?.role === "admin") {
+  if ((profileMeta as { role?: string } | null)?.role === "admin") {
     return NextResponse.json({ error: "Admin profiles cannot complete teacher onboarding here." }, { status: 403 });
   }
 
-  const teacherCountryCode =
-    (teacherRow as { country_code?: string | null } | null)?.country_code ??
-    (profile as { country_code?: string | null } | null)?.country_code ??
-    "";
-  if (!isTeacherMarketSupported(teacherCountryCode)) {
-    return NextResponse.json(marketNotSupportedPayload(teacherCountryCode), { status: 403 });
+  // Market check
+  const countryCode = trimStr(body.country_code);
+  if (countryCode && !isTeacherMarketSupported(countryCode)) {
+    return NextResponse.json(marketNotSupportedPayload(countryCode), { status: 403 });
   }
 
+  // Ensure teacher draft row exists (idempotent, admin-only)
+  const nameHint = trimStr(body.name);
+  const ensured = await ensureTeacherProfileRow(admin, user.id, {
+    name: nameHint,
+    photo_url: null,
+  });
+  if (ensured.error || !ensured.result) {
+    console.error("[api/teacher/onboarding/complete] ensureTeacherProfileRow failed", ensured.error);
+    return NextResponse.json({ error: "teacher_profile_ensure_failed" }, { status: 500 });
+  }
+  const teacherId = ensured.result.teacherId;
+
+  // Build teacher row update from wizard payload
+  const homeOn = body.teaching_mode === "at_home" || body.teaching_mode === "hybrid";
+  const teacherUpdate: Record<string, unknown> = {};
+
+  if (nameHint) teacherUpdate.name = nameHint;
+  const discipline = trimStr(body.discipline);
+  if (discipline) teacherUpdate.discipline = discipline;
+  const category = trimStr(body.category);
+  if (category) teacherUpdate.category = category;
+  const bio = trimStr(body.bio);
+  if (bio) teacherUpdate.bio = bio;
+  if (Array.isArray(body.levels)) teacherUpdate.levels = body.levels;
+  const teachingMode = trimStr(body.teaching_mode);
+  if (teachingMode) teacherUpdate.teaching_mode = teachingMode;
+  const city = trimStr(body.city);
+  if (city) teacherUpdate.city = city;
+  const region = trimStr(body.region);
+  if (region) teacherUpdate.region = region;
+  if (countryCode) teacherUpdate.country_code = countryCode;
+  const timezone = trimStr(body.timezone);
+  if (timezone) teacherUpdate.timezone = timezone;
+  const currency = trimStr(body.currency);
+  if (currency) teacherUpdate.currency = currency;
+  if (price !== null) teacherUpdate.price_per_lesson = price;
+  if (Array.isArray(body.availability)) teacherUpdate.availability = body.availability;
+  if (typeof body.default_lesson_duration_minutes === "number") {
+    teacherUpdate.default_lesson_duration_minutes = body.default_lesson_duration_minutes;
+  }
+  if (body.location && typeof body.location === "object" && !Array.isArray(body.location)) {
+    teacherUpdate.location = body.location;
+  }
+
+  teacherUpdate.home_lesson_enabled = homeOn;
+  if (homeOn) {
+    const homePrice = body.home_lesson_price != null ? Number(body.home_lesson_price) : price;
+    if (homePrice !== null && Number.isFinite(homePrice) && homePrice > 0) {
+      teacherUpdate.home_lesson_price = homePrice;
+    }
+    const homeRadius = body.home_lesson_radius_km != null ? Number(body.home_lesson_radius_km) : null;
+    if (homeRadius !== null && Number.isFinite(homeRadius) && homeRadius > 0) {
+      teacherUpdate.home_lesson_radius_km = homeRadius;
+    }
+  }
+
+  if (Object.keys(teacherUpdate).length > 0) {
+    const { error: teacherUpdateErr } = await admin
+      .from("teachers")
+      .update(teacherUpdate)
+      .eq("id", teacherId);
+    if (teacherUpdateErr) {
+      console.error("[api/teacher/onboarding/complete] teacher row update failed", teacherUpdateErr);
+      return NextResponse.json({ error: "Impossible de mettre à jour votre fiche professeur." }, { status: 500 });
+    }
+  }
+
+  // Mark profile as onboarding-complete
   const now = new Date().toISOString();
-  const currentDashboard = asObject(profile?.dashboard);
+  const currentDashboard = asObject(profileMeta?.dashboard);
   const nextDashboard = { ...currentDashboard, teacher_onboarding_complete: true };
 
   const { data: updatedRows, error: updateErr } = await admin

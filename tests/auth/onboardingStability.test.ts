@@ -50,16 +50,26 @@ test("AuthProvider exposes profile hydration, refreshProfile, and mergeAuthProfi
   assert.doesNotMatch(src, /companion_chosen: false/);
 });
 
-test("teacher OAuth default destination is dashboard not forced onboarding", () => {
-  assert.equal(oauthNextPathForPreAuthIntent("teacher"), "/dashboard");
-  assert.equal(resolveLoginOAuthNextPath(null, null, "teacher"), "/dashboard");
+test("teacher OAuth default destination is onboarding wizard", () => {
+  assert.equal(oauthNextPathForPreAuthIntent("teacher"), "/onboarding/teacher");
+  assert.equal(resolveLoginOAuthNextPath(null, null, "teacher"), "/onboarding/teacher");
 });
 
-test("incomplete teachers route to dashboard instead of onboarding trap", () => {
+test("incomplete teachers route to onboarding wizard not dashboard", () => {
   assert.equal(
     resolvePostAuthRedirect("teacher", { teacher_onboarding_complete: false }),
+    "/onboarding/teacher",
+  );
+  assert.equal(
+    resolvePostAuthRedirect("teacher", { teacher_onboarding_complete: null }),
+    "/onboarding/teacher",
+  );
+  // Complete teachers go to dashboard
+  assert.equal(
+    resolvePostAuthRedirect("teacher", { teacher_onboarding_complete: true }),
     "/dashboard",
   );
+  // Existing teacher who chose learner intent (role preserved) goes to dashboard
   assert.equal(
     resolvePostAuthRedirect(
       "teacher",
