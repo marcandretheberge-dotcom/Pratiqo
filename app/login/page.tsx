@@ -155,13 +155,14 @@ function LoginForm() {
     return <AuthHandoffScreen />;
   }
 
-  const handleLogin = async () => {
+  const handleLogin = async (options?: { forceAccountSelection?: boolean }) => {
     if (!legalAccepted || busy || !preAuthIntent) return;
     setBusy(true);
     try {
       await loginWithGoogle(oauthNext, {
         intent: preAuthIntent,
         referralCode: refCode,
+        forceAccountSelection: options?.forceAccountSelection,
       });
     } catch (e) {
       console.error(e);
@@ -267,6 +268,20 @@ function LoginForm() {
             <LogIn size={18} />
             {busy ? "Connexion…" : "Se connecter avec Google"}
           </button>
+
+          <div className="mt-4 text-center">
+            <p className="text-xs font-medium text-[var(--p-text-muted)]">
+              {t("loginWrongGoogleAccountPrompt")}
+            </p>
+            <button
+              type="button"
+              disabled={!legalAccepted || busy}
+              onClick={() => void handleLogin({ forceAccountSelection: true })}
+              className="mt-1 text-sm font-bold text-teal-700 underline underline-offset-4 transition hover:text-teal-900 disabled:cursor-not-allowed disabled:opacity-45"
+            >
+              {t("loginChangeGoogleAccount")}
+            </button>
+          </div>
 
           <p className="mt-6 text-center text-sm text-[var(--p-text-muted)]">
             <Link href={CONNEXION_PATH} className="font-semibold text-teal-700 hover:underline">
