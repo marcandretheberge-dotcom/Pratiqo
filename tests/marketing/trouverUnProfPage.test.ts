@@ -169,13 +169,46 @@ test("LandingHeader (used by this page) ships the modern Pratiqo logo + locale +
     /\/login/.test(headerSrc),
     "LandingHeader must link to /login (Se connecter)",
   );
-  for (const key of ["navPricing", "navResources", "becomeTeacher", "signIn"]) {
+  for (const key of ["navPricing", "navResources", "becomeTeacher", "navLogin"]) {
     assert.ok(
       headerSrc.includes(`t("${key}")`) ||
         headerSrc.includes(`t('${key}')`),
       `LandingHeader must read the "${key}" translation key`,
     );
   }
+});
+
+test("LandingHeader mobile navigation exposes login and the core landing CTAs", () => {
+  assert.ok(
+    /data-testid="landing-mobile-login-link"/.test(headerSrc),
+    "mobile header must keep a directly visible Connexion / Log in link",
+  );
+  assert.ok(
+    /data-testid="landing-mobile-menu-button"/.test(headerSrc),
+    "mobile header must expose a hamburger/menu button",
+  );
+  assert.ok(
+    /data-testid="landing-mobile-menu"/.test(headerSrc),
+    "mobile header must render a mobile menu surface",
+  );
+  for (const [href, labelKey] of [
+    ["/trouver-un-prof", "findTeacher"],
+    ["/devenir-enseignant", "becomeTeacher"],
+    ["loginHref", "navLogin"],
+  ] as const) {
+    assert.ok(
+      headerSrc.includes(href),
+      `mobile header/menu must include ${href}`,
+    );
+    assert.ok(
+      headerSrc.includes(`t("${labelKey}")`) ||
+        headerSrc.includes(`t('${labelKey}')`),
+      `mobile header/menu must read the "${labelKey}" translation key`,
+    );
+  }
+  assert.equal(fr.navLogin, "Connexion");
+  assert.equal(en.navLogin, "Log in");
+  assert.equal(es.navLogin, "Iniciar sesión");
 });
 
 test("LocaleSwitcher exposes both a language selector (FR / EN / ES) and a currency selector that defaults to CAD", () => {
