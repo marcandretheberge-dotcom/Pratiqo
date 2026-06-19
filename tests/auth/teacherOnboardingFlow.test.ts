@@ -281,7 +281,34 @@ test("draft ensure insert satisfies teachers price NOT NULL and minimum check", 
 
 test("complete API blocks admin profiles from completing teacher onboarding", () => {
   const route = read("app/api/teacher/onboarding/complete/route.ts");
-  assert.match(route, /role.*===.*"admin"[\s\S]*?403/);
+  assert.match(route, /profileRole\s*===\s*"admin"[\s\S]*?403/);
+});
+
+test("teacher onboarding complete route repairs a missing profile for an authenticated teacher session", () => {
+  const route = read("app/api/teacher/onboarding/complete/route.ts");
+  assert.match(route, /if \(!profileMeta\)/);
+  assert.match(route, /teacher_onboarding_profile_repair_failed/);
+  assert.match(route, /\.from\("profiles"\)[\s\S]*?\.upsert\(/);
+  assert.match(route, /role:\s*"teacher"/);
+  assert.match(route, /teacher_onboarding_complete:\s*false/);
+  assert.match(route, /companion_chosen:\s*false/);
+});
+
+test("teacher onboarding complete route returns 403 for existing non-teacher profiles", () => {
+  const route = read("app/api/teacher/onboarding/complete/route.ts");
+  assert.match(route, /teacher_onboarding_requires_teacher_role/);
+  assert.match(route, /profileRole\s*!==\s*"teacher"[\s\S]*?status:\s*403/);
+});
+
+test("teacher onboarding complete route never returns an ambiguous 404", () => {
+  const route = read("app/api/teacher/onboarding/complete/route.ts");
+  assert.doesNotMatch(route, /status:\s*404/);
+});
+
+test("wizard maps profile repair failure code to friendly localized message", () => {
+  const page = read("app/(app)/onboarding/teacher/page.tsx");
+  assert.match(page, /teacher_onboarding_profile_repair_failed/);
+  assert.match(page, /verificationNoTeacherRowSetup/);
 });
 
 // ── Stage-specific completion failure (teacher row already exists by then) ─

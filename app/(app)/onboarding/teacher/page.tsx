@@ -568,6 +568,7 @@ export default function TeacherOnboardingPage() {
         const code = completePayload.error;
         if (
           code === "teacher_profile_ensure_failed" ||
+          code === "teacher_onboarding_profile_repair_failed" ||
           code === "teacher_onboarding_update_failed" ||
           code === "teacher_profile_completion_failed" ||
           code === "teacher_onboarding_profile_load_failed" ||

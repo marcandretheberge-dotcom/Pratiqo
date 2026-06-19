@@ -26,6 +26,11 @@ function trimStr(v: unknown): string | null {
   return t.length > 0 ? t : null;
 }
 
+type ProfileMeta = {
+  role?: string | null;
+  dashboard?: unknown;
+} | null;
+
 export async function POST(req: Request) {
   let stage = "auth";
   try {
@@ -89,7 +94,7 @@ async function handlePost(req: Request, setStage: (stage: string) => void) {
   const admin = getSupabaseAdmin();
 
   // Block admin profiles
-  const { data: profileMeta, error: profileMetaErr } = await admin
+  const { data: profileMetaRow, error: profileMetaErr } = await admin
     .from("profiles")
     .select("role, dashboard")
     .eq("id", user.id)
@@ -103,8 +108,47 @@ async function handlePost(req: Request, setStage: (stage: string) => void) {
     });
     return NextResponse.json({ error: "teacher_onboarding_profile_load_failed" }, { status: 500 });
   }
-  if ((profileMeta as { role?: string } | null)?.role === "admin") {
+  let profileMeta = profileMetaRow as ProfileMeta;
+
+  if (!profileMeta) {
+    setStage("teacher_onboarding_profile_repair_failed");
+    const nameHint = trimStr(body.name) ?? trimStr(user.user_metadata?.full_name) ?? "Professeur";
+    const { data: repairedProfile, error: repairErr } = await admin
+      .from("profiles")
+      .upsert(
+        {
+          id: user.id,
+          email: user.email ?? "",
+          name: nameHint,
+          role: "teacher",
+          teacher_onboarding_complete: false,
+          companion_chosen: false,
+          dashboard: { teacher_onboarding_complete: false },
+        },
+        { onConflict: "id" },
+      )
+      .select("role, dashboard")
+      .single();
+
+    if (repairErr || !repairedProfile) {
+      console.error("[api/teacher/onboarding/complete] profile repair failed", {
+        userIdPresent: Boolean(user.id),
+        code: repairErr?.code ?? null,
+        message: repairErr?.message ?? null,
+        details: repairErr?.details ?? null,
+        hint: repairErr?.hint ?? null,
+      });
+      return NextResponse.json({ error: "teacher_onboarding_profile_repair_failed" }, { status: 500 });
+    }
+    profileMeta = repairedProfile as ProfileMeta;
+  }
+
+  const profileRole = typeof profileMeta?.role === "string" ? profileMeta.role : null;
+  if (profileRole === "admin") {
     return NextResponse.json({ error: "Admin profiles cannot complete teacher onboarding here." }, { status: 403 });
+  }
+  if (profileRole !== "teacher") {
+    return NextResponse.json({ error: "teacher_onboarding_requires_teacher_role" }, { status: 403 });
   }
 
   // Market check
@@ -192,7 +236,7 @@ async function handlePost(req: Request, setStage: (stage: string) => void) {
       userIdPresent: Boolean(user.id),
       teacherIdPresent: Boolean(teacherId),
     });
-    return NextResponse.json({ error: "teacher_profile_completion_failed" }, { status: 404 });
+    return NextResponse.json({ error: "teacher_profile_completion_failed" }, { status: 500 });
   }
 
   return NextResponse.json({ ok: true });
