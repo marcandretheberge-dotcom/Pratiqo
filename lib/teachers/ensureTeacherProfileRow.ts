@@ -2,6 +2,24 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 const TEACHER_IMAGE_FALLBACK = "https://picsum.photos/seed/teacher/400/400";
 
+/** Draft row defaults — hidden from search until teacher completes setup. */
+export const DRAFT_TEACHER_ROW_INSERT = {
+  discipline: "—",
+  category: "music",
+  rating: 0,
+  reviews: 0,
+  /** NULL is allowed by teachers_price_per_lesson_minimum_chk; 0 is not. */
+  price_per_lesson: null as number | null,
+  bio: "",
+  availability: [] as string[],
+  location: {} as Record<string, never>,
+  is_verified: false,
+  is_public: false,
+  teaching_mode: "both",
+  languages: [] as string[],
+  levels: [] as string[],
+} as const;
+
 export type EnsureTeacherProfileRowResult = {
   teacherId: string;
   created: boolean;
@@ -66,22 +84,10 @@ export async function ensureTeacherProfileRow(
       id: userId,
       user_id: userId,
       name: teacherName,
-      discipline: "—",
-      category: "music",
-      rating: 0,
-      reviews: 0,
-      price_per_lesson: 0,
-      bio: "",
       image_url: imageUrl,
-      availability: [],
-      location: {},
-      is_verified: false,
-      is_public: false,
-      teaching_mode: "both",
-      languages: [],
-      levels: [],
       country_code:
         typeof profileHints?.country_code === "string" ? profileHints.country_code : null,
+      ...DRAFT_TEACHER_ROW_INSERT,
     })
     .select("id")
     .single();

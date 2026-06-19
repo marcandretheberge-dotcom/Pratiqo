@@ -16,7 +16,7 @@ export async function fetchEnsureTeacherProfile(accessToken: string): Promise<{
     error?: string;
   };
   if (!res.ok || !json.ok) {
-    return { ok: false, error: json.error ?? "Unable to prepare teacher profile." };
+    return { ok: false, error: "teacher_profile_ensure_failed" };
   }
   return { ok: true, teacherId: json.teacherId, created: json.created };
 }

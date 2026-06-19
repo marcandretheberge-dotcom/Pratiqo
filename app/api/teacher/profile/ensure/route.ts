@@ -52,7 +52,8 @@ export async function POST(req: Request) {
   });
 
   if (error || !result) {
-    return NextResponse.json({ error: error ?? "Unable to ensure teacher profile." }, { status: 500 });
+    console.error("[api/teacher/profile/ensure] ensureTeacherProfileRow failed", error);
+    return NextResponse.json({ error: "teacher_profile_ensure_failed" }, { status: 500 });
   }
 
   return NextResponse.json({ ok: true, teacherId: result.teacherId, created: result.created });

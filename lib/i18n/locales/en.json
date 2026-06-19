@@ -1002,7 +1002,7 @@
   "teacherSetupItemAvailability": "Availability",
   "teacherSetupItemZone": "Teaching area",
   "teacherSetupModeBanner": "Complete the sections below to make your profile visible. The first incomplete section is open for you.",
-  "verificationNoTeacherRowSetup": "We could not prepare your teacher profile yet. Try again in a moment.",
+  "verificationNoTeacherRowSetup": "We couldn't prepare your teacher profile right now. Please try again in a few seconds.",
   "profileCredits": "Credits",
   "profileDisplayName": "Display name",
   "profileHourlyRate": "Hourly rate ($)",

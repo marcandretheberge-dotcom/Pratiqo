@@ -143,7 +143,6 @@ export default function TeacherProfileManagementPage() {
   const [messageKind, setMessageKind] = useState<"ok" | "error">("ok");
   const [teacherRow, setTeacherRow] = useState<TeacherVerifyRow | null>(null);
   const [teacherRowLoading, setTeacherRowLoading] = useState(true);
-  const [teacherEnsureError, setTeacherEnsureError] = useState<string | null>(null);
   const [plan, setPlan] = useState<string>("free");
 
   // Which card is currently expanded inline
@@ -223,7 +222,6 @@ export default function TeacherProfileManagementPage() {
   const load = useCallback(async () => {
     if (!user?.id) return;
     setTeacherRowLoading(true);
-    setTeacherEnsureError(null);
     const supabase = getSupabaseClient();
     let [{ data: tr }, { data: p }] = await Promise.all([
       supabase
@@ -242,7 +240,7 @@ export default function TeacherProfileManagementPage() {
       if (token) {
         const ensured = await fetchEnsureTeacherProfile(token);
         if (!ensured.ok) {
-          setTeacherEnsureError(ensured.error ?? t("verificationErrorGeneric"));
+          console.error("[teacher/verification] fetchEnsureTeacherProfile failed", ensured.error);
         } else {
           const refetch = await supabase
             .from("teachers")
@@ -885,7 +883,7 @@ export default function TeacherProfileManagementPage() {
   if (!teacherRow) {
     return (
       <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-sm text-[#633806] space-y-3">
-        <p>{teacherEnsureError ?? t("verificationNoTeacherRowSetup")}</p>
+        <p>{t("verificationNoTeacherRowSetup")}</p>
         <button
           type="button"
           onClick={() => void load()}

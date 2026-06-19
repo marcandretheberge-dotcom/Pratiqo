@@ -68,10 +68,8 @@ export async function POST(req: Request) {
   if (!teacherRow?.id) {
     const ensured = await ensureTeacherProfileRow(admin, user.id);
     if (ensured.error || !ensured.result) {
-      return NextResponse.json(
-        { error: ensured.error ?? "Unable to create teacher profile." },
-        { status: 500 },
-      );
+      console.error("[api/teacher/onboarding/complete] ensureTeacherProfileRow failed", ensured.error);
+      return NextResponse.json({ error: "teacher_profile_ensure_failed" }, { status: 500 });
     }
     const { data: refetched } = await admin
       .from("teachers")
