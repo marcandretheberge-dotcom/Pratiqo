@@ -284,6 +284,42 @@ test("complete API blocks admin profiles from completing teacher onboarding", ()
   assert.match(route, /role.*===.*"admin"[\s\S]*?403/);
 });
 
+// ── Stage-specific completion failure (teacher row already exists by then) ─
+
+test("profile completion failure is a distinct stage code, not mislabeled as ensure failure", () => {
+  const route = read("app/api/teacher/onboarding/complete/route.ts");
+  assert.match(route, /teacher_profile_completion_failed/);
+  // The completion-stage error path must not return the ensure or update codes.
+  const completionBlock = route.slice(route.indexOf("Mark profile as onboarding-complete"));
+  assert.doesNotMatch(completionBlock, /teacher_profile_ensure_failed/);
+  assert.doesNotMatch(completionBlock, /teacher_onboarding_update_failed/);
+});
+
+test("complete API does not leak raw profile completion DB error message to the client", () => {
+  const route = read("app/api/teacher/onboarding/complete/route.ts");
+  const completionBlock = route.slice(route.indexOf("Mark profile as onboarding-complete"));
+  assert.doesNotMatch(completionBlock, /error:\s*updateErr\.message/);
+});
+
+test("complete API wraps the handler so unexpected throws return a structured code, not a crash", () => {
+  const route = read("app/api/teacher/onboarding/complete/route.ts");
+  assert.match(route, /export async function POST/);
+  assert.match(route, /try\s*\{[\s\S]*?await handlePost/);
+  assert.match(route, /teacher_onboarding_unexpected_error/);
+});
+
+test("wizard maps profile-completion failure code to friendly localized message", () => {
+  const page = read("app/(app)/onboarding/teacher/page.tsx");
+  assert.match(page, /teacher_profile_completion_failed/);
+  assert.match(page, /verificationNoTeacherRowSetup/);
+});
+
+test("ensureTeacherProfileRow returns the existing row id on retry instead of re-inserting", () => {
+  const src = read("lib/teachers/ensureTeacherProfileRow.ts");
+  assert.match(src, /if \(existing\?\.id\)/);
+  assert.match(src, /created: false/);
+});
+
 async function run() {
   for (const { name, fn } of tests) {
     await fn();

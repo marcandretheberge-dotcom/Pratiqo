@@ -566,7 +566,13 @@ export default function TeacherOnboardingPage() {
       const completePayload = (await completeRes.json().catch(() => ({}))) as { error?: string };
       if (!completeRes.ok) {
         const code = completePayload.error;
-        if (code === "teacher_profile_ensure_failed" || code === "teacher_onboarding_update_failed") {
+        if (
+          code === "teacher_profile_ensure_failed" ||
+          code === "teacher_onboarding_update_failed" ||
+          code === "teacher_profile_completion_failed" ||
+          code === "teacher_onboarding_profile_load_failed" ||
+          code === "teacher_onboarding_unexpected_error"
+        ) {
           throw new Error(t("verificationNoTeacherRowSetup"));
         }
         throw new Error(code || t("anErrorOccurred"));
