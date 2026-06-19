@@ -148,16 +148,20 @@ test("complete API marks profile onboarding-complete server-side", () => {
   assert.match(route, /from\("profiles"\)[\s\S]*?\.update\(/);
 });
 
-test("wizard sends all profile fields to complete API not direct DB", () => {
+test("minimal onboarding sends only display name and existing consent acknowledgements to complete API", () => {
   const page = read("app/(app)/onboarding/teacher/page.tsx");
   // No client-side teachers insert/update
   assert.doesNotMatch(page, /supabase\.from\("teachers"\)\.insert/);
   assert.doesNotMatch(page, /supabase\.from\("teachers"\)\.update/);
-  // Posts full payload to complete API
+  // Posts only the minimal draft setup payload to complete API
   assert.match(page, /\/api\/teacher\/onboarding\/complete/);
-  assert.match(page, /price_per_lesson:\s*hourlyNum/);
-  assert.match(page, /city:\s*publicCity/);
-  assert.match(page, /availability,/);
+  assert.match(page, /name,/);
+  assert.match(page, /tax_status_acknowledged:\s*true/);
+  assert.match(page, /no_exclusivity_acknowledged:\s*true/);
+  assert.match(page, /no_income_guarantee_acknowledged:\s*true/);
+  assert.doesNotMatch(page, /price_per_lesson:/);
+  assert.doesNotMatch(page, /city:\s*publicCity/);
+  assert.doesNotMatch(page, /availability:\s/);
 });
 
 test("wizard no longer calls separate /api/teacher/pricing endpoint", () => {
@@ -240,6 +244,22 @@ test("wizard maps ensure/update failure codes to friendly localized message", ()
   assert.match(page, /teacher_profile_ensure_failed/);
   assert.match(page, /teacher_onboarding_update_failed/);
   assert.match(page, /verificationNoTeacherRowSetup/);
+});
+
+test("minimal onboarding redirects into profile management setup after draft creation", () => {
+  const page = read("app/(app)/onboarding/teacher/page.tsx");
+  assert.match(page, /SETUP_DESTINATION\s*=\s*"\/teacher\/verification\?setup=1"/);
+  assert.match(page, /router\.replace\(SETUP_DESTINATION\)/);
+});
+
+test("minimal onboarding page does not collect full public/search fields", () => {
+  const page = read("app/(app)/onboarding/teacher/page.tsx");
+  assert.match(page, /teacher-minimal-display-name/);
+  assert.match(page, /teacher-minimal-consent/);
+  assert.doesNotMatch(page, /teacherOnboardingDiscipline/);
+  assert.doesNotMatch(page, /teacherOnboardingPrice/);
+  assert.doesNotMatch(page, /teacherOnboardingAvailability/);
+  assert.doesNotMatch(page, /teacherSearchIndexingConsent/);
 });
 
 test("onboarding complete payload builder handles encoded hybrid teaching mode", () => {

@@ -76,9 +76,10 @@ test("slot generation uses teacher default_lesson_duration_minutes", () => {
   assert.match(slotsRouteSrc, /default_lesson_duration_minutes/);
 });
 
-test("onboarding step 3 collects initial lesson duration", () => {
-  assert.match(onboardingSrc, /teacher-onboarding-lesson-duration-select/);
-  assert.match(onboardingSrc, /default_lesson_duration_minutes/);
+test("minimal teacher onboarding does not collect initial lesson duration", () => {
+  assert.doesNotMatch(onboardingSrc, /teacher-onboarding-lesson-duration-select/);
+  assert.doesNotMatch(onboardingSrc, /default_lesson_duration_minutes\s*:/);
+  assert.match(onboardingSrc, /\/teacher\/verification\?setup=1/);
 });
 
 console.log("[teacherSchedule:lessonDuration] tests passed");

@@ -86,52 +86,38 @@ const accountSrc = read(TEACHER_ACCOUNT_PATH);
 // 1. Teacher Launch Center on /onboarding/teacher
 // ---------------------------------------------------------------------------
 
-test("onboarding: imports ProfileAiAssistant", () => {
-  assert.match(
-    onboardingSrc,
-    /import\s*\{\s*ProfileAiAssistant\s*\}\s*from\s*"@\/components\/teacher\/ProfileAiAssistant"/,
-  );
+test("onboarding: renders the minimal private draft setup", () => {
+  assert.match(onboardingSrc, /data-testid="teacher-minimal-onboarding"/);
+  assert.match(onboardingSrc, /data-testid="teacher-minimal-display-name"/);
+  assert.match(onboardingSrc, /data-testid="teacher-minimal-consent"/);
+  assert.match(onboardingSrc, /data-testid="teacher-minimal-submit"/);
+  assert.match(onboardingSrc, /teacherMinimalSetupTitle/);
+  assert.match(onboardingSrc, /teacherMinimalSetupConsent/);
 });
 
-test("onboarding: renders the Launch Center hero with the start CTA", () => {
-  assert.match(onboardingSrc, /data-testid="teacher-launch-hero"/);
-  assert.match(onboardingSrc, /data-testid="teacher-launch-start-cta"/);
-  assert.match(onboardingSrc, /teacherLaunchHeroTitle/);
-  assert.match(onboardingSrc, /teacherLaunchStartCta/);
-});
-
-test("onboarding: surfaces the save-and-finish-later affordance", () => {
-  assert.match(onboardingSrc, /data-testid="teacher-launch-save-exit"/);
-  assert.match(onboardingSrc, /teacherLaunchSaveAndExitCta/);
-});
-
-test("onboarding: per-step skip CTA + consequence text are rendered", () => {
-  assert.match(onboardingSrc, /data-testid="teacher-launch-skip-cta"/);
-  assert.match(onboardingSrc, /data-testid="teacher-launch-skip-consequence"/);
-  assert.match(onboardingSrc, /teacherLaunchSkipCta/);
+test("onboarding: only posts display name plus existing consent acknowledgements", () => {
   const stripped = stripJsComments(onboardingSrc);
-  assert.match(stripped, /teacherLaunchSkipProfile/);
-  assert.match(stripped, /teacherLaunchSkipLocation/);
-  assert.match(stripped, /teacherLaunchSkipPricing/);
+  assert.match(stripped, /name,/);
+  assert.match(stripped, /tax_status_acknowledged:\s*true/);
+  assert.match(stripped, /no_exclusivity_acknowledged:\s*true/);
+  assert.match(stripped, /no_income_guarantee_acknowledged:\s*true/);
+  assert.doesNotMatch(stripped, /discipline:/);
+  assert.doesNotMatch(stripped, /price_per_lesson:/);
+  assert.doesNotMatch(stripped, /availability:\s/);
 });
 
-test("onboarding: persists draft to localStorage so the teacher can save and resume", () => {
-  assert.match(onboardingSrc, /pratiqo-teacher-launch-draft:/);
-  assert.match(onboardingSrc, /pratiqo-teacher-launch-started:/);
-  assert.match(onboardingSrc, /localStorage\.setItem\(/);
-  assert.match(onboardingSrc, /localStorage\.getItem\(/);
+test("onboarding: redirects to profile management setup after minimal creation", () => {
+  assert.match(onboardingSrc, /SETUP_DESTINATION\s*=\s*"\/teacher\/verification\?setup=1"/);
+  assert.match(onboardingSrc, /router\.replace\(SETUP_DESTINATION\)/);
 });
 
-test("onboarding: AI assistant toggle exists on the bio step", () => {
-  assert.match(onboardingSrc, /data-testid="teacher-launch-ai-toggle"/);
-  assert.match(onboardingSrc, /<ProfileAiAssistant\b/);
-});
-
-test("onboarding: final save validates required fields even when earlier steps were skipped", () => {
+test("onboarding: no full-profile widgets remain in first onboarding", () => {
   const stripped = stripJsComments(onboardingSrc);
-  assert.match(stripped, /getTeacherOnboardingMissingFields\(/);
-  assert.match(stripped, /teacherOnboardingMissingFields/);
-  assert.match(stripped, /if \(missingFields\.length > 0\)/);
+  assert.doesNotMatch(stripped, /ProfileAiAssistant/);
+  assert.doesNotMatch(stripped, /TeacherHourlyRatePreview/);
+  assert.doesNotMatch(stripped, /MarketWaitlistCard/);
+  assert.doesNotMatch(stripped, /parseGooglePlace/);
+  assert.doesNotMatch(stripped, /google\.maps\.places\.Autocomplete/);
 });
 
 // ---------------------------------------------------------------------------
@@ -183,6 +169,12 @@ test("teacher account view: exposes the AI assistant outside first onboarding", 
   assert.match(accountSrc, /<ProfileAiAssistant\b/);
 });
 
+test("profile management page: exposes ProfileAiAssistant after minimal onboarding", () => {
+  assert.match(verificationSrc, /ProfileAiAssistant/);
+  assert.match(verificationSrc, /data-testid="teacher-profile-mgmt-ai-toggle"/);
+  assert.match(verificationSrc, /<ProfileAiAssistant\b/);
+});
+
 // ---------------------------------------------------------------------------
 // 4. /teacher/verification — Teacher profile management hub
 // ---------------------------------------------------------------------------
@@ -230,7 +222,18 @@ test("DiplomaStep: no longer references verificationLevel3Title or verificationL
 // ---------------------------------------------------------------------------
 
 const REQUIRED_KEYS = [
-  // Launch Center (onboarding wizard)
+  // Minimal teacher setup
+  "teacherMinimalSetupEyebrow",
+  "teacherMinimalSetupTitle",
+  "teacherMinimalSetupSubtitle",
+  "teacherMinimalSetupDisplayName",
+  "teacherMinimalSetupConsent",
+  "teacherMinimalSetupNextStep",
+  "teacherMinimalSetupSubmit",
+  "teacherMinimalSetupNameRequired",
+  "teacherMinimalSetupConsentRequired",
+  "teacherMinimalSetupRequired",
+  // Legacy launch/setup keys retained for existing surfaces
   "teacherLaunchHeroEyebrow",
   "teacherLaunchHeroTitle",
   "teacherLaunchHeroBody",
