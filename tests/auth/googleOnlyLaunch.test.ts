@@ -54,6 +54,9 @@ test("login page uses the canonical localized Google button copy, not a hardcode
   const page = read("app/login/page.tsx");
   assert.match(page, /t\("loginContinueWithGoogle"\)/);
   assert.match(page, /t\("loginWorking"\)/);
+  assert.match(page, /forceAccountSelection:\s*true/);
+  assert.doesNotMatch(page, /loginWrongGoogleAccountPrompt/);
+  assert.doesNotMatch(page, /loginChangeGoogleAccount/);
   assert.doesNotMatch(page, /"Se connecter avec Google"/);
   assert.doesNotMatch(page, /"Connexion…"/);
 });

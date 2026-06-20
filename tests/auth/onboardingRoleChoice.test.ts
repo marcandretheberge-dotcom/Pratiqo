@@ -184,9 +184,9 @@ test("connexion page exists outside AuthenticatedShell", () => {
 
 test("connexion skips role chooser when intent is already in the URL", () => {
   const src = read("app/connexion/page.tsx");
-  assert.match(src, /if \(!highlightIntent\) return/);
+  assert.match(src, /if \(!highlightIntent \|\| user\) return/);
   assert.match(src, /router\.replace\(buildLoginHrefFromConnexion/);
-  assert.match(src, /if \(highlightIntent\)[\s\S]*?Redirection/);
+  assert.match(src, /if \(highlightIntent && !user\)[\s\S]*?Redirection/);
 });
 
 test("login page does not render the full Apprenant/Professeur chooser", () => {
@@ -255,12 +255,14 @@ test("auth callback clears pending cookies after final redirect is chosen", () =
   );
 });
 
-test("login page redirects to connexion when no pre-auth intent", () => {
+test("login page supports generic Google login and path changes only after pre-auth intent", () => {
   const src = read("app/login/page.tsx");
   assert.match(src, /CONNEXION_PATH/);
   assert.match(src, /resolvePreAuthIntent/);
+  assert.match(src, /const loginIntent: PreAuthOnboardingIntent = preAuthIntent \?\? "learner"/);
   assert.match(src, /setPendingOnboardingIntentCookie/);
-  assert.match(src, /window\.location\.assign/);
+  assert.doesNotMatch(src, /router\.replace\(qs \? `\$\{CONNEXION_PATH\}/);
+  assert.match(src, /preAuthIntent \? \(/);
 });
 
 test("auth callback applies pre-auth intent patch and clears pending cookies on direct redirects", () => {
@@ -271,9 +273,13 @@ test("auth callback applies pre-auth intent patch and clears pending cookies on 
   assert.match(src, /resolveOAuthCallbackRedirect/);
 });
 
-test("login page skips duplicate choose-role when pre-auth intent is present", () => {
+test("login page delegates post-auth sessions to explicit connected-state actions", () => {
   const src = read("app/login/page.tsx");
-  assert.match(src, /resolveOAuthCallbackRedirect/);
+  assert.match(src, /resolveAuthenticatedLoginDestination/);
+  assert.match(src, /loginAlreadyConnectedTitle/);
+  assert.match(src, /loginContinueDashboard/);
+  assert.match(src, /loginSignOut/);
+  assert.doesNotMatch(src, /AuthHandoffScreen/);
 });
 
 test("AuthenticatedShell keeps unconfirmed students on role-choice instead of companion", () => {
@@ -358,10 +364,11 @@ test("landing auth gate shows handoff screen during active pending onboarding in
   assert.match(handoff, /hasPendingTeacherIntentClient/);
 });
 
-test("login handoff uses shared auth handoff screen", () => {
+test("login page no longer hides existing sessions behind auth handoff", () => {
   const src = read("app/login/page.tsx");
-  assert.match(src, /AuthHandoffScreen/);
-  assert.doesNotMatch(src, /Connexion en cours/);
+  assert.match(src, /loginAlreadyConnectedTitle/);
+  assert.match(src, /resolveAuthenticatedLoginDestination/);
+  assert.doesNotMatch(src, /AuthHandoffScreen/);
 });
 
 test("landing auth gate resumes pending onboarding intent for authenticated users", () => {
@@ -370,10 +377,13 @@ test("landing auth gate resumes pending onboarding intent for authenticated user
   assert.match(src, /buildLoginHrefAfterOAuth/);
 });
 
-test("connexion skips role chooser for authenticated users with confirmed role", () => {
+test("connexion shows a connected-state panel for authenticated users", () => {
   const src = read("app/connexion/page.tsx");
-  assert.match(src, /needsOnboardingRoleChoice/);
-  assert.match(src, /resolvePostAuthRedirect/);
+  assert.match(src, /resolveAuthenticatedLoginDestination/);
+  assert.match(src, /loginAlreadyConnectedTitle/);
+  assert.match(src, /loginContinueDashboard/);
+  assert.match(src, /loginSignOut/);
+  assert.doesNotMatch(src, /needsOnboardingRoleChoice/);
 });
 
 test("teacher-intent fallback choose-role path still exists", () => {
@@ -422,11 +432,11 @@ test("first learner OAuth handoff resolves to companion not landing", () => {
   );
 });
 
-test("login handoff refuses root fallback for consumed intent", () => {
+test("login connected-state clears pending onboarding cookies before continuing", () => {
   const src = read("app/login/page.tsx");
-  assert.match(src, /refusing-root-fallback/);
-  assert.match(src, /fetchProfileForHandoff/);
-  assert.match(src, /AuthHandoffScreen/);
+  assert.match(src, /clearPendingOnboardingIntentCookie/);
+  assert.match(src, /clearPendingTeacherOnboardingCookie/);
+  assert.match(src, /router\.replace\(authenticatedDestination\)/);
 });
 
 test("AuthenticatedShell never sends unresolved roles to legacy /onboarding", () => {

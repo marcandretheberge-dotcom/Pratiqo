@@ -4,175 +4,57 @@ import React, { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { LogIn } from "lucide-react";
-import { cn } from "../../lib/utils";
 import PratiqoLogo from "../../components/PratiqoLogo";
 import { LocaleSwitcher } from "../../components/LocaleSwitcher";
-import { loginWithGoogle } from "../../lib/auth";
-import type { ProfileRole } from "../../lib/auth/postAuthRedirect";
-import { guardAuthRedirectPath, resolveOAuthCallbackRedirect } from "../../lib/auth/oauthCallbackRedirect";
-import { mergeOnboardingRoleConfirmedDashboard } from "../../lib/auth/onboardingRoleChoice";
+import { useAuth } from "../../components/AuthProvider";
+import { loginWithGoogle, logout } from "../../lib/auth";
+import { resolveAuthenticatedLoginDestination } from "../../lib/auth/authenticatedLoginDestination";
+import { clearPendingOnboardingIntentCookie, setPendingOnboardingIntentCookie } from "../../lib/auth/pendingOnboardingIntent";
+import { clearPendingTeacherOnboardingCookie, setPendingTeacherOnboardingCookie } from "../../lib/auth/pendingTeacherIntent";
 import {
-  primaryRoleForPreAuthIntent,
+  CONNEXION_PATH,
   resolveLoginOAuthNextPath,
   resolvePreAuthIntent,
-  CONNEXION_PATH,
+  type PreAuthOnboardingIntent,
 } from "../../lib/auth/preAuthOnboardingIntent";
-import {
-  clearPendingOnboardingIntentCookie,
-  setPendingOnboardingIntentCookie,
-} from "../../lib/auth/pendingOnboardingIntent";
-import {
-  clearPendingTeacherOnboardingCookie,
-  setPendingTeacherOnboardingCookie,
-} from "../../lib/auth/pendingTeacherIntent";
-import { useAuth } from "../../components/AuthProvider";
 import { useLocale } from "../../lib/locale-context";
-import { getSupabaseClient } from "../../lib/supabase";
-import { sanitizeRelativeRedirectPath } from "../../lib/auth/redirects";
-import { AuthHandoffScreen } from "../../components/marketing/AuthHandoffScreen";
-import { logAuthFlowDecision } from "../../lib/auth/authFlowDiagnostics";
-import {
-  readPendingOnboardingIntentClient,
-} from "../../lib/auth/pendingOnboardingIntent";
-
-async function fetchProfileForHandoff(
-  userId: string,
-  maxAttempts = 8,
-): Promise<{
-  role?: string | null;
-  teacher_onboarding_complete?: boolean | null;
-  companion_chosen?: boolean | null;
-  dashboard?: unknown;
-} | null> {
-  const supabase = getSupabaseClient();
-  for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    const { data: profileRow } = await supabase
-      .from("profiles")
-      .select("role, teacher_onboarding_complete, companion_chosen, dashboard")
-      .eq("id", userId)
-      .maybeSingle();
-    if (profileRow) return profileRow as {
-      role?: string | null;
-      teacher_onboarding_complete?: boolean | null;
-      companion_chosen?: boolean | null;
-      dashboard?: unknown;
-    };
-    await new Promise((resolve) => setTimeout(resolve, 200 * (attempt + 1)));
-  }
-  return null;
-}
+import { cn } from "../../lib/utils";
 
 function LoginForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { user, loading } = useAuth();
+  const { user, loading, profile, profileHydrated } = useAuth();
+  const { t } = useLocale();
+  const [legalAccepted, setLegalAccepted] = useState(false);
+  const [busy, setBusy] = useState(false);
+
   const intentParam = searchParams.get("intent");
   const roleParam = searchParams.get("role");
   const nextParam = searchParams.get("next");
   const refCode = searchParams.get("ref") ?? undefined;
   const authError = searchParams.get("auth_error");
   const preAuthIntent = resolvePreAuthIntent(intentParam, roleParam, nextParam);
-  const oauthNext = resolveLoginOAuthNextPath(roleParam, nextParam, preAuthIntent);
+  const loginIntent: PreAuthOnboardingIntent = preAuthIntent ?? "learner";
+  const oauthNext = resolveLoginOAuthNextPath(roleParam, nextParam, loginIntent);
+  const authenticatedDestination = resolveAuthenticatedLoginDestination(profile, nextParam);
 
   useEffect(() => {
-    if (loading || user) return;
-    if (!preAuthIntent) {
-      const params = new URLSearchParams();
-      const safeNext = sanitizeRelativeRedirectPath(nextParam);
-      if (safeNext) params.set("next", safeNext);
-      if (refCode) params.set("ref", refCode);
-      const qs = params.toString();
-      router.replace(qs ? `${CONNEXION_PATH}?${qs}` : CONNEXION_PATH);
-    }
-  }, [loading, user, preAuthIntent, nextParam, refCode, router]);
-
-  useEffect(() => {
-    if (!preAuthIntent) return;
+    if (loading || user || !preAuthIntent) return;
     setPendingOnboardingIntentCookie(preAuthIntent);
     if (preAuthIntent === "teacher") {
       setPendingTeacherOnboardingCookie(oauthNext);
     }
-  }, [preAuthIntent, oauthNext]);
+  }, [loading, user, preAuthIntent, oauthNext]);
 
-  useEffect(() => {
-    if (loading || !user || !preAuthIntent) return;
-
-    let cancelled = false;
-    void (async () => {
-      const pendingCookie = readPendingOnboardingIntentClient();
-      logAuthFlowDecision("login-handoff", {
-        path: "/login",
-        sessionPresent: true,
-        userIdPresent: Boolean(user.id),
-        incomingIntent: preAuthIntent,
-        pendingIntentCookie: pendingCookie ?? "none",
-        safeNext: oauthNext,
-      });
-
-      const profile = await fetchProfileForHandoff(user.id);
-
-      if (cancelled) return;
-
-      const effectiveRole: ProfileRole = primaryRoleForPreAuthIntent(preAuthIntent, profile?.role);
-
-      const redirectPath = guardAuthRedirectPath(
-        resolveOAuthCallbackRedirect({
-          intent: preAuthIntent,
-          next: oauthNext,
-          role: effectiveRole,
-          profile: profile
-            ? {
-                teacher_onboarding_complete: profile.teacher_onboarding_complete,
-                companion_chosen: profile.companion_chosen,
-                dashboard: mergeOnboardingRoleConfirmedDashboard(profile.dashboard),
-              }
-            : null,
-        }),
-        preAuthIntent,
-      );
-
-      let destination = redirectPath;
-
-      logAuthFlowDecision("login-handoff", {
-        profileRowPresent: Boolean(profile),
-        profileRole: profile?.role ?? "null",
-        effectiveRole,
-        redirect: destination,
-        profileMissingUsedOauthNext: !profile && destination === oauthNext,
-      });
-
-      if (destination === "/" || destination === "") {
-        logAuthFlowDecision("login-handoff", { error: "refusing-root-fallback" });
-        return;
-      }
-
-      clearPendingOnboardingIntentCookie();
-      clearPendingTeacherOnboardingCookie();
-      window.location.assign(destination);
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [loading, user, oauthNext, preAuthIntent]);
-
-  const { t } = useLocale();
-  const [legalAccepted, setLegalAccepted] = useState(false);
-  const [busy, setBusy] = useState(false);
-
-  if (user && preAuthIntent) {
-    return <AuthHandoffScreen />;
-  }
-
-  const handleLogin = async (options?: { forceAccountSelection?: boolean }) => {
-    if (!legalAccepted || busy || !preAuthIntent) return;
+  const handleLogin = async () => {
+    if (!legalAccepted || busy) return;
     setBusy(true);
     try {
       await loginWithGoogle(oauthNext, {
-        intent: preAuthIntent,
-        intentQuery: intentParam === "student" ? "student" : preAuthIntent,
+        intent: loginIntent,
+        intentQuery: intentParam === "student" ? "student" : loginIntent,
         referralCode: refCode,
-        forceAccountSelection: options?.forceAccountSelection,
+        forceAccountSelection: true,
       });
     } catch (e) {
       console.error(e);
@@ -182,13 +64,26 @@ function LoginForm() {
     }
   };
 
-  if (!preAuthIntent && !user) {
-    return (
-      <div className="min-h-[50vh] flex items-center justify-center text-sm text-[var(--p-text-muted)]">
-        Redirection…
-      </div>
-    );
-  }
+  const handleContinue = () => {
+    clearPendingOnboardingIntentCookie();
+    clearPendingTeacherOnboardingCookie();
+    router.replace(authenticatedDestination);
+  };
+
+  const handleSignOut = async () => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      clearPendingOnboardingIntentCookie();
+      clearPendingTeacherOnboardingCookie();
+      await logout();
+      router.replace("/");
+    } catch (e) {
+      console.error(e);
+      alert("Déconnexion impossible. Réessaie dans un instant.");
+      setBusy(false);
+    }
+  };
 
   return (
     <div className="min-h-[100dvh] bg-[#FAFCFB]">
@@ -218,92 +113,124 @@ function LoginForm() {
 
       <div className="flex flex-col items-center justify-center px-5 py-12">
         <div className="w-full max-w-md rounded-3xl border border-[var(--p-border-light)] bg-white p-8 sm:p-10 shadow-[0_24px_80px_rgba(15,110,86,0.08)]">
-          <div className="flex justify-center mb-8">
+          <div className="mb-8 flex justify-center">
             <PratiqoLogo variant="full" size="md" />
           </div>
 
           {authError ? (
-            <p className="text-center text-sm font-semibold text-red-700 bg-red-500/10 rounded-2xl px-4 py-3 mb-6">
+            <p className="mb-6 rounded-2xl bg-red-500/10 px-4 py-3 text-center text-sm font-semibold text-red-700">
               {t("loginAuthErrorSession")}
             </p>
           ) : null}
 
-          {preAuthIntent === "learner" ? (
-            <div className="mb-6 rounded-2xl border border-teal-600/20 bg-teal-500/10 px-4 py-4 text-center">
-              <p className="text-sm font-bold text-teal-800">{t("loginIntentLearnerTitle")}</p>
-              <p className="mt-2 text-sm text-teal-900/80 leading-relaxed">{t("loginIntentContinueHint")}</p>
+          {loading || (user && !profileHydrated) ? (
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm font-semibold text-[var(--p-text-muted)]">
+              {t("loadingAccount")}
             </div>
-          ) : null}
+          ) : user ? (
+            <div className="text-center">
+              <h1 className="text-2xl font-bold text-[var(--p-text)]">{t("loginAlreadyConnectedTitle")}</h1>
+              <p className="mt-3 text-sm leading-relaxed text-[var(--p-text-muted)]">
+                {t("loginAlreadyConnectedBody")}
+              </p>
 
-          {preAuthIntent === "teacher" ? (
-            <div className="mb-6 rounded-2xl border border-teal-600/20 bg-teal-500/10 px-4 py-4 text-center">
-              <p className="text-sm font-bold text-teal-800">{t("loginIntentTeacherTitle")}</p>
-              <p className="mt-2 text-sm text-teal-900/80 leading-relaxed">{t("loginIntentContinueHint")}</p>
+              <div className="mt-7 grid gap-3">
+                <button
+                  type="button"
+                  onClick={handleContinue}
+                  className="h-12 rounded-2xl bg-teal-700 px-4 text-sm font-bold text-white transition hover:brightness-[0.98]"
+                >
+                  {t("loginContinueDashboard")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handleSignOut()}
+                  disabled={busy}
+                  className="h-12 rounded-2xl border border-slate-200 bg-white px-4 text-sm font-bold text-teal-800 transition hover:bg-teal-50 disabled:cursor-not-allowed disabled:opacity-45"
+                >
+                  {busy ? t("loginWorking") : t("loginSignOut")}
+                </button>
+              </div>
+
+              <p className="mt-5 text-sm text-[var(--p-text-muted)]">
+                <Link href="/" className="font-semibold text-teal-700 hover:underline">
+                  ← {t("loginReturnHome")}
+                </Link>
+              </p>
             </div>
-          ) : null}
+          ) : (
+            <>
+              <h1 className="mb-6 text-center text-2xl font-bold text-[var(--p-text)]">
+                {t("loginAccountTitle")}
+              </h1>
 
-          <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 mb-4">
-            <input
-              type="checkbox"
-              checked={legalAccepted}
-              onChange={(e) => setLegalAccepted(e.target.checked)}
-              className="mt-1 h-4 w-4 shrink-0 rounded border-slate-300 text-teal-700 focus:ring-2 focus:ring-teal-500"
-            />
-            <span className="text-sm font-semibold text-[var(--p-text)] leading-snug">
-              {t("loginAcceptTermsLabel")}
-            </span>
-          </label>
+              {preAuthIntent === "learner" ? (
+                <div className="mb-6 rounded-2xl border border-teal-600/20 bg-teal-500/10 px-4 py-4 text-center">
+                  <p className="text-sm font-bold text-teal-800">{t("loginIntentLearnerTitle")}</p>
+                  <p className="mt-2 text-sm leading-relaxed text-teal-900/80">{t("loginIntentContinueHint")}</p>
+                </div>
+              ) : null}
 
-          <p className="text-xs text-[var(--p-text-muted)] mb-6 text-center leading-relaxed">
-            {t("loginContinueAccept")}{" "}
-            <Link href="/legal/cgu" className="font-semibold text-teal-700 underline underline-offset-2">
-              {t("footerTerms")}
-            </Link>{" "}
-            {t("loginConsentAnd")}{" "}
-            <Link href="/legal/confidentialite" className="font-semibold text-teal-700 underline underline-offset-2">
-              {t("loginPrivacyPolicy")}
-            </Link>
-            .
-          </p>
+              {preAuthIntent === "teacher" ? (
+                <div className="mb-6 rounded-2xl border border-teal-600/20 bg-teal-500/10 px-4 py-4 text-center">
+                  <p className="text-sm font-bold text-teal-800">{t("loginIntentTeacherTitle")}</p>
+                  <p className="mt-2 text-sm leading-relaxed text-teal-900/80">{t("loginIntentContinueHint")}</p>
+                </div>
+              ) : null}
 
-          <button
-            type="button"
-            disabled={!legalAccepted || busy}
-            onClick={() => void handleLogin()}
-            className={cn(
-              "w-full h-12 rounded-2xl text-sm font-bold text-white flex items-center justify-center gap-2 transition-all",
-              "bg-teal-600 hover:brightness-[0.98] disabled:cursor-not-allowed disabled:opacity-45",
-            )}
-          >
-            <LogIn size={18} />
-            {busy ? t("loginWorking") : t("loginContinueWithGoogle")}
-          </button>
+              <label className="mb-4 flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                <input
+                  type="checkbox"
+                  checked={legalAccepted}
+                  onChange={(e) => setLegalAccepted(e.target.checked)}
+                  className="mt-1 h-4 w-4 shrink-0 rounded border-slate-300 text-teal-700 focus:ring-2 focus:ring-teal-500"
+                />
+                <span className="text-sm font-semibold leading-snug text-[var(--p-text)]">
+                  {t("loginAcceptTermsLabel")}
+                </span>
+              </label>
 
-          <div className="mt-4 text-center">
-            <p className="text-xs font-medium text-[var(--p-text-muted)]">
-              {t("loginWrongGoogleAccountPrompt")}
-            </p>
-            <button
-              type="button"
-              disabled={!legalAccepted || busy}
-              onClick={() => void handleLogin({ forceAccountSelection: true })}
-              className="mt-1 text-sm font-bold text-teal-700 underline underline-offset-4 transition hover:text-teal-900 disabled:cursor-not-allowed disabled:opacity-45"
-            >
-              {t("loginChangeGoogleAccount")}
-            </button>
-          </div>
+              <p className="mb-6 text-center text-xs leading-relaxed text-[var(--p-text-muted)]">
+                {t("loginContinueAccept")}{" "}
+                <Link href="/legal/cgu" className="font-semibold text-teal-700 underline underline-offset-2">
+                  {t("footerTerms")}
+                </Link>{" "}
+                {t("loginConsentAnd")}{" "}
+                <Link href="/legal/confidentialite" className="font-semibold text-teal-700 underline underline-offset-2">
+                  {t("loginPrivacyPolicy")}
+                </Link>
+                .
+              </p>
 
-          <p className="mt-6 text-center text-sm text-[var(--p-text-muted)]">
-            <Link href={CONNEXION_PATH} className="font-semibold text-teal-700 hover:underline">
-              ← Changer de parcours
-            </Link>
-          </p>
+              <button
+                type="button"
+                disabled={!legalAccepted || busy}
+                onClick={() => void handleLogin()}
+                className={cn(
+                  "flex h-12 w-full items-center justify-center gap-2 rounded-2xl text-sm font-bold text-white transition-all",
+                  "bg-teal-600 hover:brightness-[0.98] disabled:cursor-not-allowed disabled:opacity-45",
+                )}
+              >
+                <LogIn size={18} />
+                {busy ? t("loginWorking") : t("loginContinueWithGoogle")}
+              </button>
 
-          <p className="mt-4 text-center text-sm text-[var(--p-text-muted)]">
-            <Link href="/" className="font-semibold text-teal-700 hover:underline">
-              ← Retour à l&apos;accueil
-            </Link>
-          </p>
+              {preAuthIntent ? (
+                <p className="mt-6 text-center text-sm text-[var(--p-text-muted)]">
+                  <Link href={CONNEXION_PATH} className="font-semibold text-teal-700 hover:underline">
+                    ← {t("loginChangePath")}
+                  </Link>
+                  <span className="mt-1 block text-xs">{t("loginChangePathHelper")}</span>
+                </p>
+              ) : null}
+
+              <p className="mt-4 text-center text-sm text-[var(--p-text-muted)]">
+                <Link href="/" className="font-semibold text-teal-700 hover:underline">
+                  ← {t("loginReturnHome")}
+                </Link>
+              </p>
+            </>
+          )}
         </div>
       </div>
     </div>
@@ -314,7 +241,9 @@ export default function LoginPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-[50vh] flex items-center justify-center text-sm text-[var(--p-text-muted)]">Chargement…</div>
+        <div className="flex min-h-[50vh] items-center justify-center text-sm text-[var(--p-text-muted)]">
+          Chargement…
+        </div>
       }
     >
       <LoginForm />
