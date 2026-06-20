@@ -3,9 +3,11 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
+import { StudentOnboardingConsentGate } from "@/components/student/StudentOnboardingConsentGate";
 import { useLocale } from "@/lib/locale-context";
 import type { CompanionType } from "@/lib/companions";
 import { COMPANIONS, getCompanionStage } from "@/lib/companions";
+import { hasStudentOnboardingConsent } from "@/lib/auth/studentOnboardingConsent";
 import { getSupabaseClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -21,13 +23,13 @@ function isCompanionType(value: unknown): value is CompanionType {
 }
 
 export default function ChooseCompanionPage() {
-  const { user, loading, profile, profileHydrated, profileSyncError, retryProfileSync, refreshProfile, mergeAuthProfile } = useAuth();
+  const { user, loading, profile, profileHydrated, profileSyncError, retryProfileSync } = useAuth();
   const { locale, t } = useLocale();
 
   const [selected, setSelected] = useState<CompanionType>("phoenix");
-  const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [state, setState] = useState<"choose" | "animating" | "done">("choose");
+  const [showConsentGate, setShowConsentGate] = useState(false);
   const [showCards, setShowCards] = useState(true);
   const [currentStageIndex, setCurrentStageIndex] = useState(0);
   const [bounce, setBounce] = useState(false);
@@ -36,9 +38,17 @@ export default function ChooseCompanionPage() {
   useEffect(() => {
     if (loading || !profileHydrated) return;
     if (profile?.companion_chosen === true) {
-      router.replace("/dashboard");
+      router.replace(hasStudentOnboardingConsent(profile) ? "/dashboard" : "/student/consent");
     }
-  }, [loading, profileHydrated, profile?.companion_chosen, router]);
+  }, [
+    loading,
+    profile,
+    profileHydrated,
+    profile?.companion_chosen,
+    profile?.student_onboarding_consent_completed_at,
+    profile?.student_onboarding_consent_version,
+    router,
+  ]);
 
   useEffect(() => {
     if (loading || !user) return;
@@ -74,57 +84,10 @@ export default function ChooseCompanionPage() {
     return s.emoji;
   }, [stages, currentStageIndex]);
 
-  const handleStart = async () => {
-    if (!user) return;
-    setSaving(true);
-    setSaveError(null);
-    try {
-      const supabase = getSupabaseClient();
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      const res = await fetch("/api/companion", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
-        },
-        body: JSON.stringify({ companionType: selected }),
-      });
-      if (!res.ok) {
-        const message = await res.text().catch(() => "");
-        setSaveError(message || t("companionSaveError"));
-        return;
-      }
-      const payload = (await res.json().catch(() => null)) as {
-        ok?: boolean;
-        profile?: {
-          id?: string;
-          role?: string | null;
-          companion_type?: string | null;
-          companion_chosen?: boolean | null;
-          dashboard?: unknown;
-        };
-      } | null;
-      if (payload?.profile) {
-        mergeAuthProfile({
-          id: payload.profile.id,
-          role: payload.profile.role,
-          companion_type: payload.profile.companion_type,
-          companion_chosen: payload.profile.companion_chosen === true,
-          dashboard: payload.profile.dashboard,
-        });
-      } else {
-        void refreshProfile();
-      }
-      router.replace("/dashboard");
-    } finally {
-      setSaving(false);
-    }
-  };
-
   const startAdventure = async () => {
-    await handleStart();
+    if (!user) return;
+    setSaveError(null);
+    setShowConsentGate(true);
   };
 
   useEffect(() => {
@@ -181,6 +144,16 @@ export default function ChooseCompanionPage() {
       }}
     >
       <div className="max-w-3xl mx-auto px-4 sm:px-6">
+        {showConsentGate ? (
+          <div className="fixed inset-0 z-[80] flex items-center justify-center overflow-y-auto bg-slate-950/45 px-4 py-6 backdrop-blur-sm">
+            <StudentOnboardingConsentGate
+              companionType={selected}
+              framed={false}
+              onBack={() => setShowConsentGate(false)}
+              onSuccess={() => router.replace("/dashboard")}
+            />
+          </div>
+        ) : null}
         <Link
           href="/profile"
           aria-label={localizedText(locale, "Retour", "Back", "Volver")}
@@ -256,10 +229,8 @@ export default function ChooseCompanionPage() {
                   setState("animating");
                   setTimeout(() => setShowCards(false), 300);
                 }}
-                disabled={saving}
                 className={cn(
                   "rounded-xl px-5 py-3 text-sm font-bold text-white bg-teal-600 hover:bg-[#178C67] transition-all",
-                  saving && "opacity-70 cursor-not-allowed",
                 )}
                 style={{ transition: "all 0.2s" }}
               >
@@ -376,10 +347,8 @@ export default function ChooseCompanionPage() {
               <button
                 type="button"
                 onClick={startAdventure}
-                disabled={saving}
                 className={cn(
                   "rounded-xl px-5 py-3 text-sm font-bold text-white bg-teal-600 hover:bg-[#178C67] transition-all",
-                  saving && "opacity-70 cursor-not-allowed",
                 )}
               >
                 Commencer l&apos;aventure →

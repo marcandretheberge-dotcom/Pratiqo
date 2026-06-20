@@ -31,6 +31,8 @@ type AuthProfile = Record<string, unknown> & {
   teacher_onboarding_complete?: boolean | null;
   companion_type?: string | null;
   companion_chosen?: boolean | null;
+  student_onboarding_consent_completed_at?: string | null;
+  student_onboarding_consent_version?: string | null;
   country_code?: string | null;
   timezone?: string | null;
   currency?: string | null;
@@ -116,6 +118,8 @@ function profileFromRow(existing: Record<string, unknown>, savedLocation: Studen
     ...dash,
     companion_type: stringOrNull(ext.companion_type),
     companion_chosen: typeof ext.companion_chosen === "boolean" ? ext.companion_chosen : null,
+    student_onboarding_consent_completed_at: stringOrNull(ext.student_onboarding_consent_completed_at),
+    student_onboarding_consent_version: stringOrNull(ext.student_onboarding_consent_version),
     country_code: stringOrNull(ext.country_code),
     timezone: stringOrNull(ext.timezone),
     currency: stringOrNull(ext.currency),
