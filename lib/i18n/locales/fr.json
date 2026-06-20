@@ -744,6 +744,7 @@
   "loginIntentLearnerTitle": "Connexion comme apprenant",
   "loginIntentTeacherTitle": "Connexion comme professeur",
   "loginNoAccountPrompt": "Pas encore de compte?",
+  "loginOrDivider": "ou",
   "loginOtherWays": "Autres façons de se connecter",
   "loginPasswordLabel": "Mot de passe",
   "loginPasswordMinimum": "Le mot de passe doit contenir au moins 8 caractères.",

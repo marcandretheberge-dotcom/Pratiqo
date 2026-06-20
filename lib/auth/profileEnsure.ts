@@ -28,7 +28,9 @@ type ExistingProfile = {
 };
 
 export function parseProfileEnsureIntent(value: unknown): PreAuthOnboardingIntent | null {
-  return value === "teacher" || value === "learner" ? value : null;
+  if (value === "teacher") return "teacher";
+  if (value === "learner" || value === "student") return "learner";
+  return null;
 }
 
 export function displayNameForAuthProfile(user: Pick<User, "email" | "user_metadata">): string | null {

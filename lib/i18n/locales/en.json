@@ -744,6 +744,7 @@
   "loginIntentLearnerTitle": "Signing in as a learner",
   "loginIntentTeacherTitle": "Signing in as a teacher",
   "loginNoAccountPrompt": "No account yet?",
+  "loginOrDivider": "or",
   "loginOtherWays": "Other ways to connect",
   "loginPasswordLabel": "Password",
   "loginPasswordMinimum": "Password must be at least 8 characters.",

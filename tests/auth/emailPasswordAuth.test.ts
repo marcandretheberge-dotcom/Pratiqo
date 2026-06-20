@@ -96,8 +96,59 @@ test("standard login page renders email-password auth without replacing Google",
   assert.match(page, /loginRememberMe/);
   assert.match(page, /loginContinueWithGoogle/);
   assert.match(page, /loginChangeGoogleAccount/);
+  assert.match(page, /data-testid="login-email-password-form"/);
+  assert.match(page, /data-testid="login-email-input"/);
+  assert.match(page, /data-testid="login-password-input"/);
+  assert.match(page, /data-testid="login-google-button"/);
+  assert.match(page, /data-testid="login-change-google-button"/);
   assert.doesNotMatch(page, /if \(!preAuthIntent && !user\)/);
   assert.doesNotMatch(page, /router\.replace\(qs \? `\$\{CONNEXION_PATH\}/);
+});
+
+function assertLoginPageShowsEmailBeforeGoogle(page: string) {
+  const emailIdx = page.indexOf('data-testid="login-email-input"');
+  const googleIdx = page.indexOf('data-testid="login-google-button"');
+  assert.ok(emailIdx >= 0, "login page must render email input");
+  assert.ok(googleIdx >= 0, "login page must render Google button");
+  assert.ok(emailIdx < googleIdx, "email/password form must appear before Google login");
+}
+
+function assertLoginPageNotHiddenOnMobile(page: string) {
+  const formBlock = page.slice(
+    page.indexOf('data-testid="login-email-password-form"'),
+    page.indexOf('data-testid="login-google-button"'),
+  );
+  assert.doesNotMatch(formBlock, /\bhidden\b/);
+  assert.doesNotMatch(formBlock, /sm:hidden/);
+  assert.doesNotMatch(formBlock, /md:hidden/);
+  assert.doesNotMatch(formBlock, /display:\s*none/);
+}
+
+test("/login renders email and password fields before Google", () => {
+  const page = read("app/login/page.tsx");
+  assertLoginPageShowsEmailBeforeGoogle(page);
+  assertLoginPageNotHiddenOnMobile(page);
+  assert.match(page, /type="email"/);
+  assert.match(page, /type="password"/);
+});
+
+test("/login?intent=teacher and /login?intent=student use the same email-password form", () => {
+  const page = read("app/login/page.tsx");
+  assert.match(page, /resolvePreAuthIntent\(intentParam, roleParam, nextParam\)/);
+  assert.match(page, /preAuthIntent === "teacher"/);
+  assert.match(page, /preAuthIntent === "learner"/);
+  assertLoginPageShowsEmailBeforeGoogle(page);
+  assert.doesNotMatch(page, /if \(!preAuthIntent\) return null/);
+  assert.doesNotMatch(page, /if \(!preAuthIntent\) \{[\s\S]*return/);
+});
+
+test("email-password redirect refuses marketing homepage fallback", () => {
+  const page = read("app/login/page.tsx");
+  assert.match(page, /redirectAfterEnsuredProfile/);
+  assert.match(page, /refusing-root-fallback/);
+  assert.match(page, /window\.location\.assign\(redirectPath\)/);
+  assert.match(page, /loginCheckEmailConfirm/);
+  assert.match(page, /if \(result\.session\)/);
 });
 
 test("student intent is accepted as learner intent for login links", () => {
@@ -143,7 +194,7 @@ test("profile ensure uses schema-correct profile columns only", () => {
 test("profile ensure role resolution preserves existing protected roles", () => {
   assert.equal(parseProfileEnsureIntent("teacher"), "teacher");
   assert.equal(parseProfileEnsureIntent("learner"), "learner");
-  assert.equal(parseProfileEnsureIntent("student"), null);
+  assert.equal(parseProfileEnsureIntent("student"), "learner");
   assert.equal(
     resolveEnsuredProfileRole({ intent: "teacher", existingRole: "student", email: "teacher@example.com" }),
     "teacher",
@@ -186,8 +237,64 @@ test("email-password copy exists in FR, EN, and ES dictionaries", () => {
     "loginForgotPassword",
     "loginPasswordResetSent",
     "loginRememberMe",
+    "loginOrDivider",
     "loginOtherWays",
+    "loginSwitchToSignup",
+    "loginSwitchToLogin",
+    "loginNoAccountPrompt",
+    "loginAlreadyHaveAccountPrompt",
+    "loginWrongGoogleAccountPrompt",
+    "loginChangeGoogleAccount",
+    "loginContinueWithGoogle",
+    "loginCheckEmailConfirm",
   ];
+  const localeExpectations: Record<string, Partial<Record<string, string>>> = {
+    "lib/i18n/locales/fr.json": {
+      loginEmailTitle: "Connexion",
+      loginCreateAccountTitle: "Créer un compte",
+      loginEmailLabel: "Adresse courriel",
+      loginPasswordLabel: "Mot de passe",
+      loginRememberMe: "Se souvenir de moi",
+      loginEmailSubmit: "Se connecter",
+      loginCreateAccountSubmit: "Créer mon compte",
+      loginForgotPassword: "Mot de passe oublié?",
+      loginOrDivider: "ou",
+      loginOtherWays: "Autres façons de se connecter",
+      loginContinueWithGoogle: "Continuer avec Google",
+      loginWrongGoogleAccountPrompt: "Tu utilises le mauvais compte Google?",
+      loginChangeGoogleAccount: "Changer de compte Google",
+    },
+    "lib/i18n/locales/en.json": {
+      loginEmailTitle: "Log in",
+      loginCreateAccountTitle: "Create account",
+      loginEmailLabel: "Email address",
+      loginPasswordLabel: "Password",
+      loginRememberMe: "Remember me",
+      loginEmailSubmit: "Log in",
+      loginCreateAccountSubmit: "Create my account",
+      loginForgotPassword: "Forgot password?",
+      loginOrDivider: "or",
+      loginOtherWays: "Other ways to connect",
+      loginContinueWithGoogle: "Continue with Google",
+      loginWrongGoogleAccountPrompt: "Using the wrong Google account?",
+      loginChangeGoogleAccount: "Change Google account",
+    },
+    "lib/i18n/locales/es.json": {
+      loginEmailTitle: "Iniciar sesión",
+      loginCreateAccountTitle: "Crear una cuenta",
+      loginEmailLabel: "Correo electrónico",
+      loginPasswordLabel: "Contraseña",
+      loginRememberMe: "Recordarme",
+      loginEmailSubmit: "Iniciar sesión",
+      loginCreateAccountSubmit: "Crear mi cuenta",
+      loginForgotPassword: "¿Olvidaste tu contraseña?",
+      loginOrDivider: "o",
+      loginOtherWays: "Otras formas de conectarse",
+      loginContinueWithGoogle: "Continuar con Google",
+      loginWrongGoogleAccountPrompt: "¿Estás usando la cuenta de Google incorrecta?",
+      loginChangeGoogleAccount: "Cambiar cuenta de Google",
+    },
+  };
   for (const localePath of [
     "lib/i18n/locales/fr.json",
     "lib/i18n/locales/en.json",
@@ -197,6 +304,9 @@ test("email-password copy exists in FR, EN, and ES dictionaries", () => {
     for (const key of keys) {
       assert.equal(typeof dictionary[key], "string", `${localePath} missing ${key}`);
       assert.ok(dictionary[key].trim(), `${localePath} has empty ${key}`);
+    }
+    for (const [key, expected] of Object.entries(localeExpectations[localePath] ?? {})) {
+      assert.equal(dictionary[key], expected, `${localePath} ${key} copy mismatch`);
     }
   }
 });
