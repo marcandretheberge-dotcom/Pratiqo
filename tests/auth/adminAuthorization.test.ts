@@ -15,6 +15,11 @@ type TestFn = () => void | Promise<void>;
 
 const tests: Array<{ name: string; fn: TestFn }> = [];
 
+const STUDENT_CONSENT = {
+  student_onboarding_consent_completed_at: "2026-06-20T00:00:00.000Z",
+  student_onboarding_consent_version: "student_onboarding_consent_v1_2026_06",
+};
+
 function test(name: string, fn: TestFn) {
   tests.push({ name, fn });
 }
@@ -118,7 +123,7 @@ test("resolvePostAuthRedirect sends confirmed students without companion to choo
 
 test("resolvePostAuthRedirect keeps students with companion on safe next path", () => {
   assert.equal(
-    resolvePostAuthRedirect("student", { companion_chosen: true }, "/student/search"),
+    resolvePostAuthRedirect("student", { companion_chosen: true, ...STUDENT_CONSENT }, "/student/search"),
     "/student/search",
   );
 });
@@ -162,7 +167,7 @@ test("migration 061 SQL logic blocks self-promotion to admin for non-service cal
 
 test("resolvePostAuthRedirect preserves /student/progress for students with companion (email-link flow)", () => {
   assert.equal(
-    resolvePostAuthRedirect("student", { companion_chosen: true }, "/student/progress"),
+    resolvePostAuthRedirect("student", { companion_chosen: true, ...STUDENT_CONSENT }, "/student/progress"),
     "/student/progress",
   );
 });
@@ -176,11 +181,11 @@ test("resolvePostAuthRedirect funnels unconfirmed students to role-choice even w
 
 test("resolvePostAuthRedirect rejects open-redirect next for students and falls back to /dashboard", () => {
   assert.equal(
-    resolvePostAuthRedirect("student", { companion_chosen: true }, "https://evil.com"),
+    resolvePostAuthRedirect("student", { companion_chosen: true, ...STUDENT_CONSENT }, "https://evil.com"),
     "/dashboard",
   );
   assert.equal(
-    resolvePostAuthRedirect("student", { companion_chosen: true }, "//evil.com"),
+    resolvePostAuthRedirect("student", { companion_chosen: true, ...STUDENT_CONSENT }, "//evil.com"),
     "/dashboard",
   );
 });

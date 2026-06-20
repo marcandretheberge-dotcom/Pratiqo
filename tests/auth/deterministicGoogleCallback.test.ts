@@ -12,6 +12,11 @@ import { resolvePostAuthRedirect } from "@/lib/auth/postAuthRedirect";
 type TestFn = () => void | Promise<void>;
 const tests: Array<{ name: string; fn: TestFn }> = [];
 
+const STUDENT_CONSENT = {
+  student_onboarding_consent_completed_at: "2026-06-20T00:00:00.000Z",
+  student_onboarding_consent_version: "student_onboarding_consent_v1_2026_06",
+};
+
 function test(name: string, fn: TestFn) {
   tests.push({ name, fn });
 }
@@ -85,7 +90,7 @@ test("existing user without onboarding intent goes to dashboard", () => {
     intent: null,
     next: "/dashboard",
     role: "student",
-    profile: { companion_chosen: true, dashboard: { onboarding_role_confirmed: true } },
+    profile: { companion_chosen: true, dashboard: { onboarding_role_confirmed: true }, ...STUDENT_CONSENT },
   });
   assert.equal(path, "/dashboard");
   assert.notEqual(path, "/");
@@ -161,7 +166,7 @@ test("auth flow tracing is enabled on preview via shouldTraceAuthFlow", () => {
 
 test("resolvePostAuthRedirect baseline still rejects open redirects for existing users", () => {
   assert.equal(
-    resolvePostAuthRedirect("student", { companion_chosen: true }, "https://evil.com"),
+    resolvePostAuthRedirect("student", { companion_chosen: true, ...STUDENT_CONSENT }, "https://evil.com"),
     "/dashboard",
   );
 });

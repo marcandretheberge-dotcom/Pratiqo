@@ -29,6 +29,8 @@ export function resolveOAuthCallbackRedirect(input: {
   profile: {
     teacher_onboarding_complete?: boolean | null;
     companion_chosen?: boolean | null;
+    student_onboarding_consent_completed_at?: string | null;
+    student_onboarding_consent_version?: string | null;
     dashboard?: unknown;
   } | null;
 }): string {

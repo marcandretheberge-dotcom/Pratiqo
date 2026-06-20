@@ -9,6 +9,7 @@ import {
 } from "@/lib/auth/onboardingRoleChoice";
 import { hasTeacherOnboardingIntent } from "@/lib/auth/teacherOnboardingIntent";
 import type { PreAuthOnboardingIntent } from "@/lib/auth/preAuthOnboardingIntent";
+import { hasStudentOnboardingConsent } from "@/lib/auth/studentOnboardingConsent";
 
 export type ProfileRole = "student" | "teacher" | "admin";
 
@@ -22,6 +23,8 @@ export function resolvePostAuthRedirect(
   profile: {
     teacher_onboarding_complete?: boolean | null;
     companion_chosen?: boolean | null;
+    student_onboarding_consent_completed_at?: string | null;
+    student_onboarding_consent_version?: string | null;
     dashboard?: unknown;
   },
   nextPath?: string | null,
@@ -43,6 +46,9 @@ export function resolvePostAuthRedirect(
     if (profile.companion_chosen !== true) {
       return safeNext === "/student/choose-companion" ? safeNext : "/student/choose-companion";
     }
+    if (!hasStudentOnboardingConsent(profile)) {
+      return safeNext === "/student/consent" ? safeNext : "/student/consent";
+    }
     return safeNext ?? "/dashboard";
   }
 
@@ -61,5 +67,6 @@ export function resolvePostAuthRedirect(
     return safeNext ?? "/dashboard";
   }
   if (profile.companion_chosen !== true) return "/student/choose-companion";
+  if (!hasStudentOnboardingConsent(profile)) return "/student/consent";
   return safeNext ?? "/dashboard";
 }

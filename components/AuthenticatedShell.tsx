@@ -15,6 +15,7 @@ import { buildConnexionHrefForProtectedReturn } from "@/lib/auth/preAuthOnboardi
 import { logAuthFlowDecision } from "@/lib/auth/authFlowDiagnostics";
 import { readPendingOnboardingIntentClient } from "@/lib/auth/pendingOnboardingIntent";
 import { hasPendingTeacherIntentClient } from "@/lib/auth/pendingTeacherIntent";
+import { hasStudentOnboardingConsent } from "@/lib/auth/studentOnboardingConsent";
 
 const LEGAL_PREFIX = "/legal";
 
@@ -103,6 +104,20 @@ export function AuthenticatedShell({ children }: { children: React.ReactNode }) 
 
       if (profileHydrated && profile?.companion_chosen === false && pathname !== "/student/choose-companion") {
         router.replace("/student/choose-companion");
+        return;
+      }
+      const studentConsentComplete = hasStudentOnboardingConsent(profile);
+      if (
+        profileHydrated &&
+        profile?.companion_chosen === true &&
+        !studentConsentComplete &&
+        pathname !== "/student/consent"
+      ) {
+        router.replace("/student/consent");
+        return;
+      }
+      if (profileHydrated && studentConsentComplete && pathname === "/student/consent") {
+        router.replace("/dashboard");
         return;
       }
       if (profileHydrated && profile?.companion_chosen === true && pathname === "/student/choose-companion") {
