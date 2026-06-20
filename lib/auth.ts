@@ -9,6 +9,8 @@ export async function loginWithGoogle(
   redirectPath = "/dashboard",
   options?: {
     intent?: PreAuthOnboardingIntent;
+    /** Public intent query value for OAuth redirect (e.g. `student` alias). */
+    intentQuery?: string;
     role?: string;
     referralCode?: string;
     forceAccountSelection?: boolean;
@@ -16,8 +18,9 @@ export async function loginWithGoogle(
 ) {
   const supabase = getSupabaseClient();
   const origin = resolveOAuthRedirectOrigin();
+  const callbackIntent = options?.intentQuery ?? options?.intent;
   const redirectTo = buildOAuthCallbackUrl(origin, {
-    intent: options?.intent,
+    intent: callbackIntent,
     role: options?.role ?? (options?.intent === "teacher" ? "teacher" : undefined),
     next: redirectPath,
     ref: options?.referralCode,

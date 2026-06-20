@@ -1,5 +1,59 @@
 import { sanitizeRelativeRedirectPath } from "@/lib/auth/redirects";
 
+const PRODUCTION_HOSTS = new Set(["www.pratiqo.ca", "pratiqo.ca"]);
+
+function isLocalDevHost(hostname: string): boolean {
+  return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "[::1]";
+}
+
+function isVercelPreviewHost(hostname: string): boolean {
+  return hostname.endsWith(".vercel.app");
+}
+
+function isProductionHost(hostname: string): boolean {
+  return PRODUCTION_HOSTS.has(hostname);
+}
+
+/**
+ * Resolve the OAuth callback origin from the initiating browser context.
+ * Preview and local dev always stay on the current origin; production may
+ * normalize to NEXT_PUBLIC_SITE_URL when configured.
+ */
+export function resolveOAuthRedirectOriginFromHost(
+  hostname: string,
+  origin: string,
+  configuredSiteUrl?: string | null,
+): string {
+  if (isVercelPreviewHost(hostname) || isLocalDevHost(hostname)) {
+    return origin;
+  }
+
+  if (isProductionHost(hostname)) {
+    const configured = configuredSiteUrl?.trim().replace(/\/$/, "");
+    if (configured) {
+      try {
+        return new URL(configured).origin;
+      } catch {
+        /* ignore invalid env */
+      }
+    }
+    return origin;
+  }
+
+  // Custom staging domains and unknown hosts: never canonicalize to production.
+  return origin;
+}
+
+/** Prefer configured public site URL on production host; else current origin (preview/local). */
+export function resolveOAuthRedirectOrigin(): string {
+  if (typeof window === "undefined") return "";
+  return resolveOAuthRedirectOriginFromHost(
+    window.location.hostname,
+    window.location.origin,
+    process.env.NEXT_PUBLIC_SITE_URL,
+  );
+}
+
 /** Build the Supabase OAuth redirectTo URL (must be allowlisted in Supabase). */
 export function buildOAuthCallbackUrl(
   origin: string,
@@ -12,23 +66,6 @@ export function buildOAuthCallbackUrl(
   if (params.ref) qs.set("ref", params.ref);
   const base = origin.replace(/\/$/, "");
   return `${base}/auth/callback?${qs.toString()}`;
-}
-
-/** Prefer configured public site URL on production host; else current origin (preview/local). */
-export function resolveOAuthRedirectOrigin(): string {
-  if (typeof window === "undefined") return "";
-  const configured = process.env.NEXT_PUBLIC_SITE_URL?.trim().replace(/\/$/, "");
-  if (configured) {
-    try {
-      const configuredHost = new URL(configured).hostname;
-      if (window.location.hostname === configuredHost) {
-        return configured;
-      }
-    } catch {
-      /* ignore invalid env */
-    }
-  }
-  return window.location.origin;
 }
 
 export function buildLoginUrlWithAuthError(

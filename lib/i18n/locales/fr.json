@@ -726,6 +726,8 @@
   "loginAcceptTermsLabel": "J'accepte les CGU et la politique de confidentialité",
   "loginAuthErrorSession": "La connexion Google n'a pas pu être finalisée. Réessaie avec le bouton ci-dessous.",
   "loginChangeGoogleAccount": "Changer de compte Google",
+  "loginContinueWithGoogle": "Continuer avec Google",
+  "loginWorking": "Connexion…",
   "authHandoffTitle": "Connexion en cours…",
   "authHandoffSubtitle": "On te redirige vers ton espace Pratiqo.",
   "loginIntentContinueHint": "Tu pourras continuer vers ton espace après la connexion.",

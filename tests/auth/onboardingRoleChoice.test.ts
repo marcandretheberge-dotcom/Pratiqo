@@ -239,18 +239,20 @@ test("middleware redirects unauthenticated protected routes to connexion with in
   assert.doesNotMatch(src, /loginUrl\.searchParams\.set\("next"/);
 });
 
-test("auth callback stages intent signups through public login handoff", () => {
+test("auth callback redirects intent signups directly to onboarding destinations", () => {
   const src = read("app/auth/callback/route.ts");
-  assert.match(src, /buildLoginHrefAfterOAuth/);
+  assert.match(src, /resolveOAuthCallbackRedirect/);
   assert.match(src, /resolveOAuthProfilePatch/);
-  assert.match(src, /stage:\s*"login-handoff"/);
-  assert.doesNotMatch(src, /preAuthIntentConsumed:\s*intent/);
+  assert.match(src, /stage:\s*intent \? "direct-intent" : "direct"/);
+  assert.doesNotMatch(src, /buildLoginHrefAfterOAuth/);
 });
 
-test("auth callback clears pending cookies only for non-intent direct redirects", () => {
+test("auth callback clears pending cookies after final redirect is chosen", () => {
   const src = read("app/auth/callback/route.ts");
-  assert.match(src, /if \(intent\)[\s\S]*return applyCookies\(response, authCookies\)/);
-  assert.match(src, /pendingOnboardingIntentClearCookieHeaders/);
+  assert.match(
+    src,
+    /NextResponse\.redirect\(new URL\(redirectPath, requestUrl\.origin\)\)[\s\S]*pendingOnboardingIntentClearCookieHeaders/,
+  );
 });
 
 test("login page redirects to connexion when no pre-auth intent", () => {
@@ -266,12 +268,12 @@ test("auth callback applies pre-auth intent patch and clears pending cookies on 
   assert.match(src, /resolveOAuthProfilePatch/);
   assert.match(src, /pendingOnboardingIntentClearCookieHeaders/);
   assert.match(src, /resolveAuthCallbackParams/);
-  assert.match(src, /buildLoginHrefAfterOAuth/);
+  assert.match(src, /resolveOAuthCallbackRedirect/);
 });
 
 test("login page skips duplicate choose-role when pre-auth intent is present", () => {
   const src = read("app/login/page.tsx");
-  assert.match(src, /preAuthIntentConsumed:\s*preAuthIntent/);
+  assert.match(src, /resolveOAuthCallbackRedirect/);
 });
 
 test("AuthenticatedShell keeps unconfirmed students on role-choice instead of companion", () => {

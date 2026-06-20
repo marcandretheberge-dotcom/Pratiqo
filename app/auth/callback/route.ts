@@ -7,16 +7,18 @@ import { sendWelcomeStudent } from "@/lib/email";
 import { normalizeLocale } from "@/lib/i18n/types";
 import {
   parseAdminLoginEmails,
-  resolvePostAuthRedirect,
   resolveProfileRoleOnAuth,
 } from "@/lib/auth/admin";
 import { buildLoginUrlWithAuthError } from "@/lib/auth/oauthCallback";
 import {
   pendingOnboardingIntentClearCookieHeaders,
+  readPendingOnboardingIntentFromCookies,
   resolveAuthCallbackParams,
 } from "@/lib/auth/pendingOnboardingIntent";
-import { resolveOAuthProfilePatch, buildLoginHrefAfterOAuth } from "@/lib/auth/preAuthOnboardingIntent";
+import { resolveOAuthProfilePatch } from "@/lib/auth/preAuthOnboardingIntent";
 import { logAuthFlowDecision } from "@/lib/auth/authFlowDiagnostics";
+import { resolveOAuthCallbackRedirect } from "@/lib/auth/oauthCallbackRedirect";
+import type { ProfileRole } from "@/lib/auth/postAuthRedirect";
 import { ensureTeacherProfileRow } from "@/lib/teachers/ensureTeacherProfileRow";
 
 type AuthCookie = { name: string; value: string; options: Record<string, unknown> };
@@ -56,6 +58,16 @@ export async function GET(request: Request) {
   const cookieStore = await cookies();
   const callbackState = resolveAuthCallbackParams(requestUrl, cookieStore);
   const { next, ref: refCode, intent } = callbackState;
+  const pendingIntentCookie = readPendingOnboardingIntentFromCookies(cookieStore);
+
+  logAuthFlowDecision("callback", {
+    stage: "ingress",
+    origin: requestUrl.origin,
+    intent: intent ?? "none",
+    next,
+    pendingIntentCookie: pendingIntentCookie ?? "none",
+    hasCode: Boolean(code),
+  });
 
   if (!code) {
     const loginUrl = buildLoginUrlWithAuthError(requestUrl.origin, {
@@ -193,14 +205,26 @@ export async function GET(request: Request) {
 
   if (readErr || !profile) {
     console.error("[auth/callback] profile read failed", readErr);
-    const fallbackRedirect =
-      resolvedRole === "admin" ? "/admin" : "/dashboard";
-    const response = NextResponse.redirect(new URL(fallbackRedirect, requestUrl.origin));
-    const clearIntentCookies = resolvedRole !== "teacher" && intent !== "teacher";
-    return applyCookies(
-      response,
-      clearIntentCookies ? [...authCookies, ...pendingOnboardingIntentClearCookieHeaders()] : authCookies,
-    );
+    const redirectRole: ProfileRole =
+      resolvedRole === "admin" ? "admin" : resolvedRole === "teacher" ? "teacher" : "student";
+    const redirectPath = resolveOAuthCallbackRedirect({
+      intent,
+      next,
+      role: redirectRole,
+      profile: null,
+    });
+    logAuthFlowDecision("callback", {
+      stage: "profile-read-fallback",
+      origin: requestUrl.origin,
+      intent: intent ?? "none",
+      next,
+      redirect: redirectPath,
+      profileRowPresent: false,
+      profileRole: redirectRole,
+      pendingIntentCookie: pendingIntentCookie ?? "none",
+    });
+    const response = NextResponse.redirect(new URL(redirectPath, requestUrl.origin));
+    return applyCookies(response, [...authCookies, ...pendingOnboardingIntentClearCookieHeaders()]);
   }
 
   if (refCode) {
@@ -261,31 +285,28 @@ export async function GET(request: Request) {
     dashboard?: unknown;
   };
 
-  if (intent) {
-    const handoffPath = buildLoginHrefAfterOAuth(intent, next);
-    logAuthFlowDecision("callback", {
-      intent,
-      next,
-      redirect: handoffPath,
-      profileRole: profileRole ?? "null",
-      onboardingRoleConfirmed:
-        typeof profileForRedirect.dashboard === "object" &&
-        profileForRedirect.dashboard !== null &&
-        (profileForRedirect.dashboard as Record<string, unknown>).onboarding_role_confirmed === true,
-      stage: "login-handoff",
-    });
-    const response = NextResponse.redirect(new URL(handoffPath, requestUrl.origin));
-    // Keep pending intent cookies until /login completes the handoff.
-    return applyCookies(response, authCookies);
-  }
+  const postAuthRole = redirectRole as ProfileRole;
 
-  const redirectPath = resolvePostAuthRedirect(redirectRole, profileForRedirect, undefined);
+  const redirectPath = resolveOAuthCallbackRedirect({
+    intent,
+    next,
+    role: postAuthRole,
+    profile: profileForRedirect,
+  });
 
   logAuthFlowDecision("callback", {
-    intent: "none",
+    stage: intent ? "direct-intent" : "direct",
+    origin: requestUrl.origin,
+    intent: intent ?? "none",
+    next,
     redirect: redirectPath,
+    profileRowPresent: true,
     profileRole: profileRole ?? "null",
-    stage: "direct",
+    pendingIntentCookie: pendingIntentCookie ?? "none",
+    onboardingRoleConfirmed:
+      typeof profileForRedirect.dashboard === "object" &&
+      profileForRedirect.dashboard !== null &&
+      (profileForRedirect.dashboard as Record<string, unknown>).onboarding_role_confirmed === true,
   });
 
   const response = NextResponse.redirect(new URL(redirectPath, requestUrl.origin));

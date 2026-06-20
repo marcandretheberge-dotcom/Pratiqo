@@ -8,7 +8,8 @@ import { cn } from "../../lib/utils";
 import PratiqoLogo from "../../components/PratiqoLogo";
 import { LocaleSwitcher } from "../../components/LocaleSwitcher";
 import { loginWithGoogle } from "../../lib/auth";
-import { resolvePostAuthRedirect, type ProfileRole } from "../../lib/auth/postAuthRedirect";
+import type { ProfileRole } from "../../lib/auth/postAuthRedirect";
+import { guardAuthRedirectPath, resolveOAuthCallbackRedirect } from "../../lib/auth/oauthCallbackRedirect";
 import { mergeOnboardingRoleConfirmedDashboard } from "../../lib/auth/onboardingRoleChoice";
 import {
   primaryRoleForPreAuthIntent,
@@ -114,32 +115,40 @@ function LoginForm() {
 
       const effectiveRole: ProfileRole = primaryRoleForPreAuthIntent(preAuthIntent, profile?.role);
 
-      const redirectPath = resolvePostAuthRedirect(
-        effectiveRole,
-        {
-          teacher_onboarding_complete: profile?.teacher_onboarding_complete,
-          companion_chosen: profile?.companion_chosen,
-          dashboard: mergeOnboardingRoleConfirmedDashboard(profile?.dashboard),
-        },
-        oauthNext,
-        { preAuthIntentConsumed: preAuthIntent },
+      const redirectPath = guardAuthRedirectPath(
+        resolveOAuthCallbackRedirect({
+          intent: preAuthIntent,
+          next: oauthNext,
+          role: effectiveRole,
+          profile: profile
+            ? {
+                teacher_onboarding_complete: profile.teacher_onboarding_complete,
+                companion_chosen: profile.companion_chosen,
+                dashboard: mergeOnboardingRoleConfirmedDashboard(profile.dashboard),
+              }
+            : null,
+        }),
+        preAuthIntent,
       );
+
+      let destination = redirectPath;
 
       logAuthFlowDecision("login-handoff", {
         profileRowPresent: Boolean(profile),
         profileRole: profile?.role ?? "null",
         effectiveRole,
-        redirect: redirectPath,
+        redirect: destination,
+        profileMissingUsedOauthNext: !profile && destination === oauthNext,
       });
 
-      if (redirectPath === "/" || redirectPath === "") {
+      if (destination === "/" || destination === "") {
         logAuthFlowDecision("login-handoff", { error: "refusing-root-fallback" });
         return;
       }
 
       clearPendingOnboardingIntentCookie();
       clearPendingTeacherOnboardingCookie();
-      window.location.assign(redirectPath);
+      window.location.assign(destination);
     })();
 
     return () => {
@@ -161,6 +170,7 @@ function LoginForm() {
     try {
       await loginWithGoogle(oauthNext, {
         intent: preAuthIntent,
+        intentQuery: intentParam === "student" ? "student" : preAuthIntent,
         referralCode: refCode,
         forceAccountSelection: options?.forceAccountSelection,
       });
@@ -266,7 +276,7 @@ function LoginForm() {
             )}
           >
             <LogIn size={18} />
-            {busy ? "Connexion…" : "Se connecter avec Google"}
+            {busy ? t("loginWorking") : t("loginContinueWithGoogle")}
           </button>
 
           <div className="mt-4 text-center">

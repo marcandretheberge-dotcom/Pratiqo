@@ -50,18 +50,6 @@ export function AuthenticatedShell({ children }: { children: React.ReactNode }) 
     const role = profile?.role as string | undefined;
 
     if (!isResolvedRole(role)) {
-      const pendingTeacherIntent =
-        readPendingOnboardingIntentClient() === "teacher" || hasPendingTeacherIntentClient();
-      if (pendingTeacherIntent) {
-        logAuthFlowDecision("authenticated-shell", {
-          guard: "teacher-pending-intent-dashboard",
-          path: pathname,
-          profileRole: role ?? "null",
-          redirect: "/dashboard",
-        });
-        router.replace("/dashboard");
-        return;
-      }
       if (
         pathname.startsWith("/student") ||
         isOnboardingRoleChoicePath(pathname) ||
@@ -74,6 +62,20 @@ export function AuthenticatedShell({ children }: { children: React.ReactNode }) 
         });
         return;
       }
+
+      const pendingTeacherIntent =
+        readPendingOnboardingIntentClient() === "teacher" || hasPendingTeacherIntentClient();
+      if (pendingTeacherIntent) {
+        logAuthFlowDecision("authenticated-shell", {
+          guard: "teacher-pending-intent-dashboard",
+          path: pathname,
+          profileRole: role ?? "null",
+          redirect: "/dashboard",
+        });
+        router.replace("/dashboard");
+        return;
+      }
+
       logAuthFlowDecision("authenticated-shell", {
         guard: "role-choice-fallback",
         path: pathname,
