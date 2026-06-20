@@ -15,9 +15,10 @@
  *      ends with the assertion that fails if any public ordinary table is
  *      still RLS-disabled.
  *
- *   3. The hardening migration explicitly references every table that
+ *   3. The hardening migrations explicitly reference every table that
  *      `CREATE TABLE` appears for. This is what prevents drift from
- *      silently sneaking past the explicit-enable list.
+ *      silently sneaking past the explicit-enable list, while still allowing
+ *      forward-only hardening migrations for tables added after 074.
  *
  * This file complements `tests/security/rlsPolicyShape.test.ts` (which
  * locks down the *policy shape* on sensitive tables) and
@@ -37,6 +38,10 @@ function test(name: string, fn: TestFn) {
 
 const MIGRATIONS_DIR = join(process.cwd(), "supabase", "migrations");
 const HARDENING_FILE = "074_enable_rls_security_hardening.sql";
+const EXPLICIT_RLS_HARDENING_FILES = [
+  HARDENING_FILE,
+  "085_harden_student_onboarding_consents_rls.sql",
+];
 
 function readMigration(file: string): string {
   return readFileSync(join(MIGRATIONS_DIR, file), "utf8").replace(
@@ -180,12 +185,15 @@ test("074 hardening migration exists with audit queries, drift loop, and final a
 });
 
 // ─────────────────────────────────────────────────────────────────────────
-// Invariant 3 — every created table is in the hardening migration's
-// explicit ENABLE list, so the explicit list never drifts behind reality.
+// Invariant 3 — every created table is in an explicit hardening migration's
+// ENABLE list, so the explicit list never drifts behind reality.
 // ─────────────────────────────────────────────────────────────────────────
 
-test("074 hardening migration explicitly enables RLS for every created table", () => {
-  const hardening = stripSqlComments(readMigration(HARDENING_FILE));
+test("hardening migrations explicitly enable RLS for every created table", () => {
+  const hardening = EXPLICIT_RLS_HARDENING_FILES.map((file) => {
+    assert.ok(migrationFiles.includes(file), `missing ${file}`);
+    return stripSqlComments(readMigration(file));
+  }).join("\n");
 
   const missing: string[] = [];
   for (const table of CREATED_TABLES) {
@@ -201,7 +209,7 @@ test("074 hardening migration explicitly enables RLS for every created table", (
   assert.deepEqual(
     missing,
     [],
-    `074 hardening migration is missing explicit ENABLE ROW LEVEL SECURITY for: ${missing.join(", ")}`,
+    `RLS hardening migrations are missing explicit ENABLE ROW LEVEL SECURITY for: ${missing.join(", ")}`,
   );
 });
 

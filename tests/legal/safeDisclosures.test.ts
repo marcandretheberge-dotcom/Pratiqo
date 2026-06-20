@@ -299,6 +299,15 @@ const allowedPricingDisplayFiles = new Set<string>([
   "supabase/migrations/082_teacher_public_seo_indexing.sql",
 ]);
 
+const allowedSecurityHardeningFiles = new Set<string>([
+  // Launch security fix for the student/minor consent ledger. This migration
+  // only re-applies ENABLE ROW LEVEL SECURITY, owner-only SELECT/INSERT
+  // policies, anon revocation, and existing service-role grant conventions
+  // for public.student_onboarding_consents. It does not change schemas,
+  // payment flows, booking logic, legal copy, or YoPratiqo content.
+  "supabase/migrations/085_harden_student_onboarding_consents_rls.sql",
+]);
+
 function touchesSafeDisclosureScope(file: string): boolean {
   return (
     liveDisclosureFiles.includes(file) ||
@@ -463,6 +472,7 @@ test("safe-disclosure branch did not touch restricted systems", () => {
   for (const file of changed) {
     if (allowedYoDisclosureFiles.has(file)) continue;
     if (allowedPricingDisplayFiles.has(file)) continue;
+    if (allowedSecurityHardeningFiles.has(file)) continue;
     for (const rule of restrictedRules) {
       if (rule.re.test(file)) {
         violations.push(`${file} (${rule.label})`);
