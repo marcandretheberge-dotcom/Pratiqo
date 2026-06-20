@@ -161,6 +161,7 @@ function LoginForm() {
     try {
       await loginWithGoogle(oauthNext, {
         intent: preAuthIntent,
+        intentQuery: intentParam === "student" ? "student" : preAuthIntent,
         referralCode: refCode,
         forceAccountSelection: options?.forceAccountSelection,
       });
