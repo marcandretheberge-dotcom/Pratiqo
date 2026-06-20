@@ -349,7 +349,7 @@ test("landing auth gate shows handoff screen during active pending onboarding in
   const handoff = read("lib/auth/onboardingHandoff.ts");
   assert.match(gate, /useSyncExternalStore/);
   assert.match(gate, /hasActiveOnboardingHandoffClient/);
-  assert.match(gate, /if \(handoffActive\)[\s\S]*AuthHandoffScreen/);
+  assert.match(gate, /if \(handoffActive \|\| pendingIntentWhileHydrating\)[\s\S]*AuthHandoffScreen/);
   assert.match(screen, /authHandoffTitle/);
   assert.match(screen, /authHandoffSubtitle/);
   assert.match(handoff, /readPendingOnboardingIntentClient/);

@@ -74,6 +74,14 @@ export function AuthenticatedShell({ children }: { children: React.ReactNode }) 
         });
         return;
       }
+      if (!profileHydrated) {
+        logAuthFlowDecision("authenticated-shell", {
+          guard: "wait-profile-hydration",
+          path: pathname,
+          profileRole: role ?? "null",
+        });
+        return;
+      }
       logAuthFlowDecision("authenticated-shell", {
         guard: "role-choice-fallback",
         path: pathname,

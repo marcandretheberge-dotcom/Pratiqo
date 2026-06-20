@@ -223,10 +223,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
     };
 
-    const applySession = async (u: User | null) => {
+    const applySession = (u: User | null) => {
+      if (!u) {
+        setUser(null);
+        setProfile(null);
+        setProfileHydrated(false);
+        setProfileSyncError(false);
+        backgroundSyncRef.current += 1;
+        setLoading(false);
+        return;
+      }
+
+      // Unblock route handoff UI as soon as the session exists. Profile rows can
+      // lag behind the OAuth callback upsert — waiting on syncProfile here caused
+      // first-login users to stall on a blank shell or miss the /login handoff.
       setUser(u);
-      await syncProfile(u);
       setLoading(false);
+      void syncProfile(u);
     };
 
     let unsubAuth = () => {};
@@ -235,10 +248,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const {
         data: { session },
       } = await supabase.auth.getSession();
-      await applySession(session?.user ?? null);
+      applySession(session?.user ?? null);
 
       const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-        void applySession(session?.user ?? null);
+        applySession(session?.user ?? null);
       });
       unsubAuth = () => listener.subscription.unsubscribe();
     })();
@@ -306,7 +319,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         mergeAuthProfile,
       }}
     >
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 }

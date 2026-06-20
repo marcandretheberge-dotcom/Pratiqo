@@ -193,14 +193,22 @@ export async function GET(request: Request) {
 
   if (readErr || !profile) {
     console.error("[auth/callback] profile read failed", readErr);
+    if (intent) {
+      const handoffPath = buildLoginHrefAfterOAuth(intent, next);
+      logAuthFlowDecision("callback", {
+        intent,
+        next,
+        redirect: handoffPath,
+        profileRole: resolvedRole,
+        stage: "login-handoff-profile-read-fallback",
+      });
+      const response = NextResponse.redirect(new URL(handoffPath, requestUrl.origin));
+      return applyCookies(response, authCookies);
+    }
     const fallbackRedirect =
       resolvedRole === "admin" ? "/admin" : "/dashboard";
     const response = NextResponse.redirect(new URL(fallbackRedirect, requestUrl.origin));
-    const clearIntentCookies = resolvedRole !== "teacher" && intent !== "teacher";
-    return applyCookies(
-      response,
-      clearIntentCookies ? [...authCookies, ...pendingOnboardingIntentClearCookieHeaders()] : authCookies,
-    );
+    return applyCookies(response, [...authCookies, ...pendingOnboardingIntentClearCookieHeaders()]);
   }
 
   if (refCode) {

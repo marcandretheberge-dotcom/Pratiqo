@@ -32,8 +32,10 @@ function getServerHandoffSnapshot() {
  * pending onboarding intent still needs the public login handoff.
  */
 export function LandingAuthGate({ children }: { children: ReactNode }) {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, profileHydrated } = useAuth();
   const handoffActive = useSyncExternalStore(subscribeToHandoff, getHandoffSnapshot, getServerHandoffSnapshot);
+  const pendingIntentWhileHydrating =
+    Boolean(user) && !profileHydrated && !authLoading && Boolean(readPendingOnboardingIntentClient());
 
   useEffect(() => {
     if (!handoffActive || authLoading) return;
@@ -65,7 +67,7 @@ export function LandingAuthGate({ children }: { children: ReactNode }) {
     }
   }, [user, authLoading, handoffActive]);
 
-  if (handoffActive) {
+  if (handoffActive || pendingIntentWhileHydrating) {
     return <AuthHandoffScreen />;
   }
 
