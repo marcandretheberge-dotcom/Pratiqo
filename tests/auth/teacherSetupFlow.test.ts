@@ -55,10 +55,10 @@ test("choose-role redirects teachers and pending teacher intent to dashboard", (
   assert.match(page, /router\.replace\("\/dashboard"\)/);
 });
 
-test("auth callback teacher profile read failure routes to dashboard and keeps intent cookies", () => {
+test("auth callback profile read failure preserves intent login handoff", () => {
   const route = read("app/auth/callback/route.ts");
-  assert.match(route, /resolvedRole !== "teacher" && intent !== "teacher"/);
-  assert.doesNotMatch(route, /\/onboarding\/teacher/);
+  assert.match(route, /login-handoff-profile-read-fallback/);
+  assert.match(route, /if \(intent\)[\s\S]*buildLoginHrefAfterOAuth\(intent, next\)/);
 });
 
 test("dashboard banner and checklist CTAs use editable setup path", () => {

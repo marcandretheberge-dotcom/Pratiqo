@@ -125,21 +125,25 @@ function LoginForm() {
         { preAuthIntentConsumed: preAuthIntent },
       );
 
+      let destination =
+        redirectPath === "/" || redirectPath === "" ? oauthNext : redirectPath;
+
       logAuthFlowDecision("login-handoff", {
         profileRowPresent: Boolean(profile),
         profileRole: profile?.role ?? "null",
         effectiveRole,
-        redirect: redirectPath,
+        redirect: destination,
+        profileMissingUsedOauthNext: !profile && destination === oauthNext,
       });
 
-      if (redirectPath === "/" || redirectPath === "") {
+      if (destination === "/" || destination === "") {
         logAuthFlowDecision("login-handoff", { error: "refusing-root-fallback" });
         return;
       }
 
       clearPendingOnboardingIntentCookie();
       clearPendingTeacherOnboardingCookie();
-      window.location.assign(redirectPath);
+      window.location.assign(destination);
     })();
 
     return () => {
@@ -266,7 +270,7 @@ function LoginForm() {
             )}
           >
             <LogIn size={18} />
-            {busy ? "Connexion…" : "Se connecter avec Google"}
+            {busy ? t("loginWorking") : t("loginContinueWithGoogle")}
           </button>
 
           <div className="mt-4 text-center">
