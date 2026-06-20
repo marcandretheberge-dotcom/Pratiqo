@@ -12,7 +12,7 @@ export function parsePublicPreAuthIntent(
   intentParam: string | null | undefined,
   roleParam?: string | null | undefined,
 ): PreAuthOnboardingIntent | null {
-  if (intentParam === "learner") return "learner";
+  if (intentParam === "learner" || intentParam === "student") return "learner";
   if (intentParam === "teacher") return "teacher";
   if (roleParam === "teacher") return "teacher";
   return null;

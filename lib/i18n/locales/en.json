@@ -726,6 +726,8 @@
   "loginAcceptTermsLabel": "I accept the Terms and Privacy Policy",
   "loginAuthErrorSession": "Google sign-in could not be completed. Please try again with the button below.",
   "loginChangeGoogleAccount": "Change Google account",
+  "loginContinueWithGoogle": "Continue with Google",
+  "loginWorking": "Signing in…",
   "authHandoffTitle": "Signing you in…",
   "authHandoffSubtitle": "We're redirecting you to your Pratiqo space.",
   "loginIntentContinueHint": "You'll continue to your space after signing in.",
