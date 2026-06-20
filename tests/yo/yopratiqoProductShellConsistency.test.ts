@@ -226,16 +226,16 @@ assert.match(
   /sanitizeRelativeRedirectPath\(searchParams\.get\(["']next["']\)\)/,
   "login page must sanitize ?next= via sanitizeRelativeRedirectPath",
 );
-// The auth callback must read `next` and forward it through resolvePostAuthRedirect.
+// The auth callback must read `next` and forward it through resolveOAuthCallbackRedirect.
 assert.match(
   callbackSrc,
-  /searchParams\.get\(["']next["']\)/,
-  "auth callback must read the next= search param",
+  /resolveAuthCallbackParams/,
+  "auth callback must resolve next/intent via resolveAuthCallbackParams",
 );
 assert.match(
   callbackSrc,
-  /resolvePostAuthRedirect\(/,
-  "auth callback must call resolvePostAuthRedirect(...) so /student/yopratiqo is honored after OAuth",
+  /resolveOAuthCallbackRedirect\(/,
+  "auth callback must call resolveOAuthCallbackRedirect(...) so /student/yopratiqo is honored after OAuth",
 );
 // resolvePostAuthRedirect must accept a nextPath argument.
 assert.match(

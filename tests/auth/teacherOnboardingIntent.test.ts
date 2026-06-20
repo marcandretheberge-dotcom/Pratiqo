@@ -120,9 +120,9 @@ test("login page requires pre-auth intent before Google OAuth", () => {
   assert.doesNotMatch(src, /body: JSON\.stringify\(\{ role: "teacher" \}\)/);
 });
 
-test("auth callback stages intent signups through public login handoff", () => {
+test("auth callback redirects intent signups directly to onboarding destinations", () => {
   const src = read("app/auth/callback/route.ts");
-  assert.match(src, /buildLoginHrefAfterOAuth/);
+  assert.match(src, /resolveOAuthCallbackRedirect/);
   assert.match(src, /resolveOAuthProfilePatch/);
 });
 

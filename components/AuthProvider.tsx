@@ -223,10 +223,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
     };
 
-    const applySession = async (u: User | null) => {
+    const applySession = (u: User | null) => {
       setUser(u);
-      await syncProfile(u);
       setLoading(false);
+      void syncProfile(u);
     };
 
     let unsubAuth = () => {};
@@ -238,7 +238,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await applySession(session?.user ?? null);
 
       const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-        void applySession(session?.user ?? null);
+        applySession(session?.user ?? null);
       });
       unsubAuth = () => listener.subscription.unsubscribe();
     })();
@@ -306,7 +306,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         mergeAuthProfile,
       }}
     >
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 }
