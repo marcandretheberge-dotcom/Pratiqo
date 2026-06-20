@@ -103,8 +103,33 @@ test("consent API stores append-only versioned consent and stamps profile", () =
   assert.match(route, /student_onboarding_consent_completed_at/);
   assert.match(route, /student_onboarding_consent_version/);
   assert.match(route, /companion_chosen = true|profileUpsert\.companion_chosen = true/);
+  assert.match(route, /alreadyHasCurrentConsent/);
+  assert.match(route, /if \(!alreadyHasCurrentConsent\)/);
   assert.doesNotMatch(route, /date_of_birth|birthdate|child_age|parent_name|ip_address/i);
   assert.doesNotMatch(route, /teacher.*share|progress.*teacher/i);
+});
+
+test("consent API returns generic errors but logs the failing storage stage", () => {
+  const route = read("app/api/student/onboarding-consent/route.ts");
+  assert.match(route, /function logConsentStorageFailure/);
+  assert.match(route, /stage/);
+  assert.match(route, /profile_read/);
+  assert.match(route, /consent_insert/);
+  assert.match(route, /profile_upsert/);
+  assert.match(route, /student_consent_save_failed/);
+  assert.doesNotMatch(route, /return NextResponse\.json\(\{ error: readErr\.message \}/);
+  assert.doesNotMatch(route, /return NextResponse\.json\(\{ error: insertErr\.message \}/);
+  assert.doesNotMatch(route, /return NextResponse\.json\(\{ error: profileErr\?\.message/);
+});
+
+test("failed consent insert cannot mark companion or onboarding complete", () => {
+  const route = read("app/api/student/onboarding-consent/route.ts");
+  const insertErrorIndex = route.indexOf("if (insertErr)");
+  const profileUpsertIndex = route.indexOf("const profileUpsert");
+  const companionChosenIndex = route.indexOf("profileUpsert.companion_chosen = true");
+  assert.ok(insertErrorIndex > -1, "insert error handling is present");
+  assert.ok(profileUpsertIndex > insertErrorIndex, "profile upsert happens after consent insert handling");
+  assert.ok(companionChosenIndex > profileUpsertIndex, "companion completion happens only in profile upsert payload");
 });
 
 test("consent API is student-only and rejects teacher/admin profiles", () => {
