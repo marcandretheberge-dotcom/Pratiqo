@@ -266,7 +266,7 @@ function LoginForm() {
             )}
           >
             <LogIn size={18} />
-            {busy ? "Connexion…" : "Se connecter avec Google"}
+            {busy ? t("loginWorking") : t("loginContinueWithGoogle")}
           </button>
 
           <div className="mt-4 text-center">
