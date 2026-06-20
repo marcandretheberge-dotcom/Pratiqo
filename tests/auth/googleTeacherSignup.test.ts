@@ -81,6 +81,8 @@ test("loginWithGoogle can force Google account selection without changing the de
   assert.match(src, /forceAccountSelection\?:\s*boolean/);
   assert.match(src, /options\?\.forceAccountSelection\s*\?\s*\{\s*queryParams:\s*\{\s*prompt:\s*"select_account"\s*\}\s*\}/);
   assert.match(src, /options:\s*\{\s*redirectTo,/);
+  assert.match(src, /skipBrowserRedirect:\s*true/);
+  assert.match(src, /window\.location\.assign\(data\.url\)/);
 });
 
 test("login page renders the Google account switch option for teacher and learner intents", () => {
@@ -90,7 +92,9 @@ test("login page renders the Google account switch option for teacher and learne
   assert.match(page, /onClick=\{\(\) => void handleLogin\(\{ forceAccountSelection: true \}\)\}/);
   assert.match(page, /onClick=\{\(\) => void handleLogin\(\)\}/);
   assert.match(page, /intent:\s*preAuthIntent/);
+  assert.match(page, /intentQuery:\s*intentParam === "student" \? "student" : preAuthIntent/);
   assert.match(page, /referralCode:\s*refCode/);
+  assert.match(page, /disabled=\{!legalAccepted \|\| busy\}/);
 });
 
 test("Google account switch copy is localized in FR, EN, and ES", () => {

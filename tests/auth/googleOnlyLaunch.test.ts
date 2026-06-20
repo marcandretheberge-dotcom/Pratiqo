@@ -37,6 +37,9 @@ test("/login renders no email/password form or Magic Link UI", () => {
 test("lib/auth.ts exposes only Google OAuth — no email/password or Magic Link helpers", () => {
   const src = read("lib/auth.ts");
   assert.match(src, /export async function loginWithGoogle/);
+  assert.match(src, /signInWithOAuth/);
+  assert.match(src, /skipBrowserRedirect:\s*true/);
+  assert.match(src, /window\.location\.assign\(data\.url\)/);
   assert.doesNotMatch(src, /export async function sendMagicLink/);
   assert.doesNotMatch(src, /export async function signInWithEmailPassword/);
   assert.doesNotMatch(src, /export async function signUpWithEmailPassword/);

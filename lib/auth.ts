@@ -35,10 +35,11 @@ export async function loginWithGoogle(
     setPendingTeacherOnboardingCookie(redirectPath);
   }
 
-  const { error } = await supabase.auth.signInWithOAuth({
+  const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
       redirectTo,
+      skipBrowserRedirect: true,
       ...(options?.forceAccountSelection ? { queryParams: { prompt: "select_account" } } : {}),
     },
   });
@@ -46,6 +47,10 @@ export async function loginWithGoogle(
     console.error("Login failed", error);
     throw error;
   }
+  if (!data.url) {
+    throw new Error("Google OAuth URL was not returned.");
+  }
+  window.location.assign(data.url);
 }
 
 export async function logout() {
