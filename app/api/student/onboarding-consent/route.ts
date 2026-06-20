@@ -21,6 +21,13 @@ type ConsentBody = {
   companionType?: unknown;
 };
 
+type SupabaseLikeError = {
+  code?: string;
+  message?: string;
+  details?: string;
+  hint?: string;
+};
+
 function isCompanionType(value: unknown): value is CompanionType {
   return value === "phoenix" || value === "forest" || value === "dragon" || value === "star";
 }
@@ -37,6 +44,29 @@ function authClientForToken(token: string) {
     global: { headers: { Authorization: `Bearer ${token}` } },
     auth: { persistSession: false, autoRefreshToken: false },
   });
+}
+
+function logConsentStorageFailure(stage: string, error: SupabaseLikeError | Error | unknown) {
+  if (error instanceof Error) {
+    console.error("[student/onboarding-consent] save failed", {
+      stage,
+      message: error.message,
+    });
+    return;
+  }
+
+  const supabaseError = error as SupabaseLikeError | null;
+  console.error("[student/onboarding-consent] save failed", {
+    stage,
+    code: supabaseError?.code ?? null,
+    message: supabaseError?.message ?? "Unknown Supabase error",
+    details: supabaseError?.details ?? null,
+    hint: supabaseError?.hint ?? null,
+  });
+}
+
+function consentSaveFailed() {
+  return NextResponse.json({ error: "student_consent_save_failed" }, { status: 500 });
 }
 
 export async function POST(request: Request) {
@@ -85,15 +115,23 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "invalid_companion_type" }, { status: 400 });
   }
 
-  const admin = getSupabaseAdmin();
+  let admin: ReturnType<typeof getSupabaseAdmin>;
+  try {
+    admin = getSupabaseAdmin();
+  } catch (err) {
+    logConsentStorageFailure("admin_client", err);
+    return consentSaveFailed();
+  }
+
   const { data: existing, error: readErr } = await admin
     .from("profiles")
-    .select("role, email, name, display_name, dashboard")
+    .select("role, email, name, display_name, dashboard, student_onboarding_consent_completed_at, student_onboarding_consent_version")
     .eq("id", user.id)
     .maybeSingle();
 
   if (readErr) {
-    return NextResponse.json({ error: readErr.message }, { status: 500 });
+    logConsentStorageFailure("profile_read", readErr);
+    return consentSaveFailed();
   }
 
   const existingProfile = existing as {
@@ -101,6 +139,8 @@ export async function POST(request: Request) {
     email?: string | null;
     name?: string | null;
     display_name?: string | null;
+    student_onboarding_consent_completed_at?: string | null;
+    student_onboarding_consent_version?: string | null;
     dashboard?: unknown;
   } | null;
 
@@ -110,20 +150,27 @@ export async function POST(request: Request) {
 
   const locale = normalizeLocale(body.locale);
   const nowIso = new Date().toISOString();
+  const alreadyHasCurrentConsent =
+    typeof existingProfile?.student_onboarding_consent_completed_at === "string" &&
+    existingProfile.student_onboarding_consent_completed_at.length > 0 &&
+    existingProfile.student_onboarding_consent_version === STUDENT_ONBOARDING_CONSENT_VERSION;
 
-  const { error: insertErr } = await admin.from("student_onboarding_consents").insert({
-    user_id: user.id,
-    consent_version: STUDENT_ONBOARDING_CONSENT_VERSION,
-    actor_type: body.actorType,
-    accepted_terms: true,
-    accepted_privacy: true,
-    accepted_learning_data: true,
-    acknowledged_minor_lessons: true,
-    locale,
-  });
+  if (!alreadyHasCurrentConsent) {
+    const { error: insertErr } = await admin.from("student_onboarding_consents").insert({
+      user_id: user.id,
+      consent_version: STUDENT_ONBOARDING_CONSENT_VERSION,
+      actor_type: body.actorType,
+      accepted_terms: true,
+      accepted_privacy: true,
+      accepted_learning_data: true,
+      acknowledged_minor_lessons: true,
+      locale,
+    });
 
-  if (insertErr) {
-    return NextResponse.json({ error: insertErr.message }, { status: 500 });
+    if (insertErr) {
+      logConsentStorageFailure("consent_insert", insertErr);
+      return consentSaveFailed();
+    }
   }
 
   const displayName =
@@ -140,7 +187,8 @@ export async function POST(request: Request) {
     name: existingProfile?.name ?? displayName,
     display_name: existingProfile?.display_name ?? displayName,
     role: "student",
-    student_onboarding_consent_completed_at: nowIso,
+    student_onboarding_consent_completed_at:
+      existingProfile?.student_onboarding_consent_completed_at ?? nowIso,
     student_onboarding_consent_version: STUDENT_ONBOARDING_CONSENT_VERSION,
     dashboard: mergeOnboardingRoleConfirmedDashboard(existingProfile?.dashboard),
     updated_at: nowIso,
@@ -158,7 +206,8 @@ export async function POST(request: Request) {
     .single();
 
   if (profileErr || !profile) {
-    return NextResponse.json({ error: profileErr?.message ?? "Profile update failed." }, { status: 500 });
+    logConsentStorageFailure("profile_upsert", profileErr ?? new Error("Profile update returned no row."));
+    return consentSaveFailed();
   }
 
   return NextResponse.json({ ok: true, profile });
