@@ -315,6 +315,17 @@ test("email-password auth does not store or log raw passwords", () => {
   assertNoSensitivePasswordLogging(EMAIL_PASSWORD_AUTH_SOURCES);
 });
 
+// ── Layout stability: native autofill popup can't get stuck mid-scroll ─────
+
+test("login page blurs a focused email/password field on scroll to prevent a stuck native autofill popup", () => {
+  const page = read("app/login/page.tsx");
+  assert.match(page, /addEventListener\("scroll", blurFieldOnScroll/);
+  assert.match(page, /removeEventListener\("scroll", blurFieldOnScroll/);
+  // Only blurs our own email/password inputs — never unrelated focused elements
+  // (e.g. the legal-acceptance checkbox or buttons) on scroll.
+  assert.match(page, /active\.type === "email" \|\| active\.type === "password"/);
+});
+
 async function run() {
   for (const { name, fn } of tests) {
     await fn();

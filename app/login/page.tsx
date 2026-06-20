@@ -136,6 +136,21 @@ function LoginForm() {
     };
   }, [loading, user, oauthNext, preAuthIntent]);
 
+  // Scrolling away from a focused email/password field while the browser's
+  // native autofill/password-suggestion popup is open can leave that popup
+  // visually stuck at a stale position (a browser-chrome artifact, not part
+  // of this page's DOM). Blurring on scroll dismisses it before that happens.
+  useEffect(() => {
+    function blurFieldOnScroll() {
+      const active = document.activeElement;
+      if (active instanceof HTMLInputElement && (active.type === "email" || active.type === "password")) {
+        active.blur();
+      }
+    }
+    window.addEventListener("scroll", blurFieldOnScroll, { passive: true });
+    return () => window.removeEventListener("scroll", blurFieldOnScroll);
+  }, []);
+
   const { t } = useLocale();
   const [legalAccepted, setLegalAccepted] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "signup">("login");
