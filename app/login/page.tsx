@@ -161,6 +161,7 @@ function LoginForm() {
     try {
       await loginWithGoogle(oauthNext, {
         intent: preAuthIntent,
+        intentQuery: intentParam === "student" ? "student" : preAuthIntent,
         referralCode: refCode,
         forceAccountSelection: options?.forceAccountSelection,
       });
@@ -266,7 +267,7 @@ function LoginForm() {
             )}
           >
             <LogIn size={18} />
-            {busy ? "Connexion…" : "Se connecter avec Google"}
+            {busy ? t("loginWorking") : t("loginContinueWithGoogle")}
           </button>
 
           <div className="mt-4 text-center">
