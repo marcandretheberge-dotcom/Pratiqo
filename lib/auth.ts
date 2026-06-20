@@ -134,6 +134,42 @@ export async function signUpWithEmailPassword(
   return data;
 }
 
+/**
+ * Passwordless fallback for users without a Google account. Reuses the same
+ * `/auth/callback` redirect builder and pending-intent cookies as Google
+ * OAuth and signup, so intent/next/referral are preserved identically.
+ */
+export async function sendMagicLink(
+  email: string,
+  options?: {
+    intent?: PreAuthOnboardingIntent | null;
+    redirectPath?: string;
+    referralCode?: string;
+  },
+) {
+  const supabase = getSupabaseClient();
+  const redirectPath = options?.redirectPath ?? "/dashboard";
+  const origin = resolveOAuthRedirectOrigin();
+  const emailRedirectTo = buildOAuthCallbackUrl(origin, {
+    intent: options?.intent ?? undefined,
+    role: options?.intent === "teacher" ? "teacher" : undefined,
+    next: redirectPath,
+    ref: options?.referralCode,
+  });
+
+  setPendingIntentCookiesForAuth(redirectPath, options?.intent);
+
+  const { data, error } = await supabase.auth.signInWithOtp({
+    email,
+    options: {
+      emailRedirectTo,
+      shouldCreateUser: true,
+    },
+  });
+  if (error) throw error;
+  return data;
+}
+
 export async function sendPasswordResetEmail(email: string) {
   const supabase = getSupabaseClient();
   const origin = resolveOAuthRedirectOrigin();

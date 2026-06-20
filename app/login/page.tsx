@@ -3,13 +3,14 @@
 import React, { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { LogIn, Mail } from "lucide-react";
+import { LogIn, Mail, Wand2 } from "lucide-react";
 import { cn } from "../../lib/utils";
 import PratiqoLogo from "../../components/PratiqoLogo";
 import { LocaleSwitcher } from "../../components/LocaleSwitcher";
 import {
   ensureAuthenticatedProfile,
   loginWithGoogle,
+  sendMagicLink,
   sendPasswordResetEmail,
   signInWithEmailPassword,
   signUpWithEmailPassword,
@@ -269,6 +270,31 @@ function LoginForm() {
     }
   };
 
+  const handleMagicLink = async () => {
+    if (!legalAccepted || busy) return;
+    const normalizedEmail = email.trim().toLowerCase();
+    setFormError(null);
+    setFormMessage(null);
+    if (!normalizedEmail) {
+      setFormError(t("loginEmailRequiredForMagicLink"));
+      return;
+    }
+    setBusy(true);
+    try {
+      await sendMagicLink(normalizedEmail, {
+        intent: preAuthIntent,
+        redirectPath: oauthNext,
+        referralCode: refCode,
+      });
+      setFormMessage(t("loginMagicLinkSent"));
+    } catch (e) {
+      console.error("[login] magic link request failed", e);
+      setFormError(t("loginGenericAuthError"));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <div className="min-h-[100dvh] bg-[#FAFCFB]">
       <header
@@ -467,6 +493,20 @@ function LoginForm() {
           <p className="mb-4 text-center text-xs font-bold uppercase tracking-[0.18em] text-[var(--p-text-muted)]">
             {t("loginOtherWays")}
           </p>
+
+          <button
+            type="button"
+            disabled={!legalAccepted || busy}
+            onClick={() => void handleMagicLink()}
+            data-testid="login-magic-link-button"
+            className={cn(
+              "mb-3 w-full h-12 rounded-2xl text-sm font-bold text-teal-700 flex items-center justify-center gap-2 transition-all",
+              "border border-teal-600/30 bg-white hover:bg-teal-500/5 disabled:cursor-not-allowed disabled:opacity-45",
+            )}
+          >
+            <Wand2 size={18} />
+            {busy ? t("loginWorking") : t("loginMagicLinkCta")}
+          </button>
 
           <button
             type="button"

@@ -21,6 +21,22 @@ import { ensureTeacherProfileRow } from "@/lib/teachers/ensureTeacherProfileRow"
 
 type AuthCookie = { name: string; value: string; options: Record<string, unknown> };
 
+/**
+ * Supabase email links arrive in one of two shapes depending on the Auth
+ * email template / flow type: a PKCE `code` (OAuth, and `code`-template
+ * magic links / signup confirmations) or a `token_hash` + `type` pair
+ * (the OTP-verification template Supabase recommends for magic links,
+ * since it doesn't depend on a `code_verifier` cookie surviving a
+ * cross-device/cross-browser email click). The callback must accept
+ * whichever shape the configured template actually sends.
+ */
+const SUPPORTED_EMAIL_OTP_TYPES = ["signup", "invite", "magiclink", "recovery", "email_change", "email"] as const;
+type SupportedEmailOtpType = (typeof SUPPORTED_EMAIL_OTP_TYPES)[number];
+
+function isSupportedEmailOtpType(value: string | null): value is SupportedEmailOtpType {
+  return value !== null && (SUPPORTED_EMAIL_OTP_TYPES as readonly string[]).includes(value);
+}
+
 function applyCookies(response: NextResponse, cookiesToApply: AuthCookie[]): NextResponse {
   for (const { name, value, options } of cookiesToApply) {
     response.cookies.set(name, value, options);
@@ -53,11 +69,14 @@ async function trySendStudentWelcomeOnce(
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
+  const tokenHash = requestUrl.searchParams.get("token_hash");
+  const otpTypeParam = requestUrl.searchParams.get("type");
+  const otpType = isSupportedEmailOtpType(otpTypeParam) ? otpTypeParam : null;
   const cookieStore = await cookies();
   const callbackState = resolveAuthCallbackParams(requestUrl, cookieStore);
   const { next, ref: refCode, intent } = callbackState;
 
-  if (!code) {
+  if (!code && !(tokenHash && otpType)) {
     const loginUrl = buildLoginUrlWithAuthError(requestUrl.origin, {
       authError: "missing_code",
       intent,
@@ -91,9 +110,14 @@ export async function GET(request: Request) {
     },
   });
 
-  const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+  const { error: exchangeError } = code
+    ? await supabase.auth.exchangeCodeForSession(code)
+    : await supabase.auth.verifyOtp({ token_hash: tokenHash as string, type: otpType as SupportedEmailOtpType });
   if (exchangeError) {
-    console.error("[auth/callback] exchangeCodeForSession failed:", exchangeError.message);
+    console.error(
+      `[auth/callback] ${code ? "exchangeCodeForSession" : "verifyOtp"} failed:`,
+      exchangeError.message,
+    );
     const loginUrl = buildLoginUrlWithAuthError(requestUrl.origin, {
       authError: "session",
       intent,
