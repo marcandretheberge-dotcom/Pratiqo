@@ -106,6 +106,34 @@ const allowedYoDisclosureFiles = new Set([
   "app/yo/langues/italien/intro/page.tsx",
   "app/yo/langues/japonais/intro/page.tsx",
   "lib/yo/languageIntroDecks.ts",
+  // YoPratiqo shell polish exception (mirrors the matching entry in
+  // tests/legal/safeDisclosures.test.ts): these files are approved
+  // because they only adjust responsive layout, visual rendering,
+  // image/audio placement, and mojibake repairs for YoPratiqo
+  // learning pages. They do not change legal disclosures, pricing,
+  // checkout, consent, privacy, auth, booking, or payment behavior
+  // (verified file-by-file via `git diff` for those keywords before
+  // allowlisting — the only "payment"/"booking" hits found were
+  // pre-existing Spanish/French restaurant vocabulary the lesson
+  // teaches learners, e.g. "pago"/"paiement", and a docstring
+  // confirming the file has no checkout/Stripe code, not real
+  // commercial logic). Defended end-to-end by
+  // tests/yo/yopratiqoWorldClassShellPolish.test.ts.
+  "components/yo/YoAppLandingShell.tsx",
+  "components/yo/YoDesktopAppWorkspace.tsx",
+  "components/yo/YoDesktopLearningWorkspace.tsx",
+  "components/yo/YoLessonDeck.tsx",
+  "components/yo/YoLessonDeckHeader.tsx",
+  "components/yo/YoLessonDeckNav.tsx",
+  "lib/yo/lessonDeckVisualContract.ts",
+  "components/yo/YoAudioFeedbackProvider.tsx",
+  "components/yo/YoIntroSectionPanel.tsx",
+  "components/yo/YoLessonCard.tsx",
+  "components/yo/DominicanRepublicIntroContent.tsx",
+  "components/yo/DominicanRepublicModule2Content.tsx",
+  "components/yo/DominicanRepublicModule3Content.tsx",
+  "components/yo/DominicanRepublicModule4Content.tsx",
+  "components/yo/YoInteractiveLessonPrimitives.tsx",
 ]);
 
 /**

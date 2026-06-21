@@ -233,6 +233,41 @@ const allowedYoDisclosureFiles = new Set([
   // Supabase write, no audio generation, no quiz data. Defended by
   // tests/yo/yopratiqoAllLanguageIntrosConsistency.test.ts.
   "lib/yo/languageIntroDecks.ts",
+  // YoPratiqo shell polish exception: these files are approved
+  // because they only adjust responsive layout, visual rendering,
+  // image/audio placement, and mojibake repairs for YoPratiqo
+  // learning pages. They do not change legal disclosures, pricing,
+  // checkout, consent, privacy, auth, booking, or payment behavior
+  // (verified file-by-file via `git diff` for those keywords before
+  // allowlisting — the only "payment"/"booking" hits found were
+  // pre-existing Spanish/French restaurant vocabulary the lesson
+  // teaches learners, e.g. "pago"/"paiement", and a docstring
+  // confirming the file has no checkout/Stripe code, not real
+  // commercial logic). Defended end-to-end by
+  // tests/yo/yopratiqoWorldClassShellPolish.test.ts.
+  //
+  // Responsive shell (desktop independent-scroll-pane fix, dropped
+  // viewport lock, sticky header, widened lesson-deck column):
+  "components/yo/YoDesktopAppWorkspace.tsx",
+  "components/yo/YoDesktopLearningWorkspace.tsx",
+  "lib/yo/lessonDeckVisualContract.ts",
+  // Audio UI polish (floating mute-toggle repositioned from
+  // `absolute` + hardcoded offset to viewport-`fixed`; no audio
+  // generation, no Stripe, no Supabase):
+  "components/yo/YoAudioFeedbackProvider.tsx",
+  // Lesson rendering / image polish (map `object-contain` aspect
+  // ratio corrected to match the real asset; audio button restored
+  // beside two phrase surfaces that were missing it):
+  "components/yo/YoIntroSectionPanel.tsx",
+  "components/yo/YoLessonCard.tsx",
+  "components/yo/DominicanRepublicIntroContent.tsx",
+  // Content text repair (mojibake / UTF-8-as-Windows-1252
+  // corruption fixed via a verified byte-reversal script — no copy
+  // was added, removed, or changed in meaning, only re-encoded):
+  "components/yo/DominicanRepublicModule2Content.tsx",
+  "components/yo/DominicanRepublicModule3Content.tsx",
+  "components/yo/DominicanRepublicModule4Content.tsx",
+  "components/yo/YoInteractiveLessonPrimitives.tsx",
 ]);
 
 /**
