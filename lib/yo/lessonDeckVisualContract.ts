@@ -225,3 +225,21 @@ export const DECK_COMPANION_BUBBLE_CLASSES =
  */
 export const DECK_NAV_TOP_FADE_CLASSES =
   "pointer-events-none absolute inset-x-0 -top-6 h-6 bg-gradient-to-t from-[#F4EFE6] to-transparent";
+
+export type YoLessonVisualLayout = "imageOnly" | "split" | "map" | "mission";
+
+export function resolveYoLessonVisualLayout({
+  requested,
+  hasSideContent = false,
+  fallback = "imageOnly",
+}: {
+  requested?: YoLessonVisualLayout;
+  hasSideContent?: boolean;
+  fallback?: YoLessonVisualLayout;
+}): YoLessonVisualLayout {
+  if (requested === "split" && !hasSideContent) {
+    return fallback === "split" ? "imageOnly" : fallback;
+  }
+  if (requested) return requested;
+  return hasSideContent ? "split" : fallback;
+}

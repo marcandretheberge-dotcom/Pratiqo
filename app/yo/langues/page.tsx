@@ -380,7 +380,7 @@ function renderTile(
   const padding = options.compact ? "p-4" : "p-5 sm:p-6";
 
   const cardClassBase =
-    "group flex h-full flex-col gap-3 rounded-3xl border shadow-[0_8px_24px_rgba(15,58,52,0.05)] transition " +
+    "group flex h-full min-w-0 flex-col gap-3 rounded-3xl border shadow-[0_8px_24px_rgba(15,58,52,0.05)] transition " +
     minHeight +
     " " +
     padding;
@@ -390,24 +390,24 @@ function renderTile(
 
   const inner = (
     <>
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
+      <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex min-w-0 items-center gap-3">
           <YoLanguageBadge
             language={language.badge}
             ariaLabel={t(language.name, locale)}
           />
-          <div>
+          <div className="min-w-0">
             <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#1D9E75]">
               {t(language.eyebrow, locale)}
             </p>
-            <h3 className="text-base font-semibold text-[#0F6E56] sm:text-lg">
+            <h3 className="break-words text-base font-semibold leading-tight text-[#0F6E56] sm:text-lg">
               {t(language.name, locale)}
             </h3>
           </div>
         </div>
         <span
           className={
-            "flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] " +
+            "flex w-fit shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] " +
             (isAvailable
               ? "bg-white text-[#0F6E56] ring-1 ring-[#F4B400]/45"
               : "bg-[#DDF4F1]/60 text-[#0F6E56]/70")
@@ -485,7 +485,8 @@ function renderDesktopTileGrid(
         role="list"
         data-testid="yo-langues-catalog-tiles"
         data-yo-langues-tiles-variant="desktop"
-        className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3"
+        data-yo-langues-grid-min-card-width="280px"
+        className="grid min-w-0 gap-4 overflow-x-visible [grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr))] lg:gap-5"
       >
         {LANGUAGES.map((language) => renderTile(language, locale, langSuffix))}
       </ul>
@@ -789,11 +790,11 @@ export default async function YoLanguesPage({ searchParams }: PageProps) {
             "bg-[linear-gradient(180deg,#FAFCFB_0%,#F4EFE6_55%,#FBF7EE_100%)]",
           leftRail: renderLeftRail(locale),
           center: renderDesktopTileGrid(locale, langSuffix),
-          rightRail: renderRightRail(locale),
-          // Catalog tile grid uses `xl:grid-cols-3`; capping the
-          // centre at `max-w-2xl` would squeeze the third column
-          // off-screen, so the catalog opts into a wider cap.
-          centerMaxWidth: "4xl",
+          // The catalog is a card catalogue first. A third rail made the
+          // center pane too narrow on 1024-1440px desktops, so the language
+          // cards now get the breathing room while the left rail keeps the
+          // Yoppo/context story.
+          centerMaxWidth: "none",
         }}
       />
     </div>

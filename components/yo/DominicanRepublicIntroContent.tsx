@@ -35,6 +35,7 @@ import { YoAudioFeedbackProvider } from "@/components/yo/YoAudioFeedbackProvider
 import { YoListeningExercisePreview } from "@/components/yo/YoListeningExercisePreview";
 import { YoYoppoReward } from "@/components/yo/YoYoppoReward";
 import { YoSpanishAudioButton } from "@/components/yo/YoSpanishAudioButton";
+import { cn } from "@/lib/utils";
 
 const DECK_MODULE_LABEL = lstr("Intro · RD A1", "Intro · DR A1", "Intro · RD A1");
 const WELCOME_TAGLINE = lstr(
@@ -263,7 +264,8 @@ function HeroPage({
           locale={locale}
           fallbackKind="hero-tropical"
           variant="panel"
-          className="h-[clamp(220px,42vh,360px)] !min-h-0 rounded-none shadow-none"
+          visualLayout="imageOnly"
+          className="aspect-[16/8] !h-auto !min-h-0 rounded-none shadow-none"
         />
       </div>
       <p className="inline-flex w-fit items-center gap-2 rounded-full border border-[var(--pq-line)] bg-[var(--pq-surface)] px-3 py-1 text-[12px] font-extrabold uppercase tracking-[0.14em] text-[var(--pq-primary)]">
@@ -485,16 +487,28 @@ function ImageCard({
   visualHint?: YoVisualHint;
   imageFit?: "cover" | "contain";
 }) {
+  const isMap = visualHint === "dominican-map";
+  const resolvedFit = isMap ? "contain" : imageFit;
+  const visualLayout = isMap ? "map" : "imageOnly";
+
   return (
-    <div className="overflow-hidden rounded-[24px] border border-[var(--pq-line)] bg-[var(--pq-surface)] shadow-[0_14px_34px_rgba(23,38,66,0.07)]">
+    <div
+      data-yo-lesson-image-card="true"
+      data-yo-lesson-image-card-layout={visualLayout}
+      className="overflow-hidden rounded-[24px] border border-[var(--pq-line)] bg-[var(--pq-surface)] shadow-[0_14px_34px_rgba(23,38,66,0.07)]"
+    >
       <YoImageVisual
         imagePath={imagePath}
         alt={imageAlt}
         locale={locale}
         fallbackKind={visualHint}
         variant="panel"
-        imageFit={imageFit}
-        className="h-[clamp(190px,35vh,315px)] !min-h-0 rounded-none shadow-none"
+        imageFit={resolvedFit}
+        visualLayout={visualLayout}
+        className={cn(
+          "!h-auto !min-h-0 rounded-none shadow-none",
+          isMap ? "aspect-[3/2]" : "aspect-[16/8]",
+        )}
       />
     </div>
   );

@@ -473,7 +473,7 @@ export function YoLessonDeck({
             ref={activeScreenRef}
             data-testid="yo-lesson-deck-stage"
             data-yo-lesson-deck-stage="true"
-            className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-[22px] pb-1 pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:min-h-0 lg:flex-none lg:overflow-visible lg:pb-28 lg:pt-6"
+            className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-[22px] pb-8 pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:min-h-0 lg:flex-none lg:overflow-visible lg:pb-32 lg:pt-6"
             onPointerDown={onPointerDown}
             onPointerUp={onPointerUp}
             onPointerCancel={onPointerCancel}
@@ -651,7 +651,7 @@ function ReferenceLessonScreen({
       data-testid="yo-lesson-deck-screen-host"
       data-yo-lesson-deck-screen-host-id={screen.id}
       data-yo-lesson-deck-screen-host-active="true"
-      className="min-h-full pb-5"
+      className="min-h-full pb-8"
     >
       {screen.eyebrow ? (
         <p className="mb-3 text-[12px] font-extrabold uppercase tracking-[0.14em] text-[var(--pq-primary)]">

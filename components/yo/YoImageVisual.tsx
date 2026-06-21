@@ -11,6 +11,10 @@ import {
   YoHeroTropicalArt,
   YoUnlockTravelStamp,
 } from "@/components/yo/YoVisuals";
+import {
+  resolveYoLessonVisualLayout,
+  type YoLessonVisualLayout,
+} from "@/lib/yo/lessonDeckVisualContract";
 
 type YoImageVisualVariant = "hero" | "card" | "panel" | "flashcard" | "unlock";
 type YoImageObjectFit = "cover" | "contain";
@@ -23,6 +27,13 @@ export interface YoImageVisualProps {
   variant?: YoImageVisualVariant;
   imageFit?: YoImageObjectFit;
   imagePosition?: string;
+  /**
+   * Visual-composition contract for lesson cards. The component itself never
+   * renders an empty side panel; callers that need split visuals must pass
+   * real adjacent content outside this image-only primitive.
+   */
+  visualLayout?: YoLessonVisualLayout;
+  hasSideContent?: boolean;
   priority?: boolean;
   className?: string;
 }
@@ -51,15 +62,24 @@ export function YoImageVisual({
   variant = "card",
   imageFit = "cover",
   imagePosition = "center",
+  visualLayout,
+  hasSideContent = false,
   priority = false,
   className,
 }: YoImageVisualProps) {
   const altText = t(alt, locale);
   const [imageFailed, setImageFailed] = useState(false);
   const shouldRenderImage = Boolean(imagePath) && !imageFailed;
+  const resolvedVisualLayout = resolveYoLessonVisualLayout({
+    requested: visualLayout ?? (fallbackKind === "dominican-map" ? "map" : undefined),
+    hasSideContent,
+    fallback: "imageOnly",
+  });
 
   return (
     <div
+      data-yo-image-visual-layout={resolvedVisualLayout}
+      data-yo-image-visual-empty-side-panel="false"
       className={cn(
         "relative isolate overflow-hidden rounded-[1.75rem] border border-teal-100 bg-[#f6fbf7] shadow-[0_16px_38px_rgba(15,58,52,0.12)]",
         VARIANT_CLASSES[variant],
