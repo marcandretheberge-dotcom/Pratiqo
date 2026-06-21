@@ -9,7 +9,10 @@
  *             can be set to `null` / undefined to be hidden.
  *   Desktop : three-pane grid — left rail / center / optional right
  *             rail — with the center pane sized to a readable
- *             max-width and overflow scoped inside each pane.
+ *             max-width. Panes size to their natural content height
+ *             and the page scrolls once; no pane scopes its own
+ *             independent scroll region (that produced "left/center/
+ *             right each scroll independently" on desktop).
  *
  * The helper does NOT introduce a new design system; it just lays out
  * existing primitives (e.g. catalog tiles, hero / path / companion)
@@ -102,7 +105,7 @@ export function YoDesktopAppWorkspace({
       data-yo-desktop-workspace-has-left={hasLeft ? "true" : "false"}
       data-yo-desktop-workspace-has-right={hasRight ? "true" : "false"}
       className={cn(
-        "mx-auto grid h-full w-full max-w-6xl grid-cols-1 gap-4 px-3 py-4 sm:gap-5 sm:px-6 sm:py-5 lg:gap-6",
+        "mx-auto grid w-full max-w-6xl grid-cols-1 items-start gap-4 px-3 py-4 sm:gap-5 sm:px-6 sm:py-5 lg:gap-6",
         gridCols,
         className,
       )}
@@ -111,7 +114,7 @@ export function YoDesktopAppWorkspace({
         <aside
           data-testid="yo-desktop-workspace-left"
           data-yo-desktop-workspace-rail="left"
-          className="flex min-h-0 flex-col gap-4 overflow-y-auto pr-1 lg:gap-5"
+          className="flex flex-col gap-4 lg:gap-5"
         >
           {leftRail}
         </aside>
@@ -121,7 +124,7 @@ export function YoDesktopAppWorkspace({
         data-testid="yo-desktop-workspace-center"
         data-yo-desktop-workspace-pane="center"
         data-yo-desktop-workspace-center-max-w={centerMaxWidth}
-        className="flex min-h-0 flex-col gap-4 overflow-y-auto pr-1 lg:gap-5"
+        className="flex flex-col gap-4 lg:gap-5"
       >
         <div
           data-yo-desktop-workspace-center-inner="true"
@@ -138,7 +141,7 @@ export function YoDesktopAppWorkspace({
         <aside
           data-testid="yo-desktop-workspace-right"
           data-yo-desktop-workspace-rail="right"
-          className="hidden min-h-0 flex-col gap-4 overflow-y-auto pr-1 lg:flex lg:gap-5"
+          className="hidden flex-col gap-4 lg:flex lg:gap-5"
         >
           {rightRail}
         </aside>

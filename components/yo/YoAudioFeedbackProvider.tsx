@@ -191,7 +191,15 @@ export function YoAudioFeedbackProvider({
             toggleMuted();
           }}
           className={cn(
-            "absolute right-4 top-[4.65rem] z-50 inline-flex items-center gap-1.5 rounded-full border px-3 py-2 text-xs font-bold shadow-[0_12px_28px_rgba(23,38,66,0.12)] backdrop-blur-md transition",
+            // `fixed` (viewport-relative) instead of `absolute`
+            // inside the `relative h-full` wrapper above — the
+            // old `top-[4.65rem]` offset assumed one specific
+            // header height and drifted off-screen / collided with
+            // chrome on every other deck route. Anchored
+            // bottom-right, clear of the bottom nav bar (which is
+            // roughly 4.5rem tall including its safe-area padding),
+            // so it never overlaps content or floats off-screen.
+            "fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] right-4 z-50 inline-flex items-center gap-1.5 rounded-full border px-3 py-2 text-xs font-bold shadow-[0_12px_28px_rgba(23,38,66,0.12)] backdrop-blur-md transition",
             isMuted
               ? "border-[#E7DFCF] bg-white/90 text-[#566073]"
               : "border-[#13A085]/30 bg-[#DDF4F1]/95 text-[#0F6E56]",

@@ -2,8 +2,8 @@
  * YoDesktopLearningWorkspace
  *
  * Desktop-only sub-tree of a `<YoAdaptiveShell>` (or used
- * directly). Composes the existing `<YoAppShell>` primitive with
- * a real product-software workspace pattern on `lg+`:
+ * directly). Composes a natural-scroll desktop wrapper with a real
+ * product-software workspace pattern on `lg+`:
  *
  *   ┌──────────────────────── header (desktop) ────────────────────────┐
  *   │ logo · title                                            selector │
@@ -21,9 +21,13 @@
  *
  * Behaviour
  * ---------
- *   - Wraps an `<YoAppShell>` (locks `h-[100dvh] overflow-hidden`,
- *     keeps the header in the shrink-0 slot, exposes an optional
- *     bottom action zone).
+ *   - Unlike the mobile shell, this desktop sub-tree does NOT lock
+ *     `h-[100dvh] overflow-hidden`. Desktop surfaces (the language
+ *     catalogue, the country course home) want the browser to
+ *     scroll the page naturally — a viewport lock here is what
+ *     produced "trapped in a tiny internal scrollbar" on desktop.
+ *     The header sticks to the top of the viewport while the page
+ *     scrolls; the rest flows at its natural height.
  *   - The central pane renders the existing
  *     `<YoDesktopAppWorkspace>` three-pane grid.
  *   - Hidden below `lg` so the mobile shell takes over.
@@ -36,11 +40,13 @@
  */
 
 import { cn } from "@/lib/utils";
-import { YoAppShell } from "@/components/yo/YoAppShell";
 import {
   YoDesktopAppWorkspace,
   type YoWorkspaceCenterMaxWidth,
 } from "@/components/yo/YoDesktopAppWorkspace";
+
+const DEFAULT_BACKGROUND =
+  "bg-[linear-gradient(180deg,#F4EFE6_0%,#FBF7EE_55%,#F4EFE6_100%)]";
 
 export type YoDesktopLearningWorkspaceProps = {
   /** Desktop header. Typically a `<YoAppHeader>` with `appearance="desktop"`. */
@@ -92,20 +98,40 @@ export function YoDesktopLearningWorkspace({
       }
       className={cn("hidden lg:block", className)}
     >
-      <YoAppShell
-        surfaceId={surfaceId}
-        background={background}
-        header={header}
-        bottom={bottom}
+      <div
+        className={cn(
+          "relative flex min-h-[100dvh] flex-col text-[#172642]",
+          background ?? DEFAULT_BACKGROUND,
+        )}
       >
-        <YoDesktopAppWorkspace
-          surfaceId={surfaceId}
-          leftRail={leftRail}
-          center={center}
-          rightRail={rightRail}
-          centerMaxWidth={centerMaxWidth}
-        />
-      </YoAppShell>
+        {header ? (
+          <div data-yo-app-shell-header-slot="true" className="sticky top-0 z-40">
+            {header}
+          </div>
+        ) : null}
+
+        <main
+          data-yo-app-shell-main="true"
+          className="relative flex flex-1 flex-col"
+        >
+          <YoDesktopAppWorkspace
+            surfaceId={surfaceId}
+            leftRail={leftRail}
+            center={center}
+            rightRail={rightRail}
+            centerMaxWidth={centerMaxWidth}
+          />
+        </main>
+
+        {bottom ? (
+          <div
+            data-yo-app-shell-bottom-slot="true"
+            className="sticky bottom-0 z-30 border-t border-[#E7DFCF] bg-[#F4EFE6]/96 px-4 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-3 backdrop-blur-md"
+          >
+            {bottom}
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }

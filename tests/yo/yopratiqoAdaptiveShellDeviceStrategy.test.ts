@@ -134,24 +134,31 @@ test("YoMobileAppShell composes <YoAppShell> + <YoScreenPager> and is lg:hidden"
   );
 });
 
-// ─── 4. Desktop sub-tree composes shell + workspace + lg:block ───
-test("YoDesktopLearningWorkspace composes <YoAppShell> + <YoDesktopAppWorkspace> and is hidden lg:block", () => {
+// ─── 4. Desktop sub-tree composes a natural-scroll wrapper + workspace + lg:block ───
+test("YoDesktopLearningWorkspace composes a natural-scroll wrapper + <YoDesktopAppWorkspace> and is hidden lg:block (no viewport lock)", () => {
+  // World-class-shell pass: desktop intentionally dropped the
+  // <YoAppShell> viewport-lock — that lock produced "trapped in a
+  // tiny internal scrollbar" on desktop. Desktop now scrolls the
+  // page naturally with a `sticky` header instead.
   const src = read(DESKTOP_PATH);
   const code = stripJsComments(src);
-  assert.match(
-    src,
-    /from\s+["']@\/components\/yo\/YoAppShell["']/,
-    "YoDesktopLearningWorkspace must import YoAppShell",
+  assert.ok(
+    !/from\s+["']@\/components\/yo\/YoAppShell["']/.test(src),
+    "YoDesktopLearningWorkspace must NOT import YoAppShell anymore",
   );
   assert.match(
     src,
     /from\s+["']@\/components\/yo\/YoDesktopAppWorkspace["']/,
     "YoDesktopLearningWorkspace must import YoDesktopAppWorkspace",
   );
+  assert.ok(
+    !/<YoAppShell\b/.test(code),
+    "YoDesktopLearningWorkspace must NOT render <YoAppShell /> anymore",
+  );
   assert.match(
     code,
-    /<YoAppShell\b/,
-    "YoDesktopLearningWorkspace must render <YoAppShell />",
+    /sticky top-0/,
+    "YoDesktopLearningWorkspace must keep its own header sticky while the page scrolls naturally",
   );
   assert.match(
     code,
