@@ -174,13 +174,14 @@ test("each desktop sub-tree mounts <YoAppHeader appearance=\"desktop\">", async 
 });
 
 // ─── 3. Three-pane workspace on every audited surface ────────────
-test("desktop sub-trees declare leftRail + center + rightRail (full workspace pattern)", async () => {
-  for (const [label, tree] of [
-    ["catalog", (await renderPage(YoLanguesPage)) as ReactElement],
-    ["Spanish hub", (await renderPage(YoSpanishLandingPage)) as ReactElement],
+test("desktop sub-trees declare leftRail + center, with rightRail only where it does not squeeze the surface", async () => {
+  for (const [label, tree, requiresRightRail] of [
+    ["catalog", (await renderPage(YoLanguesPage)) as ReactElement, false],
+    ["Spanish hub", (await renderPage(YoSpanishLandingPage)) as ReactElement, true],
     [
       "Course Home",
       (await renderPage(YoEspagnolRepubliqueDominicainePage)) as ReactElement,
+      true,
     ],
   ] as const) {
     const adaptive = findAdaptiveShellElement(tree);
@@ -189,12 +190,14 @@ test("desktop sub-trees declare leftRail + center + rightRail (full workspace pa
     }).desktop;
     assert.ok(desktop.center, `${label} desktop must declare a center`);
     assert.ok(desktop.leftRail, `${label} desktop must declare a leftRail`);
-    assert.ok(desktop.rightRail, `${label} desktop must declare a rightRail`);
+    if (requiresRightRail) {
+      assert.ok(desktop.rightRail, `${label} desktop must declare a rightRail`);
+    }
   }
 });
 
 // ─── 4. Catalog desktop centre uses a wider grid (not stretched mobile) ─
-test("catalog desktop centre uses sm:grid-cols-2 + xl:grid-cols-3 (not a phone single-column)", () => {
+test("catalog desktop centre uses auto-fit min-width cards instead of a forced squeezed row", () => {
   const src = read("app/yo/langues/page.tsx");
   assert.match(
     src,
@@ -203,8 +206,18 @@ test("catalog desktop centre uses sm:grid-cols-2 + xl:grid-cols-3 (not a phone s
   );
   assert.match(
     src,
-    /sm:grid-cols-2\s+xl:grid-cols-3/,
-    "catalog desktop tile grid must be sm:grid-cols-2 xl:grid-cols-3",
+    /data-yo-langues-grid-min-card-width=["']280px["']/,
+    "catalog desktop tile grid must expose the minimum card width contract",
+  );
+  assert.match(
+    src,
+    /repeat\(auto-fit,minmax\(min\(100%,280px\),1fr\)\)/,
+    "catalog desktop tile grid must use auto-fit minmax cards",
+  );
+  assert.doesNotMatch(
+    src,
+    /data-yo-langues-tiles-variant=["']desktop["'][\s\S]{0,220}sm:grid-cols-2\s+xl:grid-cols-3/,
+    "catalog desktop tile grid must not force a squeezed 3-column row",
   );
 });
 

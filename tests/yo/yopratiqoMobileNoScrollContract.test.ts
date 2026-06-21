@@ -382,7 +382,7 @@ test("each audited page declares a desktop sub-tree with a centre pane (workspac
     {
       label: "catalog",
       tree: await renderCatalog(),
-      requireRightRail: true,
+      requireRightRail: false,
     },
     {
       label: "Spanish hub",
