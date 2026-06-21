@@ -98,14 +98,17 @@ const FAQ_ITEMS = [
 ];
 
 const DISCIPLINES = [
-  { label: "Mathématiques", slug: "mathematiques" },
-  { label: "Français", slug: "francais" },
-  { label: "Anglais", slug: "anglais" },
-  { label: "Sciences", slug: "sciences" },
-  { label: "Piano", slug: "piano" },
-  { label: "Guitare", slug: "guitare" },
-  { label: "Espagnol", slug: "espagnol" },
-  { label: "Francisation", slug: "francisation" },
+  { label: "Mathématiques", href: "/cours/mathematiques/montreal" },
+  { label: "Français", href: "/cours/francais/montreal" },
+  { label: "Anglais", href: "/cours/anglais/montreal" },
+  { label: "Piano", href: "/cours/piano/montreal" },
+  { label: "Guitare", href: "/cours/guitare/montreal" },
+  { label: "Espagnol", href: "/cours/espagnol/montreal" },
+  { label: "Francisation", href: "/cours/francisation/montreal" },
+  { label: "Coach / entraîneur", href: "/cours/coach-entraineur" },
+  { label: "Cuisine", href: "/cours/cuisine" },
+  { label: "Arts martiaux", href: "/cours/arts-martiaux" },
+  { label: "Danse", href: "/cours/danse" },
 ];
 
 const CITIES = [
@@ -287,8 +290,8 @@ export default async function TrouverUnProfPage() {
               <div className="mt-6 flex flex-wrap gap-2">
                 {DISCIPLINES.map((d) => (
                   <Link
-                    key={d.slug}
-                    href={`/cours/${d.slug}/montreal`}
+                    key={d.href}
+                    href={d.href}
                     className="rounded-full border border-[#DCEAE3] bg-white px-4 py-2 text-sm font-semibold text-[#2C2C2A] transition-colors hover:border-teal-500 hover:text-teal-700"
                   >
                     {d.label}
