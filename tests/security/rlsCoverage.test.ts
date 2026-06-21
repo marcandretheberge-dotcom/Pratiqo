@@ -43,6 +43,10 @@ const EXPLICIT_RLS_HARDENING_FILES = [
   "085_harden_student_onboarding_consents_rls.sql",
 ];
 
+const POSTGIS_RLS_HARDENING_FILES = [
+  "086_harden_spatial_ref_sys_rls.sql",
+];
+
 function readMigration(file: string): string {
   return readFileSync(join(MIGRATIONS_DIR, file), "utf8").replace(
     /\r\n/g,
@@ -232,6 +236,28 @@ test("supabase/scripts/rls_audit.sql exists and is read-only", () => {
     /\b(alter|drop|create|insert|update|delete|truncate|grant|revoke)\b/i,
     "audit helper must contain only read-only SELECT queries",
   );
+});
+
+test("086 hardening migration explicitly enables RLS on PostGIS spatial_ref_sys", () => {
+  for (const file of POSTGIS_RLS_HARDENING_FILES) {
+    assert.ok(migrationFiles.includes(file), `missing ${file}`);
+    const sql = stripSqlComments(readMigration(file));
+    assert.match(
+      sql,
+      /alter\s+table\s+if\s+exists\s+public\.spatial_ref_sys\s+enable\s+row\s+level\s+security/i,
+      `${file} must enable RLS on public.spatial_ref_sys`,
+    );
+    assert.match(
+      sql,
+      /create\s+policy\s+"spatial_ref_sys read"[\s\S]*?on\s+public\.spatial_ref_sys[\s\S]*?for\s+select[\s\S]*?to\s+anon\s*,\s*authenticated/i,
+      `${file} must create read-only policy for anon/authenticated`,
+    );
+    assert.match(
+      sql,
+      /revoke\s+insert\s*,\s*update\s*,\s*delete\s+on\s+public\.spatial_ref_sys\s+from\s+anon\s*,\s*authenticated/i,
+      `${file} must revoke writes from web roles`,
+    );
+  }
 });
 
 // ─────────────────────────────────────────────────────────────────────────

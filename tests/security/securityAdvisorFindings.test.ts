@@ -29,6 +29,7 @@ function test(name: string, fn: TestFn) {
 
 const MIGRATION_FILE = "supabase/migrations/075_fix_security_definer_views_and_spatial_ref_sys.sql";
 const MIGRATION_076_FILE = "supabase/migrations/076_spatial_ref_sys_rls_policy.sql";
+const MIGRATION_086_FILE = "supabase/migrations/086_harden_spatial_ref_sys_rls.sql";
 
 function read(rel: string): string {
   return readFileSync(join(process.cwd(), rel), "utf8").replace(/\r\n/g, "\n");
@@ -44,12 +45,14 @@ function stripSqlComments(sql: string): string {
 
 const migration = read(MIGRATION_FILE);
 const migration076 = read(MIGRATION_076_FILE);
+const migration086 = read(MIGRATION_086_FILE);
 
 // Strip SQL comments so commentary that legitimately mentions a banned
 // pattern (e.g. "Do NOT add `USING (true)`") does not false-positive the
 // regex scans below.
 const code = stripSqlComments(migration);
 const code076 = stripSqlComments(migration076);
+const code086 = stripSqlComments(migration086);
 
 // ─────────────────────────────────────────────────────────────────────────
 // 1. teachers_public: rebuilt with security_invoker = true, backed by a
@@ -422,6 +425,111 @@ test("076: does NOT drop, recreate, or move the PostGIS extension", () => {
 test("076: does not disable RLS, does not reference support@pratiqo.ca", () => {
   assert.doesNotMatch(code076, /disable\s+row\s+level\s+security/i);
   assert.doesNotMatch(code076, /support@pratiqo\.ca/i);
+});
+
+// ─────────────────────────────────────────────────────────────────────────
+// 7. Migration 086 — forward hardening for spatial_ref_sys when 075/076
+//    no-op'd inside DO blocks. Direct ENABLE + read policy + write REVOKE.
+// ─────────────────────────────────────────────────────────────────────────
+
+test("086: migration file exists and targets only public.spatial_ref_sys", () => {
+  assert.ok(migration086.length > 0, "migration 086 must exist");
+  const tableTouchPattern =
+    /ALTER\s+TABLE(?:\s+IF\s+EXISTS)?\s+public\.([a-z_][a-z0-9_]*)/gi;
+  const tablesTouched = new Set<string>();
+  let m: RegExpExecArray | null;
+  while ((m = tableTouchPattern.exec(code086)) !== null) {
+    tablesTouched.add(m[1].toLowerCase());
+  }
+  assert.deepEqual(
+    [...tablesTouched].sort(),
+    ["spatial_ref_sys"],
+    `086 must only ALTER public.spatial_ref_sys, got: ${[...tablesTouched].join(", ") || "<none>"}`,
+  );
+
+  const policyTouchPattern =
+    /(?:DROP|CREATE)\s+POLICY[\s\S]*?ON\s+public\.([a-z_][a-z0-9_]*)/gi;
+  const policyTables = new Set<string>();
+  while ((m = policyTouchPattern.exec(code086)) !== null) {
+    policyTables.add(m[1].toLowerCase());
+  }
+  assert.deepEqual(
+    [...policyTables].sort(),
+    ["spatial_ref_sys"],
+    `086 policy ops must only target public.spatial_ref_sys, got: ${[...policyTables].join(", ") || "<none>"}`,
+  );
+});
+
+test("086: enables RLS on spatial_ref_sys with direct ALTER", () => {
+  assert.match(
+    code086,
+    /ALTER TABLE IF EXISTS public\.spatial_ref_sys ENABLE ROW LEVEL SECURITY/i,
+  );
+  assert.doesNotMatch(
+    code086,
+    /DO \$\$/i,
+    "086 must apply hardening directly, not inside a silent DO fallback",
+  );
+});
+
+test("086: creates read-only SELECT policy for anon, authenticated", () => {
+  assert.match(
+    code086,
+    /DROP POLICY IF EXISTS "spatial_ref_sys read" ON public\.spatial_ref_sys/i,
+  );
+  assert.match(
+    code086,
+    /DROP POLICY IF EXISTS "spatial_ref_sys_select_public" ON public\.spatial_ref_sys/i,
+    "086 must drop the legacy 076 policy name",
+  );
+
+  const policyBlocks = Array.from(
+    code086.matchAll(/CREATE\s+POLICY[\s\S]*?;\s*/gi),
+  ).map((mm) => mm[0]);
+  assert.equal(
+    policyBlocks.length,
+    1,
+    `086 must create exactly one policy on spatial_ref_sys, found ${policyBlocks.length}`,
+  );
+
+  const policyBlock = policyBlocks[0];
+  assert.match(
+    policyBlock,
+    /CREATE POLICY "spatial_ref_sys read"\s+ON public\.spatial_ref_sys/i,
+  );
+  assert.match(policyBlock, /\bFOR\s+SELECT\b/i);
+  assert.match(policyBlock, /\bTO\s+anon\s*,\s*authenticated\b/i);
+  assert.match(policyBlock, /\bUSING\s*\(\s*true\s*\)/i);
+});
+
+test("086: revokes writes from anon and authenticated", () => {
+  assert.match(
+    code086,
+    /REVOKE\s+INSERT\s*,\s*UPDATE\s*,\s*DELETE\s+ON\s+public\.spatial_ref_sys\s+FROM\s+anon\s*,\s*authenticated/i,
+  );
+  assert.doesNotMatch(
+    code086,
+    /\bGRANT\s+(INSERT|UPDATE|DELETE|ALL|TRUNCATE|REFERENCES|TRIGGER)\b/i,
+    "086 must not GRANT writes on spatial_ref_sys",
+  );
+});
+
+test("086: does not create INSERT, UPDATE, DELETE, or ALL policies", () => {
+  for (const cmd of ["INSERT", "UPDATE", "DELETE", "ALL"]) {
+    assert.doesNotMatch(
+      code086,
+      new RegExp(`CREATE\\s+POLICY[\\s\\S]*?\\bFOR\\s+${cmd}\\b`, "i"),
+      `086 must not create a FOR ${cmd} policy on spatial_ref_sys`,
+    );
+  }
+});
+
+test("086: does not use FORCE ROW LEVEL SECURITY or PostGIS extension churn", () => {
+  assert.doesNotMatch(code086, /force\s+row\s+level\s+security/i);
+  assert.doesNotMatch(code086, /\bDROP\s+EXTENSION\b/i);
+  assert.doesNotMatch(code086, /\bCREATE\s+EXTENSION\b/i);
+  assert.doesNotMatch(code086, /\bALTER\s+EXTENSION\b/i);
+  assert.doesNotMatch(code086, /disable\s+row\s+level\s+security/i);
 });
 
 // ─────────────────────────────────────────────────────────────────────────
