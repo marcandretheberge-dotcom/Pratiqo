@@ -125,9 +125,11 @@ ORDER BY viewname;
 -- ─────────────────────────────────────────────────────────────────────────────
 -- 7. Ownership / extension membership for spatial_ref_sys. If
 --    `extension_name = 'postgis'`, the table is owned by the extension and
---    `ALTER TABLE ... ENABLE ROW LEVEL SECURITY` will fail with
---    insufficient_privilege — that is a known PostGIS limitation, not a
---    Pratiqo data leak (the table holds only public EPSG/SRID reference data).
+--    `ALTER TABLE ... ENABLE ROW LEVEL SECURITY` fails with SQLSTATE 42501
+--    (must be owner) — that is a known PostGIS limitation, not a Pratiqo
+--    data leak (the table holds only public EPSG/SRID reference data).
+--    Launch validation documents this as the sole allowlisted exception; do
+--    not ship direct-fail migrations (see tests/security/postgisRlsException.ts).
 -- ─────────────────────────────────────────────────────────────────────────────
 SELECT
   n.nspname AS schema,

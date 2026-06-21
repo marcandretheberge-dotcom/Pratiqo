@@ -8,7 +8,8 @@
  *   1. security_definer_view on public.teachers_public
  *   2. security_definer_view on public.teacher_revenue
  *   3. security_definer_view on public.revenue_daily
- *   4. rls_disabled_in_public on public.spatial_ref_sys
+ *   4. rls_disabled_in_public on public.spatial_ref_sys (documented PostGIS
+ *      extension exception — see tests/security/postgisRlsException.ts)
  *
  * Complements:
  *   - tests/security/rlsPolicyShape.test.ts        (sensitive table policies)
@@ -18,8 +19,12 @@
  */
 
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import {
+  POSTGIS_EXTENSION_RLS_ALLOWLIST,
+  POSTGIS_SPATIAL_REF_SYS_EXCEPTION,
+} from "./postgisRlsException";
 
 type TestFn = () => void;
 const tests: Array<{ name: string; fn: TestFn }> = [];
@@ -29,7 +34,7 @@ function test(name: string, fn: TestFn) {
 
 const MIGRATION_FILE = "supabase/migrations/075_fix_security_definer_views_and_spatial_ref_sys.sql";
 const MIGRATION_076_FILE = "supabase/migrations/076_spatial_ref_sys_rls_policy.sql";
-const MIGRATION_086_FILE = "supabase/migrations/086_harden_spatial_ref_sys_rls.sql";
+const MIGRATIONS_DIR = join(process.cwd(), "supabase", "migrations");
 
 function read(rel: string): string {
   return readFileSync(join(process.cwd(), rel), "utf8").replace(/\r\n/g, "\n");
@@ -45,14 +50,12 @@ function stripSqlComments(sql: string): string {
 
 const migration = read(MIGRATION_FILE);
 const migration076 = read(MIGRATION_076_FILE);
-const migration086 = read(MIGRATION_086_FILE);
 
 // Strip SQL comments so commentary that legitimately mentions a banned
 // pattern (e.g. "Do NOT add `USING (true)`") does not false-positive the
 // regex scans below.
 const code = stripSqlComments(migration);
 const code076 = stripSqlComments(migration076);
-const code086 = stripSqlComments(migration086);
 
 // ─────────────────────────────────────────────────────────────────────────
 // 1. teachers_public: rebuilt with security_invoker = true, backed by a
@@ -428,108 +431,60 @@ test("076: does not disable RLS, does not reference support@pratiqo.ca", () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────
-// 7. Migration 086 — forward hardening for spatial_ref_sys when 075/076
-//    no-op'd inside DO blocks. Direct ENABLE + read policy + write REVOKE.
+// 7. PostGIS spatial_ref_sys — narrow documented Security Advisor exception.
+//    No direct-fail production migration (086 removed). 075/076 remain
+//    historical best-effort DO blocks only.
 // ─────────────────────────────────────────────────────────────────────────
 
-test("086: migration file exists and targets only public.spatial_ref_sys", () => {
-  assert.ok(migration086.length > 0, "migration 086 must exist");
-  const tableTouchPattern =
-    /ALTER\s+TABLE(?:\s+IF\s+EXISTS)?\s+public\.([a-z_][a-z0-9_]*)/gi;
-  const tablesTouched = new Set<string>();
-  let m: RegExpExecArray | null;
-  while ((m = tableTouchPattern.exec(code086)) !== null) {
-    tablesTouched.add(m[1].toLowerCase());
+test("launch allowlists only public.spatial_ref_sys for rls_disabled_in_public", () => {
+  assert.deepEqual([...POSTGIS_EXTENSION_RLS_ALLOWLIST], ["spatial_ref_sys"]);
+  assert.equal(POSTGIS_SPATIAL_REF_SYS_EXCEPTION.table, "public.spatial_ref_sys");
+  assert.ok(
+    POSTGIS_SPATIAL_REF_SYS_EXCEPTION.reasons.length >= 5,
+    "exception must document PostGIS ownership and 42501 production failure",
+  );
+  assert.match(
+    POSTGIS_SPATIAL_REF_SYS_EXCEPTION.reasons.join(" "),
+    /42501|must be owner/i,
+    "exception must mention production 42501 must be owner",
+  );
+  assert.match(
+    POSTGIS_SPATIAL_REF_SYS_EXCEPTION.reasons.join(" "),
+    /PostGIS/i,
+    "exception must identify PostGIS extension reference data",
+  );
+  assert.match(
+    POSTGIS_SPATIAL_REF_SYS_EXCEPTION.reasons.join(" "),
+    /no Pratiqo user or private data/i,
+    "exception must clarify no Pratiqo private data",
+  );
+});
+
+test("086 direct-fail spatial_ref_sys migration must not exist", () => {
+  assert.ok(
+    !existsSync(join(MIGRATIONS_DIR, POSTGIS_SPATIAL_REF_SYS_EXCEPTION.removedDirectFailMigration)),
+    `${POSTGIS_SPATIAL_REF_SYS_EXCEPTION.removedDirectFailMigration} must be removed; production ALTER fails with 42501`,
+  );
+});
+
+test("075 and 076 remain best-effort DO blocks for spatial_ref_sys", () => {
+  for (const file of POSTGIS_SPATIAL_REF_SYS_EXCEPTION.historicalBestEffortMigrations) {
+    assert.ok(existsSync(join(MIGRATIONS_DIR, file)), `historical migration ${file} must remain`);
   }
-  assert.deepEqual(
-    [...tablesTouched].sort(),
-    ["spatial_ref_sys"],
-    `086 must only ALTER public.spatial_ref_sys, got: ${[...tablesTouched].join(", ") || "<none>"}`,
-  );
-
-  const policyTouchPattern =
-    /(?:DROP|CREATE)\s+POLICY[\s\S]*?ON\s+public\.([a-z_][a-z0-9_]*)/gi;
-  const policyTables = new Set<string>();
-  while ((m = policyTouchPattern.exec(code086)) !== null) {
-    policyTables.add(m[1].toLowerCase());
-  }
-  assert.deepEqual(
-    [...policyTables].sort(),
-    ["spatial_ref_sys"],
-    `086 policy ops must only target public.spatial_ref_sys, got: ${[...policyTables].join(", ") || "<none>"}`,
-  );
+  assert.match(code076, /DO \$\$[\s\S]*spatial_ref_sys[\s\S]*insufficient_privilege/i);
 });
 
-test("086: enables RLS on spatial_ref_sys with direct ALTER", () => {
+test("085 student_onboarding_consents RLS hardening remains separate from PostGIS exception", () => {
+  assert.ok(
+    existsSync(join(MIGRATIONS_DIR, "085_harden_student_onboarding_consents_rls.sql")),
+    "085 must remain for student_onboarding_consents",
+  );
+  const sql085 = stripSqlComments(read("supabase/migrations/085_harden_student_onboarding_consents_rls.sql"));
   assert.match(
-    code086,
-    /ALTER TABLE IF EXISTS public\.spatial_ref_sys ENABLE ROW LEVEL SECURITY/i,
+    sql085,
+    /alter\s+table\s+if\s+exists\s+public\.student_onboarding_consents\s+enable\s+row\s+level\s+security/i,
   );
-  assert.doesNotMatch(
-    code086,
-    /DO \$\$/i,
-    "086 must apply hardening directly, not inside a silent DO fallback",
-  );
-});
-
-test("086: creates read-only SELECT policy for anon, authenticated", () => {
-  assert.match(
-    code086,
-    /DROP POLICY IF EXISTS "spatial_ref_sys read" ON public\.spatial_ref_sys/i,
-  );
-  assert.match(
-    code086,
-    /DROP POLICY IF EXISTS "spatial_ref_sys_select_public" ON public\.spatial_ref_sys/i,
-    "086 must drop the legacy 076 policy name",
-  );
-
-  const policyBlocks = Array.from(
-    code086.matchAll(/CREATE\s+POLICY[\s\S]*?;\s*/gi),
-  ).map((mm) => mm[0]);
-  assert.equal(
-    policyBlocks.length,
-    1,
-    `086 must create exactly one policy on spatial_ref_sys, found ${policyBlocks.length}`,
-  );
-
-  const policyBlock = policyBlocks[0];
-  assert.match(
-    policyBlock,
-    /CREATE POLICY "spatial_ref_sys read"\s+ON public\.spatial_ref_sys/i,
-  );
-  assert.match(policyBlock, /\bFOR\s+SELECT\b/i);
-  assert.match(policyBlock, /\bTO\s+anon\s*,\s*authenticated\b/i);
-  assert.match(policyBlock, /\bUSING\s*\(\s*true\s*\)/i);
-});
-
-test("086: revokes writes from anon and authenticated", () => {
-  assert.match(
-    code086,
-    /REVOKE\s+INSERT\s*,\s*UPDATE\s*,\s*DELETE\s+ON\s+public\.spatial_ref_sys\s+FROM\s+anon\s*,\s*authenticated/i,
-  );
-  assert.doesNotMatch(
-    code086,
-    /\bGRANT\s+(INSERT|UPDATE|DELETE|ALL|TRUNCATE|REFERENCES|TRIGGER)\b/i,
-    "086 must not GRANT writes on spatial_ref_sys",
-  );
-});
-
-test("086: does not create INSERT, UPDATE, DELETE, or ALL policies", () => {
-  for (const cmd of ["INSERT", "UPDATE", "DELETE", "ALL"]) {
-    assert.doesNotMatch(
-      code086,
-      new RegExp(`CREATE\\s+POLICY[\\s\\S]*?\\bFOR\\s+${cmd}\\b`, "i"),
-      `086 must not create a FOR ${cmd} policy on spatial_ref_sys`,
-    );
-  }
-});
-
-test("086: does not use FORCE ROW LEVEL SECURITY or PostGIS extension churn", () => {
-  assert.doesNotMatch(code086, /force\s+row\s+level\s+security/i);
-  assert.doesNotMatch(code086, /\bDROP\s+EXTENSION\b/i);
-  assert.doesNotMatch(code086, /\bCREATE\s+EXTENSION\b/i);
-  assert.doesNotMatch(code086, /\bALTER\s+EXTENSION\b/i);
-  assert.doesNotMatch(code086, /disable\s+row\s+level\s+security/i);
+  assert.doesNotMatch(sql085, /spatial_ref_sys/i, "085 must not reference spatial_ref_sys");
 });
 
 // ─────────────────────────────────────────────────────────────────────────

@@ -27,8 +27,12 @@
  */
 
 import assert from "node:assert/strict";
-import { readdirSync, readFileSync } from "node:fs";
+import { readdirSync, readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
+import {
+  POSTGIS_EXTENSION_RLS_ALLOWLIST,
+  POSTGIS_SPATIAL_REF_SYS_EXCEPTION,
+} from "./postgisRlsException";
 
 type TestFn = () => void;
 const tests: Array<{ name: string; fn: TestFn }> = [];
@@ -41,10 +45,6 @@ const HARDENING_FILE = "074_enable_rls_security_hardening.sql";
 const EXPLICIT_RLS_HARDENING_FILES = [
   HARDENING_FILE,
   "085_harden_student_onboarding_consents_rls.sql",
-];
-
-const POSTGIS_RLS_HARDENING_FILES = [
-  "086_harden_spatial_ref_sys_rls.sql",
 ];
 
 function readMigration(file: string): string {
@@ -238,24 +238,37 @@ test("supabase/scripts/rls_audit.sql exists and is read-only", () => {
   );
 });
 
-test("086 hardening migration explicitly enables RLS on PostGIS spatial_ref_sys", () => {
-  for (const file of POSTGIS_RLS_HARDENING_FILES) {
-    assert.ok(migrationFiles.includes(file), `missing ${file}`);
+test("PostGIS spatial_ref_sys is the only documented RLS advisor exception", () => {
+  assert.deepEqual(
+    [...POSTGIS_EXTENSION_RLS_ALLOWLIST],
+    ["spatial_ref_sys"],
+    "allowlist must contain only public.spatial_ref_sys",
+  );
+  assert.ok(
+    !existsSync(
+      join(MIGRATIONS_DIR, POSTGIS_SPATIAL_REF_SYS_EXCEPTION.removedDirectFailMigration),
+    ),
+    `${POSTGIS_SPATIAL_REF_SYS_EXCEPTION.removedDirectFailMigration} must not ship a direct-fail production ALTER`,
+  );
+  assert.ok(
+    POSTGIS_SPATIAL_REF_SYS_EXCEPTION.reasons.some((r) => r.includes("42501")),
+    "exception must document production 42501 must be owner failure",
+  );
+  assert.ok(
+    migrationFiles.includes("085_harden_student_onboarding_consents_rls.sql"),
+    "student_onboarding_consents RLS hardening (085) must remain",
+  );
+});
+
+test("no new migration direct-ALTERs extension-owned spatial_ref_sys", () => {
+  const historical = new Set(POSTGIS_SPATIAL_REF_SYS_EXCEPTION.historicalBestEffortMigrations);
+  for (const file of migrationFiles) {
+    if (historical.has(file)) continue;
     const sql = stripSqlComments(readMigration(file));
-    assert.match(
+    assert.doesNotMatch(
       sql,
-      /alter\s+table\s+if\s+exists\s+public\.spatial_ref_sys\s+enable\s+row\s+level\s+security/i,
-      `${file} must enable RLS on public.spatial_ref_sys`,
-    );
-    assert.match(
-      sql,
-      /create\s+policy\s+"spatial_ref_sys read"[\s\S]*?on\s+public\.spatial_ref_sys[\s\S]*?for\s+select[\s\S]*?to\s+anon\s*,\s*authenticated/i,
-      `${file} must create read-only policy for anon/authenticated`,
-    );
-    assert.match(
-      sql,
-      /revoke\s+insert\s*,\s*update\s*,\s*delete\s+on\s+public\.spatial_ref_sys\s+from\s+anon\s*,\s*authenticated/i,
-      `${file} must revoke writes from web roles`,
+      /alter\s+table\s+(?:if\s+exists\s+)?public\.spatial_ref_sys\s+enable\s+row\s+level\s+security/i,
+      `${file} must not direct-ALTER spatial_ref_sys; use the documented PostGIS exception instead`,
     );
   }
 });
