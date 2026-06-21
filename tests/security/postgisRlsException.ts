@@ -23,3 +23,8 @@ export const POSTGIS_SPATIAL_REF_SYS_EXCEPTION = {
   productionAction:
     "Dismiss the Supabase Security Advisor finding for public.spatial_ref_sys after confirming PostGIS ownership via supabase/scripts/rls_audit.sql query 7.",
 } as const;
+
+/** Branch-guard allowlist for security-only migrations that must not fail launch checks. */
+export const APPROVED_SECURITY_MIGRATION_EXCEPTIONS = new Set<string>([
+  "supabase/migrations/085_harden_student_onboarding_consents_rls.sql",
+]);
