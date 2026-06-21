@@ -249,13 +249,17 @@ test("mobile and desktop headers on each audited surface are different element i
   }
 });
 
-// ─── 7. Desktop workspace primitive — viewport-lock + grid ──────
-test("YoDesktopLearningWorkspace composes <YoAppShell> + grid + hidden lg:block", () => {
+// ─── 7. Desktop workspace primitive — natural scroll + grid ─────
+test("YoDesktopLearningWorkspace composes a natural-scroll wrapper + grid + hidden lg:block", () => {
+  // World-class-shell pass: desktop intentionally dropped the
+  // <YoAppShell> viewport-lock (h-[100dvh] overflow-hidden) — that
+  // lock is what produced "trapped in a tiny internal scrollbar"
+  // on /yo/langues and the Course Home desktop workspace. Desktop
+  // now scrolls the page naturally with only a `sticky` header.
   const src = read("components/yo/YoDesktopLearningWorkspace.tsx");
-  assert.match(
-    src,
-    /from\s+["']@\/components\/yo\/YoAppShell["']/,
-    "YoDesktopLearningWorkspace must import YoAppShell",
+  assert.ok(
+    !/from\s+["']@\/components\/yo\/YoAppShell["']/.test(src),
+    "YoDesktopLearningWorkspace must NOT import YoAppShell anymore",
   );
   assert.match(
     src,
@@ -267,11 +271,14 @@ test("YoDesktopLearningWorkspace composes <YoAppShell> + grid + hidden lg:block"
     /hidden lg:block/,
     "YoDesktopLearningWorkspace must be hidden below `lg` and visible from `lg+`",
   );
-  // Composes YoAppShell + YoDesktopAppWorkspace.
+  assert.ok(
+    !/<YoAppShell\b/.test(src),
+    "YoDesktopLearningWorkspace must NOT render <YoAppShell /> anymore",
+  );
   assert.match(
     src,
-    /<YoAppShell\b/,
-    "YoDesktopLearningWorkspace must render <YoAppShell />",
+    /sticky top-0/,
+    "YoDesktopLearningWorkspace must keep its own header sticky while the page scrolls naturally",
   );
   assert.match(
     src,

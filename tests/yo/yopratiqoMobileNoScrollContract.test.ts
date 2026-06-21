@@ -511,11 +511,14 @@ test("Course Home mobile sub-tree surfaces an Intro deck primary CTA", async () 
   );
 });
 
-// ─── 10. YoAppShell viewport-lock still present underneath ──────
-test("every audited page still inherits the viewport-lock from YoAppShell underneath the adaptive sub-trees", async () => {
-  // YoAppShell ships `h-[100dvh] overflow-hidden`. We render each
-  // mobile + desktop sub-tree one level deeper and confirm a real
-  // <YoAppShell> mounts inside.
+// ─── 10. Mobile keeps the YoAppShell viewport-lock; desktop scrolls naturally ──
+test("mobile sub-tree still inherits the YoAppShell viewport-lock; desktop sub-tree does NOT lock the viewport", async () => {
+  // YoAppShell ships `h-[100dvh] overflow-hidden` — the right call
+  // for a phone-sized step shell. Desktop intentionally dropped
+  // that lock (world-class-shell pass): a viewport-locked desktop
+  // workspace is exactly what produced "trapped in a tiny internal
+  // scrollbar" on /yo/langues and the Course Home. Desktop now lets
+  // the page scroll naturally, with only a `sticky` header.
   for (const [label, tree] of [
     ["catalog", await renderCatalog()],
     ["Spanish hub", await renderSpanishHub()],
@@ -546,8 +549,8 @@ test("every audited page still inherits the viewport-lock from YoAppShell undern
     ) as unknown) as ReactElement;
     const shellInDesktop = findByType(desktopExpanded, YoAppShell);
     assert.ok(
-      shellInDesktop,
-      `${label} desktop sub-tree must compose <YoAppShell> (viewport-lock owner)`,
+      !shellInDesktop,
+      `${label} desktop sub-tree must NOT compose <YoAppShell> — desktop scrolls the page naturally instead of locking the viewport`,
     );
   }
   // Silence the lint about findByDisplayName — kept exported for

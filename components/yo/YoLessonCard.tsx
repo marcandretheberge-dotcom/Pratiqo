@@ -105,7 +105,14 @@ export function YoLessonCard({
             variant="card"
             imageFit={shouldContainImage ? "contain" : "cover"}
             imagePosition={card.visualHint === "conversation-bubbles" ? "center center" : "center"}
-            className="rounded-2xl shadow-none"
+            className={cn(
+              "rounded-2xl shadow-none",
+              // The map asset is 3:2 — the default "card" box is
+              // 16:10, which left visible blank margins on either
+              // side of a contain-fit map. Matching the box to the
+              // asset's real ratio fills the frame edge to edge.
+              shouldContainImage && "aspect-[3/2]",
+            )}
           />
         </div>
       ) : null}

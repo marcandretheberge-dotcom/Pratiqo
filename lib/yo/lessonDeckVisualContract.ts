@@ -83,6 +83,16 @@ export const DECK_CONTENT_MAX_WIDTH_PX = 640;
 /** Tailwind class for `DECK_CONTENT_MAX_WIDTH_PX`. */
 export const DECK_CONTENT_MAX_WIDTH_CLASS = "max-w-[640px]";
 
+/**
+ * Desktop (`lg+`) widens the deck's content column to ~960px so the
+ * lesson player stops reading as a phone card stretched onto a
+ * monitor. Kept as a separate token (instead of folding into
+ * `DECK_CONTENT_MAX_WIDTH_CLASS`) so the audited mobile-app width
+ * above stays pinned for the `<lg` contract while desktop opts in
+ * via `cn(DECK_CONTENT_MAX_WIDTH_CLASS, DECK_CONTENT_MAX_WIDTH_LG_CLASS)`.
+ */
+export const DECK_CONTENT_MAX_WIDTH_LG_CLASS = "lg:max-w-[960px]";
+
 // ─── Shared class strings ───────────────────────────────────────────────
 //
 // Each constant is the full `className` string consumers should
@@ -97,7 +107,7 @@ export const DECK_CONTENT_MAX_WIDTH_CLASS = "max-w-[640px]";
  * still extend it.
  */
 export const DECK_ROOT_CLASSES =
-  "relative flex h-[100dvh] flex-col overflow-hidden bg-[linear-gradient(180deg,#F4EFE6_0%,#FBF7EE_55%,#F4EFE6_100%)] overscroll-contain";
+  "relative flex h-[100dvh] flex-col overflow-hidden bg-[linear-gradient(180deg,#F4EFE6_0%,#FBF7EE_55%,#F4EFE6_100%)] overscroll-contain lg:h-auto lg:min-h-[100dvh] lg:overflow-visible";
 
 /**
  * App-style top bar wrapper. Sits at the top of the deck flex
@@ -105,7 +115,7 @@ export const DECK_ROOT_CLASSES =
  * always reads as separate from the stage.
  */
 export const DECK_HEADER_CLASSES =
-  "relative z-40 shrink-0 border-b border-[#E7DFCF] bg-[#F4EFE6]/92 backdrop-blur-md";
+  "relative z-40 shrink-0 border-b border-[#E7DFCF] bg-[#F4EFE6]/92 backdrop-blur-md lg:sticky lg:top-0";
 
 /**
  * Inner flex row for the header. Aligned to the deck content
@@ -128,7 +138,7 @@ export const DECK_PROGRESS_STRIP_CLASSES =
  * `relative` so the screen hosts can `absolute inset-0`.
  */
 export const DECK_STAGE_CLASSES =
-  "relative mx-auto flex w-full min-h-0 flex-1 px-4 pt-3 sm:px-6";
+  "relative mx-auto flex w-full min-h-0 flex-1 px-4 pt-3 sm:px-6 lg:min-h-0 lg:flex-none lg:py-8";
 
 /**
  * One screen host inside the stage. Absolute-positioned so all
@@ -138,7 +148,7 @@ export const DECK_STAGE_CLASSES =
  * up to the document.
  */
 export const DECK_SCREEN_HOST_CLASSES =
-  "absolute inset-0 px-1 pb-3 overflow-y-auto overscroll-contain";
+  "absolute inset-0 px-1 pb-3 overflow-y-auto overscroll-contain lg:relative lg:inset-auto lg:overflow-visible lg:pb-28";
 
 /**
  * Bottom Back / Next bar wrapper. `shrink-0`, `relative` so
@@ -147,7 +157,7 @@ export const DECK_SCREEN_HOST_CLASSES =
  * home indicator does not crowd the buttons.
  */
 export const DECK_NAV_CLASSES =
-  "relative z-30 shrink-0 border-t border-[#E7DFCF] bg-[#F4EFE6]/96 px-4 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-3 backdrop-blur-md";
+  "relative z-30 shrink-0 border-t border-[#E7DFCF] bg-[#F4EFE6]/96 px-4 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-3 backdrop-blur-md lg:sticky lg:bottom-0";
 
 /**
  * Inner flex row for the nav. Aligned to the deck content

@@ -44,6 +44,7 @@ import {
 } from "@/lib/yo/lessonDeckTypes";
 import {
   DECK_CONTENT_MAX_WIDTH_CLASS,
+  DECK_CONTENT_MAX_WIDTH_LG_CLASS,
   DECK_NAV_CLASSES,
   DECK_NAV_NEXT_BUTTON_CLASSES,
   DECK_NAV_PREV_BUTTON_CLASSES,
@@ -85,7 +86,13 @@ export function YoLessonDeckNav({
       className={cn(DECK_NAV_CLASSES, className)}
     >
       <div aria-hidden className={DECK_NAV_TOP_FADE_CLASSES} />
-      <div className={cn(DECK_NAV_ROW_CLASSES, DECK_CONTENT_MAX_WIDTH_CLASS)}>
+      <div
+        className={cn(
+          DECK_NAV_ROW_CLASSES,
+          DECK_CONTENT_MAX_WIDTH_CLASS,
+          DECK_CONTENT_MAX_WIDTH_LG_CLASS,
+        )}
+      >
         <button
           type="button"
           data-testid="yo-lesson-deck-nav-prev"

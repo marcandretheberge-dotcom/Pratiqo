@@ -27,8 +27,12 @@
  */
 
 import assert from "node:assert/strict";
-import { readdirSync, readFileSync } from "node:fs";
+import { readdirSync, readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
+import {
+  POSTGIS_EXTENSION_RLS_ALLOWLIST,
+  POSTGIS_SPATIAL_REF_SYS_EXCEPTION,
+} from "./postgisRlsException";
 
 type TestFn = () => void;
 const tests: Array<{ name: string; fn: TestFn }> = [];
@@ -232,6 +236,41 @@ test("supabase/scripts/rls_audit.sql exists and is read-only", () => {
     /\b(alter|drop|create|insert|update|delete|truncate|grant|revoke)\b/i,
     "audit helper must contain only read-only SELECT queries",
   );
+});
+
+test("PostGIS spatial_ref_sys is the only documented RLS advisor exception", () => {
+  assert.deepEqual(
+    [...POSTGIS_EXTENSION_RLS_ALLOWLIST],
+    ["spatial_ref_sys"],
+    "allowlist must contain only public.spatial_ref_sys",
+  );
+  assert.ok(
+    !existsSync(
+      join(MIGRATIONS_DIR, POSTGIS_SPATIAL_REF_SYS_EXCEPTION.removedDirectFailMigration),
+    ),
+    `${POSTGIS_SPATIAL_REF_SYS_EXCEPTION.removedDirectFailMigration} must not ship a direct-fail production ALTER`,
+  );
+  assert.ok(
+    POSTGIS_SPATIAL_REF_SYS_EXCEPTION.reasons.some((r) => r.includes("42501")),
+    "exception must document production 42501 must be owner failure",
+  );
+  assert.ok(
+    migrationFiles.includes("085_harden_student_onboarding_consents_rls.sql"),
+    "student_onboarding_consents RLS hardening (085) must remain",
+  );
+});
+
+test("no new migration direct-ALTERs extension-owned spatial_ref_sys", () => {
+  const historical = new Set(POSTGIS_SPATIAL_REF_SYS_EXCEPTION.historicalBestEffortMigrations);
+  for (const file of migrationFiles) {
+    if (historical.has(file)) continue;
+    const sql = stripSqlComments(readMigration(file));
+    assert.doesNotMatch(
+      sql,
+      /alter\s+table\s+(?:if\s+exists\s+)?public\.spatial_ref_sys\s+enable\s+row\s+level\s+security/i,
+      `${file} must not direct-ALTER spatial_ref_sys; use the documented PostGIS exception instead`,
+    );
+  }
 });
 
 // ─────────────────────────────────────────────────────────────────────────

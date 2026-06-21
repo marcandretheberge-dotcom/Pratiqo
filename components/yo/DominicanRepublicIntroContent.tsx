@@ -667,7 +667,19 @@ function PhraseFocusPage({
 }) {
   return (
     <div className="rounded-[24px] border border-[var(--pq-line)] bg-[var(--pq-tint)] p-5">
-      <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-[var(--pq-primary)]">{t(label, locale)}</p>
+      <div className="flex items-start justify-between gap-3">
+        <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-[var(--pq-primary)]">{t(label, locale)}</p>
+        <YoSpanishAudioButton
+          text={phrase}
+          locale={locale}
+          moduleId={AUDIO_CONTEXT.moduleId}
+          lessonId={AUDIO_CONTEXT.lessonId}
+          type="phrase"
+          accentProfile={AUDIO_CONTEXT.accentProfile}
+          speechLang={AUDIO_CONTEXT.speechLang}
+          size="sm"
+        />
+      </div>
       <p
         className="mt-3 text-[clamp(1.7rem,6vw,2.45rem)] font-semibold leading-[1.05] text-[var(--pq-ink)]"
         lang="es"
@@ -702,9 +714,21 @@ function PhraseList({
 
 function VocabChip({ item, locale }: { item: YoVocabularyItem; locale: YoLocale }) {
   return (
-    <div className="min-w-0 rounded-[16px] border border-[var(--pq-line)] bg-[var(--pq-surface)] px-3 py-3">
-      <p className="break-words text-sm font-bold text-[var(--pq-ink)]" lang="es">{item.target}</p>
-      <p className="break-words text-xs leading-5 text-[var(--pq-ink-soft)]">{t(item.translation, locale)}</p>
+    <div className="flex min-w-0 items-center justify-between gap-2 rounded-[16px] border border-[var(--pq-line)] bg-[var(--pq-surface)] px-3 py-3">
+      <div className="min-w-0">
+        <p className="break-words text-sm font-bold text-[var(--pq-ink)]" lang="es">{item.target}</p>
+        <p className="break-words text-xs leading-5 text-[var(--pq-ink-soft)]">{t(item.translation, locale)}</p>
+      </div>
+      <YoSpanishAudioButton
+        text={item.target}
+        locale={locale}
+        moduleId={AUDIO_CONTEXT.moduleId}
+        lessonId={AUDIO_CONTEXT.lessonId}
+        type="phrase"
+        accentProfile={AUDIO_CONTEXT.accentProfile}
+        speechLang={AUDIO_CONTEXT.speechLang}
+        size="xs"
+      />
     </div>
   );
 }
