@@ -12,9 +12,14 @@
  *      `appearance="desktop"` so the chrome is product-software-
  *      style, not mobile-app-style.
  *   3. Each desktop sub-tree declares a `leftRail` AND a `center`
- *      (the workspace minimum). Catalog + Spanish hub + Course
- *      Home additionally declare a `rightRail` so the layout is
- *      truly three-pane on lg+.
+ *      (the workspace minimum). Course Home additionally declares a
+ *      `rightRail` (progress / teacher bridge) so that layout is
+ *      truly three-pane on lg+. The Spanish hub deliberately does
+ *      NOT declare a `rightRail`: a 280px/1fr/300px three-pane split
+ *      squeezed its two primary cards into a ~470px center track on
+ *      every desktop breakpoint (the QA-reported "cramped, awkward
+ *      text wrap" bug). Its secondary "what's next" content now
+ *      renders inside the wider `center` column instead.
  *   4. The desktop centre uses a real grid (not a single narrow
  *      phone column with empty margins). For the catalog this is
  *      verified by ensuring the tile grid has `sm:grid-cols-2` +
@@ -177,7 +182,7 @@ test("each desktop sub-tree mounts <YoAppHeader appearance=\"desktop\">", async 
 test("desktop sub-trees declare leftRail + center, with rightRail only where it does not squeeze the surface", async () => {
   for (const [label, tree, requiresRightRail] of [
     ["catalog", (await renderPage(YoLanguesPage)) as ReactElement, false],
-    ["Spanish hub", (await renderPage(YoSpanishLandingPage)) as ReactElement, true],
+    ["Spanish hub", (await renderPage(YoSpanishLandingPage)) as ReactElement, false],
     [
       "Course Home",
       (await renderPage(YoEspagnolRepubliqueDominicainePage)) as ReactElement,

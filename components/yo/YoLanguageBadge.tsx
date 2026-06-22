@@ -5,12 +5,19 @@
  * files, including Flag of Italy.svg, Flag of Spain.svg, Flag of Quebec.svg,
  * Flag of the United Kingdom (3-5).svg, and Flag of Japan.svg. Inlined to
  * avoid production asset-path failures.
+ *
+ * `"do"` (Dominican Republic) is a country flag, not a language flag —
+ * it exists alongside the language ids so country-specific course
+ * cards (e.g. the Dominican Republic course on `/yo/langues/espagnol`)
+ * can render the correct national flag instead of reusing the
+ * generic Spanish-language ("es") flag. `"fr-ca"` already established
+ * this id type mixes language and region/country flags.
  */
 
 import type { ReactElement } from "react";
 import { cn } from "@/lib/utils";
 
-export type YoLanguageBadgeId = "es" | "fr-ca" | "en" | "ja" | "it";
+export type YoLanguageBadgeId = "es" | "fr-ca" | "en" | "ja" | "it" | "do";
 
 export interface YoLanguageBadgeProps {
   language: YoLanguageBadgeId;
@@ -40,6 +47,15 @@ const SOURCE_SVG = {
   // We deliberately do NOT add any coat of arms — the standard
   // Italian national flag has none.
   italy: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1500\" height=\"1000\" viewBox=\"0 0 3 2\">\n<path fill=\"#009246\" d=\"M0 0h1v2H0z\"/>\n<path fill=\"#ffffff\" d=\"M1 0h1v2H1z\"/>\n<path fill=\"#ce2b37\" d=\"M2 0h1v2H2z\"/>\n</svg>",
+  // Flag of the Dominican Republic, simplified: white cross on a
+  // field of four alternating rectangles (ultramarine blue
+  // top-left/bottom-right, red top-right/bottom-left) per the
+  // official geometry. We deliberately omit the central coat of
+  // arms — same simplification precedent as the Italy flag above —
+  // so the badge stays a crisp, recognizable national flag (not
+  // Spain's) at the small sizes this component renders at.
+  dominicanRepublic:
+    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"750\" height=\"500\" viewBox=\"0 0 750 500\">\n<rect width=\"750\" height=\"500\" fill=\"#ffffff\"/>\n<rect x=\"0\" y=\"0\" width=\"325\" height=\"200\" fill=\"#002d62\"/>\n<rect x=\"425\" y=\"0\" width=\"325\" height=\"200\" fill=\"#ce1126\"/>\n<rect x=\"0\" y=\"300\" width=\"325\" height=\"200\" fill=\"#ce1126\"/>\n<rect x=\"425\" y=\"300\" width=\"325\" height=\"200\" fill=\"#002d62\"/>\n</svg>",
 } as const;
 
 function toInlineSvgDataUri(svg: string): string {
@@ -52,6 +68,7 @@ const FLAG_DATA_URI = {
   unitedKingdom: toInlineSvgDataUri(SOURCE_SVG.unitedKingdom),
   japan: toInlineSvgDataUri(SOURCE_SVG.japan),
   italy: toInlineSvgDataUri(SOURCE_SVG.italy),
+  dominicanRepublic: toInlineSvgDataUri(SOURCE_SVG.dominicanRepublic),
 } as const;
 
 function FlagSpain(): ReactElement {
@@ -94,12 +111,21 @@ function FlagItaly(): ReactElement {
   );
 }
 
+function FlagDominicanRepublic(): ReactElement {
+  return (
+    <svg {...FLAG_SVG_PROPS} viewBox="0 0 750 500">
+      <image href={FLAG_DATA_URI.dominicanRepublic} width="750" height="500" />
+    </svg>
+  );
+}
+
 const LANGUAGE_FLAGS: Record<YoLanguageBadgeId, () => ReactElement> = {
   es: FlagSpain,
   "fr-ca": FlagQuebec,
   en: FlagUnitedKingdom,
   ja: FlagJapan,
   it: FlagItaly,
+  do: FlagDominicanRepublic,
 };
 
 const SIZE_STYLES = {
