@@ -12,7 +12,9 @@ import {
 import {
   acceptAllCookieConsent,
   acceptNecessaryOnlyCookieConsent,
+  COOKIE_CONSENT_EVENT,
   hasRecordedCookieConsent,
+  OPEN_COOKIE_PREFERENCES_EVENT,
   readCookieConsent,
   writeCookieConsent,
   type CookieConsent,
@@ -53,10 +55,14 @@ export function CookieConsentProvider({ children }: { children: ReactNode }) {
       setBannerVisible(!detail);
     };
 
-    window.addEventListener("pratiqo:cookie-consent", onConsentChange as EventListener);
+    const onOpenPreferences = () => setPreferencesOpen(true);
+
+    window.addEventListener(COOKIE_CONSENT_EVENT, onConsentChange as EventListener);
+    window.addEventListener(OPEN_COOKIE_PREFERENCES_EVENT, onOpenPreferences);
     window.addEventListener("storage", onConsentChange);
     return () => {
-      window.removeEventListener("pratiqo:cookie-consent", onConsentChange as EventListener);
+      window.removeEventListener(COOKIE_CONSENT_EVENT, onConsentChange as EventListener);
+      window.removeEventListener(OPEN_COOKIE_PREFERENCES_EVENT, onOpenPreferences);
       window.removeEventListener("storage", onConsentChange);
     };
   }, []);

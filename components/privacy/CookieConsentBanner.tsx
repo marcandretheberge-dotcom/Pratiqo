@@ -2,6 +2,8 @@
 
 import { useId } from "react";
 import Link from "next/link";
+import { ShieldCheck, SlidersHorizontal } from "lucide-react";
+
 import { useCookieConsent } from "@/components/privacy/CookieConsentProvider";
 import { useLocale } from "@/lib/locale-context";
 
@@ -18,40 +20,48 @@ export function CookieConsentBanner() {
       role="region"
       aria-labelledby={titleId}
       aria-describedby={descriptionId}
-      className="fixed inset-x-0 bottom-0 z-[120] border-t border-[#E8E4DC] bg-[#FFFCF7]/95 px-4 py-4 shadow-[0_-8px_32px_rgba(44,44,42,0.08)] backdrop-blur-sm sm:px-6"
+      className="fixed inset-x-3 bottom-3 z-[120] mx-auto max-w-5xl rounded-3xl border border-[#DCEAE3] bg-white p-4 text-[#18231F] shadow-[0_24px_80px_rgba(15,110,86,0.22)] backdrop-blur sm:bottom-5 sm:p-5"
+      data-testid="cookie-consent-banner"
     >
-      <div className="mx-auto flex max-w-5xl flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div className="min-w-0 flex-1 space-y-2">
-          <h2 id={titleId} className="text-base font-semibold text-[#2C2C2A]">
-            {t("cookieBannerTitle")}
-          </h2>
-          <p id={descriptionId} className="text-sm leading-relaxed text-[#5C5A56]">
-            {t("cookieBannerDescription")}{" "}
-            <Link href="/legal/confidentialite" className="underline underline-offset-2 hover:text-[#2C2C2A]">
-              {t("footerPrivacy")}
-            </Link>
-          </p>
+      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+        <div className="flex min-w-0 gap-3">
+          <div className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-teal-50 text-teal-700">
+            <ShieldCheck size={20} aria-hidden="true" />
+          </div>
+          <div className="min-w-0">
+            <h2 id={titleId} className="text-base font-black text-[#10251F]">
+              {t("cookieBannerTitle")}
+            </h2>
+            <p id={descriptionId} className="mt-2 max-w-3xl text-sm leading-relaxed text-[#56645F]">
+              {t("cookieBannerDescription")}{" "}
+              <Link href="/legal/confidentialite" className="font-semibold text-teal-700 underline underline-offset-2">
+                {t("footerPrivacy")}
+              </Link>
+            </p>
+          </div>
         </div>
-        <div className="flex w-full flex-col gap-2 sm:w-auto sm:min-w-[18rem] sm:flex-none">
+
+        <div className="grid shrink-0 gap-2 sm:grid-cols-3 md:min-w-[520px]">
           <button
             type="button"
             onClick={acceptAnalytics}
-            className="rounded-xl bg-[#2C2C2A] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#1f1f1d] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2C2C2A]"
+            className="rounded-2xl bg-teal-700 px-4 py-3 text-sm font-bold text-white transition hover:brightness-105 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
           >
             {t("cookieAcceptAnalytics")}
           </button>
           <button
             type="button"
             onClick={acceptNecessaryOnly}
-            className="rounded-xl border border-[#D8D2C8] bg-white px-4 py-2.5 text-sm font-medium text-[#2C2C2A] transition hover:bg-[#F7F3EC] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2C2C2A]"
+            className="rounded-2xl border border-teal-700 bg-white px-4 py-3 text-sm font-bold text-teal-800 transition hover:bg-teal-50 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
           >
             {t("cookieNecessaryOnly")}
           </button>
           <button
             type="button"
             onClick={openPreferences}
-            className="rounded-xl px-4 py-2 text-sm font-medium text-[#5C5A56] underline underline-offset-2 transition hover:text-[#2C2C2A] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2C2C2A]"
+            className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[#DCEAE3] bg-[#F8FBF8] px-4 py-3 text-sm font-bold text-[#25312D] transition hover:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
           >
+            <SlidersHorizontal size={16} aria-hidden="true" />
             {t("cookieManageChoices")}
           </button>
         </div>

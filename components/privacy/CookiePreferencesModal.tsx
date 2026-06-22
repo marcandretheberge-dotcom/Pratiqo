@@ -10,12 +10,10 @@ export function CookiePreferencesModal() {
   const titleId = useId();
   const { preferencesOpen, closePreferences, consent, savePreferences } = useCookieConsent();
   const [analytics, setAnalytics] = useState(false);
-  const [diagnostics, setDiagnostics] = useState(true);
 
   useEffect(() => {
     if (!preferencesOpen) return;
     setAnalytics(consent?.analytics ?? false);
-    setDiagnostics(consent?.diagnostics ?? true);
   }, [consent, preferencesOpen]);
 
   useEffect(() => {
@@ -70,36 +68,43 @@ export function CookiePreferencesModal() {
             </span>
           </label>
 
-          <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-[#E8E4DC] bg-white p-4">
+          <div className="flex items-start gap-3 rounded-xl border border-[#E8E4DC] bg-white p-4">
             <input
               type="checkbox"
-              checked={diagnostics}
-              onChange={(event) => setDiagnostics(event.target.checked)}
+              checked
+              disabled
               className="mt-1 h-4 w-4 rounded border-[#CFC8BC] text-[#2C2C2A] focus:ring-[#2C2C2A]"
             />
             <span>
               <span className="block text-sm font-medium text-[#2C2C2A]">{t("cookieDiagnosticsLabel")}</span>
               <span className="mt-1 block text-sm text-[#5C5A56]">{t("cookieDiagnosticsDescription")}</span>
             </span>
-          </label>
+          </div>
 
           <p className="text-xs leading-relaxed text-[#5C5A56]">{t("cookiePreferencesContact")}</p>
         </div>
 
-        <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+        <div className="mt-5 grid gap-2 sm:grid-cols-3">
           <button
             type="button"
-            onClick={closePreferences}
-            className="rounded-xl border border-[#D8D2C8] px-4 py-2.5 text-sm font-medium text-[#2C2C2A] hover:bg-[#F7F3EC] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2C2C2A]"
-          >
-            {t("cancel")}
-          </button>
-          <button
-            type="button"
-            onClick={() => savePreferences(analytics, diagnostics)}
+            onClick={() => savePreferences(analytics, true)}
             className="rounded-xl bg-[#2C2C2A] px-4 py-2.5 text-sm font-medium text-white hover:bg-[#1f1f1d] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2C2C2A]"
           >
             {t("cookiePreferencesSave")}
+          </button>
+          <button
+            type="button"
+            onClick={() => savePreferences(true, true)}
+            className="rounded-xl border border-teal-700 bg-white px-4 py-2.5 text-sm font-medium text-teal-800 hover:bg-teal-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700"
+          >
+            {t("cookieAcceptAnalytics")}
+          </button>
+          <button
+            type="button"
+            onClick={() => savePreferences(false, true)}
+            className="rounded-xl border border-[#D8D2C8] bg-white px-4 py-2.5 text-sm font-medium text-[#2C2C2A] hover:bg-[#F7F3EC] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2C2C2A]"
+          >
+            {t("cookieNecessaryOnly")}
           </button>
         </div>
       </div>

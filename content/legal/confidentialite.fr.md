@@ -131,7 +131,7 @@ Vous pouvez refuser cette catégorie via **« Nécessaires seulement »** ou le 
 
 ### 7.3 Diagnostics techniques — Sentry (erreurs seulement)
 
-Avec votre consentement aux diagnostics (activé par défaut lorsque vous choisissez **« Nécessaires seulement »**), nous pouvons envoyer des **rapports d’erreurs techniques** à **Sentry**. Au lancement :
+Comme mesure technique de fiabilité, nous pouvons envoyer des **rapports d’erreurs techniques** à **Sentry**. Au lancement :
 
 - **pas de relecture de session**;
 - **pas d’enregistrement vidéo**;
@@ -140,7 +140,7 @@ Avec votre consentement aux diagnostics (activé par défaut lorsque vous choisi
 
 ### 7.4 Modifier vos choix
 
-Utilisez le lien **« Cookies et confidentialité »** dans le pied de page pour rouvrir vos préférences. Vous pouvez aussi configurer votre **navigateur** pour bloquer ou supprimer certains témoins; cela peut limiter certaines fonctionnalités.
+Utilisez le lien **« Préférences de confidentialité »** dans le pied de page pour rouvrir vos préférences. Vous pouvez aussi configurer votre **navigateur** pour bloquer ou supprimer certains témoins; cela peut limiter certaines fonctionnalités.
 
 Pour toute question : **support@pratiqo.ca**.
 

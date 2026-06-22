@@ -131,7 +131,7 @@ You can refuse this category via **“Necessary only”** or the **“Manage cho
 
 ### 7.3 Technical diagnostics — Sentry (errors only)
 
-With your consent to diagnostics (enabled by default when you choose **“Necessary only”**), we may send **technical error reports** to **Sentry**. At launch:
+As a technical reliability measure, we may send **technical error reports** to **Sentry**. At launch:
 
 - **no session replay**;
 - **no video recording**;
@@ -140,7 +140,7 @@ With your consent to diagnostics (enabled by default when you choose **“Necess
 
 ### 7.4 Change your choices
 
-Use the **“Cookies & privacy”** footer link to reopen your preferences. You can also configure your **browser** to block or delete certain cookies; this may limit some features.
+Use the **“Privacy preferences”** footer link to reopen your preferences. You can also configure your **browser** to block or delete certain cookies; this may limit some features.
 
 Questions: **support@pratiqo.ca**.
 

@@ -83,7 +83,7 @@ test("consent defaults: analytics false until saved", () => {
   try {
     assert.equal(hasRecordedCookieConsent(), false);
     assert.equal(hasAnalyticsConsent(), false);
-    assert.equal(hasDiagnosticsConsent(), false);
+    assert.equal(hasDiagnosticsConsent(), true);
     assert.equal(storage.getItem(COOKIE_CONSENT_STORAGE_KEY), null);
   } finally {
     clearBrowserMocks();
@@ -195,7 +195,7 @@ test("search analytics module gates on hasAnalyticsConsent", () => {
   assert.doesNotMatch(src, /localStorage\.setItem\(ANON_KEY/);
 });
 
-test("Sentry browser capture respects diagnostics consent", () => {
+test("Sentry browser diagnostics are errors-only necessary monitoring", () => {
   installBrowserMocks();
   process.env.NEXT_PUBLIC_SENTRY_DSN = "https://abc@o123.ingest.sentry.io/456";
   let fetchCalled = false;
@@ -204,10 +204,12 @@ test("Sentry browser capture respects diagnostics consent", () => {
     return Promise.resolve(new Response("ok"));
   }) as typeof fetch;
   try {
-    assert.equal(captureMonitoringError("test error"), false);
-    acceptNecessaryOnlyCookieConsent("fr", "banner");
     assert.equal(captureMonitoringError("test error"), true);
     assert.equal(fetchCalled, true);
+    writeCookieConsent({ analytics: false, diagnostics: false, locale: "fr", source: "preferences" });
+    fetchCalled = false;
+    assert.equal(captureMonitoringError("test error"), false);
+    assert.equal(fetchCalled, false);
   } finally {
     delete process.env.NEXT_PUBLIC_SENTRY_DSN;
     clearBrowserMocks();

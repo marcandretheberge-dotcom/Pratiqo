@@ -13,7 +13,10 @@ const SENSITIVE_EXACT = new Set([
 ]);
 
 const SENSITIVE_PREFIXES = [
+  "/admin",
   "/booking",
+  "/dashboard",
+  "/loyalty",
   "/student/progress",
   "/student/search",
   "/student/settings",
@@ -22,10 +25,8 @@ const SENSITIVE_PREFIXES = [
   "/settings",
   "/account",
   "/onboarding",
-  "/teacher/onboarding",
-  "/teacher/verification",
-  "/teacher/settings",
-  "/teacher/profile",
+  "/teacher",
+  "/upgrade",
   "/checkout",
   "/payment",
   "/payments",

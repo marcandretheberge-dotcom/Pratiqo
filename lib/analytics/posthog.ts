@@ -70,8 +70,17 @@ export function isForbiddenAnalyticsKey(key: string): boolean {
   return FORBIDDEN_KEY_FRAGMENTS.some((frag) => lower.includes(frag));
 }
 
+export function scrubSensitiveText(s: string): string {
+  return s
+    .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, "[redacted-email]")
+    .replace(/\b(?:\+?\d[\s().-]*){7,}\b/g, "[redacted-phone]")
+    .replace(/\b(?:bearer|token|refresh_token|access_token|authorization)\s*[:=]\s*[^\s,;]+/gi, "[redacted-token]")
+    .replace(/\b(?:card|cvc|cvv|iban|stripe|payment_intent|charge)\s*[:=]\s*[^\s,;]+/gi, "[redacted-payment]");
+}
+
 function truncate(s: string): string {
-  return s.length <= MAX_STRING_LENGTH ? s : `${s.slice(0, MAX_STRING_LENGTH)}…[truncated]`;
+  const scrubbed = scrubSensitiveText(s);
+  return scrubbed.length <= MAX_STRING_LENGTH ? scrubbed : `${scrubbed.slice(0, MAX_STRING_LENGTH)}…[truncated]`;
 }
 
 /**
@@ -167,6 +176,7 @@ function buildAutoProperties(): AutoProperties {
   if (typeof window === "undefined") return {};
   try {
     const { href, host, pathname } = window.location;
+    if (isSensitiveAnalyticsRoute(pathname)) return {};
     return {
       $current_url: truncate(href),
       $host: truncate(host),

@@ -131,7 +131,7 @@ Puede rechazar esta categoría con **« Solo necesarias »** o el panel **« Ges
 
 ### 7.3 Diagnósticos técnicos — Sentry (solo errores)
 
-Con su consentimiento a diagnósticos (activado por defecto al elegir **« Solo necesarias »**), podemos enviar **informes de errores técnicos** a **Sentry**. En el lanzamiento:
+Como medida técnica de fiabilidad, podemos enviar **informes de errores técnicos** a **Sentry**. En el lanzamiento:
 
 - **sin relectura de sesión**;
 - **sin grabación de video**;
@@ -140,7 +140,7 @@ Con su consentimiento a diagnósticos (activado por defecto al elegir **« Solo 
 
 ### 7.4 Cambiar sus opciones
 
-Use el enlace **« Cookies y privacidad »** en el pie de página para reabrir sus preferencias. También puede configurar su **navegador** para bloquear o eliminar ciertas cookies; esto puede limitar algunas funciones.
+Use el enlace **« Preferencias de privacidad »** en el pie de página para reabrir sus preferencias. También puede configurar su **navegador** para bloquear o eliminar ciertas cookies; esto puede limitar algunas funciones.
 
 Preguntas: **support@pratiqo.ca**.
 
