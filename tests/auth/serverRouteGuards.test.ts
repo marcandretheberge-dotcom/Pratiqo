@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { isBlockedSupabaseDemoPath } from "@/middleware";
+import { isBlockedSupabaseDemoPath } from "@/proxy";
 
 type TestFn = () => void | Promise<void>;
 
@@ -19,12 +19,12 @@ test("/supabase is hard-blocked before auth redirects", () => {
   assert.equal(isBlockedSupabaseDemoPath("/teacher/profile/abc"), false);
 });
 
-test("middleware blocks /supabase before login redirect logic", () => {
-  const source = readFileSync(join(process.cwd(), "middleware.ts"), "utf8");
+test("proxy blocks /supabase before login redirect logic", () => {
+  const source = readFileSync(join(process.cwd(), "proxy.ts"), "utf8");
   const blockIndex = source.indexOf("isBlockedSupabaseDemoPath(pathname)");
   const loginIndex = source.indexOf("pathname.startsWith(LOGIN_PATH)");
-  assert.ok(blockIndex >= 0, "Expected /supabase hard block in middleware");
-  assert.ok(loginIndex >= 0, "Expected login redirect guard in middleware");
+  assert.ok(blockIndex >= 0, "Expected /supabase hard block in proxy");
+  assert.ok(loginIndex >= 0, "Expected login redirect guard in proxy");
   assert.ok(blockIndex < loginIndex, "Expected /supabase block before login redirect");
   assert.doesNotMatch(source, /["']\/supabase["'],?\s*\n\s*["']\/student["']/);
 });

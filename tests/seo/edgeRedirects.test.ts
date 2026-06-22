@@ -58,7 +58,8 @@ function test(name: string, fn: TestFn): void {
 
 // ── Source files we audit statically ─────────────────────────────────
 const nextConfigSrc = read("next.config.ts");
-const middlewareSrc = read("middleware.ts");
+const proxySrc = read("proxy.ts");
+const vercelJsonRequiredSrc = read("vercel.json");
 const rootLayoutSrc = read("app/layout.tsx");
 const homepageSrc = read("app/page.tsx");
 const sitemapSrc = read("app/sitemap.ts");
@@ -122,11 +123,29 @@ test("apex redirect destination is www, not a locale path (/fr / /en / /es)", ()
 });
 
 // ── 3. No code redirects / → /fr ─────────────────────────────────────
-test("middleware.ts never redirects / → /fr (or /en or /es)", () => {
+test("proxy.ts never redirects / → /fr (or /en or /es)", () => {
   assert.ok(
-    !/\/(fr|en|es)(?:\/|['"`])/.test(middlewareSrc.replace(/\/\/.*/g, "")),
-    "middleware.ts must not navigate / to /fr, /en, or /es",
+    !/\/(fr|en|es)(?:\/|['"`])/.test(proxySrc.replace(/\/\/.*/g, "")),
+    "proxy.ts must not navigate / to /fr, /en, or /es",
   );
+});
+
+test("vercel.json enforces apex to www with a permanent 308 before framework routing", () => {
+  const vercelConfig = JSON.parse(vercelJsonRequiredSrc) as {
+    redirects?: Array<{
+      source?: string;
+      destination?: string;
+      statusCode?: number;
+      has?: Array<{ type?: string; value?: string }>;
+    }>;
+  };
+  const redirect = vercelConfig.redirects?.find(
+    (item) =>
+      item.destination === "https://www.pratiqo.ca/$1" &&
+      item.statusCode === 308 &&
+      item.has?.some((condition) => condition.type === "host" && condition.value === "pratiqo.ca"),
+  );
+  assert.ok(redirect, "vercel.json must enforce pratiqo.ca -> www.pratiqo.ca with statusCode 308");
 });
 
 test("next.config.ts does not redirect / → /fr (or /en, /es)", () => {

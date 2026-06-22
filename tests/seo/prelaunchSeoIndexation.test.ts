@@ -72,7 +72,7 @@ const rootLayoutSrc = read("app/layout.tsx");
 const homepageSrc = read("app/page.tsx");
 const sitemapSrc = read("app/sitemap.ts");
 const robotsSrc = read("app/robots.ts");
-const middlewareSrc = read("middleware.ts");
+const proxySrc = read("proxy.ts");
 const nextConfigSrc = read("next.config.ts");
 const landingAuthGateSrc = read("components/marketing/LandingAuthGate.tsx");
 
@@ -107,7 +107,7 @@ test("Repository sources never reference pratiqo.com", () => {
     ["app/page.tsx", homepageSrc],
     ["app/sitemap.ts", sitemapSrc],
     ["app/robots.ts", robotsSrc],
-    ["middleware.ts", middlewareSrc],
+    ["proxy.ts", proxySrc],
     ["next.config.ts", nextConfigSrc],
     ["LandingAuthGate", landingAuthGateSrc],
     ["/legal/cgu", cguSrc],
