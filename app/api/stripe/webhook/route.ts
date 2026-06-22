@@ -33,6 +33,12 @@ import { issueLessonPaymentReceipt } from "@/lib/payments/receipts";
 
 export const runtime = "nodejs";
 
+function isProductionWebhookRuntime(): boolean {
+  const vercelEnv = process.env.VERCEL_ENV?.toLowerCase();
+  if (vercelEnv) return vercelEnv === "production";
+  return process.env.NODE_ENV === "production";
+}
+
 async function confirmGroupSessionCheckout(
   metadata: Record<string, string> | null | undefined,
   paymentIntentId: string,
@@ -620,14 +626,16 @@ export async function POST(req: Request) {
     type: event.type,
     livemode: event.livemode,
   });
-  if (process.env.NODE_ENV === "production" && event.livemode === false) {
-    // TODO(stripe-live): decide whether production should reject test-mode
-    // webhook events once live/test webhook delivery is fully separated.
-    console.warn("[stripe/webhook] test-mode event reached production endpoint", {
+  if (isProductionWebhookRuntime() && event.livemode === false) {
+    console.error("[stripe/webhook] rejected test-mode event on production endpoint", {
       eventId: event.id,
       type: event.type,
       livemode: event.livemode,
     });
+    return NextResponse.json(
+      { error: "Test-mode Stripe webhook events are not accepted in production." },
+      { status: 400 },
+    );
   }
 
   try {

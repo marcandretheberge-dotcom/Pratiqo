@@ -851,9 +851,7 @@ function TeacherCard({
           <div className="space-y-1">
             <p className="ds-label text-[var(--p-text-subtle)]">{t("nextAvailableLesson")}</p>
             <div className="flex items-center gap-2">
-              <VerifiedBadge
-              verified={teacher.isVerified || Boolean(teacher.identityVerified)}
-            />
+              <VerifiedBadge verified={Boolean(teacher.identityVerified)} />
             </div>
           </div>
           <div className="text-right">

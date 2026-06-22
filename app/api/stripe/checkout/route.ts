@@ -23,6 +23,11 @@ import { minimumLessonPriceErrorMessage } from "@/lib/pricing/messages";
 import { validateMinimumLessonPrice } from "@/lib/pricing/validateMinimumLessonPrice";
 import { computeBookingChargeCents } from "@/lib/pricing/bookingCharge";
 import { isValidLessonDurationMinutes } from "@/lib/pricing/lessonDuration";
+import {
+  isTeacherPayoutReadyForCheckout,
+  teacherPayoutReadinessFailureReasons,
+} from "@/lib/payments/connect";
+import { t as translate } from "@/lib/i18n/server";
 
 export const runtime = "nodejs";
 
@@ -48,6 +53,12 @@ type TeacherRow = {
   intro_session_price_cents?: number | string | null;
   intro_session_duration_minutes?: number | string | null;
   intro_session_discount_percent?: number | string | null;
+  stripe_account_id?: string | null;
+  stripe_connect_onboarding_complete?: boolean | null;
+  stripe_connect_charges_enabled?: boolean | null;
+  stripe_connect_payouts_enabled?: boolean | null;
+  stripe_connect_requirements_due?: unknown;
+  stripe_connect_disabled_reason?: string | null;
 };
 
 type BookingRow = {
@@ -163,7 +174,7 @@ export async function POST(req: Request) {
     const { data: teacher, error: tErr } = await admin
       .from("teachers")
       .select(
-        "id, user_id, name, price_per_lesson, home_lesson_enabled, home_lesson_price, intro_session_enabled, intro_session_price_cents, intro_session_duration_minutes, intro_session_discount_percent, booking_buffer_before_minutes, booking_buffer_after_minutes",
+        "id, user_id, name, price_per_lesson, home_lesson_enabled, home_lesson_price, intro_session_enabled, intro_session_price_cents, intro_session_duration_minutes, intro_session_discount_percent, booking_buffer_before_minutes, booking_buffer_after_minutes, stripe_account_id, stripe_connect_onboarding_complete, stripe_connect_charges_enabled, stripe_connect_payouts_enabled, stripe_connect_requirements_due, stripe_connect_disabled_reason",
       )
       .eq("id", booking.teacher_id)
       .maybeSingle();
@@ -231,6 +242,28 @@ export async function POST(req: Request) {
     }
 
     const typed = teacher as TeacherRow;
+    if (!isTeacherPayoutReadyForCheckout(typed)) {
+      const reasons = teacherPayoutReadinessFailureReasons(typed);
+      console.warn("[stripe/checkout] blocked teacher payout-not-ready checkout", {
+        bookingId,
+        teacherId: booking.teacher_id,
+        teacherUserId: typed.user_id ?? null,
+        reasons,
+        hasStripeAccount: Boolean(typed.stripe_account_id?.trim()),
+        onboardingComplete: Boolean(typed.stripe_connect_onboarding_complete),
+        chargesEnabled: Boolean(typed.stripe_connect_charges_enabled),
+        payoutsEnabled: Boolean(typed.stripe_connect_payouts_enabled),
+      });
+      const locale = await resolveEmailLocaleForUser(admin, user.id).catch(() => "fr");
+      return NextResponse.json(
+        {
+          error: translate(locale, "bookingTeacherPayoutNotReady"),
+          code: "teacher_payout_not_ready",
+        },
+        { status: 409 },
+      );
+    }
+
     const b = booking as BookingRow;
     const teachingMode = (b.teaching_mode || "person").toLowerCase();
     const studentAddress = (b.student_address || "").trim();

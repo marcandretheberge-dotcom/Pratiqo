@@ -72,17 +72,20 @@ test("Membre Pro checkout proceeds only after both consent flags are true", () =
   assert.ok(sessionIndex > legalGateIndex, "Stripe session creation must happen after both gates");
 });
 
-test("Stripe webhook logs event livemode after signature verification", () => {
+test("Stripe webhook logs event livemode after signature verification and rejects production test-mode events", () => {
   const verifyIndex = stripeWebhookSrc.indexOf("stripe.webhooks.constructEvent");
   const livemodeIndex = stripeWebhookSrc.indexOf("livemode: event.livemode");
+  const rejectIndex = stripeWebhookSrc.indexOf("rejected test-mode event on production endpoint");
   const handlerIndex = stripeWebhookSrc.indexOf("if (event.type === \"payment_intent.succeeded\")");
 
   assert.ok(verifyIndex >= 0);
   assert.ok(livemodeIndex > verifyIndex, "livemode must only be logged after signature verification");
-  assert.ok(handlerIndex > livemodeIndex, "livemode logging must happen before webhook mutation handlers");
+  assert.ok(rejectIndex > livemodeIndex, "test-mode rejection must happen after livemode logging");
+  assert.ok(handlerIndex > rejectIndex, "test-mode rejection must happen before webhook mutation handlers");
   assert.match(stripeWebhookSrc, /eventId:\s*event\.id/);
   assert.match(stripeWebhookSrc, /type:\s*event\.type/);
-  assert.match(stripeWebhookSrc, /NODE_ENV\s*===\s*"production"[\s\S]+event\.livemode\s*===\s*false/);
+  assert.match(stripeWebhookSrc, /isProductionWebhookRuntime\(\)\s*&&\s*event\.livemode\s*===\s*false/);
+  assert.match(stripeWebhookSrc, /status:\s*400/);
 });
 
 test("Group-session checkout is disabled by default before Stripe or auth work", () => {
@@ -132,18 +135,25 @@ test("patch stays outside restricted systems", () => {
     ".env.example",
     "app/(app)/upgrade/page.tsx",
     "app/api/group-sessions/checkout/route.ts",
+    "app/api/stripe/checkout/route.ts",
     "app/api/stripe/pro/checkout/route.ts",
     "app/api/stripe/webhook/route.ts",
+    "components/BookingModal.tsx",
+    "components/Explore.tsx",
+    "components/VerifiedBadge.tsx",
     "components/teacher/TeacherAccountView.tsx",
     "lib/config/membrePro.ts",
     "lib/email.ts",
     "lib/email/messages/notifications.ts",
     "lib/email/templates/billing.ts",
+    "lib/payments/connect.ts",
     "lib/i18n/locales/en.json",
     "lib/i18n/locales/es.json",
     "lib/i18n/locales/fr.json",
+    "package.json",
     "tests/legal/founderDecisionsAlignment.test.ts",
     "tests/legal/safeDisclosures.test.ts",
+    "tests/payments/paymentTrustLaunchHardening.test.ts",
     "tests/payments/membreProSubscriptionManagement.test.ts",
     "tests/payments/stripeProductionReadinessBlockers.test.ts",
     "tests/email/notifications.test.ts",

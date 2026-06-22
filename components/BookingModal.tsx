@@ -1734,6 +1734,19 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                   {checkoutError}
                 </div>
               ) : null}
+              <div
+                className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-relaxed text-amber-950"
+                data-testid="booking-first-lesson-guarantee"
+              >
+                <p className="font-bold">{t("bookingFirstLessonGuaranteeTitle")}</p>
+                <p className="mt-1">{t("bookingFirstLessonGuaranteeBody")}</p>
+                <Link
+                  href={LEGAL_ROUTES.annulation}
+                  className="mt-2 inline-flex font-bold text-amber-900 underline-offset-2 hover:underline"
+                >
+                  {t("viewCancellationPolicy")}
+                </Link>
+              </div>
               <div className="rounded-2xl border border-[#DCEAE3] bg-[#F3FAF6] px-4 py-3 text-xs text-slate-700 flex gap-2">
                 <Info size={15} className="mt-0.5 shrink-0 text-teal-700" aria-hidden />
                 <span>{t("bookingPaymentNote")} {paymentProcessedInCurrency}</span>
