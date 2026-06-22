@@ -5,13 +5,16 @@ import { AuthProvider } from "../components/AuthProvider";
 import { PwaServiceWorker } from "@/components/PwaServiceWorker";
 import { LocaleProvider } from "../lib/locale-context";
 import { PostHogPageView } from "@/components/analytics/PostHogPageView";
+import { CookieConsentProvider } from "@/components/privacy/CookieConsentProvider";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <LocaleProvider>
-      <AuthProvider>{children}</AuthProvider>
-      <PwaServiceWorker />
-      <PostHogPageView />
+      <CookieConsentProvider>
+        <AuthProvider>{children}</AuthProvider>
+        <PwaServiceWorker />
+        <PostHogPageView />
+      </CookieConsentProvider>
     </LocaleProvider>
   );
 }

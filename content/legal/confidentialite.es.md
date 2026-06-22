@@ -104,15 +104,45 @@ Evitamos indicar **umbrales de edad específicos** en esta Política, salvo cuan
 
 ## 7. Cookies, analítica y tecnologías similares
 
+> Esta sección busca explicar claramente nuestras prácticas y puede ajustarse tras una revisión legal.
+
 Pratiqo utiliza **cookies**, **almacenamiento local** y tecnologías similares para operar y proteger la plataforma. Según el caso, podemos utilizar:
 
 - **cookies esenciales** (autenticación, sesión, seguridad, balanceo de carga);
 - **cookies de preferencias y localización** (idioma, zona horaria, moneda mostrada);
-- **cookies de analítica y rendimiento** (medición de uso agregado, resolución de problemas);
+- **cookies de analítica y rendimiento opcionales**, con su consentimiento;
 - **cookies de seguridad y prevención del fraude**;
-- **cookies de marketing** **únicamente** cuando se utilizan y con el **consentimiento exigido** por la ley aplicable.
+- **ninguna cookie de marketing conductual** en el lanzamiento.
 
-Puedes configurar tu **navegador** para bloquear o eliminar ciertas cookies. Cuando la plataforma ofrezca controles dedicados (por ejemplo, un panel de preferencias), se ponen a tu disposición a medida que se despliegan. Desactivar algunas cookies puede limitar o impedir el uso de ciertas funciones.
+### 7.1 Necesarias (siempre activas)
+
+Permiten el inicio de sesión, la seguridad, el idioma y el funcionamiento básico. No pueden desactivarse en el panel de preferencias sin afectar el uso normal de Pratiqo.
+
+### 7.2 Analítica opcional — PostHog
+
+Con su **consentimiento explícito**, podemos enviar eventos agregados a **PostHog** (host configurado, p. ej. `us.i.posthog.com`) para comprender el uso general (páginas vistas, flujos de búsqueda agregados). **No** usamos PostHog para:
+
+- relectura de sesión (session replay);
+- publicidad conductual;
+- perfilado de menores o estudiantes;
+- recopilar correos, nombres, direcciones, contenido de mensajes o datos de pago.
+
+Puede rechazar esta categoría con **« Solo necesarias »** o el panel **« Gestionar opciones »** (enlace en el pie de página).
+
+### 7.3 Diagnósticos técnicos — Sentry (solo errores)
+
+Con su consentimiento a diagnósticos (activado por defecto al elegir **« Solo necesarias »**), podemos enviar **informes de errores técnicos** a **Sentry**. En el lanzamiento:
+
+- **sin relectura de sesión**;
+- **sin grabación de video**;
+- **sin correo ni nombre** enviados por defecto;
+- mensajes y metadatos **filtrados** para retirar secretos, tokens, direcciones y otros datos sensibles cuando sea posible.
+
+### 7.4 Cambiar sus opciones
+
+Use el enlace **« Cookies y privacidad »** en el pie de página para reabrir sus preferencias. También puede configurar su **navegador** para bloquear o eliminar ciertas cookies; esto puede limitar algunas funciones.
+
+Preguntas: **support@pratiqo.ca**.
 
 ---
 

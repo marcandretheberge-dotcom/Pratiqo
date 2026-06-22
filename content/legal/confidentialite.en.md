@@ -104,15 +104,45 @@ We avoid stating **specific age thresholds** in this Policy except where they ar
 
 ## 7. Cookies, analytics, and similar technologies
 
-Pratiqo uses **cookies**, **local storage**, and similar technologies to operate and secure the platform. We may use, depending on the case:
+> This section is intended to clearly explain our practices and may be adjusted after legal review.
+
+Pratiqo uses **cookies**, **local storage**, and similar technologies to operate and secure the platform. Depending on the case, we may use:
 
 - **essential cookies** (authentication, session, security, load balancing);
 - **preference and localization cookies** (language, time zone, displayed currency);
-- **analytics and performance cookies** (aggregate usage measurement, troubleshooting);
+- **optional analytics and performance cookies**, with your consent;
 - **security and fraud-prevention cookies**;
-- **marketing cookies** **only** where used and with the **consent required** by applicable law.
+- **no behavioral marketing cookies** at launch.
 
-You can configure your **browser** to block or delete certain cookies. Where the platform offers dedicated controls (e.g., a preferences panel), they are made available as they are deployed. Disabling some cookies may limit or prevent the use of certain features.
+### 7.1 Necessary (always on)
+
+These items support sign-in, security, language, and core functionality. They cannot be turned off in the preferences panel without breaking normal use of Pratiqo.
+
+### 7.2 Optional analytics — PostHog
+
+With your **explicit consent**, we may send aggregate events to **PostHog** (configured host, e.g. `us.i.posthog.com`) to understand general usage (page views, aggregated search flows). We do **not** use PostHog for:
+
+- session replay;
+- behavioral advertising;
+- profiling of minors or students;
+- collecting emails, names, addresses, message content, or payment data.
+
+You can refuse this category via **“Necessary only”** or the **“Manage choices”** panel (footer link).
+
+### 7.3 Technical diagnostics — Sentry (errors only)
+
+With your consent to diagnostics (enabled by default when you choose **“Necessary only”**), we may send **technical error reports** to **Sentry**. At launch:
+
+- **no session replay**;
+- **no video recording**;
+- **no email or name** sent by default;
+- messages and metadata are **filtered** to remove secrets, tokens, addresses, and other sensitive data where possible.
+
+### 7.4 Change your choices
+
+Use the **“Cookies & privacy”** footer link to reopen your preferences. You can also configure your **browser** to block or delete certain cookies; this may limit some features.
+
+Questions: **support@pratiqo.ca**.
 
 ---
 

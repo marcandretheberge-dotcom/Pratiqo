@@ -39,6 +39,7 @@
 
 import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
+import { isSensitiveAnalyticsRoute } from "@/lib/privacy/sensitiveAnalyticsRoutes";
 import {
   trackAdminUsersViewed,
   trackLandingViewed,
@@ -60,6 +61,7 @@ export function PostHogPageView() {
 
   useEffect(() => {
     if (!pathname) return;
+    if (isSensitiveAnalyticsRoute(pathname)) return;
     // Guard against the React 18 StrictMode double-mount in dev. We only
     // want one event per real navigation.
     if (lastFiredRef.current === pathname) return;

@@ -3,6 +3,8 @@
 import { useEffect } from "react";
 import type { ReactNode } from "react";
 import Link from "next/link";
+import { getAnalyticsAnonymousId } from "@/lib/privacy/analyticsAnonymousId";
+import { hasAnalyticsConsent } from "@/lib/privacy/cookieConsent";
 
 type RecruitmentEventName = "teacher_recruitment_landing_view" | "teacher_recruitment_cta_click";
 
@@ -25,15 +27,16 @@ declare global {
 const ANON_KEY = "pratiqo_recruitment_anon_id";
 
 function anonymousId(): string | null {
+  if (!hasAnalyticsConsent()) return null;
   try {
     const current = window.localStorage.getItem(ANON_KEY);
     if (current) return current;
-    const next =
-      typeof crypto !== "undefined" && "randomUUID" in crypto
-        ? crypto.randomUUID()
-        : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-    window.localStorage.setItem(ANON_KEY, next);
-    return next;
+    const shared = getAnalyticsAnonymousId();
+    if (shared) {
+      window.localStorage.setItem(ANON_KEY, shared);
+      return shared;
+    }
+    return null;
   } catch {
     return null;
   }
@@ -44,6 +47,7 @@ export function trackTeacherRecruitmentEvent(
   properties: RecruitmentEventProperties,
 ) {
   if (typeof window === "undefined") return;
+  if (!hasAnalyticsConsent()) return;
 
   try {
     window.dataLayer?.push({ event: eventName, ...properties });

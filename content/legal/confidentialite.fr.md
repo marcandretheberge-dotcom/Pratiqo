@@ -104,15 +104,45 @@ Nous évitons d'invoquer des **seuils d'âge précis** dans la présente Politiq
 
 ## 7. Témoins, analytique et technologies similaires
 
+> Cette section vise à expliquer nos pratiques de manière claire; elle peut être ajustée à la suite d’une révision juridique.
+
 Pratiqo utilise des **témoins** (cookies), du **stockage local** et des technologies similaires pour faire fonctionner et sécuriser la plateforme. Selon le cas, nous pouvons utiliser :
 
 - des **témoins essentiels** (authentification, session, sécurité, équilibrage de charge);
 - des **témoins de préférences et de localisation** (langue, fuseau horaire, devise affichée);
-- des **témoins d'analytique et de performance** (mesure d'utilisation agrégée, dépannage);
+- des **témoins d'analytique et de performance** **optionnels**, avec votre consentement;
 - des **témoins de sécurité et de prévention de la fraude**;
-- des **témoins marketing** **uniquement** lorsqu'ils sont utilisés et avec le **consentement requis** par la loi applicable.
+- **aucun témoin marketing comportemental** au lancement.
 
-Vous pouvez configurer votre **navigateur** pour bloquer ou supprimer certains témoins. Lorsque la plateforme propose des contrôles dédiés (par exemple, un panneau de préférences), ils sont mis à votre disposition à mesure qu'ils sont déployés. Désactiver certains témoins peut limiter ou empêcher l'usage de certaines fonctionnalités.
+### 7.1 Nécessaires (toujours actifs)
+
+Ces éléments permettent la connexion, la sécurité, la langue et le fonctionnement de base. Ils ne peuvent pas être désactivés via le panneau de préférences sans empêcher l’usage normal de Pratiqo.
+
+### 7.2 Analytique optionnelle — PostHog
+
+Avec votre **consentement explicite**, nous pouvons envoyer des événements agrégés à **PostHog** (hébergement configuré, par ex. `us.i.posthog.com`) pour comprendre l’usage général (pages vues, parcours de recherche agrégés). Nous **n’utilisons pas** PostHog pour :
+
+- la relecture de session (session replay);
+- la publicité comportementale;
+- le profilage des mineurs ou des élèves;
+- la collecte de courriels, noms, adresses, contenus de messages ou données de paiement.
+
+Vous pouvez refuser cette catégorie via **« Nécessaires seulement »** ou le panneau **« Gérer mes choix »** (lien disponible dans le pied de page).
+
+### 7.3 Diagnostics techniques — Sentry (erreurs seulement)
+
+Avec votre consentement aux diagnostics (activé par défaut lorsque vous choisissez **« Nécessaires seulement »**), nous pouvons envoyer des **rapports d’erreurs techniques** à **Sentry**. Au lancement :
+
+- **pas de relecture de session**;
+- **pas d’enregistrement vidéo**;
+- **pas de courriel ou nom** transmis par défaut;
+- les messages et métadonnées sont **filtrés** pour retirer secrets, jetons, adresses et autres données sensibles lorsque c’est possible.
+
+### 7.4 Modifier vos choix
+
+Utilisez le lien **« Cookies et confidentialité »** dans le pied de page pour rouvrir vos préférences. Vous pouvez aussi configurer votre **navigateur** pour bloquer ou supprimer certains témoins; cela peut limiter certaines fonctionnalités.
+
+Pour toute question : **support@pratiqo.ca**.
 
 ---
 
