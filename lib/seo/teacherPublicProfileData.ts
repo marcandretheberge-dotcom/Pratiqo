@@ -1,4 +1,5 @@
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { isIdentityVerificationFailed } from "@/lib/teachers/identityPublishGate";
 import {
   buildTeacherPublicProfileSlug,
   isTeacherPublicProfileIndexable,
@@ -6,7 +7,7 @@ import {
 } from "@/lib/seo/teacherPublicProfile";
 
 const SEO_ROW_SELECT =
-  "id, user_id, name, bio, discipline, city, region, country_code, is_public, deactivated_at, deleted_at, is_demo, identity_status, public_profile_enabled, search_indexing_consent, public_profile_slug, profiles!inner(teacher_onboarding_complete, is_active, deactivated_at, deleted_at, anonymized_at)";
+  "id, user_id, name, bio, discipline, city, region, country_code, is_public, deactivated_at, deleted_at, is_demo, identity_verified, stripe_identity_failed_reason, public_profile_enabled, search_indexing_consent, public_profile_slug, profiles!inner(teacher_onboarding_complete, is_active, deactivated_at, deleted_at, anonymized_at)";
 
 type SeoRowRaw = {
   id: string;
@@ -21,7 +22,8 @@ type SeoRowRaw = {
   deactivated_at: string | null;
   deleted_at: string | null;
   is_demo: boolean | null;
-  identity_status: string | null;
+  identity_verified: boolean | null;
+  stripe_identity_failed_reason: string | null;
   public_profile_enabled: boolean | null;
   search_indexing_consent: boolean | null;
   public_profile_slug: string | null;
@@ -57,7 +59,10 @@ function flattenSeoRow(raw: SeoRowRaw, subjectCount = 0): TeacherPublicSeoFields
     deactivated_at: raw.deactivated_at,
     deleted_at: raw.deleted_at,
     is_demo: raw.is_demo,
-    identity_status: raw.identity_status,
+    identity_verification_failed: isIdentityVerificationFailed({
+      identity_verified: raw.identity_verified,
+      stripe_identity_failed_reason: raw.stripe_identity_failed_reason,
+    }),
     public_profile_enabled: raw.public_profile_enabled,
     search_indexing_consent: raw.search_indexing_consent,
     public_profile_slug: raw.public_profile_slug,
@@ -116,7 +121,7 @@ export async function fetchIndexableTeacherSitemapRows(): Promise<
   const { data, error } = await getSupabaseAdmin()
     .from("teachers")
     .select(
-      "id, user_id, name, bio, discipline, city, region, country_code, is_public, deactivated_at, deleted_at, is_demo, identity_status, public_profile_enabled, search_indexing_consent, public_profile_slug, public_profile_last_indexable_at, updated_at, profiles!inner(teacher_onboarding_complete, is_active, deactivated_at, deleted_at, anonymized_at)",
+      "id, user_id, name, bio, discipline, city, region, country_code, is_public, deactivated_at, deleted_at, is_demo, identity_verified, stripe_identity_failed_reason, public_profile_enabled, search_indexing_consent, public_profile_slug, public_profile_last_indexable_at, updated_at, profiles!inner(teacher_onboarding_complete, is_active, deactivated_at, deleted_at, anonymized_at)",
     )
     .eq("public_profile_enabled", true)
     .eq("search_indexing_consent", true)

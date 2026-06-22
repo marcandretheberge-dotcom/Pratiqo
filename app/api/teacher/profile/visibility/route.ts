@@ -6,6 +6,7 @@ import {
   marketNotSupportedPayload,
 } from "@/lib/config/markets";
 import { evaluateTeacherProfilePublishEligibility } from "@/lib/teachers/profilePublishEligibility";
+import { isIdentityVerificationFailed } from "@/lib/teachers/identityPublishGate";
 import { t as translate } from "@/lib/i18n/server";
 import { resolveEmailLocaleForUser } from "@/lib/email/locale";
 
@@ -45,7 +46,8 @@ type TeacherVisibilityRow = {
   is_demo: boolean | null;
   deactivated_at: string | null;
   deleted_at: string | null;
-  identity_status: string | null;
+  identity_verified: boolean | null;
+  stripe_identity_failed_reason: string | null;
 };
 
 async function loadTeacherVisibilityContext(admin: ReturnType<typeof getSupabaseAdmin>, userId: string) {
@@ -53,7 +55,7 @@ async function loadTeacherVisibilityContext(admin: ReturnType<typeof getSupabase
     admin
       .from("teachers")
       .select(
-        "id, user_id, name, bio, price_per_lesson, availability, city, region, country_code, is_public, is_demo, deactivated_at, deleted_at, identity_status",
+        "id, user_id, name, bio, price_per_lesson, availability, city, region, country_code, is_public, is_demo, deactivated_at, deleted_at, identity_verified, stripe_identity_failed_reason",
       )
       .eq("user_id", userId)
       .maybeSingle(),
@@ -115,7 +117,10 @@ function buildEvaluation(
     is_demo: teacher.is_demo,
     deactivated_at: teacher.deactivated_at,
     deleted_at: teacher.deleted_at,
-    identity_status: teacher.identity_status,
+    identity_verification_failed: isIdentityVerificationFailed({
+      identity_verified: teacher.identity_verified,
+      stripe_identity_failed_reason: teacher.stripe_identity_failed_reason,
+    }),
     profile_is_active: profile?.is_active,
     profile_deactivated_at: profile?.deactivated_at,
     profile_deleted_at: profile?.deleted_at,

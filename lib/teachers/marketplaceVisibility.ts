@@ -15,7 +15,7 @@ export type TeacherMarketplaceVisibilityRow = {
   is_demo?: boolean | null;
   deactivated_at?: string | null;
   deleted_at?: string | null;
-  identity_status?: string | null;
+  identity_verification_failed?: boolean;
   profile_is_active?: boolean | null;
   profile_deactivated_at?: string | null;
   profile_deleted_at?: string | null;
@@ -29,7 +29,7 @@ export function isTeacherMarketplaceVisibleRow(row: TeacherMarketplaceVisibility
   if (row.is_demo === true) return false;
   if (row.is_public === false) return false;
   if (row.deactivated_at || row.deleted_at) return false;
-  if ((row.identity_status ?? "none") === "failed") return false;
+  if (row.identity_verification_failed === true) return false;
   if (row.profile_is_active === false) return false;
   if (row.profile_deactivated_at || row.profile_deleted_at || row.profile_anonymized_at) return false;
   return true;

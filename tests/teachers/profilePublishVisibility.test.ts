@@ -38,7 +38,7 @@ function eligibleDraft(overrides: Record<string, unknown> = {}) {
     is_demo: false,
     deactivated_at: null,
     deleted_at: null,
-    identity_status: "none",
+    identity_verification_failed: false,
     profile_is_active: true,
     profile_deactivated_at: null,
     profile_deleted_at: null,
@@ -82,6 +82,15 @@ test("admin-deactivated teacher cannot publish", () => {
   assert.equal(evaluation.canPublish, false);
 });
 
+test("identity verification failure blocks publish without exposing raw identity_status", () => {
+  const evaluation = evaluateTeacherProfilePublishEligibility(
+    eligibleDraft({ identity_verification_failed: true }),
+  );
+  assert.equal(evaluation.canPublish, false);
+  assert.ok(evaluation.blockers.includes("identity_failed"));
+  assert.equal(isTeacherMarketplaceVisibleRow(eligibleDraft({ identity_verification_failed: true, is_public: true })), false);
+});
+
 test("published teacher can unpublish", () => {
   const evaluation = evaluateTeacherProfilePublishEligibility(eligibleDraft({ is_public: true }));
   assert.equal(evaluation.canUnpublish, true);
@@ -107,6 +116,8 @@ test("visibility API requires auth and teacher role checks", () => {
   assert.match(route, /action === "unpublish"/);
   assert.match(route, /evaluateTeacherProfilePublishEligibility/);
   assert.match(route, /\.eq\("user_id", user\.id\)/);
+  assert.doesNotMatch(route, /identity_status/);
+  assert.match(route, /isIdentityVerificationFailed/);
 });
 
 test("publish updates only is_public and never touches Stripe or commission fields", () => {
@@ -117,6 +128,12 @@ test("publish updates only is_public and never touches Stripe or commission fiel
   assert.doesNotMatch(route, /commission/);
   assert.doesNotMatch(route, /plan/);
   assert.doesNotMatch(route, /deactivated_at: body\.is_public \? null : new Date/);
+});
+
+test("dashboard visibility card does not pass raw identity_status", () => {
+  const dashboard = read("components/Dashboard.tsx");
+  assert.match(dashboard, /identity_verification_failed/);
+  assert.doesNotMatch(dashboard, /identity_status/);
 });
 
 test("dashboard and profile management mount the visibility card", () => {

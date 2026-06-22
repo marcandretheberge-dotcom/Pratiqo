@@ -36,6 +36,7 @@ import { IdentityVerificationCard } from "../../../../components/IdentityVerific
 import { useLocale } from "../../../../lib/locale-context";
 import { cn } from "../../../../lib/utils";
 import { deriveVerificationState, deriveEffectiveZoneState, type VerificationStepState } from "../../../../lib/verificationState";
+import { isIdentityVerificationFailed } from "../../../../lib/teachers/identityPublishGate";
 import { getDisciplineById, getEnabledDisciplines } from "../../../../lib/disciplines";
 import { syncTeacherPrimaryFromDisciplines } from "../../../../lib/teacherDisciplines";
 import { TeacherDisciplinesEditor, type DisciplineCardDraft } from "../../../../components/teacher/TeacherDisciplinesEditor";
@@ -1034,7 +1035,10 @@ export default function TeacherProfileManagementPage() {
             is_public: teacherRow.is_public,
             deactivated_at: teacherRow.deactivated_at,
             deleted_at: teacherRow.deleted_at,
-            identity_status: teacherRow.identity_status,
+            identity_verification_failed: isIdentityVerificationFailed({
+              identity_verified: teacherRow.identity_verified,
+              stripe_identity_failed_reason: teacherRow.stripe_identity_failed_reason,
+            }),
           }}
           profileRole={profile?.role}
           onVisibilityChange={(nextPublic) =>
