@@ -36,9 +36,12 @@
  *      central pane) and NO `<YoScreenPager>` (the legacy
  *      swipe-only pager).
  *   6. The desktop sub-tree of each audited page (`desktop` prop)
- *      declares at minimum a `center` slot, and for the Spanish
- *      hub + Course Home, a `leftRail` + `rightRail` so desktop is
- *      truly a workspace, not a stretched phone column.
+ *      declares at minimum a `center` slot and a `leftRail`. Course
+ *      Home additionally declares a `rightRail` so desktop is truly
+ *      a workspace, not a stretched phone column. The Spanish hub
+ *      deliberately skips `rightRail` — see
+ *      yopratiqoDesktopWorkspaceContract.test.ts for why a 3-pane
+ *      split squeezed its two primary cards on desktop.
  *   7. The mobile and desktop sub-trees are STRUCTURALLY DISTINCT
  *      (different JSX subtrees, not the same children passed
  *      twice with different className wrappers).
@@ -375,9 +378,12 @@ test("no audited page's mobile sub-tree mounts the legacy YoAppShellScroller or 
 
 // ─── 6. Desktop sub-tree slots ───────────────────────────────────
 test("each audited page declares a desktop sub-tree with a centre pane (workspace, not stretched mobile)", async () => {
-  // Catalog: only required to declare centre + leftRail; rightRail
-  // optional. Spanish hub + Course Home: must declare all three
-  // rails so desktop is truly workspace-shaped.
+  // Catalog + Spanish hub: only required to declare centre +
+  // leftRail; rightRail optional. The Spanish hub deliberately
+  // omits it — a 280px/1fr/300px three-pane split squeezed its two
+  // primary cards into a ~470px center track on every desktop
+  // breakpoint. Course Home: must declare all three rails so
+  // desktop is truly workspace-shaped.
   const cases = [
     {
       label: "catalog",
@@ -387,7 +393,7 @@ test("each audited page declares a desktop sub-tree with a centre pane (workspac
     {
       label: "Spanish hub",
       tree: await renderSpanishHub(),
-      requireRightRail: true,
+      requireRightRail: false,
     },
     {
       label: "Course Home",
