@@ -226,7 +226,7 @@ export default function TeacherProfileManagementPage() {
     if (!user?.id) return;
     setTeacherRowLoading(true);
     const supabase = getSupabaseClient();
-    let [{ data: tr }, { data: p }] = await Promise.all([
+    const [teacherResult, profileResult] = await Promise.all([
       supabase
         .from("teachers")
         .select(
@@ -236,6 +236,8 @@ export default function TeacherProfileManagementPage() {
         .maybeSingle(),
       supabase.from("profiles").select("plan, photo_url").eq("id", user.id).maybeSingle(),
     ]);
+    let tr = teacherResult.data;
+    const p = profileResult.data;
 
     if (!tr && profile?.role === "teacher") {
       const { data: sess } = await supabase.auth.getSession();
