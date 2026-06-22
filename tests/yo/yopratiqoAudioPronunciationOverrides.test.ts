@@ -331,6 +331,11 @@ test("tracked patch avoids generated audio and restricted product systems", () =
     "app/api/onboarding/select-role/route.ts",
     "app/api/admin/users/[id]/deactivation/route.ts",
     "app/api/teachers/plans/route.ts",
+    // fix/payment-trust-launch-hardening - exact payment launch guard files.
+    // Defended by tests/payments/paymentTrustLaunchHardening.test.ts; no
+    // YoPratiqo audio data, generators, storage paths, or lesson content.
+    "app/api/stripe/webhook/route.ts",
+    "lib/payments/connect.ts",
   ]);
   const forbidden = [
     /^app\/api\//,

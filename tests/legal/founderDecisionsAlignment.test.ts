@@ -162,6 +162,20 @@ const allowedSecurityHardeningFiles = new Set<string>([
   "supabase/migrations/085_harden_student_onboarding_consents_rls.sql",
 ]);
 
+const allowedPaymentTrustHardeningFiles = new Set<string>([
+  // P0 payment/trust launch hardening. These exact files add a checkout
+  // preflight for teacher Stripe Connect payout readiness and reject
+  // test-mode Stripe webhooks in production after signature verification.
+  // They do not change Stripe product/price IDs, payment math, tax logic,
+  // refunds, commissions, Membre Pro, booking status logic, RLS,
+  // migrations, or legal pages. Defended by
+  // tests/payments/paymentTrustLaunchHardening.test.ts and the existing
+  // Stripe production-readiness test.
+  "app/api/stripe/checkout/route.ts",
+  "app/api/stripe/webhook/route.ts",
+  "lib/payments/connect.ts",
+]);
+
 function touchesFounderDecisionScope(file: string): boolean {
   return (
     liveFiles.includes(file) ||
@@ -325,6 +339,7 @@ test("branch did not touch restricted systems", () => {
     if (allowedYoDisclosureFiles.has(file)) continue;
     if (allowedConsentGateFiles.has(file)) continue;
     if (allowedSecurityHardeningFiles.has(file)) continue;
+    if (allowedPaymentTrustHardeningFiles.has(file)) continue;
     for (const rule of restrictedRules) {
       if (rule.re.test(file)) {
         violations.push(`${file} (${rule.label})`);
