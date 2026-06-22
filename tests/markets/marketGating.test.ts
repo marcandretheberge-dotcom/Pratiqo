@@ -99,7 +99,7 @@ test("monetized teacher offers are blocked outside Canada", () => {
 });
 
 test("public teacher publishing is blocked outside Canada", () => {
-  assert.match(visibilityRoute, /body\.is_public && !isTeacherMarketSupported\(teacherCountryCode\)/);
+  assert.match(visibilityRoute, /!isTeacherMarketSupported\(countryCode\)/);
   assert.match(accountView, /\/api\/teacher\/profile\/visibility/);
   assert.match(accountView, /marketTeacherUnavailableMessage/);
 });
