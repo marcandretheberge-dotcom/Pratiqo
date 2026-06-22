@@ -2,10 +2,11 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { sendTeacherVerificationRequestToAdmin } from "@/lib/email";
+import { TEACHER_DIPLOMA_BUCKET } from "@/lib/teachers/diplomaStorage";
 
 export const runtime = "nodejs";
 
-const BUCKET = "teacher-diplomas";
+const BUCKET = TEACHER_DIPLOMA_BUCKET;
 const MAX_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
 

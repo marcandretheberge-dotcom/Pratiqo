@@ -54,6 +54,7 @@ import { join } from "node:path";
 import { SITE_URL } from "../../lib/seo/site";
 import sitemap from "../../app/sitemap";
 import robots from "../../app/robots";
+import { isGroupSessionsMarketplaceIndexable } from "../../lib/groupSessionsLaunch";
 
 const REPO_ROOT = process.cwd();
 
@@ -288,7 +289,6 @@ test("Sitemap includes the canonical public surfaces", async () => {
     `${SITE_URL}/`,
     `${SITE_URL}/become-teacher`,
     `${SITE_URL}/devenir-enseignant`,
-    `${SITE_URL}/group-sessions`,
     `${SITE_URL}/tarifs`,
     `${SITE_URL}/trouver-un-prof`,
     `${SITE_URL}/francisation`,
@@ -300,6 +300,10 @@ test("Sitemap includes the canonical public surfaces", async () => {
     `${SITE_URL}/legal/membre-pro`,
     `${SITE_URL}/legal/paiements-remboursements`,
   ];
+
+  if (isGroupSessionsMarketplaceIndexable()) {
+    required.push(`${SITE_URL}/group-sessions`);
+  }
 
   for (const url of required) {
     assert.ok(urls.has(url), `Sitemap must include ${url}`);

@@ -12,6 +12,7 @@ import {
   isYoLandingPageIndexable,
   yopratiqoProductConfig,
 } from "../lib/yo/yopratiqoProductConfig";
+import { isGroupSessionsMarketplaceIndexable } from "../lib/groupSessionsLaunch";
 
 const BASE_URL = SITE_URL;
 
@@ -45,12 +46,16 @@ const STATIC_ROUTES: MetadataRoute.Sitemap = [
     changeFrequency: "weekly",
     priority: 0.75,
   },
-  {
-    url: `${BASE_URL}/group-sessions`,
-    lastModified: new Date(),
-    changeFrequency: "daily",
-    priority: 0.8,
-  },
+  ...(isGroupSessionsMarketplaceIndexable()
+    ? [
+        {
+          url: `${BASE_URL}/group-sessions`,
+          lastModified: new Date(),
+          changeFrequency: "daily" as const,
+          priority: 0.8,
+        },
+      ]
+    : []),
   {
     url: `${BASE_URL}/tarifs`,
     lastModified: new Date(),

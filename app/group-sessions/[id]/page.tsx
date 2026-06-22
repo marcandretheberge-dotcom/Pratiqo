@@ -5,6 +5,7 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import GroupSessionDetailClient from "@/components/GroupSessionDetailClient";
 
 import { SITE_URL } from "@/lib/seo/site";
+import { isGroupSessionsMarketplaceIndexable } from "@/lib/groupSessionsLaunch";
 
 const BASE_URL = SITE_URL;
 
@@ -44,12 +45,22 @@ export async function generateMetadata({
   const { id } = await params;
   const row = await getGroupSessionMeta(id);
   const canonical = `${BASE_URL}/group-sessions/${encodeURIComponent(id)}`;
+  const checkoutLive = isGroupSessionsMarketplaceIndexable();
 
   if (!row) {
     return {
       title: "Séance",
       robots: { index: false, follow: false },
       alternates: { canonical },
+    };
+  }
+
+  if (!checkoutLive) {
+    return {
+      title: row.title,
+      description: "Réservation en ligne bientôt disponible — cette séance n'est pas indexée pour le lancement.",
+      alternates: { canonical },
+      robots: { index: false, follow: false },
     };
   }
 
