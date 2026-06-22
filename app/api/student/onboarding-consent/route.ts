@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { rateLimitByIp, rateLimitResponse } from "@/lib/rateLimit";
+import { rateLimitByIp, rateLimitGuardResponse } from "@/lib/rateLimit";
 import { mergeOnboardingRoleConfirmedDashboard } from "@/lib/auth/onboardingRoleChoice";
 import {
   isStudentOnboardingConsentActorType,
@@ -75,13 +75,8 @@ export async function POST(request: Request) {
   if (!token) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
   const rl = await rateLimitByIp(request, "student-onboarding-consent", { limit: 20, windowSeconds: 60 });
-  if (!rl.allowed && rl.retryAfterSeconds != null) {
-    return rateLimitResponse(rl.retryAfterSeconds, {
-      limit: rl.limit,
-      remaining: rl.remaining,
-      reset: rl.reset,
-    });
-  }
+  const rateLimited = rateLimitGuardResponse(rl);
+  if (rateLimited) return rateLimited;
 
   const supabaseUser = authClientForToken(token);
   if (!supabaseUser) {

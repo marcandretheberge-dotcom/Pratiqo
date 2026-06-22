@@ -69,6 +69,21 @@ function changedFilesAgainstMain(): string[] | null {
   }
 }
 
+function changedPatchAgainstMain(relativePath: string): string | null {
+  try {
+    const mergeBase = execFileSync("git", ["merge-base", "HEAD", "origin/main"], {
+      cwd: root,
+      encoding: "utf8",
+    }).trim();
+    return execFileSync("git", ["diff", mergeBase, "HEAD", "--", relativePath], {
+      cwd: root,
+      encoding: "utf8",
+    });
+  } catch {
+    return null;
+  }
+}
+
 const staleOldModelPatterns: Array<{ label: string; re: RegExp }> = [
   { label: "old 10% to 7% range", re: /10\s*%\s*(?:->|to|a|à|-|–|→)\s*7\s*%/i },
   { label: "old 10 percent to 7 percent range", re: /10\s+percent\s+(?:to|a|à)\s+7\s+percent/i },
@@ -199,6 +214,35 @@ test("tracked source has no stale old commission model claims", () => {
   assert.deepEqual(offenders, []);
 });
 
+function isApprovedDisabledGroupSessionCheckoutGateChange(file: string): boolean {
+  if (file !== "app/api/group-sessions/checkout/route.ts") return false;
+
+  const source = read(file);
+  const disabledGateIndex = source.indexOf("if (!isGroupSessionsCheckoutEnabled())");
+  const stripeSecretIndex = source.indexOf("process.env.STRIPE_SECRET_KEY");
+  const stripeSessionIndex = source.indexOf("stripe.checkout.sessions.create");
+  assert.ok(disabledGateIndex >= 0, "group checkout route must keep disabled launch gate");
+  assert.ok(stripeSecretIndex > disabledGateIndex, "disabled gate must run before Stripe env checks");
+  assert.ok(stripeSessionIndex > disabledGateIndex, "disabled gate must run before Stripe session creation");
+  assert.match(source, /code:\s*"group_sessions_checkout_disabled"/);
+  assert.match(source, /status:\s*403/);
+
+  const patch = changedPatchAgainstMain(file);
+  if (patch) {
+    const changedLines = patch
+      .split(/\r?\n/)
+      .filter((line) => /^[+-]/.test(line) && !/^(?:\+\+\+|---)/.test(line))
+      .join("\n");
+    assert.doesNotMatch(
+      changedLines,
+      /stripe\.checkout\.sessions\.create|payment_intent_data|application_fee_amount|transfer_data|price_data|unit_amount|GROUP_COMMISSION|calculateBookingAmounts|MEMBRE_PRO|@\/lib\/payments/,
+      "group checkout exception may only touch the disabled launch gate, not payment behavior",
+    );
+  }
+
+  return true;
+}
+
 test("commission model branch may update canonical commission files but not restricted systems", () => {
   const changed = changedFilesAgainstMain();
   if (!changed) return;
@@ -246,6 +290,12 @@ test("commission model branch may update canonical commission files but not rest
   const violations: string[] = [];
   for (const file of changed) {
     if (approvedStripeRouteExceptions.has(file)) continue;
+    // Launch-safety PR exception: group-session checkout is disabled at launch,
+    // and this branch only centralizes the fail-closed gate so public disabled
+    // SEO surfaces share the same source of truth. The helper above verifies the
+    // patch does not alter Stripe session creation, fees, payment intent data,
+    // payment math, Membre Pro, or commission logic.
+    if (isApprovedDisabledGroupSessionCheckoutGateChange(file)) continue;
     if (APPROVED_SECURITY_MIGRATION_EXCEPTIONS.has(file)) continue;
     for (const rule of restrictedRules) {
       if (rule.re.test(file)) {

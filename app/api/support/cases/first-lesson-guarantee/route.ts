@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { sendSupportCaseAdminAlert } from "@/lib/email";
-import { rateLimitByIp, rateLimitResponse } from "@/lib/rateLimit";
+import { rateLimitByIp, rateLimitGuardResponse } from "@/lib/rateLimit";
 import { validateJsonBody } from "@/lib/validation/api";
 import {
   FIRST_LESSON_GUARANTEE_MARKER,
@@ -51,13 +51,8 @@ export async function POST(req: Request) {
   // One legitimate claim per student account. Cap retries at 5/min to absorb
   // network double-clicks and accidental retries without enabling spam.
   const rl = await rateLimitByIp(req, "first-lesson-guarantee", { limit: 5, windowSeconds: 60 });
-  if (!rl.allowed && rl.retryAfterSeconds != null) {
-    return rateLimitResponse(rl.retryAfterSeconds, {
-      limit: rl.limit,
-      remaining: rl.remaining,
-      reset: rl.reset,
-    });
-  }
+  const rateLimited = rateLimitGuardResponse(rl);
+  if (rateLimited) return rateLimited;
 
   // --- Body validation ----------------------------------------------------
   const validated = await validateJsonBody(firstLessonGuaranteeSchema, req);

@@ -5,6 +5,7 @@ import { stripe } from "@/lib/stripe";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import type { GroupSessionRow } from "@/lib/groupSessions";
 import { SITE_URL } from "@/lib/seo/site";
+import { isGroupSessionsCheckoutEnabled } from "@/lib/groupSessionsLaunch";
 
 function trimTrailingSlash(url: string) {
   return url.replace(/\/+$/, "");
@@ -18,13 +19,6 @@ function checkoutPublicBase(): string {
 const GROUP_COMMISSION = 0.05;
 
 type Body = { group_session_id?: string };
-
-function isGroupSessionsCheckoutEnabled(): boolean {
-  const normalized = String(process.env.GROUP_SESSIONS_CHECKOUT_ENABLED ?? "")
-    .trim()
-    .toLowerCase();
-  return normalized === "1" || normalized === "true" || normalized === "yes";
-}
 
 export async function POST(req: Request) {
   try {
