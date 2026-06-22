@@ -7,8 +7,17 @@ import { motion } from "motion/react";
 import { useLocale } from "../lib/locale-context";
 import { localeToBcp47 } from "../lib/i18n/types";
 
+type TeacherAgendaBooking = {
+  id: string;
+  time: string;
+  studentName: string;
+  teachingMode?: string | null;
+  studentLevel?: string | null;
+  status: string;
+};
+
 interface TeacherAgendaProps {
-  bookings: any[];
+  bookings: TeacherAgendaBooking[];
 }
 
 export function TeacherAgenda({ bookings }: TeacherAgendaProps) {
