@@ -8,7 +8,8 @@ const cspValue = [
   "connect-src 'self'"
     + " https://*.supabase.co wss://*.supabase.co"
     + " https://*.stripe.com https://api.stripe.com"
-    + " https://maps.googleapis.com https://*.googleapis.com https://maps.gstatic.com",
+    + " https://maps.googleapis.com https://*.googleapis.com https://maps.gstatic.com"
+    + " https://us.i.posthog.com",
   // Script sources (explicit so Google Maps JS API loads without relying on default-src)
   "script-src 'self' 'unsafe-inline'"
     + " https://maps.googleapis.com https://maps.gstatic.com"
@@ -41,7 +42,8 @@ const cspReportOnlyValue = [
   "connect-src 'self'"
     + " https://*.supabase.co wss://*.supabase.co"
     + " https://*.stripe.com https://api.stripe.com"
-    + " https://maps.googleapis.com https://*.googleapis.com https://maps.gstatic.com",
+    + " https://maps.googleapis.com https://*.googleapis.com https://maps.gstatic.com"
+    + " https://us.i.posthog.com",
   "script-src 'self' 'unsafe-inline'"
     + " https://maps.googleapis.com https://maps.gstatic.com"
     + " https://*.supabase.co https://*.stripe.com https://js.stripe.com",

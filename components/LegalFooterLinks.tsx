@@ -10,10 +10,12 @@
  */
 
 import Link from "next/link";
+import { useOpenCookiePreferences } from "@/components/privacy/CookieConsentProvider";
 import { useLocale } from "@/lib/locale-context";
 
 export function LegalFooterLinks() {
   const { locale, t } = useLocale();
+  const openCookiePreferences = useOpenCookiePreferences();
   const teacherTermsLabel =
     locale === "en"
       ? "Teacher Terms"
@@ -81,6 +83,13 @@ export function LegalFooterLinks() {
       <Link href="/contact" className="hover:text-[#2C2C2A] hover:underline">
         {t("footerContact")}
       </Link>
+      <button
+        type="button"
+        onClick={openCookiePreferences}
+        className="hover:text-[#2C2C2A] hover:underline text-left"
+      >
+        {t("cookieFooterLink")}
+      </button>
     </>
   );
 }

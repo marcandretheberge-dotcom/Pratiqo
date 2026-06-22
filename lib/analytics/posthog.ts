@@ -19,7 +19,9 @@
 //      call-site smuggles raw input through `Record<string, unknown>`,
 //      nothing sensitive reaches PostHog.
 
-const POSTHOG_DEFAULT_HOST = "https://us.i.posthog.com";
+import { getAnalyticsAnonymousId } from "@/lib/privacy/analyticsAnonymousId";
+import { hasAnalyticsConsent } from "@/lib/privacy/cookieConsent";
+import { isSensitiveAnalyticsRoute } from "@/lib/privacy/sensitiveAnalyticsRoutes";
 
 // Drop-list mirrors `lib/log.ts` plus analytics-specific concerns.
 // IMPORTANT: this is the privacy floor. Adding to it is cheap; weakening it
@@ -55,6 +57,8 @@ const FORBIDDEN_KEY_FRAGMENTS = [
   "email",
 ] as const;
 
+const POSTHOG_DEFAULT_HOST = "https://us.i.posthog.com";
+
 const MAX_STRING_LENGTH = 256;
 const MAX_PROPERTY_COUNT = 32;
 
@@ -66,8 +70,17 @@ export function isForbiddenAnalyticsKey(key: string): boolean {
   return FORBIDDEN_KEY_FRAGMENTS.some((frag) => lower.includes(frag));
 }
 
+export function scrubSensitiveText(s: string): string {
+  return s
+    .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, "[redacted-email]")
+    .replace(/\b(?:\+?\d[\s().-]*){7,}\b/g, "[redacted-phone]")
+    .replace(/\b(?:bearer|token|refresh_token|access_token|authorization)\s*[:=]\s*[^\s,;]+/gi, "[redacted-token]")
+    .replace(/\b(?:card|cvc|cvv|iban|stripe|payment_intent|charge)\s*[:=]\s*[^\s,;]+/gi, "[redacted-payment]");
+}
+
 function truncate(s: string): string {
-  return s.length <= MAX_STRING_LENGTH ? s : `${s.slice(0, MAX_STRING_LENGTH)}…[truncated]`;
+  const scrubbed = scrubSensitiveText(s);
+  return scrubbed.length <= MAX_STRING_LENGTH ? scrubbed : `${scrubbed.slice(0, MAX_STRING_LENGTH)}…[truncated]`;
 }
 
 /**
@@ -131,28 +144,12 @@ export function readPostHogConfig(): PostHogConfig | null {
 }
 
 /**
- * Browser-side anonymous id continuity with the existing search-events
- * pipeline (`lib/searchAnalytics.ts`). Sharing the id means PostHog
- * funnels line up 1:1 with the Supabase search_events backend without
- * any extra plumbing.
+ * Browser-side anonymous id — only created after analytics consent.
+ * Shared with the search-events pipeline via `lib/privacy/analyticsAnonymousId.ts`.
  */
-const ANON_KEY = "pratiqo_search_anon_id";
-
 function getAnonymousDistinctId(): string {
-  if (typeof window === "undefined") return "server";
-  try {
-    let id = window.localStorage.getItem(ANON_KEY);
-    if (!id) {
-      id =
-        typeof crypto !== "undefined" && "randomUUID" in crypto
-          ? crypto.randomUUID()
-          : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-      window.localStorage.setItem(ANON_KEY, id);
-    }
-    return id;
-  } catch {
-    return "anonymous";
-  }
+  const id = getAnalyticsAnonymousId();
+  return id || "anonymous";
 }
 
 // ─── Auto-properties ────────────────────────────────────────────────────────
@@ -179,6 +176,7 @@ function buildAutoProperties(): AutoProperties {
   if (typeof window === "undefined") return {};
   try {
     const { href, host, pathname } = window.location;
+    if (isSensitiveAnalyticsRoute(pathname)) return {};
     return {
       $current_url: truncate(href),
       $host: truncate(host),
@@ -223,6 +221,8 @@ export function capturePostHogEvent(
   // because `window` is patched by jsdom or the test runner; in plain
   // Node (build, scripts, edge runtimes) we simply do nothing.
   if (typeof window === "undefined") return;
+  if (!hasAnalyticsConsent()) return;
+  if (isSensitiveAnalyticsRoute(window.location.pathname)) return;
   const config = readPostHogConfig();
   if (!config) return;
   if (!event || typeof event !== "string") return;

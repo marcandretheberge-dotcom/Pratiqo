@@ -27,6 +27,7 @@
 // extra context is sanitized to drop sensitive keys.
 
 import { sanitizeAnalyticsProperties } from "@/lib/analytics/posthog";
+import { hasDiagnosticsConsent } from "@/lib/privacy/cookieConsent";
 
 type ParsedDsn = {
   publicKey: string;
@@ -35,6 +36,78 @@ type ParsedDsn = {
 };
 
 const MAX_MESSAGE_LENGTH = 1024;
+
+const MONITORING_FORBIDDEN_KEY_FRAGMENTS = [
+  "password",
+  "token",
+  "secret",
+  "auth",
+  "cookie",
+  "stripe",
+  "card",
+  "cvc",
+  "cvv",
+  "iban",
+  "ssn",
+  "sin",
+  "address",
+  "street",
+  "postal",
+  "zip",
+  "lat",
+  "lng",
+  "latitude",
+  "longitude",
+  "coords",
+  "geo",
+  "body",
+  "content",
+  "message_body",
+  "raw_query",
+  "email",
+  "phone",
+  "mobile",
+  "refresh",
+  "access_token",
+  "payment",
+  "booking_note",
+  "note",
+  "name",
+  "profile",
+  "student",
+  "teacher",
+  "replay",
+  "session_recording",
+] as const;
+
+const EMAIL_PATTERN = /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi;
+const PHONE_PATTERN = /(?:\+?\d[\d\s().-]{7,}\d)/g;
+
+export function isForbiddenMonitoringKey(key: string): boolean {
+  const lower = key.toLowerCase();
+  return MONITORING_FORBIDDEN_KEY_FRAGMENTS.some((frag) => lower.includes(frag));
+}
+
+export function scrubMonitoringMessage(message: string): string {
+  if (!message) return "";
+  const redacted = message
+    .replace(EMAIL_PATTERN, "[redacted-email]")
+    .replace(PHONE_PATTERN, "[redacted-phone]");
+  if (redacted.length <= MAX_MESSAGE_LENGTH) return redacted;
+  return `${redacted.slice(0, MAX_MESSAGE_LENGTH)}…[truncated]`;
+}
+
+function sanitizeMonitoringProperties(
+  input: Record<string, unknown> | null | undefined,
+): Record<string, unknown> {
+  const base = sanitizeAnalyticsProperties(input);
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(base)) {
+    if (isForbiddenMonitoringKey(key)) continue;
+    out[key] = value;
+  }
+  return out;
+}
 
 /**
  * Parse a Sentry DSN of the form
@@ -81,8 +154,7 @@ export type MonitoringContext = {
 };
 
 function truncateMessage(msg: string): string {
-  if (msg.length <= MAX_MESSAGE_LENGTH) return msg;
-  return `${msg.slice(0, MAX_MESSAGE_LENGTH)}…[truncated]`;
+  return scrubMonitoringMessage(msg);
 }
 
 type SentryStoreBody = {
@@ -99,6 +171,11 @@ type SentryStoreBody = {
   user?: { id: string };
 };
 
+function shouldCaptureInBrowser(): boolean {
+  if (typeof window === "undefined") return true;
+  return hasDiagnosticsConsent();
+}
+
 /**
  * Fire-and-forget structured error report to Sentry. Never throws.
  * Returns true if a request was issued, false if no-op (missing DSN, no
@@ -109,19 +186,21 @@ export function captureMonitoringError(
   context?: MonitoringContext,
   level: MonitoringLevel = "error",
 ): boolean {
+  if (!shouldCaptureInBrowser()) return false;
   const dsnRaw = readDsn();
   const parsed = parseSentryDsn(dsnRaw);
   if (!parsed) return false;
   if (!message || typeof message !== "string") return false;
 
-  const sanitizedExtra = sanitizeAnalyticsProperties(context?.extra ?? {});
-  const sanitizedTagsRaw = sanitizeAnalyticsProperties(context?.tags ?? {});
+  const sanitizedExtra = sanitizeMonitoringProperties(context?.extra ?? {});
+  const sanitizedTagsRaw = sanitizeMonitoringProperties(context?.tags ?? {});
   const tags: Record<string, string> = {};
   for (const [k, v] of Object.entries(sanitizedTagsRaw)) {
     if (v === null || v === undefined) continue;
+    if (isForbiddenMonitoringKey(k)) continue;
     tags[k] = String(v);
   }
-  if (context?.area) tags["area"] = context.area;
+  if (context?.area && !isForbiddenMonitoringKey("area")) tags["area"] = context.area;
 
   const body: SentryStoreBody = {
     event_id: randomEventId(),
@@ -134,7 +213,9 @@ export function captureMonitoringError(
     tags,
     extra: sanitizedExtra,
   };
-  if (context?.userId) body.user = { id: context.userId };
+  if (context?.userId && !context.userId.includes("@")) {
+    body.user = { id: context.userId };
+  }
 
   // Sentry public envelope auth header. The public key is safe to embed
   // — Sentry treats it as a write-only ingest credential.
