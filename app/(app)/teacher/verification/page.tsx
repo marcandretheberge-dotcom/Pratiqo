@@ -49,6 +49,7 @@ import { isValidVideoUrl } from "../../../../lib/videoEmbed";
 import { parseGooglePlace } from "../../../../lib/googleAddressParser";
 import { MIN_LESSON_PRICE_DOLLARS } from "../../../../lib/pricing/constants";
 import { fetchEnsureTeacherProfile } from "../../../../lib/teachers/ensureTeacherProfileClient";
+import { TeacherProfileVisibilityCard } from "../../../../components/teacher/TeacherProfileVisibilityCard";
 import { lessonDurationSummaryText, normalizeLessonDurationMinutes } from "../../../../lib/pricing/lessonDuration";
 import {
   buildTeacherSetupChecklist,
@@ -1012,10 +1013,35 @@ export default function TeacherProfileManagementPage() {
             className="mt-3 rounded-xl border border-teal-200/80 bg-teal-50/80 px-4 py-3 text-sm text-teal-900"
             data-testid="teacher-setup-mode-banner"
           >
-            {t("teacherSetupModeBanner")}
+            {t("teacherOnboardingSavedNotPublishedBody")}
           </p>
         ) : null}
       </div>
+
+      {teacherRow && user?.id ? (
+        <TeacherProfileVisibilityCard
+          teacher={{
+            id: teacherRow.id,
+            user_id: user.id,
+            name: teacherRow.name ?? editName,
+            bio: teacherRow.bio ?? editBio,
+            disciplineCount: discRows.length,
+            price_per_lesson: teacherRow.price_per_lesson,
+            availability: teacherRow.availability,
+            city: teacherRow.city,
+            region: teacherRow.region,
+            country_code: teacherRow.country_code,
+            is_public: teacherRow.is_public,
+            deactivated_at: teacherRow.deactivated_at,
+            deleted_at: teacherRow.deleted_at,
+            identity_status: teacherRow.identity_status,
+          }}
+          profileRole={profile?.role}
+          onVisibilityChange={(nextPublic) =>
+            setTeacherRow((prev) => (prev ? { ...prev, is_public: nextPublic } : prev))
+          }
+        />
+      ) : null}
 
       {message ? (
         <div
