@@ -21,7 +21,7 @@ export default function ErrorPage({ reset, unstable_retry }: ErrorPageProps) {
               <PratiqoLogo variant="full" size="sm" priority={false} fetchPriority="low" loading="lazy" />
             </Link>
             <span className="rounded-full border border-[#F4B400]/30 bg-[#FFF4D6] px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-[#0F6E56]">
-              Besoin d'un instant
+              Besoin d&apos;un instant
             </span>
           </div>
 
@@ -30,10 +30,10 @@ export default function ErrorPage({ reset, unstable_retry }: ErrorPageProps) {
               Une erreur est survenue
             </p>
             <h1 className="mt-4 text-4xl font-semibold tracking-tight text-[#0F6E56] sm:text-5xl">
-              Vous pouvez reessayer ou retourner a l'accueil.
+              Vous pouvez reessayer ou retourner a l&apos;accueil.
             </h1>
             <p className="mt-5 text-lg leading-8 text-slate-600">
-              Nous n'affichons pas les details techniques ici afin de proteger vos informations. Si le probleme
+              Nous n&apos;affichons pas les details techniques ici afin de proteger vos informations. Si le probleme
               persiste, contactez Pratiqo.
             </p>
             <p className="mt-3 text-sm text-slate-500" lang="en">
@@ -55,7 +55,7 @@ export default function ErrorPage({ reset, unstable_retry }: ErrorPageProps) {
               href="/"
               className="inline-flex min-h-11 items-center justify-center rounded-full border border-[#1D9E75]/25 bg-white px-5 py-3 text-sm font-semibold text-[#0F6E56] transition hover:border-[#1D9E75] hover:bg-[#DDF4F1] focus:outline-none focus:ring-2 focus:ring-[#1D9E75] focus:ring-offset-2"
             >
-              Retour a l'accueil
+              Retour a l&apos;accueil
             </Link>
             <Link
               href="/trouver-un-prof"

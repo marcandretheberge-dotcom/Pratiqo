@@ -12,6 +12,7 @@ import {
   MEMBRE_PRO_COMMISSION_MODEL,
   MEMBRE_PRO_PLAN,
 } from "../../lib/config/membrePro";
+import { APPROVED_SECURITY_MIGRATION_EXCEPTIONS } from "../security/postgisRlsException";
 
 type TestFn = () => void;
 const tests: Array<{ name: string; fn: TestFn }> = [];
@@ -245,6 +246,7 @@ test("commission model branch may update canonical commission files but not rest
   const violations: string[] = [];
   for (const file of changed) {
     if (approvedStripeRouteExceptions.has(file)) continue;
+    if (APPROVED_SECURITY_MIGRATION_EXCEPTIONS.has(file)) continue;
     for (const rule of restrictedRules) {
       if (rule.re.test(file)) {
         violations.push(`${file} (${rule.label})`);

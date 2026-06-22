@@ -25,10 +25,10 @@ export default function NotFound() {
           <div className="mt-12 max-w-2xl">
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#1D9E75]">Page introuvable</p>
             <h1 className="mt-4 text-4xl font-semibold tracking-tight text-[#0F6E56] sm:text-5xl">
-              Cette page n'existe pas ou a ete deplacee.
+              Cette page n&apos;existe pas ou a ete deplacee.
             </h1>
             <p className="mt-5 text-lg leading-8 text-slate-600">
-              Le lien a peut-etre change. Vous pouvez retourner a l'accueil, trouver un professeur ou continuer avec
+              Le lien a peut-etre change. Vous pouvez retourner a l&apos;accueil, trouver un professeur ou continuer avec
               YoPratiqo.
             </p>
             <p className="mt-3 text-sm text-slate-500" lang="en">

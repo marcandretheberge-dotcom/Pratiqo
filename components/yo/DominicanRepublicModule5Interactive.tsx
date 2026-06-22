@@ -75,6 +75,15 @@ export function DominicanRepublicModule5Quiz({
   const [picks, setPicks] = useState<Record<string, string>>({});
   const [revealed, setRevealed] = useState<Record<string, boolean>>({});
 
+  const score = useMemo(
+    () =>
+      questions.reduce(
+        (acc, q) => (picks[q.id] === q.correctOptionId ? acc + 1 : acc),
+        0,
+      ),
+    [picks, questions],
+  );
+
   const current = questions[index];
   if (!current) return null;
 
@@ -85,15 +94,6 @@ export function DominicanRepublicModule5Quiz({
     (o) => o.id === current.correctOptionId,
   );
   const isCorrect = pickedId === current.correctOptionId;
-
-  const score = useMemo(
-    () =>
-      questions.reduce(
-        (acc, q) => (picks[q.id] === q.correctOptionId ? acc + 1 : acc),
-        0,
-      ),
-    [picks, questions],
-  );
 
   const completed = Object.keys(revealed).length === questions.length;
   const isLast = index === questions.length - 1;

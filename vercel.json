@@ -1,4 +1,17 @@
 {
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "pratiqo.ca"
+        }
+      ],
+      "destination": "https://www.pratiqo.ca/$1",
+      "statusCode": 308
+    }
+  ],
   "crons": [
     {
       "path": "/api/cron/bookings/complete",

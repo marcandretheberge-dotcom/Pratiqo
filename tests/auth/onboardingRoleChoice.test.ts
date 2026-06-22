@@ -232,8 +232,8 @@ test("buildLoginHrefAfterOAuth stages post-OAuth session handoff on public login
   );
 });
 
-test("middleware redirects unauthenticated protected routes to connexion with inferred intent", () => {
-  const src = read("middleware.ts");
+test("proxy redirects unauthenticated protected routes to connexion with inferred intent", () => {
+  const src = read("proxy.ts");
   assert.match(src, /buildConnexionHrefForProtectedReturn/);
   assert.match(src, /CONNEXION_PATH/);
   assert.doesNotMatch(src, /loginUrl\.searchParams\.set\("next"/);

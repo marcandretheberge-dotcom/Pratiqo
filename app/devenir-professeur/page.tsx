@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { ArrowRight, CalendarDays, CheckCircle2, GraduationCap, Mail, MapPin, ShieldCheck, Sparkles, WalletCards } from "lucide-react";
 import PratiqoLogo from "@/components/PratiqoLogo";
 import {
@@ -153,9 +154,9 @@ export default async function DevenirProfesseurPage({
 
       <header className="border-b border-emerald-900/10 bg-white/85 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
-          <a href="/" className="flex items-center">
+          <Link href="/" className="flex items-center">
             <PratiqoLogo variant="full" size="sm" priority={false} />
-          </a>
+          </Link>
           <a
             href="mailto:marc-andre.theberge@pratiqo.ca"
             className="hidden rounded-full border border-emerald-900/10 px-4 py-2 text-sm font-semibold text-[#0F6E56] hover:bg-emerald-50 sm:inline-flex"
