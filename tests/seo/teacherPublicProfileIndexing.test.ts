@@ -47,7 +47,7 @@ const baseRow = {
   deactivated_at: null,
   deleted_at: null,
   is_demo: false,
-  identity_status: "none",
+  identity_verification_failed: false,
   public_profile_enabled: true,
   search_indexing_consent: true,
   public_profile_slug: "marie-d-espagnol-levis",

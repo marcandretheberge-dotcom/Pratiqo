@@ -46,7 +46,7 @@ const marketplaceVisibleNoSeoConsent = {
   deactivated_at: null,
   deleted_at: null,
   is_demo: false,
-  identity_status: "none",
+  identity_verification_failed: false,
   public_profile_enabled: false,
   search_indexing_consent: false,
   public_profile_slug: null,

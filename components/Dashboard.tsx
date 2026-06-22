@@ -19,6 +19,7 @@ import { TeacherProfileCompletenessCard } from "@/components/dashboard/teacher/T
 import { TeacherSearchVisibilityBanner } from "@/components/teacher/TeacherSearchVisibilityBanner";
 import { TeacherProfileSetupChecklist } from "@/components/teacher/TeacherProfileSetupChecklist";
 import { TeacherProfileVisibilityCard } from "@/components/teacher/TeacherProfileVisibilityCard";
+import { isIdentityVerificationFailed } from "@/lib/teachers/identityPublishGate";
 import { TEACHER_SETUP_PATH } from "@/lib/auth/teacherLoginRouting";
 import { buildTeacherSetupChecklist } from "@/lib/teachers/teacherSetupProgress";
 import { TeacherRequestCard } from "@/components/dashboard/teacher/TeacherRequestCard";
@@ -138,7 +139,7 @@ export function Dashboard() {
     is_demo: boolean | null;
     deactivated_at: string | null;
     deleted_at: string | null;
-    identity_status: string | null;
+    identity_verification_failed: boolean;
     country_code: string | null;
     profile_is_active: boolean | null;
     profile_deactivated_at: string | null;
@@ -551,7 +552,7 @@ export function Dashboard() {
       const { data: t } = await supabase
         .from("teachers")
         .select(
-          "id, name, discipline, price_per_lesson, bio, image_url, timezone, city, region, availability, is_public, is_demo, deactivated_at, deleted_at, identity_status, country_code",
+          "id, name, discipline, price_per_lesson, bio, image_url, timezone, city, region, availability, is_public, is_demo, deactivated_at, deleted_at, identity_verified, stripe_identity_failed_reason, country_code",
         )
         .eq("user_id", user.id)
         .maybeSingle();
@@ -575,7 +576,8 @@ export function Dashboard() {
         is_demo?: boolean | null;
         deactivated_at?: string | null;
         deleted_at?: string | null;
-        identity_status?: string | null;
+        identity_verified?: boolean | null;
+        stripe_identity_failed_reason?: string | null;
         country_code?: string | null;
       };
       const { data: drows } = await supabase.from("teacher_disciplines").select("id").eq("teacher_id", row.id);
@@ -599,7 +601,10 @@ export function Dashboard() {
         is_demo: row.is_demo ?? false,
         deactivated_at: row.deactivated_at ?? null,
         deleted_at: row.deleted_at ?? null,
-        identity_status: row.identity_status ?? null,
+        identity_verification_failed: isIdentityVerificationFailed({
+          identity_verified: row.identity_verified,
+          stripe_identity_failed_reason: row.stripe_identity_failed_reason,
+        }),
         country_code: row.country_code ?? null,
         profile_is_active: profileRow?.is_active ?? true,
         profile_deactivated_at: profileRow?.deactivated_at ?? null,
@@ -833,7 +838,7 @@ export function Dashboard() {
               is_demo: teacherMeta.is_demo,
               deactivated_at: teacherMeta.deactivated_at,
               deleted_at: teacherMeta.deleted_at,
-              identity_status: teacherMeta.identity_status,
+              identity_verification_failed: teacherMeta.identity_verification_failed,
               profile_is_active: teacherMeta.profile_is_active,
               profile_deactivated_at: teacherMeta.profile_deactivated_at,
               profile_deleted_at: teacherMeta.profile_deleted_at,

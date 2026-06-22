@@ -1,4 +1,5 @@
 import { isTeacherMarketSupported } from "@/lib/config/markets";
+import { isIdentityVerificationFailed } from "@/lib/teachers/identityPublishGate";
 import {
   buildTeacherSetupChecklist,
   type TeacherSetupChecklistItem,
@@ -28,7 +29,8 @@ export type TeacherProfilePublishInput = {
   is_demo?: boolean | null;
   deactivated_at?: string | null;
   deleted_at?: string | null;
-  identity_status?: string | null;
+  /** Derived server-side or client-side from identity_verified + stripe_identity_failed_reason. */
+  identity_verification_failed?: boolean;
   profile_is_active?: boolean | null;
   profile_deactivated_at?: string | null;
   profile_deleted_at?: string | null;
@@ -73,7 +75,7 @@ export function evaluateTeacherProfilePublishEligibility(
   if (isAdminOrProfileBlocked(input)) blockers.push("admin_or_profile_blocked");
   if (!setupComplete) blockers.push("setup_incomplete");
   if (!marketSupported) blockers.push("unsupported_market");
-  if ((input.identity_status ?? "none") === "failed") blockers.push("identity_failed");
+  if (input.identity_verification_failed === true) blockers.push("identity_failed");
 
   const marketplaceVisible = isTeacherMarketplaceVisibleRow({
     id: input.id,
@@ -82,7 +84,7 @@ export function evaluateTeacherProfilePublishEligibility(
     is_demo: input.is_demo,
     deactivated_at: input.deactivated_at,
     deleted_at: input.deleted_at,
-    identity_status: input.identity_status,
+    identity_verification_failed: input.identity_verification_failed,
     profile_is_active: input.profile_is_active,
     profile_deactivated_at: input.profile_deactivated_at,
     profile_deleted_at: input.profile_deleted_at,
@@ -107,7 +109,7 @@ export function evaluateTeacherProfilePublishEligibility(
     setupComplete &&
     marketSupported &&
     input.is_public !== true &&
-    (input.identity_status ?? "none") !== "failed";
+    input.identity_verification_failed !== true;
 
   const canUnpublish = input.is_public === true && !isAdminOrProfileBlocked(input);
 
