@@ -306,6 +306,7 @@
   "bookingRefineLocationCta": "Activar la ubicación para ajustar la duración de la clase",
   "bookingReviewsShort": "reseñas",
   "bookingSecurePaymentNote": "Pago seguro con Stripe. El pago al profesor se activa después de la clase completada.",
+  "bookingTeacherPayoutNotReady": "Este profesor aún no puede recibir pagos. Elige otro profesor o inténtalo más tarde.",
   "bookingStatusCompleted": "Terminada",
   "bookingStatusCancelled": "Cancelada",
   "bookingStatusCancelledConflict": "Cancelada (conflicto)",

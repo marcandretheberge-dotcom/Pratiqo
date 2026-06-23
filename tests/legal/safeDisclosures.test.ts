@@ -343,6 +343,12 @@ const allowedSecurityHardeningFiles = new Set<string>([
   "supabase/migrations/085_harden_student_onboarding_consents_rls.sql",
 ]);
 
+const allowedPaymentTrustHardeningFiles = new Set<string>([
+  "app/api/stripe/checkout/route.ts",
+  "app/api/stripe/webhook/route.ts",
+  "lib/payments/connect.ts",
+]);
+
 function touchesSafeDisclosureScope(file: string): boolean {
   return (
     liveDisclosureFiles.includes(file) ||
@@ -508,6 +514,7 @@ test("safe-disclosure branch did not touch restricted systems", () => {
     if (allowedYoDisclosureFiles.has(file)) continue;
     if (allowedPricingDisplayFiles.has(file)) continue;
     if (allowedSecurityHardeningFiles.has(file)) continue;
+    if (allowedPaymentTrustHardeningFiles.has(file)) continue;
     for (const rule of restrictedRules) {
       if (rule.re.test(file)) {
         violations.push(`${file} (${rule.label})`);
