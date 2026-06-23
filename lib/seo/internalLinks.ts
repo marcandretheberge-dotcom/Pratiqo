@@ -100,6 +100,24 @@ const DONNER = P(
   "How to give private lessons in Quebec",
   "Cómo dar clases privadas en Québec",
 );
+const CHOISIR_PRIVE = P(
+  "/ressources/comment-choisir-professeur-prive-quebec",
+  "Comment choisir un professeur privé au Québec",
+  "How to choose a private teacher in Quebec",
+  "Cómo elegir un profesor privado en Quebec",
+);
+const LOCAL_VS_INTL = P(
+  "/ressources/professeur-prive-local-vs-plateforme-internationale",
+  "Professeur privé local ou plateforme internationale",
+  "Local private teacher vs international platform",
+  "Profesor local o plataforma internacional",
+);
+const RESSOURCES_HUB = P(
+  "/ressources",
+  "Guides Pratiqo — Ressources",
+  "Pratiqo guides — Resources",
+  "Guías Pratiqo — Recursos",
+);
 const CHOISIR = P(
   "/blog/comment-choisir-tuteur-enfant-quebec",
   "Comment choisir un bon tuteur pour son enfant",
@@ -302,7 +320,7 @@ export function postMatchesBlogCluster(
 
 /** Guides under city landing pages. */
 export function getCitySeoGuideLinks(_citySlug: string, locale: Locale): SeoResolvedLink[] {
-  return resolveAll([CHOISIR, FORMAT, PRIX_FAMILLE], locale, 3);
+  return resolveAll([CHOISIR_PRIVE, LOCAL_VS_INTL, CHOISIR], locale, 3);
 }
 
 /** Guides under discipline × city landing pages. */
@@ -388,5 +406,5 @@ export function getDisciplineCitySeoGuideLinks(disciplineSlug: string, citySlug:
       3,
     );
   }
-  return resolveAll([CHOISIR, tuteursCity, TARIFS], locale, 3);
+  return resolveAll([CHOISIR_PRIVE, RESSOURCES_HUB, tuteursCity, TARIFS], locale, 4);
 }

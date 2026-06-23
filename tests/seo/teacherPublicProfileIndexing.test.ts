@@ -43,6 +43,7 @@ const baseRow = {
   discipline: "Espagnol",
   city: "Lévis",
   region: "QC",
+  teaching_mode: "both",
   is_public: true,
   deactivated_at: null,
   deleted_at: null,
@@ -123,12 +124,18 @@ test("professeurs page sets ProfilePage JSON-LD without worksFor or exact addres
     teacher,
     canonicalUrl: buildTeacherPublicProfileCanonicalUrl("marie-d-espagnol-levis"),
     subjects: ["Espagnol", "Langues"],
+    locale: "fr",
+    slug: "marie-d-espagnol-levis",
   });
 
-  assert.equal(jsonLd["@type"], "ProfilePage");
-  const person = jsonLd.mainEntity as Record<string, unknown>;
+  const graph = jsonLd["@graph"] as Record<string, unknown>[];
+  const profilePage = graph.find((n) => n["@type"] === "ProfilePage") as Record<string, unknown>;
+  const person = profilePage.mainEntity as Record<string, unknown>;
   assert.equal(person["@type"], "Person");
   assert.equal(person.name, "Marie D.");
+  assert.equal(person.jobTitle, "Professeur d'Espagnol");
+  assert.doesNotMatch(JSON.stringify(jsonLd), /professeur de espagnol/i);
+  assert.doesNotMatch(JSON.stringify(jsonLd), /Professeur de Espagnol/);
   assert.ok(!("worksFor" in jsonLd));
   assert.ok(!("worksFor" in person));
   const address = person.address as Record<string, unknown>;
@@ -139,12 +146,22 @@ test("professeurs page sets ProfilePage JSON-LD without worksFor or exact addres
 
 test("French SEO title and description match product copy", () => {
   assert.equal(
-    buildTeacherPublicProfileTitle({ subject: "espagnol", firstName: "Marie", city: "Lévis" }),
-    "Cours de espagnol avec Marie à Lévis | Pratiqo",
+    buildTeacherPublicProfileTitle({
+      locale: "fr",
+      subject: "espagnol",
+      firstName: "Marie",
+      cityLabel: "Lévis",
+    }),
+    "Marie — professeur d'espagnol à Lévis | Pratiqo",
   );
   assert.match(
-    buildTeacherPublicProfileDescription({ subject: "espagnol", firstName: "Marie", city: "Lévis" }),
-    /Réservez un cours de espagnol avec Marie, professeur sur Pratiqo à Lévis/,
+    buildTeacherPublicProfileDescription({
+      locale: "fr",
+      subject: "espagnol",
+      firstName: "Marie",
+      cityLabel: "Lévis",
+    })!,
+    /Profil de Marie, professeur d'espagnol à Lévis/,
   );
 });
 

@@ -7,7 +7,7 @@ import {
 } from "@/lib/seo/teacherPublicProfile";
 
 const SEO_ROW_SELECT =
-  "id, user_id, name, bio, discipline, city, region, country_code, is_public, deactivated_at, deleted_at, is_demo, identity_verified, stripe_identity_failed_reason, public_profile_enabled, search_indexing_consent, public_profile_slug, profiles!inner(teacher_onboarding_complete, is_active, deactivated_at, deleted_at, anonymized_at)";
+  "id, user_id, name, bio, discipline, city, region, country_code, teaching_mode, is_public, deactivated_at, deleted_at, is_demo, identity_verified, stripe_identity_failed_reason, public_profile_enabled, search_indexing_consent, public_profile_slug, profiles!inner(teacher_onboarding_complete, is_active, deactivated_at, deleted_at, anonymized_at)";
 
 type SeoRowRaw = {
   id: string;
@@ -18,6 +18,7 @@ type SeoRowRaw = {
   city: string | null;
   region: string | null;
   country_code: string | null;
+  teaching_mode: string | null;
   is_public: boolean | null;
   deactivated_at: string | null;
   deleted_at: string | null;
@@ -55,6 +56,7 @@ function flattenSeoRow(raw: SeoRowRaw, subjectCount = 0): TeacherPublicSeoFields
     city: raw.city,
     region: raw.region,
     country_code: raw.country_code,
+    teaching_mode: raw.teaching_mode,
     is_public: raw.is_public,
     deactivated_at: raw.deactivated_at,
     deleted_at: raw.deleted_at,
@@ -121,7 +123,7 @@ export async function fetchIndexableTeacherSitemapRows(): Promise<
   const { data, error } = await getSupabaseAdmin()
     .from("teachers")
     .select(
-      "id, user_id, name, bio, discipline, city, region, country_code, is_public, deactivated_at, deleted_at, is_demo, identity_verified, stripe_identity_failed_reason, public_profile_enabled, search_indexing_consent, public_profile_slug, public_profile_last_indexable_at, updated_at, profiles!inner(teacher_onboarding_complete, is_active, deactivated_at, deleted_at, anonymized_at)",
+      "id, user_id, name, bio, discipline, city, region, country_code, teaching_mode, is_public, deactivated_at, deleted_at, is_demo, identity_verified, stripe_identity_failed_reason, public_profile_enabled, search_indexing_consent, public_profile_slug, public_profile_last_indexable_at, updated_at, profiles!inner(teacher_onboarding_complete, is_active, deactivated_at, deleted_at, anonymized_at)",
     )
     .eq("public_profile_enabled", true)
     .eq("search_indexing_consent", true)
@@ -146,6 +148,32 @@ export async function fetchIndexableTeacherSitemapRows(): Promise<
     });
   }
   return rows;
+}
+
+/** Indexable /professeurs/[slug] paths for marketplace teacher cards (never owner-preview URLs). */
+export async function fetchIndexableTeacherPublicPathsByIds(
+  teacherIds: string[],
+): Promise<Map<string, string>> {
+  const unique = [...new Set(teacherIds.filter(Boolean))];
+  if (unique.length === 0) return new Map();
+
+  const { data, error } = await getSupabaseAdmin()
+    .from("teachers")
+    .select(SEO_ROW_SELECT)
+    .in("id", unique);
+
+  if (error || !data) return new Map();
+
+  const out = new Map<string, string>();
+  for (const raw of data as SeoRowRaw[]) {
+    const subjectCount = await countTeacherSubjects(raw.id);
+    const row = flattenSeoRow(raw, subjectCount);
+    if (!isTeacherPublicProfileIndexable(row)) continue;
+    const slug = row.public_profile_slug?.trim();
+    if (!slug) continue;
+    out.set(raw.id, `/professeurs/${encodeURIComponent(slug)}`);
+  }
+  return out;
 }
 
 export async function allocateUniqueTeacherPublicProfileSlug(input: {
