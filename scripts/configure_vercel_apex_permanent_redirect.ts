@@ -60,7 +60,7 @@ function vercelApi<T>(method: "GET" | "PATCH", path: string, fields?: Record<str
   const stdout = execSync(cmd, {
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],
-    shell: true,
+    shell: process.platform === "win32" ? "cmd.exe" : "/bin/sh",
   });
   return parseVercelApiJson(stdout) as T;
 }
