@@ -306,6 +306,7 @@
   "bookingRefineLocationCta": "Activer la localisation pour affiner la durée du cours",
   "bookingReviewsShort": "avis",
   "bookingSecurePaymentNote": "Paiement sécurisé par Stripe. Le versement au professeur est déclenché après le cours terminé.",
+  "bookingTeacherPayoutNotReady": "Ce professeur ne peut pas encore recevoir de paiements. Veuillez choisir un autre professeur ou réessayer plus tard.",
   "bookingStatusCompleted": "Terminé",
   "bookingStatusCancelled": "Annulé",
   "bookingStatusCancelledConflict": "Annulé (conflit)",

@@ -331,6 +331,9 @@ test("tracked patch avoids generated audio and restricted product systems", () =
     "app/api/onboarding/select-role/route.ts",
     "app/api/admin/users/[id]/deactivation/route.ts",
     "app/api/teachers/plans/route.ts",
+    // fix/final-launch-payment-webhook-gates — payout readiness + webhook rejection.
+    // Defended by tests/payments/paymentTrustLaunchHardening.test.ts.
+    "lib/payments/connect.ts",
   ]);
   const forbidden = [
     /^app\/api\//,

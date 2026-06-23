@@ -306,6 +306,7 @@
   "bookingRefineLocationCta": "Enable location to refine the lesson duration",
   "bookingReviewsShort": "reviews",
   "bookingSecurePaymentNote": "Secure payment by Stripe. Teacher payout is triggered after the completed lesson.",
+  "bookingTeacherPayoutNotReady": "This teacher cannot receive payments yet. Please choose another teacher or try again later.",
   "bookingStatusCompleted": "Completed",
   "bookingStatusCancelled": "Cancelled",
   "bookingStatusCancelledConflict": "Cancelled (conflict)",
