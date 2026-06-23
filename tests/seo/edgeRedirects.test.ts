@@ -180,6 +180,15 @@ test("configure_vercel_apex_permanent_redirect script pins redirectStatusCode 30
   assert.match(script, /www\.pratiqo\.ca/);
 });
 
+test("configure_vercel_apex_permanent_redirect requires VERCEL_TOKEN from env only", () => {
+  const script = read("scripts/configure_vercel_apex_permanent_redirect.ts");
+  assert.match(script, /process\.env\.VERCEL_TOKEN/);
+  assert.match(script, /Missing VERCEL_TOKEN/);
+  assert.doesNotMatch(script, /VERCEL_TOKEN\s*=\s*["'][^"']+["']/);
+  assert.doesNotMatch(script, /Bearer\s+[A-Za-z0-9._-]{8,}/);
+  assert.doesNotMatch(script, /eyJ[A-Za-z0-9_-]{10,}/);
+});
+
 test("next.config.ts does not redirect / → /fr (or /en, /es)", () => {
   // Hunt for any redirect *destination* that lands on a locale prefix.
   const localeDestRe = /destination:\s*["'`]\/(fr|en|es)(?:\/|["'`])/g;
