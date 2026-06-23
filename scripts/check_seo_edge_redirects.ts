@@ -18,10 +18,12 @@
  *     tsx scripts/check_seo_edge_redirects.ts --base https://staging.pratiqo.ca
  *
  * What it verifies (matches the SEO contract documented in
- * `lib/seo/site.ts`, `app/sitemap.ts`, `app/robots.ts`, and
- * `next.config.ts`):
+ * `lib/seo/site.ts`, `app/sitemap.ts`, `app/robots.ts`, `next.config.ts`,
+ * and `vercel.json`):
  *
  *   1. https://pratiqo.ca           → 301 / 308 → https://www.pratiqo.ca
+ *      (primary: Vercel project-domain redirect with redirectStatusCode 308;
+ *       defence-in-depth: vercel.json + next.config.ts host rules)
  *   2. https://www.pratiqo.ca       → 200, NOT a redirect to /fr or any locale
  *   3. https://www.pratiqo.ca/legal/teacher-pro
  *                                    → 308 → /legal/membre-pro
