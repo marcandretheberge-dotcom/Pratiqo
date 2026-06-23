@@ -133,6 +133,9 @@ test("professeurs page sets ProfilePage JSON-LD without worksFor or exact addres
   const person = profilePage.mainEntity as Record<string, unknown>;
   assert.equal(person["@type"], "Person");
   assert.equal(person.name, "Marie D.");
+  assert.equal(person.jobTitle, "Professeur d'Espagnol");
+  assert.doesNotMatch(JSON.stringify(jsonLd), /professeur de espagnol/i);
+  assert.doesNotMatch(JSON.stringify(jsonLd), /Professeur de Espagnol/);
   assert.ok(!("worksFor" in jsonLd));
   assert.ok(!("worksFor" in person));
   const address = person.address as Record<string, unknown>;
@@ -149,7 +152,7 @@ test("French SEO title and description match product copy", () => {
       firstName: "Marie",
       cityLabel: "Lévis",
     }),
-    "Marie — professeur de espagnol à Lévis | Pratiqo",
+    "Marie — professeur d'espagnol à Lévis | Pratiqo",
   );
   assert.match(
     buildTeacherPublicProfileDescription({
@@ -158,7 +161,7 @@ test("French SEO title and description match product copy", () => {
       firstName: "Marie",
       cityLabel: "Lévis",
     })!,
-    /Profil de Marie, professeur de espagnol à Lévis/,
+    /Profil de Marie, professeur d'espagnol à Lévis/,
   );
 });
 

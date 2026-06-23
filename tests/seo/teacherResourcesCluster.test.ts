@@ -6,13 +6,17 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { SITE_URL } from "../../lib/seo/site";
+import {
+  formatFrenchTeacherDeDiscipline,
+  localizeTeacherSeoSubject,
+} from "../../lib/seo/teacherPublicProfileLabels";
 import {
   getPublishedResourceArticles,
   getResourceArticleBySlug,
   RESOURCE_ARTICLES,
 } from "../../lib/seo/resourceArticles";
 import { resolveTeacherDisciplineHubHref } from "../../lib/seo/resolveTeacherDisciplineLink";
+import { SITE_URL } from "../../lib/seo/site";
 import {
   buildTeacherPublicProfileCanonicalUrl,
   buildTeacherPublicProfileDescription,
@@ -67,6 +71,20 @@ const baseRow = {
   subject_count: 1,
 };
 
+test("French de/d' discipline formatter contracts before vowels", () => {
+  assert.equal(formatFrenchTeacherDeDiscipline("espagnol"), "d'espagnol");
+  assert.equal(formatFrenchTeacherDeDiscipline("anglais"), "d'anglais");
+  assert.equal(formatFrenchTeacherDeDiscipline("piano"), "de piano");
+  assert.equal(formatFrenchTeacherDeDiscipline("français"), "de français");
+});
+
+test("localized subject labels for EN and ES metadata", () => {
+  assert.equal(localizeTeacherSeoSubject("espagnol", "en"), "Spanish");
+  assert.equal(localizeTeacherSeoSubject("mathématiques", "en"), "math");
+  assert.equal(localizeTeacherSeoSubject("espagnol", "es"), "español");
+  assert.equal(localizeTeacherSeoSubject("anglais", "es"), "inglés");
+});
+
 test("French teacher SEO title uses name — discipline — city pattern", () => {
   assert.equal(
     buildTeacherPublicProfileTitle({
@@ -75,7 +93,19 @@ test("French teacher SEO title uses name — discipline — city pattern", () =>
       firstName: "Marie",
       cityLabel: "Lévis",
     }),
-    "Marie — professeur de espagnol à Lévis | Pratiqo",
+    "Marie — professeur d'espagnol à Lévis | Pratiqo",
+  );
+});
+
+test("French teacher SEO title uses de before consonant discipline", () => {
+  assert.equal(
+    buildTeacherPublicProfileTitle({
+      locale: "fr",
+      subject: "piano",
+      firstName: "Marie",
+      cityLabel: "Montréal",
+    }),
+    "Marie — professeur de piano à Montréal | Pratiqo",
   );
 });
 
@@ -83,11 +113,23 @@ test("English teacher SEO title uses online label without inventing a city", () 
   assert.equal(
     buildTeacherPublicProfileTitle({
       locale: "en",
-      subject: "Spanish",
+      subject: "Espagnol",
       firstName: "Marie",
       cityLabel: "online",
     }),
-    "Marie — Spanish teacher online | Pratiqo",
+    "Marie — online Spanish teacher | Pratiqo",
+  );
+});
+
+test("Spanish teacher SEO title localizes discipline label", () => {
+  assert.equal(
+    buildTeacherPublicProfileTitle({
+      locale: "es",
+      subject: "mathématiques",
+      firstName: "Marie",
+      cityLabel: "Montréal",
+    }),
+    "Marie — profesor de matemáticas en Montréal | Pratiqo",
   );
 });
 
