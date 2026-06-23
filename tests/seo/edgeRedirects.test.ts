@@ -136,16 +136,48 @@ test("vercel.json enforces apex to www with a permanent 308 before framework rou
       source?: string;
       destination?: string;
       statusCode?: number;
+      permanent?: boolean;
       has?: Array<{ type?: string; value?: string }>;
     }>;
   };
   const redirect = vercelConfig.redirects?.find(
     (item) =>
       item.destination === "https://www.pratiqo.ca/$1" &&
-      item.statusCode === 308 &&
+      (item.statusCode === 308 || item.permanent === true) &&
       item.has?.some((condition) => condition.type === "host" && condition.value === "pratiqo.ca"),
   );
-  assert.ok(redirect, "vercel.json must enforce pratiqo.ca -> www.pratiqo.ca with statusCode 308");
+  assert.ok(redirect, "vercel.json must enforce pratiqo.ca -> www.pratiqo.ca with permanent 308");
+});
+
+test("vercel.json apex redirect preserves path segments and query strings via $1 capture", () => {
+  const vercelConfig = JSON.parse(vercelJsonRequiredSrc) as {
+    redirects?: Array<{ destination?: string; source?: string }>;
+  };
+  const redirect = vercelConfig.redirects?.find((item) => item.destination === "https://www.pratiqo.ca/$1");
+  assert.ok(redirect, "vercel.json must capture the path in $1");
+  assert.match(redirect!.source ?? "", /\(\.\*\)/, "vercel.json must match arbitrary paths on apex");
+});
+
+test("proxy.ts does not canonicalize hosts to production www", () => {
+  assert.doesNotMatch(proxySrc, /www\.pratiqo\.ca/);
+  assert.doesNotMatch(proxySrc, /pratiqo\.ca/);
+});
+
+test("next.config.ts apex redirect is host-scoped to pratiqo.ca only (www and preview stay untouched)", () => {
+  const apexRule = nextConfigSrc.match(
+    /has:\s*\[\s*\{\s*type:\s*"host",\s*value:\s*"pratiqo\.ca"\s*\}\s*\][\s\S]*?destination:\s*"([^"]+)"/,
+  );
+  assert.ok(apexRule, "apex redirect must be host-conditional");
+  assert.equal(apexRule![1], "https://www.pratiqo.ca/:path*");
+  assert.doesNotMatch(nextConfigSrc, /has:\s*\[\s*\{\s*type:\s*"host",\s*value:\s*"www\.pratiqo\.ca"/);
+});
+
+test("configure_vercel_apex_permanent_redirect script pins redirectStatusCode 308", () => {
+  const script = read("scripts/configure_vercel_apex_permanent_redirect.ts");
+  assert.match(script, /redirectStatusCode/);
+  assert.match(script, /308/);
+  assert.match(script, /pratiqo\.ca/);
+  assert.match(script, /www\.pratiqo\.ca/);
 });
 
 test("next.config.ts does not redirect / → /fr (or /en, /es)", () => {

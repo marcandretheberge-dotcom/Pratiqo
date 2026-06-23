@@ -91,12 +91,12 @@ const nextConfig: NextConfig = {
       //   - Do NOT redirect on Accept-Language or geo IP — Googlebot must
       //     always reach the canonical homepage on a fresh request.
       //
-      // Defence-in-depth note: this is a *fallback* — the primary apex→www
-      // redirect should be configured at the hosting/DNS edge (Vercel
-      // Domains: "Redirect to www.pratiqo.ca", or equivalent in Netlify).
-      // If the edge rewrite already strips the apex before the request
-      // reaches Next.js, this rule is simply inert. See the
-      // `scripts/check_seo_edge_redirects.ts` live checker.
+      // Defence-in-depth note: the *primary* apex→www redirect is the Vercel
+      // project-domain setting (`redirect` + `redirectStatusCode: 308` on
+      // `pratiqo.ca`). When `redirectStatusCode` is null, Vercel defaults to
+      // temporary 307 at the edge. See
+      // `scripts/configure_vercel_apex_permanent_redirect.ts` and
+      // `scripts/check_seo_edge_redirects.ts`.
       {
         source: "/:path*",
         has: [{ type: "host", value: "pratiqo.ca" }],
