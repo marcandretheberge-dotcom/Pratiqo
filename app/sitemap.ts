@@ -6,6 +6,7 @@ import { SUBJECT_LANDING_PATHS } from "../lib/seo/subjectLandingPages";
 import { SITE_URL } from "../lib/seo/site";
 import { buildTeacherPublicProfileCanonicalUrl } from "../lib/seo/teacherPublicProfile";
 import { fetchIndexableTeacherSitemapRows } from "../lib/seo/teacherPublicProfileData";
+import { getPublishedResourceArticles } from "../lib/seo/resourceArticles";
 import { YO_SPANISH_SEO_PATHS } from "../lib/seo/yopratiqoSpanishSeoPages";
 import {
   isYoHubIndexable,
@@ -279,6 +280,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.9,
   }];
 
+  const resourceHubRoute: MetadataRoute.Sitemap = [{
+    url: `${BASE_URL}/ressources`,
+    lastModified: new Date(),
+    changeFrequency: "weekly" as const,
+    priority: 0.88,
+  }];
+
+  const resourceArticleRoutes: MetadataRoute.Sitemap = getPublishedResourceArticles().map((article) => ({
+    url: `${BASE_URL}/ressources/${article.slug}`,
+    lastModified: new Date(article.publishedAt),
+    changeFrequency: "monthly" as const,
+    priority: 0.82,
+  }));
+
   return [
     ...STATIC_ROUTES,
     ...YO_LANGUAGE_HUB_ROUTES,
@@ -286,6 +301,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...YO_SPANISH_SEO_ROUTES,
     ...blogHubRoute,
     ...blogEntries,
+    ...resourceHubRoute,
+    ...resourceArticleRoutes,
     ...CITY_ROUTES,
     ...SUBJECT_LANDING_ROUTES,
     ...DISCIPLINE_CITY_ROUTES,

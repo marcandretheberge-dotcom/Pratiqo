@@ -1,4 +1,5 @@
 import { publicFirstNameWithInitial } from "@/lib/identity/displayName";
+import type { Locale } from "@/lib/i18n/types";
 import { SITE_URL } from "@/lib/seo/site";
 import { sanitizePublicTeacherBio } from "@/lib/teacherProfile/sanitizePublicBio";
 import {
@@ -24,6 +25,7 @@ export type TeacherPublicSeoFields = TeacherMarketplaceVisibilityRow & {
   public_profile_slug?: string | null;
   teacher_onboarding_complete?: boolean | null;
   subject_count?: number | null;
+  teaching_mode?: string | null;
 };
 
 export { isTeacherMarketplaceVisibleRow };
@@ -83,6 +85,51 @@ export function teacherHasPublicCity(row: Pick<TeacherPublicSeoFields, "city" | 
   return city.length > 0 || region.length > 0;
 }
 
+function normalizeTeachingMode(mode: string | null | undefined): string {
+  return typeof mode === "string" ? mode.trim().toLowerCase() : "";
+}
+
+/** City/region present, or an explicit online teaching format when no public city is set. */
+export function teacherHasPublicLocationOrTeachingFormat(
+  row: Pick<TeacherPublicSeoFields, "city" | "region" | "teaching_mode">,
+): boolean {
+  if (teacherHasPublicCity(row)) return true;
+  const mode = normalizeTeachingMode(row.teaching_mode);
+  return mode === "online" || mode === "both";
+}
+
+/** Public SEO location label — never invents a city; online-only teachers get a locale label. */
+export function resolveTeacherSeoCityLabel(
+  locale: Locale,
+  input: {
+    city?: string | null;
+    region?: string | null;
+    neighborhood?: string | null;
+    teachingMode?: string | null;
+  },
+): string | null {
+  const locality =
+    (typeof input.neighborhood === "string" && input.neighborhood.trim()) ||
+    (typeof input.city === "string" && input.city.trim()) ||
+    (typeof input.region === "string" && input.region.trim()) ||
+    "";
+  if (locality) return locality;
+
+  const mode = normalizeTeachingMode(input.teachingMode);
+  if (mode === "online" || mode === "both") {
+    if (locale === "fr") return "en ligne";
+    if (locale === "es") return "en línea";
+    return "online";
+  }
+  return null;
+}
+
+export function isTeacherSeoLocationOnlineLabel(label: string | null, locale: Locale): boolean {
+  if (!label) return false;
+  const onlineLabels = new Set(["en ligne", "en línea", "online"]);
+  return onlineLabels.has(label);
+}
+
 export function teacherHasSufficientPublicContent(
   row: Pick<TeacherPublicSeoFields, "name" | "bio" | "discipline">,
 ): boolean {
@@ -106,7 +153,7 @@ export function isTeacherPublicProfilePageVisible(row: TeacherPublicSeoFields): 
   if (row.teacher_onboarding_complete !== true) return false;
   if (!teacherHasSufficientPublicContent(row)) return false;
   if (!teacherHasAtLeastOneSubject(row)) return false;
-  if (!teacherHasPublicCity(row)) return false;
+  if (!teacherHasPublicLocationOrTeachingFormat(row)) return false;
   const slug = typeof row.public_profile_slug === "string" ? row.public_profile_slug.trim() : "";
   return slug.length > 0;
 }
@@ -118,76 +165,202 @@ export function isTeacherPublicProfileIndexable(row: TeacherPublicSeoFields): bo
 }
 
 export function buildTeacherPublicProfileTitle(input: {
+  locale: Locale;
   subject: string;
   firstName: string;
-  city: string;
-}): string {
-  const subject = input.subject.trim() || "cours";
-  const firstName = input.firstName.trim() || "professeur";
-  const city = input.city.trim() || "Québec";
-  return `Cours de ${subject} avec ${firstName} à ${city} | Pratiqo`;
+  cityLabel: string | null;
+}): string | null {
+  const subject = input.subject.trim();
+  const firstName = input.firstName.trim();
+  const cityLabel = input.cityLabel?.trim() ?? "";
+  if (!subject || !firstName || !cityLabel) return null;
+
+  const { locale } = input;
+  if (locale === "en") {
+  if (isTeacherSeoLocationOnlineLabel(cityLabel, locale)) {
+      return `${firstName} — ${subject} teacher online | Pratiqo`;
+    }
+    return `${firstName} — ${subject} teacher in ${cityLabel} | Pratiqo`;
+  }
+  if (locale === "es") {
+    if (isTeacherSeoLocationOnlineLabel(cityLabel, locale)) {
+      return `${firstName} — profesor de ${subject} en línea | Pratiqo`;
+    }
+    return `${firstName} — profesor de ${subject} en ${cityLabel} | Pratiqo`;
+  }
+  if (isTeacherSeoLocationOnlineLabel(cityLabel, locale)) {
+    return `${firstName} — professeur de ${subject} en ligne | Pratiqo`;
+  }
+  return `${firstName} — professeur de ${subject} à ${cityLabel} | Pratiqo`;
 }
 
 export function buildTeacherPublicProfileDescription(input: {
+  locale: Locale;
   subject: string;
   firstName: string;
-  city: string;
-}): string {
-  const subject = input.subject.trim() || "cours";
-  const firstName = input.firstName.trim() || "professeur";
-  const city = input.city.trim() || "Québec";
-  return `Réservez un cours de ${subject} avec ${firstName}, professeur sur Pratiqo à ${city}. Cours en ligne ou en personne selon disponibilité, horaires flexibles et paiement sécurisé.`;
+  cityLabel: string | null;
+}): string | null {
+  const subject = input.subject.trim();
+  const firstName = input.firstName.trim();
+  const cityLabel = input.cityLabel?.trim() ?? "";
+  if (!subject || !firstName || !cityLabel) return null;
+
+  const { locale } = input;
+  if (locale === "en") {
+    if (isTeacherSeoLocationOnlineLabel(cityLabel, locale)) {
+      return `View ${firstName}'s ${subject} teacher profile on Pratiqo. Online lessons, flexible scheduling, and secure booking when available.`;
+    }
+    return `View ${firstName}'s ${subject} teacher profile in ${cityLabel} on Pratiqo. Online or in-person lessons, flexible scheduling, and secure booking when available.`;
+  }
+  if (locale === "es") {
+    if (isTeacherSeoLocationOnlineLabel(cityLabel, locale)) {
+      return `Perfil de ${firstName}, profesor de ${subject} en línea en Pratiqo. Clases en línea, horarios flexibles y reserva segura cuando esté disponible.`;
+    }
+    return `Perfil de ${firstName}, profesor de ${subject} en ${cityLabel} en Pratiqo. Clases en línea o presenciales, horarios flexibles y reserva segura cuando esté disponible.`;
+  }
+  if (isTeacherSeoLocationOnlineLabel(cityLabel, locale)) {
+    return `Profil de ${firstName}, professeur de ${subject} en ligne sur Pratiqo. Cours en ligne, horaires flexibles et réservation sécurisée selon disponibilité.`;
+  }
+  return `Profil de ${firstName}, professeur de ${subject} à ${cityLabel} sur Pratiqo. Cours en ligne ou en personne, horaires flexibles et réservation sécurisée selon disponibilité.`;
 }
 
 export function buildTeacherPublicProfileH1(input: {
+  locale: Locale;
   subject: string;
   firstName: string;
-  city: string;
-}): string {
-  const subject = input.subject.trim() || "cours";
-  const firstName = input.firstName.trim() || "professeur";
-  const city = input.city.trim() || "Québec";
-  return `Cours de ${subject} avec ${firstName} à ${city}`;
+  cityLabel: string | null;
+}): string | null {
+  const subject = input.subject.trim();
+  const firstName = input.firstName.trim();
+  const cityLabel = input.cityLabel?.trim() ?? "";
+  if (!subject || !firstName || !cityLabel) return null;
+
+  const { locale } = input;
+  if (locale === "en") {
+    if (isTeacherSeoLocationOnlineLabel(cityLabel, locale)) {
+      return `${firstName} — ${subject} teacher online`;
+    }
+    return `${firstName} — ${subject} teacher in ${cityLabel}`;
+  }
+  if (locale === "es") {
+    if (isTeacherSeoLocationOnlineLabel(cityLabel, locale)) {
+      return `${firstName} — profesor de ${subject} en línea`;
+    }
+    return `${firstName} — profesor de ${subject} en ${cityLabel}`;
+  }
+  if (isTeacherSeoLocationOnlineLabel(cityLabel, locale)) {
+    return `${firstName} — professeur de ${subject} en ligne`;
+  }
+  return `${firstName} — professeur de ${subject} à ${cityLabel}`;
+}
+
+export function buildTeacherPublicProfileBreadcrumbItems(input: {
+  locale: Locale;
+  subject: string;
+  firstName: string;
+  slug: string;
+}): Array<{ name: string; href: string }> {
+  const hubLabel =
+    input.locale === "fr"
+      ? "Trouver un professeur"
+      : input.locale === "es"
+        ? "Encontrar un profesor"
+        : "Find a teacher";
+  const subject = input.subject.trim() || "Cours";
+  return [
+    { name: input.locale === "fr" ? "Accueil" : input.locale === "es" ? "Inicio" : "Home", href: "/" },
+    { name: hubLabel, href: "/trouver-un-prof" },
+    { name: subject, href: `/trouver-un-prof?q=${encodeURIComponent(subject)}` },
+    { name: input.firstName.trim() || "Professeur", href: buildTeacherPublicProfilePath(input.slug) },
+  ];
 }
 
 export function buildTeacherPublicProfileJsonLd(input: {
   teacher: Teacher;
   canonicalUrl: string;
   subjects: string[];
+  locale: Locale;
+  slug: string;
 }): Record<string, unknown> {
-  const { teacher, canonicalUrl, subjects } = input;
-  const locale = teacher.countryCode === "UY" ? "es" : "fr";
+  const { teacher, canonicalUrl, subjects, locale, slug } = input;
   const sanitizedBio = sanitizePublicTeacherBio(teacher.bio, locale).content;
-  const locality =
-    teacher.location?.neighborhood ?? teacher.city ?? teacher.region ?? "Québec";
+  const cityLabel = resolveTeacherSeoCityLabel(locale, {
+    city: teacher.city,
+    region: teacher.region,
+    neighborhood: teacher.location?.neighborhood,
+    teachingMode: teacher.teachingMode,
+  });
   const displayName = publicFirstNameWithInitial(teacher.name);
-  const subjectLabel = teacher.discipline?.trim() || subjects[0] || "cours";
+  const subjectLabel = teacher.discipline?.trim() || subjects[0] || "";
+  const firstName = publicTeacherFirstName(teacher.name);
   const jobTitle =
     locale === "fr"
-      ? `Professeure de ${subjectLabel}`
-      : `Profesor de ${subjectLabel}`;
+      ? `Professeur de ${subjectLabel}`
+      : locale === "es"
+        ? `Profesor de ${subjectLabel}`
+        : `${subjectLabel} teacher`;
+
+  const breadcrumb = buildTeacherPublicProfileBreadcrumbItems({
+    locale,
+    subject: subjectLabel,
+    firstName,
+    slug,
+  });
+
+  const person: Record<string, unknown> = {
+    "@type": "Person",
+    name: displayName,
+    jobTitle,
+    ...(sanitizedBio ? { description: sanitizedBio.slice(0, 500) } : {}),
+    ...(teacher.imageUrl ? { image: teacher.imageUrl } : {}),
+    ...(subjects.filter(Boolean).length > 0 ? { knowsAbout: subjects.filter(Boolean) } : {}),
+    url: canonicalUrl,
+  };
+
+  if (cityLabel && !isTeacherSeoLocationOnlineLabel(cityLabel, locale)) {
+    person.address = {
+      "@type": "PostalAddress",
+      addressLocality: cityLabel,
+      ...(teacher.region ? { addressRegion: teacher.region } : {}),
+      addressCountry: teacher.countryCode ?? "CA",
+    };
+  }
 
   return {
     "@context": "https://schema.org",
-    "@type": "ProfilePage",
-    mainEntity: {
-      "@type": "Person",
-      name: displayName,
-      jobTitle,
-      ...(sanitizedBio ? { description: sanitizedBio.slice(0, 500) } : {}),
-      ...(teacher.imageUrl ? { image: teacher.imageUrl } : {}),
-      knowsAbout: subjects.filter(Boolean),
-      address: {
-        "@type": "PostalAddress",
-        addressLocality: locality,
-        addressRegion: teacher.region ?? "QC",
-        addressCountry: teacher.countryCode ?? "CA",
+    "@graph": [
+      {
+        "@type": "ProfilePage",
+        mainEntity: person,
+        url: canonicalUrl,
       },
-      url: canonicalUrl,
-    },
-    url: canonicalUrl,
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: breadcrumb.map((item, index) => ({
+          "@type": "ListItem",
+          position: index + 1,
+          name: item.name,
+          item: `${SITE_URL}${item.href}`,
+        })),
+      },
+    ],
   };
 }
+
+/** Keys that must never appear in public teacher JSON-LD. */
+export const TEACHER_JSON_LD_FORBIDDEN_KEYS = [
+  "email",
+  "telephone",
+  "streetAddress",
+  "identity_status",
+  "diploma_url",
+  "stripe",
+  "payout",
+  "aggregateRating",
+  "reviewRating",
+  "Review",
+  "AggregateRating",
+] as const;
 
 export function teacherPublicProfileRobots(indexable: boolean): {
   index: boolean;

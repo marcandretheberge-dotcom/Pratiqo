@@ -17,6 +17,7 @@ import { BreadcrumbSchema } from "@/components/seo/BreadcrumbSchema";
 import { MarketingResourceBlock } from "@/components/seo/MarketingResourceBlock";
 import { getLocale, getDictionary } from "@/lib/i18n/server";
 import { getDisciplineCitySeoGuideLinks } from "@/lib/seo/internalLinks";
+import { fetchIndexableTeacherPublicPathsByIds } from "@/lib/seo/teacherPublicProfileData";
 import type { Teacher } from "@/types";
 
 import { SITE_URL } from "@/lib/seo/site";
@@ -164,6 +165,8 @@ export default async function DisciplineCityPage({
     discipline.dbDiscipline,
   );
 
+  const indexablePublicPaths = await fetchIndexableTeacherPublicPathsByIds(teachers.map((t) => t.id));
+
   const locale = await getLocale();
   const dict = getDictionary(locale);
   const disciplineGuideLinks = getDisciplineCitySeoGuideLinks(disciplineSlug, citySlug, locale);
@@ -186,7 +189,7 @@ export default async function DisciplineCityPage({
         "@type": "Person",
         name: t.name,
         jobTitle: `Professeur de ${discipline.name}`,
-        url: `${BASE_URL}/teacher/profile/${encodeURIComponent(t.id)}`,
+        url: indexablePublicPaths.get(t.id) ?? `${BASE_URL}/teacher/profile/${encodeURIComponent(t.id)}`,
         ...(t.reviews > 0
           ? {
               aggregateRating: {
@@ -310,10 +313,10 @@ export default async function DisciplineCityPage({
                   Voici nos professeurs disponibles en ligne ou à proximité.
                 </p>
                 <Link
-                  href="/login"
+                  href="/trouver-un-prof"
                   className="mt-5 inline-flex items-center rounded-xl bg-teal-700 px-5 py-2.5 text-sm font-bold text-white hover:brightness-105"
                 >
-                  Voir tous les professeurs →
+                  Voir les professeurs disponibles →
                 </Link>
               </div>
             ) : (
@@ -322,7 +325,10 @@ export default async function DisciplineCityPage({
                   {teachers.map((teacher) => (
                     <Link
                       key={teacher.id}
-                      href={`/teacher/profile/${encodeURIComponent(teacher.id)}`}
+                      href={
+                        indexablePublicPaths.get(teacher.id) ??
+                        `/teacher/profile/${encodeURIComponent(teacher.id)}`
+                      }
                       className="block rounded-2xl bg-white border border-[#E8E6DF] p-4 shadow-[0_8px_32px_rgba(44,44,42,0.05)] hover:shadow-[0_12px_40px_rgba(44,44,42,0.10)] transition-shadow"
                     >
                       <div className="flex items-start justify-between gap-2">
@@ -364,10 +370,10 @@ export default async function DisciplineCityPage({
 
                 <div className="mt-8 text-center">
                   <Link
-                    href="/login"
+                    href="/trouver-un-prof"
                     className="inline-flex h-11 items-center rounded-2xl bg-teal-700 px-7 text-sm font-bold text-white hover:brightness-105 shadow-sm"
                   >
-                    Voir tous les professeurs disponibles →
+                    Voir les professeurs disponibles →
                   </Link>
                   <p className="mt-2 text-xs text-[#6B6760]">Inscription gratuite · Aucun engagement</p>
                 </div>

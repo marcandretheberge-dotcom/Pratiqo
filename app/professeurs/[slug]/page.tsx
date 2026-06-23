@@ -10,6 +10,8 @@ import {
 import { fetchTeacherDisciplinesMap, mergeTeachersWithDisciplines } from "@/lib/teacherDisciplines";
 import { teacherRowToTeacher, type TeacherRow } from "@/lib/teacherMapper";
 import TeacherProfileClient from "@/app/teacher/profile/[id]/TeacherProfileClient";
+import { TeacherProfileSeoLinks } from "@/components/seo/TeacherProfileSeoLinks";
+import { getLocale } from "@/lib/i18n/server";
 import {
   buildTeacherPublicProfileCanonicalUrl,
   buildTeacherPublicProfileDescription,
@@ -19,6 +21,7 @@ import {
   isTeacherPublicProfileIndexable,
   isTeacherPublicProfilePageVisible,
   publicTeacherFirstName,
+  resolveTeacherSeoCityLabel,
   teacherPublicProfileRobots,
 } from "@/lib/seo/teacherPublicProfile";
 import { fetchTeacherPublicSeoRowBySlug } from "@/lib/seo/teacherPublicProfileData";
@@ -115,6 +118,7 @@ const getTeacherPublicProfileBundle = cache(async (slug: string) => {
     subjects: [...new Set(subjects)],
     indexable: isTeacherPublicProfileIndexable(seoRow),
     canonical: buildTeacherPublicProfileCanonicalUrl(slug),
+    slug,
   };
 });
 
@@ -124,6 +128,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
+  const locale = await getLocale();
   const bundle = await getTeacherPublicProfileBundle(slug);
   const canonical = buildTeacherPublicProfileCanonicalUrl(slug);
 
@@ -135,18 +140,28 @@ export async function generateMetadata({
     };
   }
 
-  const city =
-    bundle.teacher.location?.neighborhood ?? bundle.teacher.city ?? bundle.teacher.region ?? "Québec";
-  const subject = bundle.teacher.discipline?.trim() || bundle.subjects[0] || "cours";
+  const subject = bundle.teacher.discipline?.trim() || bundle.subjects[0] || "";
   const firstName = publicTeacherFirstName(bundle.teacher.name);
-  const title = buildTeacherPublicProfileTitle({ subject, firstName, city });
-  const description = buildTeacherPublicProfileDescription({ subject, firstName, city });
+  const cityLabel = resolveTeacherSeoCityLabel(locale, {
+    city: bundle.teacher.city,
+    region: bundle.teacher.region,
+    neighborhood: bundle.teacher.location?.neighborhood,
+    teachingMode: bundle.teacher.teachingMode,
+  });
+
+  const indexable = bundle.indexable && Boolean(subject) && Boolean(cityLabel);
+  const title =
+    buildTeacherPublicProfileTitle({ locale, subject, firstName, cityLabel }) ??
+    "Professeur | Pratiqo";
+  const description =
+    buildTeacherPublicProfileDescription({ locale, subject, firstName, cityLabel }) ??
+    "Profil professeur sur Pratiqo.";
 
   return {
     title,
     description,
     alternates: { canonical },
-    robots: teacherPublicProfileRobots(bundle.indexable),
+    robots: teacherPublicProfileRobots(indexable),
     openGraph: {
       title,
       description,
@@ -156,7 +171,7 @@ export async function generateMetadata({
         : [{ url: "/og-image.png", width: 1200, height: 630 }],
       type: "profile",
       siteName: "Pratiqo",
-      locale: "fr_CA",
+      locale: locale === "fr" ? "fr_CA" : locale === "es" ? "es_UY" : "en_CA",
     },
     twitter: {
       card: "summary_large_image",
@@ -173,23 +188,44 @@ export default async function ProfesseurPublicProfilePage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
+  const locale = await getLocale();
   const bundle = await getTeacherPublicProfileBundle(slug);
   if (!bundle) notFound();
 
-  const city =
-    bundle.teacher.location?.neighborhood ?? bundle.teacher.city ?? bundle.teacher.region ?? "Québec";
-  const subject = bundle.teacher.discipline?.trim() || bundle.subjects[0] || "cours";
+  const subject = bundle.teacher.discipline?.trim() || bundle.subjects[0] || "";
   const firstName = publicTeacherFirstName(bundle.teacher.name);
-  const h1 = buildTeacherPublicProfileH1({ subject, firstName, city });
-  const jsonLd = buildTeacherPublicProfileJsonLd({
-    teacher: bundle.teacher,
-    canonicalUrl: bundle.canonical,
-    subjects: bundle.subjects,
+  const cityLabel = resolveTeacherSeoCityLabel(locale, {
+    city: bundle.teacher.city,
+    region: bundle.teacher.region,
+    neighborhood: bundle.teacher.location?.neighborhood,
+    teachingMode: bundle.teacher.teachingMode,
   });
+  const h1 =
+    buildTeacherPublicProfileH1({ locale, subject, firstName, cityLabel }) ??
+    `Profil de ${firstName}`;
+
+  const showStructuredData = bundle.indexable && Boolean(subject) && Boolean(cityLabel);
+  const jsonLd = showStructuredData
+    ? buildTeacherPublicProfileJsonLd({
+        teacher: bundle.teacher,
+        canonicalUrl: bundle.canonical,
+        subjects: bundle.subjects,
+        locale,
+        slug: bundle.slug,
+      })
+    : null;
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      {jsonLd ? (
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      ) : null}
+      <TeacherProfileSeoLinks
+        locale={locale}
+        discipline={bundle.teacher.discipline}
+        city={bundle.teacher.city}
+        region={bundle.teacher.region}
+      />
       <TeacherProfileClient
         id={bundle.teacher.id}
         initialTeacher={bundle.teacher}
