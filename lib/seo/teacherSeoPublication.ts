@@ -57,6 +57,8 @@ export type TeacherSeoPublicationRow = TeacherPublicSeoFields & {
 export type TeacherSeoPublicationEvaluation = {
   contentReady: boolean;
   teacherRequestedPublication: boolean;
+  adminPublished: boolean;
+  publicProfileLastIndexableAt: string | null;
   isPublic: boolean;
   isPageVisible: boolean;
   isIndexable: boolean;
@@ -210,6 +212,12 @@ export function evaluateTeacherSeoPublication(
 ): TeacherSeoPublicationEvaluation {
   const contentReady = isTeacherSeoProfileContentReady(row);
   const teacherRequestedPublication = teacherHasRequestedSeoPublication(row);
+  const adminPublished = isTeacherAdminSeoPublished(row);
+  const publicProfileLastIndexableAt =
+    typeof row.public_profile_last_indexable_at === "string" &&
+    row.public_profile_last_indexable_at.trim().length > 0
+      ? row.public_profile_last_indexable_at
+      : null;
   const isPublic = row.is_public === true;
   const isPageVisible = isTeacherPublicProfilePageVisible(row);
   const isIndexable = isTeacherPublicProfileIndexable(row);
@@ -221,7 +229,7 @@ export function evaluateTeacherSeoPublication(
   const adminPublishBlockers = collectTeacherSeoAdminPublishBlockers(row);
   const seoCopy = buildGeneratedSeoCopy(row, locale);
 
-  if (teacherHasRequestedSeoPublication(row) && !isTeacherAdminSeoPublished(row)) {
+  if (teacherHasRequestedSeoPublication(row) && !adminPublished) {
     if (!missingReasonKeys.includes("not_admin_published")) {
       missingReasonKeys.push("not_admin_published");
     }
@@ -233,12 +241,14 @@ export function evaluateTeacherSeoPublication(
     isTeacherSeoAccountGateOpen(row) &&
     isTeacherMarketSupported(String(row.country_code ?? "").trim().toUpperCase());
 
-  const canAdminPublish = adminPublishBlockers.length === 0 && !isPublic;
-  const canAdminUnpublish = isPublic && isTeacherSeoAccountGateOpen(row);
+  const canAdminPublish = adminPublishBlockers.length === 0 && !isIndexable;
+  const canAdminUnpublish = (isPublic || adminPublished) && isTeacherSeoAccountGateOpen(row);
 
   return {
     contentReady,
     teacherRequestedPublication,
+    adminPublished,
+    publicProfileLastIndexableAt,
     isPublic,
     isPageVisible,
     isIndexable,

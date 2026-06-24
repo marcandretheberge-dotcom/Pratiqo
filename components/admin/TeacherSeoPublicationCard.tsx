@@ -30,6 +30,28 @@ type Props = {
   teacherId: string;
 };
 
+function publicationStatusLabel(evaluation: TeacherSeoPublicationEvaluation): string {
+  if (evaluation.isSitemapEligible) return "Publié dans le sitemap";
+  if (!evaluation.teacherRequestedPublication) return "Non demandé";
+  if (evaluation.adminPublishBlockers.length === 0) return "Prêt pour publication";
+  return "Bloqué";
+}
+
+function formatMarkerDate(value: string | null): string {
+  if (!value) return "Absent";
+  try {
+    return new Date(value).toLocaleString("fr-CA", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return value;
+  }
+}
+
 export function TeacherSeoPublicationCard({
   targetUserId,
   initialEvaluation,
@@ -103,6 +125,9 @@ export function TeacherSeoPublicationCard({
   const blockers = evaluation.adminPublishBlockers.length
     ? evaluation.adminPublishBlockers
     : evaluation.missingReasonKeys;
+  const statusLabel = publicationStatusLabel(evaluation);
+  const hasTeacherRequest = evaluation.teacherRequestedPublication;
+  const canUnpublishSeo = evaluation.adminPublished || evaluation.isSitemapEligible;
 
   return (
     <section
@@ -114,12 +139,16 @@ export function TeacherSeoPublicationCard({
         <div className="min-w-0 flex-1">
           <h2 className="text-lg font-bold text-slate-900">Publication SEO du profil</h2>
           <p className="mt-1 text-sm text-slate-600">
-            Le professeur prépare et consent ; l&apos;administrateur publie via la machine SEO.
+            Contrôlez si ce profil de professeur peut être publié dans Google et ajouté au sitemap.
           </p>
         </div>
       </div>
 
       <dl className="mt-5 grid gap-3 text-sm sm:grid-cols-2">
+        <div>
+          <dt className="text-xs font-bold uppercase tracking-wider text-slate-500">Statut actuel</dt>
+          <dd className="mt-1 font-semibold text-slate-900">{statusLabel}</dd>
+        </div>
         <div>
           <dt className="text-xs font-bold uppercase tracking-wider text-slate-500">SEO indexable</dt>
           <dd className="mt-1 font-semibold text-slate-900">{evaluation.isIndexable ? "Oui" : "Non"}</dd>
@@ -131,7 +160,7 @@ export function TeacherSeoPublicationCard({
         <div>
           <dt className="text-xs font-bold uppercase tracking-wider text-slate-500">Demande de publication</dt>
           <dd className="mt-1 font-semibold text-slate-900">
-            {evaluation.teacherRequestedPublication ? "Oui" : "Non"}
+            {hasTeacherRequest ? "Demandé par le professeur" : "Non demandé"}
           </dd>
         </div>
         <div>
@@ -140,7 +169,21 @@ export function TeacherSeoPublicationCard({
             {evaluation.isSitemapEligible ? "Inclus" : "Exclu"}
           </dd>
         </div>
+        <div className="sm:col-span-2">
+          <dt className="text-xs font-bold uppercase tracking-wider text-slate-500">
+            Marqueur admin public_profile_last_indexable_at
+          </dt>
+          <dd className="mt-1 font-semibold text-slate-900">
+            {formatMarkerDate(evaluation.publicProfileLastIndexableAt)}
+          </dd>
+        </div>
       </dl>
+
+      {!hasTeacherRequest ? (
+        <p className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
+          Le professeur doit d&apos;abord demander la publication et accepter l&apos;indexation.
+        </p>
+      ) : null}
 
       {blockers.length > 0 ? (
         <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
@@ -158,8 +201,8 @@ export function TeacherSeoPublicationCard({
 
       {evaluation.paidBookingCtaEnabled && !evaluation.payoutReady ? (
         <p className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-900">
-          Réservation payante activée mais Stripe Connect n&apos;est pas prêt (
-          {evaluation.payoutBlockers.join(", ")}). La publication est bloquée.
+          Connect Stripe doit être complété avant la publication d&apos;un profil qui accepte les réservations payantes.
+          {evaluation.payoutBlockers.length ? ` (${evaluation.payoutBlockers.join(", ")})` : null}
         </p>
       ) : null}
 
@@ -211,21 +254,23 @@ export function TeacherSeoPublicationCard({
           {busy === "publish" ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
           Publier le profil SEO
         </button>
-        <button
-          type="button"
-          disabled={Boolean(busy) || !evaluation.canAdminUnpublish}
-          onClick={() =>
-            void runAction(
-              "unpublish",
-              "Retirer ce profil de Google et le rendre privé (is_public=false) ?",
-            )
-          }
-          className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-          data-testid="admin-teacher-seo-unpublish-button"
-        >
-          {busy === "unpublish" ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
-          Retirer de Google / rendre privé
-        </button>
+        {canUnpublishSeo ? (
+          <button
+            type="button"
+            disabled={Boolean(busy) || !evaluation.canAdminUnpublish}
+            onClick={() =>
+              void runAction(
+                "unpublish",
+                "Retirer ce profil de Google et le rendre privé (is_public=false) ?",
+              )
+            }
+            className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+            data-testid="admin-teacher-seo-unpublish-button"
+          >
+            {busy === "unpublish" ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
+            Retirer de Google / rendre privé
+          </button>
+        ) : null}
         <button
           type="button"
           disabled={Boolean(busy)}
