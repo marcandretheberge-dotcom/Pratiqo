@@ -52,6 +52,7 @@ const baseRow = {
   public_profile_enabled: true,
   search_indexing_consent: true,
   public_profile_slug: "marie-d-espagnol-levis",
+  public_profile_last_indexable_at: "2026-06-01T12:00:00.000Z",
   teacher_onboarding_complete: true,
   profile_is_active: true,
   profile_deactivated_at: null,
@@ -77,6 +78,12 @@ test("eligible consented teacher is indexable", () => {
   assert.equal(isTeacherPublicProfilePageVisible(baseRow), true);
   assert.equal(isTeacherPublicProfileIndexable(baseRow), true);
   assert.deepEqual(teacherPublicProfileRobots(true), { index: true, follow: true });
+});
+
+test("consent and marketplace visibility without admin marker is not indexable", () => {
+  const row = { ...baseRow, public_profile_last_indexable_at: null };
+  assert.equal(isTeacherPublicProfilePageVisible(row), true);
+  assert.equal(isTeacherPublicProfileIndexable(row), false);
 });
 
 test("missing consent is not indexable and uses noindex robots", () => {
@@ -184,6 +191,7 @@ test("migration 082 adds consent columns and pins them in trigger", () => {
   assert.match(migration, /search_indexing_consent/i);
   assert.match(migration, /public_profile_slug/i);
   assert.match(migration, /NEW\.search_indexing_consent := OLD\.search_indexing_consent/i);
+  assert.match(migration, /public_profile_last_indexable_at := OLD\.public_profile_last_indexable_at/i);
 });
 
 test("consent API route is server-side only", () => {

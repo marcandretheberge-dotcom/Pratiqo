@@ -113,6 +113,7 @@ export async function POST(req: Request, ctx: Params) {
       .from("teachers")
       .update({
         is_public: false,
+        public_profile_last_indexable_at: null,
       })
       .eq("id", row.id);
 

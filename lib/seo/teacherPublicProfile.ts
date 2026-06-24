@@ -30,6 +30,8 @@ export type TeacherPublicSeoFields = TeacherMarketplaceVisibilityRow & {
   public_profile_enabled?: boolean | null;
   search_indexing_consent?: boolean | null;
   public_profile_slug?: string | null;
+  /** Set only by admin SEO publish (service-role); pins indexability + sitemap. */
+  public_profile_last_indexable_at?: string | null;
   teacher_onboarding_complete?: boolean | null;
   subject_count?: number | null;
   teaching_mode?: string | null;
@@ -165,9 +167,18 @@ export function isTeacherPublicProfilePageVisible(row: TeacherPublicSeoFields): 
   return slug.length > 0;
 }
 
+/** Admin SEO publication marker — only service-role routes may set this column (migration 082). */
+export function isTeacherAdminSeoPublished(
+  row: Pick<TeacherPublicSeoFields, "public_profile_last_indexable_at">,
+): boolean {
+  const at = row.public_profile_last_indexable_at;
+  return typeof at === "string" && at.trim().length > 0;
+}
+
 export function isTeacherPublicProfileIndexable(row: TeacherPublicSeoFields): boolean {
   if (!isTeacherPublicProfilePageVisible(row)) return false;
   if (row.search_indexing_consent !== true) return false;
+  if (!isTeacherAdminSeoPublished(row)) return false;
   return true;
 }
 

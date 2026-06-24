@@ -10,6 +10,7 @@ import {
   buildTeacherPublicProfileDescription,
   buildTeacherPublicProfilePath,
   buildTeacherPublicProfileTitle,
+  isTeacherAdminSeoPublished,
   isTeacherPublicProfileIndexable,
   isTeacherPublicProfilePageVisible,
   publicTeacherFirstName,
@@ -220,7 +221,7 @@ export function evaluateTeacherSeoPublication(
   const adminPublishBlockers = collectTeacherSeoAdminPublishBlockers(row);
   const seoCopy = buildGeneratedSeoCopy(row, locale);
 
-  if (!isPublic && teacherRequestedPublication) {
+  if (teacherHasRequestedSeoPublication(row) && !isTeacherAdminSeoPublished(row)) {
     if (!missingReasonKeys.includes("not_admin_published")) {
       missingReasonKeys.push("not_admin_published");
     }

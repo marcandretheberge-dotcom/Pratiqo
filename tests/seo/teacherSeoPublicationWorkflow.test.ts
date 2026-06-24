@@ -130,6 +130,44 @@ test("admin publish eligible for complete consented teacher with payout ready", 
   assert.equal(evaluation.canAdminPublish, true);
 });
 
+test("teacher self-serve visibility + consent without admin marker is not indexable", () => {
+  const row = {
+    ...baseRow,
+    is_public: true,
+    public_profile_enabled: true,
+    search_indexing_consent: true,
+    public_profile_slug: "marie-d-espagnol-levis",
+    public_profile_last_indexable_at: null,
+  };
+  assert.equal(isTeacherPublicProfilePageVisible(row), true);
+  assert.equal(isTeacherPublicProfileIndexable(row), false);
+  const evaluation = evaluateTeacherSeoPublication(row, "fr");
+  assert.equal(evaluation.isSitemapEligible, false);
+  assert.ok(evaluation.missingReasonKeys.includes("not_admin_published"));
+});
+
+test("teacher seo request route does not set admin publication marker", () => {
+  const teacherRoute = read("app/api/teacher/profile/seo-publication/route.ts");
+  assert.doesNotMatch(teacherRoute, /public_profile_last_indexable_at:\s*now/);
+  assert.doesNotMatch(teacherRoute, /public_profile_last_indexable_at:\s*new Date/);
+});
+
+test("teacher visibility route does not set admin publication marker", () => {
+  const visibilityRoute = read("app/api/teacher/profile/visibility/route.ts");
+  assert.doesNotMatch(visibilityRoute, /public_profile_last_indexable_at/);
+});
+
+test("admin unpublish clears admin publication marker", () => {
+  const adminRoute = read("app/api/admin/users/[id]/teacher-seo-publish/route.ts");
+  assert.match(adminRoute, /public_profile_last_indexable_at:\s*null/);
+});
+
+test("indexability requires admin publication marker in central helper", () => {
+  const helper = read("lib/seo/teacherPublicProfile.ts");
+  assert.match(helper, /isTeacherAdminSeoPublished/);
+  assert.match(helper, /public_profile_last_indexable_at/);
+});
+
 test("published teacher is indexable and sitemap eligible", () => {
   const row = {
     ...baseRow,
@@ -137,6 +175,7 @@ test("published teacher is indexable and sitemap eligible", () => {
     public_profile_enabled: true,
     search_indexing_consent: true,
     public_profile_slug: "marie-d-espagnol-levis",
+    public_profile_last_indexable_at: "2026-06-01T12:00:00.000Z",
   };
   assert.equal(isTeacherPublicProfileIndexable(row), true);
   const evaluation = evaluateTeacherSeoPublication(row, "fr");

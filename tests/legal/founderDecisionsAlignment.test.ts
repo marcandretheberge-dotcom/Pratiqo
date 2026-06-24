@@ -170,6 +170,7 @@ const allowedPaymentTrustHardeningFiles = new Set<string>([
 
 const allowedTeacherSeoPublicationWorkflowFiles = new Set<string>([
   "lib/seo/teacherSeoPublication.ts",
+  "lib/seo/teacherPublicProfile.ts",
   "lib/seo/teacherPublicProfileData.ts",
   "app/api/teacher/profile/seo-publication/route.ts",
   "app/api/teacher/profile/search-indexing-consent/route.ts",
@@ -179,6 +180,9 @@ const allowedTeacherSeoPublicationWorkflowFiles = new Set<string>([
   "components/Dashboard.tsx",
   "components/teacher/TeacherAccountView.tsx",
   "app/(app)/admin/users/[id]/page.tsx",
+  "tests/seo/teacherPublicProfileIndexing.test.ts",
+  "tests/seo/teacherResourcesCluster.test.ts",
+  "tests/admin/profileDeactivation.test.ts",
   "tests/seo/teacherSeoPublicationWorkflow.test.ts",
   "tests/legal/safeDisclosures.test.ts",
   "tests/legal/founderDecisionsAlignment.test.ts",

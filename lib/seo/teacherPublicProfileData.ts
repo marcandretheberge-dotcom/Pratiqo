@@ -8,10 +8,10 @@ import {
 import type { TeacherSeoPublicationRow } from "@/lib/seo/teacherSeoPublication";
 
 const SEO_ROW_SELECT =
-  "id, user_id, name, bio, discipline, city, region, country_code, teaching_mode, is_public, deactivated_at, deleted_at, is_demo, identity_verified, stripe_identity_failed_reason, public_profile_enabled, search_indexing_consent, public_profile_slug, profiles!inner(teacher_onboarding_complete, is_active, deactivated_at, deleted_at, anonymized_at)";
+  "id, user_id, name, bio, discipline, city, region, country_code, teaching_mode, is_public, deactivated_at, deleted_at, is_demo, identity_verified, stripe_identity_failed_reason, public_profile_enabled, search_indexing_consent, public_profile_slug, public_profile_last_indexable_at, profiles!inner(teacher_onboarding_complete, is_active, deactivated_at, deleted_at, anonymized_at)";
 
 const SEO_PUBLICATION_ROW_SELECT =
-  "id, user_id, name, bio, discipline, city, region, country_code, teaching_mode, is_public, deactivated_at, deleted_at, is_demo, identity_verified, stripe_identity_failed_reason, public_profile_enabled, search_indexing_consent, public_profile_slug, image_url, price_per_lesson, intro_session_enabled, stripe_account_id, stripe_connect_onboarding_complete, stripe_connect_charges_enabled, stripe_connect_payouts_enabled, stripe_connect_requirements_due, stripe_connect_disabled_reason, profiles!inner(teacher_onboarding_complete, is_active, deactivated_at, deleted_at, anonymized_at)";
+  "id, user_id, name, bio, discipline, city, region, country_code, teaching_mode, is_public, deactivated_at, deleted_at, is_demo, identity_verified, stripe_identity_failed_reason, public_profile_enabled, search_indexing_consent, public_profile_slug, public_profile_last_indexable_at, image_url, price_per_lesson, intro_session_enabled, stripe_account_id, stripe_connect_onboarding_complete, stripe_connect_charges_enabled, stripe_connect_payouts_enabled, stripe_connect_requirements_due, stripe_connect_disabled_reason, profiles!inner(teacher_onboarding_complete, is_active, deactivated_at, deleted_at, anonymized_at)";
 
 type SeoRowRaw = {
   id: string;
@@ -32,6 +32,7 @@ type SeoRowRaw = {
   public_profile_enabled: boolean | null;
   search_indexing_consent: boolean | null;
   public_profile_slug: string | null;
+  public_profile_last_indexable_at?: string | null;
   image_url?: string | null;
   price_per_lesson?: number | null;
   intro_session_enabled?: boolean | null;
@@ -81,6 +82,7 @@ function flattenSeoRow(raw: SeoRowRaw, subjectCount = 0): TeacherPublicSeoFields
     public_profile_enabled: raw.public_profile_enabled,
     search_indexing_consent: raw.search_indexing_consent,
     public_profile_slug: raw.public_profile_slug,
+    public_profile_last_indexable_at: raw.public_profile_last_indexable_at ?? null,
     teacher_onboarding_complete: profile?.teacher_onboarding_complete ?? null,
     profile_is_active: profile?.is_active ?? null,
     profile_deactivated_at: profile?.deactivated_at ?? null,
@@ -181,7 +183,8 @@ export async function fetchIndexableTeacherSitemapRows(): Promise<
     )
     .eq("public_profile_enabled", true)
     .eq("search_indexing_consent", true)
-    .not("public_profile_slug", "is", null);
+    .not("public_profile_slug", "is", null)
+    .not("public_profile_last_indexable_at", "is", null);
 
   if (error || !data) return [];
 
