@@ -334,6 +334,10 @@ test("tracked patch avoids generated audio and restricted product systems", () =
     // fix/final-launch-payment-webhook-gates — payout readiness + webhook rejection.
     // Defended by tests/payments/paymentTrustLaunchHardening.test.ts.
     "lib/payments/connect.ts",
+    // fix/seo-teacher-self-serve-publish-flow — teacher SEO consent/publish APIs only.
+    "app/api/teacher/profile/search-indexing-consent/route.ts",
+    "app/api/teacher/profile/seo-publication/route.ts",
+    "app/api/admin/users/[id]/teacher-seo-publish/route.ts",
   ]);
   const forbidden = [
     /^app\/api\//,

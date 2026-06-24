@@ -168,6 +168,24 @@ const allowedPaymentTrustHardeningFiles = new Set<string>([
   "lib/payments/connect.ts",
 ]);
 
+const allowedTeacherSeoPublicationWorkflowFiles = new Set<string>([
+  "lib/seo/teacherSeoPublication.ts",
+  "lib/seo/teacherPublicProfileData.ts",
+  "app/api/teacher/profile/seo-publication/route.ts",
+  "app/api/teacher/profile/search-indexing-consent/route.ts",
+  "app/api/admin/users/[id]/teacher-seo-publish/route.ts",
+  "components/teacher/TeacherSeoReadinessCard.tsx",
+  "components/admin/TeacherSeoPublicationCard.tsx",
+  "components/Dashboard.tsx",
+  "components/teacher/TeacherAccountView.tsx",
+  "app/(app)/admin/users/[id]/page.tsx",
+  "tests/seo/teacherSeoPublicationWorkflow.test.ts",
+  "tests/legal/safeDisclosures.test.ts",
+  "tests/legal/founderDecisionsAlignment.test.ts",
+  "tests/yo/yopratiqoAudioPronunciationOverrides.test.ts",
+  "package.json",
+]);
+
 function touchesFounderDecisionScope(file: string): boolean {
   return (
     liveFiles.includes(file) ||
@@ -332,6 +350,7 @@ test("branch did not touch restricted systems", () => {
     if (allowedConsentGateFiles.has(file)) continue;
     if (allowedSecurityHardeningFiles.has(file)) continue;
     if (allowedPaymentTrustHardeningFiles.has(file)) continue;
+    if (allowedTeacherSeoPublicationWorkflowFiles.has(file)) continue;
     for (const rule of restrictedRules) {
       if (rule.re.test(file)) {
         violations.push(`${file} (${rule.label})`);

@@ -2,13 +2,15 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import {
-  isTeacherMarketplaceVisibleRow,
   isTeacherPublicProfileIndexable,
   TEACHER_PUBLIC_SEO_CONSENT_VERSION,
   teacherHasAtLeastOneSubject,
-  teacherHasPublicCity,
+  teacherHasPublicLocationOrTeachingFormat,
   teacherHasSufficientPublicContent,
 } from "@/lib/seo/teacherPublicProfile";
+import {
+  isTeacherSeoProfileContentReady,
+} from "@/lib/seo/teacherSeoPublication";
 import {
   allocateUniqueTeacherPublicProfileSlug,
   fetchTeacherPublicSeoRowById,
@@ -106,9 +108,9 @@ export async function PATCH(req: Request) {
   }
 
   if (body.search_indexing_consent) {
-    if (!isTeacherMarketplaceVisibleRow(row)) {
+    if (!isTeacherSeoProfileContentReady(row)) {
       return NextResponse.json(
-        { error: "Votre profil doit être actif et visible pour activer l'indexation." },
+        { error: "Complétez votre profil public avant de demander la publication." },
         { status: 400 },
       );
     }
@@ -124,9 +126,9 @@ export async function PATCH(req: Request) {
         { status: 400 },
       );
     }
-    if (!teacherHasPublicCity(row)) {
+    if (!teacherHasPublicLocationOrTeachingFormat(row)) {
       return NextResponse.json(
-        { error: "Indiquez votre ville ou région avant d'activer l'indexation." },
+        { error: "Indiquez votre ville, région ou format d'enseignement en ligne." },
         { status: 400 },
       );
     }
@@ -147,7 +149,10 @@ export async function PATCH(req: Request) {
   if (body.search_indexing_consent) {
     const name = (teacher as { name?: string | null }).name ?? row.name ?? "";
     const discipline = (teacher as { discipline?: string | null }).discipline ?? row.discipline ?? "";
-    const city = (teacher as { city?: string | null }).city ?? row.city ?? "";
+    const cityForSlug =
+      (teacher as { city?: string | null }).city?.trim() ||
+      row.region?.trim() ||
+      "quebec";
     const slug =
       typeof row.public_profile_slug === "string" && row.public_profile_slug.trim()
         ? row.public_profile_slug.trim()
@@ -155,13 +160,12 @@ export async function PATCH(req: Request) {
             teacherId: (teacher as { id: string }).id,
             name,
             mainSubject: discipline,
-            city,
+            city: cityForSlug,
           });
 
     updates.search_indexing_consented_at = now;
     updates.search_indexing_consent_version = TEACHER_PUBLIC_SEO_CONSENT_VERSION;
     updates.public_profile_slug = slug;
-    updates.public_profile_last_indexable_at = now;
   } else {
     updates.public_profile_last_indexable_at = null;
   }

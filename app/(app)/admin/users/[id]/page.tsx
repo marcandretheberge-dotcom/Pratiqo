@@ -35,6 +35,7 @@ import {
   type TeacherBadgeStatusRow,
 } from "@/components/admin/TeacherBadgesCard";
 import { ProfileDeactivationCard } from "@/components/admin/ProfileDeactivationCard";
+import { TeacherSeoPublicationCard } from "@/components/admin/TeacherSeoPublicationCard";
 import {
   isProfileReactivationAllowed,
   loadProfileDeactivationSnapshot,
@@ -45,6 +46,8 @@ import {
 } from "@/lib/pricing/lessonOffer";
 import { MIN_LESSON_PRICE_DOLLARS } from "@/lib/pricing/constants";
 import { LESSON_DURATION_OPTIONS } from "@/lib/pricing/lessonDuration";
+import { evaluateTeacherSeoPublication } from "@/lib/seo/teacherSeoPublication";
+import { fetchTeacherSeoPublicationRowByUserId } from "@/lib/seo/teacherPublicProfileData";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -216,6 +219,12 @@ export default async function AdminUserDetailPage({
       }
     | null = null;
   let teacherBadges: TeacherBadgeStatusRow[] | null = null;
+  let teacherSeoPublication:
+    | {
+        teacherId: string;
+        evaluation: ReturnType<typeof evaluateTeacherSeoPublication>;
+      }
+    | null = null;
 
   if (isTeacher) {
     const { data: teacherRow } = await admin
@@ -299,6 +308,14 @@ export default async function AdminUserDetailPage({
           },
           missingFields,
         },
+      };
+    }
+
+    const seoRow = await fetchTeacherSeoPublicationRowByUserId(profile.id);
+    if (seoRow) {
+      teacherSeoPublication = {
+        teacherId: seoRow.id,
+        evaluation: evaluateTeacherSeoPublication(seoRow, "fr"),
       };
     }
   }
@@ -483,6 +500,14 @@ export default async function AdminUserDetailPage({
                 aura commencé son inscription.
               </section>
             )}
+
+            {teacherSeoPublication ? (
+              <TeacherSeoPublicationCard
+                targetUserId={profile.id}
+                teacherId={teacherSeoPublication.teacherId}
+                initialEvaluation={teacherSeoPublication.evaluation}
+              />
+            ) : null}
 
             <FounderPromoCard
               teacherId={profile.id}
