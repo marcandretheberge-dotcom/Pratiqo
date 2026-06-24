@@ -1,7 +1,7 @@
 // Admin → teacher SEO profile publication
 //
 //   GET  /api/admin/users/:id/teacher-seo-publish
-//   POST /api/admin/users/:id/teacher-seo-publish  { action: publish | unpublish | request_corrections }
+//   POST /api/admin/users/:id/teacher-seo-publish  { action: publish | unpublish | hide_marketplace | request_corrections }
 
 import { NextResponse } from "next/server";
 import { requireAdminApi, insertAdminRoleChangeAudit } from "@/lib/auth/admin";
@@ -19,9 +19,14 @@ export const runtime = "nodejs";
 
 type Params = { params: Promise<{ id: string }> };
 
-type AdminSeoAction = "publish" | "unpublish" | "request_corrections";
+type AdminSeoAction = "publish" | "unpublish" | "hide_marketplace" | "request_corrections";
 
-const ALLOWED_ACTIONS = new Set<AdminSeoAction>(["publish", "unpublish", "request_corrections"]);
+const ALLOWED_ACTIONS = new Set<AdminSeoAction>([
+  "publish",
+  "unpublish",
+  "hide_marketplace",
+  "request_corrections",
+]);
 
 function parseAction(value: unknown): AdminSeoAction | null {
   return typeof value === "string" && ALLOWED_ACTIONS.has(value as AdminSeoAction)
@@ -112,8 +117,18 @@ export async function POST(req: Request, ctx: Params) {
     const { error } = await admin
       .from("teachers")
       .update({
-        is_public: false,
         public_profile_last_indexable_at: null,
+      })
+      .eq("id", row.id);
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+  } else if (action === "hide_marketplace") {
+    const { error } = await admin
+      .from("teachers")
+      .update({
+        is_public: false,
       })
       .eq("id", row.id);
 
