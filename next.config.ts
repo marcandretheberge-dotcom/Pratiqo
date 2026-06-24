@@ -140,6 +140,11 @@ const nextConfig: NextConfig = {
       // /legal/teacher-pro is kept as a 308 redirect so any external/inbound
       // links keep working while the canonical route is /legal/membre-pro.
       {
+        source: "/tuteurs-prive/:citySlug",
+        destination: "/tuteurs/:citySlug",
+        permanent: true,
+      },
+      {
         source: "/legal/teacher-pro",
         destination: "/legal/membre-pro",
         permanent: true,

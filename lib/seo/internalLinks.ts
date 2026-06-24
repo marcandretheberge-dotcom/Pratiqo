@@ -46,8 +46,8 @@ export const SEO_CLUSTER_URLS = {
   studentHub: "/trouver-un-prof",
   pricing: "/tarifs",
   blog: "/blog",
-  tuteursMtl: "/tuteurs-prive/montreal",
-  tuteursQc: "/tuteurs-prive/quebec",
+  tuteursMtl: "/tuteurs/montreal",
+  tuteursQc: "/tuteurs/quebec",
   coursMathMtl: "/cours/mathematiques/montreal",
   coursPianoMtl: "/cours/piano/montreal",
   coursGuitareMtl: "/cours/guitare/montreal",
@@ -325,7 +325,7 @@ export function getCitySeoGuideLinks(_citySlug: string, locale: Locale): SeoReso
 
 /** Guides under discipline × city landing pages. */
 export function getDisciplineCitySeoGuideLinks(disciplineSlug: string, citySlug: string, locale: Locale): SeoResolvedLink[] {
-  const cityPath = `/tuteurs-prive/${citySlug}`;
+  const cityPath = `/tuteurs/${citySlug}`;
   const cityLabel =
     citySlug === "montreal"
       ? { fr: "Tuteurs à Montréal", en: "Tutors in Montreal", es: "Tutores en Montreal" }

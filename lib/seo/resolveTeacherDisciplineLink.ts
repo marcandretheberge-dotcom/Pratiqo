@@ -1,5 +1,6 @@
 import { QC_CITIES } from "@/lib/constants/cities";
 import { DISCIPLINES } from "@/lib/seo/disciplines";
+import { buildSubjectCityPath } from "@/lib/seo/localTeacherDiscoveryPages";
 import { SUBJECT_LANDING_PAGES } from "@/lib/seo/subjectLandingPages";
 
 function normalizeLabel(value: string | null | undefined): string {
@@ -21,7 +22,6 @@ export function matchTeacherCitySlug(cityOrRegion?: string | null): string | nul
   return byName?.slug ?? null;
 }
 
-/** Resolve a discipline label to a curated landing path (subject hub or discipline × city). */
 export function resolveTeacherDisciplineHubHref(input: {
   discipline?: string | null;
   city?: string | null;
@@ -40,7 +40,7 @@ export function resolveTeacherDisciplineHubHref(input: {
       normalizeLabel(d.dbCategory) === norm,
   );
   if (disciplineConfig) {
-    if (citySlug) return `/cours/${disciplineConfig.slug}/${citySlug}`;
+    if (citySlug) return buildSubjectCityPath(disciplineConfig.slug, citySlug);
     return `/trouver-un-prof?q=${encodeURIComponent(disciplineConfig.name)}`;
   }
 
@@ -53,4 +53,27 @@ export function resolveTeacherDisciplineHubHref(input: {
   if (subjectPage) return `/cours/${subjectPage.slug}`;
 
   return `/trouver-un-prof?q=${encodeURIComponent(discipline)}`;
+}
+
+export function resolveTeacherLocalDiscoveryLinkLabel(input: {
+  discipline?: string | null;
+  city?: string | null;
+  region?: string | null;
+  locale?: "fr" | "en" | "es";
+}): string {
+  const discipline = input.discipline?.trim() ?? "";
+  const locale = input.locale ?? "fr";
+  const href = resolveTeacherDisciplineHubHref(input);
+  const citySlug = matchTeacherCitySlug(input.city) ?? matchTeacherCitySlug(input.region);
+  const cityName = input.city?.trim() || input.region?.trim() || "";
+
+  if (citySlug && discipline && href.startsWith("/cours/") && href.split("/").length >= 4) {
+    if (locale === "fr") return `Voir les professeurs de ${discipline.toLowerCase()} à ${cityName}`;
+    if (locale === "es") return `Ver profesores de ${discipline.toLowerCase()} en ${cityName}`;
+    return `See ${discipline.toLowerCase()} teachers in ${cityName}`;
+  }
+
+  if (locale === "fr") return `Voir les cours de ${discipline || "cette discipline"} sur Pratiqo`;
+  if (locale === "es") return `Ver clases de ${discipline || "esta disciplina"} en Pratiqo`;
+  return `Browse ${discipline || "this subject"} lessons on Pratiqo`;
 }

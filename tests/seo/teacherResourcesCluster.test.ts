@@ -328,9 +328,13 @@ test("resource article page has canonical metadata and Article JSON-LD", () => {
 
 test("discipline city page links indexable teachers to /professeurs when available", () => {
   const pageSrc = read("app/cours/[disciplineSlug]/[citySlug]/page.tsx");
-  assert.match(pageSrc, /fetchIndexableTeacherPublicPathsByIds/);
-  assert.match(pageSrc, /indexablePublicPaths\.get/);
-  assert.match(pageSrc, /\/trouver-un-prof/);
+  const cardsSrc = read("components/seo/LocalTeacherDiscoveryCards.tsx");
+  const viewSrc = read("components/seo/LocalTeacherDiscoveryView.tsx");
+  assert.match(pageSrc, /LocalTeacherDiscoveryView/);
+  assert.match(pageSrc, /resolveSubjectCityDiscoveryPage/);
+  assert.match(cardsSrc, /teacher\.profilePath/);
+  assert.match(read("lib/seo/localTeacherDiscoveryPages.ts"), /buildTeacherPublicProfilePath/);
+  assert.match(viewSrc, /\/trouver-un-prof/);
 });
 
 test("teacher profile links to related discipline hub without inventing city", () => {

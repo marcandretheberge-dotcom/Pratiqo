@@ -253,8 +253,12 @@ test("TEACHERS_LIST_SELECT_LEGACY_PUBLIC is an alias of TEACHERS_LIST_SELECT (no
 
 const PUBLIC_PAGE_FILES = [
   "app/clases/montevideo/[barrioSlug]/page.tsx",
+];
+
+const LOCAL_DISCOVERY_FILES = [
   "app/cours/[disciplineSlug]/[citySlug]/page.tsx",
-  "app/tuteurs-prive/[citySlug]/page.tsx",
+  "app/tuteurs/[citySlug]/page.tsx",
+  "lib/seo/localTeacherDiscoveryPages.ts",
 ];
 
 test("public SEO pages read through teachers_public, not base teachers", () => {
@@ -269,6 +273,18 @@ test("public SEO pages read through teachers_public, not base teachers", () => {
       src,
       /TEACHERS_PUBLIC_TABLE/,
       `${rel} must read through teachers_public`,
+    );
+  }
+});
+
+test("local discovery pages use admin indexable teacher fetch without sensitive workflow columns", () => {
+  for (const rel of LOCAL_DISCOVERY_FILES) {
+    const src = read(rel);
+    assert.doesNotMatch(src, /diploma_url|identity_status|stripe_account_id|stripe_connect_/);
+    assert.match(
+      src,
+      /localTeacherDiscoveryPages|resolveSubjectCityDiscoveryPage|resolveCityHubDiscoveryPage|isTeacherPublicProfileIndexable/,
+      `${rel} must use the local discovery eligibility helper`,
     );
   }
 });

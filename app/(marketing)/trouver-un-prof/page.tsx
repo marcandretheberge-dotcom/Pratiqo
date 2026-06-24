@@ -315,7 +315,7 @@ export default async function TrouverUnProfPage() {
                 {CITIES.map((c) => (
                   <Link
                     key={c.slug}
-                    href={`/tuteurs-prive/${c.slug}`}
+                    href={`/tuteurs/${c.slug}`}
                     className="rounded-full border border-[#DCEAE3] bg-white px-4 py-2 text-sm font-semibold text-[#2C2C2A] transition-colors hover:border-teal-500 hover:text-teal-700"
                   >
                     {c.label}
