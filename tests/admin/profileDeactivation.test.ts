@@ -57,6 +57,7 @@ const activeTeacherSeoRow = {
   public_profile_enabled: true,
   search_indexing_consent: true,
   public_profile_slug: "marie-dupont",
+  public_profile_last_indexable_at: "2026-06-01T12:00:00.000Z",
   teacher_onboarding_complete: true,
   profile_is_active: true,
   profile_deactivated_at: null,

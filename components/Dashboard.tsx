@@ -19,6 +19,7 @@ import { TeacherProfileCompletenessCard } from "@/components/dashboard/teacher/T
 import { TeacherSearchVisibilityBanner } from "@/components/teacher/TeacherSearchVisibilityBanner";
 import { TeacherProfileSetupChecklist } from "@/components/teacher/TeacherProfileSetupChecklist";
 import { TeacherProfileVisibilityCard } from "@/components/teacher/TeacherProfileVisibilityCard";
+import { TeacherSeoReadinessCard } from "@/components/teacher/TeacherSeoReadinessCard";
 import { isIdentityVerificationFailed } from "@/lib/teachers/identityPublishGate";
 import { TEACHER_SETUP_PATH } from "@/lib/auth/teacherLoginRouting";
 import { buildTeacherSetupChecklist } from "@/lib/teachers/teacherSetupProgress";
@@ -822,6 +823,7 @@ export function Dashboard() {
         </header>
 
         {teacherMeta ? (
+          <>
           <TeacherProfileVisibilityCard
             teacher={{
               id: teacherMeta.id,
@@ -849,6 +851,8 @@ export function Dashboard() {
               setTeacherMeta((prev) => (prev ? { ...prev, is_public: nextPublic } : prev))
             }
           />
+          <TeacherSeoReadinessCard />
+          </>
         ) : (
           <>
             <TeacherSearchVisibilityBanner ctaHref={TEACHER_SETUP_PATH} />

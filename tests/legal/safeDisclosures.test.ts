@@ -349,6 +349,29 @@ const allowedPaymentTrustHardeningFiles = new Set<string>([
   "lib/payments/connect.ts",
 ]);
 
+/** Teacher self-serve SEO publish workflow — SEO eligibility/sitemap only, no payment/booking changes. */
+const allowedTeacherSeoPublicationWorkflowFiles = new Set<string>([
+  "lib/seo/teacherSeoPublication.ts",
+  "lib/seo/teacherPublicProfile.ts",
+  "lib/seo/teacherPublicProfileData.ts",
+  "app/api/teacher/profile/seo-publication/route.ts",
+  "app/api/teacher/profile/search-indexing-consent/route.ts",
+  "app/api/admin/users/[id]/teacher-seo-publish/route.ts",
+  "components/teacher/TeacherSeoReadinessCard.tsx",
+  "components/admin/TeacherSeoPublicationCard.tsx",
+  "components/Dashboard.tsx",
+  "components/teacher/TeacherAccountView.tsx",
+  "app/(app)/admin/users/[id]/page.tsx",
+  "tests/seo/teacherPublicProfileIndexing.test.ts",
+  "tests/seo/teacherResourcesCluster.test.ts",
+  "tests/seo/teacherSeoPublicationWorkflow.test.ts",
+  "tests/admin/profileDeactivation.test.ts",
+  "tests/legal/safeDisclosures.test.ts",
+  "tests/legal/founderDecisionsAlignment.test.ts",
+  "tests/yo/yopratiqoAudioPronunciationOverrides.test.ts",
+  "package.json",
+]);
+
 function touchesSafeDisclosureScope(file: string): boolean {
   return (
     liveDisclosureFiles.includes(file) ||
@@ -515,6 +538,7 @@ test("safe-disclosure branch did not touch restricted systems", () => {
     if (allowedPricingDisplayFiles.has(file)) continue;
     if (allowedSecurityHardeningFiles.has(file)) continue;
     if (allowedPaymentTrustHardeningFiles.has(file)) continue;
+    if (allowedTeacherSeoPublicationWorkflowFiles.has(file)) continue;
     for (const rule of restrictedRules) {
       if (rule.re.test(file)) {
         violations.push(`${file} (${rule.label})`);

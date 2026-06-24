@@ -30,7 +30,7 @@
     "test:yo-course-schema": "tsx tests/yo/yopratiqoCourseSchemaIntegration.test.ts",
     "test:yo-indexation": "tsx tests/yo/yopratiqoIndexation.test.ts",
     "test:seo-lifestyle": "tsx tests/seo/lifestyleSubjectSeo.test.ts",
-    "test:seo-teacher-resources": "tsx tests/seo/teacherPublicProfileIndexing.test.ts && tsx tests/seo/teacherResourcesCluster.test.ts",
+    "test:seo-teacher-resources": "tsx tests/seo/teacherPublicProfileIndexing.test.ts && tsx tests/seo/teacherResourcesCluster.test.ts && tsx tests/seo/teacherSeoPublicationWorkflow.test.ts",
     "test:yo-rd-responsive": "tsx tests/yo/yopratiqoDominicanResponsiveLayout.test.ts",
     "test:yo-worldclass-shell": "tsx tests/yo/yopratiqoWorldclassLearningShellVisual.test.ts",
     "test:yo-french-quebec": "tsx tests/yo/yopratiqoFrenchQuebecIntro.test.ts",
