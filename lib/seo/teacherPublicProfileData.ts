@@ -8,10 +8,13 @@ import {
 import type { TeacherSeoPublicationRow } from "@/lib/seo/teacherSeoPublication";
 
 const SEO_ROW_SELECT =
-  "id, user_id, name, bio, discipline, city, region, country_code, teaching_mode, is_public, deactivated_at, deleted_at, is_demo, identity_verified, stripe_identity_failed_reason, public_profile_enabled, search_indexing_consent, public_profile_slug, public_profile_last_indexable_at, profiles!inner(teacher_onboarding_complete, is_active, deactivated_at, deleted_at, anonymized_at)";
+  "id, user_id, name, bio, discipline, city, region, country_code, teaching_mode, is_public, deactivated_at, deleted_at, is_demo, identity_verified, stripe_identity_failed_reason, public_profile_enabled, search_indexing_consent, public_profile_slug, public_profile_last_indexable_at";
 
 const SEO_PUBLICATION_ROW_SELECT =
-  "id, user_id, name, bio, discipline, city, region, country_code, teaching_mode, is_public, deactivated_at, deleted_at, is_demo, identity_verified, stripe_identity_failed_reason, public_profile_enabled, search_indexing_consent, public_profile_slug, public_profile_last_indexable_at, image_url, price_per_lesson, intro_session_enabled, stripe_account_id, stripe_connect_onboarding_complete, stripe_connect_charges_enabled, stripe_connect_payouts_enabled, stripe_connect_requirements_due, stripe_connect_disabled_reason, profiles!inner(teacher_onboarding_complete, is_active, deactivated_at, deleted_at, anonymized_at)";
+  "id, user_id, name, bio, discipline, city, region, country_code, teaching_mode, is_public, deactivated_at, deleted_at, is_demo, identity_verified, stripe_identity_failed_reason, public_profile_enabled, search_indexing_consent, public_profile_slug, public_profile_last_indexable_at, image_url, price_per_lesson, intro_session_enabled, stripe_account_id, stripe_connect_onboarding_complete, stripe_connect_charges_enabled, stripe_connect_payouts_enabled, stripe_connect_requirements_due, stripe_connect_disabled_reason";
+
+const PROFILE_SEO_SELECT =
+  "id, teacher_onboarding_complete, is_active, deactivated_at, deleted_at, anonymized_at";
 
 type SeoRowRaw = {
   id: string;
@@ -42,25 +45,22 @@ type SeoRowRaw = {
   stripe_connect_payouts_enabled?: boolean | null;
   stripe_connect_requirements_due?: unknown;
   stripe_connect_disabled_reason?: string | null;
-  profiles:
-    | {
-        teacher_onboarding_complete: boolean | null;
-        is_active: boolean | null;
-        deactivated_at: string | null;
-        deleted_at: string | null;
-        anonymized_at: string | null;
-      }
-    | {
-        teacher_onboarding_complete: boolean | null;
-        is_active: boolean | null;
-        deactivated_at: string | null;
-        deleted_at: string | null;
-        anonymized_at: string | null;
-      }[];
 };
 
-function flattenSeoRow(raw: SeoRowRaw, subjectCount = 0): TeacherPublicSeoFields {
-  const profile = Array.isArray(raw.profiles) ? raw.profiles[0] : raw.profiles;
+type ProfileSeoRaw = {
+  id: string;
+  teacher_onboarding_complete: boolean | null;
+  is_active: boolean | null;
+  deactivated_at: string | null;
+  deleted_at: string | null;
+  anonymized_at: string | null;
+};
+
+function flattenSeoRow(
+  raw: SeoRowRaw,
+  profile: ProfileSeoRaw | null,
+  subjectCount = 0,
+): TeacherPublicSeoFields {
   return {
     id: raw.id,
     user_id: raw.user_id,
@@ -92,9 +92,13 @@ function flattenSeoRow(raw: SeoRowRaw, subjectCount = 0): TeacherPublicSeoFields
   };
 }
 
-function flattenSeoPublicationRow(raw: SeoRowRaw, subjectCount = 0): TeacherSeoPublicationRow {
+function flattenSeoPublicationRow(
+  raw: SeoRowRaw,
+  profile: ProfileSeoRaw | null,
+  subjectCount = 0,
+): TeacherSeoPublicationRow {
   return {
-    ...flattenSeoRow(raw, subjectCount),
+    ...flattenSeoRow(raw, profile, subjectCount),
     image_url: raw.image_url ?? null,
     price_per_lesson: raw.price_per_lesson ?? null,
     intro_session_enabled: raw.intro_session_enabled ?? null,
@@ -107,6 +111,29 @@ function flattenSeoPublicationRow(raw: SeoRowRaw, subjectCount = 0): TeacherSeoP
   };
 }
 
+async function fetchProfileSeoRowsByIds(userIds: string[]): Promise<Map<string, ProfileSeoRaw>> {
+  const unique = [...new Set(userIds.filter(Boolean))];
+  if (unique.length === 0) return new Map();
+
+  const { data, error } = await getSupabaseAdmin()
+    .from("profiles")
+    .select(PROFILE_SEO_SELECT)
+    .in("id", unique);
+
+  if (error || !data) return new Map();
+  const out = new Map<string, ProfileSeoRaw>();
+  for (const row of data as ProfileSeoRaw[]) {
+    out.set(row.id, row);
+  }
+  return out;
+}
+
+async function fetchProfileSeoRowByUserId(userId: string | null): Promise<ProfileSeoRaw | null> {
+  if (!userId) return null;
+  const rows = await fetchProfileSeoRowsByIds([userId]);
+  return rows.get(userId) ?? null;
+}
+
 async function fetchSeoPublicationRow(
   filter: { column: "id" | "user_id"; value: string },
 ): Promise<TeacherSeoPublicationRow | null> {
@@ -117,8 +144,12 @@ async function fetchSeoPublicationRow(
     .maybeSingle();
 
   if (error || !data) return null;
-  const subjectCount = await countTeacherSubjects((data as SeoRowRaw).id);
-  return flattenSeoPublicationRow(data as SeoRowRaw, subjectCount);
+  const raw = data as SeoRowRaw;
+  const [profile, subjectCount] = await Promise.all([
+    fetchProfileSeoRowByUserId(raw.user_id),
+    countTeacherSubjects(raw.id),
+  ]);
+  return flattenSeoPublicationRow(raw, profile, subjectCount);
 }
 
 export async function fetchTeacherSeoPublicationRowById(
@@ -155,8 +186,12 @@ export async function fetchTeacherPublicSeoRowBySlug(
     .maybeSingle();
 
   if (error || !data) return null;
-  const subjectCount = await countTeacherSubjects((data as SeoRowRaw).id);
-  return flattenSeoRow(data as SeoRowRaw, subjectCount);
+  const raw = data as SeoRowRaw;
+  const [profile, subjectCount] = await Promise.all([
+    fetchProfileSeoRowByUserId(raw.user_id),
+    countTeacherSubjects(raw.id),
+  ]);
+  return flattenSeoRow(raw, profile, subjectCount);
 }
 
 export async function fetchTeacherPublicSeoRowById(
@@ -169,8 +204,12 @@ export async function fetchTeacherPublicSeoRowById(
     .maybeSingle();
 
   if (error || !data) return null;
-  const subjectCount = await countTeacherSubjects((data as SeoRowRaw).id);
-  return flattenSeoRow(data as SeoRowRaw, subjectCount);
+  const raw = data as SeoRowRaw;
+  const [profile, subjectCount] = await Promise.all([
+    fetchProfileSeoRowByUserId(raw.user_id),
+    countTeacherSubjects(raw.id),
+  ]);
+  return flattenSeoRow(raw, profile, subjectCount);
 }
 
 export async function fetchIndexableTeacherSitemapRows(): Promise<
@@ -179,7 +218,7 @@ export async function fetchIndexableTeacherSitemapRows(): Promise<
   const { data, error } = await getSupabaseAdmin()
     .from("teachers")
     .select(
-      "id, user_id, name, bio, discipline, city, region, country_code, teaching_mode, is_public, deactivated_at, deleted_at, is_demo, identity_verified, stripe_identity_failed_reason, public_profile_enabled, search_indexing_consent, public_profile_slug, public_profile_last_indexable_at, updated_at, profiles!inner(teacher_onboarding_complete, is_active, deactivated_at, deleted_at, anonymized_at)",
+      "id, user_id, name, bio, discipline, city, region, country_code, teaching_mode, is_public, deactivated_at, deleted_at, is_demo, identity_verified, stripe_identity_failed_reason, public_profile_enabled, search_indexing_consent, public_profile_slug, public_profile_last_indexable_at, updated_at",
     )
     .eq("public_profile_enabled", true)
     .eq("search_indexing_consent", true)
@@ -188,10 +227,13 @@ export async function fetchIndexableTeacherSitemapRows(): Promise<
 
   if (error || !data) return [];
 
+  const profileRows = await fetchProfileSeoRowsByIds(
+    (data as unknown as SeoRowRaw[]).map((raw) => raw.user_id ?? ""),
+  );
   const rows: Array<{ slug: string; lastModified: Date }> = [];
   for (const raw of data as unknown as SeoRowRaw[]) {
     const subjectCount = await countTeacherSubjects(raw.id);
-    const row = flattenSeoRow(raw, subjectCount);
+    const row = flattenSeoRow(raw, raw.user_id ? profileRows.get(raw.user_id) ?? null : null, subjectCount);
     if (!isTeacherPublicProfileIndexable(row)) continue;
     const slug = row.public_profile_slug?.trim();
     if (!slug) continue;
@@ -221,10 +263,13 @@ export async function fetchIndexableTeacherPublicPathsByIds(
 
   if (error || !data) return new Map();
 
+  const profileRows = await fetchProfileSeoRowsByIds(
+    (data as SeoRowRaw[]).map((raw) => raw.user_id ?? ""),
+  );
   const out = new Map<string, string>();
   for (const raw of data as SeoRowRaw[]) {
     const subjectCount = await countTeacherSubjects(raw.id);
-    const row = flattenSeoRow(raw, subjectCount);
+    const row = flattenSeoRow(raw, raw.user_id ? profileRows.get(raw.user_id) ?? null : null, subjectCount);
     if (!isTeacherPublicProfileIndexable(row)) continue;
     const slug = row.public_profile_slug?.trim();
     if (!slug) continue;
