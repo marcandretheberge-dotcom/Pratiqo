@@ -2388,5 +2388,20 @@
   "lessonDurationSaving": "Guardando…",
   "lessonDurationSaved": "Guardado",
   "lessonDurationSaveError": "No se pudo guardar la duración. Inténtalo de nuevo.",
-  "lessonDurationAutosaveHelp": "Este ajuste determina la duración ofrecida a los estudiantes cuando reservan una clase estándar."
+  "lessonDurationAutosaveHelp": "Este ajuste determina la duración ofrecida a los estudiantes cuando reservan una clase estándar.",
+  "navBlog": "Blog",
+  "blogResourcesBanner": "Nuevo: consulta nuestras guías prácticas en la sección Recursos.",
+  "blogResourcesBannerCta": "Ver los recursos",
+  "ressourcesHubEyebrow": "Recursos",
+  "ressourcesHubTitle": "Guías para elegir un profesor privado en Quebec",
+  "ressourcesHubIntro": "Artículos prácticos para padres, estudiantes y adultos que buscan un profesor local o en línea — sin promesas de marketing ni inventario ficticio.",
+  "ressourcesGroupChooseTeacher": "Elegir un profesor",
+  "ressourcesGroupLearnConfidently": "Aprender con confianza",
+  "ressourcesGroupPopularDisciplines": "Disciplinas populares",
+  "ressourcesGroupBecomeTeacher": "Convertirse en profesor",
+  "ressourcesGroupBecomeTeacherDesc": "¿Ya enseñas una materia, un deporte o una disciplina creativa? Crea tu perfil para unirte al marketplace de Pratiqo.",
+  "ressourcesReadGuide": "Leer la guía",
+  "ressourcesSeeBlog": "Ver el blog de Pratiqo",
+  "ressourcesFindTeachersCta": "Ver profesores disponibles",
+  "ressourcesBecomeTeacherCta": "Convertirse en profesor en Pratiqo"
 }

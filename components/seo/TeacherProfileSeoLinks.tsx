@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Locale } from "@/lib/i18n/types";
+import { getResourceArticleForDisciplineLabel } from "@/lib/marketing/resourceGuideHub";
 import { resolveTeacherDisciplineHubHref } from "@/lib/seo/resolveTeacherDisciplineLink";
 
 export function TeacherProfileSeoLinks({
@@ -14,6 +15,7 @@ export function TeacherProfileSeoLinks({
   region?: string | null;
 }) {
   const href = resolveTeacherDisciplineHubHref({ discipline, city, region });
+  const resourceGuide = getResourceArticleForDisciplineLabel(discipline);
   const subject = discipline?.trim() || (locale === "fr" ? "cette discipline" : locale === "es" ? "esta disciplina" : "this subject");
   const label =
     locale === "fr"
@@ -47,6 +49,23 @@ export function TeacherProfileSeoLinks({
         <Link href="/ressources" className="font-semibold text-teal-700 hover:underline">
           {locale === "fr" ? "Guides Pratiqo" : locale === "es" ? "Guías Pratiqo" : "Pratiqo guides"}
         </Link>
+        {resourceGuide ? (
+          <>
+            <span className="text-[#D3D1C7]" aria-hidden>
+              ·
+            </span>
+            <Link
+              href={`/ressources/${resourceGuide.slug}`}
+              className="font-semibold text-teal-700 hover:underline"
+            >
+              {locale === "fr"
+                ? "Guide connexe"
+                : locale === "es"
+                  ? "Guía relacionada"
+                  : "Related guide"}
+            </Link>
+          </>
+        ) : null}
       </div>
     </nav>
   );
