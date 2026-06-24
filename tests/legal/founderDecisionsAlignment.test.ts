@@ -177,6 +177,7 @@ const allowedTeacherSeoPublicationWorkflowFiles = new Set<string>([
   "app/api/admin/users/[id]/teacher-seo-publish/route.ts",
   "components/teacher/TeacherSeoReadinessCard.tsx",
   "components/admin/TeacherSeoPublicationCard.tsx",
+  "lib/seo/adminTeacherSeoPublicationCopy.ts",
   "components/Dashboard.tsx",
   "components/teacher/TeacherAccountView.tsx",
   "app/(app)/admin/users/[id]/page.tsx",

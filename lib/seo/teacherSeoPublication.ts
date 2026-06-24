@@ -54,9 +54,18 @@ export type TeacherSeoPublicationRow = TeacherPublicSeoFields & {
   stripe_connect_disabled_reason?: string | null;
 };
 
+export type TeacherGoogleSeoPublicationStatus =
+  | "not_published"
+  | "requested"
+  | "blocked"
+  | "ready_to_publish"
+  | "published_in_google";
+
 export type TeacherSeoPublicationEvaluation = {
   contentReady: boolean;
   teacherRequestedPublication: boolean;
+  teacherPartialSeoRequest: boolean;
+  googleSeoStatus: TeacherGoogleSeoPublicationStatus;
   adminPublished: boolean;
   publicProfileLastIndexableAt: string | null;
   isPublic: boolean;
@@ -73,9 +82,28 @@ export type TeacherSeoPublicationEvaluation = {
   payoutBlockers: string[];
   canRequestPublication: boolean;
   canAdminPublish: boolean;
+  /** Clears only public_profile_last_indexable_at (SEO / sitemap). */
+  canAdminRemoveFromGoogle: boolean;
+  /** Sets is_public=false (marketplace visibility). */
+  canAdminHideFromMarketplace: boolean;
+  /** @deprecated Use canAdminRemoveFromGoogle */
   canAdminUnpublish: boolean;
   adminPublishBlockers: TeacherSeoMissingReasonKey[];
 };
+
+export function resolveTeacherGoogleSeoPublicationStatus(input: {
+  adminPublished: boolean;
+  teacherRequestedPublication: boolean;
+  teacherPartialSeoRequest: boolean;
+  adminPublishBlockers: TeacherSeoMissingReasonKey[];
+}): TeacherGoogleSeoPublicationStatus {
+  if (input.adminPublished) return "published_in_google";
+  if (!input.teacherRequestedPublication) {
+    return input.teacherPartialSeoRequest ? "requested" : "not_published";
+  }
+  if (input.adminPublishBlockers.length > 0) return "blocked";
+  return "ready_to_publish";
+}
 
 function normalizeTeachingMode(mode: string | null | undefined): string {
   return typeof mode === "string" ? mode.trim().toLowerCase() : "";
@@ -241,12 +269,25 @@ export function evaluateTeacherSeoPublication(
     isTeacherSeoAccountGateOpen(row) &&
     isTeacherMarketSupported(String(row.country_code ?? "").trim().toUpperCase());
 
-  const canAdminPublish = adminPublishBlockers.length === 0 && !isIndexable;
-  const canAdminUnpublish = (isPublic || adminPublished) && isTeacherSeoAccountGateOpen(row);
+  const teacherPartialSeoRequest =
+    row.public_profile_enabled === true || row.search_indexing_consent === true;
+  const googleSeoStatus = resolveTeacherGoogleSeoPublicationStatus({
+    adminPublished,
+    teacherRequestedPublication,
+    teacherPartialSeoRequest,
+    adminPublishBlockers,
+  });
+
+  const canAdminPublish = adminPublishBlockers.length === 0 && !adminPublished;
+  const accountGateOpen = isTeacherSeoAccountGateOpen(row);
+  const canAdminRemoveFromGoogle = adminPublished && accountGateOpen;
+  const canAdminHideFromMarketplace = isPublic && accountGateOpen;
 
   return {
     contentReady,
     teacherRequestedPublication,
+    teacherPartialSeoRequest,
+    googleSeoStatus,
     adminPublished,
     publicProfileLastIndexableAt,
     isPublic,
@@ -263,7 +304,9 @@ export function evaluateTeacherSeoPublication(
     payoutBlockers,
     canRequestPublication,
     canAdminPublish,
-    canAdminUnpublish,
+    canAdminRemoveFromGoogle,
+    canAdminHideFromMarketplace,
+    canAdminUnpublish: canAdminRemoveFromGoogle,
     adminPublishBlockers,
   };
 }

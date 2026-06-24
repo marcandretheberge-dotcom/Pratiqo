@@ -10,6 +10,7 @@ import {
   collectTeacherSeoAdminPublishBlockers,
   evaluateTeacherSeoPublication,
   isTeacherSeoProfileContentReady,
+  resolveTeacherGoogleSeoPublicationStatus,
   teacherHasRequestedSeoPublication,
 } from "../../lib/seo/teacherSeoPublication";
 import {
@@ -157,7 +158,53 @@ test("admin publish remains available when teacher is already public but admin m
   assert.equal(evaluation.adminPublished, false);
   assert.equal(evaluation.publicProfileLastIndexableAt, null);
   assert.equal(evaluation.isSitemapEligible, false);
+  assert.equal(evaluation.googleSeoStatus, "ready_to_publish");
   assert.equal(evaluation.canAdminPublish, true);
+});
+
+test("google SEO status is not published when admin marker is missing", () => {
+  const row = {
+    ...baseRow,
+    public_profile_enabled: false,
+    search_indexing_consent: false,
+  };
+  const evaluation = evaluateTeacherSeoPublication(row, "fr");
+  assert.equal(evaluation.googleSeoStatus, "not_published");
+});
+
+test("google SEO status is blocked when teacher requested but blockers remain", () => {
+  const row = {
+    ...baseRow,
+    public_profile_enabled: true,
+    search_indexing_consent: true,
+    public_profile_slug: "",
+    teaching_mode: "",
+  };
+  const evaluation = evaluateTeacherSeoPublication(row, "fr");
+  assert.equal(evaluation.googleSeoStatus, "blocked");
+});
+
+test("google SEO status is published in Google when admin marker exists", () => {
+  const row = {
+    ...baseRow,
+    is_public: true,
+    public_profile_enabled: true,
+    search_indexing_consent: true,
+    public_profile_slug: "marie-d-espagnol-levis",
+    public_profile_last_indexable_at: "2026-06-01T12:00:00.000Z",
+  };
+  const evaluation = evaluateTeacherSeoPublication(row, "fr");
+  assert.equal(evaluation.googleSeoStatus, "published_in_google");
+});
+
+test("resolveTeacherGoogleSeoPublicationStatus treats partial teacher request as requested", () => {
+  const status = resolveTeacherGoogleSeoPublicationStatus({
+    adminPublished: false,
+    teacherRequestedPublication: false,
+    teacherPartialSeoRequest: true,
+    adminPublishBlockers: ["search_consent_missing"],
+  });
+  assert.equal(status, "requested");
 });
 
 test("teacher self-serve visibility + consent without admin marker is not indexable", () => {
@@ -187,9 +234,21 @@ test("teacher visibility route does not set admin publication marker", () => {
   assert.doesNotMatch(visibilityRoute, /public_profile_last_indexable_at/);
 });
 
-test("admin unpublish clears admin publication marker", () => {
+test("admin unpublish clears admin publication marker only", () => {
   const adminRoute = read("app/api/admin/users/[id]/teacher-seo-publish/route.ts");
-  assert.match(adminRoute, /public_profile_last_indexable_at:\s*null/);
+  const unpublishBlock = adminRoute.match(/action === "unpublish"[\s\S]*?} else if \(action === "hide_marketplace"\)/);
+  assert.ok(unpublishBlock, "expected unpublish branch before hide_marketplace");
+  assert.match(unpublishBlock![0], /public_profile_last_indexable_at:\s*null/);
+  assert.doesNotMatch(unpublishBlock![0], /is_public:\s*false/);
+});
+
+test("admin hide_marketplace action sets is_public false without clearing SEO marker in same update", () => {
+  const adminRoute = read("app/api/admin/users/[id]/teacher-seo-publish/route.ts");
+  assert.match(adminRoute, /hide_marketplace/);
+  const hideBlock = adminRoute.match(/action === "hide_marketplace"[\s\S]*?} else \{/);
+  assert.ok(hideBlock);
+  assert.match(hideBlock![0], /is_public:\s*false/);
+  assert.doesNotMatch(hideBlock![0], /public_profile_last_indexable_at:\s*null/);
 });
 
 test("indexability requires admin publication marker in central helper", () => {
@@ -213,7 +272,22 @@ test("published teacher is indexable and sitemap eligible", () => {
   assert.equal(evaluation.adminPublished, true);
   assert.equal(evaluation.publicProfileLastIndexableAt, "2026-06-01T12:00:00.000Z");
   assert.equal(evaluation.canAdminPublish, false);
+  assert.equal(evaluation.canAdminRemoveFromGoogle, true);
   assert.equal(evaluation.canAdminUnpublish, true);
+});
+
+test("remove from Google eligibility requires admin marker", () => {
+  const row = {
+    ...baseRow,
+    is_public: true,
+    public_profile_enabled: true,
+    search_indexing_consent: true,
+    public_profile_slug: "marie-d-espagnol-levis",
+    public_profile_last_indexable_at: null,
+  };
+  const evaluation = evaluateTeacherSeoPublication(row, "fr");
+  assert.equal(evaluation.canAdminRemoveFromGoogle, false);
+  assert.equal(evaluation.canAdminHideFromMarketplace, true);
 });
 
 test("unpublished private teacher excluded from indexable SEO profile", () => {
@@ -234,12 +308,16 @@ test("teacher seo publication API route exists server-side", () => {
   assert.doesNotMatch(teacherRoute, /is_public:\s*true/);
 });
 
-test("admin seo publish route sets is_public on publish only", () => {
+test("admin seo publish route sets is_public on publish and hide_marketplace only", () => {
   const adminRoute = read("app/api/admin/users/[id]/teacher-seo-publish/route.ts");
   assert.match(adminRoute, /requireAdminApi/);
   assert.match(adminRoute, /collectTeacherSeoAdminPublishBlockers/);
-  assert.match(adminRoute, /is_public:\s*true/);
-  assert.match(adminRoute, /is_public:\s*false/);
+  const publishBlock = adminRoute.match(/action === "publish"[\s\S]*?} else if \(action === "unpublish"\)/);
+  assert.ok(publishBlock);
+  assert.match(publishBlock![0], /is_public:\s*true/);
+  const hideBlock = adminRoute.match(/action === "hide_marketplace"[\s\S]*?} else \{/);
+  assert.ok(hideBlock);
+  assert.match(hideBlock![0], /is_public:\s*false/);
   assert.doesNotMatch(adminRoute, /deactivated_at/);
 });
 
@@ -260,26 +338,35 @@ test("admin user page mounts SEO publication card", () => {
   assert.match(page, /evaluateTeacherSeoPublication/);
 });
 
-test("admin SEO publication card is visible, explicit, and shows blockers inside the card", () => {
+test("admin SEO publication card shows explicit Google SEO toggle section", () => {
   const card = read("components/admin/TeacherSeoPublicationCard.tsx");
-  assert.match(card, /Publication SEO du profil/);
-  assert.match(
-    card,
-    /Contrôlez si ce profil de professeur peut être publié dans Google et ajouté au sitemap\./,
-  );
-  assert.match(card, /Non demandé/);
-  assert.match(card, /Demandé par le professeur/);
-  assert.match(card, /Prêt pour publication/);
-  assert.match(card, /Publié dans le sitemap/);
-  assert.match(card, /Bloqué/);
-  assert.match(card, /public_profile_last_indexable_at/);
+  const copy = read("lib/seo/adminTeacherSeoPublicationCopy.ts");
+  assert.match(card, /getAdminTeacherSeoPublicationCopy/);
+  assert.match(card, /admin-teacher-seo-google-toggle-section/);
+  assert.match(card, /admin-teacher-seo-status-pill/);
+  assert.match(card, /admin-teacher-seo-toggle-actions/);
   assert.match(card, /admin-teacher-seo-publish-button/);
   assert.match(card, /admin-teacher-seo-unpublish-button/);
-  assert.match(card, /Le professeur doit d&apos;abord demander la publication et accepter l&apos;indexation\./);
+  assert.match(card, /admin-teacher-seo-hide-marketplace-button/);
+  assert.match(copy, /Publication SEO Google/);
+  assert.match(copy, /Publier dans Google/);
+  assert.match(copy, /Retirer de Google/);
+  assert.match(copy, /Non publié/);
+  assert.match(copy, /Demandé/);
+  assert.match(copy, /Bloqué/);
+  assert.match(copy, /Prêt à publier/);
+  assert.match(copy, /Publié dans Google/);
+  assert.match(copy, /public_profile_last_indexable_at/);
   assert.match(
-    card,
-    /Connect Stripe doit être complété avant la publication d&apos;un profil qui accepte les réservations payantes\./,
+    copy,
+    /Cette option contrôle l'indexation Google et l'ajout au sitemap\. Elle ne garantit pas le classement dans Google\./,
   );
+  assert.match(
+    copy,
+    /Le professeur doit d'abord avoir un profil complet et accepter la publication publique\./,
+  );
+  assert.match(copy, /Visibilité marketplace Pratiqo/);
+  assert.match(copy, /Rendre le profil privé sur Pratiqo/);
   assert.match(card, /generatedTitle/);
   assert.match(card, /generatedDescription/);
   assert.match(card, /canonicalUrl/);
