@@ -162,8 +162,8 @@ test("LandingHeader (used by this page) ships the modern Pratiqo logo + locale +
     "LandingHeader must link to /tarifs (Tarifs)",
   );
   assert.ok(
-    /\/blog/.test(headerSrc),
-    "LandingHeader must link to /blog (Ressources)",
+    /\/ressources/.test(headerSrc),
+    "LandingHeader must link to /ressources (Ressources)",
   );
   assert.ok(
     /\/login/.test(headerSrc),

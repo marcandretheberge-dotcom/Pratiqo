@@ -309,6 +309,9 @@ test("/ressources hub links to published guides dynamically", () => {
   const hubSrc = read("app/(marketing)/ressources/RessourcesIndexContent.tsx");
   assert.match(hubSrc, /\/ressources\/\$\{article\.slug\}/);
   assert.match(hubSrc, /trouver-un-prof/);
+  assert.match(hubSrc, /devenir-professeur/);
+  assert.match(hubSrc, /href="\/blog"/);
+  assert.match(hubSrc, /resourceGuideHub/);
   const registry = read("lib/seo/resourceArticles.ts");
   assert.match(registry, /comment-choisir-professeur-prive-quebec/);
   assert.match(registry, /professeur-prive-local-vs-plateforme-internationale/);

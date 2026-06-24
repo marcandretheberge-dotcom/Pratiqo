@@ -90,6 +90,18 @@ export default function BlogIndexContent({ posts }: { posts: BlogPost[] }) {
     <div className="min-h-[100dvh] bg-[#FAFAF8]">
       <BlogPublicHeader />
 
+      <div className="border-b border-[#DCEAE3] bg-[#EFF8F4]">
+        <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <p className="text-sm leading-relaxed text-[#2C2C2A]">{t("blogResourcesBanner")}</p>
+          <Link
+            href="/ressources"
+            className="inline-flex shrink-0 items-center justify-center rounded-xl border border-teal-600/30 bg-white px-4 py-2 text-sm font-semibold text-teal-700 hover:bg-teal-50"
+          >
+            {t("blogResourcesBannerCta")}
+          </Link>
+        </div>
+      </div>
+
       {/* ── HEADER ───────────────────────────────────────────────────────── */}
       <header className="bg-[#2C2C2A] text-white">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 py-14 sm:py-20">

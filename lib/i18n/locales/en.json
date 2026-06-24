@@ -2388,5 +2388,20 @@
   "lessonDurationSaving": "Saving…",
   "lessonDurationSaved": "Saved",
   "lessonDurationSaveError": "Could not save duration. Try again.",
-  "lessonDurationAutosaveHelp": "This setting determines the duration offered to students when they book a standard lesson."
+  "lessonDurationAutosaveHelp": "This setting determines the duration offered to students when they book a standard lesson.",
+  "navBlog": "Blog",
+  "blogResourcesBanner": "New: explore our practical guides in the Resources section.",
+  "blogResourcesBannerCta": "See resources",
+  "ressourcesHubEyebrow": "Resources",
+  "ressourcesHubTitle": "Guides to choosing a private teacher in Quebec",
+  "ressourcesHubIntro": "Practical articles for parents, students, and adults looking for a local or online teacher — no marketing hype or fake listings.",
+  "ressourcesGroupChooseTeacher": "Choosing a teacher",
+  "ressourcesGroupLearnConfidently": "Learning with confidence",
+  "ressourcesGroupPopularDisciplines": "Popular disciplines",
+  "ressourcesGroupBecomeTeacher": "Become a teacher",
+  "ressourcesGroupBecomeTeacherDesc": "Already teaching a subject, sport, or creative skill? Create your profile to join the Pratiqo marketplace.",
+  "ressourcesReadGuide": "Read the guide",
+  "ressourcesSeeBlog": "See the Pratiqo blog",
+  "ressourcesFindTeachersCta": "See available teachers",
+  "ressourcesBecomeTeacherCta": "Become a teacher on Pratiqo"
 }

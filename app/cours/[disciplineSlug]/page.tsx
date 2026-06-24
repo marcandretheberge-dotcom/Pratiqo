@@ -12,6 +12,7 @@ import {
   buildSubjectSearchHref,
   getSubjectLandingPageBySlug,
 } from "@/lib/seo/subjectLandingPages";
+import { getResourceArticleForDisciplineSlug } from "@/lib/marketing/resourceGuideHub";
 
 export function generateStaticParams() {
   return SUBJECT_LANDING_PAGES.map((page) => ({ disciplineSlug: page.slug }));
@@ -43,6 +44,13 @@ export default async function SubjectLandingPage({
   const content = page.content[locale];
   const searchHref = buildSubjectSearchHref(page);
   const signupHref = locale === "fr" ? "/devenir-enseignant" : "/become-teacher";
+  const resourceGuide = getResourceArticleForDisciplineSlug(page.slug);
+  const resourceGuideLabel =
+    locale === "fr"
+      ? "Lire le guide Pratiqo"
+      : locale === "es"
+        ? "Leer la guía de Pratiqo"
+        : "Read the Pratiqo guide";
 
   return (
     <>
@@ -148,6 +156,36 @@ export default async function SubjectLandingPage({
               </section>
             </div>
           </section>
+
+          {resourceGuide ? (
+            <section className="px-4 pb-12 sm:px-6">
+              <div className="mx-auto max-w-6xl rounded-3xl border border-[#DCEAE3] bg-[#F8FBF8] p-6 sm:p-8">
+                <h2 className="text-xl font-black text-[#10251F]">
+                  {locale === "fr"
+                    ? "Guide pour bien choisir"
+                    : locale === "es"
+                      ? "Guía para elegir bien"
+                      : "Guide to choosing well"}
+                </h2>
+                <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[#5C6670]">{resourceGuide.description}</p>
+                <div className="mt-4 flex flex-wrap gap-3">
+                  <Link
+                    href={`/ressources/${resourceGuide.slug}`}
+                    className="inline-flex items-center gap-2 rounded-2xl bg-teal-700 px-5 py-2.5 text-sm font-bold text-white hover:brightness-105"
+                  >
+                    <BookOpen size={16} aria-hidden />
+                    {resourceGuideLabel}
+                  </Link>
+                  <Link
+                    href="/ressources"
+                    className="inline-flex items-center gap-2 rounded-2xl border border-[#BFDCD4] bg-white px-5 py-2.5 text-sm font-semibold text-teal-800 hover:border-teal-500"
+                  >
+                    {locale === "fr" ? "Tous les guides" : locale === "es" ? "Todas las guías" : "All guides"}
+                  </Link>
+                </div>
+              </div>
+            </section>
+          ) : null}
 
           <section className="border-y border-[#DCEAE3] bg-white px-4 py-10 sm:px-6">
             <div className="mx-auto flex max-w-5xl flex-col gap-5 rounded-3xl bg-[#0F6E56] p-6 text-white sm:p-8 lg:flex-row lg:items-center lg:justify-between">
