@@ -70,10 +70,20 @@ const expected = {
     esH1: "Encuentra una clase de danza o baile",
     query: "danse",
   },
+  photography: {
+    slug: "photographie",
+    frTitle: "Cours de photographie privés | Pratiqo",
+    enTitle: "Private photography lessons | Pratiqo",
+    esTitle: "Clases privadas de fotografía | Pratiqo",
+    frH1: "Trouver un cours de photographie",
+    enH1: "Find a photography class",
+    esH1: "Encuentra una clase de fotografía",
+    query: "photographie",
+  },
 } as const;
 
-test("subject landing metadata source covers the four lifestyle disciplines", () => {
-  assert.equal(SUBJECT_LANDING_PAGES.length, 4);
+test("subject landing metadata source covers the lifestyle disciplines", () => {
+  assert.equal(SUBJECT_LANDING_PAGES.length, 5);
   for (const [key, entry] of Object.entries(expected)) {
     const page = SUBJECT_LANDING_PAGES.find((item) => item.key === key);
     assert.ok(page, `${key} must be registered`);
@@ -159,7 +169,7 @@ test("sitemap includes only subject landing pages, not empty city-by-subject com
   }
 });
 
-test("/trouver-un-prof links internally to the four new subject landing pages", () => {
+test("/trouver-un-prof links internally to subject landing pages", () => {
   for (const path of SUBJECT_LANDING_PATHS) {
     assert.match(
       trouverUnProfSrc,
@@ -175,7 +185,7 @@ test("structured data stays honest: BreadcrumbList only, no fake reviews or inve
   assert.doesNotMatch(subjectSeoSrc, /guaranteed|guarantee|fake reviews|fake ratings/i);
 });
 
-test("search aliases for the four lifestyle subjects still resolve", () => {
+test("search aliases for lifestyle subjects still resolve", () => {
   const cases: Array<[string, Locale, string]> = [
     ["coach sportif", "fr", "coach_trainer"],
     ["personal trainer", "en", "coach_trainer"],

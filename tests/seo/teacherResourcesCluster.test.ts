@@ -13,8 +13,11 @@ import {
 import {
   getPublishedResourceArticles,
   getResourceArticleBySlug,
+  getResourceArticleCanonical,
+  LIFESTYLE_RESOURCE_SLUGS,
   RESOURCE_ARTICLES,
 } from "../../lib/seo/resourceArticles";
+import { loadResourceArticleMarkdown } from "../../lib/seo/resourceArticleContent";
 import { resolveTeacherDisciplineHubHref } from "../../lib/seo/resolveTeacherDisciplineLink";
 import { SITE_URL } from "../../lib/seo/site";
 import {
@@ -208,18 +211,98 @@ test("incomplete teacher page does not emit JSON-LD in professeurs route when no
   assert.match(pageSrc, /bundle\.indexable/);
 });
 
-test("sitemap includes published /ressources articles only", () => {
+test("draft resource articles are excluded from sitemap and routing", () => {
   const sitemapSrc = read("app/sitemap.ts");
   assert.match(sitemapSrc, /getPublishedResourceArticles/);
-  assert.match(sitemapSrc, /\/ressources\//);
-  const draft = RESOURCE_ARTICLES.find((a) => a.status === "draft");
-  assert.ok(draft);
-  assert.doesNotMatch(sitemapSrc, new RegExp(draft!.slug));
+  for (const article of RESOURCE_ARTICLES) {
+    if (article.status === "draft") {
+      assert.doesNotMatch(sitemapSrc, new RegExp(article.slug));
+      assert.equal(getResourceArticleBySlug(article.slug), undefined);
+    }
+  }
 });
 
-test("draft resource article is not routable", () => {
-  assert.equal(getResourceArticleBySlug("cours-cuisine-prive"), undefined);
-  assert.equal(getPublishedResourceArticles().length, 2);
+test("seven resource guides are published", () => {
+  assert.equal(getPublishedResourceArticles().length, 7);
+  assert.equal(RESOURCE_ARTICLES.filter((a) => a.status === "draft").length, 0);
+});
+
+const NEW_RESOURCE_SLUGS = [
+  "cours-cuisine-prive",
+  "choisir-coach-entraineur-prive",
+  "choisir-cours-danse",
+  "choisir-cours-arts-martiaux",
+  "choisir-cours-photographie",
+] as const;
+
+test("new resource articles are published with canonical paths and cours links", () => {
+  for (const slug of NEW_RESOURCE_SLUGS) {
+    const article = getResourceArticleBySlug(slug);
+    assert.ok(article, `${slug} must be published`);
+    assert.equal(getResourceArticleCanonical(slug), `${SITE_URL}/ressources/${slug}`);
+    assert.ok(
+      article.relatedPaths.some((p) => p.startsWith("/cours/")),
+      `${slug} must link to a /cours/ page`,
+    );
+    assert.ok(article.relatedPaths.includes("/trouver-un-prof"), `${slug} must link to /trouver-un-prof`);
+    assert.ok(article.relatedPaths.includes("/devenir-professeur"), `${slug} must link to /devenir-professeur`);
+  }
+});
+
+test("resource article markdown includes expected H1 topic in registry title", () => {
+  for (const slug of NEW_RESOURCE_SLUGS) {
+    const article = getResourceArticleBySlug(slug)!;
+    const md = loadResourceArticleMarkdown(article.markdownFile);
+    assert.ok(md.length > 400, `${slug} content must not be thin`);
+    assert.match(md, /\/trouver-un-prof/);
+    assert.match(md, /\/devenir-professeur/);
+  }
+});
+
+test("martial arts guide avoids combat-instruction framing", () => {
+  const md = loadResourceArticleMarkdown("choisir-cours-arts-martiaux.md");
+  assert.match(md, /encadrement sécuritaire/i);
+  assert.match(md, /aucune technique de combat/i);
+  assert.doesNotMatch(md, /comment frapper|coups? de poing|enchaînement offensif/i);
+});
+
+test("coaching guide avoids body-transformation promises", () => {
+  const md = loadResourceArticleMarkdown("choisir-coach-entraineur-prive.md");
+  assert.match(md, /objectifs réalistes/i);
+  assert.match(md, /ne promet ni perte de poids garantie/i);
+  assert.doesNotMatch(md, /transformation corporelle assurée|perte de poids garantie pour vous/i);
+});
+
+test("dance guide avoids sexualized framing", () => {
+  const md = loadResourceArticleMarkdown("choisir-cours-danse.md");
+  assert.match(md, /respectueux/i);
+  assert.doesNotMatch(md, /sensuel|sexy|seduct/i);
+});
+
+test("photography guide avoids guaranteed professional outcomes", () => {
+  const md = loadResourceArticleMarkdown("choisir-cours-photographie.md");
+  assert.match(md, /sans promettre/i);
+  assert.match(md, /carrière garantie|revenus garantis|revenus assurés/i);
+  assert.doesNotMatch(md, /revenus garantis pour vous|certification professionnelle garantie/i);
+  const article = getResourceArticleBySlug("choisir-cours-photographie");
+  assert.ok(article?.faq?.some((item) => /ne promet pas de carrière ou de revenus garantis/i.test(item.answer)));
+});
+
+test("photography subject landing page is registered and indexable", () => {
+  const subjectSrc = read("lib/seo/subjectLandingPages.ts");
+  assert.match(subjectSrc, /slug:\s*"photographie"/);
+  assert.match(subjectSrc, /Cours de photographie privés \| Pratiqo/);
+  assert.equal(
+    resolveTeacherDisciplineHubHref({ discipline: "Photographie", city: "Montréal" }),
+    "/cours/photographie",
+  );
+  assert.equal(resolveTeacherDisciplineHubHref({ discipline: "photographie" }), "/cours/photographie");
+});
+
+test("lifestyle resource slugs registry matches published articles", () => {
+  for (const slug of LIFESTYLE_RESOURCE_SLUGS) {
+    assert.ok(getResourceArticleBySlug(slug), `${slug} in LIFESTYLE_RESOURCE_SLUGS must be published`);
+  }
 });
 
 test("/ressources hub links to published guides dynamically", () => {
