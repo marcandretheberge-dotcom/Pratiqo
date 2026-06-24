@@ -29,6 +29,7 @@ const EN_SUBJECT_LABELS: Record<string, string> = {
   cuisine: "cooking",
   italien: "Italian",
   "arts martiaux": "martial arts",
+  photographie: "photography",
 };
 
 const ES_SUBJECT_LABELS: Record<string, string> = {
@@ -42,6 +43,7 @@ const ES_SUBJECT_LABELS: Record<string, string> = {
   cuisine: "cocina",
   italien: "italiano",
   "arts martiaux": "artes marciales",
+  photographie: "fotografía",
 };
 
 /** Locale-specific subject label for teacher SEO copy (title, description, H1, JSON-LD). */

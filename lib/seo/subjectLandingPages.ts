@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import type { Locale } from "@/lib/i18n/types";
 import { SITE_URL } from "@/lib/seo/site";
 
-export type SubjectLandingKey = "coach_trainer" | "cooking" | "martial_arts" | "dance";
+export type SubjectLandingKey = "coach_trainer" | "cooking" | "martial_arts" | "dance" | "photography";
 
 export interface SubjectLandingContent {
   label: string;
@@ -378,6 +378,94 @@ export const SUBJECT_LANDING_PAGES: SubjectLandingPage[] = [
           "Si todavía no aparece ninguna clase, prueba un estilo específico como salsa, ballet, hip-hop o bachata.",
         teacherRecruitment:
           "¿Enseñas danza o baile? Publica tu perfil para que te encuentren alumnos que buscan clases privadas.",
+      },
+    },
+  },
+  {
+    key: "photography",
+    slug: "photographie",
+    searchQuery: "photographie",
+    content: {
+      fr: {
+        label: "Photographie",
+        title: "Cours de photographie privés | Pratiqo",
+        description:
+          "Trouvez un professeur de photographie pour les bases de l'appareil, la composition, la lumière ou la retouche — en ligne ou près de chez vous.",
+        h1: "Trouver un cours de photographie",
+        intro:
+          "Débutant ou amateur passionné, un cours privé peut vous aider à mieux voir, cadrer et créer — sans promesse de portfolio garanti ni de revenus professionnels.",
+        learnTitle: "Sujets souvent abordés",
+        learnItems: [
+          "bases de l'appareil ou du téléphone, réglages et mise au point",
+          "composition, lumière naturelle, portrait familial ou produit",
+          "workflow de retouche légère et organisation de vos fichiers",
+        ],
+        whyTitle: "Une recherche honnête",
+        whyItems: [
+          "comparez le profil, l'expérience et le format proposé",
+          "vérifiez les disponibilités réelles dans la recherche Pratiqo",
+          "aucune fiche professeur fictive n'est créée pour remplir la page",
+        ],
+        searchCta: "Chercher un professeur de photographie",
+        teacherCta: "Enseigner la photographie sur Pratiqo",
+        emptyState:
+          "S'il n'y a pas encore de professeur près de vous, essayez le format en ligne ou revenez lorsque de nouveaux profils seront publiés.",
+        teacherRecruitment:
+          "Vous enseignez la photographie ou accompagnez des débutants? Publiez votre profil pour recevoir des demandes structurées.",
+      },
+      en: {
+        label: "Photography",
+        title: "Private photography lessons | Pratiqo",
+        description:
+          "Find a photography teacher for camera basics, composition, lighting, or editing — online or near you.",
+        h1: "Find a photography class",
+        intro:
+          "Beginner or hobby photographer, a private lesson can help you see, frame, and create better — with no promise of a professional portfolio or income.",
+        learnTitle: "Topics often covered",
+        learnItems: [
+          "camera or phone basics, settings, and focus",
+          "composition, natural light, family portrait, or product basics",
+          "light editing workflow and file organization",
+        ],
+        whyTitle: "Honest search",
+        whyItems: [
+          "compare the profile, experience, and lesson format",
+          "check real availability in Pratiqo search",
+          "no fake teacher card is created to fill this page",
+        ],
+        searchCta: "Search photography teachers",
+        teacherCta: "Teach photography on Pratiqo",
+        emptyState:
+          "If no teacher appears near you yet, try online lessons or check back when new profiles are published.",
+        teacherRecruitment:
+          "Do you teach photography or guide beginners? Publish your profile to receive structured requests.",
+      },
+      es: {
+        label: "Fotografía",
+        title: "Clases privadas de fotografía | Pratiqo",
+        description:
+          "Encuentra un profesor de fotografía para lo básico de la cámara, composición, luz o edición — en línea o cerca de ti.",
+        h1: "Encuentra una clase de fotografía",
+        intro:
+          "Principiante o aficionado, una clase privada puede ayudarte a ver, encuadrar y crear mejor — sin promesa de portafolio garantizado ni ingresos profesionales.",
+        learnTitle: "Temas que suelen verse",
+        learnItems: [
+          "bases de cámara o teléfono, ajustes y enfoque",
+          "composición, luz natural, retrato familiar o producto",
+          "flujo de edición ligera y organización de archivos",
+        ],
+        whyTitle: "Búsqueda honesta",
+        whyItems: [
+          "compara el perfil, la experiencia y el formato propuesto",
+          "verifica la disponibilidad real en la búsqueda de Pratiqo",
+          "no se crea ninguna ficha falsa de profesor para llenar esta página",
+        ],
+        searchCta: "Buscar profesores de fotografía",
+        teacherCta: "Enseñar fotografía en Pratiqo",
+        emptyState:
+          "Si todavía no hay profesor cerca de ti, prueba el formato en línea o vuelve cuando se publiquen nuevos perfiles.",
+        teacherRecruitment:
+          "¿Enseñas fotografía o acompañas principiantes? Publica tu perfil para recibir solicitudes estructuradas.",
       },
     },
   },

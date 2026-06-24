@@ -109,6 +109,7 @@ const DISCIPLINES = [
   { label: "Cuisine", href: "/cours/cuisine" },
   { label: "Arts martiaux", href: "/cours/arts-martiaux" },
   { label: "Danse", href: "/cours/danse" },
+  { label: "Photographie", href: "/cours/photographie" },
 ];
 
 const CITIES = [
