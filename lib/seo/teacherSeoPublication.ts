@@ -13,6 +13,7 @@ import {
   isTeacherAdminSeoPublished,
   isTeacherPublicProfileIndexable,
   isTeacherPublicProfilePageVisible,
+  isTeacherSeoAcceptedTeachingMode,
   publicTeacherFirstName,
   resolveTeacherSeoCityLabel,
   teacherHasAtLeastOneSubject,
@@ -105,10 +106,6 @@ export function resolveTeacherGoogleSeoPublicationStatus(input: {
   return "ready_to_publish";
 }
 
-function normalizeTeachingMode(mode: string | null | undefined): string {
-  return typeof mode === "string" ? mode.trim().toLowerCase() : "";
-}
-
 /** Profile/account gates for SEO without requiring marketplace `is_public`. */
 export function isTeacherSeoAccountGateOpen(row: TeacherMarketplaceVisibilityRow): boolean {
   if (!UUID_RE.test(row.id)) return false;
@@ -124,8 +121,7 @@ export function isTeacherSeoAccountGateOpen(row: TeacherMarketplaceVisibilityRow
 export function teacherHasPublicTeachingFormat(
   row: Pick<TeacherSeoPublicationRow, "teaching_mode">,
 ): boolean {
-  const mode = normalizeTeachingMode(row.teaching_mode);
-  return mode === "online" || mode === "both" || mode === "in_person" || mode === "in-person";
+  return isTeacherSeoAcceptedTeachingMode(row.teaching_mode);
 }
 
 export function teacherHasRequestedSeoPublication(

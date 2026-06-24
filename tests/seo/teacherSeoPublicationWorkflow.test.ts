@@ -11,12 +11,17 @@ import {
   evaluateTeacherSeoPublication,
   isTeacherSeoProfileContentReady,
   resolveTeacherGoogleSeoPublicationStatus,
+  teacherHasPublicTeachingFormat,
   teacherHasRequestedSeoPublication,
 } from "../../lib/seo/teacherSeoPublication";
 import {
+  buildTeacherPublicProfileDescription,
   isTeacherPublicProfileIndexable,
   isTeacherPublicProfilePageVisible,
+  isTeacherSeoAcceptedTeachingMode,
+  resolveTeacherSeoCityLabel,
 } from "../../lib/seo/teacherPublicProfile";
+import { formatTeacherSeoTeachingFormatLabel } from "../../lib/seo/teacherPublicProfileLabels";
 
 const REPO_ROOT = process.cwd();
 function read(relativePath: string): string {
@@ -129,6 +134,72 @@ test("admin publish blocked when teaching format is missing", () => {
   const evaluation = evaluateTeacherSeoPublication(row, "fr");
   assert.ok(evaluation.adminPublishBlockers.includes("teaching_format"));
   assert.equal(evaluation.canAdminPublish, false);
+});
+
+test("teaching_mode all is an accepted public SEO teaching format", () => {
+  assert.equal(isTeacherSeoAcceptedTeachingMode("all"), true);
+  assert.equal(teacherHasPublicTeachingFormat({ teaching_mode: "all" }), true);
+});
+
+test("teaching_mode all satisfies SEO readiness without teaching_format blocker", () => {
+  const francisStyleRow = {
+    ...baseRow,
+    name: "Francis Audet",
+    discipline: "Guitare",
+    city: "Saint-Georges",
+    region: "QC",
+    teaching_mode: "all",
+    is_public: true,
+    public_profile_enabled: true,
+    search_indexing_consent: true,
+    public_profile_slug: "francis-a-guitare-saint-georges",
+  };
+  assert.equal(isTeacherSeoProfileContentReady(francisStyleRow), true);
+  const evaluation = evaluateTeacherSeoPublication(francisStyleRow, "fr");
+  assert.equal(evaluation.contentReady, true);
+  assert.ok(!evaluation.adminPublishBlockers.includes("teaching_format"));
+  assert.ok(!evaluation.missingReasonKeys.includes("teaching_format"));
+});
+
+test("teacher with teaching_mode all can request publication when other fields complete", () => {
+  const row = { ...baseRow, teaching_mode: "all" };
+  assert.equal(isTeacherSeoProfileContentReady(row), true);
+  assert.equal(evaluateTeacherSeoPublication(row, "fr").canRequestPublication, true);
+});
+
+test("metadata and teaching format label render safely for teaching_mode all", () => {
+  const labelFr = formatTeacherSeoTeachingFormatLabel("fr", "all");
+  assert.match(labelFr ?? "", /En ligne, chez le professeur et chez l'élève/);
+  const labelEn = formatTeacherSeoTeachingFormatLabel("en", "all");
+  assert.match(labelEn ?? "", /Online, at the teacher's place and at the student's place/);
+  const cityLabel = resolveTeacherSeoCityLabel("fr", {
+    city: "Saint-Georges",
+    region: "QC",
+    teachingMode: "all",
+  });
+  assert.equal(cityLabel, "Saint-Georges");
+  const description = buildTeacherPublicProfileDescription({
+    locale: "fr",
+    subject: "Guitare",
+    firstName: "Francis",
+    cityLabel,
+  });
+  assert.match(description ?? "", /en ligne ou en personne/i);
+});
+
+test("teaching_mode all without admin marker still requires admin SEO publication", () => {
+  const row = {
+    ...baseRow,
+    teaching_mode: "all",
+    public_profile_enabled: true,
+    search_indexing_consent: true,
+    public_profile_slug: "marie-d-espagnol-levis",
+    public_profile_last_indexable_at: null,
+  };
+  assert.equal(isTeacherPublicProfileIndexable(row), false);
+  const evaluation = evaluateTeacherSeoPublication(row, "fr");
+  assert.equal(evaluation.canAdminPublish, true);
+  assert.ok(evaluation.missingReasonKeys.includes("not_admin_published"));
 });
 
 test("admin publish eligible for complete consented teacher with payout ready", () => {
