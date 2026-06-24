@@ -31,7 +31,7 @@
  *
  *  7. Production noindex accidentally landing on the homepage,
  *     /tarifs, /devenir-enseignant, /become-teacher, /cours, or
- *     /tuteurs-prive.
+ *     /tuteurs.
  *
  *  8. The homepage ships an empty SSR body for crawlers because
  *     `LandingAuthGate` returns null while auth state is resolving.
@@ -92,7 +92,8 @@ const trouverUnProfSrc = read("app/(marketing)/trouver-un-prof/page.tsx");
 const francisationSrc = read("app/(marketing)/francisation/page.tsx");
 const groupSessionsLayoutSrc = read("app/group-sessions/layout.tsx");
 const coursPageSrc = read("app/cours/[disciplineSlug]/[citySlug]/page.tsx");
-const tuteursPageSrc = read("app/tuteurs-prive/[citySlug]/page.tsx");
+const tuteursPageSrc = read("app/tuteurs/[citySlug]/page.tsx");
+const legacyTuteursRedirectSrc = read("app/tuteurs-prive/[citySlug]/page.tsx");
 
 // ── Domain & origin ──────────────────────────────────────────────────
 test("SITE_URL points to pratiqo.ca (never pratiqo.com)", () => {
@@ -125,7 +126,8 @@ test("Repository sources never reference pratiqo.com", () => {
     ["/francisation", francisationSrc],
     ["/group-sessions layout", groupSessionsLayoutSrc],
     ["/cours/.../...", coursPageSrc],
-    ["/tuteurs-prive/...", tuteursPageSrc],
+    ["/tuteurs/...", tuteursPageSrc],
+    ["/tuteurs-prive redirect", legacyTuteursRedirectSrc],
   ] as const) {
     assert.ok(
       !/pratiqo\.com\b/.test(src),
@@ -231,13 +233,13 @@ const MARKETING_CANONICALS: Array<{ src: string; needle: RegExp; label: string }
   },
   {
     src: coursPageSrc,
-    needle: /canonical\s*:\s*`\$\{(?:SITE_URL|BASE_URL)\}\/cours\/\$\{disciplineSlug\}\/\$\{citySlug\}`/,
+    needle: /canonical:\s*bundle\.canonicalUrl/,
     label: "/cours/[disciplineSlug]/[citySlug]",
   },
   {
     src: tuteursPageSrc,
-    needle: /canonical\s*:\s*`\$\{(?:SITE_URL|BASE_URL)\}\/tuteurs-prive\/\$\{citySlug\}`/,
-    label: "/tuteurs-prive/[citySlug]",
+    needle: /canonical:\s*bundle\.canonicalUrl/,
+    label: "/tuteurs/[citySlug]",
   },
 ];
 
@@ -256,7 +258,7 @@ const PUBLIC_NOINDEX_FORBIDDEN = [
   { label: "/trouver-un-prof", src: trouverUnProfSrc },
   { label: "/francisation", src: francisationSrc },
   { label: "/cours", src: coursPageSrc },
-  { label: "/tuteurs-prive", src: tuteursPageSrc },
+  { label: "/tuteurs", src: tuteursPageSrc },
   { label: "/legal/cgu", src: cguSrc },
   { label: "/legal/confidentialite", src: confidentialiteSrc },
   { label: "/legal/membre-pro", src: membreProSrc },
@@ -381,17 +383,14 @@ test("Sitemap excludes auth-only / private routes", async () => {
 });
 
 // ── Discipline × city + city-tutor SEO routes are in the sitemap ─────
-test("Sitemap pre-renders /tuteurs-prive/[citySlug] and /cours/[discipline]/[city]", async () => {
+test("Sitemap may include supply-gated /tuteurs/[citySlug] and /cours/[discipline]/[city]", async () => {
   const entries = await sitemap();
   const urls = entries.map((e) => e.url);
   assert.ok(
-    urls.some((u) => /\/tuteurs-prive\/[a-z0-9-]+$/.test(u)),
-    "Sitemap must include at least one /tuteurs-prive/[citySlug] entry",
+    !urls.some((u) => /\/tuteurs-prive\/[a-z0-9-]+$/.test(u)),
+    "Sitemap must not list legacy /tuteurs-prive/[citySlug] URLs",
   );
-  assert.ok(
-    urls.some((u) => /\/cours\/[a-z0-9-]+\/[a-z0-9-]+$/.test(u)),
-    "Sitemap must include at least one /cours/[discipline]/[city] entry",
-  );
+  assert.match(sitemapSrc, /fetchLocalDiscoverySitemapEntries/);
 });
 
 // ── robots.ts ────────────────────────────────────────────────────────
@@ -418,7 +417,7 @@ test("robots() does NOT disallow public pages", () => {
     "/francisation",
     "/group-sessions",
     "/cours",
-    "/tuteurs-prive",
+    "/tuteurs",
     "/clases",
     "/blog",
     "/legal/cgu",

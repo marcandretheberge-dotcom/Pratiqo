@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Locale } from "@/lib/i18n/types";
 import { getResourceArticleForDisciplineLabel } from "@/lib/marketing/resourceGuideHub";
-import { resolveTeacherDisciplineHubHref } from "@/lib/seo/resolveTeacherDisciplineLink";
+import { resolveTeacherDisciplineHubHref, resolveTeacherLocalDiscoveryLinkLabel } from "@/lib/seo/resolveTeacherDisciplineLink";
 
 export function TeacherProfileSeoLinks({
   locale,
@@ -16,13 +16,7 @@ export function TeacherProfileSeoLinks({
 }) {
   const href = resolveTeacherDisciplineHubHref({ discipline, city, region });
   const resourceGuide = getResourceArticleForDisciplineLabel(discipline);
-  const subject = discipline?.trim() || (locale === "fr" ? "cette discipline" : locale === "es" ? "esta disciplina" : "this subject");
-  const label =
-    locale === "fr"
-      ? `Voir les cours de ${subject} sur Pratiqo`
-      : locale === "es"
-        ? `Ver clases de ${subject} en Pratiqo`
-        : `Browse ${subject} lessons on Pratiqo`;
+  const label = resolveTeacherLocalDiscoveryLinkLabel({ discipline, city, region, locale });
 
   return (
     <nav

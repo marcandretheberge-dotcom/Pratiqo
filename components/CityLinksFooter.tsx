@@ -2,7 +2,7 @@
  * CityLinksFooter — Strategic internal linking section.
  *
  * Renders two columns of crawlable links:
- *  1. All Quebec city landing pages  (/tuteurs-prive/[citySlug])
+ *  1. All Quebec city landing pages  (/tuteurs/[citySlug])
  *  2. Montevideo barrios column      (/clases/montevideo/[barrioSlug])
  *
  * Placed at the bottom of landing pages so Google discovers every entry point
@@ -11,7 +11,13 @@
 import Link from "next/link";
 import { QC_CITIES, MV_BARRIOS } from "../lib/constants/cities";
 
-export function CityLinksFooter({ currentSlug }: { currentSlug?: string }) {
+export function CityLinksFooter({
+  currentSlug,
+  cityHubPathPrefix = "/tuteurs",
+}: {
+  currentSlug?: string;
+  cityHubPathPrefix?: string;
+}) {
   return (
     <section
       className="border-t border-[#E8E6DF] bg-[#F8F7F3] py-8 px-4 sm:px-6"
@@ -28,7 +34,7 @@ export function CityLinksFooter({ currentSlug }: { currentSlug?: string }) {
             {QC_CITIES.map((city) => (
               <Link
                 key={city.slug}
-                href={`/tuteurs-prive/${city.slug}`}
+                href={`${cityHubPathPrefix}/${city.slug}`}
                 aria-current={city.slug === currentSlug ? "page" : undefined}
                 className={
                   city.slug === currentSlug
