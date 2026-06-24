@@ -98,13 +98,25 @@ function normalizeTeachingMode(mode: string | null | undefined): string {
   return typeof mode === "string" ? mode.trim().toLowerCase() : "";
 }
 
+/** Teaching modes accepted for public teacher SEO readiness, metadata, and blockers. */
+export function isTeacherSeoAcceptedTeachingMode(mode: string | null | undefined): boolean {
+  const normalized = normalizeTeachingMode(mode);
+  return (
+    normalized === "online" ||
+    normalized === "both" ||
+    normalized === "in_person" ||
+    normalized === "in-person" ||
+    normalized === "all"
+  );
+}
+
 /** City/region present, or an explicit online teaching format when no public city is set. */
 export function teacherHasPublicLocationOrTeachingFormat(
   row: Pick<TeacherPublicSeoFields, "city" | "region" | "teaching_mode">,
 ): boolean {
   if (teacherHasPublicCity(row)) return true;
   const mode = normalizeTeachingMode(row.teaching_mode);
-  return mode === "online" || mode === "both";
+  return mode === "online" || mode === "both" || mode === "all";
 }
 
 /** Public SEO location label — never invents a city; online-only teachers get a locale label. */
@@ -125,7 +137,7 @@ export function resolveTeacherSeoCityLabel(
   if (locality) return locality;
 
   const mode = normalizeTeachingMode(input.teachingMode);
-  if (mode === "online" || mode === "both") {
+  if (mode === "online" || mode === "both" || mode === "all") {
     if (locale === "fr") return "en ligne";
     if (locale === "es") return "en línea";
     return "online";

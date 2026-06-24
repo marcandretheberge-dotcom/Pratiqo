@@ -95,6 +95,39 @@ export function formatTeacherSeoTitle(input: {
   return `${firstName} — professeur ${deDiscipline} à ${cityLabel} | Pratiqo`;
 }
 
+/** Public SEO label for a teacher's teaching format (never exposes exact address). */
+export function formatTeacherSeoTeachingFormatLabel(
+  locale: Locale,
+  teachingMode: string | null | undefined,
+): string | null {
+  const mode = typeof teachingMode === "string" ? teachingMode.trim().toLowerCase() : "";
+  if (!mode) return null;
+
+  if (mode === "all") {
+    if (locale === "fr") {
+      return "En ligne, chez le professeur et chez l'élève";
+    }
+    if (locale === "es") {
+      return "En línea, en el lugar del profesor y en el lugar del estudiante";
+    }
+    return "Online, at the teacher's place and at the student's place";
+  }
+
+  if (mode === "online") {
+    if (locale === "fr") return "En ligne";
+    if (locale === "es") return "En línea";
+    return "Online";
+  }
+
+  if (mode === "both" || mode === "in_person" || mode === "in-person") {
+    if (locale === "fr") return "En ligne et en personne";
+    if (locale === "es") return "En línea y en persona";
+    return "Online and in person";
+  }
+
+  return null;
+}
+
 export function formatTeacherSeoDescription(input: {
   locale: Locale;
   discipline: string;
