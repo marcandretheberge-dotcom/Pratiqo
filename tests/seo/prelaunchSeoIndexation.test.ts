@@ -523,8 +523,12 @@ test("LandingAuthGate renders children during SSR / loading state (no empty body
 test("Homepage / OrgJsonLd reference the canonical Pratiqo brand and Cours Pratiqo Inc legal entity", () => {
   const orgJsonLdSrc = read("components/marketing/LandingOrgJsonLd.tsx");
   assert.match(orgJsonLdSrc, /Pratiqo/);
+  assert.match(orgJsonLdSrc, /legalName:\s*"Cours Pratiqo Inc\."/);
   assert.match(orgJsonLdSrc, /url:\s*SITE_URL/);
   assert.match(orgJsonLdSrc, /addressCountry:\s*"CA"/);
+  assert.match(orgJsonLdSrc, /"@type":\s*"Organization"/);
+  assert.match(orgJsonLdSrc, /"@type":\s*"WebSite"/);
+  assert.doesNotMatch(orgJsonLdSrc, /hasOfferCatalog/);
 });
 
 // ── Run ──────────────────────────────────────────────────────────────
