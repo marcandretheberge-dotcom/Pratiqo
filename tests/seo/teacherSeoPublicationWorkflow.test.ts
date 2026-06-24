@@ -407,6 +407,7 @@ test("admin user page mounts SEO publication card", () => {
   const page = read("app/(app)/admin/users/[id]/page.tsx");
   assert.match(page, /TeacherSeoPublicationCard/);
   assert.match(page, /evaluateTeacherSeoPublication/);
+  assert.match(page, /fetchTeacherSeoPublicationRowByUserId/);
 });
 
 test("admin SEO publication card shows explicit Google SEO toggle section", () => {
@@ -441,6 +442,14 @@ test("admin SEO publication card shows explicit Google SEO toggle section", () =
   assert.match(card, /generatedTitle/);
   assert.match(card, /generatedDescription/);
   assert.match(card, /canonicalUrl/);
+});
+
+test("admin SEO data fetcher does not depend on embedded profiles relationship", () => {
+  const dataHelper = read("lib/seo/teacherPublicProfileData.ts");
+  assert.doesNotMatch(dataHelper, /profiles!inner/);
+  assert.match(dataHelper, /PROFILE_SEO_SELECT/);
+  assert.match(dataHelper, /from\("profiles"\)/);
+  assert.match(dataHelper, /fetchProfileSeoRowByUserId/);
 });
 
 test("admin SEO publication card does not hardcode named teacher IDs or names", () => {
