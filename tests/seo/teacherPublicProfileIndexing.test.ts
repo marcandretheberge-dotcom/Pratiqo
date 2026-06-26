@@ -97,6 +97,22 @@ test("withdrawn public profile is not visible on /professeurs", () => {
   assert.equal(isTeacherPublicProfilePageVisible(row), false);
 });
 
+test("removed demo teacher is not visible or indexable on /professeurs", () => {
+  const row = {
+    ...baseRow,
+    name: "Removed Demo Teacher",
+    is_public: false,
+    is_demo: true,
+    public_profile_enabled: false,
+    search_indexing_consent: false,
+    public_profile_slug: "removed-demo-teacher",
+    public_profile_last_indexable_at: null,
+  };
+  assert.equal(isTeacherPublicProfilePageVisible(row), false);
+  assert.equal(isTeacherPublicProfileIndexable(row), false);
+  assert.deepEqual(teacherPublicProfileRobots(false), { index: false, follow: false });
+});
+
 test("sitemap uses consented /professeurs slugs only", () => {
   const sitemapSrc = read("app/sitemap.ts");
   assert.match(sitemapSrc, /fetchIndexableTeacherSitemapRows/);
@@ -180,6 +196,8 @@ test("legacy teacher profile route redirects indexable teachers to /professeurs 
 
 test("professeurs page does not render private location fields", () => {
   const pageSrc = read("app/professeurs/[slug]/page.tsx");
+  assert.match(pageSrc, /notFound\(\)/);
+  assert.match(pageSrc, /teacherPublicProfileRobots\(false\)/);
   assert.doesNotMatch(pageSrc, /location\.private/);
   assert.doesNotMatch(pageSrc, /formatted_address/);
   assert.doesNotMatch(pageSrc, /street_number/);

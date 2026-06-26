@@ -141,4 +141,26 @@ test("demo teacher remains excluded from marketplace visibility", () => {
   );
 });
 
+test("removed demo teacher remains excluded from marketplace visibility", () => {
+  const removedDemo = {
+    ...marketplaceVisibleNoSeoConsent,
+    name: "Removed Demo Teacher",
+    is_public: false,
+    is_demo: true,
+    public_profile_enabled: false,
+    search_indexing_consent: false,
+    public_profile_slug: null,
+  };
+  assert.equal(isTeacherMarketplaceVisibleRow(removedDemo), false);
+  assert.equal(isTeacherPublicProfilePageVisible(removedDemo), false);
+  assert.equal(isTeacherPublicProfileIndexable(removedDemo), false);
+});
+
+test("optional demo seed no longer includes the removed Sophie teacher", () => {
+  const constants = read("constants.ts");
+  const seed = read("lib/seed.ts");
+  assert.doesNotMatch(constants, /Sophie Martin/);
+  assert.doesNotMatch(seed, /teacher_id:\s*"1"/);
+});
+
 console.log("[teacherSearch:marketplaceSeoDecoupling] tests passed");

@@ -20,6 +20,7 @@ import {
   toDiscoveryCard,
   type RawDiscoveryTeacher,
 } from "../../lib/seo/localTeacherDiscoveryPages";
+import { isTeacherPublicProfileIndexable } from "../../lib/seo/teacherPublicProfile";
 import { findDisciplineBySlug } from "../../lib/seo/disciplines";
 import { findCityBySlug } from "../../lib/constants/cities";
 import { resolveTeacherDisciplineHubHref } from "../../lib/seo/resolveTeacherDisciplineLink";
@@ -145,6 +146,19 @@ test("self-requested teacher without admin marker is excluded before ranking", (
   const spanish = findDisciplineBySlug("espagnol")!;
   const { ranked } = rankTeachersForCity([selfRequestedOnly], city, { discipline: spanish });
   assert.equal(ranked.length, 1, "rank helper alone does not re-check admin marker");
+});
+
+test("removed demo teacher is excluded from local SEO discovery", () => {
+  const removedDemo = baseIndexableTeacher({
+    name: "Removed Demo Teacher",
+    is_public: false,
+    is_demo: true,
+    public_profile_enabled: false,
+    search_indexing_consent: false,
+    public_profile_last_indexable_at: null,
+  });
+  assert.equal(isTeacherPublicProfileIndexable(removedDemo), false);
+  assert.match(helperSrc, /isTeacherPublicProfileIndexable/);
 });
 
 test("admin-published Spanish teacher ranks for Saint-Georges subject page", () => {
