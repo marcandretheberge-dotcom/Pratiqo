@@ -32,15 +32,6 @@ export async function seedStudentProgress(studentId: string) {
   const demo = [
     {
       student_id: studentId,
-      teacher_id: "1",
-      subject: "Piano",
-      score: 85,
-      notes:
-        "Excellent travail sur la sonate de Mozart. La fluidité s'améliore nettement.",
-      achievements: ["Lecture fluide", "Rythme maîtrisé"],
-    },
-    {
-      student_id: studentId,
       teacher_id: "2",
       subject: "Karaté",
       score: 45,
