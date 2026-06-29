@@ -7,6 +7,7 @@ import {
   buildLocalDiscoveryCollectionJsonLd,
   resolveSubjectCityDiscoveryPage,
 } from "@/lib/seo/localTeacherDiscoveryPages";
+import { serializeJsonLd } from "@/lib/seo/jsonLd";
 
 export function generateStaticParams() {
   return DISCIPLINE_CITY_PAIRS;
@@ -65,7 +66,7 @@ export default async function DisciplineCityPage({
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }} />
       <LocalTeacherDiscoveryView bundle={bundle} locale={locale} />
     </>
   );

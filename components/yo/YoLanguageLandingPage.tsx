@@ -56,6 +56,7 @@ import {
 } from "lucide-react";
 
 import { SITE_URL } from "@/lib/seo/site";
+import { serializeJsonLd } from "@/lib/seo/jsonLd";
 import { buildYopratiqoCourseSchema } from "@/lib/seo/yopratiqoCourseSchema";
 import { lstr, t } from "@/lib/yo/localize";
 import type { YoLocale } from "@/lib/yo/types";
@@ -312,7 +313,7 @@ export function YoLanguageLandingPage({
       {courseSchema ? (
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(courseSchema) }}
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd(courseSchema) }}
         />
       ) : null}
       <YoAdaptiveStepShell

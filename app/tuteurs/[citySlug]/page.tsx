@@ -7,6 +7,7 @@ import {
   buildLocalDiscoveryCollectionJsonLd,
   resolveCityHubDiscoveryPage,
 } from "@/lib/seo/localTeacherDiscoveryPages";
+import { serializeJsonLd } from "@/lib/seo/jsonLd";
 
 export function generateStaticParams() {
   return QC_CITIES.map((city) => ({ citySlug: city.slug }));
@@ -60,7 +61,7 @@ export default async function CityHubTutorsPage({
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }} />
       <LocalTeacherDiscoveryView bundle={bundle} locale={locale} />
     </>
   );

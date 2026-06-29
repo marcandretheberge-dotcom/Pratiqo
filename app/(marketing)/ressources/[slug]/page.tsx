@@ -15,6 +15,7 @@ import {
   getResourceArticleCanonical,
 } from "@/lib/seo/resourceArticles";
 import { SITE_URL } from "@/lib/seo/site";
+import { serializeJsonLd } from "@/lib/seo/jsonLd";
 
 export const revalidate = 3600;
 export const dynamicParams = false;
@@ -121,7 +122,7 @@ export default async function ResourceArticlePage({
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(buildArticleJsonLd(article)) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(buildArticleJsonLd(article)) }} />
       <BreadcrumbSchema
         items={[
           { name: "Accueil", href: "/" },

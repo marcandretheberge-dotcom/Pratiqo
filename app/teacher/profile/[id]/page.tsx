@@ -22,6 +22,7 @@ import { publicFirstNameWithInitial } from "@/lib/identity/displayName";
 import TeacherProfileClient from "./TeacherProfileClient";
 
 import { SITE_URL } from "@/lib/seo/site";
+import { serializeJsonLd } from "@/lib/seo/jsonLd";
 import { isUuidString } from "@/lib/uuid";
 import { fetchTeacherPublicSeoRowById } from "@/lib/seo/teacherPublicProfileData";
 import {
@@ -318,7 +319,7 @@ export default async function TeacherProfilePage({
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
       />
       <TeacherProfileClient id={initialTeacher.id} initialTeacher={initialTeacher} />
     </>

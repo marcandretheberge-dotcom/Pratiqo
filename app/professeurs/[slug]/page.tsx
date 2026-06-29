@@ -24,6 +24,7 @@ import {
   resolveTeacherSeoCityLabel,
   teacherPublicProfileRobots,
 } from "@/lib/seo/teacherPublicProfile";
+import { serializeJsonLd } from "@/lib/seo/jsonLd";
 import { fetchTeacherPublicSeoRowBySlug } from "@/lib/seo/teacherPublicProfileData";
 
 function isColumnMismatchError(error: unknown): boolean {
@@ -218,7 +219,7 @@ export default async function ProfesseurPublicProfilePage({
   return (
     <>
       {jsonLd ? (
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }} />
       ) : null}
       <TeacherProfileSeoLinks
         locale={locale}

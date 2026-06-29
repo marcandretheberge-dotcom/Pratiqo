@@ -158,6 +158,13 @@ const allowedConsentGateFiles = new Set<string>([
   "app/api/stripe/webhook/route.ts",
 ]);
 
+const allowedJsonLdSerializationHardeningFiles = new Set<string>([
+  // Launch SEC-01: this YoPratiqo landing component already emits Course
+  // JSON-LD. The change is serialization escaping only; no lesson content,
+  // audio, checkout, indexation, sitemap, or schema shape changes.
+  "components/yo/YoLanguageLandingPage.tsx",
+]);
+
 const allowedSecurityHardeningFiles = new Set<string>([
   "supabase/migrations/085_harden_student_onboarding_consents_rls.sql",
 ]);
@@ -354,6 +361,7 @@ test("branch did not touch restricted systems", () => {
     if (allowedYoDisclosureFiles.has(file)) continue;
     if (allowedConsentGateFiles.has(file)) continue;
     if (allowedSecurityHardeningFiles.has(file)) continue;
+    if (allowedJsonLdSerializationHardeningFiles.has(file)) continue;
     if (allowedPaymentTrustHardeningFiles.has(file)) continue;
     if (allowedTeacherSeoPublicationWorkflowFiles.has(file)) continue;
     for (const rule of restrictedRules) {

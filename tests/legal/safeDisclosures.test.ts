@@ -334,6 +334,15 @@ const allowedPricingDisplayFiles = new Set<string>([
   "supabase/migrations/082_teacher_public_seo_indexing.sql",
 ]);
 
+const allowedJsonLdSerializationHardeningFiles = new Set<string>([
+  // Launch SEC-01: shared JSON-LD serializer and the YoPratiqo landing
+  // component that already emitted Course schema. This only changes script
+  // serialization escaping; it does not change lesson content, indexation,
+  // Course schema shape, sitemap, checkout, or legal copy.
+  "lib/seo/jsonLd.ts",
+  "components/yo/YoLanguageLandingPage.tsx",
+]);
+
 const allowedSecurityHardeningFiles = new Set<string>([
   // Launch security fix for the student/minor consent ledger. This migration
   // only re-applies ENABLE ROW LEVEL SECURITY, owner-only SELECT/INSERT
@@ -538,6 +547,7 @@ test("safe-disclosure branch did not touch restricted systems", () => {
     if (allowedYoDisclosureFiles.has(file)) continue;
     if (allowedPricingDisplayFiles.has(file)) continue;
     if (allowedSecurityHardeningFiles.has(file)) continue;
+    if (allowedJsonLdSerializationHardeningFiles.has(file)) continue;
     if (allowedPaymentTrustHardeningFiles.has(file)) continue;
     if (allowedTeacherSeoPublicationWorkflowFiles.has(file)) continue;
     for (const rule of restrictedRules) {

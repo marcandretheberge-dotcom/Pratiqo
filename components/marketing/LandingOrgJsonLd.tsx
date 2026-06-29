@@ -1,4 +1,5 @@
 import { SITE_URL } from "@/lib/seo/site";
+import { serializeJsonLd } from "@/lib/seo/jsonLd";
 
 const ORGANIZATION_ID = `${SITE_URL}/#organization`;
 const WEBSITE_ID = `${SITE_URL}/#website`;
@@ -57,5 +58,5 @@ export function LandingOrgJsonLd() {
     ],
   };
 
-  return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />;
+  return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }} />;
 }
