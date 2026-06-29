@@ -338,6 +338,9 @@ test("tracked patch avoids generated audio and restricted product systems", () =
     "app/api/teacher/profile/search-indexing-consent/route.ts",
     "app/api/teacher/profile/seo-publication/route.ts",
     "app/api/admin/users/[id]/teacher-seo-publish/route.ts",
+    // security/rate-limit-search-analytics — analytics endpoint hardening only.
+    // Defended by tests/security/searchAnalyticsRateLimit.test.ts.
+    "app/api/analytics/search-event/route.ts",
   ]);
   const forbidden = [
     /^app\/api\//,
