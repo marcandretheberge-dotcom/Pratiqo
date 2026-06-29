@@ -202,7 +202,7 @@ export const DECK_SCREEN_EYEBROW_CLASSES =
  * a 390 px viewport without dominating.
  */
 export const DECK_SCREEN_TITLE_CLASSES =
-  "font-[var(--yo-app-display)] text-[22px] font-semibold leading-tight tracking-tight text-[#172642] sm:text-2xl";
+  "font-yo-app-display text-[22px] font-semibold leading-tight tracking-tight text-[#172642] sm:text-2xl";
 
 /**
  * Per-screen body paragraph under the title.

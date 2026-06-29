@@ -130,7 +130,7 @@ export function YoCoursePath({
         </span>
         <h2
           id="yo-course-path-title"
-          className="font-[var(--yo-app-display)] text-[22px] font-semibold leading-tight tracking-tight text-[#172642] sm:text-2xl"
+          className="font-yo-app-display text-[22px] font-semibold leading-tight tracking-tight text-[#172642] sm:text-2xl"
         >
           {copy.sectionTitle}
         </h2>
