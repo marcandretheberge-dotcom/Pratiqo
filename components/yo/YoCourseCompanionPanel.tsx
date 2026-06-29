@@ -168,7 +168,7 @@ export function YoCourseCompanionPanel({
           </span>
           <h3
             data-testid="yo-course-companion-panel-title"
-            className="mt-2 font-[var(--yo-app-display)] text-lg font-semibold leading-snug tracking-tight text-[#172642] sm:text-xl"
+            className="mt-2 font-yo-app-display text-lg font-semibold leading-snug tracking-tight text-[#172642] sm:text-xl"
           >
             {copy.title}
           </h3>

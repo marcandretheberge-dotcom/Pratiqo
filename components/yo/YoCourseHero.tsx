@@ -167,7 +167,7 @@ export function YoCourseHero({
       {/* 3. Editorial Newsreader headline */}
       <h1
         data-testid="yo-course-hero-title"
-        className="font-[var(--yo-app-display)] text-[26px] font-semibold leading-[1.14] tracking-tight text-[#172642] sm:text-[30px]"
+        className="font-yo-app-display text-[26px] font-semibold leading-[1.14] tracking-tight text-[#172642] sm:text-[30px]"
       >
         {copy.title}
       </h1>
