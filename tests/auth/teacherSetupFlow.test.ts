@@ -37,10 +37,12 @@ test("teacher setup path opens verification in setup mode", () => {
   assert.equal(teacherSetupSectionHref("profile"), "/teacher/verification?setup=1&section=profile");
 });
 
-test("connexion bypasses role chooser for confirmed or pending teachers", () => {
+test("connexion shows authenticated users an explicit connected state", () => {
   const page = read("app/connexion/page.tsx");
-  assert.match(page, /shouldBypassTeacherRoleChoice/);
-  assert.match(page, /hasPendingTeacherIntentClient/);
+  assert.match(page, /resolveAuthenticatedLoginDestination/);
+  assert.match(page, /loginAlreadyConnectedTitle/);
+  assert.match(page, /loginContinueDashboard/);
+  assert.doesNotMatch(page, /shouldBypassTeacherRoleChoice/);
 });
 
 test("AuthenticatedShell sends pending teacher intent to dashboard not role choice", () => {
@@ -55,10 +57,11 @@ test("choose-role redirects teachers and pending teacher intent to dashboard", (
   assert.match(page, /router\.replace\("\/dashboard"\)/);
 });
 
-test("auth callback teacher profile read failure routes to dashboard and keeps intent cookies", () => {
+test("auth callback teacher profile read failure routes to onboarding when intent is teacher", () => {
   const route = read("app/auth/callback/route.ts");
-  assert.match(route, /resolvedRole !== "teacher" && intent !== "teacher"/);
-  assert.doesNotMatch(route, /\/onboarding\/teacher/);
+  assert.match(route, /stage:\s*"profile-read-fallback"/);
+  assert.match(route, /resolveOAuthCallbackRedirect/);
+  assert.match(route, /profile:\s*null/);
 });
 
 test("dashboard banner and checklist CTAs use editable setup path", () => {

@@ -41,7 +41,7 @@ export function LandingResourcesSection({ className }: { className?: string }) {
           <p className="mt-4 text-sm leading-relaxed text-neutral-700 sm:text-base">{t("landingResourcesSubtitle")}</p>
           <div className="mt-8">
             <Link
-              href="/blog"
+              href="/ressources"
               className="inline-flex min-h-[44px] items-center justify-center rounded-2xl bg-[#0F6E56] px-6 py-2.5 text-sm font-semibold text-white shadow-md transition-colors hover:bg-[#0d5c48]"
             >
               {t("landingResourcesCta")}

@@ -250,7 +250,76 @@ test("Academic bank covers Mathématiques, Chimie, Physique, Biologie + the requ
   }
 });
 
-// ── 5. Fragment matching — the specific examples from the brief ────────
+// ── 5. Lifestyle / arts-skills launch subjects ─────────────────────────
+test("Arts & skills bank covers Coach, Cuisine, Arts martiaux, and Danse in FR/EN/ES", () => {
+  const required: Array<[string, { fr: string; en: string; es: string }]> = [
+    [
+      "coach_trainer",
+      { fr: "Entraîneur / coach", en: "Coach / trainer", es: "Entrenador / coach" },
+    ],
+    ["cooking", { fr: "Cuisine", en: "Cooking", es: "Cocina" }],
+    ["martial_arts", { fr: "Arts martiaux", en: "Martial arts", es: "Artes marciales" }],
+    ["dance", { fr: "Danse", en: "Dance", es: "Danza / baile" }],
+  ];
+
+  for (const [id, labels] of required) {
+    const bucket = SUBJECT_BUCKETS.find((b) => b.canonicalId === id);
+    assert.ok(bucket, `arts_skills bucket ${id} missing`);
+    assert.equal(bucket!.category, "arts_skills", `${id} must live in arts_skills`);
+    assert.deepEqual(bucket!.labels, labels, `${id} labels must be localized`);
+  }
+});
+
+test("Coach aliases resolve in FR / EN / ES, including accent-insensitive trainer terms", () => {
+  assert.ok(hasMatch("entraîneur", "coach_trainer", "fr"));
+  assert.ok(hasMatch("entraineur", "coach_trainer", "fr"));
+  assert.ok(hasMatch("coach sportif", "coach_trainer", "fr"));
+  assert.ok(hasMatch("personal trainer", "coach_trainer", "en"));
+  assert.ok(hasMatch("private trainer", "coach_trainer", "en"));
+  assert.ok(hasMatch("entrenador", "coach_trainer", "es"));
+  assert.ok(hasMatch("preparador fisico", "coach_trainer", "es"));
+});
+
+test("Cuisine aliases resolve in FR / EN / ES, including cooking and cocina", () => {
+  assert.ok(hasMatch("cuisine", "cooking", "fr"));
+  assert.ok(hasMatch("cours de cuisine", "cooking", "fr"));
+  assert.ok(hasMatch("patisserie", "cooking", "fr"));
+  assert.ok(hasMatch("cooking", "cooking", "en"));
+  assert.ok(hasMatch("cooking class", "cooking", "en"));
+  assert.ok(hasMatch("cocina", "cooking", "es"));
+  assert.ok(hasMatch("clase de cocina", "cooking", "es"));
+});
+
+test("Martial arts aliases resolve in FR / EN / ES, including accent variants", () => {
+  assert.ok(hasMatch("arts martiaux", "martial_arts", "fr"));
+  assert.ok(hasMatch("karaté", "martial_arts", "fr"));
+  assert.ok(hasMatch("karate", "martial_arts", "fr"));
+  assert.ok(hasMatch("martial arts", "martial_arts", "en"));
+  assert.ok(hasMatch("self defence", "martial_arts", "en"));
+  assert.ok(hasMatch("artes marciales", "martial_arts", "es"));
+  assert.ok(hasMatch("kárate", "martial_arts", "es"));
+});
+
+test("Dance aliases resolve in FR / EN / ES, including baile", () => {
+  assert.ok(hasMatch("danse", "dance", "fr"));
+  assert.ok(hasMatch("cours de danse", "dance", "fr"));
+  assert.ok(hasMatch("dance", "dance", "en"));
+  assert.ok(hasMatch("latin dance", "dance", "en"));
+  assert.ok(hasMatch("baile", "dance", "es"));
+  assert.ok(hasMatch("clase de baile", "dance", "es"));
+});
+
+test("Lifestyle subject search stays metadata-only and creates no fake teacher inventory", () => {
+  for (const id of ["coach_trainer", "cooking", "martial_arts", "dance"]) {
+    const bucket = SUBJECT_BUCKETS.find((b) => b.canonicalId === id);
+    assert.ok(bucket, `${id} bucket missing`);
+    assert.ok(!("teacher" in bucket!), `${id} must not embed teacher/listing data`);
+    assert.ok(!("availability" in bucket!), `${id} must not embed availability data`);
+    assert.ok(!("review" in bucket!), `${id} must not embed review data`);
+  }
+});
+
+// ── 6. Fragment matching — the specific examples from the brief ────────
 test("Typing 'pi' suggests Piano", () => {
   assert.ok(hasMatch("pi", "piano", "fr"));
 });

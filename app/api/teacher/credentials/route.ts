@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
-import { rateLimitByIp, rateLimitResponse } from "@/lib/rateLimit";
+import { rateLimitByIp, rateLimitGuardResponse } from "@/lib/rateLimit";
 import { validateJsonBody } from "@/lib/validation/api";
 import { teacherCredentialPostSchema } from "@/lib/validation/schemas";
 
@@ -11,7 +11,8 @@ export async function POST(req: Request) {
   try {
     // ── Rate limit ────────────────────────────────────────────────────────────
     const rl = await rateLimitByIp(req, "teacher-credentials", { limit: 10, windowSeconds: 60 });
-    if (!rl.allowed) return rateLimitResponse(rl.retryAfterSeconds!, rl);
+    const rateLimited = rateLimitGuardResponse(rl);
+    if (rateLimited) return rateLimited;
 
     // ── Auth ──────────────────────────────────────────────────────────────────
     const authHeader = req.headers.get("authorization");

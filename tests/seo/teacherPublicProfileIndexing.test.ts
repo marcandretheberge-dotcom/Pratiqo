@@ -43,14 +43,16 @@ const baseRow = {
   discipline: "Espagnol",
   city: "Lévis",
   region: "QC",
+  teaching_mode: "both",
   is_public: true,
   deactivated_at: null,
   deleted_at: null,
   is_demo: false,
-  identity_status: "none",
+  identity_verification_failed: false,
   public_profile_enabled: true,
   search_indexing_consent: true,
   public_profile_slug: "marie-d-espagnol-levis",
+  public_profile_last_indexable_at: "2026-06-01T12:00:00.000Z",
   teacher_onboarding_complete: true,
   profile_is_active: true,
   profile_deactivated_at: null,
@@ -78,6 +80,12 @@ test("eligible consented teacher is indexable", () => {
   assert.deepEqual(teacherPublicProfileRobots(true), { index: true, follow: true });
 });
 
+test("consent and marketplace visibility without admin marker is not indexable", () => {
+  const row = { ...baseRow, public_profile_last_indexable_at: null };
+  assert.equal(isTeacherPublicProfilePageVisible(row), true);
+  assert.equal(isTeacherPublicProfileIndexable(row), false);
+});
+
 test("missing consent is not indexable and uses noindex robots", () => {
   const row = { ...baseRow, search_indexing_consent: false };
   assert.equal(isTeacherPublicProfileIndexable(row), false);
@@ -87,6 +95,22 @@ test("missing consent is not indexable and uses noindex robots", () => {
 test("withdrawn public profile is not visible on /professeurs", () => {
   const row = { ...baseRow, public_profile_enabled: false, search_indexing_consent: false };
   assert.equal(isTeacherPublicProfilePageVisible(row), false);
+});
+
+test("removed demo teacher is not visible or indexable on /professeurs", () => {
+  const row = {
+    ...baseRow,
+    name: "Removed Demo Teacher",
+    is_public: false,
+    is_demo: true,
+    public_profile_enabled: false,
+    search_indexing_consent: false,
+    public_profile_slug: "removed-demo-teacher",
+    public_profile_last_indexable_at: null,
+  };
+  assert.equal(isTeacherPublicProfilePageVisible(row), false);
+  assert.equal(isTeacherPublicProfileIndexable(row), false);
+  assert.deepEqual(teacherPublicProfileRobots(false), { index: false, follow: false });
 });
 
 test("sitemap uses consented /professeurs slugs only", () => {
@@ -123,12 +147,18 @@ test("professeurs page sets ProfilePage JSON-LD without worksFor or exact addres
     teacher,
     canonicalUrl: buildTeacherPublicProfileCanonicalUrl("marie-d-espagnol-levis"),
     subjects: ["Espagnol", "Langues"],
+    locale: "fr",
+    slug: "marie-d-espagnol-levis",
   });
 
-  assert.equal(jsonLd["@type"], "ProfilePage");
-  const person = jsonLd.mainEntity as Record<string, unknown>;
+  const graph = jsonLd["@graph"] as Record<string, unknown>[];
+  const profilePage = graph.find((n) => n["@type"] === "ProfilePage") as Record<string, unknown>;
+  const person = profilePage.mainEntity as Record<string, unknown>;
   assert.equal(person["@type"], "Person");
   assert.equal(person.name, "Marie D.");
+  assert.equal(person.jobTitle, "Professeur d'Espagnol");
+  assert.doesNotMatch(JSON.stringify(jsonLd), /professeur de espagnol/i);
+  assert.doesNotMatch(JSON.stringify(jsonLd), /Professeur de Espagnol/);
   assert.ok(!("worksFor" in jsonLd));
   assert.ok(!("worksFor" in person));
   const address = person.address as Record<string, unknown>;
@@ -139,12 +169,22 @@ test("professeurs page sets ProfilePage JSON-LD without worksFor or exact addres
 
 test("French SEO title and description match product copy", () => {
   assert.equal(
-    buildTeacherPublicProfileTitle({ subject: "espagnol", firstName: "Marie", city: "Lévis" }),
-    "Cours de espagnol avec Marie à Lévis | Pratiqo",
+    buildTeacherPublicProfileTitle({
+      locale: "fr",
+      subject: "espagnol",
+      firstName: "Marie",
+      cityLabel: "Lévis",
+    }),
+    "Marie — professeur d'espagnol à Lévis | Pratiqo",
   );
   assert.match(
-    buildTeacherPublicProfileDescription({ subject: "espagnol", firstName: "Marie", city: "Lévis" }),
-    /Réservez un cours de espagnol avec Marie, professeur sur Pratiqo à Lévis/,
+    buildTeacherPublicProfileDescription({
+      locale: "fr",
+      subject: "espagnol",
+      firstName: "Marie",
+      cityLabel: "Lévis",
+    })!,
+    /Profil de Marie, professeur d'espagnol à Lévis/,
   );
 });
 
@@ -156,6 +196,8 @@ test("legacy teacher profile route redirects indexable teachers to /professeurs 
 
 test("professeurs page does not render private location fields", () => {
   const pageSrc = read("app/professeurs/[slug]/page.tsx");
+  assert.match(pageSrc, /notFound\(\)/);
+  assert.match(pageSrc, /teacherPublicProfileRobots\(false\)/);
   assert.doesNotMatch(pageSrc, /location\.private/);
   assert.doesNotMatch(pageSrc, /formatted_address/);
   assert.doesNotMatch(pageSrc, /street_number/);
@@ -167,6 +209,7 @@ test("migration 082 adds consent columns and pins them in trigger", () => {
   assert.match(migration, /search_indexing_consent/i);
   assert.match(migration, /public_profile_slug/i);
   assert.match(migration, /NEW\.search_indexing_consent := OLD\.search_indexing_consent/i);
+  assert.match(migration, /public_profile_last_indexable_at := OLD\.public_profile_last_indexable_at/i);
 });
 
 test("consent API route is server-side only", () => {

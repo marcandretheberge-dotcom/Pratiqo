@@ -250,3 +250,12 @@ h3 {
 .skip-link:focus {
   top: 1rem;
 }
+
+/* YoPratiqo app-landing display fonts — use these instead of Tailwind arbitrary font utilities. */
+.font-yo-app-display {
+  font-family: var(--yo-app-display), Newsreader, Georgia, serif;
+}
+
+.font-yo-app-script {
+  font-family: var(--yo-app-script), Caveat, cursive;
+}

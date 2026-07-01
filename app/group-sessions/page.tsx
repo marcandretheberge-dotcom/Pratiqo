@@ -8,10 +8,12 @@ import { CATEGORIES } from "@/constants";
 import type { Discipline } from "@/types";
 import { cn } from "@/lib/utils";
 import { isSessionBookable, spotsRemaining, type GroupSessionRow } from "@/lib/groupSessions";
+import { isEnabled } from "@/lib/features";
 
 type RowWithTeacher = GroupSessionRow & { teachers?: { name: string; image_url: string } | null };
 
 export default function GroupSessionsMarketplacePage() {
+  const checkoutLive = isEnabled("group_sessions");
   const [rows, setRows] = useState<RowWithTeacher[]>([]);
   const [loading, setLoading] = useState(true);
   const [discipline, setDiscipline] = useState<Discipline | "All">("All");
@@ -58,9 +60,21 @@ export default function GroupSessionsMarketplacePage() {
         <p className="ds-label text-[var(--p-text-subtle)]">Marketplace</p>
         <h1 className="text-3xl font-bold text-[var(--p-text)]">Cours de groupe</h1>
         <p className="text-sm text-[var(--p-text-muted)] mt-2">
-          Réserve ta place pour une séance collective avec un professeur vérifié.
+          {checkoutLive
+            ? "Réserve ta place pour une séance collective avec un professeur vérifié."
+            : "Les cours de groupe arrivent bientôt sur Pratiqo. La réservation en ligne n'est pas encore disponible."}
         </p>
       </div>
+
+      {!checkoutLive ? (
+        <div
+          role="status"
+          className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950"
+        >
+          Bientôt disponible — cette page n&apos;est pas indexée pour le lancement et les réservations sont
+          désactivées.
+        </div>
+      ) : null}
 
       <div className="rounded-2xl border border-[var(--p-border-light)] bg-[var(--p-surface)] p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <label className="text-xs font-bold uppercase text-[var(--p-text-subtle)] block">
@@ -119,7 +133,7 @@ export default function GroupSessionsMarketplacePage() {
       ) : (
         <ul className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {filtered.map((s) => (
-            <GroupMarketCard key={s.id} session={s} />
+            <GroupMarketCard key={s.id} session={s} checkoutLive={checkoutLive} />
           ))}
         </ul>
       )}
@@ -127,7 +141,7 @@ export default function GroupSessionsMarketplacePage() {
   );
 }
 
-function GroupMarketCard({ session }: { session: RowWithTeacher }) {
+function GroupMarketCard({ session, checkoutLive }: { session: RowWithTeacher; checkoutLive: boolean }) {
   const rem = spotsRemaining(session);
   const max = Number(session.max_participants);
   const ratio = max ? rem / max : 0;
@@ -167,7 +181,9 @@ function GroupMarketCard({ session }: { session: RowWithTeacher }) {
           <div className={cn("h-full rounded-full transition-all", barColor)} style={{ width: `${max ? (rem / max) * 100 : 0}%` }} />
         </div>
       </div>
-      <p className="text-xl font-bold text-teal-700">{Number(session.price_per_person).toFixed(0)} $ / pers.</p>
+      <p className="text-xl font-bold text-teal-700">
+        {checkoutLive ? `${Number(session.price_per_person).toFixed(0)} $ / pers.` : "Tarif — bientôt"}
+      </p>
       <div className="mt-auto flex flex-col gap-2">
         <Link
           href={`/group-sessions/${session.id}`}
@@ -175,14 +191,14 @@ function GroupMarketCard({ session }: { session: RowWithTeacher }) {
         >
           Détails
         </Link>
-        {bookable ? (
+        {checkoutLive && bookable ? (
           <Link
             href={`/group-sessions/${session.id}`}
             className="w-full text-center py-2.5 rounded-xl text-sm font-bold border-2 border-teal-500 text-teal-700 hover:bg-teal-50"
           >
             Réserver ma place
           </Link>
-        ) : (
+        ) : checkoutLive ? (
           <button
             type="button"
             disabled
@@ -190,7 +206,7 @@ function GroupMarketCard({ session }: { session: RowWithTeacher }) {
           >
             Complet — liste d&apos;attente bientôt
           </button>
-        )}
+        ) : null}
       </div>
     </li>
   );

@@ -113,17 +113,19 @@ test("become-teacher CTAs use shared teacher signup login href builder", () => {
   assert.doesNotMatch(src, /href="\/login\?role=teacher"/);
 });
 
-test("login page preserves pre-auth intent when Google OAuth uses an intent", () => {
+test("login page defaults generic Google OAuth to learner while preserving explicit intent", () => {
   const src = read("app/login/page.tsx");
   assert.match(src, /resolvePreAuthIntent/);
+  assert.match(src, /const loginIntent: PreAuthOnboardingIntent = preAuthIntent \?\? "learner"/);
   assert.match(src, /loginWithGoogle\(oauthNext, \{/);
-  assert.match(src, /intent:\s*preAuthIntent \?\? undefined/);
+  assert.match(src, /intent:\s*loginIntent/);
+  assert.match(src, /intentQuery:\s*intentParam === "student" \? "student" : loginIntent/);
   assert.doesNotMatch(src, /body: JSON\.stringify\(\{ role: "teacher" \}\)/);
 });
 
-test("auth callback stages intent signups through public login handoff", () => {
+test("auth callback redirects intent signups directly to onboarding destinations", () => {
   const src = read("app/auth/callback/route.ts");
-  assert.match(src, /buildLoginHrefAfterOAuth/);
+  assert.match(src, /resolveOAuthCallbackRedirect/);
   assert.match(src, /resolveOAuthProfilePatch/);
 });
 

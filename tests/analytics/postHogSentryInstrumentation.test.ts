@@ -630,6 +630,12 @@ test(".env.example exposes the four analytics/observability placeholders without
   }
 });
 
+test("posthog capture is consent-gated before network send", () => {
+  const src = READ("lib/analytics/posthog.ts");
+  assert.match(src, /hasAnalyticsConsent\(\)/);
+  assert.match(src, /isSensitiveAnalyticsRoute/);
+});
+
 // ── Run ────────────────────────────────────────────────────────────────────
 
 async function run() {

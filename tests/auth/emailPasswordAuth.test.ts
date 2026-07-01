@@ -160,8 +160,10 @@ test("student intent is accepted as learner intent for login links", () => {
 test("email-password auth preserves teacher/student intent but allows generic login", () => {
   const page = read("app/login/page.tsx");
   const auth = read("lib/auth.ts");
-  assert.match(page, /intent:\s*preAuthIntent \?\? undefined/);
-  assert.match(page, /ensureAuthenticatedProfile\(\{ intent: preAuthIntent, displayName \}\)/);
+  assert.match(page, /const loginIntent: PreAuthOnboardingIntent = preAuthIntent \?\? "learner"/);
+  assert.match(page, /intent:\s*loginIntent/);
+  assert.match(page, /intentQuery:\s*intentParam === "student" \? "student" : loginIntent/);
+  assert.match(page, /ensureAuthenticatedProfile\(\{[\s\S]*intent:\s*preAuthIntent,[\s\S]*displayName,[\s\S]*\}\)/);
   assert.match(page, /redirectAfterEnsuredProfile/);
   assert.match(auth, /signInWithPassword/);
   assert.match(auth, /signUp\(\{/);

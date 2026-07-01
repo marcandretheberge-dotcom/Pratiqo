@@ -1,57 +1,62 @@
 import { SITE_URL } from "@/lib/seo/site";
+import { serializeJsonLd } from "@/lib/seo/jsonLd";
 
-/** LocalBusiness JSON-LD for landing SEO — server-only, no client JS. */
+const ORGANIZATION_ID = `${SITE_URL}/#organization`;
+const WEBSITE_ID = `${SITE_URL}/#website`;
+
+/** Conservative homepage JSON-LD — Organization + WebSite only (no Course/Offer catalog). */
 export function LandingOrgJsonLd() {
-  const orgJsonLd = {
+  const jsonLd = {
     "@context": "https://schema.org",
-    "@type": ["LocalBusiness", "EducationalOrganization"],
-    name: "Pratiqo",
-    url: SITE_URL,
-    logo: {
-      "@type": "ImageObject",
-      url: `${SITE_URL}/logo-email.png`,
-    },
-    image: `${SITE_URL}/og-image.png`,
-    description:
-      "La marketplace québécoise pour trouver un professeur de musique, de langue ou un tuteur. Profs vérifiés, paiements sécurisés, cours en ligne ou en présentiel.",
-    priceRange: "$$",
-    address: {
-      "@type": "PostalAddress",
-      addressLocality: "Saint-Georges",
-      addressRegion: "QC",
-      addressCountry: "CA",
-      postalCode: "G5Y",
-    },
-    areaServed: [
+    "@graph": [
       {
-        "@type": "AdministrativeArea",
-        name: "Québec",
-        containedInPlace: { "@type": "Country", name: "Canada" },
+        "@type": "Organization",
+        "@id": ORGANIZATION_ID,
+        name: "Pratiqo",
+        legalName: "Cours Pratiqo Inc.",
+        url: SITE_URL,
+        logo: {
+          "@type": "ImageObject",
+          url: `${SITE_URL}/logo-email.png`,
+        },
+        image: `${SITE_URL}/og-image.png`,
+        description:
+          "La marketplace québécoise pour trouver un professeur de musique, de langue ou un tuteur. Profs vérifiés, paiements sécurisés, cours en ligne ou en présentiel.",
+        address: {
+          "@type": "PostalAddress",
+          addressLocality: "Saint-Georges",
+          addressRegion: "QC",
+          addressCountry: "CA",
+          postalCode: "G5Y",
+        },
+        areaServed: [
+          {
+            "@type": "AdministrativeArea",
+            name: "Québec",
+            containedInPlace: { "@type": "Country", name: "Canada" },
+          },
+          {
+            "@type": "Country",
+            name: "Uruguay",
+            sameAs: "https://en.wikipedia.org/wiki/Uruguay",
+          },
+        ],
+        contactPoint: {
+          "@type": "ContactPoint",
+          contactType: "customer service",
+          availableLanguage: ["French", "English", "Spanish"],
+        },
       },
       {
-        "@type": "Country",
-        name: "Uruguay",
-        sameAs: "https://en.wikipedia.org/wiki/Uruguay",
+        "@type": "WebSite",
+        "@id": WEBSITE_ID,
+        url: SITE_URL,
+        name: "Pratiqo",
+        inLanguage: ["fr-CA", "en-CA", "es"],
+        publisher: { "@id": ORGANIZATION_ID },
       },
     ],
-    contactPoint: {
-      "@type": "ContactPoint",
-      contactType: "customer service",
-      availableLanguage: ["French", "English", "Spanish"],
-    },
-    hasOfferCatalog: {
-      "@type": "OfferCatalog",
-      name: "Cours particuliers — Québec, Canada & Uruguay",
-      itemListElement: [
-        { "@type": "Offer", itemOffered: { "@type": "Course", name: "Cours de Musique" } },
-        { "@type": "Offer", itemOffered: { "@type": "Course", name: "Cours de Langue" } },
-        { "@type": "Offer", itemOffered: { "@type": "Course", name: "Cours d'Arts Martiaux" } },
-        { "@type": "Offer", itemOffered: { "@type": "Course", name: "Cours de Danse" } },
-        { "@type": "Offer", itemOffered: { "@type": "Course", name: "Cours de Sport" } },
-        { "@type": "Offer", itemOffered: { "@type": "Course", name: "Soutien Scolaire" } },
-      ],
-    },
   };
 
-  return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }} />;
+  return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }} />;
 }

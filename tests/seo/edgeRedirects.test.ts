@@ -58,7 +58,8 @@ function test(name: string, fn: TestFn): void {
 
 // ── Source files we audit statically ─────────────────────────────────
 const nextConfigSrc = read("next.config.ts");
-const middlewareSrc = read("middleware.ts");
+const proxySrc = read("proxy.ts");
+const vercelJsonRequiredSrc = read("vercel.json");
 const rootLayoutSrc = read("app/layout.tsx");
 const homepageSrc = read("app/page.tsx");
 const sitemapSrc = read("app/sitemap.ts");
@@ -122,11 +123,70 @@ test("apex redirect destination is www, not a locale path (/fr / /en / /es)", ()
 });
 
 // ── 3. No code redirects / → /fr ─────────────────────────────────────
-test("middleware.ts never redirects / → /fr (or /en or /es)", () => {
+test("proxy.ts never redirects / → /fr (or /en or /es)", () => {
   assert.ok(
-    !/\/(fr|en|es)(?:\/|['"`])/.test(middlewareSrc.replace(/\/\/.*/g, "")),
-    "middleware.ts must not navigate / to /fr, /en, or /es",
+    !/\/(fr|en|es)(?:\/|['"`])/.test(proxySrc.replace(/\/\/.*/g, "")),
+    "proxy.ts must not navigate / to /fr, /en, or /es",
   );
+});
+
+test("vercel.json enforces apex to www with a permanent 308 before framework routing", () => {
+  const vercelConfig = JSON.parse(vercelJsonRequiredSrc) as {
+    redirects?: Array<{
+      source?: string;
+      destination?: string;
+      statusCode?: number;
+      permanent?: boolean;
+      has?: Array<{ type?: string; value?: string }>;
+    }>;
+  };
+  const redirect = vercelConfig.redirects?.find(
+    (item) =>
+      item.destination === "https://www.pratiqo.ca/$1" &&
+      (item.statusCode === 308 || item.permanent === true) &&
+      item.has?.some((condition) => condition.type === "host" && condition.value === "pratiqo.ca"),
+  );
+  assert.ok(redirect, "vercel.json must enforce pratiqo.ca -> www.pratiqo.ca with permanent 308");
+});
+
+test("vercel.json apex redirect preserves path segments and query strings via $1 capture", () => {
+  const vercelConfig = JSON.parse(vercelJsonRequiredSrc) as {
+    redirects?: Array<{ destination?: string; source?: string }>;
+  };
+  const redirect = vercelConfig.redirects?.find((item) => item.destination === "https://www.pratiqo.ca/$1");
+  assert.ok(redirect, "vercel.json must capture the path in $1");
+  assert.match(redirect!.source ?? "", /\(\.\*\)/, "vercel.json must match arbitrary paths on apex");
+});
+
+test("proxy.ts does not canonicalize hosts to production www", () => {
+  assert.doesNotMatch(proxySrc, /www\.pratiqo\.ca/);
+  assert.doesNotMatch(proxySrc, /pratiqo\.ca/);
+});
+
+test("next.config.ts apex redirect is host-scoped to pratiqo.ca only (www and preview stay untouched)", () => {
+  const apexRule = nextConfigSrc.match(
+    /has:\s*\[\s*\{\s*type:\s*"host",\s*value:\s*"pratiqo\.ca"\s*\}\s*\][\s\S]*?destination:\s*"([^"]+)"/,
+  );
+  assert.ok(apexRule, "apex redirect must be host-conditional");
+  assert.equal(apexRule![1], "https://www.pratiqo.ca/:path*");
+  assert.doesNotMatch(nextConfigSrc, /has:\s*\[\s*\{\s*type:\s*"host",\s*value:\s*"www\.pratiqo\.ca"/);
+});
+
+test("configure_vercel_apex_permanent_redirect script pins redirectStatusCode 308", () => {
+  const script = read("scripts/configure_vercel_apex_permanent_redirect.ts");
+  assert.match(script, /redirectStatusCode/);
+  assert.match(script, /308/);
+  assert.match(script, /pratiqo\.ca/);
+  assert.match(script, /www\.pratiqo\.ca/);
+});
+
+test("configure_vercel_apex_permanent_redirect requires VERCEL_TOKEN from env only", () => {
+  const script = read("scripts/configure_vercel_apex_permanent_redirect.ts");
+  assert.match(script, /process\.env\.VERCEL_TOKEN/);
+  assert.match(script, /Missing VERCEL_TOKEN/);
+  assert.doesNotMatch(script, /VERCEL_TOKEN\s*=\s*["'][^"']+["']/);
+  assert.doesNotMatch(script, /Bearer\s+[A-Za-z0-9._-]{8,}/);
+  assert.doesNotMatch(script, /eyJ[A-Za-z0-9_-]{10,}/);
 });
 
 test("next.config.ts does not redirect / → /fr (or /en, /es)", () => {

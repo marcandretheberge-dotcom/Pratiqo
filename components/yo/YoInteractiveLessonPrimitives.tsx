@@ -168,7 +168,7 @@ export function YoPairMatchGame({
             className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,0.9fr)] items-center gap-2 rounded-2xl border border-[#D8ECE6] bg-[#F8FCFB] px-3 py-3 text-left transition hover:bg-[#EEF8F5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F4B400]"
           >
             <span className="min-w-0 text-sm font-extrabold leading-snug text-[#0F6E56]">{item.left}</span>
-            <span aria-hidden className="text-[#F4B400]">â†’</span>
+            <span aria-hidden className="text-[#F4B400]">→</span>
             <span className="min-w-0 text-xs font-semibold leading-snug text-[#0F6E56]/75">{item.right}</span>
           </button>
         ))}

@@ -18,6 +18,9 @@ import { TeacherDashboardStats } from "@/components/dashboard/teacher/TeacherDas
 import { TeacherProfileCompletenessCard } from "@/components/dashboard/teacher/TeacherProfileCompletenessCard";
 import { TeacherSearchVisibilityBanner } from "@/components/teacher/TeacherSearchVisibilityBanner";
 import { TeacherProfileSetupChecklist } from "@/components/teacher/TeacherProfileSetupChecklist";
+import { TeacherProfileVisibilityCard } from "@/components/teacher/TeacherProfileVisibilityCard";
+import { TeacherSeoReadinessCard } from "@/components/teacher/TeacherSeoReadinessCard";
+import { isIdentityVerificationFailed } from "@/lib/teachers/identityPublishGate";
 import { TEACHER_SETUP_PATH } from "@/lib/auth/teacherLoginRouting";
 import { buildTeacherSetupChecklist } from "@/lib/teachers/teacherSetupProgress";
 import { TeacherRequestCard } from "@/components/dashboard/teacher/TeacherRequestCard";
@@ -121,6 +124,7 @@ export function Dashboard() {
   const [bookings, setBookings] = useState<BookingWithTeacher[]>([]);
   const [teacherBookings, setTeacherBookings] = useState<TeacherBookingRow[]>([]);
   const [teacherMeta, setTeacherMeta] = useState<{
+    id: string;
     name: string;
     discipline: string;
     hourlyRate: number;
@@ -132,6 +136,16 @@ export function Dashboard() {
     city: string;
     region: string;
     availabilityCount: number;
+    is_public: boolean | null;
+    is_demo: boolean | null;
+    deactivated_at: string | null;
+    deleted_at: string | null;
+    identity_verification_failed: boolean;
+    country_code: string | null;
+    profile_is_active: boolean | null;
+    profile_deactivated_at: string | null;
+    profile_deleted_at: string | null;
+    profile_anonymized_at: string | null;
   } | null>(null);
   const [loading, setLoading] = useState(true);
   // id → "accepting" | "declining"
@@ -522,12 +536,25 @@ export function Dashboard() {
     };
 
     const loadTeacherBookings = async () => {
-      const { data: myProf } = await supabase.from("profiles").select("photo_url").eq("id", user.id).maybeSingle();
-      const profilePhotoUrlRaw = (myProf as { photo_url?: string | null } | null)?.photo_url ?? null;
+      const { data: myProf } = await supabase
+        .from("profiles")
+        .select("photo_url, is_active, deactivated_at, deleted_at, anonymized_at")
+        .eq("id", user.id)
+        .maybeSingle();
+      const profileRow = myProf as {
+        photo_url?: string | null;
+        is_active?: boolean | null;
+        deactivated_at?: string | null;
+        deleted_at?: string | null;
+        anonymized_at?: string | null;
+      } | null;
+      const profilePhotoUrlRaw = profileRow?.photo_url ?? null;
 
       const { data: t } = await supabase
         .from("teachers")
-        .select("id, name, discipline, price_per_lesson, bio, image_url, timezone, city, region, availability")
+        .select(
+          "id, name, discipline, price_per_lesson, bio, image_url, timezone, city, region, availability, is_public, is_demo, deactivated_at, deleted_at, identity_verified, stripe_identity_failed_reason, country_code",
+        )
         .eq("user_id", user.id)
         .maybeSingle();
       if (!t?.id) {
@@ -546,12 +573,20 @@ export function Dashboard() {
         city?: string | null;
         region?: string | null;
         availability?: unknown[] | null;
+        is_public?: boolean | null;
+        is_demo?: boolean | null;
+        deactivated_at?: string | null;
+        deleted_at?: string | null;
+        identity_verified?: boolean | null;
+        stripe_identity_failed_reason?: string | null;
+        country_code?: string | null;
       };
       const { data: drows } = await supabase.from("teacher_disciplines").select("id").eq("teacher_id", row.id);
       const img = row.image_url != null ? String(row.image_url).trim() : "";
       const pPhoto = profilePhotoUrlRaw != null ? String(profilePhotoUrlRaw).trim() : "";
 
       setTeacherMeta({
+        id: row.id,
         name: String(row.name || authProfile?.name || "").trim(),
         discipline: String(row.discipline || "—"),
         hourlyRate: Number(row.price_per_lesson) || 0,
@@ -563,6 +598,19 @@ export function Dashboard() {
         city: String(row.city || "").trim(),
         region: String(row.region || "").trim(),
         availabilityCount: Array.isArray(row.availability) ? row.availability.length : 0,
+        is_public: row.is_public ?? false,
+        is_demo: row.is_demo ?? false,
+        deactivated_at: row.deactivated_at ?? null,
+        deleted_at: row.deleted_at ?? null,
+        identity_verification_failed: isIdentityVerificationFailed({
+          identity_verified: row.identity_verified,
+          stripe_identity_failed_reason: row.stripe_identity_failed_reason,
+        }),
+        country_code: row.country_code ?? null,
+        profile_is_active: profileRow?.is_active ?? true,
+        profile_deactivated_at: profileRow?.deactivated_at ?? null,
+        profile_deleted_at: profileRow?.deleted_at ?? null,
+        profile_anonymized_at: profileRow?.anonymized_at ?? null,
       });
       const teacherSlug = row.id;
       const { data: rows, error } = await supabase
@@ -774,12 +822,43 @@ export function Dashboard() {
           <p className="text-sm text-slate-600">{t("dashboardTeacherSubtitle")}</p>
         </header>
 
-        {showSearchVisibilityBanner ? (
+        {teacherMeta ? (
+          <>
+          <TeacherProfileVisibilityCard
+            teacher={{
+              id: teacherMeta.id,
+              user_id: user?.id,
+              name: teacherMeta.name || authProfile?.name,
+              bio: teacherMeta.bio,
+              disciplineCount: teacherMeta.disciplineCount,
+              price_per_lesson: teacherMeta.hourlyRate,
+              availability: Array.from({ length: teacherMeta.availabilityCount }),
+              city: teacherMeta.city,
+              region: teacherMeta.region,
+              country_code: teacherMeta.country_code,
+              is_public: teacherMeta.is_public,
+              is_demo: teacherMeta.is_demo,
+              deactivated_at: teacherMeta.deactivated_at,
+              deleted_at: teacherMeta.deleted_at,
+              identity_verification_failed: teacherMeta.identity_verification_failed,
+              profile_is_active: teacherMeta.profile_is_active,
+              profile_deactivated_at: teacherMeta.profile_deactivated_at,
+              profile_deleted_at: teacherMeta.profile_deleted_at,
+              profile_anonymized_at: teacherMeta.profile_anonymized_at,
+            }}
+            profileRole={role}
+            onVisibilityChange={(nextPublic) =>
+              setTeacherMeta((prev) => (prev ? { ...prev, is_public: nextPublic } : prev))
+            }
+          />
+          <TeacherSeoReadinessCard />
+          </>
+        ) : (
           <>
             <TeacherSearchVisibilityBanner ctaHref={TEACHER_SETUP_PATH} />
             <TeacherProfileSetupChecklist items={setupChecklistItems} ctaHref={TEACHER_SETUP_PATH} />
           </>
-        ) : null}
+        )}
 
         <TeacherDashboardStats
           items={[

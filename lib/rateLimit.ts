@@ -11,16 +11,43 @@ function hasUpstashEnv(): boolean {
   return Boolean(url && token);
 }
 
+/** Production and preview deployments must not fail open when Redis is missing or errors. */
+export function isRateLimitInfrastructureRequired(): boolean {
+  const vercelEnv = process.env.VERCEL_ENV?.trim().toLowerCase();
+  if (vercelEnv) return vercelEnv === "production";
+  return process.env.NODE_ENV === "production";
+}
+
+/** Local dev and automated tests keep fail-open behavior with warnings. */
+export function isRateLimitDevFriendly(): boolean {
+  if (process.env.NODE_ENV === "test") return true;
+  const vercelEnv = process.env.VERCEL_ENV?.trim().toLowerCase();
+  if (vercelEnv && vercelEnv !== "production") return true;
+  return process.env.NODE_ENV === "development";
+}
+
 function warnMissingUpstashOnce(): void {
-  if (process.env.NODE_ENV !== "development" || missingUpstashLoggedDev) return;
+  if (!isRateLimitDevFriendly() || missingUpstashLoggedDev) return;
   missingUpstashLoggedDev = true;
   logWarn("[rateLimit] Upstash Redis not configured — rate limiting disabled (fail open).");
 }
 
-function throttledUpstashFailureLog(context: string): void {
+function logMissingUpstashInfrastructure(): void {
+  console.error(
+    "[rateLimit] Upstash Redis is not configured — denying requests (fail closed in production).",
+  );
+}
+
+function throttledUpstashFailureLog(context: string, failClosed: boolean): void {
   const now = Date.now();
   if (now - lastUpstashErrorLogAt < RL_ERROR_LOG_INTERVAL_MS) return;
   lastUpstashErrorLogAt = now;
+  if (failClosed) {
+    console.error("[rateLimit] Upstash request failed — denying requests (fail closed in production).", {
+      context,
+    });
+    return;
+  }
   logWarn("[rateLimit] Upstash request failed — allowing request (fail open).", { context });
 }
 
@@ -61,15 +88,15 @@ async function upstashRedisExec(command: (string | number)[]): Promise<unknown |
     try {
       parsed = JSON.parse(text) as unknown;
     } catch {
-      throttledUpstashFailureLog("invalid-json");
+      throttledUpstashFailureLog("invalid-json", isRateLimitInfrastructureRequired());
       return null;
     }
     if (!res.ok) {
-      throttledUpstashFailureLog(`http-${res.status}`);
+      throttledUpstashFailureLog(`http-${res.status}`, isRateLimitInfrastructureRequired());
       return null;
     }
     if (parsed && typeof parsed === "object" && "error" in parsed) {
-      throttledUpstashFailureLog("redis-error-field");
+      throttledUpstashFailureLog("redis-error-field", isRateLimitInfrastructureRequired());
       return null;
     }
     if (parsed && typeof parsed === "object" && "result" in parsed) {
@@ -77,7 +104,7 @@ async function upstashRedisExec(command: (string | number)[]): Promise<unknown |
     }
     return null;
   } catch {
-    throttledUpstashFailureLog("exception");
+    throttledUpstashFailureLog("exception", isRateLimitInfrastructureRequired());
     return null;
   }
 }
@@ -109,10 +136,25 @@ export type RateLimitResult = {
   remaining: number;
   reset: number;
   retryAfterSeconds?: number;
+  /** True when Redis is missing or errored in a production-required environment. */
+  infrastructureUnavailable?: boolean;
 };
 
+function infrastructureDeniedResult(limit: number, reset: number): RateLimitResult {
+  return {
+    allowed: false,
+    limit,
+    remaining: 0,
+    reset,
+    infrastructureUnavailable: true,
+    retryAfterSeconds: 60,
+  };
+}
+
 /**
- * Fixed-window counter in Upstash Redis when env is set; otherwise fail open (always allowed).
+ * Fixed-window counter in Upstash Redis when env is set.
+ * In production: missing Redis or backend errors fail closed (503 via rateLimitGuardResponse).
+ * In dev/test: fail open with a one-time warning.
  */
 export async function rateLimitByIp(
   req: Request,
@@ -128,15 +170,23 @@ export async function rateLimitByIp(
   const subject = safeKeyPart(options.identifier ?? getClientIp(req));
 
   if (!hasUpstashEnv()) {
-    warnMissingUpstashOnce();
-    return { allowed: true, limit, remaining: limit, reset };
+    if (isRateLimitDevFriendly()) {
+      warnMissingUpstashOnce();
+      return { allowed: true, limit, remaining: limit, reset };
+    }
+    logMissingUpstashInfrastructure();
+    return infrastructureDeniedResult(limit, reset);
   }
 
   const redisKey = `pratiqo:rl:${safeKeyPart(keyPrefix)}:${subject}:${bucket}`;
   const n = await redisIncr(redisKey);
   if (n === null) {
-    throttledUpstashFailureLog("incr");
-    return { allowed: true, limit, remaining: limit, reset };
+    if (isRateLimitDevFriendly()) {
+      throttledUpstashFailureLog("incr", false);
+      return { allowed: true, limit, remaining: limit, reset };
+    }
+    throttledUpstashFailureLog("incr", true);
+    return infrastructureDeniedResult(limit, reset);
   }
 
   if (n === 1) {
@@ -162,6 +212,13 @@ export async function rateLimitByIp(
   };
 }
 
+export function rateLimitUnavailableResponse() {
+  return NextResponse.json(
+    { error: "Service temporarily unavailable. Please try again later." },
+    { status: 503 },
+  );
+}
+
 export function rateLimitResponse(retryAfterSeconds: number, meta: { limit: number; remaining: number; reset: number }) {
   return NextResponse.json(
     { error: "Too many requests. Please try again later." },
@@ -175,4 +232,19 @@ export function rateLimitResponse(retryAfterSeconds: number, meta: { limit: numb
       },
     },
   );
+}
+
+/** Returns a 503 (infrastructure) or 429 (quota) response, or null when allowed. */
+export function rateLimitGuardResponse(rl: RateLimitResult): NextResponse | null {
+  if (rl.infrastructureUnavailable) {
+    return rateLimitUnavailableResponse();
+  }
+  if (!rl.allowed && rl.retryAfterSeconds != null) {
+    return rateLimitResponse(rl.retryAfterSeconds, {
+      limit: rl.limit,
+      remaining: rl.remaining,
+      reset: rl.reset,
+    });
+  }
+  return null;
 }

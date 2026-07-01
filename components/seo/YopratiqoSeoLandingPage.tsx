@@ -23,6 +23,7 @@ import { ArrowRight, BookOpenCheck, CheckCircle2, GraduationCap, MessageCircle }
 import { BreadcrumbSchema } from "@/components/seo/BreadcrumbSchema";
 import { FAQSchema } from "@/components/seo/FAQSchema";
 import { SITE_URL } from "@/lib/seo/site";
+import { serializeJsonLd } from "@/lib/seo/jsonLd";
 import type { YoSpanishSeoPage } from "@/lib/seo/yopratiqoSpanishSeoPages";
 
 interface Props {
@@ -56,7 +57,7 @@ function CourseJsonLd({ page }: Props) {
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      dangerouslySetInnerHTML={{ __html: serializeJsonLd(schema) }}
     />
   );
 }

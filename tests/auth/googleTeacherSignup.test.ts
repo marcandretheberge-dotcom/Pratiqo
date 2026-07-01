@@ -81,28 +81,33 @@ test("loginWithGoogle can force Google account selection without changing the de
   assert.match(src, /forceAccountSelection\?:\s*boolean/);
   assert.match(src, /options\?\.forceAccountSelection\s*\?\s*\{\s*queryParams:\s*\{\s*prompt:\s*"select_account"\s*\}\s*\}/);
   assert.match(src, /options:\s*\{\s*redirectTo,/);
+  assert.match(src, /skipBrowserRedirect:\s*true/);
+  assert.match(src, /window\.location\.assign\(data\.url\)/);
 });
 
-test("login page renders the Google account switch option for teacher and learner intents", () => {
+test("login page renders Google login plus explicit account switching", () => {
   const page = read("app/login/page.tsx");
   assert.match(page, /loginWrongGoogleAccountPrompt/);
   assert.match(page, /loginChangeGoogleAccount/);
   assert.match(page, /onClick=\{\(\) => void handleGoogleLogin\(\{ forceAccountSelection: true \}\)\}/);
   assert.match(page, /onClick=\{\(\) => void handleGoogleLogin\(\)\}/);
-  assert.match(page, /intent:\s*preAuthIntent \?\? undefined/);
+  assert.match(page, /forceAccountSelection:\s*options\?\.forceAccountSelection === true/);
+  assert.match(page, /intent:\s*loginIntent/);
+  assert.match(page, /intentQuery:\s*intentParam === "student" \? "student" : loginIntent/);
   assert.match(page, /referralCode:\s*refCode/);
+  assert.match(page, /disabled=\{!legalAccepted \|\| busy\}/);
 });
 
-test("Google account switch copy is localized in FR, EN, and ES", () => {
+test("single-login and connected-state copy is localized in FR, EN, and ES", () => {
   const fr = read("lib/i18n/locales/fr.json");
   const en = read("lib/i18n/locales/en.json");
   const es = read("lib/i18n/locales/es.json");
-  assert.match(fr, /"loginWrongGoogleAccountPrompt":\s*"Tu utilises le mauvais compte Google\?"/);
-  assert.match(fr, /"loginChangeGoogleAccount":\s*"Changer de compte Google"/);
-  assert.match(en, /"loginWrongGoogleAccountPrompt":\s*"Using the wrong Google account\?"/);
-  assert.match(en, /"loginChangeGoogleAccount":\s*"Change Google account"/);
-  assert.match(es, /"loginWrongGoogleAccountPrompt":\s*"¿Estás usando la cuenta de Google incorrecta\?"/);
-  assert.match(es, /"loginChangeGoogleAccount":\s*"Cambiar cuenta de Google"/);
+  assert.match(fr, /"loginAccountTitle":\s*"Connexion ou création de compte"/);
+  assert.match(fr, /"loginAlreadyConnectedTitle":\s*"Tu es déjà connecté\."/);
+  assert.match(en, /"loginAccountTitle":\s*"Log in or create an account"/);
+  assert.match(en, /"loginAlreadyConnectedTitle":\s*"You are already logged in\."/);
+  assert.match(es, /"loginAccountTitle":\s*"Iniciar sesión o crear una cuenta"/);
+  assert.match(es, /"loginAlreadyConnectedTitle":\s*"Ya has iniciado sesión\."/);
 });
 
 test("auth callback applies session cookies to redirect response", () => {

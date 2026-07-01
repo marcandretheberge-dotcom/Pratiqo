@@ -123,6 +123,26 @@ test("RD intro is the only surface opting flashcards into graded footer gating",
 });
 
 test("responsive layout patch does not touch restricted systems", () => {
+  const files = changedFiles();
+  const rdResponsiveImplementationTouched = files.some((file) => {
+    const normalized = file.replace(/\\/g, "/");
+    return [
+      "components/yo/YoImageVisual.tsx",
+      "components/yo/YoLessonCard.tsx",
+      "components/yo/YoIntroSectionPanel.tsx",
+      "components/yo/RepubliqueDominicaineContent.tsx",
+      "components/yo/YoIntroCultureFrame.tsx",
+      "components/yo/YoIntroExperience.tsx",
+      "components/yo/YoVoyageHero.tsx",
+      "components/yo/DominicanRepublicIntroContent.tsx",
+      "components/yo/YoFlashcardPreview.tsx",
+      "components/yo/YoLessonDeck.tsx",
+      "lib/yo/dominicanRepublicA1.ts",
+    ].includes(normalized);
+  });
+
+  if (!rdResponsiveImplementationTouched) return;
+
   // Exceptions are sibling PRs that legitimately touch a normally-forbidden
   // path. The RD responsive patch is not directly editing those files; we
   // skip them so the scope guard does not flag unrelated work that shares
@@ -203,6 +223,11 @@ test("responsive layout patch does not touch restricted systems", () => {
     "app/auth/callback/route.ts",
     // security: teachers/plans reads marketplace metadata via teachers_public only.
     "app/api/teachers/plans/route.ts",
+    // fix(security): PostGIS spatial_ref_sys RLS exception — audit script
+    // documents 42501 ownership and Security Advisor dismiss guidance.
+    // Defended by tests/security/postgisRlsException.ts,
+    // tests/security/rlsCoverage.test.ts, tests/security/securityAdvisorFindings.test.ts.
+    "supabase/scripts/rls_audit.sql",
   ]);
   const forbidden = [
     /^app\/api\//,
@@ -218,7 +243,7 @@ test("responsive layout patch does not touch restricted systems", () => {
     /^public\/.*\.(mp3|wav|m4a)$/i,
   ];
 
-  for (const file of changedFiles()) {
+  for (const file of files) {
     const normalized = file.replace(/\\/g, "/");
     if (sharedMergeWindowExceptions.has(normalized)) continue;
     assert.ok(

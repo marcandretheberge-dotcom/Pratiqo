@@ -15,9 +15,10 @@
  *      ends with the assertion that fails if any public ordinary table is
  *      still RLS-disabled.
  *
- *   3. The hardening migration explicitly references every table that
+ *   3. The hardening migrations explicitly reference every table that
  *      `CREATE TABLE` appears for. This is what prevents drift from
- *      silently sneaking past the explicit-enable list.
+ *      silently sneaking past the explicit-enable list, while still allowing
+ *      forward-only hardening migrations for tables added after 074.
  *
  * This file complements `tests/security/rlsPolicyShape.test.ts` (which
  * locks down the *policy shape* on sensitive tables) and
@@ -26,8 +27,12 @@
  */
 
 import assert from "node:assert/strict";
-import { readdirSync, readFileSync } from "node:fs";
+import { readdirSync, readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
+import {
+  POSTGIS_EXTENSION_RLS_ALLOWLIST,
+  POSTGIS_SPATIAL_REF_SYS_EXCEPTION,
+} from "./postgisRlsException";
 
 type TestFn = () => void;
 const tests: Array<{ name: string; fn: TestFn }> = [];
@@ -37,6 +42,10 @@ function test(name: string, fn: TestFn) {
 
 const MIGRATIONS_DIR = join(process.cwd(), "supabase", "migrations");
 const HARDENING_FILE = "074_enable_rls_security_hardening.sql";
+const EXPLICIT_RLS_HARDENING_FILES = [
+  HARDENING_FILE,
+  "085_harden_student_onboarding_consents_rls.sql",
+];
 
 function readMigration(file: string): string {
   return readFileSync(join(MIGRATIONS_DIR, file), "utf8").replace(
@@ -180,12 +189,15 @@ test("074 hardening migration exists with audit queries, drift loop, and final a
 });
 
 // ─────────────────────────────────────────────────────────────────────────
-// Invariant 3 — every created table is in the hardening migration's
-// explicit ENABLE list, so the explicit list never drifts behind reality.
+// Invariant 3 — every created table is in an explicit hardening migration's
+// ENABLE list, so the explicit list never drifts behind reality.
 // ─────────────────────────────────────────────────────────────────────────
 
-test("074 hardening migration explicitly enables RLS for every created table", () => {
-  const hardening = stripSqlComments(readMigration(HARDENING_FILE));
+test("hardening migrations explicitly enable RLS for every created table", () => {
+  const hardening = EXPLICIT_RLS_HARDENING_FILES.map((file) => {
+    assert.ok(migrationFiles.includes(file), `missing ${file}`);
+    return stripSqlComments(readMigration(file));
+  }).join("\n");
 
   const missing: string[] = [];
   for (const table of CREATED_TABLES) {
@@ -201,7 +213,7 @@ test("074 hardening migration explicitly enables RLS for every created table", (
   assert.deepEqual(
     missing,
     [],
-    `074 hardening migration is missing explicit ENABLE ROW LEVEL SECURITY for: ${missing.join(", ")}`,
+    `RLS hardening migrations are missing explicit ENABLE ROW LEVEL SECURITY for: ${missing.join(", ")}`,
   );
 });
 
@@ -224,6 +236,41 @@ test("supabase/scripts/rls_audit.sql exists and is read-only", () => {
     /\b(alter|drop|create|insert|update|delete|truncate|grant|revoke)\b/i,
     "audit helper must contain only read-only SELECT queries",
   );
+});
+
+test("PostGIS spatial_ref_sys is the only documented RLS advisor exception", () => {
+  assert.deepEqual(
+    [...POSTGIS_EXTENSION_RLS_ALLOWLIST],
+    ["spatial_ref_sys"],
+    "allowlist must contain only public.spatial_ref_sys",
+  );
+  assert.ok(
+    !existsSync(
+      join(MIGRATIONS_DIR, POSTGIS_SPATIAL_REF_SYS_EXCEPTION.removedDirectFailMigration),
+    ),
+    `${POSTGIS_SPATIAL_REF_SYS_EXCEPTION.removedDirectFailMigration} must not ship a direct-fail production ALTER`,
+  );
+  assert.ok(
+    POSTGIS_SPATIAL_REF_SYS_EXCEPTION.reasons.some((r) => r.includes("42501")),
+    "exception must document production 42501 must be owner failure",
+  );
+  assert.ok(
+    migrationFiles.includes("085_harden_student_onboarding_consents_rls.sql"),
+    "student_onboarding_consents RLS hardening (085) must remain",
+  );
+});
+
+test("no new migration direct-ALTERs extension-owned spatial_ref_sys", () => {
+  const historical = new Set(POSTGIS_SPATIAL_REF_SYS_EXCEPTION.historicalBestEffortMigrations);
+  for (const file of migrationFiles) {
+    if (historical.has(file)) continue;
+    const sql = stripSqlComments(readMigration(file));
+    assert.doesNotMatch(
+      sql,
+      /alter\s+table\s+(?:if\s+exists\s+)?public\.spatial_ref_sys\s+enable\s+row\s+level\s+security/i,
+      `${file} must not direct-ALTER spatial_ref_sys; use the documented PostGIS exception instead`,
+    );
+  }
 });
 
 // ─────────────────────────────────────────────────────────────────────────

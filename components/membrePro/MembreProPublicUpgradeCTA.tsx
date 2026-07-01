@@ -280,7 +280,7 @@ export function MembreProPublicUpgradeCTA({
         {eyebrow}
         <h3
           data-testid="membre-pro-public-upgrade-cta-title"
-          className="mt-3 font-[var(--yo-app-display)] text-[20px] font-semibold leading-tight text-[#172642] sm:text-[22px]"
+          className="mt-3 font-yo-app-display text-[20px] font-semibold leading-tight text-[#172642] sm:text-[22px]"
         >
           {copy.title}
         </h3>

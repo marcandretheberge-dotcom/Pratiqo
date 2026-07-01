@@ -322,9 +322,9 @@ test("no Access-Control-Allow-Origin: \\* is configured anywhere", () => {
 // 6. Redirect sanitization
 // ────────────────────────────────────────────────────────────────────────────
 
-test("auth/callback redirects always use resolvePostAuthRedirect", () => {
+test("auth/callback redirects always use resolveOAuthCallbackRedirect", () => {
   const src = readRepoFile("app/auth/callback/route.ts");
-  assert.match(src, /resolvePostAuthRedirect\(/);
+  assert.match(src, /resolveOAuthCallbackRedirect\(/);
   // Final redirect must anchor on requestUrl.origin (defense against
   // sanitizer escapes returning an absolute URL).
   assert.match(src, /NextResponse\.redirect\(new URL\([^,]+, requestUrl\.origin\)\)/);

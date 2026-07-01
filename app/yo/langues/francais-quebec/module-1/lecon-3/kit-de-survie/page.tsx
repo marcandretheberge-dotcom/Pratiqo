@@ -43,7 +43,7 @@ export default async function FrenchQuebecLesson3SurvivalKitPage({
     >
       <YoPrintCard title="3 amorces sures">
         <ul className="grid gap-2">
-          <li>Excuse-moi, j'aurais une petite question.</li>
+          <li>Excuse-moi, j&apos;aurais une petite question.</li>
           <li>Aurais-tu deux minutes?</li>
           <li>Je veux pas te deranger, mais...</li>
         </ul>
@@ -60,17 +60,17 @@ export default async function FrenchQuebecLesson3SurvivalKitPage({
 
       <YoPrintCard title="3 facons de reformuler">
         <ul className="grid gap-2">
-          <li>La reunion, c'est quand?</li>
+          <li>La reunion, c&apos;est quand?</li>
           <li>Je veux scanner. Comment je fais?</li>
-          <li>La salle de pause, je la cherche. C'est ou?</li>
+          <li>La salle de pause, je la cherche. C&apos;est ou?</li>
         </ul>
       </YoPrintCard>
 
       <YoPrintCard title="Mini-script de travail">
         <p className="rounded-2xl bg-white p-4 print:border print:border-[#D8ECE6]">
-          Excuse-moi... j'aurais une petite question. C'est ou, la salle de pause?
+          Excuse-moi... j&apos;aurais une petite question. C&apos;est ou, la salle de pause?
           <br />
-          Si la personne repond "Hein?" : La salle de pause, je la cherche. C'est ou?
+          Si la personne repond &quot;Hein?&quot; : La salle de pause, je la cherche. C&apos;est ou?
         </p>
       </YoPrintCard>
 
@@ -81,7 +81,7 @@ export default async function FrenchQuebecLesson3SurvivalKitPage({
       <YoPrintCard title="Pratique avec un prof">
         <p>
           Demandez a votre prof Pratiqo de simuler une question simple, une
-          reformulation apres "hein?", puis un ajustement de rythme et d'intonation.
+          reformulation apres &quot;hein?&quot;, puis un ajustement de rythme et d&apos;intonation.
         </p>
       </YoPrintCard>
     </YoPrintPageShell>

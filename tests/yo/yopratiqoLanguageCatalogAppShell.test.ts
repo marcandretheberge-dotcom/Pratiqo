@@ -275,13 +275,18 @@ test("catalog renders app-style language tiles, not generic web cards", () => {
   // contract suite (`yopratiqoMobileNoScrollContract.test.ts`).
   assert.match(
     catalogCode,
-    /sm:grid-cols-2/,
-    "desktop catalog card grid must declare `sm:grid-cols-2`",
+    /data-yo-langues-grid-min-card-width="280px"/,
+    "desktop catalog card grid must expose a comfortable min-width contract",
   );
   assert.match(
     catalogCode,
-    /xl:grid-cols-3/,
-    "desktop catalog card grid must widen to 3 columns on xl+",
+    /repeat\(auto-fit,minmax\(min\(100%,280px\),1fr\)\)/,
+    "desktop catalog card grid must use auto-fit cards instead of fixed columns",
+  );
+  assert.doesNotMatch(
+    catalogCode,
+    /data-yo-langues-tiles-variant="desktop"[\s\S]{0,220}sm:grid-cols-2\s+xl:grid-cols-3/,
+    "desktop catalog card grid must not force cramped 3-column rows",
   );
 });
 

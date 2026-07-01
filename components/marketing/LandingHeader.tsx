@@ -23,7 +23,8 @@ export function LandingHeader() {
     { href: "/trouver-un-prof", label: t("findTeacher") },
     { href: "/devenir-enseignant", label: t("becomeTeacher") },
     { href: "/tarifs", label: t("navPricing") || "Tarifs" },
-    { href: "/blog", label: t("navResources") },
+    { href: "/ressources", label: t("navResources") },
+    { href: "/blog", label: t("navBlog") },
     { href: loginHref, label: loginLabel, prefetch: false },
   ];
 
@@ -49,7 +50,7 @@ export function LandingHeader() {
           {t("navPricing") || "Tarifs"}
         </Link>
         <Link
-          href="/blog"
+          href="/ressources"
           className="hidden sm:inline-flex items-center text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors"
         >
           {t("navResources")}

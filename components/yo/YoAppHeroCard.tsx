@@ -168,7 +168,7 @@ export function YoAppHeroCard({
       {/* 4. Editorial serif headline */}
       <h1
         data-testid="yo-app-hero-headline"
-        className="font-[var(--yo-app-display)] text-3xl font-semibold leading-[1.12] tracking-tight text-[#172642] sm:text-[34px]"
+        className="font-yo-app-display text-3xl font-semibold leading-[1.12] tracking-tight text-[#172642] sm:text-[34px]"
       >
         {copy.headline}
       </h1>
@@ -178,7 +178,7 @@ export function YoAppHeroCard({
          warm onboarding screen, not a cold marketing hero. */}
       <p
         data-testid="yo-app-hero-script"
-        className="font-[var(--yo-app-script)] text-2xl font-medium text-[#13A085]"
+        className="font-yo-app-script text-2xl font-medium text-[#13A085]"
       >
         {copy.script}
       </p>
@@ -200,7 +200,7 @@ export function YoAppHeroCard({
           aria-hidden
           className="absolute -right-6 -top-6 size-24 rounded-full bg-[#13A085]/15 blur-2xl"
         />
-        <span className="relative block font-[var(--yo-app-display)] italic">
+        <span className="relative block font-yo-app-display italic">
           “{copy.quote}”
         </span>
       </blockquote>

@@ -7,6 +7,7 @@ import { Loader2, MapPin, UsersRound } from "lucide-react";
 import { getSupabaseClient } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 import { isSessionBookable, spotsRemaining, type GroupSessionRow } from "@/lib/groupSessions";
+import { isEnabled } from "@/lib/features";
 import { useAuth } from "@/components/AuthProvider";
 import { GroupSessionMap } from "@/components/GroupSessionMap";
 import { hasConfirmedGroupRegistration } from "@/lib/maps";
@@ -113,6 +114,7 @@ export default function GroupSessionDetailClient({ sessionId: id }: { sessionId:
     );
   }
 
+  const checkoutLive = isEnabled("group_sessions");
   const rem = spotsRemaining(session);
   const max = Number(session.max_participants);
   const cur = Number(session.current_participants);
@@ -241,11 +243,22 @@ export default function GroupSessionDetailClient({ sessionId: id }: { sessionId:
         </section>
       ) : null}
 
+      {!checkoutLive ? (
+        <div
+          role="status"
+          className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950"
+        >
+          Réservation en ligne bientôt disponible — les paiements groupes sont désactivés pour le lancement.
+        </div>
+      ) : null}
+
       <div className="sticky bottom-4 rounded-2xl border border-[var(--p-border-light)] bg-[var(--p-surface)] p-4 shadow-lg flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
         <p className="text-lg font-bold text-teal-700">
-          Réserver ma place — {Number(session.price_per_person).toFixed(0)} $ / pers.
+          {checkoutLive
+            ? `Réserver ma place — ${Number(session.price_per_person).toFixed(0)} $ / pers.`
+            : "Réservation — bientôt disponible"}
         </p>
-        {bookable ? (
+        {checkoutLive && bookable ? (
           <button
             type="button"
             disabled={paying}
@@ -254,13 +267,21 @@ export default function GroupSessionDetailClient({ sessionId: id }: { sessionId:
           >
             {paying ? "Redirection…" : "Payer avec Stripe"}
           </button>
-        ) : (
+        ) : checkoutLive ? (
           <button
             type="button"
             disabled
             className="h-11 px-6 rounded-full font-bold border border-amber-400 text-amber-900 bg-amber-50 cursor-not-allowed"
           >
             Complet — liste d&apos;attente bientôt
+          </button>
+        ) : (
+          <button
+            type="button"
+            disabled
+            className="h-11 px-6 rounded-full font-bold border border-amber-300 text-amber-900/80 bg-amber-50 cursor-not-allowed"
+          >
+            Bientôt disponible
           </button>
         )}
       </div>

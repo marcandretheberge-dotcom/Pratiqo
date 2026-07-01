@@ -394,6 +394,7 @@ test("forbidden files: PR does not touch Stripe checkout/webhook, Supabase/RLS/m
     "supabase/migrations/071_student_search_visibility_photo.sql",
     "supabase/migrations/072_teacher_default_lesson_duration.sql",
     "supabase/migrations/073_student_saved_location.sql",
+    "supabase/migrations/085_harden_student_onboarding_consents_rls.sql",
   ]);
 
   // Approved Stripe route exceptions for narrowly-scoped consent-gate

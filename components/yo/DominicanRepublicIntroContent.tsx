@@ -35,6 +35,7 @@ import { YoAudioFeedbackProvider } from "@/components/yo/YoAudioFeedbackProvider
 import { YoListeningExercisePreview } from "@/components/yo/YoListeningExercisePreview";
 import { YoYoppoReward } from "@/components/yo/YoYoppoReward";
 import { YoSpanishAudioButton } from "@/components/yo/YoSpanishAudioButton";
+import { cn } from "@/lib/utils";
 
 const DECK_MODULE_LABEL = lstr("Intro · RD A1", "Intro · DR A1", "Intro · RD A1");
 const WELCOME_TAGLINE = lstr(
@@ -263,7 +264,8 @@ function HeroPage({
           locale={locale}
           fallbackKind="hero-tropical"
           variant="panel"
-          className="h-[clamp(220px,42vh,360px)] !min-h-0 rounded-none shadow-none"
+          visualLayout="imageOnly"
+          className="aspect-[16/8] !h-auto !min-h-0 rounded-none shadow-none"
         />
       </div>
       <p className="inline-flex w-fit items-center gap-2 rounded-full border border-[var(--pq-line)] bg-[var(--pq-surface)] px-3 py-1 text-[12px] font-extrabold uppercase tracking-[0.14em] text-[var(--pq-primary)]">
@@ -485,16 +487,28 @@ function ImageCard({
   visualHint?: YoVisualHint;
   imageFit?: "cover" | "contain";
 }) {
+  const isMap = visualHint === "dominican-map";
+  const resolvedFit = isMap ? "contain" : imageFit;
+  const visualLayout = isMap ? "map" : "imageOnly";
+
   return (
-    <div className="overflow-hidden rounded-[24px] border border-[var(--pq-line)] bg-[var(--pq-surface)] shadow-[0_14px_34px_rgba(23,38,66,0.07)]">
+    <div
+      data-yo-lesson-image-card="true"
+      data-yo-lesson-image-card-layout={visualLayout}
+      className="overflow-hidden rounded-[24px] border border-[var(--pq-line)] bg-[var(--pq-surface)] shadow-[0_14px_34px_rgba(23,38,66,0.07)]"
+    >
       <YoImageVisual
         imagePath={imagePath}
         alt={imageAlt}
         locale={locale}
         fallbackKind={visualHint}
         variant="panel"
-        imageFit={imageFit}
-        className="h-[clamp(190px,35vh,315px)] !min-h-0 rounded-none shadow-none"
+        imageFit={resolvedFit}
+        visualLayout={visualLayout}
+        className={cn(
+          "!h-auto !min-h-0 rounded-none shadow-none",
+          isMap ? "aspect-[3/2]" : "aspect-[16/8]",
+        )}
       />
     </div>
   );
@@ -667,7 +681,19 @@ function PhraseFocusPage({
 }) {
   return (
     <div className="rounded-[24px] border border-[var(--pq-line)] bg-[var(--pq-tint)] p-5">
-      <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-[var(--pq-primary)]">{t(label, locale)}</p>
+      <div className="flex items-start justify-between gap-3">
+        <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-[var(--pq-primary)]">{t(label, locale)}</p>
+        <YoSpanishAudioButton
+          text={phrase}
+          locale={locale}
+          moduleId={AUDIO_CONTEXT.moduleId}
+          lessonId={AUDIO_CONTEXT.lessonId}
+          type="phrase"
+          accentProfile={AUDIO_CONTEXT.accentProfile}
+          speechLang={AUDIO_CONTEXT.speechLang}
+          size="sm"
+        />
+      </div>
       <p
         className="mt-3 text-[clamp(1.7rem,6vw,2.45rem)] font-semibold leading-[1.05] text-[var(--pq-ink)]"
         lang="es"
@@ -702,9 +728,21 @@ function PhraseList({
 
 function VocabChip({ item, locale }: { item: YoVocabularyItem; locale: YoLocale }) {
   return (
-    <div className="min-w-0 rounded-[16px] border border-[var(--pq-line)] bg-[var(--pq-surface)] px-3 py-3">
-      <p className="break-words text-sm font-bold text-[var(--pq-ink)]" lang="es">{item.target}</p>
-      <p className="break-words text-xs leading-5 text-[var(--pq-ink-soft)]">{t(item.translation, locale)}</p>
+    <div className="flex min-w-0 items-center justify-between gap-2 rounded-[16px] border border-[var(--pq-line)] bg-[var(--pq-surface)] px-3 py-3">
+      <div className="min-w-0">
+        <p className="break-words text-sm font-bold text-[var(--pq-ink)]" lang="es">{item.target}</p>
+        <p className="break-words text-xs leading-5 text-[var(--pq-ink-soft)]">{t(item.translation, locale)}</p>
+      </div>
+      <YoSpanishAudioButton
+        text={item.target}
+        locale={locale}
+        moduleId={AUDIO_CONTEXT.moduleId}
+        lessonId={AUDIO_CONTEXT.lessonId}
+        type="phrase"
+        accentProfile={AUDIO_CONTEXT.accentProfile}
+        speechLang={AUDIO_CONTEXT.speechLang}
+        size="xs"
+      />
     </div>
   );
 }

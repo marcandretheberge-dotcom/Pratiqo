@@ -38,6 +38,7 @@ import {
 } from "@/lib/yo/lessonDeckTypes";
 import {
   DECK_CONTENT_MAX_WIDTH_CLASS,
+  DECK_CONTENT_MAX_WIDTH_LG_CLASS,
   DECK_HEADER_CLASSES,
   DECK_HEADER_ROW_CLASSES,
 } from "@/lib/yo/lessonDeckVisualContract";
@@ -103,7 +104,13 @@ export function YoLessonDeckHeader({
       data-no-deck-tap="true"
       className={cn(DECK_HEADER_CLASSES, className)}
     >
-      <div className={cn(DECK_HEADER_ROW_CLASSES, DECK_CONTENT_MAX_WIDTH_CLASS)}>
+      <div
+        className={cn(
+          DECK_HEADER_ROW_CLASSES,
+          DECK_CONTENT_MAX_WIDTH_CLASS,
+          DECK_CONTENT_MAX_WIDTH_LG_CLASS,
+        )}
+      >
         <Link
           data-testid="yo-lesson-deck-header-back"
           href={backHref}

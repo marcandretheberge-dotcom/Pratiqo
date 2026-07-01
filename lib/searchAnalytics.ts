@@ -1,3 +1,5 @@
+import { getAnalyticsAnonymousId } from "@/lib/privacy/analyticsAnonymousId";
+import { hasAnalyticsConsent } from "@/lib/privacy/cookieConsent";
 import { getSupabaseClient } from "@/lib/supabase";
 
 export type SearchAnalyticsSource = "landing" | "student_search" | "quiz" | "map";
@@ -15,23 +17,8 @@ type BasePayload = {
   result_count?: number | null;
 };
 
-const ANON_KEY = "pratiqo_search_anon_id";
-
 function getAnonymousSessionId(): string {
-  if (typeof window === "undefined") return "";
-  try {
-    let id = window.localStorage.getItem(ANON_KEY);
-    if (!id) {
-      id =
-        typeof crypto !== "undefined" && "randomUUID" in crypto
-          ? crypto.randomUUID()
-          : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-      window.localStorage.setItem(ANON_KEY, id);
-    }
-    return id;
-  } catch {
-    return "";
-  }
+  return getAnalyticsAnonymousId();
 }
 
 async function authHeaderForAnalytics(): Promise<Record<string, string>> {
@@ -60,8 +47,9 @@ async function postEventAuthed(body: Record<string, unknown>) {
   }
 }
 
-/** Fire-and-forget search demand signal (never throws). */
+/** Fire-and-forget search demand signal (never throws). Requires analytics consent. */
 export function logSearchEvent(payload: BasePayload): void {
+  if (!hasAnalyticsConsent()) return;
   const anonymous_session_id = getAnonymousSessionId();
   void postEventAuthed({
     ...payload,
@@ -74,6 +62,7 @@ export function logTeacherClick(payload: {
   clicked_teacher_id: string;
   filters?: Record<string, unknown>;
 }): void {
+  if (!hasAnalyticsConsent()) return;
   void postEventAuthed({
     source: payload.source,
     clicked_teacher_id: payload.clicked_teacher_id,
@@ -88,6 +77,7 @@ export function logBookingFromSearch(payload: {
   booked_teacher_id: string;
   filters?: Record<string, unknown>;
 }): void {
+  if (!hasAnalyticsConsent()) return;
   void postEventAuthed({
     source: payload.source,
     booked_teacher_id: payload.booked_teacher_id,

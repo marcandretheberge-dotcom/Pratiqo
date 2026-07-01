@@ -25,10 +25,14 @@ test("student companion guard waits for hydrated profile before redirecting", ()
   );
 });
 
-test("choose-companion merges server profile after companion save without blocking on refresh failure", () => {
+test("choose-companion opens consent gate before companion save", () => {
   const page = read("app/(app)/student/choose-companion/page.tsx");
-  assert.match(page, /mergeAuthProfile/);
-  assert.match(page, /router\.replace\("\/dashboard"\)/);
+  const gate = read("components/student/StudentOnboardingConsentGate.tsx");
+  assert.match(page, /StudentOnboardingConsentGate/);
+  assert.match(page, /setShowConsentGate\(true\)/);
+  assert.match(page, /companionType=\{selected\}/);
+  assert.match(gate, /mergeAuthProfile/);
+  assert.match(gate, /router\.replace\("\/dashboard"\)/);
   assert.match(page, /saveError/);
   assert.doesNotMatch(page, /setSaveError\(t\("companionProfileSyncError"\)\)/);
   assert.doesNotMatch(page, /window\.location\.assign\("\/dashboard"\)/);

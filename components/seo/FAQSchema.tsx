@@ -1,4 +1,5 @@
 import type { FAQItem } from "@/lib/seo/types";
+import { serializeJsonLd } from "@/lib/seo/jsonLd";
 
 interface Props {
   items: FAQItem[];
@@ -23,7 +24,7 @@ export function FAQSchema({ items }: Props) {
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      dangerouslySetInnerHTML={{ __html: serializeJsonLd(schema) }}
     />
   );
 }

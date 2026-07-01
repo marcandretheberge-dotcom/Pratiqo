@@ -29,6 +29,7 @@ import {
 } from "@/components/yo/YoSpanishAudioButton";
 import { t } from "@/lib/yo/localize";
 import { YO_COPY } from "@/lib/yo/copy";
+import { cn } from "@/lib/utils";
 
 export interface YoIntroSectionPanelProps {
   section: YoIntroDetailedSection;
@@ -81,7 +82,14 @@ export function YoIntroSectionPanel({
             variant="panel"
             imageFit={shouldContainImage ? "contain" : "cover"}
             imagePosition={section.visualHint === "conversation-bubbles" ? "center center" : "center"}
-            className="rounded-2xl shadow-none"
+            className={cn(
+              "rounded-2xl shadow-none",
+              // The map asset is 3:2 — the default "panel" box is
+              // 16:9, which left visible blank margins on either
+              // side of a contain-fit map. Matching the box to the
+              // asset's real ratio fills the frame edge to edge.
+              shouldContainImage && "aspect-[3/2]",
+            )}
           />
         </div>
       ) : null}

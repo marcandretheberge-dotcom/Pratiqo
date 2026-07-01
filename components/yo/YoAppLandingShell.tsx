@@ -2,12 +2,15 @@
  * YoAppLandingShell
  *
  * Mobile-first "premium app onboarding" shell for the public /yo
- * surface. Wraps the hero + value strip inside a narrow centered
- * column so the experience feels like a phone screen even on
- * desktop — instead of the wide marketing layout that /yo had
- * before. Existing marketing sections (pillars, disciplines,
- * companion onboarding, final CTA) continue to render below this
- * shell at their original full widths.
+ * surface. Below `lg`, wraps the hero + value strip inside a
+ * narrow centered column so the experience feels like a phone
+ * screen. At `lg+`, becomes a real desktop hero band: the hero +
+ * value strip sit in a left column and the optional `visual` slot
+ * (e.g. the featured course preview) sits in a right column, inside
+ * a `max-w-6xl` band — instead of the old narrow phone column
+ * stretched onto a wide monitor. Existing marketing sections
+ * (pillars, disciplines, companion onboarding, final CTA) continue
+ * to render below this shell at their original full widths.
  *
  * Design tokens (echoed from the prototype theme — see
  *  `pratiqo-theme.jsx` warm-cream look in the prototype zip):
@@ -38,11 +41,18 @@ import {
 
 export type YoAppLandingShellProps = {
   children: React.ReactNode;
+  /**
+   * Optional right-column visual on `lg+` (e.g. the featured course
+   * preview card). Renders stacked below `children` on mobile/tablet
+   * since the layout is a single column below `lg`.
+   */
+  visual?: React.ReactNode;
   className?: string;
 };
 
 export function YoAppLandingShell({
   children,
+  visual,
   className,
 }: YoAppLandingShellProps): React.JSX.Element {
   return (
@@ -55,31 +65,33 @@ export function YoAppLandingShell({
         // marketing sections below sit on their own backgrounds.
         "relative w-full bg-[#F4EFE6] py-8 sm:py-12",
         // Expose the two app-like font families as CSS variables so
-        // descendants can opt-in via Tailwind's `font-[var(...)]`
-        // utility without changing the rest of the page's font stack.
+        // descendants can opt-in via `.font-yo-app-display` / `.font-yo-app-script`
+        // without changing the rest of the page's font stack.
         appDisplayFont.variable,
         appScriptFont.variable,
         className,
       )}
     >
       {/*
-        * Narrow app-like column. Mobile-first single column with
-        * generous side padding so the layout never overflows or
-        * looks "websitey" on a 360px viewport. On md+ the column is
-        * intentionally clamped (~520px) so the desktop view keeps
-        * the phone-screen rhythm — no giant desktop whitespace,
-        * no wide hero. Larger breakpoints get a touch more room
-        * (max-w-xl) to accommodate side-by-side cat tiles without
-        * forcing wraps.
+        * Mobile/tablet: narrow single column with generous side
+        * padding so the layout never overflows or looks "websitey"
+        * on a 360px viewport. Desktop (`lg+`): a real two-column
+        * hero band — hero + value strip on the left, the optional
+        * `visual` slot on the right — inside a `max-w-6xl` band so
+        * the page uses the available width instead of forcing the
+        * phone-screen rhythm onto a wide monitor.
         */}
       <div
         className={cn(
           "mx-auto flex w-full max-w-[520px] flex-col gap-6 px-5",
           "sm:max-w-[560px] sm:gap-7 sm:px-6",
-          "lg:max-w-xl lg:gap-8",
+          "lg:max-w-6xl lg:grid lg:grid-cols-[1.05fr_0.95fr] lg:items-start lg:gap-12 lg:px-8",
         )}
       >
-        {children}
+        <div className="flex flex-col gap-6 sm:gap-7 lg:gap-8">
+          {children}
+        </div>
+        {visual ? <div className="lg:pt-2">{visual}</div> : null}
       </div>
     </section>
   );

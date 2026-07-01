@@ -15,6 +15,7 @@ import { CityMapSection } from "../../../../components/CityMapSection";
 import { CityLinksFooter } from "../../../../components/CityLinksFooter";
 
 import { SITE_URL } from "@/lib/seo/site";
+import { serializeJsonLd } from "@/lib/seo/jsonLd";
 
 const BASE_URL = SITE_URL;
 
@@ -235,11 +236,11 @@ export default async function BarrioPage({
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(breadcrumbJsonLd) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(itemListJsonLd) }}
       />
 
       <div className="min-h-[100dvh] flex flex-col bg-[#FAFCFB]">

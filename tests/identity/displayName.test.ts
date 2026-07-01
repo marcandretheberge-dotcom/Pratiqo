@@ -222,9 +222,8 @@ const PUBLIC_FILES = [
   "app/(app)/student/search/page.tsx",
   "app/(app)/booking/page.tsx",
   "app/teacher/profile/page.tsx",
-  "app/cours/[disciplineSlug]/[citySlug]/page.tsx",
+  "components/seo/LocalTeacherDiscoveryCards.tsx",
   "app/clases/montevideo/[barrioSlug]/page.tsx",
-  "app/tuteurs-prive/[citySlug]/page.tsx",
 ] as const;
 
 test("every public render surface imports publicFirstNameWithInitial", () => {

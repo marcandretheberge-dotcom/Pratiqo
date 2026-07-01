@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
-import { rateLimitByIp, rateLimitResponse } from "@/lib/rateLimit";
+import { rateLimitByIp, rateLimitGuardResponse } from "@/lib/rateLimit";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import type { CompanionType } from "@/lib/companions";
 
@@ -64,13 +64,8 @@ export async function POST(request: Request) {
   }
 
   const rl = await rateLimitByIp(request, "companion", { limit: 30, windowSeconds: 60 });
-  if (!rl.allowed && rl.retryAfterSeconds != null) {
-    return rateLimitResponse(rl.retryAfterSeconds, {
-      limit: rl.limit,
-      remaining: rl.remaining,
-      reset: rl.reset,
-    });
-  }
+  const rateLimited = rateLimitGuardResponse(rl);
+  if (rateLimited) return rateLimited;
 
   const admin = getSupabaseAdmin();
   const { data: existing, error: readErr } = await admin

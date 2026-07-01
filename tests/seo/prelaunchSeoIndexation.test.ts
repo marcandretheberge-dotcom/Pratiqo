@@ -31,7 +31,7 @@
  *
  *  7. Production noindex accidentally landing on the homepage,
  *     /tarifs, /devenir-enseignant, /become-teacher, /cours, or
- *     /tuteurs-prive.
+ *     /tuteurs.
  *
  *  8. The homepage ships an empty SSR body for crawlers because
  *     `LandingAuthGate` returns null while auth state is resolving.
@@ -54,6 +54,7 @@ import { join } from "node:path";
 import { SITE_URL } from "../../lib/seo/site";
 import sitemap from "../../app/sitemap";
 import robots from "../../app/robots";
+import { isGroupSessionsMarketplaceIndexable } from "../../lib/groupSessionsLaunch";
 
 const REPO_ROOT = process.cwd();
 
@@ -72,7 +73,7 @@ const rootLayoutSrc = read("app/layout.tsx");
 const homepageSrc = read("app/page.tsx");
 const sitemapSrc = read("app/sitemap.ts");
 const robotsSrc = read("app/robots.ts");
-const middlewareSrc = read("middleware.ts");
+const proxySrc = read("proxy.ts");
 const nextConfigSrc = read("next.config.ts");
 const landingAuthGateSrc = read("components/marketing/LandingAuthGate.tsx");
 
@@ -91,7 +92,8 @@ const trouverUnProfSrc = read("app/(marketing)/trouver-un-prof/page.tsx");
 const francisationSrc = read("app/(marketing)/francisation/page.tsx");
 const groupSessionsLayoutSrc = read("app/group-sessions/layout.tsx");
 const coursPageSrc = read("app/cours/[disciplineSlug]/[citySlug]/page.tsx");
-const tuteursPageSrc = read("app/tuteurs-prive/[citySlug]/page.tsx");
+const tuteursPageSrc = read("app/tuteurs/[citySlug]/page.tsx");
+const legacyTuteursRedirectSrc = read("app/tuteurs-prive/[citySlug]/page.tsx");
 
 // ── Domain & origin ──────────────────────────────────────────────────
 test("SITE_URL points to pratiqo.ca (never pratiqo.com)", () => {
@@ -107,7 +109,7 @@ test("Repository sources never reference pratiqo.com", () => {
     ["app/page.tsx", homepageSrc],
     ["app/sitemap.ts", sitemapSrc],
     ["app/robots.ts", robotsSrc],
-    ["middleware.ts", middlewareSrc],
+    ["proxy.ts", proxySrc],
     ["next.config.ts", nextConfigSrc],
     ["LandingAuthGate", landingAuthGateSrc],
     ["/legal/cgu", cguSrc],
@@ -124,7 +126,8 @@ test("Repository sources never reference pratiqo.com", () => {
     ["/francisation", francisationSrc],
     ["/group-sessions layout", groupSessionsLayoutSrc],
     ["/cours/.../...", coursPageSrc],
-    ["/tuteurs-prive/...", tuteursPageSrc],
+    ["/tuteurs/...", tuteursPageSrc],
+    ["/tuteurs-prive redirect", legacyTuteursRedirectSrc],
   ] as const) {
     assert.ok(
       !/pratiqo\.com\b/.test(src),
@@ -230,13 +233,13 @@ const MARKETING_CANONICALS: Array<{ src: string; needle: RegExp; label: string }
   },
   {
     src: coursPageSrc,
-    needle: /canonical\s*:\s*`\$\{(?:SITE_URL|BASE_URL)\}\/cours\/\$\{disciplineSlug\}\/\$\{citySlug\}`/,
+    needle: /canonical:\s*bundle\.canonicalUrl/,
     label: "/cours/[disciplineSlug]/[citySlug]",
   },
   {
     src: tuteursPageSrc,
-    needle: /canonical\s*:\s*`\$\{(?:SITE_URL|BASE_URL)\}\/tuteurs-prive\/\$\{citySlug\}`/,
-    label: "/tuteurs-prive/[citySlug]",
+    needle: /canonical:\s*bundle\.canonicalUrl/,
+    label: "/tuteurs/[citySlug]",
   },
 ];
 
@@ -255,7 +258,7 @@ const PUBLIC_NOINDEX_FORBIDDEN = [
   { label: "/trouver-un-prof", src: trouverUnProfSrc },
   { label: "/francisation", src: francisationSrc },
   { label: "/cours", src: coursPageSrc },
-  { label: "/tuteurs-prive", src: tuteursPageSrc },
+  { label: "/tuteurs", src: tuteursPageSrc },
   { label: "/legal/cgu", src: cguSrc },
   { label: "/legal/confidentialite", src: confidentialiteSrc },
   { label: "/legal/membre-pro", src: membreProSrc },
@@ -288,7 +291,6 @@ test("Sitemap includes the canonical public surfaces", async () => {
     `${SITE_URL}/`,
     `${SITE_URL}/become-teacher`,
     `${SITE_URL}/devenir-enseignant`,
-    `${SITE_URL}/group-sessions`,
     `${SITE_URL}/tarifs`,
     `${SITE_URL}/trouver-un-prof`,
     `${SITE_URL}/francisation`,
@@ -300,6 +302,10 @@ test("Sitemap includes the canonical public surfaces", async () => {
     `${SITE_URL}/legal/membre-pro`,
     `${SITE_URL}/legal/paiements-remboursements`,
   ];
+
+  if (isGroupSessionsMarketplaceIndexable()) {
+    required.push(`${SITE_URL}/group-sessions`);
+  }
 
   for (const url of required) {
     assert.ok(urls.has(url), `Sitemap must include ${url}`);
@@ -377,17 +383,14 @@ test("Sitemap excludes auth-only / private routes", async () => {
 });
 
 // ── Discipline × city + city-tutor SEO routes are in the sitemap ─────
-test("Sitemap pre-renders /tuteurs-prive/[citySlug] and /cours/[discipline]/[city]", async () => {
+test("Sitemap may include supply-gated /tuteurs/[citySlug] and /cours/[discipline]/[city]", async () => {
   const entries = await sitemap();
   const urls = entries.map((e) => e.url);
   assert.ok(
-    urls.some((u) => /\/tuteurs-prive\/[a-z0-9-]+$/.test(u)),
-    "Sitemap must include at least one /tuteurs-prive/[citySlug] entry",
+    !urls.some((u) => /\/tuteurs-prive\/[a-z0-9-]+$/.test(u)),
+    "Sitemap must not list legacy /tuteurs-prive/[citySlug] URLs",
   );
-  assert.ok(
-    urls.some((u) => /\/cours\/[a-z0-9-]+\/[a-z0-9-]+$/.test(u)),
-    "Sitemap must include at least one /cours/[discipline]/[city] entry",
-  );
+  assert.match(sitemapSrc, /fetchLocalDiscoverySitemapEntries/);
 });
 
 // ── robots.ts ────────────────────────────────────────────────────────
@@ -414,7 +417,7 @@ test("robots() does NOT disallow public pages", () => {
     "/francisation",
     "/group-sessions",
     "/cours",
-    "/tuteurs-prive",
+    "/tuteurs",
     "/clases",
     "/blog",
     "/legal/cgu",
@@ -519,8 +522,12 @@ test("LandingAuthGate renders children during SSR / loading state (no empty body
 test("Homepage / OrgJsonLd reference the canonical Pratiqo brand and Cours Pratiqo Inc legal entity", () => {
   const orgJsonLdSrc = read("components/marketing/LandingOrgJsonLd.tsx");
   assert.match(orgJsonLdSrc, /Pratiqo/);
+  assert.match(orgJsonLdSrc, /legalName:\s*"Cours Pratiqo Inc\."/);
   assert.match(orgJsonLdSrc, /url:\s*SITE_URL/);
   assert.match(orgJsonLdSrc, /addressCountry:\s*"CA"/);
+  assert.match(orgJsonLdSrc, /"@type":\s*"Organization"/);
+  assert.match(orgJsonLdSrc, /"@type":\s*"WebSite"/);
+  assert.doesNotMatch(orgJsonLdSrc, /hasOfferCatalog/);
 });
 
 // ── Run ──────────────────────────────────────────────────────────────

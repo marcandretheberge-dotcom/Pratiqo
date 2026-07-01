@@ -97,7 +97,7 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [teacherId, setTeacherId] = useState<string | null>(null);
-  const [teacherIsPublic, setTeacherIsPublic] = useState(true);
+  const [teacherIsPublic, setTeacherIsPublic] = useState(false);
   const [visibilitySaving, setVisibilitySaving] = useState(false);
   const [searchIndexingConsent, setSearchIndexingConsent] = useState(false);
   const [publicProfileSlug, setPublicProfileSlug] = useState<string | null>(null);
@@ -207,7 +207,7 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
         public_profile_slug?: string | null;
       };
       setTeacherId(row.id);
-      setTeacherIsPublic(row.is_public !== false && !row.deactivated_at && !row.deleted_at);
+      setTeacherIsPublic(row.is_public === true);
       setSearchIndexingConsent(row.search_indexing_consent === true);
       setPublicProfileSlug(
         typeof row.public_profile_slug === "string" && row.public_profile_slug.trim()
@@ -508,8 +508,8 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
 
   const toggleProfileVisibility = async () => {
     if (!teacherId) return;
-    const nextPublic = !teacherIsPublic;
-    if (nextPublic && !isTeacherMarketSupported(teacherCountryCode)) {
+    const action = teacherIsPublic ? "unpublish" : "publish";
+    if (action === "publish" && !isTeacherMarketSupported(teacherCountryCode)) {
       setMessage(t("marketTeacherUnavailableMessage"));
       return;
     }
@@ -529,14 +529,17 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ is_public: nextPublic }),
+      body: JSON.stringify({ action }),
     });
-    const body = (await res.json().catch(() => ({}))) as { error?: string };
+    const body = (await res.json().catch(() => ({}))) as { error?: string; is_public?: boolean };
     if (!res.ok) {
       setMessage(body.error || t("anErrorOccurred"));
     } else {
+      const nextPublic = body.is_public === true;
       setTeacherIsPublic(nextPublic);
-      setMessage(nextPublic ? t("profileReactivatedSuccess") : t("profileHiddenSuccess"));
+      setMessage(
+        nextPublic ? t("teacherProfilePublishSuccess") : t("teacherProfileUnpublishSuccess"),
+      );
     }
     setVisibilitySaving(false);
   };
@@ -1098,16 +1101,16 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
           <input
             type="checkbox"
             checked={searchIndexingConsent}
-            disabled={searchIndexingSaving || !teacherIsPublic}
+            disabled={searchIndexingSaving}
             onChange={() => void toggleSearchIndexingConsent()}
             className="mt-0.5 h-5 w-5 shrink-0 rounded border-slate-300 accent-teal-500 disabled:opacity-50"
             data-testid="teacher-search-indexing-consent-settings"
           />
           <span className="text-sm leading-relaxed text-slate-700">{t("teacherSearchIndexingConsentLabel")}</span>
         </label>
-        {!teacherIsPublic ? (
-          <p className="text-xs text-amber-800 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2">
-            {t("teacherSearchIndexingConsentRequiresVisibleProfile")}
+        {searchIndexingConsent && !teacherIsPublic ? (
+          <p className="text-xs text-sky-900 rounded-xl border border-sky-200 bg-sky-50 px-3 py-2">
+            {t("teacherSeoReadinessAwaitingAdmin")}
           </p>
         ) : null}
         {searchIndexingConsent && publicProfileSlug ? (

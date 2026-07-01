@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import DevenirEnseignantContent from "./DevenirEnseignantContent";
 
 import { SITE_URL } from "@/lib/seo/site";
+import { serializeJsonLd } from "@/lib/seo/jsonLd";
 
 const BASE_URL = SITE_URL;
 
@@ -124,7 +125,7 @@ export default function DevenirEnseignantPage() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jobPostingJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(jobPostingJsonLd) }}
       />
       <DevenirEnseignantContent />
     </>

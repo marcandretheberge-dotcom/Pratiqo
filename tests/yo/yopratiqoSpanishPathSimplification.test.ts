@@ -232,9 +232,13 @@ test("Spanish hub names Yoppo on its companion card", () => {
 
 // ─── 8. Desktop workspace pattern (via adaptive shell) ───────────
 test("Spanish hub uses the desktop workspace pattern via the adaptive shell", () => {
-  // The desktop sub-tree owns leftRail/center/rightRail props on
-  // the adaptive shell mount (legacy YoAdaptiveShell or new
-  // YoAdaptiveStepShell).
+  // The desktop sub-tree owns leftRail/center props on the adaptive
+  // shell mount (legacy YoAdaptiveShell or new YoAdaptiveStepShell).
+  // No rightRail: a 280px/1fr/300px three-pane split squeezed the
+  // two primary cards into a ~470px center track on every desktop
+  // breakpoint (the QA-reported "cramped, awkward text wrap" bug).
+  // Its secondary "what's next" content now renders inside the
+  // wider `center` column (with `centerMaxWidth: "4xl"`) instead.
   assert.match(
     hubCode,
     /desktop=\{[\s\S]*leftRail:/,
@@ -247,8 +251,13 @@ test("Spanish hub uses the desktop workspace pattern via the adaptive shell", ()
   );
   assert.match(
     hubCode,
+    /desktop=\{[\s\S]*centerMaxWidth:\s*["']4xl["']/,
+    "Spanish hub must widen the desktop center column past the default 2xl prose width",
+  );
+  assert.doesNotMatch(
+    hubCode,
     /desktop=\{[\s\S]*rightRail:/,
-    "Spanish hub must declare a desktop rightRail on the adaptive shell",
+    "Spanish hub must NOT declare a desktop rightRail (it squeezed the two primary cards)",
   );
 });
 

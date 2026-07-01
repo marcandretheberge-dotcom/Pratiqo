@@ -4,14 +4,20 @@
  * YoLessonDeck
  *
  * Client orchestrator that turns an array of pre-rendered
- * `<YoLessonDeckScreen>` payloads into a viewport-locked,
- * one-screen-at-a-time mobile-app learning surface. The deck:
+ * `<YoLessonDeckScreen>` payloads into a one-screen-at-a-time
+ * learning surface. The deck:
  *
- *   • Locks the learning area to `h-[100dvh]` with a flex
- *     column so the page itself never scrolls inside a module
- *     lesson — the document body is the same size as the
- *     viewport, and the only scroll allowed is a fallback
- *     inside the active screen card when content does not fit.
+ *   • Below `lg`: locks the learning area to `h-[100dvh]` with a
+ *     flex column so the page itself never scrolls inside a
+ *     module lesson — the document body is the same size as the
+ *     viewport, and the only scroll allowed is a fallback inside
+ *     the active screen card when content does not fit.
+ *   • At `lg+`: drops the viewport lock (`lg:` overrides in the
+ *     shared visual contract) so the desktop lesson player
+ *     scrolls the page naturally at a wider ~960px column instead
+ *     of being trapped in a phone-sized internal scrollbar. Only
+ *     the active screen renders either way (`hidden`/`block`), so
+ *     no stacking/animation logic differs between breakpoints.
  *   • Mounts every screen in the DOM but only shows the active
  *     one — internal client widgets nested inside (browser
  *     audio buttons, the flashcard carousel, the
@@ -78,6 +84,7 @@ import {
 } from "@/lib/yo/lessonDeckTypes";
 import {
   DECK_CONTENT_MAX_WIDTH_CLASS,
+  DECK_CONTENT_MAX_WIDTH_LG_CLASS,
   DECK_PROGRESS_STRIP_CLASSES,
   DECK_ROOT_CLASSES,
   DECK_SCREEN_HOST_CLASSES,
@@ -427,16 +434,16 @@ export function YoLessonDeck({
         data-yo-lesson-deck-variant="reference"
         data-yo-lesson-deck-tap-navigation={enableTapNavigation ? "on" : "off"}
         className={cn(
-          "relative flex h-[100dvh] w-full flex-col overflow-hidden bg-[var(--pq-bg)] text-[var(--pq-ink)] antialiased",
+          "relative flex h-[100dvh] w-full flex-col overflow-hidden bg-[var(--pq-bg)] text-[var(--pq-ink)] antialiased lg:h-auto lg:min-h-[100dvh] lg:overflow-visible",
           className,
         )}
         style={YO_REFERENCE_THEME_STYLE}
       >
-        <div className="mx-auto flex h-full w-full max-w-[820px] flex-col overflow-hidden bg-[var(--pq-bg)] font-sans">
+        <div className="mx-auto flex h-full w-full max-w-[820px] flex-col overflow-hidden bg-[var(--pq-bg)] font-sans lg:h-auto lg:overflow-visible">
           <div
             data-no-deck-swipe="true"
             data-no-deck-tap="true"
-            className="flex shrink-0 items-center gap-3 px-[18px] pb-[10px] pt-[52px]"
+            className="flex shrink-0 items-center gap-3 px-[18px] pb-[10px] pt-[52px] lg:sticky lg:top-0 lg:z-40 lg:bg-[var(--pq-bg)] lg:pt-6"
           >
             <Link
               href={backHref}
@@ -466,7 +473,7 @@ export function YoLessonDeck({
             ref={activeScreenRef}
             data-testid="yo-lesson-deck-stage"
             data-yo-lesson-deck-stage="true"
-            className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-[22px] pb-1 pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-[22px] pb-8 pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:min-h-0 lg:flex-none lg:overflow-visible lg:pb-32 lg:pt-6"
             onPointerDown={onPointerDown}
             onPointerUp={onPointerUp}
             onPointerCancel={onPointerCancel}
@@ -480,7 +487,7 @@ export function YoLessonDeck({
           <footer
             data-no-deck-swipe="true"
             data-no-deck-tap="true"
-            className="shrink-0 px-[22px] pb-[30px] pt-3"
+            className="shrink-0 px-[22px] pb-[30px] pt-3 lg:sticky lg:bottom-0 lg:bg-[var(--pq-bg)]"
           >
             <div className="flex items-center gap-3">
               {!isFirst ? (
@@ -545,6 +552,7 @@ export function YoLessonDeck({
         className={cn(
           DECK_PROGRESS_STRIP_CLASSES,
           DECK_CONTENT_MAX_WIDTH_CLASS,
+          DECK_CONTENT_MAX_WIDTH_LG_CLASS,
         )}
       >
         <span className="text-xs font-bold uppercase tracking-[0.16em] text-[#13A085]">
@@ -584,7 +592,11 @@ export function YoLessonDeck({
         ref={stageRef}
         data-testid="yo-lesson-deck-stage"
         data-yo-lesson-deck-stage="true"
-        className={cn(DECK_STAGE_CLASSES, DECK_CONTENT_MAX_WIDTH_CLASS)}
+        className={cn(
+          DECK_STAGE_CLASSES,
+          DECK_CONTENT_MAX_WIDTH_CLASS,
+          DECK_CONTENT_MAX_WIDTH_LG_CLASS,
+        )}
         onPointerDown={onPointerDown}
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerCancel}
@@ -603,7 +615,7 @@ export function YoLessonDeck({
               className={cn(
                 allowScreenScroll
                   ? DECK_SCREEN_HOST_CLASSES
-                  : "absolute inset-0 overflow-hidden px-1 pb-3 overscroll-none",
+                  : "absolute inset-0 overflow-hidden px-1 pb-3 overscroll-none lg:relative lg:inset-auto lg:overflow-visible lg:pb-28",
                 isActive ? "block" : "hidden",
               )}
             >
@@ -639,7 +651,7 @@ function ReferenceLessonScreen({
       data-testid="yo-lesson-deck-screen-host"
       data-yo-lesson-deck-screen-host-id={screen.id}
       data-yo-lesson-deck-screen-host-active="true"
-      className="min-h-full pb-5"
+      className="min-h-full pb-8"
     >
       {screen.eyebrow ? (
         <p className="mb-3 text-[12px] font-extrabold uppercase tracking-[0.14em] text-[var(--pq-primary)]">

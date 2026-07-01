@@ -36,6 +36,7 @@ import { IdentityVerificationCard } from "../../../../components/IdentityVerific
 import { useLocale } from "../../../../lib/locale-context";
 import { cn } from "../../../../lib/utils";
 import { deriveVerificationState, deriveEffectiveZoneState, type VerificationStepState } from "../../../../lib/verificationState";
+import { isIdentityVerificationFailed } from "../../../../lib/teachers/identityPublishGate";
 import { getDisciplineById, getEnabledDisciplines } from "../../../../lib/disciplines";
 import { syncTeacherPrimaryFromDisciplines } from "../../../../lib/teacherDisciplines";
 import { TeacherDisciplinesEditor, type DisciplineCardDraft } from "../../../../components/teacher/TeacherDisciplinesEditor";
@@ -49,6 +50,7 @@ import { isValidVideoUrl } from "../../../../lib/videoEmbed";
 import { parseGooglePlace } from "../../../../lib/googleAddressParser";
 import { MIN_LESSON_PRICE_DOLLARS } from "../../../../lib/pricing/constants";
 import { fetchEnsureTeacherProfile } from "../../../../lib/teachers/ensureTeacherProfileClient";
+import { TeacherProfileVisibilityCard } from "../../../../components/teacher/TeacherProfileVisibilityCard";
 import { lessonDurationSummaryText, normalizeLessonDurationMinutes } from "../../../../lib/pricing/lessonDuration";
 import {
   buildTeacherSetupChecklist,
@@ -226,7 +228,7 @@ export default function TeacherProfileManagementPage() {
     if (!user?.id) return;
     setTeacherRowLoading(true);
     const supabase = getSupabaseClient();
-    let [{ data: tr }, { data: p }] = await Promise.all([
+    const [teacherResult, profileResult] = await Promise.all([
       supabase
         .from("teachers")
         .select(
@@ -236,6 +238,8 @@ export default function TeacherProfileManagementPage() {
         .maybeSingle(),
       supabase.from("profiles").select("plan, photo_url").eq("id", user.id).maybeSingle(),
     ]);
+    let tr = teacherResult.data;
+    const p = profileResult.data;
 
     if (!tr && profile?.role === "teacher") {
       const { data: sess } = await supabase.auth.getSession();
@@ -1010,10 +1014,38 @@ export default function TeacherProfileManagementPage() {
             className="mt-3 rounded-xl border border-teal-200/80 bg-teal-50/80 px-4 py-3 text-sm text-teal-900"
             data-testid="teacher-setup-mode-banner"
           >
-            {t("teacherSetupModeBanner")}
+            {t("teacherOnboardingSavedNotPublishedBody")}
           </p>
         ) : null}
       </div>
+
+      {teacherRow && user?.id ? (
+        <TeacherProfileVisibilityCard
+          teacher={{
+            id: teacherRow.id,
+            user_id: user.id,
+            name: teacherRow.name ?? editName,
+            bio: teacherRow.bio ?? editBio,
+            disciplineCount: discRows.length,
+            price_per_lesson: teacherRow.price_per_lesson,
+            availability: teacherRow.availability,
+            city: teacherRow.city,
+            region: teacherRow.region,
+            country_code: teacherRow.country_code,
+            is_public: teacherRow.is_public,
+            deactivated_at: teacherRow.deactivated_at,
+            deleted_at: teacherRow.deleted_at,
+            identity_verification_failed: isIdentityVerificationFailed({
+              identity_verified: teacherRow.identity_verified,
+              stripe_identity_failed_reason: teacherRow.stripe_identity_failed_reason,
+            }),
+          }}
+          profileRole={profile?.role}
+          onVisibilityChange={(nextPublic) =>
+            setTeacherRow((prev) => (prev ? { ...prev, is_public: nextPublic } : prev))
+          }
+        />
+      ) : null}
 
       {message ? (
         <div

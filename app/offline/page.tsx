@@ -21,7 +21,7 @@ export default function OfflinePage() {
             href="/"
             className="mt-8 inline-flex min-h-11 items-center justify-center rounded-full bg-[#1D9E75] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0F6E56] focus:outline-none focus:ring-2 focus:ring-[#1D9E75] focus:ring-offset-2"
           >
-            Retour a l'accueil
+            Retour a l&apos;accueil
           </Link>
         </div>
       </section>

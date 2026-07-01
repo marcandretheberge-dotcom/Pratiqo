@@ -46,8 +46,8 @@ export const SEO_CLUSTER_URLS = {
   studentHub: "/trouver-un-prof",
   pricing: "/tarifs",
   blog: "/blog",
-  tuteursMtl: "/tuteurs-prive/montreal",
-  tuteursQc: "/tuteurs-prive/quebec",
+  tuteursMtl: "/tuteurs/montreal",
+  tuteursQc: "/tuteurs/quebec",
   coursMathMtl: "/cours/mathematiques/montreal",
   coursPianoMtl: "/cours/piano/montreal",
   coursGuitareMtl: "/cours/guitare/montreal",
@@ -99,6 +99,24 @@ const DONNER = P(
   "Comment donner des cours privés au Québec",
   "How to give private lessons in Quebec",
   "Cómo dar clases privadas en Québec",
+);
+const CHOISIR_PRIVE = P(
+  "/ressources/comment-choisir-professeur-prive-quebec",
+  "Comment choisir un professeur privé au Québec",
+  "How to choose a private teacher in Quebec",
+  "Cómo elegir un profesor privado en Quebec",
+);
+const LOCAL_VS_INTL = P(
+  "/ressources/professeur-prive-local-vs-plateforme-internationale",
+  "Professeur privé local ou plateforme internationale",
+  "Local private teacher vs international platform",
+  "Profesor local o plataforma internacional",
+);
+const RESSOURCES_HUB = P(
+  "/ressources",
+  "Guides Pratiqo — Ressources",
+  "Pratiqo guides — Resources",
+  "Guías Pratiqo — Recursos",
 );
 const CHOISIR = P(
   "/blog/comment-choisir-tuteur-enfant-quebec",
@@ -302,12 +320,12 @@ export function postMatchesBlogCluster(
 
 /** Guides under city landing pages. */
 export function getCitySeoGuideLinks(_citySlug: string, locale: Locale): SeoResolvedLink[] {
-  return resolveAll([CHOISIR, FORMAT, PRIX_FAMILLE], locale, 3);
+  return resolveAll([CHOISIR_PRIVE, LOCAL_VS_INTL, CHOISIR], locale, 3);
 }
 
 /** Guides under discipline × city landing pages. */
 export function getDisciplineCitySeoGuideLinks(disciplineSlug: string, citySlug: string, locale: Locale): SeoResolvedLink[] {
-  const cityPath = `/tuteurs-prive/${citySlug}`;
+  const cityPath = `/tuteurs/${citySlug}`;
   const cityLabel =
     citySlug === "montreal"
       ? { fr: "Tuteurs à Montréal", en: "Tutors in Montreal", es: "Tutores en Montreal" }
@@ -388,5 +406,5 @@ export function getDisciplineCitySeoGuideLinks(disciplineSlug: string, citySlug:
       3,
     );
   }
-  return resolveAll([CHOISIR, tuteursCity, TARIFS], locale, 3);
+  return resolveAll([CHOISIR_PRIVE, RESSOURCES_HUB, tuteursCity, TARIFS], locale, 4);
 }

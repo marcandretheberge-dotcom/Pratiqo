@@ -3,18 +3,28 @@ import React from "react";
 import { LandingHeader } from "@/components/marketing/LandingHeader";
 import { LandingFooter } from "@/components/marketing/LandingFooter";
 import { SITE_URL } from "@/lib/seo/site";
+import { isGroupSessionsMarketplaceIndexable } from "@/lib/groupSessionsLaunch";
+
+const checkoutLive = isGroupSessionsMarketplaceIndexable();
 
 export const metadata: Metadata = {
-  title: "Cours de groupe — Réserve ta place",
-  description:
-    "Découvre les séances collectives ouvertes sur Pratiqo : musique, langues, matières et plus. Places limitées, profils vérifiés — voir les dates et réserver quand tu es prêt.",
+  title: checkoutLive ? "Cours de groupe — Réserve ta place" : "Cours de groupe — Bientôt disponible",
+  description: checkoutLive
+    ? "Découvre les séances collectives ouvertes sur Pratiqo : musique, langues, matières et plus. Places limitées, profils vérifiés — voir les dates et réserver quand tu es prêt."
+    : "Les cours de groupe arrivent bientôt sur Pratiqo. Cette page n'est pas encore indexée : la réservation en ligne n'est pas disponible pour le lancement.",
   alternates: {
     canonical: `${SITE_URL}/group-sessions`,
   },
+  ...(checkoutLive
+    ? {}
+    : {
+        robots: { index: false, follow: false },
+      }),
   openGraph: {
-    title: "Cours de groupe | Pratiqo",
-    description:
-      "Parcourez les séances de groupe à venir et réservez votre place avec des professeurs vérifiés.",
+    title: checkoutLive ? "Cours de groupe | Pratiqo" : "Cours de groupe — Bientôt | Pratiqo",
+    description: checkoutLive
+      ? "Parcourez les séances de groupe à venir et réservez votre place avec des professeurs vérifiés."
+      : "Les séances collectives avec professeurs vérifiés arrivent bientôt sur Pratiqo.",
     url: `${SITE_URL}/group-sessions`,
     siteName: "Pratiqo",
     locale: "fr_CA",
@@ -23,8 +33,10 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Cours de groupe | Pratiqo",
-    description: "Séances collectives avec profs vérifiés — places et tarifs affichés clairement.",
+    title: checkoutLive ? "Cours de groupe | Pratiqo" : "Cours de groupe — Bientôt | Pratiqo",
+    description: checkoutLive
+      ? "Séances collectives avec profs vérifiés — places et tarifs affichés clairement."
+      : "Réservation en ligne bientôt disponible — page non indexée pour le lancement.",
     images: ["/og-image.png"],
   },
 };

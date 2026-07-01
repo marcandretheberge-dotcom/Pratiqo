@@ -12,9 +12,14 @@
  *      `appearance="desktop"` so the chrome is product-software-
  *      style, not mobile-app-style.
  *   3. Each desktop sub-tree declares a `leftRail` AND a `center`
- *      (the workspace minimum). Catalog + Spanish hub + Course
- *      Home additionally declare a `rightRail` so the layout is
- *      truly three-pane on lg+.
+ *      (the workspace minimum). Course Home additionally declares a
+ *      `rightRail` (progress / teacher bridge) so that layout is
+ *      truly three-pane on lg+. The Spanish hub deliberately does
+ *      NOT declare a `rightRail`: a 280px/1fr/300px three-pane split
+ *      squeezed its two primary cards into a ~470px center track on
+ *      every desktop breakpoint (the QA-reported "cramped, awkward
+ *      text wrap" bug). Its secondary "what's next" content now
+ *      renders inside the wider `center` column instead.
  *   4. The desktop centre uses a real grid (not a single narrow
  *      phone column with empty margins). For the catalog this is
  *      verified by ensuring the tile grid has `sm:grid-cols-2` +
@@ -174,13 +179,14 @@ test("each desktop sub-tree mounts <YoAppHeader appearance=\"desktop\">", async 
 });
 
 // ─── 3. Three-pane workspace on every audited surface ────────────
-test("desktop sub-trees declare leftRail + center + rightRail (full workspace pattern)", async () => {
-  for (const [label, tree] of [
-    ["catalog", (await renderPage(YoLanguesPage)) as ReactElement],
-    ["Spanish hub", (await renderPage(YoSpanishLandingPage)) as ReactElement],
+test("desktop sub-trees declare leftRail + center, with rightRail only where it does not squeeze the surface", async () => {
+  for (const [label, tree, requiresRightRail] of [
+    ["catalog", (await renderPage(YoLanguesPage)) as ReactElement, false],
+    ["Spanish hub", (await renderPage(YoSpanishLandingPage)) as ReactElement, false],
     [
       "Course Home",
       (await renderPage(YoEspagnolRepubliqueDominicainePage)) as ReactElement,
+      true,
     ],
   ] as const) {
     const adaptive = findAdaptiveShellElement(tree);
@@ -189,12 +195,14 @@ test("desktop sub-trees declare leftRail + center + rightRail (full workspace pa
     }).desktop;
     assert.ok(desktop.center, `${label} desktop must declare a center`);
     assert.ok(desktop.leftRail, `${label} desktop must declare a leftRail`);
-    assert.ok(desktop.rightRail, `${label} desktop must declare a rightRail`);
+    if (requiresRightRail) {
+      assert.ok(desktop.rightRail, `${label} desktop must declare a rightRail`);
+    }
   }
 });
 
 // ─── 4. Catalog desktop centre uses a wider grid (not stretched mobile) ─
-test("catalog desktop centre uses sm:grid-cols-2 + xl:grid-cols-3 (not a phone single-column)", () => {
+test("catalog desktop centre uses auto-fit min-width cards instead of a forced squeezed row", () => {
   const src = read("app/yo/langues/page.tsx");
   assert.match(
     src,
@@ -203,8 +211,18 @@ test("catalog desktop centre uses sm:grid-cols-2 + xl:grid-cols-3 (not a phone s
   );
   assert.match(
     src,
-    /sm:grid-cols-2\s+xl:grid-cols-3/,
-    "catalog desktop tile grid must be sm:grid-cols-2 xl:grid-cols-3",
+    /data-yo-langues-grid-min-card-width=["']280px["']/,
+    "catalog desktop tile grid must expose the minimum card width contract",
+  );
+  assert.match(
+    src,
+    /repeat\(auto-fit,minmax\(min\(100%,280px\),1fr\)\)/,
+    "catalog desktop tile grid must use auto-fit minmax cards",
+  );
+  assert.doesNotMatch(
+    src,
+    /data-yo-langues-tiles-variant=["']desktop["'][\s\S]{0,220}sm:grid-cols-2\s+xl:grid-cols-3/,
+    "catalog desktop tile grid must not force a squeezed 3-column row",
   );
 });
 
@@ -249,13 +267,17 @@ test("mobile and desktop headers on each audited surface are different element i
   }
 });
 
-// ─── 7. Desktop workspace primitive — viewport-lock + grid ──────
-test("YoDesktopLearningWorkspace composes <YoAppShell> + grid + hidden lg:block", () => {
+// ─── 7. Desktop workspace primitive — natural scroll + grid ─────
+test("YoDesktopLearningWorkspace composes a natural-scroll wrapper + grid + hidden lg:block", () => {
+  // World-class-shell pass: desktop intentionally dropped the
+  // <YoAppShell> viewport-lock (h-[100dvh] overflow-hidden) — that
+  // lock is what produced "trapped in a tiny internal scrollbar"
+  // on /yo/langues and the Course Home desktop workspace. Desktop
+  // now scrolls the page naturally with only a `sticky` header.
   const src = read("components/yo/YoDesktopLearningWorkspace.tsx");
-  assert.match(
-    src,
-    /from\s+["']@\/components\/yo\/YoAppShell["']/,
-    "YoDesktopLearningWorkspace must import YoAppShell",
+  assert.ok(
+    !/from\s+["']@\/components\/yo\/YoAppShell["']/.test(src),
+    "YoDesktopLearningWorkspace must NOT import YoAppShell anymore",
   );
   assert.match(
     src,
@@ -267,11 +289,14 @@ test("YoDesktopLearningWorkspace composes <YoAppShell> + grid + hidden lg:block"
     /hidden lg:block/,
     "YoDesktopLearningWorkspace must be hidden below `lg` and visible from `lg+`",
   );
-  // Composes YoAppShell + YoDesktopAppWorkspace.
+  assert.ok(
+    !/<YoAppShell\b/.test(src),
+    "YoDesktopLearningWorkspace must NOT render <YoAppShell /> anymore",
+  );
   assert.match(
     src,
-    /<YoAppShell\b/,
-    "YoDesktopLearningWorkspace must render <YoAppShell />",
+    /sticky top-0/,
+    "YoDesktopLearningWorkspace must keep its own header sticky while the page scrolls naturally",
   );
   assert.match(
     src,

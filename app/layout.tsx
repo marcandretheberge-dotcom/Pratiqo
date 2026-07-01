@@ -49,7 +49,7 @@ export const metadata: Metadata = {
   // canonical to the homepage, or (b) emit hreflang alternates that all point
   // to the homepage on every public page. Each public page is responsible for
   // its own `alternates.canonical` (see app/page.tsx, app/tarifs/layout.tsx,
-  // app/(app)/legal/**, app/cours/.../page.tsx, app/tuteurs-prive/.../page.tsx,
+  // app/(app)/legal/**, app/cours/.../page.tsx, app/tuteurs/.../page.tsx,
   // and lib/seo/yopratiqoSpanishSeoPages.ts). Locale-specific URLs only exist
   // for the YoPratiqo Spanish acquisition pages under /fr/* and /en/*, which
   // declare reciprocal hreflang via `buildYoSpanishSeoMetadata`.

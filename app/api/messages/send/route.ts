@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
-import { rateLimitByIp, rateLimitResponse } from "@/lib/rateLimit";
+import { rateLimitByIp, rateLimitGuardResponse } from "@/lib/rateLimit";
 import { validateJsonBody } from "@/lib/validation/api";
 import { messageSendPostSchema } from "@/lib/validation/schemas";
 import { hasCompletedLessonBetween } from "@/lib/messaging/contactGate";
@@ -91,13 +91,8 @@ export async function POST(req: Request) {
   const { receiver_id: receiverId, content } = validated.data;
 
   const rl = await rateLimitByIp(req, "msg-send", { limit: 20, windowSeconds: 60 });
-  if (!rl.allowed && rl.retryAfterSeconds != null) {
-    return rateLimitResponse(rl.retryAfterSeconds, {
-      limit: rl.limit,
-      remaining: rl.remaining,
-      reset: rl.reset,
-    });
-  }
+  const rateLimited = rateLimitGuardResponse(rl);
+  if (rateLimited) return rateLimited;
 
   const admin = getSupabaseAdmin();
 

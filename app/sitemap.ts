@@ -1,16 +1,19 @@
 import type { MetadataRoute } from "next";
 import { getSupabaseAdmin } from "../lib/supabaseAdmin";
-import { QC_CITIES, MV_BARRIOS } from "../lib/constants/cities";
-import { DISCIPLINE_CITY_PAIRS } from "../lib/seo/disciplines";
+import { MV_BARRIOS } from "../lib/constants/cities";
+import { fetchLocalDiscoverySitemapEntries } from "../lib/seo/localTeacherDiscoveryPages";
+import { SUBJECT_LANDING_PATHS } from "../lib/seo/subjectLandingPages";
 import { SITE_URL } from "../lib/seo/site";
 import { buildTeacherPublicProfileCanonicalUrl } from "../lib/seo/teacherPublicProfile";
 import { fetchIndexableTeacherSitemapRows } from "../lib/seo/teacherPublicProfileData";
+import { getPublishedResourceArticles } from "../lib/seo/resourceArticles";
 import { YO_SPANISH_SEO_PATHS } from "../lib/seo/yopratiqoSpanishSeoPages";
 import {
   isYoHubIndexable,
   isYoLandingPageIndexable,
   yopratiqoProductConfig,
 } from "../lib/yo/yopratiqoProductConfig";
+import { isGroupSessionsMarketplaceIndexable } from "../lib/groupSessionsLaunch";
 
 const BASE_URL = SITE_URL;
 
@@ -44,12 +47,16 @@ const STATIC_ROUTES: MetadataRoute.Sitemap = [
     changeFrequency: "weekly",
     priority: 0.75,
   },
-  {
-    url: `${BASE_URL}/group-sessions`,
-    lastModified: new Date(),
-    changeFrequency: "daily",
-    priority: 0.8,
-  },
+  ...(isGroupSessionsMarketplaceIndexable()
+    ? [
+        {
+          url: `${BASE_URL}/group-sessions`,
+          lastModified: new Date(),
+          changeFrequency: "daily" as const,
+          priority: 0.8,
+        },
+      ]
+    : []),
   {
     url: `${BASE_URL}/tarifs`,
     lastModified: new Date(),
@@ -165,16 +172,22 @@ async function fetchBlogEntries(): Promise<MetadataRoute.Sitemap> {
   }
 }
 
-// ── City landing-page routes ───────────────────────────────────────────────────
+// ── City hub + discipline × city discovery pages (supply-gated) ─────────────
 //
-// One URL per city in QC_CITIES, statically generated at build time.
-// Marked as "monthly" since content changes only when new teachers join.
-const CITY_ROUTES: MetadataRoute.Sitemap = QC_CITIES.map((city) => ({
-  url: `${BASE_URL}/tuteurs-prive/${city.slug}`,
-  lastModified: new Date(),
-  changeFrequency: "monthly" as const,
-  priority: 0.8,
-}));
+// Only URLs with at least one admin-published, indexable teacher are listed.
+async function fetchLocalDiscoveryEntries(): Promise<MetadataRoute.Sitemap> {
+  try {
+    const rows = await fetchLocalDiscoverySitemapEntries();
+    return rows.map((row) => ({
+      url: `${BASE_URL}${row.path}`,
+      lastModified: row.lastModified,
+      changeFrequency: "monthly" as const,
+      priority: row.path.startsWith("/tuteurs/") ? 0.8 : 0.75,
+    }));
+  } catch {
+    return [];
+  }
+}
 
 // ── Montevideo barrio routes ───────────────────────────────────────────────────
 //
@@ -191,15 +204,18 @@ const BARRIO_ROUTES: MetadataRoute.Sitemap = MV_BARRIOS.map((b) => ({
 // Not listed individually: sessions change often (dates, capacity). The hub
 // `/group-sessions` is enough for discovery; detail pages stay crawlable via links.
 
-// ── Discipline × city landing pages ───────────────────────────────────────────
+// Discipline × city pages are included via fetchLocalDiscoveryEntries when supply exists.
+
+// ── Subject landing pages ──────────────────────────────────────────────────
 //
-// Pre-rendered pages for /cours/[disciplineSlug]/[citySlug].
-// Limited to a curated set of discipline × city combinations.
-const DISCIPLINE_CITY_ROUTES: MetadataRoute.Sitemap = DISCIPLINE_CITY_PAIRS.map((pair) => ({
-  url: `${BASE_URL}/cours/${pair.disciplineSlug}/${pair.citySlug}`,
+// These are intentionally subject-only pages, not city × subject pages. They
+// provide useful guidance and a prefilled search CTA without pretending that a
+// teacher is available in every city.
+const SUBJECT_LANDING_ROUTES: MetadataRoute.Sitemap = SUBJECT_LANDING_PATHS.map((path) => ({
+  url: `${BASE_URL}${path}`,
   lastModified: new Date(),
   changeFrequency: "monthly" as const,
-  priority: 0.75,
+  priority: 0.72,
 }));
 
 // ── YoPratiqo Spanish SEO acquisition pages ──────────────────────────────────
@@ -248,9 +264,10 @@ const YO_LANGUAGE_LANDING_ROUTES: MetadataRoute.Sitemap = yopratiqoProductConfig
   }));
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [teacherEntries, blogEntries] = await Promise.all([
+  const [teacherEntries, blogEntries, localDiscoveryEntries] = await Promise.all([
     fetchTeacherEntries(),
     fetchBlogEntries(),
+    fetchLocalDiscoveryEntries(),
   ]);
 
   // Blog hub page (static)
@@ -261,6 +278,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.9,
   }];
 
+  const resourceHubRoute: MetadataRoute.Sitemap = [{
+    url: `${BASE_URL}/ressources`,
+    lastModified: new Date(),
+    changeFrequency: "weekly" as const,
+    priority: 0.88,
+  }];
+
+  const resourceArticleRoutes: MetadataRoute.Sitemap = getPublishedResourceArticles().map((article) => ({
+    url: `${BASE_URL}/ressources/${article.slug}`,
+    lastModified: new Date(article.publishedAt),
+    changeFrequency: "monthly" as const,
+    priority: 0.82,
+  }));
+
   return [
     ...STATIC_ROUTES,
     ...YO_LANGUAGE_HUB_ROUTES,
@@ -268,8 +299,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...YO_SPANISH_SEO_ROUTES,
     ...blogHubRoute,
     ...blogEntries,
-    ...CITY_ROUTES,
-    ...DISCIPLINE_CITY_ROUTES,
+    ...resourceHubRoute,
+    ...resourceArticleRoutes,
+    ...localDiscoveryEntries,
+    ...SUBJECT_LANDING_ROUTES,
     ...BARRIO_ROUTES,
     ...teacherEntries,
   ];

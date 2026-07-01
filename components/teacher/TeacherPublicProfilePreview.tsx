@@ -127,8 +127,7 @@ export function TeacherPublicProfilePreview() {
       .join(" · ");
   }, [disciplines, teacher?.discipline]);
 
-  const isPublic =
-    teacher?.is_public !== false && !teacher?.deactivated_at && !teacher?.deleted_at;
+  const isPublic = teacher?.is_public === true;
 
   if (loading || !setupComplete) {
     return (

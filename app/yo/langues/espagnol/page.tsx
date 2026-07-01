@@ -142,6 +142,11 @@ const RD_CARD_HINT = lstr(
   "5 modules · audio + flashcards + missions",
   "5 módulos · audio + flashcards + misiones",
 );
+const RD_FLAG_ARIA = lstr(
+  "Drapeau de la République dominicaine",
+  "Flag of the Dominican Republic",
+  "Bandera de República Dominicana",
+);
 
 const COMING_SOON_EYEBROW = lstr(
   "Autres pays hispanophones",
@@ -163,6 +168,13 @@ const PROMISE_BODY = lstr(
   "Tu apprends en autonomie, puis tu pratiques avec un vrai prof Pratiqo quand tu es prêt·e.",
   "You learn on your own, then practice with a real Pratiqo teacher when you’re ready.",
   "Aprendes por tu cuenta y practicas con un profesor Pratiqo real cuando estás listo.",
+);
+
+const WHATS_NEXT_EYEBROW = lstr("La suite", "What's next", "Lo que sigue");
+const WHATS_NEXT_BODY = lstr(
+  "La République dominicaine est le parcours espagnol complet A1 → A2. Les autres pays (Mexique, Espagne, Argentine, Pérou) arrivent quand ils seront prêts à enseigner sérieusement.",
+  "Dominican Republic is the complete A1 → A2 Spanish path. Other countries (Mexico, Spain, Argentina, Peru) land when they're ready to teach seriously.",
+  "República Dominicana es la ruta completa A1 → A2 en español. Otros países (México, España, Argentina, Perú) llegan cuando estén listos para enseñar en serio.",
 );
 
 const COMPANION_HEADING = lstr(
@@ -374,7 +386,7 @@ function PrimaryStage({
       </h2>
       <div
         data-testid="yo-spanish-hub-card-grid"
-        className="grid gap-4 sm:grid-cols-2"
+        className="grid gap-4 sm:grid-cols-2 sm:[grid-template-columns:repeat(2,minmax(260px,1fr))] lg:gap-6"
       >
         <PrimaryCard
           locale={locale}
@@ -395,8 +407,30 @@ function PrimaryStage({
           body={t(RD_CARD_BODY, locale)}
           cta={t(RD_CARD_CTA, locale)}
           hint={t(RD_CARD_HINT, locale)}
+          badge={
+            <YoLanguageBadge language="do" ariaLabel={t(RD_FLAG_ARIA, locale)} />
+          }
         />
       </div>
+      {/*
+       * "What's next" used to live in a fixed-width right rail in
+       * the 3-pane desktop workspace (leftRail + center + rightRail
+       * at 280px/1fr/300px). With a max-w-6xl workspace, that left
+       * the two primary cards squeezed into a ~470px center track
+       * regardless of monitor size — the root cause of the
+       * "cramped, awkward text wrap" QA report. Folding this block
+       * into the center column (now a 2-pane left+center layout,
+       * `centerMaxWidth="4xl"`) gives the cards a ~900px column to
+       * breathe in instead.
+       */}
+      <section className="rounded-3xl border border-[#DDF4F1] bg-white/90 p-5 shadow-[0_1px_2px_rgba(15,58,52,0.04)]">
+        <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#1D9E75]">
+          {t(WHATS_NEXT_EYEBROW, locale)}
+        </p>
+        <p className="mt-2 text-sm leading-relaxed text-[#0F6E56]/82">
+          {t(WHATS_NEXT_BODY, locale)}
+        </p>
+      </section>
       <ComingSoonCard locale={locale} />
     </section>
   );
@@ -473,6 +507,9 @@ function renderMobilePrimaryScreen(
           body={t(RD_CARD_BODY, locale)}
           cta={t(RD_CARD_CTA, locale)}
           hint={t(RD_CARD_HINT, locale)}
+          badge={
+            <YoLanguageBadge language="do" ariaLabel={t(RD_FLAG_ARIA, locale)} />
+          }
         />
       </div>
     </div>
@@ -605,27 +642,16 @@ export default async function YoSpanishLandingPage({
           "bg-[linear-gradient(180deg,#FAFCFB_0%,#F4EFE6_55%,#FBF7EE_100%)]",
         leftRail: <PromiseRail locale={locale} />,
         center: <PrimaryStage locale={locale} />,
-        rightRail: (
-          <div className="flex flex-col gap-4">
-            <section className="rounded-3xl border border-[#DDF4F1] bg-white/90 p-5 shadow-[0_1px_2px_rgba(15,58,52,0.04)]">
-              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#1D9E75]">
-                {locale === "en"
-                  ? "What's next"
-                  : locale === "es"
-                    ? "Lo que sigue"
-                    : "La suite"}
-              </p>
-              <p className="mt-2 text-sm leading-relaxed text-[#0F6E56]/82">
-                {locale === "en"
-                  ? "Dominican Republic is the complete A1 → A2 Spanish path. Other countries (Mexico, Spain, Argentina, Peru) land when they're ready to teach seriously."
-                  : locale === "es"
-                    ? "República Dominicana es la ruta completa A1 → A2 en español. Otros países (México, España, Argentina, Perú) llegan cuando estén listos para enseñar en serio."
-                    : "La République dominicaine est le parcours espagnol complet A1 → A2. Les autres pays (Mexique, Espagne, Argentine, Pérou) arrivent quand ils seront prêts à enseigner sérieusement."}
-              </p>
-            </section>
-            <ComingSoonCard locale={locale} />
-          </div>
-        ),
+        // No rightRail: a 3-pane 280px/1fr/300px workspace squeezed
+        // the two primary cards into a ~470px center track on every
+        // desktop breakpoint (the cards never had room to breathe,
+        // even at 1920px, because the workspace caps at max-w-6xl
+        // and the fixed-width rails ate more than half of it). The
+        // "What's next" content that used to live here now renders
+        // inside the center column (see PrimaryStage) where the
+        // wider 2-pane track + `centerMaxWidth="4xl"` gives the
+        // cards real room.
+        centerMaxWidth: "4xl",
       }}
       className={`yo-spanish-hub-lang-suffix-${locale === "fr" ? "fr" : locale}`}
     />

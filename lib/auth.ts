@@ -24,6 +24,8 @@ export async function loginWithGoogle(
   redirectPath = "/dashboard",
   options?: {
     intent?: PreAuthOnboardingIntent;
+    /** Public intent query value for OAuth redirect (e.g. `student` alias). */
+    intentQuery?: string;
     role?: string;
     referralCode?: string;
     forceAccountSelection?: boolean;
@@ -31,8 +33,9 @@ export async function loginWithGoogle(
 ) {
   const supabase = getSupabaseClient();
   const origin = resolveOAuthRedirectOrigin();
+  const callbackIntent = options?.intentQuery ?? options?.intent;
   const redirectTo = buildOAuthCallbackUrl(origin, {
-    intent: options?.intent,
+    intent: callbackIntent,
     role: options?.role ?? (options?.intent === "teacher" ? "teacher" : undefined),
     next: redirectPath,
     ref: options?.referralCode,
@@ -40,10 +43,11 @@ export async function loginWithGoogle(
 
   setPendingIntentCookiesForAuth(redirectPath, options?.intent, options?.role);
 
-  const { error } = await supabase.auth.signInWithOAuth({
+  const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
       redirectTo,
+      skipBrowserRedirect: true,
       ...(options?.forceAccountSelection ? { queryParams: { prompt: "select_account" } } : {}),
     },
   });
@@ -51,6 +55,10 @@ export async function loginWithGoogle(
     console.error("Login failed", error);
     throw error;
   }
+  if (!data.url) {
+    throw new Error("Google OAuth URL was not returned.");
+  }
+  window.location.assign(data.url);
 }
 
 export async function ensureAuthenticatedProfile(options?: {

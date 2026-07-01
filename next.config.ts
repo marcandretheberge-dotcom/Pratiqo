@@ -8,7 +8,8 @@ const cspValue = [
   "connect-src 'self'"
     + " https://*.supabase.co wss://*.supabase.co"
     + " https://*.stripe.com https://api.stripe.com"
-    + " https://maps.googleapis.com https://*.googleapis.com https://maps.gstatic.com",
+    + " https://maps.googleapis.com https://*.googleapis.com https://maps.gstatic.com"
+    + " https://us.i.posthog.com",
   // Script sources (explicit so Google Maps JS API loads without relying on default-src)
   "script-src 'self' 'unsafe-inline'"
     + " https://maps.googleapis.com https://maps.gstatic.com"
@@ -41,7 +42,8 @@ const cspReportOnlyValue = [
   "connect-src 'self'"
     + " https://*.supabase.co wss://*.supabase.co"
     + " https://*.stripe.com https://api.stripe.com"
-    + " https://maps.googleapis.com https://*.googleapis.com https://maps.gstatic.com",
+    + " https://maps.googleapis.com https://*.googleapis.com https://maps.gstatic.com"
+    + " https://us.i.posthog.com",
   "script-src 'self' 'unsafe-inline'"
     + " https://maps.googleapis.com https://maps.gstatic.com"
     + " https://*.supabase.co https://*.stripe.com https://js.stripe.com",
@@ -89,12 +91,12 @@ const nextConfig: NextConfig = {
       //   - Do NOT redirect on Accept-Language or geo IP — Googlebot must
       //     always reach the canonical homepage on a fresh request.
       //
-      // Defence-in-depth note: this is a *fallback* — the primary apex→www
-      // redirect should be configured at the hosting/DNS edge (Vercel
-      // Domains: "Redirect to www.pratiqo.ca", or equivalent in Netlify).
-      // If the edge rewrite already strips the apex before the request
-      // reaches Next.js, this rule is simply inert. See the
-      // `scripts/check_seo_edge_redirects.ts` live checker.
+      // Defence-in-depth note: the *primary* apex→www redirect is the Vercel
+      // project-domain setting (`redirect` + `redirectStatusCode: 308` on
+      // `pratiqo.ca`). When `redirectStatusCode` is null, Vercel defaults to
+      // temporary 307 at the edge. See
+      // `scripts/configure_vercel_apex_permanent_redirect.ts` and
+      // `scripts/check_seo_edge_redirects.ts`.
       {
         source: "/:path*",
         has: [{ type: "host", value: "pratiqo.ca" }],
@@ -137,6 +139,11 @@ const nextConfig: NextConfig = {
       // with economic advantages: reduced commission, ristourne/rewards).
       // /legal/teacher-pro is kept as a 308 redirect so any external/inbound
       // links keep working while the canonical route is /legal/membre-pro.
+      {
+        source: "/tuteurs-prive/:citySlug",
+        destination: "/tuteurs/:citySlug",
+        permanent: true,
+      },
       {
         source: "/legal/teacher-pro",
         destination: "/legal/membre-pro",

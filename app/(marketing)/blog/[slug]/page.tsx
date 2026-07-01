@@ -23,6 +23,7 @@ import { BlogArticleClosingCta } from "@/components/blog/BlogArticleClosingCta";
 import { BlogArticleMarkdownBody } from "@/components/blog/BlogArticleMarkdownBody";
 import { MarketingResourceBlock } from "@/components/seo/MarketingResourceBlock";
 import { getBlogContinuationLinks } from "@/lib/seo/internalLinks";
+import { serializeJsonLd } from "@/lib/seo/jsonLd";
 import type { TranslationKey } from "@/lib/i18n/types";
 
 export const revalidate = 3600;
@@ -216,7 +217,7 @@ export default async function BlogArticlePage({
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }} />
       <BreadcrumbSchema
         items={[
           { name: dict.navHome, href: "/" },

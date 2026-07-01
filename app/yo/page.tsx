@@ -305,31 +305,23 @@ export default async function YoHubPage({ searchParams }: PageProps) {
 
       <main>
         {/*
-         * App-like onboarding screen. Mobile-first, narrow column,
-         * warm cream background, premium serif headline + teal
-         * script accent + navy brush quote — see YoAppHeroCard
-         * for the full composition. The existing marketing
-         * sections below remain unchanged in structure (course
-         * card, pillars, disciplines, companion onboarding, final
-         * CTA) and are now read as the "browse further" surface
-         * beneath the onboarding hero.
+         * App-like onboarding screen. Below `lg`: mobile-first,
+         * narrow column, warm cream background, premium serif
+         * headline + teal script accent + navy brush quote — see
+         * YoAppHeroCard for the full composition. At `lg+`: the
+         * shell lays the hero + value strip out next to the
+         * featured RD course card (passed as `visual`) so the
+         * desktop hero reads as headline+CTA-left /
+         * visual-card-right instead of a narrow phone mockup
+         * stretched onto a wide monitor. The existing marketing
+         * sections below remain unchanged in structure (pillars,
+         * disciplines, companion onboarding, final CTA) and are
+         * now read as the "browse further" surface beneath the
+         * onboarding hero.
          */}
-        <YoAppLandingShell>
-          <YoAppHeroCard locale={locale} />
-          <YoAppValueStrip locale={locale} />
-        </YoAppLandingShell>
-
-        {/*
-         * Featured RD course card — relocated unchanged from the
-         * previous two-column hero so the launch course remains
-         * visible without crowding the onboarding hero. Single
-         * full-width card on mobile, capped at max-w-2xl so the
-         * desktop layout keeps the phone-screen rhythm of the
-         * shell above.
-         */}
-        <section className="bg-[#F4EFE6] pb-12 pt-2 sm:pt-4" id="yo-featured-course">
-          <div className="mx-auto w-full max-w-2xl px-5 sm:px-8">
-            <div className="relative">
+        <YoAppLandingShell
+          visual={
+            <div className="relative" id="yo-featured-course">
               <div className="absolute -inset-3 rounded-[2rem] bg-[#13A085]/12 blur-2xl" aria-hidden />
               <div className="relative overflow-hidden rounded-[2rem] border border-[#E7DFCF] bg-white shadow-[0_18px_46px_rgba(23,38,66,0.08)]">
                 {yoModule.heroImagePath ? (
@@ -339,7 +331,7 @@ export default async function YoHubPage({ searchParams }: PageProps) {
                     width={1500}
                     height={900}
                     priority={false}
-                    sizes="(min-width: 768px) 640px, 100vw"
+                    sizes="(min-width: 1024px) 480px, 100vw"
                     className="aspect-[16/10] w-full object-cover"
                   />
                 ) : null}
@@ -394,8 +386,11 @@ export default async function YoHubPage({ searchParams }: PageProps) {
                 </div>
               </div>
             </div>
-          </div>
-        </section>
+          }
+        >
+          <YoAppHeroCard locale={locale} />
+          <YoAppValueStrip locale={locale} />
+        </YoAppLandingShell>
 
         <section id="yo-product" className="bg-white py-12 sm:py-16">
           <div className="mx-auto max-w-6xl px-5 sm:px-8">
