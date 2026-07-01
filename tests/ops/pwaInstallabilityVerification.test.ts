@@ -39,14 +39,14 @@ const packageJson = readJson("package.json") as {
 
 assert.equal(manifest.name, "Pratiqo");
 assert.equal(manifest.short_name, "Pratiqo");
-assert.equal(typeof manifest.description, "string");
-assert.ok((manifest.description as string).length > 30);
+assert.equal(manifest.description, "Trouve un professeur local ou développe tes compétences avec Pratiqo.");
 assert.equal(manifest.start_url, "/");
 assert.equal(manifest.scope, "/");
 assert.equal(manifest.display, "standalone");
 assert.equal(manifest.background_color, "#F1EFE8");
 assert.equal(manifest.theme_color, "#1D9E75");
 assert.equal(manifest.orientation, "portrait");
+assert.equal(manifest.lang, "fr-CA");
 ok("public manifest has required installability fields");
 
 for (const required of [
@@ -58,6 +58,7 @@ for (const required of [
   'background_color: "#F1EFE8"',
   'theme_color: "#1D9E75"',
   'orientation: "portrait"',
+  'lang: "fr-CA"',
   'src: "/icons/icon-192.png"',
   'src: "/icons/icon-512.png"',
   'src: "/icons/icon-512-maskable.png"',
@@ -167,6 +168,8 @@ const ignoredUntracked = new Set([
 
 const allowed = new Set([
   "app/layout.tsx",
+  "app/manifest.ts",
+  "public/manifest.json",
   "tests/ops/pwaAppReadiness.test.ts",
   "tests/ops/pwaInstallabilityVerification.test.ts",
   "tests/teacherProfile/homeLessonsMinorLaunchGate.test.ts",

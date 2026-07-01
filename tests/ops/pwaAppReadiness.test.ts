@@ -18,10 +18,12 @@ assert.ok(existsSync(manifestPath), "public/manifest.json exists");
 const manifest = JSON.parse(read("public/manifest.json"));
 assert.equal(manifest.name, "Pratiqo");
 assert.equal(manifest.short_name, "Pratiqo");
+assert.equal(manifest.description, "Trouve un professeur local ou développe tes compétences avec Pratiqo.");
 assert.equal(manifest.start_url, "/");
 assert.equal(manifest.scope, "/");
 assert.equal(manifest.display, "standalone");
 assert.equal(manifest.theme_color, "#1D9E75");
+assert.equal(manifest.lang, "fr-CA");
 assert.ok(Array.isArray(manifest.icons) && manifest.icons.length >= 2);
 ok("manifest has required installability fields");
 
