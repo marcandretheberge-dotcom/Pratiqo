@@ -4,11 +4,12 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "Pratiqo",
     short_name: "Pratiqo",
-    description: "Marketplace canadienne pour trouver des professeurs et apprendre avec YoPratiqo.",
+    description: "Trouve un professeur local ou développe tes compétences avec Pratiqo.",
     start_url: "/",
     scope: "/",
     display: "standalone",
     orientation: "portrait",
+    lang: "fr-CA",
     background_color: "#F1EFE8",
     theme_color: "#1D9E75",
     categories: ["education", "productivity"],
