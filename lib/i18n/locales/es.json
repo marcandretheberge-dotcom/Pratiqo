@@ -763,7 +763,7 @@
   "loginChangePathHelper": "Volver a elegir aprendiz / profesor.",
   "loginChangeGoogleAccount": "Cambiar cuenta de Google",
   "loginAlreadyHaveAccountPrompt": "¿Ya tienes cuenta?",
-  "loginCheckEmailConfirm": "Revisa tu correo para confirmar tu cuenta.",
+  "loginSignupEmailConfirmationBlocked": "La confirmación por correo está activada en Supabase. Desactiva la confirmación obligatoria para el flujo MVP de correo/contraseña, o configura el correo transaccional antes de activar este flujo.",
   "loginContinueWithGoogle": "Continuar con Google",
   "loginContinueDashboard": "Continuar a mi panel",
   "loginCreateAccountSubmit": "Crear mi cuenta",

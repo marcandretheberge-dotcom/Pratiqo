@@ -147,8 +147,9 @@ test("email-password redirect refuses marketing homepage fallback", () => {
   assert.match(page, /redirectAfterEnsuredProfile/);
   assert.match(page, /refusing-root-fallback/);
   assert.match(page, /window\.location\.assign\(redirectPath\)/);
-  assert.match(page, /loginCheckEmailConfirm/);
-  assert.match(page, /if \(result\.session\)/);
+  assert.match(page, /loginSignupEmailConfirmationBlocked/);
+  assert.match(page, /if \(!result\.session\)/);
+  assert.doesNotMatch(page, /loginCheckEmailConfirm/);
 });
 
 test("student intent is accepted as learner intent for login links", () => {
@@ -248,7 +249,7 @@ test("email-password copy exists in FR, EN, and ES dictionaries", () => {
     "loginWrongGoogleAccountPrompt",
     "loginChangeGoogleAccount",
     "loginContinueWithGoogle",
-    "loginCheckEmailConfirm",
+    "loginSignupEmailConfirmationBlocked",
   ];
   const localeExpectations: Record<string, Partial<Record<string, string>>> = {
     "lib/i18n/locales/fr.json": {
@@ -334,7 +335,7 @@ test("runtime auth code does not call signInWithOtp or sendMagicLink", () => {
 
 test("login UI does not mention magic link and surfaces email/password first", () => {
   const login = read("app/login/page.tsx");
-  assert.doesNotMatch(login, /magic link|lien magique|signInWithOtp|sendMagicLink|login-magic-link/i);
+  assert.doesNotMatch(login, /magic link|lien magique|signInWithOtp|sendMagicLink|login-magic-link|loginCheckEmailConfirm/i);
   assert.match(login, /data-testid="login-email-password-form"/);
   assert.match(login, /signInWithEmailPassword/);
   assert.match(login, /loginWithGoogle/);
@@ -368,6 +369,36 @@ test("successful email/password sign-in refuses marketing homepage fallback", ()
   assert.match(login, /refusing-root-fallback after email\/password auth/);
   assert.match(login, /redirectPath === "\/" \|\| redirectPath === ""/);
   assert.match(login, /ensureAuthenticatedProfile/);
+});
+
+test("signup without a Supabase session shows a blocking configuration error, not check-your-email success", () => {
+  const login = read("app/login/page.tsx");
+  assert.doesNotMatch(login, /loginCheckEmailConfirm/);
+  assert.match(login, /loginSignupEmailConfirmationBlocked/);
+  assert.match(login, /setFormError\(t\("loginSignupEmailConfirmationBlocked"\)\)/);
+  assert.doesNotMatch(
+    login,
+    /setFormMessage\(t\("loginCheckEmailConfirm"\)\)/,
+    "signup must not treat missing session as a normal success message",
+  );
+});
+
+test("signup with a returned session continues through profile ensure and redirect", () => {
+  const login = read("app/login/page.tsx");
+  const signupBlock = login.slice(login.indexOf("signUpWithEmailPassword"), login.indexOf("const ensured"));
+  assert.match(signupBlock, /if \(!result\.session\)/);
+  assert.match(login, /ensureAuthenticatedProfile/);
+  assert.match(login, /redirectAfterEnsuredProfile/);
+});
+
+test("forgot-password flow may still mention reset email without implying magic-link login", () => {
+  const login = read("app/login/page.tsx");
+  assert.match(login, /sendPasswordResetEmail/);
+  assert.match(login, /loginPasswordResetSent/);
+  assert.match(login, /loginForgotPassword/);
+  const en = readJson("lib/i18n/locales/en.json");
+  assert.match(en.loginPasswordResetSent, /reset/i);
+  assert.doesNotMatch(login, /signInWithOtp|sendMagicLink|magic link/i);
 });
 
 async function run() {

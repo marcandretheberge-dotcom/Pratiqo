@@ -763,7 +763,7 @@
   "loginChangePathHelper": "Return to the learner / teacher choice.",
   "loginChangeGoogleAccount": "Change Google account",
   "loginAlreadyHaveAccountPrompt": "Already have an account?",
-  "loginCheckEmailConfirm": "Check your email to confirm your account.",
+  "loginSignupEmailConfirmationBlocked": "Email confirmation is enabled in Supabase. Disable required email confirmation for the MVP email/password flow, or configure transactional email before enabling this flow.",
   "loginContinueWithGoogle": "Continue with Google",
   "loginContinueDashboard": "Continue to my dashboard",
   "loginCreateAccountSubmit": "Create my account",

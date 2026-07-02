@@ -139,10 +139,11 @@ function LoginForm() {
           displayName,
         });
 
-        if (result.session) {
-          // Continue below and create/repair the profile before redirecting.
-        } else {
-          setFormMessage(t("loginCheckEmailConfirm"));
+        if (!result.session) {
+          console.error(
+            "[login] signup blocked: Supabase returned no session (required email confirmation is likely enabled)",
+          );
+          setFormError(t("loginSignupEmailConfirmationBlocked"));
           return;
         }
       }
