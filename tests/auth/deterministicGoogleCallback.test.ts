@@ -193,6 +193,11 @@ test("proxy forwards stray OAuth ?code= query params to /auth/callback", () => {
   assert.match(src, /new URL\("\/auth\/callback", req\.url\)/);
 });
 
+test("proxy matcher explicitly includes root for Site URL OAuth fallbacks", () => {
+  const src = read("proxy.ts");
+  assert.match(src, /matcher:\s*\[\s*"\/"/);
+});
+
 test("login page auto-continues authenticated intent sessions instead of landing fallback", () => {
   const src = read("app/login/page.tsx");
   assert.match(src, /resolvePostLoginDestination/);
