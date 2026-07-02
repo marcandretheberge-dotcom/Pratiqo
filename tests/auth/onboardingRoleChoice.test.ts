@@ -279,7 +279,7 @@ test("auth callback applies pre-auth intent patch and clears pending cookies on 
 
 test("login page delegates post-auth sessions to explicit connected-state actions", () => {
   const src = read("app/login/page.tsx");
-  assert.match(src, /resolveAuthenticatedLoginDestination/);
+  assert.match(src, /resolvePostLoginDestination/);
   assert.match(src, /loginAlreadyConnectedTitle/);
   assert.match(src, /loginContinueDashboard/);
   assert.match(src, /loginSignOut/);
@@ -371,19 +371,19 @@ test("landing auth gate shows handoff screen during active pending onboarding in
 test("login page no longer hides existing sessions behind auth handoff", () => {
   const src = read("app/login/page.tsx");
   assert.match(src, /loginAlreadyConnectedTitle/);
-  assert.match(src, /resolveAuthenticatedLoginDestination/);
+  assert.match(src, /resolvePostLoginDestination/);
   assert.doesNotMatch(src, /AuthHandoffScreen/);
 });
 
 test("landing auth gate resumes pending onboarding intent for authenticated users", () => {
   const src = read("components/marketing/LandingAuthGate.tsx");
   assert.match(src, /readPendingOnboardingIntentClient/);
-  assert.match(src, /buildLoginHrefAfterOAuth/);
+  assert.match(src, /resolvePostLoginDestination/);
 });
 
 test("connexion shows a connected-state panel for authenticated users", () => {
   const src = read("app/connexion/page.tsx");
-  assert.match(src, /resolveAuthenticatedLoginDestination/);
+  assert.match(src, /resolvePostLoginDestination/);
   assert.match(src, /loginAlreadyConnectedTitle/);
   assert.match(src, /loginContinueDashboard/);
   assert.match(src, /loginSignOut/);
@@ -440,7 +440,7 @@ test("login connected-state clears pending onboarding cookies before continuing"
   const src = read("app/login/page.tsx");
   assert.match(src, /clearPendingOnboardingIntentCookie/);
   assert.match(src, /clearPendingTeacherOnboardingCookie/);
-  assert.match(src, /router\.replace\(authenticatedDestination\)/);
+  assert.match(src, /router\.replace\(destination\)/);
 });
 
 test("AuthenticatedShell never sends unresolved roles to legacy /onboarding", () => {

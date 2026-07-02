@@ -47,10 +47,20 @@ function isProtectedPath(pathname: string): boolean {
 }
 
 export function proxy(req: NextRequest) {
-  const { pathname, search } = req.nextUrl;
+  const { pathname } = req.nextUrl;
 
   if (isBlockedSupabaseDemoPath(pathname)) {
     return new NextResponse(null, { status: 404 });
+  }
+
+  // Supabase may deliver the PKCE ?code= on Site URL (/) when redirect_to is not matched.
+  // Forward any stray OAuth codes to the server callback route before other routing.
+  if (!pathname.startsWith("/auth/callback") && req.nextUrl.searchParams.has("code")) {
+    const callbackUrl = new URL("/auth/callback", req.url);
+    req.nextUrl.searchParams.forEach((value, key) => {
+      callbackUrl.searchParams.set(key, value);
+    });
+    return NextResponse.redirect(callbackUrl);
   }
 
   if (pathname.startsWith(LOGIN_PATH) || pathname.startsWith(CONNEXION_PATH)) {
@@ -65,7 +75,7 @@ export function proxy(req: NextRequest) {
     return NextResponse.next();
   }
 
-  const nextParam = `${pathname}${search ?? ""}`;
+  const nextParam = `${pathname}${req.nextUrl.search ?? ""}`;
   const loginUrl = new URL(buildLoginHrefForProtectedReturn(nextParam), req.url);
   return NextResponse.redirect(loginUrl);
 }

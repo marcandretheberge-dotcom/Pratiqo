@@ -8,7 +8,7 @@ import PratiqoLogo from "../../components/PratiqoLogo";
 import { LocaleSwitcher } from "../../components/LocaleSwitcher";
 import { useAuth } from "../../components/AuthProvider";
 import { loginWithGoogle, logout } from "../../lib/auth";
-import { resolveAuthenticatedLoginDestination } from "../../lib/auth/authenticatedLoginDestination";
+import { resolvePostLoginDestination } from "../../lib/auth/authenticatedLoginDestination";
 import {
   clearPendingOnboardingIntentCookie,
   setPendingOnboardingIntentCookie,
@@ -42,8 +42,37 @@ function LoginForm() {
   const authError = searchParams.get("auth_error");
   const preAuthIntent = resolvePreAuthIntent(intentParam, roleParam, nextParam);
   const loginIntent: PreAuthOnboardingIntent = preAuthIntent ?? "learner";
-  const oauthNext = resolveLoginOAuthNextPath(roleParam, nextParam, loginIntent);
-  const authenticatedDestination = resolveAuthenticatedLoginDestination(profile, nextParam);
+  const oauthNext = resolveLoginOAuthNextPath(roleParam, nextParam, intentParam ?? loginIntent);
+
+  useEffect(() => {
+    if (loading || !user || !profileHydrated || authError) return;
+    if (!preAuthIntent && !nextParam) return;
+
+    const destination = resolvePostLoginDestination({
+      profile,
+      preAuthIntent,
+      nextPath: nextParam,
+      oauthNextPath: oauthNext,
+    });
+    if (destination === "/" || destination === "") {
+      console.error("[login] refusing root fallback after Google auth handoff");
+      return;
+    }
+
+    clearPendingOnboardingIntentCookie();
+    clearPendingTeacherOnboardingCookie();
+    router.replace(destination);
+  }, [
+    loading,
+    user,
+    profileHydrated,
+    authError,
+    preAuthIntent,
+    nextParam,
+    oauthNext,
+    profile,
+    router,
+  ]);
 
   useEffect(() => {
     if (loading || user || !preAuthIntent) return;
@@ -73,9 +102,20 @@ function LoginForm() {
   };
 
   const handleContinue = () => {
+    const destination = resolvePostLoginDestination({
+      profile,
+      preAuthIntent,
+      nextPath: nextParam,
+      oauthNextPath: oauthNext,
+    });
+    if (destination === "/" || destination === "") {
+      console.error("[login] refusing root fallback on continue");
+      setFormError(t("loginGenericAuthError"));
+      return;
+    }
     clearPendingOnboardingIntentCookie();
     clearPendingTeacherOnboardingCookie();
-    router.replace(authenticatedDestination);
+    router.replace(destination);
   };
 
   const handleSignOut = async () => {

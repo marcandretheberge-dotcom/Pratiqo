@@ -39,7 +39,7 @@ test("teacher setup path opens verification in setup mode", () => {
 
 test("connexion shows authenticated users an explicit connected state", () => {
   const page = read("app/connexion/page.tsx");
-  assert.match(page, /resolveAuthenticatedLoginDestination/);
+  assert.match(page, /resolvePostLoginDestination/);
   assert.match(page, /loginAlreadyConnectedTitle/);
   assert.match(page, /loginContinueDashboard/);
   assert.doesNotMatch(page, /shouldBypassTeacherRoleChoice/);

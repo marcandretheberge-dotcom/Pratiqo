@@ -8,7 +8,7 @@ import PratiqoLogo from "@/components/PratiqoLogo";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 import { useAuth } from "@/components/AuthProvider";
 import { logout } from "@/lib/auth";
-import { resolveAuthenticatedLoginDestination } from "@/lib/auth/authenticatedLoginDestination";
+import { resolvePostLoginDestination } from "@/lib/auth/authenticatedLoginDestination";
 import { clearPendingOnboardingIntentCookie } from "@/lib/auth/pendingOnboardingIntent";
 import { clearPendingTeacherOnboardingCookie } from "@/lib/auth/pendingTeacherIntent";
 import {
@@ -44,7 +44,11 @@ function ConnexionInner() {
 
   const safeNext = useMemo(() => sanitizeRelativeRedirectPath(searchParams.get("next")), [searchParams]);
   const ref = searchParams.get("ref");
-  const authenticatedDestination = resolveAuthenticatedLoginDestination(profile, safeNext);
+  const authenticatedDestination = resolvePostLoginDestination({
+    profile,
+    preAuthIntent: highlightIntent,
+    nextPath: safeNext,
+  });
 
   useEffect(() => {
     if (!highlightIntent || user) return;

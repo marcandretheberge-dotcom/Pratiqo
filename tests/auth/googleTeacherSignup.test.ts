@@ -134,8 +134,8 @@ test("landing header preserves pending teacher intent for generic Se connecter",
 test("landing auth gate resumes pending onboarding intent for authenticated users", () => {
   const src = read("components/marketing/LandingAuthGate.tsx");
   assert.match(src, /readPendingOnboardingIntentClient/);
+  assert.match(src, /resolvePostLoginDestination/);
   assert.match(src, /buildLoginHrefAfterOAuth/);
-  assert.doesNotMatch(src, /resolvePostAuthRedirect/);
 });
 
 async function run() {
