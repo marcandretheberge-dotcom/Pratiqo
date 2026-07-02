@@ -173,14 +173,13 @@ test("FR EN ES consent copy is complete", () => {
   }
 });
 
-test("email/password auth is available and magic link remains disabled", () => {
+test("Google-only auth is available and magic link remains disabled", () => {
   const login = read("app/login/page.tsx");
   const auth = read("lib/auth.ts");
   assert.match(login, /loginWithGoogle/);
   assert.match(auth, /signInWithOAuth/);
-  assert.match(login, /signInWithEmailPassword/);
-  assert.match(login, /signUpWithEmailPassword/);
-  assert.match(auth, /signInWithPassword/);
+  assert.doesNotMatch(login, /signInWithEmailPassword|signUpWithEmailPassword|type="email"|type="password"/);
+  assert.doesNotMatch(auth, /signInWithPassword|signUpWithPassword/);
   assert.doesNotMatch(login + auth, /signInWithOtp|magic link/i);
 });
 

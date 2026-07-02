@@ -173,6 +173,19 @@ const allowed = new Set([
   "tests/ops/pwaAppReadiness.test.ts",
   "tests/ops/pwaInstallabilityVerification.test.ts",
   "tests/teacherProfile/homeLessonsMinorLaunchGate.test.ts",
+  // Google-only login restore on /login — uses full-page OAuth redirect (PWA/mobile safe).
+  "app/login/page.tsx",
+  "lib/auth.ts",
+  "lib/i18n/locales/fr.json",
+  "lib/i18n/locales/en.json",
+  "lib/i18n/locales/es.json",
+  "package.json",
+  "tests/auth/googleOnlyLaunch.test.ts",
+  "tests/auth/onboardingRoleChoice.test.ts",
+  "tests/auth/studentOnboardingConsentGate.test.ts",
+  "tests/auth/emailPasswordAuth.test.ts",
+  "tests/commission/commissionModelCopy.test.ts",
+  "tests/yo/yopratiqoDominicanResponsiveLayout.test.ts",
 ]);
 
 const restrictedPatterns = [

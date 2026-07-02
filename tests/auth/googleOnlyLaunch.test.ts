@@ -18,32 +18,40 @@ function readJson(rel: string): Record<string, string> {
   return JSON.parse(read(rel)) as Record<string, string>;
 }
 
-test("/login renders email/password first and does not reintroduce Magic Link UI", () => {
+test("/login is Google-only and does not render email/password or Magic Link UI", () => {
   const page = read("app/login/page.tsx");
-  assert.match(page, /type="email"/);
-  assert.match(page, /type="password"/);
-  assert.match(page, /signInWithEmailPassword/);
-  assert.match(page, /signUpWithEmailPassword/);
-  assert.match(page, /sendPasswordResetEmail/);
-  assert.match(page, /data-testid="login-email-password-form"/);
-  assert.ok(
-    page.indexOf('data-testid="login-email-password-form"') < page.indexOf('data-testid="login-google-button"'),
-    "email/password form should appear before Google login",
-  );
+  assert.doesNotMatch(page, /type="email"/);
+  assert.doesNotMatch(page, /type="password"/);
+  assert.doesNotMatch(page, /signInWithEmailPassword/);
+  assert.doesNotMatch(page, /signUpWithEmailPassword/);
+  assert.doesNotMatch(page, /sendPasswordResetEmail/);
+  assert.doesNotMatch(page, /ensureAuthenticatedProfile/);
+  assert.doesNotMatch(page, /login-email-password-form/);
+  assert.doesNotMatch(page, /loginForgotPassword/);
+  assert.doesNotMatch(page, /loginCheckEmailConfirm/);
+  assert.doesNotMatch(page, /loginSignupEmailConfirmationBlocked/);
   assert.doesNotMatch(page, /sendMagicLink/);
   assert.doesNotMatch(page, /signInWithOtp/);
   assert.doesNotMatch(page, /data-testid="login-magic-link-button"/);
+  assert.match(page, /loginWithGoogle/);
+  assert.match(page, /data-testid="login-google-button"/);
+  assert.match(page, /data-testid="login-legal-accept"/);
+  assert.match(page, /data-testid="login-change-google-button"/);
+  assert.match(page, /loginAccountTitle/);
+  assert.match(page, /min-h-\[100dvh\]/, "login page uses dynamic viewport height for mobile/PWA");
 });
 
-test("lib/auth.ts exposes Google OAuth and email/password helpers, but no Magic Link", () => {
+test("lib/auth.ts exposes Google OAuth redirect flow only, no email/password or Magic Link", () => {
   const src = read("lib/auth.ts");
   assert.match(src, /export async function loginWithGoogle/);
   assert.match(src, /signInWithOAuth/);
   assert.match(src, /skipBrowserRedirect:\s*true/);
   assert.match(src, /window\.location\.assign\(data\.url\)/);
-  assert.match(src, /export async function signInWithEmailPassword/);
-  assert.match(src, /export async function signUpWithEmailPassword/);
-  assert.match(src, /export async function sendPasswordResetEmail/);
+  assert.doesNotMatch(src, /signInWithPassword/);
+  assert.doesNotMatch(src, /signUpWithPassword/);
+  assert.doesNotMatch(src, /signInWithEmailPassword/);
+  assert.doesNotMatch(src, /signUpWithEmailPassword/);
+  assert.doesNotMatch(src, /sendPasswordResetEmail/);
   assert.doesNotMatch(src, /export async function sendMagicLink/);
   assert.doesNotMatch(src, /signInWithOtp/);
 });
@@ -69,6 +77,15 @@ test("loginContinueWithGoogle copy matches the exact requested FR/EN/ES wording"
   assert.equal(es.loginContinueWithGoogle, "Continuar con Google");
 });
 
+test("loginAccountTitle matches the Google-only page title in FR/EN/ES", () => {
+  const fr = readJson("lib/i18n/locales/fr.json");
+  const en = readJson("lib/i18n/locales/en.json");
+  const es = readJson("lib/i18n/locales/es.json");
+  assert.equal(fr.loginAccountTitle, "Connexion ou création de compte");
+  assert.equal(en.loginAccountTitle, "Log in or create an account");
+  assert.equal(es.loginAccountTitle, "Iniciar sesión o crear una cuenta");
+});
+
 test("loginWorking copy exists in FR, EN, and ES", () => {
   for (const localePath of ["lib/i18n/locales/fr.json", "lib/i18n/locales/en.json", "lib/i18n/locales/es.json"]) {
     const dictionary = readJson(localePath);
@@ -77,7 +94,7 @@ test("loginWorking copy exists in FR, EN, and ES", () => {
   }
 });
 
-test("legal acceptance checkbox still gates auth actions", () => {
+test("legal acceptance checkbox still gates Google auth actions", () => {
   const page = read("app/login/page.tsx");
   assert.match(page, /loginAcceptTermsLabel/);
   assert.match(page, /disabled=\{!legalAccepted \|\| busy\}/);

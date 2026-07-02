@@ -7,14 +7,7 @@ import { LogIn } from "lucide-react";
 import PratiqoLogo from "../../components/PratiqoLogo";
 import { LocaleSwitcher } from "../../components/LocaleSwitcher";
 import { useAuth } from "../../components/AuthProvider";
-import {
-  ensureAuthenticatedProfile,
-  loginWithGoogle,
-  logout,
-  sendPasswordResetEmail,
-  signInWithEmailPassword,
-  signUpWithEmailPassword,
-} from "../../lib/auth";
+import { loginWithGoogle, logout } from "../../lib/auth";
 import { resolveAuthenticatedLoginDestination } from "../../lib/auth/authenticatedLoginDestination";
 import {
   clearPendingOnboardingIntentCookie,
@@ -33,22 +26,13 @@ import {
 import { useLocale } from "../../lib/locale-context";
 import { cn } from "../../lib/utils";
 
-type EnsuredProfileResponse = {
-  profile?: Parameters<typeof resolveAuthenticatedLoginDestination>[0] | null;
-};
-
 function LoginForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { user, loading, profile, profileHydrated } = useAuth();
   const { t } = useLocale();
   const [legalAccepted, setLegalAccepted] = useState(false);
-  const [authMode, setAuthMode] = useState<"login" | "signup">("login");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [rememberMe, setRememberMe] = useState(true);
   const [busy, setBusy] = useState(false);
-  const [formMessage, setFormMessage] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
 
   const intentParam = searchParams.get("intent");
@@ -69,25 +53,10 @@ function LoginForm() {
     }
   }, [loading, user, preAuthIntent, oauthNext]);
 
-  const redirectAfterEnsuredProfile = (ensuredProfile: EnsuredProfileResponse["profile"]) => {
-    const redirectPath = resolveAuthenticatedLoginDestination(ensuredProfile, oauthNext);
-
-    if (redirectPath === "/" || redirectPath === "") {
-      console.error("[login] refusing-root-fallback after email/password auth");
-      setFormError(t("loginGenericAuthError"));
-      return;
-    }
-
-    clearPendingOnboardingIntentCookie();
-    clearPendingTeacherOnboardingCookie();
-    window.location.assign(redirectPath);
-  };
-
   const handleGoogleLogin = async (options?: { forceAccountSelection?: boolean }) => {
     if (!legalAccepted || busy) return;
     setBusy(true);
     setFormError(null);
-    setFormMessage(null);
     try {
       await loginWithGoogle(oauthNext, {
         intent: loginIntent,
@@ -98,86 +67,6 @@ function LoginForm() {
     } catch (e) {
       console.error("[login] Google auth failed", e);
       setFormError(t("loginGenericAuthError"));
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const handleEmailAuth = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!legalAccepted || busy) return;
-
-    const normalizedEmail = email.trim().toLowerCase();
-    const displayName = normalizedEmail.split("@")[0] || null;
-
-    setFormError(null);
-    setFormMessage(null);
-
-    if (!normalizedEmail || !password) {
-      setFormError(t("loginEmailPasswordRequired"));
-      return;
-    }
-
-    if (authMode === "signup" && password.length < 8) {
-      setFormError(t("loginPasswordMinimum"));
-      return;
-    }
-
-    setBusy(true);
-    try {
-      if (authMode === "login") {
-        const result = await signInWithEmailPassword(normalizedEmail, password);
-        if (!result.session) {
-          setFormError(t("loginGenericAuthError"));
-          return;
-        }
-      } else {
-        const result = await signUpWithEmailPassword(normalizedEmail, password, {
-          intent: preAuthIntent,
-          redirectPath: oauthNext,
-          referralCode: refCode,
-          displayName,
-        });
-
-        if (!result.session) {
-          console.error(
-            "[login] signup blocked: Supabase returned no session (required email confirmation is likely enabled)",
-          );
-          setFormError(t("loginSignupEmailConfirmationBlocked"));
-          return;
-        }
-      }
-
-      const ensured = (await ensureAuthenticatedProfile({
-        intent: preAuthIntent,
-        displayName,
-      })) as EnsuredProfileResponse;
-      setFormMessage(t("loginSuccessRedirecting"));
-      redirectAfterEnsuredProfile(ensured.profile);
-    } catch (e) {
-      console.error("[login] email/password auth failed", e);
-      setFormError(t("loginGenericAuthError"));
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const handleForgotPassword = async () => {
-    if (busy) return;
-    const normalizedEmail = email.trim().toLowerCase();
-    setFormError(null);
-    setFormMessage(null);
-    if (!normalizedEmail) {
-      setFormError(t("loginEmailRequiredForReset"));
-      return;
-    }
-    setBusy(true);
-    try {
-      await sendPasswordResetEmail(normalizedEmail);
-      setFormMessage(t("loginPasswordResetSent"));
-    } catch (e) {
-      console.error("[login] password reset failed", e);
-      setFormMessage(t("loginPasswordResetSent"));
     } finally {
       setBusy(false);
     }
@@ -207,33 +96,16 @@ function LoginForm() {
 
   return (
     <div className="min-h-[100dvh] bg-[#FAFCFB]">
-      <header
-        style={{
-          position: "sticky",
-          top: 0,
-          left: 0,
-          right: 0,
-          background: "white",
-          zIndex: 50,
-          padding: "0 20px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          height: 56,
-          borderBottom: "0.5px solid #D3D1C7",
-        }}
-      >
-        <Link href="/" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none" }}>
+      <header className="sticky top-0 z-50 flex h-14 items-center justify-between border-b border-[#D3D1C7] bg-white px-4 sm:px-6">
+        <Link href="/" className="flex items-center gap-2">
           <PratiqoLogo variant="full" size="md" />
         </Link>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <LocaleSwitcher />
-        </div>
+        <LocaleSwitcher variant="light" />
       </header>
 
-      <div className="flex min-h-[calc(100dvh-56px)] flex-col items-center justify-center px-5 py-10">
-        <div className="w-full max-w-md rounded-[2rem] border border-[var(--p-border-light)] bg-white p-7 shadow-[0_24px_80px_rgba(15,110,86,0.08)] sm:p-10">
-          <div className="mb-7 flex justify-center">
+      <div className="flex min-h-[calc(100dvh-3.5rem)] flex-col items-center justify-center px-4 py-8 sm:px-5 sm:py-10">
+        <div className="w-full max-w-md rounded-[2rem] border border-[var(--p-border-light)] bg-white p-6 shadow-[0_24px_80px_rgba(15,110,86,0.08)] sm:p-10">
+          <div className="mb-6 flex justify-center sm:mb-7">
             <PratiqoLogo variant="full" size="md" />
           </div>
 
@@ -281,11 +153,8 @@ function LoginForm() {
           ) : (
             <>
               <div className="mb-5 text-center">
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-teal-700">
+                <h1 className="text-2xl font-black text-[var(--p-text)] sm:text-[1.65rem]">
                   {t("loginAccountTitle")}
-                </p>
-                <h1 className="mt-2 text-2xl font-black text-[var(--p-text)]">
-                  {authMode === "login" ? t("loginEmailTitle") : t("loginCreateAccountTitle")}
                 </h1>
               </div>
 
@@ -309,136 +178,32 @@ function LoginForm() {
                 </p>
               ) : null}
 
-              {formMessage ? (
-                <p className="mb-4 rounded-2xl bg-teal-500/10 px-4 py-3 text-center text-sm font-semibold text-teal-800">
-                  {formMessage}
-                </p>
-              ) : null}
+              <label className="mb-4 flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                <input
+                  type="checkbox"
+                  checked={legalAccepted}
+                  onChange={(e) => setLegalAccepted(e.target.checked)}
+                  data-testid="login-legal-accept"
+                  className="mt-1 h-4 w-4 shrink-0 rounded border-slate-300 text-teal-700 focus:ring-2 focus:ring-teal-500"
+                />
+                <span className="text-sm font-semibold leading-snug text-[var(--p-text)]">
+                  {t("loginAcceptTermsLabel")}
+                </span>
+              </label>
 
-              <form className="space-y-4" onSubmit={handleEmailAuth} data-testid="login-email-password-form">
-                <label className="block">
-                  <span className="text-sm font-bold text-[var(--p-text)]">{t("loginEmailLabel")}</span>
-                  <input
-                    type="email"
-                    autoComplete="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    data-testid="login-email-input"
-                    className="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-[var(--p-text)] outline-none transition focus:border-teal-600 focus:ring-4 focus:ring-teal-600/10"
-                    placeholder="nom@exemple.com"
-                    required
-                  />
-                </label>
-
-                <label className="block">
-                  <span className="text-sm font-bold text-[var(--p-text)]">{t("loginPasswordLabel")}</span>
-                  <input
-                    type="password"
-                    autoComplete={authMode === "login" ? "current-password" : "new-password"}
-                    minLength={authMode === "signup" ? 8 : undefined}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    data-testid="login-password-input"
-                    className="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-[var(--p-text)] outline-none transition focus:border-teal-600 focus:ring-4 focus:ring-teal-600/10"
-                    required
-                  />
-                </label>
-
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <label className="inline-flex cursor-pointer items-center gap-2 text-sm font-semibold text-[var(--p-text-muted)]">
-                    <input
-                      type="checkbox"
-                      checked={rememberMe}
-                      onChange={(e) => setRememberMe(e.target.checked)}
-                      data-testid="login-remember-me"
-                      className="h-4 w-4 rounded border-slate-300 text-teal-700 focus:ring-2 focus:ring-teal-500"
-                    />
-                    {t("loginRememberMe")}
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => void handleForgotPassword()}
-                    data-testid="login-forgot-password"
-                    className="text-sm font-bold text-teal-700 underline underline-offset-4 transition hover:text-teal-900"
-                  >
-                    {t("loginForgotPassword")}
-                  </button>
-                </div>
-
-                <p className="text-xs leading-relaxed text-[var(--p-text-muted)]">{t("loginRememberMeNote")}</p>
-
-                <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-                  <input
-                    type="checkbox"
-                    checked={legalAccepted}
-                    onChange={(e) => setLegalAccepted(e.target.checked)}
-                    data-testid="login-legal-accept"
-                    className="mt-1 h-4 w-4 shrink-0 rounded border-slate-300 text-teal-700 focus:ring-2 focus:ring-teal-500"
-                  />
-                  <span className="text-sm font-semibold leading-snug text-[var(--p-text)]">
-                    {t("loginAcceptTermsLabel")}
-                  </span>
-                </label>
-
-                <p className="text-center text-xs leading-relaxed text-[var(--p-text-muted)]">
-                  {t("loginContinueAccept")}{" "}
-                  <Link href="/legal/cgu" className="font-semibold text-teal-700 underline underline-offset-2">
-                    {t("footerTerms")}
-                  </Link>{" "}
-                  {t("loginConsentAnd")}{" "}
-                  <Link
-                    href="/legal/confidentialite"
-                    className="font-semibold text-teal-700 underline underline-offset-2"
-                  >
-                    {t("loginPrivacyPolicy")}
-                  </Link>
-                  .
-                </p>
-
-                <button
-                  type="submit"
-                  disabled={!legalAccepted || busy}
-                  data-testid="login-email-submit"
-                  className={cn(
-                    "flex h-12 w-full items-center justify-center gap-2 rounded-2xl text-sm font-bold text-white transition-all",
-                    "bg-teal-600 hover:brightness-[0.98] disabled:cursor-not-allowed disabled:opacity-45",
-                  )}
+              <p className="mb-6 text-center text-xs leading-relaxed text-[var(--p-text-muted)]">
+                {t("loginContinueAccept")}{" "}
+                <Link href="/legal/cgu" className="font-semibold text-teal-700 underline underline-offset-2">
+                  {t("footerTerms")}
+                </Link>{" "}
+                {t("loginConsentAnd")}{" "}
+                <Link
+                  href="/legal/confidentialite"
+                  className="font-semibold text-teal-700 underline underline-offset-2"
                 >
-                  <LogIn size={18} />
-                  {busy
-                    ? t("loginWorking")
-                    : authMode === "login"
-                      ? t("loginEmailSubmit")
-                      : t("loginCreateAccountSubmit")}
-                </button>
-              </form>
-
-              <p className="mt-4 text-center text-sm text-[var(--p-text-muted)]">
-                {authMode === "login" ? t("loginNoAccountPrompt") : t("loginAlreadyHaveAccountPrompt")}{" "}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAuthMode((mode) => (mode === "login" ? "signup" : "login"));
-                    setFormError(null);
-                    setFormMessage(null);
-                  }}
-                  data-testid="login-auth-mode-switch"
-                  className="font-bold text-teal-700 underline underline-offset-4"
-                >
-                  {authMode === "login" ? t("loginSwitchToSignup") : t("loginSwitchToLogin")}
-                </button>
-              </p>
-
-              <div className="my-6 flex items-center gap-3" data-testid="login-or-divider">
-                <div className="h-px flex-1 bg-slate-200" />
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--p-text-muted)]">
-                  {t("loginOrDivider")}
-                </p>
-                <div className="h-px flex-1 bg-slate-200" />
-              </div>
-
-              <p className="mb-4 text-center text-xs font-bold uppercase tracking-[0.18em] text-[var(--p-text-muted)]">
-                {t("loginOtherWays")}
+                  {t("loginPrivacyPolicy")}
+                </Link>
+                .
               </p>
 
               <button
@@ -447,11 +212,11 @@ function LoginForm() {
                 onClick={() => void handleGoogleLogin()}
                 data-testid="login-google-button"
                 className={cn(
-                  "flex h-12 w-full items-center justify-center gap-2 rounded-2xl text-sm font-bold text-white transition-all",
+                  "flex h-12 min-h-12 w-full items-center justify-center gap-2 rounded-2xl text-sm font-bold text-white transition-all",
                   "bg-teal-600 hover:brightness-[0.98] disabled:cursor-not-allowed disabled:opacity-45",
                 )}
               >
-                <LogIn size={18} />
+                <LogIn size={18} aria-hidden />
                 {busy ? t("loginWorking") : t("loginContinueWithGoogle")}
               </button>
 

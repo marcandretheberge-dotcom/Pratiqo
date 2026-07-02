@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import {
@@ -46,7 +46,8 @@ function trackedSourceFiles(): string[] {
     .filter((file) => !file.startsWith("components/yo/"))
     .filter((file) => !file.startsWith("lib/yo/"))
     .filter((file) => !file.startsWith("tests/yo/"))
-    .filter((file) => file !== "tests/commission/commissionModelCopy.test.ts");
+    .filter((file) => file !== "tests/commission/commissionModelCopy.test.ts")
+    .filter((file) => existsSync(join(root, file)));
 }
 
 function changedFilesAgainstMain(): string[] | null {

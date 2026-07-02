@@ -231,7 +231,7 @@ test("responsive layout patch does not touch restricted systems", () => {
     // feat/email-password-auth + origin/main merge window — already-reviewed
     // sibling paths (not edited by the RD responsive Yo components above).
     // Each group is defended by its dedicated launch test suite.
-    "app/api/auth/profile/ensure/route.ts", // tests/auth/emailPasswordAuth.test.ts
+    "app/api/auth/profile/ensure/route.ts", // auth profile ensure scaffold (Google OAuth path)
     "app/api/student/onboarding-consent/route.ts", // tests/auth/studentOnboardingConsentGate.test.ts
     "supabase/migrations/084_student_onboarding_consents.sql",
     "supabase/migrations/085_harden_student_onboarding_consents_rls.sql",
