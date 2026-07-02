@@ -285,11 +285,27 @@ test("commission model branch may update canonical commission files but not rest
   // math / subscription mechanics.
   const approvedStripeRouteExceptions = new Set<string>([
     "app/api/stripe/pro/checkout/route.ts",
+    // Payment-trust launch hardening — metadata only; defended by
+    // tests/payments/paymentTrustLaunchHardening.test.ts.
+    "app/api/stripe/checkout/route.ts",
+    "app/api/stripe/webhook/route.ts",
+  ]);
+
+  const approvedPaymentHelperExceptions = new Set<string>([
+    "lib/payments/connect.ts",
+  ]);
+
+  const approvedStudentConsentMigrationExceptions = new Set<string>([
+    // Student/minor onboarding consent ledger — owner-only RLS table.
+    // Defended by tests/auth/studentOnboardingConsentGate.test.ts.
+    "supabase/migrations/084_student_onboarding_consents.sql",
   ]);
 
   const violations: string[] = [];
   for (const file of changed) {
     if (approvedStripeRouteExceptions.has(file)) continue;
+    if (approvedPaymentHelperExceptions.has(file)) continue;
+    if (approvedStudentConsentMigrationExceptions.has(file)) continue;
     // Launch-safety PR exception: group-session checkout is disabled at launch,
     // and this branch only centralizes the fail-closed gate so public disabled
     // SEO surfaces share the same source of truth. The helper above verifies the

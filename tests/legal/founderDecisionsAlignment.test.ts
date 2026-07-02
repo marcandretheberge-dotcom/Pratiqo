@@ -120,11 +120,18 @@ const allowedYoDisclosureFiles = new Set([
   // commercial logic). Defended end-to-end by
   // tests/yo/yopratiqoWorldClassShellPolish.test.ts.
   "components/yo/YoAppLandingShell.tsx",
+  "components/yo/YoAppHeroCard.tsx",
   "components/yo/YoDesktopAppWorkspace.tsx",
   "components/yo/YoDesktopLearningWorkspace.tsx",
   "components/yo/YoLessonDeck.tsx",
   "components/yo/YoLessonDeckHeader.tsx",
   "components/yo/YoLessonDeckNav.tsx",
+  "components/yo/YoCourseHomeShell.tsx",
+  "components/yo/YoCourseAppHeader.tsx",
+  "components/yo/YoCourseHero.tsx",
+  "components/yo/YoCoursePath.tsx",
+  "components/yo/YoCourseCompanionPanel.tsx",
+  "components/yo/YoStickyCourseCta.tsx",
   "lib/yo/lessonDeckVisualContract.ts",
   "components/yo/YoAudioFeedbackProvider.tsx",
   "components/yo/YoIntroSectionPanel.tsx",
@@ -134,6 +141,15 @@ const allowedYoDisclosureFiles = new Set([
   "components/yo/DominicanRepublicModule3Content.tsx",
   "components/yo/DominicanRepublicModule4Content.tsx",
   "components/yo/YoInteractiveLessonPrimitives.tsx",
+  // Mirrors safeDisclosures Yo shell-polish follow-on entries. Defended by
+  // the same YoPratiqo test suites listed in tests/legal/safeDisclosures.test.ts.
+  "components/yo/DominicanRepublicModule4Interactive.tsx",
+  "components/yo/DominicanRepublicModule5Interactive.tsx",
+  "components/yo/YoImageVisual.tsx",
+  "components/yo/YoLanguageBadge.tsx",
+  "components/yo/YoPremiumModuleUnlockCTA.tsx",
+  "app/yo/langues/espagnol/page.tsx",
+  "app/yo/langues/francais-quebec/module-1/lecon-3/kit-de-survie/page.tsx",
 ]);
 
 /**
@@ -163,10 +179,30 @@ const allowedJsonLdSerializationHardeningFiles = new Set<string>([
   // JSON-LD. The change is serialization escaping only; no lesson content,
   // audio, checkout, indexation, sitemap, or schema shape changes.
   "components/yo/YoLanguageLandingPage.tsx",
+  "lib/seo/jsonLd.ts",
 ]);
 
 const allowedSecurityHardeningFiles = new Set<string>([
   "supabase/migrations/085_harden_student_onboarding_consents_rls.sql",
+]);
+
+const allowedStudentOnboardingConsentFiles = new Set<string>([
+  "supabase/migrations/084_student_onboarding_consents.sql",
+]);
+
+const allowedLocalTeacherDiscoverySeoFiles = new Set<string>([
+  "lib/seo/localTeacherDiscoveryPages.ts",
+  "lib/seo/internalLinks.ts",
+  "lib/seo/resolveTeacherDisciplineLink.ts",
+  "lib/seo/resourceArticleContent.ts",
+  "lib/seo/resourceArticles.ts",
+  "lib/seo/subjectLandingPages.ts",
+  "lib/seo/teacherPublicProfileLabels.ts",
+  "app/sitemap.ts",
+]);
+
+const allowedGroupSessionsLaunchSeoFiles = new Set<string>([
+  "app/api/group-sessions/checkout/route.ts",
 ]);
 
 const allowedPaymentTrustHardeningFiles = new Set<string>([
@@ -364,6 +400,9 @@ test("branch did not touch restricted systems", () => {
     if (allowedJsonLdSerializationHardeningFiles.has(file)) continue;
     if (allowedPaymentTrustHardeningFiles.has(file)) continue;
     if (allowedTeacherSeoPublicationWorkflowFiles.has(file)) continue;
+    if (allowedStudentOnboardingConsentFiles.has(file)) continue;
+    if (allowedLocalTeacherDiscoverySeoFiles.has(file)) continue;
+    if (allowedGroupSessionsLaunchSeoFiles.has(file)) continue;
     for (const rule of restrictedRules) {
       if (rule.re.test(file)) {
         violations.push(`${file} (${rule.label})`);

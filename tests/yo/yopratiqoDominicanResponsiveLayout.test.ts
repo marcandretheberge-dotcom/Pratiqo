@@ -228,6 +228,44 @@ test("responsive layout patch does not touch restricted systems", () => {
     // Defended by tests/security/postgisRlsException.ts,
     // tests/security/rlsCoverage.test.ts, tests/security/securityAdvisorFindings.test.ts.
     "supabase/scripts/rls_audit.sql",
+    // feat/email-password-auth + origin/main merge window — already-reviewed
+    // sibling paths (not edited by the RD responsive Yo components above).
+    // Each group is defended by its dedicated launch test suite.
+    "app/api/auth/profile/ensure/route.ts", // tests/auth/emailPasswordAuth.test.ts
+    "app/api/student/onboarding-consent/route.ts", // tests/auth/studentOnboardingConsentGate.test.ts
+    "supabase/migrations/084_student_onboarding_consents.sql",
+    "supabase/migrations/085_harden_student_onboarding_consents_rls.sql",
+    "lib/payments/connect.ts", // tests/payments/paymentTrustLaunchHardening.test.ts
+    "app/api/group-sessions/checkout/route.ts", // tests/seo/groupSessionsLaunchSeo.test.ts
+    "app/api/admin/users/[id]/teacher-seo-publish/route.ts",
+    "app/api/teacher/profile/seo-publication/route.ts",
+    "app/api/teacher/profile/search-indexing-consent/route.ts",
+    "lib/seo/adminTeacherSeoPublicationCopy.ts",
+    "lib/seo/internalLinks.ts",
+    "lib/seo/jsonLd.ts",
+    "lib/seo/localTeacherDiscoveryPages.ts",
+    "lib/seo/resolveTeacherDisciplineLink.ts",
+    "lib/seo/resourceArticleContent.ts",
+    "lib/seo/resourceArticles.ts",
+    "lib/seo/subjectLandingPages.ts",
+    "lib/seo/teacherPublicProfile.ts",
+    "lib/seo/teacherPublicProfileData.ts",
+    "lib/seo/teacherPublicProfileLabels.ts",
+    "lib/seo/teacherSeoPublication.ts",
+    "app/sitemap.ts",
+    "app/api/ai/description/route.ts",
+    "app/api/analytics/search-event/route.ts",
+    "app/api/reviews/route.ts",
+    "app/api/support/cases/first-lesson-guarantee/route.ts",
+    "app/api/teacher/credentials/route.ts",
+    "app/api/teacher/diploma/route.ts",
+    "app/api/teacher/profile/visibility/route.ts",
+    "app/api/waitlist/route.ts",
+    // Legal privacy policy sync from origin/main merge (V9 retention copy).
+    // Defended by tests/legal/legalLiveSyncLayout.test.ts.
+    "content/legal/confidentialite.en.md",
+    "content/legal/confidentialite.es.md",
+    "content/legal/confidentialite.fr.md",
   ]);
   const forbidden = [
     /^app\/api\//,

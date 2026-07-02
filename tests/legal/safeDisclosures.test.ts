@@ -268,6 +268,22 @@ const allowedYoDisclosureFiles = new Set([
   "components/yo/DominicanRepublicModule3Content.tsx",
   "components/yo/DominicanRepublicModule4Content.tsx",
   "components/yo/YoInteractiveLessonPrimitives.tsx",
+  // World-class shell polish follow-on: Module 4/5 interactive decks,
+  // shared visual/image primitives, language badge, Spanish hub page,
+  // FQ printable kit page, premium unlock CTA scaffold. Display-only /
+  // layout / mojibake repairs — no checkout, Stripe, legal, or payment
+  // behavior changes. Defended by tests/yo/yopratiqoWorldClassShellPolish.test.ts,
+  // yopratiqoDominicanModule4.test.ts, yopratiqoDominicanModule5Premium.test.ts,
+  // yopratiqoLanguageSelection.test.ts, yopratiqoSpanishHubFlagsAndLayout.test.ts,
+  // yopratiqoWorldclassLearningShellVisual.test.ts, yopratiqoPremiumCheckoutScaffold.test.ts,
+  // yopratiqoPrintableResourceRoutes.test.ts.
+  "components/yo/DominicanRepublicModule4Interactive.tsx",
+  "components/yo/DominicanRepublicModule5Interactive.tsx",
+  "components/yo/YoImageVisual.tsx",
+  "components/yo/YoLanguageBadge.tsx",
+  "components/yo/YoPremiumModuleUnlockCTA.tsx",
+  "app/yo/langues/espagnol/page.tsx",
+  "app/yo/langues/francais-quebec/module-1/lecon-3/kit-de-survie/page.tsx",
 ]);
 
 /**
@@ -350,6 +366,36 @@ const allowedSecurityHardeningFiles = new Set<string>([
   // for public.student_onboarding_consents. It does not change schemas,
   // payment flows, booking logic, legal copy, or YoPratiqo content.
   "supabase/migrations/085_harden_student_onboarding_consents_rls.sql",
+]);
+
+const allowedStudentOnboardingConsentFiles = new Set<string>([
+  // Student/minor onboarding consent ledger (migration 084). Adds an
+  // owner-only consent table with strict student-only-write RLS. No payment,
+  // booking, commission, or legal disclosure changes. Defended by
+  // tests/auth/studentOnboardingConsentGate.test.ts.
+  "supabase/migrations/084_student_onboarding_consents.sql",
+]);
+
+const allowedLocalTeacherDiscoverySeoFiles = new Set<string>([
+  // Local teacher discovery hubs, resource-article cluster, and sitemap
+  // wiring — supply-based SEO/indexation only. No payment, booking, or
+  // legal disclosure changes. Defended by tests/seo/localTeacherDiscovery.test.ts,
+  // tests/seo/teacherResourcesCluster.test.ts, and tests/seo/prelaunchSeoIndexation.test.ts.
+  "lib/seo/localTeacherDiscoveryPages.ts",
+  "lib/seo/internalLinks.ts",
+  "lib/seo/resolveTeacherDisciplineLink.ts",
+  "lib/seo/resourceArticleContent.ts",
+  "lib/seo/resourceArticles.ts",
+  "lib/seo/subjectLandingPages.ts",
+  "lib/seo/teacherPublicProfileLabels.ts",
+  "app/sitemap.ts",
+]);
+
+const allowedGroupSessionsLaunchSeoFiles = new Set<string>([
+  // Group-session checkout route is gated by isGroupSessionsCheckoutEnabled()
+  // (FEATURES.group_sessions = false at launch). Defended by
+  // tests/seo/groupSessionsLaunchSeo.test.ts.
+  "app/api/group-sessions/checkout/route.ts",
 ]);
 
 const allowedPaymentTrustHardeningFiles = new Set<string>([
@@ -550,6 +596,9 @@ test("safe-disclosure branch did not touch restricted systems", () => {
     if (allowedJsonLdSerializationHardeningFiles.has(file)) continue;
     if (allowedPaymentTrustHardeningFiles.has(file)) continue;
     if (allowedTeacherSeoPublicationWorkflowFiles.has(file)) continue;
+    if (allowedStudentOnboardingConsentFiles.has(file)) continue;
+    if (allowedLocalTeacherDiscoverySeoFiles.has(file)) continue;
+    if (allowedGroupSessionsLaunchSeoFiles.has(file)) continue;
     for (const rule of restrictedRules) {
       if (rule.re.test(file)) {
         violations.push(`${file} (${rule.label})`);
