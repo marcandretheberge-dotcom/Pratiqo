@@ -95,10 +95,10 @@ test("resolvePostAuthRedirect sends incomplete teachers to onboarding wizard", (
   );
 });
 
-test("buildTeacherSignupLoginHref routes to connexion with teacher emphasis", () => {
+test("buildTeacherSignupLoginHref routes to login with teacher intent", () => {
   const href = buildTeacherSignupLoginHref();
-  assert.match(href, /^\/connexion\?/);
-  const params = new URLSearchParams(href.slice("/connexion?".length));
+  assert.match(href, /^\/login\?/);
+  const params = new URLSearchParams(href.slice("/login?".length));
   assert.equal(params.get("intent"), "teacher");
 });
 

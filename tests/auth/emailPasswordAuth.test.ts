@@ -317,6 +317,59 @@ test("email-password auth does not store or log raw passwords", () => {
   assertNoSensitivePasswordLogging(EMAIL_PASSWORD_AUTH_SOURCES);
 });
 
+const RUNTIME_AUTH_SOURCES = [
+  "lib/auth.ts",
+  "app/login/page.tsx",
+  "app/connexion/page.tsx",
+  "app/auth/callback/route.ts",
+  "components/marketing/LandingHeader.tsx",
+  "proxy.ts",
+];
+
+test("runtime auth code does not call signInWithOtp or sendMagicLink", () => {
+  const combined = RUNTIME_AUTH_SOURCES.map(read).join("\n");
+  assert.doesNotMatch(combined, /signInWithOtp/);
+  assert.doesNotMatch(combined, /sendMagicLink/);
+});
+
+test("login UI does not mention magic link and surfaces email/password first", () => {
+  const login = read("app/login/page.tsx");
+  assert.doesNotMatch(login, /magic link|lien magique|signInWithOtp|sendMagicLink|login-magic-link/i);
+  assert.match(login, /data-testid="login-email-password-form"/);
+  assert.match(login, /signInWithEmailPassword/);
+  assert.match(login, /loginWithGoogle/);
+  assert.match(login, /loginChangeGoogleAccount/);
+  const emailFormIndex = login.indexOf('data-testid="login-email-password-form"');
+  const googleIndex = login.indexOf('data-testid="login-google-button"');
+  assert.ok(emailFormIndex >= 0 && googleIndex > emailFormIndex, "email/password form must render before Google");
+});
+
+test("connexion is a role-choice handoff, not a legacy login or magic-link surface", () => {
+  const connexion = read("app/connexion/page.tsx");
+  assert.doesNotMatch(connexion, /signInWithOtp|sendMagicLink|magic link|lien magique|login-email-password-form/i);
+  assert.doesNotMatch(connexion, /signInWithEmailPassword|signUpWithEmailPassword/);
+  assert.match(connexion, /buildLoginHrefWithPreAuthIntent/);
+  assert.match(connexion, /continueWithIntent\("learner"\)/);
+  assert.match(connexion, /continueWithIntent\("teacher"\)/);
+});
+
+test("primary login CTAs route to /login instead of legacy connexion login", () => {
+  const header = read("components/marketing/LandingHeader.tsx");
+  assert.match(header, /useState\("\/login"\)/);
+  assert.doesNotMatch(header, /useState\("\/connexion"\)/);
+  const teacherHref = read("lib/auth/teacherOnboardingIntent.ts");
+  assert.match(teacherHref, /return `\/login\?/);
+  const proxySrc = read("proxy.ts");
+  assert.match(proxySrc, /buildLoginHrefForProtectedReturn/);
+});
+
+test("successful email/password sign-in refuses marketing homepage fallback", () => {
+  const login = read("app/login/page.tsx");
+  assert.match(login, /refusing-root-fallback after email\/password auth/);
+  assert.match(login, /redirectPath === "\/" \|\| redirectPath === ""/);
+  assert.match(login, /ensureAuthenticatedProfile/);
+});
+
 async function run() {
   for (const { name, fn } of tests) {
     await fn();

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { buildConnexionHrefForProtectedReturn } from "@/lib/auth/preAuthOnboardingIntent";
+import { buildLoginHrefForProtectedReturn } from "@/lib/auth/preAuthOnboardingIntent";
 
 const LOGIN_PATH = "/login";
 const CONNEXION_PATH = "/connexion";
@@ -66,8 +66,8 @@ export function proxy(req: NextRequest) {
   }
 
   const nextParam = `${pathname}${search ?? ""}`;
-  const connexionUrl = new URL(buildConnexionHrefForProtectedReturn(nextParam), req.url);
-  return NextResponse.redirect(connexionUrl);
+  const loginUrl = new URL(buildLoginHrefForProtectedReturn(nextParam), req.url);
+  return NextResponse.redirect(loginUrl);
 }
 
 export const config = {

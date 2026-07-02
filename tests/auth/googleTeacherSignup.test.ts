@@ -128,7 +128,7 @@ test("auth callback does not silently succeed when session exchange fails", () =
 test("landing header preserves pending teacher intent for generic Se connecter", () => {
   const src = read("components/marketing/LandingHeader.tsx");
   assert.match(src, /resolveLoginHrefWithPendingTeacherIntent/);
-  assert.match(src, /\/connexion/);
+  assert.match(src, /useState\("\/login"\)/);
 });
 
 test("landing auth gate resumes pending onboarding intent for authenticated users", () => {

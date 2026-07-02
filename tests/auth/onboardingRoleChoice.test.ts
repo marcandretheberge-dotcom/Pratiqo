@@ -37,15 +37,16 @@ function read(rel: string): string {
   return readFileSync(join(process.cwd(), rel), "utf8");
 }
 
-test("generic Se connecter routes logged-out users to pre-auth connexion", () => {
+test("generic Se connecter routes logged-out users to email/password login", () => {
   const header = read("components/marketing/LandingHeader.tsx");
-  assert.match(header, /\/connexion/);
+  assert.match(header, /useState\("\/login"\)/);
+  assert.match(header, /resolveLoginHrefWithPendingTeacherIntent\("\/login"\)/);
   const shell = read("components/AuthenticatedShell.tsx");
-  assert.match(shell, /buildConnexionHrefForProtectedReturn/);
+  assert.match(shell, /buildLoginHrefForProtectedReturn/);
 });
 
-test("Apprenant pre-auth choice builds login with intent=learner", () => {
-  assert.equal(buildLoginHrefWithPreAuthIntent("learner"), "/login?intent=learner");
+test("Apprenant pre-auth choice builds login with intent=student", () => {
+  assert.equal(buildLoginHrefWithPreAuthIntent("learner"), "/login?intent=student");
 });
 
 test("Professeur pre-auth choice builds login with intent=teacher", () => {
@@ -218,10 +219,10 @@ test("resolvePreAuthIntent combines query intent and safe next-path inference", 
   assert.equal(resolvePreAuthIntent("learner", null, "/onboarding/teacher"), "learner");
 });
 
-test("buildConnexionHrefForProtectedReturn preserves teacher intent for onboarding return", () => {
+test("buildLoginHrefForProtectedReturn preserves teacher intent for onboarding return", () => {
   assert.equal(
     buildConnexionHrefForProtectedReturn("/onboarding/teacher"),
-    "/connexion?next=%2Fonboarding%2Fteacher&intent=teacher",
+    "/login?next=%2Fonboarding%2Fteacher&intent=teacher",
   );
 });
 
@@ -232,11 +233,10 @@ test("buildLoginHrefAfterOAuth stages post-OAuth session handoff on public login
   );
 });
 
-test("proxy redirects unauthenticated protected routes to connexion with inferred intent", () => {
+test("proxy redirects unauthenticated protected routes to login with inferred intent", () => {
   const src = read("proxy.ts");
-  assert.match(src, /buildConnexionHrefForProtectedReturn/);
-  assert.match(src, /CONNEXION_PATH/);
-  assert.doesNotMatch(src, /loginUrl\.searchParams\.set\("next"/);
+  assert.match(src, /buildLoginHrefForProtectedReturn/);
+  assert.doesNotMatch(src, /buildConnexionHrefForProtectedReturn/);
 });
 
 test("auth callback redirects intent signups directly to onboarding destinations", () => {

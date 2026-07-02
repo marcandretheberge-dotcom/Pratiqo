@@ -3,7 +3,7 @@
 import React, { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { LogIn, Mail } from "lucide-react";
+import { LogIn } from "lucide-react";
 import PratiqoLogo from "../../components/PratiqoLogo";
 import { LocaleSwitcher } from "../../components/LocaleSwitcher";
 import { useAuth } from "../../components/AuthProvider";
@@ -403,7 +403,7 @@ function LoginForm() {
                     "bg-teal-600 hover:brightness-[0.98] disabled:cursor-not-allowed disabled:opacity-45",
                   )}
                 >
-                  <Mail size={18} />
+                  <LogIn size={18} />
                   {busy
                     ? t("loginWorking")
                     : authMode === "login"
