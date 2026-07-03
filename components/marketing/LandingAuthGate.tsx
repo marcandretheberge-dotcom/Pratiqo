@@ -15,6 +15,7 @@ import {
   hasOAuthReturnPending,
   readOAuthReturnIntent,
   subscribeToOAuthReturn,
+  notifyOAuthReturnChanged,
 } from "@/lib/auth/oauthReturnHandoff";
 import { resolveOAuthRedirectOrigin } from "@/lib/auth/oauthCallback";
 import {
@@ -23,8 +24,6 @@ import {
 } from "@/lib/auth/pendingOnboardingIntent";
 import {
   clearPendingTeacherOnboardingCookie,
-  hasPendingTeacherIntentClient,
-  resolveLoginHrefWithPendingTeacherIntent,
 } from "@/lib/auth/pendingTeacherIntent";
 import { AuthHandoffScreen } from "@/components/marketing/AuthHandoffScreen";
 
@@ -50,6 +49,13 @@ function getServerOAuthReturnSnapshot() {
 
 function resolvePendingIntent(): PreAuthOnboardingIntent | null {
   return readPendingOnboardingIntentClient() ?? readOAuthReturnIntent();
+}
+
+function clearStaleAuthHandoffState(): void {
+  clearPendingOnboardingIntentCookie();
+  clearPendingTeacherOnboardingCookie();
+  clearOAuthReturnPending();
+  notifyOAuthReturnChanged();
 }
 
 function forwardOAuthCodeToCallback(): boolean {
@@ -82,9 +88,7 @@ function assignRecoveryDestination(
     ...fields,
     redirect: destination,
   });
-  clearPendingOnboardingIntentCookie();
-  clearPendingTeacherOnboardingCookie();
-  clearOAuthReturnPending();
+  clearStaleAuthHandoffState();
   window.location.assign(destination);
 }
 
@@ -109,6 +113,13 @@ export function LandingAuthGate({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (authLoading) return;
     if (forwardOAuthCodeToCallback()) return;
+
+    if (!user) {
+      if (recoveryActive || resolvePendingIntent()) {
+        clearStaleAuthHandoffState();
+      }
+      return;
+    }
 
     const pendingIntent = resolvePendingIntent();
     const shouldRecover = recoveryActive || Boolean(pendingIntent);
@@ -143,28 +154,10 @@ export function LandingAuthGate({ children }: { children: ReactNode }) {
         });
         window.location.assign(handoff);
       }
-      return;
-    }
-
-    if (hasPendingTeacherIntentClient()) {
-      const handoff = resolveLoginHrefWithPendingTeacherIntent();
-      logAuthFlowDecision("landing-gate", {
-        stage: "teacher-legacy-handoff",
-        path: "/",
-        sessionPresent: false,
-        pendingIntentCookie: "teacher-legacy",
-        redirect: handoff,
-      });
-      window.location.assign(handoff);
-      return;
-    }
-
-    if (oauthReturnPending) {
-      clearOAuthReturnPending();
     }
   }, [user, authLoading, profileHydrated, profile, recoveryActive, oauthReturnPending]);
 
-  if (recoveryActive) {
+  if (recoveryActive && user) {
     return <AuthHandoffScreen />;
   }
 

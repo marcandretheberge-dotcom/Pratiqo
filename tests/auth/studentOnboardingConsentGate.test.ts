@@ -201,6 +201,7 @@ test("schema-not-ready returns 503 when migration missing", () => {
   assert.match(route, /student_consent_schema_not_ready/);
 });
 
+test("consent API rejects saves when required acceptance flags are false", () => {
   const component = read("components/student/StudentOnboardingConsentGate.tsx");
   const route = read("app/api/student/onboarding-consent/route.ts");
   assert.match(component, /acceptedLearningData/);
