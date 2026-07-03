@@ -48,24 +48,34 @@ export function resolvePreAuthIntent(
   return parsePublicPreAuthIntent(intentParam, roleParam) ?? inferPreAuthIntentFromNextPath(nextParam);
 }
 
-export function buildConnexionHrefForProtectedReturn(nextPath: string): string {
+/** Public query value for learner intent (`student` alias; internal type stays `learner`). */
+export function publicIntentQueryValue(intent: PreAuthOnboardingIntent): string {
+  return intent === "learner" ? "student" : "teacher";
+}
+
+export function buildLoginHrefForProtectedReturn(nextPath: string): string {
   const safeNext = sanitizeRelativeRedirectPath(nextPath);
-  if (!safeNext) return CONNEXION_PATH;
+  if (!safeNext) return "/login";
   const intent = inferPreAuthIntentFromNextPath(safeNext);
   const params = new URLSearchParams({ next: safeNext });
-  if (intent) params.set("intent", intent);
-  return `${CONNEXION_PATH}?${params.toString()}`;
+  if (intent) params.set("intent", publicIntentQueryValue(intent));
+  return `/login?${params.toString()}`;
+}
+
+/** @deprecated Prefer `buildLoginHrefForProtectedReturn` — protected surfaces now hand off to `/login`. */
+export function buildConnexionHrefForProtectedReturn(nextPath: string): string {
+  return buildLoginHrefForProtectedReturn(nextPath);
 }
 
 export function buildLoginHrefAfterOAuth(intent: PreAuthOnboardingIntent, nextPath?: string | null): string {
-  const params = new URLSearchParams({ intent });
+  const params = new URLSearchParams({ intent: publicIntentQueryValue(intent) });
   const safeNext = sanitizeRelativeRedirectPath(nextPath);
   if (safeNext) params.set("next", safeNext);
   return `/login?${params.toString()}`;
 }
 
 export function buildLoginHrefWithPreAuthIntent(intent: PreAuthOnboardingIntent): string {
-  return `/login?intent=${intent}`;
+  return `/login?intent=${publicIntentQueryValue(intent)}`;
 }
 
 export function buildConnexionHref(highlightIntent?: PreAuthOnboardingIntent | null): string {

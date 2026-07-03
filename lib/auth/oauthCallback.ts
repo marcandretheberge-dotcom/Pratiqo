@@ -1,4 +1,5 @@
 import { sanitizeRelativeRedirectPath } from "@/lib/auth/redirects";
+import { publicIntentQueryValue, type PreAuthOnboardingIntent } from "@/lib/auth/preAuthOnboardingIntent";
 
 const PRODUCTION_HOSTS = new Set(["www.pratiqo.ca", "pratiqo.ca"]);
 
@@ -76,7 +77,7 @@ export function buildLoginUrlWithAuthError(
   if (options?.authError) url.searchParams.set("auth_error", options.authError);
   const safeNext = sanitizeRelativeRedirectPath(options?.next ?? null);
   if (options?.intent === "learner" || options?.intent === "teacher") {
-    url.searchParams.set("intent", options.intent);
+    url.searchParams.set("intent", publicIntentQueryValue(options.intent as PreAuthOnboardingIntent));
   } else if (options?.role === "teacher") {
     url.searchParams.set("intent", "teacher");
   }

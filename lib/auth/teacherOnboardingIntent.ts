@@ -1,9 +1,9 @@
 import { sanitizeRelativeRedirectPath } from "@/lib/auth/redirects";
 import { ONBOARDING_ROLE_CHOICE_PATH } from "@/lib/auth/onboardingRoleChoice";
 import {
-  buildConnexionHref,
   buildLoginHrefWithPreAuthIntent,
   parsePublicPreAuthIntent,
+  publicIntentQueryValue,
   resolveLoginOAuthNextPath,
 } from "@/lib/auth/preAuthOnboardingIntent";
 
@@ -38,26 +38,24 @@ export function resolveSignUpRoleParam(
   return parsePublicSignUpRoleParam(roleParam);
 }
 
-/** Teacher recruitment CTAs → pre-auth connexion with Professeur emphasized. */
+/** Teacher recruitment CTAs → email/password-first login with teacher intent. */
 export function buildTeacherSignupLoginHref(options?: {
   onboardingQuery?: string;
   extraParams?: Record<string, string>;
 }): string {
-  const href = buildConnexionHref("teacher");
-  if (!options?.onboardingQuery && !options?.extraParams) return href;
-  const params = new URLSearchParams(href.includes("?") ? href.split("?")[1] : "");
-  if (options.onboardingQuery) {
+  const params = new URLSearchParams({ intent: publicIntentQueryValue("teacher") });
+  if (options?.onboardingQuery) {
     for (const part of options.onboardingQuery.split("&")) {
       const [key, value] = part.split("=");
       if (key) params.set(key, value ?? "");
     }
   }
-  if (options.extraParams) {
+  if (options?.extraParams) {
     for (const [key, value] of Object.entries(options.extraParams)) {
       params.set(key, value);
     }
   }
-  return `${buildConnexionHref("teacher").split("?")[0]}?${params.toString()}`;
+  return `/login?${params.toString()}`;
 }
 
 /** Direct login href when pre-auth connexion was already completed. */

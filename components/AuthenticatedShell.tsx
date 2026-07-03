@@ -11,7 +11,7 @@ import {
   ONBOARDING_ROLE_CHOICE_PATH,
   resolveProfileDashboardFromAuth,
 } from "@/lib/auth/onboardingRoleChoice";
-import { buildConnexionHrefForProtectedReturn } from "@/lib/auth/preAuthOnboardingIntent";
+import { buildLoginHrefForProtectedReturn } from "@/lib/auth/preAuthOnboardingIntent";
 import { logAuthFlowDecision } from "@/lib/auth/authFlowDiagnostics";
 import { readPendingOnboardingIntentClient } from "@/lib/auth/pendingOnboardingIntent";
 import { hasPendingTeacherIntentClient } from "@/lib/auth/pendingTeacherIntent";
@@ -150,7 +150,7 @@ export function AuthenticatedShell({ children }: { children: React.ReactNode }) 
   useEffect(() => {
     if (loading || isLegal || user) return;
     const next = pathname && pathname !== "/" ? pathname : "/dashboard";
-    router.replace(buildConnexionHrefForProtectedReturn(next));
+    router.replace(buildLoginHrefForProtectedReturn(next));
   }, [loading, isLegal, user, pathname, router]);
 
   if (isLegal) {

@@ -37,15 +37,16 @@ function read(rel: string): string {
   return readFileSync(join(process.cwd(), rel), "utf8");
 }
 
-test("generic Se connecter routes logged-out users to pre-auth connexion", () => {
+test("generic Se connecter routes logged-out users to role-choice connexion", () => {
   const header = read("components/marketing/LandingHeader.tsx");
-  assert.match(header, /\/connexion/);
+  assert.match(header, /useState\(CONNEXION_PATH\)/);
+  assert.match(header, /resolveLoginHrefWithPendingTeacherIntent\(CONNEXION_PATH\)/);
   const shell = read("components/AuthenticatedShell.tsx");
-  assert.match(shell, /buildConnexionHrefForProtectedReturn/);
+  assert.match(shell, /buildLoginHrefForProtectedReturn/);
 });
 
-test("Apprenant pre-auth choice builds login with intent=learner", () => {
-  assert.equal(buildLoginHrefWithPreAuthIntent("learner"), "/login?intent=learner");
+test("Apprenant pre-auth choice builds login with intent=student", () => {
+  assert.equal(buildLoginHrefWithPreAuthIntent("learner"), "/login?intent=student");
 });
 
 test("Professeur pre-auth choice builds login with intent=teacher", () => {
@@ -218,10 +219,10 @@ test("resolvePreAuthIntent combines query intent and safe next-path inference", 
   assert.equal(resolvePreAuthIntent("learner", null, "/onboarding/teacher"), "learner");
 });
 
-test("buildConnexionHrefForProtectedReturn preserves teacher intent for onboarding return", () => {
+test("buildLoginHrefForProtectedReturn preserves teacher intent for onboarding return", () => {
   assert.equal(
     buildConnexionHrefForProtectedReturn("/onboarding/teacher"),
-    "/connexion?next=%2Fonboarding%2Fteacher&intent=teacher",
+    "/login?next=%2Fonboarding%2Fteacher&intent=teacher",
   );
 });
 
@@ -232,11 +233,10 @@ test("buildLoginHrefAfterOAuth stages post-OAuth session handoff on public login
   );
 });
 
-test("proxy redirects unauthenticated protected routes to connexion with inferred intent", () => {
+test("proxy redirects unauthenticated protected routes to login with inferred intent", () => {
   const src = read("proxy.ts");
-  assert.match(src, /buildConnexionHrefForProtectedReturn/);
-  assert.match(src, /CONNEXION_PATH/);
-  assert.doesNotMatch(src, /loginUrl\.searchParams\.set\("next"/);
+  assert.match(src, /buildLoginHrefForProtectedReturn/);
+  assert.doesNotMatch(src, /buildConnexionHrefForProtectedReturn/);
 });
 
 test("auth callback redirects intent signups directly to onboarding destinations", () => {
@@ -255,14 +255,18 @@ test("auth callback clears pending cookies after final redirect is chosen", () =
   );
 });
 
-test("login page supports generic Google login and path changes only after pre-auth intent", () => {
+test("login page redirects missing intent to connexion instead of defaulting learner", () => {
   const src = read("app/login/page.tsx");
   assert.match(src, /CONNEXION_PATH/);
   assert.match(src, /resolvePreAuthIntent/);
-  assert.match(src, /const loginIntent: PreAuthOnboardingIntent = preAuthIntent \?\? "learner"/);
+  assert.match(src, /loginWithGoogle/);
+  assert.doesNotMatch(src, /signInWithEmailPassword/);
+  assert.doesNotMatch(src, /signUpWithEmailPassword/);
+  assert.doesNotMatch(src, /preAuthIntent \?\? "learner"/);
+  assert.doesNotMatch(src, /loginIntent.*learner/);
+  assert.match(src, /router\.replace\(qs \? `\$\{CONNEXION_PATH\}/);
   assert.match(src, /setPendingOnboardingIntentCookie/);
-  assert.doesNotMatch(src, /router\.replace\(qs \? `\$\{CONNEXION_PATH\}/);
-  assert.match(src, /preAuthIntent \? \(/);
+  assert.match(src, /!preAuthIntent \?/);
 });
 
 test("auth callback applies pre-auth intent patch and clears pending cookies on direct redirects", () => {
@@ -275,7 +279,7 @@ test("auth callback applies pre-auth intent patch and clears pending cookies on 
 
 test("login page delegates post-auth sessions to explicit connected-state actions", () => {
   const src = read("app/login/page.tsx");
-  assert.match(src, /resolveAuthenticatedLoginDestination/);
+  assert.match(src, /resolvePostLoginDestination/);
   assert.match(src, /loginAlreadyConnectedTitle/);
   assert.match(src, /loginContinueDashboard/);
   assert.match(src, /loginSignOut/);
@@ -347,7 +351,7 @@ test("landing auth gate keeps public homepage accessible when authenticated", ()
   const src = read("components/marketing/LandingAuthGate.tsx");
   assert.doesNotMatch(src, /resolvePostAuthRedirect/);
   assert.doesNotMatch(src, /if \(!authLoading && user\) return null/);
-  assert.match(src, /handoffActive/);
+  assert.match(src, /recoveryActive/);
   assert.match(src, /return <>\{children\}<\/>/);
 });
 
@@ -357,7 +361,8 @@ test("landing auth gate shows handoff screen during active pending onboarding in
   const handoff = read("lib/auth/onboardingHandoff.ts");
   assert.match(gate, /useSyncExternalStore/);
   assert.match(gate, /hasActiveOnboardingHandoffClient/);
-  assert.match(gate, /if \(handoffActive\)[\s\S]*AuthHandoffScreen/);
+  assert.match(gate, /if \(recoveryActive\)[\s\S]*AuthHandoffScreen/);
+  assert.match(gate, /hasOAuthReturnPending/);
   assert.match(screen, /authHandoffTitle/);
   assert.match(screen, /authHandoffSubtitle/);
   assert.match(handoff, /readPendingOnboardingIntentClient/);
@@ -367,19 +372,20 @@ test("landing auth gate shows handoff screen during active pending onboarding in
 test("login page no longer hides existing sessions behind auth handoff", () => {
   const src = read("app/login/page.tsx");
   assert.match(src, /loginAlreadyConnectedTitle/);
-  assert.match(src, /resolveAuthenticatedLoginDestination/);
+  assert.match(src, /resolvePostLoginDestination/);
   assert.doesNotMatch(src, /AuthHandoffScreen/);
 });
 
 test("landing auth gate resumes pending onboarding intent for authenticated users", () => {
   const src = read("components/marketing/LandingAuthGate.tsx");
   assert.match(src, /readPendingOnboardingIntentClient/);
-  assert.match(src, /buildLoginHrefAfterOAuth/);
+  assert.match(src, /readOAuthReturnIntent/);
+  assert.match(src, /resolvePostLoginDestination/);
 });
 
 test("connexion shows a connected-state panel for authenticated users", () => {
   const src = read("app/connexion/page.tsx");
-  assert.match(src, /resolveAuthenticatedLoginDestination/);
+  assert.match(src, /resolvePostLoginDestination/);
   assert.match(src, /loginAlreadyConnectedTitle/);
   assert.match(src, /loginContinueDashboard/);
   assert.match(src, /loginSignOut/);
@@ -436,7 +442,7 @@ test("login connected-state clears pending onboarding cookies before continuing"
   const src = read("app/login/page.tsx");
   assert.match(src, /clearPendingOnboardingIntentCookie/);
   assert.match(src, /clearPendingTeacherOnboardingCookie/);
-  assert.match(src, /router\.replace\(authenticatedDestination\)/);
+  assert.match(src, /router\.replace\(destination\)/);
 });
 
 test("AuthenticatedShell never sends unresolved roles to legacy /onboarding", () => {

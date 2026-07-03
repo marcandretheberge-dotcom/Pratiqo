@@ -394,6 +394,9 @@ test("forbidden files: PR does not touch Stripe checkout/webhook, Supabase/RLS/m
     "supabase/migrations/071_student_search_visibility_photo.sql",
     "supabase/migrations/072_teacher_default_lesson_duration.sql",
     "supabase/migrations/073_student_saved_location.sql",
+    // Student/minor onboarding consent ledger — owner-only RLS table.
+    // Defended by tests/auth/studentOnboardingConsentGate.test.ts.
+    "supabase/migrations/084_student_onboarding_consents.sql",
     "supabase/migrations/085_harden_student_onboarding_consents_rls.sql",
   ]);
 
@@ -406,6 +409,15 @@ test("forbidden files: PR does not touch Stripe checkout/webhook, Supabase/RLS/m
   const approvedStripeRouteExceptions = new Set([
     "app/api/stripe/pro/checkout/route.ts",
     "app/api/stripe/webhook/route.ts",
+    // Payment-trust launch hardening (connect onboarding metadata only).
+    // Defended by tests/payments/paymentTrustLaunchHardening.test.ts.
+    "app/api/stripe/checkout/route.ts",
+  ]);
+
+  const approvedPaymentHelperExceptions = new Set([
+    // Payment-trust launch hardening (Connect account metadata only).
+    // Defended by tests/payments/paymentTrustLaunchHardening.test.ts.
+    "lib/payments/connect.ts",
   ]);
 
   const violations: string[] = [];
@@ -418,6 +430,12 @@ test("forbidden files: PR does not touch Stripe checkout/webhook, Supabase/RLS/m
         if (
           rule.label === "Stripe checkout/webhook routes" &&
           approvedStripeRouteExceptions.has(file)
+        ) {
+          continue;
+        }
+        if (
+          rule.label === "payment library helpers outside canonical commission config" &&
+          approvedPaymentHelperExceptions.has(file)
         ) {
           continue;
         }

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { buildConnexionHrefForProtectedReturn } from "@/lib/auth/preAuthOnboardingIntent";
+import { logAuthFlowDecision } from "@/lib/auth/authFlowDiagnostics";
+import { buildLoginHrefForProtectedReturn } from "@/lib/auth/preAuthOnboardingIntent";
 
 const LOGIN_PATH = "/login";
 const CONNEXION_PATH = "/connexion";
@@ -47,10 +48,28 @@ function isProtectedPath(pathname: string): boolean {
 }
 
 export function proxy(req: NextRequest) {
-  const { pathname, search } = req.nextUrl;
+  const { pathname } = req.nextUrl;
 
   if (isBlockedSupabaseDemoPath(pathname)) {
     return new NextResponse(null, { status: 404 });
+  }
+
+  // Supabase may deliver the PKCE ?code= on Site URL (/) when redirect_to is not matched.
+  // Forward any stray OAuth codes to the server callback route before other routing.
+  if (!pathname.startsWith("/auth/callback") && req.nextUrl.searchParams.has("code")) {
+    const callbackUrl = new URL("/auth/callback", req.url);
+    req.nextUrl.searchParams.forEach((value, key) => {
+      callbackUrl.searchParams.set(key, value);
+    });
+    logAuthFlowDecision("proxy", {
+      stage: "oauth-code-forward",
+      path: pathname,
+      hasCode: true,
+      intent: req.nextUrl.searchParams.get("intent") ?? "none",
+      next: req.nextUrl.searchParams.get("next") ?? "none",
+      redirect: callbackUrl.pathname + callbackUrl.search,
+    });
+    return NextResponse.redirect(callbackUrl);
   }
 
   if (pathname.startsWith(LOGIN_PATH) || pathname.startsWith(CONNEXION_PATH)) {
@@ -65,13 +84,14 @@ export function proxy(req: NextRequest) {
     return NextResponse.next();
   }
 
-  const nextParam = `${pathname}${search ?? ""}`;
-  const connexionUrl = new URL(buildConnexionHrefForProtectedReturn(nextParam), req.url);
-  return NextResponse.redirect(connexionUrl);
+  const nextParam = `${pathname}${req.nextUrl.search ?? ""}`;
+  const loginUrl = new URL(buildLoginHrefForProtectedReturn(nextParam), req.url);
+  return NextResponse.redirect(loginUrl);
 }
 
 export const config = {
   matcher: [
+    "/",
     "/((?!api/|_next/static|_next/image|_next/data|favicon.ico|robots.txt|sitemap.xml|manifest.webmanifest|.*\\.(?:ico|png|jpg|jpeg|gif|webp|svg|css|js|mjs|map|woff2?|ttf|eot)$).*)",
   ],
 };

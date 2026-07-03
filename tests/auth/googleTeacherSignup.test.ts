@@ -85,14 +85,15 @@ test("loginWithGoogle can force Google account selection without changing the de
   assert.match(src, /window\.location\.assign\(data\.url\)/);
 });
 
-test("login page uses one Google button that always forces account selection", () => {
+test("login page renders Google login plus explicit account switching", () => {
   const page = read("app/login/page.tsx");
-  assert.doesNotMatch(page, /loginWrongGoogleAccountPrompt/);
-  assert.doesNotMatch(page, /loginChangeGoogleAccount/);
-  assert.match(page, /forceAccountSelection:\s*true/);
-  assert.match(page, /onClick=\{\(\) => void handleLogin\(\)\}/);
-  assert.match(page, /intent:\s*loginIntent/);
-  assert.match(page, /intentQuery:\s*intentParam === "student" \? "student" : loginIntent/);
+  assert.match(page, /loginWrongGoogleAccountPrompt/);
+  assert.match(page, /loginChangeGoogleAccount/);
+  assert.match(page, /onClick=\{\(\) => void handleGoogleLogin\(\{ forceAccountSelection: true \}\)\}/);
+  assert.match(page, /onClick=\{\(\) => void handleGoogleLogin\(\)\}/);
+  assert.match(page, /forceAccountSelection:\s*options\?\.forceAccountSelection === true/);
+  assert.match(page, /intent:\s*preAuthIntent/);
+  assert.match(page, /intentQuery:\s*intentParam === "student" \? "student" : preAuthIntent/);
   assert.match(page, /referralCode:\s*refCode/);
   assert.match(page, /disabled=\{!legalAccepted \|\| busy\}/);
 });
@@ -127,14 +128,14 @@ test("auth callback does not silently succeed when session exchange fails", () =
 test("landing header preserves pending teacher intent for generic Se connecter", () => {
   const src = read("components/marketing/LandingHeader.tsx");
   assert.match(src, /resolveLoginHrefWithPendingTeacherIntent/);
-  assert.match(src, /\/connexion/);
+  assert.match(src, /useState\(CONNEXION_PATH\)/);
 });
 
 test("landing auth gate resumes pending onboarding intent for authenticated users", () => {
   const src = read("components/marketing/LandingAuthGate.tsx");
   assert.match(src, /readPendingOnboardingIntentClient/);
+  assert.match(src, /resolvePostLoginDestination/);
   assert.match(src, /buildLoginHrefAfterOAuth/);
-  assert.doesNotMatch(src, /resolvePostAuthRedirect/);
 });
 
 async function run() {

@@ -8,15 +8,21 @@ import PratiqoLogo from "../../components/PratiqoLogo";
 import { LocaleSwitcher } from "../../components/LocaleSwitcher";
 import { useAuth } from "../../components/AuthProvider";
 import { loginWithGoogle, logout } from "../../lib/auth";
-import { resolveAuthenticatedLoginDestination } from "../../lib/auth/authenticatedLoginDestination";
-import { clearPendingOnboardingIntentCookie, setPendingOnboardingIntentCookie } from "../../lib/auth/pendingOnboardingIntent";
-import { clearPendingTeacherOnboardingCookie, setPendingTeacherOnboardingCookie } from "../../lib/auth/pendingTeacherIntent";
+import { resolvePostLoginDestination } from "../../lib/auth/authenticatedLoginDestination";
+import {
+  clearPendingOnboardingIntentCookie,
+  setPendingOnboardingIntentCookie,
+} from "../../lib/auth/pendingOnboardingIntent";
+import {
+  clearPendingTeacherOnboardingCookie,
+  setPendingTeacherOnboardingCookie,
+} from "../../lib/auth/pendingTeacherIntent";
 import {
   CONNEXION_PATH,
   resolveLoginOAuthNextPath,
   resolvePreAuthIntent,
-  type PreAuthOnboardingIntent,
 } from "../../lib/auth/preAuthOnboardingIntent";
+import { clearOAuthReturnPending } from "../../lib/auth/oauthReturnHandoff";
 import { useLocale } from "../../lib/locale-context";
 import { cn } from "../../lib/utils";
 
@@ -27,6 +33,7 @@ function LoginForm() {
   const { t } = useLocale();
   const [legalAccepted, setLegalAccepted] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const intentParam = searchParams.get("intent");
   const roleParam = searchParams.get("role");
@@ -34,40 +41,93 @@ function LoginForm() {
   const refCode = searchParams.get("ref") ?? undefined;
   const authError = searchParams.get("auth_error");
   const preAuthIntent = resolvePreAuthIntent(intentParam, roleParam, nextParam);
-  const loginIntent: PreAuthOnboardingIntent = preAuthIntent ?? "learner";
-  const oauthNext = resolveLoginOAuthNextPath(roleParam, nextParam, loginIntent);
-  const authenticatedDestination = resolveAuthenticatedLoginDestination(profile, nextParam);
+  const oauthNext = preAuthIntent
+    ? resolveLoginOAuthNextPath(roleParam, nextParam, intentParam ?? preAuthIntent)
+    : null;
 
   useEffect(() => {
-    if (loading || user || !preAuthIntent) return;
+    if (loading || user || authError || preAuthIntent) return;
+    const params = new URLSearchParams();
+    if (nextParam) params.set("next", nextParam);
+    if (refCode) params.set("ref", refCode);
+    const qs = params.toString();
+    router.replace(qs ? `${CONNEXION_PATH}?${qs}` : CONNEXION_PATH);
+  }, [loading, user, authError, preAuthIntent, nextParam, refCode, router]);
+
+  useEffect(() => {
+    if (loading || !user || !profileHydrated || authError) return;
+    if (!preAuthIntent && !nextParam) return;
+
+    const destination = resolvePostLoginDestination({
+      profile,
+      preAuthIntent,
+      nextPath: nextParam,
+      oauthNextPath: oauthNext,
+    });
+    if (destination === "/" || destination === "") {
+      console.error("[login] refusing root fallback after Google auth handoff");
+      return;
+    }
+
+    clearPendingOnboardingIntentCookie();
+    clearPendingTeacherOnboardingCookie();
+    clearOAuthReturnPending();
+    router.replace(destination);
+  }, [
+    loading,
+    user,
+    profileHydrated,
+    authError,
+    preAuthIntent,
+    nextParam,
+    oauthNext,
+    profile,
+    router,
+  ]);
+
+  useEffect(() => {
+    if (loading || user || !preAuthIntent || !oauthNext) return;
     setPendingOnboardingIntentCookie(preAuthIntent);
     if (preAuthIntent === "teacher") {
       setPendingTeacherOnboardingCookie(oauthNext);
     }
   }, [loading, user, preAuthIntent, oauthNext]);
 
-  const handleLogin = async () => {
-    if (!legalAccepted || busy) return;
+  const handleGoogleLogin = async (options?: { forceAccountSelection?: boolean }) => {
+    if (!preAuthIntent || !legalAccepted || busy || !oauthNext) return;
     setBusy(true);
+    setFormError(null);
     try {
       await loginWithGoogle(oauthNext, {
-        intent: loginIntent,
-        intentQuery: intentParam === "student" ? "student" : loginIntent,
+        intent: preAuthIntent,
+        intentQuery: intentParam === "student" ? "student" : preAuthIntent,
         referralCode: refCode,
-        forceAccountSelection: true,
+        forceAccountSelection: options?.forceAccountSelection === true,
       });
     } catch (e) {
-      console.error(e);
-      alert("Connexion impossible. Réessaie dans un instant.");
+      console.error("[login] Google auth failed", e);
+      setFormError(t("loginGenericAuthError"));
     } finally {
       setBusy(false);
     }
   };
 
   const handleContinue = () => {
+    const destination = resolvePostLoginDestination({
+      profile,
+      preAuthIntent,
+      nextPath: nextParam,
+      oauthNextPath: oauthNext,
+    });
+    if (destination === "/" || destination === "") {
+      console.error("[login] refusing root fallback on continue");
+      setFormError(t("loginGenericAuthError"));
+      return;
+    }
     clearPendingOnboardingIntentCookie();
     clearPendingTeacherOnboardingCookie();
-    router.replace(authenticatedDestination);
+    clearOAuthReturnPending();
+    router.replace(destination);
   };
 
   const handleSignOut = async () => {
@@ -79,41 +139,25 @@ function LoginForm() {
       await logout();
       router.replace("/");
     } catch (e) {
-      console.error(e);
-      alert("Déconnexion impossible. Réessaie dans un instant.");
+      console.error("[login] sign out failed", e);
+      alert("Deconnexion impossible. Reessaie dans un instant.");
+    } finally {
       setBusy(false);
     }
   };
 
   return (
     <div className="min-h-[100dvh] bg-[#FAFCFB]">
-      <header
-        style={{
-          position: "sticky",
-          top: 0,
-          left: 0,
-          right: 0,
-          background: "white",
-          zIndex: 50,
-          padding: "0 20px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          height: 56,
-          borderBottom: "0.5px solid #D3D1C7",
-        }}
-      >
-        <Link href="/" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none" }}>
+      <header className="sticky top-0 z-50 flex h-14 items-center justify-between border-b border-[#D3D1C7] bg-white px-4 sm:px-6">
+        <Link href="/" className="flex items-center gap-2">
           <PratiqoLogo variant="full" size="md" />
         </Link>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <LocaleSwitcher />
-        </div>
+        <LocaleSwitcher variant="light" />
       </header>
 
-      <div className="flex flex-col items-center justify-center px-5 py-12">
-        <div className="w-full max-w-md rounded-3xl border border-[var(--p-border-light)] bg-white p-8 sm:p-10 shadow-[0_24px_80px_rgba(15,110,86,0.08)]">
-          <div className="mb-8 flex justify-center">
+      <div className="flex min-h-[calc(100dvh-3.5rem)] flex-col items-center justify-center px-4 py-8 sm:px-5 sm:py-10">
+        <div className="w-full max-w-md rounded-[2rem] border border-[var(--p-border-light)] bg-white p-6 shadow-[0_24px_80px_rgba(15,110,86,0.08)] sm:p-10">
+          <div className="mb-6 flex justify-center sm:mb-7">
             <PratiqoLogo variant="full" size="md" />
           </div>
 
@@ -158,24 +202,36 @@ function LoginForm() {
                 </Link>
               </p>
             </div>
+          ) : !preAuthIntent ? (
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm font-semibold text-[var(--p-text-muted)]">
+              {t("loginRedirectRoleChoice")}
+            </div>
           ) : (
             <>
-              <h1 className="mb-6 text-center text-2xl font-bold text-[var(--p-text)]">
-                {t("loginAccountTitle")}
-              </h1>
+              <div className="mb-5 text-center">
+                <h1 className="text-2xl font-black text-[var(--p-text)] sm:text-[1.65rem]">
+                  {t("loginAccountTitle")}
+                </h1>
+              </div>
 
               {preAuthIntent === "learner" ? (
-                <div className="mb-6 rounded-2xl border border-teal-600/20 bg-teal-500/10 px-4 py-4 text-center">
+                <div className="mb-5 rounded-2xl border border-teal-600/20 bg-teal-500/10 px-4 py-4 text-center">
                   <p className="text-sm font-bold text-teal-800">{t("loginIntentLearnerTitle")}</p>
                   <p className="mt-2 text-sm leading-relaxed text-teal-900/80">{t("loginIntentContinueHint")}</p>
                 </div>
               ) : null}
 
               {preAuthIntent === "teacher" ? (
-                <div className="mb-6 rounded-2xl border border-teal-600/20 bg-teal-500/10 px-4 py-4 text-center">
+                <div className="mb-5 rounded-2xl border border-teal-600/20 bg-teal-500/10 px-4 py-4 text-center">
                   <p className="text-sm font-bold text-teal-800">{t("loginIntentTeacherTitle")}</p>
                   <p className="mt-2 text-sm leading-relaxed text-teal-900/80">{t("loginIntentContinueHint")}</p>
                 </div>
+              ) : null}
+
+              {formError ? (
+                <p className="mb-4 rounded-2xl bg-red-500/10 px-4 py-3 text-center text-sm font-semibold text-red-700">
+                  {formError}
+                </p>
               ) : null}
 
               <label className="mb-4 flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
@@ -183,6 +239,7 @@ function LoginForm() {
                   type="checkbox"
                   checked={legalAccepted}
                   onChange={(e) => setLegalAccepted(e.target.checked)}
+                  data-testid="login-legal-accept"
                   className="mt-1 h-4 w-4 shrink-0 rounded border-slate-300 text-teal-700 focus:ring-2 focus:ring-teal-500"
                 />
                 <span className="text-sm font-semibold leading-snug text-[var(--p-text)]">
@@ -196,7 +253,10 @@ function LoginForm() {
                   {t("footerTerms")}
                 </Link>{" "}
                 {t("loginConsentAnd")}{" "}
-                <Link href="/legal/confidentialite" className="font-semibold text-teal-700 underline underline-offset-2">
+                <Link
+                  href="/legal/confidentialite"
+                  className="font-semibold text-teal-700 underline underline-offset-2"
+                >
                   {t("loginPrivacyPolicy")}
                 </Link>
                 .
@@ -205,15 +265,31 @@ function LoginForm() {
               <button
                 type="button"
                 disabled={!legalAccepted || busy}
-                onClick={() => void handleLogin()}
+                onClick={() => void handleGoogleLogin()}
+                data-testid="login-google-button"
                 className={cn(
-                  "flex h-12 w-full items-center justify-center gap-2 rounded-2xl text-sm font-bold text-white transition-all",
+                  "flex h-12 min-h-12 w-full items-center justify-center gap-2 rounded-2xl text-sm font-bold text-white transition-all",
                   "bg-teal-600 hover:brightness-[0.98] disabled:cursor-not-allowed disabled:opacity-45",
                 )}
               >
-                <LogIn size={18} />
+                <LogIn size={18} aria-hidden />
                 {busy ? t("loginWorking") : t("loginContinueWithGoogle")}
               </button>
+
+              <div className="mt-4 text-center" data-testid="login-change-google">
+                <p className="text-xs font-medium text-[var(--p-text-muted)]">
+                  {t("loginWrongGoogleAccountPrompt")}
+                </p>
+                <button
+                  type="button"
+                  disabled={!legalAccepted || busy}
+                  onClick={() => void handleGoogleLogin({ forceAccountSelection: true })}
+                  data-testid="login-change-google-button"
+                  className="mt-1 text-sm font-bold text-teal-700 underline underline-offset-4 transition hover:text-teal-900 disabled:cursor-not-allowed disabled:opacity-45"
+                >
+                  {t("loginChangeGoogleAccount")}
+                </button>
+              </div>
 
               {preAuthIntent ? (
                 <p className="mt-6 text-center text-sm text-[var(--p-text-muted)]">
@@ -242,7 +318,7 @@ export default function LoginPage() {
     <Suspense
       fallback={
         <div className="flex min-h-[50vh] items-center justify-center text-sm text-[var(--p-text-muted)]">
-          Chargement…
+          Chargement...
         </div>
       }
     >

@@ -1,9 +1,25 @@
 import { getSupabaseClient } from "./supabase";
 import { buildOAuthCallbackUrl, resolveOAuthRedirectOrigin } from "@/lib/auth/oauthCallback";
+import { markOAuthReturnPending } from "@/lib/auth/oauthReturnHandoff";
 import { setPendingOnboardingIntentCookie } from "@/lib/auth/pendingOnboardingIntent";
 import { setPendingTeacherOnboardingCookie } from "@/lib/auth/pendingTeacherIntent";
 import type { PreAuthOnboardingIntent } from "@/lib/auth/preAuthOnboardingIntent";
 import { hasTeacherOnboardingIntent } from "@/lib/auth/teacherOnboardingIntent";
+
+function setPendingIntentCookiesForAuth(
+  redirectPath: string,
+  intent?: PreAuthOnboardingIntent | null,
+  role?: string | null,
+) {
+  if (intent) {
+    setPendingOnboardingIntentCookie(intent);
+    if (intent === "teacher") {
+      setPendingTeacherOnboardingCookie(redirectPath);
+    }
+  } else if (hasTeacherOnboardingIntent(role ?? null, redirectPath)) {
+    setPendingTeacherOnboardingCookie(redirectPath);
+  }
+}
 
 export async function loginWithGoogle(
   redirectPath = "/dashboard",
@@ -26,14 +42,8 @@ export async function loginWithGoogle(
     ref: options?.referralCode,
   });
 
-  if (options?.intent) {
-    setPendingOnboardingIntentCookie(options.intent);
-    if (options.intent === "teacher") {
-      setPendingTeacherOnboardingCookie(redirectPath);
-    }
-  } else if (hasTeacherOnboardingIntent(options?.role ?? null, redirectPath)) {
-    setPendingTeacherOnboardingCookie(redirectPath);
-  }
+  setPendingIntentCookiesForAuth(redirectPath, options?.intent, options?.role);
+  markOAuthReturnPending(options?.intent ?? null);
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",

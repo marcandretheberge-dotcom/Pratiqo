@@ -47,10 +47,11 @@ export function readPendingTeacherNextClient(): string | null {
   return sanitizeRelativeRedirectPath(readCookieValue(PENDING_TEACHER_NEXT_COOKIE));
 }
 
-export function resolveLoginHrefWithPendingTeacherIntent(defaultHref = "/connexion"): string {
+export function resolveLoginHrefWithPendingTeacherIntent(defaultHref = "/login"): string {
   if (!hasPendingTeacherIntentClient()) return defaultHref;
   const next = readPendingTeacherNextClient() ?? "/onboarding/teacher";
-  return buildLoginHrefWithPreAuthIntent("teacher") + (next.includes("?") ? `&next=${encodeURIComponent(next)}` : "");
+  const href = buildLoginHrefWithPreAuthIntent("teacher");
+  return `${href}&next=${encodeURIComponent(next)}`;
 }
 
 type CookieReader = {

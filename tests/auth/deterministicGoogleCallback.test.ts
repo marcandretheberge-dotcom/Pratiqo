@@ -1,11 +1,12 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { resolvePostLoginDestination } from "@/lib/auth/authenticatedLoginDestination";
 import {
   guardAuthRedirectPath,
   resolveOAuthCallbackRedirect,
 } from "@/lib/auth/oauthCallbackRedirect";
-import { resolveOAuthRedirectOriginFromHost } from "@/lib/auth/oauthCallback";
+import { buildOAuthCallbackUrl, resolveOAuthRedirectOriginFromHost } from "@/lib/auth/oauthCallback";
 import { sanitizeRelativeRedirectPath } from "@/lib/auth/redirects";
 import { resolvePostAuthRedirect } from "@/lib/auth/postAuthRedirect";
 
@@ -104,6 +105,175 @@ test("existing teacher with completed onboarding goes to dashboard when no inten
     profile: { teacher_onboarding_complete: true, dashboard: { onboarding_role_confirmed: true } },
   });
   assert.equal(path, "/dashboard");
+});
+
+test("Google OAuth redirect URL for student intent preserves student alias in callback URL", () => {
+  const url = buildOAuthCallbackUrl("https://preview.vercel.app", {
+    intent: "student",
+    next: "/student/choose-companion",
+  });
+  assert.equal(
+    url,
+    "https://preview.vercel.app/auth/callback?intent=student&next=%2Fstudent%2Fchoose-companion",
+  );
+});
+
+test("Google OAuth redirect URL for teacher intent preserves teacher intent in callback URL", () => {
+  const url = buildOAuthCallbackUrl("https://preview.vercel.app", {
+    intent: "teacher",
+    next: "/onboarding/teacher",
+  });
+  assert.equal(
+    url,
+    "https://preview.vercel.app/auth/callback?intent=teacher&next=%2Fonboarding%2Fteacher",
+  );
+});
+
+test("post-login resolver sends new student intent to companion chooser, not landing", () => {
+  const path = resolvePostLoginDestination({
+    profile: {
+      role: "student",
+      companion_chosen: false,
+      dashboard: { onboarding_role_confirmed: true },
+    },
+    preAuthIntent: "learner",
+    oauthNextPath: "/student/choose-companion",
+  });
+  assert.equal(path, "/student/choose-companion");
+  assert.notEqual(path, "/");
+});
+
+test("post-login resolver sends new teacher intent to onboarding, not landing", () => {
+  const path = resolvePostLoginDestination({
+    profile: {
+      role: "teacher",
+      teacher_onboarding_complete: false,
+      dashboard: { onboarding_role_confirmed: true },
+    },
+    preAuthIntent: "teacher",
+    oauthNextPath: "/onboarding/teacher",
+  });
+  assert.equal(path, "/onboarding/teacher");
+  assert.notEqual(path, "/");
+});
+
+test("post-login resolver keeps existing student profiles in student flow, not landing", () => {
+  const path = resolvePostLoginDestination({
+    profile: {
+      role: "student",
+      companion_chosen: true,
+      student_onboarding_consent_completed_at: STUDENT_CONSENT.student_onboarding_consent_completed_at,
+      student_onboarding_consent_version: STUDENT_CONSENT.student_onboarding_consent_version,
+      dashboard: { onboarding_role_confirmed: true },
+    },
+    preAuthIntent: "learner",
+    oauthNextPath: "/student/choose-companion",
+  });
+  assert.equal(path, "/dashboard");
+  assert.notEqual(path, "/");
+});
+
+test("post-login resolver keeps existing teacher profiles in teacher flow, not landing", () => {
+  const path = resolvePostLoginDestination({
+    profile: {
+      role: "teacher",
+      teacher_onboarding_complete: true,
+      dashboard: { onboarding_role_confirmed: true },
+    },
+    preAuthIntent: "teacher",
+    oauthNextPath: "/onboarding/teacher",
+  });
+  assert.equal(path, "/dashboard");
+  assert.notEqual(path, "/");
+});
+
+test("proxy forwards stray OAuth ?code= query params to /auth/callback", () => {
+  const src = read("proxy.ts");
+  assert.match(src, /searchParams\.has\("code"\)/);
+  assert.match(src, /new URL\("\/auth\/callback", req\.url\)/);
+});
+
+test("proxy matcher explicitly includes root for Site URL OAuth fallbacks", () => {
+  const src = read("proxy.ts");
+  assert.match(src, /matcher:\s*\[\s*"\/"/);
+});
+
+test("login page auto-continues authenticated intent sessions instead of landing fallback", () => {
+  const src = read("app/login/page.tsx");
+  assert.match(src, /resolvePostLoginDestination/);
+  assert.match(src, /if \(!preAuthIntent && !nextParam\) return;/);
+  assert.match(src, /refusing root fallback after Google auth handoff/);
+  assert.match(src, /router\.replace\(destination\)/);
+});
+
+test("landing auth gate resumes pending onboarding intent directly when profile is hydrated", () => {
+  const src = read("components/marketing/LandingAuthGate.tsx");
+  assert.match(src, /resolvePostLoginDestination/);
+  assert.match(src, /profileHydrated/);
+  assert.match(src, /window\.location\.assign\(destination\)/);
+});
+
+test("loginWithGoogle marks OAuth return pending in sessionStorage", () => {
+  const src = read("lib/auth.ts");
+  assert.match(src, /markOAuthReturnPending/);
+});
+
+test("landing auth gate forwards stray OAuth ?code= to /auth/callback client-side", () => {
+  const src = read("components/marketing/LandingAuthGate.tsx");
+  assert.match(src, /forwardOAuthCodeToCallback/);
+  assert.match(src, /window\.location\.replace\(`\/auth\/callback\?\$\{params\.toString\(\)\}`\)/);
+});
+
+test("landing auth gate recovers authenticated students from OAuth return marker", () => {
+  const path = resolvePostLoginDestination({
+    profile: {
+      role: "student",
+      companion_chosen: true,
+      ...STUDENT_CONSENT,
+      dashboard: { onboarding_role_confirmed: true },
+    },
+  });
+  assert.equal(path, "/dashboard");
+  assert.notEqual(path, "/");
+});
+
+test("landing auth gate recovers authenticated teachers from OAuth return marker", () => {
+  const path = resolvePostLoginDestination({
+    profile: {
+      role: "teacher",
+      teacher_onboarding_complete: true,
+      dashboard: { onboarding_role_confirmed: true },
+    },
+  });
+  assert.equal(path, "/dashboard");
+  assert.notEqual(path, "/");
+});
+
+test("missing role after OAuth falls back to connexion, not landing", () => {
+  const path = resolvePostLoginDestination({
+    profile: { role: null },
+  });
+  assert.equal(path, "/connexion");
+  assert.notEqual(path, "/");
+});
+
+test("proxy logs OAuth code forwarding without secrets", () => {
+  const src = read("proxy.ts");
+  assert.match(src, /logAuthFlowDecision\("proxy"/);
+  assert.match(src, /oauth-code-forward/);
+});
+
+test("buildOAuthCallbackUrl always targets /auth/callback on the initiating origin", () => {
+  const studentUrl = buildOAuthCallbackUrl("https://preview.vercel.app", {
+    intent: "student",
+    next: "/student/choose-companion",
+  });
+  assert.ok(studentUrl.startsWith("https://preview.vercel.app/auth/callback?"));
+  const teacherUrl = buildOAuthCallbackUrl("https://www.pratiqo.ca", {
+    intent: "teacher",
+    next: "/onboarding/teacher",
+  });
+  assert.ok(teacherUrl.startsWith("https://www.pratiqo.ca/auth/callback?"));
 });
 
 test("preview origin is preserved for OAuth callback URL construction", () => {

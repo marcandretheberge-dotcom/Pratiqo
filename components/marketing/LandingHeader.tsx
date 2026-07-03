@@ -8,14 +8,15 @@ import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 import { useLocale } from "@/lib/locale-context";
 import { YoNavButton } from "@/components/yo/YoNavButton";
 import { resolveLoginHrefWithPendingTeacherIntent } from "@/lib/auth/pendingTeacherIntent";
+import { CONNEXION_PATH } from "@/lib/auth/preAuthOnboardingIntent";
 
 export function LandingHeader() {
   const { t } = useLocale();
-  const [loginHref, setLoginHref] = useState("/connexion");
+  const [loginHref, setLoginHref] = useState(CONNEXION_PATH);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    setLoginHref(resolveLoginHrefWithPendingTeacherIntent("/login"));
+    setLoginHref(resolveLoginHrefWithPendingTeacherIntent(CONNEXION_PATH));
   }, []);
 
   const loginLabel = t("navLogin");
