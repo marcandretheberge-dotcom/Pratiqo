@@ -15,6 +15,7 @@ import {
   hasOAuthReturnPending,
   readOAuthReturnIntent,
   subscribeToOAuthReturn,
+  notifyOAuthReturnChanged,
 } from "@/lib/auth/oauthReturnHandoff";
 import { resolveOAuthRedirectOrigin } from "@/lib/auth/oauthCallback";
 import {
@@ -113,6 +114,16 @@ export function LandingAuthGate({ children }: { children: ReactNode }) {
     const pendingIntent = resolvePendingIntent();
     const shouldRecover = recoveryActive || Boolean(pendingIntent);
 
+    if (!user) {
+      if (shouldRecover) {
+        clearPendingOnboardingIntentCookie();
+        clearPendingTeacherOnboardingCookie();
+        clearOAuthReturnPending();
+        notifyOAuthReturnChanged();
+      }
+      return;
+    }
+
     if (!shouldRecover) return;
 
     if (user && profileHydrated) {
@@ -164,7 +175,7 @@ export function LandingAuthGate({ children }: { children: ReactNode }) {
     }
   }, [user, authLoading, profileHydrated, profile, recoveryActive, oauthReturnPending]);
 
-  if (recoveryActive) {
+  if (recoveryActive && (authLoading || user)) {
     return <AuthHandoffScreen />;
   }
 

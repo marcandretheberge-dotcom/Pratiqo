@@ -69,10 +69,7 @@ function ConnexionInner() {
     if (busy) return;
     setBusy(true);
     try {
-      clearPendingOnboardingIntentCookie();
-      clearPendingTeacherOnboardingCookie();
-      await logout();
-      router.replace("/");
+      await logout({ redirectTo: "/" });
     } catch (e) {
       console.error(e);
       alert("Déconnexion impossible. Réessaie dans un instant.");

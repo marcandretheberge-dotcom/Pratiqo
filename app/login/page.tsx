@@ -134,10 +134,7 @@ function LoginForm() {
     if (busy) return;
     setBusy(true);
     try {
-      clearPendingOnboardingIntentCookie();
-      clearPendingTeacherOnboardingCookie();
-      await logout();
-      router.replace("/");
+      await logout({ redirectTo: "/" });
     } catch (e) {
       console.error("[login] sign out failed", e);
       alert("Deconnexion impossible. Reessaie dans un instant.");

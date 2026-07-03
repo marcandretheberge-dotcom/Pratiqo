@@ -361,12 +361,36 @@ test("landing auth gate shows handoff screen during active pending onboarding in
   const handoff = read("lib/auth/onboardingHandoff.ts");
   assert.match(gate, /useSyncExternalStore/);
   assert.match(gate, /hasActiveOnboardingHandoffClient/);
-  assert.match(gate, /if \(recoveryActive\)[\s\S]*AuthHandoffScreen/);
+  assert.match(gate, /if \(recoveryActive && \(authLoading \|\| user\)\)/);
   assert.match(gate, /hasOAuthReturnPending/);
   assert.match(screen, /authHandoffTitle/);
   assert.match(screen, /authHandoffSubtitle/);
   assert.match(handoff, /readPendingOnboardingIntentClient/);
   assert.match(handoff, /hasPendingTeacherIntentClient/);
+});
+
+test("logout clears auth handoff markers and redirects to connexion", () => {
+  const src = read("lib/auth.ts");
+  assert.match(src, /clearPendingOnboardingIntentCookie/);
+  assert.match(src, /clearPendingTeacherOnboardingCookie/);
+  assert.match(src, /clearOAuthReturnPending/);
+  assert.match(src, /window\.location\.assign\(options\?\.redirectTo \?\? CONNEXION_PATH\)/);
+});
+
+test("landing auth gate clears stale handoff markers when logged out", () => {
+  const gate = read("components/marketing/LandingAuthGate.tsx");
+  assert.match(gate, /if \(!user\) \{[\s\S]*clearPendingOnboardingIntentCookie/);
+  assert.match(gate, /clearOAuthReturnPending/);
+});
+
+test("connexion home link is a plain root link without next param", () => {
+  const src = read("app/connexion/page.tsx");
+  assert.match(src, /<Link href="\/" className="font-semibold text-teal-700 hover:underline">/);
+  assert.match(src, /loginReturnHome/);
+  assert.doesNotMatch(src, /loginReturnHome[\s\S]*searchParams\.get\("next"\)/);
+  assert.match(src, /continueWithIntent\("learner"\)/);
+  assert.match(src, /continueWithIntent\("teacher"\)/);
+  assert.match(src, /buildLoginHrefFromConnexion/);
 });
 
 test("login page no longer hides existing sessions behind auth handoff", () => {
