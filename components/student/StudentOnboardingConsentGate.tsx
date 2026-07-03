@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { getSupabaseClient } from "@/lib/supabase";
 import { getClientAccessToken } from "@/lib/auth/clientAccessToken";
+import { isProductionApexHost, resolveOAuthRedirectOrigin } from "@/lib/auth/oauthCallback";
+import { getSupabaseClient } from "@/lib/supabase";
 import { useAuth } from "@/components/AuthProvider";
 import { useLocale } from "@/lib/locale-context";
 import type { CompanionType } from "@/lib/companions";
@@ -36,6 +37,13 @@ export function StudentOnboardingConsentGate({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!isProductionApexHost(window.location.hostname)) return;
+    const canonicalOrigin = resolveOAuthRedirectOrigin();
+    window.location.replace(`${canonicalOrigin}${window.location.pathname}${window.location.search}`);
+  }, []);
+
   const blockedUnder14 = actorType === "under_14";
   const canSubmit = useMemo(
     () =>
@@ -61,10 +69,11 @@ export function StudentOnboardingConsentGate({
         headers.Authorization = `Bearer ${accessToken}`;
       }
 
-      const res = await fetch("/api/student/onboarding-consent", {
+      const apiOrigin = resolveOAuthRedirectOrigin();
+      const res = await fetch(`${apiOrigin}/api/student/onboarding-consent`, {
         method: "POST",
         headers,
-        credentials: "same-origin",
+        credentials: "include",
         body: JSON.stringify({
           actorType,
           acceptedTerms,

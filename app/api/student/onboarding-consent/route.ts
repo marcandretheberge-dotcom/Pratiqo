@@ -120,10 +120,6 @@ async function readStudentProfile(
 }
 
 export async function POST(request: Request) {
-  const rl = await rateLimitByIp(request, "student-onboarding-consent", { limit: 20, windowSeconds: 60 });
-  const rateLimited = rateLimitGuardResponse(rl);
-  if (rateLimited) return rateLimited;
-
   const supabaseUser = await getSupabaseForRequest(request);
   if (!supabaseUser) {
     return NextResponse.json({ error: "missing_supabase_env" }, { status: 500 });
@@ -136,6 +132,20 @@ export async function POST(request: Request) {
 
   if (authError || !user) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+
+  const rl = await rateLimitByIp(request, "student-onboarding-consent", {
+    limit: 20,
+    windowSeconds: 60,
+    identifier: user.id,
+  });
+  const rateLimited = rateLimitGuardResponse(rl);
+  if (rateLimited) {
+    if (rl.infrastructureUnavailable) {
+      console.error("[student/onboarding-consent] rate limit unavailable — allowing authenticated consent save");
+    } else {
+      return rateLimited;
+    }
   }
 
   const body = (await request.json().catch(() => ({}))) as ConsentBody;
@@ -250,13 +260,32 @@ export async function POST(request: Request) {
     .select("id, role, companion_type, companion_chosen, dashboard, student_onboarding_consent_completed_at, student_onboarding_consent_version")
     .maybeSingle();
 
-  if (profileErr || !profile) {
-    logConsentStorageFailure("profile_update", profileErr ?? new Error("Profile update returned no row."));
-    if (isMissingSchemaError(profileErr as SupabaseLikeError)) {
-      return consentSchemaNotReady("profile_update");
-    }
+  if (!profileErr && profile) {
+    return NextResponse.json({ ok: true, profile });
+  }
+
+  if (profileErr && !isMissingSchemaError(profileErr as SupabaseLikeError)) {
+    logConsentStorageFailure("profile_update", profileErr);
     return consentSaveFailed("profile_update");
   }
 
-  return NextResponse.json({ ok: true, profile });
+  const profileUpsert = { id: user.id, ...profilePatch };
+  const { data: upsertedProfile, error: upsertErr } = await admin
+    .from("profiles")
+    .upsert(profileUpsert, { onConflict: "id" })
+    .select("id, role, companion_type, companion_chosen, dashboard, student_onboarding_consent_completed_at, student_onboarding_consent_version")
+    .maybeSingle();
+
+  if (upsertErr || !upsertedProfile) {
+    logConsentStorageFailure(
+      "profile_upsert",
+      upsertErr ?? new Error("Profile upsert returned no row after update miss."),
+    );
+    if (isMissingSchemaError(upsertErr as SupabaseLikeError)) {
+      return consentSchemaNotReady("profile_upsert");
+    }
+    return consentSaveFailed("profile_upsert");
+  }
+
+  return NextResponse.json({ ok: true, profile: upsertedProfile });
 }
