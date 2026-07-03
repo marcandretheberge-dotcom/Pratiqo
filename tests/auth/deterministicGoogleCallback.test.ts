@@ -213,6 +213,69 @@ test("landing auth gate resumes pending onboarding intent directly when profile 
   assert.match(src, /window\.location\.assign\(destination\)/);
 });
 
+test("loginWithGoogle marks OAuth return pending in sessionStorage", () => {
+  const src = read("lib/auth.ts");
+  assert.match(src, /markOAuthReturnPending/);
+});
+
+test("landing auth gate forwards stray OAuth ?code= to /auth/callback client-side", () => {
+  const src = read("components/marketing/LandingAuthGate.tsx");
+  assert.match(src, /forwardOAuthCodeToCallback/);
+  assert.match(src, /window\.location\.replace\(`\/auth\/callback\?\$\{params\.toString\(\)\}`\)/);
+});
+
+test("landing auth gate recovers authenticated students from OAuth return marker", () => {
+  const path = resolvePostLoginDestination({
+    profile: {
+      role: "student",
+      companion_chosen: true,
+      ...STUDENT_CONSENT,
+      dashboard: { onboarding_role_confirmed: true },
+    },
+  });
+  assert.equal(path, "/dashboard");
+  assert.notEqual(path, "/");
+});
+
+test("landing auth gate recovers authenticated teachers from OAuth return marker", () => {
+  const path = resolvePostLoginDestination({
+    profile: {
+      role: "teacher",
+      teacher_onboarding_complete: true,
+      dashboard: { onboarding_role_confirmed: true },
+    },
+  });
+  assert.equal(path, "/dashboard");
+  assert.notEqual(path, "/");
+});
+
+test("missing role after OAuth falls back to connexion, not landing", () => {
+  const path = resolvePostLoginDestination({
+    profile: { role: null },
+  });
+  assert.equal(path, "/connexion");
+  assert.notEqual(path, "/");
+});
+
+test("proxy logs OAuth code forwarding without secrets", () => {
+  const src = read("proxy.ts");
+  assert.match(src, /logAuthFlowDecision\("proxy"/);
+  assert.match(src, /oauth-code-forward/);
+});
+
+test("buildOAuthCallbackUrl always targets /auth/callback on the initiating origin", () => {
+  const studentUrl = buildOAuthCallbackUrl("https://preview.vercel.app", {
+    intent: "student",
+    next: "/student/choose-companion",
+  });
+  assert.ok(studentUrl.startsWith("https://preview.vercel.app/auth/callback?"));
+  const teacherUrl = buildOAuthCallbackUrl("https://www.pratiqo.ca", {
+    intent: "teacher",
+    next: "/onboarding/teacher",
+  });
+  assert.ok(teacherUrl.startsWith("https://www.pratiqo.ca/auth/callback?"));
+});
+
 test("preview origin is preserved for OAuth callback URL construction", () => {
   const origin = resolveOAuthRedirectOriginFromHost(
     "pratiqo-git-fix-auth.vercel.app",

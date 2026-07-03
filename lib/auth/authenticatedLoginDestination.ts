@@ -1,3 +1,4 @@
+import { CONNEXION_PATH } from "@/lib/auth/preAuthOnboardingIntent";
 import { guardAuthRedirectPath } from "@/lib/auth/oauthCallbackRedirect";
 import { resolvePostAuthRedirect, type ProfileRole } from "@/lib/auth/postAuthRedirect";
 import {
@@ -97,7 +98,7 @@ export function resolvePostLoginDestination(input: {
   }
 
   if (!role) {
-    return guardAuthRedirectPath(safeNext ?? "/dashboard", input.preAuthIntent ?? null);
+    return guardAuthRedirectPath(safeNext ?? CONNEXION_PATH, input.preAuthIntent ?? null);
   }
 
   const path = resolvePostAuthRedirect(role, profileSnapshot, safeNext);

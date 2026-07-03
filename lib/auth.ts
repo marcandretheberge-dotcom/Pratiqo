@@ -1,5 +1,6 @@
 import { getSupabaseClient } from "./supabase";
 import { buildOAuthCallbackUrl, resolveOAuthRedirectOrigin } from "@/lib/auth/oauthCallback";
+import { markOAuthReturnPending } from "@/lib/auth/oauthReturnHandoff";
 import { setPendingOnboardingIntentCookie } from "@/lib/auth/pendingOnboardingIntent";
 import { setPendingTeacherOnboardingCookie } from "@/lib/auth/pendingTeacherIntent";
 import type { PreAuthOnboardingIntent } from "@/lib/auth/preAuthOnboardingIntent";
@@ -42,6 +43,7 @@ export async function loginWithGoogle(
   });
 
   setPendingIntentCookiesForAuth(redirectPath, options?.intent, options?.role);
+  markOAuthReturnPending(options?.intent ?? null);
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",

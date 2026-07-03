@@ -351,7 +351,7 @@ test("landing auth gate keeps public homepage accessible when authenticated", ()
   const src = read("components/marketing/LandingAuthGate.tsx");
   assert.doesNotMatch(src, /resolvePostAuthRedirect/);
   assert.doesNotMatch(src, /if \(!authLoading && user\) return null/);
-  assert.match(src, /handoffActive/);
+  assert.match(src, /recoveryActive/);
   assert.match(src, /return <>\{children\}<\/>/);
 });
 
@@ -361,7 +361,8 @@ test("landing auth gate shows handoff screen during active pending onboarding in
   const handoff = read("lib/auth/onboardingHandoff.ts");
   assert.match(gate, /useSyncExternalStore/);
   assert.match(gate, /hasActiveOnboardingHandoffClient/);
-  assert.match(gate, /if \(handoffActive\)[\s\S]*AuthHandoffScreen/);
+  assert.match(gate, /if \(recoveryActive\)[\s\S]*AuthHandoffScreen/);
+  assert.match(gate, /hasOAuthReturnPending/);
   assert.match(screen, /authHandoffTitle/);
   assert.match(screen, /authHandoffSubtitle/);
   assert.match(handoff, /readPendingOnboardingIntentClient/);
@@ -378,6 +379,7 @@ test("login page no longer hides existing sessions behind auth handoff", () => {
 test("landing auth gate resumes pending onboarding intent for authenticated users", () => {
   const src = read("components/marketing/LandingAuthGate.tsx");
   assert.match(src, /readPendingOnboardingIntentClient/);
+  assert.match(src, /readOAuthReturnIntent/);
   assert.match(src, /resolvePostLoginDestination/);
 });
 

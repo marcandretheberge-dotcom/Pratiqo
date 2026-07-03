@@ -22,6 +22,7 @@ import {
   resolveLoginOAuthNextPath,
   resolvePreAuthIntent,
 } from "../../lib/auth/preAuthOnboardingIntent";
+import { clearOAuthReturnPending } from "../../lib/auth/oauthReturnHandoff";
 import { useLocale } from "../../lib/locale-context";
 import { cn } from "../../lib/utils";
 
@@ -70,6 +71,7 @@ function LoginForm() {
 
     clearPendingOnboardingIntentCookie();
     clearPendingTeacherOnboardingCookie();
+    clearOAuthReturnPending();
     router.replace(destination);
   }, [
     loading,
@@ -124,6 +126,7 @@ function LoginForm() {
     }
     clearPendingOnboardingIntentCookie();
     clearPendingTeacherOnboardingCookie();
+    clearOAuthReturnPending();
     router.replace(destination);
   };
 

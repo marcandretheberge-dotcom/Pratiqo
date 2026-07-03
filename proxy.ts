@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { logAuthFlowDecision } from "@/lib/auth/authFlowDiagnostics";
 import { buildLoginHrefForProtectedReturn } from "@/lib/auth/preAuthOnboardingIntent";
 
 const LOGIN_PATH = "/login";
@@ -59,6 +60,14 @@ export function proxy(req: NextRequest) {
     const callbackUrl = new URL("/auth/callback", req.url);
     req.nextUrl.searchParams.forEach((value, key) => {
       callbackUrl.searchParams.set(key, value);
+    });
+    logAuthFlowDecision("proxy", {
+      stage: "oauth-code-forward",
+      path: pathname,
+      hasCode: true,
+      intent: req.nextUrl.searchParams.get("intent") ?? "none",
+      next: req.nextUrl.searchParams.get("next") ?? "none",
+      redirect: callbackUrl.pathname + callbackUrl.search,
     });
     return NextResponse.redirect(callbackUrl);
   }

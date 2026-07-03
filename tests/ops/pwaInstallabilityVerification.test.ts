@@ -190,6 +190,7 @@ const allowed = new Set([
   "tests/auth/emailPasswordAuth.test.ts",
   "lib/auth/authenticatedLoginDestination.ts",
   "lib/auth/oauthCallback.ts",
+  "lib/auth/oauthReturnHandoff.ts",
   "proxy.ts",
   "components/marketing/LandingAuthGate.tsx",
   "components/marketing/LandingHeader.tsx",
