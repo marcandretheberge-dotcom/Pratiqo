@@ -760,6 +760,7 @@
   "loginAlreadyConnectedTitle": "Ya has iniciado sesión.",
   "loginAuthErrorSession": "No se pudo completar el inicio de sesión con Google. Vuelve a intentarlo con el botón de abajo.",
   "loginChangePath": "Cambiar recorrido",
+  "loginRedirectRoleChoice": "Redirigiendo a la elección aprendiz / profesor…",
   "loginChangePathHelper": "Volver a elegir aprendiz / profesor.",
   "loginChangeGoogleAccount": "Cambiar cuenta de Google",
   "loginContinueWithGoogle": "Continuar con Google",

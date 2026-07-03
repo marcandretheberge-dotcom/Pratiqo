@@ -760,6 +760,7 @@
   "loginAlreadyConnectedTitle": "Tu es déjà connecté.",
   "loginAuthErrorSession": "La connexion Google n'a pas pu être finalisée. Réessaie avec le bouton ci-dessous.",
   "loginChangePath": "Changer de parcours",
+  "loginRedirectRoleChoice": "Redirection vers le choix Élève / Professeur…",
   "loginChangePathHelper": "Retourner au choix Élève / Professeur.",
   "loginChangeGoogleAccount": "Changer de compte Google",
   "loginContinueWithGoogle": "Continuer avec Google",

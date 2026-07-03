@@ -37,10 +37,10 @@ function read(rel: string): string {
   return readFileSync(join(process.cwd(), rel), "utf8");
 }
 
-test("generic Se connecter routes logged-out users to Google-only login", () => {
+test("generic Se connecter routes logged-out users to role-choice connexion", () => {
   const header = read("components/marketing/LandingHeader.tsx");
-  assert.match(header, /useState\("\/login"\)/);
-  assert.match(header, /resolveLoginHrefWithPendingTeacherIntent\("\/login"\)/);
+  assert.match(header, /useState\(CONNEXION_PATH\)/);
+  assert.match(header, /resolveLoginHrefWithPendingTeacherIntent\(CONNEXION_PATH\)/);
   const shell = read("components/AuthenticatedShell.tsx");
   assert.match(shell, /buildLoginHrefForProtectedReturn/);
 });
@@ -255,18 +255,18 @@ test("auth callback clears pending cookies after final redirect is chosen", () =
   );
 });
 
-test("login page can render Google-only auth without pre-auth intent", () => {
+test("login page redirects missing intent to connexion instead of defaulting learner", () => {
   const src = read("app/login/page.tsx");
   assert.match(src, /CONNEXION_PATH/);
   assert.match(src, /resolvePreAuthIntent/);
   assert.match(src, /loginWithGoogle/);
   assert.doesNotMatch(src, /signInWithEmailPassword/);
   assert.doesNotMatch(src, /signUpWithEmailPassword/);
-  assert.match(src, /const loginIntent: PreAuthOnboardingIntent = preAuthIntent \?\? "learner"/);
+  assert.doesNotMatch(src, /preAuthIntent \?\? "learner"/);
+  assert.doesNotMatch(src, /loginIntent.*learner/);
+  assert.match(src, /router\.replace\(qs \? `\$\{CONNEXION_PATH\}/);
   assert.match(src, /setPendingOnboardingIntentCookie/);
-  assert.doesNotMatch(src, /if \(!preAuthIntent && !user\)/);
-  assert.doesNotMatch(src, /router\.replace\(qs \? `\$\{CONNEXION_PATH\}/);
-  assert.match(src, /preAuthIntent \? \(/);
+  assert.match(src, /!preAuthIntent \?/);
 });
 
 test("auth callback applies pre-auth intent patch and clears pending cookies on direct redirects", () => {

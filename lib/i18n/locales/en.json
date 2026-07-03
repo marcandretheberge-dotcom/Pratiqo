@@ -760,6 +760,7 @@
   "loginAlreadyConnectedTitle": "You are already logged in.",
   "loginAuthErrorSession": "Google sign-in could not be completed. Please try again with the button below.",
   "loginChangePath": "Change path",
+  "loginRedirectRoleChoice": "Redirecting to the learner / teacher choice…",
   "loginChangePathHelper": "Return to the learner / teacher choice.",
   "loginChangeGoogleAccount": "Change Google account",
   "loginContinueWithGoogle": "Continue with Google",

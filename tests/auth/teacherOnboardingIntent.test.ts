@@ -113,13 +113,13 @@ test("become-teacher CTAs use shared teacher signup login href builder", () => {
   assert.doesNotMatch(src, /href="\/login\?role=teacher"/);
 });
 
-test("login page defaults generic Google OAuth to learner while preserving explicit intent", () => {
+test("login page requires explicit intent before Google OAuth", () => {
   const src = read("app/login/page.tsx");
   assert.match(src, /resolvePreAuthIntent/);
-  assert.match(src, /const loginIntent: PreAuthOnboardingIntent = preAuthIntent \?\? "learner"/);
   assert.match(src, /loginWithGoogle\(oauthNext, \{/);
-  assert.match(src, /intent:\s*loginIntent/);
-  assert.match(src, /intentQuery:\s*intentParam === "student" \? "student" : loginIntent/);
+  assert.match(src, /intent:\s*preAuthIntent/);
+  assert.match(src, /intentQuery:\s*intentParam === "student" \? "student" : preAuthIntent/);
+  assert.match(src, /if \(!preAuthIntent \|\| !legalAccepted \|\| busy \|\| !oauthNext\) return/);
   assert.doesNotMatch(src, /body: JSON\.stringify\(\{ role: "teacher" \}\)/);
 });
 

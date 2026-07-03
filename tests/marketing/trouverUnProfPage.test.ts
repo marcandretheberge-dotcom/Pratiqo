@@ -166,8 +166,8 @@ test("LandingHeader (used by this page) ships the modern Pratiqo logo + locale +
     "LandingHeader must link to /ressources (Ressources)",
   );
   assert.ok(
-    /\/login/.test(headerSrc),
-    "LandingHeader must link to /login (Se connecter)",
+    /CONNEXION_PATH/.test(headerSrc),
+    "LandingHeader must link via CONNEXION_PATH (/connexion) for Se connecter",
   );
   for (const key of ["navPricing", "navResources", "becomeTeacher", "navLogin"]) {
     assert.ok(

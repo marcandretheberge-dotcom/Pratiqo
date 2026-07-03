@@ -120,6 +120,19 @@ test("login page still shows a localized error banner for auth_error redirects, 
   assert.match(page, /t\("loginAuthErrorSession"\)/);
 });
 
+test("login page redirects to connexion when intent is missing", () => {
+  const page = read("app/login/page.tsx");
+  assert.match(page, /router\.replace\(qs \? `\$\{CONNEXION_PATH\}/);
+  assert.doesNotMatch(page, /preAuthIntent \?\? "learner"/);
+  assert.match(page, /loginRedirectRoleChoice/);
+});
+
+test("landing header generic login href defaults to connexion", () => {
+  const header = read("components/marketing/LandingHeader.tsx");
+  assert.match(header, /useState\(CONNEXION_PATH\)/);
+  assert.match(header, /resolveLoginHrefWithPendingTeacherIntent\(CONNEXION_PATH\)/);
+});
+
 async function run() {
   for (const { name, fn } of tests) {
     await fn();

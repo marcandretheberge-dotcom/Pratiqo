@@ -237,7 +237,7 @@ test("login page forwards sanitized `next` (not hard-coded /dashboard) into Goog
   );
   assert.match(
     source,
-    /intent:\s*loginIntent/,
+    /intent:\s*preAuthIntent/,
     "login must pass the resolved public intent into loginWithGoogle",
   );
   assert.doesNotMatch(

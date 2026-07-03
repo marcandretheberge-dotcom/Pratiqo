@@ -21,7 +21,6 @@ import {
   CONNEXION_PATH,
   resolveLoginOAuthNextPath,
   resolvePreAuthIntent,
-  type PreAuthOnboardingIntent,
 } from "../../lib/auth/preAuthOnboardingIntent";
 import { useLocale } from "../../lib/locale-context";
 import { cn } from "../../lib/utils";
@@ -41,8 +40,18 @@ function LoginForm() {
   const refCode = searchParams.get("ref") ?? undefined;
   const authError = searchParams.get("auth_error");
   const preAuthIntent = resolvePreAuthIntent(intentParam, roleParam, nextParam);
-  const loginIntent: PreAuthOnboardingIntent = preAuthIntent ?? "learner";
-  const oauthNext = resolveLoginOAuthNextPath(roleParam, nextParam, intentParam ?? loginIntent);
+  const oauthNext = preAuthIntent
+    ? resolveLoginOAuthNextPath(roleParam, nextParam, intentParam ?? preAuthIntent)
+    : null;
+
+  useEffect(() => {
+    if (loading || user || authError || preAuthIntent) return;
+    const params = new URLSearchParams();
+    if (nextParam) params.set("next", nextParam);
+    if (refCode) params.set("ref", refCode);
+    const qs = params.toString();
+    router.replace(qs ? `${CONNEXION_PATH}?${qs}` : CONNEXION_PATH);
+  }, [loading, user, authError, preAuthIntent, nextParam, refCode, router]);
 
   useEffect(() => {
     if (loading || !user || !profileHydrated || authError) return;
@@ -75,7 +84,7 @@ function LoginForm() {
   ]);
 
   useEffect(() => {
-    if (loading || user || !preAuthIntent) return;
+    if (loading || user || !preAuthIntent || !oauthNext) return;
     setPendingOnboardingIntentCookie(preAuthIntent);
     if (preAuthIntent === "teacher") {
       setPendingTeacherOnboardingCookie(oauthNext);
@@ -83,13 +92,13 @@ function LoginForm() {
   }, [loading, user, preAuthIntent, oauthNext]);
 
   const handleGoogleLogin = async (options?: { forceAccountSelection?: boolean }) => {
-    if (!legalAccepted || busy) return;
+    if (!preAuthIntent || !legalAccepted || busy || !oauthNext) return;
     setBusy(true);
     setFormError(null);
     try {
       await loginWithGoogle(oauthNext, {
-        intent: loginIntent,
-        intentQuery: intentParam === "student" ? "student" : loginIntent,
+        intent: preAuthIntent,
+        intentQuery: intentParam === "student" ? "student" : preAuthIntent,
         referralCode: refCode,
         forceAccountSelection: options?.forceAccountSelection === true,
       });
@@ -189,6 +198,10 @@ function LoginForm() {
                   ← {t("loginReturnHome")}
                 </Link>
               </p>
+            </div>
+          ) : !preAuthIntent ? (
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm font-semibold text-[var(--p-text-muted)]">
+              {t("loginRedirectRoleChoice")}
             </div>
           ) : (
             <>

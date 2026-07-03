@@ -92,8 +92,8 @@ test("login page renders Google login plus explicit account switching", () => {
   assert.match(page, /onClick=\{\(\) => void handleGoogleLogin\(\{ forceAccountSelection: true \}\)\}/);
   assert.match(page, /onClick=\{\(\) => void handleGoogleLogin\(\)\}/);
   assert.match(page, /forceAccountSelection:\s*options\?\.forceAccountSelection === true/);
-  assert.match(page, /intent:\s*loginIntent/);
-  assert.match(page, /intentQuery:\s*intentParam === "student" \? "student" : loginIntent/);
+  assert.match(page, /intent:\s*preAuthIntent/);
+  assert.match(page, /intentQuery:\s*intentParam === "student" \? "student" : preAuthIntent/);
   assert.match(page, /referralCode:\s*refCode/);
   assert.match(page, /disabled=\{!legalAccepted \|\| busy\}/);
 });
@@ -128,7 +128,7 @@ test("auth callback does not silently succeed when session exchange fails", () =
 test("landing header preserves pending teacher intent for generic Se connecter", () => {
   const src = read("components/marketing/LandingHeader.tsx");
   assert.match(src, /resolveLoginHrefWithPendingTeacherIntent/);
-  assert.match(src, /useState\("\/login"\)/);
+  assert.match(src, /useState\(CONNEXION_PATH\)/);
 });
 
 test("landing auth gate resumes pending onboarding intent for authenticated users", () => {
