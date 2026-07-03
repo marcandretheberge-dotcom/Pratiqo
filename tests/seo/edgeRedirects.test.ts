@@ -158,9 +158,10 @@ test("vercel.json apex redirect preserves path segments and query strings via $1
   assert.match(redirect!.source ?? "", /\(\.\*\)/, "vercel.json must match arbitrary paths on apex");
 });
 
-test("proxy.ts does not canonicalize hosts to production www", () => {
-  assert.doesNotMatch(proxySrc, /www\.pratiqo\.ca/);
-  assert.doesNotMatch(proxySrc, /pratiqo\.ca/);
+test("proxy.ts canonicalizes production apex to www before auth routing", () => {
+  assert.match(proxySrc, /isProductionApexHost/);
+  assert.match(proxySrc, /apex-canonicalize/);
+  assert.match(proxySrc, /NextResponse\.redirect\(canonicalUrl, 308\)/);
 });
 
 test("next.config.ts apex redirect is host-scoped to pratiqo.ca only (www and preview stay untouched)", () => {

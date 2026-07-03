@@ -325,9 +325,9 @@ test("no Access-Control-Allow-Origin: \\* is configured anywhere", () => {
 test("auth/callback redirects always use resolveOAuthCallbackRedirect", () => {
   const src = readRepoFile("app/auth/callback/route.ts");
   assert.match(src, /resolveOAuthCallbackRedirect\(/);
-  // Final redirect must anchor on requestUrl.origin (defense against
-  // sanitizer escapes returning an absolute URL).
-  assert.match(src, /NextResponse\.redirect\(new URL\([^,]+, requestUrl\.origin\)\)/);
+  // Final redirect anchors on the canonical origin (www in production), not raw apex host.
+  assert.match(src, /NextResponse\.redirect\(new URL\([^,]+, canonicalOrigin\)\)/);
+  assert.match(src, /resolveRequestCanonicalOrigin/);
 });
 
 test("login page sanitizes next param before forwarding to Google OAuth", () => {

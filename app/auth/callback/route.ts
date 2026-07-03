@@ -9,7 +9,7 @@ import {
   parseAdminLoginEmails,
   resolveProfileRoleOnAuth,
 } from "@/lib/auth/admin";
-import { buildLoginUrlWithAuthError } from "@/lib/auth/oauthCallback";
+import { buildLoginUrlWithAuthError, resolveRequestCanonicalOrigin } from "@/lib/auth/oauthCallback";
 import {
   pendingOnboardingIntentClearCookieHeaders,
   readPendingOnboardingIntentFromCookies,
@@ -54,6 +54,7 @@ async function trySendStudentWelcomeOnce(
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
+  const canonicalOrigin = resolveRequestCanonicalOrigin(requestUrl);
   const code = requestUrl.searchParams.get("code");
   const cookieStore = await cookies();
   const callbackState = resolveAuthCallbackParams(requestUrl, cookieStore);
@@ -62,7 +63,9 @@ export async function GET(request: Request) {
 
   logAuthFlowDecision("callback", {
     stage: "ingress",
+    host: requestUrl.hostname,
     origin: requestUrl.origin,
+    canonicalOrigin,
     intent: intent ?? "none",
     next,
     pendingIntentCookie: pendingIntentCookie ?? "none",
@@ -70,7 +73,7 @@ export async function GET(request: Request) {
   });
 
   if (!code) {
-    const loginUrl = buildLoginUrlWithAuthError(requestUrl.origin, {
+    const loginUrl = buildLoginUrlWithAuthError(canonicalOrigin, {
       authError: "missing_code",
       intent,
       next: intent ? next : null,
@@ -81,7 +84,7 @@ export async function GET(request: Request) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !anonKey) {
-    const loginUrl = buildLoginUrlWithAuthError(requestUrl.origin, {
+    const loginUrl = buildLoginUrlWithAuthError(canonicalOrigin, {
       authError: "config",
       intent,
       next: intent ? next : null,
@@ -105,8 +108,16 @@ export async function GET(request: Request) {
 
   const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
   if (exchangeError) {
-    console.error("[auth/callback] exchangeCodeForSession failed:", exchangeError.message);
-    const loginUrl = buildLoginUrlWithAuthError(requestUrl.origin, {
+    console.error("[auth/callback] exchangeCodeForSession failed", {
+      stage: "exchange",
+      host: requestUrl.hostname,
+      pathname: requestUrl.pathname,
+      hasCode: true,
+      hasSession: false,
+      message: exchangeError.message,
+      code: "code" in exchangeError ? String(exchangeError.code) : "unknown",
+    });
+    const loginUrl = buildLoginUrlWithAuthError(canonicalOrigin, {
       authError: "session",
       intent,
       next: intent ? next : null,
@@ -119,8 +130,14 @@ export async function GET(request: Request) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    console.error("[auth/callback] exchange succeeded but no user session");
-    const loginUrl = buildLoginUrlWithAuthError(requestUrl.origin, {
+    console.error("[auth/callback] exchange succeeded but no user session", {
+      stage: "session-missing",
+      host: requestUrl.hostname,
+      pathname: requestUrl.pathname,
+      hasCode: true,
+      hasSession: false,
+    });
+    const loginUrl = buildLoginUrlWithAuthError(canonicalOrigin, {
       authError: "session",
       intent,
       next: intent ? next : null,
@@ -223,7 +240,7 @@ export async function GET(request: Request) {
       profileRole: redirectRole,
       pendingIntentCookie: pendingIntentCookie ?? "none",
     });
-    const response = NextResponse.redirect(new URL(redirectPath, requestUrl.origin));
+    const response = NextResponse.redirect(new URL(redirectPath, canonicalOrigin));
     return applyCookies(response, [...authCookies, ...pendingOnboardingIntentClearCookieHeaders()]);
   }
 
@@ -309,6 +326,6 @@ export async function GET(request: Request) {
       (profileForRedirect.dashboard as Record<string, unknown>).onboarding_role_confirmed === true,
   });
 
-  const response = NextResponse.redirect(new URL(redirectPath, requestUrl.origin));
+  const response = NextResponse.redirect(new URL(redirectPath, canonicalOrigin));
   return applyCookies(response, [...authCookies, ...pendingOnboardingIntentClearCookieHeaders()]);
 }
