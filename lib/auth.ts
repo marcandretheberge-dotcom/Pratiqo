@@ -1,9 +1,10 @@
 import { getSupabaseClient } from "./supabase";
 import { buildOAuthCallbackUrl, resolveOAuthRedirectOrigin } from "@/lib/auth/oauthCallback";
-import { markOAuthReturnPending } from "@/lib/auth/oauthReturnHandoff";
-import { setPendingOnboardingIntentCookie } from "@/lib/auth/pendingOnboardingIntent";
-import { setPendingTeacherOnboardingCookie } from "@/lib/auth/pendingTeacherIntent";
+import { markOAuthReturnPending, clearOAuthReturnPending, notifyOAuthReturnChanged } from "@/lib/auth/oauthReturnHandoff";
+import { setPendingOnboardingIntentCookie, clearPendingOnboardingIntentCookie } from "@/lib/auth/pendingOnboardingIntent";
+import { setPendingTeacherOnboardingCookie, clearPendingTeacherOnboardingCookie } from "@/lib/auth/pendingTeacherIntent";
 import type { PreAuthOnboardingIntent } from "@/lib/auth/preAuthOnboardingIntent";
+import { CONNEXION_PATH } from "@/lib/auth/preAuthOnboardingIntent";
 import { hasTeacherOnboardingIntent } from "@/lib/auth/teacherOnboardingIntent";
 
 function setPendingIntentCookiesForAuth(
@@ -63,11 +64,20 @@ export async function loginWithGoogle(
   window.location.assign(data.url);
 }
 
-export async function logout() {
+export async function logout(options?: { redirectTo?: string }) {
+  clearPendingOnboardingIntentCookie();
+  clearPendingTeacherOnboardingCookie();
+  clearOAuthReturnPending();
+  notifyOAuthReturnChanged();
+
   const supabase = getSupabaseClient();
   const { error } = await supabase.auth.signOut();
   if (error) {
     console.error("Logout failed", error);
     throw error;
+  }
+
+  if (typeof window !== "undefined") {
+    window.location.assign(options?.redirectTo ?? CONNEXION_PATH);
   }
 }
