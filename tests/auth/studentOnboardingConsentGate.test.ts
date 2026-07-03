@@ -81,8 +81,11 @@ test("consent component blocks under-14 self-declaration and requires all checks
   const component = read("components/student/StudentOnboardingConsentGate.tsx");
   assert.match(component, /getClientAccessToken/);
   assert.match(component, /credentials: "include"/);
-  assert.match(component, /resolveOAuthRedirectOrigin/);
+  assert.match(component, /fetch\("\/api\/student\/onboarding-consent"/);
   assert.match(component, /isProductionApexHost/);
+  assert.match(component, /resolveOAuthRedirectOrigin/);
+  assert.doesNotMatch(component, /fetch\(`\$\{resolveOAuthRedirectOrigin\(\)\}\/api\/student\/onboarding-consent`/);
+  assert.doesNotMatch(component, /fetch\(`\$\{apiOrigin\}\/api\/student\/onboarding-consent`/);
   assert.match(component, /"under_14"/);
   assert.match(component, /blockedUnder14/);
   assert.match(component, /studentConsentUnder14Blocked/);
@@ -167,6 +170,13 @@ test("consent API accepts cookie sessions when bearer token is absent", () => {
   const helper = read("lib/auth/supabaseRouteClient.ts");
   assert.match(helper, /createServerClient/);
   assert.match(helper, /Authorization: `Bearer \$\{token\}`/);
+});
+
+test("consent component logs API stage and status on server failure", () => {
+  const component = read("components/student/StudentOnboardingConsentGate.tsx");
+  assert.match(component, /\[student\/consent-gate\] save failed/);
+  assert.match(component, /status: res\.status/);
+  assert.match(component, /stage: payload\?\.stage/);
 });
 
 test("consent API authenticates before rate limiting and fails open when limiter infra is down", () => {
