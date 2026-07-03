@@ -115,6 +115,7 @@ const allowedPrefixes = [
   "components/student/StudentOnboardingConsentGate.tsx",
   "lib/auth/profileEnsure.ts",
   "lib/auth/clientAccessToken.ts",
+  "lib/auth/supabaseRouteClient.ts",
   "tests/auth/adminAuthorization.test.ts",
   "tests/auth/oauthRedirectOrigin.test.ts",
   "tests/auth/teacherOnboardingIntent.test.ts",

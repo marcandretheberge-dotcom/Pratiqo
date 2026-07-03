@@ -1,6 +1,4 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-import { rateLimitByIp, rateLimitGuardResponse } from "@/lib/rateLimit";
 import { mergeOnboardingRoleConfirmedDashboard } from "@/lib/auth/onboardingRoleChoice";
 import {
   displayNameForAuthProfile,
@@ -10,8 +8,10 @@ import {
   isStudentOnboardingConsentActorType,
   STUDENT_ONBOARDING_CONSENT_VERSION,
 } from "@/lib/auth/studentOnboardingConsent";
+import { getSupabaseForRequest } from "@/lib/auth/supabaseRouteClient";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import type { CompanionType } from "@/lib/companions";
+import { rateLimitByIp, rateLimitGuardResponse } from "@/lib/rateLimit";
 
 export const runtime = "nodejs";
 
@@ -49,14 +49,17 @@ function normalizeLocale(value: unknown): "fr" | "en" | "es" {
   return value === "en" || value === "es" ? value : "fr";
 }
 
-function authClientForToken(token: string) {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!supabaseUrl || !supabaseAnonKey) return null;
-  return createClient(supabaseUrl, supabaseAnonKey, {
-    global: { headers: { Authorization: `Bearer ${token}` } },
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
+function isMissingSchemaError(error: SupabaseLikeError | null | undefined): boolean {
+  const code = error?.code ?? "";
+  const message = error?.message ?? "";
+  return (
+    code === "42703" ||
+    code === "42P01" ||
+    code === "PGRST204" ||
+    code === "PGRST205" ||
+    /student_onboarding_consent/.test(message) ||
+    /student_onboarding_consents/.test(message)
+  );
 }
 
 function logConsentStorageFailure(stage: string, error: SupabaseLikeError | Error | unknown) {
@@ -78,14 +81,18 @@ function logConsentStorageFailure(stage: string, error: SupabaseLikeError | Erro
   });
 }
 
-function consentSaveFailed() {
-  return NextResponse.json({ error: "student_consent_save_failed" }, { status: 500 });
+function consentSaveFailed(stage: string, status = 500) {
+  return NextResponse.json({ error: "student_consent_save_failed", stage }, { status });
+}
+
+function consentSchemaNotReady(stage: string) {
+  return NextResponse.json({ error: "student_consent_schema_not_ready", stage }, { status: 503 });
 }
 
 async function readStudentProfile(
   admin: ReturnType<typeof getSupabaseAdmin>,
   userId: string,
-): Promise<{ profile: StudentProfileRow | null; error: SupabaseLikeError | null }> {
+): Promise<{ profile: StudentProfileRow | null; error: SupabaseLikeError | null; schemaReady: boolean }> {
   const { data, error } = await admin
     .from("profiles")
     .select("role, email, name, dashboard, student_onboarding_consent_completed_at, student_onboarding_consent_version")
@@ -93,10 +100,10 @@ async function readStudentProfile(
     .maybeSingle();
 
   if (!error) {
-    return { profile: (data as StudentProfileRow | null) ?? null, error: null };
+    return { profile: (data as StudentProfileRow | null) ?? null, error: null, schemaReady: true };
   }
 
-  if (error.code === "42703") {
+  if (isMissingSchemaError(error as SupabaseLikeError)) {
     const fallback = await admin
       .from("profiles")
       .select("role, email, name, dashboard")
@@ -104,23 +111,20 @@ async function readStudentProfile(
       .maybeSingle();
     return {
       profile: (fallback.data as StudentProfileRow | null) ?? null,
-      error: fallback.error as SupabaseLikeError | null,
+      error: (fallback.error as SupabaseLikeError | null) ?? null,
+      schemaReady: false,
     };
   }
 
-  return { profile: null, error: error as SupabaseLikeError };
+  return { profile: null, error: error as SupabaseLikeError, schemaReady: true };
 }
 
 export async function POST(request: Request) {
-  const authHeader = request.headers.get("authorization") ?? "";
-  const token = authHeader.replace(/^Bearer\s+/i, "").trim();
-  if (!token) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-
   const rl = await rateLimitByIp(request, "student-onboarding-consent", { limit: 20, windowSeconds: 60 });
   const rateLimited = rateLimitGuardResponse(rl);
   if (rateLimited) return rateLimited;
 
-  const supabaseUser = authClientForToken(token);
+  const supabaseUser = await getSupabaseForRequest(request);
   if (!supabaseUser) {
     return NextResponse.json({ error: "missing_supabase_env" }, { status: 500 });
   }
@@ -157,14 +161,14 @@ export async function POST(request: Request) {
     admin = getSupabaseAdmin();
   } catch (err) {
     logConsentStorageFailure("admin_client", err);
-    return consentSaveFailed();
+    return consentSaveFailed("admin_client");
   }
 
-  let { profile: existingProfile, error: readErr } = await readStudentProfile(admin, user.id);
+  let { profile: existingProfile, error: readErr, schemaReady } = await readStudentProfile(admin, user.id);
 
   if (readErr) {
     logConsentStorageFailure("profile_read", readErr);
-    return consentSaveFailed();
+    return consentSaveFailed("profile_read");
   }
 
   if (!existingProfile) {
@@ -174,7 +178,7 @@ export async function POST(request: Request) {
     });
     if (ensured.error || !ensured.profile) {
       logConsentStorageFailure("profile_ensure", ensured.error ?? new Error("Profile ensure returned no row."));
-      return consentSaveFailed();
+      return consentSaveFailed("profile_ensure");
     }
     existingProfile = {
       role: ensured.profile.role,
@@ -186,6 +190,11 @@ export async function POST(request: Request) {
 
   if (existingProfile.role === "teacher" || existingProfile.role === "admin") {
     return NextResponse.json({ error: "student_only" }, { status: 403 });
+  }
+
+  if (!schemaReady) {
+    logConsentStorageFailure("schema_check", new Error("student onboarding consent schema is not applied"));
+    return consentSchemaNotReady("schema_check");
   }
 
   const locale = normalizeLocale(body.locale);
@@ -209,16 +218,16 @@ export async function POST(request: Request) {
 
     if (insertErr) {
       logConsentStorageFailure("consent_insert", insertErr);
-      return consentSaveFailed();
+      if (isMissingSchemaError(insertErr as SupabaseLikeError)) {
+        return consentSchemaNotReady("consent_insert");
+      }
+      return consentSaveFailed("consent_insert");
     }
   }
 
-  const displayName =
-    existingProfile.name ??
-    displayNameForAuthProfile(user);
+  const displayName = existingProfile.name ?? displayNameForAuthProfile(user);
 
-  const profileUpsert: Record<string, unknown> = {
-    id: user.id,
+  const profilePatch: Record<string, unknown> = {
     email: user.email ?? existingProfile.email ?? null,
     name: existingProfile.name ?? displayName,
     role: "student",
@@ -230,21 +239,23 @@ export async function POST(request: Request) {
   };
 
   if (body.companionType != null) {
-    profileUpsert.companion_type = body.companionType;
-    profileUpsert.companion_chosen = true;
-  } else if (!existingProfile.role) {
-    profileUpsert.companion_chosen = false;
+    profilePatch.companion_type = body.companionType;
+    profilePatch.companion_chosen = true;
   }
 
   const { data: profile, error: profileErr } = await admin
     .from("profiles")
-    .upsert(profileUpsert, { onConflict: "id" })
+    .update(profilePatch)
+    .eq("id", user.id)
     .select("id, role, companion_type, companion_chosen, dashboard, student_onboarding_consent_completed_at, student_onboarding_consent_version")
-    .single();
+    .maybeSingle();
 
   if (profileErr || !profile) {
-    logConsentStorageFailure("profile_upsert", profileErr ?? new Error("Profile update returned no row."));
-    return consentSaveFailed();
+    logConsentStorageFailure("profile_update", profileErr ?? new Error("Profile update returned no row."));
+    if (isMissingSchemaError(profileErr as SupabaseLikeError)) {
+      return consentSchemaNotReady("profile_update");
+    }
+    return consentSaveFailed("profile_update");
   }
 
   return NextResponse.json({ ok: true, profile });

@@ -346,6 +346,7 @@ test("tracked patch avoids generated audio and restricted product systems", () =
     "app/api/student/onboarding-consent/route.ts",
     "components/student/StudentOnboardingConsentGate.tsx",
     "lib/auth/clientAccessToken.ts",
+    "lib/auth/supabaseRouteClient.ts",
     "lib/auth/profileEnsure.ts",
     "tests/auth/studentOnboardingConsentGate.test.ts",
     "tests/ops/pwaAppReadiness.test.ts",
