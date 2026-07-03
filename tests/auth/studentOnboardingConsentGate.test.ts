@@ -79,6 +79,8 @@ test("choose companion page opens consent gate instead of saving companion direc
 
 test("consent component blocks under-14 self-declaration and requires all checks", () => {
   const component = read("components/student/StudentOnboardingConsentGate.tsx");
+  assert.match(component, /getClientAccessToken/);
+  assert.match(component, /credentials: "same-origin"/);
   assert.match(component, /"under_14"/);
   assert.match(component, /blockedUnder14/);
   assert.match(component, /studentConsentUnder14Blocked/);
@@ -95,6 +97,9 @@ test("consent API stores append-only versioned consent and stamps profile", () =
   const route = read("app/api/student/onboarding-consent/route.ts");
   assert.match(route, /STUDENT_ONBOARDING_CONSENT_VERSION/);
   assert.match(route, /\.from\("student_onboarding_consents"\)\.insert/);
+  assert.match(route, /ensureAuthProfileForUser/);
+  assert.match(route, /getSupabaseForRequest/);
+  assert.match(route, /\.update\(profilePatch\)/);
   assert.match(route, /actor_type: body\.actorType/);
   assert.match(route, /accepted_terms: true/);
   assert.match(route, /accepted_privacy: true/);
@@ -114,9 +119,11 @@ test("consent API returns generic errors but logs the failing storage stage", ()
   assert.match(route, /function logConsentStorageFailure/);
   assert.match(route, /stage/);
   assert.match(route, /profile_read/);
+  assert.match(route, /profile_ensure/);
   assert.match(route, /consent_insert/);
-  assert.match(route, /profile_upsert/);
+  assert.match(route, /profile_update/);
   assert.match(route, /student_consent_save_failed/);
+  assert.match(route, /student_consent_schema_not_ready/);
   assert.doesNotMatch(route, /return NextResponse\.json\(\{ error: readErr\.message \}/);
   assert.doesNotMatch(route, /return NextResponse\.json\(\{ error: insertErr\.message \}/);
   assert.doesNotMatch(route, /return NextResponse\.json\(\{ error: profileErr\?\.message/);
@@ -125,19 +132,47 @@ test("consent API returns generic errors but logs the failing storage stage", ()
 test("failed consent insert cannot mark companion or onboarding complete", () => {
   const route = read("app/api/student/onboarding-consent/route.ts");
   const insertErrorIndex = route.indexOf("if (insertErr)");
-  const profileUpsertIndex = route.indexOf("const profileUpsert");
-  const companionChosenIndex = route.indexOf("profileUpsert.companion_chosen = true");
+  const profilePatchIndex = route.indexOf("const profilePatch");
+  const companionChosenIndex = route.indexOf("profilePatch.companion_chosen = true");
   assert.ok(insertErrorIndex > -1, "insert error handling is present");
-  assert.ok(profileUpsertIndex > insertErrorIndex, "profile upsert happens after consent insert handling");
-  assert.ok(companionChosenIndex > profileUpsertIndex, "companion completion happens only in profile upsert payload");
+  assert.ok(profilePatchIndex > insertErrorIndex, "profile update happens after consent insert handling");
+  assert.ok(companionChosenIndex > profilePatchIndex, "companion completion happens only in profile update payload");
 });
 
 test("consent API is student-only and rejects teacher/admin profiles", () => {
   const route = read("app/api/student/onboarding-consent/route.ts");
-  assert.match(route, /existingProfile\?\.role === "teacher"/);
-  assert.match(route, /existingProfile\?\.role === "admin"/);
+  assert.match(route, /existingProfile\.role === "teacher"/);
+  assert.match(route, /existingProfile\.role === "admin"/);
   assert.match(route, /student_only/);
   assert.doesNotMatch(route, /ensureTeacherProfileRow/);
+});
+
+test("consent API repairs missing Google student profiles before saving", () => {
+  const route = read("app/api/student/onboarding-consent/route.ts");
+  assert.match(route, /if \(!existingProfile\)/);
+  assert.match(route, /intent: "learner"/);
+  assert.match(route, /profile_ensure/);
+});
+
+test("client access token helper refreshes stale OAuth sessions", () => {
+  const helper = read("lib/auth/clientAccessToken.ts");
+  assert.match(helper, /getSession/);
+  assert.match(helper, /refreshSession/);
+});
+
+test("consent API accepts cookie sessions when bearer token is absent", () => {
+  const helper = read("lib/auth/supabaseRouteClient.ts");
+  assert.match(helper, /createServerClient/);
+  assert.match(helper, /Authorization: `Bearer \$\{token\}`/);
+});
+
+test("self_14_plus path requires all four consent checkboxes in UI and API", () => {
+  const component = read("components/student/StudentOnboardingConsentGate.tsx");
+  const route = read("app/api/student/onboarding-consent/route.ts");
+  assert.match(component, /acceptedLearningData/);
+  assert.match(component, /acknowledgedMinorLessons/);
+  assert.match(route, /body\.acceptedLearningData !== true/);
+  assert.match(route, /body\.acknowledgedMinorLessons !== true/);
 });
 
 test("student onboarding consent migration creates owner-only RLS table", () => {

@@ -4,6 +4,7 @@ import React, { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getSupabaseClient } from "@/lib/supabase";
+import { getClientAccessToken } from "@/lib/auth/clientAccessToken";
 import { useAuth } from "@/components/AuthProvider";
 import { useLocale } from "@/lib/locale-context";
 import type { CompanionType } from "@/lib/companions";
@@ -52,20 +53,18 @@ export function StudentOnboardingConsentGate({
     setError(null);
     try {
       const supabase = getSupabaseClient();
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        setError(t("studentConsentSaveError"));
-        return;
+      const accessToken = await getClientAccessToken(supabase);
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      if (accessToken) {
+        headers.Authorization = `Bearer ${accessToken}`;
       }
 
       const res = await fetch("/api/student/onboarding-consent", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
-        },
+        headers,
+        credentials: "same-origin",
         body: JSON.stringify({
           actorType,
           acceptedTerms,
@@ -78,6 +77,12 @@ export function StudentOnboardingConsentGate({
       });
 
       if (!res.ok) {
+        const payload = (await res.json().catch(() => null)) as { stage?: string; error?: string } | null;
+        console.error("[student/consent-gate] save failed", {
+          status: res.status,
+          stage: payload?.stage ?? "unknown",
+          error: payload?.error ?? "unknown",
+        });
         setError(t("studentConsentSaveError"));
         return;
       }
