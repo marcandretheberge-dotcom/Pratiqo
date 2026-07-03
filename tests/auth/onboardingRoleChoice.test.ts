@@ -393,6 +393,42 @@ test("connexion home link is a plain root link without next param", () => {
   assert.match(src, /buildLoginHrefFromConnexion/);
 });
 
+test("profile page sign-out uses centralized logout helper", () => {
+  const src = read("app/(app)/profile/page.tsx");
+  assert.match(src, /import \{ logout \} from "@\/lib\/auth"/);
+  assert.match(src, /onClick=\{\(\) => void logout\(\)\}/);
+  assert.doesNotMatch(src, /supabase\.auth\.signOut\(\)/);
+});
+
+test("login and connexion sign-out do not double-navigate after logout", () => {
+  const login = read("app/login/page.tsx");
+  const connexion = read("app/connexion/page.tsx");
+  assert.match(login, /await logout\(\)/);
+  assert.match(connexion, /await logout\(\)/);
+  assert.doesNotMatch(login, /await logout\(\)[\s\S]{0,120}router\.replace\("\/"\)/);
+  assert.doesNotMatch(connexion, /await logout\(\)[\s\S]{0,120}router\.replace\("\/"\)/);
+});
+
+test("landing auth gate escapes stale handoff with timeout or profile sync retry", () => {
+  const gate = read("components/marketing/LandingAuthGate.tsx");
+  assert.match(gate, /HANDOFF_RECOVERY_TIMEOUT_MS/);
+  assert.match(gate, /handoffTimedOut/);
+  assert.match(gate, /profileSyncError/);
+  assert.match(gate, /AuthProfileSyncRetry/);
+  assert.match(gate, /if \(recoveryActive && user\)/);
+});
+
+test("connexion and login surface profile sync retry instead of infinite loading", () => {
+  const connexion = read("app/connexion/page.tsx");
+  const login = read("app/login/page.tsx");
+  assert.match(connexion, /profileSyncError/);
+  assert.match(connexion, /AuthProfileSyncRetry/);
+  assert.match(connexion, /retryProfileSync/);
+  assert.match(login, /profileSyncError/);
+  assert.match(login, /AuthProfileSyncRetry/);
+  assert.match(login, /retryProfileSync/);
+});
+
 test("login page no longer hides existing sessions behind auth handoff", () => {
   const src = read("app/login/page.tsx");
   assert.match(src, /loginAlreadyConnectedTitle/);
