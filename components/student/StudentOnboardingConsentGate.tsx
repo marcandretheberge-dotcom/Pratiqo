@@ -69,8 +69,7 @@ export function StudentOnboardingConsentGate({
         headers.Authorization = `Bearer ${accessToken}`;
       }
 
-      const apiOrigin = resolveOAuthRedirectOrigin();
-      const res = await fetch(`${apiOrigin}/api/student/onboarding-consent`, {
+      const res = await fetch("/api/student/onboarding-consent", {
         method: "POST",
         headers,
         credentials: "include",
