@@ -193,6 +193,14 @@ test("proxy forwards stray OAuth ?code= query params to /auth/callback", () => {
   assert.match(src, /new URL\("\/auth\/callback", req\.url\)/);
 });
 
+test("proxy canonicalizes apex before OAuth code forwarding", () => {
+  const src = read("proxy.ts");
+  const apexIndex = src.indexOf("apex-canonicalize");
+  const codeForwardIndex = src.indexOf("oauth-code-forward");
+  assert.ok(apexIndex > -1, "apex canonicalization is present");
+  assert.ok(codeForwardIndex > apexIndex, "OAuth code forwarding runs after apex canonicalization");
+});
+
 test("proxy matcher explicitly includes root for Site URL OAuth fallbacks", () => {
   const src = read("proxy.ts");
   assert.match(src, /matcher:\s*\[\s*"\/"/);
@@ -218,10 +226,11 @@ test("loginWithGoogle marks OAuth return pending in sessionStorage", () => {
   assert.match(src, /markOAuthReturnPending/);
 });
 
-test("landing auth gate forwards stray OAuth ?code= to /auth/callback client-side", () => {
+test("landing auth gate forwards stray OAuth ?code= to canonical /auth/callback client-side", () => {
   const src = read("components/marketing/LandingAuthGate.tsx");
   assert.match(src, /forwardOAuthCodeToCallback/);
-  assert.match(src, /window\.location\.replace\(`\/auth\/callback\?\$\{params\.toString\(\)\}`\)/);
+  assert.match(src, /resolveOAuthRedirectOrigin/);
+  assert.match(src, /`\$\{origin\}\/auth\/callback\?\$\{params\.toString\(\)\}`/);
 });
 
 test("landing auth gate recovers authenticated students from OAuth return marker", () => {
@@ -301,6 +310,7 @@ test("auth callback uses resolveOAuthCallbackRedirect directly instead of login 
   assert.match(src, /stage:\s*"ingress"/);
   assert.match(src, /pendingIntentCookie/);
   assert.match(src, /requestUrl\.origin/);
+  assert.match(src, /canonicalOrigin/);
   assert.match(src, /pendingOnboardingIntentClearCookieHeaders/);
 });
 
@@ -308,7 +318,7 @@ test("auth callback clears pending intent cookies only after final redirect is c
   const src = read("app/auth/callback/route.ts");
   assert.match(
     src,
-    /NextResponse\.redirect\(new URL\(redirectPath, requestUrl\.origin\)\)[\s\S]*pendingOnboardingIntentClearCookieHeaders/,
+    /NextResponse\.redirect\(new URL\(redirectPath, canonicalOrigin\)\)[\s\S]*pendingOnboardingIntentClearCookieHeaders/,
   );
 });
 

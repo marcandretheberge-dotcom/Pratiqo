@@ -1,7 +1,10 @@
 import { sanitizeRelativeRedirectPath } from "@/lib/auth/redirects";
+import { SITE_URL } from "@/lib/seo/site";
 import { publicIntentQueryValue, type PreAuthOnboardingIntent } from "@/lib/auth/preAuthOnboardingIntent";
 
-const PRODUCTION_HOSTS = new Set(["www.pratiqo.ca", "pratiqo.ca"]);
+const PRODUCTION_APEX_HOST = "pratiqo.ca";
+const PRODUCTION_WWW_HOST = "www.pratiqo.ca";
+const PRODUCTION_HOSTS = new Set([PRODUCTION_WWW_HOST, PRODUCTION_APEX_HOST]);
 
 function isLocalDevHost(hostname: string): boolean {
   return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "[::1]";
@@ -15,10 +18,13 @@ function isProductionHost(hostname: string): boolean {
   return PRODUCTION_HOSTS.has(hostname);
 }
 
+export function isProductionApexHost(hostname: string): boolean {
+  return hostname === PRODUCTION_APEX_HOST;
+}
+
 /**
- * Resolve the OAuth callback origin from the initiating browser context.
- * Preview and local dev always stay on the current origin; production may
- * normalize to NEXT_PUBLIC_SITE_URL when configured.
+ * Resolve the browser/server origin used for OAuth redirects and post-auth navigation.
+ * Preview and local dev stay on the initiating origin; production apex always maps to www.
  */
 export function resolveOAuthRedirectOriginFromHost(
   hostname: string,
@@ -27,6 +33,10 @@ export function resolveOAuthRedirectOriginFromHost(
 ): string {
   if (isVercelPreviewHost(hostname) || isLocalDevHost(hostname)) {
     return origin;
+  }
+
+  if (isProductionApexHost(hostname)) {
+    return SITE_URL;
   }
 
   if (isProductionHost(hostname)) {
@@ -43,6 +53,15 @@ export function resolveOAuthRedirectOriginFromHost(
 
   // Custom staging domains and unknown hosts: never canonicalize to production.
   return origin;
+}
+
+/** Server-side canonical origin for redirects (OAuth callback, auth errors). */
+export function resolveRequestCanonicalOrigin(requestUrl: URL): string {
+  return resolveOAuthRedirectOriginFromHost(
+    requestUrl.hostname,
+    requestUrl.origin,
+    process.env.NEXT_PUBLIC_SITE_URL,
+  );
 }
 
 /** Prefer configured public site URL on production host; else current origin (preview/local). */

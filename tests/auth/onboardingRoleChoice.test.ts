@@ -251,7 +251,7 @@ test("auth callback clears pending cookies after final redirect is chosen", () =
   const src = read("app/auth/callback/route.ts");
   assert.match(
     src,
-    /NextResponse\.redirect\(new URL\(redirectPath, requestUrl\.origin\)\)[\s\S]*pendingOnboardingIntentClearCookieHeaders/,
+    /NextResponse\.redirect\(new URL\(redirectPath, canonicalOrigin\)\)[\s\S]*pendingOnboardingIntentClearCookieHeaders/,
   );
 });
 

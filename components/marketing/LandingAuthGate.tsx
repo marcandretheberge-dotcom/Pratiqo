@@ -16,6 +16,7 @@ import {
   readOAuthReturnIntent,
   subscribeToOAuthReturn,
 } from "@/lib/auth/oauthReturnHandoff";
+import { resolveOAuthRedirectOrigin } from "@/lib/auth/oauthCallback";
 import {
   clearPendingOnboardingIntentCookie,
   readPendingOnboardingIntentClient,
@@ -65,7 +66,8 @@ function forwardOAuthCodeToCallback(): boolean {
     next: params.get("next") ?? "none",
     redirect: `/auth/callback?${params.toString()}`,
   });
-  window.location.replace(`/auth/callback?${params.toString()}`);
+  const origin = resolveOAuthRedirectOrigin();
+  window.location.replace(`${origin}/auth/callback?${params.toString()}`);
   return true;
 }
 

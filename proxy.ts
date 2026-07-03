@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { logAuthFlowDecision } from "@/lib/auth/authFlowDiagnostics";
+import { isProductionApexHost } from "@/lib/auth/oauthCallback";
 import { buildLoginHrefForProtectedReturn } from "@/lib/auth/preAuthOnboardingIntent";
+import { SITE_URL } from "@/lib/seo/site";
 
 const LOGIN_PATH = "/login";
 const CONNEXION_PATH = "/connexion";
@@ -49,6 +51,17 @@ function isProtectedPath(pathname: string): boolean {
 
 export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
+
+  if (isProductionApexHost(req.nextUrl.hostname)) {
+    const canonicalUrl = new URL(`${pathname}${req.nextUrl.search}`, SITE_URL);
+    logAuthFlowDecision("proxy", {
+      stage: "apex-canonicalize",
+      path: pathname,
+      host: req.nextUrl.hostname,
+      redirect: canonicalUrl.pathname + canonicalUrl.search,
+    });
+    return NextResponse.redirect(canonicalUrl, 308);
+  }
 
   if (isBlockedSupabaseDemoPath(pathname)) {
     return new NextResponse(null, { status: 404 });

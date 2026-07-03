@@ -85,6 +85,11 @@ test("apex production host normalizes to configured www site URL", () => {
   assert.equal(origin, PRODUCTION_SITE);
 });
 
+test("apex production host normalizes to www even without NEXT_PUBLIC_SITE_URL", () => {
+  const origin = resolveOAuthRedirectOriginFromHost("pratiqo.ca", "https://pratiqo.ca", null);
+  assert.equal(origin, PRODUCTION_SITE);
+});
+
 test("custom staging host stays on initiating origin", () => {
   const staging = "https://staging.pratiqo.ca";
   const origin = resolveOAuthRedirectOriginFromHost("staging.pratiqo.ca", staging, PRODUCTION_SITE);
@@ -127,11 +132,11 @@ test("loginWithGoogle forwards intentQuery for public student alias", () => {
 
 // ── Callback must not canonicalize preview to production ────────────────────
 
-test("auth callback never uses SITE_URL or NEXT_PUBLIC_SITE_URL for redirects", () => {
+test("auth callback uses canonical origin for redirects, not raw apex host", () => {
   const src = read("app/auth/callback/route.ts");
-  assert.doesNotMatch(src, /NEXT_PUBLIC_SITE_URL/);
-  assert.doesNotMatch(src, /SITE_URL/);
-  assert.match(src, /requestUrl\.origin/);
+  assert.match(src, /resolveRequestCanonicalOrigin/);
+  assert.doesNotMatch(src, /buildLoginUrlWithAuthError\(requestUrl\.origin/);
+  assert.doesNotMatch(src, /new URL\(redirectPath, requestUrl\.origin\)/);
 });
 
 test("unsafe next is still rejected in OAuth redirect construction", () => {
@@ -151,6 +156,17 @@ test("resolveOAuthRedirectOrigin uses window.location on the client", () => {
   assert.match(src, /resolveOAuthRedirectOriginFromHost/);
   assert.match(src, /window\.location\.hostname/);
   assert.match(src, /isVercelPreviewHost/);
+});
+
+test("proxy canonicalizes apex /login and /connexion before auth starts", () => {
+  const src = read("proxy.ts");
+  const apexIndex = src.indexOf("apex-canonicalize");
+  const loginBypassIndex = src.indexOf("pathname.startsWith(LOGIN_PATH)");
+  assert.ok(apexIndex > -1, "apex canonicalization is present");
+  assert.ok(
+    loginBypassIndex > apexIndex,
+    "login/connexion bypass must run only after apex is canonicalized to www",
+  );
 });
 
 async function run() {
