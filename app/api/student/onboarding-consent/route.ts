@@ -3,6 +3,10 @@ import { createClient } from "@supabase/supabase-js";
 import { rateLimitByIp, rateLimitGuardResponse } from "@/lib/rateLimit";
 import { mergeOnboardingRoleConfirmedDashboard } from "@/lib/auth/onboardingRoleChoice";
 import {
+  displayNameForAuthProfile,
+  ensureAuthProfileForUser,
+} from "@/lib/auth/profileEnsure";
+import {
   isStudentOnboardingConsentActorType,
   STUDENT_ONBOARDING_CONSENT_VERSION,
 } from "@/lib/auth/studentOnboardingConsent";
@@ -19,6 +23,15 @@ type ConsentBody = {
   acknowledgedMinorLessons?: unknown;
   locale?: unknown;
   companionType?: unknown;
+};
+
+type StudentProfileRow = {
+  role?: string | null;
+  email?: string | null;
+  name?: string | null;
+  student_onboarding_consent_completed_at?: string | null;
+  student_onboarding_consent_version?: string | null;
+  dashboard?: unknown;
 };
 
 type SupabaseLikeError = {
@@ -67,6 +80,35 @@ function logConsentStorageFailure(stage: string, error: SupabaseLikeError | Erro
 
 function consentSaveFailed() {
   return NextResponse.json({ error: "student_consent_save_failed" }, { status: 500 });
+}
+
+async function readStudentProfile(
+  admin: ReturnType<typeof getSupabaseAdmin>,
+  userId: string,
+): Promise<{ profile: StudentProfileRow | null; error: SupabaseLikeError | null }> {
+  const { data, error } = await admin
+    .from("profiles")
+    .select("role, email, name, dashboard, student_onboarding_consent_completed_at, student_onboarding_consent_version")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (!error) {
+    return { profile: (data as StudentProfileRow | null) ?? null, error: null };
+  }
+
+  if (error.code === "42703") {
+    const fallback = await admin
+      .from("profiles")
+      .select("role, email, name, dashboard")
+      .eq("id", userId)
+      .maybeSingle();
+    return {
+      profile: (fallback.data as StudentProfileRow | null) ?? null,
+      error: fallback.error as SupabaseLikeError | null,
+    };
+  }
+
+  return { profile: null, error: error as SupabaseLikeError };
 }
 
 export async function POST(request: Request) {
@@ -118,35 +160,38 @@ export async function POST(request: Request) {
     return consentSaveFailed();
   }
 
-  const { data: existing, error: readErr } = await admin
-    .from("profiles")
-    .select("role, email, name, display_name, dashboard, student_onboarding_consent_completed_at, student_onboarding_consent_version")
-    .eq("id", user.id)
-    .maybeSingle();
+  let { profile: existingProfile, error: readErr } = await readStudentProfile(admin, user.id);
 
   if (readErr) {
     logConsentStorageFailure("profile_read", readErr);
     return consentSaveFailed();
   }
 
-  const existingProfile = existing as {
-    role?: string | null;
-    email?: string | null;
-    name?: string | null;
-    display_name?: string | null;
-    student_onboarding_consent_completed_at?: string | null;
-    student_onboarding_consent_version?: string | null;
-    dashboard?: unknown;
-  } | null;
+  if (!existingProfile) {
+    const ensured = await ensureAuthProfileForUser(admin, user, {
+      intent: "learner",
+      displayName: displayNameForAuthProfile(user),
+    });
+    if (ensured.error || !ensured.profile) {
+      logConsentStorageFailure("profile_ensure", ensured.error ?? new Error("Profile ensure returned no row."));
+      return consentSaveFailed();
+    }
+    existingProfile = {
+      role: ensured.profile.role,
+      email: ensured.profile.email,
+      name: ensured.profile.name,
+      dashboard: ensured.profile.dashboard,
+    };
+  }
 
-  if (existingProfile?.role === "teacher" || existingProfile?.role === "admin") {
+  if (existingProfile.role === "teacher" || existingProfile.role === "admin") {
     return NextResponse.json({ error: "student_only" }, { status: 403 });
   }
 
   const locale = normalizeLocale(body.locale);
   const nowIso = new Date().toISOString();
   const alreadyHasCurrentConsent =
-    typeof existingProfile?.student_onboarding_consent_completed_at === "string" &&
+    typeof existingProfile.student_onboarding_consent_completed_at === "string" &&
     existingProfile.student_onboarding_consent_completed_at.length > 0 &&
     existingProfile.student_onboarding_consent_version === STUDENT_ONBOARDING_CONSENT_VERSION;
 
@@ -169,29 +214,26 @@ export async function POST(request: Request) {
   }
 
   const displayName =
-    existingProfile?.display_name ??
-    existingProfile?.name ??
-    (typeof user.user_metadata?.display_name === "string" ? user.user_metadata.display_name : null) ??
-    (typeof user.user_metadata?.name === "string" ? user.user_metadata.name : null) ??
-    user.email?.split("@")[0] ??
-    null;
+    existingProfile.name ??
+    displayNameForAuthProfile(user);
 
   const profileUpsert: Record<string, unknown> = {
     id: user.id,
-    email: user.email ?? existingProfile?.email ?? null,
-    name: existingProfile?.name ?? displayName,
-    display_name: existingProfile?.display_name ?? displayName,
+    email: user.email ?? existingProfile.email ?? null,
+    name: existingProfile.name ?? displayName,
     role: "student",
     student_onboarding_consent_completed_at:
-      existingProfile?.student_onboarding_consent_completed_at ?? nowIso,
+      existingProfile.student_onboarding_consent_completed_at ?? nowIso,
     student_onboarding_consent_version: STUDENT_ONBOARDING_CONSENT_VERSION,
-    dashboard: mergeOnboardingRoleConfirmedDashboard(existingProfile?.dashboard),
+    dashboard: mergeOnboardingRoleConfirmedDashboard(existingProfile.dashboard),
     updated_at: nowIso,
   };
 
   if (body.companionType != null) {
     profileUpsert.companion_type = body.companionType;
     profileUpsert.companion_chosen = true;
+  } else if (!existingProfile.role) {
+    profileUpsert.companion_chosen = false;
   }
 
   const { data: profile, error: profileErr } = await admin

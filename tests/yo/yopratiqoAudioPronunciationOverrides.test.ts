@@ -341,6 +341,15 @@ test("tracked patch avoids generated audio and restricted product systems", () =
     // security/rate-limit-search-analytics — analytics endpoint hardening only.
     // Defended by tests/security/searchAnalyticsRateLimit.test.ts.
     "app/api/analytics/search-event/route.ts",
+    // hotfix/student-companion-confirmation-save — student consent + companion save only.
+    // Defended by tests/auth/studentOnboardingConsentGate.test.ts.
+    "app/api/student/onboarding-consent/route.ts",
+    "components/student/StudentOnboardingConsentGate.tsx",
+    "lib/auth/clientAccessToken.ts",
+    "lib/auth/profileEnsure.ts",
+    "tests/auth/studentOnboardingConsentGate.test.ts",
+    "tests/ops/pwaAppReadiness.test.ts",
+    "tests/ops/pwaInstallabilityVerification.test.ts",
   ]);
   const forbidden = [
     /^app\/api\//,

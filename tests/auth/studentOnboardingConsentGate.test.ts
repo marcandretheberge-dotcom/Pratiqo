@@ -79,6 +79,7 @@ test("choose companion page opens consent gate instead of saving companion direc
 
 test("consent component blocks under-14 self-declaration and requires all checks", () => {
   const component = read("components/student/StudentOnboardingConsentGate.tsx");
+  assert.match(component, /getClientAccessToken/);
   assert.match(component, /"under_14"/);
   assert.match(component, /blockedUnder14/);
   assert.match(component, /studentConsentUnder14Blocked/);
@@ -95,6 +96,7 @@ test("consent API stores append-only versioned consent and stamps profile", () =
   const route = read("app/api/student/onboarding-consent/route.ts");
   assert.match(route, /STUDENT_ONBOARDING_CONSENT_VERSION/);
   assert.match(route, /\.from\("student_onboarding_consents"\)\.insert/);
+  assert.match(route, /ensureAuthProfileForUser/);
   assert.match(route, /actor_type: body\.actorType/);
   assert.match(route, /accepted_terms: true/);
   assert.match(route, /accepted_privacy: true/);
@@ -114,6 +116,7 @@ test("consent API returns generic errors but logs the failing storage stage", ()
   assert.match(route, /function logConsentStorageFailure/);
   assert.match(route, /stage/);
   assert.match(route, /profile_read/);
+  assert.match(route, /profile_ensure/);
   assert.match(route, /consent_insert/);
   assert.match(route, /profile_upsert/);
   assert.match(route, /student_consent_save_failed/);
@@ -134,10 +137,23 @@ test("failed consent insert cannot mark companion or onboarding complete", () =>
 
 test("consent API is student-only and rejects teacher/admin profiles", () => {
   const route = read("app/api/student/onboarding-consent/route.ts");
-  assert.match(route, /existingProfile\?\.role === "teacher"/);
-  assert.match(route, /existingProfile\?\.role === "admin"/);
+  assert.match(route, /existingProfile\.role === "teacher"/);
+  assert.match(route, /existingProfile\.role === "admin"/);
   assert.match(route, /student_only/);
   assert.doesNotMatch(route, /ensureTeacherProfileRow/);
+});
+
+test("consent API repairs missing Google student profiles before saving", () => {
+  const route = read("app/api/student/onboarding-consent/route.ts");
+  assert.match(route, /if \(!existingProfile\)/);
+  assert.match(route, /intent: "learner"/);
+  assert.match(route, /profile_ensure/);
+});
+
+test("client access token helper refreshes stale OAuth sessions", () => {
+  const helper = read("lib/auth/clientAccessToken.ts");
+  assert.match(helper, /getSession/);
+  assert.match(helper, /refreshSession/);
 });
 
 test("student onboarding consent migration creates owner-only RLS table", () => {

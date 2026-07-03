@@ -4,6 +4,7 @@ import React, { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getSupabaseClient } from "@/lib/supabase";
+import { getClientAccessToken } from "@/lib/auth/clientAccessToken";
 import { useAuth } from "@/components/AuthProvider";
 import { useLocale } from "@/lib/locale-context";
 import type { CompanionType } from "@/lib/companions";
@@ -52,10 +53,8 @@ export function StudentOnboardingConsentGate({
     setError(null);
     try {
       const supabase = getSupabaseClient();
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session?.access_token) {
+      const accessToken = await getClientAccessToken(supabase);
+      if (!accessToken) {
         setError(t("studentConsentSaveError"));
         return;
       }
@@ -64,7 +63,7 @@ export function StudentOnboardingConsentGate({
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
+          Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify({
           actorType,
