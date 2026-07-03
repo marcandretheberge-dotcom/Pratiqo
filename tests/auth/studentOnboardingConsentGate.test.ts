@@ -80,7 +80,9 @@ test("choose companion page opens consent gate instead of saving companion direc
 test("consent component blocks under-14 self-declaration and requires all checks", () => {
   const component = read("components/student/StudentOnboardingConsentGate.tsx");
   assert.match(component, /getClientAccessToken/);
-  assert.match(component, /credentials: "same-origin"/);
+  assert.match(component, /credentials: "include"/);
+  assert.match(component, /resolveOAuthRedirectOrigin/);
+  assert.match(component, /isProductionApexHost/);
   assert.match(component, /"under_14"/);
   assert.match(component, /blockedUnder14/);
   assert.match(component, /studentConsentUnder14Blocked/);
@@ -122,6 +124,7 @@ test("consent API returns generic errors but logs the failing storage stage", ()
   assert.match(route, /profile_ensure/);
   assert.match(route, /consent_insert/);
   assert.match(route, /profile_update/);
+  assert.match(route, /profile_upsert/);
   assert.match(route, /student_consent_save_failed/);
   assert.match(route, /student_consent_schema_not_ready/);
   assert.doesNotMatch(route, /return NextResponse\.json\(\{ error: readErr\.message \}/);
@@ -166,7 +169,28 @@ test("consent API accepts cookie sessions when bearer token is absent", () => {
   assert.match(helper, /Authorization: `Bearer \$\{token\}`/);
 });
 
-test("self_14_plus path requires all four consent checkboxes in UI and API", () => {
+test("consent API authenticates before rate limiting and fails open when limiter infra is down", () => {
+  const route = read("app/api/student/onboarding-consent/route.ts");
+  const authIndex = route.indexOf('error: "unauthorized"');
+  const rateLimitIndex = route.indexOf('rateLimitByIp(request, "student-onboarding-consent"');
+  assert.ok(authIndex > -1, "unauthorized response is present");
+  assert.ok(rateLimitIndex > authIndex, "rate limit runs after auth");
+  assert.match(route, /identifier: user\.id/);
+  assert.match(route, /rl\.infrastructureUnavailable/);
+});
+
+test("unauthorized consent request still returns 401", () => {
+  const route = read("app/api/student/onboarding-consent/route.ts");
+  assert.match(route, /if \(authError \|\| !user\)/);
+  assert.match(route, /error: "unauthorized"/);
+});
+
+test("schema-not-ready returns 503 when migration missing", () => {
+  const route = read("app/api/student/onboarding-consent/route.ts");
+  assert.match(route, /consentSchemaNotReady/);
+  assert.match(route, /student_consent_schema_not_ready/);
+});
+
   const component = read("components/student/StudentOnboardingConsentGate.tsx");
   const route = read("app/api/student/onboarding-consent/route.ts");
   assert.match(component, /acceptedLearningData/);
