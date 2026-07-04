@@ -166,9 +166,9 @@ function LoginForm() {
         <LocaleSwitcher variant="light" />
       </header>
 
-      <div className="flex min-h-[calc(100dvh-3.5rem)] flex-col items-center justify-center px-4 py-8 sm:px-5 sm:py-10">
-        <div className="w-full max-w-md rounded-[2rem] border border-[var(--p-border-light)] bg-white p-6 shadow-[0_24px_80px_rgba(15,110,86,0.08)] sm:p-10">
-          <div className="mb-6 flex justify-center sm:mb-7">
+      <div className="flex min-h-[calc(100dvh-3.5rem)] flex-col items-center justify-center px-4 py-5 sm:px-5 sm:py-10">
+        <div className="w-full max-w-md rounded-[1.75rem] border border-[var(--p-border-light)] bg-white p-5 shadow-[0_18px_60px_rgba(15,110,86,0.08)] sm:rounded-[2rem] sm:p-10">
+          <div className="mb-5 flex justify-center sm:mb-7">
             <PratiqoLogo variant="full" size="md" />
           </div>
 
@@ -245,7 +245,7 @@ function LoginForm() {
                 </p>
               ) : null}
 
-              <label className="mb-4 flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+              <label className="mb-4 flex min-h-[56px] cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
                 <input
                   type="checkbox"
                   checked={legalAccepted}
@@ -279,7 +279,7 @@ function LoginForm() {
                 onClick={() => void handleGoogleLogin()}
                 data-testid="login-google-button"
                 className={cn(
-                  "flex h-12 min-h-12 w-full items-center justify-center gap-2 rounded-2xl text-sm font-bold text-white transition-all",
+                  "flex h-[52px] min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl text-sm font-bold text-white transition-all",
                   "bg-teal-600 hover:brightness-[0.98] disabled:cursor-not-allowed disabled:opacity-45",
                 )}
               >

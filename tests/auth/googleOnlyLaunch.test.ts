@@ -100,6 +100,12 @@ test("legal acceptance checkbox still gates Google auth actions", () => {
   assert.match(page, /disabled=\{!legalAccepted \|\| busy\}/);
 });
 
+test("login page keeps mobile Google action comfortably tappable", () => {
+  const page = read("app/login/page.tsx");
+  assert.match(page, /h-\[52px\] min-h-\[52px\]/);
+  assert.match(page, /min-h-\[56px\]/);
+});
+
 test("teacher and student/learner intent still resolve for login", () => {
   assert.equal(resolvePreAuthIntent("teacher", null, null), "teacher");
   assert.equal(resolvePreAuthIntent("student", null, null), "learner");

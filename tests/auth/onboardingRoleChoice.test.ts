@@ -613,6 +613,26 @@ test("teacher mobile bottom nav has at most five items", () => {
   assert.ok(hrefCount >= 4, `teacher mobile bottom nav should keep primary tabs (got ${hrefCount})`);
 });
 
+test("mobile app shell reserves safe-area space for bottom nav", () => {
+  const src = read("components/AppShell.tsx");
+  assert.match(src, /pb-\[calc\(6rem\+env\(safe-area-inset-bottom\)\)\]/);
+  assert.match(src, /paddingBottom:\s*"env\(safe-area-inset-bottom\)"/);
+});
+
+test("connexion role cards stay tappable on mobile", () => {
+  const src = read("app/connexion/page.tsx");
+  assert.match(src, /min-h-\[132px\]/);
+  assert.match(src, /href=\{buildLoginHrefFromConnexion\("learner"/);
+  assert.match(src, /href=\{buildLoginHrefFromConnexion\("teacher"/);
+});
+
+test("student companion chooser reserves bottom-nav space and uses full-width mobile actions", () => {
+  const src = read("app/(app)/student/choose-companion/page.tsx");
+  assert.match(src, /calc\(6rem \+ env\(safe-area-inset-bottom\)\)/);
+  assert.match(src, /min-h-\[136px\]/);
+  assert.match(src, /min-h-12 w-full rounded-2xl/);
+});
+
 test("app route group exposes shared error boundary with retry and navigation", () => {
   const src = read("app/(app)/error.tsx");
   assert.match(src, /"use client"/);

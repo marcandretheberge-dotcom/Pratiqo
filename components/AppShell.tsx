@@ -303,9 +303,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <main
           className={cn(
             "flex-1 min-w-0",
-            isStudent && "w-full overflow-y-auto px-4 sm:px-5 py-6 md:pb-0 pb-20",
+            isStudent && "w-full overflow-y-auto px-4 sm:px-5 pt-4 sm:pt-6 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-0",
             isTeacher &&
-              "w-full overflow-y-auto px-4 sm:px-6 py-6 pb-20 md:pb-8 max-w-[1280px] mx-auto",
+              "w-full overflow-y-auto px-4 sm:px-6 pt-4 sm:pt-6 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-8 max-w-[1280px] mx-auto",
             !isStudent && !isTeacher && "overflow-y-auto px-4 sm:px-5 py-6 pb-8",
           )}
           style={
@@ -348,6 +348,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             zIndex: 50,
             background: "white",
             borderTop: "0.5px solid #D3D1C7",
+            paddingBottom: "env(safe-area-inset-bottom)",
           }}
         >
           {(
@@ -363,7 +364,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   flex: 1,
                   position: "relative",
                   textAlign: "center",
-                  padding: "8px 4px",
+                  padding: "8px 4px 10px",
                   textDecoration: "none",
                 }}
               >
@@ -432,6 +433,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               zIndex: 50,
               background: "white",
               borderTop: "0.5px solid #D3D1C7",
+              paddingBottom: "env(safe-area-inset-bottom)",
             }}
           >
             {TEACHER_MOBILE_BOTTOM_NAV.map((tab) => {
@@ -445,7 +447,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     flex: 1,
                     position: "relative",
                     textAlign: "center",
-                    padding: "8px 4px",
+                    padding: "8px 4px 10px",
                     textDecoration: "none",
                   }}
                 >
