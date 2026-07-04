@@ -280,29 +280,20 @@ ok("8) main + AppShell headers expose a YoPratiqo entry using the official wordm
 // 9. Student header/nav exposes a YoPratiqo entry linking to /student/yopratiqo
 // ─────────────────────────────────────────────────────────────────────────
 
-// Both the desktop tab strip and the mobile bottom nav include a
-// dedicated YoPratiqo entry that links to /student/yopratiqo. The
-// data-testids are owned by AppShell and the href is shared via the
-// STUDENT_NAV array + the bottom-nav literal.
+// Both the desktop tab strip and YoNavButton expose a YoPratiqo entry
+// linking to /student/yopratiqo. Mobile bottom nav keeps five primary tabs
+// and defers YoPratiqo to YoNavButton + desktop nav to avoid overcrowding.
 assert.match(
   appShellSrc,
   /["']student-nav-yopratiqo["']/,
   "AppShell must mark the desktop YoPratiqo entry with data-testid='student-nav-yopratiqo'",
 );
-assert.match(
-  appShellSrc,
-  /["']student-bottom-nav-yopratiqo["']/,
-  "AppShell must mark the mobile YoPratiqo bottom-nav entry with data-testid='student-bottom-nav-yopratiqo'",
-);
-// And the href must literally point at the YoPratiqo hub. We count
-// the references — both the desktop STUDENT_NAV entry AND the mobile
-// bottom-nav entry should mention the route.
 const yopratiqoHrefCount = (
   appShellSrc.match(/["']\/student\/yopratiqo["']/g) ?? []
 ).length;
 assert.ok(
-  yopratiqoHrefCount >= 2,
-  `AppShell must reference /student/yopratiqo in BOTH the desktop tab strip and the mobile bottom nav (got ${yopratiqoHrefCount} occurrence(s))`,
+  yopratiqoHrefCount >= 1,
+  `AppShell must reference /student/yopratiqo in the desktop tab strip (got ${yopratiqoHrefCount} occurrence(s))`,
 );
 // YoNavButton auth-aware destination: for an authenticated student
 // it must route to /student/yopratiqo, for everyone else to /yo.
@@ -316,7 +307,7 @@ assert.match(
   /["']\/yo["']/,
   "YoNavButton must keep /yo as the default destination for anonymous visitors",
 );
-ok("9) student nav (desktop + mobile) and YoNavButton expose a YoPratiqo entry linking to /student/yopratiqo");
+ok("9) student nav (desktop + YoNavButton) expose a YoPratiqo entry linking to /student/yopratiqo");
 
 // ─────────────────────────────────────────────────────────────────────────
 // 10. No "Yo" standalone product label is introduced

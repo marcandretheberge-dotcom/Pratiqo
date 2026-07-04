@@ -56,10 +56,6 @@ function ConnexionInner() {
     router.replace(buildLoginHrefFromConnexion(highlightIntent, safeNext, ref));
   }, [highlightIntent, safeNext, ref, router, user]);
 
-  const continueWithIntent = (intent: PreAuthOnboardingIntent) => {
-    router.replace(buildLoginHrefFromConnexion(intent, safeNext, ref));
-  };
-
   const handleContinue = () => {
     clearPendingOnboardingIntentCookie();
     clearPendingTeacherOnboardingCookie();
@@ -168,9 +164,8 @@ function ConnexionInner() {
               </p>
 
               <div className="mt-8 grid gap-4 sm:grid-cols-2">
-                <button
-                  type="button"
-                  onClick={() => continueWithIntent("learner")}
+                <Link
+                  href={buildLoginHrefFromConnexion("learner", safeNext, ref)}
                   className={cn(
                     "rounded-2xl border px-5 py-6 text-left transition-all",
                     "hover:border-teal-600 hover:bg-teal-50/60",
@@ -189,11 +184,10 @@ function ConnexionInner() {
                     </div>
                   </div>
                   <p className="mt-4 text-sm font-semibold text-teal-700">{t("onboardingRoleChoiceContinueLearner")}</p>
-                </button>
+                </Link>
 
-                <button
-                  type="button"
-                  onClick={() => continueWithIntent("teacher")}
+                <Link
+                  href={buildLoginHrefFromConnexion("teacher", safeNext, ref)}
                   className={cn(
                     "rounded-2xl border px-5 py-6 text-left transition-all",
                     "hover:border-teal-600 hover:bg-teal-50/60",
@@ -212,7 +206,7 @@ function ConnexionInner() {
                     </div>
                   </div>
                   <p className="mt-4 text-sm font-semibold text-teal-700">{t("onboardingRoleChoiceContinueTeacher")}</p>
-                </button>
+                </Link>
               </div>
 
               <p className="mt-8 text-center text-sm text-[var(--p-text-muted)]">

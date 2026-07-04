@@ -178,8 +178,8 @@ test("unsafe next URLs are sanitized", () => {
 test("connexion page exists outside AuthenticatedShell", () => {
   const src = read("app/connexion/page.tsx");
   assert.match(src, /onboardingRoleChoiceHeading/);
-  assert.match(src, /continueWithIntent\("learner"\)/);
-  assert.match(src, /continueWithIntent\("teacher"\)/);
+  assert.match(src, /href=\{buildLoginHrefFromConnexion\("learner"/);
+  assert.match(src, /href=\{buildLoginHrefFromConnexion\("teacher"/);
   assert.match(src, /buildLoginHrefWithPreAuthIntent/);
 });
 
@@ -388,8 +388,8 @@ test("connexion home link is a plain root link without next param", () => {
   assert.match(src, /<Link href="\/" className="font-semibold text-teal-700 hover:underline">/);
   assert.match(src, /loginReturnHome/);
   assert.doesNotMatch(src, /loginReturnHome[\s\S]*searchParams\.get\("next"\)/);
-  assert.match(src, /continueWithIntent\("learner"\)/);
-  assert.match(src, /continueWithIntent\("teacher"\)/);
+  assert.match(src, /href=\{buildLoginHrefFromConnexion\("learner"/);
+  assert.match(src, /href=\{buildLoginHrefFromConnexion\("teacher"/);
   assert.match(src, /buildLoginHrefFromConnexion/);
 });
 
@@ -570,6 +570,59 @@ test("AuthenticatedShell sends teachers on student paths to dashboard", () => {
 test("learner pending intent clears stale teacher cookies", () => {
   const src = read("lib/auth/pendingOnboardingIntent.ts");
   assert.match(src, /if \(intent === "learner"\)[\s\S]*clearPendingTeacherOnboardingCookie/);
+});
+
+test("connexion role choice uses Link navigation instead of router.replace", () => {
+  const src = read("app/connexion/page.tsx");
+  assert.match(src, /href=\{buildLoginHrefFromConnexion\("learner"/);
+  assert.match(src, /href=\{buildLoginHrefFromConnexion\("teacher"/);
+  assert.doesNotMatch(src, /continueWithIntent/);
+  assert.doesNotMatch(src, /onClick=\{\(\) => continueWithIntent/);
+});
+
+test("connexion keeps router.replace only for automatic redirects", () => {
+  const src = read("app/connexion/page.tsx");
+  assert.match(src, /if \(!highlightIntent \|\| user\) return;[\s\S]*router\.replace\(buildLoginHrefFromConnexion/);
+  assert.match(src, /router\.replace\(authenticatedDestination\)/);
+});
+
+test("login page keeps change-path link to connexion instead of replace", () => {
+  const src = read("app/login/page.tsx");
+  assert.match(src, /href=\{CONNEXION_PATH\}/);
+});
+
+test("AuthenticatedShell defers AppShell during unresolved role hydration", () => {
+  const src = read("components/AuthenticatedShell.tsx");
+  assert.match(src, /shouldDeferShellForRoleHydration/);
+  assert.match(src, /if \(shouldDeferShellForRoleHydration\(pathname, profileHydrated, role\)\)/);
+});
+
+test("student mobile bottom nav has at most five items", () => {
+  const src = read("components/AppShell.tsx");
+  const block = src.match(/STUDENT_MOBILE_BOTTOM_NAV[\s\S]*?\];/)?.[0] ?? "";
+  const hrefCount = (block.match(/href:\s*["']/g) ?? []).length;
+  assert.ok(hrefCount <= 5, `student mobile bottom nav must have at most 5 items (got ${hrefCount})`);
+  assert.ok(hrefCount >= 4, `student mobile bottom nav should keep primary tabs (got ${hrefCount})`);
+});
+
+test("teacher mobile bottom nav has at most five items", () => {
+  const src = read("components/AppShell.tsx");
+  const block = src.match(/TEACHER_MOBILE_BOTTOM_NAV[\s\S]*?\];/)?.[0] ?? "";
+  const hrefCount = (block.match(/href:\s*["']/g) ?? []).length;
+  assert.ok(hrefCount <= 5, `teacher mobile bottom nav must have at most 5 items (got ${hrefCount})`);
+  assert.ok(hrefCount >= 4, `teacher mobile bottom nav should keep primary tabs (got ${hrefCount})`);
+});
+
+test("app route group exposes shared error boundary with retry and navigation", () => {
+  const src = read("app/(app)/error.tsx");
+  assert.match(src, /"use client"/);
+  assert.match(src, /anErrorOccurred/);
+  assert.match(src, /companionProfileSyncRetry/);
+  assert.match(src, /loginContinueDashboard/);
+  assert.match(src, /loginReturnHome/);
+  assert.match(src, /onClick=\{\(\) => retry\(\)\}/);
+  assert.doesNotMatch(src, /error\.stack/);
+  assert.doesNotMatch(src, /error\.message/);
 });
 
 test("existing teacher with learner intent routes to dashboard not companion", () => {

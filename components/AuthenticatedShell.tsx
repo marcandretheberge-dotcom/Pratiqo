@@ -37,6 +37,17 @@ function teacherForbiddenPath(pathname: string) {
   return false;
 }
 
+function shouldDeferShellForRoleHydration(
+  pathname: string | null | undefined,
+  profileHydrated: boolean,
+  role: string | undefined,
+): boolean {
+  if (profileHydrated || isResolvedRole(role)) return false;
+  if (pathname?.startsWith("/student/")) return false;
+  if (pathname?.startsWith("/onboarding/teacher")) return false;
+  return true;
+}
+
 export function AuthenticatedShell({ children }: { children: React.ReactNode }) {
   const { user, loading, profile, profileHydrated } = useAuth();
   const pathname = usePathname();
@@ -167,6 +178,16 @@ export function AuthenticatedShell({ children }: { children: React.ReactNode }) 
     return (
       <div className="min-h-[40vh] flex flex-col items-center justify-center gap-2 px-6 text-center text-sm text-[var(--p-text-muted)]">
         <p>Redirection vers la connexion…</p>
+      </div>
+    );
+  }
+
+  const role = profile?.role as string | undefined;
+  if (shouldDeferShellForRoleHydration(pathname, profileHydrated, role)) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3 text-[var(--p-text-muted)]">
+        <Loader2 className="h-9 w-9 animate-spin text-teal-700" />
+        <p className="text-sm font-medium">Chargement…</p>
       </div>
     );
   }

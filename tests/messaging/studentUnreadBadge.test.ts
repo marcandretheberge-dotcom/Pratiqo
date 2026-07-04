@@ -71,7 +71,7 @@ assert.match(
 );
 assert.match(
   appShellSrc,
-  /\{\s*href:\s*"\/messages",\s*icon:\s*"[^"]+",\s*labelKey:\s*"messages" as const\s*\}/,
+  /STUDENT_MOBILE_BOTTOM_NAV[\s\S]*?\{\s*href:\s*"\/messages",\s*icon:\s*"[^"]+",\s*labelKey:\s*"messages"\s*\}/,
   "student mobile bottom navigation must include Messages",
 );
 assert.match(
