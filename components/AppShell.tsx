@@ -25,6 +25,11 @@ function isStudentNavActive(pathname: string | null, href: string): boolean {
   if (!pathname) return false;
   if (href === "/dashboard") return pathname === "/dashboard";
   if (href === "/profile") return pathname === "/profile" || pathname.startsWith("/profile/");
+  if (href === "/teacher/my-profile") return pathname.startsWith("/teacher/my-profile");
+  if (href === "/teacher/schedule") {
+    return pathname.startsWith("/teacher/schedule") || pathname.startsWith("/teacher/group-sessions");
+  }
+  if (href === "/teacher/progress") return pathname.startsWith("/teacher/progress");
   return pathname.startsWith(href);
 }
 
@@ -106,14 +111,35 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     { href: "/student/search", labelKey: "studentTabFind" },
     { href: "/dashboard", labelKey: "studentTabLessons" },
     { href: "/student/progress", labelKey: "studentTabProgress" },
-    // Brand entry — always the full word "YoPratiqo" (never "Yo"
-    // alone). Sits next to /student/progress so the YoPratiqo ↔
-    // Pratiqo bridge is one click away in either direction.
     { href: "/student/yopratiqo", label: "YoPratiqo" },
     { href: "/student/learners", labelKey: "studentTabLearners" },
     { href: "/messages", labelKey: "messages" },
     { href: "/resolution", labelKey: "resolutionCenterTitle" },
     { href: "/profile", labelKey: "studentTabProfile" },
+  ];
+
+  const STUDENT_MOBILE_BOTTOM_NAV: Array<{
+    href: string;
+    icon: string;
+    labelKey: "studentTabFind" | "studentTabLessons" | "studentTabProgress" | "messages" | "studentTabProfile";
+  }> = [
+    { href: "/student/search", icon: "🔍", labelKey: "studentTabFind" },
+    { href: "/dashboard", icon: "📅", labelKey: "studentTabLessons" },
+    { href: "/messages", icon: "✉", labelKey: "messages" },
+    { href: "/profile", icon: "👤", labelKey: "studentTabProfile" },
+    { href: "/student/progress", icon: "🌱", labelKey: "studentTabProgress" },
+  ];
+
+  const TEACHER_MOBILE_BOTTOM_NAV: Array<{
+    href: string;
+    icon: string;
+    labelKey: "teacherDashboard" | "teacherSchedule" | "teacherMessages" | "teacherStudents" | "teacherNavMyProfile";
+  }> = [
+    { href: "/dashboard", icon: "🏠", labelKey: "teacherDashboard" },
+    { href: "/teacher/schedule", icon: "📅", labelKey: "teacherSchedule" },
+    { href: "/messages", icon: "✉", labelKey: "teacherMessages" },
+    { href: "/teacher/progress", icon: "👥", labelKey: "teacherStudents" },
+    { href: "/teacher/my-profile", icon: "👤", labelKey: "teacherNavMyProfile" },
   ];
 
   return (
@@ -279,7 +305,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             "flex-1 min-w-0",
             isStudent && "w-full overflow-y-auto px-4 sm:px-5 py-6 md:pb-0 pb-20",
             isTeacher &&
-              "w-full overflow-y-auto px-4 sm:px-6 py-6 pb-8 max-w-[1280px] mx-auto",
+              "w-full overflow-y-auto px-4 sm:px-6 py-6 pb-20 md:pb-8 max-w-[1280px] mx-auto",
             !isStudent && !isTeacher && "overflow-y-auto px-4 sm:px-5 py-6 pb-8",
           )}
           style={
@@ -325,29 +351,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           }}
         >
           {(
-            [
-              { href: "/student/search", icon: "🔍", labelKey: "studentTabFind" as const },
-              { href: "/dashboard", icon: "📅", labelKey: "studentTabLessons" as const },
-              { href: "/student/progress", icon: "🌱", labelKey: "studentTabProgress" as const },
-              // YoPratiqo brand entry on the bottom tab bar so the
-              // authenticated YoPratiqo hub is reachable from any
-              // /student/* page without scrolling. Label stays the
-              // full word "YoPratiqo" — never "Yo" alone.
-              { href: "/student/yopratiqo", icon: "🧭", label: "YoPratiqo" } as const,
-              { href: "/student/learners", icon: "🎓", labelKey: "studentTabLearners" as const },
-              { href: "/profile", icon: "👤", labelKey: "studentTabProfile" as const },
-              { href: "/messages", icon: "✉", labelKey: "messages" as const },
-              { href: "/resolution", icon: "!", labelKey: "resolutionCenterTitle" as const },
-            ] as const
+            STUDENT_MOBILE_BOTTOM_NAV
           ).map((tab) => {
             const active = isStudentNavActive(pathname, tab.href);
-            const text = "labelKey" in tab ? t(tab.labelKey) : tab.label;
-            const isYopratiqoEntry = tab.href === "/student/yopratiqo";
+            const text = t(tab.labelKey);
             return (
               <Link
                 key={tab.href}
                 href={tab.href}
-                data-testid={isYopratiqoEntry ? "student-bottom-nav-yopratiqo" : undefined}
                 style={{
                   flex: 1,
                   position: "relative",
@@ -385,12 +396,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <div
                   style={{
                     fontSize: 10,
-                    color: isYopratiqoEntry
-                      ? "#F4B400"
-                      : active
-                        ? "var(--palette-teal-700)"
-                        : "#4B5563",
-                    fontWeight: active || isYopratiqoEntry ? 500 : 400,
+                    color: active ? "var(--palette-teal-700)" : "#4B5563",
+                    fontWeight: active ? 500 : 400,
                     marginTop: 2,
                   }}
                 >
@@ -400,6 +407,88 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             );
           })}
         </nav>
+        </>
+      ) : null}
+
+      {isTeacher ? (
+        <>
+          <style>{`
+            .teacher-bottom-nav {
+              display: flex;
+            }
+            @media (min-width: 768px) {
+              .teacher-bottom-nav {
+                display: none !important;
+              }
+            }
+          `}</style>
+          <nav
+            className="teacher-bottom-nav"
+            style={{
+              position: "fixed",
+              bottom: 0,
+              left: 0,
+              right: 0,
+              zIndex: 50,
+              background: "white",
+              borderTop: "0.5px solid #D3D1C7",
+            }}
+          >
+            {TEACHER_MOBILE_BOTTOM_NAV.map((tab) => {
+              const active = isStudentNavActive(pathname, tab.href);
+              const text = t(tab.labelKey);
+              return (
+                <Link
+                  key={tab.href}
+                  href={tab.href}
+                  style={{
+                    flex: 1,
+                    position: "relative",
+                    textAlign: "center",
+                    padding: "8px 4px",
+                    textDecoration: "none",
+                  }}
+                >
+                  <div style={{ fontSize: 20 }}>{tab.icon}</div>
+                  {tab.href === "/messages" && unreadMessages > 0 ? (
+                    <span
+                      aria-label={`${unreadMessages > 99 ? "99+" : unreadMessages} ${t("unreadCountLabel")}`}
+                      style={{
+                        position: "absolute",
+                        top: 5,
+                        right: "calc(50% - 18px)",
+                        minWidth: 16,
+                        height: 16,
+                        padding: "0 4px",
+                        borderRadius: 999,
+                        background: "#ef4444",
+                        color: "white",
+                        border: "2px solid white",
+                        fontSize: 9,
+                        fontWeight: 800,
+                        lineHeight: "12px",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      {unreadMessages > 99 ? "99+" : unreadMessages}
+                    </span>
+                  ) : null}
+                  <div
+                    style={{
+                      fontSize: 10,
+                      color: active ? "#00694c" : "#4B5563",
+                      fontWeight: active ? 500 : 400,
+                      marginTop: 2,
+                    }}
+                  >
+                    {text}
+                  </div>
+                </Link>
+              );
+            })}
+          </nav>
         </>
       ) : null}
 
