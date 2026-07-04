@@ -113,8 +113,8 @@ function ConnexionInner() {
         <LocaleSwitcher variant="light" />
       </header>
 
-      <main className="mx-auto max-w-2xl px-4 py-10 sm:px-6 sm:py-14">
-        <div className="rounded-3xl border border-[var(--p-border-light)] bg-white p-6 shadow-[0_24px_80px_rgba(15,110,86,0.08)] sm:p-10">
+      <main className="mx-auto max-w-2xl px-4 py-6 sm:px-6 sm:py-14">
+        <div className="rounded-[1.75rem] border border-[var(--p-border-light)] bg-white p-5 shadow-[0_18px_60px_rgba(15,110,86,0.08)] sm:rounded-3xl sm:p-10">
           {user ? (
             <div className="text-center">
               <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-teal-700">
@@ -163,11 +163,11 @@ function ConnexionInner() {
                 {t("onboardingRoleChoiceSubtitle")}
               </p>
 
-              <div className="mt-8 grid gap-4 sm:grid-cols-2">
+              <div className="mt-6 grid gap-3 sm:mt-8 sm:gap-4 sm:grid-cols-2">
                 <Link
                   href={buildLoginHrefFromConnexion("learner", safeNext, ref)}
                   className={cn(
-                    "rounded-2xl border px-5 py-6 text-left transition-all",
+                    "min-h-[132px] rounded-2xl border px-4 py-5 text-left transition-all sm:px-5 sm:py-6",
                     "hover:border-teal-600 hover:bg-teal-50/60",
                     highlightIntent === "teacher"
                       ? "border-slate-200 bg-slate-50"
@@ -178,7 +178,7 @@ function ConnexionInner() {
                     <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-teal-700 shadow-sm">
                       <Sparkles size={22} />
                     </span>
-                    <div>
+                    <div className="min-w-0">
                       <p className="text-lg font-bold text-[var(--p-text)]">{t("onboardingRoleChoiceLearner")}</p>
                       <p className="mt-1 text-sm text-[var(--p-text-muted)]">{t("onboardingRoleChoiceLearnerHint")}</p>
                     </div>
@@ -189,7 +189,7 @@ function ConnexionInner() {
                 <Link
                   href={buildLoginHrefFromConnexion("teacher", safeNext, ref)}
                   className={cn(
-                    "rounded-2xl border px-5 py-6 text-left transition-all",
+                    "min-h-[132px] rounded-2xl border px-4 py-5 text-left transition-all sm:px-5 sm:py-6",
                     "hover:border-teal-600 hover:bg-teal-50/60",
                     highlightIntent === "teacher"
                       ? "border-teal-700 bg-teal-500/10 shadow-[0_18px_44px_rgba(29,158,117,0.18)] ring-2 ring-teal-600/20"
@@ -200,7 +200,7 @@ function ConnexionInner() {
                     <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-teal-700 text-white shadow-sm">
                       <GraduationCap size={22} />
                     </span>
-                    <div>
+                    <div className="min-w-0">
                       <p className="text-lg font-bold text-[var(--p-text)]">{t("onboardingRoleChoiceTeacher")}</p>
                       <p className="mt-1 text-sm text-[var(--p-text-muted)]">{t("onboardingRoleChoiceTeacherCardHint")}</p>
                     </div>

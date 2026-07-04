@@ -139,11 +139,10 @@ export default function ChooseCompanionPage() {
     <div
       className="w-full"
       style={{
-        paddingTop: 60, // space for sticky AppShell header
-        paddingBottom: 80, // mobile bottom tabs
+        paddingBottom: "calc(6rem + env(safe-area-inset-bottom))",
       }}
     >
-      <div className="max-w-3xl mx-auto px-4 sm:px-6">
+      <div className="max-w-3xl mx-auto px-0 sm:px-6">
         {showConsentGate ? (
           <div className="fixed inset-0 z-[80] flex items-center justify-center overflow-y-auto bg-slate-950/45 px-4 py-6 backdrop-blur-sm">
             <StudentOnboardingConsentGate
@@ -183,7 +182,7 @@ export default function ChooseCompanionPage() {
               pointerEvents: state === "choose" ? "auto" : "none",
             }}
           >
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
               {companions.map((c) => {
                 const firstStage = getCompanionStage(c.id, 0);
                 const name = localizedText(locale, c.name, c.nameEn, c.nameEs);
@@ -197,7 +196,7 @@ export default function ChooseCompanionPage() {
                     key={c.id}
                     type="button"
                     onClick={() => setSelected(c.id)}
-                    className={cn("text-left w-full rounded-2xl border bg-white p-5")}
+                    className={cn("min-h-[136px] text-left w-full rounded-2xl border bg-white p-4 shadow-sm sm:p-5")}
                     style={{
                       borderColor: active ? "var(--palette-teal-500)" : "#E8E6DF",
                       opacity: active ? 1 : dim ? 0.5 : 1,
@@ -220,7 +219,7 @@ export default function ChooseCompanionPage() {
               })}
             </div>
 
-            <div className="mt-4 flex justify-end">
+            <div className="mt-4 flex">
               <button
                 type="button"
                 onClick={() => {
@@ -230,7 +229,7 @@ export default function ChooseCompanionPage() {
                   setTimeout(() => setShowCards(false), 300);
                 }}
                 className={cn(
-                  "rounded-xl px-5 py-3 text-sm font-bold text-white bg-teal-600 hover:bg-[#178C67] transition-all",
+                  "min-h-12 w-full rounded-2xl px-5 py-3 text-sm font-bold text-white bg-teal-600 hover:bg-[#178C67] transition-all sm:w-auto",
                 )}
                 style={{ transition: "all 0.2s" }}
               >
@@ -343,12 +342,12 @@ export default function ChooseCompanionPage() {
               </div>
             </div>
 
-            <div className="mt-5 flex justify-end">
+            <div className="mt-5 flex">
               <button
                 type="button"
                 onClick={startAdventure}
                 className={cn(
-                  "rounded-xl px-5 py-3 text-sm font-bold text-white bg-teal-600 hover:bg-[#178C67] transition-all",
+                  "min-h-12 w-full rounded-2xl px-5 py-3 text-sm font-bold text-white bg-teal-600 hover:bg-[#178C67] transition-all sm:w-auto",
                 )}
               >
                 Commencer l&apos;aventure →

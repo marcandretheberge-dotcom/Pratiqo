@@ -129,6 +129,12 @@ const allowedPrefixes = [
   "app/connexion/page.tsx",
   "tests/auth/deterministicGoogleCallback.test.ts",
   "tests/auth/teacherSetupFlow.test.ts",
+  // Phase 2a mobile-first polish: visual spacing/tap-target changes only.
+  "components/AppShell.tsx",
+  "components/Dashboard.tsx",
+  "app/(app)/student/choose-companion/page.tsx",
+  "app/(app)/onboarding/teacher/page.tsx",
+  "tests/auth/teacherOnboardingFlow.test.ts",
   "tests/commission/commissionModelCopy.test.ts",
   "tests/marketing/trouverUnProfPage.test.ts",
   "tests/yo/yopratiqoDominicanResponsiveLayout.test.ts",

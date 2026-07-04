@@ -195,12 +195,12 @@ export default function TeacherOnboardingPage() {
   }
 
   return (
-    <div className="mx-auto flex min-h-[70vh] w-full max-w-3xl items-center px-4 py-10 sm:px-6">
+    <div className="mx-auto flex min-h-[70vh] w-full max-w-3xl items-start px-0 py-2 sm:items-center sm:px-6 sm:py-10">
       <div
-        className="w-full overflow-hidden rounded-3xl border border-[rgba(0,0,0,0.06)] bg-white shadow-[0_18px_55px_rgba(0,0,0,0.08)]"
+        className="w-full overflow-hidden rounded-[1.75rem] border border-[rgba(0,0,0,0.06)] bg-white shadow-[0_14px_44px_rgba(0,0,0,0.08)] sm:rounded-3xl sm:shadow-[0_18px_55px_rgba(0,0,0,0.08)]"
         data-testid="teacher-minimal-onboarding"
       >
-        <div className="border-b border-[rgba(0,0,0,0.06)] bg-[#F3FAF6] px-6 py-5 sm:px-8">
+        <div className="border-b border-[rgba(0,0,0,0.06)] bg-[#F3FAF6] px-5 py-5 sm:px-8">
           <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.22em] text-teal-700/80">
             <ShieldCheck size={16} aria-hidden />
             {t("teacherMinimalSetupEyebrow")}
@@ -213,7 +213,7 @@ export default function TeacherOnboardingPage() {
           </p>
         </div>
 
-        <div className="space-y-6 px-6 py-6 sm:px-8">
+        <div className="space-y-5 px-5 py-5 sm:space-y-6 sm:px-8 sm:py-6">
           {error ? (
             <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
               {error}
@@ -278,7 +278,7 @@ export default function TeacherOnboardingPage() {
                   label: t("teacherOnboardingLegalNoIncomeGuarantee"),
                 },
               ].map((item) => (
-                <label key={item.id} className="flex gap-3">
+                <label key={item.id} className="flex min-h-11 gap-3 rounded-xl bg-white/55 px-3 py-2">
                   <input
                     type="checkbox"
                     checked={item.checked}

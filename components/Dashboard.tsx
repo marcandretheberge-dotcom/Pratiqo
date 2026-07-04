@@ -813,8 +813,8 @@ export function Dashboard() {
     const firstMessagesHref = messagesHrefForStudentId(firstConfirmed?.student_id ?? null);
 
     return (
-      <div className="mx-auto w-full max-w-[1280px] space-y-8 bg-[#F3FAF6] pb-16 px-4 sm:px-6 lg:rounded-3xl lg:p-8 lg:shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]">
-        <header className="space-y-1">
+      <div className="mx-auto w-full max-w-[1280px] space-y-6 bg-[#F3FAF6] pb-[calc(6rem+env(safe-area-inset-bottom))] sm:space-y-8 sm:px-6 lg:rounded-3xl lg:p-8 lg:shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]">
+        <header className="space-y-1 rounded-3xl bg-white/70 p-4 shadow-sm ring-1 ring-teal-900/5 sm:bg-transparent sm:p-0 sm:shadow-none sm:ring-0">
           <p className="text-xs font-medium capitalize text-slate-600">{todayLabel}</p>
           <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
             {t("greeting")} {displayName}
@@ -1007,19 +1007,19 @@ export function Dashboard() {
   }
 
   return (
-    <div className="space-y-6 pb-12">
-      <section className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+    <div className="space-y-5 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:space-y-6 sm:pb-12">
+      <section className="flex flex-col justify-between gap-3 rounded-3xl bg-white p-4 shadow-sm ring-1 ring-slate-200/70 sm:bg-transparent sm:p-0 sm:shadow-none sm:ring-0 lg:flex-row lg:items-center">
         <div>
           <p className="ds-label text-slate-600">{t("dashboardStudentSpace")}</p>
-          <h2 className="text-[32px] sm:text-[40px] leading-[1.1] text-slate-900">{t("dashboard")}</h2>
+          <h2 className="text-[28px] sm:text-[40px] leading-[1.1] text-slate-900">{t("dashboard")}</h2>
           <p className="text-[14px] text-slate-600 mt-1">{t("dashboardStudentSubtitle")}</p>
         </div>
       </section>
 
-      <div className="grid grid-cols-12 gap-6">
-        <div className="col-span-12 lg:col-span-8 space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <div className="bg-gradient-to-br from-orange-500 to-rose-500 p-6 rounded-3xl text-white shadow-xl shadow-orange-100 relative overflow-hidden group">
+      <div className="grid grid-cols-12 gap-4 sm:gap-6">
+        <div className="col-span-12 lg:col-span-8 space-y-4 sm:space-y-6">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
+            <div className="bg-gradient-to-br from-orange-500 to-rose-500 p-5 sm:p-6 rounded-3xl text-white shadow-xl shadow-orange-100 relative overflow-hidden group">
               <div className="relative z-10 space-y-4">
                 <div className="flex items-center gap-2">
                   <Flame size={24} className="animate-pulse" />
@@ -1032,7 +1032,7 @@ export function Dashboard() {
               </div>
             </div>
 
-            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between overflow-hidden relative">
+            <div className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between overflow-hidden relative">
               <div className="flex justify-between items-start">
                 <div>
                   <h4 className="font-bold text-slate-900 mb-1">Réservations</h4>
@@ -1058,7 +1058,7 @@ export function Dashboard() {
                 doesn't compete with the streak / bookings cards above. */}
             <Link
               href="/student/payments"
-              className="sm:col-span-2 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex items-center justify-between overflow-hidden relative hover:border-brand-primary/50 hover:shadow-md transition group"
+              className="sm:col-span-2 bg-white p-5 sm:p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col items-start gap-4 overflow-hidden relative hover:border-brand-primary/50 hover:shadow-md transition group sm:flex-row sm:items-center sm:justify-between"
             >
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-teal-50 rounded-2xl flex items-center justify-center text-brand-primary shrink-0">

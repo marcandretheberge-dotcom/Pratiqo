@@ -190,6 +190,12 @@ test("minimal onboarding restores all required teacher acknowledgement checkboxe
   }
 });
 
+test("minimal onboarding keeps consent rows tappable on mobile", () => {
+  const page = read("app/(app)/onboarding/teacher/page.tsx");
+  assert.match(page, /min-h-11 gap-3 rounded-xl/);
+  assert.match(page, /rounded-\[1\.75rem\]/);
+});
+
 test("minimal onboarding submit stays disabled until display name and every acknowledgement are checked", () => {
   const page = read("app/(app)/onboarding/teacher/page.tsx");
   assert.match(page, /const\s+allConsentsAccepted\s*=\s*useMemo/);
