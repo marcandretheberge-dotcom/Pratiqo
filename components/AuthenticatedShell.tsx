@@ -11,10 +11,8 @@ import {
   ONBOARDING_ROLE_CHOICE_PATH,
   resolveProfileDashboardFromAuth,
 } from "@/lib/auth/onboardingRoleChoice";
-import { buildLoginHrefForProtectedReturn } from "@/lib/auth/preAuthOnboardingIntent";
+import { buildLoginHrefForProtectedReturn, hasActivePendingTeacherIntentClient } from "@/lib/auth/preAuthOnboardingIntent";
 import { logAuthFlowDecision } from "@/lib/auth/authFlowDiagnostics";
-import { readPendingOnboardingIntentClient } from "@/lib/auth/pendingOnboardingIntent";
-import { hasPendingTeacherIntentClient } from "@/lib/auth/pendingTeacherIntent";
 import { hasStudentOnboardingConsent } from "@/lib/auth/studentOnboardingConsent";
 
 const LEGAL_PREFIX = "/legal";
@@ -64,8 +62,7 @@ export function AuthenticatedShell({ children }: { children: React.ReactNode }) 
         return;
       }
 
-      const pendingTeacherIntent =
-        readPendingOnboardingIntentClient() === "teacher" || hasPendingTeacherIntentClient();
+      const pendingTeacherIntent = hasActivePendingTeacherIntentClient();
       if (pendingTeacherIntent) {
         logAuthFlowDecision("authenticated-shell", {
           guard: "teacher-pending-intent-dashboard",

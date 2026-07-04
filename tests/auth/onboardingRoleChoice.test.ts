@@ -429,6 +429,31 @@ test("connexion and login surface profile sync retry instead of infinite loading
   assert.match(login, /retryProfileSync/);
 });
 
+test("AppShell treats /student routes as student chrome during role hydration", () => {
+  const src = read("components/AppShell.tsx");
+  assert.match(src, /isStudentShellRoute/);
+  assert.match(src, /const isStudent = role === "student" \|\| \(!isTeacher && isStudentShellRoute\(pathname\)\)/);
+  assert.doesNotMatch(
+    src,
+    /const isStudent = role === "student";/,
+  );
+});
+
+test("dashboard avoids student companion when teacher intent is pending", () => {
+  const page = read("app/(app)/dashboard/page.tsx");
+  assert.match(page, /hasActivePendingTeacherIntentClient/);
+  assert.match(page, /resolvePendingTeacherOnboardingPath/);
+  assert.match(page, /pendingTeacherIntent[\s\S]*router\.replace\(resolvePendingTeacherOnboardingPath\(\)\)/);
+  assert.doesNotMatch(page, /if \(role === "student"\) return;[\s\S]{0,80}router\.replace\("\/student\/choose-companion"\)/);
+});
+
+test("pending teacher intent resolves to teacher onboarding path helper", () => {
+  const src = read("lib/auth/preAuthOnboardingIntent.ts");
+  assert.match(src, /hasActivePendingTeacherIntentClient/);
+  assert.match(src, /resolvePendingTeacherOnboardingPath/);
+  assert.match(src, /readPendingTeacherNextClient\(\) \?\? "\/onboarding\/teacher"/);
+});
+
 test("login page no longer hides existing sessions behind auth handoff", () => {
   const src = read("app/login/page.tsx");
   assert.match(src, /loginAlreadyConnectedTitle/);

@@ -17,6 +17,10 @@ import { YoNavButton } from "@/components/yo/YoNavButton";
 
 type Role = "student" | "teacher" | string;
 
+function isStudentShellRoute(pathname: string | null): boolean {
+  return pathname?.startsWith("/student/") ?? false;
+}
+
 function isStudentNavActive(pathname: string | null, href: string): boolean {
   if (!pathname) return false;
   if (href === "/dashboard") return pathname === "/dashboard";
@@ -40,7 +44,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { user, profile } = useAuth();
   const role = profile?.role as Role | undefined;
   const isTeacher = role === "teacher";
-  const isStudent = role === "student";
+  const isStudent = role === "student" || (!isTeacher && isStudentShellRoute(pathname));
 
   const [unreadMessages, setUnreadMessages] = useState(0);
   useEffect(() => {
