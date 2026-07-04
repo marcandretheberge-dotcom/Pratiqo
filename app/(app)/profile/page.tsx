@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Bell, ChevronRight, CreditCard, GraduationCap, Loader2, MapPin, Sparkles, TrendingUp } from "lucide-react";
 import { useAuth } from "../../../components/AuthProvider";
+import { logout } from "@/lib/auth";
 import { getSupabaseClient } from "../../../lib/supabase";
 import { authDisplayName } from "../../../lib/authDisplay";
 import { useLocale } from "../../../lib/locale-context";
@@ -357,11 +358,7 @@ export default function StudentProfilePage() {
 
         <button
           type="button"
-          onClick={async () => {
-            const supabase = getSupabaseClient();
-            await supabase.auth.signOut();
-            router.replace("/");
-          }}
+          onClick={() => void logout()}
           className="w-full rounded-2xl px-3 py-3 text-left text-sm font-bold text-rose-600 hover:bg-rose-50"
         >
           {t("profileSignOut")}

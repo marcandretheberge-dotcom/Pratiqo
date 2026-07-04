@@ -7,6 +7,7 @@ import { GraduationCap, Sparkles } from "lucide-react";
 import PratiqoLogo from "@/components/PratiqoLogo";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 import { useAuth } from "@/components/AuthProvider";
+import { AuthProfileSyncRetry } from "@/components/auth/AuthProfileSyncRetry";
 import { logout } from "@/lib/auth";
 import { resolvePostLoginDestination } from "@/lib/auth/authenticatedLoginDestination";
 import { clearPendingOnboardingIntentCookie } from "@/lib/auth/pendingOnboardingIntent";
@@ -35,7 +36,7 @@ function ConnexionInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { t } = useLocale();
-  const { user, loading: authLoading, profile, profileHydrated } = useAuth();
+  const { user, loading: authLoading, profile, profileHydrated, profileSyncError, retryProfileSync } = useAuth();
   const [busy, setBusy] = useState(false);
 
   const highlightIntent = useMemo(() => {
@@ -69,16 +70,27 @@ function ConnexionInner() {
     if (busy) return;
     setBusy(true);
     try {
-      clearPendingOnboardingIntentCookie();
-      clearPendingTeacherOnboardingCookie();
       await logout();
-      router.replace("/");
     } catch (e) {
       console.error(e);
       alert("Déconnexion impossible. Réessaie dans un instant.");
       setBusy(false);
     }
   };
+
+  if (!authLoading && user && profileSyncError && !profileHydrated) {
+    return (
+      <div className="min-h-[100dvh] bg-[#FAFCFB]">
+        <header className="sticky top-0 z-50 flex h-14 items-center justify-between border-b border-[#D3D1C7] bg-white px-4 sm:px-6">
+          <Link href="/" className="flex items-center gap-2">
+            <PratiqoLogo variant="full" size="md" />
+          </Link>
+          <LocaleSwitcher variant="light" />
+        </header>
+        <AuthProfileSyncRetry onRetry={retryProfileSync} />
+      </div>
+    );
+  }
 
   if (authLoading || (user && !profileHydrated)) {
     return (

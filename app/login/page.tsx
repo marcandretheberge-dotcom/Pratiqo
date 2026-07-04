@@ -7,6 +7,7 @@ import { LogIn } from "lucide-react";
 import PratiqoLogo from "../../components/PratiqoLogo";
 import { LocaleSwitcher } from "../../components/LocaleSwitcher";
 import { useAuth } from "../../components/AuthProvider";
+import { AuthProfileSyncRetry } from "../../components/auth/AuthProfileSyncRetry";
 import { loginWithGoogle, logout } from "../../lib/auth";
 import { resolvePostLoginDestination } from "../../lib/auth/authenticatedLoginDestination";
 import {
@@ -29,7 +30,7 @@ import { cn } from "../../lib/utils";
 function LoginForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { user, loading, profile, profileHydrated } = useAuth();
+  const { user, loading, profile, profileHydrated, profileSyncError, retryProfileSync } = useAuth();
   const { t } = useLocale();
   const [legalAccepted, setLegalAccepted] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -134,17 +135,27 @@ function LoginForm() {
     if (busy) return;
     setBusy(true);
     try {
-      clearPendingOnboardingIntentCookie();
-      clearPendingTeacherOnboardingCookie();
       await logout();
-      router.replace("/");
     } catch (e) {
       console.error("[login] sign out failed", e);
       alert("Deconnexion impossible. Reessaie dans un instant.");
-    } finally {
       setBusy(false);
     }
   };
+
+  if (!loading && user && profileSyncError && !profileHydrated) {
+    return (
+      <div className="min-h-[100dvh] bg-[#FAFCFB]">
+        <header className="sticky top-0 z-50 flex h-14 items-center justify-between border-b border-[#D3D1C7] bg-white px-4 sm:px-6">
+          <Link href="/" className="flex items-center gap-2">
+            <PratiqoLogo variant="full" size="md" />
+          </Link>
+          <LocaleSwitcher variant="light" />
+        </header>
+        <AuthProfileSyncRetry onRetry={retryProfileSync} />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-[100dvh] bg-[#FAFCFB]">

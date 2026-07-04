@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useSyncExternalStore, type ReactNode } from "react";
+import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
 import { useAuth } from "@/components/AuthProvider";
+import { AuthProfileSyncRetry } from "@/components/auth/AuthProfileSyncRetry";
 import { resolvePostLoginDestination } from "@/lib/auth/authenticatedLoginDestination";
 import { logAuthFlowDecision } from "@/lib/auth/authFlowDiagnostics";
 import { hasActiveOnboardingHandoffClient } from "@/lib/auth/onboardingHandoff";
@@ -26,6 +27,9 @@ import {
   clearPendingTeacherOnboardingCookie,
 } from "@/lib/auth/pendingTeacherIntent";
 import { AuthHandoffScreen } from "@/components/marketing/AuthHandoffScreen";
+
+/** Max wait for OAuth/profile recovery before offering retry (ms). */
+const HANDOFF_RECOVERY_TIMEOUT_MS = 12_000;
 
 function subscribeToHandoff() {
   return () => {};
@@ -97,7 +101,8 @@ function assignRecoveryDestination(
  * pending onboarding intent or OAuth return marker still needs recovery.
  */
 export function LandingAuthGate({ children }: { children: ReactNode }) {
-  const { user, loading: authLoading, profile, profileHydrated } = useAuth();
+  const { user, loading: authLoading, profile, profileHydrated, profileSyncError, retryProfileSync } = useAuth();
+  const [handoffTimedOut, setHandoffTimedOut] = useState(false);
   const handoffActive = useSyncExternalStore(subscribeToHandoff, getHandoffSnapshot, getServerHandoffSnapshot);
   const oauthReturnPending = useSyncExternalStore(
     subscribeToOAuthReturn,
@@ -109,6 +114,24 @@ export function LandingAuthGate({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (forwardOAuthCodeToCallback()) return;
   }, []);
+
+  useEffect(() => {
+    if (!recoveryActive || !user || profileHydrated || profileSyncError) {
+      setHandoffTimedOut(false);
+      return;
+    }
+    const timeoutId = window.setTimeout(() => {
+      clearStaleAuthHandoffState();
+      setHandoffTimedOut(true);
+      logAuthFlowDecision("landing-gate", {
+        stage: "handoff-recovery-timeout",
+        path: "/",
+        sessionPresent: true,
+        profileHydrated: false,
+      });
+    }, HANDOFF_RECOVERY_TIMEOUT_MS);
+    return () => window.clearTimeout(timeoutId);
+  }, [recoveryActive, user, profileHydrated, profileSyncError]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -156,6 +179,10 @@ export function LandingAuthGate({ children }: { children: ReactNode }) {
       }
     }
   }, [user, authLoading, profileHydrated, profile, recoveryActive, oauthReturnPending]);
+
+  if (user && (profileSyncError || handoffTimedOut)) {
+    return <AuthProfileSyncRetry onRetry={retryProfileSync} />;
+  }
 
   if (recoveryActive && user) {
     return <AuthHandoffScreen />;
