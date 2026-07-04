@@ -2,6 +2,8 @@ import { sanitizeRelativeRedirectPath } from "@/lib/auth/redirects";
 import type { ProfileRole } from "@/lib/auth/postAuthRedirect";
 import { mergeOnboardingRoleConfirmedDashboard, ONBOARDING_ROLE_CHOICE_PATH } from "@/lib/auth/onboardingRoleChoice";
 import { hasTeacherOnboardingIntent } from "@/lib/auth/teacherOnboardingIntent";
+import { readPendingOnboardingIntentClient } from "@/lib/auth/pendingOnboardingIntent";
+import { hasPendingTeacherIntentClient, readPendingTeacherNextClient } from "@/lib/auth/pendingTeacherIntent";
 
 export type PreAuthOnboardingIntent = "learner" | "teacher";
 
@@ -145,4 +147,13 @@ export function resolveOAuthProfilePatch(input: {
     role: primaryRoleForPreAuthIntent(input.intent, input.existingRole),
     dashboard: mergeOnboardingRoleConfirmedDashboard(input.existingDashboard),
   };
+}
+
+/** Client-only: teacher signup still in progress before profile role is persisted. */
+export function hasActivePendingTeacherIntentClient(): boolean {
+  return readPendingOnboardingIntentClient() === "teacher" || hasPendingTeacherIntentClient();
+}
+
+export function resolvePendingTeacherOnboardingPath(): string {
+  return readPendingTeacherNextClient() ?? "/onboarding/teacher";
 }

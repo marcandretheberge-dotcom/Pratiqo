@@ -48,7 +48,7 @@ test("connexion shows authenticated users an explicit connected state", () => {
 test("AuthenticatedShell sends pending teacher intent to dashboard not role choice", () => {
   const shell = read("components/AuthenticatedShell.tsx");
   assert.match(shell, /teacher-pending-intent-dashboard/);
-  assert.match(shell, /hasPendingTeacherIntentClient/);
+  assert.match(shell, /hasActivePendingTeacherIntentClient/);
 });
 
 test("choose-role redirects teachers and pending teacher intent to dashboard", () => {
