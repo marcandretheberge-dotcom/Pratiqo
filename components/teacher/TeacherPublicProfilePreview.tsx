@@ -141,7 +141,7 @@ export function TeacherPublicProfilePreview() {
   const publicHref = teacher?.id ? `/teacher/profile/${teacher.id}` : null;
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6 pb-12" data-testid="teacher-public-profile-preview">
+    <div className="mx-auto max-w-2xl space-y-6 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:pb-12" data-testid="teacher-public-profile-preview">
       <div>
         <p className="text-xs font-bold uppercase tracking-widest text-teal-700/80">
           {t("teacherPublicProfileLabel")}
@@ -150,8 +150,8 @@ export function TeacherPublicProfilePreview() {
         <p className="mt-2 text-sm text-[#6B6A65]">{t("teacherPublicProfilePreviewLead")}</p>
       </div>
 
-      <div className="rounded-2xl border border-[#E8E6DF] bg-white p-6 shadow-sm space-y-4">
-        <div className="flex items-start gap-4">
+      <div className="space-y-4 rounded-2xl border border-[#E8E6DF] bg-white p-4 shadow-sm sm:p-6">
+        <div className="flex items-start gap-3 sm:gap-4">
           {avatar ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -187,10 +187,10 @@ export function TeacherPublicProfilePreview() {
         ) : null}
       </div>
 
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
         <Link
           href={TEACHER_SETUP_PATH}
-          className="inline-flex h-11 items-center gap-2 rounded-full bg-teal-600 px-5 text-sm font-bold text-white hover:bg-teal-700"
+          className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full bg-teal-600 px-5 text-sm font-bold text-white hover:bg-teal-700 sm:w-auto"
           data-testid="teacher-public-profile-edit-cta"
         >
           <Pencil size={16} />
@@ -201,7 +201,7 @@ export function TeacherPublicProfilePreview() {
             href={publicHref}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex h-11 items-center gap-2 rounded-full border border-teal-500/30 bg-white px-5 text-sm font-semibold text-teal-700 hover:bg-teal-50"
+            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full border border-teal-500/30 bg-white px-5 text-sm font-semibold text-teal-700 hover:bg-teal-50 sm:w-auto"
             data-testid="teacher-public-profile-view-cta"
           >
             <ExternalLink size={16} />

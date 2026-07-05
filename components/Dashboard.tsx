@@ -813,7 +813,7 @@ export function Dashboard() {
     const firstMessagesHref = messagesHrefForStudentId(firstConfirmed?.student_id ?? null);
 
     return (
-      <div className="mx-auto w-full max-w-[1280px] space-y-6 bg-[#F3FAF6] pb-[calc(6rem+env(safe-area-inset-bottom))] sm:space-y-8 sm:px-6 lg:rounded-3xl lg:p-8 lg:shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]">
+      <div className="mx-auto w-full max-w-[1280px] space-y-5 overflow-hidden bg-[#F3FAF6] pb-[calc(6rem+env(safe-area-inset-bottom))] sm:space-y-8 sm:px-6 lg:rounded-3xl lg:p-8 lg:shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]" data-testid="teacher-dashboard-mobile-safe">
         <header className="space-y-1 rounded-3xl bg-white/70 p-4 shadow-sm ring-1 ring-teal-900/5 sm:bg-transparent sm:p-0 sm:shadow-none sm:ring-0">
           <p className="text-xs font-medium capitalize text-slate-600">{todayLabel}</p>
           <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
@@ -874,7 +874,7 @@ export function Dashboard() {
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <div className="space-y-6 lg:col-span-2">
-            <div className="rounded-xl border border-slate-200/90 bg-white p-5 shadow-[0_4px_24px_rgba(0,0,0,0.04)]">
+            <div className="rounded-xl border border-slate-200/90 bg-white p-4 shadow-[0_4px_24px_rgba(0,0,0,0.04)] sm:p-5">
               <p className="mb-4 text-[11px] font-bold uppercase tracking-widest text-[#00694c]">{t("pendingRequests")}</p>
               {actionFlash ? (
                 <p
@@ -940,11 +940,11 @@ export function Dashboard() {
                 cancelBusy={cancelBusy}
                 timeZone={teacherMeta?.timezone ?? null}
               />
-              <div className="mt-2 flex items-center justify-center gap-2 text-xs text-slate-400">
+              <div className="mt-2 flex flex-wrap items-center justify-center gap-2 text-center text-xs text-slate-400">
                 <span>{t("completedCoursesInHistory")}</span>
                 <Link
                   href="/teacher/history"
-                  className="font-semibold text-teal-700 underline-offset-2 hover:underline"
+                  className="inline-flex min-h-10 items-center rounded-full px-2 font-semibold text-teal-700 underline-offset-2 hover:underline"
                 >
                   {t("viewHistory")}
                 </Link>

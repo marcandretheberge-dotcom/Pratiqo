@@ -260,12 +260,12 @@ export default function TeacherHistoryPage() {
   if (!user) return null;
 
   return (
-    <main className="min-h-[70dvh] bg-[#F3FAF6] px-4 py-8">
-      <div className="mx-auto max-w-4xl space-y-6 pb-10">
+    <main className="min-h-[70dvh] bg-[#F3FAF6] px-4 py-5 sm:py-8">
+      <div className="mx-auto max-w-4xl space-y-5 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:space-y-6 sm:pb-10">
 
         {/* Page header */}
-        <section className="rounded-3xl border border-[#DCEAE3] bg-white p-6 shadow-sm">
-          <div className="flex items-start gap-4">
+        <section className="rounded-3xl border border-[#DCEAE3] bg-white p-4 shadow-sm sm:p-6">
+          <div className="flex items-start gap-3 sm:gap-4">
             <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-teal-50 text-teal-700">
               <History size={26} />
             </span>
@@ -284,14 +284,14 @@ export default function TeacherHistoryPage() {
         </section>
 
         {/* Tab bar */}
-        <div className="flex gap-1 rounded-2xl border border-slate-200 bg-white p-1 shadow-sm">
+        <div className="flex gap-1 overflow-x-auto rounded-2xl border border-slate-200 bg-white p-1 shadow-sm" data-testid="teacher-history-mobile-tabs">
           {tabItems.map(({ key, labelKey, count }) => (
             <button
               key={key}
               type="button"
               onClick={() => setTab(key)}
               className={cn(
-                "flex flex-1 items-center justify-center gap-1.5 rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors",
+                "flex min-h-11 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-xl px-3 py-2.5 text-xs font-semibold transition-colors sm:text-sm",
                 tab === key
                   ? "bg-teal-600 text-white shadow-sm"
                   : "text-slate-600 hover:text-slate-900",
@@ -437,7 +437,7 @@ export default function TeacherHistoryPage() {
         <div className="text-center">
           <Link
             href="/dashboard"
-            className="text-sm font-semibold text-teal-700 underline-offset-2 hover:underline"
+            className="inline-flex min-h-11 items-center justify-center rounded-full px-4 text-sm font-semibold text-teal-700 underline-offset-2 hover:underline"
           >
             ← {t("teacherHistoryBackToDashboard")}
           </Link>
