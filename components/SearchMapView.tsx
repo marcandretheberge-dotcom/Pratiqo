@@ -470,7 +470,7 @@ export function SearchMapView({
         <div
           className={cn(
             "fixed left-0 right-0 z-[55] px-4 sm:px-6",
-            "bottom-20 md:bottom-6",
+            "bottom-[calc(6rem+env(safe-area-inset-bottom))] md:bottom-6",
           )}
         >
           <div className="mx-auto max-w-3xl rounded-2xl border border-teal-500 bg-white p-4 shadow-[0_20px_60px_rgba(44,44,42,0.18)]">

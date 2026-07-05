@@ -544,9 +544,9 @@ export default function StudentSearchPage() {
           </div>
         </div>
 
-        <div id="student-search-results" className="bg-[#F3FAF6] px-4 pb-20 pt-4 sm:px-6 lg:px-8">
+        <div id="student-search-results" className="bg-[#F3FAF6] px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-[1280px]">
-            <div className="mb-4 rounded-3xl border border-[#DCEAE3] bg-white p-4 shadow-[0_16px_40px_rgba(29,158,117,0.08)]">
+            <div className="mb-4 rounded-[1.75rem] border border-[#DCEAE3] bg-white p-4 shadow-[0_12px_34px_rgba(29,158,117,0.07)] sm:rounded-3xl sm:shadow-[0_16px_40px_rgba(29,158,117,0.08)]">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div className="flex gap-3">
                   <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-teal-50 text-teal-700">
@@ -589,7 +589,7 @@ export default function StudentSearchPage() {
                         placeholder={t("bookingAddressPlaceholder")}
                         autoComplete="off"
                         data-testid="student-location-address-input"
-                        className="h-11 min-w-0 rounded-2xl border border-[#DCEAE3] bg-white px-3 text-sm outline-none focus:border-teal-500 sm:w-72"
+                        className="h-12 min-w-0 rounded-2xl border border-[#DCEAE3] bg-white px-3 text-sm outline-none focus:border-teal-500 sm:h-11 sm:w-72"
                       />
                       {googleReady ? (
                         <p className="text-[10px] leading-snug text-[#6B6A65]">
@@ -611,7 +611,7 @@ export default function StudentSearchPage() {
                       type="button"
                       disabled={locationBusy || !locationDraft.trim()}
                       onClick={() => void saveStudentLocation({ address: locationDraft.trim() })}
-                      className="h-11 rounded-2xl bg-teal-700 px-4 text-sm font-bold text-white disabled:opacity-50"
+                      className="h-12 rounded-2xl bg-teal-700 px-4 text-sm font-bold text-white disabled:opacity-50 sm:h-11"
                     >
                       {locationBusy ? t("avatarUploading") : t("save")}
                     </button>
@@ -619,7 +619,7 @@ export default function StudentSearchPage() {
                     <button
                       type="button"
                       onClick={() => setLocationEditing(true)}
-                      className="h-11 rounded-2xl border border-[#DCEAE3] bg-white px-4 text-sm font-bold text-[#2C2C2A] hover:bg-[#FAFCFB]"
+                      className="h-12 rounded-2xl border border-[#DCEAE3] bg-white px-4 text-sm font-bold text-[#2C2C2A] hover:bg-[#FAFCFB] sm:h-11"
                     >
                       {studentLocation ? t("studentLocationEdit") : t("studentLocationAddAddress")}
                     </button>
@@ -628,7 +628,7 @@ export default function StudentSearchPage() {
                     type="button"
                     disabled={locationBusy}
                     onClick={saveCurrentBrowserLocation}
-                    className="h-11 rounded-2xl border border-[#DCEAE3] bg-[#F3FAF6] px-4 text-sm font-bold text-teal-800 hover:bg-teal-50 disabled:opacity-50"
+                    className="h-12 rounded-2xl border border-[#DCEAE3] bg-[#F3FAF6] px-4 text-sm font-bold text-teal-800 hover:bg-teal-50 disabled:opacity-50 sm:h-11"
                   >
                     {t("studentLocationUseCurrentLocation")}
                   </button>
@@ -637,7 +637,7 @@ export default function StudentSearchPage() {
                       type="button"
                       disabled={locationBusy}
                       onClick={() => void saveStudentLocation(null)}
-                      className="h-11 rounded-2xl px-3 text-sm font-semibold text-[#6B6A65] hover:bg-[#F3FAF6] disabled:opacity-50"
+                      className="h-12 rounded-2xl px-3 text-sm font-semibold text-[#6B6A65] hover:bg-[#F3FAF6] disabled:opacity-50 sm:h-11"
                     >
                       {t("studentLocationClear")}
                     </button>
@@ -656,13 +656,13 @@ export default function StudentSearchPage() {
                 {results.length} {t("searchResults")}
               </p>
 
-              <div className="flex items-center gap-2">
-                <label className="inline-flex items-center gap-2 text-sm text-[#2C2C2A]">
+              <div className="flex flex-col gap-2 min-[420px]:flex-row min-[420px]:items-center">
+                <label className="inline-flex min-w-0 items-center gap-2 text-sm text-[#2C2C2A]">
                   <span className="text-[#6B6A65]">{t("sortLabel")}</span>
                   <select
                     value={sortMode}
                     onChange={(e) => setSortMode(e.target.value as typeof sortMode)}
-                    className="h-10 rounded-xl border border-[#E8E6DF] bg-white px-3 text-sm font-semibold text-[#2C2C2A] outline-none"
+                    className="h-11 min-w-0 flex-1 rounded-xl border border-[#E8E6DF] bg-white px-3 text-sm font-semibold text-[#2C2C2A] outline-none min-[420px]:flex-none"
                   >
                     <option value="relevance">{t("sortRelevance")}</option>
                     <option value="nearest">{t("sortNearest")}</option>
@@ -702,7 +702,7 @@ export default function StudentSearchPage() {
             </div>
 
             {viewMode === "list" ? (
-              <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
                 {loadingTeachers
                   ? Array.from({ length: 6 }).map((_, i) => (
                       <div
@@ -854,7 +854,7 @@ function TeacherCard({
       type="button"
       onClick={onOpen}
       className={cn(
-        "block w-full rounded-2xl border border-[#E8E6DF] bg-white p-4 text-left shadow-[0_12px_40px_rgba(44,44,42,0.06)]",
+        "block min-h-[164px] w-full rounded-2xl border border-[#E8E6DF] bg-white p-4 text-left shadow-[0_10px_32px_rgba(44,44,42,0.055)] sm:shadow-[0_12px_40px_rgba(44,44,42,0.06)]",
         "cursor-pointer transition-all duration-200 ease-out",
         "hover:-translate-y-1 hover:scale-[1.015] hover:border-teal-500/30 hover:shadow-xl",
         "active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/40",
@@ -904,8 +904,8 @@ function TeacherCard({
         ) : null}
       </div>
 
-      <div className="mt-3 flex items-center justify-between border-t border-[#E8E6DF] pt-3 text-xs text-[#6B6A65]">
-        <span className="inline-flex items-center gap-2">
+      <div className="mt-3 flex flex-col gap-2 border-t border-[#E8E6DF] pt-3 text-xs text-[#6B6A65] min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between">
+        <span className="inline-flex min-w-0 flex-wrap items-center gap-2">
           {teacher.teachingMode === "online" ? <Video size={12} /> : <Users size={12} />}
           {teacher.teachingMode === "online" ? t("bookingOnline") : t("inPerson")}
           {distanceKm != null ? <span className="text-[#D3D1C7]">·</span> : null}
@@ -915,7 +915,7 @@ function TeacherCard({
             </span>
           ) : null}
         </span>
-        <span className="font-bold text-teal-700">
+        <span className="font-bold text-teal-700 min-[420px]:text-right">
           <PriceDisplay
             amount={Number(teacher.pricePerLesson)}
             sourceCurrency={teacher.currency ?? "CAD"}

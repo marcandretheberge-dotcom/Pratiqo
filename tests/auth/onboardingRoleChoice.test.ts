@@ -633,6 +633,58 @@ test("student companion chooser reserves bottom-nav space and uses full-width mo
   assert.match(src, /min-h-12 w-full rounded-2xl/);
 });
 
+test("student dashboard reserves bottom-nav space and keeps mobile actions tappable", () => {
+  const src = read("components/StudentDashboard.tsx");
+  assert.match(src, /pb-\[calc\(6rem\+env\(safe-area-inset-bottom\)\)\]/);
+  assert.match(src, /inline-flex min-h-\[48px\] w-full/);
+  assert.match(src, /min-h-\[44px\] flex-1/);
+});
+
+test("student search results and map card clear the mobile bottom nav", () => {
+  const search = read("app/(app)/student/search/page.tsx");
+  const map = read("components/SearchMapView.tsx");
+  assert.match(search, /pb-\[calc\(6rem\+env\(safe-area-inset-bottom\)\)\]/);
+  assert.match(search, /min-h-\[164px\]/);
+  assert.match(map, /bottom-\[calc\(6rem\+env\(safe-area-inset-bottom\)\)\]/);
+});
+
+test("student messages keep the composer above safe-area and preserve route rendering", () => {
+  const src = read("app/(app)/messages/page.tsx");
+  assert.match(src, /export default function MessagesPage/);
+  assert.match(src, /pb-\[calc\(6rem\+env\(safe-area-inset-bottom\)\)\]/);
+  assert.match(src, /pb-\[max\(0\.75rem,env\(safe-area-inset-bottom\)\)\]/);
+  assert.match(src, /min-h-\[64px\]/);
+});
+
+test("student booking entry modal remains visual-only and mobile tappable", () => {
+  const page = read("app/(app)/booking/page.tsx");
+  const modal = read("components/BookingModal.tsx");
+  assert.match(page, /<BookingModal teacher=\{bookingTeacher\}/);
+  assert.match(modal, /export function BookingModal/);
+  assert.match(modal, /rounded-t-\[1\.75rem\]/);
+  assert.match(modal, /min-h-\[58px\]/);
+  assert.match(modal, /min-h-\[48px\]/);
+});
+
+test("student profile keeps logout behavior and mobile-safe account cards", () => {
+  const src = read("app/(app)/profile/page.tsx");
+  assert.match(src, /onClick=\{\(\) => void logout\(\)\}/);
+  assert.match(src, /profileSignOut/);
+  assert.match(src, /pb-\[calc\(6rem\+env\(safe-area-inset-bottom\)\)\]/);
+  assert.match(src, /min-h-\[56px\]/);
+});
+
+test("Google-only auth remains unchanged after student mobile polish", () => {
+  const login = read("app/login/page.tsx");
+  const auth = read("lib/auth.ts");
+  assert.match(auth, /export async function loginWithGoogle/);
+  assert.match(login, /data-testid="login-google-button"/);
+  assert.doesNotMatch(login, /type="email"/);
+  assert.doesNotMatch(login, /type="password"/);
+  assert.doesNotMatch(auth, /signInWithPassword/);
+  assert.doesNotMatch(auth, /signInWithOtp/);
+});
+
 test("app route group exposes shared error boundary with retry and navigation", () => {
   const src = read("app/(app)/error.tsx");
   assert.match(src, /"use client"/);

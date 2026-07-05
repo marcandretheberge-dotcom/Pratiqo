@@ -345,7 +345,7 @@ export function StudentDashboard() {
   const openRescheduleFor = (bookingId: string) => setRescheduleBookingId(bookingId);
 
   return (
-    <div className="mx-auto w-full max-w-[1280px] space-y-8 bg-[#F3FAF6] pb-16 px-4 sm:px-6 lg:rounded-3xl lg:p-8 lg:shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]">
+    <div className="mx-auto w-full max-w-[1280px] space-y-6 bg-[#F3FAF6] px-0 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:space-y-8 sm:px-6 lg:rounded-3xl lg:p-8 lg:shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]">
       <header className="space-y-1">
         <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">{t("studentTabLessons")}</h1>
       </header>
@@ -358,7 +358,7 @@ export function StudentDashboard() {
 
       {/* NEXT CLASS — hero */}
       <section
-        className="rounded-3xl p-5 text-white shadow-[0_24px_80px_rgba(15,110,86,0.22)] sm:p-6"
+        className="rounded-[1.75rem] p-5 text-white shadow-[0_18px_50px_rgba(15,110,86,0.18)] sm:rounded-3xl sm:p-6 sm:shadow-[0_24px_80px_rgba(15,110,86,0.22)]"
         style={{ background: "var(--palette-teal-700)" }}
       >
         <p className="text-[10px] font-bold uppercase tracking-widest text-white/90">{t("studentNextClass")}</p>
@@ -391,7 +391,7 @@ export function StudentDashboard() {
                       <span className="font-semibold text-white/95"> · {nextLesson.discipline}</span>
                     ) : null}
                   </div>
-                  <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-white/90">
+                  <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm text-white/90">
                     <span className="inline-flex items-center gap-2">
                       <CalendarDays size={16} className="shrink-0 opacity-95" />
                       {timeLabelFor(nextLesson)}
@@ -473,7 +473,7 @@ export function StudentDashboard() {
             </p>
             <Link
               href="/student/search"
-              className="inline-flex h-11 min-h-[44px] items-center justify-center rounded-2xl bg-white px-5 text-sm font-bold text-teal-700"
+              className="inline-flex min-h-[48px] w-full items-center justify-center rounded-2xl bg-white px-5 text-sm font-bold text-teal-700 sm:w-auto"
             >
               <Search size={16} className="mr-2" />
               {t("studentFindTeacher")}
@@ -488,7 +488,7 @@ export function StudentDashboard() {
         {loading ? (
           <div className="rounded-2xl border border-[var(--p-border-light)] bg-white p-6 text-sm text-slate-600">…</div>
         ) : upcoming.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-slate-200/90 bg-white p-6 text-sm text-slate-700 shadow-sm">
+          <div className="rounded-2xl border border-dashed border-slate-200/90 bg-white p-5 text-sm text-slate-700 shadow-sm sm:p-6">
             {t("studentNoLesson")}
           </div>
         ) : (
@@ -636,14 +636,14 @@ export function StudentDashboard() {
       <section className="space-y-3">
         <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-700">{t("studentMyTeachers")}</h2>
         {loading ? null : teachers.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-[var(--p-border-light)] bg-white p-6 text-sm text-slate-700">
+          <div className="rounded-2xl border border-dashed border-[var(--p-border-light)] bg-white p-5 text-sm text-slate-700 sm:p-6">
             {t("studentMyTeachers")}
           </div>
         ) : (
           <ul className="space-y-2">
             {teachers.map((x) => (
               <li key={x.teacherId} className="rounded-2xl border border-[var(--p-border-light)] bg-white px-4 py-3 shadow-sm">
-                <div className="flex items-center justify-between gap-3">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="min-w-0 flex items-center gap-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#F1EFE8] text-sm font-bold text-[#2C2C2A]">
                       {(x.name || "?").slice(0, 2).toUpperCase()}
@@ -661,7 +661,7 @@ export function StudentDashboard() {
                   <Link
                     href={`/teacher/profile/${x.teacherId}`}
                     className={cn(
-                      "inline-flex h-9 items-center gap-2 rounded-full px-4 text-xs font-bold",
+                      "inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-2xl px-4 text-xs font-bold sm:h-9 sm:min-h-0 sm:w-auto sm:rounded-full",
                       "bg-teal-600 text-white hover:brightness-[0.98]",
                     )}
                   >

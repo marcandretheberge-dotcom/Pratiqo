@@ -868,13 +868,13 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
 
   return (
     <div
-      className="fixed inset-0 z-[200] flex items-center justify-center p-4"
+      className="fixed inset-0 z-[200] flex items-end justify-center p-0 sm:items-center sm:p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="booking-modal-title"
       style={{
-        paddingTop: "max(1rem, env(safe-area-inset-top))",
-        paddingBottom: "max(1rem, env(safe-area-inset-bottom))",
+        paddingTop: "max(0.5rem, env(safe-area-inset-top))",
+        paddingBottom: "env(safe-area-inset-bottom)",
       }}
     >
       <div
@@ -885,7 +885,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="relative bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-slate-200 overflow-hidden max-h-[min(92dvh,calc(100dvh-2rem))] overflow-y-auto"
+        className="relative max-h-[calc(100dvh-env(safe-area-inset-top))] w-full max-w-lg overflow-y-auto rounded-t-[1.75rem] border border-slate-200 bg-white shadow-2xl sm:max-h-[min(92dvh,calc(100dvh-2rem))] sm:rounded-3xl"
       >
         {isSubmitting ? (
           <div
@@ -899,13 +899,13 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
             <p className="max-w-xs text-center text-xs leading-relaxed text-slate-600">{t("bookingPaymentNote")}</p>
           </div>
         ) : null}
-        <div className="p-5 sm:p-6 border-b border-slate-100 space-y-4">
+        <div className="space-y-4 border-b border-slate-100 p-4 sm:p-6">
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--palette-teal-700)" }}>
                 {t("bookingTitle")}
               </p>
-              <h3 id="booking-modal-title" className="text-xl font-bold text-slate-900">{publicFirstNameWithInitial(teacher.name)}</h3>
+              <h3 id="booking-modal-title" className="text-lg font-bold text-slate-900 sm:text-xl">{publicFirstNameWithInitial(teacher.name)}</h3>
             </div>
             <button
               type="button"
@@ -913,14 +913,14 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
               disabled={isSubmitting}
               aria-label={t("accessibilityCloseDialog")}
               className={cn(
-                "text-sm font-bold text-slate-600 hover:text-slate-800",
+                "min-h-11 rounded-xl px-2 text-sm font-bold text-slate-600 hover:text-slate-800",
                 isSubmitting && "cursor-not-allowed opacity-40 hover:text-slate-600",
               )}
             >
               {t("bookingClose")}
             </button>
           </div>
-          <div className="grid grid-cols-3 gap-2 text-[11px] font-semibold">
+          <div className="grid grid-cols-3 gap-1.5 text-[10px] font-semibold sm:gap-2 sm:text-[11px]">
             {[t("bookingStepDetails"), t("bookingStepSlot"), t("bookingStepPayment")].map((label, idx) => {
               const active = idx + 1 <= currentStepNumber;
               return (
@@ -938,8 +938,8 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
           </div>
         </div>
 
-        <div className="p-5 sm:p-6 space-y-6">
-          <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+        <div className="space-y-5 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:space-y-6 sm:p-6">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3.5 sm:p-4">
             <div className="flex items-start gap-3">
               <TeacherAvatar
                 name={teacher.name}
@@ -1050,7 +1050,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                         if (teachingMode === "domicile") setTeachingMode("person");
                       }}
                       className={cn(
-                        "px-3 py-1.5 rounded-full text-xs border font-semibold",
+                      "min-h-11 rounded-full border px-4 py-2 text-xs font-semibold",
                         lessonType === "intro" ? "text-white border-transparent" : "border-slate-200 text-slate-600",
                       )}
                       style={lessonType === "intro" ? { backgroundColor: "var(--palette-teal-700)", borderColor: "var(--palette-teal-700)" } : undefined}
@@ -1061,7 +1061,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                       type="button"
                       onClick={() => setLessonType("regular")}
                       className={cn(
-                        "px-3 py-1.5 rounded-full text-xs border font-semibold",
+                        "min-h-11 rounded-full border px-4 py-2 text-xs font-semibold",
                         lessonType === "regular" ? "text-white border-transparent" : "border-slate-200 text-slate-600",
                       )}
                       style={
@@ -1088,7 +1088,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                     type="button"
                     onClick={() => setSelectedLevel(lvl)}
                     className={cn(
-                      "px-3 py-1.5 rounded-full text-xs border",
+                      "min-h-11 rounded-full border px-4 py-2 text-xs",
                       selectedLevel === lvl ? "text-white border-transparent" : "border-slate-200 text-slate-600",
                     )}
                     style={
@@ -1139,14 +1139,14 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                       type="button"
                       disabled={learnerSaving}
                       onClick={() => void createSelfLearner()}
-                      className="inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-xl bg-white px-3 text-xs font-bold text-teal-700 disabled:opacity-60"
+                      className="inline-flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl bg-white px-3 text-xs font-bold text-teal-700 disabled:opacity-60"
                     >
                       {learnerSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                       {t("bookingCreateSelfLearner")}
                     </button>
                     <Link
                       href="/student/learners"
-                      className="inline-flex min-h-10 flex-1 items-center justify-center rounded-xl border border-[#DCEAE3] bg-white px-3 text-xs font-bold text-slate-700"
+                      className="inline-flex min-h-[44px] flex-1 items-center justify-center rounded-xl border border-[#DCEAE3] bg-white px-3 text-xs font-bold text-slate-700"
                     >
                       {t("bookingCreateLearnerProfile")}
                     </Link>
@@ -1173,7 +1173,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                         setAddressError(null);
                       }}
                       className={cn(
-                        "flex-1 min-w-[100px] py-2.5 px-2 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5",
+                        "flex min-h-[44px] flex-1 items-center justify-center gap-1.5 rounded-xl border px-2 py-2.5 text-xs font-bold",
                         teachingMode === "person"
                           ? "border-teal-500 bg-teal-50 text-teal-700"
                           : "border-slate-200",
@@ -1190,7 +1190,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                         setAddressError(null);
                       }}
                       className={cn(
-                        "flex-1 min-w-[100px] py-2.5 px-2 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5",
+                        "flex min-h-[44px] flex-1 items-center justify-center gap-1.5 rounded-xl border px-2 py-2.5 text-xs font-bold",
                         teachingMode === "online"
                           ? "border-teal-500 bg-teal-50 text-teal-700"
                           : "border-slate-200",
@@ -1208,7 +1208,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                         if (savedAddress) setStudentAddress((current) => current.trim() ? current : savedAddress);
                       }}
                       className={cn(
-                        "flex-1 min-w-[100px] py-2.5 px-2 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5",
+                        "flex min-h-[44px] flex-1 items-center justify-center gap-1.5 rounded-xl border px-2 py-2.5 text-xs font-bold",
                         teachingMode === "domicile"
                           ? "border-teal-500 bg-teal-50 text-teal-700"
                           : "border-slate-200",
@@ -1382,7 +1382,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                 <button
                   type="button"
                   onClick={() => setStep("info")}
-                  className="flex-1 h-11 rounded-2xl border border-slate-200 text-sm font-semibold text-slate-600"
+                  className="h-12 flex-1 rounded-2xl border border-slate-200 text-sm font-semibold text-slate-600 sm:h-11"
                 >
                   <ChevronLeft className="inline mr-1" size={16} />
                   {t("back")}
@@ -1401,7 +1401,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                     setSelectedSlot(null);
                     setStep("pickDate");
                   }}
-                  className="flex-[2] ds-btn-primary h-11 rounded-2xl text-sm font-semibold disabled:opacity-50"
+                  className="ds-btn-primary h-12 flex-[2] rounded-2xl text-sm font-semibold disabled:opacity-50 sm:h-11"
                 >
                   {t("chooseSlotCta")}
                 </button>
@@ -1427,7 +1427,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                   {t("bookingNoAvailability")}
                 </p>
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                   {calendarCells.map((cell) => {
                     // Booking-availability tri-state ─ keep the visual
                     // states clearly distinct (production QA showed the
@@ -1452,7 +1452,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                           setStep("pickSlot");
                         }}
                         className={cn(
-                          "py-2.5 px-2 rounded-xl border text-left text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700/40 focus-visible:ring-offset-2",
+                          "min-h-[58px] rounded-xl border px-2 py-2.5 text-left text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700/40 focus-visible:ring-offset-2",
                           cell.disabled
                             ? "border-slate-200 bg-slate-100 text-slate-400 cursor-not-allowed"
                             : isSelected
@@ -1483,7 +1483,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
               <button
                 type="button"
                 onClick={() => setStep("preferences")}
-                className="w-full h-10 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600"
+                className="h-11 w-full rounded-xl border border-slate-200 text-sm font-semibold text-slate-600"
               >
                 <ChevronLeft className="inline mr-1" size={16} />
                 {t("back")}
@@ -1509,7 +1509,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
               ) : slots.length === 0 ? (
                 <p className="text-sm text-slate-500">{t("noSlotsPickOther")}</p>
               ) : (
-                <div className="space-y-4 max-h-[40vh] overflow-y-auto pr-1">
+                <div className="max-h-[42vh] space-y-4 overflow-y-auto pr-1">
                   {slotsByPeriod.map((g) => (
                     <div key={g.key}>
                       <p className="text-[11px] font-bold uppercase tracking-widest text-slate-600 mb-2">
@@ -1544,7 +1544,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                                 });
                               }}
                               className={cn(
-                                "py-2.5 rounded-xl border text-xs font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700/40 focus-visible:ring-offset-2",
+                                "min-h-[48px] rounded-xl border px-2 py-2.5 text-xs font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700/40 focus-visible:ring-offset-2",
                                 "disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400",
                                 isSelected
                                   ? "border-teal-700 bg-teal-700 text-white shadow-sm hover:bg-teal-800 cursor-pointer"
@@ -1564,7 +1564,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                 <button
                   type="button"
                   onClick={() => setStep("pickDate")}
-                  className="flex-1 h-10 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600"
+                  className="h-11 flex-1 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600"
                 >
                   <ChevronLeft className="inline mr-1" size={16} />
                   {t("backToDate")}
@@ -1752,7 +1752,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                   disabled={isSubmitting}
                   onClick={() => setStep("pickSlot")}
                   className={cn(
-                    "flex-1 h-11 rounded-2xl border border-slate-200 text-sm font-semibold text-slate-600",
+                    "h-12 flex-1 rounded-2xl border border-slate-200 text-sm font-semibold text-slate-600 sm:h-11",
                     isSubmitting && "cursor-not-allowed opacity-50",
                   )}
                 >
@@ -1763,7 +1763,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                   type="button"
                   disabled={isSubmitting || teacherIdInvalid || !sessionBookable}
                   onClick={() => void handleConfirmAndPay()}
-                  className="flex-[2] h-11 rounded-2xl text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-2 text-white shadow-md transition hover:opacity-95"
+                  className="flex h-12 flex-[2] items-center justify-center gap-2 rounded-2xl text-sm font-semibold text-white shadow-md transition hover:opacity-95 disabled:opacity-50 sm:h-11"
                   style={{ backgroundColor: "var(--palette-teal-700)" }}
                 >
                   {isSubmitting ? (
