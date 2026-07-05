@@ -137,7 +137,7 @@ export default function StudentProfilePage() {
   if (!user) return null;
 
   return (
-    <div className="space-y-6 pb-10">
+    <div className="space-y-5 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:space-y-6 sm:pb-10">
       {/* HEADER */}
       <section className="text-center space-y-2">
         <AvatarUpload userId={user.id} displayName={authDisplayName(user)} currentPhotoUrl={photoUrl} onPhotoUrlChange={setPhotoUrl} />
@@ -193,7 +193,7 @@ export default function StudentProfilePage() {
       </section>
 
       {/* SETTINGS */}
-      <section className="rounded-3xl border border-[var(--p-border-light)] bg-white p-4 shadow-sm space-y-3">
+      <section className="space-y-3 rounded-[1.75rem] border border-[var(--p-border-light)] bg-white p-4 shadow-sm sm:rounded-3xl">
         <Row label={t("profileLanguage")}>
           <div className="shrink-0 max-w-[200px] sm:max-w-none sm:scale-95 sm:origin-right">
             <LocaleSwitcher variant="light" compact />
@@ -319,7 +319,7 @@ export default function StudentProfilePage() {
                   window.setTimeout(() => setLocMsg(null), 4000);
                 }
               }}
-              className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-2xl bg-teal-600 px-4 text-sm font-bold text-white disabled:opacity-60"
+              className="inline-flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl bg-teal-600 px-4 text-sm font-bold text-white disabled:opacity-60 sm:w-auto"
             >
               {locSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
               {t("save")}
@@ -330,7 +330,7 @@ export default function StudentProfilePage() {
 
         <Link
           href="/student/payments"
-          className="flex items-center justify-between rounded-2xl px-3 py-3 hover:bg-slate-50"
+          className="flex min-h-[56px] items-center justify-between rounded-2xl px-3 py-3 hover:bg-slate-50"
         >
           <div className="flex items-center gap-3">
             <span className="h-9 w-9 rounded-xl bg-teal-50 text-teal-700 flex items-center justify-center">
@@ -343,7 +343,7 @@ export default function StudentProfilePage() {
 
         <Link
           href="/student/learners"
-          className="flex items-center justify-between rounded-2xl px-3 py-3 hover:bg-slate-50"
+          className="flex min-h-[56px] items-center justify-between rounded-2xl px-3 py-3 hover:bg-slate-50"
         >
           <div className="flex items-center gap-3">
             <span className="h-9 w-9 rounded-xl bg-teal-50 text-teal-700 flex items-center justify-center">
@@ -359,7 +359,7 @@ export default function StudentProfilePage() {
         <button
           type="button"
           onClick={() => void logout()}
-          className="w-full rounded-2xl px-3 py-3 text-left text-sm font-bold text-rose-600 hover:bg-rose-50"
+          className="min-h-[48px] w-full rounded-2xl px-3 py-3 text-left text-sm font-bold text-rose-600 hover:bg-rose-50"
         >
           {t("profileSignOut")}
         </button>
@@ -370,7 +370,7 @@ export default function StudentProfilePage() {
 
 function StatCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-[var(--p-border-light)] bg-white p-3 shadow-sm text-center">
+    <div className="min-h-[76px] rounded-2xl border border-[var(--p-border-light)] bg-white p-3 text-center shadow-sm">
       <p className="text-[10px] font-bold uppercase tracking-widest text-slate-600">{label}</p>
       <p className="mt-1 text-[18px] font-bold text-teal-700">{value}</p>
     </div>
@@ -381,7 +381,7 @@ function CreditsStatLink({ label, cta }: { label: string; cta: string }) {
   return (
     <Link
       href="/student/progress"
-      className="flex flex-col items-center justify-center rounded-2xl border border-[var(--p-border-light)] bg-white p-3 text-center shadow-sm transition hover:border-[#1D9E75]/40 hover:bg-[#F3FAF6] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1D9E75] focus-visible:ring-offset-2"
+      className="flex min-h-[76px] flex-col items-center justify-center rounded-2xl border border-[var(--p-border-light)] bg-white p-3 text-center shadow-sm transition hover:border-[#1D9E75]/40 hover:bg-[#F3FAF6] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1D9E75] focus-visible:ring-offset-2"
     >
       <p className="text-[10px] font-bold uppercase tracking-widest text-slate-600">{label}</p>
       <p className="mt-1 inline-flex items-center gap-1 text-[14px] font-bold text-teal-700">
@@ -394,7 +394,7 @@ function CreditsStatLink({ label, cta }: { label: string; cta: string }) {
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between gap-3 rounded-2xl px-3 py-2.5 hover:bg-slate-50">
+    <div className="flex min-h-[56px] items-center justify-between gap-3 rounded-2xl px-3 py-2.5 hover:bg-slate-50">
       <div className="flex items-center gap-3">
         <span className="h-9 w-9 rounded-xl bg-[#F1EFE8] text-[#2C2C2A] flex items-center justify-center">
           <Bell size={18} />

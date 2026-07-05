@@ -379,7 +379,7 @@ export default function MessagesPage() {
   }
 
   return (
-    <div className="flex flex-col gap-4 -mx-2 sm:mx-0">
+    <div className="flex flex-col gap-4 -mx-2 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:mx-0 sm:pb-0">
       <div>
         <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{t("messages")}</h1>
         <p className="text-sm text-slate-600 mt-1">{t("messagesSubtitle")}</p>
@@ -389,7 +389,7 @@ export default function MessagesPage() {
         <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm text-rose-800">{error}</div>
       ) : null}
 
-      <div className="flex rounded-2xl border border-[var(--p-border-light)] bg-white overflow-hidden min-h-[520px] max-h-[calc(100dvh-220px)] shadow-sm">
+      <div className="flex min-h-[calc(100dvh-13.5rem)] overflow-hidden rounded-2xl border border-[var(--p-border-light)] bg-white shadow-sm sm:min-h-[520px] sm:max-h-[calc(100dvh-220px)]">
         <aside
           className={cn(
             "shrink-0 border-r border-[var(--p-border-light)] flex flex-col bg-[#fafaf8]",
@@ -420,7 +420,7 @@ export default function MessagesPage() {
                       router.replace("/messages", { scroll: false });
                     }}
                     className={cn(
-                      "w-full text-left px-4 py-3 border-b border-[var(--p-border-light)]/60 transition-colors hover:bg-white/90",
+                      "w-full min-h-[64px] text-left px-4 py-3 border-b border-[var(--p-border-light)]/60 transition-colors hover:bg-white/90",
                       active ? "bg-teal-50" : "bg-transparent",
                     )}
                   >
@@ -513,7 +513,7 @@ export default function MessagesPage() {
                 <div ref={bottomRef} />
               </div>
 
-              <div className="p-3 border-t border-[var(--p-border-light)] bg-[#fafaf8]">
+              <div className="border-t border-[var(--p-border-light)] bg-[#fafaf8] p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
                 {contactGateNotice ? (
                   <div
                     role="status"
@@ -535,7 +535,7 @@ export default function MessagesPage() {
                     Brouillon pré-rempli — modifiez et envoyez quand vous êtes prêt(e).
                   </p>
                 ) : null}
-                <div className="flex items-end gap-2 rounded-[22px] border border-[var(--p-border-light)] bg-white pl-4 pr-2 py-2 focus-within:ring-2 focus-within:ring-teal-500/25">
+                <div className="flex items-end gap-2 rounded-[22px] border border-[var(--p-border-light)] bg-white py-2 pl-4 pr-2 focus-within:ring-2 focus-within:ring-teal-500/25">
                   <textarea
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
@@ -553,7 +553,7 @@ export default function MessagesPage() {
                     type="button"
                     disabled={sending || !input.trim() || !activePeerId}
                     onClick={() => void handleSend()}
-                    className="shrink-0 h-10 w-10 rounded-full flex items-center justify-center text-white disabled:opacity-40 transition hover:brightness-95"
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-white transition hover:brightness-95 disabled:opacity-40 sm:h-10 sm:w-10"
                     style={{ backgroundColor: "var(--palette-teal-500)" }}
                     title={t("sendButtonTitle")}
                   >

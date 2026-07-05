@@ -477,13 +477,13 @@ export function TeacherProfile({
 
   return (
     <div
-      className="fixed inset-0 z-[210] flex items-center justify-center p-4"
+      className="fixed inset-0 z-[210] flex items-end justify-center p-0 sm:items-center sm:p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="teacher-profile-modal-title"
       style={{
-        paddingTop: "max(1rem, env(safe-area-inset-top))",
-        paddingBottom: "max(1rem, env(safe-area-inset-bottom))",
+        paddingTop: "max(0.5rem, env(safe-area-inset-top))",
+        paddingBottom: "env(safe-area-inset-bottom)",
       }}
     >
       {/* Backdrop */}
@@ -500,38 +500,38 @@ export function TeacherProfile({
         initial={{ scale: 0.9, opacity: 0, y: 40 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.9, opacity: 0, y: 40 }}
-        className="relative bg-white w-full max-w-4xl max-h-[min(90dvh,calc(100dvh-2rem))] rounded-[32px] overflow-hidden shadow-2xl z-10 border border-slate-200 flex flex-col"
+        className="relative z-10 flex max-h-[calc(100dvh-env(safe-area-inset-top))] w-full max-w-4xl flex-col overflow-hidden rounded-t-[1.75rem] border border-slate-200 bg-white shadow-2xl sm:max-h-[min(90dvh,calc(100dvh-2rem))] sm:rounded-[32px]"
       >
         {/* Close */}
         <button
           type="button"
           onClick={onClose}
           aria-label={t("accessibilityCloseDialog")}
-          className="absolute top-5 right-5 z-20 p-2 bg-white/90 backdrop-blur-md rounded-full shadow-md border border-slate-200 text-slate-600 hover:text-slate-800 transition-all"
+          className="absolute right-4 top-4 z-20 min-h-11 min-w-11 rounded-full border border-slate-200 bg-white/90 p-2 text-slate-600 shadow-md backdrop-blur-md transition-all hover:text-slate-800 sm:right-5 sm:top-5 sm:min-h-0 sm:min-w-0"
         >
           <X size={18} />
         </button>
 
         {/* ── Scrollable body ──────────────────────────────────────── */}
         <div className="flex-1 overflow-y-auto custom-scrollbar">
-          <div className="p-6 lg:p-8">
+          <div className="p-4 sm:p-6 lg:p-8">
             <div className="lg:grid lg:grid-cols-5 lg:gap-8 lg:items-start">
 
               {/* ── LEFT COLUMN ─────────────────────── */}
               <div className="lg:col-span-3 space-y-6">
                 {pageHeadline ? (
-                  <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 leading-tight pr-12">
+                  <h1 className="pr-12 text-2xl font-bold leading-tight text-slate-900 lg:text-3xl">
                     {pageHeadline}
                   </h1>
                 ) : null}
 
                 {/* Compact header */}
-                <div className="flex items-start gap-4 pr-12">
+                <div className="flex items-start gap-3 pr-12 sm:gap-4">
                   <TeacherAvatar
                     name={teacher.name}
                     category={teacher.category}
                     imageUrl={teacher.imageUrl}
-                    size={96}
+                    size={80}
                     ringClassName="border-2 border-white shadow-lg ring-2 ring-teal-500/25"
                   />
 
@@ -542,7 +542,7 @@ export function TeacherProfile({
                       </span>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
-                      <h2 id="teacher-profile-modal-title" className="text-xl lg:text-2xl font-bold text-slate-900 leading-tight">{publicName}</h2>
+                      <h2 id="teacher-profile-modal-title" className="text-lg font-bold leading-tight text-slate-900 sm:text-xl lg:text-2xl">{publicName}</h2>
                       {headlineBadges.map((badge) => (
                         <TeacherBadgePill key={badge.id} badge={badge} compact />
                       ))}
@@ -615,7 +615,7 @@ export function TeacherProfile({
                 <TeacherVideoEmbed videoUrl={teacher.videoUrl} />
 
                 {/* Quick stats */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
                   <QuickStat icon={<Clock className="text-indigo-500" size={15} />} label={t("trialLesson")} value={t("trialLessonDuration")} />
                   <QuickStat
                     icon={<Globe className="text-emerald-500" size={15} />}
@@ -782,7 +782,7 @@ export function TeacherProfile({
                 <div className="lg:sticky lg:top-0 space-y-4">
 
                   {/* Booking widget */}
-                  <div className="rounded-2xl border border-slate-200 bg-white shadow-sm p-5 space-y-4">
+                  <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
                     <div>
                       <p className="text-2xl font-bold text-slate-900">
                         <PriceDisplay
@@ -1020,11 +1020,11 @@ export function TeacherProfile({
         </div>
 
         {/* ── Mobile sticky footer (hidden on lg+) ─── */}
-        <div className="lg:hidden flex-shrink-0 px-4 py-3 border-t border-slate-100 bg-white">
+        <div className="flex-shrink-0 border-t border-slate-100 bg-white px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:hidden">
           <button
             type="button"
             onClick={() => onBook("standard")}
-            className="w-full h-11 rounded-2xl text-white text-sm font-semibold flex items-center justify-center gap-2 shadow-sm hover:opacity-95 transition-opacity"
+            className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-95"
             style={{ backgroundColor: "var(--palette-teal-700)" }}
           >
             Réserver —{" "}
