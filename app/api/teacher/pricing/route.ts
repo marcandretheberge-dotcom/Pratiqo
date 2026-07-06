@@ -166,7 +166,10 @@ export async function PATCH(req: Request) {
   }
 
   const locale = await resolveEmailLocaleForUser(admin, user.id);
-  const data = parsed.data;
+  const data =
+    parsed.data.intro_session_enabled === false
+      ? { ...parsed.data, intro_session_price_cents: null }
+      : parsed.data;
 
   const { data: currentRow, error: currentErr } = await admin
     .from("teachers")

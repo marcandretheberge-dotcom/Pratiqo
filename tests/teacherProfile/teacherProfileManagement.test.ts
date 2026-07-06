@@ -132,6 +132,15 @@ test("page: offer & pricing card uses new copy and intro offer fields", () => {
   assert.match(verificationSrc, /data-testid="teacher-profile-mgmt-card-offer-pricing"/);
 });
 
+test("pricing save: intro price is conditional on the intro offer checkbox", () => {
+  assert.match(verificationSrc, /if \(editIntroEnabled\) \{/);
+  assert.match(verificationSrc, /introPriceRaw === ""/);
+  assert.match(verificationSrc, /setEditIntroPrice\(""\)/);
+  assert.match(verificationSrc, /intro_session_enabled:\s*editIntroEnabled/);
+  assert.match(verificationSrc, /intro_session_price_cents:\s*introPriceCents/);
+  assert.doesNotMatch(verificationSrc, /Number\(String\(editIntroPrice \|\| ""\)\.trim\(\)\)[\s\S]{0,120}return null/);
+});
+
 test("page: availability links to schedule with duration summary CTA", () => {
   assert.match(verificationSrc, /ctaHref="\/teacher\/schedule"/);
   assert.match(verificationSrc, /editScheduleAndDuration/);

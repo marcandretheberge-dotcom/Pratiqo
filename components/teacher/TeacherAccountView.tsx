@@ -367,11 +367,16 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
     setVideoUrlError(null);
 
     const hourlyNum = Number(hourly);
-    const introPriceCents = (() => {
-      const dollars = Number(String(introCustomPrice || "").trim());
-      if (!Number.isFinite(dollars) || dollars <= 0) return null;
-      return Math.max(0, Math.round(dollars * 100));
-    })();
+    const introPriceRaw = String(introCustomPrice || "").trim();
+    let introPriceCents: number | null = null;
+    if (introEnabled) {
+      const dollars = Number(introPriceRaw);
+      if (introPriceRaw === "" || !Number.isFinite(dollars) || dollars <= 0 || dollars < MIN_LESSON_PRICE_DOLLARS) {
+        setMessage(`${t("introSessionPrice")} - ${t("pricingMinLessonPrice")}`);
+        return;
+      }
+      introPriceCents = Math.round(dollars * 100);
+    }
 
     const offerCheck = validateTeacherLessonOffers({
       price_per_lesson: hourlyNum,
@@ -778,7 +783,14 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
               <input
                 type="checkbox"
                 checked={introEnabled}
-                onChange={(e) => setIntroEnabled(e.target.checked)}
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  setIntroEnabled(checked);
+                  if (!checked) {
+                    setIntroCustomPrice("");
+                    setMessage(null);
+                  }
+                }}
                 className="h-4 w-4 rounded border-slate-300 text-[#00694c]"
               />
               {t("enableIntroSession")}

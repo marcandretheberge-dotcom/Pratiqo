@@ -640,11 +640,16 @@ export default function TeacherProfileManagementPage() {
       showMsg(t("pricingMinLessonPrice"), "error");
       return;
     }
-    const introPriceCents = (() => {
-      const dollars = Number(String(editIntroPrice || "").trim());
-      if (!Number.isFinite(dollars) || dollars <= 0) return null;
-      return Math.max(0, Math.round(dollars * 100));
-    })();
+    const introPriceRaw = String(editIntroPrice || "").trim();
+    let introPriceCents: number | null = null;
+    if (editIntroEnabled) {
+      const dollars = Number(introPriceRaw);
+      if (introPriceRaw === "" || !Number.isFinite(dollars) || dollars <= 0 || dollars < MIN_LESSON_PRICE_DOLLARS) {
+        showMsg(`${t("introSessionPrice")} - ${t("pricingMinLessonPrice")}`, "error");
+        return;
+      }
+      introPriceCents = Math.round(dollars * 100);
+    }
     setBusy("pricing");
     setMessage(null);
     try {
@@ -1356,7 +1361,14 @@ export default function TeacherProfileManagementPage() {
                   <input
                     type="checkbox"
                     checked={editIntroEnabled}
-                    onChange={(e) => setEditIntroEnabled(e.target.checked)}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      setEditIntroEnabled(checked);
+                      if (!checked) {
+                        setEditIntroPrice("");
+                        setMessage(null);
+                      }
+                    }}
                     className="h-4 w-4 rounded border-slate-300 text-teal-700"
                   />
                   {t("enableIntroSession")}
