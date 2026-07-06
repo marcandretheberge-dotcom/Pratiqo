@@ -46,6 +46,7 @@ import { ZoneStep } from "./components/ZoneStep";
 import { ProfileAiAssistant } from "../../../../components/teacher/ProfileAiAssistant";
 import { AvatarUpload } from "../../../../components/profile/AvatarUpload";
 import { TeacherHourlyRatePreview } from "../../../../components/teacher/TeacherHourlyRatePreview";
+import { AppCardSkeleton } from "@/components/loading/AppSkeletons";
 import { isValidVideoUrl } from "../../../../lib/videoEmbed";
 import { parseGooglePlace } from "../../../../lib/googleAddressParser";
 import { MIN_LESSON_PRICE_DOLLARS } from "../../../../lib/pricing/constants";
@@ -875,8 +876,10 @@ export default function TeacherProfileManagementPage() {
   // ── Loading / access guards ──────────────────────────────────────────────────
   if (loading || !user || teacherRowLoading) {
     return (
-      <div className="min-h-[50vh] flex items-center justify-center text-[#6B6A65]">
-        <Loader2 className="h-8 w-8 animate-spin text-teal-700" />
+      <div className="mx-auto max-w-3xl space-y-4 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:pb-10" role="status" aria-busy="true">
+        <AppCardSkeleton lines={3} />
+        <AppCardSkeleton lines={5} />
+        <AppCardSkeleton lines={4} />
       </div>
     );
   }

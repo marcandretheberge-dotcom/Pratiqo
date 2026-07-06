@@ -23,6 +23,7 @@ import {
 } from "@/lib/timezones";
 import { SupportCaseModal } from "@/components/support/SupportCaseModal";
 import { compareBookingsByStartAsc } from "@/lib/bookings/sort";
+import { AppListSkeleton } from "@/components/loading/AppSkeletons";
 
 const PEER_UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -515,7 +516,7 @@ export function StudentDashboard() {
       <section className="space-y-3">
         <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-700">{t("studentUpcomingClasses")}</h2>
         {loading ? (
-          <div className="rounded-2xl border border-[var(--p-border-light)] bg-white p-6 text-sm text-slate-600">…</div>
+          <AppListSkeleton count={2} />
         ) : upcoming.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-slate-200/90 bg-white p-5 text-sm text-slate-700 shadow-sm sm:p-6">
             {t("studentUpcomingNoMore")}
@@ -665,7 +666,9 @@ export function StudentDashboard() {
 
       <section className="space-y-3">
         <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-700">{t("studentMyTeachers")}</h2>
-        {loading ? null : teachers.length === 0 ? (
+        {loading ? (
+          <AppListSkeleton count={2} />
+        ) : teachers.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-[var(--p-border-light)] bg-white p-5 text-sm text-slate-700 sm:p-6">
             <p>{t("studentMyTeachersEmpty")}</p>
             <Link

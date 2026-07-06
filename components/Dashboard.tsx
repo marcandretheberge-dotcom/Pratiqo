@@ -40,6 +40,7 @@ import {
   isBookingVisibleForTeacher,
 } from "@/lib/bookingLifecycle";
 import { formatAccountingDisplay } from "@/lib/currency/format";
+import { AppTeacherDashboardSkeleton } from "@/components/loading/AppSkeletons";
 
 interface BookingWithTeacher {
   id: string;
@@ -735,12 +736,7 @@ export function Dashboard() {
   }, [user, authLoading, isTeacherRole, isStudentRole]);
 
   if (!user || authLoading) {
-    return (
-      <div className="min-h-[calc(100dvh-200px)] flex flex-col items-center justify-center p-12 text-center">
-        <Loader2 size={48} className="text-brand-primary animate-spin mb-4" />
-        <h2 className="text-xl font-bold text-slate-800">{t("loadingAccount")}</h2>
-      </div>
-    );
+    return <AppTeacherDashboardSkeleton className="min-h-[calc(100dvh-200px)]" />;
   }
 
   if (!isTeacherRole && !isStudentRole) {
@@ -753,12 +749,7 @@ export function Dashboard() {
   }
 
   if (loading) {
-    return (
-      <div className="min-h-[calc(100dvh-200px)] flex flex-col items-center justify-center p-12 text-center">
-        <Loader2 size={48} className="text-brand-primary animate-spin mb-4" />
-        <h2 className="text-xl font-bold text-slate-800">{t("dashboardInitializing")}</h2>
-      </div>
-    );
+    return <AppTeacherDashboardSkeleton className="min-h-[calc(100dvh-200px)]" />;
   }
 
   if (isTeacherRole && teacherDash) {

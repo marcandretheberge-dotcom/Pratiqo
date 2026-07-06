@@ -18,6 +18,7 @@ import { useLocale } from "../../../../lib/locale-context";
 import { formatAccountingDisplay } from "@/lib/currency/format";
 import { FIRST_LESSON_CLAIM_WINDOW_MS } from "@/lib/guarantee/firstLesson";
 import type { TranslationKey } from "@/lib/translations";
+import { AppSectionListSkeleton } from "@/components/loading/AppSkeletons";
 
 type BookingRow = {
   id: string;
@@ -382,10 +383,7 @@ export default function StudentPaymentsPage() {
 
         <section className="rounded-3xl border border-[#DCEAE3] bg-white p-4 shadow-sm">
         {loading ? (
-          <div className="flex items-center justify-center gap-3 py-12 text-sm font-semibold text-slate-600">
-            <Loader2 className="h-5 w-5 animate-spin text-teal-700" />
-            {t("loading")}
-          </div>
+          <AppSectionListSkeleton rows={3} />
         ) : items.length === 0 ? (
           <div className="py-12 text-center">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-teal-50 text-teal-700">

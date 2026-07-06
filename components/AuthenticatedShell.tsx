@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect } from "react";
-import { Loader2 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "./AuthProvider";
 import { AppShell } from "./AppShell";
@@ -13,8 +12,8 @@ import {
 } from "@/lib/auth/onboardingRoleChoice";
 import { buildLoginHrefForProtectedReturn, hasActivePendingTeacherIntentClient } from "@/lib/auth/preAuthOnboardingIntent";
 import { logAuthFlowDecision } from "@/lib/auth/authFlowDiagnostics";
-import { useLocale } from "@/lib/locale-context";
 import { hasStudentOnboardingConsent } from "@/lib/auth/studentOnboardingConsent";
+import { AppShellLoadingSkeleton } from "@/components/loading/AppSkeletons";
 
 const LEGAL_PREFIX = "/legal";
 
@@ -51,7 +50,6 @@ function shouldDeferShellForRoleHydration(
 
 export function AuthenticatedShell({ children }: { children: React.ReactNode }) {
   const { user, loading, profile, profileHydrated } = useAuth();
-  const { t } = useLocale();
   const pathname = usePathname();
   const router = useRouter();
   const isLegal = pathname?.startsWith(LEGAL_PREFIX) ?? false;
@@ -168,12 +166,7 @@ export function AuthenticatedShell({ children }: { children: React.ReactNode }) 
   }
 
   if (loading) {
-    return (
-      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3 text-[var(--p-text-muted)]">
-        <Loader2 className="h-9 w-9 animate-spin text-teal-700" />
-        <p className="text-sm font-medium">{t("loading")}</p>
-      </div>
-    );
+    return <AppShellLoadingSkeleton className="min-h-[60vh]" />;
   }
 
   if (!user) {
@@ -186,12 +179,7 @@ export function AuthenticatedShell({ children }: { children: React.ReactNode }) 
 
   const role = profile?.role as string | undefined;
   if (shouldDeferShellForRoleHydration(pathname, profileHydrated, role)) {
-    return (
-      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3 text-[var(--p-text-muted)]">
-        <Loader2 className="h-9 w-9 animate-spin text-teal-700" />
-        <p className="text-sm font-medium">{t("loading")}</p>
-      </div>
-    );
+    return <AppShellLoadingSkeleton className="min-h-[60vh]" />;
   }
 
   return <AppShell>{children}</AppShell>;

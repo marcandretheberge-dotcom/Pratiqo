@@ -10,6 +10,7 @@ import { useLocale } from "@/lib/locale-context";
 import { cn } from "@/lib/utils";
 import { localeToBcp47 } from "@/lib/i18n/types";
 import type { TranslationKey } from "@/lib/translations";
+import { AppSectionListSkeleton } from "@/components/loading/AppSkeletons";
 
 /**
  * History rows show the actual booking_payments amount, always settled in CAD.
@@ -319,10 +320,7 @@ export default function TeacherHistoryPage() {
         {/* Content */}
         <section className="rounded-3xl border border-[#DCEAE3] bg-white shadow-sm">
           {loading ? (
-            <div className="flex items-center justify-center gap-3 py-14 text-sm font-semibold text-slate-600">
-              <Loader2 className="h-5 w-5 animate-spin text-teal-700" />
-              {t("loading")}
-            </div>
+            <AppSectionListSkeleton rows={4} />
           ) : activeRows.length === 0 ? (
             <div className="py-14 text-center">
               <History size={32} className="mx-auto mb-4 text-slate-300" />

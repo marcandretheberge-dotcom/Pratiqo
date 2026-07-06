@@ -25,6 +25,7 @@ import {
 } from "../../lib/auth/preAuthOnboardingIntent";
 import { clearOAuthReturnPending } from "../../lib/auth/oauthReturnHandoff";
 import { AppLoadingFallback } from "../../components/AppLoadingFallback";
+import { SkeletonBar } from "@/components/loading/AppSkeletons";
 import { useLocale } from "../../lib/locale-context";
 import { cn } from "../../lib/utils";
 
@@ -180,8 +181,10 @@ function LoginForm() {
           ) : null}
 
           {loading || (user && !profileHydrated) ? (
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm font-semibold text-[var(--p-text-muted)]">
-              {t("loadingAccount")}
+            <div className="space-y-3 py-2" role="status" aria-busy="true">
+              <SkeletonBar className="mx-auto h-4 w-40" />
+              <SkeletonBar className="h-12 w-full rounded-2xl" />
+              <SkeletonBar className="h-12 w-full rounded-2xl" />
             </div>
           ) : user ? (
             <div className="text-center">
