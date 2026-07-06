@@ -11,6 +11,7 @@ import { useLocale } from "../../../../lib/locale-context";
 import { localeToBcp47 } from "../../../../lib/i18n/types";
 import type { TranslationKey } from "../../../../lib/translations";
 import { isScheduleEditLockedByNotice, type ScheduleLockPeriod } from "../../../../lib/scheduleLockout";
+import { AppListSkeleton } from "@/components/loading/AppSkeletons";
 import {
   DEFAULT_LESSON_DURATION_MINUTES,
   LESSON_DURATION_OPTIONS,
@@ -432,9 +433,7 @@ function TeacherScheduleInner() {
       ) : null}
 
       {loading ? (
-        <div className="flex justify-center py-20">
-          <Loader2 className="animate-spin text-teal-700" size={36} />
-        </div>
+        <AppListSkeleton count={3} />
       ) : !teacherId ? (
         <p className="text-sm text-slate-500">{t("noTeacherProfile")}</p>
       ) : subtab === "today" ? (

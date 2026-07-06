@@ -24,6 +24,7 @@ import {
   trackMessageSent,
   trackMessageThreadOpened,
 } from "@/lib/analytics/events";
+import { AppMessagesSkeleton, SkeletonBar } from "@/components/loading/AppSkeletons";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -394,6 +395,9 @@ export default function MessagesPage() {
         <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm text-rose-800">{error}</div>
       ) : null}
 
+      {loadingList && !displayConversations.length ? (
+        <AppMessagesSkeleton />
+      ) : (
       <div className="flex min-h-[calc(100dvh-13.5rem)] overflow-hidden rounded-2xl border border-[var(--p-border-light)] bg-white shadow-sm sm:min-h-[520px] sm:max-h-[calc(100dvh-220px)]">
         <aside
           className={cn(
@@ -405,11 +409,7 @@ export default function MessagesPage() {
             {t("conversationsLabel")}
           </div>
           <div className="flex-1 overflow-y-auto">
-            {loadingList && !displayConversations.length ? (
-              <div className="flex justify-center py-12">
-                <Loader2 className="animate-spin text-teal-700" size={28} />
-              </div>
-            ) : displayConversations.length === 0 ? (
+            {displayConversations.length === 0 ? (
               <div className="p-6 text-center space-y-3">
                 <p className="text-sm text-slate-800">{t("noMessages")}</p>
                 <p className="text-xs leading-relaxed text-slate-600">
@@ -511,8 +511,10 @@ export default function MessagesPage() {
                 className="flex-1 overflow-y-auto px-4 py-4 space-y-4"
               >
                 {loadingThread ? (
-                  <div className="flex justify-center py-16">
-                    <Loader2 className="animate-spin text-teal-700" size={28} />
+                  <div className="space-y-4 py-2" role="status" aria-busy="true">
+                    <SkeletonBar className="ml-auto h-10 w-[62%] rounded-2xl" />
+                    <SkeletonBar className="mr-auto h-10 w-[55%] rounded-2xl" />
+                    <SkeletonBar className="ml-auto h-10 w-[48%] rounded-2xl" />
                   </div>
                 ) : (
                   messages.map((m) => {
@@ -590,6 +592,7 @@ export default function MessagesPage() {
           )}
         </section>
       </div>
+      )}
     </div>
   );
 }

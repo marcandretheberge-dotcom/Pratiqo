@@ -39,6 +39,7 @@ import { TeacherBadgePill } from "@/components/TeacherBadgePill";
 import { getCompactTeacherBadges } from "@/lib/teachers/badges";
 import type { TranslationKey } from "@/lib/translations";
 import { AppLoadingText } from "@/components/AppLoadingFallback";
+import { AppTeacherSearchCardSkeleton } from "@/components/loading/AppSkeletons";
 
 function SearchLoadingLine({ className }: { className?: string }) {
   return <AppLoadingText className={className ?? "p-4 text-center text-sm text-[#6B6A65] block"} />;
@@ -724,12 +725,7 @@ export default function StudentSearchPage() {
             {viewMode === "list" ? (
               <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
                 {loadingTeachers
-                  ? Array.from({ length: 6 }).map((_, i) => (
-                      <div
-                        key={i}
-                        className="h-[140px] rounded-2xl border border-[#E8E6DF] bg-white shadow-[0_12px_40px_rgba(44,44,42,0.06)]"
-                      />
-                    ))
+                  ? Array.from({ length: 6 }).map((_, i) => <AppTeacherSearchCardSkeleton key={i} />)
                   : results.length === 0 ? (
                       <div className="col-span-full rounded-2xl border border-dashed border-[#DCEAE3] bg-white p-8 text-center shadow-sm">
                         <p className="text-sm font-semibold text-[#2C2C2A]">

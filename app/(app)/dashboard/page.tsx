@@ -9,12 +9,10 @@ import {
   resolvePendingTeacherOnboardingPath,
 } from "@/lib/auth/preAuthOnboardingIntent";
 import { useRouter } from "next/navigation";
-
-import { useLocale } from "@/lib/locale-context";
+import { AppStudentDashboardSkeleton } from "@/components/loading/AppSkeletons";
 
 export default function DashboardPage() {
   const { profile } = useAuth();
-  const { t } = useLocale();
   const router = useRouter();
   const role = (profile?.role as string | undefined) ?? undefined;
   const pendingTeacherIntent = !role && hasActivePendingTeacherIntentClient();
@@ -34,11 +32,7 @@ export default function DashboardPage() {
   }, [role, pendingTeacherIntent, router]);
 
   if (role === "admin" || pendingTeacherIntent) {
-    return (
-      <div className="min-h-[40vh] flex items-center justify-center text-sm text-[var(--p-text-muted)]">
-        {t("loading")}
-      </div>
-    );
+    return <AppStudentDashboardSkeleton className="min-h-[40vh]" />;
   }
 
   if (role === "teacher") {

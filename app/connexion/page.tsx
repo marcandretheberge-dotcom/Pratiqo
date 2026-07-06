@@ -20,6 +20,7 @@ import {
 import { sanitizeRelativeRedirectPath } from "@/lib/auth/redirects";
 import { useLocale } from "@/lib/locale-context";
 import { AppLoadingFallback } from "@/components/AppLoadingFallback";
+import { AppCardSkeleton } from "@/components/loading/AppSkeletons";
 import { cn } from "@/lib/utils";
 
 function buildLoginHrefFromConnexion(
@@ -91,8 +92,18 @@ function ConnexionInner() {
 
   if (authLoading || (user && !profileHydrated)) {
     return (
-      <div className="flex min-h-[50vh] items-center justify-center text-sm text-[var(--p-text-muted)]">
-        {t("loading")}
+      <div className="min-h-[100dvh] bg-[#FAFCFB]">
+        <header className="sticky top-0 z-50 flex h-14 items-center justify-between border-b border-[#D3D1C7] bg-white px-4 sm:px-6">
+          <Link href="/" className="flex items-center gap-2">
+            <PratiqoLogo variant="full" size="md" />
+          </Link>
+          <LocaleSwitcher variant="light" />
+        </header>
+        <main className="mx-auto max-w-2xl px-4 py-6 sm:px-6 sm:py-14">
+          <div className="rounded-[1.75rem] border border-[var(--p-border-light)] bg-white p-5 shadow-[0_18px_60px_rgba(15,110,86,0.08)] sm:rounded-3xl sm:p-10">
+            <AppCardSkeleton lines={4} className="border-0 p-0 shadow-none" />
+          </div>
+        </main>
       </div>
     );
   }

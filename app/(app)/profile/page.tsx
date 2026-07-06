@@ -17,6 +17,7 @@ import { AvatarUpload } from "../../../components/profile/AvatarUpload";
 import { cn } from "../../../lib/utils";
 import type { TranslationKey } from "../../../lib/translations";
 import { COMPLETED_LESSON_FOR_COMPANION_FILTER } from "../../../lib/companion/rewards";
+import { AppStatGridSkeleton } from "@/components/loading/AppSkeletons";
 
 const LEARNING_FORMAT_VALUES = ["no_preference", "at_home", "in_person", "online", "hybrid"] as const;
 
@@ -148,11 +149,15 @@ export default function StudentProfilePage() {
       </section>
 
       {/* STATS */}
-      <section className="grid grid-cols-3 gap-2">
-        <StatCard label={t("profileLessons")} value={loading ? "…" : String(completedLessonCount)} />
-        <StatCard label={t("profileTeachers")} value={loading ? "…" : String(teacherCount)} />
-        <CreditsStatLink label={t("profileCredits")} cta={t("profileViewCredits")} />
-      </section>
+      {loading ? (
+        <AppStatGridSkeleton />
+      ) : (
+        <section className="grid grid-cols-3 gap-2">
+          <StatCard label={t("profileLessons")} value={String(completedLessonCount)} />
+          <StatCard label={t("profileTeachers")} value={String(teacherCount)} />
+          <CreditsStatLink label={t("profileCredits")} cta={t("profileViewCredits")} />
+        </section>
+      )}
 
       {/* COMPANION */}
       <section className="space-y-3">
