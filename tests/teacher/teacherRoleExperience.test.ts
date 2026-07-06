@@ -16,7 +16,8 @@ assert.doesNotMatch(topNav, /\/student\/progress/);
 
 const appShell = read("components/AppShell.tsx");
 assert.match(appShell, /TEACHER_MOBILE_BOTTOM_NAV/);
-assert.doesNotMatch(appShell, /STUDENT_MOBILE_BOTTOM_NAV[\s\S]*\/teacher\/schedule/);
+const studentMobileNavBlock = appShell.match(/const STUDENT_MOBILE_BOTTOM_NAV[\s\S]*?];/)?.[0] ?? "";
+assert.doesNotMatch(studentMobileNavBlock, /\/teacher\/schedule/);
 
 assert.match(read("app/(app)/onboarding/teacher/page.tsx"), /teacher\/verification/);
 assert.match(read("app/(app)/teacher/schedule/page.tsx"), /tab=dispo/);

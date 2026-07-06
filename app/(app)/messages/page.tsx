@@ -18,7 +18,8 @@ import {
   type MessageRow,
 } from "../../../lib/messaging";
 import { cn } from "../../../lib/utils";
-import { useLocale } from "../../../lib/locale-context";
+import { useLocale } from "@/lib/locale-context";
+import { localeToBcp47 } from "@/lib/i18n/types";
 import {
   trackMessageSent,
   trackMessageThreadOpened,
@@ -26,8 +27,11 @@ import {
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-function formatMsgTime(iso: string) {
-  return new Date(iso).toLocaleString("fr", { dateStyle: "short", timeStyle: "short" });
+function formatMsgTime(iso: string, locale: string) {
+  return new Date(iso).toLocaleString(localeToBcp47(locale as "fr" | "en" | "es"), {
+    dateStyle: "short",
+    timeStyle: "short",
+  });
 }
 
 function initials(name: string) {
@@ -41,7 +45,7 @@ function initials(name: string) {
 
 export default function MessagesPage() {
   const { user, profile } = useAuth();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const isTeacher = profile?.role === "teacher";
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -526,7 +530,7 @@ export default function MessagesPage() {
                         >
                           {m.content}
                         </div>
-                        <span className="text-[10px] text-slate-500 px-1">{formatMsgTime(m.created_at)}</span>
+                        <span className="text-[10px] text-slate-500 px-1">{formatMsgTime(m.created_at, locale)}</span>
                       </div>
                     );
                   })
@@ -553,7 +557,7 @@ export default function MessagesPage() {
                 ) : null}
                 {draftHint ? (
                   <p className="mb-2 rounded-xl border border-teal-500/25 bg-teal-50/80 px-3 py-2 text-[11px] font-medium text-slate-800">
-                    Brouillon pré-rempli — modifiez et envoyez quand vous êtes prêt(e).
+                    {t("messagesDraftPrefillHint")}
                   </p>
                 ) : null}
                 <div className="flex items-end gap-2 rounded-[22px] border border-[var(--p-border-light)] bg-white py-2 pl-4 pr-2 focus-within:ring-2 focus-within:ring-teal-500/25">

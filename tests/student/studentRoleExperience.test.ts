@@ -13,8 +13,10 @@ assert.doesNotMatch(read("components/StudentDashboard.tsx"), /href=\{`\/teacher\
 
 const appShell = read("components/AppShell.tsx");
 assert.match(appShell, /STUDENT_NAV/);
-assert.doesNotMatch(appShell, /href:\s*"\/teacher\/schedule"/);
-assert.doesNotMatch(appShell, /href:\s*"\/teacher\/verification"/);
+const studentNavBlock = appShell.match(/const STUDENT_NAV[\s\S]*?];/)?.[0] ?? "";
+const studentMobileNavBlock = appShell.match(/const STUDENT_MOBILE_BOTTOM_NAV[\s\S]*?];/)?.[0] ?? "";
+assert.doesNotMatch(studentNavBlock, /\/teacher\//);
+assert.doesNotMatch(studentMobileNavBlock, /\/teacher\//);
 
 assert.match(read("components/TeacherProfile.tsx"), /\.in\("status", \["confirmed", "completed"\]\)/);
 

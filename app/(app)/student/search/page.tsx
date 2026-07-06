@@ -38,14 +38,19 @@ import { PriceDisplay } from "@/components/PriceDisplay";
 import { TeacherBadgePill } from "@/components/TeacherBadgePill";
 import { getCompactTeacherBadges } from "@/lib/teachers/badges";
 import type { TranslationKey } from "@/lib/translations";
+import { AppLoadingText } from "@/components/AppLoadingFallback";
+
+function SearchLoadingLine({ className }: { className?: string }) {
+  return <AppLoadingText className={className ?? "p-4 text-center text-sm text-[#6B6A65] block"} />;
+}
 
 const TeacherProfile = dynamic(
   () => import("../../../../components/TeacherProfile").then((m) => m.TeacherProfile),
-  { ssr: false, loading: () => <p className="p-4 text-center text-sm text-[#6B6A65]">Chargement…</p> },
+  { ssr: false, loading: () => <SearchLoadingLine /> },
 );
 const BookingModal = dynamic(
   () => import("../../../../components/BookingModal").then((m) => m.BookingModal),
-  { ssr: false, loading: () => <p className="p-4 text-center text-sm text-[#6B6A65]">Chargement…</p> },
+  { ssr: false, loading: () => <SearchLoadingLine /> },
 );
 const SearchMapView = dynamic(
   () => import("../../../../components/SearchMapView").then((m) => m.SearchMapView),
@@ -54,7 +59,7 @@ const SearchMapView = dynamic(
     loading: () => (
       <div className="flex flex-col items-center justify-center gap-2 min-h-[480px] rounded-2xl bg-[#F1EFE8] text-sm text-[#6B6A65]">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-teal-700 border-t-transparent" />
-        <p>Chargement…</p>
+        <SearchLoadingLine className="text-sm text-[#6B6A65]" />
       </div>
     ),
   },

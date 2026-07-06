@@ -280,7 +280,7 @@ export default function ChooseCompanionPage() {
                 );
               })}
             </div>
-            <div className="mt-4 text-sm font-semibold text-teal-700">Chargement…</div>
+            <div className="mt-4 text-sm font-semibold text-teal-700">{t("loading")}</div>
           </div>
         ) : null}
 
