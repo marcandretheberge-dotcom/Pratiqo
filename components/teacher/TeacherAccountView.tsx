@@ -657,7 +657,7 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
 
   if (!user) {
     return (
-      <div className="max-w-lg mx-auto bg-white border border-slate-200 rounded-3xl p-8 text-center">
+      <div className="mx-auto max-w-lg rounded-3xl border border-slate-200 bg-white p-6 text-center sm:p-8">
         <p className="text-sm text-slate-600">{t("loginForSettings")}</p>
         <Link href="/" className="mt-4 inline-block text-[#00694c] font-medium underline">
           {t("teacherHome")}
@@ -676,7 +676,7 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
 
   if (!teacherId) {
     return (
-      <div className="max-w-lg mx-auto bg-white border border-amber-200 rounded-3xl p-8">
+      <div className="mx-auto max-w-lg rounded-3xl border border-amber-200 bg-white p-6 sm:p-8">
         <p className="text-sm font-semibold text-slate-800">{t("noTeacherAccountTitle")}</p>
         <p className="mt-2 text-sm text-slate-600">{t("noTeacherAccountBody")}</p>
       </div>
@@ -686,7 +686,7 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
   const maxDisciplinesReached = disciplineCards.length >= 3;
 
   return (
-    <div className="max-w-xl mx-auto space-y-8 pb-16">
+    <div className="mx-auto max-w-xl space-y-6 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:space-y-8 sm:pb-16" data-testid="teacher-account-mobile-safe">
       <div>
         <p className="text-[10px] font-bold uppercase tracking-widest text-[#00694c]">
           {variant === "profile" ? t("teacherSpaceLabel") : t("settingsTeacherLabel")}
@@ -704,7 +704,7 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
               target="_blank"
               rel="noopener noreferrer"
               title={t("previewProfileAsStudentHint")}
-              className="mt-3 inline-flex items-center gap-2 h-10 px-4 rounded-full border-2 border-[#00694c]/20 bg-white text-sm font-semibold text-[#00694c] hover:bg-[#00694c]/5 transition-colors"
+              className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full border-2 border-[#00694c]/20 bg-white px-4 text-sm font-semibold text-[#00694c] transition-colors hover:bg-[#00694c]/5 sm:w-auto"
             >
               <ExternalLink size={14} aria-hidden />
               {t("previewProfileAsStudent")}
@@ -719,7 +719,7 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
 
       {variant === "profile" ? (
         <>
-          <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+          <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
         <h2 className="text-lg font-bold text-[#2C2C2A]">{t("sectionProfile")}</h2>
         <AvatarUpload
           userId={user.id}
@@ -774,7 +774,7 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
               <p className="text-sm font-extrabold text-[#2C2C2A]">{t("introSessionTitle")}</p>
               <p className="mt-1 text-xs leading-relaxed text-slate-600">{t("introSessionDescription")}</p>
             </div>
-            <label className="inline-flex items-center gap-2 text-sm font-semibold text-slate-700">
+            <label className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-slate-700">
               <input
                 type="checkbox"
                 checked={introEnabled}
@@ -901,13 +901,13 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
           type="button"
           disabled={saving}
           onClick={() => void saveProfile()}
-          className="h-11 px-6 rounded-full bg-[#00694c] hover:bg-[#008560] text-white text-sm font-semibold disabled:opacity-50 shadow-sm hover:shadow transition-all"
+          className="inline-flex min-h-11 w-full items-center justify-center rounded-full bg-[#00694c] px-6 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#008560] hover:shadow disabled:opacity-50 sm:w-auto"
         >
           {t("settingsProfileSave")}
         </button>
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+      <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
         <h2 className="text-lg font-bold text-[#2C2C2A]">{t("teacherDisciplinesTitle")}</h2>
         <p className="text-sm leading-relaxed text-slate-600">{t("teacherDisciplinesDescription")}</p>
         {discLoading ? (
@@ -923,19 +923,19 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
                   const title = `${meta?.emoji ?? "✨"} ${meta?.label ?? card.disciplineId}`;
                   return (
                     <div key={card.disciplineId} className="rounded-2xl border border-[#DCEAE3] bg-white p-4">
-                      <div className="flex items-start justify-between gap-3">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                         <div className="min-w-0">
                           <p className="text-sm font-extrabold text-[#2C2C2A]">{title}</p>
                           <p className="mt-1 text-sm text-slate-600">
                             {card.specialties.length ? card.specialties.join(" · ") : "—"}
                           </p>
                         </div>
-                        <div className="shrink-0 flex items-center gap-2">
+                        <div className="flex shrink-0 gap-2">
                           <button
                             type="button"
                             disabled={discSaving}
                             onClick={() => openEditDiscipline(card)}
-                            className="h-9 rounded-full border border-slate-200 bg-white px-4 text-xs font-bold text-slate-800 hover:bg-slate-50 disabled:opacity-60"
+                            className="min-h-10 flex-1 rounded-full border border-slate-200 bg-white px-4 text-xs font-bold text-slate-800 hover:bg-slate-50 disabled:opacity-60 sm:flex-none"
                           >
                             {t("editDiscipline")}
                           </button>
@@ -943,7 +943,7 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
                             type="button"
                             disabled={discSaving || disciplineCards.length <= 1}
                             onClick={() => void deleteDisciplineCard(card.disciplineId)}
-                            className="h-9 rounded-full border border-rose-200 bg-rose-50 px-4 text-xs font-bold text-rose-700 hover:bg-rose-100/60 disabled:opacity-50"
+                            className="min-h-10 flex-1 rounded-full border border-rose-200 bg-rose-50 px-4 text-xs font-bold text-rose-700 hover:bg-rose-100/60 disabled:opacity-50 sm:flex-none"
                           >
                             {t("deleteDiscipline")}
                           </button>
@@ -983,7 +983,7 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
         )}
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+      <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
         <h2 className="text-lg font-bold text-[#2C2C2A]">{t("sectionFormat")}</h2>
         <div className="flex flex-wrap gap-2">
           {(["inPerson", "online", "homeVisit"] as const).map((labelKey, i) => {
@@ -1008,7 +1008,7 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
           type="button"
           disabled={saving}
           onClick={() => void saveTeachingModeOnly()}
-          className="h-10 px-5 rounded-full bg-[#00694c] hover:bg-[#008560] text-white text-sm font-semibold disabled:opacity-50 transition-colors"
+          className="inline-flex min-h-11 w-full items-center justify-center rounded-full bg-[#00694c] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#008560] disabled:opacity-50 sm:w-auto"
         >
           {t("settingsFormatSave")}
         </button>
@@ -1018,7 +1018,7 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
 
       {variant === "system" ? (
         <>
-          <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+          <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
         <h2 className="text-lg font-bold text-[#2C2C2A]">{t("sectionNotifications")}</h2>
         {(
           [
@@ -1030,7 +1030,7 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
         ).map(([key, labelKey]) => {
           const on = notif[key];
           return (
-            <label key={key} className="flex items-center justify-between gap-4 cursor-pointer py-1">
+            <label key={key} className="flex min-h-11 cursor-pointer items-center justify-between gap-4 py-1">
               <span className="text-sm text-[#2C2C2A]">{t(labelKey)}</span>
               <button
                 type="button"
@@ -1056,13 +1056,13 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
           type="button"
           disabled={saving}
           onClick={() => void saveNotifications()}
-          className="h-10 px-5 rounded-full bg-[#00694c] hover:bg-[#008560] text-white text-sm font-semibold disabled:opacity-50 shadow-sm hover:shadow transition-all"
+          className="inline-flex min-h-11 w-full items-center justify-center rounded-full bg-[#00694c] px-5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#008560] hover:shadow disabled:opacity-50 sm:w-auto"
         >
           {t("settingsNotifSave")}
         </button>
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+      <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
         <h2 className="text-lg font-bold text-[#2C2C2A]">{t("profileVisibilityTitle")}</h2>
         <p className="text-sm leading-relaxed text-slate-600">{t("profileVisibilityDescription")}</p>
         <div className="rounded-2xl border border-[#DCEAE3] bg-[#F3FAF6] px-4 py-3 text-sm text-slate-700">
@@ -1087,17 +1087,17 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
           type="button"
           disabled={visibilitySaving || (!teacherIsPublic && !isTeacherMarketSupported(teacherCountryCode))}
           onClick={() => void toggleProfileVisibility()}
-          className="inline-flex h-10 items-center justify-center gap-2 rounded-full border-2 border-[#2C2C2A]/15 bg-white px-5 text-sm font-semibold text-[#2C2C2A] disabled:opacity-60"
+          className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full border-2 border-[#2C2C2A]/15 bg-white px-5 text-sm font-semibold text-[#2C2C2A] disabled:opacity-60 sm:w-auto"
         >
           {visibilitySaving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
           {teacherIsPublic ? t("hideMyProfile") : t("reactivateMyProfile")}
         </button>
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+      <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
         <h2 className="text-lg font-bold text-[#2C2C2A]">{t("teacherSearchIndexingConsentTitle")}</h2>
         <p className="text-sm leading-relaxed text-slate-600">{t("teacherSearchIndexingConsentDescription")}</p>
-        <label className="flex items-start gap-3 cursor-pointer">
+        <label className="flex min-h-11 cursor-pointer items-start gap-3">
           <input
             type="checkbox"
             checked={searchIndexingConsent}
@@ -1128,7 +1128,7 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
         ) : null}
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+      <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
         <h2 className="text-lg font-bold text-[#2C2C2A]">{t("sectionPayments")}</h2>
         <p className="text-sm text-slate-600">
           {t("stripeConnectLabel")}{" "}
@@ -1251,14 +1251,14 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
         ) : null}
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-3">
+      <section className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
         <h2 className="text-lg font-bold text-[#2C2C2A]">{t("sectionAccount")}</h2>
         <p className="text-sm text-slate-600">{t("emailLabel")}</p>
         <p className="text-sm font-medium text-[#2C2C2A]">{email}</p>
         <button
           type="button"
           onClick={() => void logout()}
-          className="text-sm font-semibold text-red-600 hover:underline"
+          className="inline-flex min-h-11 items-center rounded-full text-sm font-semibold text-red-600 hover:underline"
         >
           {t("signOut")}
         </button>
@@ -1266,7 +1266,7 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
 
       <AccountDeletionSection />
 
-      <section className="rounded-2xl border border-slate-100 bg-slate-50/60 p-5 space-y-1.5">
+      <section className="space-y-1.5 rounded-2xl border border-slate-100 bg-slate-50/60 p-4 sm:p-5">
         <h2 className="text-sm font-bold text-slate-700 uppercase tracking-widest">{t("taxSettingsSectionTitle")}</h2>
         {taxAcknowledged ? (
           <>

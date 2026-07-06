@@ -413,7 +413,7 @@ function TeacherScheduleInner() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto space-y-5">
+    <div className="mx-auto max-w-5xl space-y-5 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:pb-10">
       <div className="space-y-1">
         <p className="text-[10px] font-bold uppercase tracking-widest text-teal-700">{t("scheduleTeacherLabel")}</p>
         <h1 className="text-2xl sm:text-3xl font-bold text-[#2C2C2A]">{t("schedulePageTitle")}</h1>
@@ -432,7 +432,7 @@ function TeacherScheduleInner() {
         <p className="text-sm text-slate-500">{t("noTeacherProfile")}</p>
       ) : subtab === "today" ? (
         <div className="space-y-4">
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
             <p className="text-sm font-semibold text-[#2C2C2A] capitalize">
               {new Date(todayIso + "T12:00:00").toLocaleDateString(dateLocale, { weekday: "long", day: "numeric", month: "long" })}
             </p>
@@ -457,7 +457,7 @@ function TeacherScheduleInner() {
                   <li
                     key={b.id}
                     className={cn(
-                      "rounded-2xl border p-4 flex flex-wrap items-center justify-between gap-3",
+                      "flex flex-col gap-3 rounded-2xl border p-4 sm:flex-row sm:items-center sm:justify-between",
                       isFirst ? "border-teal-500 bg-teal-500/15" : "border-slate-200 bg-slate-100",
                     )}
                   >
@@ -486,7 +486,7 @@ function TeacherScheduleInner() {
                     {idx === 0 ? (
                       <button
                         type="button"
-                        className="h-10 px-5 rounded-full bg-teal-600 text-white text-sm font-semibold"
+                        className="inline-flex min-h-11 w-full items-center justify-center rounded-full bg-teal-600 px-5 text-sm font-semibold text-white sm:w-auto"
                         onClick={() => router.push("/messages")}
                       >
                         Démarrer
@@ -494,7 +494,7 @@ function TeacherScheduleInner() {
                     ) : (
                       <button
                         type="button"
-                        className="h-10 px-5 rounded-full border border-slate-300 bg-white text-sm font-semibold text-[#2C2C2A]"
+                        className="inline-flex min-h-11 w-full items-center justify-center rounded-full border border-slate-300 bg-white px-5 text-sm font-semibold text-[#2C2C2A] sm:w-auto"
                         onClick={() => router.push("/messages")}
                       >
                         Message
@@ -508,11 +508,11 @@ function TeacherScheduleInner() {
         </div>
       ) : subtab === "week" ? (
         <div className="space-y-4">
-          <div className="flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
             <button
               type="button"
               onClick={() => setWeekAnchor((w) => addDays(w, -7))}
-              className="inline-flex items-center gap-1 h-10 px-3 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              className="inline-flex min-h-11 items-center justify-center gap-1 rounded-xl border border-slate-200 px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
             >
               <ChevronLeft size={18} /> {t("weekNav")}
             </button>
@@ -522,12 +522,13 @@ function TeacherScheduleInner() {
             <button
               type="button"
               onClick={() => setWeekAnchor((w) => addDays(w, 7))}
-              className="inline-flex items-center gap-1 h-10 px-3 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              className="inline-flex min-h-11 items-center justify-center gap-1 rounded-xl border border-slate-200 px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
             >
               {t("weekNav")} <ChevronRight size={18} />
             </button>
           </div>
-          <div className="grid grid-cols-7 gap-2">
+          <div className="-mx-1 overflow-x-auto px-1">
+            <div className="grid min-w-[520px] grid-cols-7 gap-2">
             {weekDays.map((dt, i) => {
               const iso = formatLocalISODate(dt);
               const c = countForDay(iso);
@@ -538,7 +539,7 @@ function TeacherScheduleInner() {
                   type="button"
                   onClick={() => setSelectedDayIndex(i)}
                   className={cn(
-                    "flex flex-col items-center rounded-xl border py-2 px-1 text-center transition-colors",
+                    "flex min-h-16 flex-col items-center justify-center rounded-xl border px-1 py-2 text-center transition-colors",
                     selectedDayIndex === i ? "border-teal-500 bg-teal-600 text-white" : "border-slate-200 bg-white hover:border-slate-300",
                   )}
                 >
@@ -550,15 +551,16 @@ function TeacherScheduleInner() {
                 </button>
               );
             })}
+            </div>
           </div>
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 space-y-3">
+          <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
             <p className="text-sm font-bold text-[#2C2C2A] capitalize">{selectedDateLabel}</p>
             {selectedDayBookings.length === 0 ? (
               <p className="text-sm text-slate-500">Aucun cours ce jour-là.</p>
             ) : (
               <ul className="space-y-2">
                 {selectedDayBookings.map((b) => (
-                  <li key={b.id} className="flex items-center justify-between gap-2 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2">
+                  <li key={b.id} className="flex flex-col gap-1 rounded-xl border border-slate-100 bg-slate-50 px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
                     <span className="text-sm font-bold text-teal-700">{b.time_slot || b.time}</span>
                     <span className="text-sm font-semibold truncate">{b.studentName}</span>
                     <span className="text-xs text-slate-500 shrink-0">{formatLabel(b)}</span>
@@ -571,7 +573,7 @@ function TeacherScheduleInner() {
       ) : (
         <div className="space-y-6">
           <div
-            className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-3"
+            className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5"
             data-testid="teacher-schedule-lesson-duration-card"
           >
             <div>
@@ -579,7 +581,7 @@ function TeacherScheduleInner() {
               <p className="mt-1 text-xs leading-5 text-slate-600">{t("lessonDurationDescription")}</p>
               <p className="mt-1 text-xs leading-5 text-slate-500">{t("lessonDurationAutosaveHelp")}</p>
             </div>
-            <label className="block max-w-xs">
+            <label className="block max-w-xs sm:max-w-sm">
               <span className="text-xs font-bold uppercase tracking-widest text-slate-600">
                 {t("lessonDurationLabel")}
               </span>
@@ -587,7 +589,7 @@ function TeacherScheduleInner() {
                 value={defaultLessonDuration}
                 onChange={(e) => void saveLessonDuration(Number(e.target.value))}
                 disabled={durationSaveState === "saving"}
-                className="mt-2 h-11 w-full rounded-xl border border-slate-200 px-3 text-sm font-semibold text-[#2C2C2A] disabled:opacity-60"
+                className="mt-2 h-12 w-full rounded-xl border border-slate-200 px-3 text-sm font-semibold text-[#2C2C2A] disabled:opacity-60"
                 data-testid="teacher-schedule-lesson-duration-select"
               >
                 {LESSON_DURATION_OPTIONS.map((minutes) => (
@@ -622,7 +624,7 @@ function TeacherScheduleInner() {
               </p>
             ) : null}
           </div>
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
+          <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
             <div className="space-y-3">
               <div>
                 <p className="text-xs font-bold uppercase tracking-widest text-slate-600">{t("gridWeeklyTitle")}</p>
@@ -633,7 +635,7 @@ function TeacherScheduleInner() {
                 <button
                   type="button"
                   onClick={() => setWeekAnchor((w) => addDays(w, -7))}
-                  className="inline-flex h-9 items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 hover:bg-slate-50"
+                  className="inline-flex min-h-10 flex-1 items-center justify-center gap-1 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 hover:bg-slate-50 sm:flex-none"
                 >
                   <ChevronLeft size={15} />
                   {t("weekNavPrev")}
@@ -641,19 +643,19 @@ function TeacherScheduleInner() {
                 <button
                   type="button"
                   onClick={resetToThisWeek}
-                  className="inline-flex h-9 items-center rounded-xl border border-teal-100 bg-teal-50 px-3 text-xs font-bold text-teal-800 hover:bg-teal-100"
+                  className="inline-flex min-h-10 flex-1 items-center justify-center rounded-xl border border-teal-100 bg-teal-50 px-3 text-xs font-bold text-teal-800 hover:bg-teal-100 sm:flex-none"
                 >
                   {t("weekToday")}
                 </button>
                 <button
                   type="button"
                   onClick={() => setWeekAnchor((w) => addDays(w, 7))}
-                  className="inline-flex h-9 items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 hover:bg-slate-50"
+                  className="inline-flex min-h-10 flex-1 items-center justify-center gap-1 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 hover:bg-slate-50 sm:flex-none"
                 >
                   {t("weekNavNext")}
                   <ChevronRight size={15} />
                 </button>
-                <span className="ml-auto text-xs font-bold uppercase tracking-wide text-slate-500">
+                <span className="w-full text-center text-xs font-bold uppercase tracking-wide text-slate-500 sm:ml-auto sm:w-auto sm:text-left">
                   {weekRangeLabel}
                 </span>
               </div>
@@ -672,7 +674,7 @@ function TeacherScheduleInner() {
                 <span className="h-3 w-3 rounded-sm border border-slate-300 bg-slate-50 opacity-60" /> {t("legendLockedNotice")}
               </span>
             </div>
-            <div className="overflow-x-auto">
+            <div className="-mx-1 overflow-x-auto px-1" data-testid="teacher-schedule-availability-scroll">
               <div className="min-w-[560px] grid grid-cols-[120px_repeat(7,1fr)] gap-2">
                 <div />
                 {DAYS.map((d, di) => (
@@ -699,7 +701,7 @@ function TeacherScheduleInner() {
                           disabled={locked}
                           onClick={() => !locked && toggleAvail(d, s)}
                           className={cn(
-                            "h-11 rounded-xl border transition-colors",
+                            "h-12 rounded-xl border transition-colors",
                             lockedByBooking ? "border-[#F5C478] bg-[#FAEEDA] cursor-not-allowed" : "",
                             lockedByNotice && !lockedByBooking ? "cursor-not-allowed border-slate-200 bg-slate-50 opacity-55" : "",
                             !locked && on ? "border-teal-500 bg-teal-500/15" : "",
@@ -726,7 +728,7 @@ function TeacherScheduleInner() {
                       type="button"
                       onClick={() => toggleFormat(keys[i])}
                       className={cn(
-                        "h-10 px-4 rounded-full text-sm font-semibold border transition-colors",
+                        "min-h-11 rounded-full border px-4 text-sm font-semibold transition-colors",
                         on ? "border-teal-500 bg-teal-500/15 text-teal-700" : "border-slate-200 bg-slate-100 text-slate-600",
                       )}
                     >
@@ -748,7 +750,7 @@ function TeacherScheduleInner() {
                   <select
                     value={bufferBefore}
                     onChange={(e) => setBufferBefore(clampBufferMinutes(e.target.value))}
-                    className="h-11 w-full rounded-xl border border-slate-200 px-3 text-sm"
+                    className="h-12 w-full rounded-xl border border-slate-200 px-3 text-sm"
                   >
                     {BUFFER_OPTIONS.map((m) => (
                       <option key={`before-${m}`} value={m}>
@@ -762,7 +764,7 @@ function TeacherScheduleInner() {
                   <select
                     value={bufferAfter}
                     onChange={(e) => setBufferAfter(clampBufferMinutes(e.target.value))}
-                    className="h-11 w-full rounded-xl border border-slate-200 px-3 text-sm"
+                    className="h-12 w-full rounded-xl border border-slate-200 px-3 text-sm"
                   >
                     {BUFFER_OPTIONS.map((m) => (
                       <option key={`after-${m}`} value={m}>
@@ -776,18 +778,18 @@ function TeacherScheduleInner() {
 
             <div className="border-t border-slate-100 pt-4 space-y-3">
               <p className="text-sm font-bold text-[#2C2C2A]">{t("blockException")}</p>
-              <div className="flex flex-wrap items-end gap-3">
+              <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
                 <input
                   type="date"
                   value={blockDate}
                   min={todayIso}
                   onChange={(e) => setBlockDate(e.target.value)}
-                  className="h-11 rounded-xl border border-slate-200 px-3 text-sm"
+                  className="h-12 w-full rounded-xl border border-slate-200 px-3 text-sm sm:w-auto"
                 />
                 <select
                   value={blockPeriod}
                   onChange={(e) => setBlockPeriod(e.target.value as typeof blockPeriod)}
-                  className="h-11 rounded-xl border border-slate-200 px-3 text-sm min-w-[10rem]"
+                  className="h-12 w-full min-w-[10rem] rounded-xl border border-slate-200 px-3 text-sm sm:w-auto"
                 >
                   <option value="matin">{t("morning")}</option>
                   <option value="apresmidi">{t("afternoon")}</option>
@@ -798,7 +800,7 @@ function TeacherScheduleInner() {
                   type="button"
                   disabled={saving || !blockDate || isScheduleEditLockedByNotice(blockDate, blockPeriod)}
                   onClick={() => void addBlocked()}
-                  className="h-11 px-5 rounded-full bg-red-600 text-white text-sm font-semibold hover:bg-red-700 disabled:opacity-50"
+                  className="inline-flex min-h-12 w-full items-center justify-center rounded-full bg-red-600 px-5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50 sm:w-auto"
                   title={blockDate && isScheduleEditLockedByNotice(blockDate, blockPeriod) ? t("scheduleLockedCellLabel") : undefined}
                 >
                   {t("blockButton")}
@@ -810,7 +812,7 @@ function TeacherScheduleInner() {
               type="button"
               disabled={saving}
               onClick={() => void saveAll()}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 h-12 px-8 rounded-full bg-teal-600 text-white text-sm font-semibold hover:brightness-[0.98] disabled:opacity-60"
+              className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-teal-600 px-8 text-sm font-semibold text-white hover:brightness-[0.98] disabled:opacity-60 sm:w-auto"
             >
               <Save size={18} />
               {saving ? t("savingDots") : t("saveAvailability")}
@@ -826,7 +828,7 @@ export default function TeacherSchedulePage() {
   return (
     <Suspense
       fallback={
-        <div className="max-w-5xl mx-auto py-20 flex justify-center">
+        <div className="mx-auto flex max-w-5xl justify-center py-20 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:pb-10">
           <Loader2 className="animate-spin text-teal-700" size={32} />
         </div>
       }

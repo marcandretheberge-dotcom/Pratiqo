@@ -878,9 +878,9 @@ export default function TeacherProfileManagementPage() {
 
   if (profile?.role !== "teacher") {
     return (
-      <div className="rounded-2xl border border-[#E8E6DF] bg-white p-8 text-center">
+      <div className="rounded-2xl border border-[#E8E6DF] bg-white p-6 text-center sm:p-8">
         <p className="text-[#2C2C2A] font-semibold">{t("verificationTeachersOnly")}</p>
-        <Link href="/dashboard" className="mt-4 inline-block text-sm font-semibold text-teal-700 hover:underline">
+        <Link href="/dashboard" className="mt-4 inline-flex min-h-11 items-center justify-center rounded-full px-4 text-sm font-semibold text-teal-700 hover:underline">
           {t("back")}
         </Link>
       </div>
@@ -889,12 +889,12 @@ export default function TeacherProfileManagementPage() {
 
   if (!teacherRow) {
     return (
-      <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-sm text-[#633806] space-y-3">
+      <div className="space-y-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-[#633806] sm:p-6">
         <p>{t("verificationNoTeacherRowSetup")}</p>
         <button
           type="button"
           onClick={() => void load()}
-          className="inline-flex rounded-full bg-amber-800 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-900"
+          className="inline-flex min-h-11 w-full items-center justify-center rounded-full bg-amber-800 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-900 sm:w-auto"
         >
           {t("companionProfileSyncRetry")}
         </button>
@@ -999,7 +999,7 @@ export default function TeacherProfileManagementPage() {
   };
 
   return (
-    <div className="space-y-8" data-testid="teacher-profile-management-page">
+    <div className="space-y-6 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:space-y-8 sm:pb-10" data-testid="teacher-profile-management-page">
       <div>
         <p className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
           {t("teacherSpaceLabel")}
@@ -1149,15 +1149,15 @@ export default function TeacherProfileManagementPage() {
               type="button"
               onClick={() => void saveProfile()}
               disabled={busy === "profile"}
-              className="h-11 rounded-xl bg-teal-700 px-5 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-50 inline-flex items-center gap-2"
+              className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-teal-700 px-5 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-50 sm:w-auto"
             >
               {busy === "profile" ? <Loader2 size={16} className="animate-spin" /> : null}
               {t("teacherLaunchCardProfileSaveBtn")}
             </button>
-            <div className="flex flex-wrap gap-3 pt-1">
+            <div className="flex flex-col gap-3 pt-1 sm:flex-row sm:flex-wrap">
               <Link
                 href="/teacher/my-profile"
-                className="text-sm font-semibold text-teal-700 hover:underline"
+                className="inline-flex min-h-11 items-center rounded-full text-sm font-semibold text-teal-700 hover:underline"
                 data-testid="teacher-profile-mgmt-preview-link"
               >
                 {t("teacherPublicProfileLabel")} →
@@ -1167,7 +1167,7 @@ export default function TeacherProfileManagementPage() {
                   href={publicProfileHref}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm font-semibold text-teal-700 hover:underline"
+                  className="inline-flex min-h-11 items-center rounded-full text-sm font-semibold text-teal-700 hover:underline"
                   data-testid="teacher-profile-mgmt-view-public-link"
                 >
                   {t("teacherPublicProfileViewCta")}
@@ -1211,7 +1211,7 @@ export default function TeacherProfileManagementPage() {
                           className="rounded-xl border border-[#E8E6DF] bg-white p-4"
                           data-testid="teacher-profile-mgmt-discipline-card"
                         >
-                          <div className="flex items-start justify-between gap-3">
+                          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                             <div className="min-w-0">
                               <p className="text-sm font-bold text-[#2C2C2A]">{title}</p>
                               <p className="mt-1 text-sm text-[#6B6A65]">
@@ -1223,7 +1223,7 @@ export default function TeacherProfileManagementPage() {
                                 type="button"
                                 disabled={discSaving}
                                 onClick={() => openEditDiscipline(card)}
-                                className="h-9 rounded-full border border-[#E8E6DF] px-3 text-xs font-semibold text-[#2C2C2A] hover:bg-slate-50 disabled:opacity-50"
+                                className="min-h-10 flex-1 rounded-full border border-[#E8E6DF] px-3 text-xs font-semibold text-[#2C2C2A] hover:bg-slate-50 disabled:opacity-50 sm:flex-none"
                               >
                                 {t("editDiscipline")}
                               </button>
@@ -1231,7 +1231,7 @@ export default function TeacherProfileManagementPage() {
                                 type="button"
                                 disabled={discSaving || disciplineCards.length <= 1}
                                 onClick={() => void deleteDisciplineCard(card.disciplineId)}
-                                className="h-9 rounded-full border border-rose-200 bg-rose-50 px-3 text-xs font-semibold text-rose-700 hover:bg-rose-100 disabled:opacity-50"
+                                className="min-h-10 flex-1 rounded-full border border-rose-200 bg-rose-50 px-3 text-xs font-semibold text-rose-700 hover:bg-rose-100 disabled:opacity-50 sm:flex-none"
                               >
                                 {t("deleteDiscipline")}
                               </button>
@@ -1283,7 +1283,7 @@ export default function TeacherProfileManagementPage() {
                       type="button"
                       onClick={() => toggleFormat(keys[i])}
                       className={cn(
-                        "h-10 px-4 rounded-full text-sm font-semibold border",
+                        "min-h-11 rounded-full border px-4 text-sm font-semibold",
                         on
                           ? "border-teal-600 bg-teal-500/10 text-teal-800"
                           : "border-[#E8E6DF] bg-slate-50 text-slate-600",
@@ -1299,7 +1299,7 @@ export default function TeacherProfileManagementPage() {
               type="button"
               onClick={() => void saveDisciplinesFormats()}
               disabled={busy === "disciplines"}
-              className="h-11 rounded-xl bg-teal-700 px-5 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-50 inline-flex items-center gap-2"
+              className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-teal-700 px-5 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-50 sm:w-auto"
             >
               {busy === "disciplines" ? <Loader2 size={16} className="animate-spin" /> : null}
               {t("teacherProfileMgmtDisciplinesSaveBtn")}
@@ -1347,12 +1347,12 @@ export default function TeacherProfileManagementPage() {
               />
             </label>
             <div className="rounded-xl border border-[#E8E6DF] bg-teal-50/40 p-4 space-y-3">
-              <div className="flex items-start justify-between gap-3">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <p className="text-sm font-bold text-[#2C2C2A]">{t("introSessionTitle")}</p>
                   <p className="mt-1 text-xs text-[#6B6A65]">{t("introSessionDescription")}</p>
                 </div>
-                <label className="inline-flex items-center gap-2 text-sm font-semibold text-[#2C2C2A]">
+                <label className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-[#2C2C2A]">
                   <input
                     type="checkbox"
                     checked={editIntroEnabled}
@@ -1382,7 +1382,7 @@ export default function TeacherProfileManagementPage() {
               type="button"
               onClick={() => void savePricing()}
               disabled={busy === "pricing"}
-              className="h-11 rounded-xl bg-teal-700 px-5 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-50 inline-flex items-center gap-2"
+              className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-teal-700 px-5 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-50 sm:w-auto"
             >
               {busy === "pricing" ? <Loader2 size={16} className="animate-spin" /> : null}
               {t("teacherProfileMgmtOfferPricingSaveBtn")}
@@ -1479,7 +1479,7 @@ export default function TeacherProfileManagementPage() {
           data-testid="teacher-profile-mgmt-card-home-lessons"
         >
           <div className="space-y-4 pt-3" data-testid="teacher-profile-mgmt-home-lessons-editor">
-            <label className="flex items-start gap-3 rounded-xl border border-[#E8E6DF] bg-white p-4">
+            <label className="flex min-h-16 items-start gap-3 rounded-xl border border-[#E8E6DF] bg-white p-4">
               <input
                 type="checkbox"
                 checked={editHomeEnabled}
@@ -1501,7 +1501,7 @@ export default function TeacherProfileManagementPage() {
               <span className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
                 {t("homeLessonsRadiusLabel")}
               </span>
-              <div className="mt-2 flex items-center gap-2">
+              <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center">
                 <input
                   value={editHomeRadius}
                   onChange={(e) => setEditHomeRadius(e.target.value)}
@@ -1510,7 +1510,7 @@ export default function TeacherProfileManagementPage() {
                   max={HOME_RADIUS_MAX_KM}
                   step="1"
                   inputMode="numeric"
-                  className="h-11 w-32 rounded-xl border border-[#E8E6DF] px-3 text-sm outline-none focus:border-teal-500"
+                  className="h-11 w-full rounded-xl border border-[#E8E6DF] px-3 text-sm outline-none focus:border-teal-500 sm:w-32"
                   data-testid="teacher-profile-mgmt-home-lessons-radius"
                 />
                 <span className="text-sm text-[#6B6A65]">{t("homeLessonsRadiusUnit")}</span>
@@ -1522,7 +1522,7 @@ export default function TeacherProfileManagementPage() {
               <span className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
                 {t("homeLessonsHourlyRateLabel")}
               </span>
-              <div className="mt-2 flex items-center gap-2">
+              <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center">
                 <input
                   value={editHomeHourlyRate}
                   onChange={(e) => setEditHomeHourlyRate(e.target.value)}
@@ -1531,7 +1531,7 @@ export default function TeacherProfileManagementPage() {
                   max={HOME_HOURLY_RATE_MAX_CAD}
                   step="0.5"
                   inputMode="decimal"
-                  className="h-11 w-32 rounded-xl border border-[#E8E6DF] px-3 text-sm outline-none focus:border-teal-500"
+                  className="h-11 w-full rounded-xl border border-[#E8E6DF] px-3 text-sm outline-none focus:border-teal-500 sm:w-32"
                   data-testid="teacher-profile-mgmt-home-lessons-hourly-rate"
                 />
                 <span className="text-sm text-[#6B6A65]">{t("homeLessonsHourlyRateUnit")}</span>
@@ -1600,7 +1600,7 @@ export default function TeacherProfileManagementPage() {
               type="button"
               onClick={() => void saveHomeLessons()}
               disabled={busy === "homeLessons"}
-              className="h-11 rounded-xl bg-teal-700 px-5 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-50 inline-flex items-center gap-2"
+              className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-teal-700 px-5 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-50 sm:w-auto"
               data-testid="teacher-profile-mgmt-home-lessons-save"
             >
               {busy === "homeLessons" ? <Loader2 size={16} className="animate-spin" /> : null}
@@ -1745,7 +1745,7 @@ function LaunchCard({
 
   return (
     <article
-      className="rounded-2xl border border-[#E8E6DF] bg-white p-5"
+      className="rounded-2xl border border-[#E8E6DF] bg-white p-4 sm:p-5"
       data-testid={testid}
     >
       <div className="flex items-start justify-between gap-3">
@@ -1767,7 +1767,7 @@ function LaunchCard({
             <button
               type="button"
               onClick={onToggle}
-              className="text-[#6B6A65] hover:text-teal-700 transition-colors"
+              className="-m-2 inline-flex min-h-11 min-w-11 items-center justify-center rounded-full text-[#6B6A65] transition-colors hover:bg-slate-50 hover:text-teal-700"
               aria-expanded={isExpanded}
               aria-label={isExpanded ? "Réduire" : "Modifier"}
             >
@@ -1786,7 +1786,7 @@ function LaunchCard({
         <div className="mt-3">
           <Link
             href={ctaHref}
-            className="inline-flex h-10 items-center rounded-full bg-teal-600 px-4 text-xs font-bold text-white hover:bg-teal-700"
+            className="inline-flex min-h-11 w-full items-center justify-center rounded-full bg-teal-600 px-4 text-xs font-bold text-white hover:bg-teal-700 sm:w-auto"
             data-testid={`${testid}-cta`}
           >
             {ctaLabel}

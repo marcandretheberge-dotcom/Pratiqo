@@ -710,6 +710,74 @@ test("existing teacher with learner intent routes to dashboard not companion", (
   );
 });
 
+test("teacher dashboard and bottom nav keep mobile-safe shell contracts", () => {
+  const dashboard = read("components/Dashboard.tsx");
+  const shell = read("components/AppShell.tsx");
+  const teacherNavMatch = shell.match(/const TEACHER_MOBILE_BOTTOM_NAV[\s\S]*?= \[[\s\S]*?\];/);
+  assert.ok(teacherNavMatch, "teacher bottom nav config must stay explicit");
+  assert.equal((teacherNavMatch[0].match(/\n\s*\{ href:/g) ?? []).length, 5);
+  assert.match(shell, /teacher-bottom-nav/);
+  assert.match(shell, /pb-\[calc\(6rem\+env\(safe-area-inset-bottom\)\)\]/);
+  assert.match(dashboard, /data-testid="teacher-dashboard-mobile-safe"/);
+  assert.match(dashboard, /pb-\[calc\(6rem\+env\(safe-area-inset-bottom\)\)\]/);
+});
+
+test("teacher availability route stays renderable and mobile-tappable", () => {
+  const src = read("app/(app)/teacher/schedule/page.tsx");
+  assert.match(src, /export default function TeacherSchedulePage/);
+  assert.match(src, /data-testid="teacher-schedule-availability-scroll"/);
+  assert.match(src, /pb-\[calc\(6rem\+env\(safe-area-inset-bottom\)\)\]/);
+  assert.match(src, /min-h-12/);
+  assert.match(src, /overflow-x-auto/);
+  assert.match(src, /onClick=\{\(\) => void saveAll\(\)\}/);
+});
+
+test("teacher bookings history route keeps mobile tabs and bottom-nav clearance", () => {
+  const src = read("app/(app)/teacher/history/page.tsx");
+  assert.match(src, /export default function TeacherHistoryPage/);
+  assert.match(src, /data-testid="teacher-history-mobile-tabs"/);
+  assert.match(src, /pb-\[calc\(6rem\+env\(safe-area-inset-bottom\)\)\]/);
+  assert.match(src, /min-h-11/);
+});
+
+test("teacher messages route remains shared and mobile composer safe", () => {
+  const src = read("app/(app)/messages/page.tsx");
+  assert.match(src, /export default function MessagesPage/);
+  assert.match(src, /pb-\[calc\(6rem\+env\(safe-area-inset-bottom\)\)\]/);
+  assert.match(src, /pb-\[max\(0\.75rem,env\(safe-area-inset-bottom\)\)\]/);
+  assert.match(src, /min-h-\[64px\]/);
+});
+
+test("teacher profile and account routes keep mobile-safe rows without changing logout", () => {
+  const preview = read("components/teacher/TeacherPublicProfilePreview.tsx");
+  const account = read("components/teacher/TeacherAccountView.tsx");
+  assert.match(preview, /data-testid="teacher-public-profile-preview"/);
+  assert.match(preview, /pb-\[calc\(6rem\+env\(safe-area-inset-bottom\)\)\]/);
+  assert.match(account, /data-testid="teacher-account-mobile-safe"/);
+  assert.match(account, /pb-\[calc\(6rem\+env\(safe-area-inset-bottom\)\)\]/);
+  assert.match(account, /onClick=\{\(\) => void logout\(\)\}/);
+});
+
+test("teacher setup hub keeps mobile-safe cards and availability/profile links", () => {
+  const src = read("app/(app)/teacher/verification/page.tsx");
+  assert.match(src, /data-testid="teacher-profile-management-page"/);
+  assert.match(src, /pb-\[calc\(6rem\+env\(safe-area-inset-bottom\)\)\]/);
+  assert.match(src, /ctaHref="\/teacher\/schedule"/);
+  assert.match(src, /href="\/teacher\/my-profile"/);
+  assert.match(src, /min-h-11/);
+});
+
+test("teacher mobile polish does not reintroduce email password magic link or OTP auth", () => {
+  const login = read("app/login/page.tsx");
+  const auth = read("lib/auth.ts");
+  assert.doesNotMatch(login, /type="email"/);
+  assert.doesNotMatch(login, /type="password"/);
+  assert.doesNotMatch(auth, /signInWithPassword/);
+  assert.doesNotMatch(auth, /signInWithOtp/);
+  assert.doesNotMatch(login, /Magic Link/i);
+  assert.doesNotMatch(login, /\bOTP\b/i);
+});
+
 async function run() {
   for (const { name, fn } of tests) {
     await fn();
