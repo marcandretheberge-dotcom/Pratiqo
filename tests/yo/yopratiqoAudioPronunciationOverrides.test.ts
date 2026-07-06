@@ -351,6 +351,9 @@ test("tracked patch avoids generated audio and restricted product systems", () =
     "tests/auth/studentOnboardingConsentGate.test.ts",
     "tests/ops/pwaAppReadiness.test.ts",
     "tests/ops/pwaInstallabilityVerification.test.ts",
+    // hotfix/teacher-intro-price-optional - teacher profile pricing API only.
+    // Defended by tests/teacherProfile/introLessonPriceConditional.test.ts.
+    "app/api/teacher/pricing/route.ts",
   ]);
   const forbidden = [
     /^app\/api\//,

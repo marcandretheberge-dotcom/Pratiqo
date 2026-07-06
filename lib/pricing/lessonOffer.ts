@@ -66,15 +66,8 @@ export function validateEnabledIntroSessionOffer(input: TeacherLessonOfferInput)
   }
 
   const explicit = positiveNumber(input.intro_session_price_cents);
-  if (explicit != null) {
-    return validateMinimumLessonPrice(Math.round(explicit));
-  }
-
-  const derived = resolveIntroSessionPriceCents({
-    ...input,
-    intro_session_price_cents: null,
-  });
-  return validateMinimumLessonPrice(derived);
+  if (explicit == null) return { ok: false, priceCents: 0 };
+  return validateMinimumLessonPrice(Math.round(explicit));
 }
 
 /**

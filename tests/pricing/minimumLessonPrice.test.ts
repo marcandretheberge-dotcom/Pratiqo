@@ -46,7 +46,7 @@ test("explicit intro price below 2000 cents is rejected", () => {
   assert.equal(result.ok, false);
 });
 
-test("derived intro price below 2000 cents is rejected", () => {
+test("missing explicit intro price is rejected when intro session is enabled", () => {
   const derived = resolveIntroSessionPriceCents({
     price_per_lesson: 20,
     intro_session_price_cents: null,
@@ -62,6 +62,15 @@ test("derived intro price below 2000 cents is rejected", () => {
     intro_session_discount_percent: 50,
   });
   assert.equal(result.ok, false);
+});
+
+test("missing intro price is accepted when intro session is disabled", () => {
+  const result = validateEnabledIntroSessionOffer({
+    intro_session_enabled: false,
+    price_per_lesson: 20,
+    intro_session_price_cents: null,
+  });
+  assert.equal(result.ok, true);
 });
 
 test("explicit intro price of 2000 cents is accepted", () => {
