@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { execSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
+import manifestRoute from "../../app/manifest";
 
 const root = process.cwd();
 
@@ -26,7 +27,8 @@ function pngDimensions(relativePath: string): { width: number; height: number } 
   };
 }
 
-const manifest = readJson("public/manifest.json");
+const publicManifest = readJson("public/manifest.json");
+const manifest = manifestRoute() as Record<string, unknown>;
 const appManifestSrc = read("app/manifest.ts");
 const layoutSrc = read("app/layout.tsx");
 const swSrc = read("public/sw.js");
@@ -47,7 +49,8 @@ assert.equal(manifest.background_color, "#F1EFE8");
 assert.equal(manifest.theme_color, "#1D9E75");
 assert.equal(manifest.orientation, "portrait");
 assert.equal(manifest.lang, "fr-CA");
-ok("public manifest has required installability fields");
+assert.deepEqual(publicManifest, manifest);
+ok("generated manifest has required installability fields and public manifest mirrors it");
 
 for (const required of [
   'name: "Pratiqo"',
@@ -66,7 +69,7 @@ for (const required of [
 ]) {
   assert.ok(appManifestSrc.includes(required), `app/manifest.ts missing ${required}`);
 }
-ok("app manifest route mirrors installable PWA metadata");
+ok("app manifest route is the canonical installable PWA metadata source");
 
 const icons = manifest.icons as Array<{ src?: string; sizes?: string; type?: string; purpose?: string }>;
 assert.ok(Array.isArray(icons), "manifest icons must be an array");
@@ -91,15 +94,23 @@ for (const expected of [
 }
 ok("PWA icons exist with correct sizes, including maskable icon");
 
-assert.match(layoutSrc, /manifest:\s*"\/manifest\.json"/);
-assert.match(layoutSrc, /<link rel="manifest" href="\/manifest\.json" \/>/);
-assert.match(layoutSrc, /meta name="theme-color" content="#1D9E75"/);
-assert.match(layoutSrc, /apple-mobile-web-app-capable" content="yes"/);
-assert.match(layoutSrc, /apple-mobile-web-app-title" content="Pratiqo"/);
-assert.match(layoutSrc, /apple-mobile-web-app-status-bar-style" content="default"/);
-assert.match(layoutSrc, /rel="apple-touch-icon" href="\/icons\/icon-192\.png"/);
+assert.match(layoutSrc, /import type \{ Metadata, Viewport \} from "next"/);
+assert.match(layoutSrc, /applicationName:\s*"Pratiqo"/);
+assert.match(layoutSrc, /manifest:\s*"\/manifest\.webmanifest"/);
+assert.match(layoutSrc, /appleWebApp:\s*\{/);
+assert.match(layoutSrc, /capable:\s*true/);
+assert.match(layoutSrc, /title:\s*"Pratiqo"/);
+assert.match(layoutSrc, /statusBarStyle:\s*"default"/);
+assert.match(layoutSrc, /export const viewport: Viewport = \{/);
+assert.match(layoutSrc, /width:\s*"device-width"/);
+assert.match(layoutSrc, /initialScale:\s*1/);
+assert.match(layoutSrc, /viewportFit:\s*"cover"/);
+assert.match(layoutSrc, /themeColor:\s*"#1D9E75"/);
 assert.match(layoutSrc, /url: "\/icons\/icon-192\.png", sizes: "192x192"/);
-ok("root metadata and head reference manifest, theme color, and Apple icon");
+assert.doesNotMatch(layoutSrc, /<meta name="theme-color"/);
+assert.doesNotMatch(layoutSrc, /<link rel="manifest"/);
+assert.doesNotMatch(layoutSrc, /<link rel="apple-touch-icon"/);
+ok("root metadata and viewport exports reference manifest, theme color, and Apple icon");
 
 assert.match(pwaServiceWorkerSrc, /^"use client"/);
 assert.match(pwaServiceWorkerSrc, /useEffect\(\(\) =>/);
@@ -107,12 +118,15 @@ assert.match(pwaServiceWorkerSrc, /"serviceWorker" in navigator/);
 assert.match(pwaServiceWorkerSrc, /window\.location\.protocol !== "https:" && window\.location\.hostname !== "localhost"/);
 assert.match(pwaServiceWorkerSrc, /navigator\.serviceWorker\.register\("\/sw\.js", \{ scope: "\/" \}\)/);
 assert.match(pwaServiceWorkerSrc, /best-effort/);
+assert.doesNotMatch(pwaServiceWorkerSrc, /PushManager|Notification|subscribe\(/);
 ok("service worker registration is browser-only and safe in development");
 
 const precacheSlice = swSrc.slice(swSrc.indexOf("const PRECACHE_URLS"), swSrc.indexOf("const AUTHENTICATED_PREFIXES"));
 for (const safe of ["/offline", "/manifest.json", "/icons/icon-192.png", "/icons/icon-512.png", "/icons/icon-512-maskable.png"]) {
   assert.match(precacheSlice, new RegExp(safe.replace(/[/.]/g, "\\$&")));
 }
+assert.match(swSrc, /pathname\.endsWith\("\.webmanifest"\)/);
+assert.doesNotMatch(swSrc, /PushManager|showNotification|pushsubscriptionchange|self\.registration\.showNotification/);
 for (const forbidden of [
   "/api",
   "/account",
