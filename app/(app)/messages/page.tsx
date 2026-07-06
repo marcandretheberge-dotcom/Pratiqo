@@ -405,7 +405,16 @@ export default function MessagesPage() {
                 <Loader2 className="animate-spin text-teal-700" size={28} />
               </div>
             ) : displayConversations.length === 0 ? (
-              <p className="p-4 text-sm text-slate-700">{t("noMessages")}</p>
+              <div className="p-6 text-center space-y-3">
+                <p className="text-sm text-slate-800">{t("noMessages")}</p>
+                <p className="text-xs leading-relaxed text-slate-600">{t("messagesEmptyHint")}</p>
+                <Link
+                  href="/student/search"
+                  className="inline-flex min-h-[44px] items-center justify-center rounded-2xl bg-teal-700 px-4 text-sm font-bold text-white hover:brightness-[0.98]"
+                >
+                  {t("studentFindTeacher")}
+                </Link>
+              </div>
             ) : (
               displayConversations.map((c) => {
                 const active = c.conversationId === activeConversationId;

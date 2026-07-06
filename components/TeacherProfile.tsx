@@ -129,7 +129,7 @@ export function TeacherProfile({
       .select("id")
       .eq("student_id", user.id)
       .eq("teacher_id", teacher.id)
-      .in("status", ["confirmed"])
+      .in("status", ["confirmed", "completed"])
       .limit(1)
       .then(({ data }) => {
         if (!cancelled) setHasBooking((data?.length ?? 0) > 0);
