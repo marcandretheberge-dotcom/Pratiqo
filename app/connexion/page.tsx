@@ -120,10 +120,10 @@ function ConnexionInner() {
               <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-teal-700">
                 {t("onboardingRoleChoiceEyebrow")}
               </p>
-              <h1 className="mt-3 text-2xl font-bold text-[var(--p-text)] sm:text-3xl">
+              <h1 className="mt-3 text-2xl font-bold text-[#214238] sm:text-[var(--p-text)] sm:text-3xl">
                 {t("loginAlreadyConnectedTitle")}
               </h1>
-              <p className="mt-4 text-sm leading-relaxed text-[var(--p-text-muted)]">
+              <p className="mt-4 text-sm leading-relaxed text-[#5F6F68] sm:text-[var(--p-text-muted)]">
                 {t("loginAlreadyConnectedBody")}
               </p>
 
@@ -156,10 +156,10 @@ function ConnexionInner() {
               <p className="text-center text-[10px] font-bold uppercase tracking-[0.2em] text-teal-700">
                 {t("onboardingRoleChoiceEyebrow")}
               </p>
-              <h1 className="mt-3 text-center text-2xl font-bold text-[var(--p-text)] sm:text-3xl">
+              <h1 className="mt-3 text-center text-2xl font-bold text-[#214238] sm:text-[var(--p-text)] sm:text-3xl">
                 {t("onboardingRoleChoiceHeading")}
               </h1>
-              <p className="mt-4 text-center text-sm leading-relaxed text-[var(--p-text-muted)]">
+              <p className="mt-4 text-center text-sm leading-relaxed text-[#5F6F68] sm:text-[var(--p-text-muted)]">
                 {t("onboardingRoleChoiceSubtitle")}
               </p>
 
@@ -179,8 +179,8 @@ function ConnexionInner() {
                       <Sparkles size={22} />
                     </span>
                     <div className="min-w-0">
-                      <p className="text-lg font-bold text-[var(--p-text)]">{t("onboardingRoleChoiceLearner")}</p>
-                      <p className="mt-1 text-sm text-[var(--p-text-muted)]">{t("onboardingRoleChoiceLearnerHint")}</p>
+                      <p className="text-lg font-bold text-[#214238] sm:text-[var(--p-text)]">{t("onboardingRoleChoiceLearner")}</p>
+                      <p className="mt-1 text-sm text-[#5F6F68] sm:text-[var(--p-text-muted)]">{t("onboardingRoleChoiceLearnerHint")}</p>
                     </div>
                   </div>
                   <p className="mt-4 text-sm font-semibold text-teal-700">{t("onboardingRoleChoiceContinueLearner")}</p>
@@ -201,8 +201,8 @@ function ConnexionInner() {
                       <GraduationCap size={22} />
                     </span>
                     <div className="min-w-0">
-                      <p className="text-lg font-bold text-[var(--p-text)]">{t("onboardingRoleChoiceTeacher")}</p>
-                      <p className="mt-1 text-sm text-[var(--p-text-muted)]">{t("onboardingRoleChoiceTeacherCardHint")}</p>
+                      <p className="text-lg font-bold text-[#214238] sm:text-[var(--p-text)]">{t("onboardingRoleChoiceTeacher")}</p>
+                      <p className="mt-1 text-sm text-[#5F6F68] sm:text-[var(--p-text-muted)]">{t("onboardingRoleChoiceTeacherCardHint")}</p>
                     </div>
                   </div>
                   <p className="mt-4 text-sm font-semibold text-teal-700">{t("onboardingRoleChoiceContinueTeacher")}</p>
