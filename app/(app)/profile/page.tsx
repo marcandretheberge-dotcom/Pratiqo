@@ -241,8 +241,13 @@ export default function StudentProfilePage() {
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-teal-50 text-teal-700">
               <MapPin size={18} />
             </span>
-            <p className="text-sm font-bold text-slate-900">{t("studentFindTeacher")}</p>
+            <p className="text-sm font-bold text-slate-900">{t("profileLocationSectionTitle")}</p>
           </div>
+          <p className="px-3 text-xs leading-relaxed text-slate-600">
+            <Link href="/student/search" className="font-semibold text-teal-700 hover:underline">
+              {t("profileManageSearchAddressLink")}
+            </Link>
+          </p>
           <label className="block px-3">
             <span className="text-[13px] font-semibold text-slate-700">{t("studentCity")}</span>
             <input

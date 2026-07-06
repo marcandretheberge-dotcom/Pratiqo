@@ -106,6 +106,7 @@ export function StudentDashboard() {
 
   const [loading, setLoading] = useState(true);
   const [upcoming, setUpcoming] = useState<BookingWithTeacher[]>([]);
+  const [pendingPaymentCount, setPendingPaymentCount] = useState(0);
   const [teachers, setTeachers] = useState<{ teacherId: string; name: string; discipline: string; avatarUrl: string | null; lessons: number; teacherUserId: string | null }[]>(
     [],
   );
@@ -240,6 +241,7 @@ export function StudentDashboard() {
 
       if (!cancelled) {
         setUpcoming(upcomingList);
+        setPendingPaymentCount(rows.filter((r) => r.status === "pending_payment").length);
         setTeachers(teachersList);
         setLoading(false);
       }
@@ -356,6 +358,15 @@ export function StudentDashboard() {
         </div>
       ) : null}
 
+      {!loading && pendingPaymentCount > 0 ? (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950 shadow-sm">
+          <p className="font-medium leading-relaxed">{t("studentPendingPaymentBanner")}</p>
+          <Link href="/student/payments" className="mt-2 inline-flex font-semibold text-teal-700 hover:underline">
+            {t("studentPendingPaymentLink")}
+          </Link>
+        </div>
+      ) : null}
+
       {/* NEXT CLASS — hero */}
       <section
         className="rounded-[1.75rem] p-5 text-white shadow-[0_18px_50px_rgba(15,110,86,0.18)] sm:rounded-3xl sm:p-6 sm:shadow-[0_24px_80px_rgba(15,110,86,0.22)]"
@@ -409,6 +420,23 @@ export function StudentDashboard() {
                     <p className="mt-1 text-xs text-white/80">
                       {t("teacherLocalTime")} : {teacherTimeLabelFor(nextLesson)}
                     </p>
+                  ) : null}
+                  {String(nextLesson.teachingMode || "").toLowerCase() === "online" ? (
+                    nextLesson.meetingUrl ? (
+                      <div className="mt-3 rounded-xl border border-white/25 bg-white/10 px-3 py-2 text-sm">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-white/90">{t("onlineLessonLink")}</p>
+                        <a
+                          href={nextLesson.meetingUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="mt-1 inline-flex font-semibold text-white underline-offset-4 hover:underline"
+                        >
+                          {t("joinCall")}
+                        </a>
+                      </div>
+                    ) : (
+                      <p className="mt-2 text-xs font-semibold text-white/85">{t("onlineLessonLinkPending")}</p>
+                    )
                   ) : null}
                 </div>
               </div>
@@ -483,13 +511,14 @@ export function StudentDashboard() {
       </section>
 
       {/* UPCOMING */}
+      {(loading || nextLesson || upcoming.length > 0) && (
       <section className="space-y-3">
         <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-700">{t("studentUpcomingClasses")}</h2>
         {loading ? (
           <div className="rounded-2xl border border-[var(--p-border-light)] bg-white p-6 text-sm text-slate-600">…</div>
         ) : upcoming.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-slate-200/90 bg-white p-5 text-sm text-slate-700 shadow-sm sm:p-6">
-            {t("studentNoLesson")}
+            {t("studentUpcomingNoMore")}
           </div>
         ) : (
           <>
@@ -621,6 +650,7 @@ export function StudentDashboard() {
           </>
         )}
       </section>
+      )}
 
       {!loading && teachers.length > 0 && (
         <CreditsWidget
@@ -637,7 +667,14 @@ export function StudentDashboard() {
         <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-700">{t("studentMyTeachers")}</h2>
         {loading ? null : teachers.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-[var(--p-border-light)] bg-white p-5 text-sm text-slate-700 sm:p-6">
-            {t("studentMyTeachers")}
+            <p>{t("studentMyTeachersEmpty")}</p>
+            <Link
+              href="/student/search"
+              className="mt-4 inline-flex min-h-[44px] items-center justify-center rounded-2xl bg-teal-700 px-4 text-sm font-bold text-white hover:brightness-[0.98]"
+            >
+              <Search size={16} className="mr-2" />
+              {t("studentFindTeacher")}
+            </Link>
           </div>
         ) : (
           <ul className="space-y-2">
@@ -654,12 +691,12 @@ export function StudentDashboard() {
                         {x.discipline ? <span className="font-medium text-slate-600"> · {x.discipline}</span> : null}
                       </p>
                       <p className="text-xs font-medium text-slate-600">
-                        {x.lessons} cours
+                        {t("studentLessonCount").replace("{count}", String(x.lessons))}
                       </p>
                     </div>
                   </div>
                   <Link
-                    href={`/teacher/profile/${x.teacherId}`}
+                    href={`/student/search?openTeacher=${encodeURIComponent(x.teacherId)}`}
                     className={cn(
                       "inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-2xl px-4 text-xs font-bold sm:h-9 sm:min-h-0 sm:w-auto sm:rounded-full",
                       "bg-teal-600 text-white hover:brightness-[0.98]",

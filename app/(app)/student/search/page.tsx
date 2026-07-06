@@ -393,9 +393,14 @@ export default function StudentSearchPage() {
     setAdv((a) => ({ ...a, formatExtra: fmt }));
   };
 
+  const searchFormat = useMemo((): TeacherSearchFormat | undefined => {
+    if (formatValue === "all") return undefined;
+    return formatValue as TeacherSearchFormat;
+  }, [formatValue]);
+
   const results = useMemo(() => {
     // NB: this surface currently only forwards `category` + `searchQuery`
-    // (and now `availabilityDay`/`availabilityPeriod`) to the engine. The
+    // (and now `availabilityDay`/`availabilityPeriod` + `format`) to the engine. The
     // other advanced filters (rating/price/language/level/teacherPreference)
     // are intentionally NOT plumbed yet — a pre-existing limitation tracked
     // separately. The availability filter is forwarded here because V1 ships
@@ -403,6 +408,7 @@ export default function StudentSearchPage() {
     const pool = filterTeacherPool(teachers, {
       category: activeCat,
       searchQuery,
+      format: searchFormat,
       availabilityDay: adv.availabilityDay || undefined,
       availabilityPeriod: adv.availabilityPeriod || undefined,
     });
@@ -439,6 +445,7 @@ export default function StudentSearchPage() {
     studentPrefs,
     adv.availabilityDay,
     adv.availabilityPeriod,
+    searchFormat,
   ]);
 
   // Open a teacher profile and carry the current distanceKm from the results list.
@@ -447,6 +454,14 @@ export default function StudentSearchPage() {
     setSelectedProfileDistanceKm(row?.distanceKm ?? null);
     setSelectedTeacherProfile(teacher);
   }, [results]);
+
+  useEffect(() => {
+    const openTeacherId = searchParams.get("openTeacher")?.trim();
+    if (!openTeacherId || loadingTeachers || teachers.length === 0) return;
+    const teacher = teachers.find((row) => row.id === openTeacherId);
+    if (!teacher || selectedTeacherProfile?.id === teacher.id) return;
+    openTeacherProfile(teacher);
+  }, [searchParams, loadingTeachers, teachers, openTeacherProfile, selectedTeacherProfile?.id]);
 
   return (
     <>
@@ -710,6 +725,16 @@ export default function StudentSearchPage() {
                         className="h-[140px] rounded-2xl border border-[#E8E6DF] bg-white shadow-[0_12px_40px_rgba(44,44,42,0.06)]"
                       />
                     ))
+                  : results.length === 0 ? (
+                      <div className="col-span-full rounded-2xl border border-dashed border-[#DCEAE3] bg-white p-8 text-center shadow-sm">
+                        <p className="text-sm font-semibold text-[#2C2C2A]">
+                          {geo && radius !== "all" && radius !== "online"
+                            ? t("noTeachersFoundRadius")
+                            : t("noTeachersFound")}
+                        </p>
+                        <p className="mt-2 text-xs leading-relaxed text-[#6B6A65]">{t("studentFindTeacher")}</p>
+                      </div>
+                    )
                   : results.map(({ teacher, distanceKm }) => (
                       <TeacherCard
                         key={teacher.id}
@@ -728,6 +753,10 @@ export default function StudentSearchPage() {
                       <div className="flex items-center gap-2 text-sm font-semibold text-teal-700">
                         <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-teal-500 border-t-transparent" />
                         {t("loading")}
+                      </div>
+                    ) : results.length === 0 ? (
+                      <div className="rounded-2xl border border-dashed border-[#DCEAE3] bg-white p-8 text-center">
+                        <p className="text-sm font-semibold text-[#2C2C2A]">{t("noTeachersFound")}</p>
                       </div>
                     ) : (
                       <SearchMapView
