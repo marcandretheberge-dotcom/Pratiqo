@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { Providers } from "./providers";
@@ -13,6 +13,7 @@ const inter = localFont({
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
+  applicationName: "Pratiqo",
   title: {
     default: "Pratiqo — Trouve ton prof idéal au Québec",
     template: "%s | Pratiqo",
@@ -53,7 +54,7 @@ export const metadata: Metadata = {
   // and lib/seo/yopratiqoSpanishSeoPages.ts). Locale-specific URLs only exist
   // for the YoPratiqo Spanish acquisition pages under /fr/* and /en/*, which
   // declare reciprocal hreflang via `buildYoSpanishSeoMetadata`.
-  manifest: "/manifest.json",
+  manifest: "/manifest.webmanifest",
   icons: {
     icon: [
       { url: "/favicon.ico" },
@@ -62,9 +63,21 @@ export const metadata: Metadata = {
     ],
     apple: [{ url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" }],
   },
+  appleWebApp: {
+    capable: true,
+    title: "Pratiqo",
+    statusBarStyle: "default",
+  },
   other: {
     copyright: "© 2026 Cours Pratiqo Inc.",
   },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#1D9E75",
 };
 
 export default function RootLayout({
@@ -76,12 +89,6 @@ export default function RootLayout({
     <html lang="fr" className={`${inter.variable} h-full antialiased`}>
       <head>
         {/* next/font/local already loads Inter; avoid duplicate font preload competing with LCP. */}
-        <meta name="theme-color" content="#1D9E75" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-title" content="Pratiqo" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <link rel="manifest" href="/manifest.json" />
-        <link rel="apple-touch-icon" href="/icons/icon-192.png" />
         {/* Preconnect to Supabase to cut TTFB on first API call */}
         <link rel="preconnect" href="https://jwlbwmxoradmbuvqfkhe.supabase.co" />
         <link rel="dns-prefetch" href="https://jwlbwmxoradmbuvqfkhe.supabase.co" />

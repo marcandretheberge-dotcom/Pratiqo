@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { execSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
+import manifestRoute from "../../app/manifest";
 
 const root = process.cwd();
 
@@ -15,17 +16,21 @@ function ok(name: string) {
 
 const manifestPath = path.join(root, "public/manifest.json");
 assert.ok(existsSync(manifestPath), "public/manifest.json exists");
-const manifest = JSON.parse(read("public/manifest.json"));
+const publicManifest = JSON.parse(read("public/manifest.json"));
+const manifest = manifestRoute();
+assert.deepEqual(publicManifest, manifest);
 assert.equal(manifest.name, "Pratiqo");
 assert.equal(manifest.short_name, "Pratiqo");
 assert.equal(manifest.description, "Trouve un professeur local ou développe tes compétences avec Pratiqo.");
 assert.equal(manifest.start_url, "/");
 assert.equal(manifest.scope, "/");
 assert.equal(manifest.display, "standalone");
+assert.equal(manifest.background_color, "#F1EFE8");
 assert.equal(manifest.theme_color, "#1D9E75");
 assert.equal(manifest.lang, "fr-CA");
 assert.ok(Array.isArray(manifest.icons) && manifest.icons.length >= 2);
-ok("manifest has required installability fields");
+assert.ok(manifest.icons.some((icon) => icon.src === "/icons/icon-512-maskable.png" && icon.purpose === "maskable"));
+ok("generated manifest has required installability fields and public manifest mirrors it");
 
 for (const icon of ["public/icons/icon-192.png", "public/icons/icon-512.png", "public/icons/icon-512-maskable.png"]) {
   assert.ok(existsSync(path.join(root, icon)), `${icon} exists`);
@@ -33,18 +38,27 @@ for (const icon of ["public/icons/icon-192.png", "public/icons/icon-512.png", "p
 ok("PWA icons exist");
 
 const layout = read("app/layout.tsx");
-assert.match(layout, /apple-mobile-web-app-capable/);
-assert.match(layout, /apple-mobile-web-app-title/);
-assert.match(layout, /theme-color/);
-assert.match(layout, /rel="manifest"\s+href="\/manifest\.json"|href="\/manifest\.json"\s+rel="manifest"/);
-assert.match(layout, /rel="apple-touch-icon"/);
-ok("root layout contains PWA and Apple app meta tags");
+assert.match(layout, /import type \{ Metadata, Viewport \} from "next"/);
+assert.match(layout, /applicationName:\s*"Pratiqo"/);
+assert.match(layout, /manifest:\s*"\/manifest\.webmanifest"/);
+assert.match(layout, /appleWebApp:\s*\{/);
+assert.match(layout, /capable:\s*true/);
+assert.match(layout, /title:\s*"Pratiqo"/);
+assert.match(layout, /statusBarStyle:\s*"default"/);
+assert.match(layout, /export const viewport: Viewport = \{/);
+assert.match(layout, /viewportFit:\s*"cover"/);
+assert.match(layout, /themeColor:\s*"#1D9E75"/);
+assert.match(layout, /url: "\/icons\/icon-192\.png", sizes: "192x192"/);
+assert.doesNotMatch(layout, /<meta name="theme-color"/);
+assert.doesNotMatch(layout, /<link rel="manifest"/);
+ok("root layout uses Next metadata and viewport exports for PWA and Apple app tags");
 
 assert.ok(existsSync(path.join(root, "app/offline/page.tsx")), "offline page exists");
 assert.match(read("app/offline/page.tsx"), /Vous semblez hors ligne/);
 ok("offline fallback page exists");
 
 const sw = read("public/sw.js");
+assert.doesNotMatch(sw, /PushManager|showNotification|pushsubscriptionchange/);
 for (const blocked of ["/api", "/dashboard", "/booking", "/checkout", "/legal", "/yo/checkout", "/student", "/teacher"]) {
   assert.match(sw, new RegExp(blocked.replace("/", "\\/")));
 }
