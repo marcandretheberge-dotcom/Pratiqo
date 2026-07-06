@@ -1239,7 +1239,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                     aria-invalid={addressError ? true : undefined}
                     aria-describedby={addressError ? "booking-address-error" : undefined}
                     className={cn(
-                      "w-full rounded-xl border px-3 py-2 text-sm resize-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 outline-none",
+                      "min-h-[104px] w-full scroll-mt-24 resize-none rounded-xl border px-3 py-2.5 text-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/30",
                       addressError ? "border-red-300 bg-red-50/60" : "border-slate-200",
                     )}
                   />
@@ -1807,11 +1807,11 @@ function LearnerBookingContextPanel({
   const { t } = useLocale();
   const academicProgramHelperKey = getAcademicProgramHelperKey(academicConfig);
 
-  const fieldClass = "h-10 w-full rounded-xl border border-[#DCEAE3] bg-white px-3 text-xs outline-none focus:border-teal-500";
-  const areaClass = "w-full rounded-xl border border-[#DCEAE3] bg-white px-3 py-2 text-xs outline-none focus:border-teal-500";
+  const fieldClass = "min-h-11 w-full rounded-xl border border-[#DCEAE3] bg-white px-3 text-sm outline-none focus:border-teal-500 sm:text-xs";
+  const areaClass = "min-h-[96px] w-full rounded-xl border border-[#DCEAE3] bg-white px-3 py-2.5 text-sm outline-none focus:border-teal-500 sm:text-xs";
 
   return (
-    <div className="space-y-3 rounded-2xl border border-[#DCEAE3] bg-white p-4">
+    <div className="space-y-3 rounded-2xl border border-[#DCEAE3] bg-white p-4" data-testid="booking-learner-context-panel">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="text-sm font-semibold text-slate-800">{t("bookingLearnerContextHint")}</p>
@@ -1820,7 +1820,7 @@ function LearnerBookingContextPanel({
         <select
           value={draft.context_type}
           onChange={(e) => onChange({ context_type: e.target.value as LearnerContextType })}
-          className="h-9 rounded-xl border border-[#DCEAE3] bg-[#F3FAF6] px-2 text-xs font-semibold text-teal-700"
+          className="min-h-11 w-full rounded-xl border border-[#DCEAE3] bg-[#F3FAF6] px-3 text-sm font-semibold text-teal-700 sm:w-auto sm:text-xs"
         >
           <option value="academic">{t("contextTypeAcademic")}</option>
           <option value="language">{t("contextTypeLanguage")}</option>
@@ -1831,11 +1831,11 @@ function LearnerBookingContextPanel({
 
       {draft.context_type === "academic" ? (
         <div className="grid gap-2 sm:grid-cols-2">
-          <label className="space-y-1">
+          <label className="space-y-1.5">
             <span className="text-[11px] font-bold uppercase text-slate-600">{t("gradeLevel")}</span>
             <input value={draft.grade_level} onChange={(e) => onChange({ grade_level: e.target.value })} className={fieldClass} />
           </label>
-          <label className="space-y-1">
+          <label className="space-y-1.5">
             <span className="text-[11px] font-bold uppercase text-slate-600">{t("academicProgram")}</span>
             <select value={draft.academic_program} onChange={(e) => onChange({ academic_program: e.target.value })} className={fieldClass}>
               <option value="">-</option>
@@ -1851,7 +1851,7 @@ function LearnerBookingContextPanel({
               </span>
             ) : null}
           </label>
-          <label className="space-y-1 sm:col-span-2">
+          <label className="space-y-1.5 sm:col-span-2">
             <span className="text-[11px] font-bold uppercase text-slate-600">{t("subjectStruggles")}</span>
             <input
               value={draft.subject_struggles}
@@ -1860,7 +1860,7 @@ function LearnerBookingContextPanel({
               className={fieldClass}
             />
           </label>
-          <label className="space-y-1">
+          <label className="space-y-1.5">
             <span className="text-[11px] font-bold uppercase text-slate-600">{t("examDate")}</span>
             <input type="date" value={draft.exam_date} onChange={(e) => onChange({ exam_date: e.target.value })} className={fieldClass} />
           </label>
@@ -1869,15 +1869,15 @@ function LearnerBookingContextPanel({
 
       {draft.context_type === "language" ? (
         <div className="grid gap-2 sm:grid-cols-2">
-          <label className="space-y-1">
+          <label className="space-y-1.5">
             <span className="text-[11px] font-bold uppercase text-slate-600">{t("targetLanguage")}</span>
             <input value={draft.target_language} onChange={(e) => onChange({ target_language: e.target.value })} className={fieldClass} />
           </label>
-          <label className="space-y-1">
+          <label className="space-y-1.5">
             <span className="text-[11px] font-bold uppercase text-slate-600">{t("currentLevel")}</span>
             <input value={draft.current_level} onChange={(e) => onChange({ current_level: e.target.value })} className={fieldClass} />
           </label>
-          <label className="space-y-1 sm:col-span-2">
+          <label className="space-y-1.5 sm:col-span-2">
             <span className="text-[11px] font-bold uppercase text-slate-600">{t("learningGoals")}</span>
             <input value={draft.learning_goals} onChange={(e) => onChange({ learning_goals: e.target.value })} className={fieldClass} />
           </label>
@@ -1886,19 +1886,19 @@ function LearnerBookingContextPanel({
 
       {draft.context_type === "music" ? (
         <div className="grid gap-2 sm:grid-cols-2">
-          <label className="space-y-1">
+          <label className="space-y-1.5">
             <span className="text-[11px] font-bold uppercase text-slate-600">{t("instrument")}</span>
             <input value={draft.instrument} onChange={(e) => onChange({ instrument: e.target.value })} className={fieldClass} />
           </label>
-          <label className="space-y-1">
+          <label className="space-y-1.5">
             <span className="text-[11px] font-bold uppercase text-slate-600">{t("currentLevel")}</span>
             <input value={draft.current_level} onChange={(e) => onChange({ current_level: e.target.value })} className={fieldClass} />
           </label>
-          <label className="space-y-1">
+          <label className="space-y-1.5">
             <span className="text-[11px] font-bold uppercase text-slate-600">{t("practiceFrequency")}</span>
             <input value={draft.practice_frequency} onChange={(e) => onChange({ practice_frequency: e.target.value })} className={fieldClass} />
           </label>
-          <label className="space-y-1">
+          <label className="space-y-1.5">
             <span className="text-[11px] font-bold uppercase text-slate-600">{t("learningGoals")}</span>
             <input value={draft.learning_goals} onChange={(e) => onChange({ learning_goals: e.target.value })} className={fieldClass} />
           </label>
@@ -1907,18 +1907,18 @@ function LearnerBookingContextPanel({
 
       {draft.context_type === "general" ? (
         <div className="grid gap-2 sm:grid-cols-2">
-          <label className="space-y-1">
+          <label className="space-y-1.5">
             <span className="text-[11px] font-bold uppercase text-slate-600">{t("currentLevel")}</span>
             <input value={draft.current_level} onChange={(e) => onChange({ current_level: e.target.value })} className={fieldClass} />
           </label>
-          <label className="space-y-1">
+          <label className="space-y-1.5">
             <span className="text-[11px] font-bold uppercase text-slate-600">{t("learningGoals")}</span>
             <input value={draft.learning_goals} onChange={(e) => onChange({ learning_goals: e.target.value })} className={fieldClass} />
           </label>
         </div>
       ) : null}
 
-      <label className="block space-y-1">
+      <label className="block space-y-1.5">
         <span className="text-[11px] font-bold uppercase text-slate-600">{t("notesForTeacher")}</span>
         <textarea
           value={draft.notes_for_teacher}
