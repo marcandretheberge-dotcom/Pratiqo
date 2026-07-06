@@ -40,8 +40,9 @@ function initials(name: string) {
 }
 
 export default function MessagesPage() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { t } = useLocale();
+  const isTeacher = profile?.role === "teacher";
   const router = useRouter();
   const searchParams = useSearchParams();
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -407,13 +408,24 @@ export default function MessagesPage() {
             ) : displayConversations.length === 0 ? (
               <div className="p-6 text-center space-y-3">
                 <p className="text-sm text-slate-800">{t("noMessages")}</p>
-                <p className="text-xs leading-relaxed text-slate-600">{t("messagesEmptyHint")}</p>
-                <Link
-                  href="/student/search"
-                  className="inline-flex min-h-[44px] items-center justify-center rounded-2xl bg-teal-700 px-4 text-sm font-bold text-white hover:brightness-[0.98]"
-                >
-                  {t("studentFindTeacher")}
-                </Link>
+                <p className="text-xs leading-relaxed text-slate-600">
+                  {isTeacher ? t("messagesEmptyHintTeacher") : t("messagesEmptyHint")}
+                </p>
+                {isTeacher ? (
+                  <Link
+                    href="/dashboard"
+                    className="inline-flex min-h-[44px] items-center justify-center rounded-2xl bg-teal-700 px-4 text-sm font-bold text-white hover:brightness-[0.98]"
+                  >
+                    {t("teacherDashboard")}
+                  </Link>
+                ) : (
+                  <Link
+                    href="/student/search"
+                    className="inline-flex min-h-[44px] items-center justify-center rounded-2xl bg-teal-700 px-4 text-sm font-bold text-white hover:brightness-[0.98]"
+                  >
+                    {t("studentFindTeacher")}
+                  </Link>
+                )}
               </div>
             ) : (
               displayConversations.map((c) => {

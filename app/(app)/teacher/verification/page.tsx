@@ -1378,17 +1378,28 @@ export default function TeacherProfileManagementPage() {
                 <span className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
                   {t("introSessionPrice")}
                 </span>
-                <input
-                  value={editIntroPrice}
-                  onChange={(e) => setEditIntroPrice(e.target.value)}
-                  disabled={!editIntroEnabled}
-                  type="number"
-                  min={MIN_LESSON_PRICE_DOLLARS}
-                  step="0.5"
-                  placeholder="(auto)"
-                  className="mt-2 w-full h-11 rounded-xl border border-[#E8E6DF] px-3 text-sm outline-none focus:border-teal-500 disabled:bg-slate-50"
-                />
+                <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div className="rounded-xl border border-[#E8E6DF] bg-white px-3 py-2">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-[#6B6A65]">{t("introSessionDuration")}</p>
+                    <p className="mt-1 text-sm font-bold text-[#2C2C2A]">45 min</p>
+                  </div>
+                  <div>
+                    <input
+                      value={editIntroPrice}
+                      onChange={(e) => setEditIntroPrice(e.target.value)}
+                      disabled={!editIntroEnabled}
+                      type="number"
+                      min={MIN_LESSON_PRICE_DOLLARS}
+                      step="0.5"
+                      className="w-full h-11 rounded-xl border border-[#E8E6DF] px-3 text-sm outline-none focus:border-teal-500 disabled:bg-slate-50"
+                    />
+                    {editIntroEnabled ? (
+                      <p className="mt-1 text-[11px] font-medium text-amber-800">{t("introSessionPriceRequiredHint")}</p>
+                    ) : null}
+                  </div>
+                </div>
               </label>
+              <p className="text-[11px] font-semibold text-[#6B6A65]">{t("introSessionOnePerTeacher")}</p>
             </div>
             <button
               type="button"
