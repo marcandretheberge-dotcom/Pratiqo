@@ -10,8 +10,11 @@ import {
 } from "@/lib/auth/preAuthOnboardingIntent";
 import { useRouter } from "next/navigation";
 
+import { useLocale } from "@/lib/locale-context";
+
 export default function DashboardPage() {
   const { profile } = useAuth();
+  const { t } = useLocale();
   const router = useRouter();
   const role = (profile?.role as string | undefined) ?? undefined;
   const pendingTeacherIntent = !role && hasActivePendingTeacherIntentClient();
@@ -33,7 +36,7 @@ export default function DashboardPage() {
   if (role === "admin" || pendingTeacherIntent) {
     return (
       <div className="min-h-[40vh] flex items-center justify-center text-sm text-[var(--p-text-muted)]">
-        Chargement…
+        {t("loading")}
       </div>
     );
   }

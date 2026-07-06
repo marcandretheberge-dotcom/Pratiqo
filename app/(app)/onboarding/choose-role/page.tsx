@@ -20,6 +20,7 @@ import {
 } from "@/lib/auth/onboardingRoleChoice";
 import { resolvePostAuthRedirect } from "@/lib/auth/postAuthRedirect";
 import PratiqoLogo from "@/components/PratiqoLogo";
+import { AppLoadingFallback } from "@/components/AppLoadingFallback";
 
 function ChooseRoleInner() {
   const router = useRouter();
@@ -224,13 +225,7 @@ function ChooseRoleInner() {
 
 export default function OnboardingChooseRolePage() {
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-[70vh] flex items-center justify-center text-sm text-[var(--p-text-muted)]">
-          Chargement…
-        </div>
-      }
-    >
+    <Suspense fallback={<AppLoadingFallback className="min-h-[70vh]" />}>
       <ChooseRoleInner />
     </Suspense>
   );

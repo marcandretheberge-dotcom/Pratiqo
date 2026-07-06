@@ -1,12 +1,17 @@
+"use client";
+
+import { useLocale } from "@/lib/locale-context";
+
 /** Neutral loading shell for /teacher/profile/[id] (route + client). */
 export function ProfileRouteSkeleton() {
+  const { t } = useLocale();
   const bar = "animate-pulse rounded-lg bg-slate-100";
   return (
     <div
       className="fixed inset-0 z-[200] flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4"
       role="status"
       aria-busy="true"
-      aria-label="Chargement du profil"
+      aria-label={t("profileLoadingLabel")}
     >
       <div className="w-full max-w-3xl rounded-t-3xl border border-slate-200 bg-white p-6 shadow-2xl sm:rounded-3xl sm:p-8">
         <div className={`mb-6 h-8 w-8 rounded-full ${bar}`} />

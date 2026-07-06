@@ -19,6 +19,7 @@ import {
 } from "@/lib/auth/preAuthOnboardingIntent";
 import { sanitizeRelativeRedirectPath } from "@/lib/auth/redirects";
 import { useLocale } from "@/lib/locale-context";
+import { AppLoadingFallback } from "@/components/AppLoadingFallback";
 import { cn } from "@/lib/utils";
 
 function buildLoginHrefFromConnexion(
@@ -69,7 +70,7 @@ function ConnexionInner() {
       await logout();
     } catch (e) {
       console.error(e);
-      alert("Déconnexion impossible. Réessaie dans un instant.");
+      alert(t("loginSignOutError"));
       setBusy(false);
     }
   };
@@ -91,7 +92,7 @@ function ConnexionInner() {
   if (authLoading || (user && !profileHydrated)) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center text-sm text-[var(--p-text-muted)]">
-        Chargement…
+        {t("loading")}
       </div>
     );
   }
@@ -224,13 +225,7 @@ function ConnexionInner() {
 
 export default function ConnexionPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="flex min-h-[50vh] items-center justify-center text-sm text-[var(--p-text-muted)]">
-          Chargement…
-        </div>
-      }
-    >
+    <Suspense fallback={<AppLoadingFallback />}>
       <ConnexionInner />
     </Suspense>
   );

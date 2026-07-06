@@ -13,6 +13,7 @@ import {
 } from "@/lib/auth/onboardingRoleChoice";
 import { buildLoginHrefForProtectedReturn, hasActivePendingTeacherIntentClient } from "@/lib/auth/preAuthOnboardingIntent";
 import { logAuthFlowDecision } from "@/lib/auth/authFlowDiagnostics";
+import { useLocale } from "@/lib/locale-context";
 import { hasStudentOnboardingConsent } from "@/lib/auth/studentOnboardingConsent";
 
 const LEGAL_PREFIX = "/legal";
@@ -50,6 +51,7 @@ function shouldDeferShellForRoleHydration(
 
 export function AuthenticatedShell({ children }: { children: React.ReactNode }) {
   const { user, loading, profile, profileHydrated } = useAuth();
+  const { t } = useLocale();
   const pathname = usePathname();
   const router = useRouter();
   const isLegal = pathname?.startsWith(LEGAL_PREFIX) ?? false;
@@ -169,7 +171,7 @@ export function AuthenticatedShell({ children }: { children: React.ReactNode }) 
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3 text-[var(--p-text-muted)]">
         <Loader2 className="h-9 w-9 animate-spin text-teal-700" />
-        <p className="text-sm font-medium">Chargement…</p>
+        <p className="text-sm font-medium">{t("loading")}</p>
       </div>
     );
   }
@@ -187,7 +189,7 @@ export function AuthenticatedShell({ children }: { children: React.ReactNode }) 
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3 text-[var(--p-text-muted)]">
         <Loader2 className="h-9 w-9 animate-spin text-teal-700" />
-        <p className="text-sm font-medium">Chargement…</p>
+        <p className="text-sm font-medium">{t("loading")}</p>
       </div>
     );
   }

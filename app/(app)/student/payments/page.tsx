@@ -392,6 +392,12 @@ export default function StudentPaymentsPage() {
               <ReceiptText size={26} />
             </div>
             <p className="mt-4 text-sm font-semibold text-slate-700">{t("studentPaymentsEmpty")}</p>
+            <Link
+              href="/student/search"
+              className="mt-4 inline-flex min-h-[44px] items-center justify-center rounded-2xl bg-teal-700 px-4 text-sm font-bold text-white hover:brightness-[0.98]"
+            >
+              {t("studentPaymentsEmptyCta")}
+            </Link>
           </div>
         ) : (
           <div className="space-y-3 p-1">

@@ -24,6 +24,7 @@ import {
   resolvePreAuthIntent,
 } from "../../lib/auth/preAuthOnboardingIntent";
 import { clearOAuthReturnPending } from "../../lib/auth/oauthReturnHandoff";
+import { AppLoadingFallback } from "../../components/AppLoadingFallback";
 import { useLocale } from "../../lib/locale-context";
 import { cn } from "../../lib/utils";
 
@@ -138,7 +139,7 @@ function LoginForm() {
       await logout();
     } catch (e) {
       console.error("[login] sign out failed", e);
-      alert("Deconnexion impossible. Reessaie dans un instant.");
+      alert(t("loginSignOutError"));
       setBusy(false);
     }
   };
@@ -326,13 +327,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="flex min-h-[50vh] items-center justify-center text-sm text-[var(--p-text-muted)]">
-          Chargement...
-        </div>
-      }
-    >
+    <Suspense fallback={<AppLoadingFallback />}>
       <LoginForm />
     </Suspense>
   );
