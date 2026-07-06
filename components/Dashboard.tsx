@@ -887,7 +887,7 @@ export function Dashboard() {
                 </p>
               ) : null}
               {pendingList.length === 0 ? (
-                <p className="text-sm text-slate-600">{t("noPending")}</p>
+                <p className="text-sm text-slate-600">{t("teacherPendingRequestsEmpty")}</p>
               ) : (
                 <ul className="space-y-3">
                   {pendingList.map((b) => (

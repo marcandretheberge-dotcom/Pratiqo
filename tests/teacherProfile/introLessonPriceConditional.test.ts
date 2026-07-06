@@ -77,6 +77,12 @@ test("clients do not send an invalid empty intro price when intro class is off",
   assert.match(accountSrc, /if \(introEnabled\) \{/);
 });
 
+test("intro price UI does not suggest auto pricing when explicit price is required", () => {
+  assert.doesNotMatch(verificationSrc, /placeholder="\(auto\)"/);
+  assert.doesNotMatch(accountSrc, /placeholder="\(auto\)"/);
+  assert.match(verificationSrc, /introSessionPriceRequiredHint/);
+});
+
 test("pricing API clears stale intro price when intro class is disabled", () => {
   assert.match(pricingRouteSrc, /parsed\.data\.intro_session_enabled === false/);
   assert.match(pricingRouteSrc, /intro_session_price_cents:\s*null/);

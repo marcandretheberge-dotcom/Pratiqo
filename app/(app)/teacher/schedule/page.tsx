@@ -108,6 +108,13 @@ function TeacherScheduleInner() {
     return "dispo";
   }, [searchParams]);
 
+  useEffect(() => {
+    const raw = (searchParams.get("tab") || "").toLowerCase();
+    if (raw === "today" || raw === "aujourdhui" || raw === "week" || raw === "semaine") {
+      router.replace("/teacher/schedule?tab=dispo", { scroll: false });
+    }
+  }, [searchParams, router]);
+
   const [teacherId, setTeacherId] = useState<string | null>(null);
   const [teacherDiscipline, setTeacherDiscipline] = useState("—");
   const [availability, setAvailability] = useState<string[]>([]);
@@ -489,7 +496,7 @@ function TeacherScheduleInner() {
                         className="inline-flex min-h-11 w-full items-center justify-center rounded-full bg-teal-600 px-5 text-sm font-semibold text-white sm:w-auto"
                         onClick={() => router.push("/messages")}
                       >
-                        Démarrer
+                        {t("startLesson")}
                       </button>
                     ) : (
                       <button
@@ -497,7 +504,7 @@ function TeacherScheduleInner() {
                         className="inline-flex min-h-11 w-full items-center justify-center rounded-full border border-slate-300 bg-white px-5 text-sm font-semibold text-[#2C2C2A] sm:w-auto"
                         onClick={() => router.push("/messages")}
                       >
-                        Message
+                        {t("messageStudent")}
                       </button>
                     )}
                   </li>

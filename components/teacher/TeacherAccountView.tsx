@@ -811,7 +811,6 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
                 type="number"
                 min={MIN_LESSON_PRICE_DOLLARS}
                 step="0.5"
-                placeholder="(auto)"
                 className="w-full h-10 rounded-xl border border-slate-200 px-3 text-sm text-slate-900 disabled:bg-slate-50 disabled:text-slate-400"
               />
               <p className="text-[11px] text-slate-500">
@@ -1140,7 +1139,7 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
         ) : null}
       </section>
 
-      <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+      <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6" id="payouts">
         <h2 className="text-lg font-bold text-[#2C2C2A]">{t("sectionPayments")}</h2>
         <p className="text-sm text-slate-600">
           {t("stripeConnectLabel")}{" "}
