@@ -666,6 +666,17 @@ test("student booking entry modal remains visual-only and mobile tappable", () =
   assert.match(modal, /min-h-\[48px\]/);
 });
 
+test("booking modal keeps keyboard-facing controls mobile-safe", () => {
+  const modal = read("components/BookingModal.tsx");
+  assert.match(modal, /max-h-\[calc\(100dvh-env\(safe-area-inset-top\)\)\]/);
+  assert.match(modal, /overflow-y-auto/);
+  assert.match(modal, /data-testid="booking-learner-context-panel"/);
+  assert.match(modal, /min-h-\[104px\] w-full scroll-mt-24 resize-none/);
+  assert.match(modal, /const fieldClass = "min-h-11 w-full/);
+  assert.match(modal, /const areaClass = "min-h-\[96px\] w-full/);
+  assert.match(modal, /min-h-11 w-full rounded-xl border border-\[#DCEAE3\] bg-\[#F3FAF6\]/);
+});
+
 test("student profile keeps logout behavior and mobile-safe account cards", () => {
   const src = read("app/(app)/profile/page.tsx");
   assert.match(src, /onClick=\{\(\) => void logout\(\)\}/);
@@ -732,6 +743,15 @@ test("teacher availability route stays renderable and mobile-tappable", () => {
   assert.match(src, /onClick=\{\(\) => void saveAll\(\)\}/);
 });
 
+test("teacher schedule keeps final mobile scroll and control contracts", () => {
+  const src = read("app/(app)/teacher/schedule/page.tsx");
+  assert.match(src, /data-testid="teacher-schedule-lesson-duration-card"/);
+  assert.match(src, /data-testid="teacher-schedule-lesson-duration-select"/);
+  assert.match(src, /className="mt-2 h-12 w-full rounded-xl/);
+  assert.match(src, /className=\{cn\(\s*"h-12 rounded-xl border transition-colors"/);
+  assert.match(src, /className="h-12 w-full rounded-xl border border-slate-200 px-3 text-sm"/);
+});
+
 test("teacher bookings history route keeps mobile tabs and bottom-nav clearance", () => {
   const src = read("app/(app)/teacher/history/page.tsx");
   assert.match(src, /export default function TeacherHistoryPage/);
@@ -746,6 +766,15 @@ test("teacher messages route remains shared and mobile composer safe", () => {
   assert.match(src, /pb-\[calc\(6rem\+env\(safe-area-inset-bottom\)\)\]/);
   assert.match(src, /pb-\[max\(0\.75rem,env\(safe-area-inset-bottom\)\)\]/);
   assert.match(src, /min-h-\[64px\]/);
+});
+
+test("messages composer remains keyboard and bottom-safe on mobile", () => {
+  const src = read("app/(app)/messages/page.tsx");
+  assert.match(src, /min-h-\[calc\(100dvh-13\.5rem\)\]/);
+  assert.match(src, /flex-1 overflow-y-auto px-4 py-4 space-y-4/);
+  assert.match(src, /border-t border-\[var\(--p-border-light\)\] bg-\[#fafaf8\] p-3 pb-\[max\(0\.75rem,env\(safe-area-inset-bottom\)\)\]/);
+  assert.match(src, /className="flex-1 min-h-\[40px\] max-h-32 resize-none/);
+  assert.match(src, /className="flex h-11 w-11 shrink-0/);
 });
 
 test("teacher profile and account routes keep mobile-safe rows without changing logout", () => {
@@ -776,6 +805,15 @@ test("teacher mobile polish does not reintroduce email password magic link or OT
   assert.doesNotMatch(auth, /signInWithOtp/);
   assert.doesNotMatch(login, /Magic Link/i);
   assert.doesNotMatch(login, /\bOTP\b/i);
+});
+
+test("connexion mobile contrast guard from launch hotfix stays intact", () => {
+  const src = read("app/connexion/page.tsx");
+  assert.match(src, /bg-\[#FAFCFB\]/);
+  assert.match(src, /text-\[#214238\]/);
+  assert.match(src, /text-\[#5F6F68\]/);
+  assert.match(src, /highlightIntent === "teacher"[\s\S]*border-teal-700 bg-teal-500\/10/);
+  assert.match(src, /highlightIntent === "teacher"[\s\S]*border-slate-200 bg-slate-50/);
 });
 
 async function run() {
