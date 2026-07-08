@@ -94,6 +94,7 @@ const groupSessionsLayoutSrc = read("app/group-sessions/layout.tsx");
 const coursPageSrc = read("app/cours/[disciplineSlug]/[citySlug]/page.tsx");
 const tuteursPageSrc = read("app/tuteurs/[citySlug]/page.tsx");
 const legacyTuteursRedirectSrc = read("app/tuteurs-prive/[citySlug]/page.tsx");
+const legacyTeacherProfileIndexSrc = read("app/teacher/profile/page.tsx");
 
 // ── Domain & origin ──────────────────────────────────────────────────
 test("SITE_URL points to pratiqo.ca (never pratiqo.com)", () => {
@@ -321,6 +322,16 @@ test("Sitemap does NOT include /login (sign-in surface, not SEO)", async () => {
   );
 });
 
+test("Sitemap does NOT include legacy teacher profile URLs", async () => {
+  const entries = await sitemap();
+  for (const e of entries) {
+    assert.ok(
+      !/\/teacher\/profile(?:$|\/|\?)/.test(e.url),
+      `Sitemap must not include legacy teacher profile URLs (got ${e.url})`,
+    );
+  }
+});
+
 test("Sitemap does NOT include the legacy /legal/teacher-pro path", async () => {
   const entries = await sitemap();
   for (const e of entries) {
@@ -380,6 +391,12 @@ test("Sitemap excludes auth-only / private routes", async () => {
       `Sitemap must not include auth-only path ${prefix}`,
     );
   }
+});
+
+test("Legacy /teacher/profile index is noindex but crawlable for legacy links", () => {
+  assert.match(legacyTeacherProfileIndexSrc, /robots:\s*\{[\s\S]*?index:\s*false,\s*[\s\S]*?follow:\s*true,\s*[\s\S]*?\}/);
+  assert.match(legacyTeacherProfileIndexSrc, /canonical:\s*`\$\{SITE_URL\}\/trouver-un-prof`/);
+  assert.doesNotMatch(robotsSrc, /["']\/teacher\/profile["']/);
 });
 
 // ── Discipline × city + city-tutor SEO routes are in the sitemap ─────
