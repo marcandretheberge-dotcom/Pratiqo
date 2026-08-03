@@ -68,6 +68,9 @@ const PROFILE_MGMT_KEYS = [
   "teacherProfileMgmtSectionPayments",
   "teacherProfileMgmtOfferPricingDesc",
   "teacherProfileMgmtOfferPricingSaveBtn",
+  "teacherRateAutosaveSaving",
+  "teacherRateAutosaveSaved",
+  "teacherRateAutosaveError",
   "teacherProfileMgmtAvailabilityDesc",
   "teacherProfileMgmtAvailabilityCta",
   "teacherProfileMgmtDisciplinesDesc",
@@ -133,12 +136,36 @@ test("page: offer & pricing card uses new copy and intro offer fields", () => {
 });
 
 test("pricing save: intro price is conditional on the intro offer checkbox", () => {
-  assert.match(verificationSrc, /if \(editIntroEnabled\) \{/);
+  assert.match(verificationSrc, /if \(draft\.introEnabled\) \{/);
   assert.match(verificationSrc, /introPriceRaw === ""/);
   assert.match(verificationSrc, /setEditIntroPrice\(""\)/);
-  assert.match(verificationSrc, /intro_session_enabled:\s*editIntroEnabled/);
+  assert.match(verificationSrc, /intro_session_enabled:\s*draft\.introEnabled/);
   assert.match(verificationSrc, /intro_session_price_cents:\s*introPriceCents/);
   assert.doesNotMatch(verificationSrc, /Number\(String\(editIntroPrice \|\| ""\)\.trim\(\)\)[\s\S]{0,120}return null/);
+});
+
+test("pricing autosave: base hourly rate saves after debounce and on blur", () => {
+  assert.match(verificationSrc, /pricingAutosaveTimeoutRef/);
+  assert.match(verificationSrc, /setTimeout\(\(\) => \{\s*void savePricing\(\{ source: "autosave", collapseOnSuccess: false \}\);/);
+  assert.match(verificationSrc, /}, 750\)/);
+  assert.match(verificationSrc, /onBlur=\{\(\) => \{[\s\S]{0,260}savePricing\(\{ source: "blur", collapseOnSuccess: false \}\)/);
+  assert.match(verificationSrc, /pricingSaveInFlightRef/);
+  assert.match(verificationSrc, /pricingPendingAutosaveRef\.current = true/);
+  assert.match(verificationSrc, /setPricingAutosaveRetryTick/);
+  assert.match(verificationSrc, /savedDraftStillCurrent/);
+  assert.match(verificationSrc, /teacher-profile-mgmt-rate-autosave-saving/);
+  assert.match(verificationSrc, /teacher-profile-mgmt-rate-autosave-saved/);
+  assert.match(verificationSrc, /teacher-profile-mgmt-rate-autosave-error/);
+});
+
+test("pricing autosave: invalid base rate and missing intro price block API writes", () => {
+  assert.match(verificationSrc, /if \(!Number\.isFinite\(priceNum\) \|\| priceNum < MIN_LESSON_PRICE_DOLLARS\) \{/);
+  assert.match(verificationSrc, /setPricingInlineError\(error\)/);
+  assert.match(verificationSrc, /return false/);
+  assert.match(verificationSrc, /if \(draft\.introEnabled\) \{/);
+  assert.match(verificationSrc, /introPriceRaw === ""/);
+  assert.match(verificationSrc, /intro_session_enabled:\s*draft\.introEnabled/);
+  assert.match(verificationSrc, /intro_session_price_cents:\s*introPriceCents/);
 });
 
 test("page: availability links to schedule with duration summary CTA", () => {

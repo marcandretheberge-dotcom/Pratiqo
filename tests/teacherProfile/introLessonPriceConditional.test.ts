@@ -73,7 +73,7 @@ test("intro price error clears when teacher unchecks the intro class option", ()
 test("clients do not send an invalid empty intro price when intro class is off", () => {
   assert.match(verificationSrc, /let introPriceCents: number \| null = null/);
   assert.match(accountSrc, /let introPriceCents: number \| null = null/);
-  assert.match(verificationSrc, /if \(editIntroEnabled\) \{/);
+  assert.match(verificationSrc, /if \(draft\.introEnabled\) \{/);
   assert.match(accountSrc, /if \(introEnabled\) \{/);
 });
 
