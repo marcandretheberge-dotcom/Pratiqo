@@ -132,11 +132,6 @@ export function LandingTeacherListingCard({
                 unoptimized={shouldUseUnoptimizedImage(photoUrl)}
                 className="h-[4.5rem] w-[4.5rem] rounded-full border border-black/[0.04] object-cover shadow-sm sm:h-[5.25rem] sm:w-[5.25rem]"
               />
-              {teacher.introSessionEnabled ? (
-                <span className="absolute -bottom-1 -right-1 rounded-full bg-teal-50 px-2 py-0.5 text-[10px] font-extrabold text-teal-700 shadow-sm ring-1 ring-white">
-                  {t("introSessionBadge").replace("{n}", String(teacher.introSessionDurationMinutes ?? 45))}
-                </span>
-              ) : null}
             </div>
           ) : (
             <div className="relative shrink-0">
@@ -146,11 +141,6 @@ export function LandingTeacherListingCard({
               >
                 {initials(teacher.name)}
               </div>
-              {teacher.introSessionEnabled ? (
-                <span className="absolute -bottom-1 -right-1 rounded-full bg-teal-50 px-2 py-0.5 text-[10px] font-extrabold text-teal-700 shadow-sm ring-1 ring-white">
-                  {t("introSessionBadge").replace("{n}", String(teacher.introSessionDurationMinutes ?? 45))}
-                </span>
-              ) : null}
             </div>
           )}
 
