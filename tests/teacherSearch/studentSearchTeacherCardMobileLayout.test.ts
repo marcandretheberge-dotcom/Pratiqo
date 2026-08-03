@@ -392,6 +392,19 @@ test("LandingTeacherListingCard right column uses min-w-0 flex-1 to protect name
   );
 });
 
+test("LandingTeacherListingCard does not overlay intro session badges on teacher photos", () => {
+  assert.doesNotMatch(
+    LANDING_TEACHER_LISTING_CARD_SRC,
+    /introSessionBadge/,
+    "compact public teacher listing cards must not render the intro-session badge over the avatar/photo",
+  );
+  assert.doesNotMatch(
+    LANDING_TEACHER_LISTING_CARD_SRC,
+    /absolute -bottom-1 -right-1[\s\S]{0,180}?introSession/,
+    "intro-session metadata must never be absolutely positioned on top of the teacher photo",
+  );
+});
+
 // -------- 13. Map mini-card: name protected, no badge bug surface --------
 
 test("SearchMapView mini-card renders the teacher name in a min-w-0 column with truncate", () => {
