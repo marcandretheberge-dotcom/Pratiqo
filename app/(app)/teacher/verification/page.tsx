@@ -100,6 +100,15 @@ type TeacherVerifyRow = {
   stripe_account_id?: string | null;
 };
 
+type PricingDraft = {
+  price: string;
+  introEnabled: boolean;
+  introPrice: string;
+};
+
+type PricingSaveSource = "manual" | "autosave" | "blur";
+type PricingSaveState = "idle" | "saving" | "saved" | "error";
+
 const TEACHER_IMAGE_URL_FALLBACK = "https://picsum.photos/seed/teacher/400/400";
 
 function encodeTeachingMode(p: boolean, o: boolean, h: boolean): string {
@@ -181,6 +190,14 @@ export default function TeacherProfileManagementPage() {
   const [editPrice, setEditPrice] = useState("");
   const [editIntroEnabled, setEditIntroEnabled] = useState(false);
   const [editIntroPrice, setEditIntroPrice] = useState("");
+  const [pricingSaveState, setPricingSaveState] = useState<PricingSaveState>("idle");
+  const [pricingInlineError, setPricingInlineError] = useState<string | null>(null);
+  const [pricingAutosaveRetryTick, setPricingAutosaveRetryTick] = useState(0);
+  const pricingDraftRef = useRef<PricingDraft>({ price: "", introEnabled: false, introPrice: "" });
+  const lastSavedPricingRef = useRef<PricingDraft | null>(null);
+  const pricingAutosaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pricingSaveInFlightRef = useRef(false);
+  const pricingPendingAutosaveRef = useRef(false);
 
   // Home lessons (cours à domicile)
   // - editHomeEnabled  → teachers.home_lesson_enabled
@@ -319,14 +336,25 @@ export default function TeacherProfileManagementPage() {
   // Pre-populate forms from loaded teacher data
   useEffect(() => {
     if (!teacherRow) return;
+    const priceDraft = teacherRow.price_per_lesson != null ? String(teacherRow.price_per_lesson) : "";
+    const introEnabledDraft = teacherRow.intro_session_enabled === true;
+    const introCents =
+      typeof teacherRow.intro_session_price_cents === "number" ? teacherRow.intro_session_price_cents : null;
+    const introPriceDraft = introCents != null && introCents > 0 ? String(introCents / 100) : "";
+    const pricingDraft = {
+      price: priceDraft,
+      introEnabled: introEnabledDraft,
+      introPrice: introPriceDraft,
+    };
+    pricingDraftRef.current = pricingDraft;
+    lastSavedPricingRef.current = pricingDraft;
+
     setEditName(teacherRow.name ?? "");
     setEditBio(teacherRow.bio ?? "");
     setEditVideoUrl(teacherRow.video_url ?? "");
-    setEditPrice(teacherRow.price_per_lesson != null ? String(teacherRow.price_per_lesson) : "");
-    setEditIntroEnabled(teacherRow.intro_session_enabled === true);
-    const introCents =
-      typeof teacherRow.intro_session_price_cents === "number" ? teacherRow.intro_session_price_cents : null;
-    setEditIntroPrice(introCents != null && introCents > 0 ? String(introCents / 100) : "");
+    setEditPrice(priceDraft);
+    setEditIntroEnabled(introEnabledDraft);
+    setEditIntroPrice(introPriceDraft);
     const chips = teachingModeToChips(teacherRow.teaching_mode);
     setChipsPerson(chips.person);
     setChipsOnline(chips.online);
@@ -434,6 +462,49 @@ export default function TeacherProfileManagementPage() {
     setMessage(text);
     setMessageKind(kind);
   }, []);
+
+  useEffect(() => {
+    pricingDraftRef.current = {
+      price: editPrice,
+      introEnabled: editIntroEnabled,
+      introPrice: editIntroPrice,
+    };
+  }, [editPrice, editIntroEnabled, editIntroPrice]);
+
+  const normalizePricingDraft = useCallback((draft: PricingDraft) => {
+    const price = Number(draft.price);
+    const introPriceRaw = draft.introPrice.trim();
+    const introPrice = introPriceRaw ? Number(introPriceRaw) : null;
+    return {
+      price: Number.isFinite(price) ? Math.round(price * 100) / 100 : Number.NaN,
+      introEnabled: draft.introEnabled,
+      introPrice: introPrice != null && Number.isFinite(introPrice) ? Math.round(introPrice * 100) / 100 : null,
+    };
+  }, []);
+
+  const isPricingDraftDirty = useCallback(
+    (draft: PricingDraft) => {
+      const saved = lastSavedPricingRef.current;
+      if (!saved) return false;
+      const current = normalizePricingDraft(draft);
+      const previous = normalizePricingDraft(saved);
+      return (
+        current.price !== previous.price ||
+        current.introEnabled !== previous.introEnabled ||
+        current.introPrice !== previous.introPrice
+      );
+    },
+    [normalizePricingDraft],
+  );
+
+  const pricingDraftsMatch = useCallback(
+    (left: PricingDraft, right: PricingDraft) => {
+      const a = normalizePricingDraft(left);
+      const b = normalizePricingDraft(right);
+      return a.price === b.price && a.introEnabled === b.introEnabled && a.introPrice === b.introPrice;
+    },
+    [normalizePricingDraft],
+  );
 
   // Redirect banner for Stripe Identity return
   useEffect(() => {
@@ -634,49 +705,124 @@ export default function TeacherProfileManagementPage() {
   };
 
   // ── Pricing save ────────────────────────────────────────────────────────────
-  const savePricing = async () => {
-    if (!user?.id) return;
-    const priceNum = Number(editPrice);
-    if (!Number.isFinite(priceNum) || priceNum < MIN_LESSON_PRICE_DOLLARS) {
-      showMsg(t("pricingMinLessonPrice"), "error");
-      return;
-    }
-    const introPriceRaw = String(editIntroPrice || "").trim();
-    let introPriceCents: number | null = null;
-    if (editIntroEnabled) {
-      const dollars = Number(introPriceRaw);
-      if (introPriceRaw === "" || !Number.isFinite(dollars) || dollars <= 0 || dollars < MIN_LESSON_PRICE_DOLLARS) {
-        showMsg(`${t("introSessionPrice")} - ${t("pricingMinLessonPrice")}`, "error");
-        return;
+  const savePricing = useCallback(
+    async (options: { source?: PricingSaveSource; collapseOnSuccess?: boolean } = {}) => {
+      if (!user?.id) return false;
+      if (pricingSaveInFlightRef.current) {
+        pricingPendingAutosaveRef.current = true;
+        return false;
       }
-      introPriceCents = Math.round(dollars * 100);
-    }
-    setBusy("pricing");
-    setMessage(null);
-    try {
-      const { data: sess } = await getSupabaseClient().auth.getSession();
-      const token = sess.session?.access_token;
-      if (!token) throw new Error(t("verificationSessionExpired"));
-      const res = await fetch("/api/teacher/pricing", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({
-          price_per_lesson: priceNum,
-          intro_session_enabled: editIntroEnabled,
-          intro_session_price_cents: introPriceCents,
-        }),
-      });
-      const j = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string };
-      if (!res.ok) throw new Error(j.error || t("anErrorOccurred"));
-      showMsg(t("savedOk"), "ok");
-      setExpandedCard(null);
-      await load();
-    } catch (e) {
-      showMsg(e instanceof Error ? e.message : t("anErrorOccurred"), "error");
-    } finally {
-      setBusy(null);
-    }
-  };
+
+      const source = options.source ?? "manual";
+      const collapseOnSuccess = options.collapseOnSuccess ?? source === "manual";
+      const draft = pricingDraftRef.current;
+      const priceNum = Number(draft.price);
+
+      setPricingInlineError(null);
+      if (!Number.isFinite(priceNum) || priceNum < MIN_LESSON_PRICE_DOLLARS) {
+        const error = t("pricingMinLessonPrice");
+        setPricingInlineError(error);
+        setPricingSaveState("error");
+        if (source === "manual") showMsg(error, "error");
+        return false;
+      }
+
+      const introPriceRaw = String(draft.introPrice || "").trim();
+      let introPriceCents: number | null = null;
+      if (draft.introEnabled) {
+        const dollars = Number(introPriceRaw);
+        if (introPriceRaw === "" || !Number.isFinite(dollars) || dollars <= 0 || dollars < MIN_LESSON_PRICE_DOLLARS) {
+          const error = `${t("introSessionPrice")} - ${t("pricingMinLessonPrice")}`;
+          setPricingInlineError(error);
+          setPricingSaveState("error");
+          if (source === "manual") showMsg(error, "error");
+          return false;
+        }
+        introPriceCents = Math.round(dollars * 100);
+      }
+
+      if (source !== "manual" && !isPricingDraftDirty(draft)) {
+        return true;
+      }
+
+      pricingSaveInFlightRef.current = true;
+      setBusy("pricing");
+      setMessage(null);
+      setPricingSaveState("saving");
+      try {
+        const { data: sess } = await getSupabaseClient().auth.getSession();
+        const token = sess.session?.access_token;
+        if (!token) throw new Error("missing_session");
+        const res = await fetch("/api/teacher/pricing", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({
+            price_per_lesson: priceNum,
+            intro_session_enabled: draft.introEnabled,
+            intro_session_price_cents: introPriceCents,
+          }),
+        });
+        const j = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string };
+        if (!res.ok) throw new Error(j.error || "pricing_save_failed");
+
+        const latestDraft = pricingDraftRef.current;
+        const savedDraftStillCurrent = pricingDraftsMatch(draft, latestDraft);
+        lastSavedPricingRef.current = draft;
+        if (savedDraftStillCurrent) {
+          setTeacherRow((row) =>
+            row
+              ? {
+                  ...row,
+                  price_per_lesson: priceNum,
+                  intro_session_enabled: draft.introEnabled,
+                  intro_session_price_cents: introPriceCents,
+                }
+              : row,
+          );
+          setPricingSaveState("saved");
+          setPricingInlineError(null);
+          showMsg(t("savedOk"), "ok");
+        }
+        if (collapseOnSuccess && savedDraftStillCurrent) {
+          setExpandedCard(null);
+          await load();
+        }
+        return true;
+      } catch {
+        const error = t("teacherRateAutosaveError");
+        setPricingInlineError(error);
+        setPricingSaveState("error");
+        if (source === "manual") showMsg(error, "error");
+        return false;
+      } finally {
+        const retryAutosave = pricingPendingAutosaveRef.current;
+        pricingPendingAutosaveRef.current = false;
+        pricingSaveInFlightRef.current = false;
+        setBusy(null);
+        if (retryAutosave) {
+          setPricingAutosaveRetryTick((tick) => tick + 1);
+        }
+      }
+    },
+    [isPricingDraftDirty, load, pricingDraftsMatch, showMsg, t, user?.id],
+  );
+
+  useEffect(() => {
+    if (!teacherRow) return;
+    const draft = pricingDraftRef.current;
+    setPricingInlineError(null);
+    if (!isPricingDraftDirty(draft)) return;
+    if (pricingAutosaveTimeoutRef.current) clearTimeout(pricingAutosaveTimeoutRef.current);
+    pricingAutosaveTimeoutRef.current = setTimeout(() => {
+      void savePricing({ source: "autosave", collapseOnSuccess: false });
+    }, 750);
+    return () => {
+      if (pricingAutosaveTimeoutRef.current) {
+        clearTimeout(pricingAutosaveTimeoutRef.current);
+        pricingAutosaveTimeoutRef.current = null;
+      }
+    };
+  }, [editPrice, editIntroEnabled, editIntroPrice, isPricingDraftDirty, pricingAutosaveRetryTick, savePricing, teacherRow]);
 
   // ── Home lessons save ───────────────────────────────────────────────────────
   // Bounds mirror the dedicated validation in app/api/teacher/pricing/route.ts
@@ -1338,7 +1484,18 @@ export default function TeacherProfileManagementPage() {
               </span>
               <input
                 value={editPrice}
-                onChange={(e) => setEditPrice(e.target.value)}
+                onChange={(e) => {
+                  setEditPrice(e.target.value);
+                  setPricingInlineError(null);
+                  setPricingSaveState("idle");
+                }}
+                onBlur={() => {
+                  if (pricingAutosaveTimeoutRef.current) {
+                    clearTimeout(pricingAutosaveTimeoutRef.current);
+                    pricingAutosaveTimeoutRef.current = null;
+                  }
+                  void savePricing({ source: "blur", collapseOnSuccess: false });
+                }}
                 type="number"
                 min={MIN_LESSON_PRICE_DOLLARS}
                 step="0.5"
@@ -1347,6 +1504,34 @@ export default function TeacherProfileManagementPage() {
               />
               <p className="mt-1 text-xs text-[#6B6A65]">{t("profileBaseRateHelper")}</p>
               <p className="mt-1 text-xs text-[#6B6A65]">{t("pricingMinLessonPrice")}</p>
+              <div className="mt-2 min-h-5" aria-live="polite">
+                {pricingSaveState === "saving" ? (
+                  <p
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-[#6B6A65]"
+                    data-testid="teacher-profile-mgmt-rate-autosave-saving"
+                  >
+                    <Loader2 size={12} className="animate-spin" aria-hidden />
+                    {t("teacherRateAutosaveSaving")}
+                  </p>
+                ) : null}
+                {pricingSaveState === "saved" ? (
+                  <p
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-teal-700"
+                    data-testid="teacher-profile-mgmt-rate-autosave-saved"
+                  >
+                    <CheckCircle2 size={12} aria-hidden />
+                    {t("teacherRateAutosaveSaved")}
+                  </p>
+                ) : null}
+                {pricingInlineError ? (
+                  <p
+                    className="text-xs font-semibold text-red-700"
+                    data-testid="teacher-profile-mgmt-rate-autosave-error"
+                  >
+                    {pricingInlineError}
+                  </p>
+                ) : null}
+              </div>
               <TeacherHourlyRatePreview
                 hourlyRate={editPrice}
                 defaultDurationMinutes={teacherRow.default_lesson_duration_minutes ?? null}
@@ -1367,6 +1552,8 @@ export default function TeacherProfileManagementPage() {
                     onChange={(e) => {
                       const checked = e.target.checked;
                       setEditIntroEnabled(checked);
+                      setPricingInlineError(null);
+                      setPricingSaveState("idle");
                       if (!checked) {
                         setEditIntroPrice("");
                         setMessage(null);
@@ -1389,7 +1576,11 @@ export default function TeacherProfileManagementPage() {
                   <div>
                     <input
                       value={editIntroPrice}
-                      onChange={(e) => setEditIntroPrice(e.target.value)}
+                      onChange={(e) => {
+                        setEditIntroPrice(e.target.value);
+                        setPricingInlineError(null);
+                        setPricingSaveState("idle");
+                      }}
                       disabled={!editIntroEnabled}
                       type="number"
                       min={MIN_LESSON_PRICE_DOLLARS}
