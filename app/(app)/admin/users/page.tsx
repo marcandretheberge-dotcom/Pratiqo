@@ -17,7 +17,10 @@ import {
 import { useAuth } from "@/components/AuthProvider";
 import { getSupabaseClient } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
-import type { TeacherSearchVisibilityReasonCode } from "@/lib/teachers/searchVisibilityDiagnostics";
+import type {
+  TeacherSearchVisibilityBlockerCode,
+  TeacherSearchVisibilityWarningCode,
+} from "@/lib/teachers/searchVisibilityDiagnostics";
 import {
   trackAdminRoleChangeCompleted,
   trackAdminRoleChangeFailed,
@@ -38,7 +41,9 @@ type AdminUserRow = {
   teacher_id: string | null;
   teacher_is_public: boolean | null;
   teacher_search_visible: boolean | null;
-  teacher_search_visibility_reasons: TeacherSearchVisibilityReasonCode[];
+  teacher_search_visibility_reasons: string[];
+  teacher_search_visibility_blockers: TeacherSearchVisibilityBlockerCode[];
+  teacher_search_visibility_warnings: TeacherSearchVisibilityWarningCode[];
   companion_chosen: boolean | null;
   deletion_requested_at: string | null;
   is_self: boolean;
@@ -73,25 +78,36 @@ function formatDate(iso: string | null): string {
   }
 }
 
-const SEARCH_VISIBILITY_REASON_LABELS: Partial<Record<TeacherSearchVisibilityReasonCode, string>> = {
-  MISSING_PUBLIC_FLAG: "Profil non publié",
-  MISSING_TEACHER_ROW: "Profil teachers manquant",
-  MISSING_PROFILE_STATUS: "Compte masqué ou désactivé",
-  MISSING_DISPLAY_NAME: "Nom public manquant",
-  MISSING_SUBJECT: "Discipline manquante",
-  MISSING_TEACHING_FORMAT: "Format manquant",
-  MISSING_RATE: "Tarif manquant",
-  MISSING_LOCATION_POINT: "Zone publique manquante",
-  IDENTITY_VERIFICATION_FAILED: "Identité refusée",
-  BLOCKED_BY_RLS_OR_VIEW: "Absent de teachers_public",
-  MISSING_ROLE_TEACHER: "Rôle enseignant manquant",
-  EXCLUDED_BY_DISTANCE_FILTER: "Filtre distance",
-  EXCLUDED_BY_SEARCH_QUERY: "Filtre recherche",
-  UNKNOWN: "Raison inconnue",
+const SEARCH_VISIBILITY_BLOCKER_LABELS: Record<TeacherSearchVisibilityBlockerCode, string> = {
+  BLOCKER_PROFILE_NOT_PUBLISHED: "Profil non publié",
+  BLOCKER_TEACHER_ROW_MISSING: "Ligne enseignant manquante",
+  BLOCKER_PROFILE_INACTIVE: "Compte masqué ou désactivé",
+  BLOCKER_TEACHER_INACTIVE: "Profil enseignant désactivé",
+  BLOCKER_DEMO_PROFILE: "Profil démo exclu",
+  BLOCKER_INVALID_PUBLIC_IDS: "Identifiants publics invalides",
+  BLOCKER_MISSING_PUBLIC_DATA: "Données publiques manquantes",
+  BLOCKER_MISSING_BASE_RATE: "Tarif de base manquant",
+  BLOCKER_MISSING_SUBJECT: "Discipline manquante",
+  BLOCKER_MISSING_TEACHING_FORMAT: "Format d'enseignement manquant",
+  BLOCKER_MISSING_PUBLIC_LOCATION_OR_ONLINE: "Zone publique ou option en ligne manquante",
+  BLOCKER_UNSUPPORTED_COUNTRY: "Pays non ouvert aux professeurs",
+  BLOCKER_FAILED_IDENTITY_IF_SEARCH_BLOCKING: "Identité refusée",
+  BLOCKER_BY_RLS_OR_PUBLIC_VIEW: "Absent de la projection publique",
 };
 
-function searchVisibilityReasonLabel(code: TeacherSearchVisibilityReasonCode): string {
-  return SEARCH_VISIBILITY_REASON_LABELS[code] ?? code;
+const SEARCH_VISIBILITY_WARNING_LABELS: Record<TeacherSearchVisibilityWarningCode, string> = {
+  WARNING_IDENTITY_NOT_VERIFIED: "Identité non vérifiée",
+  WARNING_NO_AVAILABILITY: "Aucune disponibilité configurée",
+  WARNING_NO_INTRO_LESSON: "Aucune leçon intro configurée",
+  WARNING_PROFILE_LOW_COMPLETION: "Profil incomplet",
+};
+
+function searchVisibilityBlockerLabel(code: TeacherSearchVisibilityBlockerCode): string {
+  return SEARCH_VISIBILITY_BLOCKER_LABELS[code] ?? code;
+}
+
+function searchVisibilityWarningLabel(code: TeacherSearchVisibilityWarningCode): string {
+  return SEARCH_VISIBILITY_WARNING_LABELS[code] ?? code;
 }
 
 export default function AdminUsersPage() {
@@ -385,12 +401,29 @@ export default function AdminUsersPage() {
                                   <CheckCircle2 size={12} aria-hidden /> Onboarding complet
                                 </span>
                                 {u.teacher_search_visible ? (
-                                  <span
-                                    className="block rounded-full border border-teal-200 bg-teal-50 px-2 py-1 text-[11px] font-bold text-teal-800"
-                                    data-testid="admin-users-teacher-search-visible"
-                                  >
-                                    Visible en recherche
-                                  </span>
+                                  <div className="space-y-1" data-testid="admin-users-teacher-search-visible">
+                                    <span className="block rounded-full border border-teal-200 bg-teal-50 px-2 py-1 text-[11px] font-bold text-teal-800">
+                                      Visible en recherche
+                                    </span>
+                                    {u.teacher_search_visibility_warnings.length ? (
+                                      <div className="max-w-[280px] space-y-1">
+                                        <p className="text-[10px] font-bold uppercase tracking-wide text-amber-700">
+                                          À surveiller
+                                        </p>
+                                        <div className="flex flex-wrap gap-1">
+                                          {u.teacher_search_visibility_warnings.slice(0, 4).map((code) => (
+                                            <span
+                                              key={code}
+                                              title={code}
+                                              className="rounded-full border border-amber-100 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-800"
+                                            >
+                                              {searchVisibilityWarningLabel(code)}
+                                            </span>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    ) : null}
+                                  </div>
                                 ) : (
                                   <div
                                     className="space-y-1"
@@ -399,19 +432,40 @@ export default function AdminUsersPage() {
                                     <span className="block rounded-full border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] font-bold text-amber-800">
                                       Non visible en recherche
                                     </span>
-                                    {u.teacher_search_visibility_reasons.length ? (
-                                      <div className="flex max-w-[260px] flex-wrap gap-1">
-                                        {u.teacher_search_visibility_reasons
-                                          .filter((code) => code !== "VISIBLE_IN_SEARCH")
-                                          .slice(0, 3)
-                                          .map((code) => (
+                                    {u.teacher_search_visibility_blockers.length ? (
+                                      <div className="max-w-[280px] space-y-1">
+                                        <p className="text-[10px] font-bold uppercase tracking-wide text-rose-700">
+                                          Blocages
+                                        </p>
+                                        <div className="flex flex-wrap gap-1">
+                                          {u.teacher_search_visibility_blockers.slice(0, 4).map((code) => (
                                             <span
                                               key={code}
-                                              className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600"
+                                              title={code}
+                                              className="rounded-full border border-rose-100 bg-rose-50 px-2 py-0.5 text-[10px] font-semibold text-rose-800"
                                             >
-                                              {searchVisibilityReasonLabel(code)}
+                                              {searchVisibilityBlockerLabel(code)}
                                             </span>
                                           ))}
+                                        </div>
+                                      </div>
+                                    ) : null}
+                                    {u.teacher_search_visibility_warnings.length ? (
+                                      <div className="max-w-[280px] space-y-1">
+                                        <p className="text-[10px] font-bold uppercase tracking-wide text-amber-700">
+                                          À surveiller
+                                        </p>
+                                        <div className="flex flex-wrap gap-1">
+                                          {u.teacher_search_visibility_warnings.slice(0, 4).map((code) => (
+                                            <span
+                                              key={code}
+                                              title={code}
+                                              className="rounded-full border border-amber-100 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-800"
+                                            >
+                                              {searchVisibilityWarningLabel(code)}
+                                            </span>
+                                          ))}
+                                        </div>
                                       </div>
                                     ) : null}
                                   </div>

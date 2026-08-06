@@ -27,7 +27,9 @@ import {
 } from "@/lib/auth/admin";
 import {
   diagnoseTeacherSearchVisibility,
+  type TeacherSearchVisibilityBlockerCode,
   type TeacherSearchVisibilityReasonCode,
+  type TeacherSearchVisibilityWarningCode,
 } from "@/lib/teachers/searchVisibilityDiagnostics";
 
 export const runtime = "nodejs";
@@ -47,6 +49,8 @@ type AdminUserRow = {
   teacher_is_public: boolean | null;
   teacher_search_visible: boolean | null;
   teacher_search_visibility_reasons: TeacherSearchVisibilityReasonCode[];
+  teacher_search_visibility_blockers: TeacherSearchVisibilityBlockerCode[];
+  teacher_search_visibility_warnings: TeacherSearchVisibilityWarningCode[];
   companion_chosen: boolean | null;
   deletion_requested_at: string | null;
   is_self: boolean;
@@ -74,16 +78,21 @@ type AdminTeacherVisibilityRow = {
   name: string | null;
   discipline: string | null;
   category: string | null;
+  bio: string | null;
+  availability: unknown;
   price_per_lesson: number | string | null;
   teaching_mode: string | null;
   city: string | null;
   region: string | null;
+  country_code: string | null;
   location: unknown;
   is_public: boolean | null;
   is_demo: boolean | null;
   deactivated_at: string | null;
   deleted_at: string | null;
   identity_verified: boolean | null;
+  intro_session_enabled: boolean | null;
+  intro_session_price_cents: number | string | null;
 };
 
 export async function GET(req: Request) {
@@ -138,7 +147,7 @@ export async function GET(req: Request) {
       admin
         .from("teachers")
         .select(
-          "id, user_id, name, discipline, category, price_per_lesson, teaching_mode, city, region, location, is_public, is_demo, deactivated_at, deleted_at, identity_verified",
+          "id, user_id, name, discipline, category, bio, availability, price_per_lesson, teaching_mode, city, region, country_code, location, is_public, is_demo, deactivated_at, deleted_at, identity_verified, intro_session_enabled, intro_session_price_cents",
         )
         .in("user_id", teacherProfileIds),
       admin.from("teachers_public").select("id, user_id").in("user_id", teacherProfileIds),
@@ -209,6 +218,8 @@ export async function GET(req: Request) {
       teacher_is_public: teacher?.is_public ?? null,
       teacher_search_visible: searchDiagnosis?.visibleInSearch ?? null,
       teacher_search_visibility_reasons: searchDiagnosis?.reasonCodes ?? [],
+      teacher_search_visibility_blockers: searchDiagnosis?.blockingReasonCodes ?? [],
+      teacher_search_visibility_warnings: searchDiagnosis?.warningReasonCodes ?? [],
       companion_chosen: r.companion_chosen ?? null,
       deletion_requested_at: r.deletion_requested_at ?? null,
       is_self: r.id === adminUser.id,

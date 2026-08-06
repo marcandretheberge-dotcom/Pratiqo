@@ -43,10 +43,13 @@ type TeacherRow = {
   name: string | null;
   discipline: string | null;
   category: string | null;
+  bio: string | null;
+  availability: unknown;
   price_per_lesson: number | string | null;
   teaching_mode: string | null;
   city: string | null;
   region: string | null;
+  country_code: string | null;
   location: unknown;
   is_public: boolean | null;
   is_demo: boolean | null;
@@ -55,6 +58,8 @@ type TeacherRow = {
   identity_status: string | null;
   identity_verified: boolean | null;
   stripe_identity_failed_reason: string | null;
+  intro_session_enabled: boolean | null;
+  intro_session_price_cents: number | string | null;
 };
 
 type PublicTeacherRow = {
@@ -92,7 +97,7 @@ async function main() {
     supabase
       .from("teachers")
       .select(
-        "id, user_id, name, discipline, category, price_per_lesson, teaching_mode, city, region, location, is_public, is_demo, deactivated_at, deleted_at, identity_status, identity_verified, stripe_identity_failed_reason",
+        "id, user_id, name, discipline, category, bio, availability, price_per_lesson, teaching_mode, city, region, country_code, location, is_public, is_demo, deactivated_at, deleted_at, identity_status, identity_verified, stripe_identity_failed_reason, intro_session_enabled, intro_session_price_cents",
       ),
     supabase.from("teachers_public").select("id, user_id"),
     supabase.from("teacher_disciplines").select("teacher_id"),
@@ -129,9 +134,11 @@ async function main() {
     return { profile, teacher, diagnosis };
   });
 
-  const reasonBreakdown = new Map<string, number>();
+  const blockerBreakdown = new Map<string, number>();
+  const warningBreakdown = new Map<string, number>();
   for (const row of rows) {
-    for (const code of row.diagnosis.reasonCodes) increment(reasonBreakdown, code);
+    for (const code of row.diagnosis.blockingReasonCodes) increment(blockerBreakdown, code);
+    for (const code of row.diagnosis.warningReasonCodes) increment(warningBreakdown, code);
   }
 
   const launchReturnedCount = publicRows.filter((row) =>
@@ -143,7 +150,8 @@ async function main() {
     onboardingCompletedTeachers: profiles.filter((row) => row.teacher_onboarding_complete === true).length,
     searchEligibleTeachers: rows.filter((row) => row.diagnosis.visibleInSearch).length,
     searchReturnedTeachers: launchReturnedCount,
-    reasonBreakdown: Object.fromEntries([...reasonBreakdown.entries()].sort()),
+    blockerReasonBreakdown: Object.fromEntries([...blockerBreakdown.entries()].sort()),
+    warningReasonBreakdown: Object.fromEntries([...warningBreakdown.entries()].sort()),
   };
 
   console.log(JSON.stringify({ summary }, null, 2));
@@ -158,7 +166,8 @@ async function main() {
           onboardingComplete: profile.teacher_onboarding_complete === true,
           isPublic: teacher?.is_public ?? null,
           visibleInSearch: diagnosis.visibleInSearch,
-          reasonCodes: diagnosis.reasonCodes,
+          blockingReasonCodes: diagnosis.blockingReasonCodes,
+          warningReasonCodes: diagnosis.warningReasonCodes,
         })),
       },
       null,

@@ -1,21 +1,32 @@
 import { isIdentityVerificationFailed } from "@/lib/teachers/identityPublishGate";
+import { isTeacherMarketSupported } from "@/lib/config/markets";
+
+export type TeacherSearchVisibilityBlockerCode =
+  | "BLOCKER_PROFILE_NOT_PUBLISHED"
+  | "BLOCKER_TEACHER_ROW_MISSING"
+  | "BLOCKER_PROFILE_INACTIVE"
+  | "BLOCKER_TEACHER_INACTIVE"
+  | "BLOCKER_DEMO_PROFILE"
+  | "BLOCKER_INVALID_PUBLIC_IDS"
+  | "BLOCKER_MISSING_PUBLIC_DATA"
+  | "BLOCKER_MISSING_BASE_RATE"
+  | "BLOCKER_MISSING_SUBJECT"
+  | "BLOCKER_MISSING_TEACHING_FORMAT"
+  | "BLOCKER_MISSING_PUBLIC_LOCATION_OR_ONLINE"
+  | "BLOCKER_UNSUPPORTED_COUNTRY"
+  | "BLOCKER_FAILED_IDENTITY_IF_SEARCH_BLOCKING"
+  | "BLOCKER_BY_RLS_OR_PUBLIC_VIEW";
+
+export type TeacherSearchVisibilityWarningCode =
+  | "WARNING_IDENTITY_NOT_VERIFIED"
+  | "WARNING_NO_AVAILABILITY"
+  | "WARNING_NO_INTRO_LESSON"
+  | "WARNING_PROFILE_LOW_COMPLETION";
 
 export type TeacherSearchVisibilityReasonCode =
   | "VISIBLE_IN_SEARCH"
-  | "MISSING_ROLE_TEACHER"
-  | "MISSING_TEACHER_ROW"
-  | "MISSING_PUBLIC_FLAG"
-  | "MISSING_PROFILE_STATUS"
-  | "MISSING_DISPLAY_NAME"
-  | "MISSING_SUBJECT"
-  | "MISSING_TEACHING_FORMAT"
-  | "MISSING_RATE"
-  | "MISSING_LOCATION_POINT"
-  | "IDENTITY_VERIFICATION_FAILED"
-  | "BLOCKED_BY_RLS_OR_VIEW"
-  | "EXCLUDED_BY_DISTANCE_FILTER"
-  | "EXCLUDED_BY_SEARCH_QUERY"
-  | "UNKNOWN";
+  | TeacherSearchVisibilityBlockerCode
+  | TeacherSearchVisibilityWarningCode;
 
 export type TeacherSearchVisibilityDiagnosisInput = {
   profile: {
@@ -33,10 +44,13 @@ export type TeacherSearchVisibilityDiagnosisInput = {
     name?: string | null;
     discipline?: string | null;
     category?: string | null;
+    bio?: string | null;
+    availability?: unknown;
     price_per_lesson?: number | string | null;
     teaching_mode?: string | null;
     city?: string | null;
     region?: string | null;
+    country_code?: string | null;
     location?: unknown;
     is_public?: boolean | null;
     is_demo?: boolean | null;
@@ -45,6 +59,8 @@ export type TeacherSearchVisibilityDiagnosisInput = {
     identity_status?: string | null;
     identity_verified?: boolean | null;
     stripe_identity_failed_reason?: string | null;
+    intro_session_enabled?: boolean | null;
+    intro_session_price_cents?: number | string | null;
   } | null;
   disciplineCount?: number;
   inTeachersPublicView?: boolean;
@@ -53,6 +69,8 @@ export type TeacherSearchVisibilityDiagnosisInput = {
 export type TeacherSearchVisibilityDiagnosis = {
   visibleInSearch: boolean;
   reasonCodes: TeacherSearchVisibilityReasonCode[];
+  blockingReasonCodes: TeacherSearchVisibilityBlockerCode[];
+  warningReasonCodes: TeacherSearchVisibilityWarningCode[];
 };
 
 const UUID_RE =
@@ -63,6 +81,11 @@ function hasText(value: string | null | undefined): boolean {
 }
 
 function hasValidRate(value: number | string | null | undefined): boolean {
+  const n = Number(value);
+  return Number.isFinite(n) && n > 0;
+}
+
+function hasValidIntroPrice(value: number | string | null | undefined): boolean {
   const n = Number(value);
   return Number.isFinite(n) && n > 0;
 }
@@ -101,36 +124,37 @@ function teacherBlocked(input: NonNullable<TeacherSearchVisibilityDiagnosisInput
   return Boolean(input.deactivated_at) || Boolean(input.deleted_at) || input.is_demo === true;
 }
 
+function hasAvailabilitySignal(value: unknown): boolean {
+  if (Array.isArray(value)) return value.length > 0;
+  if (typeof value === "object" && value !== null) return Object.keys(value).length > 0;
+  if (typeof value === "string") return value.trim().length > 0;
+  return false;
+}
+
+function unique<T extends string>(codes: T[]): T[] {
+  return Array.from(new Set(codes));
+}
+
 export function diagnoseTeacherSearchVisibility(
   input: TeacherSearchVisibilityDiagnosisInput,
 ): TeacherSearchVisibilityDiagnosis {
-  if (input.inTeachersPublicView === true) {
-    return { visibleInSearch: true, reasonCodes: ["VISIBLE_IN_SEARCH"] };
-  }
-
-  const reasons: TeacherSearchVisibilityReasonCode[] = [];
+  const blockers: TeacherSearchVisibilityBlockerCode[] = [];
+  const warnings: TeacherSearchVisibilityWarningCode[] = [];
   const { profile, teacher } = input;
+  const visibleInPublicView = input.inTeachersPublicView === true;
 
-  if (profile.role !== "teacher") reasons.push("MISSING_ROLE_TEACHER");
-  if (profileBlocked(profile)) reasons.push("MISSING_PROFILE_STATUS");
+  if (!visibleInPublicView && (profile.role !== "teacher" || profileBlocked(profile))) {
+    blockers.push("BLOCKER_PROFILE_INACTIVE");
+  }
 
   if (!teacher) {
-    reasons.push("MISSING_TEACHER_ROW");
-    return { visibleInSearch: false, reasonCodes: reasons };
-  }
-
-  if (!teacher.id || !UUID_RE.test(teacher.id)) reasons.push("BLOCKED_BY_RLS_OR_VIEW");
-  if (!teacher.user_id || !UUID_RE.test(teacher.user_id)) reasons.push("BLOCKED_BY_RLS_OR_VIEW");
-  if (teacher.is_public !== true) reasons.push("MISSING_PUBLIC_FLAG");
-  if (teacherBlocked(teacher)) reasons.push("MISSING_PROFILE_STATUS");
-  if (!hasText(teacher.name)) reasons.push("MISSING_DISPLAY_NAME");
-  if ((input.disciplineCount ?? 0) <= 0 && !hasText(teacher.discipline) && !hasText(teacher.category)) {
-    reasons.push("MISSING_SUBJECT");
-  }
-  if (!hasText(teacher.teaching_mode)) reasons.push("MISSING_TEACHING_FORMAT");
-  if (!hasValidRate(teacher.price_per_lesson)) reasons.push("MISSING_RATE");
-  if (!isOnlineCapable(teacher.teaching_mode) && !hasPublicLocationSignal(teacher)) {
-    reasons.push("MISSING_LOCATION_POINT");
+    if (!visibleInPublicView) blockers.push("BLOCKER_TEACHER_ROW_MISSING");
+    return {
+      visibleInSearch: visibleInPublicView,
+      reasonCodes: visibleInPublicView ? ["VISIBLE_IN_SEARCH"] : unique([...blockers, ...warnings]),
+      blockingReasonCodes: visibleInPublicView ? [] : unique(blockers),
+      warningReasonCodes: unique(warnings),
+    };
   }
 
   const identityFailed =
@@ -139,17 +163,70 @@ export function diagnoseTeacherSearchVisibility(
       identity_verified: teacher.identity_verified,
       stripe_identity_failed_reason: teacher.stripe_identity_failed_reason,
     });
-  if (identityFailed) reasons.push("IDENTITY_VERIFICATION_FAILED");
 
+  if (!visibleInPublicView) {
+    if (!teacher.id || !UUID_RE.test(teacher.id)) blockers.push("BLOCKER_INVALID_PUBLIC_IDS");
+    if (!teacher.user_id || !UUID_RE.test(teacher.user_id)) blockers.push("BLOCKER_INVALID_PUBLIC_IDS");
+    if (teacher.is_public !== true) blockers.push("BLOCKER_PROFILE_NOT_PUBLISHED");
+    if (teacher.deactivated_at || teacher.deleted_at) blockers.push("BLOCKER_TEACHER_INACTIVE");
+    if (teacher.is_demo === true) blockers.push("BLOCKER_DEMO_PROFILE");
+    if (hasText(teacher.country_code) && !isTeacherMarketSupported(teacher.country_code)) {
+      blockers.push("BLOCKER_UNSUPPORTED_COUNTRY");
+    }
+    if (!hasText(teacher.name) || !hasText(teacher.bio) || !hasText(teacher.country_code)) {
+      blockers.push("BLOCKER_MISSING_PUBLIC_DATA");
+    }
+    if ((input.disciplineCount ?? 0) <= 0 && !hasText(teacher.discipline) && !hasText(teacher.category)) {
+      blockers.push("BLOCKER_MISSING_SUBJECT");
+    }
+    if (!hasText(teacher.teaching_mode)) blockers.push("BLOCKER_MISSING_TEACHING_FORMAT");
+    if (!hasValidRate(teacher.price_per_lesson)) blockers.push("BLOCKER_MISSING_BASE_RATE");
+    if (!isOnlineCapable(teacher.teaching_mode) && !hasPublicLocationSignal(teacher)) {
+      blockers.push("BLOCKER_MISSING_PUBLIC_LOCATION_OR_ONLINE");
+    }
+    if (identityFailed) blockers.push("BLOCKER_FAILED_IDENTITY_IF_SEARCH_BLOCKING");
+  }
+
+  if (!identityFailed && teacher.identity_verified !== true) {
+    warnings.push("WARNING_IDENTITY_NOT_VERIFIED");
+  }
+  if (!hasAvailabilitySignal(teacher.availability)) warnings.push("WARNING_NO_AVAILABILITY");
+  if (teacher.intro_session_enabled !== true || !hasValidIntroPrice(teacher.intro_session_price_cents)) {
+    warnings.push("WARNING_NO_INTRO_LESSON");
+  }
   if (
-    reasons.length === 0 ||
-    (teacher.is_public === true && !profileBlocked(profile) && !teacherBlocked(teacher))
+    !hasText(teacher.name) ||
+    !hasText(teacher.bio) ||
+    !hasText(teacher.country_code) ||
+    !hasValidRate(teacher.price_per_lesson) ||
+    ((input.disciplineCount ?? 0) <= 0 && !hasText(teacher.discipline) && !hasText(teacher.category)) ||
+    !hasText(teacher.teaching_mode)
   ) {
-    reasons.push("BLOCKED_BY_RLS_OR_VIEW");
+    warnings.push("WARNING_PROFILE_LOW_COMPLETION");
+  }
+
+  if (!visibleInPublicView && (
+    blockers.length === 0 ||
+    (teacher.is_public === true && !profileBlocked(profile) && !teacherBlocked(teacher))
+  )) {
+    blockers.push("BLOCKER_BY_RLS_OR_PUBLIC_VIEW");
+  }
+
+  const blockingReasonCodes = unique(blockers);
+  const warningReasonCodes = unique(warnings);
+  if (visibleInPublicView) {
+    return {
+      visibleInSearch: true,
+      reasonCodes: unique(["VISIBLE_IN_SEARCH", ...warningReasonCodes]),
+      blockingReasonCodes: [],
+      warningReasonCodes,
+    };
   }
 
   return {
     visibleInSearch: false,
-    reasonCodes: Array.from(new Set(reasons)),
+    reasonCodes: unique([...blockingReasonCodes, ...warningReasonCodes]),
+    blockingReasonCodes,
+    warningReasonCodes,
   };
 }
