@@ -17,6 +17,7 @@ import {
 import { useAuth } from "@/components/AuthProvider";
 import { getSupabaseClient } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
+import type { TeacherSearchVisibilityReasonCode } from "@/lib/teachers/searchVisibilityDiagnostics";
 import {
   trackAdminRoleChangeCompleted,
   trackAdminRoleChangeFailed,
@@ -34,6 +35,10 @@ type AdminUserRow = {
   created_at: string | null;
   updated_at: string | null;
   teacher_onboarding_complete: boolean | null;
+  teacher_id: string | null;
+  teacher_is_public: boolean | null;
+  teacher_search_visible: boolean | null;
+  teacher_search_visibility_reasons: TeacherSearchVisibilityReasonCode[];
   companion_chosen: boolean | null;
   deletion_requested_at: string | null;
   is_self: boolean;
@@ -66,6 +71,27 @@ function formatDate(iso: string | null): string {
   } catch {
     return iso;
   }
+}
+
+const SEARCH_VISIBILITY_REASON_LABELS: Partial<Record<TeacherSearchVisibilityReasonCode, string>> = {
+  MISSING_PUBLIC_FLAG: "Profil non publié",
+  MISSING_TEACHER_ROW: "Profil teachers manquant",
+  MISSING_PROFILE_STATUS: "Compte masqué ou désactivé",
+  MISSING_DISPLAY_NAME: "Nom public manquant",
+  MISSING_SUBJECT: "Discipline manquante",
+  MISSING_TEACHING_FORMAT: "Format manquant",
+  MISSING_RATE: "Tarif manquant",
+  MISSING_LOCATION_POINT: "Zone publique manquante",
+  IDENTITY_VERIFICATION_FAILED: "Identité refusée",
+  BLOCKED_BY_RLS_OR_VIEW: "Absent de teachers_public",
+  MISSING_ROLE_TEACHER: "Rôle enseignant manquant",
+  EXCLUDED_BY_DISTANCE_FILTER: "Filtre distance",
+  EXCLUDED_BY_SEARCH_QUERY: "Filtre recherche",
+  UNKNOWN: "Raison inconnue",
+};
+
+function searchVisibilityReasonLabel(code: TeacherSearchVisibilityReasonCode): string {
+  return SEARCH_VISIBILITY_REASON_LABELS[code] ?? code;
 }
 
 export default function AdminUsersPage() {
@@ -354,9 +380,43 @@ export default function AdminUsersPage() {
                         <td className="px-4 py-3 text-xs text-slate-600">
                           {u.role === "teacher" ? (
                             teacherOnboardingDone ? (
-                              <span className="inline-flex items-center gap-1 text-teal-700">
-                                <CheckCircle2 size={12} aria-hidden /> Onboarding complet
-                              </span>
+                              <div className="space-y-1.5">
+                                <span className="inline-flex items-center gap-1 text-teal-700">
+                                  <CheckCircle2 size={12} aria-hidden /> Onboarding complet
+                                </span>
+                                {u.teacher_search_visible ? (
+                                  <span
+                                    className="block rounded-full border border-teal-200 bg-teal-50 px-2 py-1 text-[11px] font-bold text-teal-800"
+                                    data-testid="admin-users-teacher-search-visible"
+                                  >
+                                    Visible en recherche
+                                  </span>
+                                ) : (
+                                  <div
+                                    className="space-y-1"
+                                    data-testid="admin-users-teacher-search-hidden"
+                                  >
+                                    <span className="block rounded-full border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] font-bold text-amber-800">
+                                      Non visible en recherche
+                                    </span>
+                                    {u.teacher_search_visibility_reasons.length ? (
+                                      <div className="flex max-w-[260px] flex-wrap gap-1">
+                                        {u.teacher_search_visibility_reasons
+                                          .filter((code) => code !== "VISIBLE_IN_SEARCH")
+                                          .slice(0, 3)
+                                          .map((code) => (
+                                            <span
+                                              key={code}
+                                              className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600"
+                                            >
+                                              {searchVisibilityReasonLabel(code)}
+                                            </span>
+                                          ))}
+                                      </div>
+                                    ) : null}
+                                  </div>
+                                )}
+                              </div>
                             ) : (
                               <span className="text-amber-700">Onboarding en cours</span>
                             )

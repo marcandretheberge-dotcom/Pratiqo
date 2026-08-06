@@ -111,7 +111,6 @@
   "introSessionOnePerTeacher": "Une seule séance d’introduction est possible avec ce professeur.",
   "introSessionPrice": "Prix intro",
   "introSessionPriceRequiredHint": "Obligatoire lorsque la séance introductive est activée.",
-  "introSessionPriceRequiredHint": "Obligatoire lorsque la séance introductive est activée.",
   "introSessionPublicDescription": "Idéale pour évaluer le niveau, clarifier l’objectif et bâtir un plan de progression.",
   "introSessionPublicLabel": "Séance d’introduction — {n} min",
   "introSessionTitle": "Séance d’introduction",

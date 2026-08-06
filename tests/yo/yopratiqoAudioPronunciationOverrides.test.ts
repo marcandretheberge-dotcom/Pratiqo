@@ -354,6 +354,12 @@ test("tracked patch avoids generated audio and restricted product systems", () =
     // hotfix/teacher-intro-price-optional - teacher profile pricing API only.
     // Defended by tests/teacherProfile/introLessonPriceConditional.test.ts.
     "app/api/teacher/pricing/route.ts",
+    // fix/teacher-search-visibility - admin-only user list diagnostics that
+    // explain why onboarding-complete teachers may still be absent from
+    // teachers_public/search. Read-only enrichment; no YoPratiqo audio,
+    // payment, booking, or public visibility changes. Defended by
+    // tests/teacherSearch/teacherSearchVisibilityDiagnostics.test.ts.
+    "app/api/admin/users/route.ts",
   ]);
   const forbidden = [
     /^app\/api\//,
