@@ -67,6 +67,15 @@ type PublicTeacherRow = {
   user_id: string | null;
 };
 
+type VisibilityMismatch = {
+  profileId: string;
+  teacherId: string | null;
+  expectedVisibleByTypeScript: boolean;
+  actualInTeachersPublic: boolean;
+  actualInListPublicTeachersRpc: boolean;
+  blockingReasonCodes: string[];
+};
+
 function requiredEnv(name: string): string {
   const value = process.env[name]?.trim();
   if (!value) throw new Error(`${name} is required`);
@@ -86,7 +95,7 @@ async function main() {
     { auth: { persistSession: false, autoRefreshToken: false } },
   );
 
-  const [profilesResult, teachersResult, publicResult, disciplinesResult] = await Promise.all([
+  const [profilesResult, teachersResult, publicResult, rpcResult, disciplinesResult] = await Promise.all([
     supabase
       .from("profiles")
       .select(
@@ -100,17 +109,20 @@ async function main() {
         "id, user_id, name, discipline, category, bio, availability, price_per_lesson, teaching_mode, city, region, country_code, location, is_public, is_demo, deactivated_at, deleted_at, identity_status, identity_verified, stripe_identity_failed_reason, intro_session_enabled, intro_session_price_cents",
       ),
     supabase.from("teachers_public").select("id, user_id"),
+    supabase.rpc("list_public_teachers").select("id, user_id"),
     supabase.from("teacher_disciplines").select("teacher_id"),
   ]);
 
   if (profilesResult.error) throw new Error(`profiles query failed: ${profilesResult.error.message}`);
   if (teachersResult.error) throw new Error(`teachers query failed: ${teachersResult.error.message}`);
   if (publicResult.error) throw new Error(`teachers_public query failed: ${publicResult.error.message}`);
+  if (rpcResult.error) throw new Error(`list_public_teachers RPC failed: ${rpcResult.error.message}`);
   if (disciplinesResult.error) throw new Error(`teacher_disciplines query failed: ${disciplinesResult.error.message}`);
 
   const profiles = (profilesResult.data ?? []) as ProfileRow[];
   const teachers = (teachersResult.data ?? []) as TeacherRow[];
   const publicRows = (publicResult.data ?? []) as PublicTeacherRow[];
+  const rpcRows = (rpcResult.data ?? []) as PublicTeacherRow[];
 
   const teacherByUserId = new Map<string, TeacherRow>();
   for (const teacher of teachers) {
@@ -118,6 +130,7 @@ async function main() {
   }
 
   const publicTeacherIds = new Set(publicRows.map((row) => row.id));
+  const rpcTeacherIds = new Set(rpcRows.map((row) => row.id));
   const disciplineCountByTeacherId = new Map<string, number>();
   for (const row of (disciplinesResult.data ?? []) as Array<{ teacher_id?: string | null }>) {
     if (row.teacher_id) increment(disciplineCountByTeacherId, row.teacher_id);
@@ -125,13 +138,15 @@ async function main() {
 
   const rows = profiles.map((profile) => {
     const teacher = teacherByUserId.get(profile.id) ?? null;
+    const inTeachersPublic = teacher?.id ? publicTeacherIds.has(teacher.id) : false;
+    const inListPublicTeachersRpc = teacher?.id ? rpcTeacherIds.has(teacher.id) : false;
     const diagnosis = diagnoseTeacherSearchVisibility({
       profile,
       teacher,
       disciplineCount: teacher?.id ? disciplineCountByTeacherId.get(teacher.id) ?? 0 : 0,
-      inTeachersPublicView: teacher?.id ? publicTeacherIds.has(teacher.id) : false,
+      inTeachersPublicView: inTeachersPublic,
     });
-    return { profile, teacher, diagnosis };
+    return { profile, teacher, diagnosis, inTeachersPublic, inListPublicTeachersRpc };
   });
 
   const blockerBreakdown = new Map<string, number>();
@@ -144,21 +159,44 @@ async function main() {
   const launchReturnedCount = publicRows.filter((row) =>
     isLaunchEligibleTeacherRow({ id: row.id, user_id: row.user_id }),
   ).length;
+  const rpcReturnedCount = rpcRows.filter((row) =>
+    isLaunchEligibleTeacherRow({ id: row.id, user_id: row.user_id }),
+  ).length;
+
+  const mismatches: VisibilityMismatch[] = rows
+    .filter(({ diagnosis, inTeachersPublic, inListPublicTeachersRpc }) =>
+      diagnosis.visibleInSearch !== inTeachersPublic ||
+      diagnosis.visibleInSearch !== inListPublicTeachersRpc
+    )
+    .map(({ profile, teacher, diagnosis, inTeachersPublic, inListPublicTeachersRpc }) => ({
+      profileId: profile.id,
+      teacherId: teacher?.id ?? null,
+      expectedVisibleByTypeScript: diagnosis.visibleInSearch,
+      actualInTeachersPublic: inTeachersPublic,
+      actualInListPublicTeachersRpc: inListPublicTeachersRpc,
+      blockingReasonCodes: diagnosis.blockingReasonCodes,
+    }));
 
   const summary = {
     adminTeachers: profiles.length,
     onboardingCompletedTeachers: profiles.filter((row) => row.teacher_onboarding_complete === true).length,
     searchEligibleTeachers: rows.filter((row) => row.diagnosis.visibleInSearch).length,
     searchReturnedTeachers: launchReturnedCount,
+    rpcReturnedTeachers: rpcReturnedCount,
+    sqlTsVisibilityMismatches: mismatches.length,
     blockerReasonBreakdown: Object.fromEntries([...blockerBreakdown.entries()].sort()),
     warningReasonBreakdown: Object.fromEntries([...warningBreakdown.entries()].sort()),
   };
 
   console.log(JSON.stringify({ summary }, null, 2));
+  if (mismatches.length > 0) {
+    console.log("MISMATCH_SQL_TS_VISIBILITY");
+    console.log(JSON.stringify({ mismatches }, null, 2));
+  }
   console.log(
     JSON.stringify(
       {
-        teachers: rows.map(({ profile, teacher, diagnosis }) => ({
+        teachers: rows.map(({ profile, teacher, diagnosis, inTeachersPublic, inListPublicTeachersRpc }) => ({
           profileId: profile.id,
           teacherId: teacher?.id ?? null,
           email: profile.email,
@@ -166,6 +204,8 @@ async function main() {
           onboardingComplete: profile.teacher_onboarding_complete === true,
           isPublic: teacher?.is_public ?? null,
           visibleInSearch: diagnosis.visibleInSearch,
+          inTeachersPublic,
+          inListPublicTeachersRpc,
           blockingReasonCodes: diagnosis.blockingReasonCodes,
           warningReasonCodes: diagnosis.warningReasonCodes,
         })),

@@ -41,6 +41,7 @@ function test(name: string, fn: () => void): void {
 // ---------------------------------------------------------------------------
 
 const migration070 = read("supabase/migrations/070_teachers_public_read_isolation.sql");
+const migration086 = read("supabase/migrations/086_align_teacher_public_search_visibility.sql");
 
 test("migration 070: drops the broad teachers_select_public policy", () => {
   assert.match(migration070, /DROP POLICY IF EXISTS "teachers_select_public" ON public\.teachers/);
@@ -146,6 +147,54 @@ test("migration 070: view WHERE filters out failed identity verifications", () =
     migration070,
     /COALESCE\(t\.identity_status, 'none'\)\s*<>\s*'failed'/,
   );
+});
+
+test("migration 086: final public helper requires explicit teacher publication", () => {
+  const sql = migration086
+    .split("\n")
+    .map((line) => line.replace(/--.*$/, ""))
+    .join("\n");
+  assert.match(sql, /CREATE OR REPLACE FUNCTION public\.list_public_teachers\(\)/i);
+  assert.match(sql, /WHERE\s+t\.is_public\s*=\s*true/i);
+  assert.doesNotMatch(sql, /COALESCE\(t\.is_public,\s*true\)\s*=\s*true/i);
+});
+
+test("migration 086: final public helper keeps sensitive columns off the projection", () => {
+  const selectBlock =
+    migration086.match(/SELECT([\s\S]*?)\n\s+FROM public\.teachers t/i)?.[1] ?? "";
+  assert.notEqual(selectBlock, "", "086 function SELECT block must be parseable");
+  const selectNoComments = selectBlock
+    .split("\n")
+    .map((line) => line.replace(/--.*$/, ""))
+    .join("\n");
+
+  for (const sensitiveCol of [
+    "t.phone_verified",
+    "t.identity_status",
+    "t.stripe_identity_status",
+    "t.diploma_url",
+    "t.location_verification_status",
+    "t.location_verified_at",
+    "t.location_verification_method",
+    "t.cv_verification_status",
+    "t.stripe_account_id",
+    "t.stripe_connect_charges_enabled",
+    "t.stripe_connect_payouts_enabled",
+    "t.stripe_identity_session_id",
+    "t.stripe_identity_verified_at",
+    "t.stripe_identity_failed_reason",
+  ]) {
+    assert.doesNotMatch(
+      selectNoComments,
+      new RegExp(`\\b${sensitiveCol.replace(/\./g, "\\.")}\\b`),
+      `Sensitive column ${sensitiveCol} must not be selected in final teachers_public helper`,
+    );
+  }
+});
+
+test("migration 086: final public helper strips private location data", () => {
+  assert.match(migration086, /\(t\.location - 'private'::text\) AS location/);
+  assert.doesNotMatch(migration086, /t\.location\s+AS location/i);
 });
 
 test("migration 070: view re-grants SELECT to anon/authenticated/service_role", () => {

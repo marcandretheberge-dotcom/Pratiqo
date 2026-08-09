@@ -141,18 +141,17 @@ export function diagnoseTeacherSearchVisibility(
   const blockers: TeacherSearchVisibilityBlockerCode[] = [];
   const warnings: TeacherSearchVisibilityWarningCode[] = [];
   const { profile, teacher } = input;
-  const visibleInPublicView = input.inTeachersPublicView === true;
 
-  if (!visibleInPublicView && (profile.role !== "teacher" || profileBlocked(profile))) {
+  if (profile.role !== "teacher" || profileBlocked(profile)) {
     blockers.push("BLOCKER_PROFILE_INACTIVE");
   }
 
   if (!teacher) {
-    if (!visibleInPublicView) blockers.push("BLOCKER_TEACHER_ROW_MISSING");
+    blockers.push("BLOCKER_TEACHER_ROW_MISSING");
     return {
-      visibleInSearch: visibleInPublicView,
-      reasonCodes: visibleInPublicView ? ["VISIBLE_IN_SEARCH"] : unique([...blockers, ...warnings]),
-      blockingReasonCodes: visibleInPublicView ? [] : unique(blockers),
+      visibleInSearch: false,
+      reasonCodes: unique([...blockers, ...warnings]),
+      blockingReasonCodes: unique(blockers),
       warningReasonCodes: unique(warnings),
     };
   }
@@ -164,28 +163,26 @@ export function diagnoseTeacherSearchVisibility(
       stripe_identity_failed_reason: teacher.stripe_identity_failed_reason,
     });
 
-  if (!visibleInPublicView) {
-    if (!teacher.id || !UUID_RE.test(teacher.id)) blockers.push("BLOCKER_INVALID_PUBLIC_IDS");
-    if (!teacher.user_id || !UUID_RE.test(teacher.user_id)) blockers.push("BLOCKER_INVALID_PUBLIC_IDS");
-    if (teacher.is_public !== true) blockers.push("BLOCKER_PROFILE_NOT_PUBLISHED");
-    if (teacher.deactivated_at || teacher.deleted_at) blockers.push("BLOCKER_TEACHER_INACTIVE");
-    if (teacher.is_demo === true) blockers.push("BLOCKER_DEMO_PROFILE");
-    if (hasText(teacher.country_code) && !isTeacherMarketSupported(teacher.country_code)) {
-      blockers.push("BLOCKER_UNSUPPORTED_COUNTRY");
-    }
-    if (!hasText(teacher.name) || !hasText(teacher.bio) || !hasText(teacher.country_code)) {
-      blockers.push("BLOCKER_MISSING_PUBLIC_DATA");
-    }
-    if ((input.disciplineCount ?? 0) <= 0 && !hasText(teacher.discipline) && !hasText(teacher.category)) {
-      blockers.push("BLOCKER_MISSING_SUBJECT");
-    }
-    if (!hasText(teacher.teaching_mode)) blockers.push("BLOCKER_MISSING_TEACHING_FORMAT");
-    if (!hasValidRate(teacher.price_per_lesson)) blockers.push("BLOCKER_MISSING_BASE_RATE");
-    if (!isOnlineCapable(teacher.teaching_mode) && !hasPublicLocationSignal(teacher)) {
-      blockers.push("BLOCKER_MISSING_PUBLIC_LOCATION_OR_ONLINE");
-    }
-    if (identityFailed) blockers.push("BLOCKER_FAILED_IDENTITY_IF_SEARCH_BLOCKING");
+  if (!teacher.id || !UUID_RE.test(teacher.id)) blockers.push("BLOCKER_INVALID_PUBLIC_IDS");
+  if (!teacher.user_id || !UUID_RE.test(teacher.user_id)) blockers.push("BLOCKER_INVALID_PUBLIC_IDS");
+  if (teacher.is_public !== true) blockers.push("BLOCKER_PROFILE_NOT_PUBLISHED");
+  if (teacher.deactivated_at || teacher.deleted_at) blockers.push("BLOCKER_TEACHER_INACTIVE");
+  if (teacher.is_demo === true) blockers.push("BLOCKER_DEMO_PROFILE");
+  if (hasText(teacher.country_code) && !isTeacherMarketSupported(teacher.country_code)) {
+    blockers.push("BLOCKER_UNSUPPORTED_COUNTRY");
   }
+  if (!hasText(teacher.name) || !hasText(teacher.bio) || !hasText(teacher.country_code)) {
+    blockers.push("BLOCKER_MISSING_PUBLIC_DATA");
+  }
+  if ((input.disciplineCount ?? 0) <= 0 && !hasText(teacher.discipline) && !hasText(teacher.category)) {
+    blockers.push("BLOCKER_MISSING_SUBJECT");
+  }
+  if (!hasText(teacher.teaching_mode)) blockers.push("BLOCKER_MISSING_TEACHING_FORMAT");
+  if (!hasValidRate(teacher.price_per_lesson)) blockers.push("BLOCKER_MISSING_BASE_RATE");
+  if (!isOnlineCapable(teacher.teaching_mode) && !hasPublicLocationSignal(teacher)) {
+    blockers.push("BLOCKER_MISSING_PUBLIC_LOCATION_OR_ONLINE");
+  }
+  if (identityFailed) blockers.push("BLOCKER_FAILED_IDENTITY_IF_SEARCH_BLOCKING");
 
   if (!identityFailed && teacher.identity_verified !== true) {
     warnings.push("WARNING_IDENTITY_NOT_VERIFIED");
@@ -205,16 +202,9 @@ export function diagnoseTeacherSearchVisibility(
     warnings.push("WARNING_PROFILE_LOW_COMPLETION");
   }
 
-  if (!visibleInPublicView && (
-    blockers.length === 0 ||
-    (teacher.is_public === true && !profileBlocked(profile) && !teacherBlocked(teacher))
-  )) {
-    blockers.push("BLOCKER_BY_RLS_OR_PUBLIC_VIEW");
-  }
-
   const blockingReasonCodes = unique(blockers);
   const warningReasonCodes = unique(warnings);
-  if (visibleInPublicView) {
+  if (blockingReasonCodes.length === 0) {
     return {
       visibleInSearch: true,
       reasonCodes: unique(["VISIBLE_IN_SEARCH", ...warningReasonCodes]),
