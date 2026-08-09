@@ -157,6 +157,38 @@ test("unsupported teacher country is a blocker for publish/search readiness", ()
   assert.ok(result.blockingReasonCodes.includes("BLOCKER_UNSUPPORTED_COUNTRY"));
 });
 
+test("missing country is classified as missing public data in diagnostics", () => {
+  const result = diagnose({ teacher: { ...teacher, country_code: null, is_public: false } });
+  assert.ok(result.blockingReasonCodes.includes("BLOCKER_MISSING_PUBLIC_DATA"));
+});
+
+test("SQL public view does not currently enforce country, setup, rate, subject, or intro blockers", () => {
+  const migration = read("supabase/migrations/081_admin_teacher_badges.sql");
+  const whereBlock = migration.slice(migration.indexOf("WHERE COALESCE(t.is_public"), migration.indexOf("$$;", migration.indexOf("WHERE COALESCE(t.is_public")));
+  assert.match(whereBlock, /COALESCE\(t\.is_public,\s*true\)\s*=\s*true/);
+  assert.match(whereBlock, /COALESCE\(t\.identity_status,\s*'none'\)\s*<>\s*'failed'/);
+  assert.doesNotMatch(whereBlock, /country_code/i);
+  assert.doesNotMatch(whereBlock, /price_per_lesson\s*>/i);
+  assert.doesNotMatch(whereBlock, /teacher_disciplines/i);
+  assert.doesNotMatch(whereBlock, /intro_session/i);
+});
+
+test("self-publish checklist currently requires city and region even for online-capable teachers", () => {
+  const setupProgress = read("lib/teachers/teacherSetupProgress.ts");
+  const publishEligibility = read("lib/teachers/profilePublishEligibility.ts");
+  assert.match(setupProgress, /const hasZone = Boolean\(input\.city\?\.trim\(\)\) && Boolean\(input\.region\?\.trim\(\)\)/);
+  assert.match(publishEligibility, /buildTeacherSetupChecklist\(\{/);
+  assert.doesNotMatch(publishEligibility, /teachingMode:/);
+});
+
+test("publish flag blocker maps to teachers.is_public", () => {
+  const helper = read("lib/teachers/searchVisibilityDiagnostics.ts");
+  const route = read("app/api/teacher/profile/visibility/route.ts");
+  assert.match(helper, /teacher\.is_public !== true/);
+  assert.match(route, /\.update\(\{\s*is_public:\s*true/);
+  assert.match(route, /\.update\(\{\s*is_public:\s*false/);
+});
+
 test("admin users API enriches teacher rows with search visibility diagnostics", () => {
   const route = read("app/api/admin/users/route.ts");
   assert.match(route, /diagnoseTeacherSearchVisibility/);
@@ -186,8 +218,22 @@ test("diagnostic script compares admin, onboarding, eligibility, and search coun
   assert.match(script, /searchReturnedTeachers/);
   assert.match(script, /blockerReasonBreakdown/);
   assert.match(script, /warningReasonBreakdown/);
+  assert.match(script, /countrySummary/);
+  assert.match(script, /totalTeachersByCountryCode/);
+  assert.match(script, /hiddenBecauseUnsupportedCountry/);
   assert.match(script, /blockingReasonCodes/);
   assert.match(script, /warningReasonCodes/);
+});
+
+test("diagnostic script prints requested safe teacher fields", () => {
+  const script = read("scripts/diagnose_teacher_search_visibility.ts");
+  assert.match(script, /countryCode/);
+  assert.match(script, /teachingMode/);
+  assert.match(script, /hasBaseRate/);
+  assert.match(script, /hasSubject/);
+  assert.match(script, /hasBio/);
+  assert.match(script, /hasSafePublicLocation/);
+  assert.match(script, /inTeachersPublic/);
 });
 
 test("diagnostic script does not print raw private location or address fields", () => {

@@ -67,6 +67,45 @@ type PublicTeacherRow = {
   user_id: string | null;
 };
 
+function hasText(value: string | null | undefined): boolean {
+  return Boolean(value?.trim());
+}
+
+function hasBaseRate(value: number | string | null | undefined): boolean {
+  const n = Number(value);
+  return Number.isFinite(n) && n > 0;
+}
+
+function hasSubject(teacher: TeacherRow | null, disciplineCount: number): boolean {
+  return (
+    disciplineCount > 0 ||
+    hasText(teacher?.discipline) ||
+    hasText(teacher?.category)
+  );
+}
+
+function isOnlineCapable(teachingMode: string | null | undefined): boolean {
+  const mode = String(teachingMode ?? "").trim().toLowerCase();
+  return mode === "online" || mode === "both" || mode === "all";
+}
+
+function hasSafePublicLocation(teacher: TeacherRow | null): boolean {
+  if (!teacher) return false;
+  if (hasText(teacher.city) && hasText(teacher.region)) return true;
+  const location =
+    typeof teacher.location === "object" && teacher.location !== null
+      ? (teacher.location as Record<string, unknown>)
+      : null;
+  const publicLocation =
+    typeof location?.public === "object" && location.public !== null
+      ? (location.public as Record<string, unknown>)
+      : null;
+  return Boolean(
+    (typeof publicLocation?.lat === "number" && typeof publicLocation?.lng === "number") ||
+      (typeof publicLocation?.latitude === "number" && typeof publicLocation?.longitude === "number"),
+  );
+}
+
 function requiredEnv(name: string): string {
   const value = process.env[name]?.trim();
   if (!value) throw new Error(`${name} is required`);
@@ -136,7 +175,31 @@ async function main() {
 
   const blockerBreakdown = new Map<string, number>();
   const warningBreakdown = new Map<string, number>();
+  const totalByCountry = new Map<string, number>();
+  const visibleByCountry = new Map<string, number>();
+  const hiddenByCountry = new Map<string, number>();
+  let hiddenUnsupportedCountry = 0;
+  let hiddenMissingCountry = 0;
+  let onlineOnlyHiddenUnsupportedCountry = 0;
+  let inPersonHiddenUnsupportedCountry = 0;
+
   for (const row of rows) {
+    const country = row.teacher?.country_code?.trim().toUpperCase() || "MISSING";
+    increment(totalByCountry, country);
+    if (row.diagnosis.visibleInSearch) {
+      increment(visibleByCountry, country);
+    } else {
+      increment(hiddenByCountry, country);
+    }
+    if (row.diagnosis.blockingReasonCodes.includes("BLOCKER_UNSUPPORTED_COUNTRY")) {
+      hiddenUnsupportedCountry += 1;
+      const teachingMode = String(row.teacher?.teaching_mode ?? "").trim().toLowerCase();
+      if (teachingMode === "online") onlineOnlyHiddenUnsupportedCountry += 1;
+      if (!isOnlineCapable(teachingMode)) inPersonHiddenUnsupportedCountry += 1;
+    }
+    if (row.diagnosis.blockingReasonCodes.includes("BLOCKER_MISSING_PUBLIC_DATA") && !row.teacher?.country_code) {
+      hiddenMissingCountry += 1;
+    }
     for (const code of row.diagnosis.blockingReasonCodes) increment(blockerBreakdown, code);
     for (const code of row.diagnosis.warningReasonCodes) increment(warningBreakdown, code);
   }
@@ -152,6 +215,15 @@ async function main() {
     searchReturnedTeachers: launchReturnedCount,
     blockerReasonBreakdown: Object.fromEntries([...blockerBreakdown.entries()].sort()),
     warningReasonBreakdown: Object.fromEntries([...warningBreakdown.entries()].sort()),
+    countrySummary: {
+      totalTeachersByCountryCode: Object.fromEntries([...totalByCountry.entries()].sort()),
+      visibleTeachersByCountryCode: Object.fromEntries([...visibleByCountry.entries()].sort()),
+      hiddenTeachersByCountryCode: Object.fromEntries([...hiddenByCountry.entries()].sort()),
+      hiddenBecauseUnsupportedCountry: hiddenUnsupportedCountry,
+      hiddenBecauseMissingCountry: hiddenMissingCountry,
+      onlineOnlyTeachersHiddenBecauseUnsupportedCountry: onlineOnlyHiddenUnsupportedCountry,
+      inPersonTeachersHiddenBecauseUnsupportedCountry: inPersonHiddenUnsupportedCountry,
+    },
   };
 
   console.log(JSON.stringify({ summary }, null, 2));
@@ -165,6 +237,16 @@ async function main() {
           displayName: teacher?.name ?? profile.name,
           onboardingComplete: profile.teacher_onboarding_complete === true,
           isPublic: teacher?.is_public ?? null,
+          countryCode: teacher?.country_code ?? null,
+          teachingMode: teacher?.teaching_mode ?? null,
+          hasBaseRate: hasBaseRate(teacher?.price_per_lesson),
+          hasSubject: hasSubject(
+            teacher,
+            teacher?.id ? disciplineCountByTeacherId.get(teacher.id) ?? 0 : 0,
+          ),
+          hasBio: hasText(teacher?.bio),
+          hasSafePublicLocation: hasSafePublicLocation(teacher),
+          inTeachersPublic: teacher?.id ? publicTeacherIds.has(teacher.id) : false,
           visibleInSearch: diagnosis.visibleInSearch,
           blockingReasonCodes: diagnosis.blockingReasonCodes,
           warningReasonCodes: diagnosis.warningReasonCodes,
