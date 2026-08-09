@@ -143,6 +143,22 @@ test("intro session disabled and null intro price are not search exclusion reaso
   assert.ok(result.warningReasonCodes.includes("WARNING_NO_INTRO_LESSON"));
 });
 
+test("Stripe Connect readiness is not a TypeScript search visibility blocker", () => {
+  const stripeIncompleteTeacher = {
+    ...teacher,
+    stripe_account_id: null,
+    stripe_connect_onboarding_complete: false,
+    stripe_connect_charges_enabled: false,
+    stripe_connect_payouts_enabled: false,
+  } as typeof teacher & Record<string, unknown>;
+  const result = diagnose({
+    teacher: stripeIncompleteTeacher,
+    inTeachersPublicView: true,
+  });
+  assert.equal(result.visibleInSearch, true);
+  assert.deepEqual(result.blockingReasonCodes, []);
+});
+
 test("missing availability is warning-only, not a search exclusion reason", () => {
   const result = diagnose({ teacher: { ...teacher, availability: [] } });
   assert.equal(result.visibleInSearch, true);
@@ -226,6 +242,7 @@ test("086 migration does not enforce warning-only fields", () => {
   assert.doesNotMatch(migration, /intro_session_enabled\s*=\s*true/i);
   assert.doesNotMatch(migration, /intro_session_price_cents\s*>\s*0/i);
   assert.doesNotMatch(migration, /availability\s+IS NOT NULL/i);
+  assert.doesNotMatch(migration, /stripe_account_id|stripe_connect_/i);
   assert.doesNotMatch(migration, /AND\s+t\.identity_verified\s*=\s*true/i);
   assert.match(
     migration,

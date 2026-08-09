@@ -14,11 +14,19 @@ type AdminTeacherSeoPublicationCopy = {
   sitemapLabel: string;
   sitemapIncluded: string;
   sitemapExcluded: string;
+  paymentStatusLabel: string;
+  paymentActive: string;
+  paymentInactive: string;
+  payoutStatusLabel: string;
+  payoutActive: string;
+  payoutInactive: string;
   markerLabel: string;
   markerAbsent: string;
   disclaimerIndexing: string;
   disclaimerTeacherConsent: string;
   blockersTitle: string;
+  warningsTitle: string;
+  paymentWarningLabel: string;
   publishButton: string;
   removeFromGoogleButton: string;
   hideMarketplaceButton: string;
@@ -94,10 +102,17 @@ const COPY: Record<Locale, AdminTeacherSeoPublicationCopy> = {
       public_profile_intent_missing: "Demande de publication manquante",
       slug_missing: "URL publique (slug) manquante",
       not_admin_published: "En attente de publication admin",
-      payout_not_ready: "Stripe Connect / paiements non prêts",
     },
+    paymentStatusLabel: "Paiements activés",
+    paymentActive: "Oui",
+    paymentInactive: "Non",
+    payoutStatusLabel: "Versements activés",
+    payoutActive: "Oui",
+    payoutInactive: "Non",
+    warningsTitle: "À surveiller",
+    paymentWarningLabel: "Paiements non configurés",
     payoutBlockerNote:
-      "Connect Stripe doit être complété avant la publication d'un profil qui accepte les réservations payantes.",
+      "Le profil peut rester visible, mais Stripe Connect doit être terminé avant d'accepter des réservations payées.",
   },
   en: {
     sectionTitle: "Google SEO publication",
@@ -156,10 +171,17 @@ const COPY: Record<Locale, AdminTeacherSeoPublicationCopy> = {
       public_profile_intent_missing: "Missing publication request",
       slug_missing: "Missing public URL (slug)",
       not_admin_published: "Waiting for admin publication",
-      payout_not_ready: "Stripe Connect / payments not ready",
     },
+    paymentStatusLabel: "Payments enabled",
+    paymentActive: "Yes",
+    paymentInactive: "No",
+    payoutStatusLabel: "Payouts enabled",
+    payoutActive: "Yes",
+    payoutInactive: "No",
+    warningsTitle: "Watch",
+    paymentWarningLabel: "Payments not configured",
     payoutBlockerNote:
-      "Stripe Connect must be completed before publishing a profile that accepts paid bookings.",
+      "The profile can remain visible, but Stripe Connect must be completed before accepting paid bookings.",
   },
   es: {
     sectionTitle: "Publicación SEO en Google",
@@ -218,10 +240,17 @@ const COPY: Record<Locale, AdminTeacherSeoPublicationCopy> = {
       public_profile_intent_missing: "Solicitud de publicación faltante",
       slug_missing: "URL pública (slug) faltante",
       not_admin_published: "En espera de publicación admin",
-      payout_not_ready: "Stripe Connect / pagos no listos",
     },
+    paymentStatusLabel: "Pagos activados",
+    paymentActive: "Sí",
+    paymentInactive: "No",
+    payoutStatusLabel: "Transferencias activadas",
+    payoutActive: "Sí",
+    payoutInactive: "No",
+    warningsTitle: "A vigilar",
+    paymentWarningLabel: "Pagos no configurados",
     payoutBlockerNote:
-      "Stripe Connect debe completarse antes de publicar un perfil que acepta reservas pagadas.",
+      "El perfil puede seguir visible, pero Stripe Connect debe completarse antes de aceptar reservas pagadas.",
   },
 };
 

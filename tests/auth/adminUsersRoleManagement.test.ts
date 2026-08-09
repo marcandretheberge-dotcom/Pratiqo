@@ -139,6 +139,17 @@ test("/api/admin/users does not embed the Supabase service-role key", () => {
   assert.doesNotMatch(apiRoute, /service_role/i);
 });
 
+test("/api/admin/users reports payment readiness separately from search visibility", () => {
+  assert.match(apiRoute, /deriveTeacherReadinessContract/);
+  assert.match(apiRoute, /profileVisibilityReady:\s*searchDiagnosis\?\.visibleInSearch\s*===\s*true/);
+  assert.match(apiRoute, /teacher_payment_ready:\s*readiness\?\.paymentReady\s*\?\?\s*null/);
+  assert.match(apiRoute, /teacher_payout_ready:\s*readiness\?\.payoutReady\s*\?\?\s*null/);
+  const responseRowBlock =
+    apiRoute.match(/return \{[\s\S]*?teacher_payment_ready:[\s\S]*?is_self:/)?.[0] ?? "";
+  assert.ok(responseRowBlock.length > 0, "expected admin users response row mapping");
+  assert.doesNotMatch(responseRowBlock, /stripe_account_id|stripe_connect_/);
+});
+
 // ── Page guardrails ─────────────────────────────────────────────────────────
 
 const pageSource = READ("app/(app)/admin/users/page.tsx");
@@ -165,6 +176,16 @@ test("/admin/users page renders a role <select> and a search input with stable t
   assert.match(pageSource, /data-testid="admin-users-table"/);
   assert.match(pageSource, /data-testid="admin-users-row"/);
   assert.match(pageSource, /data-testid="admin-users-role-select"/);
+});
+
+test("/admin/users page shows payment readiness without changing search visibility", () => {
+  assert.match(pageSource, /admin-users-teacher-payment-statuses/);
+  assert.match(pageSource, /Paiements activés/);
+  assert.match(pageSource, /Versements activés/);
+  assert.match(pageSource, /Paiements non configurés/);
+  assert.match(pageSource, /teacher_search_visible/);
+  assert.match(pageSource, /teacher_payment_ready/);
+  assert.match(pageSource, /teacher_payout_ready/);
 });
 
 test("/admin/users page locks the self-row from role mutation", () => {

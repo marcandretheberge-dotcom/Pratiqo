@@ -1,11 +1,6 @@
 import { isTeacherMarketSupported } from "@/lib/config/markets";
 import type { Locale } from "@/lib/i18n/types";
 import {
-  isTeacherPayoutReadyForCheckout,
-  teacherPayoutReadinessFailureReasons,
-  type TeacherPayoutReadinessInput,
-} from "@/lib/payments/connect";
-import {
   buildTeacherPublicProfileCanonicalUrl,
   buildTeacherPublicProfileDescription,
   buildTeacherPublicProfilePath,
@@ -22,6 +17,10 @@ import {
   type TeacherPublicSeoFields,
 } from "@/lib/seo/teacherPublicProfile";
 import type { TeacherMarketplaceVisibilityRow } from "@/lib/teachers/marketplaceVisibility";
+import {
+  deriveTeacherReadinessContract,
+  type TeacherStripeReadinessBlocker,
+} from "@/lib/teachers/readinessContracts";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -39,8 +38,7 @@ export type TeacherSeoMissingReasonKey =
   | "search_consent_missing"
   | "public_profile_intent_missing"
   | "slug_missing"
-  | "not_admin_published"
-  | "payout_not_ready";
+  | "not_admin_published";
 
 export type TeacherSeoPublicationRow = TeacherPublicSeoFields & {
   teaching_mode?: string | null;
@@ -79,8 +77,12 @@ export type TeacherSeoPublicationEvaluation = {
   generatedTitle: string | null;
   generatedDescription: string | null;
   paidBookingCtaEnabled: boolean;
+  paymentReady: boolean;
+  paymentBlockers: TeacherStripeReadinessBlocker[];
   payoutReady: boolean;
-  payoutBlockers: string[];
+  payoutBlockers: TeacherStripeReadinessBlocker[];
+  bookingReady: boolean;
+  bookingBlockers: string[];
   canRequestPublication: boolean;
   canAdminPublish: boolean;
   /** Clears only public_profile_last_indexable_at (SEO / sitemap). */
@@ -186,10 +188,6 @@ export function collectTeacherSeoAdminPublishBlockers(
   const slug = typeof row.public_profile_slug === "string" ? row.public_profile_slug.trim() : "";
   if (!slug) reasons.push("slug_missing");
 
-  if (isTeacherPaidBookingCtaEnabled(row) && !isTeacherPayoutReadyForCheckout(row)) {
-    reasons.push("payout_not_ready");
-  }
-
   return [...new Set(reasons)];
 }
 
@@ -247,8 +245,11 @@ export function evaluateTeacherSeoPublication(
   const isIndexable = isTeacherPublicProfileIndexable(row);
   const isSitemapEligible = isIndexable;
   const paidBookingCtaEnabled = isTeacherPaidBookingCtaEnabled(row);
-  const payoutBlockers = teacherPayoutReadinessFailureReasons(row);
-  const payoutReady = payoutBlockers.length === 0;
+  const readiness = deriveTeacherReadinessContract({
+    ...row,
+    profileVisibilityReady: isPublic && contentReady,
+    requiresOnlinePayment: paidBookingCtaEnabled,
+  });
   const missingReasonKeys = collectTeacherSeoContentMissingReasonKeys(row);
   const adminPublishBlockers = collectTeacherSeoAdminPublishBlockers(row);
   const seoCopy = buildGeneratedSeoCopy(row, locale);
@@ -296,8 +297,12 @@ export function evaluateTeacherSeoPublication(
     generatedTitle: seoCopy.generatedTitle,
     generatedDescription: seoCopy.generatedDescription,
     paidBookingCtaEnabled,
-    payoutReady,
-    payoutBlockers,
+    paymentReady: readiness.paymentReady,
+    paymentBlockers: readiness.paymentBlockers,
+    payoutReady: readiness.payoutReady,
+    payoutBlockers: readiness.payoutBlockers,
+    bookingReady: readiness.bookingReady,
+    bookingBlockers: readiness.bookingBlockers,
     canRequestPublication,
     canAdminPublish,
     canAdminRemoveFromGoogle,

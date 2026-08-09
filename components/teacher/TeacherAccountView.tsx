@@ -27,6 +27,7 @@ import {
   isTeacherMarketSupported,
 } from "@/lib/config/markets";
 import { MEMBRE_PRO_PLAN } from "@/lib/config/membrePro";
+import { deriveTeacherReadinessContract } from "@/lib/teachers/readinessContracts";
 
 /**
  * Public listing card fallback used by the onboarding routes
@@ -122,6 +123,11 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
   const [teacherImageUrl, setTeacherImageUrl] = useState<string | null>(null);
   const [teachingMode, setTeachingMode] = useState("both");
   const [stripeAccountId, setStripeAccountId] = useState<string | null>(null);
+  const [stripeOnboardingComplete, setStripeOnboardingComplete] = useState(false);
+  const [stripeChargesEnabled, setStripeChargesEnabled] = useState(false);
+  const [stripePayoutsEnabled, setStripePayoutsEnabled] = useState(false);
+  const [stripeRequirementsDue, setStripeRequirementsDue] = useState<unknown>([]);
+  const [stripeDisabledReason, setStripeDisabledReason] = useState<string | null>(null);
   const [plan, setPlan] = useState("free");
   const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null);
   const [stripeCustomerId, setStripeCustomerId] = useState<string | null>(null);
@@ -196,6 +202,11 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
       }
       const row = data as TeacherRow & {
         stripe_account_id?: string | null;
+        stripe_connect_onboarding_complete?: boolean | null;
+        stripe_connect_charges_enabled?: boolean | null;
+        stripe_connect_payouts_enabled?: boolean | null;
+        stripe_connect_requirements_due?: unknown;
+        stripe_connect_disabled_reason?: string | null;
         video_url?: string | null;
         is_public?: boolean | null;
         deactivated_at?: string | null;
@@ -225,6 +236,11 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
       setTeachingMode(row.teaching_mode || "both");
       setTeacherCountryCode(String(row.country_code ?? profileCountryCode).trim().toUpperCase());
       setStripeAccountId(row.stripe_account_id?.trim() || null);
+      setStripeOnboardingComplete(row.stripe_connect_onboarding_complete === true);
+      setStripeChargesEnabled(row.stripe_connect_charges_enabled === true);
+      setStripePayoutsEnabled(row.stripe_connect_payouts_enabled === true);
+      setStripeRequirementsDue(row.stripe_connect_requirements_due ?? []);
+      setStripeDisabledReason(row.stripe_connect_disabled_reason?.trim() || null);
       setVideoUrl(row.video_url ?? "");
       const loc = (row.location || {}) as Record<string, unknown>;
       setLocationJson(loc);
@@ -510,6 +526,29 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
     }
     window.location.href = body.url;
   };
+
+  const readinessContract = useMemo(
+    () =>
+      deriveTeacherReadinessContract({
+        profileVisibilityReady: teacherIsPublic,
+        requiresOnlinePayment: true,
+        stripe_account_id: stripeAccountId,
+        stripe_connect_onboarding_complete: stripeOnboardingComplete,
+        stripe_connect_charges_enabled: stripeChargesEnabled,
+        stripe_connect_payouts_enabled: stripePayoutsEnabled,
+        stripe_connect_requirements_due: stripeRequirementsDue,
+        stripe_connect_disabled_reason: stripeDisabledReason,
+      }),
+    [
+      stripeAccountId,
+      stripeChargesEnabled,
+      stripeDisabledReason,
+      stripeOnboardingComplete,
+      stripePayoutsEnabled,
+      stripeRequirementsDue,
+      teacherIsPublic,
+    ],
+  );
 
   const toggleProfileVisibility = async () => {
     if (!teacherId) return;
@@ -1147,6 +1186,32 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
             {stripeAccountId ? t("stripeConnected") : t("stripeDisconnected")}
           </span>
         </p>
+        <dl className="grid gap-2 text-sm sm:grid-cols-2" data-testid="teacher-profile-payment-readiness-status">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+            <dt className="text-xs font-bold uppercase tracking-wider text-slate-500">
+              {t("teacherSeoStatusPayments")}
+            </dt>
+            <dd className="mt-1 font-semibold text-slate-900">
+              {readinessContract.paymentReady ? t("teacherPaymentsActivated") : t("teacherPaymentsNotActivated")}
+            </dd>
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+            <dt className="text-xs font-bold uppercase tracking-wider text-slate-500">
+              {t("teacherSeoStatusPayouts")}
+            </dt>
+            <dd className="mt-1 font-semibold text-slate-900">
+              {readinessContract.payoutReady ? t("teacherPayoutsActivated") : t("teacherPayoutsNotActivated")}
+            </dd>
+          </div>
+        </dl>
+        {teacherIsPublic && (!readinessContract.paymentReady || !readinessContract.payoutReady) ? (
+          <p
+            className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-900"
+            data-testid="teacher-profile-visible-payments-settings-warning"
+          >
+            {t("teacherProfileVisiblePaymentsWarningBody")}
+          </p>
+        ) : null}
         <button
           type="button"
           disabled={!isPayoutMarketSupported(teacherCountryCode)}

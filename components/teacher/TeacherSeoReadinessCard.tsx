@@ -23,7 +23,6 @@ const MISSING_REASON_I18N: Record<TeacherSeoMissingReasonKey, TranslationKey> = 
   public_profile_intent_missing: "teacherSeoMissingPublicIntent",
   slug_missing: "teacherSeoMissingSlug",
   not_admin_published: "teacherSeoMissingAdminPublish",
-  payout_not_ready: "teacherSeoMissingPayoutNotReady",
 };
 
 type Props = {
@@ -179,6 +178,14 @@ export function TeacherSeoReadinessCard({ className }: Props) {
           <dt className="font-semibold">{t("teacherSeoStatusRequested")}</dt>
           <dd>{evaluation.teacherRequestedPublication ? t("teacherSeoYes") : t("teacherSeoNo")}</dd>
         </div>
+        <div>
+          <dt className="font-semibold">{t("teacherSeoStatusPayments")}</dt>
+          <dd>{evaluation.paymentReady ? t("teacherSeoYes") : t("teacherSeoNo")}</dd>
+        </div>
+        <div>
+          <dt className="font-semibold">{t("teacherSeoStatusPayouts")}</dt>
+          <dd>{evaluation.payoutReady ? t("teacherSeoYes") : t("teacherSeoNo")}</dd>
+        </div>
       </dl>
 
       {checklistKeys.length > 0 ? (
@@ -199,7 +206,7 @@ export function TeacherSeoReadinessCard({ className }: Props) {
         </p>
       )}
 
-      {evaluation.paidBookingCtaEnabled && !evaluation.payoutReady ? (
+      {evaluation.paidBookingCtaEnabled && (!evaluation.paymentReady || !evaluation.payoutReady) ? (
         <p className="mt-3 rounded-xl border border-amber-300/60 bg-amber-50 px-3 py-2 text-sm text-amber-950">
           {t("teacherSeoPayoutWarning")}
         </p>

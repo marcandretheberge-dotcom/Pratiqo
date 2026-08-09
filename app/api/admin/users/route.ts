@@ -31,6 +31,7 @@ import {
   type TeacherSearchVisibilityReasonCode,
   type TeacherSearchVisibilityWarningCode,
 } from "@/lib/teachers/searchVisibilityDiagnostics";
+import { deriveTeacherReadinessContract } from "@/lib/teachers/readinessContracts";
 
 export const runtime = "nodejs";
 
@@ -51,6 +52,8 @@ type AdminUserRow = {
   teacher_search_visibility_reasons: TeacherSearchVisibilityReasonCode[];
   teacher_search_visibility_blockers: TeacherSearchVisibilityBlockerCode[];
   teacher_search_visibility_warnings: TeacherSearchVisibilityWarningCode[];
+  teacher_payment_ready: boolean | null;
+  teacher_payout_ready: boolean | null;
   companion_chosen: boolean | null;
   deletion_requested_at: string | null;
   is_self: boolean;
@@ -93,6 +96,12 @@ type AdminTeacherVisibilityRow = {
   identity_verified: boolean | null;
   intro_session_enabled: boolean | null;
   intro_session_price_cents: number | string | null;
+  stripe_account_id?: string | null;
+  stripe_connect_onboarding_complete?: boolean | null;
+  stripe_connect_charges_enabled?: boolean | null;
+  stripe_connect_payouts_enabled?: boolean | null;
+  stripe_connect_requirements_due?: unknown;
+  stripe_connect_disabled_reason?: string | null;
 };
 
 export async function GET(req: Request) {
@@ -147,7 +156,7 @@ export async function GET(req: Request) {
       admin
         .from("teachers")
         .select(
-          "id, user_id, name, discipline, category, bio, availability, price_per_lesson, teaching_mode, city, region, country_code, location, is_public, is_demo, deactivated_at, deleted_at, identity_verified, intro_session_enabled, intro_session_price_cents",
+          "id, user_id, name, discipline, category, bio, availability, price_per_lesson, teaching_mode, city, region, country_code, location, is_public, is_demo, deactivated_at, deleted_at, identity_verified, intro_session_enabled, intro_session_price_cents, stripe_account_id, stripe_connect_onboarding_complete, stripe_connect_charges_enabled, stripe_connect_payouts_enabled, stripe_connect_requirements_due, stripe_connect_disabled_reason",
         )
         .in("user_id", teacherProfileIds),
       admin.from("teachers_public").select("id, user_id").in("user_id", teacherProfileIds),
@@ -205,6 +214,14 @@ export async function GET(req: Request) {
             inTeachersPublicView: teacher?.id ? publicTeacherIds.has(teacher.id) : false,
           })
         : null;
+    const readiness =
+      role === "teacher" && teacher
+        ? deriveTeacherReadinessContract({
+            ...teacher,
+            profileVisibilityReady: searchDiagnosis?.visibleInSearch === true,
+            requiresOnlinePayment: true,
+          })
+        : null;
 
     return {
       id: r.id,
@@ -220,6 +237,8 @@ export async function GET(req: Request) {
       teacher_search_visibility_reasons: searchDiagnosis?.reasonCodes ?? [],
       teacher_search_visibility_blockers: searchDiagnosis?.blockingReasonCodes ?? [],
       teacher_search_visibility_warnings: searchDiagnosis?.warningReasonCodes ?? [],
+      teacher_payment_ready: readiness?.paymentReady ?? null,
+      teacher_payout_ready: readiness?.payoutReady ?? null,
       companion_chosen: r.companion_chosen ?? null,
       deletion_requested_at: r.deletion_requested_at ?? null,
       is_self: r.id === adminUser.id,

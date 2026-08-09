@@ -111,7 +111,7 @@ test("admin publish blocked when consent missing", () => {
   assert.ok(blockers.includes("public_profile_intent_missing"));
 });
 
-test("admin publish blocked when payout readiness missing and paid booking enabled", () => {
+test("admin publish is not blocked when payout readiness is missing", () => {
   const row = {
     ...baseRow,
     public_profile_enabled: true,
@@ -120,7 +120,33 @@ test("admin publish blocked when payout readiness missing and paid booking enabl
     stripe_connect_payouts_enabled: false,
   };
   const blockers = collectTeacherSeoAdminPublishBlockers(row);
-  assert.ok(blockers.includes("payout_not_ready"));
+  assert.doesNotMatch(blockers.join(","), /payout_not_ready/);
+  const evaluation = evaluateTeacherSeoPublication(row, "fr");
+  assert.equal(evaluation.canAdminPublish, true);
+  assert.equal(evaluation.paymentReady, true);
+  assert.equal(evaluation.payoutReady, false);
+  assert.ok(evaluation.bookingBlockers.includes("payout_not_ready"));
+});
+
+test("complete public profile remains visible when Stripe setup is incomplete", () => {
+  const row = {
+    ...baseRow,
+    is_public: true,
+    public_profile_enabled: true,
+    search_indexing_consent: true,
+    public_profile_slug: "marie-d-espagnol-levis",
+    stripe_account_id: null,
+    stripe_connect_onboarding_complete: false,
+    stripe_connect_charges_enabled: false,
+    stripe_connect_payouts_enabled: false,
+  };
+  const evaluation = evaluateTeacherSeoPublication(row, "fr");
+  assert.equal(evaluation.isPublic, true);
+  assert.equal(evaluation.isPageVisible, true);
+  assert.equal(evaluation.canAdminPublish, true);
+  assert.equal(evaluation.paymentReady, false);
+  assert.equal(evaluation.payoutReady, false);
+  assert.doesNotMatch(evaluation.adminPublishBlockers.join(","), /payout_not_ready/);
 });
 
 test("admin publish blocked when teaching format is missing", () => {
@@ -202,7 +228,7 @@ test("teaching_mode all without admin marker still requires admin SEO publicatio
   assert.ok(evaluation.missingReasonKeys.includes("not_admin_published"));
 });
 
-test("admin publish eligible for complete consented teacher with payout ready", () => {
+test("admin publish eligible for complete consented teacher with Stripe ready", () => {
   const row = {
     ...baseRow,
     public_profile_enabled: true,
@@ -439,6 +465,13 @@ test("admin SEO publication card shows explicit Google SEO toggle section", () =
   );
   assert.match(copy, /Visibilité marketplace Pratiqo/);
   assert.match(copy, /Rendre le profil privé sur Pratiqo/);
+  assert.match(copy, /paymentStatusLabel/);
+  assert.match(copy, /payoutStatusLabel/);
+  assert.match(copy, /paymentWarningLabel/);
+  assert.doesNotMatch(copy, /may wait to publish|attendre la publication|esperar a publicar/i);
+  assert.match(card, /admin-teacher-seo-payment-warning/);
+  assert.match(card, /admin-teacher-seo-payment-status/);
+  assert.match(card, /admin-teacher-seo-payout-status/);
   assert.match(card, /generatedTitle/);
   assert.match(card, /generatedDescription/);
   assert.match(card, /canonicalUrl/);

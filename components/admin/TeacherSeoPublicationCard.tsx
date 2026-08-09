@@ -169,11 +169,17 @@ export function TeacherSeoPublicationCard({
           </div>
         ) : null}
 
-        {evaluation.paidBookingCtaEnabled && !evaluation.payoutReady ? (
-          <p className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-900">
-            {copy.payoutBlockerNote}
-            {evaluation.payoutBlockers.length ? ` (${evaluation.payoutBlockers.join(", ")})` : null}
-          </p>
+        {evaluation.paidBookingCtaEnabled && (!evaluation.paymentReady || !evaluation.payoutReady) ? (
+          <div
+            className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950"
+            data-testid="admin-teacher-seo-payment-warning"
+          >
+            <p className="flex items-center gap-2 font-semibold">
+              <ShieldAlert className="h-4 w-4" aria-hidden />
+              {copy.warningsTitle}: {copy.paymentWarningLabel}
+            </p>
+            <p className="mt-2">{copy.payoutBlockerNote}</p>
+          </div>
         ) : null}
 
         <div className="mt-4 flex flex-wrap gap-3" data-testid="admin-teacher-seo-toggle-actions">
@@ -207,6 +213,22 @@ export function TeacherSeoPublicationCard({
           </dt>
           <dd className="mt-1 font-semibold text-slate-900">
             {evaluation.isPublic ? copy.marketplacePublic : copy.marketplacePrivate}
+          </dd>
+        </div>
+        <div data-testid="admin-teacher-seo-payment-status">
+          <dt className="text-xs font-bold uppercase tracking-wider text-slate-500">
+            {copy.paymentStatusLabel}
+          </dt>
+          <dd className="mt-1 font-semibold text-slate-900">
+            {evaluation.paymentReady ? copy.paymentActive : copy.paymentInactive}
+          </dd>
+        </div>
+        <div data-testid="admin-teacher-seo-payout-status">
+          <dt className="text-xs font-bold uppercase tracking-wider text-slate-500">
+            {copy.payoutStatusLabel}
+          </dt>
+          <dd className="mt-1 font-semibold text-slate-900">
+            {evaluation.payoutReady ? copy.payoutActive : copy.payoutInactive}
           </dd>
         </div>
         <div>

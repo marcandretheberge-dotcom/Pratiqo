@@ -44,6 +44,8 @@ type AdminUserRow = {
   teacher_search_visibility_reasons: string[];
   teacher_search_visibility_blockers: TeacherSearchVisibilityBlockerCode[];
   teacher_search_visibility_warnings: TeacherSearchVisibilityWarningCode[];
+  teacher_payment_ready: boolean | null;
+  teacher_payout_ready: boolean | null;
   companion_chosen: boolean | null;
   deletion_requested_at: string | null;
   is_self: boolean;
@@ -470,6 +472,19 @@ export default function AdminUsersPage() {
                                     ) : null}
                                   </div>
                                 )}
+                                <div className="max-w-[280px] space-y-1" data-testid="admin-users-teacher-payment-statuses">
+                                  <span className="block rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-bold text-slate-700">
+                                    Paiements activés: {u.teacher_payment_ready ? "Oui" : "Non"}
+                                  </span>
+                                  <span className="block rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-bold text-slate-700">
+                                    Versements activés: {u.teacher_payout_ready ? "Oui" : "Non"}
+                                  </span>
+                                  {u.teacher_search_visible && (!u.teacher_payment_ready || !u.teacher_payout_ready) ? (
+                                    <span className="block rounded-full border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] font-bold text-amber-800">
+                                      À surveiller: Paiements non configurés
+                                    </span>
+                                  ) : null}
+                                </div>
                               </div>
                             ) : (
                               <span className="text-amber-700">Onboarding en cours</span>

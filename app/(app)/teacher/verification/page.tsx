@@ -1195,6 +1195,7 @@ export default function TeacherProfileManagementPage() {
             }),
           }}
           profileRole={profile?.role}
+          paymentReady={paymentsReady}
           onVisibilityChange={(nextPublic) =>
             setTeacherRow((prev) => (prev ? { ...prev, is_public: nextPublic } : prev))
           }

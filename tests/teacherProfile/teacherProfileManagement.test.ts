@@ -40,6 +40,8 @@ const VERIFICATION_PATH = "app/(app)/teacher/verification/page.tsx";
 const ZONE_STEP_PATH = "app/(app)/teacher/verification/components/ZoneStep.tsx";
 const NAV_PATH = "components/TeacherTopNav.tsx";
 const PREVIEW_PATH = "components/teacher/TeacherPublicProfilePreview.tsx";
+const VISIBILITY_CARD_PATH = "components/teacher/TeacherProfileVisibilityCard.tsx";
+const ACCOUNT_VIEW_PATH = "components/teacher/TeacherAccountView.tsx";
 const MY_PROFILE_PATH = "app/(app)/teacher/my-profile/page.tsx";
 const EN = "lib/i18n/locales/en.json";
 const FR = "lib/i18n/locales/fr.json";
@@ -49,6 +51,8 @@ const verificationSrc = read(VERIFICATION_PATH);
 const zoneStepSrc = read(ZONE_STEP_PATH);
 const navSrc = read(NAV_PATH);
 const previewSrc = read(PREVIEW_PATH);
+const visibilityCardSrc = read(VISIBILITY_CARD_PATH);
+const accountViewSrc = read(ACCOUNT_VIEW_PATH);
 const myProfileSrc = read(MY_PROFILE_PATH);
 
 const PROFILE_MGMT_KEYS = [
@@ -78,6 +82,15 @@ const PROFILE_MGMT_KEYS = [
   "teacherProfileMgmtTrustDesc",
   "teacherProfileMgmtPaymentsDesc",
   "teacherProfileMgmtPaymentsCta",
+  "teacherSeoStatusPayments",
+  "teacherSeoStatusPayouts",
+  "teacherPaymentsActivated",
+  "teacherPaymentsNotActivated",
+  "teacherPayoutsActivated",
+  "teacherPayoutsNotActivated",
+  "teacherProfileVisiblePaymentsWarningTitle",
+  "teacherProfileVisiblePaymentsWarningBody",
+  "teacherProfileVisiblePaymentsWarningCta",
   "zoneRadiusKmLabel",
   "zoneRadiusKmHelper",
   "verificationZonePrivacyNote",
@@ -216,6 +229,24 @@ test("i18n: profile management keys exist in fr / en / es", () => {
       );
     }
   }
+});
+
+test("visibility card warns about payments without blocking public profile visibility", () => {
+  assert.match(visibilityCardSrc, /paymentReady\?:\s*boolean/);
+  assert.match(visibilityCardSrc, /teacher-profile-visible-payments-warning/);
+  assert.match(visibilityCardSrc, /teacherProfileVisiblePaymentsWarningTitle/);
+  assert.match(visibilityCardSrc, /teacherProfileVisiblePaymentsWarningBody/);
+  assert.match(visibilityCardSrc, /teacher-profile-visible-payments-cta/);
+  assert.match(verificationSrc, /paymentReady=\{paymentsReady\}/);
+});
+
+test("teacher account management separates profile visibility from Stripe readiness", () => {
+  assert.match(accountViewSrc, /deriveTeacherReadinessContract/);
+  assert.match(accountViewSrc, /profileVisibilityReady:\s*teacherIsPublic/);
+  assert.match(accountViewSrc, /teacher-profile-payment-readiness-status/);
+  assert.match(accountViewSrc, /teacher-profile-visible-payments-settings-warning/);
+  assert.match(accountViewSrc, /teacherSeoStatusPayments/);
+  assert.match(accountViewSrc, /teacherSeoStatusPayouts/);
 });
 
 test("forbidden files: branch does not touch Stripe checkout/webhook, Supabase/RLS/migrations, booking, cron, or unrelated payment infrastructure", () => {

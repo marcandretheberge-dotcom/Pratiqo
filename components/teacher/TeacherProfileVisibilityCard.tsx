@@ -20,6 +20,8 @@ export type TeacherProfileVisibilityCardProps = {
   teacher: TeacherProfilePublishInput;
   profileRole?: string | null;
   previewHref?: string;
+  paymentReady?: boolean;
+  stripeSetupHref?: string;
   onVisibilityChange?: (isPublic: boolean) => void;
   className?: string;
 };
@@ -28,6 +30,8 @@ export function TeacherProfileVisibilityCard({
   teacher,
   profileRole,
   previewHref = "/teacher/my-profile",
+  paymentReady,
+  stripeSetupHref = "/teacher/settings#payouts",
   onVisibilityChange,
   className,
 }: TeacherProfileVisibilityCardProps) {
@@ -158,6 +162,23 @@ export function TeacherProfileVisibilityCard({
             </li>
           ))}
         </ul>
+      ) : null}
+
+      {evaluation.status === "public" && paymentReady === false ? (
+        <div
+          className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 text-sm text-amber-950"
+          data-testid="teacher-profile-visible-payments-warning"
+        >
+          <p className="font-semibold">{t("teacherProfileVisiblePaymentsWarningTitle")}</p>
+          <p className="mt-1 leading-relaxed">{t("teacherProfileVisiblePaymentsWarningBody")}</p>
+          <Link
+            href={stripeSetupHref}
+            className="mt-3 inline-flex min-h-10 items-center justify-center rounded-full bg-teal-700 px-4 text-xs font-bold text-white transition hover:bg-teal-800"
+            data-testid="teacher-profile-visible-payments-cta"
+          >
+            {t("teacherProfileVisiblePaymentsWarningCta")}
+          </Link>
+        </div>
       ) : null}
 
       <div className="mt-4 flex flex-wrap gap-3">
