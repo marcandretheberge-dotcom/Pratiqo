@@ -221,7 +221,7 @@ const PUBLIC_FILES = [
   "components/blog/RelatedTeachersWidget.tsx",
   "app/(app)/student/search/page.tsx",
   "app/(app)/booking/page.tsx",
-  "app/teacher/profile/page.tsx",
+  "app/teacher/profile/TeacherProfileIndexClient.tsx",
   "components/seo/LocalTeacherDiscoveryCards.tsx",
   "app/clases/montevideo/[barrioSlug]/page.tsx",
 ] as const;

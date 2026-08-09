@@ -41,12 +41,6 @@ const STATIC_ROUTES: MetadataRoute.Sitemap = [
     changeFrequency: "monthly",
     priority: 0.9,
   },
-  {
-    url: `${BASE_URL}/teacher/profile`,
-    lastModified: new Date(),
-    changeFrequency: "weekly",
-    priority: 0.75,
-  },
   ...(isGroupSessionsMarketplaceIndexable()
     ? [
         {

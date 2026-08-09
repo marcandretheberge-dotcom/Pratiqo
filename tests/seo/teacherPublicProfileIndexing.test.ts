@@ -117,6 +117,7 @@ test("sitemap uses consented /professeurs slugs only", () => {
   const sitemapSrc = read("app/sitemap.ts");
   assert.match(sitemapSrc, /fetchIndexableTeacherSitemapRows/);
   assert.match(sitemapSrc, /buildTeacherPublicProfileCanonicalUrl/);
+  assert.doesNotMatch(sitemapSrc, /`\$\{BASE_URL\}\/teacher\/profile`/);
   assert.doesNotMatch(sitemapSrc, /\/teacher\/profile\/\$\{/);
 });
 
@@ -192,6 +193,14 @@ test("legacy teacher profile route redirects indexable teachers to /professeurs 
   const pageSrc = read("app/teacher/profile/[id]/page.tsx");
   assert.match(pageSrc, /redirect\(`\/professeurs\//);
   assert.match(pageSrc, /teacherPublicProfileRobots/);
+});
+
+test("legacy teacher profile index is noindex and not a sitemap URL", () => {
+  const pageSrc = read("app/teacher/profile/page.tsx");
+  const sitemapSrc = read("app/sitemap.ts");
+  assert.match(pageSrc, /robots:\s*\{[\s\S]*?index:\s*false,\s*[\s\S]*?follow:\s*true,\s*[\s\S]*?\}/);
+  assert.match(pageSrc, /canonical:\s*`\$\{SITE_URL\}\/trouver-un-prof`/);
+  assert.doesNotMatch(sitemapSrc, /url:\s*`\$\{BASE_URL\}\/teacher\/profile`/);
 });
 
 test("professeurs page does not render private location fields", () => {
