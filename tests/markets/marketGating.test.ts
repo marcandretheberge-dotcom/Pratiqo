@@ -9,7 +9,9 @@ import {
 import {
   PRATIQO_MARKETS,
   getMarketByCountryCode,
+  isMarketSeoEnabled,
   isMembreProMarketSupported,
+  isNextMarket,
   isPayoutMarketSupported,
   isTeacherMarketSupported,
 } from "@/lib/config/markets";
@@ -39,10 +41,20 @@ const fr = JSON.parse(read("lib/i18n/locales/fr.json")) as Record<string, string
 const en = JSON.parse(read("lib/i18n/locales/en.json")) as Record<string, string>;
 const es = JSON.parse(read("lib/i18n/locales/es.json")) as Record<string, string>;
 
-test("Canada is the only launched teacher monetization market", () => {
+test("Canada and Quebec are the launched teacher monetization market", () => {
   assert.equal(PRATIQO_MARKETS.CA.marketCode, "CA");
   assert.equal(PRATIQO_MARKETS.CA.countryCode, "CA");
-  assert.equal(PRATIQO_MARKETS.CA.status, "launched");
+  assert.equal(PRATIQO_MARKETS.CA.status, "LAUNCHED");
+  assert.deepEqual(PRATIQO_MARKETS.CA.capabilities, {
+    seoEnabled: true,
+    teacherSignupEnabled: true,
+    teacherPublishingEnabled: true,
+    studentSearchEnabled: true,
+    bookingEnabled: true,
+    paymentsEnabled: true,
+    payoutsEnabled: true,
+    membreProEnabled: true,
+  });
   assert.equal(PRATIQO_MARKETS.CA.isTeacherOnboardingEnabled, true);
   assert.equal(PRATIQO_MARKETS.CA.isStudentBookingEnabled, true);
   assert.equal(PRATIQO_MARKETS.CA.isMembreProEnabled, true);
@@ -50,9 +62,21 @@ test("Canada is the only launched teacher monetization market", () => {
   assert.equal(PRATIQO_MARKETS.CA.currency, "CAD");
 });
 
-test("Uruguay exists only as inactive waitlist market", () => {
+test("Uruguay exists as next market with SEO but no monetization", () => {
   assert.equal(PRATIQO_MARKETS.UY.marketCode, "UY");
-  assert.equal(PRATIQO_MARKETS.UY.status, "waitlist");
+  assert.equal(PRATIQO_MARKETS.UY.status, "NEXT_MARKET");
+  assert.equal(isNextMarket("UY"), true);
+  assert.equal(isMarketSeoEnabled("UY"), true);
+  assert.deepEqual(PRATIQO_MARKETS.UY.capabilities, {
+    seoEnabled: true,
+    teacherSignupEnabled: false,
+    teacherPublishingEnabled: false,
+    studentSearchEnabled: false,
+    bookingEnabled: false,
+    paymentsEnabled: false,
+    payoutsEnabled: false,
+    membreProEnabled: false,
+  });
   assert.equal(PRATIQO_MARKETS.UY.isTeacherOnboardingEnabled, false);
   assert.equal(PRATIQO_MARKETS.UY.isStudentBookingEnabled, false);
   assert.equal(PRATIQO_MARKETS.UY.isMembreProEnabled, false);
@@ -60,12 +84,13 @@ test("Uruguay exists only as inactive waitlist market", () => {
   assert.deepEqual(PRATIQO_MARKETS.UY.commissionModel, {
     status: "inactive_placeholder",
     note:
-      "Uruguay is configured for future market planning only. No Uruguay commission or Pro pricing is active.",
+      "Uruguay is configured as a NEXT_MARKET planning state only. No Uruguay commission or Pro pricing is active.",
   });
 });
 
 test("unknown countries are unsupported by default", () => {
   assert.equal(getMarketByCountryCode("FR"), null);
+  assert.equal(isMarketSeoEnabled("FR"), false);
   assert.equal(isTeacherMarketSupported("FR"), false);
   assert.equal(isMembreProMarketSupported("US"), false);
   assert.equal(isPayoutMarketSupported("UY"), false);

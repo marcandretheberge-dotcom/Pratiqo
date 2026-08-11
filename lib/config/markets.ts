@@ -5,16 +5,34 @@ import {
 
 export type MarketCode = "CA" | "UY";
 
+export type PratiqoMarketStatus =
+  | "LAUNCHED"
+  | "NEXT_MARKET"
+  | "PLANNED"
+  | "DISABLED";
+
+export type PratiqoMarketCapabilities = {
+  seoEnabled: boolean;
+  teacherSignupEnabled: boolean;
+  teacherPublishingEnabled: boolean;
+  studentSearchEnabled: boolean;
+  bookingEnabled: boolean;
+  paymentsEnabled: boolean;
+  payoutsEnabled: boolean;
+  membreProEnabled: boolean;
+};
+
 export type MarketAccessConfig = {
   marketCode: MarketCode;
   countryCode: string;
   label: string;
   currency: "CAD" | "UYU" | "USD";
+  status: PratiqoMarketStatus;
+  capabilities: PratiqoMarketCapabilities;
   isTeacherOnboardingEnabled: boolean;
   isStudentBookingEnabled: boolean;
   isMembreProEnabled: boolean;
   isPayoutEnabled: boolean;
-  status: "launched" | "waitlist";
   commissionModel:
     | typeof MEMBRE_PRO_COMMISSION_MODEL
     | { status: "inactive_placeholder"; note: string };
@@ -29,11 +47,21 @@ export const PRATIQO_MARKETS: Record<MarketCode, MarketAccessConfig> = {
     countryCode: "CA",
     label: "Canada",
     currency: "CAD",
+    status: "LAUNCHED",
+    capabilities: {
+      seoEnabled: true,
+      teacherSignupEnabled: true,
+      teacherPublishingEnabled: true,
+      studentSearchEnabled: true,
+      bookingEnabled: true,
+      paymentsEnabled: true,
+      payoutsEnabled: true,
+      membreProEnabled: true,
+    },
     isTeacherOnboardingEnabled: true,
     isStudentBookingEnabled: true,
     isMembreProEnabled: true,
     isPayoutEnabled: true,
-    status: "launched",
     commissionModel: MEMBRE_PRO_COMMISSION_MODEL,
     proMonthlyPriceCad: MEMBRE_PRO_PLAN.proMonthlyPriceCad,
   },
@@ -42,15 +70,25 @@ export const PRATIQO_MARKETS: Record<MarketCode, MarketAccessConfig> = {
     countryCode: "UY",
     label: "Uruguay",
     currency: "UYU",
+    status: "NEXT_MARKET",
+    capabilities: {
+      seoEnabled: true,
+      teacherSignupEnabled: false,
+      teacherPublishingEnabled: false,
+      studentSearchEnabled: false,
+      bookingEnabled: false,
+      paymentsEnabled: false,
+      payoutsEnabled: false,
+      membreProEnabled: false,
+    },
     isTeacherOnboardingEnabled: false,
     isStudentBookingEnabled: false,
     isMembreProEnabled: false,
     isPayoutEnabled: false,
-    status: "waitlist",
     commissionModel: {
       status: "inactive_placeholder",
       note:
-        "Uruguay is configured for future market planning only. No Uruguay commission or Pro pricing is active.",
+        "Uruguay is configured as a NEXT_MARKET planning state only. No Uruguay commission or Pro pricing is active.",
     },
   },
 } as const;
@@ -89,6 +127,19 @@ export function isMarketGateEnabled(
   return market.isPayoutEnabled;
 }
 
+export function isMarketSeoEnabled(countryCode: unknown): boolean {
+  const market = getMarketByCountryCode(countryCode);
+  return market?.capabilities.seoEnabled === true;
+}
+
+export function isLaunchedMarket(countryCode: unknown): boolean {
+  return getMarketByCountryCode(countryCode)?.status === "LAUNCHED";
+}
+
+export function isNextMarket(countryCode: unknown): boolean {
+  return getMarketByCountryCode(countryCode)?.status === "NEXT_MARKET";
+}
+
 export function isTeacherMarketSupported(countryCode: unknown): boolean {
   return isMarketGateEnabled(countryCode, "teacher_onboarding");
 }
@@ -106,6 +157,6 @@ export function marketNotSupportedPayload(countryCode: unknown) {
     code: MARKET_NOT_SUPPORTED_CODE,
     countryCode: normalizeCountryCode(countryCode) || null,
     error:
-      "Pratiqo is not open to teachers in this country yet. Canada is the only supported launch market for teacher monetization.",
+      "Pratiqo teacher monetization is currently available in Canada. Uruguay is in preparation; other countries are not open yet.",
   };
 }

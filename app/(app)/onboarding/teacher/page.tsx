@@ -4,10 +4,12 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, Loader2, ShieldCheck, UserRound } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
+import { MarketWaitlistCard } from "@/components/MarketWaitlistCard";
 import { getSupabaseClient } from "@/lib/supabase";
 import { useLocale } from "@/lib/locale-context";
 import { isTeacherProfileComplete } from "@/lib/teacherOnboarding";
 import { buildTeacherSignupLoginHref } from "@/lib/auth/teacherOnboardingIntent";
+import { isTeacherMarketSupported } from "@/lib/config/markets";
 import {
   buildOnboardingRoleChoicePath,
   needsOnboardingRoleChoice,
@@ -28,6 +30,7 @@ export default function TeacherOnboardingPage() {
   const [privateProfileAccepted, setPrivateProfileAccepted] = useState(false);
   const [noExclusivityAccepted, setNoExclusivityAccepted] = useState(false);
   const [noIncomeGuaranteeAccepted, setNoIncomeGuaranteeAccepted] = useState(false);
+  const [teacherCountryCode, setTeacherCountryCode] = useState("");
   const [checkingExistingProfile, setCheckingExistingProfile] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -90,6 +93,7 @@ export default function TeacherOnboardingPage() {
         return;
       }
 
+      setTeacherCountryCode(String(trow?.country_code ?? "").trim().toUpperCase());
       setCheckingExistingProfile(false);
     })();
 
@@ -190,6 +194,27 @@ export default function TeacherOnboardingPage() {
     return (
       <div className="flex min-h-[60vh] items-center justify-center text-[#6B6A65]">
         <Loader2 className="h-8 w-8 animate-spin text-teal-700" aria-hidden />
+      </div>
+    );
+  }
+
+  const publicCountry = String(
+    teacherCountryCode || (profile as { country_code?: string | null } | null)?.country_code || "",
+  )
+    .trim()
+    .toUpperCase();
+
+  if (publicCountry && !isTeacherMarketSupported(publicCountry)) {
+    return (
+      <div className="mx-auto flex min-h-[70vh] w-full max-w-3xl items-start px-0 py-2 sm:items-center sm:px-6 sm:py-10">
+        <div className="w-full rounded-[1.75rem] border border-amber-200 bg-amber-50/70 p-5 shadow-[0_14px_44px_rgba(0,0,0,0.08)] sm:rounded-3xl sm:p-8">
+          <p className="text-sm font-semibold text-amber-950">{t("marketTeacherUnavailableMessage")}</p>
+          <MarketWaitlistCard
+            defaultEmail={user?.email ?? ""}
+            defaultCountryCode={publicCountry}
+            defaultRole="teacher"
+          />
+        </div>
       </div>
     );
   }
