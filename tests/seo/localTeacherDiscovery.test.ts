@@ -217,6 +217,7 @@ test("sitemap uses supply-gated local discovery entries", async () => {
   const urls = entries.map((e) => e.url);
   assert.ok(!urls.some((u) => u.includes("/tuteurs-prive/")), "legacy city hub URLs must not ship in sitemap");
   assert.ok(!urls.some((u) => u.includes("/teacher/profile/")), "legacy teacher profile URLs must not ship in sitemap");
+  assert.ok(!urls.some((u) => u.includes("/clases/montevideo/")), "old Uruguay barrio URLs must not ship in sitemap");
 });
 
 test("restricted systems untouched in local discovery diff surface", () => {

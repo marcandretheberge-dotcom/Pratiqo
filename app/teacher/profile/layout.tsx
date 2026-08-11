@@ -9,6 +9,10 @@ export const metadata: Metadata = {
   alternates: {
     canonical: `${SITE_URL}/teacher/profile`,
   },
+  robots: {
+    index: false,
+    follow: false,
+  },
   openGraph: {
     title: "Professeurs et tuteurs | Pratiqo",
     description:

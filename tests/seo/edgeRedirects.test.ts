@@ -69,6 +69,7 @@ const siteConstSrc = read("lib/seo/site.ts");
 const frStubSrc = read("app/fr/page.tsx");
 const enStubSrc = read("app/en/page.tsx");
 const esStubSrc = read("app/es/page.tsx");
+const caStubSrc = read("app/ca/page.tsx");
 
 const vercelJsonSrc = readIfExists("vercel.json");
 const netlifyTomlSrc = readIfExists("netlify.toml");
@@ -218,6 +219,7 @@ const STUBS: Array<{ label: string; src: string }> = [
   { label: "/fr", src: frStubSrc },
   { label: "/en", src: enStubSrc },
   { label: "/es", src: esStubSrc },
+  { label: "/ca", src: caStubSrc },
 ];
 for (const { label, src } of STUBS) {
   test(`${label} is a stub that permanentRedirects to "/"`, () => {

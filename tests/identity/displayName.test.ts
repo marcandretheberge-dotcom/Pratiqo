@@ -223,6 +223,9 @@ const PUBLIC_FILES = [
   "app/(app)/booking/page.tsx",
   "app/teacher/profile/page.tsx",
   "components/seo/LocalTeacherDiscoveryCards.tsx",
+] as const;
+
+const LEGACY_REDIRECT_ONLY_FILES = [
   "app/clases/montevideo/[barrioSlug]/page.tsx",
 ] as const;
 
@@ -253,6 +256,14 @@ test("public render surfaces no longer print raw {teacher.name} as a visible lab
       VISIBLE_LABEL_RE,
       `${rel} still renders {teacher.name} as a visible label — wrap it with publicFirstNameWithInitial(...)`,
     );
+  }
+});
+
+test("legacy redirect-only market routes do not render teacher names", () => {
+  for (const rel of LEGACY_REDIRECT_ONLY_FILES) {
+    const src = readFileSync(join(process.cwd(), ...rel.split("/")), "utf8");
+    assert.match(src, /permanentRedirect\("\/uy"\)/, `${rel} must redirect to /uy`);
+    assert.doesNotMatch(src, /\bteacher\.name\b/, `${rel} must not render teacher.name`);
   }
 });
 

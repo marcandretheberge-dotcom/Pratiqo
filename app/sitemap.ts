@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { getSupabaseAdmin } from "../lib/supabaseAdmin";
-import { MV_BARRIOS } from "../lib/constants/cities";
+import { isMarketSeoEnabled } from "../lib/config/markets";
 import { fetchLocalDiscoverySitemapEntries } from "../lib/seo/localTeacherDiscoveryPages";
 import { SUBJECT_LANDING_PATHS } from "../lib/seo/subjectLandingPages";
 import { SITE_URL } from "../lib/seo/site";
@@ -41,12 +41,16 @@ const STATIC_ROUTES: MetadataRoute.Sitemap = [
     changeFrequency: "monthly",
     priority: 0.9,
   },
-  {
-    url: `${BASE_URL}/teacher/profile`,
-    lastModified: new Date(),
-    changeFrequency: "weekly",
-    priority: 0.75,
-  },
+  ...(isMarketSeoEnabled("UY")
+    ? [
+        {
+          url: `${BASE_URL}/uy`,
+          lastModified: new Date(),
+          changeFrequency: "monthly" as const,
+          priority: 0.65,
+        },
+      ]
+    : []),
   ...(isGroupSessionsMarketplaceIndexable()
     ? [
         {
@@ -192,12 +196,10 @@ async function fetchLocalDiscoveryEntries(): Promise<MetadataRoute.Sitemap> {
 // ── Montevideo barrio routes ───────────────────────────────────────────────────
 //
 // One URL per barrio, each targeting a tighter neighbourhood search.
-const BARRIO_ROUTES: MetadataRoute.Sitemap = MV_BARRIOS.map((b) => ({
-  url: `${BASE_URL}/clases/montevideo/${b.slug}`,
-  lastModified: new Date(),
-  changeFrequency: "monthly" as const,
-  priority: 0.75,
-}));
+// Uruguay barrio routes under /clases/montevideo/* were an early SEO
+// experiment. Uruguay is now modeled as NEXT_MARKET, so those URLs redirect
+// to /uy and are intentionally excluded from the sitemap until real supply,
+// booking, and market launch rules are enabled.
 
 // ── Group session detail URLs ──────────────────────────────────────────────────
 //
@@ -303,7 +305,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...resourceArticleRoutes,
     ...localDiscoveryEntries,
     ...SUBJECT_LANDING_ROUTES,
-    ...BARRIO_ROUTES,
     ...teacherEntries,
   ];
 }
