@@ -31,6 +31,7 @@ import {
   rowToSnapshot,
   type FounderPromoRow,
 } from "@/lib/admin/founderPromo";
+import { loadAdminTeacher360 } from "@/lib/admin/teacher360";
 
 export const runtime = "nodejs";
 
@@ -121,6 +122,7 @@ export async function GET(req: Request, ctx: Params) {
   const promoHistory = profileRow.role === "teacher"
     ? await loadFounderPromoHistory(admin, profileRow.id, 10)
     : [];
+  const teacher360 = await loadAdminTeacher360(admin, profileRow.id);
 
   // Effective commission summary — purely informational. Uses the
   // same precedence helper as the runtime payment paths so the
@@ -160,6 +162,7 @@ export async function GET(req: Request, ctx: Params) {
       percent: effectiveBps / 100,
       source: effectiveSource,
     },
+    teacher360,
   });
 }
 

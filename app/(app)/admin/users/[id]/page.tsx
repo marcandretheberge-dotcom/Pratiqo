@@ -7,8 +7,22 @@
 // non-admin browsers.
 
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { notFound } from "next/navigation";
-import { ChevronLeft, ShieldAlert, ShieldCheck, GraduationCap, User as UserIcon } from "lucide-react";
+import {
+  Activity,
+  CalendarDays,
+  ChevronLeft,
+  CreditCard,
+  ExternalLink,
+  Eye,
+  GraduationCap,
+  MapPin,
+  SearchCheck,
+  ShieldAlert,
+  ShieldCheck,
+  User as UserIcon,
+} from "lucide-react";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import {
   loadActiveFounderPromo,
@@ -48,6 +62,7 @@ import { MIN_LESSON_PRICE_DOLLARS } from "@/lib/pricing/constants";
 import { LESSON_DURATION_OPTIONS } from "@/lib/pricing/lessonDuration";
 import { evaluateTeacherSeoPublication } from "@/lib/seo/teacherSeoPublication";
 import { fetchTeacherSeoPublicationRowByUserId } from "@/lib/seo/teacherPublicProfileData";
+import { loadAdminTeacher360, type AdminTeacher360 } from "@/lib/admin/teacher360";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -131,6 +146,333 @@ function commissionSourceClass(source: EffectiveCommissionSource): string {
   if (source === "paid_pro") return "border-emerald-300 bg-emerald-50 text-emerald-900";
   if (source === "founder_promo") return "border-amber-300 bg-amber-50 text-amber-900";
   return "border-slate-300 bg-slate-50 text-slate-800";
+}
+
+function yesNo(value: boolean | null | undefined): string {
+  if (value === true) return "Oui";
+  if (value === false) return "Non";
+  return "Non disponible";
+}
+
+function valueOrDash(value: string | number | null | undefined): string {
+  if (value === null || value === undefined || value === "") return "—";
+  return String(value);
+}
+
+function formatCurrency(value: number | null | undefined): string {
+  if (value === null || value === undefined || !Number.isFinite(value)) return "—";
+  return new Intl.NumberFormat("fr-CA", { style: "currency", currency: "CAD" }).format(value);
+}
+
+function formatCents(value: number | null | undefined): string {
+  if (value === null || value === undefined || !Number.isFinite(value)) return "—";
+  return formatCurrency(value / 100);
+}
+
+const VISIBILITY_BLOCKER_LABELS: Record<string, string> = {
+  BLOCKER_PROFILE_NOT_PUBLISHED: "Profil public désactivé",
+  BLOCKER_TEACHER_ROW_MISSING: "Profil professeur manquant",
+  BLOCKER_PROFILE_INACTIVE: "Profil/compte inactif",
+  BLOCKER_TEACHER_INACTIVE: "Profil enseignant désactivé",
+  BLOCKER_DEMO_PROFILE: "Profil démo exclu",
+  BLOCKER_INVALID_PUBLIC_IDS: "Identifiants publics invalides",
+  BLOCKER_MISSING_PUBLIC_DATA: "Données publiques manquantes",
+  BLOCKER_MISSING_BASE_RATE: "Tarif manquant",
+  BLOCKER_MISSING_SUBJECT: "Matière manquante",
+  BLOCKER_MISSING_TEACHING_FORMAT: "Format de cours manquant",
+  BLOCKER_MISSING_PUBLIC_LOCATION_OR_ONLINE: "Localisation manquante pour cours en personne",
+  BLOCKER_UNSUPPORTED_COUNTRY: "Pays/marché non supporté",
+  BLOCKER_FAILED_IDENTITY_IF_SEARCH_BLOCKING: "Identité échouée",
+  BLOCKER_BY_RLS_OR_PUBLIC_VIEW: "Absent de la projection publique",
+};
+
+const VISIBILITY_WARNING_LABELS: Record<string, string> = {
+  WARNING_IDENTITY_NOT_VERIFIED: "Identité non vérifiée",
+  WARNING_NO_AVAILABILITY: "Aucune disponibilité",
+  WARNING_NO_INTRO_LESSON: "Pas de cours d’introduction",
+  WARNING_PROFILE_LOW_COMPLETION: "Profil peu complété",
+};
+
+function AdminField({
+  label,
+  value,
+  mono = false,
+}: {
+  label: string;
+  value: ReactNode;
+  mono?: boolean;
+}) {
+  return (
+    <div className="min-w-0">
+      <dt className="text-[11px] font-bold uppercase tracking-wider text-slate-500">{label}</dt>
+      <dd className={`mt-1 break-words text-sm text-slate-800 ${mono ? "font-mono text-xs" : ""}`}>
+        {value}
+      </dd>
+    </div>
+  );
+}
+
+function Admin360Card({
+  title,
+  icon,
+  children,
+}: {
+  title: string;
+  icon: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <section className="rounded-3xl border border-[#DCEAE3] bg-white p-5 shadow-sm">
+      <div className="mb-4 flex items-center gap-2">
+        <span className="inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-teal-50 text-teal-700">
+          {icon}
+        </span>
+        <h3 className="text-base font-bold text-[#2C2C2A]">{title}</h3>
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function CodePills({
+  codes,
+  labels,
+  tone,
+}: {
+  codes: string[];
+  labels: Record<string, string>;
+  tone: "rose" | "amber";
+}) {
+  if (codes.length === 0) {
+    return <p className="text-sm text-slate-500">Aucun.</p>;
+  }
+  return (
+    <div className="flex flex-wrap gap-2">
+      {codes.map((code) => (
+        <span
+          key={code}
+          title={code}
+          className={
+            tone === "rose"
+              ? "rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-xs font-bold text-rose-800"
+              : "rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-bold text-amber-800"
+          }
+        >
+          {labels[code] ?? code}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function Teacher360Panel({ data }: { data: AdminTeacher360 }) {
+  const stripeWarning = !data.payments.paymentReady || !data.payments.payoutReady;
+
+  return (
+    <section
+      className="space-y-5 rounded-[2rem] border border-teal-200 bg-teal-50/40 p-5 shadow-sm"
+      data-testid="admin-teacher-360"
+    >
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="text-[11px] font-black uppercase tracking-[0.22em] text-teal-700">
+            Admin seulement
+          </p>
+          <h2 className="mt-1 text-2xl font-black text-[#2C2C2A]">Teacher 360</h2>
+          <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-600">
+            Vue opérationnelle privée: identité, visibilité, adresse, horaire, paiements et actions recommandées.
+          </p>
+        </div>
+        <span
+          className={`inline-flex w-fit rounded-full border px-3 py-1 text-xs font-black ${
+            data.visibility.visibleInSearch
+              ? "border-teal-200 bg-white text-teal-800"
+              : "border-rose-200 bg-rose-50 text-rose-800"
+          }`}
+          data-testid="admin-teacher-360-search-status"
+        >
+          Visible en recherche: {data.visibility.visibleInSearch ? "Oui" : "Non"}
+        </span>
+      </div>
+
+      <div className="grid gap-5 lg:grid-cols-2">
+        <Admin360Card title="Identity / account" icon={<UserIcon size={18} aria-hidden />}>
+          <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <AdminField label="Nom" value={valueOrDash(data.identity.displayName)} />
+            <AdminField label="Email" value={valueOrDash(data.identity.email)} />
+            <AdminField label="Rôle" value={valueOrDash(data.identity.role)} />
+            <AdminField label="Compte actif" value={yesNo(data.identity.isActive)} />
+            <AdminField label="Onboarding" value={yesNo(data.identity.onboardingComplete)} />
+            <AdminField label="Dernière connexion" value={formatDateTime(data.identity.lastSignInAt)} />
+            <AdminField label="Profile ID" value={data.identity.id} mono />
+            <AdminField label="Teacher ID" value={valueOrDash(data.publicProfile.teacherId)} mono />
+          </dl>
+        </Admin360Card>
+
+        <Admin360Card title="Profil public" icon={<Eye size={18} aria-hidden />}>
+          <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <AdminField label="Publié" value={yesNo(data.publicProfile.isPublic)} />
+            <AdminField label="Slug public" value={valueOrDash(data.publicProfile.publicSlug)} />
+            <AdminField label="Photo" value={yesNo(data.publicProfile.hasPhoto)} />
+            <AdminField label="Bio" value={yesNo(data.publicProfile.hasBio)} />
+            <AdminField label="Tarif horaire" value={formatCurrency(data.publicProfile.hourlyRate)} />
+            <AdminField label="Intro" value={yesNo(data.publicProfile.introLessonEnabled)} />
+            <AdminField label="Prix intro" value={formatCents(data.publicProfile.introLessonPriceCents)} />
+            <AdminField label="Durée intro" value={valueOrDash(data.publicProfile.introLessonDurationMinutes)} />
+          </dl>
+          <div className="mt-4">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Matières</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {data.publicProfile.subjects.length ? (
+                data.publicProfile.subjects.map((subject) => (
+                  <span key={subject} className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700">
+                    {subject}
+                  </span>
+                ))
+              ) : (
+                <span className="text-sm text-slate-500">—</span>
+              )}
+            </div>
+          </div>
+          {data.publicProfile.publicProfileUrl ? (
+            <Link
+              href={data.publicProfile.publicProfileUrl}
+              className="mt-4 inline-flex items-center gap-1 text-sm font-bold text-teal-700 hover:underline"
+            >
+              Voir le profil public
+              <ExternalLink size={14} aria-hidden />
+            </Link>
+          ) : null}
+        </Admin360Card>
+
+        <Admin360Card title="Visibilité recherche" icon={<SearchCheck size={18} aria-hidden />}>
+          <div className="space-y-4">
+            <div>
+              <p className="mb-2 text-xs font-black uppercase tracking-wider text-rose-700">Blocages</p>
+              <CodePills codes={data.visibility.blockers} labels={VISIBILITY_BLOCKER_LABELS} tone="rose" />
+            </div>
+            <div>
+              <p className="mb-2 text-xs font-black uppercase tracking-wider text-amber-700">À surveiller</p>
+              <CodePills codes={data.visibility.warnings} labels={VISIBILITY_WARNING_LABELS} tone="amber" />
+            </div>
+          </div>
+        </Admin360Card>
+
+        <Admin360Card title="Location / address" icon={<MapPin size={18} aria-hidden />}>
+          <div
+            className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 p-3 text-xs font-semibold text-amber-900"
+            data-testid="admin-teacher-360-private-address-label"
+          >
+            Adresse privée — visible admin seulement. Ne jamais exposer dans recherche, profil public, SEO ou logs.
+          </div>
+          <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <AdminField label="Adresse privée" value={valueOrDash(data.privateLocation.addressLine)} />
+            <AdminField label="Adresse 2" value={valueOrDash(data.privateLocation.addressLine2)} />
+            <AdminField label="Ville" value={valueOrDash(data.privateLocation.city)} />
+            <AdminField label="Région" value={valueOrDash(data.privateLocation.region)} />
+            <AdminField label="Code postal" value={valueOrDash(data.privateLocation.postalCode)} />
+            <AdminField label="Pays" value={valueOrDash(data.privateLocation.countryCode)} />
+            <AdminField label="Coord. privées" value={
+              data.privateLocation.lat !== null && data.privateLocation.lng !== null
+                ? `${data.privateLocation.lat}, ${data.privateLocation.lng}`
+                : "—"
+            } />
+            <AdminField label="Rayon public" value={
+              data.publicLocation.teachingRadiusKm !== null ? `${data.publicLocation.teachingRadiusKm} km` : "—"
+            } />
+          </dl>
+          <div className="mt-5 border-t border-slate-100 pt-4">
+            <p className="text-sm font-bold text-[#2C2C2A]">Localisation publique</p>
+            <dl className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <AdminField label="Ville publique" value={valueOrDash(data.publicLocation.city)} />
+              <AdminField label="Région publique" value={valueOrDash(data.publicLocation.region)} />
+              <AdminField label="Zone approximative" value={valueOrDash(data.publicLocation.approximateZone)} />
+              <AdminField label="Signal carte public" value={yesNo(data.publicLocation.hasPublicMapSignal)} />
+              <AdminField label="En ligne" value={yesNo(data.teachingCapabilities.onlineCapable)} />
+              <AdminField label="Présentiel/domicile" value={yesNo(data.teachingCapabilities.inPersonCapable)} />
+            </dl>
+          </div>
+        </Admin360Card>
+
+        <Admin360Card title="Schedule / availability" icon={<CalendarDays size={18} aria-hidden />}>
+          <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <AdminField label="Disponibilités" value={yesNo(data.availability.hasAvailability)} />
+            <AdminField label="Fenêtres" value={valueOrDash(data.availability.availableWindowCount)} />
+            <AdminField label="Jours configurés" value={data.availability.configuredDays.join(", ") || "—"} />
+            <AdminField label="Prochain jour disponible" value={valueOrDash(data.availability.nextAvailableSlot)} />
+          </dl>
+          <p className="mt-4 text-sm text-slate-700">{data.availability.summary ?? "Aucune disponibilité configurée."}</p>
+          {data.availability.rawPreview.length ? (
+            <details className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+              <summary className="cursor-pointer text-xs font-bold uppercase tracking-wider text-slate-600">
+                Données brutes disponibles
+              </summary>
+              <pre className="mt-3 whitespace-pre-wrap break-words text-xs text-slate-700">
+                {JSON.stringify(data.availability.rawPreview, null, 2)}
+              </pre>
+            </details>
+          ) : null}
+        </Admin360Card>
+
+        <Admin360Card title="Payments / Stripe" icon={<CreditCard size={18} aria-hidden />}>
+          {stripeWarning ? (
+            <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 p-3 text-xs font-semibold text-amber-900">
+              Stripe incomplet: ce professeur peut être visible, mais il ne peut pas accepter de réservations payées tant que Stripe n’est pas complété.
+            </div>
+          ) : null}
+          <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <AdminField label="Compte Stripe" value={yesNo(data.payments.stripeAccountExists)} />
+            <AdminField label="Paiements activés" value={yesNo(data.payments.chargesEnabled)} />
+            <AdminField label="Versements activés" value={yesNo(data.payments.payoutsEnabled)} />
+            <AdminField label="Exigences dues" value={valueOrDash(data.payments.requirementsDueCount)} />
+            <AdminField label="Payment ready" value={yesNo(data.payments.paymentReady)} />
+            <AdminField label="Payout ready" value={yesNo(data.payments.payoutReady)} />
+          </dl>
+        </Admin360Card>
+
+        <Admin360Card title="Marketplace activity" icon={<Activity size={18} aria-hidden />}>
+          <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <AdminField label="Demandes" value={valueOrDash(data.activity.bookingRequestsCount)} />
+            <AdminField label="Confirmées" value={valueOrDash(data.activity.confirmedBookingsCount)} />
+            <AdminField label="Complétées" value={valueOrDash(data.activity.completedBookingsCount)} />
+            <AdminField label="Annulées" value={valueOrDash(data.activity.cancelledBookingsCount)} />
+            <AdminField label="Messages" value={valueOrDash(data.activity.messagesCount)} />
+            <AdminField label="Avis" value={valueOrDash(data.activity.reviewsCount)} />
+            <AdminField label="Note" value={valueOrDash(data.activity.rating)} />
+            <AdminField label="Dernière activité" value={formatDateTime(data.activity.lastMarketplaceActivity)} />
+          </dl>
+        </Admin360Card>
+      </div>
+
+      <Admin360Card title="Actions recommandées" icon={<ShieldCheck size={18} aria-hidden />}>
+        <div className="flex flex-wrap gap-2" data-testid="admin-teacher-360-recommended-actions">
+          {data.recommendedActions.length ? (
+            data.recommendedActions.map((action) =>
+              action.href && action.status === "link" ? (
+                <Link
+                  key={action.id}
+                  href={action.href}
+                  className="inline-flex items-center justify-center rounded-full bg-teal-700 px-4 py-2 text-sm font-bold text-white hover:bg-teal-800"
+                >
+                  {action.label}
+                </Link>
+              ) : (
+                <span
+                  key={action.id}
+                  className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-slate-100 px-4 py-2 text-sm font-bold text-slate-500"
+                  title="Action à venir"
+                >
+                  {action.label} · À venir
+                </span>
+              ),
+            )
+          ) : (
+            <p className="text-sm text-slate-500">Aucune action prioritaire.</p>
+          )}
+        </div>
+      </Admin360Card>
+    </section>
+  );
 }
 
 export default async function AdminUserDetailPage({
@@ -225,6 +567,7 @@ export default async function AdminUserDetailPage({
         evaluation: ReturnType<typeof evaluateTeacherSeoPublication>;
       }
     | null = null;
+  const teacher360 = await loadAdminTeacher360(admin, profile.id);
 
   if (isTeacher) {
     const { data: teacherRow } = await admin
@@ -453,6 +796,8 @@ export default async function AdminUserDetailPage({
             initialCanReactivate={canReactivate}
           />
         ) : null}
+
+        {teacher360 ? <Teacher360Panel data={teacher360} /> : null}
 
         {isTeacher ? (
           <>
