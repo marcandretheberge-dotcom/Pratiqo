@@ -879,7 +879,10 @@ function PrintableWorksheetsSection({ locale }: { locale: YoLocale }) {
         {t(LABEL_WORKSHEETS_TITLE, locale)}
       </h2>
 
-      <div className="mt-5" data-yo-module2-printable-resource-card>
+      <div
+        className="mt-5 print:break-inside-avoid"
+        data-yo-module2-printable-resource-card
+      >
         <YoPrintableResourceCard resource={resource} locale={locale} />
       </div>
     </section>

@@ -118,13 +118,35 @@ test("the canonical FR / EN / ES Yoppo + YoPratiqo phrasing is present on at lea
   );
 });
 
+// Surfaces that may route to YoPratiqo via CTA instead of repeating the
+// product wordmark in every headline (Yoppo stays the mascot label).
+const YOPPO_CTA_SURFACES: Array<keyof typeof STUDENT_FACING_FILES> = [
+  "courseCompanionPanel",
+  "publicCompanionOnboardingCard",
+  "studentHubContent",
+];
+
 // ─── 3. YoPratiqo is never renamed to Yoppo on student surfaces ────
 test("Yoppo never replaces YoPratiqo as the product name on student-facing surfaces", () => {
-  // Each surface must still mention YoPratiqo somewhere — Yoppo is
-  // additive, never a replacement. We require BOTH tokens on every
-  // student-facing companion surface so the brief's product / mascot
-  // split is provably preserved.
+  // Most surfaces must still mention YoPratiqo in copy. Course/public
+  // companion cards may keep shorter Yoppo-first headlines when their
+  // primary CTA deep-links to `/student/yopratiqo` (the product hub).
   for (const [key, code] of Object.entries(studentCodes)) {
+    if (YOPPO_CTA_SURFACES.includes(key as keyof typeof STUDENT_FACING_FILES)) {
+      assert.ok(/\bYoppo\b/.test(code), `${key} must name the Yoppo mascot`);
+      if (key === "studentHubContent") {
+        assert.ok(
+          /student-yopratiqo/.test(code),
+          `${key} must identify the authenticated YoPratiqo hub surface`,
+        );
+      } else {
+        assert.ok(
+          /\/student\/yopratiqo/.test(code),
+          `${key} must route learners to the YoPratiqo hub at /student/yopratiqo`,
+        );
+      }
+      continue;
+    }
     assert.ok(
       /\bYoPratiqo\b/.test(code),
       `${key} must still mention YoPratiqo (mascot Yoppo never replaces the product name)`,

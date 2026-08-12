@@ -57,6 +57,11 @@ import {
 } from "@/lib/studentLocation";
 import { YoBookingTeacherBridgeConsent } from "@/components/yo/YoBookingTeacherBridgeConsent";
 import type { YoLocale } from "@/lib/yo/types";
+import {
+  fetchAuthenticatedProgressSnapshots,
+  learnerHasYoPratiqoProgressForBridge,
+} from "@/lib/yopratiqo/fetchAuthenticatedProgressSnapshots";
+import { deriveStudentCompanionState } from "@/lib/yopratiqo/studentCompanionState";
 
 export type BookingInitialLessonKind = "standard" | "home";
 
@@ -190,11 +195,12 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
   const [applyCredits, setApplyCredits] = useState(false);
   const [loadingCredits, setLoadingCredits] = useState(false);
   // YoPratiqo → teacher bridge consent for THIS booking only. Unchecked by
-  // default. Toggling the box does NOT share anything; persistence runs
-  // server-side after the booking row exists. Real YoPratiqo per-user
-  // progress is not yet persisted in this release, so the bridge wrapper
-  // renders the soft empty state until that lands.
+  // default. Toggling the box does NOT share anything; the server builds the
+  // privacy-safe summary after the booking row exists when consent is granted.
   const [yoBridgeConsent, setYoBridgeConsent] = useState(false);
+  const [hasYoPratiqoProgress, setHasYoPratiqoProgress] = useState(false);
+  const [yoBridgeCompletedModulesCount, setYoBridgeCompletedModulesCount] = useState(0);
+  const [yoBridgeCurrentLevelLabel, setYoBridgeCurrentLevelLabel] = useState<string | null>(null);
   const [learnerProfiles, setLearnerProfiles] = useState<BookingLearnerProfile[]>([]);
   const [selectedLearnerId, setSelectedLearnerId] = useState<string>("");
   const [loadingLearners, setLoadingLearners] = useState(false);
@@ -608,6 +614,35 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
     });
   }, [step, user]);
 
+  useEffect(() => {
+    let cancelled = false;
+    setHasYoPratiqoProgress(false);
+    setYoBridgeCompletedModulesCount(0);
+    setYoBridgeCurrentLevelLabel(null);
+    setYoBridgeConsent(false);
+
+    if (!user) return;
+
+    void (async () => {
+      const snapshots = await fetchAuthenticatedProgressSnapshots();
+      if (cancelled) return;
+      if (snapshots === null) {
+        if (process.env.NODE_ENV === "development") {
+          console.warn("[BookingModal] YoPratiqo progress lookup unavailable; sharing UI stays hidden.");
+        }
+        return;
+      }
+      const derived = deriveStudentCompanionState(snapshots);
+      setHasYoPratiqoProgress(learnerHasYoPratiqoProgressForBridge(snapshots));
+      setYoBridgeCompletedModulesCount(derived.completedModulesCount);
+      setYoBridgeCurrentLevelLabel(derived.currentLevelLabel);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
+
   const calendarCells = useMemo(() => {
     const start = new Date();
     start.setHours(0, 0, 0, 0);
@@ -779,8 +814,8 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
       // Persist the YoPratiqo → teacher bridge consent for THIS booking.
       // Fire-and-forget: a transient failure here must NOT block checkout
       // (consent can be re-emitted later from a booking detail surface).
-      // The server-side endpoint validates auth + ownership and sanitizes
-      // the (currently empty) summary before writing.
+      // The server validates auth + ownership, reads the student's own
+      // snapshots, and builds the privacy-safe summary when consent is granted.
       try {
         await fetch(`/api/bookings/${bookingId}/yopratiqo-bridge`, {
           method: "POST",
@@ -790,12 +825,6 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
           },
           body: JSON.stringify({
             consent_granted: yoBridgeConsent,
-            // No client-provided summary: real YoPratiqo progress
-            // persistence does not exist yet, so we store the consent flag
-            // only. The server will reject any client-supplied raw quiz
-            // fields anyway via parseClientConsentPayload.
-            summary: null,
-            summary_version: null,
           }),
         });
       } catch {
@@ -1743,7 +1772,9 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                 checked={yoBridgeConsent}
                 onCheckedChange={setYoBridgeConsent}
                 disabled={isSubmitting}
-                hasYoPratiqoProgress={false}
+                hasYoPratiqoProgress={hasYoPratiqoProgress}
+                completedModulesCount={yoBridgeCompletedModulesCount}
+                currentLevelLabel={yoBridgeCurrentLevelLabel ?? undefined}
               />
               <BookingLegalAcceptanceLine />
               <div className="flex gap-2">

@@ -9,8 +9,6 @@
  *   1. Render a soft "Start YoPratiqo to bring your progress to future
  *      lessons" empty-state when the student has no YoPratiqo progress
  *      yet, instead of suggesting that something useful would be shared.
- *      Real YoPratiqo progress persistence does not exist yet — for now
- *      this state is the default in production.
  *
  *   2. Render a short, honest "what the teacher will see" recap when the
  *      checkbox is checked, so the student sees in the booking modal
@@ -81,9 +79,7 @@ export type YoBookingTeacherBridgeConsentProps = {
   disabled?: boolean;
   /**
    * Whether the student has any persisted YoPratiqo progress to share.
-   * Defaults to `false` in this release — real per-user persistence does
-   * not yet exist. When it lands, callers will pass `true` and the full
-   * consent card will replace the soft empty state.
+   * When false, the soft empty state is shown instead of the consent card.
    */
   hasYoPratiqoProgress?: boolean;
   /** Optional companion name for the teaser inside the full consent card. */

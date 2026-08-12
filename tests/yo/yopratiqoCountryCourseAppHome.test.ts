@@ -242,8 +242,8 @@ assert.match(
 // the path component.
 assert.match(
   countrySrc,
-  /buildRoadmap\(locale\)/,
-  "country page must build a per-locale 5-step roadmap before mounting <YoCoursePath />",
+  /buildRoadmap\(locale,\s*courseProgress\)/,
+  "country page must build a per-locale 5-step roadmap from resolved progress before mounting <YoCoursePath />",
 );
 ok("6) page renders course path / roadmap");
 

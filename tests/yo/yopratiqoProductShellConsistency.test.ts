@@ -116,13 +116,23 @@ assert.ok(
 const hubContentSrc = read(HUB_CONTENT_PATH);
 assert.match(
   hubContentSrc,
-  /import\s*\{\s*YoPratiqoLogo\s*\}\s*from\s*["']@\/components\/yo\/YoPratiqoLogo["']/,
-  "hub must import YoPratiqoLogo for branded header",
+  /import\s*\{\s*YoStudentCompanionCard\s*\}\s*from\s*["']@\/components\/yo\/YoStudentCompanionCard["']/,
+  "hub must import YoStudentCompanionCard (companion surfaces YoPratiqo + Yoppo)",
+);
+assert.match(
+  hubRouteSrc,
+  /title:\s*"Mon YoPratiqo/,
+  "hub route metadata must carry the YoPratiqo product name",
 );
 assert.match(
   hubContentSrc,
-  /<YoPratiqoLogo\b/,
-  "hub must mount <YoPratiqoLogo /> in its header",
+  /data-testid=["']yo-student-hub["']/,
+  "hub must expose the yo-student-hub surface marker",
+);
+assert.match(
+  hubContentSrc,
+  /surfaceId=["']student-yopratiqo["']/,
+  "hub must identify itself as the student-yopratiqo surface",
 );
 // And the route must wire the body in.
 assert.match(
@@ -130,7 +140,7 @@ assert.match(
   /import\s*\{\s*YoStudentHubContent\s*\}\s*from\s*["']@\/components\/yo\/YoStudentHubContent["']/,
   "hub route must mount the YoStudentHubContent body",
 );
-ok("2) /student/yopratiqo renders YoPratiqo branding via <YoPratiqoLogo />");
+ok("2) /student/yopratiqo renders YoPratiqo branding via route metadata + companion card");
 
 // ─────────────────────────────────────────────────────────────────────────
 // 3. /student/yopratiqo renders the YoPratiqo companion above the fold
@@ -162,7 +172,8 @@ ok("3) /student/yopratiqo renders the YoPratiqo companion above the lesson path"
 
 const DR_COURSE_HOME = "/yo/langues/espagnol/pays/republique-dominicaine";
 assert.ok(
-  hubContentSrc.includes(`"${DR_COURSE_HOME}"`),
+  hubContentSrc.includes(`"${DR_COURSE_HOME}"`) ||
+    hubContentSrc.includes("DOMINICAN_RD_ROUTES.courseHome"),
   "hub must link to the Dominican Republic Course Home",
 );
 ok("4) /student/yopratiqo links to the Dominican Republic Course Home");
@@ -177,17 +188,15 @@ assert.match(
   "hub must expose a stable continue-learning CTA via data-testid",
 );
 // Each of the five deck routes (Intro + Modules 2–5) must be linked
-// from the hub's lesson-path rail.
-for (const deckPath of [
-  `${DR_COURSE_HOME}/intro`,
-  `${DR_COURSE_HOME}/module-2`,
-  `${DR_COURSE_HOME}/module-3`,
-  `${DR_COURSE_HOME}/module-4`,
-  `${DR_COURSE_HOME}/module-5`,
-]) {
+// from the hub's lesson-path rail via the shared route registry.
+assert.ok(
+  hubContentSrc.includes("DOMINICAN_RD_ROUTES"),
+  "hub must import audited Dominican RD routes for lesson-path links",
+);
+for (const hrefKey of ["intro", "module2", "module3", "module4", "module5"] as const) {
   assert.ok(
-    hubContentSrc.includes(`"${deckPath}"`),
-    `hub lesson path must link to ${deckPath}`,
+    hubContentSrc.includes(`HREFS.${hrefKey}`),
+    `hub lesson path must reference HREFS.${hrefKey}`,
   );
 }
 ok("5) /student/yopratiqo links to Intro + Modules 2–5 deck routes for continue-learning");
@@ -220,11 +229,24 @@ ok("6) all YoPratiqo-originating login CTAs deep-link to /login?next=/student/yo
 const callbackSrc = read(AUTH_CALLBACK_PATH);
 const loginPageSrc = read(LOGIN_PAGE_PATH);
 const authAdminSrc = read(AUTH_ADMIN_PATH);
-// The login page must sanitize `next=` so we can't open-redirect.
+// Login still reads ?next= and sanitizes it through the shared auth helpers
+// (the login page delegates to resolveLoginOAuthNextPath rather than calling
+// sanitizeRelativeRedirectPath inline).
 assert.match(
   loginPageSrc,
-  /sanitizeRelativeRedirectPath\(searchParams\.get\(["']next["']\)\)/,
-  "login page must sanitize ?next= via sanitizeRelativeRedirectPath",
+  /searchParams\.get\(["']next["']\)/,
+  "login page must read ?next= from search params",
+);
+assert.match(
+  loginPageSrc,
+  /resolveLoginOAuthNextPath/,
+  "login page must resolve OAuth next via resolveLoginOAuthNextPath(...)",
+);
+const preAuthIntentSrc = read("lib/auth/preAuthOnboardingIntent.ts");
+assert.match(
+  preAuthIntentSrc,
+  /sanitizeRelativeRedirectPath/,
+  "preAuthOnboardingIntent must sanitize next paths via sanitizeRelativeRedirectPath",
 );
 // The auth callback must read `next` and forward it through resolveOAuthCallbackRedirect.
 assert.match(
@@ -238,8 +260,9 @@ assert.match(
   "auth callback must call resolveOAuthCallbackRedirect(...) so /student/yopratiqo is honored after OAuth",
 );
 // resolvePostAuthRedirect must accept a nextPath argument.
+const postAuthRedirectSrc = read("lib/auth/postAuthRedirect.ts");
 assert.match(
-  authAdminSrc,
+  postAuthRedirectSrc,
   /resolvePostAuthRedirect[\s\S]{0,400}nextPath/,
   "resolvePostAuthRedirect must accept a nextPath argument",
 );

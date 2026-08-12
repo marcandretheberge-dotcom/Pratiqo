@@ -287,7 +287,7 @@ function buildSteps(locale: YoLocale) {
       label: "Repères",
       content: (
         <LessonCard eyebrow="Essentiels" title="Quatre mots-questions" state="teacher_ready">
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             {["Où?", "À quelle heure?", "Qui?", "Comment?"].map((word) => (
               <p key={word} className="rounded-2xl border border-[#D8ECE6] bg-[#F8FCFB] px-4 py-5 text-center text-xl font-black text-[#0F6E56]" lang="fr-CA">
                 {word}

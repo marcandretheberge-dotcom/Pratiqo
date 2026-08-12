@@ -13,7 +13,10 @@ assert.match(src, /export function YoGoodAvoidGame/);
 assert.match(src, /export function YoOneQuestionQuiz/);
 assert.match(src, /export function YoFixedFlashcardDeck/);
 assert.match(src, /export function YoMiniScenarioCard/);
-assert.match(src, /export function YoPrintableResourceCard/);
+assert.match(
+  src,
+  /export\s*\{\s*YoPrintableResourceCard\s*\}\s*from\s*["']@\/components\/yo\/YoPrintableResourceCard["']/,
+);
 assert.match(src, /max-w-full/);
 assert.match(src, /overflow-x-hidden/);
 assert.match(src, /data-yo-one-question-quiz/);

@@ -106,6 +106,10 @@ export type YoCourseHeroProps = {
   heroImagePath: string;
   /** Localized alt text — typically `t(module.heroImageAlt, locale)`. */
   heroImageAlt: string;
+  /** Primary CTA destination — defaults to the free Intro deck. */
+  primaryHref?: string;
+  /** Primary CTA label — defaults to the locale "start for free" copy. */
+  primaryLabel?: string;
   className?: string;
 };
 
@@ -113,10 +117,14 @@ export function YoCourseHero({
   locale,
   heroImagePath,
   heroImageAlt,
+  primaryHref,
+  primaryLabel,
   className,
 }: YoCourseHeroProps): React.JSX.Element {
   const l = safeLocale(locale);
   const copy = COPY[l];
+  const resolvedPrimaryHref = primaryHref ?? HREFS.intro;
+  const resolvedPrimaryLabel = primaryLabel ?? copy.ctaPrimary;
 
   return (
     <article
@@ -178,10 +186,11 @@ export function YoCourseHero({
       {/* 5. Primary CTA pill */}
       <Link
         data-testid="yo-course-hero-primary-cta"
-        href={HREFS.intro}
+        data-yo-course-hero-primary-href={resolvedPrimaryHref}
+        href={resolvedPrimaryHref}
         className="group inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#13A085] px-6 py-4 text-base font-bold text-white shadow-[0_14px_30px_rgba(19,160,133,0.26)] transition hover:bg-[#16B597]"
       >
-        {copy.ctaPrimary}
+        {resolvedPrimaryLabel}
         <ArrowRight
           className="size-4 transition-transform group-hover:translate-x-0.5"
           aria-hidden

@@ -207,7 +207,7 @@ export function YoGoodAvoidGame({
           return (
             <article key={item.id} className="rounded-2xl border border-[#D8ECE6] bg-[#F8FCFB] p-3">
               <p className="text-sm font-extrabold text-[#0F6E56]" lang="fr-CA">{item.text}</p>
-              <div className="mt-2 grid grid-cols-2 gap-2">
+              <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
                 {(["good", "avoid"] as const).map((value) => (
                   <button
                     key={value}
@@ -289,7 +289,7 @@ export function YoFixedFlashcardDeck({
           {flipLabel}
         </span>
       </button>
-      <div className="mt-4 grid grid-cols-2 gap-2">
+      <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
         <button
           type="button"
           onClick={() => go(-1)}

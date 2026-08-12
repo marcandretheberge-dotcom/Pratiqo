@@ -37,6 +37,7 @@
  */
 
 import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowRight,
   BookOpenCheck,
@@ -52,6 +53,13 @@ import { useLocale } from "@/lib/locale-context";
 import { YoStudentCompanionCard } from "@/components/yo/YoStudentCompanionCard";
 import { YoStepNavigator } from "@/components/yo/YoStepNavigator";
 import type { StudentCompanionLocale } from "@/lib/yopratiqo/studentCompanionState";
+import {
+  deriveDominicanRdCourseProgress,
+  dominicanRdContinueLabel,
+  DOMINICAN_RD_ROUTES,
+} from "@/lib/yopratiqo/dominicanRepublicCourseProgress";
+import { fetchAuthenticatedProgressSnapshots } from "@/lib/yopratiqo/fetchAuthenticatedProgressSnapshots";
+import type { ProgressSnapshotRow } from "@/lib/yopratiqo/progressSnapshotPersistence";
 
 // ---------------------------------------------------------------------------
 // Localized copy
@@ -199,21 +207,62 @@ const COPY: Record<HubLocale, Copy> = {
 // same paths the public /yo hub, the Course Home and the bottom-tab
 // nav use. We do not invent any new route.
 const HREFS = {
-  courseHome: "/yo/langues/espagnol/pays/republique-dominicaine",
-  intro: "/yo/langues/espagnol/pays/republique-dominicaine/intro",
-  module2: "/yo/langues/espagnol/pays/republique-dominicaine/module-2",
-  module3: "/yo/langues/espagnol/pays/republique-dominicaine/module-3",
-  module4: "/yo/langues/espagnol/pays/republique-dominicaine/module-4",
-  module5: "/yo/langues/espagnol/pays/republique-dominicaine/module-5",
+  courseHome: DOMINICAN_RD_ROUTES.courseHome,
+  intro: DOMINICAN_RD_ROUTES.intro,
+  module2: DOMINICAN_RD_ROUTES["module-2"],
+  module3: DOMINICAN_RD_ROUTES["module-3"],
+  module4: DOMINICAN_RD_ROUTES["module-4"],
+  module5: DOMINICAN_RD_ROUTES["module-5"],
   fullPratiqoProgress: "/student/progress",
   findTeacher: "/trouver-un-prof",
 } as const;
+
+type ProgressFetchState =
+  | { status: "loading" }
+  | { status: "ready"; snapshots: ProgressSnapshotRow[] }
+  | { status: "unauthenticated" }
+  | { status: "error" };
 
 export function YoStudentHubContent(): React.JSX.Element {
   const { locale } = useLocale();
   const l = safeLocale(locale);
   const copy = COPY[l];
   const companionLocale = l as StudentCompanionLocale;
+
+  const [progressFetch, setProgressFetch] = useState<ProgressFetchState>({
+    status: "loading",
+  });
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const snapshots = await fetchAuthenticatedProgressSnapshots();
+      if (cancelled) return;
+      if (snapshots === null) {
+        setProgressFetch({ status: "unauthenticated" });
+        return;
+      }
+      setProgressFetch({ status: "ready", snapshots });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const courseProgress = useMemo(() => {
+    const snapshots =
+      progressFetch.status === "ready" ? progressFetch.snapshots : null;
+    return deriveDominicanRdCourseProgress(snapshots);
+  }, [progressFetch]);
+
+  const continueHref = courseProgress.continueHref;
+  const continueLabel =
+    progressFetch.status === "loading"
+      ? copy.continueLabel
+      : dominicanRdContinueLabel(l, courseProgress);
+
+  const companionInitialSnapshots =
+    progressFetch.status === "ready" ? progressFetch.snapshots : undefined;
 
   const pathSteps = [
     { href: HREFS.intro, label: copy.stepIntro, help: copy.stepIntroHelp },
@@ -258,7 +307,10 @@ export function YoStudentHubContent(): React.JSX.Element {
       >
         {copy.companionHeading}
       </h2>
-      <YoStudentCompanionCard locale={companionLocale} />
+      <YoStudentCompanionCard
+        locale={companionLocale}
+        initialSnapshots={companionInitialSnapshots}
+      />
     </section>
   );
 
@@ -279,11 +331,12 @@ export function YoStudentHubContent(): React.JSX.Element {
       <div className="mt-4 flex flex-col gap-2 sm:flex-row">
         <Link
           data-testid="yo-student-hub-continue-cta"
-          href={HREFS.intro}
+          data-yo-student-hub-continue-href={continueHref}
+          href={continueHref}
           className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-[#13A085] px-5 py-3 text-sm font-bold text-white shadow-[0_12px_28px_rgba(19,160,133,0.24)] transition hover:bg-[#16B597]"
         >
           <Compass className="size-4" aria-hidden />
-          {copy.continueLabel}
+          {continueLabel}
         </Link>
         <Link
           data-testid="yo-student-hub-course-home-link"

@@ -50,7 +50,7 @@ export default async function FrenchQuebecLesson3SurvivalKitPage({
       </YoPrintCard>
 
       <YoPrintCard title="4 mots-questions essentiels">
-        <div className="grid grid-cols-2 gap-2 font-black">
+        <div className="grid grid-cols-1 gap-2 font-black sm:grid-cols-2">
           <p>Ou?</p>
           <p>A quelle heure?</p>
           <p>Qui?</p>
