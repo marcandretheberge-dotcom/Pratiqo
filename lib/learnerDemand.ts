@@ -20,6 +20,7 @@ export type LearnerDemandMatch = {
   outcome: LearnerDemandOutcome;
   matchCount: number;
   searchUrl: string | null;
+  primaryTeacherId: string | null;
 };
 
 export function foldLearnerDemandText(value: unknown): string {
@@ -73,35 +74,45 @@ function teacherIsNearCity(teacher: Teacher, city: string, resolvedCity: City | 
   return haversineDistance(resolvedCity.lat, resolvedCity.lng, lat, lng) <= 25;
 }
 
-export function matchLearnerDemand(teachers: Teacher[], input: Pick<LearnerDemandInput, "subject" | "city" | "acceptsOnline">): LearnerDemandMatch {
+function teacherSearchUrl(subject: string, teacherId: string): string {
+  const params = new URLSearchParams({ q: subject, openTeacher: teacherId, source: "learner_finder" });
+  return `/student/search?${params.toString()}`;
+}
+
+export function matchLearnerDemand(
+  teachers: Teacher[],
+  input: Pick<LearnerDemandInput, "subject" | "city" | "acceptsOnline">,
+): LearnerDemandMatch {
   const subjectMatches = filterTeacherPool(teachers, { searchQuery: input.subject });
   const resolvedCity = findLearnerDemandCity(input.city);
   const localMatches = subjectMatches.filter(
     (teacher) => allowsLocalLessons(teacher) && teacherIsNearCity(teacher, input.city, resolvedCity),
   );
 
-  const baseParams = new URLSearchParams({ q: input.subject, city: input.city });
   if (localMatches.length > 0) {
+    const primary = localMatches[0];
     return {
       outcome: "local_match",
       matchCount: localMatches.length,
-      searchUrl: `/student/search?${baseParams.toString()}`,
+      searchUrl: teacherSearchUrl(input.subject, primary.id),
+      primaryTeacherId: primary.id,
     };
   }
 
   if (input.acceptsOnline) {
     const onlineMatches = subjectMatches.filter(allowsOnlineLessons);
     if (onlineMatches.length > 0) {
-      baseParams.set("online", "1");
+      const primary = onlineMatches[0];
       return {
         outcome: "online_match",
         matchCount: onlineMatches.length,
-        searchUrl: `/student/search?${baseParams.toString()}`,
+        searchUrl: teacherSearchUrl(input.subject, primary.id),
+        primaryTeacherId: primary.id,
       };
     }
   }
 
-  return { outcome: "waitlist", matchCount: 0, searchUrl: null };
+  return { outcome: "waitlist", matchCount: 0, searchUrl: null, primaryTeacherId: null };
 }
 
 export function buildTeacherRecruitShareUrl(subject: string, city: string): string {
