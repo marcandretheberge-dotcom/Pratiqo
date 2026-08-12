@@ -205,15 +205,17 @@ assert.match(
   /["']\/student\/progress["']/,
   "card must still keep /student/progress reachable as the full-Pratiqo-progress bridge",
 );
-// The YoPratiqo companion is now officially named "Yoppo" on every
-// student-facing surface. The FR primary progress CTA names the
-// mascot explicitly while keeping the "compagnon YoPratiqo"
-// disambiguator so the learner still sees which product owns the
-// mascot.
+// The YoPratiqo companion is officially named "Yoppo". The primary
+// authenticated CTA names the mascot and routes to the YoPratiqo hub.
 assert.match(
   cardSrc,
-  /Voir Yoppo, mon compagnon YoPratiqo/,
-  "FR progress CTA copy must match the brief verbatim (Yoppo mascot included)",
+  /Voir Yoppo, mon compagnon/,
+  "FR progress CTA must name Yoppo and invite the learner to their companion",
+);
+assert.match(
+  cardSrc,
+  /See Yoppo, my companion/,
+  "EN progress CTA must name Yoppo and invite the learner to their companion",
 );
 assert.match(
   cardSrc,

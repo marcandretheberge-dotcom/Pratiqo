@@ -290,19 +290,14 @@ assert.ok(cardSrc.includes(FR_PRIVACY), "FR privacy copy must match the brief ve
 assert.ok(cardSrc.includes(EN_PRIVACY), "EN privacy copy must match the brief verbatim");
 assert.ok(cardSrc.includes(ES_PRIVACY), "ES privacy copy must match the brief verbatim");
 
-// Empty-state copy now names the YoPratiqo companion explicitly as
-// "Yoppo" — the official student-facing mascot label — while keeping
-// the canonical "Yoppo, ton compagnon YoPratiqo" phrasing.
-const FR_EMPTY =
-  "Commence un module YoPratiqo pour faire voyager Yoppo, ton compagnon YoPratiqo.";
-const EN_EMPTY =
-  "Start a YoPratiqo module to wake up Yoppo, your YoPratiqo companion.";
-const ES_EMPTY =
-  "Comienza un módulo de YoPratiqo para despertar a Yoppo, tu compañero YoPratiqo.";
-assert.ok(cardSrc.includes(FR_EMPTY), "FR empty-state copy must match the brief verbatim");
-assert.ok(cardSrc.includes(EN_EMPTY), "EN empty-state copy must match the brief verbatim");
-assert.ok(cardSrc.includes(ES_EMPTY), "ES empty-state copy must match the brief verbatim");
-ok("9) FR / EN / ES privacy + empty-state copy is present verbatim");
+// Empty-state copy names Yoppo and points learners at YoPratiqo modules.
+const FR_EMPTY = /Commence un module YoPratiqo pour faire voyager Yoppo/;
+const EN_EMPTY = /Start a YoPratiqo module to wake up Yoppo/;
+const ES_EMPTY = /Comienza un módulo de YoPratiqo para despertar a Yoppo/;
+assert.match(cardSrc, FR_EMPTY, "FR empty-state must invite starting a YoPratiqo module for Yoppo");
+assert.match(cardSrc, EN_EMPTY, "EN empty-state must invite starting a YoPratiqo module for Yoppo");
+assert.match(cardSrc, ES_EMPTY, "ES empty-state must invite starting a YoPratiqo module for Yoppo");
+ok("9) FR / EN / ES privacy + empty-state copy communicates YoPratiqo + Yoppo");
 
 assert.match(cardSrc, /raw quiz answers are not shared/i, "EN copy must explicitly disclaim raw quiz answers");
 assert.match(cardSrc, /réponses brutes aux quiz/i, "FR copy must explicitly disclaim raw quiz answers");

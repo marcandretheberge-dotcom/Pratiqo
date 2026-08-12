@@ -1032,9 +1032,9 @@ const DECK_TITLE_EARS_GRAMMAR = lstr(
   "Oído dominicano + pasado práctico",
 );
 const DECK_HELPER_EARS_GRAMMAR = lstr(
-  "Affûte ton oreille en transport, puis ancre les chunks au passé pour raconter une sortie.",
-  "Sharpen your transit ear, then anchor the past-tense chunks for telling an outing.",
-  "Afina el oído en transporte y ancla los chunks en pasado para contar una salida.",
+  "Affûte ton oreille en transport, puis ancre les formes au passé pour raconter une sortie.",
+  "Sharpen your transit ear, then anchor the past-tense forms for telling an outing.",
+  "Afina el oído en transporte y ancla las formas en pasado para contar una salida.",
 );
 
 const DECK_LABEL_READINGS = lstr(

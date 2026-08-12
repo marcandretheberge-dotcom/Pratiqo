@@ -141,22 +141,28 @@ ok("2) Intro composer uses the shared <YoLessonDeck /> orchestrator");
 // ─────────────────────────────────────────────────────────────────────────
 
 const INTRO_SCREEN_IDS = [
-  "welcome",
-  "how-it-works",
+  "scene",
+  "mission",
+  "country",
+  "history",
+  "food",
   "phrases",
-  "culture",
-  "dictionary",
+  "practice",
+  "review",
   "flashcards",
-  "quiz",
   "ready",
 ] as const;
 for (const id of INTRO_SCREEN_IDS) {
   assert.ok(
-    introContentSrc.includes(`data-yo-intro-deck-screen="${id}"`),
-    `Intro deck must render the focused "${id}" screen via the data-yo-intro-deck-screen marker`,
+    introContentSrc.includes(`screen("${id}"`),
+    `Intro deck must compose the "${id}" screen in buildIntroDeckScreens`,
   );
 }
-ok(`3) Intro deck has ${INTRO_SCREEN_IDS.length} focused lesson screens (welcome → ready)`);
+const uniqueIds = new Set(INTRO_SCREEN_IDS);
+assert.equal(uniqueIds.size, INTRO_SCREEN_IDS.length, "Intro screen ids must be unique");
+assert.ok(introContentSrc.includes('screen("scene"'), "Intro deck must open on the scene screen");
+assert.ok(introContentSrc.includes('screen("ready"'), "Intro deck must finish on the ready screen");
+ok(`3) Intro deck has ${INTRO_SCREEN_IDS.length} focused lesson screens (scene → ready)`);
 
 // ─────────────────────────────────────────────────────────────────────────
 // 4. Intro inherits the no-scroll / swipe / tap-zone behaviour
@@ -206,69 +212,40 @@ ok("5) Intro deck uses audited companion visual states (map / confused / celebra
 //    educational content
 // ─────────────────────────────────────────────────────────────────────────
 
-// Both YoIntroLearningFrame and YoCulturePanorama live in the
-// same file (`YoIntroCultureFrame`). The order they are
-// destructured in is not part of the contract — only that both
-// names appear inside a single import statement from that file.
-const introCultureFrameImport = introContentSrc.match(
-  /import\s*\{([^}]+)\}\s*from\s*["']@\/components\/yo\/YoIntroCultureFrame["']/,
+// The intro composer reuses audited educational primitives through
+// focused page components (HeroPage, RichSectionPage, YoQuizPreview,
+// ReviewPage, FlashcardsStepPage) rather than the legacy long-scroll
+// frame components.
+assert.match(
+  introContentSrc,
+  /from\s*["']@\/lib\/yo\/dominicanRepublicA1["']/,
+  "Intro composer must source its content from lib/yo/dominicanRepublicA1.ts (no duplicated educational content)",
 );
 assert.ok(
-  introCultureFrameImport,
-  "Intro composer must import from @/components/yo/YoIntroCultureFrame",
-);
-assert.match(
-  introCultureFrameImport![1],
-  /\bYoIntroLearningFrame\b/,
-  "Intro composer must reuse YoIntroLearningFrame (existing intro learning frame)",
-);
-assert.match(
-  introCultureFrameImport![1],
-  /\bYoCulturePanorama\b/,
-  "Intro composer must reuse YoCulturePanorama (existing culture panorama)",
-);
-assert.match(
-  introContentSrc,
-  /import\s*\{\s*YoLessonCard\s*\}\s*from\s*["']@\/components\/yo\/YoLessonCard["']/,
-  "Intro composer must reuse YoLessonCard (existing lesson cards)",
-);
-assert.match(
-  introContentSrc,
-  /import\s*\{\s*YoDominicanDictionary\s*\}\s*from\s*["']@\/components\/yo\/YoDominicanDictionary["']/,
-  "Intro composer must reuse YoDominicanDictionary (existing pocket dictionary)",
-);
-assert.match(
-  introContentSrc,
-  /import\s*\{\s*YoFlashcardPreview\s*\}\s*from\s*["']@\/components\/yo\/YoFlashcardPreview["']/,
-  "Intro composer must reuse YoFlashcardPreview (existing flashcard carousel)",
+  introContentSrc.includes("dominicanRepublicA1"),
+  "Intro composer must read dominicanRepublicA1 as the content source of truth",
 );
 assert.match(
   introContentSrc,
   /import\s*\{\s*YoQuizPreview\s*\}\s*from\s*["']@\/components\/yo\/YoQuizPreview["']/,
   "Intro composer must reuse YoQuizPreview (existing quiz preview)",
 );
-// And they must actually be mounted somewhere in the composer.
+assert.match(
+  introContentSrc,
+  /import\s*\{\s*YoFlashcardPreview\s*\}\s*from\s*["']@\/components\/yo\/YoFlashcardPreview["']/,
+  "Intro composer must reuse YoFlashcardPreview (existing flashcard carousel)",
+);
 for (const componentTag of [
-  "<YoIntroLearningFrame",
-  "<YoCulturePanorama",
-  "<YoLessonCard",
-  "<YoDominicanDictionary",
-  "<YoFlashcardPreview",
   "<YoQuizPreview",
+  "<HeroPage",
+  "<ReviewPage",
+  "<FlashcardsStepPage",
 ] as const) {
   assert.ok(
     introContentCode.includes(componentTag),
     `Intro composer must mount ${componentTag} … />`,
   );
 }
-// And the intro data file must be the source of truth (so the
-// preserved content stays in sync with the long-scroll surface
-// still mounted on the Course Home).
-assert.match(
-  introContentSrc,
-  /import\s*\{\s*dominicanRepublicA1\s*\}\s*from\s*["']@\/lib\/yo\/dominicanRepublicA1["']/,
-  "Intro composer must source its content from lib/yo/dominicanRepublicA1.ts (no duplicated educational content)",
-);
 ok("6) Intro deck preserves existing intro / dictionary / flashcard / quiz educational content");
 
 // ─────────────────────────────────────────────────────────────────────────

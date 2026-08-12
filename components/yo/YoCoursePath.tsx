@@ -18,13 +18,12 @@
  *   • a status badge (next / available / completed)
  *   • a CTA (Commencer / Ouvrir / Mission finale)
  *
- * Statuses are deliberately STATIC at the moment — Phase 1 does
- * not have a per-step "completed" signal yet, so every card
- * defaults to `available` except for the first card which is
- * highlighted as `next`. Once the `/api/yo/progress` snapshot
- * surface ships consumer-side, this component can switch on
- * `step.status` to render `completed` checkmarks. No fake user
- * progress is rendered today.
+ * Statuses (`next` / `available` / `completed` / `locked`) are supplied
+ * by the parent surface — typically from
+ * `deriveDominicanRdCourseProgress()` on Course Home. This component
+ * renders whatever statuses it receives and never fetches progress
+ * itself. Anonymous visitors get Intro-first defaults from the page;
+ * no fake completions are invented here.
  *
  * Privacy / safety profile
  * ------------------------

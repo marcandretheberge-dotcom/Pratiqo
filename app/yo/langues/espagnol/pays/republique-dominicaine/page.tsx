@@ -80,6 +80,13 @@ import { YoDesktopAppWorkspace as _YoDesktopAppWorkspace } from "@/components/yo
 import { YoAdaptiveStepShell } from "@/components/yo/YoAdaptiveStepShell";
 import { YoAppBottomBar } from "@/components/yo/YoAppBottomBar";
 import { YoPremiumModuleUnlockCTA } from "@/components/yo/YoPremiumModuleUnlockCTA";
+import {
+  deriveDominicanRdCourseProgress,
+  dominicanRdContinueLabel,
+  type DominicanRdCourseProgress,
+  type DominicanRdRoadmapStepId,
+} from "@/lib/yopratiqo/dominicanRepublicCourseProgress";
+import { loadAuthenticatedProgressSnapshots } from "@/lib/yopratiqo/loadAuthenticatedProgressSnapshots";
 
 void _YoAppShell;
 void _YoAppShellScroller;
@@ -117,42 +124,37 @@ interface PageProps {
  * outcomes specifically tuned for the roadmap cards.
  */
 const ROADMAP_BASE: ReadonlyArray<
-  Omit<YoCoursePathStep, "ctaLabel" | "title" | "outcome">
-  & { id: "intro" | "module-2" | "module-3" | "module-4" | "module-5" }
+  Omit<YoCoursePathStep, "ctaLabel" | "title" | "outcome" | "status">
+  & { id: DominicanRdRoadmapStepId }
 > = [
   {
     id: "intro",
     position: 1,
     level: "A1",
-    status: "next",
     href: "/yo/langues/espagnol/pays/republique-dominicaine/intro",
   },
   {
     id: "module-2",
     position: 2,
     level: "A1",
-    status: "available",
     href: "/yo/langues/espagnol/pays/republique-dominicaine/module-2",
   },
   {
     id: "module-3",
     position: 3,
     level: "A1",
-    status: "available",
     href: "/yo/langues/espagnol/pays/republique-dominicaine/module-3",
   },
   {
     id: "module-4",
     position: 4,
     level: "A1",
-    status: "available",
     href: "/yo/langues/espagnol/pays/republique-dominicaine/module-4",
   },
   {
     id: "module-5",
     position: 5,
     level: "A2",
-    status: "available",
     href: "/yo/langues/espagnol/pays/republique-dominicaine/module-5",
   },
 ];
@@ -256,7 +258,10 @@ const DISCOVER_COPY = {
   },
 } as const;
 
-function buildRoadmap(locale: "fr" | "en" | "es"): YoCoursePathStep[] {
+function buildRoadmap(
+  locale: "fr" | "en" | "es",
+  progress: DominicanRdCourseProgress,
+): YoCoursePathStep[] {
   const copy = ROADMAP_COPY[locale];
   return ROADMAP_BASE.map((step) => {
     const c =
@@ -274,7 +279,7 @@ function buildRoadmap(locale: "fr" | "en" | "es"): YoCoursePathStep[] {
       title: c.title,
       outcome: c.outcome,
       level: step.level,
-      status: step.status,
+      status: progress.roadmapStatuses[step.id],
       ctaLabel: c.cta,
       href: step.href,
     };
@@ -331,16 +336,31 @@ export default async function YoEspagnolRepubliqueDominicainePage({
   );
   const discoverHref = `/yo/langues/espagnol/pays/republique-dominicaine/decouvrir${langSuffix}`;
 
-  const roadmap = buildRoadmap(locale);
+  const progressSnapshots = await loadAuthenticatedProgressSnapshots();
+  const courseProgress = deriveDominicanRdCourseProgress(progressSnapshots, {
+    langSuffix,
+  });
+  const roadmap = buildRoadmap(locale, courseProgress);
+  const continueHref = courseProgress.continueHref;
+  const continueLabel = dominicanRdContinueLabel(locale, courseProgress);
 
   const heroBlock = (
     <YoCourseHero
       locale={locale}
       heroImagePath={module.heroImagePath ?? "/images/yo/app/hero.png"}
       heroImageAlt={heroImageAlt}
+      primaryHref={continueHref}
+      primaryLabel={continueLabel}
     />
   );
-  const pathBlock = <YoCoursePath locale={locale} steps={roadmap} />;
+  const pathBlock = (
+    <div
+      data-yo-course-path-complete={courseProgress.courseComplete ? "true" : "false"}
+      data-yo-course-continue-href={continueHref}
+    >
+      <YoCoursePath locale={locale} steps={roadmap} />
+    </div>
+  );
   const companionBlock = <YoCourseCompanionPanel locale={locale} />;
   const discoverBlock = <DiscoverLink href={discoverHref} locale={locale} />;
 
@@ -389,13 +409,18 @@ export default async function YoEspagnolRepubliqueDominicainePage({
   // so a 360x740 phone never has to vertically scroll the Course
   // Home. The intro deck CTA stays on screen 1 as the obvious
   // primary affordance.
-  const introHref = `/yo/langues/espagnol/pays/republique-dominicaine/intro${langSuffix}`;
-  const startLabel = locale === "en" ? "Start the intro" : locale === "es" ? "Empezar la intro" : "Commencer l’intro";
-  const startHint = locale === "en"
-    ? "Free intro · ~10 min · audio + flashcards"
-    : locale === "es"
-      ? "Intro gratis · ~10 min · audio + flashcards"
-      : "Intro gratuite · ~10 min · audio + flashcards";
+  const startLabel = continueLabel;
+  const startHint = courseProgress.courseComplete
+    ? locale === "en"
+      ? "Modules 2–5 complete · replay any step from your path"
+      : locale === "es"
+        ? "Módulos 2–5 completos · repite cualquier paso desde tu ruta"
+        : "Modules 2–5 terminés · rejoue n’importe quelle étape depuis ton parcours"
+    : locale === "en"
+      ? "Free intro · ~10 min · audio + flashcards"
+      : locale === "es"
+        ? "Intro gratis · ~10 min · audio + flashcards"
+        : "Intro gratuite · ~10 min · audio + flashcards";
 
   // Each mobile screen is `flex flex-col gap-4` (no `flex-1` on the
   // inner blocks). Previously `flex h-full w-full flex-col gap-4` plus
@@ -476,7 +501,7 @@ export default async function YoEspagnolRepubliqueDominicainePage({
         rootBackHref: backHref,
         // The "Done" CTA on the last step IS the primary affordance
         // out of the Course Home: start the free intro deck.
-        lastStepNextHref: introHref,
+        lastStepNextHref: continueHref,
         lastStepNextLabel: startLabel,
         steps: [
           {
@@ -517,7 +542,7 @@ export default async function YoEspagnolRepubliqueDominicainePage({
         bottom: (
           <YoAppBottomBar
             surfaceId="rd-course-home"
-            primaryHref={introHref}
+            primaryHref={continueHref}
             primaryLabel={startLabel}
             hint={startHint}
           />

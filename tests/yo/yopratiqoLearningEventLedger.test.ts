@@ -286,6 +286,22 @@ const allowed = new Set([
   "lib/yo/yopratiqoProductConfig.ts",
   "app/yo/langues/espagnol/pays/republique-dominicaine/page.tsx",
   "tests/yo/yopratiqoPremiumCheckoutScaffold.test.ts",
+  // feat/yopratiqo-dr-course-progress-resume — canonical DR progress
+  // resolver + Course Home / student hub Continue wiring. No new
+  // persistence, migrations, or payment surfaces.
+  "lib/yopratiqo/dominicanRepublicCourseProgress.ts",
+  "lib/yopratiqo/loadAuthenticatedProgressSnapshots.ts",
+  "lib/yopratiqo/fetchAuthenticatedProgressSnapshots.ts",
+  "components/yo/YoCoursePath.tsx",
+  "components/yo/YoCourseHero.tsx",
+  "components/yo/YoStudentHubContent.tsx",
+  "tests/yo/yopratiqoDominicanRepublicCourseProgress.test.ts",
+  "tests/yo/yopratiqoDominicanCourseProgressResume.test.ts",
+  "tests/yo/yopratiqoCountryCourseAppHome.test.ts",
+  // feat/yopratiqo-booking-modal-progress — truthful hasYoPratiqoProgress
+  // in BookingModal via fetchAuthenticatedProgressSnapshots. Consent-only
+  // bridge POST; server builds summary.
+  "tests/yo/yopratiqoBookingModalProgressDetection.test.ts",
 ]);
 
 const restrictedPatterns = [

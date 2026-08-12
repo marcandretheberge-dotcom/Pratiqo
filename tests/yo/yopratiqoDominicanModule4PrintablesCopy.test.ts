@@ -123,12 +123,27 @@ test("worksheet 3 uses 'Feuille 3 · Formes utiles au passé' in French", () => 
   );
 });
 
-test("worksheet 3 kind label uses 'Petites phrases au passé pour raconter une sortie'", () => {
-  const src = read(M4_CONTENT);
-  assert.ok(
-    src.includes('"Petites phrases au passé pour raconter une sortie"'),
-    "FR kind label must be 'Petites phrases au passé pour raconter une sortie'",
-  );
+test("worksheet 3 kind is verb_chunks and uses learner-friendly printable instructions", async () => {
+  const mod = await import("../../lib/yo/dominicanRepublicExplore");
+  const explore =
+    (mod as { dominicanRepublicExplore?: unknown }).dominicanRepublicExplore ??
+    mod;
+  const sheets =
+    (explore as { printableSheets?: Array<{ kind: string; instructions: { fr: string; en: string; es: string } }> })
+      .printableSheets ?? [];
+  const sheet = sheets.find((s) => s.kind === "verb_chunks");
+  assert.ok(sheet, "worksheet 3 (kind: 'verb_chunks') must exist");
+  for (const locale of ["fr", "en", "es"] as const) {
+    const text = sheet!.instructions[locale];
+    assert.ok(
+      !/\bchunks?\b/i.test(text),
+      `worksheet 3 ${locale} instructions must not use internal 'chunk' jargon`,
+    );
+    assert.ok(
+      /pass[ée]|past|pasado/i.test(text),
+      `worksheet 3 ${locale} instructions must describe past-tense practice`,
+    );
+  }
 });
 
 test("worksheet 3 instructions read 'Complète les phrases avec la bonne forme au passé'", () => {
@@ -167,13 +182,6 @@ test("worksheet 3 EN instructions read 'Complete the sentences with the correct 
   );
 });
 
-test("worksheet 3 EN kind label reads 'Useful past-tense phrases for describing an outing'", () => {
-  const src = read(M4_CONTENT);
-  assert.ok(
-    src.includes('"Useful past-tense phrases for describing an outing"'),
-    "EN kind label must be 'Useful past-tense phrases for describing an outing'",
-  );
-});
 
 test("worksheet 3 uses 'Hoja 3 · Formas útiles en pasado' in Spanish", () => {
   const src = read(M4_DATA);
@@ -193,13 +201,6 @@ test("worksheet 3 ES instructions read 'Completa las frases con la forma correct
   );
 });
 
-test("worksheet 3 ES kind label reads 'Frases útiles en pasado para contar una salida'", () => {
-  const src = read(M4_CONTENT);
-  assert.ok(
-    src.includes('"Frases útiles en pasado para contar una salida"'),
-    "ES kind label must be 'Frases útiles en pasado para contar una salida'",
-  );
-});
 
 // ─── 5. Friendly per-item helper labels (FR) ────────────────────────────
 

@@ -135,8 +135,8 @@ assert.match(
 );
 assert.match(bookingModal, /consent_granted:\s*yoBridgeConsent/);
 // And it must NOT smuggle a raw summary from the client.
-assert.match(bookingModal, /summary:\s*null/);
-assert.match(bookingModal, /summary_version:\s*null/);
+assert.doesNotMatch(bookingModal, /summary:\s*\{/);
+assert.doesNotMatch(bookingModal, /summary_version:/);
 ok("3) booking payload only sends the explicit consent flag and no client-built summary");
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -325,20 +325,26 @@ assert.match(consentWrapper, /Lo que tu profesor verá para esta clase/);
 ok("11) FR / EN / ES copy exists for the booking-time consent wrapper");
 
 // ─────────────────────────────────────────────────────────────────────────
-// 12. If no real YoPratiqo persistence exists, no fake progress is created
+// 12. Progress availability is detected; no fake progress is fabricated
 // ─────────────────────────────────────────────────────────────────────────
 
-// The BookingModal must POST a null summary (consent flag only). The
-// server treats a null summary as "consent recorded, nothing to show".
-assert.match(bookingModal, /summary:\s*null/);
-// The booking wrapper is hardcoded to NOT pretend the student has
-// YoPratiqo progress in this release.
-assert.match(bookingModal, /hasYoPratiqoProgress=\{false\}/);
-// And the empty-state copy says the same thing in plain language.
+// The BookingModal POSTs consent only — the server builds the summary.
+assert.doesNotMatch(bookingModal, /summary:\s*\{/);
+assert.match(
+  bookingModal,
+  /hasYoPratiqoProgress=\{hasYoPratiqoProgress\}/,
+  "BookingModal must derive hasYoPratiqoProgress from authenticated snapshots",
+);
+assert.match(
+  bookingModal,
+  /fetchAuthenticatedProgressSnapshots/,
+  "BookingModal must load progress via the shared YoPratiqo helper",
+);
+// Empty-state copy remains for learners without snapshots.
 assert.match(consentWrapper, /Aucun résumé partagé pour l'instant/);
 assert.match(consentWrapper, /No summary will be shared for now/);
 assert.match(consentWrapper, /No se compartirá ningún resumen por ahora/);
-ok("12) no fake YoPratiqo progress is fabricated when real persistence does not exist");
+ok("12) progress is detected from real snapshots; empty state remains when none exist");
 
 // ─────────────────────────────────────────────────────────────────────────
 // 13. No paid YoPratiqo checkout enabled

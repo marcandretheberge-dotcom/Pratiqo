@@ -1361,8 +1361,8 @@ const DECK_TITLE_GRAMMAR = lstr(
 );
 const DECK_HELPER_GRAMMAR = lstr(
   "Passé pratique, demandes polies, projets et connecteurs — pas de tableau de conjugaison.",
-  "Past tense in chunks, polite asks, plans, and connectors — no conjugation tables.",
-  "Pasado en bloques, peticiones amables, planes y conectores — sin tablas de conjugación.",
+  "Past-tense forms, polite asks, plans, and connectors — no conjugation tables.",
+  "Formas en pasado, peticiones amables, planes y conectores — sin tablas de conjugación.",
 );
 
 const DECK_LABEL_FLASHCARDS = lstr(
