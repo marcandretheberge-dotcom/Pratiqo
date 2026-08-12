@@ -87,8 +87,8 @@ export const ADMIN_COMMAND_CENTER_MODULES: readonly AdminOverviewModule[] = [
     title: "Promotions & crédits",
     description: "Codes promo, crédits apprenants, compensations et concours.",
     cta: "Gérer les promotions",
-    href: null,
-    status: "coming_soon",
+    href: "/admin/promotions",
+    status: "ready",
   },
   {
     id: "seo",

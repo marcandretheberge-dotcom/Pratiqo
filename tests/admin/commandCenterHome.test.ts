@@ -132,11 +132,11 @@ test("priority alerts section is present and omits null counts", () => {
   assert.ok(withAlerts.every((a) => typeof a.count === "number" && a.count > 0));
 });
 
-test("promotions card is present but does not create real credits", () => {
+test("promotions card links to /admin/promotions foundation without touching overview writes", () => {
   const promo = ADMIN_COMMAND_CENTER_MODULES.find((m) => m.id === "promotions");
   assert.ok(promo);
-  assert.equal(promo!.status, "coming_soon");
-  assert.equal(promo!.href, null);
+  assert.equal(promo!.status, "ready");
+  assert.equal(promo!.href, "/admin/promotions");
 
   const page = read("app/(app)/admin/page.tsx");
   assert.match(page, /Promotions & crédits|promotions/);
