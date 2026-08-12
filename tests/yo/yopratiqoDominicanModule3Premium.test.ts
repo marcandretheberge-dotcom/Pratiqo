@@ -123,7 +123,9 @@ test("printable practice moved to a registered print-route resource", () => {
   assert.ok(component.includes("YoPrintableResourceCard"));
   assert.ok(component.includes("rd-m3-practice-sheets"));
   assert.ok(printRoute.includes("YoPrintPageShell"));
-  assert.ok(printRoute.includes("DominicanModulePrintables"));
+  assert.ok(printRoute.includes("DominicanRepublicModule3Workbook"));
+  assert.ok(!printRoute.includes("DominicanModulePrintables"));
+  assert.ok(!printRoute.includes("module3PrintablePack"));
   assert.equal(dominicanRepublicFoodCulture.printButtonLabel.fr, "Imprimer les fiches");
   assert.equal(dominicanRepublicFoodCulture.printButtonLabel.en, "Print practice sheets");
   assert.equal(dominicanRepublicFoodCulture.printButtonLabel.es, "Imprimir hojas de práctica");

@@ -66,20 +66,20 @@ export const yoPrintableResources: readonly YoPrintableResource[] = [
   {
     id: "rd-m3-practice-sheets",
     title: lstr(
-      "Fiches de pratique — table dominicaine",
-      "Practice sheets — Dominican table",
-      "Hojas de práctica — mesa dominicana",
+      "Cahier YoPratiqo 03 — Manger, commander et payer en République dominicaine",
+      "YoPratiqo Workbook 03 — Eat, order, and pay in the Dominican Republic",
+      "Cuaderno YoPratiqo 03 — Comer, pedir y pagar en República Dominicana",
     ),
     description: lstr(
-      "Menu, vocabulaire des plats, commande, paiement et culture locale dans un document imprimable.",
-      "Menu, food vocabulary, ordering, payment, and local culture in one printable document.",
-      "Menú, vocabulario de platos, pedido, pago y cultura local en un documento imprimible.",
+      "Cahier imprimable avec menu fictif, plats à reconnaître, commande, réparation d'écoute, paiement et corrigé final.",
+      "Printable workbook with a fictional menu, food recognition, ordering, listening repair, payment, and final answer key.",
+      "Cuaderno imprimible con menú ficticio, reconocimiento de platos, pedido, reparación de escucha, pago y clave final.",
     ),
     type: "print-route",
     href: "/yo/langues/espagnol/pays/republique-dominicaine/module-3/ressources/fiches-pratique",
     locale: "all",
     moduleId: "dominican-republic-module-3",
-    category: "vocabulary",
+    category: "workbook",
     available: true,
   },
   {

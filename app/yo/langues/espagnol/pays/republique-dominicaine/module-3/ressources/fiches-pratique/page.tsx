@@ -1,16 +1,14 @@
 import type { Metadata } from "next";
 
-import { DominicanModulePrintables } from "@/components/yo/DominicanModulePrintables";
-import { YoPrintCard, YoPrintPageShell } from "@/components/yo/YoPrintPageShell";
-import { dominicanRepublicFoodCulture } from "@/lib/yo/dominicanRepublicFoodCulture";
-import { module3PrintablePack } from "@/lib/yo/dominicanRepublicPrintables";
+import { DominicanRepublicModule3Workbook } from "@/components/yo/DominicanRepublicModule3Workbook";
+import { YoPrintPageShell } from "@/components/yo/YoPrintPageShell";
 import { getYoLocale, t } from "@/lib/yo/localize";
 import { getPrintableResourceById } from "@/lib/yo/printableResources";
 
 export const metadata: Metadata = {
-  title: "Fiches pratique - Republique dominicaine Module 3 | YoPratiqo",
+  title: "Cahier Module 3 - Republique dominicaine | YoPratiqo",
   description:
-    "Document imprimable YoPratiqo pour pratiquer le restaurant, la comida tipica, la commande et le paiement.",
+    "Cahier imprimable YoPratiqo pour pratiquer le restaurant, la comida tipica, la commande et le paiement.",
   robots: { index: false, follow: false },
 };
 
@@ -25,7 +23,6 @@ export default async function DominicanModule3PracticeSheetsPage({
   const locale = getYoLocale(params.lang);
   const suffix = locale === "fr" ? "" : `?lang=${locale}`;
   const resource = getPrintableResourceById("rd-m3-practice-sheets");
-  const data = dominicanRepublicFoodCulture;
 
   return (
     <YoPrintPageShell
@@ -41,23 +38,7 @@ export default async function DominicanModule3PracticeSheetsPage({
       backHref={`/yo/langues/espagnol/pays/republique-dominicaine/module-3${suffix}`}
       backLabel={locale === "en" ? "Back to module" : locale === "es" ? "Volver al modulo" : "Retour au module"}
     >
-      {data.printableSheets.map((sheet) => (
-        <YoPrintCard key={sheet.id} title={t(sheet.title, locale)}>
-          <ul className="grid gap-1.5">
-            {sheet.keyPhrases.map((phrase) => (
-              <li key={phrase} className="font-black text-[#0F6E56]" lang="es">
-                {phrase}
-              </li>
-            ))}
-          </ul>
-          <div className="mt-3 rounded-2xl bg-white p-3 print:border print:border-[#D8ECE6]">
-            <p>{t(sheet.miniExercise, locale)}</p>
-            <p className="mt-2 font-semibold">{t(sheet.roleplayOrChecklist, locale)}</p>
-          </div>
-        </YoPrintCard>
-      ))}
-
-      <DominicanModulePrintables pack={module3PrintablePack} locale={locale} />
+      <DominicanRepublicModule3Workbook locale={locale} />
     </YoPrintPageShell>
   );
 }
