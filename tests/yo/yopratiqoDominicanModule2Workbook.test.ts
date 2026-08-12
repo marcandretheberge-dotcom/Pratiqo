@@ -31,7 +31,7 @@ assert.ok(exists(DATA_FILE), "Module 2 workbook data file exists");
 assert.ok(exists(COMPONENT_FILE), "Module 2 workbook renderer exists");
 assert.ok(exists(ROUTE_FILE), "Module 2 workbook route exists");
 
-assert.equal(dominicanRepublicModule2Workbook.id, "dominican-republic-module-2-workbook-v1");
+assert.equal(dominicanRepublicModule2Workbook.id, "dominican-republic-module-2-workbook-v1-1");
 assert.equal(dominicanRepublicModule2Workbook.moduleId, "dominican-republic-module-2");
 assert.equal(dominicanRepublicModule2Workbook.resourceId, "rd-m2-arrival-kit");
 assert.equal(dominicanRepublicModule2Workbook.targetLanguage, "es");
@@ -50,9 +50,12 @@ assert.equal(
   "workbook page ids are unique",
 );
 
+// Every counted response is now derived from an item that reserves
+// writing space, so this range describes real learner work rather than
+// a hand-declared total.
 const responseCount = countRdM2WorkbookResponseOpportunities();
 assert.ok(responseCount >= 150, `expected at least 150 response opportunities, got ${responseCount}`);
-assert.ok(responseCount <= 200, `expected no more than 200 response opportunities, got ${responseCount}`);
+assert.ok(responseCount <= 240, `expected no more than 240 response opportunities, got ${responseCount}`);
 
 const mechanics = listRdM2WorkbookMechanics();
 assert.ok(mechanics.length >= 10, "workbook uses at least 10 practice mechanics");

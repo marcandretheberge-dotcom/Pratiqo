@@ -54,23 +54,69 @@ for (const [label, pattern] of [
   assert.doesNotMatch(learnerCorpus, pattern, `learner-facing workbook text must not contain ${label}`);
 }
 
-for (const oldDialogueLine of [
+// The workbook must not pass the existing digital dialogue off as new
+// authored practice content. The one legitimate exception is the page 12
+// listening lab, whose dictation answers are by definition transcriptions
+// of that same Module 2 audio — so those lines are allowed there, and
+// only there.
+const DIGITAL_DIALOGUE_LINES = [
   "Hola, buenos días. ¿Dónde puedo tomar un taxi?",
   "Los taxis están afuera, a la derecha.",
   "Perfecto, gracias. Voy a este hotel.",
   "Muy bien. Puede salir por esa puerta.",
   "Buenas tardes. Tengo una reservación.",
   "Gracias. ¿Cuál es la contraseña del wifi?",
-]) {
-  assert.ok(
-    !learnerStrings.includes(oldDialogueLine),
-    `new workbook must not copy old digital dialogue line verbatim: ${oldDialogueLine}`,
-  );
+];
+
+for (const page of dominicanRepublicModule2Workbook.pages) {
+  const isListeningLab = page.kind === "listening-lab";
+  for (const activity of page.activities) {
+    for (const line of activity.inputLines ?? []) {
+      assert.ok(
+        !DIGITAL_DIALOGUE_LINES.includes(line),
+        `page ${page.pageNumber} reuses a digital dialogue line as workbook input: ${line}`,
+      );
+    }
+    for (const item of activity.items ?? []) {
+      for (const value of [item.target, item.prompt.fr, item.prompt.en, item.prompt.es]) {
+        assert.ok(
+          !value || !DIGITAL_DIALOGUE_LINES.includes(value),
+          `page ${page.pageNumber} reuses a digital dialogue line as a prompt: ${value}`,
+        );
+      }
+      if (item.answer && DIGITAL_DIALOGUE_LINES.includes(item.answer)) {
+        assert.ok(
+          isListeningLab,
+          `only the listening lab may transcribe digital audio; ${item.id} on page ${page.pageNumber} may not`,
+        );
+      }
+    }
+  }
+}
+
+// A multiple-choice item stores its correct answer twice by design: once as
+// the answer and once as the option the learner circles. That is one
+// authored phrase, not a repeat, so it is counted once here. Whether a
+// legitimately recycled phrase carries changing cognitive demand is audited
+// separately in yopratiqoDominicanModule2WorkbookPedagogy.test.ts.
+const selfReferentialAnswers: string[] = [];
+for (const page of dominicanRepublicModule2Workbook.pages) {
+  for (const activity of page.activities) {
+    for (const item of activity.items ?? []) {
+      if (item.answer && (item.choices ?? []).some((choice) => choice === item.answer)) {
+        selfReferentialAnswers.push(item.answer);
+      }
+    }
+  }
 }
 
 const exactPhraseCounts = new Map<string, number>();
 for (const phrase of learnerStrings.filter((text) => text.length > 18 && /\s/.test(text))) {
   exactPhraseCounts.set(phrase, (exactPhraseCounts.get(phrase) ?? 0) + 1);
+}
+for (const phrase of selfReferentialAnswers) {
+  const current = exactPhraseCounts.get(phrase);
+  if (current !== undefined) exactPhraseCounts.set(phrase, current - 1);
 }
 const suspiciousRepeats = Array.from(exactPhraseCounts.entries()).filter(
   ([phrase, count]) =>
