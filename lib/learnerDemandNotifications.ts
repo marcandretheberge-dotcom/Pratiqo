@@ -12,6 +12,7 @@ type LearnerDemandLead = {
   subject: string;
   city: string;
   accepts_online: boolean;
+  local_waitlist: boolean;
   locale: string | null;
 };
 
@@ -31,7 +32,7 @@ export async function processLearnerDemandMatches(
 
   const { data: leads, error: leadsError } = await admin
     .from("learner_demand_leads")
-    .select("id, email, subject, city, accepts_online, locale")
+    .select("id, email, subject, city, accepts_online, local_waitlist, locale")
     .eq("status", "open")
     .order("created_at", { ascending: true })
     .limit(limit);
@@ -52,34 +53,28 @@ export async function processLearnerDemandMatches(
   const mapped = (teacherRows ?? [])
     .filter((row) => isLaunchEligibleTeacherRow(row as TeacherRow))
     .map((row) => teacherRowToTeacher(row as TeacherRow));
-  const disciplineMap = await fetchTeacherDisciplinesMap(
-    admin,
-    mapped.map((teacher) => teacher.id),
-  );
+  const disciplineMap = await fetchTeacherDisciplinesMap(admin, mapped.map((teacher) => teacher.id));
   const teachers = mergeTeachersWithDisciplines(mapped, disciplineMap);
 
   for (const lead of pending) {
     const match = matchLearnerDemand(teachers, {
       subject: lead.subject,
       city: lead.city,
-      acceptsOnline: lead.accepts_online,
+      acceptsOnline: lead.local_waitlist ? false : lead.accepts_online,
     });
     const now = new Date().toISOString();
 
     if (match.outcome === "waitlist" || !match.searchUrl) {
-      await admin
-        .from("learner_demand_leads")
-        .update({ last_match_at: now, matched_teacher_count: 0, match_type: "none", updated_at: now })
-        .eq("id", lead.id)
-        .eq("status", "open");
+      const patch = lead.local_waitlist
+        ? { last_match_at: now, updated_at: now }
+        : { last_match_at: now, matched_teacher_count: 0, match_type: "none", updated_at: now };
+      await admin.from("learner_demand_leads").update(patch).eq("id", lead.id).eq("status", "open");
       continue;
     }
 
     summary.matched += 1;
     const matchType = match.outcome === "local_match" ? "local" : "online";
 
-    // Claim the lead before sending so overlapping cron/manual invocations do
-    // not send the same transactional notification twice.
     const { data: claimed, error: claimError } = await admin
       .from("learner_demand_leads")
       .update({
@@ -109,7 +104,7 @@ export async function processLearnerDemandMatches(
       const sentAt = new Date().toISOString();
       await admin
         .from("learner_demand_leads")
-        .update({ status: "notified", updated_at: sentAt })
+        .update({ status: "notified", local_waitlist: false, updated_at: sentAt })
         .eq("id", lead.id)
         .eq("status", "matched");
       summary.notified += 1;
@@ -122,7 +117,7 @@ export async function processLearnerDemandMatches(
       const retryAt = new Date().toISOString();
       await admin
         .from("learner_demand_leads")
-        .update({ status: "open", updated_at: retryAt })
+        .update({ status: "open", local_waitlist: lead.local_waitlist, updated_at: retryAt })
         .eq("id", lead.id)
         .eq("status", "matched");
     }
