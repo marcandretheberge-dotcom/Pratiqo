@@ -146,9 +146,8 @@ const allowedYoDisclosureFiles = new Set([
   "components/yo/YoAppHeroCard.tsx",
   "components/yo/YoAppValueStrip.tsx",
   // Pure typography helper for the app-like landing primitives. It
-  // calls `next/font/google` to self-host two display fonts
-  // (Newsreader serif + Caveat script) and exports their `className`
-  // / `variable` so the three primitives above can opt-in. No
+  // exposes build-safe display/script CSS class tokens and exports their
+  // `className` / `variable` so the three primitives above can opt-in. No
   // persistence, no checkout, no payment library, no Supabase
   // write, no audio generation, no teacher dashboard share, no
   // quiz data. Defended end-to-end by

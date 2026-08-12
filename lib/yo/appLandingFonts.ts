@@ -1,36 +1,30 @@
 /**
- * lib/yo/appLandingFonts.ts
+ * Build-safe font contract for YoPratiqo app-like landing surfaces.
  *
- * Self-hosted Google fonts for the YoPratiqo app-like landing surface
- * (`/yo` hub hero). Co-locating them with the YoPratiqo namespace
- * means Next only bundles the font files for routes that actually
- * import them — the global marketplace pages keep using the local
- * Inter face declared in `app/layout.tsx` and never pay for these.
+ * The global marketplace font still comes from `app/layout.tsx` via
+ * `next/font/local` and `public/fonts/inter.woff2`. These YoPratiqo
+ * display/script tokens intentionally do not use `next/font/google`.
+ * Vercel production builds were failing while resolving generated
+ * `[next]/internal/font/google/*` modules for Newsreader/Caveat, so
+ * this file exposes the same `.variable` / `.className` shape with
+ * stable CSS classes defined in `app/globals.css`.
  *
  * Font choices echo the YoPratiqo prototype theme:
- *   • Newsreader — editorial serif for app-like onboarding headlines.
- *   • Caveat     — warm script accent for the small teal handwritten
- *                  ribbon above / below the headline.
- *
- * Both fonts ship with `display: "swap"` so the page never blocks on
- * font load (no FOIT). The Latin subset covers FR + EN + ES with no
- * extra cost. `next/font/google` self-hosts the files at build time
- * so the browser makes no request to Google.
+ * - display: editorial serif fallback for app-like onboarding headlines.
+ * - script: warm handwritten fallback for small teal accent ribbons.
  */
 
-import { Caveat, Newsreader } from "next/font/google";
+type YoAppFontToken = Readonly<{
+  className: string;
+  variable: string;
+}>;
 
-export const appDisplayFont = Newsreader({
-  subsets: ["latin"],
-  display: "swap",
-  weight: ["500", "600", "700"],
-  style: ["normal", "italic"],
-  variable: "--yo-app-display",
-});
+export const appDisplayFont: YoAppFontToken = {
+  className: "font-yo-app-display",
+  variable: "yo-app-display-font-variable",
+};
 
-export const appScriptFont = Caveat({
-  subsets: ["latin"],
-  display: "swap",
-  weight: ["500", "700"],
-  variable: "--yo-app-script",
-});
+export const appScriptFont: YoAppFontToken = {
+  className: "font-yo-app-script",
+  variable: "yo-app-script-font-variable",
+};

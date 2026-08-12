@@ -252,6 +252,14 @@ h3 {
 }
 
 /* YoPratiqo app-landing display fonts — use these instead of Tailwind arbitrary font utilities. */
+.yo-app-display-font-variable {
+  --yo-app-display: Georgia, "Times New Roman", serif;
+}
+
+.yo-app-script-font-variable {
+  --yo-app-script: "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
+}
+
 .font-yo-app-display {
   font-family: var(--yo-app-display), Newsreader, Georgia, serif;
 }
