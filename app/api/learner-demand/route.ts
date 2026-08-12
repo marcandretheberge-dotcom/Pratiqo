@@ -26,6 +26,11 @@ type ParsedDemand = {
   email: string;
   locale: "fr" | "en" | "es";
   source: string;
+  utmSource: string | null;
+  utmMedium: string | null;
+  utmCampaign: string | null;
+  utmContent: string | null;
+  utmTerm: string | null;
 };
 
 function byteLength(value: string): number {
@@ -55,7 +60,19 @@ function parsePayload(raw: unknown): ParsedDemand | null {
   const sourceRaw = cleanString(input.source, 100) ?? "teacher_finder";
   const source = sourceRaw.replace(/[^a-zA-Z0-9_.:-]/g, "_");
 
-  return { subject, city, acceptsOnline: input.acceptsOnline, email, locale, source };
+  return {
+    subject,
+    city,
+    acceptsOnline: input.acceptsOnline,
+    email,
+    locale,
+    source,
+    utmSource: cleanString(input.utmSource, 160),
+    utmMedium: cleanString(input.utmMedium, 160),
+    utmCampaign: cleanString(input.utmCampaign, 160),
+    utmContent: cleanString(input.utmContent, 160),
+    utmTerm: cleanString(input.utmTerm, 160),
+  };
 }
 
 async function readJson(request: Request): Promise<ParsedDemand | null> {
@@ -129,6 +146,11 @@ export async function POST(request: Request) {
       accepts_online: input.acceptsOnline,
       locale: input.locale,
       source: input.source,
+      utm_source: input.utmSource,
+      utm_medium: input.utmMedium,
+      utm_campaign: input.utmCampaign,
+      utm_content: input.utmContent,
+      utm_term: input.utmTerm,
       status,
       match_type: matchType,
       matched_teacher_count: match.matchCount,
