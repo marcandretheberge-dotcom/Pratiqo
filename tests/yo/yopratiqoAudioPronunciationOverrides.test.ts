@@ -368,6 +368,11 @@ test("tracked patch avoids generated audio and restricted product systems", () =
     "app/api/admin/student-credits/route.ts",
     "app/api/admin/student-credits/[id]/void/route.ts",
     "supabase/migrations/088_admin_student_credits_spendable.sql",
+    // admin/bookings-payments-operations — read-only admin ops list APIs.
+    // No checkout, webhook, refund, payout, or booking transition writes.
+    // Defended by tests/admin/adminBookingsPaymentsOperations.test.ts.
+    "app/api/admin/bookings/route.ts",
+    "app/api/admin/payments/route.ts",
   ]);
   const forbidden = [
     /^app\/api\//,
