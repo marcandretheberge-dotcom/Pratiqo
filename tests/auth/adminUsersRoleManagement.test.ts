@@ -197,7 +197,10 @@ test("/admin/users page locks the self-row from role mutation", () => {
 
 test("/admin/users page is reachable from the /admin dashboard", () => {
   const dashboard = READ("app/(app)/admin/page.tsx");
-  assert.match(dashboard, /href="\/admin\/users"/);
+  const overview = READ("lib/admin/overview.ts");
+  assert.match(dashboard, /ADMIN_COMMAND_CENTER_MODULES/);
+  assert.match(overview, /href:\s*"\/admin\/users"/);
+  assert.match(overview, /href:\s*"\/admin\/credentials"/);
 });
 
 // ── Onboarding / header role-intent neutrality ──────────────────────────────
