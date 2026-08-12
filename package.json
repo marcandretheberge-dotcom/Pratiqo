@@ -33,7 +33,7 @@
     "test:seo-local-discovery": "tsx tests/seo/localTeacherDiscovery.test.ts",
     "test:seo-teacher-resources": "tsx tests/seo/teacherPublicProfileIndexing.test.ts && tsx tests/seo/teacherResourcesCluster.test.ts && tsx tests/seo/teacherSeoPublicationWorkflow.test.ts",
     "test:yo-rd-responsive": "tsx tests/yo/yopratiqoDominicanResponsiveLayout.test.ts",
-    "test:yo-rd-m2-workbook": "tsx tests/yo/yopratiqoDominicanModule2Workbook.test.ts && tsx tests/yo/yopratiqoDominicanModule2WorkbookOriginality.test.ts",
+    "test:yo-rd-m2-workbook": "tsx tests/yo/yopratiqoDominicanModule2Workbook.test.ts && tsx tests/yo/yopratiqoDominicanModule2WorkbookOriginality.test.ts && tsx tests/yo/yopratiqoDominicanModule2WorkbookPedagogy.test.ts",
     "test:yo-worldclass-shell": "tsx tests/yo/yopratiqoWorldclassLearningShellVisual.test.ts",
     "test:yo-french-quebec": "tsx tests/yo/yopratiqoFrenchQuebecIntro.test.ts",
     "test:yo-fr-quebec-premium-shell": "tsx tests/yo/yopratiqoFrQuebecPremiumShell.test.ts",
