@@ -318,6 +318,12 @@ test("public SEO pages read through teachers_public, not base teachers", () => {
       /\.from\(\s*["']teachers["']\s*\)/,
       `${rel} must not query base public.teachers directly; use TEACHERS_PUBLIC_TABLE`,
     );
+    // Legacy barrio routes may now be market hub redirects with no teacher reads.
+    // That is still safe isolation — only require TEACHERS_PUBLIC_TABLE when a
+    // page still queries teachers.
+    if (/permanentRedirect\(/.test(src) && !/\.from\(/.test(src) && !/TEACHERS_PUBLIC_TABLE/.test(src)) {
+      continue;
+    }
     assert.match(
       src,
       /TEACHERS_PUBLIC_TABLE/,
@@ -341,6 +347,10 @@ test("local discovery pages use admin indexable teacher fetch without sensitive 
 test("public SEO pages do not select sensitive workflow columns", () => {
   for (const rel of PUBLIC_PAGE_FILES) {
     const src = read(rel);
+    // Redirect-only legacy pages have no select lists; that is privacy-safe.
+    if (/permanentRedirect\(/.test(src) && !/\.select\(/.test(src)) {
+      continue;
+    }
     // Extract every string literal that looks like a Supabase select list
     // (TEACHER_SELECT constant assignments + inline .select("..") arguments).
     // We deliberately ignore code comments / JSX text, which often legitimately

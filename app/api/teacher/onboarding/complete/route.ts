@@ -152,9 +152,9 @@ async function handlePost(req: Request, setStage: (stage: string) => void) {
   }
 
   // Market check
-  const countryCode = trimStr(body.country_code);
-  if (countryCode && !isTeacherMarketSupported(countryCode)) {
-    return NextResponse.json(marketNotSupportedPayload(countryCode), { status: 403 });
+  const teacherCountryCode = trimStr(body.country_code);
+  if (teacherCountryCode && !isTeacherMarketSupported(teacherCountryCode)) {
+    return NextResponse.json(marketNotSupportedPayload(teacherCountryCode), { status: 403 });
   }
 
   // Ensure teacher draft row exists (idempotent, admin-only)

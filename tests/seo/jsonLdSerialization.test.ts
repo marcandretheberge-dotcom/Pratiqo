@@ -107,7 +107,6 @@ test("high-risk public SEO pages import and use the shared JSON-LD serializer", 
     "app/teacher/profile/[id]/page.tsx",
     "app/cours/[disciplineSlug]/[citySlug]/page.tsx",
     "app/tuteurs/[citySlug]/page.tsx",
-    "app/clases/montevideo/[barrioSlug]/page.tsx",
   ];
 
   for (const file of fixedFiles) {
@@ -115,5 +114,12 @@ test("high-risk public SEO pages import and use the shared JSON-LD serializer", 
     assert.match(src, /serializeJsonLd/);
     assert.doesNotMatch(src, /dangerouslySetInnerHTML=\{\{\s*__html:\s*JSON\.stringify/);
   }
+});
+
+test("legacy Uruguay barrio route redirects instead of injecting JSON-LD", () => {
+  const src = read("app/clases/montevideo/[barrioSlug]/page.tsx");
+  assert.match(src, /permanentRedirect\(\s*["']\/uy["']\s*\)/);
+  assert.doesNotMatch(src, /type="application\/ld\+json"/);
+  assert.doesNotMatch(src, /serializeJsonLd|JSON\.stringify/);
 });
 

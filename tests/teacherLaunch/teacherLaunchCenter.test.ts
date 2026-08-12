@@ -142,9 +142,15 @@ test("onboarding: no full-profile widgets remain in first onboarding", () => {
   const stripped = stripJsComments(onboardingSrc);
   assert.doesNotMatch(stripped, /ProfileAiAssistant/);
   assert.doesNotMatch(stripped, /TeacherHourlyRatePreview/);
-  assert.doesNotMatch(stripped, /MarketWaitlistCard/);
   assert.doesNotMatch(stripped, /parseGooglePlace/);
   assert.doesNotMatch(stripped, /google\.maps\.places\.Autocomplete/);
+});
+
+test("onboarding: market waitlist appears only behind unsupported-country gate", () => {
+  const stripped = stripJsComments(onboardingSrc);
+  assert.match(stripped, /if \(publicCountry && !isTeacherMarketSupported\(publicCountry\)\)/);
+  assert.match(stripped, /<MarketWaitlistCard/);
+  assert.match(stripped, /defaultRole="teacher"/);
 });
 
 // ---------------------------------------------------------------------------

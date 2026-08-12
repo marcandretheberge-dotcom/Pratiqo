@@ -291,6 +291,7 @@ test("Sitemap includes the canonical public surfaces", async () => {
     `${SITE_URL}/`,
     `${SITE_URL}/become-teacher`,
     `${SITE_URL}/devenir-enseignant`,
+    `${SITE_URL}/uy`,
     `${SITE_URL}/tarifs`,
     `${SITE_URL}/trouver-un-prof`,
     `${SITE_URL}/francisation`,
@@ -318,6 +319,26 @@ test("Sitemap does NOT include /login (sign-in surface, not SEO)", async () => {
   assert.ok(
     !urls.has(`${SITE_URL}/login`),
     "Sitemap must not include /login",
+  );
+});
+
+test("Sitemap does NOT include market redirect stubs or legacy teacher profile index", async () => {
+  const entries = await sitemap();
+  const urls = entries.map((e) => e.url);
+  for (const forbidden of [
+    `${SITE_URL}/fr`,
+    `${SITE_URL}/en`,
+    `${SITE_URL}/es`,
+    `${SITE_URL}/ca`,
+    `${SITE_URL}/teacher/profile`,
+    `${SITE_URL}/clases`,
+    `${SITE_URL}/clases/montevideo`,
+  ]) {
+    assert.ok(!urls.includes(forbidden), `Sitemap must not include ${forbidden}`);
+  }
+  assert.ok(
+    !urls.some((u) => /\/clases\/montevideo\//.test(u)),
+    "Sitemap must not include old Uruguay barrio URLs",
   );
 });
 
@@ -418,7 +439,6 @@ test("robots() does NOT disallow public pages", () => {
     "/group-sessions",
     "/cours",
     "/tuteurs",
-    "/clases",
     "/blog",
     "/legal/cgu",
     "/legal/confidentialite",
