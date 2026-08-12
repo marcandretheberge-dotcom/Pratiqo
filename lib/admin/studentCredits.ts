@@ -1,16 +1,18 @@
 /**
- * Server-side helpers for admin-granted student credits (migration 087).
+ * Server-side helpers for admin-granted student credits.
  *
- * This module records grants/voids with mandatory reasons and an append-only
- * ledger. It intentionally does NOT mutate profiles.credit_balance and does
- * NOT change Stripe checkout math — applying these grants to the spendable
- * balance is a later controlled payment PR.
+ * Since migration 088, grant/void go through SECURITY DEFINER RPCs that
+ * atomically update:
+ *   student_credits + student_credit_ledger + credit_transactions
+ *   + profiles.credit_balance + admin_audit_log
+ *
+ * Checkout continues to consume profiles.credit_balance only — this module
+ * does not change Stripe amount math or wire promo codes.
  *
  * DO NOT import from client components.
  */
 
 import type { getSupabaseAdmin } from "@/lib/supabaseAdmin";
-import { insertAdminAuditLog } from "@/lib/admin/auditLog";
 import {
   isStudentCreditReasonCode,
   STUDENT_CREDIT_REASON_CODES,
@@ -42,6 +44,9 @@ export type StudentCreditRow = {
   voided_by: string | null;
   voided_at: string | null;
   void_reason: string | null;
+  /** Present on grant/void RPC responses; list rows may omit it. */
+  spendable?: boolean;
+  new_credit_balance?: number;
 };
 
 export type StudentCreditLedgerRow = {
@@ -60,6 +65,22 @@ export type StudentCreditLedgerRow = {
 
 export const STUDENT_CREDIT_SELECT =
   "id, student_profile_id, amount_cents, currency, remaining_cents, status, reason_code, reason_note, expires_at, created_by, created_at, voided_by, voided_at, void_reason";
+
+/** Dollars (numeric) ↔ cents helper used by tests and UI formatting. */
+export function centsToCreditBalanceDollars(amountCents: number): number {
+  return Math.round(amountCents) / 100;
+}
+
+export function isCreditUnusedForVoid(credit: Pick<StudentCreditRow, "status" | "amount_cents" | "remaining_cents">): boolean {
+  return (
+    credit.status === "active" &&
+    credit.remaining_cents === credit.amount_cents &&
+    credit.amount_cents > 0
+  );
+}
+
+export const VOID_UNSAFE_MESSAGE =
+  "Ce crédit semble déjà utilisé en partie ou le solde disponible est insuffisant. Crée un ajustement manuel séparé si nécessaire.";
 
 export type GrantStudentCreditInput = {
   studentProfileId: unknown;
@@ -81,8 +102,73 @@ export type VoidStudentCreditResult =
 function parsePositiveIntCents(value: unknown): number | null {
   const n = typeof value === "number" ? value : Number(value);
   if (!Number.isFinite(n) || !Number.isInteger(n) || n <= 0) return null;
-  if (n > 5_000_000) return null; // hard cap $50,000
+  if (n > 5_000_000) return null;
   return n;
+}
+
+function mapRpcError(message: string | undefined, fallback: string): { error: string; status: 400 | 404 | 500 } {
+  const code = (message ?? "").toUpperCase();
+  if (code.includes("STUDENT_NOT_FOUND") || code.includes("CREDIT_NOT_FOUND")) {
+    return { error: code.includes("CREDIT") ? "Crédit introuvable." : "Apprenant introuvable.", status: 404 };
+  }
+  if (code.includes("NOT_A_STUDENT")) {
+    return {
+      error: "Les crédits admin ne s'appliquent qu'aux comptes apprenants.",
+      status: 400,
+    };
+  }
+  if (code.includes("REASON_NOTE_REQUIRED") || code.includes("REASON_CODE_REQUIRED")) {
+    return { error: "Une note de raison est obligatoire.", status: 400 };
+  }
+  if (code.includes("VOID_REASON_REQUIRED")) {
+    return { error: "Une raison d'annulation est obligatoire.", status: 400 };
+  }
+  if (code.includes("AMOUNT_INVALID")) {
+    return { error: "Montant invalide (centimes entiers > 0).", status: 400 };
+  }
+  if (code.includes("CURRENCY_INVALID")) {
+    return { error: "Devise invalide (code ISO à 3 lettres).", status: 400 };
+  }
+  if (
+    code.includes("ALREADY_USED") ||
+    code.includes("BALANCE_INSUFFICIENT") ||
+    code.includes("NOT_ACTIVE")
+  ) {
+    return { error: VOID_UNSAFE_MESSAGE, status: 400 };
+  }
+  if (code.includes("ALREADY_VOIDED")) {
+    return { error: "Ce crédit est déjà annulé.", status: 400 };
+  }
+  if (code.includes("REASON_NOTE_TOO_LONG") || code.includes("VOID_REASON_TOO_LONG")) {
+    return { error: "Raison trop longue (max 1000 caractères).", status: 400 };
+  }
+  console.error("[admin/studentCredits] rpc error", message);
+  return { error: fallback, status: 500 };
+}
+
+function parseCreditRow(data: unknown): StudentCreditRow | null {
+  if (!data || typeof data !== "object") return null;
+  const row = data as Record<string, unknown>;
+  if (typeof row.id !== "string") return null;
+  return {
+    id: row.id,
+    student_profile_id: String(row.student_profile_id ?? ""),
+    amount_cents: Number(row.amount_cents ?? 0),
+    currency: String(row.currency ?? "CAD"),
+    remaining_cents: Number(row.remaining_cents ?? 0),
+    status: row.status as StudentCreditStatus,
+    reason_code: String(row.reason_code ?? ""),
+    reason_note: String(row.reason_note ?? ""),
+    expires_at: (row.expires_at as string | null) ?? null,
+    created_by: String(row.created_by ?? ""),
+    created_at: String(row.created_at ?? ""),
+    voided_by: (row.voided_by as string | null) ?? null,
+    voided_at: (row.voided_at as string | null) ?? null,
+    void_reason: (row.void_reason as string | null) ?? null,
+    spendable: typeof row.spendable === "boolean" ? row.spendable : row.status === "active",
+    new_credit_balance:
+      typeof row.new_credit_balance === "number" ? row.new_credit_balance : undefined,
+  };
 }
 
 export async function grantStudentCredit(
@@ -102,15 +188,10 @@ export async function grantStudentCredit(
   }
 
   if (!isStudentCreditReasonCode(raw.reasonCode)) {
-    return {
-      ok: false,
-      status: 400,
-      error: "Code de raison invalide.",
-    };
+    return { ok: false, status: 400, error: "Code de raison invalide." };
   }
 
-  const reasonNote =
-    typeof raw.reasonNote === "string" ? raw.reasonNote.trim() : "";
+  const reasonNote = typeof raw.reasonNote === "string" ? raw.reasonNote.trim() : "";
   if (!reasonNote) {
     return { ok: false, status: 400, error: "Une note de raison est obligatoire." };
   }
@@ -138,85 +219,26 @@ export async function grantStudentCredit(
     expiresAt = d.toISOString();
   }
 
-  const { data: student, error: studentErr } = await admin
-    .from("profiles")
-    .select("id, role")
-    .eq("id", studentProfileId)
-    .maybeSingle();
-  if (studentErr) {
-    console.error("[admin/studentCredits] student read failed", studentErr.message);
-    return { ok: false, status: 500, error: "Attribution impossible. Réessaie." };
-  }
-  if (!student) {
-    return { ok: false, status: 404, error: "Apprenant introuvable." };
-  }
-  const studentRow = student as { id: string; role: string | null };
-  if (studentRow.role !== "student") {
-    return {
-      ok: false,
-      status: 400,
-      error: "Les crédits admin ne s'appliquent qu'aux comptes apprenants.",
-    };
-  }
-
-  const nowIso = new Date().toISOString();
-  const { data: credit, error: insertErr } = await admin
-    .from("student_credits")
-    .insert({
-      student_profile_id: studentProfileId,
-      amount_cents: amountCents,
-      currency,
-      remaining_cents: amountCents,
-      status: "active",
-      reason_code: raw.reasonCode,
-      reason_note: reasonNote,
-      expires_at: expiresAt,
-      created_by: actor.id,
-      created_at: nowIso,
-    })
-    .select(STUDENT_CREDIT_SELECT)
-    .maybeSingle();
-
-  if (insertErr || !credit) {
-    console.error("[admin/studentCredits] grant insert failed", insertErr?.message);
-    return { ok: false, status: 500, error: "Attribution impossible. Réessaie." };
-  }
-
-  const creditRow = credit as StudentCreditRow;
-
-  const { error: ledgerErr } = await admin.from("student_credit_ledger").insert({
-    student_credit_id: creditRow.id,
-    student_profile_id: studentProfileId,
-    entry_type: "grant",
-    amount_cents: amountCents,
-    balance_after_cents: amountCents,
-    reference_type: "admin",
-    reference_id: null,
-    created_by: actor.id,
-    created_at: nowIso,
-    note: reasonNote,
-  });
-  if (ledgerErr) {
-    console.error("[admin/studentCredits] ledger grant failed", ledgerErr.message);
-    // Soft-fail ledger: credit row exists; surface as 500 so admin retries/investigates.
-    return { ok: false, status: 500, error: "Crédit créé mais journalisation incomplète. Vérifie l'audit." };
-  }
-
-  await insertAdminAuditLog(admin, {
-    actorProfileId: actor.id,
-    action: "student_credit.granted",
-    targetType: "student_credit",
-    targetId: creditRow.id,
-    metadata: {
-      student_profile_id: studentProfileId,
-      amount_cents: amountCents,
-      currency,
-      reason_code: raw.reasonCode,
-      actor_email: actor.email,
-    },
+  const { data, error } = await admin.rpc("admin_grant_student_credit", {
+    p_student_profile_id: studentProfileId,
+    p_amount_cents: amountCents,
+    p_currency: currency,
+    p_reason_code: raw.reasonCode,
+    p_reason_note: reasonNote,
+    p_expires_at: expiresAt,
+    p_actor_id: actor.id,
+    p_actor_email: actor.email,
   });
 
-  return { ok: true, credit: creditRow };
+  if (error) {
+    return { ok: false, ...mapRpcError(error.message, "Attribution impossible. Réessaie.") };
+  }
+
+  const credit = parseCreditRow(data);
+  if (!credit) {
+    return { ok: false, status: 500, error: "Attribution impossible. Réessaie." };
+  }
+  return { ok: true, credit };
 }
 
 export async function listStudentCredits(
@@ -238,7 +260,10 @@ export async function listStudentCredits(
     console.error("[admin/studentCredits] list failed", error.message);
     throw new Error(error.message);
   }
-  return (data ?? []) as StudentCreditRow[];
+  return ((data ?? []) as StudentCreditRow[]).map((row) => ({
+    ...row,
+    spendable: row.status === "active" && row.remaining_cents > 0,
+  }));
 }
 
 export async function voidStudentCredit(
@@ -259,83 +284,20 @@ export async function voidStudentCredit(
     return { ok: false, status: 400, error: "Raison trop longue (max 1000 caractères)." };
   }
 
-  const { data: existing, error: readErr } = await admin
-    .from("student_credits")
-    .select(STUDENT_CREDIT_SELECT)
-    .eq("id", creditId)
-    .maybeSingle();
-  if (readErr) {
-    console.error("[admin/studentCredits] void read failed", readErr.message);
-    return { ok: false, status: 500, error: "Annulation impossible. Réessaie." };
-  }
-  if (!existing) {
-    return { ok: false, status: 404, error: "Crédit introuvable." };
-  }
-
-  const row = existing as StudentCreditRow;
-  if (row.status === "voided") {
-    return { ok: false, status: 400, error: "Ce crédit est déjà annulé." };
-  }
-  if (row.status !== "active") {
-    return {
-      ok: false,
-      status: 400,
-      error: "Seuls les crédits actifs peuvent être annulés.",
-    };
-  }
-
-  const nowIso = new Date().toISOString();
-  const remaining = row.remaining_cents;
-
-  const { data: updated, error: updateErr } = await admin
-    .from("student_credits")
-    .update({
-      status: "voided",
-      remaining_cents: 0,
-      voided_by: actor.id,
-      voided_at: nowIso,
-      void_reason: voidReason,
-    })
-    .eq("id", creditId)
-    .eq("status", "active")
-    .select(STUDENT_CREDIT_SELECT)
-    .maybeSingle();
-
-  if (updateErr || !updated) {
-    console.error("[admin/studentCredits] void update failed", updateErr?.message);
-    return { ok: false, status: 500, error: "Annulation impossible. Réessaie." };
-  }
-
-  const credit = updated as StudentCreditRow;
-
-  const { error: ledgerErr } = await admin.from("student_credit_ledger").insert({
-    student_credit_id: credit.id,
-    student_profile_id: credit.student_profile_id,
-    entry_type: "void",
-    amount_cents: -remaining,
-    balance_after_cents: 0,
-    reference_type: "admin",
-    reference_id: null,
-    created_by: actor.id,
-    created_at: nowIso,
-    note: voidReason,
-  });
-  if (ledgerErr) {
-    console.error("[admin/studentCredits] ledger void failed", ledgerErr.message);
-  }
-
-  await insertAdminAuditLog(admin, {
-    actorProfileId: actor.id,
-    action: "student_credit.voided",
-    targetType: "student_credit",
-    targetId: credit.id,
-    metadata: {
-      student_profile_id: credit.student_profile_id,
-      voided_remaining_cents: remaining,
-      void_reason: voidReason,
-      actor_email: actor.email,
-    },
+  const { data, error } = await admin.rpc("admin_void_student_credit", {
+    p_credit_id: creditId,
+    p_void_reason: voidReason,
+    p_actor_id: actor.id,
+    p_actor_email: actor.email,
   });
 
+  if (error) {
+    return { ok: false, ...mapRpcError(error.message, "Annulation impossible. Réessaie.") };
+  }
+
+  const credit = parseCreditRow(data);
+  if (!credit) {
+    return { ok: false, status: 500, error: "Annulation impossible. Réessaie." };
+  }
   return { ok: true, credit };
 }

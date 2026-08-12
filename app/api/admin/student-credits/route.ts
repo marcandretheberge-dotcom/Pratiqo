@@ -1,4 +1,4 @@
-// Admin → Student credits foundation
+// Admin → Student credits (spendable)
 //
 //   GET  /api/admin/student-credits?studentId=…  → list credits
 //   POST /api/admin/student-credits              → grant credit (reason required)
@@ -6,13 +6,15 @@
 // Security model (defense in depth):
 //   1. Bearer JWT required
 //   2. requireAdminApi() verifies profiles.role === "admin" via service-role
-//   3. Writes go through service-role only; student_credits / ledger /
-//      admin_audit_log have RLS with zero JWT policies
-//   4. Grant always writes ledger + audit; reason_note is mandatory
+//   3. Grant/void run through SECURITY DEFINER RPCs (migration 088) that
+//      atomically update student_credits, ledger, credit_transactions,
+//      profiles.credit_balance, and admin_audit_log
+//   4. reason_note is mandatory; zero/negative amounts rejected
 //
 // What this does NOT do (intentional):
-//   - Does not mutate profiles.credit_balance
-//   - Does not change Stripe checkout / PaymentIntent math
+//   - Does not change Stripe checkout amount math (checkout still reads
+//     profiles.credit_balance exactly as before)
+//   - Does not create Stripe coupons or apply promo codes
 //   - Does not create real refunds
 //   - Does not expose credit data on public routes
 
@@ -48,8 +50,7 @@ export async function GET(req: Request) {
     return NextResponse.json({
       credits,
       reasonCodes: STUDENT_CREDIT_REASON_CODES,
-      // Explicit: these grants are not yet applied to spendable credit_balance.
-      appliedToSpendableBalance: false,
+      appliedToSpendableBalance: true,
     });
   } catch (e) {
     console.error("[admin/student-credits] GET failed", e);
@@ -86,7 +87,7 @@ export async function POST(req: Request) {
   }
 
   console.log(
-    `[admin/student-credits] grant actor=${actor.id} credit=${result.credit.id} student=${result.credit.student_profile_id}`,
+    `[admin/student-credits] grant actor=${actor.id} credit=${result.credit.id} student=${result.credit.student_profile_id} balance=${result.credit.new_credit_balance ?? "?"}`,
   );
 
   return NextResponse.json({ ok: true, credit: result.credit });

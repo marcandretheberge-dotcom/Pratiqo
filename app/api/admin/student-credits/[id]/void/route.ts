@@ -1,9 +1,10 @@
-// Admin → Void a student credit
+// Admin → Void a student credit (unused only)
 //
 //   POST /api/admin/student-credits/:id/void
 //
-// Security: requireAdminApi + mandatory void reason + ledger + audit.
-// Does not mutate profiles.credit_balance or Stripe.
+// Security: requireAdminApi + mandatory void reason.
+// Atomic RPC (migration 088) rejects partial use / insufficient balance.
+// Does not change Stripe checkout math or create refunds.
 
 import { NextResponse } from "next/server";
 import { requireAdminApi } from "@/lib/auth/admin";
@@ -42,6 +43,8 @@ export async function POST(req: Request, ctx: Params) {
     return NextResponse.json({ error: result.error }, { status: result.status });
   }
 
-  console.log(`[admin/student-credits] void actor=${actor.id} credit=${result.credit.id}`);
+  console.log(
+    `[admin/student-credits] void actor=${actor.id} credit=${result.credit.id} balance=${result.credit.new_credit_balance ?? "?"}`,
+  );
   return NextResponse.json({ ok: true, credit: result.credit });
 }
