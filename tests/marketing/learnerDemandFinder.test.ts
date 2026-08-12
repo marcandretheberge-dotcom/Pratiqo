@@ -41,11 +41,13 @@ test("/trouver-mon-prof reuses the shared marketing shell and dedicated finder",
 
 test("finder is exactly a three-step pre-account funnel", () => {
   assert.match(finderSrc, /type Step = 1 \| 2 \| 3/);
+  assert.match(finderSrc, /setStep\(2\)/);
+  assert.match(finderSrc, /setStep\(3\)/);
+  assert.match(finderSrc, /\(step \/ 3\) \* 100/);
   assert.match(finderSrc, /subject:/);
   assert.match(finderSrc, /city:/);
   assert.match(finderSrc, /acceptsOnline/);
   assert.match(finderSrc, /email:/);
-  assert.match(finderSrc, /step} 3/);
 
   const code = stripComments(finderSrc);
   assert.ok(!/type=["']password["']/.test(code), "finder must not ask for a password");
