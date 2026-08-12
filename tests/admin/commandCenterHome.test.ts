@@ -146,15 +146,20 @@ test("promotions card links to /admin/promotions foundation without touching ove
   assert.doesNotMatch(overviewRoute, /credit_balance|promo_codes|insert\(/i);
 });
 
-test("payments card is present but does not modify Stripe/payment logic", () => {
+test("bookings and payments cards link to read-only operations views", () => {
+  const bookings = ADMIN_COMMAND_CENTER_MODULES.find((m) => m.id === "bookings");
   const payments = ADMIN_COMMAND_CENTER_MODULES.find((m) => m.id === "payments");
+  assert.ok(bookings);
   assert.ok(payments);
-  assert.equal(payments!.status, "coming_soon");
-  assert.equal(payments!.href, null);
+  assert.equal(bookings!.status, "ready");
+  assert.equal(bookings!.href, "/admin/bookings");
+  assert.equal(payments!.status, "ready");
+  assert.equal(payments!.href, "/admin/payments");
 
   const page = read("app/(app)/admin/page.tsx");
-  assert.match(page, /Paiements/);
-  assert.doesNotMatch(page, /stripe\.checkout|PaymentIntent|webhook/i);
+  assert.match(page, /Réservations|Paiements/);
+  assert.doesNotMatch(page, /stripe\.checkout|webhook\.constructEvent/i);
+  assert.doesNotMatch(page, /refund|capture|payout\.create/i);
 });
 
 test("SEO & markets card references Canada launched and Uruguay next without changing market rules", () => {
