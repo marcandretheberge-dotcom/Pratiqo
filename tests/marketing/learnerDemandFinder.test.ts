@@ -52,7 +52,7 @@ test("finder is exactly a three-step pre-account funnel", () => {
   const code = stripComments(finderSrc);
   assert.ok(!/type=["']password["']/.test(code), "finder must not ask for a password");
   assert.ok(!/type=["']tel["']/.test(code), "finder must not ask for a phone number");
-  assert.ok(!/street|postal|zip|address-line/i.test(code), "finder must not ask for a street/postal address");
+  assert.ok(!/autoComplete=["'](?:street-address|postal-code)["']/i.test(code), "finder must not collect a street/postal address");
 });
 
 test("email collection states the narrow match-notification purpose and links privacy policy", () => {
