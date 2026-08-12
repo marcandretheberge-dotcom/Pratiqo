@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS public.learner_demand_leads (
   region text,
   country_code text NOT NULL DEFAULT 'CA',
   accepts_online boolean NOT NULL DEFAULT true,
+  local_waitlist boolean NOT NULL DEFAULT false,
   locale text NOT NULL DEFAULT 'fr',
   source text NOT NULL DEFAULT 'teacher_finder',
   utm_source text,
@@ -69,6 +70,8 @@ COMMENT ON TABLE public.learner_demand_leads IS
   'Private anonymous learner demand captured before account creation. Server-only access; used to match supply and notify learners when a relevant teacher becomes available.';
 COMMENT ON COLUMN public.learner_demand_leads.email IS
   'Email used only for the requested teacher-match result / availability notification unless separate marketing consent is collected elsewhere.';
+COMMENT ON COLUMN public.learner_demand_leads.local_waitlist IS
+  'True when an online fallback was shown immediately but the learner should still be notified when local supply appears.';
 COMMENT ON COLUMN public.learner_demand_leads.source IS
   'Internal acquisition source slug, e.g. teacher_finder or learner_waitlist.';
 COMMENT ON COLUMN public.learner_demand_leads.utm_campaign IS
