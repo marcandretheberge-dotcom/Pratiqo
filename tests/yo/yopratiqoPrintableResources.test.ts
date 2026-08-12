@@ -47,6 +47,10 @@ for (const id of expectedIds) {
   assert.equal(resource.type, "print-route", `${id} must not be a fake PDF`);
 }
 
+const rdM2Workbook = getPrintableResourceById("rd-m2-arrival-kit");
+assert.equal(rdM2Workbook?.category, "workbook", "RD Module 2 resource is a workbook");
+assert.match(rdM2Workbook?.title.fr ?? "", /Cahier YoPratiqo 02/);
+
 assert.equal(getPrintableResourcesForModule("dominican-republic-module-2").length, 1);
 assert.equal(getPrintableResourcesForModule("dominican-republic-module-3").length, 1);
 assert.equal(getPrintableResourcesForModule("dominican-republic-module-4").length, 1);

@@ -47,20 +47,20 @@ export const yoPrintableResources: readonly YoPrintableResource[] = [
   {
     id: "rd-m2-arrival-kit",
     title: lstr(
-      "Kit d'arrivée — hôtel, aéroport et taxi",
-      "Arrival kit — hotel, airport, and taxi",
-      "Kit de llegada — hotel, aeropuerto y taxi",
+      "Cahier YoPratiqo 02 — Arriver et se débrouiller en République dominicaine",
+      "YoPratiqo Workbook 02 — Arrive and get around in the Dominican Republic",
+      "Cuaderno YoPratiqo 02 — Llegar y desenvolverte en República Dominicana",
     ),
     description: lstr(
-      "Fiches imprimables pour pratiquer les premiers échanges à l'arrivée, le taxi, le check-in et les imprévus simples.",
-      "Printable sheets to practice first arrival exchanges, taxi rides, check-in, and simple problems.",
-      "Hojas imprimibles para practicar los primeros intercambios de llegada, taxi, check-in e imprevistos simples.",
+      "Cahier imprimable avec pratique guidée, récupération, scénarios, écoute simulée, écriture, mission orale et corrigé final.",
+      "Printable workbook with guided practice, retrieval, scenarios, simulated listening, writing, speaking mission, and final answer key.",
+      "Cuaderno imprimible con práctica guiada, recuperación, escenarios, escucha simulada, escritura, misión oral y clave final.",
     ),
     type: "print-route",
     href: "/yo/langues/espagnol/pays/republique-dominicaine/module-2/ressources/kit-arrivee",
     locale: "all",
     moduleId: "dominican-republic-module-2",
-    category: "survival-kit",
+    category: "workbook",
     available: true,
   },
   {

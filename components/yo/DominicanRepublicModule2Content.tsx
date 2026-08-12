@@ -138,14 +138,14 @@ const LABEL_AUDIO_NOTE = lstr(
   "El audio de práctica usa la voz del navegador. La calidad puede variar según el dispositivo.",
 );
 const LABEL_WORKSHEETS = lstr(
-  "Fiches imprimables",
-  "Printable worksheets",
-  "Hojas imprimibles",
+  "Cahier imprimable",
+  "Printable workbook",
+  "Cuaderno imprimible",
 );
 const LABEL_WORKSHEETS_TITLE = lstr(
-  "Imprime ton kit d'arrivée",
-  "Print your arrival kit",
-  "Imprime tu kit de llegada",
+  "Ouvre ton cahier Module 2",
+  "Open your Module 2 workbook",
+  "Abre tu cuaderno del Módulo 2",
 );
 const LABEL_PROBLEMS = lstr(
   "Imprévus à l'hôtel",

@@ -22,6 +22,16 @@ for (const route of routes) {
   assert.doesNotMatch(src, /rawQuizAnswers|quizAnswers|correctAnswers/i, `${route} does not expose raw quiz answers`);
 }
 
+const module2Route = readFileSync(
+  join(
+    ROOT,
+    "app/yo/langues/espagnol/pays/republique-dominicaine/module-2/ressources/kit-arrivee/page.tsx",
+  ),
+  "utf8",
+);
+assert.match(module2Route, /DominicanRepublicModule2Workbook/);
+assert.doesNotMatch(module2Route, /DominicanModulePrintables|module2PrintablePack/);
+
 const module2 = readFileSync(
   join(ROOT, "components/yo/DominicanRepublicModule2Content.tsx"),
   "utf8",
