@@ -1,0 +1,78 @@
+-- Learner demand funnel: captures anonymous pre-account demand from the
+-- public "Trouve ton prof" flow. PII stays server-only; clients write through
+-- /api/learner-demand using the service-role client.
+
+CREATE TABLE IF NOT EXISTS public.learner_demand_leads (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  email text NOT NULL,
+  email_normalized text NOT NULL,
+  subject text NOT NULL,
+  subject_normalized text NOT NULL,
+  city text NOT NULL,
+  city_normalized text NOT NULL,
+  region text,
+  country_code text NOT NULL DEFAULT 'CA',
+  accepts_online boolean NOT NULL DEFAULT true,
+  local_waitlist boolean NOT NULL DEFAULT false,
+  locale text NOT NULL DEFAULT 'fr',
+  source text NOT NULL DEFAULT 'teacher_finder',
+  utm_source text,
+  utm_medium text,
+  utm_campaign text,
+  utm_content text,
+  utm_term text,
+  status text NOT NULL DEFAULT 'open',
+  match_type text NOT NULL DEFAULT 'none',
+  matched_teacher_count integer NOT NULL DEFAULT 0,
+  last_match_at timestamptz,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now(),
+
+  CONSTRAINT learner_demand_email_length CHECK (char_length(email) BETWEEN 3 AND 320),
+  CONSTRAINT learner_demand_subject_length CHECK (char_length(subject) BETWEEN 1 AND 120),
+  CONSTRAINT learner_demand_city_length CHECK (char_length(city) BETWEEN 1 AND 120),
+  CONSTRAINT learner_demand_country_code_length CHECK (char_length(country_code) BETWEEN 2 AND 10),
+  CONSTRAINT learner_demand_source_length CHECK (char_length(source) BETWEEN 1 AND 100),
+  CONSTRAINT learner_demand_utm_source_length CHECK (utm_source IS NULL OR char_length(utm_source) <= 160),
+  CONSTRAINT learner_demand_utm_medium_length CHECK (utm_medium IS NULL OR char_length(utm_medium) <= 160),
+  CONSTRAINT learner_demand_utm_campaign_length CHECK (utm_campaign IS NULL OR char_length(utm_campaign) <= 160),
+  CONSTRAINT learner_demand_utm_content_length CHECK (utm_content IS NULL OR char_length(utm_content) <= 160),
+  CONSTRAINT learner_demand_utm_term_length CHECK (utm_term IS NULL OR char_length(utm_term) <= 160),
+  CONSTRAINT learner_demand_status_check CHECK (status IN ('open', 'matched', 'notified', 'converted', 'closed')),
+  CONSTRAINT learner_demand_match_type_check CHECK (match_type IN ('none', 'local', 'online')),
+  CONSTRAINT learner_demand_match_count_check CHECK (matched_teacher_count >= 0)
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_learner_demand_open_dedupe
+  ON public.learner_demand_leads (
+    email_normalized,
+    subject_normalized,
+    city_normalized,
+    accepts_online
+  );
+
+CREATE INDEX IF NOT EXISTS idx_learner_demand_subject_city
+  ON public.learner_demand_leads (subject_normalized, city_normalized, status, created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_learner_demand_created_at
+  ON public.learner_demand_leads (created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_learner_demand_campaign
+  ON public.learner_demand_leads (utm_source, utm_campaign, created_at DESC);
+
+ALTER TABLE public.learner_demand_leads ENABLE ROW LEVEL SECURITY;
+
+-- Deliberately no anon/authenticated SELECT/INSERT/UPDATE/DELETE policies.
+-- The public form posts to a server route; the service role bypasses RLS.
+REVOKE ALL ON TABLE public.learner_demand_leads FROM anon, authenticated;
+
+COMMENT ON TABLE public.learner_demand_leads IS
+  'Private anonymous learner demand captured before account creation. Server-only access; used to match supply and notify learners when a relevant teacher becomes available.';
+COMMENT ON COLUMN public.learner_demand_leads.email IS
+  'Email used only for the requested teacher-match result / availability notification unless separate marketing consent is collected elsewhere.';
+COMMENT ON COLUMN public.learner_demand_leads.local_waitlist IS
+  'True when an online fallback was shown immediately but the learner should still be notified when local supply appears.';
+COMMENT ON COLUMN public.learner_demand_leads.source IS
+  'Internal acquisition source slug, e.g. teacher_finder or learner_waitlist.';
+COMMENT ON COLUMN public.learner_demand_leads.utm_campaign IS
+  'Optional campaign attribution copied from the learner landing URL; no raw referrer or browsing history is stored.';
