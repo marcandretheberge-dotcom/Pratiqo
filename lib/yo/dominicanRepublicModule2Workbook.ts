@@ -1240,13 +1240,21 @@ const authoredPages: readonly AuthoredPage[] = [
           askMeaning(
             "rd-pa",
             lstr("pa' — comme dans « pa' allá »", "pa' — as in \"pa' allá\"", "pa' — como en «pa' allá»"),
-            lstr("Version raccourcie de « para ».", "A shortened form of \"para\".", "Forma abreviada de «para»."),
+            lstr(
+              "Version familière raccourcie de « para », pas réservée à la République dominicaine.",
+              "A colloquial shortened form of \"para\", not exclusive to the Dominican Republic.",
+              "Forma coloquial abreviada de «para», no exclusiva de la República Dominicana.",
+            ),
             ["para", "pero", "piso"],
           ),
           askMeaning(
             "rd-final-s",
-            lstr("« do' café' » — le s final devient très léger ou disparaît", "\"do' café'\" — the final s becomes very light or disappears", "«do' café'» — la s final se vuelve muy suave o desaparece"),
-            lstr("dos cafés", "dos cafés", "dos cafés"),
+            lstr(
+              "dos cafés — le s final peut devenir très léger à l'oral; on garde l'orthographe normale",
+              "dos cafés — final s may become very light in speech; keep the normal spelling",
+              "dos cafés — la s final puede sonar muy suave al hablar; se mantiene la escritura normal",
+            ),
+            lstr("On comprend « dos cafés »; on écrit « dos cafés ».", "You understand \"dos cafés\"; you write \"dos cafés\".", "Se entiende «dos cafés»; se escribe «dos cafés»."),
             ["dos cafés", "doce cafés", "dos cafeterías"],
           ),
           askMeaning(
@@ -1282,9 +1290,13 @@ const authoredPages: readonly AuthoredPage[] = [
           askMeaning(
             "rd-ahorita",
             lstr("ahorita", "ahorita", "ahorita"),
-            lstr("« dans un moment » — pas forcément tout de suite. Si l'heure compte, demande : ¿A qué hora?", "\"in a moment\" — not necessarily right now. If timing matters, ask: ¿A qué hora?", "«en un momento» — no siempre ahora mismo. Si la hora importa, pregunta: ¿A qué hora?"),
+            lstr(
+              "Temps proche selon le contexte; si l'heure précise compte, demande : ¿A qué hora?",
+              "Nearby time, depending on context; if the precise time matters, ask: ¿A qué hora?",
+              "Tiempo cercano según el contexto; si la hora precisa importa, pregunta: ¿A qué hora?",
+            ),
             [
-              lstr("dans un moment", "in a moment", "en un momento"),
+              lstr("un moment proche, selon le contexte", "a nearby time, depending on context", "un tiempo cercano, según el contexto"),
               lstr("hier", "yesterday", "ayer"),
               lstr("jamais", "never", "nunca"),
             ],
@@ -1368,7 +1380,7 @@ const authoredPages: readonly AuthoredPage[] = [
           "Buenas tardes, señora Tremblay. Bienvenida a Puerto Plata.",
           "Su habitación está lista a las tres de la tarde.",
           "Nuestro conductor se llama Elvis. La espera en la salida principal del aeropuerto, con un cartel con su nombre.",
-          "El viaje hasta el hotel es de veinte minutos. Estamos cerca del parque central.",
+          "El viaje hasta el hotel dura veinte minutos. Estamos cerca del parque central.",
           "La recepción está abierta toda la noche.",
           "Si no ve al conductor, escriba a este número.",
           "Buen viaje y hasta pronto.",
@@ -1413,7 +1425,7 @@ const authoredPages: readonly AuthoredPage[] = [
         ),
         targetLanguage: "es",
         items: [
-          ordered("seq-ride", "El viaje hasta el hotel es de veinte minutos.", 3),
+          ordered("seq-ride", "El viaje hasta el hotel dura veinte minutos.", 3),
           ordered("seq-welcome", "Bienvenida a Puerto Plata.", 1),
           ordered("seq-room", "Su habitación está lista a las tres de la tarde.", 4),
           ordered("seq-driver", "Nuestro conductor la espera en la salida principal.", 2),
@@ -1466,7 +1478,7 @@ const authoredPages: readonly AuthoredPage[] = [
               "Rewrite the driver sentence for a traveler named Diallo arriving at eleven at night.",
               "Reescribe la frase del conductor para un viajero que se llama Diallo y llega a las once de la noche.",
             ),
-            "Nuestro conductor espera al señor Diallo en la salida principal a las once de la noche.",
+            "Nuestro conductor lo espera en la salida principal a las once de la noche.",
           ),
           open(
             "read-reply",
@@ -1655,9 +1667,9 @@ const authoredPages: readonly AuthoredPage[] = [
           own("plan-keywords", lstr("Mots-clés (5 maximum)", "Keywords (5 maximum)", "Palabras clave (5 como máximo)"), 1),
           open("plan-opening", lstr("Ouverture", "Opening", "Apertura"), "Buenas. Soy Alex Tremblay.", 1),
           open("plan-location", lstr("Où tu es", "Where you are", "Dónde estás"), "Estoy afuera, en la salida principal del aeropuerto.", 1),
-          open("plan-question", lstr("Ta question au chauffeur", "Your question to the driver", "Tu pregunta al conductor"), "¿Dónde está usted?", 1),
+          open("plan-question", lstr("Ta question au chauffeur", "Your question to the driver", "Tu pregunta al conductor"), "¿Dónde está?", 1),
           open("plan-clarify", lstr("Demande de clarification", "Clarification request", "Pedido de aclaración"), "¿Me puede repetir más despacio, por favor?", 1),
-          open("plan-confirm", lstr("Confirmation de la destination", "Destination confirmation", "Confirmación del destino"), "Voy al Hotel Villa Mango. ¿Está bien?", 1),
+          open("plan-confirm", lstr("Confirmation de la destination", "Destination confirmation", "Confirmación del destino"), "Voy al Hotel Villa Mango, ¿correcto?", 1),
           open("plan-close", lstr("Clôture", "Closing", "Cierre"), "Perfecto. Gracias. Nos vemos.", 1),
         ],
       },
@@ -1943,9 +1955,9 @@ const authoredPages: readonly AuthoredPage[] = [
         kind: "assessment",
         title: lstr("D · RESUELVO", "D · RESUELVO", "D · RESUELVO"),
         instructions: lstr(
-          "Une seule séquence, du sol de l'aéroport à la chambre. À toi de choisir la langue de chaque étape.",
-          "One single sequence, from the airport floor to the room. You choose the language for each step.",
-          "Una sola secuencia, del suelo del aeropuerto a la habitación. Tú eliges la lengua de cada paso.",
+          "Une seule séquence, de l'aéroport jusqu'à la chambre. À toi de choisir la langue de chaque étape.",
+          "One single sequence, from the airport to the room. You choose the language for each step.",
+          "Una sola secuencia, desde el aeropuerto hasta la habitación. Tú eliges la lengua de cada paso.",
         ),
         targetLanguage: "es",
         items: [

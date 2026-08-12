@@ -413,6 +413,38 @@ assert.ok(
   "page 13 must not claim every Dominican speaker uses the same forms",
 );
 
+const finalSItem = recognitionActivity?.items?.find((item) => item.id === "rd-final-s");
+assert.ok(finalSItem, "page 13 includes a final-s recognition item");
+const finalSText = [
+  finalSItem?.prompt.fr,
+  finalSItem?.prompt.en,
+  finalSItem?.prompt.es,
+  finalSItem?.answerNote?.fr,
+  finalSItem?.answerNote?.en,
+  finalSItem?.answerNote?.es,
+].join(" ");
+assert.match(finalSText, /dos cafés/, "normal spelling remains visible for the final-s example");
+assert.doesNotMatch(
+  finalSText,
+  /do'\s*café'?/i,
+  "dialect-style apostrophe spelling is not presented as standard written Spanish",
+);
+assert.match(finalSText, /orthographe normale|normal spelling|escritura normal/i);
+
+const ahoritaItem = recognitionActivity?.items?.find((item) => item.id === "rd-ahorita");
+assert.ok(ahoritaItem, "page 13 includes an ahorita recognition item");
+const ahoritaText = [
+  ahoritaItem?.answerNote?.fr,
+  ahoritaItem?.answerNote?.en,
+  ahoritaItem?.answerNote?.es,
+  ...(ahoritaItem?.choices ?? []).map((choice) =>
+    isRdM2LocalizedChoice(choice) ? `${choice.fr} ${choice.en} ${choice.es ?? ""}` : choice,
+  ),
+].join(" ");
+assert.match(ahoritaText, /contexte|context|contexto/i, "ahorita explanation is context-dependent");
+assert.match(ahoritaText, /précise|precise|precisa/i, "ahorita explanation warns about precision");
+assert.match(ahoritaText, /¿A qué hora/, "safe timing clarification remains visible");
+
 const safeActivity = awarenessActivities.find((activity) => activity.id === "rd-safe-production");
 assert.ok(safeActivity, "page 13 tells the learner what is safe to produce");
 assert.ok((safeActivity?.items?.length ?? 0) >= 3, "at least three safe-production situations");

@@ -9,6 +9,7 @@ const DATA_FILE = "lib/yo/dominicanRepublicModule2Workbook.ts";
 const COMPONENT_FILE = "components/yo/DominicanRepublicModule2Workbook.tsx";
 const ROUTE_FILE =
   "app/yo/langues/espagnol/pays/republique-dominicaine/module-2/ressources/kit-arrivee/page.tsx";
+const RD_LANGUAGE_REVIEW_FILE = "docs/yopratiqo/RD_LANGUAGE_REVIEW.md";
 
 function read(path: string): string {
   return readFileSync(join(ROOT, path), "utf8");
@@ -37,6 +38,7 @@ const dataSrc = read(DATA_FILE);
 const learnerStrings = collectStrings(dominicanRepublicModule2Workbook);
 const learnerCorpus = learnerStrings.join("\n");
 const codeCorpus = stripComments(dataSrc);
+const rdLanguageReview = read(RD_LANGUAGE_REVIEW_FILE);
 
 assert.match(dataSrc, /Original YoPratiqo instructional content/);
 assert.match(dataSrc, /No commercial textbook text, exercises, layouts, dialogues/);
@@ -133,6 +135,18 @@ assert.deepEqual(suspiciousRepeats, [], "workbook should not rely on broad repea
 const targetPhraseCount = learnerStrings.filter((text) => /[¿¡áéíóúñ]/i.test(text)).length;
 assert.ok(targetPhraseCount >= 70, "Spanish target/reference text is prominent");
 
+assert.match(learnerCorpus, /dos cafés/, "the final-s awareness item keeps normal Spanish spelling visible");
+assert.doesNotMatch(
+  learnerCorpus,
+  /do'\s*café'?/i,
+  "the workbook must not teach faux apostrophe spelling as normal written Spanish",
+);
+assert.doesNotMatch(
+  learnerCorpus,
+  /del suelo del aeropuerto|airport floor|du sol de l'aéroport/i,
+  "Page 18 assessment sequence must not use awkward airport-floor wording",
+);
+
 const sourceBrands = [
   "Duolingo",
   "Babbel",
@@ -156,5 +170,22 @@ assert.doesNotMatch(routeSrc, /DominicanModulePrintables|module2PrintablePack/);
 assert.doesNotMatch(routeSrc, /href=.*\.pdf|download=/i);
 
 assert.doesNotMatch(codeCorpus, /from\s+["']stripe["']|supabase|openai|OPENAI_API_KEY|\.mp3/i);
+
+for (const source of [
+  "Academia Dominicana de la Lengua",
+  "Diccionario del español dominicano",
+  "ASALE",
+  "Instituto Cervantes",
+]) {
+  assert.match(rdLanguageReview, new RegExp(source), `language review records source: ${source}`);
+}
+for (const claim of ["pa'", "Final /s/", "guagua", "colmado", "motoconcho", "ahorita"]) {
+  assert.match(rdLanguageReview, new RegExp(claim, "i"), `language review records claim: ${claim}`);
+}
+assert.match(
+  rdLanguageReview,
+  /Native Dominican editorial review: pending/,
+  "source verification must not pretend to replace native Dominican editorial review",
+);
 
 console.log("[yo:dominican-m2-workbook-originality] assertions passed");
