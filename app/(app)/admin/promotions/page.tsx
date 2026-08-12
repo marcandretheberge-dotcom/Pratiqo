@@ -341,7 +341,7 @@ function AdminPromotionsPageInner() {
       if (!res.ok) throw new Error(data.error ?? "Attribution impossible.");
       setFlash({
         kind: "ok",
-        text: "Crédit enregistré (fondation admin). Pas encore appliqué au solde utilisable au paiement.",
+        text: "Crédit accordé et ajouté au solde utilisable de l'apprenant. Action journalisée.",
       });
       setCreditForm((f) => ({ ...f, amountDollars: "", reasonNote: "" }));
       await loadAll();
@@ -356,6 +356,13 @@ function AdminPromotionsPageInner() {
   };
 
   const voidCredit = async (id: string) => {
+    if (
+      !window.confirm(
+        "Annuler ce crédit ?\n\nPossible seulement s'il est encore entièrement inutilisé et que le solde disponible couvre le montant. Cette action est journalisée et retire le montant du solde utilisable.",
+      )
+    ) {
+      return;
+    }
     const reason = window.prompt(
       "Raison d'annulation obligatoire (journalisée) :",
     );
@@ -412,9 +419,10 @@ function AdminPromotionsPageInner() {
             </p>
             <h1 className="mt-2 text-2xl font-bold text-[#2C2C2A]">Promotions & crédits</h1>
             <p className="mt-2 max-w-3xl text-sm text-slate-600">
-              Fondation admin seulement. L'application automatique au paiement sera activée
-              dans une prochaine étape. Les crédits enregistrés ici ne modifient pas encore le
-              solde utilisable (`credit_balance`) ni Stripe.
+              Les crédits apprenants accordés ici sont ajoutés au solde utilisable de
+              l&apos;apprenant et peuvent être appliqués au paiement selon les règles
+              existantes de Pratiqo. Les codes promo restent une fondation admin seulement —
+              pas encore appliqués au paiement.
             </p>
           </div>
         </div>
@@ -693,8 +701,9 @@ function AdminPromotionsPageInner() {
                 Crédits apprenants
               </h2>
               <p className="mt-1 text-sm text-slate-600">
-                Attribution manuelle avec raison obligatoire et journal d'audit. Solde
-                utilisable au paiement : pas encore branché.
+                Attribution manuelle avec raison obligatoire. Le montant est ajouté au solde
+                utilisable (`credit_balance`). L&apos;annulation n&apos;est possible que si le
+                crédit est encore entièrement inutilisé.
               </p>
               <p className="mt-2 text-xs text-slate-500">
                 Total accordé : {formatMoneyCents(creditTotals.granted)} · Restant actif :{" "}
@@ -818,6 +827,7 @@ function AdminPromotionsPageInner() {
                     <th className="px-2 py-2">Apprenant</th>
                     <th className="px-2 py-2">Montant</th>
                     <th className="px-2 py-2">Restant</th>
+                    <th className="px-2 py-2">Utilisable</th>
                     <th className="px-2 py-2">Statut</th>
                     <th className="px-2 py-2">Raison</th>
                     <th className="px-2 py-2">Expiration</th>
@@ -832,6 +842,9 @@ function AdminPromotionsPageInner() {
                       <td className="px-2 py-3">{formatMoneyCents(c.amount_cents, c.currency)}</td>
                       <td className="px-2 py-3">
                         {formatMoneyCents(c.remaining_cents, c.currency)}
+                      </td>
+                      <td className="px-2 py-3">
+                        {c.status === "active" && c.remaining_cents > 0 ? "Oui" : "Non"}
                       </td>
                       <td className="px-2 py-3">
                         <span

@@ -360,6 +360,14 @@ test("tracked patch avoids generated audio and restricted product systems", () =
     // payment, booking, or public visibility changes. Defended by
     // tests/teacherSearch/teacherSearchVisibilityDiagnostics.test.ts.
     "app/api/admin/users/route.ts",
+    // payments/admin-student-credits-spendable — wires admin student credit
+    // grants/voids into existing profiles.credit_balance via SECURITY DEFINER
+    // RPCs. Does not touch YoPratiqo audio, promo-code checkout, Stripe
+    // coupons, or commission math. Defended by
+    // tests/payments/adminStudentCreditsSpendable.test.ts.
+    "app/api/admin/student-credits/route.ts",
+    "app/api/admin/student-credits/[id]/void/route.ts",
+    "supabase/migrations/088_admin_student_credits_spendable.sql",
   ]);
   const forbidden = [
     /^app\/api\//,

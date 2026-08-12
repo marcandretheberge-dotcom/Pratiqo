@@ -10,7 +10,7 @@
 //   - Migration 087 enables RLS with ZERO JWT policies on all four tables.
 //   - No public route leaks promo/credit admin data.
 //   - Checkout / Stripe payment math is untouched by this PR.
-//   - Existing spendable credit_balance is intentionally NOT mutated here.
+//   - Existing spendable credit_balance is mutated only via migration 088 RPCs.
 
 import assert from "node:assert/strict";
 import { readFileSync, readdirSync, statSync } from "node:fs";
@@ -187,7 +187,7 @@ test("/admin/promotions page mounts under admin layout and does not import servi
   assert.match(page, /data-testid="admin-promotions-page"/);
   assert.match(page, /Codes promo/);
   assert.match(page, /Crédits apprenants/);
-  assert.match(page, /Fondation admin seulement/);
+  assert.match(page, /solde utilisable|codes promo restent une fondation/i);
   assert.doesNotMatch(page, /getSupabaseAdmin|SUPABASE_SERVICE_ROLE_KEY/);
   assert.doesNotMatch(page, /from\s+"@\/lib\/admin\/studentCredits"/);
   assert.match(page, /from\s+"@\/lib\/admin\/studentCreditConstants"/);
@@ -354,39 +354,17 @@ test("reason code allowlist is exactly the seven documented codes", () => {
   assert.equal(isStudentCreditReasonCode("not_a_reason"), false);
 });
 
-test("admin can grant student credit with required reason; ledger + audit written", async () => {
-  const { admin, inserts } = makeAdminStub({
-    student: { id: "student-1", role: "student" },
-  });
-  const result = await grantStudentCredit(admin, { id: "admin-1", email: "a@x.com" }, {
-    studentProfileId: "student-1",
-    amountCents: 1500,
-    reasonCode: "goodwill",
-    reasonNote: "Geste commercial après retard",
-  });
-  assert.equal(result.ok, true);
-  if (!result.ok) return;
-  assert.equal(result.credit.amount_cents, 1500);
-  assert.equal(result.credit.remaining_cents, 1500);
-  assert.equal(result.credit.status, "active");
-  assert.ok(inserts.some((i) => i.table === "student_credits"));
-  assert.ok(
-    inserts.some(
-      (i) =>
-        i.table === "student_credit_ledger" &&
-        i.row.entry_type === "grant" &&
-        i.row.amount_cents === 1500,
-    ),
-  );
-  assert.ok(
-    inserts.some(
-      (i) => i.table === "admin_audit_log" && i.row.action === "student_credit.granted",
-    ),
-  );
+test("student credit grant/void helpers delegate to atomic RPCs (spendable integration)", () => {
+  // Detailed spendable grant/void coverage lives in
+  // tests/payments/adminStudentCreditsSpendable.test.ts after migration 088.
+  const src = READ("lib/admin/studentCredits.ts");
+  assert.match(src, /admin_grant_student_credit/);
+  assert.match(src, /admin_void_student_credit/);
+  assert.match(src, /admin\.rpc\(/);
 });
 
-test("credit without reason note is rejected", async () => {
-  const { admin } = makeAdminStub();
+test("credit without reason note is rejected before RPC", async () => {
+  const admin = { rpc() { throw new Error("rpc should not be called"); } } as never;
   const result = await grantStudentCredit(admin, { id: "admin-1", email: null }, {
     studentProfileId: "student-1",
     amountCents: 500,
@@ -398,8 +376,8 @@ test("credit without reason note is rejected", async () => {
   assert.match(result.error, /note/i);
 });
 
-test("negative or zero credit is rejected", async () => {
-  const { admin } = makeAdminStub();
+test("negative or zero credit is rejected before RPC", async () => {
+  const admin = { rpc() { throw new Error("rpc should not be called"); } } as never;
   for (const amountCents of [0, -100, 1.5]) {
     const result = await grantStudentCredit(admin, { id: "admin-1", email: null }, {
       studentProfileId: "student-1",
@@ -411,53 +389,10 @@ test("negative or zero credit is rejected", async () => {
   }
 });
 
-test("admin can void credit with reason; void without reason is rejected", async () => {
-  const active = {
-    id: "credit-1",
-    student_profile_id: "student-1",
-    amount_cents: 2000,
-    currency: "CAD",
-    remaining_cents: 2000,
-    status: "active",
-    reason_code: "goodwill",
-    reason_note: "note",
-    expires_at: null,
-    created_by: "admin-1",
-    created_at: new Date().toISOString(),
-    voided_by: null,
-    voided_at: null,
-    void_reason: null,
-  };
-
-  const missingReason = await voidStudentCredit(
-    makeAdminStub({ existingCredit: active }).admin,
-    { id: "admin-1", email: null },
-    "credit-1",
-    "  ",
-  );
+test("void without reason is rejected before RPC", async () => {
+  const admin = { rpc() { throw new Error("rpc should not be called"); } } as never;
+  const missingReason = await voidStudentCredit(admin, { id: "admin-1", email: null }, "credit-1", "  ");
   assert.equal(missingReason.ok, false);
-
-  const probe = makeAdminStub({ existingCredit: active });
-  const voided = await voidStudentCredit(
-    probe.admin,
-    { id: "admin-1", email: "a@x.com" },
-    "credit-1",
-    "Erreur de saisie",
-  );
-  assert.equal(voided.ok, true);
-  if (!voided.ok) return;
-  assert.equal(voided.credit.status, "voided");
-  assert.equal(voided.credit.remaining_cents, 0);
-  assert.ok(
-    probe.inserts.some(
-      (i) => i.table === "student_credit_ledger" && i.row.entry_type === "void",
-    ),
-  );
-  assert.ok(
-    probe.inserts.some(
-      (i) => i.table === "admin_audit_log" && i.row.action === "student_credit.voided",
-    ),
-  );
 });
 
 // ── Migration / RLS ─────────────────────────────────────────────────────────
@@ -510,11 +445,16 @@ test("migration 087 does not alter credit_balance, bookings, or Stripe tables", 
 
 // ── Public isolation + checkout unchanged ───────────────────────────────────
 
-test("helpers do not mutate profiles.credit_balance", () => {
+test("helpers mutate spendable balance only through atomic RPCs (not direct profile updates)", () => {
   const promotions = READ("lib/admin/promotions.ts");
   const credits = READ("lib/admin/studentCredits.ts");
   assert.doesNotMatch(stripCommentsAndStrings(promotions), /credit_balance/);
-  assert.doesNotMatch(stripCommentsAndStrings(credits), /credit_balance/);
+  // Direct profile updates are forbidden in the TS helper; migration 088 RPC owns them.
+  assert.doesNotMatch(stripCommentsAndStrings(credits), /\.from\(\s*"profiles"\s*\)/);
+  assert.doesNotMatch(stripCommentsAndStrings(credits), /\.from\(\s*"credit_transactions"\s*\)/);
+  // Match RPC names on raw source — stripCommentsAndStrings blanks string literals.
+  assert.match(credits, /admin_grant_student_credit/);
+  assert.match(credits, /admin_void_student_credit/);
 });
 
 test("checkout and booking payment routes are unchanged by this foundation", () => {
@@ -543,6 +483,7 @@ test("no public app route outside /admin exposes student_credits or admin_promo_
       "lib/admin/overview.ts",
       "tests/admin/adminPromotionsCreditsFoundation.test.ts",
       "tests/admin/commandCenterHome.test.ts",
+      "tests/payments/adminStudentCreditsSpendable.test.ts",
     ].map((p) => p.replace(/\//g, sep)),
   );
 
