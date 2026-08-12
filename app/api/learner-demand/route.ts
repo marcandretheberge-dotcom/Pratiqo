@@ -152,7 +152,8 @@ export async function POST(request: Request) {
     const match = matchLearnerDemand(teachers, input);
     const resolvedCity = findLearnerDemandCity(input.city);
     const matchType = match.outcome === "local_match" ? "local" : match.outcome === "online_match" ? "online" : "none";
-    const status = match.outcome === "waitlist" ? "open" : "matched";
+    const keepLocalWaitlist = match.outcome === "online_match";
+    const status = match.outcome === "local_match" ? "matched" : "open";
     const now = new Date().toISOString();
 
     const row = {
@@ -165,6 +166,7 @@ export async function POST(request: Request) {
       region: resolvedCity?.province ?? null,
       country_code: resolvedCity?.country ?? "CA",
       accepts_online: input.acceptsOnline,
+      local_waitlist: keepLocalWaitlist,
       locale: input.locale,
       source: input.source,
       utm_source: input.utmSource ?? referrerAttribution.utmSource,
