@@ -19,18 +19,21 @@ const MAX_BODY_BYTES = 4_096;
 const RATE_LIMIT = { limit: 10, windowSeconds: 60 } as const;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-type ParsedDemand = {
+type Attribution = {
+  utmSource: string | null;
+  utmMedium: string | null;
+  utmCampaign: string | null;
+  utmContent: string | null;
+  utmTerm: string | null;
+};
+
+type ParsedDemand = Attribution & {
   subject: string;
   city: string;
   acceptsOnline: boolean;
   email: string;
   locale: "fr" | "en" | "es";
   source: string;
-  utmSource: string | null;
-  utmMedium: string | null;
-  utmCampaign: string | null;
-  utmContent: string | null;
-  utmTerm: string | null;
 };
 
 function byteLength(value: string): number {
@@ -42,6 +45,23 @@ function cleanString(value: unknown, max: number): string | null {
   const cleaned = value.trim().replace(/\s+/g, " ");
   if (!cleaned || cleaned.length > max) return null;
   return cleaned;
+}
+
+function parseReferrerAttribution(value: string | null): Attribution {
+  const empty: Attribution = { utmSource: null, utmMedium: null, utmCampaign: null, utmContent: null, utmTerm: null };
+  if (!value) return empty;
+  try {
+    const url = new URL(value);
+    return {
+      utmSource: cleanString(url.searchParams.get("utm_source"), 160),
+      utmMedium: cleanString(url.searchParams.get("utm_medium"), 160),
+      utmCampaign: cleanString(url.searchParams.get("utm_campaign"), 160),
+      utmContent: cleanString(url.searchParams.get("utm_content"), 160),
+      utmTerm: cleanString(url.searchParams.get("utm_term"), 160),
+    };
+  } catch {
+    return empty;
+  }
 }
 
 function parsePayload(raw: unknown): ParsedDemand | null {
@@ -106,6 +126,7 @@ export async function POST(request: Request) {
   if (!input) {
     return NextResponse.json({ ok: false, error: "invalid_request" }, { status: 400 });
   }
+  const referrerAttribution = parseReferrerAttribution(request.headers.get("referer"));
 
   try {
     const admin = getSupabaseAdmin();
@@ -146,11 +167,11 @@ export async function POST(request: Request) {
       accepts_online: input.acceptsOnline,
       locale: input.locale,
       source: input.source,
-      utm_source: input.utmSource,
-      utm_medium: input.utmMedium,
-      utm_campaign: input.utmCampaign,
-      utm_content: input.utmContent,
-      utm_term: input.utmTerm,
+      utm_source: input.utmSource ?? referrerAttribution.utmSource,
+      utm_medium: input.utmMedium ?? referrerAttribution.utmMedium,
+      utm_campaign: input.utmCampaign ?? referrerAttribution.utmCampaign,
+      utm_content: input.utmContent ?? referrerAttribution.utmContent,
+      utm_term: input.utmTerm ?? referrerAttribution.utmTerm,
       status,
       match_type: matchType,
       matched_teacher_count: match.matchCount,
