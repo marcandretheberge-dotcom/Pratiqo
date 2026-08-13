@@ -21,6 +21,22 @@ export function safeAmbassadorDestination(value: string | null | undefined): str
   return path;
 }
 
+export function isNewAccountForReferral(input: {
+  profileCreatedAt: string | null | undefined;
+  firstTouchAt: string | null | undefined;
+  expiresAt: string | null | undefined;
+  now?: Date;
+}): boolean {
+  const profileCreatedMs = Date.parse(input.profileCreatedAt ?? "");
+  const firstTouchMs = Date.parse(input.firstTouchAt ?? "");
+  const expiresMs = Date.parse(input.expiresAt ?? "");
+  const nowMs = (input.now ?? new Date()).getTime();
+
+  if (![profileCreatedMs, firstTouchMs, expiresMs].every(Number.isFinite)) return false;
+  if (expiresMs <= nowMs) return false;
+  return profileCreatedMs >= firstTouchMs;
+}
+
 export async function claimAmbassadorReferralForNewUser(
   admin: SupabaseClient,
   userId: string,
@@ -28,6 +44,36 @@ export async function claimAmbassadorReferralForNewUser(
 ): Promise<string | null> {
   const sessionId = parseAmbassadorReferralSessionId(rawSessionId);
   if (!sessionId) return null;
+
+  const [sessionResult, profileResult] = await Promise.all([
+    admin
+      .from("referral_sessions")
+      .select("first_touch_at, expires_at")
+      .eq("id", sessionId)
+      .maybeSingle(),
+    admin.from("profiles").select("created_at").eq("id", userId).maybeSingle(),
+  ]);
+
+  if (sessionResult.error || profileResult.error) {
+    console.error("[ambassador/referral] eligibility lookup failed", {
+      userIdPresent: Boolean(userId),
+      sessionCode: sessionResult.error?.code ?? null,
+      profileCode: profileResult.error?.code ?? null,
+    });
+    return null;
+  }
+
+  if (
+    !sessionResult.data ||
+    !profileResult.data ||
+    !isNewAccountForReferral({
+      profileCreatedAt: profileResult.data.created_at as string | null,
+      firstTouchAt: sessionResult.data.first_touch_at as string | null,
+      expiresAt: sessionResult.data.expires_at as string | null,
+    })
+  ) {
+    return null;
+  }
 
   const result = await admin.rpc("claim_ambassador_referral", {
     p_session_id: sessionId,
