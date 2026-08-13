@@ -1,31 +1,22 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { useAuth } from "@/components/AuthProvider";
+import type { Session } from "@supabase/supabase-js";
 import { getSupabaseClient } from "@/lib/supabase";
 
 export function AmbassadorReferralClaim() {
-  const { user, profileHydrated } = useAuth();
   const attemptedUserRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!user || !profileHydrated || attemptedUserRef.current === user.id) return;
-
-    attemptedUserRef.current = user.id;
+    const supabase = getSupabaseClient();
     let cancelled = false;
 
-    void (async () => {
+    const claimForSession = async (session: Session | null) => {
+      const userId = session?.user.id ?? null;
+      if (!session?.access_token || !userId || attemptedUserRef.current === userId) return;
+
+      attemptedUserRef.current = userId;
       try {
-        const supabase = getSupabaseClient();
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-
-        if (!session?.access_token || session.user.id !== user.id) {
-          if (!cancelled) attemptedUserRef.current = null;
-          return;
-        }
-
         const response = await fetch("/api/ambassadors/referral/claim", {
           method: "POST",
           headers: {
@@ -41,12 +32,18 @@ export function AmbassadorReferralClaim() {
         console.warn("[ambassador/referral] background claim failed", error);
         if (!cancelled) attemptedUserRef.current = null;
       }
-    })();
+    };
+
+    void supabase.auth.getSession().then(({ data }) => claimForSession(data.session));
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      void claimForSession(session);
+    });
 
     return () => {
       cancelled = true;
+      listener.subscription.unsubscribe();
     };
-  }, [profileHydrated, user]);
+  }, []);
 
   return null;
 }
