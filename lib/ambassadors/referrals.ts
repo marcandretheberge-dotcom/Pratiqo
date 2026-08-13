@@ -22,19 +22,19 @@ export function safeAmbassadorDestination(value: string | null | undefined): str
 }
 
 export function isNewAccountForReferral(input: {
-  profileCreatedAt: string | null | undefined;
+  accountCreatedAt: string | null | undefined;
   firstTouchAt: string | null | undefined;
   expiresAt: string | null | undefined;
   now?: Date;
 }): boolean {
-  const profileCreatedMs = Date.parse(input.profileCreatedAt ?? "");
+  const accountCreatedMs = Date.parse(input.accountCreatedAt ?? "");
   const firstTouchMs = Date.parse(input.firstTouchAt ?? "");
   const expiresMs = Date.parse(input.expiresAt ?? "");
   const nowMs = (input.now ?? new Date()).getTime();
 
-  if (![profileCreatedMs, firstTouchMs, expiresMs].every(Number.isFinite)) return false;
+  if (![accountCreatedMs, firstTouchMs, expiresMs].every(Number.isFinite)) return false;
   if (expiresMs <= nowMs) return false;
-  return profileCreatedMs >= firstTouchMs;
+  return accountCreatedMs >= firstTouchMs;
 }
 
 export async function claimAmbassadorReferralForNewUser(
@@ -45,29 +45,30 @@ export async function claimAmbassadorReferralForNewUser(
   const sessionId = parseAmbassadorReferralSessionId(rawSessionId);
   if (!sessionId) return null;
 
-  const [sessionResult, profileResult] = await Promise.all([
+  const [sessionResult, authUserResult] = await Promise.all([
     admin
       .from("referral_sessions")
       .select("first_touch_at, expires_at")
       .eq("id", sessionId)
       .maybeSingle(),
-    admin.from("profiles").select("created_at").eq("id", userId).maybeSingle(),
+    admin.auth.admin.getUserById(userId),
   ]);
 
-  if (sessionResult.error || profileResult.error) {
+  if (sessionResult.error || authUserResult.error) {
     console.error("[ambassador/referral] eligibility lookup failed", {
       userIdPresent: Boolean(userId),
       sessionCode: sessionResult.error?.code ?? null,
-      profileCode: profileResult.error?.code ?? null,
+      authMessage: authUserResult.error?.message ?? null,
     });
     return null;
   }
 
+  const authUser = authUserResult.data.user;
   if (
     !sessionResult.data ||
-    !profileResult.data ||
+    !authUser ||
     !isNewAccountForReferral({
-      profileCreatedAt: profileResult.data.created_at as string | null,
+      accountCreatedAt: authUser.created_at,
       firstTouchAt: sessionResult.data.first_touch_at as string | null,
       expiresAt: sessionResult.data.expires_at as string | null,
     })
