@@ -2,18 +2,23 @@
 --
 -- Principles:
 -- - pay from realized Pratiqo platform fees, never from GMV or teacher gross revenue
--- - only completed + held + paid bookings qualify
+-- - only completed + held + paid + non-refunded bookings qualify
 -- - keep rewards pending for manual review/payout in V1
 -- - keep the rule version immutable/auditable through ambassador_rewards.rule_version
 -- - conservatively void/reverse rewards on refunds or disputes
+-- - serialize student-reward creation per attribution so caps remain correct under concurrency
 --
 -- V1 economics (CAD only):
 -- Student referral:
 --   50% of actual Pratiqo platform fee on up to the first 3 eligible completed bookings,
 --   capped at $5 per booking and $10 total per referred learner.
 -- Teacher referral:
---   $10 once the referred teacher has generated at least $20 of eligible completed
---   Pratiqo platform fees. This keeps the acquisition bounty <= 50% of realized margin.
+--   $10 once the referred teacher has generated at least $40 of eligible completed
+--   Pratiqo platform fees. The teacher bounty therefore consumes at most 25% of
+--   realized teacher-side platform margin, leaving room for overlapping learner rewards.
+
+ALTER TABLE public.ambassador_rewards
+  ADD COLUMN IF NOT EXISTS metadata jsonb NOT NULL DEFAULT '{}'::jsonb;
 
 CREATE TABLE IF NOT EXISTS public.ambassador_reward_rules (
   rule_version text PRIMARY KEY,
@@ -47,7 +52,7 @@ CREATE TABLE IF NOT EXISTS public.ambassador_reward_rules (
     student_per_booking_cap_cents <= student_total_cap_cents
   ),
   CONSTRAINT ambassador_reward_rules_teacher_margin_check CHECK (
-    teacher_activation_bonus_cents * 2 <= teacher_min_completed_platform_fee_cents
+    teacher_activation_bonus_cents * 4 <= teacher_min_completed_platform_fee_cents
   )
 );
 
@@ -75,13 +80,15 @@ INSERT INTO public.ambassador_reward_rules (
   500,
   1000,
   1000,
-  2000,
+  4000,
   now()
 )
 ON CONFLICT (rule_version) DO NOTHING;
 
 COMMENT ON TABLE public.ambassador_reward_rules IS
-  'Versioned service-role-only ambassador economics. V1 rewards are margin-linked and remain pending for manual payout review.';
+  'Versioned service-role-only ambassador economics. Insert a new version instead of mutating historical economics. V1 rewards remain pending for manual payout review.';
+COMMENT ON COLUMN public.ambassador_rewards.metadata IS
+  'Audit metadata for reward creation, invalidation and conservative refund/dispute reconciliation.';
 
 -- Create pending rewards after a booking becomes completed/held.
 CREATE OR REPLACE FUNCTION public.record_ambassador_rewards_v1_on_booking_completion()
@@ -133,9 +140,11 @@ BEGIN
       INTO v_student_attr
     FROM public.referral_attributions ra
     WHERE ra.referred_user_id = NEW.student_id
-      AND ra.referral_type = 'student';
+      AND ra.referral_type = 'student'
+    FOR UPDATE;
 
     IF FOUND THEN
+      -- The attribution row lock serializes cap/count calculations for this learner.
       SELECT
         count(*)::integer,
         COALESCE(sum(ar.amount_cents), 0)::integer
@@ -164,7 +173,8 @@ BEGIN
             amount_cents,
             currency,
             rule_version,
-            status
+            status,
+            metadata
           ) VALUES (
             v_student_attr.ambassador_link_id,
             v_student_attr.id,
@@ -174,7 +184,13 @@ BEGIN
             v_student_reward_cents,
             v_rule.currency,
             v_rule.rule_version,
-            'pending'
+            'pending',
+            jsonb_build_object(
+              'platform_fee_cents', v_payment.platform_fee_cents,
+              'share_bps', v_rule.student_platform_fee_share_bps,
+              'per_booking_cap_cents', v_rule.student_per_booking_cap_cents,
+              'learner_total_cap_cents', v_rule.student_total_cap_cents
+            )
           )
           ON CONFLICT (reward_key) DO NOTHING;
         END IF;
@@ -197,7 +213,8 @@ BEGIN
     INTO v_teacher_attr
   FROM public.referral_attributions ra
   WHERE ra.referred_user_id = v_teacher_user_id
-    AND ra.referral_type = 'teacher';
+    AND ra.referral_type = 'teacher'
+  FOR UPDATE;
 
   IF NOT FOUND THEN
     RETURN NEW;
@@ -225,7 +242,8 @@ BEGIN
       amount_cents,
       currency,
       rule_version,
-      status
+      status,
+      metadata
     ) VALUES (
       v_teacher_attr.ambassador_link_id,
       v_teacher_attr.id,
@@ -235,15 +253,21 @@ BEGIN
       v_rule.teacher_activation_bonus_cents,
       v_rule.currency,
       v_rule.rule_version,
-      'pending'
+      'pending',
+      jsonb_build_object(
+        'eligible_platform_fee_cents_at_creation', v_teacher_platform_fee_total,
+        'minimum_platform_fee_cents', v_rule.teacher_min_completed_platform_fee_cents
+      )
     )
     ON CONFLICT (reward_key) DO UPDATE
       SET booking_id = EXCLUDED.booking_id,
           amount_cents = EXCLUDED.amount_cents,
           status = 'pending',
           voided_at = NULL,
+          metadata = EXCLUDED.metadata,
           updated_at = now()
-      WHERE public.ambassador_rewards.status = 'void';
+      WHERE public.ambassador_rewards.status = 'void'
+        AND public.ambassador_rewards.metadata->>'status_reason' = 'teacher_margin_below_threshold';
   END IF;
 
   RETURN NEW;
@@ -280,6 +304,13 @@ BEGIN
   UPDATE public.ambassador_rewards ar
   SET status = CASE WHEN ar.status = 'paid' THEN 'reversed' ELSE 'void' END,
       voided_at = COALESCE(ar.voided_at, now()),
+      metadata = COALESCE(ar.metadata, '{}'::jsonb) || jsonb_build_object(
+        'status_reason', 'booking_refund_or_dispute',
+        'invalidated_by_booking_id', NEW.booking_id,
+        'payment_status', NEW.payment_status,
+        'refunded_cents', NEW.refunded_cents,
+        'invalidated_at', now()
+      ),
       updated_at = now()
   WHERE ar.booking_id = NEW.booking_id
     AND ar.reward_type = 'student_completed_booking_share'
@@ -310,7 +341,8 @@ BEGIN
     INTO v_teacher_attr
   FROM public.referral_attributions ra
   WHERE ra.referred_user_id = v_teacher_user_id
-    AND ra.referral_type = 'teacher';
+    AND ra.referral_type = 'teacher'
+  FOR UPDATE;
 
   IF NOT FOUND THEN
     RETURN NEW;
@@ -331,6 +363,12 @@ BEGIN
     UPDATE public.ambassador_rewards ar
     SET status = CASE WHEN ar.status = 'paid' THEN 'reversed' ELSE 'void' END,
         voided_at = COALESCE(ar.voided_at, now()),
+        metadata = COALESCE(ar.metadata, '{}'::jsonb) || jsonb_build_object(
+          'status_reason', 'teacher_margin_below_threshold',
+          'eligible_platform_fee_cents_after_adjustment', v_teacher_platform_fee_total,
+          'invalidated_by_booking_id', NEW.booking_id,
+          'invalidated_at', now()
+        ),
         updated_at = now()
     WHERE ar.attribution_id = v_teacher_attr.id
       AND ar.reward_type = 'teacher_activation_margin_bonus'
@@ -352,27 +390,103 @@ WHEN (
 )
 EXECUTE FUNCTION public.reconcile_ambassador_rewards_v1_after_payment_adjustment();
 
--- Admin-only economics view: exposes how much realized fee remains after ambassador obligations.
+-- Admin-only economics view. `unique_fee_rollup` uses UNION so a booking that
+-- belongs to both a referred learner and a referred teacher is counted once,
+-- while reward obligations from both acquisition loops remain visible.
 CREATE OR REPLACE VIEW public.ambassador_reward_economics
 WITH (security_invoker = true)
 AS
+WITH student_fee_rows AS (
+  SELECT
+    ra.ambassador_link_id,
+    bp.booking_id,
+    bp.platform_fee_cents
+  FROM public.referral_attributions ra
+  JOIN public.booking_payments bp ON bp.student_id = ra.referred_user_id
+  JOIN public.bookings b ON b.id = bp.booking_id
+  WHERE ra.referral_type = 'student'
+    AND bp.payment_status = 'paid'
+    AND bp.refunded_cents = 0
+    AND bp.currency = 'cad'
+    AND b.status = 'completed'
+    AND b.completion_outcome = 'held'
+), teacher_fee_rows AS (
+  SELECT
+    ra.ambassador_link_id,
+    bp.booking_id,
+    bp.platform_fee_cents
+  FROM public.referral_attributions ra
+  JOIN public.teachers referred_teacher ON referred_teacher.user_id = ra.referred_user_id
+  JOIN public.booking_payments bp ON bp.teacher_id = referred_teacher.id
+  JOIN public.bookings b ON b.id = bp.booking_id
+  WHERE ra.referral_type = 'teacher'
+    AND bp.payment_status = 'paid'
+    AND bp.refunded_cents = 0
+    AND bp.currency = 'cad'
+    AND b.status = 'completed'
+    AND b.completion_outcome = 'held'
+), student_fee_rollup AS (
+  SELECT ambassador_link_id, COALESCE(sum(platform_fee_cents), 0)::bigint AS student_platform_fee_cents
+  FROM student_fee_rows
+  GROUP BY ambassador_link_id
+), teacher_fee_rollup AS (
+  SELECT ambassador_link_id, COALESCE(sum(platform_fee_cents), 0)::bigint AS teacher_platform_fee_cents
+  FROM teacher_fee_rows
+  GROUP BY ambassador_link_id
+), unique_fee_rollup AS (
+  SELECT
+    x.ambassador_link_id,
+    COALESCE(sum(x.platform_fee_cents), 0)::bigint AS unique_realized_platform_fee_cents
+  FROM (
+    SELECT ambassador_link_id, booking_id, platform_fee_cents FROM student_fee_rows
+    UNION
+    SELECT ambassador_link_id, booking_id, platform_fee_cents FROM teacher_fee_rows
+  ) x
+  GROUP BY x.ambassador_link_id
+), reward_rollup AS (
+  SELECT
+    ar.ambassador_link_id,
+    COALESCE(sum(ar.amount_cents) FILTER (
+      WHERE ar.status IN ('pending', 'earned')
+    ), 0)::bigint AS rewards_due_cents,
+    COALESCE(sum(ar.amount_cents) FILTER (
+      WHERE ar.status = 'paid'
+    ), 0)::bigint AS rewards_paid_cents,
+    COALESCE(sum(ar.amount_cents) FILTER (
+      WHERE ar.reward_type = 'student_completed_booking_share'
+        AND ar.status IN ('pending', 'earned', 'paid')
+    ), 0)::bigint AS student_rewards_active_cents,
+    COALESCE(sum(ar.amount_cents) FILTER (
+      WHERE ar.reward_type = 'teacher_activation_margin_bonus'
+        AND ar.status IN ('pending', 'earned', 'paid')
+    ), 0)::bigint AS teacher_rewards_active_cents
+  FROM public.ambassador_rewards ar
+  GROUP BY ar.ambassador_link_id
+)
 SELECT
   al.id AS ambassador_link_id,
   al.code,
   al.teacher_id,
   t.user_id AS ambassador_user_id,
-  COALESCE(ap.completed_platform_fee_cents, 0) AS referred_student_completed_platform_fee_cents,
-  COALESCE(ap.rewards_due_cents, 0) AS rewards_due_cents,
-  COALESCE(ap.rewards_paid_cents, 0) AS rewards_paid_cents,
+  COALESCE(sfr.student_platform_fee_cents, 0) AS referred_student_platform_fee_cents,
+  COALESCE(tfr.teacher_platform_fee_cents, 0) AS referred_teacher_platform_fee_cents,
+  COALESCE(ufr.unique_realized_platform_fee_cents, 0) AS unique_realized_platform_fee_cents,
+  COALESCE(rr.student_rewards_active_cents, 0) AS student_rewards_active_cents,
+  COALESCE(rr.teacher_rewards_active_cents, 0) AS teacher_rewards_active_cents,
+  COALESCE(rr.rewards_due_cents, 0) AS rewards_due_cents,
+  COALESCE(rr.rewards_paid_cents, 0) AS rewards_paid_cents,
   GREATEST(
     0,
-    COALESCE(ap.completed_platform_fee_cents, 0)
-      - COALESCE(ap.rewards_due_cents, 0)
-      - COALESCE(ap.rewards_paid_cents, 0)
-  ) AS referred_student_fee_after_rewards_cents
+    COALESCE(ufr.unique_realized_platform_fee_cents, 0)
+      - COALESCE(rr.rewards_due_cents, 0)
+      - COALESCE(rr.rewards_paid_cents, 0)
+  ) AS realized_fee_after_active_rewards_cents
 FROM public.ambassador_links al
 JOIN public.teachers t ON t.id = al.teacher_id
-LEFT JOIN public.ambassador_performance ap ON ap.ambassador_link_id = al.id;
+LEFT JOIN student_fee_rollup sfr ON sfr.ambassador_link_id = al.id
+LEFT JOIN teacher_fee_rollup tfr ON tfr.ambassador_link_id = al.id
+LEFT JOIN unique_fee_rollup ufr ON ufr.ambassador_link_id = al.id
+LEFT JOIN reward_rollup rr ON rr.ambassador_link_id = al.id;
 
 ALTER TABLE public.ambassador_reward_rules ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON public.ambassador_reward_rules FROM anon, authenticated;
