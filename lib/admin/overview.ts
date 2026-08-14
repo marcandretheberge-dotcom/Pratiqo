@@ -19,6 +19,17 @@ export type AdminOverview = {
   teachersMissingAvailability: number | null;
 };
 
+type AdminOverviewQuery = PromiseLike<{
+  data?: unknown;
+  count: number | null;
+  error: { message: string } | null;
+}> & {
+  eq: (...args: unknown[]) => AdminOverviewQuery;
+  is: (...args: unknown[]) => AdminOverviewQuery;
+  not: (...args: unknown[]) => AdminOverviewQuery;
+  or: (...args: unknown[]) => AdminOverviewQuery;
+};
+
 export type AdminOverviewModuleId =
   | "teachers"
   | "students"
@@ -253,7 +264,7 @@ export async function loadAdminOverview(admin: {
 }): Promise<AdminOverview> {
   const db = admin as {
     from: (table: string) => {
-      select: (...args: unknown[]) => any;
+      select: (...args: unknown[]) => AdminOverviewQuery;
     };
   };
   const overview = emptyAdminOverview();

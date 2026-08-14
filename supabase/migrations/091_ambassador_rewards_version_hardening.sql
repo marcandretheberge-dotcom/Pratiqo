@@ -1,8 +1,9 @@
 -- Future-proof Ambassador rewards across rule-version changes.
 -- This migration deliberately follows 090 instead of rewriting history.
 -- It prevents learner caps from resetting when a future rule version becomes active,
--- prevents duplicate teacher acquisition bounties across versions, and reconciles
--- teacher rewards against the exact rule version that created each reward.
+-- keeps paid->reversed rewards counted as historical acquisition spend, prevents
+-- duplicate teacher acquisition bounties across versions, and reconciles teacher
+-- rewards against the exact rule version that created each reward.
 
 CREATE OR REPLACE FUNCTION public.record_ambassador_rewards_v1_on_booking_completion()
 RETURNS trigger
@@ -58,6 +59,7 @@ BEGIN
 
     IF FOUND THEN
       -- Lifetime acquisition caps: do not reset count or spend at a V2/V3 transition.
+      -- A pre-payout void releases capacity; paid->reversed remains historical spend.
       SELECT
         count(*)::integer,
         COALESCE(sum(ar.amount_cents), 0)::integer
@@ -65,7 +67,7 @@ BEGIN
       FROM public.ambassador_rewards ar
       WHERE ar.attribution_id = v_student_attr.id
         AND ar.reward_type = 'student_completed_booking_share'
-        AND ar.status NOT IN ('void', 'reversed');
+        AND ar.status <> 'void';
 
       IF v_student_reward_count < v_rule.student_booking_limit
          AND v_student_reward_total < v_rule.student_total_cap_cents THEN
@@ -91,7 +93,7 @@ BEGIN
             v_student_attr.ambassador_link_id,
             v_student_attr.id,
             NEW.id,
-            'student_completed:' || v_student_attr.id::text || ':' || NEW.id::text || ':' || v_rule.rule_version,
+            'student_completed:' || v_student_attr.id::text || ':' || NEW.id::text,
             'student_completed_booking_share',
             v_student_reward_cents,
             v_rule.currency,
@@ -173,7 +175,7 @@ BEGIN
       v_teacher_attr.ambassador_link_id,
       v_teacher_attr.id,
       NEW.id,
-      'teacher_activation:' || v_teacher_attr.id::text || ':' || v_rule.rule_version,
+      'teacher_activation:' || v_teacher_attr.id::text,
       'teacher_activation_margin_bonus',
       v_rule.teacher_activation_bonus_cents,
       v_rule.currency,
@@ -186,10 +188,14 @@ BEGIN
     )
     ON CONFLICT (reward_key) DO UPDATE
       SET booking_id = EXCLUDED.booking_id,
-          amount_cents = EXCLUDED.amount_cents,
           status = 'pending',
           voided_at = NULL,
-          metadata = EXCLUDED.metadata,
+          metadata = COALESCE(public.ambassador_rewards.metadata, '{}'::jsonb)
+            || EXCLUDED.metadata
+            || jsonb_build_object(
+              'reactivated_from_void', true,
+              'reactivated_at', now()
+            ),
           updated_at = now()
       WHERE public.ambassador_rewards.status = 'void'
         AND public.ambassador_rewards.metadata->>'status_reason' = 'teacher_margin_below_threshold';
@@ -289,6 +295,8 @@ WHEN (
   OR NEW.refunded_cents > 0
 )
 EXECUTE FUNCTION public.reconcile_ambassador_rewards_after_payment_adjustment();
+
+DROP FUNCTION IF EXISTS public.reconcile_ambassador_rewards_v1_after_payment_adjustment();
 
 REVOKE ALL ON FUNCTION public.reconcile_ambassador_rewards_after_payment_adjustment() FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.reconcile_ambassador_rewards_after_payment_adjustment() TO service_role;

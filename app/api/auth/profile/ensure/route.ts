@@ -45,9 +45,6 @@ export async function POST(req: Request) {
   const displayName = typeof body.displayName === "string" ? body.displayName.trim() : null;
 
   const admin = getSupabaseAdmin();
-  const beforeEnsure = await admin.from("profiles").select("id").eq("id", user.id).maybeSingle();
-  const isNewProfile = !beforeEnsure.error && !beforeEnsure.data;
-
   const ensured = await ensureAuthProfileForUser(admin, user, {
     intent,
     displayName,
@@ -58,14 +55,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "profile_ensure_failed" }, { status: 500 });
   }
 
-  if (isNewProfile) {
-    const cookieStore = await cookies();
-    await claimAmbassadorReferralForNewUser(
-      admin,
-      user.id,
-      cookieStore.get(AMBASSADOR_REF_COOKIE)?.value,
-    );
-  }
+  const cookieStore = await cookies();
+  await claimAmbassadorReferralForNewUser(
+    admin,
+    user.id,
+    cookieStore.get(AMBASSADOR_REF_COOKIE)?.value,
+  );
 
   return NextResponse.json({ ok: true, profile: ensured.profile });
 }

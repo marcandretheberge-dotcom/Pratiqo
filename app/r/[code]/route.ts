@@ -1,13 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { rateLimitByIp } from "@/lib/rateLimit";
 import {
   AMBASSADOR_REF_COOKIE,
+  AMBASSADOR_REFERRAL_RATE_LIMIT,
+  clampAmbassadorReferralWindowDays,
   normalizeAmbassadorCode,
   parseAmbassadorReferralSessionId,
   safeAmbassadorDestination,
+  shouldSkipAmbassadorSessionCreationForRateLimit,
 } from "@/lib/ambassadors/referrals";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 function cookieMaxAgeSeconds(expiresAt: string): number {
   const remainingMs = new Date(expiresAt).getTime() - Date.now();
@@ -48,7 +53,12 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ code
     }
   }
 
-  const days = Number(link.attribution_window_days ?? 30);
+  const rateLimit = await rateLimitByIp(req, `ambassador-referral-${code}`, AMBASSADOR_REFERRAL_RATE_LIMIT);
+  if (shouldSkipAmbassadorSessionCreationForRateLimit(rateLimit)) {
+    return NextResponse.redirect(new URL(destinationPath, req.url));
+  }
+
+  const days = clampAmbassadorReferralWindowDays(link.attribution_window_days);
   const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
   const sessionResult = await admin
     .from("referral_sessions")

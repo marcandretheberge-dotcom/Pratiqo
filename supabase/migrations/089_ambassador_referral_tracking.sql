@@ -58,17 +58,19 @@ CREATE INDEX IF NOT EXISTS idx_referral_sessions_expiry
 
 CREATE TABLE IF NOT EXISTS public.referral_attributions (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  session_id uuid NOT NULL UNIQUE REFERENCES public.referral_sessions(id) ON DELETE RESTRICT,
+  session_id uuid NOT NULL REFERENCES public.referral_sessions(id) ON DELETE RESTRICT,
   ambassador_link_id uuid NOT NULL REFERENCES public.ambassador_links(id) ON DELETE RESTRICT,
   ambassador_user_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE RESTRICT,
-  referred_user_id uuid NOT NULL UNIQUE REFERENCES public.profiles(id) ON DELETE CASCADE,
+  referred_user_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   referral_type text NOT NULL,
   first_touch_at timestamptz NOT NULL,
   attributed_at timestamptz NOT NULL DEFAULT now(),
   expires_at timestamptz NOT NULL,
 
   CONSTRAINT referral_attributions_type_check CHECK (referral_type IN ('student', 'teacher')),
-  CONSTRAINT referral_attributions_not_self_check CHECK (ambassador_user_id <> referred_user_id)
+  CONSTRAINT referral_attributions_not_self_check CHECK (ambassador_user_id <> referred_user_id),
+  CONSTRAINT referral_attributions_one_per_session_type UNIQUE (session_id, referral_type),
+  CONSTRAINT referral_attributions_one_per_user_type UNIQUE (referred_user_id, referral_type)
 );
 
 CREATE INDEX IF NOT EXISTS idx_referral_attributions_ambassador
@@ -133,6 +135,9 @@ CREATE TABLE IF NOT EXISTS public.ambassador_rewards (
   ),
   CONSTRAINT ambassador_rewards_status_check CHECK (
     status IN ('pending', 'earned', 'paid', 'void', 'reversed')
+  ),
+  CONSTRAINT ambassador_rewards_type_check CHECK (
+    reward_type IN ('student_completed_booking_share', 'teacher_activation_margin_bonus')
   )
 );
 
@@ -173,15 +178,6 @@ DECLARE
 BEGIN
   IF p_session_id IS NULL OR p_user_id IS NULL THEN
     RETURN NULL;
-  END IF;
-
-  SELECT ra.id
-    INTO v_attribution_id
-  FROM public.referral_attributions ra
-  WHERE ra.referred_user_id = p_user_id;
-
-  IF v_attribution_id IS NOT NULL THEN
-    RETURN v_attribution_id;
   END IF;
 
   SELECT s.*
@@ -226,6 +222,16 @@ BEGIN
 
   v_referral_type := CASE WHEN v_role = 'teacher' THEN 'teacher' ELSE 'student' END;
 
+  SELECT ra.id
+    INTO v_attribution_id
+  FROM public.referral_attributions ra
+  WHERE ra.referred_user_id = p_user_id
+    AND ra.referral_type = v_referral_type;
+
+  IF v_attribution_id IS NOT NULL THEN
+    RETURN v_attribution_id;
+  END IF;
+
   INSERT INTO public.referral_attributions (
     session_id,
     ambassador_link_id,
@@ -245,14 +251,15 @@ BEGIN
     now(),
     v_session.expires_at
   )
-  ON CONFLICT (referred_user_id) DO NOTHING
+  ON CONFLICT (referred_user_id, referral_type) DO NOTHING
   RETURNING id INTO v_attribution_id;
 
   IF v_attribution_id IS NULL THEN
     SELECT ra.id
       INTO v_attribution_id
     FROM public.referral_attributions ra
-    WHERE ra.referred_user_id = p_user_id;
+    WHERE ra.referred_user_id = p_user_id
+      AND ra.referral_type = v_referral_type;
     RETURN v_attribution_id;
   END IF;
 
@@ -275,7 +282,7 @@ BEGIN
     v_attribution_id,
     p_user_id,
     CASE WHEN v_referral_type = 'teacher' THEN 'teacher_signup' ELSE 'student_signup' END,
-    'signup:' || p_user_id::text
+    'signup:' || v_referral_type || ':' || p_user_id::text
   )
   ON CONFLICT (event_key) DO NOTHING;
 

@@ -373,6 +373,17 @@ test("tracked patch avoids generated audio and restricted product systems", () =
     // Defended by tests/admin/adminBookingsPaymentsOperations.test.ts.
     "app/api/admin/bookings/route.ts",
     "app/api/admin/payments/route.ts",
+    // agent/ambassador-referral-tracking (#303) — referral attribution must
+    // claim after profile hydration, but this does not touch YoPratiqo audio
+    // manifests, lesson content, or generation scripts. Defended by
+    // tests/ambassadors/* and tests/security/rlsCoverage.test.ts.
+    "app/api/auth/profile/ensure/route.ts",
+    "app/api/ambassadors/referral/claim/route.ts",
+    "app/r/[code]/route.ts",
+    "supabase/migrations/089_ambassador_referral_tracking.sql",
+    "supabase/migrations/090_ambassador_rewards_v1.sql",
+    "supabase/migrations/091_ambassador_rewards_version_hardening.sql",
+    "supabase/migrations/092_harden_recent_program_tables_rls.sql",
   ]);
   const forbidden = [
     /^app\/api\//,

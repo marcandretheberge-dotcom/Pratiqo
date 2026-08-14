@@ -302,11 +302,21 @@ test("commission model branch may update canonical commission files but not rest
     "supabase/migrations/084_student_onboarding_consents.sql",
   ]);
 
+  const approvedAmbassadorMigrationExceptions = new Set<string>([
+    // Ambassador referral/reward infrastructure draft PR (#303).
+    // Defended by tests/ambassadors/* and tests/security/rlsCoverage.test.ts.
+    "supabase/migrations/089_ambassador_referral_tracking.sql",
+    "supabase/migrations/090_ambassador_rewards_v1.sql",
+    "supabase/migrations/091_ambassador_rewards_version_hardening.sql",
+    "supabase/migrations/092_harden_recent_program_tables_rls.sql",
+  ]);
+
   const violations: string[] = [];
   for (const file of changed) {
     if (approvedStripeRouteExceptions.has(file)) continue;
     if (approvedPaymentHelperExceptions.has(file)) continue;
     if (approvedStudentConsentMigrationExceptions.has(file)) continue;
+    if (approvedAmbassadorMigrationExceptions.has(file)) continue;
     // Launch-safety PR exception: group-session checkout is disabled at launch,
     // and this branch only centralizes the fail-closed gate so public disabled
     // SEO surfaces share the same source of truth. The helper above verifies the
