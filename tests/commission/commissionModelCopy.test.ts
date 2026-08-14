@@ -303,13 +303,16 @@ test("commission model branch may update canonical commission files but not rest
   ]);
 
   const approvedAmbassadorMigrationExceptions = new Set<string>([
+    // Migration-number cleanup before PR #303: learner demand moved from 088 to 089.
+    "supabase/migrations/088_learner_demand_funnel.sql",
+    "supabase/migrations/089_learner_demand_funnel.sql",
     // Ambassador referral/reward infrastructure draft PR (#303).
     // Defended by tests/ambassadors/* and tests/security/rlsCoverage.test.ts.
-    "supabase/migrations/089_ambassador_referral_tracking.sql",
-    "supabase/migrations/090_ambassador_rewards_v1.sql",
-    "supabase/migrations/091_ambassador_rewards_version_hardening.sql",
-    "supabase/migrations/092_harden_recent_program_tables_rls.sql",
-    "supabase/migrations/093_ambassador_net_contribution_economics.sql",
+    "supabase/migrations/090_ambassador_referral_tracking.sql",
+    "supabase/migrations/091_ambassador_rewards_v1.sql",
+    "supabase/migrations/092_ambassador_rewards_version_hardening.sql",
+    "supabase/migrations/093_harden_recent_program_tables_rls.sql",
+    "supabase/migrations/094_ambassador_net_contribution_economics.sql",
   ]);
 
   const violations: string[] = [];

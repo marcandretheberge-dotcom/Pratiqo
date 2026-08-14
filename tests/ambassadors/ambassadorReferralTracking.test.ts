@@ -41,16 +41,16 @@ const clientClaimSrc = read("components/ambassadors/AmbassadorReferralClaim.tsx"
 const authCallbackSrc = read("app/auth/callback/route.ts");
 const creditsRouteSrc = read("app/api/credits/route.ts");
 const creditsLibSrc = read("lib/credits.ts");
-const migration089 = read("supabase/migrations/089_ambassador_referral_tracking.sql");
-const migration093 = read("supabase/migrations/093_ambassador_net_contribution_economics.sql");
+const migration090 = read("supabase/migrations/090_ambassador_referral_tracking.sql");
+const migration094 = read("supabase/migrations/094_ambassador_net_contribution_economics.sql");
 
 test("public ambassador codes are normalized but not used as relational keys", () => {
   assert.equal(normalizeAmbassadorCode("Julie-Piano"), "julie-piano");
   assert.equal(normalizeAmbassadorCode("ab"), null);
   assert.equal(normalizeAmbassadorCode("julie_piano"), null);
-  assert.match(migration089, /id uuid PRIMARY KEY DEFAULT gen_random_uuid\(\)/);
-  assert.match(migration089, /ambassador_link_id uuid NOT NULL REFERENCES public\.ambassador_links\(id\)/);
-  assert.doesNotMatch(migration089, /REFERENCES public\.ambassador_links\(code\)/);
+  assert.match(migration090, /id uuid PRIMARY KEY DEFAULT gen_random_uuid\(\)/);
+  assert.match(migration090, /ambassador_link_id uuid NOT NULL REFERENCES public\.ambassador_links\(id\)/);
+  assert.doesNotMatch(migration090, /REFERENCES public\.ambassador_links\(code\)/);
 });
 
 test("referral destination and cookie values stay constrained", () => {
@@ -116,19 +116,19 @@ test("/r/[code] preserves first valid touch before creating a new session", () =
 
 test("existing first-touch sessions remain claimable after public link deactivation", () => {
   assert.match(routeSrc, /\.eq\("active", true\)/, "new /r/[code] sessions require an active link");
-  assert.match(migration093, /legitimately issued while its link was active remains[\s\S]*claimable until expiry/);
-  assert.match(migration093, /FROM public\.ambassador_links l\s+WHERE l\.id = v_session\.ambassador_link_id;/);
+  assert.match(migration094, /legitimately issued while its link was active remains[\s\S]*claimable until expiry/);
+  assert.match(migration094, /FROM public\.ambassador_links l\s+WHERE l\.id = v_session\.ambassador_link_id;/);
   assert.doesNotMatch(
-    migration093,
+    migration094,
     /WHERE l\.id = v_session\.ambassador_link_id\s+AND l\.active = true/,
   );
 });
 
 test("ambassador link destination SQL constraint rejects backslash redirects", () => {
-  assert.match(migration093, /DROP CONSTRAINT IF EXISTS ambassador_links_destination_check/);
-  assert.match(migration093, /UPDATE public\.ambassador_links\s+SET destination_path = '\/'/);
-  assert.match(migration093, /position\(chr\(92\) in destination_path\) = 0/);
-  assert.match(migration093, /lower\(destination_path\) NOT LIKE '%5c%'/);
+  assert.match(migration094, /DROP CONSTRAINT IF EXISTS ambassador_links_destination_check/);
+  assert.match(migration094, /UPDATE public\.ambassador_links\s+SET destination_path = '\/'/);
+  assert.match(migration094, /position\(chr\(92\) in destination_path\) = 0/);
+  assert.match(migration094, /lower\(destination_path\) NOT LIKE '%5c%'/);
 });
 
 test("/r/[code] rate limits tracking without breaking navigation", () => {
@@ -185,8 +185,8 @@ test("legacy friend referral credit system remains separate", () => {
   assert.match(authCallbackSrc, /referred_by/);
   assert.match(creditsRouteSrc, /referral_code/);
   assert.match(creditsLibSrc, /REFERRAL_YEARLY_CAP/);
-  assert.doesNotMatch(migration089, /ALTER TABLE public\.profiles.*referral_code/is);
-  assert.doesNotMatch(migration089, /credit_transactions/);
+  assert.doesNotMatch(migration090, /ALTER TABLE public\.profiles.*referral_code/is);
+  assert.doesNotMatch(migration090, /credit_transactions/);
 });
 
 test("ambassador PR stays away from restricted systems", () => {
@@ -194,7 +194,7 @@ test("ambassador PR stays away from restricted systems", () => {
     /^app\/api\/stripe\//,
     /^lib\/payments\//,
     /^lib\/config\/membrePro\.ts$/,
-    /^supabase\/migrations\/(?!089_ambassador|090_ambassador|091_ambassador|092_harden_recent_program_tables_rls\.sql$|093_ambassador_net_contribution_economics\.sql$)/,
+    /^supabase\/migrations\/(?!(088_learner_demand_funnel|089_learner_demand_funnel|089_ambassador_referral_tracking|090_ambassador_referral_tracking|090_ambassador_rewards_v1|091_ambassador_rewards_v1|091_ambassador_rewards_version_hardening|092_ambassador_rewards_version_hardening|092_harden_recent_program_tables_rls|093_harden_recent_program_tables_rls|093_ambassador_net_contribution_economics|094_ambassador_net_contribution_economics)\.sql$)/,
     /^app\/yo\//,
     /^lib\/yo\//,
     /^public\/.*\.mp3$/i,

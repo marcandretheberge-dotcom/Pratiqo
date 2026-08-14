@@ -380,11 +380,13 @@ test("tracked patch avoids generated audio and restricted product systems", () =
     "app/api/auth/profile/ensure/route.ts",
     "app/api/ambassadors/referral/claim/route.ts",
     "app/r/[code]/route.ts",
-    "supabase/migrations/089_ambassador_referral_tracking.sql",
-    "supabase/migrations/090_ambassador_rewards_v1.sql",
-    "supabase/migrations/091_ambassador_rewards_version_hardening.sql",
-    "supabase/migrations/092_harden_recent_program_tables_rls.sql",
-    "supabase/migrations/093_ambassador_net_contribution_economics.sql",
+    "supabase/migrations/088_learner_demand_funnel.sql",
+    "supabase/migrations/089_learner_demand_funnel.sql",
+    "supabase/migrations/090_ambassador_referral_tracking.sql",
+    "supabase/migrations/091_ambassador_rewards_v1.sql",
+    "supabase/migrations/092_ambassador_rewards_version_hardening.sql",
+    "supabase/migrations/093_harden_recent_program_tables_rls.sql",
+    "supabase/migrations/094_ambassador_net_contribution_economics.sql",
   ]);
   const forbidden = [
     /^app\/api\//,

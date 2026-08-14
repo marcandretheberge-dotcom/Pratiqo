@@ -24,7 +24,7 @@ const helperSrc = readFileSync(join(root, "lib", "learnerDemand.ts"), "utf8");
 const notificationSrc = readFileSync(join(root, "lib", "learnerDemandNotifications.ts"), "utf8");
 const emailSrc = readFileSync(join(root, "lib", "email", "templates", "learnerDemand.ts"), "utf8");
 const cronSrc = readFileSync(join(root, "app", "api", "cron", "learner-demand", "route.ts"), "utf8");
-const migrationSrc = readFileSync(join(root, "supabase", "migrations", "088_learner_demand_funnel.sql"), "utf8");
+const migrationSrc = readFileSync(join(root, "supabase", "migrations", "089_learner_demand_funnel.sql"), "utf8");
 const vercelSrc = readFileSync(join(root, "vercel.json"), "utf8");
 
 function stripComments(src: string): string {

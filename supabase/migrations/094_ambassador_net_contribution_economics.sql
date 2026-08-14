@@ -1,6 +1,6 @@
 -- Final PR #303 hardening: make ambassador rewards contribution-margin safe.
 --
--- Migrations 089-092 are kept intact as PR history. This forward migration
+-- Migrations 090-093 are kept intact as PR history. This forward migration
 -- makes the final executable reward functions use net platform contribution:
 --   max(0, booking_payments.platform_fee_cents - conservative payment reserve)
 --
