@@ -7,9 +7,19 @@ export const AMBASSADOR_REFERRAL_RATE_LIMIT = {
   limit: 20,
   windowSeconds: 60,
 } as const;
+export const AMBASSADOR_REWARD_RULE_V1 = {
+  paymentCostReserveBps: 420,
+  paymentCostReserveFixedCents: 55,
+  learnerRewardShareBps: 5000,
+  learnerPerBookingCapCents: 500,
+  learnerLifetimeCapCents: 1000,
+  teacherMinimumNetContributionCents: 4000,
+  teacherActivationBonusCents: 1000,
+} as const;
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const CODE_RE = /^[a-z0-9][a-z0-9-]{2,63}$/;
+const ENCODED_BACKSLASH_RE = /%5c/i;
 
 export function normalizeAmbassadorCode(value: string): string | null {
   const code = value.trim().toLowerCase();
@@ -24,7 +34,16 @@ export function parseAmbassadorReferralSessionId(value: string | null | undefine
 export function safeAmbassadorDestination(value: string | null | undefined): string {
   const path = value?.trim() ?? "";
   if (!path.startsWith("/") || path.startsWith("//")) return "/";
-  return path;
+  if (path.includes("\\") || ENCODED_BACKSLASH_RE.test(path)) return "/";
+
+  try {
+    const base = "https://www.pratiqo.ca";
+    const parsed = new URL(path, base);
+    if (parsed.origin !== base) return "/";
+    return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+  } catch {
+    return "/";
+  }
 }
 
 export function clampAmbassadorReferralWindowDays(value: unknown): number {
@@ -41,6 +60,54 @@ export function shouldSkipAmbassadorSessionCreationForRateLimit(input: {
   infrastructureUnavailable?: boolean;
 }): boolean {
   return input.infrastructureUnavailable === true || input.allowed === false;
+}
+
+function safeCents(value: number): number {
+  return Math.max(0, Math.trunc(Number.isFinite(value) ? value : 0));
+}
+
+export function calculateAmbassadorPaymentCostReserveCents(input: {
+  amountCents: number;
+  paymentCostReserveBps?: number;
+  paymentCostReserveFixedCents?: number;
+}): number {
+  const amountCents = safeCents(input.amountCents);
+  const reserveBps = safeCents(input.paymentCostReserveBps ?? AMBASSADOR_REWARD_RULE_V1.paymentCostReserveBps);
+  const fixedCents = safeCents(
+    input.paymentCostReserveFixedCents ?? AMBASSADOR_REWARD_RULE_V1.paymentCostReserveFixedCents,
+  );
+  return Math.ceil((amountCents * reserveBps) / 10000) + fixedCents;
+}
+
+export function calculateAmbassadorNetPlatformContributionCents(input: {
+  amountCents: number;
+  grossPlatformFeeCents: number;
+  paymentCostReserveBps?: number;
+  paymentCostReserveFixedCents?: number;
+}): number {
+  const grossPlatformFeeCents = safeCents(input.grossPlatformFeeCents);
+  const reserveCents = calculateAmbassadorPaymentCostReserveCents(input);
+  return Math.max(0, grossPlatformFeeCents - reserveCents);
+}
+
+export function calculateAmbassadorLearnerRewardCents(input: {
+  amountCents: number;
+  grossPlatformFeeCents: number;
+  remainingLifetimeCapCents: number;
+  rewardShareBps?: number;
+  perBookingCapCents?: number;
+  paymentCostReserveBps?: number;
+  paymentCostReserveFixedCents?: number;
+}): number {
+  const netContributionCents = calculateAmbassadorNetPlatformContributionCents(input);
+  if (netContributionCents <= 0) return 0;
+
+  const rewardShareBps = safeCents(input.rewardShareBps ?? AMBASSADOR_REWARD_RULE_V1.learnerRewardShareBps);
+  return Math.min(
+    safeCents(input.perBookingCapCents ?? AMBASSADOR_REWARD_RULE_V1.learnerPerBookingCapCents),
+    Math.floor((netContributionCents * rewardShareBps) / 10000),
+    safeCents(input.remainingLifetimeCapCents),
+  );
 }
 
 export function isNewAccountForReferral(input: {

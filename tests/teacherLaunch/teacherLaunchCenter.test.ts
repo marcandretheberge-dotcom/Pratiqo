@@ -410,6 +410,7 @@ test("forbidden files: PR does not touch Stripe checkout/webhook, Supabase/RLS/m
     "supabase/migrations/090_ambassador_rewards_v1.sql",
     "supabase/migrations/091_ambassador_rewards_version_hardening.sql",
     "supabase/migrations/092_harden_recent_program_tables_rls.sql",
+    "supabase/migrations/093_ambassador_net_contribution_economics.sql",
   ]);
 
   // Approved Stripe route exceptions for narrowly-scoped consent-gate

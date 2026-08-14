@@ -42,6 +42,7 @@ const authCallbackSrc = read("app/auth/callback/route.ts");
 const creditsRouteSrc = read("app/api/credits/route.ts");
 const creditsLibSrc = read("lib/credits.ts");
 const migration089 = read("supabase/migrations/089_ambassador_referral_tracking.sql");
+const migration093 = read("supabase/migrations/093_ambassador_net_contribution_economics.sql");
 
 test("public ambassador codes are normalized but not used as relational keys", () => {
   assert.equal(normalizeAmbassadorCode("Julie-Piano"), "julie-piano");
@@ -56,6 +57,9 @@ test("referral destination and cookie values stay constrained", () => {
   assert.equal(safeAmbassadorDestination("/trouver-un-prof?q=espagnol"), "/trouver-un-prof?q=espagnol");
   assert.equal(safeAmbassadorDestination("https://evil.example"), "/");
   assert.equal(safeAmbassadorDestination("//evil.example"), "/");
+  assert.equal(safeAmbassadorDestination("/\\evil.example"), "/");
+  assert.equal(safeAmbassadorDestination("/\\/evil.example"), "/");
+  assert.equal(safeAmbassadorDestination("/%5Cevil.example"), "/");
   assert.equal(
     parseAmbassadorReferralSessionId("11111111-1111-4111-8111-111111111111"),
     "11111111-1111-4111-8111-111111111111",
@@ -108,6 +112,23 @@ test("/r/[code] preserves first valid touch before creating a new session", () =
   assert.ok(insertSession > existingLookup, "new sessions are created only after valid existing session check");
   assert.match(routeSrc, /parseAmbassadorReferralSessionId\(req\.cookies\.get\(AMBASSADOR_REF_COOKIE\)\?\.value\)/);
   assert.match(routeSrc, /return NextResponse\.redirect\(new URL\(destinationPath, req\.url\)\)/);
+});
+
+test("existing first-touch sessions remain claimable after public link deactivation", () => {
+  assert.match(routeSrc, /\.eq\("active", true\)/, "new /r/[code] sessions require an active link");
+  assert.match(migration093, /legitimately issued while its link was active remains[\s\S]*claimable until expiry/);
+  assert.match(migration093, /FROM public\.ambassador_links l\s+WHERE l\.id = v_session\.ambassador_link_id;/);
+  assert.doesNotMatch(
+    migration093,
+    /WHERE l\.id = v_session\.ambassador_link_id\s+AND l\.active = true/,
+  );
+});
+
+test("ambassador link destination SQL constraint rejects backslash redirects", () => {
+  assert.match(migration093, /DROP CONSTRAINT IF EXISTS ambassador_links_destination_check/);
+  assert.match(migration093, /UPDATE public\.ambassador_links\s+SET destination_path = '\/'/);
+  assert.match(migration093, /position\(chr\(92\) in destination_path\) = 0/);
+  assert.match(migration093, /lower\(destination_path\) NOT LIKE '%5c%'/);
 });
 
 test("/r/[code] rate limits tracking without breaking navigation", () => {
@@ -173,7 +194,7 @@ test("ambassador PR stays away from restricted systems", () => {
     /^app\/api\/stripe\//,
     /^lib\/payments\//,
     /^lib\/config\/membrePro\.ts$/,
-    /^supabase\/migrations\/(?!089_ambassador|090_ambassador|091_ambassador|092_harden_recent_program_tables_rls\.sql$)/,
+    /^supabase\/migrations\/(?!089_ambassador|090_ambassador|091_ambassador|092_harden_recent_program_tables_rls\.sql$|093_ambassador_net_contribution_economics\.sql$)/,
     /^app\/yo\//,
     /^lib\/yo\//,
     /^public\/.*\.mp3$/i,
