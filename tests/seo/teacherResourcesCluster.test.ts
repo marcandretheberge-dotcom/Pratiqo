@@ -280,13 +280,21 @@ test("dance guide avoids sexualized framing", () => {
   assert.doesNotMatch(md, /sensuel|sexy|seduct/i);
 });
 
-test("photography guide avoids guaranteed professional outcomes", () => {
+test("photography guide stays learner-focused without implying unprofessional teachers", () => {
   const md = loadResourceArticleMarkdown("choisir-cours-photographie.md");
-  assert.match(md, /sans promettre/i);
-  assert.match(md, /carrière garantie|revenus garantis|revenus assurés/i);
-  assert.doesNotMatch(md, /revenus garantis pour vous|certification professionnelle garantie/i);
+  assert.match(md, /conseils concrets, adaptés à votre niveau/i);
+  assert.doesNotMatch(md, /promesses professionnelles|portfolio professionnel du jour au lendemain/i);
+  assert.doesNotMatch(md, /\brevenus\b/i);
   const article = getResourceArticleBySlug("choisir-cours-photographie");
-  assert.ok(article?.faq?.some((item) => /ne promet pas de carrière ou de revenus garantis/i.test(item.answer)));
+  assert.match(
+    article?.description ?? "",
+    /sans fausses promesses de résultats instantanés/i,
+  );
+  assert.doesNotMatch(article?.description ?? "", /promesses professionnelles|\brevenus\b/i);
+  assert.ok(
+    article?.faq?.some((item) => /sans promettre des résultats du jour au lendemain/i.test(item.answer)),
+  );
+  assert.ok(article?.faq?.every((item) => !/\brevenus\b/i.test(`${item.question} ${item.answer}`)));
 });
 
 test("photography subject landing page is registered and indexable", () => {

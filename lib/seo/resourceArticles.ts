@@ -189,7 +189,7 @@ export const RESOURCE_ARTICLES: ResourceArticleMeta[] = [
     slug: "choisir-cours-photographie",
     title: "Cours de photographie : apprendre à mieux voir, cadrer et créer",
     description:
-      "Guide pratique pour débutants et amateurs : choisir un professeur de photographie, téléphone ou appareil photo, sujets abordés et recherche sur Pratiqo — sans promesses professionnelles.",
+      "Guide pratique pour débutants et amateurs : choisir un professeur de photographie, utiliser un téléphone ou un appareil photo, comprendre les sujets abordés et trouver un accompagnement sur Pratiqo — sans fausses promesses de résultats instantanés.",
     category: "Loisirs",
     publishedAt: "2026-06-24",
     status: "published",
@@ -207,9 +207,9 @@ export const RESOURCE_ARTICLES: ResourceArticleMeta[] = [
           "Quelques photos récentes à discuter, votre appareil chargé, une note de vos objectifs et les questions que vous avez sur la composition ou la lumière.",
       },
       {
-        question: "Un cours privé garantit-il un portfolio professionnel?",
+        question: "Un cours privé garantit-il des résultats instantanés?",
         answer:
-          "Non. La progression dépend de votre pratique régulière et de vos objectifs. Un bon professeur vous guide; il ne promet pas de carrière ou de revenus garantis.",
+          "Non. La progression dépend de votre pratique régulière et de vos objectifs. Un professeur peut vous accompagner avec des conseils concrets, adaptés à votre niveau — sans promettre des résultats du jour au lendemain.",
       },
     ],
   },
