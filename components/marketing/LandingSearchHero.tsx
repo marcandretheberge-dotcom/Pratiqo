@@ -108,7 +108,7 @@ export function LandingSearchHero({
         // IDs are canonical marketplace labels used by filtering (not localized).
         { id: "Musique", labelKey: "marketplaceCategoryMusic" as TranslationKey, Icon: Music2 },
         { id: "Langues", labelKey: "marketplaceCategoryLanguages" as TranslationKey, Icon: Languages },
-        { id: "Tuteurs académiques", labelKey: "marketplaceCategoryAcademic" as TranslationKey, Icon: BookOpen },
+        { id: "Tutorat académique", labelKey: "marketplaceCategoryAcademic" as TranslationKey, Icon: BookOpen },
         { id: "All", labelKey: "filterAll" as TranslationKey, Icon: null },
       ] as const,
     [],

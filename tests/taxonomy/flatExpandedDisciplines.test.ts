@@ -201,7 +201,7 @@ const REQUIRED_ES_BY_FR: Record<string, string> = {
   "Préparation TEF / TCF": "Preparación TEF / TCF",
   "Conversation française": "Conversación en francés",
   "Français professionnel": "Francés profesional",
-  "Tuteurs académiques": "Tutoría académica",
+  "Tutorat académique": "Tutoría académica",
   Mathématiques: "Matemáticas",
   "Français scolaire": "Francés escolar",
   "Anglais scolaire": "Inglés escolar",

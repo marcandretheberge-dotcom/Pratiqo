@@ -77,7 +77,7 @@ export const PRATIQO_DISCIPLINES: PratiqoDiscipline[] = [
   item("conversation_francaise", "Conversation française", "French conversation", "Conversación en francés", "francisation"),
   item("francais_professionnel", "Français professionnel", "Professional French", "Francés profesional", "francisation"),
 
-  item("tuteurs", "Tuteurs académiques", "Academic tutoring", "Tutoría académica", "tutorat"),
+  item("tuteurs", "Tutorat académique", "Academic tutoring", "Tutoría académica", "tutorat"),
   item("mathematiques", "Mathématiques", "Mathematics", "Matemáticas", "tutorat"),
   item("francais_scolaire", "Français scolaire", "School French", "Francés escolar", "tutorat"),
   item("anglais_scolaire", "Anglais scolaire", "School English", "Inglés escolar", "tutorat"),
