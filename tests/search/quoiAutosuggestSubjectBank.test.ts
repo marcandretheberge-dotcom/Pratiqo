@@ -3,7 +3,7 @@
  *
  * Production bug (pre-fix): the landing page "Quoi" field only autosuggested
  * the three broad disciplines from `lib/disciplines.ts` (Musique, Langues,
- * Tuteurs académiques). Typing "pi" never surfaced Piano; typing "esp"
+ * Tutorat académique). Typing "pi" never surfaced Piano; typing "esp"
  * surfaced teachers but never Espagnol as a category.
  *
  * Root cause: `components/SmartSearchInput.tsx` consumed
@@ -93,11 +93,11 @@ function hasMatch(query: string, canonicalId: string, locale: "fr" | "en" | "es"
 }
 
 // ── 1. Broad categories preserved ───────────────────────────────────────
-test("Broad categories survive: Langues, Musique, Tuteurs académiques, Francisation", () => {
+test("Broad categories survive: Langues, Musique, Tutorat académique, Francisation", () => {
   // The four broad-category buckets the brief asks us to preserve.
   // - music_general    → "Musique"
   // - languages_general → "Langues"
-  // - tutors_general   → "Tuteurs académiques"
+  // - tutors_general   → "Tutorat académique"
   // - francisation     → "Francisation"
   for (const id of ["music_general", "languages_general", "tutors_general", "francisation"]) {
     const bucket = SUBJECT_BUCKETS.find((b) => b.canonicalId === id);
@@ -106,7 +106,7 @@ test("Broad categories survive: Langues, Musique, Tuteurs académiques, Francisa
 
   assert.equal(bucketLabels("music_general").fr, "Musique");
   assert.equal(bucketLabels("languages_general").fr, "Langues");
-  assert.equal(bucketLabels("tutors_general").fr, "Tuteurs académiques");
+  assert.equal(bucketLabels("tutors_general").fr, "Tutorat académique");
   assert.equal(bucketLabels("francisation").fr, "Francisation");
 });
 

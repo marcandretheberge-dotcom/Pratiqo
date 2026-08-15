@@ -42,7 +42,7 @@ export const SUBJECT_CATEGORY_LABELS: Record<
 > = {
   music: { fr: "Musique", en: "Music", es: "Música" },
   languages: { fr: "Langues", en: "Languages", es: "Idiomas" },
-  academic: { fr: "Tuteurs académiques", en: "Academic tutors", es: "Tutores académicos" },
+  academic: { fr: "Tutorat académique", en: "Academic tutoring", es: "Tutoría académica" },
   arts_skills: { fr: "Arts et compétences", en: "Arts & skills", es: "Artes y habilidades" },
 };
 
@@ -687,19 +687,19 @@ export const SUBJECT_BUCKETS: SubjectBucket[] = [
     },
   },
   {
-    // Broad "Tuteurs académiques" entry — its French label MUST exactly match
+    // Broad "Tutorat académique" entry — its French label MUST exactly match
     // the discipline label in `lib/disciplines.ts` so picking it can activate
     // the existing parent-side category chip (see SmartSearchInput.select).
     canonicalId: "tutors_general",
     category: "academic",
     emoji: "📚",
     labels: {
-      fr: "Tuteurs académiques",
-      en: "Academic tutors",
-      es: "Tutores académicos",
+      fr: "Tutorat académique",
+      en: "Academic tutoring",
+      es: "Tutoría académica",
     },
     aliases: {
-      fr: ["tuteurs academiques", "tutorat", "soutien scolaire", "scolaire"],
+      fr: ["tuteurs academiques", "tutorat academique", "tutorat", "soutien scolaire", "scolaire"],
       en: ["academic tutor", "academic tutoring", "tutor"],
       es: ["tutoria academica", "apoyo escolar"],
     },
