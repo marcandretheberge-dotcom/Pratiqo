@@ -593,7 +593,7 @@ export const SUBJECT_BUCKETS: SubjectBucket[] = [
     emoji: "💻",
     labels: { fr: "Programmation", en: "Coding", es: "Programación" },
     aliases: {
-      fr: ["informatique", "code", "developpement"],
+      fr: ["informatique", "code", "developpement", "developpement web"],
       en: ["programming", "software development"],
       es: ["programacion", "desarrollo de software"],
     },
@@ -603,7 +603,7 @@ export const SUBJECT_BUCKETS: SubjectBucket[] = [
     category: "academic",
     emoji: "🖥️",
     labels: { fr: "Informatique", en: "Computer skills", es: "Informática" },
-    aliases: { fr: [], en: ["computer", "office", "digital skills"], es: ["informatica", "computacion"] },
+    aliases: { fr: ["excel", "tableur"], en: ["computer", "office", "digital skills", "excel"], es: ["informatica", "computacion", "excel"] },
   },
   {
     canonicalId: "reading",
@@ -724,7 +724,7 @@ export const SUBJECT_BUCKETS: SubjectBucket[] = [
     canonicalId: "coach_trainer",
     category: "arts_skills",
     emoji: "💪",
-    labels: { fr: "Entraîneur / coach", en: "Coach / trainer", es: "Entrenador / coach" },
+    labels: { fr: "Coach sportif", en: "Fitness coach", es: "Entrenador deportivo" },
     aliases: {
       fr: [
         "entraîneur",
@@ -804,6 +804,49 @@ export const SUBJECT_BUCKETS: SubjectBucket[] = [
         "chef",
         "cocina casera",
       ],
+    },
+  },
+  {
+    canonicalId: "yoga",
+    category: "arts_skills",
+    emoji: "🧘",
+    labels: { fr: "Yoga", en: "Yoga", es: "Yoga" },
+    aliases: { fr: ["hatha", "vinyasa"], en: ["hatha", "vinyasa"], es: ["hatha", "vinyasa"] },
+  },
+  {
+    canonicalId: "excel",
+    category: "arts_skills",
+    emoji: "📊",
+    labels: { fr: "Excel", en: "Excel", es: "Excel" },
+    aliases: {
+      fr: ["tableur", "microsoft excel"],
+      en: ["spreadsheet", "microsoft excel"],
+      es: ["hoja de calculo", "microsoft excel"],
+    },
+  },
+  {
+    canonicalId: "chess",
+    category: "arts_skills",
+    emoji: "♟️",
+    labels: { fr: "Échecs", en: "Chess", es: "Ajedrez" },
+    aliases: { fr: ["echecs", "jeu d echecs"], en: ["chess lessons"], es: ["ajedrez"] },
+  },
+  {
+    canonicalId: "sewing",
+    category: "arts_skills",
+    emoji: "🧵",
+    labels: { fr: "Couture", en: "Sewing", es: "Costura" },
+    aliases: { fr: ["coudre", "couturier"], en: ["sewing class"], es: ["costura"] },
+  },
+  {
+    canonicalId: "web_development",
+    category: "arts_skills",
+    emoji: "💻",
+    labels: { fr: "Développement web", en: "Web development", es: "Desarrollo web" },
+    aliases: {
+      fr: ["dev web", "html", "css", "javascript"],
+      en: ["web dev", "html", "css", "javascript"],
+      es: ["desarrollo web", "html", "css"],
     },
   },
   {

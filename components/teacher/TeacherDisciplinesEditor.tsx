@@ -4,17 +4,19 @@ import React, { useMemo, useState } from "react";
 import { Loader2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLocale } from "@/lib/locale-context";
-import { getEnabledDisciplines, getDisciplineById } from "@/lib/disciplines";
+import { getEnabledDisciplines, getDisciplineById, getDisciplineLabel } from "@/lib/disciplines";
+import { isActiveDisciplineId } from "@/lib/taxonomy/disciplines";
 
 export type DisciplineCardDraft = {
   disciplineId: string;
   specialties: string[];
 };
 
-const PRESET_SPECIALTIES: Record<string, string[]> = {
-  langues: ["Français", "Anglais", "Espagnol", "Allemand", "Japonais", "Coréen", "Italien", "Portugais", "Mandarin", "Arabe", "Autre"],
-  musique: ["Piano", "Guitare", "Chant", "Violon", "Batterie", "Basse", "Ukulélé", "Théorie musicale", "Autre"],
-  tuteurs: ["Mathématiques", "Français", "Anglais", "Sciences", "Physique", "Chimie", "Histoire", "Aide aux devoirs", "Préparation aux examens", "Autre"],
+/** Optional helper chips for broad parent rows only — never required. */
+const OPTIONAL_PRESET_SPECIALTIES: Record<string, string[]> = {
+  langues: ["Français", "Anglais", "Espagnol", "Allemand", "Japonais", "Coréen", "Italien", "Portugais", "Mandarin", "Arabe"],
+  musique: ["Piano", "Guitare", "Chant", "Violon", "Batterie", "Théorie musicale"],
+  tuteurs: ["Mathématiques", "Français scolaire", "Anglais scolaire", "Sciences", "Aide aux devoirs", "Préparation aux examens"],
 };
 
 function normalizeSpec(s: string): string {
@@ -35,6 +37,14 @@ function uniqSpecs(specs: string[]): string[] {
   return out;
 }
 
+function fold(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
 export function TeacherDisciplinesEditor({
   open,
   mode,
@@ -52,16 +62,27 @@ export function TeacherDisciplinesEditor({
   onClose: () => void;
   onSave: (next: DisciplineCardDraft) => Promise<void> | void;
 }) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const enabledDomains = useMemo(() => getEnabledDisciplines(), []);
 
   const [disciplineId, setDisciplineId] = useState(initial.disciplineId);
+  const [query, setQuery] = useState("");
   const [specialties, setSpecialties] = useState<string[]>(() => uniqSpecs(initial.specialties));
   const [custom, setCustom] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const preset = PRESET_SPECIALTIES[disciplineId] ?? [];
-  const domainLabel = getDisciplineById(disciplineId)?.label ?? disciplineId;
+  const preset = OPTIONAL_PRESET_SPECIALTIES[disciplineId] ?? [];
+  const domain = getDisciplineById(disciplineId);
+  const domainLabel = domain?.label ?? disciplineId;
+
+  const filtered = useMemo(() => {
+    const q = fold(query);
+    if (!q) return enabledDomains;
+    return enabledDomains.filter((d) => {
+      const hay = fold(`${d.label} ${d.labelEn} ${d.labelEs} ${d.id}`);
+      return hay.includes(q);
+    });
+  }, [enabledDomains, query]);
 
   if (!open) return null;
 
@@ -84,7 +105,8 @@ export function TeacherDisciplinesEditor({
     setSpecialties(specialties.filter((s) => s.toLowerCase() !== key));
   };
 
-  const canSave = !busy && Boolean(disciplineId) && specialties.length > 0 && (!maxReached || mode === "edit");
+  const canSave =
+    !busy && Boolean(disciplineId) && isActiveDisciplineId(disciplineId) && (!maxReached || mode === "edit");
 
   return (
     <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/40 px-4 py-6">
@@ -95,8 +117,9 @@ export function TeacherDisciplinesEditor({
               {mode === "add" ? t("addDiscipline") : t("editDiscipline")}
             </p>
             <h3 className="mt-1 text-xl font-bold text-[#2C2C2A]">
-              {mode === "add" ? t("addDiscipline") : `${t("editDiscipline")} · ${domainLabel}`}
+              {mode === "add" ? t("whatDoYouTeach") : `${t("editDiscipline")} · ${domainLabel}`}
             </h3>
+            <p className="mt-1 text-sm text-slate-600">{t("selectUpToFiveDisciplines")}</p>
           </div>
           <button
             type="button"
@@ -112,6 +135,13 @@ export function TeacherDisciplinesEditor({
         <div className="mt-5 space-y-4">
           <label className="block space-y-2">
             <span className="text-xs font-bold uppercase tracking-wide text-slate-600">{t("disciplineCategory")}</span>
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={t("disciplineSearchExamples")}
+              disabled={busy}
+              className="w-full h-11 rounded-xl border border-slate-200 px-3 text-sm bg-white text-slate-800"
+            />
             <select
               value={disciplineId}
               onChange={(e) => {
@@ -120,19 +150,22 @@ export function TeacherDisciplinesEditor({
                 setError(null);
               }}
               disabled={busy || (mode === "add" && maxReached)}
-              className="w-full h-11 rounded-xl border border-slate-200 px-3 text-sm bg-white text-slate-800 disabled:opacity-60"
+              size={8}
+              className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm bg-white text-slate-800 disabled:opacity-60"
             >
-              {enabledDomains.map((d) => (
+              {filtered.map((d) => (
                 <option key={d.id} value={d.id}>
-                  {d.emoji} {d.label}
+                  {d.emoji} {getDisciplineLabel(d, locale)}
                 </option>
               ))}
             </select>
+            <p className="text-xs text-slate-500">{t("flatDisciplineHint")}</p>
             {mode === "add" && maxReached ? <p className="text-xs font-semibold text-rose-700">{t("maxDisciplinesReached")}</p> : null}
           </label>
 
           <div className="space-y-2">
-            <span className="text-xs font-bold uppercase tracking-wide text-slate-600">{t("disciplineSpecialties")}</span>
+            <span className="text-xs font-bold uppercase tracking-wide text-slate-600">{t("disciplineApproachOptional")}</span>
+            <p className="text-xs text-slate-500">{t("disciplineApproachExample")}</p>
 
             {preset.length ? (
               <div className="flex flex-wrap gap-2">
@@ -155,9 +188,7 @@ export function TeacherDisciplinesEditor({
                   );
                 })}
               </div>
-            ) : (
-              <p className="text-xs text-slate-500">{t("customSpecialty")}</p>
-            )}
+            ) : null}
 
             {specialties.length ? (
               <div className="mt-2 flex flex-wrap gap-2">
@@ -216,13 +247,12 @@ export function TeacherDisciplinesEditor({
             type="button"
             disabled={!canSave}
             onClick={async () => {
-              const nextSpecs = uniqSpecs(specialties);
-              if (!nextSpecs.length) {
-                setError(t("specialtyValidationRequired"));
+              if (!isActiveDisciplineId(disciplineId)) {
+                setError(t("invalidDiscipline"));
                 return;
               }
               setError(null);
-              await onSave({ disciplineId, specialties: nextSpecs });
+              await onSave({ disciplineId, specialties: uniqSpecs(specialties) });
             }}
             className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-[#00694c] px-5 text-sm font-bold text-white disabled:opacity-50"
           >
@@ -234,4 +264,3 @@ export function TeacherDisciplinesEditor({
     </div>
   );
 }
-

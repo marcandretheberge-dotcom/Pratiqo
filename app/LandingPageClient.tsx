@@ -7,7 +7,7 @@ import dynamic from "next/dynamic";
 import { BookOpen, GraduationCap, LayoutGrid, LayoutList, Map, MapPin, Music, Sparkles } from "lucide-react";
 import type { Teacher } from "../types";
 import { cn } from "../lib/utils";
-import { getEnabledDisciplines } from "../lib/disciplines";
+import { getFeaturedFilterDisciplines } from "../lib/disciplines";
 import { isEnabled } from "../lib/features";
 import { getSupabaseClient } from "../lib/supabase";
 import { fetchTeacherDisciplinesMap, mergeTeachersWithDisciplines } from "../lib/teacherDisciplines";
@@ -490,7 +490,7 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
 
                   <div className="mx-auto mt-5 max-w-4xl">
                     <div className="flex flex-wrap justify-center gap-2">
-                      {getEnabledDisciplines().map((d) => {
+                      {getFeaturedFilterDisciplines().map((d) => {
                         const catKey = CATEGORY_I18N[d.id];
                         const Icon = CATEGORY_ICON[d.id];
                         const active = activeCat === d.label;

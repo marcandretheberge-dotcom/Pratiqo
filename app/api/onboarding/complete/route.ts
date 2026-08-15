@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
-import { disciplineLabelToTeacherCategory, getAllDisciplines, getDisciplineById } from "@/lib/disciplines";
+import { disciplineLabelToTeacherCategory, getAllDisciplines, getDisciplineById, resolveDisciplineId } from "@/lib/disciplines";
 import { sendWelcomeTeacher, sendWelcomeStudent } from "@/lib/email";
 import { resolveEmailLocaleForUser } from "@/lib/email/locale";
 import { logError, logInfo, logWarn } from "@/lib/log";
@@ -162,13 +162,21 @@ export async function POST(req: Request) {
       const rawDisciplines = Array.isArray(body.disciplines) ? body.disciplines : [];
       const normalizedDisciplines = rawDisciplines
         .filter((x) => x && typeof x.discipline_id === "string" && x.discipline_id.trim())
-        .slice(0, 3)
-        .map((x) => ({
-          discipline_id: String(x.discipline_id).trim(),
-          specialite: String(x.specialite ?? "")
-            .trim()
-            .slice(0, 200),
-        }));
+        .slice(0, 5)
+        .map((x) => {
+          const rawId = String(x.discipline_id).trim();
+          const resolved = resolveDisciplineId(rawId);
+          const meta = resolved ? getDisciplineById(resolved) : undefined;
+          return {
+            discipline_id: meta?.id ?? rawId,
+            specialite: String(x.specialite ?? "")
+              .trim()
+              .slice(0, 200),
+            known: Boolean(meta?.enabled),
+          };
+        })
+        .filter((x) => x.known)
+        .map(({ discipline_id, specialite }) => ({ discipline_id, specialite }));
 
       let category: string;
       let discipline: string;

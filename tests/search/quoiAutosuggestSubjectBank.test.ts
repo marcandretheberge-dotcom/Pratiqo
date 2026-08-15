@@ -255,7 +255,7 @@ test("Arts & skills bank covers Coach, Cuisine, Arts martiaux, and Danse in FR/E
   const required: Array<[string, { fr: string; en: string; es: string }]> = [
     [
       "coach_trainer",
-      { fr: "Entraîneur / coach", en: "Coach / trainer", es: "Entrenador / coach" },
+      { fr: "Coach sportif", en: "Fitness coach", es: "Entrenador deportivo" },
     ],
     ["cooking", { fr: "Cuisine", en: "Cooking", es: "Cocina" }],
     ["martial_arts", { fr: "Arts martiaux", en: "Martial arts", es: "Artes marciales" }],

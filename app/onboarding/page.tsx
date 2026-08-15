@@ -7,7 +7,7 @@ import { CheckCircle2, ChevronLeft, ChevronRight, Loader2, ShieldCheck, Upload }
 import { cn } from "../../lib/utils";
 import { useAuth } from "../../components/AuthProvider";
 import { getSupabaseClient } from "../../lib/supabase";
-import { getEnabledDisciplines } from "../../lib/disciplines";
+import { getDisciplineLabel, getEnabledDisciplines, MAX_TEACHER_DISCIPLINES } from "../../lib/disciplines";
 import { useLocale } from "../../lib/locale-context";
 import { TeacherHourlyRatePreview } from "../../components/teacher/TeacherHourlyRatePreview";
 import { validateMinimumLessonPriceDollars } from "@/lib/pricing/validateMinimumLessonPrice";
@@ -15,7 +15,7 @@ import { validateMinimumLessonPriceDollars } from "@/lib/pricing/validateMinimum
 type Step = 1 | 2 | 3 | 4 | "done";
 type Mode = "person" | "online" | "both";
 
-const MAX_DISCIPLINES = 3;
+const MAX_DISCIPLINES = MAX_TEACHER_DISCIPLINES;
 
 type SelectedDiscipline = {
   id: string;
@@ -33,7 +33,7 @@ function OnboardingInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, loading, profile } = useAuth();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const roleParam = searchParams.get("role");
   const stripeStatus = searchParams.get("stripe");
   const force = searchParams.get("force") === "true";
@@ -55,6 +55,7 @@ function OnboardingInner() {
   const [teachingSince, setTeachingSince] = useState<number | null>(null);
 
   const [selectedDisciplines, setSelectedDisciplines] = useState<SelectedDiscipline[]>([]);
+  const [disciplineQuery, setDisciplineQuery] = useState("");
   const [teachingMode, setTeachingMode] = useState<Mode>("both");
   const [hourlyRate, setHourlyRate] = useState<number>(50);
   const [levels, setLevels] = useState<string[]>([]);
@@ -465,12 +466,34 @@ function OnboardingInner() {
                 />
               </Field>
 
-              <Field label="Disciplines (max 3)">
+              <Field label={t("whatDoYouTeach")}>
+                <p className="text-sm text-slate-600 mb-1">{t("selectUpToFiveDisciplines")}</p>
+                <p className="text-xs text-slate-500 mb-2">{t("disciplineSearchExamples")}</p>
                 <p className="text-xs font-semibold text-[#0f6d52] mb-2">
-                  {selectedDisciplines.length}/{MAX_DISCIPLINES} disciplines sélectionnées
+                  {selectedDisciplines.length}/{MAX_DISCIPLINES} {t("maxDisciplines").toLowerCase()}
                 </p>
-                <div className="flex flex-wrap gap-2">
-                  {getEnabledDisciplines().map((d) => {
+                <input
+                  value={disciplineQuery}
+                  onChange={(e) => setDisciplineQuery(e.target.value)}
+                  placeholder={t("disciplineSearchExamples")}
+                  className="mb-3 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                />
+                <div className="flex max-h-56 flex-wrap gap-2 overflow-y-auto rounded-xl border border-slate-100 p-2">
+                  {getEnabledDisciplines()
+                    .filter((d) => {
+                      const q = disciplineQuery
+                        .normalize("NFD")
+                        .replace(/[\u0300-\u036f]/g, "")
+                        .toLowerCase()
+                        .trim();
+                      if (!q) return true;
+                      const hay = `${d.label} ${d.labelEn} ${d.labelEs} ${d.id}`
+                        .normalize("NFD")
+                        .replace(/[\u0300-\u036f]/g, "")
+                        .toLowerCase();
+                      return hay.includes(q);
+                    })
+                    .map((d) => {
                     const active = selectedDisciplines.some((x) => x.id === d.id);
                     const atMax = selectedDisciplines.length >= MAX_DISCIPLINES;
                     return (
@@ -495,7 +518,7 @@ function OnboardingInner() {
                         )}
                       >
                         <span aria-hidden>{d.emoji}</span>
-                        <span>{d.label}</span>
+                        <span>{getDisciplineLabel(d, locale)}</span>
                       </button>
                     );
                   })}
@@ -505,7 +528,7 @@ function OnboardingInner() {
                     {selectedDisciplines.map((s) => (
                       <div key={s.id} className="rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2.5">
                         <p className="text-xs font-bold text-slate-700 mb-1.5">
-                          {s.emoji} {s.label}
+                          {s.emoji} {getDisciplineLabel(s.id, locale) || s.label}
                         </p>
                         <input
                           value={s.specialite}
@@ -515,14 +538,13 @@ function OnboardingInner() {
                             )
                           }
                           className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm bg-white"
-                          placeholder={s.label === "Langues" ? "Anglais, Espagnol…" : "Piano classique…"}
+                          placeholder={t("disciplineApproachExample")}
                         />
                       </div>
                     ))}
                   </div>
                 ) : null}
                 <p className="mt-2 text-xs italic text-[#6B6A65]">Tu peux modifier tes disciplines dans Paramètres.</p>
-                <p className="mt-1 italic text-[12px] text-[#6B6A65]">D&apos;autres disciplines seront bientôt disponibles.</p>
               </Field>
 
               <Field label="Tarif horaire ($)">
@@ -948,15 +970,8 @@ function OnboardingInner() {
                   type="button"
                   onClick={() => {
                     if (step === 1 && selectedDisciplines.length === 0) {
-                      alert("Choisis au moins une discipline (disponible dès la Phase 1).");
+                      alert("Choisis au moins une discipline.");
                       return;
-                    }
-                    if (step === 1) {
-                      const missingSpec = selectedDisciplines.some((s) => !s.specialite.trim());
-                      if (missingSpec) {
-                        alert("Indique une spécialité pour chaque discipline sélectionnée.");
-                        return;
-                      }
                     }
                     setStep((prev) => (prev === 1 ? 2 : prev === 2 ? 3 : 4));
                   }}
