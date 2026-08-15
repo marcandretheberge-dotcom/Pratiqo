@@ -10,7 +10,7 @@ export type PratiqoDiscipline = {
   slug: string;
   labelFr: string;
   labelEn: string;
-  labelEs?: string;
+  labelEs: string;
   internalGroup?: string;
   isActive: boolean;
   searchable: boolean;
@@ -87,14 +87,14 @@ export const PRATIQO_DISCIPLINES: PratiqoDiscipline[] = [
   item("biologie", "Biologie", "Biology", "Biología", "tutorat"),
   item("histoire", "Histoire", "History", "Historia", "tutorat"),
   item("geographie", "Géographie", "Geography", "Geografía", "tutorat"),
-  item("aide_aux_devoirs", "Aide aux devoirs", "Homework help", "Ayuda con los deberes", "tutorat"),
+  item("aide_aux_devoirs", "Aide aux devoirs", "Homework help", "Ayuda con tareas", "tutorat"),
   item("preparation_aux_examens", "Préparation aux examens", "Exam preparation", "Preparación de exámenes", "tutorat"),
   item("methodes_etude", "Méthodes d’étude", "Study methods", "Métodos de estudio", "tutorat"),
 
   item("photographie", "Photographie", "Photography", "Fotografía", "media"),
   item("videographie", "Vidéographie", "Videography", "Videografía", "media"),
   item("montage_video", "Montage vidéo", "Video editing", "Edición de video", "media"),
-  item("retouche_photo", "Retouche photo", "Photo editing", "Retoque fotográfico", "media"),
+  item("retouche_photo", "Retouche photo", "Photo editing", "Edición fotográfica", "media"),
   item("creation_de_contenu", "Création de contenu", "Content creation", "Creación de contenido", "media"),
 
   item("cuisine", "Cuisine", "Cooking", "Cocina", "cuisine"),
@@ -103,7 +103,7 @@ export const PRATIQO_DISCIPLINES: PratiqoDiscipline[] = [
   item("cuisine_sante", "Cuisine santé", "Healthy cooking", "Cocina saludable", "cuisine"),
   item("cuisine_internationale", "Cuisine internationale", "International cooking", "Cocina internacional", "cuisine"),
 
-  item("coach_sportif", "Coach sportif", "Fitness coach", "Entrenador deportivo", "sport"),
+  item("coach_sportif", "Coach sportif", "Fitness coach", "Entrenador personal", "sport"),
   item("mise_en_forme", "Mise en forme", "Fitness training", "Puesta en forma", "sport"),
   item("musculation", "Musculation", "Strength training", "Musculación", "sport"),
   item("course_a_pied", "Course à pied", "Running", "Running", "sport"),
@@ -119,7 +119,7 @@ export const PRATIQO_DISCIPLINES: PratiqoDiscipline[] = [
   item("ballet", "Ballet", "Ballet", "Ballet", "danse"),
   item("danse_contemporaine", "Danse contemporaine", "Contemporary dance", "Danza contemporánea", "danse"),
   item("danse_urbaine", "Danse urbaine", "Urban dance", "Danza urbana", "danse"),
-  item("danse_sociale", "Danse sociale", "Social dance", "Danza social", "danse"),
+  item("danse_sociale", "Danse sociale", "Social dance", "Baile social", "danse"),
 
   item("arts", "Arts", "Arts", "Artes", "arts"),
   item("dessin", "Dessin", "Drawing", "Dibujo", "arts"),
@@ -130,7 +130,7 @@ export const PRATIQO_DISCIPLINES: PratiqoDiscipline[] = [
   item("ecriture_creative", "Écriture créative", "Creative writing", "Escritura creativa", "arts"),
 
   item("informatique", "Informatique", "Computer / digital skills", "Informática", "informatique"),
-  item("initiation_ordinateur", "Initiation à l’ordinateur", "Computer basics", "Iniciación a la computadora", "informatique"),
+  item("initiation_ordinateur", "Initiation à l’ordinateur", "Computer basics", "Iniciación a la computación", "informatique"),
   item("excel", "Excel", "Excel", "Excel", "informatique"),
   item("programmation", "Programmation", "Programming", "Programación", "informatique"),
   item("developpement_web", "Développement web", "Web development", "Desarrollo web", "informatique"),
@@ -139,10 +139,10 @@ export const PRATIQO_DISCIPLINES: PratiqoDiscipline[] = [
   item("robotique", "Robotique", "Robotics", "Robótica", "informatique"),
 
   item("developpement_professionnel", "Développement professionnel", "Professional development", "Desarrollo profesional", "pro"),
-  item("prise_de_parole", "Prise de parole", "Public speaking", "Hablar en público", "pro"),
+  item("prise_de_parole", "Prise de parole", "Public speaking", "Oratoria", "pro"),
   item("communication", "Communication", "Communication", "Comunicación", "pro"),
   item("leadership", "Leadership", "Leadership", "Liderazgo", "pro"),
-  item("preparation_entrevue", "Préparation entrevue", "Interview preparation", "Preparación de entrevistas", "pro"),
+  item("preparation_entrevue", "Préparation entrevue", "Interview preparation", "Preparación para entrevistas", "pro"),
   item("cv_et_carriere", "CV et carrière", "Resume and career", "CV y carrera", "pro"),
   item("comptabilite", "Comptabilité", "Accounting", "Contabilidad", "pro"),
   item("entrepreneuriat", "Entrepreneuriat", "Entrepreneurship", "Emprendimiento", "pro"),
@@ -224,7 +224,7 @@ export function resolveDisciplineId(raw: string | null | undefined): string | nu
   const aliased = LEGACY_DISCIPLINE_ALIASES[folded];
   if (aliased && BY_ID.has(aliased)) return aliased;
   for (const d of PRATIQO_DISCIPLINES) {
-    if (fold(d.labelFr) === folded || fold(d.labelEn) === folded || (d.labelEs && fold(d.labelEs) === folded)) {
+    if (fold(d.labelFr) === folded || fold(d.labelEn) === folded || fold(d.labelEs) === folded) {
       return d.id;
     }
   }
@@ -234,6 +234,19 @@ export function resolveDisciplineId(raw: string | null | undefined): string | nu
 export function getTaxonomyDisciplineById(id: string | null | undefined): PratiqoDiscipline | undefined {
   const resolved = resolveDisciplineId(id);
   return resolved ? BY_ID.get(resolved) : undefined;
+}
+
+/** Locale-aware taxonomy label. Unknown locales fall back to French. */
+export function getDisciplineLabel(
+  discipline: PratiqoDiscipline | string | null | undefined,
+  locale?: string | null,
+): string {
+  const d = typeof discipline === "string" ? getTaxonomyDisciplineById(discipline) : discipline;
+  if (!d) return "";
+  const loc = (locale ?? "fr").toLowerCase();
+  if (loc.startsWith("es")) return d.labelEs;
+  if (loc.startsWith("en")) return d.labelEn;
+  return d.labelFr;
 }
 
 export function getActiveDisciplines(): PratiqoDiscipline[] {

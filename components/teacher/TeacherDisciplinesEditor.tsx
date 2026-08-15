@@ -4,7 +4,7 @@ import React, { useMemo, useState } from "react";
 import { Loader2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLocale } from "@/lib/locale-context";
-import { getEnabledDisciplines, getDisciplineById } from "@/lib/disciplines";
+import { getEnabledDisciplines, getDisciplineById, getDisciplineLabel } from "@/lib/disciplines";
 import { isActiveDisciplineId } from "@/lib/taxonomy/disciplines";
 
 export type DisciplineCardDraft = {
@@ -79,7 +79,7 @@ export function TeacherDisciplinesEditor({
     const q = fold(query);
     if (!q) return enabledDomains;
     return enabledDomains.filter((d) => {
-      const hay = fold(`${d.label} ${d.labelEn ?? ""} ${d.labelEs ?? ""} ${d.id}`);
+      const hay = fold(`${d.label} ${d.labelEn} ${d.labelEs} ${d.id}`);
       return hay.includes(q);
     });
   }, [enabledDomains, query]);
@@ -107,12 +107,6 @@ export function TeacherDisciplinesEditor({
 
   const canSave =
     !busy && Boolean(disciplineId) && isActiveDisciplineId(disciplineId) && (!maxReached || mode === "edit");
-
-  const localizedLabel = (d: { label: string; labelEn?: string; labelEs?: string }) => {
-    if (locale === "en") return d.labelEn || d.label;
-    if (locale === "es") return d.labelEs || d.label;
-    return d.label;
-  };
 
   return (
     <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/40 px-4 py-6">
@@ -161,7 +155,7 @@ export function TeacherDisciplinesEditor({
             >
               {filtered.map((d) => (
                 <option key={d.id} value={d.id}>
-                  {d.emoji} {localizedLabel(d)}
+                  {d.emoji} {getDisciplineLabel(d, locale)}
                 </option>
               ))}
             </select>

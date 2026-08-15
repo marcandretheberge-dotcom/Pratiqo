@@ -20,6 +20,7 @@ import {
 } from "@/lib/disciplines";
 import {
   PRATIQO_DISCIPLINES,
+  getDisciplineLabel,
   getTaxonomyDisciplineById,
   isActiveDisciplineId,
   requiredDisciplineIds,
@@ -172,6 +173,138 @@ test("onboarding complete does not change checkout or booking math", () => {
   assert.doesNotMatch(complete, /stripe\.|webhook|platform_fee/);
   const taxonomy = read("lib/taxonomy/disciplines.ts");
   assert.doesNotMatch(taxonomy, /internalGroup.*=.*required/);
+});
+
+const REQUIRED_ES_BY_FR: Record<string, string> = {
+  Musique: "Música",
+  Piano: "Piano",
+  Guitare: "Guitarra",
+  Chant: "Canto",
+  Violon: "Violín",
+  Batterie: "Batería",
+  "Production musicale": "Producción musical",
+  "Théorie musicale": "Teoría musical",
+  Langues: "Idiomas",
+  Anglais: "Inglés",
+  Espagnol: "Español",
+  Français: "Francés",
+  Allemand: "Alemán",
+  Japonais: "Japonés",
+  Italien: "Italiano",
+  Portugais: "Portugués",
+  Mandarin: "Mandarín",
+  Coréen: "Coreano",
+  Arabe: "Árabe",
+  "Langue des signes": "Lengua de señas",
+  Francisation: "Francización",
+  "Français langue seconde": "Francés como segunda lengua",
+  "Préparation TEF / TCF": "Preparación TEF / TCF",
+  "Conversation française": "Conversación en francés",
+  "Français professionnel": "Francés profesional",
+  "Tuteurs académiques": "Tutoría académica",
+  Mathématiques: "Matemáticas",
+  "Français scolaire": "Francés escolar",
+  "Anglais scolaire": "Inglés escolar",
+  Sciences: "Ciencias",
+  Physique: "Física",
+  Chimie: "Química",
+  Biologie: "Biología",
+  Histoire: "Historia",
+  Géographie: "Geografía",
+  "Aide aux devoirs": "Ayuda con tareas",
+  "Préparation aux examens": "Preparación de exámenes",
+  "Méthodes d’étude": "Métodos de estudio",
+  Photographie: "Fotografía",
+  Vidéographie: "Videografía",
+  "Montage vidéo": "Edición de video",
+  "Retouche photo": "Edición fotográfica",
+  "Création de contenu": "Creación de contenido",
+  Cuisine: "Cocina",
+  Pâtisserie: "Pastelería",
+  "Cuisine familiale": "Cocina familiar",
+  "Cuisine santé": "Cocina saludable",
+  "Cuisine internationale": "Cocina internacional",
+  "Coach sportif": "Entrenador personal",
+  "Mise en forme": "Puesta en forma",
+  Musculation: "Musculación",
+  "Course à pied": "Running",
+  Mobilité: "Movilidad",
+  Yoga: "Yoga",
+  Pilates: "Pilates",
+  Natation: "Natación",
+  "Arts martiaux": "Artes marciales",
+  Danse: "Danza",
+  Salsa: "Salsa",
+  Bachata: "Bachata",
+  Ballet: "Ballet",
+  "Danse contemporaine": "Danza contemporánea",
+  "Danse urbaine": "Danza urbana",
+  "Danse sociale": "Baile social",
+  Arts: "Artes",
+  Dessin: "Dibujo",
+  Peinture: "Pintura",
+  Illustration: "Ilustración",
+  Aquarelle: "Acuarela",
+  Théâtre: "Teatro",
+  "Écriture créative": "Escritura creativa",
+  Informatique: "Informática",
+  "Initiation à l’ordinateur": "Iniciación a la computación",
+  Excel: "Excel",
+  Programmation: "Programación",
+  "Développement web": "Desarrollo web",
+  "Intelligence artificielle": "Inteligencia artificial",
+  Cybersécurité: "Ciberseguridad",
+  Robotique: "Robótica",
+  "Développement professionnel": "Desarrollo profesional",
+  "Prise de parole": "Oratoria",
+  Communication: "Comunicación",
+  Leadership: "Liderazgo",
+  "Préparation entrevue": "Preparación para entrevistas",
+  "CV et carrière": "CV y carrera",
+  Comptabilité: "Contabilidad",
+  Entrepreneuriat: "Emprendimiento",
+  Marketing: "Marketing",
+  "Jeux et stratégie": "Juegos y estrategia",
+  Échecs: "Ajedrez",
+  Poker: "Póker",
+  "Jeux de société": "Juegos de mesa",
+  Logique: "Lógica",
+  Artisanat: "Artesanía",
+  Couture: "Costura",
+  Tricot: "Tejido",
+  Menuiserie: "Carpintería",
+  Bricolage: "Bricolaje",
+  Jardinage: "Jardinería",
+  Autre: "Otro",
+};
+
+test("every discipline has required French, English, and Spanish labels", () => {
+  const typeSrc = read("lib/taxonomy/disciplines.ts");
+  assert.match(typeSrc, /labelEs: string;/);
+  assert.doesNotMatch(typeSrc, /labelEs\?: string;/);
+  for (const d of PRATIQO_DISCIPLINES) {
+    assert.equal(typeof d.labelFr, "string");
+    assert.ok(d.labelFr.trim().length > 0, `${d.id} missing labelFr`);
+    assert.equal(typeof d.labelEn, "string");
+    assert.ok(d.labelEn.trim().length > 0, `${d.id} missing labelEn`);
+    assert.equal(typeof d.labelEs, "string");
+    assert.ok(d.labelEs.trim().length > 0, `${d.id} missing labelEs`);
+    const expectedEs = REQUIRED_ES_BY_FR[d.labelFr];
+    assert.ok(expectedEs, `unexpected French label for ${d.id}: ${d.labelFr}`);
+    assert.equal(d.labelEs, expectedEs, `${d.id} Spanish label`);
+  }
+  assert.equal(PRATIQO_DISCIPLINES.length, Object.keys(REQUIRED_ES_BY_FR).length);
+});
+
+test("taxonomy label helper returns es/en/fr with French fallback", () => {
+  assert.equal(getDisciplineLabel("photographie", "es"), "Fotografía");
+  assert.equal(getDisciplineLabel("cuisine", "es"), "Cocina");
+  assert.equal(getDisciplineLabel("coach_sportif", "es"), "Entrenador personal");
+  assert.equal(getDisciplineLabel("photographie", "en"), "Photography");
+  assert.equal(getDisciplineLabel("photographie", "fr"), "Photographie");
+  assert.equal(getDisciplineLabel("photographie", "pt"), "Photographie");
+  assert.equal(getDisciplineLabel("photographie"), "Photographie");
+  assert.equal(getDisciplineLabel("not_a_real_discipline", "es"), "");
 });
 
 (async () => {

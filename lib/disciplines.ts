@@ -2,6 +2,7 @@ import {
   FEATURED_FILTER_DISCIPLINE_IDS,
   MAX_TEACHER_DISCIPLINES,
   getActiveDisciplines,
+  getDisciplineLabel as getTaxonomyDisciplineLabel,
   getTaxonomyDisciplineById,
   isActiveDisciplineId,
   resolveDisciplineId,
@@ -24,8 +25,8 @@ export function getFeaturedFilterDisciplines(): Discipline[] {
 export interface Discipline {
   id: string;
   label: string;
-  labelEn?: string;
-  labelEs?: string;
+  labelEn: string;
+  labelEs: string;
   emoji: string;
   enabled: boolean;
   phase: 1 | 2 | 3;
@@ -98,6 +99,20 @@ export const getDisciplineById = (id: string) => {
   const tax = getTaxonomyDisciplineById(resolved);
   return tax ? toDiscipline(tax) : undefined;
 };
+
+export function getDisciplineLabel(
+  discipline: Discipline | PratiqoDiscipline | string | null | undefined,
+  locale?: string | null,
+): string {
+  if (discipline == null) return "";
+  if (typeof discipline === "string" || "labelFr" in discipline) {
+    return getTaxonomyDisciplineLabel(discipline, locale);
+  }
+  const loc = (locale ?? "fr").toLowerCase();
+  if (loc.startsWith("es")) return discipline.labelEs;
+  if (loc.startsWith("en")) return discipline.labelEn;
+  return discipline.label;
+}
 
 /** Legacy `teachers.category` (Pratiqo enum-like text) → discipline id */
 const LEGACY_CATEGORY_TO_ID: Record<string, string> = {

@@ -7,7 +7,7 @@ import { CheckCircle2, ChevronLeft, ChevronRight, Loader2, ShieldCheck, Upload }
 import { cn } from "../../lib/utils";
 import { useAuth } from "../../components/AuthProvider";
 import { getSupabaseClient } from "../../lib/supabase";
-import { getEnabledDisciplines, MAX_TEACHER_DISCIPLINES } from "../../lib/disciplines";
+import { getDisciplineLabel, getEnabledDisciplines, MAX_TEACHER_DISCIPLINES } from "../../lib/disciplines";
 import { useLocale } from "../../lib/locale-context";
 import { TeacherHourlyRatePreview } from "../../components/teacher/TeacherHourlyRatePreview";
 import { validateMinimumLessonPriceDollars } from "@/lib/pricing/validateMinimumLessonPrice";
@@ -33,7 +33,7 @@ function OnboardingInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, loading, profile } = useAuth();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const roleParam = searchParams.get("role");
   const stripeStatus = searchParams.get("stripe");
   const force = searchParams.get("force") === "true";
@@ -487,7 +487,7 @@ function OnboardingInner() {
                         .toLowerCase()
                         .trim();
                       if (!q) return true;
-                      const hay = `${d.label} ${d.labelEn ?? ""} ${d.id}`
+                      const hay = `${d.label} ${d.labelEn} ${d.labelEs} ${d.id}`
                         .normalize("NFD")
                         .replace(/[\u0300-\u036f]/g, "")
                         .toLowerCase();
@@ -518,7 +518,7 @@ function OnboardingInner() {
                         )}
                       >
                         <span aria-hidden>{d.emoji}</span>
-                        <span>{d.label}</span>
+                        <span>{getDisciplineLabel(d, locale)}</span>
                       </button>
                     );
                   })}
@@ -528,7 +528,7 @@ function OnboardingInner() {
                     {selectedDisciplines.map((s) => (
                       <div key={s.id} className="rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2.5">
                         <p className="text-xs font-bold text-slate-700 mb-1.5">
-                          {s.emoji} {s.label}
+                          {s.emoji} {getDisciplineLabel(s.id, locale) || s.label}
                         </p>
                         <input
                           value={s.specialite}
