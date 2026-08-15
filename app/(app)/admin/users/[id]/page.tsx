@@ -63,6 +63,7 @@ import { LESSON_DURATION_OPTIONS } from "@/lib/pricing/lessonDuration";
 import { evaluateTeacherSeoPublication } from "@/lib/seo/teacherSeoPublication";
 import { fetchTeacherSeoPublicationRowByUserId } from "@/lib/seo/teacherPublicProfileData";
 import { loadAdminTeacher360, type AdminTeacher360 } from "@/lib/admin/teacher360";
+import { getAdminAmbassadorForTeacher } from "@/lib/admin/ambassadors";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -567,6 +568,7 @@ export default async function AdminUserDetailPage({
         evaluation: ReturnType<typeof evaluateTeacherSeoPublication>;
       }
     | null = null;
+  let teacherProfileId: string | null = null;
   const teacher360 = await loadAdminTeacher360(admin, profile.id);
 
   if (isTeacher) {
@@ -580,6 +582,7 @@ export default async function AdminUserDetailPage({
 
     const row = teacherRow as TeacherSupportRow | null;
     if (row) {
+      teacherProfileId = row.id;
       // Admin-controlled trust badges. Loaded server-side so the admin
       // never sees the boolean flicker, and so the audit metadata
       // (set_at / set_by) does NOT travel through the public
@@ -662,6 +665,10 @@ export default async function AdminUserDetailPage({
       };
     }
   }
+
+  const ambassadorMembership = teacherProfileId
+    ? await getAdminAmbassadorForTeacher(admin, teacherProfileId)
+    : null;
 
   const { Icon: RoleIcon, label: roleLabel, className: roleClass } = roleStyle(profile.role);
 
@@ -818,6 +825,62 @@ export default async function AdminUserDetailPage({
                 &gt; <strong>Taux standard</strong>. La promotion fondateur n&apos;active
                 jamais le statut payé Membre Pro.
               </p>
+            </section>
+
+            <section
+              className="rounded-3xl border border-[#DCEAE3] bg-white p-6 shadow-sm"
+              data-testid="admin-user-ambassador-card"
+            >
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0">
+                  <h2 className="text-lg font-bold text-[#2C2C2A]">Ambassadeur Pratiqo</h2>
+                  <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                    Le statut ambassadeur est distinct de Membre Pro et de la promotion
+                    fondateur. Il s’active sur un professeur existant, sans recréer son compte.
+                  </p>
+                  {teacherProfileId ? (
+                    <p className="mt-2 break-all font-mono text-xs text-slate-500">
+                      teachers.id: {teacherProfileId}
+                    </p>
+                  ) : (
+                    <p className="mt-2 text-sm font-semibold text-amber-800">
+                      Aucun profil teachers trouvé pour activer ce professeur.
+                    </p>
+                  )}
+                </div>
+                {ambassadorMembership ? (
+                  <Link
+                    href={`/admin/ambassadors/${ambassadorMembership.ambassadorId}`}
+                    className="inline-flex shrink-0 items-center justify-center rounded-full bg-[#0F6E56] px-4 py-2 text-sm font-bold text-white hover:bg-[#0B5845]"
+                  >
+                    Gérer l’ambassadeur
+                  </Link>
+                ) : teacherProfileId ? (
+                  <Link
+                    href={`/admin/ambassadors?teacherId=${encodeURIComponent(teacherProfileId)}`}
+                    className="inline-flex shrink-0 items-center justify-center rounded-full border border-teal-200 bg-teal-50 px-4 py-2 text-sm font-bold text-teal-800 hover:bg-teal-100"
+                  >
+                    Activer comme ambassadeur
+                  </Link>
+                ) : null}
+              </div>
+              {ambassadorMembership ? (
+                <dl className="mt-4 grid grid-cols-1 gap-3 text-sm sm:grid-cols-3">
+                  <AdminField label="Statut" value={ambassadorMembership.status} />
+                  <AdminField
+                    label="Lien principal"
+                    value={
+                      ambassadorMembership.primaryCode
+                        ? `/r/${ambassadorMembership.primaryCode}`
+                        : "Aucun"
+                    }
+                  />
+                  <AdminField
+                    label="Récompenses à payer"
+                    value={formatCents(ambassadorMembership.rewardsOutstandingCents)}
+                  />
+                </dl>
+              ) : null}
             </section>
 
             {teacherBadges ? (

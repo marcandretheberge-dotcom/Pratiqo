@@ -37,6 +37,7 @@ export type AdminOverviewModuleId =
   | "bookings"
   | "payments"
   | "promotions"
+  | "ambassadors"
   | "seo"
   | "support";
 
@@ -99,6 +100,15 @@ export const ADMIN_COMMAND_CENTER_MODULES: readonly AdminOverviewModule[] = [
     description: "Codes promo, crédits apprenants, compensations et concours.",
     cta: "Gérer les promotions",
     href: "/admin/promotions",
+    status: "ready",
+  },
+  {
+    id: "ambassadors",
+    title: "Ambassadeurs",
+    description:
+      "Activer les professeurs ambassadeurs, gérer les liens et suivre les récompenses.",
+    cta: "Gérer les ambassadeurs",
+    href: "/admin/ambassadors",
     status: "ready",
   },
   {
