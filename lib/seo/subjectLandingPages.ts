@@ -393,7 +393,7 @@ export const SUBJECT_LANDING_PAGES: SubjectLandingPage[] = [
           "Trouvez un professeur de photographie pour les bases de l'appareil, la composition, la lumière ou la retouche — en ligne ou près de chez vous.",
         h1: "Trouver un cours de photographie",
         intro:
-          "Débutant ou amateur passionné, un cours privé peut vous aider à mieux voir, cadrer et créer — sans promesse de portfolio garanti ni de revenus professionnels.",
+          "Débutant ou amateur passionné, un professeur peut vous aider à mieux voir, cadrer et créer — avec des conseils concrets, adaptés à votre niveau.",
         learnTitle: "Sujets souvent abordés",
         learnItems: [
           "bases de l'appareil ou du téléphone, réglages et mise au point",
@@ -420,7 +420,7 @@ export const SUBJECT_LANDING_PAGES: SubjectLandingPage[] = [
           "Find a photography teacher for camera basics, composition, lighting, or editing — online or near you.",
         h1: "Find a photography class",
         intro:
-          "Beginner or hobby photographer, a private lesson can help you see, frame, and create better — with no promise of a professional portfolio or income.",
+          "Beginner or hobby photographer, a teacher can help you see, frame, and create better — with practical advice, adapted to your level.",
         learnTitle: "Topics often covered",
         learnItems: [
           "camera or phone basics, settings, and focus",
@@ -447,7 +447,7 @@ export const SUBJECT_LANDING_PAGES: SubjectLandingPage[] = [
           "Encuentra un profesor de fotografía para lo básico de la cámara, composición, luz o edición — en línea o cerca de ti.",
         h1: "Encuentra una clase de fotografía",
         intro:
-          "Principiante o aficionado, una clase privada puede ayudarte a ver, encuadrar y crear mejor — sin promesa de portafolio garantizado ni ingresos profesionales.",
+          "Principiante o aficionado, un profesor puede ayudarte a ver, encuadrar y crear mejor — con consejos concretos, adaptados a tu nivel.",
         learnTitle: "Temas que suelen verse",
         learnItems: [
           "bases de cámara o teléfono, ajustes y enfoque",

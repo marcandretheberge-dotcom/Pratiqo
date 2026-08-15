@@ -1,6 +1,6 @@
 ## Apprendre la photographie en privé, à votre rythme
 
-Que vous utilisiez un téléphone ou un appareil photo, un cours privé peut vous aider à **mieux voir**, **cadrer** et **raconter** une image — sans promettre un portfolio professionnel du jour au lendemain ni des revenus garantis.
+Que vous utilisiez un téléphone ou un appareil photo, un professeur peut vous aider à mieux voir, cadrer et raconter une image — avec des conseils concrets, adaptés à votre niveau.
 
 Ce guide s'adresse aux débutants et aux amateurs qui veulent progresser avec un accompagnement personnalisé.
 
@@ -29,7 +29,7 @@ Chaque professeur a sa spécialité : vérifiez la bio et posez des questions su
 - **Expérience pédagogique** : enseigne-t-il aux débutants? Comment structure-t-il une séance?
 - **Format** : balade photo en personne, cours en ligne avec partage d'écran, critique de vos images.
 - **Zone ou en ligne** : certains professeurs se déplacent; d'autres préfèrent le distanciel.
-- **Attentes honnêtes** : fuyez les promesses de « carrière garantie », certification officielle non précisée ou revenus assurés.
+- **Attentes honnêtes** : fuyez les promesses de résultats instantanés ou de certification officielle non précisée.
 
 Sur Pratiqo, seuls les profils publiés par les enseignants apparaissent — sans inventaire fictif.
 
