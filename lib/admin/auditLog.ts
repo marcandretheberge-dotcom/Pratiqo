@@ -17,9 +17,21 @@ export type AdminAuditAction =
   | "promo_code.paused"
   | "promo_code.archived"
   | "student_credit.granted"
-  | "student_credit.voided";
+  | "student_credit.voided"
+  | "ambassador.activated"
+  | "ambassador.paused"
+  | "ambassador.reactivated"
+  | "ambassador.revoked"
+  | "ambassador_link.created"
+  | "ambassador_link.updated"
+  | "ambassador_reward.marked_paid";
 
-export type AdminAuditTargetType = "promo_code" | "student_credit";
+export type AdminAuditTargetType =
+  | "promo_code"
+  | "student_credit"
+  | "ambassador"
+  | "ambassador_link"
+  | "ambassador_reward";
 
 export async function insertAdminAuditLog(
   admin: AdminClient,

@@ -48,6 +48,7 @@ const EXPLICIT_RLS_HARDENING_FILES = [
   "087_admin_promotions_student_credits.sql",
   "093_harden_recent_program_tables_rls.sql",
   "094_ambassador_net_contribution_economics.sql",
+  "095_ambassador_membership_admin.sql",
 ];
 
 function readMigration(file: string): string {

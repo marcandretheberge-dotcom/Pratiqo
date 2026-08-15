@@ -27,7 +27,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ code
   const admin = getSupabaseAdmin();
   const linkResult = await admin
     .from("ambassador_links")
-    .select("id, destination_path, attribution_window_days")
+    .select("id, destination_path, attribution_window_days, ambassador_id")
     .eq("code", code)
     .eq("active", true)
     .maybeSingle();
@@ -38,6 +38,24 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ code
   if (!linkResult.data) return NextResponse.redirect(new URL("/", req.url));
 
   const link = linkResult.data;
+  const ambassadorId =
+    typeof link.ambassador_id === "string" && link.ambassador_id.trim()
+      ? link.ambassador_id
+      : null;
+  if (!ambassadorId) return NextResponse.redirect(new URL("/", req.url));
+
+  const membershipResult = await admin
+    .from("ambassadors")
+    .select("status")
+    .eq("id", ambassadorId)
+    .eq("status", "active")
+    .maybeSingle();
+
+  if (membershipResult.error) {
+    console.error("[ambassador/referral] membership lookup failed", membershipResult.error);
+  }
+  if (!membershipResult.data) return NextResponse.redirect(new URL("/", req.url));
+
   const destinationPath = safeAmbassadorDestination(link.destination_path as string | null);
   const existingSessionId = parseAmbassadorReferralSessionId(req.cookies.get(AMBASSADOR_REF_COOKIE)?.value);
 
