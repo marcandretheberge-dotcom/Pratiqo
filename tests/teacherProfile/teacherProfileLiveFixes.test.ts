@@ -88,7 +88,7 @@ test("disciplines: controlled selector uses enabled discipline catalog", () => {
 });
 
 test("disciplines: language category exposes language specialty selector", () => {
-  assert.match(DISC_EDITOR, /PRESET_SPECIALTIES/);
+  assert.match(DISC_EDITOR, /OPTIONAL_PRESET_SPECIALTIES/);
   assert.match(DISC_EDITOR, /langues/);
   assert.match(DISC_EDITOR, /Coréen/);
   assert.match(DISC_EDITOR, /Français/);

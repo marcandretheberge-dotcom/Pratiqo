@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import type { Discipline, Teacher, TeachingMode } from "../types";
-import { displayTeacherMarketplaceCategory, getEnabledDisciplines } from "../lib/disciplines";
+import { displayTeacherMarketplaceCategory, getFeaturedFilterDisciplines } from "../lib/disciplines";
 import { isEnabled } from "../lib/features";
 import { cn } from "../lib/utils";
 import { getSupabaseClient } from "../lib/supabase";
@@ -523,7 +523,7 @@ export function Explore({
 
       <section className="flex gap-2 overflow-x-auto pb-4 no-scrollbar">
         <CategoryPill label={t("filterAll")} active={selectedCategory === "All"} onClick={() => setSelectedCategory("All")} />
-        {getEnabledDisciplines().map((d) => (
+        {getFeaturedFilterDisciplines().map((d) => (
           <CategoryPill
             key={d.id}
             label={d.label}

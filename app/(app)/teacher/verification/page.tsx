@@ -37,7 +37,7 @@ import { useLocale } from "../../../../lib/locale-context";
 import { cn } from "../../../../lib/utils";
 import { deriveVerificationState, deriveEffectiveZoneState, type VerificationStepState } from "../../../../lib/verificationState";
 import { isIdentityVerificationFailed } from "../../../../lib/teachers/identityPublishGate";
-import { getDisciplineById, getEnabledDisciplines } from "../../../../lib/disciplines";
+import { getDisciplineById, getEnabledDisciplines, MAX_TEACHER_DISCIPLINES, isActiveDisciplineId } from "../../../../lib/disciplines";
 import { syncTeacherPrimaryFromDisciplines } from "../../../../lib/teacherDisciplines";
 import { TeacherDisciplinesEditor, type DisciplineCardDraft } from "../../../../components/teacher/TeacherDisciplinesEditor";
 import type { TranslationKey } from "../../../../lib/translations";
@@ -659,12 +659,12 @@ export default function TeacherProfileManagementPage() {
   const saveDisciplineCard = async (draft: DisciplineCardDraft) => {
     if (!teacherRow?.id) return;
     const nextSpecs = draft.specialties.map((s) => normalizeSpec(s)).filter(Boolean);
-    if (nextSpecs.length === 0) {
-      showMsg(t("specialtyValidationRequired"), "error");
+    if (!isActiveDisciplineId(draft.disciplineId)) {
+      showMsg(t("invalidDiscipline"), "error");
       return;
     }
     const exists = disciplineCards.some((c) => c.disciplineId === draft.disciplineId);
-    if (discEditorMode === "add" && disciplineCards.length >= 3 && !exists) {
+    if (discEditorMode === "add" && disciplineCards.length >= MAX_TEACHER_DISCIPLINES && !exists) {
       showMsg(t("maxDisciplinesReached"), "error");
       return;
     }
@@ -678,10 +678,11 @@ export default function TeacherProfileManagementPage() {
     const baseSort =
       disciplineCards.find((c) => c.disciplineId === draft.disciplineId)?.minSort ??
       (disciplineCards.length ? Math.max(...disciplineCards.map((c) => c.minSort)) + 100 : 0);
-    const inserts = nextSpecs.map((spec, i) => ({
+    const specsToWrite = nextSpecs.length > 0 ? nextSpecs : [""];
+    const inserts = specsToWrite.map((spec, i) => ({
       teacher_id: teacherRow.id,
       discipline_id: draft.disciplineId,
-      specialite: spec,
+      specialite: spec || null,
       sort_order: baseSort + i,
     }));
     const { error: insErr } = await supabase.from("teacher_disciplines").insert(inserts);
@@ -1399,11 +1400,11 @@ export default function TeacherProfileManagementPage() {
                 )}
                 <button
                   type="button"
-                  disabled={discSaving || disciplineCards.length >= 3}
+                  disabled={discSaving || disciplineCards.length >= MAX_TEACHER_DISCIPLINES}
                   onClick={openAddDiscipline}
                   className={cn(
                     "w-full py-3 rounded-xl border-2 border-dashed text-sm font-semibold",
-                    disciplineCards.length >= 3
+                    disciplineCards.length >= MAX_TEACHER_DISCIPLINES
                       ? "border-slate-200 text-slate-400 bg-slate-50"
                       : "border-teal-500/40 text-teal-700 hover:bg-teal-50/50",
                   )}
@@ -1411,7 +1412,7 @@ export default function TeacherProfileManagementPage() {
                 >
                   {t("addDiscipline")}
                 </button>
-                {disciplineCards.length >= 3 ? (
+                {disciplineCards.length >= MAX_TEACHER_DISCIPLINES ? (
                   <p className="text-xs text-[#6B6A65]">{t("maxDisciplinesReached")}</p>
                 ) : null}
                 <TeacherDisciplinesEditor
@@ -1419,7 +1420,7 @@ export default function TeacherProfileManagementPage() {
                   mode={discEditorMode}
                   initial={discEditorInitial}
                   busy={discSaving}
-                  maxReached={disciplineCards.length >= 3}
+                  maxReached={disciplineCards.length >= MAX_TEACHER_DISCIPLINES}
                   onClose={() => setDiscEditorOpen(false)}
                   onSave={saveDisciplineCard}
                 />

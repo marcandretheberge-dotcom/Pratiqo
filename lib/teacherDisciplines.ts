@@ -72,6 +72,7 @@ export function teacherMatchesExploreSearch(teacher: Teacher, searchQuery: strin
   if (!q) return true;
   if (foldAscii(teacher.name).includes(q)) return true;
   if (foldAscii(teacher.discipline).includes(q)) return true;
+  if (foldAscii(displayTeacherMarketplaceCategory(teacher.category)).includes(q)) return true;
   if (foldAscii(String(teacher.city ?? "")).includes(q)) return true;
   if (foldAscii(String(teacher.region ?? "")).includes(q)) return true;
   if (foldAscii(String(teacher.location?.neighborhood ?? "")).includes(q)) return true;

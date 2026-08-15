@@ -9,7 +9,7 @@ import { getSupabaseClient } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 import { useLocale } from "@/lib/locale-context";
 import { localeToBcp47 } from "@/lib/i18n/types";
-import { getDisciplineById, getEnabledDisciplines } from "@/lib/disciplines";
+import { getDisciplineById, getEnabledDisciplines, MAX_TEACHER_DISCIPLINES, isActiveDisciplineId } from "@/lib/disciplines";
 import { syncTeacherPrimaryFromDisciplines } from "@/lib/teacherDisciplines";
 import type { TeacherRow } from "@/lib/teacherMapper";
 import { isValidVideoUrl } from "@/lib/videoEmbed";
@@ -332,12 +332,12 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
   const saveDisciplineCard = async (draft: DisciplineCardDraft) => {
     if (!teacherId) return;
     const nextSpecs = draft.specialties.map((s) => normalizeSpec(s)).filter(Boolean);
-    if (nextSpecs.length === 0) {
-      setMessage(t("specialtyValidationRequired"));
+    if (!isActiveDisciplineId(draft.disciplineId)) {
+      setMessage(t("invalidDiscipline"));
       return;
     }
     const exists = disciplineCards.some((c) => c.disciplineId === draft.disciplineId);
-    if (discEditorMode === "add" && disciplineCards.length >= 3 && !exists) {
+    if (discEditorMode === "add" && disciplineCards.length >= MAX_TEACHER_DISCIPLINES && !exists) {
       setMessage(t("maxDisciplinesReached"));
       return;
     }
@@ -352,10 +352,11 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
       disciplineCards.find((c) => c.disciplineId === draft.disciplineId)?.minSort ??
       (disciplineCards.length ? Math.max(...disciplineCards.map((c) => c.minSort)) + 100 : 0);
 
-    const inserts = nextSpecs.map((spec, i) => ({
+    const specsToWrite = nextSpecs.length > 0 ? nextSpecs : [""];
+    const inserts = specsToWrite.map((spec, i) => ({
       teacher_id: teacherId,
       discipline_id: draft.disciplineId,
-      specialite: spec,
+      specialite: spec || null,
       sort_order: baseSort + i,
     }));
     const { error: insErr } = await supabase.from("teacher_disciplines").insert(inserts);
@@ -727,7 +728,7 @@ export function TeacherAccountView({ variant }: { variant: "profile" | "system" 
     );
   }
 
-  const maxDisciplinesReached = disciplineCards.length >= 3;
+  const maxDisciplinesReached = disciplineCards.length >= MAX_TEACHER_DISCIPLINES;
 
   return (
     <div className="mx-auto max-w-xl space-y-6 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:space-y-8 sm:pb-16" data-testid="teacher-account-mobile-safe">

@@ -88,7 +88,7 @@ export const onboardingCompletePostSchema = z
     teaching_since: z.coerce.number().int().min(1950).max(2035).nullable().optional(),
     categories: z.array(z.string().trim().max(100)).max(20).optional(),
     discipline: z.string().max(200).optional(),
-    disciplines: z.array(disciplineRowSchema).max(3).optional(),
+    disciplines: z.array(disciplineRowSchema).max(5).optional(),
     teaching_mode: z.enum(["person", "online", "both"]).optional(),
     hourly_rate: z.coerce.number().finite().min(20).max(500).optional(),
     levels: z.array(z.string().max(80)).max(10).optional(),
