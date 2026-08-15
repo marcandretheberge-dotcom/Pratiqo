@@ -396,7 +396,7 @@ function AdminPromotionsPageInner() {
     return (
       <main className="min-h-[70dvh] bg-[#F3FAF6] px-4 py-8">
         <div className="mx-auto max-w-6xl">
-          <p className="text-sm text-slate-600">Vérification de l'accès admin…</p>
+          <p className="text-sm text-slate-600">Vérification de l&apos;accès admin…</p>
         </div>
       </main>
     );
@@ -455,7 +455,7 @@ function AdminPromotionsPageInner() {
                 Codes promo
               </h2>
               <p className="mt-1 text-sm text-slate-600">
-                Registre interne. Usage au paiement : non disponible pour l'instant.
+                Registre interne. Usage au paiement : non disponible pour l&apos;instant.
               </p>
             </div>
           </div>
@@ -555,7 +555,7 @@ function AdminPromotionsPageInner() {
               />
             </label>
             <label className="text-sm">
-              <span className="font-semibold text-slate-700">Date d'expiration</span>
+              <span className="font-semibold text-slate-700">Date d&apos;expiration</span>
               <input
                 type="datetime-local"
                 value={promoForm.expiresAt}
@@ -617,7 +617,7 @@ function AdminPromotionsPageInner() {
             {loading ? (
               <p className="text-sm text-slate-500">Chargement…</p>
             ) : promos.length === 0 ? (
-              <p className="text-sm text-slate-500">Aucun code promo pour l'instant.</p>
+              <p className="text-sm text-slate-500">Aucun code promo pour l&apos;instant.</p>
             ) : (
               <table className="min-w-full text-left text-sm" data-testid="admin-promo-table">
                 <thead className="text-xs uppercase tracking-wide text-slate-500">

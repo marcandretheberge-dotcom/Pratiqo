@@ -17,6 +17,7 @@ import Link from "next/link";
 import { X } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useLocale } from "@/lib/locale-context";
+import { AmbassadorReferralClaim } from "@/components/ambassadors/AmbassadorReferralClaim";
 
 const STORAGE_KEY = "pratiqo-teacher-strip-dismissed";
 
@@ -50,8 +51,6 @@ export function TeacherRecruitStrip() {
     pathname?.startsWith("/upgrade") ||
     pathname?.startsWith("/group-sessions");
 
-  if (!visible || suppressed) return null;
-
   function dismiss() {
     setVisible(false);
     try {
@@ -62,28 +61,33 @@ export function TeacherRecruitStrip() {
   }
 
   return (
-    <div
-      role="banner"
-      aria-label={t("bannerAreYouTeacher")}
-      className="fixed bottom-0 inset-x-0 z-50 flex items-center justify-between gap-3 bg-teal-700 px-4 sm:px-6 h-11 shadow-lg"
-    >
-      <span className="text-xs text-white/85 font-medium truncate">{t("bannerAreYouTeacher")}</span>
+    <>
+      <AmbassadorReferralClaim />
+      {visible && !suppressed ? (
+        <div
+          role="banner"
+          aria-label={t("bannerAreYouTeacher")}
+          className="fixed bottom-0 inset-x-0 z-50 flex items-center justify-between gap-3 bg-teal-700 px-4 sm:px-6 h-11 shadow-lg"
+        >
+          <span className="text-xs text-white/85 font-medium truncate">{t("bannerAreYouTeacher")}</span>
 
-      <Link
-        href="/devenir-enseignant"
-        className="shrink-0 text-xs font-bold text-white underline underline-offset-2 hover:text-white/85 transition-colors"
-      >
-        {t("bannerJoinCta")}
-      </Link>
+          <Link
+            href="/devenir-enseignant"
+            className="shrink-0 text-xs font-bold text-white underline underline-offset-2 hover:text-white/85 transition-colors"
+          >
+            {t("bannerJoinCta")}
+          </Link>
 
-      <button
-        type="button"
-        onClick={dismiss}
-        aria-label={t("bannerDismiss")}
-        className="shrink-0 rounded-md p-1 text-white/60 hover:text-white transition-colors"
-      >
-        <X size={14} />
-      </button>
-    </div>
+          <button
+            type="button"
+            onClick={dismiss}
+            aria-label={t("bannerDismiss")}
+            className="shrink-0 rounded-md p-1 text-white/60 hover:text-white transition-colors"
+          >
+            <X size={14} />
+          </button>
+        </div>
+      ) : null}
+    </>
   );
 }

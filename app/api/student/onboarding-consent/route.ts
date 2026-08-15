@@ -174,7 +174,9 @@ export async function POST(request: Request) {
     return consentSaveFailed("admin_client");
   }
 
-  let { profile: existingProfile, error: readErr, schemaReady } = await readStudentProfile(admin, user.id);
+  const profileRead = await readStudentProfile(admin, user.id);
+  let existingProfile = profileRead.profile;
+  const { error: readErr, schemaReady } = profileRead;
 
   if (readErr) {
     logConsentStorageFailure("profile_read", readErr);

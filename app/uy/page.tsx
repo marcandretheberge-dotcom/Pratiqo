@@ -59,14 +59,14 @@ export default function UruguayNextMarketPage() {
             <p className="max-w-2xl text-base leading-7 text-[#4F5E59]">
               Le marché Uruguay est en préparation. Les réservations payées,
               les versements aux professeurs et Membre Pro ne sont pas encore
-              activés pour l'Uruguay.
+              activés pour l&apos;Uruguay.
             </p>
             <div className="flex flex-col gap-3 sm:flex-row">
               <a
                 href={URUGUAY_WAITLIST_MAILTO}
                 className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-[#0F6E56] px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[#0B5E49]"
               >
-                Rejoindre la liste d'attente
+                Rejoindre la liste d&apos;attente
                 <ArrowRight aria-hidden="true" size={17} />
               </a>
               <Link
