@@ -1,7 +1,9 @@
 import type { MetadataRoute } from "next";
 import { getSupabaseAdmin } from "../lib/supabaseAdmin";
 import { isMarketSeoEnabled } from "../lib/config/markets";
+import { cacheSeoData, SEO_SITEMAP_REVALIDATE_SECONDS } from "../lib/seo/cache";
 import { fetchLocalDiscoverySitemapEntries } from "../lib/seo/localTeacherDiscoveryPages";
+import { filterSitemapEntries } from "../lib/seo/sitemap";
 import { SUBJECT_LANDING_PATHS } from "../lib/seo/subjectLandingPages";
 import { SITE_URL } from "../lib/seo/site";
 import { buildTeacherPublicProfileCanonicalUrl } from "../lib/seo/teacherPublicProfile";
@@ -74,6 +76,12 @@ const STATIC_ROUTES: MetadataRoute.Sitemap = [
     priority: 0.85,
   },
   {
+    url: `${BASE_URL}/trouver-mon-prof`,
+    lastModified: new Date(),
+    changeFrequency: "monthly",
+    priority: 0.85,
+  },
+  {
     url: `${BASE_URL}/francisation`,
     lastModified: new Date(),
     changeFrequency: "monthly",
@@ -129,6 +137,18 @@ const STATIC_ROUTES: MetadataRoute.Sitemap = [
     changeFrequency: "yearly",
     priority: 0.4,
   },
+  {
+    url: `${BASE_URL}/legal/accessibilite`,
+    lastModified: new Date(),
+    changeFrequency: "yearly",
+    priority: 0.35,
+  },
+  {
+    url: `${BASE_URL}/legal/yo-remboursement`,
+    lastModified: new Date(),
+    changeFrequency: "yearly",
+    priority: 0.35,
+  },
 ];
 
 // ── Consented public teacher SEO profiles (/professeurs/[slug]) ─────────────
@@ -153,7 +173,7 @@ async function fetchTeacherEntries(): Promise<MetadataRoute.Sitemap> {
 //
 // The /blog hub + individual post pages.
 // Post slugs are fetched at build time so Google indexes them immediately.
-async function fetchBlogEntries(): Promise<MetadataRoute.Sitemap> {
+const fetchBlogEntries = cacheSeoData(async (): Promise<MetadataRoute.Sitemap> => {
   try {
     const supabase = getSupabaseAdmin();
     const { data, error } = await supabase
@@ -174,7 +194,7 @@ async function fetchBlogEntries(): Promise<MetadataRoute.Sitemap> {
   } catch {
     return [];
   }
-}
+}, ["blog-sitemap-entries-v1"], { revalidate: SEO_SITEMAP_REVALIDATE_SECONDS });
 
 // ── City hub + discipline × city discovery pages (supply-gated) ─────────────
 //
@@ -294,7 +314,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.82,
   }));
 
-  return [
+  return filterSitemapEntries([
     ...STATIC_ROUTES,
     ...YO_LANGUAGE_HUB_ROUTES,
     ...YO_LANGUAGE_LANDING_ROUTES,
@@ -306,5 +326,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...localDiscoveryEntries,
     ...SUBJECT_LANDING_ROUTES,
     ...teacherEntries,
-  ];
+  ]);
 }

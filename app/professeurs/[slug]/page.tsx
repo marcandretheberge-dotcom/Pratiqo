@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { cache } from "react";
 import { notFound } from "next/navigation";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import {
@@ -26,6 +25,7 @@ import {
 } from "@/lib/seo/teacherPublicProfile";
 import { serializeJsonLd } from "@/lib/seo/jsonLd";
 import { fetchTeacherPublicSeoRowBySlug } from "@/lib/seo/teacherPublicProfileData";
+import { cacheSeoData, SEO_TEACHER_PROFILE_REVALIDATE_SECONDS } from "@/lib/seo/cache";
 
 function isColumnMismatchError(error: unknown): boolean {
   if (!error || typeof error !== "object") return false;
@@ -88,7 +88,7 @@ async function withSafeProfilePhoto(row: TeacherRow): Promise<TeacherRow | null>
   return { ...row, image_url: resolveTeacherPublicPhoto(photoUrl, row.image_url) };
 }
 
-const getTeacherPublicProfileBundle = cache(async (slug: string) => {
+const getTeacherPublicProfileBundle = cacheSeoData(async (slug: string) => {
   const seoRow = await fetchTeacherPublicSeoRowBySlug(slug);
   if (!seoRow || !isTeacherPublicProfilePageVisible(seoRow)) {
     return null;
@@ -121,7 +121,7 @@ const getTeacherPublicProfileBundle = cache(async (slug: string) => {
     canonical: buildTeacherPublicProfileCanonicalUrl(slug),
     slug,
   };
-});
+}, ["teacher-public-profile-bundle-v1"], { revalidate: SEO_TEACHER_PROFILE_REVALIDATE_SECONDS });
 
 export async function generateMetadata({
   params,

@@ -1,4 +1,5 @@
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { cacheSeoData, SEO_SITEMAP_REVALIDATE_SECONDS, SEO_TEACHER_PROFILE_REVALIDATE_SECONDS } from "@/lib/seo/cache";
 import { isIdentityVerificationFailed } from "@/lib/teachers/identityPublishGate";
 import {
   buildTeacherPublicProfileSlug,
@@ -6,6 +7,7 @@ import {
   type TeacherPublicSeoFields,
 } from "@/lib/seo/teacherPublicProfile";
 import type { TeacherSeoPublicationRow } from "@/lib/seo/teacherSeoPublication";
+import { countTeacherSubjects, fetchTeacherSubjectCountsByIds } from "@/lib/seo/teacherSubjectCounts";
 
 const SEO_ROW_SELECT =
   "id, user_id, name, bio, discipline, city, region, country_code, teaching_mode, is_public, deactivated_at, deleted_at, is_demo, identity_verified, stripe_identity_failed_reason, public_profile_enabled, search_indexing_consent, public_profile_slug, public_profile_last_indexable_at";
@@ -164,16 +166,7 @@ export async function fetchTeacherSeoPublicationRowByUserId(
   return fetchSeoPublicationRow({ column: "user_id", value: userId });
 }
 
-async function countTeacherSubjects(teacherId: string): Promise<number> {
-  const { count, error } = await getSupabaseAdmin()
-    .from("teacher_disciplines")
-    .select("id", { count: "exact", head: true })
-    .eq("teacher_id", teacherId);
-  if (error) return 0;
-  return count ?? 0;
-}
-
-export async function fetchTeacherPublicSeoRowBySlug(
+async function fetchTeacherPublicSeoRowBySlugUncached(
   slug: string,
 ): Promise<TeacherPublicSeoFields | null> {
   const trimmed = slug.trim();
@@ -194,6 +187,12 @@ export async function fetchTeacherPublicSeoRowBySlug(
   return flattenSeoRow(raw, profile, subjectCount);
 }
 
+export const fetchTeacherPublicSeoRowBySlug = cacheSeoData(
+  fetchTeacherPublicSeoRowBySlugUncached,
+  ["teacher-public-seo-row-by-slug-v1"],
+  { revalidate: SEO_TEACHER_PROFILE_REVALIDATE_SECONDS },
+);
+
 export async function fetchTeacherPublicSeoRowById(
   teacherId: string,
 ): Promise<TeacherPublicSeoFields | null> {
@@ -212,7 +211,7 @@ export async function fetchTeacherPublicSeoRowById(
   return flattenSeoRow(raw, profile, subjectCount);
 }
 
-export async function fetchIndexableTeacherSitemapRows(): Promise<
+async function fetchIndexableTeacherSitemapRowsUncached(): Promise<
   Array<{ slug: string; lastModified: Date }>
 > {
   const { data, error } = await getSupabaseAdmin()
@@ -230,9 +229,12 @@ export async function fetchIndexableTeacherSitemapRows(): Promise<
   const profileRows = await fetchProfileSeoRowsByIds(
     (data as unknown as SeoRowRaw[]).map((raw) => raw.user_id ?? ""),
   );
+  const subjectCounts = await fetchTeacherSubjectCountsByIds(
+    (data as unknown as SeoRowRaw[]).map((raw) => raw.id),
+  );
   const rows: Array<{ slug: string; lastModified: Date }> = [];
   for (const raw of data as unknown as SeoRowRaw[]) {
-    const subjectCount = await countTeacherSubjects(raw.id);
+    const subjectCount = subjectCounts.get(raw.id) ?? 0;
     const row = flattenSeoRow(raw, raw.user_id ? profileRows.get(raw.user_id) ?? null : null, subjectCount);
     if (!isTeacherPublicProfileIndexable(row)) continue;
     const slug = row.public_profile_slug?.trim();
@@ -249,8 +251,14 @@ export async function fetchIndexableTeacherSitemapRows(): Promise<
   return rows;
 }
 
+export const fetchIndexableTeacherSitemapRows = cacheSeoData(
+  fetchIndexableTeacherSitemapRowsUncached,
+  ["teacher-public-sitemap-rows-v1"],
+  { revalidate: SEO_SITEMAP_REVALIDATE_SECONDS },
+);
+
 /** Indexable /professeurs/[slug] paths for marketplace teacher cards (never owner-preview URLs). */
-export async function fetchIndexableTeacherPublicPathsByIds(
+async function fetchIndexableTeacherPublicPathsByIdsUncached(
   teacherIds: string[],
 ): Promise<Map<string, string>> {
   const unique = [...new Set(teacherIds.filter(Boolean))];
@@ -266,9 +274,12 @@ export async function fetchIndexableTeacherPublicPathsByIds(
   const profileRows = await fetchProfileSeoRowsByIds(
     (data as SeoRowRaw[]).map((raw) => raw.user_id ?? ""),
   );
+  const subjectCounts = await fetchTeacherSubjectCountsByIds(
+    (data as SeoRowRaw[]).map((raw) => raw.id),
+  );
   const out = new Map<string, string>();
   for (const raw of data as SeoRowRaw[]) {
-    const subjectCount = await countTeacherSubjects(raw.id);
+    const subjectCount = subjectCounts.get(raw.id) ?? 0;
     const row = flattenSeoRow(raw, raw.user_id ? profileRows.get(raw.user_id) ?? null : null, subjectCount);
     if (!isTeacherPublicProfileIndexable(row)) continue;
     const slug = row.public_profile_slug?.trim();
@@ -277,6 +288,12 @@ export async function fetchIndexableTeacherPublicPathsByIds(
   }
   return out;
 }
+
+export const fetchIndexableTeacherPublicPathsByIds = cacheSeoData(
+  fetchIndexableTeacherPublicPathsByIdsUncached,
+  ["teacher-public-paths-by-ids-v1"],
+  { revalidate: SEO_TEACHER_PROFILE_REVALIDATE_SECONDS },
+);
 
 export async function allocateUniqueTeacherPublicProfileSlug(input: {
   teacherId: string;
