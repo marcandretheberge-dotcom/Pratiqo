@@ -1,4 +1,3 @@
-import { unstable_cache } from "next/cache";
 import { QC_CITIES, findCityBySlug, type QcCity } from "@/lib/constants/cities";
 import { haversineDistance } from "@/lib/geo";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
@@ -11,6 +10,8 @@ import {
   type TeacherPublicSeoFields,
 } from "@/lib/seo/teacherPublicProfile";
 import { SITE_URL } from "@/lib/seo/site";
+import { cacheSeoData, SEO_SITEMAP_REVALIDATE_SECONDS } from "@/lib/seo/cache";
+import { fetchTeacherSubjectCountsByIds } from "@/lib/seo/teacherSubjectCounts";
 export const LOCAL_CITY_HUB_PATH_PREFIX = "/tuteurs";
 export const LEGACY_CITY_HUB_PATH_PREFIX = "/tuteurs-prive";
 
@@ -184,16 +185,7 @@ function flattenDiscoveryRow(raw: SeoRowRaw, subjectCount = 0): RawDiscoveryTeac
   };
 }
 
-async function countTeacherSubjects(teacherId: string): Promise<number> {
-  const { count, error } = await getSupabaseAdmin()
-    .from("teacher_disciplines")
-    .select("id", { count: "exact", head: true })
-    .eq("teacher_id", teacherId);
-  if (error) return 0;
-  return count ?? 0;
-}
-
-export const fetchIndexableDiscoveryTeachers = unstable_cache(
+export const fetchIndexableDiscoveryTeachers = cacheSeoData(
   async (): Promise<RawDiscoveryTeacher[]> => {
     try {
       const { data, error } = await getSupabaseAdmin()
@@ -203,9 +195,10 @@ export const fetchIndexableDiscoveryTeachers = unstable_cache(
 
       if (error || !data) return [];
 
+      const subjectCounts = await fetchTeacherSubjectCountsByIds((data as SeoRowRaw[]).map((raw) => raw.id));
       const rows: RawDiscoveryTeacher[] = [];
       for (const raw of data as SeoRowRaw[]) {
-        const subjectCount = await countTeacherSubjects(raw.id);
+        const subjectCount = subjectCounts.get(raw.id) ?? 0;
         const row = flattenDiscoveryRow(raw, subjectCount);
         if (!isTeacherPublicProfileIndexable(row)) continue;
         const slug = row.public_profile_slug?.trim();
@@ -218,7 +211,7 @@ export const fetchIndexableDiscoveryTeachers = unstable_cache(
     }
   },
   ["local-discovery-indexable-teachers-v1"],
-  { revalidate: 3600 },
+  { revalidate: SEO_SITEMAP_REVALIDATE_SECONDS },
 );
 
 export function teacherIsOnlineCapable(teachingMode: string | null | undefined): boolean {
@@ -502,25 +495,37 @@ export async function resolveSubjectCityDiscoveryPage(
 
 export type LocalDiscoverySitemapEntry = {
   path: string;
-  lastModified: Date;
+  lastModified?: Date;
 };
+
+function latestTeacherLastModified(entries: RankedTeacher[]): Date | undefined {
+  const latestTimestamp = entries.reduce<number | null>((latest, entry) => {
+    const sourceDate = entry.row.public_profile_last_indexable_at;
+    if (!sourceDate) return latest;
+    const timestamp = Date.parse(sourceDate);
+    if (!Number.isFinite(timestamp)) return latest;
+    return latest === null || timestamp > latest ? timestamp : latest;
+  }, null);
+  return latestTimestamp === null ? undefined : new Date(latestTimestamp);
+}
 
 export async function fetchLocalDiscoverySitemapEntries(): Promise<LocalDiscoverySitemapEntry[]> {
   const teachers = await fetchIndexableDiscoveryTeachers();
   const entries: LocalDiscoverySitemapEntry[] = [];
-  const now = new Date();
 
   for (const city of QC_CITIES) {
     const hubRank = rankTeachersForCity(teachers, city);
     if (hubRank.ranked.length > 0) {
-      entries.push({ path: buildCityHubPath(city.slug), lastModified: now });
+      const lastModified = latestTeacherLastModified(hubRank.ranked);
+      entries.push({ path: buildCityHubPath(city.slug), ...(lastModified ? { lastModified } : {}) });
     }
     for (const discipline of DISCIPLINES) {
       const subjectRank = rankTeachersForCity(teachers, city, { discipline });
       if (subjectRank.ranked.length > 0) {
+        const lastModified = latestTeacherLastModified(subjectRank.ranked);
         entries.push({
           path: buildSubjectCityPath(discipline.slug, city.slug),
-          lastModified: now,
+          ...(lastModified ? { lastModified } : {}),
         });
       }
     }

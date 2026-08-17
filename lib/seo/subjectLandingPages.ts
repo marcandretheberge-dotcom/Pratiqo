@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import type { Locale } from "@/lib/i18n/types";
-import { SITE_URL } from "@/lib/seo/site";
+import { buildPageMetadata } from "@/lib/seo/metadata";
 
 export type SubjectLandingKey = "coach_trainer" | "cooking" | "martial_arts" | "dance" | "photography";
 
@@ -483,32 +483,10 @@ export function buildSubjectSearchHref(page: SubjectLandingPage): string {
 
 export function buildSubjectLandingMetadata(page: SubjectLandingPage, locale: Locale): Metadata {
   const content = page.content[locale];
-  const canonical = `${SITE_URL}/cours/${page.slug}`;
-
-  return {
+  return buildPageMetadata({
     title: content.title,
     description: content.description,
-    openGraph: {
-      title: content.title,
-      description: content.description,
-      url: canonical,
-      siteName: "Pratiqo",
-      locale: locale === "fr" ? "fr_CA" : locale === "es" ? "es_UY" : "en_CA",
-      type: "website",
-      images: [{ url: "/og-image.png", width: 1200, height: 630 }],
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: content.title,
-      description: content.description,
-      images: ["/og-image.png"],
-    },
-    alternates: {
-      canonical,
-    },
-    robots: {
-      index: true,
-      follow: true,
-    },
-  };
+    pathname: `/cours/${page.slug}`,
+    locale,
+  });
 }
