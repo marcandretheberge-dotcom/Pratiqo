@@ -39,6 +39,7 @@ const MODULE_ICONS: Record<AdminOverviewModule["id"], React.ReactNode> = {
   verifications: <BadgeCheck size={20} aria-hidden />,
   bookings: <BookOpen size={20} aria-hidden />,
   payments: <CreditCard size={20} aria-hidden />,
+  stripe_diagnostics: <ShieldCheck size={20} aria-hidden />,
   promotions: <TicketPercent size={20} aria-hidden />,
   ambassadors: <Handshake size={20} aria-hidden />,
   seo: <Globe2 size={20} aria-hidden />,

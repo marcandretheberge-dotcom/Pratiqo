@@ -36,6 +36,7 @@ export type AdminOverviewModuleId =
   | "verifications"
   | "bookings"
   | "payments"
+  | "stripe_diagnostics"
   | "promotions"
   | "ambassadors"
   | "seo"
@@ -92,6 +93,15 @@ export const ADMIN_COMMAND_CENTER_MODULES: readonly AdminOverviewModule[] = [
     description: "Stripe, paiements, versements, exigences et revenus plateforme.",
     cta: "Voir les paiements",
     href: "/admin/payments",
+    status: "ready",
+  },
+  {
+    id: "stripe_diagnostics",
+    title: "Diagnostics Stripe Connect",
+    description:
+      "Inspecter Connect, Identity, readiness paiement, payouts, sync et faux negatifs possibles.",
+    cta: "Voir les diagnostics",
+    href: "/admin/stripe-diagnostics",
     status: "ready",
   },
   {
