@@ -243,9 +243,12 @@ async function fetchIndexableTeacherSitemapRowsUncached(): Promise<
       (raw as { public_profile_last_indexable_at?: string | null; updated_at?: string | null })
         .public_profile_last_indexable_at ??
       (raw as { updated_at?: string | null }).updated_at;
+    if (!last) continue;
+    const lastModified = new Date(last);
+    if (!Number.isFinite(lastModified.getTime())) continue;
     rows.push({
       slug,
-      lastModified: last ? new Date(last) : new Date(),
+      lastModified,
     });
   }
   return rows;

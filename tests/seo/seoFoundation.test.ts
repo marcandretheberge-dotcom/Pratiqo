@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import test from "node:test";
 
+import sitemap from "../../app/sitemap";
 import { SITE_URL } from "../../lib/seo/site";
 import {
   buildCityDisciplineMetadata,
@@ -116,6 +117,51 @@ test("sitemap helper excludes private, auth, duplicate query, and preview URLs",
     { url: "https://preview.vercel.app/cours/piano" },
   ]);
   assert.deepEqual(filtered.map((entry) => entry.url), ["https://www.pratiqo.ca/cours/piano"]);
+});
+
+test("final sitemap includes expected static public routes and excludes private surfaces", async () => {
+  const entries = await sitemap();
+  const urls = new Set(entries.map((entry) => entry.url));
+
+  for (const url of [
+    "https://www.pratiqo.ca/trouver-mon-prof",
+    "https://www.pratiqo.ca/legal/accessibilite",
+    "https://www.pratiqo.ca/legal/yo-remboursement",
+  ]) {
+    assert.ok(urls.has(url), `${url} must be present in the final sitemap output`);
+  }
+
+  for (const entry of entries) {
+    assert.ok(entry.url.startsWith(`${SITE_URL}/`) || entry.url === SITE_URL, `${entry.url} must use canonical host`);
+  }
+
+  for (const privatePath of [
+    "/admin",
+    "/api",
+    "/login",
+    "/connexion",
+    "/student",
+    "/teacher",
+    "/checkout",
+    "/messages",
+    "/onboarding",
+    "/dashboard",
+  ]) {
+    assert.equal(
+      [...urls].some((url) => url === `${SITE_URL}${privatePath}` || url.startsWith(`${SITE_URL}${privatePath}/`)),
+      false,
+      `${privatePath} must not be present in the sitemap`,
+    );
+  }
+});
+
+test("static sitemap routes do not fake freshness with generation-time lastmod", () => {
+  const source = read("app/sitemap.ts");
+
+  assert.doesNotMatch(source, /lastModified:\s*new Date\(\),/);
+  assert.match(source, /new Date\(sourceDate\)/);
+  assert.match(source, /new Date\(article\.publishedAt\)/);
+  assert.match(source, /lastModified:\s*row\.lastModified/);
 });
 
 test("metadata builders use canonical host and unique page templates", () => {

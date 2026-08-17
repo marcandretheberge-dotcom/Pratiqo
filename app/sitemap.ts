@@ -27,19 +27,16 @@ const BASE_URL = SITE_URL;
 const STATIC_ROUTES: MetadataRoute.Sitemap = [
   {
     url: `${BASE_URL}/`,
-    lastModified: new Date(),
     changeFrequency: "weekly",
     priority: 1.0,
   },
   {
     url: `${BASE_URL}/become-teacher`,
-    lastModified: new Date(),
     changeFrequency: "monthly",
     priority: 0.9,
   },
   {
     url: `${BASE_URL}/devenir-enseignant`,
-    lastModified: new Date(),
     changeFrequency: "monthly",
     priority: 0.9,
   },
@@ -47,7 +44,6 @@ const STATIC_ROUTES: MetadataRoute.Sitemap = [
     ? [
         {
           url: `${BASE_URL}/uy`,
-          lastModified: new Date(),
           changeFrequency: "monthly" as const,
           priority: 0.65,
         },
@@ -57,7 +53,6 @@ const STATIC_ROUTES: MetadataRoute.Sitemap = [
     ? [
         {
           url: `${BASE_URL}/group-sessions`,
-          lastModified: new Date(),
           changeFrequency: "daily" as const,
           priority: 0.8,
         },
@@ -65,25 +60,21 @@ const STATIC_ROUTES: MetadataRoute.Sitemap = [
     : []),
   {
     url: `${BASE_URL}/tarifs`,
-    lastModified: new Date(),
     changeFrequency: "monthly",
     priority: 0.8,
   },
   {
     url: `${BASE_URL}/trouver-un-prof`,
-    lastModified: new Date(),
     changeFrequency: "monthly",
     priority: 0.85,
   },
   {
     url: `${BASE_URL}/trouver-mon-prof`,
-    lastModified: new Date(),
     changeFrequency: "monthly",
     priority: 0.85,
   },
   {
     url: `${BASE_URL}/francisation`,
-    lastModified: new Date(),
     changeFrequency: "monthly",
     priority: 0.85,
   },
@@ -97,55 +88,46 @@ const STATIC_ROUTES: MetadataRoute.Sitemap = [
   // excluded from the sitemap so search engines index the canonical URLs.
   {
     url: `${BASE_URL}/legal/cgu`,
-    lastModified: new Date(),
     changeFrequency: "yearly",
     priority: 0.4,
   },
   {
     url: `${BASE_URL}/legal/confidentialite`,
-    lastModified: new Date(),
     changeFrequency: "yearly",
     priority: 0.4,
   },
   {
     url: `${BASE_URL}/legal/annulation`,
-    lastModified: new Date(),
     changeFrequency: "yearly",
     priority: 0.4,
   },
   {
     url: `${BASE_URL}/legal/code-de-conduite`,
-    lastModified: new Date(),
     changeFrequency: "yearly",
     priority: 0.4,
   },
   {
     url: `${BASE_URL}/legal/conditions-professeurs`,
-    lastModified: new Date(),
     changeFrequency: "yearly",
     priority: 0.4,
   },
   {
     url: `${BASE_URL}/legal/membre-pro`,
-    lastModified: new Date(),
     changeFrequency: "yearly",
     priority: 0.4,
   },
   {
     url: `${BASE_URL}/legal/paiements-remboursements`,
-    lastModified: new Date(),
     changeFrequency: "yearly",
     priority: 0.4,
   },
   {
     url: `${BASE_URL}/legal/accessibilite`,
-    lastModified: new Date(),
     changeFrequency: "yearly",
     priority: 0.35,
   },
   {
     url: `${BASE_URL}/legal/yo-remboursement`,
-    lastModified: new Date(),
     changeFrequency: "yearly",
     priority: 0.35,
   },
@@ -178,19 +160,22 @@ const fetchBlogEntries = cacheSeoData(async (): Promise<MetadataRoute.Sitemap> =
     const supabase = getSupabaseAdmin();
     const { data, error } = await supabase
       .from("blog_posts")
-      .select("slug, updated_at")
+      .select("slug, published_at, updated_at")
       .not("published_at", "is", null)
       .lte("published_at", new Date().toISOString())
       .order("published_at", { ascending: false });
 
     if (error || !data) return [];
 
-    return (data as { slug: string; updated_at: string | null }[]).map((row) => ({
-      url: `${BASE_URL}/blog/${row.slug}`,
-      lastModified: row.updated_at ? new Date(row.updated_at) : new Date(),
-      changeFrequency: "weekly" as const,
-      priority: 0.85,
-    }));
+    return (data as { slug: string; published_at: string | null; updated_at: string | null }[]).map((row) => {
+      const sourceDate = row.updated_at ?? row.published_at;
+      return {
+        url: `${BASE_URL}/blog/${row.slug}`,
+        ...(sourceDate ? { lastModified: new Date(sourceDate) } : {}),
+        changeFrequency: "weekly" as const,
+        priority: 0.85,
+      };
+    });
   } catch {
     return [];
   }
@@ -235,7 +220,6 @@ async function fetchLocalDiscoveryEntries(): Promise<MetadataRoute.Sitemap> {
 // teacher is available in every city.
 const SUBJECT_LANDING_ROUTES: MetadataRoute.Sitemap = SUBJECT_LANDING_PATHS.map((path) => ({
   url: `${BASE_URL}${path}`,
-  lastModified: new Date(),
   changeFrequency: "monthly" as const,
   priority: 0.72,
 }));
@@ -248,7 +232,6 @@ const SUBJECT_LANDING_ROUTES: MetadataRoute.Sitemap = SUBJECT_LANDING_PATHS.map(
 // so we only need to advertise each unique URL here.
 const YO_SPANISH_SEO_ROUTES: MetadataRoute.Sitemap = YO_SPANISH_SEO_PATHS.map((path) => ({
   url: `${BASE_URL}${path}`,
-  lastModified: new Date(),
   changeFrequency: "monthly" as const,
   priority: 0.7,
 }));
@@ -268,7 +251,6 @@ const YO_LANGUAGE_HUB_ROUTES: MetadataRoute.Sitemap = isYoHubIndexable()
   ? [
       {
         url: `${BASE_URL}/yo/langues`,
-        lastModified: new Date(),
         changeFrequency: "weekly" as const,
         priority: 0.85,
       },
@@ -280,7 +262,6 @@ const YO_LANGUAGE_LANDING_ROUTES: MetadataRoute.Sitemap = yopratiqoProductConfig
   .filter((moduleConfig) => isYoLandingPageIndexable(moduleConfig.slug))
   .map((moduleConfig) => ({
     url: `${BASE_URL}${moduleConfig.landingRoute}`,
-    lastModified: new Date(),
     changeFrequency: "weekly" as const,
     priority: 0.8,
   }));
@@ -295,14 +276,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Blog hub page (static)
   const blogHubRoute: MetadataRoute.Sitemap = [{
     url: `${BASE_URL}/blog`,
-    lastModified: new Date(),
     changeFrequency: "daily" as const,
     priority: 0.9,
   }];
 
   const resourceHubRoute: MetadataRoute.Sitemap = [{
     url: `${BASE_URL}/ressources`,
-    lastModified: new Date(),
     changeFrequency: "weekly" as const,
     priority: 0.88,
   }];

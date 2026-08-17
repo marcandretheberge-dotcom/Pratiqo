@@ -495,25 +495,37 @@ export async function resolveSubjectCityDiscoveryPage(
 
 export type LocalDiscoverySitemapEntry = {
   path: string;
-  lastModified: Date;
+  lastModified?: Date;
 };
+
+function latestTeacherLastModified(entries: RankedTeacher[]): Date | undefined {
+  const latestTimestamp = entries.reduce<number | null>((latest, entry) => {
+    const sourceDate = entry.row.public_profile_last_indexable_at;
+    if (!sourceDate) return latest;
+    const timestamp = Date.parse(sourceDate);
+    if (!Number.isFinite(timestamp)) return latest;
+    return latest === null || timestamp > latest ? timestamp : latest;
+  }, null);
+  return latestTimestamp === null ? undefined : new Date(latestTimestamp);
+}
 
 export async function fetchLocalDiscoverySitemapEntries(): Promise<LocalDiscoverySitemapEntry[]> {
   const teachers = await fetchIndexableDiscoveryTeachers();
   const entries: LocalDiscoverySitemapEntry[] = [];
-  const now = new Date();
 
   for (const city of QC_CITIES) {
     const hubRank = rankTeachersForCity(teachers, city);
     if (hubRank.ranked.length > 0) {
-      entries.push({ path: buildCityHubPath(city.slug), lastModified: now });
+      const lastModified = latestTeacherLastModified(hubRank.ranked);
+      entries.push({ path: buildCityHubPath(city.slug), ...(lastModified ? { lastModified } : {}) });
     }
     for (const discipline of DISCIPLINES) {
       const subjectRank = rankTeachersForCity(teachers, city, { discipline });
       if (subjectRank.ranked.length > 0) {
+        const lastModified = latestTeacherLastModified(subjectRank.ranked);
         entries.push({
           path: buildSubjectCityPath(discipline.slug, city.slug),
-          lastModified: now,
+          ...(lastModified ? { lastModified } : {}),
         });
       }
     }
