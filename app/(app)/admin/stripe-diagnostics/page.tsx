@@ -108,6 +108,19 @@ function freshnessClass(value: AdminStripeDiagnosticsTeacher["connect"]["syncFre
   return "border-slate-200 bg-slate-100 text-slate-700";
 }
 
+function actionSeverityClass(value: AdminStripeDiagnosticsTeacher["actionSummary"]["severity"]): string {
+  if (value === "ok") return "border-teal-200 bg-teal-50 text-teal-800";
+  if (value === "warning") return "border-amber-200 bg-amber-50 text-amber-900";
+  return "border-rose-200 bg-rose-50 text-rose-800";
+}
+
+function actionOwnerLabel(value: AdminStripeDiagnosticsTeacher["actionSummary"]["owner"]): string {
+  if (value === "teacher") return "Teacher";
+  if (value === "admin") return "Admin";
+  if (value === "stripe") return "Stripe";
+  return "None";
+}
+
 function labelText(label: AdminStripeDiagnosticLabel): string {
   const labels: Record<AdminStripeDiagnosticLabel, string> = {
     missing_stripe_account: "Compte Stripe manquant",
@@ -365,12 +378,13 @@ export default function AdminStripeDiagnosticsPage() {
             </p>
           </div>
           <div className="overflow-x-auto">
-            <table className="min-w-[1180px] divide-y divide-slate-100 text-left text-sm">
+            <table className="min-w-[1460px] divide-y divide-slate-100 text-left text-sm">
               <thead className="bg-slate-50 text-xs font-bold uppercase tracking-[0.12em] text-slate-500">
                 <tr>
                   <th className="px-4 py-3">Teacher</th>
                   <th className="px-4 py-3">Country / market</th>
                   <th className="px-4 py-3">Connect status</th>
+                  <th className="px-4 py-3">What this means / next action</th>
                   <th className="px-4 py-3">Payment readiness</th>
                   <th className="px-4 py-3">Payout readiness</th>
                   <th className="px-4 py-3">Identity status</th>
@@ -410,6 +424,43 @@ export default function AdminStripeDiagnosticsPage() {
                         {teacher.connect.disabledReason ? (
                           <p className="font-semibold text-rose-700">{teacher.connect.disabledReason}</p>
                         ) : null}
+                      </div>
+                    </td>
+                    <td className="px-4 py-4">
+                      <div className="max-w-sm space-y-3 rounded-2xl border border-slate-200 bg-slate-50/70 p-3">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span
+                            className={`rounded-full border px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide ${actionSeverityClass(
+                              teacher.actionSummary.severity,
+                            )}`}
+                          >
+                            Severity: {teacher.actionSummary.severity}
+                          </span>
+                          <span className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-slate-700">
+                            Owner: {actionOwnerLabel(teacher.actionSummary.owner)}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">
+                            What this means
+                          </p>
+                          <p className="mt-1 text-sm font-semibold text-slate-900">
+                            {teacher.actionSummary.title}
+                          </p>
+                          <p className="mt-1 text-xs leading-relaxed text-slate-600">
+                            {teacher.actionSummary.explanation}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">
+                            What to do next
+                          </p>
+                          <ul className="mt-1 list-disc space-y-1 pl-4 text-xs leading-relaxed text-slate-700">
+                            {teacher.actionSummary.nextSteps.map((step) => (
+                              <li key={step}>{step}</li>
+                            ))}
+                          </ul>
+                        </div>
                       </div>
                     </td>
                     <td className="px-4 py-4">
@@ -483,8 +534,12 @@ export default function AdminStripeDiagnosticsPage() {
                             Requirements raw
                           </summary>
                           <ul className="mt-1 list-disc space-y-1 pl-4">
-                            {teacher.connect.requirementsDue.map((item) => (
-                              <li key={item}>{item}</li>
+                            {teacher.connect.requirementsDueDetails.map((item) => (
+                              <li key={item.raw}>
+                                <span className="font-mono text-[11px] text-slate-700">{item.raw}</span>
+                                <span className="mx-1 text-slate-400">=</span>
+                                <span className="font-semibold text-slate-800">{item.friendly}</span>
+                              </li>
                             ))}
                           </ul>
                         </details>
@@ -494,7 +549,7 @@ export default function AdminStripeDiagnosticsPage() {
                 ))}
                 {!loading && diagnostics.teachers.length === 0 ? (
                   <tr>
-                    <td colSpan={9} className="px-4 py-8 text-center text-sm text-slate-500">
+                    <td colSpan={10} className="px-4 py-8 text-center text-sm text-slate-500">
                       Aucun professeur ne correspond a ce filtre.
                     </td>
                   </tr>
