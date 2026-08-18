@@ -13,7 +13,9 @@ import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
+  deriveAdminStripeActionSummary,
   deriveAdminStripeDiagnosticsTeacher,
+  explainStripeRequirement,
   listAdminStripeDiagnostics,
   maskStripeAccountId,
   normalizeAdminStripeDiagnosticsFilter,
@@ -146,6 +148,17 @@ test("Stripe account IDs are masked and full IDs are not required client-side", 
   assert.doesNotMatch(page, /stripe_account_id/);
 });
 
+test("diagnostics page renders action guidance and friendly requirement details", () => {
+  const page = read("app/(app)/admin/stripe-diagnostics/page.tsx");
+  assert.match(page, /What this means/);
+  assert.match(page, /What to do next/);
+  assert.match(page, /Owner:/);
+  assert.match(page, /Severity:/);
+  assert.match(page, /requirementsDueDetails/);
+  assert.match(page, /item\.friendly/);
+  assert.match(page, /item\.raw/);
+});
+
 test("ready Canadian teacher reports current payment and payout readiness", () => {
   const diagnostic = deriveAdminStripeDiagnosticsTeacher(
     { profile: baseProfile(), teacher: baseTeacher() as never },
@@ -163,6 +176,163 @@ test("ready Canadian teacher reports current payment and payout readiness", () =
   assert.ok(diagnostic.labels.includes("charges_enabled"));
   assert.ok(diagnostic.labels.includes("payouts_enabled"));
   assert.ok(diagnostic.labels.includes("identity_verified"));
+  assert.equal(diagnostic.actionSummary.severity, "ok");
+  assert.equal(diagnostic.actionSummary.owner, "none");
+  assert.equal(diagnostic.actionSummary.title, "Stripe payment setup ready");
+  assert.deepEqual(diagnostic.actionSummary.nextSteps, ["No immediate action."]);
+});
+
+test("missing Stripe account produces teacher action guidance", () => {
+  const diagnostic = deriveAdminStripeDiagnosticsTeacher(
+    { profile: baseProfile(), teacher: null },
+    NOW,
+  );
+  assert.equal(diagnostic.actionSummary.severity, "blocked");
+  assert.equal(diagnostic.actionSummary.owner, "teacher");
+  assert.equal(diagnostic.actionSummary.title, "Stripe Connect not started");
+  assert.match(diagnostic.actionSummary.explanation, /has not created a Stripe Connect account/);
+  assert.ok(diagnostic.actionSummary.nextSteps.includes("Go to payment setup."));
+});
+
+test("onboarding incomplete produces continue onboarding guidance", () => {
+  const diagnostic = deriveAdminStripeDiagnosticsTeacher(
+    {
+      profile: baseProfile(),
+      teacher: baseTeacher({
+        stripe_connect_onboarding_complete: false,
+        stripe_connect_charges_enabled: false,
+        stripe_connect_payouts_enabled: false,
+      }) as never,
+    },
+    NOW,
+  );
+  assert.equal(diagnostic.actionSummary.severity, "blocked");
+  assert.equal(diagnostic.actionSummary.owner, "teacher");
+  assert.equal(diagnostic.actionSummary.title, "Stripe onboarding incomplete");
+  assert.ok(
+    diagnostic.actionSummary.nextSteps.includes(
+      "Ask the teacher to continue Stripe onboarding from Pratiqo.",
+    ),
+  );
+});
+
+test("raw Stripe requirements get friendly admin translations", () => {
+  assert.deepEqual(explainStripeRequirement("external_account"), {
+    raw: "external_account",
+    friendly: "Add payout bank account",
+  });
+  assert.deepEqual(explainStripeRequirement("tos_acceptance.date"), {
+    raw: "tos_acceptance.date",
+    friendly: "Accept Stripe terms",
+  });
+  assert.deepEqual(explainStripeRequirement("tos_acceptance.ip"), {
+    raw: "tos_acceptance.ip",
+    friendly: "Accept Stripe terms from browser/IP",
+  });
+  assert.deepEqual(explainStripeRequirement("requirements.past_due"), {
+    raw: "requirements.past_due",
+    friendly: "Missing info is past due; Stripe blocked capability",
+  });
+});
+
+test("external_account produces add bank account guidance", () => {
+  const diagnostic = deriveAdminStripeDiagnosticsTeacher(
+    {
+      profile: baseProfile(),
+      teacher: baseTeacher({
+        stripe_connect_onboarding_complete: false,
+        stripe_connect_requirements_due: ["external_account"],
+      }) as never,
+    },
+    NOW,
+  );
+  assert.ok(
+    diagnostic.actionSummary.nextSteps.includes(
+      "Teacher must add a payout bank account or external payout account in Stripe.",
+    ),
+  );
+  assert.deepEqual(diagnostic.connect.requirementsDueDetails, [
+    { raw: "external_account", friendly: "Add payout bank account" },
+  ]);
+});
+
+test("tos_acceptance.date and tos_acceptance.ip produce accept Stripe terms guidance", () => {
+  const diagnostic = deriveAdminStripeDiagnosticsTeacher(
+    {
+      profile: baseProfile(),
+      teacher: baseTeacher({
+        stripe_connect_onboarding_complete: false,
+        stripe_connect_requirements_due: ["tos_acceptance.date", "tos_acceptance.ip"],
+      }) as never,
+    },
+    NOW,
+  );
+  assert.ok(
+    diagnostic.actionSummary.nextSteps.includes(
+      "Teacher must accept Stripe's connected account terms inside the Stripe onboarding flow.",
+    ),
+  );
+  assert.deepEqual(diagnostic.connect.requirementsDueDetails, [
+    { raw: "tos_acceptance.date", friendly: "Accept Stripe terms" },
+    { raw: "tos_acceptance.ip", friendly: "Accept Stripe terms from browser/IP" },
+  ]);
+});
+
+test("requirements.past_due produces past-due blocked guidance", () => {
+  const diagnostic = deriveAdminStripeDiagnosticsTeacher(
+    {
+      profile: baseProfile(),
+      teacher: baseTeacher({
+        stripe_connect_requirements_due: ["requirements.past_due"],
+        stripe_connect_disabled_reason: "requirements.past_due",
+      }) as never,
+    },
+    NOW,
+  );
+  assert.equal(diagnostic.actionSummary.severity, "blocked");
+  assert.equal(diagnostic.actionSummary.owner, "teacher");
+  assert.equal(diagnostic.actionSummary.title, "Stripe requirements are past due");
+  assert.match(diagnostic.actionSummary.explanation, /past due/);
+});
+
+test("disabled_by_stripe produces blocked guidance", () => {
+  const diagnostic = deriveAdminStripeDiagnosticsTeacher(
+    {
+      profile: baseProfile(),
+      teacher: baseTeacher({
+        stripe_connect_disabled_reason: "rejected.fraud",
+      }) as never,
+    },
+    NOW,
+  );
+  assert.equal(diagnostic.actionSummary.severity, "blocked");
+  assert.equal(diagnostic.actionSummary.owner, "stripe");
+  assert.equal(diagnostic.actionSummary.title, "Stripe disabled this account or capability");
+  assert.ok(
+    diagnostic.actionSummary.nextSteps.includes(
+      "If the teacher says everything is complete, check the connected account in Stripe Dashboard.",
+    ),
+  );
+});
+
+test("stale sync produces admin refresh and webhook guidance", () => {
+  const diagnostic = deriveAdminStripeDiagnosticsTeacher(
+    {
+      profile: baseProfile(),
+      teacher: baseTeacher({
+        stripe_connect_last_synced_at: "2026-08-10T00:00:00.000Z",
+      }) as never,
+    },
+    NOW,
+  );
+  assert.equal(diagnostic.actionSummary.severity, "warning");
+  assert.equal(diagnostic.actionSummary.owner, "admin");
+  assert.equal(diagnostic.actionSummary.title, "Stripe status may be stale");
+  assert.ok(
+    diagnostic.actionSummary.nextSteps.includes(
+      "Confirm production Stripe account.updated webhooks are configured.",
+    ),
+  );
 });
 
 test("requirements due can flag possible false negatives under collapsed requirements", () => {
@@ -183,6 +353,55 @@ test("requirements due can flag possible false negatives under collapsed require
   assert.ok(diagnostic.labels.includes("requirements_due_blocking_current_logic"));
   assert.ok(diagnostic.labels.includes("possible_false_negative_from_collapsed_requirements"));
   assert.ok(diagnostic.warnings.includes("possible_false_negative_from_collapsed_requirements"));
+  assert.equal(diagnostic.actionSummary.severity, "warning");
+  assert.equal(diagnostic.actionSummary.owner, "admin");
+  assert.equal(diagnostic.actionSummary.title, "Possible false negative");
+  assert.match(diagnostic.actionSummary.explanation, /eventual or future requirements/);
+});
+
+test("identity_missing says Identity is separate from Connect/payment activation", () => {
+  const diagnostic = deriveAdminStripeDiagnosticsTeacher(
+    {
+      profile: baseProfile(),
+      teacher: baseTeacher({
+        identity_verified: false,
+        identity_status: "none",
+        stripe_identity_status: null,
+      }) as never,
+    },
+    NOW,
+  );
+  assert.equal(diagnostic.actionSummary.severity, "warning");
+  assert.equal(diagnostic.actionSummary.owner, "teacher");
+  assert.equal(diagnostic.actionSummary.title, "Stripe Identity not completed");
+  assert.match(diagnostic.actionSummary.explanation, /separate from Stripe Connect/);
+  assert.match(diagnostic.actionSummary.explanation, /not necessarily payment activation/);
+});
+
+test("action summary helper can return direct charges and payouts guidance", () => {
+  const charges = deriveAdminStripeActionSummary({
+    labels: ["charges_disabled"],
+    requirementsDue: [],
+    disabledReason: null,
+    paymentReady: false,
+    payoutReady: true,
+  });
+  assert.equal(charges.title, "Payments not enabled");
+  assert.ok(charges.nextSteps.includes("Check the raw requirements."));
+
+  const payouts = deriveAdminStripeActionSummary({
+    labels: ["payouts_disabled"],
+    requirementsDue: [],
+    disabledReason: null,
+    paymentReady: true,
+    payoutReady: false,
+  });
+  assert.equal(payouts.title, "Payouts not enabled");
+  assert.ok(
+    payouts.nextSteps.includes(
+      "In most cases this means adding a bank account or debit payout method.",
+    ),
+  );
 });
 
 test("missing account, stale sync, unsupported market, and identity failures are labelled", () => {

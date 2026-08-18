@@ -54,6 +54,21 @@ export const ADMIN_STRIPE_DIAGNOSTIC_FILTERS: readonly AdminStripeDiagnosticsFil
 
 export type AdminStripeSyncFreshness = "fresh" | "stale" | "never_synced";
 export type AdminStripeIdentityStatus = "verified" | "pending" | "failed" | "missing";
+export type AdminStripeDiagnosticSeverity = "ok" | "warning" | "blocked";
+export type AdminStripeDiagnosticOwner = "teacher" | "admin" | "stripe" | "none";
+
+export type AdminStripeRequirementExplanation = {
+  raw: string;
+  friendly: string;
+};
+
+export type AdminStripeDiagnosticActionSummary = {
+  severity: AdminStripeDiagnosticSeverity;
+  owner: AdminStripeDiagnosticOwner;
+  title: string;
+  explanation: string;
+  nextSteps: string[];
+};
 
 export type AdminStripeDiagnosticsTeacher = {
   teacherId: string | null;
@@ -69,6 +84,7 @@ export type AdminStripeDiagnosticsTeacher = {
     chargesEnabled: boolean | null;
     payoutsEnabled: boolean | null;
     requirementsDue: string[];
+    requirementsDueDetails: AdminStripeRequirementExplanation[];
     disabledReason: string | null;
     lastSyncedAt: string | null;
     syncFreshness: AdminStripeSyncFreshness;
@@ -90,6 +106,7 @@ export type AdminStripeDiagnosticsTeacher = {
   };
   labels: AdminStripeDiagnosticLabel[];
   warnings: AdminStripeDiagnosticLabel[];
+  actionSummary: AdminStripeDiagnosticActionSummary;
 };
 
 export type AdminStripeDiagnosticsSummary = {
@@ -250,6 +267,38 @@ export function maskStripeAccountId(value: string | null | undefined): string | 
   return `acct_****${suffix}`;
 }
 
+export function explainStripeRequirement(raw: string): AdminStripeRequirementExplanation {
+  const normalized = raw.trim().toLowerCase();
+  if (normalized === "external_account" || normalized.endsWith(".external_account")) {
+    return {
+      raw,
+      friendly: "Add payout bank account",
+    };
+  }
+  if (normalized === "tos_acceptance.date" || normalized.endsWith(".tos_acceptance.date")) {
+    return {
+      raw,
+      friendly: "Accept Stripe terms",
+    };
+  }
+  if (normalized === "tos_acceptance.ip" || normalized.endsWith(".tos_acceptance.ip")) {
+    return {
+      raw,
+      friendly: "Accept Stripe terms from browser/IP",
+    };
+  }
+  if (normalized.includes("requirements.past_due")) {
+    return {
+      raw,
+      friendly: "Missing info is past due; Stripe blocked capability",
+    };
+  }
+  return {
+    raw,
+    friendly: "Review in Stripe onboarding",
+  };
+}
+
 function cleanString(value: unknown): string | null {
   return typeof value === "string" && value.trim() ? value.trim() : null;
 }
@@ -319,6 +368,206 @@ function deriveIdentityStatus(row: TeacherRow | null): AdminStripeIdentityStatus
 
 function uniqueLabels(labels: AdminStripeDiagnosticLabel[]): AdminStripeDiagnosticLabel[] {
   return Array.from(new Set(labels));
+}
+
+function hasRequirement(requirements: string[], expected: string): boolean {
+  const normalizedExpected = expected.toLowerCase();
+  return requirements.some((requirement) => requirement.trim().toLowerCase() === normalizedExpected);
+}
+
+function hasRequirementContaining(requirements: string[], expected: string): boolean {
+  const normalizedExpected = expected.toLowerCase();
+  return requirements.some((requirement) => requirement.trim().toLowerCase().includes(normalizedExpected));
+}
+
+function appendUnique(target: string[], step: string): void {
+  if (!target.includes(step)) target.push(step);
+}
+
+export function deriveAdminStripeActionSummary(input: {
+  labels: AdminStripeDiagnosticLabel[];
+  requirementsDue: string[];
+  disabledReason: string | null;
+  paymentReady: boolean;
+  payoutReady: boolean;
+}): AdminStripeDiagnosticActionSummary {
+  const { labels, requirementsDue, disabledReason, paymentReady, payoutReady } = input;
+  const nextSteps: string[] = [];
+  const hasExternalAccount = hasRequirement(requirementsDue, "external_account");
+  const hasTermsDate = hasRequirement(requirementsDue, "tos_acceptance.date");
+  const hasTermsIp = hasRequirement(requirementsDue, "tos_acceptance.ip");
+  const hasPastDue =
+    hasRequirementContaining(requirementsDue, "requirements.past_due") ||
+    String(disabledReason ?? "").toLowerCase().includes("requirements.past_due");
+
+  if (hasExternalAccount) {
+    appendUnique(
+      nextSteps,
+      "Teacher must add a payout bank account or external payout account in Stripe.",
+    );
+  }
+  if (hasTermsDate || hasTermsIp) {
+    appendUnique(
+      nextSteps,
+      "Teacher must accept Stripe's connected account terms inside the Stripe onboarding flow.",
+    );
+  }
+
+  if (labels.includes("missing_stripe_account")) {
+    return {
+      severity: "blocked",
+      owner: "teacher",
+      title: "Stripe Connect not started",
+      explanation: "The teacher has not created a Stripe Connect account through Pratiqo yet.",
+      nextSteps: [
+        "Ask the teacher to open Pratiqo as a teacher.",
+        "Go to payment setup.",
+        "Click to activate Stripe Connect.",
+      ],
+    };
+  }
+
+  if (labels.includes("onboarding_incomplete")) {
+    return {
+      severity: "blocked",
+      owner: "teacher",
+      title: "Stripe onboarding incomplete",
+      explanation: "The teacher started Stripe Connect, but Stripe onboarding was not fully submitted.",
+      nextSteps: [
+        "Ask the teacher to continue Stripe onboarding from Pratiqo.",
+        "They must complete all required Stripe screens.",
+        "They should not close the Stripe window before the final confirmation.",
+        ...nextSteps,
+      ],
+    };
+  }
+
+  if (hasPastDue) {
+    return {
+      severity: "blocked",
+      owner: "teacher",
+      title: "Stripe requirements are past due",
+      explanation:
+        "Stripe requirements are past due. The account remains blocked until the missing information is provided.",
+      nextSteps: [
+        "Review the raw requirements.",
+        "Send the teacher back through Stripe onboarding/remediation.",
+        ...nextSteps,
+      ],
+    };
+  }
+
+  if (labels.includes("disabled_by_stripe")) {
+    return {
+      severity: "blocked",
+      owner: "stripe",
+      title: "Stripe disabled this account or capability",
+      explanation:
+        "Stripe has disabled payment or payout capability because required information is missing or unresolved.",
+      nextSteps: [
+        "Review the raw requirements.",
+        "Send the teacher back through Stripe onboarding/remediation.",
+        "If the teacher says everything is complete, check the connected account in Stripe Dashboard.",
+        ...nextSteps,
+      ],
+    };
+  }
+
+  if (labels.includes("charges_disabled")) {
+    return {
+      severity: "blocked",
+      owner: "teacher",
+      title: "Payments not enabled",
+      explanation: "Stripe does not currently allow this connected account to accept student payments.",
+      nextSteps: [
+        "Check the raw requirements.",
+        "Send the teacher back through Stripe onboarding/remediation.",
+        "Recheck status after completion.",
+        ...nextSteps,
+      ],
+    };
+  }
+
+  if (labels.includes("payouts_disabled")) {
+    return {
+      severity: "blocked",
+      owner: "teacher",
+      title: "Payouts not enabled",
+      explanation: "Stripe does not currently allow this connected account to receive payouts.",
+      nextSteps: [
+        "Teacher must add or verify payout details.",
+        "In most cases this means adding a bank account or debit payout method.",
+        "Recheck status after completion.",
+        ...nextSteps,
+      ],
+    };
+  }
+
+  if (labels.includes("possible_false_negative_from_collapsed_requirements")) {
+    return {
+      severity: "warning",
+      owner: "admin",
+      title: "Possible false negative",
+      explanation:
+        "The account has charges or payouts enabled, but current Pratiqo logic treats every stored Stripe requirement as blocking. If the remaining requirements are eventual or future requirements, this teacher may appear blocked even though Stripe allows payments or payouts.",
+      nextSteps: [
+        "Inspect the raw requirements.",
+        "In the next PR, separate current/past requirements from eventual/future requirements.",
+        "Do not manually override until confirmed.",
+      ],
+    };
+  }
+
+  if (
+    labels.includes("sync_never_run") ||
+    labels.includes("sync_stale_over_24h") ||
+    labels.includes("sync_stale_over_7d")
+  ) {
+    return {
+      severity: "warning",
+      owner: "admin",
+      title: "Stripe status may be stale",
+      explanation: "Pratiqo has not refreshed this teacher's Stripe status recently.",
+      nextSteps: [
+        "Ask the teacher to open their payment setup page.",
+        "Or use the future admin refresh action once implemented.",
+        "Confirm production Stripe account.updated webhooks are configured.",
+      ],
+    };
+  }
+
+  if (labels.includes("identity_missing")) {
+    return {
+      severity: "warning",
+      owner: "teacher",
+      title: "Stripe Identity not completed",
+      explanation:
+        "This is separate from Stripe Connect. It affects teacher trust/verification status, not necessarily payment activation.",
+      nextSteps: [
+        "Ask the teacher to complete identity verification if required for their teaching mode.",
+        "Do not confuse this with payout activation.",
+      ],
+    };
+  }
+
+  if (paymentReady && payoutReady) {
+    return {
+      severity: "ok",
+      owner: "none",
+      title: "Stripe payment setup ready",
+      explanation: "Under current Pratiqo logic, this teacher can accept payments and receive payouts.",
+      nextSteps: ["No immediate action."],
+    };
+  }
+
+  return {
+    severity: "warning",
+    owner: "admin",
+    title: "Review Stripe diagnostics",
+    explanation:
+      "This teacher has a Stripe status combination that does not match a specific diagnostic guidance rule.",
+    nextSteps: ["Review the raw requirements and current readiness blockers before taking action."],
+  };
 }
 
 export function deriveAdminStripeDiagnosticsTeacher(
@@ -403,6 +652,13 @@ export function deriveAdminStripeDiagnosticsTeacher(
       "possible_false_negative_from_collapsed_requirements",
     ].includes(label),
   );
+  const actionSummary = deriveAdminStripeActionSummary({
+    labels: normalizedLabels,
+    requirementsDue,
+    disabledReason: cleanString(teacher?.stripe_connect_disabled_reason),
+    paymentReady: readiness.paymentReady,
+    payoutReady: readiness.payoutReady,
+  });
 
   return {
     teacherId: teacher?.id ?? null,
@@ -418,6 +674,7 @@ export function deriveAdminStripeDiagnosticsTeacher(
       chargesEnabled: teacher?.stripe_connect_charges_enabled ?? null,
       payoutsEnabled: teacher?.stripe_connect_payouts_enabled ?? null,
       requirementsDue,
+      requirementsDueDetails: requirementsDue.map(explainStripeRequirement),
       disabledReason: cleanString(teacher?.stripe_connect_disabled_reason),
       lastSyncedAt: teacher?.stripe_connect_last_synced_at ?? null,
       syncFreshness: sync.freshness,
@@ -439,6 +696,7 @@ export function deriveAdminStripeDiagnosticsTeacher(
     },
     labels: normalizedLabels,
     warnings,
+    actionSummary,
   };
 }
 
