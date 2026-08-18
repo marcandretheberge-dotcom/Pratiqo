@@ -187,8 +187,8 @@ test("name <p> still uses truncate so an extreme name renders one ellipsised lin
 test("discipline summary stays present and truncated below the name", () => {
   assert.match(
     TEACHER_CARD,
-    /<p className="truncate text-xs text-\[#6B6A65\]">\{teacher\.discipline\}<\/p>/,
-    "discipline <p> must still render with `truncate text-xs text-[#6B6A65]`",
+    /<p className="truncate text-xs text-\[#6B6A65\]">\{formatTeacherCardDisciplines\(teacher\)\}<\/p>/,
+    "discipline <p> must still render with `truncate text-xs text-[#6B6A65]` using the shared summary helper",
   );
 });
 
@@ -408,63 +408,47 @@ test("LandingTeacherListingCard does not overlay intro session badges on teacher
 // -------- 13. Map mini-card: name protected, no badge bug surface --------
 
 test("SearchMapView mini-card renders the teacher name in a min-w-0 column with truncate", () => {
-  // The map's `selectedTeacher` overlay puts the name + discipline
+  // The map's selected-teacher overlay puts the name + discipline
   // in their own `min-w-0` column with truncating <p>s. This is the
   // structural primitive that keeps the name visible against a
   // shrink-0 close button on the right. Guard both invariants.
-  const minColumnIdx = SEARCH_MAP_VIEW_SRC.indexOf(
-    'className="min-w-0"',
-  );
-  assert.ok(
-    minColumnIdx >= 0,
-    "SearchMapView mini-card must render its text column inside `className=\"min-w-0\"`",
-  );
-  // Within the next ~600 chars after the column opens, both the name
-  // and the discipline must render as truncating <p>s.
-  const columnTail = SEARCH_MAP_VIEW_SRC.slice(
-    minColumnIdx,
-    minColumnIdx + 600,
+  assert.match(
+    SEARCH_MAP_VIEW_SRC,
+    /className="min-w-0 flex-1"/,
+    "SearchMapView mini-card must render its text column inside `className=\"min-w-0 flex-1\"`",
   );
   assert.match(
-    columnTail,
-    /<p className="truncate font-semibold text-\[#2C2C2A\]">\{publicFirstNameWithInitial\(selectedTeacher\.name\)\}<\/p>/,
+    SEARCH_MAP_VIEW_SRC,
+    /<p className="truncate font-semibold text-\[#2C2C2A\]">\s*\{publicFirstNameWithInitial\(teacher\.name\)\}\s*<\/p>/s,
     "SearchMapView mini-card name <p> must be truncating",
   );
   assert.match(
-    columnTail,
-    /<p className="truncate text-xs text-\[#6B6A65\]">\{selectedTeacher\.discipline\}<\/p>/,
-    "SearchMapView mini-card discipline <p> must be truncating",
+    SEARCH_MAP_VIEW_SRC,
+    /getTeacherDisciplineSummary\(teacher\)/,
+    "SearchMapView mini-card must use the shared discipline summary helper",
+  );
+  assert.doesNotMatch(
+    SEARCH_MAP_VIEW_SRC,
+    /selectedTeacher\.discipline/,
+    "SearchMapView mini-card must not display only teacher.discipline",
   );
 });
 
-test("SearchMapView mini-card does not render <TeacherBadgePill> in the same column as the name", () => {
-  // Today the map mini-card renders no badges at all — that is
-  // intentional because the overlay is small. If a future refactor
-  // wires <TeacherBadgePill> into this card, it must NOT land in the
-  // same flex column as the name without a `flex-wrap` row, or it
-  // will crowd the name to zero width on phones.
-  //
-  // This guard does not forbid badges on the map preview forever; it
-  // forbids the specific shape that causes the QA bug. To opt in,
-  // future edits must add a dedicated `flex flex-wrap` row first
-  // (then remove this assertion in the same PR).
-  const cardOpenerIdx = SEARCH_MAP_VIEW_SRC.indexOf(
-    'className="flex items-start justify-between gap-3"',
-  );
-  assert.ok(
-    cardOpenerIdx >= 0,
-    "SearchMapView mini-card must still open with `flex items-start justify-between gap-3`",
-  );
-  // The mini-card body is < 1200 chars; sanity slice forward and
-  // forbid TeacherBadgePill in that scope.
-  const cardBody = SEARCH_MAP_VIEW_SRC.slice(
-    cardOpenerIdx,
-    cardOpenerIdx + 1200,
-  );
+test("SearchMapView mini-card puts trust badges in a dedicated flex-wrap row", () => {
+  const nameIdx = SEARCH_MAP_VIEW_SRC.indexOf("publicFirstNameWithInitial(teacher.name)");
+  assert.ok(nameIdx >= 0, "map popup must still render the public teacher name");
+  const afterName = SEARCH_MAP_VIEW_SRC.slice(nameIdx, nameIdx + 900);
+  const nameClose = afterName.indexOf("</p>");
+  assert.ok(nameClose >= 0);
   assert.doesNotMatch(
-    cardBody,
+    afterName.slice(0, nameClose),
     /<TeacherBadgePill\b/,
-    "SearchMapView mini-card must NOT render <TeacherBadgePill> until a dedicated flex-wrap row is added (see PR #178 layout pattern)",
+    "TeacherBadgePill must not share the name <p>",
+  );
+  assert.match(
+    SEARCH_MAP_VIEW_SRC,
+    /flex flex-wrap items-center gap-1[\s\S]{0,180}<TeacherBadgePill/,
+    "trust badges must live in a dedicated flex-wrap row under the name",
   );
 });
 
