@@ -8,12 +8,20 @@ export type Discipline =
 
 export type TeachingMode = "online" | "person" | "both" | "home" | "all";
 
+export type TeacherDisciplineDisplay = {
+  disciplineId: string;
+  label: string;
+  specialite: string;
+};
+
 export interface Teacher {
   id: string;
   /** Compte Supabase (auth) lié à la fiche professeur — messagerie, etc. */
   userId?: string | null;
   name: string;
   discipline: string;
+  /** Ordered marketplace labels from `teacher_disciplines` (all rows, including the first). */
+  disciplineDisplay?: TeacherDisciplineDisplay[];
   /** Disciplines secondaires (ordre = `created_at` sur `teacher_disciplines`, sans la première entrée). */
   additionalDisciplines?: { disciplineId: string; specialite: string }[];
   category: Discipline;

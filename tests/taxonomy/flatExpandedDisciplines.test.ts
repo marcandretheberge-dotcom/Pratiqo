@@ -111,6 +111,12 @@ test("search accepts new discipline queries without exposing private data", () =
     ["mathematiques", "math"],
     ["yoga", "yoga"],
     ["excel", "excel"],
+    ["orthopédagogue", "orthopedagogue"],
+    ["orthopedagogue", "orthopedagogue"],
+    ["orthopédagogie", "orthopedagogie"],
+    ["soutien scolaire", "academic_support"],
+    ["lecture", "reading_writing"],
+    ["difficultés d’apprentissage", "learning_difficulties"],
   ];
   for (const [q, id] of cases) {
     const hits = searchSubjectBuckets(q, { locale: "fr", limit: 12 });
@@ -275,6 +281,11 @@ const REQUIRED_ES_BY_FR: Record<string, string> = {
   Menuiserie: "Carpintería",
   Bricolage: "Bricolaje",
   Jardinage: "Jardinería",
+  Orthopédagogue: "Psicopedagogo/a",
+  Orthopédagogie: "Psicopedagogía",
+  "Soutien scolaire": "Apoyo escolar",
+  "Lecture et écriture": "Lectura y escritura",
+  "Difficultés d’apprentissage": "Dificultades de aprendizaje",
   Autre: "Otro",
 };
 
@@ -305,6 +316,33 @@ test("taxonomy label helper returns es/en/fr with French fallback", () => {
   assert.equal(getDisciplineLabel("photographie", "pt"), "Photographie");
   assert.equal(getDisciplineLabel("photographie"), "Photographie");
   assert.equal(getDisciplineLabel("not_a_real_discipline", "es"), "");
+});
+
+test("academic support disciplines include orthopedagogue and related labels", () => {
+  const ids = [
+    "orthopedagogue",
+    "orthopedagogie",
+    "soutien_scolaire",
+    "lecture_ecriture",
+    "difficultes_apprentissage",
+  ];
+  for (const id of ids) {
+    const d = getTaxonomyDisciplineById(id);
+    assert.ok(d, `missing ${id}`);
+    assert.ok(d!.labelFr);
+    assert.ok(d!.labelEn);
+    assert.ok(d!.labelEs);
+  }
+  assert.equal(getDisciplineById("orthopedagogue")?.label, "Orthopédagogue");
+  assert.equal(getDisciplineById("orthopedagogie")?.label, "Orthopédagogie");
+  assert.equal(resolveDisciplineId("orthopédagogue"), "orthopedagogue");
+  assert.equal(resolveDisciplineId("orthopedagogue"), "orthopedagogue");
+  assert.equal(resolveDisciplineId("orthopedagogy"), "orthopedagogie");
+  assert.equal(resolveDisciplineId("soutien_scolaire_primaire"), "soutien_scolaire");
+  assert.equal(resolveDisciplineId("academic_support"), "soutien_scolaire");
+  assert.equal(resolveDisciplineId("lecture"), "lecture_ecriture");
+  assert.equal(resolveDisciplineId("écriture"), "lecture_ecriture");
+  assert.equal(resolveDisciplineId("learning_difficulties"), "difficultes_apprentissage");
 });
 
 (async () => {

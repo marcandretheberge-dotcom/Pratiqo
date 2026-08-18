@@ -33,7 +33,18 @@ function teacherMatchesQuizCategory(teacher: Teacher, category: string | null | 
 function teacherMatchesSubject(teacher: Teacher, subject: string | null | undefined): boolean {
   const s = foldAscii(subject ?? "");
   if (!s) return true;
-  return foldAscii(teacher.discipline).includes(s) || foldAscii(teacher.name).includes(s);
+  if (foldAscii(teacher.name).includes(s)) return true;
+  if (foldAscii(teacher.discipline).includes(s)) return true;
+  for (const row of teacher.disciplineDisplay ?? []) {
+    if (foldAscii(row.label).includes(s)) return true;
+    if (row.specialite && foldAscii(row.specialite).includes(s)) return true;
+    if (foldAscii(row.disciplineId).includes(s)) return true;
+  }
+  for (const ad of teacher.additionalDisciplines ?? []) {
+    if (foldAscii(ad.disciplineId).includes(s)) return true;
+    if (foldAscii(ad.specialite).includes(s)) return true;
+  }
+  return false;
 }
 
 const QUIZ_CATEGORY_SLUGS = new Set(["music", "languages", "academic"]);

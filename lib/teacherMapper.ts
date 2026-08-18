@@ -1,6 +1,8 @@
-import type { Teacher } from "../types";
+import type { Teacher, TeacherDisciplineDisplay } from "../types";
 import { resolveTeacherPublicPhoto, readTeacherPhotoFromRecord } from "@/lib/teacherPhoto";
 import { normalizeLessonDurationMinutes } from "@/lib/pricing/lessonDuration";
+import { displayTeacherMarketplaceCategory, getDisciplineById } from "./disciplines";
+import { resolveDisciplineId } from "./taxonomy/disciplines";
 
 /** One row from `teacher_disciplines` (same teacher_id may appear in ordered list). */
 export type TeacherDisciplineRow = {
@@ -144,6 +146,7 @@ export function teacherRowToTeacher(row: TeacherRow): Teacher {
     cvVerificationStatus: row.cv_verification_status ?? null,
     videoUrl: row.video_url ?? null,
     additionalDisciplines: undefined,
+    disciplineDisplay: undefined,
     countryCode: row.country_code ?? undefined,
     timezone: row.timezone ?? undefined,
     currency: row.currency ?? undefined,
@@ -152,16 +155,109 @@ export function teacherRowToTeacher(row: TeacherRow): Teacher {
   };
 }
 
-/** Rows must be ordered by `created_at` asc (primary = first row). Adds `additionalDisciplines` from remaining rows. */
-export function applyAdditionalDisciplines(teacher: Teacher, rowsOrdered: TeacherDisciplineRow[]): Teacher {
-  if (rowsOrdered.length <= 1) {
-    return { ...teacher, additionalDisciplines: undefined };
+export function isPlaceholderDisciplineLabel(value: string | null | undefined): boolean {
+  const trimmed = String(value ?? "").trim();
+  return !trimmed || trimmed === "—" || trimmed === "-" || trimmed === "–";
+}
+
+function foldDisplayKey(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
+function rowDisplayLabel(row: TeacherDisciplineRow): string {
+  const spec = String(row.specialite ?? "").trim();
+  if (!isPlaceholderDisciplineLabel(spec)) return spec;
+  const meta = getDisciplineById(row.discipline_id);
+  if (meta?.label) return meta.label;
+  const raw = String(row.discipline_id ?? "").trim();
+  return isPlaceholderDisciplineLabel(raw) ? "Autre" : raw;
+}
+
+export function buildTeacherDisciplineDisplay(rowsOrdered: TeacherDisciplineRow[]): TeacherDisciplineDisplay[] {
+  const out: TeacherDisciplineDisplay[] = [];
+  const seen = new Set<string>();
+  for (const row of rowsOrdered) {
+    const resolved = resolveDisciplineId(row.discipline_id) ?? String(row.discipline_id ?? "").trim();
+    const specRaw = String(row.specialite ?? "").trim();
+    const spec = isPlaceholderDisciplineLabel(specRaw) ? "" : specRaw;
+    const label = rowDisplayLabel(row);
+    const key = foldDisplayKey(label) || foldDisplayKey(resolved);
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    out.push({
+      disciplineId: resolved || "autre",
+      label,
+      specialite: spec,
+    });
   }
-  const additional = rowsOrdered.slice(1).map((r) => ({
-    disciplineId: r.discipline_id,
-    specialite: String(r.specialite ?? "").trim(),
-  }));
-  return { ...teacher, additionalDisciplines: additional };
+  return out;
+}
+
+function legacyDisciplineFallback(teacher: Teacher): TeacherDisciplineDisplay[] {
+  if (!isPlaceholderDisciplineLabel(teacher.discipline)) {
+    return [
+      {
+        disciplineId: resolveDisciplineId(teacher.discipline) ?? "legacy",
+        label: teacher.discipline.trim(),
+        specialite: "",
+      },
+    ];
+  }
+  const categoryLabel = displayTeacherMarketplaceCategory(String(teacher.category ?? ""));
+  if (!isPlaceholderDisciplineLabel(categoryLabel) && categoryLabel !== "Autre") {
+    return [
+      {
+        disciplineId: resolveDisciplineId(categoryLabel) ?? String(teacher.category ?? "autre"),
+        label: categoryLabel,
+        specialite: "",
+      },
+    ];
+  }
+  return [{ disciplineId: "autre", label: "Autre", specialite: "" }];
+}
+
+export function formatTeacherCardDisciplines(teacher: Teacher, maxVisible = 3): string {
+  const labels =
+    teacher.disciplineDisplay && teacher.disciplineDisplay.length > 0
+      ? teacher.disciplineDisplay.map((d) => d.label)
+      : isPlaceholderDisciplineLabel(teacher.discipline)
+        ? ["Autre"]
+        : [teacher.discipline.trim()];
+  const unique: string[] = [];
+  const seen = new Set<string>();
+  for (const label of labels) {
+    const key = foldDisplayKey(label);
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    unique.push(label);
+  }
+  if (unique.length === 0) return "Autre";
+  const shown = unique.slice(0, maxVisible);
+  const extra = unique.length - shown.length;
+  return extra > 0 ? `${shown.join(" · ")} +${extra}` : shown.join(" · ");
+}
+
+/** Rows must be ordered by `sort_order`, then `created_at` asc. Uses every row, including the first. */
+export function applyAdditionalDisciplines(teacher: Teacher, rowsOrdered: TeacherDisciplineRow[]): Teacher {
+  const disciplineDisplay =
+    rowsOrdered.length > 0 ? buildTeacherDisciplineDisplay(rowsOrdered) : legacyDisciplineFallback(teacher);
+  const additional =
+    disciplineDisplay.length > 1
+      ? disciplineDisplay.slice(1).map((d) => ({
+          disciplineId: d.disciplineId,
+          specialite: d.specialite,
+        }))
+      : undefined;
+  return {
+    ...teacher,
+    disciplineDisplay,
+    discipline: disciplineDisplay[0]?.label ?? "Autre",
+    additionalDisciplines: additional,
+  };
 }
 
 export function teacherToRow(t: Teacher): Record<string, unknown> {
