@@ -301,13 +301,11 @@ test("TeacherProfile memoizes sanitizedBio from teacher.bio + locale", () => {
 });
 
 test("TeacherProfile bio render uses sanitizedBio.content (not raw teacher.bio)", () => {
-  // The about-section render must reference sanitizedBio.content somewhere.
   assert.match(
     PROFILE_SRC,
-    /sanitizedBio\.content/,
-    "render must use sanitizedBio.content",
+    /splitPublicBioParagraphs\(sanitizedBio\.content\)/,
+    "render must split sanitizedBio.content into paragraphs",
   );
-  // And the legacy `{teacher.bio ||` render must be gone.
   assert.doesNotMatch(
     PROFILE_SRC,
     /\{teacher\.bio\s*\|\|/,

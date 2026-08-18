@@ -28,6 +28,7 @@ import { join } from "node:path";
 import {
   buildTeacherBadges,
   getCompactTeacherBadges,
+  getSearchCardTeacherBadges,
   hasPublicTeacherReviews,
   hasVerifiedDiplomaEvidence,
   isPublicTeacherIdentityVerified,
@@ -232,6 +233,26 @@ test("getCompactTeacherBadges respects an explicit max", () => {
   );
   assert.equal(compact.length, 1);
   assert.equal(compact[0].id, "identity_verified", "highest-priority badge wins");
+});
+
+test("getSearchCardTeacherBadges caps at 2 and prefers identity then experience", () => {
+  const compact = getSearchCardTeacherBadges(
+    withInput({
+      identityVerified: true,
+      verifiedExperience: true,
+      diplomaVerified: true,
+      founder: true,
+      reviewCount: 0,
+      profilePlan: "pro",
+    }),
+  );
+  assert.deepEqual(ids(compact), ["identity_verified", "verified_experience"]);
+});
+
+test("getSearchCardTeacherBadges omits Nouveau because the rating slot covers it", () => {
+  const compact = getSearchCardTeacherBadges(withInput({ reviewCount: 0, founder: true }));
+  assert.deepEqual(ids(compact), ["founder"]);
+  assert.ok(!ids(compact).includes("new_teacher"));
 });
 
 // ---------------------------------------------------------------------------
