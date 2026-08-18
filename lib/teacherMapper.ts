@@ -220,21 +220,67 @@ function legacyDisciplineFallback(teacher: Teacher): TeacherDisciplineDisplay[] 
   return [{ disciplineId: "autre", label: "Autre", specialite: "" }];
 }
 
-export function formatTeacherCardDisciplines(teacher: Teacher, maxVisible = 3): string {
-  const labels =
-    teacher.disciplineDisplay && teacher.disciplineDisplay.length > 0
-      ? teacher.disciplineDisplay.map((d) => d.label)
-      : isPlaceholderDisciplineLabel(teacher.discipline)
-        ? ["Autre"]
-        : [teacher.discipline.trim()];
+function uniqueDisciplineLabels(labels: string[]): string[] {
   const unique: string[] = [];
   const seen = new Set<string>();
   for (const label of labels) {
+    if (isPlaceholderDisciplineLabel(label)) continue;
     const key = foldDisplayKey(label);
     if (!key || seen.has(key)) continue;
     seen.add(key);
-    unique.push(label);
+    unique.push(label.trim());
   }
+  return unique.length > 0 ? unique : ["Autre"];
+}
+
+/** Ordered marketplace labels for cards, search, and profile surfaces. */
+export function getTeacherDisciplineDisplayLabels(
+  teacher: Teacher,
+  opts?: { limit?: number },
+): string[] {
+  const labels =
+    teacher.disciplineDisplay && teacher.disciplineDisplay.length > 0
+      ? teacher.disciplineDisplay.map((d) => d.label)
+      : legacyDisciplineFallback(teacher).map((d) => d.label);
+  const unique = uniqueDisciplineLabels(labels);
+  if (typeof opts?.limit === "number" && opts.limit >= 0) {
+    return unique.slice(0, opts.limit);
+  }
+  return unique;
+}
+
+export type TeacherDisciplineChip = {
+  disciplineId: string;
+  emoji: string;
+  label: string;
+};
+
+/** Full chip list for profile modal — one chip per selected discipline. */
+export function getTeacherProfileDisciplineChips(teacher: Teacher): TeacherDisciplineChip[] {
+  const rows =
+    teacher.disciplineDisplay && teacher.disciplineDisplay.length > 0
+      ? teacher.disciplineDisplay
+      : legacyDisciplineFallback(teacher);
+  const chips: TeacherDisciplineChip[] = [];
+  const seen = new Set<string>();
+  for (const row of rows) {
+    if (isPlaceholderDisciplineLabel(row.label)) continue;
+    const key = foldDisplayKey(row.label) || foldDisplayKey(row.disciplineId);
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    const meta = getDisciplineById(row.disciplineId);
+    chips.push({
+      disciplineId: row.disciplineId,
+      emoji: meta?.emoji ?? "✨",
+      label: row.label,
+    });
+  }
+  if (chips.length > 0) return chips;
+  return [{ disciplineId: "autre", emoji: "✨", label: "Autre" }];
+}
+
+export function formatTeacherCardDisciplines(teacher: Teacher, maxVisible = 3): string {
+  const unique = getTeacherDisciplineDisplayLabels(teacher);
   if (unique.length === 0) return "Autre";
   const shown = unique.slice(0, maxVisible);
   const extra = unique.length - shown.length;

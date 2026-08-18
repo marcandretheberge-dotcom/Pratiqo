@@ -26,7 +26,7 @@ import { useRouter } from "next/navigation";
 import { haversineDistance } from "../lib/geo";
 import { formatApproxDistanceKm } from "@/lib/studentLocation";
 import { TeacherMap } from "./TeacherMap";
-import { getAllDisciplines, getDisciplineById } from "../lib/disciplines";
+import { getTeacherProfileDisciplineChips } from "@/lib/teacherMapper";
 import { useLocale } from "../lib/locale-context";
 import type { TeacherCredential } from "../lib/teacherTrust";
 import { getPublicTeacherCredentials } from "@/lib/supabase/queries";
@@ -429,32 +429,10 @@ export function TeacherProfile({
 
   const isTeacherOwner = Boolean(user?.id && teacher.userId && user.id === teacher.userId);
 
-  const disciplineChips = useMemo(() => {
-    // Group specialties by discipline domain when available.
-    const buckets = new Map<string, { emoji: string; label: string; specs: string[] }>();
-    for (const ad of teacher.additionalDisciplines ?? []) {
-      const d = getDisciplineById(ad.disciplineId);
-      const label = d?.label ?? ad.disciplineId;
-      const emoji = d?.emoji ?? "✨";
-      const spec = String(ad.specialite ?? "").trim();
-      if (!spec) continue;
-      const b = buckets.get(ad.disciplineId) ?? { emoji, label, specs: [] };
-      if (!b.specs.some((x) => x.toLowerCase() === spec.toLowerCase())) b.specs.push(spec);
-      buckets.set(ad.disciplineId, b);
-    }
-
-    const primaryEmoji = getAllDisciplines().find((d) => d.label === teacher.category)?.emoji ?? "✨";
-    const primaryLine = `${primaryEmoji} ${teacher.discipline}`.trim();
-
-    // If we have grouped specialties, prefer "Domain: a · b" style chips.
-    const grouped = Array.from(buckets.values()).map((b) => `${b.emoji} ${b.label}: ${b.specs.join(" · ")}`.trim());
-    if (grouped.length > 0) {
-      // Keep primary chip first for continuity.
-      return [primaryLine, ...grouped];
-    }
-
-    return [primaryLine];
-  }, [teacher.category, teacher.discipline, teacher.additionalDisciplines]);
+  const disciplineChips = useMemo(
+    () => getTeacherProfileDisciplineChips(teacher),
+    [teacher],
+  );
 
   const teachingModes = useMemo(() => {
     const modes: { icon: React.ReactNode; label: string }[] = [];
@@ -584,12 +562,12 @@ export function TeacherProfile({
                 {/* Discipline chips */}
                 {disciplineChips.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
-                    {disciplineChips.map((text, i) => (
+                    {disciplineChips.map((chip) => (
                       <span
-                        key={`${text}-${i}`}
+                        key={chip.disciplineId}
                         className="inline-flex items-center rounded-full border border-teal-500/35 bg-teal-500/10 px-3 py-1 text-xs font-semibold text-teal-700"
                       >
-                        {text}
+                        {chip.emoji} {chip.label}
                       </span>
                     ))}
                   </div>
