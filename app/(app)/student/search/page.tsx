@@ -36,8 +36,12 @@ import { LandingSearchHero } from "@/components/marketing/LandingSearchHero";
 import type { LandingFormatFilter } from "@/lib/landingTeacherFilter";
 import { PriceDisplay } from "@/components/PriceDisplay";
 import { TeacherBadgePill } from "@/components/TeacherBadgePill";
-import { getCompactTeacherBadges } from "@/lib/teachers/badges";
+import { getSearchCardTeacherBadges, hasPublicTeacherReviews } from "@/lib/teachers/badges";
+import { getTeacherCompactFormatLabel } from "@/lib/teachers/display";
+import { sanitizePublicTeacherBio } from "@/lib/teacherProfile/sanitizePublicBio";
+import { collapsePublicBioSnippet } from "@/lib/teacherProfile/formatPublicBio";
 import type { TranslationKey } from "@/lib/translations";
+import type { Locale } from "@/lib/i18n/types";
 import { AppLoadingText } from "@/components/AppLoadingFallback";
 import { AppTeacherSearchCardSkeleton } from "@/components/loading/AppSkeletons";
 
@@ -70,7 +74,7 @@ type SearchRadius = 5 | 10 | 25 | 50 | "all" | "online";
 
 export default function StudentSearchPage() {
   const router = useRouter();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCat, setActiveCat] = useState<string>("All");
   const [teachers, setTeachers] = useState<Teacher[]>([]);
@@ -741,6 +745,7 @@ export default function StudentSearchPage() {
                         key={teacher.id}
                         teacher={teacher}
                         distanceKm={distanceKm}
+                        locale={locale}
                         t={t}
                         onOpen={() => openTeacherProfile(teacher)}
                       />
@@ -855,20 +860,43 @@ function RadiusPill({ active, onClick, children }: { active: boolean; onClick: (
   );
 }
 
+function publicTeacherAreaLabel(teacher: Teacher): string | null {
+  const city = String(teacher.city ?? "").trim();
+  if (city) return city;
+  const neighborhood = String(teacher.location?.neighborhood ?? "").trim();
+  return neighborhood || null;
+}
+
 function TeacherCard({
   teacher,
   distanceKm,
+  locale,
   onOpen,
   t,
 }: {
   teacher: Teacher;
   distanceKm: number | null;
+  locale: Locale;
   onOpen: () => void;
   t: (key: TranslationKey) => string;
 }) {
-  const availability = teacher.availability?.[0] ? String(teacher.availability[0]) : null;
-
-  const badges = getCompactTeacherBadges({
+  const hasAvailability =
+    Array.isArray(teacher.availability) &&
+    teacher.availability.some((slot) => String(slot ?? "").trim().length > 0);
+  const hasReviews = hasPublicTeacherReviews({
+    rating: teacher.rating,
+    reviewCount: teacher.reviews,
+  });
+  const sanitizedBio = sanitizePublicTeacherBio(teacher.bio, locale);
+  const bioSnippet = collapsePublicBioSnippet(sanitizedBio.content);
+  const areaLabel = publicTeacherAreaLabel(teacher);
+  const formatLabel = getTeacherCompactFormatLabel(teacher, {
+    online: t("filterOnline"),
+    inPerson: t("filterInPerson"),
+    home: t("modeHome"),
+    hybrid: t("modeHybrid"),
+  });
+  const badges = getSearchCardTeacherBadges({
     teacherId: teacher.id,
     identityVerified: teacher.identityVerified,
     identityStatus: teacher.identityStatus,
@@ -884,31 +912,16 @@ function TeacherCard({
       type="button"
       onClick={onOpen}
       className={cn(
-        "block min-h-[164px] w-full rounded-2xl border border-[#E8E6DF] bg-white p-4 text-left shadow-[0_10px_32px_rgba(44,44,42,0.055)] sm:shadow-[0_12px_40px_rgba(44,44,42,0.06)]",
+        "flex h-full min-h-[220px] w-full flex-col overflow-hidden rounded-2xl border border-[#E8E6DF] bg-white p-4 text-left shadow-[0_10px_32px_rgba(44,44,42,0.055)] sm:shadow-[0_12px_40px_rgba(44,44,42,0.06)]",
         "cursor-pointer transition-all duration-200 ease-out",
         "hover:-translate-y-1 hover:scale-[1.015] hover:border-teal-500/30 hover:shadow-xl",
         "active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/40",
       )}
     >
       {/*
-        Mobile QA fix (fix/mobile-teacher-card-name-badges):
-        the teacher name MUST stay visible on narrow screens.
-
-        Previously the name and the (up to two) compact trust badges
-        shared the same flex row with the badges marked `shrink-0` —
-        on a 320-360 px phone, after the avatar (44 px), the rating
-        pill, and ~190 px of badges, the truncated name container was
-        squeezed to ~0 px and disappeared. The badges literally hid
-        the teacher's name.
-
-        Fix: split the header into a protected name region and a
-        dedicated badge row beneath the discipline.
-          - Row 1 (this block): avatar + name + discipline + rating
-          - Row 2 (this block): badges in flex-wrap, never competing
-                                with the name for horizontal space.
-        The trust pills above (`availability`, "studio vérifié",
-        teaching-mode icons), the price row, and the booking action
-        are unchanged.
+        Mobile QA fix: the teacher name MUST stay visible on narrow screens.
+        Name lives in its own truncated row. Trust badges wrap below it
+        and never share horizontal space with the name.
       */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 flex-1 items-start gap-3">
@@ -917,57 +930,77 @@ function TeacherCard({
             <p className="truncate font-semibold text-[#2C2C2A]">
               {publicFirstNameWithInitial(teacher.name)}
             </p>
-            <p className="truncate text-xs text-[#6B6A65]">{formatTeacherCardDisciplines(teacher)}</p>
             {badges.length > 0 ? (
               <div className="mt-1.5 flex flex-wrap items-center gap-1">
                 {badges.map((badge) => (
-                  <TeacherBadgePill key={badge.id} badge={badge} compact />
+                  <TeacherBadgePill
+                    key={badge.id}
+                    badge={badge}
+                    compact
+                    className="border-slate-200 bg-slate-50 font-medium text-slate-700"
+                  />
                 ))}
               </div>
             ) : null}
           </div>
         </div>
-        {Number(teacher.reviews ?? 0) > 0 ? (
-          <span className="shrink-0 rounded-lg bg-white px-2 py-1 text-[11px] font-bold text-[#2C2C2A] border border-[#E8E6DF]">
-            ★ {Number(teacher.rating).toFixed(1)}
+        {hasReviews ? (
+          <span className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-[#E8E6DF] bg-white px-2 py-1 text-[11px] font-semibold tabular-nums text-[#2C2C2A]">
+            <Star size={12} className="text-amber-500" fill="currentColor" aria-hidden />
+            {Number(teacher.rating).toFixed(1)}
+            <span className="font-medium text-slate-600">({Number(teacher.reviews)})</span>
           </span>
+        ) : (
+          <span className="shrink-0 rounded-lg border border-[#E8E6DF] bg-white px-2 py-1 text-[11px] font-semibold text-slate-600">
+            {t("teacherCardNew")}
+          </span>
+        )}
+      </div>
+
+      <div className="mt-3 min-w-0 flex-1">
+        <p className="truncate text-sm font-medium text-[#2C2C2A]">{formatTeacherCardDisciplines(teacher)}</p>
+        {bioSnippet ? (
+          <p className="mt-1 line-clamp-2 text-sm leading-snug text-slate-600">
+            {bioSnippet}
+          </p>
+        ) : null}
+        {areaLabel || distanceKm != null ? (
+          <p className="mt-2 truncate text-xs text-slate-500">
+            {areaLabel}
+            {areaLabel && distanceKm != null ? " · " : null}
+            {distanceKm != null
+              ? t("studentApproxDistanceFromYou").replace("{distance}", formatApproxDistanceKm(distanceKm))
+              : null}
+          </p>
         ) : null}
       </div>
 
-      <div className="mt-3 flex flex-col gap-2 border-t border-[#E8E6DF] pt-3 text-xs text-[#6B6A65] min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between">
-        <span className="inline-flex min-w-0 flex-wrap items-center gap-2">
-          {teacher.teachingMode === "online" ? <Video size={12} /> : <Users size={12} />}
-          {teacher.teachingMode === "online" ? t("bookingOnline") : t("inPerson")}
-          {distanceKm != null ? <span className="text-[#D3D1C7]">·</span> : null}
-          {distanceKm != null ? (
-            <span>
-              {t("studentApproxDistanceFromYou").replace("{distance}", formatApproxDistanceKm(distanceKm))}
+      <div className="mt-auto flex flex-col gap-2 border-t border-[#E8E6DF] pt-3 text-xs text-slate-600 min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between">
+        <span className="inline-flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+          {formatLabel ? (
+            <span className="inline-flex items-center gap-1">
+              {teacher.teachingMode === "online" ? <Video size={12} aria-hidden /> : <Users size={12} aria-hidden />}
+              {formatLabel}
+            </span>
+          ) : null}
+          {hasAvailability ? (
+            <span className="inline-flex items-center gap-1.5">
+              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-600" aria-hidden />
+              {t("availableThisWeekMatch")}
             </span>
           ) : null}
         </span>
-        <span className="font-bold text-teal-700 min-[420px]:text-right">
+        <span className="font-bold text-[#0F766E] min-[420px]:text-right">
+          {/* When teacher_offers launches, this card should display the minimum active published offer price with “À partir de” copy. */}
           <PriceDisplay
             amount={Number(teacher.pricePerLesson)}
             sourceCurrency={teacher.currency ?? "CAD"}
             perHour
-            primaryClassName="font-bold text-teal-700"
+            primaryClassName="font-bold tabular-nums text-[#0F766E]"
             secondaryClassName="block w-full text-[9px] font-semibold text-slate-500"
             className="justify-end"
           />
         </span>
-      </div>
-
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        {availability ? (
-          <span className="inline-flex items-center rounded-full bg-teal-50 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-teal-800">
-            {availability}
-          </span>
-        ) : null}
-        {String(teacher.profilePlan || "").toLowerCase() === "enterprise" ? (
-          <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase text-[#6B6A65]">
-            <Star size={12} className="text-teal-700" /> {t("sortTrusted")}
-          </span>
-        ) : null}
       </div>
     </button>
   );

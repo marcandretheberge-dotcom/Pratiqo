@@ -45,6 +45,7 @@ import { TeacherAvatar } from "./TeacherAvatar";
 import { calculateIntroSessionPriceCents } from "@/lib/introSession";
 import { PriceDisplay } from "@/components/PriceDisplay";
 import { sanitizePublicTeacherBio } from "@/lib/teacherProfile/sanitizePublicBio";
+import { splitPublicBioParagraphs } from "@/lib/teacherProfile/formatPublicBio";
 import { publicFirstNameWithInitial } from "@/lib/identity/displayName";
 import { TeacherBadgePill } from "@/components/TeacherBadgePill";
 import {
@@ -337,6 +338,10 @@ export function TeacherProfile({
     () => sanitizePublicTeacherBio(teacher.bio, locale),
     [teacher.bio, locale],
   );
+  const bioParagraphs = useMemo(
+    () => splitPublicBioParagraphs(sanitizedBio.content),
+    [sanitizedBio.content],
+  );
 
   // Public display name: first name + last-name initial. Stored
   // `teacher.name` is unchanged; this is presentation-only and only used
@@ -609,12 +614,21 @@ export function TeacherProfile({
                 {/* Bio — rendered through sanitizePublicTeacherBio so personal
                     contact details are masked before the first lesson. The
                     stored bio is never mutated. */}
-                <div className="space-y-1.5">
+                <div className="space-y-3">
                   <p className="text-[10px] font-bold uppercase tracking-widest text-slate-600">{t("aboutSection")}</p>
-                  <p className="text-slate-600 leading-relaxed text-sm">
-                    {sanitizedBio.content ||
-                      `${publicName} est un(e) expert(e) en ${teacher.discipline.toLowerCase()}. Sa méthode d'enseignement repose sur la pratique immédiate et l'adaptation aux objectifs de chaque élève.`}
-                  </p>
+                  <div className="max-w-prose space-y-3">
+                    {bioParagraphs.length > 0 ? (
+                      bioParagraphs.map((paragraph, index) => (
+                        <p key={`bio-${index}`} className="text-sm leading-7 text-slate-600">
+                          {paragraph}
+                        </p>
+                      ))
+                    ) : (
+                      <p className="text-sm leading-7 text-slate-600">
+                        {`${publicName} est un(e) expert(e) en ${teacher.discipline.toLowerCase()}. Sa méthode d'enseignement repose sur la pratique immédiate et l'adaptation aux objectifs de chaque élève.`}
+                      </p>
+                    )}
+                  </div>
                   {sanitizedBio.masked ? (
                     <p className="text-[11px] leading-snug text-slate-500">
                       {t("teacherBioContactHiddenNotice")}

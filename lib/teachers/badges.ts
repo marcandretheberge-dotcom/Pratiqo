@@ -163,3 +163,26 @@ export function buildTeacherBadges(input: TeacherBadgeInput): TeacherBadge[] {
 export function getCompactTeacherBadges(input: TeacherBadgeInput, max = 2): TeacherBadge[] {
   return buildTeacherBadges(input).slice(0, Math.max(0, max));
 }
+
+/**
+ * Search-card trust badges. Caps at 2 and uses a stable marketplace order:
+ * identity → verified experience → diploma → founder → pro.
+ *
+ * `new_teacher` is omitted here because the card rating slot already shows
+ * compact "Nouveau" copy when there are no public reviews.
+ */
+export const SEARCH_CARD_BADGE_PRIORITY: TeacherBadgeId[] = [
+  "identity_verified",
+  "verified_experience",
+  "diploma_verified",
+  "founder",
+  "pro",
+];
+
+export function getSearchCardTeacherBadges(input: TeacherBadgeInput, max = 2): TeacherBadge[] {
+  const rank = new Map(SEARCH_CARD_BADGE_PRIORITY.map((id, index) => [id, index]));
+  return buildTeacherBadges(input)
+    .filter((badge) => rank.has(badge.id))
+    .sort((a, b) => (rank.get(a.id) ?? 99) - (rank.get(b.id) ?? 99))
+    .slice(0, Math.max(0, max));
+}

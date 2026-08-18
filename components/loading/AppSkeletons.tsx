@@ -210,7 +210,7 @@ export function AppTeacherSearchCardSkeleton({ className }: { className?: string
   return (
     <div
       className={cn(
-        "h-[140px] animate-pulse rounded-2xl border border-[#E8E6DF] bg-white p-4 shadow-[0_12px_40px_rgba(44,44,42,0.06)]",
+        "h-[220px] animate-pulse rounded-2xl border border-[#E8E6DF] bg-white p-4 shadow-[0_12px_40px_rgba(44,44,42,0.06)]",
         className,
       )}
       aria-hidden

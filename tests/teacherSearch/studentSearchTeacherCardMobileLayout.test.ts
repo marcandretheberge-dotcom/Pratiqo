@@ -187,8 +187,8 @@ test("name <p> still uses truncate so an extreme name renders one ellipsised lin
 test("discipline summary stays present and truncated below the name", () => {
   assert.match(
     TEACHER_CARD,
-    /<p className="truncate text-xs text-\[#6B6A65\]">\{formatTeacherCardDisciplines\(teacher\)\}<\/p>/,
-    "discipline <p> must still render with `truncate text-xs text-[#6B6A65]` using the shared summary helper",
+    /<p className="truncate text-sm font-medium text-\[#2C2C2A\]">\{formatTeacherCardDisciplines\(teacher\)\}<\/p>/,
+    "discipline <p> must still render with truncate using the shared summary helper",
   );
 });
 
