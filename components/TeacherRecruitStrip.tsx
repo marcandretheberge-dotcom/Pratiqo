@@ -21,6 +21,11 @@ import { AmbassadorReferralClaim } from "@/components/ambassadors/AmbassadorRefe
 
 const STORAGE_KEY = "pratiqo-teacher-strip-dismissed";
 
+// In-app / student browsing must not show this recruitment banner.
+// Dedicated recruitment pages (/devenir-professeur, /become-teacher, etc.)
+// keep their own CTAs. Set true only if the sitewide strip is needed again.
+const SHOW_TEACHER_RECRUITMENT_STRIP = false;
+
 // Pages where this strip should not appear (teacher is already the audience).
 const SUPPRESSED_PATHS = ["/devenir-enseignant", "/become-teacher", "/onboarding", "/login"];
 
@@ -63,7 +68,7 @@ export function TeacherRecruitStrip() {
   return (
     <>
       <AmbassadorReferralClaim />
-      {visible && !suppressed ? (
+      {SHOW_TEACHER_RECRUITMENT_STRIP && visible && !suppressed ? (
         <div
           role="banner"
           aria-label={t("bannerAreYouTeacher")}
