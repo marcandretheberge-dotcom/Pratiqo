@@ -12,9 +12,18 @@ import type { Renderer } from "@googlemaps/markerclusterer";
 import type { Teacher } from "../types";
 import { cn } from "../lib/utils";
 import { useLocale } from "../lib/locale-context";
-import { Star } from "lucide-react";
 import { PriceDisplay } from "@/components/PriceDisplay";
+import { TeacherAvatar } from "./TeacherAvatar";
+import { TeacherBadgePill } from "@/components/TeacherBadgePill";
 import { publicFirstNameWithInitial } from "@/lib/identity/displayName";
+import { formatApproxDistanceKm } from "@/lib/studentLocation";
+import { getCompactTeacherBadges } from "@/lib/teachers/badges";
+import {
+  getTeacherCompactFormatLabel,
+  getTeacherDisciplineSummary,
+  getTeacherPrimaryPriceAmount,
+  getTeacherPublicDistanceKm,
+} from "@/lib/teachers/display";
 
 // ── Public types ──────────────────────────────────────────────────────────────
 
@@ -465,59 +474,152 @@ export function SearchMapView({
         </div>
       ) : null}
 
-      {/* Teacher mini-card overlay — completely decoupled from map state */}
+      {/* Teacher mini-card overlay — pointer-events only on the card itself */}
       {selectedTeacher ? (
-        <div
-          className={cn(
-            "fixed left-0 right-0 z-[55] px-4 sm:px-6",
-            "bottom-[calc(6rem+env(safe-area-inset-bottom))] md:bottom-6",
-          )}
-        >
-          <div className="mx-auto max-w-3xl rounded-2xl border border-teal-500 bg-white p-4 shadow-[0_20px_60px_rgba(44,44,42,0.18)]">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <p className="truncate font-semibold text-[#2C2C2A]">{publicFirstNameWithInitial(selectedTeacher.name)}</p>
-                <p className="truncate text-xs text-[#6B6A65]">{selectedTeacher.discipline}</p>
-                <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-[#6B6A65]">
-                  <span className="inline-flex items-center gap-1">
-                    <Star size={14} className="text-teal-700" />
-                    {selectedTeacher.rating}
-                  </span>
-                  <span className="text-[#D3D1C7]">·</span>
-                  <span className="font-bold text-teal-700">
+        <SearchMapTeacherPopup
+          teacher={selectedTeacher}
+          userLat={userLat}
+          userLng={userLng}
+          onClose={onCloseSelected}
+          onViewProfile={onViewProfile}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function SearchMapTeacherPopup({
+  teacher,
+  userLat,
+  userLng,
+  onClose,
+  onViewProfile,
+}: {
+  teacher: Teacher;
+  userLat: number | null;
+  userLng: number | null;
+  onClose: () => void;
+  onViewProfile: (teacher: Teacher) => void;
+}) {
+  const { t, formatDisplayPrice } = useLocale();
+  const disciplineSummary = getTeacherDisciplineSummary(teacher);
+  const formatLabel = getTeacherCompactFormatLabel(teacher, {
+    online: t("filterOnline"),
+    inPerson: t("filterInPerson"),
+    home: t("modeHome"),
+    hybrid: t("modeHybrid"),
+  });
+  const distanceKm = getTeacherPublicDistanceKm(teacher, userLat, userLng);
+  const priceAmount = getTeacherPrimaryPriceAmount(teacher);
+  const priceLabel =
+    priceAmount != null
+      ? t("teacherPriceFrom").replace(
+          "{price}",
+          formatDisplayPrice(priceAmount, teacher.currency ?? "CAD").original,
+        )
+      : null;
+  const trustBadges = getCompactTeacherBadges(
+    {
+      teacherId: teacher.id,
+      identityVerified: teacher.identityVerified,
+      identityStatus: teacher.identityStatus,
+      stripeIdentityStatus: teacher.stripeIdentityStatus,
+      diplomaVerified: teacher.diplomaVerified,
+      verifiedExperience: teacher.verifiedExperience,
+      profilePlan: teacher.profilePlan,
+      reviewCount: teacher.reviews,
+    },
+    2,
+  );
+
+  return (
+    <div
+      className={cn(
+        "pointer-events-none fixed left-0 right-0 z-[55] px-4 sm:px-6",
+        "bottom-[calc(6rem+env(safe-area-inset-bottom))] md:bottom-6",
+      )}
+    >
+      <div
+        data-testid="teacher-map-popup"
+        className="pointer-events-auto mx-auto max-w-3xl rounded-2xl border border-teal-500 bg-white p-4 shadow-[0_20px_60px_rgba(44,44,42,0.18)]"
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex min-w-0 flex-1 items-start gap-3">
+            <TeacherAvatar
+              name={teacher.name}
+              category={teacher.category}
+              imageUrl={teacher.imageUrl}
+              size={44}
+            />
+            <div className="min-w-0 flex-1">
+              <p className="truncate font-semibold text-[#2C2C2A]">
+                {publicFirstNameWithInitial(teacher.name)}
+              </p>
+              <p
+                data-testid="teacher-map-popup-disciplines"
+                className="truncate text-xs text-[#6B6A65]"
+              >
+                {disciplineSummary}
+              </p>
+              {trustBadges.length > 0 ? (
+                <div className="mt-1.5 flex flex-wrap items-center gap-1">
+                  {trustBadges.map((badge) => (
+                    <TeacherBadgePill key={badge.id} badge={badge} compact />
+                  ))}
+                </div>
+              ) : null}
+              {formatLabel || distanceKm != null ? (
+                <p className="mt-1.5 truncate text-xs text-[#6B6A65]">
+                  {[
+                    formatLabel,
+                    distanceKm != null
+                      ? t("studentApproxDistanceFromYou").replace(
+                          "{distance}",
+                          formatApproxDistanceKm(distanceKm),
+                        )
+                      : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </p>
+              ) : null}
+              {priceAmount != null ? (
+                <div className="mt-1.5 text-xs font-bold text-teal-700">
+                  {priceLabel ? (
+                    <span>{priceLabel}</span>
+                  ) : (
                     <PriceDisplay
-                      amount={Number(selectedTeacher.pricePerLesson)}
-                      sourceCurrency={selectedTeacher.currency ?? "CAD"}
-                      perHour
+                      amount={priceAmount}
+                      sourceCurrency={teacher.currency ?? "CAD"}
                       primaryClassName="font-bold text-teal-700"
                       secondaryClassName="block w-full text-[9px] font-semibold text-slate-500"
                     />
-                  </span>
+                  )}
                 </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={onCloseSelected}
-                aria-label={t("accessibilityCloseDialog")}
-                className="shrink-0 rounded-full border border-[#E8E6DF] bg-white px-3 py-1 text-xs font-semibold text-[#2C2C2A] hover:bg-[#FAFCFB]"
-              >
-                ×
-              </button>
-            </div>
-
-            <div className="mt-3 flex items-center justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => onViewProfile(selectedTeacher)}
-                className="rounded-full bg-teal-600 px-4 py-2 text-xs font-bold text-white hover:brightness-[0.98]"
-              >
-                {t("viewProfile")}
-              </button>
+              ) : null}
             </div>
           </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label={t("accessibilityCloseDialog")}
+            className="shrink-0 rounded-full border border-[#E8E6DF] bg-white px-3 py-1 text-xs font-semibold text-[#2C2C2A] hover:bg-[#FAFCFB]"
+          >
+            ×
+          </button>
         </div>
-      ) : null}
+
+        <div className="mt-3 flex items-center justify-end gap-2">
+          <button
+            type="button"
+            onClick={() => onViewProfile(teacher)}
+            className="rounded-full bg-teal-600 px-4 py-2 text-xs font-bold text-white hover:brightness-[0.98]"
+          >
+            {t("viewProfile")}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

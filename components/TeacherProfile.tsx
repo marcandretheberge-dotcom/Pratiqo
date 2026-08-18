@@ -27,6 +27,16 @@ import { haversineDistance } from "../lib/geo";
 import { formatApproxDistanceKm } from "@/lib/studentLocation";
 import { TeacherMap } from "./TeacherMap";
 import { getTeacherProfileDisciplineChips } from "@/lib/teacherMapper";
+import {
+  getTeacherAvailabilitySummary,
+  getTeacherDisciplineSummary,
+  getTeacherDiscoveryLessonLabel,
+  getTeacherLevelLabels,
+  getTeacherPrimaryPriceLabel,
+  getTeacherProfileSummaryCardIds,
+  getTeacherPublicFormatLabels,
+  getTeacherSpokenLanguageLabels,
+} from "@/lib/teachers/display";
 import { useLocale } from "../lib/locale-context";
 import type { TeacherCredential } from "../lib/teacherTrust";
 import { getPublicTeacherCredentials } from "@/lib/supabase/queries";
@@ -433,6 +443,31 @@ export function TeacherProfile({
     () => getTeacherProfileDisciplineChips(teacher),
     [teacher],
   );
+  const summaryCardIds = useMemo(
+    () => getTeacherProfileSummaryCardIds(teacher),
+    [teacher],
+  );
+  const formatLabels = useMemo(
+    () =>
+      getTeacherPublicFormatLabels(teacher, {
+        online: t("filterOnline"),
+        inPerson: t("filterInPerson"),
+        home: t("modeHome"),
+      }),
+    [teacher, t],
+  );
+  const spokenLanguages = useMemo(() => getTeacherSpokenLanguageLabels(teacher), [teacher]);
+  const levelLabels = useMemo(() => getTeacherLevelLabels(teacher), [teacher]);
+  const availabilitySummary = useMemo(() => getTeacherAvailabilitySummary(teacher), [teacher]);
+  const discoveryLabel = useMemo(() => getTeacherDiscoveryLessonLabel(teacher), [teacher]);
+  const rateSummary = useMemo(
+    () =>
+      getTeacherPrimaryPriceLabel(teacher, {
+        formattedPrice: standardOriginalPrice,
+        fromTemplate: t("publicTeacherCardFromPerHour"),
+      }),
+    [teacher, standardOriginalPrice, t],
+  );
 
   const teachingModes = useMemo(() => {
     const modes: { icon: React.ReactNode; label: string }[] = [];
@@ -443,7 +478,7 @@ export function TeacherProfile({
     if (homeConfigured)
       modes.push({ icon: <Home size={14} />, label: t("modeHome") });
     return modes;
-  }, [teacher.teachingMode, homeConfigured]);
+  }, [teacher.teachingMode, homeConfigured, t]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -514,11 +549,6 @@ export function TeacherProfile({
                   />
 
                   <div className="flex-1 min-w-0 pt-1">
-                    <div className="flex flex-wrap items-center gap-1.5 mb-1">
-                      <span className="px-2.5 py-0.5 bg-teal-700 text-white text-[9px] font-bold uppercase tracking-widest rounded-full">
-                        {teacher.category}
-                      </span>
-                    </div>
                     <div className="flex flex-wrap items-center gap-2">
                       <h2 id="teacher-profile-modal-title" className="text-lg font-bold leading-tight text-slate-900 sm:text-xl lg:text-2xl">{publicName}</h2>
                       {headlineBadges.map((badge) => (
@@ -559,12 +589,15 @@ export function TeacherProfile({
                   </div>
                 </div>
 
-                {/* Discipline chips */}
+                {/* Full selected disciplines — visible before the bio */}
                 {disciplineChips.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
+                  <div
+                    data-testid="teacher-profile-discipline-chips"
+                    className="flex flex-wrap gap-2"
+                  >
                     {disciplineChips.map((chip) => (
                       <span
-                        key={chip.disciplineId}
+                        key={`${chip.disciplineId}-${chip.label}`}
                         className="inline-flex items-center rounded-full border border-teal-500/35 bg-teal-500/10 px-3 py-1 text-xs font-semibold text-teal-700"
                       >
                         {chip.emoji} {chip.label}
@@ -592,25 +625,71 @@ export function TeacherProfile({
                 {/* Intro video — only rendered when teacher.videoUrl is a valid YT/Vimeo URL */}
                 <TeacherVideoEmbed videoUrl={teacher.videoUrl} />
 
-                {/* Quick stats */}
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
-                  <QuickStat icon={<Clock className="text-indigo-500" size={15} />} label={t("trialLesson")} value={t("trialLessonDuration")} />
-                  <QuickStat
-                    icon={<Globe className="text-emerald-500" size={15} />}
-                    label={t("languagesLabel")}
-                    value={teacher.languages.join(", ") || "—"}
-                  />
-                  <QuickStat
-                    icon={<Users className="text-rose-500" size={15} />}
-                    label={t("levelsLabel")}
-                    value={teacher.levels.length > 2 ? t("allLevels") : (teacher.levels[0] ?? "—")}
-                  />
-                  <QuickStat
-                    icon={<CreditCard className="text-teal-500" size={15} />}
-                    label={t("rateLabel")}
-                    value={t("publicTeacherCardFromPerHour").replace("{price}", standardOriginalPrice)}
-                  />
-                </div>
+                {summaryCardIds.length > 0 ? (
+                  <div data-testid="teacher-profile-summary" className="space-y-2">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-600">
+                      {t("inBriefSection")}
+                    </p>
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
+                      {summaryCardIds.includes("disciplines") ? (
+                        <QuickStat
+                          testId="teacher-profile-summary-disciplines"
+                          icon={<Users className="text-teal-600" size={15} />}
+                          label={t("disciplinesLabel")}
+                          value={getTeacherDisciplineSummary(teacher)}
+                        />
+                      ) : null}
+                      {summaryCardIds.includes("formats") ? (
+                        <QuickStat
+                          testId="teacher-profile-summary-formats"
+                          icon={<Video className="text-teal-600" size={15} />}
+                          label={t("formatsLabel")}
+                          value={formatLabels.join(" · ")}
+                        />
+                      ) : null}
+                      {summaryCardIds.includes("availability") && availabilitySummary ? (
+                        <QuickStat
+                          testId="teacher-profile-summary-availability"
+                          icon={<Clock className="text-indigo-500" size={15} />}
+                          label={t("availabilityShortLabel")}
+                          value={availabilitySummary}
+                        />
+                      ) : null}
+                      {summaryCardIds.includes("rate") && rateSummary ? (
+                        <QuickStat
+                          testId="teacher-profile-summary-rate"
+                          icon={<CreditCard className="text-teal-500" size={15} />}
+                          label={t("rateLabel")}
+                          value={rateSummary}
+                        />
+                      ) : null}
+                      {summaryCardIds.includes("discovery") && discoveryLabel ? (
+                        <QuickStat
+                          testId="teacher-profile-summary-discovery"
+                          icon={<Clock className="text-amber-500" size={15} />}
+                          label={t("discoveryLessonLabel")}
+                          value={discoveryLabel}
+                        />
+                      ) : null}
+                      {summaryCardIds.includes("languages") ? (
+                        <QuickStat
+                          testId="teacher-profile-summary-languages"
+                          icon={<Globe className="text-emerald-500" size={15} />}
+                          label={t("spokenLanguagesLabel")}
+                          value={spokenLanguages.join(", ")}
+                        />
+                      ) : null}
+                      {summaryCardIds.includes("levels") ? (
+                        <QuickStat
+                          testId="teacher-profile-summary-levels"
+                          icon={<Users className="text-rose-500" size={15} />}
+                          label={t("levelsLabel")}
+                          value={levelLabels.length > 2 ? t("allLevels") : levelLabels.join(" · ")}
+                        />
+                      ) : null}
+                    </div>
+                  </div>
+                ) : null}
 
                 {/* Teaching modes */}
                 {teachingModes.length > 0 ? (
@@ -1128,9 +1207,22 @@ function TeacherVideoEmbed({ videoUrl }: { videoUrl?: string | null }) {
   );
 }
 
-function QuickStat({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+function QuickStat({
+  icon,
+  label,
+  value,
+  testId,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  testId?: string;
+}) {
   return (
-    <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100 space-y-1.5">
+    <div
+      data-testid={testId}
+      className="bg-slate-50 p-3.5 rounded-xl border border-slate-100 space-y-1.5"
+    >
       <div className="flex items-center gap-1.5">
         {icon}
         <span className="text-[9px] font-bold uppercase tracking-widest text-slate-600">{label}</span>

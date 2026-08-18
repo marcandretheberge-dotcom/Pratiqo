@@ -299,13 +299,14 @@ test("preview component: includes a local duration selector that does not mutate
 
 // ── 5. Public student-facing surfaces ────────────────────────────────────────
 test("public profile: QuickStat rate is shown as 'From {price} / h', not a naked '45 $'", () => {
-  // The QuickStat label wraps the formatted price in publicTeacherCardFromPerHour
+  // The Tarif card wraps the formatted price in publicTeacherCardFromPerHour
   // ("À partir de {price} / h"). Without this wrapper the card displayed
   // "45 $" naked, which is the bug.
   assert.match(
     TEACHER_PROFILE_SRC,
-    /label=\{t\("rateLabel"\)\}[\s\S]*publicTeacherCardFromPerHour/,
+    /fromTemplate:\s*t\("publicTeacherCardFromPerHour"\)/,
   );
+  assert.match(TEACHER_PROFILE_SRC, /label=\{t\("rateLabel"\)\}/);
   assert.match(FR.publicTeacherCardFromPerHour, /\/\s*h/);
   assert.match(EN.publicTeacherCardFromPerHour, /\/\s*h/);
   assert.match(ES.publicTeacherCardFromPerHour, /\/\s*h/);
