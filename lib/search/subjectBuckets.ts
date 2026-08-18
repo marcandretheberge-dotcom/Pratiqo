@@ -687,6 +687,61 @@ export const SUBJECT_BUCKETS: SubjectBucket[] = [
     },
   },
   {
+    canonicalId: "orthopedagogue",
+    category: "academic",
+    emoji: "🧩",
+    labels: { fr: "Orthopédagogue", en: "Orthopedagogue", es: "Psicopedagogo/a" },
+    aliases: {
+      fr: ["orthopedagogue", "ortho pedagogue"],
+      en: ["orthopedagogue", "special education teacher"],
+      es: ["psicopedagogo", "psicopedagoga"],
+    },
+  },
+  {
+    canonicalId: "orthopedagogie",
+    category: "academic",
+    emoji: "🧩",
+    labels: { fr: "Orthopédagogie", en: "Orthopedagogy", es: "Psicopedagogía" },
+    aliases: {
+      fr: ["orthopedagogie"],
+      en: ["orthopedagogy"],
+      es: ["psicopedagogia"],
+    },
+  },
+  {
+    canonicalId: "academic_support",
+    category: "academic",
+    emoji: "📘",
+    labels: { fr: "Soutien scolaire", en: "Academic support", es: "Apoyo escolar" },
+    aliases: {
+      fr: ["soutien scolaire primaire", "aide scolaire"],
+      en: ["academic support", "school support"],
+      es: ["apoyo escolar", "refuerzo escolar"],
+    },
+  },
+  {
+    canonicalId: "reading_writing",
+    category: "academic",
+    emoji: "✍️",
+    labels: { fr: "Lecture et écriture", en: "Reading and writing", es: "Lectura y escritura" },
+    aliases: {
+      fr: ["lecture", "ecriture", "écriture"],
+      en: ["reading", "writing", "reading and writing"],
+      es: ["lectura", "escritura"],
+    },
+  },
+  {
+    canonicalId: "learning_difficulties",
+    category: "academic",
+    emoji: "🧠",
+    labels: { fr: "Difficultés d’apprentissage", en: "Learning difficulties", es: "Dificultades de aprendizaje" },
+    aliases: {
+      fr: ["difficultes d apprentissage", "difficultes apprentissage"],
+      en: ["learning difficulties", "learning disability"],
+      es: ["dificultades de aprendizaje"],
+    },
+  },
+  {
     // Broad "Tuteurs académiques" entry — its French label MUST exactly match
     // the discipline label in `lib/disciplines.ts` so picking it can activate
     // the existing parent-side category chip (see SmartSearchInput.select).

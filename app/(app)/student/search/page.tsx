@@ -11,7 +11,7 @@ import { useLocale } from "../../../../lib/locale-context";
 import { cn } from "../../../../lib/utils";
 import { getSupabaseClient } from "../../../../lib/supabase";
 import { fetchTeacherDisciplinesMap, mergeTeachersWithDisciplines } from "../../../../lib/teacherDisciplines";
-import { isLaunchEligibleTeacherRow, teacherRowToTeacher, type TeacherRow } from "../../../../lib/teacherMapper";
+import { isLaunchEligibleTeacherRow, teacherRowToTeacher, formatTeacherCardDisciplines, type TeacherRow } from "../../../../lib/teacherMapper";
 import { TEACHERS_LIST_SELECT, TEACHERS_PUBLIC_TABLE } from "../../../../lib/supabase/queries";
 import { TeacherAvatar } from "../../../../components/TeacherAvatar";
 import { publicFirstNameWithInitial } from "@/lib/identity/displayName";
@@ -917,7 +917,7 @@ function TeacherCard({
             <p className="truncate font-semibold text-[#2C2C2A]">
               {publicFirstNameWithInitial(teacher.name)}
             </p>
-            <p className="truncate text-xs text-[#6B6A65]">{teacher.discipline}</p>
+            <p className="truncate text-xs text-[#6B6A65]">{formatTeacherCardDisciplines(teacher)}</p>
             {badges.length > 0 ? (
               <div className="mt-1.5 flex flex-wrap items-center gap-1">
                 {badges.map((badge) => (

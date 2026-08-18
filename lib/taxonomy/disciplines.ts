@@ -90,6 +90,11 @@ export const PRATIQO_DISCIPLINES: PratiqoDiscipline[] = [
   item("aide_aux_devoirs", "Aide aux devoirs", "Homework help", "Ayuda con tareas", "tutorat"),
   item("preparation_aux_examens", "Préparation aux examens", "Exam preparation", "Preparación de exámenes", "tutorat"),
   item("methodes_etude", "Méthodes d’étude", "Study methods", "Métodos de estudio", "tutorat"),
+  item("orthopedagogue", "Orthopédagogue", "Orthopedagogue", "Psicopedagogo/a", "tutorat"),
+  item("orthopedagogie", "Orthopédagogie", "Orthopedagogy", "Psicopedagogía", "tutorat"),
+  item("soutien_scolaire", "Soutien scolaire", "Academic support", "Apoyo escolar", "tutorat"),
+  item("lecture_ecriture", "Lecture et écriture", "Reading and writing", "Lectura y escritura", "tutorat"),
+  item("difficultes_apprentissage", "Difficultés d’apprentissage", "Learning difficulties", "Dificultades de aprendizaje", "tutorat"),
 
   item("photographie", "Photographie", "Photography", "Fotografía", "media"),
   item("videographie", "Vidéographie", "Videography", "Videografía", "media"),
@@ -213,6 +218,17 @@ export const LEGACY_DISCIPLINE_ALIASES: Record<string, string> = {
   coding: "programmation",
   fitness_coach: "coach_sportif",
   coach_trainer: "coach_sportif",
+  orthopedagogue: "orthopedagogue",
+  orthopedagogie: "orthopedagogie",
+  orthopedagogy: "orthopedagogie",
+  soutien_scolaire: "soutien_scolaire",
+  soutien_scolaire_primaire: "soutien_scolaire",
+  academic_support: "soutien_scolaire",
+  reading_writing: "lecture_ecriture",
+  lecture: "lecture_ecriture",
+  ecriture: "lecture_ecriture",
+  difficultes_apprentissage: "difficultes_apprentissage",
+  learning_difficulties: "difficultes_apprentissage",
 };
 
 export function resolveDisciplineId(raw: string | null | undefined): string | null {
@@ -289,5 +305,10 @@ export function requiredDisciplineIds(): string[] {
     "guitare",
     "anglais",
     "francais",
+    "orthopedagogue",
+    "orthopedagogie",
+    "soutien_scolaire",
+    "lecture_ecriture",
+    "difficultes_apprentissage",
   ];
 }
