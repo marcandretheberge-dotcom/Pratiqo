@@ -28,14 +28,14 @@ function test(name: string, fn: TestFn) {
 function baseTeacher(overrides: Partial<Teacher> = {}): Teacher {
   return {
     id: "11111111-1111-4111-8111-111111111111",
-    name: "Éloïse Dufour",
+    name: "Éloïse D.",
     discipline: "—",
     category: "Scolaire",
     rating: 5,
     reviews: 2,
     distance: 0,
     pricePerLesson: 45,
-    bio: "Orthopédagogue.",
+    bio: "Professeure de photographie et de français.",
     imageUrl: "https://cdn.example.com/eloise.webp",
     availability: [],
     location: { lat: 0, lng: 0 },
@@ -55,12 +55,23 @@ function row(discipline_id: string, specialite: string | null = null): TeacherDi
   };
 }
 
+test("Éloïse shows Photographie and Français from teacher_disciplines, not dash", () => {
+  const merged = applyAdditionalDisciplines(baseTeacher({ discipline: "—" }), [
+    row("photographie"),
+    row("francais"),
+  ]);
+  assert.equal(merged.discipline, "Photographie");
+  assert.deepEqual(merged.disciplineDisplay?.map((d) => d.label), ["Photographie", "Français"]);
+  assert.equal(formatTeacherCardDisciplines(merged), "Photographie · Français");
+  assert.notEqual(formatTeacherCardDisciplines(merged), "—");
+});
+
 test("one teacher_disciplines row displays taxonomy label instead of dash", () => {
-  const merged = applyAdditionalDisciplines(baseTeacher({ discipline: "—" }), [row("orthopedagogue", null)]);
-  assert.equal(merged.discipline, "Orthopédagogue");
+  const merged = applyAdditionalDisciplines(baseTeacher({ discipline: "—" }), [row("photographie", null)]);
+  assert.equal(merged.discipline, "Photographie");
   assert.equal(merged.disciplineDisplay?.length, 1);
-  assert.equal(merged.disciplineDisplay?.[0]?.label, "Orthopédagogue");
-  assert.equal(formatTeacherCardDisciplines(merged), "Orthopédagogue");
+  assert.equal(merged.disciplineDisplay?.[0]?.label, "Photographie");
+  assert.equal(formatTeacherCardDisciplines(merged), "Photographie");
   assert.notEqual(formatTeacherCardDisciplines(merged), "—");
 });
 
@@ -121,15 +132,14 @@ test("TeacherCard shows first 3 disciplines plus +N", () => {
   assert.doesNotMatch(searchPage, /\{teacher\.discipline\}/);
 });
 
-test("search matches additional and new disciplines", () => {
+test("search matches Photographie and Français for Éloïse-style profile", () => {
   const merged = applyAdditionalDisciplines(baseTeacher({ discipline: "—" }), [
-    row("orthopedagogue"),
-    row("lecture_ecriture"),
+    row("photographie"),
+    row("francais"),
   ]);
-  assert.equal(teacherMatchesExploreSearch(merged, "orthopédagogue"), true);
-  assert.equal(teacherMatchesExploreSearch(merged, "orthopedagogue"), true);
-  assert.equal(teacherMatchesExploreSearch(merged, "lecture"), true);
-  assert.equal(teacherMatchesExploreSearch(merged, "photographie"), false);
+  assert.equal(teacherMatchesExploreSearch(merged, "photographie"), true);
+  assert.equal(teacherMatchesExploreSearch(merged, "français"), true);
+  assert.equal(teacherMatchesExploreSearch(merged, "francais"), true);
 });
 
 test("legacy teachers without teacher_disciplines still display legacy discipline", () => {
