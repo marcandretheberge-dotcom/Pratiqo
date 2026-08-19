@@ -89,9 +89,6 @@ export const PUBLIC_TEACHER_CARD_INTERACTIVE_CLASS =
 /** Subtle avatar ring used by public teacher cards. */
 export const PUBLIC_TEACHER_CARD_AVATAR_RING_CLASS = "ring-1 ring-[#E8E6DF]";
 
-/** Subtle avatar ring used by public teacher cards. */
-export const PUBLIC_TEACHER_CARD_AVATAR_RING_CLASS = "ring-1 ring-[#E8E6DF]";
-
 /** Location/distance row: subordinate to name, discipline, bio, and price. */
 export const PUBLIC_TEACHER_CARD_LOCATION_CLASS =
   "mt-2 flex min-w-0 items-center gap-1 text-xs leading-tight text-slate-500";
