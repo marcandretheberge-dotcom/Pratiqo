@@ -213,11 +213,8 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
     () =>
       isPublicTeacherIdentityVerified({
         identityVerified: teacher.identityVerified,
-        identityStatus: teacher.identityStatus,
-        stripeIdentityStatus: teacher.stripeIdentityStatus,
-        identityVerifiedManually: teacher.identityVerifiedManually,
       }),
-    [teacher.identityStatus, teacher.identityVerified, teacher.identityVerifiedManually, teacher.stripeIdentityStatus],
+    [teacher.identityVerified],
   );
   const [identityCautionAcknowledged, setIdentityCautionAcknowledged] = useState(false);
 

@@ -387,6 +387,11 @@ test("tracked patch avoids generated audio and restricted product systems", () =
     "supabase/migrations/092_ambassador_rewards_version_hardening.sql",
     "supabase/migrations/093_harden_recent_program_tables_rls.sql",
     "supabase/migrations/094_ambassador_net_contribution_economics.sql",
+    // fix/hide-manual-identity-source-public — public projection only.
+    // Admin manual verification stays on public.teachers. Defended by
+    // tests/admin/manualTeacherIdentityVerification.test.ts and
+    // tests/security/teacherPublicReadIsolation.test.ts.
+    "supabase/migrations/098_hide_manual_identity_source_from_public_projection.sql",
   ]);
   const forbidden = [
     /^app\/api\//,

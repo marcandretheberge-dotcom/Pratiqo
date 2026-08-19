@@ -400,9 +400,6 @@ export function TeacherProfile({
     () => ({
       teacherId: teacher.id,
       identityVerified: teacher.identityVerified,
-      identityStatus: teacher.identityStatus ?? null,
-      stripeIdentityStatus: teacher.stripeIdentityStatus ?? null,
-      identityVerifiedManually: teacher.identityVerifiedManually ?? null,
       diplomaVerified: teacher.diplomaVerified,
       verifiedExperience: teacher.verifiedExperience ?? null,
       credentials: publicCredentials,
@@ -415,10 +412,7 @@ export function TeacherProfile({
       publicCredentials,
       teacher.diplomaVerified,
       teacher.id,
-      teacher.identityStatus,
       teacher.identityVerified,
-      teacher.identityVerifiedManually,
-      teacher.stripeIdentityStatus,
       teacher.verifiedExperience,
     ],
   );
