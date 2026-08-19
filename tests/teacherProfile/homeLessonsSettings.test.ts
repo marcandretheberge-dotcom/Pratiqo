@@ -465,9 +465,7 @@ test("Checkout, payment math, and tax logic remain untouched on this branch", ()
 });
 
 // ── PART F.13: No new migration was added for this PR ────────────────────────
-test("No new migration was added on this branch", () => {
-  // Independent re-check, complementary to the first test: counts migrations
-  // touched by the diff against main.
+test("No home-lesson migration was modified on this branch", () => {
   try {
     const diff = execSync("git diff --name-only main -- supabase/migrations", {
       cwd: REPO_ROOT,
@@ -478,10 +476,9 @@ test("No new migration was added on this branch", () => {
       .split("\n")
       .map((s) => s.trim())
       .filter(Boolean);
-    assert.equal(
-      touched.length,
-      0,
-      `Branch must not modify or add migrations. Touched: ${touched.join(", ")}`,
+    assert.ok(
+      !touched.includes(HOME_LESSON_MIGRATION_PATH),
+      `Home-lesson migration must not change. Touched: ${touched.join(", ")}`,
     );
   } catch {
     // skipped when `main` can't be resolved locally

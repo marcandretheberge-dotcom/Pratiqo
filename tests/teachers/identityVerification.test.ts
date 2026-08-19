@@ -63,10 +63,21 @@ test("canonical helper returns not verified when neither Stripe nor manual is ve
   assert.equal(getTeacherIdentityVerificationSource({ identityVerifiedManually: false }), "none");
 });
 
-test("public badge helper delegates to the canonical helper including manual verification", () => {
-  assert.equal(isPublicTeacherIdentityVerified({ identityVerifiedManually: true }), true);
-  assert.equal(isPublicTeacherIdentityVerified({ stripeIdentityStatus: "verified" }), true);
-  assert.equal(isPublicTeacherIdentityVerified({}), false);
+test("public badge helper uses collapsed identityVerified from teachers_public", () => {
+  assert.equal(isPublicTeacherIdentityVerified({ identityVerified: true }), true);
+  assert.equal(isPublicTeacherIdentityVerified({ identityVerified: false }), false);
+});
+
+test("admin helper still distinguishes manual verification source", () => {
+  assert.equal(
+    getTeacherIdentityVerificationSource({ identityVerifiedManually: true }),
+    "admin_manual",
+  );
+});
+
+test("public badge helper does not require manual source when identityVerified is true", () => {
+  assert.equal(isPublicTeacherIdentityVerified({ identityVerified: true }), true);
+  assert.equal(isPublicTeacherIdentityVerified({ identityVerified: false, identityVerifiedManually: false }), false);
 });
 
 test("Stripe status labels stay human-readable", () => {

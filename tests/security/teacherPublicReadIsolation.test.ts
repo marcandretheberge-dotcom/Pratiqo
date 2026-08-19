@@ -43,6 +43,7 @@ function test(name: string, fn: () => void): void {
 const migration070 = read("supabase/migrations/070_teachers_public_read_isolation.sql");
 const migration086 = read("supabase/migrations/086_align_teacher_public_search_visibility.sql");
 const migration097 = read("supabase/migrations/097_admin_manual_teacher_identity_verification.sql");
+const migration098 = read("supabase/migrations/098_hide_manual_identity_source_from_public_projection.sql");
 
 test("migration 070: drops the broad teachers_select_public policy", () => {
   assert.match(migration070, /DROP POLICY IF EXISTS "teachers_select_public" ON public\.teachers/);
@@ -235,6 +236,35 @@ test("migration 097: public helper keeps Stripe Identity internals off the proje
   }
 });
 
+test("migration 098: public helper collapses identity into identity_verified and hides manual source", () => {
+  const fnBlock =
+    migration098.match(/CREATE FUNCTION public\.list_public_teachers\([\s\S]*?\$\$;/i)?.[0] ?? "";
+  assert.notEqual(fnBlock, "", "098 list_public_teachers() must be parseable");
+  assert.match(
+    fnBlock,
+    /COALESCE\(t\.identity_verified,\s*false\)\s+OR COALESCE\(t\.identity_verified_manually,\s*false\)/,
+  );
+  assert.match(fnBlock, /AS identity_verified/);
+  const returnsBlock = fnBlock.match(/RETURNS TABLE \(([\s\S]*?)\)/)?.[1] ?? "";
+  assert.doesNotMatch(returnsBlock, /identity_verified_manually\s+boolean/);
+  assert.doesNotMatch(fnBlock, /identity_verified_manually_at/);
+  assert.doesNotMatch(fnBlock, /identity_verified_manually_by/);
+  assert.doesNotMatch(fnBlock, /identity_manual_verification_note/);
+  const outputSelect = fnBlock.match(/SELECT([\s\S]*?)\n\s+FROM public\.teachers t/i)?.[1] ?? "";
+  assert.doesNotMatch(outputSelect, /^\s*t\.identity_verified_manually\s*,/m);
+  assert.doesNotMatch(outputSelect, /t\.identity_verified_manually\s+AS/i);
+  assert.match(fnBlock, /OR t\.identity_verified_manually = true/);
+});
+
+test("migration 098: drops and restores teacher_offers public-read policy around teachers_public rebuild", () => {
+  const dropViewIdx = migration098.indexOf("DROP VIEW IF EXISTS public.teachers_public");
+  const firstPolicyDropIdx = migration098.indexOf('DROP POLICY IF EXISTS "teacher_offers_select_published_public"');
+  const recreatePolicyIdx = migration098.lastIndexOf('CREATE POLICY "teacher_offers_select_published_public"');
+  assert.ok(firstPolicyDropIdx >= 0 && dropViewIdx > firstPolicyDropIdx);
+  assert.ok(recreatePolicyIdx > dropViewIdx);
+  assert.match(migration098, /FROM public\.teachers_public tp/);
+});
+
 test("migration 070: view re-grants SELECT to anon/authenticated/service_role", () => {
   assert.match(migration070, /GRANT SELECT ON public\.teachers_public TO anon/);
   assert.match(migration070, /GRANT SELECT ON public\.teachers_public TO authenticated/);
@@ -278,6 +308,7 @@ test("TEACHERS_LIST_SELECT omits sensitive workflow columns", () => {
     "location_verification_method",
     "cv_verification_status",
     "stripe_account_id",
+    "identity_verified_manually",
     "identity_verified_manually_at",
     "identity_verified_manually_by",
     "identity_manual_verification_note",
@@ -296,7 +327,6 @@ test("TEACHERS_LIST_SELECT omits sensitive workflow columns", () => {
     "identity_verified",
     "diploma_verified",
     "verification_level",
-    "identity_verified_manually",
   ]) {
     assert.equal(
       cols.has(required),
@@ -304,6 +334,11 @@ test("TEACHERS_LIST_SELECT omits sensitive workflow columns", () => {
       `TEACHERS_LIST_SELECT is missing required public column "${required}"`,
     );
   }
+  assert.equal(
+    cols.has("identity_verified_manually"),
+    false,
+    "TEACHERS_LIST_SELECT must not request identity_verified_manually from the public view",
+  );
 });
 
 test("TEACHERS_LIST_SELECT_LEGACY_PUBLIC is an alias of TEACHERS_LIST_SELECT (no extra columns)", () => {
@@ -566,6 +601,7 @@ test("no public-facing supabase select re-requests sensitive teacher columns", (
         "location_verified_at",
         "location_verification_method",
         "cv_verification_status",
+        "identity_verified_manually",
         "identity_verified_manually_at",
         "identity_verified_manually_by",
         "identity_manual_verification_note",

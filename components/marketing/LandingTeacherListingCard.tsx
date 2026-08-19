@@ -35,9 +35,6 @@ export function LandingTeacherListingCard({
   const { t, locale } = useLocale();
   const identityVerified = isPublicTeacherIdentityVerified({
     identityVerified: teacher.identityVerified,
-    identityStatus: teacher.identityStatus,
-    stripeIdentityStatus: teacher.stripeIdentityStatus,
-    identityVerifiedManually: teacher.identityVerifiedManually,
   });
   const hasReviews = hasPublicTeacherReviews({
     rating: teacher.rating,

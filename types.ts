@@ -73,6 +73,10 @@ export interface Teacher {
   profilePlan?: string | null;
   /** Colonnes `teachers` — confiance progressive */
   verificationLevel?: number | null;
+  /**
+   * Public identity verification boolean. On `teachers_public` this is already
+   * the effective value (Stripe Identity OR admin-manual). Do not infer source.
+   */
   identityVerified?: boolean;
   diplomaVerified?: boolean;
   phoneVerified?: boolean;
@@ -84,8 +88,8 @@ export interface Teacher {
    */
   verifiedExperience?: boolean;
   /**
-   * Admin-controlled identity verification, independent of Stripe Identity.
-   * Public surfaces may read the boolean only — never the admin note or actor.
+   * Admin-only source flag from `teachers.identity_verified_manually`.
+   * Never projected on `teachers_public`. Do not use on public cards/profile/booking.
    */
   identityVerifiedManually?: boolean;
   identityStatus?: string | null;

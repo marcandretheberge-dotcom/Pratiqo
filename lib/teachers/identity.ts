@@ -1,9 +1,17 @@
 /**
  * Canonical teacher identity-verification helper.
  *
- * A teacher is publicly identity-verified when EITHER:
+ * A teacher is identity-verified when EITHER:
  *   1. Stripe Identity verified them, OR
  *   2. a Pratiqo admin marked them verified manually.
+ *
+ * Public projection (`teachers_public.identity_verified`) already collapses
+ * both sources into one boolean. Public UI should pass that field only and
+ * must not inspect or display the verification source.
+ *
+ * `getTeacherIdentityVerificationSource` is admin-only. Call it on raw
+ * `teachers` rows, never on the public projection — public
+ * `identity_verified = true` can come from either source.
  *
  * Manual verification is a separate source. It must never be written
  * into stripe_identity_status / Stripe Identity session fields.

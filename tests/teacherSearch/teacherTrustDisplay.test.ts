@@ -84,6 +84,14 @@ test("search card avatar size stays compact", () => {
   assert.match(TEACHER_CARD, /<TeacherAvatar[^>]*size=\{44\}/);
 });
 
+test("public trust surfaces use collapsed identityVerified only, not manual source", () => {
+  assert.match(TEACHER_CARD, /identityVerified:\s*teacher\.identityVerified/);
+  assert.doesNotMatch(TEACHER_CARD, /identityVerifiedManually/);
+  assert.match(BOOKING_SRC, /identityVerified:\s*teacher\.identityVerified/);
+  assert.doesNotMatch(BOOKING_SRC, /identityVerifiedManually/);
+  assert.doesNotMatch(PROFILE_SRC, /identityVerifiedManually/);
+});
+
 test("teacher profile still shows detailed trust badges", () => {
   assert.match(PROFILE_SRC, /getCompactTeacherBadges\(/);
   assert.match(PROFILE_SRC, /buildTeacherBadges\(/);

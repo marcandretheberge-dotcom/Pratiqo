@@ -20,7 +20,8 @@ function test(name: string, fn: TestFn) {
 }
 
 const ROUTE = read("app/api/admin/teachers/[teacherId]/identity-verification/route.ts");
-const MIGRATION = read("supabase/migrations/097_admin_manual_teacher_identity_verification.sql");
+const MIGRATION097 = read("supabase/migrations/097_admin_manual_teacher_identity_verification.sql");
+const MIGRATION098 = read("supabase/migrations/098_hide_manual_identity_source_from_public_projection.sql");
 const CARD = read("components/admin/TeacherIdentityVerificationCard.tsx");
 const PAGE = read("app/(app)/admin/users/[id]/page.tsx");
 const PROFILE = read("components/TeacherProfile.tsx");
@@ -64,38 +65,39 @@ test("manual verification note is sanitized", () => {
   assert.match(ROUTE, /sanitizeManualIdentityVerificationNote\(body\.note\)/);
 });
 
-test("manual verification note is not exposed publicly", () => {
+test("manual verification note and source fields are not exposed publicly", () => {
   const listSelect = QUERIES.match(/TEACHERS_LIST_SELECT\s*=\s*"([^"]+)"/)?.[1] ?? "";
   assert.doesNotMatch(listSelect, /identity_manual_verification_note/);
   assert.doesNotMatch(listSelect, /identity_verified_manually_by/);
   assert.doesNotMatch(listSelect, /identity_verified_manually_at/);
-  assert.match(listSelect, /identity_verified_manually/);
-  assert.doesNotMatch(MIGRATION, /t\.identity_manual_verification_note/);
+  assert.doesNotMatch(listSelect, /identity_verified_manually/);
+  assert.doesNotMatch(MIGRATION097, /t\.identity_manual_verification_note/);
   assert.doesNotMatch(PROFILE, /identityManualVerificationNote|identity_manual_verification_note/);
   assert.doesNotMatch(SEARCH_CARD, /identity_manual_verification_note/);
-  assert.match(MIGRATION, /identity_verified_manually\s+boolean/);
   assert.doesNotMatch(
-    MIGRATION.match(/CREATE FUNCTION public\.list_public_teachers\([\s\S]*?\$\$;/i)?.[0] ?? "",
-    /identity_verified_manually_by/,
+    MIGRATION098.match(/RETURNS TABLE \([\s\S]*?\)/)?.[0] ?? "",
+    /identity_verified_manually/,
   );
 });
 
-test("search card checkmark uses the canonical helper including manual verification", () => {
+test("search card checkmark uses collapsed public identityVerified only", () => {
   assert.match(SEARCH_CARD, /isPublicTeacherIdentityVerified\(/);
-  assert.match(SEARCH_CARD, /identityVerifiedManually:\s*teacher\.identityVerifiedManually/);
+  assert.match(SEARCH_CARD, /identityVerified:\s*teacher\.identityVerified/);
+  assert.doesNotMatch(SEARCH_CARD, /identityVerifiedManually/);
 });
 
-test("booking caution uses effective identity including manual verification", () => {
-  assert.match(BOOKING, /identityVerifiedManually:\s*teacher\.identityVerifiedManually/);
+test("booking caution uses collapsed public identityVerified only", () => {
+  assert.match(BOOKING, /identityVerified:\s*teacher\.identityVerified/);
+  assert.doesNotMatch(BOOKING, /identityVerifiedManually/);
   assert.match(BOOKING, /!teacherIdentityVerified && !identityCautionAcknowledged/);
   assert.match(BOOKING, /payableAmountCents/);
   assert.doesNotMatch(BOOKING, /from ["']@\/lib\/offers/);
 });
 
-test("public TeacherProfile does not expose admin note or admin verifier", () => {
+test("public TeacherProfile does not expose admin note, verifier, or manual source", () => {
   assert.doesNotMatch(PROFILE, /identity_verified_manually_by/);
   assert.doesNotMatch(PROFILE, /identity_manual_verification_note/);
-  assert.match(PROFILE, /identityVerifiedManually:\s*teacher\.identityVerifiedManually/);
+  assert.doesNotMatch(PROFILE, /identityVerifiedManually/);
   assert.match(PROFILE, /teacherBadgeIdentityVerified/);
   assert.match(PROFILE, /teacherTrustIdentityNotVerifiedTitle/);
 });
@@ -110,20 +112,29 @@ test("admin UI shows Stripe status, manual status, and effective public status",
   assert.match(CARD, /Note interne/);
 });
 
-test("migration pins manual fields and does not fake Stripe Identity", () => {
-  assert.match(MIGRATION, /identity_verified_manually boolean NOT NULL DEFAULT false/i);
-  assert.match(MIGRATION, /NEW\.identity_verified_manually := false/);
-  assert.match(MIGRATION, /NEW\.identity_verified_manually := OLD\.identity_verified_manually/);
-  assert.doesNotMatch(MIGRATION, /NEW\.stripe_identity_status := 'verified'/);
+test("migration 097 pins manual fields on teachers table and does not fake Stripe Identity", () => {
+  assert.match(MIGRATION097, /identity_verified_manually boolean NOT NULL DEFAULT false/i);
+  assert.match(MIGRATION097, /NEW\.identity_verified_manually := false/);
+  assert.match(MIGRATION097, /NEW\.identity_verified_manually := OLD\.identity_verified_manually/);
+  assert.doesNotMatch(MIGRATION097, /NEW\.stripe_identity_status := 'verified'/);
 });
 
-test("migration drops and restores teacher_offers public-read policy around teachers_public rebuild", () => {
-  const dropViewIdx = MIGRATION.indexOf("DROP VIEW IF EXISTS public.teachers_public");
-  const firstPolicyDropIdx = MIGRATION.indexOf('DROP POLICY IF EXISTS "teacher_offers_select_published_public"');
-  const recreatePolicyIdx = MIGRATION.lastIndexOf('CREATE POLICY "teacher_offers_select_published_public"');
+test("migration 098 collapses manual verification into public identity_verified", () => {
+  const fnBlock = MIGRATION098.match(/CREATE FUNCTION public\.list_public_teachers\([\s\S]*?\$\$;/i)?.[0] ?? "";
+  assert.match(
+    fnBlock,
+    /COALESCE\(t\.identity_verified,\s*false\)\s+OR COALESCE\(t\.identity_verified_manually,\s*false\)/,
+  );
+  assert.doesNotMatch(fnBlock.match(/RETURNS TABLE \([\s\S]*?\)/)?.[0] ?? "", /identity_verified_manually/);
+});
+
+test("migration 098 drops and restores teacher_offers public-read policy around teachers_public rebuild", () => {
+  const dropViewIdx = MIGRATION098.indexOf("DROP VIEW IF EXISTS public.teachers_public");
+  const firstPolicyDropIdx = MIGRATION098.indexOf('DROP POLICY IF EXISTS "teacher_offers_select_published_public"');
+  const recreatePolicyIdx = MIGRATION098.lastIndexOf('CREATE POLICY "teacher_offers_select_published_public"');
   assert.ok(firstPolicyDropIdx >= 0 && dropViewIdx > firstPolicyDropIdx);
   assert.ok(recreatePolicyIdx > dropViewIdx);
-  assert.match(MIGRATION, /FROM public\.teachers_public tp/);
+  assert.match(MIGRATION098, /FROM public\.teachers_public tp/);
 });
 
 test("audit log records verify and clear without document payloads", () => {

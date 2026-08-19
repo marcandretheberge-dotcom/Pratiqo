@@ -93,6 +93,14 @@ test("identity checkmark appears only when verified", () => {
   assert.match(LOCAL, /<TeacherCardIdentityCheck verified=\{teacher\.identityVerified\}/);
 });
 
+test("public cards do not inspect manual identity verification source", () => {
+  for (const [name, src] of Object.entries(CARD_SOURCES)) {
+    assert.doesNotMatch(src, /identityVerifiedManually/, `${name} must not read identityVerifiedManually`);
+    assert.doesNotMatch(src, /identity_verified_manually/, `${name} must not read identity_verified_manually`);
+  }
+  assert.doesNotMatch(PROFILE, /identityVerifiedManually/);
+});
+
 test("compact Nouveau appears when there are no public reviews", () => {
   for (const src of [SEARCH_CARD, LANDING, HERO, RELATED, QUIZ]) {
     assert.match(src, /hasPublicTeacherReviews\(/);
