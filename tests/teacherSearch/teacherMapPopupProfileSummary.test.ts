@@ -155,7 +155,6 @@ test("profile summary shows Disciplines using teacher.disciplineDisplay", () => 
     ["Français", "Aide aux devoirs", "Photographie"],
   );
   assert.ok(getTeacherProfileSummaryCardIds(teacher).includes("disciplines"));
-  assert.match(PROFILE_SRC, /getTeacherDisciplineSummary\(teacher\)/);
   assert.match(PROFILE_SRC, /getTeacherProfileDisciplineChips/);
   assert.doesNotMatch(
     PROFILE_SRC,

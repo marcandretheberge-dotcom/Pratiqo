@@ -32,7 +32,8 @@ export type TeacherProfileSummaryCardId =
   | "rate"
   | "discovery"
   | "languages"
-  | "levels";
+  | "levels"
+  | "duration";
 
 function foldKey(value: string): string {
   return value
@@ -109,6 +110,10 @@ export const PUBLIC_TEACHER_CARD_DISCIPLINE_CLASS =
 /** Profile modal chips: one calm style, metadata under the name. Not clickable. */
 export const PUBLIC_TEACHER_PROFILE_DISCIPLINE_CHIP_CLASS =
   "inline-flex max-w-full items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium leading-tight text-slate-700";
+
+/** In-brief values wrap; never ellipsize key facts in the detailed modal. */
+export const PUBLIC_TEACHER_PROFILE_IN_BRIEF_VALUE_CLASS =
+  "whitespace-normal break-words text-xs font-semibold leading-snug text-slate-900";
 
 /**
  * When teacher_offers launches, this value should come from the minimum
@@ -190,7 +195,10 @@ export function getTeacherLevelLabels(teacher: Teacher): string[] {
 export function getTeacherAvailabilitySummary(teacher: Teacher, maxVisible = 2): string | null {
   const values = getMeaningfulStringList(teacher.availability);
   if (values.length === 0) return null;
-  const shown = values.slice(0, maxVisible);
+  if (!Number.isFinite(maxVisible) || maxVisible >= values.length) {
+    return values.join(" · ");
+  }
+  const shown = values.slice(0, Math.max(0, maxVisible));
   const extra = values.length - shown.length;
   return extra > 0 ? `${shown.join(" · ")} +${extra}` : shown.join(" · ");
 }
@@ -247,10 +255,33 @@ export function getTeacherProfileSummaryCardIds(teacher: Teacher): TeacherProfil
   const cards: TeacherProfileSummaryCardId[] = [];
   if (getTeacherDisciplineDisplayItems(teacher).length > 0) cards.push("disciplines");
   if (getTeacherPublicFormatIds(teacher).length > 0) cards.push("formats");
-  if (getTeacherAvailabilitySummary(teacher)) cards.push("availability");
+  if (getTeacherAvailabilitySummary(teacher, Number.POSITIVE_INFINITY)) cards.push("availability");
   if (getTeacherPrimaryPriceAmount(teacher) != null) cards.push("rate");
   if (teacherShowsDiscoveryLesson(teacher)) cards.push("discovery");
   if (getTeacherSpokenLanguageLabels(teacher).length > 0) cards.push("languages");
   if (getTeacherLevelLabels(teacher).length > 0) cards.push("levels");
+  return cards;
+}
+
+export function getTeacherDefaultLessonDurationLabel(teacher: Teacher): string | null {
+  const minutes = Number(teacher.defaultLessonDurationMinutes);
+  if (!Number.isFinite(minutes) || minutes <= 0) return null;
+  return `${Math.round(minutes)} min`;
+}
+
+/**
+ * Profile-modal “En bref” facts. Drops cards already shown nearby:
+ * discipline chips, course-option pills, and (on desktop) the booking rate.
+ */
+export function getTeacherProfileInBriefCardIds(
+  teacher: Teacher,
+  ctx: { hasDisciplineChips: boolean; hasCourseOptions: boolean },
+): TeacherProfileSummaryCardId[] {
+  const cards = getTeacherProfileSummaryCardIds(teacher).filter((id) => {
+    if (id === "disciplines" && ctx.hasDisciplineChips) return false;
+    if (id === "formats" && ctx.hasCourseOptions) return false;
+    return true;
+  });
+  if (getTeacherDefaultLessonDurationLabel(teacher)) cards.push("duration");
   return cards;
 }
