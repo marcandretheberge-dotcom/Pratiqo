@@ -117,6 +117,15 @@ test("migration pins manual fields and does not fake Stripe Identity", () => {
   assert.doesNotMatch(MIGRATION, /NEW\.stripe_identity_status := 'verified'/);
 });
 
+test("migration drops and restores teacher_offers public-read policy around teachers_public rebuild", () => {
+  const dropViewIdx = MIGRATION.indexOf("DROP VIEW IF EXISTS public.teachers_public");
+  const firstPolicyDropIdx = MIGRATION.indexOf('DROP POLICY IF EXISTS "teacher_offers_select_published_public"');
+  const recreatePolicyIdx = MIGRATION.lastIndexOf('CREATE POLICY "teacher_offers_select_published_public"');
+  assert.ok(firstPolicyDropIdx >= 0 && dropViewIdx > firstPolicyDropIdx);
+  assert.ok(recreatePolicyIdx > dropViewIdx);
+  assert.match(MIGRATION, /FROM public\.teachers_public tp/);
+});
+
 test("audit log records verify and clear without document payloads", () => {
   assert.match(ROUTE, /admin_manual_identity_verify/);
   assert.match(ROUTE, /admin_manual_identity_clear/);

@@ -143,6 +143,9 @@ COMMENT ON FUNCTION public.teachers_preserve_sensitive_client_fields() IS
 
 -- Public projection: add the boolean only. DROP is required because Postgres
 -- cannot add a RETURNS TABLE column via CREATE OR REPLACE.
+-- 096's teacher_offers_select_published_public policy depends on this view,
+-- so drop (and later recreate) the policy first.
+DROP POLICY IF EXISTS "teacher_offers_select_published_public" ON public.teacher_offers;
 DROP VIEW IF EXISTS public.teachers_public;
 DROP FUNCTION IF EXISTS public.list_public_teachers();
 
@@ -328,3 +331,22 @@ GRANT SELECT ON public.teachers_public TO service_role;
 
 COMMENT ON VIEW public.teachers_public IS
   '097: security_invoker = true; projection comes from list_public_teachers(). Adds identity_verified_manually boolean. Manual note and admin actor stay off-projection.';
+
+-- Restore the 096 public-read policy that depended on teachers_public.
+-- Same USING clause: published offers of search-visible teachers only.
+DROP POLICY IF EXISTS "teacher_offers_select_published_public" ON public.teacher_offers;
+CREATE POLICY "teacher_offers_select_published_public"
+  ON public.teacher_offers FOR SELECT
+  TO anon, authenticated
+  USING (
+    status = 'published'
+    AND published_at IS NOT NULL
+    AND EXISTS (
+      SELECT 1
+      FROM public.teachers_public tp
+      WHERE tp.id = teacher_offers.teacher_id
+    )
+  );
+
+COMMENT ON POLICY "teacher_offers_select_published_public" ON public.teacher_offers IS
+  'Restored by 097 after teachers_public rebuild. Anon/authenticated readers see only published offers of teachers visible in public.teachers_public.';
