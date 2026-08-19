@@ -170,15 +170,12 @@ test("avatar+text wrapper carries flex-1 + min-w-0 + items-start", () => {
 // -------- 4. Long teacher name still truncates safely ---------------------
 
 test("name <p> still uses truncate so an extreme name renders one ellipsised line", () => {
-  // The fix keeps `truncate` on the name line so a pathological 60-char
-  // name still degrades to a single ellipsised line instead of
-  // breaking the card vertically.
-  const nameRowMatch = TEACHER_CARD.match(
-    /<p className="truncate font-semibold text-\[#2C2C2A\]">[\s\S]{0,160}?publicFirstNameWithInitial\(teacher\.name\)/,
-  );
-  assert.ok(
-    nameRowMatch,
-    "name <p> must keep `truncate font-semibold text-[#2C2C2A]`",
+  // The name lives in a truncated span so a pathological 60-char name still
+  // degrades to a single ellipsised line instead of breaking the card.
+  assert.match(
+    TEACHER_CARD,
+    /<span className="truncate">\{publicFirstNameWithInitial\(teacher\.name\)\}<\/span>/,
+    "name must keep `truncate` on its own span",
   );
 });
 
@@ -194,72 +191,48 @@ test("discipline summary stays present and truncated below the name", () => {
 
 // -------- 6. Badges render in their own wrapping row ---------------------
 
-test("badges live in a dedicated flex-wrap row, never competing with the name", () => {
-  // The new dedicated badge row uses `mt-1.5 flex flex-wrap
-  // items-center gap-1`. flex-wrap is the critical primitive — it
-  // ensures the badges fall onto a second visual line on narrow
-  // screens instead of overflowing the card or squeezing the name.
+test("search card does not render trust badge pills", () => {
+  assert.doesNotMatch(
+    TEACHER_CARD,
+    /<TeacherBadgePill\b/,
+    "student-search TeacherCard must not render TeacherBadgePill",
+  );
+  assert.doesNotMatch(
+    TEACHER_CARD,
+    /getSearchCardTeacherBadges\(/,
+    "student-search TeacherCard must not select compact trust pills",
+  );
+  assert.doesNotMatch(
+    TEACHER_CARD,
+    /teacherBadgeNewTeacher/,
+    "search card must not show “Nouveau sur Pratiqo”",
+  );
+});
+
+test("verified identity uses a compact inline checkmark that cannot squeeze the name", () => {
   assert.match(
     TEACHER_CARD,
-    /className="mt-1\.5 flex flex-wrap items-center gap-1"/,
-    "badges must render in their own `mt-1.5 flex flex-wrap items-center gap-1` row",
-  );
-  // The dedicated badge row must contain the actual map; otherwise the
-  // wrapper is decorative and the badges might still be elsewhere.
-  const wrapperMatch = TEACHER_CARD.match(
-    /className="mt-1\.5 flex flex-wrap items-center gap-1"[\s\S]{0,400}?<\/div>/,
-  );
-  assert.ok(wrapperMatch, "badge wrapper must close before the next sibling");
-  assert.match(
-    wrapperMatch![0],
-    /badges\.map\(\(badge\)/,
-    "badge wrapper must actually map over `badges`",
+    /isPublicTeacherIdentityVerified\(/,
+    "search card must use the canonical identity helper",
   );
   assert.match(
-    wrapperMatch![0],
-    /<TeacherBadgePill\b/,
-    "badge wrapper must render <TeacherBadgePill>",
+    TEACHER_CARD,
+    /data-testid="teacher-card-identity-verified"/,
+    "verified identity checkmark must be present in markup",
+  );
+  assert.match(
+    TEACHER_CARD,
+    /className="inline-flex shrink-0 text-teal-700"/,
+    "identity checkmark must be shrink-0 so the name span truncates instead",
+  );
+  assert.match(
+    TEACHER_CARD,
+    /<span className="sr-only">\{t\("teacherBadgeIdentityVerified"\)\}<\/span>/,
+    "checkmark must not be the only accessible identity signal",
   );
 });
 
-// -------- 7. Badges are no longer pinned with shrink-0 -------------------
-
-test("TeacherBadgePill in this card must not carry shrink-0", () => {
-  // The original bug was specifically that the badges were
-  // `shrink-0` AND in the same flex row as the name — when the row
-  // overflowed, only the name could shrink. Now that badges live in
-  // their own wrapping row, `shrink-0` is no longer needed (and
-  // re-introducing it would make the badges spill out of the card on
-  // very narrow screens). Forbid it on this card's badge call sites.
-  const cardBadgePills = [...TEACHER_CARD.matchAll(/<TeacherBadgePill[\s\S]*?\/>/g)];
-  assert.ok(
-    cardBadgePills.length > 0,
-    "expected the student-search TeacherCard to still render <TeacherBadgePill>",
-  );
-  for (const m of cardBadgePills) {
-    assert.doesNotMatch(
-      m[0],
-      /shrink-0/,
-      "TeacherBadgePill in the student-search TeacherCard must NOT carry className=\"shrink-0\" — that re-creates the QA bug",
-    );
-  }
-});
-
-// -------- 8. Badges are NOT absolutely positioned ------------------------
-
-test("no absolute positioning is used to overlay badges over the name", () => {
-  // Sanity check: the layout must rely on flow + flex-wrap, never on
-  // absolute positioning that could overlap the name.
-  const cardBadgePills = [...TEACHER_CARD.matchAll(/<TeacherBadgePill[\s\S]*?\/>/g)];
-  for (const m of cardBadgePills) {
-    assert.doesNotMatch(
-      m[0],
-      /\babsolute\b/,
-      "TeacherBadgePill must not be rendered with absolute positioning",
-    );
-  }
-  // Also: the wrapper's parent column must not carry `position:
-  // absolute` either.
+test("no absolute positioning is used to overlay trust UI over the name", () => {
   const minWrapper = TEACHER_CARD.match(
     /<div className="min-w-0 flex-1">[\s\S]{0,800}?<\/div>/,
   );
@@ -267,7 +240,7 @@ test("no absolute positioning is used to overlay badges over the name", () => {
     assert.doesNotMatch(
       minWrapper[0],
       /\babsolute\b/,
-      "name+badges column must rely on flex flow, not absolute positioning",
+      "name column must rely on flex flow, not absolute positioning",
     );
   }
 });

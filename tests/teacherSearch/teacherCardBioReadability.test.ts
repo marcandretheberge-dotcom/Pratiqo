@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { getSearchCardTeacherBadges } from "@/lib/teachers/badges";
 
 const ROOT = process.cwd();
 function read(rel: string): string {
@@ -79,23 +78,16 @@ test("teacher name stays in its own truncated row away from badges", () => {
   assert.ok(nameIdx >= 0);
   const nameRow = TEACHER_CARD.slice(nameIdx, nameIdx + TEACHER_CARD.slice(nameIdx).indexOf("</p>"));
   assert.doesNotMatch(nameRow, /<TeacherBadgePill\b/);
-  assert.match(TEACHER_CARD, /truncate font-semibold text-\[#2C2C2A\]/);
+  assert.match(TEACHER_CARD, /<span className="truncate">\{publicFirstNameWithInitial\(teacher\.name\)\}<\/span>/);
 });
 
-test("trust badge selection is stable and capped at 2", () => {
-  assert.match(TEACHER_CARD, /getSearchCardTeacherBadges\(/);
-  const badges = getSearchCardTeacherBadges({
-    identityVerified: true,
-    verifiedExperience: true,
-    diplomaVerified: true,
-    founder: true,
-    profilePlan: "pro",
-    reviewCount: 0,
-  });
-  assert.deepEqual(
-    badges.map((badge) => badge.id),
-    ["identity_verified", "verified_experience"],
-  );
+test("search card uses a compact identity checkmark instead of trust badge pills", () => {
+  assert.match(TEACHER_CARD, /isPublicTeacherIdentityVerified\(/);
+  assert.match(TEACHER_CARD, /teacher-card-identity-verified/);
+  assert.match(TEACHER_CARD, /teacherBadgeIdentityVerified/);
+  assert.doesNotMatch(TEACHER_CARD, /<TeacherBadgePill\b/);
+  assert.doesNotMatch(TEACHER_CARD, /getSearchCardTeacherBadges\(/);
+  assert.doesNotMatch(TEACHER_CARD, /teacherBadgeNewTeacher/);
 });
 
 test("no nested interactive controls are introduced", () => {
@@ -103,7 +95,6 @@ test("no nested interactive controls are introduced", () => {
   assert.equal(innerButtons.length, 1, "the card itself is the only button");
   assert.doesNotMatch(TEACHER_CARD, /<Link\b/);
   assert.doesNotMatch(TEACHER_CARD, /<a\b/);
-  assert.match(TEACHER_CARD, /<TeacherBadgePill\b/);
   assert.match(TEACHER_CARD, /focus-visible:ring-2/);
 });
 
