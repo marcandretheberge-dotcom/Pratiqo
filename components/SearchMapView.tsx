@@ -23,6 +23,8 @@ import {
   getTeacherDisciplineSummary,
   getTeacherPrimaryPriceAmount,
   getTeacherPublicDistanceKm,
+  PUBLIC_TEACHER_CARD_AVATAR_SIZE_COMPACT,
+  PUBLIC_TEACHER_CARD_DISCIPLINE_CLASS,
 } from "@/lib/teachers/display";
 
 // ── Public types ──────────────────────────────────────────────────────────────
@@ -536,7 +538,7 @@ function SearchMapTeacherPopup({
               name={teacher.name}
               category={teacher.category}
               imageUrl={teacher.imageUrl}
-              size={44}
+              size={PUBLIC_TEACHER_CARD_AVATAR_SIZE_COMPACT}
             />
             <div className="min-w-0 flex-1">
               <p className="flex min-w-0 items-center gap-1 font-semibold text-[#2C2C2A]">
@@ -545,7 +547,7 @@ function SearchMapTeacherPopup({
               </p>
               <p
                 data-testid="teacher-map-popup-disciplines"
-                className="truncate text-xs text-[#6B6A65]"
+                className={PUBLIC_TEACHER_CARD_DISCIPLINE_CLASS}
               >
                 {disciplineSummary}
               </p>
@@ -553,9 +555,8 @@ function SearchMapTeacherPopup({
                 <p className="mt-1 text-xs font-semibold tabular-nums text-[#2C2C2A]">
                   ★ {Number(teacher.rating).toFixed(1)} ({Number(teacher.reviews)})
                 </p>
-              ) : (
-                <p className="mt-1 text-xs font-semibold text-slate-600">{t("teacherCardNew")}</p>
-              )}
+              ) : null}
+              {/* Future: show “Nouveau” only for teachers created within a defined recent window, not for every unrated teacher. */}
               {formatLabel || distanceKm != null ? (
                 <p className="mt-1.5 flex min-w-0 items-center gap-1 text-xs leading-tight text-slate-500">
                   <span className="truncate">

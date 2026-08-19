@@ -26,6 +26,10 @@ import { PriceDisplay } from "@/components/PriceDisplay";
 import { TeacherAvatar } from "@/components/TeacherAvatar";
 import { TeacherCardIdentityCheck } from "@/components/teachers/TeacherCardIdentityCheck";
 import { hasPublicTeacherReviews, isPublicTeacherIdentityVerified } from "@/lib/teachers/badges";
+import {
+  PUBLIC_TEACHER_CARD_AVATAR_SIZE_COMPACT,
+  PUBLIC_TEACHER_CARD_DISCIPLINE_CLASS,
+} from "@/lib/teachers/display";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 type QuizAnswers = {
@@ -967,7 +971,7 @@ function MatchCard({
         </span>
       </div>
 
-      <TeacherAvatar name={teacher.name} category={category} imageUrl={teacher.image_url} size={44} />
+      <TeacherAvatar name={teacher.name} category={category} imageUrl={teacher.image_url} size={PUBLIC_TEACHER_CARD_AVATAR_SIZE_COMPACT} />
 
       <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-1">
@@ -976,18 +980,15 @@ function MatchCard({
               <span className="truncate">{formatPublicTeacherDisplayName(teacher.name)}</span>
               <TeacherCardIdentityCheck verified={identityVerified} label={t("teacherBadgeIdentityVerified")} />
             </p>
-            <p className="truncate text-[11px] text-neutral-700">{formatTeacherDisciplineLabel(teacher.discipline)}</p>
+            <p className={PUBLIC_TEACHER_CARD_DISCIPLINE_CLASS}>{formatTeacherDisciplineLabel(teacher.discipline)}</p>
           </div>
           {hasReviews ? (
             <span className="inline-flex shrink-0 items-center gap-0.5 text-[11px] font-bold text-[#2C2C2A]">
               <Star size={10} className="fill-amber-400 text-amber-400" />
               {Number(teacher.rating).toFixed(1)}
             </span>
-          ) : (
-            <span className="shrink-0 rounded-lg border border-[#E8E6DF] px-1.5 py-0.5 text-[10px] font-semibold text-slate-600">
-              {t("teacherCardNew")}
-            </span>
-          )}
+          ) : null}
+          {/* Future: show “Nouveau” only for teachers created within a defined recent window, not for every unrated teacher. */}
         </div>
 
         {teacher.price_per_lesson != null && teacher.price_per_lesson > 0 ? (

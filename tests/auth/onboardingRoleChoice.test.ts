@@ -644,7 +644,7 @@ test("student search results and map card clear the mobile bottom nav", () => {
   const search = read("app/(app)/student/search/page.tsx");
   const map = read("components/SearchMapView.tsx");
   assert.match(search, /pb-\[calc\(6rem\+env\(safe-area-inset-bottom\)\)\]/);
-  assert.match(search, /min-h-\[220px\]/);
+  assert.match(search, /min-h-\[240px\]/);
   assert.match(map, /bottom-\[calc\(6rem\+env\(safe-area-inset-bottom\)\)\]/);
 });
 

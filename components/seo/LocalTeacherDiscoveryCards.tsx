@@ -6,7 +6,11 @@ import type { LocalTeacherDiscoveryPageBundle } from "@/lib/seo/localTeacherDisc
 import { formatPublicTeacherDisplayName } from "@/lib/identity/displayName";
 import { formatTeacherDisciplineLabel } from "@/lib/teacherMapper";
 import { TeacherCardIdentityCheck } from "@/components/teachers/TeacherCardIdentityCheck";
-import { PUBLIC_TEACHER_CARD_INTERACTIVE_CLASS } from "@/lib/teachers/display";
+import {
+  PUBLIC_TEACHER_CARD_AVATAR_SIZE_CLASS,
+  PUBLIC_TEACHER_CARD_DISCIPLINE_CLASS,
+  PUBLIC_TEACHER_CARD_INTERACTIVE_CLASS,
+} from "@/lib/teachers/display";
 import { cn } from "@/lib/utils";
 
 function teachingModeLabel(mode: string): string {
@@ -76,7 +80,10 @@ export function LocalTeacherDiscoveryCards({ bundle }: Props) {
             >
               <div className="flex min-w-0 items-start gap-3">
                 <div
-                  className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-teal-500/15 text-sm font-bold text-teal-800 ring-1 ring-[#E8E6DF]"
+                  className={cn(
+                    "flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-teal-500/15 text-sm font-bold text-teal-800 ring-1 ring-[#E8E6DF]",
+                    PUBLIC_TEACHER_CARD_AVATAR_SIZE_CLASS,
+                  )}
                   aria-hidden
                 >
                   {teacher.imageUrl ? (
@@ -84,8 +91,8 @@ export function LocalTeacherDiscoveryCards({ bundle }: Props) {
                     <img
                       src={teacher.imageUrl}
                       alt=""
-                      width={44}
-                      height={44}
+                      width={80}
+                      height={80}
                       className="h-full w-full rounded-full object-cover"
                       loading="lazy"
                     />
@@ -98,16 +105,15 @@ export function LocalTeacherDiscoveryCards({ bundle }: Props) {
                     <span className="truncate">{formatPublicTeacherDisplayName(teacher.displayName)}</span>
                     <TeacherCardIdentityCheck verified={teacher.identityVerified} label="Identité vérifiée" />
                   </p>
-                  <p className="truncate text-xs text-[#6B6760]">{formatTeacherDisciplineLabel(teacher.discipline)}</p>
+                  <p className={PUBLIC_TEACHER_CARD_DISCIPLINE_CLASS}>{formatTeacherDisciplineLabel(teacher.discipline)}</p>
                   {hasReviews ? (
                     <p className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-[#2C2C2A]">
                       <Star size={11} className="fill-amber-400 text-amber-400" aria-hidden />
                       {Number(teacher.rating).toFixed(1)}
                       <span className="font-medium text-slate-600">({Number(teacher.reviewCount)})</span>
                     </p>
-                  ) : (
-                    <p className="mt-1 text-[11px] font-semibold text-slate-600">Nouveau</p>
-                  )}
+                  ) : null}
+                  {/* Future: show “Nouveau” only for teachers created within a defined recent window, not for every unrated teacher. */}
                 </div>
               </div>
 

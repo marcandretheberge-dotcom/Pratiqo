@@ -15,6 +15,7 @@ import { isLaunchEligibleTeacherRow, teacherRowToTeacher, formatTeacherCardDisci
 import { TEACHERS_LIST_SELECT, TEACHERS_PUBLIC_TABLE } from "../../../../lib/supabase/queries";
 import { TeacherAvatar } from "../../../../components/TeacherAvatar";
 import { TeacherCardIdentityCheck } from "@/components/teachers/TeacherCardIdentityCheck";
+import { TeacherCardBioSnippet } from "@/components/teachers/TeacherCardBioSnippet";
 import { formatPublicTeacherDisplayName } from "@/lib/identity/displayName";
 import type { City } from "../../../../lib/cities";
 import type { MapBounds } from "../../../../components/SearchMapView";
@@ -37,7 +38,16 @@ import { LandingSearchHero } from "@/components/marketing/LandingSearchHero";
 import type { LandingFormatFilter } from "@/lib/landingTeacherFilter";
 import { PriceDisplay } from "@/components/PriceDisplay";
 import { hasPublicTeacherReviews, isPublicTeacherIdentityVerified } from "@/lib/teachers/badges";
-import { getTeacherCompactFormatLabel, getTeacherPublicAreaLabel, PUBLIC_TEACHER_CARD_INTERACTIVE_CLASS, PUBLIC_TEACHER_CARD_LOCATION_CLASS, PUBLIC_TEACHER_CARD_LOCATION_ICON_CLASS } from "@/lib/teachers/display";
+import {
+  getTeacherCompactFormatLabel,
+  getTeacherPublicAreaLabel,
+  PUBLIC_TEACHER_CARD_AVATAR_SIZE_CLASS,
+  PUBLIC_TEACHER_CARD_AVATAR_SIZE_DESKTOP,
+  PUBLIC_TEACHER_CARD_DISCIPLINE_CLASS,
+  PUBLIC_TEACHER_CARD_INTERACTIVE_CLASS,
+  PUBLIC_TEACHER_CARD_LOCATION_CLASS,
+  PUBLIC_TEACHER_CARD_LOCATION_ICON_CLASS,
+} from "@/lib/teachers/display";
 import { sanitizePublicTeacherBio } from "@/lib/teacherProfile/sanitizePublicBio";
 import { formatTeacherCardBioSnippet } from "@/lib/teacherProfile/formatPublicBio";
 import type { TranslationKey } from "@/lib/translations";
@@ -898,7 +908,7 @@ function TeacherCard({
       type="button"
       onClick={onOpen}
       className={cn(
-        "flex h-full min-h-[220px] w-full flex-col overflow-hidden rounded-2xl border border-[#E8E6DF] bg-white p-4 text-left shadow-[0_10px_32px_rgba(44,44,42,0.055)] sm:shadow-[0_12px_40px_rgba(44,44,42,0.06)]",
+        "flex h-full min-h-[240px] w-full flex-col overflow-hidden rounded-2xl border border-[#E8E6DF] bg-white p-4 text-left shadow-[0_10px_32px_rgba(44,44,42,0.055)] sm:shadow-[0_12px_40px_rgba(44,44,42,0.06)]",
         PUBLIC_TEACHER_CARD_INTERACTIVE_CLASS,
       )}
     >
@@ -910,7 +920,13 @@ function TeacherCard({
       */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 flex-1 items-start gap-3">
-          <TeacherAvatar name={teacher.name} category={teacher.category} imageUrl={teacher.imageUrl} size={44} />
+          <TeacherAvatar
+            name={teacher.name}
+            category={teacher.category}
+            imageUrl={teacher.imageUrl}
+            size={PUBLIC_TEACHER_CARD_AVATAR_SIZE_DESKTOP}
+            className={PUBLIC_TEACHER_CARD_AVATAR_SIZE_CLASS}
+          />
           <div className="min-w-0 flex-1">
             <p className="flex min-w-0 items-center gap-1 font-semibold text-[#2C2C2A]">
               <span className="truncate">{formatPublicTeacherDisplayName(teacher.name)}</span>
@@ -924,20 +940,13 @@ function TeacherCard({
             {Number(teacher.rating).toFixed(1)}
             <span className="font-medium text-slate-600">({Number(teacher.reviews)})</span>
           </span>
-        ) : (
-          <span className="shrink-0 rounded-lg border border-[#E8E6DF] bg-white px-2 py-1 text-[11px] font-semibold text-slate-600">
-            {t("teacherCardNew")}
-          </span>
-        )}
+        ) : null}
+        {/* Future: show “Nouveau” only for teachers created within a defined recent window, not for every unrated teacher. */}
       </div>
 
       <div className="mt-3 min-w-0 flex-1">
-        <p className="truncate text-sm font-medium text-[#2C2C2A]">{formatTeacherCardDisciplines(teacher)}</p>
-        {bioSnippet ? (
-          <p className="mt-1 line-clamp-2 text-sm leading-snug text-slate-600">
-            {bioSnippet}
-          </p>
-        ) : null}
+        <p className={PUBLIC_TEACHER_CARD_DISCIPLINE_CLASS}>{formatTeacherCardDisciplines(teacher)}</p>
+        <TeacherCardBioSnippet text={bioSnippet} />
         {areaLabel || distanceKm != null ? (
           <p className={PUBLIC_TEACHER_CARD_LOCATION_CLASS}>
             {areaLabel ? <MapPin className={PUBLIC_TEACHER_CARD_LOCATION_ICON_CLASS} aria-hidden /> : null}

@@ -15,7 +15,12 @@ import { TeacherCardIdentityCheck } from "@/components/teachers/TeacherCardIdent
 import { formatPublicTeacherDisplayName } from "@/lib/identity/displayName";
 import { formatTeacherDisciplineLabel } from "@/lib/teacherMapper";
 import { hasPublicTeacherReviews, isPublicTeacherIdentityVerified } from "@/lib/teachers/badges";
-import { PUBLIC_TEACHER_CARD_INTERACTIVE_CLASS } from "@/lib/teachers/display";
+import {
+  PUBLIC_TEACHER_CARD_AVATAR_SIZE_CLASS,
+  PUBLIC_TEACHER_CARD_AVATAR_SIZE_DESKTOP,
+  PUBLIC_TEACHER_CARD_DISCIPLINE_CLASS,
+  PUBLIC_TEACHER_CARD_INTERACTIVE_CLASS,
+} from "@/lib/teachers/display";
 
 type TeacherSnippet = {
   id: string;
@@ -138,14 +143,15 @@ export function RelatedTeachersWidget({ category }: { category: string }) {
                 name={teacher.name}
                 category={inferDiscipline(teacher.discipline, category)}
                 imageUrl={teacher.image_url}
-                size={52}
+                size={PUBLIC_TEACHER_CARD_AVATAR_SIZE_DESKTOP}
+                className={PUBLIC_TEACHER_CARD_AVATAR_SIZE_CLASS}
               />
               <div className="min-w-0 flex-1">
                 <p className="flex min-w-0 items-center gap-1 text-sm font-bold text-[#2C2C2A]">
                   <span className="truncate">{formatPublicTeacherDisplayName(teacher.name)}</span>
                   <TeacherCardIdentityCheck verified={identityVerified} label={t("teacherBadgeIdentityVerified")} />
                 </p>
-                <p className="truncate text-[11px] text-[#6B6760]">{formatTeacherDisciplineLabel(teacher.discipline)}</p>
+                <p className={PUBLIC_TEACHER_CARD_DISCIPLINE_CLASS}>{formatTeacherDisciplineLabel(teacher.discipline)}</p>
               </div>
               {hasReviews ? (
                 <span className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-[#6B6760]">
@@ -155,11 +161,8 @@ export function RelatedTeachersWidget({ category }: { category: string }) {
                     <span className="text-[10px] text-[#6B6760]/70">({teacher.reviews})</span>
                   ) : null}
                 </span>
-              ) : (
-                <span className="shrink-0 rounded-lg border border-[#E8E6DF] px-2 py-0.5 text-[11px] font-semibold text-slate-600">
-                  {t("teacherCardNew")}
-                </span>
-              )}
+              ) : null}
+              {/* Future: show “Nouveau” only for teachers created within a defined recent window, not for every unrated teacher. */}
             </div>
 
             {teacher.price_per_lesson != null && teacher.price_per_lesson > 0 ? (

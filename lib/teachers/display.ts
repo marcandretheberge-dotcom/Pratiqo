@@ -94,6 +94,18 @@ export const PUBLIC_TEACHER_CARD_LOCATION_CLASS =
   "mt-2 flex min-w-0 items-center gap-1 text-xs leading-tight text-slate-500";
 export const PUBLIC_TEACHER_CARD_LOCATION_ICON_CLASS = "h-3.5 w-3.5 shrink-0 text-slate-400";
 
+/** Desktop listing cards: 80px. CSS shrinks to 56px on mobile. */
+export const PUBLIC_TEACHER_CARD_AVATAR_SIZE_DESKTOP = 80;
+export const PUBLIC_TEACHER_CARD_AVATAR_SIZE_MOBILE = 56;
+export const PUBLIC_TEACHER_CARD_AVATAR_SIZE_CLASS = "!h-14 !w-14 sm:!h-20 sm:!w-20";
+
+/** Compact overlays (map popup, quiz match): 56px. */
+export const PUBLIC_TEACHER_CARD_AVATAR_SIZE_COMPACT = 56;
+
+/** Discipline row is stronger than the bio snippet, never a pill. */
+export const PUBLIC_TEACHER_CARD_DISCIPLINE_CLASS =
+  "truncate text-sm font-semibold leading-snug text-slate-950";
+
 /**
  * When teacher_offers launches, this value should come from the minimum
  * active published offer. Until then, fall back to the legacy hourly rate.
