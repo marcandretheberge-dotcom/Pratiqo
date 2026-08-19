@@ -106,6 +106,10 @@ export const PUBLIC_TEACHER_CARD_AVATAR_SIZE_COMPACT = 56;
 export const PUBLIC_TEACHER_CARD_DISCIPLINE_CLASS =
   "truncate text-sm font-semibold leading-snug text-slate-950";
 
+/** Profile modal chips: one calm style, metadata under the name. Not clickable. */
+export const PUBLIC_TEACHER_PROFILE_DISCIPLINE_CHIP_CLASS =
+  "inline-flex max-w-full items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium leading-tight text-slate-700";
+
 /**
  * When teacher_offers launches, this value should come from the minimum
  * active published offer. Until then, fall back to the legacy hourly rate.

@@ -8,6 +8,7 @@ import {
   Clock,
   CreditCard,
   FileCheck2,
+  Award,
   Globe,
   Home,
   MapPin,
@@ -36,6 +37,7 @@ import {
   getTeacherProfileSummaryCardIds,
   getTeacherPublicFormatLabels,
   getTeacherSpokenLanguageLabels,
+  PUBLIC_TEACHER_PROFILE_DISCIPLINE_CHIP_CLASS,
 } from "@/lib/teachers/display";
 import { useLocale } from "../lib/locale-context";
 import type { TeacherCredential } from "../lib/teacherTrust";
@@ -45,12 +47,11 @@ import { TeacherAvatar } from "./TeacherAvatar";
 import { calculateIntroSessionPriceCents } from "@/lib/introSession";
 import { PriceDisplay } from "@/components/PriceDisplay";
 import { sanitizePublicTeacherBio } from "@/lib/teacherProfile/sanitizePublicBio";
-import { splitPublicBioParagraphs } from "@/lib/teacherProfile/formatPublicBio";
+import { parseTeacherProfileBio } from "@/lib/teachers/profileBio";
 import { formatPublicTeacherDisplayName } from "@/lib/identity/displayName";
-import { TeacherBadgePill } from "@/components/TeacherBadgePill";
+import { TeacherCardIdentityCheck } from "@/components/teachers/TeacherCardIdentityCheck";
+import { TeacherProfileBio } from "@/components/teachers/TeacherProfileBio";
 import {
-  buildTeacherBadges,
-  getCompactTeacherBadges,
   hasPublicTeacherReviews,
   hasVerifiedDiplomaEvidence,
   isPublicTeacherIdentityVerified,
@@ -338,8 +339,8 @@ export function TeacherProfile({
     () => sanitizePublicTeacherBio(teacher.bio, locale),
     [teacher.bio, locale],
   );
-  const bioParagraphs = useMemo(
-    () => splitPublicBioParagraphs(sanitizedBio.content),
+  const bioBlocks = useMemo(
+    () => parseTeacherProfileBio(sanitizedBio.content),
     [sanitizedBio.content],
   );
 
@@ -416,10 +417,9 @@ export function TeacherProfile({
       teacher.verifiedExperience,
     ],
   );
-  const headlineBadges = useMemo(() => getCompactTeacherBadges(badgeInput, 2), [badgeInput]);
-  const profileBadges = useMemo(() => buildTeacherBadges(badgeInput), [badgeInput]);
   const identityVerifiedForTrustBox = isPublicTeacherIdentityVerified(badgeInput);
   const diplomaVerifiedForTrustBox = hasVerifiedDiplomaEvidence(badgeInput);
+  const experienceVerifiedForTrustBox = badgeInput.verifiedExperience === true;
 
   const homeConfigured =
     Boolean(teacher.homeLessonEnabled) &&
@@ -551,37 +551,29 @@ export function TeacherProfile({
                     ringClassName="border-2 border-white shadow-lg ring-2 ring-teal-500/25"
                   />
 
-                  <div className="flex-1 min-w-0 pt-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h2 id="teacher-profile-modal-title" className="text-lg font-bold leading-tight text-slate-900 sm:text-xl lg:text-2xl">{publicName}</h2>
-                      {headlineBadges.map((badge) => (
-                        <TeacherBadgePill key={badge.id} badge={badge} compact />
-                      ))}
+                  <div className="min-w-0 flex-1 pt-1">
+                    <div className="flex min-w-0 items-center gap-1.5">
+                      <h2 id="teacher-profile-modal-title" className="truncate text-lg font-bold leading-tight text-slate-900 sm:text-xl lg:text-2xl">{publicName}</h2>
+                      <TeacherCardIdentityCheck
+                        verified={identityVerifiedForTrustBox}
+                        label={t("teacherBadgeIdentityVerified")}
+                      />
                     </div>
-                    {profileBadges.length > headlineBadges.length ? (
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {profileBadges
-                          .filter((badge) => !headlineBadges.some((headlineBadge) => headlineBadge.id === badge.id))
-                          .map((badge) => (
-                            <TeacherBadgePill key={badge.id} badge={badge} compact />
-                          ))}
-                      </div>
-                    ) : null}
-                    <div className="flex flex-wrap items-center gap-2 mt-1.5">
+                    <div className="mt-1.5 flex flex-wrap items-center gap-2">
                       {hasReviews ? (
                         <div className="flex items-center gap-1">
-                          <Star size={13} fill="currentColor" className="text-amber-400" />
+                          <Star size={13} fill="currentColor" className="text-amber-400" aria-hidden />
                           <span className="text-sm font-semibold text-slate-700">{Number(teacher.rating).toFixed(1)}</span>
-                          <span className="text-xs text-slate-600 ml-0.5">
+                          <span className="ml-0.5 text-xs text-slate-600">
                             ({displayReviewCount} {t("bookingReviewsShort")})
                           </span>
                         </div>
                       ) : (
-                        <span className="text-xs font-semibold text-slate-600">{t("teacherNoReviewsYet")}</span>
+                        <span className="text-xs font-medium text-slate-600">{t("teacherNoReviewsYet")}</span>
                       )}
                     </div>
-                    <p className="text-xs text-slate-600 flex items-center gap-1.5 mt-1.5">
-                      <MapPin size={11} className="text-teal-700 shrink-0" />
+                    <p className="mt-1.5 flex items-center gap-1.5 text-xs text-slate-600">
+                      <MapPin size={11} className="shrink-0 text-slate-400" aria-hidden />
                       {displayDistanceKm !== null ? `${t("studentApproxDistanceFromYou").replace("{distance}", formatApproxDistanceKm(displayDistanceKm))} · ` : ""}
                       {["both", "all"].includes(teacher.teachingMode)
                         ? t("modeHybrid")
@@ -601,7 +593,7 @@ export function TeacherProfile({
                     {disciplineChips.map((chip) => (
                       <span
                         key={`${chip.disciplineId}-${chip.label}`}
-                        className="inline-flex items-center rounded-full border border-teal-500/35 bg-teal-500/10 px-3 py-1 text-xs font-semibold text-teal-700"
+                        className={PUBLIC_TEACHER_PROFILE_DISCIPLINE_CHIP_CLASS}
                       >
                         {chip.emoji} {chip.label}
                       </span>
@@ -614,19 +606,10 @@ export function TeacherProfile({
                     stored bio is never mutated. */}
                 <div className="space-y-3">
                   <p className="text-[10px] font-bold uppercase tracking-widest text-slate-600">{t("aboutSection")}</p>
-                  <div className="max-w-prose space-y-3">
-                    {bioParagraphs.length > 0 ? (
-                      bioParagraphs.map((paragraph, index) => (
-                        <p key={`bio-${index}`} className="text-sm leading-7 text-slate-600">
-                          {paragraph}
-                        </p>
-                      ))
-                    ) : (
-                      <p className="text-sm leading-7 text-slate-600">
-                        {`${publicName} est un(e) expert(e) en ${teacher.discipline.toLowerCase()}. Sa méthode d'enseignement repose sur la pratique immédiate et l'adaptation aux objectifs de chaque élève.`}
-                      </p>
-                    )}
-                  </div>
+                  <TeacherProfileBio
+                    blocks={bioBlocks}
+                    fallback={`${publicName} est un(e) expert(e) en ${teacher.discipline.toLowerCase()}. Sa méthode d'enseignement repose sur la pratique immédiate et l'adaptation aux objectifs de chaque élève.`}
+                  />
                   {sanitizedBio.masked ? (
                     <p className="text-[11px] leading-snug text-slate-500">
                       {t("teacherBioContactHiddenNotice")}
@@ -862,15 +845,12 @@ export function TeacherProfile({
                           secondaryClassName="block w-full text-xs font-semibold text-slate-500"
                         />
                       </p>
-                      <p className="text-xs text-slate-600 mt-0.5">{standardLabel}</p>
+                      <p className="mt-0.5 text-xs text-slate-600">{standardLabel}</p>
                       <p
                         className="mt-2 text-[11px] text-slate-600"
                         data-testid="teacher-profile-final-price-depends-on-duration"
                       >
                         {t("publicTeacherProfileFinalPriceDependsOnDuration")}
-                      </p>
-                      <p className="mt-1 text-[11px] font-semibold text-teal-700">
-                        {t("bookingNoHiddenFees").replace("{price}", standardOriginalPrice)}
                       </p>
                     </div>
 
@@ -1009,7 +989,7 @@ export function TeacherProfile({
                   </div>
 
                   {/* Public trust card */}
-                  <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4" data-testid="teacher-profile-trust-box">
                     <div className="flex items-center gap-2">
                       <span className="flex h-8 w-8 items-center justify-center rounded-full bg-teal-50 text-teal-700">
                         <Shield size={16} aria-hidden />
@@ -1038,6 +1018,17 @@ export function TeacherProfile({
                           </span>
                         </li>
                       )}
+                      {experienceVerifiedForTrustBox ? (
+                        <li className="flex gap-2.5" data-testid="teacher-profile-trust-experience">
+                          <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-teal-50">
+                            <Award size={15} className="text-teal-700" aria-hidden />
+                          </span>
+                          <span>
+                            <span className="block text-xs font-semibold text-slate-900">{t("teacherBadgeVerifiedExperience")}</span>
+                            <span className="block text-[11px] leading-relaxed text-slate-600">{t("teacherBadgeVerifiedExperienceDescription")}</span>
+                          </span>
+                        </li>
+                      ) : null}
                       {diplomaVerifiedForTrustBox ? (
                         <li className="flex gap-2.5">
                           <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-teal-50">

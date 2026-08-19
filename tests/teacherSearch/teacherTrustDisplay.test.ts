@@ -93,12 +93,13 @@ test("public trust surfaces use collapsed identityVerified only, not manual sour
 });
 
 test("teacher profile still shows detailed trust badges", () => {
-  assert.match(PROFILE_SRC, /getCompactTeacherBadges\(/);
-  assert.match(PROFILE_SRC, /buildTeacherBadges\(/);
-  assert.match(PROFILE_SRC, /<TeacherBadgePill\b/);
+  assert.match(PROFILE_SRC, /<TeacherCardIdentityCheck/);
+  assert.doesNotMatch(PROFILE_SRC, /getCompactTeacherBadges\(/);
+  assert.doesNotMatch(PROFILE_SRC, /<TeacherBadgePill\b/);
   assert.match(PROFILE_SRC, /teacherBadgeIdentityVerified/);
   assert.match(PROFILE_SRC, /teacherTrustPaymentProtected/);
   assert.match(PROFILE_SRC, /teacherTrustContactProtected/);
+  assert.match(PROFILE_SRC, /data-testid="teacher-profile-trust-box"/);
 });
 
 test("teacher profile shows a neutral non-verified identity note", () => {

@@ -303,8 +303,8 @@ test("TeacherProfile memoizes sanitizedBio from teacher.bio + locale", () => {
 test("TeacherProfile bio render uses sanitizedBio.content (not raw teacher.bio)", () => {
   assert.match(
     PROFILE_SRC,
-    /splitPublicBioParagraphs\(sanitizedBio\.content\)/,
-    "render must split sanitizedBio.content into paragraphs",
+    /parseTeacherProfileBio\(sanitizedBio\.content\)/,
+    "render must parse sanitizedBio.content into blocks",
   );
   assert.doesNotMatch(
     PROFILE_SRC,

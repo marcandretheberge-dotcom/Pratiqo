@@ -387,12 +387,10 @@ const PROFILE_SRC = readFileSync(
   "utf8",
 );
 
-test("TeacherProfile uses getCompactTeacherBadges(..., 2) for the headline slot", () => {
-  assert.match(
-    PROFILE_SRC,
-    /getCompactTeacherBadges\(\s*[^,]+,\s*2\s*\)/,
-    "headline badges must be capped at 2 via getCompactTeacherBadges",
-  );
+test("TeacherProfile uses a compact identity checkmark in the header, not badge pills", () => {
+  assert.match(PROFILE_SRC, /<TeacherCardIdentityCheck/);
+  assert.doesNotMatch(PROFILE_SRC, /getCompactTeacherBadges\(/);
+  assert.doesNotMatch(PROFILE_SRC, /<TeacherBadgePill\b/);
 });
 
 test("TeacherProfile no longer renders the legacy getPublicTeacherTrustBadgeKey chip", () => {
@@ -405,7 +403,7 @@ test("TeacherProfile no longer renders the legacy getPublicTeacherTrustBadgeKey 
 test("TeacherProfile no longer iterates buildTeacherTrustBadges in the header", () => {
   assert.ok(
     !/buildTeacherTrustBadges/.test(PROFILE_SRC),
-    "old buildTeacherTrustBadges header strip must be replaced by TeacherBadgePill",
+    "old buildTeacherTrustBadges header strip must not return",
   );
 });
 
