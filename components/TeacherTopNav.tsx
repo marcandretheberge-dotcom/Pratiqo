@@ -12,6 +12,7 @@ import {
   Menu,
   MessageCircle,
   MoreHorizontal,
+  NotebookPen,
   Shield,
   Star,
   User,
@@ -43,6 +44,7 @@ function isTeacherNavActive(pathname: string | null, href: string): boolean {
   if (href === "/teacher/progress") return pathname.startsWith("/teacher/progress");
   if (href === "/teacher/revenue") return pathname.startsWith("/teacher/revenue");
   if (href === "/teacher/history") return pathname.startsWith("/teacher/history");
+  if (href === "/teacher/offers") return pathname.startsWith("/teacher/offers");
   if (href === "/resolution") return pathname.startsWith("/resolution");
   if (href === "/loyalty") return pathname.startsWith("/loyalty");
   return pathname === href || pathname.startsWith(`${href}/`);
@@ -59,6 +61,7 @@ type NavItem = {
     | "teacherProfileManagementNav"
     | "teacherNavRevenue"
     | "teacherHistoryTitle"
+    | "teacherOffersNav"
     | "teacherNavMyProfile"
     | "resolutionCenterTitle"
     | "settings";
@@ -74,6 +77,7 @@ const PRIMARY_NAV: NavItem[] = [
 ];
 
 const SECONDARY_NAV: NavItem[] = [
+  { href: "/teacher/offers", labelKey: "teacherOffersNav", icon: NotebookPen },
   { href: "/teacher/history", labelKey: "teacherHistoryTitle", icon: Calendar },
   { href: "/resolution", labelKey: "resolutionCenterTitle", icon: LifeBuoy },
   { href: "/loyalty", labelKey: "teacherLoyalty", icon: Star },
