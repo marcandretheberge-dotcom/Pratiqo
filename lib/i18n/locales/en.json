@@ -1948,7 +1948,7 @@
   "pricingPreviewDurationOption": "{minutes} min",
   "publicTeacherCardFromPerHour": "From {price} / h",
   "publicTeacherProfileHourlyRateLine": "Hourly rate: {price} / h",
-  "publicTeacherProfileFinalPriceDependsOnDuration": "The final price depends on the selected lesson duration.",
+  "publicTeacherProfileFinalPriceDependsOnDuration": "The total is calculated from the selected duration.",
   "bookingPriceBreakdownLessonPrice": "Lesson price: {price}",
   "bookingPriceBreakdownHomeLessonPrice": "At-home lesson price: {price}",
   "bookingPriceBreakdownDuration": "Duration: {minutes} min",

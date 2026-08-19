@@ -15,14 +15,15 @@ function test(name: string, fn: TestFn) {
 
 const SEARCH_PAGE = read("app/(app)/student/search/page.tsx");
 const PROFILE_SRC = read("components/TeacherProfile.tsx");
+const PROFILE_BIO_SRC = read("components/teachers/TeacherProfileBio.tsx");
 const CARD_START = SEARCH_PAGE.indexOf("function TeacherCard({");
 assert.ok(CARD_START >= 0, "expected inline TeacherCard in student search page");
 const TEACHER_CARD = SEARCH_PAGE.slice(CARD_START);
 
-test("public bio rendering splits sanitized content into paragraphs", () => {
-  assert.match(PROFILE_SRC, /splitPublicBioParagraphs\(sanitizedBio\.content\)/);
-  assert.match(PROFILE_SRC, /bioParagraphs\.map\(/);
-  assert.match(PROFILE_SRC, /max-w-prose space-y-3/);
+test("public bio rendering splits sanitized content into paragraphs and lists", () => {
+  assert.match(PROFILE_SRC, /parseTeacherProfileBio\(sanitizedBio\.content\)/);
+  assert.match(PROFILE_SRC, /<TeacherProfileBio/);
+  assert.match(PROFILE_BIO_SRC, /max-w-prose/);
   assert.doesNotMatch(
     PROFILE_SRC,
     /\{sanitizedBio\.content\s*\|\|/,

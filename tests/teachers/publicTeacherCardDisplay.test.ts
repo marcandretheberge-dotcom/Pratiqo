@@ -164,10 +164,11 @@ test("avatars keep a subtle ring and cover crop", () => {
   assert.match(AVATAR, /nudge teachers toward clear real-life headshots/);
 });
 
-test("teacher profile still keeps detailed trust badges and paragraph bios", () => {
-  assert.match(PROFILE, /getCompactTeacherBadges\(/);
-  assert.match(PROFILE, /<TeacherBadgePill\b/);
-  assert.match(PROFILE, /splitPublicBioParagraphs\(sanitizedBio\.content\)/);
+test("teacher profile still keeps detailed trust explanation and formatted bios", () => {
+  assert.match(PROFILE, /<TeacherCardIdentityCheck/);
+  assert.match(PROFILE, /data-testid="teacher-profile-trust-box"/);
+  assert.doesNotMatch(PROFILE, /<TeacherBadgePill\b/);
+  assert.match(PROFILE, /parseTeacherProfileBio\(sanitizedBio\.content\)/);
 });
 
 test("display helpers stay display-only", () => {

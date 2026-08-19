@@ -47,7 +47,7 @@ test("profile paragraph splitting is unchanged by card snippet cleanup", () => {
     "Premier paragraphe.",
     "- Deuxième paragraphe.",
   ]);
-  assert.match(PROFILE, /splitPublicBioParagraphs\(sanitizedBio\.content\)/);
+  assert.match(PROFILE, /parseTeacherProfileBio\(sanitizedBio\.content\)/);
 });
 
 test("PriceDisplay keeps /h visually secondary to amount and currency", () => {

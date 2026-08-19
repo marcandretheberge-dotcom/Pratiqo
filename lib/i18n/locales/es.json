@@ -1948,7 +1948,7 @@
   "pricingPreviewDurationOption": "{minutes} min",
   "publicTeacherCardFromPerHour": "Desde {price} / h",
   "publicTeacherProfileHourlyRateLine": "Tarifa horaria: {price} / h",
-  "publicTeacherProfileFinalPriceDependsOnDuration": "El precio final depende de la duración de la clase elegida.",
+  "publicTeacherProfileFinalPriceDependsOnDuration": "El total se calcula según la duración elegida.",
   "bookingPriceBreakdownLessonPrice": "Precio de la clase: {price}",
   "bookingPriceBreakdownHomeLessonPrice": "Precio de la clase a domicilio: {price}",
   "bookingPriceBreakdownDuration": "Duración: {minutes} min",

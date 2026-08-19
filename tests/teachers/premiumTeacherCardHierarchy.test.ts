@@ -115,7 +115,7 @@ test("bio snippet strips leading bullets and stays secondary", () => {
   assert.match(BIO, /line-clamp-2/);
   assert.doesNotMatch(BIO, /whitespace-pre-line/);
   assert.doesNotMatch(BIO, /whitespace-pre-wrap/);
-  assert.match(PROFILE, /splitPublicBioParagraphs\(sanitizedBio\.content\)/);
+  assert.match(PROFILE, /parseTeacherProfileBio\(sanitizedBio\.content\)/);
 });
 
 test("desktop card avatars are 72–88px with a 56–64px mobile class", () => {

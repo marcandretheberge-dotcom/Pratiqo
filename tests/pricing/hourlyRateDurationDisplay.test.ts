@@ -317,8 +317,9 @@ test("public profile: booking widget warns that final price depends on duration"
     TEACHER_PROFILE_SRC,
     /publicTeacherProfileFinalPriceDependsOnDuration/,
   );
+  assert.doesNotMatch(TEACHER_PROFILE_SRC, /bookingNoHiddenFees/);
   assert.match(FR.publicTeacherProfileFinalPriceDependsOnDuration, /durée/i);
-  assert.match(EN.publicTeacherProfileFinalPriceDependsOnDuration, /lesson\s+duration/i);
+  assert.match(EN.publicTeacherProfileFinalPriceDependsOnDuration, /duration/i);
   assert.match(ES.publicTeacherProfileFinalPriceDependsOnDuration, /duración/i);
 });
 
