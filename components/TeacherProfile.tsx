@@ -59,6 +59,7 @@ import {
   hasVerifiedDiplomaEvidence,
   isPublicTeacherIdentityVerified,
 } from "@/lib/teachers/badges";
+import { PublicTeacherOffersSection } from "@/components/teacher/PublicTeacherOffersSection";
 
 export type TeacherBookKind = "standard" | "home";
 
@@ -762,6 +763,8 @@ export function TeacherProfile({
                     isEnterprise={displayPlan === "enterprise"}
                   />
                 ) : null}
+
+                <PublicTeacherOffersSection teacherId={teacher.id} />
 
                 {/* ── Reviews ────────────────────────────────────────────── */}
                 <div className="space-y-3">
