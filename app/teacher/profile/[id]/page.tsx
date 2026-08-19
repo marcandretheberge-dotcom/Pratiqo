@@ -18,7 +18,7 @@ import {
 import { usdToUyu } from "@/lib/geoLocale";
 import { resolveTeacherPublicPhoto } from "@/lib/teacherPhoto";
 import { sanitizePublicTeacherBio } from "@/lib/teacherProfile/sanitizePublicBio";
-import { publicFirstNameWithInitial } from "@/lib/identity/displayName";
+import { formatPublicTeacherDisplayName } from "@/lib/identity/displayName";
 import TeacherProfileClient from "./TeacherProfileClient";
 
 import { SITE_URL } from "@/lib/seo/site";
@@ -177,7 +177,7 @@ export async function generateMetadata({
   // untouched — receipts, support, admin, and Stripe metadata continue to
   // see the full name elsewhere. Only the public SEO/OG/Twitter/JSON-LD
   // surfaces below get the masked variant.
-  const publicTeacherName = publicFirstNameWithInitial(teacher.name);
+  const publicTeacherName = formatPublicTeacherDisplayName(teacher.name);
 
   const title = buildTeacherSeoTitle(
     publicTeacherName,
@@ -271,7 +271,7 @@ export default async function TeacherProfilePage({
     "@type": "Person",
     // Public masked name. Full legal name is still available in receipts /
     // support tooling / Stripe metadata where appropriate.
-    name: publicFirstNameWithInitial(initialTeacher.name),
+    name: formatPublicTeacherDisplayName(initialTeacher.name),
     jobTitle: buildJobTitle(initialTeacher.discipline, initialTeacher.category ?? ""),
     knowsAbout: [initialTeacher.discipline, initialTeacher.category].filter(Boolean),
     hasOccupation: {

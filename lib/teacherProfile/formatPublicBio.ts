@@ -37,3 +37,19 @@ export function splitPublicBioParagraphs(content: string | null | undefined): st
 export function collapsePublicBioSnippet(content: string | null | undefined): string {
   return asText(content).replace(/\s+/g, " ").trim();
 }
+
+const LEADING_SNIPPET_MARKER = /^(?:[-–—*•·]+|\d+[.)]|#{1,6})\s*/u;
+
+/**
+ * Card-only bio snippet. Flattens whitespace and strips leading bullets /
+ * dashes / markdown markers. Does not mutate stored `teachers.bio`.
+ */
+export function formatTeacherCardBioSnippet(content: string | null | undefined): string {
+  let snippet = collapsePublicBioSnippet(content);
+  for (let i = 0; i < 3 && snippet; i += 1) {
+    const next = snippet.replace(LEADING_SNIPPET_MARKER, "").trim();
+    if (next === snippet) break;
+    snippet = next;
+  }
+  return snippet;
+}

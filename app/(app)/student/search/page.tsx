@@ -6,7 +6,7 @@ import { importLibrary, setOptions } from "@googlemaps/js-api-loader";
 import type { Teacher } from "../../../../types";
 import type { BookingInitialLessonKind } from "../../../../components/BookingModal";
 import { useRouter, useSearchParams } from "next/navigation";
-import { CheckCircle2, MapPin, Star, Users, Video } from "lucide-react";
+import { MapPin, Star, Users, Video } from "lucide-react";
 import { useLocale } from "../../../../lib/locale-context";
 import { cn } from "../../../../lib/utils";
 import { getSupabaseClient } from "../../../../lib/supabase";
@@ -14,7 +14,8 @@ import { fetchTeacherDisciplinesMap, mergeTeachersWithDisciplines } from "../../
 import { isLaunchEligibleTeacherRow, teacherRowToTeacher, formatTeacherCardDisciplines, type TeacherRow } from "../../../../lib/teacherMapper";
 import { TEACHERS_LIST_SELECT, TEACHERS_PUBLIC_TABLE } from "../../../../lib/supabase/queries";
 import { TeacherAvatar } from "../../../../components/TeacherAvatar";
-import { publicFirstNameWithInitial } from "@/lib/identity/displayName";
+import { TeacherCardIdentityCheck } from "@/components/teachers/TeacherCardIdentityCheck";
+import { formatPublicTeacherDisplayName } from "@/lib/identity/displayName";
 import type { City } from "../../../../lib/cities";
 import type { MapBounds } from "../../../../components/SearchMapView";
 import { useAuth } from "../../../../components/AuthProvider";
@@ -36,9 +37,9 @@ import { LandingSearchHero } from "@/components/marketing/LandingSearchHero";
 import type { LandingFormatFilter } from "@/lib/landingTeacherFilter";
 import { PriceDisplay } from "@/components/PriceDisplay";
 import { hasPublicTeacherReviews, isPublicTeacherIdentityVerified } from "@/lib/teachers/badges";
-import { getTeacherCompactFormatLabel } from "@/lib/teachers/display";
+import { getTeacherCompactFormatLabel, getTeacherPublicAreaLabel, PUBLIC_TEACHER_CARD_INTERACTIVE_CLASS } from "@/lib/teachers/display";
 import { sanitizePublicTeacherBio } from "@/lib/teacherProfile/sanitizePublicBio";
-import { collapsePublicBioSnippet } from "@/lib/teacherProfile/formatPublicBio";
+import { formatTeacherCardBioSnippet } from "@/lib/teacherProfile/formatPublicBio";
 import type { TranslationKey } from "@/lib/translations";
 import type { Locale } from "@/lib/i18n/types";
 import { AppLoadingText } from "@/components/AppLoadingFallback";
@@ -859,13 +860,6 @@ function RadiusPill({ active, onClick, children }: { active: boolean; onClick: (
   );
 }
 
-function publicTeacherAreaLabel(teacher: Teacher): string | null {
-  const city = String(teacher.city ?? "").trim();
-  if (city) return city;
-  const neighborhood = String(teacher.location?.neighborhood ?? "").trim();
-  return neighborhood || null;
-}
-
 function TeacherCard({
   teacher,
   distanceKm,
@@ -887,8 +881,8 @@ function TeacherCard({
     reviewCount: teacher.reviews,
   });
   const sanitizedBio = sanitizePublicTeacherBio(teacher.bio, locale);
-  const bioSnippet = collapsePublicBioSnippet(sanitizedBio.content);
-  const areaLabel = publicTeacherAreaLabel(teacher);
+  const bioSnippet = formatTeacherCardBioSnippet(sanitizedBio.content);
+  const areaLabel = getTeacherPublicAreaLabel(teacher);
   const formatLabel = getTeacherCompactFormatLabel(teacher, {
     online: t("filterOnline"),
     inPerson: t("filterInPerson"),
@@ -908,9 +902,7 @@ function TeacherCard({
       onClick={onOpen}
       className={cn(
         "flex h-full min-h-[220px] w-full flex-col overflow-hidden rounded-2xl border border-[#E8E6DF] bg-white p-4 text-left shadow-[0_10px_32px_rgba(44,44,42,0.055)] sm:shadow-[0_12px_40px_rgba(44,44,42,0.06)]",
-        "cursor-pointer transition-all duration-200 ease-out",
-        "hover:-translate-y-1 hover:scale-[1.015] hover:border-teal-500/30 hover:shadow-xl",
-        "active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/40",
+        PUBLIC_TEACHER_CARD_INTERACTIVE_CLASS,
       )}
     >
       {/*
@@ -924,17 +916,8 @@ function TeacherCard({
           <TeacherAvatar name={teacher.name} category={teacher.category} imageUrl={teacher.imageUrl} size={44} />
           <div className="min-w-0 flex-1">
             <p className="flex min-w-0 items-center gap-1 font-semibold text-[#2C2C2A]">
-              <span className="truncate">{publicFirstNameWithInitial(teacher.name)}</span>
-              {identityVerified ? (
-                <span
-                  className="inline-flex shrink-0 text-teal-700"
-                  title={t("teacherBadgeIdentityVerified")}
-                  data-testid="teacher-card-identity-verified"
-                >
-                  <CheckCircle2 size={14} strokeWidth={2.5} aria-hidden />
-                  <span className="sr-only">{t("teacherBadgeIdentityVerified")}</span>
-                </span>
-              ) : null}
+              <span className="truncate">{formatPublicTeacherDisplayName(teacher.name)}</span>
+              <TeacherCardIdentityCheck verified={identityVerified} label={t("teacherBadgeIdentityVerified")} />
             </p>
           </div>
         </div>

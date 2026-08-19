@@ -65,6 +65,10 @@ const TEACHER_BADGE_PILL_SRC = readFileSync(
   join(ROOT, "components", "TeacherBadgePill.tsx"),
   "utf8",
 );
+const TEACHER_CARD_IDENTITY_SRC = readFileSync(
+  join(ROOT, "components", "teachers", "TeacherCardIdentityCheck.tsx"),
+  "utf8",
+);
 
 // Two additional teacher-card surfaces audited as part of the same QA
 // sweep that produced PR #178. Neither of them currently exhibits the
@@ -117,11 +121,11 @@ test("name <p> is NOT in a flex row that also contains TeacherBadgePill", () => 
   // TeacherBadgePill rendered as a sibling inside the same flex row.
   //
   // We approximate "same row" by walking 0–600 chars after the
-  // `publicFirstNameWithInitial(teacher.name)` token until we hit a
+  // `formatPublicTeacherDisplayName(teacher.name)` token until we hit a
   // closing </div>. If a TeacherBadgePill appears before that closing
   // </div>, the name and badges are still in the same container and
   // the bug is back.
-  const nameMarker = "publicFirstNameWithInitial(teacher.name)";
+  const nameMarker = "formatPublicTeacherDisplayName(teacher.name)";
   const nameIdx = TEACHER_CARD.indexOf(nameMarker);
   assert.ok(nameIdx >= 0, "name expression must still be rendered");
   const tail = TEACHER_CARD.slice(nameIdx, nameIdx + 600);
@@ -174,7 +178,7 @@ test("name <p> still uses truncate so an extreme name renders one ellipsised lin
   // degrades to a single ellipsised line instead of breaking the card.
   assert.match(
     TEACHER_CARD,
-    /<span className="truncate">\{publicFirstNameWithInitial\(teacher\.name\)\}<\/span>/,
+    /<span className="truncate">\{formatPublicTeacherDisplayName\(teacher\.name\)\}<\/span>/,
     "name must keep `truncate` on its own span",
   );
 });
@@ -217,17 +221,17 @@ test("verified identity uses a compact inline checkmark that cannot squeeze the 
   );
   assert.match(
     TEACHER_CARD,
-    /data-testid="teacher-card-identity-verified"/,
+    /<TeacherCardIdentityCheck verified=\{identityVerified\}/,
     "verified identity checkmark must be present in markup",
   );
   assert.match(
-    TEACHER_CARD,
+    TEACHER_CARD_IDENTITY_SRC,
     /className="inline-flex shrink-0 text-teal-700"/,
     "identity checkmark must be shrink-0 so the name span truncates instead",
   );
   assert.match(
-    TEACHER_CARD,
-    /<span className="sr-only">\{t\("teacherBadgeIdentityVerified"\)\}<\/span>/,
+    TEACHER_CARD_IDENTITY_SRC,
+    /<span className="sr-only">\{label\}<\/span>/,
     "checkmark must not be the only accessible identity signal",
   );
 });
@@ -321,47 +325,40 @@ test("TeacherBadgePill component contract is untouched (max-w-full + truncate la
 
 // -------- 12. Landing card: name+badges row keeps `flex-wrap` -----------
 
-test("LandingTeacherListingCard keeps flex-wrap on the name+badges row so badges wrap below name on mobile", () => {
-  // The landing card intentionally puts the name and badges in the
-  // SAME row, but adds `flex-wrap` so badges fall onto a second line
-  // when they would otherwise crowd the name on a narrow phone. The
-  // `gap-y-1` is what makes that wrapped second line breathe.
-  //
-  // If a future refactor removes `flex-wrap` from this row, the
-  // landing card regresses to the exact bug PR #178 fixed in the
-  // search card. This guard catches that.
-  const nameRowMatch = LANDING_TEACHER_LISTING_CARD_SRC.match(
-    /<div className="flex flex-wrap items-center gap-x-2 gap-y-1">[\s\S]{0,400}?publicFirstNameWithInitial\(teacher\.name\)[\s\S]{0,400}?<\/div>/,
+test("LandingTeacherListingCard keeps the name truncated and free of trust pills", () => {
+  assert.doesNotMatch(
+    LANDING_TEACHER_LISTING_CARD_SRC,
+    /<TeacherBadgePill\b/,
+    "landing cards must not render TeacherBadgePill",
   );
-  assert.ok(
-    nameRowMatch,
-    "LandingTeacherListingCard must render the name + badges inside a `flex flex-wrap items-center gap-x-2 gap-y-1` row",
+  assert.doesNotMatch(
+    LANDING_TEACHER_LISTING_CARD_SRC,
+    /badges\.map\(/,
+    "landing cards must not render a compact badge-pill row",
   );
-  // The row that wraps must actually contain the badge map; otherwise
-  // the wrap utility is decorative and badges live somewhere else.
   assert.match(
-    nameRowMatch![0],
-    /badges\.map\(\(badge\)/,
-    "LandingTeacherListingCard's flex-wrap row must include the badges.map(...) render",
+    LANDING_TEACHER_LISTING_CARD_SRC,
+    /<TeacherCardIdentityCheck verified=\{identityVerified\}/,
+    "landing cards use the compact identity checkmark",
+  );
+  assert.match(
+    LANDING_TEACHER_LISTING_CARD_SRC,
+    /formatPublicTeacherDisplayName\(teacher\.name\)/,
+    "landing cards must use the shared public name formatter",
   );
 });
 
 test("LandingTeacherListingCard right column uses min-w-0 flex-1 to protect name width", () => {
-  // The landing card's right-of-avatar column also needs `min-w-0
-  // flex-1` for `truncate` on the name to actually take effect. Both
-  // the outer right column AND the inner name column are guarded.
   const occurrences =
-    LANDING_TEACHER_LISTING_CARD_SRC.match(/className="min-w-0 flex-1"/g) ?? [];
+    LANDING_TEACHER_LISTING_CARD_SRC.match(/min-w-0 flex-1/g) ?? [];
   assert.ok(
     occurrences.length >= 2,
     `LandingTeacherListingCard must have at least 2 \`min-w-0 flex-1\` columns (outer right column + inner name column); found ${occurrences.length}`,
   );
-  // And the name <p> must keep `truncate` so a pathological 60-char
-  // name still renders as a single ellipsised line on mobile.
   assert.match(
     LANDING_TEACHER_LISTING_CARD_SRC,
-    /<p className="truncate text-\[15px\] font-bold leading-tight tracking-tight text-\[#2C2C2A\]">[\s\S]{0,80}?publicFirstNameWithInitial\(teacher\.name\)/,
-    "LandingTeacherListingCard's name <p> must keep `truncate` + the existing typography",
+    /<span className="truncate">\{formatPublicTeacherDisplayName\(teacher\.name\)\}<\/span>/,
+    "LandingTeacherListingCard's name must keep `truncate` on its own span",
   );
 });
 
@@ -392,8 +389,8 @@ test("SearchMapView mini-card renders the teacher name in a min-w-0 column with 
   );
   assert.match(
     SEARCH_MAP_VIEW_SRC,
-    /<p className="truncate font-semibold text-\[#2C2C2A\]">\s*\{publicFirstNameWithInitial\(teacher\.name\)\}\s*<\/p>/s,
-    "SearchMapView mini-card name <p> must be truncating",
+    /<span className="truncate">\{formatPublicTeacherDisplayName\(teacher\.name\)\}<\/span>/,
+    "SearchMapView mini-card name must stay truncated in its own span",
   );
   assert.match(
     SEARCH_MAP_VIEW_SRC,
@@ -407,8 +404,8 @@ test("SearchMapView mini-card renders the teacher name in a min-w-0 column with 
   );
 });
 
-test("SearchMapView mini-card puts trust badges in a dedicated flex-wrap row", () => {
-  const nameIdx = SEARCH_MAP_VIEW_SRC.indexOf("publicFirstNameWithInitial(teacher.name)");
+test("SearchMapView mini-card uses a compact identity checkmark instead of trust pills", () => {
+  const nameIdx = SEARCH_MAP_VIEW_SRC.indexOf("formatPublicTeacherDisplayName(teacher.name)");
   assert.ok(nameIdx >= 0, "map popup must still render the public teacher name");
   const afterName = SEARCH_MAP_VIEW_SRC.slice(nameIdx, nameIdx + 900);
   const nameClose = afterName.indexOf("</p>");
@@ -418,10 +415,15 @@ test("SearchMapView mini-card puts trust badges in a dedicated flex-wrap row", (
     /<TeacherBadgePill\b/,
     "TeacherBadgePill must not share the name <p>",
   );
+  assert.doesNotMatch(
+    SEARCH_MAP_VIEW_SRC,
+    /<TeacherBadgePill\b/,
+    "map popup must not render TeacherBadgePill",
+  );
   assert.match(
     SEARCH_MAP_VIEW_SRC,
-    /flex flex-wrap items-center gap-1[\s\S]{0,180}<TeacherBadgePill/,
-    "trust badges must live in a dedicated flex-wrap row under the name",
+    /<TeacherCardIdentityCheck verified=\{identityVerified\}/,
+    "map popup must use the compact identity checkmark",
   );
 });
 

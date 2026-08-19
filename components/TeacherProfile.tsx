@@ -46,7 +46,7 @@ import { calculateIntroSessionPriceCents } from "@/lib/introSession";
 import { PriceDisplay } from "@/components/PriceDisplay";
 import { sanitizePublicTeacherBio } from "@/lib/teacherProfile/sanitizePublicBio";
 import { splitPublicBioParagraphs } from "@/lib/teacherProfile/formatPublicBio";
-import { publicFirstNameWithInitial } from "@/lib/identity/displayName";
+import { formatPublicTeacherDisplayName } from "@/lib/identity/displayName";
 import { TeacherBadgePill } from "@/components/TeacherBadgePill";
 import {
   buildTeacherBadges,
@@ -347,7 +347,7 @@ export function TeacherProfile({
   // `teacher.name` is unchanged; this is presentation-only and only used
   // on the public profile (receipts/admin/emails continue to show the
   // full name via `teacher.name`).
-  const publicName = useMemo(() => publicFirstNameWithInitial(teacher.name), [teacher.name]);
+  const publicName = useMemo(() => formatPublicTeacherDisplayName(teacher.name), [teacher.name]);
 
   const [publicCredentials, setPublicCredentials] = useState<TeacherCredential[]>([]);
   useEffect(() => {

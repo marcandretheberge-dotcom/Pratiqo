@@ -82,6 +82,13 @@ export function getTeacherDisciplineSummary(teacher: Teacher, opts?: { limit?: n
   return formatTeacherCardDisciplines(teacher, opts?.limit ?? 3);
 }
 
+/** Shared clickable-card hover. No layout shift; respects reduced motion. */
+export const PUBLIC_TEACHER_CARD_INTERACTIVE_CLASS =
+  "cursor-pointer transition duration-200 ease-out hover:shadow-md motion-safe:hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/40";
+
+/** Subtle avatar ring used by public teacher cards. */
+export const PUBLIC_TEACHER_CARD_AVATAR_RING_CLASS = "ring-1 ring-[#E8E6DF]";
+
 /**
  * When teacher_offers launches, this value should come from the minimum
  * active published offer. Until then, fall back to the legacy hourly rate.
@@ -165,6 +172,13 @@ export function getTeacherAvailabilitySummary(teacher: Teacher, maxVisible = 2):
   const shown = values.slice(0, maxVisible);
   const extra = values.length - shown.length;
   return extra > 0 ? `${shown.join(" · ")} +${extra}` : shown.join(" · ");
+}
+
+export function getTeacherPublicAreaLabel(teacher: Teacher): string | null {
+  const city = String(teacher.city ?? "").trim();
+  if (city) return city;
+  const neighborhood = String(teacher.location?.neighborhood ?? "").trim();
+  return neighborhood || null;
 }
 
 export function teacherShowsDiscoveryLesson(teacher: Teacher): boolean {

@@ -1,4 +1,4 @@
-import { publicFirstNameWithInitial } from "@/lib/identity/displayName";
+import { formatPublicTeacherDisplayName } from "@/lib/identity/displayName";
 import type { Locale } from "@/lib/i18n/types";
 import { SITE_URL } from "@/lib/seo/site";
 import {
@@ -291,7 +291,7 @@ export function buildTeacherPublicProfileJsonLd(input: {
     neighborhood: teacher.location?.neighborhood,
     teachingMode: teacher.teachingMode,
   });
-  const displayName = publicFirstNameWithInitial(teacher.name);
+  const displayName = formatPublicTeacherDisplayName(teacher.name);
   const rawSubject = teacher.discipline?.trim() || subjects[0] || "";
   const firstName = publicTeacherFirstName(teacher.name);
   const jobTitle = formatTeacherSeoJobTitle(locale, rawSubject);

@@ -8,7 +8,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { X, ArrowLeft, ArrowRight, Star, Sparkles, Music, BookOpen, Languages, Monitor, Home, MapPin, LayoutGrid, ChevronRight, RefreshCw } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { useLocale } from "@/lib/locale-context";
 import { getSupabaseClient } from "@/lib/supabase";
@@ -19,13 +18,14 @@ import { teacherStudentPrefScoreFromQuizRow, type QuizTeacherMatchRow, type Stud
 import { filterTeacherPool } from "@/lib/teacherSearchEngine";
 import type { TeacherSearchCriteria } from "@/lib/teacherSearchCriteria";
 import type { Teacher } from "@/types";
-import { teacherRowToTeacher, type TeacherRow } from "@/lib/teacherMapper";
-import { publicFirstNameWithInitial } from "@/lib/identity/displayName";
+import { teacherRowToTeacher, formatTeacherDisciplineLabel, type TeacherRow } from "@/lib/teacherMapper";
+import { formatPublicTeacherDisplayName } from "@/lib/identity/displayName";
 import { logSearchEvent } from "@/lib/searchAnalytics";
 import type { TranslationKey } from "@/lib/i18n/types";
 import { PriceDisplay } from "@/components/PriceDisplay";
-import { TeacherBadgePill } from "@/components/TeacherBadgePill";
-import { getCompactTeacherBadges } from "@/lib/teachers/badges";
+import { TeacherAvatar } from "@/components/TeacherAvatar";
+import { TeacherCardIdentityCheck } from "@/components/teachers/TeacherCardIdentityCheck";
+import { hasPublicTeacherReviews, isPublicTeacherIdentityVerified } from "@/lib/teachers/badges";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 type QuizAnswers = {
@@ -942,27 +942,24 @@ function MatchCard({
   onClose: () => void;
   isLoggedIn: boolean;
 }) {
-  const initials = teacher.name
-    .split(" ")
-    .slice(0, 2)
-    .map((x) => x[0]?.toUpperCase() ?? "")
-    .join("");
-
-  const badges = getCompactTeacherBadges({
-    teacherId: teacher.id,
+  const { t } = useLocale();
+  const identityVerified = isPublicTeacherIdentityVerified({
     identityVerified: teacher.identity_verified,
     identityVerifiedManually: teacher.identity_verified_manually,
     identityStatus: teacher.identity_status,
-    diplomaVerified: teacher.diploma_verified,
-    verifiedExperience: teacher.verified_experience_active,
+  });
+  const hasReviews = hasPublicTeacherReviews({
+    rating: teacher.rating,
     reviewCount: teacher.reviews,
   });
   const profilePath = `/teacher/profile/${encodeURIComponent(teacher.id)}`;
   const bookHref = isLoggedIn ? profilePath : `/login?next=${encodeURIComponent(profilePath)}`;
+  const category = (teacher.category === "Musique" || teacher.category === "Langues" || teacher.category === "Arts Martiaux"
+    ? teacher.category
+    : "Scolaire") as Teacher["category"];
 
   return (
-    <div className="rounded-2xl border border-[#E8E6DF] bg-white p-4 flex items-start gap-3">
-      {/* Rank badge */}
+    <div className="flex items-start gap-3 rounded-2xl border border-[#E8E6DF] bg-white p-4">
       <div className="shrink-0 flex flex-col items-center gap-1 pt-0.5">
         <span
           className={cn(
@@ -974,49 +971,33 @@ function MatchCard({
         </span>
       </div>
 
-      {/* Avatar */}
-      <div className="relative shrink-0">
-        {teacher.image_url ? (
-          <Image
-            src={teacher.image_url}
-            alt={teacher.name}
-            width={44}
-            height={44}
-            className="rounded-full object-cover border-2 border-teal-500/25"
-          />
-        ) : (
-          <div
-            className="h-11 w-11 rounded-full flex items-center justify-center text-sm font-bold text-white"
-            style={{ background: "linear-gradient(135deg,var(--palette-teal-500),var(--palette-teal-700))" }}
-          >
-            {initials}
-          </div>
-        )}
-        {badges[0] ? (
-          <span className="absolute -bottom-0.5 -right-0.5">
-            <TeacherBadgePill badge={badges[0]} compact className="shadow-sm" />
-          </span>
-        ) : null}
-      </div>
+      <TeacherAvatar name={teacher.name} category={category} imageUrl={teacher.image_url} size={44} />
 
-      {/* Info */}
-      <div className="flex-1 min-w-0">
+      <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-1">
           <div className="min-w-0">
-            <p className="font-bold text-sm text-[#2C2C2A] truncate">{publicFirstNameWithInitial(teacher.name)}</p>
-            <p className="text-[11px] text-neutral-700 truncate">{teacher.discipline}</p>
+            <p className="flex min-w-0 items-center gap-1 text-sm font-bold text-[#2C2C2A]">
+              <span className="truncate">{formatPublicTeacherDisplayName(teacher.name)}</span>
+              <TeacherCardIdentityCheck verified={identityVerified} label={t("teacherBadgeIdentityVerified")} />
+            </p>
+            <p className="truncate text-[11px] text-neutral-700">{formatTeacherDisciplineLabel(teacher.discipline)}</p>
           </div>
-          {teacher.rating != null && teacher.rating > 0 && teacher.reviews != null && teacher.reviews > 0 && (
-            <span className="shrink-0 flex items-center gap-0.5 text-[11px] font-bold text-[#2C2C2A]">
+          {hasReviews ? (
+            <span className="inline-flex shrink-0 items-center gap-0.5 text-[11px] font-bold text-[#2C2C2A]">
               <Star size={10} className="fill-amber-400 text-amber-400" />
-              {teacher.rating.toFixed(1)}
+              {Number(teacher.rating).toFixed(1)}
+            </span>
+          ) : (
+            <span className="shrink-0 rounded-lg border border-[#E8E6DF] px-1.5 py-0.5 text-[10px] font-semibold text-slate-600">
+              {t("teacherCardNew")}
             </span>
           )}
         </div>
 
-        <div className="mt-2 flex items-center gap-2">
-          {teacher.price_per_lesson != null && teacher.price_per_lesson > 0 && (
+        {teacher.price_per_lesson != null && teacher.price_per_lesson > 0 ? (
+          <div className="mt-2 flex items-center gap-2">
             <span className="text-xs font-bold text-teal-700">
+              {/* When teacher_offers launches, this card should display the minimum active published offer price with “À partir de” copy. */}
               <PriceDisplay
                 amount={teacher.price_per_lesson}
                 sourceCurrency={teacher.currency ?? "CAD"}
@@ -1025,8 +1006,8 @@ function MatchCard({
                 secondaryClassName="block text-[9px] font-semibold text-slate-500"
               />
             </span>
-          )}
-        </div>
+          </div>
+        ) : null}
 
         {/* CTAs */}
         <div className="mt-3 flex items-center gap-2">

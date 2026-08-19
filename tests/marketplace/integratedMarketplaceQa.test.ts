@@ -89,10 +89,10 @@ test("[P0.5a] mobile teacher card keeps the name visible (badges live in their o
   );
   assert.match(
     card,
-    /<span className="truncate">\{publicFirstNameWithInitial\(teacher\.name\)\}<\/span>/,
+    /<span className="truncate">\{formatPublicTeacherDisplayName\(teacher\.name\)\}<\/span>/,
     "[P0.5a] teacher name must still truncate in its own span",
   );
-  const nameMarker = "publicFirstNameWithInitial(teacher.name)";
+  const nameMarker = "formatPublicTeacherDisplayName(teacher.name)";
   const nameIdx = card.indexOf(nameMarker);
   assert.ok(nameIdx >= 0, "[P0.5a] teacher name expression must still render");
   const closingP = card.slice(nameIdx).indexOf("</p>");

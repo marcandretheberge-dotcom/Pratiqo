@@ -183,19 +183,27 @@ test("student search teacher card does not render experience as a pill", () => {
   );
 });
 
-test("Landing teacher listing card passes verifiedExperience", () => {
+test("Landing teacher listing card does not render experience as a pill", () => {
   const src = readRepoFile("components/marketing/LandingTeacherListingCard.tsx");
-  assert.match(src, /verifiedExperience:\s*teacher\.verifiedExperience/);
+  assert.doesNotMatch(src, /<TeacherBadgePill\b/);
+  assert.doesNotMatch(src, /getCompactTeacherBadges/);
+  assert.doesNotMatch(src, /verifiedExperience:\s*teacher\.verifiedExperience/);
+  assert.match(src, /<TeacherCardIdentityCheck verified=\{identityVerified\}/);
 });
 
-test("HeroTeacherPreviewCards passes verifiedExperience", () => {
+test("HeroTeacherPreviewCards does not render experience as a pill", () => {
   const src = readRepoFile("components/marketing/HeroTeacherPreviewCards.tsx");
-  assert.match(src, /verifiedExperience:\s*teacher\.verifiedExperience/);
+  assert.doesNotMatch(src, /<TeacherBadgePill\b/);
+  assert.doesNotMatch(src, /getCompactTeacherBadges/);
+  assert.doesNotMatch(src, /verifiedExperience:\s*teacher\.verifiedExperience/);
+  assert.match(src, /<TeacherCardIdentityCheck verified=\{identityVerified\}/);
 });
 
-test("Blog RelatedTeachersWidget passes verifiedExperience and selects the column", () => {
+test("Blog RelatedTeachersWidget still selects verified_experience_active but does not render it as a pill", () => {
   const src = readRepoFile("components/blog/RelatedTeachersWidget.tsx");
-  assert.match(src, /verifiedExperience:\s*teacher\.verified_experience_active/);
+  assert.doesNotMatch(src, /<TeacherBadgePill\b/);
+  assert.doesNotMatch(src, /getCompactTeacherBadges/);
+  assert.doesNotMatch(src, /verifiedExperience:\s*teacher\.verified_experience_active/);
   // Both .select() calls must include the column so the public surface
   // hydrates it even after the fallback query.
   const selectCalls = src.match(/\.select\([^)]*verified_experience_active[^)]*\)/g) ?? [];
@@ -205,11 +213,13 @@ test("Blog RelatedTeachersWidget passes verifiedExperience and selects the colum
   );
 });
 
-test("TeacherQuiz row shape and quiz card thread verifiedExperience through", () => {
+test("TeacherQuiz row shape still projects verifiedExperience; quiz card does not render it as a pill", () => {
   const src = readRepoFile("components/marketing/TeacherQuiz.tsx");
   assert.match(src, /verified_experience_active:\s*boolean\s*\|\s*null/);
   assert.match(src, /verified_experience_active:\s*t\.verifiedExperience/);
-  assert.match(src, /verifiedExperience:\s*teacher\.verified_experience_active/);
+  assert.doesNotMatch(src, /<TeacherBadgePill\b/);
+  assert.doesNotMatch(src, /getCompactTeacherBadges/);
+  assert.match(src, /<TeacherCardIdentityCheck verified=\{identityVerified\}/);
 });
 
 test("TEACHERS_LIST_SELECT includes verified_experience_active so it flows through every list query", () => {

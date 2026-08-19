@@ -223,7 +223,7 @@ test("no name-based or avatar-style fake filtering in student search", () => {
 
 test("public name masking still used on student search cards", () => {
   const src = readFileSync("app/(app)/student/search/page.tsx", "utf8");
-  assert.match(src, /publicFirstNameWithInitial/);
+  assert.match(src, /formatPublicTeacherDisplayName/);
 });
 
 test("student search cards still use PriceDisplay for selected currency", () => {

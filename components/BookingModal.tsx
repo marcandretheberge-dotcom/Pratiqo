@@ -41,7 +41,7 @@ import { localeToBcp47 } from "../lib/i18n/types";
 import { useLocale } from "../lib/locale-context";
 import { TeacherAvatar } from "./TeacherAvatar";
 import { PriceDisplay } from "@/components/PriceDisplay";
-import { publicFirstNameWithInitial } from "@/lib/identity/displayName";
+import { formatPublicTeacherDisplayName } from "@/lib/identity/displayName";
 import {
   bookingWallTimeRangeToUtc,
   formatBookingTimeForBothZones,
@@ -946,7 +946,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
               <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--palette-teal-700)" }}>
                 {t("bookingTitle")}
               </p>
-              <h3 id="booking-modal-title" className="text-lg font-bold text-slate-900 sm:text-xl">{publicFirstNameWithInitial(teacher.name)}</h3>
+              <h3 id="booking-modal-title" className="text-lg font-bold text-slate-900 sm:text-xl">{formatPublicTeacherDisplayName(teacher.name)}</h3>
             </div>
             <button
               type="button"
@@ -992,7 +992,7 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
-                    <p className="font-bold text-slate-900 leading-tight">{publicFirstNameWithInitial(teacher.name)}</p>
+                    <p className="font-bold text-slate-900 leading-tight">{formatPublicTeacherDisplayName(teacher.name)}</p>
                     <p className="text-xs text-slate-600">{teacher.discipline}</p>
                     <p className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-slate-600">
                       <Star size={12} fill="currentColor" className="text-amber-400" />

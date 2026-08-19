@@ -1,5 +1,7 @@
 "use client";
 
+// Future PR: simplify app navigation by keeping primary actions visible and moving secondary items into a user menu.
+
 import React, { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";

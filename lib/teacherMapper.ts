@@ -222,15 +222,30 @@ function legacyDisciplineFallback(teacher: Teacher): TeacherDisciplineDisplay[] 
   return [{ disciplineId: "autre", label: "Autre", specialite: "" }];
 }
 
+/**
+ * Display-only discipline label: capitalize the first visible character.
+ * Does not title-case every word (French labels like "Aide aux devoirs").
+ */
+export function formatTeacherDisciplineLabel(label: string): string {
+  const trimmed = String(label ?? "").trim();
+  if (!trimmed) return trimmed;
+  const graphemes = Array.from(trimmed);
+  const first = graphemes[0];
+  if (!first) return trimmed;
+  if (first !== first.toLocaleLowerCase("fr-CA")) return trimmed;
+  return first.toLocaleUpperCase("fr-CA") + graphemes.slice(1).join("");
+}
+
 function uniqueDisciplineLabels(labels: string[]): string[] {
   const unique: string[] = [];
   const seen = new Set<string>();
   for (const label of labels) {
     if (isPlaceholderDisciplineLabel(label)) continue;
-    const key = foldDisplayKey(label);
+    const display = formatTeacherDisciplineLabel(label);
+    const key = foldDisplayKey(display);
     if (!key || seen.has(key)) continue;
     seen.add(key);
-    unique.push(label.trim());
+    unique.push(display);
   }
   return unique.length > 0 ? unique : ["Autre"];
 }
@@ -274,7 +289,7 @@ export function getTeacherProfileDisciplineChips(teacher: Teacher): TeacherDisci
     chips.push({
       disciplineId: row.disciplineId,
       emoji: meta?.emoji ?? "✨",
-      label: row.label,
+      label: formatTeacherDisciplineLabel(row.label),
     });
   }
   if (chips.length > 0) return chips;

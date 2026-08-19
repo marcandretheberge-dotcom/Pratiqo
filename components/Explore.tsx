@@ -28,7 +28,7 @@ import {
   teacherMatchesExploreSearch,
 } from "../lib/teacherDisciplines";
 import { isLaunchEligibleTeacherRow, teacherRowToTeacher, type TeacherRow } from "../lib/teacherMapper";
-import { publicFirstNameWithInitial } from "@/lib/identity/displayName";
+import { formatPublicTeacherDisplayName } from "@/lib/identity/displayName";
 import { haversineDistance } from "../lib/geo";
 import { spotsRemaining, type GroupSessionRow } from "../lib/groupSessions";
 import { getVerificationLevel } from "../lib/verification";
@@ -826,7 +826,7 @@ function TeacherCard({
           </div>
           <div className="flex items-center gap-2 min-w-0">
             <h3 className="text-[18px] leading-tight text-[var(--p-text)] truncate group-hover:text-[var(--p-dark-teal)] transition-colors">
-              {publicFirstNameWithInitial(teacher.name)}
+              {formatPublicTeacherDisplayName(teacher.name)}
             </h3>
             <VerificationBadge
               level={verificationSortKey(teacher)}
