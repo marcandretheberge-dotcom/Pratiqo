@@ -50,6 +50,7 @@ type TeacherMatch = {
   home_lesson_enabled: boolean | null;
   verification_level: number | null;
   identity_verified: boolean | null;
+  identity_verified_manually: boolean | null;
   diploma_verified: boolean | null;
   verified_experience_active: boolean | null;
   is_verified: boolean | null;
@@ -126,6 +127,7 @@ function teacherToMatchRow(t: Teacher): TeacherMatch {
     home_lesson_enabled: t.homeLessonEnabled ?? null,
     verification_level: t.verificationLevel ?? null,
     identity_verified: t.identityVerified ?? null,
+    identity_verified_manually: t.identityVerifiedManually ?? null,
     diploma_verified: t.diplomaVerified ?? null,
     verified_experience_active: t.verifiedExperience ?? null,
     is_verified: t.isVerified,
@@ -949,6 +951,7 @@ function MatchCard({
   const badges = getCompactTeacherBadges({
     teacherId: teacher.id,
     identityVerified: teacher.identity_verified,
+    identityVerifiedManually: teacher.identity_verified_manually,
     identityStatus: teacher.identity_status,
     diplomaVerified: teacher.diploma_verified,
     verifiedExperience: teacher.verified_experience_active,

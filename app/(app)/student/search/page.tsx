@@ -899,6 +899,7 @@ function TeacherCard({
     identityVerified: teacher.identityVerified,
     identityStatus: teacher.identityStatus,
     stripeIdentityStatus: teacher.stripeIdentityStatus,
+    identityVerifiedManually: teacher.identityVerifiedManually,
   });
 
   return (

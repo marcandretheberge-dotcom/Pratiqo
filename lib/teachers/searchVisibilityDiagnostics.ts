@@ -58,6 +58,7 @@ export type TeacherSearchVisibilityDiagnosisInput = {
     deleted_at?: string | null;
     identity_status?: string | null;
     identity_verified?: boolean | null;
+    identity_verified_manually?: boolean | null;
     stripe_identity_failed_reason?: string | null;
     intro_session_enabled?: boolean | null;
     intro_session_price_cents?: number | string | null;
@@ -157,11 +158,13 @@ export function diagnoseTeacherSearchVisibility(
   }
 
   const identityFailed =
-    String(teacher.identity_status ?? "").trim().toLowerCase() === "failed" ||
-    isIdentityVerificationFailed({
-      identity_verified: teacher.identity_verified,
-      stripe_identity_failed_reason: teacher.stripe_identity_failed_reason,
-    });
+    teacher.identity_verified_manually !== true &&
+    (String(teacher.identity_status ?? "").trim().toLowerCase() === "failed" ||
+      isIdentityVerificationFailed({
+        identity_verified: teacher.identity_verified,
+        identity_verified_manually: teacher.identity_verified_manually,
+        stripe_identity_failed_reason: teacher.stripe_identity_failed_reason,
+      }));
 
   if (!teacher.id || !UUID_RE.test(teacher.id)) blockers.push("BLOCKER_INVALID_PUBLIC_IDS");
   if (!teacher.user_id || !UUID_RE.test(teacher.user_id)) blockers.push("BLOCKER_INVALID_PUBLIC_IDS");
@@ -184,7 +187,11 @@ export function diagnoseTeacherSearchVisibility(
   }
   if (identityFailed) blockers.push("BLOCKER_FAILED_IDENTITY_IF_SEARCH_BLOCKING");
 
-  if (!identityFailed && teacher.identity_verified !== true) {
+  if (
+    !identityFailed &&
+    teacher.identity_verified !== true &&
+    teacher.identity_verified_manually !== true
+  ) {
     warnings.push("WARNING_IDENTITY_NOT_VERIFIED");
   }
   if (!hasAvailabilitySignal(teacher.availability)) warnings.push("WARNING_NO_AVAILABILITY");

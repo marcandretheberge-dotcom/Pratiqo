@@ -1,4 +1,5 @@
 import type { TranslationKey } from "./translations";
+import { isTeacherIdentityVerified } from "@/lib/teachers/identity";
 
 export type TeacherTrustKey = "email" | "identity" | "zone" | "diploma" | "background";
 export type TeacherTrustStatus = "verified" | "pending" | "missing" | "provided";
@@ -65,6 +66,7 @@ export type TeacherTrustItem = {
 export type TeacherTrustInput = {
   isVerified?: boolean | null;
   identityVerified?: boolean | null;
+  identityVerifiedManually?: boolean | null;
   identityStatus?: string | null;
   stripeIdentityStatus?: string | null;
   diplomaVerified?: boolean | null;
@@ -80,13 +82,7 @@ function normalizedStatus(value: string | null | undefined): string {
 }
 
 function isIdentityVerified(input: TeacherTrustInput): boolean {
-  const identityStatus = normalizedStatus(input.identityStatus);
-  const stripeIdentityStatus = normalizedStatus(input.stripeIdentityStatus);
-  return (
-    Boolean(input.identityVerified) ||
-    identityStatus === "verified" ||
-    stripeIdentityStatus === "verified"
-  );
+  return isTeacherIdentityVerified(input);
 }
 
 export function buildTeacherTrustItems(input: TeacherTrustInput): TeacherTrustItem[] {

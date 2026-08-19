@@ -43,6 +43,7 @@ export type TeacherRow = {
   intro_session_discount_percent?: number | null;
   verification_level?: number | null;
   identity_verified?: boolean | null;
+  identity_verified_manually?: boolean | null;
   diploma_verified?: boolean | null;
   phone_verified?: boolean | null;
   verified_experience_active?: boolean | null;
@@ -135,6 +136,7 @@ export function teacherRowToTeacher(row: TeacherRow): Teacher {
         : undefined,
     verificationLevel: row.verification_level ?? undefined,
     identityVerified: Boolean(row.identity_verified),
+    identityVerifiedManually: Boolean(row.identity_verified_manually),
     diplomaVerified: Boolean(row.diploma_verified),
     phoneVerified: Boolean(row.phone_verified),
     verifiedExperience: Boolean(row.verified_experience_active),
@@ -333,6 +335,7 @@ export function teacherToRow(t: Teacher): Record<string, unknown> {
     home_lesson_force_2h_over_20km: t.homeLessonForce2hOver20km ?? false,
     verification_level: t.verificationLevel ?? null,
     identity_verified: t.identityVerified ?? false,
+    identity_verified_manually: t.identityVerifiedManually ?? false,
     diploma_verified: t.diplomaVerified ?? false,
     phone_verified: t.phoneVerified ?? false,
     identity_status: t.identityStatus ?? null,

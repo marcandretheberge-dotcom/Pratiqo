@@ -1,5 +1,9 @@
 import type { TranslationKey } from "@/lib/translations";
 import { isFounderTeacher } from "@/lib/teachers/founderTeachers";
+import {
+  isTeacherIdentityVerified,
+  type TeacherIdentityVerificationInput,
+} from "@/lib/teachers/identity";
 
 export type TeacherBadgeType = "trust" | "marketplace" | "product";
 export type TeacherBadgeIcon = "shield" | "diploma" | "sparkles" | "star" | "pro" | "experience";
@@ -26,11 +30,8 @@ export type PublicTeacherCredentialLike = {
   verification_status?: string | null;
 };
 
-export type TeacherBadgeInput = {
+export type TeacherBadgeInput = TeacherIdentityVerificationInput & {
   teacherId?: string | null;
-  identityVerified?: boolean | null;
-  identityStatus?: string | null;
-  stripeIdentityStatus?: string | null;
   diplomaVerified?: boolean | null;
   credentials?: PublicTeacherCredentialLike[] | null;
   profilePlan?: string | null;
@@ -50,12 +51,8 @@ function normalized(value: string | null | undefined): string {
   return String(value ?? "").trim().toLowerCase();
 }
 
-export function isPublicTeacherIdentityVerified(input: Pick<TeacherBadgeInput, "identityVerified" | "identityStatus" | "stripeIdentityStatus">): boolean {
-  return (
-    Boolean(input.identityVerified) ||
-    normalized(input.identityStatus) === "verified" ||
-    normalized(input.stripeIdentityStatus) === "verified"
-  );
+export function isPublicTeacherIdentityVerified(input: TeacherIdentityVerificationInput): boolean {
+  return isTeacherIdentityVerified(input);
 }
 
 export function hasVerifiedDiplomaEvidence(input: Pick<TeacherBadgeInput, "diplomaVerified" | "credentials">): boolean {
