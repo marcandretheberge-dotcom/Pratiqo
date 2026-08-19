@@ -101,13 +101,13 @@ test("public cards do not inspect manual identity verification source", () => {
   assert.doesNotMatch(PROFILE, /identityVerifiedManually/);
 });
 
-test("compact Nouveau appears when there are no public reviews", () => {
+test("compact rating appears when reviews exist; unrated cards leave the slot empty", () => {
   for (const src of [SEARCH_CARD, LANDING, HERO, RELATED, QUIZ]) {
     assert.match(src, /hasPublicTeacherReviews\(/);
-    assert.match(src, /teacherCardNew/);
+    assert.doesNotMatch(src, /teacherCardNew/);
   }
-  assert.match(LOCAL, />Nouveau</);
-  assert.match(MAP, /teacherCardNew/);
+  assert.doesNotMatch(LOCAL, />Nouveau</);
+  assert.doesNotMatch(MAP, /teacherCardNew/);
 });
 
 test("cards keep legacy price display without À partir de", () => {

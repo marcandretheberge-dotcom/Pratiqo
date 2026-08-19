@@ -35,10 +35,10 @@ test("public bio rendering preserves sanitizer output and contact-hidden notice"
   assert.match(PROFILE_SRC, /sanitizedBio\.masked[\s\S]{0,400}teacherBioContactHiddenNotice/);
 });
 
-test("card bio snippet collapses line breaks before line-clamp", () => {
+test("search card bio snippet uses the secondary bio block, not pre-wrap", () => {
   assert.match(TEACHER_CARD, /formatTeacherCardBioSnippet\(sanitizedBio\.content\)/);
   assert.match(TEACHER_CARD, /sanitizePublicTeacherBio\(teacher\.bio,\s*locale\)/);
-  assert.match(TEACHER_CARD, /line-clamp-2/);
+  assert.match(TEACHER_CARD, /<TeacherCardBioSnippet text=\{bioSnippet\}/);
   assert.doesNotMatch(TEACHER_CARD, /whitespace-pre-line/);
   assert.doesNotMatch(TEACHER_CARD, /whitespace-pre-wrap/);
 });
@@ -47,9 +47,9 @@ test("search card shows discipline summary via formatTeacherCardDisciplines", ()
   assert.match(TEACHER_CARD, /formatTeacherCardDisciplines\(teacher\)/);
 });
 
-test("search card reserves rating/new slot", () => {
+test("search card reserves rating slot without Nouveau inflation", () => {
   assert.match(TEACHER_CARD, /hasPublicTeacherReviews\(/);
-  assert.match(TEACHER_CARD, /teacherCardNew/);
+  assert.doesNotMatch(TEACHER_CARD, /teacherCardNew/);
   assert.match(TEACHER_CARD, /teacher\.reviews/);
   assert.match(TEACHER_CARD, /teacher\.rating/);
 });

@@ -52,13 +52,12 @@ test("search card shows a compact identity checkmark only when verified", () => 
   assert.match(AVATAR_SRC, /ring-1 ring-\[#E8E6DF\]/);
 });
 
-test("search card keeps rating or compact Nouveau, never Nouveau sur Pratiqo", () => {
+test("search card shows compact rating when reviews exist, otherwise an empty top-right slot", () => {
   assert.match(TEACHER_CARD, /hasPublicTeacherReviews\(/);
+  assert.match(TEACHER_CARD, /teacher\.reviews/);
   assert.match(TEACHER_CARD, /teacher\.rating/);
-  assert.match(TEACHER_CARD, /teacherCardNew/);
-  assert.doesNotMatch(TEACHER_CARD, /teacherBadgeNewTeacher/);
-  assert.equal(FR.teacherCardNew, "Nouveau");
-  assert.notEqual(FR.teacherCardNew, FR.teacherBadgeNewTeacher);
+  assert.doesNotMatch(TEACHER_CARD, /teacherCardNew/);
+  assert.doesNotMatch(TEACHER_CARD, /Nouveau sur Pratiqo/);
 });
 
 test("search card name stays truncated and is not nested in extra controls", () => {
@@ -80,8 +79,9 @@ test("search card keeps legacy price display without À partir de", () => {
   assert.doesNotMatch(SEARCH_PAGE, /from ["']@\/lib\/offers/);
 });
 
-test("search card avatar size stays compact", () => {
-  assert.match(TEACHER_CARD, /<TeacherAvatar[^>]*size=\{44\}/);
+test("search card avatar is larger on desktop and still reasonable on mobile", () => {
+  assert.match(TEACHER_CARD, /size=\{PUBLIC_TEACHER_CARD_AVATAR_SIZE_DESKTOP\}/);
+  assert.match(TEACHER_CARD, /className=\{PUBLIC_TEACHER_CARD_AVATAR_SIZE_CLASS\}/);
 });
 
 test("public trust surfaces use collapsed identityVerified only, not manual source", () => {
@@ -114,9 +114,9 @@ test("teacher profile shows a neutral non-verified identity note", () => {
 });
 
 test("profile modal avatar is larger than the search card avatar", () => {
-  assert.match(PROFILE_SRC, /size=\{96\}/);
-  assert.match(PROFILE_SRC, /sm:!h-\[120px\] sm:!w-\[120px\]/);
-  assert.match(TEACHER_CARD, /size=\{44\}/);
+  assert.match(PROFILE_SRC, /size=\{112\}/);
+  assert.match(PROFILE_SRC, /sm:!h-32 sm:!w-32/);
+  assert.match(TEACHER_CARD, /PUBLIC_TEACHER_CARD_AVATAR_SIZE_DESKTOP/);
   assert.match(AVATAR_SRC, /object-cover/);
   assert.doesNotMatch(PROFILE_SRC, /photoLightboxOpen/);
   assert.doesNotMatch(PROFILE_SRC, /teacherProfileEnlargePhoto/);

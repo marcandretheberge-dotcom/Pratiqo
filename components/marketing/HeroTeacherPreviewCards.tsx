@@ -11,7 +11,13 @@ import { TeacherCardIdentityCheck } from "@/components/teachers/TeacherCardIdent
 import { formatPublicTeacherDisplayName } from "@/lib/identity/displayName";
 import { formatTeacherCardDisciplines } from "@/lib/teacherMapper";
 import { hasPublicTeacherReviews, isPublicTeacherIdentityVerified } from "@/lib/teachers/badges";
-import { getTeacherCompactFormatLabel, PUBLIC_TEACHER_CARD_INTERACTIVE_CLASS } from "@/lib/teachers/display";
+import {
+  getTeacherCompactFormatLabel,
+  PUBLIC_TEACHER_CARD_AVATAR_SIZE_CLASS,
+  PUBLIC_TEACHER_CARD_AVATAR_SIZE_DESKTOP,
+  PUBLIC_TEACHER_CARD_DISCIPLINE_CLASS,
+  PUBLIC_TEACHER_CARD_INTERACTIVE_CLASS,
+} from "@/lib/teachers/display";
 
 export function HeroTeacherPreviewCards({
   teachers,
@@ -33,7 +39,7 @@ export function HeroTeacherPreviewCards({
       className="relative mx-auto w-full max-w-[360px] pb-4 pl-1 pr-2 pt-2 sm:max-w-sm"
       aria-label={t("heroTeacherPreviewStackHint")}
     >
-      <div className="relative min-h-[300px] sm:min-h-[320px]">
+      <div className="relative min-h-[340px] sm:min-h-[360px]">
         {stack.map((teacher, idx) => {
           const identityVerified = isPublicTeacherIdentityVerified({
             identityVerified: teacher.identityVerified,
@@ -73,24 +79,30 @@ export function HeroTeacherPreviewCards({
                 rotations[idx % 3],
               )}
               style={{
-                top: idx * 88,
+                top: idx * 100,
                 zIndex: 11 + idx,
               }}
             >
-              <article className="rounded-3xl border border-[#E8E6DF] bg-white p-4 shadow-[0_14px_48px_rgba(44,44,42,0.1)]">
+              <article className="rounded-3xl border border-[#E8E6DF] bg-white p-4 shadow-[0_14px_48px_rgba(44,44,42,0.1)] transition duration-200 group-hover:border-emerald-200">
                 {isExampleFallback ? (
                   <p className="mb-2 text-[10px] font-bold uppercase tracking-wide text-neutral-700">
                     {t("heroTeacherPreviewSampleLabel")}
                   </p>
                 ) : null}
                 <div className="flex gap-3">
-                  <TeacherAvatar name={teacher.name} category={teacher.category} imageUrl={teacher.imageUrl} size={52} />
+                  <TeacherAvatar
+                    name={teacher.name}
+                    category={teacher.category}
+                    imageUrl={teacher.imageUrl}
+                    size={PUBLIC_TEACHER_CARD_AVATAR_SIZE_DESKTOP}
+                    className={PUBLIC_TEACHER_CARD_AVATAR_SIZE_CLASS}
+                  />
                   <div className="min-w-0 flex-1">
                     <p className="flex min-w-0 items-center gap-1 font-semibold text-[#2C2C2A]">
                       <span className="truncate">{formatPublicTeacherDisplayName(teacher.name)}</span>
                       <TeacherCardIdentityCheck verified={identityVerified} label={t("teacherBadgeIdentityVerified")} />
                     </p>
-                    <p className="truncate text-xs text-neutral-700">{formatTeacherCardDisciplines(teacher)}</p>
+                    <p className={PUBLIC_TEACHER_CARD_DISCIPLINE_CLASS}>{formatTeacherCardDisciplines(teacher)}</p>
                     <div className="mt-2 flex flex-wrap items-center gap-2">
                       {hasReviews ? (
                         <span className="inline-flex items-center gap-0.5 rounded-lg border border-[#E8E6DF] bg-white px-2 py-0.5 text-[11px] font-bold tabular-nums text-[#2C2C2A]">
@@ -98,11 +110,8 @@ export function HeroTeacherPreviewCards({
                           {Number(teacher.rating).toFixed(1)}
                           <span className="font-medium text-neutral-700">({teacher.reviews})</span>
                         </span>
-                      ) : (
-                        <span className="rounded-lg border border-[#E8E6DF] bg-white px-2 py-0.5 text-[11px] font-semibold text-slate-600">
-                          {t("teacherCardNew")}
-                        </span>
-                      )}
+                      ) : null}
+                      {/* Future: show “Nouveau” only for teachers created within a defined recent window, not for every unrated teacher. */}
                       {Number(teacher.pricePerLesson) > 0 ? (
                         <span className="text-[11px] font-bold text-teal-700">
                           {/* When teacher_offers launches, this card should display the minimum active published offer price with “À partir de” copy. */}

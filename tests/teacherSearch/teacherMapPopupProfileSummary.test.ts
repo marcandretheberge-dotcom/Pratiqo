@@ -98,7 +98,8 @@ test("map popup shows a compact identity checkmark instead of trust pills", () =
   assert.doesNotMatch(MAP_SRC, /getCompactTeacherBadges/);
   assert.doesNotMatch(MAP_SRC, /<TeacherBadgePill/);
   assert.match(MAP_SRC, /<TeacherCardIdentityCheck verified=\{identityVerified\}/);
-  assert.match(MAP_SRC, /teacherCardNew/);
+  assert.match(MAP_SRC, /hasPublicTeacherReviews/);
+  assert.doesNotMatch(MAP_SRC, /teacherCardNew/);
   assert.doesNotMatch(MAP_SRC, /teacherBadgeNewTeacher/);
   assert.doesNotMatch(MAP_SRC, /t\(["']teacherPriceFrom["']\)/);
 });

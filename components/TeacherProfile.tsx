@@ -546,8 +546,8 @@ export function TeacherProfile({
                     name={teacher.name}
                     category={teacher.category}
                     imageUrl={teacher.imageUrl}
-                    size={96}
-                    className="!h-24 !w-24 sm:!h-[120px] sm:!w-[120px]"
+                    size={112}
+                    className="!h-28 !w-28 sm:!h-32 sm:!w-32"
                     ringClassName="border-2 border-white shadow-lg ring-2 ring-teal-500/25"
                   />
 
