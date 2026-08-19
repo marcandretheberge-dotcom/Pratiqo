@@ -5,14 +5,17 @@ import Link from "next/link";
 import { Star, ArrowRight } from "lucide-react";
 import { getSupabaseClient } from "@/lib/supabase";
 import { TEACHERS_PUBLIC_TABLE } from "@/lib/supabase/queries";
+import { cn } from "@/lib/utils";
 import { useLocale } from "@/lib/locale-context";
 import { useAuth } from "@/components/AuthProvider";
 import { TeacherAvatar } from "@/components/TeacherAvatar";
 import type { Discipline } from "@/types";
 import { PriceDisplay } from "@/components/PriceDisplay";
-import { TeacherBadgePill } from "@/components/TeacherBadgePill";
-import { getCompactTeacherBadges } from "@/lib/teachers/badges";
-import { publicFirstNameWithInitial } from "@/lib/identity/displayName";
+import { TeacherCardIdentityCheck } from "@/components/teachers/TeacherCardIdentityCheck";
+import { formatPublicTeacherDisplayName } from "@/lib/identity/displayName";
+import { formatTeacherDisciplineLabel } from "@/lib/teacherMapper";
+import { hasPublicTeacherReviews, isPublicTeacherIdentityVerified } from "@/lib/teachers/badges";
+import { PUBLIC_TEACHER_CARD_INTERACTIVE_CLASS } from "@/lib/teachers/display";
 
 type TeacherSnippet = {
   id: string;
@@ -115,57 +118,56 @@ export function RelatedTeachersWidget({ category }: { category: string }) {
     <div className="space-y-5">
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {teachers.map((teacher) => {
-          const badges = getCompactTeacherBadges({
-            teacherId: teacher.id,
+          const identityVerified = isPublicTeacherIdentityVerified({
             identityVerified: teacher.identity_verified,
             identityVerifiedManually: teacher.identity_verified_manually,
-            diplomaVerified: teacher.diploma_verified,
-            verifiedExperience: teacher.verified_experience_active,
+          });
+          const hasReviews = hasPublicTeacherReviews({
+            rating: teacher.rating,
             reviewCount: teacher.reviews,
           });
 
           return (
           <div
             key={teacher.id}
-            className="group rounded-2xl border border-[#E8E6DF] bg-white p-4 flex flex-col gap-3 hover:border-teal-500/40 hover:shadow-sm transition-all"
+            className={cn(
+              "group flex h-full flex-col gap-3 rounded-2xl border border-[#E8E6DF] bg-white p-4",
+              PUBLIC_TEACHER_CARD_INTERACTIVE_CLASS,
+            )}
           >
-            {/* Avatar + badge */}
             <div className="flex items-start gap-3">
-              <div className="relative shrink-0">
-                <TeacherAvatar
-                  name={teacher.name}
-                  category={inferDiscipline(teacher.discipline, category)}
-                  imageUrl={teacher.image_url}
-                  size={52}
-                  ringClassName="ring-2 ring-teal-500/20"
-                />
-                {badges[0] ? (
-                  <span className="absolute -bottom-0.5 -right-0.5">
-                    <TeacherBadgePill badge={badges[0]} compact className="shadow-sm" />
-                  </span>
-                ) : null}
+              <TeacherAvatar
+                name={teacher.name}
+                category={inferDiscipline(teacher.discipline, category)}
+                imageUrl={teacher.image_url}
+                size={52}
+              />
+              <div className="min-w-0 flex-1">
+                <p className="flex min-w-0 items-center gap-1 text-sm font-bold text-[#2C2C2A]">
+                  <span className="truncate">{formatPublicTeacherDisplayName(teacher.name)}</span>
+                  <TeacherCardIdentityCheck verified={identityVerified} label={t("teacherBadgeIdentityVerified")} />
+                </p>
+                <p className="truncate text-[11px] text-[#6B6760]">{formatTeacherDisciplineLabel(teacher.discipline)}</p>
               </div>
-              <div className="min-w-0">
-                <p className="font-bold text-[#2C2C2A] text-sm truncate">{publicFirstNameWithInitial(teacher.name)}</p>
-                <p className="text-[11px] text-[#6B6760] truncate">{teacher.discipline}</p>
-              </div>
-            </div>
-
-            {/* Rating + price */}
-            <div className="flex items-center justify-between text-xs text-[#6B6760]">
-              {teacher.rating != null && teacher.rating > 0 && teacher.reviews != null && teacher.reviews > 0 ? (
-                <span className="flex items-center gap-1 font-medium">
+              {hasReviews ? (
+                <span className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-[#6B6760]">
                   <Star size={11} className="fill-amber-400 text-amber-400" />
-                  {teacher.rating.toFixed(1)}
-                  {teacher.reviews != null && teacher.reviews > 0 && (
+                  {Number(teacher.rating).toFixed(1)}
+                  {teacher.reviews != null && teacher.reviews > 0 ? (
                     <span className="text-[10px] text-[#6B6760]/70">({teacher.reviews})</span>
-                  )}
+                  ) : null}
                 </span>
               ) : (
-                <span />
+                <span className="shrink-0 rounded-lg border border-[#E8E6DF] px-2 py-0.5 text-[11px] font-semibold text-slate-600">
+                  {t("teacherCardNew")}
+                </span>
               )}
-              {teacher.price_per_lesson != null && teacher.price_per_lesson > 0 && (
-                <span className="font-bold text-teal-700 text-xs">
+            </div>
+
+            {teacher.price_per_lesson != null && teacher.price_per_lesson > 0 ? (
+              <div className="mt-auto flex items-center justify-end text-xs text-[#6B6760]">
+                <span className="font-bold text-teal-700">
+                  {/* When teacher_offers launches, this card should display the minimum active published offer price with “À partir de” copy. */}
                   <PriceDisplay
                     amount={teacher.price_per_lesson}
                     sourceCurrency={teacher.currency ?? "CAD"}
@@ -174,8 +176,8 @@ export function RelatedTeachersWidget({ category }: { category: string }) {
                     secondaryClassName="block text-[9px] font-semibold text-slate-500"
                   />
                 </span>
-              )}
-            </div>
+              </div>
+            ) : null}
 
             {/* CTA */}
             <Link

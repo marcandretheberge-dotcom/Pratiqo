@@ -8,7 +8,7 @@ import { useLocale } from "@/lib/locale-context";
 import { cn } from "@/lib/utils";
 import type { City } from "@/lib/cities";
 import { CITIES } from "@/lib/cities";
-import { publicFirstNameWithInitial } from "@/lib/identity/displayName";
+import { formatPublicTeacherDisplayName } from "@/lib/identity/displayName";
 import type { TranslationKey } from "@/lib/translations";
 import {
   GENERAL_DISCIPLINE_BUCKET_IDS,
@@ -377,7 +377,7 @@ export function SmartSearchInput({
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="text-sm font-semibold text-[#2C2C2A] truncate">
-                            <Highlight text={publicFirstNameWithInitial(item.teacher.name)} query={debouncedQuery} />
+                            <Highlight text={formatPublicTeacherDisplayName(item.teacher.name)} query={debouncedQuery} />
                           </p>
                           <p className="text-xs text-[#6B6760] truncate">
                             {item.teacher.discipline}

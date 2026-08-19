@@ -67,3 +67,77 @@ export function publicFirstNameWithInitial(name: string | null | undefined): str
 
   return `${parts[0]} ${firstGrapheme.toUpperCase()}.`;
 }
+
+const NAME_PARTICLE_KEYS = new Set([
+  "de",
+  "del",
+  "da",
+  "di",
+  "du",
+  "la",
+  "le",
+  "van",
+  "von",
+  "der",
+  "den",
+  "ter",
+]);
+
+function lettersOnly(value: string): string {
+  return value.replace(/[^\p{L}]/gu, "");
+}
+
+function capitalizeGrapheme(value: string): string {
+  const graphemes = Array.from(value);
+  if (graphemes.length === 0) return value;
+  return graphemes[0].toLocaleUpperCase("fr-CA") + graphemes.slice(1).join("").toLocaleLowerCase("fr-CA");
+}
+
+function isUniformCasing(value: string): boolean {
+  const letters = lettersOnly(value);
+  if (!letters) return false;
+  return letters === letters.toLocaleUpperCase("fr-CA") || letters === letters.toLocaleLowerCase("fr-CA");
+}
+
+function formatNameToken(token: string, index: number): string {
+  const trimmed = token.trim();
+  if (!trimmed) return trimmed;
+
+  if (/^[A-Za-zÀ-ÿ]\.$/u.test(trimmed)) {
+    return `${trimmed[0].toLocaleUpperCase("fr-CA")}.`;
+  }
+
+  const apostrophe = trimmed.match(/^([\p{L}]+)(['’])([\p{L}].*)$/u);
+  if (apostrophe) {
+    return `${formatNameToken(apostrophe[1], index)}${apostrophe[2]}${formatNameToken(apostrophe[3], 1)}`;
+  }
+
+  if (trimmed.includes("-")) {
+    return trimmed
+      .split("-")
+      .map((part, partIndex) => formatNameToken(part, index + partIndex))
+      .join("-");
+  }
+
+  const folded = trimmed.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
+  if (index > 0 && NAME_PARTICLE_KEYS.has(folded)) {
+    return trimmed.toLocaleLowerCase("fr-CA");
+  }
+
+  if (!isUniformCasing(trimmed)) return trimmed;
+  return capitalizeGrapheme(trimmed);
+}
+
+/**
+ * Display-only public teacher name. Masks to first name + last initial,
+ * then repairs obvious ALL-CAPS / all-lowercase casing without mutating
+ * stored teacher records or unmasking last names.
+ */
+export function formatPublicTeacherDisplayName(name: string | null | undefined): string {
+  const masked = publicFirstNameWithInitial(name);
+  if (!masked) return "";
+  return masked
+    .split(" ")
+    .map((token, index) => formatNameToken(token, index))
+    .join(" ");
+}

@@ -27,7 +27,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { publicFirstNameWithInitial } from "@/lib/identity/displayName";
+import { publicFirstNameWithInitial, formatPublicTeacherDisplayName } from "@/lib/identity/displayName";
 
 type TestFn = () => void | Promise<void>;
 const tests: Array<{ name: string; fn: TestFn }> = [];
@@ -105,6 +105,22 @@ test("non-string (cast at API edge) returns empty string", () => {
   // string but could be null at runtime. The helper must never throw.
   assert.equal(publicFirstNameWithInitial(42 as unknown as string), "");
   assert.equal(publicFirstNameWithInitial({} as unknown as string), "");
+});
+
+test("formatPublicTeacherDisplayName repairs obvious casing after masking", () => {
+  assert.equal(formatPublicTeacherDisplayName("bektache K."), "Bektache K.");
+  assert.equal(formatPublicTeacherDisplayName("CRESCENCE G."), "Crescence G.");
+  assert.equal(formatPublicTeacherDisplayName("el p."), "El P.");
+  assert.equal(formatPublicTeacherDisplayName("marie dubois"), "Marie D.");
+  assert.equal(formatPublicTeacherDisplayName("Marc-André Théberge"), "Marc-André T.");
+  assert.equal(formatPublicTeacherDisplayName("Jean-François Lavoie"), "Jean-François L.");
+  assert.equal(formatPublicTeacherDisplayName("McDonald Smith"), "McDonald S.");
+  assert.equal(formatPublicTeacherDisplayName("O'Neil Parker"), "O'Neil P.");
+});
+
+test("formatPublicTeacherDisplayName still masks last names", () => {
+  assert.equal(formatPublicTeacherDisplayName("Marie Dubois"), "Marie D.");
+  assert.doesNotMatch(formatPublicTeacherDisplayName("Marie Dubois"), /Dubois/);
 });
 
 // ---------------------------------------------------------------------------
@@ -191,11 +207,11 @@ test("SEO description is built from publicTeacherName, not raw teacher.name", ()
   );
 });
 
-test("JSON-LD Person.name uses publicFirstNameWithInitial(initialTeacher.name)", () => {
+test("JSON-LD Person.name uses formatPublicTeacherDisplayName(initialTeacher.name)", () => {
   assert.match(
     SEO_PAGE_SRC,
-    /name:\s*publicFirstNameWithInitial\(\s*initialTeacher\.name\s*\)/,
-    "JSON-LD `name` must be the masked variant",
+    /name:\s*formatPublicTeacherDisplayName\(\s*initialTeacher\.name\s*\)/,
+    "JSON-LD `name` must be the masked, display-cased variant",
   );
   // And the legacy raw `name: initialTeacher.name,` form must not return.
   assert.doesNotMatch(
@@ -229,13 +245,13 @@ const LEGACY_REDIRECT_ONLY_FILES = [
   "app/clases/montevideo/[barrioSlug]/page.tsx",
 ] as const;
 
-test("every public render surface imports publicFirstNameWithInitial", () => {
+test("every public render surface imports a public name formatter", () => {
   for (const rel of PUBLIC_FILES) {
     const src = readFileSync(join(process.cwd(), ...rel.split("/")), "utf8");
     assert.match(
       src,
-      /publicFirstNameWithInitial/,
-      `${rel} must reference publicFirstNameWithInitial`,
+      /formatPublicTeacherDisplayName|publicFirstNameWithInitial/,
+      `${rel} must reference formatPublicTeacherDisplayName or publicFirstNameWithInitial`,
     );
   }
 });
@@ -254,7 +270,7 @@ test("public render surfaces no longer print raw {teacher.name} as a visible lab
     assert.doesNotMatch(
       src,
       VISIBLE_LABEL_RE,
-      `${rel} still renders {teacher.name} as a visible label — wrap it with publicFirstNameWithInitial(...)`,
+      `${rel} still renders {teacher.name} as a visible label — wrap it with formatPublicTeacherDisplayName(...)`,
     );
   }
 });
@@ -281,6 +297,11 @@ test("displayName helper exports the spec-mandated function name", () => {
     HELPER_SRC,
     /export\s+function\s+publicFirstNameWithInitial\s*\(/,
     "spec requires the export name 'publicFirstNameWithInitial'",
+  );
+  assert.match(
+    HELPER_SRC,
+    /export\s+function\s+formatPublicTeacherDisplayName\s*\(/,
+    "public cards must format names via formatPublicTeacherDisplayName",
   );
 });
 
@@ -315,6 +336,11 @@ test("payments page does NOT route the receipt teacher name through publicFirstN
     /publicFirstNameWithInitial/,
     "receipts page must keep the full teacher name (legal/accounting)",
   );
+  assert.doesNotMatch(
+    src,
+    /formatPublicTeacherDisplayName/,
+    "receipts page must keep the full teacher name (legal/accounting)",
+  );
 });
 
 test("review-published webhook does NOT route the teacher email name through the masker", () => {
@@ -325,6 +351,11 @@ test("review-published webhook does NOT route the teacher email name through the
   assert.doesNotMatch(
     src,
     /publicFirstNameWithInitial/,
+    "teacher-bound webhook must keep the full name (we are emailing the teacher themselves)",
+  );
+  assert.doesNotMatch(
+    src,
+    /formatPublicTeacherDisplayName/,
     "teacher-bound webhook must keep the full name (we are emailing the teacher themselves)",
   );
 });

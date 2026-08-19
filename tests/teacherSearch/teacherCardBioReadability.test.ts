@@ -36,7 +36,7 @@ test("public bio rendering preserves sanitizer output and contact-hidden notice"
 });
 
 test("card bio snippet collapses line breaks before line-clamp", () => {
-  assert.match(TEACHER_CARD, /collapsePublicBioSnippet\(sanitizedBio\.content\)/);
+  assert.match(TEACHER_CARD, /formatTeacherCardBioSnippet\(sanitizedBio\.content\)/);
   assert.match(TEACHER_CARD, /sanitizePublicTeacherBio\(teacher\.bio,\s*locale\)/);
   assert.match(TEACHER_CARD, /line-clamp-2/);
   assert.doesNotMatch(TEACHER_CARD, /whitespace-pre-line/);
@@ -74,16 +74,16 @@ test("search card shows distance when distanceKm is available and hides private 
 });
 
 test("teacher name stays in its own truncated row away from badges", () => {
-  const nameIdx = TEACHER_CARD.indexOf("publicFirstNameWithInitial(teacher.name)");
+  const nameIdx = TEACHER_CARD.indexOf("formatPublicTeacherDisplayName(teacher.name)");
   assert.ok(nameIdx >= 0);
   const nameRow = TEACHER_CARD.slice(nameIdx, nameIdx + TEACHER_CARD.slice(nameIdx).indexOf("</p>"));
   assert.doesNotMatch(nameRow, /<TeacherBadgePill\b/);
-  assert.match(TEACHER_CARD, /<span className="truncate">\{publicFirstNameWithInitial\(teacher\.name\)\}<\/span>/);
+  assert.match(TEACHER_CARD, /<span className="truncate">\{formatPublicTeacherDisplayName\(teacher\.name\)\}<\/span>/);
 });
 
 test("search card uses a compact identity checkmark instead of trust badge pills", () => {
   assert.match(TEACHER_CARD, /isPublicTeacherIdentityVerified\(/);
-  assert.match(TEACHER_CARD, /teacher-card-identity-verified/);
+  assert.match(TEACHER_CARD, /<TeacherCardIdentityCheck verified=\{identityVerified\}/);
   assert.match(TEACHER_CARD, /teacherBadgeIdentityVerified/);
   assert.doesNotMatch(TEACHER_CARD, /<TeacherBadgePill\b/);
   assert.doesNotMatch(TEACHER_CARD, /getSearchCardTeacherBadges\(/);
@@ -95,7 +95,8 @@ test("no nested interactive controls are introduced", () => {
   assert.equal(innerButtons.length, 1, "the card itself is the only button");
   assert.doesNotMatch(TEACHER_CARD, /<Link\b/);
   assert.doesNotMatch(TEACHER_CARD, /<a\b/);
-  assert.match(TEACHER_CARD, /focus-visible:ring-2/);
+  assert.match(TEACHER_CARD, /PUBLIC_TEACHER_CARD_INTERACTIVE_CLASS/);
+  assert.match(read("lib/teachers/display.ts"), /focus-visible:ring-2/);
 });
 
 test("price copy does not use starting-from i18n keys before teacher_offers pricing exists", () => {

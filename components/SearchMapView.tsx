@@ -14,10 +14,10 @@ import { cn } from "../lib/utils";
 import { useLocale } from "../lib/locale-context";
 import { PriceDisplay } from "@/components/PriceDisplay";
 import { TeacherAvatar } from "./TeacherAvatar";
-import { TeacherBadgePill } from "@/components/TeacherBadgePill";
-import { publicFirstNameWithInitial } from "@/lib/identity/displayName";
+import { TeacherCardIdentityCheck } from "@/components/teachers/TeacherCardIdentityCheck";
+import { formatPublicTeacherDisplayName } from "@/lib/identity/displayName";
 import { formatApproxDistanceKm } from "@/lib/studentLocation";
-import { getCompactTeacherBadges } from "@/lib/teachers/badges";
+import { hasPublicTeacherReviews, isPublicTeacherIdentityVerified } from "@/lib/teachers/badges";
 import {
   getTeacherCompactFormatLabel,
   getTeacherDisciplineSummary,
@@ -501,7 +501,7 @@ function SearchMapTeacherPopup({
   onClose: () => void;
   onViewProfile: (teacher: Teacher) => void;
 }) {
-  const { t, formatDisplayPrice } = useLocale();
+  const { t } = useLocale();
   const disciplineSummary = getTeacherDisciplineSummary(teacher);
   const formatLabel = getTeacherCompactFormatLabel(teacher, {
     online: t("filterOnline"),
@@ -511,27 +511,16 @@ function SearchMapTeacherPopup({
   });
   const distanceKm = getTeacherPublicDistanceKm(teacher, userLat, userLng);
   const priceAmount = getTeacherPrimaryPriceAmount(teacher);
-  const priceLabel =
-    priceAmount != null
-      ? t("teacherPriceFrom").replace(
-          "{price}",
-          formatDisplayPrice(priceAmount, teacher.currency ?? "CAD").original,
-        )
-      : null;
-  const trustBadges = getCompactTeacherBadges(
-    {
-      teacherId: teacher.id,
-      identityVerified: teacher.identityVerified,
-      identityStatus: teacher.identityStatus,
-      stripeIdentityStatus: teacher.stripeIdentityStatus,
-      identityVerifiedManually: teacher.identityVerifiedManually,
-      diplomaVerified: teacher.diplomaVerified,
-      verifiedExperience: teacher.verifiedExperience,
-      profilePlan: teacher.profilePlan,
-      reviewCount: teacher.reviews,
-    },
-    2,
-  );
+  const identityVerified = isPublicTeacherIdentityVerified({
+    identityVerified: teacher.identityVerified,
+    identityStatus: teacher.identityStatus,
+    stripeIdentityStatus: teacher.stripeIdentityStatus,
+    identityVerifiedManually: teacher.identityVerifiedManually,
+  });
+  const hasReviews = hasPublicTeacherReviews({
+    rating: teacher.rating,
+    reviewCount: teacher.reviews,
+  });
 
   return (
     <div
@@ -553,8 +542,9 @@ function SearchMapTeacherPopup({
               size={44}
             />
             <div className="min-w-0 flex-1">
-              <p className="truncate font-semibold text-[#2C2C2A]">
-                {publicFirstNameWithInitial(teacher.name)}
+              <p className="flex min-w-0 items-center gap-1 font-semibold text-[#2C2C2A]">
+                <span className="truncate">{formatPublicTeacherDisplayName(teacher.name)}</span>
+                <TeacherCardIdentityCheck verified={identityVerified} label={t("teacherBadgeIdentityVerified")} />
               </p>
               <p
                 data-testid="teacher-map-popup-disciplines"
@@ -562,13 +552,13 @@ function SearchMapTeacherPopup({
               >
                 {disciplineSummary}
               </p>
-              {trustBadges.length > 0 ? (
-                <div className="mt-1.5 flex flex-wrap items-center gap-1">
-                  {trustBadges.map((badge) => (
-                    <TeacherBadgePill key={badge.id} badge={badge} compact />
-                  ))}
-                </div>
-              ) : null}
+              {hasReviews ? (
+                <p className="mt-1 text-xs font-semibold tabular-nums text-[#2C2C2A]">
+                  ★ {Number(teacher.rating).toFixed(1)} ({Number(teacher.reviews)})
+                </p>
+              ) : (
+                <p className="mt-1 text-xs font-semibold text-slate-600">{t("teacherCardNew")}</p>
+              )}
               {formatLabel || distanceKm != null ? (
                 <p className="mt-1.5 truncate text-xs text-[#6B6A65]">
                   {[
@@ -586,16 +576,14 @@ function SearchMapTeacherPopup({
               ) : null}
               {priceAmount != null ? (
                 <div className="mt-1.5 text-xs font-bold text-teal-700">
-                  {priceLabel ? (
-                    <span>{priceLabel}</span>
-                  ) : (
-                    <PriceDisplay
-                      amount={priceAmount}
-                      sourceCurrency={teacher.currency ?? "CAD"}
-                      primaryClassName="font-bold text-teal-700"
-                      secondaryClassName="block w-full text-[9px] font-semibold text-slate-500"
-                    />
-                  )}
+                  {/* When teacher_offers launches, this card should display the minimum active published offer price with “À partir de” copy. */}
+                  <PriceDisplay
+                    amount={priceAmount}
+                    sourceCurrency={teacher.currency ?? "CAD"}
+                    perHour
+                    primaryClassName="font-bold text-teal-700"
+                    secondaryClassName="block w-full text-[9px] font-semibold text-slate-500"
+                  />
                 </div>
               ) : null}
             </div>

@@ -45,13 +45,11 @@ test("search card does not render identity/experience/diploma badge pills", () =
 
 test("search card shows a compact identity checkmark only when verified", () => {
   assert.match(TEACHER_CARD, /isPublicTeacherIdentityVerified\(/);
-  assert.match(TEACHER_CARD, /identityVerified \? \(/);
-  assert.match(TEACHER_CARD, /data-testid="teacher-card-identity-verified"/);
-  assert.match(TEACHER_CARD, /<CheckCircle2\b/);
+  assert.match(TEACHER_CARD, /<TeacherCardIdentityCheck verified=\{identityVerified\}/);
   assert.match(TEACHER_CARD, /teacherBadgeIdentityVerified/);
-  assert.match(TEACHER_CARD, /<span className="sr-only">\{t\("teacherBadgeIdentityVerified"\)\}<\/span>/);
   assert.doesNotMatch(TEACHER_CARD, /teacherTrustIdentityNotVerifiedTitle/);
   assert.doesNotMatch(TEACHER_CARD, /bookingIdentityCautionTitle/);
+  assert.match(AVATAR_SRC, /ring-1 ring-\[#E8E6DF\]/);
 });
 
 test("search card keeps rating or compact Nouveau, never Nouveau sur Pratiqo", () => {
@@ -66,7 +64,7 @@ test("search card keeps rating or compact Nouveau, never Nouveau sur Pratiqo", (
 test("search card name stays truncated and is not nested in extra controls", () => {
   assert.match(
     TEACHER_CARD,
-    /<span className="truncate">\{publicFirstNameWithInitial\(teacher\.name\)\}<\/span>/,
+    /<span className="truncate">\{formatPublicTeacherDisplayName\(teacher\.name\)\}<\/span>/,
   );
   const innerButtons = [...TEACHER_CARD.matchAll(/<button\b/g)];
   assert.equal(innerButtons.length, 1, "the card itself is the only button");

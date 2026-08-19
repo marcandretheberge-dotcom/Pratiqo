@@ -10,6 +10,7 @@ import type { Teacher } from "../../types";
 import {
   applyAdditionalDisciplines,
   formatTeacherCardDisciplines,
+  formatTeacherDisciplineLabel,
   type TeacherDisciplineRow,
 } from "../../lib/teacherMapper";
 import { teacherMatchesExploreSearch } from "../../lib/teacherDisciplines";
@@ -151,6 +152,28 @@ test("legacy teachers without teacher_disciplines still display legacy disciplin
   const stale = applyAdditionalDisciplines(baseTeacher({ discipline: "—", category: "Scolaire" }), []);
   assert.notEqual(stale.discipline, "—");
   assert.equal(formatTeacherCardDisciplines(stale), "Tuteurs académiques");
+});
+
+test("formatTeacherDisciplineLabel capitalizes the first character only", () => {
+  assert.equal(formatTeacherDisciplineLabel("chant populaire"), "Chant populaire");
+  assert.equal(formatTeacherDisciplineLabel("aide aux devoirs"), "Aide aux devoirs");
+  assert.equal(formatTeacherDisciplineLabel("Français"), "Français");
+  assert.equal(formatTeacherDisciplineLabel("Aide aux devoirs"), "Aide aux devoirs");
+});
+
+test("card summary capitalizes custom labels without inventing disciplines", () => {
+  const custom = applyAdditionalDisciplines(
+    baseTeacher({ discipline: "chant populaire", category: "Musique" }),
+    [],
+  );
+  assert.equal(formatTeacherCardDisciplines(custom), "Chant populaire");
+
+  const mixed = applyAdditionalDisciplines(baseTeacher({ discipline: "français" }), [
+    row("francais"),
+    row("aide_aux_devoirs"),
+    row("photographie"),
+  ]);
+  assert.equal(formatTeacherCardDisciplines(mixed), "Français · Aide aux devoirs · Photographie");
 });
 
 (async () => {

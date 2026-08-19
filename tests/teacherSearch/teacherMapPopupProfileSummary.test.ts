@@ -94,9 +94,13 @@ test("map popup shows +N when more than 3 disciplines", () => {
   );
 });
 
-test("map popup shows trust badges when available", () => {
-  assert.match(MAP_SRC, /getCompactTeacherBadges/);
-  assert.match(MAP_SRC, /<TeacherBadgePill/);
+test("map popup shows a compact identity checkmark instead of trust pills", () => {
+  assert.doesNotMatch(MAP_SRC, /getCompactTeacherBadges/);
+  assert.doesNotMatch(MAP_SRC, /<TeacherBadgePill/);
+  assert.match(MAP_SRC, /<TeacherCardIdentityCheck verified=\{identityVerified\}/);
+  assert.match(MAP_SRC, /teacherCardNew/);
+  assert.doesNotMatch(MAP_SRC, /teacherBadgeNewTeacher/);
+  assert.doesNotMatch(MAP_SRC, /t\(["']teacherPriceFrom["']\)/);
 });
 
 test("map popup does not expose private address", () => {

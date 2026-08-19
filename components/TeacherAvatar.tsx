@@ -29,7 +29,7 @@ export function TeacherAvatar({
   imageUrl,
   size = 44,
   className,
-  ringClassName,
+  ringClassName = "ring-1 ring-[#E8E6DF]",
 }: {
   name: string;
   category: Discipline;
@@ -88,6 +88,7 @@ export function TeacherAvatar({
       ) : (
         <span aria-label={name}>{initials}</span>
       )}
+      {/* Future: nudge teachers toward clear real-life headshots during onboarding. */}
     </div>
   );
 }

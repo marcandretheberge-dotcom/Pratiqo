@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import {
   collapsePublicBioSnippet,
+  formatTeacherCardBioSnippet,
   splitPublicBioParagraphs,
 } from "@/lib/teacherProfile/formatPublicBio";
 import { sanitizePublicTeacherBio } from "@/lib/teacherProfile/sanitizePublicBio";
@@ -60,6 +61,37 @@ test("collapsePublicBioSnippet flattens line breaks into one line", () => {
 test("collapsePublicBioSnippet returns empty for null/blank", () => {
   assert.equal(collapsePublicBioSnippet(null), "");
   assert.equal(collapsePublicBioSnippet("   \n\n  "), "");
+});
+
+test("formatTeacherCardBioSnippet strips leading bullets and dashes", () => {
+  assert.equal(
+    formatTeacherCardBioSnippet("-Enseignante avec plus de dix ans d'expérience."),
+    "Enseignante avec plus de dix ans d'expérience.",
+  );
+  assert.equal(
+    formatTeacherCardBioSnippet("• Professeur passionné de piano."),
+    "Professeur passionné de piano.",
+  );
+  assert.equal(
+    formatTeacherCardBioSnippet("* Cours adaptés à chaque élève."),
+    "Cours adaptés à chaque élève.",
+  );
+  assert.equal(
+    formatTeacherCardBioSnippet("  -  Disponible en semaine.\n\nCours en ligne."),
+    "Disponible en semaine. Cours en ligne.",
+  );
+});
+
+test("formatTeacherCardBioSnippet does not rewrite full profile paragraphs", () => {
+  const bio = "Premier paragraphe.\n\nDeuxième paragraphe.";
+  assert.deepEqual(splitPublicBioParagraphs(bio), [
+    "Premier paragraphe.",
+    "Deuxième paragraphe.",
+  ]);
+  assert.equal(
+    formatTeacherCardBioSnippet(bio),
+    "Premier paragraphe. Deuxième paragraphe.",
+  );
 });
 
 test("helpers operate on sanitizer output and never restore masked contact", () => {

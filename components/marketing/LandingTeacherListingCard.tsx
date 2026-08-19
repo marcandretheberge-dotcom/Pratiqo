@@ -1,48 +1,23 @@
 "use client";
 
-import Image from "next/image";
-import { MapPin, Star } from "lucide-react";
+import { MapPin, Star, Users, Video } from "lucide-react";
 import type { Teacher } from "@/types";
 import { haversineDistance } from "@/lib/geo";
 import { cn } from "@/lib/utils";
 import { useLocale } from "@/lib/locale-context";
-import type { TranslationKey } from "@/lib/translations";
-import { getTeacherImageUrl, shouldUseUnoptimizedImage } from "@/lib/images";
 import { PriceDisplay } from "@/components/PriceDisplay";
-import { TeacherBadgePill } from "@/components/TeacherBadgePill";
-import { getCompactTeacherBadges } from "@/lib/teachers/badges";
-import { publicFirstNameWithInitial } from "@/lib/identity/displayName";
-
-function landingCardFormatSummary(teacher: Teacher, t: (k: TranslationKey) => string) {
-  const m = teacher.teachingMode;
-  const homeOn = teacher.homeLessonEnabled === true;
-  const home = t("marketplaceTeachingAtHomeShort");
-  const inPerson = t("teachingFormatInPerson");
-  const online = t("teachingFormatOnline");
-  const mixte = t("marketplaceTeachingMixteShort");
-
-  if (m === "online") return online;
-  if (m === "home") return home;
-  if (m === "person") return homeOn ? `${home} / ${inPerson}` : inPerson;
-  if (m === "both") return homeOn ? `${home} / ${mixte}` : mixte;
-  if (m === "all") return homeOn ? `${home} / ${mixte}` : mixte;
-  return mixte;
-}
-
-function initials(name: string) {
-  return name
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((x) => x[0]?.toUpperCase() ?? "")
-    .join("");
-}
-
-function trimBio(bio: string) {
-  const s = bio.replace(/\s+/g, " ").trim();
-  if (!s) return "";
-  if (s.length <= 100) return s;
-  return `${s.slice(0, 100).trim()}…`;
-}
+import { TeacherAvatar } from "@/components/TeacherAvatar";
+import { TeacherCardIdentityCheck } from "@/components/teachers/TeacherCardIdentityCheck";
+import { formatPublicTeacherDisplayName } from "@/lib/identity/displayName";
+import { formatTeacherCardDisciplines } from "@/lib/teacherMapper";
+import { hasPublicTeacherReviews, isPublicTeacherIdentityVerified } from "@/lib/teachers/badges";
+import {
+  getTeacherCompactFormatLabel,
+  getTeacherPublicAreaLabel,
+  PUBLIC_TEACHER_CARD_INTERACTIVE_CLASS,
+} from "@/lib/teachers/display";
+import { sanitizePublicTeacherBio } from "@/lib/teacherProfile/sanitizePublicBio";
+import { formatTeacherCardBioSnippet } from "@/lib/teacherProfile/formatPublicBio";
 
 export function LandingTeacherListingCard({
   teacher,
@@ -57,16 +32,15 @@ export function LandingTeacherListingCard({
   isHighlighted?: boolean;
   onHoverChange?: (id: string | null) => void;
 }) {
-  const { t } = useLocale();
-  const badges = getCompactTeacherBadges({
-    teacherId: teacher.id,
+  const { t, locale } = useLocale();
+  const identityVerified = isPublicTeacherIdentityVerified({
     identityVerified: teacher.identityVerified,
     identityStatus: teacher.identityStatus,
     stripeIdentityStatus: teacher.stripeIdentityStatus,
     identityVerifiedManually: teacher.identityVerifiedManually,
-    diplomaVerified: teacher.diplomaVerified,
-    verifiedExperience: teacher.verifiedExperience,
-    profilePlan: teacher.profilePlan,
+  });
+  const hasReviews = hasPublicTeacherReviews({
+    rating: teacher.rating,
     reviewCount: teacher.reviews,
   });
   const distKm =
@@ -80,135 +54,101 @@ export function LandingTeacherListingCard({
           ),
         )
       : null;
+  const hasAvailability =
+    Array.isArray(teacher.availability) &&
+    teacher.availability.some((slot) => String(slot ?? "").trim().length > 0);
+  const formatLabel = getTeacherCompactFormatLabel(teacher, {
+    online: t("filterOnline"),
+    inPerson: t("filterInPerson"),
+    home: t("modeHome"),
+    hybrid: t("modeHybrid"),
+  });
+  const sanitizedBio = sanitizePublicTeacherBio(teacher.bio, locale);
+  const bioSnippet = formatTeacherCardBioSnippet(sanitizedBio.content);
+  const areaLabel = getTeacherPublicAreaLabel(teacher);
 
-  const hasAvailabilitySlots = Array.isArray(teacher.availability) && teacher.availability.length > 0;
-  const availabilityHint = hasAvailabilitySlots
-    ? teacher.availability!.slice(0, 2).join(" · ")
-    : t("availabilityHintGeneric");
-
-  const photoUrl = getTeacherImageUrl(teacher.imageUrl, { width: 128, height: 128, quality: 72, format: "webp" });
-  const neighborhoodHint = teacher.location?.neighborhood?.trim();
-
-  const formatSummary = landingCardFormatSummary(teacher, t);
-
-  const bioOneLine =
-    typeof teacher.bio === "string" && teacher.bio.trim()
-      ? trimBio(teacher.bio)
-      : "";
-
-  const commonButtonProps = {
-    type: "button" as const,
-    onClick: onOpen,
-    onMouseEnter: () => onHoverChange?.(teacher.id),
-    onMouseLeave: () => onHoverChange?.(null),
-  };
-
-  /** Marketplace grid cards: horizontal layout, circular photo (~80px). */
   return (
     <button
-      {...commonButtonProps}
+      type="button"
+      onClick={onOpen}
+      onMouseEnter={() => onHoverChange?.(teacher.id)}
+      onMouseLeave={() => onHoverChange?.(null)}
       className={cn(
-        "group block w-full rounded-3xl border border-[#E8E6DF] bg-white text-left shadow-[0_10px_40px_rgba(44,44,42,0.06)] ring-1 ring-black/[0.02]",
-        "cursor-pointer transition-all duration-200 ease-out",
-        "hover:-translate-y-1 hover:scale-[1.015] hover:border-teal-500/30 hover:shadow-xl",
-        "active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/40",
-        isHighlighted
-          ? "border-teal-500 shadow-[0_14px_48px_rgb(45_123_114/0.15)] ring-teal-500/15"
-          : "",
+        "flex h-full w-full flex-col overflow-hidden rounded-2xl border border-[#E8E6DF] bg-white p-4 text-left shadow-[0_10px_32px_rgba(44,44,42,0.055)]",
+        PUBLIC_TEACHER_CARD_INTERACTIVE_CLASS,
+        isHighlighted ? "border-teal-500 ring-1 ring-teal-500/20" : "",
       )}
     >
-      <div className="relative p-4 sm:p-[1.125rem]">
-        <div className="flex items-start gap-3.5 sm:gap-4">
-          {photoUrl ? (
-            <div className="relative shrink-0">
-              <Image
-                src={photoUrl}
-                alt={t("imageAltTeacherProfile").replace("{name}", teacher.name)}
-                width={88}
-                height={88}
-                sizes="(max-width: 640px) 72px, 84px"
-                loading="lazy"
-                fetchPriority="low"
-                decoding="async"
-                unoptimized={shouldUseUnoptimizedImage(photoUrl)}
-                className="h-[4.5rem] w-[4.5rem] rounded-full border border-black/[0.04] object-cover shadow-sm sm:h-[5.25rem] sm:w-[5.25rem]"
-              />
-            </div>
-          ) : (
-            <div className="relative shrink-0">
-              <div
-                className="flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full border border-black/[0.04] text-lg font-bold text-white shadow-inner sm:h-[5.25rem] sm:w-[5.25rem] sm:text-xl"
-                style={{ background: "linear-gradient(135deg,var(--palette-teal-500),var(--palette-teal-700))" }}
-              >
-                {initials(teacher.name)}
-              </div>
-            </div>
-          )}
-
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex min-w-0 flex-1 items-start gap-3">
+          <TeacherAvatar name={teacher.name} category={teacher.category} imageUrl={teacher.imageUrl} size={56} />
           <div className="min-w-0 flex-1">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                  <p className="truncate text-[15px] font-bold leading-tight tracking-tight text-[#2C2C2A]">
-                    {publicFirstNameWithInitial(teacher.name)}
-                  </p>
-                  {badges.map((badge) => (
-                    <TeacherBadgePill key={badge.id} badge={badge} compact className="shrink-0" />
-                  ))}
-                </div>
-                <p className="mt-0.5 truncate text-sm text-neutral-700">{teacher.discipline}</p>
-                {bioOneLine ? (
-                  <p className="mt-1.5 line-clamp-1 text-xs leading-snug text-neutral-700">{bioOneLine}</p>
-                ) : null}
-                {neighborhoodHint ? (
-                  <p className="mt-1 flex items-center gap-1 truncate text-[11px] font-medium text-neutral-700">
-                    <MapPin size={11} className="shrink-0 text-teal-700" aria-hidden /> {neighborhoodHint}
-                  </p>
-                ) : null}
-                {distKm != null ? (
-                  <p className="mt-0.5 flex items-center gap-1 text-[11px] font-medium text-neutral-700">
-                    <MapPin size={11} className="text-teal-800" aria-hidden />
-                    {t("distanceFromYouKm").replace("{{n}}", String(distKm))}
-                  </p>
-                ) : null}
-              </div>
-              {Number(teacher.reviews ?? 0) > 0 ? (
-                <span className="flex shrink-0 flex-col items-end gap-0.5 rounded-xl border border-[#F1EFE8] bg-[#FAFCFB] px-2 py-1.5 text-[12px] font-bold tabular-nums sm:flex-row sm:items-center sm:gap-1">
-                  <span className="flex items-center gap-0.5 text-[#CA9A06]">
-                    <Star size={14} fill="#F4B400" className="text-[#F4B400]" strokeWidth={2} aria-hidden />
-                    <span>{Number(teacher.rating).toFixed(1)}</span>
-                  </span>
-                  <span className="text-[10px] font-normal text-neutral-700 sm:text-[11px]">({teacher.reviews})</span>
-                </span>
-              ) : null}
-            </div>
-
-            <div className="mt-3 flex items-start justify-between gap-3 border-t border-[#EFECE6] pt-3">
-              <div className="min-w-0 flex flex-wrap items-center gap-2">
-                <p className="max-w-[min(100%,12rem)] text-left text-[13px] font-semibold leading-snug tracking-tight text-[#374038] sm:max-w-[70%]">
-                  {formatSummary}
-                </p>
-                {hasAvailabilitySlots ? (
-                  <span className="inline-flex shrink-0 rounded-full bg-[#E8F8F2] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#065a46] sm:text-[11px]">
-                    {t("landingAvailableThisWeek")}
-                  </span>
-                ) : null}
-              </div>
-              <p className="shrink-0 text-right text-[15px] font-bold tracking-tight text-teal-700">
-                <PriceDisplay
-                  amount={Number(teacher.pricePerLesson)}
-                  sourceCurrency={teacher.currency ?? "CAD"}
-                  perHour
-                  primaryClassName="font-bold text-teal-700"
-                  secondaryClassName="block w-full text-[9px] font-semibold text-slate-500"
-                  className="justify-end"
-                />
-              </p>
-            </div>
-
-            <p className="mt-2 line-clamp-2 text-[11px] leading-relaxed text-neutral-700 sm:text-xs">{availabilityHint}</p>
+            <p className="flex min-w-0 items-center gap-1 text-[15px] font-bold leading-tight tracking-tight text-[#2C2C2A]">
+              <span className="truncate">{formatPublicTeacherDisplayName(teacher.name)}</span>
+              <TeacherCardIdentityCheck verified={identityVerified} label={t("teacherBadgeIdentityVerified")} />
+            </p>
           </div>
         </div>
+        {hasReviews ? (
+          <span className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-[#E8E6DF] bg-white px-2 py-1 text-[11px] font-semibold tabular-nums text-[#2C2C2A]">
+            <Star size={12} className="text-amber-500" fill="currentColor" aria-hidden />
+            {Number(teacher.rating).toFixed(1)}
+            <span className="font-medium text-slate-600">({Number(teacher.reviews)})</span>
+          </span>
+        ) : (
+          <span className="shrink-0 rounded-lg border border-[#E8E6DF] bg-white px-2 py-1 text-[11px] font-semibold text-slate-600">
+            {t("teacherCardNew")}
+          </span>
+        )}
+      </div>
+
+      <div className="mt-3 min-w-0 flex-1">
+        <p className="truncate text-sm font-medium text-[#2C2C2A]">{formatTeacherCardDisciplines(teacher)}</p>
+        {bioSnippet ? (
+          <p className="mt-1 line-clamp-2 text-sm leading-snug text-slate-600">{bioSnippet}</p>
+        ) : null}
+        {areaLabel || distKm != null ? (
+          <p className="mt-2 truncate text-xs text-slate-500">
+            {areaLabel ? (
+              <span className="inline-flex items-center gap-1">
+                <MapPin size={11} className="shrink-0 text-teal-700" aria-hidden />
+                {areaLabel}
+              </span>
+            ) : null}
+            {areaLabel && distKm != null ? " · " : null}
+            {distKm != null ? t("distanceFromYouKm").replace("{{n}}", String(distKm)) : null}
+          </p>
+        ) : null}
+      </div>
+
+      <div className="mt-auto flex flex-col gap-2 border-t border-[#E8E6DF] pt-3 text-xs text-slate-600 min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between">
+        <span className="inline-flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+          {formatLabel ? (
+            <span className="inline-flex items-center gap-1">
+              {teacher.teachingMode === "online" ? <Video size={12} aria-hidden /> : <Users size={12} aria-hidden />}
+              {formatLabel}
+            </span>
+          ) : null}
+          {hasAvailability ? (
+            <span className="inline-flex items-center gap-1.5">
+              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-600" aria-hidden />
+              {t("availableThisWeekMatch")}
+            </span>
+          ) : null}
+        </span>
+        {Number(teacher.pricePerLesson) > 0 ? (
+          <span className="font-bold text-[#0F766E] min-[420px]:text-right">
+            {/* When teacher_offers launches, this card should display the minimum active published offer price with “À partir de” copy. */}
+            <PriceDisplay
+              amount={Number(teacher.pricePerLesson)}
+              sourceCurrency={teacher.currency ?? "CAD"}
+              perHour
+              primaryClassName="font-bold tabular-nums text-[#0F766E]"
+              secondaryClassName="block w-full text-[9px] font-semibold text-slate-500"
+              className="justify-end"
+            />
+          </span>
+        ) : null}
       </div>
     </button>
   );

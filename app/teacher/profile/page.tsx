@@ -6,7 +6,7 @@ import type { Teacher } from "@/types";
 import { getSupabaseClient } from "@/lib/supabase";
 import { teacherRowToTeacher, type TeacherRow } from "@/lib/teacherMapper";
 import { TEACHERS_PUBLIC_TABLE } from "@/lib/supabase/queries";
-import { publicFirstNameWithInitial } from "@/lib/identity/displayName";
+import { formatPublicTeacherDisplayName } from "@/lib/identity/displayName";
 
 export default function TeacherProfileIndexPage() {
   const [teachers, setTeachers] = useState<Teacher[]>([]);
@@ -73,7 +73,7 @@ export default function TeacherProfileIndexPage() {
               />
               <div className="min-w-0">
                 <span className="ds-pill">{t.category}</span>
-                <p className="text-[16px] font-medium text-[var(--p-text)] truncate mt-2">{publicFirstNameWithInitial(t.name)}</p>
+                <p className="text-[16px] font-medium text-[var(--p-text)] truncate mt-2">{formatPublicTeacherDisplayName(t.name)}</p>
                 <p className="text-[13px] text-[var(--p-text-muted)] truncate">{t.discipline}</p>
               </div>
             </div>
