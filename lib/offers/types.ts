@@ -7,8 +7,14 @@
  *   EN: Course offers / Offers
  *   ES: Ofertas de cursos / Ofertas
  *
- * No runtime CRUD/checkout logic here.
+ * API DTO types are the teacher-dashboard contract. Checkout/booking still
+ * uses legacy teacher price fields until later PRs.
  */
+
+/** Defensive sanity cap only. Product plan/founder published-offer limits are implemented in a later PR. */
+export const TEACHER_OFFERS_SANITY_CAP = 50;
+
+export const TEACHER_OFFER_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 /** Charge currency stored on teacher_offers. Display FX (USD/UYU/…) is not a charge currency. */
 export type TeacherOfferCurrency = "CAD";
@@ -100,4 +106,84 @@ export type TeacherOffer = {
   archivedAt: string | null;
   createdAt: string;
   updatedAt: string;
+};
+
+/** Safe teacher-dashboard payload. Never include address, Stripe, or created_by. */
+export type TeacherOfferDto = {
+  id: string;
+  teacherId: string;
+  title: string;
+  slug: string | null;
+  shortDescription: string | null;
+  description: string | null;
+  disciplineId: string | null;
+  specialite: string | null;
+  offerType: TeacherOfferType;
+  format: TeacherOfferFormat;
+  status: TeacherOfferStatus;
+  imageUrl: string | null;
+  priceCents: number;
+  currency: TeacherOfferCurrency;
+  durationMinutes: number | null;
+  sessionCount: number | null;
+  capacityMin: number | null;
+  capacityMax: number | null;
+  level: string | null;
+  ageMin: number | null;
+  ageMax: number | null;
+  requiresIdentity: boolean;
+  requiresManualConfirmation: boolean;
+  publishedAt: string | null;
+  pausedAt: string | null;
+  archivedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type TeacherOfferCreateInput = {
+  title: string;
+  slug: string | null;
+  shortDescription: string | null;
+  description: string | null;
+  disciplineId: string | null;
+  specialite: string | null;
+  offerType: TeacherOfferType;
+  format: TeacherOfferFormat;
+  status: Extract<TeacherOfferStatus, "draft" | "published">;
+  imageUrl: string | null;
+  priceCents: number;
+  currency: TeacherOfferCurrency;
+  durationMinutes: number | null;
+  sessionCount: number | null;
+  capacityMin: number | null;
+  capacityMax: number | null;
+  level: string | null;
+  ageMin: number | null;
+  ageMax: number | null;
+  requiresIdentity: boolean;
+  requiresManualConfirmation: boolean;
+};
+
+export type TeacherOfferUpdateInput = {
+  title?: string;
+  slug?: string | null;
+  shortDescription?: string | null;
+  description?: string | null;
+  disciplineId?: string | null;
+  specialite?: string | null;
+  offerType?: TeacherOfferType;
+  format?: TeacherOfferFormat;
+  status?: TeacherOfferStatus;
+  imageUrl?: string | null;
+  priceCents?: number;
+  currency?: TeacherOfferCurrency;
+  durationMinutes?: number | null;
+  sessionCount?: number | null;
+  capacityMin?: number | null;
+  capacityMax?: number | null;
+  level?: string | null;
+  ageMin?: number | null;
+  ageMax?: number | null;
+  requiresIdentity?: boolean;
+  requiresManualConfirmation?: boolean;
 };
