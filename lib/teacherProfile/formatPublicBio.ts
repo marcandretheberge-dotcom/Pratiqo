@@ -38,18 +38,37 @@ export function collapsePublicBioSnippet(content: string | null | undefined): st
   return asText(content).replace(/\s+/g, " ").trim();
 }
 
-const LEADING_SNIPPET_MARKER = /^(?:[-–—*•·]+|\d+[.)]|#{1,6})\s*/u;
+const LINE_LIST_MARKER = /^(?:[-–—*•·]+|\d+[.)]|#{1,6})\s*/u;
+/** List markers after a sentence end (`français. -Ayant`), not hyphens in names. */
+const SENTENCE_LIST_MARKER = /([.!?…])\s*[-–—*•·]+\s*/gu;
+
+function stripLeadingListMarker(line: string): string {
+  let next = line.trim();
+  for (let i = 0; i < 3 && next; i += 1) {
+    const stripped = next.replace(LINE_LIST_MARKER, "").trim();
+    if (stripped === next) break;
+    next = stripped;
+  }
+  return next;
+}
 
 /**
- * Card-only bio snippet. Flattens whitespace and strips leading bullets /
- * dashes / markdown markers. Does not mutate stored `teachers.bio`.
+ * Card-only bio snippet. Cleans each original line, then flattens.
+ * Does not mutate stored `teachers.bio`. Profile paragraphs use
+ * `splitPublicBioParagraphs` instead.
  */
 export function formatTeacherCardBioSnippet(content: string | null | undefined): string {
-  let snippet = collapsePublicBioSnippet(content);
-  for (let i = 0; i < 3 && snippet; i += 1) {
-    const next = snippet.replace(LEADING_SNIPPET_MARKER, "").trim();
-    if (next === snippet) break;
-    snippet = next;
-  }
-  return snippet;
+  const raw = asText(content);
+  if (!raw.trim()) return "";
+
+  const joined = raw
+    .split(/\r?\n/)
+    .map((line) => stripLeadingListMarker(line))
+    .filter((line) => line.length > 0)
+    .join(" ")
+    .replace(SENTENCE_LIST_MARKER, "$1 ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return joined;
 }

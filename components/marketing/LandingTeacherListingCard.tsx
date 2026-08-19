@@ -15,6 +15,8 @@ import {
   getTeacherCompactFormatLabel,
   getTeacherPublicAreaLabel,
   PUBLIC_TEACHER_CARD_INTERACTIVE_CLASS,
+  PUBLIC_TEACHER_CARD_LOCATION_CLASS,
+  PUBLIC_TEACHER_CARD_LOCATION_ICON_CLASS,
 } from "@/lib/teachers/display";
 import { sanitizePublicTeacherBio } from "@/lib/teacherProfile/sanitizePublicBio";
 import { formatTeacherCardBioSnippet } from "@/lib/teacherProfile/formatPublicBio";
@@ -105,15 +107,13 @@ export function LandingTeacherListingCard({
           <p className="mt-1 line-clamp-2 text-sm leading-snug text-slate-600">{bioSnippet}</p>
         ) : null}
         {areaLabel || distKm != null ? (
-          <p className="mt-2 truncate text-xs text-slate-500">
-            {areaLabel ? (
-              <span className="inline-flex items-center gap-1">
-                <MapPin size={11} className="shrink-0 text-teal-700" aria-hidden />
-                {areaLabel}
-              </span>
-            ) : null}
-            {areaLabel && distKm != null ? " · " : null}
-            {distKm != null ? t("distanceFromYouKm").replace("{{n}}", String(distKm)) : null}
+          <p className={PUBLIC_TEACHER_CARD_LOCATION_CLASS}>
+            {areaLabel ? <MapPin className={PUBLIC_TEACHER_CARD_LOCATION_ICON_CLASS} aria-hidden /> : null}
+            <span className="min-w-0 truncate">
+              {areaLabel}
+              {areaLabel && distKm != null ? " · " : null}
+              {distKm != null ? t("distanceFromYouKm").replace("{{n}}", String(distKm)) : null}
+            </span>
           </p>
         ) : null}
       </div>

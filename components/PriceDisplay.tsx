@@ -45,7 +45,7 @@ export function PriceDisplay({
   return (
     <span className={cn("inline-flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5", className)}>
       <span className={primaryClassName}>{primary}</span>
-      {perHour ? <span className="text-xs font-normal text-slate-500">/h</span> : null}
+      {perHour ? <span className="text-sm font-normal text-slate-400">/h</span> : null}
       {showOriginal && display.approximate ? (
         <span className={secondaryClassName}>{original}</span>
       ) : null}

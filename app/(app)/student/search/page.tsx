@@ -37,7 +37,7 @@ import { LandingSearchHero } from "@/components/marketing/LandingSearchHero";
 import type { LandingFormatFilter } from "@/lib/landingTeacherFilter";
 import { PriceDisplay } from "@/components/PriceDisplay";
 import { hasPublicTeacherReviews, isPublicTeacherIdentityVerified } from "@/lib/teachers/badges";
-import { getTeacherCompactFormatLabel, getTeacherPublicAreaLabel, PUBLIC_TEACHER_CARD_INTERACTIVE_CLASS } from "@/lib/teachers/display";
+import { getTeacherCompactFormatLabel, getTeacherPublicAreaLabel, PUBLIC_TEACHER_CARD_INTERACTIVE_CLASS, PUBLIC_TEACHER_CARD_LOCATION_CLASS, PUBLIC_TEACHER_CARD_LOCATION_ICON_CLASS } from "@/lib/teachers/display";
 import { sanitizePublicTeacherBio } from "@/lib/teacherProfile/sanitizePublicBio";
 import { formatTeacherCardBioSnippet } from "@/lib/teacherProfile/formatPublicBio";
 import type { TranslationKey } from "@/lib/translations";
@@ -939,12 +939,15 @@ function TeacherCard({
           </p>
         ) : null}
         {areaLabel || distanceKm != null ? (
-          <p className="mt-2 truncate text-xs text-slate-500">
-            {areaLabel}
-            {areaLabel && distanceKm != null ? " · " : null}
-            {distanceKm != null
-              ? t("studentApproxDistanceFromYou").replace("{distance}", formatApproxDistanceKm(distanceKm))
-              : null}
+          <p className={PUBLIC_TEACHER_CARD_LOCATION_CLASS}>
+            {areaLabel ? <MapPin className={PUBLIC_TEACHER_CARD_LOCATION_ICON_CLASS} aria-hidden /> : null}
+            <span className="min-w-0 truncate">
+              {areaLabel}
+              {areaLabel && distanceKm != null ? " · " : null}
+              {distanceKm != null
+                ? t("studentApproxDistanceFromYou").replace("{distance}", formatApproxDistanceKm(distanceKm))
+                : null}
+            </span>
           </p>
         ) : null}
       </div>

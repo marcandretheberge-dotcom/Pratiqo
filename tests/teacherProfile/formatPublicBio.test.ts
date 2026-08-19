@@ -82,6 +82,32 @@ test("formatTeacherCardBioSnippet strips leading bullets and dashes", () => {
   );
 });
 
+test("formatTeacherCardBioSnippet strips dash markers from later lines before flattening", () => {
+  assert.equal(
+    formatTeacherCardBioSnippet(
+      "Enseignante avec plus de dix ans d'expérience en enseignement du français.\n-Ayant enseigné au secondaire.",
+    ),
+    "Enseignante avec plus de dix ans d'expérience en enseignement du français. Ayant enseigné au secondaire.",
+  );
+  assert.equal(
+    formatTeacherCardBioSnippet(
+      "Enseignante avec plus de dix ans d'expérience en enseignement du français. -Ayant enseigné au secondaire.",
+    ),
+    "Enseignante avec plus de dix ans d'expérience en enseignement du français. Ayant enseigné au secondaire.",
+  );
+});
+
+test("formatTeacherCardBioSnippet preserves hyphenated names and phrases", () => {
+  assert.equal(
+    formatTeacherCardBioSnippet("Marc-André enseigne le piano."),
+    "Marc-André enseigne le piano.",
+  );
+  assert.equal(
+    formatTeacherCardBioSnippet("Cours parent-enfant à Montréal."),
+    "Cours parent-enfant à Montréal.",
+  );
+});
+
 test("formatTeacherCardBioSnippet does not rewrite full profile paragraphs", () => {
   const bio = "Premier paragraphe.\n\nDeuxième paragraphe.";
   assert.deepEqual(splitPublicBioParagraphs(bio), [
