@@ -557,18 +557,20 @@ function SearchMapTeacherPopup({
                 <p className="mt-1 text-xs font-semibold text-slate-600">{t("teacherCardNew")}</p>
               )}
               {formatLabel || distanceKm != null ? (
-                <p className="mt-1.5 truncate text-xs text-[#6B6A65]">
-                  {[
-                    formatLabel,
-                    distanceKm != null
-                      ? t("studentApproxDistanceFromYou").replace(
-                          "{distance}",
-                          formatApproxDistanceKm(distanceKm),
-                        )
-                      : null,
-                  ]
-                    .filter(Boolean)
-                    .join(" · ")}
+                <p className="mt-1.5 flex min-w-0 items-center gap-1 text-xs leading-tight text-slate-500">
+                  <span className="truncate">
+                    {[
+                      formatLabel,
+                      distanceKm != null
+                        ? t("studentApproxDistanceFromYou").replace(
+                            "{distance}",
+                            formatApproxDistanceKm(distanceKm),
+                          )
+                        : null,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </span>
                 </p>
               ) : null}
               {priceAmount != null ? (

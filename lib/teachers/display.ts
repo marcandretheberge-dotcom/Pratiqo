@@ -84,10 +84,15 @@ export function getTeacherDisciplineSummary(teacher: Teacher, opts?: { limit?: n
 
 /** Shared clickable-card hover. No layout shift; respects reduced motion. */
 export const PUBLIC_TEACHER_CARD_INTERACTIVE_CLASS =
-  "cursor-pointer transition duration-200 ease-out hover:shadow-md motion-safe:hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/40";
+  "cursor-pointer transition duration-200 ease-out hover:border-emerald-200 hover:shadow-md motion-safe:hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/40";
 
 /** Subtle avatar ring used by public teacher cards. */
 export const PUBLIC_TEACHER_CARD_AVATAR_RING_CLASS = "ring-1 ring-[#E8E6DF]";
+
+/** Location/distance row: subordinate to name, discipline, bio, and price. */
+export const PUBLIC_TEACHER_CARD_LOCATION_CLASS =
+  "mt-2 flex min-w-0 items-center gap-1 text-xs leading-tight text-slate-500";
+export const PUBLIC_TEACHER_CARD_LOCATION_ICON_CLASS = "h-3.5 w-3.5 shrink-0 text-slate-400";
 
 /**
  * When teacher_offers launches, this value should come from the minimum

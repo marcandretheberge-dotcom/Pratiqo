@@ -120,7 +120,10 @@ export function LocalTeacherDiscoveryCards({ bundle }: Props) {
               <div className="mt-auto flex items-center justify-between border-t border-[#E8E6DF] pt-3 text-xs text-[#6B6760]">
                 <span>{teachingModeLabel(teacher.teachingMode)}</span>
                 {teacher.pricePerLesson != null ? (
-                  <span className="font-bold text-teal-700">{Math.round(teacher.pricePerLesson)} CAD /h</span>
+                  <span className="font-bold text-teal-700">
+                    {Math.round(teacher.pricePerLesson)} CAD{" "}
+                    <span className="text-sm font-normal text-slate-400">/h</span>
+                  </span>
                 ) : null}
               </div>
             </Link>

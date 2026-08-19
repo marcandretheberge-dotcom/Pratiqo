@@ -147,7 +147,7 @@ test("cards do not add teacher_offers runtime or payment imports", () => {
 test("clickable cards share subtle hover without layout-breaking scale", () => {
   assert.match(DISPLAY, /PUBLIC_TEACHER_CARD_INTERACTIVE_CLASS/);
   assert.match(DISPLAY, /motion-safe:hover:-translate-y-0\.5/);
-  assert.match(DISPLAY, /hover:shadow-md/);
+  assert.match(DISPLAY, /hover:border-emerald-200/);
   assert.match(DISPLAY, /focus-visible:ring-2/);
   assert.match(SEARCH_CARD, /PUBLIC_TEACHER_CARD_INTERACTIVE_CLASS/);
   assert.match(LANDING, /PUBLIC_TEACHER_CARD_INTERACTIVE_CLASS/);
