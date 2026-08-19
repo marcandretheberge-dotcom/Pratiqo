@@ -40,6 +40,7 @@ import {
   getTeacherSpokenLanguageLabels,
   PUBLIC_TEACHER_PROFILE_DISCIPLINE_CHIP_CLASS,
   PUBLIC_TEACHER_PROFILE_IN_BRIEF_VALUE_CLASS,
+  PUBLIC_TEACHER_PROFILE_TEACHING_MODE_CHIP_CLASS,
 } from "@/lib/teachers/display";
 import { useLocale } from "../lib/locale-context";
 import type { TeacherCredential } from "../lib/teacherTrust";
@@ -449,11 +450,11 @@ export function TeacherProfile({
   const teachingModes = useMemo(() => {
     const modes: { icon: React.ReactNode; label: string }[] = [];
     if (["person", "both", "all"].includes(teacher.teachingMode))
-      modes.push({ icon: <Users size={14} />, label: t("filterInPerson") });
+      modes.push({ icon: <Users size={14} className="shrink-0 text-slate-500" aria-hidden />, label: t("filterInPerson") });
     if (["online", "both", "all"].includes(teacher.teachingMode))
-      modes.push({ icon: <Video size={14} />, label: t("filterOnline") });
+      modes.push({ icon: <Video size={14} className="shrink-0 text-slate-500" aria-hidden />, label: t("filterOnline") });
     if (homeConfigured)
-      modes.push({ icon: <Home size={14} />, label: t("modeHome") });
+      modes.push({ icon: <Home size={14} className="shrink-0 text-slate-500" aria-hidden />, label: t("modeHome") });
     return modes;
   }, [teacher.teachingMode, homeConfigured, t]);
   const summaryCardIds = useMemo(
@@ -720,7 +721,7 @@ export function TeacherProfile({
                       {teachingModes.map((m) => (
                         <div
                           key={String(m.label)}
-                          className={cn(PUBLIC_TEACHER_PROFILE_DISCIPLINE_CHIP_CLASS, "gap-1.5")}
+                          className={PUBLIC_TEACHER_PROFILE_TEACHING_MODE_CHIP_CLASS}
                         >
                           {m.icon}
                           {m.label}
