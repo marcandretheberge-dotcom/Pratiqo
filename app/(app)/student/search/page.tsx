@@ -6,7 +6,7 @@ import { importLibrary, setOptions } from "@googlemaps/js-api-loader";
 import type { Teacher } from "../../../../types";
 import type { BookingInitialLessonKind } from "../../../../components/BookingModal";
 import { useRouter, useSearchParams } from "next/navigation";
-import { MapPin, Star, Users, Video } from "lucide-react";
+import { CheckCircle2, MapPin, Star, Users, Video } from "lucide-react";
 import { useLocale } from "../../../../lib/locale-context";
 import { cn } from "../../../../lib/utils";
 import { getSupabaseClient } from "../../../../lib/supabase";
@@ -35,8 +35,7 @@ import { applyTeacherListingMetadata } from "@/lib/teacherListingMetadata";
 import { LandingSearchHero } from "@/components/marketing/LandingSearchHero";
 import type { LandingFormatFilter } from "@/lib/landingTeacherFilter";
 import { PriceDisplay } from "@/components/PriceDisplay";
-import { TeacherBadgePill } from "@/components/TeacherBadgePill";
-import { getSearchCardTeacherBadges, hasPublicTeacherReviews } from "@/lib/teachers/badges";
+import { hasPublicTeacherReviews, isPublicTeacherIdentityVerified } from "@/lib/teachers/badges";
 import { getTeacherCompactFormatLabel } from "@/lib/teachers/display";
 import { sanitizePublicTeacherBio } from "@/lib/teacherProfile/sanitizePublicBio";
 import { collapsePublicBioSnippet } from "@/lib/teacherProfile/formatPublicBio";
@@ -896,15 +895,10 @@ function TeacherCard({
     home: t("modeHome"),
     hybrid: t("modeHybrid"),
   });
-  const badges = getSearchCardTeacherBadges({
-    teacherId: teacher.id,
+  const identityVerified = isPublicTeacherIdentityVerified({
     identityVerified: teacher.identityVerified,
     identityStatus: teacher.identityStatus,
     stripeIdentityStatus: teacher.stripeIdentityStatus,
-    diplomaVerified: teacher.diplomaVerified,
-    verifiedExperience: teacher.verifiedExperience,
-    profilePlan: teacher.profilePlan,
-    reviewCount: teacher.reviews,
   });
 
   return (
@@ -920,28 +914,27 @@ function TeacherCard({
     >
       {/*
         Mobile QA fix: the teacher name MUST stay visible on narrow screens.
-        Name lives in its own truncated row. Trust badges wrap below it
-        and never share horizontal space with the name.
+        Name lives in its own truncated span. A compact identity checkmark
+        may sit inline after the name (shrink-0) without competing for width.
+        Trust badge pills never appear on the search card.
       */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 flex-1 items-start gap-3">
           <TeacherAvatar name={teacher.name} category={teacher.category} imageUrl={teacher.imageUrl} size={44} />
           <div className="min-w-0 flex-1">
-            <p className="truncate font-semibold text-[#2C2C2A]">
-              {publicFirstNameWithInitial(teacher.name)}
+            <p className="flex min-w-0 items-center gap-1 font-semibold text-[#2C2C2A]">
+              <span className="truncate">{publicFirstNameWithInitial(teacher.name)}</span>
+              {identityVerified ? (
+                <span
+                  className="inline-flex shrink-0 text-teal-700"
+                  title={t("teacherBadgeIdentityVerified")}
+                  data-testid="teacher-card-identity-verified"
+                >
+                  <CheckCircle2 size={14} strokeWidth={2.5} aria-hidden />
+                  <span className="sr-only">{t("teacherBadgeIdentityVerified")}</span>
+                </span>
+              ) : null}
             </p>
-            {badges.length > 0 ? (
-              <div className="mt-1.5 flex flex-wrap items-center gap-1">
-                {badges.map((badge) => (
-                  <TeacherBadgePill
-                    key={badge.id}
-                    badge={badge}
-                    compact
-                    className="border-slate-200 bg-slate-50 font-medium text-slate-700"
-                  />
-                ))}
-              </div>
-            ) : null}
           </div>
         </div>
         {hasReviews ? (

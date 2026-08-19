@@ -55,6 +55,7 @@ import {
   studentLocationToBookingAddress,
   type StudentSavedLocation,
 } from "@/lib/studentLocation";
+import { isPublicTeacherIdentityVerified } from "@/lib/teachers/badges";
 import { YoBookingTeacherBridgeConsent } from "@/components/yo/YoBookingTeacherBridgeConsent";
 import type { YoLocale } from "@/lib/yo/types";
 import {
@@ -208,6 +209,16 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
   const suggestedContextType = useMemo(() => suggestLearnerContextType(teacher), [teacher]);
   const [contextDraft, setContextDraft] = useState<BookingContextDraft>(() => draftFromLearner(null, suggestedContextType));
   const [contextDirty, setContextDirty] = useState(false);
+  const teacherIdentityVerified = useMemo(
+    () =>
+      isPublicTeacherIdentityVerified({
+        identityVerified: teacher.identityVerified,
+        identityStatus: teacher.identityStatus,
+        stripeIdentityStatus: teacher.stripeIdentityStatus,
+      }),
+    [teacher.identityStatus, teacher.identityVerified, teacher.stripeIdentityStatus],
+  );
+  const [identityCautionAcknowledged, setIdentityCautionAcknowledged] = useState(false);
 
   const [availableDays, setAvailableDays] = useState<Record<string, number>>({});
   const [slots, setSlots] = useState<string[]>([]);
@@ -1055,13 +1066,39 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                 <Info size={15} className="mt-0.5 shrink-0 text-teal-700" />
                 <span>{t("bookingSecurePaymentNote")}</span>
               </div>
-              <button
-                type="button"
-                onClick={() => setStep("preferences")}
-                className="w-full ds-btn-primary h-12 rounded-2xl text-sm font-semibold"
-              >
-                {t("bookingContinue")} <ChevronRight className="inline ml-1" size={16} />
-              </button>
+              {!teacherIdentityVerified && !identityCautionAcknowledged ? (
+                <div className="space-y-3">
+                  <div
+                    className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-slate-800"
+                    role="note"
+                    data-testid="booking-identity-caution"
+                  >
+                    <p className="font-semibold text-amber-950">{t("bookingIdentityCautionTitle")}</p>
+                    <p className="mt-1 text-xs leading-relaxed text-slate-700">
+                      {t("bookingIdentityCautionBody")}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    data-testid="booking-identity-caution-continue"
+                    onClick={() => {
+                      setIdentityCautionAcknowledged(true);
+                      setStep("preferences");
+                    }}
+                    className="w-full ds-btn-primary h-12 rounded-2xl text-sm font-semibold"
+                  >
+                    {t("bookingIdentityCautionContinue")} <ChevronRight className="inline ml-1" size={16} />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setStep("preferences")}
+                  className="w-full ds-btn-primary h-12 rounded-2xl text-sm font-semibold"
+                >
+                  {t("bookingContinue")} <ChevronRight className="inline ml-1" size={16} />
+                </button>
+              )}
             </div>
           )}
 

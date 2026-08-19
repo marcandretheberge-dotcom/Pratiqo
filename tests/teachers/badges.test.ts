@@ -417,6 +417,24 @@ test("TeacherProfile renders the trust box title via the new teacherTrustTitle k
   );
 });
 
+test("TeacherProfile trust box explains non-verified identity neutrally", () => {
+  assert.match(
+    PROFILE_SRC,
+    /teacherTrustIdentityNotVerifiedTitle/,
+    "non-verified identity must use the neutral title key",
+  );
+  assert.match(
+    PROFILE_SRC,
+    /teacherTrustIdentityNotVerifiedDescription/,
+    "non-verified identity must use the neutral description key",
+  );
+  assert.match(
+    PROFILE_SRC,
+    /identityVerifiedForTrustBox \?/,
+    "trust box must still branch on identityVerifiedForTrustBox",
+  );
+});
+
 test("TeacherProfile trust box does NOT show 'Email vérifié' as a public item", () => {
   // The trust box ul must not iterate buildTeacherTrustItems anymore.
   assert.ok(
@@ -459,11 +477,16 @@ const REQUIRED_KEYS = [
   "teacherBadgeNewTeacher",
   "teacherTrustTitle",
   "teacherTrustIdentityVerifiedDescription",
+  "teacherTrustIdentityNotVerifiedTitle",
+  "teacherTrustIdentityNotVerifiedDescription",
   "teacherTrustPaymentProtected",
   "teacherTrustPaymentProtectedDescription",
   "teacherTrustContactProtected",
   "teacherTrustContactProtectedDescription",
   "teacherNoReviewsYet",
+  "bookingIdentityCautionTitle",
+  "bookingIdentityCautionBody",
+  "bookingIdentityCautionContinue",
 ] as const;
 
 test("all required badge / trust keys exist in fr/en/es", () => {
@@ -509,6 +532,33 @@ test("teacherNoReviewsYet is the agreed copy in fr/en/es", () => {
   assert.equal(FR.teacherNoReviewsYet, "Aucun avis pour le moment");
   assert.equal(EN.teacherNoReviewsYet, "No reviews yet");
   assert.equal(ES.teacherNoReviewsYet, "Aún no hay reseñas");
+});
+
+test("non-verified identity profile copy is the agreed neutral copy in fr/en/es", () => {
+  assert.equal(FR.teacherTrustIdentityNotVerifiedTitle, "Identité non vérifiée par Pratiqo");
+  assert.equal(
+    FR.teacherTrustIdentityNotVerifiedDescription,
+    "Ce professeur n’a pas encore complété la vérification d’identité Pratiqo.",
+  );
+  assert.equal(EN.teacherTrustIdentityNotVerifiedTitle, "Identity not verified by Pratiqo");
+  assert.equal(
+    EN.teacherTrustIdentityNotVerifiedDescription,
+    "This teacher has not completed Pratiqo identity verification yet.",
+  );
+  assert.equal(ES.teacherTrustIdentityNotVerifiedTitle, "Identidad no verificada por Pratiqo");
+  assert.equal(
+    ES.teacherTrustIdentityNotVerifiedDescription,
+    "Este profesor todavía no completó la verificación de identidad de Pratiqo.",
+  );
+});
+
+test("booking identity caution copy is the agreed copy in fr/en/es", () => {
+  assert.equal(FR.bookingIdentityCautionTitle, "Identité non vérifiée");
+  assert.equal(EN.bookingIdentityCautionTitle, "Identity not verified");
+  assert.equal(ES.bookingIdentityCautionTitle, "Identidad no verificada");
+  assert.equal(FR.bookingIdentityCautionContinue, "Je comprends et je veux continuer");
+  assert.equal(EN.bookingIdentityCautionContinue, "I understand and want to continue");
+  assert.equal(ES.bookingIdentityCautionContinue, "Entiendo y quiero continuar");
 });
 
 // ---------------------------------------------------------------------------

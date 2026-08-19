@@ -81,13 +81,17 @@ test("[P0.5a] mobile teacher card keeps the name visible (badges live in their o
     /className="min-w-0 flex-1"/,
     "[P0.5a] right-of-avatar column must keep `min-w-0 flex-1` (PR #178)",
   );
-  // Badges must be in their own dedicated wrapping row.
+  // Search cards keep the name visible; identity is a compact checkmark, not pills.
+  assert.doesNotMatch(
+    card,
+    /<TeacherBadgePill\b/,
+    "[P0.5a] student-search TeacherCard must not render TeacherBadgePill",
+  );
   assert.match(
     card,
-    /className="mt-1\.5 flex flex-wrap items-center gap-1"/,
-    "[P0.5a] badges must render in their own `mt-1.5 flex flex-wrap items-center gap-1` row (PR #178)",
+    /<span className="truncate">\{publicFirstNameWithInitial\(teacher\.name\)\}<\/span>/,
+    "[P0.5a] teacher name must still truncate in its own span",
   );
-  // The name <p> must NOT share a flex row with TeacherBadgePill.
   const nameMarker = "publicFirstNameWithInitial(teacher.name)";
   const nameIdx = card.indexOf(nameMarker);
   assert.ok(nameIdx >= 0, "[P0.5a] teacher name expression must still render");

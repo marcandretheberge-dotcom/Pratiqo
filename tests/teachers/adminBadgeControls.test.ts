@@ -12,8 +12,9 @@
  *      builds badges via `getCompactTeacherBadges` now passes
  *      `verifiedExperience` from the teacher row, AND the safe public
  *      column lists (TEACHERS_LIST_SELECT + RelatedTeachersWidget +
- *      TeacherQuiz row shape) project the new column. Mobile search
- *      card still splits name and badges into separate rows.
+ *      TeacherQuiz row shape) project the new column. The student
+ *      search card no longer renders those pills; identity is a
+ *      compact checkmark and experience/diploma stay in the profile.
  *   3. Admin route guardrails — POST/DELETE require admin JWT, hit a
  *      strict ALLOWED set, audit every toggle, never import Stripe /
  *      commission / founder-promo / Membre-Pro code, never touch
@@ -168,9 +169,18 @@ test("TeacherProfile passes verifiedExperience into the badge input", () => {
   );
 });
 
-test("student search teacher card passes verifiedExperience into getCompactTeacherBadges", () => {
+test("student search teacher card does not render experience as a pill", () => {
   const src = readRepoFile("app/(app)/student/search/page.tsx");
-  assert.match(src, /verifiedExperience:\s*teacher\.verifiedExperience/);
+  const cardStart = src.indexOf("function TeacherCard({");
+  assert.ok(cardStart >= 0, "inline TeacherCard must still exist");
+  const card = src.slice(cardStart);
+  assert.doesNotMatch(card, /<TeacherBadgePill\b/);
+  assert.doesNotMatch(card, /verifiedExperience:\s*teacher\.verifiedExperience/);
+  assert.match(
+    readRepoFile("lib/teacherMapper.ts"),
+    /verifiedExperience:\s*Boolean\(row\.verified_experience_active\)/,
+    "teacherMapper must still project verifiedExperience for the profile",
+  );
 });
 
 test("Landing teacher listing card passes verifiedExperience", () => {

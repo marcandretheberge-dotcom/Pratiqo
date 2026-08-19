@@ -543,13 +543,15 @@ export function TeacherProfile({
                   </h1>
                 ) : null}
 
-                {/* Compact header */}
+                {/* Compact header — larger photo for face evaluation. Nested
+                    lightbox skipped: this dialog already closes on Escape. */}
                 <div className="flex items-start gap-3 pr-12 sm:gap-4">
                   <TeacherAvatar
                     name={teacher.name}
                     category={teacher.category}
                     imageUrl={teacher.imageUrl}
-                    size={80}
+                    size={96}
+                    className="!h-24 !w-24 sm:!h-[120px] sm:!w-[120px]"
                     ringClassName="border-2 border-white shadow-lg ring-2 ring-teal-500/25"
                   />
 
@@ -1029,7 +1031,17 @@ export function TeacherProfile({
                             <span className="block text-[11px] leading-relaxed text-slate-600">{t("teacherTrustIdentityVerifiedDescription")}</span>
                           </span>
                         </li>
-                      ) : null}
+                      ) : (
+                        <li className="flex gap-2.5" data-testid="teacher-profile-identity-unverified">
+                          <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-100">
+                            <Shield size={15} className="text-slate-600" aria-hidden />
+                          </span>
+                          <span>
+                            <span className="block text-xs font-semibold text-slate-900">{t("teacherTrustIdentityNotVerifiedTitle")}</span>
+                            <span className="block text-[11px] leading-relaxed text-slate-600">{t("teacherTrustIdentityNotVerifiedDescription")}</span>
+                          </span>
+                        </li>
+                      )}
                       {diplomaVerifiedForTrustBox ? (
                         <li className="flex gap-2.5">
                           <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-teal-50">
