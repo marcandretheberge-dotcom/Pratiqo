@@ -42,6 +42,7 @@ function test(name: string, fn: () => void): void {
 
 const migration070 = read("supabase/migrations/070_teachers_public_read_isolation.sql");
 const migration086 = read("supabase/migrations/086_align_teacher_public_search_visibility.sql");
+const migration097 = read("supabase/migrations/097_admin_manual_teacher_identity_verification.sql");
 
 test("migration 070: drops the broad teachers_select_public policy", () => {
   assert.match(migration070, /DROP POLICY IF EXISTS "teachers_select_public" ON public\.teachers/);
@@ -197,6 +198,43 @@ test("migration 086: final public helper strips private location data", () => {
   assert.doesNotMatch(migration086, /t\.location\s+AS location/i);
 });
 
+test("migration 097: public helper projects only the manual-verification boolean", () => {
+  const fnBlock =
+    migration097.match(/CREATE FUNCTION public\.list_public_teachers\([\s\S]*?\$\$;/i)?.[0] ?? "";
+  assert.notEqual(fnBlock, "", "097 list_public_teachers() must be parseable");
+  assert.match(fnBlock, /identity_verified_manually\s+boolean/);
+  assert.match(fnBlock, /t\.identity_verified_manually/);
+  assert.doesNotMatch(fnBlock, /identity_verified_manually_at/);
+  assert.doesNotMatch(fnBlock, /identity_verified_manually_by/);
+  assert.doesNotMatch(fnBlock, /identity_manual_verification_note/);
+});
+
+test("migration 097: public helper keeps Stripe Identity internals off the projection", () => {
+  const selectBlock =
+    migration097.match(/SELECT([\s\S]*?)\n\s+FROM public\.teachers t/i)?.[1] ?? "";
+  assert.notEqual(selectBlock, "", "097 function SELECT block must be parseable");
+  const selectNoComments = selectBlock
+    .split("\n")
+    .map((line) => line.replace(/--.*$/, ""))
+    .join("\n");
+
+  for (const sensitiveCol of [
+    "t.phone_verified",
+    "t.identity_status",
+    "t.stripe_identity_status",
+    "t.diploma_url",
+    "t.identity_verified_manually_at",
+    "t.identity_verified_manually_by",
+    "t.identity_manual_verification_note",
+  ]) {
+    assert.doesNotMatch(
+      selectNoComments,
+      new RegExp(`\\b${sensitiveCol.replace(/\./g, "\\.")}\\b`),
+      `Sensitive column ${sensitiveCol} must not be selected in 097 teachers_public helper`,
+    );
+  }
+});
+
 test("migration 070: view re-grants SELECT to anon/authenticated/service_role", () => {
   assert.match(migration070, /GRANT SELECT ON public\.teachers_public TO anon/);
   assert.match(migration070, /GRANT SELECT ON public\.teachers_public TO authenticated/);
@@ -240,6 +278,9 @@ test("TEACHERS_LIST_SELECT omits sensitive workflow columns", () => {
     "location_verification_method",
     "cv_verification_status",
     "stripe_account_id",
+    "identity_verified_manually_at",
+    "identity_verified_manually_by",
+    "identity_manual_verification_note",
   ]) {
     assert.equal(
       cols.has(banned),
@@ -255,6 +296,7 @@ test("TEACHERS_LIST_SELECT omits sensitive workflow columns", () => {
     "identity_verified",
     "diploma_verified",
     "verification_level",
+    "identity_verified_manually",
   ]) {
     assert.equal(
       cols.has(required),
@@ -473,6 +515,7 @@ test("no public-facing supabase select re-requests sensitive teacher columns", (
       "app/(app)/onboarding/teacher/page.tsx",
       "app/(app)/admin/review/page.tsx",
       "app/api/admin/review/route.ts",
+      "app/api/admin/teachers/[teacherId]/identity-verification/route.ts",
       "app/api/stripe/webhook/route.ts",
       "app/api/stripe/identity/verify/route.ts",
       "app/api/stripe/connect/route.ts",
@@ -523,6 +566,9 @@ test("no public-facing supabase select re-requests sensitive teacher columns", (
         "location_verified_at",
         "location_verification_method",
         "cv_verification_status",
+        "identity_verified_manually_at",
+        "identity_verified_manually_by",
+        "identity_manual_verification_note",
       ]) {
         if (tokens.has(banned)) {
           violations.push({ file: rel, column: banned, literal });

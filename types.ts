@@ -83,6 +83,11 @@ export interface Teacher {
    * never exposed in the public projection.
    */
   verifiedExperience?: boolean;
+  /**
+   * Admin-controlled identity verification, independent of Stripe Identity.
+   * Public surfaces may read the boolean only — never the admin note or actor.
+   */
+  identityVerifiedManually?: boolean;
   identityStatus?: string | null;
   stripeIdentityStatus?: string | null;
   diplomaUrl?: string | null;

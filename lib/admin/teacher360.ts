@@ -10,6 +10,12 @@ import {
   deriveTeacherReadinessContract,
   type TeacherStripeReadinessBlocker,
 } from "@/lib/teachers/readinessContracts";
+import {
+  describeStripeIdentityStatus,
+  getTeacherIdentityVerificationSource,
+  isTeacherIdentityVerified,
+  type TeacherIdentityVerificationSource,
+} from "@/lib/teachers/identity";
 
 type AdminClient = SupabaseClient;
 
@@ -104,6 +110,18 @@ export type AdminTeacher360 = {
     rating: number | null;
     lastMarketplaceActivity: string | null;
   };
+  identityVerification: {
+    stripeStatus: ReturnType<typeof describeStripeIdentityStatus>;
+    stripeIdentityStatus: string | null;
+    identityVerified: boolean;
+    identityStatus: string | null;
+    manualVerified: boolean;
+    manualVerifiedAt: string | null;
+    manualVerifiedBy: string | null;
+    manualNote: string | null;
+    effectiveVerified: boolean;
+    effectiveSource: TeacherIdentityVerificationSource;
+  };
   recommendedActions: AdminTeacher360Action[];
 };
 
@@ -144,6 +162,10 @@ type TeacherRow = {
   identity_status: string | null;
   stripe_identity_status: string | null;
   stripe_identity_failed_reason: string | null;
+  identity_verified_manually: boolean | null;
+  identity_verified_manually_at: string | null;
+  identity_verified_manually_by: string | null;
+  identity_manual_verification_note: string | null;
   diploma_verified: boolean | null;
   phone_verified: boolean | null;
   is_verified: boolean | null;
@@ -191,6 +213,10 @@ const TEACHER_360_SELECT = [
   "identity_status",
   "stripe_identity_status",
   "stripe_identity_failed_reason",
+  "identity_verified_manually",
+  "identity_verified_manually_at",
+  "identity_verified_manually_by",
+  "identity_manual_verification_note",
   "diploma_verified",
   "phone_verified",
   "is_verified",
@@ -473,7 +499,12 @@ function buildRecommendedActions(input: {
     actions.push({ id: "stripe-follow-up", label: "Relancer Stripe", href: null, status: "coming_soon" });
   }
   if (warnings.includes("WARNING_IDENTITY_NOT_VERIFIED")) {
-    actions.push({ id: "verify-identity", label: "Verifier l'identite", href: "/admin/credentials", status: "link" });
+    actions.push({
+      id: "verify-identity",
+      label: "Verifier l'identite",
+      href: teacher.user_id ? `/admin/users/${teacher.user_id}` : null,
+      status: "link",
+    });
   }
   if (teacher.id) {
     actions.push({ id: "view-public-profile", label: "Voir le profil public", href: publicProfileUrl(teacher), status: "link" });
@@ -560,6 +591,28 @@ export async function loadAdminTeacher360(
       createdAt: profile.created_at ?? null,
       updatedAt: profile.updated_at ?? null,
       lastSignInAt,
+    },
+    identityVerification: {
+      stripeStatus: describeStripeIdentityStatus(teacher.stripe_identity_status),
+      stripeIdentityStatus: teacher.stripe_identity_status ?? null,
+      identityVerified: Boolean(teacher.identity_verified),
+      identityStatus: teacher.identity_status ?? null,
+      manualVerified: Boolean(teacher.identity_verified_manually),
+      manualVerifiedAt: teacher.identity_verified_manually_at ?? null,
+      manualVerifiedBy: teacher.identity_verified_manually_by ?? null,
+      manualNote: teacher.identity_manual_verification_note ?? null,
+      effectiveVerified: isTeacherIdentityVerified({
+        identityVerified: teacher.identity_verified,
+        identityStatus: teacher.identity_status,
+        stripeIdentityStatus: teacher.stripe_identity_status,
+        identityVerifiedManually: teacher.identity_verified_manually,
+      }),
+      effectiveSource: getTeacherIdentityVerificationSource({
+        identityVerified: teacher.identity_verified,
+        identityStatus: teacher.identity_status,
+        stripeIdentityStatus: teacher.stripe_identity_status,
+        identityVerifiedManually: teacher.identity_verified_manually,
+      }),
     },
     publicProfile: {
       teacherId: teacher.id,

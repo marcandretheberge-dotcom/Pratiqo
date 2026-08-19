@@ -44,6 +44,7 @@ import {
   type TeacherOnboardingDiagnosis,
   type TeacherOnboardingSnapshot,
 } from "@/components/admin/TeacherOnboardingSupportCard";
+import { TeacherIdentityVerificationCard } from "@/components/admin/TeacherIdentityVerificationCard";
 import {
   TeacherBadgesCard,
   type TeacherBadgeStatusRow,
@@ -804,7 +805,19 @@ export default async function AdminUserDetailPage({
           />
         ) : null}
 
-        {teacher360 ? <Teacher360Panel data={teacher360} /> : null}
+            {teacher360 ? <Teacher360Panel data={teacher360} /> : null}
+
+            {teacher360?.publicProfile.teacherId ? (
+              <TeacherIdentityVerificationCard
+                teacherId={teacher360.publicProfile.teacherId}
+                identityVerified={teacher360.identityVerification.identityVerified}
+                identityStatus={teacher360.identityVerification.identityStatus}
+                stripeIdentityStatus={teacher360.identityVerification.stripeIdentityStatus}
+                identityVerifiedManually={teacher360.identityVerification.manualVerified}
+                identityVerifiedManuallyAt={teacher360.identityVerification.manualVerifiedAt}
+                identityManualVerificationNote={teacher360.identityVerification.manualNote}
+              />
+            ) : null}
 
         {isTeacher ? (
           <>

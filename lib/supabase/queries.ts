@@ -20,12 +20,13 @@ export const TEACHERS_PUBLIC_TABLE = "teachers_public";
  *
  * Sensitive workflow fields are intentionally excluded: phone_verified,
  * identity_status, stripe_identity_status, diploma_url, location_verification_*,
- * cv_verification_status. Public trust signals rely on identity_verified and
- * diploma_verified booleans instead (set server-side by Stripe webhook /
- * admin review).
+ * cv_verification_status, identity_verified_manually_at/by, and
+ * identity_manual_verification_note. Public trust signals rely on
+ * identity_verified, identity_verified_manually, and diploma_verified
+ * booleans instead (set server-side by Stripe webhook / admin review).
  */
 export const TEACHERS_LIST_SELECT =
-  "id, user_id, name, discipline, category, rating, reviews, price_per_lesson, monthly_subscription, bio, image_url, profile_photo_url, availability, location, is_verified, teaching_mode, languages, levels, home_lesson_enabled, home_lesson_price, home_lesson_radius_km, home_lesson_min_duration, home_lesson_requires_confirmation, home_lesson_force_2h_over_20km, default_lesson_duration_minutes, intro_session_enabled, intro_session_duration_minutes, intro_session_price_cents, intro_session_discount_percent, verification_level, identity_verified, diploma_verified, verified_experience_active, video_url, cv_summary, country_code, timezone, currency, city, region";
+  "id, user_id, name, discipline, category, rating, reviews, price_per_lesson, monthly_subscription, bio, image_url, profile_photo_url, availability, location, is_verified, teaching_mode, languages, levels, home_lesson_enabled, home_lesson_price, home_lesson_radius_km, home_lesson_min_duration, home_lesson_requires_confirmation, home_lesson_force_2h_over_20km, default_lesson_duration_minutes, intro_session_enabled, intro_session_duration_minutes, intro_session_price_cents, intro_session_discount_percent, verification_level, identity_verified, identity_verified_manually, diploma_verified, verified_experience_active, video_url, cv_summary, country_code, timezone, currency, city, region";
 
 /**
  * Legacy compatibility select kept as an alias so existing call sites that
@@ -55,10 +56,10 @@ export type TeacherCredentialInsert = {
 type SupabaseClientLike = Pick<SupabaseClient, "from">;
 
 export function getTeacherIdentityVerification(supabase: SupabaseClientLike, teacherId: string) {
-  // Identity verification currently lives on `teachers` (Stripe Identity columns).
+  // Identity verification currently lives on `teachers` (Stripe Identity + admin-manual columns).
   return supabase
     .from("teachers")
-    .select("id, user_id, identity_verified, identity_status, stripe_identity_status, stripe_identity_verified_at, country_code")
+    .select("id, user_id, identity_verified, identity_verified_manually, identity_status, stripe_identity_status, stripe_identity_verified_at, country_code")
     .eq("id", teacherId)
     .maybeSingle();
 }

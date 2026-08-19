@@ -24,14 +24,17 @@ export type AdminAuditAction =
   | "ambassador.revoked"
   | "ambassador_link.created"
   | "ambassador_link.updated"
-  | "ambassador_reward.marked_paid";
+  | "ambassador_reward.marked_paid"
+  | "admin_manual_identity_verify"
+  | "admin_manual_identity_clear";
 
 export type AdminAuditTargetType =
   | "promo_code"
   | "student_credit"
   | "ambassador"
   | "ambassador_link"
-  | "ambassador_reward";
+  | "ambassador_reward"
+  | "teacher";
 
 export async function insertAdminAuditLog(
   admin: AdminClient,

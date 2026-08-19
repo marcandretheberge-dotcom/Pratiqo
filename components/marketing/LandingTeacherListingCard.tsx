@@ -63,6 +63,7 @@ export function LandingTeacherListingCard({
     identityVerified: teacher.identityVerified,
     identityStatus: teacher.identityStatus,
     stripeIdentityStatus: teacher.stripeIdentityStatus,
+    identityVerifiedManually: teacher.identityVerifiedManually,
     diplomaVerified: teacher.diplomaVerified,
     verifiedExperience: teacher.verifiedExperience,
     profilePlan: teacher.profilePlan,
