@@ -111,6 +111,10 @@ export const PUBLIC_TEACHER_CARD_DISCIPLINE_CLASS =
 export const PUBLIC_TEACHER_PROFILE_DISCIPLINE_CHIP_CLASS =
   "inline-flex max-w-full items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium leading-tight text-slate-700";
 
+/** Teaching-mode chips share the discipline-pill family. Static metadata, not CTAs. */
+export const PUBLIC_TEACHER_PROFILE_TEACHING_MODE_CHIP_CLASS =
+  `${PUBLIC_TEACHER_PROFILE_DISCIPLINE_CHIP_CLASS} gap-1.5`;
+
 /** In-brief values wrap; never ellipsize key facts in the detailed modal. */
 export const PUBLIC_TEACHER_PROFILE_IN_BRIEF_VALUE_CLASS =
   "whitespace-normal break-words text-xs font-semibold leading-snug text-slate-900";
