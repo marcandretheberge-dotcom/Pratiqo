@@ -10,6 +10,7 @@ import {
   formatTeacherOfferFormatLabel,
   formatTeacherOfferTypeLabel,
 } from "@/lib/offers/display";
+import { getBookingOfferSelectionNoteKey } from "@/lib/offers/offerSnapshotCheckout";
 import type { PublicTeacherOfferDto } from "@/lib/offers/publicTeacherOfferDto";
 import { PUBLIC_TEACHER_PROFILE_DISCIPLINE_CHIP_CLASS } from "@/lib/teachers/display";
 import { cn } from "@/lib/utils";
@@ -37,7 +38,7 @@ export function BookingOfferPicker({ offers, selectedOfferId, onSelect, onClear 
         >
           {t("bookingOfferSelectionTitle")}
         </h3>
-        <p className="text-xs leading-relaxed text-slate-600">{t("bookingOfferSelectionPreviewNote")}</p>
+        <p className="text-xs leading-relaxed text-slate-600">{t(getBookingOfferSelectionNoteKey())}</p>
       </div>
 
       <div className="space-y-2">

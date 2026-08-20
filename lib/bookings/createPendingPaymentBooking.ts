@@ -167,8 +167,8 @@ export async function createPendingPaymentBooking(args: {
   // student_id is always the authenticated user. RLS-equivalent checks:
   // teacher exists, learner profile owned by student, status pending_payment.
   //
-  // PR 8 will make checkout validate and charge from booking offer snapshots.
-  // Until then, legacy booking pricing remains the live payment source.
+  // Checkout charges from immutable booking snapshots when ENABLE_OFFER_SNAPSHOT_CHECKOUT
+  // is ON (PR 8). Legacy bookings without snapshots keep teacher DB pricing.
   const insertRow = buildCreateBookingInsertRow({
     studentId: args.studentId,
     request: args.request,

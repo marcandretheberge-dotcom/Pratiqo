@@ -2585,6 +2585,11 @@
   "bookingOfferSelectionNone": "No specific offer",
   "bookingOfferSelectionPrepare": "Prepare a booking",
   "bookingOfferSelectionPreviewNote": "This selection prepares the booking. Final payment still uses the current booking rate until offers are fully enabled.",
+  "bookingOfferSelectionCheckoutNote": "This offer will be used to calculate payment.",
+  "checkoutOfferSnapshotDisabled": "This offer cannot be paid online yet.",
+  "checkoutIncompleteOfferSnapshot": "This booking has an incomplete offer snapshot. Please try again.",
+  "checkoutUnsupportedOfferType": "This offer is not yet compatible with online payment.",
+  "checkoutLegacyPriceUnavailable": "Invalid lesson amount for this teacher.",
   "bookingOfferSelectionDisabled": "Offer selection is not enabled yet.",
   "bookingOfferNotFound": "This offer is no longer available for booking.",
   "bookingOfferNotBookable": "This offer cannot be booked."

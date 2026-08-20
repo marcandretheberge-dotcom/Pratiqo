@@ -65,8 +65,8 @@ test("verification remains summary + link only (no duration editor)", () => {
   assert.doesNotMatch(verificationSrc, /LESSON_DURATION_OPTIONS/);
 });
 
-test("checkout still uses computeBookingChargeCents and rejects client price trust", () => {
-  assert.match(checkoutSrc, /computeBookingChargeCents\(/);
+test("checkout still uses resolveBookingCheckoutPrice and rejects client price trust", () => {
+  assert.match(checkoutSrc, /resolveBookingCheckoutPrice\(/);
   assert.match(checkoutSrc, /isValidLessonDurationMinutes/);
   assert.doesNotMatch(checkoutSrc, /Number\(b\.price\)/);
   assert.doesNotMatch(checkoutSrc, /bookingPriceDollars/);

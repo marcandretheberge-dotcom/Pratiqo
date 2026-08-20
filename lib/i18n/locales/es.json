@@ -2585,6 +2585,11 @@
   "bookingOfferSelectionNone": "Sin oferta específica",
   "bookingOfferSelectionPrepare": "Preparar una reserva",
   "bookingOfferSelectionPreviewNote": "Esta selección prepara la reserva. El pago final todavía usa la tarifa actual de reserva hasta que las ofertas estén completamente activadas.",
+  "bookingOfferSelectionCheckoutNote": "Esta oferta se utilizará para calcular el pago.",
+  "checkoutOfferSnapshotDisabled": "Esta oferta todavía no se puede pagar en línea.",
+  "checkoutIncompleteOfferSnapshot": "Esta reserva tiene una copia de oferta incompleta. Inténtalo de nuevo.",
+  "checkoutUnsupportedOfferType": "Esta oferta todavía no es compatible con el pago en línea.",
+  "checkoutLegacyPriceUnavailable": "Importe de clase no válido para este profesor.",
   "bookingOfferSelectionDisabled": "La selección de oferta aún no está activada.",
   "bookingOfferNotFound": "Esta oferta ya no está disponible para la reserva.",
   "bookingOfferNotBookable": "Esta oferta no se puede reservar."

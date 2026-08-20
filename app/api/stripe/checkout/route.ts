@@ -21,13 +21,18 @@ import { SITE_URL } from "@/lib/seo/site";
 import { resolveEmailLocaleForUser } from "@/lib/email/locale";
 import { minimumLessonPriceErrorMessage } from "@/lib/pricing/messages";
 import { validateMinimumLessonPrice } from "@/lib/pricing/validateMinimumLessonPrice";
-import { computeBookingChargeCents } from "@/lib/pricing/bookingCharge";
 import { isValidLessonDurationMinutes } from "@/lib/pricing/lessonDuration";
+import {
+  resolveBookingCheckoutPrice,
+  type ResolveBookingCheckoutPriceError,
+} from "@/lib/pricing/resolveBookingCheckoutPrice";
 import {
   isTeacherPayoutReadyForCheckout,
   teacherPayoutReadinessFailureReasons,
 } from "@/lib/payments/connect";
 import { t as translate } from "@/lib/i18n/server";
+import type { Locale, TranslationKey } from "@/lib/i18n/types";
+import { normalizeLocale } from "@/lib/i18n/types";
 
 export const runtime = "nodejs";
 
@@ -68,7 +73,39 @@ type BookingRow = {
   lesson_type?: string | null;
   learner_profile_id?: string | null;
   duration_minutes?: number | string | null;
+  teacher_offer_id?: string | null;
+  teacher_offer_title_snapshot?: string | null;
+  teacher_offer_type_snapshot?: string | null;
+  teacher_offer_format_snapshot?: string | null;
+  teacher_offer_price_cents_snapshot?: number | string | null;
+  teacher_offer_currency_snapshot?: string | null;
+  teacher_offer_snapshot_version?: number | string | null;
 };
+
+function checkoutPricingErrorResponse(
+  error: ResolveBookingCheckoutPriceError,
+  locale: Locale,
+): NextResponse {
+  const messageKeyByError: Record<ResolveBookingCheckoutPriceError, TranslationKey> = {
+    offer_snapshot_checkout_disabled: "checkoutOfferSnapshotDisabled",
+    incomplete_offer_snapshot: "checkoutIncompleteOfferSnapshot",
+    unsupported_offer_type_for_checkout: "checkoutUnsupportedOfferType",
+    invalid_offer_snapshot_price: "checkoutIncompleteOfferSnapshot",
+    invalid_currency: "checkoutIncompleteOfferSnapshot",
+    legacy_price_unavailable: "checkoutLegacyPriceUnavailable",
+  };
+  const statusByError: Partial<Record<ResolveBookingCheckoutPriceError, number>> = {
+    offer_snapshot_checkout_disabled: 409,
+    unsupported_offer_type_for_checkout: 409,
+  };
+  return NextResponse.json(
+    {
+      error: translate(locale, messageKeyByError[error]),
+      code: error,
+    },
+    { status: statusByError[error] ?? 400 },
+  );
+}
 
 export async function POST(req: Request) {
   try {
@@ -121,7 +158,7 @@ export async function POST(req: Request) {
     const { data: booking, error: bookErr } = await admin
       .from("bookings")
       .select(
-        "id, teacher_id, student_id, status, price, date, time, slot_date, time_slot, duration_minutes, student_level, teaching_mode, student_address, lesson_type, learner_profile_id",
+        "id, teacher_id, student_id, status, price, date, time, slot_date, time_slot, duration_minutes, student_level, teaching_mode, student_address, lesson_type, learner_profile_id, teacher_offer_id, teacher_offer_title_snapshot, teacher_offer_type_snapshot, teacher_offer_format_snapshot, teacher_offer_price_cents_snapshot, teacher_offer_currency_snapshot, teacher_offer_snapshot_version",
       )
       .eq("id", bookingId)
       .maybeSingle();
@@ -242,6 +279,7 @@ export async function POST(req: Request) {
     }
 
     const typed = teacher as TeacherRow;
+    const locale: Locale = normalizeLocale(await resolveEmailLocaleForUser(admin, user.id).catch(() => "fr"));
     if (!isTeacherPayoutReadyForCheckout(typed)) {
       const reasons = teacherPayoutReadinessFailureReasons(typed);
       console.warn("[stripe/checkout] blocked teacher payout-not-ready checkout", {
@@ -254,7 +292,6 @@ export async function POST(req: Request) {
         chargesEnabled: Boolean(typed.stripe_connect_charges_enabled),
         payoutsEnabled: Boolean(typed.stripe_connect_payouts_enabled),
       });
-      const locale = await resolveEmailLocaleForUser(admin, user.id).catch(() => "fr");
       return NextResponse.json(
         {
           error: translate(locale, "bookingTeacherPayoutNotReady"),
@@ -297,15 +334,29 @@ export async function POST(req: Request) {
       }
     }
 
-    let unitAmountCents = computeBookingChargeCents(typed, {
-      lesson_type: lessonType,
-      teaching_mode: teachingMode,
-      duration_minutes: b.duration_minutes,
-    });
-
-    if (unitAmountCents <= 0) {
-      return NextResponse.json({ error: "Montant de cours invalide pour ce professeur." }, { status: 400 });
+    // Client-supplied amount and snapshot fields are never used for pricing.
+    if (body.amount != null) {
+      console.warn("[stripe/checkout] ignored client amount; pricing is server-derived", {
+        bookingId,
+        clientAmount: body.amount,
+      });
     }
+
+    const resolvedPricing = resolveBookingCheckoutPrice({
+      booking: {
+        ...b,
+        lesson_type: lessonType,
+        teaching_mode: teachingMode,
+        duration_minutes: b.duration_minutes,
+      },
+      teacher: typed,
+      teacherName: typed.name,
+    });
+    if (!resolvedPricing.ok) {
+      return checkoutPricingErrorResponse(resolvedPricing.error, locale);
+    }
+    const { pricing } = resolvedPricing;
+    let unitAmountCents = pricing.amountCents;
 
     if (teachingMode === "domicile") {
       if (!typed.home_lesson_enabled) {
@@ -316,10 +367,7 @@ export async function POST(req: Request) {
       }
     }
 
-    const modeLabel =
-      teachingMode === "domicile" ? "À domicile" : teachingMode === "online" ? "En ligne" : "En studio";
-
-    const lessonLabel = lessonType === "intro" ? "Séance d’introduction" : "Cours";
+    const checkoutLineItemName = pricing.label;
 
     // Apply credits: validate server-side against actual balance
     let validatedCredits = 0;
@@ -340,7 +388,6 @@ export async function POST(req: Request) {
     unitAmountCents = Math.max(0, unitAmountCents - discountCents);
 
     if (!validateMinimumLessonPrice(unitAmountCents).ok) {
-      const locale = await resolveEmailLocaleForUser(admin, user.id);
       return NextResponse.json(
         { error: minimumLessonPriceErrorMessage(locale), code: "minimum_lesson_price" },
         { status: 400 },
@@ -466,6 +513,16 @@ export async function POST(req: Request) {
       loyalty_tier: amounts.loyaltyTier,
       tax_behavior: taxBehavior,
       tax_total_cents: String(taxTotalCents),
+      pricing_source: pricing.metadata.pricing_source,
+      ...(pricing.metadata.teacher_offer_id
+        ? { teacher_offer_id: pricing.metadata.teacher_offer_id }
+        : {}),
+      ...(pricing.metadata.teacher_offer_snapshot_version
+        ? { teacher_offer_snapshot_version: pricing.metadata.teacher_offer_snapshot_version }
+        : {}),
+      ...(pricing.metadata.teacher_offer_type_snapshot
+        ? { teacher_offer_type_snapshot: pricing.metadata.teacher_offer_type_snapshot }
+        : {}),
       ...taxParams.metadata,
     };
 
@@ -489,7 +546,7 @@ export async function POST(req: Request) {
             unit_amount: checkoutAmountCents,
             ...(taxParams.lineItemTaxBehavior ? { tax_behavior: taxParams.lineItemTaxBehavior } : {}),
             product_data: {
-              name: `${lessonLabel} avec ${typed.name} (${modeLabel})`,
+              name: checkoutLineItemName,
               description:
                 [bSlotDate, bTimeSlot].filter(Boolean).join(" · ") ||
                 [booking.date, booking.time].filter(Boolean).join(" · ") ||
@@ -536,6 +593,10 @@ export async function POST(req: Request) {
           tax_behavior: taxBehavior,
           tax_status: taxStatus,
           tax_total_cents: taxTotalCents,
+          pricing_source: pricing.metadata.pricing_source,
+          ...(pricing.metadata.teacher_offer_id
+            ? { teacher_offer_id: pricing.metadata.teacher_offer_id }
+            : {}),
           ...taxParams.metadata,
         },
       });

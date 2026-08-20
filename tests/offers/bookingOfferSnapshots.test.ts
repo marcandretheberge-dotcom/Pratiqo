@@ -277,7 +277,7 @@ test("POST /api/bookings exists and does not trust client student_id or snapshot
   assert.match(src, /createPendingPaymentBooking/);
   assert.match(src, /studentId: user\.id/);
   assert.doesNotMatch(src, /student_id:\s*parsed/);
-  assert.match(src, /legacy booking pricing remains the live payment source/);
+  assert.match(src, /Checkout charges from immutable booking snapshots/);
   assert.doesNotMatch(src, /computeBookingChargeCents|calculateBookingAmounts|from ["']stripe["']/);
 });
 
@@ -306,19 +306,19 @@ test("booking update endpoints cannot modify snapshot fields from client payload
   assert.match(read(MIGRATION), /bookings_preserve_offer_snapshot_fields/);
 });
 
-test("checkout and payment math files are unchanged", () => {
-  for (const rel of [
-    CHECKOUT,
-    "app/api/stripe/webhook/route.ts",
-    "lib/payments/commission.ts",
-    "lib/pricing/bookingCharge.ts",
-  ]) {
-    const src = read(rel);
-    assert.doesNotMatch(src, /teacher_offer/);
-    assert.doesNotMatch(src, /bookingOfferSnapshot/);
-    assert.doesNotMatch(src, /from ["']@\/lib\/offers/);
-  }
-  assert.doesNotMatch(read("lib/bookings/createPendingPaymentBooking.ts"), /computeBookingChargeCents/);
+test("checkout charges from booking offer snapshots via central resolver", () => {
+  const checkout = read(CHECKOUT);
+  assert.match(checkout, /resolveBookingCheckoutPrice\(/);
+  assert.match(checkout, /teacher_offer_price_cents_snapshot/);
+  assert.match(checkout, /pricing_source/);
+  assert.doesNotMatch(checkout, /from\(["']teacher_offers["']\)/);
+  assert.doesNotMatch(checkout, /computeBookingChargeCents\(/);
+});
+
+test("offer snapshot checkout flag and resolver modules exist", () => {
+  assert.match(read("lib/offers/offerSnapshotCheckout.ts"), /ENABLE_OFFER_SNAPSHOT_CHECKOUT/);
+  assert.match(read("lib/pricing/resolveBookingCheckoutPrice.ts"), /offer_snapshot/);
+  assert.match(read("lib/pricing/resolveBookingCheckoutPrice.ts"), /legacy_teacher_price/);
 });
 
 test("public search cards unchanged and no catalog added", () => {
