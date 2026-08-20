@@ -35,12 +35,16 @@ const CODE_SURFACES = [
   "docs/product/marketplace-independent-teacher-guardrails.md",
   "lib/offers/packageRedemptions.ts",
   "lib/offers/packageEntitlements.ts",
+  "lib/offers/studentPackages.ts",
   "components/BookingModal.tsx",
   "components/teacher/TeacherOfferForm.tsx",
   "components/teacher/PublicTeacherOffersSection.tsx",
   "components/admin/AdminPaymentSourceSection.tsx",
+  "components/student/StudentPackageDashboard.tsx",
+  "components/student/StudentPackageCard.tsx",
   "app/api/package-entitlements/route.ts",
   "app/api/package-entitlements/[entitlementId]/redeem/route.ts",
+  "app/api/student/packages/route.ts",
 ];
 
 /** i18n keys owned by offers/packages booking + admin payment source. */
@@ -49,6 +53,8 @@ const PACKAGE_OFFER_I18N_KEY_PREFIXES = [
   "adminPaymentSourcePackage",
   "adminOfferSnapshotListPackage",
   "cancelOutcomePackageCredit",
+  "studentPackages",
+  "studentTabPackages",
   "teacherOffer",
   "offerTypePackage",
   "publicOffer",
@@ -90,9 +96,10 @@ for (const localeFile of [
 const fr = read("lib/i18n/locales/fr.json");
 assert.match(fr, /Utiliser une séance du forfait/);
 assert.match(fr, /avec ce professeur/);
-assert.match(fr, /Forfait proposé par le professeur/);
+assert.match(fr, /Forfait proposé par le professeur|Forfait proposé par ce professeur/);
 assert.match(fr, /facilitée par Pratiqo/);
 assert.match(fr, /remise dans le forfait/);
+assert.match(fr, /"studentTabPackages": "Mes forfaits"/);
 
 console.log("ok - marketplace independent-teacher guardrails copy");
 console.log("[offers:marketplace-guardrails] tests passed");
