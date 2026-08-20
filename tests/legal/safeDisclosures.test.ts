@@ -427,7 +427,7 @@ const allowedTeacherSeoPublicationWorkflowFiles = new Set<string>([
   "package.json",
 ]);
 
-/** Booking offer snapshots (PR 7) — server snapshot columns + POST /api/bookings; no checkout/payment math. */
+/** Booking offer snapshots (PR 7) — server snapshot columns + POST /api/bookings. */
 const allowedBookingOfferSnapshotFiles = new Set<string>([
   "supabase/migrations/099_add_teacher_offer_snapshots_to_bookings.sql",
   "app/api/bookings/route.ts",
@@ -441,6 +441,32 @@ const allowedBookingOfferSnapshotFiles = new Set<string>([
   "lib/i18n/locales/es.json",
   "tests/offers/bookingOfferSnapshots.test.ts",
   "tests/offers/bookingOfferSelection.test.ts",
+  "tests/legal/safeDisclosures.test.ts",
+  "package.json",
+]);
+
+/** Checkout charges from booking offer snapshots (PR 8) — resolver + gated Stripe checkout only. */
+const allowedBookingOfferSnapshotCheckoutFiles = new Set<string>([
+  "lib/pricing/resolveBookingCheckoutPrice.ts",
+  "lib/offers/offerSnapshotCheckout.ts",
+  "lib/offers/bookingOfferSnapshot.ts",
+  "lib/offers/bookingOfferSelection.ts",
+  "app/api/stripe/checkout/route.ts",
+  "app/api/bookings/route.ts",
+  "lib/bookings/createPendingPaymentBooking.ts",
+  "components/BookingModal.tsx",
+  "components/teacher/BookingOfferPicker.tsx",
+  "components/teacher/BookingOfferSelectionSummary.tsx",
+  "lib/i18n/locales/fr.json",
+  "lib/i18n/locales/en.json",
+  "lib/i18n/locales/es.json",
+  ".env.example",
+  "tests/pricing/resolveBookingCheckoutPrice.test.ts",
+  "tests/pricing/lessonDuration.test.ts",
+  "tests/payments/bookingCharge.test.ts",
+  "tests/offers/bookingOfferSnapshots.test.ts",
+  "tests/offers/bookingOfferSelection.test.ts",
+  "tests/teacherSchedule/lessonDurationAutosave.test.ts",
   "tests/legal/safeDisclosures.test.ts",
   "package.json",
 ]);
@@ -617,6 +643,7 @@ test("safe-disclosure branch did not touch restricted systems", () => {
     if (allowedLocalTeacherDiscoverySeoFiles.has(file)) continue;
     if (allowedGroupSessionsLaunchSeoFiles.has(file)) continue;
     if (allowedBookingOfferSnapshotFiles.has(file)) continue;
+    if (allowedBookingOfferSnapshotCheckoutFiles.has(file)) continue;
     for (const rule of restrictedRules) {
       if (rule.re.test(file)) {
         violations.push(`${file} (${rule.label})`);

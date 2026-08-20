@@ -78,9 +78,9 @@ test("computeBookingChargeCents applies duration multiplier for standard studio 
   );
 });
 
-test("checkout route derives Stripe amount from computeBookingChargeCents, not bookings.price", () => {
+test("checkout route derives Stripe amount from resolveBookingCheckoutPrice, not bookings.price", () => {
   const src = readFileSync("app/api/stripe/checkout/route.ts", "utf8");
-  assert.match(src, /computeBookingChargeCents\(/);
+  assert.match(src, /resolveBookingCheckoutPrice\(/);
   assert.doesNotMatch(src, /bookingPriceDollars/);
   assert.doesNotMatch(src, /Number\(b\.price\)/);
 });

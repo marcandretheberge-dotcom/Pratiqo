@@ -7,6 +7,7 @@ import {
   formatTeacherOfferFormatLabel,
   formatTeacherOfferTypeLabel,
 } from "@/lib/offers/display";
+import { getBookingOfferSelectionNoteKey } from "@/lib/offers/offerSnapshotCheckout";
 import type { PublicTeacherOfferDto } from "@/lib/offers/publicTeacherOfferDto";
 
 type Props = {
@@ -48,7 +49,7 @@ export function BookingOfferSelectionSummary({ offer, onChangeOffer }: Props) {
           </button>
         ) : null}
       </div>
-      <p className="text-[11px] leading-relaxed text-slate-600">{t("bookingOfferSelectionPreviewNote")}</p>
+      <p className="text-[11px] leading-relaxed text-slate-600">{t(getBookingOfferSelectionNoteKey())}</p>
     </div>
   );
 }

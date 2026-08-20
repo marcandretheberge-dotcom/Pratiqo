@@ -5,10 +5,10 @@ import {
 } from "./publicTeacherOfferDto";
 
 /**
- * Offer selection is display/UX foundation only until checkout snapshots (PR 8).
- * When the feature flag is ON, BookingModal may send teacher_offer_id to
- * POST /api/bookings so the server can snapshot the published offer.
- * Payment must still use legacy teacher pricing until PR 8.
+ * Gated offer selection in BookingModal (PR 6). When enabled, POST /api/bookings
+ * may receive teacher_offer_id so the server snapshots the published offer (PR 7).
+ * Checkout charges from that immutable snapshot when ENABLE_OFFER_SNAPSHOT_CHECKOUT
+ * is ON (PR 8); otherwise snapshotted bookings are rejected at checkout.
  *
  * Booking offer snapshots are immutable booking-time copies.
  * Later edits to teacher_offers must not rewrite historical bookings.

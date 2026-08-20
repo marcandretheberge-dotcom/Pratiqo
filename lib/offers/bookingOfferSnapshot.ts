@@ -12,12 +12,9 @@ import {
  * Booking offer snapshots are immutable booking-time copies.
  * Later edits to teacher_offers must not rewrite historical bookings.
  *
- * Offer selection is display/UX + booking-row memory only.
- * Payment must use server-side offer snapshots in a later PR before selected
- * offers can affect checkout.
- *
- * PR 8 will make checkout validate and charge from booking offer snapshots.
- * Until then, legacy booking pricing remains the live payment source.
+ * Checkout validates and charges from these snapshots when
+ * ENABLE_OFFER_SNAPSHOT_CHECKOUT is ON (PR 8). Legacy bookings without
+ * snapshots continue to use teacher DB rates via resolveBookingCheckoutPrice.
  */
 
 export const BOOKING_TEACHER_OFFER_SNAPSHOT_VERSION = 1;

@@ -15,8 +15,8 @@ export const runtime = "nodejs";
  * The client may send teacher_offer_id only. Snapshot columns are ignored
  * and rejected if present.
  *
- * PR 8 will make checkout validate and charge from booking offer snapshots.
- * Until then, legacy booking pricing remains the live payment source.
+ * Checkout charges from immutable booking snapshots when ENABLE_OFFER_SNAPSHOT_CHECKOUT
+ * is ON (PR 8). Legacy bookings without snapshots keep teacher DB pricing.
  */
 export async function POST(req: Request): Promise<Response> {
   const authHeader = req.headers.get("authorization");

@@ -823,10 +823,10 @@ export function BookingModal({
         throw new Error(t("bookingSessionExpired"));
       }
 
-      // Until checkout snapshots are implemented, selected offers must not affect
-      // booking charge calculation.
-      // PR 8 will make checkout validate and charge from booking offer snapshots.
-      // Until then, legacy booking pricing remains the live payment source.
+      // Client display pricing still uses legacy teacher rates for the modal summary.
+      // Stripe checkout resolves the charge server-side via resolveBookingCheckoutPrice
+      // (booking snapshots when ENABLE_OFFER_SNAPSHOT_CHECKOUT is ON; legacy otherwise).
+      // Selected offers must not affect checkout payload amount or snapshot fields.
       const bookingCreateBody = {
         teacher_id: teacher.id,
         date: selectedDate,

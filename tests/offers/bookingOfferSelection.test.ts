@@ -140,8 +140,7 @@ test("BookingModal sends teacher_offer_id only via gated booking create helper, 
   const booking = read(BOOKING);
   assert.match(booking, /fetch\("\/api\/bookings"/);
   assert.match(booking, /buildBookingCreateOfferFields/);
-  assert.match(booking, /selected offers must not affect/);
-  assert.match(booking, /legacy booking pricing remains the live payment source/);
+  assert.match(booking, /Selected offers must not affect checkout payload amount or snapshot fields/);
   const checkoutBodyBlock = booking.match(/body: JSON\.stringify\(\{[\s\S]*?\}\),/);
   assert.ok(checkoutBodyBlock, "checkout JSON body should exist");
   assert.doesNotMatch(checkoutBodyBlock![0], /teacher_offer_id|teacherOfferId|offer_id|offerId/);
@@ -167,8 +166,11 @@ test("payment amount remains based on legacy teacher fields", () => {
   assert.doesNotMatch(pricingBlock![0], /selectedOffer|offer\.priceCents/);
 });
 
-test("checkout and Stripe files are unchanged by offer selection foundation", () => {
-  assert.doesNotMatch(read(CHECKOUT), /teacher_offer|BookingOfferPicker|bookingOfferSelection/);
+test("checkout reads booking offer snapshots via central pricing resolver", () => {
+  const checkout = read(CHECKOUT);
+  assert.match(checkout, /resolveBookingCheckoutPrice\(/);
+  assert.match(checkout, /teacher_offer_price_cents_snapshot/);
+  assert.doesNotMatch(checkout, /BookingOfferPicker|bookingOfferSelection/);
   assert.doesNotMatch(read("app/api/stripe/webhook/route.ts"), /teacher_offer/);
   assert.doesNotMatch(read("lib/payments/commission.ts"), /teacher_offer/);
   assert.doesNotMatch(read("lib/pricing/bookingCharge.ts"), /teacher_offer/);

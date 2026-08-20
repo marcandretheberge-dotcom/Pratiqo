@@ -89,7 +89,7 @@ test("checkout route rejects invalid duration_minutes before charging", () => {
 
   assert.match(src, /isValidLessonDurationMinutes/);
   assert.match(src, /Durée de cours invalide/);
-  assert.match(src, /computeBookingChargeCents\(/);
+  assert.match(src, /resolveBookingCheckoutPrice\(/);
   assert.doesNotMatch(src, /Number\(b\.price\)/);
   assert.doesNotMatch(src, /bookingPriceDollars/);
 });
