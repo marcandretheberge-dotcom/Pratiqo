@@ -171,7 +171,7 @@ test("checkout reads booking offer snapshots via central pricing resolver", () =
   assert.match(checkout, /resolveBookingCheckoutPrice\(/);
   assert.match(checkout, /teacher_offer_price_cents_snapshot/);
   assert.doesNotMatch(checkout, /BookingOfferPicker|bookingOfferSelection/);
-  assert.doesNotMatch(read("app/api/stripe/webhook/route.ts"), /teacher_offer/);
+  assert.doesNotMatch(read("app/api/stripe/webhook/route.ts"), /BookingOfferPicker|bookingOfferSelection/);
   assert.doesNotMatch(read("lib/payments/commission.ts"), /teacher_offer/);
   assert.doesNotMatch(read("lib/pricing/bookingCharge.ts"), /teacher_offer/);
 });

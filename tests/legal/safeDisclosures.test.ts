@@ -488,6 +488,25 @@ const allowedAdminOfferSnapshotVisibilityFiles = new Set<string>([
   "package.json",
 ]);
 
+/** Package purchase entitlement foundation (PR 10A). */
+const allowedPackageEntitlementFoundationFiles = new Set<string>([
+  "supabase/migrations/100_create_package_entitlements.sql",
+  "lib/offers/packageEntitlements.ts",
+  "lib/offers/offerSnapshotCheckout.ts",
+  "lib/pricing/resolveBookingCheckoutPrice.ts",
+  "app/api/stripe/checkout/route.ts",
+  "app/api/stripe/webhook/route.ts",
+  "app/(app)/booking/success/page.tsx",
+  ".env.example",
+  "tests/offers/packageEntitlements.test.ts",
+  "tests/pricing/resolveBookingCheckoutPrice.test.ts",
+  "tests/offers/teacherOffersApi.test.ts",
+  "tests/offers/bookingOfferSelection.test.ts",
+  "tests/security/rlsCoverage.test.ts",
+  "tests/legal/safeDisclosures.test.ts",
+  "package.json",
+]);
+
 function touchesSafeDisclosureScope(file: string): boolean {
   return (
     liveDisclosureFiles.includes(file) ||
@@ -662,6 +681,7 @@ test("safe-disclosure branch did not touch restricted systems", () => {
     if (allowedBookingOfferSnapshotFiles.has(file)) continue;
     if (allowedBookingOfferSnapshotCheckoutFiles.has(file)) continue;
     if (allowedAdminOfferSnapshotVisibilityFiles.has(file)) continue;
+    if (allowedPackageEntitlementFoundationFiles.has(file)) continue;
     for (const rule of restrictedRules) {
       if (rule.re.test(file)) {
         violations.push(`${file} (${rule.label})`);

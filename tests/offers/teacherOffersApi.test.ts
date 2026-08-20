@@ -465,7 +465,6 @@ test("DTO mapper omits created_by, address, and Stripe fields", () => {
 test("no Stripe/payment/checkout server files changed", () => {
   const forbidden = [
     "app/api/stripe/checkout/route.ts",
-    "app/api/stripe/webhook/route.ts",
     "lib/payments/commission.ts",
     "lib/payments/ledger.ts",
     "lib/pricing/bookingCharge.ts",
@@ -475,6 +474,9 @@ test("no Stripe/payment/checkout server files changed", () => {
     assert.doesNotMatch(src, /from ["']@\/lib\/offers/);
     assert.doesNotMatch(src, /\/api\/teacher\/offers/);
   }
+  const webhook = read("app/api/stripe/webhook/route.ts");
+  assert.doesNotMatch(webhook, /\/api\/teacher\/offers/);
+  assert.doesNotMatch(webhook, /from\(["']teacher_offers["']\)/);
 });
 
 test("no Mes formules / formules product label introduced", () => {

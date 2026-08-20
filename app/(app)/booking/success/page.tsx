@@ -34,6 +34,7 @@ import {
   upsertPaidBookingPayment,
 } from "@/lib/payments/ledger";
 import { issueLessonPaymentReceipt } from "@/lib/payments/receipts";
+import { maybeCreatePackageEntitlementAfterPaidBooking } from "@/lib/offers/packageEntitlements";
 import { shouldDeferLessonPaymentFinalization } from "@/lib/payments/tax";
 import {
   bookingWallTimeRangeToUtc,
@@ -150,7 +151,7 @@ async function verifyAndConfirm(sessionId: string, locale: Locale): Promise<Veri
   const bookingRes = await admin
     .from("bookings")
     .select(
-      "id, teacher_id, student_id, status, date, time, slot_date, time_slot, price, duration_minutes, teaching_mode, credits_applied, learner_profile_id, meeting_url",
+      "id, teacher_id, student_id, status, date, time, slot_date, time_slot, price, duration_minutes, teaching_mode, credits_applied, learner_profile_id, meeting_url, teacher_offer_id, teacher_offer_title_snapshot, teacher_offer_type_snapshot, teacher_offer_format_snapshot, teacher_offer_price_cents_snapshot, teacher_offer_currency_snapshot, teacher_offer_duration_minutes_snapshot, teacher_offer_session_count_snapshot, teacher_offer_discipline_id_snapshot, teacher_offer_specialite_snapshot, teacher_offer_short_description_snapshot, teacher_offer_snapshot_version",
     )
     .eq("id", bookingId)
     .maybeSingle();
@@ -214,6 +215,12 @@ async function verifyAndConfirm(sessionId: string, locale: Locale): Promise<Veri
         fallback_source: "booking_success_page",
       },
     }).catch((e) => console.error("[booking/success] booking payment ledger upsert failed", e));
+
+    await maybeCreatePackageEntitlementAfterPaidBooking({
+      admin,
+      bookingId,
+      booking,
+    }).catch((e) => console.error("[booking/success] package entitlement create failed", e));
 
     await issueLessonPaymentReceipt(admin, {
       bookingId,
