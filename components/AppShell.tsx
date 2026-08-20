@@ -14,6 +14,7 @@ import { useLocale } from "../lib/locale-context";
 import { LocaleSwitcher } from "./LocaleSwitcher";
 import { TeacherTopNav } from "./TeacherTopNav";
 import { YoNavButton } from "@/components/yo/YoNavButton";
+import { isStudentPackageDashboardUiEnabled } from "@/lib/offers/studentPackages";
 
 type Role = "student" | "teacher" | string;
 
@@ -88,6 +89,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const studentDisplayName = (profile?.name as string | undefined) || (user ? authDisplayName(user) : "");
   const studentInitials = initialsFromDisplay(studentDisplayName, user?.email || undefined);
 
+  const studentPackagesNavEnabled = isStudentPackageDashboardUiEnabled();
+
   // Student nav uses a discriminated `label | labelKey` union so we
   // can mix translated labels with the YoPratiqo brand name (which is
   // intentionally untranslated — it is the official product label, in
@@ -102,6 +105,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           | "studentTabLessons"
           | "studentTabProgress"
           | "studentTabLearners"
+          | "studentTabPackages"
           | "resolutionCenterTitle"
           | "messages"
           | "studentTabProfile";
@@ -113,6 +117,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     { href: "/student/progress", labelKey: "studentTabProgress" },
     { href: "/student/yopratiqo", label: "YoPratiqo" },
     { href: "/student/learners", labelKey: "studentTabLearners" },
+    ...(studentPackagesNavEnabled
+      ? ([{ href: "/student/packages", labelKey: "studentTabPackages" as const }] as const)
+      : []),
     { href: "/messages", labelKey: "messages" },
     { href: "/resolution", labelKey: "resolutionCenterTitle" },
     { href: "/profile", labelKey: "studentTabProfile" },
