@@ -29,6 +29,12 @@ import { notifyBookingCancelled } from "@/lib/bookings/cancellationNotifications
 
 export const runtime = "nodejs";
 
+// Package credit reversal on cancellation is intentionally deferred until
+// cancellation lifecycle is centralized.
+// Future PR: teacher-configurable cancellation/rescheduling preferences for offers/packages,
+// within Pratiqo marketplace safety and fairness rules.
+// See docs/product/marketplace-independent-teacher-guardrails.md.
+
 function localeFromAcceptLanguage(header: string | null | undefined): Locale {
   const h = (header ?? "").split(",")[0]?.trim().toLowerCase() ?? "";
   if (h.startsWith("fr")) return "fr";

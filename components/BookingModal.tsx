@@ -71,6 +71,10 @@ import {
   isBookingOfferSelectionEnabled,
   resolveBookingOfferSelection,
 } from "@/lib/offers/bookingOfferSelection";
+import {
+  isPackageRedemptionBookingUiEnabled,
+  type ActivePackageEntitlementSummary,
+} from "@/lib/offers/packageRedemptions";
 import type { PublicTeacherOfferDto } from "@/lib/offers/publicTeacherOfferDto";
 
 export type BookingInitialLessonKind = "standard" | "home";
@@ -246,6 +250,14 @@ export function BookingModal({
     [publicOffers, selectedOfferId, teacher.id],
   );
   const selectedOffer = selectedOfferSelection.selectedOffer;
+  const packageRedemptionUiEnabled = isPackageRedemptionBookingUiEnabled();
+  const [packageEntitlements, setPackageEntitlements] = useState<ActivePackageEntitlementSummary[]>([]);
+  const [selectedPackageEntitlementId, setSelectedPackageEntitlementId] = useState<string | null>(null);
+  const selectedPackageEntitlement = useMemo(
+    () => packageEntitlements.find((row) => row.id === selectedPackageEntitlementId) ?? null,
+    [packageEntitlements, selectedPackageEntitlementId],
+  );
+  const usePackageCredit = selectedPackageEntitlement != null;
 
   const [availableDays, setAvailableDays] = useState<Record<string, number>>({});
   const [slots, setSlots] = useState<string[]>([]);
@@ -325,6 +337,51 @@ export function BookingModal({
   useEffect(() => {
     setDurationMinutes(lessonMinutes);
   }, [lessonMinutes]);
+
+  useEffect(() => {
+    if (!packageRedemptionUiEnabled || !user || teacherIdInvalid) {
+      setPackageEntitlements([]);
+      setSelectedPackageEntitlementId(null);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      try {
+        const supabase = getSupabaseClient();
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        const accessToken = session?.access_token;
+        if (!accessToken) return;
+        const res = await fetch(
+          `/api/package-entitlements?teacher_id=${encodeURIComponent(teacher.id)}`,
+          { headers: { Authorization: `Bearer ${accessToken}` } },
+        );
+        if (!res.ok) {
+          if (!cancelled) {
+            setPackageEntitlements([]);
+            setSelectedPackageEntitlementId(null);
+          }
+          return;
+        }
+        const payload = (await res.json()) as { entitlements?: ActivePackageEntitlementSummary[] };
+        if (cancelled) return;
+        const rows = Array.isArray(payload.entitlements) ? payload.entitlements : [];
+        setPackageEntitlements(rows);
+        setSelectedPackageEntitlementId((current) =>
+          current && rows.some((row) => row.id === current) ? current : null,
+        );
+      } catch {
+        if (!cancelled) {
+          setPackageEntitlements([]);
+          setSelectedPackageEntitlementId(null);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [packageRedemptionUiEnabled, user, teacher.id, teacherIdInvalid]);
 
   const lessonHours = lessonMinutes / 60;
   const hourlyRate = teachingMode === "domicile" ? Number(teacher.homeLessonPrice ?? 0) : teacher.pricePerLesson;
@@ -782,7 +839,10 @@ export function BookingModal({
       return;
     }
 
-    if (!sessionBookable || !validateMinimumLessonPriceDollars(effectivePrice).ok) {
+    if (
+      !usePackageCredit &&
+      (!sessionBookable || !validateMinimumLessonPriceDollars(effectivePrice).ok)
+    ) {
       setCheckoutError(`${t("pricingMinLessonPrice")} ${t("pricingMinLessonPriceSuggestion")}`);
       return;
     }
@@ -827,6 +887,95 @@ export function BookingModal({
       // Stripe checkout resolves the charge server-side via resolveBookingCheckoutPrice
       // (booking snapshots when ENABLE_OFFER_SNAPSHOT_CHECKOUT is ON; legacy otherwise).
       // Selected offers must not affect checkout payload amount or snapshot fields.
+      //
+      // Package-credit path: redeem one session from a forfait purchased from this
+      // independent teacher. No Stripe checkout. Same teacher only — never reassigned.
+
+      if (usePackageCredit && selectedPackageEntitlement) {
+        const clientRequestId =
+          typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+            ? crypto.randomUUID()
+            : `pkg-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+        const redeemRes = await fetch(
+          `/api/package-entitlements/${selectedPackageEntitlement.id}/redeem`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${accessToken}`,
+            },
+            body: JSON.stringify({
+              client_request_id: clientRequestId,
+              slot_date: selectedDate,
+              time_slot: selectedSlot,
+              date: selectedDate,
+              time: selectedSlot,
+              teaching_mode: modeForDb,
+              student_level: selectedLevel,
+              student_address: modeForDb === "domicile" ? addressTrim : null,
+              learner_profile_id: learnerTrim === "" ? null : learnerTrim,
+              duration_minutes:
+                selectedPackageEntitlement.durationMinutes ?? lessonMinutes,
+            }),
+          },
+        );
+        const redeemRaw = await redeemRes.text();
+        let redeemPayload: {
+          booking?: { id?: string };
+          error?: string;
+        } = {};
+        try {
+          redeemPayload = redeemRaw ? (JSON.parse(redeemRaw) as typeof redeemPayload) : {};
+        } catch {
+          redeemPayload = {};
+        }
+        if (redeemRes.status === 400 && redeemPayload.error === "package_redemption_disabled") {
+          setCheckoutError(t("bookingPackageRedemptionDisabled"));
+          return;
+        }
+        if (redeemRes.status === 409 && redeemPayload.error === "no_remaining_sessions") {
+          setCheckoutError(t("bookingPackageNoRemainingSessions"));
+          return;
+        }
+        if (redeemRes.status === 409 && redeemPayload.error === "entitlement_not_active") {
+          setCheckoutError(t("bookingPackageNotActive"));
+          return;
+        }
+        if (redeemRes.status === 409 && redeemPayload.error === "slot_booked") {
+          setCheckoutError(t("slotBooked"));
+          return;
+        }
+        if (redeemRes.status === 400 && redeemPayload.error === "booking_minimum_notice") {
+          setCheckoutError(t("bookingMinimumNoticeError"));
+          return;
+        }
+        if (redeemRes.status === 404) {
+          setCheckoutError(t("bookingPackageNotFound"));
+          return;
+        }
+        if (!redeemRes.ok || !redeemPayload.booking?.id) {
+          setCheckoutError(redeemPayload.error || t("bookingUnknownError"));
+          return;
+        }
+
+        try {
+          await fetch(`/api/bookings/${redeemPayload.booking.id}/yopratiqo-bridge`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${accessToken}`,
+            },
+            body: JSON.stringify({ consent_granted: yoBridgeConsent }),
+          });
+        } catch {
+          // Bridge consent is not on the critical path.
+        }
+
+        redirecting = true;
+        window.location.assign(`/booking/success?booking_id=${encodeURIComponent(redeemPayload.booking.id)}&package_credit=1`);
+        return;
+      }
+
       const bookingCreateBody = {
         teacher_id: teacher.id,
         date: selectedDate,
@@ -1730,6 +1879,65 @@ export function BookingModal({
                   onChangeOffer={() => setStep("info")}
                 />
               ) : null}
+              {packageRedemptionUiEnabled && packageEntitlements.length > 0 ? (
+                <div
+                  className="rounded-2xl border border-teal-200 bg-teal-50/70 px-4 py-3 space-y-3"
+                  data-testid="booking-package-credit-panel"
+                >
+                  <div>
+                    <p className="text-sm font-semibold text-teal-950">
+                      {t("bookingPackageActiveTitle")}
+                    </p>
+                    <p className="mt-1 text-xs leading-relaxed text-slate-700">
+                      {t("bookingPackageActiveBody")}
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    {packageEntitlements.map((entitlement) => {
+                      const selected = selectedPackageEntitlementId === entitlement.id;
+                      return (
+                        <button
+                          key={entitlement.id}
+                          type="button"
+                          data-testid="booking-package-credit-option"
+                          aria-pressed={selected}
+                          onClick={() =>
+                            setSelectedPackageEntitlementId((current) =>
+                              current === entitlement.id ? null : entitlement.id,
+                            )
+                          }
+                          className={cn(
+                            "w-full rounded-xl border px-3 py-2 text-left text-sm transition",
+                            selected
+                              ? "border-teal-600 bg-white shadow-sm"
+                              : "border-teal-100 bg-white/70 hover:border-teal-300",
+                          )}
+                        >
+                          <span className="block font-semibold text-slate-900">
+                            {entitlement.title}
+                          </span>
+                          <span className="mt-0.5 block text-xs text-slate-600">
+                            {t("bookingPackageRemainingSessions").replace(
+                              "{n}",
+                              String(entitlement.remainingSessions),
+                            )}
+                          </span>
+                          <span className="mt-1 block text-xs font-semibold text-teal-800">
+                            {selected
+                              ? t("bookingPackageUseSessionSelected")
+                              : t("bookingPackageUseSession")}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {usePackageCredit ? (
+                    <p className="text-xs font-medium text-teal-900" role="status">
+                      {t("bookingPackageNoPaymentNote")}
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
               <div className="rounded-2xl border border-teal-500/35 bg-teal-500/10 p-4 space-y-2 text-sm">
                 <div className="flex justify-between gap-2">
                   <span className="text-slate-600">{t("bookingDateLabel")}</span>
@@ -1882,7 +2090,11 @@ export function BookingModal({
               ) : null}
               <div className="rounded-2xl border border-[#DCEAE3] bg-[#F3FAF6] px-4 py-3 text-xs text-slate-700 flex gap-2">
                 <Info size={15} className="mt-0.5 shrink-0 text-teal-700" aria-hidden />
-                <span>{t("bookingPaymentNote")} {paymentProcessedInCurrency}</span>
+                <span>
+                  {usePackageCredit
+                    ? t("bookingPackagePaymentFacilitatedNote")
+                    : `${t("bookingPaymentNote")} ${paymentProcessedInCurrency}`}
+                </span>
               </div>
               <YoBookingTeacherBridgeConsent
                 locale={locale as YoLocale}
@@ -1918,6 +2130,11 @@ export function BookingModal({
                     <>
                       <Loader2 className="animate-spin" size={18} />
                       {t("bookingRedirecting")}
+                    </>
+                  ) : usePackageCredit ? (
+                    <>
+                      <CheckCircle2 size={18} />
+                      {t("bookingPackageConfirm")}
                     </>
                   ) : (
                     <>

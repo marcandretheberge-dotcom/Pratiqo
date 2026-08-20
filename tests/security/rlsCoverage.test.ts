@@ -52,6 +52,7 @@ const EXPLICIT_RLS_HARDENING_FILES = [
   "096_teacher_offers_schema_rls.sql",
   "100_create_package_entitlements.sql",
   "101_package_entitlements_rls_if_exists.sql",
+  "102_create_package_redemptions.sql",
 ];
 
 function readMigration(file: string): string {

@@ -3,8 +3,8 @@
  *
  * Created only after a successful paid checkout for a booking whose
  * immutable offer snapshot type is `package`. Never reads live teacher_offers
- * for snapshot values. Session redemption is PR 10B — this module never
- * decrements used_sessions / remaining_sessions.
+ * for snapshot values. Session redemption is implemented in
+ * lib/offers/packageRedemptions.ts (PR 10B) via an atomic RPC.
  *
  * DO NOT import from client components for mutation.
  */

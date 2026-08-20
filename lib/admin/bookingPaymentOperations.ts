@@ -412,7 +412,11 @@ function mapBookingOfferSnapshotFields(
         : snapshotState.kind === "complete"
           ? snapshotState.snapshot.teacherOfferId
           : null,
-    pricingSource: deriveAdminPricingSource(snapshotState, metadataPricingSource),
+    pricingSource: deriveAdminPricingSource(
+      snapshotState,
+      metadataPricingSource,
+      typeof row.booking_payment_source === "string" ? row.booking_payment_source : null,
+    ),
   };
 }
 
