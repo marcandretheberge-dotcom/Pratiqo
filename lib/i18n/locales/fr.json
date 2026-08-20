@@ -2566,5 +2566,17 @@
   "teacherOffersApiInvalid": "Vérifiez les champs du formulaire.",
   "teacherOffersApiTransition": "Cette offre archivée ne peut pas être réactivée.",
   "teacherOffersApiLimit": "Vous avez atteint la limite provisoire d’offres.",
-  "teacherOffersApiConflict": "Ce slug est déjà utilisé."
+  "teacherOffersApiConflict": "Ce slug est déjà utilisé.",
+  "publicTeacherOffersSection": "Offres de cours",
+  "publicTeacherOffersShowDetails": "Voir les détails",
+  "publicTeacherOffersHideDetails": "Masquer les détails",
+  "publicTeacherOffersPriceHourly": "{price} /h",
+  "publicTeacherOffersPriceSession": "{price} / séance",
+  "publicTeacherOffersPricePackage": "{price} / forfait",
+  "publicTeacherOffersPriceAssessment": "{price} / évaluation",
+  "publicTeacherOffersPackageOf": "Forfait de {n} cours",
+  "publicTeacherOffersLevelChip": "Niveau {level}",
+  "publicTeacherOffersAgeRange": "Âge {min}–{max}",
+  "publicTeacherOffersAgeFrom": "Dès {min} ans",
+  "publicTeacherOffersAgeTo": "Jusqu’à {max} ans"
 }

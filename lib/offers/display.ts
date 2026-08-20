@@ -1,6 +1,7 @@
 import { formatAccountingDisplay } from "@/lib/currency/format";
 import type { TranslationKey } from "@/lib/i18n/types";
 import { getDisciplineLabel } from "@/lib/taxonomy/disciplines";
+import type { PublicTeacherOfferDto } from "./publicTeacherOfferDto";
 import type {
   TeacherOfferDto,
   TeacherOfferFormat,
@@ -130,6 +131,60 @@ export function teacherOfferApiErrorMessage(
   if (error.error === "slug_conflict") return t("teacherOffersApiConflict");
   if (error.status === 401) return t("teacherOffersLoadError");
   return t("teacherOffersActionError");
+}
+
+export function formatPublicTeacherOfferPriceLabel(
+  offer: Pick<PublicTeacherOfferDto, "offerType" | "priceCents">,
+  t: TeacherOfferTranslator,
+  locale: string,
+): string {
+  const price = formatTeacherOfferPrice(offer.priceCents, locale);
+  if (offer.offerType === "package") return t("publicTeacherOffersPricePackage").replace("{price}", price);
+  if (offer.offerType === "intro_session") return t("publicTeacherOffersPriceSession").replace("{price}", price);
+  if (offer.offerType === "assessment") return t("publicTeacherOffersPriceAssessment").replace("{price}", price);
+  return t("publicTeacherOffersPriceHourly").replace("{price}", price);
+}
+
+export function formatPublicTeacherOfferPackageChip(
+  offer: Pick<PublicTeacherOfferDto, "offerType" | "sessionCount">,
+  t: TeacherOfferTranslator,
+): string | null {
+  if (offer.offerType !== "package" || offer.sessionCount == null || offer.sessionCount < 1) return null;
+  return t("publicTeacherOffersPackageOf").replace("{n}", String(offer.sessionCount));
+}
+
+export function formatPublicTeacherOfferCapacity(
+  offer: Pick<PublicTeacherOfferDto, "capacityMin" | "capacityMax">,
+  t: TeacherOfferTranslator,
+): string | null {
+  const relevant =
+    (offer.capacityMax != null && offer.capacityMax > 1) ||
+    (offer.capacityMin != null && offer.capacityMin > 1);
+  if (!relevant) return null;
+  return formatTeacherOfferCapacity(offer, t);
+}
+
+export function formatPublicTeacherOfferAge(
+  offer: Pick<PublicTeacherOfferDto, "ageMin" | "ageMax">,
+  t: TeacherOfferTranslator,
+): string | null {
+  if (offer.ageMin != null && offer.ageMax != null) {
+    return t("publicTeacherOffersAgeRange")
+      .replace("{min}", String(offer.ageMin))
+      .replace("{max}", String(offer.ageMax));
+  }
+  if (offer.ageMin != null) return t("publicTeacherOffersAgeFrom").replace("{min}", String(offer.ageMin));
+  if (offer.ageMax != null) return t("publicTeacherOffersAgeTo").replace("{max}", String(offer.ageMax));
+  return null;
+}
+
+export function formatPublicTeacherOfferLevel(
+  level: string | null | undefined,
+  t: TeacherOfferTranslator,
+): string | null {
+  const trimmed = level?.trim();
+  if (!trimmed) return null;
+  return t("publicTeacherOffersLevelChip").replace("{level}", trimmed);
 }
 
 export function teacherOfferFormErrorKey(

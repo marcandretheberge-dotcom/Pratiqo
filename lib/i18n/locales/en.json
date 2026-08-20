@@ -2566,5 +2566,17 @@
   "teacherOffersApiInvalid": "Please check the form fields.",
   "teacherOffersApiTransition": "This archived offer cannot be reactivated.",
   "teacherOffersApiLimit": "You have reached the temporary offer limit.",
-  "teacherOffersApiConflict": "This slug is already in use."
+  "teacherOffersApiConflict": "This slug is already in use.",
+  "publicTeacherOffersSection": "Course offers",
+  "publicTeacherOffersShowDetails": "Show details",
+  "publicTeacherOffersHideDetails": "Hide details",
+  "publicTeacherOffersPriceHourly": "{price} /h",
+  "publicTeacherOffersPriceSession": "{price} / session",
+  "publicTeacherOffersPricePackage": "{price} / package",
+  "publicTeacherOffersPriceAssessment": "{price} / assessment",
+  "publicTeacherOffersPackageOf": "Package of {n} lessons",
+  "publicTeacherOffersLevelChip": "Level {level}",
+  "publicTeacherOffersAgeRange": "Ages {min}–{max}",
+  "publicTeacherOffersAgeFrom": "From age {min}",
+  "publicTeacherOffersAgeTo": "Up to age {max}"
 }

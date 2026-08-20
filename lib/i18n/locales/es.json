@@ -2566,5 +2566,17 @@
   "teacherOffersApiInvalid": "Revisa los campos del formulario.",
   "teacherOffersApiTransition": "Esta oferta archivada no se puede reactivar.",
   "teacherOffersApiLimit": "Alcanzaste el límite provisional de ofertas.",
-  "teacherOffersApiConflict": "Este slug ya está en uso."
+  "teacherOffersApiConflict": "Este slug ya está en uso.",
+  "publicTeacherOffersSection": "Ofertas de cursos",
+  "publicTeacherOffersShowDetails": "Ver detalles",
+  "publicTeacherOffersHideDetails": "Ocultar detalles",
+  "publicTeacherOffersPriceHourly": "{price} /h",
+  "publicTeacherOffersPriceSession": "{price} / sesión",
+  "publicTeacherOffersPricePackage": "{price} / paquete",
+  "publicTeacherOffersPriceAssessment": "{price} / evaluación",
+  "publicTeacherOffersPackageOf": "Paquete de {n} clases",
+  "publicTeacherOffersLevelChip": "Nivel {level}",
+  "publicTeacherOffersAgeRange": "Edad {min}–{max}",
+  "publicTeacherOffersAgeFrom": "Desde {min} años",
+  "publicTeacherOffersAgeTo": "Hasta {max} años"
 }
