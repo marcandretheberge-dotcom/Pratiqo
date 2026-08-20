@@ -40,6 +40,7 @@ const CODE_SURFACES = [
   "lib/offers/studentPackages.ts",
   "lib/offers/teacherPackages.ts",
   "lib/offers/offerCoverImages.ts",
+  "lib/offers/cancellationPreferences.ts",
   "components/BookingModal.tsx",
   "components/teacher/TeacherOfferForm.tsx",
   "components/teacher/TeacherOfferCoverUpload.tsx",

@@ -5,8 +5,13 @@ import type { PublicTeacherOfferDto } from "./publicTeacherOfferDto";
 import type {
   TeacherOfferDto,
   TeacherOfferFormat,
+  TeacherOfferPolicyPreference,
   TeacherOfferStatus,
   TeacherOfferType,
+} from "./types";
+import {
+  noticeHoursForTeacherOfferPolicyPreference,
+  TEACHER_OFFER_POLICY_PREFERENCES,
 } from "./types";
 
 export type TeacherOfferTranslator = (key: TranslationKey) => string;
@@ -38,6 +43,13 @@ const STATUS_LABEL_KEYS: Record<TeacherOfferStatus, TranslationKey> = {
   archived: "teacherOffersStatusArchived",
 };
 
+const POLICY_PREFERENCE_LABEL_KEYS: Record<TeacherOfferPolicyPreference, TranslationKey> = {
+  flexible: "teacherOffersPolicyFlexible",
+  standard: "teacherOffersPolicyStandard",
+  strict: "teacherOffersPolicyStrict",
+  manual_review: "teacherOffersPolicyManualReview",
+};
+
 export function formatTeacherOfferTypeLabel(
   type: TeacherOfferType,
   t: TeacherOfferTranslator,
@@ -57,6 +69,42 @@ export function formatTeacherOfferStatusLabel(
   t: TeacherOfferTranslator,
 ): string {
   return t(STATUS_LABEL_KEYS[status]);
+}
+
+export function formatTeacherOfferPolicyPreferenceLabel(
+  preference: TeacherOfferPolicyPreference,
+  t: TeacherOfferTranslator,
+): string {
+  return t(POLICY_PREFERENCE_LABEL_KEYS[preference]);
+}
+
+/** Public chip: teacher-defined cancellation preference, not a platform-imposed rule. */
+export function formatTeacherOfferCancellationPreferenceChip(
+  preference: TeacherOfferPolicyPreference | null | undefined,
+  t: TeacherOfferTranslator,
+): string | null {
+  if (!preference || !(TEACHER_OFFER_POLICY_PREFERENCES as readonly string[]).includes(preference)) {
+    return null;
+  }
+  const hours = noticeHoursForTeacherOfferPolicyPreference(preference);
+  if (preference === "manual_review" || hours == null) {
+    return t("teacherOffersCancellationManualChip");
+  }
+  return t("teacherOffersCancellationHoursChip").replace("{hours}", String(hours));
+}
+
+export function formatTeacherOfferReschedulePreferenceChip(
+  preference: TeacherOfferPolicyPreference | null | undefined,
+  t: TeacherOfferTranslator,
+): string | null {
+  if (!preference || !(TEACHER_OFFER_POLICY_PREFERENCES as readonly string[]).includes(preference)) {
+    return null;
+  }
+  const hours = noticeHoursForTeacherOfferPolicyPreference(preference);
+  if (preference === "manual_review" || hours == null) {
+    return t("teacherOffersRescheduleManualChip");
+  }
+  return t("teacherOffersRescheduleHoursChip").replace("{hours}", String(hours));
 }
 
 export function formatTeacherOfferPrice(priceCents: number, locale: string): string {

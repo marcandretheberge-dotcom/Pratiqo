@@ -69,6 +69,8 @@ function publishedRow(overrides: Record<string, unknown> = {}) {
     age_max: null,
     requires_identity: false,
     requires_manual_confirmation: false,
+    cancellation_preference: "standard",
+    reschedule_preference: "standard",
     published_at: "2026-08-19T12:00:00.000Z",
     updated_at: "2026-08-19T12:00:00.000Z",
     ...overrides,

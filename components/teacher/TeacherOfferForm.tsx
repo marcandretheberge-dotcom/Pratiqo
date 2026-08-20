@@ -3,10 +3,11 @@
 import React, { useId, useState } from "react";
 import { ChevronDown, Loader2 } from "lucide-react";
 import { useLocale } from "@/lib/locale-context";
-import { TEACHER_OFFER_FORMATS, TEACHER_OFFER_MVP_TYPES } from "@/lib/offers/types";
+import { TEACHER_OFFER_FORMATS, TEACHER_OFFER_MVP_TYPES, TEACHER_OFFER_POLICY_PREFERENCES } from "@/lib/offers/types";
 import type { TeacherOfferFormFieldError, TeacherOfferFormValues } from "@/lib/offers/clientPayload";
 import {
   formatTeacherOfferFormatLabel,
+  formatTeacherOfferPolicyPreferenceLabel,
   formatTeacherOfferTypeLabel,
   teacherOfferFormErrorKey,
 } from "@/lib/offers/display";
@@ -16,7 +17,7 @@ import { cn } from "@/lib/utils";
 import { TeacherOfferPublishChecklist } from "@/components/teacher/TeacherOfferPublishChecklist";
 import { TeacherOfferPreview } from "@/components/teacher/TeacherOfferPreview";
 import { TeacherOfferCoverUpload } from "@/components/teacher/TeacherOfferCoverUpload";
-import type { TeacherOfferDto } from "@/lib/offers/types";
+import type { TeacherOfferDto, TeacherOfferPolicyPreference } from "@/lib/offers/types";
 
 type Props = {
   values: TeacherOfferFormValues;
@@ -137,6 +138,7 @@ export function TeacherOfferForm({
   const formId = useId();
   const [openEssentials, setOpenEssentials] = useState(true);
   const [openPresentation, setOpenPresentation] = useState(true);
+  const [openPolicy, setOpenPolicy] = useState(true);
   const [openAdvanced, setOpenAdvanced] = useState(false);
   const [openMobilePreview, setOpenMobilePreview] = useState(false);
 
@@ -328,6 +330,60 @@ export function TeacherOfferForm({
                 onChange={(event) => onChange({ description: event.target.value })}
               />
               <FieldError errors={errors} keys={["description"]} />
+            </div>
+          </div>
+        </Section>
+
+        <Section
+          id={`${formId}-policy`}
+          title={t("teacherOffersSectionPolicy")}
+          hint={t("teacherOffersSectionPolicyHint")}
+          open={openPolicy}
+          onToggle={() => setOpenPolicy((value) => !value)}
+        >
+          <div className="space-y-4">
+            <p className="text-xs leading-relaxed text-slate-600">{t("teacherOffersPolicyHelper")}</p>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div>
+                <Label htmlFor="offer-cancellation">{t("teacherOffersFieldCancellationPreference")}</Label>
+                <select
+                  id="offer-cancellation"
+                  className={inputClass}
+                  value={values.cancellationPreference}
+                  disabled={disabled}
+                  onChange={(event) =>
+                    onChange({
+                      cancellationPreference: event.target.value as TeacherOfferPolicyPreference,
+                    })
+                  }
+                >
+                  {TEACHER_OFFER_POLICY_PREFERENCES.map((preference) => (
+                    <option key={preference} value={preference}>
+                      {formatTeacherOfferPolicyPreferenceLabel(preference, t)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <Label htmlFor="offer-reschedule">{t("teacherOffersFieldReschedulePreference")}</Label>
+                <select
+                  id="offer-reschedule"
+                  className={inputClass}
+                  value={values.reschedulePreference}
+                  disabled={disabled}
+                  onChange={(event) =>
+                    onChange({
+                      reschedulePreference: event.target.value as TeacherOfferPolicyPreference,
+                    })
+                  }
+                >
+                  {TEACHER_OFFER_POLICY_PREFERENCES.map((preference) => (
+                    <option key={preference} value={preference}>
+                      {formatTeacherOfferPolicyPreferenceLabel(preference, t)}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
         </Section>

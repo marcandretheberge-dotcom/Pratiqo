@@ -8,10 +8,12 @@ import type { TeacherOfferTranslator } from "@/lib/offers/display";
 import type { TeacherOfferDto } from "@/lib/offers/types";
 import {
   formatTeacherOfferCapacity,
+  formatTeacherOfferCancellationPreferenceChip,
   formatTeacherOfferDiscipline,
   formatTeacherOfferDuration,
   formatTeacherOfferFormatLabel,
   formatTeacherOfferPrice,
+  formatTeacherOfferReschedulePreferenceChip,
   formatTeacherOfferSessions,
   formatTeacherOfferStatusLabel,
   formatTeacherOfferTypeLabel,
@@ -46,6 +48,8 @@ export function TeacherOfferCard({ offer, busy = false, onAction }: Props) {
     duration,
     sessions,
     capacity,
+    formatTeacherOfferCancellationPreferenceChip(offer.cancellationPreference, t),
+    formatTeacherOfferReschedulePreferenceChip(offer.reschedulePreference, t),
   ].filter(Boolean);
 
   return (

@@ -66,6 +66,8 @@ function publishedOffer(overrides: Partial<PublicTeacherOfferDto> = {}): PublicT
     ageMax: null,
     requiresIdentity: false,
     requiresManualConfirmation: false,
+    cancellationPreference: "standard",
+    reschedulePreference: "standard",
     publishedAt: "2026-08-19T12:00:00.000Z",
     updatedAt: "2026-08-19T12:00:00.000Z",
     ...overrides,

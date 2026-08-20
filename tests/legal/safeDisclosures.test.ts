@@ -676,6 +676,37 @@ const allowedTeacherOfferCoverImageFiles = new Set<string>([
   "package.json",
 ]);
 
+/** Teacher cancellation/reschedule preferences (PR 16A). */
+const allowedTeacherOfferCancellationPreferenceFiles = new Set<string>([
+  "supabase/migrations/105_offer_cancellation_reschedule_preferences.sql",
+  "lib/offers/cancellationPreferences.ts",
+  "lib/offers/types.ts",
+  "lib/offers/validation.ts",
+  "lib/offers/clientPayload.ts",
+  "lib/offers/teacherOfferDto.ts",
+  "lib/offers/publicTeacherOfferDto.ts",
+  "lib/offers/bookingOfferSnapshot.ts",
+  "lib/offers/display.ts",
+  "lib/offers/adminOfferSnapshotDisplay.ts",
+  "lib/bookings/parseCreateBookingRequest.ts",
+  "components/teacher/TeacherOfferForm.tsx",
+  "components/teacher/TeacherOfferCard.tsx",
+  "components/teacher/PublicTeacherOfferCard.tsx",
+  "docs/product/marketplace-independent-teacher-guardrails.md",
+  "lib/i18n/locales/fr.json",
+  "lib/i18n/locales/en.json",
+  "lib/i18n/locales/es.json",
+  "tests/offers/teacherOfferCancellationPreferences.test.ts",
+  "tests/offers/bookingOfferSnapshots.test.ts",
+  "tests/offers/bookingOfferSelection.test.ts",
+  "tests/offers/teacherOffersApi.test.ts",
+  "tests/offers/teacherOfferPublishReadiness.test.ts",
+  "tests/offers/publicTeacherProfileOffers.test.ts",
+  "tests/offers/marketplaceIndependentTeacherGuardrails.test.ts",
+  "tests/legal/safeDisclosures.test.ts",
+  "package.json",
+]);
+
 function touchesSafeDisclosureScope(file: string): boolean {
   return (
     liveDisclosureFiles.includes(file) ||
@@ -859,6 +890,7 @@ test("safe-disclosure branch did not touch restricted systems", () => {
     if (allowedMarketplaceLegalHardeningFiles.has(file)) continue;
     if (allowedPackageLaunchReadinessFiles.has(file)) continue;
     if (allowedTeacherOfferCoverImageFiles.has(file)) continue;
+    if (allowedTeacherOfferCancellationPreferenceFiles.has(file)) continue;
     for (const rule of restrictedRules) {
       if (rule.re.test(file)) {
         violations.push(`${file} (${rule.label})`);

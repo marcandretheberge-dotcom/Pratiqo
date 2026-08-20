@@ -11,6 +11,18 @@
  * uses legacy teacher price fields until later PRs.
  */
 
+import type { TeacherOfferPolicyPreference } from "./cancellationPreferences";
+
+export type { TeacherOfferPolicyPreference } from "./cancellationPreferences";
+
+export {
+  DEFAULT_TEACHER_OFFER_POLICY_PREFERENCE,
+  TEACHER_OFFER_POLICY_PREFERENCES,
+  isTeacherOfferPolicyPreference,
+  noticeHoursForTeacherOfferPolicyPreference,
+  parseTeacherOfferPolicyPreference,
+} from "./cancellationPreferences";
+
 /** Defensive sanity cap only. Product plan/founder published-offer limits are implemented in a later PR. */
 export const TEACHER_OFFERS_SANITY_CAP = 50;
 
@@ -101,6 +113,8 @@ export type TeacherOffer = {
   locationMode: TeacherOfferFormat | null;
   requiresIdentity: boolean;
   requiresManualConfirmation: boolean;
+  cancellationPreference: TeacherOfferPolicyPreference;
+  reschedulePreference: TeacherOfferPolicyPreference;
   publishedAt: string | null;
   pausedAt: string | null;
   archivedAt: string | null;
@@ -133,6 +147,8 @@ export type TeacherOfferDto = {
   ageMax: number | null;
   requiresIdentity: boolean;
   requiresManualConfirmation: boolean;
+  cancellationPreference: TeacherOfferPolicyPreference;
+  reschedulePreference: TeacherOfferPolicyPreference;
   publishedAt: string | null;
   pausedAt: string | null;
   archivedAt: string | null;
@@ -162,6 +178,8 @@ export type TeacherOfferCreateInput = {
   ageMax: number | null;
   requiresIdentity: boolean;
   requiresManualConfirmation: boolean;
+  cancellationPreference: TeacherOfferPolicyPreference;
+  reschedulePreference: TeacherOfferPolicyPreference;
 };
 
 export type TeacherOfferUpdateInput = {
@@ -186,4 +204,6 @@ export type TeacherOfferUpdateInput = {
   ageMax?: number | null;
   requiresIdentity?: boolean;
   requiresManualConfirmation?: boolean;
+  cancellationPreference?: TeacherOfferPolicyPreference;
+  reschedulePreference?: TeacherOfferPolicyPreference;
 };

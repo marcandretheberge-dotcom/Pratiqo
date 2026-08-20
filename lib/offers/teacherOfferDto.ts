@@ -10,6 +10,7 @@ import {
   TEACHER_OFFER_FORMATS,
   TEACHER_OFFER_STATUSES,
   TEACHER_OFFER_TYPES,
+  parseTeacherOfferPolicyPreference,
 } from "./types";
 
 export const TEACHER_OFFER_SELECT_COLUMNS = [
@@ -36,6 +37,8 @@ export const TEACHER_OFFER_SELECT_COLUMNS = [
   "age_max",
   "requires_identity",
   "requires_manual_confirmation",
+  "cancellation_preference",
+  "reschedule_preference",
   "published_at",
   "paused_at",
   "archived_at",
@@ -67,6 +70,8 @@ export type TeacherOfferRow = {
   age_max: number | null;
   requires_identity: boolean;
   requires_manual_confirmation: boolean;
+  cancellation_preference: string;
+  reschedule_preference: string;
   published_at: string | null;
   paused_at: string | null;
   archived_at: string | null;
@@ -159,6 +164,8 @@ export function mapTeacherOfferRow(row: unknown): TeacherOfferDto | null {
     ageMax: asInt(raw.age_max),
     requiresIdentity: asBool(raw.requires_identity),
     requiresManualConfirmation: asBool(raw.requires_manual_confirmation),
+    cancellationPreference: parseTeacherOfferPolicyPreference(raw.cancellation_preference),
+    reschedulePreference: parseTeacherOfferPolicyPreference(raw.reschedule_preference),
     publishedAt: asNullableString(raw.published_at),
     pausedAt: asNullableString(raw.paused_at),
     archivedAt: asNullableString(raw.archived_at),

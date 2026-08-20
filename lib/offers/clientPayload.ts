@@ -1,5 +1,12 @@
-import { TEACHER_OFFER_FORMATS, TEACHER_OFFER_MVP_TYPES } from "./types";
-import type { TeacherOfferDto, TeacherOfferFormat, TeacherOfferType } from "./types";
+import {
+  DEFAULT_TEACHER_OFFER_POLICY_PREFERENCE,
+  TEACHER_OFFER_FORMATS,
+  TEACHER_OFFER_MVP_TYPES,
+  type TeacherOfferDto,
+  type TeacherOfferFormat,
+  type TeacherOfferPolicyPreference,
+  type TeacherOfferType,
+} from "./types";
 
 export const TEACHER_OFFER_CLIENT_FORBIDDEN_KEYS = [
   "teacher_id",
@@ -34,6 +41,8 @@ export type TeacherOfferFormValues = {
   specialite: string;
   requiresIdentity: boolean;
   requiresManualConfirmation: boolean;
+  cancellationPreference: TeacherOfferPolicyPreference;
+  reschedulePreference: TeacherOfferPolicyPreference;
 };
 
 export type TeacherOfferFormFieldError =
@@ -91,6 +100,8 @@ export function emptyTeacherOfferFormValues(): TeacherOfferFormValues {
     specialite: "",
     requiresIdentity: false,
     requiresManualConfirmation: false,
+    cancellationPreference: DEFAULT_TEACHER_OFFER_POLICY_PREFERENCE,
+    reschedulePreference: DEFAULT_TEACHER_OFFER_POLICY_PREFERENCE,
   };
 }
 
@@ -113,6 +124,8 @@ export function teacherOfferToFormValues(offer: TeacherOfferDto): TeacherOfferFo
     specialite: offer.specialite ?? "",
     requiresIdentity: offer.requiresIdentity,
     requiresManualConfirmation: offer.requiresManualConfirmation,
+    cancellationPreference: offer.cancellationPreference,
+    reschedulePreference: offer.reschedulePreference,
   };
 }
 
@@ -225,6 +238,8 @@ export function buildTeacherOfferWritePayload(values: TeacherOfferFormValues): T
     specialite: optionalText(values.specialite),
     requires_identity: values.requiresIdentity,
     requires_manual_confirmation: values.requiresManualConfirmation,
+    cancellation_preference: values.cancellationPreference,
+    reschedule_preference: values.reschedulePreference,
   };
 
   for (const key of TEACHER_OFFER_CLIENT_FORBIDDEN_KEYS) {

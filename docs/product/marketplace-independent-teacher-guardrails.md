@@ -131,9 +131,20 @@ When a learner redeems a package session:
 
 ## Cancellation / rescheduling
 
+Teachers may define reasonable cancellation and rescheduling **preferences** per offer (PR 16A). Pratiqo displays those preferences and snapshots them onto bookings. Framing:
+
+> Préférences d’annulation du professeur / Conditions proposées par le professeur
+
+not:
+
+> Politique Pratiqo imposée / Nos règles de cours
+
 When a package-credit booking is cancelled or declined **before** the lesson is completed, Pratiqo restores the unused session to the teacher-sold forfait (atomic server RPC). This is not a Stripe monetary refund and not employment-style control.
 
-Future package cancellation/rescheduling rules should be framed as teacher-defined terms within Pratiqo marketplace rules — not Pratiqo employment-style supervision.
+```ts
+// Future PR 16B: enforce cancellation/rescheduling preferences for package
+// credits and paid bookings within Pratiqo marketplace safety rules.
+```
 
 Do not impose a one-size-fits-all package policy unless legally reviewed.
 
