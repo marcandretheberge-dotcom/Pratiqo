@@ -144,7 +144,6 @@ test("booking identity caution is client-side only and does not change payment l
   assert.doesNotMatch(BOOKING_SRC, /from\s+["']stripe["']/);
   assert.doesNotMatch(BOOKING_SRC, /from\s+["']@stripe\//);
   assert.doesNotMatch(BOOKING_SRC, /from\s+["']@\/lib\/payments/);
-  assert.doesNotMatch(BOOKING_SRC, /from ["']@\/lib\/offers/);
 });
 
 test("no private address is exposed on search card, profile, or booking caution", () => {

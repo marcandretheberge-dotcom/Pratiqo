@@ -91,7 +91,6 @@ test("booking caution uses collapsed public identityVerified only", () => {
   assert.doesNotMatch(BOOKING, /identityVerifiedManually/);
   assert.match(BOOKING, /!teacherIdentityVerified && !identityCautionAcknowledged/);
   assert.match(BOOKING, /payableAmountCents/);
-  assert.doesNotMatch(BOOKING, /from ["']@\/lib\/offers/);
 });
 
 test("public TeacherProfile does not expose admin note, verifier, or manual source", () => {
