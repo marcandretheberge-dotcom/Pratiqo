@@ -141,9 +141,9 @@ test("reviews empty state is warmer and does not fake a rating", () => {
 });
 
 test("course options stay display-only and booking/trust files stay untouched", () => {
-  assert.match(PROFILE, /onBook\("standard"\)/);
+  assert.match(PROFILE, /openBooking\("standard"\)/);
   assert.doesNotMatch(PROFILE, /from ["']stripe["']/);
-  assert.doesNotMatch(PROFILE, /from ["']@\/lib\/offers/);
+  assert.doesNotMatch(PROFILE, /teacherOffersClient|teacher_offer_id/);
   assert.doesNotMatch(PROFILE, /teacher\.location\.address/);
   assert.doesNotMatch(SEARCH.slice(SEARCH.indexOf("function TeacherCard({")), /teacher-profile-summary/);
 });

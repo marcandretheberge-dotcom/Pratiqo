@@ -63,6 +63,14 @@ import {
   learnerHasYoPratiqoProgressForBridge,
 } from "@/lib/yopratiqo/fetchAuthenticatedProgressSnapshots";
 import { deriveStudentCompanionState } from "@/lib/yopratiqo/studentCompanionState";
+import { BookingOfferPicker } from "@/components/teacher/BookingOfferPicker";
+import { BookingOfferSelectionSummary } from "@/components/teacher/BookingOfferSelectionSummary";
+import {
+  getSelectableBookingOffers,
+  isBookingOfferSelectionEnabled,
+  resolveBookingOfferSelection,
+} from "@/lib/offers/bookingOfferSelection";
+import type { PublicTeacherOfferDto } from "@/lib/offers/publicTeacherOfferDto";
 
 export type BookingInitialLessonKind = "standard" | "home";
 
@@ -163,9 +171,17 @@ interface BookingModalProps {
   teacher: Teacher;
   onClose: () => void;
   initialLessonKind?: BookingInitialLessonKind;
+  initialSelectedOfferId?: string | null;
+  publicOffers?: PublicTeacherOfferDto[];
 }
 
-export function BookingModal({ teacher, onClose, initialLessonKind = "standard" }: BookingModalProps) {
+export function BookingModal({
+  teacher,
+  onClose,
+  initialLessonKind = "standard",
+  initialSelectedOfferId = null,
+  publicOffers,
+}: BookingModalProps) {
   const { user, profile } = useAuth();
   const { locale, t, formatDisplayPrice } = useLocale();
   const dateLocale = localeToBcp47(locale);
@@ -217,6 +233,18 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
     [teacher.identityVerified],
   );
   const [identityCautionAcknowledged, setIdentityCautionAcknowledged] = useState(false);
+  const offerSelectionEnabled = isBookingOfferSelectionEnabled();
+  const selectableOffers = useMemo(
+    () => getSelectableBookingOffers(publicOffers, teacher.id),
+    [publicOffers, teacher.id],
+  );
+  const showOfferSelection = offerSelectionEnabled && selectableOffers.length > 0;
+  const [selectedOfferId, setSelectedOfferId] = useState<string | null>(initialSelectedOfferId);
+  const selectedOfferSelection = useMemo(
+    () => resolveBookingOfferSelection(publicOffers, teacher.id, selectedOfferId),
+    [publicOffers, selectedOfferId, teacher.id],
+  );
+  const selectedOffer = selectedOfferSelection.selectedOffer;
 
   const [availableDays, setAvailableDays] = useState<Record<string, number>>({});
   const [slots, setSlots] = useState<string[]>([]);
@@ -443,7 +471,8 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
     setGeo(null);
     setContextDraft(draftFromLearner(null, suggestedContextType));
     setContextDirty(false);
-  }, [teacher.id, initialLessonKind, suggestedContextType]);
+    setSelectedOfferId(initialSelectedOfferId);
+  }, [teacher.id, initialLessonKind, initialSelectedOfferId, suggestedContextType]);
 
   useEffect(() => {
     setContextDraft(draftFromLearner(selectedLearner, suggestedContextType));
@@ -800,6 +829,8 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
         student_address: modeForDb === "domicile" ? addressTrim : null,
         learner_profile_id: learnerTrim === "" ? null : learnerTrim,
       };
+      // Until checkout snapshots are implemented, selected offers must not affect
+      // booking charge calculation. Do not send teacher_offer_id in this PR.
 
       const { data: inserted, error: insErr } = await supabase.from("bookings").insert(bookingData).select("id").single();
       if (insErr) {
@@ -1057,6 +1088,14 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
 
           {step === "info" && (
             <div className="space-y-4">
+              {showOfferSelection ? (
+                <BookingOfferPicker
+                  offers={selectableOffers}
+                  selectedOfferId={selectedOfferSelection.selectedOfferId}
+                  onSelect={setSelectedOfferId}
+                  onClear={() => setSelectedOfferId(null)}
+                />
+              ) : null}
               <p className="text-sm text-slate-600 leading-relaxed">
                 {teacher.bio || t("bookingTeacherSummaryFallback")}
               </p>
@@ -1648,6 +1687,12 @@ export function BookingModal({ teacher, onClose, initialLessonKind = "standard" 
                 </div>
               ) : null}
               <p className="text-sm font-bold text-slate-900">{t("bookingConfirmTitle")}</p>
+              {showOfferSelection && selectedOffer ? (
+                <BookingOfferSelectionSummary
+                  offer={selectedOffer}
+                  onChangeOffer={() => setStep("info")}
+                />
+              ) : null}
               <div className="rounded-2xl border border-teal-500/35 bg-teal-500/10 p-4 space-y-2 text-sm">
                 <div className="flex justify-between gap-2">
                   <span className="text-slate-600">{t("bookingDateLabel")}</span>

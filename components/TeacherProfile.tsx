@@ -60,8 +60,15 @@ import {
   isPublicTeacherIdentityVerified,
 } from "@/lib/teachers/badges";
 import { PublicTeacherOffersSection } from "@/components/teacher/PublicTeacherOffersSection";
+import type { PublicTeacherOfferDto } from "@/lib/offers/publicTeacherOfferDto";
+import { isBookingOfferSelectionEnabled } from "@/lib/offers/bookingOfferSelection";
 
 export type TeacherBookKind = "standard" | "home";
+
+export type TeacherBookContext = {
+  selectedOfferId?: string | null;
+  publicOffers?: PublicTeacherOfferDto[];
+};
 
 function normalizeMarketPlan(p: string | null | undefined): "free" | "pro" | "enterprise" {
   const raw = String(p || "free").toLowerCase();
@@ -94,7 +101,7 @@ function formatReviewerName(fullName: string): string {
 interface TeacherProfileProps {
   teacher: Teacher;
   onClose: () => void;
-  onBook: (kind: TeacherBookKind) => void;
+  onBook: (kind: TeacherBookKind, context?: TeacherBookContext) => void;
   /** Opens messaging with this teacher (requires `teacher.userId`). */
   onSendMessage?: () => void;
   distanceKm?: number | null;
@@ -135,6 +142,7 @@ export function TeacherProfile({
   const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
   const [replySavingId, setReplySavingId] = useState<string | null>(null);
   const [replyErrorId, setReplyErrorId] = useState<string | null>(null);
+  const [publicOffers, setPublicOffers] = useState<PublicTeacherOfferDto[]>([]);
 
   // Check whether this student has a confirmed booking with the teacher
   useEffect(() => {
@@ -158,6 +166,7 @@ export function TeacherProfile({
   // Fetch reviews + reviewer display names; reset when teacher changes
   useEffect(() => {
     if (!teacher.id) return;
+    setPublicOffers([]);
     setReviews([]);
     setReviewerNames(new Map());
     setReportTarget(null);
@@ -400,6 +409,24 @@ export function TeacherProfile({
 
   const displayReviewCount = Math.max(Number(teacher.reviews ?? 0), reviews.length);
   const hasReviews = hasPublicTeacherReviews({ rating: teacher.rating, reviewCount: displayReviewCount });
+
+  const openBooking = useCallback(
+    (kind: TeacherBookKind, context?: TeacherBookContext) => {
+      onBook(kind, {
+        ...context,
+        publicOffers: context?.publicOffers ?? publicOffers,
+      });
+    },
+    [onBook, publicOffers],
+  );
+
+  const handlePrepareOfferBooking = useCallback(
+    (offerId: string) => {
+      if (!isBookingOfferSelectionEnabled()) return;
+      openBooking("standard", { selectedOfferId: offerId });
+    },
+    [openBooking],
+  );
 
   const badgeInput = useMemo(
     () => ({
@@ -764,7 +791,11 @@ export function TeacherProfile({
                   />
                 ) : null}
 
-                <PublicTeacherOffersSection teacherId={teacher.id} />
+                <PublicTeacherOffersSection
+                  teacherId={teacher.id}
+                  onOffersLoaded={setPublicOffers}
+                  onPrepareBooking={handlePrepareOfferBooking}
+                />
 
                 {/* ── Reviews ────────────────────────────────────────────── */}
                 <div className="space-y-3">
@@ -936,7 +967,7 @@ export function TeacherProfile({
 
                     <button
                       type="button"
-                      onClick={() => onBook("standard")}
+                      onClick={() => openBooking("standard")}
                       className="w-full h-11 rounded-2xl text-white text-sm font-semibold shadow-sm hover:opacity-95 transition-opacity flex items-center justify-center gap-2"
                       style={{ backgroundColor: "var(--palette-teal-700)" }}
                     >
@@ -984,7 +1015,7 @@ export function TeacherProfile({
                         <button
                           type="button"
                           disabled={homeDisabled}
-                          onClick={() => onBook("home")}
+                          onClick={() => openBooking("home")}
                           className={cn(
                             "w-full rounded-xl border p-3 text-left text-sm transition-all",
                             homeDisabled
@@ -1130,7 +1161,7 @@ export function TeacherProfile({
         <div className="flex-shrink-0 border-t border-slate-100 bg-white px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:hidden">
           <button
             type="button"
-            onClick={() => onBook("standard")}
+            onClick={() => openBooking("standard")}
             className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-95"
             style={{ backgroundColor: "var(--palette-teal-700)" }}
           >

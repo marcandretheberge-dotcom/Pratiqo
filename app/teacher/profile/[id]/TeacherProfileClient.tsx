@@ -10,7 +10,7 @@ import {
   TEACHERS_LIST_SELECT_LEGACY_PUBLIC,
   TEACHERS_PUBLIC_TABLE,
 } from "@/lib/supabase/queries";
-import { TeacherProfile } from "@/components/TeacherProfile";
+import { TeacherProfile, type TeacherBookContext } from "@/components/TeacherProfile";
 import { BookingModal, type BookingInitialLessonKind } from "@/components/BookingModal";
 import { useRouter } from "next/navigation";
 import { haversineDistance } from "@/lib/geo";
@@ -64,6 +64,7 @@ export default function TeacherProfileClient({
   });
   const [booking, setBooking] = useState(false);
   const [bookingInitialKind, setBookingInitialKind] = useState<BookingInitialLessonKind>("standard");
+  const [bookingContext, setBookingContext] = useState<TeacherBookContext | undefined>();
   const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(null);
   const [geoDeniedOrUnavailable, setGeoDeniedOrUnavailable] = useState(false);
   const [studioMapHasConfirmedBooking, setStudioMapHasConfirmedBooking] = useState(false);
@@ -201,8 +202,9 @@ export default function TeacherProfileClient({
           studioMapHasConfirmedBooking={studioMapHasConfirmedBooking}
           pageHeadline={pageHeadline}
           onClose={() => router.push("/teacher/profile")}
-          onBook={(kind) => {
+          onBook={(kind, context) => {
             setBookingInitialKind(kind);
+            setBookingContext(context);
             setBooking(true);
           }}
           onSendMessage={
@@ -221,12 +223,15 @@ export default function TeacherProfileClient({
       ) : null}
       {booking ? (
         <BookingModal
-          key={`${displayTeacher.id}-${bookingInitialKind}`}
+          key={`${displayTeacher.id}-${bookingInitialKind}-${bookingContext?.selectedOfferId ?? "none"}`}
           teacher={displayTeacher}
           initialLessonKind={bookingInitialKind}
+          initialSelectedOfferId={bookingContext?.selectedOfferId ?? null}
+          publicOffers={bookingContext?.publicOffers}
           onClose={() => {
             setBooking(false);
             setBookingInitialKind("standard");
+            setBookingContext(undefined);
           }}
         />
       ) : null}

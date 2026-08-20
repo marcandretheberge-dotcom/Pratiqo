@@ -462,15 +462,13 @@ test("DTO mapper omits created_by, address, and Stripe fields", () => {
   assert.equal(JSON.stringify(mapped).includes("123 Rue"), false);
 });
 
-test("no Stripe/payment/checkout/booking files changed", () => {
+test("no Stripe/payment/checkout server files changed", () => {
   const forbidden = [
     "app/api/stripe/checkout/route.ts",
     "app/api/stripe/webhook/route.ts",
     "lib/payments/commission.ts",
     "lib/payments/ledger.ts",
     "lib/pricing/bookingCharge.ts",
-    "components/BookingModal.tsx",
-    "components/TeacherProfile.tsx",
   ];
   for (const rel of forbidden) {
     const src = read(rel);

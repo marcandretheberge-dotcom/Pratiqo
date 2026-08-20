@@ -2578,5 +2578,11 @@
   "publicTeacherOffersLevelChip": "Level {level}",
   "publicTeacherOffersAgeRange": "Ages {min}–{max}",
   "publicTeacherOffersAgeFrom": "From age {min}",
-  "publicTeacherOffersAgeTo": "Up to age {max}"
+  "publicTeacherOffersAgeTo": "Up to age {max}",
+  "bookingOfferSelectionTitle": "Choose a course offer",
+  "bookingOfferSelectionSelected": "Selected offer",
+  "bookingOfferSelectionChange": "Change offer",
+  "bookingOfferSelectionNone": "No specific offer",
+  "bookingOfferSelectionPrepare": "Prepare a booking",
+  "bookingOfferSelectionPreviewNote": "This selection prepares the booking. Final payment still uses the current booking rate until offers are fully enabled."
 }

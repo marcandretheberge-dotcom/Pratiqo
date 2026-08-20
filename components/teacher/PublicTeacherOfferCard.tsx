@@ -16,13 +16,16 @@ import {
 import type { PublicTeacherOfferDto } from "@/lib/offers/publicTeacherOfferDto";
 import { PUBLIC_TEACHER_PROFILE_DISCIPLINE_CHIP_CLASS } from "@/lib/teachers/display";
 import { cn } from "@/lib/utils";
+import { isBookingOfferSelectionEnabled } from "@/lib/offers/bookingOfferSelection";
 
 type Props = {
   offer: PublicTeacherOfferDto;
+  onPrepareBooking?: (offerId: string) => void;
 };
 
-export function PublicTeacherOfferCard({ offer }: Props) {
+export function PublicTeacherOfferCard({ offer, onPrepareBooking }: Props) {
   const { t, locale } = useLocale();
+  const showPrepareBooking = isBookingOfferSelectionEnabled() && typeof onPrepareBooking === "function";
   const [expanded, setExpanded] = useState(false);
   const detailsId = useId();
   const shortText = offer.shortDescription?.trim() || "";
@@ -85,6 +88,16 @@ export function PublicTeacherOfferCard({ offer }: Props) {
           onClick={() => setExpanded((open) => !open)}
         >
           {expanded ? t("publicTeacherOffersHideDetails") : t("publicTeacherOffersShowDetails")}
+        </button>
+      ) : null}
+      {showPrepareBooking ? (
+        <button
+          type="button"
+          data-testid="teacher-profile-offer-prepare-booking"
+          onClick={() => onPrepareBooking(offer.id)}
+          className="mt-3 inline-flex min-h-10 items-center justify-center rounded-full border border-teal-200 bg-white px-4 text-sm font-semibold text-teal-800 transition-colors hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2"
+        >
+          {t("bookingOfferSelectionPrepare")}
         </button>
       ) : null}
     </article>

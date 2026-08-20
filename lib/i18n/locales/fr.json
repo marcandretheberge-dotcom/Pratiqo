@@ -2578,5 +2578,11 @@
   "publicTeacherOffersLevelChip": "Niveau {level}",
   "publicTeacherOffersAgeRange": "Âge {min}–{max}",
   "publicTeacherOffersAgeFrom": "Dès {min} ans",
-  "publicTeacherOffersAgeTo": "Jusqu’à {max} ans"
+  "publicTeacherOffersAgeTo": "Jusqu’à {max} ans",
+  "bookingOfferSelectionTitle": "Choisir une offre de cours",
+  "bookingOfferSelectionSelected": "Offre sélectionnée",
+  "bookingOfferSelectionChange": "Changer d’offre",
+  "bookingOfferSelectionNone": "Sans offre spécifique",
+  "bookingOfferSelectionPrepare": "Préparer une réservation",
+  "bookingOfferSelectionPreviewNote": "Cette sélection prépare la réservation. Le paiement final utilisera encore le tarif de réservation actuel jusqu’à l’activation complète des offres."
 }

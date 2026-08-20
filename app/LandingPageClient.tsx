@@ -20,6 +20,7 @@ import { buildTeacherSignupLoginHref } from "@/lib/auth/teacherOnboardingIntent"
 import { useLocale } from "../lib/locale-context";
 import { useAuth } from "../components/AuthProvider";
 import type { BookingInitialLessonKind } from "../components/BookingModal";
+import type { TeacherBookContext } from "../components/TeacherProfile";
 import type { MapBounds } from "../components/SearchMapView";
 import { LandingDiscoverySearch } from "../components/marketing/LandingDiscoverySearch";
 import { LandingHeroTrustStrip } from "../components/marketing/LandingHeroTrustStrip";
@@ -188,6 +189,7 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
   const [selectedMapTeacher, setSelectedMapTeacher] = useState<Teacher | null>(null);
   const [bookingTeacher, setBookingTeacher] = useState<Teacher | null>(null);
   const [bookingInitialKind, setBookingInitialKind] = useState<BookingInitialLessonKind>("standard");
+  const [bookingContext, setBookingContext] = useState<TeacherBookContext | undefined>();
 
   const teacherResultsRef = useRef<HTMLDivElement>(null);
 
@@ -782,12 +784,13 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
           key={selectedTeacherProfile.id}
           teacher={selectedTeacherProfile}
           onClose={() => setSelectedTeacherProfile(null)}
-          onBook={(kind) => {
+          onBook={(kind, context) => {
             if (!user) {
               router.push(`/login?next=${encodeURIComponent("/student/search")}`);
               return;
             }
             setBookingInitialKind(kind);
+            setBookingContext(context);
             setBookingTeacher(selectedTeacherProfile);
             setSelectedTeacherProfile(null);
           }}
@@ -808,10 +811,16 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
 
       {bookingTeacher ? (
         <BookingModal
-          key={`${bookingTeacher.id}-${bookingInitialKind}`}
+          key={`${bookingTeacher.id}-${bookingInitialKind}-${bookingContext?.selectedOfferId ?? "none"}`}
           teacher={bookingTeacher}
           initialLessonKind={bookingInitialKind}
-          onClose={() => { setBookingTeacher(null); setBookingInitialKind("standard"); }}
+          initialSelectedOfferId={bookingContext?.selectedOfferId ?? null}
+          publicOffers={bookingContext?.publicOffers}
+          onClose={() => {
+            setBookingTeacher(null);
+            setBookingInitialKind("standard");
+            setBookingContext(undefined);
+          }}
         />
       ) : null}
 

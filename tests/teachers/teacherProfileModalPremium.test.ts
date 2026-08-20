@@ -170,12 +170,12 @@ test("discipline pills use one subtle non-clickable style and wrap", () => {
   assert.match(PROFILE, /PUBLIC_TEACHER_PROFILE_DISCIPLINE_CHIP_CLASS/);
 });
 
-test("cards do not regress and no payment or offers runtime is added", () => {
+test("cards do not regress and no payment or checkout offer wiring is added", () => {
   assert.doesNotMatch(TEACHER_CARD, /<TeacherBadgePill\b/);
   assert.match(TEACHER_CARD, /<TeacherCardIdentityCheck/);
   assert.doesNotMatch(PROFILE, /from ["']stripe["']/);
   assert.doesNotMatch(PROFILE, /from ["']@stripe\//);
-  assert.doesNotMatch(PROFILE, /from ["']@\/lib\/offers/);
+  assert.doesNotMatch(PROFILE, /teacherOffersClient|teacher_offer_id/);
   assert.doesNotMatch(BIO_HELPER, /from ["']stripe["']/);
   assert.doesNotMatch(PROFILE, /Mes formules|teacher_offers/);
 });

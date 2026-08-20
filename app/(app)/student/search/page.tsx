@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { importLibrary, setOptions } from "@googlemaps/js-api-loader";
 import type { Teacher } from "../../../../types";
 import type { BookingInitialLessonKind } from "../../../../components/BookingModal";
+import type { TeacherBookContext } from "../../../../components/TeacherProfile";
 import { useRouter, useSearchParams } from "next/navigation";
 import { MapPin, Star, Users, Video } from "lucide-react";
 import { useLocale } from "../../../../lib/locale-context";
@@ -99,6 +100,7 @@ export default function StudentSearchPage() {
   const [selectedMapTeacher, setSelectedMapTeacher] = useState<Teacher | null>(null);
   const [bookingTeacher, setBookingTeacher] = useState<Teacher | null>(null);
   const [bookingInitialKind, setBookingInitialKind] = useState<BookingInitialLessonKind>("standard");
+  const [bookingContext, setBookingContext] = useState<TeacherBookContext | undefined>();
   const [selectedTeacherProfile, setSelectedTeacherProfile] = useState<Teacher | null>(null);
   const [landingLocQuery, setLandingLocQuery] = useState("");
   const searchParams = useSearchParams();
@@ -799,12 +801,13 @@ export default function StudentSearchPage() {
           teacher={selectedTeacherProfile}
           distanceKm={selectedProfileDistanceKm}
           onClose={() => setSelectedTeacherProfile(null)}
-          onBook={(kind) => {
+          onBook={(kind, context) => {
             if (!user) {
               router.push(`/login?next=${encodeURIComponent("/student/search")}`);
               return;
             }
             setBookingInitialKind(kind);
+            setBookingContext(context);
             setBookingTeacher(selectedTeacherProfile);
             setSelectedTeacherProfile(null);
           }}
@@ -827,12 +830,15 @@ export default function StudentSearchPage() {
 
       {bookingTeacher && (
         <BookingModal
-          key={`${bookingTeacher.id}-${bookingInitialKind}`}
+          key={`${bookingTeacher.id}-${bookingInitialKind}-${bookingContext?.selectedOfferId ?? "none"}`}
           teacher={bookingTeacher}
           initialLessonKind={bookingInitialKind}
+          initialSelectedOfferId={bookingContext?.selectedOfferId ?? null}
+          publicOffers={bookingContext?.publicOffers}
           onClose={() => {
             setBookingTeacher(null);
             setBookingInitialKind("standard");
+            setBookingContext(undefined);
           }}
         />
       )}

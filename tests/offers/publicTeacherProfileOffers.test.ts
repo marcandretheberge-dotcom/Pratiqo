@@ -154,7 +154,7 @@ test("offer-specific booking CTA is not rendered", () => {
     assert.doesNotMatch(src, /teacher_offer_id/);
   }
   assert.match(read(CARD), /publicTeacherOffersShowDetails/);
-  assert.match(read(PROFILE), /onBook\("standard"\)/);
+  assert.match(read(PROFILE), /openBooking\("standard"\)/);
   assert.match(read(PROFILE), /teacher\.pricePerLesson/);
 });
 
@@ -207,14 +207,14 @@ test("offer fetch failure does not crash the profile", () => {
   assert.match(src, /catch \{/);
   assert.match(src, /setOffers\(\[\]\)/);
   assert.match(read(FETCH), /if \(error \|\| !Array\.isArray\(data\)\) return \[\]/);
-  assert.match(read(PROFILE), /PublicTeacherOffersSection teacherId=\{teacher\.id\}/);
-  assert.doesNotMatch(read(PROFILE), /from ["']@\/lib\/offers/);
+  assert.match(read(PROFILE), /PublicTeacherOffersSection/);
+  assert.match(read(PROFILE), /from "@\/lib\/offers\/bookingOfferSelection"/);
 });
 
 test("legacy Réserver maintenant still uses profile booking widget", () => {
   assert.match(read(PROFILE), /t\("bookNow"\)/);
-  assert.match(read(PROFILE), /onClick=\{\(\) => onBook\("standard"\)\}/);
-  assert.doesNotMatch(read(CARD), /onBook/);
+  assert.match(read(PROFILE), /openBooking\("standard"\)/);
+  assert.doesNotMatch(read("components/teacher/BookingOfferSelectionSummary.tsx"), /onBook/);
 });
 
 (async () => {
