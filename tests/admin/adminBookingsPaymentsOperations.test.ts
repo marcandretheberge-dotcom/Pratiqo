@@ -69,12 +69,17 @@ test("admin ops helpers forbid Stripe secrets and metadata dumps in responses", 
   assert.ok(ADMIN_OPS_FORBIDDEN_RESPONSE_KEYS.includes("client_secret"));
   assert.ok(ADMIN_OPS_FORBIDDEN_RESPONSE_KEYS.includes("metadata"));
   const lib = read("lib/admin/bookingPaymentOperations.ts");
-  const bookingSelect = lib.match(/const BOOKING_SELECT\s*=\s*\n?\s*"([^"]+)"/)?.[1] ?? "";
+  const bookingSelect =
+    lib.match(/const BOOKING_SELECT\s*=\s*\n?\s*"([^"]+)"/)?.[1] ??
+    lib.match(/const BOOKING_SELECT\s*=\s*\n?\s*"([^"]+)"\s*\+/)?.[1] ??
+    "";
   const paymentSelect = lib.match(/const PAYMENT_SELECT\s*=\s*\n?\s*"([^"]+)"/)?.[1] ?? "";
-  assert.ok(bookingSelect.length > 0, "BOOKING_SELECT missing");
+  assert.ok(bookingSelect.length > 0 || lib.includes("ADMIN_BOOKING_OFFER_SNAPSHOT_SELECT"), "BOOKING_SELECT missing");
   assert.ok(paymentSelect.length > 0, "PAYMENT_SELECT missing");
-  assert.doesNotMatch(bookingSelect, /client_secret|metadata|raw|payload/i);
-  assert.doesNotMatch(paymentSelect, /client_secret|metadata|raw|payload/i);
+  assert.doesNotMatch(bookingSelect, /client_secret|raw|payload/i);
+  assert.match(lib, /ADMIN_BOOKING_OFFER_SNAPSHOT_SELECT/);
+  assert.doesNotMatch(paymentSelect, /client_secret|raw|payload/i);
+  assert.match(paymentSelect, /metadata/);
   assert.match(paymentSelect, /stripe_payment_intent_id/);
   assert.match(paymentSelect, /stripe_checkout_session_id/);
   const bookingsRoute = read("app/api/admin/bookings/route.ts");

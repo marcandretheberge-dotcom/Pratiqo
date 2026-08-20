@@ -11,7 +11,11 @@ import {
   Search,
 } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
+import { AdminBookingOfferSnapshotSection } from "@/components/admin/AdminBookingOfferSnapshotSection";
+import { adminOfferListLabel } from "@/components/admin/AdminPaymentSourceSection";
 import { getSupabaseClient } from "@/lib/supabase";
+import { useLocale } from "@/lib/locale-context";
+import { adminOfferSnapshotViewStateFromFields } from "@/lib/offers/adminOfferSnapshotDisplay";
 import { cn } from "@/lib/utils";
 import {
   ADMIN_BOOKING_STATUSES,
@@ -102,6 +106,7 @@ function emptySummary(): AdminBookingsSummary {
 
 function AdminBookingsInner() {
   const { user, profile } = useAuth();
+  const { t } = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
   const isAdmin = (profile?.role as string | undefined) === "admin";
@@ -321,6 +326,7 @@ function AdminBookingsInner() {
                     <th className="px-3 py-2 font-medium">Élève</th>
                     <th className="px-3 py-2 font-medium">Prof</th>
                     <th className="px-3 py-2 font-medium">Format</th>
+                    <th className="px-3 py-2 font-medium">Offre</th>
                     <th className="px-3 py-2 font-medium">Montant</th>
                     <th className="px-3 py-2 font-medium">Paiement</th>
                     <th className="px-3 py-2 font-medium">Signal</th>
@@ -363,6 +369,12 @@ function AdminBookingsInner() {
                       </td>
                       <td className="px-3 py-2 text-xs">
                         {teachingModeLabel(b.teachingMode)}
+                      </td>
+                      <td className="px-3 py-2 text-xs">
+                        {adminOfferListLabel(
+                          adminOfferSnapshotViewStateFromFields(b),
+                          t,
+                        )}
                       </td>
                       <td className="px-3 py-2 text-xs">{formatMoneyDollars(b.price)}</td>
                       <td className="px-3 py-2 text-xs">
@@ -516,6 +528,10 @@ function AdminBookingsInner() {
                       ? selected.attentionLabels.join(", ")
                       : "Aucun"
                   }
+                />
+                <AdminBookingOfferSnapshotSection
+                  snapshotState={adminOfferSnapshotViewStateFromFields(selected)}
+                  pricingSource={selected.pricingSource}
                 />
                 {selected.student?.id ? (
                   <div>

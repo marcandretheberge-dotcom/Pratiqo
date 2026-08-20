@@ -9,6 +9,14 @@
  */
 
 import type { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import {
+  deriveAdminPricingSource,
+  extractPricingSourceFromPaymentMetadata,
+  mapAdminOfferSnapshotFromBookingRow,
+  type AdminBookingOfferSnapshotFields,
+  type AdminPricingSource,
+  ADMIN_BOOKING_OFFER_SNAPSHOT_SELECT,
+} from "@/lib/offers/adminOfferSnapshotDisplay";
 
 type AdminClient = ReturnType<typeof getSupabaseAdmin>;
 
@@ -74,6 +82,8 @@ export type AdminPersonSummary = {
   email: string | null;
 };
 
+export type { AdminBookingOfferSnapshotFields } from "@/lib/offers/adminOfferSnapshotDisplay";
+
 export type AdminBookingOpsRow = {
   id: string;
   shortId: string;
@@ -97,7 +107,7 @@ export type AdminBookingOpsRow = {
   stripeCheckoutSessionId: string | null;
   attentionCodes: AdminAttentionCode[];
   attentionLabels: AdminAttentionLabel[];
-};
+} & AdminBookingOfferSnapshotFields;
 
 export type AdminPaymentOpsRow = {
   id: string;
@@ -129,7 +139,7 @@ export type AdminPaymentOpsRow = {
   failureReason: string | null;
   attentionCodes: AdminAttentionCode[];
   attentionLabels: AdminAttentionLabel[];
-};
+} & AdminBookingOfferSnapshotFields;
 
 export type AdminBookingsSummary = {
   total: number;
@@ -151,10 +161,11 @@ export type AdminPaymentsSummary = {
 };
 
 const BOOKING_SELECT =
-  "id, teacher_id, student_id, status, date, time, slot_date, time_slot, teaching_mode, price, duration_minutes, credits_applied, created_at, cancelled_at, cancellation_reason, refund_status, refund_amount, refund_method, stripe_payment_intent_id, lesson_type";
+  "id, teacher_id, student_id, status, date, time, slot_date, time_slot, teaching_mode, price, duration_minutes, credits_applied, created_at, cancelled_at, cancellation_reason, refund_status, refund_amount, refund_method, stripe_payment_intent_id, lesson_type, " +
+  ADMIN_BOOKING_OFFER_SNAPSHOT_SELECT;
 
 const PAYMENT_SELECT =
-  "id, booking_id, teacher_id, student_id, amount_cents, subtotal_cents, platform_fee_cents, teacher_net_cents, refunded_cents, currency, payment_status, transfer_status, refund_status, stripe_checkout_session_id, stripe_payment_intent_id, stripe_charge_id, stripe_transfer_id, paid_at, failed_at, failure_reason, created_at, updated_at";
+  "id, booking_id, teacher_id, student_id, amount_cents, subtotal_cents, platform_fee_cents, teacher_net_cents, refunded_cents, currency, payment_status, transfer_status, refund_status, stripe_checkout_session_id, stripe_payment_intent_id, stripe_charge_id, stripe_transfer_id, paid_at, failed_at, failure_reason, created_at, updated_at, metadata";
 
 const PENDING_BOOKING_HOURS = 24;
 const PENDING_PAYMENT_HOURS = 24;
@@ -387,6 +398,24 @@ function personFrom(
   return { id: profile.id, name: profile.name, email: profile.email };
 }
 
+function mapBookingOfferSnapshotFields(
+  row: Record<string, unknown>,
+  metadataPricingSource?: string | null,
+): AdminBookingOfferSnapshotFields {
+  const snapshotState = mapAdminOfferSnapshotFromBookingRow(row);
+  return {
+    offerSnapshot: snapshotState.kind === "complete" ? snapshotState.snapshot : null,
+    offerSnapshotIncomplete: snapshotState.kind === "incomplete",
+    offerSnapshotTeacherOfferId:
+      snapshotState.kind === "incomplete"
+        ? snapshotState.teacherOfferId
+        : snapshotState.kind === "complete"
+          ? snapshotState.snapshot.teacherOfferId
+          : null,
+    pricingSource: deriveAdminPricingSource(snapshotState, metadataPricingSource),
+  };
+}
+
 export type ListAdminBookingsInput = {
   status?: string | null;
   q?: string | null;
@@ -421,7 +450,7 @@ export async function listAdminBookings(
     throw new Error(error.message);
   }
 
-  const rows = (data ?? []) as Array<Record<string, unknown>>;
+  const rows = (data ?? []) as unknown as Array<Record<string, unknown>>;
   const studentIds = rows.map((r) => String(r.student_id ?? ""));
   const teacherIds = rows.map((r) => String(r.teacher_id ?? ""));
   const bookingIds = rows.map((r) => String(r.id ?? ""));
@@ -524,6 +553,7 @@ export async function listAdminBookings(
       stripeCheckoutSessionId: (pay?.stripe_checkout_session_id as string | null) || null,
       attentionCodes: attention.codes,
       attentionLabels: attention.labels,
+      ...mapBookingOfferSnapshotFields(row),
     };
 
     if (q) {
@@ -536,6 +566,8 @@ export async function listAdminBookings(
         opsRow.teacher?.name,
         opsRow.teacher?.email,
         opsRow.paymentStatus,
+        opsRow.offerSnapshot?.title,
+        opsRow.offerSnapshotTeacherOfferId,
       ]
         .filter(Boolean)
         .join(" ")
@@ -598,7 +630,7 @@ export async function listAdminPayments(
     throw new Error(error.message);
   }
 
-  const rows = (data ?? []) as Array<Record<string, unknown>>;
+  const rows = (data ?? []) as unknown as Array<Record<string, unknown>>;
   const studentIds = rows.map((r) => String(r.student_id ?? ""));
   const teacherIds = rows.map((r) => String(r.teacher_id ?? ""));
   const bookingIds = rows.map((r) => String(r.booking_id ?? ""));
@@ -610,7 +642,7 @@ export async function listAdminPayments(
       if (bookingIds.length === 0) return [] as Array<Record<string, unknown>>;
       const { data: bData, error: bErr } = await admin
         .from("bookings")
-        .select("id, credits_applied")
+        .select(`id, credits_applied, ${ADMIN_BOOKING_OFFER_SNAPSHOT_SELECT}`)
         .in("id", bookingIds);
       if (bErr) {
         console.error("[admin/ops] payments bookings join failed", bErr.message);
@@ -625,8 +657,11 @@ export async function listAdminPayments(
     .filter((id): id is string => Boolean(id));
   const teacherProfiles = await loadProfilesByIds(admin, teacherUserIds);
   const creditsByBooking = new Map<string, number>();
+  const bookingById = new Map<string, Record<string, unknown>>();
   for (const b of bookings) {
-    creditsByBooking.set(String(b.id), Number(b.credits_applied ?? 0));
+    const bookingId = String(b.id);
+    creditsByBooking.set(bookingId, Number(b.credits_applied ?? 0));
+    bookingById.set(bookingId, b);
   }
 
   const q = input.q?.trim().toLowerCase() ?? "";
@@ -655,6 +690,10 @@ export async function listAdminPayments(
       teacher: teacherPerson,
       teacherStripeIncomplete: isTeacherStripeIncomplete(teacher),
     });
+
+    const bookingRow = bookingById.get(String(row.booking_id ?? "")) ?? {};
+    const metadataPricingSource = extractPricingSourceFromPaymentMetadata(row.metadata);
+    const snapshotFields = mapBookingOfferSnapshotFields(bookingRow, metadataPricingSource);
 
     const opsRow: AdminPaymentOpsRow = {
       id,
@@ -701,6 +740,7 @@ export async function listAdminPayments(
       failureReason: (row.failure_reason as string | null) ?? null,
       attentionCodes: attention.codes,
       attentionLabels: attention.labels,
+      ...snapshotFields,
     };
 
     if (q) {

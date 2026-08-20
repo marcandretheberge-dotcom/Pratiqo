@@ -11,7 +11,13 @@ import {
   Search,
 } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
+import {
+  AdminPaymentSourceSection,
+  adminPaymentSourceListLabel,
+} from "@/components/admin/AdminPaymentSourceSection";
 import { getSupabaseClient } from "@/lib/supabase";
+import { useLocale } from "@/lib/locale-context";
+import { adminOfferSnapshotViewStateFromFields } from "@/lib/offers/adminOfferSnapshotDisplay";
 import { cn } from "@/lib/utils";
 import {
   ADMIN_OPS_UNAVAILABLE,
@@ -109,6 +115,7 @@ function emptySummary(): AdminPaymentsSummary {
 
 function AdminPaymentsInner() {
   const { user, profile } = useAuth();
+  const { t } = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
   const isAdmin = (profile?.role as string | undefined) === "admin";
@@ -337,6 +344,7 @@ function AdminPaymentsInner() {
                     <th className="px-3 py-2 font-medium">Brut</th>
                     <th className="px-3 py-2 font-medium">Commission</th>
                     <th className="px-3 py-2 font-medium">Prof net</th>
+                    <th className="px-3 py-2 font-medium">Source</th>
                     <th className="px-3 py-2 font-medium">Statut</th>
                     <th className="px-3 py-2 font-medium">Versement</th>
                     <th className="px-3 py-2 font-medium">Signal</th>
@@ -373,6 +381,9 @@ function AdminPaymentsInner() {
                       </td>
                       <td className="px-3 py-2 text-xs">
                         {formatMoneyCents(p.teacherNetCents, p.currency ?? "CAD")}
+                      </td>
+                      <td className="px-3 py-2 text-xs">
+                        {adminPaymentSourceListLabel(p.pricingSource, t)}
                       </td>
                       <td className="px-3 py-2">
                         <span
@@ -552,6 +563,13 @@ function AdminPaymentsInner() {
                       ? selected.attentionLabels.join(", ")
                       : "Aucun"
                   }
+                />
+                <AdminPaymentSourceSection
+                  pricingSource={selected.pricingSource}
+                  snapshotState={adminOfferSnapshotViewStateFromFields(selected)}
+                  chargedAmountCents={selected.amountCents}
+                  subtotalCents={selected.subtotalCents}
+                  currency={selected.currency}
                 />
                 {selected.bookingId ? (
                   <div>
