@@ -2584,5 +2584,8 @@
   "bookingOfferSelectionChange": "Cambiar oferta",
   "bookingOfferSelectionNone": "Sin oferta específica",
   "bookingOfferSelectionPrepare": "Preparar una reserva",
-  "bookingOfferSelectionPreviewNote": "Esta selección prepara la reserva. El pago final todavía usa la tarifa actual de reserva hasta que las ofertas estén completamente activadas."
+  "bookingOfferSelectionPreviewNote": "Esta selección prepara la reserva. El pago final todavía usa la tarifa actual de reserva hasta que las ofertas estén completamente activadas.",
+  "bookingOfferSelectionDisabled": "La selección de oferta aún no está activada.",
+  "bookingOfferNotFound": "Esta oferta ya no está disponible para la reserva.",
+  "bookingOfferNotBookable": "Esta oferta no se puede reservar."
 }

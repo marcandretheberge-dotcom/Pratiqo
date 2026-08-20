@@ -66,6 +66,7 @@ import { deriveStudentCompanionState } from "@/lib/yopratiqo/studentCompanionSta
 import { BookingOfferPicker } from "@/components/teacher/BookingOfferPicker";
 import { BookingOfferSelectionSummary } from "@/components/teacher/BookingOfferSelectionSummary";
 import {
+  buildBookingCreateOfferFields,
   getSelectableBookingOffers,
   isBookingOfferSelectionEnabled,
   resolveBookingOfferSelection,
@@ -813,35 +814,6 @@ export function BookingModal({
           return;
         }
       }
-      const bookingData = {
-        teacher_id: teacher.id,
-        student_id: user.id,
-        date: selectedDate,
-        time: selectedSlot,
-        slot_date: selectedDate,
-        time_slot: selectedSlot,
-        student_level: selectedLevel,
-        teaching_mode: modeForDb,
-        status: "pending_payment",
-        lesson_type: lessonType,
-        price: basePrice,
-        duration_minutes: lessonMinutes,
-        student_address: modeForDb === "domicile" ? addressTrim : null,
-        learner_profile_id: learnerTrim === "" ? null : learnerTrim,
-      };
-      // Until checkout snapshots are implemented, selected offers must not affect
-      // booking charge calculation. Do not send teacher_offer_id in this PR.
-
-      const { data: inserted, error: insErr } = await supabase.from("bookings").insert(bookingData).select("id").single();
-      if (insErr) {
-        if ((insErr as { code?: string }).code === "23505") {
-          setCheckoutError(t("slotBooked"));
-          return;
-        }
-        throw insErr;
-      }
-      const bookingId = inserted?.id as string;
-      if (!bookingId) throw new Error("Missing booking id after insert.");
 
       const {
         data: { session },
@@ -850,6 +822,71 @@ export function BookingModal({
       if (!accessToken) {
         throw new Error(t("bookingSessionExpired"));
       }
+
+      // Until checkout snapshots are implemented, selected offers must not affect
+      // booking charge calculation.
+      // PR 8 will make checkout validate and charge from booking offer snapshots.
+      // Until then, legacy booking pricing remains the live payment source.
+      const bookingCreateBody = {
+        teacher_id: teacher.id,
+        date: selectedDate,
+        time: selectedSlot,
+        slot_date: selectedDate,
+        time_slot: selectedSlot,
+        student_level: selectedLevel,
+        teaching_mode: modeForDb,
+        lesson_type: lessonType,
+        price: basePrice,
+        duration_minutes: lessonMinutes,
+        student_address: modeForDb === "domicile" ? addressTrim : null,
+        learner_profile_id: learnerTrim === "" ? null : learnerTrim,
+        ...buildBookingCreateOfferFields(selectedOfferSelection.selectedOfferId),
+      };
+
+      const createRes = await fetch("/api/bookings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify(bookingCreateBody),
+      });
+      const createRaw = await createRes.text();
+      let createPayload: { id?: string; error?: string } = {};
+      try {
+        createPayload = createRaw ? (JSON.parse(createRaw) as typeof createPayload) : {};
+      } catch {
+        createPayload = {};
+      }
+      if (createRes.status === 409 && createPayload.error === "intro_session_already_used") {
+        setCheckoutError(t("introSessionAlreadyUsed"));
+        return;
+      }
+      if (createRes.status === 409 && createPayload.error === "offer_not_bookable") {
+        setCheckoutError(t("bookingOfferNotBookable"));
+        return;
+      }
+      if (createRes.status === 409) {
+        setCheckoutError(t("slotBooked"));
+        return;
+      }
+      if (createRes.status === 400 && createPayload.error === "offer_selection_disabled") {
+        setCheckoutError(t("bookingOfferSelectionDisabled"));
+        return;
+      }
+      if (createRes.status === 404 && createPayload.error === "offer_not_found") {
+        setCheckoutError(t("bookingOfferNotFound"));
+        return;
+      }
+      if (createRes.status === 400 && createPayload.error === "booking_minimum_notice") {
+        setCheckoutError(t("bookingMinimumNoticeError"));
+        return;
+      }
+      if (!createRes.ok || !createPayload.id) {
+        setCheckoutError(createPayload.error || t("bookingUnknownError"));
+        return;
+      }
+      const bookingId = createPayload.id;
 
       // Persist the YoPratiqo → teacher bridge consent for THIS booking.
       // Fire-and-forget: a transient failure here must NOT block checkout

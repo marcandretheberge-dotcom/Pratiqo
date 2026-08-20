@@ -5,9 +5,13 @@ import {
 } from "./publicTeacherOfferDto";
 
 /**
- * Offer selection is display/UX foundation only.
- * Payment must use server-side offer snapshots in a later PR before selected
- * offers can affect checkout.
+ * Offer selection is display/UX foundation only until checkout snapshots (PR 8).
+ * When the feature flag is ON, BookingModal may send teacher_offer_id to
+ * POST /api/bookings so the server can snapshot the published offer.
+ * Payment must still use legacy teacher pricing until PR 8.
+ *
+ * Booking offer snapshots are immutable booking-time copies.
+ * Later edits to teacher_offers must not rewrite historical bookings.
  */
 
 export const BOOKING_OFFER_SELECTION_FLAG = "NEXT_PUBLIC_ENABLE_BOOKING_OFFER_SELECTION";
@@ -64,9 +68,19 @@ const FORBIDDEN_BOOKING_OFFER_KEYS = [
   "offerId",
 ] as const;
 
-/** Guard for future payload builders — selected offers must stay out of payment APIs. */
+/** Guard for checkout/payment payloads — selected offers must stay out of Stripe APIs until PR 8. */
 export function bookingPayloadExcludesOfferIdentity(payload: Record<string, unknown>): boolean {
   return !FORBIDDEN_BOOKING_OFFER_KEYS.some((key) => key in payload);
+}
+
+/** Client may send teacher_offer_id only when the gated picker is enabled and an offer is selected. */
+export function buildBookingCreateOfferFields(selectedOfferId: string | null | undefined): {
+  teacher_offer_id?: string;
+} {
+  if (!isBookingOfferSelectionEnabled()) return {};
+  const trimmed = selectedOfferId?.trim() ?? "";
+  if (!trimmed) return {};
+  return { teacher_offer_id: trimmed };
 }
 
 /** Re-export for callers that already fetch raw rows. */

@@ -8,6 +8,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
   BOOKING_OFFER_SELECTION_FLAG,
+  buildBookingCreateOfferFields,
   bookingPayloadExcludesOfferIdentity,
   canSelectOfferForBooking,
   getSelectableBookingOffers,
@@ -135,28 +136,23 @@ test("selected offer summary and picker render when enabled", () => {
   assert.match(read(PICKER), /booking-offer-clear/);
 });
 
-test("BookingModal does not send teacher_offer_id to booking or checkout APIs", () => {
+test("BookingModal sends teacher_offer_id only via gated booking create helper, never to checkout", () => {
   const booking = read(BOOKING);
-  assert.match(booking, /Do not send teacher_offer_id in this PR/);
+  assert.match(booking, /fetch\("\/api\/bookings"/);
+  assert.match(booking, /buildBookingCreateOfferFields/);
   assert.match(booking, /selected offers must not affect/);
-  const bookingDataBlock = booking.match(/const bookingData = \{[\s\S]*?\};/);
-  assert.ok(bookingDataBlock, "bookingData object literal should exist");
-  assert.doesNotMatch(bookingDataBlock![0], /teacher_offer_id|teacherOfferId|offer_id|offerId/);
+  assert.match(booking, /legacy booking pricing remains the live payment source/);
   const checkoutBodyBlock = booking.match(/body: JSON\.stringify\(\{[\s\S]*?\}\),/);
   assert.ok(checkoutBodyBlock, "checkout JSON body should exist");
   assert.doesNotMatch(checkoutBodyBlock![0], /teacher_offer_id|teacherOfferId|offer_id|offerId/);
-  const sampleBooking = {
-    teacher_id: "11111111-1111-4111-8111-111111111111",
-    price: 70,
-    duration_minutes: 60,
-  };
+  assert.doesNotMatch(checkoutBodyBlock![0], /teacher_offer_title_snapshot/);
   const sampleCheckout = {
     teacher_id: "11111111-1111-4111-8111-111111111111",
     amount: 70,
     booking_details: { booking_id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb" },
   };
-  assert.equal(bookingPayloadExcludesOfferIdentity(sampleBooking), true);
   assert.equal(bookingPayloadExcludesOfferIdentity(sampleCheckout), true);
+  assert.deepEqual(buildBookingCreateOfferFields("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"), {});
 });
 
 test("payment amount remains based on legacy teacher fields", () => {
