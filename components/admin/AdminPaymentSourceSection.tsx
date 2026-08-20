@@ -19,6 +19,12 @@ type Props = {
   chargedAmountCents: number | null;
   subtotalCents: number | null;
   currency?: string | null;
+  packageEntitlementId?: string | null;
+  packageRedemptionId?: string | null;
+  packageRedemptionStatus?: string | null;
+  packageRedemptionSessionNumber?: number | null;
+  packageRedemptionReversedAt?: string | null;
+  packageRedemptionReversalSource?: string | null;
   className?: string;
 };
 
@@ -28,6 +34,12 @@ export function AdminPaymentSourceSection({
   chargedAmountCents,
   subtotalCents,
   currency = "CAD",
+  packageEntitlementId = null,
+  packageRedemptionId = null,
+  packageRedemptionStatus = null,
+  packageRedemptionSessionNumber = null,
+  packageRedemptionReversedAt = null,
+  packageRedemptionReversalSource = null,
   className,
 }: Props) {
   const { t, locale } = useLocale();
@@ -41,6 +53,10 @@ export function AdminPaymentSourceSection({
       subtotalCents,
       snapshotPriceCents: snapshot.priceCents,
     });
+  const showPackageMeta =
+    pricingSource === "package_credit" ||
+    Boolean(packageEntitlementId) ||
+    Boolean(packageRedemptionId);
 
   return (
     <section
@@ -80,6 +96,47 @@ export function AdminPaymentSourceSection({
           <p className="mt-3 text-sm text-slate-600">{t("adminPaymentSourcePackageCreditBody")}</p>
         ) : pricingSource === "legacy_teacher_price" ? (
           <p className="text-xs text-slate-600">{t("adminOfferSnapshotClassicRate")}</p>
+        ) : null}
+
+        {showPackageMeta ? (
+          <>
+            {packageEntitlementId ? (
+              <div>
+                <dt className="text-xs text-slate-500">{t("adminPaymentSourcePackageEntitlementId")}</dt>
+                <dd className="font-mono text-xs text-slate-900">{packageEntitlementId}</dd>
+              </div>
+            ) : null}
+            {packageRedemptionId ? (
+              <div>
+                <dt className="text-xs text-slate-500">{t("adminPaymentSourcePackageRedemptionId")}</dt>
+                <dd className="font-mono text-xs text-slate-900">{packageRedemptionId}</dd>
+              </div>
+            ) : null}
+            {packageRedemptionStatus ? (
+              <div>
+                <dt className="text-xs text-slate-500">{t("adminPaymentSourcePackageRedemptionStatus")}</dt>
+                <dd className="text-slate-900">{packageRedemptionStatus}</dd>
+              </div>
+            ) : null}
+            {packageRedemptionSessionNumber != null ? (
+              <div>
+                <dt className="text-xs text-slate-500">{t("adminPaymentSourcePackageSessionNumber")}</dt>
+                <dd className="text-slate-900">{packageRedemptionSessionNumber}</dd>
+              </div>
+            ) : null}
+            {packageRedemptionReversedAt ? (
+              <div>
+                <dt className="text-xs text-slate-500">{t("adminPaymentSourcePackageReversedAt")}</dt>
+                <dd className="text-slate-900">{packageRedemptionReversedAt}</dd>
+              </div>
+            ) : null}
+            {packageRedemptionReversalSource ? (
+              <div>
+                <dt className="text-xs text-slate-500">{t("adminPaymentSourcePackageReversalSource")}</dt>
+                <dd className="text-slate-900">{packageRedemptionReversalSource}</dd>
+              </div>
+            ) : null}
+          </>
         ) : null}
 
         <div>

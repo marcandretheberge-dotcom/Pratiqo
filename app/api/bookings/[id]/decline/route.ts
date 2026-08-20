@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { notifyBookingDeclined } from "@/lib/bookings/cancellationNotifications";
+import { reversePackageRedemptionForBooking } from "@/lib/offers/packageRedemptions";
 
 export const runtime = "nodejs";
 
@@ -46,7 +47,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const admin = getSupabaseAdmin();
   const { data: booking, error: bookingErr } = await admin
     .from("bookings")
-    .select("id, teacher_id, student_id, status")
+    .select("id, teacher_id, student_id, status, booking_payment_source, package_redemption_id")
     .eq("id", bookingId)
     .maybeSingle();
 
@@ -96,6 +97,41 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     return NextResponse.json({ error: "Booking status changed - try refreshing." }, { status: 409 });
   }
 
+  const isPackageCredit =
+    booking.booking_payment_source === "package_credit" ||
+    (typeof booking.package_redemption_id === "string" &&
+      booking.package_redemption_id.trim().length > 0);
+
+  let packageCreditRestored = false;
+  if (isPackageCredit) {
+    const reverseResult = await reversePackageRedemptionForBooking({
+      admin: {
+        rpc: async (fn, args) => {
+          const { data, error } = await admin.rpc(fn, args);
+          return {
+            data,
+            error: error ? { message: error.message, code: error.code } : null,
+          };
+        },
+      },
+      bookingId,
+      actorUserId: user.id,
+      source: "teacher_rejected",
+      reason,
+    });
+    if (!reverseResult.ok) {
+      console.error("[bookings/decline] package credit reverse failed", reverseResult.error);
+      return NextResponse.json(
+        { error: "package_credit_reversal_failed", booking_cancelled: true },
+        { status: 500 },
+      );
+    }
+    packageCreditRestored =
+      reverseResult.reversed ||
+      reverseResult.idempotent ||
+      reverseResult.reason === "no_package_redemption";
+  }
+
   // The status transition already succeeded; failing to send the decline
   // email must not roll the booking back. notifyBookingDeclined handles
   // its own errors via console.error per the existing email philosophy.
@@ -105,5 +141,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     student_id: booking.student_id as string,
   });
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({
+    ok: true,
+    package_credit_restored: packageCreditRestored,
+  });
 }

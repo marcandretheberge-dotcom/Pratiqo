@@ -754,6 +754,8 @@
   "cancelOutcomeReviewRequestedBody": "Nuestro equipo de soporte revisará tu solicitud. Por ahora no hay reembolso confirmado.",
   "cancelOutcomeNoPaymentTitle": "Cancelación registrada.",
   "cancelOutcomeNoPaymentBody": "No había pago asociado a esta reserva. No hay nada que reembolsar.",
+  "cancelOutcomePackageCreditRestoredTitle": "Cancelación registrada.",
+  "cancelOutcomePackageCreditRestoredBody": "Esta sesión no se usó. Se ha devuelto al paquete propuesto por el profesor.",
   "legendAvailable": "Verde = disponible",
   "legendBooked": "Naranja = reservado (no editable)",
   "legendLockedNotice": "Gris = bloqueado por 24 h",
@@ -2668,5 +2670,11 @@
   "bookingOfferNotBookable": "Esta oferta no se puede reservar.",
   "adminOfferSnapshotListPackage": "Paquete",
   "adminPaymentSourcePackageCredit": "Sesión del paquete (profesor)",
-  "adminPaymentSourcePackageCreditBody": "Reserva saldada con una sesión del paquete propuesto por el profesor. Pago facilitado por Pratiqo — sin nuevo Checkout de Stripe."
+  "adminPaymentSourcePackageCreditBody": "Reserva saldada con una sesión del paquete propuesto por el profesor. Pago facilitado por Pratiqo — sin nuevo Checkout de Stripe.",
+  "adminPaymentSourcePackageEntitlementId": "Paquete (entitlement)",
+  "adminPaymentSourcePackageRedemptionId": "Redemption",
+  "adminPaymentSourcePackageRedemptionStatus": "Estado de redemption",
+  "adminPaymentSourcePackageSessionNumber": "N.º de sesión",
+  "adminPaymentSourcePackageReversedAt": "Crédito restaurado el",
+  "adminPaymentSourcePackageReversalSource": "Origen de la restauración"
 }

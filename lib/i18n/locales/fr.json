@@ -754,6 +754,8 @@
   "cancelOutcomeReviewRequestedBody": "Notre équipe de soutien examinera votre demande. Aucun remboursement n'est confirmé pour le moment.",
   "cancelOutcomeNoPaymentTitle": "Annulation enregistrée.",
   "cancelOutcomeNoPaymentBody": "Aucun paiement n'était associé à cette réservation. Aucun remboursement à effectuer.",
+  "cancelOutcomePackageCreditRestoredTitle": "Annulation enregistrée.",
+  "cancelOutcomePackageCreditRestoredBody": "Cette séance n’a pas été utilisée. Elle a été remise dans le forfait proposé par le professeur.",
   "legendAvailable": "Vert = disponible",
   "legendBooked": "Orange = réservation (non modifiable)",
   "legendLockedNotice": "Gris = verrouillé 24 h",
@@ -2668,5 +2670,11 @@
   "bookingOfferNotBookable": "Cette offre ne peut pas être réservée.",
   "adminOfferSnapshotListPackage": "Forfait",
   "adminPaymentSourcePackageCredit": "Séance du forfait (professeur)",
-  "adminPaymentSourcePackageCreditBody": "Réservation réglée avec une séance du forfait proposé par le professeur. Paiement facilité par Pratiqo — pas de nouveau Checkout Stripe."
+  "adminPaymentSourcePackageCreditBody": "Réservation réglée avec une séance du forfait proposé par le professeur. Paiement facilité par Pratiqo — pas de nouveau Checkout Stripe.",
+  "adminPaymentSourcePackageEntitlementId": "Forfait (entitlement)",
+  "adminPaymentSourcePackageRedemptionId": "Redemption",
+  "adminPaymentSourcePackageRedemptionStatus": "Statut redemption",
+  "adminPaymentSourcePackageSessionNumber": "N° de séance",
+  "adminPaymentSourcePackageReversedAt": "Crédit remis le",
+  "adminPaymentSourcePackageReversalSource": "Source de remise"
 }

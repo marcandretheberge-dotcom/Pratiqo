@@ -26,14 +26,22 @@ import {
 import { t as translate } from "@/lib/translations";
 import type { Locale } from "@/lib/i18n/types";
 import { notifyBookingCancelled } from "@/lib/bookings/cancellationNotifications";
+import {
+  reversePackageRedemptionForBooking,
+  type PackageReversalSource,
+} from "@/lib/offers/packageRedemptions";
 
 export const runtime = "nodejs";
 
-// Package credit reversal on cancellation is intentionally deferred until
-// cancellation lifecycle is centralized.
 // Future PR: teacher-configurable cancellation/rescheduling preferences for offers/packages,
 // within Pratiqo marketplace safety and fairness rules.
 // See docs/product/marketplace-independent-teacher-guardrails.md.
+//
+// Legal TODO before public package launch:
+// Terms must clarify that the package service contract is between the learner
+// and the independent teacher. Pratiqo acts as a technology marketplace /
+// payment / booking facilitator. Pratiqo is not the teaching provider and
+// does not employ the teacher.
 
 function localeFromAcceptLanguage(header: string | null | undefined): Locale {
   const h = (header ?? "").split(",")[0]?.trim().toLowerCase() ?? "";
@@ -89,7 +97,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const { data: booking, error: bookingErr } = await admin
     .from("bookings")
     .select(
-      "id, teacher_id, student_id, status, slot_date, date, time_slot, time, price, stripe_payment_intent_id",
+      "id, teacher_id, student_id, status, slot_date, date, time_slot, time, price, stripe_payment_intent_id, booking_payment_source, package_entitlement_id, package_redemption_id",
     )
     .eq("id", bookingId)
     .maybeSingle();
@@ -186,6 +194,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     return NextResponse.json({ error: "Booking status changed — try refreshing" }, { status: 409 });
   }
 
+  const isPackageCredit =
+    booking.booking_payment_source === "package_credit" ||
+    (typeof booking.package_redemption_id === "string" &&
+      booking.package_redemption_id.trim().length > 0);
+
   // The booking is now committed as `cancelled`. From here on, every error
   // path must return a successful HTTP response (the cancellation already
   // happened) but surface the right honest outcome so the UI never claims
@@ -195,6 +208,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   let stripeRefundAmountCents: number | null = null;
   let supportCaseId: string | null = null;
   let bookingRefundStatus = refundPlan.refund_status;
+  let packageCreditRestored = false;
 
   const supportCaseBase = {
     bookingId,
@@ -236,7 +250,64 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       .eq("id", bookingId);
   }
 
-  if (decision.kind === "open_manual_review") {
+  if (isPackageCredit) {
+    // Package-credit bookings never open Stripe Checkout for the redeemed
+    // session. Restore the forfait session atomically; do not invent refunds.
+    const reversalSource: PackageReversalSource =
+      cancellerRole === "student" ? "student_cancelled" : "teacher_cancelled";
+    try {
+      const reverseResult = await reversePackageRedemptionForBooking({
+        admin: {
+          rpc: async (fn, args) => {
+            const { data, error } = await admin.rpc(fn, args);
+            return {
+              data,
+              error: error ? { message: error.message, code: error.code } : null,
+            };
+          },
+        },
+        bookingId,
+        actorUserId: user.id,
+        source: reversalSource,
+        reason,
+      });
+
+      if (!reverseResult.ok) {
+        console.error("[bookings/cancel] package credit reverse failed", reverseResult.error);
+        await escalateToManualReview(
+          "missing_payment_data",
+          `package_credit_reversal_failed:${reverseResult.error}`,
+        );
+      } else if (reverseResult.reason === "no_package_redemption") {
+        outcome = "no_payment";
+        bookingRefundStatus = "not_required";
+        await admin
+          .from("bookings")
+          .update({
+            refund_status: "not_required",
+            refund_method: null,
+            refund_amount: null,
+          })
+          .eq("id", bookingId);
+      } else {
+        packageCreditRestored = reverseResult.reversed || reverseResult.idempotent;
+        outcome = "package_credit_restored";
+        bookingRefundStatus = "not_required";
+        await admin
+          .from("bookings")
+          .update({
+            refund_status: "not_required",
+            refund_method: null,
+            refund_amount: null,
+          })
+          .eq("id", bookingId);
+      }
+    } catch (e) {
+      const detail = e instanceof Error ? e.message : "unknown package reverse error";
+      console.error("[bookings/cancel] package credit reverse threw", e);
+      await escalateToManualReview("missing_payment_data", `package_credit_reversal_threw:${detail}`);
+    }
+  } else if (decision.kind === "open_manual_review") {
     await escalateToManualReview("exceptional_review", null);
   } else if (decision.kind === "late_no_refund") {
     outcome = "late_no_refund";
@@ -395,5 +466,6 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     stripe_refund_amount_cents: stripeRefundAmountCents,
     support_case_id: supportCaseId,
     policy_window: isLate ? "less_than_24h" : "more_than_24h",
+    package_credit_restored: packageCreditRestored,
   });
 }

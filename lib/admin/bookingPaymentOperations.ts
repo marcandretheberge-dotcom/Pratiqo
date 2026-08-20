@@ -13,7 +13,9 @@ import {
   deriveAdminPricingSource,
   extractPricingSourceFromPaymentMetadata,
   mapAdminOfferSnapshotFromBookingRow,
+  mapAdminPackageCreditFieldsFromBookingRow,
   type AdminBookingOfferSnapshotFields,
+  type AdminPackageRedemptionLite,
   type AdminPricingSource,
   ADMIN_BOOKING_OFFER_SNAPSHOT_SELECT,
 } from "@/lib/offers/adminOfferSnapshotDisplay";
@@ -401,6 +403,7 @@ function personFrom(
 function mapBookingOfferSnapshotFields(
   row: Record<string, unknown>,
   metadataPricingSource?: string | null,
+  redemption?: AdminPackageRedemptionLite | null,
 ): AdminBookingOfferSnapshotFields {
   const snapshotState = mapAdminOfferSnapshotFromBookingRow(row);
   return {
@@ -417,7 +420,40 @@ function mapBookingOfferSnapshotFields(
       metadataPricingSource,
       typeof row.booking_payment_source === "string" ? row.booking_payment_source : null,
     ),
+    ...mapAdminPackageCreditFieldsFromBookingRow(row, redemption),
   };
+}
+
+async function loadPackageRedemptionsByIds(
+  admin: AdminClient,
+  ids: string[],
+): Promise<Map<string, AdminPackageRedemptionLite>> {
+  const unique = Array.from(new Set(ids.filter(Boolean)));
+  const map = new Map<string, AdminPackageRedemptionLite>();
+  if (unique.length === 0) return map;
+  const { data, error } = await admin
+    .from("package_redemptions")
+    .select("id, status, session_number, reversed_at, reversal_source")
+    .in("id", unique);
+  if (error) {
+    console.error("[admin/ops] package_redemptions load failed", error.message);
+    return map;
+  }
+  for (const row of (data ?? []) as Array<Record<string, unknown>>) {
+    const id = String(row.id ?? "");
+    if (!id) continue;
+    map.set(id, {
+      id,
+      status: typeof row.status === "string" ? row.status : null,
+      sessionNumber:
+        row.session_number === null || row.session_number === undefined
+          ? null
+          : Number(row.session_number),
+      reversedAt: typeof row.reversed_at === "string" ? row.reversed_at : null,
+      reversalSource: typeof row.reversal_source === "string" ? row.reversal_source : null,
+    });
+  }
+  return map;
 }
 
 export type ListAdminBookingsInput = {
@@ -459,7 +495,7 @@ export async function listAdminBookings(
   const teacherIds = rows.map((r) => String(r.teacher_id ?? ""));
   const bookingIds = rows.map((r) => String(r.id ?? ""));
 
-  const [profiles, teachers, payments] = await Promise.all([
+  const [profiles, teachers, payments, redemptions] = await Promise.all([
     loadProfilesByIds(admin, studentIds),
     loadTeachersByIds(admin, teacherIds),
     (async () => {
@@ -476,6 +512,14 @@ export async function listAdminBookings(
       }
       return (payData ?? []) as Array<Record<string, unknown>>;
     })(),
+    loadPackageRedemptionsByIds(
+      admin,
+      rows
+        .map((r) =>
+          typeof r.package_redemption_id === "string" ? r.package_redemption_id : "",
+        )
+        .filter(Boolean),
+    ),
   ]);
 
   const teacherUserIds = Array.from(teachers.values())
@@ -557,7 +601,13 @@ export async function listAdminBookings(
       stripeCheckoutSessionId: (pay?.stripe_checkout_session_id as string | null) || null,
       attentionCodes: attention.codes,
       attentionLabels: attention.labels,
-      ...mapBookingOfferSnapshotFields(row),
+      ...mapBookingOfferSnapshotFields(
+        row,
+        null,
+        typeof row.package_redemption_id === "string"
+          ? redemptions.get(row.package_redemption_id) ?? null
+          : null,
+      ),
     };
 
     if (q) {
@@ -668,6 +718,15 @@ export async function listAdminPayments(
     bookingById.set(bookingId, b);
   }
 
+  const redemptions = await loadPackageRedemptionsByIds(
+    admin,
+    bookings
+      .map((b) =>
+        typeof b.package_redemption_id === "string" ? b.package_redemption_id : "",
+      )
+      .filter(Boolean),
+  );
+
   const q = input.q?.trim().toLowerCase() ?? "";
   const payments: AdminPaymentOpsRow[] = [];
 
@@ -697,7 +756,15 @@ export async function listAdminPayments(
 
     const bookingRow = bookingById.get(String(row.booking_id ?? "")) ?? {};
     const metadataPricingSource = extractPricingSourceFromPaymentMetadata(row.metadata);
-    const snapshotFields = mapBookingOfferSnapshotFields(bookingRow, metadataPricingSource);
+    const redemptionId =
+      typeof bookingRow.package_redemption_id === "string"
+        ? bookingRow.package_redemption_id
+        : "";
+    const snapshotFields = mapBookingOfferSnapshotFields(
+      bookingRow,
+      metadataPricingSource,
+      redemptionId ? redemptions.get(redemptionId) ?? null : null,
+    );
 
     const opsRow: AdminPaymentOpsRow = {
       id,

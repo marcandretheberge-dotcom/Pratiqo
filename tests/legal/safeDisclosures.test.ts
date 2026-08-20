@@ -554,6 +554,30 @@ const allowedPackageSessionRedemptionFiles = new Set<string>([
   "package.json",
 ]);
 
+/** Package credit reversal on cancellation (PR 10C). */
+const allowedPackageCreditReversalFiles = new Set<string>([
+  "supabase/migrations/103_add_package_redemption_reversal_rpc.sql",
+  "lib/offers/packageRedemptions.ts",
+  "lib/offers/adminOfferSnapshotDisplay.ts",
+  "lib/admin/bookingPaymentOperations.ts",
+  "lib/bookings/cancellationOutcome.ts",
+  "lib/bookings/completeBooking.ts",
+  "app/api/bookings/[id]/cancel/route.ts",
+  "app/api/bookings/[id]/decline/route.ts",
+  "app/(app)/admin/payments/page.tsx",
+  "components/admin/AdminPaymentSourceSection.tsx",
+  "docs/product/marketplace-independent-teacher-guardrails.md",
+  "lib/i18n/locales/fr.json",
+  "lib/i18n/locales/en.json",
+  "lib/i18n/locales/es.json",
+  "tests/offers/packageRedemptions.test.ts",
+  "tests/offers/packageRedemptionReversal.test.ts",
+  "tests/offers/marketplaceIndependentTeacherGuardrails.test.ts",
+  "tests/security/rlsCoverage.test.ts",
+  "tests/legal/safeDisclosures.test.ts",
+  "package.json",
+]);
+
 function touchesSafeDisclosureScope(file: string): boolean {
   return (
     liveDisclosureFiles.includes(file) ||
@@ -731,6 +755,7 @@ test("safe-disclosure branch did not touch restricted systems", () => {
     if (allowedPackageEntitlementFoundationFiles.has(file)) continue;
     if (allowedTeacherOfferBuilderPolishFiles.has(file)) continue;
     if (allowedPackageSessionRedemptionFiles.has(file)) continue;
+    if (allowedPackageCreditReversalFiles.has(file)) continue;
     for (const rule of restrictedRules) {
       if (rule.re.test(file)) {
         violations.push(`${file} (${rule.label})`);

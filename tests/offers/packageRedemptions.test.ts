@@ -177,10 +177,14 @@ test("admin visibility includes package_credit source", () => {
   );
 });
 
-test("cancellation reversal is deferred; Stripe checkout unchanged", () => {
+test("cancellation reversal is wired; Stripe checkout unchanged", () => {
   assert.match(
     read("app/api/bookings/[id]/cancel/route.ts"),
-    /Package credit reversal on cancellation is intentionally deferred/,
+    /reversePackageRedemptionForBooking/,
+  );
+  assert.match(
+    read("supabase/migrations/103_add_package_redemption_reversal_rpc.sql"),
+    /reverse_package_redemption_for_booking/,
   );
   assert.doesNotMatch(read("app/api/stripe/checkout/route.ts"), /package_redemptions|redeem_package/);
   assert.doesNotMatch(read("lib/payments/commission.ts"), /package_redemptions|ENABLE_PACKAGE_REDEMPTION/);

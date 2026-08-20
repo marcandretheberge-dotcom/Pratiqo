@@ -53,6 +53,7 @@ const EXPLICIT_RLS_HARDENING_FILES = [
   "100_create_package_entitlements.sql",
   "101_package_entitlements_rls_if_exists.sql",
   "102_create_package_redemptions.sql",
+  "103_add_package_redemption_reversal_rpc.sql",
 ];
 
 function readMigration(file: string): string {
