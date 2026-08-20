@@ -427,6 +427,24 @@ const allowedTeacherSeoPublicationWorkflowFiles = new Set<string>([
   "package.json",
 ]);
 
+/** Booking offer snapshots (PR 7) — server snapshot columns + POST /api/bookings; no checkout/payment math. */
+const allowedBookingOfferSnapshotFiles = new Set<string>([
+  "supabase/migrations/099_add_teacher_offer_snapshots_to_bookings.sql",
+  "app/api/bookings/route.ts",
+  "lib/offers/bookingOfferSnapshot.ts",
+  "lib/offers/bookingOfferSelection.ts",
+  "lib/bookings/parseCreateBookingRequest.ts",
+  "lib/bookings/createPendingPaymentBooking.ts",
+  "components/BookingModal.tsx",
+  "lib/i18n/locales/fr.json",
+  "lib/i18n/locales/en.json",
+  "lib/i18n/locales/es.json",
+  "tests/offers/bookingOfferSnapshots.test.ts",
+  "tests/offers/bookingOfferSelection.test.ts",
+  "tests/legal/safeDisclosures.test.ts",
+  "package.json",
+]);
+
 function touchesSafeDisclosureScope(file: string): boolean {
   return (
     liveDisclosureFiles.includes(file) ||
@@ -598,6 +616,7 @@ test("safe-disclosure branch did not touch restricted systems", () => {
     if (allowedStudentOnboardingConsentFiles.has(file)) continue;
     if (allowedLocalTeacherDiscoverySeoFiles.has(file)) continue;
     if (allowedGroupSessionsLaunchSeoFiles.has(file)) continue;
+    if (allowedBookingOfferSnapshotFiles.has(file)) continue;
     for (const rule of restrictedRules) {
       if (rule.re.test(file)) {
         violations.push(`${file} (${rule.label})`);
