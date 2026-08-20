@@ -93,6 +93,7 @@ test("admin homepage renders marketplace command center modules", () => {
     "bookings",
     "payments",
     "stripe_diagnostics",
+    "package_launch_readiness",
     "promotions",
     "ambassadors",
     "seo",

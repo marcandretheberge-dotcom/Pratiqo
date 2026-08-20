@@ -634,6 +634,23 @@ const allowedMarketplaceLegalHardeningFiles = new Set<string>([
   "package.json",
 ]);
 
+/** Paid packages launch readiness gate (PR 14). */
+const allowedPackageLaunchReadinessFiles = new Set<string>([
+  "lib/offers/packageLaunchReadiness.ts",
+  "app/(app)/admin/package-launch-readiness/page.tsx",
+  "app/api/admin/package-launch-readiness/route.ts",
+  "app/(app)/admin/page.tsx",
+  "lib/admin/overview.ts",
+  "docs/product/paid-packages-launch-readiness.md",
+  "docs/product/package-feature-flags.md",
+  "docs/product/paid-packages-legal-launch-checklist.md",
+  ".env.example",
+  "tests/offers/packageLaunchReadiness.test.ts",
+  "tests/admin/commandCenterHome.test.ts",
+  "tests/legal/safeDisclosures.test.ts",
+  "package.json",
+]);
+
 function touchesSafeDisclosureScope(file: string): boolean {
   return (
     liveDisclosureFiles.includes(file) ||
@@ -815,6 +832,7 @@ test("safe-disclosure branch did not touch restricted systems", () => {
     if (allowedStudentPackageDashboardFiles.has(file)) continue;
     if (allowedTeacherPackageVisibilityFiles.has(file)) continue;
     if (allowedMarketplaceLegalHardeningFiles.has(file)) continue;
+    if (allowedPackageLaunchReadinessFiles.has(file)) continue;
     for (const rule of restrictedRules) {
       if (rule.re.test(file)) {
         violations.push(`${file} (${rule.label})`);

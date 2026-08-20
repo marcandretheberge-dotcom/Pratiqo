@@ -37,6 +37,7 @@ export type AdminOverviewModuleId =
   | "bookings"
   | "payments"
   | "stripe_diagnostics"
+  | "package_launch_readiness"
   | "promotions"
   | "ambassadors"
   | "seo"
@@ -102,6 +103,15 @@ export const ADMIN_COMMAND_CENTER_MODULES: readonly AdminOverviewModule[] = [
       "Inspecter Connect, Identity, readiness paiement, payouts, sync et faux negatifs possibles.",
     cta: "Voir les diagnostics",
     href: "/admin/stripe-diagnostics",
+    status: "ready",
+  },
+  {
+    id: "package_launch_readiness",
+    title: "Forfaits — préparation au lancement",
+    description:
+      "Flags, crédits, annulations, dashboards et garde-fous marketplace avant activation contrôlée.",
+    cta: "Voir la préparation",
+    href: "/admin/package-launch-readiness",
     status: "ready",
   },
   {

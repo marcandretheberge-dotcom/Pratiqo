@@ -33,6 +33,8 @@ Do not claim the product is legally complete. Do not show “pending legal revie
 ## Related docs
 
 - [`marketplace-independent-teacher-guardrails.md`](./marketplace-independent-teacher-guardrails.md)
+- [`paid-packages-launch-readiness.md`](./paid-packages-launch-readiness.md)
+- [`package-feature-flags.md`](./package-feature-flags.md)
 - Live Terms: `content/legal/terms.{fr,en,es}.md`
 - Teacher terms: `content/legal/conditions-professeurs.{fr,en,es}.md`
 - Payments policy: `content/legal/paiements-remboursements.{fr,en,es}.md`
