@@ -1,17 +1,23 @@
 /**
- * Package (forfait) session redemption — PR 10B.
+ * Package (forfait) session redemption — PR 10B + 10C.
  *
  * A learner uses one session from a package purchased from the same independent
  * teacher. Pratiqo facilitates booking; it does not assign another teacher,
  * impose curriculum, or create Stripe checkout for the redeemed session.
+ *
+ * PR 10C restores one session credit when a package-credit booking is cancelled
+ * or declined before completion (atomic RPC). No monetary Stripe refund.
  *
  * See docs/product/marketplace-independent-teacher-guardrails.md.
  *
  * // Future PR: teacher-configurable cancellation/rescheduling preferences for offers/packages,
  * // within Pratiqo marketplace safety and fairness rules.
  *
- * // Package credit reversal on cancellation is intentionally deferred until
- * // cancellation lifecycle is centralized.
+ * // Legal TODO before public package launch:
+ * // Terms must clarify that the package service contract is between the learner
+ * // and the independent teacher. Pratiqo acts as a technology marketplace /
+ * // payment / booking facilitator. Pratiqo is not the teaching provider and
+ * // does not employ the teacher.
  *
  * DO NOT import mutation helpers from client components.
  */
@@ -88,6 +94,42 @@ export type ActivePackageEntitlementSummary = {
   totalSessions: number;
   durationMinutes: number | null;
   status: PackageEntitlementStatus;
+};
+
+export const PACKAGE_REVERSAL_SOURCES = [
+  "student_cancelled",
+  "teacher_cancelled",
+  "teacher_rejected",
+  "admin_cancelled",
+  "system",
+] as const;
+
+export type PackageReversalSource = (typeof PACKAGE_REVERSAL_SOURCES)[number];
+
+export type ReversePackageRedemptionResult = {
+  ok: true;
+  reversed: boolean;
+  idempotent: boolean;
+  bookingId: string | null;
+  redemptionId: string | null;
+  entitlementId: string | null;
+  sessionNumber: number | null;
+  redemptionStatus: PackageRedemptionStatus | null;
+  remainingSessions: number | null;
+  usedSessions: number | null;
+  entitlementStatus: PackageEntitlementStatus | null;
+  reversalSource: PackageReversalSource | null;
+  reason?: string | null;
+};
+
+export type ReversePackageRedemptionFailure = {
+  ok: false;
+  error:
+    | "no_package_redemption"
+    | "redemption_not_reversible"
+    | "booking_not_found"
+    | "invalid_payload"
+    | "server_error";
 };
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -319,6 +361,124 @@ export async function redeemPackageSessionBooking(args: {
     remainingSessions: Number(row.remaining_sessions),
     usedSessions: Number(row.used_sessions),
     entitlementStatus: String(row.entitlement_status) as PackageEntitlementStatus,
+  };
+}
+
+export async function reversePackageRedemptionForBooking(args: {
+  admin: RpcAdmin;
+  bookingId: string;
+  actorUserId?: string | null;
+  source: PackageReversalSource;
+  reason?: string | null;
+}): Promise<ReversePackageRedemptionResult | ReversePackageRedemptionFailure> {
+  const bookingId = asUuid(args.bookingId);
+  if (!bookingId) {
+    return { ok: false, error: "invalid_payload" };
+  }
+  if (!(PACKAGE_REVERSAL_SOURCES as readonly string[]).includes(args.source)) {
+    return { ok: false, error: "invalid_payload" };
+  }
+
+  const { data, error } = await args.admin.rpc("reverse_package_redemption_for_booking", {
+    p_booking_id: bookingId,
+    p_actor_user_id: asUuid(args.actorUserId) ?? null,
+    p_source: args.source,
+    p_reason: args.reason ?? null,
+  });
+
+  if (error) {
+    const text = (error.message ?? "").toUpperCase();
+    if (text.includes("REDEMPTION_NOT_REVERSIBLE")) {
+      return { ok: false, error: "redemption_not_reversible" };
+    }
+    if (text.includes("INVALID_PAYLOAD")) {
+      return { ok: false, error: "invalid_payload" };
+    }
+    return { ok: false, error: "server_error" };
+  }
+
+  if (!data || typeof data !== "object") {
+    return { ok: false, error: "server_error" };
+  }
+
+  const row = data as Record<string, unknown>;
+  if (row.ok !== true) {
+    return { ok: false, error: "server_error" };
+  }
+
+  if (row.reason === "no_package_redemption" && row.reversed !== true) {
+    return {
+      ok: true,
+      reversed: false,
+      idempotent: true,
+      bookingId,
+      redemptionId: null,
+      entitlementId: null,
+      sessionNumber: null,
+      redemptionStatus: null,
+      remainingSessions: null,
+      usedSessions: null,
+      entitlementStatus: null,
+      reversalSource: null,
+      reason: "no_package_redemption",
+    };
+  }
+
+  return {
+    ok: true,
+    reversed: row.reversed === true,
+    idempotent: row.idempotent === true,
+    bookingId: asUuid(row.booking_id) ?? bookingId,
+    redemptionId: asUuid(row.redemption_id),
+    entitlementId: asUuid(row.entitlement_id),
+    sessionNumber:
+      row.session_number == null || row.session_number === undefined
+        ? null
+        : Number(row.session_number),
+    redemptionStatus:
+      typeof row.redemption_status === "string"
+        ? (row.redemption_status as PackageRedemptionStatus)
+        : null,
+    remainingSessions:
+      row.remaining_sessions == null || row.remaining_sessions === undefined
+        ? null
+        : Number(row.remaining_sessions),
+    usedSessions:
+      row.used_sessions == null || row.used_sessions === undefined
+        ? null
+        : Number(row.used_sessions),
+    entitlementStatus:
+      typeof row.entitlement_status === "string"
+        ? (row.entitlement_status as PackageEntitlementStatus)
+        : null,
+    reversalSource:
+      typeof row.reversal_source === "string"
+        ? (row.reversal_source as PackageReversalSource)
+        : args.source,
+    reason: typeof row.reason === "string" ? row.reason : null,
+  };
+}
+
+export async function markPackageRedemptionCompletedForBooking(args: {
+  admin: RpcAdmin;
+  bookingId: string;
+}): Promise<{ ok: true; completed: boolean; idempotent: boolean } | { ok: false; error: "server_error" }> {
+  const bookingId = asUuid(args.bookingId);
+  if (!bookingId) return { ok: false, error: "server_error" };
+
+  const { data, error } = await args.admin.rpc("mark_package_redemption_completed_for_booking", {
+    p_booking_id: bookingId,
+  });
+
+  if (error || !data || typeof data !== "object") {
+    return { ok: false, error: "server_error" };
+  }
+
+  const row = data as Record<string, unknown>;
+  return {
+    ok: true,
+    completed: row.completed === true,
+    idempotent: row.idempotent === true,
   };
 }
 

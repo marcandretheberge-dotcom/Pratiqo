@@ -18,6 +18,7 @@ import {
   getCompanionMilestoneForCompletedLesson,
   isRewardCompanionType,
 } from "@/lib/companion/rewards";
+import { markPackageRedemptionCompletedForBooking } from "@/lib/offers/packageRedemptions";
 
 export const AUTO_COMPLETE_GRACE_MS = 2 * 60 * 60 * 1000;
 
@@ -348,6 +349,28 @@ export async function completeConfirmedBooking(
       code: "status_race",
       error: "Booking status changed - try refreshing",
     };
+  }
+
+  // Package-credit: mark redemption completed (no entitlement balance change).
+  // Best-effort — booking completion already succeeded.
+  try {
+    const mark = await markPackageRedemptionCompletedForBooking({
+      admin: {
+        rpc: async (fn, args) => {
+          const { data, error } = await admin.rpc(fn, args);
+          return {
+            data,
+            error: error ? { message: error.message, code: error.code } : null,
+          };
+        },
+      },
+      bookingId,
+    });
+    if (!mark.ok) {
+      console.error("[bookings/complete] package redemption complete mark failed", mark.error);
+    }
+  } catch (e) {
+    console.error("[bookings/complete] package redemption complete mark threw", e);
   }
 
   try {

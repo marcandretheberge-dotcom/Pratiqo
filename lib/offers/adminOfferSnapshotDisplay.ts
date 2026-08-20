@@ -274,7 +274,70 @@ export type AdminBookingOfferSnapshotFields = {
   offerSnapshotIncomplete: boolean;
   offerSnapshotTeacherOfferId: string | null;
   pricingSource: AdminPricingSource;
+  packageEntitlementId: string | null;
+  packageRedemptionId: string | null;
+  packageRedemptionStatus: string | null;
+  packageRedemptionSessionNumber: number | null;
+  packageRedemptionReversedAt: string | null;
+  packageRedemptionReversalSource: string | null;
 };
 
 export const ADMIN_BOOKING_OFFER_SNAPSHOT_SELECT =
   "teacher_offer_id, teacher_offer_title_snapshot, teacher_offer_type_snapshot, teacher_offer_format_snapshot, teacher_offer_price_cents_snapshot, teacher_offer_currency_snapshot, teacher_offer_duration_minutes_snapshot, teacher_offer_session_count_snapshot, teacher_offer_discipline_id_snapshot, teacher_offer_specialite_snapshot, teacher_offer_short_description_snapshot, teacher_offer_snapshot_version, booking_payment_source, package_entitlement_id, package_redemption_id";
+
+export type AdminPackageRedemptionLite = {
+  id: string;
+  status: string | null;
+  sessionNumber: number | null;
+  reversedAt: string | null;
+  reversalSource: string | null;
+};
+
+export function emptyAdminPackageCreditFields(): Pick<
+  AdminBookingOfferSnapshotFields,
+  | "packageEntitlementId"
+  | "packageRedemptionId"
+  | "packageRedemptionStatus"
+  | "packageRedemptionSessionNumber"
+  | "packageRedemptionReversedAt"
+  | "packageRedemptionReversalSource"
+> {
+  return {
+    packageEntitlementId: null,
+    packageRedemptionId: null,
+    packageRedemptionStatus: null,
+    packageRedemptionSessionNumber: null,
+    packageRedemptionReversedAt: null,
+    packageRedemptionReversalSource: null,
+  };
+}
+
+export function mapAdminPackageCreditFieldsFromBookingRow(
+  row: BookingOfferSnapshotRowInput,
+  redemption?: AdminPackageRedemptionLite | null,
+): Pick<
+  AdminBookingOfferSnapshotFields,
+  | "packageEntitlementId"
+  | "packageRedemptionId"
+  | "packageRedemptionStatus"
+  | "packageRedemptionSessionNumber"
+  | "packageRedemptionReversedAt"
+  | "packageRedemptionReversalSource"
+> {
+  const entitlementId =
+    typeof row.package_entitlement_id === "string" && row.package_entitlement_id.trim()
+      ? row.package_entitlement_id
+      : null;
+  const redemptionId =
+    typeof row.package_redemption_id === "string" && row.package_redemption_id.trim()
+      ? row.package_redemption_id
+      : redemption?.id ?? null;
+  return {
+    packageEntitlementId: entitlementId,
+    packageRedemptionId: redemptionId,
+    packageRedemptionStatus: redemption?.status ?? null,
+    packageRedemptionSessionNumber: redemption?.sessionNumber ?? null,
+    packageRedemptionReversedAt: redemption?.reversedAt ?? null,
+    packageRedemptionReversalSource: redemption?.reversalSource ?? null,
+  };
+}

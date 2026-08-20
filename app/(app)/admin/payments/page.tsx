@@ -570,6 +570,12 @@ function AdminPaymentsInner() {
                   chargedAmountCents={selected.amountCents}
                   subtotalCents={selected.subtotalCents}
                   currency={selected.currency}
+                  packageEntitlementId={selected.packageEntitlementId}
+                  packageRedemptionId={selected.packageRedemptionId}
+                  packageRedemptionStatus={selected.packageRedemptionStatus}
+                  packageRedemptionSessionNumber={selected.packageRedemptionSessionNumber}
+                  packageRedemptionReversedAt={selected.packageRedemptionReversedAt}
+                  packageRedemptionReversalSource={selected.packageRedemptionReversalSource}
                 />
                 {selected.bookingId ? (
                   <div>

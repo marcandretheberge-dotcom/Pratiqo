@@ -130,6 +130,8 @@ Bad behavior: Pratiqo assigns any available teacher, dictates session curriculum
 
 ## Cancellation / rescheduling
 
+When a package-credit booking is cancelled or declined **before** the lesson is completed, Pratiqo restores the unused session to the teacher-sold forfait (atomic server RPC). This is not a Stripe monetary refund and not employment-style control.
+
 Future package cancellation/rescheduling rules should be framed as:
 
 > teacher-defined terms within Pratiqo marketplace rules
@@ -144,6 +146,12 @@ not:
 ```
 
 Do not impose a one-size-fits-all package policy unless legally reviewed.
+
+Good copy for credit restore:
+
+- La séance a été remise dans le forfait.
+- Cette séance n’a pas été utilisée. Elle a été remise dans le forfait.
+- Le forfait est proposé par le professeur.
 
 ## Terms of Use follow-up (not in code PRs)
 

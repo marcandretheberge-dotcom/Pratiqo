@@ -48,6 +48,7 @@ const PACKAGE_OFFER_I18N_KEY_PREFIXES = [
   "bookingPackage",
   "adminPaymentSourcePackage",
   "adminOfferSnapshotListPackage",
+  "cancelOutcomePackageCredit",
   "teacherOffer",
   "offerTypePackage",
   "publicOffer",
@@ -91,6 +92,7 @@ assert.match(fr, /Utiliser une séance du forfait/);
 assert.match(fr, /avec ce professeur/);
 assert.match(fr, /Forfait proposé par le professeur/);
 assert.match(fr, /facilitée par Pratiqo/);
+assert.match(fr, /remise dans le forfait/);
 
 console.log("ok - marketplace independent-teacher guardrails copy");
 console.log("[offers:marketplace-guardrails] tests passed");

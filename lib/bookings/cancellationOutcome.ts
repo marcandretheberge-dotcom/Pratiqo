@@ -34,14 +34,17 @@ export type CancellationOutcome =
   /** A support_cases row was opened with payout_hold=true. Manual review will decide the refund. */
   | "manual_review"
   /** Student cancelled <24h with no exceptional-review request. No refund, no manual case opened. */
-  | "late_no_refund";
+  | "late_no_refund"
+  /** Package-credit booking cancelled; forfait session restored (not a Stripe refund). */
+  | "package_credit_restored";
 
 export type CancellationOutcomeCopyKey =
   | "cancelOutcomeNoPayment"
   | "cancelOutcomeRefundExecuted"
   | "cancelOutcomeManualReview"
   | "cancelOutcomeLateNoRefund"
-  | "cancelOutcomeReviewRequested";
+  | "cancelOutcomeReviewRequested"
+  | "cancelOutcomePackageCreditRestored";
 
 /**
  * Caller-friendly copy key map. The UI picks `<key>Title` / `<key>Body`
@@ -66,6 +69,8 @@ export function copyKeyForOutcome(
       return "cancelOutcomeManualReview";
     case "late_no_refund":
       return "cancelOutcomeLateNoRefund";
+    case "package_credit_restored":
+      return "cancelOutcomePackageCreditRestored";
   }
 }
 
