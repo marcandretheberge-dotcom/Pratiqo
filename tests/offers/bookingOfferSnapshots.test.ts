@@ -59,6 +59,8 @@ const publishedRow = {
   currency: "CAD",
   duration_minutes: 60,
   session_count: null,
+  cancellation_preference: "standard",
+  reschedule_preference: "standard",
   published_at: "2026-08-19T12:00:00.000Z",
 };
 
@@ -254,6 +256,9 @@ test("published offer owned by teacher creates snapshot fields", () => {
   assert.equal(mapped.snapshot.teacher_offer_type_snapshot, "private_lesson");
   assert.equal(mapped.snapshot.teacher_offer_format_snapshot, "online");
   assert.equal(mapped.snapshot.teacher_offer_currency_snapshot, "CAD");
+  assert.equal(mapped.snapshot.teacher_offer_cancellation_preference_snapshot, "standard");
+  assert.equal(mapped.snapshot.teacher_offer_reschedule_preference_snapshot, "standard");
+  assert.equal(mapped.snapshot.teacher_offer_snapshot_version, BOOKING_TEACHER_OFFER_SNAPSHOT_VERSION);
 });
 
 test("insert row without selected offer keeps snapshot fields absent", () => {

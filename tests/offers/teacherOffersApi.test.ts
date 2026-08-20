@@ -82,6 +82,8 @@ function dto(partial: Partial<TeacherOfferDto> & Pick<TeacherOfferDto, "id" | "s
     ageMax: null,
     requiresIdentity: false,
     requiresManualConfirmation: false,
+    cancellationPreference: "standard",
+    reschedulePreference: "standard",
     publishedAt: null,
     pausedAt: null,
     archivedAt: null,

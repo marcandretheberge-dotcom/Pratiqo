@@ -1,5 +1,10 @@
 import { isTeacherOfferId } from "./teacherOfferDto";
 import {
+  isTeacherOfferPolicyPreference,
+  parseTeacherOfferPolicyPreference,
+  type TeacherOfferPolicyPreference,
+} from "./cancellationPreferences";
+import {
   TEACHER_OFFER_CURRENCIES,
   TEACHER_OFFER_FORMATS,
   TEACHER_OFFER_TYPES,
@@ -15,9 +20,12 @@ import {
  * Checkout validates and charges from these snapshots when
  * ENABLE_OFFER_SNAPSHOT_CHECKOUT is ON (PR 8). Legacy bookings without
  * snapshots continue to use teacher DB rates via resolveBookingCheckoutPrice.
+ *
+ * PR 16A adds cancellation/reschedule preference snapshots (version 2).
+ * Enforcement of those preferences is PR 16B.
  */
 
-export const BOOKING_TEACHER_OFFER_SNAPSHOT_VERSION = 1;
+export const BOOKING_TEACHER_OFFER_SNAPSHOT_VERSION = 2;
 
 export const BOOKING_OFFER_SNAPSHOT_SELECT_COLUMNS = [
   "id",
@@ -33,6 +41,8 @@ export const BOOKING_OFFER_SNAPSHOT_SELECT_COLUMNS = [
   "currency",
   "duration_minutes",
   "session_count",
+  "cancellation_preference",
+  "reschedule_preference",
   "published_at",
 ].join(", ");
 
@@ -48,6 +58,8 @@ export type BookingTeacherOfferSnapshot = {
   teacher_offer_discipline_id_snapshot: string | null;
   teacher_offer_specialite_snapshot: string | null;
   teacher_offer_short_description_snapshot: string | null;
+  teacher_offer_cancellation_preference_snapshot: TeacherOfferPolicyPreference;
+  teacher_offer_reschedule_preference_snapshot: TeacherOfferPolicyPreference;
   teacher_offer_snapshot_version: typeof BOOKING_TEACHER_OFFER_SNAPSHOT_VERSION;
 };
 
@@ -71,6 +83,8 @@ type OfferLookupRow = {
   currency?: unknown;
   duration_minutes?: unknown;
   session_count?: unknown;
+  cancellation_preference?: unknown;
+  reschedule_preference?: unknown;
   published_at?: unknown;
 };
 
@@ -138,6 +152,15 @@ export function mapTeacherOfferRowToBookingSnapshot(
     return { ok: false, error: "offer_not_bookable" };
   }
 
+  const cancellationPreference = parseTeacherOfferPolicyPreference(row.cancellation_preference);
+  const reschedulePreference = parseTeacherOfferPolicyPreference(row.reschedule_preference);
+  if (
+    !isTeacherOfferPolicyPreference(cancellationPreference) ||
+    !isTeacherOfferPolicyPreference(reschedulePreference)
+  ) {
+    return { ok: false, error: "offer_not_bookable" };
+  }
+
   return {
     ok: true,
     snapshot: {
@@ -152,6 +175,8 @@ export function mapTeacherOfferRowToBookingSnapshot(
       teacher_offer_discipline_id_snapshot: asString(row.discipline_id),
       teacher_offer_specialite_snapshot: asString(row.specialite),
       teacher_offer_short_description_snapshot: asString(row.short_description),
+      teacher_offer_cancellation_preference_snapshot: cancellationPreference,
+      teacher_offer_reschedule_preference_snapshot: reschedulePreference,
       teacher_offer_snapshot_version: BOOKING_TEACHER_OFFER_SNAPSHOT_VERSION,
     },
   };

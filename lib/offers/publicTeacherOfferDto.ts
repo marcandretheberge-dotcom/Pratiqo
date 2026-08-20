@@ -3,6 +3,7 @@ import {
   TEACHER_OFFER_FORMATS,
   TEACHER_OFFER_STATUSES,
   TEACHER_OFFER_TYPES,
+  parseTeacherOfferPolicyPreference,
   type TeacherOfferCurrency,
   type TeacherOfferDto,
   type TeacherOfferFormat,
@@ -40,6 +41,8 @@ export const TEACHER_OFFER_PUBLIC_SELECT_COLUMNS = [
   "age_max",
   "requires_identity",
   "requires_manual_confirmation",
+  "cancellation_preference",
+  "reschedule_preference",
   "published_at",
   "updated_at",
 ].join(", ");
@@ -160,6 +163,8 @@ export function mapPublicTeacherOfferRow(row: unknown): PublicTeacherOfferDto | 
     ageMax: asInt(raw.age_max),
     requiresIdentity: asBool(raw.requires_identity),
     requiresManualConfirmation: asBool(raw.requires_manual_confirmation),
+    cancellationPreference: parseTeacherOfferPolicyPreference(raw.cancellation_preference),
+    reschedulePreference: parseTeacherOfferPolicyPreference(raw.reschedule_preference),
     publishedAt,
     updatedAt,
   });

@@ -8,9 +8,11 @@ import {
   formatPublicTeacherOfferLevel,
   formatPublicTeacherOfferPackageChip,
   formatPublicTeacherOfferPriceLabel,
+  formatTeacherOfferCancellationPreferenceChip,
   formatTeacherOfferDiscipline,
   formatTeacherOfferDuration,
   formatTeacherOfferFormatLabel,
+  formatTeacherOfferReschedulePreferenceChip,
   formatTeacherOfferTypeLabel,
 } from "@/lib/offers/display";
 import type { PublicTeacherOfferDto } from "@/lib/offers/publicTeacherOfferDto";
@@ -42,6 +44,8 @@ export function PublicTeacherOfferCard({ offer, onPrepareBooking }: Props) {
     formatPublicTeacherOfferCapacity(offer, t),
     formatPublicTeacherOfferLevel(offer.level, t),
     formatPublicTeacherOfferAge(offer, t),
+    formatTeacherOfferCancellationPreferenceChip(offer.cancellationPreference, t),
+    formatTeacherOfferReschedulePreferenceChip(offer.reschedulePreference, t),
     offer.specialite?.trim() || null,
   ].filter((value): value is string => Boolean(value));
   const priceLabel = formatPublicTeacherOfferPriceLabel(offer, t, locale);

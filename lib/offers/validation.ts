@@ -9,9 +9,11 @@ import {
   TEACHER_OFFER_CURRENCIES,
   TEACHER_OFFER_DISCIPLINE_ID_PATTERN,
   TEACHER_OFFER_FORMATS,
+  TEACHER_OFFER_POLICY_PREFERENCES,
   TEACHER_OFFER_SLUG_PATTERN,
   TEACHER_OFFER_STATUSES,
   TEACHER_OFFER_TYPES,
+  DEFAULT_TEACHER_OFFER_POLICY_PREFERENCE,
   type TeacherOfferCreateInput,
   type TeacherOfferDto,
   type TeacherOfferUpdateInput,
@@ -129,6 +131,10 @@ const createBodySchema = z
     requiresIdentity: z.boolean().optional(),
     requires_manual_confirmation: z.boolean().optional(),
     requiresManualConfirmation: z.boolean().optional(),
+    cancellation_preference: z.enum(TEACHER_OFFER_POLICY_PREFERENCES).optional(),
+    cancellationPreference: z.enum(TEACHER_OFFER_POLICY_PREFERENCES).optional(),
+    reschedule_preference: z.enum(TEACHER_OFFER_POLICY_PREFERENCES).optional(),
+    reschedulePreference: z.enum(TEACHER_OFFER_POLICY_PREFERENCES).optional(),
   })
   .passthrough();
 
@@ -168,6 +174,10 @@ const updateBodySchema = z
     requiresIdentity: z.boolean().optional(),
     requires_manual_confirmation: z.boolean().optional(),
     requiresManualConfirmation: z.boolean().optional(),
+    cancellation_preference: z.enum(TEACHER_OFFER_POLICY_PREFERENCES).optional(),
+    cancellationPreference: z.enum(TEACHER_OFFER_POLICY_PREFERENCES).optional(),
+    reschedule_preference: z.enum(TEACHER_OFFER_POLICY_PREFERENCES).optional(),
+    reschedulePreference: z.enum(TEACHER_OFFER_POLICY_PREFERENCES).optional(),
   })
   .passthrough();
 
@@ -367,6 +377,15 @@ function normalizeSharedFields(
     return fail("requires_manual_confirmation", requiresManualConfirmation.message);
   }
 
+  const cancellationPreferenceRaw = firstDefined(
+    raw.cancellation_preference,
+    raw.cancellationPreference,
+  );
+  const reschedulePreferenceRaw = firstDefined(
+    raw.reschedule_preference,
+    raw.reschedulePreference,
+  );
+
   const offerType = firstDefined(raw.offer_type, raw.offerType);
   const format = raw.format;
   const status = raw.status;
@@ -398,6 +417,16 @@ function normalizeSharedFields(
       ...(requiresManualConfirmation.value !== undefined
         ? { requiresManualConfirmation: requiresManualConfirmation.value }
         : {}),
+      ...(cancellationPreferenceRaw !== undefined
+        ? { cancellationPreference: cancellationPreferenceRaw }
+        : mode === "create"
+          ? { cancellationPreference: DEFAULT_TEACHER_OFFER_POLICY_PREFERENCE }
+          : {}),
+      ...(reschedulePreferenceRaw !== undefined
+        ? { reschedulePreference: reschedulePreferenceRaw }
+        : mode === "create"
+          ? { reschedulePreference: DEFAULT_TEACHER_OFFER_POLICY_PREFERENCE }
+          : {}),
     },
   };
 }
@@ -449,6 +478,10 @@ export function parseTeacherOfferCreateInput(body: unknown): ParseCreateResult {
       ageMax: shared.ageMax ?? null,
       requiresIdentity: shared.requiresIdentity ?? false,
       requiresManualConfirmation: shared.requiresManualConfirmation ?? false,
+      cancellationPreference:
+        shared.cancellationPreference ?? DEFAULT_TEACHER_OFFER_POLICY_PREFERENCE,
+      reschedulePreference:
+        shared.reschedulePreference ?? DEFAULT_TEACHER_OFFER_POLICY_PREFERENCE,
     },
   };
 }
@@ -519,6 +552,15 @@ export function parseTeacherOfferUpdateInput(body: unknown): ParseUpdateResult {
   ) {
     data.requiresManualConfirmation = shared.requiresManualConfirmation;
   }
+  if (
+    source.cancellation_preference !== undefined ||
+    source.cancellationPreference !== undefined
+  ) {
+    data.cancellationPreference = shared.cancellationPreference;
+  }
+  if (source.reschedule_preference !== undefined || source.reschedulePreference !== undefined) {
+    data.reschedulePreference = shared.reschedulePreference;
+  }
 
   if (Object.keys(data).length === 0) {
     return fail("body", "no mutable fields provided");
@@ -568,6 +610,8 @@ export function teacherOfferCreateToInsertRow(
     age_max: input.ageMax,
     requires_identity: input.requiresIdentity,
     requires_manual_confirmation: input.requiresManualConfirmation,
+    cancellation_preference: input.cancellationPreference,
+    reschedule_preference: input.reschedulePreference,
   };
   if (input.status === "published") {
     row.published_at = nowIso;
@@ -597,6 +641,12 @@ export function teacherOfferUpdateToPatchRow(input: TeacherOfferUpdateInput): Re
   if (input.requiresIdentity !== undefined) row.requires_identity = input.requiresIdentity;
   if (input.requiresManualConfirmation !== undefined) {
     row.requires_manual_confirmation = input.requiresManualConfirmation;
+  }
+  if (input.cancellationPreference !== undefined) {
+    row.cancellation_preference = input.cancellationPreference;
+  }
+  if (input.reschedulePreference !== undefined) {
+    row.reschedule_preference = input.reschedulePreference;
   }
   return row;
 }

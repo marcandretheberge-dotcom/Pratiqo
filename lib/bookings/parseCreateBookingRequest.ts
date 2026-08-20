@@ -9,6 +9,8 @@ export const CLIENT_BOOKING_OFFER_SNAPSHOT_KEYS = [
   "teacher_offer_discipline_id_snapshot",
   "teacher_offer_specialite_snapshot",
   "teacher_offer_short_description_snapshot",
+  "teacher_offer_cancellation_preference_snapshot",
+  "teacher_offer_reschedule_preference_snapshot",
   "teacher_offer_snapshot_version",
 ] as const;
 

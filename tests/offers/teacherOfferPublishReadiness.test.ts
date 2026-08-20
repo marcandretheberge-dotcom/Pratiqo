@@ -56,6 +56,8 @@ function readyCreate(overrides: Partial<TeacherOfferCreateInput> = {}): TeacherO
     ageMax: null,
     requiresIdentity: false,
     requiresManualConfirmation: false,
+    cancellationPreference: "standard",
+    reschedulePreference: "standard",
     ...overrides,
   };
 }
@@ -85,6 +87,8 @@ function dto(partial: Partial<TeacherOfferDto> = {}): TeacherOfferDto {
     ageMax: null,
     requiresIdentity: false,
     requiresManualConfirmation: false,
+    cancellationPreference: "standard",
+    reschedulePreference: "standard",
     publishedAt: null,
     pausedAt: null,
     archivedAt: null,
