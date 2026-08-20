@@ -1,8 +1,8 @@
 # Conditions Générales d'Utilisation — Pratiqo
 
-**Version :** 1.0 · **Dernière mise à jour :** avril 2026
+**Version :** 1.1 · **Dernière mise à jour :** août 2026
 
-> ⚠️ **Important** : Ce document est un modèle préliminaire préparé à titre informatif. Il ne constitue pas un avis juridique. Cours Pratiqo Inc. recommande de le faire réviser par un avocat qualifié au Québec avant tout lancement commercial.
+> ⚠️ **Important** : Ce document est un modèle préliminaire préparé à titre informatif. Il ne constitue pas un avis juridique. Cours Pratiqo Inc. recommande de le faire réviser par un avocat qualifié au Québec avant tout lancement commercial, y compris avant l’activation large des forfaits payants.
 
 ---
 
@@ -75,6 +75,23 @@ Pratiqo se réserve le droit de suspendre ou de résilier tout compte qui viole 
 - Il n'existe **AUCUNE relation d'emploi** entre Pratiqo et les professeurs
 - Aucune exclusivité n'est exigée — les professeurs peuvent enseigner sur d'autres plateformes
 - Les professeurs fixent leurs propres tarifs, horaires et méthodes pédagogiques
+- La prestation d’enseignement (cours ou forfait) est fournie par le professeur, et non par Pratiqo
+- Le contrat de service relatif à un cours ou à un forfait lie l’élève (ou le parent/tuteur) et le professeur
+
+---
+
+## 4quinquies. Offres de cours et forfaits
+
+Lorsqu’un professeur publie des **offres de cours** ou des **forfaits** sur Pratiqo :
+
+- l’offre ou le forfait est **proposé par le professeur** (titre, description, format, durée, nombre de séances, tarif);
+- Pratiqo agit comme **intermédiaire technologique** pour faciliter la découverte, la réservation et le paiement;
+- Pratiqo peut prélever des **frais de plateforme** ou une **commission** pour l’utilisation de la marketplace;
+- Pratiqo **n’assigne pas** de professeur à un élève et **n’impose pas** de programme pédagogique ni de méthode d’enseignement;
+- Pratiqo peut appliquer des règles de marketplace (confiance, sécurité, intégrité des paiements, conduite, conformité légale et qualité minimale des annonces publiques) sans diriger le contenu des cours;
+- aucune exclusivité n’est exigée : les professeurs demeurent libres d’offrir leurs services ailleurs, sous réserve du respect des présentes conditions et des règles applicables à l’utilisation de la plateforme.
+
+YoPratiqo (cours numériques autonomes vendus par Cours Pratiqo Inc.) est distinct de la marketplace de cours individuels et des forfaits proposés par les professeurs.
 
 ---
 

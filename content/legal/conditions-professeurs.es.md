@@ -30,6 +30,19 @@ El profesor actúa como **prestador independiente**. No es empleado, agente, soc
 - El profesor controla sus métodos de enseñanza, disponibilidad, precios cuando la plataforma lo permite, organización de trabajo y obligaciones fiscales.
 - Nada en estas condiciones crea una relación laboral, sociedad, agencia, franquicia o empresa conjunta entre el profesor y Cours Pratiqo Inc.
 - El profesor sigue siendo responsable de su material, entorno de enseñanza y cumplimiento legal.
+- No se exige exclusividad: los profesores siguen siendo libres de ofrecer sus servicios en otros lugares, sujeto al cumplimiento de estas condiciones y de las reglas aplicables de la plataforma.
+
+---
+
+## 3a. Ofertas de cursos y paquetes ofrecidos por el profesor
+
+El profesor puede crear, publicar, modificar y retirar sus propias **ofertas de cursos** y **paquetes** en Pratiqo.
+
+- El profesor elige el título, la descripción, el formato, la duración, el número de sesiones (para un paquete) y el precio.
+- El paquete o la oferta es **propuesto por el profesor**; Pratiqo facilita la puesta en relación, la reserva y el pago, y puede cobrar una comisión de plataforma o comisión.
+- Pratiqo no impone una estructura de paquete obligatoria, un precio impuesto, un programa pedagógico ni un método de enseñanza.
+- Pratiqo no asigna alumnos a los profesores.
+- Pratiqo puede aplicar reglas del marketplace (confianza, seguridad, integridad de los pagos, conducta, cumplimiento y calidad mínima de los anuncios) sin dirigir el contenido de las clases.
 
 ---
 

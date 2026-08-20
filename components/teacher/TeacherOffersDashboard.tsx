@@ -259,6 +259,9 @@ export function TeacherOffersDashboard() {
               <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">{t("teacherSpaceLabel")}</p>
               <h1 className="mt-1 text-2xl font-bold text-[#2C2C2A]">{t("teacherOffersTitle")}</h1>
               <p className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-600">{t("teacherOffersSubtitle")}</p>
+              <p className="mt-3 max-w-3xl text-sm leading-relaxed text-slate-500" data-testid="teacher-offers-marketplace-notice">
+                {t("teacherOffersMarketplaceNotice")}
+              </p>
             </div>
           </div>
           <button

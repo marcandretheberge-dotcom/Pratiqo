@@ -1,8 +1,8 @@
 # Terms of Service — Pratiqo
 
-**Version:** 1.0 · **Last updated:** April 2026
+**Version:** 1.1 · **Last updated:** August 2026
 
-> ⚠️ **Important**: This document is a preliminary template for informational purposes only. It does not constitute legal advice. Cours Pratiqo Inc. recommends having it reviewed by a qualified lawyer before commercial launch.
+> ⚠️ **Important**: This document is a preliminary template for informational purposes only. It does not constitute legal advice. Cours Pratiqo Inc. recommends having it reviewed by a qualified lawyer in Quebec before commercial launch, including before broadly enabling paid packages.
 
 ---
 
@@ -75,6 +75,23 @@ As such:
 - There is **NO employment relationship** between Pratiqo and teachers
 - No exclusivity is required — teachers may teach on other platforms
 - Teachers set their own rates, schedules, and teaching methods
+- The teaching service (lesson or package) is provided by the teacher, not by Pratiqo
+- The service agreement for a lesson or package is between the learner (or parent/guardian) and the teacher
+
+---
+
+## 4c. Course offers and packages
+
+When a teacher publishes **course offers** or **packages** on Pratiqo:
+
+- the offer or package is **offered by the teacher** (title, description, format, duration, session count, price);
+- Pratiqo acts as a **technology intermediary** facilitating discovery, booking, and payment;
+- Pratiqo may collect a **platform fee** or **commission** for use of the marketplace;
+- Pratiqo does **not** assign a teacher to a learner and does **not** impose a curriculum or teaching method;
+- Pratiqo may enforce marketplace rules (trust, safety, payment integrity, conduct, legal compliance, and minimum quality standards for public listings) without directing lesson content;
+- no exclusivity is required: teachers remain free to offer their services elsewhere, subject to these Terms and applicable platform rules.
+
+YoPratiqo (self-paced digital courses sold by Cours Pratiqo Inc.) is distinct from the marketplace of individual lessons and teacher-offered packages.
 
 ---
 
