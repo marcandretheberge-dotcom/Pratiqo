@@ -596,6 +596,24 @@ const allowedStudentPackageDashboardFiles = new Set<string>([
   "package.json",
 ]);
 
+/** Teacher package visibility (PR 12). */
+const allowedTeacherPackageVisibilityFiles = new Set<string>([
+  "lib/offers/teacherPackages.ts",
+  "app/api/teacher/packages/route.ts",
+  "app/(app)/teacher/packages/page.tsx",
+  "components/teacher/TeacherPackageDashboard.tsx",
+  "components/teacher/TeacherPackageCard.tsx",
+  "components/TeacherTopNav.tsx",
+  "lib/i18n/locales/fr.json",
+  "lib/i18n/locales/en.json",
+  "lib/i18n/locales/es.json",
+  ".env.example",
+  "tests/offers/teacherPackagesDashboard.test.ts",
+  "tests/offers/marketplaceIndependentTeacherGuardrails.test.ts",
+  "tests/legal/safeDisclosures.test.ts",
+  "package.json",
+]);
+
 function touchesSafeDisclosureScope(file: string): boolean {
   return (
     liveDisclosureFiles.includes(file) ||
@@ -775,6 +793,7 @@ test("safe-disclosure branch did not touch restricted systems", () => {
     if (allowedPackageSessionRedemptionFiles.has(file)) continue;
     if (allowedPackageCreditReversalFiles.has(file)) continue;
     if (allowedStudentPackageDashboardFiles.has(file)) continue;
+    if (allowedTeacherPackageVisibilityFiles.has(file)) continue;
     for (const rule of restrictedRules) {
       if (rule.re.test(file)) {
         violations.push(`${file} (${rule.label})`);

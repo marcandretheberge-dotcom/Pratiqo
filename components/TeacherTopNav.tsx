@@ -13,6 +13,7 @@ import {
   MessageCircle,
   MoreHorizontal,
   NotebookPen,
+  Package,
   Shield,
   Star,
   User,
@@ -27,6 +28,7 @@ import { useLocale } from "@/lib/locale-context";
 import { useAuth } from "@/components/AuthProvider";
 import { authDisplayName } from "@/lib/authDisplay";
 import { logout } from "@/lib/auth";
+import { isTeacherPackageVisibilityUiEnabled } from "@/lib/offers/teacherPackages";
 
 function initialsFrom(name: string | undefined, email: string | undefined): string {
   const base = (name || email || "?").trim();
@@ -45,6 +47,7 @@ function isTeacherNavActive(pathname: string | null, href: string): boolean {
   if (href === "/teacher/revenue") return pathname.startsWith("/teacher/revenue");
   if (href === "/teacher/history") return pathname.startsWith("/teacher/history");
   if (href === "/teacher/offers") return pathname.startsWith("/teacher/offers");
+  if (href === "/teacher/packages") return pathname.startsWith("/teacher/packages");
   if (href === "/resolution") return pathname.startsWith("/resolution");
   if (href === "/loyalty") return pathname.startsWith("/loyalty");
   return pathname === href || pathname.startsWith(`${href}/`);
@@ -62,6 +65,7 @@ type NavItem = {
     | "teacherNavRevenue"
     | "teacherHistoryTitle"
     | "teacherOffersNav"
+    | "teacherPackagesNav"
     | "teacherNavMyProfile"
     | "resolutionCenterTitle"
     | "settings";
@@ -76,13 +80,22 @@ const PRIMARY_NAV: NavItem[] = [
   { href: "/messages", labelKey: "teacherMessages", icon: MessageCircle },
 ];
 
-const SECONDARY_NAV: NavItem[] = [
-  { href: "/teacher/offers", labelKey: "teacherOffersNav", icon: NotebookPen },
-  { href: "/teacher/history", labelKey: "teacherHistoryTitle", icon: Calendar },
-  { href: "/resolution", labelKey: "resolutionCenterTitle", icon: LifeBuoy },
-  { href: "/loyalty", labelKey: "teacherLoyalty", icon: Star },
-  { href: "/teacher/verification", labelKey: "teacherProfileManagementNav", icon: Shield },
-];
+function buildSecondaryNav(): NavItem[] {
+  const packagesNavEnabled = isTeacherPackageVisibilityUiEnabled();
+  const items: NavItem[] = [
+    { href: "/teacher/offers", labelKey: "teacherOffersNav", icon: NotebookPen },
+  ];
+  if (packagesNavEnabled) {
+    items.push({ href: "/teacher/packages", labelKey: "teacherPackagesNav", icon: Package });
+  }
+  items.push(
+    { href: "/teacher/history", labelKey: "teacherHistoryTitle", icon: Calendar },
+    { href: "/resolution", labelKey: "resolutionCenterTitle", icon: LifeBuoy },
+    { href: "/loyalty", labelKey: "teacherLoyalty", icon: Star },
+    { href: "/teacher/verification", labelKey: "teacherProfileManagementNav", icon: Shield },
+  );
+  return items;
+}
 
 const DRAWER_EXTRA_NAV: NavItem[] = [
   { href: "/teacher/my-profile", labelKey: "teacherNavMyProfile", icon: User },
@@ -100,6 +113,7 @@ export function TeacherTopNav({ unreadMessages }: { unreadMessages: number }) {
   const displayName = (profile?.name as string | undefined) || (user ? authDisplayName(user) : "");
   const photoUrl = (profile?.photo_url as string | null | undefined) ?? null;
   const initials = initialsFrom(displayName, user?.email || undefined);
+  const SECONDARY_NAV = buildSecondaryNav();
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [avatarOpen, setAvatarOpen] = useState(false);
