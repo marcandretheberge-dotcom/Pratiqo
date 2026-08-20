@@ -49,6 +49,7 @@ function completeSnapshot(overrides: Record<string, unknown> = {}) {
 }
 
 const prevCheckoutFlag = process.env.ENABLE_OFFER_SNAPSHOT_CHECKOUT;
+const prevPackageFlag = process.env.ENABLE_PACKAGE_ENTITLEMENTS;
 
 test("legacy booking without offer snapshot uses legacy teacher pricing unchanged", () => {
   const resolved = resolveBookingCheckoutPrice({
@@ -164,10 +165,61 @@ test("private_lesson, intro_session, and assessment snapshots are checkout-ready
   }
 });
 
-test("package and group-style offer snapshots are rejected as unsupported", () => {
+test("package snapshots are rejected unless package entitlements are enabled", () => {
   process.env.ENABLE_OFFER_SNAPSHOT_CHECKOUT = "true";
+  delete process.env.ENABLE_PACKAGE_ENTITLEMENTS;
+  const resolved = resolveBookingCheckoutPrice({
+    booking: completeSnapshot({
+      teacher_offer_type_snapshot: "package",
+      teacher_offer_session_count_snapshot: 5,
+    }),
+    teacher,
+    teacherName: "Marie",
+  });
+  assert.equal(resolved.ok, false);
+  if (resolved.ok) return;
+  assert.equal(resolved.error, "unsupported_offer_type_for_checkout");
+});
+
+test("package snapshots charge snapshot total when both checkout and entitlement flags are ON", () => {
+  process.env.ENABLE_OFFER_SNAPSHOT_CHECKOUT = "true";
+  process.env.ENABLE_PACKAGE_ENTITLEMENTS = "true";
+  const resolved = resolveBookingCheckoutPrice({
+    booking: completeSnapshot({
+      teacher_offer_type_snapshot: "package",
+      teacher_offer_price_cents_snapshot: 25000,
+      teacher_offer_session_count_snapshot: 5,
+      duration_minutes: 120,
+    }),
+    teacher,
+    teacherName: "Marie",
+  });
+  assert.equal(resolved.ok, true);
+  if (!resolved.ok) return;
+  assert.equal(resolved.pricing.source, "offer_snapshot");
+  assert.equal(resolved.pricing.amountCents, 25000);
+});
+
+test("package snapshots without session count are incomplete even when entitlements are ON", () => {
+  process.env.ENABLE_OFFER_SNAPSHOT_CHECKOUT = "true";
+  process.env.ENABLE_PACKAGE_ENTITLEMENTS = "true";
+  const resolved = resolveBookingCheckoutPrice({
+    booking: completeSnapshot({
+      teacher_offer_type_snapshot: "package",
+      teacher_offer_session_count_snapshot: null,
+    }),
+    teacher,
+    teacherName: "Marie",
+  });
+  assert.equal(resolved.ok, false);
+  if (resolved.ok) return;
+  assert.equal(resolved.error, "incomplete_offer_snapshot");
+});
+
+test("group-style offer snapshots remain rejected as unsupported even with entitlements ON", () => {
+  process.env.ENABLE_OFFER_SNAPSHOT_CHECKOUT = "true";
+  process.env.ENABLE_PACKAGE_ENTITLEMENTS = "true";
   for (const offerType of [
-    "package",
     "workshop",
     "group_class",
     "cohort",
@@ -223,6 +275,12 @@ if (prevCheckoutFlag === undefined) {
   delete process.env.ENABLE_OFFER_SNAPSHOT_CHECKOUT;
 } else {
   process.env.ENABLE_OFFER_SNAPSHOT_CHECKOUT = prevCheckoutFlag;
+}
+
+if (prevPackageFlag === undefined) {
+  delete process.env.ENABLE_PACKAGE_ENTITLEMENTS;
+} else {
+  process.env.ENABLE_PACKAGE_ENTITLEMENTS = prevPackageFlag;
 }
 
 console.log("[pricing:resolveBookingCheckoutPrice] tests passed");

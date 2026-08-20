@@ -1,3 +1,4 @@
+import { isPackageEntitlementsEnabled } from "./packageEntitlements";
 import {
   TEACHER_OFFER_CURRENCIES,
   TEACHER_OFFER_FORMATS,
@@ -36,9 +37,13 @@ export const CHECKOUT_READY_OFFER_TYPES = [
   "assessment",
 ] as const satisfies readonly TeacherOfferType[];
 
-export type CheckoutReadyOfferType = (typeof CHECKOUT_READY_OFFER_TYPES)[number];
+export type CheckoutReadyOfferType =
+  | (typeof CHECKOUT_READY_OFFER_TYPES)[number]
+  | "package";
 
 // Packages and group-style offers need redemption/capacity logic before checkout can charge them.
+// Package checkout is allowed only when ENABLE_PACKAGE_ENTITLEMENTS is also ON so a
+// paid booking can create a server-owned entitlement (PR 10A). Redemption is PR 10B.
 
 export type BookingOfferSnapshotCheckoutRow = {
   teacher_offer_id?: string | null;
@@ -47,6 +52,7 @@ export type BookingOfferSnapshotCheckoutRow = {
   teacher_offer_format_snapshot?: string | null;
   teacher_offer_price_cents_snapshot?: number | string | null;
   teacher_offer_currency_snapshot?: string | null;
+  teacher_offer_session_count_snapshot?: number | string | null;
   teacher_offer_snapshot_version?: number | string | null;
 };
 
@@ -83,10 +89,9 @@ function isCurrency(value: unknown): value is TeacherOfferCurrency {
 export function isCheckoutReadyOfferType(
   value: unknown,
 ): value is CheckoutReadyOfferType {
-  return (
-    typeof value === "string" &&
-    (CHECKOUT_READY_OFFER_TYPES as readonly string[]).includes(value)
-  );
+  if (typeof value !== "string") return false;
+  if ((CHECKOUT_READY_OFFER_TYPES as readonly string[]).includes(value)) return true;
+  return value === "package" && isPackageEntitlementsEnabled();
 }
 
 export type ParsedBookingOfferSnapshotCheckout = {
@@ -96,6 +101,7 @@ export type ParsedBookingOfferSnapshotCheckout = {
   format: TeacherOfferFormat;
   priceCents: number;
   currency: TeacherOfferCurrency;
+  sessionCount: number | null;
   snapshotVersion: number | null;
 };
 
@@ -137,6 +143,11 @@ export function parseBookingOfferSnapshotCheckoutRow(
     return { ok: false, error: "unsupported_offer_type_for_checkout" };
   }
 
+  const sessionCount = asInt(booking.teacher_offer_session_count_snapshot);
+  if (offerType === "package" && (sessionCount == null || sessionCount < 1)) {
+    return { ok: false, error: "incomplete_offer_snapshot" };
+  }
+
   if (priceCents < 0) {
     return { ok: false, error: "invalid_offer_snapshot_price" };
   }
@@ -158,6 +169,7 @@ export function parseBookingOfferSnapshotCheckoutRow(
       format,
       priceCents,
       currency,
+      sessionCount,
       snapshotVersion,
     },
   };

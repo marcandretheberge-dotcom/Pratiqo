@@ -79,6 +79,7 @@ type BookingRow = {
   teacher_offer_format_snapshot?: string | null;
   teacher_offer_price_cents_snapshot?: number | string | null;
   teacher_offer_currency_snapshot?: string | null;
+  teacher_offer_session_count_snapshot?: number | string | null;
   teacher_offer_snapshot_version?: number | string | null;
 };
 
@@ -158,7 +159,7 @@ export async function POST(req: Request) {
     const { data: booking, error: bookErr } = await admin
       .from("bookings")
       .select(
-        "id, teacher_id, student_id, status, price, date, time, slot_date, time_slot, duration_minutes, student_level, teaching_mode, student_address, lesson_type, learner_profile_id, teacher_offer_id, teacher_offer_title_snapshot, teacher_offer_type_snapshot, teacher_offer_format_snapshot, teacher_offer_price_cents_snapshot, teacher_offer_currency_snapshot, teacher_offer_snapshot_version",
+        "id, teacher_id, student_id, status, price, date, time, slot_date, time_slot, duration_minutes, student_level, teaching_mode, student_address, lesson_type, learner_profile_id, teacher_offer_id, teacher_offer_title_snapshot, teacher_offer_type_snapshot, teacher_offer_format_snapshot, teacher_offer_price_cents_snapshot, teacher_offer_currency_snapshot, teacher_offer_session_count_snapshot, teacher_offer_snapshot_version",
       )
       .eq("id", bookingId)
       .maybeSingle();

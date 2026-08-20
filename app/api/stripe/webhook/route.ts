@@ -30,6 +30,7 @@ import {
   handleStripeTransferFailed,
 } from "@/lib/payments/webhookRiskEvents";
 import { issueLessonPaymentReceipt } from "@/lib/payments/receipts";
+import { maybeCreatePackageEntitlementAfterPaidBooking } from "@/lib/offers/packageEntitlements";
 
 export const runtime = "nodejs";
 
@@ -166,7 +167,7 @@ async function confirmBookingAndNotify(
 
   const { data: booking, error: fetchErr } = await admin
     .from("bookings")
-    .select("id, teacher_id, student_id, status, date, time, slot_date, time_slot, credits_applied, price, duration_minutes, teaching_mode")
+    .select("id, teacher_id, student_id, status, date, time, slot_date, time_slot, credits_applied, price, duration_minutes, teaching_mode, teacher_offer_id, teacher_offer_title_snapshot, teacher_offer_type_snapshot, teacher_offer_format_snapshot, teacher_offer_price_cents_snapshot, teacher_offer_currency_snapshot, teacher_offer_duration_minutes_snapshot, teacher_offer_session_count_snapshot, teacher_offer_discipline_id_snapshot, teacher_offer_specialite_snapshot, teacher_offer_short_description_snapshot, teacher_offer_snapshot_version")
     .eq("id", bookingId)
     .maybeSingle();
 
@@ -316,6 +317,21 @@ async function confirmBookingAndNotify(
     } catch (ledgerErr) {
       console.error("[stripe/webhook] booking payment ledger upsert failed", ledgerErr);
       return;
+    }
+
+    try {
+      const entitlementResult = await maybeCreatePackageEntitlementAfterPaidBooking({
+        admin,
+        bookingId,
+        booking,
+      });
+      if (!entitlementResult.ok) {
+        console.error("[stripe/webhook] package entitlement create failed", entitlementResult.error, {
+          bookingId,
+        });
+      }
+    } catch (entitlementErr) {
+      console.error("[stripe/webhook] package entitlement create threw", entitlementErr);
     }
 
     if (ledger.ok) {

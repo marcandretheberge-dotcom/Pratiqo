@@ -58,6 +58,8 @@ function offerTypeLabel(offerType: ParsedBookingOfferSnapshotCheckout["offerType
       return "Séance d’introduction";
     case "assessment":
       return "Évaluation";
+    case "package":
+      return "Forfait";
     default:
       return "Offre de cours";
   }
