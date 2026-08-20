@@ -15,20 +15,20 @@ import {
 import type { TeacherOfferFormat, TeacherOfferType } from "@/lib/offers/types";
 import { TEACHER_OFFER_FORMATS, TEACHER_OFFER_MVP_TYPES } from "@/lib/offers/types";
 import { PUBLIC_TEACHER_PROFILE_DISCIPLINE_CHIP_CLASS } from "@/lib/teachers/display";
+import { TeacherOfferCoverImage } from "@/components/teacher/TeacherOfferCoverImage";
 import { cn } from "@/lib/utils";
 
 type Props = {
   values: TeacherOfferFormValues;
+  coverImageUrl?: string | null;
   className?: string;
 };
 
 /**
  * Live local preview of how an offer may appear on the public profile.
  * Uses form state only — never fetches teacher_offers.
- *
- * Future PR: offer cover image upload with storage validation and moderation-safe constraints.
  */
-export function TeacherOfferPreview({ values, className }: Props) {
+export function TeacherOfferPreview({ values, coverImageUrl = null, className }: Props) {
   const { t, locale } = useLocale();
   const title = values.title.trim() || t("teacherOffersPreviewTitlePlaceholder");
   const offerType =
@@ -70,6 +70,8 @@ export function TeacherOfferPreview({ values, className }: Props) {
       ? formatPublicTeacherOfferPriceLabel({ offerType, priceCents }, t, locale)
       : t("teacherOffersPreviewPricePlaceholder");
 
+  const alt = t("teacherOffersCoverAlt").replace("{title}", title);
+
   return (
     <aside
       aria-labelledby="teacher-offer-preview-title"
@@ -81,11 +83,9 @@ export function TeacherOfferPreview({ values, className }: Props) {
       >
         {t("teacherOffersPreviewLabel")}
       </p>
-      {/* Future PR: offer cover image upload with storage validation and moderation-safe constraints. */}
-      <div
-        aria-hidden="true"
-        className="mt-3 h-16 rounded-xl bg-gradient-to-br from-teal-100 via-white to-slate-100"
-      />
+      <div className="mt-3">
+        <TeacherOfferCoverImage imageUrl={coverImageUrl} title={title} alt={alt} />
+      </div>
       <article className="mt-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <h3 className="min-w-0 flex-1 text-base font-semibold text-slate-900">{title}</h3>

@@ -110,6 +110,8 @@ test("draft paused and archived offers are not shown", () => {
 test("offer cards show title type format price and description", () => {
   const card = read(CARD);
   assert.match(card, /offer\.title/);
+  assert.match(card, /TeacherOfferCoverImage/);
+  assert.match(card, /offer\.imageUrl/);
   assert.match(card, /formatTeacherOfferTypeLabel/);
   assert.match(card, /formatTeacherOfferFormatLabel/);
   assert.match(card, /formatPublicTeacherOfferPriceLabel/);

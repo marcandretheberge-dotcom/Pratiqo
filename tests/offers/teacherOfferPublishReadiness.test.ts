@@ -217,14 +217,15 @@ test("offer builder UI shows sections checklist preview and dual actions", () =>
   assert.match(form, /onPublish/);
   assert.match(form, /teacherOffersPublishDisabledHint/);
   assert.doesNotMatch(form, /workshop|group_class|cohort|self_paced_bridge/);
-  assert.doesNotMatch(form, /type=["']file["']|drag.?drop|image upload/i);
+  assert.match(form, /TeacherOfferCoverUpload/);
+  assert.match(read("components/teacher/TeacherOfferCoverUpload.tsx"), /type=["']file["']/);
 
   assert.match(dashboard, /handleSave\("draft"\)/);
   assert.match(dashboard, /handleSave\("published"\)/);
   assert.match(dashboard, /max-w-5xl/);
 
   assert.match(preview, /never fetches teacher_offers|Uses form state only/i);
-  assert.match(preview, /Future PR: offer cover image upload/);
+  assert.match(preview, /TeacherOfferCoverImage|coverImageUrl/);
   assert.doesNotMatch(preview, /fetch\(|from\(["']teacher_offers["']\)/);
   assert.match(checklist, /teacherOffersPublishReady|teacherOffersPublishIncomplete/);
 });

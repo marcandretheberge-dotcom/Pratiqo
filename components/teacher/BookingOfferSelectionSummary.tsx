@@ -9,6 +9,7 @@ import {
 } from "@/lib/offers/display";
 import { getBookingOfferSelectionNoteKey } from "@/lib/offers/offerSnapshotCheckout";
 import type { PublicTeacherOfferDto } from "@/lib/offers/publicTeacherOfferDto";
+import { TeacherOfferCoverImage } from "@/components/teacher/TeacherOfferCoverImage";
 
 type Props = {
   offer: PublicTeacherOfferDto;
@@ -18,12 +19,19 @@ type Props = {
 export function BookingOfferSelectionSummary({ offer, onChangeOffer }: Props) {
   const { t, locale } = useLocale();
   const priceLabel = formatPublicTeacherOfferPriceLabel(offer, t, locale);
+  const coverAlt = t("teacherOffersCoverAlt").replace("{title}", offer.title);
 
   return (
     <div
       data-testid="booking-selected-offer-summary"
       className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3 space-y-2"
     >
+      <TeacherOfferCoverImage
+        imageUrl={offer.imageUrl}
+        title={offer.title}
+        alt={coverAlt}
+        aspectClassName="aspect-[16/9] max-h-32"
+      />
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-[10px] font-bold uppercase tracking-widest text-slate-600">

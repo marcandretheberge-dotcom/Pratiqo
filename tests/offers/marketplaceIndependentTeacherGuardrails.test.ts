@@ -21,6 +21,8 @@ const FORBIDDEN = [
   /Acheter un cours Pratiqo/i,
   /Nos forfaits Pratiqo/i,
   /Acheter un forfait Pratiqo/i,
+  /Pratiqo vous offre/i,
+  /Pratiqo vous assigne/i,
   /\bsalaire\b/i,
   /\bwage\b/i,
   /\bemployé\b/i,
@@ -37,9 +39,13 @@ const CODE_SURFACES = [
   "lib/offers/packageEntitlements.ts",
   "lib/offers/studentPackages.ts",
   "lib/offers/teacherPackages.ts",
+  "lib/offers/offerCoverImages.ts",
   "components/BookingModal.tsx",
   "components/teacher/TeacherOfferForm.tsx",
+  "components/teacher/TeacherOfferCoverUpload.tsx",
+  "components/teacher/TeacherOfferCoverImage.tsx",
   "components/teacher/PublicTeacherOffersSection.tsx",
+  "components/teacher/PublicTeacherOfferCard.tsx",
   "components/admin/AdminPaymentSourceSection.tsx",
   "components/student/StudentPackageDashboard.tsx",
   "components/student/StudentPackageCard.tsx",
@@ -49,6 +55,7 @@ const CODE_SURFACES = [
   "app/api/package-entitlements/[entitlementId]/redeem/route.ts",
   "app/api/student/packages/route.ts",
   "app/api/teacher/packages/route.ts",
+  "app/api/teacher/offers/[offerId]/cover/route.ts",
 ];
 
 /** i18n keys owned by offers/packages booking + admin payment source. */

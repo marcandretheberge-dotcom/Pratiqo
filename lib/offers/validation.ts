@@ -298,8 +298,10 @@ function normalizeSharedFields(
   const disciplineId = parseDisciplineId(firstDefined(raw.discipline_id, raw.disciplineId));
   if (!disciplineId.ok) return fail("discipline_id", disciplineId.message);
 
-  const imageUrl = parseImageUrl(firstDefined(raw.image_url, raw.imageUrl));
-  if (!imageUrl.ok) return fail("image_url", imageUrl.message);
+  // Cover images are set only via POST/DELETE /api/teacher/offers/[id]/cover.
+  // Reject unsafe client-supplied image_url values, then ignore them for persistence.
+  const imageUrlCheck = parseImageUrl(firstDefined(raw.image_url, raw.imageUrl));
+  if (!imageUrlCheck.ok) return fail("image_url", imageUrlCheck.message);
 
   const durationMinutes = parseOptionalInt(
     firstDefined(raw.duration_minutes, raw.durationMinutes),
@@ -383,7 +385,6 @@ function normalizeSharedFields(
       ...(offerType !== undefined ? { offerType } : {}),
       ...(format !== undefined ? { format } : {}),
       ...(status !== undefined ? { status } : {}),
-      imageUrl: imageUrl.value,
       ...(priceCents !== undefined ? { priceCents } : {}),
       ...(currency !== undefined ? { currency } : {}),
       durationMinutes: durationMinutes.value,
@@ -486,9 +487,6 @@ export function parseTeacherOfferUpdateInput(body: unknown): ParseUpdateResult {
   }
   if (source.format !== undefined) data.format = shared.format;
   if (source.status !== undefined) data.status = shared.status;
-  if (source.image_url !== undefined || source.imageUrl !== undefined) {
-    data.imageUrl = shared.imageUrl ?? null;
-  }
   if (source.price_cents !== undefined || source.priceCents !== undefined) {
     data.priceCents = shared.priceCents;
   }
@@ -558,7 +556,7 @@ export function teacherOfferCreateToInsertRow(
     offer_type: input.offerType,
     format: input.format,
     status: input.status,
-    image_url: input.imageUrl,
+    image_url: null,
     price_cents: input.priceCents,
     currency: input.currency,
     duration_minutes: input.durationMinutes,
@@ -587,7 +585,6 @@ export function teacherOfferUpdateToPatchRow(input: TeacherOfferUpdateInput): Re
   if (input.specialite !== undefined) row.specialite = input.specialite;
   if (input.offerType !== undefined) row.offer_type = input.offerType;
   if (input.format !== undefined) row.format = input.format;
-  if (input.imageUrl !== undefined) row.image_url = input.imageUrl;
   if (input.priceCents !== undefined) row.price_cents = input.priceCents;
   if (input.currency !== undefined) row.currency = input.currency;
   if (input.durationMinutes !== undefined) row.duration_minutes = input.durationMinutes;
