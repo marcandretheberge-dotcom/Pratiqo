@@ -614,6 +614,26 @@ const allowedTeacherPackageVisibilityFiles = new Set<string>([
   "package.json",
 ]);
 
+/** Marketplace legal / independent-teacher terms hardening (PR 13). */
+const allowedMarketplaceLegalHardeningFiles = new Set<string>([
+  "docs/product/marketplace-independent-teacher-guardrails.md",
+  "docs/product/paid-packages-legal-launch-checklist.md",
+  "content/legal/terms.fr.md",
+  "content/legal/terms.en.md",
+  "content/legal/terms.es.md",
+  "content/legal/conditions-professeurs.fr.md",
+  "content/legal/conditions-professeurs.en.md",
+  "content/legal/conditions-professeurs.es.md",
+  "components/teacher/TeacherOffersDashboard.tsx",
+  "lib/i18n/locales/fr.json",
+  "lib/i18n/locales/en.json",
+  "lib/i18n/locales/es.json",
+  "tests/legal/marketplaceIndependentTeacherHardening.test.ts",
+  "tests/offers/marketplaceIndependentTeacherGuardrails.test.ts",
+  "tests/legal/safeDisclosures.test.ts",
+  "package.json",
+]);
+
 function touchesSafeDisclosureScope(file: string): boolean {
   return (
     liveDisclosureFiles.includes(file) ||
@@ -794,6 +814,7 @@ test("safe-disclosure branch did not touch restricted systems", () => {
     if (allowedPackageCreditReversalFiles.has(file)) continue;
     if (allowedStudentPackageDashboardFiles.has(file)) continue;
     if (allowedTeacherPackageVisibilityFiles.has(file)) continue;
+    if (allowedMarketplaceLegalHardeningFiles.has(file)) continue;
     for (const rule of restrictedRules) {
       if (rule.re.test(file)) {
         violations.push(`${file} (${rule.label})`);

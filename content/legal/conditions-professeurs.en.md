@@ -30,6 +30,19 @@ The teacher acts as an **independent service provider**. The teacher is not an e
 - The teacher controls their own teaching methods, availability, pricing where the platform allows it, work organization, and tax obligations.
 - Nothing in these Teacher Terms creates an employment, partnership, agency, franchise, or joint venture relationship between the teacher and Cours Pratiqo Inc.
 - The teacher remains responsible for their equipment, teaching environment, and legal compliance.
+- No exclusivity is required: teachers remain free to offer their services elsewhere, subject to these Terms and applicable platform rules.
+
+---
+
+## 3a. Course offers and packages offered by the teacher
+
+Teachers may create, publish, edit, and remove their own **course offers** and **packages** on Pratiqo.
+
+- The teacher chooses the title, description, format, duration, number of sessions (for a package), and price.
+- The package or offer is **offered by the teacher**; Pratiqo facilitates matching, booking, and payment, and may collect a platform fee or commission.
+- Pratiqo does not impose a mandatory package structure, fixed price, curriculum, or teaching method.
+- Pratiqo does not assign learners to teachers.
+- Pratiqo may enforce marketplace rules (trust, safety, payment integrity, conduct, compliance, and minimum listing quality) without directing lesson content.
 
 ---
 

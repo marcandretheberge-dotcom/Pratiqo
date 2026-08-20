@@ -30,6 +30,19 @@ Le professeur agit comme **prestataire indépendant**. Il n'est pas un employé,
 - Le professeur contrôle ses méthodes pédagogiques, ses disponibilités, ses tarifs lorsque la plateforme le permet, son organisation de travail et ses obligations fiscales.
 - Aucune disposition des présentes conditions ne crée une relation d'emploi, de partenariat, d'agence, de franchise ou de coentreprise entre le professeur et Cours Pratiqo Inc.
 - Le professeur demeure responsable de son matériel, de son environnement d'enseignement et de sa conformité légale.
+- Aucune exclusivité n’est exigée : les professeurs demeurent libres d’offrir leurs services ailleurs, sous réserve du respect des présentes conditions et des règles applicables à l’utilisation de la plateforme.
+
+---
+
+## 3bis. Offres de cours et forfaits proposés par le professeur
+
+Le professeur peut créer, publier, modifier et retirer ses propres **offres de cours** et **forfaits** sur Pratiqo.
+
+- Le professeur choisit le titre, la description, le format, la durée, le nombre de séances (pour un forfait) et le tarif.
+- Le forfait ou l’offre est **proposé par le professeur**; Pratiqo facilite la mise en relation, la réservation et le paiement, et peut prélever des frais de plateforme ou une commission.
+- Pratiqo n’impose pas de structure de forfait obligatoire, de prix imposé, de programme pédagogique ni de méthode d’enseignement.
+- Pratiqo n’assigne pas d’élèves aux professeurs.
+- Pratiqo peut appliquer des règles de marketplace (confiance, sécurité, intégrité des paiements, conduite, conformité et qualité minimale des annonces) sans diriger le contenu des cours.
 
 ---
 

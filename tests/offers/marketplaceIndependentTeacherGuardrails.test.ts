@@ -107,6 +107,9 @@ assert.match(fr, /remise dans le forfait/);
 assert.match(fr, /"studentTabPackages": "Mes forfaits"/);
 assert.match(fr, /"teacherPackagesHeading": "Forfaits achetés avec vous"/);
 assert.match(fr, /Forfait acheté avec vous/);
+assert.match(fr, /intermédiaire technologique/);
+assert.match(fr, /"teacherOffersMarketplaceNotice":/);
+assert.equal(existsSync(join(ROOT, "docs/product/paid-packages-legal-launch-checklist.md")), true);
 
 console.log("ok - marketplace independent-teacher guardrails copy");
 console.log("[offers:marketplace-guardrails] tests passed");

@@ -1,8 +1,8 @@
 # Términos de Servicio — Pratiqo
 
-**Versión:** 1.0 · **Última actualización:** abril 2026
+**Versión:** 1.1 · **Última actualización:** agosto 2026
 
-> ⚠️ **Importante**: Este documento es un modelo preliminar con fines informativos. No constituye asesoramiento legal. Cours Pratiqo Inc. te recomienda que lo revise un abogado calificado antes del lanzamiento comercial.
+> ⚠️ **Importante**: Este documento es un modelo preliminar con fines informativos. No constituye asesoramiento legal. Cours Pratiqo Inc. te recomienda que lo revise un abogado calificado en Quebec antes del lanzamiento comercial, incluso antes de activar de forma amplia los paquetes de pago.
 
 ---
 
@@ -75,6 +75,23 @@ Por lo tanto:
 - **NO existe relación laboral** entre Pratiqo y los profesores
 - No se exige exclusividad — podés enseñar en otras plataformas
 - Los profesores fijan sus propias tarifas, horarios y métodos de enseñanza
+- El servicio de enseñanza (clase o paquete) lo presta el profesor, no Pratiqo
+- El acuerdo de servicio relativo a una clase o un paquete vincula al alumno (o al padre/tutor) y al profesor
+
+---
+
+## 4c. Ofertas de cursos y paquetes
+
+Cuando un profesor publica **ofertas de cursos** o **paquetes** en Pratiqo:
+
+- la oferta o el paquete es **propuesto por el profesor** (título, descripción, formato, duración, número de sesiones, precio);
+- Pratiqo actúa como **intermediario tecnológico** para facilitar el descubrimiento, la reserva y el pago;
+- Pratiqo puede cobrar una **comisión de plataforma** o **comisión** por el uso del marketplace;
+- Pratiqo **no asigna** un profesor a un alumno y **no impone** un programa pedagógico ni un método de enseñanza;
+- Pratiqo puede aplicar reglas del marketplace (confianza, seguridad, integridad de los pagos, conducta, cumplimiento legal y estándares mínimos de calidad para anuncios públicos) sin dirigir el contenido de las clases;
+- no se exige exclusividad: los profesores siguen siendo libres de ofrecer sus servicios en otros lugares, sujeto al cumplimiento de estos Términos y de las reglas aplicables de la plataforma.
+
+YoPratiqo (cursos digitales autónomos vendidos por Cours Pratiqo Inc.) es distinto del marketplace de clases individuales y de los paquetes ofrecidos por los profesores.
 
 ---
 

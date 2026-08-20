@@ -1,22 +1,19 @@
 # Marketplace independent-teacher guardrails
 
-Pratiqo is a **technology marketplace** that lets **independent teachers** create, publish, price, and manage their own course offers.
+Pratiqo is a **technology marketplace / intermediary** that lets **independent teachers** create, publish, price, and manage their own course offers and packages (forfaits).
 
-This document is a product/engineering guardrail for offers, packages, checkout, booking, and package redemption. It is **not legal advice**.
+This document is a **product/engineering guardrail** for offers, packages, checkout, booking, and package redemption. It is **not legal advice**.
 
-## What Pratiqo must not become
+```
+Legal review required before public paid package launch.
+Québec legal counsel should review Terms of Use, teacher terms, payment flow wording, and package policy wording before enabling paid packages broadly.
+```
 
-Pratiqo must not accidentally behave like:
+Do not claim the app is “legally bulletproof.” Do not add public copy saying legal review is pending.
 
-- an employer;
-- a school;
-- a teaching provider;
-- a director of teacher work;
-- a manager assigning lessons or curriculum.
+## Core principle
 
-The legal risk is not caused by selling packages. The legal risk comes from **platform control and subordination**.
-
-## What must stay true
+Selling packages does **not** automatically make Pratiqo an employer. Risk comes from **platform control and subordination**.
 
 Preserve:
 
@@ -25,31 +22,32 @@ Preserve:
 - teacher control over number of sessions;
 - teacher control over teaching method;
 - teacher control over schedule/availability;
-- teacher ability to teach elsewhere;
+- teacher ability to teach elsewhere (no exclusivity);
 - teacher economic upside/downside;
 - Stripe Connect marketplace-style money flow;
 - Pratiqo as intermediary/facilitator, not teaching provider.
 
-## Competitive framing (inspiration only)
+## What Pratiqo is
 
-### Superprof-like principle
+Pratiqo provides:
 
-- teacher sets their own price;
-- teacher defines their own offer;
-- teacher controls availability and teaching method;
-- platform facilitates discovery/contact/payment tools;
-- platform does not dictate lesson content or teacher schedule.
+- marketplace infrastructure;
+- discovery and booking tools;
+- payment facilitation;
+- trust/safety layer;
+- platform fee / commission processing.
 
-### Outschool-like principle
+## What Pratiqo must not become
 
-- platform may enforce safety/community/content standards;
-- platform may approve or reject content for marketplace quality/safety;
-- teacher still designs the class/offer;
-- teacher sets price/session structure where product allows;
-- teacher decides how to teach;
-- teacher assumes risk if nobody books.
+Pratiqo must not accidentally behave or present itself like:
 
-Pratiqo may enforce quality/safety rules, but must **not** dictate teaching method, curriculum, or employment-like control.
+- an employer;
+- a school;
+- a teaching provider;
+- a director of teacher work;
+- a manager assigning lessons or curriculum;
+- a party that pays salaries/wages;
+- a seller of “Pratiqo packages” taught by assigned teachers.
 
 ## Stripe Connect money-flow guardrail
 
@@ -59,7 +57,8 @@ Preferred framing:
 - the teacher is the service provider;
 - Pratiqo facilitates payment and booking;
 - Pratiqo collects a platform fee / commission;
-- payouts go to connected teacher accounts.
+- payouts go to connected teacher accounts;
+- “paiement facilité par Pratiqo” / “payment facilitated by Pratiqo”.
 
 Avoid framing:
 
@@ -94,24 +93,30 @@ Do **not** implement:
 - forced standard price;
 - forced standard curriculum;
 - forced teaching method;
-- teacher assignment by Pratiqo.
+- teacher assignment by Pratiqo;
+- exclusivity / non-compete.
 
-### Good copy
+## Safety/quality without subordination
 
-- Ce professeur propose un forfait de 5 séances.
-- Forfait proposé par le professeur.
-- Réserver avec ce professeur.
-- Utiliser une séance du forfait avec ce professeur.
-- Paiement facilité par Pratiqo.
+Pratiqo **may** enforce marketplace rules for:
 
-### Bad copy
+- identity / trust verification;
+- marketplace safety;
+- payment integrity;
+- prohibited content;
+- fraud prevention;
+- respectful conduct;
+- legal compliance;
+- minimum quality standards for public listings.
 
-- Nos forfaits Pratiqo.
-- Acheter un forfait Pratiqo.
-- Pratiqo vous offre 5 cours.
-- Nos professeurs vous enseigneront.
-- Embaucher un tuteur.
-- Salaire du professeur.
+Pratiqo must **not** impose employer-style control such as:
+
+- mandatory curriculum;
+- mandatory lesson scripts;
+- platform-directed teaching method;
+- platform-assigned students;
+- platform-imposed package prices;
+- platform-imposed working hours.
 
 ## Package redemption guardrails
 
@@ -124,51 +129,30 @@ When a learner redeems a package session:
 - the booking must respect the teacher’s availability;
 - package balance changes must be **server-owned and atomic**.
 
-Good behavior: learner uses one session from a package purchased from that teacher.
-
-Bad behavior: Pratiqo assigns any available teacher, dictates session curriculum, or forces one fixed package structure.
-
 ## Cancellation / rescheduling
 
 When a package-credit booking is cancelled or declined **before** the lesson is completed, Pratiqo restores the unused session to the teacher-sold forfait (atomic server RPC). This is not a Stripe monetary refund and not employment-style control.
 
-Future package cancellation/rescheduling rules should be framed as:
-
-> teacher-defined terms within Pratiqo marketplace rules
-
-not:
-
-> Pratiqo employment-style supervision.
-
-```ts
-// Future PR: teacher-configurable cancellation/rescheduling preferences for offers/packages,
-// within Pratiqo marketplace safety and fairness rules.
-```
+Future package cancellation/rescheduling rules should be framed as teacher-defined terms within Pratiqo marketplace rules — not Pratiqo employment-style supervision.
 
 Do not impose a one-size-fits-all package policy unless legally reviewed.
 
-Good copy for credit restore:
+## Copy do / don’t
 
-- La séance a été remise dans le forfait.
-- Cette séance n’a pas été utilisée. Elle a été remise dans le forfait.
-- Le forfait est proposé par le professeur.
+### Do
 
-## Terms of Use follow-up (not in code PRs)
+- Les professeurs inscrits sur Pratiqo
+- Professeur indépendant
+- Réserver avec ce professeur
+- Forfait proposé par le professeur / par ce professeur
+- Ce professeur propose un forfait
+- Utiliser une séance du forfait avec ce professeur
+- Paiement facilité par Pratiqo
+- Pratiqo agit comme intermédiaire technologique
+- Frais de plateforme / commission
+- Versement au professeur / revenu du professeur
 
-Before public paid package launch:
-
-```
-Legal TODO:
-Terms must clarify that the package service contract is between the learner and the independent teacher.
-Pratiqo acts as a technology marketplace/payment/booking facilitator.
-Pratiqo is not the teaching provider and does not employ the teacher.
-```
-
-Do not rewrite full Terms of Use in feature PRs. Do not present this as legal advice.
-
-## Forbidden vs allowed wording (static tests)
-
-Forbidden in offers/packages public/admin-facing copy:
+### Don’t
 
 - Nos professeurs
 - Nous vous offrons des cours
@@ -177,19 +161,39 @@ Forbidden in offers/packages public/admin-facing copy:
 - Acheter un cours Pratiqo
 - Nos forfaits Pratiqo
 - Acheter un forfait Pratiqo
-- salaire / wage
-- employé / employee / employer
+- Pratiqo vous offre
+- Pratiqo vous assigne
+- Salaire / wage / employé / employee / employer (except explicit negation in legal/onboarding acknowledgements)
+- Mes formules / formules (product labels)
 
-Allowed framing:
+Exception: legal Terms, teacher onboarding acknowledgements, and this guardrail doc may **negate** employment (“not an employee”) — that is intentional and allowed.
 
-- professeur inscrit
-- professeur indépendant
-- forfait proposé par le professeur
-- réserver avec ce professeur
-- intermédiaire technologique
-- marketplace / plateforme
-- commission / frais de plateforme
-- payout
+## Engineering guardrails for future PRs
+
+1. Do not mutate package balances from UI-only code; use server-owned atomic RPCs.
+2. Do not change Stripe checkout amount calculation, commission tiers, payout, transfer, or refund logic in copy-only PRs.
+3. Keep feature flags OFF until legal launch checklist items are completed.
+4. Prefer entitlement **snapshot** fields for historical package display (never rewrite history from live `teacher_offers`).
+5. Teacher APIs must enforce ownership (`teacher_id` / `requireOwnedTeacher`).
+6. Add/extend static forbidden-copy tests when introducing new package/offer surfaces.
+7. Do not add public package catalog, SEO offer ranking changes, or teacher assignment in package PRs.
+8. Do not introduce exclusivity, mandatory curriculum, or platform-imposed package structures.
+
+## Legal review TODOs
+
+Internal only — not for public UI:
+
+- [ ] Québec legal counsel reviews Terms of Use (CGU).
+- [ ] Québec legal counsel reviews teacher terms (`conditions-professeurs`).
+- [ ] Counsel reviews payment / platform-fee / Stripe Connect wording.
+- [ ] Counsel reviews package purchase, redemption, and credit-restore wording.
+- [ ] Counsel reviews cancellation / refund interplay for packages.
+- [ ] Counsel reviews tax / professional responsibility wording for teachers.
+- [ ] Privacy / Law 25 implications reviewed for student/teacher package dashboards.
+- [ ] Feature flags for paid packages remain OFF until review is complete.
+- [ ] Marketplace copy guard tests remain green.
+
+See also: [`paid-packages-legal-launch-checklist.md`](./paid-packages-legal-launch-checklist.md).
 
 ## Required PR report checklist
 
