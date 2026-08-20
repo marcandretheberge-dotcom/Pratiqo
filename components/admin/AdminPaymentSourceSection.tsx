@@ -76,6 +76,8 @@ export function AdminPaymentSourceSection({
               </dd>
             </div>
           </>
+        ) : pricingSource === "package_credit" ? (
+          <p className="mt-3 text-sm text-slate-600">{t("adminPaymentSourcePackageCreditBody")}</p>
         ) : pricingSource === "legacy_teacher_price" ? (
           <p className="text-xs text-slate-600">{t("adminOfferSnapshotClassicRate")}</p>
         ) : null}
@@ -113,9 +115,16 @@ export function adminOfferListLabel(
 
 export function adminPaymentSourceListLabel(
   pricingSource: AdminPricingSource,
-  t: (key: "adminOfferSnapshotListOffer" | "adminOfferSnapshotListClassic" | "adminPaymentSourceUnknown") => string,
+  t: (
+    key:
+      | "adminOfferSnapshotListOffer"
+      | "adminOfferSnapshotListClassic"
+      | "adminOfferSnapshotListPackage"
+      | "adminPaymentSourceUnknown",
+  ) => string,
 ): string {
   if (pricingSource === "offer_snapshot") return t("adminOfferSnapshotListOffer");
   if (pricingSource === "legacy_teacher_price") return t("adminOfferSnapshotListClassic");
+  if (pricingSource === "package_credit") return t("adminOfferSnapshotListPackage");
   return t("adminPaymentSourceUnknown");
 }

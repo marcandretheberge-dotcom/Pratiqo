@@ -33,7 +33,11 @@ export type AdminOfferSnapshotDto = {
   snapshotVersion: number | null;
 };
 
-export type AdminPricingSource = "offer_snapshot" | "legacy_teacher_price" | "unknown";
+export type AdminPricingSource =
+  | "offer_snapshot"
+  | "legacy_teacher_price"
+  | "package_credit"
+  | "unknown";
 
 export type AdminOfferSnapshotViewState =
   | { kind: "none" }
@@ -53,6 +57,9 @@ export type BookingOfferSnapshotRowInput = {
   teacher_offer_specialite_snapshot?: string | null;
   teacher_offer_short_description_snapshot?: string | null;
   teacher_offer_snapshot_version?: number | string | null;
+  booking_payment_source?: string | null;
+  package_entitlement_id?: string | null;
+  package_redemption_id?: string | null;
 };
 
 function asTrimmedString(value: unknown): string | null {
@@ -145,7 +152,11 @@ export function mapAdminOfferSnapshotFromBookingRow(
 export function deriveAdminPricingSource(
   snapshotState: AdminOfferSnapshotViewState,
   metadataPricingSource?: string | null,
+  bookingPaymentSource?: string | null,
 ): AdminPricingSource {
+  if (bookingPaymentSource === "package_credit" || metadataPricingSource === "package_credit") {
+    return "package_credit";
+  }
   if (metadataPricingSource === "offer_snapshot") return "offer_snapshot";
   if (metadataPricingSource === "legacy_teacher_price") return "legacy_teacher_price";
   if (snapshotState.kind === "complete") return "offer_snapshot";
@@ -212,6 +223,8 @@ export function formatAdminPricingSourceLabel(
       return t("adminPaymentSourceOfferSnapshot");
     case "legacy_teacher_price":
       return t("adminPaymentSourceLegacyRate");
+    case "package_credit":
+      return t("adminPaymentSourcePackageCredit");
     default:
       return t("adminPaymentSourceUnknown");
   }
@@ -264,4 +277,4 @@ export type AdminBookingOfferSnapshotFields = {
 };
 
 export const ADMIN_BOOKING_OFFER_SNAPSHOT_SELECT =
-  "teacher_offer_id, teacher_offer_title_snapshot, teacher_offer_type_snapshot, teacher_offer_format_snapshot, teacher_offer_price_cents_snapshot, teacher_offer_currency_snapshot, teacher_offer_duration_minutes_snapshot, teacher_offer_session_count_snapshot, teacher_offer_discipline_id_snapshot, teacher_offer_specialite_snapshot, teacher_offer_short_description_snapshot, teacher_offer_snapshot_version";
+  "teacher_offer_id, teacher_offer_title_snapshot, teacher_offer_type_snapshot, teacher_offer_format_snapshot, teacher_offer_price_cents_snapshot, teacher_offer_currency_snapshot, teacher_offer_duration_minutes_snapshot, teacher_offer_session_count_snapshot, teacher_offer_discipline_id_snapshot, teacher_offer_specialite_snapshot, teacher_offer_short_description_snapshot, teacher_offer_snapshot_version, booking_payment_source, package_entitlement_id, package_redemption_id";

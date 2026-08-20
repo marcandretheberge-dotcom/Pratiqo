@@ -258,6 +258,18 @@
   "bookingOnline": "En línea",
   "bookingPay": "Proceder al pago",
   "bookingPaymentNote": "Vas a ser redirigido a Stripe para pagar de forma segura.",
+  "bookingPackageActiveTitle": "Tienes un paquete activo con este profesor.",
+  "bookingPackageActiveBody": "Paquete propuesto por el profesor. Usa una sesión restante para reservar sin un nuevo pago.",
+  "bookingPackageRemainingSessions": "Sesiones restantes: {n}",
+  "bookingPackageUseSession": "Usar una sesión del paquete",
+  "bookingPackageUseSessionSelected": "Sesión del paquete seleccionada",
+  "bookingPackageNoPaymentNote": "No se requiere un nuevo pago para esta reserva con este profesor.",
+  "bookingPackagePaymentFacilitatedNote": "Ya pagado con el paquete de este profesor. Reserva facilitada por Pratiqo.",
+  "bookingPackageConfirm": "Reservar con este profesor",
+  "bookingPackageRedemptionDisabled": "La reserva con paquete no está disponible por ahora.",
+  "bookingPackageNoRemainingSessions": "No quedan sesiones en este paquete.",
+  "bookingPackageNotActive": "Este paquete ya no está activo.",
+  "bookingPackageNotFound": "Este paquete no está disponible.",
   "bookingPerHourWord": "hora",
   "bookingPickDateTitle": "Fecha",
   "bookingRateHint": "Tarifa",
@@ -2653,5 +2665,8 @@
   "adminPaymentSnapshotAmountMismatch": "El monto pagado difiere del precio de la copia de la oferta. Revisa el historial de Stripe y los metadatos.",
   "bookingOfferSelectionDisabled": "La selección de oferta aún no está activada.",
   "bookingOfferNotFound": "Esta oferta ya no está disponible para la reserva.",
-  "bookingOfferNotBookable": "Esta oferta no se puede reservar."
+  "bookingOfferNotBookable": "Esta oferta no se puede reservar.",
+  "adminOfferSnapshotListPackage": "Paquete",
+  "adminPaymentSourcePackageCredit": "Sesión del paquete (profesor)",
+  "adminPaymentSourcePackageCreditBody": "Reserva saldada con una sesión del paquete propuesto por el profesor. Pago facilitado por Pratiqo — sin nuevo Checkout de Stripe."
 }

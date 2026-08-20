@@ -258,6 +258,18 @@
   "bookingOnline": "En ligne",
   "bookingPay": "Procéder au paiement",
   "bookingPaymentNote": "Vous serez redirigé vers Stripe pour payer de façon sécurisée.",
+  "bookingPackageActiveTitle": "Vous avez un forfait actif avec ce professeur.",
+  "bookingPackageActiveBody": "Forfait proposé par le professeur. Utilisez une séance restante pour réserver sans nouveau paiement.",
+  "bookingPackageRemainingSessions": "Séances restantes : {n}",
+  "bookingPackageUseSession": "Utiliser une séance du forfait",
+  "bookingPackageUseSessionSelected": "Séance du forfait sélectionnée",
+  "bookingPackageNoPaymentNote": "Aucun nouveau paiement ne sera requis pour cette réservation avec ce professeur.",
+  "bookingPackagePaymentFacilitatedNote": "Paiement déjà réglé via le forfait de ce professeur. Réservation facilitée par Pratiqo.",
+  "bookingPackageConfirm": "Réserver avec ce professeur",
+  "bookingPackageRedemptionDisabled": "La réservation via forfait n’est pas disponible pour le moment.",
+  "bookingPackageNoRemainingSessions": "Il ne reste plus de séances sur ce forfait.",
+  "bookingPackageNotActive": "Ce forfait n’est plus actif.",
+  "bookingPackageNotFound": "Ce forfait n’est pas disponible.",
   "bookingPerHourWord": "heure",
   "bookingPickDateTitle": "Date",
   "bookingRateHint": "Tarif",
@@ -2653,5 +2665,8 @@
   "adminPaymentSnapshotAmountMismatch": "Le montant payé diffère du prix snapshot de l’offre. Vérifier l’historique Stripe et les métadonnées.",
   "bookingOfferSelectionDisabled": "La sélection d’offre n’est pas encore activée.",
   "bookingOfferNotFound": "Cette offre n’est plus disponible pour la réservation.",
-  "bookingOfferNotBookable": "Cette offre ne peut pas être réservée."
+  "bookingOfferNotBookable": "Cette offre ne peut pas être réservée.",
+  "adminOfferSnapshotListPackage": "Forfait",
+  "adminPaymentSourcePackageCredit": "Séance du forfait (professeur)",
+  "adminPaymentSourcePackageCreditBody": "Réservation réglée avec une séance du forfait proposé par le professeur. Paiement facilité par Pratiqo — pas de nouveau Checkout Stripe."
 }
