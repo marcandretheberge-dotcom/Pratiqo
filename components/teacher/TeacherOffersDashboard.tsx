@@ -20,6 +20,7 @@ import {
   teacherOfferApiErrorMessage,
   type TeacherOfferStatusAction,
 } from "@/lib/offers/display";
+import { isTeacherOfferFormPublishReady } from "@/lib/offers/publishReadiness";
 import { sortTeacherOffersForDashboard } from "@/lib/offers/sortTeacherOffers";
 import {
   archiveTeacherOffer,
@@ -121,21 +122,26 @@ export function TeacherOffersDashboard() {
     setOffers((current) => sortTeacherOffersForDashboard([offer, ...current.filter((row) => row.id !== offer.id)]));
   };
 
-  const handleSave = async () => {
+  const handleSave = async (status: "draft" | "published") => {
     const parsed = buildTeacherOfferWritePayload(formValues);
     if (!parsed.ok) {
       setFormErrors(parsed.errors);
+      return;
+    }
+    if (status === "published" && !isTeacherOfferFormPublishReady(formValues)) {
+      setActionError(t("teacherOffersNotPublishable"));
       return;
     }
     setFormErrors([]);
     setSaving(true);
     setActionError(null);
     try {
+      const body = { ...parsed.body, status };
       const result =
         editor === "create"
-          ? await createTeacherOffer(parsed.body)
+          ? await createTeacherOffer(body)
           : editingId
-            ? await updateTeacherOffer(editingId, parsed.body)
+            ? await updateTeacherOffer(editingId, body)
             : null;
       if (!result) return;
       if (!result.ok) {
@@ -144,7 +150,7 @@ export function TeacherOffersDashboard() {
         return;
       }
       upsertOffer(result.data.offer);
-      setNotice(t("teacherOffersSaved"));
+      setNotice(status === "published" ? t("teacherOffersPublished") : t("teacherOffersSaved"));
       setEditor(null);
       setEditingId(null);
     } catch {
@@ -334,7 +340,7 @@ export function TeacherOffersDashboard() {
 
       {editor ? (
         <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4">
-          <div className="max-h-[92dvh] w-full max-w-2xl overflow-y-auto rounded-t-3xl bg-white p-5 shadow-xl sm:rounded-3xl sm:p-6">
+          <div className="max-h-[92dvh] w-full max-w-5xl overflow-y-auto rounded-t-3xl bg-white p-5 shadow-xl sm:rounded-3xl sm:p-6">
             <div className="mb-4 flex items-center justify-between gap-3">
               <h2 className="text-lg font-bold text-[#2C2C2A]">{editorTitle}</h2>
               <button type="button" className="rounded-lg p-2 hover:bg-slate-50" onClick={closeEditor} aria-label={t("teacherOffersClose")}>
@@ -342,16 +348,18 @@ export function TeacherOffersDashboard() {
               </button>
             </div>
             {actionError && editor ? (
-              <p className="mb-3 rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-800">{actionError}</p>
+              <p className="mb-3 rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-800" role="alert">
+                {actionError}
+              </p>
             ) : null}
             <TeacherOfferForm
               values={formValues}
               errors={formErrors}
               readOnly={editor === "view"}
               saving={saving}
-              submitLabel={editor === "create" ? t("teacherOffersSaveDraft") : t("teacherOffersSave")}
               onChange={(patch) => setFormValues((current) => ({ ...current, ...patch }))}
-              onSubmit={() => void handleSave()}
+              onSaveDraft={() => void handleSave("draft")}
+              onPublish={() => void handleSave("published")}
               onCancel={closeEditor}
             />
           </div>

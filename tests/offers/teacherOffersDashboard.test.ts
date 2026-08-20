@@ -114,13 +114,13 @@ test("create form submits POST with mutable fields only", () => {
   assert.equal("created_by" in parsed.body, false);
   assert.equal("published_at" in parsed.body, false);
   assert.match(read(CLIENT), /method: "POST"/);
-  assert.match(read(DASHBOARD), /createTeacherOffer\(parsed\.body\)/);
+  assert.match(read(DASHBOARD), /createTeacherOffer\(body\)/);
 });
 
 test("edit form submits PATCH /api/teacher/offers/[offerId]", () => {
   assert.match(read(CLIENT), /method: "PATCH"/);
   assert.match(read(CLIENT), /\/api\/teacher\/offers\/\$\{offerId\}/);
-  assert.match(read(DASHBOARD), /updateTeacherOffer\(editingId, parsed\.body\)/);
+  assert.match(read(DASHBOARD), /updateTeacherOffer\(editingId, body\)/);
 });
 
 test("publish action sends status published", () => {
@@ -128,6 +128,27 @@ test("publish action sends status published", () => {
   assert.match(src, /status = action === "pause" \? "paused" : "published"/);
   assert.match(src, /updateTeacherOffer\(offer\.id, \{ status \}\)/);
   assert.match(src, /Future: published offer limits will depend on plan\/founder status/);
+  assert.match(src, /handleSave\("published"\)/);
+});
+
+test("form builder shows guided sections checklist and preview", () => {
+  const form = read(FORM);
+  assert.match(form, /teacherOffersSectionEssentials/);
+  assert.match(form, /teacherOffersSectionPresentation/);
+  assert.match(form, /teacherOffersSectionAdvanced/);
+  assert.match(form, /TeacherOfferPublishChecklist/);
+  assert.match(form, /TeacherOfferPreview/);
+  assert.match(form, /teacherOffersSaveDraft/);
+  assert.match(form, /teacherOffersPublish/);
+  assert.match(form, /teacherOffersPlaceholderTitle/);
+  assert.doesNotMatch(form, /workshop|group_class|cohort|self_paced_bridge/);
+});
+
+test("draft save remains available when publish is not ready", () => {
+  const dashboard = read(DASHBOARD);
+  assert.match(dashboard, /onSaveDraft=\{\(\) => void handleSave\("draft"\)\}/);
+  assert.match(dashboard, /onPublish=\{\(\) => void handleSave\("published"\)\}/);
+  assert.match(read(FORM), /disabled=\{saving \|\| !publishReady\}/);
 });
 
 test("pause action sends status paused", () => {

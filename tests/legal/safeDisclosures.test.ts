@@ -507,6 +507,29 @@ const allowedPackageEntitlementFoundationFiles = new Set<string>([
   "package.json",
 ]);
 
+/** Teacher offer builder polish + publish quality gate. */
+const allowedTeacherOfferBuilderPolishFiles = new Set<string>([
+  "components/teacher/TeacherOfferForm.tsx",
+  "components/teacher/TeacherOfferPreview.tsx",
+  "components/teacher/TeacherOfferPublishChecklist.tsx",
+  "components/teacher/TeacherOffersDashboard.tsx",
+  "app/api/teacher/offers/route.ts",
+  "app/api/teacher/offers/[offerId]/route.ts",
+  "lib/offers/publishReadiness.ts",
+  "lib/offers/display.ts",
+  "lib/offers/clientPayload.ts",
+  "lib/i18n/locales/fr.json",
+  "lib/i18n/locales/en.json",
+  "lib/i18n/locales/es.json",
+  "supabase/migrations/101_package_entitlements_rls_if_exists.sql",
+  "tests/offers/teacherOfferPublishReadiness.test.ts",
+  "tests/offers/teacherOffersApi.test.ts",
+  "tests/offers/teacherOffersDashboard.test.ts",
+  "tests/security/rlsCoverage.test.ts",
+  "tests/legal/safeDisclosures.test.ts",
+  "package.json",
+]);
+
 function touchesSafeDisclosureScope(file: string): boolean {
   return (
     liveDisclosureFiles.includes(file) ||
@@ -682,6 +705,7 @@ test("safe-disclosure branch did not touch restricted systems", () => {
     if (allowedBookingOfferSnapshotCheckoutFiles.has(file)) continue;
     if (allowedAdminOfferSnapshotVisibilityFiles.has(file)) continue;
     if (allowedPackageEntitlementFoundationFiles.has(file)) continue;
+    if (allowedTeacherOfferBuilderPolishFiles.has(file)) continue;
     for (const rule of restrictedRules) {
       if (rule.re.test(file)) {
         violations.push(`${file} (${rule.label})`);

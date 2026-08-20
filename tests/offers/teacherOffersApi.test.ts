@@ -32,6 +32,11 @@ import {
   teacherOfferCreateToInsertRow,
   teacherOfferUpdateToPatchRow,
 } from "../../lib/offers/validation";
+import {
+  assertTeacherOfferPublishable,
+  createInputToPublishCandidate,
+  mergeTeacherOfferForPublishCheck,
+} from "../../lib/offers/publishReadiness";
 
 const ROOT = process.cwd();
 
@@ -503,6 +508,82 @@ test("no Mes formules / formules product label introduced", () => {
 test("item route does not trust client status timestamps", () => {
   assert.match(ITEM_SRC, /teacher_id, created_by, created_at, updated_at/);
   assert.match(ITEM_SRC, /buildTeacherOfferStatusPatch/);
+});
+
+test("API rejects incomplete published create with offer_not_publishable", () => {
+  const parsed = parseTeacherOfferCreateInput(
+    validCreate({
+      status: "published",
+      discipline_id: null,
+      duration_minutes: null,
+      short_description: "court",
+    }),
+  );
+  assert.equal(parsed.ok, true);
+  if (!parsed.ok) return;
+  const gate = assertTeacherOfferPublishable(createInputToPublishCandidate(parsed.data));
+  assert.equal(gate.ok, false);
+  if (gate.ok) return;
+  assert.equal(gate.error, "offer_not_publishable");
+  assert.ok(gate.issues.some((issue) => issue.path === "discipline_id"));
+  assert.ok(gate.issues.some((issue) => issue.path === "duration_minutes"));
+  assert.ok(gate.issues.some((issue) => issue.path === "short_description"));
+  assert.match(LIST_SRC, /assertTeacherOfferPublishable/);
+  assert.match(LIST_SRC, /parsed\.data\.status === "published"/);
+});
+
+test("API allows incomplete draft create and update", () => {
+  const created = parseTeacherOfferCreateInput(
+    validCreate({
+      status: "draft",
+      discipline_id: null,
+      duration_minutes: null,
+      short_description: null,
+    }),
+  );
+  assert.equal(created.ok, true);
+
+  const updated = parseTeacherOfferUpdateInput({
+    title: "Brouillon incomplet",
+    discipline_id: null,
+    duration_minutes: null,
+    short_description: null,
+  });
+  assert.equal(updated.ok, true);
+});
+
+test("API rejects incomplete draft→published update with offer_not_publishable", () => {
+  const current = dto({
+    status: "draft",
+    disciplineId: null,
+    durationMinutes: null,
+    shortDescription: null,
+  });
+  const patch = parseTeacherOfferUpdateInput({ status: "published" });
+  assert.equal(patch.ok, true);
+  if (!patch.ok) return;
+  const gate = assertTeacherOfferPublishable(mergeTeacherOfferForPublishCheck(current, patch.data));
+  assert.equal(gate.ok, false);
+  if (gate.ok) return;
+  assert.equal(gate.error, "offer_not_publishable");
+  assert.match(ITEM_SRC, /mergeTeacherOfferForPublishCheck/);
+  assert.match(ITEM_SRC, /nextStatus === "published"/);
+});
+
+test("API accepts complete published create after publish gate", () => {
+  const parsed = parseTeacherOfferCreateInput(
+    validCreate({
+      status: "published",
+      discipline_id: "piano",
+      duration_minutes: 60,
+      short_description:
+        "Un cours clair et motivant pour apprendre les bases, poser vos questions et progresser.",
+    }),
+  );
+  assert.equal(parsed.ok, true);
+  if (!parsed.ok) return;
+  const gate = assertTeacherOfferPublishable(createInputToPublishCandidate(parsed.data));
+  assert.equal(gate.ok, true);
 });
 
 (async () => {

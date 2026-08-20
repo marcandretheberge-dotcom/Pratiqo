@@ -122,15 +122,50 @@ export function teacherOfferStatusTone(status: TeacherOfferStatus): string {
 }
 
 export function teacherOfferApiErrorMessage(
-  error: { status: number; error: string },
+  error: { status: number; error: string; issues?: Array<{ path?: string; message?: string }> },
   t: TeacherOfferTranslator,
 ): string {
+  if (error.error === "offer_not_publishable") {
+    const missing = (error.issues ?? [])
+      .map((issue) => teacherOfferPublishIssueLabel(issue.path, t))
+      .filter((label): label is string => Boolean(label));
+    if (missing.length === 0) return t("teacherOffersNotPublishable");
+    return `${t("teacherOffersNotPublishable")} ${missing.join(" · ")}`;
+  }
   if (error.error === "invalid_payload") return t("teacherOffersApiInvalid");
   if (error.error === "invalid_status_transition") return t("teacherOffersApiTransition");
   if (error.error === "offer_limit_sanity_cap") return t("teacherOffersApiLimit");
   if (error.error === "slug_conflict") return t("teacherOffersApiConflict");
   if (error.status === 401) return t("teacherOffersLoadError");
   return t("teacherOffersActionError");
+}
+
+export function teacherOfferPublishIssueLabel(
+  path: string | undefined,
+  t: TeacherOfferTranslator,
+): string | null {
+  if (path === "title") return t("teacherOffersFieldTitle");
+  if (path === "offer_type") return t("teacherOffersFieldType");
+  if (path === "discipline_id") return t("teacherOffersFieldDiscipline");
+  if (path === "format") return t("teacherOffersFieldFormat");
+  if (path === "price_cents") return t("teacherOffersFieldPrice");
+  if (path === "duration_minutes") return t("teacherOffersFieldDuration");
+  if (path === "short_description") return t("teacherOffersFieldShortDescription");
+  if (path === "session_count") return t("teacherOffersFieldSessionCount");
+  return null;
+}
+
+export function teacherOfferPublishChecklistLabel(
+  id: import("./publishReadiness").TeacherOfferPublishChecklistItemId,
+  t: TeacherOfferTranslator,
+): string {
+  if (id === "title") return t("teacherOffersFieldTitle");
+  if (id === "disciplineId") return t("teacherOffersFieldDiscipline");
+  if (id === "format") return t("teacherOffersFieldFormat");
+  if (id === "priceCents") return t("teacherOffersFieldPrice");
+  if (id === "durationMinutes") return t("teacherOffersFieldDuration");
+  if (id === "shortDescription") return t("teacherOffersFieldShortDescription");
+  return t("teacherOffersFieldSessionCount");
 }
 
 export function formatPublicTeacherOfferPriceLabel(
@@ -200,5 +235,7 @@ export function teacherOfferFormErrorKey(
   if (error === "session") return "teacherOffersErrorSession";
   if (error === "capacity") return "teacherOffersErrorCapacity";
   if (error === "age") return "teacherOffersErrorAge";
+  if (error === "discipline") return "teacherOffersErrorDiscipline";
+  if (error === "shortDescription") return "teacherOffersErrorShortDescription";
   return "teacherOffersErrorDescription";
 }

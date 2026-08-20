@@ -11,6 +11,10 @@ import {
   TEACHER_OFFER_SELECT_COLUMNS,
 } from "@/lib/offers/teacherOfferDto";
 import {
+  assertTeacherOfferPublishable,
+  mergeTeacherOfferForPublishCheck,
+} from "@/lib/offers/publishReadiness";
+import {
   mergedOfferRangeError,
   parseTeacherOfferUpdateInput,
   teacherOfferUpdateToPatchRow,
@@ -61,6 +65,19 @@ export async function PATCH(req: Request, ctx: Params) {
       { error: rangeError.error, issues: rangeError.issues },
       { status: 400 },
     );
+  }
+
+  const nextStatus = parsed.data.status ?? current.status;
+  if (nextStatus === "published") {
+    const publishGate = assertTeacherOfferPublishable(
+      mergeTeacherOfferForPublishCheck(current, parsed.data),
+    );
+    if (!publishGate.ok) {
+      return NextResponse.json(
+        { error: publishGate.error, issues: publishGate.issues },
+        { status: 400 },
+      );
+    }
   }
 
   const patchRow = teacherOfferUpdateToPatchRow(parsed.data);

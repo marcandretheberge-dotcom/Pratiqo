@@ -47,7 +47,9 @@ export type TeacherOfferFormFieldError =
   | "session"
   | "capacity"
   | "age"
-  | "description";
+  | "description"
+  | "discipline"
+  | "shortDescription";
 
 /** Convert a teacher-entered CAD dollar string to integer cents without float drift. */
 export function dollarsInputToPriceCents(raw: string): number | null {

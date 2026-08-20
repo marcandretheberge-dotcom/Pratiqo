@@ -8,6 +8,10 @@ import {
 } from "@/lib/offers/teacherOfferDto";
 import { TEACHER_OFFERS_SANITY_CAP } from "@/lib/offers/types";
 import {
+  assertTeacherOfferPublishable,
+  createInputToPublishCandidate,
+} from "@/lib/offers/publishReadiness";
+import {
   parseTeacherOfferCreateInput,
   teacherOfferCreateToInsertRow,
 } from "@/lib/offers/validation";
@@ -52,6 +56,16 @@ export async function POST(req: Request) {
       { error: parsed.error, issues: parsed.issues },
       { status: 400 },
     );
+  }
+
+  if (parsed.data.status === "published") {
+    const publishGate = assertTeacherOfferPublishable(createInputToPublishCandidate(parsed.data));
+    if (!publishGate.ok) {
+      return NextResponse.json(
+        { error: publishGate.error, issues: publishGate.issues },
+        { status: 400 },
+      );
+    }
   }
 
   const { teacherId, userId, admin } = auth.context;
