@@ -471,6 +471,23 @@ const allowedBookingOfferSnapshotCheckoutFiles = new Set<string>([
   "package.json",
 ]);
 
+/** Admin read-only visibility for booking offer snapshots (PR 9). */
+const allowedAdminOfferSnapshotVisibilityFiles = new Set<string>([
+  "lib/offers/adminOfferSnapshotDisplay.ts",
+  "lib/admin/bookingPaymentOperations.ts",
+  "app/(app)/admin/bookings/page.tsx",
+  "app/(app)/admin/payments/page.tsx",
+  "components/admin/AdminBookingOfferSnapshotSection.tsx",
+  "components/admin/AdminPaymentSourceSection.tsx",
+  "lib/i18n/locales/fr.json",
+  "lib/i18n/locales/en.json",
+  "lib/i18n/locales/es.json",
+  "tests/admin/adminOfferSnapshotVisibility.test.ts",
+  "tests/admin/adminBookingsPaymentsOperations.test.ts",
+  "tests/legal/safeDisclosures.test.ts",
+  "package.json",
+]);
+
 function touchesSafeDisclosureScope(file: string): boolean {
   return (
     liveDisclosureFiles.includes(file) ||
@@ -644,6 +661,7 @@ test("safe-disclosure branch did not touch restricted systems", () => {
     if (allowedGroupSessionsLaunchSeoFiles.has(file)) continue;
     if (allowedBookingOfferSnapshotFiles.has(file)) continue;
     if (allowedBookingOfferSnapshotCheckoutFiles.has(file)) continue;
+    if (allowedAdminOfferSnapshotVisibilityFiles.has(file)) continue;
     for (const rule of restrictedRules) {
       if (rule.re.test(file)) {
         violations.push(`${file} (${rule.label})`);
