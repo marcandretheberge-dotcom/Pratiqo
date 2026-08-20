@@ -50,6 +50,7 @@ export function TeacherOffersDashboard() {
   const [saving, setSaving] = useState(false);
   const [editor, setEditor] = useState<EditorMode | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
   const [formValues, setFormValues] = useState<TeacherOfferFormValues>(emptyTeacherOfferFormValues);
   const [formErrors, setFormErrors] = useState<TeacherOfferFormFieldError[]>([]);
   const [archiveTarget, setArchiveTarget] = useState<TeacherOfferDto | null>(null);
@@ -98,6 +99,7 @@ export function TeacherOffersDashboard() {
   const openCreate = () => {
     setEditor("create");
     setEditingId(null);
+    setCoverImageUrl(null);
     setFormValues(emptyTeacherOfferFormValues());
     setFormErrors([]);
     setActionError(null);
@@ -106,6 +108,7 @@ export function TeacherOffersDashboard() {
   const openEditor = (offer: TeacherOfferDto, mode: "edit" | "view") => {
     setEditor(mode);
     setEditingId(offer.id);
+    setCoverImageUrl(offer.imageUrl ?? null);
     setFormValues(teacherOfferToFormValues(offer));
     setFormErrors([]);
     setActionError(null);
@@ -115,6 +118,7 @@ export function TeacherOffersDashboard() {
     if (saving) return;
     setEditor(null);
     setEditingId(null);
+    setCoverImageUrl(null);
     setFormErrors([]);
   };
 
@@ -151,8 +155,15 @@ export function TeacherOffersDashboard() {
       }
       upsertOffer(result.data.offer);
       setNotice(status === "published" ? t("teacherOffersPublished") : t("teacherOffersSaved"));
-      setEditor(null);
-      setEditingId(null);
+      if (editor === "create") {
+        setEditor("edit");
+        setEditingId(result.data.offer.id);
+        setCoverImageUrl(result.data.offer.imageUrl ?? null);
+      } else {
+        setEditor(null);
+        setEditingId(null);
+        setCoverImageUrl(null);
+      }
     } catch {
       setActionError(t("teacherOffersSaveError"));
     } finally {
@@ -360,6 +371,16 @@ export function TeacherOffersDashboard() {
               errors={formErrors}
               readOnly={editor === "view"}
               saving={saving}
+              offerId={editingId}
+              coverImageUrl={coverImageUrl}
+              onCoverUploaded={(offer) => {
+                upsertOffer(offer);
+                setCoverImageUrl(offer.imageUrl ?? null);
+              }}
+              onCoverRemoved={(offer) => {
+                upsertOffer(offer);
+                setCoverImageUrl(null);
+              }}
               onChange={(patch) => setFormValues((current) => ({ ...current, ...patch }))}
               onSaveDraft={() => void handleSave("draft")}
               onPublish={() => void handleSave("published")}

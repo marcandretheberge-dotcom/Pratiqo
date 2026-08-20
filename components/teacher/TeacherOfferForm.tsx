@@ -15,12 +15,18 @@ import { getActiveDisciplines, getDisciplineLabel } from "@/lib/taxonomy/discipl
 import { cn } from "@/lib/utils";
 import { TeacherOfferPublishChecklist } from "@/components/teacher/TeacherOfferPublishChecklist";
 import { TeacherOfferPreview } from "@/components/teacher/TeacherOfferPreview";
+import { TeacherOfferCoverUpload } from "@/components/teacher/TeacherOfferCoverUpload";
+import type { TeacherOfferDto } from "@/lib/offers/types";
 
 type Props = {
   values: TeacherOfferFormValues;
   errors: TeacherOfferFormFieldError[];
   readOnly?: boolean;
   saving?: boolean;
+  offerId?: string | null;
+  coverImageUrl?: string | null;
+  onCoverUploaded?: (offer: TeacherOfferDto) => void;
+  onCoverRemoved?: (offer: TeacherOfferDto) => void;
   onChange: (patch: Partial<TeacherOfferFormValues>) => void;
   onSaveDraft: () => void;
   onPublish: () => void;
@@ -114,6 +120,10 @@ export function TeacherOfferForm({
   errors,
   readOnly = false,
   saving = false,
+  offerId = null,
+  coverImageUrl = null,
+  onCoverUploaded,
+  onCoverRemoved,
   onChange,
   onSaveDraft,
   onPublish,
@@ -281,6 +291,14 @@ export function TeacherOfferForm({
           onToggle={() => setOpenPresentation((value) => !value)}
         >
           <div className="space-y-4">
+            <TeacherOfferCoverUpload
+              offerId={offerId}
+              imageUrl={coverImageUrl}
+              title={values.title}
+              disabled={disabled || readOnly}
+              onUploaded={(offer) => onCoverUploaded?.(offer)}
+              onRemoved={(offer) => onCoverRemoved?.(offer)}
+            />
             <div>
               <Label htmlFor="offer-short">{t("teacherOffersFieldShortDescription")}</Label>
               <input
@@ -456,7 +474,7 @@ export function TeacherOfferForm({
             open={openMobilePreview}
             onToggle={() => setOpenMobilePreview((value) => !value)}
           >
-            <TeacherOfferPreview values={values} />
+            <TeacherOfferPreview values={values} coverImageUrl={coverImageUrl} />
           </Section>
         </div>
 
@@ -504,7 +522,7 @@ export function TeacherOfferForm({
 
       <div className="hidden lg:block">
         <div className="sticky top-0">
-          <TeacherOfferPreview values={values} />
+          <TeacherOfferPreview values={values} coverImageUrl={coverImageUrl} />
         </div>
       </div>
     </div>

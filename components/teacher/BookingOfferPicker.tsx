@@ -14,6 +14,7 @@ import { getBookingOfferSelectionNoteKey } from "@/lib/offers/offerSnapshotCheck
 import type { PublicTeacherOfferDto } from "@/lib/offers/publicTeacherOfferDto";
 import { PUBLIC_TEACHER_PROFILE_DISCIPLINE_CHIP_CLASS } from "@/lib/teachers/display";
 import { cn } from "@/lib/utils";
+import { TeacherOfferCoverImage } from "@/components/teacher/TeacherOfferCoverImage";
 
 type Props = {
   offers: PublicTeacherOfferDto[];
@@ -51,6 +52,7 @@ export function BookingOfferPicker({ offers, selectedOfferId, onSelect, onClear 
             formatPublicTeacherOfferPackageChip(offer, t),
           ].filter(Boolean);
           const priceLabel = formatPublicTeacherOfferPriceLabel(offer, t, locale);
+          const coverAlt = t("teacherOffersCoverAlt").replace("{title}", offer.title);
           return (
             <button
               key={offer.id}
@@ -65,6 +67,14 @@ export function BookingOfferPicker({ offers, selectedOfferId, onSelect, onClear 
                   : "border-slate-200 bg-slate-50/40 hover:border-slate-300",
               )}
             >
+              <div className="mb-2">
+                <TeacherOfferCoverImage
+                  imageUrl={offer.imageUrl}
+                  title={offer.title}
+                  alt={coverAlt}
+                  aspectClassName="aspect-[16/9] max-h-28"
+                />
+              </div>
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-slate-900">{offer.title}</p>

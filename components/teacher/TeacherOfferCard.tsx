@@ -20,6 +20,7 @@ import {
   type TeacherOfferStatusAction,
 } from "@/lib/offers/display";
 import { cn } from "@/lib/utils";
+import { TeacherOfferCoverImage } from "@/components/teacher/TeacherOfferCoverImage";
 
 type Props = {
   offer: TeacherOfferDto;
@@ -49,6 +50,14 @@ export function TeacherOfferCard({ offer, busy = false, onAction }: Props) {
 
   return (
     <article className="rounded-2xl border border-[#DCEAE3] bg-white p-4 shadow-sm">
+      <div className="mb-3">
+        <TeacherOfferCoverImage
+          imageUrl={offer.imageUrl}
+          title={offer.title}
+          alt={t("teacherOffersCoverAlt").replace("{title}", offer.title)}
+          aspectClassName="aspect-[16/9] max-h-40"
+        />
+      </div>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">

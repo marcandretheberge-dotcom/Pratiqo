@@ -651,6 +651,31 @@ const allowedPackageLaunchReadinessFiles = new Set<string>([
   "package.json",
 ]);
 
+/** Teacher offer cover images (PR 15). */
+const allowedTeacherOfferCoverImageFiles = new Set<string>([
+  "supabase/migrations/104_teacher_offer_covers_bucket.sql",
+  "app/api/teacher/offers/[offerId]/cover/route.ts",
+  "lib/offers/offerCoverImages.ts",
+  "lib/offers/validation.ts",
+  "components/teacher/TeacherOfferCoverImage.tsx",
+  "components/teacher/TeacherOfferCoverUpload.tsx",
+  "components/teacher/TeacherOfferForm.tsx",
+  "components/teacher/TeacherOfferPreview.tsx",
+  "components/teacher/TeacherOfferCard.tsx",
+  "components/teacher/TeacherOffersDashboard.tsx",
+  "components/teacher/PublicTeacherOfferCard.tsx",
+  "components/teacher/BookingOfferPicker.tsx",
+  "components/teacher/BookingOfferSelectionSummary.tsx",
+  "lib/i18n/locales/fr.json",
+  "lib/i18n/locales/en.json",
+  "lib/i18n/locales/es.json",
+  "tests/offers/teacherOfferCoverImages.test.ts",
+  "tests/offers/publicTeacherProfileOffers.test.ts",
+  "tests/offers/marketplaceIndependentTeacherGuardrails.test.ts",
+  "tests/legal/safeDisclosures.test.ts",
+  "package.json",
+]);
+
 function touchesSafeDisclosureScope(file: string): boolean {
   return (
     liveDisclosureFiles.includes(file) ||
@@ -833,6 +858,7 @@ test("safe-disclosure branch did not touch restricted systems", () => {
     if (allowedTeacherPackageVisibilityFiles.has(file)) continue;
     if (allowedMarketplaceLegalHardeningFiles.has(file)) continue;
     if (allowedPackageLaunchReadinessFiles.has(file)) continue;
+    if (allowedTeacherOfferCoverImageFiles.has(file)) continue;
     for (const rule of restrictedRules) {
       if (rule.re.test(file)) {
         violations.push(`${file} (${rule.label})`);

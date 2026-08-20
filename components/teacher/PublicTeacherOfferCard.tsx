@@ -17,6 +17,7 @@ import type { PublicTeacherOfferDto } from "@/lib/offers/publicTeacherOfferDto";
 import { PUBLIC_TEACHER_PROFILE_DISCIPLINE_CHIP_CLASS } from "@/lib/teachers/display";
 import { cn } from "@/lib/utils";
 import { isBookingOfferSelectionEnabled } from "@/lib/offers/bookingOfferSelection";
+import { TeacherOfferCoverImage } from "@/components/teacher/TeacherOfferCoverImage";
 
 type Props = {
   offer: PublicTeacherOfferDto;
@@ -50,6 +51,13 @@ export function PublicTeacherOfferCard({ offer, onPrepareBooking }: Props) {
       data-testid="teacher-profile-offer-card"
       className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
     >
+      <div className="mb-3">
+        <TeacherOfferCoverImage
+          imageUrl={offer.imageUrl}
+          title={offer.title}
+          alt={t("teacherOffersCoverAlt").replace("{title}", offer.title)}
+        />
+      </div>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <h3 className="min-w-0 flex-1 text-base font-semibold text-slate-900">{offer.title}</h3>
         <p className="text-sm font-semibold text-slate-800" aria-label={priceLabel}>
