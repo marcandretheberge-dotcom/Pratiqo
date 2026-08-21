@@ -170,15 +170,17 @@ export function teacherOfferStatusTone(status: TeacherOfferStatus): string {
 }
 
 export function teacherOfferApiErrorMessage(
-  error: { status: number; error: string; issues?: Array<{ path?: string; message?: string }> },
+  error: {
+    status: number;
+    error: string;
+    issues?: Array<{ path?: string; message?: string }>;
+    missingFields?: string[];
+  },
   t: TeacherOfferTranslator,
 ): string {
   if (error.error === "offer_not_publishable") {
-    const missing = (error.issues ?? [])
-      .map((issue) => teacherOfferPublishIssueLabel(issue.path, t))
-      .filter((label): label is string => Boolean(label));
-    if (missing.length === 0) return t("teacherOffersNotPublishable");
-    return `${t("teacherOffersNotPublishable")} ${missing.join(" · ")}`;
+    // Structured checklist is rendered separately — keep the sentence alone.
+    return t("teacherOffersNotPublishable");
   }
   if (error.error === "invalid_payload") return t("teacherOffersApiInvalid");
   if (error.error === "invalid_status_transition") return t("teacherOffersApiTransition");
@@ -186,6 +188,19 @@ export function teacherOfferApiErrorMessage(
   if (error.error === "slug_conflict") return t("teacherOffersApiConflict");
   if (error.status === 401) return t("teacherOffersLoadError");
   return t("teacherOffersActionError");
+}
+
+/** Resolve missing field paths from API issues or missingFields array. */
+export function resolveTeacherOfferMissingFieldPaths(error: {
+  issues?: Array<{ path?: string; message?: string }>;
+  missingFields?: string[];
+}): string[] {
+  if (Array.isArray(error.missingFields) && error.missingFields.length > 0) {
+    return error.missingFields.filter((path): path is string => typeof path === "string" && path.length > 0);
+  }
+  return (error.issues ?? [])
+    .map((issue) => issue.path)
+    .filter((path): path is string => typeof path === "string" && path.length > 0);
 }
 
 export function teacherOfferPublishIssueLabel(

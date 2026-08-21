@@ -413,6 +413,12 @@ test("tracked patch avoids generated audio and restricted product systems", () =
     "lib/schedule/preciseScheduleActivation.ts",
     "lib/bookings/teacherScheduleEligibility.ts",
     "lib/teachers/currentTeacher.ts",
+    // offers/teacher-offers-functional-polish — teacher offers publish UX +
+    // structured 422 missingFields. No Stripe amount / commission / payout /
+    // package entitlement mutation. Defended by
+    // tests/offers/teacherOffersMobilePublishPolish.test.ts.
+    "app/api/teacher/offers/route.ts",
+    "app/api/teacher/offers/[offerId]/route.ts",
   ]);
   const forbidden = [
     /^app\/api\//,

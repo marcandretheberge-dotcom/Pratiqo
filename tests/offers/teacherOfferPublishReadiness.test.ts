@@ -199,9 +199,10 @@ test("API routes enforce offer_not_publishable on publish", () => {
   const createRoute = read("app/api/teacher/offers/route.ts");
   const itemRoute = read("app/api/teacher/offers/[offerId]/route.ts");
   assert.match(createRoute, /assertTeacherOfferPublishable/);
-  assert.match(createRoute, /offer_not_publishable|publishGate\.error/);
+  assert.match(createRoute, /OFFER_NOT_PUBLISHABLE_STATUS|offerNotPublishableResponseBody/);
   assert.match(itemRoute, /mergeTeacherOfferForPublishCheck/);
   assert.match(itemRoute, /nextStatus === "published"/);
+  assert.match(itemRoute, /OFFER_NOT_PUBLISHABLE_STATUS|offerNotPublishableResponseBody/);
 });
 
 test("offer builder UI shows sections checklist preview and dual actions", () => {

@@ -17,6 +17,7 @@ export type TeacherOffersApiError = {
   status: number;
   error: string;
   issues?: Array<{ path?: string; message?: string }>;
+  missingFields?: string[];
 };
 
 export type TeacherOffersApiResult<T> =
@@ -33,11 +34,18 @@ async function parseJson(res: Response): Promise<unknown> {
 
 function asError(status: number, payload: unknown): TeacherOffersApiError {
   if (payload && typeof payload === "object" && "error" in payload) {
-    const row = payload as { error?: unknown; issues?: TeacherOffersApiError["issues"] };
+    const row = payload as {
+      error?: unknown;
+      issues?: TeacherOffersApiError["issues"];
+      missingFields?: unknown;
+    };
     return {
       status,
       error: typeof row.error === "string" ? row.error : "server_error",
       issues: Array.isArray(row.issues) ? row.issues : undefined,
+      missingFields: Array.isArray(row.missingFields)
+        ? row.missingFields.filter((item): item is string => typeof item === "string")
+        : undefined,
     };
   }
   return { status, error: "server_error" };
