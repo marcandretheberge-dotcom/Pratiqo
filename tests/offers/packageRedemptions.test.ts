@@ -78,7 +78,16 @@ test("parsePackageRedemptionRequest rejects balance and amount fields", () => {
 test("redeemPackageSessionBooking rejects when flag OFF", async () => {
   delete process.env.ENABLE_PACKAGE_REDEMPTION_BOOKING;
   const result = await redeemPackageSessionBooking({
-    admin: { rpc: async () => ({ data: null, error: null }) },
+    admin: {
+      rpc: async () => ({ data: null, error: null }),
+      from: () => ({
+        select: () => ({
+          eq: () => ({
+            maybeSingle: async () => ({ data: null, error: null }),
+          }),
+        }),
+      }),
+    },
     entitlementId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
     studentId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
     request: {
@@ -115,6 +124,27 @@ test("redeemPackageSessionBooking maps RPC success and idempotency", async () =>
         },
         error: null,
       }),
+      from: (table: string) => ({
+        select: () => ({
+          eq: () => ({
+            maybeSingle: async () => {
+              if (table === "package_entitlements") {
+                return {
+                  data: {
+                    id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                    teacher_id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+                  },
+                  error: null,
+                };
+              }
+              return {
+                data: { id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee", available_from_date: null },
+                error: null,
+              };
+            },
+          }),
+        }),
+      }),
     },
     entitlementId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
     studentId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
@@ -134,6 +164,55 @@ test("redeemPackageSessionBooking maps RPC success and idempotency", async () =>
   assert.equal(result.idempotent, true);
   assert.equal(result.remainingSessions, 3);
   assert.equal(result.sessionNumber, 2);
+});
+
+test("redeemPackageSessionBooking rejects before teacher available_from_date", async () => {
+  process.env.ENABLE_PACKAGE_REDEMPTION_BOOKING = "true";
+  const result = await redeemPackageSessionBooking({
+    admin: {
+      rpc: async () => ({ data: null, error: null }),
+      from: (table: string) => ({
+        select: () => ({
+          eq: () => ({
+            maybeSingle: async () => {
+              if (table === "package_entitlements") {
+                return {
+                  data: {
+                    id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                    teacher_id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+                  },
+                  error: null,
+                };
+              }
+              return {
+                data: {
+                  id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+                  available_from_date: "2099-10-01",
+                },
+                error: null,
+              };
+            },
+          }),
+        }),
+      }),
+    },
+    entitlementId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    studentId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+    request: {
+      clientRequestId: "req-12345678",
+      slotDate: "2099-09-01",
+      timeSlot: "10:00",
+      teachingMode: "online",
+      studentLevel: null,
+      studentAddress: null,
+      learnerProfileId: null,
+      durationMinutes: 60,
+    },
+  });
+  assert.equal(result.ok, false);
+  if (result.ok) return;
+  assert.equal(result.error, "teacher_not_available_yet");
+  assert.equal(result.availableFromDate, "2099-10-01");
 });
 
 test("redeem routes and BookingModal are wired without Stripe for package credit", () => {

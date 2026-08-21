@@ -43,6 +43,8 @@ import {
   PUBLIC_TEACHER_PROFILE_TEACHING_MODE_CHIP_CLASS,
 } from "@/lib/teachers/display";
 import { useLocale } from "../lib/locale-context";
+import { formatLocalISODate } from "@/lib/slots";
+import { getAvailableFromBadge } from "@/lib/teachers/availabilityStartDate";
 import type { TeacherCredential } from "../lib/teacherTrust";
 import { getPublicTeacherCredentials } from "@/lib/supabase/queries";
 import { getEmbedUrl } from "../lib/videoEmbed";
@@ -964,6 +966,31 @@ export function TeacherProfile({
                         })()}
                       </div>
                     ) : null}
+
+                    {(() => {
+                      const todayIso = formatLocalISODate(new Date());
+                      const badge = getAvailableFromBadge(teacher.availableFromDate, locale, todayIso);
+                      if (!badge) return null;
+                      const title =
+                        badge.kind === "month"
+                          ? t("availableFromBadgeMonth").replace("{month}", badge.monthLabel)
+                          : t("availableFromBadgeDay")
+                              .replace("{day}", String(badge.day))
+                              .replace("{month}", badge.monthLabel);
+                      const hint =
+                        badge.kind === "month"
+                          ? t("availableFromProfileHintMonth")
+                          : t("availableFromProfileHintDay");
+                      return (
+                        <div
+                          className="rounded-xl border border-teal-100 bg-teal-50/80 px-3 py-3 text-left"
+                          data-testid="teacher-profile-available-from"
+                        >
+                          <p className="text-sm font-bold text-teal-900">{title}</p>
+                          <p className="mt-1 text-xs leading-relaxed text-teal-800/90">{hint}</p>
+                        </div>
+                      );
+                    })()}
 
                     <button
                       type="button"

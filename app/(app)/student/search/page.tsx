@@ -16,6 +16,9 @@ import { isLaunchEligibleTeacherRow, teacherRowToTeacher, formatTeacherCardDisci
 import { TEACHERS_LIST_SELECT, TEACHERS_PUBLIC_TABLE } from "../../../../lib/supabase/queries";
 import { TeacherAvatar } from "../../../../components/TeacherAvatar";
 import { TeacherCardIdentityCheck } from "@/components/teachers/TeacherCardIdentityCheck";
+import { TeacherAvailableFromBadge } from "@/components/teachers/TeacherAvailableFromBadge";
+import { formatLocalISODate } from "@/lib/slots";
+import { getAvailableFromBadge } from "@/lib/teachers/availabilityStartDate";
 import { TeacherCardBioSnippet } from "@/components/teachers/TeacherCardBioSnippet";
 import { formatPublicTeacherDisplayName } from "@/lib/identity/displayName";
 import type { City } from "../../../../lib/cities";
@@ -908,6 +911,8 @@ function TeacherCard({
   const identityVerified = isPublicTeacherIdentityVerified({
     identityVerified: teacher.identityVerified,
   });
+  const todayIso = formatLocalISODate(new Date());
+  const futureStart = Boolean(getAvailableFromBadge(teacher.availableFromDate, locale, todayIso));
 
   return (
     <button
@@ -975,7 +980,13 @@ function TeacherCard({
               {formatLabel}
             </span>
           ) : null}
-          {hasAvailability ? (
+          <TeacherAvailableFromBadge
+            availableFromDate={teacher.availableFromDate}
+            locale={locale}
+            todayIso={todayIso}
+            t={t}
+          />
+          {hasAvailability && !futureStart ? (
             <span className="inline-flex items-center gap-1.5">
               <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-600" aria-hidden />
               {t("availableThisWeekMatch")}

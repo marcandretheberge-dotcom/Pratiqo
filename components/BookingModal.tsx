@@ -34,6 +34,12 @@ import {
 import { validateMinimumLessonPriceDollars } from "@/lib/pricing/validateMinimumLessonPrice";
 import { formatLocalISODate, periodForSlot } from "../lib/slots";
 import {
+  canBookTeacherOnDate,
+  formatAvailableFromDisplayDate,
+  getAvailableFromBadge,
+  normalizeAvailableFromDate,
+} from "@/lib/teachers/availabilityStartDate";
+import {
   trackBookingCheckoutStarted,
   trackBookingSlotSelected,
 } from "@/lib/analytics/events";
@@ -742,18 +748,20 @@ export function BookingModal({
   const calendarCells = useMemo(() => {
     const start = new Date();
     start.setHours(0, 0, 0, 0);
+    const availableFrom = normalizeAvailableFromDate(teacher.availableFromDate);
     const cells: { iso: string; label: string; count: number; disabled: boolean }[] = [];
     for (let i = 0; i < 28; i++) {
       const d = new Date(start);
       d.setDate(start.getDate() + i);
       const iso = formatLocalISODate(d);
       const count = availableDays[iso] ?? 0;
-      const disabled = iso <= todayIso || count === 0;
+      const beforeStart = !canBookTeacherOnDate(availableFrom, iso);
+      const disabled = iso <= todayIso || count === 0 || beforeStart;
       const label = d.toLocaleDateString(dateLocale, { weekday: "short", day: "numeric", month: "short" });
       cells.push({ iso, label, count, disabled });
     }
     return cells;
-  }, [availableDays, todayIso, dateLocale]);
+  }, [availableDays, todayIso, dateLocale, teacher.availableFromDate]);
 
   const slotsByPeriod = useMemo(() => {
     const groups: { key: "matin" | "apresmidi" | "soir"; label: string; emoji: string; items: string[] }[] = [
@@ -805,6 +813,12 @@ export function BookingModal({
     }
     if (!selectedDate || !selectedSlot) {
       setCheckoutError(t("bookingSelectDateTimeError"));
+      return;
+    }
+    if (!canBookTeacherOnDate(teacher.availableFromDate, selectedDate)) {
+      const from = normalizeAvailableFromDate(teacher.availableFromDate);
+      const dateLabel = from ? formatAvailableFromDisplayDate(from, locale) : "";
+      setCheckoutError(t("bookingTeacherNotAvailableYet").replace("{date}", dateLabel || "…"));
       return;
     }
 
@@ -923,6 +937,7 @@ export function BookingModal({
         let redeemPayload: {
           booking?: { id?: string };
           error?: string;
+          availableFromDate?: string;
         } = {};
         try {
           redeemPayload = redeemRaw ? (JSON.parse(redeemRaw) as typeof redeemPayload) : {};
@@ -943,6 +958,17 @@ export function BookingModal({
         }
         if (redeemRes.status === 409 && redeemPayload.error === "slot_booked") {
           setCheckoutError(t("slotBooked"));
+          return;
+        }
+        if (redeemRes.status === 409 && redeemPayload.error === "teacher_not_available_yet") {
+          const from =
+            normalizeAvailableFromDate(
+              (redeemPayload as { availableFromDate?: string }).availableFromDate,
+            ) ?? normalizeAvailableFromDate(teacher.availableFromDate);
+          const dateLabel = from ? formatAvailableFromDisplayDate(from, locale) : "";
+          setCheckoutError(
+            t("bookingTeacherNotAvailableYetStale").replace("{date}", dateLabel || "…"),
+          );
           return;
         }
         if (redeemRes.status === 400 && redeemPayload.error === "booking_minimum_notice") {
@@ -1001,7 +1027,7 @@ export function BookingModal({
         body: JSON.stringify(bookingCreateBody),
       });
       const createRaw = await createRes.text();
-      let createPayload: { id?: string; error?: string } = {};
+      let createPayload: { id?: string; error?: string; availableFromDate?: string } = {};
       try {
         createPayload = createRaw ? (JSON.parse(createRaw) as typeof createPayload) : {};
       } catch {
@@ -1013,6 +1039,14 @@ export function BookingModal({
       }
       if (createRes.status === 409 && createPayload.error === "offer_not_bookable") {
         setCheckoutError(t("bookingOfferNotBookable"));
+        return;
+      }
+      if (createRes.status === 409 && createPayload.error === "teacher_not_available_yet") {
+        const from =
+          normalizeAvailableFromDate(createPayload.availableFromDate) ??
+          normalizeAvailableFromDate(teacher.availableFromDate);
+        const dateLabel = from ? formatAvailableFromDisplayDate(from, locale) : "";
+        setCheckoutError(t("bookingTeacherNotAvailableYet").replace("{date}", dateLabel || "…"));
         return;
       }
       if (createRes.status === 409) {
@@ -1704,6 +1738,25 @@ export function BookingModal({
                 <Calendar size={16} /> {t("bookingPickDateTitle")}
               </p>
               <p className="text-xs text-slate-500">{t("fourWeeksHint")}</p>
+              {(() => {
+                const badge = getAvailableFromBadge(teacher.availableFromDate, locale, todayIso);
+                if (!badge) return null;
+                const title =
+                  badge.kind === "month"
+                    ? t("availableFromBadgeMonth").replace("{month}", badge.monthLabel)
+                    : t("availableFromBadgeDay")
+                        .replace("{day}", String(badge.day))
+                        .replace("{month}", badge.monthLabel);
+                return (
+                  <div
+                    className="rounded-xl border border-teal-100 bg-teal-50 px-3 py-2 text-xs text-teal-900"
+                    data-testid="booking-modal-available-from-notice"
+                  >
+                    <p className="font-semibold">{title}</p>
+                    <p className="mt-1 text-teal-800/90">{t("availableFromProfileHintDay")}</p>
+                  </div>
+                );
+              })()}
               {daysError ? (
                 <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800">{daysError}</div>
               ) : null}

@@ -58,6 +58,11 @@ export interface Teacher {
   homeLessonMinDuration?: number;
   /** Default regular lesson duration (studio/online slots). */
   defaultLessonDurationMinutes?: number;
+  /**
+   * Earliest calendar date (YYYY-MM-DD) learners may book.
+   * Null/undefined = no start-date gate. Independent of search visibility and Stripe readiness.
+   */
+  availableFromDate?: string | null;
   homeLessonRequiresConfirmation?: boolean;
   /** Si distance élève → prof &gt; 20 km, durée min 2 h */
   homeLessonForce2hOver20km?: boolean;

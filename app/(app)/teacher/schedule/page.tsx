@@ -18,6 +18,10 @@ import {
   formatLessonDurationLabel,
   normalizeLessonDurationMinutes,
 } from "../../../../lib/pricing/lessonDuration";
+import {
+  formatAvailableFromDisplayDate,
+  normalizeAvailableFromDate,
+} from "@/lib/teachers/availabilityStartDate";
 
 const DAYS = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"] as const;
 const SLOTS = ["Matin", "Après-midi", "Soir"] as const;
@@ -125,6 +129,9 @@ function TeacherScheduleInner() {
   const [defaultLessonDuration, setDefaultLessonDuration] = useState<number>(DEFAULT_LESSON_DURATION_MINUTES);
   const [savedLessonDuration, setSavedLessonDuration] = useState<number>(DEFAULT_LESSON_DURATION_MINUTES);
   const [durationSaveState, setDurationSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [availableFromDate, setAvailableFromDate] = useState<string>("");
+  const [savedAvailableFromDate, setSavedAvailableFromDate] = useState<string | null>(null);
+  const [availableFromSaveState, setAvailableFromSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [weekAnchor, setWeekAnchor] = useState(() => startOfWeekMonday(new Date()));
   const [selectedDayIndex, setSelectedDayIndex] = useState(() => {
     const w = startOfWeekMonday(new Date());
@@ -185,7 +192,7 @@ function TeacherScheduleInner() {
     const { data: trow } = await supabase
       .from("teachers")
       .select(
-        "id, availability, default_lesson_duration_minutes, teaching_mode, booking_buffer_before_minutes, booking_buffer_after_minutes",
+        "id, availability, default_lesson_duration_minutes, available_from_date, teaching_mode, booking_buffer_before_minutes, booking_buffer_after_minutes",
       )
       .eq("user_id", userId)
       .maybeSingle();
@@ -199,6 +206,11 @@ function TeacherScheduleInner() {
     );
     setDefaultLessonDuration(loadedDuration);
     setSavedLessonDuration(loadedDuration);
+    const loadedAvailableFrom = normalizeAvailableFromDate(
+      (trow as { available_from_date?: string | null })?.available_from_date,
+    );
+    setAvailableFromDate(loadedAvailableFrom ?? "");
+    setSavedAvailableFromDate(loadedAvailableFrom);
     if (!tid) {
       setBookings([]);
       setLoading(false);
@@ -332,6 +344,53 @@ function TeacherScheduleInner() {
       }
     },
     [savedLessonDuration, t],
+  );
+
+  const saveAvailableFromDate = useCallback(
+    async (nextRaw: string | null) => {
+      const next = nextRaw === null || nextRaw.trim() === "" ? null : normalizeAvailableFromDate(nextRaw);
+      if (next === savedAvailableFromDate) {
+        setAvailableFromDate(next ?? "");
+        return;
+      }
+
+      const previous = savedAvailableFromDate;
+      setAvailableFromDate(next ?? "");
+      setAvailableFromSaveState("saving");
+
+      try {
+        const supabase = getSupabaseClient();
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        const token = session?.access_token;
+        if (!token) throw new Error(t("availableFromSaveError"));
+
+        const res = await fetch("/api/teacher/available-from", {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ availableFromDate: next }),
+        });
+        const body = (await res.json().catch(() => ({}))) as {
+          availableFromDate?: string | null;
+          error?: string;
+        };
+        if (!res.ok) throw new Error(typeof body.error === "string" ? body.error : t("availableFromSaveError"));
+
+        const saved = normalizeAvailableFromDate(body.availableFromDate) ?? null;
+        setSavedAvailableFromDate(saved);
+        setAvailableFromDate(saved ?? "");
+        setAvailableFromSaveState("saved");
+      } catch {
+        setSavedAvailableFromDate(previous);
+        setAvailableFromDate(previous ?? "");
+        setAvailableFromSaveState("error");
+      }
+    },
+    [savedAvailableFromDate, t],
   );
 
   const saveAll = async () => {
@@ -628,6 +687,56 @@ function TeacherScheduleInner() {
               >
                 {t("lessonDurationSaveError")}
               </p>
+            ) : null}
+          </div>
+          <div
+            className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5"
+            data-testid="teacher-schedule-available-from-card"
+          >
+            <div>
+              <p className="text-sm font-bold text-[#2C2C2A]">{t("availableFromLessonStartDate")}</p>
+              <p className="mt-1 text-xs leading-5 text-slate-600">{t("availableFromHelper")}</p>
+              <p className="mt-1 text-xs leading-5 text-slate-500">{t("availableFromFutureHint")}</p>
+              <p className="mt-1 text-xs leading-5 text-slate-500">{t("availableFromVisibilityNote")}</p>
+            </div>
+            <label className="block max-w-xs sm:max-w-sm">
+              <span className="text-xs font-bold uppercase tracking-widest text-slate-600">
+                {t("availableFromLabel")}
+              </span>
+              <input
+                type="date"
+                value={availableFromDate}
+                min={todayIso}
+                onChange={(e) => void saveAvailableFromDate(e.target.value || null)}
+                disabled={availableFromSaveState === "saving"}
+                className="mt-2 h-12 w-full rounded-xl border border-slate-200 px-3 text-sm font-semibold text-[#2C2C2A] disabled:opacity-60"
+                data-testid="teacher-schedule-available-from-input"
+              />
+            </label>
+            <button
+              type="button"
+              onClick={() => void saveAvailableFromDate(null)}
+              disabled={availableFromSaveState === "saving" || savedAvailableFromDate == null}
+              className="text-xs font-semibold text-teal-800 underline disabled:opacity-40"
+              data-testid="teacher-schedule-available-from-clear"
+            >
+              {t("availableFromClear")}
+            </button>
+            {savedAvailableFromDate ? (
+              <p className="text-xs font-medium text-slate-700" data-testid="teacher-schedule-available-from-summary">
+                {formatAvailableFromDisplayDate(savedAvailableFromDate, locale)}
+              </p>
+            ) : null}
+            {availableFromSaveState === "saving" ? (
+              <p className="text-xs font-medium text-slate-600">{t("lessonDurationSaving")}</p>
+            ) : null}
+            {availableFromSaveState === "saved" ? (
+              <p className="text-xs font-medium text-teal-700" data-testid="teacher-schedule-available-from-saved">
+                {t("availableFromSaved")}
+              </p>
+            ) : null}
+            {availableFromSaveState === "error" ? (
+              <p className="text-xs font-medium text-red-700">{t("availableFromSaveError")}</p>
             ) : null}
           </div>
           <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">

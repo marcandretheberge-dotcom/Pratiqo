@@ -13,6 +13,7 @@ import {
 import { defaultLessonDurationMinutes, normalizeTeacherBufferSettings } from "@/lib/teacherSlotQueries";
 import { isValidLessonDurationMinutes } from "@/lib/pricing/lessonDuration";
 import { isBookingAtLeast24hAhead } from "@/lib/bookingCancellation";
+import { canBookTeacherOnDate, normalizeAvailableFromDate } from "@/lib/teachers/availabilityStartDate";
 
 export const runtime = "nodejs";
 
@@ -34,13 +35,28 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
     const { data: teacher, error: tErr } = await admin
       .from("teachers")
       .select(
-        "id, availability, default_lesson_duration_minutes, booking_buffer_before_minutes, booking_buffer_after_minutes",
+        "id, availability, default_lesson_duration_minutes, available_from_date, booking_buffer_before_minutes, booking_buffer_after_minutes",
       )
       .eq("id", teacherId)
       .maybeSingle();
 
     if (tErr || !teacher) {
       return NextResponse.json({ error: "Professeur introuvable." }, { status: 404 });
+    }
+
+    const availableFromDate = normalizeAvailableFromDate(
+      (teacher as { available_from_date?: string | null }).available_from_date,
+    );
+    if (!canBookTeacherOnDate(availableFromDate, date)) {
+      return NextResponse.json({
+        slots: [],
+        durationMinutes: defaultLessonDurationMinutes(
+          (teacher as { default_lesson_duration_minutes?: number | null }).default_lesson_duration_minutes,
+        ),
+        date,
+        availableFromDate,
+        error: "teacher_not_available_yet",
+      });
     }
 
     const durationParam = url.searchParams.get("duration");

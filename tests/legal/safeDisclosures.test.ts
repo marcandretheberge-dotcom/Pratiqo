@@ -707,6 +707,37 @@ const allowedTeacherOfferCancellationPreferenceFiles = new Set<string>([
   "package.json",
 ]);
 
+/** Teacher availability start date ("Cours à partir de…") — display + booking gate only. */
+const allowedTeacherAvailabilityStartDateFiles = new Set<string>([
+  "supabase/migrations/107_teacher_available_from_date.sql",
+  "lib/teachers/availabilityStartDate.ts",
+  "lib/teacherMapper.ts",
+  "lib/supabase/queries.ts",
+  "lib/bookings/createPendingPaymentBooking.ts",
+  "lib/teacherSlotQueries.ts",
+  "lib/offers/packageRedemptions.ts",
+  "lib/admin/teacher360.ts",
+  "types.ts",
+  "app/api/teacher/available-from/route.ts",
+  "app/api/bookings/route.ts",
+  "app/api/package-entitlements/[entitlementId]/redeem/route.ts",
+  "app/api/teachers/[id]/slots/route.ts",
+  "app/(app)/teacher/schedule/page.tsx",
+  "app/(app)/teacher/verification/page.tsx",
+  "app/(app)/student/search/page.tsx",
+  "app/(app)/admin/users/[id]/page.tsx",
+  "components/BookingModal.tsx",
+  "components/TeacherProfile.tsx",
+  "components/teachers/TeacherAvailableFromBadge.tsx",
+  "lib/i18n/locales/fr.json",
+  "lib/i18n/locales/en.json",
+  "lib/i18n/locales/es.json",
+  "tests/teachers/availabilityStartDate.test.ts",
+  "tests/offers/packageRedemptions.test.ts",
+  "tests/legal/safeDisclosures.test.ts",
+  "package.json",
+]);
+
 function touchesSafeDisclosureScope(file: string): boolean {
   return (
     liveDisclosureFiles.includes(file) ||
@@ -891,6 +922,7 @@ test("safe-disclosure branch did not touch restricted systems", () => {
     if (allowedPackageLaunchReadinessFiles.has(file)) continue;
     if (allowedTeacherOfferCoverImageFiles.has(file)) continue;
     if (allowedTeacherOfferCancellationPreferenceFiles.has(file)) continue;
+    if (allowedTeacherAvailabilityStartDateFiles.has(file)) continue;
     for (const rule of restrictedRules) {
       if (rule.re.test(file)) {
         violations.push(`${file} (${rule.label})`);

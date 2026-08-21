@@ -27,6 +27,10 @@
  */
 
 import { isBookingAtLeast24hAhead } from "@/lib/bookingCancellation";
+import {
+  canBookTeacherOnDate,
+  normalizeAvailableFromDate,
+} from "@/lib/teachers/availabilityStartDate";
 import type { PackageEntitlementRow, PackageEntitlementStatus } from "./packageEntitlements";
 
 export const PACKAGE_REDEMPTION_BOOKING_FLAG = "ENABLE_PACKAGE_REDEMPTION_BOOKING";
@@ -83,10 +87,12 @@ export type RedeemPackageSessionFailure = {
     | "entitlement_not_active"
     | "no_remaining_sessions"
     | "booking_minimum_notice"
+    | "teacher_not_available_yet"
     | "invalid_learner_profile"
     | "slot_booked"
     | "duplicate_redemption_conflict"
     | "server_error";
+  availableFromDate?: string;
 };
 
 export type ActivePackageEntitlementSummary = {
@@ -308,6 +314,17 @@ type RpcAdmin = {
     fn: string,
     args: Record<string, unknown>,
   ) => Promise<{ data: unknown; error: { message?: string; code?: string } | null }>;
+  /** Required for redeem date-gate lookups; optional for reverse/forfeit RPCs. */
+  from?: (table: string) => {
+    select: (columns: string) => {
+      eq: (column: string, value: string) => {
+        maybeSingle: () => Promise<{
+          data: Record<string, unknown> | null;
+          error: { message?: string } | null;
+        }>;
+      };
+    };
+  };
 };
 
 function mapRpcException(message: string | undefined): RedeemPackageSessionFailure {
@@ -345,6 +362,41 @@ export async function redeemPackageSessionBooking(args: {
 
   if (!isBookingAtLeast24hAhead({ slot_date: args.request.slotDate, time_slot: args.request.timeSlot })) {
     return { ok: false, status: 400, error: "booking_minimum_notice" };
+  }
+
+  const adminFrom = args.admin.from;
+  if (!adminFrom) {
+    return { ok: false, status: 500, error: "server_error" };
+  }
+
+  const { data: entitlement, error: entitlementErr } = await adminFrom("package_entitlements")
+    .select("id, teacher_id")
+    .eq("id", args.entitlementId)
+    .maybeSingle();
+  if (entitlementErr) {
+    return { ok: false, status: 500, error: "server_error" };
+  }
+  const teacherId =
+    entitlement && typeof entitlement.teacher_id === "string" ? entitlement.teacher_id : null;
+  if (!entitlement?.id || !teacherId) {
+    return { ok: false, status: 404, error: "entitlement_not_found" };
+  }
+
+  const { data: teacher, error: teacherErr } = await adminFrom("teachers")
+    .select("id, available_from_date")
+    .eq("id", teacherId)
+    .maybeSingle();
+  if (teacherErr) {
+    return { ok: false, status: 500, error: "server_error" };
+  }
+  const availableFromDate = normalizeAvailableFromDate(teacher?.available_from_date);
+  if (!canBookTeacherOnDate(availableFromDate, args.request.slotDate)) {
+    return {
+      ok: false,
+      status: 409,
+      error: "teacher_not_available_yet",
+      availableFromDate: availableFromDate ?? undefined,
+    };
   }
 
   const { data, error } = await args.admin.rpc("redeem_package_session_booking", {
