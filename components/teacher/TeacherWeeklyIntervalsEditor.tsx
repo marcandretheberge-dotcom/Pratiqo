@@ -5,11 +5,20 @@ import { Loader2, Plus, Save, Trash2 } from "lucide-react";
 import { getSupabaseClient } from "@/lib/supabase";
 import { useLocale } from "@/lib/locale-context";
 import type { TranslationKey } from "@/lib/translations";
+import { cn } from "@/lib/utils";
 import {
   validateWeeklyIntervalSet,
   WEEKLY_INTERVAL_STEP_MINUTES,
   type WeeklyIntervalInput,
 } from "@/lib/schedule/weeklyIntervals";
+import {
+  isTeacherScheduleAutosaveEnabled,
+  isTeacherScheduleStickySaveEnabled,
+  SCHEDULE_AUTOSAVE_DEBOUNCE_MS,
+} from "@/lib/schedule/scheduleSaveFlags";
+import { scheduleSaveStatusFrom } from "@/lib/schedule/scheduleSaveState";
+import { useUnsavedChangesWarning } from "@/hooks/useUnsavedChangesWarning";
+import { TeacherScheduleSaveBar } from "@/components/teacher/TeacherScheduleSaveBar";
 
 /** Display order Mon→Sun; dayOfWeek still uses JS Sunday=0. */
 const DAY_ORDER: Array<{ dayOfWeek: number; labelKey: "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun" }> = [
@@ -45,13 +54,18 @@ type Props = {
   hasLegacyBlocks: boolean;
   /** Notifies parent when saved/loaded precise interval count changes (for migration banner). */
   onPreciseIntervalCountChange?: (count: number) => void;
+  /** Notifies parent when unsaved interval edits change (page-level save coordination). */
+  onDirtyChange?: (dirty: boolean) => void;
 };
 
 export function TeacherWeeklyIntervalsEditor({
   hasLegacyBlocks,
   onPreciseIntervalCountChange,
+  onDirtyChange,
 }: Props) {
   const { t } = useLocale();
+  const stickyEnabled = isTeacherScheduleStickySaveEnabled();
+  const autosaveEnabled = isTeacherScheduleAutosaveEnabled();
   const [byDay, setByDay] = useState<Record<number, LocalInterval[]>>(() => {
     const init: Record<number, LocalInterval[]> = {};
     for (const d of DAY_ORDER) init[d.dayOfWeek] = [];
@@ -67,6 +81,7 @@ export function TeacherWeeklyIntervalsEditor({
   const [errorKey, setErrorKey] = useState<TranslationKey | null>(null);
   const [dirty, setDirty] = useState(false);
   const [baseline, setBaseline] = useState("");
+  const [autosaveFlash, setAutosaveFlash] = useState(false);
 
   const getAccessToken = useCallback(async (): Promise<string | null> => {
     const supabase = getSupabaseClient();
@@ -145,12 +160,17 @@ export function TeacherWeeklyIntervalsEditor({
         (a, b) => a.dayOfWeek - b.dayOfWeek || a.startTime.localeCompare(b.startTime),
       ),
     );
-    setDirty(serialized !== baseline);
-  }, [currentPayload, baseline]);
+    const nextDirty = serialized !== baseline;
+    setDirty(nextDirty);
+    onDirtyChange?.(nextDirty);
+  }, [currentPayload, baseline, onDirtyChange]);
+
+  useUnsavedChangesWarning(dirty, stickyEnabled);
 
   const markChanged = () => {
     setSaveState("idle");
     setErrorKey(null);
+    setAutosaveFlash(false);
   };
 
   const toggleDay = (dayOfWeek: number, enabled: boolean) => {
@@ -200,11 +220,12 @@ export function TeacherWeeklyIntervalsEditor({
     }));
   };
 
-  const save = async () => {
+  const save = async (opts?: { fromAutosave?: boolean }): Promise<boolean> => {
     const accessToken = await getAccessToken();
-    if (!accessToken) return;
+    if (!accessToken) return false;
     const validated = validateWeeklyIntervalSet(currentPayload);
     if (!validated.ok) {
+      if (opts?.fromAutosave) return false;
       const map: Partial<Record<string, TranslationKey>> = {
         end_before_or_equal_start: "weeklyIntervalsEndAfterStart",
         overnight_not_allowed: "weeklyIntervalsEndAfterStart",
@@ -216,7 +237,7 @@ export function TeacherWeeklyIntervalsEditor({
       };
       setErrorKey(map[validated.error] ?? "weeklyIntervalsInvalidRange");
       setSaveState("error");
-      return;
+      return false;
     }
 
     setSaveState("saving");
@@ -246,15 +267,52 @@ export function TeacherWeeklyIntervalsEditor({
         };
         setErrorKey(map[json.error ?? ""] ?? "weeklyIntervalsSaveError");
         setSaveState("error");
-        return;
+        return false;
       }
       applyLoaded(Array.isArray(json.intervals) ? json.intervals : validated.intervals);
       setSaveState("saved");
+      if (opts?.fromAutosave) setAutosaveFlash(true);
+      return true;
     } catch {
       setErrorKey("weeklyIntervalsSaveError");
       setSaveState("error");
+      return false;
     }
   };
+
+  const discard = async () => {
+    const accessToken = await getAccessToken();
+    if (!accessToken) return;
+    setSaveState("idle");
+    setErrorKey(null);
+    try {
+      const res = await fetch("/api/teacher/weekly-intervals", {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      const json = (await res.json().catch(() => ({}))) as { intervals?: WeeklyIntervalInput[] };
+      applyLoaded(Array.isArray(json.intervals) ? json.intervals : []);
+    } catch {
+      setErrorKey("weeklyIntervalsLoadError");
+    }
+  };
+
+  useEffect(() => {
+    if (!autosaveEnabled || !dirty || loading) return;
+    const validated = validateWeeklyIntervalSet(currentPayload);
+    if (!validated.ok) return;
+    const timer = window.setTimeout(() => {
+      void save({ fromAutosave: true });
+    }, SCHEDULE_AUTOSAVE_DEBOUNCE_MS);
+    return () => window.clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- debounce on dirty payload only
+  }, [autosaveEnabled, dirty, loading, currentPayload]);
+
+  const saveStatus = scheduleSaveStatusFrom({
+    dirty,
+    saving: saveState === "saving",
+    error: saveState === "error",
+    justSaved: saveState === "saved",
+  });
 
   if (loading) {
     return (
@@ -268,7 +326,7 @@ export function TeacherWeeklyIntervalsEditor({
   return (
     <div
       id="teacher-weekly-intervals-editor"
-      className="space-y-4"
+      className={cn("space-y-4", stickyEnabled && "pb-24")}
       data-testid="teacher-weekly-intervals-editor"
     >
       <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
@@ -375,24 +433,42 @@ export function TeacherWeeklyIntervalsEditor({
         })}
       </div>
 
-      <div
-        className="sticky bottom-3 z-10 flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-lg backdrop-blur"
-        data-testid="teacher-weekly-intervals-save-bar"
-      >
-        <p className="text-xs font-medium text-slate-600">
-          {dirty ? t("weeklyIntervalsUnsaved") : saveState === "saved" ? t("weeklyIntervalsSaved") : "\u00a0"}
-        </p>
-        <button
-          type="button"
-          onClick={() => void save()}
-          disabled={saveState === "saving" || !dirty}
-          className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-teal-700 px-4 text-sm font-bold text-white hover:bg-teal-800 disabled:opacity-50"
-          data-testid="teacher-weekly-intervals-save"
+      {stickyEnabled ? (
+        <TeacherScheduleSaveBar
+          status={saveStatus}
+          dirty={dirty}
+          saving={saveState === "saving"}
+          onSave={() => void save()}
+          onDiscard={() => void discard()}
+          autosaveActive={autosaveEnabled && (saveState === "saving" || autosaveFlash)}
+          testId="teacher-weekly-intervals-save-bar"
+        />
+      ) : (
+        <div
+          className="sticky bottom-3 z-10 flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-lg backdrop-blur"
+          data-testid="teacher-weekly-intervals-save-bar"
         >
-          {saveState === "saving" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save size={16} />}
-          {t("weeklyIntervalsSave")}
-        </button>
-      </div>
+          <p className="text-xs font-medium text-slate-600">
+            {dirty ? t("weeklyIntervalsUnsaved") : saveState === "saved" ? t("weeklyIntervalsSaved") : "\u00a0"}
+          </p>
+          <button
+            type="button"
+            onClick={() => void save()}
+            disabled={saveState === "saving" || !dirty}
+            className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-teal-700 px-4 text-sm font-bold text-white hover:bg-teal-800 disabled:opacity-50"
+            data-testid="teacher-weekly-intervals-save"
+          >
+            {saveState === "saving" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save size={16} />}
+            {t("weeklyIntervalsSave")}
+          </button>
+        </div>
+      )}
+
+      {autosaveFlash && !dirty ? (
+        <p className="text-xs font-medium text-teal-700" data-testid="teacher-weekly-intervals-autosaved">
+          {t("scheduleSaveAutosaved")}
+        </p>
+      ) : null}
 
       {errorKey ? (
         <p className="text-xs font-medium text-red-700" data-testid="teacher-weekly-intervals-error">

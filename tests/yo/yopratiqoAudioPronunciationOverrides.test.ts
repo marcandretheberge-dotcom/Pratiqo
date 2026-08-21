@@ -402,6 +402,8 @@ test("tracked patch avoids generated audio and restricted product systems", () =
     "app/api/teacher/schedule-exceptions/route.ts",
     "supabase/migrations/110_teacher_schedule_exceptions.sql",
     "supabase/migrations/111_harden_teacher_schedule_exceptions_rls.sql",
+    // PR 17C — schedule sticky save / light autosave (UX only; no audio/Stripe).
+    "hooks/useUnsavedChangesWarning.ts",
   ]);
   const forbidden = [
     /^app\/api\//,

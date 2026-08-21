@@ -32,6 +32,15 @@ import { TeacherScheduleIntervalMigrationBanner } from "@/components/teacher/Tea
 import { TeacherScheduleIntervalMigrationModal } from "@/components/teacher/TeacherScheduleIntervalMigrationModal";
 import { TeacherScheduleExceptionsEditor } from "@/components/teacher/TeacherScheduleExceptionsEditor";
 import { isTeacherScheduleExceptionsUiEnabled } from "@/lib/schedule/dateExceptions";
+import {
+  isTeacherScheduleStickySaveEnabled,
+} from "@/lib/schedule/scheduleSaveFlags";
+import { scheduleSaveStatusFrom, stableScheduleSnapshot } from "@/lib/schedule/scheduleSaveState";
+import { useUnsavedChangesWarning } from "@/hooks/useUnsavedChangesWarning";
+import {
+  TeacherScheduleSaveBar,
+  TeacherScheduleSaveStatusBadge,
+} from "@/components/teacher/TeacherScheduleSaveBar";
 
 const DAYS = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"] as const;
 const SLOTS = ["Matin", "Après-midi", "Soir"] as const;
@@ -159,6 +168,14 @@ function TeacherScheduleInner() {
   const [blockDate, setBlockDate] = useState("");
   const [blockPeriod, setBlockPeriod] = useState<"matin" | "apresmidi" | "soir" | "all">("matin");
   const [flash, setFlash] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+  const [settingsBaseline, setSettingsBaseline] = useState("");
+  const [settingsDirty, setSettingsDirty] = useState(false);
+  const [intervalsDirty, setIntervalsDirty] = useState(false);
+  const [exceptionsDirty, setExceptionsDirty] = useState(false);
+  const stickyEnabled = isTeacherScheduleStickySaveEnabled();
+  const pageDirty = settingsDirty || intervalsDirty || exceptionsDirty;
+
+  useUnsavedChangesWarning(pageDirty, stickyEnabled);
 
   const todayIso = formatLocalISODate(new Date());
   const weekDays = useMemo(() => Array.from({ length: 7 }, (_, i) => addDays(weekAnchor, i)), [weekAnchor]);
@@ -228,7 +245,24 @@ function TeacherScheduleInner() {
       return;
     }
     const avail = (trow as { availability?: unknown }).availability;
-    setAvailability(Array.isArray(avail) ? (avail as string[]) : []);
+    const availArr = Array.isArray(avail) ? (avail as string[]) : [];
+    setAvailability(availArr);
+    const mode = String((trow as { teaching_mode?: string })?.teaching_mode || "both");
+    const before = clampBufferMinutes(
+      (trow as { booking_buffer_before_minutes?: number | null })?.booking_buffer_before_minutes,
+    );
+    const after = clampBufferMinutes(
+      (trow as { booking_buffer_after_minutes?: number | null })?.booking_buffer_after_minutes,
+    );
+    setSettingsBaseline(
+      stableScheduleSnapshot({
+        availability: [...availArr].sort(),
+        teachingMode: mode,
+        bufferBefore: before,
+        bufferAfter: after,
+      }),
+    );
+    setSettingsDirty(false);
 
     const from = formatLocalISODate(weekAnchor);
     const to = formatLocalISODate(addDays(weekAnchor, 13));
@@ -404,29 +438,71 @@ function TeacherScheduleInner() {
     [savedAvailableFromDate, t],
   );
 
-  const saveAll = async () => {
-    if (!userId) return;
+  const saveAll = async (): Promise<boolean> => {
+    if (!userId) return false;
     setSaving(true);
     setFlash(null);
     try {
       const supabase = getSupabaseClient();
+      const nextBefore = clampBufferMinutes(bufferBefore);
+      const nextAfter = clampBufferMinutes(bufferAfter);
       const { error } = await supabase
         .from("teachers")
         .update({
           availability,
           teaching_mode: teachingMode,
-          booking_buffer_before_minutes: clampBufferMinutes(bufferBefore),
-          booking_buffer_after_minutes: clampBufferMinutes(bufferAfter),
+          booking_buffer_before_minutes: nextBefore,
+          booking_buffer_after_minutes: nextAfter,
         })
         .eq("user_id", userId);
       if (error) throw error;
+      setSettingsBaseline(
+        stableScheduleSnapshot({
+          availability: [...availability].sort(),
+          teachingMode,
+          bufferBefore: nextBefore,
+          bufferAfter: nextAfter,
+        }),
+      );
+      setSettingsDirty(false);
       setFlash({ kind: "ok", text: t("availabilitySaved") });
+      return true;
     } catch (e) {
       setFlash({ kind: "err", text: e instanceof Error ? e.message : t("errorGeneric") });
+      return false;
     } finally {
       setSaving(false);
     }
   };
+
+  const discardSettings = useCallback(() => {
+    void load();
+  }, [load]);
+
+  useEffect(() => {
+    if (!settingsBaseline) return;
+    const next = stableScheduleSnapshot({
+      availability: [...availability].sort(),
+      teachingMode,
+      bufferBefore: clampBufferMinutes(bufferBefore),
+      bufferAfter: clampBufferMinutes(bufferAfter),
+    });
+    setSettingsDirty(next !== settingsBaseline);
+  }, [availability, teachingMode, bufferBefore, bufferAfter, settingsBaseline]);
+
+  const settingsSaveStatus = scheduleSaveStatusFrom({
+    dirty: settingsDirty,
+    saving,
+    error: flash?.kind === "err",
+    justSaved: flash?.kind === "ok",
+  });
+
+  const pageSaveStatus = scheduleSaveStatusFrom({
+    dirty: pageDirty,
+    saving,
+    error: flash?.kind === "err",
+    justSaved: !pageDirty && flash?.kind === "ok",
+  });
 
   const addBlocked = async () => {
     if (!teacherId || !blockDate) return;
@@ -494,7 +570,10 @@ function TeacherScheduleInner() {
     <div className="mx-auto max-w-5xl space-y-5 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:pb-10">
       <div className="space-y-1">
         <p className="text-[10px] font-bold uppercase tracking-widest text-teal-700">{t("scheduleTeacherLabel")}</p>
-        <h1 className="text-2xl sm:text-3xl font-bold text-[#2C2C2A]">{t("schedulePageTitle")}</h1>
+        <div className="flex flex-wrap items-end justify-between gap-2">
+          <h1 className="text-2xl sm:text-3xl font-bold text-[#2C2C2A]">{t("schedulePageTitle")}</h1>
+          {stickyEnabled ? <TeacherScheduleSaveStatusBadge status={pageSaveStatus} /> : null}
+        </div>
         <p className="text-sm text-slate-600">{t("schedulePageSubtitle")}</p>
       </div>
 
@@ -763,6 +842,7 @@ function TeacherScheduleInner() {
               <TeacherWeeklyIntervalsEditor
                 hasLegacyBlocks={availability.length > 0}
                 onPreciseIntervalCountChange={setPreciseIntervalCount}
+                onDirtyChange={setIntervalsDirty}
               />
               <TeacherScheduleIntervalMigrationModal
                 state={buildScheduleIntervalMigrationState({
@@ -779,7 +859,9 @@ function TeacherScheduleInner() {
             </>
           ) : null}
 
-          {isTeacherScheduleExceptionsUiEnabled() ? <TeacherScheduleExceptionsEditor /> : null}
+          {isTeacherScheduleExceptionsUiEnabled() ? (
+            <TeacherScheduleExceptionsEditor onDirtyChange={setExceptionsDirty} />
+          ) : null}
 
           <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
             {!isTeacherScheduleIntervalsUiEnabled() ? (
@@ -971,9 +1053,10 @@ function TeacherScheduleInner() {
 
             <button
               type="button"
-              disabled={saving}
+              disabled={saving || (stickyEnabled && !settingsDirty)}
               onClick={() => void saveAll()}
               className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-teal-600 px-8 text-sm font-semibold text-white hover:brightness-[0.98] disabled:opacity-60 sm:w-auto"
+              data-testid="teacher-schedule-settings-save"
             >
               <Save size={18} />
               {saving ? t("savingDots") : t("saveAvailability")}
@@ -981,6 +1064,17 @@ function TeacherScheduleInner() {
           </div>
         </div>
       )}
+
+      {stickyEnabled && settingsDirty ? (
+        <TeacherScheduleSaveBar
+          status={settingsSaveStatus}
+          dirty={settingsDirty}
+          saving={saving}
+          onSave={() => void saveAll()}
+          onDiscard={discardSettings}
+          testId="teacher-schedule-settings-save-bar"
+        />
+      ) : null}
     </div>
   );
 }

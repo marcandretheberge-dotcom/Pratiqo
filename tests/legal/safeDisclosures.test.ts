@@ -796,6 +796,26 @@ const allowedTeacherScheduleExceptionsFiles = new Set<string>([
   "package.json",
 ]);
 
+/** PR 17C — sticky save / unsaved protection (UX only; no Stripe/payout changes). */
+const allowedTeacherScheduleSaveExperienceFiles = new Set<string>([
+  "lib/schedule/scheduleSaveFlags.ts",
+  "lib/schedule/scheduleSaveState.ts",
+  "hooks/useUnsavedChangesWarning.ts",
+  "components/teacher/TeacherScheduleSaveBar.tsx",
+  "components/teacher/TeacherWeeklyIntervalsEditor.tsx",
+  "components/teacher/TeacherScheduleExceptionsEditor.tsx",
+  "app/(app)/teacher/schedule/page.tsx",
+  "lib/i18n/locales/fr.json",
+  "lib/i18n/locales/en.json",
+  "lib/i18n/locales/es.json",
+  ".env.example",
+  "tests/schedule/scheduleSaveExperience.test.ts",
+  "tests/legal/marketplaceIndependentTeacherHardening.test.ts",
+  "tests/legal/safeDisclosures.test.ts",
+  "tests/yo/yopratiqoAudioPronunciationOverrides.test.ts",
+  "package.json",
+]);
+
 function touchesSafeDisclosureScope(file: string): boolean {
   return (
     liveDisclosureFiles.includes(file) ||
@@ -983,6 +1003,7 @@ test("safe-disclosure branch did not touch restricted systems", () => {
     if (allowedTeacherAvailabilityStartDateFiles.has(file)) continue;
     if (allowedTeacherWeeklyScheduleIntervalsFiles.has(file)) continue;
     if (allowedTeacherScheduleExceptionsFiles.has(file)) continue;
+    if (allowedTeacherScheduleSaveExperienceFiles.has(file)) continue;
     for (const rule of restrictedRules) {
       if (rule.re.test(file)) {
         violations.push(`${file} (${rule.label})`);
