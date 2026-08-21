@@ -69,7 +69,7 @@ test("dashboard action only when legacy blocks need conversion", () => {
   assert.equal(shouldShowScheduleIntervalDashboardAction(done), false);
 });
 
-test("Horaire shows strong banner until precise intervals exist", () => {
+test("Horaire shows teacher-friendly precision banner until precise intervals exist", () => {
   const needs = buildScheduleIntervalMigrationState({
     uiEnabled: true,
     legacyBlockCount: 2,
@@ -78,13 +78,15 @@ test("Horaire shows strong banner until precise intervals exist", () => {
   assert.equal(shouldShowScheduleIntervalHoraireBanner(needs), true);
 
   const page = read("app/(app)/teacher/schedule/page.tsx");
-  assert.match(page, /TeacherScheduleIntervalMigrationBanner/);
+  assert.match(page, /TeacherSchedulePrecisionBanner/);
   assert.match(page, /TeacherScheduleIntervalMigrationModal/);
-  assert.match(page, /shouldShowScheduleIntervalHoraireBanner/);
+  assert.doesNotMatch(page, /TeacherScheduleIntervalMigrationBanner/);
+  assert.doesNotMatch(page, /Mode grilles|héritées|teacher-schedule-legacy-mode-banner/);
 
-  const banner = read("components/teacher/TeacherScheduleIntervalMigrationBanner.tsx");
-  assert.match(banner, /weeklyIntervalsMigrationBannerTitle/);
-  assert.match(banner, /weeklyIntervalsMigrationBannerLegacyNote/);
+  const banner = read("components/teacher/TeacherSchedulePrecisionBanner.tsx");
+  assert.match(banner, /schedulePrecisionInfoTitle|schedulePrecisionWarningTitle/);
+  assert.match(banner, /schedulePrecisionCta/);
+  assert.doesNotMatch(banner, /héritées|Legacy/);
 });
 
 test("optional Horaire first-visit modal can be dismissed and does not repeat", () => {

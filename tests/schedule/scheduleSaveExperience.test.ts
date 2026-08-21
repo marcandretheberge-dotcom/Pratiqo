@@ -117,8 +117,9 @@ test("schedule page coordinates dirty state and sticky settings bar", () => {
   assert.match(page, /defaultLessonDuration/);
   assert.match(page, /availableFromDate/);
   assert.match(page, /forcePersist:\s*true/);
-  assert.match(page, /teacher-schedule-legacy-mode-banner/);
-  assert.match(page, /text-slate-600/);
+  assert.match(page, /TeacherSchedulePrecisionBanner/);
+  assert.match(page, /dispatchConfigurePrecision/);
+  assert.doesNotMatch(page, /teacher-schedule-legacy-mode-banner/);
 });
 
 test("teacher shell places topbar inside main column after sidebar", () => {

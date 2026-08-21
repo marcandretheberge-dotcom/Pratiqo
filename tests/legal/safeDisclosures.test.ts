@@ -857,6 +857,24 @@ const allowedTeacherScheduleInteractiveCellsFiles = new Set<string>([
   "package.json",
 ]);
 
+/** PR 17A-UX-2 — teacher-friendly precision schedule banner. */
+const allowedTeacherSchedulePrecisionBannerFiles = new Set<string>([
+  "lib/schedule/precisionScheduleBanner.ts",
+  "components/teacher/TeacherSchedulePrecisionBanner.tsx",
+  "components/teacher/TeacherScheduleInteractiveGrid.tsx",
+  "app/(app)/teacher/schedule/page.tsx",
+  "lib/i18n/locales/fr.json",
+  "lib/i18n/locales/en.json",
+  "lib/i18n/locales/es.json",
+  "tests/schedule/precisionScheduleBanner.test.ts",
+  "tests/schedule/scheduleIntervalMigrationUx.test.ts",
+  "tests/schedule/scheduleSaveExperience.test.ts",
+  "tests/legal/marketplaceIndependentTeacherHardening.test.ts",
+  "tests/legal/safeDisclosures.test.ts",
+  "tests/yo/yopratiqoAudioPronunciationOverrides.test.ts",
+  "package.json",
+]);
+
 function touchesSafeDisclosureScope(file: string): boolean {
   return (
     liveDisclosureFiles.includes(file) ||
@@ -1047,6 +1065,7 @@ test("safe-disclosure branch did not touch restricted systems", () => {
     if (allowedTeacherScheduleSaveExperienceFiles.has(file)) continue;
     if (allowedTeacherShellSaveStabilizationFiles.has(file)) continue;
     if (allowedTeacherScheduleInteractiveCellsFiles.has(file)) continue;
+    if (allowedTeacherSchedulePrecisionBannerFiles.has(file)) continue;
     for (const rule of restrictedRules) {
       if (rule.re.test(file)) {
         violations.push(`${file} (${rule.label})`);
