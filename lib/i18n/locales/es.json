@@ -2946,6 +2946,8 @@
   "bookingNoSlotsForDayTitle": "No hay horarios disponibles para este día.",
   "bookingNoSlotsForDayBody": "Elige otra fecha o contacta al profesor.",
   "bookingSlotOutsideCurrentSchedule": "Este horario no está disponible con el horario actual del profesor.",
+  "schedulePreciseDisabledTitle": "Horario preciso desactivado por configuración",
+  "schedulePreciseDisabledBody": "La edición de horarios precisos está desactivada (NEXT_PUBLIC_ENABLE_TEACHER_SCHEDULE_INTERACTIVE_CELLS=false). Reactívala para configurar horas exactas.",
   "scheduleCellAdd": "Agregar",
   "scheduleCellAddAria": "Agregar disponibilidad {day} {part}",
   "scheduleCellEnableSlot": "Activar este horario",

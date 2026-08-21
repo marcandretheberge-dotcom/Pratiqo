@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { isTeacherScheduleInteractiveCellsEnabled } from "@/lib/schedule/interactiveCells";
 import {
   intervalsToCoarseAvailabilityStrings,
   isTeacherScheduleIntervalsEnabled,
@@ -105,7 +106,7 @@ export async function GET(req: Request) {
   }));
 
   return NextResponse.json({
-    enabled: isTeacherScheduleIntervalsEnabled(),
+    enabled: isTeacherScheduleInteractiveCellsEnabled() || isTeacherScheduleIntervalsEnabled(),
     intervals,
   });
 }
@@ -113,11 +114,13 @@ export async function GET(req: Request) {
 /**
  * PUT /api/teacher/weekly-intervals
  * Atomically replaces the teacher's active weekly intervals.
- * Requires ENABLE_TEACHER_SCHEDULE_INTERVALS=true.
+ * Allowed when interactive cells persistence defaults ON, or when
+ * ENABLE_TEACHER_SCHEDULE_INTERVALS / ENABLE_TEACHER_SCHEDULE_INTERACTIVE_CELLS is true.
+ * Booking still uses separate precise-booking / intervals flags.
  * Also syncs a coarse teachers.availability projection for search filters.
  */
 export async function PUT(req: Request) {
-  if (!isTeacherScheduleIntervalsEnabled()) {
+  if (!isTeacherScheduleInteractiveCellsEnabled()) {
     return NextResponse.json({ error: "weekly_intervals_disabled" }, { status: 400 });
   }
 

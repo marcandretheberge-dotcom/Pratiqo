@@ -17,6 +17,7 @@ import {
 } from "../../lib/schedule/dayparts";
 import { formatCellIntervalLines, formatIntervalRange } from "../../lib/schedule/cellDisplay";
 import {
+  isTeacherScheduleInteractiveCellsEnabled,
   isTeacherScheduleInteractiveCellsUiEnabled,
   TEACHER_SCHEDULE_INTERACTIVE_CELLS_FLAG,
   TEACHER_SCHEDULE_INTERACTIVE_CELLS_UI_FLAG,
@@ -33,10 +34,21 @@ function test(name: string, fn: () => void | Promise<void>) {
 }
 
 const uiFlag = process.env[TEACHER_SCHEDULE_INTERACTIVE_CELLS_UI_FLAG];
+const serverFlag = process.env[TEACHER_SCHEDULE_INTERACTIVE_CELLS_FLAG];
 
-test("interactive cells UI flag defaults OFF", () => {
+test("interactive cells UI flag defaults ON (explicit false disables)", () => {
   delete process.env[TEACHER_SCHEDULE_INTERACTIVE_CELLS_UI_FLAG];
+  assert.equal(isTeacherScheduleInteractiveCellsUiEnabled(), true);
+  process.env[TEACHER_SCHEDULE_INTERACTIVE_CELLS_UI_FLAG] = "false";
   assert.equal(isTeacherScheduleInteractiveCellsUiEnabled(), false);
+});
+
+test("interactive cells server persistence defaults ON (explicit false disables)", () => {
+  delete process.env[TEACHER_SCHEDULE_INTERACTIVE_CELLS_FLAG];
+  delete process.env.ENABLE_TEACHER_SCHEDULE_INTERVALS;
+  assert.equal(isTeacherScheduleInteractiveCellsEnabled(), true);
+  process.env[TEACHER_SCHEDULE_INTERACTIVE_CELLS_FLAG] = "false";
+  assert.equal(isTeacherScheduleInteractiveCellsEnabled(), false);
 });
 
 test("daypart bounds match PERIODS 08-12 / 12-17 / 17-21", () => {
@@ -150,6 +162,8 @@ test("interactive grid + editor components wire sticky save and modal", () => {
   assert.match(editor, /scheduleCellCancel/);
   assert.match(page, /isTeacherScheduleInteractiveCellsUiEnabled/);
   assert.match(page, /TeacherScheduleInteractiveGrid/);
+  assert.match(page, /schedulePreciseDisabledTitle/);
+  assert.doesNotMatch(page, /Mode grilles|héritées/);
 });
 
 test("opening editor without Apply does not require page dirty (Apply updates state)", () => {
@@ -159,10 +173,11 @@ test("opening editor without Apply does not require page dirty (Apply updates st
   assert.match(grid, /replaceDaypartIntervals/);
 });
 
-test("env example documents interactive cells flags", () => {
+test("env example documents interactive cells flags default ON", () => {
   const env = read(".env.example");
   assert.match(env, new RegExp(TEACHER_SCHEDULE_INTERACTIVE_CELLS_FLAG));
   assert.match(env, new RegExp(TEACHER_SCHEDULE_INTERACTIVE_CELLS_UI_FLAG));
+  assert.match(env, /defaults ON/);
 });
 
 test("i18n includes interactive cell copy FR/EN/ES", () => {
@@ -172,11 +187,14 @@ test("i18n includes interactive cell copy FR/EN/ES", () => {
     assert.match(json, /"scheduleCellOutsideDaypart"/);
     assert.match(json, /"scheduleCellLockedReadonly"/);
     assert.match(json, /"scheduleCellCopySameWeekday"/);
+    assert.match(json, /"schedulePreciseDisabledTitle"/);
   }
   const fr = read("lib/i18n/locales/fr.json");
   assert.match(fr, /Activer ce créneau/);
   assert.match(fr, /Cette plage doit rester dans la période sélectionnée/);
+  assert.match(fr, /Horaire précis désactivé par configuration/);
   assert.doesNotMatch(fr, /Salaire|Employé|Pratiqo vous assigne/);
+  assert.doesNotMatch(fr, /Mode grilles héritées/);
 });
 
 test("no Stripe/checkout/commission/package mutation in interactive cell files", () => {
@@ -205,6 +223,9 @@ test("no Stripe/checkout/commission/package mutation in interactive cell files",
   } finally {
     if (uiFlag === undefined) delete process.env[TEACHER_SCHEDULE_INTERACTIVE_CELLS_UI_FLAG];
     else process.env[TEACHER_SCHEDULE_INTERACTIVE_CELLS_UI_FLAG] = uiFlag;
+    if (serverFlag === undefined) delete process.env[TEACHER_SCHEDULE_INTERACTIVE_CELLS_FLAG];
+    else process.env[TEACHER_SCHEDULE_INTERACTIVE_CELLS_FLAG] = serverFlag;
+    delete process.env.ENABLE_TEACHER_SCHEDULE_INTERVALS;
   }
 })().catch((error) => {
   console.error(error);

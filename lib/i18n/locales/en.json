@@ -2946,6 +2946,8 @@
   "bookingNoSlotsForDayTitle": "No time slots available for this day.",
   "bookingNoSlotsForDayBody": "Choose another date or contact the teacher.",
   "bookingSlotOutsideCurrentSchedule": "This time slot is not available with the teacher’s current schedule.",
+  "schedulePreciseDisabledTitle": "Precise schedule disabled by configuration",
+  "schedulePreciseDisabledBody": "Precise cell editing is disabled (NEXT_PUBLIC_ENABLE_TEACHER_SCHEDULE_INTERACTIVE_CELLS=false). Re-enable it to configure exact hours.",
   "scheduleCellAdd": "Add",
   "scheduleCellAddAria": "Add availability for {day} {part}",
   "scheduleCellEnableSlot": "Enable this slot",

@@ -180,7 +180,8 @@ export function TeacherScheduleInteractiveGrid({
     const nextDirty = stableScheduleSnapshot(intervals) !== baseline && baseline !== "";
     setDirty(nextDirty);
     onDirtyChange?.(nextDirty);
-  }, [intervals, baseline, onDirtyChange]);
+    onPreciseIntervalCountChange?.(intervals.length);
+  }, [intervals, baseline, onDirtyChange, onPreciseIntervalCountChange]);
 
   useUnsavedChangesWarning(dirty, stickyEnabled);
 
@@ -298,7 +299,11 @@ export function TeacherScheduleInteractiveGrid({
       });
       const json = (await res.json().catch(() => ({}))) as { intervals?: WeeklyIntervalInput[]; error?: string };
       if (!res.ok) {
-        setErrorKey("weeklyIntervalsSaveError");
+        setErrorKey(
+          json.error === "weekly_intervals_disabled"
+            ? "schedulePreciseDisabledTitle"
+            : "weeklyIntervalsSaveError",
+        );
         setSaveError(true);
         return false;
       }

@@ -982,7 +982,18 @@ function TeacherScheduleInner() {
               onDirtyChange={setIntervalsDirty}
               onPreciseIntervalCountChange={setPreciseIntervalCount}
             />
-          ) : isTeacherScheduleIntervalsUiEnabled() ? (
+          ) : (
+            <div
+              className="rounded-2xl border border-amber-200 bg-amber-50 p-4"
+              data-testid="teacher-schedule-precise-disabled"
+              role="status"
+            >
+              <p className="text-sm font-bold text-amber-950">{t("schedulePreciseDisabledTitle")}</p>
+              <p className="mt-1 text-xs leading-5 text-amber-900">{t("schedulePreciseDisabledBody")}</p>
+            </div>
+          )}
+
+          {!isTeacherScheduleInteractiveCellsUiEnabled() && isTeacherScheduleIntervalsUiEnabled() ? (
             <>
               <TeacherWeeklyIntervalsEditor
                 hasLegacyBlocks={availability.length > 0}
