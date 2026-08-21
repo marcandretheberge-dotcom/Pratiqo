@@ -398,6 +398,10 @@ test("tracked patch avoids generated audio and restricted product systems", () =
     "app/api/teachers/[id]/slots/route.ts",
     "supabase/migrations/108_teacher_weekly_availability_intervals.sql",
     "supabase/migrations/109_harden_teacher_weekly_availability_intervals_rls.sql",
+    // PR 17B — calendar date exceptions (flagged OFF by default).
+    "app/api/teacher/schedule-exceptions/route.ts",
+    "supabase/migrations/110_teacher_schedule_exceptions.sql",
+    "supabase/migrations/111_harden_teacher_schedule_exceptions_rls.sql",
   ]);
   const forbidden = [
     /^app\/api\//,
