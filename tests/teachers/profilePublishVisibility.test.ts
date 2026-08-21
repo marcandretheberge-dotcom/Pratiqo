@@ -136,12 +136,17 @@ test("dashboard visibility card does not pass raw identity_status", () => {
   assert.doesNotMatch(dashboard, /identity_status/);
 });
 
-test("dashboard and profile management mount the visibility card", () => {
+test("dashboard uses compact profile status; full visibility card stays on Gestion du profil", () => {
   const dashboard = read("components/Dashboard.tsx");
   const verification = read("app/(app)/teacher/verification/page.tsx");
   const card = read("components/teacher/TeacherProfileVisibilityCard.tsx");
-  assert.match(dashboard, /TeacherProfileVisibilityCard/);
+  assert.doesNotMatch(dashboard, /TeacherProfileVisibilityCard/);
+  assert.doesNotMatch(dashboard, /TeacherSeoReadinessCard/);
+  assert.doesNotMatch(dashboard, /TeacherProfileCompletenessCard/);
+  assert.match(dashboard, /TeacherProfileStatusCard/);
+  assert.match(dashboard, /TeacherDashboardActionCenter/);
   assert.match(verification, /TeacherProfileVisibilityCard/);
+  assert.match(verification, /TeacherSeoReadinessCard/);
   assert.match(card, /data-testid="teacher-profile-visibility-card"/);
 });
 

@@ -52,6 +52,7 @@ import { parseGooglePlace } from "../../../../lib/googleAddressParser";
 import { MIN_LESSON_PRICE_DOLLARS } from "../../../../lib/pricing/constants";
 import { fetchEnsureTeacherProfile } from "../../../../lib/teachers/ensureTeacherProfileClient";
 import { TeacherProfileVisibilityCard } from "../../../../components/teacher/TeacherProfileVisibilityCard";
+import { TeacherSeoReadinessCard } from "../../../../components/teacher/TeacherSeoReadinessCard";
 import { lessonDurationSummaryText, normalizeLessonDurationMinutes } from "../../../../lib/pricing/lessonDuration";
 import {
   buildTeacherSetupChecklist,
@@ -1202,6 +1203,8 @@ export default function TeacherProfileManagementPage() {
           }
         />
       ) : null}
+
+      <TeacherSeoReadinessCard />
 
       {message ? (
         <div
