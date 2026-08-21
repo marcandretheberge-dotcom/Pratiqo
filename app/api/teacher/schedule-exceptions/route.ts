@@ -6,8 +6,10 @@ import {
   isTeacherScheduleExceptionsEnabled,
   mapDbRowsToExceptions,
   normalizeScheduleException,
+  assertCustomHoursAllowedForScheduleMode,
   EXCEPTION_TYPES,
 } from "@/lib/schedule/dateExceptions";
+import { normalizeTeacherScheduleMode } from "@/lib/schedule/preciseScheduleActivation";
 
 export const runtime = "nodejs";
 
@@ -52,7 +54,7 @@ async function getAuthenticatedTeacher(req: Request) {
   const admin = getSupabaseAdmin();
   const { data: teacher, error: teacherErr } = await admin
     .from("teachers")
-    .select("id")
+    .select("id, schedule_mode")
     .eq("user_id", user.id)
     .maybeSingle();
 
@@ -60,7 +62,11 @@ async function getAuthenticatedTeacher(req: Request) {
     return { error: NextResponse.json({ error: "teacher_not_found" }, { status: 404 }) };
   }
 
-  return { teacherId: teacher.id as string, admin };
+  return {
+    teacherId: teacher.id as string,
+    scheduleMode: (teacher as { schedule_mode?: string | null }).schedule_mode ?? "legacy_blocks",
+    admin,
+  };
 }
 
 function toDto(ex: ReturnType<typeof mapDbRowsToExceptions>[number]) {
@@ -81,6 +87,7 @@ export async function GET(req: Request) {
   if ("error" in auth && auth.error) return auth.error;
   const { teacherId, admin } = auth as {
     teacherId: string;
+    scheduleMode: string;
     admin: ReturnType<typeof getSupabaseAdmin>;
   };
 
@@ -91,7 +98,7 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "invalid_exception_date" }, { status: 400 });
   }
 
-  let query = admin
+  const { data, error } = await admin
     .from("teacher_schedule_exceptions")
     .select("id, exception_date, exception_type, start_time, end_time, note, is_active")
     .eq("teacher_id", teacherId)
@@ -100,7 +107,6 @@ export async function GET(req: Request) {
     .lte("exception_date", to)
     .order("exception_date", { ascending: true });
 
-  const { data, error } = await query;
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
@@ -108,6 +114,9 @@ export async function GET(req: Request) {
   const exceptions = mapDbRowsToExceptions(data ?? []).map(toDto);
   return NextResponse.json({
     enabled: isTeacherScheduleExceptionsEnabled(),
+    scheduleMode: normalizeTeacherScheduleMode(
+      (auth as { scheduleMode?: string }).scheduleMode,
+    ),
     exceptions,
   });
 }
@@ -123,8 +132,9 @@ export async function PUT(req: Request) {
 
   const auth = await getAuthenticatedTeacher(req);
   if ("error" in auth && auth.error) return auth.error;
-  const { teacherId, admin } = auth as {
+  const { teacherId, scheduleMode, admin } = auth as {
     teacherId: string;
+    scheduleMode: string;
     admin: ReturnType<typeof getSupabaseAdmin>;
   };
 
@@ -138,6 +148,14 @@ export async function PUT(req: Request) {
   const parsed = putBodySchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: "invalid_payload" }, { status: 400 });
+  }
+
+  const modeGate = assertCustomHoursAllowedForScheduleMode(
+    parsed.data.exceptionType,
+    scheduleMode,
+  );
+  if (!modeGate.ok) {
+    return NextResponse.json({ error: modeGate.error }, { status: 400 });
   }
 
   const validated = normalizeScheduleException({

@@ -91,6 +91,10 @@ export type AdminTeacher360 = {
     availableFromDate: string | null;
     scheduleMode: "general" | "precise";
     preciseScheduleActivatedAt: string | null;
+    upcomingExceptions: Array<{
+      exceptionDate: string;
+      label: string;
+    }>;
     rawPreview: string[];
   };
   payments: {
@@ -582,6 +586,39 @@ export async function loadAdminTeacher360(
     console.error("[admin/teacher360] next availability failed", error);
   }
 
+  const todayIso = new Date().toISOString().slice(0, 10);
+  const horizon = new Date();
+  horizon.setDate(horizon.getDate() + 90);
+  const horizonIso = horizon.toISOString().slice(0, 10);
+  let upcomingExceptions: Array<{ exceptionDate: string; label: string }> = [];
+  try {
+    const { data: exceptionRows } = await admin
+      .from("teacher_schedule_exceptions")
+      .select("exception_date, exception_type, start_time, end_time, is_active")
+      .eq("teacher_id", teacher.id)
+      .eq("is_active", true)
+      .gte("exception_date", todayIso)
+      .lte("exception_date", horizonIso)
+      .order("exception_date", { ascending: true })
+      .limit(12);
+    upcomingExceptions = ((exceptionRows ?? []) as Array<{
+      exception_date?: string | null;
+      exception_type?: string | null;
+      start_time?: string | null;
+      end_time?: string | null;
+    }>).map((row) => {
+      const date = String(row.exception_date ?? "").slice(0, 10);
+      if (row.exception_type === "unavailable_full_day") {
+        return { exceptionDate: date, label: "Journée bloquée" };
+      }
+      const start = String(row.start_time ?? "").slice(0, 5);
+      const end = String(row.end_time ?? "").slice(0, 5);
+      return { exceptionDate: date, label: `${start}–${end}` };
+    });
+  } catch (error) {
+    console.error("[admin/teacher360] upcoming exceptions failed", error);
+  }
+
   const activity = await fetchActivity(admin, teacher);
   const requirementsDue = normalizeRequirementsDue(teacher.stripe_connect_requirements_due);
 
@@ -652,6 +689,7 @@ export async function loadAdminTeacher360(
       scheduleMode:
         teacher.schedule_mode === "precise_intervals" ? "precise" : "general",
       preciseScheduleActivatedAt: cleanString(teacher.precise_schedule_activated_at) ?? null,
+      upcomingExceptions,
     },
     payments: {
       stripeAccountExists: Boolean(teacher.stripe_account_id?.trim()),

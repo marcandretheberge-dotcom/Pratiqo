@@ -903,6 +903,30 @@ const allowedTeacherPreciseScheduleBookingFiles = new Set<string>([
   "package.json",
 ]);
 
+/** PR 17B-CORE — calendar exceptions override precise schedule. */
+const allowedTeacherScheduleExceptionsCoreFiles = new Set<string>([
+  "lib/schedule/dateExceptions.ts",
+  "lib/bookings/dateExceptionGuard.ts",
+  "lib/bookings/createPendingPaymentBooking.ts",
+  "lib/bookings/teacherScheduleEligibility.ts",
+  "lib/offers/packageRedemptions.ts",
+  "lib/teacherSlotQueries.ts",
+  "lib/admin/teacher360.ts",
+  "app/api/teacher/schedule-exceptions/route.ts",
+  "app/api/teachers/[id]/slots/route.ts",
+  "app/(app)/teacher/schedule/page.tsx",
+  "app/(app)/admin/users/[id]/page.tsx",
+  "components/teacher/TeacherScheduleExceptionsEditor.tsx",
+  "lib/i18n/locales/fr.json",
+  "lib/i18n/locales/en.json",
+  "lib/i18n/locales/es.json",
+  "tests/schedule/dateExceptions.test.ts",
+  "tests/legal/marketplaceIndependentTeacherHardening.test.ts",
+  "tests/legal/safeDisclosures.test.ts",
+  "tests/yo/yopratiqoAudioPronunciationOverrides.test.ts",
+  "package.json",
+]);
+
 function touchesSafeDisclosureScope(file: string): boolean {
   return (
     liveDisclosureFiles.includes(file) ||
@@ -1095,6 +1119,7 @@ test("safe-disclosure branch did not touch restricted systems", () => {
     if (allowedTeacherScheduleInteractiveCellsFiles.has(file)) continue;
     if (allowedTeacherSchedulePrecisionBannerFiles.has(file)) continue;
     if (allowedTeacherPreciseScheduleBookingFiles.has(file)) continue;
+    if (allowedTeacherScheduleExceptionsCoreFiles.has(file)) continue;
     for (const rule of restrictedRules) {
       if (rule.re.test(file)) {
         violations.push(`${file} (${rule.label})`);

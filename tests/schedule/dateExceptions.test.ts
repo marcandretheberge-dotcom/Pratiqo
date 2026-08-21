@@ -10,6 +10,9 @@ import {
   isTeacherScheduleExceptionsEnabled,
   normalizeScheduleException,
   slotFitsCustomExceptionHours,
+  canUseCustomHoursException,
+  assertCustomHoursAllowedForScheduleMode,
+  resolveExceptionOverride,
   TEACHER_SCHEDULE_EXCEPTIONS_FLAG,
   TEACHER_SCHEDULE_EXCEPTIONS_UI_FLAG,
   toPublicExceptionSummary,
@@ -223,33 +226,135 @@ test("API UI and booking wiring", () => {
   const api = read("app/api/teacher/schedule-exceptions/route.ts");
   assert.match(api, /isTeacherScheduleExceptionsEnabled/);
   assert.match(api, /normalizeScheduleException/);
+  assert.match(api, /assertCustomHoursAllowedForScheduleMode/);
+  assert.match(api, /schedule_mode/);
 
   const page = read("app/(app)/teacher/schedule/page.tsx");
   assert.match(page, /TeacherScheduleExceptionsEditor/);
   assert.match(page, /isTeacherScheduleExceptionsUiEnabled/);
+  assert.match(page, /scheduleMode=\{scheduleMode\}/);
 
   const editor = read("components/teacher/TeacherScheduleExceptionsEditor.tsx");
   assert.match(editor, /scheduleExceptionsTitle/);
   assert.match(editor, /scheduleExceptionsPrivateNotePrivacy/);
+  assert.match(editor, /canUseCustomHoursException/);
+  assert.match(editor, /scheduleExceptionsEdit/);
+  assert.match(editor, /schedule-exception-delete-/);
+  assert.doesNotMatch(editor, /héritées|Legacy mode|Employé|Salaire/);
 
   const create = read("lib/bookings/createPendingPaymentBooking.ts");
   assert.match(create, /applyDateExceptionToBooking/);
   assert.match(create, /skipWeeklyIntervals/);
+  assert.match(create, /scheduleMode:/);
 
   const redeem = read("lib/offers/packageRedemptions.ts");
   assert.match(redeem, /applyDateExceptionToBooking/);
+  assert.match(redeem, /scheduleMode:/);
 
   const slots = read("app/api/teachers/[id]/slots/route.ts");
   assert.match(slots, /generateSlotsFromDateException/);
+  assert.match(slots, /resolveExceptionOverride/);
   assert.match(slots, /unavailable_full_day/);
 
   const modal = read("components/BookingModal.tsx");
   assert.match(modal, /teacher_unavailable_on_date/);
   assert.match(modal, /bookingTeacherUnavailableOnDate/);
 
+  const admin = read("lib/admin/teacher360.ts");
+  assert.match(admin, /upcomingExceptions/);
+  assert.match(admin, /teacher_schedule_exceptions/);
+  const adminPage = read("app/(app)/admin/users/[id]/page.tsx");
+  assert.match(adminPage, /Exceptions au calendrier/);
+
   const env = read(".env.example");
   assert.match(env, new RegExp(TEACHER_SCHEDULE_EXCEPTIONS_FLAG));
   assert.match(env, new RegExp(TEACHER_SCHEDULE_EXCEPTIONS_UI_FLAG));
+
+  for (const locale of ["fr", "en", "es"] as const) {
+    const json = read(`lib/i18n/locales/${locale}.json`);
+    assert.match(json, /"scheduleExceptionsCustomHoursPreciseOnly"/);
+    assert.match(json, /"scheduleExceptionsEdit"/);
+  }
+});
+
+test("custom hours gated to precise schedule mode", () => {
+  assert.equal(canUseCustomHoursException("legacy_blocks"), false);
+  assert.equal(canUseCustomHoursException("precise_intervals"), true);
+  assert.equal(
+    assertCustomHoursAllowedForScheduleMode("available_custom_hours", "legacy_blocks").ok,
+    false,
+  );
+  assert.equal(
+    assertCustomHoursAllowedForScheduleMode("unavailable_full_day", "legacy_blocks").ok,
+    true,
+  );
+  assert.equal(
+    resolveExceptionOverride({
+      exception: {
+        exceptionDate: "2099-09-09",
+        exceptionType: "available_custom_hours",
+        startMin: 19 * 60,
+        endMin: 21 * 60,
+        startTime: "19:00",
+        endTime: "21:00",
+        note: null,
+      },
+      scheduleMode: "legacy_blocks",
+    }).kind,
+    "ignore_custom_hours_for_legacy",
+  );
+  assert.equal(
+    resolveExceptionOverride({
+      exception: {
+        exceptionDate: "2099-09-09",
+        exceptionType: "unavailable_full_day",
+        startMin: null,
+        endMin: null,
+        startTime: null,
+        endTime: null,
+        note: null,
+      },
+      scheduleMode: "legacy_blocks",
+    }).kind,
+    "unavailable_full_day",
+  );
+});
+
+test("booking guard ignores custom hours for legacy schedule_mode", async () => {
+  process.env[TEACHER_SCHEDULE_EXCEPTIONS_FLAG] = "true";
+  const customAdmin = {
+    from: () => ({
+      select: () => ({
+        eq: () => ({
+          eq: () => ({
+            eq: () =>
+              Promise.resolve({
+                data: [
+                  {
+                    exception_date: "2099-09-07",
+                    exception_type: "available_custom_hours",
+                    start_time: "18:00:00",
+                    end_time: "20:00:00",
+                    is_active: true,
+                  },
+                ],
+                error: null,
+              }),
+          }),
+        }),
+      }),
+    }),
+  };
+  const ignored = await applyDateExceptionToBooking({
+    admin: customAdmin,
+    teacherId: "t1",
+    slotDate: "2099-09-07",
+    timeSlot: "10h00",
+    durationMinutes: 60,
+    scheduleMode: "legacy_blocks",
+  });
+  assert.equal(ignored.ok, true);
+  if (ignored.ok) assert.equal(ignored.skipWeeklyIntervals, false);
 });
 
 test("no Stripe/checkout amount mutation surfaces in this feature", () => {

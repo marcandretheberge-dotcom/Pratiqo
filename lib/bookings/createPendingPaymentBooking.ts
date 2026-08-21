@@ -151,6 +151,7 @@ export async function createPendingPaymentBooking(args: {
     slotDate: args.request.slotDate,
     timeSlot: args.request.timeSlot,
     durationMinutes: args.request.durationMinutes,
+    scheduleMode: (teacher as { schedule_mode?: string | null }).schedule_mode,
   });
   if (!exceptionResult.ok) {
     return { ok: false, status: exceptionResult.status, error: exceptionResult.error };

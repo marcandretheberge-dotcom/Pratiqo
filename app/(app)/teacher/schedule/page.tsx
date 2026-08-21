@@ -979,7 +979,10 @@ function TeacherScheduleInner() {
           ) : null}
 
           {isTeacherScheduleExceptionsUiEnabled() ? (
-            <TeacherScheduleExceptionsEditor onDirtyChange={setExceptionsDirty} />
+            <TeacherScheduleExceptionsEditor
+              onDirtyChange={setExceptionsDirty}
+              scheduleMode={scheduleMode}
+            />
           ) : null}
 
           <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
