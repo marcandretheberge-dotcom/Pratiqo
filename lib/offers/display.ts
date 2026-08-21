@@ -175,10 +175,17 @@ export function teacherOfferApiErrorMessage(
     error: string;
     issues?: Array<{ path?: string; message?: string }>;
     missingFields?: string[];
+    blockers?: string[];
   },
   t: TeacherOfferTranslator,
 ): string {
+  if (error.error === "planned_packages_disabled") {
+    return t("teacherOffersPlannedPackagesDisabled");
+  }
   if (error.error === "offer_not_publishable") {
+    if (Array.isArray(error.blockers) && error.blockers.length > 0) {
+      return t("teacherOffersPackageLaunchBlocked");
+    }
     // Structured checklist is rendered separately — keep the sentence alone.
     return t("teacherOffersNotPublishable");
   }
@@ -215,6 +222,18 @@ export function teacherOfferPublishIssueLabel(
   if (path === "duration_minutes") return t("teacherOffersFieldDuration");
   if (path === "short_description") return t("teacherOffersFieldShortDescription");
   if (path === "session_count") return t("teacherOffersFieldSessionCount");
+  return null;
+}
+
+export function plannedPackageBlockerLabel(
+  code: string | undefined,
+  t: TeacherOfferTranslator,
+): string | null {
+  if (code === "package_legal_review_required") return t("teacherOffersBlockerLegalReview");
+  if (code === "package_purchase_disabled") return t("teacherOffersBlockerPurchaseDisabled");
+  if (code === "planned_packages_disabled") return t("teacherOffersPlannedPackagesDisabled");
+  if (code === "progressive_payout_not_ready") return t("teacherOffersBlockerProgressivePayout");
+  if (code === "package_refund_policy_draft") return t("teacherOffersBlockerRefundDraft");
   return null;
 }
 

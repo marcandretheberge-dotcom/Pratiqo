@@ -12,6 +12,17 @@ See also:
 
 ## Flags
 
+### `ENABLE_PLANNED_PACKAGES` (+ `NEXT_PUBLIC_ENABLE_PLANNED_PACKAGES`)
+
+| | |
+|--|--|
+| Default | OFF |
+| Runtime | Teacher offer form + teacher offers API draft/publish gates |
+| Who sees effect | Teachers may draft Phase 1 planned packages (`offer_type=package`) when ON |
+| Dependencies | None for drafts |
+| Safe preview | ON in staging for form UX only |
+| Production note | Does **not** enable public purchase, entitlements, checkout, or payouts |
+
 ### `NEXT_PUBLIC_ENABLE_BOOKING_OFFER_SELECTION`
 
 | | |

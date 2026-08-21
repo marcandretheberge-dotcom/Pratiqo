@@ -18,6 +18,7 @@ export type TeacherOffersApiError = {
   error: string;
   issues?: Array<{ path?: string; message?: string }>;
   missingFields?: string[];
+  blockers?: string[];
 };
 
 export type TeacherOffersApiResult<T> =
@@ -38,6 +39,7 @@ function asError(status: number, payload: unknown): TeacherOffersApiError {
       error?: unknown;
       issues?: TeacherOffersApiError["issues"];
       missingFields?: unknown;
+      blockers?: unknown;
     };
     return {
       status,
@@ -45,6 +47,9 @@ function asError(status: number, payload: unknown): TeacherOffersApiError {
       issues: Array.isArray(row.issues) ? row.issues : undefined,
       missingFields: Array.isArray(row.missingFields)
         ? row.missingFields.filter((item): item is string => typeof item === "string")
+        : undefined,
+      blockers: Array.isArray(row.blockers)
+        ? row.blockers.filter((item): item is string => typeof item === "string")
         : undefined,
     };
   }

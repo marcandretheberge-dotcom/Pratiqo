@@ -76,7 +76,7 @@ test("list renders offers from { offers }", () => {
 
 test("offer labels render human-readable type/format/status", () => {
   assert.equal(formatTeacherOfferTypeLabel("private_lesson", t), "Cours privé");
-  assert.equal(formatTeacherOfferTypeLabel("package", t), "Forfait");
+  assert.equal(formatTeacherOfferTypeLabel("package", t), "Forfait planifié");
   assert.equal(formatTeacherOfferTypeLabel("intro_session", t), "Séance d’introduction");
   assert.equal(formatTeacherOfferFormatLabel("online", t), "En ligne");
   assert.equal(formatTeacherOfferFormatLabel("in_person", t), "Présentiel");
@@ -213,7 +213,7 @@ test("no Mes formules / formules product label introduced", () => {
     assert.doesNotMatch(src, /\bformules\b/);
     assert.doesNotMatch(src, /\bannonces\b/);
   }
-  assert.match(read("lib/i18n/locales/fr.json"), /"teacherOffersTypePackage": "Forfait"/);
+  assert.match(read("lib/i18n/locales/fr.json"), /"teacherOffersTypePackage": "Forfait planifié"/);
 });
 
 test("client payload validation mirrors required fields", () => {

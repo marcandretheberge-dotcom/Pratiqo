@@ -16,6 +16,10 @@ import { isOfferSnapshotCheckoutEnabled } from "./offerSnapshotCheckout";
 import { isPackageEntitlementsEnabled } from "./packageEntitlements";
 import { isPackageRedemptionBookingEnabled } from "./packageRedemptions";
 import {
+  canPubliclyPurchasePlannedPackage,
+  isPlannedPackagesEnabled,
+} from "./plannedPackages";
+import {
   isStudentPackageDashboardEnabled,
   isStudentPackageDashboardUiEnabled,
 } from "./studentPackages";
@@ -51,6 +55,7 @@ export const PACKAGE_LAUNCH_ADMIN_SUPPORT_SURFACES = [
 ] as const;
 
 export type PackageLaunchFlagId =
+  | "plannedPackages"
   | "bookingOfferSelection"
   | "offerSnapshotCheckout"
   | "packageEntitlements"
@@ -79,6 +84,7 @@ export type PackageLaunchBlocker = {
 
 export type PackageLaunchReadiness = {
   flags: {
+    plannedPackages: boolean;
     bookingOfferSelection: boolean;
     offerSnapshotCheckout: boolean;
     packageEntitlements: boolean;
@@ -102,6 +108,10 @@ export type PackageLaunchReadiness = {
     marketplaceCopyGuardsPresent: boolean;
     adminSupportVisibilityPresent: boolean;
     noPublicCatalogSurface: boolean;
+    plannedPackageSkeletonPresent: boolean;
+    plannedPackagePublicPurchaseBlocked: boolean;
+    progressivePayoutNotImplemented: boolean;
+    refundPolicyStillDraft: boolean;
   };
   status: PackageLaunchReadinessStatus;
   blockers: PackageLaunchBlocker[];
@@ -117,6 +127,14 @@ export const PACKAGE_LAUNCH_FLAG_META: ReadonlyArray<{
   explanationFr: string;
   launchMeaningFr: string;
 }> = [
+  {
+    id: "plannedPackages",
+    envName: "ENABLE_PLANNED_PACKAGES",
+    uiEnvName: "NEXT_PUBLIC_ENABLE_PLANNED_PACKAGES",
+    explanationFr:
+      "Permet de rédiger des forfaits planifiés (brouillon) côté professeur — sans achat public.",
+    launchMeaningFr: "Squelette Phase 1 — ne lance pas le checkout ni les entitlements.",
+  },
   {
     id: "bookingOfferSelection",
     envName: "NEXT_PUBLIC_ENABLE_BOOKING_OFFER_SELECTION",
@@ -170,6 +188,7 @@ function isLegalReviewCompletedSignal(): boolean {
  * Safe to call from admin server components / admin APIs only.
  */
 export function getPackageLaunchReadiness(): PackageLaunchReadiness {
+  const plannedPackages = isPlannedPackagesEnabled();
   const bookingOfferSelection = isBookingOfferSelectionEnabled();
   const offerSnapshotCheckout = isOfferSnapshotCheckoutEnabled();
   const packageEntitlements = isPackageEntitlementsEnabled();
@@ -180,6 +199,7 @@ export function getPackageLaunchReadiness(): PackageLaunchReadiness {
   const teacherUi = isTeacherPackageVisibilityUiEnabled();
 
   const flags = {
+    plannedPackages,
     bookingOfferSelection,
     offerSnapshotCheckout,
     packageEntitlements,
@@ -194,7 +214,9 @@ export function getPackageLaunchReadiness(): PackageLaunchReadiness {
     if (meta.id === "studentPackageDashboard") uiEnabled = studentUi;
     else if (meta.id === "teacherPackageVisibility") uiEnabled = teacherUi;
     else if (meta.id === "bookingOfferSelection") uiEnabled = bookingOfferSelection;
-    else if (meta.id === "offerSnapshotCheckout") {
+    else if (meta.id === "plannedPackages") {
+      uiEnabled = process.env.NEXT_PUBLIC_ENABLE_PLANNED_PACKAGES === "true";
+    } else if (meta.id === "offerSnapshotCheckout") {
       uiEnabled = process.env.NEXT_PUBLIC_ENABLE_OFFER_SNAPSHOT_CHECKOUT === "true";
     } else if (meta.id === "packageRedemptionBooking") {
       uiEnabled = process.env.NEXT_PUBLIC_ENABLE_PACKAGE_REDEMPTION_BOOKING === "true";
@@ -229,6 +251,10 @@ export function getPackageLaunchReadiness(): PackageLaunchReadiness {
     marketplaceCopyGuardsPresent,
     adminSupportVisibilityPresent,
     noPublicCatalogSurface: true,
+    plannedPackageSkeletonPresent: true,
+    plannedPackagePublicPurchaseBlocked: !canPubliclyPurchasePlannedPackage(),
+    progressivePayoutNotImplemented: true,
+    refundPolicyStillDraft: true,
   };
 
   const blockers: PackageLaunchBlocker[] = [];

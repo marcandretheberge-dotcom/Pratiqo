@@ -122,6 +122,40 @@ function ReadinessBody({ readiness }: { readiness: PackageLaunchReadiness }) {
         </ul>
       </Section>
 
+      <Section title="1b. Phase 1 — Forfaits planifiés">
+        <p className="text-sm text-slate-600" data-testid="package-launch-phase1">
+          Squelette technique pour les forfaits planifiés proposés par les professeurs. L’achat public
+          reste bloqué.
+        </p>
+        <ChecklistRow label="Décision produit Phase 1 documentée" ok={true} />
+        <ChecklistRow
+          label="Helper / schéma forfait planifié présent"
+          ok={readiness.checks.plannedPackageSkeletonPresent}
+        />
+        <ChecklistRow
+          label={`Brouillon professeur (ENABLE_PLANNED_PACKAGES) : ${
+            readiness.flags.plannedPackages ? "ON" : "OFF"
+          }`}
+          ok={true}
+        />
+        <ChecklistRow
+          label="Achat public de forfait bloqué"
+          ok={readiness.checks.plannedPackagePublicPurchaseBlocked}
+        />
+        <ChecklistRow
+          label="Revue légale toujours requise"
+          ok={readiness.checks.legalReviewMarkedRequired}
+        />
+        <ChecklistRow
+          label="Versement progressif pas encore implémenté"
+          ok={readiness.checks.progressivePayoutNotImplemented}
+        />
+        <ChecklistRow
+          label="Politique de remboursement encore en brouillon"
+          ok={readiness.checks.refundPolicyStillDraft}
+        />
+      </Section>
+
       <Section title="2. Paiements et forfaits">
         <ChecklistRow
           label="Checkout forfait gated (snapshot + entitlements cohérents)"

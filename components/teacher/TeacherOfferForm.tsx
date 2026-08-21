@@ -199,6 +199,11 @@ export function TeacherOfferForm({
                 {!packagesAvailable ? (
                   <p className="mt-1 text-xs text-slate-500">{t("teacherOffersPackagesComingSoon")}</p>
                 ) : null}
+                {packagesAvailable && isPackage ? (
+                  <p className="mt-1 text-xs text-slate-500" data-testid="planned-package-draft-notice">
+                    {t("teacherOffersPlannedPackageHint")}
+                  </p>
+                ) : null}
                 <FieldError errors={errors} keys={["offerType"]} />
               </div>
               <div>
