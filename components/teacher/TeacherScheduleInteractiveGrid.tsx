@@ -11,9 +11,15 @@ import {
   intervalsForDaypart,
   replaceDaypartIntervals,
   slotLabelToDaypart,
+  formatWeeklyScheduleCellTitle,
   type ScheduleDaypart,
 } from "@/lib/schedule/dayparts";
-import { cellConfiguredCountKey, formatCellIntervalLines } from "@/lib/schedule/cellDisplay";
+import {
+  cellConfiguredCountKey,
+  cellOverflowCountKey,
+  formatCellIntervalDisplay,
+} from "@/lib/schedule/cellDisplay";
+import { applyScheduleCellCopy, type ScheduleCellCopyTarget } from "@/lib/schedule/copyScheduleIntervals";
 import { stableScheduleSnapshot } from "@/lib/schedule/scheduleSaveState";
 import { scheduleSaveStatusFrom } from "@/lib/schedule/scheduleSaveState";
 import { isTeacherScheduleStickySaveEnabled } from "@/lib/schedule/scheduleSaveFlags";
@@ -25,7 +31,6 @@ import {
   cellEditorShellClass,
 } from "@/components/teacher/TeacherScheduleCellEditor";
 import type { WeeklyIntervalInput } from "@/lib/schedule/weeklyIntervals";
-import { cn } from "@/lib/utils";
 
 const DAYS = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"] as const;
 const SLOTS = ["Matin", "Après-midi", "Soir"] as const;
@@ -220,17 +225,24 @@ export function TeacherScheduleInteractiveGrid({
     setLockedMessage(null);
     const dayOfWeek = columnToDayOfWeek(columnIndex);
     const daypart = slotLabelToDaypart(slot);
-    const dayName = t(DAY_TKEY[DAYS[columnIndex]!]);
+    const fullDayKeys: TranslationKey[] = [
+      "dayMonday",
+      "dayTuesday",
+      "dayWednesday",
+      "dayThursday",
+      "dayFriday",
+      "daySaturday",
+      "daySunday",
+    ];
+    const dayName = t(fullDayKeys[columnIndex]!);
     const partName = t(SLOT_TKEY[slot]);
-    const dateLabel = weekDays[columnIndex]
-      ? weekDays[columnIndex]!.toLocaleDateString(dateLocale, { day: "numeric", month: "long" })
-      : "";
     setEditor({
       dayOfWeek,
       daypart,
       columnIndex,
       slot,
-      title: `${dayName} ${partName.toLowerCase()}${dateLabel ? ` — ${dateLabel}` : ""}`,
+      // Weekly recurring scope — never include a calendar date here.
+      title: formatWeeklyScheduleCellTitle(dayName, partName, t("scheduleCellWeeklyScope")),
     });
   };
 
@@ -266,7 +278,7 @@ export function TeacherScheduleInteractiveGrid({
       "daySunday",
     ];
     const dayName = t(fullDayKeys[editor.columnIndex]!).toLowerCase();
-    return t("scheduleCellCopySameWeekday").replace("{day}", dayName);
+    return t("scheduleCellCopySameWeekdayOption").replace("{day}", dayName);
   }, [editor, t]);
 
   const handleApply = (cellIntervals: WeeklyIntervalInput[]) => {
@@ -277,9 +289,20 @@ export function TeacherScheduleInteractiveGrid({
     setSaveError(false);
   };
 
-  const handleCopySameWeekday = (cellIntervals: WeeklyIntervalInput[]) => {
-    // Weekly schedule: "every Wednesday" = this dayOfWeek pattern.
-    handleApply(cellIntervals);
+  const handleCopy = (cellIntervals: WeeklyIntervalInput[], target: ScheduleCellCopyTarget) => {
+    if (!editor) return;
+    setIntervals((prev) =>
+      applyScheduleCellCopy({
+        all: prev,
+        sourceDayOfWeek: editor.dayOfWeek,
+        daypart: editor.daypart,
+        cellIntervals,
+        target,
+      }),
+    );
+    setEditor(null);
+    setFlashOk(false);
+    setSaveError(false);
   };
 
   const save = async (): Promise<boolean> => {
@@ -412,7 +435,7 @@ export function TeacherScheduleInteractiveGrid({
                   const dayOfWeek = columnToDayOfWeek(di);
                   const daypart = slotLabelToDaypart(s);
                   const cellIv = intervalsForDaypart(intervals, dayOfWeek, daypart);
-                  const lines = formatCellIntervalLines(cellIv);
+                  const display = formatCellIntervalDisplay(cellIv);
                   const booked = cellHasBooking(di, s);
                   const notice = cellLockedByNotice(di, s);
                   const locked = booked || notice;
@@ -421,12 +444,12 @@ export function TeacherScheduleInteractiveGrid({
                   const aria =
                     locked
                       ? t("scheduleCellLockedReadonly")
-                      : lines.length === 0
+                      : display.lines.length === 0
                         ? t("scheduleCellAddAria").replace("{day}", dayName).replace("{part}", partName)
-                        : `${dayName} ${partName}: ${lines.join(", ")}`;
-                  const title =
-                    lines.length > 0
-                      ? lines.join("\n")
+                        : `${dayName} ${partName}: ${display.lines.join(", ")}`;
+                  const titleAttr =
+                    display.lines.length > 0
+                      ? display.lines.join("\n")
                       : locked
                         ? t("scheduleCellLockedReadonly")
                         : t("scheduleCellAdd");
@@ -435,27 +458,47 @@ export function TeacherScheduleInteractiveGrid({
                       key={`${d}-${s}`}
                       type="button"
                       onClick={() => openCell(di, s)}
-                      className={cellEditorShellClass(locked, lines.length > 0, booked)}
+                      className={cellEditorShellClass(locked, display.lines.length > 0, booked)}
                       aria-label={aria}
-                      title={title}
+                      title={titleAttr}
                       data-testid={`teacher-schedule-cell-${d}-${SLOT_PERIOD[s]}`}
-                      data-configured={lines.length > 0 ? "true" : undefined}
+                      data-configured={display.lines.length > 0 ? "true" : undefined}
                     >
-                      {lines.length === 0 ? (
+                      {display.lines.length === 0 ? (
                         <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-slate-500">
                           <Plus size={12} aria-hidden />
                           {t("scheduleCellAdd")}
                         </span>
                       ) : (
-                        lines.map((line) => (
-                          <span key={line} className="block text-[10px] font-bold leading-tight text-teal-900 sm:text-[11px]">
-                            {line}
-                          </span>
-                        ))
+                        <span className="flex w-full flex-col items-center gap-0.5 px-0.5">
+                          {display.visible.map((line) => (
+                            <span
+                              key={line}
+                              className="max-w-full truncate rounded-md bg-teal-100/90 px-1 py-0.5 text-[10px] font-bold leading-tight text-teal-900 sm:text-[11px]"
+                              data-testid="teacher-schedule-cell-time-pill"
+                            >
+                              {line}
+                            </span>
+                          ))}
+                          {display.overflow > 0 ? (
+                            <span
+                              className="rounded-md bg-teal-50 px-1 py-0.5 text-[9px] font-semibold text-teal-800"
+                              data-testid="teacher-schedule-cell-overflow"
+                            >
+                              {t(cellOverflowCountKey(display.overflow)).replace(
+                                "{count}",
+                                String(display.overflow),
+                              )}
+                            </span>
+                          ) : null}
+                        </span>
                       )}
-                      {lines.length > 1 ? (
+                      {display.lines.length > 1 ? (
                         <span className="sr-only">
-                          {t(cellConfiguredCountKey(lines.length)).replace("{count}", String(lines.length))}
+                          {t(cellConfiguredCountKey(display.lines.length)).replace(
+                            "{count}",
+                            String(display.lines.length),
+                          )}
                         </span>
                       ) : null}
                     </button>
@@ -510,8 +553,8 @@ export function TeacherScheduleInteractiveGrid({
         initialIntervals={editorIntervals}
         onClose={() => setEditor(null)}
         onApply={handleApply}
-        onCopyToAllWeekdays={handleCopySameWeekday}
-        weekdayCopyLabel={weekdayCopyLabel}
+        onCopy={handleCopy}
+        sameWeekdayCopyLabel={weekdayCopyLabel}
       />
     </div>
   );
