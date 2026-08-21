@@ -82,6 +82,9 @@ test("admin page is under requireAdminPage layout and has no mutation UI", () =>
   assert.match(page, /Vérification légale requise/);
   assert.match(page, /intermédiaire technologique/);
   assert.match(page, /proposés par les professeurs/);
+  assert.match(page, /offres de cours standards peuvent fonctionner séparément/i);
+  assert.match(page, /modèle de remboursement/);
+  assert.match(page, /package-launch-offers-separation/);
   assert.doesNotMatch(page, /type="checkbox"|toggle|setFlag|process\.env\.\w+\s*=/);
   assert.doesNotMatch(page, /stripe\.|sessions\.create|\.update\(|\.insert\(|redeem|reverse_package/);
   assert.doesNotMatch(page, /Forfaits Pratiqo|Nos forfaits Pratiqo|salaire|employé/i);
