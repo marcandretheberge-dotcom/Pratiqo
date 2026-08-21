@@ -1,35 +1,16 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import {
-  type BookedSlotInterval,
-  blockedPeriodsFromRows,
-  blockedTimeRangesFromRows,
-  dayShortKeyForISODate,
-  formatLocalISODate,
-  generateSlots,
-  slotStartMinutes,
-  weeklyAvailabilityFromTeacherRows,
-} from "@/lib/slots";
-import { defaultLessonDurationMinutes, normalizeTeacherBufferSettings } from "@/lib/teacherSlotQueries";
-import { isValidLessonDurationMinutes } from "@/lib/pricing/lessonDuration";
-import { isBookingAtLeast24hAhead } from "@/lib/bookingCancellation";
-import { canBookTeacherOnDate, normalizeAvailableFromDate } from "@/lib/teachers/availabilityStartDate";
-import {
-  dayOfWeekForISODate,
-  generateSlotsFromWeeklyIntervals,
-  mapDbRowsToNormalized,
-} from "@/lib/schedule/weeklyIntervals";
-import {
-  normalizeTeacherScheduleMode,
-  shouldUsePreciseIntervalsForBooking,
-} from "@/lib/schedule/preciseScheduleActivation";
-import {
-  findExceptionForDate,
-  generateSlotsFromDateException,
-  isTeacherScheduleExceptionsEnabled,
+  bookedIntervalsFromRows,
+  generateBookableSlotsForTeacherDay,
   mapDbRowsToExceptions,
-  resolveExceptionOverride,
-} from "@/lib/schedule/dateExceptions";
+  mapDbRowsToNormalized,
+} from "@/lib/bookings/bookableSlotsForDay";
+import { defaultLessonDurationMinutes } from "@/lib/teacherSlotQueries";
+import { isValidLessonDurationMinutes } from "@/lib/pricing/lessonDuration";
+import { formatLocalISODate } from "@/lib/slots";
+import { isTeacherScheduleExceptionsEnabled } from "@/lib/schedule/dateExceptions";
+import { isTeacherPreciseScheduleBookingEnabled } from "@/lib/schedule/preciseScheduleActivation";
 
 export const runtime = "nodejs";
 
@@ -60,21 +41,6 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
       return NextResponse.json({ error: "Professeur introuvable." }, { status: 404 });
     }
 
-    const availableFromDate = normalizeAvailableFromDate(
-      (teacher as { available_from_date?: string | null }).available_from_date,
-    );
-    if (!canBookTeacherOnDate(availableFromDate, date)) {
-      return NextResponse.json({
-        slots: [],
-        durationMinutes: defaultLessonDurationMinutes(
-          (teacher as { default_lesson_duration_minutes?: number | null }).default_lesson_duration_minutes,
-        ),
-        date,
-        availableFromDate,
-        error: "teacher_not_available_yet",
-      });
-    }
-
     const durationParam = url.searchParams.get("duration");
     const parsedDur = durationParam != null ? Number(durationParam) : NaN;
     const durationMinutes =
@@ -83,16 +49,6 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
         : defaultLessonDurationMinutes(
             (teacher as { default_lesson_duration_minutes?: number | null }).default_lesson_duration_minutes,
           );
-    const weekly = weeklyAvailabilityFromTeacherRows((teacher as { availability?: unknown }).availability);
-    const buffers = normalizeTeacherBufferSettings(
-      teacher as Parameters<typeof normalizeTeacherBufferSettings>[0],
-    );
-    const scheduleMode = normalizeTeacherScheduleMode(
-      (teacher as { schedule_mode?: string | null }).schedule_mode,
-    );
-    const usePrecise = shouldUsePreciseIntervalsForBooking({ scheduleMode });
-    const dayKey = dayShortKeyForISODate(date);
-    const dayAvail = weekly[dayKey] || { matin: false, apresmidi: false, soir: false };
 
     const { data: bookedRows } = await admin
       .from("bookings")
@@ -102,18 +58,9 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
       .in("status", ["pending_payment", "confirmed"])
       .not("time_slot", "is", null);
 
-    const bookedRaw = ((bookedRows || []) as { time_slot?: string; duration_minutes?: number | null }[]).filter(
-      (r): r is { time_slot: string; duration_minutes?: number | null } => Boolean(r.time_slot),
+    const { bookedSlots, bookedIntervals } = bookedIntervalsFromRows(
+      (bookedRows || []) as { time_slot?: string; duration_minutes?: number | null }[],
     );
-    const bookedSlots = bookedRaw.map((r) => r.time_slot);
-    const bookedIntervals: BookedSlotInterval[] = [];
-    for (const r of bookedRaw) {
-      const startMin = slotStartMinutes(r.time_slot);
-      if (startMin < 0) continue;
-      const rawDur = Number(r.duration_minutes);
-      const durMin = Number.isFinite(rawDur) && rawDur > 0 ? Math.round(rawDur) : 60;
-      bookedIntervals.push({ startMin, durationMin: durMin });
-    }
 
     const { data: blockedRows } = await admin
       .from("blocked_slots")
@@ -121,20 +68,15 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
       .eq("teacher_id", teacherId)
       .eq("blocked_date", date);
 
-    const blockedDayRows = (blockedRows || []) as {
-      period: string | null;
-      start_time?: string | null;
-      end_time?: string | null;
-    }[];
-    const blockedPeriods = blockedPeriodsFromRows(blockedDayRows);
-    const blockedRanges = blockedTimeRangesFromRows(blockedDayRows);
+    let weeklyIntervals = mapDbRowsToNormalized([]);
+    const { data: intervalRows } = await admin
+      .from("teacher_weekly_availability_intervals")
+      .select("day_of_week, start_time, end_time, is_active")
+      .eq("teacher_id", teacherId)
+      .eq("is_active", true);
+    weeklyIntervals = mapDbRowsToNormalized(intervalRows ?? []);
 
-    const slotOptions = {
-      bookedIntervals,
-      bufferBeforeMin: buffers.bookingBufferBeforeMinutes,
-      bufferAfterMin: buffers.bookingBufferAfterMinutes,
-    };
-
+    let exceptions = mapDbRowsToExceptions([]);
     if (isTeacherScheduleExceptionsEnabled()) {
       const { data: exceptionRows } = await admin
         .from("teacher_schedule_exceptions")
@@ -142,77 +84,71 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
         .eq("teacher_id", teacherId)
         .eq("exception_date", date)
         .eq("is_active", true);
-      const exception = findExceptionForDate(mapDbRowsToExceptions(exceptionRows ?? []), date);
-      const override = resolveExceptionOverride({ exception, scheduleMode });
-      if (override.kind === "unavailable_full_day") {
-        return NextResponse.json({
-          slots: [],
-          durationMinutes,
-          date,
-          exceptionType: "unavailable_full_day",
-        });
-      }
-      if (override.kind === "available_custom_hours") {
-        const slots = generateSlotsFromDateException(
-          override.exception,
-          durationMinutes,
-          bookedSlots,
-          blockedPeriods,
-          blockedRanges,
-          slotOptions,
-        );
-        const now = new Date();
-        const filteredSlots = slots.filter((slot) =>
-          isBookingAtLeast24hAhead({ slot_date: date, time_slot: slot }, now),
-        );
-        return NextResponse.json({
-          slots: filteredSlots,
-          durationMinutes,
-          date,
-          exceptionType: "available_custom_hours",
-        });
-      }
+      exceptions = mapDbRowsToExceptions(exceptionRows ?? []);
     }
 
-    if (usePrecise) {
-      const { data: intervalRows } = await admin
-        .from("teacher_weekly_availability_intervals")
-        .select("day_of_week, start_time, end_time, is_active")
-        .eq("teacher_id", teacherId)
-        .eq("is_active", true);
-      const intervals = mapDbRowsToNormalized(intervalRows ?? []);
-      const dayOfWeek = dayOfWeekForISODate(date) ?? 0;
-      const slots = generateSlotsFromWeeklyIntervals(
-        dayOfWeek,
-        intervals,
-        durationMinutes,
-        bookedSlots,
-        blockedPeriods,
-        blockedRanges,
-        slotOptions,
-      );
-      const now = new Date();
-      const filteredSlots = slots.filter((slot) =>
-        isBookingAtLeast24hAhead({ slot_date: date, time_slot: slot }, now),
-      );
+    const day = generateBookableSlotsForTeacherDay({
+      date,
+      durationMinutes,
+      teacher: teacher as {
+        availability?: unknown;
+        available_from_date?: string | null;
+        schedule_mode?: string | null;
+        booking_buffer_before_minutes?: number | null;
+        booking_buffer_after_minutes?: number | null;
+      },
+      weeklyIntervals,
+      exceptions,
+      bookedSlots,
+      bookedIntervals,
+      blockedDayRows: (blockedRows || []) as {
+        period: string | null;
+        start_time?: string | null;
+        end_time?: string | null;
+      }[],
+      preciseBookingEnabled: isTeacherPreciseScheduleBookingEnabled(),
+    });
+
+    if (day.blockedReasons.includes("before_available_from")) {
       return NextResponse.json({
-        slots: filteredSlots,
-        durationMinutes,
+        slots: [],
+        durationMinutes: day.durationMinutes,
         date,
-        preciseIntervals: true,
-        hasWeeklyIntervals: intervals.length > 0,
-        scheduleMode,
+        availableFromDate: day.availableFromDate,
+        error: "teacher_not_available_yet",
       });
     }
 
-    const slots = generateSlots(dayAvail, durationMinutes, date, bookedSlots, blockedPeriods, blockedRanges, slotOptions);
+    if (day.exceptionType === "unavailable_full_day") {
+      return NextResponse.json({
+        slots: [],
+        durationMinutes: day.durationMinutes,
+        date,
+        exceptionType: "unavailable_full_day",
+      });
+    }
 
-    const now = new Date();
-    const filteredSlots = slots.filter((slot) =>
-      isBookingAtLeast24hAhead({ slot_date: date, time_slot: slot }, now),
-    );
+    if (day.exceptionType === "available_custom_hours") {
+      return NextResponse.json({
+        slots: day.slots,
+        durationMinutes: day.durationMinutes,
+        date,
+        exceptionType: "available_custom_hours",
+      });
+    }
 
-    return NextResponse.json({ slots: filteredSlots, durationMinutes, date });
+    if (day.source === "precise_intervals") {
+      return NextResponse.json({
+        slots: day.slots,
+        durationMinutes: day.durationMinutes,
+        date,
+        preciseIntervals: true,
+        hasWeeklyIntervals: weeklyIntervals.length > 0,
+        scheduleMode: day.scheduleMode,
+      });
+    }
+
+    return NextResponse.json({ slots: day.slots, durationMinutes: day.durationMinutes, date });
   } catch (e) {
     console.error("[teachers/slots]", e);
     return NextResponse.json({ error: "Erreur serveur." }, { status: 500 });

@@ -30,6 +30,7 @@ import { TeacherScheduleExceptionsEditor } from "@/components/teacher/TeacherSch
 import { TeacherScheduleInteractiveGrid } from "@/components/teacher/TeacherScheduleInteractiveGrid";
 import { TeacherSchedulePrecisionBanner } from "@/components/teacher/TeacherSchedulePrecisionBanner";
 import { TeacherScheduleStatus } from "@/components/teacher/TeacherScheduleStatus";
+import { TeacherAvailabilityPreview } from "@/components/teacher/TeacherAvailabilityPreview";
 import { isTeacherScheduleExceptionsUiEnabled } from "@/lib/schedule/dateExceptions";
 import { isTeacherScheduleInteractiveCellsUiEnabled } from "@/lib/schedule/interactiveCells";
 import { dispatchConfigurePrecision } from "@/lib/schedule/precisionScheduleBanner";
@@ -1021,6 +1022,22 @@ function TeacherScheduleInner() {
               scheduleMode={scheduleMode}
             />
           ) : null}
+
+          <TeacherAvailabilityPreview
+            defaultDurationMinutes={defaultLessonDuration}
+            scheduleDirty={pageDirty}
+            onRequestSave={() => {
+              const sticky = document.querySelector(
+                '[data-testid="teacher-schedule-settings-save-bar-save"], [data-testid="teacher-weekly-intervals-save"], [data-testid="teacher-schedule-interactive-save"]',
+              );
+              if (sticky instanceof HTMLElement) {
+                sticky.scrollIntoView({ behavior: "smooth", block: "center" });
+                sticky.focus?.();
+                return;
+              }
+              void saveAll();
+            }}
+          />
 
           <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
             {!isTeacherScheduleIntervalsUiEnabled() && !isTeacherScheduleInteractiveCellsUiEnabled() ? (

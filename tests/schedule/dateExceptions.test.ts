@@ -252,8 +252,10 @@ test("API UI and booking wiring", () => {
   assert.match(redeem, /scheduleMode:/);
 
   const slots = read("app/api/teachers/[id]/slots/route.ts");
-  assert.match(slots, /generateSlotsFromDateException/);
-  assert.match(slots, /resolveExceptionOverride/);
+  const bookable = read("lib/bookings/bookableSlotsForDay.ts");
+  assert.match(slots, /generateBookableSlotsForTeacherDay/);
+  assert.match(bookable, /generateSlotsFromDateException/);
+  assert.match(bookable, /resolveExceptionOverride/);
   assert.match(slots, /unavailable_full_day/);
 
   const modal = read("components/BookingModal.tsx");
