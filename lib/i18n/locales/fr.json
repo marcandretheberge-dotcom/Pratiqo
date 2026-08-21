@@ -2932,6 +2932,8 @@
   "schedulePrecisionProgressMany": "{count} jours configurés sur 7",
   "schedulePrecisionActiveTitle": "Horaire précis actif",
   "schedulePrecisionActiveBody": "Vos élèves réservent selon vos heures exactes.",
+  "schedulePreciseGeneralTitle": "Horaire général actif",
+  "schedulePreciseGeneralBody": "Vos élèves voient encore des disponibilités générales comme Matin, Après-midi ou Soir.",
   "schedulePreciseReadyTitle": "Horaire précis prêt",
   "schedulePreciseReadyBody": "Vos heures exactes sont configurées. Activez l’horaire précis pour que les élèves réservent selon ces heures.",
   "schedulePreciseActiveTitle": "Horaire précis actif",

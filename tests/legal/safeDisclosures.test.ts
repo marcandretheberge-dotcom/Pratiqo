@@ -918,6 +918,7 @@ const allowedTeacherPreciseScheduleBookingFiles = new Set<string>([
   "lib/i18n/locales/es.json",
   ".env.example",
   "tests/schedule/preciseScheduleBookingSource.test.ts",
+  "tests/schedule/preciseScheduleBookingEnforcement.test.ts",
   "tests/schedule/weeklyIntervals.test.ts",
   "tests/legal/marketplaceIndependentTeacherHardening.test.ts",
   "tests/legal/safeDisclosures.test.ts",
