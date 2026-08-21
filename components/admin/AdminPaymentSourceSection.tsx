@@ -25,6 +25,11 @@ type Props = {
   packageRedemptionSessionNumber?: number | null;
   packageRedemptionReversedAt?: string | null;
   packageRedemptionReversalSource?: string | null;
+  packageRedemptionPolicyEvaluationResult?: string | null;
+  packageRedemptionPolicyEvaluatedAt?: string | null;
+  packageRedemptionCreditReturnReason?: string | null;
+  packageRedemptionManualReviewRequired?: boolean | null;
+  cancellationPreferenceSnapshot?: string | null;
   className?: string;
 };
 
@@ -40,6 +45,11 @@ export function AdminPaymentSourceSection({
   packageRedemptionSessionNumber = null,
   packageRedemptionReversedAt = null,
   packageRedemptionReversalSource = null,
+  packageRedemptionPolicyEvaluationResult = null,
+  packageRedemptionPolicyEvaluatedAt = null,
+  packageRedemptionCreditReturnReason = null,
+  packageRedemptionManualReviewRequired = null,
+  cancellationPreferenceSnapshot = null,
   className,
 }: Props) {
   const { t, locale } = useLocale();
@@ -134,6 +144,46 @@ export function AdminPaymentSourceSection({
               <div>
                 <dt className="text-xs text-slate-500">{t("adminPaymentSourcePackageReversalSource")}</dt>
                 <dd className="text-slate-900">{packageRedemptionReversalSource}</dd>
+              </div>
+            ) : null}
+            {cancellationPreferenceSnapshot ? (
+              <div>
+                <dt className="text-xs text-slate-500">
+                  {t("adminPaymentSourcePackageCancellationPreference")}
+                </dt>
+                <dd className="text-slate-900">{cancellationPreferenceSnapshot}</dd>
+              </div>
+            ) : null}
+            {packageRedemptionPolicyEvaluationResult ? (
+              <div>
+                <dt className="text-xs text-slate-500">{t("adminPaymentSourcePackagePolicyResult")}</dt>
+                <dd className="text-slate-900">{packageRedemptionPolicyEvaluationResult}</dd>
+              </div>
+            ) : null}
+            {packageRedemptionPolicyEvaluatedAt ? (
+              <div>
+                <dt className="text-xs text-slate-500">
+                  {t("adminPaymentSourcePackagePolicyEvaluatedAt")}
+                </dt>
+                <dd className="text-slate-900">{packageRedemptionPolicyEvaluatedAt}</dd>
+              </div>
+            ) : null}
+            {packageRedemptionCreditReturnReason ? (
+              <div>
+                <dt className="text-xs text-slate-500">
+                  {t("adminPaymentSourcePackageCreditReturnReason")}
+                </dt>
+                <dd className="text-slate-900">{packageRedemptionCreditReturnReason}</dd>
+              </div>
+            ) : null}
+            {packageRedemptionManualReviewRequired != null ? (
+              <div>
+                <dt className="text-xs text-slate-500">
+                  {t("adminPaymentSourcePackageManualReviewRequired")}
+                </dt>
+                <dd className="text-slate-900">
+                  {packageRedemptionManualReviewRequired ? "true" : "false"}
+                </dd>
               </div>
             ) : null}
           </>

@@ -8,10 +8,14 @@
  * PR 10C restores one session credit when a package-credit booking is cancelled
  * or declined before completion (atomic RPC). No monetary Stripe refund.
  *
+ * PR 16B: when offer-policy enforcement is ON, student cancellations outside the
+ * snapshotted teacher notice window (or manual_review) forfeit the redemption
+ * without restoring balance via forfeitPackageRedemptionForBooking.
+ *
  * See docs/product/marketplace-independent-teacher-guardrails.md.
  *
- * // Future PR: teacher-configurable cancellation/rescheduling preferences for offers/packages,
- * // within Pratiqo marketplace safety and fairness rules.
+ * // Future PR: apply rescheduling_policy_code_snapshot and rescheduling_notice_hours_snapshot
+ * // to package-credit rescheduling flow.
  *
  * // Legal TODO before public package launch:
  * // Terms must clarify that the package service contract is between the learner
@@ -130,6 +134,27 @@ export type ReversePackageRedemptionFailure = {
     | "booking_not_found"
     | "invalid_payload"
     | "server_error";
+};
+
+export type ForfeitPackageRedemptionResult = {
+  ok: true;
+  forfeited: boolean;
+  idempotent: boolean;
+  bookingId: string | null;
+  redemptionId: string | null;
+  entitlementId: string | null;
+  sessionNumber: number | null;
+  redemptionStatus: PackageRedemptionStatus | null;
+  remainingSessions: number | null;
+  usedSessions: number | null;
+  entitlementStatus: PackageEntitlementStatus | null;
+  manualReviewRequired: boolean;
+  reason?: string | null;
+};
+
+export type ForfeitPackageRedemptionFailure = {
+  ok: false;
+  error: "invalid_payload" | "redemption_not_forfeitable" | "server_error";
 };
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -455,6 +480,90 @@ export async function reversePackageRedemptionForBooking(args: {
       typeof row.reversal_source === "string"
         ? (row.reversal_source as PackageReversalSource)
         : args.source,
+    reason: typeof row.reason === "string" ? row.reason : null,
+  };
+}
+
+/**
+ * Cancel a package redemption without restoring the forfait session
+ * (outside teacher notice window / manual_review). Does not mutate balances.
+ */
+export async function forfeitPackageRedemptionForBooking(args: {
+  admin: RpcAdmin;
+  bookingId: string;
+  actorUserId?: string | null;
+  source: PackageReversalSource;
+  reason?: string | null;
+  policyEvaluationResult?: string | null;
+  creditReturnReason?: string | null;
+  manualReviewRequired?: boolean;
+}): Promise<ForfeitPackageRedemptionResult | ForfeitPackageRedemptionFailure> {
+  const bookingId = asUuid(args.bookingId);
+  if (!bookingId) {
+    return { ok: false, error: "invalid_payload" };
+  }
+  if (!(PACKAGE_REVERSAL_SOURCES as readonly string[]).includes(args.source)) {
+    return { ok: false, error: "invalid_payload" };
+  }
+
+  const { data, error } = await args.admin.rpc("forfeit_package_redemption_for_booking", {
+    p_booking_id: bookingId,
+    p_actor_user_id: asUuid(args.actorUserId) ?? null,
+    p_source: args.source,
+    p_reason: args.reason ?? null,
+    p_policy_evaluation_result: args.policyEvaluationResult ?? null,
+    p_credit_return_reason: args.creditReturnReason ?? null,
+    p_manual_review_required: args.manualReviewRequired === true,
+  });
+
+  if (error) {
+    const text = (error.message ?? "").toUpperCase();
+    if (text.includes("REDEMPTION_NOT_FORFEITABLE")) {
+      return { ok: false, error: "redemption_not_forfeitable" };
+    }
+    if (text.includes("INVALID_PAYLOAD")) {
+      return { ok: false, error: "invalid_payload" };
+    }
+    return { ok: false, error: "server_error" };
+  }
+
+  if (!data || typeof data !== "object") {
+    return { ok: false, error: "server_error" };
+  }
+
+  const row = data as Record<string, unknown>;
+  if (row.ok !== true) {
+    return { ok: false, error: "server_error" };
+  }
+
+  return {
+    ok: true,
+    forfeited: row.forfeited === true,
+    idempotent: row.idempotent === true,
+    bookingId: asUuid(row.booking_id) ?? bookingId,
+    redemptionId: asUuid(row.redemption_id),
+    entitlementId: asUuid(row.entitlement_id),
+    sessionNumber:
+      row.session_number == null || row.session_number === undefined
+        ? null
+        : Number(row.session_number),
+    redemptionStatus:
+      typeof row.redemption_status === "string"
+        ? (row.redemption_status as PackageRedemptionStatus)
+        : null,
+    remainingSessions:
+      row.remaining_sessions == null || row.remaining_sessions === undefined
+        ? null
+        : Number(row.remaining_sessions),
+    usedSessions:
+      row.used_sessions == null || row.used_sessions === undefined
+        ? null
+        : Number(row.used_sessions),
+    entitlementStatus:
+      typeof row.entitlement_status === "string"
+        ? (row.entitlement_status as PackageEntitlementStatus)
+        : null,
+    manualReviewRequired: row.manual_review_required === true,
     reason: typeof row.reason === "string" ? row.reason : null,
   };
 }

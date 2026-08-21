@@ -20,6 +20,8 @@ export type CancelBookingSuccess = {
   support_case_id?: string | null;
   /** Echo of the policy window the API evaluated against. */
   policy_window?: "more_than_24h" | "less_than_24h";
+  /** Package-credit: whether a forfait session was restored. */
+  package_credit_restored?: boolean;
 };
 
 /**
@@ -67,5 +69,6 @@ export async function postCancelBooking(
     stripe_refund_amount_cents: body.stripe_refund_amount_cents ?? null,
     support_case_id: body.support_case_id ?? null,
     policy_window: body.policy_window,
+    package_credit_restored: body.package_credit_restored,
   };
 }

@@ -133,10 +133,8 @@ test("cancel and decline routes restore package credit without Stripe refund", (
   assert.match(decline, /reversePackageRedemptionForBooking/);
   assert.match(decline, /teacher_rejected/);
   // Package path runs first; Stripe refund only in the else branch.
-  assert.match(
-    cancel,
-    /if \(isPackageCredit\) \{[\s\S]*reversePackageRedemptionForBooking[\s\S]*\} else if \(decision\.kind === "open_manual_review"\)/,
-  );
+  assert.match(cancel, /if \(isPackageCredit\) \{/);
+  assert.match(cancel, /forfeitPackageRedemptionForBooking/);
   const packageBranch = cancel.indexOf("if (isPackageCredit)");
   const stripeCall = cancel.indexOf("await attemptStripeBookingRefund");
   assert.ok(packageBranch > 0 && stripeCall > packageBranch);

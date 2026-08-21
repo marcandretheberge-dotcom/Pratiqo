@@ -78,6 +78,17 @@ See also:
 | Safe preview | ON for UX review without mutating balances |
 | Production note | Visibility only |
 
+### `ENABLE_OFFER_POLICY_ENFORCEMENT` (+ `NEXT_PUBLIC_ENABLE_OFFER_POLICY_ENFORCEMENT`)
+
+| | |
+|--|--|
+| Default | OFF |
+| Runtime | Server cancel API (+ optional UI hints) |
+| Who sees effect | Package-credit student cancellations use booking policy snapshots to decide automatic credit return |
+| Dependencies | PR 16A preference snapshots on bookings; package redemption booking |
+| Safe preview | ON in staging after package cancel/restore is validated |
+| Production note | Keep OFF until teacher preferences + legal copy are ready. Does **not** create Stripe refunds |
+
 ### `PACKAGE_LEGAL_REVIEW_COMPLETED` (ops signal only)
 
 | | |

@@ -433,7 +433,9 @@ async function loadPackageRedemptionsByIds(
   if (unique.length === 0) return map;
   const { data, error } = await admin
     .from("package_redemptions")
-    .select("id, status, session_number, reversed_at, reversal_source")
+    .select(
+      "id, status, session_number, reversed_at, reversal_source, policy_evaluation_result, policy_evaluated_at, credit_return_reason, manual_review_required",
+    )
     .in("id", unique);
   if (error) {
     console.error("[admin/ops] package_redemptions load failed", error.message);
@@ -451,6 +453,13 @@ async function loadPackageRedemptionsByIds(
           : Number(row.session_number),
       reversedAt: typeof row.reversed_at === "string" ? row.reversed_at : null,
       reversalSource: typeof row.reversal_source === "string" ? row.reversal_source : null,
+      policyEvaluationResult:
+        typeof row.policy_evaluation_result === "string" ? row.policy_evaluation_result : null,
+      policyEvaluatedAt: typeof row.policy_evaluated_at === "string" ? row.policy_evaluated_at : null,
+      creditReturnReason:
+        typeof row.credit_return_reason === "string" ? row.credit_return_reason : null,
+      manualReviewRequired:
+        typeof row.manual_review_required === "boolean" ? row.manual_review_required : null,
     });
   }
   return map;
