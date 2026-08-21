@@ -37,11 +37,13 @@ test("schedule: duration card shows autosave state text", () => {
   assert.match(scheduleSrc, /teacher-schedule-lesson-duration-error/);
 });
 
-test("schedule: duration autosaves via dedicated route, not main save button", () => {
+test("schedule: duration autosaves via dedicated route, or defers when sticky save is on", () => {
   assert.match(scheduleSrc, /\/api\/teacher\/lesson-duration/);
   assert.match(scheduleSrc, /saveLessonDuration/);
-  const saveAllBlock = scheduleSrc.slice(scheduleSrc.indexOf("const saveAll"), scheduleSrc.indexOf("const addBlocked"));
-  assert.doesNotMatch(saveAllBlock, /default_lesson_duration_minutes/);
+  assert.match(scheduleSrc, /stickyEnabled/);
+  assert.match(scheduleSrc, /forcePersist/);
+  const saveAllBlock = scheduleSrc.slice(scheduleSrc.indexOf("const saveAll"), scheduleSrc.indexOf("const discardSettings"));
+  assert.match(saveAllBlock, /saveLessonDuration\([\s\S]*forcePersist:\s*true/);
 });
 
 test("lesson-duration route: auth required and teacher resolved server-side", () => {

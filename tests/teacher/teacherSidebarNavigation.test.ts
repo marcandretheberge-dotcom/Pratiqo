@@ -28,11 +28,23 @@ test("desktop teacher shell mounts sidebar and no horizontal tab strip", () => {
   const top = read(TOP_NAV);
   const sidebar = read(SIDEBAR);
   assert.match(shell, /TeacherSidebarNav/);
+  assert.match(shell, /data-testid="teacher-app-shell"/);
+  assert.match(shell, /data-testid="teacher-main-shell"/);
+  assert.match(shell, /h-\[100dvh\]/);
+  assert.match(shell, /overflow-hidden/);
   assert.match(sidebar, /data-testid="teacher-sidebar-nav"/);
   assert.match(sidebar, /hidden[\s\S]*md:flex/);
+  assert.match(sidebar, /h-full/);
+  assert.match(sidebar, /data-testid="teacher-sidebar-logo"/);
+  assert.match(top, /data-testid="teacher-top-header"/);
+  assert.match(top, /sticky top-0/);
   assert.doesNotMatch(top, /data-testid="teacher-top-nav-tabs"/);
   assert.doesNotMatch(top, /overflow-x-auto/);
   assert.doesNotMatch(top, /MoreHorizontal|navMore/);
+  // Topbar lives inside main column — not a full-width sibling above sidebar.
+  const teacherReturn = shell.slice(shell.indexOf("if (isTeacher)"));
+  assert.match(teacherReturn, /TeacherSidebarNav[\s\S]*TeacherTopNav/);
+  assert.doesNotMatch(teacherReturn.slice(0, teacherReturn.indexOf("TeacherSidebarNav")), /TeacherTopNav/);
 });
 
 test("sidebar includes all required teacher routes in product order", () => {
@@ -74,7 +86,7 @@ test("mobile drawer exposes all teacher routes; no permanent mobile sidebar", ()
   assert.match(config, /TEACHER_DRAWER_EXTRA_NAV/);
   assert.match(config, /\/teacher\/my-profile/);
   assert.match(config, /\/teacher\/settings/);
-  assert.match(sidebar, /hidden w-\[260px\]/);
+  assert.match(sidebar, /hidden[\s\S]*w-\[260px\]/);
 });
 
 test("app shell content uses min-w-0 and does not misuse w-screen", () => {
@@ -86,6 +98,9 @@ test("app shell content uses min-w-0 and does not misuse w-screen", () => {
   assert.doesNotMatch(shell, /w-screen/);
   assert.doesNotMatch(read(TOP_NAV), /w-screen/);
   assert.doesNotMatch(read(SIDEBAR), /w-screen/);
+  // Avoid page-level overflow-x-hidden as the only overflow fix on the teacher shell.
+  const teacherBlock = shell.slice(shell.indexOf('data-testid="teacher-app-shell"'));
+  assert.doesNotMatch(teacherBlock.slice(0, 400), /overflow-x-hidden/);
 });
 
 test("dashboard content and compact profile status still render; no large visibility duplicate", () => {

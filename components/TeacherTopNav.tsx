@@ -66,12 +66,12 @@ export function TeacherTopNav({ unreadMessages }: { unreadMessages: number }) {
   return (
     <>
       <header
-        className="sticky top-0 z-[55] w-full shrink-0 bg-white/95 backdrop-blur-md supports-[backdrop-filter]:bg-white/80"
+        className="sticky top-0 z-40 w-full shrink-0 bg-white/95 backdrop-blur-md supports-[backdrop-filter]:bg-white/80"
         style={{ borderBottom: "0.5px solid #D3D1C7" }}
         data-testid="teacher-top-header"
       >
         <div className="flex h-[52px] w-full items-center justify-between gap-3 px-4 sm:px-5 lg:px-6">
-          <div className="flex min-w-0 items-center gap-3">
+          <div className="flex min-w-0 items-center gap-3 md:min-w-0">
             <button
               type="button"
               className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200/80 text-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600 md:hidden"
@@ -83,10 +83,13 @@ export function TeacherTopNav({ unreadMessages }: { unreadMessages: number }) {
             >
               <Menu size={22} />
             </button>
-            <Link href="/dashboard" className="shrink-0" aria-label={t("ariaHome")}>
-              <PratiqoLogo variant="icon" size="sm" className="md:hidden" />
-              <PratiqoLogo variant="full" size="md" className="hidden md:block" />
+            {/* Logo on mobile only — desktop logo lives in the sidebar. */}
+            <Link href="/dashboard" className="shrink-0 md:hidden" aria-label={t("ariaHome")}>
+              <PratiqoLogo variant="icon" size="sm" />
             </Link>
+            <p className="hidden truncate text-sm font-semibold text-slate-600 md:block" data-testid="teacher-top-shell-label">
+              {t("teacherSpaceLabel")}
+            </p>
           </div>
 
           <div className="flex shrink-0 items-center gap-2 sm:gap-3">

@@ -20,8 +20,6 @@ import {
   stableScheduleSnapshot,
 } from "../../lib/schedule/scheduleSaveState";
 import { validateWeeklyIntervalSet } from "../../lib/schedule/weeklyIntervals";
-import { TEACHER_SCHEDULE_INTERVALS_UI_FLAG } from "../../lib/schedule/weeklyIntervals";
-import { TEACHER_SCHEDULE_EXCEPTIONS_UI_FLAG } from "../../lib/schedule/dateExceptions";
 
 const ROOT = process.cwd();
 function read(rel: string): string {
@@ -36,8 +34,6 @@ function test(name: string, fn: () => void | Promise<void>) {
 const stickyFlag = process.env[TEACHER_SCHEDULE_STICKY_SAVE_UI_FLAG];
 const autosaveFlag = process.env[TEACHER_SCHEDULE_AUTOSAVE_UI_FLAG];
 const autosaveServer = process.env[TEACHER_SCHEDULE_AUTOSAVE_FLAG];
-const intervalsUi = process.env[TEACHER_SCHEDULE_INTERVALS_UI_FLAG];
-const exceptionsUi = process.env[TEACHER_SCHEDULE_EXCEPTIONS_UI_FLAG];
 
 test("autosave defaults OFF", () => {
   delete process.env[TEACHER_SCHEDULE_AUTOSAVE_FLAG];
@@ -45,23 +41,13 @@ test("autosave defaults OFF", () => {
   assert.equal(isTeacherScheduleAutosaveEnabled(), false);
 });
 
-test("sticky save defaults ON when intervals UI is on", () => {
+test("sticky save defaults ON", () => {
   delete process.env[TEACHER_SCHEDULE_STICKY_SAVE_UI_FLAG];
-  process.env[TEACHER_SCHEDULE_INTERVALS_UI_FLAG] = "true";
-  delete process.env[TEACHER_SCHEDULE_EXCEPTIONS_UI_FLAG];
   assert.equal(isTeacherScheduleStickySaveEnabled(), true);
 });
 
 test("sticky save can be explicitly disabled", () => {
   process.env[TEACHER_SCHEDULE_STICKY_SAVE_UI_FLAG] = "false";
-  process.env[TEACHER_SCHEDULE_INTERVALS_UI_FLAG] = "true";
-  assert.equal(isTeacherScheduleStickySaveEnabled(), false);
-});
-
-test("sticky save defaults OFF when no schedule UI flags", () => {
-  delete process.env[TEACHER_SCHEDULE_STICKY_SAVE_UI_FLAG];
-  delete process.env[TEACHER_SCHEDULE_INTERVALS_UI_FLAG];
-  delete process.env[TEACHER_SCHEDULE_EXCEPTIONS_UI_FLAG];
   assert.equal(isTeacherScheduleStickySaveEnabled(), false);
 });
 
@@ -128,6 +114,20 @@ test("schedule page coordinates dirty state and sticky settings bar", () => {
   assert.match(page, /onDirtyChange=\{setExceptionsDirty\}/);
   assert.match(page, /settingsDirty/);
   assert.match(page, /discardSettings/);
+  assert.match(page, /defaultLessonDuration/);
+  assert.match(page, /availableFromDate/);
+  assert.match(page, /forcePersist:\s*true/);
+  assert.match(page, /teacher-schedule-legacy-mode-banner/);
+  assert.match(page, /text-slate-600/);
+});
+
+test("teacher shell places topbar inside main column after sidebar", () => {
+  const shell = read("components/AppShell.tsx");
+  assert.match(shell, /data-testid="teacher-app-shell"/);
+  assert.match(shell, /data-testid="teacher-main-shell"/);
+  assert.match(shell, /TeacherSidebarNav[\s\S]*TeacherTopNav[\s\S]*teacher-main-content/);
+  assert.match(shell, /h-\[100dvh\]/);
+  assert.doesNotMatch(shell, /w-screen/);
 });
 
 test("i18n includes sticky save copy FR/EN/ES", () => {
@@ -199,10 +199,6 @@ test("marketplace-safe copy in save bar component", () => {
     else process.env[TEACHER_SCHEDULE_AUTOSAVE_UI_FLAG] = autosaveFlag;
     if (autosaveServer === undefined) delete process.env[TEACHER_SCHEDULE_AUTOSAVE_FLAG];
     else process.env[TEACHER_SCHEDULE_AUTOSAVE_FLAG] = autosaveServer;
-    if (intervalsUi === undefined) delete process.env[TEACHER_SCHEDULE_INTERVALS_UI_FLAG];
-    else process.env[TEACHER_SCHEDULE_INTERVALS_UI_FLAG] = intervalsUi;
-    if (exceptionsUi === undefined) delete process.env[TEACHER_SCHEDULE_EXCEPTIONS_UI_FLAG];
-    else process.env[TEACHER_SCHEDULE_EXCEPTIONS_UI_FLAG] = exceptionsUi;
   }
 })().catch((error) => {
   console.error(error);

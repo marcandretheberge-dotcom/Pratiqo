@@ -332,7 +332,7 @@ export function TeacherWeeklyIntervalsEditor({
       <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
         <p className="text-sm font-bold text-[#2C2C2A]">{t("weeklyIntervalsTitle")}</p>
         <p className="mt-1 text-xs leading-5 text-slate-600">{t("weeklyIntervalsHelper")}</p>
-        <p className="mt-1 text-xs leading-5 text-slate-500">{t("weeklyIntervalsTeacherChooses")}</p>
+        <p className="mt-1 text-xs leading-5 text-slate-600">{t("weeklyIntervalsTeacherChooses")}</p>
         {hasLegacyBlocks && currentPayload.length === 0 ? (
           <p
             className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-900"
