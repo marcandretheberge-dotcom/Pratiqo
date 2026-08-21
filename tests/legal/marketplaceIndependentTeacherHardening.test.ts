@@ -48,6 +48,8 @@ const PRODUCT_SURFACES = [
   "components/BookingModal.tsx",
   "components/admin/AdminPaymentSourceSection.tsx",
   "components/teacher/TeacherWeeklyIntervalsEditor.tsx",
+  "components/teacher/TeacherScheduleIntervalMigrationBanner.tsx",
+  "components/teacher/TeacherScheduleIntervalMigrationModal.tsx",
 ];
 
 const BEHAVIOR_CRITICAL = [

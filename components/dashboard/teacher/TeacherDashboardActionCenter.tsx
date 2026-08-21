@@ -12,6 +12,8 @@ import { cn } from "@/lib/utils";
 export type TeacherDashboardActionItem = {
   id: string;
   label: string;
+  /** Optional supporting line under the label (e.g. migration guidance). */
+  description?: string;
   count?: number | null;
   href: string;
   cta: string;
@@ -28,7 +30,9 @@ export type TeacherDashboardActionCenterProps = {
 export function TeacherDashboardActionCenter({ items, className }: TeacherDashboardActionCenterProps) {
   const { t } = useLocale();
   const visible = items.filter((item) => item.alwaysShow || (typeof item.count === "number" && item.count > 0));
-  const hasUrgent = visible.some((item) => item.urgent && (item.count ?? 0) > 0);
+  const hasUrgent = visible.some(
+    (item) => item.urgent && (item.alwaysShow || (typeof item.count === "number" && item.count > 0)),
+  );
 
   return (
     <section
@@ -63,7 +67,7 @@ export function TeacherDashboardActionCenter({ items, className }: TeacherDashbo
                   href={item.href}
                   className={cn(
                     "flex min-h-12 items-center justify-between gap-3 rounded-xl border px-3 py-2.5 text-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600",
-                    item.urgent && (item.count ?? 0) > 0
+                    item.urgent && (item.alwaysShow || (item.count ?? 0) > 0)
                       ? "border-amber-200 bg-amber-50/80 hover:bg-amber-50"
                       : "border-slate-100 bg-[#fafaf8] hover:bg-slate-50",
                   )}
@@ -79,6 +83,9 @@ export function TeacherDashboardActionCenter({ items, className }: TeacherDashbo
                         item.label
                       )}
                     </span>
+                    {item.description ? (
+                      <span className="mt-0.5 block text-xs leading-4 text-slate-600">{item.description}</span>
+                    ) : null}
                     <span className="mt-0.5 block text-xs font-medium text-teal-700">{item.cta}</span>
                   </span>
                 </Link>

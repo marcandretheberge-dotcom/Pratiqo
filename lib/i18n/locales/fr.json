@@ -2848,5 +2848,18 @@
   "weeklyIntervalsSaveError": "Impossible d’enregistrer les disponibilités.",
   "weeklyIntervalsDisabled": "Les plages horaires précises ne sont pas activées.",
   "bookingNoPreciseAvailability": "Ce professeur n’a pas encore ajouté de disponibilités précises.",
-  "bookingSlotOutsideAvailability": "Cette plage n’est plus disponible. Veuillez choisir une autre heure."
+  "bookingSlotOutsideAvailability": "Cette plage n’est plus disponible. Veuillez choisir une autre heure.",
+  "teacherDashActionScheduleIntervalsLabel": "Disponibilités à préciser",
+  "teacherDashActionScheduleIntervalsDescription": "Votre ancien horaire doit être converti en plages horaires exactes pour éviter les réservations imprécises.",
+  "teacherDashActionScheduleIntervalsCta": "Mettre à jour mon horaire",
+  "weeklyIntervalsMigrationBannerTitle": "Nouvel horaire précis",
+  "weeklyIntervalsMigrationBannerBody": "Ajoutez vos plages horaires exactes pour recevoir des réservations aux bonnes heures.",
+  "weeklyIntervalsMigrationBannerLegacyNote": "Vos anciens blocs Matin / Après-midi / Soir ne seront pas utilisés pour les nouvelles réservations tant que vous n’avez pas précisé vos heures.",
+  "weeklyIntervalsMigrationBannerCta": "Configurer mon horaire",
+  "weeklyIntervalsMigrationTeacherHint": "Ajoutez vos plages horaires exactes pour recevoir des réservations.",
+  "weeklyIntervalsMigrationModalTitle": "Vos disponibilités deviennent plus précises",
+  "weeklyIntervalsMigrationModalBody": "Pour éviter les réservations aux mauvaises heures, Pratiqo utilise maintenant des plages horaires exactes. Ajoutez les heures où vous souhaitez recevoir des réservations.",
+  "weeklyIntervalsMigrationModalExample": "Par exemple : Lundi 9 h à 11 h 30, Mercredi 18 h à 20 h.",
+  "weeklyIntervalsMigrationModalConfigure": "Configurer mon horaire",
+  "weeklyIntervalsMigrationModalLater": "Plus tard"
 }
