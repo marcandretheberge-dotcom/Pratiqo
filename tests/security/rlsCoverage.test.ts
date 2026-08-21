@@ -56,6 +56,7 @@ const EXPLICIT_RLS_HARDENING_FILES = [
   "103_add_package_redemption_reversal_rpc.sql",
   "109_harden_teacher_weekly_availability_intervals_rls.sql",
   "111_harden_teacher_schedule_exceptions_rls.sql",
+  "113_harden_teacher_schedule_exceptions_grants.sql",
 ];
 
 function readMigration(file: string): string {

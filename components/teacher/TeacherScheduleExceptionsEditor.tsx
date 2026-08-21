@@ -84,6 +84,8 @@ export function TeacherScheduleExceptionsEditor({
   const [errorText, setErrorText] = useState<string | null>(null);
   const [panelBaseline, setPanelBaseline] = useState("");
   const [dirty, setDirty] = useState(false);
+  /** Server flag from GET; when false, mutate APIs are disabled even if UI flag is ON. */
+  const [serverEnabled, setServerEnabled] = useState(true);
 
   const getAccessToken = useCallback(async (): Promise<string | null> => {
     const supabase = getSupabaseClient();
@@ -140,9 +142,17 @@ export function TeacherScheduleExceptionsEditor({
         `/api/teacher/schedule-exceptions?from=${encodeURIComponent(range.from)}&to=${encodeURIComponent(range.to)}`,
         { headers: { Authorization: `Bearer ${token}` } },
       );
-      const json = (await res.json().catch(() => ({}))) as { exceptions?: ExceptionDto[]; error?: string };
+      const json = (await res.json().catch(() => ({}))) as {
+        exceptions?: ExceptionDto[];
+        enabled?: boolean;
+        error?: string;
+      };
       if (!res.ok) throw new Error(json.error || "load_failed");
+      setServerEnabled(json.enabled !== false);
       setExceptions(Array.isArray(json.exceptions) ? json.exceptions : []);
+      if (json.enabled === false) {
+        setErrorText(t("scheduleExceptionsDisabled"));
+      }
     } catch {
       setErrorText(t("scheduleExceptionsLoadError"));
     } finally {
@@ -195,6 +205,10 @@ export function TeacherScheduleExceptionsEditor({
   };
 
   const deleteExceptionDate = async (iso: string) => {
+    if (!serverEnabled) {
+      setErrorText(t("scheduleExceptionsDisabled"));
+      return;
+    }
     const token = await getAccessToken();
     if (!token) return;
     setSaveState("saving");
@@ -210,7 +224,10 @@ export function TeacherScheduleExceptionsEditor({
       });
       if (!res.ok) {
         const json = (await res.json().catch(() => ({}))) as { error?: string };
-        setErrorText(json.error || t("scheduleExceptionsSaveError"));
+        const map: Record<string, string> = {
+          schedule_exceptions_disabled: t("scheduleExceptionsDisabled"),
+        };
+        setErrorText(map[json.error ?? ""] || t("scheduleExceptionsSaveError"));
         setSaveState("error");
         return;
       }
@@ -256,7 +273,14 @@ export function TeacherScheduleExceptionsEditor({
   useUnsavedChangesWarning(dirty, stickyEnabled);
 
   const save = async () => {
-    if (!selectedDate) return;
+    if (!selectedDate) {
+      setErrorText(t("scheduleExceptionsChooseDate"));
+      return;
+    }
+    if (!serverEnabled) {
+      setErrorText(t("scheduleExceptionsDisabled"));
+      return;
+    }
     const token = await getAccessToken();
     if (!token) return;
 
@@ -273,7 +297,10 @@ export function TeacherScheduleExceptionsEditor({
         });
         if (!res.ok) {
           const json = (await res.json().catch(() => ({}))) as { error?: string };
-          setErrorText(json.error || t("scheduleExceptionsSaveError"));
+          const map: Record<string, string> = {
+            schedule_exceptions_disabled: t("scheduleExceptionsDisabled"),
+          };
+          setErrorText(map[json.error ?? ""] || t("scheduleExceptionsSaveError"));
           setSaveState("error");
           return;
         }
@@ -323,6 +350,10 @@ export function TeacherScheduleExceptionsEditor({
           invalid_time_range: t("weeklyIntervalsInvalidRange"),
           custom_hours_require_times: t("weeklyIntervalsInvalidRange"),
           custom_hours_require_precise_schedule: t("scheduleExceptionsCustomHoursPreciseOnly"),
+          schedule_exceptions_disabled: t("scheduleExceptionsDisabled"),
+          invalid_exception_date: t("scheduleExceptionsChooseDate"),
+          invalid_exception_type: t("scheduleExceptionsInvalid"),
+          invalid_payload: t("scheduleExceptionsInvalid"),
         };
         setErrorText(map[json.error ?? ""] || t("scheduleExceptionsSaveError"));
         setSaveState("error");
@@ -531,7 +562,7 @@ export function TeacherScheduleExceptionsEditor({
             <button
               type="button"
               onClick={() => void save()}
-              disabled={saveState === "saving"}
+              disabled={saveState === "saving" || !serverEnabled}
               className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-teal-700 px-4 text-sm font-bold text-white hover:bg-teal-800 disabled:opacity-50"
               data-testid="teacher-schedule-exception-save"
             >
