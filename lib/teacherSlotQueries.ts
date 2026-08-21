@@ -8,6 +8,10 @@ import {
   weeklyAvailabilityFromTeacherRows,
 } from "@/lib/slots";
 import { normalizeLessonDurationMinutes } from "@/lib/pricing/lessonDuration";
+import {
+  filterAvailableDaysByStartDate,
+  normalizeAvailableFromDate,
+} from "@/lib/teachers/availabilityStartDate";
 
 type Admin = SupabaseClient;
 
@@ -135,7 +139,7 @@ export async function computeAvailableDaysForTeacher(
   const { data: teacher, error } = await admin
     .from("teachers")
     .select(
-      "availability, default_lesson_duration_minutes, booking_buffer_before_minutes, booking_buffer_after_minutes",
+      "availability, default_lesson_duration_minutes, available_from_date, booking_buffer_before_minutes, booking_buffer_after_minutes",
     )
     .eq("id", teacherId)
     .maybeSingle();
@@ -157,6 +161,9 @@ export async function computeAvailableDaysForTeacher(
       : base;
   const weekly = weeklyAvailabilityFromTeacherRows((teacher as { availability?: unknown }).availability);
   const buffers = normalizeTeacherBufferSettings(teacher as Parameters<typeof normalizeTeacherBufferSettings>[0]);
+  const availableFromDate = normalizeAvailableFromDate(
+    (teacher as { available_from_date?: string | null }).available_from_date,
+  );
 
   const start = new Date();
   start.setHours(0, 0, 0, 0);
@@ -190,10 +197,13 @@ export async function computeAvailableDaysForTeacher(
     });
   }
 
-  const days = getAvailableDays(weekly, durationMinutes, timeLabelsByDate, blockedByDate, weeks, {
-    bookedIntervalsByDate: intervalsByDate,
-    bufferBeforeMin: buffers.bookingBufferBeforeMinutes,
-    bufferAfterMin: buffers.bookingBufferAfterMinutes,
-  });
+  const days = filterAvailableDaysByStartDate(
+    getAvailableDays(weekly, durationMinutes, timeLabelsByDate, blockedByDate, weeks, {
+      bookedIntervalsByDate: intervalsByDate,
+      bufferBeforeMin: buffers.bookingBufferBeforeMinutes,
+      bufferAfterMin: buffers.bookingBufferAfterMinutes,
+    }),
+    availableFromDate,
+  );
   return { days, durationMinutes };
 }

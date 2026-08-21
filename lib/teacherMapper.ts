@@ -1,6 +1,7 @@
 import type { Teacher, TeacherDisciplineDisplay } from "../types";
 import { resolveTeacherPublicPhoto, readTeacherPhotoFromRecord } from "@/lib/teacherPhoto";
 import { normalizeLessonDurationMinutes } from "@/lib/pricing/lessonDuration";
+import { normalizeAvailableFromDate } from "@/lib/teachers/availabilityStartDate";
 import { displayTeacherMarketplaceCategory, getDisciplineById } from "./disciplines";
 import { resolveDisciplineId } from "./taxonomy/disciplines";
 
@@ -35,6 +36,7 @@ export type TeacherRow = {
   home_lesson_radius_km?: number | null;
   home_lesson_min_duration?: number | null;
   default_lesson_duration_minutes?: number | null;
+  available_from_date?: string | null;
   home_lesson_requires_confirmation?: boolean | null;
   home_lesson_force_2h_over_20km?: boolean | null;
   intro_session_enabled?: boolean | null;
@@ -119,6 +121,7 @@ export function teacherRowToTeacher(row: TeacherRow): Teacher {
     homeLessonRadiusKm: row.home_lesson_radius_km ?? 25,
     homeLessonMinDuration: row.home_lesson_min_duration ?? 60,
     defaultLessonDurationMinutes: normalizeLessonDurationMinutes(row.default_lesson_duration_minutes),
+    availableFromDate: normalizeAvailableFromDate(row.available_from_date),
     homeLessonRequiresConfirmation: row.home_lesson_requires_confirmation ?? true,
     homeLessonForce2hOver20km: Boolean(row.home_lesson_force_2h_over_20km),
     introSessionEnabled: row.intro_session_enabled === true,

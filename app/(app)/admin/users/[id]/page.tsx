@@ -402,6 +402,7 @@ function Teacher360Panel({ data }: { data: AdminTeacher360 }) {
             <AdminField label="Fenêtres" value={valueOrDash(data.availability.availableWindowCount)} />
             <AdminField label="Jours configurés" value={data.availability.configuredDays.join(", ") || "—"} />
             <AdminField label="Prochain jour disponible" value={valueOrDash(data.availability.nextAvailableSlot)} />
+            <AdminField label="Date de début des cours" value={valueOrDash(data.availability.availableFromDate)} />
           </dl>
           <p className="mt-4 text-sm text-slate-700">{data.availability.summary ?? "Aucune disponibilité configurée."}</p>
           {data.availability.rawPreview.length ? (

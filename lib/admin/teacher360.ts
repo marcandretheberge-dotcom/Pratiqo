@@ -88,6 +88,7 @@ export type AdminTeacher360 = {
     configuredDays: string[];
     availableWindowCount: number | null;
     nextAvailableSlot: string | null;
+    availableFromDate: string | null;
     rawPreview: string[];
   };
   payments: {
@@ -175,6 +176,7 @@ type TeacherRow = {
   home_lesson_enabled: boolean | null;
   home_lesson_radius_km: number | null;
   default_lesson_duration_minutes: number | null;
+  available_from_date: string | null;
   intro_session_enabled: boolean | null;
   intro_session_duration_minutes: number | string | null;
   intro_session_price_cents: number | string | null;
@@ -226,6 +228,7 @@ const TEACHER_360_SELECT = [
   "home_lesson_enabled",
   "home_lesson_radius_km",
   "default_lesson_duration_minutes",
+  "available_from_date",
   "intro_session_enabled",
   "intro_session_duration_minutes",
   "intro_session_price_cents",
@@ -639,6 +642,7 @@ export async function loadAdminTeacher360(
     availability: {
       ...availability,
       nextAvailableSlot,
+      availableFromDate: cleanString(teacher.available_from_date)?.slice(0, 10) ?? null,
     },
     payments: {
       stripeAccountExists: Boolean(teacher.stripe_account_id?.trim()),

@@ -82,6 +82,19 @@ export async function POST(req: Request, ctx: Params): Promise<Response> {
             : null,
         };
       },
+      from: (table: string) => ({
+        select: (columns: string) => ({
+          eq: (column: string, value: string) => ({
+            maybeSingle: async () => {
+              const { data, error } = await admin.from(table).select(columns).eq(column, value).maybeSingle();
+              return {
+                data: (data as Record<string, unknown> | null) ?? null,
+                error: error ? { message: error.message } : null,
+              };
+            },
+          }),
+        }),
+      }),
     },
     entitlementId,
     studentId: user.id,
@@ -89,7 +102,13 @@ export async function POST(req: Request, ctx: Params): Promise<Response> {
   });
 
   if (!result.ok) {
-    return NextResponse.json({ error: result.error }, { status: result.status });
+    return NextResponse.json(
+      {
+        error: result.error,
+        ...(result.availableFromDate ? { availableFromDate: result.availableFromDate } : {}),
+      },
+      { status: result.status },
+    );
   }
 
   return NextResponse.json({

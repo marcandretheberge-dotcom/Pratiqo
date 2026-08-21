@@ -7,11 +7,16 @@ import {
 } from "@/lib/offers/bookingOfferSnapshot";
 import { isPostgresUniqueViolation } from "@/lib/offers/teacherOfferDto";
 import type { ParsedCreateBookingRequest } from "@/lib/bookings/parseCreateBookingRequest";
+import {
+  canBookTeacherOnDate,
+  normalizeAvailableFromDate,
+} from "@/lib/teachers/availabilityStartDate";
 
 export type CreateBookingFailure = {
   ok: false;
   status: number;
   error: string;
+  availableFromDate?: string;
 };
 
 export type CreateBookingSuccess = {
@@ -40,7 +45,11 @@ export type BookingCreateAdmin = {
 type BookingCreateFilter = {
   eq: (column: string, value: string) => BookingCreateFilter;
   maybeSingle: () => Promise<{
-    data: { id?: string; archived_at?: string | null } | null;
+    data: {
+      id?: string;
+      archived_at?: string | null;
+      available_from_date?: string | null;
+    } | null;
     error: { message?: string } | null;
   }>;
   then?: (
@@ -112,7 +121,7 @@ export async function createPendingPaymentBooking(args: {
 
   const { data: teacher, error: teacherErr } = await args.admin
     .from("teachers")
-    .select("id")
+    .select("id, available_from_date")
     .eq("id", args.request.teacherId)
     .maybeSingle();
   if (teacherErr) {
@@ -120,6 +129,16 @@ export async function createPendingPaymentBooking(args: {
   }
   if (!teacher?.id) {
     return { ok: false, status: 400, error: "invalid_teacher" };
+  }
+
+  const availableFromDate = normalizeAvailableFromDate(teacher.available_from_date);
+  if (!canBookTeacherOnDate(availableFromDate, args.request.slotDate)) {
+    return {
+      ok: false,
+      status: 409,
+      error: "teacher_not_available_yet",
+      availableFromDate: availableFromDate ?? undefined,
+    };
   }
 
   if (args.request.learnerProfileId) {

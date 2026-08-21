@@ -65,7 +65,13 @@ export async function POST(req: Request): Promise<Response> {
     request: parsed.data,
   });
   if (!created.ok) {
-    return NextResponse.json({ error: created.error }, { status: created.status });
+    return NextResponse.json(
+      {
+        error: created.error,
+        ...(created.availableFromDate ? { availableFromDate: created.availableFromDate } : {}),
+      },
+      { status: created.status },
+    );
   }
 
   return NextResponse.json({ id: created.bookingId });

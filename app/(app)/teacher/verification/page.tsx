@@ -55,6 +55,10 @@ import { TeacherProfileVisibilityCard } from "../../../../components/teacher/Tea
 import { TeacherSeoReadinessCard } from "../../../../components/teacher/TeacherSeoReadinessCard";
 import { lessonDurationSummaryText, normalizeLessonDurationMinutes } from "../../../../lib/pricing/lessonDuration";
 import {
+  formatAvailableFromDisplayDate,
+  normalizeAvailableFromDate,
+} from "@/lib/teachers/availabilityStartDate";
+import {
   buildTeacherSetupChecklist,
   firstIncompleteTeacherSetupSection,
   type TeacherSetupSectionId,
@@ -73,6 +77,7 @@ type TeacherVerifyRow = {
   intro_session_price_cents?: number | null;
   availability?: string[] | null;
   default_lesson_duration_minutes?: number | null;
+  available_from_date?: string | null;
   verification_level: number | null;
   identity_verified: boolean | null;
   identity_status: string | null;
@@ -151,7 +156,7 @@ type DisciplineCard = {
 
 export default function TeacherProfileManagementPage() {
   const { user, profile, loading } = useAuth();
-  const { t } = useLocale();
+  const { locale, t } = useLocale();
   const searchParams = useSearchParams();
 
   const [busy, setBusy] = useState<string | null>(null);
@@ -251,7 +256,7 @@ export default function TeacherProfileManagementPage() {
       supabase
         .from("teachers")
         .select(
-          "id, name, discipline, bio, image_url, video_url, price_per_lesson, teaching_mode, intro_session_enabled, intro_session_price_cents, availability, default_lesson_duration_minutes, verification_level, identity_verified, identity_status, stripe_identity_status, stripe_identity_failed_reason, diploma_verified, diploma_url, phone_verified, is_verified, location_verification_status, cv_summary, cv_verification_status, city, region, country_code, home_lesson_radius_km, home_lesson_price, home_lesson_enabled, is_public, deactivated_at, deleted_at, location, stripe_account_id, stripe_connect_onboarding_complete, stripe_connect_charges_enabled, stripe_connect_payouts_enabled",
+          "id, name, discipline, bio, image_url, video_url, price_per_lesson, teaching_mode, intro_session_enabled, intro_session_price_cents, availability, default_lesson_duration_minutes, available_from_date, verification_level, identity_verified, identity_status, stripe_identity_status, stripe_identity_failed_reason, diploma_verified, diploma_url, phone_verified, is_verified, location_verification_status, cv_summary, cv_verification_status, city, region, country_code, home_lesson_radius_km, home_lesson_price, home_lesson_enabled, is_public, deactivated_at, deleted_at, location, stripe_account_id, stripe_connect_onboarding_complete, stripe_connect_charges_enabled, stripe_connect_payouts_enabled",
         )
         .eq("user_id", user.id)
         .maybeSingle(),
@@ -271,7 +276,7 @@ export default function TeacherProfileManagementPage() {
           const refetch = await supabase
             .from("teachers")
             .select(
-              "id, name, discipline, bio, image_url, video_url, price_per_lesson, teaching_mode, intro_session_enabled, intro_session_price_cents, availability, default_lesson_duration_minutes, verification_level, identity_verified, identity_status, stripe_identity_status, stripe_identity_failed_reason, diploma_verified, diploma_url, phone_verified, is_verified, location_verification_status, cv_summary, cv_verification_status, city, region, country_code, home_lesson_radius_km, home_lesson_price, home_lesson_enabled, is_public, deactivated_at, deleted_at, location, stripe_account_id, stripe_connect_onboarding_complete, stripe_connect_charges_enabled, stripe_connect_payouts_enabled",
+              "id, name, discipline, bio, image_url, video_url, price_per_lesson, teaching_mode, intro_session_enabled, intro_session_price_cents, availability, default_lesson_duration_minutes, available_from_date, verification_level, identity_verified, identity_status, stripe_identity_status, stripe_identity_failed_reason, diploma_verified, diploma_url, phone_verified, is_verified, location_verification_status, cv_summary, cv_verification_status, city, region, country_code, home_lesson_radius_km, home_lesson_price, home_lesson_enabled, is_public, deactivated_at, deleted_at, location, stripe_account_id, stripe_connect_onboarding_complete, stripe_connect_charges_enabled, stripe_connect_payouts_enabled",
             )
             .eq("user_id", user.id)
             .maybeSingle();
@@ -616,8 +621,12 @@ export default function TeacherProfileManagementPage() {
     const durationMinutes = normalizeLessonDurationMinutes(
       teacherRow?.default_lesson_duration_minutes,
     );
-    return `${t("teacherProfileMgmtAvailabilityDesc")} ${lessonDurationSummaryText(durationMinutes, t)}`;
-  }, [teacherRow?.default_lesson_duration_minutes, t]);
+    const from = normalizeAvailableFromDate(teacherRow?.available_from_date);
+    const fromPart = from
+      ? ` · ${t("availableFromLabel")}: ${formatAvailableFromDisplayDate(from, locale)}`
+      : "";
+    return `${t("teacherProfileMgmtAvailabilityDesc")} ${lessonDurationSummaryText(durationMinutes, t)}${fromPart}`;
+  }, [teacherRow?.default_lesson_duration_minutes, teacherRow?.available_from_date, locale, t]);
 
   const openAddDiscipline = () => {
     const enabled = getEnabledDisciplines();
@@ -1891,7 +1900,7 @@ export default function TeacherProfileManagementPage() {
           cardKey="payments"
           icon={<CreditCard size={18} aria-hidden />}
           title={t("teacherProfileMgmtSectionPayments")}
-          description={t("teacherProfileMgmtPaymentsDesc")}
+          description={`${t("teacherProfileMgmtPaymentsDesc")} ${t("availableFromVisibilityNote")}`}
           state={paymentsState}
           expandedCard={expandedCard}
           onToggle={null}
@@ -1900,6 +1909,24 @@ export default function TeacherProfileManagementPage() {
           ctaHref="/teacher/settings#payouts"
           ctaLabel={t("teacherProfileMgmtPaymentsCta")}
         />
+        <div
+          className="rounded-xl border border-slate-100 bg-slate-50/80 px-3 py-3 text-xs text-slate-700"
+          data-testid="teacher-profile-mgmt-available-from-status"
+        >
+          <p>
+            <span className="font-bold">{t("availableFromPaymentsSeparate")}: </span>
+            {paymentsReady ? t("availableFromPaymentsActive") : t("availableFromPaymentsIncomplete")}
+          </p>
+          {normalizeAvailableFromDate(teacherRow.available_from_date) ? (
+            <p className="mt-1">
+              <span className="font-bold">{t("availableFromLabel")}: </span>
+              {formatAvailableFromDisplayDate(
+                normalizeAvailableFromDate(teacherRow.available_from_date)!,
+                locale,
+              )}
+            </p>
+          ) : null}
+        </div>
       </section>
     </div>
   );
