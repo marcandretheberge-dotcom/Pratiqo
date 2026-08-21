@@ -407,6 +407,7 @@ test("tracked patch avoids generated audio and restricted product systems", () =
     // PR 17A-UX — interactive schedule cells (reuses weekly intervals; no audio).
     "lib/schedule/dayparts.ts",
     "lib/schedule/cellDisplay.ts",
+    "lib/schedule/copyScheduleIntervals.ts",
     "lib/schedule/interactiveCells.ts",
     "lib/schedule/precisionScheduleBanner.ts",
     "lib/schedule/preciseScheduleActivation.ts",

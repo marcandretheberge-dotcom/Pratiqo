@@ -194,3 +194,47 @@ export function buildTimeOptionsForDaypart(daypart: ScheduleDaypart): string[] {
   }
   return out;
 }
+
+/**
+ * Suggest a non-overlapping next interval after existing ones within the daypart.
+ * Prefers a 30-minute gap then up to 60 minutes (or remaining daypart room).
+ * Returns null when no safe interval fits.
+ */
+export function suggestNextDaypartInterval(
+  daypart: ScheduleDaypart,
+  existing: Array<{ startTime: string; endTime: string }>,
+): { startTime: string; endTime: string } | null {
+  const b = daypartBounds(daypart);
+  let cursor = b.startMin;
+  for (const iv of existing) {
+    const n = normalizeWeeklyInterval({ dayOfWeek: 1, startTime: iv.startTime, endTime: iv.endTime });
+    if (!n.ok) continue;
+    cursor = Math.max(cursor, n.value.endMin + 30);
+  }
+  // Snap up to 15-minute grid.
+  cursor = Math.ceil(cursor / 15) * 15;
+  if (cursor >= b.endMin) return null;
+
+  let end = Math.min(b.endMin, cursor + 60);
+  end = Math.floor(end / 15) * 15;
+  if (end <= cursor) return null;
+
+  const candidate = { startTime: minutesToHHMM(cursor), endTime: minutesToHHMM(end) };
+  if (!intervalFitsDaypart(candidate.startTime, candidate.endTime, daypart)) return null;
+
+  const probe = validateDaypartIntervals({
+    dayOfWeek: 1,
+    daypart,
+    enabled: true,
+    intervals: [...existing, candidate],
+  });
+  if (!probe.ok) return null;
+  return candidate;
+}
+
+/** Weekly editor title: "Dimanche matin — hebdomadaire" (never a calendar date). */
+export function formatWeeklyScheduleCellTitle(dayLabel: string, partLabel: string, weeklyLabel: string): string {
+  const day = dayLabel.trim();
+  const part = partLabel.trim().toLowerCase();
+  return `${day} ${part} — ${weeklyLabel}`;
+}

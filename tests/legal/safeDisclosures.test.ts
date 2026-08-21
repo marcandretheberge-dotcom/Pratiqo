@@ -843,6 +843,7 @@ const allowedTeacherScheduleInteractiveCellsFiles = new Set<string>([
   "lib/schedule/dayparts.ts",
   "lib/schedule/cellDisplay.ts",
   "lib/schedule/interactiveCells.ts",
+  "lib/schedule/copyScheduleIntervals.ts",
   "components/teacher/TeacherScheduleInteractiveGrid.tsx",
   "components/teacher/TeacherScheduleCellEditor.tsx",
   "app/(app)/teacher/schedule/page.tsx",
@@ -852,9 +853,27 @@ const allowedTeacherScheduleInteractiveCellsFiles = new Set<string>([
   ".env.example",
   "tests/schedule/interactiveCells.test.ts",
   "tests/schedule/interactiveCellsEndToEnd.test.ts",
+  "tests/schedule/cellEditorPolish.test.ts",
   "tests/schedule/weeklyIntervals.test.ts",
   "app/api/teacher/weekly-intervals/route.ts",
   "tests/legal/marketplaceIndependentTeacherHardening.test.ts",
+  "tests/legal/safeDisclosures.test.ts",
+  "tests/yo/yopratiqoAudioPronunciationOverrides.test.ts",
+  "package.json",
+]);
+
+/** PR 17A-UX-POLISH — schedule cell editor polish. */
+const allowedTeacherScheduleCellEditorPolishFiles = new Set<string>([
+  "lib/schedule/dayparts.ts",
+  "lib/schedule/cellDisplay.ts",
+  "lib/schedule/copyScheduleIntervals.ts",
+  "components/teacher/TeacherScheduleInteractiveGrid.tsx",
+  "components/teacher/TeacherScheduleCellEditor.tsx",
+  "lib/i18n/locales/fr.json",
+  "lib/i18n/locales/en.json",
+  "lib/i18n/locales/es.json",
+  "tests/schedule/cellEditorPolish.test.ts",
+  "tests/schedule/interactiveCells.test.ts",
   "tests/legal/safeDisclosures.test.ts",
   "tests/yo/yopratiqoAudioPronunciationOverrides.test.ts",
   "package.json",
@@ -1133,6 +1152,7 @@ test("safe-disclosure branch did not touch restricted systems", () => {
     if (allowedTeacherScheduleSaveExperienceFiles.has(file)) continue;
     if (allowedTeacherShellSaveStabilizationFiles.has(file)) continue;
     if (allowedTeacherScheduleInteractiveCellsFiles.has(file)) continue;
+    if (allowedTeacherScheduleCellEditorPolishFiles.has(file)) continue;
     if (allowedTeacherSchedulePrecisionBannerFiles.has(file)) continue;
     if (allowedTeacherPreciseScheduleBookingFiles.has(file)) continue;
     if (allowedTeacherScheduleExceptionsCoreFiles.has(file)) continue;

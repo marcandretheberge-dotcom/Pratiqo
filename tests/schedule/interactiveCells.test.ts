@@ -160,6 +160,7 @@ test("interactive grid + editor components wire sticky save and modal", () => {
   assert.match(editor, /aria-modal/);
   assert.match(editor, /scheduleCellApply/);
   assert.match(editor, /scheduleCellCancel/);
+  assert.match(editor, /liveValidation|canApply/);
   assert.match(page, /isTeacherScheduleInteractiveCellsUiEnabled/);
   assert.match(page, /TeacherScheduleInteractiveGrid/);
   assert.match(page, /schedulePreciseDisabledTitle/);
@@ -171,6 +172,7 @@ test("opening editor without Apply does not require page dirty (Apply updates st
   assert.match(grid, /onApply=\{handleApply\}/);
   assert.match(grid, /onClose=\{\(\) => setEditor\(null\)\}/);
   assert.match(grid, /replaceDaypartIntervals/);
+  assert.match(grid, /onCopy=\{handleCopy\}/);
 });
 
 test("env example documents interactive cells flags default ON", () => {
@@ -186,7 +188,7 @@ test("i18n includes interactive cell copy FR/EN/ES", () => {
     assert.match(json, /"scheduleCellEnableSlot"/);
     assert.match(json, /"scheduleCellOutsideDaypart"/);
     assert.match(json, /"scheduleCellLockedReadonly"/);
-    assert.match(json, /"scheduleCellCopySameWeekday"/);
+    assert.match(json, /"scheduleCellCopyTo"/);
     assert.match(json, /"schedulePreciseDisabledTitle"/);
   }
   const fr = read("lib/i18n/locales/fr.json");
