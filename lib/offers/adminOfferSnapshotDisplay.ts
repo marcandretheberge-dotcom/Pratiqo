@@ -56,6 +56,8 @@ export type BookingOfferSnapshotRowInput = {
   teacher_offer_discipline_id_snapshot?: string | null;
   teacher_offer_specialite_snapshot?: string | null;
   teacher_offer_short_description_snapshot?: string | null;
+  teacher_offer_cancellation_preference_snapshot?: string | null;
+  teacher_offer_reschedule_preference_snapshot?: string | null;
   teacher_offer_snapshot_version?: number | string | null;
   booking_payment_source?: string | null;
   package_entitlement_id?: string | null;
@@ -280,6 +282,11 @@ export type AdminBookingOfferSnapshotFields = {
   packageRedemptionSessionNumber: number | null;
   packageRedemptionReversedAt: string | null;
   packageRedemptionReversalSource: string | null;
+  packageRedemptionPolicyEvaluationResult: string | null;
+  packageRedemptionPolicyEvaluatedAt: string | null;
+  packageRedemptionCreditReturnReason: string | null;
+  packageRedemptionManualReviewRequired: boolean | null;
+  cancellationPreferenceSnapshot: string | null;
 };
 
 export const ADMIN_BOOKING_OFFER_SNAPSHOT_SELECT =
@@ -291,6 +298,10 @@ export type AdminPackageRedemptionLite = {
   sessionNumber: number | null;
   reversedAt: string | null;
   reversalSource: string | null;
+  policyEvaluationResult: string | null;
+  policyEvaluatedAt: string | null;
+  creditReturnReason: string | null;
+  manualReviewRequired: boolean | null;
 };
 
 export function emptyAdminPackageCreditFields(): Pick<
@@ -301,6 +312,11 @@ export function emptyAdminPackageCreditFields(): Pick<
   | "packageRedemptionSessionNumber"
   | "packageRedemptionReversedAt"
   | "packageRedemptionReversalSource"
+  | "packageRedemptionPolicyEvaluationResult"
+  | "packageRedemptionPolicyEvaluatedAt"
+  | "packageRedemptionCreditReturnReason"
+  | "packageRedemptionManualReviewRequired"
+  | "cancellationPreferenceSnapshot"
 > {
   return {
     packageEntitlementId: null,
@@ -309,6 +325,11 @@ export function emptyAdminPackageCreditFields(): Pick<
     packageRedemptionSessionNumber: null,
     packageRedemptionReversedAt: null,
     packageRedemptionReversalSource: null,
+    packageRedemptionPolicyEvaluationResult: null,
+    packageRedemptionPolicyEvaluatedAt: null,
+    packageRedemptionCreditReturnReason: null,
+    packageRedemptionManualReviewRequired: null,
+    cancellationPreferenceSnapshot: null,
   };
 }
 
@@ -323,6 +344,11 @@ export function mapAdminPackageCreditFieldsFromBookingRow(
   | "packageRedemptionSessionNumber"
   | "packageRedemptionReversedAt"
   | "packageRedemptionReversalSource"
+  | "packageRedemptionPolicyEvaluationResult"
+  | "packageRedemptionPolicyEvaluatedAt"
+  | "packageRedemptionCreditReturnReason"
+  | "packageRedemptionManualReviewRequired"
+  | "cancellationPreferenceSnapshot"
 > {
   const entitlementId =
     typeof row.package_entitlement_id === "string" && row.package_entitlement_id.trim()
@@ -332,6 +358,11 @@ export function mapAdminPackageCreditFieldsFromBookingRow(
     typeof row.package_redemption_id === "string" && row.package_redemption_id.trim()
       ? row.package_redemption_id
       : redemption?.id ?? null;
+  const cancellationPreferenceSnapshot =
+    typeof row.teacher_offer_cancellation_preference_snapshot === "string" &&
+    row.teacher_offer_cancellation_preference_snapshot.trim()
+      ? row.teacher_offer_cancellation_preference_snapshot.trim()
+      : null;
   return {
     packageEntitlementId: entitlementId,
     packageRedemptionId: redemptionId,
@@ -339,5 +370,10 @@ export function mapAdminPackageCreditFieldsFromBookingRow(
     packageRedemptionSessionNumber: redemption?.sessionNumber ?? null,
     packageRedemptionReversedAt: redemption?.reversedAt ?? null,
     packageRedemptionReversalSource: redemption?.reversalSource ?? null,
+    packageRedemptionPolicyEvaluationResult: redemption?.policyEvaluationResult ?? null,
+    packageRedemptionPolicyEvaluatedAt: redemption?.policyEvaluatedAt ?? null,
+    packageRedemptionCreditReturnReason: redemption?.creditReturnReason ?? null,
+    packageRedemptionManualReviewRequired: redemption?.manualReviewRequired ?? null,
+    cancellationPreferenceSnapshot,
   };
 }

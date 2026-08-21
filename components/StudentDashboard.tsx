@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 import { CreditsWidget } from "@/components/CreditsWidget";
 import { ConfirmCancelBookingDialog } from "@/components/ConfirmCancelBookingDialog";
 import { RescheduleModal, type RescheduleModalBooking } from "@/components/RescheduleModal";
-import { STUDENT_CANCEL_STATUSES, isBookingLessonDateOnOrAfterToday, isLateCancellation } from "@/lib/bookingCancellation";
+import { STUDENT_CANCEL_STATUSES, isBookingLessonDateOnOrAfterToday, isLateCancellation, bookingLessonStartDate } from "@/lib/bookingCancellation";
 import { postCancelBooking } from "@/lib/bookingCancellationClient";
 import type { TranslationKey } from "@/lib/translations";
 import { localeToBcp47 } from "@/lib/i18n/types";
@@ -24,6 +24,12 @@ import {
 import { SupportCaseModal } from "@/components/support/SupportCaseModal";
 import { compareBookingsByStartAsc } from "@/lib/bookings/sort";
 import { AppListSkeleton } from "@/components/loading/AppSkeletons";
+import { isOfferPolicyEnforcementUiEnabled } from "@/lib/offers/offerPolicyEnforcement";
+import {
+  evaluatePackageCancellationPolicy,
+  packageCancelPolicyUiHintFromEvaluation,
+  type PackageCancelPolicyUiHint,
+} from "@/lib/offers/cancellationPolicyEvaluation";
 
 const PEER_UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -42,6 +48,9 @@ type BookingRow = {
   price?: number | null;
   teaching_mode?: string | null;
   meeting_url?: string | null;
+  booking_payment_source?: string | null;
+  package_redemption_id?: string | null;
+  teacher_offer_cancellation_preference_snapshot?: string | null;
 };
 
 type LearnerRow = {
@@ -79,6 +88,9 @@ type BookingWithTeacher = {
   slotDate: string | null;
   timeSlot: string | null;
   createdAt: string | null;
+  bookingPaymentSource: string | null;
+  packageRedemptionId: string | null;
+  cancellationPreferenceSnapshot: string | null;
 };
 
 function messagesHrefForTeacherUser(teacherUserId: string | null | undefined): string {
@@ -127,7 +139,7 @@ export function StudentDashboard() {
       setLoading(true);
       const { data: bookings } = await supabase
         .from("bookings")
-        .select("id, teacher_id, learner_profile_id, status, date, time, slot_date, time_slot, created_at, duration_minutes, price, teaching_mode, meeting_url")
+        .select("id, teacher_id, learner_profile_id, status, date, time, slot_date, time_slot, created_at, duration_minutes, price, teaching_mode, meeting_url, booking_payment_source, package_redemption_id, teacher_offer_cancellation_preference_snapshot")
         .eq("student_id", user.id)
         .in("status", [...STUDENT_CANCEL_STATUSES])
         .order("date", { ascending: true })
@@ -192,6 +204,9 @@ export function StudentDashboard() {
             slotDate: r.slot_date ?? null,
             timeSlot: r.time_slot ?? null,
             createdAt: r.created_at ?? null,
+            bookingPaymentSource: r.booking_payment_source ?? null,
+            packageRedemptionId: r.package_redemption_id ?? null,
+            cancellationPreferenceSnapshot: r.teacher_offer_cancellation_preference_snapshot ?? null,
           };
         })
         .filter((row) =>
@@ -304,6 +319,31 @@ export function StudentDashboard() {
     const b = upcoming.find((x) => x.bookingId === cancelBookingId);
     if (!b) return false;
     return isLateCancellation({ slot_date: b.date, date: b.date, time_slot: b.time, time: b.time });
+  }, [cancelBookingId, upcoming]);
+
+  const cancelPackagePolicyHint = useMemo((): PackageCancelPolicyUiHint => {
+    if (!isOfferPolicyEnforcementUiEnabled() || !cancelBookingId) return null;
+    const b = upcoming.find((x) => x.bookingId === cancelBookingId);
+    if (!b) return null;
+    const isPackage =
+      b.bookingPaymentSource === "package_credit" ||
+      (typeof b.packageRedemptionId === "string" && b.packageRedemptionId.trim().length > 0);
+    if (!isPackage) return null;
+    const evaluation = evaluatePackageCancellationPolicy({
+      bookingStartAt: bookingLessonStartDate({
+        slot_date: b.date,
+        date: b.date,
+        time_slot: b.time,
+        time: b.time,
+      }),
+      cancellationRequestedAt: new Date(),
+      policyCodeSnapshot: b.cancellationPreferenceSnapshot,
+      bookingPaymentSource: b.bookingPaymentSource,
+      redemptionStatus: null,
+      bookingStatus: b.status,
+      hasPackageRedemption: Boolean(b.packageRedemptionId),
+    });
+    return packageCancelPolicyUiHintFromEvaluation(evaluation);
   }, [cancelBookingId, upcoming]);
 
   const executeStudentCancel = async (payload: {
@@ -740,6 +780,7 @@ export function StudentDashboard() {
         busy={cancelBusy}
         role="student"
         isLate={cancelIsLate}
+        packagePolicyHint={cancelPackagePolicyHint}
       />
       <SupportCaseModal
         open={Boolean(supportBookingId)}

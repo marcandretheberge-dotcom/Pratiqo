@@ -36,7 +36,11 @@ export type CancellationOutcome =
   /** Student cancelled <24h with no exceptional-review request. No refund, no manual case opened. */
   | "late_no_refund"
   /** Package-credit booking cancelled; forfait session restored (not a Stripe refund). */
-  | "package_credit_restored";
+  | "package_credit_restored"
+  /** Package-credit cancelled outside teacher notice window; session not auto-returned. */
+  | "package_credit_not_restored"
+  /** Package-credit cancelled under teacher manual_review preference; agreement needed. */
+  | "package_credit_manual_review";
 
 export type CancellationOutcomeCopyKey =
   | "cancelOutcomeNoPayment"
@@ -44,7 +48,9 @@ export type CancellationOutcomeCopyKey =
   | "cancelOutcomeManualReview"
   | "cancelOutcomeLateNoRefund"
   | "cancelOutcomeReviewRequested"
-  | "cancelOutcomePackageCreditRestored";
+  | "cancelOutcomePackageCreditRestored"
+  | "cancelOutcomePackageCreditNotRestored"
+  | "cancelOutcomePackageCreditManualReview";
 
 /**
  * Caller-friendly copy key map. The UI picks `<key>Title` / `<key>Body`
@@ -71,6 +77,10 @@ export function copyKeyForOutcome(
       return "cancelOutcomeLateNoRefund";
     case "package_credit_restored":
       return "cancelOutcomePackageCreditRestored";
+    case "package_credit_not_restored":
+      return "cancelOutcomePackageCreditNotRestored";
+    case "package_credit_manual_review":
+      return "cancelOutcomePackageCreditManualReview";
   }
 }
 
@@ -103,6 +113,9 @@ export type CancellationDecisionInput = {
  * if the booking has no Stripe payment, the refund call fails, or the teacher
  * payout has already been transferred. That degradation is decided in
  * `lib/payments/refunds.ts`, not here.
+ *
+ * Package-credit restoration is decided separately (PR 10C / PR 16B) and does
+ * not use this Stripe-oriented decision tree.
  */
 export function decideCancellationAction(input: CancellationDecisionInput): CancellationDecision {
   if (input.cancellerRole === "teacher") {

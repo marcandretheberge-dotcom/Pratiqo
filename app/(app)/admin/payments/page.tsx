@@ -576,6 +576,15 @@ function AdminPaymentsInner() {
                   packageRedemptionSessionNumber={selected.packageRedemptionSessionNumber}
                   packageRedemptionReversedAt={selected.packageRedemptionReversedAt}
                   packageRedemptionReversalSource={selected.packageRedemptionReversalSource}
+                  packageRedemptionPolicyEvaluationResult={
+                    selected.packageRedemptionPolicyEvaluationResult
+                  }
+                  packageRedemptionPolicyEvaluatedAt={selected.packageRedemptionPolicyEvaluatedAt}
+                  packageRedemptionCreditReturnReason={selected.packageRedemptionCreditReturnReason}
+                  packageRedemptionManualReviewRequired={
+                    selected.packageRedemptionManualReviewRequired
+                  }
+                  cancellationPreferenceSnapshot={selected.cancellationPreferenceSnapshot}
                 />
                 {selected.bookingId ? (
                   <div>

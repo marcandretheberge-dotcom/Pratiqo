@@ -30,6 +30,8 @@ const PRODUCT_FORBIDDEN = [
   /Acheter un cours Pratiqo/i,
   /Nos forfaits Pratiqo/i,
   /Acheter un forfait Pratiqo/i,
+  /Politique Pratiqo imposée/i,
+  /Garantie de remboursement Pratiqo/i,
   /Pratiqo vous offre/i,
   /Pratiqo vous assigne/i,
   /Mes formules/i,

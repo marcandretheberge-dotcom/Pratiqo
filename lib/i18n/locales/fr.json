@@ -756,6 +756,15 @@
   "cancelOutcomeNoPaymentBody": "Aucun paiement n'était associé à cette réservation. Aucun remboursement à effectuer.",
   "cancelOutcomePackageCreditRestoredTitle": "Annulation enregistrée.",
   "cancelOutcomePackageCreditRestoredBody": "Cette séance n’a pas été utilisée. Elle a été remise dans le forfait proposé par le professeur.",
+  "cancelOutcomePackageCreditNotRestoredTitle": "Annulation enregistrée.",
+  "cancelOutcomePackageCreditNotRestoredBody": "Selon les conditions proposées par le professeur, cette séance ne sera pas automatiquement remise dans le forfait.",
+  "cancelOutcomePackageCreditManualReviewTitle": "Annulation enregistrée.",
+  "cancelOutcomePackageCreditManualReviewBody": "Cette annulation nécessite une entente avec le professeur. La séance n’a pas été remise automatiquement dans le forfait.",
+  "cancelPackagePolicyEligibleHint": "Cette annulation respecte les conditions proposées par le professeur. La séance sera remise dans votre forfait.",
+  "cancelPackagePolicyOutsideWindowHint": "Selon les conditions proposées par le professeur, cette séance ne sera pas automatiquement remise dans le forfait.",
+  "cancelPackagePolicyManualHint": "Cette annulation nécessite une entente avec le professeur.",
+  "cancelPackagePolicyTeacherRestoreHint": "La séance sera remise dans le forfait de l’élève.",
+  "cancelPackagePolicyTeacherReviewHint": "Cette annulation nécessite une vérification selon les conditions proposées.",
   "legendAvailable": "Vert = disponible",
   "legendBooked": "Orange = réservation (non modifiable)",
   "legendLockedNotice": "Gris = verrouillé 24 h",
@@ -2775,5 +2784,10 @@
   "adminPaymentSourcePackageRedemptionStatus": "Statut redemption",
   "adminPaymentSourcePackageSessionNumber": "N° de séance",
   "adminPaymentSourcePackageReversedAt": "Crédit remis le",
-  "adminPaymentSourcePackageReversalSource": "Source de remise"
+  "adminPaymentSourcePackageReversalSource": "Source de remise",
+  "adminPaymentSourcePackagePolicyResult": "Évaluation des conditions (forfait)",
+  "adminPaymentSourcePackagePolicyEvaluatedAt": "Évalué le",
+  "adminPaymentSourcePackageCreditReturnReason": "Motif remise / non-remise",
+  "adminPaymentSourcePackageManualReviewRequired": "Revue manuelle requise",
+  "adminPaymentSourcePackageCancellationPreference": "Préférence d’annulation (snapshot)"
 }

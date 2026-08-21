@@ -32,6 +32,7 @@ import {
   STUDENT_CANCEL_STATUSES,
   isBookingLessonDateOnOrAfterToday,
   isLateCancellation,
+  bookingLessonStartDate,
 } from "@/lib/bookingCancellation";
 import { postCancelBooking } from "@/lib/bookingCancellationClient";
 import {
@@ -41,6 +42,12 @@ import {
 } from "@/lib/bookingLifecycle";
 import { formatAccountingDisplay } from "@/lib/currency/format";
 import { AppTeacherDashboardSkeleton } from "@/components/loading/AppSkeletons";
+import { isOfferPolicyEnforcementUiEnabled } from "@/lib/offers/offerPolicyEnforcement";
+import {
+  evaluatePackageCancellationPolicy,
+  packageCancelPolicyUiHintFromEvaluation,
+  type PackageCancelPolicyUiHint,
+} from "@/lib/offers/cancellationPolicyEvaluation";
 
 interface BookingWithTeacher {
   id: string;
@@ -54,6 +61,9 @@ interface BookingWithTeacher {
   teachingMode?: string;
   slotDate?: string | null;
   timeSlot?: string | null;
+  bookingPaymentSource?: string | null;
+  packageRedemptionId?: string | null;
+  cancellationPreferenceSnapshot?: string | null;
 }
 
 type TeacherBookingRow = {
@@ -75,6 +85,9 @@ type TeacherBookingRow = {
   student_address?: string | null;
   completion_outcome?: string | null;
   completed_at?: string | null;
+  booking_payment_source?: string | null;
+  package_redemption_id?: string | null;
+  teacher_offer_cancellation_preference_snapshot?: string | null;
 };
 
 type LearnerContext = {
@@ -325,6 +338,56 @@ export function Dashboard() {
 
   const cancelIsLate = cancelLessonRow ? isLateCancellation(cancelLessonRow) : false;
 
+  const cancelPackagePolicyHint = useMemo((): PackageCancelPolicyUiHint => {
+    if (!isOfferPolicyEnforcementUiEnabled() || !cancelBooking) return null;
+
+    const raw =
+      cancelBooking.side === "student"
+        ? (bookings.find((b) => b.id === cancelBooking.id) as Record<string, unknown> | undefined)
+        : (teacherBookings.find((b) => String(b.id) === cancelBooking.id) as
+            | Record<string, unknown>
+            | undefined);
+    if (!raw) return null;
+
+    const paymentSource =
+      typeof raw.booking_payment_source === "string"
+        ? raw.booking_payment_source
+        : typeof raw.bookingPaymentSource === "string"
+          ? raw.bookingPaymentSource
+          : null;
+    const redemptionId =
+      typeof raw.package_redemption_id === "string"
+        ? raw.package_redemption_id
+        : typeof raw.packageRedemptionId === "string"
+          ? raw.packageRedemptionId
+          : null;
+    const isPackage =
+      paymentSource === "package_credit" ||
+      (typeof redemptionId === "string" && redemptionId.trim().length > 0);
+    if (!isPackage) return null;
+
+    // Teacher cancel always restores package credit.
+    if (cancelBooking.side === "teacher") return "eligible";
+
+    const pref =
+      typeof raw.teacher_offer_cancellation_preference_snapshot === "string"
+        ? raw.teacher_offer_cancellation_preference_snapshot
+        : typeof raw.cancellationPreferenceSnapshot === "string"
+          ? raw.cancellationPreferenceSnapshot
+          : null;
+    const status = typeof raw.status === "string" ? raw.status : "confirmed";
+    const evaluation = evaluatePackageCancellationPolicy({
+      bookingStartAt: cancelLessonRow ? bookingLessonStartDate(cancelLessonRow) : null,
+      cancellationRequestedAt: new Date(),
+      policyCodeSnapshot: pref,
+      bookingPaymentSource: paymentSource,
+      redemptionStatus: null,
+      bookingStatus: status,
+      hasPackageRedemption: Boolean(redemptionId),
+    });
+    return packageCancelPolicyUiHintFromEvaluation(evaluation);
+  }, [cancelBooking, bookings, teacherBookings, cancelLessonRow]);
+
   const runConfirmedCancelFromDialog = async ({
     reason,
     message,
@@ -531,6 +594,10 @@ export function Dashboard() {
           teachingMode: row.teaching_mode as string | undefined,
           slotDate: (row.slot_date as string | null) ?? null,
           timeSlot: (row.time_slot as string | null) ?? null,
+          bookingPaymentSource: (row.booking_payment_source as string | null) ?? null,
+          packageRedemptionId: (row.package_redemption_id as string | null) ?? null,
+          cancellationPreferenceSnapshot:
+            (row.teacher_offer_cancellation_preference_snapshot as string | null) ?? null,
         });
       }
       setBookings(list);
@@ -984,6 +1051,9 @@ export function Dashboard() {
               busy={cancelBusy}
               role="teacher"
               isLate={cancelBooking?.side === "teacher" ? cancelIsLate : false}
+              packagePolicyHint={
+                cancelBooking?.side === "teacher" ? cancelPackagePolicyHint : null
+              }
             />
 
             <AssignmentHub mode="teacher" />
@@ -1142,6 +1212,7 @@ export function Dashboard() {
         busy={cancelBusy}
         role="student"
         isLate={cancelBooking?.side === "student" ? cancelIsLate : false}
+        packagePolicyHint={cancelBooking?.side === "student" ? cancelPackagePolicyHint : null}
       />
     </div>
   );

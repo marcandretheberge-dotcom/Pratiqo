@@ -27,15 +27,17 @@ import { t as translate } from "@/lib/translations";
 import type { Locale } from "@/lib/i18n/types";
 import { notifyBookingCancelled } from "@/lib/bookings/cancellationNotifications";
 import {
+  forfeitPackageRedemptionForBooking,
   reversePackageRedemptionForBooking,
   type PackageReversalSource,
 } from "@/lib/offers/packageRedemptions";
+import { evaluatePackageCancellationPolicy } from "@/lib/offers/cancellationPolicyEvaluation";
+import { isOfferPolicyEnforcementEnabled } from "@/lib/offers/offerPolicyEnforcement";
 
 export const runtime = "nodejs";
 
-// Future PR: teacher-configurable cancellation/rescheduling preferences for offers/packages,
-// within Pratiqo marketplace safety and fairness rules.
-// See docs/product/marketplace-independent-teacher-guardrails.md.
+// Future PR: apply rescheduling_policy_code_snapshot and rescheduling_notice_hours_snapshot
+// to package-credit rescheduling flow.
 //
 // Legal TODO before public package launch:
 // Terms must clarify that the package service contract is between the learner
@@ -97,7 +99,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const { data: booking, error: bookingErr } = await admin
     .from("bookings")
     .select(
-      "id, teacher_id, student_id, status, slot_date, date, time_slot, time, price, stripe_payment_intent_id, booking_payment_source, package_entitlement_id, package_redemption_id",
+      "id, teacher_id, student_id, status, slot_date, date, time_slot, time, price, stripe_payment_intent_id, booking_payment_source, package_entitlement_id, package_redemption_id, teacher_offer_cancellation_preference_snapshot",
     )
     .eq("id", bookingId)
     .maybeSingle();
@@ -209,6 +211,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   let supportCaseId: string | null = null;
   let bookingRefundStatus = refundPlan.refund_status;
   let packageCreditRestored = false;
+  let policyEvaluationJson: ReturnType<typeof evaluatePackageCancellationPolicy> | null = null;
 
   const supportCaseBase = {
     bookingId,
@@ -250,61 +253,173 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       .eq("id", bookingId);
   }
 
+  const packageAdminRpc = {
+    rpc: async (fn: string, args: Record<string, unknown>) => {
+      const { data, error } = await admin.rpc(fn, args);
+      return {
+        data,
+        error: error ? { message: error.message, code: error.code } : null,
+      };
+    },
+  };
+
+  async function recordPolicyAuditOnRedemption(fields: {
+    policyEvaluationResult: string;
+    creditReturnReason: string;
+    manualReviewRequired: boolean;
+  }): Promise<void> {
+    await admin
+      .from("package_redemptions")
+      .update({
+        policy_evaluation_result: fields.policyEvaluationResult,
+        policy_evaluated_at: new Date().toISOString(),
+        credit_return_reason: fields.creditReturnReason,
+        manual_review_required: fields.manualReviewRequired,
+      })
+      .eq("booking_id", bookingId);
+  }
+
   if (isPackageCredit) {
     // Package-credit bookings never open Stripe Checkout for the redeemed
-    // session. Restore the forfait session atomically; do not invent refunds.
+    // session. Restore or forfeit the forfait session; do not invent refunds.
     const reversalSource: PackageReversalSource =
       cancellerRole === "student" ? "student_cancelled" : "teacher_cancelled";
-    try {
-      const reverseResult = await reversePackageRedemptionForBooking({
-        admin: {
-          rpc: async (fn, args) => {
-            const { data, error } = await admin.rpc(fn, args);
-            return {
-              data,
-              error: error ? { message: error.message, code: error.code } : null,
-            };
-          },
-        },
-        bookingId,
-        actorUserId: user.id,
-        source: reversalSource,
-        reason,
-      });
 
-      if (!reverseResult.ok) {
-        console.error("[bookings/cancel] package credit reverse failed", reverseResult.error);
-        await escalateToManualReview(
-          "missing_payment_data",
-          `package_credit_reversal_failed:${reverseResult.error}`,
-        );
-      } else if (reverseResult.reason === "no_package_redemption") {
-        outcome = "no_payment";
-        bookingRefundStatus = "not_required";
-        await admin
-          .from("bookings")
-          .update({
-            refund_status: "not_required",
-            refund_method: null,
-            refund_amount: null,
-          })
-          .eq("id", bookingId);
+    let redemptionStatus: string | null = null;
+    if (typeof booking.package_redemption_id === "string" && booking.package_redemption_id.trim()) {
+      const { data: redRow } = await admin
+        .from("package_redemptions")
+        .select("status")
+        .eq("id", booking.package_redemption_id)
+        .maybeSingle();
+      redemptionStatus = typeof redRow?.status === "string" ? redRow.status : null;
+    }
+
+    const policyEval = evaluatePackageCancellationPolicy({
+      bookingStartAt: lessonStart,
+      cancellationRequestedAt: new Date(cancelledAtIso),
+      policyCodeSnapshot: booking.teacher_offer_cancellation_preference_snapshot as string | null,
+      bookingPaymentSource: booking.booking_payment_source as string | null,
+      redemptionStatus,
+      bookingStatus: status,
+      hasPackageRedemption:
+        typeof booking.package_redemption_id === "string" &&
+        booking.package_redemption_id.trim().length > 0,
+    });
+    policyEvaluationJson = policyEval;
+
+    // Teacher-initiated cancel always restores credit (student must not lose
+    // a session when the teacher cancels). Flag OFF → legacy PR 10C restore.
+    const enforcePolicy = isOfferPolicyEnforcementEnabled() && cancellerRole === "student";
+    const shouldRestoreCredit = !enforcePolicy || policyEval.eligibleForAutomaticCreditReturn;
+
+    try {
+      if (shouldRestoreCredit) {
+        const reverseResult = await reversePackageRedemptionForBooking({
+          admin: packageAdminRpc,
+          bookingId,
+          actorUserId: user.id,
+          source: reversalSource,
+          reason,
+        });
+
+        if (!reverseResult.ok) {
+          console.error("[bookings/cancel] package credit reverse failed", reverseResult.error);
+          await escalateToManualReview(
+            "missing_payment_data",
+            `package_credit_reversal_failed:${reverseResult.error}`,
+          );
+        } else if (reverseResult.reason === "no_package_redemption") {
+          outcome = "no_payment";
+          bookingRefundStatus = "not_required";
+          await admin
+            .from("bookings")
+            .update({
+              refund_status: "not_required",
+              refund_method: null,
+              refund_amount: null,
+            })
+            .eq("id", bookingId);
+        } else {
+          packageCreditRestored = reverseResult.reversed || reverseResult.idempotent;
+          // If already forfeited (status cancelled), reverse is idempotent but
+          // credit was not restored — correct the outcome.
+          if (reverseResult.redemptionStatus === "cancelled" && !reverseResult.reversed) {
+            packageCreditRestored = false;
+            outcome =
+              policyEval.reason === "manual_policy"
+                ? "package_credit_manual_review"
+                : "package_credit_not_restored";
+          } else {
+            outcome = "package_credit_restored";
+          }
+          bookingRefundStatus = "not_required";
+          await admin
+            .from("bookings")
+            .update({
+              refund_status: "not_required",
+              refund_method: null,
+              refund_amount: null,
+            })
+            .eq("id", bookingId);
+          if (enforcePolicy && packageCreditRestored) {
+            await recordPolicyAuditOnRedemption({
+              policyEvaluationResult: policyEval.reason,
+              creditReturnReason: policyEval.reason,
+              manualReviewRequired: false,
+            });
+          }
+        }
       } else {
-        packageCreditRestored = reverseResult.reversed || reverseResult.idempotent;
-        outcome = "package_credit_restored";
-        bookingRefundStatus = "not_required";
-        await admin
-          .from("bookings")
-          .update({
-            refund_status: "not_required",
-            refund_method: null,
-            refund_amount: null,
-          })
-          .eq("id", bookingId);
+        const forfeitResult = await forfeitPackageRedemptionForBooking({
+          admin: packageAdminRpc,
+          bookingId,
+          actorUserId: user.id,
+          source: reversalSource,
+          reason,
+          policyEvaluationResult: policyEval.reason,
+          creditReturnReason: policyEval.reason,
+          manualReviewRequired: policyEval.requiresManualReview,
+        });
+
+        if (!forfeitResult.ok) {
+          console.error("[bookings/cancel] package credit forfeit failed", forfeitResult.error);
+          await escalateToManualReview(
+            "missing_payment_data",
+            `package_credit_forfeit_failed:${forfeitResult.error}`,
+          );
+        } else if (forfeitResult.reason === "already_reversed") {
+          packageCreditRestored = true;
+          outcome = "package_credit_restored";
+          bookingRefundStatus = "not_required";
+          await admin
+            .from("bookings")
+            .update({
+              refund_status: "not_required",
+              refund_method: null,
+              refund_amount: null,
+            })
+            .eq("id", bookingId);
+        } else {
+          packageCreditRestored = false;
+          outcome =
+            policyEval.requiresManualReview || policyEval.reason === "manual_policy"
+              ? "package_credit_manual_review"
+              : "package_credit_not_restored";
+          bookingRefundStatus = "not_required";
+          await admin
+            .from("bookings")
+            .update({
+              refund_status: "not_required",
+              refund_method: null,
+              refund_amount: null,
+            })
+            .eq("id", bookingId);
+        }
       }
     } catch (e) {
       const detail = e instanceof Error ? e.message : "unknown package reverse error";
-      console.error("[bookings/cancel] package credit reverse threw", e);
+      console.error("[bookings/cancel] package credit reverse/forfeit threw", e);
       await escalateToManualReview("missing_payment_data", `package_credit_reversal_threw:${detail}`);
     }
   } else if (decision.kind === "open_manual_review") {
@@ -467,5 +582,6 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     support_case_id: supportCaseId,
     policy_window: isLate ? "less_than_24h" : "more_than_24h",
     package_credit_restored: packageCreditRestored,
+    policy_evaluation: policyEvaluationJson,
   });
 }

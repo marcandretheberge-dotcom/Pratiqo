@@ -47,6 +47,7 @@ export function ConfirmCancelBookingDialog({
   busy,
   role,
   isLate,
+  packagePolicyHint = null,
 }: {
   open: boolean;
   onClose: () => void;
@@ -60,6 +61,11 @@ export function ConfirmCancelBookingDialog({
   role?: CancellerRole;
   /** True when the lesson is closer than 24h — show the late-cancellation warning. */
   isLate?: boolean;
+  /**
+   * When offer-policy enforcement UI is ON and this is a package-credit booking,
+   * preview whether the session returns to the forfait. Hidden when null.
+   */
+  packagePolicyHint?: "eligible" | "outside_window" | "manual" | null;
 }) {
   const { t } = useLocale();
   const titleId = useId();
@@ -146,6 +152,23 @@ export function ConfirmCancelBookingDialog({
           >
             <AlertTriangle size={16} className="mt-0.5 shrink-0" aria-hidden />
             <span className="leading-relaxed">{t("lateCancellationWarning")}</span>
+          </div>
+        ) : null}
+
+        {packagePolicyHint ? (
+          <div
+            data-testid="cancel-package-policy-hint"
+            className="mt-3 rounded-2xl border border-[var(--p-border-light)] bg-[#fafaf8] px-3 py-2 text-[13px] text-slate-800 leading-relaxed"
+          >
+            {effectiveRole === "teacher"
+              ? packagePolicyHint === "eligible"
+                ? t("cancelPackagePolicyTeacherRestoreHint")
+                : t("cancelPackagePolicyTeacherReviewHint")
+              : packagePolicyHint === "eligible"
+                ? t("cancelPackagePolicyEligibleHint")
+                : packagePolicyHint === "manual"
+                  ? t("cancelPackagePolicyManualHint")
+                  : t("cancelPackagePolicyOutsideWindowHint")}
           </div>
         ) : null}
 

@@ -756,6 +756,15 @@
   "cancelOutcomeNoPaymentBody": "No había pago asociado a esta reserva. No hay nada que reembolsar.",
   "cancelOutcomePackageCreditRestoredTitle": "Cancelación registrada.",
   "cancelOutcomePackageCreditRestoredBody": "Esta sesión no se usó. Se ha devuelto al paquete propuesto por el profesor.",
+  "cancelOutcomePackageCreditNotRestoredTitle": "Cancelación registrada.",
+  "cancelOutcomePackageCreditNotRestoredBody": "Según las condiciones propuestas por el profesor, esta sesión no se devolverá automáticamente al paquete.",
+  "cancelOutcomePackageCreditManualReviewTitle": "Cancelación registrada.",
+  "cancelOutcomePackageCreditManualReviewBody": "Esta cancelación requiere un acuerdo con el profesor. La sesión no se ha devuelto automáticamente al paquete.",
+  "cancelPackagePolicyEligibleHint": "Esta cancelación respeta las condiciones propuestas por el profesor. La sesión se devolverá a tu paquete.",
+  "cancelPackagePolicyOutsideWindowHint": "Según las condiciones propuestas por el profesor, esta sesión no se devolverá automáticamente al paquete.",
+  "cancelPackagePolicyManualHint": "Esta cancelación requiere un acuerdo con el profesor.",
+  "cancelPackagePolicyTeacherRestoreHint": "La sesión se devolverá al paquete del alumno.",
+  "cancelPackagePolicyTeacherReviewHint": "Esta cancelación requiere una verificación según las condiciones propuestas.",
   "legendAvailable": "Verde = disponible",
   "legendBooked": "Naranja = reservado (no editable)",
   "legendLockedNotice": "Gris = bloqueado por 24 h",
@@ -2775,5 +2784,10 @@
   "adminPaymentSourcePackageRedemptionStatus": "Estado de redemption",
   "adminPaymentSourcePackageSessionNumber": "N.º de sesión",
   "adminPaymentSourcePackageReversedAt": "Crédito restaurado el",
-  "adminPaymentSourcePackageReversalSource": "Origen de la restauración"
+  "adminPaymentSourcePackageReversalSource": "Origen de la restauración",
+  "adminPaymentSourcePackagePolicyResult": "Evaluación de política (paquete)",
+  "adminPaymentSourcePackagePolicyEvaluatedAt": "Evaluado el",
+  "adminPaymentSourcePackageCreditReturnReason": "Motivo de devolución / no devolución",
+  "adminPaymentSourcePackageManualReviewRequired": "Revisión manual requerida",
+  "adminPaymentSourcePackageCancellationPreference": "Preferencia de cancelación (snapshot)"
 }
