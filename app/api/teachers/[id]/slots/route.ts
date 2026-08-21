@@ -17,9 +17,12 @@ import { canBookTeacherOnDate, normalizeAvailableFromDate } from "@/lib/teachers
 import {
   dayOfWeekForISODate,
   generateSlotsFromWeeklyIntervals,
-  isTeacherScheduleIntervalsEnabled,
   mapDbRowsToNormalized,
 } from "@/lib/schedule/weeklyIntervals";
+import {
+  normalizeTeacherScheduleMode,
+  shouldUsePreciseIntervalsForBooking,
+} from "@/lib/schedule/preciseScheduleActivation";
 import {
   findExceptionForDate,
   generateSlotsFromDateException,
@@ -47,7 +50,7 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
     const { data: teacher, error: tErr } = await admin
       .from("teachers")
       .select(
-        "id, availability, default_lesson_duration_minutes, available_from_date, booking_buffer_before_minutes, booking_buffer_after_minutes",
+        "id, availability, default_lesson_duration_minutes, available_from_date, booking_buffer_before_minutes, booking_buffer_after_minutes, schedule_mode",
       )
       .eq("id", teacherId)
       .maybeSingle();
@@ -83,6 +86,10 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
     const buffers = normalizeTeacherBufferSettings(
       teacher as Parameters<typeof normalizeTeacherBufferSettings>[0],
     );
+    const scheduleMode = normalizeTeacherScheduleMode(
+      (teacher as { schedule_mode?: string | null }).schedule_mode,
+    );
+    const usePrecise = shouldUsePreciseIntervalsForBooking({ scheduleMode });
     const dayKey = dayShortKeyForISODate(date);
     const dayAvail = weekly[dayKey] || { matin: false, apresmidi: false, soir: false };
 
@@ -165,7 +172,7 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
       }
     }
 
-    if (isTeacherScheduleIntervalsEnabled()) {
+    if (usePrecise) {
       const { data: intervalRows } = await admin
         .from("teacher_weekly_availability_intervals")
         .select("day_of_week, start_time, end_time, is_active")
@@ -192,6 +199,7 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
         date,
         preciseIntervals: true,
         hasWeeklyIntervals: intervals.length > 0,
+        scheduleMode,
       });
     }
 

@@ -1,9 +1,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   getAvailableDaysFromWeeklyIntervals,
-  isTeacherScheduleIntervalsEnabled,
   mapDbRowsToNormalized,
 } from "@/lib/schedule/weeklyIntervals";
+import {
+  normalizeTeacherScheduleMode,
+  shouldUsePreciseIntervalsForBooking,
+} from "@/lib/schedule/preciseScheduleActivation";
 import {
   findExceptionForDate,
   generateSlotsFromDateException,
@@ -152,7 +155,7 @@ export async function computeAvailableDaysForTeacher(
   const { data: teacher, error } = await admin
     .from("teachers")
     .select(
-      "availability, default_lesson_duration_minutes, available_from_date, booking_buffer_before_minutes, booking_buffer_after_minutes",
+      "availability, default_lesson_duration_minutes, available_from_date, booking_buffer_before_minutes, booking_buffer_after_minutes, schedule_mode",
     )
     .eq("id", teacherId)
     .maybeSingle();
@@ -177,6 +180,10 @@ export async function computeAvailableDaysForTeacher(
   const availableFromDate = normalizeAvailableFromDate(
     (teacher as { available_from_date?: string | null }).available_from_date,
   );
+  const scheduleMode = normalizeTeacherScheduleMode(
+    (teacher as { schedule_mode?: string | null }).schedule_mode,
+  );
+  const usePrecise = shouldUsePreciseIntervalsForBooking({ scheduleMode });
 
   const start = new Date();
   start.setHours(0, 0, 0, 0);
@@ -217,14 +224,14 @@ export async function computeAvailableDaysForTeacher(
   };
 
   let rawDays: Record<string, number>;
-  if (isTeacherScheduleIntervalsEnabled()) {
+  if (usePrecise) {
     const { data: intervalRows } = await admin
       .from("teacher_weekly_availability_intervals")
       .select("day_of_week, start_time, end_time, is_active")
       .eq("teacher_id", teacherId)
       .eq("is_active", true);
     const intervals = mapDbRowsToNormalized(intervalRows ?? []);
-    // Flag ON: intervals are the sole source of truth (empty → no bookable days).
+    // Precise mode: intervals are the sole source of truth (empty → no bookable days).
     rawDays = getAvailableDaysFromWeeklyIntervals(
       intervals,
       durationMinutes,

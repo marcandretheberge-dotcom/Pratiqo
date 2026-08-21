@@ -875,6 +875,34 @@ const allowedTeacherSchedulePrecisionBannerFiles = new Set<string>([
   "package.json",
 ]);
 
+/** PR 17A-CORE — precise schedule booking source of truth. */
+const allowedTeacherPreciseScheduleBookingFiles = new Set<string>([
+  "supabase/migrations/112_teacher_schedule_mode.sql",
+  "lib/schedule/preciseScheduleActivation.ts",
+  "lib/bookings/teacherScheduleEligibility.ts",
+  "lib/bookings/weeklyIntervalGuard.ts",
+  "lib/bookings/createPendingPaymentBooking.ts",
+  "lib/offers/packageRedemptions.ts",
+  "lib/teacherSlotQueries.ts",
+  "lib/admin/teacher360.ts",
+  "app/api/teacher/schedule/activate-precise/route.ts",
+  "app/api/teachers/[id]/slots/route.ts",
+  "app/(app)/teacher/schedule/page.tsx",
+  "app/(app)/admin/users/[id]/page.tsx",
+  "components/teacher/TeacherScheduleStatus.tsx",
+  "components/BookingModal.tsx",
+  "lib/i18n/locales/fr.json",
+  "lib/i18n/locales/en.json",
+  "lib/i18n/locales/es.json",
+  ".env.example",
+  "tests/schedule/preciseScheduleBookingSource.test.ts",
+  "tests/schedule/weeklyIntervals.test.ts",
+  "tests/legal/marketplaceIndependentTeacherHardening.test.ts",
+  "tests/legal/safeDisclosures.test.ts",
+  "tests/yo/yopratiqoAudioPronunciationOverrides.test.ts",
+  "package.json",
+]);
+
 function touchesSafeDisclosureScope(file: string): boolean {
   return (
     liveDisclosureFiles.includes(file) ||
@@ -1066,6 +1094,7 @@ test("safe-disclosure branch did not touch restricted systems", () => {
     if (allowedTeacherShellSaveStabilizationFiles.has(file)) continue;
     if (allowedTeacherScheduleInteractiveCellsFiles.has(file)) continue;
     if (allowedTeacherSchedulePrecisionBannerFiles.has(file)) continue;
+    if (allowedTeacherPreciseScheduleBookingFiles.has(file)) continue;
     for (const rule of restrictedRules) {
       if (rule.re.test(file)) {
         violations.push(`${file} (${rule.label})`);

@@ -390,7 +390,7 @@ export async function redeemPackageSessionBooking(args: {
   }
 
   const { data: teacher, error: teacherErr } = await adminFrom("teachers")
-    .select("id, available_from_date")
+    .select("id, available_from_date, schedule_mode")
     .eq("id", teacherId)
     .maybeSingle();
   if (teacherErr) {
@@ -427,6 +427,7 @@ export async function redeemPackageSessionBooking(args: {
       slotDate: args.request.slotDate,
       timeSlot: args.request.timeSlot,
       durationMinutes,
+      scheduleMode: (teacher as { schedule_mode?: string | null } | null)?.schedule_mode,
     });
     if (outside) {
       return { ok: false, status: outside.status, error: outside.error };

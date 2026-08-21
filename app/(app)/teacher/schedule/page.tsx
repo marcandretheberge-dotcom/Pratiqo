@@ -29,9 +29,15 @@ import { TeacherScheduleIntervalMigrationModal } from "@/components/teacher/Teac
 import { TeacherScheduleExceptionsEditor } from "@/components/teacher/TeacherScheduleExceptionsEditor";
 import { TeacherScheduleInteractiveGrid } from "@/components/teacher/TeacherScheduleInteractiveGrid";
 import { TeacherSchedulePrecisionBanner } from "@/components/teacher/TeacherSchedulePrecisionBanner";
+import { TeacherScheduleStatus } from "@/components/teacher/TeacherScheduleStatus";
 import { isTeacherScheduleExceptionsUiEnabled } from "@/lib/schedule/dateExceptions";
 import { isTeacherScheduleInteractiveCellsUiEnabled } from "@/lib/schedule/interactiveCells";
 import { dispatchConfigurePrecision } from "@/lib/schedule/precisionScheduleBanner";
+import {
+  isTeacherPreciseScheduleBookingUiEnabled,
+  normalizeTeacherScheduleMode,
+  type TeacherScheduleMode,
+} from "@/lib/schedule/preciseScheduleActivation";
 import {
   isTeacherScheduleStickySaveEnabled,
 } from "@/lib/schedule/scheduleSaveFlags";
@@ -143,6 +149,8 @@ function TeacherScheduleInner() {
   const [teacherDiscipline, setTeacherDiscipline] = useState("—");
   const [availability, setAvailability] = useState<string[]>([]);
   const [preciseIntervalCount, setPreciseIntervalCount] = useState(0);
+  const [scheduleMode, setScheduleMode] = useState<TeacherScheduleMode>("legacy_blocks");
+  const preciseBookingUi = isTeacherPreciseScheduleBookingUiEnabled();
   const [teachingMode, setTeachingMode] = useState<string>("both");
   const [bufferBefore, setBufferBefore] = useState<number>(0);
   const [bufferAfter, setBufferAfter] = useState<number>(0);
@@ -220,12 +228,15 @@ function TeacherScheduleInner() {
     const { data: trow } = await supabase
       .from("teachers")
       .select(
-        "id, availability, default_lesson_duration_minutes, available_from_date, teaching_mode, booking_buffer_before_minutes, booking_buffer_after_minutes",
+        "id, availability, default_lesson_duration_minutes, available_from_date, teaching_mode, booking_buffer_before_minutes, booking_buffer_after_minutes, schedule_mode",
       )
       .eq("user_id", userId)
       .maybeSingle();
     const tid = (trow as { id?: string } | null)?.id ?? null;
     setTeacherId(tid);
+    setScheduleMode(
+      normalizeTeacherScheduleMode((trow as { schedule_mode?: string | null } | null)?.schedule_mode),
+    );
     setTeachingMode(String((trow as { teaching_mode?: string })?.teaching_mode || "both"));
     setBufferBefore(clampBufferMinutes((trow as { booking_buffer_before_minutes?: number | null })?.booking_buffer_before_minutes));
     setBufferAfter(clampBufferMinutes((trow as { booking_buffer_after_minutes?: number | null })?.booking_buffer_after_minutes));
@@ -883,33 +894,61 @@ function TeacherScheduleInner() {
               <p className="text-xs font-medium text-red-700">{t("availableFromSaveError")}</p>
             ) : null}
           </div>
-          <TeacherSchedulePrecisionBanner
-            broadBlockCount={availability.length}
-            preciseIntervalCount={preciseIntervalCount}
-            configuredDayCount={preciseIntervalCount > 0 ? Math.min(7, preciseIntervalCount) : 0}
-            intervalsServerEnabled={isTeacherScheduleIntervalsEnabled()}
-            intervalsUiEnabled={isTeacherScheduleIntervalsUiEnabled()}
-            interactiveCellsUiEnabled={isTeacherScheduleInteractiveCellsUiEnabled()}
-            onConfigure={() => {
-              if (isTeacherScheduleInteractiveCellsUiEnabled()) {
+          {preciseBookingUi ? (
+            <TeacherScheduleStatus
+              scheduleMode={scheduleMode}
+              preciseIntervalCount={preciseIntervalCount}
+              preciseBookingUiEnabled={preciseBookingUi}
+              onActivated={({ scheduleMode: next }) => setScheduleMode(next)}
+              onConfigure={() => {
+                if (isTeacherScheduleInteractiveCellsUiEnabled()) {
+                  document
+                    .querySelector('[data-testid="teacher-schedule-interactive-grid"]')
+                    ?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  dispatchConfigurePrecision();
+                  return;
+                }
+                if (isTeacherScheduleIntervalsUiEnabled()) {
+                  document.getElementById("teacher-weekly-intervals-editor")?.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start",
+                  });
+                  return;
+                }
                 document
-                  .querySelector('[data-testid="teacher-schedule-interactive-grid"]')
+                  .querySelector('[data-testid="teacher-schedule-availability-scroll"]')
                   ?.scrollIntoView({ behavior: "smooth", block: "start" });
-                dispatchConfigurePrecision();
-                return;
-              }
-              if (isTeacherScheduleIntervalsUiEnabled()) {
-                document.getElementById("teacher-weekly-intervals-editor")?.scrollIntoView({
-                  behavior: "smooth",
-                  block: "start",
-                });
-                return;
-              }
-              document
-                .querySelector('[data-testid="teacher-schedule-availability-scroll"]')
-                ?.scrollIntoView({ behavior: "smooth", block: "start" });
-            }}
-          />
+              }}
+            />
+          ) : (
+            <TeacherSchedulePrecisionBanner
+              broadBlockCount={availability.length}
+              preciseIntervalCount={preciseIntervalCount}
+              configuredDayCount={preciseIntervalCount > 0 ? Math.min(7, preciseIntervalCount) : 0}
+              intervalsServerEnabled={isTeacherScheduleIntervalsEnabled()}
+              intervalsUiEnabled={isTeacherScheduleIntervalsUiEnabled()}
+              interactiveCellsUiEnabled={isTeacherScheduleInteractiveCellsUiEnabled()}
+              onConfigure={() => {
+                if (isTeacherScheduleInteractiveCellsUiEnabled()) {
+                  document
+                    .querySelector('[data-testid="teacher-schedule-interactive-grid"]')
+                    ?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  dispatchConfigurePrecision();
+                  return;
+                }
+                if (isTeacherScheduleIntervalsUiEnabled()) {
+                  document.getElementById("teacher-weekly-intervals-editor")?.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start",
+                  });
+                  return;
+                }
+                document
+                  .querySelector('[data-testid="teacher-schedule-availability-scroll"]')
+                  ?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}
+            />
+          )}
 
           {isTeacherScheduleInteractiveCellsUiEnabled() ? (
             <TeacherScheduleInteractiveGrid
