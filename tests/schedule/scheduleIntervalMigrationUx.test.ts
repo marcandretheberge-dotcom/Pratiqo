@@ -128,8 +128,11 @@ test("optional Horaire first-visit modal can be dismissed and does not repeat", 
 
 test("booking path still refuses legacy blocks when interval mode ON with no intervals", () => {
   const guard = read("lib/bookings/weeklyIntervalGuard.ts");
-  assert.match(guard, /slot_outside_teacher_availability/);
-  assert.match(guard, /loaded\.intervals\.length === 0/);
+  assert.match(guard, /slot_outside_teacher_availability|evaluatePreciseIntervalSlotFit/);
+  assert.match(guard, /shouldUsePreciseIntervalsForBooking/);
+
+  const eligibility = read("lib/bookings/teacherScheduleEligibility.ts");
+  assert.match(eligibility, /intervals\.length === 0/);
 
   const slots = read("app/api/teachers/[id]/slots/route.ts");
   assert.match(slots, /generateSlotsFromWeeklyIntervals/);

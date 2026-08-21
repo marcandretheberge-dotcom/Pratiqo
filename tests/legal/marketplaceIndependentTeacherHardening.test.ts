@@ -55,6 +55,7 @@ const PRODUCT_SURFACES = [
   "components/teacher/TeacherScheduleInteractiveGrid.tsx",
   "components/teacher/TeacherScheduleCellEditor.tsx",
   "components/teacher/TeacherSchedulePrecisionBanner.tsx",
+  "components/teacher/TeacherScheduleStatus.tsx",
 ];
 
 const BEHAVIOR_CRITICAL = [

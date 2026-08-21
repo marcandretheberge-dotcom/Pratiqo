@@ -1880,9 +1880,16 @@ export function BookingModal({
                   <Loader2 className="animate-spin text-teal-700" size={28} />
                 </div>
               ) : slots.length === 0 ? (
-                <p className="text-sm text-slate-500">
-                  {noPreciseAvailability ? t("bookingNoPreciseAvailability") : t("noSlotsPickOther")}
-                </p>
+                <div className="space-y-1 text-sm text-slate-500" data-testid="booking-no-slots-for-day">
+                  {noPreciseAvailability ? (
+                    <p>{t("bookingNoPreciseAvailability")}</p>
+                  ) : (
+                    <>
+                      <p className="font-medium text-slate-700">{t("bookingNoSlotsForDayTitle")}</p>
+                      <p>{t("bookingNoSlotsForDayBody")}</p>
+                    </>
+                  )}
+                </div>
               ) : (
                 <div className="max-h-[42vh] space-y-4 overflow-y-auto pr-1">
                   {slotsByPeriod.map((g) => (

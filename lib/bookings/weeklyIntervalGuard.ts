@@ -1,23 +1,36 @@
 import {
-  dayOfWeekForISODate,
-  isTeacherScheduleIntervalsEnabled,
+  evaluatePreciseIntervalSlotFit,
+  shouldUsePreciseIntervalsForBooking,
+} from "@/lib/bookings/teacherScheduleEligibility";
+import {
+  isTeacherPreciseScheduleBookingEnabled,
+  normalizeTeacherScheduleMode,
+  type TeacherScheduleMode,
+} from "@/lib/schedule/preciseScheduleActivation";
+import {
   mapDbRowsToNormalized,
-  slotFitsWeeklyIntervals,
   type NormalizedWeeklyInterval,
 } from "@/lib/schedule/weeklyIntervals";
-import { slotStartMinutes } from "@/lib/slots";
 
 /** Minimal admin surface for loading weekly intervals (service-role or test double). */
 export type WeeklyIntervalAdmin = {
   from: (table: string) => {
     select: (columns: string) => {
       eq: (column: string, value: string | boolean | number) => WeeklyIntervalFilter;
+      maybeSingle?: () => PromiseLike<{
+        data: Record<string, unknown> | null;
+        error: { message?: string } | null;
+      }>;
     };
   };
 };
 
 type WeeklyIntervalFilter = {
   eq: (column: string, value: string | boolean | number) => WeeklyIntervalFilter;
+  maybeSingle?: () => PromiseLike<{
+    data: Record<string, unknown> | null;
+    error: { message?: string } | null;
+  }>;
   then?: (
     resolve: (value: {
       data: Array<Record<string, unknown>> | null;
@@ -62,9 +75,29 @@ export async function loadTeacherWeeklyIntervals(
   return { ok: true, intervals: mapDbRowsToNormalized(result.data ?? []) };
 }
 
+export async function loadTeacherScheduleMode(
+  admin: WeeklyIntervalAdmin,
+  teacherId: string,
+): Promise<{ ok: true; scheduleMode: TeacherScheduleMode } | { ok: false; error: "server_error" }> {
+  const query = admin.from("teachers").select("schedule_mode").eq("id", teacherId);
+  const maybeSingle = (query as WeeklyIntervalFilter).maybeSingle;
+  if (!maybeSingle) {
+    // Test doubles may return rows via thenable; treat missing as legacy.
+    return { ok: true, scheduleMode: "legacy_blocks" };
+  }
+  const result = await maybeSingle.call(query);
+  if (result.error) {
+    return { ok: false, error: "server_error" };
+  }
+  return {
+    ok: true,
+    scheduleMode: normalizeTeacherScheduleMode(result.data?.schedule_mode),
+  };
+}
+
 /**
- * When ENABLE_TEACHER_SCHEDULE_INTERVALS is ON, the booking must fit a weekly interval.
- * Returns null when the check passes or the flag is OFF.
+ * Enforce precise weekly intervals when they are the booking source of truth.
+ * Returns null when the check passes or precise intervals are not required.
  */
 export async function rejectIfOutsideWeeklyIntervals(args: {
   admin: WeeklyIntervalAdmin;
@@ -72,25 +105,43 @@ export async function rejectIfOutsideWeeklyIntervals(args: {
   slotDate: string;
   timeSlot: string;
   durationMinutes: number;
+  /** When provided, skips an extra teachers row fetch. */
+  scheduleMode?: TeacherScheduleMode | string | null;
 }): Promise<{ error: "slot_outside_teacher_availability" | "server_error"; status: number } | null> {
-  if (!isTeacherScheduleIntervalsEnabled()) return null;
+  const preciseBookingEnabled = isTeacherPreciseScheduleBookingEnabled();
+  let scheduleMode: TeacherScheduleMode = "legacy_blocks";
+
+  // Only load per-teacher mode when the precise-booking flag is ON.
+  if (preciseBookingEnabled) {
+    if (args.scheduleMode !== undefined && args.scheduleMode !== null) {
+      scheduleMode = normalizeTeacherScheduleMode(args.scheduleMode);
+    } else {
+      const loadedMode = await loadTeacherScheduleMode(args.admin, args.teacherId);
+      if (!loadedMode.ok) return { error: "server_error", status: 500 };
+      scheduleMode = loadedMode.scheduleMode;
+    }
+  }
+
+  if (
+    !shouldUsePreciseIntervalsForBooking({
+      scheduleMode,
+      preciseBookingEnabled,
+    })
+  ) {
+    return null;
+  }
 
   const loaded = await loadTeacherWeeklyIntervals(args.admin, args.teacherId);
   if (!loaded.ok) return { error: "server_error", status: 500 };
 
-  const dayOfWeek = dayOfWeekForISODate(args.slotDate);
-  const startMin = slotStartMinutes(args.timeSlot);
-  if (dayOfWeek == null || startMin < 0) {
-    return { error: "slot_outside_teacher_availability", status: 409 };
-  }
-
-  // Flag ON + no intervals configured → no bookable slots from legacy blocks.
-  if (loaded.intervals.length === 0) {
-    return { error: "slot_outside_teacher_availability", status: 409 };
-  }
-
-  if (!slotFitsWeeklyIntervals(dayOfWeek, startMin, args.durationMinutes, loaded.intervals)) {
-    return { error: "slot_outside_teacher_availability", status: 409 };
+  const fit = evaluatePreciseIntervalSlotFit({
+    slotDate: args.slotDate,
+    timeSlot: args.timeSlot,
+    durationMinutes: args.durationMinutes,
+    intervals: loaded.intervals,
+  });
+  if (!fit.allowed) {
+    return { error: fit.reason, status: fit.reason === "server_error" ? 500 : 409 };
   }
   return null;
 }
