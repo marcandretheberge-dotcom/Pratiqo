@@ -13,6 +13,7 @@ import PratiqoLogo from "./PratiqoLogo";
 import { useLocale } from "../lib/locale-context";
 import { LocaleSwitcher } from "./LocaleSwitcher";
 import { TeacherTopNav } from "./TeacherTopNav";
+import { TeacherSidebarNav } from "@/components/teacher/TeacherSidebarNav";
 import { YoNavButton } from "@/components/yo/YoNavButton";
 import { isStudentPackageDashboardUiEnabled } from "@/lib/offers/studentPackages";
 
@@ -306,13 +307,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </>
       ) : null}
 
-      <div className={cn("flex flex-1 min-h-0", isTeacher && "flex-col")}>
+      <div className={cn("flex min-h-0 flex-1", isTeacher ? "min-w-0" : "")}>
+        {isTeacher ? <TeacherSidebarNav unreadMessages={unreadMessages} /> : null}
         <main
           className={cn(
-            "flex-1 min-w-0",
+            "min-w-0 flex-1",
             isStudent && "w-full overflow-y-auto px-4 sm:px-5 pt-4 sm:pt-6 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-0",
             isTeacher &&
-              "w-full overflow-y-auto px-4 sm:px-6 pt-4 sm:pt-6 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-8 max-w-[1280px] mx-auto",
+              "w-full overflow-y-auto overflow-x-clip px-4 sm:px-6 pt-4 sm:pt-6 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-8",
             !isStudent && !isTeacher && "overflow-y-auto px-4 sm:px-5 py-6 pb-8",
           )}
           style={
@@ -327,7 +329,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           {isStudent ? (
             <div className="w-full">{children}</div>
           ) : (
-            <div className={cn("mx-auto w-full", !isTeacher && "max-w-[960px]", isTeacher && "w-full")}>{children}</div>
+            <div
+              className={cn(
+                "mx-auto w-full min-w-0",
+                !isTeacher && "max-w-[960px]",
+                isTeacher && "max-w-[1280px]",
+              )}
+            >
+              {children}
+            </div>
           )}
         </main>
       </div>

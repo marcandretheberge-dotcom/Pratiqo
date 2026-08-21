@@ -10,9 +10,11 @@ assert.match(read("components/Dashboard.tsx"), /TeacherScheduleCard/);
 assert.match(read("components/Dashboard.tsx"), /viewHistory/);
 
 const topNav = read("components/TeacherTopNav.tsx");
-assert.match(topNav, /\/teacher\/history/);
+const navConfig = read("components/teacher/teacherNavConfig.ts");
+assert.match(navConfig, /\/teacher\/history/);
 assert.doesNotMatch(topNav, /\/student\/search/);
 assert.doesNotMatch(topNav, /\/student\/progress/);
+assert.doesNotMatch(navConfig, /\/student\/search/);
 
 const appShell = read("components/AppShell.tsx");
 assert.match(appShell, /TEACHER_MOBILE_BOTTOM_NAV/);
