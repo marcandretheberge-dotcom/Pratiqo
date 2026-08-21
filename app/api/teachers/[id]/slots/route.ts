@@ -28,6 +28,7 @@ import {
   generateSlotsFromDateException,
   isTeacherScheduleExceptionsEnabled,
   mapDbRowsToExceptions,
+  resolveExceptionOverride,
 } from "@/lib/schedule/dateExceptions";
 
 export const runtime = "nodejs";
@@ -142,7 +143,8 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
         .eq("exception_date", date)
         .eq("is_active", true);
       const exception = findExceptionForDate(mapDbRowsToExceptions(exceptionRows ?? []), date);
-      if (exception?.exceptionType === "unavailable_full_day") {
+      const override = resolveExceptionOverride({ exception, scheduleMode });
+      if (override.kind === "unavailable_full_day") {
         return NextResponse.json({
           slots: [],
           durationMinutes,
@@ -150,9 +152,9 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
           exceptionType: "unavailable_full_day",
         });
       }
-      if (exception?.exceptionType === "available_custom_hours") {
+      if (override.kind === "available_custom_hours") {
         const slots = generateSlotsFromDateException(
-          exception,
+          override.exception,
           durationMinutes,
           bookedSlots,
           blockedPeriods,

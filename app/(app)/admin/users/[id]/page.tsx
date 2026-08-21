@@ -412,6 +412,20 @@ function Teacher360Panel({ data }: { data: AdminTeacher360 }) {
               value={valueOrDash(data.availability.preciseScheduleActivatedAt)}
             />
           </dl>
+          {data.availability.upcomingExceptions.length ? (
+            <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-600">
+                Exceptions au calendrier
+              </p>
+              <ul className="mt-2 space-y-1 text-sm text-slate-700">
+                {data.availability.upcomingExceptions.map((ex) => (
+                  <li key={ex.exceptionDate}>
+                    {ex.exceptionDate} — {ex.label}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
           <p className="mt-4 text-sm text-slate-700">{data.availability.summary ?? "Aucune disponibilité configurée."}</p>
           {data.availability.rawPreview.length ? (
             <details className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-3">

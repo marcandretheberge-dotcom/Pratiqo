@@ -1,15 +1,16 @@
 /**
- * Central booking schedule eligibility helpers (PR 17A-CORE).
+ * Central booking schedule eligibility helpers (PR 17A-CORE / 17B-CORE).
  *
  * Ordering for create/redeem flows (callers still own Stripe / package gates):
  * 1. teacher exists / bookable under existing rules
  * 2. available_from_date
- * 3. date exceptions (when enabled)
+ * 3. date exceptions (when enabled) — full-day block or custom hours override
  * 4. precise intervals OR legacy blocks (via shouldUsePreciseIntervalsForBooking)
  * 5. existing conflict checks elsewhere
  *
  * Timezone: compares local calendar date + wall-clock slot labels ("9h00")
- * against interval times stored as local time-of-day.
+ * against interval / exception times stored as local time-of-day.
+ * exception_date is date-only local YYYY-MM-DD (same as bookings.slot_date).
  */
 
 import {

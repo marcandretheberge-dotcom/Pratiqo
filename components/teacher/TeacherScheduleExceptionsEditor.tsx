@@ -7,8 +7,10 @@ import { useLocale } from "@/lib/locale-context";
 import { formatLocalISODate } from "@/lib/slots";
 import {
   WEEKLY_INTERVAL_STEP_MINUTES,
+  canUseCustomHoursException,
   type ScheduleExceptionType,
 } from "@/lib/schedule/dateExceptions";
+import type { TeacherScheduleMode } from "@/lib/schedule/preciseScheduleActivation";
 import { isTeacherScheduleStickySaveEnabled } from "@/lib/schedule/scheduleSaveFlags";
 import { stableScheduleSnapshot } from "@/lib/schedule/scheduleSaveState";
 import { useUnsavedChangesWarning } from "@/hooks/useUnsavedChangesWarning";
@@ -53,13 +55,23 @@ function mondayFirstIndex(d: Date): number {
   return (d.getDay() + 6) % 7;
 }
 
+function addDaysIso(iso: string, days: number): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  const dt = new Date(y!, m! - 1, d!);
+  dt.setDate(dt.getDate() + days);
+  return formatLocalISODate(dt);
+}
+
 export function TeacherScheduleExceptionsEditor({
   onDirtyChange,
+  scheduleMode = "legacy_blocks",
 }: {
   onDirtyChange?: (dirty: boolean) => void;
+  scheduleMode?: TeacherScheduleMode;
 } = {}) {
   const { t, locale } = useLocale();
   const stickyEnabled = isTeacherScheduleStickySaveEnabled();
+  const customHoursAllowed = canUseCustomHoursException(scheduleMode);
   const [monthAnchor, setMonthAnchor] = useState(() => startOfMonth(new Date()));
   const [exceptions, setExceptions] = useState<ExceptionDto[]>([]);
   const [loading, setLoading] = useState(true);
@@ -88,10 +100,27 @@ export function TeacherScheduleExceptionsEditor({
     });
   }, [monthAnchor, locale]);
 
+  const formatExceptionDate = useCallback(
+    (iso: string) => {
+      const [y, m, d] = iso.split("-").map(Number);
+      const dt = new Date(y!, m! - 1, d!);
+      return dt.toLocaleDateString(locale === "fr" ? "fr-CA" : locale === "es" ? "es" : "en-CA", {
+        day: "numeric",
+        month: "long",
+      });
+    },
+    [locale],
+  );
+
   const range = useMemo(() => {
-    const from = formatLocalISODate(monthAnchor);
+    const today = formatLocalISODate(new Date());
+    const monthFrom = formatLocalISODate(monthAnchor);
     const last = new Date(monthAnchor.getFullYear(), monthAnchor.getMonth(), daysInMonth(monthAnchor));
-    const to = formatLocalISODate(last);
+    const monthTo = formatLocalISODate(last);
+    // Include upcoming horizon so the list is not limited to the visible month.
+    const horizonTo = addDaysIso(today, 90);
+    const from = monthFrom < today ? monthFrom : today;
+    const to = monthTo > horizonTo ? monthTo : horizonTo;
     return { from, to };
   }, [monthAnchor]);
 
@@ -125,6 +154,12 @@ export function TeacherScheduleExceptionsEditor({
     void load();
   }, [load]);
 
+  useEffect(() => {
+    if (!customHoursAllowed && mode === "available_custom_hours") {
+      setMode("unavailable_full_day");
+    }
+  }, [customHoursAllowed, mode]);
+
   const openDate = (iso: string) => {
     setSelectedDate(iso);
     setSaveState("idle");
@@ -138,7 +173,7 @@ export function TeacherScheduleExceptionsEditor({
       nextMode = "unavailable_full_day";
       nextNote = existing.note || "";
     } else if (existing?.exceptionType === "available_custom_hours") {
-      nextMode = "available_custom_hours";
+      nextMode = customHoursAllowed ? "available_custom_hours" : "unavailable_full_day";
       nextStart = existing.startTime || "09:00";
       nextEnd = existing.endTime || "12:00";
       nextNote = existing.note || "";
@@ -157,6 +192,48 @@ export function TeacherScheduleExceptionsEditor({
     );
     setDirty(false);
     onDirtyChange?.(false);
+  };
+
+  const deleteExceptionDate = async (iso: string) => {
+    const token = await getAccessToken();
+    if (!token) return;
+    setSaveState("saving");
+    setErrorText(null);
+    try {
+      const res = await fetch("/api/teacher/schedule-exceptions", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ exceptionDate: iso }),
+      });
+      if (!res.ok) {
+        const json = (await res.json().catch(() => ({}))) as { error?: string };
+        setErrorText(json.error || t("scheduleExceptionsSaveError"));
+        setSaveState("error");
+        return;
+      }
+      if (selectedDate === iso) {
+        setMode("regular");
+        setNote("");
+        setPanelBaseline(
+          stableScheduleSnapshot({
+            mode: "regular",
+            startTime: "09:00",
+            endTime: "12:00",
+            note: "",
+          }),
+        );
+        setDirty(false);
+        onDirtyChange?.(false);
+      }
+      setSaveState("deleted");
+      await load();
+    } catch {
+      setErrorText(t("scheduleExceptionsSaveError"));
+      setSaveState("error");
+    }
   };
 
   useEffect(() => {
@@ -245,6 +322,7 @@ export function TeacherScheduleExceptionsEditor({
           overnight_not_allowed: t("weeklyIntervalsEndAfterStart"),
           invalid_time_range: t("weeklyIntervalsInvalidRange"),
           custom_hours_require_times: t("weeklyIntervalsInvalidRange"),
+          custom_hours_require_precise_schedule: t("scheduleExceptionsCustomHoursPreciseOnly"),
         };
         setErrorText(map[json.error ?? ""] || t("scheduleExceptionsSaveError"));
         setSaveState("error");
@@ -372,12 +450,14 @@ export function TeacherScheduleExceptionsEditor({
           <p className="text-sm font-bold text-[#2C2C2A]">
             {selectedDate} — {t("scheduleExceptionsChooseMode")}
           </p>
-          <div className="space-y-2">
+          <div className="space-y-2" role="radiogroup" aria-label={t("scheduleExceptionsChooseMode")}>
             {(
               [
                 ["regular", "scheduleExceptionsModeRegular"],
                 ["unavailable_full_day", "scheduleExceptionsModeBlockDay"],
-                ["available_custom_hours", "scheduleExceptionsModeCustomHours"],
+                ...(customHoursAllowed
+                  ? ([["available_custom_hours", "scheduleExceptionsModeCustomHours"]] as const)
+                  : []),
               ] as const
             ).map(([value, key]) => (
               <label key={value} className="flex items-center gap-2 text-sm font-medium text-slate-800">
@@ -391,6 +471,11 @@ export function TeacherScheduleExceptionsEditor({
               </label>
             ))}
           </div>
+          {!customHoursAllowed ? (
+            <p className="text-xs text-slate-600" data-testid="schedule-exceptions-custom-hours-locked">
+              {t("scheduleExceptionsCustomHoursPreciseOnly")}
+            </p>
+          ) : null}
 
           {mode === "regular" ? (
             <p className="text-xs text-slate-600">{t("scheduleExceptionsModeRegularHelp")}</p>
@@ -480,13 +565,42 @@ export function TeacherScheduleExceptionsEditor({
       {upcoming.length > 0 ? (
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm" data-testid="teacher-schedule-exceptions-upcoming">
           <p className="text-sm font-bold text-[#2C2C2A]">{t("scheduleExceptionsUpcoming")}</p>
-          <ul className="mt-2 space-y-1 text-xs text-slate-700">
+          <ul className="mt-2 space-y-2">
             {upcoming.map((ex) => (
-              <li key={ex.exceptionDate}>
-                {ex.exceptionDate} —{" "}
-                {ex.exceptionType === "unavailable_full_day"
-                  ? t("scheduleExceptionsDayBlocked")
-                  : `${ex.startTime}–${ex.endTime} (${t("scheduleExceptionsHoursAdjusted")})`}
+              <li
+                key={ex.exceptionDate}
+                className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2"
+                data-testid={`schedule-exception-upcoming-${ex.exceptionDate}`}
+              >
+                <div className="min-w-0 text-xs text-slate-800">
+                  <p className="font-semibold">
+                    {formatExceptionDate(ex.exceptionDate)} —{" "}
+                    {ex.exceptionType === "unavailable_full_day"
+                      ? t("scheduleExceptionsDayBlocked")
+                      : `${ex.startTime}–${ex.endTime}`}
+                  </p>
+                  {ex.note ? (
+                    <p className="mt-0.5 text-[11px] text-slate-500">{ex.note}</p>
+                  ) : null}
+                </div>
+                <div className="flex shrink-0 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => openDate(ex.exceptionDate)}
+                    className="inline-flex min-h-9 items-center rounded-lg border border-slate-200 bg-white px-2.5 text-[11px] font-bold text-slate-800 hover:bg-white"
+                    data-testid={`schedule-exception-edit-${ex.exceptionDate}`}
+                  >
+                    {t("scheduleExceptionsEdit")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void deleteExceptionDate(ex.exceptionDate)}
+                    className="inline-flex min-h-9 items-center rounded-lg border border-red-100 bg-white px-2.5 text-[11px] font-bold text-red-700 hover:bg-red-50"
+                    data-testid={`schedule-exception-delete-${ex.exceptionDate}`}
+                  >
+                    {t("scheduleExceptionsDelete")}
+                  </button>
+                </div>
               </li>
             ))}
           </ul>

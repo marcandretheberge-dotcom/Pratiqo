@@ -2,9 +2,11 @@ import {
   findExceptionForDate,
   isTeacherScheduleExceptionsEnabled,
   mapDbRowsToExceptions,
+  resolveExceptionOverride,
   slotFitsCustomExceptionHours,
   type NormalizedScheduleException,
 } from "@/lib/schedule/dateExceptions";
+import type { TeacherScheduleMode } from "@/lib/schedule/preciseScheduleActivation";
 import { slotStartMinutes } from "@/lib/slots";
 
 /** Minimal admin surface for loading date exceptions. */
@@ -74,8 +76,11 @@ export async function loadTeacherScheduleExceptionsForDate(
 /**
  * Apply date exceptions when ENABLE_TEACHER_SCHEDULE_EXCEPTIONS is ON.
  *
- * - unavailable_full_day → reject
- * - available_custom_hours → require slot inside custom hours; skip weekly intervals
+ * Order (callers): available_from_date → this → weekly/precise intervals.
+ *
+ * - unavailable_full_day → reject (legacy + precise)
+ * - available_custom_hours → only when schedule_mode is precise_intervals;
+ *   otherwise ignored so legacy weekly blocks remain source of truth
  * - no exception → continue with weekly/legacy checks
  */
 export async function applyDateExceptionToBooking(args: {
@@ -84,6 +89,8 @@ export async function applyDateExceptionToBooking(args: {
   slotDate: string;
   timeSlot: string;
   durationMinutes: number;
+  /** When omitted, custom hours still apply (backward compatible with global intervals). */
+  scheduleMode?: TeacherScheduleMode | string | null;
 }): Promise<
   | { ok: true; skipWeeklyIntervals: boolean }
   | {
@@ -99,15 +106,23 @@ export async function applyDateExceptionToBooking(args: {
   const loaded = await loadTeacherScheduleExceptionsForDate(args.admin, args.teacherId, args.slotDate);
   if (!loaded.ok) return { ok: false, status: 500, error: "server_error" };
 
-  const ex = loaded.exception;
-  if (!ex) return { ok: true, skipWeeklyIntervals: false };
+  const override = resolveExceptionOverride({
+    exception: loaded.exception,
+    // If scheduleMode not provided, treat as precise so existing custom-hour
+    // rows still enforce (flag-only environments before schedule_mode rollout).
+    scheduleMode: args.scheduleMode ?? "precise_intervals",
+  });
 
-  if (ex.exceptionType === "unavailable_full_day") {
+  if (override.kind === "none" || override.kind === "ignore_custom_hours_for_legacy") {
+    return { ok: true, skipWeeklyIntervals: false };
+  }
+
+  if (override.kind === "unavailable_full_day") {
     return { ok: false, status: 409, error: "teacher_unavailable_on_date" };
   }
 
   const startMin = slotStartMinutes(args.timeSlot);
-  if (startMin < 0 || !slotFitsCustomExceptionHours(startMin, args.durationMinutes, ex)) {
+  if (startMin < 0 || !slotFitsCustomExceptionHours(startMin, args.durationMinutes, override.exception)) {
     return { ok: false, status: 409, error: "slot_outside_teacher_exception_hours" };
   }
 

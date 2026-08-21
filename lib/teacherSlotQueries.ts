@@ -12,6 +12,7 @@ import {
   generateSlotsFromDateException,
   isTeacherScheduleExceptionsEnabled,
   mapDbRowsToExceptions,
+  resolveExceptionOverride,
 } from "@/lib/schedule/dateExceptions";
 import {
   blockedPeriodsFromRows,
@@ -269,11 +270,16 @@ export async function computeAvailableDaysForTeacher(
         continue;
       }
 
+      const override = resolveExceptionOverride({ exception: ex, scheduleMode });
+      if (override.kind !== "available_custom_hours") {
+        continue;
+      }
+
       const booked = timeLabelsByDate[dateStr] || [];
       const blockedRowsForDay = blockedByDate[dateStr] || [];
       const blocked = blockedPeriodsFromRows(blockedRowsForDay);
       const ranges = blockedTimeRangesFromRows(blockedRowsForDay);
-      const slots = generateSlotsFromDateException(ex, durationMinutes, booked, blocked, ranges, {
+      const slots = generateSlotsFromDateException(override.exception, durationMinutes, booked, blocked, ranges, {
         bookedIntervals: intervalsByDate[dateStr] ?? [],
         bufferBeforeMin: buffers.bookingBufferBeforeMinutes,
         bufferAfterMin: buffers.bookingBufferAfterMinutes,

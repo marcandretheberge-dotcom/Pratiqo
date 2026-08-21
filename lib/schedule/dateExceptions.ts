@@ -17,6 +17,10 @@ import {
   WEEKLY_INTERVAL_STEP_MINUTES,
   type NormalizedWeeklyInterval,
 } from "@/lib/schedule/weeklyIntervals";
+import {
+  normalizeTeacherScheduleMode,
+  type TeacherScheduleMode,
+} from "@/lib/schedule/preciseScheduleActivation";
 import type { BlockedTimeRange, GenerateSlotsOptions } from "@/lib/slots";
 
 export const TEACHER_SCHEDULE_EXCEPTIONS_FLAG = "ENABLE_TEACHER_SCHEDULE_EXCEPTIONS";
@@ -28,6 +32,43 @@ export function isTeacherScheduleExceptionsEnabled(): boolean {
 
 export function isTeacherScheduleExceptionsUiEnabled(): boolean {
   return process.env.NEXT_PUBLIC_ENABLE_TEACHER_SCHEDULE_EXCEPTIONS === "true";
+}
+
+/**
+ * Custom-hours exceptions override weekly intervals and can create availability
+ * outside the normal week. Only precise_intervals teachers may create/use them.
+ * Full-day blocks work for both legacy and precise modes.
+ */
+export function canUseCustomHoursException(
+  scheduleMode: TeacherScheduleMode | string | null | undefined,
+): boolean {
+  return normalizeTeacherScheduleMode(scheduleMode) === "precise_intervals";
+}
+
+/**
+ * Decide how an exception applies for booking/slot generation.
+ * Timezone: exception_date is local calendar YYYY-MM-DD (same as slot_date).
+ */
+export function resolveExceptionOverride(args: {
+  exception: NormalizedScheduleException | null | undefined;
+  scheduleMode: TeacherScheduleMode | string | null | undefined;
+}):
+  | { kind: "none" }
+  | { kind: "unavailable_full_day" }
+  | { kind: "available_custom_hours"; exception: NormalizedScheduleException }
+  | { kind: "ignore_custom_hours_for_legacy" } {
+  const ex = args.exception;
+  if (!ex) return { kind: "none" };
+  if (ex.exceptionType === "unavailable_full_day") {
+    return { kind: "unavailable_full_day" };
+  }
+  if (ex.exceptionType === "available_custom_hours") {
+    if (!canUseCustomHoursException(args.scheduleMode)) {
+      return { kind: "ignore_custom_hours_for_legacy" };
+    }
+    return { kind: "available_custom_hours", exception: ex };
+  }
+  return { kind: "none" };
 }
 
 export const EXCEPTION_TYPES = ["unavailable_full_day", "available_custom_hours"] as const;
@@ -60,7 +101,20 @@ export type ScheduleExceptionValidationError =
   | "not_quarter_hour"
   | "note_too_long"
   | "full_day_must_omit_times"
-  | "custom_hours_require_times";
+  | "custom_hours_require_times"
+  | "custom_hours_require_precise_schedule";
+
+/**
+ * Reject custom-hours when teacher is still on general (legacy) schedule.
+ */
+export function assertCustomHoursAllowedForScheduleMode(
+  exceptionType: ScheduleExceptionType,
+  scheduleMode: TeacherScheduleMode | string | null | undefined,
+): { ok: true } | { ok: false; error: "custom_hours_require_precise_schedule" } {
+  if (exceptionType !== "available_custom_hours") return { ok: true };
+  if (canUseCustomHoursException(scheduleMode)) return { ok: true };
+  return { ok: false, error: "custom_hours_require_precise_schedule" };
+}
 
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
