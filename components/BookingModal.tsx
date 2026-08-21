@@ -268,6 +268,7 @@ export function BookingModal({
   const [availableDays, setAvailableDays] = useState<Record<string, number>>({});
   const [slots, setSlots] = useState<string[]>([]);
   const [noPreciseAvailability, setNoPreciseAvailability] = useState(false);
+  const [dayUnavailableByException, setDayUnavailableByException] = useState(false);
   const [durationMinutes, setDurationMinutes] = useState(60);
   const [loadingDays, setLoadingDays] = useState(false);
   const [loadingSlots, setLoadingSlots] = useState(false);
@@ -507,17 +508,20 @@ export function BookingModal({
           error?: string;
           preciseIntervals?: boolean;
           hasWeeklyIntervals?: boolean;
+          exceptionType?: string;
         };
         if (!res.ok) throw new Error(body.error || t("bookingLoadSlotsFail"));
         setSlots(body.slots ?? []);
         setNoPreciseAvailability(
           Boolean(body.preciseIntervals) && body.hasWeeklyIntervals === false,
         );
+        setDayUnavailableByException(body.exceptionType === "unavailable_full_day");
         if (typeof body.durationMinutes === "number") setDurationMinutes(body.durationMinutes);
       } catch (e) {
         setSlotsError(e instanceof Error ? e.message : "Erreur");
         setSlots([]);
         setNoPreciseAvailability(false);
+        setDayUnavailableByException(false);
       } finally {
         setLoadingSlots(false);
       }
@@ -537,6 +541,8 @@ export function BookingModal({
     setAddressError(null);
     setAvailableDays({});
     setSlots([]);
+    setNoPreciseAvailability(false);
+    setDayUnavailableByException(false);
     setDaysError(null);
     setSlotsError(null);
     setGeo(null);
@@ -1881,7 +1887,9 @@ export function BookingModal({
                 </div>
               ) : slots.length === 0 ? (
                 <div className="space-y-1 text-sm text-slate-500" data-testid="booking-no-slots-for-day">
-                  {noPreciseAvailability ? (
+                  {dayUnavailableByException ? (
+                    <p className="font-medium text-slate-700">{t("bookingTeacherUnavailableOnDate")}</p>
+                  ) : noPreciseAvailability ? (
                     <p>{t("bookingNoPreciseAvailability")}</p>
                   ) : (
                     <>
