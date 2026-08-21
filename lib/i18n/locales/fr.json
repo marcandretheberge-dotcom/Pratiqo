@@ -2946,6 +2946,8 @@
   "bookingNoSlotsForDayTitle": "Aucun créneau disponible pour cette journée.",
   "bookingNoSlotsForDayBody": "Choisissez une autre date ou contactez le professeur.",
   "bookingSlotOutsideCurrentSchedule": "Cette plage n’est pas disponible avec l’horaire actuel du professeur.",
+  "schedulePreciseDisabledTitle": "Horaire précis désactivé par configuration",
+  "schedulePreciseDisabledBody": "L’édition des plages précises est désactivée (NEXT_PUBLIC_ENABLE_TEACHER_SCHEDULE_INTERACTIVE_CELLS=false). Réactivez-la pour configurer des heures exactes.",
   "scheduleCellAdd": "Ajouter",
   "scheduleCellAddAria": "Ajouter une disponibilité {day} {part}",
   "scheduleCellEnableSlot": "Activer ce créneau",

@@ -192,7 +192,7 @@ test("booking guard rejects when flag ON and no intervals configured", async () 
 
 test("API route and schedule UI wire feature flags", () => {
   const api = read("app/api/teacher/weekly-intervals/route.ts");
-  assert.match(api, /isTeacherScheduleIntervalsEnabled/);
+  assert.match(api, /isTeacherScheduleInteractiveCellsEnabled/);
   assert.match(api, /weekly_intervals_disabled/);
   assert.match(api, /validateWeeklyIntervalSet/);
   assert.match(api, /intervalsToCoarseAvailabilityStrings/);
@@ -200,6 +200,7 @@ test("API route and schedule UI wire feature flags", () => {
   const page = read("app/(app)/teacher/schedule/page.tsx");
   assert.match(page, /isTeacherScheduleIntervalsUiEnabled/);
   assert.match(page, /TeacherWeeklyIntervalsEditor/);
+  assert.match(page, /TeacherScheduleInteractiveGrid/);
 
   const editor = read("components/teacher/TeacherWeeklyIntervalsEditor.tsx");
   assert.match(editor, /weeklyIntervalsTitle/);
