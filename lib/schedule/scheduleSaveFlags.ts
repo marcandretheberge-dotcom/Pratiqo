@@ -1,12 +1,9 @@
 /**
- * PR 17C — schedule save UX flags.
+ * PR 17C / 17C-FIX — schedule save UX flags.
  *
- * Sticky save defaults ON when precise schedule UI (intervals or exceptions) is enabled.
+ * Sticky save defaults ON (schedule reliability).
  * Auto-save defaults OFF (opt-in only).
  */
-
-import { isTeacherScheduleExceptionsUiEnabled } from "@/lib/schedule/dateExceptions";
-import { isTeacherScheduleIntervalsUiEnabled } from "@/lib/schedule/weeklyIntervals";
 
 export const TEACHER_SCHEDULE_STICKY_SAVE_FLAG = "ENABLE_TEACHER_SCHEDULE_STICKY_SAVE";
 export const TEACHER_SCHEDULE_STICKY_SAVE_UI_FLAG = "NEXT_PUBLIC_ENABLE_TEACHER_SCHEDULE_STICKY_SAVE";
@@ -15,13 +12,12 @@ export const TEACHER_SCHEDULE_AUTOSAVE_UI_FLAG = "NEXT_PUBLIC_ENABLE_TEACHER_SCH
 
 /**
  * Sticky save bar / unsaved warnings.
- * Explicit false disables; explicit true enables; otherwise ON when schedule interval/exception UI is on.
+ * Explicit false disables; otherwise ON (including when interval/exception UI flags are off).
  */
 export function isTeacherScheduleStickySaveEnabled(): boolean {
   const explicit = process.env.NEXT_PUBLIC_ENABLE_TEACHER_SCHEDULE_STICKY_SAVE;
   if (explicit === "false") return false;
-  if (explicit === "true") return true;
-  return isTeacherScheduleIntervalsUiEnabled() || isTeacherScheduleExceptionsUiEnabled();
+  return true;
 }
 
 /** Lightweight debounced auto-save — OFF unless explicitly enabled. */

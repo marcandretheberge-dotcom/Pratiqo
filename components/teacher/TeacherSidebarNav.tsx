@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import PratiqoLogo from "@/components/PratiqoLogo";
 import { useLocale } from "@/lib/locale-context";
 import {
   buildTeacherNavSections,
@@ -59,14 +60,19 @@ export function TeacherSidebarNav({ unreadMessages }: { unreadMessages: number }
 
   return (
     <aside
-      className="hidden w-[260px] shrink-0 border-r border-[#E8E6DF] bg-white md:flex md:flex-col"
+      className="hidden h-full min-h-0 w-[260px] shrink-0 flex-col border-r border-[#E8E6DF] bg-white md:flex"
       data-testid="teacher-sidebar-nav"
       aria-label={t("teacherSpaceLabel")}
     >
-      <nav className="flex flex-1 flex-col gap-6 overflow-y-auto px-3 py-5" aria-label={t("teacherSpaceLabel")}>
+      <div className="flex h-[52px] shrink-0 items-center border-b border-[#E8E6DF] px-4">
+        <Link href="/dashboard" className="min-w-0" aria-label={t("ariaHome")} data-testid="teacher-sidebar-logo">
+          <PratiqoLogo variant="full" size="md" />
+        </Link>
+      </div>
+      <nav className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-3 py-5" aria-label={t("teacherSpaceLabel")}>
         {sections.map((section) => (
           <div key={section.id}>
-            <p className="mb-2 px-3 text-[11px] font-bold uppercase tracking-[0.08em] text-slate-400">
+            <p className="mb-2 px-3 text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500">
               {t(section.headingKey)}
             </p>
             <ul className="flex flex-col gap-0.5">

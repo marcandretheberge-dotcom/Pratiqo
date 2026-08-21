@@ -260,6 +260,8 @@ function TeacherScheduleInner() {
         teachingMode: mode,
         bufferBefore: before,
         bufferAfter: after,
+        defaultLessonDuration: loadedDuration,
+        availableFromDate: loadedAvailableFrom ?? "",
       }),
     );
     setSettingsDirty(false);
@@ -349,9 +351,16 @@ function TeacherScheduleInner() {
   };
 
   const saveLessonDuration = useCallback(
-    async (nextRaw: number) => {
+    async (nextRaw: number, opts?: { forcePersist?: boolean }) => {
       const next = normalizeLessonDurationMinutes(nextRaw);
-      if (next === savedLessonDuration) return;
+      if (next === savedLessonDuration && !opts?.forcePersist) return true;
+
+      // Sticky save mode: keep local edits dirty until coordinated save.
+      if (stickyEnabled && !opts?.forcePersist) {
+        setDefaultLessonDuration(next);
+        setDurationSaveState("idle");
+        return true;
+      }
 
       const previous = savedLessonDuration;
       setDefaultLessonDuration(next);
@@ -383,20 +392,28 @@ function TeacherScheduleInner() {
         setSavedLessonDuration(saved);
         setDefaultLessonDuration(saved);
         setDurationSaveState("saved");
+        return true;
       } catch {
         setDefaultLessonDuration(previous);
         setDurationSaveState("error");
+        return false;
       }
     },
-    [savedLessonDuration, t],
+    [savedLessonDuration, stickyEnabled, t],
   );
 
   const saveAvailableFromDate = useCallback(
-    async (nextRaw: string | null) => {
+    async (nextRaw: string | null, opts?: { forcePersist?: boolean }) => {
       const next = nextRaw === null || nextRaw.trim() === "" ? null : normalizeAvailableFromDate(nextRaw);
-      if (next === savedAvailableFromDate) {
+      if (next === savedAvailableFromDate && !opts?.forcePersist) {
         setAvailableFromDate(next ?? "");
-        return;
+        return true;
+      }
+
+      if (stickyEnabled && !opts?.forcePersist) {
+        setAvailableFromDate(next ?? "");
+        setAvailableFromSaveState("idle");
+        return true;
       }
 
       const previous = savedAvailableFromDate;
@@ -429,13 +446,15 @@ function TeacherScheduleInner() {
         setSavedAvailableFromDate(saved);
         setAvailableFromDate(saved ?? "");
         setAvailableFromSaveState("saved");
+        return true;
       } catch {
         setSavedAvailableFromDate(previous);
         setAvailableFromDate(previous ?? "");
         setAvailableFromSaveState("error");
+        return false;
       }
     },
-    [savedAvailableFromDate, t],
+    [savedAvailableFromDate, stickyEnabled, t],
   );
 
   const saveAll = async (): Promise<boolean> => {
@@ -456,12 +475,28 @@ function TeacherScheduleInner() {
         })
         .eq("user_id", userId);
       if (error) throw error;
+
+      let durationOk = true;
+      let availableFromOk = true;
+      if (defaultLessonDuration !== savedLessonDuration) {
+        durationOk = await saveLessonDuration(defaultLessonDuration, { forcePersist: true });
+      }
+      if ((availableFromDate || "") !== (savedAvailableFromDate ?? "")) {
+        availableFromOk = await saveAvailableFromDate(availableFromDate || null, { forcePersist: true });
+      }
+      if (!durationOk || !availableFromOk) {
+        setFlash({ kind: "err", text: t("scheduleSavePartialError") });
+        return false;
+      }
+
       setSettingsBaseline(
         stableScheduleSnapshot({
           availability: [...availability].sort(),
           teachingMode,
           bufferBefore: nextBefore,
           bufferAfter: nextAfter,
+          defaultLessonDuration,
+          availableFromDate: availableFromDate || "",
         }),
       );
       setSettingsDirty(false);
@@ -486,9 +521,19 @@ function TeacherScheduleInner() {
       teachingMode,
       bufferBefore: clampBufferMinutes(bufferBefore),
       bufferAfter: clampBufferMinutes(bufferAfter),
+      defaultLessonDuration,
+      availableFromDate: availableFromDate || "",
     });
     setSettingsDirty(next !== settingsBaseline);
-  }, [availability, teachingMode, bufferBefore, bufferAfter, settingsBaseline]);
+  }, [
+    availability,
+    teachingMode,
+    bufferBefore,
+    bufferAfter,
+    defaultLessonDuration,
+    availableFromDate,
+    settingsBaseline,
+  ]);
 
   const settingsSaveStatus = scheduleSaveStatusFrom({
     dirty: settingsDirty,
@@ -567,7 +612,14 @@ function TeacherScheduleInner() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-5 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:pb-10">
+    <div
+      className={cn(
+        "mx-auto max-w-5xl space-y-5",
+        stickyEnabled ? "pb-[calc(7rem+env(safe-area-inset-bottom))]" : "pb-[calc(6rem+env(safe-area-inset-bottom))]",
+        "sm:pb-10",
+      )}
+      data-testid="teacher-schedule-page"
+    >
       <div className="space-y-1">
         <p className="text-[10px] font-bold uppercase tracking-widest text-teal-700">{t("scheduleTeacherLabel")}</p>
         <div className="flex flex-wrap items-end justify-between gap-2">
@@ -734,7 +786,9 @@ function TeacherScheduleInner() {
             <div>
               <p className="text-sm font-bold text-[#2C2C2A]">{t("lessonDurationTitle")}</p>
               <p className="mt-1 text-xs leading-5 text-slate-600">{t("lessonDurationDescription")}</p>
-              <p className="mt-1 text-xs leading-5 text-slate-500">{t("lessonDurationAutosaveHelp")}</p>
+              <p className="mt-1 text-xs leading-5 text-slate-600">
+                {stickyEnabled ? t("scheduleSaveStickyDurationHelp") : t("lessonDurationAutosaveHelp")}
+              </p>
             </div>
             <label className="block max-w-xs sm:max-w-sm">
               <span className="text-xs font-bold uppercase tracking-widest text-slate-600">
@@ -786,8 +840,8 @@ function TeacherScheduleInner() {
             <div>
               <p className="text-sm font-bold text-[#2C2C2A]">{t("availableFromLessonStartDate")}</p>
               <p className="mt-1 text-xs leading-5 text-slate-600">{t("availableFromHelper")}</p>
-              <p className="mt-1 text-xs leading-5 text-slate-500">{t("availableFromFutureHint")}</p>
-              <p className="mt-1 text-xs leading-5 text-slate-500">{t("availableFromVisibilityNote")}</p>
+              <p className="mt-1 text-xs leading-5 text-slate-600">{t("availableFromFutureHint")}</p>
+              <p className="mt-1 text-xs leading-5 text-slate-600">{t("availableFromVisibilityNote")}</p>
             </div>
             <label className="block max-w-xs sm:max-w-sm">
               <span className="text-xs font-bold uppercase tracking-widest text-slate-600">
@@ -857,7 +911,16 @@ function TeacherScheduleInner() {
                 }}
               />
             </>
-          ) : null}
+          ) : (
+            <div
+              className="rounded-2xl border border-amber-200 bg-amber-50 p-4 shadow-sm sm:p-5"
+              data-testid="teacher-schedule-legacy-mode-banner"
+              role="status"
+            >
+              <p className="text-sm font-bold text-amber-950">{t("scheduleLegacyModeTitle")}</p>
+              <p className="mt-1 text-xs leading-5 text-amber-900">{t("scheduleLegacyModeBody")}</p>
+            </div>
+          )}
 
           {isTeacherScheduleExceptionsUiEnabled() ? (
             <TeacherScheduleExceptionsEditor onDirtyChange={setExceptionsDirty} />
@@ -870,7 +933,7 @@ function TeacherScheduleInner() {
               <div>
                 <p className="text-xs font-bold uppercase tracking-widest text-slate-600">{t("gridWeeklyTitle")}</p>
                 <p className="mt-1 text-xs leading-5 text-slate-600">{t("availabilityRecurringHint")}</p>
-                <p className="mt-1 text-xs leading-5 font-semibold text-amber-800">{t("scheduleLockedNotice")}</p>
+                <p className="mt-1 text-xs leading-5 font-semibold text-amber-900">{t("scheduleLockedNotice")}</p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <button

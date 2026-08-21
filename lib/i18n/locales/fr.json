@@ -2902,5 +2902,8 @@
   "scheduleSaveLeaveStay": "Rester sur la page",
   "scheduleSaveLeaveConfirm": "Quitter sans enregistrer",
   "scheduleSaveConflict": "Ces disponibilités ont changé ailleurs. Rechargez la page avant de continuer.",
-  "scheduleSaveBarAria": "Enregistrement des disponibilités"
+  "scheduleSaveBarAria": "Enregistrement des disponibilités",
+  "scheduleLegacyModeTitle": "Mode grilles héritées",
+  "scheduleLegacyModeBody": "Les plages Matin / Après-midi / Soir restent actives tant que l’horaire précis n’est pas activé. Activez les plages horaires exactes pour un horaire plus fiable.",
+  "scheduleSaveStickyDurationHelp": "Les changements de durée sont enregistrés avec le bouton Enregistrer les disponibilités."
 }

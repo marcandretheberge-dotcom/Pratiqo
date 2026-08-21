@@ -2902,5 +2902,8 @@
   "scheduleSaveLeaveStay": "Permanecer en la página",
   "scheduleSaveLeaveConfirm": "Salir sin guardar",
   "scheduleSaveConflict": "Esta disponibilidad cambió en otro lugar. Recarga la página antes de continuar.",
-  "scheduleSaveBarAria": "Acciones para guardar la disponibilidad"
+  "scheduleSaveBarAria": "Acciones para guardar la disponibilidad",
+  "scheduleLegacyModeTitle": "Horario por bloques heredado",
+  "scheduleLegacyModeBody": "Los bloques Mañana / Tarde / Noche siguen activos hasta activar franjas horarias exactas. Activa intervalos precisos para un horario más fiable.",
+  "scheduleSaveStickyDurationHelp": "Los cambios de duración se guardan con el botón Guardar disponibilidad."
 }

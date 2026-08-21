@@ -150,17 +150,118 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     { href: "/teacher/my-profile", icon: "👤", labelKey: "teacherNavMyProfile" },
   ];
 
+  // Teacher shell: sidebar + main column (topbar only over content). Lock viewport height so
+  // sticky topbar cannot float mid-page over a document-scrolling sidebar.
+  if (isTeacher) {
+    return (
+      <div
+        className="flex h-[100dvh] max-h-[100dvh] min-h-0 overflow-hidden bg-[#F4F4F3] text-[#2C2C2A]"
+        data-testid="teacher-app-shell"
+      >
+        <TeacherSidebarNav unreadMessages={unreadMessages} />
+        <div
+          className="flex min-h-0 min-w-0 flex-1 flex-col"
+          data-testid="teacher-main-shell"
+        >
+          <TeacherTopNav unreadMessages={unreadMessages} />
+          <main
+            className="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-clip px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-4 sm:px-6 sm:pt-6 md:pb-8"
+            data-testid="teacher-main-content"
+          >
+            <div className="mx-auto w-full min-w-0 max-w-[1280px]">{children}</div>
+          </main>
+        </div>
+        <style>{`
+          .teacher-bottom-nav {
+            display: flex;
+          }
+          @media (min-width: 768px) {
+            .teacher-bottom-nav {
+              display: none !important;
+            }
+          }
+        `}</style>
+        <nav
+          className="teacher-bottom-nav"
+          style={{
+            position: "fixed",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            zIndex: 50,
+            background: "white",
+            borderTop: "0.5px solid #D3D1C7",
+            paddingBottom: "env(safe-area-inset-bottom)",
+          }}
+        >
+          {TEACHER_MOBILE_BOTTOM_NAV.map((tab) => {
+            const active = isStudentNavActive(pathname, tab.href);
+            const text = t(tab.labelKey);
+            return (
+              <Link
+                key={tab.href}
+                href={tab.href}
+                style={{
+                  flex: 1,
+                  position: "relative",
+                  textAlign: "center",
+                  padding: "8px 4px 10px",
+                  textDecoration: "none",
+                }}
+              >
+                <div style={{ fontSize: 20 }}>{tab.icon}</div>
+                {tab.href === "/messages" && unreadMessages > 0 ? (
+                  <span
+                    aria-label={`${unreadMessages > 99 ? "99+" : unreadMessages} ${t("unreadCountLabel")}`}
+                    style={{
+                      position: "absolute",
+                      top: 5,
+                      right: "calc(50% - 18px)",
+                      minWidth: 16,
+                      height: 16,
+                      padding: "0 4px",
+                      borderRadius: 999,
+                      background: "#ef4444",
+                      color: "white",
+                      border: "2px solid white",
+                      fontSize: 9,
+                      fontWeight: 800,
+                      lineHeight: "12px",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    {unreadMessages > 99 ? "99+" : unreadMessages}
+                  </span>
+                ) : null}
+                <div
+                  style={{
+                    fontSize: 10,
+                    color: active ? "#00694c" : "#4B5563",
+                    fontWeight: active ? 500 : 400,
+                    marginTop: 2,
+                  }}
+                >
+                  {text}
+                </div>
+              </Link>
+            );
+          })}
+        </nav>
+      </div>
+    );
+  }
+
   return (
     <div
       className={cn(
         "min-h-[100dvh] flex flex-col",
-        isTeacher ? "bg-[#F4F4F3] text-[#2C2C2A]" : "bg-[#FAFCFB] text-[var(--p-text)]",
+        "bg-[#FAFCFB] text-[var(--p-text)]",
       )}
     >
-      {isTeacher ? <TeacherTopNav unreadMessages={unreadMessages} /> : null}
-
       {/* Default top bar (non-student, non-teacher: logged-out or unknown role) */}
-      {!isStudent && !isTeacher ? (
+      {!isStudent ? (
         <header className="sticky top-0 z-40 h-14 shrink-0 border-b border-[var(--p-border-light)] bg-white flex items-center justify-between px-4 sm:px-5">
           <Link href={logoHref} className="flex items-center gap-2 min-w-0" aria-label={t("ariaHome")}>
             <PratiqoLogo variant="full" size="md" />
@@ -307,15 +408,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </>
       ) : null}
 
-      <div className={cn("flex min-h-0 flex-1", isTeacher ? "min-w-0" : "")}>
-        {isTeacher ? <TeacherSidebarNav unreadMessages={unreadMessages} /> : null}
+      <div className="flex min-h-0 flex-1">
         <main
           className={cn(
             "min-w-0 flex-1",
             isStudent && "w-full overflow-y-auto px-4 sm:px-5 pt-4 sm:pt-6 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-0",
-            isTeacher &&
-              "w-full overflow-y-auto overflow-x-clip px-4 sm:px-6 pt-4 sm:pt-6 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-8",
-            !isStudent && !isTeacher && "overflow-y-auto px-4 sm:px-5 py-6 pb-8",
+            !isStudent && "overflow-y-auto px-4 sm:px-5 py-6 pb-8",
           )}
           style={
             isStudent
@@ -329,15 +427,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           {isStudent ? (
             <div className="w-full">{children}</div>
           ) : (
-            <div
-              className={cn(
-                "mx-auto w-full min-w-0",
-                !isTeacher && "max-w-[960px]",
-                isTeacher && "max-w-[1280px]",
-              )}
-            >
-              {children}
-            </div>
+            <div className="mx-auto w-full min-w-0 max-w-[960px]">{children}</div>
           )}
         </main>
       </div>
@@ -425,89 +515,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             );
           })}
         </nav>
-        </>
-      ) : null}
-
-      {isTeacher ? (
-        <>
-          <style>{`
-            .teacher-bottom-nav {
-              display: flex;
-            }
-            @media (min-width: 768px) {
-              .teacher-bottom-nav {
-                display: none !important;
-              }
-            }
-          `}</style>
-          <nav
-            className="teacher-bottom-nav"
-            style={{
-              position: "fixed",
-              bottom: 0,
-              left: 0,
-              right: 0,
-              zIndex: 50,
-              background: "white",
-              borderTop: "0.5px solid #D3D1C7",
-              paddingBottom: "env(safe-area-inset-bottom)",
-            }}
-          >
-            {TEACHER_MOBILE_BOTTOM_NAV.map((tab) => {
-              const active = isStudentNavActive(pathname, tab.href);
-              const text = t(tab.labelKey);
-              return (
-                <Link
-                  key={tab.href}
-                  href={tab.href}
-                  style={{
-                    flex: 1,
-                    position: "relative",
-                    textAlign: "center",
-                    padding: "8px 4px 10px",
-                    textDecoration: "none",
-                  }}
-                >
-                  <div style={{ fontSize: 20 }}>{tab.icon}</div>
-                  {tab.href === "/messages" && unreadMessages > 0 ? (
-                    <span
-                      aria-label={`${unreadMessages > 99 ? "99+" : unreadMessages} ${t("unreadCountLabel")}`}
-                      style={{
-                        position: "absolute",
-                        top: 5,
-                        right: "calc(50% - 18px)",
-                        minWidth: 16,
-                        height: 16,
-                        padding: "0 4px",
-                        borderRadius: 999,
-                        background: "#ef4444",
-                        color: "white",
-                        border: "2px solid white",
-                        fontSize: 9,
-                        fontWeight: 800,
-                        lineHeight: "12px",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      {unreadMessages > 99 ? "99+" : unreadMessages}
-                    </span>
-                  ) : null}
-                  <div
-                    style={{
-                      fontSize: 10,
-                      color: active ? "#00694c" : "#4B5563",
-                      fontWeight: active ? 500 : 400,
-                      marginTop: 2,
-                    }}
-                  >
-                    {text}
-                  </div>
-                </Link>
-              );
-            })}
-          </nav>
         </>
       ) : null}
 

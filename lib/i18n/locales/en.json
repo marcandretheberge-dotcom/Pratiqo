@@ -2902,5 +2902,8 @@
   "scheduleSaveLeaveStay": "Stay on page",
   "scheduleSaveLeaveConfirm": "Leave without saving",
   "scheduleSaveConflict": "This availability changed elsewhere. Reload the page before continuing.",
-  "scheduleSaveBarAria": "Availability save actions"
+  "scheduleSaveBarAria": "Availability save actions",
+  "scheduleLegacyModeTitle": "Legacy block schedule",
+  "scheduleLegacyModeBody": "Morning / Afternoon / Evening blocks remain active until precise time ranges are enabled. Turn on exact intervals for a more reliable schedule.",
+  "scheduleSaveStickyDurationHelp": "Duration changes are saved with the Save availability button."
 }

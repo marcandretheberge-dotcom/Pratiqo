@@ -816,6 +816,28 @@ const allowedTeacherScheduleSaveExperienceFiles = new Set<string>([
   "package.json",
 ]);
 
+/** PR 17C-FIX — teacher shell + schedule save stabilization (layout/UX only). */
+const allowedTeacherShellSaveStabilizationFiles = new Set<string>([
+  "components/AppShell.tsx",
+  "components/TeacherTopNav.tsx",
+  "components/teacher/TeacherSidebarNav.tsx",
+  "components/teacher/TeacherWeeklyIntervalsEditor.tsx",
+  "components/teacher/TeacherScheduleExceptionsEditor.tsx",
+  "app/(app)/teacher/schedule/page.tsx",
+  "lib/schedule/scheduleSaveFlags.ts",
+  "lib/i18n/locales/fr.json",
+  "lib/i18n/locales/en.json",
+  "lib/i18n/locales/es.json",
+  ".env.example",
+  "tests/teacher/teacherSidebarNavigation.test.ts",
+  "tests/schedule/scheduleSaveExperience.test.ts",
+  "tests/teacherSchedule/lessonDurationAutosave.test.ts",
+  "tests/legal/safeDisclosures.test.ts",
+  "tests/legal/marketplaceIndependentTeacherHardening.test.ts",
+  "tests/yo/yopratiqoAudioPronunciationOverrides.test.ts",
+  "package.json",
+]);
+
 function touchesSafeDisclosureScope(file: string): boolean {
   return (
     liveDisclosureFiles.includes(file) ||
@@ -1004,6 +1026,7 @@ test("safe-disclosure branch did not touch restricted systems", () => {
     if (allowedTeacherWeeklyScheduleIntervalsFiles.has(file)) continue;
     if (allowedTeacherScheduleExceptionsFiles.has(file)) continue;
     if (allowedTeacherScheduleSaveExperienceFiles.has(file)) continue;
+    if (allowedTeacherShellSaveStabilizationFiles.has(file)) continue;
     for (const rule of restrictedRules) {
       if (rule.re.test(file)) {
         violations.push(`${file} (${rule.label})`);

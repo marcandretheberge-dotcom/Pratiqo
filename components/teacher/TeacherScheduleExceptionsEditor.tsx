@@ -295,7 +295,7 @@ export function TeacherScheduleExceptionsEditor({
       <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
         <p className="text-sm font-bold text-[#2C2C2A]">{t("scheduleExceptionsTitle")}</p>
         <p className="mt-1 text-xs leading-5 text-slate-600">{t("scheduleExceptionsHelper")}</p>
-        <p className="mt-1 text-xs leading-5 text-slate-500">{t("weeklyIntervalsTeacherChooses")}</p>
+        <p className="mt-1 text-xs leading-5 text-slate-600">{t("weeklyIntervalsTeacherChooses")}</p>
 
         <div className="mt-4 flex flex-wrap items-center gap-2">
           <button
