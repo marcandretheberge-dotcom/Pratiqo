@@ -314,7 +314,8 @@ type RpcAdmin = {
     fn: string,
     args: Record<string, unknown>,
   ) => Promise<{ data: unknown; error: { message?: string; code?: string } | null }>;
-  from: (table: string) => {
+  /** Required for redeem date-gate lookups; optional for reverse/forfeit RPCs. */
+  from?: (table: string) => {
     select: (columns: string) => {
       eq: (column: string, value: string) => {
         maybeSingle: () => Promise<{
@@ -363,8 +364,12 @@ export async function redeemPackageSessionBooking(args: {
     return { ok: false, status: 400, error: "booking_minimum_notice" };
   }
 
-  const { data: entitlement, error: entitlementErr } = await args.admin
-    .from("package_entitlements")
+  const adminFrom = args.admin.from;
+  if (!adminFrom) {
+    return { ok: false, status: 500, error: "server_error" };
+  }
+
+  const { data: entitlement, error: entitlementErr } = await adminFrom("package_entitlements")
     .select("id, teacher_id")
     .eq("id", args.entitlementId)
     .maybeSingle();
@@ -377,8 +382,7 @@ export async function redeemPackageSessionBooking(args: {
     return { ok: false, status: 404, error: "entitlement_not_found" };
   }
 
-  const { data: teacher, error: teacherErr } = await args.admin
-    .from("teachers")
+  const { data: teacher, error: teacherErr } = await adminFrom("teachers")
     .select("id, available_from_date")
     .eq("id", teacherId)
     .maybeSingle();
