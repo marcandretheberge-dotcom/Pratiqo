@@ -31,6 +31,8 @@ import {
   canBookTeacherOnDate,
   normalizeAvailableFromDate,
 } from "@/lib/teachers/availabilityStartDate";
+import { rejectIfOutsideWeeklyIntervals } from "@/lib/bookings/weeklyIntervalGuard";
+import type { WeeklyIntervalAdmin } from "@/lib/bookings/weeklyIntervalGuard";
 import type { PackageEntitlementRow, PackageEntitlementStatus } from "./packageEntitlements";
 
 export const PACKAGE_REDEMPTION_BOOKING_FLAG = "ENABLE_PACKAGE_REDEMPTION_BOOKING";
@@ -88,6 +90,7 @@ export type RedeemPackageSessionFailure = {
     | "no_remaining_sessions"
     | "booking_minimum_notice"
     | "teacher_not_available_yet"
+    | "slot_outside_teacher_availability"
     | "invalid_learner_profile"
     | "slot_booked"
     | "duplicate_redemption_conflict"
@@ -397,6 +400,21 @@ export async function redeemPackageSessionBooking(args: {
       error: "teacher_not_available_yet",
       availableFromDate: availableFromDate ?? undefined,
     };
+  }
+
+  const durationMinutes =
+    typeof args.request.durationMinutes === "number" && Number.isFinite(args.request.durationMinutes)
+      ? Math.round(args.request.durationMinutes)
+      : 60;
+  const outside = await rejectIfOutsideWeeklyIntervals({
+    admin: args.admin as unknown as WeeklyIntervalAdmin,
+    teacherId,
+    slotDate: args.request.slotDate,
+    timeSlot: args.request.timeSlot,
+    durationMinutes,
+  });
+  if (outside) {
+    return { ok: false, status: outside.status, error: outside.error };
   }
 
   const { data, error } = await args.admin.rpc("redeem_package_session_booking", {

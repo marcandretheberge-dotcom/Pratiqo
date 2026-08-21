@@ -12,6 +12,11 @@ import {
   filterAvailableDaysByStartDate,
   normalizeAvailableFromDate,
 } from "@/lib/teachers/availabilityStartDate";
+import {
+  getAvailableDaysFromWeeklyIntervals,
+  isTeacherScheduleIntervalsEnabled,
+  mapDbRowsToNormalized,
+} from "@/lib/schedule/weeklyIntervals";
 
 type Admin = SupabaseClient;
 
@@ -197,13 +202,33 @@ export async function computeAvailableDaysForTeacher(
     });
   }
 
-  const days = filterAvailableDaysByStartDate(
-    getAvailableDays(weekly, durationMinutes, timeLabelsByDate, blockedByDate, weeks, {
-      bookedIntervalsByDate: intervalsByDate,
-      bufferBeforeMin: buffers.bookingBufferBeforeMinutes,
-      bufferAfterMin: buffers.bookingBufferAfterMinutes,
-    }),
-    availableFromDate,
-  );
+  const dayOptions = {
+    bookedIntervalsByDate: intervalsByDate,
+    bufferBeforeMin: buffers.bookingBufferBeforeMinutes,
+    bufferAfterMin: buffers.bookingBufferAfterMinutes,
+  };
+
+  let rawDays: Record<string, number>;
+  if (isTeacherScheduleIntervalsEnabled()) {
+    const { data: intervalRows } = await admin
+      .from("teacher_weekly_availability_intervals")
+      .select("day_of_week, start_time, end_time, is_active")
+      .eq("teacher_id", teacherId)
+      .eq("is_active", true);
+    const intervals = mapDbRowsToNormalized(intervalRows ?? []);
+    // Flag ON: intervals are the sole source of truth (empty → no bookable days).
+    rawDays = getAvailableDaysFromWeeklyIntervals(
+      intervals,
+      durationMinutes,
+      timeLabelsByDate,
+      blockedByDate,
+      weeks,
+      dayOptions,
+    );
+  } else {
+    rawDays = getAvailableDays(weekly, durationMinutes, timeLabelsByDate, blockedByDate, weeks, dayOptions);
+  }
+
+  const days = filterAvailableDaysByStartDate(rawDays, availableFromDate);
   return { days, durationMinutes };
 }

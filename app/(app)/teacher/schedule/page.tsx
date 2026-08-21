@@ -22,6 +22,8 @@ import {
   formatAvailableFromDisplayDate,
   normalizeAvailableFromDate,
 } from "@/lib/teachers/availabilityStartDate";
+import { isTeacherScheduleIntervalsUiEnabled } from "@/lib/schedule/weeklyIntervals";
+import { TeacherWeeklyIntervalsEditor } from "@/components/teacher/TeacherWeeklyIntervalsEditor";
 
 const DAYS = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"] as const;
 const SLOTS = ["Matin", "Après-midi", "Soir"] as const;
@@ -739,7 +741,13 @@ function TeacherScheduleInner() {
               <p className="text-xs font-medium text-red-700">{t("availableFromSaveError")}</p>
             ) : null}
           </div>
+          {isTeacherScheduleIntervalsUiEnabled() ? (
+            <TeacherWeeklyIntervalsEditor hasLegacyBlocks={availability.length > 0} />
+          ) : null}
+
           <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+            {!isTeacherScheduleIntervalsUiEnabled() ? (
+              <>
             <div className="space-y-3">
               <div>
                 <p className="text-xs font-bold uppercase tracking-widest text-slate-600">{t("gridWeeklyTitle")}</p>
@@ -820,7 +828,7 @@ function TeacherScheduleInner() {
                             lockedByBooking ? "border-[#F5C478] bg-[#FAEEDA] cursor-not-allowed" : "",
                             lockedByNotice && !lockedByBooking ? "cursor-not-allowed border-slate-200 bg-slate-50 opacity-55" : "",
                             !locked && on ? "border-teal-500 bg-teal-500/15" : "",
-                            !locked && !on ? "border-slate-200 bg-slate-100 hover:border-slate-300" : "",
+                            !locked && !on ? "border-slate-200 bg-slate-100 hover:bg-slate-100 hover:border-slate-300" : "",
                           )}
                           title={lockedByBooking ? t("titleCellBooked") : lockedByNotice ? t("scheduleLockedCellLabel") : on ? t("titleCellAvailable") : t("titleCellUnavailable")}
                         />
@@ -830,6 +838,8 @@ function TeacherScheduleInner() {
                 ))}
               </div>
             </div>
+              </>
+            ) : null}
 
             <div className="border-t border-slate-100 pt-4 space-y-2">
               <p className="text-sm font-bold text-[#2C2C2A]">{t("teachingFormat")}</p>

@@ -738,6 +738,32 @@ const allowedTeacherAvailabilityStartDateFiles = new Set<string>([
   "package.json",
 ]);
 
+/** PR 17A — precise teacher weekly availability intervals (flagged; no Stripe/payout changes). */
+const allowedTeacherWeeklyScheduleIntervalsFiles = new Set<string>([
+  "supabase/migrations/108_teacher_weekly_availability_intervals.sql",
+  "supabase/migrations/109_harden_teacher_weekly_availability_intervals_rls.sql",
+  "lib/schedule/weeklyIntervals.ts",
+  "lib/bookings/weeklyIntervalGuard.ts",
+  "lib/bookings/createPendingPaymentBooking.ts",
+  "lib/teacherSlotQueries.ts",
+  "lib/offers/packageRedemptions.ts",
+  "app/api/teacher/weekly-intervals/route.ts",
+  "app/api/teachers/[id]/slots/route.ts",
+  "app/(app)/teacher/schedule/page.tsx",
+  "components/teacher/TeacherWeeklyIntervalsEditor.tsx",
+  "components/BookingModal.tsx",
+  "lib/i18n/locales/fr.json",
+  "lib/i18n/locales/en.json",
+  "lib/i18n/locales/es.json",
+  ".env.example",
+  "tests/schedule/weeklyIntervals.test.ts",
+  "tests/security/rlsCoverage.test.ts",
+  "tests/legal/marketplaceIndependentTeacherHardening.test.ts",
+  "tests/legal/safeDisclosures.test.ts",
+  "tests/yo/yopratiqoAudioPronunciationOverrides.test.ts",
+  "package.json",
+]);
+
 function touchesSafeDisclosureScope(file: string): boolean {
   return (
     liveDisclosureFiles.includes(file) ||
@@ -923,6 +949,7 @@ test("safe-disclosure branch did not touch restricted systems", () => {
     if (allowedTeacherOfferCoverImageFiles.has(file)) continue;
     if (allowedTeacherOfferCancellationPreferenceFiles.has(file)) continue;
     if (allowedTeacherAvailabilityStartDateFiles.has(file)) continue;
+    if (allowedTeacherWeeklyScheduleIntervalsFiles.has(file)) continue;
     for (const rule of restrictedRules) {
       if (rule.re.test(file)) {
         violations.push(`${file} (${rule.label})`);

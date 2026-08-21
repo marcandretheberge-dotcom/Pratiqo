@@ -11,6 +11,8 @@ import {
   canBookTeacherOnDate,
   normalizeAvailableFromDate,
 } from "@/lib/teachers/availabilityStartDate";
+import { rejectIfOutsideWeeklyIntervals } from "@/lib/bookings/weeklyIntervalGuard";
+import type { WeeklyIntervalAdmin } from "@/lib/bookings/weeklyIntervalGuard";
 
 export type CreateBookingFailure = {
   ok: false;
@@ -139,6 +141,17 @@ export async function createPendingPaymentBooking(args: {
       error: "teacher_not_available_yet",
       availableFromDate: availableFromDate ?? undefined,
     };
+  }
+
+  const outside = await rejectIfOutsideWeeklyIntervals({
+    admin: args.admin as unknown as WeeklyIntervalAdmin,
+    teacherId: args.request.teacherId,
+    slotDate: args.request.slotDate,
+    timeSlot: args.request.timeSlot,
+    durationMinutes: args.request.durationMinutes,
+  });
+  if (outside) {
+    return { ok: false, status: outside.status, error: outside.error };
   }
 
   if (args.request.learnerProfileId) {

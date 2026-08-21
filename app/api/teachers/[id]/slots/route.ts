@@ -14,6 +14,12 @@ import { defaultLessonDurationMinutes, normalizeTeacherBufferSettings } from "@/
 import { isValidLessonDurationMinutes } from "@/lib/pricing/lessonDuration";
 import { isBookingAtLeast24hAhead } from "@/lib/bookingCancellation";
 import { canBookTeacherOnDate, normalizeAvailableFromDate } from "@/lib/teachers/availabilityStartDate";
+import {
+  dayOfWeekForISODate,
+  generateSlotsFromWeeklyIntervals,
+  isTeacherScheduleIntervalsEnabled,
+  mapDbRowsToNormalized,
+} from "@/lib/schedule/weeklyIntervals";
 
 export const runtime = "nodejs";
 
@@ -109,11 +115,43 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
     const blockedPeriods = blockedPeriodsFromRows(blockedDayRows);
     const blockedRanges = blockedTimeRangesFromRows(blockedDayRows);
 
-    const slots = generateSlots(dayAvail, durationMinutes, date, bookedSlots, blockedPeriods, blockedRanges, {
+    const slotOptions = {
       bookedIntervals,
       bufferBeforeMin: buffers.bookingBufferBeforeMinutes,
       bufferAfterMin: buffers.bookingBufferAfterMinutes,
-    });
+    };
+
+    if (isTeacherScheduleIntervalsEnabled()) {
+      const { data: intervalRows } = await admin
+        .from("teacher_weekly_availability_intervals")
+        .select("day_of_week, start_time, end_time, is_active")
+        .eq("teacher_id", teacherId)
+        .eq("is_active", true);
+      const intervals = mapDbRowsToNormalized(intervalRows ?? []);
+      const dayOfWeek = dayOfWeekForISODate(date) ?? 0;
+      const slots = generateSlotsFromWeeklyIntervals(
+        dayOfWeek,
+        intervals,
+        durationMinutes,
+        bookedSlots,
+        blockedPeriods,
+        blockedRanges,
+        slotOptions,
+      );
+      const now = new Date();
+      const filteredSlots = slots.filter((slot) =>
+        isBookingAtLeast24hAhead({ slot_date: date, time_slot: slot }, now),
+      );
+      return NextResponse.json({
+        slots: filteredSlots,
+        durationMinutes,
+        date,
+        preciseIntervals: true,
+        hasWeeklyIntervals: intervals.length > 0,
+      });
+    }
+
+    const slots = generateSlots(dayAvail, durationMinutes, date, bookedSlots, blockedPeriods, blockedRanges, slotOptions);
 
     const now = new Date();
     const filteredSlots = slots.filter((slot) =>

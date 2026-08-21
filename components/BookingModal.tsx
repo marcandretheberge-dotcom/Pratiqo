@@ -267,6 +267,7 @@ export function BookingModal({
 
   const [availableDays, setAvailableDays] = useState<Record<string, number>>({});
   const [slots, setSlots] = useState<string[]>([]);
+  const [noPreciseAvailability, setNoPreciseAvailability] = useState(false);
   const [durationMinutes, setDurationMinutes] = useState(60);
   const [loadingDays, setLoadingDays] = useState(false);
   const [loadingSlots, setLoadingSlots] = useState(false);
@@ -504,13 +505,19 @@ export function BookingModal({
           slots?: string[];
           durationMinutes?: number;
           error?: string;
+          preciseIntervals?: boolean;
+          hasWeeklyIntervals?: boolean;
         };
         if (!res.ok) throw new Error(body.error || t("bookingLoadSlotsFail"));
         setSlots(body.slots ?? []);
+        setNoPreciseAvailability(
+          Boolean(body.preciseIntervals) && body.hasWeeklyIntervals === false,
+        );
         if (typeof body.durationMinutes === "number") setDurationMinutes(body.durationMinutes);
       } catch (e) {
         setSlotsError(e instanceof Error ? e.message : "Erreur");
         setSlots([]);
+        setNoPreciseAvailability(false);
       } finally {
         setLoadingSlots(false);
       }
@@ -971,6 +978,10 @@ export function BookingModal({
           );
           return;
         }
+        if (redeemRes.status === 409 && redeemPayload.error === "slot_outside_teacher_availability") {
+          setCheckoutError(t("bookingSlotOutsideAvailability"));
+          return;
+        }
         if (redeemRes.status === 400 && redeemPayload.error === "booking_minimum_notice") {
           setCheckoutError(t("bookingMinimumNoticeError"));
           return;
@@ -1047,6 +1058,10 @@ export function BookingModal({
           normalizeAvailableFromDate(teacher.availableFromDate);
         const dateLabel = from ? formatAvailableFromDisplayDate(from, locale) : "";
         setCheckoutError(t("bookingTeacherNotAvailableYet").replace("{date}", dateLabel || "…"));
+        return;
+      }
+      if (createRes.status === 409 && createPayload.error === "slot_outside_teacher_availability") {
+        setCheckoutError(t("bookingSlotOutsideAvailability"));
         return;
       }
       if (createRes.status === 409) {
@@ -1849,7 +1864,9 @@ export function BookingModal({
                   <Loader2 className="animate-spin text-teal-700" size={28} />
                 </div>
               ) : slots.length === 0 ? (
-                <p className="text-sm text-slate-500">{t("noSlotsPickOther")}</p>
+                <p className="text-sm text-slate-500">
+                  {noPreciseAvailability ? t("bookingNoPreciseAvailability") : t("noSlotsPickOther")}
+                </p>
               ) : (
                 <div className="max-h-[42vh] space-y-4 overflow-y-auto pr-1">
                   {slotsByPeriod.map((g) => (
