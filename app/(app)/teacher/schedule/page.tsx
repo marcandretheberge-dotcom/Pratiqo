@@ -22,18 +22,16 @@ import {
   formatAvailableFromDisplayDate,
   normalizeAvailableFromDate,
 } from "@/lib/teachers/availabilityStartDate";
-import { isTeacherScheduleIntervalsUiEnabled } from "@/lib/schedule/weeklyIntervals";
-import {
-  buildScheduleIntervalMigrationState,
-  shouldShowScheduleIntervalHoraireBanner,
-} from "@/lib/schedule/scheduleIntervalMigration";
+import { isTeacherScheduleIntervalsUiEnabled, isTeacherScheduleIntervalsEnabled } from "@/lib/schedule/weeklyIntervals";
+import { buildScheduleIntervalMigrationState } from "@/lib/schedule/scheduleIntervalMigration";
 import { TeacherWeeklyIntervalsEditor } from "@/components/teacher/TeacherWeeklyIntervalsEditor";
-import { TeacherScheduleIntervalMigrationBanner } from "@/components/teacher/TeacherScheduleIntervalMigrationBanner";
 import { TeacherScheduleIntervalMigrationModal } from "@/components/teacher/TeacherScheduleIntervalMigrationModal";
 import { TeacherScheduleExceptionsEditor } from "@/components/teacher/TeacherScheduleExceptionsEditor";
 import { TeacherScheduleInteractiveGrid } from "@/components/teacher/TeacherScheduleInteractiveGrid";
+import { TeacherSchedulePrecisionBanner } from "@/components/teacher/TeacherSchedulePrecisionBanner";
 import { isTeacherScheduleExceptionsUiEnabled } from "@/lib/schedule/dateExceptions";
 import { isTeacherScheduleInteractiveCellsUiEnabled } from "@/lib/schedule/interactiveCells";
+import { dispatchConfigurePrecision } from "@/lib/schedule/precisionScheduleBanner";
 import {
   isTeacherScheduleStickySaveEnabled,
 } from "@/lib/schedule/scheduleSaveFlags";
@@ -885,6 +883,34 @@ function TeacherScheduleInner() {
               <p className="text-xs font-medium text-red-700">{t("availableFromSaveError")}</p>
             ) : null}
           </div>
+          <TeacherSchedulePrecisionBanner
+            broadBlockCount={availability.length}
+            preciseIntervalCount={preciseIntervalCount}
+            configuredDayCount={preciseIntervalCount > 0 ? Math.min(7, preciseIntervalCount) : 0}
+            intervalsServerEnabled={isTeacherScheduleIntervalsEnabled()}
+            intervalsUiEnabled={isTeacherScheduleIntervalsUiEnabled()}
+            interactiveCellsUiEnabled={isTeacherScheduleInteractiveCellsUiEnabled()}
+            onConfigure={() => {
+              if (isTeacherScheduleInteractiveCellsUiEnabled()) {
+                document
+                  .querySelector('[data-testid="teacher-schedule-interactive-grid"]')
+                  ?.scrollIntoView({ behavior: "smooth", block: "start" });
+                dispatchConfigurePrecision();
+                return;
+              }
+              if (isTeacherScheduleIntervalsUiEnabled()) {
+                document.getElementById("teacher-weekly-intervals-editor")?.scrollIntoView({
+                  behavior: "smooth",
+                  block: "start",
+                });
+                return;
+              }
+              document
+                .querySelector('[data-testid="teacher-schedule-availability-scroll"]')
+                ?.scrollIntoView({ behavior: "smooth", block: "start" });
+            }}
+          />
+
           {isTeacherScheduleInteractiveCellsUiEnabled() ? (
             <TeacherScheduleInteractiveGrid
               bookings={bookings}
@@ -893,14 +919,6 @@ function TeacherScheduleInner() {
             />
           ) : isTeacherScheduleIntervalsUiEnabled() ? (
             <>
-              {shouldShowScheduleIntervalHoraireBanner(
-                buildScheduleIntervalMigrationState({
-                  legacyBlockCount: availability.length,
-                  preciseIntervalCount,
-                }),
-              ) ? (
-                <TeacherScheduleIntervalMigrationBanner hasLegacyBlocks={availability.length > 0} />
-              ) : null}
               <TeacherWeeklyIntervalsEditor
                 hasLegacyBlocks={availability.length > 0}
                 onPreciseIntervalCountChange={setPreciseIntervalCount}
@@ -919,16 +937,7 @@ function TeacherScheduleInner() {
                 }}
               />
             </>
-          ) : (
-            <div
-              className="rounded-2xl border border-amber-200 bg-amber-50 p-4 shadow-sm sm:p-5"
-              data-testid="teacher-schedule-legacy-mode-banner"
-              role="status"
-            >
-              <p className="text-sm font-bold text-amber-950">{t("scheduleLegacyModeTitle")}</p>
-              <p className="mt-1 text-xs leading-5 text-amber-900">{t("scheduleLegacyModeBody")}</p>
-            </div>
-          )}
+          ) : null}
 
           {isTeacherScheduleExceptionsUiEnabled() ? (
             <TeacherScheduleExceptionsEditor onDirtyChange={setExceptionsDirty} />

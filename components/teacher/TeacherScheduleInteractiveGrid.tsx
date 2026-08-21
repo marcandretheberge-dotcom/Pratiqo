@@ -17,6 +17,7 @@ import { cellConfiguredCountKey, formatCellIntervalLines } from "@/lib/schedule/
 import { stableScheduleSnapshot } from "@/lib/schedule/scheduleSaveState";
 import { scheduleSaveStatusFrom } from "@/lib/schedule/scheduleSaveState";
 import { isTeacherScheduleStickySaveEnabled } from "@/lib/schedule/scheduleSaveFlags";
+import { SCHEDULE_CONFIGURE_PRECISION_EVENT } from "@/lib/schedule/precisionScheduleBanner";
 import { useUnsavedChangesWarning } from "@/hooks/useUnsavedChangesWarning";
 import { TeacherScheduleSaveBar } from "@/components/teacher/TeacherScheduleSaveBar";
 import {
@@ -231,6 +232,22 @@ export function TeacherScheduleInteractiveGrid({
       title: `${dayName} ${partName.toLowerCase()}${dateLabel ? ` — ${dateLabel}` : ""}`,
     });
   };
+
+  const openFirstEditableCell = useCallback(() => {
+    for (let di = 0; di < DAYS.length; di++) {
+      for (const s of SLOTS) {
+        if (cellHasBooking(di, s) || cellLockedByNotice(di, s)) continue;
+        openCell(di, s);
+        return;
+      }
+    }
+  }, [weekDays, weekAnchor, bookings, t, dateLocale]);
+
+  useEffect(() => {
+    const onConfigure = () => openFirstEditableCell();
+    window.addEventListener(SCHEDULE_CONFIGURE_PRECISION_EVENT, onConfigure);
+    return () => window.removeEventListener(SCHEDULE_CONFIGURE_PRECISION_EVENT, onConfigure);
+  }, [openFirstEditableCell]);
 
   const editorIntervals = editor
     ? intervalsForDaypart(intervals, editor.dayOfWeek, editor.daypart)
