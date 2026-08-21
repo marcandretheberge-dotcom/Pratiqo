@@ -61,8 +61,9 @@
     "test:payments": "tsx tests/bookings/autoComplete.test.ts && tsx tests/bookings/reminders.test.ts && tsx tests/email/locale.test.ts && tsx tests/email/welcome.test.ts && tsx tests/email/notifications.test.ts && tsx tests/email/formatSchedule.test.ts && tsx tests/email/logo.test.ts && tsx tests/pricing/minimumLessonPrice.test.ts && tsx tests/pricing/lessonDuration.test.ts && tsx tests/pricing/resolveBookingCheckoutPrice.test.ts && tsx tests/payments/bookingCharge.test.ts && tsx tests/payments/commissionSubtotal.test.ts && tsx tests/payments/stripeTaxInclusive.test.ts && tsx tests/payments/receipts.test.ts && tsx tests/payments/paymentRiskWebhook.test.ts && tsx tests/payments/founderPromoLiveCommission.test.ts && tsx tests/payments/paymentTrustLaunchHardening.test.ts && tsx tests/payments/adminStudentCreditsSpendable.test.ts && tsx tests/i18n/uniqueKeys.test.ts",
     "validate:launch": "npm run test:auth && npm run test:security && npm run test:payments && npm run test:launch-critical && npm run test:currency && npm run payment:safety && tsx scripts/validate_i18n.ts && npm run build",
     "lint": "eslint",
-    "test:schedule-intervals": "tsx tests/schedule/weeklyIntervals.test.ts && tsx tests/schedule/scheduleIntervalMigrationUx.test.ts && tsx tests/schedule/dateExceptions.test.ts",
-    "test:schedule-exceptions": "tsx tests/schedule/dateExceptions.test.ts"
+    "test:schedule-intervals": "tsx tests/schedule/weeklyIntervals.test.ts && tsx tests/schedule/scheduleIntervalMigrationUx.test.ts && tsx tests/schedule/dateExceptions.test.ts && tsx tests/schedule/scheduleSaveExperience.test.ts",
+    "test:schedule-exceptions": "tsx tests/schedule/dateExceptions.test.ts",
+    "test:schedule-save": "tsx tests/schedule/scheduleSaveExperience.test.ts"
   },
   "dependencies": {
     "@googlemaps/js-api-loader": "^2.0.2",

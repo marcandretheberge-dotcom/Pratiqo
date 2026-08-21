@@ -9,6 +9,9 @@ import {
   WEEKLY_INTERVAL_STEP_MINUTES,
   type ScheduleExceptionType,
 } from "@/lib/schedule/dateExceptions";
+import { isTeacherScheduleStickySaveEnabled } from "@/lib/schedule/scheduleSaveFlags";
+import { stableScheduleSnapshot } from "@/lib/schedule/scheduleSaveState";
+import { useUnsavedChangesWarning } from "@/hooks/useUnsavedChangesWarning";
 import { cn } from "@/lib/utils";
 
 type ExceptionDto = {
@@ -50,8 +53,13 @@ function mondayFirstIndex(d: Date): number {
   return (d.getDay() + 6) % 7;
 }
 
-export function TeacherScheduleExceptionsEditor() {
+export function TeacherScheduleExceptionsEditor({
+  onDirtyChange,
+}: {
+  onDirtyChange?: (dirty: boolean) => void;
+} = {}) {
   const { t, locale } = useLocale();
+  const stickyEnabled = isTeacherScheduleStickySaveEnabled();
   const [monthAnchor, setMonthAnchor] = useState(() => startOfMonth(new Date()));
   const [exceptions, setExceptions] = useState<ExceptionDto[]>([]);
   const [loading, setLoading] = useState(true);
@@ -62,6 +70,8 @@ export function TeacherScheduleExceptionsEditor() {
   const [note, setNote] = useState("");
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error" | "deleted">("idle");
   const [errorText, setErrorText] = useState<string | null>(null);
+  const [panelBaseline, setPanelBaseline] = useState("");
+  const [dirty, setDirty] = useState(false);
 
   const getAccessToken = useCallback(async (): Promise<string | null> => {
     const supabase = getSupabaseClient();
@@ -120,24 +130,53 @@ export function TeacherScheduleExceptionsEditor() {
     setSaveState("idle");
     setErrorText(null);
     const existing = byDate.get(iso);
-    if (!existing) {
-      setMode("regular");
-      setStartTime("09:00");
-      setEndTime("12:00");
-      setNote("");
+    let nextMode: Mode = "regular";
+    let nextStart = "09:00";
+    let nextEnd = "12:00";
+    let nextNote = "";
+    if (existing?.exceptionType === "unavailable_full_day") {
+      nextMode = "unavailable_full_day";
+      nextNote = existing.note || "";
+    } else if (existing?.exceptionType === "available_custom_hours") {
+      nextMode = "available_custom_hours";
+      nextStart = existing.startTime || "09:00";
+      nextEnd = existing.endTime || "12:00";
+      nextNote = existing.note || "";
+    }
+    setMode(nextMode);
+    setStartTime(nextStart);
+    setEndTime(nextEnd);
+    setNote(nextNote);
+    setPanelBaseline(
+      stableScheduleSnapshot({
+        mode: nextMode,
+        startTime: nextStart,
+        endTime: nextEnd,
+        note: nextNote,
+      }),
+    );
+    setDirty(false);
+    onDirtyChange?.(false);
+  };
+
+  useEffect(() => {
+    if (!selectedDate || !panelBaseline) {
+      setDirty(false);
+      onDirtyChange?.(false);
       return;
     }
-    if (existing.exceptionType === "unavailable_full_day") {
-      setMode("unavailable_full_day");
-      setStartTime("09:00");
-      setEndTime("12:00");
-    } else {
-      setMode("available_custom_hours");
-      setStartTime(existing.startTime || "09:00");
-      setEndTime(existing.endTime || "12:00");
-    }
-    setNote(existing.note || "");
-  };
+    const next = stableScheduleSnapshot({
+      mode,
+      startTime,
+      endTime,
+      note,
+    });
+    const nextDirty = next !== panelBaseline;
+    setDirty(nextDirty);
+    onDirtyChange?.(nextDirty);
+  }, [selectedDate, panelBaseline, mode, startTime, endTime, note, onDirtyChange]);
+
+  useUnsavedChangesWarning(dirty, stickyEnabled);
 
   const save = async () => {
     if (!selectedDate) return;
@@ -162,6 +201,18 @@ export function TeacherScheduleExceptionsEditor() {
           return;
         }
         setSaveState("deleted");
+        setPanelBaseline(
+          stableScheduleSnapshot({
+            mode: "regular",
+            startTime: "09:00",
+            endTime: "12:00",
+            note: "",
+          }),
+        );
+        setMode("regular");
+        setNote("");
+        setDirty(false);
+        onDirtyChange?.(false);
         await load();
       } catch {
         setErrorText(t("scheduleExceptionsSaveError"));
@@ -200,6 +251,16 @@ export function TeacherScheduleExceptionsEditor() {
         return;
       }
       setSaveState("saved");
+      setPanelBaseline(
+        stableScheduleSnapshot({
+          mode,
+          startTime,
+          endTime,
+          note,
+        }),
+      );
+      setDirty(false);
+      onDirtyChange?.(false);
       await load();
     } catch {
       setErrorText(t("scheduleExceptionsSaveError"));
