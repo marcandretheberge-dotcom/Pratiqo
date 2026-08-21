@@ -16,6 +16,11 @@ import type { TranslationKey } from "@/lib/translations";
 import { localeToBcp47 } from "@/lib/i18n/types";
 import { TeacherDashboardStats } from "@/components/dashboard/teacher/TeacherDashboardStats";
 import { TeacherDashboardActionCenter } from "@/components/dashboard/teacher/TeacherDashboardActionCenter";
+import {
+  buildScheduleIntervalMigrationState,
+  shouldShowScheduleIntervalDashboardAction,
+} from "@/lib/schedule/scheduleIntervalMigration";
+import { isTeacherScheduleIntervalsUiEnabled } from "@/lib/schedule/weeklyIntervals";
 import { TeacherProfileStatusCard } from "@/components/dashboard/teacher/TeacherProfileStatusCard";
 import { TeacherSearchVisibilityBanner } from "@/components/teacher/TeacherSearchVisibilityBanner";
 import { TeacherProfileSetupChecklist } from "@/components/teacher/TeacherProfileSetupChecklist";
@@ -151,6 +156,7 @@ export function Dashboard() {
     city: string;
     region: string;
     availabilityCount: number;
+    preciseIntervalCount: number;
     is_public: boolean | null;
     is_demo: boolean | null;
     deactivated_at: string | null;
@@ -677,6 +683,18 @@ export function Dashboard() {
       const img = row.image_url != null ? String(row.image_url).trim() : "";
       const pPhoto = profilePhotoUrlRaw != null ? String(profilePhotoUrlRaw).trim() : "";
 
+      let preciseIntervalCount = 0;
+      if (isTeacherScheduleIntervalsUiEnabled()) {
+        const { count, error: intervalCountErr } = await supabase
+          .from("teacher_weekly_availability_intervals")
+          .select("id", { count: "exact", head: true })
+          .eq("teacher_id", row.id)
+          .eq("is_active", true);
+        if (!intervalCountErr && typeof count === "number") {
+          preciseIntervalCount = count;
+        }
+      }
+
       setTeacherMeta({
         id: row.id,
         name: String(row.name || authProfile?.name || "").trim(),
@@ -690,6 +708,7 @@ export function Dashboard() {
         city: String(row.city || "").trim(),
         region: String(row.region || "").trim(),
         availabilityCount: Array.isArray(row.availability) ? row.availability.length : 0,
+        preciseIntervalCount,
         is_public: row.is_public ?? false,
         is_demo: row.is_demo ?? false,
         deactivated_at: row.deactivated_at ?? null,
@@ -957,6 +976,26 @@ export function Dashboard() {
               count: publishEval?.missingSectionIds.length ?? null,
               href: TEACHER_SETUP_PATH,
               cta: t("teacherDashFixProfileCta"),
+              urgent: true,
+              alwaysShow: true as const,
+            },
+          ]
+        : []),
+      ...(teacherMeta &&
+      shouldShowScheduleIntervalDashboardAction(
+        buildScheduleIntervalMigrationState({
+          legacyBlockCount: teacherMeta.availabilityCount,
+          preciseIntervalCount: teacherMeta.preciseIntervalCount,
+        }),
+      )
+        ? [
+            {
+              id: "schedule-intervals",
+              label: t("teacherDashActionScheduleIntervalsLabel"),
+              description: t("teacherDashActionScheduleIntervalsDescription"),
+              count: null,
+              href: "/teacher/schedule",
+              cta: t("teacherDashActionScheduleIntervalsCta"),
               urgent: true,
               alwaysShow: true as const,
             },

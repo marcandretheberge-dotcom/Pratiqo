@@ -23,7 +23,13 @@ import {
   normalizeAvailableFromDate,
 } from "@/lib/teachers/availabilityStartDate";
 import { isTeacherScheduleIntervalsUiEnabled } from "@/lib/schedule/weeklyIntervals";
+import {
+  buildScheduleIntervalMigrationState,
+  shouldShowScheduleIntervalHoraireBanner,
+} from "@/lib/schedule/scheduleIntervalMigration";
 import { TeacherWeeklyIntervalsEditor } from "@/components/teacher/TeacherWeeklyIntervalsEditor";
+import { TeacherScheduleIntervalMigrationBanner } from "@/components/teacher/TeacherScheduleIntervalMigrationBanner";
+import { TeacherScheduleIntervalMigrationModal } from "@/components/teacher/TeacherScheduleIntervalMigrationModal";
 
 const DAYS = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"] as const;
 const SLOTS = ["Matin", "Après-midi", "Soir"] as const;
@@ -125,6 +131,7 @@ function TeacherScheduleInner() {
   const [teacherId, setTeacherId] = useState<string | null>(null);
   const [teacherDiscipline, setTeacherDiscipline] = useState("—");
   const [availability, setAvailability] = useState<string[]>([]);
+  const [preciseIntervalCount, setPreciseIntervalCount] = useState(0);
   const [teachingMode, setTeachingMode] = useState<string>("both");
   const [bufferBefore, setBufferBefore] = useState<number>(0);
   const [bufferAfter, setBufferAfter] = useState<number>(0);
@@ -742,7 +749,32 @@ function TeacherScheduleInner() {
             ) : null}
           </div>
           {isTeacherScheduleIntervalsUiEnabled() ? (
-            <TeacherWeeklyIntervalsEditor hasLegacyBlocks={availability.length > 0} />
+            <>
+              {shouldShowScheduleIntervalHoraireBanner(
+                buildScheduleIntervalMigrationState({
+                  legacyBlockCount: availability.length,
+                  preciseIntervalCount,
+                }),
+              ) ? (
+                <TeacherScheduleIntervalMigrationBanner hasLegacyBlocks={availability.length > 0} />
+              ) : null}
+              <TeacherWeeklyIntervalsEditor
+                hasLegacyBlocks={availability.length > 0}
+                onPreciseIntervalCountChange={setPreciseIntervalCount}
+              />
+              <TeacherScheduleIntervalMigrationModal
+                state={buildScheduleIntervalMigrationState({
+                  legacyBlockCount: availability.length,
+                  preciseIntervalCount,
+                })}
+                onConfigure={() => {
+                  document.getElementById("teacher-weekly-intervals-editor")?.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start",
+                  });
+                }}
+              />
+            </>
           ) : null}
 
           <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">

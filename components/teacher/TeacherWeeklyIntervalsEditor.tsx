@@ -43,9 +43,14 @@ function newLocalId(): string {
 type Props = {
   /** True when teacher still has legacy Matin/Après-midi/Soir cells and no intervals yet. */
   hasLegacyBlocks: boolean;
+  /** Notifies parent when saved/loaded precise interval count changes (for migration banner). */
+  onPreciseIntervalCountChange?: (count: number) => void;
 };
 
-export function TeacherWeeklyIntervalsEditor({ hasLegacyBlocks }: Props) {
+export function TeacherWeeklyIntervalsEditor({
+  hasLegacyBlocks,
+  onPreciseIntervalCountChange,
+}: Props) {
   const { t } = useLocale();
   const [byDay, setByDay] = useState<Record<number, LocalInterval[]>>(() => {
     const init: Record<number, LocalInterval[]> = {};
@@ -96,7 +101,8 @@ export function TeacherWeeklyIntervalsEditor({ hasLegacyBlocks }: Props) {
     );
     setBaseline(payload);
     setDirty(false);
-  }, []);
+    onPreciseIntervalCountChange?.(intervals.length);
+  }, [onPreciseIntervalCountChange]);
 
   useEffect(() => {
     let cancelled = false;
@@ -260,7 +266,11 @@ export function TeacherWeeklyIntervalsEditor({ hasLegacyBlocks }: Props) {
   }
 
   return (
-    <div className="space-y-4" data-testid="teacher-weekly-intervals-editor">
+    <div
+      id="teacher-weekly-intervals-editor"
+      className="space-y-4"
+      data-testid="teacher-weekly-intervals-editor"
+    >
       <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
         <p className="text-sm font-bold text-[#2C2C2A]">{t("weeklyIntervalsTitle")}</p>
         <p className="mt-1 text-xs leading-5 text-slate-600">{t("weeklyIntervalsHelper")}</p>

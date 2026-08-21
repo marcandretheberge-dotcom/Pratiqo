@@ -2848,5 +2848,18 @@
   "weeklyIntervalsSaveError": "Could not save availability.",
   "weeklyIntervalsDisabled": "Precise schedule intervals are not enabled.",
   "bookingNoPreciseAvailability": "This teacher has not added precise availability yet.",
-  "bookingSlotOutsideAvailability": "This time slot is no longer available. Please choose another time."
+  "bookingSlotOutsideAvailability": "This time slot is no longer available. Please choose another time.",
+  "teacherDashActionScheduleIntervalsLabel": "Availability needs updating",
+  "teacherDashActionScheduleIntervalsDescription": "Your previous schedule must be converted to exact time ranges to avoid imprecise bookings.",
+  "teacherDashActionScheduleIntervalsCta": "Update my schedule",
+  "weeklyIntervalsMigrationBannerTitle": "New precise schedule",
+  "weeklyIntervalsMigrationBannerBody": "Add your exact time ranges to receive bookings at the right hours.",
+  "weeklyIntervalsMigrationBannerLegacyNote": "Your previous Morning / Afternoon / Evening blocks will not be used for new bookings until you set exact hours.",
+  "weeklyIntervalsMigrationBannerCta": "Configure my schedule",
+  "weeklyIntervalsMigrationTeacherHint": "Add your exact time ranges to receive bookings.",
+  "weeklyIntervalsMigrationModalTitle": "Your availability is becoming more precise",
+  "weeklyIntervalsMigrationModalBody": "To avoid bookings at the wrong times, Pratiqo now uses exact time ranges. Add the hours when you want to receive bookings.",
+  "weeklyIntervalsMigrationModalExample": "For example: Monday 9:00–11:30, Wednesday 18:00–20:00.",
+  "weeklyIntervalsMigrationModalConfigure": "Configure my schedule",
+  "weeklyIntervalsMigrationModalLater": "Later"
 }
