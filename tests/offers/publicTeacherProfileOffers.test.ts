@@ -120,7 +120,7 @@ test("offer cards show title type format price and description", () => {
   assert.match(card, /preview/);
   assert.equal(formatTeacherOfferTypeLabel("private_lesson", t), "Cours privé");
   assert.equal(formatTeacherOfferFormatLabel("online", t), "En ligne");
-  assert.equal(formatTeacherOfferTypeLabel("package", t), "Forfait");
+  assert.equal(formatTeacherOfferTypeLabel("package", t), "Forfait planifié");
   const offer: Pick<PublicTeacherOfferDto, "offerType" | "priceCents"> = {
     offerType: "private_lesson",
     priceCents: 7000,
@@ -194,7 +194,7 @@ test("no Mes formules / formules product label introduced", () => {
     assert.doesNotMatch(src, /\bformules\b/);
     assert.doesNotMatch(src, /\bannonces\b/);
   }
-  assert.match(read("lib/i18n/locales/fr.json"), /"teacherOffersTypePackage": "Forfait"/);
+  assert.match(read("lib/i18n/locales/fr.json"), /"teacherOffersTypePackage": "Forfait planifié"/);
   assert.match(read("lib/i18n/locales/fr.json"), /"publicTeacherOffersSection": "Offres de cours"/);
 });
 

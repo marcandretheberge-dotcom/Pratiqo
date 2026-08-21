@@ -15,6 +15,10 @@ import {
   mergeTeacherOfferForPublishCheck,
 } from "@/lib/offers/publishReadiness";
 import {
+  assertPlannedPackageDraftAllowed,
+  assertPlannedPackagePublishAllowed,
+} from "@/lib/offers/plannedPackages";
+import {
   OFFER_NOT_PUBLISHABLE_STATUS,
   offerNotPublishableResponseBody,
 } from "@/lib/offers/offerNotPublishableResponse";
@@ -71,6 +75,17 @@ export async function PATCH(req: Request, ctx: Params) {
     );
   }
 
+  const nextOfferType = parsed.data.offerType ?? current.offerType;
+  const draftGate = assertPlannedPackageDraftAllowed(nextOfferType, {
+    allowExistingPackageDraft: current.offerType === "package",
+  });
+  if (!draftGate.ok) {
+    return NextResponse.json(
+      { error: draftGate.error, blockers: draftGate.blockers },
+      { status: 422 },
+    );
+  }
+
   const nextStatus = parsed.data.status ?? current.status;
   if (nextStatus === "published") {
     const publishGate = assertTeacherOfferPublishable(
@@ -78,6 +93,12 @@ export async function PATCH(req: Request, ctx: Params) {
     );
     if (!publishGate.ok) {
       return NextResponse.json(offerNotPublishableResponseBody(publishGate), {
+        status: OFFER_NOT_PUBLISHABLE_STATUS,
+      });
+    }
+    const launchGate = assertPlannedPackagePublishAllowed(nextOfferType);
+    if (!launchGate.ok) {
+      return NextResponse.json(offerNotPublishableResponseBody(launchGate), {
         status: OFFER_NOT_PUBLISHABLE_STATUS,
       });
     }

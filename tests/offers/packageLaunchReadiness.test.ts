@@ -53,6 +53,7 @@ test("helper lists all package-related flags and never returns production_ready"
     "offerSnapshotCheckout",
     "packageEntitlements",
     "packageRedemptionBooking",
+    "plannedPackages",
     "studentPackageDashboard",
     "teacherPackageVisibility",
   ].sort());
@@ -85,6 +86,8 @@ test("admin page is under requireAdminPage layout and has no mutation UI", () =>
   assert.match(page, /offres de cours standards peuvent fonctionner séparément/i);
   assert.match(page, /modèle de remboursement/);
   assert.match(page, /package-launch-offers-separation/);
+  assert.match(page, /package-launch-phase1/);
+  assert.match(page, /Phase 1 — Forfaits planifiés/);
   assert.doesNotMatch(page, /type="checkbox"|toggle|setFlag|process\.env\.\w+\s*=/);
   assert.doesNotMatch(page, /stripe\.|sessions\.create|\.update\(|\.insert\(|redeem|reverse_package/);
   assert.doesNotMatch(page, /Forfaits Pratiqo|Nos forfaits Pratiqo|salaire|employé/i);

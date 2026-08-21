@@ -10,6 +10,10 @@ import {
   type TeacherOfferStatus,
   type TeacherOfferType,
 } from "./types";
+import {
+  canShowPlannedPackageOnPublicProfile,
+  isPlannedPackageOfferType,
+} from "./plannedPackages";
 
 /**
  * Learner-facing offer payload. Omits created_by, createdAt, pausedAt,
@@ -179,6 +183,9 @@ export function filterPublishedPublicTeacherOffers(
     const offer = mapPublicTeacherOfferRow(row);
     if (!offer) continue;
     if (offer.teacherId !== teacherId) continue;
+    if (isPlannedPackageOfferType(offer.offerType) && !canShowPlannedPackageOnPublicProfile()) {
+      continue;
+    }
     offers.push(offer);
   }
   return offers.sort((a, b) => {

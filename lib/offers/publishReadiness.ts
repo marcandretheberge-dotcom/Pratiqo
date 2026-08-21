@@ -147,10 +147,15 @@ export function evaluateTeacherOfferPublishReadiness(
     if (
       sessionCount == null ||
       !Number.isInteger(sessionCount) ||
-      sessionCount < 1 ||
+      sessionCount < 2 ||
       sessionCount > 52
     ) {
-      issues.push(issue("session_count", "session_count is required to publish a package"));
+      issues.push(
+        issue(
+          "session_count",
+          "session_count is required to publish a planned package (2–52 sessions)",
+        ),
+      );
     }
   }
 
