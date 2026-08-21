@@ -134,14 +134,14 @@ export function TeacherScheduleStatus({
                 ? t("schedulePreciseActiveTitle")
                 : status === "ready"
                   ? t("schedulePreciseReadyTitle")
-                  : t("schedulePrecisionCompactTitle")}
+                  : t("schedulePreciseGeneralTitle")}
             </h2>
             <p className="mt-1 text-xs leading-5 text-slate-700">
               {status === "active"
                 ? t("schedulePreciseActiveBody")
                 : status === "ready"
                   ? t("schedulePreciseReadyBody")
-                  : t("schedulePrecisionInfoBody")}
+                  : t("schedulePreciseGeneralBody")}
             </p>
             {error ? (
               <p className="mt-2 text-xs font-medium text-red-700" role="alert">

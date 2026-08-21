@@ -240,8 +240,10 @@ test("slots + available-days use shouldUsePreciseIntervalsForBooking", () => {
 test("Horaire wires TeacherScheduleStatus + activate CTA", () => {
   const page = read("app/(app)/teacher/schedule/page.tsx");
   const status = read("components/teacher/TeacherScheduleStatus.tsx");
+  const lookup = read("lib/teachers/currentTeacher.ts");
   assert.match(page, /TeacherScheduleStatus/);
-  assert.match(page, /schedule_mode/);
+  assert.match(page, /loadCurrentTeacherForSchedule|scheduleMode/);
+  assert.match(lookup, /schedule_mode/);
   assert.match(status, /schedulePreciseActivateCta/);
   assert.match(status, /\/api\/teacher\/schedule\/activate-precise/);
   assert.doesNotMatch(status, /héritées|Legacy mode|Employé|Salaire/);
@@ -253,13 +255,15 @@ test("BookingModal empty day + stale slot copy keys exist", () => {
   assert.match(modal, /bookingSlotOutsideAvailability/);
   for (const locale of ["fr", "en", "es"] as const) {
     const json = read(`lib/i18n/locales/${locale}.json`);
+    assert.match(json, /"schedulePreciseGeneralTitle"/);
     assert.match(json, /"schedulePreciseReadyTitle"/);
     assert.match(json, /"schedulePreciseActivateCta"/);
     assert.match(json, /"bookingNoSlotsForDayTitle"/);
   }
   const fr = read("lib/i18n/locales/fr.json");
   assert.match(fr, /Activer l’horaire précis/);
-  assert.doesNotMatch(fr, /Pratiqo impose|Employé|Salaire|Horaire de travail/);
+  assert.match(fr, /Horaire général actif/);
+  assert.doesNotMatch(fr, /Pratiqo impose|Employé|Salaire|Horaire de travail|Mode grilles héritées/);
 });
 
 test("admin Teacher 360 exposes schedule mode read-only", () => {

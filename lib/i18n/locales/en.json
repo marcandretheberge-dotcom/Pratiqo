@@ -2932,6 +2932,8 @@
   "schedulePrecisionProgressMany": "{count} days configured out of 7",
   "schedulePrecisionActiveTitle": "Precise availability active",
   "schedulePrecisionActiveBody": "Learners book according to your exact hours.",
+  "schedulePreciseGeneralTitle": "General availability active",
+  "schedulePreciseGeneralBody": "Learners still see broad availability blocks like Morning, Afternoon, or Evening.",
   "schedulePreciseReadyTitle": "Precise availability ready",
   "schedulePreciseReadyBody": "Your exact hours are configured. Activate precise availability so learners book according to those hours.",
   "schedulePreciseActiveTitle": "Precise availability active",
