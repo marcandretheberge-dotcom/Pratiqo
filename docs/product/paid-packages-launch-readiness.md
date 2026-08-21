@@ -9,6 +9,8 @@ Related:
 - [`marketplace-independent-teacher-guardrails.md`](./marketplace-independent-teacher-guardrails.md)
 - [`paid-packages-legal-launch-checklist.md`](./paid-packages-legal-launch-checklist.md)
 - [`package-feature-flags.md`](./package-feature-flags.md)
+- [`package-product-decision.md`](./package-product-decision.md) — Phase 1 planned packages first
+- [`paid-packages-launch-checklist.md`](./paid-packages-launch-checklist.md)
 - Admin page: `/admin/package-launch-readiness`
 
 ```

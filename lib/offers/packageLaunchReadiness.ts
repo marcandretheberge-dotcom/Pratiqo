@@ -30,11 +30,19 @@ export const PACKAGE_LAUNCH_REQUIRED_DOCS = [
   "docs/product/paid-packages-legal-launch-checklist.md",
   "docs/product/paid-packages-launch-readiness.md",
   "docs/product/package-feature-flags.md",
+  "docs/product/package-product-decision.md",
+  "docs/product/package-technical-architecture.md",
+  "docs/product/package-glossary.md",
+  "docs/product/paid-packages-launch-checklist.md",
+  "docs/product/package-risk-register.md",
+  "docs/product/package-refund-cancellation-policy-draft.md",
+  "docs/product/package-public-copy-draft.md",
 ] as const;
 
 export const PACKAGE_LAUNCH_COPY_GUARD_TESTS = [
   "tests/offers/marketplaceIndependentTeacherGuardrails.test.ts",
   "tests/legal/marketplaceIndependentTeacherHardening.test.ts",
+  "tests/offers/packageLegalSafeArchitecture.test.ts",
 ] as const;
 
 export const PACKAGE_LAUNCH_ADMIN_SUPPORT_SURFACES = [

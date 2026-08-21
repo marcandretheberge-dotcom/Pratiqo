@@ -255,8 +255,22 @@ export default function AdminPackageLaunchReadinessPage() {
           </p>
           <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-500">
             Les offres de cours standards peuvent fonctionner séparément. Les forfaits payants
-            restent bloqués jusqu’à la revue légale.
+            restent bloqués jusqu’à la revue légale et la validation du modèle de remboursement.
           </p>
+          <div
+            className="mt-3 max-w-2xl space-y-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700"
+            data-testid="package-launch-offers-separation"
+          >
+            <p>
+              <span className="font-semibold">Offres de cours standards :</span> peuvent être
+              fonctionnelles indépendamment.
+            </p>
+            <p>
+              <span className="font-semibold">Forfaits payants :</span> restent bloqués jusqu’à la
+              revue légale et l’approbation de l’architecture de remboursement / versement
+              progressif.
+            </p>
+          </div>
         </div>
       </div>
       <ReadinessBody readiness={readiness} />
