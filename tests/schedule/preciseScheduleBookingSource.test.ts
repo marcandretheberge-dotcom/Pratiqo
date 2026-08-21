@@ -231,9 +231,10 @@ test("booking create + package redeem pass schedule_mode into interval guard", (
 
 test("slots + available-days use shouldUsePreciseIntervalsForBooking", () => {
   const slots = read("app/api/teachers/[id]/slots/route.ts");
+  const bookable = read("lib/bookings/bookableSlotsForDay.ts");
   const days = read("lib/teacherSlotQueries.ts");
-  assert.match(slots, /shouldUsePreciseIntervalsForBooking/);
-  assert.match(slots, /schedule_mode/);
+  assert.match(slots, /generateBookableSlotsForTeacherDay/);
+  assert.match(bookable, /shouldUsePreciseIntervalsForBooking/);
   assert.match(days, /shouldUsePreciseIntervalsForBooking/);
 });
 

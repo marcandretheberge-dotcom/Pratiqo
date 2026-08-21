@@ -135,7 +135,9 @@ test("booking path still refuses legacy blocks when interval mode ON with no int
   assert.match(eligibility, /intervals\.length === 0/);
 
   const slots = read("app/api/teachers/[id]/slots/route.ts");
-  assert.match(slots, /generateSlotsFromWeeklyIntervals/);
+  const bookable = read("lib/bookings/bookableSlotsForDay.ts");
+  assert.match(slots, /generateBookableSlotsForTeacherDay/);
+  assert.match(bookable, /generateSlotsFromWeeklyIntervals/);
   assert.match(slots, /hasWeeklyIntervals/);
 });
 

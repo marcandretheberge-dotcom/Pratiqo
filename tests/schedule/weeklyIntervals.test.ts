@@ -210,8 +210,10 @@ test("API route and schedule UI wire feature flags", () => {
 
 test("slots route and booking create use interval guards when enabled", () => {
   const slots = read("app/api/teachers/[id]/slots/route.ts");
-  assert.match(slots, /generateSlotsFromWeeklyIntervals/);
-  assert.match(slots, /shouldUsePreciseIntervalsForBooking/);
+  const bookable = read("lib/bookings/bookableSlotsForDay.ts");
+  assert.match(slots, /generateBookableSlotsForTeacherDay/);
+  assert.match(bookable, /generateSlotsFromWeeklyIntervals/);
+  assert.match(bookable, /shouldUsePreciseIntervalsForBooking/);
   assert.match(slots, /hasWeeklyIntervals/);
 
   const create = read("lib/bookings/createPendingPaymentBooking.ts");
