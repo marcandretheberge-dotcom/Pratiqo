@@ -33,6 +33,8 @@ import {
 } from "@/lib/teachers/availabilityStartDate";
 import { rejectIfOutsideWeeklyIntervals } from "@/lib/bookings/weeklyIntervalGuard";
 import type { WeeklyIntervalAdmin } from "@/lib/bookings/weeklyIntervalGuard";
+import { applyDateExceptionToBooking } from "@/lib/bookings/dateExceptionGuard";
+import type { DateExceptionAdmin } from "@/lib/bookings/dateExceptionGuard";
 import type { PackageEntitlementRow, PackageEntitlementStatus } from "./packageEntitlements";
 
 export const PACKAGE_REDEMPTION_BOOKING_FLAG = "ENABLE_PACKAGE_REDEMPTION_BOOKING";
@@ -91,6 +93,8 @@ export type RedeemPackageSessionFailure = {
     | "booking_minimum_notice"
     | "teacher_not_available_yet"
     | "slot_outside_teacher_availability"
+    | "teacher_unavailable_on_date"
+    | "slot_outside_teacher_exception_hours"
     | "invalid_learner_profile"
     | "slot_booked"
     | "duplicate_redemption_conflict"
@@ -406,15 +410,27 @@ export async function redeemPackageSessionBooking(args: {
     typeof args.request.durationMinutes === "number" && Number.isFinite(args.request.durationMinutes)
       ? Math.round(args.request.durationMinutes)
       : 60;
-  const outside = await rejectIfOutsideWeeklyIntervals({
-    admin: args.admin as unknown as WeeklyIntervalAdmin,
+  const exceptionResult = await applyDateExceptionToBooking({
+    admin: args.admin as unknown as DateExceptionAdmin,
     teacherId,
     slotDate: args.request.slotDate,
     timeSlot: args.request.timeSlot,
     durationMinutes,
   });
-  if (outside) {
-    return { ok: false, status: outside.status, error: outside.error };
+  if (!exceptionResult.ok) {
+    return { ok: false, status: exceptionResult.status, error: exceptionResult.error };
+  }
+  if (!exceptionResult.skipWeeklyIntervals) {
+    const outside = await rejectIfOutsideWeeklyIntervals({
+      admin: args.admin as unknown as WeeklyIntervalAdmin,
+      teacherId,
+      slotDate: args.request.slotDate,
+      timeSlot: args.request.timeSlot,
+      durationMinutes,
+    });
+    if (outside) {
+      return { ok: false, status: outside.status, error: outside.error };
+    }
   }
 
   const { data, error } = await args.admin.rpc("redeem_package_session_booking", {

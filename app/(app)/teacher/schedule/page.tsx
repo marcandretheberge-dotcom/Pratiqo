@@ -30,6 +30,8 @@ import {
 import { TeacherWeeklyIntervalsEditor } from "@/components/teacher/TeacherWeeklyIntervalsEditor";
 import { TeacherScheduleIntervalMigrationBanner } from "@/components/teacher/TeacherScheduleIntervalMigrationBanner";
 import { TeacherScheduleIntervalMigrationModal } from "@/components/teacher/TeacherScheduleIntervalMigrationModal";
+import { TeacherScheduleExceptionsEditor } from "@/components/teacher/TeacherScheduleExceptionsEditor";
+import { isTeacherScheduleExceptionsUiEnabled } from "@/lib/schedule/dateExceptions";
 
 const DAYS = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"] as const;
 const SLOTS = ["Matin", "Après-midi", "Soir"] as const;
@@ -776,6 +778,8 @@ function TeacherScheduleInner() {
               />
             </>
           ) : null}
+
+          {isTeacherScheduleExceptionsUiEnabled() ? <TeacherScheduleExceptionsEditor /> : null}
 
           <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
             {!isTeacherScheduleIntervalsUiEnabled() ? (

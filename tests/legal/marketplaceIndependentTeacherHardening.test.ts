@@ -50,6 +50,7 @@ const PRODUCT_SURFACES = [
   "components/teacher/TeacherWeeklyIntervalsEditor.tsx",
   "components/teacher/TeacherScheduleIntervalMigrationBanner.tsx",
   "components/teacher/TeacherScheduleIntervalMigrationModal.tsx",
+  "components/teacher/TeacherScheduleExceptionsEditor.tsx",
 ];
 
 const BEHAVIOR_CRITICAL = [

@@ -982,6 +982,14 @@ export function BookingModal({
           setCheckoutError(t("bookingSlotOutsideAvailability"));
           return;
         }
+        if (redeemRes.status === 409 && redeemPayload.error === "teacher_unavailable_on_date") {
+          setCheckoutError(t("bookingTeacherUnavailableOnDate"));
+          return;
+        }
+        if (redeemRes.status === 409 && redeemPayload.error === "slot_outside_teacher_exception_hours") {
+          setCheckoutError(t("bookingSlotOutsideExceptionHours"));
+          return;
+        }
         if (redeemRes.status === 400 && redeemPayload.error === "booking_minimum_notice") {
           setCheckoutError(t("bookingMinimumNoticeError"));
           return;
@@ -1062,6 +1070,14 @@ export function BookingModal({
       }
       if (createRes.status === 409 && createPayload.error === "slot_outside_teacher_availability") {
         setCheckoutError(t("bookingSlotOutsideAvailability"));
+        return;
+      }
+      if (createRes.status === 409 && createPayload.error === "teacher_unavailable_on_date") {
+        setCheckoutError(t("bookingTeacherUnavailableOnDate"));
+        return;
+      }
+      if (createRes.status === 409 && createPayload.error === "slot_outside_teacher_exception_hours") {
+        setCheckoutError(t("bookingSlotOutsideExceptionHours"));
         return;
       }
       if (createRes.status === 409) {

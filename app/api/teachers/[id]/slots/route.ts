@@ -20,6 +20,12 @@ import {
   isTeacherScheduleIntervalsEnabled,
   mapDbRowsToNormalized,
 } from "@/lib/schedule/weeklyIntervals";
+import {
+  findExceptionForDate,
+  generateSlotsFromDateException,
+  isTeacherScheduleExceptionsEnabled,
+  mapDbRowsToExceptions,
+} from "@/lib/schedule/dateExceptions";
 
 export const runtime = "nodejs";
 
@@ -120,6 +126,44 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
       bufferBeforeMin: buffers.bookingBufferBeforeMinutes,
       bufferAfterMin: buffers.bookingBufferAfterMinutes,
     };
+
+    if (isTeacherScheduleExceptionsEnabled()) {
+      const { data: exceptionRows } = await admin
+        .from("teacher_schedule_exceptions")
+        .select("exception_date, exception_type, start_time, end_time, is_active")
+        .eq("teacher_id", teacherId)
+        .eq("exception_date", date)
+        .eq("is_active", true);
+      const exception = findExceptionForDate(mapDbRowsToExceptions(exceptionRows ?? []), date);
+      if (exception?.exceptionType === "unavailable_full_day") {
+        return NextResponse.json({
+          slots: [],
+          durationMinutes,
+          date,
+          exceptionType: "unavailable_full_day",
+        });
+      }
+      if (exception?.exceptionType === "available_custom_hours") {
+        const slots = generateSlotsFromDateException(
+          exception,
+          durationMinutes,
+          bookedSlots,
+          blockedPeriods,
+          blockedRanges,
+          slotOptions,
+        );
+        const now = new Date();
+        const filteredSlots = slots.filter((slot) =>
+          isBookingAtLeast24hAhead({ slot_date: date, time_slot: slot }, now),
+        );
+        return NextResponse.json({
+          slots: filteredSlots,
+          durationMinutes,
+          date,
+          exceptionType: "available_custom_hours",
+        });
+      }
+    }
 
     if (isTeacherScheduleIntervalsEnabled()) {
       const { data: intervalRows } = await admin

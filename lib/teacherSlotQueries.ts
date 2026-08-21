@@ -1,22 +1,30 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
-  type BlockedSlotDayRow,
-  type BookedSlotInterval,
+  getAvailableDaysFromWeeklyIntervals,
+  isTeacherScheduleIntervalsEnabled,
+  mapDbRowsToNormalized,
+} from "@/lib/schedule/weeklyIntervals";
+import {
+  findExceptionForDate,
+  generateSlotsFromDateException,
+  isTeacherScheduleExceptionsEnabled,
+  mapDbRowsToExceptions,
+} from "@/lib/schedule/dateExceptions";
+import {
+  blockedPeriodsFromRows,
+  blockedTimeRangesFromRows,
   formatLocalISODate,
   getAvailableDays,
   slotStartMinutes,
   weeklyAvailabilityFromTeacherRows,
+  type BlockedSlotDayRow,
+  type BookedSlotInterval,
 } from "@/lib/slots";
 import { normalizeLessonDurationMinutes } from "@/lib/pricing/lessonDuration";
 import {
   filterAvailableDaysByStartDate,
   normalizeAvailableFromDate,
 } from "@/lib/teachers/availabilityStartDate";
-import {
-  getAvailableDaysFromWeeklyIntervals,
-  isTeacherScheduleIntervalsEnabled,
-  mapDbRowsToNormalized,
-} from "@/lib/schedule/weeklyIntervals";
 
 type Admin = SupabaseClient;
 
@@ -227,6 +235,45 @@ export async function computeAvailableDaysForTeacher(
     );
   } else {
     rawDays = getAvailableDays(weekly, durationMinutes, timeLabelsByDate, blockedByDate, weeks, dayOptions);
+  }
+
+  if (isTeacherScheduleExceptionsEnabled()) {
+    const { data: exceptionRows } = await admin
+      .from("teacher_schedule_exceptions")
+      .select("exception_date, exception_type, start_time, end_time, is_active")
+      .eq("teacher_id", teacherId)
+      .eq("is_active", true)
+      .gte("exception_date", fromIso)
+      .lte("exception_date", toIso);
+    const exceptions = mapDbRowsToExceptions(exceptionRows ?? []);
+    const daysTotal = Math.max(1, weeks) * 7;
+    const startDay = new Date();
+    startDay.setHours(0, 0, 0, 0);
+
+    for (let i = 0; i < daysTotal; i++) {
+      const date = new Date(startDay);
+      date.setDate(startDay.getDate() + i);
+      const dateStr = formatLocalISODate(date);
+      const ex = findExceptionForDate(exceptions, dateStr);
+      if (!ex) continue;
+
+      if (ex.exceptionType === "unavailable_full_day") {
+        delete rawDays[dateStr];
+        continue;
+      }
+
+      const booked = timeLabelsByDate[dateStr] || [];
+      const blockedRowsForDay = blockedByDate[dateStr] || [];
+      const blocked = blockedPeriodsFromRows(blockedRowsForDay);
+      const ranges = blockedTimeRangesFromRows(blockedRowsForDay);
+      const slots = generateSlotsFromDateException(ex, durationMinutes, booked, blocked, ranges, {
+        bookedIntervals: intervalsByDate[dateStr] ?? [],
+        bufferBeforeMin: buffers.bookingBufferBeforeMinutes,
+        bufferAfterMin: buffers.bookingBufferAfterMinutes,
+      });
+      if (slots.length > 0) rawDays[dateStr] = slots.length;
+      else delete rawDays[dateStr];
+    }
   }
 
   const days = filterAvailableDaysByStartDate(rawDays, availableFromDate);

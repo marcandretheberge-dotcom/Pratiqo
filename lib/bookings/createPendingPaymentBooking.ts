@@ -13,6 +13,8 @@ import {
 } from "@/lib/teachers/availabilityStartDate";
 import { rejectIfOutsideWeeklyIntervals } from "@/lib/bookings/weeklyIntervalGuard";
 import type { WeeklyIntervalAdmin } from "@/lib/bookings/weeklyIntervalGuard";
+import { applyDateExceptionToBooking } from "@/lib/bookings/dateExceptionGuard";
+import type { DateExceptionAdmin } from "@/lib/bookings/dateExceptionGuard";
 
 export type CreateBookingFailure = {
   ok: false;
@@ -143,15 +145,28 @@ export async function createPendingPaymentBooking(args: {
     };
   }
 
-  const outside = await rejectIfOutsideWeeklyIntervals({
-    admin: args.admin as unknown as WeeklyIntervalAdmin,
+  const exceptionResult = await applyDateExceptionToBooking({
+    admin: args.admin as unknown as DateExceptionAdmin,
     teacherId: args.request.teacherId,
     slotDate: args.request.slotDate,
     timeSlot: args.request.timeSlot,
     durationMinutes: args.request.durationMinutes,
   });
-  if (outside) {
-    return { ok: false, status: outside.status, error: outside.error };
+  if (!exceptionResult.ok) {
+    return { ok: false, status: exceptionResult.status, error: exceptionResult.error };
+  }
+
+  if (!exceptionResult.skipWeeklyIntervals) {
+    const outside = await rejectIfOutsideWeeklyIntervals({
+      admin: args.admin as unknown as WeeklyIntervalAdmin,
+      teacherId: args.request.teacherId,
+      slotDate: args.request.slotDate,
+      timeSlot: args.request.timeSlot,
+      durationMinutes: args.request.durationMinutes,
+    });
+    if (outside) {
+      return { ok: false, status: outside.status, error: outside.error };
+    }
   }
 
   if (args.request.learnerProfileId) {
