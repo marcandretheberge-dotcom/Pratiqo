@@ -392,6 +392,12 @@ test("tracked patch avoids generated audio and restricted product systems", () =
     // tests/admin/manualTeacherIdentityVerification.test.ts and
     // tests/security/teacherPublicReadIsolation.test.ts.
     "supabase/migrations/098_hide_manual_identity_source_from_public_projection.sql",
+    // PR 17A — precise teacher weekly schedule intervals (flagged OFF by default).
+    // Does not touch YoPratiqo audio, lesson content, Stripe amounts, or payouts.
+    "app/api/teacher/weekly-intervals/route.ts",
+    "app/api/teachers/[id]/slots/route.ts",
+    "supabase/migrations/108_teacher_weekly_availability_intervals.sql",
+    "supabase/migrations/109_harden_teacher_weekly_availability_intervals_rls.sql",
   ]);
   const forbidden = [
     /^app\/api\//,
