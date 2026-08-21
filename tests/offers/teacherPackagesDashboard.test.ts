@@ -246,7 +246,7 @@ test("route, page, nav, and API are wired read-only", () => {
     /Nos forfaits Pratiqo|Acheter un forfait Pratiqo|salaire|employer|Modifier les crédits|Rembourser/i,
   );
 
-  const nav = read("components/TeacherTopNav.tsx");
+  const nav = read("components/teacher/teacherNavConfig.ts");
   assert.match(nav, /isTeacherPackageVisibilityUiEnabled/);
   assert.match(nav, /\/teacher\/packages/);
   assert.match(nav, /teacherPackagesNav/);

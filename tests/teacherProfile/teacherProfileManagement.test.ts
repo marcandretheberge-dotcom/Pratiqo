@@ -38,7 +38,7 @@ function loadJson(path: string): Record<string, string> {
 
 const VERIFICATION_PATH = "app/(app)/teacher/verification/page.tsx";
 const ZONE_STEP_PATH = "app/(app)/teacher/verification/components/ZoneStep.tsx";
-const NAV_PATH = "components/TeacherTopNav.tsx";
+const NAV_PATH = "components/teacher/teacherNavConfig.ts";
 const PREVIEW_PATH = "components/teacher/TeacherPublicProfilePreview.tsx";
 const VISIBILITY_CARD_PATH = "components/teacher/TeacherProfileVisibilityCard.tsx";
 const ACCOUNT_VIEW_PATH = "components/teacher/TeacherAccountView.tsx";

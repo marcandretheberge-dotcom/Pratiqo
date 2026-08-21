@@ -53,23 +53,23 @@ test("dashboard layout uses min-w-0 / overflow-x-clip to avoid page-level horizo
   assert.match(dash, /lg:grid-cols-\[minmax\(0,1fr\)_minmax\(0,280px\)\]/);
 });
 
-test("top nav scrolls within itself and prioritizes daily routes", () => {
+test("desktop sidebar replaces horizontal top tab nav", () => {
   const nav = read("components/TeacherTopNav.tsx");
-  assert.match(nav, /overflow-x-auto/);
-  assert.match(nav, /data-testid="teacher-top-nav-tabs"/);
-  const primary = nav.match(/const PRIMARY_NAV[\s\S]*?= \[[\s\S]*?\];/);
-  assert.ok(primary);
-  assert.match(primary![0], /\/dashboard/);
-  assert.match(primary![0], /\/teacher\/schedule/);
-  assert.match(primary![0], /\/teacher\/progress/);
-  assert.match(primary![0], /\/messages/);
-  assert.match(primary![0], /\/teacher\/offers/);
-  assert.match(primary![0], /\/teacher\/revenue/);
-  const secondary = nav.match(/function buildSecondaryNav[\s\S]*?return items;\n}/);
-  assert.ok(secondary);
-  assert.match(secondary![0], /\/teacher\/verification/);
-  assert.match(secondary![0], /\/teacher\/history/);
-  assert.doesNotMatch(secondary![0], /href: "\/teacher\/offers"/);
+  const sidebar = read("components/teacher/TeacherSidebarNav.tsx");
+  const config = read("components/teacher/teacherNavConfig.ts");
+  const shell = read("components/AppShell.tsx");
+  assert.doesNotMatch(nav, /overflow-x-auto/);
+  assert.doesNotMatch(nav, /data-testid="teacher-top-nav-tabs"/);
+  assert.match(sidebar, /data-testid="teacher-sidebar-nav"/);
+  assert.match(shell, /TeacherSidebarNav/);
+  assert.match(config, /\/dashboard/);
+  assert.match(config, /\/teacher\/schedule/);
+  assert.match(config, /\/teacher\/progress/);
+  assert.match(config, /\/messages/);
+  assert.match(config, /\/teacher\/offers/);
+  assert.match(config, /\/teacher\/revenue/);
+  assert.match(config, /\/teacher\/verification/);
+  assert.match(config, /\/teacher\/history/);
 });
 
 test("metric cards, pending requests, upcoming lessons, and homework still render", () => {
