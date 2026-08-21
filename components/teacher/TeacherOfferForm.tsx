@@ -3,7 +3,8 @@
 import React, { useId, useState } from "react";
 import { ChevronDown, Loader2 } from "lucide-react";
 import { useLocale } from "@/lib/locale-context";
-import { TEACHER_OFFER_FORMATS, TEACHER_OFFER_MVP_TYPES, TEACHER_OFFER_POLICY_PREFERENCES } from "@/lib/offers/types";
+import { TEACHER_OFFER_FORMATS, TEACHER_OFFER_POLICY_PREFERENCES } from "@/lib/offers/types";
+import { getTeacherOfferFormTypes, isTeacherOfferPackageTypeAvailable } from "@/lib/offers/offerFormTypes";
 import type { TeacherOfferFormFieldError, TeacherOfferFormValues } from "@/lib/offers/clientPayload";
 import {
   formatTeacherOfferFormatLabel,
@@ -135,6 +136,8 @@ export function TeacherOfferForm({
   const disabled = readOnly || saving;
   const publishReady = isTeacherOfferFormPublishReady(values);
   const isPackage = values.offerType === "package";
+  const offerTypes = getTeacherOfferFormTypes(values.offerType);
+  const packagesAvailable = isTeacherOfferPackageTypeAvailable();
   const formId = useId();
   const [openEssentials, setOpenEssentials] = useState(true);
   const [openPresentation, setOpenPresentation] = useState(true);
@@ -187,12 +190,15 @@ export function TeacherOfferForm({
                     onChange({ offerType: event.target.value as TeacherOfferFormValues["offerType"] })
                   }
                 >
-                  {TEACHER_OFFER_MVP_TYPES.map((type) => (
+                  {offerTypes.map((type) => (
                     <option key={type} value={type}>
                       {formatTeacherOfferTypeLabel(type, t)}
                     </option>
                   ))}
                 </select>
+                {!packagesAvailable ? (
+                  <p className="mt-1 text-xs text-slate-500">{t("teacherOffersPackagesComingSoon")}</p>
+                ) : null}
                 <FieldError errors={errors} keys={["offerType"]} />
               </div>
               <div>

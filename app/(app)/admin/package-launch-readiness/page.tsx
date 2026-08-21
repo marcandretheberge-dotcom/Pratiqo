@@ -253,6 +253,10 @@ export default function AdminPackageLaunchReadinessPage() {
           <p className="mt-0.5 text-sm text-slate-600">
             Diagnostic interne · intermédiaire technologique · forfaits proposés par les professeurs
           </p>
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-500">
+            Les offres de cours standards peuvent fonctionner séparément. Les forfaits payants
+            restent bloqués jusqu’à la revue légale.
+          </p>
         </div>
       </div>
       <ReadinessBody readiness={readiness} />

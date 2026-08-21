@@ -84,7 +84,7 @@ test("offer labels render human-readable type/format/status", () => {
   assert.equal(formatTeacherOfferStatusLabel("published", t), "Publiée");
   assert.doesNotMatch(formatTeacherOfferTypeLabel("private_lesson", t), /private_lesson/);
   assert.match(read(CARD), /formatTeacherOfferTypeLabel/);
-  assert.match(read(FORM), /TEACHER_OFFER_MVP_TYPES/);
+  assert.match(read(FORM), /getTeacherOfferFormTypes/);
   assert.doesNotMatch(read(FORM), /workshop|group_class|cohort|self_paced_bridge/);
 });
 

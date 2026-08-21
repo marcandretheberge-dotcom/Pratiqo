@@ -7,6 +7,7 @@ import { Loader2, NotebookPen, Plus, X } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { TeacherOfferCard } from "@/components/teacher/TeacherOfferCard";
 import { TeacherOfferForm } from "@/components/teacher/TeacherOfferForm";
+import { TeacherOfferMissingFieldsAlert } from "@/components/teacher/TeacherOfferMissingFieldsAlert";
 import { useLocale } from "@/lib/locale-context";
 import {
   buildTeacherOfferWritePayload,
@@ -17,10 +18,15 @@ import {
 } from "@/lib/offers/clientPayload";
 import {
   formatTeacherOfferStatusLabel,
+  resolveTeacherOfferMissingFieldPaths,
   teacherOfferApiErrorMessage,
   type TeacherOfferStatusAction,
 } from "@/lib/offers/display";
-import { isTeacherOfferFormPublishReady } from "@/lib/offers/publishReadiness";
+import {
+  getMissingPublishFieldsForForm,
+  getMissingPublishFieldsForOffer,
+  isTeacherOfferFormPublishReady,
+} from "@/lib/offers/publishReadiness";
 import { sortTeacherOffersForDashboard } from "@/lib/offers/sortTeacherOffers";
 import {
   archiveTeacherOffer,
@@ -54,6 +60,7 @@ export function TeacherOffersDashboard() {
   const [formValues, setFormValues] = useState<TeacherOfferFormValues>(emptyTeacherOfferFormValues);
   const [formErrors, setFormErrors] = useState<TeacherOfferFormFieldError[]>([]);
   const [archiveTarget, setArchiveTarget] = useState<TeacherOfferDto | null>(null);
+  const [publishMissingFields, setPublishMissingFields] = useState<string[]>([]);
 
   useEffect(() => {
     if (authLoading || !user) return;
@@ -103,6 +110,7 @@ export function TeacherOffersDashboard() {
     setFormValues(emptyTeacherOfferFormValues());
     setFormErrors([]);
     setActionError(null);
+    setPublishMissingFields([]);
   };
 
   const openEditor = (offer: TeacherOfferDto, mode: "edit" | "view") => {
@@ -112,6 +120,7 @@ export function TeacherOffersDashboard() {
     setFormValues(teacherOfferToFormValues(offer));
     setFormErrors([]);
     setActionError(null);
+    setPublishMissingFields([]);
   };
 
   const closeEditor = () => {
@@ -134,11 +143,13 @@ export function TeacherOffersDashboard() {
     }
     if (status === "published" && !isTeacherOfferFormPublishReady(formValues)) {
       setActionError(t("teacherOffersNotPublishable"));
+      setPublishMissingFields(getMissingPublishFieldsForForm(formValues));
       return;
     }
     setFormErrors([]);
     setSaving(true);
     setActionError(null);
+    setPublishMissingFields([]);
     try {
       const body = { ...parsed.body, status };
       const result =
@@ -150,6 +161,9 @@ export function TeacherOffersDashboard() {
       if (!result) return;
       if (!result.ok) {
         setActionError(teacherOfferApiErrorMessage(result.error, t));
+        if (result.error.error === "offer_not_publishable") {
+          setPublishMissingFields(resolveTeacherOfferMissingFieldPaths(result.error));
+        }
         if (result.error.error === "invalid_payload") setFormErrors(["title"]);
         return;
       }
@@ -184,15 +198,29 @@ export function TeacherOffersDashboard() {
       setArchiveTarget(offer);
       return;
     }
+    if (action === "publish") {
+      const missing = getMissingPublishFieldsForOffer(offer);
+      if (missing.length > 0) {
+        setActionError(t("teacherOffersNotPublishable"));
+        setPublishMissingFields(missing);
+        openEditor(offer, "edit");
+        return;
+      }
+    }
     if (busyId) return;
     setBusyId(offer.id);
     setActionError(null);
+    setPublishMissingFields([]);
     try {
       // Future: published offer limits will depend on plan/founder status.
       const status = action === "pause" ? "paused" : "published";
       const result = await updateTeacherOffer(offer.id, { status });
       if (!result.ok) {
         setActionError(teacherOfferApiErrorMessage(result.error, t));
+        if (result.error.error === "offer_not_publishable") {
+          setPublishMissingFields(resolveTeacherOfferMissingFieldPaths(result.error));
+          openEditor(offer, "edit");
+        }
         return;
       }
       upsertOffer(result.data.offer);
@@ -259,7 +287,7 @@ export function TeacherOffersDashboard() {
         : t("teacherOffersEditTitle");
 
   return (
-    <div className="space-y-6 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:pb-10">
+    <div className="space-y-6 sm:pb-2">
       <section className="rounded-3xl border border-[#DCEAE3] bg-white p-6 shadow-sm">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-start gap-4">
@@ -291,10 +319,25 @@ export function TeacherOffersDashboard() {
           {notice}
         </p>
       ) : null}
-      {actionError ? (
-        <p className="rounded-xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-800" role="alert">
-          {actionError}
-        </p>
+      {actionError || publishMissingFields.length > 0 ? (
+        <div className="rounded-xl border border-rose-100 bg-rose-50 px-4 py-3" role="alert">
+          {publishMissingFields.length > 0 ? (
+            <TeacherOfferMissingFieldsAlert
+              className="border-0 bg-transparent p-0"
+              missingFields={publishMissingFields}
+              onComplete={
+                editor
+                  ? undefined
+                  : () => {
+                      const draft = offers.find((row) => row.status === "draft");
+                      if (draft) openEditor(draft, "edit");
+                    }
+              }
+            />
+          ) : (
+            <p className="text-sm font-semibold text-rose-800">{actionError}</p>
+          )}
+        </div>
       ) : null}
 
       {loading ? (

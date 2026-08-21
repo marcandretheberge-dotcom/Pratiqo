@@ -168,6 +168,59 @@ export function assertTeacherOfferPublishable(
   return { ok: false, error: "offer_not_publishable", issues: result.issues };
 }
 
+/** Stable field paths for API `missingFields` (422 offer_not_publishable). */
+export function missingFieldsFromPublishIssues(
+  issues: TeacherOfferPublishIssue[],
+): TeacherOfferPublishIssuePath[] {
+  const seen = new Set<TeacherOfferPublishIssuePath>();
+  const out: TeacherOfferPublishIssuePath[] = [];
+  for (const row of issues) {
+    if (seen.has(row.path)) continue;
+    seen.add(row.path);
+    out.push(row.path);
+  }
+  return out;
+}
+
+export function teacherOfferDtoToPublishCandidate(
+  offer: Pick<
+    TeacherOfferDto,
+    | "title"
+    | "offerType"
+    | "disciplineId"
+    | "format"
+    | "priceCents"
+    | "durationMinutes"
+    | "shortDescription"
+    | "sessionCount"
+  >,
+): TeacherOfferPublishCandidate {
+  return {
+    title: offer.title,
+    offerType: offer.offerType,
+    disciplineId: offer.disciplineId,
+    format: offer.format,
+    priceCents: offer.priceCents,
+    durationMinutes: offer.durationMinutes,
+    shortDescription: offer.shortDescription,
+    sessionCount: offer.sessionCount,
+  };
+}
+
+export function getMissingPublishFieldsForOffer(
+  offer: Parameters<typeof teacherOfferDtoToPublishCandidate>[0],
+): TeacherOfferPublishIssuePath[] {
+  const result = evaluateTeacherOfferPublishReadiness(teacherOfferDtoToPublishCandidate(offer));
+  return result.ready ? [] : missingFieldsFromPublishIssues(result.issues);
+}
+
+export function getMissingPublishFieldsForForm(
+  values: TeacherOfferFormValues,
+): TeacherOfferPublishIssuePath[] {
+  const result = evaluateTeacherOfferPublishReadiness(formValuesToPublishCandidate(values));
+  return result.ready ? [] : missingFieldsFromPublishIssues(result.issues);
+}
+
 export function mergeTeacherOfferForPublishCheck(
   current: TeacherOfferDto,
   patch: TeacherOfferUpdateInput,

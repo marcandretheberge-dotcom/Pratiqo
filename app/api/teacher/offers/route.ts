@@ -12,6 +12,10 @@ import {
   createInputToPublishCandidate,
 } from "@/lib/offers/publishReadiness";
 import {
+  OFFER_NOT_PUBLISHABLE_STATUS,
+  offerNotPublishableResponseBody,
+} from "@/lib/offers/offerNotPublishableResponse";
+import {
   parseTeacherOfferCreateInput,
   teacherOfferCreateToInsertRow,
 } from "@/lib/offers/validation";
@@ -61,10 +65,9 @@ export async function POST(req: Request) {
   if (parsed.data.status === "published") {
     const publishGate = assertTeacherOfferPublishable(createInputToPublishCandidate(parsed.data));
     if (!publishGate.ok) {
-      return NextResponse.json(
-        { error: publishGate.error, issues: publishGate.issues },
-        { status: 400 },
-      );
+      return NextResponse.json(offerNotPublishableResponseBody(publishGate), {
+        status: OFFER_NOT_PUBLISHABLE_STATUS,
+      });
     }
   }
 

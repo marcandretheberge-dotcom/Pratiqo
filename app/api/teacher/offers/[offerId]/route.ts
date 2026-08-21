@@ -15,6 +15,10 @@ import {
   mergeTeacherOfferForPublishCheck,
 } from "@/lib/offers/publishReadiness";
 import {
+  OFFER_NOT_PUBLISHABLE_STATUS,
+  offerNotPublishableResponseBody,
+} from "@/lib/offers/offerNotPublishableResponse";
+import {
   mergedOfferRangeError,
   parseTeacherOfferUpdateInput,
   teacherOfferUpdateToPatchRow,
@@ -73,10 +77,9 @@ export async function PATCH(req: Request, ctx: Params) {
       mergeTeacherOfferForPublishCheck(current, parsed.data),
     );
     if (!publishGate.ok) {
-      return NextResponse.json(
-        { error: publishGate.error, issues: publishGate.issues },
-        { status: 400 },
-      );
+      return NextResponse.json(offerNotPublishableResponseBody(publishGate), {
+        status: OFFER_NOT_PUBLISHABLE_STATUS,
+      });
     }
   }
 
