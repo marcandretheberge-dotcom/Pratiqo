@@ -411,6 +411,7 @@ test("tracked patch avoids generated audio and restricted product systems", () =
     "lib/schedule/precisionScheduleBanner.ts",
     "lib/schedule/preciseScheduleActivation.ts",
     "lib/bookings/teacherScheduleEligibility.ts",
+    "lib/teachers/currentTeacher.ts",
   ]);
   const forbidden = [
     /^app\/api\//,

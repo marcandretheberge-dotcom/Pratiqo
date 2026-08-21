@@ -35,9 +35,9 @@ import { isTeacherScheduleInteractiveCellsUiEnabled } from "@/lib/schedule/inter
 import { dispatchConfigurePrecision } from "@/lib/schedule/precisionScheduleBanner";
 import {
   isTeacherPreciseScheduleBookingUiEnabled,
-  normalizeTeacherScheduleMode,
   type TeacherScheduleMode,
 } from "@/lib/schedule/preciseScheduleActivation";
+import { loadCurrentTeacherForSchedule } from "@/lib/teachers/currentTeacher";
 import {
   isTeacherScheduleStickySaveEnabled,
 } from "@/lib/schedule/scheduleSaveFlags";
@@ -146,6 +146,9 @@ function TeacherScheduleInner() {
   }, [searchParams, router]);
 
   const [teacherId, setTeacherId] = useState<string | null>(null);
+  const [teacherLookupState, setTeacherLookupState] = useState<"pending" | "found" | "missing" | "error">(
+    "pending",
+  );
   const [teacherDiscipline, setTeacherDiscipline] = useState("—");
   const [availability, setAvailability] = useState<string[]>([]);
   const [preciseIntervalCount, setPreciseIntervalCount] = useState(0);
@@ -221,50 +224,42 @@ function TeacherScheduleInner() {
   const load = useCallback(async () => {
     if (!userId) {
       setLoading(false);
+      setTeacherLookupState("pending");
       return;
     }
     setLoading(true);
+    setTeacherLookupState("pending");
     const supabase = getSupabaseClient();
-    const { data: trow } = await supabase
-      .from("teachers")
-      .select(
-        "id, availability, default_lesson_duration_minutes, available_from_date, teaching_mode, booking_buffer_before_minutes, booking_buffer_after_minutes, schedule_mode",
-      )
-      .eq("user_id", userId)
-      .maybeSingle();
-    const tid = (trow as { id?: string } | null)?.id ?? null;
-    setTeacherId(tid);
-    setScheduleMode(
-      normalizeTeacherScheduleMode((trow as { schedule_mode?: string | null } | null)?.schedule_mode),
-    );
-    setTeachingMode(String((trow as { teaching_mode?: string })?.teaching_mode || "both"));
-    setBufferBefore(clampBufferMinutes((trow as { booking_buffer_before_minutes?: number | null })?.booking_buffer_before_minutes));
-    setBufferAfter(clampBufferMinutes((trow as { booking_buffer_after_minutes?: number | null })?.booking_buffer_after_minutes));
-    const loadedDuration = normalizeLessonDurationMinutes(
-      (trow as { default_lesson_duration_minutes?: number | null })?.default_lesson_duration_minutes,
-    );
-    setDefaultLessonDuration(loadedDuration);
-    setSavedLessonDuration(loadedDuration);
-    const loadedAvailableFrom = normalizeAvailableFromDate(
-      (trow as { available_from_date?: string | null })?.available_from_date,
-    );
-    setAvailableFromDate(loadedAvailableFrom ?? "");
-    setSavedAvailableFromDate(loadedAvailableFrom);
-    if (!tid) {
+    const resolved = await loadCurrentTeacherForSchedule(supabase, userId);
+    if (!resolved.ok) {
+      setTeacherId(null);
       setBookings([]);
+      setTeacherLookupState(resolved.reason === "query_error" ? "error" : "missing");
       setLoading(false);
       return;
     }
-    const avail = (trow as { availability?: unknown }).availability;
+
+    const trow = resolved.teacher;
+    const tid = trow.id;
+    setTeacherId(tid);
+    setTeacherLookupState("found");
+    setScheduleMode(trow.scheduleMode);
+    setTeachingMode(String(trow.teaching_mode || "both"));
+    setBufferBefore(clampBufferMinutes(trow.booking_buffer_before_minutes));
+    setBufferAfter(clampBufferMinutes(trow.booking_buffer_after_minutes));
+    const loadedDuration = normalizeLessonDurationMinutes(trow.default_lesson_duration_minutes);
+    setDefaultLessonDuration(loadedDuration);
+    setSavedLessonDuration(loadedDuration);
+    const loadedAvailableFrom = normalizeAvailableFromDate(trow.available_from_date);
+    setAvailableFromDate(loadedAvailableFrom ?? "");
+    setSavedAvailableFromDate(loadedAvailableFrom);
+
+    const avail = trow.availability;
     const availArr = Array.isArray(avail) ? (avail as string[]) : [];
     setAvailability(availArr);
-    const mode = String((trow as { teaching_mode?: string })?.teaching_mode || "both");
-    const before = clampBufferMinutes(
-      (trow as { booking_buffer_before_minutes?: number | null })?.booking_buffer_before_minutes,
-    );
-    const after = clampBufferMinutes(
-      (trow as { booking_buffer_after_minutes?: number | null })?.booking_buffer_after_minutes,
-    );
+    const mode = String(trow.teaching_mode || "both");
+    const before = clampBufferMinutes(trow.booking_buffer_before_minutes);
+    const after = clampBufferMinutes(trow.booking_buffer_after_minutes);
     setSettingsBaseline(
       stableScheduleSnapshot({
         availability: [...availArr].sort(),
@@ -644,10 +639,41 @@ function TeacherScheduleInner() {
         <p className={cn("text-sm", flash.kind === "err" ? "text-rose-600" : "text-teal-800")}>{flash.text}</p>
       ) : null}
 
-      {loading ? (
-        <AppListSkeleton count={3} />
-      ) : !teacherId ? (
-        <p className="text-sm text-slate-500">{t("noTeacherProfile")}</p>
+      {loading || teacherLookupState === "pending" ? (
+        <div className="space-y-3" data-testid="teacher-schedule-loading">
+          <AppListSkeleton count={3} />
+          <p className="text-sm text-slate-500">{t("scheduleLoadingTeacher")}</p>
+        </div>
+      ) : teacherLookupState === "error" ? (
+        <div
+          className="rounded-2xl border border-amber-200 bg-amber-50 p-5 space-y-3"
+          data-testid="teacher-schedule-load-error"
+          role="alert"
+        >
+          <p className="text-sm font-bold text-amber-950">{t("scheduleLoadErrorTitle")}</p>
+          <p className="text-sm text-amber-900">{t("scheduleLoadErrorBody")}</p>
+          <button
+            type="button"
+            onClick={() => void load()}
+            className="inline-flex min-h-11 items-center rounded-xl bg-teal-700 px-4 text-sm font-bold text-white hover:bg-teal-800"
+          >
+            {t("scheduleLoadErrorRetry")}
+          </button>
+        </div>
+      ) : !teacherId || teacherLookupState === "missing" ? (
+        <div
+          className="rounded-2xl border border-slate-200 bg-white p-5 space-y-3 shadow-sm"
+          data-testid="teacher-schedule-no-profile"
+        >
+          <p className="text-sm font-bold text-[#2C2C2A]">{t("scheduleNoTeacherTitle")}</p>
+          <p className="text-sm text-slate-600">{t("scheduleNoTeacherBody")}</p>
+          <a
+            href="/teacher/my-profile"
+            className="inline-flex min-h-11 items-center rounded-xl bg-teal-700 px-4 text-sm font-bold text-white hover:bg-teal-800"
+          >
+            {t("scheduleNoTeacherCta")}
+          </a>
+        </div>
       ) : subtab === "today" ? (
         <div className="space-y-4">
           <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">

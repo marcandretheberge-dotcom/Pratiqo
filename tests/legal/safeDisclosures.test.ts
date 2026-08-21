@@ -927,6 +927,19 @@ const allowedTeacherScheduleExceptionsCoreFiles = new Set<string>([
   "package.json",
 ]);
 
+/** Recovery — schedule teacher lookup + load/error states (migration 112 applied). */
+const allowedTeacherScheduleProfileLookupFiles = new Set<string>([
+  "lib/teachers/currentTeacher.ts",
+  "app/(app)/teacher/schedule/page.tsx",
+  "lib/i18n/locales/fr.json",
+  "lib/i18n/locales/en.json",
+  "lib/i18n/locales/es.json",
+  "tests/schedule/teacherScheduleProfileLookup.test.ts",
+  "tests/legal/safeDisclosures.test.ts",
+  "tests/yo/yopratiqoAudioPronunciationOverrides.test.ts",
+  "package.json",
+]);
+
 function touchesSafeDisclosureScope(file: string): boolean {
   return (
     liveDisclosureFiles.includes(file) ||
@@ -1120,6 +1133,7 @@ test("safe-disclosure branch did not touch restricted systems", () => {
     if (allowedTeacherSchedulePrecisionBannerFiles.has(file)) continue;
     if (allowedTeacherPreciseScheduleBookingFiles.has(file)) continue;
     if (allowedTeacherScheduleExceptionsCoreFiles.has(file)) continue;
+    if (allowedTeacherScheduleProfileLookupFiles.has(file)) continue;
     for (const rule of restrictedRules) {
       if (rule.re.test(file)) {
         violations.push(`${file} (${rule.label})`);
