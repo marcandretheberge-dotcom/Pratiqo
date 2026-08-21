@@ -424,9 +424,11 @@ test("consent API no longer requires marketplace visibility before consent", () 
   assert.doesNotMatch(consentRoute, /isTeacherMarketplaceVisibleRow/);
 });
 
-test("teacher dashboard mounts SEO readiness card", () => {
+test("profile management mounts SEO readiness card (not main dashboard)", () => {
   const dashboard = read("components/Dashboard.tsx");
-  assert.match(dashboard, /TeacherSeoReadinessCard/);
+  const verification = read("app/(app)/teacher/verification/page.tsx");
+  assert.doesNotMatch(dashboard, /TeacherSeoReadinessCard/);
+  assert.match(verification, /TeacherSeoReadinessCard/);
 });
 
 test("admin user page mounts SEO publication card", () => {

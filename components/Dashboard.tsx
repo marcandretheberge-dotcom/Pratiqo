@@ -15,14 +15,14 @@ import { useLocale } from "../lib/locale-context";
 import type { TranslationKey } from "@/lib/translations";
 import { localeToBcp47 } from "@/lib/i18n/types";
 import { TeacherDashboardStats } from "@/components/dashboard/teacher/TeacherDashboardStats";
-import { TeacherProfileCompletenessCard } from "@/components/dashboard/teacher/TeacherProfileCompletenessCard";
+import { TeacherDashboardActionCenter } from "@/components/dashboard/teacher/TeacherDashboardActionCenter";
+import { TeacherProfileStatusCard } from "@/components/dashboard/teacher/TeacherProfileStatusCard";
 import { TeacherSearchVisibilityBanner } from "@/components/teacher/TeacherSearchVisibilityBanner";
 import { TeacherProfileSetupChecklist } from "@/components/teacher/TeacherProfileSetupChecklist";
-import { TeacherProfileVisibilityCard } from "@/components/teacher/TeacherProfileVisibilityCard";
-import { TeacherSeoReadinessCard } from "@/components/teacher/TeacherSeoReadinessCard";
 import { isIdentityVerificationFailed } from "@/lib/teachers/identityPublishGate";
 import { TEACHER_SETUP_PATH } from "@/lib/auth/teacherLoginRouting";
 import { buildTeacherSetupChecklist } from "@/lib/teachers/teacherSetupProgress";
+import { evaluateTeacherProfilePublishEligibility } from "@/lib/teachers/profilePublishEligibility";
 import { TeacherRequestCard } from "@/components/dashboard/teacher/TeacherRequestCard";
 import { TeacherScheduleCard } from "@/components/dashboard/teacher/TeacherScheduleCard";
 import { RescheduleModal, type RescheduleModalBooking } from "@/components/RescheduleModal";
@@ -48,6 +48,7 @@ import {
   packageCancelPolicyUiHintFromEvaluation,
   type PackageCancelPolicyUiHint,
 } from "@/lib/offers/cancellationPolicyEvaluation";
+import { fetchUnreadMessageCount } from "@/lib/messaging";
 
 interface BookingWithTeacher {
   id: string;
@@ -168,6 +169,7 @@ export function Dashboard() {
   const [cancelBooking, setCancelBooking] = useState<{ id: string; side: "student" | "teacher" } | null>(null);
   const [cancelBusy, setCancelBusy] = useState(false);
   const [rescheduleModalBookingId, setRescheduleModalBookingId] = useState<string | null>(null);
+  const [unreadMessages, setUnreadMessages] = useState(0);
 
   const teacherRescheduleBooking = useMemo((): RescheduleModalBooking | null => {
     if (!rescheduleModalBookingId) return null;
@@ -188,6 +190,28 @@ export function Dashboard() {
             : null,
     };
   }, [rescheduleModalBookingId, teacherBookings]);
+
+  useEffect(() => {
+    if (!user?.id || !isTeacherRole) {
+      setUnreadMessages(0);
+      return;
+    }
+    const supabase = getSupabaseClient();
+    let cancelled = false;
+    const refresh = () => {
+      void fetchUnreadMessageCount(supabase, user.id).then((count) => {
+        if (!cancelled) setUnreadMessages(count);
+      });
+    };
+    refresh();
+    window.addEventListener("pratiqo:messages-read", refresh);
+    window.addEventListener("focus", refresh);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("pratiqo:messages-read", refresh);
+      window.removeEventListener("focus", refresh);
+    };
+  }, [user?.id, isTeacherRole]);
 
   const teacherDash = useMemo(() => {
     if (!isTeacherRole) return null;
@@ -853,7 +877,7 @@ export function Dashboard() {
     const completenessPct = Math.round(
       (completenessChecks.filter(Boolean).length / completenessChecks.length) * 100,
     );
-    const showSearchVisibilityBanner =
+    const setupIncomplete =
       authProfile?.teacher_onboarding_complete !== true || completenessPct < 100 || !teacherMeta;
     const setupChecklistItems = teacherMeta
       ? buildTeacherSetupChecklist({
@@ -867,12 +891,85 @@ export function Dashboard() {
         })
       : buildTeacherSetupChecklist({});
 
+    const publishInput = teacherMeta
+      ? {
+          id: teacherMeta.id,
+          user_id: user?.id,
+          name: teacherMeta.name || authProfile?.name,
+          bio: teacherMeta.bio,
+          disciplineCount: teacherMeta.disciplineCount,
+          price_per_lesson: teacherMeta.hourlyRate,
+          availability: Array.from({ length: teacherMeta.availabilityCount }),
+          city: teacherMeta.city,
+          region: teacherMeta.region,
+          country_code: teacherMeta.country_code,
+          is_public: teacherMeta.is_public,
+          is_demo: teacherMeta.is_demo,
+          deactivated_at: teacherMeta.deactivated_at,
+          deleted_at: teacherMeta.deleted_at,
+          identity_verification_failed: teacherMeta.identity_verification_failed,
+          profile_is_active: teacherMeta.profile_is_active,
+          profile_deactivated_at: teacherMeta.profile_deactivated_at,
+          profile_deleted_at: teacherMeta.profile_deleted_at,
+          profile_anonymized_at: teacherMeta.profile_anonymized_at,
+        }
+      : null;
+    const publishEval = publishInput ? evaluateTeacherProfilePublishEligibility(publishInput) : null;
+    const profileNeedsAction =
+      !teacherMeta ||
+      publishEval?.status === "incomplete" ||
+      publishEval?.status === "admin_hidden" ||
+      publishEval?.status === "ready_to_publish";
+
     const firstConfirmed = confirmedUpcoming[0] as { id?: string; student_id?: string | null } | undefined;
     const firstMessagesHref = messagesHrefForStudentId(firstConfirmed?.student_id ?? null);
 
+    const actionItems = [
+      {
+        id: "pending",
+        label: t("teacherDashActionPendingLabel"),
+        count: pendingList.length,
+        href: "#teacher-dash-pending",
+        cta: t("teacherDashActionViewRequests"),
+        urgent: true,
+      },
+      {
+        id: "messages",
+        label: t("teacherDashActionMessagesLabel"),
+        count: unreadMessages,
+        href: "/messages",
+        cta: t("teacherDashActionViewMessages"),
+        urgent: true,
+      },
+      {
+        id: "today",
+        label: t("teacherDashActionTodayLabel"),
+        count: coursesTodayCount,
+        href: "#teacher-dash-schedule",
+        cta: t("teacherDashActionViewSchedule"),
+        alwaysShow: true,
+      },
+      ...(profileNeedsAction
+        ? [
+            {
+              id: "profile",
+              label: t("teacherDashActionProfileLabel"),
+              count: publishEval?.missingSectionIds.length ?? null,
+              href: TEACHER_SETUP_PATH,
+              cta: t("teacherDashFixProfileCta"),
+              urgent: true,
+              alwaysShow: true as const,
+            },
+          ]
+        : []),
+    ];
+
     return (
-      <div className="mx-auto w-full max-w-[1280px] space-y-5 overflow-hidden bg-[#F3FAF6] pb-[calc(6rem+env(safe-area-inset-bottom))] sm:space-y-8 sm:px-6 lg:rounded-3xl lg:p-8 lg:shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]" data-testid="teacher-dashboard-mobile-safe">
-        <header className="space-y-1 rounded-3xl bg-white/70 p-4 shadow-sm ring-1 ring-teal-900/5 sm:bg-transparent sm:p-0 sm:shadow-none sm:ring-0">
+      <div
+        className="mx-auto w-full min-w-0 max-w-[1280px] space-y-5 overflow-x-clip bg-[#F3FAF6] pb-[calc(6rem+env(safe-area-inset-bottom))] sm:space-y-8 sm:px-6 lg:rounded-3xl lg:p-8 lg:shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]"
+        data-testid="teacher-dashboard-mobile-safe"
+      >
+        <header className="min-w-0 space-y-1 rounded-3xl bg-white/70 p-4 shadow-sm ring-1 ring-teal-900/5 sm:bg-transparent sm:p-0 sm:shadow-none sm:ring-0">
           <p className="text-xs font-medium capitalize text-slate-600">{todayLabel}</p>
           <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
             {t("greeting")} {displayName}
@@ -880,60 +977,34 @@ export function Dashboard() {
           <p className="text-sm text-slate-600">{t("dashboardTeacherSubtitle")}</p>
         </header>
 
-        {teacherMeta ? (
-          <>
-          <TeacherProfileVisibilityCard
-            teacher={{
-              id: teacherMeta.id,
-              user_id: user?.id,
-              name: teacherMeta.name || authProfile?.name,
-              bio: teacherMeta.bio,
-              disciplineCount: teacherMeta.disciplineCount,
-              price_per_lesson: teacherMeta.hourlyRate,
-              availability: Array.from({ length: teacherMeta.availabilityCount }),
-              city: teacherMeta.city,
-              region: teacherMeta.region,
-              country_code: teacherMeta.country_code,
-              is_public: teacherMeta.is_public,
-              is_demo: teacherMeta.is_demo,
-              deactivated_at: teacherMeta.deactivated_at,
-              deleted_at: teacherMeta.deleted_at,
-              identity_verification_failed: teacherMeta.identity_verification_failed,
-              profile_is_active: teacherMeta.profile_is_active,
-              profile_deactivated_at: teacherMeta.profile_deactivated_at,
-              profile_deleted_at: teacherMeta.profile_deleted_at,
-              profile_anonymized_at: teacherMeta.profile_anonymized_at,
-            }}
-            profileRole={role}
-            onVisibilityChange={(nextPublic) =>
-              setTeacherMeta((prev) => (prev ? { ...prev, is_public: nextPublic } : prev))
-            }
-          />
-          <TeacherSeoReadinessCard />
-          </>
-        ) : (
-          <>
-            <TeacherSearchVisibilityBanner ctaHref={TEACHER_SETUP_PATH} />
-            <TeacherProfileSetupChecklist items={setupChecklistItems} ctaHref={TEACHER_SETUP_PATH} />
-          </>
-        )}
+        <TeacherDashboardActionCenter items={actionItems} />
 
         <TeacherDashboardStats
           items={[
             { labelKey: "lessonsToday", value: coursesTodayCount },
             { labelKey: "activeStudentsLabel", value: distinctStudents },
             {
-              labelKey: "thisMonthLabel",
+              labelKey: "teacherDashRevenueThisMonth",
               value: monthRevenueDisplay.primary,
               approx: monthRevenueDisplay.approx ? `≈ ${monthRevenueDisplay.approx}` : null,
             },
           ]}
         />
+        {monthRevenue === 0 ? (
+          <p className="text-xs text-slate-500" data-testid="teacher-dash-revenue-empty-hint">
+            {t("teacherDashRevenueEmpty")}
+          </p>
+        ) : null}
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          <div className="space-y-6 lg:col-span-2">
-            <div className="rounded-xl border border-slate-200/90 bg-white p-4 shadow-[0_4px_24px_rgba(0,0,0,0.04)] sm:p-5">
-              <p className="mb-4 text-[11px] font-bold uppercase tracking-widest text-[#00694c]">{t("pendingRequests")}</p>
+        <div className="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-3">
+          <div className="min-w-0 space-y-6 lg:col-span-2">
+            <div
+              id="teacher-dash-pending"
+              className="scroll-mt-24 rounded-xl border border-slate-200/90 bg-white p-4 shadow-[0_4px_24px_rgba(0,0,0,0.04)] sm:p-5"
+            >
+              <h2 className="mb-4 text-[11px] font-bold uppercase tracking-widest text-[#00694c]">
+                {t("pendingRequests")}
+              </h2>
               {actionFlash ? (
                 <p
                   className={cn(
@@ -962,10 +1033,11 @@ export function Dashboard() {
             </div>
 
             <div
+              id="teacher-dash-schedule"
               className={
                 confirmedUpcoming.length > 0
-                  ? "grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(260px,300px)] lg:items-start lg:gap-8"
-                  : "grid gap-6"
+                  ? "grid min-w-0 scroll-mt-24 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,280px)] lg:items-start lg:gap-8"
+                  : "grid min-w-0 scroll-mt-24 gap-6"
               }
             >
               <TeacherScheduleCard
@@ -991,7 +1063,7 @@ export function Dashboard() {
                   studentAddress: b.student_address as string | null | undefined,
                   meetingUrl: (b as { meeting_url?: string | null }).meeting_url ?? null,
                 }))}
-                emptyHint={t("dashboardNoLessonsWeek")}
+                emptyHint={t("teacherDashScheduleEmpty")}
                 onRequestCancelClass={(bookingId) => setCancelBooking({ id: bookingId, side: "teacher" })}
                 onOpenReschedule={(bookingId) => setRescheduleModalBookingId(bookingId)}
                 onMarkCompleted={markTeacherBookingCompleted}
@@ -1056,12 +1128,65 @@ export function Dashboard() {
               }
             />
 
+            <section
+              className="rounded-xl border border-slate-200/90 bg-white p-4 shadow-[0_4px_24px_rgba(0,0,0,0.04)] sm:p-5"
+              data-testid="teacher-dash-shortcuts"
+              aria-labelledby="teacher-dash-shortcuts-heading"
+            >
+              <h2
+                id="teacher-dash-shortcuts-heading"
+                className="text-[11px] font-bold uppercase tracking-widest text-[#00694c]"
+              >
+                {t("teacherDashShortcutsTitle")}
+              </h2>
+              <ul className="mt-3 flex flex-wrap gap-2">
+                <li>
+                  <Link
+                    href="/teacher/offers"
+                    className="inline-flex min-h-10 items-center rounded-xl border border-slate-200 bg-[#fafaf8] px-3 text-sm font-semibold text-slate-800 hover:bg-slate-50"
+                  >
+                    {t("teacherOffersNav")}
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/teacher/schedule"
+                    className="inline-flex min-h-10 items-center rounded-xl border border-slate-200 bg-[#fafaf8] px-3 text-sm font-semibold text-slate-800 hover:bg-slate-50"
+                  >
+                    {t("teacherSchedule")}
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/teacher/revenue"
+                    className="inline-flex min-h-10 items-center rounded-xl border border-slate-200 bg-[#fafaf8] px-3 text-sm font-semibold text-slate-800 hover:bg-slate-50"
+                  >
+                    {t("teacherNavRevenue")}
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/teacher/verification"
+                    className="inline-flex min-h-10 items-center rounded-xl border border-slate-200 bg-[#fafaf8] px-3 text-sm font-semibold text-slate-800 hover:bg-slate-50"
+                  >
+                    {t("teacherProfileManagementNav")}
+                  </Link>
+                </li>
+              </ul>
+            </section>
+
             <AssignmentHub mode="teacher" />
           </div>
 
-          <div className="space-y-6 lg:col-span-1">
-            <TeacherProfileCompletenessCard percent={completenessPct} ctaHref={TEACHER_SETUP_PATH} />
-          </div>
+          <aside className="min-w-0 space-y-6 lg:col-span-1">
+            <TeacherProfileStatusCard teacher={publishInput} manageHref="/teacher/verification" />
+            {setupIncomplete && !teacherMeta ? (
+              <>
+                <TeacherSearchVisibilityBanner ctaHref={TEACHER_SETUP_PATH} />
+                <TeacherProfileSetupChecklist items={setupChecklistItems} ctaHref={TEACHER_SETUP_PATH} />
+              </>
+            ) : null}
+          </aside>
         </div>
       </div>
     );

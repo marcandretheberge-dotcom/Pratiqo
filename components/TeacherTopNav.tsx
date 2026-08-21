@@ -76,15 +76,14 @@ const PRIMARY_NAV: NavItem[] = [
   { href: "/dashboard", labelKey: "teacherDashboard", icon: LayoutDashboard },
   { href: "/teacher/schedule", labelKey: "teacherSchedule", icon: Calendar },
   { href: "/teacher/progress", labelKey: "teacherStudents", icon: Users },
-  { href: "/teacher/revenue", labelKey: "teacherNavRevenue", icon: CircleDollarSign },
   { href: "/messages", labelKey: "teacherMessages", icon: MessageCircle },
+  { href: "/teacher/offers", labelKey: "teacherOffersNav", icon: NotebookPen },
+  { href: "/teacher/revenue", labelKey: "teacherNavRevenue", icon: CircleDollarSign },
 ];
 
 function buildSecondaryNav(): NavItem[] {
   const packagesNavEnabled = isTeacherPackageVisibilityUiEnabled();
-  const items: NavItem[] = [
-    { href: "/teacher/offers", labelKey: "teacherOffersNav", icon: NotebookPen },
-  ];
+  const items: NavItem[] = [];
   if (packagesNavEnabled) {
     items.push({ href: "/teacher/packages", labelKey: "teacherPackagesNav", icon: Package });
   }
@@ -140,7 +139,7 @@ export function TeacherTopNav({ unreadMessages }: { unreadMessages: number }) {
 
   const tabClass = (href: string, extra?: string) =>
     cn(
-      "inline-flex h-10 items-center gap-1.5 border-b-2 px-3 text-sm font-semibold transition-colors whitespace-nowrap",
+      "inline-flex h-10 shrink-0 items-center gap-1 border-b-2 px-2.5 text-sm font-semibold transition-colors whitespace-nowrap focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600",
       extra,
       isTeacherNavActive(pathname, href)
         ? "border-teal-500 text-teal-700"
@@ -259,7 +258,11 @@ export function TeacherTopNav({ unreadMessages }: { unreadMessages: number }) {
           </div>
         </div>
 
-        <nav className="mx-auto hidden h-[42px] max-w-[1280px] items-end gap-1 border-t border-[#F1EFE8] px-4 sm:px-5 md:flex lg:px-6" aria-label="Teacher">
+        <nav
+          className="mx-auto hidden h-[42px] max-w-[1280px] min-w-0 items-end gap-0.5 overflow-x-auto overscroll-x-contain border-t border-[#F1EFE8] px-4 sm:px-5 md:flex lg:px-6"
+          aria-label="Teacher"
+          data-testid="teacher-top-nav-tabs"
+        >
           {PRIMARY_NAV.map((item) => {
             const Icon = item.icon;
             return (

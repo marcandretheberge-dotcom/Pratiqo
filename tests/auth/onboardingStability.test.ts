@@ -116,7 +116,8 @@ test("profile completion CTAs route to teacher verification setup mode not publi
   assert.match(dashboard, /TEACHER_SETUP_PATH/);
   assert.match(dashboard, /TeacherProfileSetupChecklist/);
   assert.match(dashboard, /TeacherSearchVisibilityBanner ctaHref=\{TEACHER_SETUP_PATH\}/);
-  assert.match(dashboard, /TeacherProfileCompletenessCard percent=\{completenessPct\} ctaHref=\{TEACHER_SETUP_PATH\}/);
+  assert.match(dashboard, /TeacherProfileStatusCard/);
+  assert.doesNotMatch(dashboard, /TeacherProfileCompletenessCard/);
   const banner = read("components/teacher/TeacherSearchVisibilityBanner.tsx");
   assert.match(banner, /\/teacher\/verification\?setup=1/);
 });
