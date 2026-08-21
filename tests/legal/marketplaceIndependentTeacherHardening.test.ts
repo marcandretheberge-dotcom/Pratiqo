@@ -52,6 +52,8 @@ const PRODUCT_SURFACES = [
   "components/teacher/TeacherScheduleIntervalMigrationModal.tsx",
   "components/teacher/TeacherScheduleExceptionsEditor.tsx",
   "components/teacher/TeacherScheduleSaveBar.tsx",
+  "components/teacher/TeacherScheduleInteractiveGrid.tsx",
+  "components/teacher/TeacherScheduleCellEditor.tsx",
 ];
 
 const BEHAVIOR_CRITICAL = [

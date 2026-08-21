@@ -31,7 +31,9 @@ import { TeacherWeeklyIntervalsEditor } from "@/components/teacher/TeacherWeekly
 import { TeacherScheduleIntervalMigrationBanner } from "@/components/teacher/TeacherScheduleIntervalMigrationBanner";
 import { TeacherScheduleIntervalMigrationModal } from "@/components/teacher/TeacherScheduleIntervalMigrationModal";
 import { TeacherScheduleExceptionsEditor } from "@/components/teacher/TeacherScheduleExceptionsEditor";
+import { TeacherScheduleInteractiveGrid } from "@/components/teacher/TeacherScheduleInteractiveGrid";
 import { isTeacherScheduleExceptionsUiEnabled } from "@/lib/schedule/dateExceptions";
+import { isTeacherScheduleInteractiveCellsUiEnabled } from "@/lib/schedule/interactiveCells";
 import {
   isTeacherScheduleStickySaveEnabled,
 } from "@/lib/schedule/scheduleSaveFlags";
@@ -883,7 +885,13 @@ function TeacherScheduleInner() {
               <p className="text-xs font-medium text-red-700">{t("availableFromSaveError")}</p>
             ) : null}
           </div>
-          {isTeacherScheduleIntervalsUiEnabled() ? (
+          {isTeacherScheduleInteractiveCellsUiEnabled() ? (
+            <TeacherScheduleInteractiveGrid
+              bookings={bookings}
+              onDirtyChange={setIntervalsDirty}
+              onPreciseIntervalCountChange={setPreciseIntervalCount}
+            />
+          ) : isTeacherScheduleIntervalsUiEnabled() ? (
             <>
               {shouldShowScheduleIntervalHoraireBanner(
                 buildScheduleIntervalMigrationState({
@@ -927,7 +935,7 @@ function TeacherScheduleInner() {
           ) : null}
 
           <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-            {!isTeacherScheduleIntervalsUiEnabled() ? (
+            {!isTeacherScheduleIntervalsUiEnabled() && !isTeacherScheduleInteractiveCellsUiEnabled() ? (
               <>
             <div className="space-y-3">
               <div>

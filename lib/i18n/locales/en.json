@@ -2905,5 +2905,21 @@
   "scheduleSaveBarAria": "Availability save actions",
   "scheduleLegacyModeTitle": "Legacy block schedule",
   "scheduleLegacyModeBody": "Morning / Afternoon / Evening blocks remain active until precise time ranges are enabled. Turn on exact intervals for a more reliable schedule.",
-  "scheduleSaveStickyDurationHelp": "Duration changes are saved with the Save availability button."
+  "scheduleSaveStickyDurationHelp": "Duration changes are saved with the Save availability button.",
+  "scheduleCellAdd": "Add",
+  "scheduleCellAddAria": "Add availability for {day} {part}",
+  "scheduleCellEnableSlot": "Enable this slot",
+  "scheduleCellPreciseRanges": "Precise time ranges",
+  "scheduleCellAddInterval": "Add another interval",
+  "scheduleCellCopySameWeekday": "Copy to every {day}",
+  "scheduleCellApply": "Apply",
+  "scheduleCellCancel": "Cancel",
+  "scheduleCellOutsideDaypart": "This time range must stay within the selected period.",
+  "scheduleCellLockedReadonly": "This slot can no longer be edited.",
+  "scheduleCellCountNone": "No availability",
+  "scheduleCellCountOne": "1 time range configured",
+  "scheduleCellCountMany": "{count} time ranges configured",
+  "scheduleCellEmptyWhenEnabled": "Add at least one time range, or disable this slot.",
+  "scheduleCellGridHelper": "Click a cell to set precise time ranges.",
+  "scheduleCellLegendAdd": "Add"
 }

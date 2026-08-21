@@ -2905,5 +2905,21 @@
   "scheduleSaveBarAria": "Acciones para guardar la disponibilidad",
   "scheduleLegacyModeTitle": "Horario por bloques heredado",
   "scheduleLegacyModeBody": "Los bloques Mañana / Tarde / Noche siguen activos hasta activar franjas horarias exactas. Activa intervalos precisos para un horario más fiable.",
-  "scheduleSaveStickyDurationHelp": "Los cambios de duración se guardan con el botón Guardar disponibilidad."
+  "scheduleSaveStickyDurationHelp": "Los cambios de duración se guardan con el botón Guardar disponibilidad.",
+  "scheduleCellAdd": "Agregar",
+  "scheduleCellAddAria": "Agregar disponibilidad {day} {part}",
+  "scheduleCellEnableSlot": "Activar este horario",
+  "scheduleCellPreciseRanges": "Horarios precisos",
+  "scheduleCellAddInterval": "Agregar otro horario",
+  "scheduleCellCopySameWeekday": "Copiar a todos los {day}",
+  "scheduleCellApply": "Aplicar",
+  "scheduleCellCancel": "Cancelar",
+  "scheduleCellOutsideDaypart": "Este horario debe permanecer dentro del período seleccionado.",
+  "scheduleCellLockedReadonly": "Este horario ya no se puede modificar.",
+  "scheduleCellCountNone": "Sin disponibilidad",
+  "scheduleCellCountOne": "1 horario configurado",
+  "scheduleCellCountMany": "{count} horarios configurados",
+  "scheduleCellEmptyWhenEnabled": "Agrega al menos un horario, o desactiva este período.",
+  "scheduleCellGridHelper": "Haz clic en una casilla para definir horarios precisos.",
+  "scheduleCellLegendAdd": "Agregar"
 }

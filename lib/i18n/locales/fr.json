@@ -2905,5 +2905,21 @@
   "scheduleSaveBarAria": "Enregistrement des disponibilités",
   "scheduleLegacyModeTitle": "Mode grilles héritées",
   "scheduleLegacyModeBody": "Les plages Matin / Après-midi / Soir restent actives tant que l’horaire précis n’est pas activé. Activez les plages horaires exactes pour un horaire plus fiable.",
-  "scheduleSaveStickyDurationHelp": "Les changements de durée sont enregistrés avec le bouton Enregistrer les disponibilités."
+  "scheduleSaveStickyDurationHelp": "Les changements de durée sont enregistrés avec le bouton Enregistrer les disponibilités.",
+  "scheduleCellAdd": "Ajouter",
+  "scheduleCellAddAria": "Ajouter une disponibilité {day} {part}",
+  "scheduleCellEnableSlot": "Activer ce créneau",
+  "scheduleCellPreciseRanges": "Plages horaires précises",
+  "scheduleCellAddInterval": "Ajouter un autre intervalle",
+  "scheduleCellCopySameWeekday": "Copier sur tous les {day}s",
+  "scheduleCellApply": "Appliquer",
+  "scheduleCellCancel": "Annuler",
+  "scheduleCellOutsideDaypart": "Cette plage doit rester dans la période sélectionnée.",
+  "scheduleCellLockedReadonly": "Ce créneau ne peut plus être modifié.",
+  "scheduleCellCountNone": "Aucune disponibilité",
+  "scheduleCellCountOne": "1 plage configurée",
+  "scheduleCellCountMany": "{count} plages configurées",
+  "scheduleCellEmptyWhenEnabled": "Ajoutez au moins une plage horaire, ou désactivez ce créneau.",
+  "scheduleCellGridHelper": "Cliquez une case pour définir des plages horaires précises.",
+  "scheduleCellLegendAdd": "Ajouter"
 }
