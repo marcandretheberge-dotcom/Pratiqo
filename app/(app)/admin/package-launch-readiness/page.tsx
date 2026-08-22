@@ -297,8 +297,28 @@ function ReadinessBody({ readiness }: { readiness: PackageLaunchReadiness }) {
           ok={readiness.checks.plannedPackageRefundQuoteNoAutomaticStripeRefund}
         />
         <ChecklistRow
-          label="Exécution remboursement pas encore implémentée"
-          ok={readiness.checks.plannedPackageRefundExecutionNotImplemented}
+          label="Exécution remboursement manuel présente (admin, quote approuvée)"
+          ok={readiness.checks.plannedPackageManualRefundExecutionPresent}
+        />
+        <ChecklistRow
+          label="Exécution remboursement manuel gated (chaîne admin review)"
+          ok={readiness.checks.plannedPackageManualRefundExecutionGated}
+        />
+        <ChecklistRow
+          label="Quote approuvée requise avant remboursement Stripe"
+          ok={readiness.checks.plannedPackageManualRefundApprovedQuoteRequired}
+        />
+        <ChecklistRow
+          label="Idempotence remboursement Stripe"
+          ok={readiness.checks.plannedPackageManualRefundIdempotencyPresent}
+        />
+        <ChecklistRow
+          label="Pas de transfer reversal dans ce PR"
+          ok={readiness.checks.plannedPackageManualRefundNoTransferReversal}
+        />
+        <ChecklistRow
+          label="Pas de versement professeur dans exécution remboursement"
+          ok={readiness.checks.plannedPackageManualRefundNoPayoutRelease}
         />
         <ChecklistRow
           label="Revue légale toujours requise"

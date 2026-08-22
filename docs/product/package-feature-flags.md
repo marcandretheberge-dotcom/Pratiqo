@@ -108,6 +108,15 @@ See also:
 | Runtime | Approve quote for manual refund label |
 | Production note | Marks `approved_for_manual_refund` only — **does not** call Stripe |
 
+### `ENABLE_PLANNED_PACKAGE_MANUAL_REFUNDS` (server only)
+
+| | |
+|--|--|
+| Default | OFF |
+| Runtime | Admin executes Stripe refund for approved quote only |
+| Dependencies | Refund quotes + admin review + admin ops |
+| Production note | Requires `PACKAGE_LEGAL_REVIEW_COMPLETED=true` in production |
+
 ### `ENABLE_PLANNED_PACKAGE_CHECKOUT_TEST_MODE` (optional)
 
 | | |

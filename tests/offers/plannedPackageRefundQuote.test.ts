@@ -246,7 +246,8 @@ test("admin readiness shows refund quote engine and execution missing", () => {
   const readiness = getPackageLaunchReadiness();
   assert.equal(readiness.checks.plannedPackageRefundQuoteEnginePresent, true);
   assert.equal(readiness.checks.plannedPackageRefundQuoteNoAutomaticStripeRefund, true);
-  assert.equal(readiness.checks.plannedPackageRefundExecutionNotImplemented, true);
+  assert.equal(readiness.checks.plannedPackageManualRefundExecutionPresent, true);
+  assert.equal(readiness.checks.plannedPackageManualRefundNoTransferReversal, true);
   assert.equal(readiness.checks.plannedPackagePublicPurchaseBlocked, true);
   assert.equal(readiness.checks.legalReviewCompletedSignal, false);
   const page = read("app/(app)/admin/package-launch-readiness/page.tsx");
@@ -257,7 +258,7 @@ test("admin readiness shows refund quote engine and execution missing", () => {
 test("docs describe quote-only scope", () => {
   const doc = read("docs/product/package-refund-quote-engine.md");
   assert.match(doc, /Quote-only/);
-  assert.match(doc, /stripe\.refunds\.create/);
+  assert.match(doc, /package-manual-refund-execution/);
   assert.match(doc, /planned-package-refund-v1-draft-2026/);
 });
 

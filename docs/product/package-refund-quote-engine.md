@@ -9,13 +9,19 @@
 
 This is **not** legal advice and **not** a final refund decision.
 
-## Out of scope (future PR)
+## Out of scope (quote engine PR)
 
-- `stripe.refunds.create` or any live refund execution
-- Stripe transfers / teacher payout release
 - Automatic booking cancellation
 - Public learner cancellation UI (optional flag exists but default OFF)
 - Public package launch
+
+## Manual refund execution (separate PR)
+
+Live Stripe refund execution is implemented in [package-manual-refund-execution.md](./package-manual-refund-execution.md):
+
+- Admin-only, requires `approved_for_manual_refund` quote
+- Gated by `ENABLE_PLANNED_PACKAGE_MANUAL_REFUNDS` (default OFF)
+- No transfer reversal in that PR
 
 ## Policy version
 

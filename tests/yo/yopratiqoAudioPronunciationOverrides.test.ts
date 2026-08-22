@@ -449,7 +449,13 @@ test("tracked patch avoids generated audio and restricted product systems", () =
     "app/api/admin/planned-package-orders/[orderId]/cancellation-request/route.ts",
     "app/api/admin/planned-package-orders/[orderId]/refund-quote/route.ts",
     "app/api/admin/planned-package-orders/[orderId]/refund-quote/action/route.ts",
+    // packages/planned-package-manual-refund-execution — admin Stripe refund for approved quote.
+    // Defended by tests/offers/plannedPackageManualRefund.test.ts.
+    "app/api/admin/planned-package-orders/[orderId]/refund-quotes/[quoteId]/execute/route.ts",
+    "lib/offers/plannedPackageManualRefund.ts",
+    "lib/offers/plannedPackageManualRefunds.ts",
     "supabase/migrations/119_planned_package_cancellation_refund_quotes.sql",
+    "supabase/migrations/120_planned_package_refund_executions.sql",
   ]);
   const forbidden = [
     /^app\/api\//,
