@@ -53,6 +53,7 @@ const EXPLICIT_RLS_HARDENING_FILES = [
   "100_create_package_entitlements.sql",
   "101_package_entitlements_rls_if_exists.sql",
   "114_planned_package_session_drafts.sql",
+  "115_planned_package_pending_orders_and_holds.sql",
   "102_create_package_redemptions.sql",
   "103_add_package_redemption_reversal_rpc.sql",
   "109_harden_teacher_weekly_availability_intervals_rls.sql",

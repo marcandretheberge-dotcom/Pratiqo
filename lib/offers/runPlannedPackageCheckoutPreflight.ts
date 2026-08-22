@@ -32,6 +32,7 @@ import {
   validatePlannedPackageDraftSlot,
   type PlannedPackageSlotAdmin,
 } from "./validatePlannedPackageDraftSessions";
+import { hasActivePlannedPackageHoldConflict } from "./plannedPackageHoldQueries";
 
 function adminClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -177,7 +178,17 @@ export async function runPlannedPackageCheckoutPreflight(args: {
             timeSlot: parsed.timeSlot,
             durationMinutes: draft.durationMinutes,
           });
-          if (conflict) sessionBlockers.push("slot_conflict");
+          if (conflict) {
+            sessionBlockers.push("slot_conflict");
+          } else {
+            const holdConflict = await hasActivePlannedPackageHoldConflict({
+              admin,
+              teacherId: draft.teacherId,
+              startsAt: parsed.startsAtIso,
+              endsAt: parsed.endsAtIso,
+            });
+            if (holdConflict) sessionBlockers.push("slot_conflict");
+          }
         }
       }
     }

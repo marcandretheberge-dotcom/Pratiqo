@@ -10,6 +10,8 @@ import {
   type PlannedPackageCheckoutPreflightResult,
   type PlannedPackagePreflightBlocker,
 } from "@/lib/offers/plannedPackageCheckoutPreflight";
+import { PlannedPackagePendingOrderPanel } from "@/components/packages/PlannedPackagePendingOrder";
+import { isPlannedPackageTemporaryHoldsUiEnabled } from "@/lib/offers/plannedPackageTemporaryHolds";
 
 type Props = {
   draftId: string;
@@ -144,14 +146,21 @@ export function PlannedPackageCheckoutPreflight({
           <p className="text-xs leading-relaxed text-slate-600">{t("plannedPackageNotReservedYet")}</p>
           <p className="text-xs leading-relaxed text-slate-600">{t("plannedPackageAvailabilityRecheck")}</p>
 
-          <button
-            type="button"
-            disabled
-            className="inline-flex min-h-10 w-full cursor-not-allowed items-center justify-center rounded-full border border-slate-200 bg-slate-100 px-4 text-sm font-semibold text-slate-500"
-            data-testid="planned-package-preflight-payment-coming-soon"
-          >
-            {t("plannedPackagePaymentComingSoon")}
-          </button>
+          {sessionsValid && isPlannedPackageTemporaryHoldsUiEnabled() ? (
+            <PlannedPackagePendingOrderPanel
+              draftId={draftId}
+              onEditSessions={onEditSessions}
+            />
+          ) : (
+            <button
+              type="button"
+              disabled
+              className="inline-flex min-h-10 w-full cursor-not-allowed items-center justify-center rounded-full border border-slate-200 bg-slate-100 px-4 text-sm font-semibold text-slate-500"
+              data-testid="planned-package-preflight-payment-coming-soon"
+            >
+              {t("plannedPackagePaymentComingSoon")}
+            </button>
+          )}
 
           <div className="flex flex-col gap-2 sm:flex-row">
             <button

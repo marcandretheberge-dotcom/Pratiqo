@@ -3044,5 +3044,15 @@
   "plannedPackagePreflightDraftNotActive": "Ce brouillon n’est plus actif.",
   "plannedPackagePreflightOfferUnavailable": "Cette offre n’est plus disponible.",
   "plannedPackagePreflightInvalidSessionCount": "Le nombre de séances ne correspond plus à l’offre.",
-  "plannedPackagePreflightTeacherNotAvailableYet": "Le professeur n’est pas encore disponible à cette date."
+  "plannedPackagePreflightTeacherNotAvailableYet": "Le professeur n’est pas encore disponible à cette date.",
+  "plannedPackageHoldPreparePayment": "Préparer le paiement",
+  "plannedPackageHoldTitle": "Séances temporairement réservées",
+  "plannedPackageHoldBody": "Ces séances sont bloquées temporairement pendant la préparation du paiement.",
+  "plannedPackageHoldConfirmedAfterPayment": "Les réservations seront confirmées seulement après le paiement.",
+  "plannedPackageHoldReleasedIfUnpaid": "Les séances seront libérées si le paiement n’est pas complété.",
+  "plannedPackageHoldSlotTemporarilyUnavailable": "Cette plage est temporairement indisponible.",
+  "plannedPackageHoldCancel": "Annuler la préparation",
+  "plannedPackageHoldExpired": "La préparation du forfait a expiré.",
+  "plannedPackageHoldChooseNew": "Choisissez de nouvelles séances pour continuer.",
+  "plannedPackageHoldPrepareFailed": "Impossible de préparer le forfait. Veuillez réessayer."
 }

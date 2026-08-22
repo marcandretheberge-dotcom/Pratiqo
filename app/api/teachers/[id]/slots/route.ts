@@ -11,6 +11,10 @@ import { isValidLessonDurationMinutes } from "@/lib/pricing/lessonDuration";
 import { formatLocalISODate } from "@/lib/slots";
 import { isTeacherScheduleExceptionsEnabled } from "@/lib/schedule/dateExceptions";
 import { isTeacherPreciseScheduleBookingEnabled } from "@/lib/schedule/preciseScheduleActivation";
+import {
+  holdRowsToBookedIntervals,
+  listActiveHoldsForTeacherDay,
+} from "@/lib/offers/plannedPackageHoldQueries";
 
 export const runtime = "nodejs";
 
@@ -62,6 +66,14 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
       (bookedRows || []) as { time_slot?: string; duration_minutes?: number | null }[],
     );
 
+    const activeHolds = await listActiveHoldsForTeacherDay({
+      admin,
+      teacherId,
+      slotDate: date,
+    });
+    const holdIntervals = holdRowsToBookedIntervals(activeHolds);
+    const mergedBookedIntervals = [...bookedIntervals, ...holdIntervals];
+
     const { data: blockedRows } = await admin
       .from("blocked_slots")
       .select("period, start_time, end_time")
@@ -100,7 +112,7 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
       weeklyIntervals,
       exceptions,
       bookedSlots,
-      bookedIntervals,
+      bookedIntervals: mergedBookedIntervals,
       blockedDayRows: (blockedRows || []) as {
         period: string | null;
         start_time?: string | null;

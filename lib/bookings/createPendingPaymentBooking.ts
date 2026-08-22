@@ -15,6 +15,7 @@ import { rejectIfOutsideWeeklyIntervals } from "@/lib/bookings/weeklyIntervalGua
 import type { WeeklyIntervalAdmin } from "@/lib/bookings/weeklyIntervalGuard";
 import { applyDateExceptionToBooking } from "@/lib/bookings/dateExceptionGuard";
 import type { DateExceptionAdmin } from "@/lib/bookings/dateExceptionGuard";
+import { hasActiveHoldConflictForBookingSlot } from "@/lib/offers/plannedPackageHoldQueries";
 
 export type CreateBookingFailure = {
   ok: false;
@@ -169,6 +170,17 @@ export async function createPendingPaymentBooking(args: {
     if (outside) {
       return { ok: false, status: outside.status, error: outside.error };
     }
+  }
+
+  const holdConflict = await hasActiveHoldConflictForBookingSlot({
+    admin: args.admin as never,
+    teacherId: args.request.teacherId,
+    slotDate: args.request.slotDate,
+    timeSlot: args.request.timeSlot,
+    durationMinutes: args.request.durationMinutes,
+  });
+  if (holdConflict) {
+    return { ok: false, status: 409, error: "slot_temporarily_held" };
   }
 
   if (args.request.learnerProfileId) {

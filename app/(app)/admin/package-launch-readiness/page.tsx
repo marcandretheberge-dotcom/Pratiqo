@@ -179,6 +179,20 @@ function ReadinessBody({ readiness }: { readiness: PackageLaunchReadiness }) {
           ok={readiness.checks.plannedPackageCheckoutPreflightNoPayment}
         />
         <ChecklistRow
+          label="Schéma commandes / holds temporaire présent"
+          ok={readiness.checks.plannedPackageTemporaryHoldsSchemaPresent}
+        />
+        <ChecklistRow
+          label={`Holds temporaires gated (ENABLE_PLANNED_PACKAGE_TEMPORARY_HOLDS) : ${
+            readiness.flags.plannedPackageTemporaryHolds ? "ON" : "OFF"
+          }`}
+          ok={readiness.checks.plannedPackageTemporaryHoldsGated}
+        />
+        <ChecklistRow
+          label="Holds sans paiement / sans réservation confirmée"
+          ok={readiness.checks.plannedPackageTemporaryHoldsNoPayment}
+        />
+        <ChecklistRow
           label="Checkout forfait toujours bloqué"
           ok={readiness.checks.plannedPackagePublicPurchaseBlocked}
         />

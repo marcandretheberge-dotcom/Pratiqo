@@ -429,6 +429,10 @@ test("tracked patch avoids generated audio and restricted product systems", () =
     // packages/planned-package-checkout-preflight — readiness only; no payment.
     // Defended by tests/offers/plannedPackageCheckoutPreflight.test.ts.
     "app/api/planned-packages/session-drafts/[draftId]/checkout-preflight/route.ts",
+    // packages/planned-package-temporary-holds — pending order holds only; no payment.
+    // Defended by tests/offers/plannedPackageTemporaryHolds.test.ts.
+    "app/api/planned-packages/session-drafts/[draftId]/pending-order/route.ts",
+    "app/api/planned-packages/pending-orders/[orderId]/cancel/route.ts",
   ]);
   const forbidden = [
     /^app\/api\//,
