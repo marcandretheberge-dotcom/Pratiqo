@@ -14,6 +14,7 @@ import {
   canUsePlannedPackageManualRefunds,
   isPlannedPackageManualRefundsEnabled,
 } from "./plannedPackageManualRefunds";
+import { packageOrderHasUnreversedPlannedPackageTransfer } from "./plannedPackageTransferReversal";
 import { isProductionCheckoutEnvironment } from "./plannedPackageStripeCheckout";
 import type { PlannedPackageSessionDeliveryRow } from "./plannedPackageSessionDelivery";
 
@@ -103,28 +104,35 @@ export async function packageOrderHasTeacherTransfer(
   admin: SupabaseClient,
   orderId: string,
 ): Promise<boolean> {
-  const { data: bookings, error: bookingErr } = await admin
-    .from("bookings")
-    .select("id")
-    .eq("planned_package_order_id", orderId);
+  const [legacyTransfer, plannedUnreversed] = await Promise.all([
+    (async () => {
+      const { data: bookings, error: bookingErr } = await admin
+        .from("bookings")
+        .select("id")
+        .eq("planned_package_order_id", orderId);
 
-  if (bookingErr) throw new Error(bookingErr.message);
+      if (bookingErr) throw new Error(bookingErr.message);
 
-  const bookingIds = ((bookings ?? []) as { id: string }[]).map((b) => b.id);
-  if (bookingIds.length === 0) return false;
+      const bookingIds = ((bookings ?? []) as { id: string }[]).map((b) => b.id);
+      if (bookingIds.length === 0) return false;
 
-  const { data: payments, error: payErr } = await admin
-    .from("booking_payments")
-    .select("id, stripe_transfer_id, transfer_status")
-    .in("booking_id", bookingIds);
+      const { data: payments, error: payErr } = await admin
+        .from("booking_payments")
+        .select("id, stripe_transfer_id, transfer_status")
+        .in("booking_id", bookingIds);
 
-  if (payErr) throw new Error(payErr.message);
+      if (payErr) throw new Error(payErr.message);
 
-  return ((payments ?? []) as { stripe_transfer_id: string | null; transfer_status: string }[]).some(
-    (p) =>
-      Boolean(p.stripe_transfer_id) ||
-      TRANSFER_BLOCKING_STATUSES.has(String(p.transfer_status ?? "")),
-  );
+      return ((payments ?? []) as { stripe_transfer_id: string | null; transfer_status: string }[]).some(
+        (p) =>
+          Boolean(p.stripe_transfer_id) ||
+          TRANSFER_BLOCKING_STATUSES.has(String(p.transfer_status ?? "")),
+      );
+    })(),
+    packageOrderHasUnreversedPlannedPackageTransfer(admin, orderId).catch(() => false),
+  ]);
+
+  return legacyTransfer || plannedUnreversed;
 }
 
 async function loadQuoteContext(admin: SupabaseClient, refundQuoteId: string) {

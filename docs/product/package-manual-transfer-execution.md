@@ -84,5 +84,5 @@ When manual transfers flag is ON, attention reasons include:
 
 ## Future work
 
-- Transfer reversal and dispute handling when progressive payouts and refunds overlap;
-- Optional read-only webhook reconciliation for `transfer.created` / `transfer.updated`.
+- Optional read-only webhook reconciliation for `transfer.created` / `transfer.updated`;
+- Transfer reversal: see [package-manual-transfer-reversal.md](./package-manual-transfer-reversal.md).

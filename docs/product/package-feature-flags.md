@@ -144,6 +144,15 @@ See also:
 | Dependencies | Payout eligibility ledger + admin view + fulfillment + admin ops |
 | Production note | Requires `PACKAGE_LEGAL_REVIEW_COMPLETED=true` in production; no automatic payout cron |
 
+### `ENABLE_PLANNED_PACKAGE_MANUAL_TRANSFER_REVERSALS` (server only)
+
+| | |
+|--|--|
+| Default | OFF |
+| Runtime | Admin executes Stripe transfer reversal for succeeded transfer execution |
+| Dependencies | Manual transfers + payout eligibility ledger + admin view + admin ops |
+| Production note | Requires `PACKAGE_LEGAL_REVIEW_COMPLETED=true`; no customer refund in this layer |
+
 ### `ENABLE_PLANNED_PACKAGE_CHECKOUT_TEST_MODE` (optional)
 
 | | |

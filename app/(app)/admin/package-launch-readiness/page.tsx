@@ -377,6 +377,42 @@ function ReadinessBody({ readiness }: { readiness: PackageLaunchReadiness }) {
           ok={readiness.checks.plannedPackageManualTransferNoStripePayout}
         />
         <ChecklistRow
+          label="Exécution transfer reversal manuel présente (admin, transfer réussi)"
+          ok={readiness.checks.plannedPackageManualTransferReversalExecutionPresent}
+        />
+        <ChecklistRow
+          label="Exécution transfer reversal gated (chaîne manual transfers)"
+          ok={readiness.checks.plannedPackageManualTransferReversalExecutionGated}
+        />
+        <ChecklistRow
+          label="Transfer réussi requis avant reversal Stripe"
+          ok={readiness.checks.plannedPackageManualTransferReversalSucceededTransferRequired}
+        />
+        <ChecklistRow
+          label="Idempotence transfer reversal Stripe"
+          ok={readiness.checks.plannedPackageManualTransferReversalIdempotencyPresent}
+        />
+        <ChecklistRow
+          label="Intégration remboursement reconnaît statut reversal"
+          ok={readiness.checks.plannedPackageManualTransferReversalRefundIntegrationPresent}
+        />
+        <ChecklistRow
+          label="Pas de cron reversal automatique"
+          ok={readiness.checks.plannedPackageManualTransferReversalNoAutomaticReversalCron}
+        />
+        <ChecklistRow
+          label="Pas de remboursement automatique après reversal"
+          ok={readiness.checks.plannedPackageManualTransferReversalNoAutomaticRefund}
+        />
+        <ChecklistRow
+          label="Pas de nouveau transfer Stripe dans reversal"
+          ok={readiness.checks.plannedPackageManualTransferReversalNoNewTransfer}
+        />
+        <ChecklistRow
+          label="Pas de Stripe payout dans reversal"
+          ok={readiness.checks.plannedPackageManualTransferReversalNoStripePayout}
+        />
+        <ChecklistRow
           label="Revue légale toujours requise"
           ok={readiness.checks.legalReviewMarkedRequired}
         />

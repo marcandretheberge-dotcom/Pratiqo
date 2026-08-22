@@ -166,6 +166,16 @@ test("reconciliation marks eligible_transfer_not_executed when manual transfers 
         },
       ],
     },
+    transferExecutions: {
+      manualTransfersEnabled: true,
+      manualTransferReversalsEnabled: false,
+      latestExecutionStatus: null,
+      latestReversalStatus: null,
+      cancellationOpen: false,
+      refundExecuted: false,
+      refundApproved: false,
+      entries: [],
+    },
   });
   assert.ok(r.attentionReasons.includes("eligible_transfer_not_executed"));
 });
@@ -214,10 +224,25 @@ test("reconciliation marks transfer_execution_failed", () => {
     },
     transferExecutions: {
       manualTransfersEnabled: true,
+      manualTransferReversalsEnabled: false,
       latestExecutionStatus: "failed",
+      latestReversalStatus: null,
       cancellationOpen: false,
       refundExecuted: false,
-      entries: [{ entryId: "pe1", status: "failed", amountCents: 4000, teacherNetCents: 4000 }],
+      refundApproved: false,
+      entries: [
+        {
+          entryId: "pe1",
+          transferExecutionId: "tx1",
+          status: "failed",
+          amountCents: 4000,
+          teacherNetCents: 4000,
+          reversedCents: 0,
+          reversalStatus: "failed",
+          remainingReversibleCents: 4000,
+          latestReversalStatus: null,
+        },
+      ],
     },
   });
   assert.ok(r.attentionReasons.includes("transfer_execution_failed"));

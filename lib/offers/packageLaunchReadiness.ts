@@ -56,6 +56,10 @@ import {
   isPlannedPackageManualTransfersEnabled,
 } from "./plannedPackageManualTransfers";
 import {
+  canUsePlannedPackageManualTransferReversals,
+  isPlannedPackageManualTransferReversalsEnabled,
+} from "./plannedPackageManualTransferReversals";
+import {
   canUsePlannedPackageStripeCheckout,
   isPlannedPackageStripeCheckoutEnabled,
 } from "./plannedPackageStripeCheckout";
@@ -107,6 +111,7 @@ export type PackageLaunchFlagId =
   | "plannedPackageManualRefunds"
   | "plannedPackagePayoutEligibilityLedger"
   | "plannedPackageManualTransfers"
+  | "plannedPackageManualTransferReversals"
   | "bookingOfferSelection"
   | "offerSnapshotCheckout"
   | "packageEntitlements"
@@ -147,6 +152,7 @@ export type PackageLaunchReadiness = {
     plannedPackageManualRefunds: boolean;
     plannedPackagePayoutEligibilityLedger: boolean;
     plannedPackageManualTransfers: boolean;
+    plannedPackageManualTransferReversals: boolean;
     bookingOfferSelection: boolean;
     offerSnapshotCheckout: boolean;
     packageEntitlements: boolean;
@@ -228,6 +234,15 @@ export type PackageLaunchReadiness = {
     plannedPackageManualTransferNoTransferReversal: boolean;
     plannedPackageManualTransferNoStripeRefund: boolean;
     plannedPackageManualTransferNoStripePayout: boolean;
+    plannedPackageManualTransferReversalExecutionPresent: boolean;
+    plannedPackageManualTransferReversalExecutionGated: boolean;
+    plannedPackageManualTransferReversalSucceededTransferRequired: boolean;
+    plannedPackageManualTransferReversalIdempotencyPresent: boolean;
+    plannedPackageManualTransferReversalRefundIntegrationPresent: boolean;
+    plannedPackageManualTransferReversalNoAutomaticReversalCron: boolean;
+    plannedPackageManualTransferReversalNoAutomaticRefund: boolean;
+    plannedPackageManualTransferReversalNoNewTransfer: boolean;
+    plannedPackageManualTransferReversalNoStripePayout: boolean;
     plannedPackagePublicPurchaseBlocked: boolean;
     progressivePayoutNotImplemented: boolean;
     refundPolicyStillDraft: boolean;
@@ -346,6 +361,15 @@ export const PACKAGE_LAUNCH_FLAG_META: ReadonlyArray<{
       "Admin-only après admissibilité confirmée — revue légale requise en production ; pas de transfer reversal.",
   },
   {
+    id: "plannedPackageManualTransferReversals",
+    envName: "ENABLE_PLANNED_PACKAGE_MANUAL_TRANSFER_REVERSALS",
+    uiEnvName: null,
+    explanationFr:
+      "Exécution admin d’un transfer reversal Stripe pour un transfer réussi — pas de remboursement client automatique.",
+    launchMeaningFr:
+      "Admin-only après transfer confirmé — revue légale requise en production ; remboursement reste séparé.",
+  },
+  {
     id: "bookingOfferSelection",
     envName: "NEXT_PUBLIC_ENABLE_BOOKING_OFFER_SELECTION",
     uiEnvName: "NEXT_PUBLIC_ENABLE_BOOKING_OFFER_SELECTION",
@@ -410,6 +434,7 @@ export function getPackageLaunchReadiness(): PackageLaunchReadiness {
   const plannedPackageManualRefunds = isPlannedPackageManualRefundsEnabled();
   const plannedPackagePayoutEligibilityLedger = isPlannedPackagePayoutEligibilityLedgerEnabled();
   const plannedPackageManualTransfers = isPlannedPackageManualTransfersEnabled();
+  const plannedPackageManualTransferReversals = isPlannedPackageManualTransferReversalsEnabled();
   const bookingOfferSelection = isBookingOfferSelectionEnabled();
   const offerSnapshotCheckout = isOfferSnapshotCheckoutEnabled();
   const packageEntitlements = isPackageEntitlementsEnabled();
@@ -432,6 +457,7 @@ export function getPackageLaunchReadiness(): PackageLaunchReadiness {
     plannedPackageManualRefunds,
     plannedPackagePayoutEligibilityLedger,
     plannedPackageManualTransfers,
+    plannedPackageManualTransferReversals,
     bookingOfferSelection,
     offerSnapshotCheckout,
     packageEntitlements,
@@ -560,6 +586,16 @@ export function getPackageLaunchReadiness(): PackageLaunchReadiness {
     plannedPackageManualTransferNoTransferReversal: true,
     plannedPackageManualTransferNoStripeRefund: true,
     plannedPackageManualTransferNoStripePayout: true,
+    plannedPackageManualTransferReversalExecutionPresent: true,
+    plannedPackageManualTransferReversalExecutionGated:
+      !canUsePlannedPackageManualTransferReversals() || plannedPackageManualTransfers,
+    plannedPackageManualTransferReversalSucceededTransferRequired: true,
+    plannedPackageManualTransferReversalIdempotencyPresent: true,
+    plannedPackageManualTransferReversalRefundIntegrationPresent: true,
+    plannedPackageManualTransferReversalNoAutomaticReversalCron: true,
+    plannedPackageManualTransferReversalNoAutomaticRefund: true,
+    plannedPackageManualTransferReversalNoNewTransfer: true,
+    plannedPackageManualTransferReversalNoStripePayout: true,
     plannedPackagePublicPurchaseBlocked: !canPubliclyPurchasePlannedPackage(),
     progressivePayoutNotImplemented: true,
     refundPolicyStillDraft: true,
