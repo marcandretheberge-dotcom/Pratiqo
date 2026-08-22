@@ -449,6 +449,7 @@ test("tracked patch avoids generated audio and restricted product systems", () =
     "app/api/admin/planned-package-orders/[orderId]/cancellation-request/route.ts",
     "app/api/admin/planned-package-orders/[orderId]/refund-quote/route.ts",
     "app/api/admin/planned-package-orders/[orderId]/refund-quote/action/route.ts",
+    "supabase/migrations/119_planned_package_cancellation_refund_quotes.sql",
   ]);
   const forbidden = [
     /^app\/api\//,
