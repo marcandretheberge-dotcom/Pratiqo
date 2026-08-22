@@ -822,6 +822,38 @@ const allowedPlannedPackageManualRefundFiles = new Set<string>([
   "package.json",
 ]);
 
+/** Planned package payout eligibility ledger — eligibility only, no Stripe transfer. */
+const allowedPlannedPackagePayoutEligibilityFiles = new Set<string>([
+  "supabase/migrations/121_planned_package_payout_eligibility_ledger.sql",
+  "lib/offers/plannedPackagePayoutEligibilityLedger.ts",
+  "lib/offers/plannedPackagePayoutEligibility.ts",
+  "lib/admin/plannedPackagePayoutEligibilityOperations.ts",
+  "lib/admin/plannedPackageOrderOperations.ts",
+  "lib/offers/plannedPackageReconciliation.ts",
+  "lib/offers/packageLaunchReadiness.ts",
+  "app/api/admin/planned-package-orders/[orderId]/payout-eligibility/route.ts",
+  "app/api/admin/planned-package-orders/[orderId]/sync-payout-eligibility/route.ts",
+  "app/api/admin/planned-package-orders/[orderId]/route.ts",
+  "app/(app)/admin/planned-package-orders/[orderId]/page.tsx",
+  "app/(app)/admin/package-launch-readiness/page.tsx",
+  "docs/product/package-payout-eligibility-ledger.md",
+  "docs/product/package-feature-flags.md",
+  "lib/i18n/locales/fr.json",
+  "lib/i18n/locales/en.json",
+  "lib/i18n/locales/es.json",
+  ".env.example",
+  "tests/offers/plannedPackagePayoutEligibility.test.ts",
+  "tests/offers/packageLaunchReadiness.test.ts",
+  "tests/security/rlsCoverage.test.ts",
+  "tests/yo/yopratiqoAudioPronunciationOverrides.test.ts",
+  "tests/legal/safeDisclosures.test.ts",
+  "tests/legal/founderDecisionsAlignment.test.ts",
+  "tests/teacherLaunch/teacherLaunchCenter.test.ts",
+  "tests/teacherProfile/teacherProfileManagement.test.ts",
+  "tests/commission/commissionModelCopy.test.ts",
+  "package.json",
+]);
+
 /** Teacher offer cover images (PR 15). */
 const allowedTeacherOfferCoverImageFiles = new Set<string>([
   "supabase/migrations/104_teacher_offer_covers_bucket.sql",
@@ -1348,6 +1380,7 @@ test("safe-disclosure branch did not touch restricted systems", () => {
     if (allowedPlannedPackageAdminOpsFiles.has(file)) continue;
     if (allowedPlannedPackageRefundQuoteFiles.has(file)) continue;
     if (allowedPlannedPackageManualRefundFiles.has(file)) continue;
+    if (allowedPlannedPackagePayoutEligibilityFiles.has(file)) continue;
     if (allowedTeacherOfferCoverImageFiles.has(file)) continue;
     if (allowedTeacherOfferCancellationPreferenceFiles.has(file)) continue;
     if (allowedTeacherAvailabilityStartDateFiles.has(file)) continue;

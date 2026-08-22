@@ -3,6 +3,8 @@
  * Used by admin list/detail — never mutates money or bookings.
  */
 
+import { classifyPlannedPackageSessionStatus } from "./plannedPackageSessionDelivery";
+
 export type PlannedPackageAttentionReason =
   | "paid_not_fulfilled"
   | "fulfillment_failed"
@@ -18,7 +20,19 @@ export type PlannedPackageAttentionReason =
   | "approved_refund_not_executed"
   | "refund_execution_failed"
   | "refund_succeeded_but_order_not_marked"
-  | "transfer_reversal_required";
+  | "transfer_reversal_required"
+  | "completed_session_missing_payout_eligibility"
+  | "eligible_session_blocked_by_refund"
+  | "payout_eligibility_admin_review_required"
+  | "payout_allocation_mismatch"
+  | "payout_pricing_policy_not_finalized";
+
+export type PlannedPackagePayoutEligibilityReconciliationEntry = {
+  bookingId: string;
+  status: string;
+  blockers: string[];
+  adminReviewRequired: boolean;
+};
 
 export type PlannedPackageReconciliationInput = {
   orderId: string;
@@ -43,7 +57,11 @@ export type PlannedPackageReconciliationInput = {
   latestExecutionStatus: string | null;
   packageTransferDetected: boolean;
   holds: Array<{ status: string; sessionIndex: number }>;
-  bookings: Array<{ id: string; sessionIndex: number | null }>;
+  bookings: Array<{ id: string; sessionIndex: number | null; status?: string }>;
+  payoutEligibility?: {
+    ledgerEnabled: boolean;
+    entries: PlannedPackagePayoutEligibilityReconciliationEntry[];
+  };
 };
 
 export type PlannedPackageReconciliationResult = {
@@ -163,6 +181,43 @@ export function reconcilePlannedPackageOrder(
     input.refundStatus !== "partial"
   ) {
     reasons.push("refund_succeeded_but_order_not_marked");
+  }
+
+  if (input.payoutEligibility?.ledgerEnabled && status === "fulfilled") {
+    const completedBookingIds = input.bookings
+      .filter(
+        (b) =>
+          classifyPlannedPackageSessionStatus(String(b.status ?? "")) === "completed",
+      )
+      .map((b) => b.id);
+    const entryByBooking = new Map(
+      input.payoutEligibility.entries.map((e) => [e.bookingId, e]),
+    );
+
+    if (completedBookingIds.some((id) => !entryByBooking.has(id))) {
+      reasons.push("completed_session_missing_payout_eligibility");
+    }
+
+    const refundBlocksPayout =
+      input.refundStatus === "refunded" ||
+      input.refundStatus === "partial" ||
+      input.latestQuoteStatus === "approved_for_manual_refund" ||
+      input.latestExecutionStatus === "succeeded";
+
+    for (const entry of input.payoutEligibility.entries) {
+      if (entry.adminReviewRequired || entry.status === "admin_review_required") {
+        reasons.push("payout_eligibility_admin_review_required");
+      }
+      if (entry.blockers.includes("allocation_mismatch")) {
+        reasons.push("payout_allocation_mismatch");
+      }
+      if (entry.blockers.includes("payout_pricing_policy_not_finalized")) {
+        reasons.push("payout_pricing_policy_not_finalized");
+      }
+      if (entry.status === "eligible" && refundBlocksPayout) {
+        reasons.push("eligible_session_blocked_by_refund");
+      }
+    }
   }
 
   const unique = Array.from(new Set(reasons));

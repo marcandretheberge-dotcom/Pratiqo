@@ -456,6 +456,7 @@ test("tracked patch avoids generated audio and restricted product systems", () =
     "lib/offers/plannedPackageManualRefunds.ts",
     "supabase/migrations/119_planned_package_cancellation_refund_quotes.sql",
     "supabase/migrations/120_planned_package_refund_executions.sql",
+    "supabase/migrations/121_planned_package_payout_eligibility_ledger.sql",
   ]);
   const forbidden = [
     /^app\/api\//,

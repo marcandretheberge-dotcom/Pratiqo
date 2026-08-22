@@ -321,6 +321,30 @@ function ReadinessBody({ readiness }: { readiness: PackageLaunchReadiness }) {
           ok={readiness.checks.plannedPackageManualRefundNoPayoutRelease}
         />
         <ChecklistRow
+          label="Registre admissibilité versements forfait planifié présent"
+          ok={readiness.checks.plannedPackagePayoutEligibilityLedgerPresent}
+        />
+        <ChecklistRow
+          label="Admissibilité versements gated (admin ops + flag ledger)"
+          ok={readiness.checks.plannedPackagePayoutEligibilityLedgerGated}
+        />
+        <ChecklistRow
+          label="Sync admin admissibilité versements présente"
+          ok={readiness.checks.plannedPackagePayoutEligibilityAdminSyncPresent}
+        />
+        <ChecklistRow
+          label="Admissibilité versements — aucun transfer Stripe"
+          ok={readiness.checks.plannedPackagePayoutEligibilityNoStripeTransfer}
+        />
+        <ChecklistRow
+          label="Admissibilité versements — aucun versement professeur"
+          ok={readiness.checks.plannedPackagePayoutEligibilityNoPayoutRelease}
+        />
+        <ChecklistRow
+          label="Blockers remboursement/annulation considérés pour admissibilité"
+          ok={readiness.checks.plannedPackagePayoutEligibilityRefundBlockersConsidered}
+        />
+        <ChecklistRow
           label="Revue légale toujours requise"
           ok={readiness.checks.legalReviewMarkedRequired}
         />

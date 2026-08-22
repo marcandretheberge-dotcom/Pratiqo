@@ -10,6 +10,7 @@ import { useLocale } from "@/lib/locale-context";
 import { cn } from "@/lib/utils";
 import type { AdminPlannedPackageOrderDetail } from "@/lib/admin/plannedPackageOrderOperations";
 import type { AdminPlannedPackageRefundContext } from "@/lib/admin/plannedPackageRefundOperations";
+import type { AdminPlannedPackagePayoutEligibilityContext } from "@/lib/admin/plannedPackagePayoutEligibilityOperations";
 
 function formatDate(iso: string | null): string {
   if (!iso) return "—";
@@ -70,6 +71,7 @@ export default function PlannedPackageOrderDetailPage() {
   const [loading, setLoading] = useState(true);
   const [order, setOrder] = useState<AdminPlannedPackageOrderDetail | null>(null);
   const [refund, setRefund] = useState<AdminPlannedPackageRefundContext | null>(null);
+  const [payout, setPayout] = useState<AdminPlannedPackagePayoutEligibilityContext | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [disabled, setDisabled] = useState(false);
   const [retrying, setRetrying] = useState(false);
@@ -79,6 +81,8 @@ export default function PlannedPackageOrderDetailPage() {
   const [executeConfirmOpen, setExecuteConfirmOpen] = useState(false);
   const [executeConfirmText, setExecuteConfirmText] = useState("");
   const [executeAcknowledged, setExecuteAcknowledged] = useState(false);
+  const [payoutBusy, setPayoutBusy] = useState(false);
+  const [payoutMessage, setPayoutMessage] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!user || !isAdmin || !orderId) return;
@@ -100,9 +104,11 @@ export default function PlannedPackageOrderDetailPage() {
       const data = (await res.json()) as {
         order: AdminPlannedPackageOrderDetail;
         refund?: AdminPlannedPackageRefundContext;
+        payout?: AdminPlannedPackagePayoutEligibilityContext;
       };
       setOrder(data.order);
       setRefund(data.refund ?? null);
+      setPayout(data.payout ?? null);
     } catch {
       setError(t("plannedPackageAdminOpsLoadFailed"));
     } finally {
@@ -113,6 +119,47 @@ export default function PlannedPackageOrderDetailPage() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  async function handleSyncPayoutEligibility() {
+    if (!order) return;
+    setPayoutBusy(true);
+    setPayoutMessage(null);
+    try {
+      const res = await adminFetch(
+        `/api/admin/planned-package-orders/${order.id}/sync-payout-eligibility`,
+        { method: "POST" },
+      );
+      const data = (await res.json()) as { error?: string; entries?: unknown[] };
+      if (res.status === 403 && data.error === "payout_eligibility_disabled") {
+        setPayoutMessage(t("plannedPackagePayoutEligibilityDisabled"));
+        return;
+      }
+      if (!res.ok) {
+        setPayoutMessage(t("plannedPackagePayoutEligibilitySyncFailed"));
+        return;
+      }
+      setPayoutMessage(t("plannedPackagePayoutEligibilitySyncSuccess"));
+      await load();
+    } catch {
+      setPayoutMessage(t("plannedPackagePayoutEligibilitySyncFailed"));
+    } finally {
+      setPayoutBusy(false);
+    }
+  }
+
+  function payoutStatusLabel(status: string): string {
+    const key = `plannedPackagePayoutEligibilityStatus_${status}`;
+    const translate = t as (translationKey: string) => string;
+    const translated = translate(key);
+    return translated === key ? status : translated;
+  }
+
+  function payoutBlockerLabel(blocker: string): string {
+    const key = `plannedPackagePayoutEligibilityBlocker_${blocker}`;
+    const translate = t as (translationKey: string) => string;
+    const translated = translate(key);
+    return translated === key ? blocker : translated;
+  }
 
   async function handleCreateCancellationRequest() {
     if (!order) return;
@@ -558,6 +605,81 @@ export default function PlannedPackageOrderDetailPage() {
                   <p className="mt-2 text-xs text-amber-800">{t("plannedPackageManualRefundsDisabled")}</p>
                 ) : null}
                 {refundMessage ? <p className="mt-2 text-sm text-slate-700">{refundMessage}</p> : null}
+              </>
+            )}
+          </Section>
+
+          <Section title={t("plannedPackagePayoutEligibilitySectionTitle")}>
+            {!payout?.enabled ? (
+              <p className="text-sm text-amber-800">{t("plannedPackagePayoutEligibilityDisabled")}</p>
+            ) : !payout.adminViewEnabled ? (
+              <p className="text-sm text-amber-800">{t("plannedPackagePayoutEligibilityAdminViewDisabled")}</p>
+            ) : (
+              <>
+                <p className="text-xs text-slate-500">{t("plannedPackagePayoutEligibilityNoStripeTransfer")}</p>
+                <p className="text-xs text-slate-500">{t("plannedPackagePayoutEligibilityDoesNotPayTeacher")}</p>
+                {payout.entries.length === 0 ? (
+                  <p className="text-sm text-slate-600">{t("plannedPackagePayoutEligibilityEmpty")}</p>
+                ) : (
+                  <div className="mt-3 overflow-x-auto">
+                    <table className="min-w-full text-left text-sm">
+                      <thead>
+                        <tr className="border-b border-slate-200 text-xs uppercase text-slate-500">
+                          <th className="py-2 pr-3">{t("plannedPackagePayoutEligibilityColSession")}</th>
+                          <th className="py-2 pr-3">{t("plannedPackagePayoutEligibilityColBooking")}</th>
+                          <th className="py-2 pr-3">{t("plannedPackagePayoutEligibilityColDate")}</th>
+                          <th className="py-2 pr-3">{t("plannedPackagePayoutEligibilityColBookingStatus")}</th>
+                          <th className="py-2 pr-3">{t("plannedPackagePayoutEligibilityColGross")}</th>
+                          <th className="py-2 pr-3">{t("plannedPackagePayoutEligibilityColStatus")}</th>
+                          <th className="py-2 pr-3">{t("plannedPackagePayoutEligibilityColBlockers")}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {payout.entries.map((entry) => (
+                          <tr key={entry.id} className="border-b border-slate-100">
+                            <td className="py-2 pr-3 font-medium">{entry.sessionIndex}</td>
+                            <td className="py-2 pr-3 font-mono text-xs">{entry.bookingShortId}</td>
+                            <td className="py-2 pr-3">
+                              {entry.lessonDate
+                                ? `${entry.lessonDate}${entry.lessonTime ? ` · ${entry.lessonTime}` : ""}`
+                                : "—"}
+                            </td>
+                            <td className="py-2 pr-3">{entry.bookingStatus}</td>
+                            <td className="py-2 pr-3">
+                              {formatMoney(entry.grossSessionAmountCents, entry.currency)}
+                            </td>
+                            <td className="py-2 pr-3">{payoutStatusLabel(entry.status)}</td>
+                            <td className="py-2 pr-3 text-xs text-slate-600">
+                              {entry.blockers.length > 0
+                                ? entry.blockers.map(payoutBlockerLabel).join(", ")
+                                : "—"}
+                              {entry.adminReviewRequired ? (
+                                <span className="mt-1 block text-amber-800">
+                                  {t("plannedPackagePayoutEligibilityAdminReviewRequired")}
+                                </span>
+                              ) : null}
+                              {entry.eligibleAt ? (
+                                <span className="mt-1 block text-teal-800">
+                                  {formatDate(entry.eligibleAt)}
+                                </span>
+                              ) : null}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+                <button
+                  type="button"
+                  disabled={payoutBusy}
+                  onClick={() => void handleSyncPayoutEligibility()}
+                  className="mt-3 inline-flex items-center gap-2 rounded-xl bg-teal-700 px-3 py-2 text-sm font-bold text-white hover:bg-teal-800 disabled:opacity-60"
+                >
+                  <RefreshCw size={16} className={payoutBusy ? "animate-spin" : ""} aria-hidden />
+                  {t("plannedPackagePayoutEligibilitySync")}
+                </button>
+                {payoutMessage ? <p className="mt-2 text-sm text-slate-700">{payoutMessage}</p> : null}
               </>
             )}
           </Section>
