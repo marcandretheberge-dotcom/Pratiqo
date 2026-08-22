@@ -120,10 +120,8 @@ export function isPlannedPackageCheckoutPreflightUiEnabled(): boolean {
   );
 }
 
-/** Real checkout is intentionally OFF; this PR only adds preflight. */
-export function isPlannedPackageCheckoutEnabled(): boolean {
-  return process.env.ENABLE_PLANNED_PACKAGE_CHECKOUT === "true";
-}
+/** Real Stripe checkout flag — see plannedPackageStripeCheckout.ts */
+export { isPlannedPackageCheckoutEnabled } from "./plannedPackageStripeCheckout";
 
 export function canUsePlannedPackageCheckoutPreflight(): boolean {
   return (

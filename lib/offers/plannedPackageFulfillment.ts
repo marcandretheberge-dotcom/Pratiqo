@@ -75,6 +75,8 @@ export async function markPlannedPackageOrderPaymentConfirmed(args: {
   orderId: string;
   paymentReference: string;
   actor: FulfillTrustedActor;
+  /** Stripe webhook bypasses simulation gate and hold-expiry check. */
+  source?: "simulation" | "stripe_webhook";
 }): Promise<
   | { ok: true; orderId: string; status: "payment_confirmed" }
   | { ok: false; status: number; error: string }
@@ -85,9 +87,13 @@ export async function markPlannedPackageOrderPaymentConfirmed(args: {
   if (!isTrustedActor(args.actor)) {
     return { ok: false, status: 403, error: "trusted_context_required" };
   }
-  // This helper is simulation-only in this PR (no Stripe webhook yet).
-  if (!canSimulatePlannedPackagePaymentConfirmed()) {
-    return { ok: false, status: 403, error: "payment_simulation_disabled" };
+  const fromStripe = args.source === "stripe_webhook";
+  if (!fromStripe) {
+    if (!canSimulatePlannedPackagePaymentConfirmed()) {
+      return { ok: false, status: 403, error: "payment_simulation_disabled" };
+    }
+  } else if (args.actor.kind !== "service") {
+    return { ok: false, status: 403, error: "trusted_context_required" };
   }
 
   const ref = args.paymentReference.trim();
@@ -116,7 +122,11 @@ export async function markPlannedPackageOrderPaymentConfirmed(args: {
 
   const holdExpiresAt = typeof order.hold_expires_at === "string" ? order.hold_expires_at : null;
   const now = new Date();
-  if (holdExpiresAt && new Date(holdExpiresAt).getTime() <= now.getTime()) {
+  if (
+    !fromStripe &&
+    holdExpiresAt &&
+    new Date(holdExpiresAt).getTime() <= now.getTime()
+  ) {
     return { ok: false, status: 409, error: "hold_expired" };
   }
 

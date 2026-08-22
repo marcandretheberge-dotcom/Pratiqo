@@ -6,6 +6,8 @@ import { getClientAccessToken } from "@/lib/auth/clientAccessToken";
 import { getSupabaseClient } from "@/lib/supabase";
 import type { PlannedPackagePendingOrderDto } from "@/lib/offers/plannedPackageTemporaryHolds";
 import { isPlannedPackageTemporaryHoldsUiEnabled } from "@/lib/offers/plannedPackageTemporaryHolds";
+import { isPlannedPackageStripeCheckoutUiEnabled } from "@/lib/offers/plannedPackageStripeCheckout";
+import { PlannedPackageCheckoutButton } from "./PlannedPackageCheckoutButton";
 
 type Props = {
   draftId: string;
@@ -154,13 +156,17 @@ export function PlannedPackagePendingOrderPanel({
         </>
       )}
 
-      <button
-        type="button"
-        disabled
-        className="inline-flex min-h-10 w-full cursor-not-allowed items-center justify-center rounded-full border border-slate-200 bg-slate-100 px-4 text-sm font-semibold text-slate-500"
-      >
-        {t("plannedPackagePaymentComingSoon")}
-      </button>
+      <PlannedPackageCheckoutButton orderId={order.id} disabled={expired || loading} />
+
+      {!isPlannedPackageStripeCheckoutUiEnabled() ? (
+        <button
+          type="button"
+          disabled
+          className="inline-flex min-h-10 w-full cursor-not-allowed items-center justify-center rounded-full border border-slate-200 bg-slate-100 px-4 text-sm font-semibold text-slate-500"
+        >
+          {t("plannedPackagePaymentComingSoon")}
+        </button>
+      ) : null}
 
       <div className="flex flex-col gap-2 sm:flex-row">
         {!expired ? (
