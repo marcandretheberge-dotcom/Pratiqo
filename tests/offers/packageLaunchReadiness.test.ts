@@ -53,6 +53,7 @@ test("helper lists all package-related flags and never returns production_ready"
     "offerSnapshotCheckout",
     "packageEntitlements",
     "packageRedemptionBooking",
+    "plannedPackageCheckoutPreflight",
     "plannedPackageSessionDrafts",
     "plannedPackages",
     "studentPackageDashboard",

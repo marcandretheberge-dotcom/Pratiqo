@@ -165,6 +165,20 @@ function ReadinessBody({ readiness }: { readiness: PackageLaunchReadiness }) {
           ok={readiness.checks.plannedPackageSessionDraftNoEntitlements}
         />
         <ChecklistRow
+          label="Endpoint préflight checkout présent"
+          ok={readiness.checks.plannedPackageCheckoutPreflightPresent}
+        />
+        <ChecklistRow
+          label={`Préflight gated (ENABLE_PLANNED_PACKAGE_CHECKOUT_PREFLIGHT) : ${
+            readiness.flags.plannedPackageCheckoutPreflight ? "ON" : "OFF"
+          }`}
+          ok={readiness.checks.plannedPackageCheckoutPreflightGated}
+        />
+        <ChecklistRow
+          label="Préflight sans paiement / Stripe"
+          ok={readiness.checks.plannedPackageCheckoutPreflightNoPayment}
+        />
+        <ChecklistRow
           label="Checkout forfait toujours bloqué"
           ok={readiness.checks.plannedPackagePublicPurchaseBlocked}
         />

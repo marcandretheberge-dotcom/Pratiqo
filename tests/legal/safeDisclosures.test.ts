@@ -680,6 +680,27 @@ const allowedPlannedPackageSessionDraftFiles = new Set<string>([
   "package.json",
 ]);
 
+/** Planned package checkout preflight — readiness only, no payment. */
+const allowedPlannedPackageCheckoutPreflightFiles = new Set<string>([
+  "lib/offers/plannedPackageCheckoutPreflight.ts",
+  "lib/offers/runPlannedPackageCheckoutPreflight.ts",
+  "lib/offers/packageLaunchReadiness.ts",
+  "app/api/planned-packages/session-drafts/[draftId]/checkout-preflight/route.ts",
+  "components/packages/PlannedPackageCheckoutPreflight.tsx",
+  "components/packages/PlannedPackageSessionSelector.tsx",
+  "app/(app)/admin/package-launch-readiness/page.tsx",
+  "docs/product/package-feature-flags.md",
+  "lib/i18n/locales/fr.json",
+  "lib/i18n/locales/en.json",
+  "lib/i18n/locales/es.json",
+  ".env.example",
+  "tests/offers/plannedPackageCheckoutPreflight.test.ts",
+  "tests/offers/packageLaunchReadiness.test.ts",
+  "tests/yo/yopratiqoAudioPronunciationOverrides.test.ts",
+  "tests/legal/safeDisclosures.test.ts",
+  "package.json",
+]);
+
 /** Teacher offer cover images (PR 15). */
 const allowedTeacherOfferCoverImageFiles = new Set<string>([
   "supabase/migrations/104_teacher_offer_covers_bucket.sql",
@@ -1201,6 +1222,7 @@ test("safe-disclosure branch did not touch restricted systems", () => {
     if (allowedMarketplaceLegalHardeningFiles.has(file)) continue;
     if (allowedPackageLaunchReadinessFiles.has(file)) continue;
     if (allowedPlannedPackageSessionDraftFiles.has(file)) continue;
+    if (allowedPlannedPackageCheckoutPreflightFiles.has(file)) continue;
     if (allowedTeacherOfferCoverImageFiles.has(file)) continue;
     if (allowedTeacherOfferCancellationPreferenceFiles.has(file)) continue;
     if (allowedTeacherAvailabilityStartDateFiles.has(file)) continue;
