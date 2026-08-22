@@ -9,6 +9,7 @@ import { getSupabaseClient } from "@/lib/supabase";
 import { useLocale } from "@/lib/locale-context";
 import { cn } from "@/lib/utils";
 import type { AdminPlannedPackageOrderDetail } from "@/lib/admin/plannedPackageOrderOperations";
+import type { AdminPlannedPackageRefundContext } from "@/lib/admin/plannedPackageRefundOperations";
 
 function formatDate(iso: string | null): string {
   if (!iso) return "—";
@@ -68,10 +69,13 @@ export default function PlannedPackageOrderDetailPage() {
 
   const [loading, setLoading] = useState(true);
   const [order, setOrder] = useState<AdminPlannedPackageOrderDetail | null>(null);
+  const [refund, setRefund] = useState<AdminPlannedPackageRefundContext | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [disabled, setDisabled] = useState(false);
   const [retrying, setRetrying] = useState(false);
   const [retryMessage, setRetryMessage] = useState<string | null>(null);
+  const [refundBusy, setRefundBusy] = useState(false);
+  const [refundMessage, setRefundMessage] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!user || !isAdmin || !orderId) return;
@@ -90,8 +94,12 @@ export default function PlannedPackageOrderDetailPage() {
         return;
       }
       if (!res.ok) throw new Error("load_failed");
-      const data = (await res.json()) as { order: AdminPlannedPackageOrderDetail };
+      const data = (await res.json()) as {
+        order: AdminPlannedPackageOrderDetail;
+        refund?: AdminPlannedPackageRefundContext;
+      };
       setOrder(data.order);
+      setRefund(data.refund ?? null);
     } catch {
       setError(t("plannedPackageAdminOpsLoadFailed"));
     } finally {
@@ -102,6 +110,86 @@ export default function PlannedPackageOrderDetailPage() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  async function handleCreateCancellationRequest() {
+    if (!order) return;
+    setRefundBusy(true);
+    setRefundMessage(null);
+    try {
+      const res = await adminFetch(
+        `/api/admin/planned-package-orders/${order.id}/cancellation-request`,
+        { method: "POST", body: JSON.stringify({}) },
+      );
+      const data = (await res.json()) as { error?: string };
+      if (!res.ok) {
+        setRefundMessage(data.error ?? t("plannedPackageRefundQuoteActionFailed"));
+        return;
+      }
+      setRefundMessage(t("plannedPackageRefundCancellationCreated"));
+      await load();
+    } catch {
+      setRefundMessage(t("plannedPackageRefundQuoteActionFailed"));
+    } finally {
+      setRefundBusy(false);
+    }
+  }
+
+  async function handleGenerateQuote() {
+    if (!order) return;
+    setRefundBusy(true);
+    setRefundMessage(null);
+    try {
+      const res = await adminFetch(
+        `/api/admin/planned-package-orders/${order.id}/refund-quote`,
+        { method: "POST", body: JSON.stringify({}) },
+      );
+      const data = (await res.json()) as { error?: string; blockers?: string[] };
+      if (!res.ok) {
+        setRefundMessage(
+          data.blockers?.length
+            ? `${data.error}: ${data.blockers.join(", ")}`
+            : (data.error ?? t("plannedPackageRefundQuoteActionFailed")),
+        );
+        return;
+      }
+      setRefundMessage(t("plannedPackageRefundQuoteGenerated"));
+      await load();
+    } catch {
+      setRefundMessage(t("plannedPackageRefundQuoteActionFailed"));
+    } finally {
+      setRefundBusy(false);
+    }
+  }
+
+  async function handleQuoteAction(action: "approve" | "mark_for_review") {
+    if (!order || !refund?.latestQuote) return;
+    setRefundBusy(true);
+    setRefundMessage(null);
+    try {
+      const res = await adminFetch(
+        `/api/admin/planned-package-orders/${order.id}/refund-quote/action`,
+        {
+          method: "POST",
+          body: JSON.stringify({ action, quoteId: refund.latestQuote.id }),
+        },
+      );
+      const data = (await res.json()) as { error?: string };
+      if (!res.ok) {
+        setRefundMessage(data.error ?? t("plannedPackageRefundQuoteActionFailed"));
+        return;
+      }
+      setRefundMessage(
+        action === "approve"
+          ? t("plannedPackageRefundApprovedForManual")
+          : t("plannedPackageRefundMarkedForReview"),
+      );
+      await load();
+    } catch {
+      setRefundMessage(t("plannedPackageRefundQuoteActionFailed"));
+    } finally {
+      setRefundBusy(false);
+    }
+  }
 
   async function handleRetry() {
     if (!order || !order.retryEligible) return;
@@ -246,6 +334,102 @@ export default function PlannedPackageOrderDetailPage() {
                   </li>
                 ))}
               </ul>
+            )}
+          </Section>
+
+          <Section title={t("plannedPackageRefundSectionTitle")}>
+            {!refund?.enabled ? (
+              <p className="text-sm text-amber-900">{t("plannedPackageRefundQuotesDisabled")}</p>
+            ) : (
+              <>
+                <Row
+                  label={t("plannedPackageRefundCancellationRequest")}
+                  value={refund.cancellationRequest?.status ?? "—"}
+                />
+                {refund.latestQuote ? (
+                  <>
+                    <Row label={t("plannedPackageRefundQuoteStatus")} value={refund.latestQuote.quoteStatus} />
+                    <Row
+                      label={t("plannedPackageRefundPolicyVersion")}
+                      value={refund.latestQuote.policyVersion}
+                    />
+                    <Row
+                      label={t("plannedPackageRefundEstimatedAmount")}
+                      value={formatMoney(
+                        refund.latestQuote.estimatedRefundCents,
+                        refund.latestQuote.currency,
+                      )}
+                    />
+                    <Row
+                      label={t("plannedPackageRefundCompletedSessions")}
+                      value={String(refund.latestQuote.completedSessionCount)}
+                    />
+                    <Row
+                      label={t("plannedPackageRefundUndeliveredSessions")}
+                      value={String(refund.latestQuote.undeliveredSessionCount)}
+                    />
+                    <Row
+                      label={t("plannedPackageRefundEstimatedPenalty")}
+                      value={formatMoney(refund.latestQuote.penaltyCents, refund.latestQuote.currency)}
+                    />
+                    {refund.latestQuote.manualReviewRequired ? (
+                      <p className="text-xs text-amber-800">{t("plannedPackageRefundAdminReviewRequired")}</p>
+                    ) : null}
+                    {refund.latestQuote.legalReviewRequired ? (
+                      <p className="text-xs text-amber-800">{t("plannedPackageRefundLegalReviewRequired")}</p>
+                    ) : null}
+                    {refund.latestQuote.warnings.length > 0 ? (
+                      <p className="text-xs text-slate-600">{refund.latestQuote.warnings.join(", ")}</p>
+                    ) : null}
+                  </>
+                ) : (
+                  <p className="text-sm text-slate-600">—</p>
+                )}
+                <p className="text-xs text-slate-500">{t("plannedPackageRefundNotFinalDecision")}</p>
+                <p className="text-xs text-slate-500">{t("plannedPackageRefundNoAutomaticRefund")}</p>
+                <p className="text-xs text-slate-500">{t("plannedPackageRefundNoStripeExecuted")}</p>
+                <p className="text-xs text-slate-500">{t("plannedPackageRefundActualNotAvailable")}</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    disabled={refundBusy}
+                    onClick={() => void handleCreateCancellationRequest()}
+                    className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50 disabled:opacity-60"
+                  >
+                    {t("plannedPackageRefundCreateCancellationRequest")}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={refundBusy}
+                    onClick={() => void handleGenerateQuote()}
+                    className="rounded-xl bg-teal-700 px-3 py-2 text-sm font-bold text-white hover:bg-teal-800 disabled:opacity-60"
+                  >
+                    {t("plannedPackageRefundGenerateEstimate")}
+                  </button>
+                  {refund.latestQuote &&
+                  refund.latestQuote.quoteStatus !== "approved_for_manual_refund" ? (
+                    <>
+                      <button
+                        type="button"
+                        disabled={refundBusy}
+                        onClick={() => void handleQuoteAction("mark_for_review")}
+                        className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-950 hover:bg-amber-100 disabled:opacity-60"
+                      >
+                        {t("plannedPackageRefundMarkForReview")}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={refundBusy}
+                        onClick={() => void handleQuoteAction("approve")}
+                        className="rounded-xl border border-teal-200 bg-teal-50 px-3 py-2 text-sm font-semibold text-teal-900 hover:bg-teal-100 disabled:opacity-60"
+                      >
+                        {t("plannedPackageRefundApproveForManual")}
+                      </button>
+                    </>
+                  ) : null}
+                </div>
+                {refundMessage ? <p className="mt-2 text-sm text-slate-700">{refundMessage}</p> : null}
+              </>
             )}
           </Section>
 

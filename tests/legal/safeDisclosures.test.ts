@@ -762,6 +762,34 @@ const allowedPlannedPackageAdminOpsFiles = new Set<string>([
   "package.json",
 ]);
 
+/** Planned package refund quote engine — quote/admin review only, no Stripe refund. */
+const allowedPlannedPackageRefundQuoteFiles = new Set<string>([
+  "supabase/migrations/119_planned_package_cancellation_refund_quotes.sql",
+  "lib/offers/plannedPackageRefundQuotes.ts",
+  "lib/offers/plannedPackageRefundQuote.ts",
+  "lib/offers/plannedPackageSessionDelivery.ts",
+  "lib/admin/plannedPackageRefundOperations.ts",
+  "lib/offers/packageLaunchReadiness.ts",
+  "app/api/admin/planned-package-orders/[orderId]/route.ts",
+  "app/api/admin/planned-package-orders/[orderId]/cancellation-request/route.ts",
+  "app/api/admin/planned-package-orders/[orderId]/refund-quote/route.ts",
+  "app/api/admin/planned-package-orders/[orderId]/refund-quote/action/route.ts",
+  "app/(app)/admin/planned-package-orders/[orderId]/page.tsx",
+  "app/(app)/admin/package-launch-readiness/page.tsx",
+  "docs/product/package-refund-quote-engine.md",
+  "docs/product/package-feature-flags.md",
+  "lib/i18n/locales/fr.json",
+  "lib/i18n/locales/en.json",
+  "lib/i18n/locales/es.json",
+  ".env.example",
+  "tests/offers/plannedPackageRefundQuote.test.ts",
+  "tests/offers/packageLaunchReadiness.test.ts",
+  "tests/security/rlsCoverage.test.ts",
+  "tests/yo/yopratiqoAudioPronunciationOverrides.test.ts",
+  "tests/legal/safeDisclosures.test.ts",
+  "package.json",
+]);
+
 /** Teacher offer cover images (PR 15). */
 const allowedTeacherOfferCoverImageFiles = new Set<string>([
   "supabase/migrations/104_teacher_offer_covers_bucket.sql",
@@ -1286,6 +1314,7 @@ test("safe-disclosure branch did not touch restricted systems", () => {
     if (allowedPlannedPackageCheckoutPreflightFiles.has(file)) continue;
     if (allowedPlannedPackageTemporaryHoldsFiles.has(file)) continue;
     if (allowedPlannedPackageAdminOpsFiles.has(file)) continue;
+    if (allowedPlannedPackageRefundQuoteFiles.has(file)) continue;
     if (allowedTeacherOfferCoverImageFiles.has(file)) continue;
     if (allowedTeacherOfferCancellationPreferenceFiles.has(file)) continue;
     if (allowedTeacherAvailabilityStartDateFiles.has(file)) continue;

@@ -37,6 +37,12 @@ import {
   isPlannedPackageAdminOpsEnabled,
 } from "./plannedPackageAdminOps";
 import {
+  canUsePlannedPackageRefundAdminReview,
+  canUsePlannedPackageRefundQuotes,
+  isPlannedPackageRefundAdminReviewEnabled,
+  isPlannedPackageRefundQuotesEnabled,
+} from "./plannedPackageRefundQuotes";
+import {
   canUsePlannedPackageStripeCheckout,
   isPlannedPackageStripeCheckoutEnabled,
 } from "./plannedPackageStripeCheckout";
@@ -83,6 +89,8 @@ export type PackageLaunchFlagId =
   | "plannedPackageFulfillmentEngine"
   | "plannedPackageStripeCheckout"
   | "plannedPackageAdminOps"
+  | "plannedPackageRefundQuotes"
+  | "plannedPackageRefundAdminReview"
   | "bookingOfferSelection"
   | "offerSnapshotCheckout"
   | "packageEntitlements"
@@ -118,6 +126,8 @@ export type PackageLaunchReadiness = {
     plannedPackageFulfillmentEngine: boolean;
     plannedPackageStripeCheckout: boolean;
     plannedPackageAdminOps: boolean;
+    plannedPackageRefundQuotes: boolean;
+    plannedPackageRefundAdminReview: boolean;
     bookingOfferSelection: boolean;
     offerSnapshotCheckout: boolean;
     packageEntitlements: boolean;
@@ -174,6 +184,12 @@ export type PackageLaunchReadiness = {
     plannedPackageAdminOpsRetryGated: boolean;
     plannedPackageAdminOpsNoPayoutAction: boolean;
     plannedPackageAdminOpsNoRefundAction: boolean;
+    plannedPackageRefundQuoteEnginePresent: boolean;
+    plannedPackageRefundQuotesGated: boolean;
+    plannedPackageRefundQuotePolicyVersioned: boolean;
+    plannedPackageRefundQuoteAdminReviewRequired: boolean;
+    plannedPackageRefundQuoteNoAutomaticStripeRefund: boolean;
+    plannedPackageRefundExecutionNotImplemented: boolean;
     plannedPackagePublicPurchaseBlocked: boolean;
     progressivePayoutNotImplemented: boolean;
     refundPolicyStillDraft: boolean;
@@ -249,6 +265,22 @@ export const PACKAGE_LAUNCH_FLAG_META: ReadonlyArray<{
     launchMeaningFr: "Couche sécurité interne — pas de versement, remboursement, ni lancement public.",
   },
   {
+    id: "plannedPackageRefundQuotes",
+    envName: "ENABLE_PLANNED_PACKAGE_REFUND_QUOTES",
+    uiEnvName: null,
+    explanationFr:
+      "Estimations de remboursement forfait planifié — quote-only, revue admin, pas de Stripe refund.",
+    launchMeaningFr: "Audit/remboursement estimé seulement — exécution remboursement dans un PR futur.",
+  },
+  {
+    id: "plannedPackageRefundAdminReview",
+    envName: "ENABLE_PLANNED_PACKAGE_REFUND_ADMIN_REVIEW",
+    uiEnvName: null,
+    explanationFr:
+      "Permet l’approbation admin « pour remboursement manuel » sur une estimation — sans exécuter Stripe.",
+    launchMeaningFr: "Workflow revue admin — marque seulement, ne rembourse pas.",
+  },
+  {
     id: "bookingOfferSelection",
     envName: "NEXT_PUBLIC_ENABLE_BOOKING_OFFER_SELECTION",
     uiEnvName: "NEXT_PUBLIC_ENABLE_BOOKING_OFFER_SELECTION",
@@ -308,6 +340,8 @@ export function getPackageLaunchReadiness(): PackageLaunchReadiness {
   const plannedPackageFulfillmentEngine = isPlannedPackageFulfillmentEngineEnabled();
   const plannedPackageStripeCheckout = isPlannedPackageStripeCheckoutEnabled();
   const plannedPackageAdminOps = isPlannedPackageAdminOpsEnabled();
+  const plannedPackageRefundQuotes = isPlannedPackageRefundQuotesEnabled();
+  const plannedPackageRefundAdminReview = isPlannedPackageRefundAdminReviewEnabled();
   const bookingOfferSelection = isBookingOfferSelectionEnabled();
   const offerSnapshotCheckout = isOfferSnapshotCheckoutEnabled();
   const packageEntitlements = isPackageEntitlementsEnabled();
@@ -325,6 +359,8 @@ export function getPackageLaunchReadiness(): PackageLaunchReadiness {
     plannedPackageFulfillmentEngine,
     plannedPackageStripeCheckout,
     plannedPackageAdminOps,
+    plannedPackageRefundQuotes,
+    plannedPackageRefundAdminReview,
     bookingOfferSelection,
     offerSnapshotCheckout,
     packageEntitlements,
@@ -422,6 +458,13 @@ export function getPackageLaunchReadiness(): PackageLaunchReadiness {
     plannedPackageAdminOpsRetryGated: true,
     plannedPackageAdminOpsNoPayoutAction: true,
     plannedPackageAdminOpsNoRefundAction: true,
+    plannedPackageRefundQuoteEnginePresent: true,
+    plannedPackageRefundQuotesGated:
+      !canUsePlannedPackageRefundQuotes() || plannedPackageAdminOps,
+    plannedPackageRefundQuotePolicyVersioned: true,
+    plannedPackageRefundQuoteAdminReviewRequired: true,
+    plannedPackageRefundQuoteNoAutomaticStripeRefund: true,
+    plannedPackageRefundExecutionNotImplemented: true,
     plannedPackagePublicPurchaseBlocked: !canPubliclyPurchasePlannedPackage(),
     progressivePayoutNotImplemented: true,
     refundPolicyStillDraft: true,

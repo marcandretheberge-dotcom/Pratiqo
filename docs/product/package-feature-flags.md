@@ -89,6 +89,25 @@ See also:
 | Safe preview | ON in staging for support diagnostics |
 | Production note | **Read-heavy + safe retry only** — no payout, refund, mark-paid, or public launch |
 
+### `ENABLE_PLANNED_PACKAGE_REFUND_QUOTES` (server only)
+
+| | |
+|--|--|
+| Default | OFF |
+| Runtime | Admin cancellation request + refund quote APIs |
+| Who sees effect | Admin can generate audited refund **estimates** (no Stripe refund) |
+| Dependencies | Admin ops (+ full planned package chain) |
+| Safe preview | ON in staging for support/legal review workflows |
+| Production note | Quote-only — requires admin + legal review; execution in future PR |
+
+### `ENABLE_PLANNED_PACKAGE_REFUND_ADMIN_REVIEW` (server only)
+
+| | |
+|--|--|
+| Default | OFF |
+| Runtime | Approve quote for manual refund label |
+| Production note | Marks `approved_for_manual_refund` only — **does not** call Stripe |
+
 ### `ENABLE_PLANNED_PACKAGE_CHECKOUT_TEST_MODE` (optional)
 
 | | |

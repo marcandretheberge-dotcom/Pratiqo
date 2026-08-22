@@ -57,6 +57,7 @@ const EXPLICIT_RLS_HARDENING_FILES = [
   "116_planned_package_fulfillment_engine.sql",
   "117_planned_package_stripe_checkout_fields.sql",
   "118_planned_package_admin_ops_metadata.sql",
+  "119_planned_package_cancellation_refund_quotes.sql",
   "102_create_package_redemptions.sql",
   "103_add_package_redemption_reversal_rpc.sql",
   "109_harden_teacher_weekly_availability_intervals_rls.sql",
