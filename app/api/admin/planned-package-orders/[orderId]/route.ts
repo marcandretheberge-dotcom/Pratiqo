@@ -6,6 +6,7 @@ import { NextResponse } from "next/server";
 import { requireAdminApi } from "@/lib/auth/admin";
 import { canUsePlannedPackageAdminOps } from "@/lib/offers/plannedPackageAdminOps";
 import { getAdminPlannedPackageOrderDetail } from "@/lib/admin/plannedPackageOrderOperations";
+import { getAdminPlannedPackageRefundContext } from "@/lib/admin/plannedPackageRefundOperations";
 
 export const runtime = "nodejs";
 
@@ -27,11 +28,15 @@ export async function GET(req: Request, context: RouteContext) {
       return NextResponse.json({ error: "order_not_found" }, { status: 404 });
     }
 
+    const refund = await getAdminPlannedPackageRefundContext(auth.admin, orderId);
+
     return NextResponse.json({
       order,
+      refund,
       readOnly: true,
       noTeacherTransferMade: true,
       noRefundMade: true,
+      noStripeRefundExecuted: true,
     });
   } catch (e) {
     console.error("[admin/planned-package-orders/detail] GET failed", e);

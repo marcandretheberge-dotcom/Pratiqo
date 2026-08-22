@@ -315,12 +315,19 @@ test("commission model branch may update canonical commission files but not rest
     "supabase/migrations/094_ambassador_net_contribution_economics.sql",
   ]);
 
+  const approvedPlannedPackageMigrationExceptions = new Set<string>([
+    // Planned package refund quote engine — quote/audit tables only, no Stripe refund.
+    // Defended by tests/offers/plannedPackageRefundQuote.test.ts.
+    "supabase/migrations/119_planned_package_cancellation_refund_quotes.sql",
+  ]);
+
   const violations: string[] = [];
   for (const file of changed) {
     if (approvedStripeRouteExceptions.has(file)) continue;
     if (approvedPaymentHelperExceptions.has(file)) continue;
     if (approvedStudentConsentMigrationExceptions.has(file)) continue;
     if (approvedAmbassadorMigrationExceptions.has(file)) continue;
+    if (approvedPlannedPackageMigrationExceptions.has(file)) continue;
     // Launch-safety PR exception: group-session checkout is disabled at launch,
     // and this branch only centralizes the fail-closed gate so public disabled
     // SEO surfaces share the same source of truth. The helper above verifies the

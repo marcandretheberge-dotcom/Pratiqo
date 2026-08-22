@@ -414,6 +414,9 @@ test("forbidden files: PR does not touch Stripe checkout/webhook, Supabase/RLS/m
     "supabase/migrations/092_ambassador_rewards_version_hardening.sql",
     "supabase/migrations/093_harden_recent_program_tables_rls.sql",
     "supabase/migrations/094_ambassador_net_contribution_economics.sql",
+    // Planned package refund quote engine — quote/audit tables only, no Stripe refund.
+    // Defended by tests/offers/plannedPackageRefundQuote.test.ts.
+    "supabase/migrations/119_planned_package_cancellation_refund_quotes.sql",
   ]);
 
   // Approved Stripe route exceptions for narrowly-scoped consent-gate

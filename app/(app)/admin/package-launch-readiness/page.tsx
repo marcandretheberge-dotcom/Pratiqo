@@ -279,6 +279,28 @@ function ReadinessBody({ readiness }: { readiness: PackageLaunchReadiness }) {
           ok={readiness.checks.plannedPackageAdminOpsNoRefundAction}
         />
         <ChecklistRow
+          label="Moteur estimation remboursement forfait planifié présent"
+          ok={readiness.checks.plannedPackageRefundQuoteEnginePresent}
+        />
+        <ChecklistRow
+          label={`Estimation remboursement gated (ENABLE_PLANNED_PACKAGE_REFUND_QUOTES) : ${
+            readiness.flags.plannedPackageRefundQuotes ? "ON" : "OFF"
+          }`}
+          ok={readiness.checks.plannedPackageRefundQuotesGated}
+        />
+        <ChecklistRow
+          label="Estimation remboursement — revue admin requise"
+          ok={readiness.checks.plannedPackageRefundQuoteAdminReviewRequired}
+        />
+        <ChecklistRow
+          label="Estimation remboursement — aucun Stripe refund automatique"
+          ok={readiness.checks.plannedPackageRefundQuoteNoAutomaticStripeRefund}
+        />
+        <ChecklistRow
+          label="Exécution remboursement pas encore implémentée"
+          ok={readiness.checks.plannedPackageRefundExecutionNotImplemented}
+        />
+        <ChecklistRow
           label="Revue légale toujours requise"
           ok={readiness.checks.legalReviewMarkedRequired}
         />

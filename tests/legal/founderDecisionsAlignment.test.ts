@@ -234,6 +234,35 @@ const allowedTeacherSeoPublicationWorkflowFiles = new Set<string>([
   "package.json",
 ]);
 
+/** Planned package refund quote engine — quote/admin review only, no Stripe refund. */
+const allowedPlannedPackageRefundQuoteFiles = new Set<string>([
+  "supabase/migrations/119_planned_package_cancellation_refund_quotes.sql",
+  "lib/offers/plannedPackageRefundQuotes.ts",
+  "lib/offers/plannedPackageRefundQuote.ts",
+  "lib/offers/plannedPackageSessionDelivery.ts",
+  "lib/admin/plannedPackageRefundOperations.ts",
+  "lib/offers/packageLaunchReadiness.ts",
+  "app/api/admin/planned-package-orders/[orderId]/route.ts",
+  "app/api/admin/planned-package-orders/[orderId]/cancellation-request/route.ts",
+  "app/api/admin/planned-package-orders/[orderId]/refund-quote/route.ts",
+  "app/api/admin/planned-package-orders/[orderId]/refund-quote/action/route.ts",
+  "app/(app)/admin/planned-package-orders/[orderId]/page.tsx",
+  "app/(app)/admin/package-launch-readiness/page.tsx",
+  "docs/product/package-refund-quote-engine.md",
+  "docs/product/package-feature-flags.md",
+  "lib/i18n/locales/fr.json",
+  "lib/i18n/locales/en.json",
+  "lib/i18n/locales/es.json",
+  ".env.example",
+  "tests/offers/plannedPackageRefundQuote.test.ts",
+  "tests/offers/packageLaunchReadiness.test.ts",
+  "tests/security/rlsCoverage.test.ts",
+  "tests/yo/yopratiqoAudioPronunciationOverrides.test.ts",
+  "tests/legal/safeDisclosures.test.ts",
+  "tests/legal/founderDecisionsAlignment.test.ts",
+  "package.json",
+]);
+
 function touchesFounderDecisionScope(file: string): boolean {
   return (
     liveFiles.includes(file) ||
@@ -403,6 +432,7 @@ test("branch did not touch restricted systems", () => {
     if (allowedStudentOnboardingConsentFiles.has(file)) continue;
     if (allowedLocalTeacherDiscoverySeoFiles.has(file)) continue;
     if (allowedGroupSessionsLaunchSeoFiles.has(file)) continue;
+    if (allowedPlannedPackageRefundQuoteFiles.has(file)) continue;
     for (const rule of restrictedRules) {
       if (rule.re.test(file)) {
         violations.push(`${file} (${rule.label})`);
