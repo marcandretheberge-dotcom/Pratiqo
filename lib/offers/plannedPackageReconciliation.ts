@@ -14,7 +14,11 @@ export type PlannedPackageAttentionReason =
   | "checkout_expired_but_order_pending"
   | "hold_expired_before_payment"
   | "webhook_missing"
-  | "duplicate_booking_risk";
+  | "duplicate_booking_risk"
+  | "approved_refund_not_executed"
+  | "refund_execution_failed"
+  | "refund_succeeded_but_order_not_marked"
+  | "transfer_reversal_required";
 
 export type PlannedPackageReconciliationInput = {
   orderId: string;
@@ -33,6 +37,11 @@ export type PlannedPackageReconciliationInput = {
   stripeAmountReceivedCents: number | null;
   stripeCurrency: string | null;
   lastWebhookReceivedAt: string | null;
+  refundStatus: string | null;
+  refundedCents: number;
+  latestQuoteStatus: string | null;
+  latestExecutionStatus: string | null;
+  packageTransferDetected: boolean;
   holds: Array<{ status: string; sessionIndex: number }>;
   bookings: Array<{ id: string; sessionIndex: number | null }>;
 };
@@ -131,6 +140,29 @@ export function reconcilePlannedPackageOrder(
 
   if (bookingCount > input.sessionCount) {
     reasons.push("duplicate_booking_risk");
+  }
+
+  if (input.packageTransferDetected) {
+    reasons.push("transfer_reversal_required");
+  }
+
+  if (
+    input.latestQuoteStatus === "approved_for_manual_refund" &&
+    input.latestExecutionStatus !== "succeeded"
+  ) {
+    reasons.push("approved_refund_not_executed");
+  }
+
+  if (input.latestExecutionStatus === "failed") {
+    reasons.push("refund_execution_failed");
+  }
+
+  if (
+    input.latestExecutionStatus === "succeeded" &&
+    input.refundStatus !== "refunded" &&
+    input.refundStatus !== "partial"
+  ) {
+    reasons.push("refund_succeeded_but_order_not_marked");
   }
 
   const unique = Array.from(new Set(reasons));

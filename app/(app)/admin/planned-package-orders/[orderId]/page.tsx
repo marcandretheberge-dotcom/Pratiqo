@@ -76,6 +76,9 @@ export default function PlannedPackageOrderDetailPage() {
   const [retryMessage, setRetryMessage] = useState<string | null>(null);
   const [refundBusy, setRefundBusy] = useState(false);
   const [refundMessage, setRefundMessage] = useState<string | null>(null);
+  const [executeConfirmOpen, setExecuteConfirmOpen] = useState(false);
+  const [executeConfirmText, setExecuteConfirmText] = useState("");
+  const [executeAcknowledged, setExecuteAcknowledged] = useState(false);
 
   const load = useCallback(async () => {
     if (!user || !isAdmin || !orderId) return;
@@ -156,6 +159,36 @@ export default function PlannedPackageOrderDetailPage() {
       await load();
     } catch {
       setRefundMessage(t("plannedPackageRefundQuoteActionFailed"));
+    } finally {
+      setRefundBusy(false);
+    }
+  }
+
+  async function handleExecuteRefund() {
+    if (!order || !refund?.latestQuote) return;
+    if (executeConfirmText !== "REFUND" || !executeAcknowledged) return;
+    setRefundBusy(true);
+    setRefundMessage(null);
+    try {
+      const res = await adminFetch(
+        `/api/admin/planned-package-orders/${order.id}/refund-quotes/${refund.latestQuote.id}/execute`,
+        {
+          method: "POST",
+          body: JSON.stringify({ confirm: "REFUND" }),
+        },
+      );
+      const data = (await res.json()) as { error?: string; execution?: { stripeRefundId?: string | null } };
+      if (!res.ok) {
+        setRefundMessage(data.error ?? t("plannedPackageManualRefundFailed"));
+        return;
+      }
+      setRefundMessage(t("plannedPackageManualRefundExecuted"));
+      setExecuteConfirmOpen(false);
+      setExecuteConfirmText("");
+      setExecuteAcknowledged(false);
+      await load();
+    } catch {
+      setRefundMessage(t("plannedPackageManualRefundFailed"));
     } finally {
       setRefundBusy(false);
     }
@@ -387,8 +420,36 @@ export default function PlannedPackageOrderDetailPage() {
                 )}
                 <p className="text-xs text-slate-500">{t("plannedPackageRefundNotFinalDecision")}</p>
                 <p className="text-xs text-slate-500">{t("plannedPackageRefundNoAutomaticRefund")}</p>
-                <p className="text-xs text-slate-500">{t("plannedPackageRefundNoStripeExecuted")}</p>
-                <p className="text-xs text-slate-500">{t("plannedPackageRefundActualNotAvailable")}</p>
+                {refund.latestExecution?.status === "succeeded" ? (
+                  <>
+                    <p className="text-xs font-medium text-teal-800">{t("plannedPackageManualRefundExecuted")}</p>
+                    <Row
+                      label={t("plannedPackageManualRefundAmount")}
+                      value={formatMoney(
+                        refund.latestExecution.amountCents,
+                        refund.latestExecution.currency,
+                      )}
+                    />
+                    <Row
+                      label={t("plannedPackageManualRefundStripeReference")}
+                      value={refund.latestExecution.stripeRefundId ?? "—"}
+                      mono
+                    />
+                  </>
+                ) : refund.latestExecution?.status === "failed" ? (
+                  <p className="text-xs text-rose-700">{t("plannedPackageManualRefundFailed")}</p>
+                ) : (
+                  <>
+                    <p className="text-xs text-slate-500">{t("plannedPackageRefundNoStripeExecuted")}</p>
+                    <p className="text-xs text-slate-500">{t("plannedPackageRefundActualNotAvailable")}</p>
+                  </>
+                )}
+                {refund.orderRefundStatus ? (
+                  <Row
+                    label={t("plannedPackageManualRefundOrderStatus")}
+                    value={refund.orderRefundStatus}
+                  />
+                ) : null}
                 <div className="mt-3 flex flex-wrap gap-2">
                   <button
                     type="button"
@@ -428,6 +489,74 @@ export default function PlannedPackageOrderDetailPage() {
                     </>
                   ) : null}
                 </div>
+                {refund.canExecuteManualRefund ? (
+                  <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50/60 p-4">
+                    <h3 className="text-sm font-bold text-rose-950">
+                      {t("plannedPackageManualRefundSectionTitle")}
+                    </h3>
+                    <p className="mt-2 text-xs text-rose-900">{t("plannedPackageManualRefundStripeWarning")}</p>
+                    <p className="mt-1 text-xs text-rose-900">{t("plannedPackageManualRefundNoTeacherTransfer")}</p>
+                    <p className="mt-1 text-xs text-rose-900">{t("plannedPackageManualRefundNoTransferReversal")}</p>
+                    {!executeConfirmOpen ? (
+                      <button
+                        type="button"
+                        disabled={refundBusy}
+                        onClick={() => setExecuteConfirmOpen(true)}
+                        className="mt-3 rounded-xl bg-rose-700 px-3 py-2 text-sm font-bold text-white hover:bg-rose-800 disabled:opacity-60"
+                      >
+                        {t("plannedPackageManualRefundExecuteStripe")}
+                      </button>
+                    ) : (
+                      <div className="mt-3 space-y-2">
+                        <label className="flex items-start gap-2 text-xs text-rose-950">
+                          <input
+                            type="checkbox"
+                            checked={executeAcknowledged}
+                            onChange={(e) => setExecuteAcknowledged(e.target.checked)}
+                            className="mt-0.5"
+                          />
+                          {t("plannedPackageManualRefundConfirmAcknowledge")}
+                        </label>
+                        <input
+                          type="text"
+                          value={executeConfirmText}
+                          onChange={(e) => setExecuteConfirmText(e.target.value)}
+                          placeholder="REFUND"
+                          className="w-full rounded-lg border border-rose-200 px-3 py-2 text-sm"
+                          aria-label={t("plannedPackageManualRefundConfirmTypeRefund")}
+                        />
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            disabled={
+                              refundBusy ||
+                              executeConfirmText !== "REFUND" ||
+                              !executeAcknowledged
+                            }
+                            onClick={() => void handleExecuteRefund()}
+                            className="rounded-xl bg-rose-700 px-3 py-2 text-sm font-bold text-white hover:bg-rose-800 disabled:opacity-60"
+                          >
+                            {t("plannedPackageManualRefundExecuteStripe")}
+                          </button>
+                          <button
+                            type="button"
+                            disabled={refundBusy}
+                            onClick={() => {
+                              setExecuteConfirmOpen(false);
+                              setExecuteConfirmText("");
+                              setExecuteAcknowledged(false);
+                            }}
+                            className="rounded-xl border border-rose-200 bg-white px-3 py-2 text-sm font-semibold text-rose-950"
+                          >
+                            {t("cancel")}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : refund.manualRefundsEnabled === false ? (
+                  <p className="mt-2 text-xs text-amber-800">{t("plannedPackageManualRefundsDisabled")}</p>
+                ) : null}
                 {refundMessage ? <p className="mt-2 text-sm text-slate-700">{refundMessage}</p> : null}
               </>
             )}

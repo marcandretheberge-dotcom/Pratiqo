@@ -10,6 +10,14 @@ import {
   canUsePlannedPackageRefundQuotes,
   PLANNED_PACKAGE_REFUND_POLICY_VERSION,
 } from "@/lib/offers/plannedPackageRefundQuotes";
+import {
+  canUsePlannedPackageManualRefunds,
+  isPlannedPackageManualRefundsEnabled,
+} from "@/lib/offers/plannedPackageManualRefunds";
+import {
+  canExecutePlannedPackageRefundInCurrentEnvironment,
+  executeApprovedPlannedPackageRefund,
+} from "@/lib/offers/plannedPackageManualRefund";
 import { canUsePlannedPackageAdminOps } from "@/lib/offers/plannedPackageAdminOps";
 import type { PlannedPackageSessionDeliveryRow } from "@/lib/offers/plannedPackageSessionDelivery";
 import { PACKAGE_LEGAL_REVIEW_COMPLETED_FLAG } from "@/lib/offers/packageLaunchReadiness";
@@ -53,11 +61,29 @@ export type AdminRefundQuoteDto = {
   noStripeRefundExecuted: true;
 };
 
+export type AdminRefundExecutionDto = {
+  id: string;
+  quoteId: string;
+  orderId: string;
+  status: string;
+  amountCents: number;
+  currency: string;
+  stripeRefundId: string | null;
+  executedBy: string;
+  executedAt: string | null;
+  failureCode: string | null;
+  failureMessage: string | null;
+};
+
 export type AdminPlannedPackageRefundContext = {
   enabled: boolean;
+  manualRefundsEnabled: boolean;
+  canExecuteManualRefund: boolean;
   cancellationRequest: AdminCancellationRequestDto | null;
   latestQuote: AdminRefundQuoteDto | null;
-  noStripeRefundExecuted: true;
+  latestExecution: AdminRefundExecutionDto | null;
+  orderRefundStatus: string | null;
+  orderRefundedCents: number;
   noAutomaticRefund: true;
 };
 
@@ -87,6 +113,22 @@ function mapCancellationRow(row: Record<string, unknown>): AdminCancellationRequ
     requestedAt: String(row.requested_at ?? row.created_at ?? ""),
     reviewedAt: (row.reviewed_at as string | null) ?? null,
     reviewedBy: (row.reviewed_by as string | null) ?? null,
+  };
+}
+
+function mapExecutionRow(row: Record<string, unknown>): AdminRefundExecutionDto {
+  return {
+    id: String(row.id ?? ""),
+    quoteId: String(row.refund_quote_id ?? ""),
+    orderId: String(row.planned_package_order_id ?? ""),
+    status: String(row.status ?? ""),
+    amountCents: Number(row.amount_cents ?? 0),
+    currency: String(row.currency ?? "CAD"),
+    stripeRefundId: (row.stripe_refund_id as string | null) ?? null,
+    executedBy: String(row.executed_by ?? ""),
+    executedAt: (row.executed_at as string | null) ?? null,
+    failureCode: (row.failure_code as string | null) ?? null,
+    failureMessage: (row.failure_message as string | null) ?? null,
   };
 }
 
@@ -160,18 +202,49 @@ async function loadBookingsForQuote(
   }));
 }
 
+async function loadLatestExecution(
+  admin: AdminClient,
+  orderId: string,
+): Promise<AdminRefundExecutionDto | null> {
+  const { data } = await admin
+    .from("planned_package_refund_executions")
+    .select("*")
+    .eq("planned_package_order_id", orderId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (!data) return null;
+  return mapExecutionRow(data as Record<string, unknown>);
+}
+
 export async function getAdminPlannedPackageRefundContext(
   admin: AdminClient,
   orderId: string,
 ): Promise<AdminPlannedPackageRefundContext> {
   const enabled = canUsePlannedPackageRefundQuotes();
+  const manualRefundsEnabled = canUsePlannedPackageManualRefunds();
+
+  const { data: orderRefundRow } = await admin
+    .from("planned_package_pending_orders")
+    .select("refund_status, refunded_cents")
+    .eq("id", orderId)
+    .maybeSingle();
+
+  const orderRefundStatus =
+    (orderRefundRow?.refund_status as string | null) ?? null;
+  const orderRefundedCents = Number(orderRefundRow?.refunded_cents ?? 0);
 
   if (!enabled) {
     return {
       enabled: false,
+      manualRefundsEnabled: false,
+      canExecuteManualRefund: false,
       cancellationRequest: null,
       latestQuote: null,
-      noStripeRefundExecuted: true,
+      latestExecution: null,
+      orderRefundStatus,
+      orderRefundedCents,
       noAutomaticRefund: true,
     };
   }
@@ -199,12 +272,80 @@ export async function getAdminPlannedPackageRefundContext(
     }
   }
 
+  const latestExecution = await loadLatestExecution(admin, orderId);
+  const canExecuteManualRefund =
+    manualRefundsEnabled &&
+    canExecutePlannedPackageRefundInCurrentEnvironment() &&
+    latestQuote?.quoteStatus === "approved_for_manual_refund" &&
+    latestQuote.estimatedRefundCents > 0 &&
+    latestExecution?.status !== "succeeded";
+
   return {
     enabled: true,
+    manualRefundsEnabled,
+    canExecuteManualRefund,
     cancellationRequest: req ? mapCancellationRow(req) : null,
     latestQuote,
-    noStripeRefundExecuted: true,
+    latestExecution,
+    orderRefundStatus,
+    orderRefundedCents,
     noAutomaticRefund: true,
+  };
+}
+
+export async function adminExecutePlannedPackageManualRefund(args: {
+  admin: AdminClient;
+  orderId: string;
+  quoteId: string;
+  adminUserId: string;
+}): Promise<
+  | {
+      ok: true;
+      execution: AdminRefundExecutionDto;
+      order: { refundStatus: string | null; refundedCents: number; refundedAt: string | null };
+      reusedExisting: boolean;
+    }
+  | { ok: false; status: number; error: string; blockers?: string[] }
+> {
+  if (!isPlannedPackageManualRefundsEnabled()) {
+    return { ok: false, status: 403, error: "manual_refunds_disabled" };
+  }
+
+  const { data: quoteRow } = await args.admin
+    .from("planned_package_refund_quotes")
+    .select("id, planned_package_order_id")
+    .eq("id", args.quoteId)
+    .eq("planned_package_order_id", args.orderId)
+    .maybeSingle();
+
+  if (!quoteRow) {
+    return { ok: false, status: 404, error: "quote_not_found" };
+  }
+
+  const result = await executeApprovedPlannedPackageRefund({
+    admin: args.admin,
+    refundQuoteId: args.quoteId,
+    adminUserId: args.adminUserId,
+  });
+
+  if (!result.ok) {
+    return {
+      ok: false,
+      status: result.status,
+      error: result.error,
+      blockers: result.blockers,
+    };
+  }
+
+  return {
+    ok: true,
+    execution: mapExecutionRow(result.execution as unknown as Record<string, unknown>),
+    order: {
+      refundStatus: result.order.refundStatus,
+      refundedCents: result.order.refundedCents,
+      refundedAt: result.order.refundedAt,
+    },
+    reusedExisting: result.reusedExisting,
   };
 }
 

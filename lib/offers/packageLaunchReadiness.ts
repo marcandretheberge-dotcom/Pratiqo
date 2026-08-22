@@ -43,6 +43,10 @@ import {
   isPlannedPackageRefundQuotesEnabled,
 } from "./plannedPackageRefundQuotes";
 import {
+  canUsePlannedPackageManualRefunds,
+  isPlannedPackageManualRefundsEnabled,
+} from "./plannedPackageManualRefunds";
+import {
   canUsePlannedPackageStripeCheckout,
   isPlannedPackageStripeCheckoutEnabled,
 } from "./plannedPackageStripeCheckout";
@@ -91,6 +95,7 @@ export type PackageLaunchFlagId =
   | "plannedPackageAdminOps"
   | "plannedPackageRefundQuotes"
   | "plannedPackageRefundAdminReview"
+  | "plannedPackageManualRefunds"
   | "bookingOfferSelection"
   | "offerSnapshotCheckout"
   | "packageEntitlements"
@@ -128,6 +133,7 @@ export type PackageLaunchReadiness = {
     plannedPackageAdminOps: boolean;
     plannedPackageRefundQuotes: boolean;
     plannedPackageRefundAdminReview: boolean;
+    plannedPackageManualRefunds: boolean;
     bookingOfferSelection: boolean;
     offerSnapshotCheckout: boolean;
     packageEntitlements: boolean;
@@ -189,7 +195,12 @@ export type PackageLaunchReadiness = {
     plannedPackageRefundQuotePolicyVersioned: boolean;
     plannedPackageRefundQuoteAdminReviewRequired: boolean;
     plannedPackageRefundQuoteNoAutomaticStripeRefund: boolean;
-    plannedPackageRefundExecutionNotImplemented: boolean;
+    plannedPackageManualRefundExecutionPresent: boolean;
+    plannedPackageManualRefundExecutionGated: boolean;
+    plannedPackageManualRefundApprovedQuoteRequired: boolean;
+    plannedPackageManualRefundIdempotencyPresent: boolean;
+    plannedPackageManualRefundNoTransferReversal: boolean;
+    plannedPackageManualRefundNoPayoutRelease: boolean;
     plannedPackagePublicPurchaseBlocked: boolean;
     progressivePayoutNotImplemented: boolean;
     refundPolicyStillDraft: boolean;
@@ -281,6 +292,15 @@ export const PACKAGE_LAUNCH_FLAG_META: ReadonlyArray<{
     launchMeaningFr: "Workflow revue admin — marque seulement, ne rembourse pas.",
   },
   {
+    id: "plannedPackageManualRefunds",
+    envName: "ENABLE_PLANNED_PACKAGE_MANUAL_REFUNDS",
+    uiEnvName: null,
+    explanationFr:
+      "Exécution admin du remboursement Stripe pour une estimation approuvée — pas de remboursement automatique.",
+    launchMeaningFr:
+      "Admin-only après quote approuvée — revue légale requise en production ; pas de transfer reversal.",
+  },
+  {
     id: "bookingOfferSelection",
     envName: "NEXT_PUBLIC_ENABLE_BOOKING_OFFER_SELECTION",
     uiEnvName: "NEXT_PUBLIC_ENABLE_BOOKING_OFFER_SELECTION",
@@ -342,6 +362,7 @@ export function getPackageLaunchReadiness(): PackageLaunchReadiness {
   const plannedPackageAdminOps = isPlannedPackageAdminOpsEnabled();
   const plannedPackageRefundQuotes = isPlannedPackageRefundQuotesEnabled();
   const plannedPackageRefundAdminReview = isPlannedPackageRefundAdminReviewEnabled();
+  const plannedPackageManualRefunds = isPlannedPackageManualRefundsEnabled();
   const bookingOfferSelection = isBookingOfferSelectionEnabled();
   const offerSnapshotCheckout = isOfferSnapshotCheckoutEnabled();
   const packageEntitlements = isPackageEntitlementsEnabled();
@@ -361,6 +382,7 @@ export function getPackageLaunchReadiness(): PackageLaunchReadiness {
     plannedPackageAdminOps,
     plannedPackageRefundQuotes,
     plannedPackageRefundAdminReview,
+    plannedPackageManualRefunds,
     bookingOfferSelection,
     offerSnapshotCheckout,
     packageEntitlements,
@@ -464,7 +486,13 @@ export function getPackageLaunchReadiness(): PackageLaunchReadiness {
     plannedPackageRefundQuotePolicyVersioned: true,
     plannedPackageRefundQuoteAdminReviewRequired: true,
     plannedPackageRefundQuoteNoAutomaticStripeRefund: true,
-    plannedPackageRefundExecutionNotImplemented: true,
+    plannedPackageManualRefundExecutionPresent: true,
+    plannedPackageManualRefundExecutionGated:
+      !canUsePlannedPackageManualRefunds() || plannedPackageRefundAdminReview,
+    plannedPackageManualRefundApprovedQuoteRequired: true,
+    plannedPackageManualRefundIdempotencyPresent: true,
+    plannedPackageManualRefundNoTransferReversal: true,
+    plannedPackageManualRefundNoPayoutRelease: true,
     plannedPackagePublicPurchaseBlocked: !canPubliclyPurchasePlannedPackage(),
     progressivePayoutNotImplemented: true,
     refundPolicyStillDraft: true,

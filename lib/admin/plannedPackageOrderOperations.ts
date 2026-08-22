@@ -17,6 +17,7 @@ import {
   reconcilePlannedPackageOrder,
   type PlannedPackageAttentionReason,
 } from "@/lib/offers/plannedPackageReconciliation";
+import { packageOrderHasTeacherTransfer } from "@/lib/offers/plannedPackageManualRefund";
 import {
   fulfillPlannedPackageOrder,
   canUsePlannedPackageFulfillmentEngine,
@@ -34,7 +35,13 @@ export const ADMIN_PLANNED_PACKAGE_FORBIDDEN_KEYS = [
 ] as const;
 
 const ORDER_SELECT =
-  "id, student_id, teacher_id, teacher_offer_id, draft_id, status, session_count, duration_minutes, price_cents_snapshot, currency_snapshot, title_snapshot, hold_expires_at, payment_reference, payment_confirmed_at, fulfilled_at, fulfillment_error, stripe_checkout_session_id, stripe_payment_intent_id, stripe_checkout_status, checkout_expires_at, paid_at, stripe_checkout_completed_at, stripe_checkout_expired_at, last_webhook_event_id, last_webhook_event_type, last_webhook_received_at, fulfillment_attempt_count, last_fulfillment_attempt_at, created_at, updated_at";
+  "id, student_id, teacher_id, teacher_offer_id, draft_id, status, session_count, duration_minutes, price_cents_snapshot, currency_snapshot, title_snapshot, hold_expires_at, payment_reference, payment_confirmed_at, fulfilled_at, fulfillment_error, stripe_checkout_session_id, stripe_payment_intent_id, stripe_checkout_status, checkout_expires_at, paid_at, stripe_checkout_completed_at, stripe_checkout_expired_at, last_webhook_event_id, last_webhook_event_type, last_webhook_received_at, fulfillment_attempt_count, last_fulfillment_attempt_at, refund_status, refunded_cents, refunded_at, last_refund_execution_id, created_at, updated_at";
+
+type ReconciliationRefundOverlay = {
+  latestQuoteStatus?: string | null;
+  latestExecutionStatus?: string | null;
+  packageTransferDetected?: boolean;
+};
 
 export type AdminPlannedPackageOrderListRow = {
   id: string;
@@ -250,6 +257,7 @@ function buildReconciliation(
   row: Record<string, unknown>,
   holds: AdminPlannedPackageHoldRow[],
   bookings: AdminPlannedPackageBookingRow[],
+  refundOverlay: ReconciliationRefundOverlay = {},
 ): ReturnType<typeof reconcilePlannedPackageOrder> {
   const paidAt = (row.paid_at as string | null) ?? null;
   const stripeCheckoutStatus = (row.stripe_checkout_status as string | null) ?? null;
@@ -273,9 +281,44 @@ function buildReconciliation(
     stripeAmountReceivedCents,
     stripeCurrency: String(row.currency_snapshot ?? "CAD"),
     lastWebhookReceivedAt: (row.last_webhook_received_at as string | null) ?? null,
+    refundStatus: (row.refund_status as string | null) ?? null,
+    refundedCents: Number(row.refunded_cents ?? 0),
+    latestQuoteStatus: refundOverlay.latestQuoteStatus ?? null,
+    latestExecutionStatus: refundOverlay.latestExecutionStatus ?? null,
+    packageTransferDetected: refundOverlay.packageTransferDetected ?? false,
     holds: holds.map((h) => ({ status: h.status, sessionIndex: h.sessionIndex })),
     bookings: bookings.map((b) => ({ id: b.id, sessionIndex: b.sessionIndex })),
   });
+}
+
+async function loadRefundReconciliationOverlay(
+  admin: AdminClient,
+  orderId: string,
+): Promise<ReconciliationRefundOverlay> {
+  const [quoteRes, execRes, transferDetected] = await Promise.all([
+    admin
+      .from("planned_package_refund_quotes")
+      .select("quote_status")
+      .eq("planned_package_order_id", orderId)
+      .neq("quote_status", "superseded")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    admin
+      .from("planned_package_refund_executions")
+      .select("status")
+      .eq("planned_package_order_id", orderId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    packageOrderHasTeacherTransfer(admin, orderId).catch(() => false),
+  ]);
+
+  return {
+    latestQuoteStatus: (quoteRes.data?.quote_status as string | null) ?? null,
+    latestExecutionStatus: (execRes.data?.status as string | null) ?? null,
+    packageTransferDetected: transferDetected,
+  };
 }
 
 function matchesFilter(row: AdminPlannedPackageOrderListRow, filter: AdminPlannedPackageOrderFilter): boolean {
@@ -404,11 +447,12 @@ export async function getAdminPlannedPackageOrderDetail(
   const studentId = String(row.student_id ?? "");
   const teacherId = String(row.teacher_id ?? "");
 
-  const [profiles, teachers, holds, bookings] = await Promise.all([
+  const [profiles, teachers, holds, bookings, refundOverlay] = await Promise.all([
     loadProfiles(admin, [studentId]),
     loadTeachers(admin, [teacherId]),
     loadHoldsForOrder(admin, orderId),
     loadBookingsForOrder(admin, orderId),
+    loadRefundReconciliationOverlay(admin, orderId),
   ]);
 
   const teacher = teachers.get(teacherId);
@@ -418,7 +462,7 @@ export async function getAdminPlannedPackageOrderDetail(
     teacherPerson = personFrom(tp.get(teacher.user_id), teacher.user_id);
   }
 
-  const reconciliation = buildReconciliation(row, holds, bookings);
+  const reconciliation = buildReconciliation(row, holds, bookings, refundOverlay);
   const base = mapOrderRow(
     row,
     personFrom(profiles.get(studentId), studentId),

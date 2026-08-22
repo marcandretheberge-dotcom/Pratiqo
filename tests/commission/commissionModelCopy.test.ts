@@ -319,6 +319,7 @@ test("commission model branch may update canonical commission files but not rest
     // Planned package refund quote engine — quote/audit tables only, no Stripe refund.
     // Defended by tests/offers/plannedPackageRefundQuote.test.ts.
     "supabase/migrations/119_planned_package_cancellation_refund_quotes.sql",
+    "supabase/migrations/120_planned_package_refund_executions.sql",
   ]);
 
   const violations: string[] = [];
