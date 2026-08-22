@@ -457,8 +457,20 @@ function ReadinessBody({ readiness }: { readiness: PackageLaunchReadiness }) {
 
       <Section title="4. Tableaux de bord">
         <ChecklistRow
-          label="Élève — Mes forfaits (flag serveur)"
+          label="Élève — Mes forfaits entitlements (flag serveur)"
           ok={readiness.flags.studentPackageDashboard}
+        />
+        <ChecklistRow
+          label="Élève — forfaits planifiés gated (safe DTO)"
+          ok={readiness.checks.studentPlannedPackageDashboardGated}
+        />
+        <ChecklistRow
+          label="Forfaits planifiés — aucun détail de versement exposé"
+          ok={readiness.checks.studentPlannedPackageDashboardNoPayoutInternals}
+        />
+        <ChecklistRow
+          label="Forfaits planifiés — pas de remboursement self-serve"
+          ok={readiness.checks.studentPlannedPackageDashboardNoSelfServeRefund}
         />
         <ChecklistRow
           label="Professeur — Forfaits achetés avec vous (flag serveur)"

@@ -222,10 +222,21 @@ See also:
 |--|--|
 | Default | OFF |
 | Runtime | Server API + student nav/UI |
-| Who sees effect | Students on `/student/packages` (read-only) |
+| Who sees effect | Students on `/student/packages` (read-only entitlement packages) |
 | Dependencies | `package_entitlements` data existing (flag usually ON) |
 | Safe preview | ON for UX review without mutating balances |
 | Production note | Visibility only |
+
+### `ENABLE_STUDENT_PLANNED_PACKAGE_DASHBOARD` (+ `NEXT_PUBLIC_ENABLE_STUDENT_PLANNED_PACKAGE_DASHBOARD`)
+
+| | |
+|--|--|
+| Default | OFF |
+| Runtime | Server planned-package student API + `/student/packages` section |
+| Who sees effect | Students see their own planned package orders and sessions (read-only) |
+| Dependencies | Planned package orders / bookings existing |
+| Safe preview | ON in staging after fulfillment works |
+| Production note | Visibility only — **no** self-serve refund, transfer, or payout details |
 
 ### `ENABLE_TEACHER_PACKAGE_VISIBILITY` (+ `NEXT_PUBLIC_ENABLE_TEACHER_PACKAGE_VISIBILITY`)
 

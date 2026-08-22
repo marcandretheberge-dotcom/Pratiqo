@@ -16,6 +16,7 @@ import { TeacherTopNav } from "./TeacherTopNav";
 import { TeacherSidebarNav } from "@/components/teacher/TeacherSidebarNav";
 import { YoNavButton } from "@/components/yo/YoNavButton";
 import { isStudentPackageDashboardUiEnabled } from "@/lib/offers/studentPackages";
+import { isStudentPlannedPackageDashboardUiEnabled } from "@/lib/offers/plannedPackageStudentDashboard";
 
 type Role = "student" | "teacher" | string;
 
@@ -90,7 +91,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const studentDisplayName = (profile?.name as string | undefined) || (user ? authDisplayName(user) : "");
   const studentInitials = initialsFromDisplay(studentDisplayName, user?.email || undefined);
 
-  const studentPackagesNavEnabled = isStudentPackageDashboardUiEnabled();
+  const studentPackagesNavEnabled =
+    isStudentPackageDashboardUiEnabled() || isStudentPlannedPackageDashboardUiEnabled();
 
   // Student nav uses a discriminated `label | labelKey` union so we
   // can mix translated labels with the YoPratiqo brand name (which is

@@ -11,15 +11,22 @@ import {
   isStudentPackageDashboardUiEnabled,
   type StudentPackageDto,
 } from "@/lib/offers/studentPackages";
+import { isStudentPlannedPackageDashboardUiEnabled } from "@/lib/offers/plannedPackageStudentDashboard";
+import type { StudentPlannedPackageDto } from "@/lib/offers/plannedPackageStudentDto";
 import { StudentPackageCard } from "@/components/student/StudentPackageCard";
+import { StudentPlannedPackageCard } from "@/components/student/StudentPlannedPackageCard";
 import { AppSectionListSkeleton } from "@/components/loading/AppSkeletons";
 
 export function StudentPackageDashboard() {
   const { user, profile } = useAuth();
   const { t } = useLocale();
   const router = useRouter();
-  const uiEnabled = isStudentPackageDashboardUiEnabled();
+  const entitlementsUiEnabled = isStudentPackageDashboardUiEnabled();
+  const plannedUiEnabled = isStudentPlannedPackageDashboardUiEnabled();
+  const uiEnabled = entitlementsUiEnabled || plannedUiEnabled;
+
   const [packages, setPackages] = useState<StudentPackageDto[]>([]);
+  const [plannedPackages, setPlannedPackages] = useState<StudentPlannedPackageDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,6 +40,7 @@ export function StudentPackageDashboard() {
     if (!uiEnabled || !user) {
       setLoading(false);
       setPackages([]);
+      setPlannedPackages([]);
       return;
     }
     setLoading(true);
@@ -46,30 +54,59 @@ export function StudentPackageDashboard() {
       if (!token) {
         setError(t("studentPackagesLoadError"));
         setPackages([]);
+        setPlannedPackages([]);
         return;
       }
-      const res = await fetch("/api/student/packages", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.status === 400) {
-        setPackages([]);
-        setError(null);
-        return;
+
+      const headers = { Authorization: `Bearer ${token}` };
+      const [entRes, plannedRes] = await Promise.all([
+        entitlementsUiEnabled
+          ? fetch("/api/student/packages", { headers })
+          : Promise.resolve(null),
+        plannedUiEnabled
+          ? fetch("/api/student/planned-packages", { headers })
+          : Promise.resolve(null),
+      ]);
+
+      let nextEnt: StudentPackageDto[] = [];
+      let nextPlanned: StudentPlannedPackageDto[] = [];
+      let hadHardError = false;
+
+      if (entRes) {
+        if (entRes.status === 400) {
+          nextEnt = [];
+        } else if (!entRes.ok) {
+          hadHardError = true;
+        } else {
+          const payload = (await entRes.json()) as { packages?: StudentPackageDto[] };
+          nextEnt = Array.isArray(payload.packages) ? payload.packages : [];
+        }
       }
-      if (!res.ok) {
-        setError(t("studentPackagesLoadError"));
-        setPackages([]);
-        return;
+
+      if (plannedRes) {
+        if (plannedRes.status === 400) {
+          nextPlanned = [];
+        } else if (!plannedRes.ok) {
+          hadHardError = true;
+        } else {
+          const payload = (await plannedRes.json()) as {
+            packages?: StudentPlannedPackageDto[];
+          };
+          nextPlanned = Array.isArray(payload.packages) ? payload.packages : [];
+        }
       }
-      const payload = (await res.json()) as { packages?: StudentPackageDto[] };
-      setPackages(Array.isArray(payload.packages) ? payload.packages : []);
+
+      setPackages(nextEnt);
+      setPlannedPackages(nextPlanned);
+      setError(hadHardError ? t("studentPackagesLoadError") : null);
     } catch {
       setError(t("studentPackagesLoadError"));
       setPackages([]);
+      setPlannedPackages([]);
     } finally {
       setLoading(false);
     }
-  }, [uiEnabled, user, t]);
+  }, [uiEnabled, entitlementsUiEnabled, plannedUiEnabled, user, t]);
 
   useEffect(() => {
     void load();
@@ -87,6 +124,28 @@ export function StudentPackageDashboard() {
     }
     return { active: activeList, completed: completedList };
   }, [packages]);
+
+  const plannedActive = useMemo(
+    () =>
+      plannedPackages.filter(
+        (p) =>
+          p.status !== "completed" &&
+          p.status !== "refunded" &&
+          p.status !== "payment_pending",
+      ),
+    [plannedPackages],
+  );
+  const plannedPending = useMemo(
+    () => plannedPackages.filter((p) => p.status === "payment_pending"),
+    [plannedPackages],
+  );
+  const plannedPast = useMemo(
+    () => plannedPackages.filter((p) => p.status === "completed" || p.status === "refunded"),
+    [plannedPackages],
+  );
+
+  const isEmpty =
+    packages.length === 0 && plannedPackages.length === 0;
 
   if (!uiEnabled) {
     return (
@@ -126,14 +185,18 @@ export function StudentPackageDashboard() {
         <p className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
           {error}
         </p>
-      ) : packages.length === 0 ? (
+      ) : isEmpty ? (
         <div
           className="rounded-2xl border border-dashed border-[#DCEAE3] bg-[#F3FAF6]/60 px-5 py-10 text-center"
           data-testid="student-packages-empty"
         >
           <Package className="mx-auto text-teal-700/70" size={36} aria-hidden />
-          <p className="mt-3 text-base font-semibold text-slate-800">{t("studentPackagesEmptyTitle")}</p>
-          <p className="mt-2 text-sm leading-relaxed text-slate-600">{t("studentPackagesEmptyBody")}</p>
+          <p className="mt-3 text-base font-semibold text-slate-800">
+            {t("studentPlannedPackagesEmptyTitle")}
+          </p>
+          <p className="mt-2 text-sm leading-relaxed text-slate-600">
+            {t("studentPackagesEmptyBody")}
+          </p>
           <Link
             href="/student/search"
             className="mt-5 inline-flex min-h-11 items-center justify-center rounded-full bg-teal-700 px-5 text-sm font-bold text-white hover:bg-teal-800"
@@ -143,7 +206,42 @@ export function StudentPackageDashboard() {
         </div>
       ) : (
         <div className="space-y-8">
-          {active.length > 0 ? (
+          {plannedUiEnabled && plannedActive.length > 0 ? (
+            <section
+              aria-labelledby="student-planned-packages-heading"
+              data-testid="student-planned-packages-section"
+            >
+              <h2
+                id="student-planned-packages-heading"
+                className="mb-3 text-sm font-bold uppercase tracking-wide text-slate-500"
+              >
+                {t("studentPlannedPackagesSection")}
+              </h2>
+              <div className="grid gap-4">
+                {plannedActive.map((pkg) => (
+                  <StudentPlannedPackageCard key={pkg.orderId} pkg={pkg} />
+                ))}
+              </div>
+            </section>
+          ) : null}
+
+          {plannedUiEnabled && plannedPending.length > 0 ? (
+            <section aria-labelledby="student-planned-packages-pending-heading">
+              <h2
+                id="student-planned-packages-pending-heading"
+                className="mb-3 text-sm font-bold uppercase tracking-wide text-slate-500"
+              >
+                {t("studentPlannedPackagesPendingSection")}
+              </h2>
+              <div className="grid gap-4">
+                {plannedPending.map((pkg) => (
+                  <StudentPlannedPackageCard key={pkg.orderId} pkg={pkg} />
+                ))}
+              </div>
+            </section>
+          ) : null}
+
+          {entitlementsUiEnabled && active.length > 0 ? (
             <section aria-labelledby="student-packages-active-heading">
               <h2
                 id="student-packages-active-heading"
@@ -159,7 +257,7 @@ export function StudentPackageDashboard() {
             </section>
           ) : null}
 
-          {completed.length > 0 ? (
+          {entitlementsUiEnabled && completed.length > 0 ? (
             <section aria-labelledby="student-packages-past-heading">
               <h2
                 id="student-packages-past-heading"
@@ -171,6 +269,22 @@ export function StudentPackageDashboard() {
               <div className="grid gap-4">
                 {completed.map((pkg) => (
                   <StudentPackageCard key={pkg.id} pkg={pkg} />
+                ))}
+              </div>
+            </section>
+          ) : null}
+
+          {plannedUiEnabled && plannedPast.length > 0 ? (
+            <section aria-labelledby="student-planned-packages-past-heading">
+              <h2
+                id="student-planned-packages-past-heading"
+                className="mb-3 text-sm font-bold uppercase tracking-wide text-slate-500"
+              >
+                {t("studentPlannedPackagesPastSection")}
+              </h2>
+              <div className="grid gap-4">
+                {plannedPast.map((pkg) => (
+                  <StudentPlannedPackageCard key={pkg.orderId} pkg={pkg} />
                 ))}
               </div>
             </section>

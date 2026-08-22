@@ -417,6 +417,34 @@ const allowedPlannedPackageE2eQaFiles = new Set<string>([
   "package.json",
 ]);
 
+/** Student planned package dashboard — read-only learner visibility. */
+const allowedStudentPlannedPackageDashboardFiles = new Set<string>([
+  "lib/offers/plannedPackageStudentDashboard.ts",
+  "lib/offers/plannedPackageStudentStatus.ts",
+  "lib/offers/plannedPackageStudentDto.ts",
+  "lib/offers/packageLaunchReadiness.ts",
+  "lib/offers/studentPackages.ts",
+  "app/api/student/planned-packages/route.ts",
+  "app/api/student/planned-packages/[orderId]/route.ts",
+  "app/(app)/student/packages/page.tsx",
+  "components/student/StudentPackageDashboard.tsx",
+  "components/student/StudentPlannedPackageCard.tsx",
+  "components/AppShell.tsx",
+  "app/(app)/admin/package-launch-readiness/page.tsx",
+  "docs/product/student-planned-package-dashboard.md",
+  "docs/product/package-feature-flags.md",
+  "docs/product/paid-packages-launch-checklist.md",
+  "lib/i18n/locales/fr.json",
+  "lib/i18n/locales/en.json",
+  "lib/i18n/locales/es.json",
+  ".env.example",
+  "tests/offers/studentPlannedPackageDashboard.test.ts",
+  "tests/offers/packageLaunchReadiness.test.ts",
+  "tests/legal/safeDisclosures.test.ts",
+  "tests/legal/founderDecisionsAlignment.test.ts",
+  "package.json",
+]);
+
 function touchesFounderDecisionScope(file: string): boolean {
   return (
     liveFiles.includes(file) ||
@@ -592,6 +620,7 @@ test("branch did not touch restricted systems", () => {
     if (allowedPlannedPackageManualTransferFiles.has(file)) continue;
     if (allowedPlannedPackageManualTransferReversalFiles.has(file)) continue;
     if (allowedPlannedPackageE2eQaFiles.has(file)) continue;
+    if (allowedStudentPlannedPackageDashboardFiles.has(file)) continue;
     for (const rule of restrictedRules) {
       if (rule.re.test(file)) {
         violations.push(`${file} (${rule.label})`);
