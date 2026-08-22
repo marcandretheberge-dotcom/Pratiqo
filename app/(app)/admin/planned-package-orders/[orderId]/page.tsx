@@ -83,6 +83,11 @@ export default function PlannedPackageOrderDetailPage() {
   const [executeAcknowledged, setExecuteAcknowledged] = useState(false);
   const [payoutBusy, setPayoutBusy] = useState(false);
   const [payoutMessage, setPayoutMessage] = useState<string | null>(null);
+  const [transferBusyEntryId, setTransferBusyEntryId] = useState<string | null>(null);
+  const [transferConfirmEntryId, setTransferConfirmEntryId] = useState<string | null>(null);
+  const [transferConfirmText, setTransferConfirmText] = useState("");
+  const [transferAcknowledged, setTransferAcknowledged] = useState(false);
+  const [transferMessage, setTransferMessage] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!user || !isAdmin || !orderId) return;
@@ -159,6 +164,44 @@ export default function PlannedPackageOrderDetailPage() {
     const translate = t as (translationKey: string) => string;
     const translated = translate(key);
     return translated === key ? blocker : translated;
+  }
+
+  async function handleExecuteTransfer(entryId: string) {
+    if (!order) return;
+    if (transferConfirmText !== "TRANSFER" || !transferAcknowledged) return;
+    setTransferBusyEntryId(entryId);
+    setTransferMessage(null);
+    try {
+      const res = await adminFetch(
+        `/api/admin/planned-package-orders/${order.id}/payout-eligibility/${entryId}/execute-transfer`,
+        {
+          method: "POST",
+          body: JSON.stringify({ confirm: "TRANSFER" }),
+        },
+      );
+      const data = (await res.json()) as { error?: string; blockers?: string[] };
+      if (res.status === 403 && data.error === "manual_transfers_disabled") {
+        setTransferMessage(t("plannedPackageManualTransfersDisabled"));
+        return;
+      }
+      if (!res.ok) {
+        if (data.error === "refund_or_cancellation_blocker") {
+          setTransferMessage(t("plannedPackageManualTransferBlockedByRefund"));
+        } else {
+          setTransferMessage(data.error ?? t("plannedPackageManualTransferFailed"));
+        }
+        return;
+      }
+      setTransferMessage(t("plannedPackageManualTransferExecuted"));
+      setTransferConfirmEntryId(null);
+      setTransferConfirmText("");
+      setTransferAcknowledged(false);
+      await load();
+    } catch {
+      setTransferMessage(t("plannedPackageManualTransferFailed"));
+    } finally {
+      setTransferBusyEntryId(null);
+    }
   }
 
   async function handleCreateCancellationRequest() {
@@ -616,8 +659,14 @@ export default function PlannedPackageOrderDetailPage() {
               <p className="text-sm text-amber-800">{t("plannedPackagePayoutEligibilityAdminViewDisabled")}</p>
             ) : (
               <>
-                <p className="text-xs text-slate-500">{t("plannedPackagePayoutEligibilityNoStripeTransfer")}</p>
-                <p className="text-xs text-slate-500">{t("plannedPackagePayoutEligibilityDoesNotPayTeacher")}</p>
+                <p className="text-xs text-slate-500">
+                  {payout.manualTransfersEnabled
+                    ? t("plannedPackageManualTransferSectionHint")
+                    : t("plannedPackagePayoutEligibilityNoStripeTransfer")}
+                </p>
+                {!payout.manualTransfersEnabled ? (
+                  <p className="text-xs text-slate-500">{t("plannedPackagePayoutEligibilityDoesNotPayTeacher")}</p>
+                ) : null}
                 {payout.entries.length === 0 ? (
                   <p className="text-sm text-slate-600">{t("plannedPackagePayoutEligibilityEmpty")}</p>
                 ) : (
@@ -630,8 +679,10 @@ export default function PlannedPackageOrderDetailPage() {
                           <th className="py-2 pr-3">{t("plannedPackagePayoutEligibilityColDate")}</th>
                           <th className="py-2 pr-3">{t("plannedPackagePayoutEligibilityColBookingStatus")}</th>
                           <th className="py-2 pr-3">{t("plannedPackagePayoutEligibilityColGross")}</th>
+                          <th className="py-2 pr-3">{t("plannedPackageManualTransferTeacherNet")}</th>
                           <th className="py-2 pr-3">{t("plannedPackagePayoutEligibilityColStatus")}</th>
                           <th className="py-2 pr-3">{t("plannedPackagePayoutEligibilityColBlockers")}</th>
+                          <th className="py-2 pr-3">{t("plannedPackageManualTransferColActions")}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -647,6 +698,9 @@ export default function PlannedPackageOrderDetailPage() {
                             <td className="py-2 pr-3">{entry.bookingStatus}</td>
                             <td className="py-2 pr-3">
                               {formatMoney(entry.grossSessionAmountCents, entry.currency)}
+                            </td>
+                            <td className="py-2 pr-3">
+                              {formatMoney(entry.teacherNetCents, entry.currency)}
                             </td>
                             <td className="py-2 pr-3">{payoutStatusLabel(entry.status)}</td>
                             <td className="py-2 pr-3 text-xs text-slate-600">
@@ -664,6 +718,83 @@ export default function PlannedPackageOrderDetailPage() {
                                 </span>
                               ) : null}
                             </td>
+                            <td className="py-2 pr-3 align-top text-xs">
+                              {entry.latestTransferExecution?.status === "succeeded" ? (
+                                <>
+                                  <p className="font-medium text-teal-800">
+                                    {t("plannedPackageManualTransferExecuted")}
+                                  </p>
+                                  <p>{formatMoney(entry.latestTransferExecution.amountCents, entry.currency)}</p>
+                                  <p className="font-mono break-all">
+                                    {entry.latestTransferExecution.stripeTransferId ?? "—"}
+                                  </p>
+                                </>
+                              ) : entry.canExecuteManualTransfer ? (
+                                transferConfirmEntryId === entry.id ? (
+                                  <div className="space-y-2">
+                                    <p className="text-rose-900">{t("plannedPackageManualTransferStripeWarning")}</p>
+                                    <p className="text-rose-900">{t("plannedPackageManualTransferNoRefund")}</p>
+                                    <p className="text-rose-900">{t("plannedPackageManualTransferNoReversal")}</p>
+                                    <label className="flex items-start gap-2 text-rose-950">
+                                      <input
+                                        type="checkbox"
+                                        checked={transferAcknowledged}
+                                        onChange={(e) => setTransferAcknowledged(e.target.checked)}
+                                        className="mt-0.5"
+                                      />
+                                      {t("plannedPackageManualTransferConfirmAcknowledge")}
+                                    </label>
+                                    <input
+                                      type="text"
+                                      value={transferConfirmText}
+                                      onChange={(e) => setTransferConfirmText(e.target.value)}
+                                      placeholder="TRANSFER"
+                                      className="w-full rounded-lg border border-rose-200 px-2 py-1"
+                                    />
+                                    <div className="flex flex-wrap gap-2">
+                                      <button
+                                        type="button"
+                                        disabled={
+                                          transferBusyEntryId === entry.id ||
+                                          transferConfirmText !== "TRANSFER" ||
+                                          !transferAcknowledged
+                                        }
+                                        onClick={() => void handleExecuteTransfer(entry.id)}
+                                        className="rounded-lg bg-rose-700 px-2 py-1 font-bold text-white disabled:opacity-60"
+                                      >
+                                        {t("plannedPackageManualTransferExecuteStripe")}
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setTransferConfirmEntryId(null);
+                                          setTransferConfirmText("");
+                                          setTransferAcknowledged(false);
+                                        }}
+                                        className="rounded-lg border border-rose-200 px-2 py-1"
+                                      >
+                                        {t("cancel")}
+                                      </button>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    disabled={transferBusyEntryId === entry.id}
+                                    onClick={() => setTransferConfirmEntryId(entry.id)}
+                                    className="rounded-lg bg-rose-700 px-2 py-1 font-bold text-white disabled:opacity-60"
+                                  >
+                                    {t("plannedPackageManualTransferExecuteStripe")}
+                                  </button>
+                                )
+                              ) : entry.latestTransferExecution?.status === "failed" ? (
+                                <p className="text-rose-700">{t("plannedPackageManualTransferFailed")}</p>
+                              ) : payout.manualTransfersEnabled === false ? (
+                                <p className="text-amber-800">{t("plannedPackageManualTransfersDisabled")}</p>
+                              ) : (
+                                "—"
+                              )}
+                            </td>
                           </tr>
                         ))}
                       </tbody>
@@ -680,6 +811,7 @@ export default function PlannedPackageOrderDetailPage() {
                   {t("plannedPackagePayoutEligibilitySync")}
                 </button>
                 {payoutMessage ? <p className="mt-2 text-sm text-slate-700">{payoutMessage}</p> : null}
+                {transferMessage ? <p className="mt-2 text-sm text-slate-700">{transferMessage}</p> : null}
               </>
             )}
           </Section>

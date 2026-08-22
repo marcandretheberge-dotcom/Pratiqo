@@ -85,7 +85,7 @@ CREATE INDEX IF NOT EXISTS idx_planned_package_payout_eligibility_status_eligibl
 COMMENT ON TABLE public.planned_package_payout_eligibility_entries IS
   'Per-session planned package payout eligibility. No Stripe transfer in this layer.';
 
-ALTER TABLE public.planned_package_payout_eligibility_entries ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.planned_package_payout_eligibility_entries ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY planned_package_payout_eligibility_service_all
   ON public.planned_package_payout_eligibility_entries

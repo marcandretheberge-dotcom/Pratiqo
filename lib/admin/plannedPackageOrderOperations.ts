@@ -22,6 +22,7 @@ import {
   canUsePlannedPackagePayoutEligibilityLedger,
   isPlannedPackagePayoutEligibilityLedgerEnabled,
 } from "@/lib/offers/plannedPackagePayoutEligibilityLedger";
+import { canUsePlannedPackageManualTransfers } from "@/lib/offers/plannedPackageManualTransfers";
 import {
   fulfillPlannedPackageOrder,
   canUsePlannedPackageFulfillmentEngine,
@@ -49,12 +50,31 @@ type ReconciliationRefundOverlay = {
 
 type ReconciliationPayoutEligibilityOverlay = {
   ledgerEnabled: boolean;
+  manualTransfersEnabled: boolean;
   entries: Array<{
+    id: string;
     bookingId: string;
     status: string;
     blockers: string[];
     adminReviewRequired: boolean;
+    teacherNetCents: number | null;
+    transferStatus: string | null;
+    stripeTransferId: string | null;
+    transferredCents: number;
   }>;
+};
+
+type ReconciliationTransferOverlay = {
+  manualTransfersEnabled: boolean;
+  entries: Array<{
+    entryId: string;
+    status: string;
+    amountCents: number;
+    teacherNetCents: number | null;
+  }>;
+  latestExecutionStatus: string | null;
+  cancellationOpen: boolean;
+  refundExecuted: boolean;
 };
 
 export type AdminPlannedPackageOrderListRow = {
@@ -272,7 +292,18 @@ function buildReconciliation(
   holds: AdminPlannedPackageHoldRow[],
   bookings: AdminPlannedPackageBookingRow[],
   refundOverlay: ReconciliationRefundOverlay = {},
-  payoutOverlay: ReconciliationPayoutEligibilityOverlay = { ledgerEnabled: false, entries: [] },
+  payoutOverlay: ReconciliationPayoutEligibilityOverlay = {
+    ledgerEnabled: false,
+    manualTransfersEnabled: false,
+    entries: [],
+  },
+  transferOverlay: ReconciliationTransferOverlay = {
+    manualTransfersEnabled: false,
+    entries: [],
+    latestExecutionStatus: null,
+    cancellationOpen: false,
+    refundExecuted: false,
+  },
 ): ReturnType<typeof reconcilePlannedPackageOrder> {
   const paidAt = (row.paid_at as string | null) ?? null;
   const stripeCheckoutStatus = (row.stripe_checkout_status as string | null) ?? null;
@@ -310,7 +341,27 @@ function buildReconciliation(
     payoutEligibility: payoutOverlay.ledgerEnabled
       ? {
           ledgerEnabled: true,
-          entries: payoutOverlay.entries,
+          manualTransfersEnabled: payoutOverlay.manualTransfersEnabled,
+          entries: payoutOverlay.entries.map((e) => ({
+            id: e.id,
+            bookingId: e.bookingId,
+            status: e.status,
+            blockers: e.blockers,
+            adminReviewRequired: e.adminReviewRequired,
+            teacherNetCents: e.teacherNetCents,
+            transferStatus: e.transferStatus,
+            stripeTransferId: e.stripeTransferId,
+            transferredCents: e.transferredCents,
+          })),
+        }
+      : undefined,
+    transferExecutions: transferOverlay.manualTransfersEnabled
+      ? {
+          manualTransfersEnabled: true,
+          entries: transferOverlay.entries,
+          latestExecutionStatus: transferOverlay.latestExecutionStatus,
+          cancellationOpen: transferOverlay.cancellationOpen,
+          refundExecuted: transferOverlay.refundExecuted,
         }
       : undefined,
   });
@@ -350,33 +401,119 @@ async function loadPayoutEligibilityReconciliationOverlay(
   admin: AdminClient,
   orderId: string,
 ): Promise<ReconciliationPayoutEligibilityOverlay> {
+  const manualTransfersEnabled = canUsePlannedPackageManualTransfers();
   if (!canUsePlannedPackagePayoutEligibilityLedger()) {
-    return { ledgerEnabled: false, entries: [] };
+    return { ledgerEnabled: false, manualTransfersEnabled, entries: [] };
   }
 
   const { data, error } = await admin
     .from("planned_package_payout_eligibility_entries")
-    .select("booking_id, status, blocker_details, admin_review_required")
+    .select(
+      "id, booking_id, status, blocker_details, admin_review_required, teacher_net_cents, transfer_status, stripe_transfer_id, transferred_cents",
+    )
     .eq("planned_package_order_id", orderId);
 
   if (error) {
     console.error("[admin/planned-package-orders] payout eligibility load failed", error.message);
-    return { ledgerEnabled: isPlannedPackagePayoutEligibilityLedgerEnabled(), entries: [] };
+    return {
+      ledgerEnabled: isPlannedPackagePayoutEligibilityLedgerEnabled(),
+      manualTransfersEnabled,
+      entries: [],
+    };
   }
 
   const entries = ((data ?? []) as Record<string, unknown>[]).map((row) => {
     const details = (row.blocker_details ?? {}) as { blockers?: string[] };
     return {
+      id: String(row.id ?? ""),
       bookingId: String(row.booking_id ?? ""),
       status: String(row.status ?? "not_eligible"),
       blockers: Array.isArray(details.blockers)
         ? details.blockers.filter((b): b is string => typeof b === "string")
         : [],
       adminReviewRequired: row.admin_review_required === true,
+      teacherNetCents:
+        row.teacher_net_cents === null || row.teacher_net_cents === undefined
+          ? null
+          : Number(row.teacher_net_cents),
+      transferStatus: (row.transfer_status as string | null) ?? null,
+      stripeTransferId: (row.stripe_transfer_id as string | null) ?? null,
+      transferredCents: Number(row.transferred_cents ?? 0),
     };
   });
 
-  return { ledgerEnabled: true, entries };
+  return { ledgerEnabled: true, manualTransfersEnabled, entries };
+}
+
+async function loadTransferReconciliationOverlay(
+  admin: AdminClient,
+  orderId: string,
+): Promise<ReconciliationTransferOverlay> {
+  const manualTransfersEnabled = canUsePlannedPackageManualTransfers();
+  if (!manualTransfersEnabled) {
+    return {
+      manualTransfersEnabled: false,
+      entries: [],
+      latestExecutionStatus: null,
+      cancellationOpen: false,
+      refundExecuted: false,
+    };
+  }
+
+  const [{ data: transfers }, { data: cancel }, { data: refundExec }, { data: eligibility }] =
+    await Promise.all([
+      admin
+        .from("planned_package_transfer_executions")
+        .select("payout_eligibility_entry_id, status, amount_cents")
+        .eq("planned_package_order_id", orderId)
+        .order("created_at", { ascending: false }),
+      admin
+        .from("planned_package_cancellation_requests")
+        .select("status")
+        .eq("planned_package_order_id", orderId)
+        .in("status", ["requested", "quote_generated", "admin_review_required", "approved_for_manual_refund"])
+        .limit(1)
+        .maybeSingle(),
+      admin
+        .from("planned_package_refund_executions")
+        .select("status")
+        .eq("planned_package_order_id", orderId)
+        .eq("status", "succeeded")
+        .limit(1)
+        .maybeSingle(),
+      admin
+        .from("planned_package_payout_eligibility_entries")
+        .select("id, teacher_net_cents")
+        .eq("planned_package_order_id", orderId),
+    ]);
+
+  const teacherNetByEntry = new Map(
+    ((eligibility ?? []) as { id: string; teacher_net_cents: number | null }[]).map((e) => [
+      e.id,
+      e.teacher_net_cents,
+    ]),
+  );
+
+  const entries = ((transfers ?? []) as Record<string, unknown>[]).map((row) => {
+    const entryId = String(row.payout_eligibility_entry_id ?? "");
+    return {
+      entryId,
+      status: String(row.status ?? ""),
+      amountCents: Number(row.amount_cents ?? 0),
+      teacherNetCents: teacherNetByEntry.get(entryId) ?? null,
+    };
+  });
+
+  const latestExecutionStatus =
+    entries.length > 0 ? entries[0]!.status : null;
+
+  return {
+    manualTransfersEnabled: true,
+    entries,
+    latestExecutionStatus,
+    cancellationOpen: Boolean(cancel),
+    refundExecuted: Boolean(refundExec),
+  };
 }
 
 function matchesFilter(row: AdminPlannedPackageOrderListRow, filter: AdminPlannedPackageOrderFilter): boolean {
@@ -505,13 +642,15 @@ export async function getAdminPlannedPackageOrderDetail(
   const studentId = String(row.student_id ?? "");
   const teacherId = String(row.teacher_id ?? "");
 
-  const [profiles, teachers, holds, bookings, refundOverlay, payoutOverlay] = await Promise.all([
+  const [profiles, teachers, holds, bookings, refundOverlay, payoutOverlay, transferOverlay] =
+    await Promise.all([
     loadProfiles(admin, [studentId]),
     loadTeachers(admin, [teacherId]),
     loadHoldsForOrder(admin, orderId),
     loadBookingsForOrder(admin, orderId),
     loadRefundReconciliationOverlay(admin, orderId),
     loadPayoutEligibilityReconciliationOverlay(admin, orderId),
+    loadTransferReconciliationOverlay(admin, orderId),
   ]);
 
   const teacher = teachers.get(teacherId);
@@ -521,7 +660,14 @@ export async function getAdminPlannedPackageOrderDetail(
     teacherPerson = personFrom(tp.get(teacher.user_id), teacher.user_id);
   }
 
-  const reconciliation = buildReconciliation(row, holds, bookings, refundOverlay, payoutOverlay);
+  const reconciliation = buildReconciliation(
+    row,
+    holds,
+    bookings,
+    refundOverlay,
+    payoutOverlay,
+    transferOverlay,
+  );
   const base = mapOrderRow(
     row,
     personFrom(profiles.get(studentId), studentId),

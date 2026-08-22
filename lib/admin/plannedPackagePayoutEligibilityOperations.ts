@@ -14,15 +14,27 @@ import {
   syncPlannedPackagePayoutEligibilityForOrder,
   type PlannedPackagePayoutEligibilityEntryDto,
 } from "@/lib/offers/plannedPackagePayoutEligibility";
+import {
+  getManualTransferAdminFlags,
+  loadAdminTransferExecutionsForOrder,
+  type AdminTransferExecutionDto,
+} from "@/lib/admin/plannedPackageTransferOperations";
+import { canExecutePlannedPackageTransferInCurrentEnvironment } from "@/lib/offers/plannedPackageManualTransfer";
 
 type AdminClient = ReturnType<typeof getSupabaseAdmin>;
+
+export type AdminPlannedPackagePayoutEligibilityEntry = PlannedPackagePayoutEligibilityEntryDto & {
+  latestTransferExecution: AdminTransferExecutionDto | null;
+  canExecuteManualTransfer: boolean;
+};
 
 export type AdminPlannedPackagePayoutEligibilityContext = {
   enabled: boolean;
   adminViewEnabled: boolean;
-  entries: PlannedPackagePayoutEligibilityEntryDto[];
-  noStripeTransferCreated: true;
-  noPayoutReleased: true;
+  manualTransfersEnabled: boolean;
+  canExecuteManualTransfer: boolean;
+  entries: AdminPlannedPackagePayoutEligibilityEntry[];
+  noAutomaticPayoutCron: true;
 };
 
 export async function getAdminPlannedPackagePayoutEligibilityContext(
@@ -33,23 +45,49 @@ export async function getAdminPlannedPackagePayoutEligibilityContext(
   const adminViewEnabled = canShowPlannedPackagePayoutAdminView();
 
   if (!enabled) {
+    const flags = getManualTransferAdminFlags();
     return {
       enabled: false,
-      adminViewEnabled: isPlannedPackagePayoutEligibilityLedgerEnabled(),
+      adminViewEnabled: isPlannedPackagePayoutAdminViewEnabled(),
+      manualTransfersEnabled: flags.manualTransfersEnabled,
+      canExecuteManualTransfer: false,
       entries: [],
-      noStripeTransferCreated: true,
-      noPayoutReleased: true,
+      noAutomaticPayoutCron: true,
     };
   }
 
-  const entries = await listPlannedPackagePayoutEligibilityForOrder(admin, orderId);
+  const [entries, transferMap] = await Promise.all([
+    listPlannedPackagePayoutEligibilityForOrder(admin, orderId),
+    loadAdminTransferExecutionsForOrder(admin, orderId),
+  ]);
+
+  const flags = getManualTransferAdminFlags();
+  const canExecute = flags.manualTransfersEnabled && canExecutePlannedPackageTransferInCurrentEnvironment();
+
+  const enriched: AdminPlannedPackagePayoutEligibilityEntry[] = entries.map((entry) => {
+    const latestTransferExecution = transferMap.get(entry.id) ?? null;
+    const canExecuteManualTransfer =
+      canExecute &&
+      entry.status === "eligible" &&
+      entry.teacherNetCents != null &&
+      entry.teacherNetCents > 0 &&
+      entry.transferStatus !== "transferred" &&
+      !entry.stripeTransferId &&
+      latestTransferExecution?.status !== "succeeded";
+    return {
+      ...entry,
+      latestTransferExecution,
+      canExecuteManualTransfer,
+    };
+  });
 
   return {
     enabled: true,
     adminViewEnabled,
-    entries,
-    noStripeTransferCreated: true,
-    noPayoutReleased: true,
+    manualTransfersEnabled: flags.manualTransfersEnabled,
+    canExecuteManualTransfer: canExecute,
+    entries: enriched,
+    noAutomaticPayoutCron: true,
   };
 }
 
@@ -59,9 +97,8 @@ export async function adminSyncPlannedPackagePayoutEligibility(args: {
 }): Promise<
   | {
       ok: true;
-      entries: PlannedPackagePayoutEligibilityEntryDto[];
-      noStripeTransferCreated: true;
-      noPayoutReleased: true;
+      entries: AdminPlannedPackagePayoutEligibilityEntry[];
+      noAutomaticPayoutCron: true;
     }
   | { ok: false; status: number; error: string }
 > {
@@ -84,12 +121,11 @@ export async function adminSyncPlannedPackagePayoutEligibility(args: {
     return { ok: false, status, error: result.error };
   }
 
-  const entries = await listPlannedPackagePayoutEligibilityForOrder(args.admin, args.orderId);
+  const entries = await getAdminPlannedPackagePayoutEligibilityContext(args.admin, args.orderId);
 
   return {
     ok: true,
-    entries,
-    noStripeTransferCreated: true,
-    noPayoutReleased: true,
+    entries: entries.entries,
+    noAutomaticPayoutCron: true,
   };
 }

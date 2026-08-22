@@ -133,7 +133,16 @@ See also:
 | Default | OFF |
 | Runtime | Shows payout eligibility section on admin order detail |
 | Dependencies | Payout eligibility ledger flag + admin ops |
-| Production note | Read-only audit UI — no payout actions |
+| Production note | Read-only audit UI — no payout actions until manual transfers enabled |
+
+### `ENABLE_PLANNED_PACKAGE_MANUAL_TRANSFERS` (server only)
+
+| | |
+|--|--|
+| Default | OFF |
+| Runtime | Admin executes Stripe Connect transfer for eligible ledger entry only |
+| Dependencies | Payout eligibility ledger + admin view + fulfillment + admin ops |
+| Production note | Requires `PACKAGE_LEGAL_REVIEW_COMPLETED=true` in production; no automatic payout cron |
 
 ### `ENABLE_PLANNED_PACKAGE_CHECKOUT_TEST_MODE` (optional)
 

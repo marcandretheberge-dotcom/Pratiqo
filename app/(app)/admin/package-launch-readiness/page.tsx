@@ -345,6 +345,38 @@ function ReadinessBody({ readiness }: { readiness: PackageLaunchReadiness }) {
           ok={readiness.checks.plannedPackagePayoutEligibilityRefundBlockersConsidered}
         />
         <ChecklistRow
+          label="Exécution transfer manuel présente (admin, entrée admissible)"
+          ok={readiness.checks.plannedPackageManualTransferExecutionPresent}
+        />
+        <ChecklistRow
+          label="Exécution transfer manuel gated (chaîne admissibilité ledger)"
+          ok={readiness.checks.plannedPackageManualTransferExecutionGated}
+        />
+        <ChecklistRow
+          label="Entrée admissible requise avant transfer Stripe"
+          ok={readiness.checks.plannedPackageManualTransferEligibleEntryRequired}
+        />
+        <ChecklistRow
+          label="Idempotence transfer Stripe"
+          ok={readiness.checks.plannedPackageManualTransferIdempotencyPresent}
+        />
+        <ChecklistRow
+          label="Pas de cron versement automatique (transfer manuel)"
+          ok={readiness.checks.plannedPackageManualTransferNoAutomaticPayoutCron}
+        />
+        <ChecklistRow
+          label="Pas de transfer reversal dans exécution transfer"
+          ok={readiness.checks.plannedPackageManualTransferNoTransferReversal}
+        />
+        <ChecklistRow
+          label="Pas de Stripe refund dans exécution transfer"
+          ok={readiness.checks.plannedPackageManualTransferNoStripeRefund}
+        />
+        <ChecklistRow
+          label="Pas de Stripe payout dans exécution transfer"
+          ok={readiness.checks.plannedPackageManualTransferNoStripePayout}
+        />
+        <ChecklistRow
           label="Revue légale toujours requise"
           ok={readiness.checks.legalReviewMarkedRequired}
         />

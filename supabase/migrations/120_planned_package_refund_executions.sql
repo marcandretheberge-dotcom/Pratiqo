@@ -68,7 +68,7 @@ ALTER TABLE public.planned_package_pending_orders
 COMMENT ON COLUMN public.planned_package_pending_orders.refund_status IS
   'Package-level refund state: null, partial, refunded, refund_failed, etc.';
 
-ALTER TABLE public.planned_package_refund_executions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.planned_package_refund_executions ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY planned_package_refund_executions_service_all
   ON public.planned_package_refund_executions

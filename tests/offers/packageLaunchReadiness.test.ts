@@ -60,6 +60,7 @@ test("helper lists all package-related flags and never returns production_ready"
     "plannedPackageRefundQuotes",
     "plannedPackageRefundAdminReview",
     "plannedPackageManualRefunds",
+    "plannedPackageManualTransfers",
     "plannedPackagePayoutEligibilityLedger",
     "plannedPackageSessionDrafts",
     "plannedPackageTemporaryHolds",

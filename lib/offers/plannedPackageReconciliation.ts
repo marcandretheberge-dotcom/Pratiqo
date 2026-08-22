@@ -25,13 +25,32 @@ export type PlannedPackageAttentionReason =
   | "eligible_session_blocked_by_refund"
   | "payout_eligibility_admin_review_required"
   | "payout_allocation_mismatch"
-  | "payout_pricing_policy_not_finalized";
+  | "payout_pricing_policy_not_finalized"
+  | "eligible_transfer_not_executed"
+  | "transfer_execution_failed"
+  | "transfer_succeeded_but_entry_not_marked"
+  | "refund_exists_after_transfer"
+  | "cancellation_request_after_transfer"
+  | "transfer_amount_mismatch"
+  | "teacher_payment_not_ready_for_transfer";
 
 export type PlannedPackagePayoutEligibilityReconciliationEntry = {
+  id: string;
   bookingId: string;
   status: string;
   blockers: string[];
   adminReviewRequired: boolean;
+  teacherNetCents: number | null;
+  transferStatus: string | null;
+  stripeTransferId: string | null;
+  transferredCents: number;
+};
+
+export type PlannedPackageTransferReconciliationEntry = {
+  entryId: string;
+  status: string;
+  amountCents: number;
+  teacherNetCents: number | null;
 };
 
 export type PlannedPackageReconciliationInput = {
@@ -60,7 +79,15 @@ export type PlannedPackageReconciliationInput = {
   bookings: Array<{ id: string; sessionIndex: number | null; status?: string }>;
   payoutEligibility?: {
     ledgerEnabled: boolean;
+    manualTransfersEnabled?: boolean;
     entries: PlannedPackagePayoutEligibilityReconciliationEntry[];
+  };
+  transferExecutions?: {
+    manualTransfersEnabled: boolean;
+    entries: PlannedPackageTransferReconciliationEntry[];
+    latestExecutionStatus: string | null;
+    cancellationOpen: boolean;
+    refundExecuted: boolean;
   };
 };
 
@@ -216,6 +243,70 @@ export function reconcilePlannedPackageOrder(
       }
       if (entry.status === "eligible" && refundBlocksPayout) {
         reasons.push("eligible_session_blocked_by_refund");
+      }
+      if (
+        input.payoutEligibility.manualTransfersEnabled &&
+        entry.status === "eligible" &&
+        entry.teacherNetCents != null &&
+        entry.teacherNetCents > 0 &&
+        entry.transferStatus !== "transferred" &&
+        !entry.stripeTransferId &&
+        !refundBlocksPayout
+      ) {
+        reasons.push("eligible_transfer_not_executed");
+      }
+      if (
+        entry.teacherNetCents != null &&
+        entry.transferredCents > 0 &&
+        entry.transferredCents !== entry.teacherNetCents
+      ) {
+        reasons.push("transfer_amount_mismatch");
+      }
+      if (
+        entry.blockers.includes("teacher_payment_not_ready") &&
+        entry.status === "eligible" &&
+        input.payoutEligibility.manualTransfersEnabled
+      ) {
+        reasons.push("teacher_payment_not_ready_for_transfer");
+      }
+    }
+  }
+
+  if (input.transferExecutions?.manualTransfersEnabled && status === "fulfilled") {
+    if (input.transferExecutions.latestExecutionStatus === "failed") {
+      reasons.push("transfer_execution_failed");
+    }
+
+    for (const exec of input.transferExecutions.entries) {
+      if (exec.status === "succeeded" && exec.teacherNetCents != null && exec.amountCents !== exec.teacherNetCents) {
+        reasons.push("transfer_amount_mismatch");
+      }
+    }
+
+    if (input.transferExecutions.cancellationOpen || input.transferExecutions.refundExecuted) {
+      const hasTransferred = input.payoutEligibility?.entries.some(
+        (e) => e.transferStatus === "transferred" || e.stripeTransferId,
+      );
+      if (hasTransferred) {
+        if (input.transferExecutions.refundExecuted) {
+          reasons.push("refund_exists_after_transfer");
+        }
+        if (input.transferExecutions.cancellationOpen) {
+          reasons.push("cancellation_request_after_transfer");
+        }
+      }
+    }
+
+    for (const payoutEntry of input.payoutEligibility?.entries ?? []) {
+      const exec = input.transferExecutions.entries.find(
+        (e) => e.entryId === payoutEntry.id,
+      );
+      if (
+        exec?.status === "succeeded" &&
+        payoutEntry.transferStatus !== "transferred" &&
+        !payoutEntry.stripeTransferId
+      ) {
+        reasons.push("transfer_succeeded_but_entry_not_marked");
       }
     }
   }
