@@ -8,6 +8,7 @@ Related:
 - [`package-product-decision.md`](./package-product-decision.md)
 - [`student-planned-package-dashboard.md`](./student-planned-package-dashboard.md)
 - [`package-feature-flags.md`](./package-feature-flags.md)
+- [`planned-package-dashboard-polish.md`](./planned-package-dashboard-polish.md)
 - Route: `/teacher/packages`
 - API: `GET /api/teacher/planned-packages`
 

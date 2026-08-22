@@ -493,6 +493,29 @@ function ReadinessBody({ readiness }: { readiness: PackageLaunchReadiness }) {
           ok={readiness.checks.teacherPlannedPackageDashboardNoTeacherReversalExecution}
         />
         <ChecklistRow
+          label="Tableaux forfaits — polish élève/professeur"
+          ok={readiness.checks.plannedPackageDashboardPolishComplete}
+        />
+        <ChecklistRow
+          label="Tableaux forfaits — liens croisés sûrs"
+          ok={readiness.checks.plannedPackageDashboardSafeCrossLinks}
+        />
+        <ChecklistRow
+          label="Tableaux forfaits — empty/loading/error mobile"
+          ok={readiness.checks.plannedPackageDashboardMobileEmptyLoadingError}
+        />
+        <ChecklistRow
+          label="DTO élève/prof — toujours sans internals Stripe"
+          ok={
+            readiness.checks.plannedPackageDashboardStudentDtoStillSafe &&
+            readiness.checks.plannedPackageDashboardTeacherDtoStillSafe
+          }
+        />
+        <ChecklistRow
+          label="Aucun self-serve refund/payout/reversal"
+          ok={readiness.checks.plannedPackageDashboardNoSelfServeFinancialActions}
+        />
+        <ChecklistRow
           label="Visibilité admin / support (snapshots & source de paiement)"
           ok={readiness.checks.adminSupportVisibilityPresent}
         />

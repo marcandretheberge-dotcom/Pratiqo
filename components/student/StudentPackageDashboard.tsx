@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Package } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { getSupabaseClient } from "@/lib/supabase";
 import { useLocale } from "@/lib/locale-context";
@@ -15,7 +15,12 @@ import { isStudentPlannedPackageDashboardUiEnabled } from "@/lib/offers/plannedP
 import type { StudentPlannedPackageDto } from "@/lib/offers/plannedPackageStudentDto";
 import { StudentPackageCard } from "@/components/student/StudentPackageCard";
 import { StudentPlannedPackageCard } from "@/components/student/StudentPlannedPackageCard";
-import { AppSectionListSkeleton } from "@/components/loading/AppSkeletons";
+import { PlannedPackageEmptyState } from "@/components/packages/PlannedPackageEmptyState";
+import {
+  PlannedPackageLoadError,
+  PlannedPackageLoadingState,
+} from "@/components/packages/PlannedPackageLoadState";
+import { PLANNED_PACKAGE_STUDENT_EXPLORE_HREF } from "@/lib/offers/plannedPackageDashboardLinks";
 
 export function StudentPackageDashboard() {
   const { user, profile } = useAuth();
@@ -164,7 +169,7 @@ export function StudentPackageDashboard() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-6 sm:py-8" data-testid="student-packages-dashboard">
+    <div className="mx-auto max-w-3xl overflow-x-hidden px-4 py-6 sm:py-8" data-testid="student-packages-dashboard">
       <div className="mb-6 flex items-center gap-3">
         <Link
           href="/dashboard"
@@ -180,30 +185,20 @@ export function StudentPackageDashboard() {
       </div>
 
       {loading ? (
-        <AppSectionListSkeleton />
+        <PlannedPackageLoadingState label={t("plannedPackageDashboardLoading")} />
       ) : error ? (
-        <p className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          {error}
-        </p>
+        <PlannedPackageLoadError
+          message={t("plannedPackageDashboardLoadError")}
+          hint={t("plannedPackageDashboardLoadErrorHint")}
+        />
       ) : isEmpty ? (
-        <div
-          className="rounded-2xl border border-dashed border-[#DCEAE3] bg-[#F3FAF6]/60 px-5 py-10 text-center"
-          data-testid="student-packages-empty"
-        >
-          <Package className="mx-auto text-teal-700/70" size={36} aria-hidden />
-          <p className="mt-3 text-base font-semibold text-slate-800">
-            {t("studentPlannedPackagesEmptyTitle")}
-          </p>
-          <p className="mt-2 text-sm leading-relaxed text-slate-600">
-            {t("studentPackagesEmptyBody")}
-          </p>
-          <Link
-            href="/student/search"
-            className="mt-5 inline-flex min-h-11 items-center justify-center rounded-full bg-teal-700 px-5 text-sm font-bold text-white hover:bg-teal-800"
-          >
-            {t("studentPackagesFindTeacher")}
-          </Link>
-        </div>
+        <PlannedPackageEmptyState
+          testId="student-packages-empty"
+          title={t("plannedPackageDashboardStudentEmptyTitle")}
+          body={t("plannedPackageDashboardStudentEmptyBody")}
+          ctaHref={PLANNED_PACKAGE_STUDENT_EXPLORE_HREF}
+          ctaLabel={t("plannedPackageDashboardExploreTeachers")}
+        />
       ) : (
         <div className="space-y-8">
           {plannedUiEnabled && plannedActive.length > 0 ? (

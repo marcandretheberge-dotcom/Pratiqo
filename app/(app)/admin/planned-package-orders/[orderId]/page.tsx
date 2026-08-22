@@ -11,6 +11,13 @@ import { cn } from "@/lib/utils";
 import type { AdminPlannedPackageOrderDetail } from "@/lib/admin/plannedPackageOrderOperations";
 import type { AdminPlannedPackageRefundContext } from "@/lib/admin/plannedPackageRefundOperations";
 import type { AdminPlannedPackagePayoutEligibilityContext } from "@/lib/admin/plannedPackagePayoutEligibilityOperations";
+import {
+  PLANNED_PACKAGE_ADMIN_READINESS_HREF,
+  PLANNED_PACKAGE_STUDENT_DASHBOARD_HREF,
+  PLANNED_PACKAGE_TEACHER_DASHBOARD_HREF,
+  adminBookingSearchHref,
+  adminUserHref,
+} from "@/lib/offers/plannedPackageDashboardLinks";
 
 function formatDate(iso: string | null): string {
   if (!iso) return "—";
@@ -446,11 +453,39 @@ export default function PlannedPackageOrderDetailPage() {
                   : ""}
               </p>
             ) : null}
+            <div
+              className="flex flex-wrap gap-3 text-sm font-semibold text-teal-800"
+              data-testid="admin-planned-package-cross-links"
+            >
+              <Link href={PLANNED_PACKAGE_ADMIN_READINESS_HREF} className="hover:underline">
+                {t("plannedPackageDashboardAdminReadinessLink")}
+              </Link>
+              <span className="font-normal text-slate-500">
+                {t("plannedPackageDashboardAdminOwnerGatedNote")}{" "}
+                <code className="text-xs">{PLANNED_PACKAGE_STUDENT_DASHBOARD_HREF}</code>
+                {" · "}
+                <code className="text-xs">{PLANNED_PACKAGE_TEACHER_DASHBOARD_HREF}</code>
+              </span>
+            </div>
           </header>
 
           <Section title={t("plannedPackageAdminOpsSectionOrder")}>
             <Row label={t("plannedPackageAdminOpsFieldStatus")} value={order.orderStatus} />
-            <Row label={t("plannedPackageAdminOpsFieldStudent")} value={person(order.student)} />
+            <Row
+              label={t("plannedPackageAdminOpsFieldStudent")}
+              value={
+                order.student?.id ? (
+                  <Link
+                    href={adminUserHref(order.student.id)}
+                    className="font-semibold text-teal-800 hover:underline"
+                  >
+                    {person(order.student)}
+                  </Link>
+                ) : (
+                  person(order.student)
+                )
+              }
+            />
             <Row label={t("plannedPackageAdminOpsFieldTeacher")} value={person(order.teacher)} />
             <Row label={t("plannedPackageAdminOpsFieldOffer")} value={order.offerTitleSnapshot} />
             <Row
@@ -514,7 +549,13 @@ export default function PlannedPackageOrderDetailPage() {
               <ul className="space-y-2 text-sm">
                 {order.bookings.map((b) => (
                   <li key={b.id} className="rounded-xl border border-slate-100 px-3 py-2 font-mono">
-                    {b.shortId} · idx {b.sessionIndex ?? "—"} · {b.status}
+                    <Link
+                      href={adminBookingSearchHref(b.shortId)}
+                      className="font-semibold text-teal-800 hover:underline"
+                    >
+                      {b.shortId}
+                    </Link>
+                    {` · idx ${b.sessionIndex ?? "—"} · ${b.status}`}
                   </li>
                 ))}
               </ul>
@@ -1065,7 +1106,7 @@ function Row({
   mono,
 }: {
   label: string;
-  value: string;
+  value: React.ReactNode;
   mono?: boolean;
 }) {
   return (

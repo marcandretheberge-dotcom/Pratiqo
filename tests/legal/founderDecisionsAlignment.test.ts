@@ -475,6 +475,42 @@ const allowedTeacherPlannedPackageDashboardFiles = new Set<string>([
   "package.json",
 ]);
 
+/** Planned package dashboard polish — UX/cross-links, no financial logic. */
+const allowedPlannedPackageDashboardPolishFiles = new Set<string>([
+  "lib/offers/plannedPackageDashboardLinks.ts",
+  "lib/offers/plannedPackageDashboardUi.ts",
+  "lib/offers/packageLaunchReadiness.ts",
+  "components/packages/PlannedPackageStatusBadge.tsx",
+  "components/packages/PlannedPackageSessionTimeline.tsx",
+  "components/packages/PlannedPackageProgressSummary.tsx",
+  "components/packages/PlannedPackageEmptyState.tsx",
+  "components/packages/PlannedPackageSupportCta.tsx",
+  "components/packages/PlannedPackageLoadState.tsx",
+  "components/student/StudentPackageDashboard.tsx",
+  "components/student/StudentPlannedPackageCard.tsx",
+  "components/teacher/TeacherPackageDashboard.tsx",
+  "components/teacher/TeacherPlannedPackageCard.tsx",
+  "app/(app)/admin/planned-package-orders/page.tsx",
+  "app/(app)/admin/planned-package-orders/[orderId]/page.tsx",
+  "app/(app)/admin/package-launch-readiness/page.tsx",
+  "docs/product/planned-package-dashboard-polish.md",
+  "docs/product/student-planned-package-dashboard.md",
+  "docs/product/teacher-planned-package-dashboard.md",
+  "docs/product/paid-packages-launch-checklist.md",
+  "lib/i18n/locales/fr.json",
+  "lib/i18n/locales/en.json",
+  "lib/i18n/locales/es.json",
+  "tests/offers/plannedPackageDashboardPolish.test.ts",
+  "tests/offers/studentPlannedPackageDashboard.test.ts",
+  "tests/offers/teacherPlannedPackageDashboard.test.ts",
+  "tests/offers/packageLaunchReadiness.test.ts",
+  "tests/offers/marketplaceIndependentTeacherGuardrails.test.ts",
+  "tests/legal/marketplaceIndependentTeacherHardening.test.ts",
+  "tests/legal/safeDisclosures.test.ts",
+  "tests/legal/founderDecisionsAlignment.test.ts",
+  "package.json",
+]);
+
 function touchesFounderDecisionScope(file: string): boolean {
   return (
     liveFiles.includes(file) ||
@@ -652,6 +688,7 @@ test("branch did not touch restricted systems", () => {
     if (allowedPlannedPackageE2eQaFiles.has(file)) continue;
     if (allowedStudentPlannedPackageDashboardFiles.has(file)) continue;
     if (allowedTeacherPlannedPackageDashboardFiles.has(file)) continue;
+    if (allowedPlannedPackageDashboardPolishFiles.has(file)) continue;
     for (const rule of restrictedRules) {
       if (rule.re.test(file)) {
         violations.push(`${file} (${rule.label})`);

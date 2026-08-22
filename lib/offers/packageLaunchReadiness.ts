@@ -100,6 +100,7 @@ export const PACKAGE_LAUNCH_REQUIRED_DOCS = [
   "docs/product/planned-package-e2e-staging-qa.md",
   "docs/product/student-planned-package-dashboard.md",
   "docs/product/teacher-planned-package-dashboard.md",
+  "docs/product/planned-package-dashboard-polish.md",
 ] as const;
 
 export const PACKAGE_LAUNCH_COPY_GUARD_TESTS = [
@@ -288,6 +289,12 @@ export type PackageLaunchReadiness = {
     teacherPlannedPackageDashboardNoTeacherTransferExecution: boolean;
     teacherPlannedPackageDashboardNoTeacherRefundExecution: boolean;
     teacherPlannedPackageDashboardNoTeacherReversalExecution: boolean;
+    plannedPackageDashboardPolishComplete: boolean;
+    plannedPackageDashboardSafeCrossLinks: boolean;
+    plannedPackageDashboardMobileEmptyLoadingError: boolean;
+    plannedPackageDashboardStudentDtoStillSafe: boolean;
+    plannedPackageDashboardTeacherDtoStillSafe: boolean;
+    plannedPackageDashboardNoSelfServeFinancialActions: boolean;
     plannedPackagePublicPurchaseBlocked: boolean;
     progressivePayoutNotImplemented: boolean;
     refundPolicyStillDraft: boolean;
@@ -702,6 +709,12 @@ export function getPackageLaunchReadiness(): PackageLaunchReadiness {
     teacherPlannedPackageDashboardNoTeacherTransferExecution: true,
     teacherPlannedPackageDashboardNoTeacherRefundExecution: true,
     teacherPlannedPackageDashboardNoTeacherReversalExecution: true,
+    plannedPackageDashboardPolishComplete: true,
+    plannedPackageDashboardSafeCrossLinks: true,
+    plannedPackageDashboardMobileEmptyLoadingError: true,
+    plannedPackageDashboardStudentDtoStillSafe: true,
+    plannedPackageDashboardTeacherDtoStillSafe: true,
+    plannedPackageDashboardNoSelfServeFinancialActions: true,
     plannedPackagePublicPurchaseBlocked: !canPubliclyPurchasePlannedPackage(),
     progressivePayoutNotImplemented: true,
     refundPolicyStillDraft: true,
