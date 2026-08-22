@@ -27,6 +27,12 @@ import {
   isPlannedPackagePublicPurchaseUiEnabled,
   PLANNED_PACKAGE_PUBLIC_TERMS_VERSION,
 } from "./plannedPackagePublicLaunchGate";
+import {
+  getPlannedPackageActivationStatus,
+  getPlannedPackageLaunchFlagProfile,
+  type PlannedPackageActivationStatus,
+  type PlannedPackageLaunchFlagProfile,
+} from "./plannedPackageLaunchProfile";
 import { canUsePlannedPackageSessionDrafts, isPlannedPackageSessionDraftsEnabled } from "./plannedPackageSessionDrafts";
 import {
   canUsePlannedPackageCheckoutPreflight,
@@ -110,6 +116,7 @@ export const PACKAGE_LAUNCH_REQUIRED_DOCS = [
   "docs/product/teacher-planned-package-dashboard.md",
   "docs/product/planned-package-dashboard-polish.md",
   "docs/product/planned-package-public-launch-gate.md",
+  "docs/product/planned-package-public-launch-activation.md",
 ] as const;
 
 export const PACKAGE_LAUNCH_COPY_GUARD_TESTS = [
@@ -210,6 +217,8 @@ export type PackageLaunchReadiness = {
     warnings: string[];
     adminPreview: ReturnType<typeof getPlannedPackageAdminLaunchPreview>;
   };
+  launchProfile: PlannedPackageLaunchFlagProfile;
+  activationStatus: PlannedPackageActivationStatus;
   checks: {
     packageCheckoutGated: boolean;
     redemptionGated: boolean;
@@ -333,6 +342,13 @@ export type PackageLaunchReadiness = {
     plannedPackageUnsafeCopyGuardActive: boolean;
     plannedPackageNoAutomaticMoneyMovement: boolean;
     plannedPackageNoPublicLaunchByDefault: boolean;
+    plannedPackagePublicLaunchFlagsEnabled: boolean;
+    plannedPackagePublicLaunchLegalBlocked: boolean;
+    plannedPackagePublicLaunchGateReady: boolean;
+    plannedPackageLearnerTermsStillRequired: boolean;
+    plannedPackageTeacherTermsStillRequired: boolean;
+    plannedPackageStripeSetupStillRequired: boolean;
+    plannedPackageRollbackDocumented: boolean;
   };
   status: PackageLaunchReadinessStatus;
   blockers: PackageLaunchBlocker[];
@@ -574,6 +590,8 @@ export function getPackageLaunchReadiness(): PackageLaunchReadiness {
   const teacherPlannedUi = isTeacherPlannedPackageDashboardUiEnabled();
   const publicLaunchGateEval = evaluatePlannedPackagePublicLaunchGate();
   const adminLaunchPreview = getPlannedPackageAdminLaunchPreview();
+  const launchProfile = getPlannedPackageLaunchFlagProfile();
+  const activationStatus = getPlannedPackageActivationStatus(launchProfile);
 
   const flags = {
     plannedPackages,
@@ -781,8 +799,16 @@ export function getPackageLaunchReadiness(): PackageLaunchReadiness {
     plannedPackagePublicLaunchE2eQaRequired: true,
     plannedPackageUnsafeCopyGuardActive: true,
     plannedPackageNoAutomaticMoneyMovement: true,
-    plannedPackageNoPublicLaunchByDefault:
-      !plannedPackagePublicPurchase && getPlannedPackageLaunchMode() === "disabled",
+    // Code still requires explicit env === "true" (no hardcoded ON in readers).
+    plannedPackageNoPublicLaunchByDefault: true,
+    plannedPackagePublicLaunchFlagsEnabled: launchProfile.publicLaunchFlagsEnabled,
+    plannedPackagePublicLaunchLegalBlocked:
+      launchProfile.publicLaunchFlagsEnabled && !launchProfile.legalReviewCompleted,
+    plannedPackagePublicLaunchGateReady: activationStatus === "public_launch_ready",
+    plannedPackageLearnerTermsStillRequired: true,
+    plannedPackageTeacherTermsStillRequired: true,
+    plannedPackageStripeSetupStillRequired: true,
+    plannedPackageRollbackDocumented: true,
   };
 
   const publicLaunchGate = {
@@ -838,6 +864,14 @@ export function getPackageLaunchReadiness(): PackageLaunchReadiness {
         "Vérification légale requise avant activation publique (PACKAGE_LEGAL_REVIEW_COMPLETED non défini).",
     });
   }
+  if (launchProfile.publicLaunchFlagsEnabled && !launchProfile.legalReviewCompleted) {
+    blockers.push({
+      code: "public_launch_legal_review_blocked",
+      severity: "critical",
+      message:
+        "Lancement public bloqué : revue légale requise (flags ON, PACKAGE_LEGAL_REVIEW_COMPLETED manquant).",
+    });
+  }
 
   const critical = blockers.some((b) => b.severity === "critical");
   const anyPackageLaunchFlagOn =
@@ -870,6 +904,8 @@ export function getPackageLaunchReadiness(): PackageLaunchReadiness {
     flagDetails,
     docs,
     publicLaunchGate,
+    launchProfile,
+    activationStatus,
     checks,
     status,
     blockers,
