@@ -38,6 +38,7 @@ export type AdminOverviewModuleId =
   | "payments"
   | "stripe_diagnostics"
   | "package_launch_readiness"
+  | "planned_package_orders"
   | "promotions"
   | "ambassadors"
   | "seo"
@@ -112,6 +113,15 @@ export const ADMIN_COMMAND_CENTER_MODULES: readonly AdminOverviewModule[] = [
       "Flags, crédits, annulations, dashboards et garde-fous marketplace avant activation contrôlée.",
     cta: "Voir la préparation",
     href: "/admin/package-launch-readiness",
+    status: "ready",
+  },
+  {
+    id: "planned_package_orders",
+    title: "Commandes de forfaits planifiés",
+    description:
+      "Diagnostic paiement, fulfillment, holds et réconciliation — sans versement ni remboursement.",
+    cta: "Voir les commandes",
+    href: "/admin/planned-package-orders",
     status: "ready",
   },
   {

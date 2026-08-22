@@ -688,7 +688,12 @@ export async function POST(req: Request) {
             : null;
 
       if (md?.package_type === "planned_package" && piId) {
-        await confirmPlannedPackageStripeCheckout({ session: sess, paymentIntentId: piId });
+        await confirmPlannedPackageStripeCheckout({
+          session: sess,
+          paymentIntentId: piId,
+          webhookEventId: event.id,
+          webhookEventType: event.type,
+        });
       } else if (md?.checkout_kind === "group_session" && piId) {
         await confirmGroupSessionCheckout(md, piId);
       } else {
@@ -735,7 +740,10 @@ export async function POST(req: Request) {
 
     if (event.type === "checkout.session.expired") {
       const sess = event.data.object as Stripe.Checkout.Session;
-      await expirePlannedPackageStripeCheckout(sess);
+      await expirePlannedPackageStripeCheckout(sess, {
+        eventId: event.id,
+        eventType: event.type,
+      });
     }
 
     if (

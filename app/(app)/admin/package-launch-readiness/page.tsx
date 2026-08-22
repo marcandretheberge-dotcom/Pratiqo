@@ -253,6 +253,32 @@ function ReadinessBody({ readiness }: { readiness: PackageLaunchReadiness }) {
           ok={readiness.checks.plannedPackagePublicPurchaseBlocked}
         />
         <ChecklistRow
+          label="Ops admin commandes forfait planifié présentes"
+          ok={readiness.checks.plannedPackageAdminOpsPresent}
+        />
+        <ChecklistRow
+          label={`Ops admin gated (ENABLE_PLANNED_PACKAGE_ADMIN_OPS) : ${
+            readiness.flags.plannedPackageAdminOps ? "ON" : "OFF"
+          }`}
+          ok={readiness.checks.plannedPackageAdminOpsGated}
+        />
+        <ChecklistRow
+          label="Réconciliation paid-not-fulfilled"
+          ok={readiness.checks.plannedPackageAdminOpsPaidNotFulfilledDetection}
+        />
+        <ChecklistRow
+          label="Retry fulfillment gated (admin ops + moteur)"
+          ok={readiness.checks.plannedPackageAdminOpsRetryGated}
+        />
+        <ChecklistRow
+          label="Ops admin — aucune action versement"
+          ok={readiness.checks.plannedPackageAdminOpsNoPayoutAction}
+        />
+        <ChecklistRow
+          label="Ops admin — aucune action remboursement"
+          ok={readiness.checks.plannedPackageAdminOpsNoRefundAction}
+        />
+        <ChecklistRow
           label="Revue légale toujours requise"
           ok={readiness.checks.legalReviewMarkedRequired}
         />

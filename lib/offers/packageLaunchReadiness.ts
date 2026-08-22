@@ -33,6 +33,10 @@ import {
   isPlannedPackageFulfillmentEngineEnabled,
 } from "./plannedPackageFulfillment";
 import {
+  canUsePlannedPackageAdminOps,
+  isPlannedPackageAdminOpsEnabled,
+} from "./plannedPackageAdminOps";
+import {
   canUsePlannedPackageStripeCheckout,
   isPlannedPackageStripeCheckoutEnabled,
 } from "./plannedPackageStripeCheckout";
@@ -78,6 +82,7 @@ export type PackageLaunchFlagId =
   | "plannedPackageTemporaryHolds"
   | "plannedPackageFulfillmentEngine"
   | "plannedPackageStripeCheckout"
+  | "plannedPackageAdminOps"
   | "bookingOfferSelection"
   | "offerSnapshotCheckout"
   | "packageEntitlements"
@@ -112,6 +117,7 @@ export type PackageLaunchReadiness = {
     plannedPackageTemporaryHolds: boolean;
     plannedPackageFulfillmentEngine: boolean;
     plannedPackageStripeCheckout: boolean;
+    plannedPackageAdminOps: boolean;
     bookingOfferSelection: boolean;
     offerSnapshotCheckout: boolean;
     packageEntitlements: boolean;
@@ -161,6 +167,13 @@ export type PackageLaunchReadiness = {
     plannedPackageStripeCheckoutNoTransfer: boolean;
     plannedPackageStripeCheckoutWebhookFulfillment: boolean;
     plannedPackageStripeCheckoutNoPayoutRelease: boolean;
+    plannedPackageAdminOpsPresent: boolean;
+    plannedPackageAdminOpsGated: boolean;
+    plannedPackageAdminOpsReconciliationPresent: boolean;
+    plannedPackageAdminOpsPaidNotFulfilledDetection: boolean;
+    plannedPackageAdminOpsRetryGated: boolean;
+    plannedPackageAdminOpsNoPayoutAction: boolean;
+    plannedPackageAdminOpsNoRefundAction: boolean;
     plannedPackagePublicPurchaseBlocked: boolean;
     progressivePayoutNotImplemented: boolean;
     refundPolicyStillDraft: boolean;
@@ -228,6 +241,14 @@ export const PACKAGE_LAUNCH_FLAG_META: ReadonlyArray<{
     launchMeaningFr: "Gated — revue légale requise en production ; pas de versement automatique.",
   },
   {
+    id: "plannedPackageAdminOps",
+    envName: "ENABLE_PLANNED_PACKAGE_ADMIN_OPS",
+    uiEnvName: null,
+    explanationFr:
+      "Ops admin internes : visibilité commandes, réconciliation, retry fulfillment sécurisé.",
+    launchMeaningFr: "Couche sécurité interne — pas de versement, remboursement, ni lancement public.",
+  },
+  {
     id: "bookingOfferSelection",
     envName: "NEXT_PUBLIC_ENABLE_BOOKING_OFFER_SELECTION",
     uiEnvName: "NEXT_PUBLIC_ENABLE_BOOKING_OFFER_SELECTION",
@@ -286,6 +307,7 @@ export function getPackageLaunchReadiness(): PackageLaunchReadiness {
   const plannedPackageTemporaryHolds = isPlannedPackageTemporaryHoldsEnabled();
   const plannedPackageFulfillmentEngine = isPlannedPackageFulfillmentEngineEnabled();
   const plannedPackageStripeCheckout = isPlannedPackageStripeCheckoutEnabled();
+  const plannedPackageAdminOps = isPlannedPackageAdminOpsEnabled();
   const bookingOfferSelection = isBookingOfferSelectionEnabled();
   const offerSnapshotCheckout = isOfferSnapshotCheckoutEnabled();
   const packageEntitlements = isPackageEntitlementsEnabled();
@@ -302,6 +324,7 @@ export function getPackageLaunchReadiness(): PackageLaunchReadiness {
     plannedPackageTemporaryHolds,
     plannedPackageFulfillmentEngine,
     plannedPackageStripeCheckout,
+    plannedPackageAdminOps,
     bookingOfferSelection,
     offerSnapshotCheckout,
     packageEntitlements,
@@ -391,6 +414,14 @@ export function getPackageLaunchReadiness(): PackageLaunchReadiness {
     plannedPackageStripeCheckoutNoTransfer: true,
     plannedPackageStripeCheckoutWebhookFulfillment: true,
     plannedPackageStripeCheckoutNoPayoutRelease: true,
+    plannedPackageAdminOpsPresent: true,
+    plannedPackageAdminOpsGated:
+      !canUsePlannedPackageAdminOps() || plannedPackageFulfillmentEngine,
+    plannedPackageAdminOpsReconciliationPresent: true,
+    plannedPackageAdminOpsPaidNotFulfilledDetection: true,
+    plannedPackageAdminOpsRetryGated: true,
+    plannedPackageAdminOpsNoPayoutAction: true,
+    plannedPackageAdminOpsNoRefundAction: true,
     plannedPackagePublicPurchaseBlocked: !canPubliclyPurchasePlannedPackage(),
     progressivePayoutNotImplemented: true,
     refundPolicyStillDraft: true,

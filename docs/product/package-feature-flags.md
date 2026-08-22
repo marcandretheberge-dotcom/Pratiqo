@@ -78,6 +78,17 @@ See also:
 | Safe preview | ON in staging with `ENABLE_PLANNED_PACKAGE_CHECKOUT_TEST_MODE` + Stripe test keys |
 | Production note | Requires `PACKAGE_LEGAL_REVIEW_COMPLETED=true`. Platform charge only — `transfer_group` set, **no transfer/payout** |
 
+### `ENABLE_PLANNED_PACKAGE_ADMIN_OPS` (server only)
+
+| | |
+|--|--|
+| Default | OFF |
+| Runtime | Admin list/detail APIs + `/admin/planned-package-orders` |
+| Who sees effect | Admin can diagnose orders, reconciliation warnings, and retry fulfillment when safe |
+| Dependencies | Fulfillment engine (+ full planned package chain) |
+| Safe preview | ON in staging for support diagnostics |
+| Production note | **Read-heavy + safe retry only** — no payout, refund, mark-paid, or public launch |
+
 ### `ENABLE_PLANNED_PACKAGE_CHECKOUT_TEST_MODE` (optional)
 
 | | |
