@@ -14,6 +14,14 @@ import {
 } from "./plannedPackageSessionDrafts";
 import { isPlannedPackageOfferType } from "./plannedPackages";
 import {
+  evaluatePlannedPackagePublicLaunchGate,
+  isPlannedPackagePublicPurchaseEnabled,
+} from "./plannedPackagePublicLaunchGate";
+import {
+  loadTeacherPackageTerms,
+  teacherPackageTermsGateInput,
+} from "./plannedPackagePublicTerms";
+import {
   parseStartsAtToBookingSlot,
   validatePlannedPackageDraftSlot,
   type PlannedPackageSlotAdmin,
@@ -131,6 +139,21 @@ export async function createPlannedPackageSessionDraft(args: {
   // Prefer published packages in controlled preview; also allow draft/paused for teacher testing is out of scope — require published for learner drafts.
   if (offer.status !== "published" || !offer.published_at) {
     return { ok: false, status: 409, error: "offer_not_available_for_package_draft" };
+  }
+
+  // When public purchase is ON, enforce the centralized launch gate (canary, teacher terms, deps).
+  // When OFF, session drafts remain available for controlled QA/preview.
+  if (isPlannedPackagePublicPurchaseEnabled()) {
+    const teacherTerms = await loadTeacherPackageTerms(offer.teacher_id);
+    const gate = evaluatePlannedPackagePublicLaunchGate({
+      teacherId: offer.teacher_id,
+      offerId: offer.id,
+      ...teacherPackageTermsGateInput(teacherTerms),
+    });
+    if (!gate.canCreateSessionDraft) {
+      const code = gate.blockers[0] ?? "planned_package_public_purchase_disabled";
+      return { ok: false, status: 403, error: code };
+    }
   }
 
   const sessionCount = offer.session_count;

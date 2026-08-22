@@ -10,6 +10,7 @@ Related:
 - [`package-manual-refund-execution.md`](./package-manual-refund-execution.md)
 - [`package-payout-eligibility-ledger.md`](./package-payout-eligibility-ledger.md)
 - [`paid-packages-launch-checklist.md`](./paid-packages-launch-checklist.md)
+- [`planned-package-public-launch-gate.md`](./planned-package-public-launch-gate.md)
 - Admin: `/admin/package-launch-readiness`
 - Diagnostics API: `GET /api/admin/planned-package-e2e-qa` (requires `ENABLE_PLANNED_PACKAGE_E2E_QA_TOOLS=true`, non-production)
 
@@ -26,7 +27,7 @@ charge → fulfillment → bookings → completion → payout eligibility
 
 This document is a QA harness. It does **not**:
 
-- enable package public launch;
+- enable package public launch (`ENABLE_PLANNED_PACKAGE_PUBLIC_PURCHASE` stays OFF unless intentionally testing canary/staging modes);
 - create automatic payouts, refunds, or transfer reversals;
 - bypass legal review;
 - change production Stripe behavior.
@@ -35,7 +36,7 @@ This document is a QA harness. It does **not**:
 
 ## Preconditions
 
-1. Migrations **114–123** applied (session drafts through transfer reversals).
+1. Migrations **114–124** applied (session drafts through public terms consent).
 2. Stripe **test** secret key (`sk_test_…`) configured.
 3. `STRIPE_WEBHOOK_SECRET` configured for the staging webhook endpoint.
 4. Teacher Connect account ready in test mode.

@@ -16,6 +16,17 @@ import {
   plannedPackageTransferGroup,
   PLANNED_PACKAGE_STRIPE_METADATA_TYPE,
 } from "./plannedPackageStripeCheckout";
+import {
+  evaluatePlannedPackagePublicLaunchGate,
+  isPlannedPackagePublicPurchaseEnabled,
+  PLANNED_PACKAGE_PUBLIC_TERMS_VERSION,
+} from "./plannedPackagePublicLaunchGate";
+import {
+  learnerPackageTermsFromOrder,
+  loadTeacherPackageTerms,
+  recordLearnerPackageTermsOnPendingOrder,
+  teacherPackageTermsGateInput,
+} from "./plannedPackagePublicTerms";
 import { isActiveHold } from "./plannedPackageTemporaryHolds";
 import { expireStalePlannedPackageHolds } from "./plannedPackageHoldQueries";
 
@@ -50,6 +61,8 @@ type OrderRow = {
   hold_expires_at: string;
   updated_at: string;
   stripe_checkout_session_id: string | null;
+  learner_package_terms_accepted_at: string | null;
+  learner_package_terms_policy_version: string | null;
 };
 
 async function loadOwnedPendingOrder(
@@ -60,7 +73,7 @@ async function loadOwnedPendingOrder(
   const { data } = await admin
     .from("planned_package_pending_orders")
     .select(
-      "id, student_id, teacher_id, teacher_offer_id, draft_id, status, session_count, duration_minutes, price_cents_snapshot, currency_snapshot, title_snapshot, hold_expires_at, updated_at, stripe_checkout_session_id",
+      "id, student_id, teacher_id, teacher_offer_id, draft_id, status, session_count, duration_minutes, price_cents_snapshot, currency_snapshot, title_snapshot, hold_expires_at, updated_at, stripe_checkout_session_id, learner_package_terms_accepted_at, learner_package_terms_policy_version",
     )
     .eq("id", orderId)
     .eq("student_id", studentId)
@@ -105,6 +118,8 @@ async function reuseOpenCheckoutSession(
 export async function createPlannedPackageStripeCheckoutSession(args: {
   orderId: string;
   studentId: string;
+  /** Learner must accept package terms before Stripe Checkout. */
+  learnerPackageTermsAccepted?: boolean;
 }): Promise<CreatePlannedPackageCheckoutResult> {
   if (!canUsePlannedPackageStripeCheckout()) {
     return { ok: false, status: 403, error: "planned_package_checkout_disabled" };
@@ -123,12 +138,46 @@ export async function createPlannedPackageStripeCheckoutSession(args: {
   const admin = adminClient();
   await expireStalePlannedPackageHolds(admin);
 
-  const order = await loadOwnedPendingOrder(admin, args.orderId, args.studentId);
+  let order = await loadOwnedPendingOrder(admin, args.orderId, args.studentId);
   if (!order) {
     return { ok: false, status: 404, error: "order_not_found" };
   }
   if (order.status !== "pending_payment") {
     return { ok: false, status: 409, error: "order_not_active" };
+  }
+
+  if (args.learnerPackageTermsAccepted === true) {
+    const saved = await recordLearnerPackageTermsOnPendingOrder({
+      orderId: order.id,
+      studentId: args.studentId,
+    });
+    if (!saved.ok) {
+      return { ok: false, status: 500, error: saved.error };
+    }
+    order = {
+      ...order,
+      learner_package_terms_accepted_at: saved.acceptedAt,
+      learner_package_terms_policy_version: saved.policyVersion,
+    };
+  }
+
+  const teacherTerms = await loadTeacherPackageTerms(order.teacher_id);
+  const learnerTerms = learnerPackageTermsFromOrder(order);
+  const gate = evaluatePlannedPackagePublicLaunchGate({
+    teacherId: order.teacher_id,
+    offerId: order.teacher_offer_id,
+    ...teacherPackageTermsGateInput(teacherTerms),
+    ...learnerTerms,
+  });
+
+  // Public purchase flag OFF: keep prior Stripe checkout gating (staging/test) but still require learner terms.
+  if (isPlannedPackagePublicPurchaseEnabled()) {
+    if (!gate.canOpenCheckout) {
+      const code = gate.blockers[0] ?? "planned_package_public_purchase_disabled";
+      return { ok: false, status: 403, error: code };
+    }
+  } else if (!learnerTerms.learnerTermsAccepted) {
+    return { ok: false, status: 403, error: "learner_package_terms_required" };
   }
 
   const holdExpires = new Date(order.hold_expires_at).getTime();
@@ -185,6 +234,7 @@ export async function createPlannedPackageStripeCheckoutSession(args: {
     transfer_group: transferGroup,
     price_cents_snapshot: String(unitAmount),
     currency_snapshot: order.currency_snapshot,
+    planned_package_terms_version: PLANNED_PACKAGE_PUBLIC_TERMS_VERSION,
   };
 
   const idempotencyKey = `planned-package-checkout-${order.id}-${order.updated_at}`;

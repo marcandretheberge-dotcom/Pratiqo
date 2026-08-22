@@ -17,6 +17,14 @@ import {
   type PlannedPackageSessionHoldDto,
 } from "./plannedPackageTemporaryHolds";
 import { runPlannedPackageCheckoutPreflight } from "./runPlannedPackageCheckoutPreflight";
+import {
+  evaluatePlannedPackagePublicLaunchGate,
+  isPlannedPackagePublicPurchaseEnabled,
+} from "./plannedPackagePublicLaunchGate";
+import {
+  loadTeacherPackageTerms,
+  teacherPackageTermsGateInput,
+} from "./plannedPackagePublicTerms";
 
 function adminClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -143,6 +151,19 @@ export async function createPlannedPackagePendingOrder(args: {
   });
   if (!draft) return { ok: false, status: 404, error: "draft_not_found" };
   if (draft.status !== "draft") return { ok: false, status: 409, error: "draft_not_active" };
+
+  if (isPlannedPackagePublicPurchaseEnabled()) {
+    const teacherTerms = await loadTeacherPackageTerms(draft.teacherId);
+    const gate = evaluatePlannedPackagePublicLaunchGate({
+      teacherId: draft.teacherId,
+      offerId: draft.teacherOfferId,
+      ...teacherPackageTermsGateInput(teacherTerms),
+    });
+    if (!gate.canCreatePendingOrder) {
+      const code = gate.blockers[0] ?? "planned_package_public_purchase_disabled";
+      return { ok: false, status: 403, error: code };
+    }
+  }
 
   // Reuse existing unexpired pending order for this draft when still active.
   const { data: existingOrders } = await admin

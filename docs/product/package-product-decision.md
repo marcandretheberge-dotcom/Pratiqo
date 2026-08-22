@@ -11,6 +11,7 @@ Related:
 - [`package-risk-register.md`](./package-risk-register.md)
 - [`paid-packages-legal-launch-checklist.md`](./paid-packages-legal-launch-checklist.md)
 - [`marketplace-independent-teacher-guardrails.md`](./marketplace-independent-teacher-guardrails.md)
+- [`planned-package-public-launch-gate.md`](./planned-package-public-launch-gate.md)
 
 ---
 

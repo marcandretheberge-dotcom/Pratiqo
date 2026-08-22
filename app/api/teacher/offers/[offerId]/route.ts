@@ -18,6 +18,7 @@ import {
   assertPlannedPackageDraftAllowed,
   assertPlannedPackagePublishAllowed,
 } from "@/lib/offers/plannedPackages";
+import { loadTeacherPackageTerms } from "@/lib/offers/plannedPackagePublicTerms";
 import {
   OFFER_NOT_PUBLISHABLE_STATUS,
   offerNotPublishableResponseBody,
@@ -96,7 +97,11 @@ export async function PATCH(req: Request, ctx: Params) {
         status: OFFER_NOT_PUBLISHABLE_STATUS,
       });
     }
-    const launchGate = assertPlannedPackagePublishAllowed(nextOfferType);
+    const teacherTerms = await loadTeacherPackageTerms(teacherId);
+    const launchGate = assertPlannedPackagePublishAllowed(nextOfferType, {
+      teacherPackageTermsAcceptedAt: teacherTerms.acceptedAt,
+      teacherPackageTermsPolicyVersion: teacherTerms.policyVersion,
+    });
     if (!launchGate.ok) {
       return NextResponse.json(offerNotPublishableResponseBody(launchGate), {
         status: OFFER_NOT_PUBLISHABLE_STATUS,

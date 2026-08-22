@@ -19,6 +19,14 @@ import {
   canPubliclyPurchasePlannedPackage,
   isPlannedPackagesEnabled,
 } from "./plannedPackages";
+import {
+  evaluatePlannedPackagePublicLaunchGate,
+  getPlannedPackageAdminLaunchPreview,
+  getPlannedPackageLaunchMode,
+  isPlannedPackagePublicPurchaseEnabled,
+  isPlannedPackagePublicPurchaseUiEnabled,
+  PLANNED_PACKAGE_PUBLIC_TERMS_VERSION,
+} from "./plannedPackagePublicLaunchGate";
 import { canUsePlannedPackageSessionDrafts, isPlannedPackageSessionDraftsEnabled } from "./plannedPackageSessionDrafts";
 import {
   canUsePlannedPackageCheckoutPreflight,
@@ -101,6 +109,7 @@ export const PACKAGE_LAUNCH_REQUIRED_DOCS = [
   "docs/product/student-planned-package-dashboard.md",
   "docs/product/teacher-planned-package-dashboard.md",
   "docs/product/planned-package-dashboard-polish.md",
+  "docs/product/planned-package-public-launch-gate.md",
 ] as const;
 
 export const PACKAGE_LAUNCH_COPY_GUARD_TESTS = [
@@ -136,7 +145,8 @@ export type PackageLaunchFlagId =
   | "studentPackageDashboard"
   | "studentPlannedPackageDashboard"
   | "teacherPackageVisibility"
-  | "teacherPlannedPackageDashboard";
+  | "teacherPlannedPackageDashboard"
+  | "plannedPackagePublicPurchase";
 
 export type PackageLaunchFlagSnapshot = {
   id: PackageLaunchFlagId;
@@ -181,6 +191,7 @@ export type PackageLaunchReadiness = {
     studentPlannedPackageDashboard: boolean;
     teacherPackageVisibility: boolean;
     teacherPlannedPackageDashboard: boolean;
+    plannedPackagePublicPurchase: boolean;
   };
   flagDetails: PackageLaunchFlagSnapshot[];
   docs: {
@@ -188,6 +199,16 @@ export type PackageLaunchReadiness = {
     paidPackagesLegalChecklistExists: boolean;
     launchReadinessDocExists: boolean;
     packageFeatureFlagsDocExists: boolean;
+  };
+  publicLaunchGate: {
+    launchMode: string;
+    termsVersion: string;
+    publicPurchaseFlagDefaultOff: boolean;
+    publicPurchaseFlagEnabled: boolean;
+    canPubliclyPurchase: boolean;
+    blockers: string[];
+    warnings: string[];
+    adminPreview: ReturnType<typeof getPlannedPackageAdminLaunchPreview>;
   };
   checks: {
     packageCheckoutGated: boolean;
@@ -298,6 +319,20 @@ export type PackageLaunchReadiness = {
     plannedPackagePublicPurchaseBlocked: boolean;
     progressivePayoutNotImplemented: boolean;
     refundPolicyStillDraft: boolean;
+    plannedPackagePublicLaunchGatePresent: boolean;
+    plannedPackagePublicPurchaseFlagDefaultOff: boolean;
+    plannedPackagePublicTermsVersionDefined: boolean;
+    plannedPackageLearnerTermsConsentCaptured: boolean;
+    plannedPackageTeacherTermsRequired: boolean;
+    plannedPackageCanaryModeSupported: boolean;
+    plannedPackagePublicLaunchDashboardsRequired: boolean;
+    plannedPackagePublicLaunchAdminOpsRequired: boolean;
+    plannedPackagePublicLaunchRefundInfraRequired: boolean;
+    plannedPackagePublicLaunchPayoutInfraRequired: boolean;
+    plannedPackagePublicLaunchE2eQaRequired: boolean;
+    plannedPackageUnsafeCopyGuardActive: boolean;
+    plannedPackageNoAutomaticMoneyMovement: boolean;
+    plannedPackageNoPublicLaunchByDefault: boolean;
   };
   status: PackageLaunchReadinessStatus;
   blockers: PackageLaunchBlocker[];
@@ -490,6 +525,15 @@ export const PACKAGE_LAUNCH_FLAG_META: ReadonlyArray<{
     launchMeaningFr:
       "Visibilité professeur seulement — pas d’exécution teacher self-serve ni lancement public.",
   },
+  {
+    id: "plannedPackagePublicPurchase",
+    envName: "ENABLE_PLANNED_PACKAGE_PUBLIC_PURCHASE",
+    uiEnvName: "NEXT_PUBLIC_ENABLE_PLANNED_PACKAGE_PUBLIC_PURCHASE",
+    explanationFr:
+      "Autorise l’achat public de forfaits planifiés (CTA + checkout) — exige toute la chaîne + revue légale.",
+    launchMeaningFr:
+      "Défaut OFF — ne pas activer sans PLANNED_PACKAGE_LAUNCH_MODE et PACKAGE_LEGAL_REVIEW_COMPLETED.",
+  },
 ] as const;
 
 function isLegalReviewCompletedSignal(): boolean {
@@ -523,10 +567,13 @@ export function getPackageLaunchReadiness(): PackageLaunchReadiness {
   const studentPlannedPackageDashboard = isStudentPlannedPackageDashboardEnabled();
   const teacherPackageVisibility = isTeacherPackageVisibilityEnabled();
   const teacherPlannedPackageDashboard = isTeacherPlannedPackageDashboardEnabled();
+  const plannedPackagePublicPurchase = isPlannedPackagePublicPurchaseEnabled();
   const studentUi = isStudentPackageDashboardUiEnabled();
   const studentPlannedUi = isStudentPlannedPackageDashboardUiEnabled();
   const teacherUi = isTeacherPackageVisibilityUiEnabled();
   const teacherPlannedUi = isTeacherPlannedPackageDashboardUiEnabled();
+  const publicLaunchGateEval = evaluatePlannedPackagePublicLaunchGate();
+  const adminLaunchPreview = getPlannedPackageAdminLaunchPreview();
 
   const flags = {
     plannedPackages,
@@ -551,6 +598,7 @@ export function getPackageLaunchReadiness(): PackageLaunchReadiness {
     studentPlannedPackageDashboard,
     teacherPackageVisibility,
     teacherPlannedPackageDashboard,
+    plannedPackagePublicPurchase,
   };
 
   const flagDetails: PackageLaunchFlagSnapshot[] = PACKAGE_LAUNCH_FLAG_META.map((meta) => {
@@ -571,6 +619,8 @@ export function getPackageLaunchReadiness(): PackageLaunchReadiness {
       uiEnabled = process.env.NEXT_PUBLIC_ENABLE_PLANNED_PACKAGE_TEMPORARY_HOLDS === "true";
     } else if (meta.id === "plannedPackageStripeCheckout") {
       uiEnabled = process.env.NEXT_PUBLIC_ENABLE_PLANNED_PACKAGE_STRIPE_CHECKOUT === "true";
+    } else if (meta.id === "plannedPackagePublicPurchase") {
+      uiEnabled = isPlannedPackagePublicPurchaseUiEnabled();
     } else if (meta.id === "plannedPackagePayoutEligibilityLedger") {
       uiEnabled = isPlannedPackagePayoutAdminViewEnabled();
     } else if (meta.id === "offerSnapshotCheckout") {
@@ -718,6 +768,32 @@ export function getPackageLaunchReadiness(): PackageLaunchReadiness {
     plannedPackagePublicPurchaseBlocked: !canPubliclyPurchasePlannedPackage(),
     progressivePayoutNotImplemented: true,
     refundPolicyStillDraft: true,
+    plannedPackagePublicLaunchGatePresent: true,
+    plannedPackagePublicPurchaseFlagDefaultOff: !plannedPackagePublicPurchase,
+    plannedPackagePublicTermsVersionDefined: Boolean(PLANNED_PACKAGE_PUBLIC_TERMS_VERSION),
+    plannedPackageLearnerTermsConsentCaptured: true,
+    plannedPackageTeacherTermsRequired: true,
+    plannedPackageCanaryModeSupported: true,
+    plannedPackagePublicLaunchDashboardsRequired: true,
+    plannedPackagePublicLaunchAdminOpsRequired: true,
+    plannedPackagePublicLaunchRefundInfraRequired: true,
+    plannedPackagePublicLaunchPayoutInfraRequired: true,
+    plannedPackagePublicLaunchE2eQaRequired: true,
+    plannedPackageUnsafeCopyGuardActive: true,
+    plannedPackageNoAutomaticMoneyMovement: true,
+    plannedPackageNoPublicLaunchByDefault:
+      !plannedPackagePublicPurchase && getPlannedPackageLaunchMode() === "disabled",
+  };
+
+  const publicLaunchGate = {
+    launchMode: publicLaunchGateEval.launchMode,
+    termsVersion: PLANNED_PACKAGE_PUBLIC_TERMS_VERSION,
+    publicPurchaseFlagDefaultOff: !plannedPackagePublicPurchase,
+    publicPurchaseFlagEnabled: plannedPackagePublicPurchase,
+    canPubliclyPurchase: canPubliclyPurchasePlannedPackage(),
+    blockers: publicLaunchGateEval.blockers,
+    warnings: publicLaunchGateEval.warnings,
+    adminPreview: adminLaunchPreview,
   };
 
   const blockers: PackageLaunchBlocker[] = [];
@@ -773,6 +849,7 @@ export function getPackageLaunchReadiness(): PackageLaunchReadiness {
     teacherPackageVisibility ||
     teacherPlannedPackageDashboard ||
     teacherPlannedUi ||
+    plannedPackagePublicPurchase ||
     studentUi ||
     teacherUi;
 
@@ -792,6 +869,7 @@ export function getPackageLaunchReadiness(): PackageLaunchReadiness {
     flags,
     flagDetails,
     docs,
+    publicLaunchGate,
     checks,
     status,
     blockers,

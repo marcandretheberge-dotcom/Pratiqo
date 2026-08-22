@@ -24,6 +24,7 @@ import {
   PlannedPackageSessionSelector,
   shouldShowPlannedPackageSessionDraftCta,
 } from "@/components/packages/PlannedPackageSessionSelector";
+import { isPlannedPackagePublicPurchaseUiEnabled } from "@/lib/offers/plannedPackagePublicLaunchGate";
 
 type Props = {
   offer: PublicTeacherOfferDto;
@@ -35,6 +36,7 @@ export function PublicTeacherOfferCard({ offer, teacherId, onPrepareBooking }: P
   const { t, locale } = useLocale();
   const showPackageDraft =
     Boolean(teacherId) && shouldShowPlannedPackageSessionDraftCta(offer);
+  const publicPurchaseUi = isPlannedPackagePublicPurchaseUiEnabled();
   const showPrepareBooking =
     !showPackageDraft &&
     isBookingOfferSelectionEnabled() &&
@@ -114,14 +116,29 @@ export function PublicTeacherOfferCard({ offer, teacherId, onPrepareBooking }: P
         </button>
       ) : null}
       {showPackageDraft ? (
-        <button
-          type="button"
-          data-testid="teacher-profile-offer-choose-package-sessions"
-          onClick={() => setDraftOpen(true)}
-          className="mt-3 inline-flex min-h-10 items-center justify-center rounded-full border border-teal-200 bg-white px-4 text-sm font-semibold text-teal-800 transition-colors hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2"
-        >
-          {t("plannedPackageChooseSessions")}
-        </button>
+        publicPurchaseUi ? (
+          <button
+            type="button"
+            data-testid="teacher-profile-offer-choose-package-sessions"
+            onClick={() => setDraftOpen(true)}
+            className="mt-3 inline-flex min-h-10 items-center justify-center rounded-full border border-teal-200 bg-white px-4 text-sm font-semibold text-teal-800 transition-colors hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2"
+          >
+            {t("plannedPackagePlanThisPackage")}
+          </button>
+        ) : (
+          <div className="mt-3 space-y-2" data-testid="planned-package-cta-preparing">
+            <p className="text-sm text-slate-600">{t("plannedPackageBeingPrepared")}</p>
+            <p className="text-xs text-slate-500">{t("plannedPackageBookingsNotOpenYet")}</p>
+            <button
+              type="button"
+              data-testid="teacher-profile-offer-choose-package-sessions"
+              onClick={() => setDraftOpen(true)}
+              className="inline-flex min-h-10 items-center justify-center rounded-full border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2"
+            >
+              {t("plannedPackageChooseSessions")}
+            </button>
+          </div>
+        )
       ) : null}
       {showPrepareBooking ? (
         <button

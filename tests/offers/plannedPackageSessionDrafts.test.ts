@@ -74,11 +74,18 @@ test("public profile may show planned packages for draft preview only when draft
   assert.equal(canPubliclyPurchasePlannedPackage(), false);
 });
 
-test("publish allowed for draft preview when session drafts ON; purchase still blocked", () => {
+test("publish allowed for draft preview when session drafts ON and teacher terms accepted; purchase still blocked", () => {
   resetFlags();
   process.env.ENABLE_PLANNED_PACKAGES = "true";
   process.env.ENABLE_PLANNED_PACKAGE_SESSION_DRAFTS = "true";
-  assert.equal(assertPlannedPackagePublishAllowed("package").ok, true);
+  assert.equal(assertPlannedPackagePublishAllowed("package").ok, false);
+  assert.equal(
+    assertPlannedPackagePublishAllowed("package", {
+      teacherPackageTermsAcceptedAt: "2026-08-01T00:00:00.000Z",
+      teacherPackageTermsPolicyVersion: "planned_package_terms_v1_2026_08",
+    }).ok,
+    true,
+  );
   assert.equal(canPubliclyPurchasePlannedPackage(), false);
 });
 
