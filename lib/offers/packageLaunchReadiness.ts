@@ -21,6 +21,10 @@ import {
 } from "./plannedPackages";
 import { canUsePlannedPackageSessionDrafts, isPlannedPackageSessionDraftsEnabled } from "./plannedPackageSessionDrafts";
 import {
+  canUsePlannedPackageCheckoutPreflight,
+  isPlannedPackageCheckoutPreflightEnabled,
+} from "./plannedPackageCheckoutPreflight";
+import {
   isStudentPackageDashboardEnabled,
   isStudentPackageDashboardUiEnabled,
 } from "./studentPackages";
@@ -58,6 +62,7 @@ export const PACKAGE_LAUNCH_ADMIN_SUPPORT_SURFACES = [
 export type PackageLaunchFlagId =
   | "plannedPackages"
   | "plannedPackageSessionDrafts"
+  | "plannedPackageCheckoutPreflight"
   | "bookingOfferSelection"
   | "offerSnapshotCheckout"
   | "packageEntitlements"
@@ -88,6 +93,7 @@ export type PackageLaunchReadiness = {
   flags: {
     plannedPackages: boolean;
     plannedPackageSessionDrafts: boolean;
+    plannedPackageCheckoutPreflight: boolean;
     bookingOfferSelection: boolean;
     offerSnapshotCheckout: boolean;
     packageEntitlements: boolean;
@@ -117,6 +123,9 @@ export type PackageLaunchReadiness = {
     plannedPackageSessionDraftNoPayment: boolean;
     plannedPackageSessionDraftNoBookings: boolean;
     plannedPackageSessionDraftNoEntitlements: boolean;
+    plannedPackageCheckoutPreflightPresent: boolean;
+    plannedPackageCheckoutPreflightGated: boolean;
+    plannedPackageCheckoutPreflightNoPayment: boolean;
     plannedPackagePublicPurchaseBlocked: boolean;
     progressivePayoutNotImplemented: boolean;
     refundPolicyStillDraft: boolean;
@@ -150,6 +159,14 @@ export const PACKAGE_LAUNCH_FLAG_META: ReadonlyArray<{
     explanationFr:
       "Permet à l’élève de choisir les séances d’un forfait planifié (brouillon) — sans paiement.",
     launchMeaningFr: "Couche planification uniquement — pas de réservation confirmée ni Stripe.",
+  },
+  {
+    id: "plannedPackageCheckoutPreflight",
+    envName: "ENABLE_PLANNED_PACKAGE_CHECKOUT_PREFLIGHT",
+    uiEnvName: "NEXT_PUBLIC_ENABLE_PLANNED_PACKAGE_CHECKOUT_PREFLIGHT",
+    explanationFr:
+      "Revérifie un brouillon de séances et produit un résumé de préparation au paiement — sans encaisser.",
+    launchMeaningFr: "Préflight seulement — le checkout Stripe reste désactivé.",
   },
   {
     id: "bookingOfferSelection",
@@ -206,6 +223,7 @@ function isLegalReviewCompletedSignal(): boolean {
 export function getPackageLaunchReadiness(): PackageLaunchReadiness {
   const plannedPackages = isPlannedPackagesEnabled();
   const plannedPackageSessionDrafts = isPlannedPackageSessionDraftsEnabled();
+  const plannedPackageCheckoutPreflight = isPlannedPackageCheckoutPreflightEnabled();
   const bookingOfferSelection = isBookingOfferSelectionEnabled();
   const offerSnapshotCheckout = isOfferSnapshotCheckoutEnabled();
   const packageEntitlements = isPackageEntitlementsEnabled();
@@ -218,6 +236,7 @@ export function getPackageLaunchReadiness(): PackageLaunchReadiness {
   const flags = {
     plannedPackages,
     plannedPackageSessionDrafts,
+    plannedPackageCheckoutPreflight,
     bookingOfferSelection,
     offerSnapshotCheckout,
     packageEntitlements,
@@ -236,6 +255,8 @@ export function getPackageLaunchReadiness(): PackageLaunchReadiness {
       uiEnabled = process.env.NEXT_PUBLIC_ENABLE_PLANNED_PACKAGES === "true";
     } else if (meta.id === "plannedPackageSessionDrafts") {
       uiEnabled = process.env.NEXT_PUBLIC_ENABLE_PLANNED_PACKAGE_SESSION_DRAFTS === "true";
+    } else if (meta.id === "plannedPackageCheckoutPreflight") {
+      uiEnabled = process.env.NEXT_PUBLIC_ENABLE_PLANNED_PACKAGE_CHECKOUT_PREFLIGHT === "true";
     } else if (meta.id === "offerSnapshotCheckout") {
       uiEnabled = process.env.NEXT_PUBLIC_ENABLE_OFFER_SNAPSHOT_CHECKOUT === "true";
     } else if (meta.id === "packageRedemptionBooking") {
@@ -277,6 +298,10 @@ export function getPackageLaunchReadiness(): PackageLaunchReadiness {
     plannedPackageSessionDraftNoPayment: true,
     plannedPackageSessionDraftNoBookings: true,
     plannedPackageSessionDraftNoEntitlements: true,
+    plannedPackageCheckoutPreflightPresent: true,
+    plannedPackageCheckoutPreflightGated:
+      !canUsePlannedPackageCheckoutPreflight() || plannedPackageSessionDrafts,
+    plannedPackageCheckoutPreflightNoPayment: true,
     plannedPackagePublicPurchaseBlocked: !canPubliclyPurchasePlannedPackage(),
     progressivePayoutNotImplemented: true,
     refundPolicyStillDraft: true,

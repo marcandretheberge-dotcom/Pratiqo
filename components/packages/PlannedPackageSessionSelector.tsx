@@ -9,6 +9,8 @@ import type { PublicTeacherOfferDto } from "@/lib/offers/publicTeacherOfferDto";
 import type { PlannedPackageSessionDraftDto } from "@/lib/offers/plannedPackageSessionDrafts";
 import { isPlannedPackageOfferType } from "@/lib/offers/plannedPackages";
 import { isPlannedPackageSessionDraftsUiEnabled } from "@/lib/offers/plannedPackageSessionDrafts";
+import { PlannedPackageCheckoutPreflight } from "@/components/packages/PlannedPackageCheckoutPreflight";
+import { isPlannedPackageCheckoutPreflightUiEnabled } from "@/lib/offers/plannedPackageCheckoutPreflight";
 
 type SelectedSession = {
   slotDate: string;
@@ -201,14 +203,24 @@ export function PlannedPackageSessionSelector({ teacherId, offer, open, onClose 
             </ul>
             <p className="text-xs leading-relaxed text-amber-900">{t("plannedPackageNotReservedYet")}</p>
             <p className="text-xs leading-relaxed text-amber-900">{t("plannedPackageAvailabilityRecheck")}</p>
-            <button
-              type="button"
-              disabled
-              className="mt-2 inline-flex min-h-10 w-full cursor-not-allowed items-center justify-center rounded-full border border-slate-200 bg-slate-100 px-4 text-sm font-semibold text-slate-500"
-              data-testid="planned-package-payment-coming-soon"
-            >
-              {t("plannedPackagePaymentComingSoon")}
-            </button>
+            {isPlannedPackageCheckoutPreflightUiEnabled() ? (
+              <PlannedPackageCheckoutPreflight
+                draftId={draft.id}
+                onEditSessions={() => {
+                  setDraft(null);
+                  setSelected([]);
+                }}
+              />
+            ) : (
+              <button
+                type="button"
+                disabled
+                className="mt-2 inline-flex min-h-10 w-full cursor-not-allowed items-center justify-center rounded-full border border-slate-200 bg-slate-100 px-4 text-sm font-semibold text-slate-500"
+                data-testid="planned-package-payment-coming-soon"
+              >
+                {t("plannedPackagePaymentComingSoon")}
+              </button>
+            )}
           </div>
         ) : (
           <>

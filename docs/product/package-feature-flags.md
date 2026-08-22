@@ -34,6 +34,17 @@ See also:
 | Safe preview | ON in staging with planned packages ON |
 | Production note | Does **not** create bookings, Stripe checkout, entitlements, or holds |
 
+### `ENABLE_PLANNED_PACKAGE_CHECKOUT_PREFLIGHT` (+ `NEXT_PUBLIC_ENABLE_PLANNED_PACKAGE_CHECKOUT_PREFLIGHT`)
+
+| | |
+|--|--|
+| Default | OFF |
+| Runtime | Preflight API + gated draft summary UI |
+| Who sees effect | Learners may revalidate a draft and see readiness blockers — **no payment** |
+| Dependencies | Planned packages + session drafts |
+| Safe preview | ON in staging after drafts work |
+| Production note | Does **not** enable Stripe Checkout / PaymentIntent. Real checkout remains OFF (`ENABLE_PLANNED_PACKAGE_CHECKOUT` unset) |
+
 ### `NEXT_PUBLIC_ENABLE_BOOKING_OFFER_SELECTION`
 
 | | |
