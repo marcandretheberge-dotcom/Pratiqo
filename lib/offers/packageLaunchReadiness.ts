@@ -52,6 +52,10 @@ import {
   isPlannedPackagePayoutAdminViewEnabled,
 } from "./plannedPackagePayoutEligibilityLedger";
 import {
+  canUsePlannedPackageManualTransfers,
+  isPlannedPackageManualTransfersEnabled,
+} from "./plannedPackageManualTransfers";
+import {
   canUsePlannedPackageStripeCheckout,
   isPlannedPackageStripeCheckoutEnabled,
 } from "./plannedPackageStripeCheckout";
@@ -102,6 +106,7 @@ export type PackageLaunchFlagId =
   | "plannedPackageRefundAdminReview"
   | "plannedPackageManualRefunds"
   | "plannedPackagePayoutEligibilityLedger"
+  | "plannedPackageManualTransfers"
   | "bookingOfferSelection"
   | "offerSnapshotCheckout"
   | "packageEntitlements"
@@ -141,6 +146,7 @@ export type PackageLaunchReadiness = {
     plannedPackageRefundAdminReview: boolean;
     plannedPackageManualRefunds: boolean;
     plannedPackagePayoutEligibilityLedger: boolean;
+    plannedPackageManualTransfers: boolean;
     bookingOfferSelection: boolean;
     offerSnapshotCheckout: boolean;
     packageEntitlements: boolean;
@@ -214,6 +220,14 @@ export type PackageLaunchReadiness = {
     plannedPackagePayoutEligibilityNoStripeTransfer: boolean;
     plannedPackagePayoutEligibilityNoPayoutRelease: boolean;
     plannedPackagePayoutEligibilityRefundBlockersConsidered: boolean;
+    plannedPackageManualTransferExecutionPresent: boolean;
+    plannedPackageManualTransferExecutionGated: boolean;
+    plannedPackageManualTransferEligibleEntryRequired: boolean;
+    plannedPackageManualTransferIdempotencyPresent: boolean;
+    plannedPackageManualTransferNoAutomaticPayoutCron: boolean;
+    plannedPackageManualTransferNoTransferReversal: boolean;
+    plannedPackageManualTransferNoStripeRefund: boolean;
+    plannedPackageManualTransferNoStripePayout: boolean;
     plannedPackagePublicPurchaseBlocked: boolean;
     progressivePayoutNotImplemented: boolean;
     refundPolicyStillDraft: boolean;
@@ -323,6 +337,15 @@ export const PACKAGE_LAUNCH_FLAG_META: ReadonlyArray<{
       "Couche audit interne — ne verse pas d’argent au professeur ; exécution transfer dans un PR futur.",
   },
   {
+    id: "plannedPackageManualTransfers",
+    envName: "ENABLE_PLANNED_PACKAGE_MANUAL_TRANSFERS",
+    uiEnvName: null,
+    explanationFr:
+      "Exécution admin d’un transfer Stripe Connect pour une entrée admissible — pas de versement automatique.",
+    launchMeaningFr:
+      "Admin-only après admissibilité confirmée — revue légale requise en production ; pas de transfer reversal.",
+  },
+  {
     id: "bookingOfferSelection",
     envName: "NEXT_PUBLIC_ENABLE_BOOKING_OFFER_SELECTION",
     uiEnvName: "NEXT_PUBLIC_ENABLE_BOOKING_OFFER_SELECTION",
@@ -386,6 +409,7 @@ export function getPackageLaunchReadiness(): PackageLaunchReadiness {
   const plannedPackageRefundAdminReview = isPlannedPackageRefundAdminReviewEnabled();
   const plannedPackageManualRefunds = isPlannedPackageManualRefundsEnabled();
   const plannedPackagePayoutEligibilityLedger = isPlannedPackagePayoutEligibilityLedgerEnabled();
+  const plannedPackageManualTransfers = isPlannedPackageManualTransfersEnabled();
   const bookingOfferSelection = isBookingOfferSelectionEnabled();
   const offerSnapshotCheckout = isOfferSnapshotCheckoutEnabled();
   const packageEntitlements = isPackageEntitlementsEnabled();
@@ -407,6 +431,7 @@ export function getPackageLaunchReadiness(): PackageLaunchReadiness {
     plannedPackageRefundAdminReview,
     plannedPackageManualRefunds,
     plannedPackagePayoutEligibilityLedger,
+    plannedPackageManualTransfers,
     bookingOfferSelection,
     offerSnapshotCheckout,
     packageEntitlements,
@@ -526,6 +551,15 @@ export function getPackageLaunchReadiness(): PackageLaunchReadiness {
     plannedPackagePayoutEligibilityNoStripeTransfer: true,
     plannedPackagePayoutEligibilityNoPayoutRelease: true,
     plannedPackagePayoutEligibilityRefundBlockersConsidered: true,
+    plannedPackageManualTransferExecutionPresent: true,
+    plannedPackageManualTransferExecutionGated:
+      !canUsePlannedPackageManualTransfers() || plannedPackagePayoutEligibilityLedger,
+    plannedPackageManualTransferEligibleEntryRequired: true,
+    plannedPackageManualTransferIdempotencyPresent: true,
+    plannedPackageManualTransferNoAutomaticPayoutCron: true,
+    plannedPackageManualTransferNoTransferReversal: true,
+    plannedPackageManualTransferNoStripeRefund: true,
+    plannedPackageManualTransferNoStripePayout: true,
     plannedPackagePublicPurchaseBlocked: !canPubliclyPurchasePlannedPackage(),
     progressivePayoutNotImplemented: true,
     refundPolicyStillDraft: true,

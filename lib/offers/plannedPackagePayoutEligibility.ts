@@ -468,13 +468,18 @@ export type PlannedPackagePayoutEligibilityEntryDto = {
   lessonDate: string | null;
   lessonTime: string | null;
   grossSessionAmountCents: number;
+  teacherNetCents: number | null;
   currency: string;
   status: PayoutEligibilityStatus;
   blockers: string[];
   adminReviewRequired: boolean;
   eligibleAt: string | null;
   eligibilityReason: string | null;
-  noStripeTransferCreated: true;
+  transferStatus: string | null;
+  transferredCents: number;
+  stripeTransferId: string | null;
+  transferredAt: string | null;
+  noStripeTransferCreated: boolean;
 };
 
 export async function listPlannedPackagePayoutEligibilityForOrder(
@@ -484,7 +489,7 @@ export async function listPlannedPackagePayoutEligibilityForOrder(
   const { data: rows, error } = await admin
     .from("planned_package_payout_eligibility_entries")
     .select(
-      "id, booking_id, package_session_index, gross_session_amount_cents, currency, status, blocker_details, admin_review_required, eligible_at, eligibility_reason",
+      "id, booking_id, package_session_index, gross_session_amount_cents, teacher_net_cents, currency, status, blocker_details, admin_review_required, eligible_at, eligibility_reason, transfer_status, transferred_cents, stripe_transfer_id, transferred_at",
     )
     .eq("planned_package_order_id", orderId)
     .order("package_session_index", { ascending: true });
@@ -519,6 +524,10 @@ export async function listPlannedPackagePayoutEligibilityForOrder(
       lessonDate: (booking?.lesson_date as string | null) ?? null,
       lessonTime: (booking?.time_slot as string | null) ?? null,
       grossSessionAmountCents: Number(row.gross_session_amount_cents ?? 0),
+      teacherNetCents:
+        row.teacher_net_cents === null || row.teacher_net_cents === undefined
+          ? null
+          : Number(row.teacher_net_cents),
       currency: String(row.currency ?? "CAD"),
       status: String(row.status ?? "not_eligible") as PayoutEligibilityStatus,
       blockers: Array.isArray(details.blockers)
@@ -527,7 +536,11 @@ export async function listPlannedPackagePayoutEligibilityForOrder(
       adminReviewRequired: row.admin_review_required === true,
       eligibleAt: (row.eligible_at as string | null) ?? null,
       eligibilityReason: (row.eligibility_reason as string | null) ?? null,
-      noStripeTransferCreated: true as const,
+      transferStatus: (row.transfer_status as string | null) ?? null,
+      transferredCents: Number(row.transferred_cents ?? 0),
+      stripeTransferId: (row.stripe_transfer_id as string | null) ?? null,
+      transferredAt: (row.transferred_at as string | null) ?? null,
+      noStripeTransferCreated: !(row.stripe_transfer_id as string | null),
     };
   });
 }

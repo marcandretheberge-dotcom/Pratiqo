@@ -30,6 +30,8 @@ Required before **public** launch:
 - [ ] Package purchase snapshots implemented
 - [ ] Session completion payout release implemented
 - [ ] Admin visibility implemented
+- [ ] Payout eligibility ledger synced for completed sessions
+- [ ] Manual transfer execution reviewed (admin-only; no automatic payout cron)
 - [ ] Teacher/student copy reviewed against glossary
 - [ ] Package feature flags controlled (defaults OFF; staged enablement)
 - [ ] Test purchase/refund scenarios completed

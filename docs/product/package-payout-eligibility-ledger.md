@@ -25,11 +25,16 @@ It does **not** answer:
 
 ## Out of scope (future PRs)
 
-- `stripe.transfers.create`
-- `stripe.transfers.createReversal`
 - Automatic payout release / cron
-- Package commission policy finalization
+- Package commission policy finalization (when finalized, sync populates `teacher_net_cents`)
 - Public package launch
+
+Manual Stripe Connect transfer execution is documented in `package-manual-transfer-execution.md` (separate PR, admin-only, gated).
+
+Previously out of scope for the ledger PR alone:
+
+- ~~`stripe.transfers.create`~~ — now in manual transfer execution PR (admin-only)
+- `stripe.transfers.createReversal`
 
 ## Feature flags
 
@@ -82,8 +87,9 @@ Examples tracked in `blocker_details`:
 Order detail section **Admissibilité aux versements**:
 
 - One row per package session booking
-- Sync button only — **no** “Send payout” or “Create Stripe transfer”
-- Clear note: **Aucun transfer Stripe n’est créé par cette étape.**
+- Sync button — **no** automatic transfer
+- When `ENABLE_PLANNED_PACKAGE_MANUAL_TRANSFERS` is OFF: clear note **Aucun transfer Stripe n’est créé par cette étape.**
+- When manual transfers ON: admin may execute transfer for eligible entries only (see `package-manual-transfer-execution.md`)
 
 ## Reconciliation
 
@@ -95,13 +101,24 @@ New attention reasons (when ledger flag ON):
 - `payout_allocation_mismatch`
 - `payout_pricing_policy_not_finalized`
 
-“Eligible but no transfer” is **not** an error — transfers are intentionally deferred.
+When `ENABLE_PLANNED_PACKAGE_MANUAL_TRANSFERS` is ON:
+
+- `eligible_transfer_not_executed`
+- `transfer_execution_failed`
+- `transfer_succeeded_but_entry_not_marked`
+- `refund_exists_after_transfer`
+- `cancellation_request_after_transfer`
+- `transfer_amount_mismatch`
+- `teacher_payment_not_ready_for_transfer`
+
+When manual transfers OFF, “eligible but no transfer” is **not** an error — transfers are intentionally deferred.
 
 ## Related docs
 
 - `docs/product/package-technical-architecture.md`
 - `docs/product/package-refund-quote-engine.md`
 - `docs/product/package-manual-refund-execution.md`
+- `docs/product/package-manual-transfer-execution.md`
 - `docs/product/package-feature-flags.md`
 
 ## Migration
