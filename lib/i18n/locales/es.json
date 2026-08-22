@@ -3044,5 +3044,15 @@
   "plannedPackagePreflightDraftNotActive": "Este borrador ya no está activo.",
   "plannedPackagePreflightOfferUnavailable": "Esta oferta ya no está disponible.",
   "plannedPackagePreflightInvalidSessionCount": "El número de sesiones ya no coincide con la oferta.",
-  "plannedPackagePreflightTeacherNotAvailableYet": "El profesor aún no está disponible en esta fecha."
+  "plannedPackagePreflightTeacherNotAvailableYet": "El profesor aún no está disponible en esta fecha.",
+  "plannedPackageHoldPreparePayment": "Preparar pago",
+  "plannedPackageHoldTitle": "Sesiones reservadas temporalmente",
+  "plannedPackageHoldBody": "Estas sesiones están bloqueadas temporalmente mientras se prepara el pago.",
+  "plannedPackageHoldConfirmedAfterPayment": "Las reservas solo se confirmarán después del pago.",
+  "plannedPackageHoldReleasedIfUnpaid": "Las sesiones se liberarán si el pago no se completa.",
+  "plannedPackageHoldSlotTemporarilyUnavailable": "Este horario no está disponible temporalmente.",
+  "plannedPackageHoldCancel": "Cancelar preparación",
+  "plannedPackageHoldExpired": "La preparación del paquete expiró.",
+  "plannedPackageHoldChooseNew": "Elige nuevas sesiones para continuar.",
+  "plannedPackageHoldPrepareFailed": "No se pudo preparar el paquete. Inténtalo de nuevo."
 }

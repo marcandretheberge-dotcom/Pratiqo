@@ -701,6 +701,34 @@ const allowedPlannedPackageCheckoutPreflightFiles = new Set<string>([
   "package.json",
 ]);
 
+/** Planned package temporary holds / pending orders — no payment. */
+const allowedPlannedPackageTemporaryHoldsFiles = new Set<string>([
+  "supabase/migrations/115_planned_package_pending_orders_and_holds.sql",
+  "lib/offers/plannedPackageTemporaryHolds.ts",
+  "lib/offers/plannedPackageHoldQueries.ts",
+  "lib/offers/createPlannedPackagePendingOrder.ts",
+  "lib/offers/runPlannedPackageCheckoutPreflight.ts",
+  "lib/offers/packageLaunchReadiness.ts",
+  "lib/bookings/createPendingPaymentBooking.ts",
+  "app/api/teachers/[id]/slots/route.ts",
+  "app/api/planned-packages/session-drafts/[draftId]/pending-order/route.ts",
+  "app/api/planned-packages/pending-orders/[orderId]/cancel/route.ts",
+  "components/packages/PlannedPackagePendingOrder.tsx",
+  "components/packages/PlannedPackageCheckoutPreflight.tsx",
+  "app/(app)/admin/package-launch-readiness/page.tsx",
+  "docs/product/package-feature-flags.md",
+  "lib/i18n/locales/fr.json",
+  "lib/i18n/locales/en.json",
+  "lib/i18n/locales/es.json",
+  ".env.example",
+  "tests/offers/plannedPackageTemporaryHolds.test.ts",
+  "tests/offers/packageLaunchReadiness.test.ts",
+  "tests/security/rlsCoverage.test.ts",
+  "tests/yo/yopratiqoAudioPronunciationOverrides.test.ts",
+  "tests/legal/safeDisclosures.test.ts",
+  "package.json",
+]);
+
 /** Teacher offer cover images (PR 15). */
 const allowedTeacherOfferCoverImageFiles = new Set<string>([
   "supabase/migrations/104_teacher_offer_covers_bucket.sql",
@@ -1223,6 +1251,7 @@ test("safe-disclosure branch did not touch restricted systems", () => {
     if (allowedPackageLaunchReadinessFiles.has(file)) continue;
     if (allowedPlannedPackageSessionDraftFiles.has(file)) continue;
     if (allowedPlannedPackageCheckoutPreflightFiles.has(file)) continue;
+    if (allowedPlannedPackageTemporaryHoldsFiles.has(file)) continue;
     if (allowedTeacherOfferCoverImageFiles.has(file)) continue;
     if (allowedTeacherOfferCancellationPreferenceFiles.has(file)) continue;
     if (allowedTeacherAvailabilityStartDateFiles.has(file)) continue;

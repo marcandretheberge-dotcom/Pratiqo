@@ -3044,5 +3044,15 @@
   "plannedPackagePreflightDraftNotActive": "This draft is no longer active.",
   "plannedPackagePreflightOfferUnavailable": "This offer is no longer available.",
   "plannedPackagePreflightInvalidSessionCount": "Session count no longer matches the offer.",
-  "plannedPackagePreflightTeacherNotAvailableYet": "The teacher is not available yet on this date."
+  "plannedPackagePreflightTeacherNotAvailableYet": "The teacher is not available yet on this date.",
+  "plannedPackageHoldPreparePayment": "Prepare payment",
+  "plannedPackageHoldTitle": "Sessions temporarily held",
+  "plannedPackageHoldBody": "These sessions are temporarily held while payment is being prepared.",
+  "plannedPackageHoldConfirmedAfterPayment": "Reservations will only be confirmed after payment.",
+  "plannedPackageHoldReleasedIfUnpaid": "Sessions will be released if payment is not completed.",
+  "plannedPackageHoldSlotTemporarilyUnavailable": "This time slot is temporarily unavailable.",
+  "plannedPackageHoldCancel": "Cancel preparation",
+  "plannedPackageHoldExpired": "Package preparation has expired.",
+  "plannedPackageHoldChooseNew": "Choose new sessions to continue.",
+  "plannedPackageHoldPrepareFailed": "Could not prepare the package. Please try again."
 }

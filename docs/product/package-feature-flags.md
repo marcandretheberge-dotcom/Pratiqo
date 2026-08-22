@@ -45,6 +45,17 @@ See also:
 | Safe preview | ON in staging after drafts work |
 | Production note | Does **not** enable Stripe Checkout / PaymentIntent. Real checkout remains OFF (`ENABLE_PLANNED_PACKAGE_CHECKOUT` unset) |
 
+### `ENABLE_PLANNED_PACKAGE_TEMPORARY_HOLDS` (+ `NEXT_PUBLIC_ENABLE_PLANNED_PACKAGE_TEMPORARY_HOLDS`)
+
+| | |
+|--|--|
+| Default | OFF |
+| Runtime | Pending-order API + hold conflict checks in booking/slots |
+| Who sees effect | Learners may create a short-lived pending order that temporarily blocks slots |
+| Dependencies | Preflight (+ drafts + planned packages) |
+| Safe preview | ON in staging after preflight works |
+| Production note | Default hold `PLANNED_PACKAGE_HOLD_MINUTES=15`. Does **not** charge or confirm bookings |
+
 ### `NEXT_PUBLIC_ENABLE_BOOKING_OFFER_SELECTION`
 
 | | |

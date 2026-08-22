@@ -25,6 +25,10 @@ import {
   isPlannedPackageCheckoutPreflightEnabled,
 } from "./plannedPackageCheckoutPreflight";
 import {
+  canUsePlannedPackageTemporaryHolds,
+  isPlannedPackageTemporaryHoldsEnabled,
+} from "./plannedPackageTemporaryHolds";
+import {
   isStudentPackageDashboardEnabled,
   isStudentPackageDashboardUiEnabled,
 } from "./studentPackages";
@@ -63,6 +67,7 @@ export type PackageLaunchFlagId =
   | "plannedPackages"
   | "plannedPackageSessionDrafts"
   | "plannedPackageCheckoutPreflight"
+  | "plannedPackageTemporaryHolds"
   | "bookingOfferSelection"
   | "offerSnapshotCheckout"
   | "packageEntitlements"
@@ -94,6 +99,7 @@ export type PackageLaunchReadiness = {
     plannedPackages: boolean;
     plannedPackageSessionDrafts: boolean;
     plannedPackageCheckoutPreflight: boolean;
+    plannedPackageTemporaryHolds: boolean;
     bookingOfferSelection: boolean;
     offerSnapshotCheckout: boolean;
     packageEntitlements: boolean;
@@ -126,6 +132,9 @@ export type PackageLaunchReadiness = {
     plannedPackageCheckoutPreflightPresent: boolean;
     plannedPackageCheckoutPreflightGated: boolean;
     plannedPackageCheckoutPreflightNoPayment: boolean;
+    plannedPackageTemporaryHoldsSchemaPresent: boolean;
+    plannedPackageTemporaryHoldsGated: boolean;
+    plannedPackageTemporaryHoldsNoPayment: boolean;
     plannedPackagePublicPurchaseBlocked: boolean;
     progressivePayoutNotImplemented: boolean;
     refundPolicyStillDraft: boolean;
@@ -167,6 +176,14 @@ export const PACKAGE_LAUNCH_FLAG_META: ReadonlyArray<{
     explanationFr:
       "Revérifie un brouillon de séances et produit un résumé de préparation au paiement — sans encaisser.",
     launchMeaningFr: "Préflight seulement — le checkout Stripe reste désactivé.",
+  },
+  {
+    id: "plannedPackageTemporaryHolds",
+    envName: "ENABLE_PLANNED_PACKAGE_TEMPORARY_HOLDS",
+    uiEnvName: "NEXT_PUBLIC_ENABLE_PLANNED_PACKAGE_TEMPORARY_HOLDS",
+    explanationFr:
+      "Crée une commande en attente avec rétention temporaire des plages — sans paiement.",
+    launchMeaningFr: "Holds courts seulement — pas de réservation confirmée ni Stripe.",
   },
   {
     id: "bookingOfferSelection",
@@ -224,6 +241,7 @@ export function getPackageLaunchReadiness(): PackageLaunchReadiness {
   const plannedPackages = isPlannedPackagesEnabled();
   const plannedPackageSessionDrafts = isPlannedPackageSessionDraftsEnabled();
   const plannedPackageCheckoutPreflight = isPlannedPackageCheckoutPreflightEnabled();
+  const plannedPackageTemporaryHolds = isPlannedPackageTemporaryHoldsEnabled();
   const bookingOfferSelection = isBookingOfferSelectionEnabled();
   const offerSnapshotCheckout = isOfferSnapshotCheckoutEnabled();
   const packageEntitlements = isPackageEntitlementsEnabled();
@@ -237,6 +255,7 @@ export function getPackageLaunchReadiness(): PackageLaunchReadiness {
     plannedPackages,
     plannedPackageSessionDrafts,
     plannedPackageCheckoutPreflight,
+    plannedPackageTemporaryHolds,
     bookingOfferSelection,
     offerSnapshotCheckout,
     packageEntitlements,
@@ -257,6 +276,8 @@ export function getPackageLaunchReadiness(): PackageLaunchReadiness {
       uiEnabled = process.env.NEXT_PUBLIC_ENABLE_PLANNED_PACKAGE_SESSION_DRAFTS === "true";
     } else if (meta.id === "plannedPackageCheckoutPreflight") {
       uiEnabled = process.env.NEXT_PUBLIC_ENABLE_PLANNED_PACKAGE_CHECKOUT_PREFLIGHT === "true";
+    } else if (meta.id === "plannedPackageTemporaryHolds") {
+      uiEnabled = process.env.NEXT_PUBLIC_ENABLE_PLANNED_PACKAGE_TEMPORARY_HOLDS === "true";
     } else if (meta.id === "offerSnapshotCheckout") {
       uiEnabled = process.env.NEXT_PUBLIC_ENABLE_OFFER_SNAPSHOT_CHECKOUT === "true";
     } else if (meta.id === "packageRedemptionBooking") {
@@ -302,6 +323,10 @@ export function getPackageLaunchReadiness(): PackageLaunchReadiness {
     plannedPackageCheckoutPreflightGated:
       !canUsePlannedPackageCheckoutPreflight() || plannedPackageSessionDrafts,
     plannedPackageCheckoutPreflightNoPayment: true,
+    plannedPackageTemporaryHoldsSchemaPresent: true,
+    plannedPackageTemporaryHoldsGated:
+      !canUsePlannedPackageTemporaryHolds() || plannedPackageCheckoutPreflight,
+    plannedPackageTemporaryHoldsNoPayment: true,
     plannedPackagePublicPurchaseBlocked: !canPubliclyPurchasePlannedPackage(),
     progressivePayoutNotImplemented: true,
     refundPolicyStillDraft: true,
