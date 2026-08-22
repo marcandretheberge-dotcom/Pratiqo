@@ -38,6 +38,8 @@ Required before **public** launch:
 - [ ] Teacher planned package dashboard reviewed (read-only; no teacher transfer/refund/reversal)
 - [ ] Planned package dashboard polish / cross-links reviewed (no financial actions)
 - [ ] Public launch gate reviewed (`docs/product/planned-package-public-launch-gate.md`)
+- [ ] Admin launch monitor reviewed (`/admin/planned-package-launch-monitor`)
+- [ ] First 72h monitoring checklist prepared (`docs/product/planned-package-launch-monitoring.md`)
 - [ ] Public launch **activation** profile applied (`docs/product/planned-package-public-launch-activation.md`)
 - [ ] Planned package feature flags set ON in hosting env (see `.env.example` / `.env.production.example`)
 - [ ] `PLANNED_PACKAGE_LAUNCH_MODE=public_ready`
