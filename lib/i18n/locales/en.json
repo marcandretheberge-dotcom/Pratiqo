@@ -3012,5 +3012,17 @@
   "scheduleCellOverflowMany": "+{count} time ranges",
   "scheduleCellEmptyWhenEnabled": "Add at least one time range, or disable this slot.",
   "scheduleCellGridHelper": "Click a cell to set precise time ranges.",
-  "scheduleCellLegendAdd": "Add"
+  "scheduleCellLegendAdd": "Add",
+  "plannedPackageChooseSessions": "Choose package sessions",
+  "plannedPackagePrepareSessions": "Prepare sessions",
+  "plannedPackageDraftProgressOne": "{selected} session selected out of {total}",
+  "plannedPackageDraftProgressMany": "{selected} sessions selected out of {total}",
+  "plannedPackageNotReservedYet": "Sessions are not reserved until payment is completed.",
+  "plannedPackageAvailabilityRecheck": "Availability will be checked again before payment.",
+  "plannedPackagePaymentComingSoon": "Payment coming soon",
+  "plannedPackageProposedByTeacher": "Package proposed by the teacher",
+  "plannedPackageDraftCreateFailed": "Could not create the package draft. Please try again.",
+  "plannedPackageDraftSlotUnavailable": "This time slot is no longer available. Please choose another time.",
+  "plannedPackageSelectedSessions": "Selected sessions",
+  "plannedPackageDraftCreated": "Package draft created"
 }

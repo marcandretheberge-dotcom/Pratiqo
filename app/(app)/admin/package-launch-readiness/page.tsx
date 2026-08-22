@@ -143,6 +143,32 @@ function ReadinessBody({ readiness }: { readiness: PackageLaunchReadiness }) {
           ok={readiness.checks.plannedPackagePublicPurchaseBlocked}
         />
         <ChecklistRow
+          label="Schéma brouillon de séances présent"
+          ok={readiness.checks.plannedPackageSessionDraftSchemaPresent}
+        />
+        <ChecklistRow
+          label={`Sélection de séances gated (ENABLE_PLANNED_PACKAGE_SESSION_DRAFTS) : ${
+            readiness.flags.plannedPackageSessionDrafts ? "ON" : "OFF"
+          }`}
+          ok={readiness.checks.plannedPackageSessionDraftsGated}
+        />
+        <ChecklistRow
+          label="Brouillon de séances sans paiement"
+          ok={readiness.checks.plannedPackageSessionDraftNoPayment}
+        />
+        <ChecklistRow
+          label="Brouillon de séances sans réservations"
+          ok={readiness.checks.plannedPackageSessionDraftNoBookings}
+        />
+        <ChecklistRow
+          label="Brouillon de séances sans entitlements"
+          ok={readiness.checks.plannedPackageSessionDraftNoEntitlements}
+        />
+        <ChecklistRow
+          label="Checkout forfait toujours bloqué"
+          ok={readiness.checks.plannedPackagePublicPurchaseBlocked}
+        />
+        <ChecklistRow
           label="Revue légale toujours requise"
           ok={readiness.checks.legalReviewMarkedRequired}
         />

@@ -103,7 +103,7 @@ test("when flag OFF existing Réserver maintenant behavior remains unchanged", (
 });
 
 test("published offers are selectable only when flag ON in UI wiring", () => {
-  assert.match(read(OFFER_CARD), /showPrepareBooking = isBookingOfferSelectionEnabled\(\)/);
+  assert.match(read(OFFER_CARD), /showPrepareBooking[\s\S]*isBookingOfferSelectionEnabled\(\)/);
   assert.match(read(BOOKING), /getSelectableBookingOffers/);
   const teacherId = "11111111-1111-4111-8111-111111111111";
   const offers = [

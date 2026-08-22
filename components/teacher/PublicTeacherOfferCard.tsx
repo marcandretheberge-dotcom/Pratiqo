@@ -20,16 +20,27 @@ import { PUBLIC_TEACHER_PROFILE_DISCIPLINE_CHIP_CLASS } from "@/lib/teachers/dis
 import { cn } from "@/lib/utils";
 import { isBookingOfferSelectionEnabled } from "@/lib/offers/bookingOfferSelection";
 import { TeacherOfferCoverImage } from "@/components/teacher/TeacherOfferCoverImage";
+import {
+  PlannedPackageSessionSelector,
+  shouldShowPlannedPackageSessionDraftCta,
+} from "@/components/packages/PlannedPackageSessionSelector";
 
 type Props = {
   offer: PublicTeacherOfferDto;
+  teacherId?: string;
   onPrepareBooking?: (offerId: string) => void;
 };
 
-export function PublicTeacherOfferCard({ offer, onPrepareBooking }: Props) {
+export function PublicTeacherOfferCard({ offer, teacherId, onPrepareBooking }: Props) {
   const { t, locale } = useLocale();
-  const showPrepareBooking = isBookingOfferSelectionEnabled() && typeof onPrepareBooking === "function";
+  const showPackageDraft =
+    Boolean(teacherId) && shouldShowPlannedPackageSessionDraftCta(offer);
+  const showPrepareBooking =
+    !showPackageDraft &&
+    isBookingOfferSelectionEnabled() &&
+    typeof onPrepareBooking === "function";
   const [expanded, setExpanded] = useState(false);
+  const [draftOpen, setDraftOpen] = useState(false);
   const detailsId = useId();
   const shortText = offer.shortDescription?.trim() || "";
   const fullText = offer.description?.trim() || "";
@@ -102,6 +113,16 @@ export function PublicTeacherOfferCard({ offer, onPrepareBooking }: Props) {
           {expanded ? t("publicTeacherOffersHideDetails") : t("publicTeacherOffersShowDetails")}
         </button>
       ) : null}
+      {showPackageDraft ? (
+        <button
+          type="button"
+          data-testid="teacher-profile-offer-choose-package-sessions"
+          onClick={() => setDraftOpen(true)}
+          className="mt-3 inline-flex min-h-10 items-center justify-center rounded-full border border-teal-200 bg-white px-4 text-sm font-semibold text-teal-800 transition-colors hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2"
+        >
+          {t("plannedPackageChooseSessions")}
+        </button>
+      ) : null}
       {showPrepareBooking ? (
         <button
           type="button"
@@ -111,6 +132,14 @@ export function PublicTeacherOfferCard({ offer, onPrepareBooking }: Props) {
         >
           {t("bookingOfferSelectionPrepare")}
         </button>
+      ) : null}
+      {showPackageDraft && teacherId ? (
+        <PlannedPackageSessionSelector
+          teacherId={teacherId}
+          offer={offer}
+          open={draftOpen}
+          onClose={() => setDraftOpen(false)}
+        />
       ) : null}
     </article>
   );

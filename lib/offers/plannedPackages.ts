@@ -77,15 +77,27 @@ export function canPubliclyPurchasePlannedPackage(): boolean {
   return getPlannedPackagePublicLaunchBlockers().length === 0;
 }
 
+function isPlannedPackageSessionDraftsFlagOn(): boolean {
+  return (
+    process.env.ENABLE_PLANNED_PACKAGE_SESSION_DRAFTS === "true" ||
+    process.env.NEXT_PUBLIC_ENABLE_PLANNED_PACKAGE_SESSION_DRAFTS === "true"
+  );
+}
+
 /** Prefer hide planned packages on public profile until purchase path is ready. */
 export function canShowPlannedPackageOnPublicProfile(): boolean {
-  return canPubliclyPurchasePlannedPackage();
+  if (canPubliclyPurchasePlannedPackage()) return true;
+  // Controlled session-draft preview (still no purchase CTA).
+  return isPlannedPackagesEnabled() && isPlannedPackageSessionDraftsFlagOn();
 }
 
 export function assertPlannedPackagePublishAllowed(
   offerType: TeacherOfferType | string | null | undefined,
 ): { ok: true } | { ok: false; error: "offer_not_publishable"; blockers: PlannedPackageLaunchBlockerCode[] } {
   if (!isPlannedPackageOfferType(offerType)) return { ok: true };
+  // Session-draft mode may publish for profile visibility / draft selection only.
+  // Purchase remains blocked via canPubliclyPurchasePlannedPackage().
+  if (isPlannedPackagesEnabled() && isPlannedPackageSessionDraftsFlagOn()) return { ok: true };
   const blockers = getPlannedPackagePublicLaunchBlockers();
   if (blockers.length === 0) return { ok: true };
   return { ok: false, error: "offer_not_publishable", blockers };

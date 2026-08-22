@@ -19,6 +19,7 @@ import {
   canPubliclyPurchasePlannedPackage,
   isPlannedPackagesEnabled,
 } from "./plannedPackages";
+import { canUsePlannedPackageSessionDrafts, isPlannedPackageSessionDraftsEnabled } from "./plannedPackageSessionDrafts";
 import {
   isStudentPackageDashboardEnabled,
   isStudentPackageDashboardUiEnabled,
@@ -56,6 +57,7 @@ export const PACKAGE_LAUNCH_ADMIN_SUPPORT_SURFACES = [
 
 export type PackageLaunchFlagId =
   | "plannedPackages"
+  | "plannedPackageSessionDrafts"
   | "bookingOfferSelection"
   | "offerSnapshotCheckout"
   | "packageEntitlements"
@@ -85,6 +87,7 @@ export type PackageLaunchBlocker = {
 export type PackageLaunchReadiness = {
   flags: {
     plannedPackages: boolean;
+    plannedPackageSessionDrafts: boolean;
     bookingOfferSelection: boolean;
     offerSnapshotCheckout: boolean;
     packageEntitlements: boolean;
@@ -109,6 +112,11 @@ export type PackageLaunchReadiness = {
     adminSupportVisibilityPresent: boolean;
     noPublicCatalogSurface: boolean;
     plannedPackageSkeletonPresent: boolean;
+    plannedPackageSessionDraftSchemaPresent: boolean;
+    plannedPackageSessionDraftsGated: boolean;
+    plannedPackageSessionDraftNoPayment: boolean;
+    plannedPackageSessionDraftNoBookings: boolean;
+    plannedPackageSessionDraftNoEntitlements: boolean;
     plannedPackagePublicPurchaseBlocked: boolean;
     progressivePayoutNotImplemented: boolean;
     refundPolicyStillDraft: boolean;
@@ -134,6 +142,14 @@ export const PACKAGE_LAUNCH_FLAG_META: ReadonlyArray<{
     explanationFr:
       "Permet de rédiger des forfaits planifiés (brouillon) côté professeur — sans achat public.",
     launchMeaningFr: "Squelette Phase 1 — ne lance pas le checkout ni les entitlements.",
+  },
+  {
+    id: "plannedPackageSessionDrafts",
+    envName: "ENABLE_PLANNED_PACKAGE_SESSION_DRAFTS",
+    uiEnvName: "NEXT_PUBLIC_ENABLE_PLANNED_PACKAGE_SESSION_DRAFTS",
+    explanationFr:
+      "Permet à l’élève de choisir les séances d’un forfait planifié (brouillon) — sans paiement.",
+    launchMeaningFr: "Couche planification uniquement — pas de réservation confirmée ni Stripe.",
   },
   {
     id: "bookingOfferSelection",
@@ -189,6 +205,7 @@ function isLegalReviewCompletedSignal(): boolean {
  */
 export function getPackageLaunchReadiness(): PackageLaunchReadiness {
   const plannedPackages = isPlannedPackagesEnabled();
+  const plannedPackageSessionDrafts = isPlannedPackageSessionDraftsEnabled();
   const bookingOfferSelection = isBookingOfferSelectionEnabled();
   const offerSnapshotCheckout = isOfferSnapshotCheckoutEnabled();
   const packageEntitlements = isPackageEntitlementsEnabled();
@@ -200,6 +217,7 @@ export function getPackageLaunchReadiness(): PackageLaunchReadiness {
 
   const flags = {
     plannedPackages,
+    plannedPackageSessionDrafts,
     bookingOfferSelection,
     offerSnapshotCheckout,
     packageEntitlements,
@@ -216,6 +234,8 @@ export function getPackageLaunchReadiness(): PackageLaunchReadiness {
     else if (meta.id === "bookingOfferSelection") uiEnabled = bookingOfferSelection;
     else if (meta.id === "plannedPackages") {
       uiEnabled = process.env.NEXT_PUBLIC_ENABLE_PLANNED_PACKAGES === "true";
+    } else if (meta.id === "plannedPackageSessionDrafts") {
+      uiEnabled = process.env.NEXT_PUBLIC_ENABLE_PLANNED_PACKAGE_SESSION_DRAFTS === "true";
     } else if (meta.id === "offerSnapshotCheckout") {
       uiEnabled = process.env.NEXT_PUBLIC_ENABLE_OFFER_SNAPSHOT_CHECKOUT === "true";
     } else if (meta.id === "packageRedemptionBooking") {
@@ -252,6 +272,11 @@ export function getPackageLaunchReadiness(): PackageLaunchReadiness {
     adminSupportVisibilityPresent,
     noPublicCatalogSurface: true,
     plannedPackageSkeletonPresent: true,
+    plannedPackageSessionDraftSchemaPresent: true,
+    plannedPackageSessionDraftsGated: !canUsePlannedPackageSessionDrafts() || plannedPackages,
+    plannedPackageSessionDraftNoPayment: true,
+    plannedPackageSessionDraftNoBookings: true,
+    plannedPackageSessionDraftNoEntitlements: true,
     plannedPackagePublicPurchaseBlocked: !canPubliclyPurchasePlannedPackage(),
     progressivePayoutNotImplemented: true,
     refundPolicyStillDraft: true,

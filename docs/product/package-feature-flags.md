@@ -23,6 +23,17 @@ See also:
 | Safe preview | ON in staging for form UX only |
 | Production note | Does **not** enable public purchase, entitlements, checkout, or payouts |
 
+### `ENABLE_PLANNED_PACKAGE_SESSION_DRAFTS` (+ `NEXT_PUBLIC_ENABLE_PLANNED_PACKAGE_SESSION_DRAFTS`)
+
+| | |
+|--|--|
+| Default | OFF |
+| Runtime | Session-draft API + gated learner UI (requires planned packages ON) |
+| Who sees effect | Learners may select N sessions and create a **draft** session plan |
+| Dependencies | `ENABLE_PLANNED_PACKAGES` |
+| Safe preview | ON in staging with planned packages ON |
+| Production note | Does **not** create bookings, Stripe checkout, entitlements, or holds |
+
 ### `NEXT_PUBLIC_ENABLE_BOOKING_OFFER_SELECTION`
 
 | | |

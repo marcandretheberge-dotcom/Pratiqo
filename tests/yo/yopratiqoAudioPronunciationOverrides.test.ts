@@ -421,6 +421,11 @@ test("tracked patch avoids generated audio and restricted product systems", () =
     "app/api/teacher/offers/[offerId]/route.ts",
     // packages/planned-package-skeleton — Phase 1 draft gates only; purchase OFF.
     // Defended by tests/offers/plannedPackagesSkeleton.test.ts.
+    // packages/planned-package-session-drafts — session draft only; no payment.
+    // Defended by tests/offers/plannedPackageSessionDrafts.test.ts.
+    "app/api/planned-packages/session-drafts/route.ts",
+    "app/api/planned-packages/session-drafts/[draftId]/route.ts",
+    "app/api/planned-packages/session-drafts/[draftId]/cancel/route.ts",
   ]);
   const forbidden = [
     /^app\/api\//,
