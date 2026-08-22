@@ -3012,5 +3012,17 @@
   "scheduleCellOverflowMany": "+{count} horarios",
   "scheduleCellEmptyWhenEnabled": "Agrega al menos un horario, o desactiva este período.",
   "scheduleCellGridHelper": "Haz clic en una casilla para definir horarios precisos.",
-  "scheduleCellLegendAdd": "Agregar"
+  "scheduleCellLegendAdd": "Agregar",
+  "plannedPackageChooseSessions": "Elegir sesiones del paquete",
+  "plannedPackagePrepareSessions": "Preparar sesiones",
+  "plannedPackageDraftProgressOne": "{selected} sesión seleccionada de {total}",
+  "plannedPackageDraftProgressMany": "{selected} sesiones seleccionadas de {total}",
+  "plannedPackageNotReservedYet": "Las sesiones no quedan reservadas hasta que se complete el pago.",
+  "plannedPackageAvailabilityRecheck": "La disponibilidad se verificará nuevamente antes del pago.",
+  "plannedPackagePaymentComingSoon": "Pago próximamente",
+  "plannedPackageProposedByTeacher": "Paquete propuesto por el profesor",
+  "plannedPackageDraftCreateFailed": "No se pudo crear el borrador del paquete. Inténtalo de nuevo.",
+  "plannedPackageDraftSlotUnavailable": "Este horario ya no está disponible. Elige otro horario.",
+  "plannedPackageSelectedSessions": "Sesiones seleccionadas",
+  "plannedPackageDraftCreated": "Borrador del paquete creado"
 }

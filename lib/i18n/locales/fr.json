@@ -3012,5 +3012,17 @@
   "scheduleCellOverflowMany": "+{count} plages",
   "scheduleCellEmptyWhenEnabled": "Ajoutez au moins une plage horaire, ou désactivez ce créneau.",
   "scheduleCellGridHelper": "Cliquez une case pour définir des plages horaires précises.",
-  "scheduleCellLegendAdd": "Ajouter"
+  "scheduleCellLegendAdd": "Ajouter",
+  "plannedPackageChooseSessions": "Choisir les séances du forfait",
+  "plannedPackagePrepareSessions": "Préparer les séances",
+  "plannedPackageDraftProgressOne": "{selected} séance sélectionnée sur {total}",
+  "plannedPackageDraftProgressMany": "{selected} séances sélectionnées sur {total}",
+  "plannedPackageNotReservedYet": "Les séances ne sont pas réservées tant que le paiement n’est pas complété.",
+  "plannedPackageAvailabilityRecheck": "Les disponibilités seront revérifiées avant le paiement.",
+  "plannedPackagePaymentComingSoon": "Paiement bientôt disponible",
+  "plannedPackageProposedByTeacher": "Forfait proposé par le professeur",
+  "plannedPackageDraftCreateFailed": "Impossible de créer le brouillon du forfait. Veuillez réessayer.",
+  "plannedPackageDraftSlotUnavailable": "Cette plage n’est plus disponible. Veuillez choisir une autre heure.",
+  "plannedPackageSelectedSessions": "Séances choisies",
+  "plannedPackageDraftCreated": "Brouillon du forfait créé"
 }

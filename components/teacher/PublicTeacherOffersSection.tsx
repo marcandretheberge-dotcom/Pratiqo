@@ -73,6 +73,7 @@ export function PublicTeacherOffersSection({ teacherId, onOffersLoaded, onPrepar
           <PublicTeacherOfferCard
             key={offer.id}
             offer={offer}
+            teacherId={teacherId}
             onPrepareBooking={onPrepareBooking}
           />
         ))}
