@@ -501,6 +501,78 @@ function ReadinessBody({ readiness }: { readiness: PackageLaunchReadiness }) {
         </p>
       </Section>
 
+      <Section title="5b. E2E / staging QA">
+        <p className="text-sm text-slate-600" data-testid="package-e2e-qa-section">
+          Vérification E2E des forfaits — diagnostic forfaits planifiés. Lecture seule : aucun secret
+          n’est affiché. Les actions financières restent admin-only.
+        </p>
+        <ChecklistRow
+          label="Runbook QA staging présent"
+          ok={readiness.checks.plannedPackageE2eQaDocsPresent}
+        />
+        <ChecklistRow
+          label="Helper diagnostics E2E présent"
+          ok={readiness.checks.plannedPackageE2eQaDiagnosticsPresent}
+        />
+        <ChecklistRow
+          label="Test de cycle complet (smoke) présent"
+          ok={readiness.checks.plannedPackageE2eQaLifecycleSmokePresent}
+        />
+        <ChecklistRow
+          label={`Outils QA E2E gated (ENABLE_PLANNED_PACKAGE_E2E_QA_TOOLS) : ${
+            readiness.flags.plannedPackageE2eQaTools ? "ON" : "OFF"
+          }`}
+          ok={readiness.checks.plannedPackageE2eQaToolsGated}
+        />
+        <ChecklistRow
+          label="Lancement public toujours bloqué"
+          ok={readiness.checks.plannedPackageE2eQaNoPublicLaunchByDefault}
+        />
+        <ChecklistRow
+          label="Revue légale toujours requise pour lancement public"
+          ok={readiness.checks.plannedPackageE2eQaLegalReviewStillRequired || readiness.checks.legalReviewMarkedRequired}
+        />
+        <ChecklistRow
+          label="Outils QA rejetés en production / Stripe live"
+          ok={readiness.checks.plannedPackageE2eQaStripeLiveRejectedForTools}
+        />
+        <ChecklistRow
+          label="Actions financières admin-only"
+          ok={readiness.checks.plannedPackageE2eQaAdminOnlyMoneyMovement}
+        />
+        <ChecklistRow
+          label="Tests d’idempotence webhook/transfer/refund/reversal présents"
+          ok={readiness.checks.plannedPackageE2eQaIdempotencyTestsPresent}
+        />
+        <ChecklistRow
+          label="Migrations cycle forfait documentées (114–123)"
+          ok={readiness.checks.plannedPackageE2eQaMigrationsDocumented}
+        />
+        <ChecklistRow
+          label="Aucun cron de versement automatique"
+          ok={readiness.checks.plannedPackageE2eQaNoAutomaticPayoutCron}
+        />
+        <ChecklistRow
+          label="Aucun cron de remboursement automatique"
+          ok={readiness.checks.plannedPackageE2eQaNoAutomaticRefundCron}
+        />
+        <ChecklistRow
+          label="Aucun cron de transfer reversal automatique"
+          ok={readiness.checks.plannedPackageE2eQaNoAutomaticReversalCron}
+        />
+        <p className="text-sm text-slate-600">
+          <span className="font-semibold text-slate-800">Voir le runbook QA :</span>{" "}
+          <code className="text-xs">docs/product/planned-package-e2e-staging-qa.md</code>
+          {" · "}
+          <code className="text-xs">GET /api/admin/planned-package-e2e-qa</code>
+          {" "}
+          (staging, flag ON)
+        </p>
+        <p className="text-xs text-slate-500">
+          Cette section ne lance rien et n’exécute aucun transfer, refund ou reversal.
+        </p>
+      </Section>
+
       <Section title="6. Bloqueurs / alertes">
         {readiness.blockers.length === 0 ? (
           <p className="flex items-center gap-2 text-sm text-teal-800">

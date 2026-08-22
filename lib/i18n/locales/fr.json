@@ -3286,5 +3286,18 @@
   "plannedPackageAdminOpsReason_transfer_partially_reversed": "Transfer partiellement renversé",
   "plannedPackageAdminOpsReason_refund_waiting_on_transfer_reversal": "Remboursement en attente de reversal",
   "plannedPackageAdminOpsReason_transfer_reversed_but_refund_not_executed": "Transfer renversé, remboursement non exécuté",
-  "plannedPackageAdminOpsReason_transfer_reversal_insufficient_balance": "Balance connectée insuffisante pour reversal"
+  "plannedPackageAdminOpsReason_transfer_reversal_insufficient_balance": "Balance connectée insuffisante pour reversal",
+  "plannedPackageE2eQaTitle": "Vérification E2E des forfaits",
+  "plannedPackageE2eQaDiagnostics": "Diagnostic forfaits planifiés",
+  "plannedPackageE2eQaReadyForStaging": "Prêt pour test staging",
+  "plannedPackageE2eQaMissingMigration": "Migration manquante",
+  "plannedPackageE2eQaMissingFlag": "Flag manquant",
+  "plannedPackageE2eQaWebhookConfigured": "Webhook Stripe configuré",
+  "plannedPackageE2eQaWebhookMissing": "Webhook Stripe manquant",
+  "plannedPackageE2eQaStripeTestModeRequired": "Stripe test mode requis",
+  "plannedPackageE2eQaNoSecretsDisplayed": "Aucun secret n’est affiché",
+  "plannedPackageE2eQaPublicLaunchBlocked": "Lancement public toujours bloqué",
+  "plannedPackageE2eQaViewRunbook": "Voir le runbook QA",
+  "plannedPackageE2eQaLifecycleTestRequired": "Test de cycle complet requis",
+  "plannedPackageE2eQaFinancialAdminOnly": "Les actions financières restent admin-only"
 }

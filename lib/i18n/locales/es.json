@@ -3286,5 +3286,18 @@
   "plannedPackageAdminOpsReason_transfer_partially_reversed": "Transferencia parcialmente revertida",
   "plannedPackageAdminOpsReason_refund_waiting_on_transfer_reversal": "Reembolso en espera de reversal",
   "plannedPackageAdminOpsReason_transfer_reversed_but_refund_not_executed": "Transferencia revertida, reembolso no ejecutado",
-  "plannedPackageAdminOpsReason_transfer_reversal_insufficient_balance": "Saldo conectado insuficiente para reversal"
+  "plannedPackageAdminOpsReason_transfer_reversal_insufficient_balance": "Saldo conectado insuficiente para reversal",
+  "plannedPackageE2eQaTitle": "Verificación E2E de paquetes",
+  "plannedPackageE2eQaDiagnostics": "Diagnóstico de paquetes planificados",
+  "plannedPackageE2eQaReadyForStaging": "Listo para prueba en staging",
+  "plannedPackageE2eQaMissingMigration": "Migración faltante",
+  "plannedPackageE2eQaMissingFlag": "Flag faltante",
+  "plannedPackageE2eQaWebhookConfigured": "Webhook de Stripe configurado",
+  "plannedPackageE2eQaWebhookMissing": "Webhook de Stripe faltante",
+  "plannedPackageE2eQaStripeTestModeRequired": "Se requiere modo de prueba de Stripe",
+  "plannedPackageE2eQaNoSecretsDisplayed": "No se muestran secretos",
+  "plannedPackageE2eQaPublicLaunchBlocked": "Lanzamiento público todavía bloqueado",
+  "plannedPackageE2eQaViewRunbook": "Ver runbook QA",
+  "plannedPackageE2eQaLifecycleTestRequired": "Se requiere prueba de ciclo completo",
+  "plannedPackageE2eQaFinancialAdminOnly": "Las acciones financieras siguen siendo solo admin"
 }
