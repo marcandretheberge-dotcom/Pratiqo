@@ -43,6 +43,7 @@ const PRODUCT_SURFACES = [
   "components/teacher/PublicTeacherOffersSection.tsx",
   "components/teacher/TeacherPackageDashboard.tsx",
   "components/teacher/TeacherPackageCard.tsx",
+  "components/teacher/TeacherPlannedPackageCard.tsx",
   "components/student/StudentPackageDashboard.tsx",
   "components/student/StudentPackageCard.tsx",
   "components/BookingModal.tsx",

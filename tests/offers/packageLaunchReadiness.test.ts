@@ -70,6 +70,7 @@ test("helper lists all package-related flags and never returns production_ready"
     "studentPackageDashboard",
     "studentPlannedPackageDashboard",
     "teacherPackageVisibility",
+    "teacherPlannedPackageDashboard",
   ].sort());
   for (const id of ids) {
     assert.equal(typeof readiness.flags[id], "boolean");

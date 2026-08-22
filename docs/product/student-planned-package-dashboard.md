@@ -66,7 +66,7 @@ Admin blocker codes are never shown to students.
 
 ## Future
 
-- Teacher planned package visibility (separate PR)
+- Teacher planned package session management / messaging (separate PR)
 - Learner-initiated cancellation request (product + legal approval required)
 
 Public launch still requires `PACKAGE_LEGAL_REVIEW_COMPLETED` after counsel review.
