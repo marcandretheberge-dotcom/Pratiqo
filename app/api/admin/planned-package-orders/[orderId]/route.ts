@@ -7,6 +7,7 @@ import { requireAdminApi } from "@/lib/auth/admin";
 import { canUsePlannedPackageAdminOps } from "@/lib/offers/plannedPackageAdminOps";
 import { getAdminPlannedPackageOrderDetail } from "@/lib/admin/plannedPackageOrderOperations";
 import { getAdminPlannedPackageRefundContext } from "@/lib/admin/plannedPackageRefundOperations";
+import { getAdminPlannedPackagePayoutEligibilityContext } from "@/lib/admin/plannedPackagePayoutEligibilityOperations";
 
 export const runtime = "nodejs";
 
@@ -29,14 +30,17 @@ export async function GET(req: Request, context: RouteContext) {
     }
 
     const refund = await getAdminPlannedPackageRefundContext(auth.admin, orderId);
+    const payout = await getAdminPlannedPackagePayoutEligibilityContext(auth.admin, orderId);
 
     return NextResponse.json({
       order,
       refund,
+      payout,
       readOnly: true,
       noTeacherTransferMade: true,
       noRefundMade: true,
       noStripeRefundExecuted: true,
+      noStripeTransferCreated: true,
     });
   } catch (e) {
     console.error("[admin/planned-package-orders/detail] GET failed", e);

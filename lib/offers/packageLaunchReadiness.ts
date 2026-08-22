@@ -47,6 +47,11 @@ import {
   isPlannedPackageManualRefundsEnabled,
 } from "./plannedPackageManualRefunds";
 import {
+  canUsePlannedPackagePayoutEligibilityLedger,
+  isPlannedPackagePayoutEligibilityLedgerEnabled,
+  isPlannedPackagePayoutAdminViewEnabled,
+} from "./plannedPackagePayoutEligibilityLedger";
+import {
   canUsePlannedPackageStripeCheckout,
   isPlannedPackageStripeCheckoutEnabled,
 } from "./plannedPackageStripeCheckout";
@@ -96,6 +101,7 @@ export type PackageLaunchFlagId =
   | "plannedPackageRefundQuotes"
   | "plannedPackageRefundAdminReview"
   | "plannedPackageManualRefunds"
+  | "plannedPackagePayoutEligibilityLedger"
   | "bookingOfferSelection"
   | "offerSnapshotCheckout"
   | "packageEntitlements"
@@ -134,6 +140,7 @@ export type PackageLaunchReadiness = {
     plannedPackageRefundQuotes: boolean;
     plannedPackageRefundAdminReview: boolean;
     plannedPackageManualRefunds: boolean;
+    plannedPackagePayoutEligibilityLedger: boolean;
     bookingOfferSelection: boolean;
     offerSnapshotCheckout: boolean;
     packageEntitlements: boolean;
@@ -201,6 +208,12 @@ export type PackageLaunchReadiness = {
     plannedPackageManualRefundIdempotencyPresent: boolean;
     plannedPackageManualRefundNoTransferReversal: boolean;
     plannedPackageManualRefundNoPayoutRelease: boolean;
+    plannedPackagePayoutEligibilityLedgerPresent: boolean;
+    plannedPackagePayoutEligibilityLedgerGated: boolean;
+    plannedPackagePayoutEligibilityAdminSyncPresent: boolean;
+    plannedPackagePayoutEligibilityNoStripeTransfer: boolean;
+    plannedPackagePayoutEligibilityNoPayoutRelease: boolean;
+    plannedPackagePayoutEligibilityRefundBlockersConsidered: boolean;
     plannedPackagePublicPurchaseBlocked: boolean;
     progressivePayoutNotImplemented: boolean;
     refundPolicyStillDraft: boolean;
@@ -301,6 +314,15 @@ export const PACKAGE_LAUNCH_FLAG_META: ReadonlyArray<{
       "Admin-only après quote approuvée — revue légale requise en production ; pas de transfer reversal.",
   },
   {
+    id: "plannedPackagePayoutEligibilityLedger",
+    envName: "ENABLE_PLANNED_PACKAGE_PAYOUT_ELIGIBILITY_LEDGER",
+    uiEnvName: "ENABLE_PLANNED_PACKAGE_PAYOUT_ADMIN_VIEW",
+    explanationFr:
+      "Registre d’admissibilité aux versements par séance forfait planifié — admissibilité seulement, aucun transfer Stripe.",
+    launchMeaningFr:
+      "Couche audit interne — ne verse pas d’argent au professeur ; exécution transfer dans un PR futur.",
+  },
+  {
     id: "bookingOfferSelection",
     envName: "NEXT_PUBLIC_ENABLE_BOOKING_OFFER_SELECTION",
     uiEnvName: "NEXT_PUBLIC_ENABLE_BOOKING_OFFER_SELECTION",
@@ -363,6 +385,7 @@ export function getPackageLaunchReadiness(): PackageLaunchReadiness {
   const plannedPackageRefundQuotes = isPlannedPackageRefundQuotesEnabled();
   const plannedPackageRefundAdminReview = isPlannedPackageRefundAdminReviewEnabled();
   const plannedPackageManualRefunds = isPlannedPackageManualRefundsEnabled();
+  const plannedPackagePayoutEligibilityLedger = isPlannedPackagePayoutEligibilityLedgerEnabled();
   const bookingOfferSelection = isBookingOfferSelectionEnabled();
   const offerSnapshotCheckout = isOfferSnapshotCheckoutEnabled();
   const packageEntitlements = isPackageEntitlementsEnabled();
@@ -383,6 +406,7 @@ export function getPackageLaunchReadiness(): PackageLaunchReadiness {
     plannedPackageRefundQuotes,
     plannedPackageRefundAdminReview,
     plannedPackageManualRefunds,
+    plannedPackagePayoutEligibilityLedger,
     bookingOfferSelection,
     offerSnapshotCheckout,
     packageEntitlements,
@@ -407,6 +431,8 @@ export function getPackageLaunchReadiness(): PackageLaunchReadiness {
       uiEnabled = process.env.NEXT_PUBLIC_ENABLE_PLANNED_PACKAGE_TEMPORARY_HOLDS === "true";
     } else if (meta.id === "plannedPackageStripeCheckout") {
       uiEnabled = process.env.NEXT_PUBLIC_ENABLE_PLANNED_PACKAGE_STRIPE_CHECKOUT === "true";
+    } else if (meta.id === "plannedPackagePayoutEligibilityLedger") {
+      uiEnabled = isPlannedPackagePayoutAdminViewEnabled();
     } else if (meta.id === "offerSnapshotCheckout") {
       uiEnabled = process.env.NEXT_PUBLIC_ENABLE_OFFER_SNAPSHOT_CHECKOUT === "true";
     } else if (meta.id === "packageRedemptionBooking") {
@@ -493,6 +519,13 @@ export function getPackageLaunchReadiness(): PackageLaunchReadiness {
     plannedPackageManualRefundIdempotencyPresent: true,
     plannedPackageManualRefundNoTransferReversal: true,
     plannedPackageManualRefundNoPayoutRelease: true,
+    plannedPackagePayoutEligibilityLedgerPresent: true,
+    plannedPackagePayoutEligibilityLedgerGated:
+      !canUsePlannedPackagePayoutEligibilityLedger() || plannedPackageAdminOps,
+    plannedPackagePayoutEligibilityAdminSyncPresent: true,
+    plannedPackagePayoutEligibilityNoStripeTransfer: true,
+    plannedPackagePayoutEligibilityNoPayoutRelease: true,
+    plannedPackagePayoutEligibilityRefundBlockersConsidered: true,
     plannedPackagePublicPurchaseBlocked: !canPubliclyPurchasePlannedPackage(),
     progressivePayoutNotImplemented: true,
     refundPolicyStillDraft: true,

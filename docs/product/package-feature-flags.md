@@ -117,6 +117,24 @@ See also:
 | Dependencies | Refund quotes + admin review + admin ops |
 | Production note | Requires `PACKAGE_LEGAL_REVIEW_COMPLETED=true` in production |
 
+### `ENABLE_PLANNED_PACKAGE_PAYOUT_ELIGIBILITY_LEDGER` (server only)
+
+| | |
+|--|--|
+| Default | OFF |
+| Runtime | Creates/updates per-session payout eligibility entries on admin sync |
+| Dependencies | Planned package admin ops chain |
+| Production note | **Does not** create Stripe transfers or release payouts |
+
+### `ENABLE_PLANNED_PACKAGE_PAYOUT_ADMIN_VIEW` (server only)
+
+| | |
+|--|--|
+| Default | OFF |
+| Runtime | Shows payout eligibility section on admin order detail |
+| Dependencies | Payout eligibility ledger flag + admin ops |
+| Production note | Read-only audit UI — no payout actions |
+
 ### `ENABLE_PLANNED_PACKAGE_CHECKOUT_TEST_MODE` (optional)
 
 | | |
